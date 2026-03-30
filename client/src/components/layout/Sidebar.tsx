@@ -103,6 +103,7 @@ export default function Sidebar() {
     'Call History': 'navigation.callHistory',
     'AI Insights': 'navigation.aiInsights',
     Analytics: 'navigation.analytics',
+    Campaigns: 'navigation.campaigns',
     Coupons: 'navigation.coupons',
     Customers: 'navigation.customers',
     Reports: 'navigation.reports',

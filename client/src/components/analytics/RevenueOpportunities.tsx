@@ -41,11 +41,31 @@ const PRIORITY_I18N: Record<string, Record<string, string>> = {
   es: { high: 'Alto', medium: 'Medio', low: 'Bajo' },
 };
 
+const DIFFICULTY_I18N: Record<string, Record<string, string>> = {
+  'pt-BR': { low: 'baixa', medium: 'média', high: 'alta' },
+  es: { low: 'baja', medium: 'media', high: 'alta' },
+};
+
+const TIMELINE_I18N: Record<string, Record<string, string>> = {
+  'pt-BR': {
+    '1-2 weeks': '1-2 semanas',
+    '2-4 weeks': '2-4 semanas',
+    '4-6 weeks': '4-6 semanas',
+  },
+  es: {
+    '1-2 weeks': '1-2 semanas',
+    '2-4 weeks': '2-4 semanas',
+    '4-6 weeks': '4-6 semanas',
+  },
+};
+
 export default function RevenueOpportunities() {
   const { t, i18n } = useTranslation();
   const tCat = (cat: string) => CATEGORY_I18N[i18n.language]?.[cat] ?? cat;
   const tDesc = (desc: string) => DESCRIPTION_I18N[i18n.language]?.[desc] ?? desc;
   const tPriority = (p: string) => PRIORITY_I18N[i18n.language]?.[p] ?? p.charAt(0).toUpperCase() + p.slice(1);
+  const tDifficulty = (d: string) => DIFFICULTY_I18N[i18n.language]?.[d] ?? d;
+  const tTimeline = (tl: string) => TIMELINE_I18N[i18n.language]?.[tl] ?? tl;
   const { data, isLoading, isError } = useRevenueOpportunities();
   const opportunities = data?.opportunities ?? [];
   const summary = data?.summary ?? null;
@@ -160,9 +180,9 @@ export default function RevenueOpportunities() {
                   </div>
                   <div className="bg-soft-gray/50 border border-border-gray rounded-xl p-3">
                     <div className="text-xs text-warm-stone font-medium mb-1">{t('analytics.timeline')}</div>
-                    <div className="text-lg font-bold text-deep-charcoal">{opp.estimated_timeline}</div>
+                    <div className="text-lg font-bold text-deep-charcoal">{tTimeline(opp.estimated_timeline)}</div>
                     <div className={`text-xs px-2 py-1 rounded-full inline-block mt-1 ${getDifficultyBadge(opp.implementation_difficulty)}`}>
-                      {t('analytics.difficulty', { level: opp.implementation_difficulty })}
+                      {t('analytics.difficulty', { level: tDifficulty(opp.implementation_difficulty) })}
                     </div>
                   </div>
                 </div>

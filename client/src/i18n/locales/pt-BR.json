@@ -80,7 +80,8 @@
     "upgradePlanToUnlock": "Atualize para o plano Profissional para desbloquear",
     "whatsapp": "WhatsApp",
     "restaurantSettings": "Configurações do Restaurante",
-    "coupons": "Cupons"
+    "coupons": "Cupons",
+    "campaigns": "Campanhas"
   },
   "dashboard": {
     "overview": "Visão Geral",
@@ -519,7 +520,7 @@
     "topGuestPreferences": "Principais Preferências",
     "noPreferenceData": "Sem dados de preferências para este período",
     "noDemographicsTitle": "Sem dados demográficos ainda",
-    "noDemographicsHint": "Os perfis dos clientes serão construídos ao longo do tempo conforme visitam e interagem.",
+    "noDemographicsHint": "Dados de perfil de clientes aparecerão após as primeiras reservas.",
     "occupancyRate": "Taxa de Ocupação",
     "reservationsOverTime": "Reservas ao Longo do Tempo",
     "trendingUp": "Em Alta",
@@ -2332,7 +2333,7 @@
     "noShowRate": "Taxa de No-show",
     "avgRevenue": "Receita Média / Coberto",
     "conversionRate": "Taxa de Conversão",
-    "target": "meta",
+    "target": "meta (padrão)",
     "notEnoughData": "Dados insuficientes",
     "loadFailed": "Falha ao carregar métricas",
     "noReservations": "Sem reservas neste período — as métricas aparecerão conforme os dados chegarem",

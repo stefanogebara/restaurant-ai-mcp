@@ -30,8 +30,8 @@ async function handleCalculateAll(req, res) {
     const restaurantId = req.user.restaurant_id;
     const now = new Date();
 
-    // Use actual avg revenue per cover from service_records, fall back to 40
-    let AVG_REVENUE_PER_COVER = 40;
+    // Use actual avg revenue per cover from service_records, fall back to 80
+    let AVG_REVENUE_PER_COVER = 80;
     const { data: serviceData } = await supabaseAdmin
       .from('service_records')
       .select('total_bill, party_size')

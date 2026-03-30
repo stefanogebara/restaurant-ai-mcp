@@ -214,8 +214,8 @@ async function getRevenueOpportunities(restaurantId) {
 
   const totalCapacity = tables.reduce((sum, table) => sum + table.capacity, 0);
 
-  // Fetch actual avg revenue per cover from service_records (fall back to 40 default)
-  let avgRevenuePerCover = 40;
+  // Fetch actual avg revenue per cover from service_records (fall back to 80 default)
+  let avgRevenuePerCover = 80;
   let avgCoversPerReservation = 3;
   try {
     const { data: serviceData } = await supabaseAdmin

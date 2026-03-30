@@ -129,7 +129,7 @@ describe('buildLTVRecord', () => {
       avg_spend: null,
     };
     const rec = buildLTVRecord(row, restaurantId);
-    expect(rec.avg_revenue_per_visit).toBe(40); // DEFAULT_AVG_SPEND
+    expect(rec.avg_revenue_per_visit).toBe(80); // DEFAULT_AVG_SPEND
     expect(rec.last_visit_date).toBeNull();
   });
 });

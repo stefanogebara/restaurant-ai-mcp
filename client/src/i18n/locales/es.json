@@ -80,7 +80,8 @@
     "upgradePlanToUnlock": "Actualiza al plan Profesional para desbloquear",
     "whatsapp": "WhatsApp",
     "restaurantSettings": "Configuración del Restaurante",
-    "coupons": "Cupones"
+    "coupons": "Cupones",
+    "campaigns": "Campañas"
   },
   "dashboard": {
     "overview": "Vista General",
@@ -2460,7 +2461,7 @@
     "noShowRate": "Tasa de No-show",
     "avgRevenue": "Ingreso Promedio / Cubierto",
     "conversionRate": "Tasa de Conversión",
-    "target": "objetivo",
+    "target": "objetivo (predeterminado)",
     "notEnoughData": "Aún no hay suficientes datos",
     "loadFailed": "Error al cargar métricas",
     "noReservations": "Aún no hay reservas en este período — las métricas aparecerán cuando lleguen datos",

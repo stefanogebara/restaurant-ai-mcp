@@ -1,3 +1,58 @@
+## Brand Design System — Social Media & Marketing
+
+### Illustration Style (AI Studio / Nano Banana Prompts)
+All social media backgrounds use a **consistent editorial illustration style**. When generating new illustrations, ALWAYS attach 3 reference images from `~/seatable-ads/output/insta-final/` as style anchors.
+
+**Style**: Flat vector editorial illustration with depth, ambient lighting, and subtle shadows. Think Monocle magazine meets restaurant ambiance.
+
+**Color Palette**:
+- Burgundy/wine: #9F1239 (primary accent)
+- Warm amber/golden: #D97706, #F59E0B
+- Cream/off-white: #F5F0EB (backgrounds, text areas)
+- Warm brown: #78350F, #92400E
+- Deep charcoal: #1C1917 (dark variants)
+
+**Key Elements**:
+- Warm golden lighting from windows, pendant lamps, candles, string lights
+- Stylized simplified human figures (no detailed faces)
+- Clean lines, flat colors with subtle gradients and shadows
+- Restaurant scenes: interiors, exteriors, terraces, bars, kitchens
+- European bistro / sophisticated dining atmosphere
+- Perspective depth with foreground/background elements
+
+**Post Design System** (from `~/seatable-ads/output/insta-final/generate-100-v4.js`):
+- Typography: Playfair Display (serif headlines), Inter (body)
+- Key words in burgundy italic
+- S. logo with burgundy dot — top-left
+- "seatable.one" watermark — bottom-right
+- Semi-transparent overlay for text readability over illustrations
+- 4 content types: stat, headline, quote, cta
+
+**Reference Images** (attach these to AI Studio prompts):
+- `illust-night.png` — Night exterior with warm window glow
+- `illust-rooftop.png` — Rooftop dining at sunset
+- `illust-bar.png` — Warm bar interior
+- `illust-interior.png` — Classic restaurant dining room
+- `illust-terrace.png` — Garden terrace with string lights
+
+**AI Studio Default Prompt Template**:
+```
+[Attach 3 reference images from ~/seatable-ads/output/insta-final/]
+
+These images show my exact illustration style. Create a NEW illustration in the EXACT SAME STYLE.
+Match: flat vector editorial look, warm color palette (burgundy, amber, golden orange, cream, warm browns),
+stylized simplified figures, clean lines, flat colors with subtle gradients and ambient shadows,
+depth with perspective, warm golden lighting.
+
+NEW SCENE: [describe scene here]
+
+Square 1:1. No text. No logos.
+```
+
+**Website Style Match**: Nordic Clean — white bg, 1px borders #E5E7EB, burgundy #9F1239, Inter + JetBrains Mono, zero shadows. The illustrations complement the clean UI with warmth.
+
+---
+
 ## Vercel Cost Rules (CRITICAL — $375 bill incident March 2026)
 
 - **Crons**: NEVER more than */15. Check-late-reservations and send-campaigns should be */15, not */5.

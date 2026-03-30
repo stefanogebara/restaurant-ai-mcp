@@ -2,7 +2,7 @@
 
 const { parse } = require('csv-parse/sync');
 
-const DEFAULT_AVG_SPEND = 40;
+const DEFAULT_AVG_SPEND = 80;
 
 /**
  * Parse a CSV buffer. Returns raw row objects with string values.
