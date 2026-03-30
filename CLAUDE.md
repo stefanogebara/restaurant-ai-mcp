@@ -158,6 +158,45 @@ Square 1:1. No text. No logos.
 
 ---
 
+## Design System — Nordic Clean
+
+### Typography
+- **Font stack**: Inter (body), Playfair Display (landing headings), JetBrains Mono (code/mono)
+- **Section headings**: `text-4xl sm:text-[48px]` (36px mobile, 48px desktop)
+- **Subtitles**: `text-lg` (18px)
+- **Body**: `text-sm` (14px) or `text-base` (16px)
+- Never mix font sizes within the same hierarchy level
+
+### Color Palette
+| Token | Value | Usage |
+|-------|-------|-------|
+| **Background** | `#FAFAF9` (warm white) | Page background — never pure white |
+| **Primary accent** | `#9F1239` (burgundy) | CTAs, links, highlights |
+| **Text primary** | `#1C1917` (deep charcoal) | Headings, body text |
+| **Text secondary** | `#706A65` (muted stone) | Captions, placeholders (WCAG-compliant, was #A8A29E) |
+| **Borders** | `#E5E7EB` (1px) | Cards, panels, dividers |
+
+- **No shadows** on cards/panels — borders only
+- **Shadows allowed** on: modals, dropdowns, tooltips, FABs
+- Semantic green OK for status indicators (online dots, positive trends)
+
+### WCAG Contrast Rules
+- Normal text (< 18px): minimum **4.5:1** contrast ratio
+- Large text (>= 18px bold or >= 24px): minimum **3:1** contrast ratio
+- Text over images: minimum **60% overlay opacity**
+- Never use opacity below 0.5 for readable text (`white/50` minimum on dark, `dark/50` minimum on light)
+
+### Instagram Post Design
+- **Style**: Flat illustration with soft gradients
+- **Color palette**: cream, brown, burgundy, gold
+- **Typography**: Playfair Display (headlines), Inter (body)
+- Key words in burgundy italic
+- Dark backgrounds: white text with dark gradient overlay
+- Light backgrounds: overlay opacity **0.45–0.55 minimum** at midpoint
+- Always include `seatable.one` watermark
+
+---
+
 ## Multi-Tenancy Architecture
 
 All operational tables (`reservations`, `tables`, `waitlist`, `service_records`, `subscriptions`) are scoped by `restaurant_id`. RLS policies enforce tenant isolation via JWT claims.
