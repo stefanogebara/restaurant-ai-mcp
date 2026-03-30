@@ -203,7 +203,7 @@ export default function BookingPage() {
       <div className="flex flex-col md:flex-row max-w-[1200px] mx-auto w-full px-4 sm:px-10 py-8 md:py-12 gap-8 md:gap-16">
         {/* Left: Restaurant Info */}
         <div className="md:flex-shrink-0 md:w-[340px]">
-          <div className="w-full h-[220px] rounded-2xl bg-gradient-to-br from-burgundy/80 via-burgundy/50 to-stone-700 mb-7 flex items-end p-6 relative overflow-hidden">
+          <div className="w-full h-[220px] rounded-2xl bg-gradient-to-br from-burgundy via-burgundy/80 to-stone-700 mb-7 flex items-end p-6 relative overflow-hidden">
             {/* Restaurant initial as a subtle background accent */}
             <span
               aria-hidden="true"

@@ -18,7 +18,7 @@ export default function PresetDemoSection() {
         <p className="text-xs font-semibold tracking-[2px] uppercase text-burgundy mb-3">
           {t('landing.tryDemo.label', 'Try it right now')}
         </p>
-        <h2 className="font-serif text-[32px] sm:text-[48px] leading-tight font-medium text-deep-charcoal mb-3">
+        <h2 className="font-serif text-4xl sm:text-[48px] leading-tight font-medium text-deep-charcoal mb-3">
           {t('landing.tryDemo.heading', 'Pick a restaurant. Explore the dashboard.')}
         </h2>
         <p className="text-lg text-warm-stone font-light mb-14">

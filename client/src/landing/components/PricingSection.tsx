@@ -89,7 +89,7 @@ export default function PricingSection() {
           <h2 className="font-serif text-4xl sm:text-[48px] font-medium tracking-tight text-deep-charcoal mb-3">
             {t('landing.pricing.heading')}
           </h2>
-          <p className="text-[17px] text-warm-stone font-light">{t('landing.pricing.subheading')}</p>
+          <p className="text-lg text-warm-stone font-light">{t('landing.pricing.subheading')}</p>
         </div>
 
         {/* Pricing Grid */}
@@ -101,20 +101,20 @@ export default function PricingSection() {
             return (
               <div key={index} className={`relative px-8 sm:px-9 py-12 ${isFeatured ? 'bg-deep-charcoal' : 'bg-warm-white'}`}>
                 {/* Plan label */}
-                <div className={`text-xs font-semibold tracking-[1.5px] uppercase mb-2 ${isFeatured ? 'text-burgundy' : 'text-warm-stone'}`}>
+                <div className={`text-xs font-semibold tracking-[1.5px] uppercase mb-2 ${isFeatured ? 'text-rose-400' : 'text-warm-stone'}`}>
                   {t(`landing.pricing.${tierKey}.name`, tier.name)}
                 </div>
 
                 {/* Price */}
                 <div className={`font-serif text-4xl sm:text-[48px] font-medium tracking-tight leading-none mb-1 ${isFeatured ? 'text-white' : 'text-deep-charcoal'}`}>
                   {isBRL ? (tier.brlPrice ?? tier.price) : tier.price}
-                  <span className="text-lg font-normal text-muted-stone">
+                  <span className={`text-lg font-normal ${isFeatured ? 'text-stone-400' : 'text-muted-stone'}`}>
                     /{t(`landing.pricing.perMonth`)}
                   </span>
                 </div>
 
                 {/* Description */}
-                <p className={`text-sm font-light mb-8 ${isFeatured ? 'text-muted-stone' : 'text-warm-stone'}`}>
+                <p className={`text-sm font-light mb-8 ${isFeatured ? 'text-stone-400' : 'text-warm-stone'}`}>
                   {t(`landing.pricing.${tierKey}.desc`, tier.description)}
                 </p>
 

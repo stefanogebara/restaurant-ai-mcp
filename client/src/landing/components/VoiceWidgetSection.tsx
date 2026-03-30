@@ -99,7 +99,7 @@ export default function VoiceWidgetSection() {
               {/* Ready to call? confirmation */}
               {agentState === 'ready' && (
                 <div className="flex flex-col items-center gap-3 mt-4">
-                  <p className="text-xs text-white/40">
+                  <p className="text-xs text-white/60">
                     {t('landing.voice.readyPrompt', 'This will use your microphone.')}
                   </p>
                   <div className="flex items-center gap-3">
@@ -113,7 +113,7 @@ export default function VoiceWidgetSection() {
                     <button
                       type="button"
                       onClick={cancelStart}
-                      className="px-4 py-2 text-white/40 hover:text-white/60 text-sm rounded-full transition-colors"
+                      className="px-4 py-2 text-white/60 hover:text-white/80 text-sm rounded-full transition-colors"
                     >
                       {t('landing.voice.cancel', 'Cancel')}
                     </button>
@@ -194,7 +194,7 @@ export default function VoiceWidgetSection() {
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.5 }}
-            className="text-xs text-white/25 mt-5"
+            className="text-xs text-white/50 mt-5"
           >
             {t('landing.voice.powered', 'Powered by ElevenLabs \u00b7 English, Portuguese, Spanish')}
           </motion.p>
@@ -217,7 +217,7 @@ function FallbackWhatsApp({ t }: { t: (key: string, fallback?: string) => string
         <h3 className="font-serif text-lg font-semibold text-white mb-1">
           {t('landing.voice.fallbackTitle', 'Voice demo unavailable')}
         </h3>
-        <p className="text-sm text-white/40 mb-5">
+        <p className="text-sm text-white/60 mb-5">
           {t('landing.voice.fallbackDesc', 'Try our WhatsApp AI instead \u2014 send a message and get an instant response.')}
         </p>
       </div>

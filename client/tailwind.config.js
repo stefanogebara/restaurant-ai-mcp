@@ -38,7 +38,7 @@ export default {
         'burgundy-dark': '#881337',
         'border-gray': '#E7E5E4',
         'warm-stone': '#78716C',
-        'muted-stone': '#A8A29E',
+        'muted-stone': '#706A65',
         'charcoal-dark': '#292524',
         // CSS Variable Colors
         border: "var(--border)",

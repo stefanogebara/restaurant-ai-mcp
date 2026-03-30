@@ -46,7 +46,7 @@ export default function WhatsAppWidgetSection() {
                     <p className="text-white text-sm font-semibold">Seatable AI</p>
                     <div className="flex items-center gap-1.5 mt-0.5">
                       <span className="w-2 h-2 rounded-full bg-whatsapp" />
-                      <span className="text-white/70 text-[11px]">online</span>
+                      <span className="text-white/90 text-[11px]">online</span>
                     </div>
                   </div>
                 </div>
@@ -81,13 +81,13 @@ export default function WhatsAppWidgetSection() {
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          <div className="text-xs font-semibold tracking-[2px] uppercase text-whatsapp mb-4">
+          <div className="text-xs font-semibold tracking-[2px] uppercase text-[#0B7A2F] mb-4">
             {t('landing.whatsapp.label', 'Real AI, real WhatsApp')}
           </div>
-          <h2 className="font-serif text-[40px] font-medium tracking-tight text-deep-charcoal leading-tight mb-4">
+          <h2 className="font-serif text-4xl sm:text-[48px] font-medium tracking-tight text-deep-charcoal leading-tight mb-4">
             {t('landing.whatsapp.heading', 'Text our AI right now')}
           </h2>
-          <p className="text-lg text-warm-stone font-light leading-relaxed mb-8">
+          <p className="text-lg text-stone-gray font-light leading-relaxed mb-8">
             {t('landing.whatsapp.subtitle', 'Send a message on WhatsApp and get an instant response from our AI. No app to download, no signup needed.')}
           </p>
           <a

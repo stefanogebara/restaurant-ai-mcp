@@ -46,13 +46,13 @@ export default function BeforeAfterSection() {
           transition={{ duration: 0.6 }}
           className="text-center mb-14"
         >
-          <div className="text-xs font-semibold tracking-[3px] uppercase text-white/25 mb-4">
+          <div className="text-xs font-semibold tracking-[3px] uppercase text-white/50 mb-4">
             {t('landing.beforeAfter.label', 'The Difference')}
           </div>
           <h2 className="font-serif text-4xl sm:text-[48px] font-medium tracking-tight text-white mb-3">
             {t('landing.beforeAfter.heading', 'Same restaurant. Different night.')}
           </h2>
-          <p className="text-lg text-white/30 font-light max-w-2xl mx-auto">
+          <p className="text-lg text-white/60 font-light max-w-2xl mx-auto">
             {t('landing.beforeAfter.subtitle', 'Watch what happens when AI handles the front of house.')}
           </p>
         </motion.div>
@@ -71,7 +71,7 @@ export default function BeforeAfterSection() {
           >
             <div className="bg-[#1a1a22] px-4 py-2 flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-red-400/60" />
-              <span className="text-[10px] text-red-400/40 uppercase tracking-widest font-medium">
+              <span className="text-[10px] text-red-400 uppercase tracking-widest font-medium">
                 {t('landing.beforeAfter.withoutAi', 'Without AI')}
               </span>
             </div>
@@ -91,7 +91,7 @@ export default function BeforeAfterSection() {
                   <div className="text-[12px] text-white/60">
                     {t('landing.beforeAfter.phoneRinging', 'Phone ringing...')}
                   </div>
-                  <div className="text-[10px] text-red-400/40">
+                  <div className="text-[10px] text-red-400/80">
                     {t('landing.beforeAfter.staffBusy', 'Staff busy with dinner service')}
                   </div>
                 </div>
@@ -112,18 +112,18 @@ export default function BeforeAfterSection() {
                     viewport={{ once: true }}
                     transition={{ delay: 0.3 + i * 0.4 }}
                   >
-                    <span className="text-red-400/50 text-[10px]">{'\u2715'}</span>
-                    <span className="text-[11px] text-white/30">{msg}</span>
+                    <span className="text-red-400 text-[10px]">{'\u2715'}</span>
+                    <span className="text-[11px] text-white/60">{msg}</span>
                   </motion.div>
                 ))}
               </div>
 
               {/* Paper notepad scribble */}
               <div className="rounded-lg bg-amber-900/[0.06] border border-amber-500/[0.08] p-3">
-                <div className="text-[9px] text-amber-400/30 uppercase tracking-wider mb-1.5">
+                <div className="text-[9px] text-amber-400/70 uppercase tracking-wider mb-1.5">
                   {t('landing.beforeAfter.paperNotepad', 'Paper notepad')}
                 </div>
-                <div className="space-y-1 text-[11px] text-white/20 italic font-mono">
+                <div className="space-y-1 text-[11px] text-white/50 italic font-mono">
                   <div>{t('landing.beforeAfter.note1', 'Table 5 — Giovanni? 4ppl??')}</div>
                   <div className="line-through opacity-40">{t('landing.beforeAfter.note2', 'Table 3 — cancelled')}</div>
                   <div>{t('landing.beforeAfter.note3', '8pm — someone called (name??)')}</div>
@@ -148,7 +148,7 @@ export default function BeforeAfterSection() {
                 animate={{ boxShadow: ['0 0 4px #8B1A4A', '0 0 12px #8B1A4A', '0 0 4px #8B1A4A'] }}
                 transition={{ duration: 2, repeat: Infinity }}
               />
-              <span className="text-[10px] text-burgundy/60 uppercase tracking-widest font-medium">
+              <span className="text-[10px] text-rose-400 uppercase tracking-widest font-medium">
                 {t('landing.beforeAfter.withAi', 'With Seatable AI')}
               </span>
             </div>
@@ -164,7 +164,7 @@ export default function BeforeAfterSection() {
                   <div className="text-[12px] text-white/60">
                     {t('landing.beforeAfter.aiHandling', 'AI handling all channels')}
                   </div>
-                  <div className="text-[10px] text-burgundy/50">WhatsApp · Voice · Web</div>
+                  <div className="text-[10px] text-rose-400">WhatsApp · Voice · Web</div>
                 </div>
               </div>
 
@@ -185,7 +185,7 @@ export default function BeforeAfterSection() {
                   >
                     <div>
                       <div className="text-[12px] text-white/70">{r.name}</div>
-                      <div className="text-[9px] text-white/25">{r.time} · {r.size}p · via {r.via}</div>
+                      <div className="text-[9px] text-white/50">{r.time} · {r.size}p · via {r.via}</div>
                     </div>
                     <motion.span
                       className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-burgundy/10 text-burgundy/70"
@@ -209,11 +209,11 @@ export default function BeforeAfterSection() {
                 transition={{ delay: 1.4 }}
               >
                 <div className="flex items-center justify-between">
-                  <div className="text-[9px] text-burgundy/40 uppercase tracking-wider">
+                  <div className="text-[9px] text-rose-400/80 uppercase tracking-wider">
                     {t('landing.beforeAfter.predictedRevenue', 'Predicted Revenue')}
                   </div>
                   <ShineFx>
-                    <span className="text-sm font-bold text-burgundy/80">{isBRL ? 'R$1.596' : '$1,596'}</span>
+                    <span className="text-sm font-bold text-rose-400">{isBRL ? 'R$1.596' : '$1,596'}</span>
                   </ShineFx>
                 </div>
                 <div className="mt-2 h-1.5 rounded-full bg-white/[0.04] overflow-hidden">

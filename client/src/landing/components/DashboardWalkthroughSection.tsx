@@ -129,7 +129,7 @@ function DashboardChrome({ children, accentColor }: { children: React.ReactNode;
             <div key={c} className="w-2.5 h-2.5 rounded-full" style={{ background: c }} />
           ))}
         </div>
-        <div className="flex-1 mx-3 bg-black/30 rounded-md px-3 py-1 text-[10px] text-white/20 text-center font-mono">
+        <div className="flex-1 mx-3 bg-black/30 rounded-md px-3 py-1 text-[10px] text-white/50 text-center font-mono">
           seatable.one/dashboard
         </div>
       </div>
@@ -235,10 +235,10 @@ function SceneRevenue({ progress }: { progress: number }) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.08 }}
           >
-            <div className="text-[9px] uppercase tracking-wider text-white/25">{s.label}</div>
+            <div className="text-[9px] uppercase tracking-wider text-white/50">{s.label}</div>
             <div className="flex items-baseline gap-1.5">
               <span className="text-base font-bold text-white/85">{s.value}</span>
-              <span className="text-[9px] text-white/20">{s.sub}</span>
+              <span className="text-[9px] text-white/50">{s.sub}</span>
             </div>
           </motion.div>
         ))}
@@ -251,7 +251,7 @@ function SceneRevenue({ progress }: { progress: number }) {
           transition={{ type: 'spring', stiffness: 140, damping: 18 }}
           className="origin-center"
         >
-          <div className="text-[11px] font-semibold text-white/25 uppercase tracking-wider mb-2">
+          <div className="text-[11px] font-semibold text-white/50 uppercase tracking-wider mb-2">
             {t('landing.walkthrough.todaysReservations', "Today's Reservations")}
           </div>
 
@@ -294,7 +294,7 @@ function SceneRevenue({ progress }: { progress: number }) {
               >
                 <div>
                   <div className="text-[13px] font-medium text-white/80">{r.name}</div>
-                  <div className="text-[10px] text-white/25">{r.time} - {r.size}p</div>
+                  <div className="text-[10px] text-white/50">{r.time} - {r.size}p</div>
                 </div>
                 <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-400/70">{t('landing.walkthrough.confirmed', 'confirmed')}</span>
               </motion.div>
@@ -325,7 +325,7 @@ function SceneRevenue({ progress }: { progress: number }) {
                     )}
                   </AnimatePresence>
                 </div>
-                <div className="text-[10px] text-white/25">20:00 - 4p - 3 {t('landing.walkthrough.visits', 'visits')}</div>
+                <div className="text-[10px] text-white/50">20:00 - 4p - 3 {t('landing.walkthrough.visits', 'visits')}</div>
               </div>
               <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-rose-500/15 text-rose-400">{t('landing.walkthrough.confirmed', 'confirmed')}</span>
             </motion.div>
@@ -355,7 +355,7 @@ function SceneRevenue({ progress }: { progress: number }) {
                     )}
                   </AnimatePresence>
                 </div>
-                <div className="text-[10px] text-white/25">19:30 - 6p - VIP</div>
+                <div className="text-[10px] text-white/50">19:30 - 6p - VIP</div>
               </div>
               <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-rose-500/15 text-rose-400">{t('landing.walkthrough.confirmed', 'confirmed')}</span>
             </motion.div>
@@ -372,7 +372,7 @@ function SceneRevenue({ progress }: { progress: number }) {
           >
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-[9px] uppercase tracking-widest text-rose-400/40 mb-1">
+                <div className="text-[9px] uppercase tracking-widest text-rose-400/80 mb-1">
                   {t('landing.walkthrough.predictedRevenue', 'Predicted Daily Revenue')}
                 </div>
                 <div className="flex items-baseline gap-2.5">
@@ -422,7 +422,7 @@ function SceneNoShow({ progress }: { progress: number }) {
 
   return (
     <div>
-      <div className="text-[11px] font-semibold text-white/25 uppercase tracking-wider mb-3">
+      <div className="text-[11px] font-semibold text-white/50 uppercase tracking-wider mb-3">
         {t('landing.walkthrough.todaysReservations', "Today's Reservations")}
       </div>
       <div className="space-y-1">
@@ -433,7 +433,7 @@ function SceneNoShow({ progress }: { progress: number }) {
         >
           <div>
             <div className="text-[13px] font-medium text-white/80">Giovanni B.</div>
-            <div className="text-[10px] text-white/25">12:00 - 4p</div>
+            <div className="text-[10px] text-white/50">12:00 - 4p</div>
           </div>
           <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-400/70">{t('landing.walkthrough.confirmed', 'confirmed')}</span>
         </motion.div>
@@ -477,7 +477,7 @@ function SceneNoShow({ progress }: { progress: number }) {
                 )}
               </AnimatePresence>
             </div>
-            <div className="text-[10px] text-white/25">19:00 - 3p - 2 no-shows</div>
+            <div className="text-[10px] text-white/50">19:00 - 3p - 2 no-shows</div>
           </div>
           <span
             className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full transition-all duration-500"
@@ -497,7 +497,7 @@ function SceneNoShow({ progress }: { progress: number }) {
         >
           <div>
             <div className="text-[13px] font-medium text-white/80">Maria Santos</div>
-            <div className="text-[10px] text-white/25">20:00 - 4p</div>
+            <div className="text-[10px] text-white/50">20:00 - 4p</div>
           </div>
           <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-400/70">{t('landing.walkthrough.confirmed', 'confirmed')}</span>
         </motion.div>
@@ -515,7 +515,7 @@ function SceneNoShow({ progress }: { progress: number }) {
               <PulsingIcon color="#f59e0b" size={32}>$</PulsingIcon>
               <div>
                 <div className="text-[12px] font-semibold text-amber-400">{t('landing.walkthrough.depositRequested', 'Deposit hold requested')}</div>
-                <div className="text-[10px] text-white/35">{t('landing.walkthrough.depositDetail', '$25 hold - auto-triggered by risk score')}</div>
+                <div className="text-[10px] text-white/50">{t('landing.walkthrough.depositDetail', '$25 hold - auto-triggered by risk score')}</div>
               </div>
             </div>
           </motion.div>
@@ -532,7 +532,7 @@ function SceneNoShow({ progress }: { progress: number }) {
               </PulsingIcon>
               <div>
                 <div className="text-[12px] font-semibold text-rose-400">{t('landing.walkthrough.guestArrived', 'Guest arrived - deposit released')}</div>
-                <div className="text-[10px] text-white/35">{t('landing.walkthrough.checkedInDetail', 'Lucas Ferreira checked in at 18:52')}</div>
+                <div className="text-[10px] text-white/50">{t('landing.walkthrough.checkedInDetail', 'Lucas Ferreira checked in at 18:52')}</div>
               </div>
             </div>
           </motion.div>
@@ -567,13 +567,13 @@ function SceneManagerAI({ progress }: { progress: number }) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.06 }}
           >
-            <div className="text-[9px] uppercase tracking-wider text-white/25">{s.label}</div>
+            <div className="text-[9px] uppercase tracking-wider text-white/50">{s.label}</div>
             <div className="text-base font-bold text-white/85">{s.value}</div>
           </motion.div>
         ))}
       </div>
 
-      <div className="text-[11px] font-semibold text-white/25 uppercase tracking-wider mb-2">
+      <div className="text-[11px] font-semibold text-white/50 uppercase tracking-wider mb-2">
         {t('landing.walkthrough.todaysReservations', "Today's Reservations")}
       </div>
       <div className="space-y-0.5">
@@ -589,7 +589,7 @@ function SceneManagerAI({ progress }: { progress: number }) {
           >
             <div>
               <div className="text-[13px] font-medium text-white/80">{r.name}</div>
-              <div className="text-[10px] text-white/25">{r.time} - {r.size}p</div>
+              <div className="text-[10px] text-white/50">{r.time} - {r.size}p</div>
             </div>
             <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-400/70">{t('landing.walkthrough.confirmed', 'confirmed')}</span>
           </motion.div>
@@ -653,7 +653,7 @@ function SceneManagerAI({ progress }: { progress: number }) {
                       {t('landing.walkthrough.sendCampaign', 'Send campaign')}
                     </motion.span>
                     <motion.span
-                      className="text-[10px] font-semibold px-3.5 py-1.5 rounded-full bg-white/[0.05] text-white/40 cursor-default"
+                      className="text-[10px] font-semibold px-3.5 py-1.5 rounded-full bg-white/[0.05] text-white/50 cursor-default"
                       whileHover={{ scale: 1.05 }}
                     >
                       {t('landing.walkthrough.showList', 'Show me the list')}
@@ -687,7 +687,7 @@ function SceneStaffing({ progress }: { progress: number }) {
 
   return (
     <div>
-      <div className="text-[11px] font-semibold text-white/25 uppercase tracking-wider mb-3">
+      <div className="text-[11px] font-semibold text-white/50 uppercase tracking-wider mb-3">
         {t('landing.walkthrough.staffingForecast', '7-Day Staffing Forecast')}
       </div>
 
@@ -777,7 +777,7 @@ function SceneStaffing({ progress }: { progress: number }) {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.08 }}
                 >
-                  <div className="text-[9px] uppercase tracking-wider text-white/25">{s.role}</div>
+                  <div className="text-[9px] uppercase tracking-wider text-white/50">{s.role}</div>
                   <div className="text-lg font-bold text-white/80 flex items-center">
                     {s.count}
                     {isHighlight && (
@@ -872,13 +872,13 @@ export default function DashboardWalkthroughSection() {
           transition={{ duration: 0.6 }}
           className="text-center mb-12"
         >
-          <div className="text-xs font-semibold tracking-[3px] uppercase text-burgundy mb-4">
+          <div className="text-xs font-semibold tracking-[3px] uppercase text-rose-400 mb-4">
             {t('landing.walkthrough.label', 'Beyond Reservations')}
           </div>
           <h2 className="font-serif text-4xl sm:text-[48px] font-medium tracking-tight text-white mb-3">
             {t('landing.walkthrough.heading', 'Watch the AI work.')}
           </h2>
-          <p className="text-lg text-white/35 font-light max-w-2xl mx-auto">
+          <p className="text-lg text-white/60 font-light max-w-2xl mx-auto">
             {t('landing.walkthrough.subtitle', 'Revenue predictions, no-show protection, proactive insights, and smart staffing — all happening automatically.')}
           </p>
         </motion.div>
@@ -893,7 +893,7 @@ export default function DashboardWalkthroughSection() {
               className={`px-4 py-1.5 rounded-full text-[11px] font-medium transition-all duration-300 ${
                 i === scene
                   ? 'bg-white/[0.08] text-white ring-1 ring-white/[0.12]'
-                  : 'text-white/25 hover:text-white/40 hover:bg-white/[0.03]'
+                  : 'text-white/50 hover:text-white/70 hover:bg-white/[0.03]'
               }`}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.97 }}
@@ -914,7 +914,7 @@ export default function DashboardWalkthroughSection() {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <div className="text-[14px] font-semibold text-white/85">{t('landing.walkthrough.dashboard', 'Dashboard')}</div>
-                <div className="text-[10px] text-white/25">{t('landing.walkthrough.today', 'today')}</div>
+                <div className="text-[10px] text-white/50">{t('landing.walkthrough.today', 'today')}</div>
               </div>
               <div className="flex items-center gap-1.5">
                 <StatusDot />

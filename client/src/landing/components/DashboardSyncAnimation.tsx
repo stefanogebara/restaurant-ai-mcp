@@ -70,7 +70,7 @@ export default function DashboardSyncAnimation({
             <div className="text-[13px] font-bold text-[#1C1917] font-sans">
               {t('landing.dashboardAnim.dashboard', 'Dashboard')}
             </div>
-            <div className="text-[10px] text-[#A8A29E]">{t('landing.dashboardAnim.todayDate', 'Today · March 14')}</div>
+            <div className="text-[10px] text-[#706A65]">{t('landing.dashboardAnim.todayDate', 'Today · March 14')}</div>
           </div>
           <div className="px-3 py-1 bg-[#9F1239] text-white text-[10px] font-semibold rounded-lg">
             + {t('landing.dashboardAnim.walkIn', 'Walk-in')}
@@ -84,7 +84,7 @@ export default function DashboardSyncAnimation({
               key={s.label}
               className="bg-white border border-[#E7E5E4] rounded-xl px-2.5 py-2"
             >
-              <div className="text-[10px] text-[#A8A29E]">{s.label}</div>
+              <div className="text-[10px] text-[#706A65]">{s.label}</div>
               <AnimatePresence mode="wait">
                 <motion.div
                   key={s.value}
@@ -132,7 +132,7 @@ export default function DashboardSyncAnimation({
                         <div className="text-[11px] font-medium text-[#1C1917]">
                           {NEW_RESERVATION.name}
                         </div>
-                        <div className="text-[9px] text-[#A8A29E]">
+                        <div className="text-[9px] text-[#706A65]">
                           {NEW_RESERVATION.time} · {NEW_RESERVATION.size}p
                         </div>
                       </div>
@@ -156,7 +156,7 @@ export default function DashboardSyncAnimation({
                     <div className="text-[11px] font-medium text-[#1C1917]">
                       {r.name}
                     </div>
-                    <div className="text-[9px] text-[#A8A29E]">
+                    <div className="text-[9px] text-[#706A65]">
                       {r.time} · {r.size}p
                     </div>
                   </div>
@@ -177,7 +177,7 @@ export default function DashboardSyncAnimation({
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#10b981] opacity-75" />
                 <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#10b981]" />
               </span>
-              <span className="text-[9px] text-[#A8A29E]">
+              <span className="text-[9px] text-[#706A65]">
                 {t('landing.dashboardAnim.aiHandlingCalls', 'AI agent handling calls')}
               </span>
             </div>
