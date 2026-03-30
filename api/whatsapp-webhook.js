@@ -126,6 +126,32 @@ async function handlePost(req, res) {
       messageCount: value?.messages?.length || 0,
     });
 
+    // ── TwinMe phone number forwarding ──
+    // The WABA has multiple phone numbers. Messages to the TwinMe number
+    // (882860144919419 / +1 762-994-3997) are forwarded to TwinMe's webhook.
+    // Seatable only processes messages to its own number (1035729146286096).
+    const incomingPhoneNumberId = value?.metadata?.phone_number_id;
+    const TWINME_PHONE_NUMBER_ID = '882860144919419';
+    if (incomingPhoneNumberId === TWINME_PHONE_NUMBER_ID && value?.messages) {
+      logger.info('TwinMe phone number detected — forwarding to TwinMe webhook', {
+        phoneNumberId: incomingPhoneNumberId,
+        messageCount: value.messages.length,
+      });
+      try {
+        const axios = require('axios');
+        await axios.post('https://twin-ai-learn.vercel.app/api/whatsapp-twin/webhook', body, {
+          headers: {
+            'Content-Type': 'application/json',
+            'x-hub-signature-256': signature,
+          },
+          timeout: 10000,
+        });
+      } catch (fwdErr) {
+        logger.error('TwinMe forward failed', { error: fwdErr.message });
+      }
+      return res.status(200).json({ status: 'ok', handler: 'twinme_forward' });
+    }
+
     // Check if this is a message event
     // When ElevenLabs WhatsApp is enabled, they handle inbound messages.
     // Our webhook only processes status updates (delivery receipts, campaign tracking).
