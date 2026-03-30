@@ -182,7 +182,7 @@ export default function Sidebar() {
               <div key={section.label} className="mb-5">
                 {/* Section Label */}
                 {!isCollapsed && (
-                  <div className="px-6 mb-2 text-[11px] font-semibold tracking-widest uppercase text-stone-gray/70">
+                  <div className="px-6 mb-2 text-[11px] font-semibold tracking-widest uppercase text-stone-500">
                     {t(NAV_KEYS[section.label] ?? section.label, section.label)}
                   </div>
                 )}
@@ -206,7 +206,7 @@ export default function Sidebar() {
                         key={item.path}
                         className={`
                           w-full flex items-center gap-3 text-left transition-all duration-150
-                          opacity-30 cursor-not-allowed text-muted-stone
+                          opacity-30 cursor-not-allowed text-stone-400
                           ${isCollapsed ? 'justify-center px-6 py-3' : 'px-6 py-3'}
                         `}
                         title={isCollapsed
@@ -240,7 +240,7 @@ export default function Sidebar() {
                         ${isCollapsed ? 'justify-center px-6 py-3' : 'px-6 py-3'}
                         ${active
                           ? 'text-white bg-burgundy/10 border-l-2 border-l-burgundy font-medium'
-                          : 'text-muted-stone hover:text-stone-300 hover:bg-white/[0.03] border-l-2 border-l-transparent'
+                          : 'text-stone-400 hover:text-stone-300 hover:bg-white/[0.03] border-l-2 border-l-transparent'
                         }
                       `}
                       title={isCollapsed ? item.label : undefined}
@@ -264,7 +264,7 @@ export default function Sidebar() {
             {/* Settings */}
             <div className="mb-5">
               {!isCollapsed && (
-                <div className="px-6 mb-2 text-[11px] font-semibold tracking-widest uppercase text-stone-gray/70">
+                <div className="px-6 mb-2 text-[11px] font-semibold tracking-widest uppercase text-stone-500">
                   {t('navigation.sectionSettings', 'Settings')}
                 </div>
               )}
@@ -281,7 +281,7 @@ export default function Sidebar() {
                   ${isCollapsed ? 'justify-center px-6 py-3' : 'px-6 py-3'}
                   ${isActive('/host-dashboard/settings')
                     ? 'text-white bg-burgundy/10 border-l-2 border-l-burgundy font-medium'
-                    : 'text-muted-stone hover:text-stone-300 hover:bg-white/[0.03] border-l-2 border-l-transparent'
+                    : 'text-stone-400 hover:text-stone-300 hover:bg-white/[0.03] border-l-2 border-l-transparent'
                   }
                 `}
                 title={isCollapsed ? t('navigation.restaurantSettings', 'Restaurant Settings') : undefined}
@@ -297,7 +297,7 @@ export default function Sidebar() {
                   ${isCollapsed ? 'justify-center px-6 py-3' : 'px-6 py-3'}
                   ${isActive('/settings/language')
                     ? 'text-white bg-burgundy/10 border-l-2 border-l-burgundy font-medium'
-                    : 'text-muted-stone hover:text-stone-300 hover:bg-white/[0.03] border-l-2 border-l-transparent'
+                    : 'text-stone-400 hover:text-stone-300 hover:bg-white/[0.03] border-l-2 border-l-transparent'
                   }
                 `}
                 title={isCollapsed ? t('navigation.languageSettings', 'Language') : undefined}
@@ -311,7 +311,7 @@ export default function Sidebar() {
             {can('manageTeam') && (
               <div className="mb-5">
                 {!isCollapsed && (
-                  <div className="px-6 mb-2 text-[11px] font-semibold tracking-widest uppercase text-stone-gray/70">
+                  <div className="px-6 mb-2 text-[11px] font-semibold tracking-widest uppercase text-stone-500">
                     {t('navigation.sectionManage', 'Manage')}
                   </div>
                 )}
@@ -328,7 +328,7 @@ export default function Sidebar() {
                     ${isCollapsed ? 'justify-center px-6 py-3' : 'px-6 py-3'}
                     ${isActive('/host-dashboard/team')
                       ? 'text-white bg-burgundy/10 border-l-2 border-l-burgundy font-medium'
-                      : 'text-muted-stone hover:text-stone-300 hover:bg-white/[0.03] border-l-2 border-l-transparent'
+                      : 'text-stone-400 hover:text-stone-300 hover:bg-white/[0.03] border-l-2 border-l-transparent'
                     }
                   `}
                   title={isCollapsed ? t('navigation.team', 'Team') : undefined}
@@ -401,7 +401,7 @@ export default function Sidebar() {
                           onClick={() => handleLanguageChange(lang.code)}
                           className={`
                             w-full px-4 py-2 flex items-center gap-3 hover:bg-white/[0.05] transition-colors text-left text-sm
-                            ${i18n.language === lang.code ? 'bg-burgundy/15 text-rose-600 font-medium' : 'text-muted-stone'}
+                            ${i18n.language === lang.code ? 'bg-burgundy/15 text-rose-600 font-medium' : 'text-stone-400'}
                           `}
                         >
                           <span className="text-lg">{lang.flag}</span>
