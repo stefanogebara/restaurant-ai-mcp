@@ -5,7 +5,7 @@ import ThiingsIcon from '../components/common/ThiingsIcon';
 import { useCouponList, useCreateCoupon, useDeactivateCoupon } from '../hooks/useCoupons';
 import type { Coupon } from '../hooks/useCoupons';
 
-function getStatusBadge(coupon: Coupon, t: (key: string, fallback?: string) => string) {
+function getStatusBadge(coupon: Coupon, t: any) {
   const now = new Date();
 
   if (!coupon.is_active) {
@@ -80,7 +80,7 @@ function CouponCreateForm({ onCreated, onCancel }: { onCreated: () => void; onCa
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-sm font-bold text-deep-charcoal">{t('coupons.newCoupon', 'Novo Cupom')}</h3>
         <button type="button" onClick={onCancel} className="text-stone-gray hover:text-deep-charcoal transition-colors">
-          <ThiingsIcon name="x" size="xs" />
+          <ThiingsIcon name={"x" as any} size="xs" />
         </button>
       </div>
 
@@ -247,7 +247,7 @@ function CouponRow({ coupon }: { coupon: Coupon }) {
           className="text-stone-gray hover:text-[#9F1239] transition-colors"
           title={t('coupons.copyCode', 'Copiar codigo')}
         >
-          <ThiingsIcon name={copied ? 'check' : 'copy'} pxSize={14} />
+          <ThiingsIcon name={(copied ? 'check' : 'copy') as any} pxSize={14} />
         </button>
       </div>
 

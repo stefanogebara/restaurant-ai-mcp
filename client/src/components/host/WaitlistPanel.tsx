@@ -59,16 +59,17 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
 
   const rawWaitlist = data?.waitlist;
   const waitlist = useMemo(() => rawWaitlist || [], [rawWaitlist]);
-  const activeCount = waitlist.filter(e => ['waiting', 'notified'].includes(e.status)).length;
-  const seatedCount = waitlist.filter(e => e.status === 'seated').length;
-  const removedCount = waitlist.filter(e => ['cancelled', 'no_show'].includes(e.status)).length;
+  const s = (v: string) => v.toLowerCase();
+  const activeCount = waitlist.filter(e => ['waiting', 'notified'].includes(s(e.status))).length;
+  const seatedCount = waitlist.filter(e => s(e.status) === 'seated').length;
+  const removedCount = waitlist.filter(e => ['cancelled', 'no_show'].includes(s(e.status))).length;
 
   const filteredWaitlist = useMemo(() => {
     let filtered = waitlist;
     switch (activeTab) {
-      case 'active': filtered = filtered.filter(e => ['waiting', 'notified'].includes(e.status)); break;
-      case 'seated': filtered = filtered.filter(e => e.status === 'seated'); break;
-      case 'removed': filtered = filtered.filter(e => ['cancelled', 'no_show'].includes(e.status)); break;
+      case 'active': filtered = filtered.filter(e => ['waiting', 'notified'].includes(s(e.status))); break;
+      case 'seated': filtered = filtered.filter(e => s(e.status) === 'seated'); break;
+      case 'removed': filtered = filtered.filter(e => ['cancelled', 'no_show'].includes(s(e.status))); break;
     }
     if (sourceFilter === 'whatsapp') {
       filtered = filtered.filter(e => e.source === 'whatsapp' || e.source === 'whatsapp_ai');
@@ -85,8 +86,8 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
     return filtered;
   }, [waitlist, activeTab, sourceFilter, searchQuery]);
 
-  const tableReadyEntries = filteredWaitlist.filter(e => e.status === 'notified');
-  const waitingEntries = filteredWaitlist.filter(e => e.status === 'waiting');
+  const tableReadyEntries = filteredWaitlist.filter(e => s(e.status) === 'notified');
+  const waitingEntries = filteredWaitlist.filter(e => s(e.status) === 'waiting');
 
   if (isLoading) {
     return (
