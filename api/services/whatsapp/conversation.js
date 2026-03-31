@@ -146,6 +146,51 @@ function buildWhatsAppPrompt(restaurantConfig, session, currentDateTime) {
 
   prompt += '\n';
 
+  // AI Personality
+  const aiPersonality = restaurantConfig.ai_personality;
+  if (aiPersonality && typeof aiPersonality === 'object') {
+    prompt += '[PERSONALITY]\n';
+
+    if (aiPersonality.humor_type && aiPersonality.humor_type !== 'none') {
+      const humorDesc = {
+        light: 'Use light, gentle humor when appropriate',
+        witty: 'Be witty and clever with occasional wordplay',
+        warm: 'Use warm, feel-good humor that makes people smile',
+        playful: 'Be playful and fun, use casual jokes and lighthearted banter',
+      };
+      prompt += `- Humor: ${humorDesc[aiPersonality.humor_type] || aiPersonality.humor_type}\n`;
+    }
+
+    if (Array.isArray(aiPersonality.personality_traits) && aiPersonality.personality_traits.length > 0) {
+      prompt += `- Personality traits: ${aiPersonality.personality_traits.join(', ')}\n`;
+    }
+
+    if (aiPersonality.communication_style) {
+      const styleDesc = {
+        formal: 'Use formal, polished language. Address customers with respect and courtesy',
+        casual: 'Be casual and relaxed, like texting a friend',
+        friendly_professional: 'Be warm and approachable while maintaining professionalism',
+      };
+      prompt += `- Style: ${styleDesc[aiPersonality.communication_style] || aiPersonality.communication_style}\n`;
+    }
+
+    if (aiPersonality.language_tone) {
+      const toneDesc = {
+        enthusiastic: 'Be enthusiastic and energetic in your responses',
+        calm: 'Keep a calm, composed, and reassuring tone',
+        neutral: 'Maintain a balanced, neutral tone',
+        warm: 'Be warm, caring, and inviting in every message',
+      };
+      prompt += `- Tone: ${toneDesc[aiPersonality.language_tone] || aiPersonality.language_tone}\n`;
+    }
+
+    if (aiPersonality.verbal_quirks) {
+      prompt += `- Verbal quirks: ${aiPersonality.verbal_quirks}\n`;
+    }
+
+    prompt += '\n';
+  }
+
   // Communication style
   prompt += `HOW YOU COMMUNICATE:
 - You're texting on WhatsApp \u{2014} keep it short, warm, natural

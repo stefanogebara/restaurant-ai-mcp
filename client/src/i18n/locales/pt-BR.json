@@ -281,6 +281,53 @@
       "saved": "Persona do agente salva",
       "saveFailed": "Falha ao salvar persona"
     },
+    "aiPersonality": {
+      "title": "Personalidade da IA",
+      "description": "Personalize como sua assistente de IA se comunica no WhatsApp e telefone",
+      "saving": "Salvando...",
+      "saved": "Personalidade da IA salva",
+      "saveFailed": "Falha ao salvar personalidade da IA",
+      "humorType": "Tipo de humor",
+      "communicationStyle": "Estilo de comunicação",
+      "languageTone": "Tom de linguagem",
+      "personalityTraits": "Traços de personalidade",
+      "verbalQuirks": "Expressões e maneirismos",
+      "max300": "(máx 300 caracteres)",
+      "verbalQuirksPlaceholder": "ex: usa gírias brasileiras, sempre diz \"com certeza\", termina mensagens com emoji de comida",
+      "customTraitPlaceholder": "Adicionar traço personalizado...",
+      "humor": {
+        "none": "Nenhum",
+        "light": "Leve",
+        "witty": "Espirituoso",
+        "warm": "Acolhedor",
+        "playful": "Descontraído"
+      },
+      "commStyle": {
+        "formal": "Formal",
+        "casual": "Casual",
+        "friendly_professional": "Profissional amigável"
+      },
+      "tone": {
+        "enthusiastic": "Entusiasmado",
+        "calm": "Calmo",
+        "neutral": "Neutro",
+        "warm": "Acolhedor"
+      },
+      "trait": {
+        "friendly": "Amigável",
+        "professional": "Profissional",
+        "empathetic": "Empático",
+        "energetic": "Energético",
+        "patient": "Paciente",
+        "knowledgeable": "Conhecedor",
+        "caring": "Atencioso",
+        "humorous": "Bem-humorado",
+        "sophisticated": "Sofisticado",
+        "welcoming": "Acolhedor",
+        "attentive": "Atento",
+        "cheerful": "Alegre"
+      }
+    },
     "feedback": {
       "title": "Feedback Pós-Visita",
       "description": "Envie automaticamente uma mensagem pelo WhatsApp após cada experiência gastronômica para coletar feedback.",

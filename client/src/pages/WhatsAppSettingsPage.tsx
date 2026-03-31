@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import ManagerNotificationsPanel from '../components/dashboard/ManagerNotificationsPanel';
 import FeedbackSettingsPanel from '../components/dashboard/FeedbackSettingsPanel';
+import AiPersonalityPanel from '../components/dashboard/AiPersonalityPanel';
 import { authFetch } from '../services/api';
 import { useToast } from '../contexts/ToastContext';
 import {
@@ -483,6 +484,9 @@ export default function WhatsAppSettingsPage() {
 
         {/* WhatsApp Template Status */}
         <WhatsAppTemplateStatusPanel />
+
+        {/* AI Personality */}
+        <AiPersonalityPanel />
 
         {/* Manager Notifications */}
         <ManagerNotificationsPanel />
