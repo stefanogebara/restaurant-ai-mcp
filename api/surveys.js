@@ -14,7 +14,7 @@
  * DB migration (run in Supabase SQL editor):
  *   CREATE TABLE IF NOT EXISTS restaurant.survey_responses (
  *     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
- *     restaurant_id UUID NOT NULL REFERENCES public.restaurants(id) ON DELETE CASCADE,
+ *     restaurant_id UUID NOT NULL REFERENCES public.restaurant_registry(id) ON DELETE CASCADE,
  *     customer_phone TEXT,
  *     customer_name TEXT,
  *     rating SMALLINT NOT NULL CHECK (rating BETWEEN 1 AND 5),
