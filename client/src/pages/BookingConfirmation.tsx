@@ -60,6 +60,22 @@ export default function BookingConfirmation() {
     });
   }, [id, restaurantIdParam]);
 
+  // Notify parent window (widget iframe) that booking was confirmed
+  useEffect(() => {
+    if (!reservation || !window.parent || window.parent === window) return;
+    window.parent.postMessage({
+      type: 'seatable-booking-confirmed',
+      payload: {
+        reservation_id: id,
+        slug,
+        guest_name: reservation.name,
+        date: reservation.date,
+        time: reservation.time,
+        party_size: reservation.party_size,
+      },
+    }, '*');
+  }, [reservation, id, slug]);
+
   const formatTime = (time: string) => {
     const [h, m] = time.split(':').map(Number);
     // PT-BR and ES use 24-hour format; EN uses 12-hour AM/PM

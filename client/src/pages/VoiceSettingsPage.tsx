@@ -32,7 +32,7 @@ import VoiceGrid from '../components/voice/VoiceGrid';
 import Spinner from '../components/common/Spinner';
 import VoicePersonaPanel from '../components/dashboard/VoicePersonaPanel';
 // VoiceExperimentPanel removed — non-functional (K-1)
-import EmbedSnippetPanel from '../components/dashboard/EmbedSnippetPanel';
+import BookingChannelsPanel from '../components/dashboard/BookingChannelsPanel';
 import PhoneIntegrationPanel from '../components/voice/PhoneIntegrationPanel';
 import AIStrategyPanel from '../components/dashboard/AIStrategyPanel';
 import StrategyMetricsWidget from '../components/dashboard/StrategyMetricsWidget';
@@ -61,7 +61,7 @@ export default function VoiceSettingsPage() {
     },
     staleTime: 5 * 60 * 1000,
   });
-  const slug: string = (dashData as { restaurant_slug?: string } | undefined)?.restaurant_slug || '';
+  const slug: string = (dashData as { slug?: string } | undefined)?.slug || '';
 
   // ─── Pending changes ──────────────────────────────────────────────────────────
 
@@ -401,7 +401,7 @@ export default function VoiceSettingsPage() {
           {/* VoiceExperimentPanel removed — buttons were non-functional (K-1) */}
           <StrategyMetricsWidget />
           <AIStrategyPanel />
-          {slug && <EmbedSnippetPanel slug={slug} />}
+          {slug && <BookingChannelsPanel slug={slug} />}
         </div>
 
         <VoiceEngineSwitchModal isOpen={showEngineSwitchConfirm} engineSwitchTarget={engineSwitchTarget} onConfirm={confirmEngineSwitch} onClose={() => setShowEngineSwitchConfirm(false)} />

@@ -42,6 +42,14 @@
       "destination": "/api/event-public.js"
     },
     {
+      "source": "/api/booking-qr",
+      "destination": "/api/booking-qr.js"
+    },
+    {
+      "source": "/api/widget-config",
+      "destination": "/api/widget-config.js"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

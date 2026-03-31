@@ -15,6 +15,9 @@ import DashboardLayout from '../components/layout/DashboardLayout';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 import StaffingSettingsPanel from '../components/dashboard/StaffingSettingsPanel';
 import DepositSettingsPanel from '../components/settings/DepositSettingsPanel';
+import BookingChannelsPanel from '../components/dashboard/BookingChannelsPanel';
+import { useQuery } from '@tanstack/react-query';
+import { authFetch } from '../services/api';
 
 const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const;
 
@@ -30,6 +33,15 @@ export default function RestaurantSettingsPage() {
   const toast = useToast();
   const { data: settings, isLoading, error } = useRestaurantSettings();
   const updateMutation = useUpdateRestaurantSettings();
+  const { data: dashData } = useQuery({
+    queryKey: ['hostDashboard'],
+    queryFn: async () => {
+      const res = await authFetch('/host-dashboard?action=dashboard');
+      return res.json();
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+  const slug: string = (dashData as { slug?: string } | undefined)?.slug || '';
 
   // Basic info form
   const [info, setInfo] = useState({
@@ -321,6 +333,9 @@ export default function RestaurantSettingsPage() {
         <section className="py-5 border-b border-[#E5E7EB]">
           <DepositSettingsPanel />
         </section>
+
+        {/* ── Booking Channels ── */}
+        {slug && <BookingChannelsPanel slug={slug} />}
       </div>
     </DashboardLayout>
   );
