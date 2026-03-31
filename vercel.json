@@ -26,6 +26,22 @@
       "destination": "/api/voice-experiments.js"
     },
     {
+      "source": "/api/event-checkout",
+      "destination": "/api/event-checkout.js"
+    },
+    {
+      "source": "/api/event-booking-confirm",
+      "destination": "/api/event-booking-confirm.js"
+    },
+    {
+      "source": "/api/event-refund",
+      "destination": "/api/event-refund.js"
+    },
+    {
+      "source": "/api/event-public",
+      "destination": "/api/event-public.js"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

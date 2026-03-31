@@ -4,6 +4,7 @@ import DashboardLayout from '../components/layout/DashboardLayout';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 import { useEventList, useCreateEvent, useDeactivateEvent } from '../hooks/useEvents';
 import type { EventItem } from '../hooks/useEvents';
+import EventBookingsPanel from '../components/events/EventBookingsPanel';
 
 function getStatusBadge(event: EventItem, t: (key: string, fallback: string) => string) {
   if (!event.is_active) {
@@ -46,6 +47,8 @@ function EventCreateForm({ onCreated, onCancel }: { onCreated: () => void; onCan
   const [durationMinutes, setDurationMinutes] = useState('120');
   const [maxCapacity, setMaxCapacity] = useState('');
   const [price, setPrice] = useState('');
+  const [refundPolicy, setRefundPolicy] = useState('full');
+  const [menuDescription, setMenuDescription] = useState('');
   const [formError, setFormError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -86,6 +89,8 @@ function EventCreateForm({ onCreated, onCancel }: { onCreated: () => void; onCan
         duration_minutes: parseInt(durationMinutes, 10) || 120,
         max_capacity: parsedCapacity,
         price: parsedPrice,
+        refund_policy: refundPolicy,
+        menu_description: menuDescription.trim() || undefined,
       });
       onCreated();
     } catch (err: unknown) {
@@ -109,7 +114,6 @@ function EventCreateForm({ onCreated, onCancel }: { onCreated: () => void; onCan
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {/* Title */}
         <div className="sm:col-span-2">
           <label className="block text-xs font-medium text-stone-gray mb-1">{t('events.title', 'Title')}</label>
           <input
@@ -123,7 +127,6 @@ function EventCreateForm({ onCreated, onCancel }: { onCreated: () => void; onCan
           />
         </div>
 
-        {/* Description */}
         <div className="sm:col-span-2">
           <label className="block text-xs font-medium text-stone-gray mb-1">
             {t('events.description', 'Description')} <span className="text-stone-gray/60">({t('events.optional', 'optional')})</span>
@@ -138,88 +141,71 @@ function EventCreateForm({ onCreated, onCancel }: { onCreated: () => void; onCan
           />
         </div>
 
-        {/* Date */}
         <div>
           <label className="block text-xs font-medium text-stone-gray mb-1">{t('events.date', 'Date')}</label>
-          <input
-            type="date"
-            value={eventDate}
-            onChange={(e) => setEventDate(e.target.value)}
-            required
-            className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]"
-          />
+          <input type="date" value={eventDate} onChange={(e) => setEventDate(e.target.value)} required
+            className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]" />
         </div>
 
-        {/* Time */}
         <div>
           <label className="block text-xs font-medium text-stone-gray mb-1">{t('events.time', 'Time')}</label>
-          <input
-            type="time"
-            value={eventTime}
-            onChange={(e) => setEventTime(e.target.value)}
-            required
-            className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]"
-          />
+          <input type="time" value={eventTime} onChange={(e) => setEventTime(e.target.value)} required
+            className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]" />
         </div>
 
-        {/* Duration */}
         <div>
           <label className="block text-xs font-medium text-stone-gray mb-1">{t('events.duration', 'Duration (min)')}</label>
-          <input
-            type="number"
-            value={durationMinutes}
-            onChange={(e) => setDurationMinutes(e.target.value)}
-            placeholder="120"
-            min="15"
-            max="720"
-            required
-            className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]"
-          />
+          <input type="number" value={durationMinutes} onChange={(e) => setDurationMinutes(e.target.value)}
+            placeholder="120" min="15" max="720" required
+            className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]" />
         </div>
 
-        {/* Capacity */}
         <div>
           <label className="block text-xs font-medium text-stone-gray mb-1">{t('events.capacity', 'Capacity')}</label>
-          <input
-            type="number"
-            value={maxCapacity}
-            onChange={(e) => setMaxCapacity(e.target.value)}
-            placeholder="20"
-            min="1"
-            required
-            className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]"
-          />
+          <input type="number" value={maxCapacity} onChange={(e) => setMaxCapacity(e.target.value)}
+            placeholder="20" min="1" required
+            className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]" />
         </div>
 
-        {/* Price */}
         <div>
           <label className="block text-xs font-medium text-stone-gray mb-1">{t('events.price', 'Price (R$)')}</label>
-          <input
-            type="number"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-            placeholder="150.00"
-            min="0"
-            step="0.01"
-            required
-            className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]"
+          <input type="number" value={price} onChange={(e) => setPrice(e.target.value)}
+            placeholder="150.00" min="0" step="0.01" required
+            className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]" />
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium text-stone-gray mb-1">{t('events.refundPolicy', 'Refund Policy')}</label>
+          <select value={refundPolicy} onChange={(e) => setRefundPolicy(e.target.value)}
+            className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239] bg-white">
+            <option value="full">{t('events.refundFull', 'Full refund')}</option>
+            <option value="partial">{t('events.refundPartial', '50% refund')}</option>
+            <option value="none">{t('events.refundNone', 'No refund')}</option>
+          </select>
+        </div>
+
+        <div className="sm:col-span-2">
+          <label className="block text-xs font-medium text-stone-gray mb-1">
+            {t('events.menuDescription', 'Menu / Experience Details')} <span className="text-stone-gray/60">({t('events.optional', 'optional')})</span>
+          </label>
+          <textarea
+            value={menuDescription}
+            onChange={(e) => setMenuDescription(e.target.value)}
+            placeholder={t('events.menuPlaceholder', 'Describe the menu or experience highlights...')}
+            maxLength={2000}
+            rows={3}
+            className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239] resize-none"
           />
         </div>
       </div>
 
       <div className="flex items-center justify-end gap-3 pt-2">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="px-4 py-2 text-sm font-medium text-stone-gray hover:text-deep-charcoal transition-colors"
-        >
+        <button type="button" onClick={onCancel}
+          className="px-4 py-2 text-sm font-medium text-stone-gray hover:text-deep-charcoal transition-colors">
           {t('events.cancel', 'Cancel')}
         </button>
-        <button
-          type="submit"
-          disabled={createMutation.isPending}
-          className="px-4 py-2 bg-[#9F1239] hover:bg-[#881337] text-white font-semibold rounded-full text-sm transition-colors disabled:opacity-50"
-        >
+        <button type="submit" disabled={createMutation.isPending}
+          className="px-4 py-2 bg-[#9F1239] hover:bg-[#881337] text-white font-semibold rounded-full text-sm transition-colors disabled:opacity-50">
           {createMutation.isPending ? t('events.creating', 'Creating...') : t('events.createEvent', 'Create Event')}
         </button>
       </div>
@@ -230,6 +216,7 @@ function EventCreateForm({ onCreated, onCancel }: { onCreated: () => void; onCan
 function EventCard({ event }: { event: EventItem }) {
   const { t } = useTranslation();
   const deactivateMutation = useDeactivateEvent();
+  const [showBookings, setShowBookings] = useState(false);
   const badge = getStatusBadge(event, t);
 
   const handleDeactivate = () => {
@@ -276,17 +263,30 @@ function EventCard({ event }: { event: EventItem }) {
             <span className="text-green-600 ml-1">({spotsLeft} {t('events.spotsLeft', 'left')})</span>
           )}
         </div>
-        {event.is_active && (
-          <button
-            type="button"
-            onClick={handleDeactivate}
-            disabled={deactivateMutation.isPending}
-            className="text-xs text-red-600 hover:text-red-800 font-medium transition-colors disabled:opacity-50"
-          >
-            {t('events.deactivate', 'Deactivate')}
-          </button>
-        )}
+        <div className="flex items-center gap-3">
+          {event.current_bookings > 0 && (
+            <button
+              type="button"
+              onClick={() => setShowBookings(!showBookings)}
+              className="text-xs text-[#9F1239] hover:text-[#881337] font-medium transition-colors"
+            >
+              {showBookings ? t('events.hideBookings', 'Hide') : t('events.viewBookings', 'View Bookings')}
+            </button>
+          )}
+          {event.is_active && (
+            <button
+              type="button"
+              onClick={handleDeactivate}
+              disabled={deactivateMutation.isPending}
+              className="text-xs text-red-600 hover:text-red-800 font-medium transition-colors disabled:opacity-50"
+            >
+              {t('events.deactivate', 'Deactivate')}
+            </button>
+          )}
+        </div>
       </div>
+
+      {showBookings && <EventBookingsPanel eventId={event.id} />}
     </div>
   );
 }
@@ -303,6 +303,7 @@ export default function EventsPage() {
     return e.is_active && eventDateTime >= now && e.current_bookings < e.max_capacity;
   }).length ?? 0;
   const totalBookings = events?.reduce((sum, e) => sum + e.current_bookings, 0) ?? 0;
+  const totalRevenue = events?.reduce((sum, e) => sum + (e.current_bookings * e.price), 0) ?? 0;
 
   return (
     <DashboardLayout>
@@ -325,7 +326,7 @@ export default function EventsPage() {
         </div>
 
         {/* Stats bar */}
-        <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-4 gap-4 mb-6">
           <div className="bg-white border border-[#E5E7EB] rounded-xl p-4 text-center">
             <div className="text-2xl font-bold text-deep-charcoal">{totalEvents}</div>
             <div className="text-xs text-stone-gray mt-1">{t('events.totalEvents', 'Total')}</div>
@@ -337,6 +338,10 @@ export default function EventsPage() {
           <div className="bg-white border border-[#E5E7EB] rounded-xl p-4 text-center">
             <div className="text-2xl font-bold text-[#9F1239]">{totalBookings}</div>
             <div className="text-xs text-stone-gray mt-1">{t('events.totalBookings', 'Bookings')}</div>
+          </div>
+          <div className="bg-white border border-[#E5E7EB] rounded-xl p-4 text-center">
+            <div className="text-2xl font-bold text-deep-charcoal">{formatPrice(totalRevenue)}</div>
+            <div className="text-xs text-stone-gray mt-1">{t('events.estimatedRevenue', 'Est. Revenue')}</div>
           </div>
         </div>
 

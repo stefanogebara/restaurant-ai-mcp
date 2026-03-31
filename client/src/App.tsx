@@ -57,6 +57,7 @@ const ManagerAIChatPage = lazyRetry(() => import('./pages/ManagerAIChatPage'));
 const CampaignsPage = lazyRetry(() => import('./pages/CampaignsPage'));
 const CouponsPage = lazyRetry(() => import('./pages/CouponsPage'));
 const EventsPage = lazyRetry(() => import('./pages/EventsPage'));
+const EventBookingPage = lazyRetry(() => import('./pages/EventBookingPage'));
 const CustomersPage = lazyRetry(() => import('./pages/CustomersPage'));
 const Prototype = lazyRetry(() => import('./pages/Prototype'));
 
@@ -164,6 +165,8 @@ function App() {
               <Route path="/host-dashboard/campaigns" element={<ProtectedRoute><CampaignsPage /></ProtectedRoute>} />
               <Route path="/host-dashboard/coupons" element={<ProtectedRoute><CouponsPage /></ProtectedRoute>} />
               <Route path="/host-dashboard/events" element={<ProtectedRoute><EventsPage /></ProtectedRoute>} />
+              {/* Public event booking page */}
+              <Route path="/events/:slug/:eventId" element={<ErrorBoundary fallback={<RouteErrorFallback />}><EventBookingPage /></ErrorBoundary>} />
               <Route path="/host-dashboard/customers" element={<ProtectedRoute><CustomersPage /></ProtectedRoute>} />
               <Route path="/privacy" element={<PrivacyPolicy />} />
               <Route path="/terms" element={<TermsOfService />} />

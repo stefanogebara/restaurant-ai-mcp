@@ -60,6 +60,9 @@ async function handleCreate(req, res) {
       duration_minutes,
       max_capacity,
       price,
+      refund_policy,
+      cover_image_url,
+      menu_description,
     } = req.body || {};
 
     if (!title || !title.trim()) {
@@ -93,6 +96,12 @@ async function handleCreate(req, res) {
       return res.status(400).json({ success: false, error: 'price must be 0 or greater' });
     }
 
+    // Validate refund_policy if provided
+    const validPolicies = ['full', 'partial', 'none'];
+    if (refund_policy && !validPolicies.includes(refund_policy)) {
+      return res.status(400).json({ success: false, error: 'refund_policy must be: full, partial, or none' });
+    }
+
     const insertData = {
       restaurant_id: restaurantId,
       title: title.trim(),
@@ -103,6 +112,9 @@ async function handleCreate(req, res) {
       max_capacity: parsedCapacity,
       current_bookings: 0,
       price: parsedPrice,
+      refund_policy: refund_policy || 'full',
+      cover_image_url: cover_image_url || null,
+      menu_description: menu_description ? menu_description.trim() : null,
     };
 
     const { data, error } = await eventsDb()
@@ -134,7 +146,7 @@ async function handleUpdate(req, res) {
       return res.status(400).json({ success: false, error: 'Missing required field: event_id' });
     }
 
-    const allowed = ['title', 'description', 'event_date', 'event_time', 'duration_minutes', 'max_capacity', 'price'];
+    const allowed = ['title', 'description', 'event_date', 'event_time', 'duration_minutes', 'max_capacity', 'price', 'refund_policy', 'cover_image_url', 'menu_description'];
     const updateData = {};
 
     for (const key of allowed) {
@@ -173,6 +185,15 @@ async function handleUpdate(req, res) {
       }
       updateData.price = p;
     }
+    if (updateData.refund_policy !== undefined) {
+      const validPolicies = ['full', 'partial', 'none'];
+      if (!validPolicies.includes(updateData.refund_policy)) {
+        return res.status(400).json({ success: false, error: 'refund_policy must be: full, partial, or none' });
+      }
+    }
+    if (updateData.menu_description !== undefined) {
+      updateData.menu_description = updateData.menu_description ? updateData.menu_description.trim() : null;
+    }
 
     if (Object.keys(updateData).length === 0) {
       return res.status(400).json({ success: false, error: 'No valid fields to update' });
@@ -201,6 +222,63 @@ async function handleUpdate(req, res) {
   } catch (error) {
     logger.error('Error updating event:', error);
     return res.status(500).json({ success: false, error: 'Failed to update event' });
+  }
+}
+
+/**
+ * List bookings for a specific event
+ */
+async function handleBookings(req, res) {
+  try {
+    const restaurantId = req.user.restaurant_id;
+    const { event_id } = req.query;
+
+    if (!event_id) {
+      return res.status(400).json({ success: false, error: 'Missing required parameter: event_id' });
+    }
+
+    // Verify event belongs to this restaurant
+    const { data: event, error: eventError } = await eventsDb()
+      .from('events')
+      .select('id')
+      .eq('id', event_id)
+      .eq('restaurant_id', restaurantId)
+      .single();
+
+    if (eventError || !event) {
+      return res.status(404).json({ success: false, error: 'Event not found' });
+    }
+
+    const { data: bookings, error } = await eventsDb()
+      .from('event_bookings')
+      .select('*')
+      .eq('event_id', event_id)
+      .eq('restaurant_id', restaurantId)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    // Calculate revenue summary
+    const paidBookings = (bookings || []).filter(b => b.payment_status === 'paid');
+    const totalRevenue = paidBookings.reduce((sum, b) => sum + Number(b.total_amount), 0);
+    const totalRefunded = (bookings || []).reduce((sum, b) => sum + Number(b.refund_amount || 0), 0);
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        bookings: bookings || [],
+        summary: {
+          total_bookings: (bookings || []).length,
+          paid_bookings: paidBookings.length,
+          total_revenue: totalRevenue,
+          total_refunded: totalRefunded,
+          net_revenue: totalRevenue - totalRefunded,
+        },
+      },
+    });
+  } catch (error) {
+    logger.error('Error listing event bookings:', error);
+    return res.status(500).json({ success: false, error: 'Failed to list bookings' });
   }
 }
 
@@ -276,7 +354,7 @@ module.exports = async (req, res) => {
     return res.status(400).json({
       success: false,
       error: 'Missing required parameter: action',
-      available_actions: ['list', 'create', 'update', 'deactivate'],
+      available_actions: ['list', 'create', 'update', 'deactivate', 'bookings'],
     });
   }
 
@@ -297,11 +375,14 @@ module.exports = async (req, res) => {
         if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'POST required for deactivate' });
         return await handleDeactivate(req, res);
 
+      case 'bookings':
+        return await handleBookings(req, res);
+
       default:
         return res.status(400).json({
           success: false,
           error: `Unknown action: ${action}`,
-          available_actions: ['list', 'create', 'update', 'deactivate'],
+          available_actions: ['list', 'create', 'update', 'deactivate', 'bookings'],
         });
     }
   } catch (error) {

@@ -402,6 +402,50 @@ module.exports = async (req, res) => {
 
         break;
 
+      case 'payment_intent.succeeded':
+        const succeededPI = event.data.object;
+        // Only handle event bookings (skip deposits, subscriptions, etc.)
+        if (succeededPI.metadata?.type === 'event_booking') {
+          const eventBookingId = succeededPI.metadata?.booking_id;
+          const eventPiId = succeededPI.id;
+          logger.info('Event booking payment succeeded:', eventPiId);
+
+          try {
+            // Look up booking by stripe_payment_intent_id
+            const { data: evtBooking, error: evtError } = await supabaseAdmin
+              .schema('restaurant')
+              .from('event_bookings')
+              .select('id, party_size, payment_status')
+              .eq('stripe_payment_intent_id', eventPiId)
+              .single();
+
+            if (evtError || !evtBooking) {
+              logger.warn('Event booking not found for PI:', eventPiId);
+              break;
+            }
+
+            if (evtBooking.payment_status === 'paid') {
+              logger.info('Event booking already confirmed:', evtBooking.id);
+              break;
+            }
+
+            // Atomically confirm via RPC
+            const { data: confirmed } = await supabaseAdmin.rpc('confirm_event_booking', {
+              p_booking_id: evtBooking.id,
+              p_party_size: evtBooking.party_size,
+            });
+
+            if (confirmed) {
+              logger.info('Event booking auto-confirmed via webhook:', evtBooking.id);
+            } else {
+              logger.error('Event booking auto-confirm failed (capacity?):', evtBooking.id);
+            }
+          } catch (evtErr) {
+            logger.error('Event booking webhook handler error:', evtErr.message);
+          }
+        }
+        break;
+
       default:
         logger.info(`Unhandled event type: ${event.type}`);
     }
