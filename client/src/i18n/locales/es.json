@@ -2424,7 +2424,42 @@
     "read": "Leidos",
     "failed": "Fallidos",
     "loading": "Cargando...",
-    "customers": "clientes"
+    "customers": "clientes",
+    "tabManual": "Manual",
+    "tabAutomations": "Automatizaciones",
+    "automations": {
+      "description": "Configura campanas automaticas que se activan segun el comportamiento del cliente. Cada gatillo envia como maximo un mensaje por cliente por semana.",
+      "channel": "Canal",
+      "channelEmail": "Email",
+      "channelWhatsApp": "WhatsApp",
+      "delay": "Retraso",
+      "delay1h": "1 hora",
+      "delay2h": "2 horas",
+      "delay4h": "4 horas",
+      "delay8h": "8 horas",
+      "delay24h": "24 horas",
+      "delay7d": "7 dias",
+      "googleReviewUrl": "URL de Google Reviews",
+      "googleReviewUrlHint": "Pega el enlace de resena de Google Business aqui",
+      "save": "Guardar",
+      "updateFailed": "Error al actualizar la automatizacion",
+      "triggers": {
+        "post_visit_thank_you": "Agradecimiento Post-Visita",
+        "post_visit_thank_youDesc": "Envia un email de agradecimiento despues de que el cliente complete su visita",
+        "birthday_reminder": "Recordatorio de Cumpleanos",
+        "birthday_reminderDesc": "Envia una felicitacion 7 dias antes del cumpleanos del cliente",
+        "anniversary_reminder": "Recordatorio de Aniversario",
+        "anniversary_reminderDesc": "Envia un saludo antes de la fecha de aniversario del cliente",
+        "lapsed_30d": "Inactivo 30 Dias",
+        "lapsed_30dDesc": "Reactiva clientes que no han visitado en 30 dias",
+        "lapsed_60d": "Inactivo 60 Dias",
+        "lapsed_60dDesc": "Recupera clientes que no han visitado en 60 dias",
+        "lapsed_90d": "Inactivo 90 Dias",
+        "lapsed_90dDesc": "Ultimo intento para clientes ausentes por 90 dias",
+        "review_request": "Solicitud de Resena",
+        "review_requestDesc": "Pide a los clientes que dejen una resena en Google 4 horas despues de su visita"
+      }
+    }
   },
   "host": {
     "riskBadge": {

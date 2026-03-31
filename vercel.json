@@ -50,6 +50,14 @@
       "destination": "/api/widget-config.js"
     },
     {
+      "source": "/api/campaign-automations",
+      "destination": "/api/campaign-automations.js"
+    },
+    {
+      "source": "/api/campaign-unsubscribe",
+      "destination": "/api/campaign-unsubscribe.js"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
@@ -238,6 +246,10 @@
     {
       "path": "/api/cron/cleanup-waitlist",
       "schedule": "0 4 * * *"
+    },
+    {
+      "path": "/api/cron/automated-campaigns",
+      "schedule": "0 10 * * *"
     }
   ]
 }

@@ -2474,7 +2474,42 @@
     "read": "Read",
     "failed": "Failed",
     "loading": "Loading...",
-    "customers": "customers"
+    "customers": "customers",
+    "tabManual": "Manual",
+    "tabAutomations": "Automations",
+    "automations": {
+      "description": "Configure automated campaigns that trigger based on customer behavior. Each trigger sends at most one message per customer per week.",
+      "channel": "Channel",
+      "channelEmail": "Email",
+      "channelWhatsApp": "WhatsApp",
+      "delay": "Delay",
+      "delay1h": "1 hour",
+      "delay2h": "2 hours",
+      "delay4h": "4 hours",
+      "delay8h": "8 hours",
+      "delay24h": "24 hours",
+      "delay7d": "7 days",
+      "googleReviewUrl": "Google Review URL",
+      "googleReviewUrlHint": "Paste your Google Business review link here",
+      "save": "Save",
+      "updateFailed": "Failed to update automation",
+      "triggers": {
+        "post_visit_thank_you": "Post-Visit Thank You",
+        "post_visit_thank_youDesc": "Send a thank you email after a guest completes their visit",
+        "birthday_reminder": "Birthday Reminder",
+        "birthday_reminderDesc": "Send a birthday greeting 7 days before the customer's birthday",
+        "anniversary_reminder": "Anniversary Reminder",
+        "anniversary_reminderDesc": "Send a greeting before the customer's anniversary date",
+        "lapsed_30d": "Lapsed 30 Days",
+        "lapsed_30dDesc": "Re-engage customers who haven't visited in 30 days",
+        "lapsed_60d": "Lapsed 60 Days",
+        "lapsed_60dDesc": "Win back customers who haven't visited in 60 days",
+        "lapsed_90d": "Lapsed 90 Days",
+        "lapsed_90dDesc": "Last chance outreach for customers absent for 90 days",
+        "review_request": "Review Request",
+        "review_requestDesc": "Ask customers to leave a Google review 4 hours after their visit"
+      }
+    }
   },
   "host": {
     "riskBadge": {

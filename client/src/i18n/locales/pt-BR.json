@@ -2494,7 +2494,42 @@
     "read": "Lidos",
     "failed": "Falhou",
     "loading": "Carregando...",
-    "customers": "clientes"
+    "customers": "clientes",
+    "tabManual": "Manual",
+    "tabAutomations": "Automacoes",
+    "automations": {
+      "description": "Configure campanhas automaticas que disparam com base no comportamento do cliente. Cada gatilho envia no maximo uma mensagem por cliente por semana.",
+      "channel": "Canal",
+      "channelEmail": "Email",
+      "channelWhatsApp": "WhatsApp",
+      "delay": "Atraso",
+      "delay1h": "1 hora",
+      "delay2h": "2 horas",
+      "delay4h": "4 horas",
+      "delay8h": "8 horas",
+      "delay24h": "24 horas",
+      "delay7d": "7 dias",
+      "googleReviewUrl": "URL do Google Reviews",
+      "googleReviewUrlHint": "Cole o link de avaliacao do Google Business aqui",
+      "save": "Salvar",
+      "updateFailed": "Falha ao atualizar automacao",
+      "triggers": {
+        "post_visit_thank_you": "Agradecimento Pos-Visita",
+        "post_visit_thank_youDesc": "Envie um email de agradecimento apos o cliente completar a visita",
+        "birthday_reminder": "Lembrete de Aniversario",
+        "birthday_reminderDesc": "Envie uma saudacao de aniversario 7 dias antes do aniversario do cliente",
+        "anniversary_reminder": "Lembrete de Datas Especiais",
+        "anniversary_reminderDesc": "Envie uma saudacao antes da data comemorativa do cliente",
+        "lapsed_30d": "Inativo 30 Dias",
+        "lapsed_30dDesc": "Reengaje clientes que nao visitaram nos ultimos 30 dias",
+        "lapsed_60d": "Inativo 60 Dias",
+        "lapsed_60dDesc": "Reconquiste clientes que nao visitaram nos ultimos 60 dias",
+        "lapsed_90d": "Inativo 90 Dias",
+        "lapsed_90dDesc": "Ultima tentativa para clientes ausentes ha 90 dias",
+        "review_request": "Pedido de Avaliacao",
+        "review_requestDesc": "Peca aos clientes para deixar uma avaliacao no Google 4 horas apos a visita"
+      }
+    }
   },
   "host": {
     "riskBadge": {
