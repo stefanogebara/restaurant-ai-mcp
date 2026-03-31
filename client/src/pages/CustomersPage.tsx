@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import CustomerTierBadge from '../components/dashboard/CustomerTierBadge';
 import CrmCustomerDrawer from '../components/dashboard/CrmCustomerDrawer';
+import DuplicateCustomersPanel from '../components/dashboard/DuplicateCustomersPanel';
 import { useCustomerList } from '../hooks/useCustomers';
 import type { CustomerListFilters } from '../hooks/useCustomers';
 import { formatCurrency } from '../utils/currency';
@@ -10,6 +11,14 @@ import { formatCurrency } from '../utils/currency';
 const PAGE_SIZE = 25;
 
 const TIER_OPTIONS = ['', 'vip', 'regular', 'occasional', 'new', 'at_risk'] as const;
+
+const ALLERGY_FILTER_OPTIONS = [
+  'Gluten', 'Lactose', 'Nuts', 'Seafood', 'Soy', 'Eggs', 'Shellfish',
+];
+
+const DIETARY_FILTER_OPTIONS = [
+  'Vegetarian', 'Vegan', 'Pescatarian', 'Kosher', 'Halal', 'Low-carb', 'Keto',
+];
 
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
@@ -41,19 +50,24 @@ export default function CustomersPage() {
   const [searchInput, setSearchInput] = useState('');
   const [tierFilter, setTierFilter] = useState('');
   const [tagFilter, setTagFilter] = useState('');
+  const [allergyFilter, setAllergyFilter] = useState('');
+  const [dietaryFilter, setDietaryFilter] = useState('');
   const [page, setPage] = useState(0);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
+  const [showDuplicates, setShowDuplicates] = useState(false);
 
   const debouncedSearch = useDebounce(searchInput, 300);
 
   // Reset page when filters change
   const resetPage = useCallback(() => setPage(0), []);
-  useEffect(() => { resetPage(); }, [debouncedSearch, tierFilter, tagFilter, resetPage]);
+  useEffect(() => { resetPage(); }, [debouncedSearch, tierFilter, tagFilter, allergyFilter, dietaryFilter, resetPage]);
 
   const filters: CustomerListFilters = {
     search: debouncedSearch || undefined,
     tier: tierFilter || undefined,
     tag: tagFilter || undefined,
+    allergy: allergyFilter || undefined,
+    dietary: dietaryFilter || undefined,
     sort: 'last_visit_date',
     order: 'desc',
     limit: PAGE_SIZE,
@@ -81,6 +95,13 @@ export default function CustomersPage() {
               </p>
             )}
           </div>
+          <button
+            type="button"
+            onClick={() => setShowDuplicates(true)}
+            className="px-4 py-2 text-sm font-medium text-stone-700 border border-[#E5E7EB] rounded-lg hover:bg-stone-50 transition-colors"
+          >
+            {t('crm.findDuplicates', 'Find Duplicates')}
+          </button>
         </div>
 
         {/* Filters */}
@@ -130,6 +151,32 @@ export default function CustomersPage() {
               placeholder={t('crm.filterByTag', 'Filtrar por tag...')}
               className="text-sm border border-[#E5E7EB] rounded-lg px-3 py-2 text-stone-700 placeholder:text-stone-400 bg-white focus:outline-none focus:ring-1 focus:ring-[#9F1239]/30 focus:border-[#9F1239]/30"
             />
+
+            <select
+              value={allergyFilter}
+              onChange={(e) => setAllergyFilter(e.target.value)}
+              className="text-sm border border-[#E5E7EB] rounded-lg px-3 py-2 text-stone-700 bg-white focus:outline-none focus:ring-1 focus:ring-[#9F1239]/30 focus:border-[#9F1239]/30"
+            >
+              <option value="">{t('crm.allAllergies', 'All allergies')}</option>
+              {ALLERGY_FILTER_OPTIONS.map((a) => (
+                <option key={a} value={a}>
+                  {t(`crm.allergy_${a.toLowerCase()}`, a)}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={dietaryFilter}
+              onChange={(e) => setDietaryFilter(e.target.value)}
+              className="text-sm border border-[#E5E7EB] rounded-lg px-3 py-2 text-stone-700 bg-white focus:outline-none focus:ring-1 focus:ring-[#9F1239]/30 focus:border-[#9F1239]/30"
+            >
+              <option value="">{t('crm.allDietary', 'All dietary')}</option>
+              {DIETARY_FILTER_OPTIONS.map((d) => (
+                <option key={d} value={d}>
+                  {t(`crm.dietary_${d.toLowerCase().replace('-', '_')}`, d)}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 
@@ -146,10 +193,10 @@ export default function CustomersPage() {
           ) : customers.length === 0 ? (
             <div className="text-center py-20">
               <p className="text-sm text-stone-500">{t('crm.noCustomers', 'Nenhum cliente encontrado')}</p>
-              {(debouncedSearch || tierFilter || tagFilter) && (
+              {(debouncedSearch || tierFilter || tagFilter || allergyFilter || dietaryFilter) && (
                 <button
                   type="button"
-                  onClick={() => { setSearchInput(''); setTierFilter(''); setTagFilter(''); }}
+                  onClick={() => { setSearchInput(''); setTierFilter(''); setTagFilter(''); setAllergyFilter(''); setDietaryFilter(''); }}
                   className="mt-2 text-sm text-[#9F1239] hover:underline"
                 >
                   {t('crm.clearFilters', 'Limpar filtros')}
@@ -278,6 +325,11 @@ export default function CustomersPage() {
         customerId={selectedCustomerId}
         onClose={() => setSelectedCustomerId(null)}
       />
+
+      {/* Duplicates Modal */}
+      {showDuplicates && (
+        <DuplicateCustomersPanel onClose={() => setShowDuplicates(false)} />
+      )}
     </DashboardLayout>
   );
 }

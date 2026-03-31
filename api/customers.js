@@ -14,6 +14,7 @@ const { verifyAuth } = require('./_lib/auth');
 const { checkSubscription, requireFeature } = require('./_lib/subscription-middleware');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { setInternalCors } = require('./_lib/cors');
+const { findDuplicates, mergeCustomers } = require('./services/customerMergeService');
 
 const logger = createSecureLogger('Customers');
 
@@ -328,6 +329,175 @@ async function handleDeleteNote(req, res) {
 }
 
 /**
+ * Update customer profile (allergies, dietary, seating, occasions)
+ */
+async function handleUpdateProfile(req, res) {
+  try {
+    const restaurantId = req.user.restaurant_id;
+    const {
+      customer_id,
+      allergies,
+      dietary_restrictions,
+      seating_preferences,
+      special_occasions,
+    } = req.body || {};
+
+    if (!customer_id) {
+      return res.status(400).json({ success: false, error: 'Missing required field: customer_id' });
+    }
+
+    const updates = {};
+
+    // Validate allergies
+    if (allergies !== undefined) {
+      if (!Array.isArray(allergies)) {
+        return res.status(400).json({ success: false, error: 'allergies must be an array of strings' });
+      }
+      if (allergies.length > 20) {
+        return res.status(400).json({ success: false, error: 'Maximum 20 allergies allowed' });
+      }
+      for (const a of allergies) {
+        if (typeof a !== 'string') {
+          return res.status(400).json({ success: false, error: 'Each allergy must be a string' });
+        }
+      }
+      updates.allergies = allergies.map(a => a.trim()).filter(Boolean);
+    }
+
+    // Validate dietary_restrictions
+    if (dietary_restrictions !== undefined) {
+      if (!Array.isArray(dietary_restrictions)) {
+        return res.status(400).json({ success: false, error: 'dietary_restrictions must be an array of strings' });
+      }
+      if (dietary_restrictions.length > 20) {
+        return res.status(400).json({ success: false, error: 'Maximum 20 dietary restrictions allowed' });
+      }
+      for (const d of dietary_restrictions) {
+        if (typeof d !== 'string') {
+          return res.status(400).json({ success: false, error: 'Each dietary restriction must be a string' });
+        }
+      }
+      updates.dietary_restrictions = dietary_restrictions.map(d => d.trim()).filter(Boolean);
+    }
+
+    // Validate seating_preferences
+    if (seating_preferences !== undefined) {
+      if (!Array.isArray(seating_preferences)) {
+        return res.status(400).json({ success: false, error: 'seating_preferences must be an array of strings' });
+      }
+      if (seating_preferences.length > 10) {
+        return res.status(400).json({ success: false, error: 'Maximum 10 seating preferences allowed' });
+      }
+      for (const s of seating_preferences) {
+        if (typeof s !== 'string') {
+          return res.status(400).json({ success: false, error: 'Each seating preference must be a string' });
+        }
+      }
+      updates.seating_preferences = seating_preferences.map(s => s.trim()).filter(Boolean);
+    }
+
+    // Validate special_occasions
+    if (special_occasions !== undefined) {
+      if (typeof special_occasions !== 'object' || special_occasions === null || Array.isArray(special_occasions)) {
+        return res.status(400).json({ success: false, error: 'special_occasions must be a JSON object' });
+      }
+      // Validate keys and values are reasonable
+      for (const [key, value] of Object.entries(special_occasions)) {
+        if (typeof key !== 'string' || key.length > 50) {
+          return res.status(400).json({ success: false, error: 'special_occasions keys must be strings under 50 chars' });
+        }
+        if (typeof value !== 'string' || value.length > 100) {
+          return res.status(400).json({ success: false, error: 'special_occasions values must be strings under 100 chars' });
+        }
+      }
+      updates.special_occasions = special_occasions;
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ success: false, error: 'No profile fields provided to update' });
+    }
+
+    updates.updated_at = new Date().toISOString();
+
+    const { data, error } = await crmDb()
+      .from('customer_ltv')
+      .update(updates)
+      .eq('customer_id', customer_id)
+      .eq('restaurant_id', restaurantId)
+      .select('*')
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return res.status(404).json({ success: false, error: 'Customer not found' });
+      }
+      throw error;
+    }
+
+    logger.info('Profile updated', { customerId: customer_id, fields: Object.keys(updates) });
+
+    return res.status(200).json({ success: true, data });
+
+  } catch (error) {
+    logger.error('Error updating profile:', error);
+    return res.status(500).json({ success: false, error: 'Failed to update customer profile' });
+  }
+}
+
+/**
+ * Find duplicate customers by phone or email
+ */
+async function handleFindDuplicates(req, res) {
+  try {
+    const restaurantId = req.user.restaurant_id;
+    const duplicates = await findDuplicates(restaurantId);
+
+    return res.status(200).json({
+      success: true,
+      data: { duplicates, total_groups: duplicates.length },
+    });
+
+  } catch (error) {
+    logger.error('Error finding duplicates:', error);
+    return res.status(500).json({ success: false, error: 'Failed to find duplicate customers' });
+  }
+}
+
+/**
+ * Merge two customer records
+ */
+async function handleMerge(req, res) {
+  try {
+    const restaurantId = req.user.restaurant_id;
+    const { keep_id, merge_id } = req.body || {};
+
+    if (!keep_id) {
+      return res.status(400).json({ success: false, error: 'Missing required field: keep_id' });
+    }
+    if (!merge_id) {
+      return res.status(400).json({ success: false, error: 'Missing required field: merge_id' });
+    }
+    if (keep_id === merge_id) {
+      return res.status(400).json({ success: false, error: 'keep_id and merge_id must be different' });
+    }
+
+    const merged = await mergeCustomers(restaurantId, keep_id, merge_id);
+
+    logger.info('Customers merged', { keepId: keep_id, mergeId: merge_id });
+
+    return res.status(200).json({ success: true, data: merged });
+
+  } catch (error) {
+    // Surface known errors as 400/404
+    if (error.message && (error.message.includes('not found') || error.message.includes('Cannot merge'))) {
+      return res.status(400).json({ success: false, error: error.message });
+    }
+    logger.error('Error merging customers:', error);
+    return res.status(500).json({ success: false, error: 'Failed to merge customers' });
+  }
+}
+
+/**
  * Main serverless function handler
  */
 module.exports = async (req, res) => {
@@ -364,11 +534,16 @@ module.exports = async (req, res) => {
 
   const { action } = req.query;
 
+  const AVAILABLE_ACTIONS = [
+    'list', 'detail', 'update_tags', 'update_profile',
+    'add_note', 'delete_note', 'find_duplicates', 'merge',
+  ];
+
   if (!action) {
     return res.status(400).json({
       success: false,
       error: 'Missing required parameter: action',
-      available_actions: ['list', 'detail', 'update_tags', 'add_note', 'delete_note'],
+      available_actions: AVAILABLE_ACTIONS,
     });
   }
 
@@ -384,6 +559,10 @@ module.exports = async (req, res) => {
         if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'POST required for update_tags' });
         return await handleUpdateTags(req, res);
 
+      case 'update_profile':
+        if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'POST required for update_profile' });
+        return await handleUpdateProfile(req, res);
+
       case 'add_note':
         if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'POST required for add_note' });
         return await handleAddNote(req, res);
@@ -392,11 +571,18 @@ module.exports = async (req, res) => {
         if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'POST required for delete_note' });
         return await handleDeleteNote(req, res);
 
+      case 'find_duplicates':
+        return await handleFindDuplicates(req, res);
+
+      case 'merge':
+        if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'POST required for merge' });
+        return await handleMerge(req, res);
+
       default:
         return res.status(400).json({
           success: false,
           error: `Unknown action: ${action}`,
-          available_actions: ['list', 'detail', 'update_tags', 'add_note', 'delete_note'],
+          available_actions: AVAILABLE_ACTIONS,
         });
     }
   } catch (error) {

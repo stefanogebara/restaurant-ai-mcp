@@ -196,6 +196,10 @@
       "schedule": "0 * * * *"
     },
     {
+      "path": "/api/cron/send-surveys",
+      "schedule": "30 * * * *"
+    },
+    {
       "path": "/api/cron/send-campaigns",
       "schedule": "*/15 * * * *"
     },

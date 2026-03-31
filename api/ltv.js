@@ -68,6 +68,24 @@ async function handleCalculateAll(req, res) {
       byPhone[phone].party_sizes.push(r.party_size || 2);
     }
 
+    // Pre-compute revenue P80 for VIP classification
+    const allRevenues = Object.values(byPhone).map(cust => {
+      const avgParty = cust.party_sizes.reduce((s, p) => s + p, 0) / cust.party_sizes.length;
+      return cust.visits.length * avgParty * AVG_REVENUE_PER_COVER;
+    }).sort((a, b) => a - b);
+    const p80Index = Math.floor(allRevenues.length * 0.8);
+    const revenueP80 = allRevenues.length > 0 ? allRevenues[Math.min(p80Index, allRevenues.length - 1)] : 0;
+
+    // Fetch existing tiers and tags for at_risk / vip-tag detection
+    const { data: existingRecords } = await ltvDb()
+      .from('customer_ltv')
+      .select('customer_id, customer_tier, tags')
+      .eq('restaurant_id', restaurantId);
+    const existingMap = {};
+    for (const rec of (existingRecords || [])) {
+      existingMap[rec.customer_id] = { tier: rec.customer_tier, tags: rec.tags || [] };
+    }
+
     let upserted = 0;
     for (const [phone, cust] of Object.entries(byPhone)) {
       const visits = cust.visits.sort((a, b) => a - b);
@@ -94,11 +112,20 @@ async function handleCalculateAll(req, res) {
       if (!Number.isFinite(churn)) churn = 50;
       churn = Math.max(0, Math.min(100, churn));
 
+      const existing = existingMap[phone] || {};
       let tier = 'new';
-      if (churn > 70) tier = 'at_risk';
-      else if (total_visits >= 10) tier = 'vip';
-      else if (total_visits >= 4) tier = 'regular';
-      else if (total_visits >= 2) tier = 'occasional';
+      // at_risk: last_visit > 60 days AND was regular/vip
+      if (daysSinceLast > 60 && (existing.tier === 'regular' || existing.tier === 'vip')) {
+        tier = 'at_risk';
+      } else if ((Array.isArray(existing.tags) ? existing.tags : []).map(t => String(t).toLowerCase()).includes('vip')) {
+        tier = 'vip';
+      } else if (total_visits >= 10 && total_revenue >= revenueP80) {
+        tier = 'vip';
+      } else if (total_visits >= 4) {
+        tier = 'regular';
+      } else if (total_visits >= 2) {
+        tier = 'occasional';
+      }
 
       const { error: upsertErr } = await ltvDb()
         .from('customer_ltv')

@@ -37,6 +37,7 @@ const navSections: NavSection[] = [
       { path: '/host-dashboard/whatsapp', label: 'WhatsApp', requiredFeature: 'overview' },
       { path: '/host-dashboard/campaigns', label: 'Campaigns', requiredFeature: 'advancedAnalytics' },
       { path: '/host-dashboard/coupons', label: 'Coupons', requiredFeature: 'advancedAnalytics' },
+      { path: '/host-dashboard/events', label: 'Events', requiredFeature: 'advancedAnalytics' },
       { path: '/host-dashboard/calls', label: 'Call History', requiredFeature: 'aiAgentTracking' },
     ]
   },
@@ -105,6 +106,7 @@ export default function Sidebar() {
     Analytics: 'navigation.analytics',
     Campaigns: 'navigation.campaigns',
     Coupons: 'navigation.coupons',
+    Events: 'navigation.events',
     Customers: 'navigation.customers',
     Reports: 'navigation.reports',
     Main: 'navigation.sectionMain',

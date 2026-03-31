@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import ManagerNotificationsPanel from '../components/dashboard/ManagerNotificationsPanel';
 import FeedbackSettingsPanel from '../components/dashboard/FeedbackSettingsPanel';
+import SurveySettingsPanel from '../components/dashboard/SurveySettingsPanel';
 import AiPersonalityPanel from '../components/dashboard/AiPersonalityPanel';
 import { authFetch } from '../services/api';
 import { useToast } from '../contexts/ToastContext';
@@ -493,6 +494,9 @@ export default function WhatsAppSettingsPage() {
 
         {/* Post-Visit Feedback */}
         <FeedbackSettingsPanel />
+
+        {/* Satisfaction Survey */}
+        <SurveySettingsPanel />
       </div>
     </DashboardLayout>
   );

@@ -36,12 +36,37 @@ export interface CustomerDetail extends CrmCustomer {
     status: string;
   }>;
   notes: CustomerNote[];
+  allergies: string[];
+  dietary_restrictions: string[];
+  seating_preferences: string[];
+  special_occasions: Record<string, string>;
+}
+
+export interface ProfileUpdatePayload {
+  customerId: string;
+  allergies?: string[];
+  dietary_restrictions?: string[];
+  seating_preferences?: string[];
+  special_occasions?: Record<string, string>;
+}
+
+export interface DuplicateGroup {
+  match_type: string;
+  match_value: string;
+  customers: Array<CrmCustomer & { customer_id: string }>;
+}
+
+export interface DuplicatesResponse {
+  duplicates: DuplicateGroup[];
+  total_groups: number;
 }
 
 export interface CustomerListFilters {
   search?: string;
   tier?: string;
   tag?: string;
+  allergy?: string;
+  dietary?: string;
   sort?: string;
   order?: 'asc' | 'desc';
   limit?: number;
@@ -64,6 +89,8 @@ function buildQueryString(filters: CustomerListFilters): string {
   if (filters.search) params.set('search', filters.search);
   if (filters.tier) params.set('tier', filters.tier);
   if (filters.tag) params.set('tag', filters.tag);
+  if (filters.allergy) params.set('allergy', filters.allergy);
+  if (filters.dietary) params.set('dietary', filters.dietary);
   if (filters.sort) params.set('sort', filters.sort);
   if (filters.order) params.set('order', filters.order);
   if (filters.limit != null) params.set('limit', String(filters.limit));
@@ -158,6 +185,59 @@ export function useDeleteNote() {
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['crm', 'customer', variables.customerId] });
+    },
+  });
+}
+
+export function useUpdateProfile() {
+  const queryClient = useQueryClient();
+  return useMutation<void, Error, ProfileUpdatePayload>({
+    mutationFn: async ({ customerId, ...fields }) => {
+      const response = await authFetch('/api/customers?action=update_profile', {
+        method: 'POST',
+        body: JSON.stringify({ customer_id: customerId, ...fields }),
+      });
+      if (!response.ok) throw new Error('Failed to update profile');
+      const result = await response.json();
+      if (!result.success) throw new Error(result.error || 'Failed to update profile');
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['crm', 'customer', variables.customerId] });
+      queryClient.invalidateQueries({ queryKey: ['crm', 'customers'] });
+    },
+  });
+}
+
+export function useFindDuplicates(enabled = false) {
+  return useQuery<DuplicatesResponse>({
+    queryKey: ['crm', 'duplicates'],
+    queryFn: async () => {
+      const response = await authFetch('/api/customers?action=find_duplicates');
+      if (!response.ok) throw new Error('Failed to find duplicates');
+      const result = await response.json();
+      if (!result.success) throw new Error(result.error || 'Failed to find duplicates');
+      return result.data;
+    },
+    enabled,
+    staleTime: CRM_STALE_TIME,
+  });
+}
+
+export function useMergeCustomers() {
+  const queryClient = useQueryClient();
+  return useMutation<void, Error, { keepId: string; mergeId: string }>({
+    mutationFn: async ({ keepId, mergeId }) => {
+      const response = await authFetch('/api/customers?action=merge', {
+        method: 'POST',
+        body: JSON.stringify({ keep_id: keepId, merge_id: mergeId }),
+      });
+      if (!response.ok) throw new Error('Failed to merge customers');
+      const result = await response.json();
+      if (!result.success) throw new Error(result.error || 'Failed to merge customers');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['crm', 'customers'] });
+      queryClient.invalidateQueries({ queryKey: ['crm', 'duplicates'] });
     },
   });
 }

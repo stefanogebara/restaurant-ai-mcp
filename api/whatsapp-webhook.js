@@ -29,6 +29,7 @@ const {
 const { getAllActiveRestaurants } = require('./_lib/restaurant-registry');
 const { extractMemoriesFromWhatsApp } = require('./services/memoryExtractor');
 const { findPendingFeedbackForPhone, processFeedbackReply } = require('./services/feedbackService');
+const { handleSurveyReply } = require('./services/surveyReplyHandler');
 const { setWebhookCors } = require('./_lib/cors');
 const { updateDeliveryStatus } = require('./services/campaignService');
 
@@ -262,6 +263,21 @@ async function handleIncomingMessage(message, res) {
   } catch (feedbackErr) {
     logger.error('Feedback reply check failed:', feedbackErr.message);
     // Fall through to normal conversation flow
+  }
+
+  // Check if this is a survey reply (1-5 rating)
+  try {
+    const surveyResult = await handleSurveyReply(from, messageText);
+    if (surveyResult) {
+      const stars = '⭐'.repeat(surveyResult.rating);
+      const thankYou = surveyResult.comment
+        ? `Obrigado pela avaliacao! ${stars} (${surveyResult.rating}/5)\nSeu comentario foi registrado. Esperamos ve-lo novamente!`
+        : `Obrigado pela avaliacao! ${stars} (${surveyResult.rating}/5)\nEsperamos ve-lo novamente!`;
+      await sendWhatsAppMessage(from, thankYou);
+      return res.status(200).json({ status: 'ok' });
+    }
+  } catch (surveyErr) {
+    logger.error('Survey reply check failed:', surveyErr.message);
   }
 
   // Get or create session for this phone number

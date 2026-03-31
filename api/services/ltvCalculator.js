@@ -78,12 +78,14 @@ async function calculateCustomerLTV(customerId, restaurantId = null) {
     const days = revenues.map(r => new Date(r.service_date).toLocaleDateString('en-US', { weekday: 'long' }));
     const favoriteDay = getMostCommon(days);
 
-    // 7. Calculate customer tier
-    const customerTier = calculateTier(totalVisits, totalRevenue, avgRevenuePerVisit);
-
-    // 8. Calculate churn risk
+    // 7. Calculate churn risk (needed by tier calculation)
     const daysSinceLastVisit = (new Date() - lastVisit) / (1000 * 60 * 60 * 24);
     const churnRiskScore = calculateChurnRisk(daysSinceLastVisit, avgDaysBetweenVisits, totalVisits);
+
+    // 8. Calculate customer tier (uses daysSinceLastVisit for at_risk detection)
+    const customerTier = calculateTier(totalVisits, totalRevenue, avgRevenuePerVisit, {
+      daysSinceLastVisit,
+    });
 
     // 9. Calculate Lifetime Value (predicted total value)
     const lifetimeValue = calculatePredictedLTV(
@@ -216,23 +218,57 @@ function getMostCommon(arr) {
 }
 
 /**
- * Calculate customer tier based on visits and revenue
+ * Calculate customer tier based on visits, revenue, recency, and tags.
+ *
+ * Tiers (evaluated in priority order):
+ *   at_risk  — last_visit > 60 days AND was regular or vip
+ *   vip      — 10+ visits AND top 20% revenue, OR tagged 'vip'
+ *   regular  — 4-9 visits
+ *   occasional — 2-3 visits
+ *   new      — 1 visit
+ *
+ * @param {number}   visits
+ * @param {number}   totalRevenue
+ * @param {number}   avgRevenue         (unused, kept for compat)
+ * @param {Object}   [opts]
+ * @param {number}   [opts.daysSinceLastVisit]
+ * @param {string}   [opts.previousTier]
+ * @param {string[]} [opts.tags]
+ * @param {number}   [opts.revenueP80]  — 80th-percentile revenue threshold
  */
-function calculateTier(visits, totalRevenue, avgRevenue) {
-  // VIP: 10+ visits OR R$1000+ total revenue OR R$100+ avg per visit
-  if (visits >= 10 || totalRevenue >= 1000 || avgRevenue >= 100) {
+function calculateTier(visits, totalRevenue, avgRevenue, opts = {}) {
+  const {
+    daysSinceLastVisit = 0,
+    previousTier,
+    tags = [],
+    revenueP80 = Infinity,
+  } = opts;
+
+  // At-risk: hasn't visited in 60+ days AND was regular or vip
+  if (
+    daysSinceLastVisit > 60 &&
+    (previousTier === 'regular' || previousTier === 'vip')
+  ) {
+    return 'at_risk';
+  }
+
+  // VIP: explicitly tagged OR (10+ visits AND top 20% revenue)
+  const normalizedTags = (tags || []).map(t =>
+    typeof t === 'string' ? t.trim().toLowerCase() : ''
+  );
+  if (normalizedTags.includes('vip')) {
+    return 'vip';
+  }
+  if (visits >= 10 && totalRevenue >= revenueP80) {
     return 'vip';
   }
 
-  // Regular: 5+ visits OR R$500+ total revenue
-  if (visits >= 5 || totalRevenue >= 500) {
+  // Regular: 4-9 visits
+  if (visits >= 4) {
     return 'regular';
   }
 
-  // At Risk: Haven't visited in 90+ days
-  // (This would need last visit date, handle in churn risk instead)
-
-  // Occasional: 2-4 visits
+  // Occasional: 2-3 visits
   if (visits >= 2) {
     return 'occasional';
   }
@@ -293,5 +329,7 @@ function calculatePredictedLTV(totalRevenue, avgRevenue, avgDaysBetween, churnRi
 module.exports = {
   calculateCustomerLTV,
   calculateAllCustomerLTV,
-  upsertCustomerLTV
+  upsertCustomerLTV,
+  // Exported for testing
+  calculateTier,
 };

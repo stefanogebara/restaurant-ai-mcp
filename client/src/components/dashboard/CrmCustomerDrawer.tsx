@@ -3,8 +3,10 @@ import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import CustomerTierBadge from './CustomerTierBadge';
 import TagEditor from './TagEditor';
+import CustomerProfileSections from './CustomerProfileSections';
 import { formatCurrency } from '../../utils/currency';
-import { useCustomerDetail, useUpdateTags, useAddNote, useDeleteNote } from '../../hooks/useCustomers';
+import { useCustomerDetail, useUpdateTags, useAddNote, useDeleteNote, useUpdateProfile } from '../../hooks/useCustomers';
+import type { ProfileUpdatePayload } from '../../hooks/useCustomers';
 
 interface CrmCustomerDrawerProps {
   customerId: string | null;
@@ -19,6 +21,7 @@ export default function CrmCustomerDrawer({ customerId, onClose }: CrmCustomerDr
   const updateTags = useUpdateTags();
   const addNote = useAddNote();
   const deleteNote = useDeleteNote();
+  const updateProfile = useUpdateProfile();
 
   const [noteText, setNoteText] = useState('');
 
@@ -39,6 +42,10 @@ export default function CrmCustomerDrawer({ customerId, onClose }: CrmCustomerDr
   const handleDeleteNote = (noteId: string) => {
     if (!customerId) return;
     deleteNote.mutate({ customerId, noteId });
+  };
+
+  const handleUpdateProfile = (payload: ProfileUpdatePayload) => {
+    updateProfile.mutate(payload);
   };
 
   return (
@@ -129,6 +136,16 @@ export default function CrmCustomerDrawer({ customerId, onClose }: CrmCustomerDr
                       onTagsChange={handleTagsChange}
                     />
                   </Section>
+
+                  {/* Profile Sections (Allergies, Dietary, Seating, Occasions) */}
+                  <CustomerProfileSections
+                    customerId={customer.customer_id}
+                    allergies={customer.allergies || []}
+                    dietaryRestrictions={customer.dietary_restrictions || []}
+                    seatingPreferences={customer.seating_preferences || []}
+                    specialOccasions={customer.special_occasions || {}}
+                    onUpdateProfile={handleUpdateProfile}
+                  />
 
                   {/* Notes */}
                   <Section title={t('crm.notes', 'Notas')}>
