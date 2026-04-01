@@ -16,7 +16,7 @@ export interface CampaignAutomation {
 export interface UpdateAutomationParams {
   trigger_type: string;
   enabled?: boolean;
-  channel?: 'email' | 'whatsapp';
+  channel?: string;
   delay_minutes?: number;
   google_review_url?: string | null;
 }
