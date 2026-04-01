@@ -39,14 +39,23 @@ module.exports = async (req, res) => {
       c.manager_whatsapp_verified === true && c.notification_preferences?.[prefKey]
     );
 
-    // Debug: return filter diagnostics if no eligible found
-    if (eligible.length === 0 && configs?.length > 0) {
-      const diag = configs.map(c => ({
-        id: c.id?.slice(0, 8),
-        verified: c.manager_whatsapp_verified,
-        pref: c.notification_preferences?.[prefKey],
-      }));
-      return res.json({ sent: 0, total: 0, _diag: { prefKey, configCount: configs.length, rows: diag } });
+    // Debug: always return diagnostics
+    if (eligible.length === 0) {
+      return res.json({
+        sent: 0,
+        total: 0,
+        _diag: {
+          prefKey,
+          configCount: configs?.length ?? -1,
+          queryErr: queryErr?.message || null,
+          dataIsNull: configs === null,
+          rows: (configs || []).slice(0, 3).map(c => ({
+            id: c.id?.slice(0, 8),
+            verified: c.manager_whatsapp_verified,
+            pref: c.notification_preferences?.[prefKey],
+          })),
+        },
+      });
     }
 
     let sent = 0;
