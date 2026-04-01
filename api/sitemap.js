@@ -103,12 +103,36 @@ module.exports = async (req, res) => {
     )
     .join('\n');
 
+  // Programmatic SEO pages (/para/:slug) — cuisine+city landing pages
+  const programmaticSeoSlugs = [
+    'pizzaria-sao-paulo', 'japonesa-sao-paulo', 'italiana-sao-paulo',
+    'churrascaria-sao-paulo', 'fine-dining-sao-paulo', 'bar-sao-paulo',
+    'cafe-sao-paulo', 'mexicana-sao-paulo', 'hamburguer-sao-paulo',
+    'vegano-sao-paulo', 'pizzaria-rio-de-janeiro', 'churrascaria-rio-de-janeiro',
+    'frutos-do-mar-rio-de-janeiro', 'italiana-curitiba', 'cafe-curitiba',
+    'comida-mineira-belo-horizonte', 'bar-belo-horizonte',
+    'fine-dining-brasilia', 'japonesa-brasilia',
+    'frutos-do-mar-florianopolis', 'churrascaria-porto-alegre',
+    'baiana-salvador', 'nordestina-recife',
+  ];
+  const programmaticEntries = programmaticSeoSlugs
+    .map(
+      (slug) => `  <url>
+    <loc>${BASE_URL}/para/${slug}</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>`,
+    )
+    .join('\n');
+
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${staticEntries}
 ${restaurantEntries}
 ${seoEntries}
 ${vsEntries}
+${programmaticEntries}
 </urlset>`;
 
   return res.status(200).send(xml);

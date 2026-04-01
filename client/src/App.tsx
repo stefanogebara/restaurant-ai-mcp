@@ -25,6 +25,7 @@ import { lazyRetry } from './utils/lazyRetry';
 
 // Lazy-loaded pages (with retry for chunk load resilience)
 const LandingPage = lazyRetry(() => import('./landing/pages/LandingPage'));
+const SeoLandingPage = lazyRetry(() => import('./pages/SeoLandingPage'));
 const Login = lazyRetry(() => import('./pages/Login'));
 const LiveAIDemo = lazyRetry(() => import('./pages/LiveAIDemo'));
 const Dashboard = lazyRetry(() => import('./pages/Dashboard'));
@@ -173,6 +174,8 @@ function App() {
               <Route path="/privacy" element={<PrivacyPolicy />} />
               <Route path="/terms" element={<TermsOfService />} />
               <Route path="/portfolio" element={<PortfolioPage />} />
+              {/* Programmatic SEO pages — /para/:slug */}
+              <Route path="/para/:slug" element={<ErrorBoundary fallback={<RouteErrorFallback />}><SeoLandingPage /></ErrorBoundary>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
             </main>
