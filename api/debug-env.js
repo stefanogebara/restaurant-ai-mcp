@@ -17,7 +17,17 @@ module.exports = async (req, res) => {
       .from('restaurant_config')
       .select('id, manager_phone, manager_whatsapp_verified')
       .not('manager_phone', 'is', null);
-    queryResult = { count: data?.length, error: error?.message, ids: (data || []).map(d => d.id.slice(0, 8)) };
+    const eligible = (data || []).filter(c => c.manager_whatsapp_verified === true);
+    queryResult = {
+      count: data?.length,
+      eligible: eligible.length,
+      error: error?.message,
+      rows: (data || []).map(d => ({
+        id: d.id.slice(0, 8),
+        verified: d.manager_whatsapp_verified,
+        verified_type: typeof d.manager_whatsapp_verified,
+      })),
+    };
   } catch (e) {
     queryResult = { exception: e.message };
   }
