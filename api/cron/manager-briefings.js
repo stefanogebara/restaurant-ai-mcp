@@ -24,17 +24,20 @@ module.exports = async (req, res) => {
   const prefKey = type === 'morning' ? 'morning_briefing' : 'end_of_day_briefing';
 
   try {
-    const { data: configs } = await supabaseAdmin
+    const { data: configs, error: queryErr } = await supabaseAdmin
       .schema('restaurant')
       .from('restaurant_config')
-      .select('id, manager_phone, notification_preferences, restaurant_name, restaurant_profile, ai_strategy_doc')
-      .eq('manager_whatsapp_verified', true)
+      .select('id, manager_phone, manager_whatsapp_verified, notification_preferences, restaurant_name, restaurant_profile, ai_strategy_doc')
       .not('manager_phone', 'is', null);
 
-    logger.info('Briefing query result', { configCount: configs?.length || 0, prefKey, rawIds: (configs || []).map(c => c.id) });
+    if (queryErr) {
+      logger.error('Briefing query error', { error: queryErr.message });
+    }
 
-    const eligible = (configs || []).filter((c) => c.notification_preferences?.[prefKey]);
-    logger.info('Eligible after filter', { eligible: eligible.length, prefKey });
+    // Filter in JS: verified + has the right preference enabled
+    const eligible = (configs || []).filter((c) =>
+      c.manager_whatsapp_verified === true && c.notification_preferences?.[prefKey]
+    );
 
     let sent = 0;
     for (const config of eligible) {
@@ -84,7 +87,7 @@ module.exports = async (req, res) => {
     const jobName = type === 'morning' ? 'manager-briefings-morning' : 'manager-briefings-eod';
     await logCronRun(jobName, { sent, total: eligible.length });
 
-    return res.json({ sent, total: eligible.length, _debug: { configCount: configs?.length || 0, prefKey } });
+    return res.json({ sent, total: eligible.length });
   } catch (err) {
     logger.error('manager-briefings cron error', { error: err.message });
     return res.status(500).json({ error: 'Internal error' });
