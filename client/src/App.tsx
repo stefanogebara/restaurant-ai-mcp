@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { HelmetProvider } from 'react-helmet-async';
 import ThiingsIcon from './components/common/ThiingsIcon';
 import "./i18n/config";
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
@@ -108,6 +109,7 @@ function RouteErrorFallback() {
 function App() {
   const { t } = useTranslation();
   return (
+    <HelmetProvider>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <ToastProvider>
@@ -188,6 +190,7 @@ function App() {
         </ToastProvider>
       </AuthProvider>
     </QueryClientProvider>
+    </HelmetProvider>
   );
 }
 
