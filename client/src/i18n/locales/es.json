@@ -75,6 +75,7 @@
     "sectionSettings": "Configuración",
     "aiInsights": "Central IA",
     "languageSettings": "Idioma",
+    "integrations": "Integraciones",
     "lockedFeature": "Función bloqueada",
     "upgradeToUnlock": "Actualiza para desbloquear",
     "upgradePlanToUnlock": "Actualiza al plan Profesional para desbloquear",
@@ -2367,7 +2368,8 @@
     "settings": "Configuración | seatable",
     "reports": "Informes | seatable",
     "bookingPage": "{{name}} — Reservar Mesa | Seatable",
-    "bookingDescription": "Reserva una mesa en {{name}} en {{city}}, {{country}}. Consulta disponibilidad y reserva en línea — rápido y fácil."
+    "bookingDescription": "Reserva una mesa en {{name}} en {{city}}, {{country}}. Consulta disponibilidad y reserva en línea — rápido y fácil.",
+    "integrations": "Integraciones | seatable"
   },
   "campaigns": {
     "title": "Campanas",
@@ -2780,5 +2782,40 @@
     "refunded": "Reembolsado",
     "noBookings": "Sin reservas aun",
     "error": "Error al cargar reservas"
+  },
+  "integrations": {
+    "title": "Integración POS",
+    "subtitle": "Conecta tu sistema de punto de venta para sincronizar reservas, servicios y estado de mesas en tiempo real.",
+    "apiKeys": "Claves API",
+    "apiKeysDescription": "Usa claves API para autenticar sistemas POS e integraciones externas.",
+    "createKey": "Crear Clave",
+    "keyName": "Nombre de la Clave",
+    "keyNamePlaceholder": "ej. Terminal POS 1",
+    "generate": "Generar",
+    "keyCreatedWarning": "Guarda esta clave ahora. No se mostrará de nuevo.",
+    "dismissKeyBanner": "Ya guardé la clave",
+    "noApiKeys": "Sin claves API aún. Crea una para comenzar.",
+    "created": "Creada",
+    "lastUsed": "Último uso",
+    "revoke": "Revocar",
+    "revokeConfirm": "¿Revocar clave API \"{{name}}\"? Esto no se puede deshacer.",
+    "webhooks": "Webhooks",
+    "webhooksDescription": "Recibe notificaciones en tiempo real cuando ocurren eventos en tu restaurante.",
+    "addWebhook": "Agregar Webhook",
+    "webhookUrl": "URL del Webhook",
+    "events": "Eventos",
+    "allEvents": "Todos los Eventos",
+    "createWebhook": "Crear",
+    "deleteWebhookConfirm": "¿Eliminar webhook para \"{{url}}\"?",
+    "secretWarning": "Guarda este secreto de firma ahora. No se mostrará de nuevo.",
+    "dismissSecretBanner": "Ya guardé el secreto",
+    "noWebhooks": "Sin webhooks configurados. Agrega uno para recibir notificaciones de eventos.",
+    "lastTriggered": "Último disparo",
+    "failures": "fallos",
+    "test": "Probar",
+    "endpointsTitle": "Endpoints Disponibles",
+    "endpointServiceCompletion": "Reportar servicios completados con facturación",
+    "endpointReservations": "Consultar reservas por rango de fechas",
+    "endpointTableStatus": "Actualizar estado de disponibilidad de mesas"
   }
 }

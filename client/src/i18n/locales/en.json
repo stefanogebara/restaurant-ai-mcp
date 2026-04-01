@@ -75,6 +75,7 @@
     "sectionSettings": "Settings",
     "aiInsights": "AI Insights",
     "languageSettings": "Language",
+    "integrations": "Integrations",
     "lockedFeature": "Locked feature",
     "upgradeToUnlock": "Upgrade to unlock",
     "upgradePlanToUnlock": "Upgrade to Professional plan to unlock",
@@ -2367,7 +2368,8 @@
     "settings": "Settings | seatable",
     "reports": "Reports | seatable",
     "bookingPage": "{{name}} — Reserve a Table | Seatable",
-    "bookingDescription": "Book a table at {{name}} in {{city}}, {{country}}. Check availability and reserve online — quick and easy."
+    "bookingDescription": "Book a table at {{name}} in {{city}}, {{country}}. Check availability and reserve online — quick and easy.",
+    "integrations": "Integrations | seatable"
   },
   "strategy": {
     "title": "AI Strategy Document",
@@ -2780,5 +2782,40 @@
     "refunded": "Refunded",
     "noBookings": "No bookings yet",
     "error": "Failed to load bookings"
+  },
+  "integrations": {
+    "title": "POS Integration",
+    "subtitle": "Connect your Point-of-Sale system to sync reservations, services, and table status in real-time.",
+    "apiKeys": "API Keys",
+    "apiKeysDescription": "Use API keys to authenticate POS systems and external integrations.",
+    "createKey": "Create Key",
+    "keyName": "Key Name",
+    "keyNamePlaceholder": "e.g. POS Terminal 1",
+    "generate": "Generate",
+    "keyCreatedWarning": "Save this key now. It will not be shown again.",
+    "dismissKeyBanner": "I have saved the key",
+    "noApiKeys": "No API keys yet. Create one to get started.",
+    "created": "Created",
+    "lastUsed": "Last used",
+    "revoke": "Revoke",
+    "revokeConfirm": "Revoke API key \"{{name}}\"? This cannot be undone.",
+    "webhooks": "Webhooks",
+    "webhooksDescription": "Receive real-time notifications when events happen in your restaurant.",
+    "addWebhook": "Add Webhook",
+    "webhookUrl": "Webhook URL",
+    "events": "Events",
+    "allEvents": "All Events",
+    "createWebhook": "Create",
+    "deleteWebhookConfirm": "Delete webhook for \"{{url}}\"?",
+    "secretWarning": "Save this signing secret now. It will not be shown again.",
+    "dismissSecretBanner": "I have saved the secret",
+    "noWebhooks": "No webhooks configured. Add one to receive event notifications.",
+    "lastTriggered": "Last triggered",
+    "failures": "failures",
+    "test": "Test",
+    "endpointsTitle": "Available Endpoints",
+    "endpointServiceCompletion": "Report completed services with billing",
+    "endpointReservations": "Pull reservations by date range",
+    "endpointTableStatus": "Update table availability status"
   }
 }

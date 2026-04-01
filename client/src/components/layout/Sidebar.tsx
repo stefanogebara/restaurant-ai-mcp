@@ -307,6 +307,22 @@ export default function Sidebar() {
                 <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 transition-colors ${isActive('/settings/language') ? 'bg-burgundy' : 'bg-current opacity-40'}`} />
                 {!isCollapsed && <span className="text-sm">{t('navigation.languageSettings', 'Language')}</span>}
               </Link>
+              <Link
+                to="/host-dashboard/integrations"
+                onClick={() => setIsMobileOpen(false)}
+                className={`
+                  flex items-center gap-3 transition-all duration-150
+                  ${isCollapsed ? 'justify-center px-6 py-3' : 'px-6 py-3'}
+                  ${isActive('/host-dashboard/integrations')
+                    ? 'text-white bg-burgundy/10 border-l-2 border-l-burgundy font-medium'
+                    : 'text-stone-400 hover:text-stone-300 hover:bg-white/[0.03] border-l-2 border-l-transparent'
+                  }
+                `}
+                title={isCollapsed ? t('navigation.integrations', 'Integrations') : undefined}
+              >
+                <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 transition-colors ${isActive('/host-dashboard/integrations') ? 'bg-burgundy' : 'bg-current opacity-40'}`} />
+                {!isCollapsed && <span className="text-sm">{t('navigation.integrations', 'Integrations')}</span>}
+              </Link>
             </div>
 
             {/* Team section — owner only */}
@@ -427,6 +443,16 @@ export default function Sidebar() {
                 >
                   <ThiingsIcon name="settings" pxSize={16} />
                   <span className="text-sm">{t('navigation.restaurantSettings', 'Restaurant Settings')}</span>
+                </Link>
+
+                {/* Integrations */}
+                <Link
+                  to="/host-dashboard/integrations"
+                  onClick={() => setIsSettingsOpen(false)}
+                  className="w-full px-4 py-3 flex items-center gap-3 hover:bg-white/[0.05] transition-colors text-stone-300"
+                >
+                  <ThiingsIcon name="link" pxSize={16} />
+                  <span className="text-sm">{t('navigation.integrations', 'Integrations')}</span>
                 </Link>
 
                 <div className="border-t border-stone-mid" />

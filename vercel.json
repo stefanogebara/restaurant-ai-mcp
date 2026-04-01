@@ -58,6 +58,26 @@
       "destination": "/api/campaign-unsubscribe.js"
     },
     {
+      "source": "/api/api-keys",
+      "destination": "/api/api-keys.js"
+    },
+    {
+      "source": "/api/webhooks-config",
+      "destination": "/api/webhooks-config.js"
+    },
+    {
+      "source": "/api/pos/service-completion",
+      "destination": "/api/pos/service-completion.js"
+    },
+    {
+      "source": "/api/pos/reservations",
+      "destination": "/api/pos/reservations.js"
+    },
+    {
+      "source": "/api/pos/table-status",
+      "destination": "/api/pos/table-status.js"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

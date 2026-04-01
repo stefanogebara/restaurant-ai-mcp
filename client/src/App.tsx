@@ -59,6 +59,7 @@ const CouponsPage = lazyRetry(() => import('./pages/CouponsPage'));
 const EventsPage = lazyRetry(() => import('./pages/EventsPage'));
 const EventBookingPage = lazyRetry(() => import('./pages/EventBookingPage'));
 const CustomersPage = lazyRetry(() => import('./pages/CustomersPage'));
+const IntegrationsPage = lazyRetry(() => import('./pages/IntegrationsPage'));
 const Prototype = lazyRetry(() => import('./pages/Prototype'));
 
 const queryClient = new QueryClient({
@@ -168,6 +169,7 @@ function App() {
               {/* Public event booking page */}
               <Route path="/events/:slug/:eventId" element={<ErrorBoundary fallback={<RouteErrorFallback />}><EventBookingPage /></ErrorBoundary>} />
               <Route path="/host-dashboard/customers" element={<ProtectedRoute><CustomersPage /></ProtectedRoute>} />
+              <Route path="/host-dashboard/integrations" element={<ProtectedRoute><IntegrationsPage /></ProtectedRoute>} />
               <Route path="/privacy" element={<PrivacyPolicy />} />
               <Route path="/terms" element={<TermsOfService />} />
               <Route path="/portfolio" element={<PortfolioPage />} />
