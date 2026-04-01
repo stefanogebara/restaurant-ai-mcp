@@ -103,6 +103,14 @@ module.exports = async (req, res) => {
     )
     .join('\n');
 
+  // Free tools
+  const toolEntries = `  <url>
+    <loc>${BASE_URL}/calculadora</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>`;
+
   // Programmatic SEO pages (/para/:slug) — cuisine+city landing pages
   const programmaticSeoSlugs = [
     'pizzaria-sao-paulo', 'japonesa-sao-paulo', 'italiana-sao-paulo',
@@ -132,6 +140,7 @@ ${staticEntries}
 ${restaurantEntries}
 ${seoEntries}
 ${vsEntries}
+${toolEntries}
 ${programmaticEntries}
 </urlset>`;
 
