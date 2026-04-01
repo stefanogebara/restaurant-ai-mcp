@@ -271,8 +271,10 @@ function buildElevenLabsTwiml(restaurant) {
 
   // ElevenLabs Twilio integration uses <Connect><Stream> for bidirectional audio
   // The Stream connects to ElevenLabs WebSocket which handles STT + LLM + TTS
+  // Brief <Pause> before <Connect> ensures Twilio establishes audio path before streaming
   return `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
+  <Pause length="1"/>
   <Connect>
     <Stream url="wss://api.elevenlabs.io/v1/convai/conversation?agent_id=${agentId}">
       <Parameter name="caller_id" value="{{From}}" />
