@@ -3,15 +3,15 @@
   "buildCommand": "cd client && rm -rf dist node_modules/.vite && npm install && npm run build && node cache-bust-sw.cjs",
   "outputDirectory": "client/dist",
   "functions": {
-    "api/**/*.js": {
-      "excludeFiles": "lambda/**",
-      "maxDuration": 60
-    },
     "api/manager-chat.js": {
       "maxDuration": 120
     },
     "api/twilio-voice-connect.js": {
       "maxDuration": 120
+    },
+    "api/**/*.js": {
+      "excludeFiles": "lambda/**",
+      "maxDuration": 60
     }
   },
   "rewrites": [
