@@ -31,7 +31,10 @@ module.exports = async (req, res) => {
       .eq('manager_whatsapp_verified', true)
       .not('manager_phone', 'is', null);
 
+    logger.info('Briefing query result', { configCount: configs?.length || 0, prefKey, rawIds: (configs || []).map(c => c.id) });
+
     const eligible = (configs || []).filter((c) => c.notification_preferences?.[prefKey]);
+    logger.info('Eligible after filter', { eligible: eligible.length, prefKey });
 
     let sent = 0;
     for (const config of eligible) {
@@ -81,7 +84,7 @@ module.exports = async (req, res) => {
     const jobName = type === 'morning' ? 'manager-briefings-morning' : 'manager-briefings-eod';
     await logCronRun(jobName, { sent, total: eligible.length });
 
-    return res.json({ sent, total: eligible.length });
+    return res.json({ sent, total: eligible.length, _debug: { configCount: configs?.length || 0, prefKey } });
   } catch (err) {
     logger.error('manager-briefings cron error', { error: err.message });
     return res.status(500).json({ error: 'Internal error' });
