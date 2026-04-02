@@ -27,7 +27,7 @@ module.exports = async (req, res) => {
     const { data: configs, error: queryErr } = await supabaseAdmin
       .schema('restaurant')
       .from('restaurant_config')
-      .select('id, manager_phone, manager_whatsapp_verified, notification_preferences, restaurant_name, restaurant_profile, ai_strategy_doc')
+      .select('id, manager_phone, manager_whatsapp_verified, notification_preferences, restaurant_name')
       .not('manager_phone', 'is', null);
 
     if (queryErr) {
@@ -39,35 +39,12 @@ module.exports = async (req, res) => {
       c.manager_whatsapp_verified === true && c.notification_preferences?.[prefKey]
     );
 
-    // Debug: always return diagnostics
-    if (eligible.length === 0) {
-      return res.json({
-        sent: 0,
-        total: 0,
-        _diag: {
-          prefKey,
-          configCount: configs?.length ?? -1,
-          queryErr: queryErr?.message || null,
-          dataIsNull: configs === null,
-          rows: (configs || []).slice(0, 3).map(c => ({
-            id: c.id?.slice(0, 8),
-            verified: c.manager_whatsapp_verified,
-            pref: c.notification_preferences?.[prefKey],
-          })),
-        },
-      });
-    }
-
     let sent = 0;
     for (const config of eligible) {
       try {
         let promptToSend = prompt;
 
         // Inject restaurant identity into briefing context
-        const profile = config.restaurant_profile;
-        if (profile?.communication_style?.tone) {
-          promptToSend += `\n\nAdapt your tone to: ${profile.communication_style.tone}.`;
-        }
         if (config.restaurant_name) {
           promptToSend += `\nRestaurant: ${config.restaurant_name}.`;
         }
@@ -82,12 +59,9 @@ module.exports = async (req, res) => {
           }
         }
 
-        // Inject owner strategy + ask for suggestions at end of day
-        if (config.ai_strategy_doc) {
-          promptToSend += `\n\n[OWNER STRATEGY]\n${config.ai_strategy_doc}`;
-          if (type === 'end_of_day') {
-            promptToSend += '\n\nBased on today\'s data and the owner strategy above, end your briefing with 1-2 specific strategy suggestions: what to adjust, why, and what outcome to expect. Label this section "[STRATEGY SUGGESTIONS]".';
-          }
+        // Strategy suggestions for end of day
+        if (type === 'end_of_day') {
+          promptToSend += '\n\nEnd your briefing with 1-2 specific suggestions: what to adjust, why, and expected outcome.';
         }
 
         const briefing = await runManagerAgent(config.id, promptToSend, 'whatsapp');
