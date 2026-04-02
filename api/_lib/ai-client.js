@@ -13,10 +13,10 @@ const logger = createSecureLogger('ai-client');
 let _client = null;
 
 /** Default model */
-const AI_MODEL = process.env.AI_MODEL || 'anthropic/claude-sonnet-4-20250514';
+const AI_MODEL = process.env.AI_MODEL || 'anthropic/claude-sonnet-4';
 
 /** Cheap model for extraction/classification */
-const AI_MODEL_FAST = process.env.AI_MODEL_FAST || 'anthropic/claude-haiku-4-5-20251001';
+const AI_MODEL_FAST = process.env.AI_MODEL_FAST || 'anthropic/claude-3.5-haiku';
 
 /**
  * OpenRouter client that mimics the Anthropic SDK interface.
