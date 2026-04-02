@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -56,6 +56,10 @@ export default function ManagerAIChatPage() {
   const { data, isLoading } = useQuery<{ history: Message[] }>({
     queryKey: ['manager-chat-history'],
     queryFn: () => api.get('/manager-chat').then((r) => r.data),
+    // Disable automatic refetch to prevent duplicate messages from race conditions
+    // between optimistic updates and background refetches
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 
   const { data: usageData } = useQuery<UsageData>({
@@ -70,7 +74,17 @@ export default function ManagerAIChatPage() {
     usageData?.limit !== undefined &&
     (usageData?.used ?? 0) >= (usageData?.limit ?? Infinity);
 
-  const messages: Message[] = data?.history || [];
+  // Deduplicate messages by content+role to handle race conditions
+  const messages: Message[] = useMemo(() => {
+    const history = data?.history || [];
+    const seen = new Set<string>();
+    return history.filter((m) => {
+      const key = `${m.role}:${m.content}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [data?.history]);
 
   const sendMutation = useMutation({
     mutationFn: (message: string) =>

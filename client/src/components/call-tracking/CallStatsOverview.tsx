@@ -37,7 +37,7 @@ export default function CallStatsOverview({ stats }: Props) {
         <div className="text-[32px] font-bold tracking-tight leading-none text-deep-charcoal">
           {overview.average_duration_formatted}
         </div>
-        <div className="text-xs text-warm-stone mt-1">{t('callTracking.minutesPerCall')}</div>
+        <div className="text-xs text-warm-stone mt-1">{t('callTracking.perCall', 'per call')}</div>
       </div>
 
       <div className="py-5">

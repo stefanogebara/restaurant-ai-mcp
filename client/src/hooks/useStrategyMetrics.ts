@@ -35,5 +35,6 @@ export function useStrategyMetrics(range = 30) {
       return json.data;
     },
     staleTime: 10 * 60 * 1000,
+    retry: 1,
   });
 }

@@ -113,10 +113,11 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
 
   // ─── Derived ─────────────────────────────────────────────────────────────────
   const availableDates = useMemo(() => {
-    const days: { value: string; label: string; dayKey: string; dayNum: number; isToday: boolean }[] = [];
+    const days: { value: string; label: string; dayKey: string; dayNum: number; monthShort: string; weekdayShort: string; isToday: boolean; isFirstOfMonth: boolean }[] = [];
     const limit = restaurant.advance_booking_days || 30;
     const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
     const todayStr = new Date().toISOString().split('T')[0];
+    let prevMonth = -1;
 
     for (let i = 0; i < limit; i++) {
       const d = new Date();
@@ -126,7 +127,11 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
       const dayHours = restaurant.business_hours[dayKey];
       if (!dayHours || dayHours.is_open === false || dayHours.closed) continue;
       const label = d.toLocaleDateString(dateLocale, { weekday: 'short', month: 'short', day: 'numeric' });
-      days.push({ value, label, dayKey, dayNum: d.getDate(), isToday: value === todayStr });
+      const monthShort = d.toLocaleDateString(dateLocale, { month: 'short' });
+      const weekdayShort = d.toLocaleDateString(dateLocale, { weekday: 'short' });
+      const isFirstOfMonth = d.getMonth() !== prevMonth;
+      prevMonth = d.getMonth();
+      days.push({ value, label, dayKey, dayNum: d.getDate(), monthShort, weekdayShort, isToday: value === todayStr, isFirstOfMonth });
     }
     return days;
   }, [restaurant, dateLocale]);
@@ -247,6 +252,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
               type="button"
               key={d.value}
               onClick={() => setSelectedDate(d.value)}
+              title={d.label}
               className={`aspect-square flex flex-col items-center justify-center rounded-[10px] text-[13px] transition-colors ${
                 selectedDate === d.value
                   ? 'bg-deep-charcoal text-white font-semibold'
@@ -255,6 +261,9 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
                     : 'text-stone-gray hover:bg-soft-gray'
               }`}
             >
+              <span className={`text-[10px] leading-tight ${selectedDate === d.value ? 'text-white/70' : 'text-muted-stone'}`}>
+                {d.isFirstOfMonth || d.isToday ? d.monthShort : d.weekdayShort}
+              </span>
               <span>{d.dayNum}</span>
             </button>
           ))}

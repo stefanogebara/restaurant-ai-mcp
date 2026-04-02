@@ -2255,6 +2255,7 @@
     "callsResolved": "{{success}} de {{total}} llamadas resueltas",
     "avgDuration": "Duración Promedio",
     "minutesPerCall": "minutos por llamada",
+    "perCall": "por llamada",
     "bookingsViaCall": "Reservas por Llamada",
     "conversionRate": "{{rate}}% de conversión",
     "noCallsYet": "Sin llamadas aún",

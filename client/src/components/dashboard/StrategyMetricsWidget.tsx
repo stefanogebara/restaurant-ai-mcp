@@ -157,7 +157,7 @@ function MetricCard({
 export default function StrategyMetricsWidget() {
   const { t } = useTranslation();
   const [range, setRange] = useState(30);
-  const { data, isLoading, refetch, isFetching } = useStrategyMetrics(range);
+  const { data, isLoading, isError, refetch, isFetching } = useStrategyMetrics(range);
 
   return (
     <div className="py-5">
@@ -198,8 +198,16 @@ export default function StrategyMetricsWidget() {
         <div className="flex items-center justify-center h-32">
           <Spinner />
         </div>
-      ) : !data ? (
-        <p className="text-sm text-muted-stone text-center py-8">{t('strategy.loadFailed', 'Failed to load metrics')}</p>
+      ) : isError || !data ? (
+        <div className="text-center py-8">
+          <p className="text-sm text-muted-stone mb-3">{t('strategy.loadFailed', 'Failed to load metrics')}</p>
+          <button
+            onClick={() => refetch()}
+            className="text-xs font-medium text-burgundy hover:text-burgundy-dark cursor-pointer underline underline-offset-2"
+          >
+            {t('common.retry', 'Retry')}
+          </button>
+        </div>
       ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">

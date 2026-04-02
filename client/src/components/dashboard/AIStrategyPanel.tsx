@@ -71,6 +71,25 @@ METAS:
 - Aumentar ingreso promedio por cubierto`,
 };
 
+/**
+ * Remove duplicated content blocks from a strategy document.
+ * If a multi-line block appears more than once, keep only the first occurrence.
+ */
+function deduplicateDoc(text: string): string {
+  if (!text) return text;
+  // Split into paragraphs/blocks separated by blank lines
+  const blocks = text.split(/\n{2,}/);
+  const seen = new Set<string>();
+  const unique = blocks.filter((block) => {
+    const trimmed = block.trim();
+    if (!trimmed) return false;
+    if (seen.has(trimmed)) return false;
+    seen.add(trimmed);
+    return true;
+  });
+  return unique.join('\n\n');
+}
+
 export default function AIStrategyPanel() {
   const { t, i18n } = useTranslation();
   const toast = useToast();
@@ -81,8 +100,11 @@ export default function AIStrategyPanel() {
   const [doc, setDoc] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<string | null>(null);
 
-  // Use local state if editing, otherwise use server value
-  const currentDoc = doc !== null ? doc : (data?.strategy_doc ?? '');
+  // Use local state if editing, otherwise use server value.
+  // Deduplicate repeated content blocks that may have been appended by buggy saves.
+  const serverDoc = data?.strategy_doc ?? '';
+  const deduplicatedServerDoc = deduplicateDoc(serverDoc);
+  const currentDoc = doc !== null ? doc : deduplicatedServerDoc;
 
   const isDirty = doc !== null && doc !== (data?.strategy_doc ?? '');
 

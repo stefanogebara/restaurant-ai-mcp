@@ -1527,6 +1527,7 @@
     "callsResolved": "{{success}} of {{total}} calls resolved",
     "avgDuration": "Avg Duration",
     "minutesPerCall": "minutes per call",
+    "perCall": "per call",
     "bookingsViaCall": "Bookings via Call",
     "conversionRate": "{{rate}}% conversion rate",
     "noCallsYet": "No calls yet",

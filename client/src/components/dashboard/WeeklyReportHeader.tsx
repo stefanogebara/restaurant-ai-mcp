@@ -21,7 +21,7 @@ export default function WeeklyReportHeader({
   return (
     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pl-12 sm:pl-0">
       <h1 className="text-2xl font-bold text-deep-charcoal tracking-tight">
-        {t('analytics.weeklyReports', 'Reports')} <span className="font-light text-warm-stone">/ {t('analytics.weekly', 'Weekly')}</span>
+        {t('analytics.weeklyReports', 'Weekly Reports')}
       </h1>
       <div className="flex items-center gap-2.5 print:hidden">
         <div className="flex items-center gap-1.5 px-2 py-2 bg-white border border-border-gray rounded-xl text-[13px] font-medium text-stone-gray">
