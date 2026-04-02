@@ -107,7 +107,8 @@ module.exports = async (req, res) => {
           agentId: restaurant.elevenlabs_agent_id
         });
 
-        res.status(200).send(buildElevenLabsTwiml(restaurant));
+        const twiml = await buildElevenLabsTwiml(restaurant, callerNumber, calledNumber);
+        res.status(200).send(twiml);
         break;
       }
     }
@@ -254,10 +255,11 @@ function buildStreamTwiml(wsUrl, restaurantId, callerNumber, callSid) {
 }
 
 /**
- * Build TwiML that routes to ElevenLabs managed pipeline (existing flow)
- * This preserves the current behavior for restaurants still on ElevenLabs
+ * Register call with ElevenLabs and return TwiML for Twilio stream.
+ * Uses the /convai/twilio/register-call API which returns proper
+ * TwiML with a signed conversation-specific WebSocket URL.
  */
-function buildElevenLabsTwiml(restaurant) {
+async function buildElevenLabsTwiml(restaurant, callerNumber, calledNumber) {
   const agentId = restaurant.elevenlabs_agent_id;
 
   if (!agentId) {
@@ -269,18 +271,40 @@ function buildElevenLabsTwiml(restaurant) {
     );
   }
 
-  // ElevenLabs Twilio integration uses <Connect><Stream> for bidirectional audio
-  // The Stream connects to ElevenLabs WebSocket which handles STT + LLM + TTS
-  // Brief <Pause> before <Connect> ensures Twilio establishes audio path before streaming
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-  <Pause length="1"/>
-  <Connect>
-    <Stream url="wss://api.elevenlabs.io/v1/convai/conversation?agent_id=${agentId}">
-      <Parameter name="caller_id" value="{{From}}" />
-    </Stream>
-  </Connect>
-</Response>`;
+  const apiKey = process.env.ELEVENLABS_API_KEY;
+  if (!apiKey) {
+    logger.error('ELEVENLABS_API_KEY not configured');
+    return buildErrorTwiml('Voice service not configured.');
+  }
+
+  try {
+    const resp = await fetch('https://api.elevenlabs.io/v1/convai/twilio/register-call', {
+      method: 'POST',
+      headers: {
+        'xi-api-key': apiKey,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        agent_id: agentId,
+        from_number: callerNumber || 'unknown',
+        to_number: calledNumber || 'unknown',
+      }),
+    });
+
+    if (!resp.ok) {
+      const errText = await resp.text().catch(() => '');
+      logger.error('ElevenLabs register-call failed', { status: resp.status, body: errText.slice(0, 200) });
+      return buildErrorTwiml('Voice assistant is temporarily unavailable.');
+    }
+
+    // ElevenLabs returns TwiML directly
+    const twiml = await resp.text();
+    logger.info('ElevenLabs call registered', { agentId, restaurantId: restaurant.id });
+    return twiml;
+  } catch (err) {
+    logger.error('ElevenLabs register-call error', { error: err.message });
+    return buildErrorTwiml('Voice assistant is temporarily unavailable.');
+  }
 }
 
 /**
