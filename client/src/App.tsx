@@ -168,7 +168,7 @@ function App() {
               <Route path="/host-dashboard/settings" element={<ProtectedRoute><RestaurantSettingsPage /></ProtectedRoute>} />
               <Route path="/host-dashboard/manager-ai" element={<ProtectedRoute><ManagerAIChatPage /></ProtectedRoute>} />
               <Route path="/host-dashboard/campaigns" element={<ProtectedRoute><CampaignsPage /></ProtectedRoute>} />
-              <Route path="/host-dashboard/coupons" element={<ProtectedRoute><CouponsPage /></ProtectedRoute>} />
+              <Route path="/host-dashboard/coupons" element={<ProtectedRoute><ErrorBoundary fallback={<RouteErrorFallback />}><CouponsPage /></ErrorBoundary></ProtectedRoute>} />
               <Route path="/host-dashboard/events" element={<ProtectedRoute><EventsPage /></ProtectedRoute>} />
               {/* Public event booking page */}
               <Route path="/events/:slug/:eventId" element={<ErrorBoundary fallback={<RouteErrorFallback />}><EventBookingPage /></ErrorBoundary>} />

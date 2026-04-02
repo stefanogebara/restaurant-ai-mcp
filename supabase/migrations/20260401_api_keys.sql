@@ -36,3 +36,9 @@ CREATE INDEX idx_webhook_subs_restaurant ON restaurant.webhook_subscriptions (re
 -- Enable RLS
 ALTER TABLE restaurant.api_keys ENABLE ROW LEVEL SECURITY;
 ALTER TABLE restaurant.webhook_subscriptions ENABLE ROW LEVEL SECURITY;
+
+-- Grant access to roles (GRANT ALL ON ALL TABLES only covers tables that existed at grant time)
+GRANT ALL ON restaurant.api_keys TO service_role;
+GRANT ALL ON restaurant.webhook_subscriptions TO service_role;
+GRANT SELECT ON restaurant.api_keys TO anon, authenticated;
+GRANT SELECT ON restaurant.webhook_subscriptions TO anon, authenticated;

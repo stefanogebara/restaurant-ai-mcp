@@ -105,7 +105,7 @@ export function useCustomerList(filters: CustomerListFilters) {
     queryKey: ['crm', 'customers', filters],
     queryFn: async () => {
       const qs = buildQueryString(filters);
-      const response = await authFetch(`/api/crm?${qs}`);
+      const response = await authFetch(`/api/customers?${qs}`);
       if (!response.ok) throw new Error('Failed to fetch customers');
       const result = await response.json();
       if (!result.success) throw new Error(result.error || 'Failed to fetch customers');
@@ -120,7 +120,7 @@ export function useCustomerDetail(customerId: string | null) {
     queryKey: ['crm', 'customer', customerId],
     queryFn: async () => {
       const response = await authFetch(
-        `/api/crm?action=detail&customer_id=${encodeURIComponent(customerId!)}`
+        `/api/customers?action=detail&customer_id=${encodeURIComponent(customerId!)}`
       );
       if (!response.ok) throw new Error('Failed to fetch customer detail');
       const result = await response.json();
@@ -138,7 +138,7 @@ export function useUpdateTags() {
   const queryClient = useQueryClient();
   return useMutation<void, Error, { customerId: string; tags: string[] }>({
     mutationFn: async ({ customerId, tags }) => {
-      const response = await authFetch('/api/crm?action=update_tags', {
+      const response = await authFetch('/api/customers?action=update_tags', {
         method: 'POST',
         body: JSON.stringify({ customer_id: customerId, tags }),
       });
@@ -157,7 +157,7 @@ export function useAddNote() {
   const queryClient = useQueryClient();
   return useMutation<void, Error, { customerId: string; content: string }>({
     mutationFn: async ({ customerId, content }) => {
-      const response = await authFetch('/api/crm?action=add_note', {
+      const response = await authFetch('/api/customers?action=add_note', {
         method: 'POST',
         body: JSON.stringify({ customer_id: customerId, content }),
       });
@@ -175,7 +175,7 @@ export function useDeleteNote() {
   const queryClient = useQueryClient();
   return useMutation<void, Error, { customerId: string; noteId: string }>({
     mutationFn: async ({ customerId, noteId }) => {
-      const response = await authFetch('/api/crm?action=delete_note', {
+      const response = await authFetch('/api/customers?action=delete_note', {
         method: 'POST',
         body: JSON.stringify({ customer_id: customerId, note_id: noteId }),
       });

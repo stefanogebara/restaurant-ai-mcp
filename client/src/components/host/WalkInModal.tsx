@@ -130,7 +130,7 @@ export default function WalkInModal({ isOpen, onClose, onSuccess, availableTable
               type="tel"
               required
               aria-label="Customer phone"
-              placeholder="+34 612 345 678"
+              placeholder="+55 11 91234 5678"
               value={formData.customer_phone}
               onChange={(e) => setFormData({ ...formData, customer_phone: e.target.value })}
               className="w-full px-4 py-3 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent"

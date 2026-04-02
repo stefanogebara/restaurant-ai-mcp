@@ -37,7 +37,7 @@ vi.mock('../../common/PhoneInput', () => ({
         type="tel"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="+34 612 345 678"
+        placeholder="+55 11 91234 5678"
       />
     </div>
   ),
@@ -105,7 +105,7 @@ describe('AddReservationModal', () => {
 
     // Fill required fields
     await user.type(screen.getByPlaceholderText('John Smith'), 'Alice Test');
-    await user.type(screen.getByPlaceholderText('+34 612 345 678'), '+1 555-0001');
+    await user.type(screen.getByPlaceholderText('+55 11 91234 5678'), '+1 555-0001');
 
     // Submit
     await user.click(screen.getByText('Create Reservation'));

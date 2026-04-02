@@ -171,7 +171,7 @@ function PhoneVerificationPanel() {
           isVerified ? 'bg-rose-50 text-rose-700' : 'bg-amber-50 text-amber-700'
         }`}>
           <span className={`w-1.5 h-1.5 rounded-full ${isVerified ? 'bg-rose-500' : 'bg-amber-500'}`} />
-          {isVerified ? t('settings.verified') : (phone?.code_verification_status || 'Unknown').replace(/_/g, ' ')}
+          {isVerified ? t('settings.verified') : t(`settings.phoneStatus.${phone?.code_verification_status}`, (phone?.code_verification_status || 'Unknown').replace(/_/g, ' '))}
         </span>
       </div>
 

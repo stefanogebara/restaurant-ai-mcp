@@ -80,7 +80,7 @@ function CouponCreateForm({ onCreated, onCancel }: { onCreated: () => void; onCa
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-sm font-bold text-deep-charcoal">{t('coupons.newCoupon', 'Novo Cupom')}</h3>
         <button type="button" onClick={onCancel} className="text-stone-gray hover:text-deep-charcoal transition-colors">
-          <ThiingsIcon name={"x" as any} size="xs" />
+          <ThiingsIcon name="x" size="xs" />
         </button>
       </div>
 
@@ -247,7 +247,7 @@ function CouponRow({ coupon }: { coupon: Coupon }) {
           className="text-stone-gray hover:text-[#9F1239] transition-colors"
           title={t('coupons.copyCode', 'Copiar codigo')}
         >
-          <ThiingsIcon name={(copied ? 'check' : 'copy') as any} pxSize={14} />
+          <ThiingsIcon name={copied ? 'check' : 'copy'} pxSize={14} />
         </button>
       </div>
 
@@ -358,14 +358,14 @@ export default function CouponsPage() {
             </div>
           )}
 
-          {!isLoading && !error && coupons && coupons.length === 0 && (
+          {!isLoading && !error && Array.isArray(coupons) && coupons.length === 0 && (
             <div className="text-center py-12">
               <p className="text-sm font-medium text-deep-charcoal">{t('coupons.noCoupons', 'Nenhum cupom ainda')}</p>
               <p className="text-xs text-stone-gray mt-1">{t('coupons.noCouponsHint', 'Crie seu primeiro cupom para atrair mais clientes')}</p>
             </div>
           )}
 
-          {!isLoading && !error && coupons && coupons.length > 0 && (
+          {!isLoading && !error && Array.isArray(coupons) && coupons.length > 0 && (
             <div>
               {/* Table header */}
               <div className="flex items-center gap-4 px-4 py-2 border-b border-[#E5E7EB] bg-gray-50/50 text-xs font-medium text-stone-gray uppercase tracking-wide">

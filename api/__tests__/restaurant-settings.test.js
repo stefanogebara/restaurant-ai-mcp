@@ -75,7 +75,7 @@ function createMockReqRes(overrides = {}) {
 beforeEach(() => {
   jest.clearAllMocks();
   useMockSingleImpl = false;
-  mockSupabaseResult = { data: { language: 'en', restaurant_name: 'Test Restaurant', city: 'Madrid', country: 'ES', metric_profile: null }, error: null };
+  mockSupabaseResult = { data: { agent_language: 'en', restaurant_name: 'Test Restaurant', city: 'Madrid', country: 'ES', metric_profile: null, language: 'en' }, error: null };
 });
 
 // ============================================================
@@ -124,7 +124,7 @@ describe('RestaurantSettings: GET basic settings', () => {
       user: { restaurant_id: 'rest-1', email: 'admin@test.com' },
     });
     mockSupabaseResult = {
-      data: { language: 'es', restaurant_name: 'El Tapas', city: 'Barcelona', country: 'ES' },
+      data: { agent_language: 'es', restaurant_name: 'El Tapas', city: 'Barcelona', country: 'ES' },
       error: null,
     };
 
@@ -142,7 +142,7 @@ describe('RestaurantSettings: GET basic settings', () => {
       user: { restaurant_id: 'rest-1', email: 'admin@test.com' },
     });
     mockSupabaseResult = {
-      data: { language: null, restaurant_name: 'Test', city: 'London', country: 'GB' },
+      data: { agent_language: null, restaurant_name: 'Test', city: 'London', country: 'GB' },
       error: null,
     };
 
@@ -172,7 +172,7 @@ describe('RestaurantSettings: PUT basic settings', () => {
     verifyAuth.mockResolvedValueOnce({
       user: { restaurant_id: 'rest-1', email: 'admin@test.com' },
     });
-    mockSupabaseResult = { data: { language: 'pt', restaurant_name: 'Test' }, error: null };
+    mockSupabaseResult = { data: { agent_language: 'pt', restaurant_name: 'Test' }, error: null };
 
     const { req, res } = createMockReqRes({
       method: 'PUT',

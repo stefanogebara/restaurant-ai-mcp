@@ -1,14 +1,23 @@
 import { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import type { Table, TableShape } from '../../types/host.types';
 import { SHAPES, CAPACITIES, getStatusKey, getStatusStyle } from './floorPlanConstants';
 
-const STATUS_LABEL: Record<string, string> = {
-  available: 'Available',
-  occupied:  'Occupied',
-  reserved:  'Reserved',
-  cleaning:  'Cleaning',
-  default:   'Unknown',
+const STATUS_LABEL_KEYS: Record<string, string> = {
+  available: 'floorPlan.status.available',
+  occupied:  'floorPlan.status.occupied',
+  reserved:  'floorPlan.status.reserved',
+  cleaning:  'floorPlan.status.cleaning',
+  default:   'floorPlan.status.unknown',
+};
+
+const SHAPE_LABEL_KEYS: Record<string, string> = {
+  round:       'floorPlan.shape.round',
+  square:      'floorPlan.shape.square',
+  rectangle:   'floorPlan.shape.rectangle',
+  booth:       'floorPlan.shape.booth',
+  'bar-stool': 'floorPlan.shape.barStool',
 };
 
 interface Props {
@@ -20,6 +29,7 @@ interface Props {
 }
 
 export default function TablePopover({ table, position, onClose, onDelete, onUpdateProps }: Props) {
+  const { t } = useTranslation();
   const [shape, setShape] = useState(table.shape || 'round');
   const [capacity, setCapacity] = useState(table.capacity || 2);
   const popoverRef = useRef<HTMLDivElement>(null);
@@ -45,19 +55,19 @@ export default function TablePopover({ table, position, onClose, onDelete, onUpd
       {/* Header */}
       <div className="px-4 py-3.5 border-b border-border-gray flex items-start justify-between">
         <div>
-          <div className="font-semibold text-sm text-deep-charcoal">Table {table.table_number}</div>
+          <div className="font-semibold text-sm text-deep-charcoal">{t('floorPlan.tableLabel', 'Table')} {table.table_number}</div>
           <div className="flex items-center gap-1.5 mt-1">
             <span className="inline-block w-2 h-2 rounded-full" style={{ background: st.stroke }} />
             <span className="text-xs font-medium" style={{ color: st.text }}>
-              {STATUS_LABEL[statusKey] ?? 'Unknown'}
+              {t(STATUS_LABEL_KEYS[statusKey] ?? 'floorPlan.status.unknown', statusKey)}
             </span>
-            <span className="text-xs text-muted-stone">&middot; {table.location || 'Main'}</span>
+            <span className="text-xs text-muted-stone">&middot; {t(`floorPlan.location.${(table.location || 'main').toLowerCase()}`, table.location || 'Main')}</span>
           </div>
         </div>
         <button
           type="button"
           onClick={onClose}
-          aria-label="Close"
+          aria-label={t('common.close', 'Close')}
           className="p-1.5 hover:bg-soft-gray rounded-xl transition-colors text-muted-stone mt-0.5"
         >
           <ThiingsIcon name="close" pxSize={14} />
@@ -68,20 +78,20 @@ export default function TablePopover({ table, position, onClose, onDelete, onUpd
       <div className="p-4 space-y-3.5">
         <div>
           <label className="block text-[11px] font-semibold text-warm-stone mb-1.5 uppercase tracking-wider">
-            Shape
+            {t('floorPlan.shape.label', 'Shape')}
           </label>
           <select
             value={shape}
             onChange={e => setShape(e.target.value as TableShape)}
             className="w-full px-3 py-2 bg-soft-gray border border-border-gray rounded-xl text-xs text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
           >
-            {SHAPES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+            {SHAPES.map(s => <option key={s.value} value={s.value}>{t(SHAPE_LABEL_KEYS[s.value] || s.label, s.label)}</option>)}
           </select>
         </div>
 
         <div>
           <label className="block text-[11px] font-semibold text-warm-stone mb-1.5 uppercase tracking-wider">
-            Capacity
+            {t('floorPlan.capacity', 'Capacity')}
           </label>
           <div className="flex gap-1.5">
             {CAPACITIES.map(c => (
@@ -108,17 +118,17 @@ export default function TablePopover({ table, position, onClose, onDelete, onUpd
               onClick={() => { onUpdateProps({ table_id: table.id, shape, capacity }); onClose(); }}
               className="flex-1 py-1.5 bg-deep-charcoal text-white text-xs font-semibold rounded-xl hover:bg-stone-mid transition-colors"
             >
-              Save Changes
+              {t('floorPlan.saveChanges', 'Save Changes')}
             </button>
           )}
           <button
             type="button"
             onClick={() => {
-              if (confirm(`Delete table ${table.table_number}?`)) { onDelete(table.id); onClose(); }
+              if (confirm(t('floorPlan.deleteConfirm', 'Delete table {{number}}?', { number: table.table_number }))) { onDelete(table.id); onClose(); }
             }}
             className="flex-1 py-1.5 border border-red-200 text-red-600 text-xs font-semibold rounded-xl hover:bg-red-50 transition-colors"
           >
-            Delete
+            {t('floorPlan.delete', 'Delete')}
           </button>
         </div>
       </div>

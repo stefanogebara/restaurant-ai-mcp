@@ -199,7 +199,7 @@ export default function ManualRevenueModal({
                 type="tel"
                 value={customerPhone}
                 onChange={(e) => setCustomerPhone(e.target.value)}
-                placeholder="+34 612 345 678"
+                placeholder="+55 11 91234 5678"
                 className="w-full px-4 py-2 border border-border-gray rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
               />
             </div>

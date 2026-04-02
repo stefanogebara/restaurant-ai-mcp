@@ -148,17 +148,31 @@ module.exports = async function handler(req, res) {
     }
 
     // GET /profile
+    // metric_profile and language live on restaurant_info, not restaurant_config
     if (method === 'GET' && path.includes('/profile')) {
       const { data: restaurant, error } = await supabase
         .schema('restaurant')
-        .from('restaurant_config')
+        .from('restaurant_info')
         .select('metric_profile, language')
         .eq('id', restaurantId)
         .single();
 
       if (error) {
-        logger.error('Error fetching profile:', error);
-        return res.status(500).json({ success: false, error: 'Failed to fetch profile' });
+        // Fall back to restaurant_config.agent_language if restaurant_info doesn't exist
+        const { data: configData } = await supabase
+          .schema('restaurant')
+          .from('restaurant_config')
+          .select('agent_language')
+          .eq('id', restaurantId)
+          .single();
+
+        if (!configData) {
+          logger.error('Error fetching profile:', error);
+          return res.status(500).json({ success: false, error: 'Failed to fetch profile' });
+        }
+
+        const profile = getDefaultMetricProfile(configData.agent_language || 'en');
+        return res.status(200).json({ success: true, data: profile });
       }
 
       if (!restaurant) {
@@ -170,6 +184,7 @@ module.exports = async function handler(req, res) {
     }
 
     // PUT /profile
+    // metric_profile lives on restaurant_info, not restaurant_config
     if (method === 'PUT' && path.includes('/profile')) {
       const { metric_profile } = req.body;
 
@@ -184,7 +199,7 @@ module.exports = async function handler(req, res) {
 
       const { data, error } = await supabase
         .schema('restaurant')
-        .from('restaurant_config')
+        .from('restaurant_info')
         .update({ metric_profile })
         .eq('id', restaurantId)
         .select('metric_profile')
@@ -213,11 +228,12 @@ module.exports = async function handler(req, res) {
     }
 
     // GET / - Basic settings
+    // restaurant_config uses agent_language (not language) as the column name
     if (method === 'GET' && !path.includes('/profile')) {
       const { data: restaurant, error } = await supabase
         .schema('restaurant')
         .from('restaurant_config')
-        .select('language, restaurant_name, city, country, phone, email, business_hours, timezone, reservation_settings')
+        .select('agent_language, restaurant_name, city, country, phone, email, business_hours, timezone, reservation_settings')
         .eq('id', restaurantId)
         .single();
 
@@ -233,7 +249,7 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({
         success: true,
         data: {
-          language: restaurant.language || 'en',
+          language: restaurant.agent_language || 'en',
           restaurant_name: restaurant.restaurant_name,
           city: restaurant.city,
           country: restaurant.country,
@@ -247,6 +263,7 @@ module.exports = async function handler(req, res) {
     }
 
     // PUT / - Update settings
+    // restaurant_config uses agent_language (not language), so we map the field name
     if (method === 'PUT' && !path.includes('/profile')) {
       const ALLOWED_FIELDS = ['language', 'restaurant_name', 'city', 'country', 'phone', 'email', 'business_hours', 'timezone', 'reservation_settings'];
       const { language } = req.body;
@@ -258,7 +275,12 @@ module.exports = async function handler(req, res) {
       const updates = {};
       for (const field of ALLOWED_FIELDS) {
         if (req.body[field] !== undefined) {
-          updates[field] = req.body[field];
+          if (field === 'language') {
+            // Map 'language' from the API to 'agent_language' column in restaurant_config
+            updates.agent_language = req.body[field];
+          } else {
+            updates[field] = req.body[field];
+          }
         }
       }
 
@@ -271,7 +293,7 @@ module.exports = async function handler(req, res) {
         .from('restaurant_config')
         .update(updates)
         .eq('id', restaurantId)
-        .select('language, restaurant_name')
+        .select('agent_language, restaurant_name')
         .single();
 
       if (error) {
@@ -282,7 +304,7 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({
         success: true,
         message: 'Settings updated successfully',
-        data: { language: data.language, restaurant_name: data.restaurant_name },
+        data: { language: data.agent_language, restaurant_name: data.restaurant_name },
       });
     }
 

@@ -65,7 +65,8 @@ function calculateHourOfDay(reservation) {
  */
 function calculateDayOfWeek(reservation) {
   try {
-    const date = new Date(reservation.date);
+    // Use T12:00:00 to avoid UTC midnight parsing shifting the date in negative-offset timezones
+    const date = new Date(reservation.date + 'T12:00:00');
     if (isNaN(date.getTime())) return 5; // Invalid date
     return date.getDay(); // 0-6
   } catch (error) {

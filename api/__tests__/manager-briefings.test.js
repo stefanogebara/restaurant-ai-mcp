@@ -23,6 +23,9 @@ jest.mock('../_lib/secure-logger', () => ({
 jest.mock('../services/restaurantSnapshot', () => ({
   getVIPsForToday: (...a) => mockGetVIPsForToday(...a),
 }));
+jest.mock('../_lib/cron-tracker', () => ({
+  logCronRun: jest.fn().mockResolvedValue(undefined),
+}));
 
 function mockChain(data) {
   const c = { select: jest.fn(), eq: jest.fn(), not: jest.fn() };
@@ -48,7 +51,7 @@ beforeEach(() => {
 
 it('sends end-of-day briefing to opted-in restaurants via sendBriefing', async () => {
   mockSchemaFrom.mockReturnValue(mockChain([
-    { id: 'rest-1', manager_phone: '+15551234567', notification_preferences: { end_of_day_briefing: true, briefing_channel: 'text' } },
+    { id: 'rest-1', manager_phone: '+15551234567', manager_whatsapp_verified: true, notification_preferences: { end_of_day_briefing: true, briefing_channel: 'text' } },
   ]));
 
   const req = { method: 'POST', headers: { authorization: 'Bearer test-cron-secret' }, query: { type: 'end_of_day' } };
@@ -62,7 +65,7 @@ it('sends end-of-day briefing to opted-in restaurants via sendBriefing', async (
 
 it('uses voice_note channel when briefing_channel is voice_note', async () => {
   mockSchemaFrom.mockReturnValue(mockChain([
-    { id: 'rest-1', manager_phone: '+15551234567', notification_preferences: { end_of_day_briefing: true, briefing_channel: 'voice_note' } },
+    { id: 'rest-1', manager_phone: '+15551234567', manager_whatsapp_verified: true, notification_preferences: { end_of_day_briefing: true, briefing_channel: 'voice_note' } },
   ]));
 
   const req = { method: 'POST', headers: { authorization: 'Bearer test-cron-secret' }, query: { type: 'end_of_day' } };
@@ -74,7 +77,7 @@ it('uses voice_note channel when briefing_channel is voice_note', async () => {
 
 it('defaults to text channel when briefing_channel is not set', async () => {
   mockSchemaFrom.mockReturnValue(mockChain([
-    { id: 'rest-1', manager_phone: '+15551234567', notification_preferences: { end_of_day_briefing: true } },
+    { id: 'rest-1', manager_phone: '+15551234567', manager_whatsapp_verified: true, notification_preferences: { end_of_day_briefing: true } },
   ]));
 
   const req = { method: 'POST', headers: { authorization: 'Bearer test-cron-secret' }, query: { type: 'end_of_day' } };
@@ -107,7 +110,7 @@ it('returns 401 for wrong CRON_SECRET', async () => {
 
 it('sends morning briefing to opted-in restaurants', async () => {
   mockSchemaFrom.mockReturnValue(mockChain([
-    { id: 'rest-1', manager_phone: '+15551234567', notification_preferences: { morning_briefing: true, briefing_channel: 'phone_call' } },
+    { id: 'rest-1', manager_phone: '+15551234567', manager_whatsapp_verified: true, notification_preferences: { morning_briefing: true, briefing_channel: 'phone_call' } },
   ]));
 
   const req = { method: 'POST', headers: { authorization: 'Bearer test-cron-secret' }, query: { type: 'morning' } };
@@ -127,7 +130,7 @@ it('injects [VIP GUESTS TODAY] block in morning prompt when VIPs exist', async (
     { customer_name: "John O'Brien", customer_tier: 'regular', total_visits: 8 },
   ]);
   mockSchemaFrom.mockReturnValue(mockChain([
-    { id: 'rest-1', manager_phone: '+15551234567', notification_preferences: { morning_briefing: true, briefing_channel: 'text' } },
+    { id: 'rest-1', manager_phone: '+15551234567', manager_whatsapp_verified: true, notification_preferences: { morning_briefing: true, briefing_channel: 'text' } },
   ]));
 
   const req = { method: 'POST', headers: { authorization: 'Bearer test-cron-secret' }, query: { type: 'morning' } };
@@ -143,7 +146,7 @@ it('injects [VIP GUESTS TODAY] block in morning prompt when VIPs exist', async (
 it('uses base morning prompt when no VIPs today', async () => {
   mockGetVIPsForToday.mockResolvedValue([]);
   mockSchemaFrom.mockReturnValue(mockChain([
-    { id: 'rest-1', manager_phone: '+15551234567', notification_preferences: { morning_briefing: true, briefing_channel: 'text' } },
+    { id: 'rest-1', manager_phone: '+15551234567', manager_whatsapp_verified: true, notification_preferences: { morning_briefing: true, briefing_channel: 'text' } },
   ]));
 
   const req = { method: 'POST', headers: { authorization: 'Bearer test-cron-secret' }, query: { type: 'morning' } };

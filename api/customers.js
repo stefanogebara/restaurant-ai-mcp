@@ -32,6 +32,8 @@ async function handleList(req, res) {
       search,
       tier,
       tag,
+      allergy,
+      dietary,
       sort = 'last_visit_date',
       order = 'desc',
       limit = '25',
@@ -83,6 +85,16 @@ async function handleList(req, res) {
     // Tag filter (JSONB contains)
     if (tag) {
       query = query.contains('tags', [tag.trim().toLowerCase()]);
+    }
+
+    // Allergy filter (array contains)
+    if (allergy) {
+      query = query.contains('allergies', [allergy.trim()]);
+    }
+
+    // Dietary filter (array contains)
+    if (dietary) {
+      query = query.contains('dietary_restrictions', [dietary.trim()]);
     }
 
     // Sorting and pagination

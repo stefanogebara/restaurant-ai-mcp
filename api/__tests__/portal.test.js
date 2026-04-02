@@ -350,7 +350,7 @@ describe('Portal: reserve action', () => {
         customer_name: 'Test User',
         customer_phone: '+5511999999999',
         party_size: 2,
-        date: '2026-04-01',
+        date: '2027-04-01',
         time: '19:00',
       },
     });
@@ -385,7 +385,7 @@ describe('Portal: reserve action', () => {
         customer_name: 'Test User',
         customer_phone: '+5511999999999',
         party_size: 4,
-        date: '2026-04-01',
+        date: '2027-04-01',
         time: '19:00',
       },
     });
@@ -418,7 +418,7 @@ describe('Portal: reserve action', () => {
         reservation_id: 'RES-TEST-123',
         customer_name: 'Test User',
         party_size: 2,
-        date: '2026-04-01',
+        date: '2027-04-01',
         time: '19:00',
         status: 'confirmed',
       },
@@ -433,7 +433,7 @@ describe('Portal: reserve action', () => {
         customer_name: 'Test User',
         customer_phone: '+5511999999999',
         party_size: 2,
-        date: '2026-04-01',
+        date: '2027-04-01',
         time: '19:00',
       },
     });
@@ -453,8 +453,8 @@ describe('Portal: reserve action', () => {
 // action=availability (slot generation)
 // ============================================================
 describe('Portal: availability slot generation', () => {
-  // 2026-03-02 is a Monday
-  const MONDAY = '2026-03-02';
+  // 2027-04-05 is a Monday
+  const MONDAY = '2027-04-05';
 
   function restaurantConfig(overrides = {}) {
     return {
@@ -567,7 +567,7 @@ describe('Portal: reserve - party size limit', () => {
         customer_name: 'Big Group',
         customer_phone: '+5511999999999',
         party_size: 10,
-        date: '2026-04-01',
+        date: '2027-04-01',
         time: '19:00',
       },
     });
@@ -609,7 +609,7 @@ describe('Portal: reserve - DB insert error', () => {
         customer_name: 'Test User',
         customer_phone: '+5511999999999',
         party_size: 2,
-        date: '2026-04-01',
+        date: '2027-04-01',
         time: '19:00',
       },
     });
@@ -648,7 +648,7 @@ describe('Portal: reserve - email confirmation', () => {
         reservation_id: 'RES-TEST-123',
         customer_name: 'Email User',
         party_size: 2,
-        date: '2026-04-01',
+        date: '2027-04-01',
         time: '19:00',
         status: 'confirmed',
       },
@@ -668,7 +668,7 @@ describe('Portal: reserve - email confirmation', () => {
         customer_phone: '+5511999999999',
         customer_email: 'user@example.com',
         party_size: 2,
-        date: '2026-04-01',
+        date: '2027-04-01',
         time: '19:00',
       },
     });
@@ -697,7 +697,7 @@ describe('Portal: reserve - email confirmation', () => {
         customer_phone: '+5511999999999',
         customer_email: 'user@example.com',
         party_size: 2,
-        date: '2026-04-01',
+        date: '2027-04-01',
         time: '19:00',
       },
     });
@@ -722,7 +722,7 @@ describe('Portal: reserve - email confirmation', () => {
         customer_name: 'No Email User',
         customer_phone: '+5511999999999',
         party_size: 2,
-        date: '2026-04-01',
+        date: '2027-04-01',
         time: '19:00',
       },
     });
@@ -744,7 +744,7 @@ describe('Portal: reserve - email confirmation', () => {
         customer_phone: '+5511999999999',
         customer_email: 'user@example.com',
         party_size: 2,
-        date: '2026-04-01',
+        date: '2027-04-01',
         time: '19:00',
       },
     });
@@ -767,7 +767,7 @@ describe('Portal: reserve - email confirmation', () => {
         customer_phone: '+5511999999999',
         customer_email: 'user@example.com',
         party_size: 2,
-        date: '2026-04-01',
+        date: '2027-04-01',
         time: '19:00',
       },
     });
@@ -816,7 +816,7 @@ describe('Portal: reservation action (lookup by ID)', () => {
         restaurant_id: 'r1',
         customer_name: 'John Doe',
         party_size: 4,
-        date: '2026-04-01',
+        date: '2027-04-01',
         time: '19:00',
         status: 'confirmed',
       },
@@ -840,7 +840,7 @@ describe('Portal: reservation action (lookup by ID)', () => {
         id: 'RES-TEST-123',
         name: 'John Doe',
         party_size: 4,
-        date: '2026-04-01',
+        date: '2027-04-01',
         time: '19:00',
         status: 'confirmed',
         restaurant_name: 'Test Restaurant',
@@ -856,7 +856,7 @@ describe('Portal: reservation action (lookup by ID)', () => {
         restaurant_id: 'r1',
         customer_name: 'Jane Doe',
         party_size: 2,
-        date: '2026-04-01',
+        date: '2027-04-01',
         time: '20:00',
         status: 'confirmed',
       },
@@ -907,7 +907,7 @@ describe('Portal: reserve - WhatsApp owner alert', () => {
         reservation_id: 'RES-TEST-123',
         customer_name: 'WA User',
         party_size: 3,
-        date: '2026-04-01',
+        date: '2027-04-01',
         time: '20:00',
         status: 'confirmed',
       },
@@ -921,7 +921,7 @@ describe('Portal: reserve - WhatsApp owner alert', () => {
     customer_name: 'WA User',
     customer_phone: '+5511888888888',
     party_size: 3,
-    date: '2026-04-01',
+    date: '2027-04-01',
     time: '20:00',
   };
 
@@ -941,7 +941,7 @@ describe('Portal: reserve - WhatsApp owner alert', () => {
         customerName: 'WA User',
         customerPhone: '+5511888888888',
         partySize: 3,
-        date: '2026-04-01',
+        date: '2027-04-01',
         time: '20:00',
       })
     );

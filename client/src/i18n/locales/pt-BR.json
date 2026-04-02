@@ -203,7 +203,7 @@
       "guests": "Clientes Esperados",
       "aiCalls": "Mesas Ocupadas",
       "seated": "sentados",
-      "capacity": "capacidade",
+      "capacity": "Capacidade",
       "waiting": "na fila",
       "predictedRevenue": "Receita Prevista",
       "totalCapacity": "Capacidade Total",
@@ -213,6 +213,30 @@
       "activeParties": "Mesas Ativas",
       "estWaitTime": "Tempo de Espera",
       "noWait": "Sem Espera"
+    },
+    "survey": {
+      "title": "Pesquisa de Satisfação",
+      "description": "Envie uma pesquisa de satisfação via WhatsApp após cada visita. Colete avaliações por estrelas e comentários dos seus clientes.",
+      "enableToggle": "Ativar pesquisa pós-visita",
+      "sendAfter": "Enviar pesquisa após",
+      "delay30min": "30 min",
+      "delay1h": "1 hora",
+      "delay2h": "2 horas",
+      "delay4h": "4 horas",
+      "delay6h": "6 horas",
+      "delay12h": "12 horas",
+      "delay24h": "24 horas",
+      "questionLabel": "Pergunta da pesquisa",
+      "questionPlaceholder": "Como foi sua experiência?",
+      "questionHint": "A pergunta enviada aos clientes após a visita.",
+      "saving": "Salvando...",
+      "saveSettings": "Salvar Configurações da Pesquisa",
+      "resultsTitle": "Resultados (Últimos 30 Dias)",
+      "avgRating": "Nota Média",
+      "totalResponses": "Respostas",
+      "recentComments": "Comentários Recentes",
+      "anonymous": "Anônimo",
+      "noResponses": "Nenhuma resposta de pesquisa ainda. Os resultados aparecerão aqui após os clientes responderem."
     },
     "activityFeed": "Atividade Recente",
     "revenueByPartySize": "Receita por Tamanho de Mesa",
@@ -1209,7 +1233,17 @@
     "phoneVerified": "Número de telefone verificado!",
     "metaVerificationHint": "Para o selo verde de verificado, complete a",
     "metaBusinessVerification": "Verificação Meta Business",
-    "testMessageSent": "Mensagem de teste enviada!"
+    "testMessageSent": "Mensagem de teste enviada!",
+    "analyticsBriefing": "Briefing Diário de Análises",
+    "analyticsBriefingLabel": "Análises diárias via WhatsApp",
+    "analyticsBriefingDesc": "Receba um resumo diário às 9h com visitantes, funil de demo e métricas de conversão",
+    "analyticsBriefingPhone": "Número do WhatsApp para o briefing",
+    "phoneStatus": {
+      "EXPIRED": "EXPIRADO",
+      "NOT_VERIFIED": "NÃO VERIFICADO",
+      "VERIFIED": "VERIFICADO"
+    },
+    "loadError": "Falha ao carregar configurações do restaurante."
   },
   "tableLayout": {
     "title": "Mapa de Mesas",
@@ -1402,6 +1436,7 @@
     "noTablesTitle": "Nenhuma mesa em {{area}}",
     "noTablesDescription": "Clique em \"Adicionar Mesa\" para começar a montar seu plano.",
     "table": "mesa",
+    "tableLabel": "Mesa",
     "tables": "mesas",
     "seats": "lugares",
     "guests": "pessoas",
@@ -1414,7 +1449,26 @@
       "patio": "Pátio",
       "bar": "Bar",
       "main": "Principal"
-    }
+    },
+    "status": {
+      "available": "Disponível",
+      "occupied": "Ocupada",
+      "reserved": "Reservada",
+      "cleaning": "Limpeza",
+      "unknown": "Desconhecido"
+    },
+    "shape": {
+      "label": "Formato",
+      "round": "Redonda",
+      "square": "Quadrada",
+      "rectangle": "Retangular",
+      "booth": "Cabine",
+      "barStool": "Banco de Bar"
+    },
+    "capacity": "Capacidade",
+    "saveChanges": "Salvar Alterações",
+    "delete": "Excluir",
+    "deleteConfirm": "Excluir mesa {{number}}?"
   },
   "insights": {
     "title": "Central IA",
@@ -2498,7 +2552,7 @@
     "loading": "Carregando...",
     "customers": "clientes",
     "tabManual": "Manual",
-    "tabAutomations": "Automacoes",
+    "tabAutomations": "Automações",
     "automations": {
       "description": "Configure campanhas automaticas que disparam com base no comportamento do cliente. Cada gatilho envia no maximo uma mensagem por cliente por semana.",
       "channel": "Canal",
@@ -2801,7 +2855,11 @@
     "netRevenue": "Receita Liquida",
     "refunded": "Reembolsado",
     "noBookings": "Nenhuma reserva ainda",
-    "error": "Falha ao carregar reservas"
+    "error": "Falha ao carregar reservas",
+    "statusPaid": "Pago",
+    "statusRefunded": "Reembolsado",
+    "statusFailed": "Falhou",
+    "statusPending": "Pendente"
   },
   "integrations": {
     "title": "Integração POS",
@@ -2837,5 +2895,57 @@
     "endpointServiceCompletion": "Reportar serviços concluídos com faturamento",
     "endpointReservations": "Consultar reservas por período",
     "endpointTableStatus": "Atualizar status de disponibilidade das mesas"
+  },
+  "events": {
+    "pageTitle": "Eventos & Experiências",
+    "newEvent": "Novo Evento",
+    "totalEvents": "Total",
+    "upcomingEvents": "Próximos",
+    "totalBookings": "Reservas",
+    "estimatedRevenue": "Receita Est.",
+    "title": "Título",
+    "titlePlaceholder": "ex. Noite de Degustação de Vinhos",
+    "description": "Descrição",
+    "descriptionPlaceholder": "Descreva a experiência...",
+    "optional": "opcional",
+    "date": "Data",
+    "time": "Hora",
+    "duration": "Duração (min)",
+    "capacity": "Capacidade",
+    "price": "Preço (R$)",
+    "refundPolicy": "Política de Reembolso",
+    "refundFull": "Reembolso total",
+    "refundPartial": "Reembolso de 50%",
+    "refundNone": "Sem reembolso",
+    "menuDescription": "Menu / Detalhes da Experiência",
+    "menuPlaceholder": "Descreva o menu ou os destaques da experiência...",
+    "cancel": "Cancelar",
+    "creating": "Criando...",
+    "createEvent": "Criar Evento",
+    "confirmDeactivate": "Desativar este evento?",
+    "booked": "reservados",
+    "spotsLeft": "restantes",
+    "hideBookings": "Ocultar",
+    "viewBookings": "Ver Reservas",
+    "deactivate": "Desativar",
+    "errorLoading": "Erro ao carregar eventos",
+    "noEvents": "Nenhum evento ainda",
+    "noEventsHint": "Crie seu primeiro evento para oferecer experiências únicas",
+    "errorTitleRequired": "Título é obrigatório",
+    "errorDateRequired": "Data é obrigatória",
+    "errorTimeRequired": "Hora é obrigatória",
+    "errorCapacityRequired": "Capacidade deve ser pelo menos 1",
+    "errorPriceRequired": "Preço deve ser 0 ou maior",
+    "statusInactive": "Inativo",
+    "statusPast": "Encerrado",
+    "statusFull": "Lotado",
+    "statusUpcoming": "Próximo"
+  },
+  "strategy": {
+    "noShowRate": "Taxa de No-show",
+    "avgRevenue": "Receita Média / Couvert",
+    "conversionRate": "Taxa de Conversão",
+    "target": "meta",
+    "notEnoughData": "Dados insuficientes"
   }
 }

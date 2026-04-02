@@ -22,7 +22,7 @@ export const ICON_NAMES = [
   'star', 'stethoscope', 'store', 'sun', 'target', 'timer',
   'trash', 'trending-down', 'trending-up', 'unlink', 'upload', 'user',
   'users', 'utensils', 'utensils-crossed', 'voice', 'volume', 'wifi',
-  'wifi-off', 'wine', 'wrench', 'x-circle', 'zap',
+  'wifi-off', 'wine', 'wrench', 'x', 'x-circle', 'copy', 'zap',
 ] as const;
 
 export type IconName = typeof ICON_NAMES[number];

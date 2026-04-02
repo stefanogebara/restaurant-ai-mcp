@@ -16,24 +16,24 @@ function formatDateTime(dateStr: string): string {
   });
 }
 
-function getPaymentBadge(status: string) {
+function getPaymentBadge(status: string, t: (key: string, fallback: string) => string) {
   switch (status) {
     case 'paid':
-      return { label: 'Paid', color: 'bg-green-50 text-green-700' };
+      return { label: t('eventBookings.statusPaid', 'Paid'), color: 'bg-green-50 text-green-700' };
     case 'refunded':
-      return { label: 'Refunded', color: 'bg-amber-50 text-amber-700' };
+      return { label: t('eventBookings.statusRefunded', 'Refunded'), color: 'bg-amber-50 text-amber-700' };
     case 'failed':
-      return { label: 'Failed', color: 'bg-red-50 text-red-700' };
+      return { label: t('eventBookings.statusFailed', 'Failed'), color: 'bg-red-50 text-red-700' };
     case 'pending':
     default:
-      return { label: 'Pending', color: 'bg-gray-100 text-gray-600' };
+      return { label: t('eventBookings.statusPending', 'Pending'), color: 'bg-gray-100 text-gray-600' };
   }
 }
 
 function BookingRow({ booking }: { booking: EventBooking }) {
   const { t } = useTranslation();
   const refundMutation = useRefundEventBooking();
-  const badge = getPaymentBadge(booking.payment_status);
+  const badge = getPaymentBadge(booking.payment_status, t);
 
   const handleRefund = () => {
     if (window.confirm(t('eventBookings.confirmRefund', 'Refund this booking? This cannot be undone.'))) {
