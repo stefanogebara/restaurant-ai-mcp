@@ -134,7 +134,7 @@ async function saveTurn(restaurantId, role, content, channel) {
 
 function buildSystemPrompt(memories, snapshot, config) {
   const restaurantName = config?.restaurant_name || config?.name || 'this restaurant';
-  const language = config?.language || 'en';
+  const language = config?.agent_language || config?.language || 'en';
 
   const memoryBlock =
     memories.length > 0
@@ -188,14 +188,18 @@ function buildSystemPrompt(memories, snapshot, config) {
 
   const toneDirective = '';
 
+  const langLabel =
+    language === 'pt' || language === 'pt-BR' ? 'Brazilian Portuguese (PT-BR)' :
+    language === 'es' ? 'Spanish' :
+    language === 'fr' ? 'French' :
+    language === 'it' ? 'Italian' :
+    'English';
+
   let systemPrompt =
     `You are the AI manager for ${restaurantName}. ` +
     'You know this restaurant deeply and help the manager run their business.\n\n' +
-    'IMPORTANT: Always respond in the same language the user writes in. ' +
-    'If they write in Portuguese, respond entirely in Portuguese. ' +
-    'If they write in Spanish, respond entirely in Spanish. ' +
-    'If they write in English, respond in English. ' +
-    'Match their language exactly — never default to English unless they write in English.\n\n';
+    `CRITICAL: ALWAYS respond in ${langLabel}, regardless of the language the user writes in. ` +
+    `Even if the user writes in English or any other language, you MUST respond in ${langLabel}.\n\n`;
 
   // Inject restaurant soul between role and operational data
   if (identitySection) {
@@ -240,28 +244,13 @@ function buildSystemPrompt(memories, snapshot, config) {
 
   // Strategy doc removed — column doesn't exist yet
 
-  // Language awareness — auto-detect from manager's message, fall back to restaurant config
+  // Language enforcement — always use the restaurant's configured language
   systemPrompt +=
     '\n\n## Language Rules\n' +
-    'CRITICAL: Always match the language the manager writes in. ' +
-    'If they write in Portuguese, respond in Portuguese. If in English, respond in English. ' +
-    'If in Spanish, respond in Spanish. Auto-detect and mirror their language.\n';
-  if (language === 'pt' || language === 'pt-BR') {
-    systemPrompt +=
-      'This restaurant is configured for Brazilian Portuguese — when in doubt, default to pt-BR.';
-  } else if (language === 'es') {
-    systemPrompt +=
-      'This restaurant is configured for Spanish — when in doubt, default to Spanish.';
-  } else if (language === 'fr') {
-    systemPrompt +=
-      'This restaurant is configured for French — when in doubt, default to French.';
-  } else if (language === 'it') {
-    systemPrompt +=
-      'This restaurant is configured for Italian — when in doubt, default to Italian.';
-  } else {
-    systemPrompt +=
-      'When in doubt, default to English.';
-  }
+    `CRITICAL: You MUST respond in ${langLabel} at ALL times. ` +
+    `This restaurant is configured for ${langLabel}. ` +
+    'Do NOT switch languages based on the user\'s input language. ' +
+    `Always respond in ${langLabel}, no exceptions.\n`;
 
   systemPrompt +=
     '\n\nRespond concisely. For operational questions, be direct. ' +
@@ -307,7 +296,7 @@ async function runManagerAgent(restaurantId, userMessage, channel) {
     supabaseAdmin
       .schema('restaurant')
       .from('restaurant_config')
-      .select('restaurant_name, name, language')
+      .select('restaurant_name, name, agent_language')
       .eq('id', restaurantId)
       .maybeSingle(),
   ]);
@@ -416,7 +405,7 @@ async function runManagerAgentStream(restaurantId, userMessage, channel, onToken
     supabaseAdmin
       .schema('restaurant')
       .from('restaurant_config')
-      .select('restaurant_name, name, language')
+      .select('restaurant_name, name, agent_language')
       .eq('id', restaurantId)
       .maybeSingle(),
   ]);

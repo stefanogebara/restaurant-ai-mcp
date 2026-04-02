@@ -204,12 +204,12 @@ export default function BookingPage() {
         {/* Left: Restaurant Info */}
         <div className="md:flex-shrink-0 md:w-[340px]">
           <div className="w-full h-[220px] rounded-2xl bg-gradient-to-br from-burgundy via-burgundy/80 to-stone-700 mb-7 flex items-end p-6 relative overflow-hidden">
-            {/* Restaurant initial as a subtle background accent */}
+            {/* Full restaurant name as a subtle background watermark */}
             <span
               aria-hidden="true"
-              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 font-serif text-[140px] font-bold text-white/[0.07] leading-none select-none pointer-events-none"
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 font-serif text-[48px] font-bold text-white/[0.06] leading-tight select-none pointer-events-none text-center whitespace-nowrap max-w-[90%] overflow-hidden"
             >
-              {restaurant.name.charAt(0).toUpperCase()}
+              {restaurant.name}
             </span>
             <div className="relative z-10">
               <h2 className="font-serif text-[28px] font-medium text-white tracking-tight mb-1">
