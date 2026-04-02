@@ -183,14 +183,10 @@ function buildSystemPrompt(memories, snapshot, config) {
       f.roles.map(r => r.name + ': ' + r.recommended).join(', '))
     .join('\n');
 
-  // Build identity section from restaurant_profile
+  // Build identity section
   const identitySection = buildRestaurantIdentitySection(config || {});
 
-  // Adapt communication tone from profile
-  const commStyle = config?.restaurant_profile?.communication_style;
-  const toneDirective = commStyle?.tone
-    ? `Match this communication tone: ${commStyle.tone}.`
-    : '';
+  const toneDirective = '';
 
   let systemPrompt =
     `You are the AI manager for ${restaurantName}. ` +
@@ -242,10 +238,7 @@ function buildSystemPrompt(memories, snapshot, config) {
     systemPrompt += feedbackBlock;
   }
 
-  if (config?.ai_strategy_doc) {
-    systemPrompt += '\n\n[RESTAURANT STRATEGY — OWNER DEFINED]\n' + config.ai_strategy_doc;
-    systemPrompt += '\n\nApply this strategy when advising on operations, marketing, and guest experience.';
-  }
+  // Strategy doc removed — column doesn't exist yet
 
   // Language awareness — auto-detect from manager's message, fall back to restaurant config
   systemPrompt +=
@@ -314,21 +307,9 @@ async function runManagerAgent(restaurantId, userMessage, channel) {
     supabaseAdmin
       .schema('restaurant')
       .from('restaurant_config')
-      .select('restaurant_name, name, restaurant_profile, ai_strategy_doc, language')
+      .select('restaurant_name, name, language')
       .eq('id', restaurantId)
-      .maybeSingle()
-      .then(r => {
-        // Gracefully handle missing column (migration not yet applied)
-        if (r.error?.message?.includes('ai_strategy_doc')) {
-          return supabaseAdmin
-            .schema('restaurant')
-            .from('restaurant_config')
-            .select('restaurant_name, name, restaurant_profile, language')
-            .eq('id', restaurantId)
-            .maybeSingle();
-        }
-        return r;
-      }),
+      .maybeSingle(),
   ]);
 
   const config = configResult?.data || {};
@@ -435,20 +416,9 @@ async function runManagerAgentStream(restaurantId, userMessage, channel, onToken
     supabaseAdmin
       .schema('restaurant')
       .from('restaurant_config')
-      .select('restaurant_name, name, restaurant_profile, ai_strategy_doc, language')
+      .select('restaurant_name, name, language')
       .eq('id', restaurantId)
-      .maybeSingle()
-      .then(r => {
-        if (r.error?.message?.includes('ai_strategy_doc')) {
-          return supabaseAdmin
-            .schema('restaurant')
-            .from('restaurant_config')
-            .select('restaurant_name, name, restaurant_profile, language')
-            .eq('id', restaurantId)
-            .maybeSingle();
-        }
-        return r;
-      }),
+      .maybeSingle(),
   ]);
 
   const config = configResult?.data || {};
