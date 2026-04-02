@@ -103,9 +103,9 @@ function handleQuotaOrError(err, res) {
     }
     return res.status(402).json({ error: 'Manager AI access restricted', type: err.type });
   }
-  logger.error('manager-chat error', { error: err.message });
+  logger.error('manager-chat error', { error: err.message, stack: err.stack?.split('\n').slice(0, 3).join(' | ') });
   if (err.message === 'UNAUTHORIZED') return res.status(401).json({ error: 'Authentication required' });
-  return res.status(500).json({ error: 'Internal error' });
+  return res.status(500).json({ error: 'Internal error', _debug: err.message });
 }
 
 async function handleHistory(req, res) {
