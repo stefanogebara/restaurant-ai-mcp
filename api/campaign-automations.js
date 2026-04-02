@@ -54,6 +54,10 @@ async function handleGet(req, res) {
       .order('trigger_type');
 
     if (error) {
+      // Table may not exist yet — return empty defaults
+      if (error.code === 'PGRST205' || error.message?.includes('does not exist')) {
+        return res.json({ automations: VALID_TRIGGER_TYPES.map(t => ({ trigger_type: t, enabled: false, template_name: null, delay_hours: 24 })) });
+      }
       logger.error('Failed to fetch automations', { error: error.message });
       return res.status(500).json({ error: 'Failed to fetch automations' });
     }

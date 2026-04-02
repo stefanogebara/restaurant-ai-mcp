@@ -73,7 +73,7 @@ module.exports = async (req, res) => {
     const { data: restaurants, error: restError } = await supabaseAdmin
       .schema('restaurant')
       .from('restaurant_config')
-      .select('id, restaurant_name, restaurant_profile, notification_preferences, timezone')
+      .select('id, restaurant_name, notification_preferences, timezone')
       .not('notification_preferences', 'is', null);
 
     if (restError) {
@@ -101,7 +101,7 @@ module.exports = async (req, res) => {
     for (const restaurant of eligibleRestaurants) {
       const restaurantId = restaurant.id;
       const restaurantName = restaurant.restaurant_name || 'our restaurant';
-      const signatureDishes = restaurant.restaurant_profile?.signature_dishes || [];
+      const signatureDishes = [];
       const tz = restaurant.timezone || 'UTC';
 
       // Get tomorrow in the restaurant's local timezone

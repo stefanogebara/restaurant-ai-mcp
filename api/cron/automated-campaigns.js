@@ -39,6 +39,11 @@ module.exports = async (req, res) => {
       .eq('enabled', true);
 
     if (error) {
+      // Table may not exist yet
+      if (error.code === 'PGRST205' || error.message?.includes('does not exist')) {
+        await logCronRun('automated-campaigns', { restaurants: 0, totalSent: 0, skipped: 'table not found' });
+        return res.json({ success: true, restaurants: 0, totalSent: 0 });
+      }
       logger.error('Failed to query automations', { error: error.message });
       return res.status(500).json({ success: false, error: 'Query failed' });
     }
