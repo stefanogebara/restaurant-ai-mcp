@@ -3,17 +3,12 @@
  * Handles restaurant settings including language preferences and metric profiles
  */
 
-const { createClient } = require('@supabase/supabase-js');
 const { verifyAuth } = require('./_lib/auth');
+const { supabaseAdmin: supabase } = require('./_lib/supabase');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const logger = createSecureLogger('RestaurantSettings');
-
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY
-);
 
 const ALLOWED_LANGUAGES = ['en', 'es', 'pt', 'pt-BR', 'fr', 'it'];
 

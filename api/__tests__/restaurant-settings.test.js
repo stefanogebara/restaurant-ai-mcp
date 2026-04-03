@@ -28,12 +28,12 @@ function mockBuildChain(resolveWith) {
   return chain;
 }
 
-jest.mock('@supabase/supabase-js', () => ({
-  createClient: jest.fn(() => ({
+jest.mock('../_lib/supabase', () => ({
+  supabaseAdmin: {
     schema: () => ({
       from: () => mockBuildChain(mockSupabaseResult),
     }),
-  })),
+  },
 }));
 
 jest.mock('../_lib/auth', () => ({
