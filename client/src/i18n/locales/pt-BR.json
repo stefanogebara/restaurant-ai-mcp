@@ -2148,7 +2148,9 @@
         "emailPlaceholder": "Seu e-mail profissional",
         "emailHint": "Enviaremos o link do demo aqui",
         "launchDemo": "Iniciar meu demo",
-        "creatingDemo": "Criando seu demo..."
+        "creatingDemo": "Criando seu demo...",
+        "searchFailed": "Busca falhou",
+        "networkError": "Erro de rede. Tente novamente."
       }
     },
     "voiceDemo": {
@@ -2431,7 +2433,32 @@
       "subtitle": "É isso que seus clientes vão ouvir quando ligarem",
       "clickToTalk": "Clique no widget abaixo para começar a conversar",
       "loading": "Carregando agente de voz...",
-      "skipToDashboard": "Ir para o painel"
+      "skipToDashboard": "Ir para o painel",
+      "error": "Agente de voz indisponível",
+      "listening": "Ouvindo... toque no orbe para parar",
+      "tapToStart": "Toque no orbe para começar a falar"
+    },
+    "banner": {
+      "expired": "Demo expirada",
+      "oneDayLeft": "Modo demo \u00b7 1 dia restante",
+      "daysLeft": "Modo demo \u00b7 {{count}} dias restantes",
+      "upgrade": "Atualize para manter seus dados"
+    },
+    "conversation": {
+      "loading": "Carregando dados do restaurante...",
+      "notFound": "Demo não encontrada ou expirada.",
+      "restaurantNotFound": "Restaurante não encontrado. Tente outro nome.",
+      "missingParams": "Forneça ?token= ou ?q= na URL.",
+      "loadError": "Erro ao carregar dados do restaurante.",
+      "settingUp": "Configurando seu dashboard personalizado...",
+      "fewSeconds": "Isso leva alguns segundos",
+      "placeholder": "Digite sua mensagem...",
+      "send": "Enviar mensagem",
+      "ariaChat": "Conversa com IA"
+    },
+    "errors": {
+      "createFailed": "Falha ao criar demo. Tente novamente.",
+      "generic": "Algo deu errado. Tente novamente."
     }
   },
   "pageTitles": {

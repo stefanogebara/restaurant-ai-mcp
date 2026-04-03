@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useSSEChat, type ChatMessage } from '../hooks/useSSEChat';
 
 interface RestaurantContext {
@@ -27,6 +28,7 @@ const SUGGESTED_PROMPTS = [
 ];
 
 export default function DemoConversation() {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const token = searchParams.get('token') || undefined;
@@ -125,7 +127,7 @@ export default function DemoConversation() {
               city: r.city || 'São Paulo',
             });
           } else {
-            setLoadError('Demo não encontrada ou expirada.');
+            setLoadError(t('demo.conversation.notFound', 'Demo não encontrada ou expirada.'));
           }
         } else if (query) {
           // Path B: Scrape on the fly
@@ -144,13 +146,13 @@ export default function DemoConversation() {
               city,
             });
           } else {
-            setLoadError('Restaurante não encontrado. Tente outro nome.');
+            setLoadError(t('demo.conversation.restaurantNotFound', 'Restaurante não encontrado. Tente outro nome.'));
           }
         } else {
-          setLoadError('Forneça ?token= ou ?q= na URL.');
+          setLoadError(t('demo.conversation.missingParams', 'Forneça ?token= ou ?q= na URL.'));
         }
       } catch (err) {
-        setLoadError('Erro ao carregar dados do restaurante.');
+        setLoadError(t('demo.conversation.loadError', 'Erro ao carregar dados do restaurante.'));
       } finally {
         setIsLoadingContext(false);
       }
@@ -210,7 +212,7 @@ export default function DemoConversation() {
           seatable<span className="text-burgundy">.</span>
         </div>
         <div className="w-8 h-8 border-2 border-burgundy border-t-transparent rounded-full animate-spin" />
-        <p className="text-warm-stone text-sm">Carregando dados do restaurante...</p>
+        <p className="text-warm-stone text-sm">{t('demo.conversation.loading', 'Carregando dados do restaurante...')}</p>
       </div>
     );
   }
@@ -252,13 +254,13 @@ export default function DemoConversation() {
       {isConverting && (
         <div className="fixed inset-0 bg-white/90 backdrop-blur-sm z-50 flex flex-col items-center justify-center gap-4">
           <div className="w-10 h-10 border-2 border-burgundy border-t-transparent rounded-full animate-spin" />
-          <p className="text-deep-charcoal font-medium">Configurando seu dashboard personalizado...</p>
-          <p className="text-warm-stone text-sm">Isso leva alguns segundos</p>
+          <p className="text-deep-charcoal font-medium">{t('demo.conversation.settingUp', 'Configurando seu dashboard personalizado...')}</p>
+          <p className="text-warm-stone text-sm">{t('demo.conversation.fewSeconds', 'Isso leva alguns segundos')}</p>
         </div>
       )}
 
       {/* Chat area */}
-      <div className="flex-1 overflow-y-auto" role="log" aria-label="Conversa com IA" aria-live="polite">
+      <div className="flex-1 overflow-y-auto" role="log" aria-label={t('demo.conversation.ariaChat', 'Conversa com IA')} aria-live="polite">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6 space-y-4">
           {messages.map((msg) => (
             <MessageBubble key={msg.id} message={msg} isStreaming={isStreaming && msg === messages[messages.length - 1] && msg.role === 'assistant'} />
@@ -292,8 +294,8 @@ export default function DemoConversation() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Digite sua mensagem..."
-            aria-label="Digite sua mensagem"
+            placeholder={t('demo.conversation.placeholder', 'Digite sua mensagem...')}
+            aria-label={t('demo.conversation.placeholder', 'Digite sua mensagem...')}
             rows={1}
             disabled={isStreaming || isConverting}
             className="flex-1 resize-none rounded-xl border border-border-gray px-4 py-2.5 text-sm text-deep-charcoal placeholder:text-muted-stone focus:outline-none focus:border-burgundy/40 disabled:opacity-50 transition-colors"
@@ -308,7 +310,7 @@ export default function DemoConversation() {
             type="button"
             onClick={handleSend}
             disabled={!input.trim() || isStreaming || isConverting}
-            aria-label="Enviar mensagem"
+            aria-label={t('demo.conversation.send', 'Enviar mensagem')}
             className="flex-shrink-0 w-10 h-10 rounded-xl bg-burgundy hover:bg-burgundy-dark disabled:opacity-30 text-white flex items-center justify-center transition-colors"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

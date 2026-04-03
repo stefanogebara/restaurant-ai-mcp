@@ -77,7 +77,7 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
       });
       const data = await res.json();
       if (!res.ok) {
-        setSearchError(data.error || 'Search failed');
+        setSearchError(data.error || t('landing.demoSetup.form.searchFailed', 'Search failed'));
         return;
       }
       setSearchResults(data.results || []);
@@ -86,7 +86,7 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
         setSelectedResult(data.results[0]);
       }
     } catch {
-      setSearchError('Network error. Please try again.');
+      setSearchError(t('landing.demoSetup.form.networkError', 'Network error. Please try again.'));
     } finally {
       setIsSearching(false);
     }

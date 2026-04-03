@@ -188,7 +188,7 @@ export default function DemoDashboard() {
         <div className="flex items-center justify-center h-[60vh]">
           <div className="text-center space-y-3">
             <div className="w-8 h-8 border-2 border-burgundy border-t-transparent rounded-full animate-spin mx-auto" />
-            <p className="text-warm-stone text-sm">Carregando demo...</p>
+            <p className="text-warm-stone text-sm">{t.loadingDemo || 'Carregando demo...'}</p>
           </div>
         </div>
       )}

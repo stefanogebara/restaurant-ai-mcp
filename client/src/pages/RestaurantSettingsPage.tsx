@@ -75,7 +75,7 @@ export default function RestaurantSettingsPage() {
       email: settings.email || '',
       city: settings.city || '',
       country: settings.country || '',
-      timezone: settings.timezone || '',
+      timezone: settings.timezone || 'America/Sao_Paulo',
     });
     if (settings.business_hours) setHours(settings.business_hours);
     if (settings.reservation_settings) {

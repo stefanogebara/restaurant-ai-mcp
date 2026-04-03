@@ -251,7 +251,7 @@ module.exports = async function handler(req, res) {
           phone: restaurant.phone || '',
           email: restaurant.email || '',
           business_hours: restaurant.business_hours || null,
-          timezone: restaurant.timezone || 'UTC',
+          timezone: restaurant.timezone || 'America/Sao_Paulo',
           reservation_settings: restaurant.reservation_settings || null,
         },
       });

@@ -1691,7 +1691,8 @@
       "title": "This is sample data",
       "subtitle": "Want to see YOUR restaurant here? Setup takes 30 seconds.",
       "cta": "Set up my restaurant",
-      "later": "Maybe later"
+      "later": "Maybe later",
+      "share": "Share with a friend"
     },
     "faq": {
       "label": "FAQ",
@@ -2128,7 +2129,9 @@
         "emailPlaceholder": "Your work email",
         "emailHint": "We'll send your demo link here",
         "launchDemo": "Launch my demo",
-        "creatingDemo": "Creating your demo..."
+        "creatingDemo": "Creating your demo...",
+        "searchFailed": "Search failed",
+        "networkError": "Network error. Please try again."
       }
     },
     "voiceDemo": {
@@ -2411,7 +2414,32 @@
       "subtitle": "This is what your customers will hear when they call",
       "clickToTalk": "Click the widget below to start talking",
       "loading": "Loading voice agent...",
-      "skipToDashboard": "Skip to dashboard"
+      "skipToDashboard": "Skip to dashboard",
+      "error": "Voice agent unavailable",
+      "listening": "Listening... tap orb to stop",
+      "tapToStart": "Tap the orb to start talking"
+    },
+    "banner": {
+      "expired": "Demo expired",
+      "oneDayLeft": "Demo mode \u00b7 1 day left",
+      "daysLeft": "Demo mode \u00b7 {{count}} days left",
+      "upgrade": "Upgrade to keep your data"
+    },
+    "conversation": {
+      "loading": "Loading restaurant data...",
+      "notFound": "Demo not found or expired.",
+      "restaurantNotFound": "Restaurant not found. Try another name.",
+      "missingParams": "Please provide ?token= or ?q= in the URL.",
+      "loadError": "Error loading restaurant data.",
+      "settingUp": "Setting up your personalized dashboard...",
+      "fewSeconds": "This takes a few seconds",
+      "placeholder": "Type your message...",
+      "send": "Send message",
+      "ariaChat": "AI conversation"
+    },
+    "errors": {
+      "createFailed": "Failed to create demo. Please try again.",
+      "generic": "Something went wrong. Please try again."
     }
   },
   "pageTitles": {

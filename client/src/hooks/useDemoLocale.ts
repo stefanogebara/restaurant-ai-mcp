@@ -66,6 +66,8 @@ const strings = {
     exitMessage: 'Set up your own AI receptionist in under 5 minutes. No credit card required.',
     exitTrialCTA: 'Start Free Trial',
     exitContinue: 'Continue Demo',
+    // Loading
+    loadingDemo: 'Loading demo...',
   },
   'pt-BR': {
     banner: 'Demo Interativa — todas as ações são locais, nenhum dado real é afetado',
@@ -109,6 +111,8 @@ const strings = {
     exitMessage: 'Configure sua recepcionista IA em menos de 5 minutos. Sem cartão de crédito.',
     exitTrialCTA: 'Começar Teste Grátis',
     exitContinue: 'Continuar Demo',
+    // Loading
+    loadingDemo: 'Carregando demo...',
   },
 } as const;
 

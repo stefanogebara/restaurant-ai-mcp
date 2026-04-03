@@ -40,13 +40,13 @@ export default function DemoSetupPage() {
       });
       const result = await response.json();
       if (!response.ok || !result.demo_url) {
-        throw new Error(result.error || 'Failed to create demo. Please try again.');
+        throw new Error(result.error || t('demo.errors.createFailed', 'Failed to create demo. Please try again.'));
       }
 
       trackDemoCompleted({ demo_token: result.demo_token || '' });
       window.location.href = result.demo_url;
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Something went wrong. Please try again.';
+      const message = err instanceof Error ? err.message : t('demo.errors.generic', 'Something went wrong. Please try again.');
       setSubmitError(message);
       setIsSubmitting(false);
     }
