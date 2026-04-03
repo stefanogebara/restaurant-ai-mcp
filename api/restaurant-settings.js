@@ -234,7 +234,7 @@ module.exports = async function handler(req, res) {
 
       if (error) {
         logger.error('Error fetching restaurant settings:', error);
-        return res.status(500).json({ success: false, error: 'Failed to fetch restaurant settings' });
+        return res.status(500).json({ success: false, error: 'Failed to fetch restaurant settings', debug: error.message || error.code || String(error) });
       }
 
       if (!restaurant) {
