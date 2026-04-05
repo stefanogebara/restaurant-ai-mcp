@@ -116,10 +116,10 @@ export default function ReservationsList({
   return (
     <div className="overflow-hidden">
       {/* Panel Header */}
-      <div className="px-6 py-5 border-b border-[#E5E7EB]">
+      <div className="px-3 sm:px-6 py-4 sm:py-5 border-b border-[#E5E7EB]">
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-2.5">
-            <span className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{tl('upcoming')}</span>
+            <span className="text-[12px] sm:text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{tl('upcoming')}</span>
             <span className="text-[11px] font-semibold bg-[#9F1239]/[8%] text-[#9F1239] px-2.5 py-0.5 rounded-full">
               {displayed.length}
             </span>
@@ -189,13 +189,13 @@ export default function ReservationsList({
         </div>
 
         {/* Status filter chips */}
-        <div className="flex items-center gap-1.5 mt-2.5 flex-wrap">
+        <div className="flex items-center gap-1.5 mt-2.5 overflow-x-auto sm:overflow-x-visible sm:flex-wrap pb-1 sm:pb-0 -mx-3 px-3 sm:mx-0 sm:px-0 scrollbar-hide">
           {statusFilters.map(({ key, label }) => (
             <button
               key={key}
               type="button"
               onClick={() => setStatusFilter(key)}
-              className={`text-[11px] font-medium px-3 py-1 rounded-full transition-colors ${
+              className={`text-[11px] font-medium px-3 py-1 rounded-full transition-colors whitespace-nowrap flex-shrink-0 ${
                 statusFilter === key
                   ? 'bg-[#9F1239] text-white'
                   : 'bg-[#F3F4F6] text-[#6B7280] hover:bg-[#E5E7EB] hover:text-[#111827]'
@@ -323,13 +323,13 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
   const avatarStyle = { background: `linear-gradient(135deg, hsl(${hue},50%,75%), hsl(${(hue + 40) % 360},50%,65%))` };
 
   return (
-    <div className={`flex items-center py-[18px] border-b border-[#F3F4F6] last:border-b-0 gap-2.5 sm:gap-4 transition-colors ${
+    <div className={`flex items-center py-3 sm:py-[18px] border-b border-[#F3F4F6] last:border-b-0 gap-2 sm:gap-4 transition-colors ${
   reservation.party_size >= 6
-    ? 'pl-3 sm:pl-5 pr-4 sm:pr-6 border-l-2 border-l-[#9F1239]/30'
+    ? 'pl-3 sm:pl-5 pr-3 sm:pr-6 border-l-2 border-l-[#9F1239]/30'
     : 'px-3 sm:px-6'
 }`}>
       {/* Avatar */}
-      <div className="w-9 h-9 rounded-xl flex items-center justify-center text-[13px] font-semibold text-warm-stone flex-shrink-0" style={avatarStyle}>
+      <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center text-[11px] sm:text-[13px] font-semibold text-warm-stone flex-shrink-0" style={avatarStyle}>
         {initials}
       </div>
 
@@ -339,19 +339,19 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
           <button
             type="button"
             onClick={onCustomerClick}
-            className="text-sm font-semibold text-deep-charcoal tracking-tight break-words hover:text-burgundy transition-colors text-left"
+            className="text-[13px] sm:text-sm font-semibold text-deep-charcoal tracking-tight truncate hover:text-burgundy transition-colors text-left"
             title={reservation.customer_name}
           >
             {reservation.customer_name}
           </button>
           <CustomerTierBadge tier={reservation.customer_tier} visitCount={reservation.visit_count} compact />
         </div>
-        <div className="text-xs text-muted-stone mt-0.5 truncate">
+        <div className="text-[11px] sm:text-xs text-muted-stone mt-0.5 truncate">
           {reservation.party_size} {tl('people')}
           {avgSpendPerCover ? (
             <span className="text-rose-600 font-medium"> · ~{formatCurrency(predictReservationRevenue(reservation.party_size, avgSpendPerCover, byPartySize))}</span>
           ) : null}
-          {reservation.special_requests && <span> · {reservation.special_requests}</span>}
+          {reservation.special_requests && <span className="hidden sm:inline"> · {reservation.special_requests}</span>}
         </div>
         {/* Risk + Deposit badges */}
         {(reservation.ml_risk_score != null || reservation.deposit_amount) && (
@@ -363,18 +363,20 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
             <DepositBadge amount={reservation.deposit_amount} />
           </div>
         )}
-        {/* CRM preference icons */}
-        <CrmBadges reservation={reservation} />
+        {/* CRM preference icons — hide on mobile to save space */}
+        <div className="hidden sm:block">
+          <CrmBadges reservation={reservation} />
+        </div>
       </div>
 
       {/* Time */}
       <div className="text-right flex-shrink-0">
-        <div className="text-[13px] font-medium text-stone-gray">{formatTime(reservation.time)}</div>
-        <div className="text-[11px] text-muted-stone">{getMealPeriod(reservation.time)}</div>
+        <div className="text-[12px] sm:text-[13px] font-medium text-stone-gray">{formatTime(reservation.time)}</div>
+        <div className="text-[10px] sm:text-[11px] text-muted-stone">{getMealPeriod(reservation.time)}</div>
       </div>
 
       {/* Status / Action */}
-      <div className="flex-shrink-0">
+      <div className="flex-shrink-0 hidden sm:block">
         {!reservation.checked_in && !isHighRisk ? (
           <button
             type="button"
@@ -415,9 +417,43 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
         )}
       </div>
 
+      {/* Mobile-only: compact status dot */}
+      <div className="flex-shrink-0 sm:hidden">
+        {!reservation.checked_in && !isHighRisk ? (
+          <button
+            type="button"
+            onClick={onCheckIn}
+            aria-label={tl('checkIn')}
+            className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusBadge.classes}`}
+          >
+            <span className="inline-flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60 flex-shrink-0" />
+              {statusBadge.label}
+            </span>
+          </button>
+        ) : isHighRisk && !reservation.intervention_taken ? (
+          <button
+            type="button"
+            onClick={onIntervention}
+            className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-600/[8%] text-amber-600"
+          >
+            <span className="inline-flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60 flex-shrink-0" />
+              !
+            </span>
+          </button>
+        ) : (
+          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusBadge.classes}`}>
+            <span className="inline-flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60 flex-shrink-0" />
+            </span>
+          </span>
+        )}
+      </div>
+
       {/* Deposit Actions */}
       {reservation.deposit_amount && reservation.deposit_payment_intent_id && (
-        <div className="flex-shrink-0">
+        <div className="flex-shrink-0 hidden sm:block">
           <DepositActions
             reservationId={reservation.reservation_id}
             depositAmount={reservation.deposit_amount}
@@ -428,7 +464,7 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
 
       {/* Edit / Cancel actions */}
       {(onEdit || onCancel) && !reservation.checked_in && (
-        <div className="flex-shrink-0 flex items-center gap-1">
+        <div className="flex-shrink-0 hidden sm:flex items-center gap-1">
           {onEdit && (
             <button
               type="button"

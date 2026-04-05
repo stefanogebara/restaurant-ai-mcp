@@ -195,12 +195,12 @@ export default function Dashboard() {
 
   return (
     <DashboardLayout>
-      <div className="dashboard min-h-screen bg-white px-10 pt-10 pb-20">
+      <div className="dashboard min-h-screen bg-white px-4 sm:px-6 lg:px-10 pt-6 sm:pt-10 pb-24 sm:pb-20">
         <div className="max-w-[1240px]">
 
           {/* ---- Payment Failure Banner ---- */}
           {subStatus === 'past_due' && (
-            <div className="bg-red-50 border border-red-300 rounded-xl px-5 py-3.5 flex items-center justify-between gap-3 mb-8">
+            <div className="bg-red-50 border border-red-300 rounded-xl px-4 sm:px-5 py-3 sm:py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 mb-6 sm:mb-8">
               <p className="text-sm text-red-800 flex-1 min-w-0">
                 <span className="font-semibold">{t('dashboard.paymentFailed', 'Payment failed')}</span>
                 {' — '}
@@ -217,7 +217,7 @@ export default function Dashboard() {
 
           {/* ---- Trial Banner ---- */}
           {isTrial && isActive && trialDaysLeft !== null && (
-            <div className="bg-amber-50 border border-amber-200 rounded-xl px-5 py-3.5 flex items-center justify-between gap-3 mb-8">
+            <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 sm:px-5 py-3 sm:py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 mb-6 sm:mb-8">
               <p className="text-sm text-amber-800 flex-1 min-w-0">
                 <span className="font-semibold">{t('dashboard.freeTrial')}</span>
                 {' — '}
@@ -235,25 +235,25 @@ export default function Dashboard() {
           )}
 
           {/* ---- Header Section ---- */}
-          <header className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-14 mt-14 sm:mt-0 gap-4">
+          <header className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-8 sm:mb-14 mt-14 sm:mt-0 gap-3 sm:gap-4">
             <div className="pl-12 lg:pl-0">
-              <h1 className="font-sans text-2xl font-semibold tracking-tight text-deep-charcoal">
+              <h1 className="font-sans text-xl sm:text-2xl font-semibold tracking-tight text-deep-charcoal">
                 {t('dashboard.overview')}
               </h1>
-              <p className="text-[13px] text-muted-stone font-mono uppercase tracking-widest mt-1">
+              <p className="text-[12px] sm:text-[13px] text-muted-stone font-mono uppercase tracking-widest mt-1">
                 {fullDateStr}
               </p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3 pl-12 lg:pl-0">
               <button
                 onClick={() => window.location.href = '/host-dashboard/reports'}
-                className="px-4 py-2 border border-border-gray rounded-lg text-[13px] font-medium bg-transparent hover:bg-soft-gray transition-colors text-deep-charcoal"
+                className="px-3 sm:px-4 py-2 border border-border-gray rounded-lg text-[12px] sm:text-[13px] font-medium bg-transparent hover:bg-soft-gray transition-colors text-deep-charcoal"
               >
                 {t('dashboard.reports', 'Export')}
               </button>
               <button
                 onClick={() => setShowWalkInModal(true)}
-                className="px-4 py-2 bg-burgundy hover:bg-burgundy-dark text-white border border-burgundy rounded-lg text-[13px] font-medium transition-colors"
+                className="hidden sm:inline-flex px-4 py-2 bg-burgundy hover:bg-burgundy-dark text-white border border-burgundy rounded-lg text-[13px] font-medium transition-colors"
               >
                 {t('dashboard.addWalkIn')}
               </button>
@@ -262,7 +262,7 @@ export default function Dashboard() {
 
           {/* ---- Metrics Row ---- */}
           {isLoading ? (
-            <section className="grid grid-cols-2 sm:grid-cols-4 gap-12 mb-12 pb-12 border-b border-border-gray">
+            <section className="grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-12 mb-8 sm:mb-12 pb-8 sm:pb-12 border-b border-border-gray">
               {Array.from({ length: 4 }).map((_, i) => (
                 <div key={i}>
                   <div className="h-7 w-16 bg-border-gray rounded animate-pulse mb-3" />
@@ -271,24 +271,24 @@ export default function Dashboard() {
               ))}
             </section>
           ) : (
-            <section className="grid grid-cols-2 sm:grid-cols-4 gap-12 mb-12 pb-12 border-b border-border-gray">
+            <section className="grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-12 mb-8 sm:mb-12 pb-8 sm:pb-12 border-b border-border-gray">
               {/* Reservations */}
               <div>
-                <p className="font-mono text-[28px] font-medium leading-none text-deep-charcoal">{todayReservations.length}</p>
+                <p className="font-mono text-[22px] sm:text-[28px] font-medium leading-none text-deep-charcoal">{todayReservations.length}</p>
                 <p className="text-[12px] uppercase tracking-[0.05em] text-muted-stone mt-3">
                   {t('dashboard.stats.reservations', 'Reservations')}
                 </p>
               </div>
               {/* Guests Expected */}
               <div>
-                <p className="font-mono text-[28px] font-medium leading-none text-deep-charcoal">{guestsExpected}</p>
+                <p className="font-mono text-[22px] sm:text-[28px] font-medium leading-none text-deep-charcoal">{guestsExpected}</p>
                 <p className="text-[12px] uppercase tracking-[0.05em] text-muted-stone mt-3">
                   {t('dashboard.stats.guests', 'Guests')}
                 </p>
               </div>
               {/* Capacity */}
               <div>
-                <p className="font-mono text-[28px] font-medium leading-none text-deep-charcoal">
+                <p className="font-mono text-[22px] sm:text-[28px] font-medium leading-none text-deep-charcoal">
                   {occupiedTables}/{totalTables}
                 </p>
                 <p className="text-[12px] uppercase tracking-[0.05em] text-muted-stone mt-3">
@@ -297,7 +297,7 @@ export default function Dashboard() {
               </div>
               {/* Waitlist */}
               <div>
-                <p className="font-mono text-[28px] font-medium leading-none text-deep-charcoal">{waitlistCount}</p>
+                <p className="font-mono text-[22px] sm:text-[28px] font-medium leading-none text-deep-charcoal">{waitlistCount}</p>
                 <p className="text-[12px] uppercase tracking-[0.05em] text-muted-stone mt-3">
                   {t('waitlist.title', 'Waitlist')}
                 </p>
@@ -307,7 +307,7 @@ export default function Dashboard() {
 
           {/* ---- Welcome Guide for New Users ---- */}
           {isDashboardEmpty && !isLoading && (
-            <div className="bg-[#FFF7ED] border border-amber-200 rounded-xl px-6 py-5 mb-12">
+            <div className="bg-[#FFF7ED] border border-amber-200 rounded-xl px-4 sm:px-6 py-4 sm:py-5 mb-8 sm:mb-12">
               <h3 className="text-sm font-semibold text-amber-900 mb-1">
                 {t('dashboard.welcomeGuide.title', 'Your dashboard is ready!')}
               </h3>
@@ -318,7 +318,7 @@ export default function Dashboard() {
           )}
 
           {/* ---- Reservations Section ---- */}
-          <section className="mb-16">
+          <section className="mb-8 sm:mb-16">
             <ReservationsList
               todayReservations={todayReservations}
               tomorrowReservations={tomorrowReservations}
@@ -335,7 +335,7 @@ export default function Dashboard() {
           </section>
 
           {/* ---- Two-Column Split: Floor Plan (col-span-7) + Waitlist/Active (col-span-5) ---- */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-16">
             {/* Left: Floor Plan / Table Layout */}
             <section className="lg:col-span-7">
               <TableLayoutPanel
@@ -361,7 +361,7 @@ export default function Dashboard() {
           </div>
 
           {/* ---- Section Divider ---- */}
-          <div className="border-t border-border-gray mt-16 mb-12" />
+          <div className="border-t border-border-gray mt-10 sm:mt-16 mb-8 sm:mb-12" />
 
           {/* ---- Additional Widgets (progressive disclosure for new users) ---- */}
           {isDashboardEmpty && !showInsightsWidgets ? (
@@ -377,15 +377,15 @@ export default function Dashboard() {
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
                 <ManagerNotesPanel />
                 <FeedbackWidget />
               </div>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 mt-6 sm:mt-8">
                 <StaffingForecastWidget />
                 <RevenueStatsWidget />
               </div>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 mt-6 sm:mt-8">
                 <RevenueByPartySizeWidget />
                 <ActivityFeedWidget />
               </div>

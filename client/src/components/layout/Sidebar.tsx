@@ -126,14 +126,14 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* Mobile Menu Button */}
+      {/* Mobile Menu Button (top-left hamburger, visible when bottom nav is hidden or as fallback) */}
       <button
         onClick={() => setIsMobileOpen(!isMobileOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-3 bg-deep-charcoal rounded-xl shadow-lg border border-charcoal-dark text-white focus:outline-none focus:ring-2 focus:ring-burgundy"
+        className="lg:hidden fixed top-4 left-4 z-50 p-2.5 bg-deep-charcoal/90 backdrop-blur-sm rounded-xl shadow-lg border border-charcoal-dark text-white focus:outline-none focus:ring-2 focus:ring-burgundy"
         aria-label={isMobileOpen ? "Close navigation menu" : "Open navigation menu"}
         aria-expanded={isMobileOpen}
       >
-        <ThiingsIcon name="menu" pxSize={24} />
+        <ThiingsIcon name="menu" pxSize={20} />
       </button>
 
       {/* Mobile Overlay */}
@@ -470,6 +470,46 @@ export default function Sidebar() {
           </div>
         </div>
       </aside>
+
+      {/* Mobile Bottom Navigation Bar */}
+      <nav
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-deep-charcoal border-t border-charcoal-dark safe-area-bottom"
+        aria-label="Mobile navigation"
+      >
+        <div className="flex items-center justify-around px-2 py-1 pb-[max(0.25rem,env(safe-area-inset-bottom))]">
+          {[
+            { path: '/host-dashboard/simple', label: t('navigation.dashboard', 'Dashboard'), icon: 'layout-dashboard' },
+            { path: '/host-dashboard/floor-plan', label: t('navigation.tables', 'Tables'), icon: 'table' },
+            { path: '/host-dashboard/manager-ai', label: 'AI', icon: 'message-circle' },
+            { path: '/host-dashboard/settings', label: t('navigation.restaurantSettings', 'Settings'), icon: 'settings' },
+          ].map((item) => {
+            const active = isActive(item.path);
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`flex flex-col items-center gap-0.5 px-3 py-2 rounded-lg transition-colors min-w-[60px] ${
+                  active
+                    ? 'text-white'
+                    : 'text-stone-500 active:text-stone-300'
+                }`}
+              >
+                <ThiingsIcon name={item.icon} pxSize={20} />
+                <span className="text-[10px] font-medium leading-tight">{item.label}</span>
+                {active && <span className="w-1 h-1 rounded-full bg-burgundy" />}
+              </Link>
+            );
+          })}
+          <button
+            type="button"
+            onClick={() => setIsMobileOpen(true)}
+            className="flex flex-col items-center gap-0.5 px-3 py-2 rounded-lg transition-colors min-w-[60px] text-stone-500 active:text-stone-300"
+          >
+            <ThiingsIcon name="menu" pxSize={20} />
+            <span className="text-[10px] font-medium leading-tight">{t('common.more', 'More')}</span>
+          </button>
+        </div>
+      </nav>
     </>
   );
 }

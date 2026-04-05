@@ -149,7 +149,7 @@ export default function RestaurantSettingsPage() {
 
   return (
     <DashboardLayout>
-      <div className="p-6 sm:p-10 max-w-3xl mx-auto bg-white mt-14 sm:mt-0">
+      <div className="p-4 sm:p-6 lg:p-10 max-w-3xl mx-auto bg-white mt-14 sm:mt-0 pb-24 sm:pb-10">
         <div className="pl-12 lg:pl-0 mb-8">
           <h1 className="text-2xl font-bold text-deep-charcoal tracking-tight">
             {t('settings.title', 'Restaurant Settings')}
@@ -191,38 +191,40 @@ export default function RestaurantSettingsPage() {
             {DAYS.map((day) => {
               const dayHours = hours[day] || { is_open: false, open_time: '12:00', close_time: '23:00' };
               return (
-                <div key={day} className="flex items-center gap-3 py-2">
-                  <label className="w-20 text-sm font-medium text-deep-charcoal flex-shrink-0">
-                    {dayLabels[day]}
-                  </label>
-                  <label className="flex items-center gap-1.5 flex-shrink-0">
-                    <input
-                      type="checkbox"
-                      checked={dayHours.is_open}
-                      onChange={(e) => updateHour(day, 'is_open', e.target.checked)}
-                      className="w-4 h-4 rounded border-border-gray text-burgundy focus:ring-burgundy/30"
-                    />
-                    <span className="text-xs text-muted-stone">{t('settings.open', 'Open')}</span>
-                  </label>
+                <div key={day} className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3 py-2 border-b border-[#F3F4F6] sm:border-b-0 last:border-b-0">
+                  <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
+                    <label className="w-16 sm:w-20 text-sm font-medium text-deep-charcoal flex-shrink-0">
+                      {dayLabels[day]}
+                    </label>
+                    <label className="flex items-center gap-1.5 flex-shrink-0">
+                      <input
+                        type="checkbox"
+                        checked={dayHours.is_open}
+                        onChange={(e) => updateHour(day, 'is_open', e.target.checked)}
+                        className="w-4 h-4 rounded border-border-gray text-burgundy focus:ring-burgundy/30"
+                      />
+                      <span className="text-xs text-muted-stone">{t('settings.open', 'Open')}</span>
+                    </label>
+                    {!dayHours.is_open && (
+                      <span className="text-xs text-muted-stone italic">{t('settings.closed', 'Closed')}</span>
+                    )}
+                  </div>
                   {dayHours.is_open && (
-                    <div className="flex items-center gap-2 flex-1">
+                    <div className="flex items-center gap-2 flex-1 pl-0 sm:pl-0 ml-0">
                       <input
                         type="time"
                         value={dayHours.open_time || '12:00'}
                         onChange={(e) => updateHour(day, 'open_time', e.target.value)}
-                        className="px-2 py-1.5 bg-soft-gray border border-border-gray rounded-lg text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
+                        className="flex-1 sm:flex-none px-2 py-1.5 bg-soft-gray border border-border-gray rounded-lg text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
                       />
                       <span className="text-xs text-muted-stone">—</span>
                       <input
                         type="time"
                         value={dayHours.close_time || '23:00'}
                         onChange={(e) => updateHour(day, 'close_time', e.target.value)}
-                        className="px-2 py-1.5 bg-soft-gray border border-border-gray rounded-lg text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
+                        className="flex-1 sm:flex-none px-2 py-1.5 bg-soft-gray border border-border-gray rounded-lg text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
                       />
                     </div>
-                  )}
-                  {!dayHours.is_open && (
-                    <span className="text-xs text-muted-stone italic">{t('settings.closed', 'Closed')}</span>
                   )}
                 </div>
               );

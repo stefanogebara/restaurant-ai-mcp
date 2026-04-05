@@ -269,7 +269,7 @@ export default function FloorPlanEditor() {
 
   return (
     <DashboardLayout>
-      <div className="bg-white p-4 sm:p-6 lg:p-8 max-w-[1280px] mx-auto">
+      <div className="bg-white p-3 sm:p-6 lg:p-8 max-w-[1280px] mx-auto mt-14 sm:mt-0 pb-20 sm:pb-8">
 
         <FloorPlanHeader
           saveStatus={saveStatus}
@@ -292,7 +292,7 @@ export default function FloorPlanEditor() {
           />
         )}
 
-        <div className="relative">
+        <div className="relative overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0 pb-2 sm:pb-0">
           <FloorPlanCanvas
             filteredTables={filteredTables}
             isLoading={isLoading}

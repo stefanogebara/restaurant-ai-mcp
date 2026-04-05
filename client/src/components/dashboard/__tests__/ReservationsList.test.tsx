@@ -134,8 +134,9 @@ describe('ReservationsList', () => {
   it('shows check-in button for unchecked reservations', () => {
     render(<ReservationsList {...defaultProps} />);
     // Button displays "Confirmed" but has aria-label "Check In"
+    // Desktop + mobile responsive variants both render (CSS hides one), so expect 2
     const checkInButtons = screen.getAllByRole('button', { name: /check in/i });
-    expect(checkInButtons).toHaveLength(1); // Only Alice (Bob is already checked in)
+    expect(checkInButtons).toHaveLength(2); // Only Alice (Bob is already checked in) — desktop + mobile
   });
 
   it('shows "Seated" badge for checked-in reservations', () => {
@@ -148,7 +149,9 @@ describe('ReservationsList', () => {
     const onCheckIn = vi.fn();
     render(<ReservationsList {...defaultProps} onCheckIn={onCheckIn} />);
 
-    await user.click(screen.getByRole('button', { name: /check in/i }));
+    // Desktop + mobile both render; click the first (desktop) one
+    const checkInButtons = screen.getAllByRole('button', { name: /check in/i });
+    await user.click(checkInButtons[0]);
     expect(onCheckIn).toHaveBeenCalledTimes(1);
     expect(onCheckIn).toHaveBeenCalledWith(todayReservations[0]);
   });
