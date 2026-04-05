@@ -34,10 +34,19 @@ const { setWebhookCors } = require('./_lib/cors');
 const { updateDeliveryStatus } = require('./services/campaignService');
 
 // Extracted modules
-const { sendWhatsAppMessage, sendInteractiveListMessage } = require('./services/whatsapp/message-sender');
+const { sendWhatsAppMessage: sendWhatsAppMessageLib, getWhatsAppProvider } = require('./_lib/whatsapp-sender');
+const { sendInteractiveListMessage } = require('./services/whatsapp/message-sender');
 const { isRateLimited } = require('./services/whatsapp/rate-limiter');
 const { processWithAI, cleanHistoryForStorage } = require('./services/whatsapp/conversation');
 const { handleKeyword } = require('./services/whatsapp/keyword-handler');
+
+/**
+ * Wrapper that sends a WhatsApp message, always via Meta (this webhook IS the Meta path).
+ * Kept for backward-compat with all callsites inside this file.
+ */
+async function sendWhatsAppMessage(to, message) {
+  return sendWhatsAppMessageLib(to, message, { provider: 'meta' });
+}
 
 /**
  * Handle webhook verification (GET)
@@ -154,14 +163,50 @@ async function handlePost(req, res) {
     }
 
     // Check if this is a message event
-    // When ElevenLabs WhatsApp is enabled, they handle inbound messages.
-    // Our webhook only processes status updates (delivery receipts, campaign tracking).
     if (value?.messages) {
-      const elevenLabsWhatsApp = process.env.ELEVENLABS_WHATSAPP_ENABLED === 'true';
-      if (elevenLabsWhatsApp) {
-        logger.info('ElevenLabs WhatsApp active — skipping message handling (ElevenLabs handles it)');
-        return res.status(200).json({ status: 'ok', handler: 'elevenlabs' });
+      // Determine which restaurant this message belongs to so we can check its provider.
+      // We peek at the first message's sender to resolve restaurant, but fall back to
+      // the global ELEVENLABS flag for backwards compatibility.
+      const firstMsg = value.messages[0];
+      const senderPhone = firstMsg?.from;
+
+      // Try to resolve the restaurant for this phone to check whatsapp_provider.
+      // If only one restaurant exists, that's the one. Otherwise we check the session.
+      let restaurantProvider = null;
+      try {
+        const activeRestaurants = await getAllActiveRestaurants();
+        if (activeRestaurants.length === 1) {
+          restaurantProvider = await getWhatsAppProvider(activeRestaurants[0].id);
+        } else if (senderPhone) {
+          // Check if there's an existing session with a restaurant assigned
+          const { getSessionByPhone } = require('./_lib/whatsapp-sessions');
+          const existingSession = typeof getSessionByPhone === 'function'
+            ? await getSessionByPhone(senderPhone)
+            : null;
+          if (existingSession?.restaurant?.id) {
+            restaurantProvider = await getWhatsAppProvider(existingSession.restaurant.id);
+          }
+        }
+      } catch (providerErr) {
+        logger.warn('Provider lookup failed (non-fatal), falling back to global flag:', providerErr.message);
       }
+
+      // If the restaurant is configured for twilio, skip processing on the Meta webhook.
+      if (restaurantProvider === 'twilio') {
+        logger.info('Restaurant uses Twilio provider — skipping Meta webhook message handling');
+        return res.status(200).json({ status: 'ok', handler: 'twilio_provider' });
+      }
+
+      // Legacy global flag: when ElevenLabs WhatsApp is enabled and we couldn't resolve
+      // a per-restaurant provider, defer to ElevenLabs.
+      if (restaurantProvider === null) {
+        const elevenLabsWhatsApp = process.env.ELEVENLABS_WHATSAPP_ENABLED === 'true';
+        if (elevenLabsWhatsApp) {
+          logger.info('ElevenLabs WhatsApp active — skipping message handling (ElevenLabs handles it)');
+          return res.status(200).json({ status: 'ok', handler: 'elevenlabs' });
+        }
+      }
+
       return await handleIncomingMessage(value.messages[0], res);
     }
 

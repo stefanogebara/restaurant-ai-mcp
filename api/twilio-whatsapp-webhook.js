@@ -39,6 +39,8 @@ const { getOrCreateSession } = require('./_lib/whatsapp-sessions');
 const { sendWhatsAppMessage, buildTwimlResponse, EMPTY_TWIML } = require('./_lib/whatsapp/message-sender');
 const { processWithClaude } = require('./_lib/whatsapp/conversation-handler');
 const { handleQuickAction } = require('./_lib/whatsapp/quick-actions');
+const { getWhatsAppProvider } = require('./_lib/whatsapp-sender');
+const { getAllActiveRestaurants } = require('./_lib/restaurant-registry');
 
 // Message deduplication is handled via Redis (shared across Vercel instances).
 // Falls back to allowing the message when Redis is unavailable.
@@ -189,6 +191,26 @@ module.exports = async (req, res) => {
         logger.error(' Failed to create session');
         await sendWhatsAppMessage(fromNumber, 'Sorry, I had trouble starting our conversation. Please try again.');
         return res.status(200).send(EMPTY_TWIML);
+      }
+
+      // Per-restaurant provider guard: if this restaurant uses Meta, skip Twilio processing
+      try {
+        let restaurantId = session?.restaurant?.id;
+        if (!restaurantId) {
+          const activeRestaurants = await getAllActiveRestaurants();
+          if (activeRestaurants.length === 1) {
+            restaurantId = activeRestaurants[0].id;
+          }
+        }
+        if (restaurantId) {
+          const provider = await getWhatsAppProvider(restaurantId);
+          if (provider !== 'twilio') {
+            logger.warn(`Restaurant ${restaurantId} uses provider '${provider}', not twilio — returning empty TwiML`);
+            return res.status(200).send(EMPTY_TWIML);
+          }
+        }
+      } catch (providerErr) {
+        logger.warn('Twilio provider check failed (non-fatal), continuing:', providerErr.message);
       }
 
       // Handle quick action keywords (MODIFY, CANCEL, BOOK, HELP, YES/NO)

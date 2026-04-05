@@ -105,6 +105,13 @@ jest.mock('../_lib/supabase', () => ({
   },
 }));
 
+// Mock whatsapp-sender's getWhatsAppProvider to return 'twilio' so the provider guard passes
+jest.mock('../_lib/whatsapp-sender', () => ({
+  getWhatsAppProvider: jest.fn().mockResolvedValue('twilio'),
+  sendWhatsAppMessage: jest.fn().mockResolvedValue({ success: true, messageId: 'msg-test' }),
+  isWhatsAppConfigured: jest.fn().mockReturnValue(true),
+}));
+
 jest.mock('../_lib/usage-tracking', () => ({
   trackUsage: jest.fn().mockResolvedValue(true),
 }));

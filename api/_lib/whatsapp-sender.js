@@ -25,13 +25,36 @@ function isWhatsAppConfigured() {
 }
 
 /**
- * Send a WhatsApp text message via Meta Cloud API.
+ * Look up the whatsapp_provider for a restaurant from restaurant_config.
+ * Returns 'meta' (default) or 'twilio'.
  *
- * @param {string} to - Recipient phone number (e.g. +5511999999999)
- * @param {string} message - Message body text
- * @returns {{ success: boolean, messageId?: string, error?: string }}
+ * @param {string} restaurantId - UUID of the restaurant
+ * @returns {Promise<string>} 'meta' | 'twilio'
  */
-async function sendWhatsAppMessage(to, message) {
+async function getWhatsAppProvider(restaurantId) {
+  if (!restaurantId) return 'meta';
+
+  try {
+    const { supabaseAdmin } = require('./supabase');
+    const { data } = await supabaseAdmin
+      .schema('restaurant')
+      .from('restaurant_config')
+      .select('whatsapp_provider')
+      .eq('id', restaurantId)
+      .maybeSingle();
+
+    return data?.whatsapp_provider || 'meta';
+  } catch (err) {
+    logger.error('getWhatsAppProvider lookup failed, defaulting to meta:', err.message);
+    return 'meta';
+  }
+}
+
+/**
+ * Send a WhatsApp text message via Meta Cloud API.
+ * @private
+ */
+async function sendViaMeta(to, message) {
   const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
   const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
 
@@ -69,6 +92,60 @@ async function sendWhatsAppMessage(to, message) {
     logger.error('WhatsApp send exception:', error);
     return { success: false, error: error.message };
   }
+}
+
+/**
+ * Send a WhatsApp text message via Twilio.
+ * @private
+ */
+async function sendViaTwilio(to, message) {
+  try {
+    const twilio = require('twilio');
+    const accountSid = process.env.TWILIO_ACCOUNT_SID;
+    const authToken = process.env.TWILIO_AUTH_TOKEN;
+    const twilioWhatsAppNumber = process.env.TWILIO_WHATSAPP_NUMBER;
+
+    if (!accountSid || !authToken || !twilioWhatsAppNumber) {
+      logger.error('Missing TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, or TWILIO_WHATSAPP_NUMBER');
+      return { success: false, error: 'Twilio not configured' };
+    }
+
+    const client = twilio(accountSid, authToken);
+    const toNumber = to.startsWith('whatsapp:') ? to : `whatsapp:${to}`;
+    const fromNumber = twilioWhatsAppNumber.startsWith('whatsapp:')
+      ? twilioWhatsAppNumber
+      : `whatsapp:${twilioWhatsAppNumber}`;
+
+    const result = await client.messages.create({
+      body: message,
+      from: fromNumber,
+      to: toNumber
+    });
+
+    logger.info(`Twilio WhatsApp message sent to ${to}, sid=${result.sid}`);
+    return { success: true, messageId: result.sid };
+  } catch (error) {
+    logger.error('Twilio WhatsApp send exception:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Send a WhatsApp text message, routing to the correct provider.
+ *
+ * @param {string} to - Recipient phone number (e.g. +5511999999999)
+ * @param {string} message - Message body text
+ * @param {object} [options] - Optional configuration
+ * @param {string} [options.provider] - Force a specific provider ('meta' | 'twilio')
+ * @returns {{ success: boolean, messageId?: string, error?: string }}
+ */
+async function sendWhatsAppMessage(to, message, options = {}) {
+  const provider = options.provider || 'meta';
+
+  if (provider === 'twilio') {
+    return sendViaTwilio(to, message);
+  }
+  return sendViaMeta(to, message);
 }
 
 /**
@@ -263,6 +340,7 @@ async function sendWhatsAppAudioMessage(to, audioUrl) {
 
 module.exports = {
   isWhatsAppConfigured,
+  getWhatsAppProvider,
   sendWhatsAppMessage,
   sendWhatsAppAudioMessage,
   sendTemplateMessage,
