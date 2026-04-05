@@ -151,8 +151,8 @@ export default function RestaurantSettingsPage() {
 
   return (
     <DashboardLayout>
-      <div className="p-4 sm:p-6 lg:p-10 max-w-3xl mx-auto bg-white mt-14 sm:mt-0 pb-24 sm:pb-10">
-        <div className="pl-12 lg:pl-0 mb-8">
+      <div className="p-4 sm:p-6 lg:p-10 max-w-3xl mx-auto bg-white mt-14 sm:mt-0 pb-24 sm:pb-10 overflow-x-hidden">
+        <div className="pl-10 lg:pl-0 mb-8">
           <h1 className="text-2xl font-bold text-deep-charcoal tracking-tight">
             {t('settings.title', 'Restaurant Settings')}
           </h1>
@@ -212,19 +212,19 @@ export default function RestaurantSettingsPage() {
                     )}
                   </div>
                   {dayHours.is_open && (
-                    <div className="flex items-center gap-2 flex-1 pl-0 sm:pl-0 ml-0">
+                    <div className="flex items-center gap-2 w-full sm:w-auto sm:flex-1 pl-0 sm:pl-0 ml-0">
                       <input
                         type="time"
                         value={dayHours.open_time || '12:00'}
                         onChange={(e) => updateHour(day, 'open_time', e.target.value)}
-                        className="flex-1 sm:flex-none px-2 py-1.5 bg-soft-gray border border-border-gray rounded-lg text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
+                        className="min-w-0 flex-1 sm:flex-none sm:w-[120px] px-2 py-1.5 bg-soft-gray border border-border-gray rounded-lg text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
                       />
-                      <span className="text-xs text-muted-stone">—</span>
+                      <span className="text-xs text-muted-stone flex-shrink-0">—</span>
                       <input
                         type="time"
                         value={dayHours.close_time || '23:00'}
                         onChange={(e) => updateHour(day, 'close_time', e.target.value)}
-                        className="flex-1 sm:flex-none px-2 py-1.5 bg-soft-gray border border-border-gray rounded-lg text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
+                        className="min-w-0 flex-1 sm:flex-none sm:w-[120px] px-2 py-1.5 bg-soft-gray border border-border-gray rounded-lg text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
                       />
                     </div>
                   )}

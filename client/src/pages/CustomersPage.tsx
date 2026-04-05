@@ -82,9 +82,9 @@ export default function CustomersPage() {
 
   return (
     <DashboardLayout>
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 overflow-x-hidden pb-24 sm:pb-6 mt-14 sm:mt-0">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
           <div>
             <h1 className="text-xl font-bold text-stone-900">
               {t('crm.pageTitle', 'Clientes')}
@@ -98,7 +98,7 @@ export default function CustomersPage() {
           <button
             type="button"
             onClick={() => setShowDuplicates(true)}
-            className="px-4 py-2 text-sm font-medium text-stone-700 border border-[#E5E7EB] rounded-lg hover:bg-stone-50 transition-colors"
+            className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-stone-700 border border-[#E5E7EB] rounded-lg hover:bg-stone-50 transition-colors"
           >
             {t('crm.findDuplicates', 'Find Duplicates')}
           </button>
@@ -130,11 +130,11 @@ export default function CustomersPage() {
           </div>
 
           {/* Filter row */}
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <select
               value={tierFilter}
               onChange={(e) => setTierFilter(e.target.value)}
-              className="text-sm border border-[#E5E7EB] rounded-lg px-3 py-2 text-stone-700 bg-white focus:outline-none focus:ring-1 focus:ring-[#9F1239]/30 focus:border-[#9F1239]/30"
+              className="flex-1 min-w-[120px] sm:flex-none text-sm border border-[#E5E7EB] rounded-lg px-3 py-2 text-stone-700 bg-white focus:outline-none focus:ring-1 focus:ring-[#9F1239]/30 focus:border-[#9F1239]/30"
             >
               <option value="">{t('crm.allTiers', 'Todos os niveis')}</option>
               {TIER_OPTIONS.filter(Boolean).map((tier) => (
@@ -149,13 +149,13 @@ export default function CustomersPage() {
               value={tagFilter}
               onChange={(e) => setTagFilter(e.target.value)}
               placeholder={t('crm.filterByTag', 'Filtrar por tag...')}
-              className="text-sm border border-[#E5E7EB] rounded-lg px-3 py-2 text-stone-700 placeholder:text-stone-400 bg-white focus:outline-none focus:ring-1 focus:ring-[#9F1239]/30 focus:border-[#9F1239]/30"
+              className="flex-1 min-w-[120px] sm:flex-none text-sm border border-[#E5E7EB] rounded-lg px-3 py-2 text-stone-700 placeholder:text-stone-400 bg-white focus:outline-none focus:ring-1 focus:ring-[#9F1239]/30 focus:border-[#9F1239]/30"
             />
 
             <select
               value={allergyFilter}
               onChange={(e) => setAllergyFilter(e.target.value)}
-              className="text-sm border border-[#E5E7EB] rounded-lg px-3 py-2 text-stone-700 bg-white focus:outline-none focus:ring-1 focus:ring-[#9F1239]/30 focus:border-[#9F1239]/30"
+              className="flex-1 min-w-[120px] sm:flex-none text-sm border border-[#E5E7EB] rounded-lg px-3 py-2 text-stone-700 bg-white focus:outline-none focus:ring-1 focus:ring-[#9F1239]/30 focus:border-[#9F1239]/30"
             >
               <option value="">{t('crm.allAllergies', 'All allergies')}</option>
               {ALLERGY_FILTER_OPTIONS.map((a) => (
@@ -168,7 +168,7 @@ export default function CustomersPage() {
             <select
               value={dietaryFilter}
               onChange={(e) => setDietaryFilter(e.target.value)}
-              className="text-sm border border-[#E5E7EB] rounded-lg px-3 py-2 text-stone-700 bg-white focus:outline-none focus:ring-1 focus:ring-[#9F1239]/30 focus:border-[#9F1239]/30"
+              className="flex-1 min-w-[120px] sm:flex-none text-sm border border-[#E5E7EB] rounded-lg px-3 py-2 text-stone-700 bg-white focus:outline-none focus:ring-1 focus:ring-[#9F1239]/30 focus:border-[#9F1239]/30"
             >
               <option value="">{t('crm.allDietary', 'All dietary')}</option>
               {DIETARY_FILTER_OPTIONS.map((d) => (
