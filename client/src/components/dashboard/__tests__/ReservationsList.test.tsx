@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ReservationsList from '../ReservationsList';
 import type { UpcomingReservation } from '../../../types/host.types';
@@ -26,6 +26,14 @@ const enTranslations: Record<string, string> = {
   'dashboard.reservationsList.edit': 'Edit',
   'dashboard.reservationsList.cancel': 'Cancel',
   'dashboard.reservationsList.addReservation': '+ Add',
+  'dashboard.reservationsList.searchPlaceholder': 'Search by name or phone...',
+  'dashboard.reservationsList.filterAll': 'All',
+  'dashboard.reservationsList.filterConfirmed': 'Confirmed',
+  'dashboard.reservationsList.filterAtRisk': 'At Risk',
+  'dashboard.reservationsList.filterCheckedIn': 'Checked In',
+  'dashboard.reservationsList.showingResults': 'Showing {{shown}} of {{total}}',
+  'dashboard.reservationsList.noResults': 'No matches',
+  'dashboard.reservationsList.noResultsHint': 'Try a different search or filter',
 };
 
 const esTranslations: Record<string, string> = {
@@ -44,9 +52,18 @@ const esTranslations: Record<string, string> = {
 let currentLang = 'en';
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string) => {
+    t: (key: string, opts?: Record<string, unknown>) => {
       const translations = currentLang === 'es' ? esTranslations : enTranslations;
-      return translations[key] || key;
+      let result = translations[key] || (opts?.defaultValue as string) || key;
+      // Simple interpolation for {{var}} patterns
+      if (opts) {
+        Object.entries(opts).forEach(([k, v]) => {
+          if (k !== 'defaultValue') {
+            result = result.replace(new RegExp(`\\{\\{${k}\\}\\}`, 'g'), String(v));
+          }
+        });
+      }
+      return result;
     },
     i18n: { language: currentLang, changeLanguage: (lang: string) => { currentLang = lang; } },
   }),
@@ -254,5 +271,121 @@ describe('ReservationsList', () => {
 
     await user.click(screen.getByRole('button', { name: /take action/i }));
     expect(onIntervention).toHaveBeenCalledTimes(1);
+  });
+
+  // --- Search & Filter tests ---
+
+  it('renders search input', () => {
+    render(<ReservationsList {...defaultProps} />);
+    expect(screen.getByPlaceholderText('Search by name or phone...')).toBeInTheDocument();
+  });
+
+  it('renders status filter chips', () => {
+    render(<ReservationsList {...defaultProps} />);
+    expect(screen.getByRole('button', { name: 'All' })).toBeInTheDocument();
+    // "Confirmed" appears as both a filter chip and a status badge — check chip exists
+    const confirmedButtons = screen.getAllByRole('button', { name: /Confirmed/i });
+    expect(confirmedButtons.length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByRole('button', { name: 'At Risk' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Checked In' })).toBeInTheDocument();
+  });
+
+  it('filters reservations by search query (debounced)', async () => {
+    vi.useFakeTimers();
+
+    render(<ReservationsList {...defaultProps} />);
+
+    // Both visible before search
+    expect(screen.getByText('Alice Smith')).toBeInTheDocument();
+    expect(screen.getByText('Bob Johnson')).toBeInTheDocument();
+
+    // Type in search using fireEvent (avoids userEvent timer conflicts)
+    const searchInput = screen.getByPlaceholderText('Search by name or phone...');
+    fireEvent.change(searchInput, { target: { value: 'Alice' } });
+
+    // Advance past debounce
+    act(() => { vi.advanceTimersByTime(350); });
+
+    // Only Alice should remain
+    expect(screen.getByText('Alice Smith')).toBeInTheDocument();
+    expect(screen.queryByText('Bob Johnson')).not.toBeInTheDocument();
+
+    vi.useRealTimers();
+  });
+
+  it('filters reservations by phone number', async () => {
+    vi.useFakeTimers();
+
+    render(<ReservationsList {...defaultProps} />);
+
+    const searchInput = screen.getByPlaceholderText('Search by name or phone...');
+    fireEvent.change(searchInput, { target: { value: '555-0002' } });
+
+    act(() => { vi.advanceTimersByTime(350); });
+
+    expect(screen.queryByText('Alice Smith')).not.toBeInTheDocument();
+    expect(screen.getByText('Bob Johnson')).toBeInTheDocument();
+
+    vi.useRealTimers();
+  });
+
+  it('filters by "Checked In" status chip', () => {
+    render(<ReservationsList {...defaultProps} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Checked In' }));
+
+    // Bob is checked in, Alice is not
+    expect(screen.getByText('Bob Johnson')).toBeInTheDocument();
+    expect(screen.queryByText('Alice Smith')).not.toBeInTheDocument();
+  });
+
+  it('filters by "At Risk" status chip', () => {
+    const mixedReservations: UpcomingReservation[] = [
+      { ...todayReservations[0], ml_risk_level: 'high', ml_risk_score: 80 },
+      todayReservations[1],
+    ];
+
+    render(
+      <ReservationsList
+        {...defaultProps}
+        todayReservations={mixedReservations}
+      />
+    );
+
+    // Click the filter chip "At Risk" (not the status badge)
+    const atRiskButtons = screen.getAllByRole('button', { name: /At Risk/i });
+    // The filter chip is the first one (in the header area)
+    fireEvent.click(atRiskButtons[0]);
+
+    expect(screen.getByText('Alice Smith')).toBeInTheDocument();
+    expect(screen.queryByText('Bob Johnson')).not.toBeInTheDocument();
+  });
+
+  it('shows result count when filtering', () => {
+    render(<ReservationsList {...defaultProps} />);
+
+    // Click Checked In filter chip
+    fireEvent.click(screen.getByRole('button', { name: 'Checked In' }));
+
+    const resultCount = screen.getByTestId('filter-result-count');
+    expect(resultCount).toBeInTheDocument();
+    expect(resultCount.textContent).toContain('1');
+    expect(resultCount.textContent).toContain('2');
+  });
+
+  it('shows no-results empty state when search has no matches', () => {
+    vi.useFakeTimers();
+
+    render(<ReservationsList {...defaultProps} />);
+
+    const searchInput = screen.getByPlaceholderText('Search by name or phone...');
+    fireEvent.change(searchInput, { target: { value: 'zzzznonexistent' } });
+
+    act(() => { vi.advanceTimersByTime(350); });
+
+    expect(screen.getByText('No matches')).toBeInTheDocument();
+    expect(screen.getByText('Try a different search or filter')).toBeInTheDocument();
+
+    vi.useRealTimers();
   });
 });

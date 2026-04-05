@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import type { UpcomingReservation } from '../../types/host.types';
@@ -8,6 +8,8 @@ import CustomerTierBadge from './CustomerTierBadge';
 import DepositActions from './DepositActions';
 import { formatCurrency } from '../../utils/currency';
 import { predictReservationRevenue, type PartySizeRevenue } from '../../utils/revenuePredictor';
+
+type StatusFilter = 'all' | 'confirmed' | 'at_risk' | 'checked_in';
 
 interface ReservationsListProps {
   todayReservations: UpcomingReservation[];
@@ -42,8 +44,54 @@ export default function ReservationsList({
 }: ReservationsListProps) {
   const { t } = useTranslation();
   const [showTomorrow, setShowTomorrow] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const displayed = showTomorrow ? tomorrowReservations : todayReservations;
   const tl = (key: string) => t(`dashboard.reservationsList.${key}`);
+
+  // Debounce search query (300ms)
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedQuery(searchQuery), 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Filter by search query + status
+  const filtered = useMemo(() => {
+    return displayed.filter((r) => {
+      // Search filter
+      if (debouncedQuery.trim()) {
+        const q = debouncedQuery.toLowerCase();
+        const matchesSearch =
+          r.customer_name?.toLowerCase().includes(q) ||
+          r.customer_phone?.includes(q) ||
+          r.reservation_id?.toLowerCase().includes(q);
+        if (!matchesSearch) return false;
+      }
+
+      // Status filter
+      if (statusFilter === 'confirmed') {
+        return !r.checked_in && r.ml_risk_level !== 'high' && r.ml_risk_level !== 'very-high';
+      }
+      if (statusFilter === 'at_risk') {
+        return r.ml_risk_level === 'high' || r.ml_risk_level === 'very-high';
+      }
+      if (statusFilter === 'checked_in') {
+        return r.checked_in;
+      }
+      return true;
+    });
+  }, [displayed, debouncedQuery, statusFilter]);
+
+  const isFiltering = debouncedQuery.trim() !== '' || statusFilter !== 'all';
+
+  const statusFilters: Array<{ key: StatusFilter; label: string }> = [
+    { key: 'all', label: tl('filterAll') },
+    { key: 'confirmed', label: tl('filterConfirmed') },
+    { key: 'at_risk', label: tl('filterAtRisk') },
+    { key: 'checked_in', label: tl('filterCheckedIn') },
+  ];
 
   if (isLoading) {
     return (
@@ -68,57 +116,106 @@ export default function ReservationsList({
   return (
     <div className="overflow-hidden">
       {/* Panel Header */}
-      <div className="flex items-center justify-between px-6 py-5 border-b border-[#E5E7EB] gap-2 flex-wrap">
-        <div className="flex items-center gap-2.5">
-          <span className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{tl('upcoming')}</span>
-          <span className="text-[11px] font-semibold bg-[#9F1239]/[8%] text-[#9F1239] px-2.5 py-0.5 rounded-full">
-            {displayed.length}
-          </span>
-          {displayed.length > 0 && !showTomorrow && (
-            <span className="flex items-center gap-1 text-[10px] font-medium text-rose-600">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500" />
-              </span>
-              {t('common.live', 'Live')}
+      <div className="px-6 py-5 border-b border-[#E5E7EB]">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div className="flex items-center gap-2.5">
+            <span className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{tl('upcoming')}</span>
+            <span className="text-[11px] font-semibold bg-[#9F1239]/[8%] text-[#9F1239] px-2.5 py-0.5 rounded-full">
+              {displayed.length}
             </span>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="flex border border-[#E5E7EB] rounded-lg text-[11px] font-medium overflow-hidden flex-shrink-0">
-            <button
-              type="button"
-              onClick={() => setShowTomorrow(false)}
-              className={`px-4 py-1.5 transition-all ${
-                !showTomorrow
-                  ? 'bg-[#F9FAFB] text-[#111827] border-r border-[#E5E7EB]'
-                  : 'text-[#9CA3AF] hover:text-[#111827] border-r border-[#E5E7EB]'
-              }`}
-            >
-              {tl('today')}
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowTomorrow(true)}
-              className={`px-4 py-1.5 transition-all ${
-                showTomorrow
-                  ? 'bg-[#F9FAFB] text-[#111827]'
-                  : 'text-[#9CA3AF] hover:text-[#111827]'
-              }`}
-            >
-              {tl('tomorrow')}
-            </button>
+            {displayed.length > 0 && !showTomorrow && (
+              <span className="flex items-center gap-1 text-[10px] font-medium text-rose-600">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500" />
+                </span>
+                {t('common.live', 'Live')}
+              </span>
+            )}
           </div>
-          {onAdd && (
-            <button
-              type="button"
-              onClick={onAdd}
-              className="text-xs font-semibold px-3 py-1 rounded-lg bg-[#9F1239]/[8%] text-[#9F1239] hover:bg-[#9F1239]/[14%] transition-colors"
-            >
-              {tl('addReservation')}
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            <div className="flex border border-[#E5E7EB] rounded-lg text-[11px] font-medium overflow-hidden flex-shrink-0">
+              <button
+                type="button"
+                onClick={() => setShowTomorrow(false)}
+                className={`px-4 py-1.5 transition-all ${
+                  !showTomorrow
+                    ? 'bg-[#F9FAFB] text-[#111827] border-r border-[#E5E7EB]'
+                    : 'text-[#9CA3AF] hover:text-[#111827] border-r border-[#E5E7EB]'
+                }`}
+              >
+                {tl('today')}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowTomorrow(true)}
+                className={`px-4 py-1.5 transition-all ${
+                  showTomorrow
+                    ? 'bg-[#F9FAFB] text-[#111827]'
+                    : 'text-[#9CA3AF] hover:text-[#111827]'
+                }`}
+              >
+                {tl('tomorrow')}
+              </button>
+            </div>
+            {onAdd && (
+              <button
+                type="button"
+                onClick={onAdd}
+                className="text-xs font-semibold px-3 py-1 rounded-lg bg-[#9F1239]/[8%] text-[#9F1239] hover:bg-[#9F1239]/[14%] transition-colors"
+              >
+                {tl('addReservation')}
+              </button>
+            )}
+          </div>
         </div>
+
+        {/* Search input */}
+        <div className="relative mt-3">
+          <ThiingsIcon
+            name="search"
+            pxSize={14}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9CA3AF] pointer-events-none"
+          />
+          <input
+            ref={searchInputRef}
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={tl('searchPlaceholder')}
+            className="w-full pl-9 pr-3 py-2 text-sm font-[Inter] border border-[#E5E7EB] rounded-lg bg-white placeholder-[#9CA3AF] text-[#111827] focus:outline-none focus:ring-1 focus:ring-[#9F1239]/30 focus:border-[#9F1239]/40 transition-colors"
+            aria-label={tl('searchPlaceholder')}
+          />
+        </div>
+
+        {/* Status filter chips */}
+        <div className="flex items-center gap-1.5 mt-2.5 flex-wrap">
+          {statusFilters.map(({ key, label }) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setStatusFilter(key)}
+              className={`text-[11px] font-medium px-3 py-1 rounded-full transition-colors ${
+                statusFilter === key
+                  ? 'bg-[#9F1239] text-white'
+                  : 'bg-[#F3F4F6] text-[#6B7280] hover:bg-[#E5E7EB] hover:text-[#111827]'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {/* Showing X of Y */}
+        {isFiltering && (
+          <p className="text-[11px] text-[#9CA3AF] mt-2" data-testid="filter-result-count">
+            {t('dashboard.reservationsList.showingResults', {
+              shown: filtered.length,
+              total: displayed.length,
+              defaultValue: `Mostrando ${filtered.length} de ${displayed.length}`,
+            })}
+          </p>
+        )}
       </div>
 
       {/* List */}
@@ -142,9 +239,17 @@ export default function ReservationsList({
             </button>
           )}
         </div>
+      ) : filtered.length === 0 ? (
+        <div className="text-center py-10 px-6">
+          <div className="w-12 h-12 rounded-2xl bg-soft-gray flex items-center justify-center mb-3 mx-auto">
+            <ThiingsIcon name="search" pxSize={20} className="text-muted-stone" />
+          </div>
+          <p className="text-sm font-semibold text-deep-charcoal mb-1">{tl('noResults')}</p>
+          <p className="text-xs text-stone-gray">{tl('noResultsHint')}</p>
+        </div>
       ) : (
         <div>
-          {displayed.map((reservation) => (
+          {filtered.map((reservation) => (
             <ReservationRow
               key={reservation.reservation_id}
               reservation={reservation}

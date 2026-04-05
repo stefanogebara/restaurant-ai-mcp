@@ -267,7 +267,15 @@
       "confirmed": "Confirmado",
       "edit": "Editar",
       "cancel": "Cancelar",
-      "addReservation": "+ Adicionar"
+      "addReservation": "+ Adicionar",
+      "searchPlaceholder": "Buscar por nome ou telefone...",
+      "filterAll": "Todos",
+      "filterConfirmed": "Confirmados",
+      "filterAtRisk": "Risco",
+      "filterCheckedIn": "Check-in",
+      "showingResults": "Mostrando {{shown}} de {{total}}",
+      "noResults": "Nenhum resultado",
+      "noResultsHint": "Tente uma busca ou filtro diferente"
     },
     "guestFeedback": "Feedback dos Clientes",
     "last7days": "Últimos 7 dias",

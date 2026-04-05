@@ -267,7 +267,15 @@
       "confirmed": "Confirmed",
       "edit": "Edit",
       "cancel": "Cancel",
-      "addReservation": "+ Add"
+      "addReservation": "+ Add",
+      "searchPlaceholder": "Search by name or phone...",
+      "filterAll": "All",
+      "filterConfirmed": "Confirmed",
+      "filterAtRisk": "At Risk",
+      "filterCheckedIn": "Checked In",
+      "showingResults": "Showing {{shown}} of {{total}}",
+      "noResults": "No matches",
+      "noResultsHint": "Try a different search or filter"
     },
     "guestFeedback": "Guest Feedback",
     "last7days": "Last 7 days",
