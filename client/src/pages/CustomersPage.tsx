@@ -84,7 +84,7 @@ export default function CustomersPage() {
     <DashboardLayout>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 overflow-x-hidden pb-24 sm:pb-6 mt-14 sm:mt-0">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6 pl-10 sm:pl-0">
           <div>
             <h1 className="text-xl font-bold text-stone-900">
               {t('crm.pageTitle', 'Clientes')}
