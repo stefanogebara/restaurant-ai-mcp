@@ -22,13 +22,21 @@ const CHANNEL_OPTIONS = [
 export default function CampaignAutomationsPanel() {
   const { t } = useTranslation();
   const toast = useToast();
-  const { data: automations, isLoading } = useAutomations();
+  const { data: automations, isLoading, error } = useAutomations();
   const updateMutation = useUpdateAutomation();
 
   if (isLoading) {
     return (
       <div className="text-center py-12 text-stone-500 text-sm">
         {t('campaigns.loading')}
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-12 text-red-600 text-sm">
+        {t('campaigns.automations.updateFailed', 'Falha ao carregar automações')}
       </div>
     );
   }

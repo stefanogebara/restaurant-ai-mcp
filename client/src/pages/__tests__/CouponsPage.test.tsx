@@ -48,7 +48,7 @@ describe('CouponsPage', () => {
 
   it('renders the page title', () => {
     renderPage();
-    expect(screen.getByText('Cupons e Promocoes')).toBeInTheDocument();
+    expect(screen.getByText('Cupons e Promoções')).toBeInTheDocument();
   });
 
   it('renders stats bar', () => {

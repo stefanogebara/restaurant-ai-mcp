@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useQueryClient } from '@tanstack/react-query';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 import { useCouponList, useCreateCoupon, useDeactivateCoupon } from '../hooks/useCoupons';
@@ -29,6 +30,7 @@ function formatDiscount(coupon: Coupon): string {
 
 function CouponCreateForm({ onCreated, onCancel }: { onCreated: () => void; onCancel: () => void }) {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const createMutation = useCreateCoupon();
 
   const [code, setCode] = useState('');
@@ -67,6 +69,7 @@ function CouponCreateForm({ onCreated, onCancel }: { onCreated: () => void; onCa
         valid_from: validFrom || undefined,
         valid_until: validUntil || null,
       });
+      await queryClient.invalidateQueries({ queryKey: ['coupons'] });
       onCreated();
     } catch (err: unknown) {
       const errorMsg = err instanceof Error ? err.message : 'Failed to create coupon';
@@ -91,7 +94,7 @@ function CouponCreateForm({ onCreated, onCancel }: { onCreated: () => void; onCa
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Code (optional) */}
         <div>
-          <label className="block text-xs font-medium text-stone-gray mb-1">{t('coupons.code', 'Codigo')} <span className="text-stone-gray/60">({t('coupons.optional', 'opcional')})</span></label>
+          <label className="block text-xs font-medium text-stone-gray mb-1">{t('coupons.code', 'Código')} <span className="text-stone-gray/60">({t('coupons.optional', 'opcional')})</span></label>
           <input
             type="text"
             value={code}
@@ -104,7 +107,7 @@ function CouponCreateForm({ onCreated, onCancel }: { onCreated: () => void; onCa
 
         {/* Description */}
         <div>
-          <label className="block text-xs font-medium text-stone-gray mb-1">{t('coupons.description', 'Descricao')}</label>
+          <label className="block text-xs font-medium text-stone-gray mb-1">{t('coupons.description', 'Descrição')}</label>
           <input
             type="text"
             value={description}
@@ -245,7 +248,7 @@ function CouponRow({ coupon }: { coupon: Coupon }) {
           type="button"
           onClick={handleCopy}
           className="text-stone-gray hover:text-[#9F1239] transition-colors"
-          title={t('coupons.copyCode', 'Copiar codigo')}
+          title={t('coupons.copyCode', 'Copiar código')}
         >
           <ThiingsIcon name={copied ? 'check' : 'copy'} pxSize={14} />
         </button>
@@ -304,7 +307,7 @@ export default function CouponsPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-xl font-bold text-deep-charcoal">
-            {t('coupons.title', 'Cupons e Promocoes')}
+            {t('coupons.title', 'Cupons e Promoções')}
           </h1>
           {!showForm && (
             <button
@@ -369,8 +372,8 @@ export default function CouponsPage() {
             <div>
               {/* Table header */}
               <div className="flex items-center gap-4 px-4 py-2 border-b border-[#E5E7EB] bg-gray-50/50 text-xs font-medium text-stone-gray uppercase tracking-wide">
-                <div className="min-w-[120px]">{t('coupons.code', 'Codigo')}</div>
-                <div className="flex-1">{t('coupons.description', 'Descricao')}</div>
+                <div className="min-w-[120px]">{t('coupons.code', 'Código')}</div>
+                <div className="flex-1">{t('coupons.description', 'Descrição')}</div>
                 <div>{t('coupons.discount', 'Desconto')}</div>
                 <div>{t('coupons.status', 'Status')}</div>
                 <div>{t('coupons.usage', 'Uso')}</div>

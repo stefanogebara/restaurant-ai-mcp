@@ -206,7 +206,7 @@ export default function CrmCustomerDrawer({ customerId, onClose }: CrmCustomerDr
                   </Section>
 
                   {/* Visit History */}
-                  <Section title={t('crm.visitHistory', 'Historico de Visitas')}>
+                  <Section title={t('crm.visitHistory', 'Histórico de Visitas')}>
                     {customer.recent_reservations && customer.recent_reservations.length > 0 ? (
                       <div className="space-y-2">
                         {customer.recent_reservations.map((res) => (

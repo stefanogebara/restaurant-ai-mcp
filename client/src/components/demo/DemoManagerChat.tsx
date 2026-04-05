@@ -51,17 +51,18 @@ function buildResponsePT(input: string, ctx: Ctx): string {
   const occ = ctx.totalTables > 0 ? Math.round((ctx.occupiedTables / ctx.totalTables) * 100) : 0;
 
   if (lower.includes('mesa') || lower.includes('disponiv') || lower.includes('table'))
-    return `Voce tem ${avail} de ${ctx.totalTables} mesas disponiveis (${occ}% de ocupacao). ${avail <= 2 ? 'Ficando apertado -- considere a lista de espera.' : 'Bastante espaco para walk-ins.'}`;
+    return `Você tem ${avail} de ${ctx.totalTables} mesas disponíveis (${occ}% de ocupação). ${avail <= 2 ? 'Ficando apertado — considere a lista de espera.' : 'Bastante espaço para walk-ins.'}`;
   if (lower.includes('espera') || lower.includes('fila') || lower.includes('waitlist'))
-    return ctx.waitlistCount > 0 ? `${ctx.waitlistCount === 1 ? 'Ha 1 grupo' : `Ha ${ctx.waitlistCount} grupos`} na lista de espera. Voce tem ${avail} mesas livres.` : 'Lista de espera vazia -- ninguem esperando.';
+    return ctx.waitlistCount > 0 ? `${ctx.waitlistCount === 1 ? 'Há 1 grupo' : `Há ${ctx.waitlistCount} grupos`} na lista de espera. Você tem ${avail} mesas livres.` : 'Lista de espera vazia — ninguém esperando.';
   if (lower.includes('reserva') || lower.includes('booking'))
-    return `Voce tem ${ctx.reservationsToday} reservas para hoje. ${ctx.reservationsToday > 4 ? 'Dia cheio pela frente.' : 'Carga tranquila para hoje.'}`;
+    return `Você tem ${ctx.reservationsToday} reservas para hoje. ${ctx.reservationsToday > 4 ? 'Dia cheio pela frente.' : 'Carga tranquila para hoje.'}`;
   if (lower.includes('cliente') || lower.includes('pessoa') || lower.includes('guest'))
     return `${ctx.totalGuests} clientes sentados em ${ctx.activeParties} ${ctx.activeParties === 1 ? 'grupo ativo' : 'grupos ativos'}.`;
   if (lower.includes('status') || lower.includes('resumo') || lower.includes('como'))
     return `Resumo: ${ctx.occupiedTables}/${ctx.totalTables} mesas ocupadas (${occ}%), ${ctx.activeParties} grupos ativos com ${ctx.totalGuests} clientes, ${ctx.reservationsToday} reservas hoje, ${ctx.waitlistCount} na espera.`;
+
   if (lower.includes('equipe') || lower.includes('func') || lower.includes('staff'))
-    return `Com ${ctx.activeParties} grupos ativos, recomendo pelo menos ${Math.max(2, Math.ceil(ctx.activeParties / 2))} garcons e 1 hostess no salao.`;
+    return `Com ${ctx.activeParties} grupos ativos, recomendo pelo menos ${Math.max(2, Math.ceil(ctx.activeParties / 2))} garçons e 1 hostess no salão.`;
   if (lower.includes('ajuda') || lower.includes('o que'))
     return 'Posso ajudar com: mesas, lista de espera, reservas, clientes, equipe e resumo geral.';
   if (lower.includes('oi') || lower.includes('ola') || lower.includes('bom'))

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useQueryClient } from '@tanstack/react-query';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 import { useEventList, useCreateEvent, useDeactivateEvent } from '../hooks/useEvents';
@@ -38,6 +39,7 @@ function formatTime(timeStr: string): string {
 
 function EventCreateForm({ onCreated, onCancel }: { onCreated: () => void; onCancel: () => void }) {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const createMutation = useCreateEvent();
 
   const [title, setTitle] = useState('');
@@ -92,6 +94,7 @@ function EventCreateForm({ onCreated, onCancel }: { onCreated: () => void; onCan
         refund_policy: refundPolicy,
         menu_description: menuDescription.trim() || undefined,
       });
+      await queryClient.invalidateQueries({ queryKey: ['events'] });
       onCreated();
     } catch (err: unknown) {
       const errorMsg = err instanceof Error ? err.message : 'Failed to create event';

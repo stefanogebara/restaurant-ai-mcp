@@ -147,7 +147,7 @@ export default function CalculatorSliders({ inputs, onChange }: Props) {
       />
 
       <SliderField
-        label={t('calculator.inputs.occupancy', 'Lotacao media')}
+        label={t('calculator.inputs.occupancy', 'Lotação média')}
         value={inputs.occupancy}
         min={50}
         max={100}

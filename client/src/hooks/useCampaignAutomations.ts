@@ -26,9 +26,12 @@ export function useAutomations() {
     queryKey: ['campaign-automations'],
     queryFn: async () => {
       const res = await apiClient.get('/campaign-automations');
-      return res.data.data as CampaignAutomation[];
+      // API returns { success, data } or fallback { automations } when table missing
+      const automations = res.data.data ?? res.data.automations ?? [];
+      return automations as CampaignAutomation[];
     },
     staleTime: 5 * 60 * 1000,
+    retry: 1,
   });
 }
 
