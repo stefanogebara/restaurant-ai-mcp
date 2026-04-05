@@ -175,10 +175,12 @@ function PhoneVerificationPanel() {
         </span>
       </div>
 
-      {isExpired && (
+      {!isVerified && (
         <div className="space-y-3">
           <p className="text-xs text-warm-stone">
-            {t('settings.phoneVerExpired')}
+            {isExpired
+              ? t('settings.phoneVerExpired')
+              : t('settings.phoneVerPending', 'Your phone number is not yet verified. Request a verification code below.')}
           </p>
           <button
             type="button"
@@ -186,7 +188,7 @@ function PhoneVerificationPanel() {
             disabled={requestMutation.isPending}
             className="text-xs bg-soft-gray hover:bg-border-gray text-deep-charcoal px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
           >
-            {requestMutation.isPending ? t('settings.sendingSms') : t('settings.sendSmsCode')}
+            {requestMutation.isPending ? t('settings.sendingSms') : t('settings.reverifyPhone', 'Verify Again')}
           </button>
           <div className="flex gap-2">
             <input

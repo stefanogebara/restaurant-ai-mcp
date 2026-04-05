@@ -16,6 +16,8 @@ export interface ReservationSettings {
   max_party_size?: number;
   min_party_size?: number;
   allow_waitlist?: boolean;
+  default_dining_duration?: number;
+  auto_confirm?: boolean;
 }
 
 export interface RestaurantSettings {

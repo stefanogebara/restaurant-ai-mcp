@@ -14,10 +14,16 @@ export default function VoiceAgentInfo({ agentId, updatedAt, createdAt }: Props)
 
   return (
     <section className="py-5 border-b border-[#E5E7EB]">
-      <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827] mb-4 flex items-center gap-2">
-        <ThiingsIcon name="info" pxSize={20} />
-        {t('agentInfo.title')}
-      </h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827] flex items-center gap-2">
+          <ThiingsIcon name="info" pxSize={20} />
+          {t('agentInfo.title')}
+        </h2>
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+          {t('voice.agentActive', 'Agent active')}
+        </span>
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
         <div>

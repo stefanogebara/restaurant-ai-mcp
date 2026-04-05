@@ -1223,7 +1223,12 @@
     "cancellationPolicy": "Política de Cancelamento",
     "cancellationPlaceholder": "Cancelamento gratuito até 24 horas antes...",
     "allowWaitlist": "Permitir lista de espera quando lotado",
+    "defaultDiningDuration": "Duração Padrão da Refeição",
+    "durationMinutes": "{{count}} minutos",
+    "autoConfirm": "Confirmar reservas automaticamente",
     "savePolicies": "Salvar Políticas",
+    "phoneVerPending": "Seu número ainda não foi verificado. Solicite um código de verificação abaixo.",
+    "reverifyPhone": "Verificar Novamente",
     "messageTemplates": "Modelos de Mensagem",
     "templateFeedback": "Solicitação de Feedback",
     "templateReengagement": "Reengajamento",
@@ -2288,7 +2293,13 @@
   },
   "voice": {
     "settingsSaved": "Configurações de voz salvas com sucesso",
-    "savedWithSyncWarning": "Configurações salvas localmente. A sincronização do agente será aplicada na próxima atualização."
+    "savedWithSyncWarning": "Configurações salvas localmente. A sincronização do agente será aplicada na próxima atualização.",
+    "agentActive": "Agente ativo",
+    "agentCreating": "Criando seu agente de voz...",
+    "agentCreatingDesc": "Isso pode levar até 2 minutos. Se o agente não aparecer, tente novamente abaixo.",
+    "agentCreationStarted": "Criação do agente iniciada. Isso pode levar até 2 minutos.",
+    "retryAgentCreation": "Tentar Criar Novamente",
+    "retrying": "Criando..."
   },
   "voiceExperiment": {
     "title": "Teste A/B da Sua Voz",

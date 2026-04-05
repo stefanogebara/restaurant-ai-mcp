@@ -18,6 +18,7 @@ import UpgradePrompt from '../components/common/UpgradePrompt';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 import { useVoiceBrowser } from '../hooks/useVoiceBrowser';
 import { useAudioPlayback } from '../hooks/useAudioPlayback';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 
 import VoiceEngineSelector from '../components/voice/VoiceEngineSelector';
 import VoiceCurrentCard from '../components/voice/VoiceCurrentCard';
@@ -36,7 +37,6 @@ import BookingChannelsPanel from '../components/dashboard/BookingChannelsPanel';
 import PhoneIntegrationPanel from '../components/voice/PhoneIntegrationPanel';
 import AIStrategyPanel from '../components/dashboard/AIStrategyPanel';
 import StrategyMetricsWidget from '../components/dashboard/StrategyMetricsWidget';
-import { useQuery } from '@tanstack/react-query';
 import { authFetch } from '../services/api';
 
 import { DEFAULT_VOICE_SETTINGS } from '../components/voice/voiceTypes';
@@ -53,6 +53,24 @@ export default function VoiceSettingsPage() {
   const { data: engineConfig } = useVoiceEngineSettings();
   const saveEngineMutation = useSaveVoiceEngine();
   const { data: waStatus } = useWhatsAppIntegrationStatus();
+  const queryClient = useQueryClient();
+  const retryAgentMutation = useMutation({
+    mutationFn: async () => {
+      const res = await authFetch('/api/elevenlabs-agent-create', { method: 'POST' });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Failed to create agent');
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      toast.success(t('voice.agentCreationStarted', 'Agent creation started. This may take up to 2 minutes.'));
+      setTimeout(() => queryClient.invalidateQueries({ queryKey: ['voiceSettings'] }), 5000);
+    },
+    onError: (err) => {
+      toast.error(err instanceof Error ? err.message : 'Failed to create agent');
+    },
+  });
   const { data: dashData } = useQuery({
     queryKey: ['hostDashboard'],
     queryFn: async () => {
@@ -215,23 +233,55 @@ export default function VoiceSettingsPage() {
   }
 
   if (!config?.agent_id) {
+    const hasRestaurantName = !!config?.restaurant_name;
     return (
       <DashboardLayout>
         <div className="p-6 lg:p-8 max-w-5xl space-y-6">
           <div className="mt-8 text-center py-16">
             <div className="border border-[#E5E7EB] rounded-lg p-8 max-w-md mx-auto">
-              <ThiingsIcon name="volume" pxSize={48} className="mx-auto mb-4" />
-              <h2 className="text-lg font-bold text-deep-charcoal mb-2">{t('settings.noAgentConfigured')}</h2>
-              <p className="text-sm text-stone-gray mb-6">
-                {t('settings.noAgentDesc')}
-              </p>
-              <a
-                href="/onboarding"
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-xl transition-colors"
-              >
-                <ThiingsIcon name="lightning" size="xs" />
-                {t('settings.completeSetup')}
-              </a>
+              {hasRestaurantName ? (
+                <>
+                  <div className="mx-auto mb-4 flex items-center justify-center">
+                    <Spinner size="lg" className="border-burgundy border-t-burgundy/30" />
+                  </div>
+                  <h2 className="text-lg font-bold text-deep-charcoal mb-2">
+                    {t('voice.agentCreating', 'Creating your voice agent...')}
+                  </h2>
+                  <p className="text-sm text-stone-gray mb-6">
+                    {t('voice.agentCreatingDesc', 'This may take up to 2 minutes. If the agent does not appear, try again below.')}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => retryAgentMutation.mutate()}
+                    disabled={retryAgentMutation.isPending}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-xl transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    {retryAgentMutation.isPending ? (
+                      <Spinner size="sm" className="border-white border-t-white/30" />
+                    ) : (
+                      <ThiingsIcon name="refresh" size="xs" />
+                    )}
+                    {retryAgentMutation.isPending
+                      ? t('voice.retrying', 'Creating...')
+                      : t('voice.retryAgentCreation', 'Retry Agent Creation')}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <ThiingsIcon name="volume" pxSize={48} className="mx-auto mb-4" />
+                  <h2 className="text-lg font-bold text-deep-charcoal mb-2">{t('settings.noAgentConfigured')}</h2>
+                  <p className="text-sm text-stone-gray mb-6">
+                    {t('settings.noAgentDesc')}
+                  </p>
+                  <a
+                    href="/onboarding"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-xl transition-colors"
+                  >
+                    <ThiingsIcon name="lightning" size="xs" />
+                    {t('settings.completeSetup')}
+                  </a>
+                </>
+              )}
             </div>
           </div>
           <AIStrategyPanel />

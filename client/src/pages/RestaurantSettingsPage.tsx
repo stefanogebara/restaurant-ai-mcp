@@ -64,6 +64,8 @@ export default function RestaurantSettingsPage() {
     max_party_size: 12,
     min_party_size: 1,
     allow_waitlist: true,
+    default_dining_duration: 90,
+    auto_confirm: true,
   });
 
   // Sync from server
@@ -259,6 +261,21 @@ export default function RestaurantSettingsPage() {
             </div>
             <div>
               <label className="block text-xs font-medium text-muted-stone mb-1">
+                {t('settings.defaultDiningDuration', 'Default Dining Duration')}
+              </label>
+              <select
+                value={policies.default_dining_duration ?? 90}
+                onChange={(e) => setPolicies({ ...policies, default_dining_duration: parseInt(e.target.value) })}
+                className="w-full px-3 py-2 bg-soft-gray border border-border-gray rounded-xl text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
+              >
+                <option value={60}>{t('settings.durationMinutes', '{{count}} minutes', { count: 60 })}</option>
+                <option value={90}>{t('settings.durationMinutes', '{{count}} minutes', { count: 90 })}</option>
+                <option value={120}>{t('settings.durationMinutes', '{{count}} minutes', { count: 120 })}</option>
+                <option value={150}>{t('settings.durationMinutes', '{{count}} minutes', { count: 150 })}</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-muted-stone mb-1">
                 {t('settings.bufferTime', 'Buffer Between Reservations (min)')}
               </label>
               <input
@@ -310,6 +327,16 @@ export default function RestaurantSettingsPage() {
               placeholder={t('settings.cancellationPlaceholder', 'Free cancellation up to 24 hours before...')}
             />
           </div>
+
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={policies.auto_confirm ?? true}
+              onChange={(e) => setPolicies({ ...policies, auto_confirm: e.target.checked })}
+              className="w-4 h-4 rounded border-border-gray text-burgundy focus:ring-burgundy/30"
+            />
+            <span className="text-sm text-deep-charcoal">{t('settings.autoConfirm', 'Automatically confirm reservations')}</span>
+          </label>
 
           <label className="flex items-center gap-2">
             <input
