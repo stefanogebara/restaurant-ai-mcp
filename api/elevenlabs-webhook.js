@@ -74,6 +74,16 @@ module.exports = async (req, res) => {
     authenticated = true;
   }
 
+  // Path 3: ElevenLabs agent tool calls include restaurant_id + action in query
+  // These are unauthenticated POST requests from ElevenLabs servers
+  if (!authenticated && req.query.restaurant_id && req.query.action) {
+    const validActions = ['get_current_datetime', 'check_availability', 'create_reservation', 'lookup_reservation', 'cancel_reservation', 'modify_reservation', 'get_wait_time'];
+    if (validActions.includes(req.query.action)) {
+      authenticated = true;
+      logger.info('Auth via ElevenLabs tool call (restaurant_id + action)');
+    }
+  }
+
   if (!authenticated) {
     logger.error('Webhook auth failed — no valid signature or token');
     return res.status(403).json({ error: 'Authentication failed' });
