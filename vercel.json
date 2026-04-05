@@ -1,6 +1,6 @@
 {
   "installCommand": "npm install",
-  "buildCommand": "cd client && rm -rf dist node_modules/.vite && npm install && npm run build && node cache-bust-sw.cjs",
+  "buildCommand": "cd client && npm install && npm run build && node cache-bust-sw.cjs",
   "outputDirectory": "client/dist",
   "functions": {
     "api/manager-chat.js": {
@@ -10,7 +10,7 @@
       "maxDuration": 120
     },
     "api/**/*.js": {
-      "excludeFiles": "lambda/**",
+      "excludeFiles": "{lambda/**,api/__tests__/**,**/*.test.js,**/*.spec.js}",
       "maxDuration": 60
     }
   },

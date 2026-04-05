@@ -19,3 +19,14 @@ parallel-agents/
 .git/
 
 # Keep ml_models/ - we need the trained model for production
+
+# Exclude test files (they get bundled as serverless functions, adding ~10min to build)
+api/__tests__/
+client/src/**/__tests__/
+**/*.test.js
+**/*.test.ts
+**/*.spec.js
+**/*.spec.ts
+e2e/
+test-screenshots/
+test-results/
