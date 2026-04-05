@@ -132,6 +132,17 @@ jest.mock('../_lib/secure-logger', () => ({
   })),
 }));
 
+jest.mock('../_lib/subscription-middleware', () => ({
+  inlineCheckSubscription: jest.fn().mockResolvedValue(false),
+  softCheckSubscription: jest.fn().mockResolvedValue(false),
+  checkSubscriptionByRestaurantId: jest.fn().mockResolvedValue({ active: true, plan: 'growth', status: 'active' }),
+  inlineRequireFeature: jest.fn().mockReturnValue(false),
+  checkSubscription: jest.fn((_req, _res, next) => next()),
+  requireFeature: jest.fn(() => (_req, _res, next) => next()),
+  checkReservationLimits: jest.fn((_req, _res, next) => next()),
+  isDemoRestaurant: jest.fn().mockResolvedValue(false),
+}));
+
 // ---------------------------------------------------------------------------
 // Require modules under test (AFTER mocks are in place)
 // ---------------------------------------------------------------------------

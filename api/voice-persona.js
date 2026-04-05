@@ -2,6 +2,7 @@ const { verifyJWT } = require('./_lib/auth');
 const { supabaseAdmin } = require('./_lib/supabase');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
+const { inlineRequireFeature, checkSubscriptionByRestaurantId } = require('./_lib/subscription-middleware');
 
 const logger = createSecureLogger('voice-persona');
 
@@ -17,6 +18,19 @@ async function handleGet(req, res) {
     const user = await verifyJWT(req.headers.authorization?.replace('Bearer ', ''));
     if (!user?.restaurant_id) throw new Error('UNAUTHORIZED');
     const restaurantId = user.restaurant_id;
+
+    const subResult = await checkSubscriptionByRestaurantId(restaurantId);
+    if (!subResult.active) {
+      return res.status(403).json({
+        error: 'Subscription required',
+        message: 'No active subscription found. Please subscribe to access this feature.',
+        status: subResult.status,
+        upgrade_url: `${process.env.CLIENT_URL || 'https://seatable.one'}/#pricing`,
+      });
+    }
+    if (subResult.warning === 'past_due') res.setHeader('X-Subscription-Warning', 'past_due');
+    if (inlineRequireFeature(subResult.plan?.toLowerCase(), 'voice_ai', res)) return;
+
     const { data, error } = await supabaseAdmin
       .schema('restaurant')
       .from('restaurant_config')
@@ -44,6 +58,19 @@ async function handlePatch(req, res) {
     const user = await verifyJWT(req.headers.authorization?.replace('Bearer ', ''));
     if (!user?.restaurant_id) throw new Error('UNAUTHORIZED');
     const restaurantId = user.restaurant_id;
+
+    const subResult = await checkSubscriptionByRestaurantId(restaurantId);
+    if (!subResult.active) {
+      return res.status(403).json({
+        error: 'Subscription required',
+        message: 'No active subscription found. Please subscribe to access this feature.',
+        status: subResult.status,
+        upgrade_url: `${process.env.CLIENT_URL || 'https://seatable.one'}/#pricing`,
+      });
+    }
+    if (subResult.warning === 'past_due') res.setHeader('X-Subscription-Warning', 'past_due');
+    if (inlineRequireFeature(subResult.plan?.toLowerCase(), 'voice_ai', res)) return;
+
     const { agent_name, agent_greeting } = req.body || {};
 
     if (agent_name !== undefined && (typeof agent_name !== 'string' || agent_name.length > 50)) {

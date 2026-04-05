@@ -13,6 +13,7 @@ const { setWebhookCors, handlePreflight } = require('./_lib/cors');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { buildGuestContext, getRecentMemories } = require('./services/guestMemory');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
+const { inlineCheckSubscription } = require('./_lib/subscription-middleware');
 
 const logger = createSecureLogger('GuestContext');
 
@@ -37,6 +38,10 @@ module.exports = async (req, res) => {
   if (!restaurantId) {
     return res.status(403).json({ message: 'No restaurant associated with your account.' });
   }
+
+  // Subscription check
+  const subBlocked = await inlineCheckSubscription(restaurantId, res);
+  if (subBlocked) return;
 
   const { phone } = req.query;
   if (!phone) {

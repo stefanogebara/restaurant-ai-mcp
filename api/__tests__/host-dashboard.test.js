@@ -181,6 +181,17 @@ jest.mock('../_lib/secure-logger', () => ({
   })),
 }));
 
+jest.mock('../_lib/subscription-middleware', () => ({
+  inlineCheckSubscription: jest.fn().mockResolvedValue(false),
+  softCheckSubscription: jest.fn().mockResolvedValue(false),
+  checkSubscriptionByRestaurantId: jest.fn().mockResolvedValue({ active: true, plan: 'growth', status: 'active' }),
+  inlineRequireFeature: jest.fn().mockReturnValue(false),
+  checkSubscription: jest.fn((req, res, next) => next()),
+  requireFeature: jest.fn(() => (req, res, next) => next()),
+  checkReservationLimits: jest.fn((req, res, next) => next()),
+  isDemoRestaurant: jest.fn().mockResolvedValue(false),
+}));
+
 jest.mock('../_lib/sentry', () => ({
   initSentry: jest.fn(),
   captureException: jest.fn(),

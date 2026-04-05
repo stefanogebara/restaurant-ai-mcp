@@ -15,6 +15,7 @@ const { verifyAuth } = require('./_lib/auth');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
+const { inlineCheckSubscription } = require('./_lib/subscription-middleware');
 const logger = createSecureLogger('Reports');
 
 module.exports = async (req, res) => {
@@ -32,6 +33,10 @@ module.exports = async (req, res) => {
   if (auth.error) {
     return res.status(auth.status).json({ success: false, error: auth.error });
   }
+
+  // Subscription check
+  const subBlocked = await inlineCheckSubscription(auth.user.restaurant_id, res);
+  if (subBlocked) return;
 
   const { action } = req.query;
 

@@ -19,6 +19,7 @@
 
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { supabaseAdmin } = require('../_lib/supabase');
+const { logCronRun } = require('../_lib/cron-tracker');
 const logger = createSecureLogger('AnalyticsBriefing');
 
 const POSTHOG_API_KEY = process.env.POSTHOG_PERSONAL_API_KEY;
@@ -207,6 +208,13 @@ module.exports = async (req, res) => {
         logger.warn('Failed to query briefing recipients:', dbErr.message);
       }
     }
+
+    await logCronRun('analytics-briefing', {
+      date: dateLabel,
+      unique_visitors: uniqueVisitors,
+      events_tracked: Object.keys(counts).length,
+      recipients: sentCount,
+    });
 
     return res.status(200).json({
       success: true,

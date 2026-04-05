@@ -5,6 +5,7 @@ const { createSecureLogger } = require('./_lib/secure-logger');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { setInternalCors } = require('./_lib/cors');
 const { applySecurityHeaders } = require('./_lib/security-headers');
+const { inlineCheckSubscription } = require('./_lib/subscription-middleware');
 
 const logger = createSecureLogger('manager-chat');
 
@@ -29,6 +30,9 @@ async function handleChat(req, res) {
     }
     const restaurantId = user.restaurant_id;
 
+    const subBlocked = await inlineCheckSubscription(restaurantId, res);
+    if (subBlocked) return;
+
     const rateLimited = await checkAndApplyRateLimit(req, res, 'chat');
     if (rateLimited) return;
 
@@ -50,6 +54,9 @@ async function handleChatStream(req, res) {
       return res.status(401).json({ error: 'Authentication required' });
     }
     const restaurantId = user.restaurant_id;
+
+    const subBlocked = await inlineCheckSubscription(restaurantId, res);
+    if (subBlocked) return;
 
     const rateLimited = await checkAndApplyRateLimit(req, res, 'chat');
     if (rateLimited) return;
@@ -115,6 +122,9 @@ async function handleHistory(req, res) {
       return res.status(401).json({ error: 'Authentication required' });
     }
     const restaurantId = user.restaurant_id;
+
+    const subBlocked = await inlineCheckSubscription(restaurantId, res);
+    if (subBlocked) return;
 
     const rateLimited = await checkAndApplyRateLimit(req, res, 'api');
     if (rateLimited) return;

@@ -10,6 +10,7 @@ const { supabaseAdmin } = require('./_lib/supabase');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { setInternalCors } = require('./_lib/cors');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
+const { inlineCheckSubscription } = require('./_lib/subscription-middleware');
 
 const logger = createSecureLogger('activity-feed');
 
@@ -61,6 +62,10 @@ module.exports = async (req, res) => {
     if (!user?.restaurant_id) return res.status(401).json({ error: 'Authentication required' });
 
     const restaurantId = user.restaurant_id;
+
+    const subBlocked = await inlineCheckSubscription(restaurantId, res);
+    if (subBlocked) return;
+
     const limit = Math.min(parseInt(req.query?.limit) || 20, 50);
 
     // Query recent events from multiple tables in parallel

@@ -20,24 +20,29 @@ const logger = createSecureLogger('CronHealth');
 // Expected cron jobs with their schedule intervals in minutes
 // Derived from vercel.json crons configuration
 const CRON_JOBS = [
-  { name: 'check-late-reservations', intervalMinutes: 5 },
-  { name: 'send-campaigns', intervalMinutes: 5 },
-  { name: 'send-feedback', intervalMinutes: 30 },
-  { name: 'send-reminders', intervalMinutes: 1440 },         // daily
-  { name: 'update-churn-scores', intervalMinutes: 1440 },    // daily
-  { name: 'report-usage', intervalMinutes: 1440 },           // daily
-  { name: 'generate-reflections', intervalMinutes: 1440 },   // daily
-  { name: 'demo-nurture', intervalMinutes: 1440 },           // daily
-  { name: 'cleanup-expired-demos', intervalMinutes: 1440 },  // daily
-  { name: 'warm-seo-cache', intervalMinutes: 1440 },         // daily
+  { name: 'check-late-reservations', intervalMinutes: 15 },     // */15
+  { name: 'send-campaigns', intervalMinutes: 15 },              // */15
+  { name: 'send-feedback', intervalMinutes: 30 },               // hourly (top of hour → 60, but 30min tolerance)
+  { name: 'send-surveys', intervalMinutes: 60 },                // hourly (:30)
+  { name: 'send-reminders', intervalMinutes: 1440 },            // daily
+  { name: 'update-churn-scores', intervalMinutes: 1440 },       // daily
+  { name: 'report-usage', intervalMinutes: 1440 },              // daily
+  { name: 'generate-reflections', intervalMinutes: 1440 },      // daily
+  { name: 'demo-nurture', intervalMinutes: 1440 },              // daily
+  { name: 'cleanup-expired-demos', intervalMinutes: 1440 },     // daily
+  { name: 'warm-seo-cache', intervalMinutes: 1440 },            // daily
   { name: 'manager-briefings-morning', intervalMinutes: 1440 },
   { name: 'manager-briefings-eod', intervalMinutes: 1440 },
   { name: 'manager-alerts-low-covers', intervalMinutes: 1440 },
   { name: 'manager-alerts-high-noshows', intervalMinutes: 1440 },
   { name: 'manager-alerts-late-cancellations', intervalMinutes: 120 }, // every 2h
-  { name: 'proactive-comms', intervalMinutes: 10080 },       // weekly
+  { name: 'proactive-comms', intervalMinutes: 10080 },          // weekly
   { name: 'refresh-restaurant-profiles', intervalMinutes: 10080 }, // weekly
-  { name: 'pre-reservation-upsell', intervalMinutes: 1440 },     // daily
+  { name: 'pre-reservation-upsell', intervalMinutes: 1440 },    // daily
+  { name: 'analytics-briefing', intervalMinutes: 1440 },        // daily
+  { name: 'cleanup-waitlist', intervalMinutes: 1440 },           // daily
+  { name: 'automated-campaigns', intervalMinutes: 1440 },       // daily
+  { name: 'health-alert', intervalMinutes: 1440 },              // daily
 ];
 
 function getStatus(lastRanAt, intervalMinutes) {
@@ -62,7 +67,81 @@ function formatAge(lastRanAt) {
   return `${days}d ${hours % 24}h ago`;
 }
 
-module.exports = async (req, res) => {
+/**
+ * Core health check logic — reusable by health-alert.js
+ * @returns {{ overall, summary, jobs, checked_at }} or null if DB unavailable
+ */
+async function checkCronHealth() {
+  if (!supabaseAdmin) {
+    return null;
+  }
+
+  const { data: runs, error } = await supabaseAdmin
+    .from('cron_runs')
+    .select('job_name, ran_at, meta')
+    .gte('ran_at', new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString())
+    .order('ran_at', { ascending: false })
+    .limit(500);
+
+  if (error) {
+    logger.warn('Failed to query cron_runs', { error: error.message });
+    return null;
+  }
+
+  // Build lookup maps: job_name -> latest ran_at, job_name -> error count (14d)
+  const lastRunMap = {};
+  const errorCountMap = {};
+  for (const run of (runs || [])) {
+    if (!lastRunMap[run.job_name]) {
+      lastRunMap[run.job_name] = run.ran_at;
+    }
+    if (run.meta && run.meta.status === 'error') {
+      errorCountMap[run.job_name] = (errorCountMap[run.job_name] || 0) + 1;
+    }
+  }
+
+  // Evaluate each job
+  const jobs = CRON_JOBS.map(job => {
+    const lastRanAt = lastRunMap[job.name] || null;
+    const status = getStatus(lastRanAt, job.intervalMinutes);
+    const errorCount = errorCountMap[job.name] || 0;
+
+    return {
+      name: job.name,
+      status,
+      last_ran_at: lastRanAt,
+      age: formatAge(lastRanAt),
+      interval_minutes: job.intervalMinutes,
+      errors_14d: errorCount,
+    };
+  });
+
+  // Overall status
+  const staleCount = jobs.filter(j => j.status === 'stale').length;
+  const neverRunCount = jobs.filter(j => j.status === 'never_run').length;
+  const healthyCount = jobs.filter(j => j.status === 'healthy').length;
+  const totalErrors = jobs.reduce((sum, j) => sum + j.errors_14d, 0);
+
+  let overall = 'healthy';
+  if (staleCount > 0) overall = 'degraded';
+  if (staleCount > 3) overall = 'critical';
+  if (neverRunCount === jobs.length) overall = 'not_tracking';
+
+  return {
+    overall,
+    summary: {
+      healthy: healthyCount,
+      stale: staleCount,
+      never_run: neverRunCount,
+      errors_14d: totalErrors,
+      total: jobs.length,
+    },
+    jobs,
+    checked_at: new Date().toISOString(),
+  };
+}
+
+async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -82,18 +161,9 @@ module.exports = async (req, res) => {
   }
 
   try {
-    // Get recent runs (last 14 days) — we'll compute latest per job in JS
-    const { data: runs, error } = await supabaseAdmin
-      .from('cron_runs')
-      .select('job_name, ran_at, meta')
-      .gte('ran_at', new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString())
-      .order('ran_at', { ascending: false })
-      .limit(500);
+    const result = await checkCronHealth();
 
-    if (error) {
-      // Table might not exist yet — return all as never_run
-      logger.warn('Failed to query cron_runs', { error: error.message });
-
+    if (!result) {
       const jobs = CRON_JOBS.map(job => ({
         name: job.name,
         status: 'never_run',
@@ -110,53 +180,21 @@ module.exports = async (req, res) => {
       });
     }
 
-    // Build a lookup map: job_name → latest ran_at (results ordered DESC so first wins)
-    const lastRunMap = {};
-    for (const run of (runs || [])) {
-      if (!lastRunMap[run.job_name]) {
-        lastRunMap[run.job_name] = run.ran_at;
-      }
-    }
-
-    // Evaluate each job
-    const jobs = CRON_JOBS.map(job => {
-      const lastRanAt = lastRunMap[job.name] || null;
-      const status = getStatus(lastRanAt, job.intervalMinutes);
-
-      return {
-        name: job.name,
-        status,
-        last_ran_at: lastRanAt,
-        age: formatAge(lastRanAt),
-        interval_minutes: job.intervalMinutes,
-      };
+    logger.info('Cron health check', {
+      overall: result.overall,
+      healthy: result.summary.healthy,
+      stale: result.summary.stale,
+      never_run: result.summary.never_run,
+      errors_14d: result.summary.errors_14d,
     });
 
-    // Overall status
-    const staleCount = jobs.filter(j => j.status === 'stale').length;
-    const neverRunCount = jobs.filter(j => j.status === 'never_run').length;
-    const healthyCount = jobs.filter(j => j.status === 'healthy').length;
-
-    let overall = 'healthy';
-    if (staleCount > 0) overall = 'degraded';
-    if (staleCount > 3) overall = 'critical';
-    if (neverRunCount === jobs.length) overall = 'not_tracking';
-
-    logger.info('Cron health check', { overall, healthy: healthyCount, stale: staleCount, never_run: neverRunCount });
-
-    return res.status(200).json({
-      overall,
-      summary: {
-        healthy: healthyCount,
-        stale: staleCount,
-        never_run: neverRunCount,
-        total: jobs.length,
-      },
-      jobs,
-      checked_at: new Date().toISOString(),
-    });
+    return res.status(200).json(result);
   } catch (err) {
     logger.error('Cron health check failed', { error: err.message });
     return res.status(500).json({ error: 'Health check failed' });
   }
-};
+}
+
+// Export handler as default + checkCronHealth for internal use
+module.exports = handler;
+module.exports.checkCronHealth = checkCronHealth;

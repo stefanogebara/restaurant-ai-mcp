@@ -11,6 +11,7 @@ const { verifyJWT } = require('./_lib/auth');
 const { supabaseAdmin } = require('./_lib/supabase');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
+const { inlineCheckSubscription } = require('./_lib/subscription-middleware');
 
 const logger = createSecureLogger('campaign-automations');
 
@@ -44,6 +45,9 @@ async function handleGet(req, res) {
       return res.status(401).json({ error: 'Authentication required' });
     }
     const restaurantId = user.restaurant_id;
+
+    const subBlocked = await inlineCheckSubscription(restaurantId, res);
+    if (subBlocked) return;
 
     // Fetch existing automations
     let { data: automations, error } = await supabaseAdmin
@@ -104,6 +108,10 @@ async function handlePatch(req, res) {
       return res.status(401).json({ error: 'Authentication required' });
     }
     const restaurantId = user.restaurant_id;
+
+    const subBlocked = await inlineCheckSubscription(restaurantId, res);
+    if (subBlocked) return;
+
     const { trigger_type, enabled, channel, delay_minutes, google_review_url } = req.body || {};
 
     // Validate trigger_type

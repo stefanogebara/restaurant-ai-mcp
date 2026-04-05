@@ -319,6 +319,12 @@ jest.mock('../services/mlRiskScoring', () => ({
 jest.mock('../_lib/subscription-middleware', () => ({
   checkSubscription: jest.fn((_req, _res, next) => next()),
   checkReservationLimits: jest.fn((_req, _res, next) => next()),
+  inlineCheckSubscription: jest.fn().mockResolvedValue(false),
+  softCheckSubscription: jest.fn().mockResolvedValue(false),
+  checkSubscriptionByRestaurantId: jest.fn().mockResolvedValue({ active: true, plan: 'growth', status: 'active' }),
+  inlineRequireFeature: jest.fn().mockReturnValue(false),
+  requireFeature: jest.fn(() => (_req, _res, next) => next()),
+  isDemoRestaurant: jest.fn().mockResolvedValue(false),
 }));
 
 jest.mock('../_lib/usage-tracking', () => ({

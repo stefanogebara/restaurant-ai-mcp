@@ -21,6 +21,14 @@ jest.mock('../_lib/supabase', () => ({
         single: jest.fn(() => Promise.resolve({ data: { id: 'rest-001' }, error: null })),
       })),
     })),
+    from: jest.fn(() => ({
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockReturnValue({
+        single: jest.fn(() => Promise.resolve({ data: null, error: { message: 'not found' } })),
+        maybeSingle: jest.fn(() => Promise.resolve({ data: null, error: null })),
+      }),
+    })),
   },
 }));
 

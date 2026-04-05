@@ -18,16 +18,25 @@ const { setWebhookCors, handlePreflight } = require('./_lib/cors');
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
 /**
- * Look up restaurant_id from Stripe event metadata or customer email.
- * Stripe checkout sessions should include restaurant_id in metadata.
- * Fallback: look up restaurant_config by email.
+ * Look up restaurant_id from Stripe event metadata, Stripe customer metadata,
+ * subscriptions table, or (last resort) customer email.
+ *
+ * Fallback chain:
+ *   1. Object metadata (safe — set at checkout)
+ *   2. Stripe customer metadata (safe — propagated from checkout.session.completed)
+ *   3. Subscriptions table by customer_id (safe for existing customers)
+ *   4. Email lookup in restaurant_config (UNSAFE — could match wrong restaurant,
+ *      logged as ERROR, NEVER used for creation events)
  *
  * @param {object} stripeObject - The Stripe event data object (session, subscription, invoice, etc.)
  * @param {string|null} customerEmail - Customer email if already retrieved
+ * @param {string} eventType - The Stripe event type (e.g. 'customer.subscription.created')
  * @returns {Promise<string|null>} restaurant_id or null
  */
-async function resolveRestaurantId(stripeObject, customerEmail = null) {
-  // Method 1: Check Stripe metadata for restaurant_id
+async function resolveRestaurantId(stripeObject, customerEmail = null, eventType = '') {
+  const isCreationEvent = eventType === 'customer.subscription.created';
+
+  // Method 1: Check Stripe object metadata for restaurant_id
   // (create-checkout-session.js includes restaurant_id in both session and subscription metadata)
   const metadataRestaurantId = stripeObject.metadata?.restaurant_id;
   if (metadataRestaurantId) {
@@ -35,29 +44,22 @@ async function resolveRestaurantId(stripeObject, customerEmail = null) {
     return metadataRestaurantId;
   }
 
-  // Method 2: Look up by customer email in restaurant_config (less reliable fallback)
-  if (customerEmail) {
-    logger.warn('Falling back to email lookup for restaurant_id — metadata was missing. Email:', customerEmail);
+  // Method 2: Check Stripe customer metadata for restaurant_id
+  // (propagated from checkout.session.completed handler)
+  const stripeCustomerId = stripeObject.customer;
+  if (stripeCustomerId) {
     try {
-      const { data, error } = await supabase
-        .schema('restaurant')
-        .from('restaurant_config')
-        .select('id')
-        .eq('email', customerEmail)
-        .limit(1)
-        .single();
-
-      if (!error && data) {
-        logger.info('Restaurant ID resolved from email:', data.id);
-        return data.id;
+      const customerObj = await stripe.customers.retrieve(stripeCustomerId);
+      if (customerObj && !customerObj.deleted && customerObj.metadata?.restaurant_id) {
+        logger.info('Restaurant ID from Stripe customer metadata:', customerObj.metadata.restaurant_id);
+        return customerObj.metadata.restaurant_id;
       }
     } catch (err) {
-      logger.warn('Could not look up restaurant by email:', err.message);
+      logger.warn('Could not retrieve Stripe customer for metadata lookup:', err.message);
     }
   }
 
   // Method 3: Look up by stripe customer_id in subscriptions table
-  const stripeCustomerId = stripeObject.customer;
   if (stripeCustomerId) {
     logger.warn('Falling back to Stripe customer_id lookup in subscriptions. Customer:', stripeCustomerId);
     try {
@@ -74,6 +76,34 @@ async function resolveRestaurantId(stripeObject, customerEmail = null) {
       }
     } catch (err) {
       logger.warn('Could not look up restaurant by Stripe customer_id:', err.message);
+    }
+  }
+
+  // For creation events, NEVER fall back to email lookup — it's unsafe.
+  // Throw so Stripe retries and we get alerted.
+  if (isCreationEvent) {
+    logger.error('Cannot resolve restaurant_id for subscription creation event. Object metadata, customer metadata, and subscriptions table all failed. Customer:', stripeCustomerId, 'Email:', customerEmail);
+    return null;
+  }
+
+  // Method 4: Email lookup in restaurant_config (LAST RESORT, non-creation events only)
+  if (customerEmail) {
+    logger.error('UNSAFE FALLBACK: Resolving restaurant_id via email lookup — this may match the wrong restaurant. Email:', customerEmail, 'Event:', eventType);
+    try {
+      const { data, error } = await supabase
+        .schema('restaurant')
+        .from('restaurant_config')
+        .select('id')
+        .eq('email', customerEmail)
+        .limit(1)
+        .single();
+
+      if (!error && data) {
+        logger.error('Restaurant ID resolved from email (unsafe):', data.id, 'Email:', customerEmail);
+        return data.id;
+      }
+    } catch (err) {
+      logger.warn('Could not look up restaurant by email:', err.message);
     }
   }
 
@@ -194,12 +224,23 @@ module.exports = async (req, res) => {
         const session = event.data.object;
         logger.info('Checkout session completed:', session.id);
 
-        // Session completed, subscription will be created in customer.subscription.created event
-        // Just log for now
         logger.info('Customer:', session.customer);
         logger.info('Subscription:', session.subscription);
         logger.info('Email:', session.customer_details?.email);
         logger.info('Metadata restaurant_id:', session.metadata?.restaurant_id || 'NOT SET');
+
+        // Propagate restaurant_id to Stripe customer metadata so future events
+        // (subscription.created, invoice, etc.) can resolve it without email lookup
+        if (session.metadata?.restaurant_id && session.customer) {
+          try {
+            await stripe.customers.update(session.customer, {
+              metadata: { restaurant_id: session.metadata.restaurant_id },
+            });
+            logger.info('Propagated restaurant_id to Stripe customer metadata:', session.customer);
+          } catch (err) {
+            logger.error('Failed to propagate restaurant_id to Stripe customer metadata:', err.message);
+          }
+        }
 
         break;
 
@@ -217,11 +258,24 @@ module.exports = async (req, res) => {
         const planName = getPlanFromPriceId(priceId);
 
         // Resolve restaurant_id from Stripe metadata or customer email
-        const createRestaurantId = await resolveRestaurantId(subscriptionCreated, customer.email);
+        const createRestaurantId = await resolveRestaurantId(subscriptionCreated, customer.email, event.type);
         if (!createRestaurantId) {
           logger.error('Cannot create subscription without restaurant_id. Subscription:', subscriptionCreated.id, 'Customer email:', customer.email, 'Customer ID:', subscriptionCreated.customer);
           // Throw to return 500 so Stripe retries this event
           throw new Error(`Cannot resolve restaurant for subscription ${subscriptionCreated.id}`);
+        }
+
+        // Idempotency guard: skip if subscription with this Stripe ID already exists
+        const { data: existingSub } = await supabase
+          .from('subscriptions')
+          .select('id')
+          .eq('subscription_id', subscriptionCreated.id)
+          .limit(1)
+          .maybeSingle();
+
+        if (existingSub) {
+          logger.info('Subscription already exists in database, skipping creation:', subscriptionCreated.id);
+          break;
         }
 
         // Create subscription record in database
@@ -264,7 +318,7 @@ module.exports = async (req, res) => {
 
         // Resolve restaurant_id from Stripe metadata or customer lookup
         const updateCustomer = await stripe.customers.retrieve(subscriptionUpdated.customer);
-        const updateRestaurantId = await resolveRestaurantId(subscriptionUpdated, updateCustomer.email);
+        const updateRestaurantId = await resolveRestaurantId(subscriptionUpdated, updateCustomer.email, event.type);
         if (!updateRestaurantId) {
           logger.error('Cannot update subscription without restaurant_id. Customer:', subscriptionUpdated.customer);
           break;
@@ -298,7 +352,7 @@ module.exports = async (req, res) => {
 
         // Resolve restaurant_id from Stripe metadata or customer lookup
         const deleteCustomer = await stripe.customers.retrieve(subscriptionDeleted.customer);
-        const deleteRestaurantId = await resolveRestaurantId(subscriptionDeleted, deleteCustomer.email);
+        const deleteRestaurantId = await resolveRestaurantId(subscriptionDeleted, deleteCustomer.email, event.type);
         if (!deleteRestaurantId) {
           logger.error('Cannot cancel subscription without restaurant_id. Customer:', subscriptionDeleted.customer);
           break;
@@ -331,7 +385,7 @@ module.exports = async (req, res) => {
         if (invoice.billing_reason === 'subscription_create' && invoice.amount_paid > 0) {
           try {
             const invoiceCustomer = await stripe.customers.retrieve(invoice.customer);
-            const invoiceRestaurantId = await resolveRestaurantId(invoice, invoiceCustomer?.email || null);
+            const invoiceRestaurantId = await resolveRestaurantId(invoice, invoiceCustomer?.email || null, event.type);
             if (invoiceRestaurantId) {
               await rewardReferralIfEligible(invoiceRestaurantId, invoice.customer, stripe, logger);
             }

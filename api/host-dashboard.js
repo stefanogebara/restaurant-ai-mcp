@@ -2,6 +2,7 @@ const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const { verifyAuth } = require('./_lib/auth');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { createSecureLogger } = require('./_lib/secure-logger');
+const { softCheckSubscription } = require('./_lib/subscription-middleware');
 const { initSentry, captureException } = require('./_lib/sentry');
 initSentry();
 
@@ -43,6 +44,10 @@ module.exports = async (req, res) => {
     });
   }
   req.user = authResult.user;
+
+  // Soft subscription check — allows 7-day grace period after expiry
+  const subBlocked = await softCheckSubscription(req.user.restaurant_id, res);
+  if (subBlocked) return;
 
   const { action } = req.query;
 

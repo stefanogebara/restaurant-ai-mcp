@@ -5,6 +5,7 @@
 
 // --- Mock dependencies ---
 const mockCustomersRetrieve = jest.fn();
+const mockCustomersUpdate = jest.fn();
 const mockConstructEvent = jest.fn();
 
 jest.mock('stripe', () => {
@@ -14,8 +15,26 @@ jest.mock('stripe', () => {
     },
     customers: {
       retrieve: mockCustomersRetrieve,
+      update: mockCustomersUpdate,
     },
   }));
+});
+
+// Build a mock chain for supabase queries.
+// schema('restaurant').from().select().eq().limit().single() → email lookup (Method 4)
+// from('subscriptions').select().eq().limit().single() → subscriptions table lookup (Method 3 in resolveRestaurantId)
+// from('subscriptions').select().eq().limit().maybeSingle() → idempotency guard
+const mockMaybeSingle = jest.fn().mockResolvedValue({ data: null, error: null });
+const mockSubscriptionsSingle = jest.fn().mockResolvedValue({ data: null, error: { message: 'not found' } });
+const mockSubscriptionsLimit = jest.fn().mockReturnValue({
+  single: mockSubscriptionsSingle,
+  maybeSingle: mockMaybeSingle,
+});
+const mockSubscriptionsEq = jest.fn().mockReturnValue({
+  limit: mockSubscriptionsLimit,
+});
+const mockSubscriptionsSelect = jest.fn().mockReturnValue({
+  eq: mockSubscriptionsEq,
 });
 
 jest.mock('../_lib/supabase', () => ({
@@ -34,6 +53,9 @@ jest.mock('../_lib/supabase', () => ({
           }),
         }),
       }),
+    }),
+    from: jest.fn().mockReturnValue({
+      select: mockSubscriptionsSelect,
     }),
   },
 }));
@@ -119,7 +141,7 @@ describe('StripeWebhook: Signature verification', () => {
 // checkout.session.completed
 // ============================================================
 describe('StripeWebhook: checkout.session.completed', () => {
-  test('logs checkout session without error', async () => {
+  test('logs checkout session and propagates restaurant_id to customer metadata', async () => {
     mockConstructEvent.mockReturnValueOnce({
       type: 'checkout.session.completed',
       data: {
@@ -132,9 +154,56 @@ describe('StripeWebhook: checkout.session.completed', () => {
         },
       },
     });
+    mockCustomersUpdate.mockResolvedValueOnce({});
 
     const { req, res } = createMockReqRes();
     await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({ received: true });
+    // Verify restaurant_id was propagated to Stripe customer metadata
+    expect(mockCustomersUpdate).toHaveBeenCalledWith('cus_test', {
+      metadata: { restaurant_id: 'rest-1' },
+    });
+  });
+
+  test('does not propagate metadata when restaurant_id is missing', async () => {
+    mockConstructEvent.mockReturnValueOnce({
+      type: 'checkout.session.completed',
+      data: {
+        object: {
+          id: 'cs_test_no_meta',
+          customer: 'cus_test',
+          subscription: 'sub_test',
+          customer_details: { email: 'test@test.com' },
+          metadata: {},
+        },
+      },
+    });
+
+    const { req, res } = createMockReqRes();
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(mockCustomersUpdate).not.toHaveBeenCalled();
+  });
+
+  test('handles customer update failure gracefully', async () => {
+    mockConstructEvent.mockReturnValueOnce({
+      type: 'checkout.session.completed',
+      data: {
+        object: {
+          id: 'cs_test_fail',
+          customer: 'cus_test',
+          subscription: 'sub_test',
+          customer_details: { email: 'test@test.com' },
+          metadata: { restaurant_id: 'rest-1' },
+        },
+      },
+    });
+    mockCustomersUpdate.mockRejectedValueOnce(new Error('Stripe API error'));
+
+    const { req, res } = createMockReqRes();
+    await handler(req, res);
+    // Should still return 200 — metadata propagation failure is non-fatal
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith({ received: true });
   });
@@ -164,7 +233,10 @@ describe('StripeWebhook: customer.subscription.created', () => {
       },
     });
 
+    // Handler calls customers.retrieve for the customer email
     mockCustomersRetrieve.mockResolvedValueOnce({ email: 'test@restaurant.com' });
+    // Idempotency guard: no existing subscription
+    mockMaybeSingle.mockResolvedValueOnce({ data: null, error: null });
 
     const { req, res } = createMockReqRes();
     await handler(req, res);
@@ -195,21 +267,13 @@ describe('StripeWebhook: customer.subscription.created', () => {
       },
     });
 
+    // Handler: customers.retrieve for customer email
     mockCustomersRetrieve.mockResolvedValueOnce({ email: 'unknown@test.com' });
-
-    // Override supabase query to return no match
-    const supabase = require('../_lib/supabase');
-    supabase.query.schema.mockReturnValueOnce({
-      from: jest.fn().mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            limit: jest.fn().mockReturnValue({
-              single: jest.fn().mockResolvedValue({ data: null, error: { message: 'Not found' } }),
-            }),
-          }),
-        }),
-      }),
-    });
+    // resolveRestaurantId Method 2: customers.retrieve for Stripe customer metadata — no restaurant_id
+    mockCustomersRetrieve.mockResolvedValueOnce({ email: 'unknown@test.com', metadata: {} });
+    // Method 3 subscriptions lookup — no match
+    mockSubscriptionsSingle.mockResolvedValueOnce({ data: null, error: { message: 'not found' } });
+    // For creation events, email lookup (Method 4) is skipped entirely → returns null → throws
 
     const { req, res } = createMockReqRes();
     await handler(req, res);
@@ -217,6 +281,36 @@ describe('StripeWebhook: customer.subscription.created', () => {
     expect(createSubscription).not.toHaveBeenCalled();
     // Returns 500 so Stripe retries the event instead of silently dropping the subscription
     expect(res.status).toHaveBeenCalledWith(500);
+  });
+
+  test('skips creation when subscription already exists (idempotency guard)', async () => {
+    mockConstructEvent.mockReturnValueOnce({
+      id: 'evt_sub_create_idem',
+      type: 'customer.subscription.created',
+      data: {
+        object: {
+          id: 'sub_already_exists',
+          customer: 'cus_test',
+          status: 'active',
+          current_period_start: Math.floor(Date.now() / 1000),
+          current_period_end: Math.floor(Date.now() / 1000) + 30 * 86400,
+          trial_end: null,
+          metadata: { restaurant_id: 'rest-1' },
+          items: { data: [{ price: { id: 'price_growth' } }] },
+        },
+      },
+    });
+
+    mockCustomersRetrieve.mockResolvedValueOnce({ email: 'test@restaurant.com' });
+    // Idempotency guard: subscription already exists
+    mockMaybeSingle.mockResolvedValueOnce({ data: { id: 'existing-uuid' }, error: null });
+
+    const { req, res } = createMockReqRes();
+    await handler(req, res);
+
+    expect(createSubscription).not.toHaveBeenCalled();
+    expect(updateRestaurantPlan).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(200);
   });
 });
 
@@ -392,19 +486,19 @@ describe('StripeWebhook: Unhandled events', () => {
 });
 
 // ============================================================
-// resolveRestaurantId - email lookup path (lines 47-52)
+// resolveRestaurantId - fallback chain
 // ============================================================
-describe('StripeWebhook: resolveRestaurantId via email lookup', () => {
-  test('resolves restaurant_id from email when metadata has no restaurant_id (lines 47-49)', async () => {
-    // Subscription event without restaurant_id in metadata → triggers email lookup
+describe('StripeWebhook: resolveRestaurantId fallback chain', () => {
+  test('resolves restaurant_id from Stripe customer metadata (Method 2)', async () => {
+    // Subscription.updated (not creation) without object metadata → tries customer metadata
     mockConstructEvent.mockReturnValueOnce({
-      type: 'customer.subscription.created',
+      type: 'customer.subscription.updated',
       data: {
         object: {
-          id: 'sub_email_test',
-          customer: 'cus_email',
+          id: 'sub_cust_meta_test',
+          customer: 'cus_meta',
           items: { data: [{ price: { id: 'price_test_123' } }] },
-          metadata: {}, // No restaurant_id → falls through to email lookup
+          metadata: {}, // No object metadata
           status: 'active',
           current_period_start: 1700000000,
           current_period_end: 1702688400,
@@ -412,23 +506,26 @@ describe('StripeWebhook: resolveRestaurantId via email lookup', () => {
         },
       },
     });
+    // Handler calls customers.retrieve for the update customer email
     mockCustomersRetrieve.mockResolvedValueOnce({ email: 'restaurant@example.com' });
-    // Default supabase query mock returns { data: { id: 'rest-1' }, error: null }
+    // resolveRestaurantId Method 2: customers.retrieve returns customer with restaurant_id in metadata
+    mockCustomersRetrieve.mockResolvedValueOnce({ email: 'restaurant@example.com', metadata: { restaurant_id: 'rest-from-cust-meta' } });
 
     const { req, res } = createMockReqRes();
     await handler(req, res);
     expect(res.status).toHaveBeenCalledWith(200);
   });
 
-  test('logs warning when email lookup throws and falls through (lines 51-52)', async () => {
+  test('creation events skip email fallback and return 500 when metadata missing', async () => {
+    // Subscription.created with no metadata → email lookup is SKIPPED → returns null → 500
     mockConstructEvent.mockReturnValueOnce({
       type: 'customer.subscription.created',
       data: {
         object: {
-          id: 'sub_catch_test',
-          customer: 'cus_catch',
+          id: 'sub_no_meta_create',
+          customer: 'cus_no_meta',
           items: { data: [{ price: { id: 'price_test_123' } }] },
-          metadata: {}, // No restaurant_id → email lookup path
+          metadata: {},
           status: 'active',
           current_period_start: 1700000000,
           current_period_end: 1702688400,
@@ -436,16 +533,48 @@ describe('StripeWebhook: resolveRestaurantId via email lookup', () => {
         },
       },
     });
-    mockCustomersRetrieve.mockResolvedValueOnce({ email: 'bad@example.com' });
-
-    // Make the supabase schema call throw to trigger the catch in resolveRestaurantId
-    const { query: supabase } = require('../_lib/supabase');
-    supabase.schema.mockImplementationOnce(() => { throw new Error('DB unreachable'); });
+    // Handler: customers.retrieve for email
+    mockCustomersRetrieve.mockResolvedValueOnce({ email: 'restaurant@example.com' });
+    // resolveRestaurantId Method 2: no restaurant_id in customer metadata
+    mockCustomersRetrieve.mockResolvedValueOnce({ email: 'restaurant@example.com', metadata: {} });
+    // Method 3: subscriptions table — no match
+    mockSubscriptionsSingle.mockResolvedValueOnce({ data: null, error: { message: 'not found' } });
 
     const { req, res } = createMockReqRes();
     await handler(req, res);
-    // resolveRestaurantId returns null → throws error → 500 so Stripe retries
+    // Email lookup is NOT attempted for creation events → returns null → throws → 500
     expect(res.status).toHaveBeenCalledWith(500);
+    expect(createSubscription).not.toHaveBeenCalled();
+  });
+
+  test('non-creation events fall back to email lookup as last resort', async () => {
+    // Subscription.updated with no metadata anywhere → falls through to email lookup
+    mockConstructEvent.mockReturnValueOnce({
+      type: 'customer.subscription.updated',
+      data: {
+        object: {
+          id: 'sub_email_fallback',
+          customer: 'cus_email_fallback',
+          items: { data: [{ price: { id: 'price_test_123' } }] },
+          metadata: {},
+          status: 'active',
+          current_period_start: 1700000000,
+          current_period_end: 1702688400,
+          trial_end: null,
+        },
+      },
+    });
+    // Handler: customers.retrieve for email
+    mockCustomersRetrieve.mockResolvedValueOnce({ email: 'restaurant@example.com' });
+    // resolveRestaurantId Method 2: customer metadata — no restaurant_id
+    mockCustomersRetrieve.mockResolvedValueOnce({ email: 'restaurant@example.com', metadata: {} });
+    // Method 3: subscriptions table — no match
+    mockSubscriptionsSingle.mockResolvedValueOnce({ data: null, error: { message: 'not found' } });
+    // Method 4: email lookup returns a match (default mock returns { data: { id: 'rest-1' } })
+
+    const { req, res } = createMockReqRes();
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(200);
   });
 });
 
@@ -474,6 +603,7 @@ describe('StripeWebhook: subscription.created DB failure paths', () => {
   test('logs error when createSubscription fails (line 132)', async () => {
     mockConstructEvent.mockReturnValueOnce(makeCreatedEvent());
     mockCustomersRetrieve.mockResolvedValueOnce({ email: 'test@restaurant.com' });
+    mockMaybeSingle.mockResolvedValueOnce({ data: null, error: null }); // idempotency guard: no existing sub
     createSubscription.mockResolvedValueOnce({ success: false, message: 'DB write failed' });
 
     const { req, res } = createMockReqRes();
@@ -484,6 +614,7 @@ describe('StripeWebhook: subscription.created DB failure paths', () => {
   test('logs error when updateRestaurantPlan fails (line 140)', async () => {
     mockConstructEvent.mockReturnValueOnce(makeCreatedEvent());
     mockCustomersRetrieve.mockResolvedValueOnce({ email: 'test@restaurant.com' });
+    mockMaybeSingle.mockResolvedValueOnce({ data: null, error: null }); // idempotency guard: no existing sub
     // createSubscription succeeds (default), updateRestaurantPlan fails
     updateRestaurantPlan.mockResolvedValueOnce({ success: false, message: 'Plan update failed' });
 
@@ -517,9 +648,14 @@ describe('StripeWebhook: subscription.updated failure paths', () => {
 
   test('breaks early when restaurant_id cannot be resolved (lines 159-160)', async () => {
     mockConstructEvent.mockReturnValueOnce(makeUpdatedEvent(false));
+    // Handler: customers.retrieve for email
     mockCustomersRetrieve.mockResolvedValueOnce({ email: 'unknown@example.com' });
+    // resolveRestaurantId Method 2: customer metadata — no restaurant_id
+    mockCustomersRetrieve.mockResolvedValueOnce({ email: 'unknown@example.com', metadata: {} });
+    // Method 3: subscriptions table — no match
+    mockSubscriptionsSingle.mockResolvedValueOnce({ data: null, error: { message: 'not found' } });
 
-    // Override email lookup to return no data
+    // Override email lookup (Method 4) to return no data
     const { query: supabase } = require('../_lib/supabase');
     supabase.schema.mockImplementationOnce(() => ({
       from: jest.fn().mockReturnValue({
@@ -570,8 +706,14 @@ describe('StripeWebhook: subscription.deleted failure paths', () => {
 
   test('breaks early when restaurant_id cannot be resolved (lines 193-194)', async () => {
     mockConstructEvent.mockReturnValueOnce(makeDeletedEvent(false));
+    // Handler: customers.retrieve for email
     mockCustomersRetrieve.mockResolvedValueOnce({ email: 'unknown@example.com' });
+    // resolveRestaurantId Method 2: customer metadata — no restaurant_id
+    mockCustomersRetrieve.mockResolvedValueOnce({ email: 'unknown@example.com', metadata: {} });
+    // Method 3: subscriptions table — no match
+    mockSubscriptionsSingle.mockResolvedValueOnce({ data: null, error: { message: 'not found' } });
 
+    // Method 4: email lookup — no match
     const { query: supabase } = require('../_lib/supabase');
     supabase.schema.mockImplementationOnce(() => ({
       from: jest.fn().mockReturnValue({

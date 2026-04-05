@@ -276,6 +276,10 @@
     {
       "path": "/api/cron/automated-campaigns",
       "schedule": "0 10 * * *"
+    },
+    {
+      "path": "/api/cron/health-alert",
+      "schedule": "0 10 * * *"
     }
   ]
 }

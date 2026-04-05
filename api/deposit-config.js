@@ -3,6 +3,7 @@ const { verifyAuth } = require('./_lib/auth');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { createSecureLogger } = require('./_lib/secure-logger');
+const { inlineCheckSubscription } = require('./_lib/subscription-middleware');
 
 const logger = createSecureLogger('DepositConfig');
 
@@ -26,6 +27,10 @@ module.exports = async (req, res) => {
   if (!restaurantId) {
     return res.status(400).json({ success: false, error: 'No restaurant associated with account' });
   }
+
+  // Subscription check
+  const subBlocked = await inlineCheckSubscription(restaurantId, res);
+  if (subBlocked) return;
 
   try {
     if (req.method === 'GET') {

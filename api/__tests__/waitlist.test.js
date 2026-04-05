@@ -102,6 +102,17 @@ jest.mock('../_lib/sentry', () => ({
   captureException: jest.fn(),
 }));
 
+jest.mock('../_lib/subscription-middleware', () => ({
+  inlineCheckSubscription: jest.fn().mockResolvedValue(false),
+  softCheckSubscription: jest.fn().mockResolvedValue(false),
+  checkSubscriptionByRestaurantId: jest.fn().mockResolvedValue({ active: true, plan: 'growth', status: 'active' }),
+  inlineRequireFeature: jest.fn().mockReturnValue(false),
+  checkSubscription: jest.fn((req, res, next) => next()),
+  requireFeature: jest.fn(() => (req, res, next) => next()),
+  checkReservationLimits: jest.fn((req, res, next) => next()),
+  isDemoRestaurant: jest.fn().mockResolvedValue(false),
+}));
+
 // ---------------------------------------------------------------------------
 // Require handler
 // ---------------------------------------------------------------------------

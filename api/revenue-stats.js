@@ -2,6 +2,7 @@ const { verifyJWT } = require('./_lib/auth');
 const { supabaseAdmin } = require('./_lib/supabase');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
+const { inlineCheckSubscription } = require('./_lib/subscription-middleware');
 
 const logger = createSecureLogger('revenue-stats');
 const DEFAULT_AVG_SPEND = 80;
@@ -17,6 +18,9 @@ module.exports = async (req, res) => {
     const user = await verifyJWT(req.headers.authorization?.replace('Bearer ', ''));
     if (!user?.restaurant_id) throw new Error('UNAUTHORIZED');
     const restaurantId = user.restaurant_id;
+
+    const subBlocked = await inlineCheckSubscription(restaurantId, res);
+    if (subBlocked) return;
 
     const { data, error } = await supabaseAdmin
       .from('service_records')

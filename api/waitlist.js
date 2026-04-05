@@ -13,6 +13,7 @@ const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { validateWaitlistEntry, sanitizeInput } = require('./_lib/validation');
 const { trackUsage } = require('./_lib/usage-tracking');
 const { sendWhatsAppMessage, isWhatsAppConfigured } = require('./_lib/whatsapp-sender');
+const { inlineRequireFeature, checkSubscriptionByRestaurantId } = require('./_lib/subscription-middleware');
 const { initSentry, captureException } = require('./_lib/sentry');
 initSentry();
 
@@ -44,6 +45,22 @@ module.exports = async (req, res) => {
   if (!restaurantId) {
     return res.status(400).json({ error: 'No restaurant associated with this account' });
   }
+
+  // Subscription + feature check (single DB call)
+  const subResult = await checkSubscriptionByRestaurantId(restaurantId);
+  if (!subResult.active) {
+    return res.status(403).json({
+      error: 'Subscription required',
+      message: 'No active subscription found. Please subscribe to access this feature.',
+      status: subResult.status,
+      upgrade_url: `${process.env.CLIENT_URL || 'https://seatable.one'}/#pricing`,
+    });
+  }
+  if (subResult.warning === 'past_due') {
+    res.setHeader('X-Subscription-Warning', 'past_due');
+  }
+  const plan = subResult.plan?.toLowerCase();
+  if (inlineRequireFeature(plan, 'waitlist_management', res)) return;
 
   const { id } = req.query;
 
