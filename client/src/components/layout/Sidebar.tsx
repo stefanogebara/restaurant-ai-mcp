@@ -494,7 +494,7 @@ export default function Sidebar() {
                     : 'text-stone-500 active:text-stone-300'
                 }`}
               >
-                <ThiingsIcon name={item.icon} pxSize={20} />
+                <ThiingsIcon name={item.icon as any} pxSize={20} />
                 <span className="text-[10px] font-medium leading-tight">{item.label}</span>
                 {active && <span className="w-1 h-1 rounded-full bg-burgundy" />}
               </Link>
