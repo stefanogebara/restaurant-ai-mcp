@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import ThiingsIcon from './ThiingsIcon';
 import { PLAN_NAMES, getPlanPrices, type PlanType } from '../../config/planFeatures';
-import { detectCurrency, formatPrice } from '../../utils/currency';
+import { currencyFromLanguage, formatPriceLocale } from '../../utils/currency';
 
 interface UpgradePromptProps {
   requiredPlan: PlanType;
@@ -10,12 +10,12 @@ interface UpgradePromptProps {
 }
 
 export default function UpgradePrompt({ requiredPlan, feature, description }: UpgradePromptProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const planName = PLAN_NAMES[requiredPlan];
-  const currency = detectCurrency();
+  const currency = currencyFromLanguage(i18n.language);
   const prices = getPlanPrices(currency);
   const price = prices[requiredPlan as keyof typeof prices];
-  const priceDisplay = price ? formatPrice(price, currency) : '';
+  const priceDisplay = price ? formatPriceLocale(price, currency) : '';
 
   const handleUpgrade = () => {
     window.location.href = '/#pricing';

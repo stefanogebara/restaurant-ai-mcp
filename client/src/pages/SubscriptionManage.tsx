@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { SkeletonSubscription } from '../components/common/Skeleton';
 import { useToast } from '../contexts/ToastContext';
 import { useSubscriptionData, useCustomerPortal } from '../hooks/useSubscriptionManage';
-import { detectCurrency, formatPrice } from '../utils/currency';
+import { currencyFromLanguage, formatPriceLocale } from '../utils/currency';
 import { getPlanPrices } from '../config/planFeatures';
 
 const planTiers = ['starter', 'growth', 'scale'];
@@ -25,18 +25,19 @@ function normalizePlanName(raw: string): string {
 }
 
 export default function SubscriptionManage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { can } = usePermission();
   const navigate = useNavigate();
   const { error } = useToast();
-  const currency = detectCurrency();
+  const currency = currencyFromLanguage(i18n.language);
   const prices = getPlanPrices(currency);
-  const perMonth = currency === 'BRL' ? '/mês' : '/mo';
+
+  const perMonth = t('subscription.perMonth');
 
   const plans = [
-    { key: 'starter', name: t('subscription.starterName'), price: formatPrice(prices.starter, currency) + perMonth, desc: t('subscription.starterDesc'), features: [t('subscription.starterF1'), t('subscription.starterF2'), t('subscription.starterF3'), t('subscription.starterF4'), t('subscription.starterF5')] },
-    { key: 'growth', name: t('subscription.growthName'), price: formatPrice(prices.growth, currency) + perMonth, desc: t('subscription.growthDesc'), features: [t('subscription.growthF1'), t('subscription.growthF2'), t('subscription.growthF3'), t('subscription.growthF4'), t('subscription.growthF5')], featured: true },
-    { key: 'scale', name: t('subscription.scaleName'), price: formatPrice(prices.scale, currency) + perMonth, desc: t('subscription.scaleDesc'), features: [t('subscription.scaleF1'), t('subscription.scaleF2'), t('subscription.scaleF3'), t('subscription.scaleF4'), t('subscription.scaleF5')] },
+    { key: 'starter', name: t('subscription.starterName'), price: formatPriceLocale(prices.starter, currency) + perMonth, desc: t('subscription.starterDesc'), features: [t('subscription.starterF1'), t('subscription.starterF2'), t('subscription.starterF3'), t('subscription.starterF4'), t('subscription.starterF5')] },
+    { key: 'growth', name: t('subscription.growthName'), price: formatPriceLocale(prices.growth, currency) + perMonth, desc: t('subscription.growthDesc'), features: [t('subscription.growthF1'), t('subscription.growthF2'), t('subscription.growthF3'), t('subscription.growthF4'), t('subscription.growthF5')], featured: true },
+    { key: 'scale', name: t('subscription.scaleName'), price: formatPriceLocale(prices.scale, currency) + perMonth, desc: t('subscription.scaleDesc'), features: [t('subscription.scaleF1'), t('subscription.scaleF2'), t('subscription.scaleF3'), t('subscription.scaleF4'), t('subscription.scaleF5')] },
   ];
 
   const { data: subscription, isLoading } = useSubscriptionData();

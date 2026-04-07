@@ -1,11 +1,17 @@
 /**
  * SeoPricing — competitor comparison + Seatable pricing.
  * Shows a feature comparison table and the three plans.
+ *
+ * NOTE: SEO pages are exclusively PT-BR content targeting the Brazilian market,
+ * so the comparison table and feature labels remain hardcoded in Portuguese.
+ * Prices use the BRL plan prices from planFeatures.
  */
 
 import { Check, X, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { SeoPageData } from '../../data/seoPages';
+import { PLAN_PRICES_BRL } from '../../config/planFeatures';
+import { formatPriceLocale } from '../../utils/currency';
 
 interface SeoPricingProps {
   readonly page: SeoPageData;
@@ -32,7 +38,7 @@ const COMPETITORS: Record<string, readonly boolean[]> = {
 const PLANS = [
   {
     name: 'Essencial',
-    price: 'R$ 497',
+    price: formatPriceLocale(PLAN_PRICES_BRL.starter, 'BRL'),
     period: '/mês',
     features: [
       'Até 50 reservas/mês',
@@ -46,7 +52,7 @@ const PLANS = [
   },
   {
     name: 'Profissional',
-    price: 'R$ 1.497',
+    price: formatPriceLocale(PLAN_PRICES_BRL.growth, 'BRL'),
     period: '/mês',
     features: [
       'Até 150 reservas/mês',
@@ -61,7 +67,7 @@ const PLANS = [
   },
   {
     name: 'Enterprise',
-    price: 'R$ 2.997',
+    price: formatPriceLocale(PLAN_PRICES_BRL.scale, 'BRL'),
     period: '/mês',
     features: [
       'Reservas ilimitadas',

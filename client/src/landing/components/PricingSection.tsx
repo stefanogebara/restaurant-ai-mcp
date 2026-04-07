@@ -7,7 +7,7 @@ import { authFetch } from '../../services/api';
 import { supabase } from '../../lib/supabase';
 import { trackCtaClicked, trackPricingPlanClicked } from '../../lib/analytics';
 import { useToast } from '../../contexts/ToastContext';
-import { detectCurrency } from '../../utils/currency';
+import { currencyFromLanguage } from '../../utils/currency';
 
 const TIER_KEYS: Record<string, string> = {
   Essencial: 'starter',
@@ -25,12 +25,19 @@ const FEATURE_COUNTS: Record<string, number> = {
   scale: 6,
 };
 
+/** Pick the right price string for the current currency */
+function tierPrice(tier: (typeof PRICING_TIERS)[number], currency: 'BRL' | 'USD' | 'EUR'): string {
+  if (currency === 'BRL') return tier.brlPrice ?? tier.price;
+  if (currency === 'EUR') return tier.eurPrice ?? tier.price;
+  return tier.price;
+}
+
 export default function PricingSection() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const navigate = useNavigate();
   const toast = useToast();
-  const isBRL = detectCurrency() === 'BRL';
+  const currency = currencyFromLanguage(i18n.language);
 
   const scrollToContact = () => {
     const element = document.getElementById('contact');
@@ -107,7 +114,7 @@ export default function PricingSection() {
 
                 {/* Price */}
                 <div className={`font-serif text-4xl sm:text-[48px] font-medium tracking-tight leading-none mb-1 ${isFeatured ? 'text-white' : 'text-deep-charcoal'}`}>
-                  {isBRL ? (tier.brlPrice ?? tier.price) : tier.price}
+                  {tierPrice(tier, currency)}
                   <span className={`text-lg font-normal ${isFeatured ? 'text-stone-400' : 'text-muted-stone'}`}>
                     /{t(`landing.pricing.perMonth`)}
                   </span>
@@ -170,7 +177,7 @@ export default function PricingSection() {
         <div className="mt-10 p-5 bg-soft-gray rounded-2xl border border-border-gray text-center">
           <p className="text-xs text-stone-gray leading-relaxed">
             <span className="font-semibold text-deep-charcoal">{t('landing.pricing.usageBased')}</span>{' '}
-            {t('landing.pricing.usageDetail', { currency: isBRL ? 'BRL' : 'USD' })}
+            {t('landing.pricing.usageDetail', { currency })}
           </p>
         </div>
 

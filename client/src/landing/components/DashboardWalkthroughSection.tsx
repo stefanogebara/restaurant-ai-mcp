@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
-import { detectCurrency } from '../../utils/currency';
+import { currencyFromLanguage } from '../../utils/currency';
 
 /**
  * Animated Dashboard Walkthrough — a dynamic "silent movie" showing 4 moments
@@ -209,8 +209,10 @@ function Sparkline() {
 
 // ─── Scene 0: Revenue Intelligence ─────────────────────────────
 function SceneRevenue({ progress }: { progress: number }) {
-  const { t } = useTranslation();
-  const isBRL = detectCurrency() === 'BRL';
+  const { t, i18n } = useTranslation();
+  const currency = currencyFromLanguage(i18n.language);
+  const isBRL = currency === 'BRL';
+  const isEUR = currency === 'EUR';
   const showScan = progress > 0.06;
   const showPrediction1 = progress > 0.18;
   const showPrediction2 = progress > 0.35;
@@ -226,7 +228,7 @@ function SceneRevenue({ progress }: { progress: number }) {
         {[
           { label: t('landing.walkthrough.reservations', 'Reservations'), value: '11', sub: t('landing.walkthrough.today', 'today') },
           { label: t('landing.walkthrough.covers', 'Covers'), value: '38', sub: t('landing.walkthrough.expected', 'expected') },
-          { label: t('landing.walkthrough.avgSpend', 'Avg Spend'), value: isBRL ? 'R$42' : '$42', sub: isBRL ? '/couvert' : '/cover' },
+          { label: t('landing.walkthrough.avgSpend', 'Avg Spend'), value: isBRL ? 'R$42' : isEUR ? '€38' : '$42', sub: isBRL ? '/couvert' : '/cover' },
         ].map((s, i) => (
           <motion.div
             key={s.label}

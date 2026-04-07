@@ -302,14 +302,26 @@ export const PLAN_PRICES_USD = {
   scale: 597,
 } as const;
 
+export const PLAN_PRICES_EUR = {
+  free: 0,
+  starter: 89,
+  growth: 269,
+  professional: 269,
+  scale: 539,
+} as const;
+
 /** @deprecated Use PLAN_PRICES_BRL or getPlanPrices() instead */
 export const PLAN_PRICES = PLAN_PRICES_BRL;
+
+type PlanPriceMap = { free: number; starter: number; growth: number; professional: number; scale: number };
 
 /**
  * Get plan prices for the given currency.
  */
-export function getPlanPrices(currency: 'BRL' | 'USD'): { free: number; starter: number; growth: number; professional: number; scale: number } {
-  return currency === 'BRL' ? PLAN_PRICES_BRL : PLAN_PRICES_USD;
+export function getPlanPrices(currency: 'BRL' | 'USD' | 'EUR'): PlanPriceMap {
+  if (currency === 'BRL') return PLAN_PRICES_BRL;
+  if (currency === 'EUR') return PLAN_PRICES_EUR;
+  return PLAN_PRICES_USD;
 }
 
 export const PLAN_NAMES = {
