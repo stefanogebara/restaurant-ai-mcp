@@ -20,18 +20,8 @@ export default function StaffingForecastWidget() {
     );
   }
 
-  if (isEmpty) {
-    return (
-      <div className="p-6">
-        <h2 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#111827]">
-          {t('dashboard.staffingForecast')}
-        </h2>
-        <p className="text-sm text-warm-stone mt-2">
-          {t('dashboard.staffingForecastHint', 'Staff recommendations will appear here once you have reservations.')}
-        </p>
-      </div>
-    );
-  }
+  // Hide widget silently when there's no forecast data
+  if (isEmpty) return null;
 
   return (
     <div className="p-6 space-y-4">

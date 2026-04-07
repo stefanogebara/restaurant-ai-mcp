@@ -17,29 +17,14 @@ export default function RevenueStatsWidget() {
     );
   }
 
-  if (!stats || !forecast || forecast.length === 0) {
-    return (
-      <div className="p-6">
-        <h2 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#111827]">
-          {t('dashboard.revenueForecast')}
-        </h2>
-        <p className="text-sm text-warm-stone mt-2">{t('dashboard.revenueNoData', 'Revenue forecast will appear once you have reservations and service data.')}</p>
-      </div>
-    );
-  }
+  // Hide widget when there's not enough real data (using_default means < 5 service records)
+  if (stats?.using_default) return null;
 
-  // All days project zero revenue — show compact hint instead of zero bars
+  if (!stats || !forecast || forecast.length === 0) return null;
+
+  // All days project zero revenue — hide silently
   const allZero = forecast.slice(0, 7).every(d => d.expected_covers === 0);
-  if (allZero) {
-    return (
-      <div className="p-6">
-        <h2 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#111827]">
-          {t('dashboard.revenueForecast')}
-        </h2>
-        <p className="text-sm text-warm-stone mt-2">{t('dashboard.revenueNoData', 'Revenue forecast will appear once you have reservations and service data.')}</p>
-      </div>
-    );
-  }
+  if (allZero) return null;
 
   const days = forecast.slice(0, 7);
   const totalProjected = days.reduce((s, d) => s + d.expected_covers * stats.avg_spend_per_cover, 0);
@@ -52,11 +37,6 @@ export default function RevenueStatsWidget() {
           {t('dashboard.revenueForecast')}
         </h2>
         <div className="flex items-center gap-2">
-          {stats.using_default && (
-            <span className="text-xs bg-amber-50 text-amber-700 border border-amber-200 rounded-full px-2 py-0.5">
-              {t('dashboard.estimated', 'estimated')}
-            </span>
-          )}
           <span className="text-sm font-semibold text-deep-charcoal">{formatCurrency(totalProjected)}</span>
           <span className="text-xs text-warm-stone">/ 7 {t('dashboard.days', 'days')}</span>
         </div>
@@ -85,11 +65,7 @@ export default function RevenueStatsWidget() {
         })}
       </div>
 
-      {stats.using_default && (
-        <p className="text-xs text-warm-stone">
-          {t('dashboard.revenueDefault', 'Based on {{amount}}/cover (default). Add bills when completing service to improve accuracy.', { amount: formatCurrency(stats.avg_spend_per_cover) })}
-        </p>
-      )}
+      {/* using_default disclaimer removed — widget hidden when using defaults */}
     </div>
   );
 }

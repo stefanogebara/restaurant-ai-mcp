@@ -28,8 +28,8 @@ import ManagerNotesPanel from '../components/dashboard/ManagerNotesPanel';
 import StaffingForecastWidget from '../components/dashboard/StaffingForecastWidget';
 import RevenueStatsWidget from '../components/dashboard/RevenueStatsWidget';
 import RevenueByPartySizeWidget from '../components/dashboard/RevenueByPartySizeWidget';
-import ActivityFeedWidget from '../components/dashboard/ActivityFeedWidget';
-import FeedbackWidget from '../components/dashboard/FeedbackWidget';
+// ActivityFeedWidget removed — dead feature
+// FeedbackWidget removed — dead feature
 import WalkInModal from '../components/host/WalkInModal';
 import SeatPartyModal from '../components/host/SeatPartyModal';
 import CheckInModal from '../components/host/CheckInModal';
@@ -379,15 +379,11 @@ export default function Dashboard() {
             <>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
                 <ManagerNotesPanel />
-                <FeedbackWidget />
+                <RevenueByPartySizeWidget />
               </div>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 mt-6 sm:mt-8">
                 <StaffingForecastWidget />
                 <RevenueStatsWidget />
-              </div>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 mt-6 sm:mt-8">
-                <RevenueByPartySizeWidget />
-                <ActivityFeedWidget />
               </div>
             </>
           )}

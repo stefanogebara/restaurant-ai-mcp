@@ -50,15 +50,15 @@ describe('StaffingForecastWidget', () => {
     expect(screen.getAllByText('FOH').length).toBeGreaterThan(0);
   });
 
-  it('shows empty state when no forecast', () => {
+  it('renders nothing when no forecast data', () => {
     mockUse.mockReturnValue({ data: [], isLoading: false, isError: false });
-    render(<StaffingForecastWidget />);
-    expect(screen.getByText(/staff recommendations will appear/i)).toBeInTheDocument();
+    const { container } = render(<StaffingForecastWidget />);
+    expect(container.innerHTML).toBe('');
   });
 
-  it('shows error state as neutral empty message', () => {
+  it('renders nothing on error state', () => {
     mockUse.mockReturnValue({ data: undefined, isLoading: false, isError: true });
-    render(<StaffingForecastWidget />);
-    expect(screen.getByText(/staff recommendations will appear/i)).toBeInTheDocument();
+    const { container } = render(<StaffingForecastWidget />);
+    expect(container.innerHTML).toBe('');
   });
 });

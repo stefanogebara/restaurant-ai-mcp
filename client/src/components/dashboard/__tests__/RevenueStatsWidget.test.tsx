@@ -41,17 +41,16 @@ describe('RevenueStatsWidget', () => {
     expect(screen.getByText(/[$R]\s*2/)).toBeInTheDocument();
   });
 
-  it('shows estimated badge when using default', () => {
+  it('renders nothing when using_default is true', () => {
     mockStats.mockReturnValue({ data: { avg_spend_per_cover: 40, data_points: 2, using_default: true }, isLoading: false });
-    render(<RevenueStatsWidget />);
-    expect(screen.getByText(/estimated/i)).toBeInTheDocument();
+    const { container } = render(<RevenueStatsWidget />);
+    expect(container.innerHTML).toBe('');
   });
 
-  it('shows no-data message when stats missing', () => {
+  it('renders nothing when stats missing', () => {
     mockStats.mockReturnValue({ data: undefined, isLoading: false });
     mockForecast.mockReturnValue({ data: [], isLoading: false });
-    render(<RevenueStatsWidget />);
-    expect(screen.getByRole('heading', { name: /revenue forecast/i })).toBeInTheDocument();
-    expect(screen.getByText(/will appear once/i)).toBeInTheDocument();
+    const { container } = render(<RevenueStatsWidget />);
+    expect(container.innerHTML).toBe('');
   });
 });

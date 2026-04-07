@@ -159,6 +159,13 @@ export default function StrategyMetricsWidget() {
   const [range, setRange] = useState(30);
   const { data, isLoading, isError, refetch, isFetching } = useStrategyMetrics(range);
 
+  // Hide widget entirely when insufficient data (< 5 data points)
+  const totalDataPoints =
+    (data?.timelines?.no_show?.length ?? 0) +
+    (data?.timelines?.revenue?.length ?? 0) +
+    (data?.timelines?.conversion?.length ?? 0);
+  if (!isLoading && totalDataPoints < 5) return null;
+
   return (
     <div className="py-5">
       {/* Header */}

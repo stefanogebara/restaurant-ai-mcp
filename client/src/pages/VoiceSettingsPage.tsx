@@ -35,8 +35,8 @@ import VoicePersonaPanel from '../components/dashboard/VoicePersonaPanel';
 // VoiceExperimentPanel removed — non-functional (K-1)
 import BookingChannelsPanel from '../components/dashboard/BookingChannelsPanel';
 import PhoneIntegrationPanel from '../components/voice/PhoneIntegrationPanel';
-import AIStrategyPanel from '../components/dashboard/AIStrategyPanel';
-import StrategyMetricsWidget from '../components/dashboard/StrategyMetricsWidget';
+// AIStrategyPanel removed — dead feature
+// StrategyMetricsWidget moved to insights-only (removed from voice settings)
 import { authFetch } from '../services/api';
 
 import { DEFAULT_VOICE_SETTINGS } from '../components/voice/voiceTypes';
@@ -284,7 +284,6 @@ export default function VoiceSettingsPage() {
               )}
             </div>
           </div>
-          <AIStrategyPanel />
         </div>
       </DashboardLayout>
     );
@@ -449,8 +448,7 @@ export default function VoiceSettingsPage() {
           <PhoneIntegrationPanel />
           <VoicePersonaPanel />
           {/* VoiceExperimentPanel removed — buttons were non-functional (K-1) */}
-          <StrategyMetricsWidget />
-          <AIStrategyPanel />
+          {/* AIStrategyPanel + StrategyMetricsWidget removed — dead features */}
           {slug && <BookingChannelsPanel slug={slug} />}
         </div>
 

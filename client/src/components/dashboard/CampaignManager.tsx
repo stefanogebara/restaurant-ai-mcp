@@ -1,13 +1,14 @@
 /**
- * CampaignManager — WhatsApp campaign creation, listing, and delivery stats.
+ * CampaignManager — Email campaign creation, listing, and delivery stats.
  * Added as a section in the AI Insights page.
+ * WhatsApp and SMS channels removed — email is the only channel that actually sends.
  */
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   useCampaignList,
   useSegmentCounts,
-  useCreateWhatsAppCampaign,
+  useCreateEmailCampaign,
   useSendCampaignNow,
   useCampaignDeliveryStats,
 } from '../../hooks/useCampaigns';
@@ -35,7 +36,7 @@ const STATUS_BADGES: Record<string, { i18nKey: string; label: string; classes: s
 export default function CampaignManager() {
   const { data: campaigns, isLoading } = useCampaignList();
   const { data: segments } = useSegmentCounts();
-  const createCampaign = useCreateWhatsAppCampaign();
+  const createCampaign = useCreateEmailCampaign();
   const sendNow = useSendCampaignNow();
 
   const [showCreate, setShowCreate] = useState(false);
@@ -70,7 +71,7 @@ export default function CampaignManager() {
           <div className="w-8 h-8 rounded-lg bg-rose-50 flex items-center justify-center">
             <ThiingsIcon name="send" pxSize={16} className="text-rose-600" />
           </div>
-          <h3 className="text-sm font-semibold text-deep-charcoal">{t('insights.whatsappCampaigns', 'WhatsApp Campaigns')}</h3>
+          <h3 className="text-sm font-semibold text-deep-charcoal">{t('insights.emailCampaigns', 'Email Campaigns')}</h3>
         </div>
         <button
           onClick={() => setShowCreate(!showCreate)}
@@ -154,7 +155,7 @@ export default function CampaignManager() {
       ) : (
         <div className="space-y-2">
           {campaigns
-            .filter(c => c.channel === 'whatsapp')
+            .filter(c => c.channel === 'email')
             .slice(0, 10)
             .map((campaign) => (
               <CampaignRow

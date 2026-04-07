@@ -91,6 +91,28 @@ export function useCreateWhatsAppCampaign() {
   });
 }
 
+export function useCreateEmailCampaign() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: {
+      name: string;
+      segment: string;
+      message: string;
+      campaign_type?: string;
+      scheduled_at?: string | null;
+    }) => {
+      const res = await apiClient.post('/retention-campaigns?action=create_whatsapp', {
+        ...data,
+        channel: 'email',
+      });
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['campaigns'] });
+    },
+  });
+}
+
 export function useSendCampaignNow() {
   const queryClient = useQueryClient();
   return useMutation({
