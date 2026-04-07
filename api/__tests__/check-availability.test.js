@@ -143,8 +143,8 @@ describe("check-availability handler", function() {
       await handler(r.req, r.res);
       expect(r.res._status).toBe(400);
       expect(r.res._body).toMatchObject({
-        success: false, error: true,
-        message: expect.stringContaining("restaurant_id"),
+        success: false,
+        error: expect.stringContaining("restaurant_id"),
       });
     });
 
@@ -153,8 +153,8 @@ describe("check-availability handler", function() {
       await handler(r.req, r.res);
       expect(r.res._status).toBe(400);
       expect(r.res._body).toMatchObject({
-        success: false, error: true,
-        message: expect.stringContaining("date"),
+        success: false,
+        error: expect.stringContaining("date"),
       });
     });
 
@@ -163,8 +163,8 @@ describe("check-availability handler", function() {
       await handler(r.req, r.res);
       expect(r.res._status).toBe(400);
       expect(r.res._body).toMatchObject({
-        success: false, error: true,
-        message: expect.stringContaining("time"),
+        success: false,
+        error: expect.stringContaining("time"),
       });
     });
 
@@ -173,8 +173,8 @@ describe("check-availability handler", function() {
       await handler(r.req, r.res);
       expect(r.res._status).toBe(400);
       expect(r.res._body).toMatchObject({
-        success: false, error: true,
-        message: expect.stringContaining("party_size"),
+        success: false,
+        error: expect.stringContaining("party_size"),
       });
     });
   });
@@ -188,7 +188,7 @@ describe("check-availability handler", function() {
       var r = mkReqRes({ query: Object.assign({}, defaultParams) });
       await handler(r.req, r.res);
       expect(r.res._status).toBe(500);
-      expect(r.res._body).toMatchObject({ success: false, error: true, message: 'Failed to load restaurant configuration' });
+      expect(r.res._body).toMatchObject({ success: false, error: 'Failed to load restaurant configuration' });
     });
 
     it("returns 500 when restaurant records array is empty", async function() {
@@ -197,8 +197,8 @@ describe("check-availability handler", function() {
       await handler(r.req, r.res);
       expect(r.res._status).toBe(500);
       expect(r.res._body).toMatchObject({
-        success: false, error: true,
-        message: expect.stringContaining("not found"),
+        success: false,
+        error: expect.stringContaining("not found"),
       });
     });
   });
@@ -213,7 +213,7 @@ describe("check-availability handler", function() {
       var r = mkReqRes({ query: Object.assign({}, defaultParams) });
       await handler(r.req, r.res);
       expect(r.res._status).toBe(500);
-      expect(r.res._body).toMatchObject({ success: false, error: true, message: 'Failed to load reservations' });
+      expect(r.res._body).toMatchObject({ success: false, error: 'Failed to load reservations' });
     });
 
     it("passes a filter with the requested date to getReservations", async function() {
@@ -339,7 +339,7 @@ describe("check-availability handler", function() {
       });
       await handler(r.req, r.res);
       expect(r.res._status).toBe(400);
-      expect(r.res._body).toMatchObject({ success: false, error: true });
+      expect(r.res._body).toMatchObject({ success: false, error: expect.any(String) });
     });
   });
 
@@ -354,8 +354,7 @@ describe("check-availability handler", function() {
       expect(r.res._status).toBe(500);
       expect(r.res._body).toMatchObject({
         success: false,
-        error: true,
-        message: expect.stringContaining("Unable to check availability"),
+        error: expect.stringContaining("Unable to check availability"),
       });
     });
 

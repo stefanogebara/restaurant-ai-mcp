@@ -125,13 +125,14 @@ module.exports = async (req, res) => {
   // ============================================================================
   const auth = await verifyAuth(req);
   if (auth.error) {
-    return res.status(auth.status || 401).json({ error: auth.error });
+    return res.status(auth.status || 401).json({ success: false, error: auth.error });
   }
   const restaurantId = auth.user.restaurant_id;
   const timezone = auth.user.timezone || 'UTC';
   if (!restaurantId) {
     return res.status(403).json({
-      message: 'No restaurant associated with your account. Please complete onboarding first.'
+      success: false,
+      error: 'No restaurant associated with your account. Please complete onboarding first.'
     });
   }
 
@@ -153,14 +154,16 @@ module.exports = async (req, res) => {
         return await handleCancel(req, res, restaurantId);
       default:
         return res.status(400).json({
-          message: 'Invalid action requested. Please specify whether you want to create, lookup, list, modify, or cancel a reservation.'
+          success: false,
+          error: 'Invalid action requested. Please specify whether you want to create, lookup, list, modify, or cancel a reservation.'
         });
     }
   } catch (error) {
     logger.error('Reservation error', error);
     captureException(error, { method: req.method, url: req.url, action: req.query?.action });
     return res.status(500).json({
-      message: 'I apologize, but something went wrong processing your request. Please try again or contact the restaurant directly.'
+      success: false,
+      error: 'I apologize, but something went wrong processing your request. Please try again or contact the restaurant directly.'
     });
   }
 };
@@ -179,7 +182,8 @@ async function handleCreate(req, res, restaurantId, timezone) {
 
   if (!date || !time || !party_size || !customer_name || !customer_phone) {
     return res.status(400).json({
-      message: 'I need a few more details to complete your reservation. Please provide the date, time, party size, your name, and phone number.'
+      success: false,
+      error: 'I need a few more details to complete your reservation. Please provide the date, time, party size, your name, and phone number.'
     });
   }
 
@@ -187,7 +191,8 @@ async function handleCreate(req, res, restaurantId, timezone) {
   const phoneDigits = String(customer_phone).replace(/\D/g, '');
   if (phoneDigits.length < 10) {
     return res.status(400).json({
-      message: 'The phone number provided is invalid. Please provide a number with at least 10 digits.'
+      success: false,
+      error: 'The phone number provided is invalid. Please provide a number with at least 10 digits.'
     });
   }
 
@@ -220,7 +225,8 @@ async function handleCreate(req, res, restaurantId, timezone) {
 
       if (!validation.valid) {
         return res.status(400).json({
-          message: validation.message
+          success: false,
+          error: validation.message
         });
       }
     }
@@ -275,7 +281,8 @@ async function handleCreate(req, res, restaurantId, timezone) {
 
   if (!result.success) {
     return res.status(500).json({
-      message: 'I apologize, but I encountered an issue creating your reservation. Please try again or call us directly at the restaurant.'
+      success: false,
+      error: 'I apologize, but I encountered an issue creating your reservation. Please try again or call us directly at the restaurant.'
     });
   }
 
@@ -504,6 +511,7 @@ async function handleCreate(req, res, restaurantId, timezone) {
   }
 
   return res.status(200).json({
+    success: true,
     message: `Perfect! Your reservation is confirmed for ${sanitizedName}, party of ${party_size}, on ${date} at ${time}. Your confirmation number is ${reservationId}. We've sent you a text message with the details. We look forward to seeing you!`,
     notification_sent: !!customer_email,
   });
@@ -518,7 +526,8 @@ async function handleLookup(req, res, restaurantId) {
 
   if (!reservation_id && !customer_phone && !customer_name) {
     return res.status(400).json({
-      message: 'To look up your reservation, I need either your confirmation number, phone number, or name.'
+      success: false,
+      error: 'To look up your reservation, I need either your confirmation number, phone number, or name.'
     });
   }
 
@@ -530,7 +539,8 @@ async function handleLookup(req, res, restaurantId) {
 
   if (!result.success) {
     return res.status(404).json({
-      message: 'I couldn\'t find a reservation with that information. Could you double-check the details and try again?'
+      success: false,
+      error: 'I couldn\'t find a reservation with that information. Could you double-check the details and try again?'
     });
   }
 
@@ -539,7 +549,7 @@ async function handleLookup(req, res, restaurantId) {
   return res.status(200).json({
     success: true,
     reservation: r,
-    message: `I found your reservation! ${r.customer_name}, party of ${r.party_size}, scheduled for ${r.reservation_time}. Confirmation number: ${r.reservation_id}. Status: ${r.status}.${specialReqs}`
+    message: `I found your reservation! ${r.customer_name}, party of ${r.party_size}, scheduled for ${r.reservation_time}. Confirmation number: ${r.reservation_id}. Status: ${r.status}.${specialReqs}`,
   });
 }
 
@@ -552,8 +562,9 @@ async function handleList(req, res, restaurantId) {
 
     if (!result.success || !result.data || !result.data.records) {
       return res.status(200).json({
+        success: true,
         reservations: [],
-        total: 0
+        total: 0,
       });
     }
 
@@ -581,15 +592,15 @@ async function handleList(req, res, restaurantId) {
       .slice(0, parseInt(limit));
 
     return res.status(200).json({
+      success: true,
       reservations,
-      total: result.data.records.length
+      total: result.data.records.length,
     });
   } catch (error) {
     logger.error('Error listing reservations', error);
     return res.status(500).json({
-      message: 'Error fetching reservations',
-      reservations: [],
-      total: 0
+      success: false,
+      error: 'Error fetching reservations',
     });
   }
 }
@@ -605,7 +616,8 @@ async function handleModify(req, res, restaurantId) {
 
   if (!reservation_id) {
     return res.status(400).json({
-      message: 'I need your confirmation number to modify your reservation.'
+      success: false,
+      error: 'I need your confirmation number to modify your reservation.'
     });
   }
 
@@ -627,7 +639,8 @@ async function handleModify(req, res, restaurantId) {
 
   if (!result.success) {
     return res.status(500).json({
-      message: 'I couldn\'t update your reservation. Please try again or call us directly.'
+      success: false,
+      error: 'I couldn\'t update your reservation. Please try again or call us directly.'
     });
   }
 
@@ -680,7 +693,8 @@ async function handleCancel(req, res, restaurantId) {
 
   if (!reservation_id) {
     return res.status(400).json({
-      message: 'I need your confirmation number to cancel your reservation.'
+      success: false,
+      error: 'I need your confirmation number to cancel your reservation.'
     });
   }
 
@@ -692,7 +706,8 @@ async function handleCancel(req, res, restaurantId) {
 
   if (!result.success) {
     return res.status(500).json({
-      message: 'I couldn\'t cancel your reservation. Please try again or call us directly.'
+      success: false,
+      error: 'I couldn\'t cancel your reservation. Please try again or call us directly.'
     });
   }
 

@@ -39,8 +39,8 @@ module.exports = async (req, res) => {
   const authResult = await verifyAuth(req, { required: true });
   if (authResult.error) {
     return res.status(authResult.status || 401).json({
-      error: authResult.error,
-      message: 'Authentication required to access dashboard'
+      success: false,
+      error: authResult.error
     });
   }
   req.user = authResult.user;
@@ -97,8 +97,7 @@ module.exports = async (req, res) => {
     captureException(error, { method: req.method, url: req.url, action: req.query?.action });
     return res.status(500).json({
       success: false,
-      error: true,
-      message: 'An error occurred processing your request'
+      error: 'An error occurred processing your request'
     });
   }
 };

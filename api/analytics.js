@@ -275,8 +275,8 @@ module.exports = async (req, res) => {
   const authResult = await verifyAuth(req, { required: true });
   if (authResult.error) {
     return res.status(authResult.status || 401).json({
-      error: authResult.error,
-      message: 'Authentication required to access analytics'
+      success: false,
+      error: authResult.error
     });
   }
   req.user = authResult.user;

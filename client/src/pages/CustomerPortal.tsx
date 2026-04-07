@@ -56,7 +56,7 @@ export default function CustomerPortal() {
       });
       const response = await fetch(`/api/customer-reservation?${params}`);
       const data = await response.json();
-      if (!data.success || !data.reservation) throw new Error(data.message || t('reservations.reservationNotFoundLookup'));
+      if (!data.success || !data.reservation) throw new Error(data.error || data.message || t('reservations.reservationNotFoundLookup'));
       return data.reservation;
     },
     onSuccess: (res) => {
@@ -83,7 +83,7 @@ export default function CustomerPortal() {
         }),
       });
       const data = await response.json();
-      if (!data.success) throw new Error(data.message || t('reservations.updateFailed'));
+      if (!data.success) throw new Error(data.error || data.message || t('reservations.updateFailed'));
       return data;
     },
     onSuccess: () => {
@@ -107,7 +107,7 @@ export default function CustomerPortal() {
         }),
       });
       const data = await response.json();
-      if (!data.success) throw new Error(data.message || t('reservations.cancelFailed2'));
+      if (!data.success) throw new Error(data.error || data.message || t('reservations.cancelFailed2'));
       return data;
     },
     onSuccess: () => {

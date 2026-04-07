@@ -92,7 +92,7 @@ describe('POST /api/manager-chat', () => {
     const res = mockRes();
     await managerChat(req, res);
     expect(res.status).toHaveBeenCalledWith(401);
-    expect(res.json).toHaveBeenCalledWith({ error: 'Authentication required' });
+    expect(res.json).toHaveBeenCalledWith({ success: false, error: 'Authentication required' });
   });
 
   it('returns 403 when plan is free (upgrade_required)', async () => {
@@ -103,7 +103,7 @@ describe('POST /api/manager-chat', () => {
     const res = mockRes();
     await managerChat(req, res);
     expect(res.status).toHaveBeenCalledWith(403);
-    expect(res.json).toHaveBeenCalledWith({ error: 'Manager AI requires a paid plan', upgrade_required: true });
+    expect(res.json).toHaveBeenCalledWith({ success: false, error: 'Manager AI requires a paid plan', upgrade_required: true });
   });
 
   it('returns 429 when quota exceeded', async () => {
@@ -114,7 +114,7 @@ describe('POST /api/manager-chat', () => {
     const res = mockRes();
     await managerChat(req, res);
     expect(res.status).toHaveBeenCalledWith(429);
-    expect(res.json).toHaveBeenCalledWith({ error: 'Monthly Manager AI limit reached', used: 100, limit: 100 });
+    expect(res.json).toHaveBeenCalledWith({ success: false, error: 'Monthly Manager AI limit reached', used: 100, limit: 100 });
   });
 });
 

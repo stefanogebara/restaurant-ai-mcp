@@ -74,11 +74,11 @@ module.exports = async (req, res) => {
       case 'modify': return await handleModify(req, res);
       case 'cancel': return await handleCancel(req, res);
       default:
-        return res.status(400).json({ success: false, message: 'Invalid action' });
+        return res.status(400).json({ success: false, error: 'Invalid action' });
     }
   } catch (error) {
     logger.error('Customer reservation error', error);
-    return res.status(500).json({ success: false, message: 'Something went wrong. Please try again.' });
+    return res.status(500).json({ success: false, error: 'Something went wrong. Please try again.' });
   }
 };
 
@@ -126,7 +126,7 @@ async function handleLookup(req, res) {
 
   if (error || !data) {
     logger.info('Reservation lookup — not found', { reservation_id, customer_phone: customer_phone ? '[redacted]' : undefined });
-    return res.status(404).json({ success: false, message: 'Reservation not found' });
+    return res.status(404).json({ success: false, error: 'Reservation not found' });
   }
 
   return res.status(200).json({ success: true, reservation: data });
@@ -138,25 +138,25 @@ async function handleLookup(req, res) {
  */
 async function handleModify(req, res) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ success: false, message: 'Method not allowed' });
+    return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
 
   const { reservation_id, customer_phone, date, time, party_size, special_requests } = req.body || {};
 
   if (!reservation_id || !customer_phone) {
-    return res.status(400).json({ success: false, message: 'reservation_id and customer_phone are required' });
+    return res.status(400).json({ success: false, error: 'reservation_id and customer_phone are required' });
   }
 
   // Validate phone number: at least 10 digits after stripping non-numeric chars
   const phoneDigitsModify = String(customer_phone).replace(/\D/g, '');
   if (phoneDigitsModify.length < 10) {
-    return res.status(400).json({ success: false, message: 'Invalid phone number. Must contain at least 10 digits.' });
+    return res.status(400).json({ success: false, error: 'Invalid phone number. Must contain at least 10 digits.' });
   }
 
   // M-02: Check per-reservation rate limit before DB query
   if (checkPhoneVerifyRateLimit(reservation_id)) {
     logger.info('Phone verify rate limited', { reservation_id });
-    return res.status(429).json({ success: false, message: 'Too many attempts. Please try again later.' });
+    return res.status(429).json({ success: false, error: 'Too many attempts. Please try again later.' });
   }
 
   // Verify ownership: phone must match the reservation
@@ -173,19 +173,19 @@ async function handleModify(req, res) {
   if (fetchError || !existing) {
     // Record a failure even when reservation doesn't exist to avoid timing leaks
     recordPhoneVerifyFailure(reservation_id);
-    return res.status(404).json({ success: false, message: GENERIC_NOT_FOUND });
+    return res.status(404).json({ success: false, error: GENERIC_NOT_FOUND });
   }
 
   if (existing.customer_phone !== customer_phone) {
     recordPhoneVerifyFailure(reservation_id);
-    return res.status(404).json({ success: false, message: GENERIC_NOT_FOUND });
+    return res.status(404).json({ success: false, error: GENERIC_NOT_FOUND });
   }
 
   // Phone matched — clear any accumulated failures
   clearPhoneVerifyFailures(reservation_id);
 
   if (existing.status === 'Cancelled' || existing.status === 'cancelled') {
-    return res.status(400).json({ success: false, message: 'Cannot modify a cancelled reservation' });
+    return res.status(400).json({ success: false, error: 'Cannot modify a cancelled reservation' });
   }
 
   const updates = {};
@@ -195,7 +195,7 @@ async function handleModify(req, res) {
   if (special_requests !== undefined) updates.special_requests = special_requests;
 
   if (Object.keys(updates).length === 0) {
-    return res.status(400).json({ success: false, message: 'No changes provided' });
+    return res.status(400).json({ success: false, error: 'No changes provided' });
   }
 
   const { error } = await supabaseAdmin
@@ -205,7 +205,7 @@ async function handleModify(req, res) {
 
   if (error) {
     logger.error('Failed to update reservation', error);
-    return res.status(500).json({ success: false, message: 'Failed to update reservation' });
+    return res.status(500).json({ success: false, error: 'Failed to update reservation' });
   }
 
   logger.info('Reservation modified by customer', { reservation_id });
@@ -218,25 +218,25 @@ async function handleModify(req, res) {
  */
 async function handleCancel(req, res) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ success: false, message: 'Method not allowed' });
+    return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
 
   const { reservation_id, customer_phone } = req.body || {};
 
   if (!reservation_id || !customer_phone) {
-    return res.status(400).json({ success: false, message: 'reservation_id and customer_phone are required' });
+    return res.status(400).json({ success: false, error: 'reservation_id and customer_phone are required' });
   }
 
   // Validate phone number: at least 10 digits after stripping non-numeric chars
   const phoneDigitsCancel = String(customer_phone).replace(/\D/g, '');
   if (phoneDigitsCancel.length < 10) {
-    return res.status(400).json({ success: false, message: 'Invalid phone number. Must contain at least 10 digits.' });
+    return res.status(400).json({ success: false, error: 'Invalid phone number. Must contain at least 10 digits.' });
   }
 
   // M-02: Check per-reservation rate limit before DB query
   if (checkPhoneVerifyRateLimit(reservation_id)) {
     logger.info('Phone verify rate limited', { reservation_id });
-    return res.status(429).json({ success: false, message: 'Too many attempts. Please try again later.' });
+    return res.status(429).json({ success: false, error: 'Too many attempts. Please try again later.' });
   }
 
   // Verify ownership
@@ -251,19 +251,19 @@ async function handleCancel(req, res) {
 
   if (fetchError || !existing) {
     recordPhoneVerifyFailure(reservation_id);
-    return res.status(404).json({ success: false, message: GENERIC_NOT_FOUND });
+    return res.status(404).json({ success: false, error: GENERIC_NOT_FOUND });
   }
 
   if (existing.customer_phone !== customer_phone) {
     recordPhoneVerifyFailure(reservation_id);
-    return res.status(404).json({ success: false, message: GENERIC_NOT_FOUND });
+    return res.status(404).json({ success: false, error: GENERIC_NOT_FOUND });
   }
 
   // Phone matched — clear any accumulated failures
   clearPhoneVerifyFailures(reservation_id);
 
   if (existing.status === 'Cancelled' || existing.status === 'cancelled') {
-    return res.status(400).json({ success: false, message: 'Reservation is already cancelled' });
+    return res.status(400).json({ success: false, error: 'Reservation is already cancelled' });
   }
 
   const { error } = await supabaseAdmin
@@ -273,7 +273,7 @@ async function handleCancel(req, res) {
 
   if (error) {
     logger.error('Failed to cancel reservation', error);
-    return res.status(500).json({ success: false, message: 'Failed to cancel reservation' });
+    return res.status(500).json({ success: false, error: 'Failed to cancel reservation' });
   }
 
   logger.info('Reservation cancelled by customer', { reservation_id });

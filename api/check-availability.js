@@ -24,38 +24,35 @@ module.exports = async (req, res) => {
     if (!restaurantId) {
       return res.status(400).json({
         success: false,
-        error: true,
-        message: 'Missing required parameter: restaurant_id'
+        error: 'Missing required parameter: restaurant_id'
       });
     }
 
     if (!date || !time || !party_size) {
       return res.status(400).json({
         success: false,
-        error: true,
-        message: 'Missing required parameters: date, time, and party_size are required'
+        error: 'Missing required parameters: date, time, and party_size are required'
       });
     }
 
     // Validate restaurant_id format (UUID)
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(restaurantId)) {
-      return res.status(400).json({ success: false, error: true, message: 'Invalid restaurant ID format' });
+      return res.status(400).json({ success: false, error: 'Invalid restaurant ID format' });
     }
 
     // Get restaurant info
     const restaurantResult = await getRestaurantInfo(restaurantId);
     if (!restaurantResult.success) {
       logger.error('Failed to get restaurant info:', restaurantResult);
-      return res.status(500).json({ success: false, error: true, message: 'Failed to load restaurant configuration' });
+      return res.status(500).json({ success: false, error: 'Failed to load restaurant configuration' });
     }
 
     const restaurant = restaurantResult.data.records[0];
     if (!restaurant) {
       return res.status(500).json({
         success: false,
-        error: true,
-        message: 'Restaurant configuration not found'
+        error: 'Restaurant configuration not found'
       });
     }
 
@@ -92,7 +89,7 @@ module.exports = async (req, res) => {
 
     if (!reservationsResult.success) {
       logger.error('Failed to get reservations:', reservationsResult);
-      return res.status(500).json({ success: false, error: true, message: 'Failed to load reservations' });
+      return res.status(500).json({ success: false, error: 'Failed to load reservations' });
     }
 
     const existingReservations = (reservationsResult.data.records || []).filter(r => {
@@ -154,8 +151,7 @@ module.exports = async (req, res) => {
     logger.error('Check availability error:', error);
     return res.status(500).json({
       success: false,
-      error: true,
-      message: 'Unable to check availability at this time. Please call us directly.'
+      error: 'Unable to check availability at this time. Please call us directly.'
     });
   }
 };

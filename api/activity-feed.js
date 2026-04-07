@@ -53,13 +53,13 @@ function makeEvent({ id, type, icon, color, message, detail, timestamp, customer
 module.exports = async (req, res) => {
   setInternalCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
+  if (req.method !== 'GET') return res.status(405).json({ success: false, error: 'Method not allowed' });
 
   if (await checkAndApplyRateLimit(req, res, 'api')) return;
 
   try {
     const user = await verifyJWT(req.headers.authorization?.replace('Bearer ', ''));
-    if (!user?.restaurant_id) return res.status(401).json({ error: 'Authentication required' });
+    if (!user?.restaurant_id) return res.status(401).json({ success: false, error: 'Authentication required' });
 
     const restaurantId = user.restaurant_id;
 
@@ -83,7 +83,7 @@ module.exports = async (req, res) => {
     return res.json({ success: true, data: events });
   } catch (err) {
     logger.error('activity-feed error', { error: err.message });
-    return res.status(500).json({ error: 'Internal error' });
+    return res.status(500).json({ success: false, error: 'Internal error' });
   }
 };
 

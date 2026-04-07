@@ -19,14 +19,14 @@ module.exports = async (req, res) => {
     const wantsStream = (req.headers.accept || '').includes('text/event-stream');
     return wantsStream ? handleChatStream(req, res) : handleChat(req, res);
   }
-  return res.status(405).json({ error: 'Method not allowed' });
+  return res.status(405).json({ success: false, error: 'Method not allowed' });
 };
 
 async function handleChat(req, res) {
   try {
     const user = await verifyJWT(req.headers.authorization?.replace('Bearer ', ''));
     if (!user || !user.restaurant_id) {
-      return res.status(401).json({ error: 'Authentication required' });
+      return res.status(401).json({ success: false, error: 'Authentication required' });
     }
     const restaurantId = user.restaurant_id;
 
@@ -38,10 +38,10 @@ async function handleChat(req, res) {
 
     const { message } = req.body || {};
     if (!message || typeof message !== 'string' || !message.trim()) {
-      return res.status(400).json({ error: 'message is required' });
+      return res.status(400).json({ success: false, error: 'message is required' });
     }
     const reply = await runManagerAgent(restaurantId, message.trim(), 'app');
-    return res.json({ reply });
+    return res.json({ success: true, reply });
   } catch (err) {
     return handleQuotaOrError(err, res);
   }
@@ -51,7 +51,7 @@ async function handleChatStream(req, res) {
   try {
     const user = await verifyJWT(req.headers.authorization?.replace('Bearer ', ''));
     if (!user || !user.restaurant_id) {
-      return res.status(401).json({ error: 'Authentication required' });
+      return res.status(401).json({ success: false, error: 'Authentication required' });
     }
     const restaurantId = user.restaurant_id;
 
@@ -63,7 +63,7 @@ async function handleChatStream(req, res) {
 
     const { message } = req.body || {};
     if (!message || typeof message !== 'string' || !message.trim()) {
-      return res.status(400).json({ error: 'message is required' });
+      return res.status(400).json({ success: false, error: 'message is required' });
     }
 
     // SSE headers
@@ -94,8 +94,8 @@ async function handleChatStream(req, res) {
       res.write(`data: ${JSON.stringify({ type: 'error', error: 'Internal error' })}\n\n`);
       return res.end();
     }
-    if (err.message === 'UNAUTHORIZED') return res.status(401).json({ error: 'Authentication required' });
-    return res.status(500).json({ error: 'Internal error' });
+    if (err.message === 'UNAUTHORIZED') return res.status(401).json({ success: false, error: 'Authentication required' });
+    return res.status(500).json({ success: false, error: 'Internal error' });
   }
 }
 
@@ -103,23 +103,23 @@ function handleQuotaOrError(err, res) {
   if (err instanceof ManagerQuotaError) {
     logger.info('manager-chat quota gate', { type: err.type, plan: err.plan, used: err.used, limit: err.limit });
     if (err.type === 'upgrade_required') {
-      return res.status(403).json({ error: 'Manager AI requires a paid plan', upgrade_required: true });
+      return res.status(403).json({ success: false, error: 'Manager AI requires a paid plan', upgrade_required: true });
     }
     if (err.type === 'quota_exceeded') {
-      return res.status(429).json({ error: 'Monthly Manager AI limit reached', used: err.used, limit: err.limit });
+      return res.status(429).json({ success: false, error: 'Monthly Manager AI limit reached', used: err.used, limit: err.limit });
     }
-    return res.status(402).json({ error: 'Manager AI access restricted', type: err.type });
+    return res.status(402).json({ success: false, error: 'Manager AI access restricted', type: err.type });
   }
   logger.error('manager-chat error', { error: err.message });
-  if (err.message === 'UNAUTHORIZED') return res.status(401).json({ error: 'Authentication required' });
-  return res.status(500).json({ error: 'Internal error' });
+  if (err.message === 'UNAUTHORIZED') return res.status(401).json({ success: false, error: 'Authentication required' });
+  return res.status(500).json({ success: false, error: 'Internal error' });
 }
 
 async function handleHistory(req, res) {
   try {
     const user = await verifyJWT(req.headers.authorization?.replace('Bearer ', ''));
     if (!user || !user.restaurant_id) {
-      return res.status(401).json({ error: 'Authentication required' });
+      return res.status(401).json({ success: false, error: 'Authentication required' });
     }
     const restaurantId = user.restaurant_id;
 
@@ -136,10 +136,10 @@ async function handleHistory(req, res) {
       .order('created_at', { ascending: true })
       .limit(100);
     if (error) throw new Error(error.message);
-    return res.json({ history: data || [] });
+    return res.json({ success: true, history: data || [] });
   } catch (err) {
     logger.error('manager-chat history error', { error: err.message });
-    if (err.message === 'UNAUTHORIZED') return res.status(401).json({ error: 'Authentication required' });
-    return res.status(500).json({ error: 'Internal error' });
+    if (err.message === 'UNAUTHORIZED') return res.status(401).json({ success: false, error: 'Authentication required' });
+    return res.status(500).json({ success: false, error: 'Internal error' });
   }
 }

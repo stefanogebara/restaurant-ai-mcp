@@ -42,7 +42,7 @@ module.exports = async (req, res) => {
       logger.warn('[Portal] Rejected oversized body:', { size: bodySize });
       return res.status(413).json({
         success: false,
-        message: 'Request body too large. Maximum size is 1MB.'
+        error: 'Request body too large. Maximum size is 1MB.'
       });
     }
   }
@@ -140,12 +140,12 @@ async function handleGetReservation(req, res) {
   const { id } = req.query;
 
   if (!id) {
-    return res.status(400).json({ success: false, message: 'Missing required parameter: id' });
+    return res.status(400).json({ success: false, error: 'Missing required parameter: id' });
   }
 
   // Basic sanity check on format to avoid full-table scans on junk input
   if (typeof id !== 'string' || id.length > 60) {
-    return res.status(400).json({ success: false, message: 'Invalid reservation ID' });
+    return res.status(400).json({ success: false, error: 'Invalid reservation ID' });
   }
 
   const { data, error } = await supabaseAdmin
@@ -155,7 +155,7 @@ async function handleGetReservation(req, res) {
     .single();
 
   if (error || !data) {
-    return res.status(404).json({ success: false, message: 'Reservation not found' });
+    return res.status(404).json({ success: false, error: 'Reservation not found' });
   }
 
   // Fetch restaurant name for display

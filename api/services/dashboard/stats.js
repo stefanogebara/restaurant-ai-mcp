@@ -132,6 +132,7 @@ async function handleDashboard(req, res) {
   }
 
   return res.status(200).json({
+    success: true,
     restaurant_id: restaurantId,
     timezone: timezone,
     slug: restaurantSlug,

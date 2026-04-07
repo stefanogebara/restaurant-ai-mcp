@@ -93,7 +93,7 @@ export function useCreateReservation() {
         body: JSON.stringify(input),
       });
       const data = await res.json();
-      if (!data.success) throw new Error(data.message || 'Could not complete reservation');
+      if (!data.success) throw new Error(data.error || data.message || 'Could not complete reservation');
       return data;
     },
   });

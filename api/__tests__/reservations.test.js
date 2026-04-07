@@ -559,7 +559,8 @@ describe('Missing restaurant_id', () => {
 
     expect(res.status).toHaveBeenCalledWith(403);
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
-      message: expect.stringContaining('onboarding'),
+      success: false,
+      error: expect.stringContaining('onboarding'),
     }));
   });
 });

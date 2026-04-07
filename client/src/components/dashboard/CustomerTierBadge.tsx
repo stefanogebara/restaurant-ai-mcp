@@ -5,17 +5,19 @@ interface CustomerTierBadgeProps {
 }
 
 const TIER_STYLES: Record<string, { bg: string; text: string; label: string; labelPt: string }> = {
-  vip:        { bg: 'bg-amber-100', text: 'text-amber-800', label: 'VIP', labelPt: 'VIP' },
-  regular:    { bg: 'bg-rose-100', text: 'text-rose-800', label: 'Regular', labelPt: 'Frequente' },
-  occasional: { bg: 'bg-stone-100', text: 'text-stone-600', label: 'Occasional', labelPt: 'Ocasional' },
+  vip:        { bg: 'bg-[#9F1239]/10', text: 'text-[#9F1239]', label: 'VIP', labelPt: 'VIP' },
+  regular:    { bg: 'bg-stone-100', text: 'text-stone-600', label: 'Regular', labelPt: 'Regular' },
+  at_risk:    { bg: 'bg-amber-100', text: 'text-amber-700', label: 'At Risk', labelPt: 'Em Risco' },
   new:        { bg: 'bg-blue-50', text: 'text-blue-700', label: 'New', labelPt: 'Novo' },
-  at_risk:    { bg: 'bg-red-50', text: 'text-red-700', label: 'At Risk', labelPt: 'Em Risco' },
 };
 
-export default function CustomerTierBadge({ tier, visitCount, compact = false }: CustomerTierBadgeProps) {
-  if (!tier || tier === 'new') return null;
+// "occasional" is intentionally excluded — too common, adds noise
+const HIDDEN_TIERS = new Set(['occasional']);
 
-  const style = TIER_STYLES[tier] || TIER_STYLES.occasional;
+export default function CustomerTierBadge({ tier, visitCount, compact = false }: CustomerTierBadgeProps) {
+  if (!tier || HIDDEN_TIERS.has(tier)) return null;
+
+  const style = TIER_STYLES[tier] || TIER_STYLES.regular;
 
   if (compact) {
     return (

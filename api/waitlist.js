@@ -37,21 +37,21 @@ module.exports = async (req, res) => {
 
   const auth = await verifyAuth(req);
   if (auth.error) {
-    return res.status(auth.status).json({ error: auth.error });
+    return res.status(auth.status).json({ success: false, error: auth.error });
   }
   req.user = auth.user;
   const restaurantId = auth.user.restaurant_id;
 
   if (!restaurantId) {
-    return res.status(400).json({ error: 'No restaurant associated with this account' });
+    return res.status(400).json({ success: false, error: 'No restaurant associated with this account' });
   }
 
   // Subscription + feature check (single DB call)
   const subResult = await checkSubscriptionByRestaurantId(restaurantId);
   if (!subResult.active) {
     return res.status(403).json({
-      error: 'Subscription required',
-      message: 'No active subscription found. Please subscribe to access this feature.',
+      success: false,
+      error: 'No active subscription found. Please subscribe to access this feature.',
       status: subResult.status,
       upgrade_url: `${process.env.CLIENT_URL || 'https://seatable.one'}/#pricing`,
     });
@@ -71,18 +71,18 @@ module.exports = async (req, res) => {
       case 'POST':
         return await handleAddToWaitlist(req, res, restaurantId);
       case 'PATCH':
-        if (!id) return res.status(400).json({ error: 'Waitlist entry ID required' });
+        if (!id) return res.status(400).json({ success: false, error: 'Waitlist entry ID required' });
         return await handleUpdateWaitlist(req, res, id, restaurantId);
       case 'DELETE':
-        if (!id) return res.status(400).json({ error: 'Waitlist entry ID required' });
+        if (!id) return res.status(400).json({ success: false, error: 'Waitlist entry ID required' });
         return await handleRemoveFromWaitlist(req, res, id, restaurantId);
       default:
-        return res.status(405).json({ error: 'Method not allowed' });
+        return res.status(405).json({ success: false, error: 'Method not allowed' });
     }
   } catch (error) {
     logger.error('Waitlist API error:', error);
     captureException(error, { method: req.method, url: req.url });
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ success: false, error: 'Internal server error' });
   }
 };
 
@@ -96,7 +96,7 @@ async function handleGetWaitlist(req, res, restaurantId) {
   });
 
   if (!result.success) {
-    return res.status(500).json({ error: 'Failed to fetch waitlist' });
+    return res.status(500).json({ success: false, error: 'Failed to fetch waitlist' });
   }
 
   return res.status(200).json({
@@ -111,7 +111,7 @@ async function handleAddToWaitlist(req, res, restaurantId) {
 
   const validation = validateWaitlistEntry({ customer_name, customer_phone, customer_email, party_size });
   if (!validation.valid) {
-    return res.status(400).json({ error: 'Validation failed', details: validation.errors });
+    return res.status(400).json({ success: false, error: 'Validation failed', details: validation.errors });
   }
 
   const result = await addToWaitlist(restaurantId, {
@@ -123,7 +123,7 @@ async function handleAddToWaitlist(req, res, restaurantId) {
   });
 
   if (!result.success) {
-    return res.status(500).json({ error: 'Failed to add to waitlist' });
+    return res.status(500).json({ success: false, error: 'Failed to add to waitlist' });
   }
 
   return res.status(201).json({
@@ -137,13 +137,13 @@ async function handleUpdateWaitlist(req, res, entryId, restaurantId) {
   const { status, estimated_wait, notes } = req.body;
 
   if (!status && estimated_wait === undefined && notes === undefined) {
-    return res.status(400).json({ error: 'At least one field required for update' });
+    return res.status(400).json({ success: false, error: 'At least one field required for update' });
   }
 
   if (status) {
     const validStatuses = ['waiting', 'notified', 'seated', 'cancelled', 'no_show'];
     if (!validStatuses.includes(status)) {
-      return res.status(400).json({ error: `Invalid status. Must be one of: ${validStatuses.join(', ')}` });
+      return res.status(400).json({ success: false, error: `Invalid status. Must be one of: ${validStatuses.join(', ')}` });
     }
   }
 
@@ -157,6 +157,7 @@ async function handleUpdateWaitlist(req, res, entryId, restaurantId) {
 
   if (!result.success) {
     return res.status(result.message?.includes('not found') ? 404 : 500).json({
+      success: false,
       error: result.message || 'Failed to update waitlist entry',
     });
   }
@@ -188,7 +189,7 @@ async function handleRemoveFromWaitlist(req, res, entryId, restaurantId) {
   const result = await removeFromWaitlist(entryId, restaurantId);
 
   if (!result.success) {
-    return res.status(500).json({ error: 'Failed to remove from waitlist' });
+    return res.status(500).json({ success: false, error: 'Failed to remove from waitlist' });
   }
 
   return res.status(200).json({
