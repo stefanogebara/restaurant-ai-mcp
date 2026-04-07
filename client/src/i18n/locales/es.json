@@ -83,7 +83,8 @@
     "restaurantSettings": "Configuración del Restaurante",
     "coupons": "Cupones",
     "events": "Eventos",
-    "campaigns": "Campañas"
+    "campaigns": "Campañas",
+    "insights": "Insights"
   },
   "dashboard": {
     "overview": "Vista General",
@@ -2241,7 +2242,17 @@
     "reEngagementFailed": "Error al enviar mensaje",
     "lastVisit": "Última",
     "editStrategy": "Editar documento de estrategia IA",
-    "whatsappCampaigns": "Campañas WhatsApp"
+    "whatsappCampaigns": "Campañas WhatsApp",
+    "pageTitle": "Insights",
+    "pageSubtitle": "Tu centro de inteligencia del restaurante.",
+    "lockedTitle": "Actualiza para acceder",
+    "locked_advancedAnalytics": "Actualiza tu plan para desbloquear análisis completos con gráficos, tendencias y exportación.",
+    "locked_weeklyReports": "Actualiza tu plan para desbloquear informes semanales con demografía y preferencias.",
+    "tabs": {
+      "overview": "Vista General",
+      "analytics": "Análisis",
+      "reports": "Informes"
+    }
   },
   "callTracking": {
     "title": "Historial de Llamadas",

@@ -31,9 +31,7 @@ const NoShowCalculator = lazyRetry(() => import('./pages/NoShowCalculator'));
 const Login = lazyRetry(() => import('./pages/Login'));
 const LiveAIDemo = lazyRetry(() => import('./pages/LiveAIDemo'));
 const Dashboard = lazyRetry(() => import('./pages/Dashboard'));
-const WeeklyReport = lazyRetry(() => import('./pages/WeeklyReport'));
-const AnalyticsDashboard = lazyRetry(() => import('./pages/AnalyticsDashboard'));
-const AIInsights = lazyRetry(() => import('./pages/AIInsights'));
+const InsightsPage = lazyRetry(() => import('./pages/InsightsPage'));
 const CallTrackingDashboard = lazyRetry(() => import('./pages/CallTrackingDashboard'));
 const CustomerPortal = lazyRetry(() => import('./pages/CustomerPortal'));
 const SubscriptionSuccess = lazyRetry(() => import('./pages/SubscriptionSuccess'));
@@ -143,14 +141,14 @@ function App() {
 {/* Dashboard - New unified dashboard (default) */}
               <Route path="/host-dashboard" element={<Navigate to="/host-dashboard/simple" replace />} />
               <Route path="/host-dashboard/simple" element={<ProtectedRoute><ErrorBoundary fallback={<RouteErrorFallback />}><Dashboard /></ErrorBoundary></ProtectedRoute>} />
-              <Route path="/host-dashboard/reports" element={<ProtectedRoute><WeeklyReport /></ProtectedRoute>} />
+              <Route path="/host-dashboard/reports" element={<Navigate to="/host-dashboard/insights?tab=reports" replace />} />
               <Route path="/host-dashboard/calls" element={<ProtectedRoute><CallTrackingDashboard /></ProtectedRoute>} />
               <Route path="/host-dashboard/tables" element={<ProtectedRoute><TableConfigPage /></ProtectedRoute>} />
               <Route path="/host-dashboard/floor-plan" element={<ProtectedRoute><FloorPlanEditor /></ProtectedRoute>} />
               <Route path="/host-dashboard/voice-settings" element={<ProtectedRoute><VoiceSettingsPage /></ProtectedRoute>} />
               <Route path="/host-dashboard/whatsapp" element={<ProtectedRoute><WhatsAppSettingsPage /></ProtectedRoute>} />
-              <Route path="/host-dashboard/insights" element={<ProtectedRoute><ErrorBoundary fallback={<RouteErrorFallback />}><AIInsights /></ErrorBoundary></ProtectedRoute>} />
-              <Route path="/analytics" element={<ProtectedRoute><ErrorBoundary fallback={<RouteErrorFallback />}><AnalyticsDashboard /></ErrorBoundary></ProtectedRoute>} />
+              <Route path="/host-dashboard/insights" element={<ProtectedRoute><ErrorBoundary fallback={<RouteErrorFallback />}><InsightsPage /></ErrorBoundary></ProtectedRoute>} />
+              <Route path="/analytics" element={<Navigate to="/host-dashboard/insights?tab=analytics" replace />} />
               <Route path="/customer" element={<CustomerPortal />} />
               <Route path="/subscription/success" element={<SubscriptionSuccess />} />
               <Route path="/subscription/manage" element={<ProtectedRoute><ErrorBoundary fallback={<RouteErrorFallback />}><SubscriptionManage /></ErrorBoundary></ProtectedRoute>} />

@@ -44,10 +44,8 @@ const navSections: NavSection[] = [
   {
     label: 'Insights',
     items: [
-      { path: '/host-dashboard/insights', label: 'AI Insights', requiredFeature: 'advancedAnalytics' },
-      { path: '/analytics', label: 'Analytics', requiredFeature: 'advancedAnalytics' },
+      { path: '/host-dashboard/insights', label: 'Insights', requiredFeature: 'overview' },
       { path: '/host-dashboard/customers', label: 'Customers', requiredFeature: 'customerLTV' },
-      { path: '/host-dashboard/reports', label: 'Reports', requiredFeature: 'weeklyReports' },
     ]
   }
 ];
@@ -102,16 +100,13 @@ export default function Sidebar() {
     'Voice Agent': 'navigation.voiceAgent',
     WhatsApp: 'navigation.whatsapp',
     'Call History': 'navigation.callHistory',
-    'AI Insights': 'navigation.aiInsights',
-    Analytics: 'navigation.analytics',
+    Insights: 'navigation.insights',
     Campaigns: 'navigation.campaigns',
     Coupons: 'navigation.coupons',
     Events: 'navigation.events',
     Customers: 'navigation.customers',
-    Reports: 'navigation.reports',
     Main: 'navigation.sectionMain',
     AI: 'navigation.sectionAI',
-    Insights: 'navigation.sectionInsights',
   };
 
   const isActive = (path: string) => {
