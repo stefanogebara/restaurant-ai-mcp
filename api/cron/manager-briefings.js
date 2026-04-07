@@ -4,6 +4,8 @@ const { sendBriefing } = require('../_lib/briefing-sender');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { getVIPsForToday } = require('../services/restaurantSnapshot');
 const { logCronRun } = require('../_lib/cron-tracker');
+const { isWhatsAppConfigured, sendWhatsAppImageMessage } = require('../_lib/whatsapp-sender');
+const { buildWeeklyReservationsChart, buildNoShowChart } = require('../services/chartService');
 
 const logger = createSecureLogger('manager-briefings');
 
@@ -71,6 +73,53 @@ module.exports = async (req, res) => {
           config.notification_preferences?.briefing_channel || 'text',
           config.id
         );
+
+        // Send weekly chart via WhatsApp (morning briefing only)
+        if (type === 'morning' && isWhatsAppConfigured() && config.manager_phone) {
+          try {
+            const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+            const { data: weekReservations } = await supabaseAdmin
+              .from('reservations')
+              .select('date, status')
+              .eq('restaurant_id', config.id)
+              .gte('date', weekAgo)
+              .order('date');
+
+            if (weekReservations?.length > 0) {
+              // Group by day
+              const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'];
+              const dayCounts = {};
+              for (const r of weekReservations) {
+                const d = new Date(r.date + 'T12:00:00Z');
+                const dayName = dayNames[d.getUTCDay()];
+                dayCounts[dayName] = (dayCounts[dayName] || 0) + 1;
+              }
+
+              const chartData = dayNames.map(day => ({ day, count: dayCounts[day] || 0 }));
+              const chartUrl = buildWeeklyReservationsChart(chartData, config.restaurant_name || 'Restaurante');
+
+              // Count no-shows
+              const showed = weekReservations.filter(r => r.status === 'completed' || r.status === 'seated').length;
+              const noShow = weekReservations.filter(r => r.status === 'no-show').length;
+              const cancelled = weekReservations.filter(r => r.status === 'cancelled').length;
+
+              await sendWhatsAppImageMessage(
+                config.manager_phone,
+                chartUrl,
+                `Reservas da semana: ${weekReservations.length} total | ${noShow} no-shows | ${cancelled} cancelamentos`
+              );
+
+              // Send no-show chart if there are any
+              if (noShow > 0 || cancelled > 0) {
+                const noShowUrl = buildNoShowChart({ showed, noShow, cancelled }, config.restaurant_name || 'Restaurante');
+                await sendWhatsAppImageMessage(config.manager_phone, noShowUrl);
+              }
+            }
+          } catch (chartErr) {
+            logger.warn('Chart send failed (non-blocking)', { error: chartErr.message });
+          }
+        }
+
         sent++;
       } catch (err) {
         logger.error('briefing failed', { restaurantId: config.id, error: err.message });

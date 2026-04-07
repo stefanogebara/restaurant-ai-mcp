@@ -29,7 +29,7 @@ const BRAND_COLORS = {
  */
 function buildChartUrl(config, { width = 800, height = 400, backgroundColor = '#FFFFFF' } = {}) {
   const encoded = encodeURIComponent(JSON.stringify(config));
-  return `${QUICKCHART_BASE}?c=${encoded}&w=${width}&h=${height}&bkg=${encodeURIComponent(backgroundColor)}&f=png`;
+  return `${QUICKCHART_BASE}?c=${encoded}&w=${width}&h=${height}&bkg=${encodeURIComponent(backgroundColor)}&f=png&v=4`;
 }
 
 /**
@@ -160,12 +160,14 @@ function buildOccupancyChart(data, restaurantName) {
  * @param {string} restaurantName
  */
 function buildKPIDashboard(stats, restaurantName) {
+  const noShowRate = stats.reservations > 0 ? Math.round((stats.noShows / stats.reservations) * 100) : 0;
   const config = {
     type: 'bar',
     data: {
-      labels: ['Reservas', 'No-Shows', 'Receita (R$100)', 'Nota'],
+      labels: ['Reservas', 'No-Show %', 'Receita (R$ mil)', 'Nota (x10)'],
       datasets: [{
-        data: [stats.reservations, stats.noShows, Math.round(stats.revenue / 100), stats.avgRating * 10],
+        label: 'Resumo',
+        data: [stats.reservations, noShowRate, Math.round(stats.revenue / 1000), Math.round(stats.avgRating * 10)],
         backgroundColor: [BRAND_COLORS.teal, BRAND_COLORS.burgundy, BRAND_COLORS.amber, '#6366F1'],
         borderRadius: 6,
       }],
@@ -178,7 +180,7 @@ function buildKPIDashboard(stats, restaurantName) {
       },
       scales: {
         x: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } },
-        y: { grid: { display: false }, ticks: { color: BRAND_COLORS.charcoal, font: { size: 14, weight: 'bold' } } },
+        y: { grid: { display: false }, ticks: { color: BRAND_COLORS.charcoal, font: { size: 13, weight: 'bold' } } },
       },
     },
   };
