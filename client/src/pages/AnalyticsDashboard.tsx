@@ -12,7 +12,6 @@ import DayOfWeekChart from '../components/analytics/DayOfWeekChart';
 import TableUtilizationHeatmap from '../components/analytics/TableUtilizationHeatmap';
 import StatusBreakdownPie from '../components/analytics/StatusBreakdownPie';
 import NoShowPredictions from '../components/analytics/NoShowPredictions';
-import RevenueOpportunities from '../components/analytics/RevenueOpportunities';
 import DateRangePicker, { presetToRange, type DateRangeValue } from '../components/analytics/DateRangePicker';
 import ExportDropdown from '../components/analytics/ExportDropdown';
 import ThiingsIcon from '../components/common/ThiingsIcon';
@@ -168,7 +167,6 @@ export default function AnalyticsDashboard() {
           {/* AI Insights */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <NoShowPredictions />
-            <RevenueOpportunities />
           </div>
 
           {/* Status Breakdown */}

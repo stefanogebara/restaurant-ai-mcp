@@ -5,7 +5,6 @@ import ThiingsIcon from '../components/common/ThiingsIcon';
 import { usePermission } from '../hooks/usePermission';
 import TonightBriefingCard from '../components/insights/TonightBriefingCard';
 import CustomerIntelligenceCard from '../components/insights/CustomerIntelligenceCard';
-import RevenueQuickWinsCard from '../components/insights/RevenueQuickWinsCard';
 import WeeklyForecastCard from '../components/insights/WeeklyForecastCard';
 import CampaignManager from '../components/dashboard/CampaignManager';
 import StrategyMetricsWidget from '../components/dashboard/StrategyMetricsWidget';
@@ -61,7 +60,6 @@ export default function AIInsights() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <TonightBriefingCard />
           <CustomerIntelligenceCard />
-          <RevenueQuickWinsCard />
           <WeeklyForecastCard />
         </div>
 
