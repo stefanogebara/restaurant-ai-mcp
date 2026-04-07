@@ -102,7 +102,7 @@ const SEGMENT_TEMPLATE_MAP = {
   new_customers: 'seatable_promotion',
 };
 
-async function createCampaign(restaurantId, { name, segment, message, scheduledAt, campaignType, whatsappTemplateName }) {
+async function createCampaign(restaurantId, { name, segment, message, scheduledAt, campaignType, whatsappTemplateName, channel: channelOverride }) {
   // Get segment customers
   const customers = await getSegmentCustomers(restaurantId, segment);
 
@@ -135,7 +135,7 @@ async function createCampaign(restaurantId, { name, segment, message, scheduledA
       restaurant_id: restaurantId,
       campaign_type: campaignType || 'win_back',
       message,
-      channel: 'whatsapp',
+      channel: channelOverride || 'whatsapp',
       whatsapp_template_name: whatsappTemplateName || SEGMENT_TEMPLATE_MAP[segment] || 'seatable_promotion',
       status: scheduledAt ? 'scheduled' : 'active',
       scheduled_at: scheduledAt || null,

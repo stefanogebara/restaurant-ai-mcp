@@ -200,7 +200,7 @@ async function handleStats(req, res) {
  */
 async function handleCreateWhatsApp(req, res) {
   try {
-    const { name, segment, message, scheduled_at, campaign_type, template_name } = req.body;
+    const { name, segment, message, scheduled_at, campaign_type, template_name, channel } = req.body;
 
     if (!segment) {
       return res.status(400).json({
@@ -224,6 +224,7 @@ async function handleCreateWhatsApp(req, res) {
       scheduledAt: scheduled_at || null,
       campaignType: campaign_type || 'win_back',
       whatsappTemplateName: template_name || null,
+      channel: channel || 'email',
     });
 
     if (!result.success) {
