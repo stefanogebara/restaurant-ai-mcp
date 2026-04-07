@@ -1,6 +1,6 @@
 {
   "installCommand": "npm install",
-  "buildCommand": "cd client && npm install && npm run build && node cache-bust-sw.cjs",
+  "buildCommand": "cd client && npm install && npx vite build && node cache-bust-sw.cjs",
   "outputDirectory": "client/dist",
   "functions": {
     "api/manager-chat.js": {

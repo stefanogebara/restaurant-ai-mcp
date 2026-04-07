@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../../components/common/ThiingsIcon';
-import Spinner from '../../components/common/Spinner';
 import { SkeletonWeeklyReport } from '../../components/common/Skeleton';
 import { useWeeklyReport } from '../../hooks/useWeeklyReport';
 import WeeklyReportHeader from '../../components/dashboard/WeeklyReportHeader';
