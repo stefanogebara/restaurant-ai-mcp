@@ -431,8 +431,34 @@ async function handleCreateReservation(req, res) {
         }
       }
 
-      // Fire-and-forget: send voice note confirmation to customer
+      // Fire-and-forget: send confirmations to customer via all channels
       if (customer_phone && restaurant?.id) {
+        const confirmDetails = {
+          reservationId: result.reservation_id,
+          customerName: customer_name,
+          customerPhone: customer_phone,
+          customerEmail: customer_email,
+          partySize: party_size,
+          date,
+          time,
+          restaurantName,
+        };
+
+        // 1. WhatsApp template confirmation
+        const { isWhatsAppConfigured, sendReservationConfirmation } = require('./_lib/whatsapp-sender');
+        if (isWhatsAppConfigured()) {
+          sendReservationConfirmation(customer_phone, confirmDetails)
+            .catch(err => logger.warn('WhatsApp confirmation failed (non-blocking)', { error: err.message }));
+        }
+
+        // 2. Email confirmation
+        const { sendReservationConfirmationEmail } = require('./_lib/email');
+        if (customer_email) {
+          sendReservationConfirmationEmail(customer_email, confirmDetails)
+            .catch(err => logger.warn('Email confirmation failed (non-blocking)', { error: err.message }));
+        }
+
+        // 3. Voice note confirmation (legacy)
         sendConfirmationVoiceNote({
           restaurantId: restaurant.id,
           customerPhone: customer_phone,

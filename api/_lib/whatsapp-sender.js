@@ -338,11 +338,58 @@ async function sendWhatsAppAudioMessage(to, audioUrl) {
   }
 }
 
+/**
+ * Send a WhatsApp image message via Meta Cloud API.
+ * @param {string} to - Recipient phone
+ * @param {string} imageUrl - Public URL of the image (PNG/JPEG)
+ * @param {string} [caption] - Optional caption text
+ */
+async function sendWhatsAppImageMessage(to, imageUrl, caption) {
+  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+  const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
+
+  if (!phoneNumberId || !accessToken) {
+    return { success: false, error: 'WhatsApp not configured' };
+  }
+
+  try {
+    const response = await fetch(`${WHATSAPP_API_URL}/${phoneNumberId}/messages`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        messaging_product: 'whatsapp',
+        recipient_type: 'individual',
+        to,
+        type: 'image',
+        image: {
+          link: imageUrl,
+          ...(caption ? { caption } : {}),
+        },
+      }),
+    });
+
+    const data = await response.json();
+    if (data.messages?.[0]?.id) {
+      logger.info('WhatsApp image sent', { to: to.slice(0, 4) + '****', messageId: data.messages[0].id });
+      return { success: true, messageId: data.messages[0].id };
+    }
+    logger.error('WhatsApp image send failed', { response: data });
+    return { success: false, error: data.error?.message || 'Send failed' };
+  } catch (error) {
+    logger.error('WhatsApp image error', { error: error.message });
+    return { success: false, error: error.message };
+  }
+}
+
 module.exports = {
   isWhatsAppConfigured,
   getWhatsAppProvider,
   sendWhatsAppMessage,
   sendWhatsAppAudioMessage,
+  sendWhatsAppImageMessage,
   sendTemplateMessage,
   sendReservationConfirmation,
   sendNewBookingAlertWhatsApp,
