@@ -101,6 +101,10 @@
       "destination": "/api/external-booking-webhook.js"
     },
     {
+      "source": "/api/google-booking/server",
+      "destination": "/api/google-booking/server.js"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
