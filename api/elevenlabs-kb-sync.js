@@ -22,7 +22,7 @@ const logger = createSecureLogger('elevenlabs-kb-sync');
 /**
  * Build a plain-text knowledge document from restaurant data.
  */
-function buildKnowledgeDoc(config, managerFacts) {
+function buildKnowledgeDoc(config, managerFacts, menuItems) {
   const profile = config.restaurant_profile || {};
   const lines = [];
 
@@ -125,6 +125,26 @@ function buildKnowledgeDoc(config, managerFacts) {
     lines.push('');
   }
 
+  // POS menu items (synced from Square/Toast)
+  if (menuItems && menuItems.length > 0) {
+    lines.push('## Menu');
+    // Group by category
+    const categories = {};
+    for (const item of menuItems) {
+      const cat = item.category || 'Other';
+      if (!categories[cat]) categories[cat] = [];
+      categories[cat].push(item);
+    }
+    for (const [category, items] of Object.entries(categories)) {
+      lines.push(`### ${category}`);
+      for (const item of items) {
+        const price = item.price_cents ? ` — $${(item.price_cents / 100).toFixed(2)}` : '';
+        lines.push(`- ${item.name}${price}${item.description ? `: ${item.description}` : ''}`);
+      }
+    }
+    lines.push('');
+  }
+
   // Manager knowledge (extracted from documents + learned facts)
   if (managerFacts.length > 0) {
     lines.push('## Additional Knowledge');
@@ -167,8 +187,8 @@ const handler = async (req, res) => {
   // agentId resolved from DB after config fetch (per-restaurant)
 
   try {
-    // Fetch restaurant config + manager facts in parallel
-    const [configResult, factsResult] = await Promise.all([
+    // Fetch restaurant config + manager facts + POS menu in parallel
+    const [configResult, factsResult, menuResult] = await Promise.all([
       supabaseAdmin
         .schema('restaurant')
         .from('restaurant_config')
@@ -182,6 +202,13 @@ const handler = async (req, res) => {
         .eq('type', 'fact')
         .order('created_at', { ascending: false })
         .limit(50),
+      supabaseAdmin
+        .from('pos_menu_items')
+        .select('name, description, price_cents, category')
+        .eq('restaurant_id', restaurantId)
+        .eq('is_available', true)
+        .order('category')
+        .limit(100),
     ]);
 
     if (configResult.error || !configResult.data) {
@@ -195,7 +222,7 @@ const handler = async (req, res) => {
       return res.status(400).json({ success: false, error: 'Agent not provisioned for this restaurant' });
     }
 
-    const knowledgeDoc = buildKnowledgeDoc(configResult.data, factsResult.data || []);
+    const knowledgeDoc = buildKnowledgeDoc(configResult.data, factsResult.data || [], menuResult.data || []);
 
     // Step 1: Delete old KB doc if one exists
     const oldDocId = configResult.data.elevenlabs_kb_doc_id;

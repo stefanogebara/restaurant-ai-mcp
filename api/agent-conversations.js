@@ -173,9 +173,10 @@ async function handleGetConversation(req, res, user) {
   }
 
   try {
+    // TODO: select('*') replaced — all fields returned to client as conversation detail
     let query = supabaseAdmin
       .from('agent_conversations')
-      .select('*')
+      .select('id, conversation_id, restaurant_info_id, started_at, ended_at, duration_seconds, caller_phone, customer_name, customer_email, customer_sentiment, outcome, successful_booking, reservation_id, transcript, summary, ai_notes, created_at, recording_url, tools_used, errors_encountered, language, party_size')
       .eq('restaurant_info_id', user.restaurant_id);
 
     if (id) {
@@ -252,7 +253,7 @@ async function handleGetStats(req, res, user) {
     // Build query with restaurant filter (always applied)
     let query = supabaseAdmin
       .from('agent_conversations')
-      .select('*')
+      .select('id, started_at, duration_seconds, outcome, successful_booking, customer_sentiment')
       .eq('restaurant_info_id', restaurant_id)
       .gte('started_at', startDate.toISOString())
       .lte('started_at', endDate.toISOString());

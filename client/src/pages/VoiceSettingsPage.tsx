@@ -34,6 +34,7 @@ import Spinner from '../components/common/Spinner';
 import VoicePersonaPanel from '../components/dashboard/VoicePersonaPanel';
 // VoiceExperimentPanel removed — non-functional (K-1)
 import BookingChannelsPanel from '../components/dashboard/BookingChannelsPanel';
+import POSIntegrationPanel from '../components/dashboard/POSIntegrationPanel';
 import PhoneIntegrationPanel from '../components/voice/PhoneIntegrationPanel';
 // AIStrategyPanel removed — dead feature
 // StrategyMetricsWidget moved to insights-only (removed from voice settings)
@@ -447,6 +448,7 @@ export default function VoiceSettingsPage() {
           )}
           <PhoneIntegrationPanel />
           <VoicePersonaPanel />
+          <POSIntegrationPanel />
           {/* VoiceExperimentPanel removed — buttons were non-functional (K-1) */}
           {/* AIStrategyPanel + StrategyMetricsWidget removed — dead features */}
           {slug && <BookingChannelsPanel slug={slug} />}

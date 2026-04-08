@@ -85,6 +85,14 @@
       "destination": "/api/pos/table-status.js"
     },
     {
+      "source": "/api/square/auth",
+      "destination": "/api/square/auth.js"
+    },
+    {
+      "source": "/api/square/sync",
+      "destination": "/api/square/sync.js"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
@@ -289,6 +297,14 @@
     {
       "path": "/api/cron/validate-conversations",
       "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/square/sync?action=cron_catalog",
+      "schedule": "0 4 * * *"
+    },
+    {
+      "path": "/api/square/sync?action=cron_refresh",
+      "schedule": "0 2 * * *"
     }
   ]
 }
