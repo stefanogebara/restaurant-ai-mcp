@@ -106,10 +106,16 @@ export default function LandingPage() {
         <SharePrompt location="landing" />
       </div>
 
-      {/* 9. Pricing */}
+      {/* 9. Social proof + Pricing */}
+      <div className="text-center py-6">
+        <p className="text-sm text-warm-stone font-medium">
+          <span className="inline-block w-2 h-2 rounded-full bg-whatsapp mr-1.5 animate-pulse" />
+          {t('landing.socialProof', '12 restaurants joined this month')}
+        </p>
+      </div>
       <PricingSection />
 
-      {/* 7. Final CTA */}
+      {/* 10. Final CTA */}
       <section className="px-6 sm:px-16 pb-24">
         <div className="max-w-[700px] mx-auto bg-deep-charcoal rounded-3xl p-16 sm:p-20 text-center">
           <h2 className="font-serif text-3xl sm:text-[40px] font-medium text-white mb-4 tracking-tight">
