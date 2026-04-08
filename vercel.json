@@ -109,19 +109,23 @@
       "destination": "/api/google-booking/server.js"
     },
     {
-      "source": "/v3/HealthCheck{/}?",
+      "source": "/v3/HealthCheck",
       "destination": "/api/google-booking/server.js?action=HealthCheck"
     },
     {
-      "source": "/v3/BatchAvailabilityLookup{/}?",
+      "source": "/v3/HealthCheck/",
+      "destination": "/api/google-booking/server.js?action=HealthCheck"
+    },
+    {
+      "source": "/v3/BatchAvailabilityLookup",
       "destination": "/api/google-booking/server.js?action=BatchAvailabilityLookup"
     },
     {
-      "source": "/v3/CreateBooking{/}?",
+      "source": "/v3/CreateBooking",
       "destination": "/api/google-booking/server.js?action=CreateBooking"
     },
     {
-      "source": "/v3/UpdateBooking{/}?",
+      "source": "/v3/UpdateBooking",
       "destination": "/api/google-booking/server.js?action=UpdateBooking"
     },
     {
