@@ -5,6 +5,19 @@
 
 const { supabase, handleSupabaseResponse, logger } = require('./clients');
 
+/** Normalize DB status to PascalCase for frontend compatibility */
+function normalizeStatus(dbStatus) {
+  const map = {
+    'available': 'Available',
+    'occupied': 'Occupied',
+    'being cleaned': 'Being Cleaned',
+    'being_cleaned': 'Being Cleaned',
+    'reserved': 'Reserved',
+  };
+  if (!dbStatus) return 'Available';
+  return map[dbStatus.toLowerCase()] || dbStatus;
+}
+
 // ============ TABLES ============
 
 const getTables = async (restaurantId, filter = {}) => {
@@ -29,7 +42,7 @@ const getTables = async (restaurantId, filter = {}) => {
           'Table Number': t.table_number,
           'Capacity': t.capacity,
           'Location': t.location,
-          'Status': t.status,
+          'Status': normalizeStatus(t.status),
           'Current Service ID': t.current_service_id,
           'Is Active': t.is_active,
           // Shape configuration
@@ -69,7 +82,7 @@ const getAvailableTables = async (restaurantId) => {
           'Table Number': t.table_number,
           'Capacity': t.capacity,
           'Location': t.location,
-          'Status': t.status,
+          'Status': normalizeStatus(t.status),
           // Shape configuration
           'Shape': t.shape || 'square',
           'Is Fixed Seating': t.is_fixed_seating || false,
@@ -544,7 +557,7 @@ const getAllTablesAdmin = async (restaurantId) => {
     table_number: t.table_number,
     capacity: t.capacity,
     location: t.location || 'Main',
-    status: t.status || 'available',
+    status: normalizeStatus(t.status),
     is_active: t.is_active,
     current_service_id: t.current_service_id || null,
     // Shape configuration
@@ -590,7 +603,7 @@ const getAllTables = async (restaurantId) => {
     table_number: t.table_number,
     capacity: t.capacity,
     location: t.location || 'Main',
-    status: t.status || 'available',
+    status: normalizeStatus(t.status),
     current_service_id: t.current_service_id || null,
     // Shape configuration
     shape: t.shape || 'square',

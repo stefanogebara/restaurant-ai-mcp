@@ -21,6 +21,8 @@ export function suggestTableCombinations(
 ): TableCombination[] {
   // Only consider available tables
   const availableTables = tables.filter(t => t.status === 'Available');
+  // Tables eligible for joining (is_joinable=true or undefined)
+  const joinableTables = availableTables.filter(t => t.is_joinable !== false);
 
   if (availableTables.length === 0) {
     return [];
@@ -50,22 +52,26 @@ export function suggestTableCombinations(
     }
   }
 
-  // Strategy 2: Two tables
+  // Strategy 2: Two tables (only joinable tables)
   if (partySize > Math.max(...availableTables.map(t => t.capacity))) {
-    for (let i = 0; i < availableTables.length; i++) {
-      for (let j = i + 1; j < availableTables.length; j++) {
-        const table1 = availableTables[i];
-        const table2 = availableTables[j];
+    for (let i = 0; i < joinableTables.length; i++) {
+      for (let j = i + 1; j < joinableTables.length; j++) {
+        const table1 = joinableTables[i];
+        const table2 = joinableTables[j];
         const totalCapacity = table1.capacity + table2.capacity;
 
         if (totalCapacity >= partySize) {
           const wastedSeats = totalCapacity - partySize;
           const sameSection = table1.location === table2.location;
 
+          // Check explicit joinable_with configuration
+          const explicitlyJoinable =
+            (table1.joinable_with?.length > 0 && table1.joinable_with.includes(table2.id)) ||
+            (table2.joinable_with?.length > 0 && table2.joinable_with.includes(table1.id));
+
           // Prefer adjacent table numbers
           const adjacentBonus = Math.abs(
-            parseInt(table1.table_number.toString()) -
-            parseInt(table2.table_number.toString())
+            Number(table1.table_number) - Number(table2.table_number)
           ) === 1;
 
           const score = calculateScore({
@@ -73,11 +79,14 @@ export function suggestTableCombinations(
             wastedSeats,
             tableCount: 2,
             sameSectionBonus: sameSection,
-            adjacentBonus
+            adjacentBonus,
+            joinableBonus: explicitlyJoinable,
           });
 
           let reason = `2 tables in ${sameSection ? 'same section' : 'different sections'}`;
-          if (adjacentBonus) {
+          if (explicitlyJoinable) {
+            reason += ' (configured as joinable)';
+          } else if (adjacentBonus) {
             reason += ' (adjacent)';
           }
           if (wastedSeats === 0) {
@@ -95,14 +104,14 @@ export function suggestTableCombinations(
     }
   }
 
-  // Strategy 3: Three tables (for very large parties)
-  if (partySize > 8 && availableTables.length >= 3) {
-    for (let i = 0; i < availableTables.length; i++) {
-      for (let j = i + 1; j < availableTables.length; j++) {
-        for (let k = j + 1; k < availableTables.length; k++) {
-          const table1 = availableTables[i];
-          const table2 = availableTables[j];
-          const table3 = availableTables[k];
+  // Strategy 3: Three tables (for very large parties, only joinable)
+  if (partySize > 8 && joinableTables.length >= 3) {
+    for (let i = 0; i < joinableTables.length; i++) {
+      for (let j = i + 1; j < joinableTables.length; j++) {
+        for (let k = j + 1; k < joinableTables.length; k++) {
+          const table1 = joinableTables[i];
+          const table2 = joinableTables[j];
+          const table3 = joinableTables[k];
           const totalCapacity = table1.capacity + table2.capacity + table3.capacity;
 
           if (totalCapacity >= partySize && totalCapacity <= partySize + 4) {
@@ -149,6 +158,7 @@ function calculateScore(params: {
   tableCount: number;
   sameSectionBonus: boolean;
   adjacentBonus?: boolean;
+  joinableBonus?: boolean;
 }): number {
   let score = 100;
 
@@ -171,6 +181,11 @@ function calculateScore(params: {
   // Bonus for adjacent tables
   if (params.adjacentBonus) {
     score += 15;
+  }
+
+  // Bonus for explicitly configured joinable pairs
+  if (params.joinableBonus) {
+    score += 25;
   }
 
   // Ensure score doesn't go negative

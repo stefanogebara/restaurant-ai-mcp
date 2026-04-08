@@ -11,13 +11,13 @@ import type { Table } from '../../types/host.types';
 function makeTable(overrides: Partial<Table> = {}): Table {
   return {
     id: 'table-1',
-    table_number: '1',
+    table_number: 1,
     capacity: 4,
     location: 'Indoor',
     status: 'Available',
     shape: 'square',
     is_fixed_seating: false,
-    is_joinable: false,
+    is_joinable: true,
     joinable_with: [],
     position_x: 0,
     position_y: 0,
@@ -40,8 +40,8 @@ describe('suggestTableCombinations', () => {
 
   it('finds a single table with perfect fit', () => {
     const tables = [
-      makeTable({ id: 't1', table_number: '1', capacity: 4 }),
-      makeTable({ id: 't2', table_number: '2', capacity: 6 }),
+      makeTable({ id: 't1', table_number: 1, capacity: 4 }),
+      makeTable({ id: 't2', table_number: 2, capacity: 6 }),
     ];
 
     const result = suggestTableCombinations(tables, 4);
@@ -57,8 +57,8 @@ describe('suggestTableCombinations', () => {
 
   it('prefers minimal waste over larger tables', () => {
     const tables = [
-      makeTable({ id: 't1', table_number: '1', capacity: 4 }),
-      makeTable({ id: 't2', table_number: '2', capacity: 8 }),
+      makeTable({ id: 't1', table_number: 1, capacity: 4 }),
+      makeTable({ id: 't2', table_number: 2, capacity: 8 }),
     ];
 
     const result = suggestTableCombinations(tables, 4);
@@ -68,7 +68,7 @@ describe('suggestTableCombinations', () => {
 
   it('returns up to maxCombinations results', () => {
     const tables = Array.from({ length: 10 }, (_, i) =>
-      makeTable({ id: `t${i}`, table_number: `${i}`, capacity: 4 + i })
+      makeTable({ id: `t${i}`, table_number: i, capacity: 4 + i })
     );
 
     const result = suggestTableCombinations(tables, 4, 2);
@@ -77,8 +77,8 @@ describe('suggestTableCombinations', () => {
 
   it('suggests two-table combinations for large parties', () => {
     const tables = [
-      makeTable({ id: 't1', table_number: '1', capacity: 4, location: 'Indoor' }),
-      makeTable({ id: 't2', table_number: '2', capacity: 4, location: 'Indoor' }),
+      makeTable({ id: 't1', table_number: 1, capacity: 4, location: 'Indoor' }),
+      makeTable({ id: 't2', table_number: 2, capacity: 4, location: 'Indoor' }),
     ];
 
     // Party of 7 exceeds any single table (max 4)
@@ -90,9 +90,9 @@ describe('suggestTableCombinations', () => {
 
   it('gives bonus for same-section two-table combos', () => {
     const tables = [
-      makeTable({ id: 't1', table_number: '1', capacity: 4, location: 'Indoor' }),
-      makeTable({ id: 't2', table_number: '2', capacity: 4, location: 'Indoor' }),
-      makeTable({ id: 't3', table_number: '3', capacity: 4, location: 'Patio' }),
+      makeTable({ id: 't1', table_number: 1, capacity: 4, location: 'Indoor' }),
+      makeTable({ id: 't2', table_number: 2, capacity: 4, location: 'Indoor' }),
+      makeTable({ id: 't3', table_number: 3, capacity: 4, location: 'Patio' }),
     ];
 
     const result = suggestTableCombinations(tables, 7);
@@ -122,9 +122,9 @@ describe('suggestTableCombinations', () => {
 
   it('suggests three-table combinations for very large parties', () => {
     const tables = [
-      makeTable({ id: 't1', table_number: '1', capacity: 4, location: 'Indoor' }),
-      makeTable({ id: 't2', table_number: '2', capacity: 4, location: 'Indoor' }),
-      makeTable({ id: 't3', table_number: '3', capacity: 4, location: 'Indoor' }),
+      makeTable({ id: 't1', table_number: 1, capacity: 4, location: 'Indoor' }),
+      makeTable({ id: 't2', table_number: 2, capacity: 4, location: 'Indoor' }),
+      makeTable({ id: 't3', table_number: 3, capacity: 4, location: 'Indoor' }),
     ];
 
     // Party of 10 with max single table = 4
@@ -137,15 +137,15 @@ describe('suggestTableCombinations', () => {
 
 describe('formatTableNumbers', () => {
   it('formats single table', () => {
-    const tables = [makeTable({ table_number: '5' })];
+    const tables = [makeTable({ table_number: 5 })];
     expect(formatTableNumbers(tables)).toBe('Table 5');
   });
 
   it('formats multiple tables with plus separator', () => {
     const tables = [
-      makeTable({ table_number: '1' }),
-      makeTable({ table_number: '2' }),
-      makeTable({ table_number: '3' }),
+      makeTable({ table_number: 1 }),
+      makeTable({ table_number: 2 }),
+      makeTable({ table_number: 3 }),
     ];
     expect(formatTableNumbers(tables)).toBe('Table 1 + Table 2 + Table 3');
   });

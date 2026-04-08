@@ -47,7 +47,7 @@ export function getTableSize(shape: TableShape, capacity: number): { width: numb
 
 export interface Table {
   id: string;
-  table_number: string;
+  table_number: number;
   capacity: number;
   location: string;
   status: TableStatus;

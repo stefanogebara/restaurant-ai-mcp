@@ -7,6 +7,19 @@
 
 const { supabase, handleSupabaseResponse, logger, withRetry } = require('./db-clients');
 
+/** Normalize DB status to PascalCase for frontend compatibility */
+function normalizeStatus(dbStatus) {
+  const map = {
+    'available': 'Available',
+    'occupied': 'Occupied',
+    'being cleaned': 'Being Cleaned',
+    'being_cleaned': 'Being Cleaned',
+    'reserved': 'Reserved',
+  };
+  if (!dbStatus) return 'Available';
+  return map[dbStatus.toLowerCase()] || dbStatus;
+}
+
 // ============ TABLES ============
 
 const getTables = async (restaurantId, filter = {}) => {
@@ -627,7 +640,7 @@ const getAllTablesAdmin = async (restaurantId) => {
     table_number: t.table_number,
     capacity: t.capacity,
     location: t.location || 'Main',
-    status: t.status || 'available',
+    status: normalizeStatus(t.status),
     is_active: t.is_active,
     current_service_id: t.current_service_id || null,
     // Shape configuration
@@ -680,7 +693,7 @@ const getAllTables = async (restaurantId) => {
     table_number: t.table_number,
     capacity: t.capacity,
     location: t.location || 'Main',
-    status: t.status || 'available',
+    status: normalizeStatus(t.status),
     current_service_id: t.current_service_id || null,
     // Shape configuration
     shape: t.shape || 'square',
