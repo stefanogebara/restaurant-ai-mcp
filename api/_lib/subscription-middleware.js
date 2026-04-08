@@ -60,15 +60,29 @@ async function checkSubscription(req, res, next) {
     // Get restaurant ID from authenticated user for multi-tenancy
     const restaurantId = req.user?.restaurant_id;
 
-    // Get customer email from request - prioritize authenticated user, then fall back to other sources
-    const customerEmail = req.user?.email || req.body?.customer_email || req.query?.customer_email || req.headers?.['x-customer-email'];
-
-    if (!customerEmail) {
-      return res.status(401).json({ error: 'Authentication required' });
+    // Look up subscription by restaurant_id first (covers all team members),
+    // then fall back to email-based lookup for backwards compatibility
+    let result;
+    if (restaurantId) {
+      result = await checkSubscriptionByRestaurantId(restaurantId);
+      // Wrap in expected format
+      if (result.active) {
+        result = { success: true, subscription: { status: result.status || 'active', plan_name: result.plan, restaurant_id: restaurantId } };
+      } else {
+        result = { success: false };
+      }
     }
 
-    // Get subscription from database
-    const result = await getSubscriptionByEmail(restaurantId, customerEmail);
+    if (!result?.success) {
+      const customerEmail = req.user?.email || req.body?.customer_email || req.query?.customer_email || req.headers?.['x-customer-email'];
+      if (customerEmail) {
+        result = await getSubscriptionByEmail(restaurantId, customerEmail);
+      }
+    }
+
+    if (!result) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
 
     if (!result.success) {
       return res.status(403).json({
