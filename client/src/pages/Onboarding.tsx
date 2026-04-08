@@ -109,14 +109,38 @@ export default function Onboarding() {
       .then((r) => r.json())
       .then((data) => {
         if (!data.success || !data.restaurant) return;
-        const { restaurant_name, restaurant_type, city, country } = data.restaurant;
-        setOnboardingData((prev) => ({
-          ...prev,
-          ...(restaurant_name ? { restaurant_name } : {}),
-          ...(restaurant_type ? { restaurant_type } : {}),
-          ...(city ? { city } : {}),
-          ...(country ? { country } : {}),
-        }));
+        const r = data.restaurant;
+        setOnboardingData((prev) => {
+          const updates: Partial<OnboardingData> = {};
+          // Step 1: Restaurant info
+          if (r.restaurant_name) updates.restaurant_name = r.restaurant_name;
+          if (r.restaurant_type) updates.restaurant_type = r.restaurant_type;
+          if (r.city) updates.city = r.city;
+          if (r.country) updates.country = r.country;
+          // Step 2: Contact & Hours (from Google Maps scrape)
+          if (r.phone) updates.phone_number = r.phone;
+          if (r.email) updates.email = r.email;
+          if (r.business_hours && typeof r.business_hours === 'object') {
+            // Convert scraped hours to onboarding format
+            const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+            const hours = days.map(day => {
+              const dayHours = r.business_hours[day] || r.business_hours[day.toLowerCase()];
+              if (!dayHours || dayHours === 'Closed' || dayHours === 'closed') {
+                return { day, is_open: false, open_time: '12:00', close_time: '23:00' };
+              }
+              if (typeof dayHours === 'string') {
+                const [open, close] = dayHours.split('-').map((s: string) => s.trim());
+                return { day, is_open: true, open_time: open || '12:00', close_time: close || '23:00' };
+              }
+              if (typeof dayHours === 'object') {
+                return { day, is_open: true, open_time: dayHours.open || '12:00', close_time: dayHours.close || '23:00' };
+              }
+              return { day, is_open: true, open_time: '12:00', close_time: '23:00' };
+            });
+            updates.business_hours = hours;
+          }
+          return { ...prev, ...updates };
+        });
         setIsPreFilledFromDemo(true);
       })
       .catch(() => { /* non-fatal — user fills in manually */ })

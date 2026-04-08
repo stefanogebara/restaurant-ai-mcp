@@ -431,7 +431,7 @@ async function handleSession(req, res) {
   const { data: config, error } = await supabaseAdmin
     .schema('restaurant')
     .from('restaurant_config')
-    .select('id, restaurant_name, restaurant_type, city, country, email, slug, business_hours, reservation_settings, is_active, is_demo, demo_token, demo_expires_at, demo_contact_email, demo_contact_name, onboarding_completed')
+    .select('id, restaurant_name, restaurant_type, city, country, phone, email, slug, business_hours, reservation_settings, is_active, is_demo, demo_token, demo_expires_at, demo_contact_email, demo_contact_name, onboarding_completed')
     .eq('demo_token', token)
     .gt('demo_expires_at', now)
     .single();
