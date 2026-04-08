@@ -253,8 +253,16 @@ function buildSystemPrompt(memories, snapshot, config) {
     `Always respond in ${langLabel}, no exceptions.\n`;
 
   systemPrompt +=
-    '\n\nRespond concisely. For operational questions, be direct. ' +
-    'Keep responses under 200 words unless detail is specifically requested.';
+    '\n\n## Response Style Rules\n' +
+    '- Be CONCISE. Default to 3-5 sentences. Only give full briefings when explicitly asked.\n' +
+    '- For specific questions ("how many reservations?"), give the answer FIRST in one line, then optional context.\n' +
+    '- Do NOT use headers, bullet points, or structured formatting unless the user asks for a "briefing" or "report".\n' +
+    '- Do NOT use emojis. Ever. No exceptions.\n' +
+    '- Do NOT repeat the same information across multiple messages.\n' +
+    '- If the restaurant has zero data (0 reservations, 0 covers for multiple days), do NOT panic or say "CRITICAL ALERT". ' +
+    'Instead say something like "Tudo tranquilo por aqui" and suggest checking back when there is more data.\n' +
+    '- Match your response length to the question: short question = short answer.\n' +
+    '- When comparing periods, focus on the delta and one actionable insight, not a wall of numbers.\n';
 
   return systemPrompt;
 }
@@ -313,7 +321,7 @@ async function runManagerAgent(restaurantId, userMessage, channel) {
 
   const response = await getAI().messages.create({
     model: AI_MODEL,
-    max_tokens: 512,
+    max_tokens: 1024,
     system: systemPrompt,
     messages,
     tools: MANAGER_TOOLS,
@@ -344,7 +352,7 @@ async function runManagerAgent(restaurantId, userMessage, channel) {
 
       const finalResponse = await getAI().messages.create({
         model: AI_MODEL,
-        max_tokens: 512,
+        max_tokens: 1024,
         system: systemPrompt,
         messages: followUpMessages,
         tools: MANAGER_TOOLS,
@@ -425,7 +433,7 @@ async function runManagerAgentStream(restaurantId, userMessage, channel, onToken
   async function streamCall(msgs) {
     const stream = getAI().messages.stream({
       model: AI_MODEL,
-      max_tokens: 512,
+      max_tokens: 1024,
       system: systemPrompt,
       messages: msgs,
       tools: MANAGER_TOOLS,

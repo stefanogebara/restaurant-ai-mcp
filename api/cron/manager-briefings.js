@@ -10,8 +10,16 @@ const { buildWeeklyReservationsChart, buildNoShowChart } = require('../services/
 const logger = createSecureLogger('manager-briefings');
 
 const BRIEFING_PROMPTS = {
-  end_of_day: 'Give me a concise end-of-day briefing: covers served, notable events, anything to prepare for tomorrow.',
-  morning: 'Give me a morning briefing: reservations today, any upcoming events or prep I should know about.',
+  end_of_day: {
+    en: 'Give me a concise end-of-day briefing: covers served, notable events, anything to prepare for tomorrow.',
+    'pt-BR': 'Me da um resumo conciso do fim do dia: covers servidos, eventos notaveis, e o que preparar para amanha.',
+    es: 'Dame un resumen conciso del fin del dia: cubiertos servidos, eventos notables, y que preparar para manana.',
+  },
+  morning: {
+    en: 'Give me a morning briefing: reservations today, any upcoming events or prep I should know about.',
+    'pt-BR': 'Me da o briefing da manha: reservas de hoje, eventos ou preparativos que eu deva saber.',
+    es: 'Dame el briefing de la manana: reservas de hoy, eventos o preparativos que deba saber.',
+  },
 };
 
 module.exports = async (req, res) => {
@@ -22,14 +30,14 @@ module.exports = async (req, res) => {
   }
 
   const type = req.query.type || 'end_of_day';
-  const prompt = BRIEFING_PROMPTS[type] || BRIEFING_PROMPTS.end_of_day;
+  const promptSet = BRIEFING_PROMPTS[type] || BRIEFING_PROMPTS.end_of_day;
   const prefKey = type === 'morning' ? 'morning_briefing' : 'end_of_day_briefing';
 
   try {
     const { data: configs, error: queryErr } = await supabaseAdmin
       .schema('restaurant')
       .from('restaurant_config')
-      .select('id, manager_phone, manager_whatsapp_verified, notification_preferences, restaurant_name')
+      .select('id, manager_phone, manager_whatsapp_verified, notification_preferences, restaurant_name, agent_language')
       .not('manager_phone', 'is', null);
 
     if (queryErr) {
@@ -54,7 +62,9 @@ module.exports = async (req, res) => {
       }
 
       try {
-        let promptToSend = prompt;
+        // Select prompt in the restaurant's configured language
+        const lang = config.agent_language || 'pt-BR';
+        let promptToSend = promptSet[lang] || promptSet['en'];
 
         // Inject restaurant identity into briefing context
         if (config.restaurant_name) {
@@ -80,6 +90,24 @@ module.exports = async (req, res) => {
           runManagerAgent(config.id, promptToSend, 'whatsapp'),
           new Promise((_, reject) => setTimeout(() => reject(new Error('Briefing timeout')), PER_RESTAURANT_TIMEOUT))
         ]);
+
+        // Dedup: skip if identical to last briefing (e.g. "0 reservations" every day)
+        const { data: lastMsg } = await supabaseAdmin
+          .from('manager_conversations')
+          .select('content')
+          .eq('restaurant_id', config.id)
+          .eq('role', 'assistant')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        // Compare core content (strip whitespace/dates for comparison)
+        const normalize = (s) => (s || '').replace(/\d{1,2}\/\d{1,2}|\d{4}-\d{2}-\d{2}|monday|tuesday|wednesday|thursday|friday|saturday|sunday|hoje|amanha|ontem/gi, '').replace(/\s+/g, ' ').trim();
+        if (lastMsg && normalize(lastMsg.content) === normalize(briefing)) {
+          logger.info(`Skipping duplicate briefing for ${config.restaurant_name}`);
+          continue;
+        }
+
         await sendBriefing(
           config.manager_phone,
           briefing,
