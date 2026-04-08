@@ -52,7 +52,7 @@ module.exports = async (req, res) => {
         .from('reservations')
         .select('id, guest_name, party_size, reservation_date, reservation_time, status, created_at')
         .eq('restaurant_id', restaurant_id)
-        .eq('guest_phone', phone)
+        .eq('customer_phone', phone)
         .order('reservation_date', { ascending: false })
         .limit(20),
 

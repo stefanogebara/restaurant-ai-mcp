@@ -58,7 +58,7 @@ module.exports = async (req, res) => {
 
     if (error) {
       logger.error('[iCalFeed] DB error:', error.message);
-      return res.status(500).json({ error: 'Failed to fetch reservations' });
+      return res.status(500).json({ error: 'Failed to fetch reservations', detail: error.message });
     }
 
     // Get restaurant name
