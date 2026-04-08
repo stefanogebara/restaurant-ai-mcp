@@ -54,7 +54,7 @@ module.exports = async (req, res) => {
       .gte('date', today)
       .lte('date', thirtyDaysOut)
       .in('status', ['confirmed', 'pending'])
-      .order('reservation_date', { ascending: true });
+      .order('date', { ascending: true });
 
     if (error) {
       logger.error('[iCalFeed] DB error:', error.message);
