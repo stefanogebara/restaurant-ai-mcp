@@ -18,13 +18,15 @@ interface ConversationsResult {
 export function useCallConversations(filter: CallFilter, restaurantId: string) {
   const outcomeParam = filter.outcome !== 'all' ? `&outcome=${filter.outcome}` : '';
   const languageParam = filter.language !== 'all' ? `&language=${filter.language}` : '';
+  const sentimentParam = filter.sentiment ? `&sentiment=${filter.sentiment}` : '';
+  const searchParam = filter.search ? `&search=${encodeURIComponent(filter.search)}` : '';
   const restaurantParam = restaurantId ? `&restaurant_id=${restaurantId}` : '';
 
   return useQuery<ConversationsResult>({
-    queryKey: ['call-conversations', filter.outcome, filter.language, restaurantId],
+    queryKey: ['call-conversations', filter.outcome, filter.language, filter.sentiment, filter.search, restaurantId],
     queryFn: async () => {
       const res = await authFetch(
-        `/api/agent-conversations?action=list&limit=50&offset=0${restaurantParam}${outcomeParam}${languageParam}`
+        `/api/agent-conversations?action=list&limit=50&offset=0${restaurantParam}${outcomeParam}${languageParam}${sentimentParam}${searchParam}`
       );
       if (!res.ok) throw new Error('Failed to fetch conversations');
       const data = await res.json();

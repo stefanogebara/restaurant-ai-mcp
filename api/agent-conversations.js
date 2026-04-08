@@ -61,7 +61,7 @@ module.exports = async (req, res) => {
   }
 };
 
-const ALLOWED_ORDER_COLUMNS = new Set(['started_at', 'outcome', 'language', 'duration_seconds', 'created_at']);
+const ALLOWED_ORDER_COLUMNS = new Set(['started_at', 'outcome', 'language', 'duration_seconds', 'created_at', 'customer_sentiment']);
 
 /**
  * List all conversations with filtering and pagination
@@ -73,6 +73,8 @@ async function handleListConversations(req, res, user) {
     date_to,
     outcome,
     language,
+    sentiment,
+    search,
     limit = 50,
     offset = 0,
     order_by = 'started_at',
@@ -108,6 +110,12 @@ async function handleListConversations(req, res, user) {
     }
     if (language) {
       query = query.eq('language', language);
+    }
+    if (sentiment) {
+      query = query.eq('customer_sentiment', sentiment);
+    }
+    if (search) {
+      query = query.or(`summary.ilike.%${search}%,customer_name.ilike.%${search}%`);
     }
 
     // Apply ordering — validate against allowlist to prevent injection
@@ -277,6 +285,13 @@ async function handleGetStats(req, res, user) {
       languageBreakdown[c.language] = (languageBreakdown[c.language] || 0) + 1;
     });
 
+    // Sentiment breakdown
+    const sentimentBreakdown = {};
+    conversations.forEach(c => {
+      const s = c.customer_sentiment || 'unknown';
+      sentimentBreakdown[s] = (sentimentBreakdown[s] || 0) + 1;
+    });
+
     // Success rate
     const successRate = totalCalls > 0 ? (successfulBookings / totalCalls * 100).toFixed(1) : 0;
 
@@ -305,6 +320,7 @@ async function handleGetStats(req, res, user) {
         breakdowns: {
           by_outcome: outcomeBreakdown,
           by_language: languageBreakdown,
+          by_sentiment: sentimentBreakdown,
           by_day: dailyVolume
         },
         top_errors: getTopErrors(conversations)

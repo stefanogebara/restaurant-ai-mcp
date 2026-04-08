@@ -34,6 +34,7 @@ export interface Conversation {
   errors_encountered?: ConversationError[];
   transcript?: TranscriptMessage[];
   summary?: string;
+  recording_url?: string;
 }
 
 export interface Stats {
@@ -81,6 +82,8 @@ export interface CallFilter {
   period: string;
   outcome: string;
   language: string;
+  sentiment?: string;
+  search?: string;
 }
 
 // ─── Helper functions ──────────────────────────────────────────────────────────
@@ -123,6 +126,15 @@ export function getOutcomeLabelKey(outcome?: string): string {
     case 'error':               return 'callTracking.outcomeError';
     case 'abandoned':           return 'callTracking.outcomeAbandonedLabel';
     default:                    return 'callTracking.outcomeUnknown';
+  }
+}
+
+export function getSentimentColor(sentiment?: string): string {
+  switch (sentiment) {
+    case 'positive': return 'bg-emerald-500/10 text-emerald-600';
+    case 'neutral':  return 'bg-blue-500/10 text-blue-600';
+    case 'negative': return 'bg-red-600/10 text-red-600';
+    default:         return 'bg-warm-stone/10 text-stone-gray';
   }
 }
 

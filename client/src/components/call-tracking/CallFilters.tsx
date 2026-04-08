@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { CallFilter } from './callTrackingTypes';
 
@@ -8,6 +9,17 @@ interface Props {
 
 export default function CallFilters({ filter, onChange }: Props) {
   const { t } = useTranslation();
+  const [searchInput, setSearchInput] = useState(filter.search || '');
+
+  // Debounce search input (300ms)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchInput !== (filter.search || '')) {
+        onChange({ ...filter, search: searchInput || undefined });
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
 
   const PERIOD_OPTIONS = [
     { value: '1d',  label: t('callTracking.twentyFourHours') },
@@ -19,6 +31,18 @@ export default function CallFilters({ filter, onChange }: Props) {
   return (
     <div className="border-b border-[#E5E7EB]">
       <div className="flex flex-wrap items-center gap-4 sm:gap-6 py-4">
+        {/* Search */}
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            placeholder={t('callTracking.searchPlaceholder', 'Search calls...')}
+            aria-label={t('callTracking.searchPlaceholder', 'Search calls...')}
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            className="text-xs font-medium px-3 py-1.5 bg-soft-gray border-0 rounded-xl text-deep-charcoal placeholder-muted-stone w-40 focus:outline-none focus:ring-2 focus:ring-burgundy/20"
+          />
+        </div>
+
         {/* Period */}
         <div className="flex items-center gap-2">
           <span className="text-xs font-medium text-muted-stone">{t('callTracking.period')}</span>
@@ -54,6 +78,22 @@ export default function CallFilters({ filter, onChange }: Props) {
             <option value="information_only">{t('callTracking.outcomeInfo')}</option>
             <option value="error">{t('callTracking.outcomeErrors')}</option>
             <option value="abandoned">{t('callTracking.outcomeAbandoned')}</option>
+          </select>
+        </div>
+
+        {/* Sentiment */}
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-medium text-muted-stone">{t('callTracking.sentiment', 'Sentiment')}</span>
+          <select
+            aria-label={t('callTracking.sentiment', 'Sentiment')}
+            value={filter.sentiment || 'all'}
+            onChange={(e) => onChange({ ...filter, sentiment: e.target.value === 'all' ? undefined : e.target.value })}
+            className="text-xs font-medium px-3 py-1.5 bg-soft-gray border-0 rounded-xl text-deep-charcoal cursor-pointer focus:outline-none focus:ring-2 focus:ring-burgundy/20"
+          >
+            <option value="all">{t('callTracking.outcomeAll')}</option>
+            <option value="positive">{t('callTracking.sentimentPositive', 'Positive')}</option>
+            <option value="neutral">{t('callTracking.sentimentNeutral', 'Neutral')}</option>
+            <option value="negative">{t('callTracking.sentimentNegative', 'Negative')}</option>
           </select>
         </div>
 

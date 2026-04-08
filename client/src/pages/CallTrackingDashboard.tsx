@@ -19,6 +19,7 @@ import CallFilters from '../components/call-tracking/CallFilters';
 import CallStatsOverview from '../components/call-tracking/CallStatsOverview';
 import CallConversationList from '../components/call-tracking/CallConversationList';
 import CallConversationModal from '../components/call-tracking/CallConversationModal';
+import GuestProfilePanel from '../components/call-tracking/GuestProfilePanel';
 
 import {
   useCallConversations,
@@ -38,6 +39,7 @@ export default function CallTrackingDashboard() {
   const [filter, setFilter] = useState<CallFilter>({ period: '7d', outcome: 'all', language: 'all' });
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [showDiagnosePanel, setShowDiagnosePanel] = useState(false);
+  const [guestProfilePhone, setGuestProfilePhone] = useState<string | null>(null);
 
   const { success: toastSuccess, error: toastError, info: toastInfo } = useToast();
   const restaurant_id = localStorage.getItem(LS_RESTAURANT_ID) || '';
@@ -201,12 +203,20 @@ export default function CallTrackingDashboard() {
             filter={filter}
             onOutcomeChange={(outcome) => setFilter({ ...filter, outcome })}
             onConversationClick={(id) => setSelectedConversationId(id)}
+            onPhoneClick={(phone) => setGuestProfilePhone(phone)}
           />
 
           {selectedConversation && (
             <CallConversationModal
               conversation={selectedConversation}
               onClose={() => setSelectedConversationId(null)}
+            />
+          )}
+
+          {guestProfilePhone && (
+            <GuestProfilePanel
+              phone={guestProfilePhone}
+              onClose={() => setGuestProfilePhone(null)}
             />
           )}
 

@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
-import { type Conversation, formatDate, getOutcomeColor, getOutcomeLabelKey } from './callTrackingTypes';
+import { type Conversation, formatDate, getOutcomeColor, getOutcomeLabelKey, getSentimentColor } from './callTrackingTypes';
 
 interface Props {
   conversation: Conversation;
@@ -52,6 +52,16 @@ export default function CallConversationModal({ conversation, onClose }: Props) 
             </div>
           )}
 
+          {/* Recording */}
+          {conversation.recording_url && (
+            <div className="bg-soft-gray/50 rounded-xl p-4">
+              <h3 className="font-semibold text-deep-charcoal mb-2">{t('callTracking.recording', 'Recording')}</h3>
+              <audio controls className="w-full" preload="metadata">
+                <source src={conversation.recording_url} />
+              </audio>
+            </div>
+          )}
+
           {/* Metadata */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
@@ -68,6 +78,14 @@ export default function CallConversationModal({ conversation, onClose }: Props) 
               <p className="text-sm text-stone-gray">{t('callTracking.language')}</p>
               <p className="text-sm font-medium text-deep-charcoal mt-1 uppercase">{conversation.language}</p>
             </div>
+            {conversation.customer_sentiment && (
+              <div>
+                <p className="text-sm text-stone-gray">{t('callTracking.sentiment', 'Sentiment')}</p>
+                <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium mt-1 ${getSentimentColor(conversation.customer_sentiment)}`}>
+                  {conversation.customer_sentiment}
+                </span>
+              </div>
+            )}
             {conversation.reservation_id && (
               <div>
                 <p className="text-sm text-stone-gray">{t('callTracking.reservationId')}</p>

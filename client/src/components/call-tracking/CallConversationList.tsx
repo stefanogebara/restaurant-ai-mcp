@@ -17,6 +17,7 @@ interface Props {
   filter: CallFilter;
   onOutcomeChange: (outcome: string) => void;
   onConversationClick: (id: string) => void;
+  onPhoneClick?: (phone: string) => void;
 }
 
 export default function CallConversationList({
@@ -24,6 +25,7 @@ export default function CallConversationList({
   filter,
   onOutcomeChange,
   onConversationClick,
+  onPhoneClick,
 }: Props) {
   const { t } = useTranslation();
 
@@ -92,7 +94,15 @@ export default function CallConversationList({
                     {conv.customer_name || t('callTracking.unknownCaller')}
                   </div>
                   <div className="text-xs text-muted-stone mt-0.5 truncate">
-                    {conv.caller_phone || t('callTracking.noNumber')}
+                    {conv.caller_phone ? (
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); onPhoneClick?.(conv.caller_phone); }}
+                        className="hover:text-burgundy hover:underline transition-colors"
+                      >
+                        {conv.caller_phone}
+                      </button>
+                    ) : t('callTracking.noNumber')}
                     {conv.party_size ? ` · ${t('callTracking.partyOf', { size: conv.party_size })}` : ''}
                     {conv.language ? ` · ${conv.language.toUpperCase()}` : ''}
                   </div>
