@@ -239,7 +239,7 @@ async function handleCreate(req, res) {
         traffic_split: split,
         started_at: new Date().toISOString(),
       })
-      .select('*')
+      .select('id, restaurant_id, status, branch_id, branch_name, parent_version_id, variant_config, traffic_split, result, started_at, completed_at, created_at')
       .single();
 
     if (insertError) {
@@ -314,7 +314,7 @@ async function handlePromote(req, res) {
         result: { winner: 'variant' },
       })
       .eq('id', experiment.id)
-      .select('*')
+      .select('id, restaurant_id, status, branch_id, branch_name, parent_version_id, variant_config, traffic_split, result, started_at, completed_at, created_at')
       .single();
 
     if (dbError) throw new Error(`DB update error: ${dbError.message}`);
@@ -366,7 +366,7 @@ async function handleRollback(req, res) {
         result: { winner: 'control' },
       })
       .eq('id', experiment.id)
-      .select('*')
+      .select('id, restaurant_id, status, branch_id, branch_name, parent_version_id, variant_config, traffic_split, result, started_at, completed_at, created_at')
       .single();
 
     if (dbError) throw new Error(`DB update error: ${dbError.message}`);

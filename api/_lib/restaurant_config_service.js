@@ -26,7 +26,7 @@ class RestaurantConfigService {
     const { data, error } = await this.supabase
       .schema('restaurant')
       .from('restaurant_config')
-      .select('*')
+      .select('id, restaurant_name, city, country, phone, email, website, voice_id, ai_config, business_hours, timezone, average_dining_duration_minutes, table_configuration, reservation_settings, team_members, user_id, is_active')
       .eq('user_id', userId)
       .eq('is_active', true)
       .single();
@@ -58,7 +58,7 @@ class RestaurantConfigService {
     const { data, error } = await this.supabase
       .schema('restaurant')
       .from('restaurant_config')
-      .select('*')
+      .select('id, restaurant_name, city, country, phone, email, website, voice_id, ai_config, business_hours, timezone, average_dining_duration_minutes, table_configuration, reservation_settings, team_members, user_id, is_active')
       .eq('phone', phoneNumber)
       .eq('is_active', true)
       .single();

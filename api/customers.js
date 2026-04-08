@@ -139,10 +139,9 @@ async function handleDetail(req, res) {
 
     // Fetch customer, reservations, and notes in parallel
     const [customerResult, reservationsResult, notesResult] = await Promise.all([
-      // All customer_ltv fields needed — returned as customer detail to dashboard
       crmDb()
         .from('customer_ltv')
-        .select('*')
+        .select('customer_id, restaurant_id, customer_name, customer_email, customer_phone, total_visits, total_revenue, avg_revenue_per_visit, first_visit_date, last_visit_date, churn_risk, ltv_score, tags, allergies, dietary_restrictions, seating_preferences, special_occasions, notes, merged_into, created_at, updated_at')
         .eq('customer_id', customer_id)
         .eq('restaurant_id', restaurantId)
         .single(),
@@ -238,7 +237,7 @@ async function handleUpdateTags(req, res) {
       .update({ tags: uniqueTags, updated_at: new Date().toISOString() })
       .eq('customer_id', customer_id)
       .eq('restaurant_id', restaurantId)
-      .select('*')
+      .select('customer_id, restaurant_id, customer_name, customer_email, customer_phone, total_visits, total_revenue, avg_revenue_per_visit, first_visit_date, last_visit_date, churn_risk, ltv_score, tags, allergies, dietary_restrictions, seating_preferences, special_occasions, notes, merged_into, created_at, updated_at')
       .single();
 
     if (error) {
@@ -437,7 +436,7 @@ async function handleUpdateProfile(req, res) {
       .update(updates)
       .eq('customer_id', customer_id)
       .eq('restaurant_id', restaurantId)
-      .select('*')
+      .select('customer_id, restaurant_id, customer_name, customer_email, customer_phone, total_visits, total_revenue, avg_revenue_per_visit, first_visit_date, last_visit_date, churn_risk, ltv_score, tags, allergies, dietary_restrictions, seating_preferences, special_occasions, notes, merged_into, created_at, updated_at')
       .single();
 
     if (error) {

@@ -40,10 +40,9 @@ async function calculatePrice(params) {
     const basePrice = getBasePrice(time);
 
     // 2. Get all active pricing rules
-    // All pricing_rules columns needed for rule evaluation
     const { data: rules, error } = await supabaseAdmin
       .from('pricing_rules')
-      .select('*')
+      .select('id, restaurant_id, rule_name, rule_type, price_modifier_type, price_modifier_value, description, conditions, time_start, time_end, days_of_week, is_active, priority, min_occupancy, max_occupancy, min_party_size, max_party_size, event_name, start_date, end_date, created_at')
       .eq('is_active', true)
       .order('priority', { ascending: false }); // Higher priority first
 

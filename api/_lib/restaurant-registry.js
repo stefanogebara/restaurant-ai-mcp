@@ -31,7 +31,7 @@ async function getRestaurantByName(name) {
     // First try exact match (case-insensitive)
     const { data: exact, error: exactError } = await centralSupabase
       .from('restaurant_registry')
-      .select('*')
+      .select('id, restaurant_name, restaurant_aliases, supabase_url, supabase_anon_key, supabase_service_role_key, customer_email, subscription_status, plan_name, language, voice_id, is_active, created_at, updated_at')
       .ilike('restaurant_name', searchName)
       .eq('is_active', true)
       .single();
@@ -92,7 +92,7 @@ async function getRestaurantById(id) {
   try {
     const { data, error } = await centralSupabase
       .from('restaurant_registry')
-      .select('*')
+      .select('id, restaurant_name, restaurant_aliases, supabase_url, supabase_anon_key, supabase_service_role_key, customer_email, subscription_status, plan_name, language, voice_id, is_active, created_at, updated_at')
       .eq('id', id)
       .eq('is_active', true)
       .single();
@@ -300,7 +300,7 @@ async function getRestaurantsByEmail(email) {
   try {
     const { data, error } = await centralSupabase
       .from('restaurant_registry')
-      .select('*')
+      .select('id, restaurant_name, restaurant_aliases, supabase_url, supabase_anon_key, supabase_service_role_key, customer_email, subscription_status, plan_name, language, voice_id, is_active, created_at, updated_at')
       .eq('customer_email', email)
       .order('created_at', { ascending: false });
 

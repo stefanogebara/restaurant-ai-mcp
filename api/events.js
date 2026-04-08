@@ -30,7 +30,7 @@ async function handleList(req, res) {
 
     const { data, error } = await eventsDb()
       .from('events')
-      .select('*')
+      .select('id, restaurant_id, title, description, event_date, event_time, duration_minutes, max_capacity, current_bookings, price, refund_policy, cover_image_url, menu_description, is_active, created_at, updated_at')
       .eq('restaurant_id', restaurantId)
       .order('event_date', { ascending: true });
 
@@ -120,7 +120,7 @@ async function handleCreate(req, res) {
     const { data, error } = await eventsDb()
       .from('events')
       .insert(insertData)
-      .select('*')
+      .select('id, restaurant_id, title, description, event_date, event_time, duration_minutes, max_capacity, current_bookings, price, refund_policy, cover_image_url, menu_description, is_active, created_at, updated_at')
       .single();
 
     if (error) throw error;
@@ -206,7 +206,7 @@ async function handleUpdate(req, res) {
       .update(updateData)
       .eq('id', event_id)
       .eq('restaurant_id', restaurantId)
-      .select('*')
+      .select('id, restaurant_id, title, description, event_date, event_time, duration_minutes, max_capacity, current_bookings, price, refund_policy, cover_image_url, menu_description, is_active, created_at, updated_at')
       .single();
 
     if (error) {
@@ -251,7 +251,7 @@ async function handleBookings(req, res) {
 
     const { data: bookings, error } = await eventsDb()
       .from('event_bookings')
-      .select('*')
+      .select('id, event_id, restaurant_id, customer_name, customer_email, customer_phone, guests, total_amount, payment_status, booking_status, stripe_payment_intent_id, refund_amount, created_at, updated_at')
       .eq('event_id', event_id)
       .eq('restaurant_id', restaurantId)
       .order('created_at', { ascending: false });
@@ -299,7 +299,7 @@ async function handleDeactivate(req, res) {
       .update({ is_active: false, updated_at: new Date().toISOString() })
       .eq('id', event_id)
       .eq('restaurant_id', restaurantId)
-      .select('*')
+      .select('id, restaurant_id, title, description, event_date, event_time, duration_minutes, max_capacity, current_bookings, price, refund_policy, cover_image_url, menu_description, is_active, created_at, updated_at')
       .single();
 
     if (error) {

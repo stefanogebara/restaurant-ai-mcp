@@ -802,22 +802,22 @@ async function getCustomerDNAProfile(customerId) {
     const [profileResult, occasionsResult, predictionsResult, textSignalsResult] = await Promise.all([
       supabaseAdmin
         .from('customer_behavioral_profiles')
-        .select('*')
+        .select('id, customer_id, restaurant_id, profile_confidence, dining_style, preferred_day_type, preferred_time_slot, spontaneity_score, brings_children, avg_party_size, avg_booking_lead_time_hours, preferred_table_location, created_at, updated_at')
         .eq('customer_id', customerId)
         .single(),
       supabaseAdmin
         .from('customer_occasions')
-        .select('*')
+        .select('id, customer_id, occasion_type, occasion_date, next_predicted_date, confidence, created_at')
         .eq('customer_id', customerId),
       supabaseAdmin
         .from('customer_predictions')
-        .select('*')
+        .select('id, customer_id, prediction_type, predicted_value, confidence, metadata, created_at')
         .eq('customer_id', customerId)
         .order('created_at', { ascending: false })
         .limit(10),
       supabaseAdmin
         .from('customer_text_signals')
-        .select('*')
+        .select('id, customer_id, text_content_hash, sentiment_score, formality_score, enthusiasm_level, communication_style, key_topics, language_detected, created_at, updated_at')
         .eq('customer_id', customerId)
         .single()
     ]);

@@ -70,10 +70,9 @@ async function handleGetRules(req, res) {
   try {
     const { is_active, rule_type } = req.query;
 
-    // All pricing_rules columns needed — returned to client dashboard
     let query = supabaseAdmin
       .from('pricing_rules')
-      .select('*')
+      .select('id, restaurant_id, rule_name, rule_type, price_modifier_type, price_modifier_value, description, conditions, time_start, time_end, days_of_week, is_active, priority, min_occupancy, max_occupancy, min_party_size, max_party_size, event_name, start_date, end_date, created_at, updated_at')
       .eq('restaurant_id', req.restaurantId)
       .order('priority', { ascending: false });
 
@@ -320,10 +319,9 @@ async function handleGetEvents(req, res) {
   try {
     const { start_date, end_date, demand_level, limit = 100 } = req.query;
 
-    // TODO: Replace select('*') with explicit columns once pricing_events schema is confirmed
     let query = supabaseAdmin
       .from('pricing_events')
-      .select('*')
+      .select('id, restaurant_id, date, time_slot, base_price, final_price, modifier_applied, demand_level, pricing_rule_name, created_at')
       .eq('restaurant_id', req.restaurantId)
       .order('created_at', { ascending: false })
       .limit(limit);
@@ -378,7 +376,7 @@ async function handleGetAnalytics(req, res) {
 
     let query = supabaseAdmin
       .from('pricing_events')
-      .select('*')
+      .select('id, restaurant_id, date, time_slot, base_price, final_price, modifier_applied, demand_level, pricing_rule_name, created_at')
       .eq('restaurant_id', req.restaurantId);
 
     // Filter by date range
@@ -581,7 +579,7 @@ async function handleGetStats(req, res) {
 
     let query = supabaseAdmin
       .from('pricing_events')
-      .select('*')
+      .select('id, restaurant_id, date, time_slot, base_price, final_price, modifier_applied, demand_level, pricing_rule_name, created_at')
       .eq('restaurant_id', req.restaurantId);
 
     // Filter by date range

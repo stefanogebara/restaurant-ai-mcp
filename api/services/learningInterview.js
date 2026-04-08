@@ -497,7 +497,7 @@ async function completeInterview(sessionId) {
   const { data: session, error } = await supabaseAdmin
     .schema('restaurant')
     .from('learning_interviews')
-    .select('*')
+    .select('id, restaurant_config_id, status, extracted_knowledge, questions_asked, answers, completed_at, created_at, updated_at')
     .eq('id', sessionId)
     .single();
 

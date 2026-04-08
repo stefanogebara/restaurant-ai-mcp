@@ -228,7 +228,7 @@ async function checkSubscriptionByRestaurantId(restaurantId) {
     // 1. Check subscriptions table
     const { data: subscriptions, error: subError } = await supabaseAdmin
       .from('subscriptions')
-      .select('*')
+      .select('id, restaurant_id, plan_name, status, stripe_subscription_id, stripe_customer_id, trial_end, current_period_end, created_at, updated_at')
       .eq('restaurant_id', restaurantId)
       .order('created_at', { ascending: false })
       .limit(1);

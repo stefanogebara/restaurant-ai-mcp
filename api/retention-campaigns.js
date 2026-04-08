@@ -124,7 +124,7 @@ async function handleList(req, res) {
     let query = supabaseAdmin
       .schema('restaurant')
       .from('retention_campaigns')
-      .select('*')
+      .select('id, restaurant_id, customer_id, campaign_type, channel, status, message_content, scheduled_for, sent_at, opened_at, clicked_at, created_at, updated_at')
       .eq('restaurant_id', restaurantId)
       .order('created_at', { ascending: false })
       .range(parseInt(offset), parseInt(offset) + parseInt(limit) - 1);

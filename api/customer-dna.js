@@ -108,7 +108,7 @@ module.exports = async (req, res) => {
         // Get profile statistics
         const { data: profiles, error: profilesError } = await supabaseAdmin
           .from('customer_behavioral_profiles')
-          .select('*')
+          .select('id, customer_id, restaurant_id, profile_confidence, dining_style, preferred_day_type, preferred_time_slot, spontaneity_score, brings_children, created_at, updated_at')
           .eq('restaurant_id', req.user.restaurant_id);
 
         if (profilesError) throw profilesError;
@@ -189,7 +189,7 @@ module.exports = async (req, res) => {
 
         const { data: occasions, error } = await supabaseAdmin
           .from('customer_occasions')
-          .select('*')
+          .select('id, customer_id, occasion_type, occasion_date, next_predicted_date, confidence, created_at')
           .order('next_predicted_date', { ascending: true })
           .range(offset, offset + limit - 1);
 
@@ -215,7 +215,7 @@ module.exports = async (req, res) => {
 
         const { data: predictions, error } = await supabaseAdmin
           .from('customer_predictions')
-          .select('*')
+          .select('id, customer_id, prediction_type, predicted_value, confidence, metadata, created_at')
           .eq('customer_id', customer_id)
           .order('created_at', { ascending: false })
           .limit(20);
@@ -242,7 +242,7 @@ module.exports = async (req, res) => {
 
         const { data: companions, error } = await supabaseAdmin
           .from('customer_companions')
-          .select('*')
+          .select('id, customer_id, companion_name, companion_phone, times_dined_together, last_dined_together, created_at')
           .eq('customer_id', customer_id)
           .order('times_dined_together', { ascending: false });
 
@@ -270,7 +270,7 @@ module.exports = async (req, res) => {
 
         let query = supabaseAdmin
           .from('customer_behavioral_profiles')
-          .select('*');
+          .select('id, customer_id, restaurant_id, profile_confidence, dining_style, preferred_day_type, preferred_time_slot, spontaneity_score, brings_children, created_at, updated_at');
 
         // Apply filters
         if (dining_style) {

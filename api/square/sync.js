@@ -79,7 +79,7 @@ async function handleStatus(req, res, user) {
 async function handleSyncCatalog(req, res, user) {
   const { data: connection } = await supabaseAdmin
     .from('pos_connections')
-    .select('*')
+    .select('id, restaurant_id, pos_provider, merchant_id, location_id, access_token, refresh_token, token_expires_at, status, last_sync_at, sync_error, created_at, updated_at')
     .eq('restaurant_id', user.restaurant_id)
     .eq('pos_provider', 'square')
     .eq('status', 'active')
@@ -150,7 +150,7 @@ async function handleCronCatalog(req, res) {
   try {
     const { data: connections } = await supabaseAdmin
       .from('pos_connections')
-      .select('*')
+      .select('id, restaurant_id, pos_provider, merchant_id, location_id, access_token, refresh_token, token_expires_at, status, last_sync_at, sync_error, created_at, updated_at')
       .eq('pos_provider', 'square')
       .eq('status', 'active');
 
@@ -193,7 +193,7 @@ async function handleCronRefresh(req, res) {
 
     const { data: connections } = await supabaseAdmin
       .from('pos_connections')
-      .select('*')
+      .select('id, restaurant_id, pos_provider, access_token, refresh_token, token_expires_at, status, sync_error, updated_at')
       .eq('pos_provider', 'square')
       .eq('status', 'active')
       .not('refresh_token', 'is', null)

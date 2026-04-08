@@ -53,7 +53,7 @@ async function handleGet(req, res) {
     let { data: automations, error } = await supabaseAdmin
       .schema('restaurant')
       .from('campaign_automations')
-      .select('*')
+      .select('id, restaurant_id, trigger_type, enabled, channel, delay_minutes, google_review_url, template_name, created_at, updated_at')
       .eq('restaurant_id', restaurantId)
       .order('trigger_type');
 
@@ -80,7 +80,7 @@ async function handleGet(req, res) {
         .schema('restaurant')
         .from('campaign_automations')
         .insert(defaults)
-        .select('*');
+        .select('id, restaurant_id, trigger_type, enabled, channel, delay_minutes, google_review_url, template_name, created_at, updated_at');
 
       if (insertError) {
         logger.error('Failed to initialize automations', { error: insertError.message });
@@ -162,7 +162,7 @@ async function handlePatch(req, res) {
         trigger_type,
         ...updates,
       }, { onConflict: 'restaurant_id,trigger_type' })
-      .select('*')
+      .select('id, restaurant_id, trigger_type, enabled, channel, delay_minutes, google_review_url, template_name, created_at, updated_at')
       .single();
 
     if (error) {

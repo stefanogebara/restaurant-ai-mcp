@@ -52,10 +52,9 @@ module.exports = async (req, res) => {
 
   try {
     // --- Fetch booking (scoped to restaurant) ---
-    // All event_bookings fields needed for refund flow
     const { data: booking, error: bookingError } = await eventsDb()
       .from('event_bookings')
-      .select('*')
+      .select('id, event_id, restaurant_id, customer_name, customer_email, customer_phone, guests, total_amount, payment_status, booking_status, stripe_payment_intent_id, refund_amount, created_at, updated_at')
       .eq('id', booking_id)
       .eq('restaurant_id', restaurantId)
       .single();

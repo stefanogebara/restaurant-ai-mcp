@@ -93,7 +93,7 @@ async function handleWeeklyReport(req, res) {
     // Get completed service records (actual covers served)
     const { data: currentServices, error: currentServicesError } = await supabaseAdmin
       .from('service_records')
-      .select('*')
+      .select('id, seated_at, party_size, status, reservation_id')
       .gte('seated_at', currentStart)
       .lte('seated_at', currentEnd)
       .eq('status', 'completed');
@@ -103,7 +103,7 @@ async function handleWeeklyReport(req, res) {
     // Get reservations data for current week
     const { data: currentReservations, error: currentReservationsError } = await supabaseAdmin
       .from('reservations')
-      .select('*')
+      .select('id, date, time, party_size, status, customer_type, dietary_restrictions, language_preference, seating_preference, special_occasion, first_time_visitor')
       .gte('date', currentStart)
       .lte('date', currentEnd);
 
@@ -115,7 +115,7 @@ async function handleWeeklyReport(req, res) {
 
     const { data: prevServices, error: prevServicesError } = await supabaseAdmin
       .from('service_records')
-      .select('*')
+      .select('id, seated_at, party_size, status, reservation_id')
       .gte('seated_at', prevStart)
       .lte('seated_at', prevEnd)
       .eq('status', 'completed');
@@ -124,7 +124,7 @@ async function handleWeeklyReport(req, res) {
 
     const { data: prevReservations, error: prevReservationsError } = await supabaseAdmin
       .from('reservations')
-      .select('*')
+      .select('id, date, time, party_size, status, customer_type, dietary_restrictions, language_preference, seating_preference, special_occasion, first_time_visitor')
       .gte('date', prevStart)
       .lte('date', prevEnd);
 

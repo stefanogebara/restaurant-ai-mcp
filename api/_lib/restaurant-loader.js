@@ -29,7 +29,7 @@ async function getRestaurantByPhone(phoneNumber) {
     const result = await query
       .schema('restaurant')
       .from('restaurant_config')
-      .select('*')
+      .select('id, restaurant_name, city, country, phone, email, website, voice_id, voice_engine, voice_engine_status, openai_voice_id, persona_prompt_override, voice_ws_endpoint, ai_config, business_hours, timezone, average_dining_duration_minutes, table_configuration, reservation_settings, team_members')
       .eq('phone', phoneNumber)
       .eq('is_active', true)
       .eq('onboarding_completed', true)
@@ -104,7 +104,7 @@ async function getRestaurantById(restaurantId) {
     const result = await query
       .schema('restaurant')
       .from('restaurant_config')
-      .select('*')
+      .select('id, restaurant_name, city, country, phone, email, website, voice_id, voice_engine, voice_engine_status, openai_voice_id, persona_prompt_override, voice_ws_endpoint, ai_config, business_hours, timezone, average_dining_duration_minutes, table_configuration, reservation_settings, team_members')
       .eq('id', restaurantId)
       .eq('is_active', true)
       .single();
@@ -146,7 +146,7 @@ async function getRestaurantById(restaurantId) {
     const infoResult = await query
       .schema('restaurant')
       .from('restaurant_info')
-      .select('*')
+      .select('id, restaurant_name, phone, email, language, business_hours, avg_dining_duration_minutes, timezone')
       .eq('id', restaurantId)
       .single();
 
@@ -233,7 +233,7 @@ async function getRestaurantByAgentId(agentId) {
     const result = await query
       .schema('restaurant')
       .from('restaurant_config')
-      .select('*')
+      .select('id, restaurant_name, city, country, phone, email, website, voice_id, voice_engine, voice_engine_status, openai_voice_id, persona_prompt_override, voice_ws_endpoint, ai_config, business_hours, timezone, average_dining_duration_minutes, table_configuration, reservation_settings, team_members, elevenlabs_agent_id')
       .eq('elevenlabs_agent_id', agentId)
       .eq('is_active', true)
       .single();

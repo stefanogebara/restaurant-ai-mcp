@@ -359,7 +359,7 @@ async function processAllTriggers(restaurantId) {
   const { data: automations, error } = await supabaseAdmin
     .schema('restaurant')
     .from('campaign_automations')
-    .select('*')
+    .select('id, restaurant_id, trigger_type, enabled, channel, delay_minutes, google_review_url, template_name, created_at, updated_at')
     .eq('restaurant_id', restaurantId)
     .eq('enabled', true);
 

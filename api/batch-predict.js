@@ -76,14 +76,14 @@ async function batchGetCustomerStats(reservations, restaurantId) {
       phones.length > 0
         ? supabaseAdmin
             .from('customer_history')
-            .select('*')
+            .select('id, customer_phone, customer_email, total_visits, total_no_shows, total_cancellations, average_party_size, last_visit_date, vip_status, restaurant_id')
             .in('customer_phone', phones)
             .eq('restaurant_id', restaurantId)
         : { data: [], error: null },
       emails.length > 0
         ? supabaseAdmin
             .from('customer_history')
-            .select('*')
+            .select('id, customer_phone, customer_email, total_visits, total_no_shows, total_cancellations, average_party_size, last_visit_date, vip_status, restaurant_id')
             .in('customer_email', emails)
             .eq('restaurant_id', restaurantId)
         : { data: [], error: null },

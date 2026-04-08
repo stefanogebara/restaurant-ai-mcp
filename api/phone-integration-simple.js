@@ -110,7 +110,7 @@ async function handleRegister(req, res) {
   const { data: restaurant, error: fetchError } = await supabaseAdmin
     .schema('restaurant')
     .from('restaurant_config')
-    .select('*')
+    .select('id, restaurant_name, elevenlabs_agent_id, ai_config, phone')
     .eq('id', restaurant_id)
     .single();
 
@@ -407,7 +407,7 @@ async function handleStatus(req, res) {
   const { data: restaurant, error: fetchError } = await supabaseAdmin
     .schema('restaurant')
     .from('restaurant_config')
-    .select('*')
+    .select('id, restaurant_name, elevenlabs_agent_id, ai_config')
     .eq('id', restaurant_id)
     .single();
 
@@ -547,7 +547,7 @@ async function handleFixTools(req, res) {
   const { data: restaurant } = await supabaseAdmin
     .schema('restaurant')
     .from('restaurant_config')
-    .select('*')
+    .select('id, restaurant_name, elevenlabs_agent_id')
     .eq('id', restaurant_id)
     .single();
 
@@ -601,7 +601,7 @@ async function handleDiagnose(req, res) {
   const { data: restaurant } = await supabaseAdmin
     .schema('restaurant')
     .from('restaurant_config')
-    .select('*')
+    .select('id, restaurant_name, elevenlabs_agent_id')
     .eq('id', restaurant_id)
     .single();
 

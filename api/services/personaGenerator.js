@@ -45,11 +45,10 @@ async function generatePersona(sessionId, { version } = {}) {
   const restaurantConfigId = session.restaurant_config_id;
 
   // Fetch intelligence data
-  // All intelligence fields needed for persona generation prompt
   const { data: intelligence } = await supabaseAdmin
     .schema('restaurant')
     .from('restaurant_intelligence')
-    .select('*')
+    .select('id, restaurant_config_id, intelligence_data, source, created_at, updated_at')
     .eq('restaurant_config_id', restaurantConfigId)
     .single();
 

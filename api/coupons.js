@@ -41,7 +41,7 @@ async function handleList(req, res) {
 
     const { data, error } = await couponsDb()
       .from('coupons')
-      .select('*')
+      .select('id, restaurant_id, code, description, discount_type, discount_value, min_order, max_uses, used_count, is_active, valid_from, valid_until, created_at, updated_at')
       .eq('restaurant_id', restaurantId)
       .order('created_at', { ascending: false });
 
@@ -145,7 +145,7 @@ async function handleCreate(req, res) {
     const { data, error } = await couponsDb()
       .from('coupons')
       .insert(insertData)
-      .select('*')
+      .select('id, restaurant_id, code, description, discount_type, discount_value, min_order, max_uses, used_count, is_active, valid_from, valid_until, created_at, updated_at')
       .single();
 
     if (error) {
@@ -184,7 +184,7 @@ async function handleDeactivate(req, res) {
       .update({ is_active: false, updated_at: new Date().toISOString() })
       .eq('id', coupon_id)
       .eq('restaurant_id', restaurantId)
-      .select('*')
+      .select('id, restaurant_id, code, description, discount_type, discount_value, min_order, max_uses, used_count, is_active, valid_from, valid_until, created_at, updated_at')
       .single();
 
     if (error) {
@@ -217,7 +217,7 @@ async function handleValidate(req, res) {
 
     const { data, error } = await couponsDb()
       .from('coupons')
-      .select('*')
+      .select('id, restaurant_id, code, description, discount_type, discount_value, min_order, max_uses, used_count, is_active, valid_from, valid_until, created_at, updated_at')
       .eq('restaurant_id', restaurantId)
       .eq('code', code.trim().toUpperCase())
       .maybeSingle();
@@ -268,7 +268,7 @@ async function handleRedeem(req, res) {
     // Read current state
     const { data: coupon, error: readErr } = await couponsDb()
       .from('coupons')
-      .select('*')
+      .select('id, restaurant_id, code, discount_type, discount_value, max_uses, used_count, is_active, valid_until')
       .eq('id', coupon_id)
       .eq('restaurant_id', restaurantId)
       .single();
@@ -297,7 +297,7 @@ async function handleRedeem(req, res) {
       .eq('id', coupon_id)
       .eq('restaurant_id', restaurantId)
       .eq('used_count', coupon.used_count)
-      .select('*')
+      .select('id, restaurant_id, code, description, discount_type, discount_value, min_order, max_uses, used_count, is_active, valid_from, valid_until, created_at, updated_at')
       .single();
 
     if (updateErr) {
