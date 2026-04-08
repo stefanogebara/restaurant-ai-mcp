@@ -20,6 +20,15 @@ jest.mock('../_lib/secure-logger', () => ({
   }),
 }));
 
+jest.mock('../_lib/whatsapp-interactions', () => ({
+  markAsRead: jest.fn().mockResolvedValue(undefined),
+  addReaction: jest.fn().mockResolvedValue(undefined),
+  removeReaction: jest.fn().mockResolvedValue(undefined),
+  transcribeVoiceMessage: jest.fn().mockResolvedValue('transcribed text'),
+  downloadMedia: jest.fn().mockResolvedValue({ buffer: Buffer.from(''), mimeType: 'image/jpeg', size: 100 }),
+  simulateTypingDelay: jest.fn().mockResolvedValue(undefined),
+}));
+
 jest.mock('../_lib/rate-limit', () => ({
   isMessageDuplicate: jest.fn().mockResolvedValue(false),
   rejectOversizedBody: jest.fn().mockReturnValue(false),

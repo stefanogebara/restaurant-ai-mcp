@@ -39,6 +39,14 @@ const { sendInteractiveListMessage } = require('./services/whatsapp/message-send
 const { isRateLimited } = require('./services/whatsapp/rate-limiter');
 const { processWithAI, cleanHistoryForStorage } = require('./services/whatsapp/conversation');
 const { handleKeyword } = require('./services/whatsapp/keyword-handler');
+const {
+  markAsRead,
+  addReaction,
+  removeReaction,
+  transcribeVoiceMessage,
+  downloadMedia,
+  simulateTypingDelay,
+} = require('./_lib/whatsapp-interactions');
 
 /**
  * Wrapper that sends a WhatsApp message, always via Meta (this webhook IS the Meta path).
@@ -244,11 +252,17 @@ async function handlePost(req, res) {
  */
 async function handleIncomingMessage(message, res) {
   const from = message.from; // Sender's WhatsApp number
+  const messageId = message.id;
   const messageType = message.type;
+
+  // ── Immediate UX feedback ──
+  // Mark as read (blue checkmarks) — fire-and-forget
+  markAsRead(messageId).catch(() => {});
 
   // Extract text from text messages OR interactive replies (list selections)
   let messageText = '';
   let interactiveSelection = null;
+  let mediaContext = null; // For image/document descriptions
 
   if (messageType === 'text') {
     messageText = message.text?.body || '';
@@ -261,13 +275,58 @@ async function handleIncomingMessage(message, res) {
       interactiveSelection = message.interactive.button_reply;
       messageText = interactiveSelection.title || '';
     }
+  } else if (messageType === 'audio') {
+    // Voice message — transcribe via OpenAI Whisper
+    const audioMediaId = message.audio?.id;
+    if (audioMediaId) {
+      try {
+        addReaction(from, messageId, '\uD83C\uDFA4').catch(() => {}); // microphone emoji while transcribing
+        messageText = await transcribeVoiceMessage(audioMediaId);
+        removeReaction(from, messageId).catch(() => {});
+        if (!messageText.trim()) {
+          await sendWhatsAppMessage(from, 'Nao consegui entender o audio. Poderia tentar novamente ou digitar sua mensagem?');
+          return res.status(200).json({ status: 'ok' });
+        }
+        logger.info(`Voice transcribed from ${from}: ${messageText.substring(0, 80)}`);
+      } catch (transcribeErr) {
+        logger.error('Voice transcription failed:', transcribeErr.message);
+        removeReaction(from, messageId).catch(() => {});
+        await sendWhatsAppMessage(from, 'Desculpe, nao consegui processar o audio. Por favor, envie sua mensagem por texto.');
+        return res.status(200).json({ status: 'ok' });
+      }
+    }
+  } else if (messageType === 'image') {
+    // Image message — download and describe context
+    const imageMediaId = message.image?.id;
+    const caption = message.image?.caption || '';
+    if (imageMediaId) {
+      try {
+        const media = await downloadMedia(imageMediaId);
+        mediaContext = `[Customer sent an image (${Math.round(media.size / 1024)}KB, ${media.mimeType})]`;
+        messageText = caption || 'Sent an image';
+        logger.info(`Image received from ${from}: ${media.size} bytes`);
+      } catch (mediaErr) {
+        logger.error('Image download failed:', mediaErr.message);
+        messageText = caption || 'Sent an image (could not download)';
+      }
+    }
+  } else if (messageType === 'document') {
+    // Document message (PDF, etc.)
+    const docMediaId = message.document?.id;
+    const filename = message.document?.filename || 'document';
+    const caption = message.document?.caption || '';
+    if (docMediaId) {
+      mediaContext = `[Customer sent a document: ${filename}]`;
+      messageText = caption || `Sent a document: ${filename}`;
+      logger.info(`Document received from ${from}: ${filename}`);
+    }
   }
 
   logger.info(` Message from ${from}: ${messageText} (type=${messageType})`);
 
-  // Only handle text and interactive messages
-  if (messageType !== 'text' && messageType !== 'interactive') {
-    await sendWhatsAppMessage(from, 'I can only process text messages at the moment. Please type your request.');
+  // Handle unsupported message types
+  if (!messageText && messageType !== 'text' && messageType !== 'interactive') {
+    await sendWhatsAppMessage(from, 'Consigo processar mensagens de texto e audio. Por favor, envie sua mensagem assim.');
     return res.status(200).json({ status: 'ok' });
   }
 
@@ -280,7 +339,6 @@ async function handleIncomingMessage(message, res) {
 
   // Deduplicate: Meta retries failed webhooks for up to 24h with exponential backoff.
   // Use 24h TTL to catch retries that come in hours after the original.
-  const messageId = message.id;
   if (messageId && await isMessageDuplicate(messageId, 86400)) {
     logger.info(` Duplicate message ${messageId}, skipping`);
     return res.status(200).json({ status: 'ok' });
@@ -431,17 +489,30 @@ async function handleIncomingMessage(message, res) {
   const conversationHistory = Array.isArray(session.conversation_history) ? session.conversation_history : [];
   logger.info(` Loaded ${conversationHistory.length} history messages for session: ${session.id}`);
 
+  // ── Return 200 immediately, process in background ──
+  // This prevents Meta webhook timeouts on slow LLM calls.
+  res.status(200).json({ status: 'ok' });
+
+  // Add eye emoji reaction — processing started
+  addReaction(from, messageId, '\uD83D\uDC40').catch(() => {}); // 👀
+
+  // Prepend media context to message if present
+  const aiMessage = mediaContext ? `${mediaContext}\n${messageText}` : messageText;
+
   // Process message with AI
   logger.info(' [STEP 3] Processing message with AI...');
   const aiStart = Date.now();
   let response;
   try {
-    response = await processWithAI(messageText, session, conversationHistory);
+    response = await processWithAI(aiMessage, session, conversationHistory);
     logger.info(` [STEP 3] AI done in ${Date.now() - aiStart}ms: ${response?.substring(0, 100)}...`);
   } catch (aiError) {
     logger.error(` [STEP 3] AI error after ${Date.now() - aiStart}ms:`, aiError);
     response = 'Desculpe, tive dificuldade em processar sua mensagem. Por favor, tente novamente.';
   }
+
+  // Remove eye reaction — processing complete
+  removeReaction(from, messageId).catch(() => {});
 
   // Save updated conversation history — clean out tool messages for storage
   const updatedHistory = cleanHistoryForStorage([
@@ -469,12 +540,15 @@ async function handleIncomingMessage(message, res) {
     });
   }
 
+  // Simulate typing delay for human-like feel
+  await simulateTypingDelay(response.length);
+
   // Send response back via WhatsApp
   logger.info(` Sending response to ${from}`);
   const sendResult = await sendWhatsAppMessage(from, response);
   logger.info(` Send result:`, JSON.stringify(sendResult));
 
-  return res.status(200).json({ status: 'ok' });
+  return;
 }
 
 /**
