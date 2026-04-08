@@ -615,19 +615,22 @@ function buildFirstMessage({ restaurant_name, language = 'en', custom_greeting }
  */
 function buildToolDefinitions(baseUrl, restaurantId) {
   const rp = restaurantId ? `&restaurant_id=${restaurantId}` : '';
+  const authHeaders = process.env.CRON_SECRET
+    ? { Authorization: `Bearer ${process.env.CRON_SECRET}` }
+    : {};
 
   return [
     {
       type: 'webhook', name: 'get_current_datetime',
       description: 'Get the current date and time. Use this at the start of conversations to know what "today" and "tomorrow" mean.',
-      api_schema: { url: `${baseUrl}/api/elevenlabs-webhook?action=get_current_datetime`, method: 'GET' },
+      api_schema: { url: `${baseUrl}/api/elevenlabs-webhook?action=get_current_datetime`, method: 'GET', request_headers: authHeaders },
     },
     {
       type: 'webhook', name: 'check_availability',
       description: 'Check table availability for a specific date, time, and party size. Use this before creating a reservation to verify availability.',
       api_schema: {
         url: `${baseUrl}/api/elevenlabs-webhook?action=check_availability${rp}`, method: 'POST',
-        content_type: 'application/json',
+        content_type: 'application/json', request_headers: authHeaders,
         request_body_schema: { type: 'object', properties: {
           date: { type: 'string', description: 'Date in YYYY-MM-DD format' },
           time: { type: 'string', description: 'Time in HH:MM format' },
@@ -640,7 +643,7 @@ function buildToolDefinitions(baseUrl, restaurantId) {
       description: 'Create a new reservation after confirming all details with the customer.',
       api_schema: {
         url: `${baseUrl}/api/elevenlabs-webhook?action=create_reservation${rp}`, method: 'POST',
-        content_type: 'application/json',
+        content_type: 'application/json', request_headers: authHeaders,
         request_body_schema: { type: 'object', properties: {
           customer_name: { type: 'string', description: 'Full name' },
           customer_phone: { type: 'string', description: 'Phone number' },
@@ -657,7 +660,7 @@ function buildToolDefinitions(baseUrl, restaurantId) {
       description: 'Find an existing reservation by customer phone number or name.',
       api_schema: {
         url: `${baseUrl}/api/reservations?action=lookup${rp}`, method: 'POST',
-        content_type: 'application/json',
+        content_type: 'application/json', request_headers: authHeaders,
         request_body_schema: { type: 'object', properties: {
           customer_phone: { type: 'string', description: 'Phone number for the reservation' },
           customer_name: { type: 'string', description: 'Name for the reservation (optional if phone provided)' },
@@ -669,7 +672,7 @@ function buildToolDefinitions(baseUrl, restaurantId) {
       description: 'Cancel an existing reservation by ID.',
       api_schema: {
         url: `${baseUrl}/api/reservations?action=cancel${rp}`, method: 'POST',
-        content_type: 'application/json',
+        content_type: 'application/json', request_headers: authHeaders,
         request_body_schema: { type: 'object', properties: {
           reservation_id: { type: 'string', description: 'Reservation ID to cancel' },
         }, required: ['reservation_id'] },
@@ -680,7 +683,7 @@ function buildToolDefinitions(baseUrl, restaurantId) {
       description: 'Change date, time, or party size of an existing reservation.',
       api_schema: {
         url: `${baseUrl}/api/reservations?action=modify${rp}`, method: 'POST',
-        content_type: 'application/json',
+        content_type: 'application/json', request_headers: authHeaders,
         request_body_schema: { type: 'object', properties: {
           reservation_id: { type: 'string', description: 'Reservation ID to modify' },
           new_date: { type: 'string', description: 'New date YYYY-MM-DD (optional)' },
@@ -694,7 +697,7 @@ function buildToolDefinitions(baseUrl, restaurantId) {
       description: 'Get current estimated wait time for walk-in customers.',
       api_schema: {
         url: `${baseUrl}/api/get-wait-time?${restaurantId ? `restaurant_id=${restaurantId}` : ''}`,
-        method: 'GET',
+        method: 'GET', request_headers: authHeaders,
       },
     },
   ];
