@@ -49,6 +49,10 @@
       "destination": "/api/event-public.js"
     },
     {
+      "source": "/api/waha-webhook",
+      "destination": "/api/waha-webhook.js"
+    },
+    {
       "source": "/api/voice-forward",
       "destination": "/api/voice-forward.js"
     },
