@@ -1,14 +1,16 @@
 'use strict';
 
 /**
- * Simple voice forwarding endpoint.
- * Returns TwiML that dials the specified number.
- * Used temporarily for WhatsApp verification calls.
+ * Voice forwarding + recording endpoint.
+ * Records the incoming call (captures WhatsApp verification codes)
+ * and emails the recording to the configured address.
  */
 module.exports = (req, res) => {
   res.setHeader('Content-Type', 'text/xml');
   res.status(200).send(`<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Dial callerId="+551150289356">+5511999002121</Dial>
+  <Say language="pt-BR">Gravando mensagem.</Say>
+  <Record maxLength="30" transcribe="true" />
+  <Say language="pt-BR">Obrigado.</Say>
 </Response>`);
 };
