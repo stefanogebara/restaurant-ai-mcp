@@ -21,8 +21,18 @@ jest.mock('../_lib/rate-limit', () => ({
   checkAndApplyRateLimit: jest.fn(() => false),
 }));
 
+jest.mock('../_lib/supabase', () => ({
+  supabaseAdmin: {
+    schema: jest.fn().mockReturnThis(),
+    from: jest.fn().mockReturnThis(),
+    select: jest.fn().mockReturnThis(),
+    eq: jest.fn().mockReturnThis(),
+    maybeSingle: jest.fn().mockResolvedValue({ data: { id: 'demo-123' }, error: null }),
+  },
+}));
+
 function createReq(method, body) {
-  return { method, body, headers: {} };
+  return { method, body: { restaurant_id: 'demo-123', ...body }, headers: {} };
 }
 
 function createRes() {

@@ -170,9 +170,12 @@ function validateReservationDate(date) {
  * Validate reservation time
  *
  * @param {string} time - Time in HH:MM format
+ * @param {object|null} businessHours - Optional business hours with open/close in HH:MM format
+ * @param {string} businessHours.open - Opening time in HH:MM format (e.g. "09:00")
+ * @param {string} businessHours.close - Closing time in HH:MM format (e.g. "23:00")
  * @returns {{valid: boolean, error?: string}}
  */
-function validateReservationTime(time) {
+function validateReservationTime(time, businessHours = null) {
   if (!time || typeof time !== 'string') {
     return { valid: false, error: 'Reservation time is required' };
   }
@@ -182,15 +185,29 @@ function validateReservationTime(time) {
     return { valid: false, error: 'Invalid time format (use HH:MM)' };
   }
 
-  // Check if time is within business hours (11:00 AM - 10:00 PM)
   const [hours, minutes] = time.split(':').map(Number);
   const totalMinutes = hours * 60 + minutes;
 
-  const openingTime = 11 * 60; // 11:00 AM
-  const closingTime = 22 * 60; // 10:00 PM
+  // Use provided business hours or fall back to defaults (11:00 - 22:00)
+  let openingTime = 11 * 60; // 11:00 AM default
+  let closingTime = 22 * 60; // 10:00 PM default
+
+  if (businessHours && typeof businessHours.open === 'string' && typeof businessHours.close === 'string') {
+    const openParts = businessHours.open.split(':').map(Number);
+    const closeParts = businessHours.close.split(':').map(Number);
+    if (openParts.length === 2 && !isNaN(openParts[0]) && !isNaN(openParts[1])) {
+      openingTime = openParts[0] * 60 + openParts[1];
+    }
+    if (closeParts.length === 2 && !isNaN(closeParts[0]) && !isNaN(closeParts[1])) {
+      closingTime = closeParts[0] * 60 + closeParts[1];
+    }
+  }
+
+  const openLabel = `${String(Math.floor(openingTime / 60)).padStart(2, '0')}:${String(openingTime % 60).padStart(2, '0')}`;
+  const closeLabel = `${String(Math.floor(closingTime / 60)).padStart(2, '0')}:${String(closingTime % 60).padStart(2, '0')}`;
 
   if (totalMinutes < openingTime || totalMinutes > closingTime) {
-    return { valid: false, error: 'Reservations only available between 11:00 AM and 10:00 PM' };
+    return { valid: false, error: `Reservations only available between ${openLabel} and ${closeLabel}` };
   }
 
   return { valid: true };

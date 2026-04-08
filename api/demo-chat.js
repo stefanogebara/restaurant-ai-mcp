@@ -2,6 +2,7 @@ const { getAI, AI_MODEL_FAST } = require('./_lib/ai-client');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { setInternalCors } = require('./_lib/cors');
+const { supabaseAdmin } = require('./_lib/supabase');
 const logger = createSecureLogger('DemoChat');
 
 module.exports = async function handler(req, res) {
@@ -13,7 +14,29 @@ module.exports = async function handler(req, res) {
 
   if (await checkAndApplyRateLimit(req, res, 'chat')) return;
 
-  const { message, context, lang } = req.body || {};
+  const { message, context, lang, restaurant_id } = req.body || {};
+
+  // Validate that a legitimate demo restaurant is being used
+  if (!restaurant_id || typeof restaurant_id !== 'string') {
+    return res.status(400).json({ error: 'restaurant_id is required' });
+  }
+
+  try {
+    const { data: restaurant, error } = await supabaseAdmin
+      .schema('restaurant')
+      .from('restaurant_config')
+      .select('id')
+      .eq('id', restaurant_id)
+      .eq('is_demo', true)
+      .maybeSingle();
+
+    if (error || !restaurant) {
+      return res.status(400).json({ error: 'Invalid or non-demo restaurant' });
+    }
+  } catch (err) {
+    logger.error('Demo restaurant validation error:', err.message);
+    return res.status(500).json({ error: 'Validation failed' });
+  }
 
   if (!message || typeof message !== 'string' || message.length > 500) {
     return res.status(400).json({ error: 'Invalid message' });

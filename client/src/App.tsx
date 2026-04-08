@@ -52,7 +52,7 @@ const DemoConversation = lazyRetry(() => import('./pages/DemoConversation'));
 const DemoDashboard = lazyRetry(() => import('./pages/DemoDashboard'));
 const PrivacyPolicy = lazyRetry(() => import('./pages/PrivacyPolicy'));
 const TermsOfService = lazyRetry(() => import('./pages/TermsOfService'));
-const PortfolioPage = lazyRetry(() => import('./pages/PortfolioPage'));
+// PortfolioPage removed — orphaned route, linked from nowhere
 const RestaurantSettingsPage = lazyRetry(() => import('./pages/RestaurantSettingsPage'));
 const ManagerAIChatPage = lazyRetry(() => import('./pages/ManagerAIChatPage'));
 const CampaignsPage = lazyRetry(() => import('./pages/CampaignsPage'));
@@ -61,7 +61,7 @@ const EventsPage = lazyRetry(() => import('./pages/EventsPage'));
 const EventBookingPage = lazyRetry(() => import('./pages/EventBookingPage'));
 const CustomersPage = lazyRetry(() => import('./pages/CustomersPage'));
 const IntegrationsPage = lazyRetry(() => import('./pages/IntegrationsPage'));
-const Prototype = lazyRetry(() => import('./pages/Prototype'));
+// Prototype removed — orphaned route, linked from nowhere
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -133,7 +133,7 @@ function App() {
               <Route path="/" element={<ErrorBoundary fallback={<RouteErrorFallback />}><LandingPage /></ErrorBoundary>} />
               <Route path="/login" element={<Login />} />
               <Route path="/live-demo" element={<LiveAIDemo />} />
-              <Route path="/prototype" element={<Prototype />} />
+              {/* /prototype route removed — orphaned, linked from nowhere */}
               <Route path="/demo/setup" element={<DemoSetupPage />} />
               <Route path="/demo/chat" element={<DemoConversation />} />
               <Route path="/demo" element={<DemoDashboard />} />
@@ -174,7 +174,7 @@ function App() {
               <Route path="/host-dashboard/integrations" element={<ProtectedRoute><IntegrationsPage /></ProtectedRoute>} />
               <Route path="/privacy" element={<PrivacyPolicy />} />
               <Route path="/terms" element={<TermsOfService />} />
-              <Route path="/portfolio" element={<PortfolioPage />} />
+              {/* /portfolio route removed — orphaned, linked from nowhere */}
               {/* Programmatic SEO pages — /para/:slug */}
               <Route path="/para/:slug" element={<ErrorBoundary fallback={<RouteErrorFallback />}><SeoLandingPage /></ErrorBoundary>} />
               <Route path="/calculadora" element={<ErrorBoundary fallback={<RouteErrorFallback />}><NoShowCalculator /></ErrorBoundary>} />

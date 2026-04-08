@@ -26,7 +26,8 @@ const SECURITY_HEADERS = {
   'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
 
   // Permissions Policy (formerly Feature-Policy)
-  'Permissions-Policy': 'camera=(), microphone=(self), geolocation=(), interest-cohort=()',
+  // microphone=() denied globally; voice/booking routes override via vercel.json headers
+  'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
 
   // Prevent caching of sensitive API responses
   'Cache-Control': 'no-store, no-cache, must-revalidate',

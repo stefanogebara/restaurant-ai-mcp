@@ -213,11 +213,11 @@ Restaurant config lives in `restaurant.restaurant_config` schema.
 
 | Plan | Price | Features |
 |------|-------|----------|
-| **Starter** | R$ 497/month | AI reservations (Chat + WhatsApp), Host dashboard, Basic analytics, Email support, Up to 50 reservations/month |
-| **Growth** | R$ 1.497/month | Everything in Starter + Voice AI agent, Advanced analytics, Waitlist management, Up to 150 reservations/month, SMS notifications |
-| **Scale** | R$ 2.997/month | Everything in Growth + Unlimited reservations, Unlimited SMS, Priority support, Custom integrations |
+| **Essencial** | R$ 497/month | AI reservations (Chat + WhatsApp), Host dashboard, Basic analytics, Email support, Up to 50 reservations/month |
+| **Profissional** | R$ 1.497/month | Everything in Essencial + Voice AI agent, Advanced analytics, Waitlist management, Up to 150 reservations/month, SMS notifications |
+| **Enterprise** | R$ 2.997/month | Everything in Profissional + Unlimited reservations, Unlimited SMS, Priority support, Custom integrations |
 
-*Growth plan includes 14-day free trial. Usage-based metered billing for reservations, AI calls, SMS, and WhatsApp. Prices in BRL.*
+*Profissional plan includes 14-day free trial. Usage-based metered billing for reservations, AI calls, SMS, and WhatsApp. Prices in BRL.*
 
 ---
 

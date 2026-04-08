@@ -4,6 +4,11 @@
  * Connects to the central registry database for multi-tenant restaurant routing.
  * By default uses the main Supabase project, but can be configured to use a
  * separate project via CENTRAL_SUPABASE_URL and CENTRAL_SUPABASE_SERVICE_ROLE_KEY.
+ *
+ * NOTE: Candidate for removal. See multi-tenant-supabase.js for details.
+ * Currently always resolves to the main SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY.
+ * Imported by: multi-tenant-supabase.js, restaurant-registry.js,
+ * whatsapp/reservation-lookup.js, whatsapp/quick-actions.js, whatsapp-sessions.js.
  */
 
 const { createClient } = require('@supabase/supabase-js');

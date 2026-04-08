@@ -21,7 +21,8 @@ module.exports = async (req, res) => {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  if (await checkAndApplyRateLimit(req, res, 'api')) return;
+  // Rate limit: tight limit on public enumeration endpoint (20 req/min per IP)
+  if (await checkAndApplyRateLimit(req, res, 'public_enumeration')) return;
 
   const { slug } = req.query || {};
 

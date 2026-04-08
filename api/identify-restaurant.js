@@ -19,8 +19,8 @@ module.exports = async (req, res) => {
     return res.status(200).end();
   }
 
-  // Rate limit (60 req/min)
-  if (await checkAndApplyRateLimit(req, res, 'api')) return;
+  // Rate limit: tight limit on public enumeration endpoint (20 req/min per IP)
+  if (await checkAndApplyRateLimit(req, res, 'public_enumeration')) return;
 
   try {
     const { restaurant_name } = req.method === 'POST' ? req.body : req.query;

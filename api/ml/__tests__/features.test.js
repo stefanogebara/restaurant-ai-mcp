@@ -650,7 +650,3 @@ describe('Feature Engineering Test Summary', () => {
   });
 });
 
-console.log('✅ Feature Engineering Test Suite Complete!');
-console.log('   Total Test Suites: 8');
-console.log('   Total Tests: 60+');
-console.log('   Coverage: All 23 features + integration tests');

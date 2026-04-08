@@ -137,12 +137,6 @@ function getSystemHealth() {
     status,
     uptime,
     timestamp: new Date(),
-    memory: {
-      used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
-      total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024),
-      rss: Math.round(process.memoryUsage().rss / 1024 / 1024)
-    },
-    cpu: process.cpuUsage(),
     metrics: {
       totalCalls: metrics.agentCalls.length,
       totalErrors: metrics.errors.length,

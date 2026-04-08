@@ -230,7 +230,7 @@ describe('validateReservationTime', () => {
   test('rejects time outside business hours (before 11:00)', () => {
     const result = validateReservationTime('09:00');
     expect(result.valid).toBe(false);
-    expect(result.error).toContain('11:00 AM');
+    expect(result.error).toContain('11:00');
   });
 
   test('rejects time outside business hours (after 22:00)', () => {

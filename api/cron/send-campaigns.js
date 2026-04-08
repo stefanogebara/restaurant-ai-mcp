@@ -1,7 +1,7 @@
 /**
  * Send Campaigns Cron
  *
- * Runs every 5 minutes to:
+ * Runs every 15 minutes to:
  * 1. Activate scheduled campaigns whose time has come
  * 2. Send next batch for active campaigns (rate-limited to 10/campaign/run)
  */

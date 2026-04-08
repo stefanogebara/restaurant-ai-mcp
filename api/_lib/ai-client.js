@@ -8,6 +8,7 @@
  */
 
 const { createSecureLogger } = require('./secure-logger');
+const { withRetry } = require('./supabase');
 const logger = createSecureLogger('ai-client');
 
 let _client = null;
@@ -87,16 +88,19 @@ class OpenRouterClient {
     };
     if (oaiTools.length > 0) body.tools = oaiTools;
 
-    const response = await fetch(this.baseURL, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${this.apiKey}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://seatable.one',
-        'X-Title': 'Seatable AI',
-      },
-      body: JSON.stringify(body),
-    });
+    const response = await withRetry(
+      () => fetch(this.baseURL, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': 'https://seatable.one',
+          'X-Title': 'Seatable AI',
+        },
+        body: JSON.stringify(body),
+      }),
+      { maxAttempts: 2 }
+    );
 
     if (!response.ok) {
       const errText = await response.text().catch(() => '');

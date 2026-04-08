@@ -12,9 +12,9 @@ require('./validate-env'); // Auto-warns about missing critical env vars on cold
 const logger = createSecureLogger('Auth');
 
 // JWT_SECRET for internally generated tokens (HS256)
-const JWT_SECRET = process.env.JWT_SECRET || process.env.SUPABASE_JWT_SECRET;
-if (!process.env.JWT_SECRET && process.env.SUPABASE_JWT_SECRET) {
-  logger.warn('JWT_SECRET not set, falling back to SUPABASE_JWT_SECRET');
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  logger.warn('JWT_SECRET not set — internal token signing/verification will be unavailable');
 }
 
 const JWT_EXPIRY = '8h';

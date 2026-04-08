@@ -19,8 +19,8 @@ const logger = createSecureLogger('CronRefreshProfiles');
 
 // Maximum time per restaurant regeneration (30s)
 const PER_RESTAURANT_TIMEOUT = 30000;
-// Maximum total cron runtime (4 minutes, leaving buffer for Vercel 5min limit)
-const MAX_TOTAL_RUNTIME = 4 * 60 * 1000;
+// Maximum total cron runtime (45s, leaving 15s buffer for Vercel 60s limit)
+const MAX_TOTAL_RUNTIME = 45000;
 
 module.exports = async (req, res) => {
   // Only allow GET (Vercel cron) and POST

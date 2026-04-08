@@ -191,13 +191,40 @@ module.exports = async function handler(req, res) {
   const now = Date.now();
   if (now - lastClean > 5 * 60 * 1000) { lastClean = now; cleanSessions(); }
 
-  const { message, session_id, restaurant_context, demo_token, lang = 'pt-BR' } = req.body || {};
+  const { message, session_id, restaurant_context, demo_token, restaurant_id, lang = 'pt-BR' } = req.body || {};
 
   if (!message || typeof message !== 'string') {
     return res.status(400).json({ error: 'message is required' });
   }
   if (message.length > 2000) {
     return res.status(400).json({ error: 'Message too long (max 2000 chars)' });
+  }
+
+  // Require a valid demo restaurant — either via demo_token, restaurant_id, or existing session
+  if (!session_id || !sessions.has(session_id)) {
+    // New session: must provide demo_token or restaurant_id for validation
+    const lookupId = restaurant_id || demo_token;
+    if (!lookupId || typeof lookupId !== 'string') {
+      return res.status(400).json({ error: 'demo_token or restaurant_id is required for new sessions' });
+    }
+
+    try {
+      const filterCol = restaurant_id ? 'id' : 'demo_token';
+      const { data: demoRestaurant, error: demoError } = await supabaseAdmin
+        .schema('restaurant')
+        .from('restaurant_config')
+        .select('id')
+        .eq(filterCol, lookupId)
+        .eq('is_demo', true)
+        .maybeSingle();
+
+      if (demoError || !demoRestaurant) {
+        return res.status(400).json({ error: 'Invalid or non-demo restaurant' });
+      }
+    } catch (err) {
+      logger.error('Demo restaurant validation error:', err.message);
+      return res.status(500).json({ error: 'Validation failed' });
+    }
   }
 
   // SSE headers (CORS already set by setInternalCors above)

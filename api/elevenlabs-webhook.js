@@ -390,6 +390,20 @@ async function handleCreateReservation(req, res) {
     });
   }
 
+  // Pre-execution validation (Observer pattern — catch errors before they hit the DB)
+  const partyNum = parseInt(party_size, 10);
+  if (partyNum > 20 || partyNum < 1 || isNaN(partyNum)) {
+    const msg = `Party size ${party_size} is not valid. Please ask the customer to confirm the number of guests (1-20).`;
+    logger.warn(`[Interceptor] Blocked create_reservation: invalid party_size=${party_size}`);
+    return res.status(200).json({ success: false, error: msg, message: msg });
+  }
+
+  if (!date || !time) {
+    const msg = 'Please confirm the date and time before creating a reservation.';
+    logger.warn('[Interceptor] Blocked create_reservation: missing date or time');
+    return res.status(200).json({ success: false, error: msg, message: msg });
+  }
+
   try {
     const result = await toolHandlers.createReservation(restaurant.id || restaurant.id, restaurant, {
       date, time, party_size, customer_name, customer_phone, customer_email, special_requests

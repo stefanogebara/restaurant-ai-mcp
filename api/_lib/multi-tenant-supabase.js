@@ -4,6 +4,13 @@
  * Creates and caches Supabase clients for specific restaurants.
  * Uses a connection pool with TTL to manage resources efficiently.
  * Falls back to central Supabase when restaurant-specific credentials aren't available.
+ *
+ * NOTE: Candidate for removal. This is speculative infrastructure for a multi-database
+ * future that may never arrive. Currently all restaurants share one Supabase project.
+ * In practice, getRestaurantClient() always falls back to centralSupabase because no
+ * restaurant has its own supabase_url/supabase_service_role_key.
+ * Imported by: elevenlabs-webhook.js, reservation-tools.js, conversation-handler.js,
+ * plus test mocks. Evaluate consolidating into supabase.js before adding new consumers.
  */
 
 const { createClient } = require('@supabase/supabase-js');

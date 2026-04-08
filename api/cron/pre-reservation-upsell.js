@@ -13,7 +13,7 @@
  *   6. Send via WhatsApp + log to upsell_messages_log
  *
  * Runs daily at 11 AM via Vercel Cron Jobs.
- * Max 20 reservations per restaurant per run (Vercel 60s timeout).
+ * Max 10 reservations per restaurant per run (Vercel 60s timeout, 45s time budget).
  */
 
 const { supabaseAdmin } = require('../_lib/supabase');
@@ -27,8 +27,9 @@ const { getLocalDate } = require('../_lib/timezone');
 initSentry();
 const logger = createSecureLogger('CronPreReservationUpsell');
 
-const MAX_PER_RESTAURANT = 20;
+const MAX_PER_RESTAURANT = 10;
 const SEND_DELAY_MS = 500;
+const TIME_BUDGET_MS = 45000; // 45s budget, leaving 15s buffer for Vercel 60s limit
 
 /**
  * Detect language from phone number country code.
@@ -67,6 +68,7 @@ module.exports = async (req, res) => {
   }
 
   try {
+    const startTime = Date.now();
     logger.info('Starting pre-reservation upsell job (V2)...');
 
     // ---- 1. Find eligible restaurants (opt-in) ----
@@ -99,6 +101,12 @@ module.exports = async (req, res) => {
 
     // ---- 2. Process each restaurant ----
     for (const restaurant of eligibleRestaurants) {
+      // Time-budget guard at restaurant level too
+      if (Date.now() - startTime > TIME_BUDGET_MS) {
+        logger.warn(`Time budget exceeded (${TIME_BUDGET_MS}ms), stopping restaurant loop`);
+        break;
+      }
+
       const restaurantId = restaurant.id;
       const restaurantName = restaurant.restaurant_name || 'our restaurant';
       const signatureDishes = [];
@@ -178,6 +186,12 @@ module.exports = async (req, res) => {
 
       // 3e. Generate + send for each reservation
       for (const reservation of newReservations) {
+        // Time-budget guard: break if we've used most of the allowed runtime
+        if (Date.now() - startTime > TIME_BUDGET_MS) {
+          logger.warn(`Time budget exceeded (${TIME_BUDGET_MS}ms), stopping upsell sends`);
+          break;
+        }
+
         const { reservation_id, customer_name, customer_phone, party_size, time } = reservation;
         const lang = detectLangFromPhone(customer_phone);
         const history = historyMap[customer_phone] || {};

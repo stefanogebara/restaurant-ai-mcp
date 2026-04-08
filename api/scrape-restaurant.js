@@ -137,13 +137,49 @@ module.exports = async function handler(req, res) {
   const rateLimited = await checkAndApplyRateLimit(req, res, 'demo-create');
   if (rateLimited) return;
 
-  const { query, city, country } = req.body || {};
+  const { query, city, country, restaurant_id, demo_token } = req.body || {};
 
   if (!query || typeof query !== 'string' || !query.trim()) {
     return res.status(400).json({ error: 'Missing required field: query' });
   }
+  if (query.trim().length > 100) {
+    return res.status(400).json({ error: 'query must be 100 characters or less' });
+  }
   if (!city || typeof city !== 'string' || !city.trim()) {
     return res.status(400).json({ error: 'Missing required field: city' });
+  }
+  if (city.trim().length > 100) {
+    return res.status(400).json({ error: 'city must be 100 characters or less' });
+  }
+
+  // Require either auth or a valid demo identifier to prevent anonymous quota abuse
+  const authHeader = req.headers.authorization;
+  const hasAuth = authHeader && authHeader.startsWith('Bearer ');
+  const lookupId = restaurant_id || demo_token;
+
+  if (!hasAuth && !lookupId) {
+    return res.status(400).json({ error: 'Authentication or demo_token/restaurant_id is required' });
+  }
+
+  if (!hasAuth && lookupId) {
+    try {
+      const { supabaseAdmin } = require('./_lib/supabase');
+      const filterCol = restaurant_id ? 'id' : 'demo_token';
+      const { data: demoRestaurant, error: demoError } = await supabaseAdmin
+        .schema('restaurant')
+        .from('restaurant_config')
+        .select('id')
+        .eq(filterCol, lookupId)
+        .eq('is_demo', true)
+        .maybeSingle();
+
+      if (demoError || !demoRestaurant) {
+        return res.status(400).json({ error: 'Invalid or non-demo restaurant' });
+      }
+    } catch (err) {
+      logger.error('Demo restaurant validation error:', err.message);
+      return res.status(500).json({ error: 'Validation failed' });
+    }
   }
 
   const apiKey = process.env.GOOGLE_PLACES_API_KEY;

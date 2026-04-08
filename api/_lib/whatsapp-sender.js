@@ -11,6 +11,7 @@
 
 const { getTemplate } = require('./whatsapp-templates');
 const { createSecureLogger } = require('./secure-logger');
+const { withRetry } = require('./supabase');
 
 const logger = createSecureLogger('WhatsAppSender');
 
@@ -64,20 +65,23 @@ async function sendViaMeta(to, message) {
   }
 
   try {
-    const response = await fetch(`${WHATSAPP_API_URL}/${phoneNumberId}/messages`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        messaging_product: 'whatsapp',
-        recipient_type: 'individual',
-        to,
-        type: 'text',
-        text: { body: message }
-      })
-    });
+    const response = await withRetry(
+      () => fetch(`${WHATSAPP_API_URL}/${phoneNumberId}/messages`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          messaging_product: 'whatsapp',
+          recipient_type: 'individual',
+          to,
+          type: 'text',
+          text: { body: message }
+        })
+      }),
+      { maxAttempts: 2 }
+    );
 
     const data = await response.json();
 
@@ -116,11 +120,14 @@ async function sendViaTwilio(to, message) {
       ? twilioWhatsAppNumber
       : `whatsapp:${twilioWhatsAppNumber}`;
 
-    const result = await client.messages.create({
-      body: message,
-      from: fromNumber,
-      to: toNumber
-    });
+    const result = await withRetry(
+      () => client.messages.create({
+        body: message,
+        from: fromNumber,
+        to: toNumber
+      }),
+      { maxAttempts: 2 }
+    );
 
     logger.info(`Twilio WhatsApp message sent to ${to}, sid=${result.sid}`);
     return { success: true, messageId: result.sid };

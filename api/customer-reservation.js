@@ -36,7 +36,7 @@ function checkPhoneVerifyRateLimit(reservationId) {
 }
 
 function recordPhoneVerifyFailure(reservationId) {
-  const entry = phoneVerifyAttempts.get(reservationId) || { failures: 0, blockedUntil: 0 };
+  const entry = phoneVerifyAttempts.get(reservationId) || { failures: 0, blockedUntil: 0, createdAt: Date.now() };
   entry.failures += 1;
   if (entry.failures >= PHONE_VERIFY_MAX_ATTEMPTS) {
     entry.blockedUntil = Date.now() + PHONE_VERIFY_BLOCK_MS;
@@ -49,10 +49,14 @@ function clearPhoneVerifyFailures(reservationId) {
 }
 
 // Clean up expired entries every 10 minutes
+// Removes blocked entries whose block has expired AND stale entries older than 30 minutes
+const PHONE_VERIFY_STALE_MS = 30 * 60 * 1000; // 30 minutes
 setInterval(() => {
   const now = Date.now();
   for (const [id, entry] of phoneVerifyAttempts) {
-    if (now > entry.blockedUntil && entry.failures >= PHONE_VERIFY_MAX_ATTEMPTS) {
+    const isBlockExpired = entry.failures >= PHONE_VERIFY_MAX_ATTEMPTS && now > entry.blockedUntil;
+    const isStale = entry.createdAt && (now - entry.createdAt > PHONE_VERIFY_STALE_MS);
+    if (isBlockExpired || isStale) {
       phoneVerifyAttempts.delete(id);
     }
   }

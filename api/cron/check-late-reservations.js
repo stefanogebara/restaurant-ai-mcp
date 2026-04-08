@@ -100,26 +100,25 @@ module.exports = async (req, res) => {
 
         logger.info(`Marked as no-show: ${resId} (${customerName} at ${time})`);
 
-        // If tables were assigned, release them back to Available status
+        // If tables were assigned, release them back to Available status (batched, scoped by restaurant_id)
         if (tableIds && tableIds.length > 0) {
-          for (const tableId of tableIds) {
-            try {
-              const { error: tableError } = await supabaseAdmin
-                .from('tables')
-                .update({
-                  status: 'available',
-                  current_service_id: null
-                })
-                .eq('id', tableId);
+          try {
+            const { error: tableError } = await supabaseAdmin
+              .from('tables')
+              .update({
+                status: 'available',
+                current_service_id: null
+              })
+              .in('id', tableIds)
+              .eq('restaurant_id', reservationRestaurantId);
 
-              if (tableError) {
-                logger.error(`Failed to release table ${tableId}:`, tableError.message);
-              } else {
-                logger.info(`Released table ${tableId}`);
-              }
-            } catch (tableError) {
-              logger.error(`Failed to release table ${tableId}:`, tableError.message);
+            if (tableError) {
+              logger.error(`Failed to release tables [${tableIds.join(', ')}]:`, tableError.message);
+            } else {
+              logger.info(`Released ${tableIds.length} table(s) [${tableIds.join(', ')}] for restaurant ${reservationRestaurantId}`);
             }
+          } catch (tableError) {
+            logger.error(`Failed to release tables [${tableIds.join(', ')}]:`, tableError.message);
           }
         }
 

@@ -45,6 +45,13 @@ const RATE_LIMITS = {
     message: 'Too many demo creation attempts. Please try again in 15 minutes.',
   },
 
+  // Tight limit for public enumeration endpoints (booking-qr, identify-restaurant)
+  public_enumeration: {
+    windowMs: 60 * 1000,      // 1 minute
+    maxRequests: 20,          // 20 requests per minute
+    message: 'Too many requests. Please slow down.',
+  },
+
   // Standard API limits
   api: {
     windowMs: 60 * 1000,      // 1 minute
