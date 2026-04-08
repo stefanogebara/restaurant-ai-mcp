@@ -7,6 +7,7 @@ import ErrorBoundary from '../../components/common/ErrorBoundary';
 import LandingNav from '../components/LandingNav';
 import HeroSection from '../components/HeroSection';
 import PresetDemoSection from '../components/PresetDemoSection';
+import VoiceWidgetSection from '../components/VoiceWidgetSection';
 import WhatsAppWidgetSection from '../components/WhatsAppWidgetSection';
 import BeforeAfterSection from '../components/BeforeAfterSection';
 import HeroAnimation from '../components/HeroAnimation';
@@ -75,12 +76,15 @@ export default function LandingPage() {
       {/* 2. Try it — 3 preset restaurant demos, zero friction */}
       <PresetDemoSection />
 
-      {/* 3. Text our AI — WhatsApp widget with real number */}
+      {/* 3. Call our AI — voice widget with ElevenLabs agent */}
+      <ErrorBoundary silent>
+        <VoiceWidgetSection />
+      </ErrorBoundary>
+
+      {/* 4. Text our AI — WhatsApp widget with real number */}
       <WhatsAppWidgetSection />
 
-      {/* 4. See Seatable in action — Remotion animation showcase */}
-      {/* Silent error boundary: Remotion can fail (license, AudioContext, version mismatch)
-          — gracefully hide rather than crash the entire landing page */}
+      {/* 5. See Seatable in action — Remotion animation showcase */}
       <ErrorBoundary silent>
         <section className="py-20 px-6 sm:px-16">
           <div className="max-w-[1000px] mx-auto text-center">
@@ -89,20 +93,20 @@ export default function LandingPage() {
         </section>
       </ErrorBoundary>
 
-      {/* 5. Dashboard Walkthrough — animated "silent movie" of AI features */}
+      {/* 6. Dashboard Walkthrough — animated "silent movie" of AI features */}
       <ErrorBoundary silent>
         <DashboardWalkthroughSection />
       </ErrorBoundary>
 
-      {/* 6. Before/After — animated side-by-side visual demo */}
+      {/* 7. Before/After — animated side-by-side visual demo */}
       <BeforeAfterSection />
 
-      {/* 7. Share prompt — viral referral */}
+      {/* 8. Share prompt — viral referral */}
       <div className="max-w-md mx-auto px-6 -mt-8 mb-8">
         <SharePrompt location="landing" />
       </div>
 
-      {/* 8. Pricing */}
+      {/* 9. Pricing */}
       <PricingSection />
 
       {/* 7. Final CTA */}
