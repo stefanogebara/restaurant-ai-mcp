@@ -33,12 +33,9 @@ const navSections: NavSection[] = [
     label: 'AI',
     items: [
       { path: '/host-dashboard/manager-ai', label: 'Manager AI', requiredFeature: 'overview' },
-      { path: '/host-dashboard/voice-settings', label: 'Voice Agent', requiredFeature: 'voiceAI' },
+      { path: '/host-dashboard/voice-settings', label: 'Voice & Calls', requiredFeature: 'voiceAI' },
       { path: '/host-dashboard/whatsapp', label: 'WhatsApp', requiredFeature: 'overview' },
-      { path: '/host-dashboard/campaigns', label: 'Campaigns', requiredFeature: 'advancedAnalytics' },
-      { path: '/host-dashboard/coupons', label: 'Coupons', requiredFeature: 'advancedAnalytics' },
-      { path: '/host-dashboard/events', label: 'Events', requiredFeature: 'advancedAnalytics' },
-      { path: '/host-dashboard/calls', label: 'Call History', requiredFeature: 'aiAgentTracking' },
+      { path: '/host-dashboard/campaigns', label: 'Marketing', requiredFeature: 'advancedAnalytics' },
     ]
   },
   {
@@ -112,6 +109,14 @@ export default function Sidebar() {
   const isActive = (path: string) => {
     if (path === '/host-dashboard/simple') {
       return location.pathname === '/host-dashboard/simple' || location.pathname === '/host-dashboard';
+    }
+    // Voice & Calls highlights for both voice-settings and calls pages
+    if (path === '/host-dashboard/voice-settings') {
+      return location.pathname.startsWith('/host-dashboard/voice-settings') || location.pathname.startsWith('/host-dashboard/calls');
+    }
+    // Marketing highlights for campaigns, coupons, and events
+    if (path === '/host-dashboard/campaigns') {
+      return location.pathname.startsWith('/host-dashboard/campaigns') || location.pathname.startsWith('/host-dashboard/coupons') || location.pathname.startsWith('/host-dashboard/events');
     }
     return location.pathname.startsWith(path);
   };
