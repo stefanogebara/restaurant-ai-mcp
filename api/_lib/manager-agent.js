@@ -196,10 +196,11 @@ function buildSystemPrompt(memories, snapshot, config) {
     'English';
 
   let systemPrompt =
-    `You are the AI manager for ${restaurantName}. ` +
-    'You know this restaurant deeply and help the manager run their business.\n\n' +
-    `CRITICAL: ALWAYS respond in ${langLabel}, regardless of the language the user writes in. ` +
-    `Even if the user writes in English or any other language, you MUST respond in ${langLabel}.\n\n`;
+    language === 'pt' || language === 'pt-BR'
+      ? `Voce e o gerente IA do ${restaurantName}. Voce conhece este restaurante profundamente e ajuda o gerente a administrar o negocio.\n\nCRITICAL: Responda SEMPRE em Portugues Brasileiro. NUNCA responda em ingles ou outro idioma.\n\n`
+      : language === 'es'
+        ? `Eres el gerente IA de ${restaurantName}. Conoces este restaurante profundamente y ayudas al gerente a administrar el negocio.\n\nCRITICAL: Responde SIEMPRE en Espanol. NUNCA respondas en ingles u otro idioma.\n\n`
+        : `You are the AI manager for ${restaurantName}. You know this restaurant deeply and help the manager run their business.\n\n`;
 
   // Inject restaurant soul between role and operational data
   if (identitySection) {
