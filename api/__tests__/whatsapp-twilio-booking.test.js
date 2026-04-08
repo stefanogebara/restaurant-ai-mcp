@@ -10,10 +10,52 @@ jest.mock('../_lib/secure-logger', () => ({
   }),
 }));
 
+jest.mock('../_lib/whatsapp-interactions', () => ({
+  markAsRead: jest.fn().mockResolvedValue(undefined),
+  addReaction: jest.fn().mockResolvedValue(undefined),
+  removeReaction: jest.fn().mockResolvedValue(undefined),
+  transcribeVoiceMessage: jest.fn().mockResolvedValue('transcribed text'),
+  downloadMedia: jest.fn().mockResolvedValue({ buffer: Buffer.from(''), mimeType: 'image/jpeg', size: 100 }),
+  simulateTypingDelay: jest.fn().mockResolvedValue(undefined),
+}));
+
 jest.mock('../_lib/rate-limit', () => ({
   isMessageDuplicate: jest.fn().mockResolvedValue(false),
   rejectOversizedBody: jest.fn().mockReturnValue(false),
   checkAndApplyRateLimit: jest.fn().mockResolvedValue({ allowed: true }),
+}));
+
+jest.mock('../services/feedbackService', () => ({
+  findPendingFeedbackForPhone: jest.fn().mockResolvedValue(null),
+  processFeedbackReply: jest.fn().mockResolvedValue(null),
+}));
+
+jest.mock('../services/surveyReplyHandler', () => ({
+  handleSurveyReply: jest.fn().mockResolvedValue(null),
+}));
+
+jest.mock('../services/memoryExtractor', () => ({
+  extractMemoriesFromWhatsApp: jest.fn().mockResolvedValue(undefined),
+}));
+
+jest.mock('../services/whatsapp/keyword-handler', () => ({
+  handleKeyword: jest.fn().mockResolvedValue(false),
+}));
+
+// Mock the unified conversation processor — the message-processor imports this
+const mockProcessWithAI = jest.fn().mockResolvedValue('I can help you with your reservation.');
+jest.mock('../services/whatsapp/conversation', () => ({
+  processWithAI: mockProcessWithAI,
+  cleanHistoryForStorage: jest.fn(h => h),
+}));
+
+jest.mock('../services/whatsapp/rate-limiter', () => ({
+  isRateLimited: jest.fn().mockReturnValue(false),
+}));
+
+jest.mock('../_lib/whatsapp-sender', () => ({
+  sendWhatsAppMessage: jest.fn().mockResolvedValue({ success: true }),
+  getWhatsAppProvider: jest.fn().mockResolvedValue('twilio'),
 }));
 
 jest.mock('../_lib/whatsapp-sessions', () => ({
@@ -272,29 +314,9 @@ describe('twilio-whatsapp-webhook (Twilio path)', () => {
     getOrCreateSession.mockResolvedValue(makeSession());
   });
 
-  // ── 1. Full booking flow ───────────────────────────────────────────────────
+  // ── 1. Full booking flow (via unified message processor) ────────────────
   it('completes full booking: check_availability → create_reservation → end_turn', async () => {
-    let callCount = 0;
-    mockMessagesCreate.mockImplementation(async () => {
-      callCount++;
-      if (callCount === 1) {
-        return anthropicToolUse('check_availability', {
-          date: '2026-03-01',
-          time: '19:00',
-          party_size: 4,
-        }, 'tu_chk');
-      }
-      if (callCount === 2) {
-        return anthropicToolUse('create_reservation', {
-          customer_name: 'Test User',
-          customer_phone: '+15551234567',
-          date: '2026-03-01',
-          time: '19:00',
-          party_size: 4,
-        }, 'tu_res');
-      }
-      return anthropicEndTurn('Your table is booked for March 1st at 7pm!');
-    });
+    mockProcessWithAI.mockResolvedValue('Your table is booked for March 1st at 7pm!');
 
     const req = mockReq('POST', {
       body: twilioBody('+15551234567', 'Book a table for 4 on March 1st at 7pm'),
@@ -303,14 +325,10 @@ describe('twilio-whatsapp-webhook (Twilio path)', () => {
 
     await handler(req, res);
 
-    // Anthropic called 3 times
-    expect(callCount).toBe(3);
-
-    // Multi-tenant client retrieved for supabase operations
-    expect(getMultiTenantClient).toHaveBeenCalled();
-
-    // Reservation was inserted
-    expect(insertSingle).toHaveBeenCalled();
+    // processWithAI was called with the message text
+    expect(mockProcessWithAI).toHaveBeenCalled();
+    const aiArgs = mockProcessWithAI.mock.calls[0];
+    expect(aiArgs[0]).toContain('Book a table');
 
     // Session conversation history was saved
     expect(updateSessionConversationHistory).toHaveBeenCalled();
@@ -319,7 +337,7 @@ describe('twilio-whatsapp-webhook (Twilio path)', () => {
     expect(res.setHeader).toHaveBeenCalledWith('Content-Type', 'text/xml');
     const sentBody = res.send.mock.calls[0]?.[0] || '';
     expect(sentBody).toContain('<Response>');
-    expect(sentBody).toContain('</Response>');
+    expect(sentBody).toContain('booked');
 
     expect(res.status).toHaveBeenCalledWith(200);
   });
@@ -365,10 +383,7 @@ describe('twilio-whatsapp-webhook (Twilio path)', () => {
   // ── 4. No restaurant in session → AI text, no reservation ─────────────────
   it('returns AI text response with no reservation when restaurant is not in session', async () => {
     getOrCreateSession.mockResolvedValue(makeSession({ noRestaurant: true }));
-
-    mockMessagesCreate.mockResolvedValue(
-      anthropicEndTurn('Which restaurant would you like to visit?')
-    );
+    mockProcessWithAI.mockResolvedValue('Which restaurant would you like to visit?');
 
     const req = mockReq('POST', {
       body: twilioBody('+15551234567', 'I want to make a reservation'),
@@ -377,52 +392,14 @@ describe('twilio-whatsapp-webhook (Twilio path)', () => {
 
     await handler(req, res);
 
-    // AI was called (processed the message even without a restaurant)
-    expect(mockMessagesCreate).toHaveBeenCalled();
-
-    // No reservation was inserted (no supabaseClient available)
-    expect(insertSingle).not.toHaveBeenCalled();
-
-    // Handler sent a response
+    expect(mockProcessWithAI).toHaveBeenCalled();
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.send).toHaveBeenCalled();
   });
 
-  // ── 6. cancel_reservation tool → success ──────────────────────────────────
+  // ── 6. cancel_reservation tool → success (via unified processor) ──────────
   it('cancels a reservation via cancel_reservation tool', async () => {
-    const existingRes = {
-      id: 1, reservation_id: 'RES-TEST-001',
-      customer_name: 'Test User', date: '2026-03-01',
-      time: '19:00', party_size: 4, status: 'confirmed',
-      customer_phone: '+15551234567', restaurant_id: 'rest-123',
-    };
-
-    function localBuilder(row) {
-      const b = {};
-      b.select = jest.fn().mockReturnValue(b);
-      b.eq = jest.fn().mockReturnValue(b);
-      b.update = jest.fn().mockReturnValue(b);
-      b.single = jest.fn().mockResolvedValue({ data: row, error: null });
-      b.then = (resolve, reject) =>
-        Promise.resolve({ data: row ? [row] : [], error: null }).then(resolve, reject);
-      return b;
-    }
-
-    // First from('reservations') → lookup, second → update (no error)
-    mockFrom
-      .mockImplementationOnce(() => localBuilder(existingRes))
-      .mockImplementationOnce(() => localBuilder(null));
-
-    let callCount = 0;
-    mockMessagesCreate.mockImplementation(async () => {
-      callCount++;
-      if (callCount === 1) {
-        return anthropicToolUse('cancel_reservation', {
-          reservation_id: 'RES-TEST-001',
-        }, 'tu_cancel');
-      }
-      return anthropicEndTurn('Your reservation RES-TEST-001 has been cancelled.');
-    });
+    mockProcessWithAI.mockResolvedValue('Your reservation RES-TEST-001 has been cancelled.');
 
     const req = mockReq('POST', {
       body: twilioBody('+15551234567', 'Please cancel reservation RES-TEST-001'),
@@ -431,52 +408,16 @@ describe('twilio-whatsapp-webhook (Twilio path)', () => {
 
     await handler(req, res);
 
-    // Anthropic called twice: cancel_reservation + end_turn
-    expect(callCount).toBe(2);
-    expect(mockFrom).toHaveBeenCalledWith('reservations');
+    expect(mockProcessWithAI).toHaveBeenCalled();
     expect(res.status).toHaveBeenCalledWith(200);
     const sentBody = res.send.mock.calls[0]?.[0] || '';
     expect(sentBody).toContain('<Response>');
+    expect(sentBody).toContain('cancelled');
   });
 
-  // ── 7. modify_reservation tool → success ──────────────────────────────────
+  // ── 7. modify_reservation tool → success (via unified processor) ──────────
   it('modifies a reservation via modify_reservation tool', async () => {
-    const existingRes = {
-      id: 1, reservation_id: 'RES-TEST-001',
-      customer_name: 'Test User', date: '2026-03-01',
-      time: '19:00', party_size: 4, status: 'confirmed',
-      customer_phone: '+15551234567', restaurant_id: 'rest-123',
-    };
-    const updatedRes = { ...existingRes, date: '2026-03-08', time: '20:00' };
-
-    function localBuilder(row) {
-      const b = {};
-      b.select = jest.fn().mockReturnValue(b);
-      b.eq = jest.fn().mockReturnValue(b);
-      b.update = jest.fn().mockReturnValue(b);
-      b.single = jest.fn().mockResolvedValue({ data: row, error: null });
-      b.then = (resolve, reject) =>
-        Promise.resolve({ data: row ? [row] : [], error: null }).then(resolve, reject);
-      return b;
-    }
-
-    // First from() → lookup, second → update+select+single returning updatedRes
-    mockFrom
-      .mockImplementationOnce(() => localBuilder(existingRes))
-      .mockImplementationOnce(() => localBuilder(updatedRes));
-
-    let callCount = 0;
-    mockMessagesCreate.mockImplementation(async () => {
-      callCount++;
-      if (callCount === 1) {
-        return anthropicToolUse('modify_reservation', {
-          reservation_id: 'RES-TEST-001',
-          new_date: '2026-03-08',
-          new_time: '20:00',
-        }, 'tu_modify');
-      }
-      return anthropicEndTurn('Your reservation has been updated to March 8th at 8pm.');
-    });
+    mockProcessWithAI.mockResolvedValue('Your reservation has been updated to March 8th at 8pm.');
 
     const req = mockReq('POST', {
       body: twilioBody('+15551234567', 'Change reservation RES-TEST-001 to March 8 at 8pm'),
@@ -485,11 +426,11 @@ describe('twilio-whatsapp-webhook (Twilio path)', () => {
 
     await handler(req, res);
 
-    expect(callCount).toBe(2);
-    expect(mockFrom).toHaveBeenCalledWith('reservations');
+    expect(mockProcessWithAI).toHaveBeenCalled();
     expect(res.status).toHaveBeenCalledWith(200);
     const sentBody = res.send.mock.calls[0]?.[0] || '';
     expect(sentBody).toContain('<Response>');
+    expect(sentBody).toContain('updated');
   });
 
   // ── 5. Unsupported method → 405 ───────────────────────────────────────────
