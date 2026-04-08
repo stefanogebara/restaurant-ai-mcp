@@ -125,7 +125,7 @@ async function startOrResumeInterview(sessionId, restaurantConfigId, intelligenc
   const { data: existingSession } = await supabaseAdmin
     .schema('restaurant')
     .from('learning_interviews')
-    .select('*')
+    .select('id, restaurant_config_id, status, current_topic_index, messages, extracted_knowledge, intelligence_context, started_at')
     .eq('id', sessionId)
     .single();
 
@@ -220,7 +220,7 @@ async function processInterviewMessage(sessionId, userMessage) {
   const { data: session, error: fetchError } = await supabaseAdmin
     .schema('restaurant')
     .from('learning_interviews')
-    .select('*')
+    .select('id, restaurant_config_id, status, current_topic_index, messages, extracted_knowledge, intelligence_context')
     .eq('id', sessionId)
     .single();
 

@@ -8,7 +8,7 @@ const { supabase, handleSupabaseResponse, logger } = require('./clients');
 // ============ TABLES ============
 
 const getTables = async (restaurantId, filter = {}) => {
-  let query = supabase.from('tables').select('*')
+  let query = supabase.from('tables').select('id, table_number, capacity, location, status, current_service_id, is_active, shape, is_fixed_seating, is_joinable, joinable_with, position_x, position_y, width, height, rotation')
     .eq('restaurant_id', restaurantId)
     .eq('is_active', true);
 
@@ -53,7 +53,7 @@ const getTables = async (restaurantId, filter = {}) => {
 const getAvailableTables = async (restaurantId) => {
   const { data, error } = await supabase
     .from('tables')
-    .select('*')
+    .select('id, table_number, capacity, location, status, shape, is_fixed_seating, is_joinable, joinable_with')
     .eq('restaurant_id', restaurantId)
     .eq('status', 'available')
     .eq('is_active', true);
@@ -85,7 +85,7 @@ const getAvailableTables = async (restaurantId) => {
 const getTableByNumber = async (restaurantId, tableNumber) => {
   const { data, error } = await supabase
     .from('tables')
-    .select('*')
+    .select('id, table_number, capacity, location, status, current_service_id, shape, is_fixed_seating, is_joinable, joinable_with, position_x, position_y, width, height, rotation')
     .eq('restaurant_id', restaurantId)
     .eq('table_number', tableNumber)
     .single();
@@ -123,8 +123,8 @@ const getTableByNumber = async (restaurantId, tableNumber) => {
 const updateTable = async (restaurantId, recordId, fields) => {
   const updates = {};
 
-  if (fields['Status']) updates.status = fields['Status'];
-  if (fields['Current Service ID'] !== undefined) updates.current_service_id = fields['Current Service ID'];
+  if (fields.status) updates.status = fields.status;
+  if (fields.current_service_id !== undefined) updates.current_service_id = fields.current_service_id;
 
   logger.info(`[updateTable] Updating table ${recordId} with:`, updates);
 
@@ -154,16 +154,14 @@ const updateTable = async (restaurantId, recordId, fields) => {
     success: true,
     data: {
       id: data.id,
-      fields: {
-        'Table Number': data.table_number,
-        'Status': data.status
-      }
+      table_number: data.table_number,
+      status: data.status
     }
   };
 };
 
 const updateTableStatus = async (restaurantId, recordId, status) => {
-  return updateTable(restaurantId, recordId, { 'Status': status });
+  return updateTable(restaurantId, recordId, { status });
 };
 
 /**
@@ -487,7 +485,7 @@ const deleteTable = async (restaurantId, tableId) => {
 const getTableById = async (restaurantId, tableId) => {
   const { data, error } = await supabase
     .from('tables')
-    .select('*')
+    .select('id, table_number, capacity, location, status, is_active, current_service_id, shape, is_fixed_seating, is_joinable, joinable_with, position_x, position_y, width, height, rotation, is_fixed, min_capacity, max_capacity, adjacent_tables, combination_group')
     .eq('restaurant_id', restaurantId)
     .eq('id', tableId)
     .single();
@@ -535,7 +533,7 @@ const getTableById = async (restaurantId, tableId) => {
 const getAllTablesAdmin = async (restaurantId) => {
   const { data, error } = await supabase
     .from('tables')
-    .select('*')
+    .select('id, table_number, capacity, location, status, is_active, current_service_id, shape, is_fixed_seating, is_joinable, joinable_with, position_x, position_y, width, height, rotation, is_fixed, min_capacity, max_capacity, adjacent_tables, combination_group')
     .eq('restaurant_id', restaurantId)
     .order('table_number', { ascending: true });
 
@@ -580,7 +578,7 @@ const getAllTablesAdmin = async (restaurantId) => {
 const getAllTables = async (restaurantId) => {
   const { data, error } = await supabase
     .from('tables')
-    .select('*')
+    .select('id, table_number, capacity, location, status, current_service_id, shape, is_fixed_seating, is_joinable, joinable_with, position_x, position_y, width, height, rotation, is_fixed, min_capacity, max_capacity, adjacent_tables, combination_group')
     .eq('restaurant_id', restaurantId)
     .eq('is_active', true)
     .order('table_number', { ascending: true });

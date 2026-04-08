@@ -17,7 +17,7 @@ async function getROISummary(days, reservationIds = []) {
   // Always use direct query with tenant scoping (RPC doesn't support restaurant_id filter)
   const { data, error } = await supabaseAdmin
     .from('ml_interventions')
-    .select('*')
+    .select('intervention_id, reservation_id, ml_risk_level, ml_risk_score, intervention_type, action_taken, actual_outcome, cost_of_intervention, value_saved, created_at, action_timestamp')
     .in('reservation_id', reservationIds)
     .gte('created_at', new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString());
 
@@ -71,7 +71,7 @@ async function getInterventionTimeline(days, limit = 20, reservationIds = []) {
 
   const { data, error } = await supabaseAdmin
     .from('ml_interventions')
-    .select('*')
+    .select('intervention_id, reservation_id, ml_risk_level, ml_risk_score, intervention_type, action_taken, actual_outcome, cost_of_intervention, value_saved, created_at, action_timestamp')
     .in('reservation_id', reservationIds)
     .gte('created_at', new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString())
     .order('created_at', { ascending: false })
@@ -105,7 +105,7 @@ async function getTypeBreakdown(days, reservationIds = []) {
 
   const { data, error } = await supabaseAdmin
     .from('ml_interventions')
-    .select('*')
+    .select('intervention_type, actual_outcome, cost_of_intervention, value_saved')
     .in('reservation_id', reservationIds)
     .gte('created_at', new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString());
 
@@ -161,7 +161,7 @@ async function getROITrend(days, reservationIds = []) {
 
   const { data, error } = await supabaseAdmin
     .from('ml_interventions')
-    .select('*')
+    .select('cost_of_intervention, value_saved, created_at')
     .in('reservation_id', reservationIds)
     .gte('created_at', new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString())
     .order('created_at', { ascending: true });
@@ -220,7 +220,7 @@ async function getQuickStats(reservationIds = []) {
 
     const { data: todayData, error: todayError } = await supabaseAdmin
       .from('ml_interventions')
-      .select('*')
+      .select('intervention_id')
       .in('reservation_id', reservationIds)
       .gte('created_at', today.toISOString());
 

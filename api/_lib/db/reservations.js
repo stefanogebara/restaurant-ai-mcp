@@ -11,7 +11,7 @@ const { sanitizeSearchQuery } = require('../validation');
 // ============ RESERVATIONS ============
 
 const getReservations = async (restaurantId, filter = {}) => {
-  let query = supabase.from('reservations').select('*')
+  let query = supabase.from('reservations').select('id, reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, special_requests, status, table_ids, checked_in_at, notes, ml_risk_score, ml_risk_level, ml_confidence, ml_model_version, ml_prediction_timestamp')
     .eq('restaurant_id', restaurantId);
 
   if (filter.status) {
@@ -33,25 +33,23 @@ const getReservations = async (restaurantId, filter = {}) => {
     data: {
       records: data.map(r => ({
         id: r.id,
-        fields: {
-          'Reservation ID': r.reservation_id,
-          'Customer Name': r.customer_name,
-          'Customer Phone': r.customer_phone,
-          'Customer Email': r.customer_email,
-          'Party Size': r.party_size,
-          'Date': r.date,
-          'Time': r.time,
-          'Special Requests': r.special_requests,
-          'Status': r.status,
-          'Table IDs': r.table_ids,
-          'Checked In At': r.checked_in_at,
-          'Notes': r.notes,
-          'ML Risk Score': r.ml_risk_score,
-          'ML Risk Level': r.ml_risk_level,
-          'ML Confidence': r.ml_confidence,
-          'ML Model Version': r.ml_model_version,
-          'ML Prediction Timestamp': r.ml_prediction_timestamp
-        }
+        reservation_id: r.reservation_id,
+        customer_name: r.customer_name,
+        customer_phone: r.customer_phone,
+        customer_email: r.customer_email,
+        party_size: r.party_size,
+        date: r.date,
+        time: r.time,
+        special_requests: r.special_requests,
+        status: r.status,
+        table_ids: r.table_ids,
+        checked_in_at: r.checked_in_at,
+        notes: r.notes,
+        ml_risk_score: r.ml_risk_score,
+        ml_risk_level: r.ml_risk_level,
+        ml_confidence: r.ml_confidence,
+        ml_model_version: r.ml_model_version,
+        ml_prediction_timestamp: r.ml_prediction_timestamp
       }))
     }
   };
@@ -60,7 +58,7 @@ const getReservations = async (restaurantId, filter = {}) => {
 const getReservationById = async (restaurantId, reservationId) => {
   const { data, error } = await supabase
     .from('reservations')
-    .select('*')
+    .select('id, reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, special_requests, status, table_ids, checked_in_at')
     .eq('restaurant_id', restaurantId)
     .eq('reservation_id', reservationId)
     .single();
@@ -72,19 +70,17 @@ const getReservationById = async (restaurantId, reservationId) => {
     success: true,
     data: {
       id: data.id,
-      fields: {
-        'Reservation ID': data.reservation_id,
-        'Customer Name': data.customer_name,
-        'Customer Phone': data.customer_phone,
-        'Customer Email': data.customer_email,
-        'Party Size': data.party_size,
-        'Date': data.date,
-        'Time': data.time,
-        'Special Requests': data.special_requests,
-        'Status': data.status,
-        'Table IDs': data.table_ids,
-        'Checked In At': data.checked_in_at
-      }
+      reservation_id: data.reservation_id,
+      customer_name: data.customer_name,
+      customer_phone: data.customer_phone,
+      customer_email: data.customer_email,
+      party_size: data.party_size,
+      date: data.date,
+      time: data.time,
+      special_requests: data.special_requests,
+      status: data.status,
+      table_ids: data.table_ids,
+      checked_in_at: data.checked_in_at
     }
   };
 };
@@ -94,17 +90,17 @@ const createReservation = async (restaurantId, fields) => {
     .from('reservations')
     .insert({
       restaurant_id: restaurantId,
-      reservation_id: fields['Reservation ID'],
-      customer_name: fields['Customer Name'],
-      customer_phone: fields['Customer Phone'],
-      customer_email: fields['Customer Email'],
-      party_size: fields['Party Size'],
-      date: fields['Date'],
-      time: fields['Time'],
-      special_requests: fields['Special Requests'],
-      status: fields['Status'] || 'pending',
-      table_ids: fields['Table IDs'] || [],
-      notes: fields['Notes']
+      reservation_id: fields.reservation_id,
+      customer_name: fields.customer_name,
+      customer_phone: fields.customer_phone,
+      customer_email: fields.customer_email,
+      party_size: fields.party_size,
+      date: fields.date,
+      time: fields.time,
+      special_requests: fields.special_requests,
+      status: fields.status || 'pending',
+      table_ids: fields.table_ids || [],
+      notes: fields.notes
     })
     .select()
     .single();
@@ -115,11 +111,9 @@ const createReservation = async (restaurantId, fields) => {
     success: true,
     data: {
       id: data.id,
-      fields: {
-        'Reservation ID': data.reservation_id,
-        'Customer Name': data.customer_name,
-        'Status': data.status
-      }
+      reservation_id: data.reservation_id,
+      customer_name: data.customer_name,
+      status: data.status
     }
   };
 };
@@ -128,25 +122,25 @@ const updateReservation = async (restaurantId, recordId, fields) => {
   const updates = {};
 
   // Core reservation fields
-  if (fields['Date']) updates.date = fields['Date'];
-  if (fields['Time']) updates.time = fields['Time'];
-  if (fields['Party Size']) updates.party_size = fields['Party Size'];
-  if (fields['Special Requests'] !== undefined) updates.special_requests = fields['Special Requests'];
-  if (fields['Updated At']) updates.updated_at = fields['Updated At'];
+  if (fields.date) updates.date = fields.date;
+  if (fields.time) updates.time = fields.time;
+  if (fields.party_size) updates.party_size = fields.party_size;
+  if (fields.special_requests !== undefined) updates.special_requests = fields.special_requests;
+  if (fields.updated_at) updates.updated_at = fields.updated_at;
 
   // Status and tracking fields
-  if (fields['Status']) updates.status = fields['Status'];
-  if (fields['Checked In At']) updates.checked_in_at = fields['Checked In At'];
-  if (fields['Table IDs']) updates.table_ids = fields['Table IDs'];
-  if (fields['Notes']) updates.notes = fields['Notes'];
-  if (fields['Customer History']) updates.customer_history = fields['Customer History'];
+  if (fields.status) updates.status = fields.status;
+  if (fields.checked_in_at) updates.checked_in_at = fields.checked_in_at;
+  if (fields.table_ids) updates.table_ids = fields.table_ids;
+  if (fields.notes) updates.notes = fields.notes;
+  if (fields.customer_history) updates.customer_history = fields.customer_history;
 
   // ML prediction fields
-  if (fields['ML Risk Score']) updates.ml_risk_score = fields['ML Risk Score'];
-  if (fields['ML Risk Level']) updates.ml_risk_level = fields['ML Risk Level'];
-  if (fields['ML Confidence']) updates.ml_confidence = fields['ML Confidence'];
-  if (fields['ML Model Version']) updates.ml_model_version = fields['ML Model Version'];
-  if (fields['ML Prediction Timestamp']) updates.ml_prediction_timestamp = fields['ML Prediction Timestamp'];
+  if (fields.ml_risk_score) updates.ml_risk_score = fields.ml_risk_score;
+  if (fields.ml_risk_level) updates.ml_risk_level = fields.ml_risk_level;
+  if (fields.ml_confidence) updates.ml_confidence = fields.ml_confidence;
+  if (fields.ml_model_version) updates.ml_model_version = fields.ml_model_version;
+  if (fields.ml_prediction_timestamp) updates.ml_prediction_timestamp = fields.ml_prediction_timestamp;
 
   // Determine if recordId is a UUID or reservation_id
   const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(recordId);
@@ -166,10 +160,8 @@ const updateReservation = async (restaurantId, recordId, fields) => {
     success: true,
     data: {
       id: data.id,
-      fields: {
-        'Reservation ID': data.reservation_id,
-        'Status': data.status
-      }
+      reservation_id: data.reservation_id,
+      status: data.status
     }
   };
 };
@@ -177,7 +169,7 @@ const updateReservation = async (restaurantId, recordId, fields) => {
 // ============ RESERVATION HELPERS ============
 
 const findReservation = async (restaurantId, { reservation_id, customer_phone, customer_name }) => {
-  let query = supabase.from('reservations').select('*')
+  let query = supabase.from('reservations').select('id, reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, special_requests, status')
     .eq('restaurant_id', restaurantId);
 
   if (reservation_id) {
@@ -235,7 +227,7 @@ const cancelReservation = async (restaurantId, reservationId) => {
   }
 
   const updateResult = await updateReservation(restaurantId, result.reservation.record_id, {
-    'Status': 'cancelled'
+    status: 'cancelled'
   });
 
   if (!updateResult.success) {
@@ -251,8 +243,8 @@ const cancelReservation = async (restaurantId, reservationId) => {
 
 const markReservationAsNoShow = async (restaurantId, recordId) => {
   const updateResult = await updateReservation(restaurantId, recordId, {
-    'Status': 'no-show',
-    'Notes': 'Automatically marked as no-show - 20+ minutes late without check-in'
+    status: 'no-show',
+    notes: 'Automatically marked as no-show - 20+ minutes late without check-in'
   });
 
   if (!updateResult.success) {
@@ -273,7 +265,7 @@ const getUpcomingReservations = async (restaurantId, timezone) => {
 
   const { data, error } = await supabase
     .from('reservations')
-    .select('*')
+    .select('id, reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, special_requests, status, checked_in_at, ml_risk_score, ml_risk_level, ml_confidence, ml_model_version, deposit_amount, deposit_payment_intent_id')
     .eq('restaurant_id', restaurantId)
     // SAFE: today and currentTime are server-generated date strings from getLocalDate/getLocalTime,
     // not user input. No injection risk via .or() interpolation.

@@ -292,7 +292,7 @@ async function getCustomerHistory(customerPhone) {
   try {
     const { data, error } = await supabaseAdmin
       .from('customer_history')
-      .select('*')
+      .select('customer_phone, total_visits, total_no_shows, total_cancellations, last_visit_date, avg_party_size, preferred_day, preferred_time, is_vip, no_show_streak, cancellation_streak')
       .eq('customer_phone', customerPhone)
       .single();
 

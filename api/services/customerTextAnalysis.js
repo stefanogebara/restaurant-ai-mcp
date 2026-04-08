@@ -40,6 +40,7 @@ async function extractCustomerSignals(customerId) {
     const textHash = computeTextHash(textSources.allText);
 
     // Step 3: Check cache
+    // All columns needed — returned as cache hit result
     const { data: cached } = await supabaseAdmin
       .from('customer_text_signals')
       .select('*')

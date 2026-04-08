@@ -85,7 +85,7 @@ async function handleGet(req, res) {
     const { data: restaurant, error: dbError } = await supabaseAdmin
       .schema('restaurant')
       .from('restaurant_config')
-      .select('*')
+      .select('id, restaurant_name, elevenlabs_agent_id, agent_voice_id, agent_voice_name, agent_language, voice_settings, tts_model_id, agent_updated_at')
       .eq('id', restaurantId)
       .maybeSingle();
 
@@ -225,7 +225,7 @@ async function handlePatch(req, res) {
     const { data: restaurant, error: dbError } = await supabaseAdmin
       .schema('restaurant')
       .from('restaurant_config')
-      .select('*')
+      .select('id, restaurant_name, elevenlabs_agent_id')
       .eq('id', restaurantId)
       .maybeSingle();
 

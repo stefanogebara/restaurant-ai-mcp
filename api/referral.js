@@ -58,7 +58,7 @@ async function handleGetCode(req, res) {
   const { data: config, error } = await supabaseAdmin
     .schema('restaurant')
     .from('restaurant_config')
-    .select('*')
+    .select('id, restaurant_name, referral_code')
     .eq('id', restaurantId)
     .single();
 

@@ -25,7 +25,7 @@ async function getAllReservations(restaurantId) {
   try {
     const { data, error } = await supabaseAdmin
       .from('reservations')
-      .select('*')
+      .select('date, time, status, party_size, customer_name, reservation_id, created_at')
       .eq('restaurant_id', restaurantId);
 
     if (error) throw error;

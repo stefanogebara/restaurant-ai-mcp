@@ -33,11 +33,11 @@ async function refreshVoiceAgentPrompt(restaurantId) {
     return { skipped: true, reason: 'no_api_key' };
   }
 
-  // Fetch full restaurant config
+  // Fetch restaurant config — all fields needed for buildPersonaPrompt
   const { data: config, error: dbError } = await supabaseAdmin
     .schema('restaurant')
     .from('restaurant_config')
-    .select('*')
+    .select('id, restaurant_name, restaurant_type, phone, email, address, city, country, business_hours, avg_dining_duration_minutes, timezone, language, cancellation_policy, special_notes, advance_booking_days, buffer_time, elevenlabs_agent_id, agent_name, agent_greeting, ai_config, metric_profile')
     .eq('id', restaurantId)
     .single();
 

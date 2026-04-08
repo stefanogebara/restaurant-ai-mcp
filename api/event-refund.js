@@ -52,6 +52,7 @@ module.exports = async (req, res) => {
 
   try {
     // --- Fetch booking (scoped to restaurant) ---
+    // All event_bookings fields needed for refund flow
     const { data: booking, error: bookingError } = await eventsDb()
       .from('event_bookings')
       .select('*')

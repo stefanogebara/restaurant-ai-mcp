@@ -251,7 +251,7 @@ async function handleGetAvailability(req, res) {
   // Get existing reservations for this date
   const { data: reservations, error: resError } = await supabaseAdmin
     .from('reservations')
-    .select('*')
+    .select('time, party_size, status')
     .eq('restaurant_id', restaurant_id)
     .eq('date', date)
     .in('status', ['confirmed', 'pending', 'Confirmed', 'Pending', 'Seated']);
@@ -289,13 +289,11 @@ async function handleGetAvailability(req, res) {
   // Final fallback
   if (totalCapacity === 0) totalCapacity = 60;
 
-  // Convert reservations to the format expected by availability calculator
+  // Pass reservations directly (availability calculator uses snake_case)
   const formattedReservations = (reservations || []).map(r => ({
-    fields: {
-      'Time': r.time,
-      'Party Size': r.party_size,
-      'Status': r.status
-    }
+    time: r.time,
+    party_size: r.party_size,
+    status: r.status
   }));
 
   // Generate time slots at 30-minute intervals during operating hours
@@ -489,7 +487,9 @@ async function handleCreateReservation(req, res) {
   if (totalCapacity === 0) totalCapacity = 60;
 
   const formatted = (existingRes || []).map(r => ({
-    fields: { 'Time': r.time, 'Party Size': r.party_size, 'Status': r.status }
+    time: r.time,
+    party_size: r.party_size,
+    status: r.status
   }));
 
   const availCheck = checkTimeSlotAvailability(time, partySize, formatted, totalCapacity);

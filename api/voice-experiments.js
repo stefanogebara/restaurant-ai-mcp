@@ -44,7 +44,7 @@ async function getActiveExperiment(restaurantId) {
   const { data, error } = await supabaseAdmin
     .schema('restaurant')
     .from('voice_experiments')
-    .select('*')
+    .select('id, restaurant_id, status, branch_id, branch_name, parent_version_id, variant_config, traffic_split, started_at, completed_at, result, created_at')
     .eq('restaurant_id', restaurantId)
     .in('status', ['draft', 'running'])
     .maybeSingle();

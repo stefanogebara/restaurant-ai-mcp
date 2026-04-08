@@ -336,7 +336,7 @@ async function importFromDNA(restaurantId, guestPhone) {
     // DNA tables use customer_id (which IS the phone number) and have no restaurant_id column
     const { data: profile } = await supabaseAdmin
       .from('customer_behavioral_profiles')
-      .select('*')
+      .select('id, preferred_day_type, preferred_time_slot, typical_party_size, dining_style, dietary_restrictions, preferred_seating, primary_occasion_type, avg_check_per_person')
       .eq('customer_id', guestPhone)
       .maybeSingle();
 
@@ -414,7 +414,7 @@ async function importFromDNA(restaurantId, guestPhone) {
     // Import from customer_text_signals (keyed by customer_id = phone)
     const { data: signals } = await supabaseAdmin
       .from('customer_text_signals')
-      .select('*')
+      .select('id, dietary_restrictions, cuisine_preferences, seating_preferences, vip_signals, sentiment_summary')
       .eq('customer_id', guestPhone)
       .maybeSingle();
 
@@ -471,7 +471,7 @@ async function importFromDNA(restaurantId, guestPhone) {
     // Import from customer_occasions (keyed by customer_id = phone)
     const { data: occasions } = await supabaseAdmin
       .from('customer_occasions')
-      .select('*')
+      .select('id, occasion_type, occasion_date, special_requests')
       .eq('customer_id', guestPhone);
 
     if (occasions && occasions.length > 0) {

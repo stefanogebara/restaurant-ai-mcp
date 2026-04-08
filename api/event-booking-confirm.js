@@ -97,6 +97,7 @@ module.exports = async (req, res) => {
 
   try {
     // --- Fetch booking ---
+    // All event_bookings fields needed for confirmation flow
     const { data: booking, error: bookingError } = await eventsDb()
       .from('event_bookings')
       .select('*')

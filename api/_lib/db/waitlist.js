@@ -15,9 +15,10 @@ const logger = createSecureLogger('Waitlist');
  * @param {object} options - { status, active, limit }
  */
 const getWaitlistEntries = async (restaurantId, options = {}) => {
+  // select all columns — entries are returned directly to the client and all fields are needed
   let query = supabase
     .from('waitlist')
-    .select('*')
+    .select('id, waitlist_id, restaurant_id, customer_name, customer_phone, customer_whatsapp, party_size, notes, estimated_wait_minutes, status, source, added_at, notified_at, updated_at')
     .eq('restaurant_id', restaurantId);
 
   if (options.active === true) {
@@ -161,7 +162,7 @@ const getWaitlistByPhone = async (restaurantId, phone) => {
   try {
     const { data, error } = await supabaseAdmin
       .from('waitlist')
-      .select('*')
+      .select('id, waitlist_id, restaurant_id, customer_name, customer_phone, customer_whatsapp, party_size, notes, estimated_wait_minutes, status, source, added_at, notified_at, updated_at')
       .eq('restaurant_id', restaurantId)
       .eq('customer_whatsapp', phone)
       .eq('status', 'waiting')

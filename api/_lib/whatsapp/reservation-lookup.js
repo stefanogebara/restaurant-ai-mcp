@@ -46,7 +46,7 @@ async function findRecentReservation(phoneNumber, restaurantId = null) {
 
     let query = centralSupabase
       .from('reservations')
-      .select('*')
+      .select('id, reservation_id, restaurant_id, customer_name, customer_phone, customer_email, party_size, date, time, special_requests, status')
       .in('customer_phone', phoneVariants)
       .in('status', ['confirmed', 'pending'])
       .gte('date', today)

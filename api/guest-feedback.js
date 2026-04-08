@@ -68,6 +68,7 @@ async function handleList(req, res, restaurantId) {
   const limit = Math.min(parseInt(req.query.limit) || 20, 100);
   const offset = parseInt(req.query.offset) || 0;
 
+  // TODO: Replace select('*') with explicit columns once guest_feedback schema is confirmed
   const { data, error } = await supabaseAdmin
     .from('guest_feedback')
     .select('*')

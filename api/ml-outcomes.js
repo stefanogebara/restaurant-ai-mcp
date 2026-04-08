@@ -123,7 +123,7 @@ async function handleRecordOutcome(req, res) {
 
     const { data: reservation, error: fetchError } = await supabaseAdmin
       .from('reservations')
-      .select('*')
+      .select('id, reservation_id, customer_name, customer_phone, party_size, date, time, status, ml_risk_score, ml_risk_level, ml_confidence, ml_model_version, ml_prediction_timestamp, intervention_taken, intervention_type')
       .eq('reservation_id', reservation_id)
       .eq('restaurant_id', restaurantId)
       .single();
@@ -287,7 +287,7 @@ async function handleROISummary(req, res) {
     // Fetch intervention records scoped to this restaurant's reservations
     const { data: interventions, error } = await supabaseAdmin
       .from('ml_interventions')
-      .select('*')
+      .select('intervention_id, reservation_id, ml_risk_level, ml_risk_score, intervention_type, action_taken, actual_outcome, cost_of_intervention, value_saved, created_at, action_timestamp')
       .in('reservation_id', reservationIds)
       .order('created_at', { ascending: false });
 
@@ -436,7 +436,7 @@ async function handleMarkActionTaken(req, res) {
 
     const { data: reservation, error: fetchError } = await supabaseAdmin
       .from('reservations')
-      .select('*')
+      .select('id, reservation_id, ml_risk_score, ml_risk_level, ml_confidence')
       .eq('reservation_id', reservation_id)
       .eq('restaurant_id', restaurantId)
       .single();
@@ -530,7 +530,7 @@ async function updateCustomerHistory(customerPhone, outcome, partySize) {
     // Check if customer exists
     const { data: existing, error: fetchError } = await supabaseAdmin
       .from('customer_history')
-      .select('*')
+      .select('customer_phone, total_visits, total_no_shows, last_visit_date, avg_party_size')
       .eq('customer_phone', customerPhone)
       .single();
 

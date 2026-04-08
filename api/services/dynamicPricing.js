@@ -40,6 +40,7 @@ async function calculatePrice(params) {
     const basePrice = getBasePrice(time);
 
     // 2. Get all active pricing rules
+    // All pricing_rules columns needed for rule evaluation
     const { data: rules, error } = await supabaseAdmin
       .from('pricing_rules')
       .select('*')

@@ -70,6 +70,7 @@ async function handleGetRules(req, res) {
   try {
     const { is_active, rule_type } = req.query;
 
+    // All pricing_rules columns needed — returned to client dashboard
     let query = supabaseAdmin
       .from('pricing_rules')
       .select('*')
@@ -319,6 +320,7 @@ async function handleGetEvents(req, res) {
   try {
     const { start_date, end_date, demand_level, limit = 100 } = req.query;
 
+    // TODO: Replace select('*') with explicit columns once pricing_events schema is confirmed
     let query = supabaseAdmin
       .from('pricing_events')
       .select('*')

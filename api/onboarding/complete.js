@@ -246,7 +246,7 @@ module.exports = async (req, res) => {
     const { data: existingInfo, error: fetchError } = await supabaseAdmin
       .schema('restaurant')
       .from('restaurant_info')
-      .select('*')
+      .select('id')
       .limit(1)
       .single();
 
@@ -530,7 +530,7 @@ module.exports = async (req, res) => {
         const { data: existingConfig } = await supabaseAdmin
           .schema('restaurant')
           .from('restaurant_config')
-          .select('*')
+          .select('id, user_id')
           .eq('user_id', userId)
           .single();
 

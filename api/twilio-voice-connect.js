@@ -195,7 +195,7 @@ async function resolveVoiceEngine(restaurant) {
     const { data: abTest, error } = await supabaseAdmin
       .schema('restaurant')
       .from('voice_ab_tests')
-      .select('*')
+      .select('id, total_calls, new_engine_calls, new_engine, new_engine_percentage, is_active')
       .eq('restaurant_id', restaurant.id)
       .eq('is_active', true)
       .maybeSingle();

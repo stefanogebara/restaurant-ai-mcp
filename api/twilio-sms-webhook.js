@@ -108,6 +108,7 @@ module.exports = async (req, res) => {
       return res.status(401).json({ error: 'Authentication required' });
     }
     try {
+      // TODO: Replace select('*') with explicit columns once sms_logs schema is confirmed
       const { data, error } = await supabaseAdmin
         .from('sms_logs')
         .select('*')

@@ -34,7 +34,7 @@ async function generatePersona(sessionId, { version } = {}) {
   const { data: session, error: sessionError } = await supabaseAdmin
     .schema('restaurant')
     .from('learning_interviews')
-    .select('*')
+    .select('id, restaurant_config_id, status, messages, extracted_knowledge, intelligence_context')
     .eq('id', sessionId)
     .single();
 
@@ -45,6 +45,7 @@ async function generatePersona(sessionId, { version } = {}) {
   const restaurantConfigId = session.restaurant_config_id;
 
   // Fetch intelligence data
+  // All intelligence fields needed for persona generation prompt
   const { data: intelligence } = await supabaseAdmin
     .schema('restaurant')
     .from('restaurant_intelligence')

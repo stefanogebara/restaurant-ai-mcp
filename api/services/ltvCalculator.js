@@ -24,7 +24,7 @@ async function calculateCustomerLTV(customerId, restaurantId = null) {
     // 1. Get all revenue records for this customer
     let query = supabaseAdmin
       .from('revenue_records')
-      .select('*')
+      .select('id, customer_id, restaurant_id, service_date, total_amount, party_size, payment_method, created_at')
       .eq('customer_id', customerId);
 
     // Filter by restaurant if specified

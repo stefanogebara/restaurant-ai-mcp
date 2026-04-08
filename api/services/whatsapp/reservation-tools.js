@@ -311,7 +311,7 @@ async function executeTool(toolName, toolInput, session) {
         // Get reservations for that date/time
         const { data: reservations, error } = await client
           .from('reservations')
-          .select('*')
+          .select('id, time, party_size, status')
           .eq('date', date)
           .in('status', ['confirmed', 'seated']);
 
@@ -536,7 +536,7 @@ async function executeTool(toolName, toolInput, session) {
         const client = getMultiTenantClient(session.restaurant);
         if (!client) return { success: false, error: 'Could not connect to restaurant database' };
 
-        let query = client.from('reservations').select('*');
+        let query = client.from('reservations').select('reservation_id, customer_name, customer_phone, date, time, party_size, status, special_requests');
 
         if (reservation_id) {
           query = query.eq('reservation_id', reservation_id);
@@ -602,7 +602,7 @@ async function executeTool(toolName, toolInput, session) {
         // Verify reservation exists
         const { data: existing, error: lookupErr } = await client
           .from('reservations')
-          .select('*')
+          .select('reservation_id, customer_name, date, time, status')
           .eq('reservation_id', reservation_id)
           .single();
 
@@ -656,7 +656,7 @@ async function executeTool(toolName, toolInput, session) {
 
         const { data: existing, error: lookupErr } = await client
           .from('reservations')
-          .select('*')
+          .select('reservation_id, customer_name, date, time, party_size, status')
           .eq('reservation_id', reservation_id)
           .single();
 

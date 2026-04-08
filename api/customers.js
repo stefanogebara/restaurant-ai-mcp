@@ -139,6 +139,7 @@ async function handleDetail(req, res) {
 
     // Fetch customer, reservations, and notes in parallel
     const [customerResult, reservationsResult, notesResult] = await Promise.all([
+      // All customer_ltv fields needed — returned as customer detail to dashboard
       crmDb()
         .from('customer_ltv')
         .select('*')

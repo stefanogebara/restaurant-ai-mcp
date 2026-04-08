@@ -238,7 +238,7 @@ async function handleToolCall(toolName, toolInput, session, supabaseClient, rest
 
       let query = supabaseClient
         .from('reservations')
-        .select('*');
+        .select('reservation_id, customer_name, customer_phone, date, time, party_size, status');
 
       if (reservation_id) {
         query = query.eq('reservation_id', reservation_id);
@@ -322,7 +322,7 @@ async function handleToolCall(toolName, toolInput, session, supabaseClient, rest
       // First, verify the reservation exists and belongs to this restaurant
       let query = supabaseClient
         .from('reservations')
-        .select('*')
+        .select('reservation_id, customer_name, customer_phone, date, time, party_size, status')
         .eq('reservation_id', reservation_id);
 
       if (restaurantInfo?.id) {
@@ -405,7 +405,7 @@ async function handleToolCall(toolName, toolInput, session, supabaseClient, rest
       // First, verify the reservation exists
       let query = supabaseClient
         .from('reservations')
-        .select('*')
+        .select('reservation_id, customer_name, date, time, party_size, status')
         .eq('reservation_id', reservation_id);
 
       if (restaurantInfo?.id) {

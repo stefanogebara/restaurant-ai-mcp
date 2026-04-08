@@ -334,7 +334,7 @@ async function processWithAI(userMessage, session, conversationHistory = []) {
       const { data: restaurantConfig } = await supabaseAdmin
         .schema('restaurant')
         .from('restaurant_config')
-        .select('*')
+        .select('id, restaurant_name, restaurant_type, phone, email, address, city, country, business_hours, avg_dining_duration_minutes, timezone, language, cancellation_policy, special_notes, advance_booking_days, buffer_time, agent_name, agent_greeting, ai_config, metric_profile')
         .eq('id', session.restaurant.id)
         .single();
 

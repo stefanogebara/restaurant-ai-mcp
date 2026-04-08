@@ -8,7 +8,7 @@ const { supabase, handleSupabaseResponse } = require('./clients');
 // ============ SUBSCRIPTIONS ============
 
 const getSubscriptions = async (restaurantId, filter = {}) => {
-  let query = supabase.from('subscriptions').select('*')
+  let query = supabase.from('subscriptions').select('id, subscription_id, customer_id, customer_email, plan_name, price_id, status, current_period_start, current_period_end, trial_end, canceled_at, created_at')
     .eq('restaurant_id', restaurantId);
 
   if (filter.customer_id) {
@@ -80,7 +80,7 @@ const getSubscriptionByEmail = async (restaurantId, email) => {
   // First, try to get from subscriptions table
   const { data: subscriptions, error: subError } = await supabase
     .from('subscriptions')
-    .select('*')
+    .select('id, subscription_id, customer_id, customer_email, plan_name, price_id, status, current_period_start, current_period_end, trial_end, canceled_at, created_at')
     .eq('restaurant_id', restaurantId)
     .eq('customer_email', email)
     .limit(1);

@@ -9,7 +9,7 @@ const { generateSecureServiceId } = require('../secure-id');
 // ============ SERVICE RECORDS ============
 
 const getServiceRecords = async (restaurantId, filter = {}) => {
-  let query = supabase.from('service_records').select('*')
+  let query = supabase.from('service_records').select('id, service_id, reservation_id, customer_name, customer_phone, party_size, table_ids, seated_at, estimated_departure, actual_departure, special_requests, status')
     .eq('restaurant_id', restaurantId);
 
   if (filter.status) {
@@ -25,19 +25,17 @@ const getServiceRecords = async (restaurantId, filter = {}) => {
     data: {
       records: data.map(s => ({
         id: s.id,
-        fields: {
-          'Service ID': s.service_id,
-          'Reservation ID': s.reservation_id,
-          'Customer Name': s.customer_name,
-          'Customer Phone': s.customer_phone,
-          'Party Size': s.party_size,
-          'Table IDs': s.table_ids,
-          'Seated At': s.seated_at,
-          'Estimated Departure': s.estimated_departure,
-          'Actual Departure': s.actual_departure,
-          'Special Requests': s.special_requests,
-          'Status': s.status
-        }
+        service_id: s.service_id,
+        reservation_id: s.reservation_id,
+        customer_name: s.customer_name,
+        customer_phone: s.customer_phone,
+        party_size: s.party_size,
+        table_ids: s.table_ids,
+        seated_at: s.seated_at,
+        estimated_departure: s.estimated_departure,
+        actual_departure: s.actual_departure,
+        special_requests: s.special_requests,
+        status: s.status
       }))
     }
   };
@@ -46,7 +44,7 @@ const getServiceRecords = async (restaurantId, filter = {}) => {
 const getActiveServiceRecords = async (restaurantId) => {
   const { data, error } = await supabase
     .from('service_records')
-    .select('*')
+    .select('id, service_id, reservation_id, customer_name, customer_phone, party_size, table_ids, seated_at, estimated_departure, special_requests, status')
     .eq('restaurant_id', restaurantId)
     .eq('status', 'active');
 
@@ -77,15 +75,15 @@ const createServiceRecord = async (restaurantId, fields) => {
     .from('service_records')
     .insert({
       restaurant_id: restaurantId,
-      service_id: fields['Service ID'],
-      reservation_id: fields['Reservation ID'] || null,
-      customer_name: fields['Customer Name'],
-      customer_phone: fields['Customer Phone'],
-      party_size: fields['Party Size'],
-      table_ids: fields['Table IDs'],
-      seated_at: fields['Seated At'] || new Date().toISOString(),
-      estimated_departure: fields['Estimated Departure'],
-      special_requests: fields['Special Requests'],
+      service_id: fields.service_id,
+      reservation_id: fields.reservation_id || null,
+      customer_name: fields.customer_name,
+      customer_phone: fields.customer_phone,
+      party_size: fields.party_size,
+      table_ids: fields.table_ids,
+      seated_at: fields.seated_at || new Date().toISOString(),
+      estimated_departure: fields.estimated_departure,
+      special_requests: fields.special_requests,
       status: 'active'
     })
     .select()
@@ -97,11 +95,9 @@ const createServiceRecord = async (restaurantId, fields) => {
     success: true,
     data: {
       id: data.id,
-      fields: {
-        'Service ID': data.service_id,
-        'Customer Name': data.customer_name,
-        'Status': data.status
-      }
+      service_id: data.service_id,
+      customer_name: data.customer_name,
+      status: data.status
     }
   };
 };
@@ -109,8 +105,8 @@ const createServiceRecord = async (restaurantId, fields) => {
 const updateServiceRecord = async (restaurantId, serviceId, fields) => {
   const updates = {};
 
-  if (fields['Status']) updates.status = fields['Status'];
-  if (fields['Actual Departure']) updates.actual_departure = fields['Actual Departure'];
+  if (fields.status) updates.status = fields.status;
+  if (fields.actual_departure) updates.actual_departure = fields.actual_departure;
   if (fields.total_bill !== undefined) updates.total_bill = fields.total_bill;
 
   logger.info(`[updateServiceRecord] Updating service ${serviceId} with:`, updates);
@@ -142,8 +138,8 @@ const updateServiceRecord = async (restaurantId, serviceId, fields) => {
 
 const completeServiceRecord = async (restaurantId, serviceId) => {
   return updateServiceRecord(restaurantId, serviceId, {
-    'Status': 'completed',
-    'Actual Departure': new Date().toISOString()
+    status: 'completed',
+    actual_departure: new Date().toISOString()
   });
 };
 

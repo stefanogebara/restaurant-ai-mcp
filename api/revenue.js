@@ -469,7 +469,7 @@ async function handleStats(req, res) {
 
     let query = supabaseAdmin
       .from('revenue_records')
-      .select('*')
+      .select('id, service_date, total_revenue, tip_amount, party_size, payment_method')
       .eq('is_deleted', false);
 
     if (start_date) {

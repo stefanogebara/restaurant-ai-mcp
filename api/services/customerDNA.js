@@ -263,7 +263,7 @@ async function analyzeCustomerDNA(customerId) {
     // Get all historical data for this customer
     const { data: reservations, error: resError } = await supabaseAdmin
       .from('reservations')
-      .select('*')
+      .select('id, reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, special_requests, status, created_at')
       .eq('customer_phone', customerId)
       .order('date', { ascending: true });
 
