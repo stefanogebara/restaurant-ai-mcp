@@ -139,6 +139,9 @@ export interface UpcomingReservation {
   // Deposit fields (Phase 10)
   deposit_amount?: number;
   deposit_payment_intent_id?: string;
+  // External platform source
+  source?: string;
+  external_id?: string;
 }
 
 export interface DashboardSummary {

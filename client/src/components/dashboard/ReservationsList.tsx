@@ -345,6 +345,11 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
             {reservation.customer_name}
           </button>
           <CustomerTierBadge tier={reservation.customer_tier} visitCount={reservation.visit_count} compact />
+          {reservation.source && reservation.source !== 'seatable' && (
+            <span className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-blue-500/10 text-blue-600 uppercase">
+              {reservation.source}
+            </span>
+          )}
         </div>
         <div className="text-[11px] sm:text-xs text-muted-stone mt-0.5 truncate">
           {reservation.party_size} {tl('people')}

@@ -93,6 +93,14 @@
       "destination": "/api/square/sync.js"
     },
     {
+      "source": "/api/ical-feed",
+      "destination": "/api/ical-feed.js"
+    },
+    {
+      "source": "/api/external-booking-webhook",
+      "destination": "/api/external-booking-webhook.js"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
