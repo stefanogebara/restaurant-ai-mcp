@@ -219,7 +219,7 @@ export default function TableConfigPage() {
         {Object.entries(tablesByLocation).map(([location, locationTables]) => (
           <div key={location} className="mb-8">
             <div className="flex items-center gap-2.5 mb-4">
-              <span className="text-sm font-semibold text-deep-charcoal tracking-tight">{location}</span>
+              <span className="text-sm font-semibold text-deep-charcoal tracking-tight">{t(`floorPlan.location.${location.toLowerCase()}`, location)}</span>
               <span className="text-[11px] font-medium text-warm-stone bg-soft-gray px-2.5 py-1 rounded-full">
                 {(locationTables as TableConfig[]).filter(t => t.is_active).length} {t('settings.tablesCount')}
               </span>
