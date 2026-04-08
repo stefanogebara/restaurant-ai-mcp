@@ -1,0 +1,183 @@
+{
+  "audit_date": "2026-04-08",
+  "production_url": "https://seatable.one",
+  "status": "200 OK (314ms)",
+  "test_suite": "1,434 backend + 458 frontend = 1,892 passing",
+  "agents": ["Backend API", "Frontend E2E", "Security", "Architecture", "Data Integrity"],
+  "scorecard": {
+    "CRITICAL": 6,
+    "HIGH": 13,
+    "MEDIUM": 22,
+    "LOW": 21,
+    "total": 62
+  },
+  "critical": [
+    {
+      "id": "SEC-CRIT-01",
+      "title": "ElevenLabs Webhook Accepts Unauthenticated Tool Calls",
+      "file": "api/elevenlabs-webhook.js:77-85",
+      "detail": "Path 3 auth grants full access (create/cancel reservations, customer lookup) if request includes any restaurant_id + valid action in query params. No signature, no secret. Restaurant UUIDs discoverable via public endpoints.",
+      "fix": "Remove Path 3 entirely. ElevenLabs tool calls should use HMAC signature (Path 1) or Bearer token (Path 2)."
+    },
+    {
+      "id": "SEC-CRIT-02",
+      "title": "Cross-Tenant Customer Data Leak in get_customer_info",
+      "file": "api/elevenlabs-webhook.js:582-644",
+      "detail": "get_customer_info searches reservations with supabaseAdmin WITHOUT filtering by restaurant_id. Combined with CRIT-01, any unauthenticated caller can look up any customer's reservation history across all restaurants by phone number.",
+      "fix": "Add .eq('restaurant_id', verifiedRestaurantId) to the query."
+    },
+    {
+      "id": "SEC-CRIT-03",
+      "title": "Twilio Voice Signature Check Bypassed",
+      "file": "api/twilio-voice-connect.js:39-47",
+      "detail": "Signature validation runs but on failure logs a warning and continues executing. Attacker can POST crafted payloads to trigger calls on behalf of any restaurant, causing ElevenLabs charges.",
+      "fix": "Return res.status(403) on signature mismatch instead of continuing."
+    },
+    {
+      "id": "ARCH-CRIT-01",
+      "title": "N+1 Query in Customer DNA Profile Listing",
+      "file": "api/services/customerDNA.js:930-968",
+      "detail": "listCustomerProfiles executes individual DB query per profile for customer name lookup. 20 profiles = 20 sequential queries.",
+      "fix": "Batch-fetch customer names in single .in() query, merge in memory."
+    },
+    {
+      "id": "ARCH-CRIT-02",
+      "title": "Duplicate Database Layer - Partially Migrated",
+      "file": "api/_lib/db-*.js + api/_lib/db/*.js",
+      "detail": "6 legacy db-*.js files (~2,215 lines) coexist with 6 new db/*.js files (~2,087 lines). Two production endpoints still import from legacy. New db/clients.js imports withRetry from old db-clients.js.",
+      "fix": "Delete legacy files, move withRetry into db/clients.js, update 2 production imports + test imports."
+    },
+    {
+      "id": "ARCH-CRIT-03",
+      "title": "Dual ElevenLabs Agent Creation Logic",
+      "file": "api/elevenlabs-agent-create.js (755 lines) + api/services/elevenlabsAgentService.js (880 lines)",
+      "detail": "Both independently call ElevenLabs API to create agents. Any API change must be updated in two places.",
+      "fix": "Make elevenlabs-agent-create.js a thin HTTP handler delegating to elevenlabsAgentService.createAgent()."
+    }
+  ],
+  "high": [
+    {
+      "id": "SEC-HIGH-01",
+      "title": "In-Memory Rate Limiters Don't Work on Serverless",
+      "file": "api/customer-reservation.js:22-58, api/twilio-whatsapp-webhook.js:50-69",
+      "fix": "Move to shared Redis-backed store using checkAndApplyRateLimit."
+    },
+    {
+      "id": "SEC-HIGH-02",
+      "title": "Vite 3x HIGH CVEs (Dev Server Path Traversal/File Read)",
+      "fix": "cd client && npm audit fix"
+    },
+    {
+      "id": "SEC-HIGH-03",
+      "title": "flatted Prototype Pollution + path-to-regexp ReDoS",
+      "fix": "npm audit fix in root and client"
+    },
+    {
+      "id": "DATA-HIGH-01",
+      "title": "proactive-comms.js Queries Wrong Schema - Completely Broken",
+      "file": "api/cron/proactive-comms.js:128-134",
+      "detail": "Queries .from('customer_ltv') (defaults to public schema) but table lives in restaurant schema. Returns zero results silently. At-risk customer detection is non-functional.",
+      "fix": "Add .schema('restaurant') to the query. Update stale comment."
+    },
+    {
+      "id": "DATA-HIGH-02",
+      "title": "update-churn-scores.js Unbounded Reservation Fetch",
+      "file": "api/cron/update-churn-scores.js:27-31",
+      "detail": "Fetches ALL completed reservations per restaurant with no .limit(). Sequential N+1 upsert per customer. Will timeout at scale.",
+      "fix": "Add .limit(1000) and process in batches."
+    },
+    {
+      "id": "DATA-HIGH-03",
+      "title": "generate-reflections.js Unbounded Observation Fetch",
+      "file": "api/cron/generate-reflections.js:42-48",
+      "fix": "Add .limit() and process in batches with time-budget guard."
+    },
+    {
+      "id": "DATA-HIGH-04",
+      "title": "manager-briefings.js No Timeout Guard for Sequential LLM Calls",
+      "file": "api/cron/manager-briefings.js:69",
+      "detail": "Each restaurant gets LLM call (10-30s) + WhatsApp + chart. With 3+ restaurants, exceeds 60s limit.",
+      "fix": "Add Promise.race timeout guard per restaurant. Cap at 2 restaurants per invocation."
+    },
+    {
+      "id": "DATA-HIGH-05",
+      "title": "Missing Env Vars from .env.example",
+      "detail": "OPENROUTER_API_KEY (primary AI provider), POSTHOG_PERSONAL_API_KEY, POSTHOG_PROJECT_ID, HEALTH_ALERT_PHONE",
+      "fix": "Add to .env.example and add OPENROUTER_API_KEY to validate-env.js critical list."
+    },
+    {
+      "id": "ARCH-HIGH-01",
+      "title": "Inconsistent Error Response Format (50/50 Split)",
+      "detail": "Pattern A: { error: 'message' } (~335 uses) vs Pattern B: { success: false, error: 'message' } (~382 uses).",
+      "fix": "Create sendError/sendSuccess helpers. Migrate gradually."
+    },
+    {
+      "id": "ARCH-HIGH-02",
+      "title": "Auth + Cron Boilerplate Duplicated in 46+ Endpoints",
+      "detail": "30+ endpoints manually inline verifyAuth. 16+ crons inline CRON_SECRET check. authMiddleware() exists but zero production endpoints use it.",
+      "fix": "Extract verifyCron(req, res) and promote authMiddleware usage."
+    },
+    {
+      "id": "ARCH-HIGH-03",
+      "title": "ElevenLabs Webhook (742 lines) Has Zero Tests",
+      "file": "api/elevenlabs-webhook.js",
+      "fix": "Write integration tests covering auth paths, tool dispatch, cross-tenant isolation."
+    },
+    {
+      "id": "ARCH-HIGH-04",
+      "title": "13 of 19 Cron Jobs Lack Dedicated Tests",
+      "fix": "Prioritize tests for crons with business logic (update-churn-scores, generate-reflections, proactive-comms, send-campaigns)."
+    }
+  ],
+  "medium_count": 22,
+  "medium_summary": [
+    "SEC: JWT_SECRET falls back to SUPABASE_JWT_SECRET (auth.js:15-18)",
+    "SEC: 3s token cache extends revoked token window (auth.js:58-59)",
+    "SEC: frame-ancestors * on booking pages enables clickjacking (vercel.json:136)",
+    "SEC: scrape-restaurant.js public proxy - Google API quota abuse risk",
+    "SEC: Demo AI endpoints callable without demo token (demo-chat.js, demo-conversation.js)",
+    "SEC: Observability exposes system internals to all auth users (observability.js:137-153)",
+    "SEC: Business hours hardcoded 11AM-10PM in validator (validation.js:185-197)",
+    "BACKEND: OPENROUTER_API_KEY not in validate-env.js critical list",
+    "BACKEND: db/tables.js at 904 lines exceeds 800-line limit",
+    "BACKEND: Table release in check-late-reservations not scoped by restaurant_id",
+    "DATA: No retry logic for WhatsApp API calls (whatsapp-sender.js:57-95)",
+    "DATA: No retry logic for OpenRouter/Anthropic API calls (ai-client.js:90-100)",
+    "DATA: No circuit breaker for any third-party service",
+    "DATA: pre-reservation-upsell.js sequential AI calls conflict with 60s limit",
+    "DATA: No FK on api_keys and webhook_subscriptions tables",
+    "DATA: Inconsistent migration naming (dated vs undated)",
+    "ARCH: 12+ backend files over 800-line limit",
+    "ARCH: Dual WhatsApp conversation handlers (Anthropic vs OpenRouter)",
+    "ARCH: Legacy Airtable field naming in 31 files",
+    "ARCH: Orphaned pages /prototype and /portfolio in prod bundle",
+    "ARCH: multi-tenant-supabase.js speculative infrastructure (175 lines)",
+    "FRONTEND: Pricing plan names in CLAUDE.md stale (Starter/Growth/Scale vs Essencial/Profissional/Enterprise)"
+  ],
+  "low_count": 21,
+  "positive_findings": [
+    "Zero console errors across all 7 public routes",
+    "Zero hardcoded secrets in codebase",
+    "Zero TODO/FIXME/HACK comments in production code",
+    "All 23 crons protected with CRON_SECRET validation",
+    "All webhooks use cryptographic signature verification",
+    "Consistent logging: 250+ files use createSecureLogger with PII masking",
+    "Strong auth: 3-tier JWT verification with session liveness checks",
+    "Rate limiting on all public + dashboard endpoints via Upstash Redis",
+    "No SQL injection: All queries use parameterized Supabase client",
+    "Clean DB refactor: supabase.js split from 1,900 lines to focused modules",
+    "51 React Query hooks with strong separation of concerns",
+    "Only 4 React Contexts (restrained global state)",
+    "Sub-600ms DOMContentLoaded on landing page",
+    "1,892 passing tests",
+    "PT-BR localization complete",
+    "Nordic Clean design consistently applied"
+  ],
+  "fix_order": [
+    "Batch 1 - Security Critical: Fix SEC-CRIT-01, SEC-CRIT-02, SEC-CRIT-03",
+    "Batch 2 - Data Integrity: Fix DATA-HIGH-01 through DATA-HIGH-05",
+    "Batch 3 - Architecture Cleanup: Fix ARCH-CRIT-02, ARCH-CRIT-03, ARCH-HIGH-02",
+    "Batch 4 - Dependencies: npm audit fix in root and client",
+    "Batch 5 - Test Coverage: Write tests for elevenlabs-webhook.js and untested crons"
+  ]
+}

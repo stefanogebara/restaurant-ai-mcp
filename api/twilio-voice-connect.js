@@ -38,12 +38,13 @@ module.exports = async (req, res) => {
   const url = `https://${req.headers.host}${req.url}`;
   const sigValid = signature && twilio.validateRequest(authToken, signature, url, req.body || {});
   if (!sigValid) {
-    logger.warn('TwilioVoiceConnect: Signature mismatch (proceeding anyway)', {
+    logger.warn('TwilioVoiceConnect: Signature mismatch — rejecting (SEC-CRIT-03)', {
       host: req.headers.host,
       url: req.url,
       hasSig: !!signature,
     });
-    // Continue anyway — ElevenLabs register-call provides its own auth
+    res.status(403).send(buildErrorTwiml('Unauthorized'));
+    return;
   }
 
   try {

@@ -32,6 +32,7 @@ describe('validateEnv', () => {
     process.env.SUPABASE_ANON_KEY = 'anon-key';
     process.env.JWT_SECRET = 'secret';
     process.env.ANTHROPIC_API_KEY = 'key';
+    process.env.OPENROUTER_API_KEY = 'sk-or-key';
     process.env.STRIPE_SECRET_KEY = 'sk_test_key';
     process.env.STRIPE_WEBHOOK_SECRET = 'whsec_key';
     process.env.CRON_SECRET = 'cron-secret';
@@ -45,6 +46,7 @@ describe('validateEnv', () => {
     process.env.SUPABASE_ANON_KEY = 'anon-key';
     process.env.JWT_SECRET = 'secret';
     process.env.ANTHROPIC_API_KEY = 'key';
+    process.env.OPENROUTER_API_KEY = 'sk-or-key';
     process.env.STRIPE_SECRET_KEY = 'sk_test_key';
     process.env.STRIPE_WEBHOOK_SECRET = 'whsec_key';
     // CRON_SECRET intentionally absent

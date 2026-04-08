@@ -1,7 +1,7 @@
 const Stripe = require('stripe');
 const { verifyAuth } = require('./_lib/auth');
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
-const { getSubscriptions } = require('./_lib/db-subscriptions');
+const { getSubscriptions } = require('./_lib/supabase');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');

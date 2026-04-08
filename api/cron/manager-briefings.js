@@ -41,8 +41,18 @@ module.exports = async (req, res) => {
       c.manager_whatsapp_verified === true && c.notification_preferences?.[prefKey]
     );
 
+    const MAX_RESTAURANTS = 3;
+    const PER_RESTAURANT_TIMEOUT = 25000; // 25s per restaurant, fits 2-3 in 60s
+    const startTime = Date.now();
+
     let sent = 0;
-    for (const config of eligible) {
+    for (const config of eligible.slice(0, MAX_RESTAURANTS)) {
+      // Time budget guard: stop if less than 15s remaining
+      if (Date.now() - startTime > 45000) {
+        logger.warn('Time budget exceeded, stopping briefings', { sent, remaining: eligible.length - sent });
+        break;
+      }
+
       try {
         let promptToSend = prompt;
 
@@ -66,7 +76,10 @@ module.exports = async (req, res) => {
           promptToSend += '\n\nEnd your briefing with 1-2 specific suggestions: what to adjust, why, and expected outcome.';
         }
 
-        const briefing = await runManagerAgent(config.id, promptToSend, 'whatsapp');
+        const briefing = await Promise.race([
+          runManagerAgent(config.id, promptToSend, 'whatsapp'),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Briefing timeout')), PER_RESTAURANT_TIMEOUT))
+        ]);
         await sendBriefing(
           config.manager_phone,
           briefing,

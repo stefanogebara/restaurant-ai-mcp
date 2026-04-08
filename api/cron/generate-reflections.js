@@ -45,7 +45,8 @@ module.exports = async (req, res) => {
       .eq('is_active', true)
       .eq('memory_type', 'observation')
       .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .limit(5000);
 
     if (queryError) throw queryError;
 

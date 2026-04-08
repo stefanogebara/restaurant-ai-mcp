@@ -74,15 +74,9 @@ module.exports = async (req, res) => {
     authenticated = true;
   }
 
-  // Path 3: ElevenLabs agent tool calls include restaurant_id + action in query
-  // These are unauthenticated POST requests from ElevenLabs servers
-  if (!authenticated && req.query.restaurant_id && req.query.action) {
-    const validActions = ['get_current_datetime', 'check_availability', 'create_reservation', 'lookup_reservation', 'cancel_reservation', 'modify_reservation', 'get_wait_time'];
-    if (validActions.includes(req.query.action)) {
-      authenticated = true;
-      logger.info('Auth via ElevenLabs tool call (restaurant_id + action)');
-    }
-  }
+  // Path 3 REMOVED (SEC-CRIT-01): Previously allowed unauthenticated access
+  // via restaurant_id + action query params. ElevenLabs agents must use
+  // HMAC signature (Path 1) or Bearer token (Path 2) instead.
 
   if (!authenticated) {
     logger.error('Webhook auth failed — no valid signature or token');
@@ -132,11 +126,12 @@ module.exports = async (req, res) => {
       'lookup_reservation',
       'modify_reservation',
       'cancel_reservation',
-      'get_wait_time'
+      'get_wait_time',
+      'get_customer_info'
     ];
 
-    // Actions that query across all restaurants (no restaurant context needed)
-    const globalActions = ['get_customer_info'];
+    // SEC-CRIT-02: get_customer_info moved to actionsRequiringRestaurant
+    // to prevent cross-tenant data leaks
 
     // Actions that handle their own restaurant identification (multi-tenant mode)
     const multiTenantActions = ['identify_restaurant'];
@@ -577,9 +572,10 @@ async function handleGetWaitTime(req, res) {
 
 /**
  * Handle customer info lookup by phone number.
- * Searches reservations across all restaurants to identify returning customers.
+ * Scoped to the current restaurant to prevent cross-tenant data leaks (SEC-CRIT-02).
  */
 async function handleGetCustomerInfo(req, res) {
+  const restaurant = req.restaurant;
   const data = req.method === 'POST' ? req.body : req.query;
   const phone = data.phone;
 
@@ -606,7 +602,8 @@ async function handleGetCustomerInfo(req, res) {
     for (const variant of uniqueVariants) {
       const { data: rows } = await supabaseAdmin
         .from('reservations')
-        .select('customer_name, customer_phone, date, time, status, restaurant_id')
+        .select('customer_name, customer_phone, date, time, status')
+        .eq('restaurant_id', restaurant.id)
         .eq('customer_phone', variant)
         .order('date', { ascending: false })
         .limit(5);

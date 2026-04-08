@@ -28,7 +28,9 @@ async function refreshLTVForRestaurant(restaurantId) {
     .from('reservations')
     .select('customer_phone, customer_name, customer_email, date, party_size')
     .eq('restaurant_id', restaurantId)
-    .eq('status', 'completed');
+    .eq('status', 'completed')
+    .order('date', { ascending: false })
+    .limit(2000);
 
   if (error) {
     logger.error(`Failed to fetch reservations for ${restaurantId}:`, error.message);

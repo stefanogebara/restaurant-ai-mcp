@@ -124,10 +124,11 @@ async function findUpcomingOccasions() {
  */
 async function findAtRiskCustomers() {
   try {
-    // customer_ltv has no restaurant_id column - it's keyed by customer_id (phone)
+    // DATA-HIGH-01: customer_ltv lives in restaurant schema and has restaurant_id
     const { data: atRisk, error } = await supabaseAdmin
+      .schema('restaurant')
       .from('customer_ltv')
-      .select('customer_id, customer_phone, churn_risk_score, customer_tier, last_visit_date, total_visits')
+      .select('customer_id, customer_phone, churn_risk_score, customer_tier, last_visit_date, total_visits, restaurant_id')
       .gte('churn_risk_score', 70)
       .gte('total_visits', 3)
       .order('churn_risk_score', { ascending: false })
