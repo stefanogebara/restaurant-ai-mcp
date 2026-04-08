@@ -211,14 +211,17 @@ function buildSystemPrompt(memories, snapshot, config) {
     systemPrompt += toneDirective + '\n\n';
   }
 
+  const isPT = language === 'pt' || language === 'pt-BR';
+  const isES = language === 'es';
+
   systemPrompt +=
-    '## What You Know About This Restaurant\n' +
+    (isPT ? '## O que voce sabe sobre este restaurante\n' : isES ? '## Lo que sabes sobre este restaurante\n' : '## What You Know About This Restaurant\n') +
     memoryBlock +
-    '\n\n## Current Live Status\n' +
-    'Upcoming reservations: ' + snapshot.upcoming_reservations.length + '\n' +
+    (isPT ? '\n\n## Status atual ao vivo\n' : isES ? '\n\n## Estado actual en vivo\n' : '\n\n## Current Live Status\n') +
+    (isPT ? 'Reservas futuras: ' : isES ? 'Reservas futuras: ' : 'Upcoming reservations: ') + snapshot.upcoming_reservations.length + '\n' +
     upcomingLines + '\n' +
-    'Active parties: ' + snapshot.active_parties.length + '\n' +
-    'Waitlist: ' + snapshot.waitlist_count;
+    (isPT ? 'Mesas ocupadas: ' : isES ? 'Mesas ocupadas: ' : 'Active parties: ') + snapshot.active_parties.length + '\n' +
+    (isPT ? 'Lista de espera: ' : isES ? 'Lista de espera: ' : 'Waitlist: ') + snapshot.waitlist_count;
 
   if (staffingLines) {
     systemPrompt += '\n\n[STAFFING FORECAST - NEXT 3 DAYS]\n' + staffingLines;
@@ -245,25 +248,39 @@ function buildSystemPrompt(memories, snapshot, config) {
 
   // Strategy doc removed — column doesn't exist yet
 
-  // Language enforcement — always use the restaurant's configured language
-  systemPrompt +=
-    '\n\n## Language Rules\n' +
-    `CRITICAL: You MUST respond in ${langLabel} at ALL times. ` +
-    `This restaurant is configured for ${langLabel}. ` +
-    'Do NOT switch languages based on the user\'s input language. ' +
-    `Always respond in ${langLabel}, no exceptions.\n`;
-
-  systemPrompt +=
-    '\n\n## Response Style Rules\n' +
-    '- Be CONCISE. Default to 3-5 sentences. Only give full briefings when explicitly asked.\n' +
-    '- For specific questions ("how many reservations?"), give the answer FIRST in one line, then optional context.\n' +
-    '- Do NOT use headers, bullet points, or structured formatting unless the user asks for a "briefing" or "report".\n' +
-    '- Do NOT use emojis. Ever. No exceptions.\n' +
-    '- Do NOT repeat the same information across multiple messages.\n' +
-    '- If the restaurant has zero data (0 reservations, 0 covers for multiple days), do NOT panic or say "CRITICAL ALERT". ' +
-    'Instead say something like "Tudo tranquilo por aqui" and suggest checking back when there is more data.\n' +
-    '- Match your response length to the question: short question = short answer.\n' +
-    '- When comparing periods, focus on the delta and one actionable insight, not a wall of numbers.\n';
+  // Response style rules — written in the target language for maximum compliance
+  if (isPT) {
+    systemPrompt +=
+      '\n\n## Regras de resposta\n' +
+      '- Seja CONCISO. Padrao de 3-5 frases. So de briefings completos quando pedido.\n' +
+      '- Para perguntas especificas ("quantas reservas?"), de a resposta PRIMEIRO em uma linha.\n' +
+      '- NAO use cabecalhos, bullets ou formatacao estruturada, a menos que o usuario peca um "briefing" ou "relatorio".\n' +
+      '- NAO use emojis. Nunca. Sem excecoes.\n' +
+      '- NAO repita informacoes ja ditas em mensagens anteriores.\n' +
+      '- Se o restaurante tem zero dados (0 reservas por varios dias), NAO entre em panico. Diga algo como "Tudo tranquilo por aqui" e sugira verificar quando houver mais atividade.\n' +
+      '- Resposta curta para pergunta curta.\n' +
+      '- RESPONDA SEMPRE EM PORTUGUES BRASILEIRO. Nunca em ingles.\n';
+  } else if (isES) {
+    systemPrompt +=
+      '\n\n## Reglas de respuesta\n' +
+      '- Se CONCISO. 3-5 frases por defecto. Solo briefings completos cuando se pidan.\n' +
+      '- Para preguntas especificas, da la respuesta PRIMERO en una linea.\n' +
+      '- NO uses encabezados, bullets o formato estructurado a menos que pidan "briefing".\n' +
+      '- NO uses emojis. Nunca.\n' +
+      '- NO repitas informacion de mensajes anteriores.\n' +
+      '- Si el restaurante tiene cero datos, NO entres en panico. Di "Todo tranquilo" y sugiere revisar cuando haya mas actividad.\n' +
+      '- RESPONDE SIEMPRE EN ESPANOL. Nunca en ingles.\n';
+  } else {
+    systemPrompt +=
+      '\n\n## Response Style Rules\n' +
+      '- Be CONCISE. Default to 3-5 sentences. Only give full briefings when explicitly asked.\n' +
+      '- For specific questions, give the answer FIRST in one line, then optional context.\n' +
+      '- Do NOT use headers, bullet points, or structured formatting unless asked for a "briefing".\n' +
+      '- Do NOT use emojis. Ever.\n' +
+      '- Do NOT repeat information from previous messages.\n' +
+      '- If the restaurant has zero data, do NOT panic. Say "All quiet" and suggest checking back later.\n' +
+      '- Match response length to question length.\n';
+  }
 
   return systemPrompt;
 }
