@@ -109,6 +109,22 @@
       "destination": "/api/google-booking/server.js"
     },
     {
+      "source": "/v3/HealthCheck/:path*",
+      "destination": "/api/google-booking/server.js?action=HealthCheck"
+    },
+    {
+      "source": "/v3/BatchAvailabilityLookup/:path*",
+      "destination": "/api/google-booking/server.js?action=BatchAvailabilityLookup"
+    },
+    {
+      "source": "/v3/CreateBooking/:path*",
+      "destination": "/api/google-booking/server.js?action=CreateBooking"
+    },
+    {
+      "source": "/v3/UpdateBooking/:path*",
+      "destination": "/api/google-booking/server.js?action=UpdateBooking"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
