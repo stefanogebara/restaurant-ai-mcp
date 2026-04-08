@@ -82,7 +82,12 @@ module.exports = async (req, res) => {
       });
     }
 
-    if (!guest_name || !party_size || !reservation_date || !reservation_time) {
+    // Accept both naming conventions (guest_name or customer_name)
+    const customerName = guest_name || req.body.customer_name;
+    const customerPhone = guest_phone || req.body.customer_phone;
+    const customerEmail = guest_email || req.body.customer_email;
+
+    if (!customerName || !party_size || !reservation_date || !reservation_time) {
       return res.status(400).json({
         success: false,
         error: 'Required fields: guest_name, party_size, reservation_date, reservation_time',
@@ -139,12 +144,12 @@ module.exports = async (req, res) => {
         await supabaseAdmin
           .from('reservations')
           .update({
-            guest_name,
-            guest_phone,
-            guest_email,
+            customer_name: customerName,
+            customer_phone: customerPhone,
+            customer_email: customerEmail,
             party_size,
-            reservation_date,
-            reservation_time,
+            date: reservation_date,
+            time: reservation_time,
             special_requests,
             status,
             updated_at: new Date().toISOString(),
@@ -165,12 +170,12 @@ module.exports = async (req, res) => {
       .from('reservations')
       .insert({
         restaurant_id: restaurantId,
-        guest_name,
-        guest_phone: guest_phone || null,
-        guest_email: guest_email || null,
+        customer_name: customerName,
+        customer_phone: customerPhone || null,
+        customer_email: customerEmail || null,
         party_size,
-        reservation_date,
-        reservation_time,
+        date: reservation_date,
+        time: reservation_time,
         special_requests: special_requests || null,
         status,
         source,
@@ -184,7 +189,7 @@ module.exports = async (req, res) => {
       return res.status(500).json({ success: false, error: 'Failed to create reservation' });
     }
 
-    logger.info(`[ExternalBooking] Created reservation ${reservation.id} from ${source} for ${guest_name}`);
+    logger.info(`[ExternalBooking] Created reservation ${reservation.id} from ${source} for ${customerName}`);
     return res.status(201).json({
       success: true,
       action: 'created',

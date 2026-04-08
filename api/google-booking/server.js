@@ -108,10 +108,10 @@ async function handleBatchAvailabilityLookup(req, res) {
     // Get existing reservations for the date range
     const { data: existingReservations } = await supabaseAdmin
       .from('reservations')
-      .select('reservation_date, reservation_time, party_size')
+      .select('date, time, party_size')
       .eq('restaurant_id', restaurantId)
-      .gte('reservation_date', startDate)
-      .lte('reservation_date', endDate)
+      .gte('date', startDate)
+      .lte('date', endDate)
       .in('status', ['confirmed', 'pending']);
 
     // Get tables
@@ -201,12 +201,12 @@ async function handleCreateBooking(req, res) {
       .from('reservations')
       .insert({
         restaurant_id: restaurantId,
-        guest_name: guestName,
-        guest_phone: user_information.telephone || null,
-        guest_email: user_information.email || null,
+        customer_name: guestName,
+        customer_phone: user_information.telephone || null,
+        customer_email: user_information.email || null,
         party_size: partySize,
-        reservation_date: reservationDate,
-        reservation_time: reservationTime,
+        date: reservationDate,
+        time: reservationTime,
         status: 'confirmed',
         source: 'google',
         external_id: idempotency_token || null,
@@ -270,8 +270,8 @@ async function handleUpdateBooking(req, res) {
 
     if (booking.start_time) {
       const startTime = new Date(booking.start_time);
-      updates.reservation_date = startTime.toISOString().split('T')[0];
-      updates.reservation_time = startTime.toISOString().split('T')[1].substring(0, 5);
+      updates.date = startTime.toISOString().split('T')[0];
+      updates.time = startTime.toISOString().split('T')[1].substring(0, 5);
     }
 
     if (booking.party_size) {
@@ -324,8 +324,8 @@ function generateAvailableSlots(startDate, endDate, businessHours, existingReser
       for (const time of timeSlots) {
         // Count overlapping reservations at this time
         const overlapping = existingReservations.filter(r => {
-          if (r.reservation_date !== dateStr) return false;
-          const existingMinutes = timeToMinutes(r.reservation_time);
+          if (r.date !== dateStr) return false;
+          const existingMinutes = timeToMinutes(r.time);
           const slotMinutes = timeToMinutes(time);
           return Math.abs(existingMinutes - slotMinutes) < diningDuration;
         });

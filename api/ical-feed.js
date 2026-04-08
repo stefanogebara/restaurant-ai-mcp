@@ -49,10 +49,10 @@ module.exports = async (req, res) => {
 
     const { data: reservations, error } = await supabaseAdmin
       .from('reservations')
-      .select('id, guest_name, guest_phone, party_size, reservation_date, reservation_time, status, special_requests, source, created_at')
+      .select('id, customer_name, customer_phone, party_size, date, time, status, special_requests, source, created_at')
       .eq('restaurant_id', restaurant_id)
-      .gte('reservation_date', today)
-      .lte('reservation_date', thirtyDaysOut)
+      .gte('date', today)
+      .lte('date', thirtyDaysOut)
       .in('status', ['confirmed', 'pending'])
       .order('reservation_date', { ascending: true });
 
@@ -95,15 +95,15 @@ function buildICal(restaurantName, reservations) {
   ];
 
   for (const r of reservations) {
-    const dtStart = formatICalDate(r.reservation_date, r.reservation_time);
+    const dtStart = formatICalDate(r.date, r.time);
     // Default 90-minute dining duration
-    const endTime = addMinutes(r.reservation_date, r.reservation_time, 90);
+    const endTime = addMinutes(r.date, r.time, 90);
     const dtEnd = formatICalDate(endTime.date, endTime.time);
 
-    const summary = `${r.guest_name || 'Guest'} — Party of ${r.party_size}`;
+    const summary = `${r.customer_name || 'Guest'} — Party of ${r.party_size}`;
     const description = [
-      `Guest: ${r.guest_name || 'Unknown'}`,
-      `Phone: ${r.guest_phone || 'N/A'}`,
+      `Guest: ${r.customer_name || 'Unknown'}`,
+      `Phone: ${r.customer_phone || 'N/A'}`,
       `Party size: ${r.party_size}`,
       `Status: ${r.status}`,
       r.special_requests ? `Notes: ${r.special_requests}` : null,
