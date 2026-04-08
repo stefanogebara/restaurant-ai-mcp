@@ -51,10 +51,15 @@ export default function WhatsAppWidgetSection() {
                   </div>
                 </div>
                 {/* Chat */}
-                <div className="px-3 py-4 min-h-[200px]" style={{ backgroundImage: 'radial-gradient(circle at 20% 80%, #e8e5e0 0%, #ede9e3 100%)' }}>
+                <div className="px-3 py-4 min-h-[200px] space-y-2" style={{ backgroundImage: 'radial-gradient(circle at 20% 80%, #e8e5e0 0%, #ede9e3 100%)' }}>
                   <div className="flex justify-end">
                     <div className="max-w-[85%] px-3 py-2 bg-rose-100 rounded-2xl rounded-tr-sm text-[13px] text-deep-charcoal shadow-sm">
                       {messageText}
+                    </div>
+                  </div>
+                  <div className="flex justify-start">
+                    <div className="max-w-[85%] px-3 py-2 bg-white rounded-2xl rounded-tl-sm text-[13px] text-deep-charcoal shadow-sm">
+                      {t('landing.whatsapp.aiReply', "Perfect! I found a table for 4 tomorrow at 8pm. Shall I confirm the reservation? I'll just need your name.")}
                     </div>
                   </div>
                 </div>
@@ -99,9 +104,10 @@ export default function WhatsAppWidgetSection() {
           >
             {t('landing.whatsapp.cta', 'Send a test message')} &rarr;
           </a>
-          <p className="text-xs text-muted-stone">
-            {t('landing.whatsapp.trust', 'Real number: +55 11 5028-9356 · São Paulo, Brazil')}
-          </p>
+          <div className="flex items-center gap-2 text-sm text-muted-stone">
+            <span className="w-2 h-2 rounded-full bg-whatsapp animate-pulse" />
+            <span className="font-medium">{t('landing.whatsapp.trust', 'Real number: +55 11 5028-9356 · São Paulo, Brazil')}</span>
+          </div>
         </motion.div>
       </div>
     </section>
