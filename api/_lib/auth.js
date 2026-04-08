@@ -221,6 +221,10 @@ async function verifyJWT(token) {
   if (!decoded) return null;
 
   // Ensure restaurant_id, timezone, and role are present on the user object
+  // First check user_metadata (set during auth), then fall back to DB lookup
+  if (!decoded.restaurant_id && decoded.user_metadata?.restaurant_id) {
+    decoded.restaurant_id = decoded.user_metadata.restaurant_id;
+  }
   if (!decoded.restaurant_id && decoded.sub) {
     const restaurant = await getRestaurantIdForUser(decoded.sub);
     if (restaurant) {

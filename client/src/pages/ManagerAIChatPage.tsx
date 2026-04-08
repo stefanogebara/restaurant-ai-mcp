@@ -164,8 +164,8 @@ export default function ManagerAIChatPage() {
             <ThiingsIcon name="arrow-left" pxSize={18} />
           </Link>
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-burgundy/10 flex items-center justify-center">
-              <ThiingsIcon name="sparkles" pxSize={16} className="text-burgundy" />
+            <div className="w-8 h-8 rounded-full bg-burgundy/10 flex items-center justify-center overflow-hidden">
+              <img src="/favicon.svg" alt="seatable" className="w-5 h-5" />
             </div>
             <div>
               <h1 className="text-sm font-bold text-deep-charcoal leading-tight">
@@ -193,8 +193,8 @@ export default function ManagerAIChatPage() {
           {messages.length === 0 && !isLoading && (
             <div className="flex flex-col items-center justify-center py-16 space-y-8">
               <div className="text-center space-y-3">
-                <div className="w-16 h-16 rounded-2xl bg-burgundy/10 flex items-center justify-center mx-auto">
-                  <ThiingsIcon name="sparkles" pxSize={32} className="text-burgundy" />
+                <div className="w-16 h-16 rounded-2xl bg-burgundy/10 flex items-center justify-center mx-auto overflow-hidden">
+                  <img src="/favicon.svg" alt="seatable" className="w-10 h-10" />
                 </div>
                 <h2 className="text-xl font-bold text-deep-charcoal">
                   {t('dashboard.managerAssistant', 'Manager AI')}
@@ -225,8 +225,8 @@ export default function ManagerAIChatPage() {
           {messages.map((m, i) => (
             <div key={i} className={'flex ' + (m.role === 'manager' ? 'justify-end' : 'justify-start')}>
               {m.role === 'assistant' && (
-                <div className="w-7 h-7 rounded-full bg-burgundy/10 flex items-center justify-center flex-shrink-0 mt-1 mr-2">
-                  <ThiingsIcon name="sparkles" pxSize={14} className="text-burgundy" />
+                <div className="w-7 h-7 rounded-full bg-burgundy/10 flex items-center justify-center flex-shrink-0 mt-1 mr-2 overflow-hidden">
+                  <img src="/favicon.svg" alt="S" className="w-4 h-4" />
                 </div>
               )}
               <div
