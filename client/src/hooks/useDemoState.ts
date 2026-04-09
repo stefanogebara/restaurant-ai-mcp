@@ -425,6 +425,11 @@ export function useDemoState(presetKey?: string, overrideData?: DemoOverrideData
     [tables, seatParty],
   );
 
+  /** Cancel (remove) a reservation */
+  const cancelReservation = useCallback((reservationId: string) => {
+    setReservations((prev) => prev.filter((r) => r.reservation_id !== reservationId));
+  }, []);
+
   /** Add a guest to the waitlist */
   const addToWaitlist = useCallback((data: WalkInFormData & { special_requests?: string }) => {
     const entry: DemoWaitlistEntry = {
@@ -490,6 +495,7 @@ export function useDemoState(presetKey?: string, overrideData?: DemoOverrideData
     waitlist,
     stats,
     checkIn,
+    cancelReservation,
     seatParty,
     completeService,
     addWalkIn,

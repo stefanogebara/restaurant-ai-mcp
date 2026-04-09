@@ -11,6 +11,7 @@ interface DemoAIInsightsBarProps {
   completedCount?: number;
   totalRevenue?: number;
   lang: string;
+  presetKey?: string;
 }
 
 interface ChatMessage {
@@ -42,6 +43,16 @@ const labels = {
     insightVipLabel: 'Alerta VIP',
     powered: 'Desenvolvido por Seatable AI',
   },
+  es: {
+    title: 'IA del Gerente',
+    inputPlaceholder: '¿Cómo va la noche? ¿Algún consejo?',
+    typing: 'Pensando...',
+    insightCapLabel: 'Capacidad',
+    insightStaffLabel: 'Personal',
+    insightWaitLabel: 'Lista de Espera',
+    insightVipLabel: 'Alerta VIP',
+    powered: 'Desarrollado por Seatable AI',
+  },
 } as const;
 
 // Keyword-matched fallback responses when API is unavailable
@@ -58,6 +69,14 @@ const cannedResponses: Record<string, Array<{ keywords: string[]; response: stri
     { keywords: ['receita', 'faturamento', 'dinheiro', 'venda'], response: "Com base nas reservas atuais e gasto médio, estimo o faturamento de hoje em torno de R$ 8.500. Considere sugerir sobremesas para aumentar o ticket médio." },
     { keywords: ['reserva', 'mesa', 'disponível'], response: "Analisando seus padrões de reserva, sextas entre 19:00-20:30 lotam consistentemente. Considere adicionar um segundo turno." },
     { keywords: ['no-show', 'cancelamento', 'falta'], response: "Hoje temos 1 reserva com risco de no-show. Os lembretes automáticos por WhatsApp já foram enviados — historicamente reduzimos no-shows em 40%." },
+  ],
+  es: [
+    { keywords: ['noche', 'hoy', 'movimiento', 'ocupación', 'cómo'], response: `Ahora mismo tenemos ${'{occupied}'} mesas ocupadas de ${'{total}'}. ${'{waitlist}'} grupos en lista de espera. Recomiendo preparar al equipo para el servicio de cena.` },
+    { keywords: ['equipo', 'personal', 'camarero', 'staff'], response: "El tiempo medio de rotación de mesa esta semana es de 55 minutos — ideal para el ritmo de alta cocina. El equipo está trabajando muy bien." },
+    { keywords: ['factura', 'ingresos', 'ventas', 'dinero', 'ticket'], response: "Con las reservas actuales y el ticket medio del Omakase (~€90/cubierto), el servicio de esta noche podría superar los €3.800. Considera ofrecer el maridaje sake para subir el ticket." },
+    { keywords: ['reserva', 'mesa', 'disponible', 'omakase'], response: "Los viernes y sábados entre 21:00–22:30 son vuestros horarios de mayor demanda. El menú omakase tiene lista de espera — considera limitar plazas para mantener la calidad." },
+    { keywords: ['no-show', 'cancelación', 'falta'], response: "Tienes 1 reserva con riesgo de no-show esta noche. Los recordatorios automáticos por WhatsApp se han enviado — históricament reducimos no-shows un 38%." },
+    { keywords: ['wagyu', 'sushi', 'carta', 'menu', 'plato'], response: "El menú omakase y el wagyu con yema curada son tus platos más populares. Esta noche tienes 3 mesas que han pedido el omakase — verifica que hay stock suficiente." },
   ],
 };
 
@@ -99,6 +118,7 @@ export default function DemoAIInsightsBar({
   completedCount = 0,
   totalRevenue = 0,
   lang,
+  presetKey,
 }: DemoAIInsightsBarProps) {
   // Update stats for fallback responses
   _statsForFallback = { occupied: String(occupiedTables), total: String(totalTables), waitlist: String(waitlistCount) };
@@ -108,8 +128,8 @@ export default function DemoAIInsightsBar({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const langKey = lang === 'pt-BR' ? 'pt-BR' : 'en';
-  const ui = labels[langKey];
+  const langKey = lang === 'pt-BR' ? 'pt-BR' : lang === 'es' ? 'es' : 'en';
+  const ui = labels[langKey] ?? labels['en'];
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -134,6 +154,7 @@ export default function DemoAIInsightsBar({
         message: text,
         context: { occupiedTables, totalTables, reservationsToday, waitlistCount, totalGuests, restaurantName, completedCount, totalRevenue },
         lang: langKey,
+        preset_key: presetKey,
       }),
     })
       .then(res => res.json())

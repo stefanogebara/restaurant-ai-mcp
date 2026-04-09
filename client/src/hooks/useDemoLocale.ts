@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import i18n from '../i18n/config';
 import { DEMO_PRESETS } from '../data/demoPresets';
 
-export type DemoLang = 'en' | 'pt-BR';
+export type DemoLang = 'en' | 'pt-BR' | 'es';
 
 const STORAGE_KEY = 'seatable-demo-lang';
 const USER_LANG_KEY = 'seatable-user-lang';
@@ -88,6 +88,7 @@ const strings = {
     cancel: 'Cancelar',
     seatGuest: 'Sentar Cliente',
     noTablesAvailable: 'Nenhuma mesa disponível. Considere adicionar à lista de espera.',
+    cancelReservation: 'Cancelar reserva',
     // Waitlist
     waitlist: 'Lista de Espera',
     noOneWaiting: 'Ninguém esperando',
@@ -114,13 +115,63 @@ const strings = {
     // Loading
     loadingDemo: 'Carregando demo...',
   },
+  'es': {
+    banner: 'Demo Interactiva — todas las acciones son locales, ningún dato real se ve afectado',
+    backToHome: 'Volver al inicio',
+    restaurantName: 'Makoto',
+    cuisine: 'Alta Cocina Japonesa',
+    neighborhood: 'Barrio Salamanca, Madrid',
+    addWalkIn: 'Agregar Walk-In',
+    readyToGoLive: '¿Listo para empezar?',
+    setupYourOwn: 'Configura tu restaurante en menos de 5 minutos.',
+    getStartedFree: 'Comenzar Gratis',
+    walkInTitle: 'Agregar Walk-In',
+    guestName: 'Nombre del Cliente',
+    phone: 'Teléfono',
+    phonePlaceholder: '+34 600 000 000',
+    namePlaceholder: 'ej. María García',
+    partySize: 'Número de Personas',
+    cancel: 'Cancelar',
+    seatGuest: 'Sentar Cliente',
+    noTablesAvailable: 'No hay mesas disponibles. Considera añadir a la lista de espera.',
+    cancelReservation: 'Cancelar reserva',
+    // Waitlist
+    waitlist: 'Lista de Espera',
+    noOneWaiting: 'Nadie esperando',
+    waitlistEmpty: 'Los clientes añadidos a la lista de espera aparecerán aquí',
+    guests: 'personas',
+    waited: 'espera',
+    seat: 'Sentar',
+    // Chat
+    managerAI: 'IA del Gerente',
+    demoMode: 'Modo demo — sin datos reales',
+    closeChat: 'Cerrar chat',
+    askPlaceholder: 'Pregunta sobre tu restaurante...',
+    sendMessage: 'Enviar mensaje',
+    // Language popup
+    langPopupTitle: '¿Prefiere inglés?',
+    langPopupDesc: 'Este demo también está disponible en inglés.',
+    langSwitchYes: 'Cambiar a inglés',
+    langKeepEn: 'Mantener español',
+    // Exit intent
+    exitTitle: '¿Listo para empezar?',
+    exitMessage: 'Configura tu recepcionista IA en menos de 5 minutos. Sin tarjeta de crédito.',
+    exitTrialCTA: 'Comenzar prueba gratuita',
+    exitContinue: 'Continuar demo',
+    // Loading
+    loadingDemo: 'Cargando demo...',
+  },
 } as const;
 
 export type DemoStrings = typeof strings['en'];
 
+// Presets that should default to Spanish
+const SPANISH_PRESETS = new Set(['makoto']);
+
 function detectBrowserLang(): DemoLang {
   const nav = navigator.language || '';
   if (nav.startsWith('pt')) return 'pt-BR';
+  if (nav.startsWith('es')) return 'es';
   return 'en';
 }
 
@@ -136,11 +187,10 @@ export function useDemoLocale() {
   const urlCuisine = preset?.cuisine || urlParams.get('cuisine');
   const urlCity = preset?.neighborhood || urlParams.get('city');
 
-  // Use the current i18n language for presets so clicking from a PT-BR landing
-  // page keeps PT-BR instead of always defaulting to English.
+  // Spanish presets (e.g. makoto) always default to Spanish.
   // Non-preset demo always defaults to PT-BR (it's the Brazilian demo).
-  const currentI18nLang: DemoLang = i18n.language?.startsWith('pt') ? 'pt-BR' : 'en';
-  const defaultLang: DemoLang = preset ? currentI18nLang : 'pt-BR';
+  const currentI18nLang: DemoLang = i18n.language?.startsWith('pt') ? 'pt-BR' : i18n.language?.startsWith('es') ? 'es' : 'en';
+  const defaultLang: DemoLang = presetKey && SPANISH_PRESETS.has(presetKey) ? 'es' : (preset ? currentI18nLang : 'pt-BR');
   const [showLangPopup, setShowLangPopup] = useState(!stored && !preset && !browserLang.startsWith('pt') && currentI18nLang !== 'pt-BR');
   const [lang, setLangState] = useState<DemoLang>(stored || defaultLang);
 
@@ -166,7 +216,8 @@ export function useDemoLocale() {
     setLangState(newLang);
     setShowLangPopup(false);
     // Sync i18next so shared components (StatsBar etc.) update too
-    changeDemoLanguage(newLang === 'pt-BR' ? 'pt-BR' : 'en');
+    const i18nLang = newLang === 'pt-BR' ? 'pt-BR' : newLang === 'es' ? 'es' : 'en';
+    changeDemoLanguage(i18nLang);
   }, []);
 
   const dismissPopup = useCallback(() => {
@@ -174,14 +225,14 @@ export function useDemoLocale() {
     setShowLangPopup(false);
   }, [lang]);
 
-  const base = strings[lang];
+  const base = strings[lang] ?? strings['en'];
   const t = urlName ? {
     ...base,
     restaurantName: urlName,
     cuisine: urlCuisine || base.cuisine,
     neighborhood: urlCity || base.neighborhood,
   } : base;
-  const dateLocale = lang === 'pt-BR' ? 'pt-BR' : 'en-US';
+  const dateLocale = lang === 'pt-BR' ? 'pt-BR' : lang === 'es' ? 'es-ES' : 'en-US';
 
   return { lang, setLang, t, dateLocale, showLangPopup, dismissPopup };
 }

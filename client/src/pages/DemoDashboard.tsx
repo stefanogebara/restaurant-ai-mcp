@@ -4,6 +4,8 @@ import DemoSlideIn from '../landing/components/DemoSlideIn';
 import DemoSidebar from '../components/demo/DemoSidebar';
 import DemoTablesGrid from '../components/demo/DemoTablesGrid';
 import DemoWhatsAppSim from '../components/demo/DemoWhatsAppSim';
+import DemoAnalyticsPanel from '../components/demo/DemoAnalyticsPanel';
+import DemoRestaurantInfoCard from '../components/demo/DemoRestaurantInfoCard';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 import StatsBar from '../components/dashboard/StatsBar';
 import ReservationsList from '../components/dashboard/ReservationsList';
@@ -15,6 +17,7 @@ import { useDemoState } from '../hooks/useDemoState';
 import { useDemoLocale } from '../hooks/useDemoLocale';
 import { useDemoSession } from '../hooks/useDemoSession';
 import { useExitIntent } from '../hooks/useExitIntent';
+import { DEMO_PRESETS } from '../data/demoPresets';
 import type { UpcomingReservation, ActiveParty } from '../types/host.types';
 
 // Map DB table rows to the shape useDemoState expects
@@ -55,6 +58,7 @@ export default function DemoDashboard() {
 
   const demo = useDemoState(presetKey, overrideData);
   const { t, dateLocale, lang, setLang, showLangPopup, dismissPopup } = useDemoLocale();
+  const presetInfo = presetKey ? DEMO_PRESETS[presetKey]?.info : undefined;
 
   // Override restaurant identity when using token-based demo
   const restaurantName = tokenSession?.restaurant?.restaurant_name || t.restaurantName;
@@ -64,7 +68,7 @@ export default function DemoDashboard() {
   const neighborhoodLabel = tokenSession?.restaurant?.city || t.neighborhood;
 
   const [showWalkInModal, setShowWalkInModal] = useState(false);
-  const [activeView, setActiveView] = useState<'dashboard' | 'tables' | 'whatsapp'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'tables' | 'whatsapp' | 'manager-ai' | 'analytics'>('dashboard');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<UpcomingReservation | null>(null);
   const { showPopup: showExitPopup, dismiss: dismissExitPopup } = useExitIntent();
@@ -80,6 +84,10 @@ export default function DemoDashboard() {
   const dateStr = new Date().toLocaleDateString(dateLocale, { day: 'numeric', month: 'short' });
 
   // ---- Handlers ----
+  const handleCancelReservation = (reservation: UpcomingReservation) => {
+    demo.cancelReservation(reservation.reservation_id);
+  };
+
   const handleCheckIn = (reservation: UpcomingReservation) => {
     const available = demo.tables.find(
       (tbl) => tbl.status === 'Available' && tbl.capacity >= reservation.party_size,
@@ -166,12 +174,12 @@ export default function DemoDashboard() {
           <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={() => setLang(lang === 'en' ? 'pt-BR' : 'en')}
+              onClick={() => setLang(lang === 'en' ? 'es' : lang === 'es' ? 'pt-BR' : 'en')}
               className="text-xs font-medium text-white/70 hover:text-white transition-colors flex items-center gap-1.5"
               aria-label="Toggle language"
             >
               <ThiingsIcon name="globe" pxSize={12} className="text-white/70" />
-              {lang === 'en' ? 'EN' : 'PT'}
+              {lang === 'en' ? 'EN' : lang === 'es' ? 'ES' : 'PT'}
             </button>
             <Link
               to="/"
@@ -205,8 +213,41 @@ export default function DemoDashboard() {
           <DemoWhatsAppSim restaurantName={restaurantName} lang={lang} />
         )}
 
+        {/* View: Manager AI — full-page chat */}
+        {activeView === 'manager-ai' && (
+          <div className="space-y-4">
+            <div>
+              <h1 className="font-serif text-[22px] font-bold text-stone-900 tracking-tight">{restaurantName}</h1>
+              <p className="text-stone-500 text-[13px] mt-0.5">
+                {lang === 'es' ? 'IA del Gerente' : lang === 'pt-BR' ? 'IA do Gerente' : 'Manager AI'}
+              </p>
+            </div>
+            <DemoAIInsightsBar
+              restaurantName={restaurantName}
+              occupiedTables={demo.stats.occupiedTables}
+              totalTables={demo.stats.totalTables}
+              reservationsToday={demo.stats.reservationsToday}
+              waitlistCount={demo.stats.waitlistCount}
+              totalGuests={demo.stats.totalGuests}
+              completedCount={demo.stats.completedCount}
+              totalRevenue={demo.stats.totalRevenue}
+              lang={lang}
+              presetKey={presetKey}
+            />
+          </div>
+        )}
+
+        {/* View: Analytics */}
+        {activeView === 'analytics' && (
+          <DemoAnalyticsPanel
+            restaurantName={restaurantName}
+            lang={lang}
+            presetKey={presetKey}
+          />
+        )}
+
         {/* View: Dashboard (default) */}
-        {activeView !== 'tables' && activeView !== 'whatsapp' && (<>
+        {activeView !== 'tables' && activeView !== 'whatsapp' && activeView !== 'manager-ai' && activeView !== 'analytics' && (<>
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
@@ -246,6 +287,11 @@ export default function DemoDashboard() {
           isLoading={false}
         />
 
+        {/* Restaurant info card (only for presets that have real info, e.g. makoto) */}
+        {presetInfo && (
+          <DemoRestaurantInfoCard info={presetInfo} lang={lang} />
+        )}
+
         {/* AI Insights Bar */}
         <DemoAIInsightsBar
           restaurantName={restaurantName}
@@ -257,6 +303,7 @@ export default function DemoDashboard() {
           completedCount={demo.stats.completedCount}
           totalRevenue={demo.stats.totalRevenue}
           lang={lang}
+          presetKey={presetKey}
         />
 
         {/* Main Content: Unified container with 2px dividers */}
@@ -267,6 +314,7 @@ export default function DemoDashboard() {
               todayReservations={demo.todayReservations}
               tomorrowReservations={demo.tomorrowReservations}
               onCheckIn={handleCheckIn}
+              onCancel={handleCancelReservation}
               onIntervention={() => {}}
               onCustomerClick={setSelectedCustomer}
               isLoading={false}
@@ -310,8 +358,8 @@ export default function DemoDashboard() {
       </>)}
       </div>
 
-      {/* FAB: Add Walk-in (only on dashboard view) */}
-      {activeView === 'dashboard' && (
+      {/* FAB: Add Walk-in (only on dashboard and tables views) */}
+      {(activeView === 'dashboard' || activeView === 'tables') && (
         <button
           type="button"
           onClick={() => setShowWalkInModal(true)}

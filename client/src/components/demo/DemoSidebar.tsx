@@ -15,13 +15,13 @@ const NAV_LABELS: Record<string, Record<string, string>> = {
     Main: 'Principal', AI: 'IA', Insights: 'Análises',
     Dashboard: 'Painel', Tables: 'Mesas', 'Manager AI': 'IA do Gerente',
     'Voice Agent': 'Agente de Voz', WhatsApp: 'WhatsApp',
-    Analytics: 'Análises', Reports: 'Relatórios',
+    Analytics: 'Análises', Reports: 'Relatórios', 'Import History': 'Importar Histórico',
   },
   es: {
     Main: 'Principal', AI: 'IA', Insights: 'Análisis',
     Dashboard: 'Panel', Tables: 'Mesas', 'Manager AI': 'IA del Gerente',
     'Voice Agent': 'Agente de Voz', WhatsApp: 'WhatsApp',
-    Analytics: 'Análisis', Reports: 'Informes',
+    Analytics: 'Análisis', Reports: 'Informes', 'Import History': 'Importar Historial',
   },
 };
 
@@ -36,7 +36,7 @@ const navSections: { label: string; items: DemoNavItem[] }[] = [
   {
     label: 'AI',
     items: [
-      { label: 'Manager AI', icon: 'bot', locked: true },
+      { label: 'Manager AI', icon: 'bot', view: 'manager-ai' },
       { label: 'Voice Agent', icon: 'microphone', locked: true },
       { label: 'WhatsApp', icon: 'phone', view: 'whatsapp' },
     ],
@@ -44,8 +44,9 @@ const navSections: { label: string; items: DemoNavItem[] }[] = [
   {
     label: 'Insights',
     items: [
-      { label: 'Analytics', icon: 'bar-chart', locked: true },
+      { label: 'Analytics', icon: 'bar-chart', view: 'analytics' },
       { label: 'Reports', icon: 'clipboard-list', locked: true },
+      { label: 'Import History', icon: 'upload', locked: true },
     ],
   },
 ];

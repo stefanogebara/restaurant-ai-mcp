@@ -23,6 +23,16 @@ function eveningTime(hour: number, minute: number): string {
   return d.toISOString();
 }
 
+interface RestaurantInfo {
+  address?: string;
+  phone?: string;
+  hours?: string;
+  website?: string;
+  chef?: string;
+  recognition?: string;
+  menu?: string[];
+}
+
 interface DemoTable {
   id: string;
   table_number: string;
@@ -39,6 +49,7 @@ export interface DemoPreset {
   reservations: UpcomingReservation[];
   activeParties: ActiveParty[];
   waitlist: DemoWaitlistEntry[];
+  info?: RestaurantInfo;
 }
 
 // ---------- 1. Italian Trattoria (Rome-inspired) ----------
@@ -589,6 +600,19 @@ const makotoPreset: DemoPreset = {
       status: 'Waiting',
     },
   ],
+  info: {
+    address: 'C/ Marqués de Villamagna 1, 28001 Madrid',
+    phone: '+34 917 31 43 42',
+    hours: 'Lun–Dom: 13:00–00:00',
+    website: 'makotomadrid.com',
+    chef: 'Chef Makoto Okuwa',
+    recognition: 'Mejor Rest. Japonés 2025 · Gastro & Cía',
+    menu: [
+      'Menú Omakase', 'Nigiri Edomae', 'Wagyu con yema curada',
+      'Rock Shrimp', 'Fried Rice con foie y anguila',
+      'Tres Leches de Okinawa', 'Maridaje Sake Premium',
+    ],
+  },
 };
 
 // ---------- Export preset map ----------
