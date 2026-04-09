@@ -192,13 +192,21 @@ export function useDemoLocale() {
   const currentI18nLang: DemoLang = i18n.language?.startsWith('pt') ? 'pt-BR' : i18n.language?.startsWith('es') ? 'es' : 'en';
   const defaultLang: DemoLang = presetKey && SPANISH_PRESETS.has(presetKey) ? 'es' : (preset ? currentI18nLang : 'pt-BR');
   const [showLangPopup, setShowLangPopup] = useState(!stored && !preset && !browserLang.startsWith('pt') && currentI18nLang !== 'pt-BR');
-  const [lang, setLangState] = useState<DemoLang>(stored || defaultLang);
+  // Spanish presets always override localStorage — visitor may have 'pt-BR' stored from the
+  // Brazilian demo, but Makoto expects Spanish. We also clear the stored value so the next
+  // visit to a non-Spanish preset isn't forced into Spanish.
+  const forcedLang: DemoLang | null = presetKey && SPANISH_PRESETS.has(presetKey) ? 'es' : null;
+  if (forcedLang && stored && stored !== forcedLang) {
+    // Remove the stale stored preference so it doesn't bleed back on next visit
+    try { localStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
+  }
+  const [lang, setLangState] = useState<DemoLang>(forcedLang ?? stored ?? defaultLang);
 
   // Sync i18next with demo locale on mount, restore original on unmount.
   // Uses changeDemoLanguage to avoid corrupting the user's saved language.
   const originalLngRef = useRef(i18n.language);
   useEffect(() => {
-    const target = stored || defaultLang;
+    const target = forcedLang ?? stored ?? defaultLang;
     if (i18n.language !== target) {
       changeDemoLanguage(target);
     }
