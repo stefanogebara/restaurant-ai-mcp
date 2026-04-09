@@ -73,6 +73,7 @@ function buildResponsePT(input: string, ctx: Ctx): string {
 const uiLabels = {
   en: { title: 'Manager AI', subtitle: 'Demo mode -- no real data', close: 'Close chat', placeholder: 'Ask about your restaurant...', send: 'Send message' },
   'pt-BR': { title: 'Gerente IA', subtitle: 'Modo demo -- sem dados reais', close: 'Fechar chat', placeholder: 'Pergunte sobre seu restaurante...', send: 'Enviar mensagem' },
+  es: { title: 'IA del Gerente', subtitle: 'Modo demo — sin datos reales', close: 'Cerrar chat', placeholder: 'Pregunta sobre tu restaurante...', send: 'Enviar mensaje' },
 } as const;
 
 let msgCounter = 0;
@@ -106,9 +107,11 @@ async function fetchAIResponse(message: string, ctx: Ctx, lang: DemoLang): Promi
 export default function DemoManagerChat({
   occupiedTables, totalTables, activeParties, waitlistCount, reservationsToday, totalGuests, onClose, lang,
 }: DemoManagerChatProps) {
-  const ui = uiLabels[lang];
+  const ui = uiLabels[lang as keyof typeof uiLabels] ?? uiLabels.en;
   const introMsg = lang === 'pt-BR'
     ? `Oi! Sou seu gerente IA. Voce tem ${activeParties} grupos ativos e ${reservationsToday} reservas hoje. Pergunte qualquer coisa!`
+    : lang === 'es'
+    ? `¡Hola! Soy tu asistente IA. Tienes ${activeParties} grupos activos y ${reservationsToday} reservas hoy. ¡Pregúntame lo que quieras!`
     : `Hi! I'm your AI manager assistant. You have ${activeParties} active parties and ${reservationsToday} reservations today. Ask me anything!`;
 
   const [messages, setMessages] = useState<ChatMessage[]>([
