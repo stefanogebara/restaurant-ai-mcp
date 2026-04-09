@@ -11,6 +11,7 @@ interface DemoWaitlistPanelProps {
 const labels = {
   en: { title: 'Waitlist', empty: 'No one waiting', emptyDesc: 'Guests added to the waitlist will appear here', guests: 'guests', waited: 'waited', seat: 'Seat' },
   'pt-BR': { title: 'Lista de Espera', empty: 'Ninguem esperando', emptyDesc: 'Clientes adicionados a lista de espera aparecerao aqui', guests: 'pessoas', waited: 'espera', seat: 'Sentar' },
+  es: { title: 'Lista de Espera', empty: 'Nadie esperando', emptyDesc: 'Los clientes añadidos a la lista de espera aparecerán aquí', guests: 'personas', waited: 'espera', seat: 'Sentar' },
 } as const;
 
 function minutesAgo(isoString: string): number {
@@ -18,7 +19,7 @@ function minutesAgo(isoString: string): number {
 }
 
 export default function DemoWaitlistPanel({ entries, onSeat, lang }: DemoWaitlistPanelProps) {
-  const t = labels[lang];
+  const t = labels[lang as keyof typeof labels] ?? labels.en;
 
   return (
     <div className="bg-white border border-border-gray rounded-2xl overflow-hidden">

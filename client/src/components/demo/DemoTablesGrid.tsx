@@ -8,10 +8,12 @@ interface DemoTablesGridProps {
 const labels = {
   en: { title: 'Tables', seats: 'seats', available: 'Available', occupied: 'Occupied', reserved: 'Reserved' },
   'pt-BR': { title: 'Mesas', seats: 'lugares', available: 'Disponível', occupied: 'Ocupada', reserved: 'Reservada' },
+  es: { title: 'Mesas', seats: 'plazas', available: 'Disponible', occupied: 'Ocupada', reserved: 'Reservada' },
 } as const;
 
 const LOCATION_LABELS: Record<string, Record<string, string>> = {
   'pt-BR': { window: 'Janela', indoor: 'Salão', terrace: 'Terraço', patio: 'Pátio', bar: 'Bar', Window: 'Janela', Indoor: 'Salão', Terrace: 'Terraço', Patio: 'Pátio', Bar: 'Bar' },
+  es: { window: 'Ventana', indoor: 'Salón', terrace: 'Terraza', patio: 'Patio', bar: 'Bar', Window: 'Ventana', Indoor: 'Salón', Terrace: 'Terraza', Patio: 'Patio', Bar: 'Bar' },
 };
 
 const STATUS_STYLES: Record<string, { dot: string; text: string; bg: string }> = {
@@ -21,7 +23,7 @@ const STATUS_STYLES: Record<string, { dot: string; text: string; bg: string }> =
 };
 
 export default function DemoTablesGrid({ tables, lang }: DemoTablesGridProps) {
-  const t = labels[lang === 'pt-BR' ? 'pt-BR' : 'en'];
+  const t = labels[lang as keyof typeof labels] ?? labels.en;
 
   // Group tables by location
   const grouped = tables.reduce<Record<string, DemoTable[]>>((acc, table) => {

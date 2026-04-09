@@ -14,6 +14,7 @@ interface SimMessage {
 const labels = {
   en: { title: 'WhatsApp AI', subtitle: 'Booking Assistant', replay: 'Replay', typing: 'typing...' },
   'pt-BR': { title: 'WhatsApp IA', subtitle: 'Assistente de Reservas', replay: 'Repetir', typing: 'digitando...' },
+  es: { title: 'WhatsApp IA', subtitle: 'Asistente de Reservas', replay: 'Repetir', typing: 'escribiendo...' },
 } as const;
 
 function buildScript(name: string, lang: string): SimMessage[] {
@@ -26,6 +27,15 @@ function buildScript(name: string, lang: string): SimMessage[] {
       { role: 'ai', text: 'Perfeito, João! ✅ Reserva confirmada.\n\nEnviaremos um lembrete 2h antes. Até sexta!' },
     ];
   }
+  if (lang === 'es') {
+    return [
+      { role: 'customer', text: 'Hola, quisiera reservar mesa para 4 personas el viernes a las 21h' },
+      { role: 'ai', text: `¡Hola! Claro, déjame verificar disponibilidad en ${name} para el viernes, 4 personas a las 21:00...` },
+      { role: 'ai', text: `¡Tenemos mesa disponible! ¿Puedo confirmar?\n\n📍 ${name}\n📅 Viernes, 28/03\n🕗 21:00\n👥 4 personas\n\n¿Cuál es tu nombre completo?` },
+      { role: 'customer', text: 'Carlos García' },
+      { role: 'ai', text: '¡Perfecto, Carlos! ✅ Reserva confirmada.\n\nTe enviaremos un recordatorio 2 horas antes. ¡Hasta el viernes!' },
+    ];
+  }
   return [
     { role: 'customer', text: "Hi, I'd like to book a table for 4 on Friday at 8pm" },
     { role: 'ai', text: `Hello! Sure, let me check availability at ${name} for Friday, 4 guests at 8pm...` },
@@ -36,7 +46,7 @@ function buildScript(name: string, lang: string): SimMessage[] {
 }
 
 export default function DemoWhatsAppSim({ restaurantName, lang }: DemoWhatsAppSimProps) {
-  const t = labels[lang === 'pt-BR' ? 'pt-BR' : 'en'];
+  const t = labels[lang as keyof typeof labels] ?? labels.en;
   const messages = buildScript(restaurantName, lang);
   const [visibleCount, setVisibleCount] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
