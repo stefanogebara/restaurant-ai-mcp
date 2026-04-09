@@ -97,7 +97,7 @@ async function processMessage(adapter, msg, options = {}) {
   try {
     session = await Promise.race([
       getOrCreateSession(from, `${providerName}-${Date.now()}`),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('Session timeout')), 8000)),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Session timeout')), 20000)),
     ]);
   } catch (err) {
     logger.error(`[${providerName}] Session failed:`, err.message);
@@ -114,7 +114,7 @@ async function processMessage(adapter, msg, options = {}) {
     try {
       const activeRestaurants = await Promise.race([
         getAllActiveRestaurants(),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Restaurant lookup timeout')), 8000)),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Restaurant lookup timeout')), 20000)),
       ]);
 
       if (activeRestaurants.length === 1) {
