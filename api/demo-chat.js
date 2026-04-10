@@ -13,15 +13,23 @@ const PRESET_META = {
   makoto: {
     city: 'Madrid, España',
     respondIn: 'Spanish',
-    context: `
-Restaurant context:
-- Chef: Makoto Okuwa (ex Iron Chef Morimoto, NYC)
-- Recognition: Mejor Restaurante Japonés del Año 2025 (Gastro & Cía por La Razón)
-- Location: Calle del Marqués de Villamagna 1, Barrio Salamanca, 28001 Madrid
-- Phone: +34 917 31 43 42 | Hours: Daily 13:00–00:00
-- Signature dishes: Menú Omakase (Edomae), Wagyu con yema curada, Rock Shrimp, Fried Rice con foie y anguila, Tres Leches de Okinawa, Sake pairing
-- Average ticket: €80–€120 per cover | Fine dining, reservations required
-- Style: Contemporary Japanese + European influences, open kitchen sushi counter`,
+    wiki: `### Visión General del Restaurante
+Makoto es un restaurante de alta cocina japonesa de 9 mesas ubicado en el Barrio Salamanca de Madrid (Calle del Marqués de Villamagna 1). El chef Makoto Okuwa, ex colaborador del Iron Chef Morimoto en Nueva York, dirige una propuesta de cocina contemporánea japonesa con influencias europeas. El restaurante fue reconocido como el Mejor Restaurante Japonés del Año 2025 por Gastro & Cía (La Razón). Horario: diario de 13:00 a 00:00.
+
+### Menú y Especialidades
+El menú estrella es el Omakase Edomae (€90/cubierto) — un menú degustación de sushi, nigiri y cocina kaiseki. Los platos más solicitados son: Menú Omakase (34% de los pedidos), Wagyu con yema curada (22%), Rock Shrimp (18%), Nigiri Edomae (15%), Fried Rice con foie y anguila (11%), Tres Leches de Okinawa y maridaje sake. El ticket medio es de €80–€120 por cubierto. El maridaje sake (€30 extra) es muy popular — mencionarlo puede aumentar el ticket medio.
+
+### Perfil de Clientes
+Los clientes habituales incluyen Carlos Domingo Ríos (VIP, 12 visitas, prefiere mesa discreta), Elena García Ruiz (alérgica al marisco — avisar siempre a cocina), Javier Martínez Blanco (asiduo de los viernes), y Sofía Fernández López (aniversario recurrente). El 60% de los comensales son residentes del barrio Salamanca, el 40% turistas de alto poder adquisitivo. Reserva obligatoria para todos los servicios.
+
+### Patrones de Reserva
+Los viernes y sábados entre 21:00–22:30 son los horarios de máxima demanda — suelen completarse con 3–4 días de antelación. El menú omakase ocupa mesa durante 90–110 minutos promedio. La tasa de no-show es del 3%. Los recordatorios de WhatsApp se envían 2 horas antes y han reducido los no-shows en un 38%.
+
+### Métricas de Rendimiento
+Cubiertos promedio por servicio nocturno: 22. Facturación semanal estimada: €24.500. Ocupación media: 81%. Satisfacción del cliente: 4.6/5. Los viernes y sábados son los días de mayor ingreso — concentran el 40% de la facturación semanal.
+
+### Notas Operativas
+La cocina necesita mínimo 24 horas de antelación para acomodar alergias graves (marisco, gluten). El mostrador de sushi está siempre abierto para walk-ins si hay taburete disponible. La sala privada (Mesa 9, sala de madera, 4 personas) se reserva con semanas de antelación para ocasiones especiales. El stock de sake premium debe verificarse antes del servicio del viernes.`,
   },
 
   italian: {
