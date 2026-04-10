@@ -38,27 +38,33 @@ async function processMessage(adapter, msg, options = {}) {
   const { from, messageId, text, mediaContext, interactiveSelection } = msg;
   const providerName = adapter.providerName;
 
+  logger.info(`[${providerName}] processMessage step 1: markAsRead`);
   // 1. Mark as read (fire-and-forget)
   adapter.markAsRead(messageId).catch(() => {});
 
+  logger.info(`[${providerName}] processMessage step 2: dedup check, messageId=${messageId}`);
   // 2. Dedup check
   if (messageId && await isMessageDuplicate(messageId, 86400)) {
     logger.info(`[${providerName}] Duplicate message ${messageId}, skipping`);
     return { handled: true };
   }
 
+  logger.info(`[${providerName}] processMessage step 3: rate limit check`);
   // 3. Rate limit
   if (isRateLimited(from)) {
     logger.info(`[${providerName}] Rate limited ${from}`);
     return { handled: true };
   }
 
+  logger.info(`[${providerName}] processMessage step 4: keyword check`);
   // 4. Keyword handling (template responses)
   const normalizedText = text.trim().toUpperCase();
   const keywordHandled = await handleKeyword(normalizedText, from);
   if (keywordHandled) {
     return { handled: true };
   }
+
+  logger.info(`[${providerName}] processMessage step 5: feedback check`);
 
   // 5. Feedback reply detection
   try {
@@ -77,6 +83,7 @@ async function processMessage(adapter, msg, options = {}) {
     logger.error('Feedback reply check failed:', err.message);
   }
 
+  logger.info(`[${providerName}] processMessage step 6: survey check`);
   // 6. Survey reply detection
   try {
     const surveyResult = await handleSurveyReply(from, text);
@@ -92,6 +99,7 @@ async function processMessage(adapter, msg, options = {}) {
     logger.error('Survey reply check failed:', err.message);
   }
 
+  logger.info(`[${providerName}] processMessage step 7: session management`);
   // 7. Session management
   let session;
   try {
