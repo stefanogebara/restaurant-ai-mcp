@@ -207,6 +207,8 @@ export default function DemoAIInsightsBar({
                 <p className="text-xs text-muted-stone/70 italic">
                   {langKey === 'pt-BR'
                     ? '"Como está o movimento hoje?" ou "Sugira algo para o jantar"'
+                    : langKey === 'es'
+                    ? '"¿Cómo va la noche?" o "¿Algún consejo para el servicio?"'
                     : '"How is tonight looking?" or "Suggest something for dinner service"'}
                 </p>
               </div>

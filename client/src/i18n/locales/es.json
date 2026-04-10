@@ -1429,7 +1429,8 @@
       "title": "Estos son datos de ejemplo",
       "subtitle": "¿Quieres ver TU restaurante aquí? La configuración toma 30 segundos.",
       "cta": "Configurar mi restaurante",
-      "later": "Quizás después"
+      "later": "Quizás después",
+      "share": "Compartir con un amigo"
     },
     "faq": {
       "label": "Preguntas Frecuentes",
