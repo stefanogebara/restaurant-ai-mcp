@@ -69,17 +69,17 @@ module.exports = async (req, res) => {
 
       logger.info('WAHA message received from:', msg.from, '— text:', msg.text?.substring(0, 60));
 
-      // Return 200 immediately — process in background (async)
-      res.status(200).json({ status: 'ok' });
-
       // Send typing indicator
       adapter.startTyping(msg.from).catch(() => {});
 
-      // Process through unified pipeline
+      // Process through unified pipeline (sync before response so logs are captured)
       await processMessage(adapter, msg);
 
       // Stop typing
       adapter.stopTyping(msg.from).catch(() => {});
+
+      // Return 200 after processing
+      return res.status(200).json({ status: 'ok' });
 
     } catch (error) {
       logger.error('WAHA webhook error:', error.message);
