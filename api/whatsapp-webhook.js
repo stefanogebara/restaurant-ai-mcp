@@ -76,11 +76,10 @@ async function handlePost(req, res) {
       return res.status(200).json({ status: 'ok' });
     }
 
-    // Return 200 immediately — process in background (async pattern)
-    res.status(200).json({ status: 'ok' });
-
-    // Process through unified pipeline
+    // Process first, then return 200 (Vercel kills async work after res.json)
+    // Meta timeout is 20s — our pipeline runs in ~5-10s, well within limits
     await processMessage(adapter, msg, { oppositeProvider: 'twilio' });
+    return res.status(200).json({ status: 'ok' });
 
   } catch (error) {
     logger.error('Webhook error:', error.message);

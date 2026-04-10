@@ -69,17 +69,17 @@ module.exports = async (req, res) => {
 
       logger.info('WAHA message received from:', msg.from, '— text:', msg.text?.substring(0, 60));
 
-      // Return 200 immediately — process in background (async)
-      res.status(200).json({ status: 'ok' });
-
       // Send typing indicator
       adapter.startTyping(msg.from).catch(() => {});
 
-      // Process through unified pipeline
+      // Process first, then return 200 (Vercel kills async work after res.json)
+      // WAHA retries if no 200 within 30s — our pipeline runs in ~5-10s
       await processMessage(adapter, msg);
 
       // Stop typing
       adapter.stopTyping(msg.from).catch(() => {});
+
+      return res.status(200).json({ status: 'ok' });
 
     } catch (error) {
       logger.error('WAHA webhook error:', error.message);
