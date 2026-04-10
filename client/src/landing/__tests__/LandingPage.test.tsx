@@ -35,8 +35,8 @@ vi.mock('../components/Footer', () => ({
 vi.mock('../components/LandingNav', () => ({
   default: () => <div data-testid="landing-nav">Nav</div>,
 }));
-vi.mock('../components/HeroAnimation', () => ({
-  default: () => <div data-testid="hero-animation">HeroAnimation</div>,
+vi.mock('../components/VoiceWidgetSection', () => ({
+  default: () => <div data-testid="voice-widget-section">VoiceWidget</div>,
 }));
 vi.mock('../components/DashboardWalkthroughSection', () => ({
   default: () => <div data-testid="walkthrough-section">Walkthrough</div>,
@@ -62,7 +62,7 @@ describe('LandingPage', () => {
     expect(screen.getByTestId('hero-section')).toBeInTheDocument();
     expect(screen.getByTestId('preset-demo-section')).toBeInTheDocument();
     expect(screen.getByTestId('whatsapp-widget-section')).toBeInTheDocument();
-    expect(screen.getByTestId('hero-animation')).toBeInTheDocument();
+    expect(screen.getByTestId('voice-widget-section')).toBeInTheDocument();
     expect(screen.getByTestId('walkthrough-section')).toBeInTheDocument();
     expect(screen.getByTestId('before-after-section')).toBeInTheDocument();
     expect(screen.getByTestId('pricing-section')).toBeInTheDocument();

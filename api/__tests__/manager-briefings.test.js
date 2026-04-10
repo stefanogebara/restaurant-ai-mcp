@@ -1,8 +1,22 @@
 // mockSupabaseAdmin must be declared with var so it is hoisted above jest.mock() calls
 // (jest.mock factories run before const/let declarations are initialized)
 var mockSchemaFrom = jest.fn();
+// Default from() mock returns a dedup chain resolving {data: null} so sendBriefing is reached
+function mockFromChain(data = null) {
+  const c = {
+    select: jest.fn(), eq: jest.fn(), order: jest.fn(),
+    limit: jest.fn(), gte: jest.fn(),
+  };
+  c.select.mockReturnValue(c);
+  c.eq.mockReturnValue(c);
+  c.order.mockReturnValue(c);
+  c.limit.mockReturnValue(c);
+  c.gte.mockReturnValue(c);
+  c.maybeSingle = jest.fn().mockResolvedValue({ data, error: null });
+  return c;
+}
 var mockSupabaseAdmin = {
-  from: jest.fn(),
+  from: jest.fn().mockImplementation(() => mockFromChain()),
   schema: jest.fn().mockReturnValue({ from: mockSchemaFrom }),
 };
 var mockSendBriefing = jest.fn().mockResolvedValue(undefined);
@@ -119,7 +133,8 @@ it('sends morning briefing to opted-in restaurants', async () => {
   await briefings(req, res);
 
   const { runManagerAgent } = require('../_lib/manager-agent');
-  expect(runManagerAgent).toHaveBeenCalledWith('rest-1', expect.stringContaining('morning'), 'whatsapp');
+  // Prompt is in the restaurant's language (agent_language not set → pt-BR default)
+  expect(runManagerAgent).toHaveBeenCalledWith('rest-1', expect.any(String), 'whatsapp');
   expect(mockSendBriefing).toHaveBeenCalledWith('+15551234567', expect.any(String), 'phone_call', 'rest-1');
   expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ sent: 1 }));
 });
