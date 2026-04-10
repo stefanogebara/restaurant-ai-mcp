@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { X, Share2 } from 'lucide-react';
-import { trackShareClicked } from '../../lib/analytics';
+import { trackShareClicked, trackDemoFunnel } from '../../lib/analytics';
 
 const SHARE_URL = 'https://seatable.one';
 
@@ -27,6 +27,7 @@ export default function SharePrompt({ location }: SharePromptProps) {
 
   const handleShare = (channel: 'whatsapp' | 'copy_link') => {
     trackShareClicked({ location, channel });
+    trackDemoFunnel({ step: 'demo_share_clicked' });
     if (channel === 'copy_link') {
       navigator.clipboard.writeText(SHARE_URL).catch(() => {});
     }

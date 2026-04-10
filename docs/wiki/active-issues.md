@@ -1,32 +1,31 @@
 ---
 title: "Active Issues & TODOs"
 slug: active-issues
-compiled_at: "2026-04-10T21:21:00.479Z"
+compiled_at: "2026-04-10T21:33:53.750Z"
 ---
-# Active Issues in Project
+# Active Issues and Development Focus
 
-## Open TODOs and Critical Technical Debt
+## TODO and FIXME Tracking
 
-High-Priority TODOs involve database query safety and ID generation. Multiple files (`agent-conversations.js`, `guest-feedback.js`, `twilio-sms-webhook.js`) are using `select('*')` instead of explicit column selection, which creates potential security and performance risks. The secure ID generation in `_lib/secure-id.js` uses predictable reservation ID formats (RES-YYYYMMDD-XXXX), which might benefit from additional entropy or validation.
+High-priority TODOs center around database query patterns and ID generation. Multiple files (`agent-conversations.js`, `guest-feedback.js`, `twilio-sms-webhook.js`) contain `select('*')` warnings requiring explicit column selection. The secure ID generation in `_lib/secure-id.js` uses consistent reservation/service ID formats (RES-YYYYMMDD-XXXX) but lacks comprehensive validation. Phone number input validation in `PhoneInput.tsx` shows complex international regex patterns that may need comprehensive testing.
 
-## Recent Bug Fix Patterns
+## Recurring Bug Patterns
 
-Language internationalization (i18n) and rendering consistency have been recurring challenges. Recent fixes clustered around Spanish language support, React rendering synchronization, and preventing locale-related crashes. AI response quality and system prompts also required multiple interventions, suggesting fragility in multilingual AI interaction frameworks.
+Recent fixes reveal consistent challenges in internationalization (i18n), language handling, and system prompt generation. Multiple commits addressed Spanish language support, system prompt localization, and preventing render/loading issues. Performance and timeout problems appear frequently, with recent fixes increasing routing timeframes from 8 to 20 seconds. AI response quality and token management also emerge as persistent development challenges.
 
-## Cron Job Risk Assessment
+## Cron Job Risks
 
-Several time-sensitive crons present potential silent failure modes:
-- Hourly sync jobs (`sync-conversation-data`, `validate-conversations`) run every 15 minutes
-- Critical daily jobs like `check-late-reservations` and marketing automation crons lack explicit error handling
-- Manager alert crons with complex timing (e.g., late cancellation alerts at multiple daily intervals) increase complexity
+Critical cron jobs with potential silent failure include time-sensitive operations like reservation checks, manager briefings, and analytics processing. Particularly high-risk jobs run at fixed intervals:
+- Every 15 minutes: Late reservation checks, campaign synchronization
+- Daily morning/evening jobs: Manager briefings, health alerts
+- Analytics and sync jobs risk incomplete data processing if they encounter unexpected errors
 
 ## Development Focus Recommendations
 
-Prioritize:
-1. Comprehensive error logging for cron jobs
-2. Explicit column selection in database queries
-3. Internationalization test coverage
-4. Standardize system prompt generation
-5. Enhance secure ID generation entropy
+1. Implement comprehensive error handling and logging for cron jobs
+2. Complete database query column explicit selection
+3. Enhance internationalization test coverage
+4. Standardize AI prompt generation and token management
+5. Review and optimize system timeout configurations
 
-Potential architecture improvements include introducing more robust i18n middleware, implementing circuit breakers for AI interactions, and creating centralized cron monitoring.
+Immediate technical debt requires addressing query safety, internationalization robustness, and ensuring predictable background job performance.

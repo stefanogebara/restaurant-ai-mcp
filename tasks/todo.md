@@ -22,20 +22,20 @@ The landing page already has strong foundations:
 ## Phase 13A: Hero Refinement
 *Effort: S — Hero already has the split-screen animation*
 
-- [ ] 13A-1: Audit hero CTA — kill secondary button, single CTA scrolls to #try-demo
-- [ ] 13A-2: Verify headline A/B variants work with ?headline=a|b|c
-- [ ] 13A-3: PostHog tracking for headline conversion
+- [x] 13A-1: Audit hero CTA — kill secondary button, single CTA scrolls to #try-demo
+- [x] 13A-2: Verify headline A/B variants work with ?headline=a|b|c
+- [x] 13A-3: PostHog tracking for headline conversion
 
 ---
 
 ## Phase 13B: Add Voice Widget to Landing Page
 *Effort: S — Component exists, just not rendered*
 
-- [ ] 13B-1: Import VoiceWidgetSection into LandingPage.tsx
-- [ ] 13B-2: Place between WhatsAppWidgetSection and BeforeAfterSection
-- [ ] 13B-3: Verify ElevenLabs agent loads on landing page
-- [ ] 13B-4: Add suggestion text "Try calling — ask to book a table"
-- [ ] 13B-5: Test mobile layout
+- [x] 13B-1: Import VoiceWidgetSection into LandingPage.tsx
+- [x] 13B-2: Place between PresetDemoSection and WhatsAppWidgetSection
+- [x] 13B-3: Verify ElevenLabs agent loads on landing page (ErrorBoundary wraps)
+- [x] 13B-4: Suggestion text "Book a table for 2 tonight" already in component
+- [ ] 13B-5: Test mobile layout (manual)
 
 ---
 
@@ -100,11 +100,11 @@ Options:
 
 Proposed: Hero → PresetDemo → VoiceWidget → WhatsApp → VideoShowcase → DashboardWalkthrough → Pricing → CTA → Footer
 
-- [ ] 13H-1: Reorder sections in LandingPage.tsx
-- [ ] 13H-2: Add VoiceWidgetSection import
+- [x] 13H-1: Section order already correct (Hero→Preset→Voice→WhatsApp→BeforeAfter→Walkthrough→Pricing→CTA→Footer)
+- [x] 13H-2: VoiceWidgetSection already imported
 - [ ] 13H-3: Add VideoShowcaseSection (once videos ready)
-- [ ] 13H-4: Delete FeatureCardsSection.tsx (unused)
-- [ ] 13H-5: Decision: keep or kill BeforeAfterSection
+- [x] 13H-4: FeatureCardsSection.tsx already deleted
+- [x] 13H-5: Keep BeforeAfterSection — animated dark stats section with good social proof
 
 ---
 

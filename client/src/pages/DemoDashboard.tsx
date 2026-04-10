@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { Link, useSearchParams, useParams } from 'react-router-dom';
 import DemoSlideIn from '../landing/components/DemoSlideIn';
 import DemoSidebar from '../components/demo/DemoSidebar';
@@ -18,6 +18,7 @@ import { useDemoLocale } from '../hooks/useDemoLocale';
 import { useDemoSession } from '../hooks/useDemoSession';
 import { useExitIntent } from '../hooks/useExitIntent';
 import { DEMO_PRESETS } from '../data/demoPresets';
+import { trackDemoFunnel } from '../lib/analytics';
 import type { UpcomingReservation, ActiveParty } from '../types/host.types';
 
 // Map DB table rows to the shape useDemoState expects
@@ -67,6 +68,8 @@ export default function DemoDashboard() {
     ? (CUISINE_DISPLAY[tokenSession.restaurant.restaurant_type] || tokenSession.restaurant.restaurant_type)
     : t.cuisine;
   const neighborhoodLabel = tokenSession?.restaurant?.city || t.neighborhood;
+
+  const hasTrackedInteraction = useRef(false);
 
   const [showWalkInModal, setShowWalkInModal] = useState(false);
   const [activeView, setActiveView] = useState<'dashboard' | 'tables' | 'whatsapp' | 'manager-ai' | 'analytics'>('dashboard');
@@ -128,7 +131,19 @@ export default function DemoDashboard() {
 
   return (
     <div className="min-h-screen bg-soft-gray">
-      <DemoSidebar lang={lang} activeView={activeView} onNavigate={(v) => setActiveView(v as typeof activeView)} collapsed={sidebarCollapsed} onToggleCollapse={() => setSidebarCollapsed(c => !c)} />
+      <DemoSidebar
+        lang={lang}
+        activeView={activeView}
+        onNavigate={(v) => {
+          setActiveView(v as typeof activeView);
+          if (!hasTrackedInteraction.current) {
+            hasTrackedInteraction.current = true;
+            trackDemoFunnel({ step: 'demo_interacted', preset: presetKey });
+          }
+        }}
+        collapsed={sidebarCollapsed}
+        onToggleCollapse={() => setSidebarCollapsed(c => !c)}
+      />
 
       {/* Language Popup */}
       {showLangPopup && (
@@ -351,6 +366,7 @@ export default function DemoDashboard() {
           </div>
           <Link
             to="/login"
+            onClick={() => trackDemoFunnel({ step: 'signup_started', preset: presetKey })}
             className="px-8 py-3.5 bg-burgundy text-white rounded-full font-bold text-sm hover:bg-burgundy-dark transition-all"
           >
             {t.getStartedFree}

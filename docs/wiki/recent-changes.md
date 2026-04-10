@@ -1,25 +1,24 @@
 ---
 title: "Recent Changes"
 slug: recent-changes
-compiled_at: "2026-04-10T21:20:31.649Z"
+compiled_at: "2026-04-10T21:33:42.325Z"
 ---
 # Recent Changes
 
-## WAHA WhatsApp Integration
-The team is actively enhancing the WAHA (self-hosted WhatsApp) adapter, with recent commits focusing on message processing refinement. Developers are resolving LID identifiers to real phone numbers (commit 511ef697) and implementing logic to skip group/newsletter messages to optimize AI token usage (a8f36c53). The webhook and message processor (waha-webhook.js, waha-adapter.js) have undergone significant updates to improve async processing and logging.
+## WhatsApp and Message Processing Improvements
+The team has been focusing on enhancing the WAHA (self-hosted WhatsApp) adapter and message processing system. Key improvements include resolving local identifiers to real phone numbers (commit 511ef697), skipping group and newsletter messages to conserve AI tokens (a8f36c53), and improving message handling synchronization to prevent data loss, especially with Vercel deployments (56029c11).
 
-## Internationalization and Localization Improvements
-Recent work emphasizes multilingual support, particularly for the Makoto demo. Commits introduce Spanish locale support, with careful attention to system prompts, component translations, and language synchronization. The team has been fixing language-related issues in components like DemoManagerChat and ensuring robust fallback mechanisms (commits like 58bfaf60, 39975eba). Translation files (en.json, es.json, pt-BR.json) have been incrementally updated to support these changes.
+## Multilingual and Demo Enhancements
+A significant effort has been made to improve internationalization and demo experiences. The Makoto demo now supports Spanish locale with real restaurant information, interactive cancellation, and language-specific system prompts (commits 39975eba, 58bfaf60, a1ed95f9). The team has also been carefully managing language switching and translation, ensuring smooth user experiences across different locales.
 
-## Demo and Dashboard Enhancements
-The development team is iterating on demo experiences, with recent work targeting the Makoto restaurant demo. Key improvements include adding an interactive Madrid preset, implementing analytics sidebar panels, and refining the booking flow. Dashboard-related commits address authentication, API noise reduction, and token handling (e.g., b26e1ea1 which adds URL path parameter token reading).
+## Project Documentation and Wiki
+A new project wiki compiler has been developed with Obsidian integration (a3cbfb65), resulting in comprehensive documentation across multiple areas including active issues, API endpoints, architecture, and recent changes. The wiki compiler script (scripts/compile-project-wiki.js) represents a substantial addition to the project's documentation infrastructure.
 
-## Ongoing Development Patterns
-The commit history reveals a consistent focus on:
-- Bug fixes and stability improvements
-- Performance optimization
-- Internationalization
-- Expanding demo capabilities
+## Development Patterns
+The recent commit history reveals a consistent focus on:
+- Bug fixes and performance improvements
+- Internationalization support
 - Debugging and logging enhancements
+- Adapter and webhook optimizations
 
-The current development trajectory suggests continued refinement of the platform's multilingual capabilities, WhatsApp integration, and demo experiences, with a strong emphasis on code quality and user experience.
+The current development seems concentrated on stabilizing the messaging system, improving multilingual support, and creating robust documentation for the project.
