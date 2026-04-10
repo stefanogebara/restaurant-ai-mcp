@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useParams } from 'react-router-dom';
 import DemoSlideIn from '../landing/components/DemoSlideIn';
 import DemoSidebar from '../components/demo/DemoSidebar';
 import DemoTablesGrid from '../components/demo/DemoTablesGrid';
@@ -40,8 +40,9 @@ const CUISINE_DISPLAY: Record<string, string> = {
 
 export default function DemoDashboard() {
   const [searchParams] = useSearchParams();
+  const { token: pathToken } = useParams<{ token?: string }>();
   const presetKey = searchParams.get('preset') || undefined;
-  const demoToken = searchParams.get('token') || undefined;
+  const demoToken = searchParams.get('token') || pathToken || undefined;
 
   // Fetch personalized demo from API when token is present
   const { data: tokenSession, isLoading: tokenLoading } = useDemoSession(demoToken);

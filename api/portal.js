@@ -302,7 +302,9 @@ async function handleGetAvailability(req, res) {
   const [openH, openM] = openTime.split(':').map(Number);
   const [closeH, closeM] = closeTime.split(':').map(Number);
   const openMinutes = openH * 60 + openM;
-  const closeMinutes = closeH * 60 + closeM;
+  // Treat 00:00 as 24:00 (next-day midnight) so late-night restaurants generate slots
+  const rawCloseMinutes = closeH * 60 + closeM;
+  const closeMinutes = rawCloseMinutes === 0 ? 1440 : rawCloseMinutes;
   const diningDuration = getDiningDuration(partySize);
 
   // Last seating: close time minus dining duration
