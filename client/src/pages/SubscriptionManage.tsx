@@ -1,12 +1,14 @@
 import { useTranslation } from 'react-i18next';
-import ThiingsIcon from '../components/common/ThiingsIcon';
 import { usePermission } from '../hooks/usePermission';
 import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { Loader2 } from 'lucide-react';
 import { SkeletonSubscription } from '../components/common/Skeleton';
 import { useToast } from '../contexts/ToastContext';
 import { useSubscriptionData, useCustomerPortal } from '../hooks/useSubscriptionManage';
 import { currencyFromLanguage, formatPriceLocale } from '../utils/currency';
 import { getPlanPrices } from '../config/planFeatures';
+import { authFetch } from '../services/api';
 
 const planTiers = ['starter', 'growth', 'scale'];
 
@@ -73,33 +75,7 @@ export default function SubscriptionManage() {
   }
 
   if (!subscription || subscription.status === 'none') {
-    return (
-      <div className="min-h-screen bg-white flex flex-col">
-        <header className="flex justify-between items-center px-6 sm:px-10 py-4 border-b border-border-gray bg-white">
-          <div className="font-serif text-lg font-semibold text-deep-charcoal">
-            seatable<span className="text-burgundy">.</span>
-          </div>
-        </header>
-
-        <div className="flex-1 flex items-center justify-center p-6">
-          <div className="border border-[#E5E7EB] rounded-lg p-12 max-w-md text-center">
-            <div className="w-16 h-16 rounded-full bg-soft-gray flex items-center justify-center mx-auto mb-5" aria-hidden="true">
-              <ThiingsIcon name="close" pxSize={28} className="text-muted-stone" />
-            </div>
-            <h1 className="font-serif text-2xl font-medium text-deep-charcoal mb-2">{t('subscription.noActiveSubscription')}</h1>
-            <p className="text-[15px] text-warm-stone font-light mb-8">
-              {t('subscription.noActiveSubscriptionDesc')}
-            </p>
-            <button
-              onClick={() => navigate('/#pricing')}
-              className="px-8 py-3.5 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-full transition-colors"
-            >
-              {t('subscription.viewPricingPlans')}
-            </button>
-          </div>
-        </div>
-      </div>
-    );
+    return <NoPlanPricing />;
   }
 
   const displayPlanName = normalizePlanName(subscription.planName);
@@ -238,6 +214,152 @@ export default function SubscriptionManage() {
           <p className="text-center text-sm text-muted-stone mt-10">
             {t('subscription.needHelp')}{' '}
             <a href="mailto:hello@seatable.one" className="text-burgundy hover:text-burgundy-dark transition-colors">{t('subscription.contactSupport')}</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Plan picker shown to users with no active subscription ─────────────────
+
+const NO_PLAN_TIERS = [
+  {
+    key: 'starter',
+    name: 'Essencial',
+    priceId: import.meta.env.VITE_STRIPE_STARTER_PRICE_ID || '',
+    brl: 'R$497',
+    desc: 'Perfeito para restaurantes pequenos',
+    features: ['Reservas com IA (Chat + WhatsApp)', 'Painel do anfitrião', 'Análises básicas', 'Suporte por e-mail', 'Até 50 reservas/mês'],
+    highlighted: false,
+    planName: 'Starter',
+  },
+  {
+    key: 'growth',
+    name: 'Profissional',
+    priceId: import.meta.env.VITE_STRIPE_GROWTH_PRICE_ID || '',
+    brl: 'R$1.497',
+    desc: 'Para restaurantes em crescimento',
+    features: ['Tudo do Essencial', 'Agente de voz com IA', 'Análises avançadas', 'Gestão de lista de espera', 'Até 150 reservas/mês', 'Notificações por SMS'],
+    highlighted: true,
+    planName: 'Growth',
+    trial: true,
+  },
+  {
+    key: 'scale',
+    name: 'Enterprise',
+    priceId: import.meta.env.VITE_STRIPE_SCALE_PRICE_ID || '',
+    brl: 'R$2.997',
+    desc: 'Para restaurantes de alto volume',
+    features: ['Tudo do Profissional', 'Reservas ilimitadas', 'SMS ilimitado', 'Suporte prioritário', 'Integrações personalizadas'],
+    highlighted: false,
+    planName: 'Scale',
+  },
+];
+
+function NoPlanPricing() {
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+  const { error } = useToast();
+
+  const handleCheckout = async (priceId: string, planName: string) => {
+    if (!priceId) { error('Price not configured. Please contact support.'); return; }
+    try {
+      setLoadingPlan(planName);
+      const apiUrl = import.meta.env.VITE_API_URL
+        ? `${import.meta.env.VITE_API_URL}/api/create-checkout-session`
+        : '/api/create-checkout-session';
+      const response = await authFetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ priceId, planName }),
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || 'Failed to create checkout session');
+      }
+      const { url } = await response.json();
+      window.location.href = url;
+    } catch (err: unknown) {
+      error(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
+      setLoadingPlan(null);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-white flex flex-col">
+      <header className="flex justify-between items-center px-6 sm:px-10 py-4 border-b border-border-gray bg-white">
+        <div className="font-serif text-lg font-semibold text-deep-charcoal">
+          seatable<span className="text-burgundy">.</span>
+        </div>
+        <a href="/host-dashboard/simple" className="text-[13px] text-warm-stone hover:text-stone-gray transition-colors">
+          Acessar painel →
+        </a>
+      </header>
+
+      <div className="flex-1 px-6 sm:px-16 py-12">
+        <div className="max-w-[1100px] mx-auto">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-burgundy/[6%] rounded-full mb-5">
+              <span className="text-xs font-semibold tracking-[1.5px] uppercase text-burgundy">Planos</span>
+            </div>
+            <h1 className="font-serif text-[40px] font-medium tracking-tight text-deep-charcoal mb-3">
+              Escolha seu plano
+            </h1>
+            <p className="text-[17px] text-warm-stone font-light">
+              Sem taxas ocultas. Cancele quando quiser.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-[2px] bg-border-gray rounded-[20px] overflow-hidden">
+            {NO_PLAN_TIERS.map((tier) => {
+              const isLoading = loadingPlan === tier.planName;
+              return (
+                <div key={tier.key} className={`relative px-8 py-12 ${tier.highlighted ? 'bg-deep-charcoal' : 'bg-warm-white'}`}>
+                  {tier.trial && (
+                    <div className="absolute top-0 inset-x-0 flex justify-center">
+                      <span className="bg-burgundy text-white text-[11px] font-semibold tracking-wide uppercase px-4 py-1 rounded-b-lg">
+                        14 dias grátis
+                      </span>
+                    </div>
+                  )}
+                  <div className={`text-xs font-semibold tracking-[1.5px] uppercase mb-2 ${tier.highlighted ? 'text-burgundy' : 'text-warm-stone'}`}>
+                    {tier.name}
+                  </div>
+                  <div className={`font-serif text-[42px] font-medium tracking-tight leading-none mb-1 ${tier.highlighted ? 'text-white' : 'text-deep-charcoal'}`}>
+                    {tier.brl}<span className={`text-base font-normal ${tier.highlighted ? 'text-muted-stone' : 'text-warm-stone'}`}>/mês</span>
+                  </div>
+                  <p className={`text-sm font-light mb-7 mt-2 ${tier.highlighted ? 'text-muted-stone' : 'text-warm-stone'}`}>{tier.desc}</p>
+                  <ul className="mb-8 space-y-0">
+                    {tier.features.map((f) => (
+                      <li key={f} className={`text-sm py-2.5 border-b flex items-center gap-2.5 ${tier.highlighted ? 'text-stone-300 border-white/10' : 'text-deep-charcoal border-border-gray'}`}>
+                        <span className="w-[5px] h-[5px] rounded-full bg-burgundy flex-shrink-0" />
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                  <button
+                    type="button"
+                    onClick={() => handleCheckout(tier.priceId, tier.planName)}
+                    disabled={!!loadingPlan}
+                    className={`w-full py-3.5 rounded-full text-sm font-semibold transition-colors flex items-center justify-center gap-2 disabled:opacity-60 ${
+                      tier.highlighted
+                        ? 'bg-burgundy text-white hover:bg-burgundy-dark'
+                        : 'border border-border-gray text-deep-charcoal hover:border-muted-stone bg-white'
+                    }`}
+                  >
+                    {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+                    {isLoading ? 'Aguarde...' : tier.trial ? 'Começar Teste Grátis' : 'Começar'}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+
+          <p className="text-center text-sm text-muted-stone mt-8">
+            Precisa de ajuda?{' '}
+            <a href="mailto:hello@seatable.one" className="text-burgundy hover:text-burgundy-dark transition-colors">
+              Fale conosco
+            </a>
           </p>
         </div>
       </div>

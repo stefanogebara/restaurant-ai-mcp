@@ -158,7 +158,7 @@ export default function Onboarding() {
     if (!showSuccessModal) return;
     const interval = setInterval(() => {
       setCountdown((prev) => {
-        if (prev <= 1) { clearInterval(interval); window.location.href = '/host-dashboard/simple'; return 0; }
+        if (prev <= 1) { clearInterval(interval); window.location.href = '/subscription/manage'; return 0; }
         return prev - 1;
       });
     }, 1000);
