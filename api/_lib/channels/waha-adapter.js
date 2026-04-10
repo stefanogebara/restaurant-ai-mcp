@@ -199,9 +199,11 @@ class WAHAAdapter extends ChannelAdapter {
   }
 
   async markAsRead(messageId) {
+    // NOWEB engine requires store to be enabled for sendSeen — skip silently
+    // Enable when WAHA_NOWEB_STORE=true (requires persistent disk on Render)
+    if (!process.env.WAHA_NOWEB_STORE) return;
+
     const { session } = getConfig();
-    // WAHA sendSeen takes chatId, not messageId
-    // We extract chatId from the message ID format: true_PHONE@c.us_MSGID
     const parts = messageId.split('_');
     const chatId = parts[1] || null;
     if (!chatId) return;
@@ -210,6 +212,9 @@ class WAHAAdapter extends ChannelAdapter {
   }
 
   async addReaction(to, messageId, emoji) {
+    // NOWEB engine does not support reactions — skip silently
+    if (!process.env.WAHA_NOWEB_STORE) return;
+
     const { session } = getConfig();
     await wahaAPI('POST', '/api/reaction', {
       session,
@@ -220,6 +225,8 @@ class WAHAAdapter extends ChannelAdapter {
   }
 
   async removeReaction(to, messageId) {
+    if (!process.env.WAHA_NOWEB_STORE) return;
+
     const { session } = getConfig();
     await wahaAPI('POST', '/api/reaction', {
       session,
