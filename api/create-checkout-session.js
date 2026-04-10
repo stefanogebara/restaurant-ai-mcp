@@ -117,9 +117,10 @@ module.exports = async (req, res) => {
     });
   } catch (error) {
     logger.error('Error creating checkout session:', error.message);
-    return res.status(500).json({
-      error: 'Failed to create checkout session',
-      message: 'Something went wrong. Please try again.',
+    const stripeMessage = error?.message || 'Failed to create checkout session';
+    return res.status(400).json({
+      error: stripeMessage,
+      message: stripeMessage,
     });
   }
 };

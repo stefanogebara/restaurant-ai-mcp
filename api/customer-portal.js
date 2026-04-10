@@ -75,9 +75,11 @@ module.exports = async (req, res) => {
     });
   } catch (error) {
     logger.error('Error creating portal session:', error);
-    return res.status(500).json({
-      error: 'Failed to create portal session',
-      message: 'Something went wrong. Please try again.',
+    // Forward the Stripe error message so the frontend can react meaningfully
+    const stripeMessage = error?.message || 'Failed to create portal session';
+    return res.status(400).json({
+      error: stripeMessage,
+      message: stripeMessage,
     });
   }
 };

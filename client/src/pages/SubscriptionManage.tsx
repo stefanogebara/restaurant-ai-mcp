@@ -50,14 +50,10 @@ export default function SubscriptionManage() {
       onSuccess: ({ url }) => { window.location.href = url; },
       onError: (err) => {
         const message = err.message || t('subscription.failedToOpen');
-        // If no active subscription (e.g. canceled), redirect to pricing
-        if (message.includes('No active subscription')) {
-          error(message);
-          navigate('/#pricing');
-        } else {
-          // Show a helpful contact-support message for portal failures
-          error(t('subscription.portalError', 'Unable to open billing portal. Please contact support at seatable.ai.br@gmail.com'));
-        }
+        // For any portal failure (no subscription, portal not configured, etc.)
+        // redirect to pricing so the user can pick/re-subscribe
+        error(t('subscription.portalError', 'Não foi possível abrir o portal de cobrança. Redirecionando para os planos…'));
+        navigate('/subscription/manage#pricing');
       },
     });
   };
