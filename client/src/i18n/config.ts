@@ -2,9 +2,10 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 
-// Import both EN and PT-BR eagerly (PT-BR is fallback/primary, EN for international)
+// Import all locales eagerly so language switches are synchronous (no async waterfall)
 import en from './locales/en.json';
 import ptBR from './locales/pt-BR.json';
+import es from './locales/es.json';
 
 export const languages = {
   en: { name: 'English', flag: '\u{1F1FA}\u{1F1F8}' },
@@ -62,6 +63,7 @@ i18n
     resources: {
       en: { translation: en },
       'pt-BR': { translation: ptBR },
+      es: { translation: es },
     },
     fallbackLng: 'pt-BR',
     debug: false,
