@@ -50,9 +50,7 @@ module.exports = async (req, res) => {
     const result = await getSubscriptionByEmail(restaurantId, customerEmail);
 
     if (!result.success) {
-      return res.status(404).json({
-        error: 'No subscription found',
-        message: 'This email does not have an active subscription',
+      return res.status(200).json({
         has_subscription: false
       });
     }

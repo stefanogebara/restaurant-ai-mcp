@@ -106,7 +106,7 @@ describe('SubscriptionStatus: Input validation', () => {
 // Data fetching
 // ============================================================
 describe('SubscriptionStatus: Data fetching', () => {
-  test('returns 404 when subscription not found', async () => {
+  test('returns 200 with no subscription when subscription not found', async () => {
     verifyAuth.mockResolvedValueOnce({
       user: { restaurant_id: 'rest-1', email: 'admin@test.com' },
     });
@@ -114,7 +114,7 @@ describe('SubscriptionStatus: Data fetching', () => {
 
     const { req, res } = createMockReqRes({ query: { email: 'customer@test.com' } });
     await handler(req, res);
-    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
       has_subscription: false,
     }));

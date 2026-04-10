@@ -62,16 +62,13 @@ async function getMagicLink(serviceKey) {
   try {
     await page.goto(actionLink, { waitUntil: 'domcontentloaded', timeout: 30000 });
 
-    // Wait for redirect to vercel.app (Supabase verifies token then redirects)
-    await page.waitForURL(/restaurant-ai-mcp\.vercel\.app/, { timeout: 30000 });
-
-    // Allow client-side redirects to settle
+    // Supabase may redirect directly to the production domain or to the legacy
+    // Vercel domain depending on project settings. Avoid logging the URL because
+    // magic-link redirects contain access tokens in the hash.
     await page.waitForTimeout(3000);
+    console.log('Magic link followed; extracting browser auth storage...');
 
-    const vercelUrl = page.url();
-    console.log('Landed at:', vercelUrl);
-
-    // Extract localStorage from vercel.app
+    // Extract localStorage from the current redirect origin.
     const lsData = await page.evaluate(() => {
       const items = {};
       for (let i = 0; i < localStorage.length; i++) {
@@ -80,11 +77,11 @@ async function getMagicLink(serviceKey) {
       }
       return items;
     });
-    console.log('Extracted', Object.keys(lsData).length, 'localStorage entries from vercel.app');
+    console.log('Extracted', Object.keys(lsData).length, 'localStorage entries');
 
-    // Try to transfer auth to seatable.one (skip if domain is unreachable)
+    // Try to transfer auth to seatable.one when the redirect landed elsewhere.
     let authPage = page;
-    try {
+    if (!page.url().startsWith('https://seatable.one/')) {
       const seatablePage = await context.newPage();
       await seatablePage.goto('https://seatable.one/login', { waitUntil: 'domcontentloaded', timeout: 10000 });
       await seatablePage.evaluate((data) => {
@@ -93,14 +90,11 @@ async function getMagicLink(serviceKey) {
         }
       }, lsData);
       console.log('Injected localStorage into seatable.one');
-
-      await seatablePage.goto('https://seatable.one/host-dashboard/simple', { waitUntil: 'networkidle', timeout: 15000 });
-      await seatablePage.waitForTimeout(3000);
-      console.log('Final URL on seatable.one:', seatablePage.url());
       authPage = seatablePage;
-    } catch (e) {
-      console.log('seatable.one unreachable, saving auth state from vercel.app only');
     }
+
+    await authPage.goto('https://seatable.one/host-dashboard/simple', { waitUntil: 'domcontentloaded', timeout: 30000 });
+    await authPage.waitForTimeout(3000);
 
     await context.storageState({ path: AUTH_STATE_PATH });
     console.log('✅ Auth state saved to', AUTH_STATE_PATH);

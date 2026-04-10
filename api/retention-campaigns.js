@@ -124,7 +124,7 @@ async function handleList(req, res) {
     let query = supabaseAdmin
       .schema('restaurant')
       .from('retention_campaigns')
-      .select('id, restaurant_id, customer_id, campaign_type, channel, status, message_content, scheduled_for, sent_at, opened_at, clicked_at, created_at, updated_at')
+      .select('id, restaurant_id, customer_id, campaign_type, channel, status, message, scheduled_at, sent_at, opened_at, converted_at, conversion_value, metadata, created_at, whatsapp_template_name, sent_count, delivered_count, read_count')
       .eq('restaurant_id', restaurantId)
       .order('created_at', { ascending: false })
       .range(parseInt(offset), parseInt(offset) + parseInt(limit) - 1);
@@ -140,7 +140,12 @@ async function handleList(req, res) {
       success: true,
       data: {
         total: data.length,
-        campaigns: data
+        campaigns: data.map(campaign => ({
+          ...campaign,
+          failed_count: 0,
+          recipient_count: 0,
+          segment_name: campaign.metadata?.segment_name || '',
+        }))
       }
     });
 
