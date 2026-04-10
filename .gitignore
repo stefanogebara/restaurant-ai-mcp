@@ -41,8 +41,15 @@ lambda/lambda-package.zip
 lambda/trust-policy.json
 .env*.local
 
-# Local scripts and one-off utilities
-scripts/
+# Local scripts and one-off utilities (exclude by name, not directory)
+scripts/seed-*
+scripts/create-*
+scripts/test-*
+scripts/fix-*
+scripts/check-*
+scripts/generate-*
+scripts/setup-*
+scripts/train-ml-model.py
 
 # Database migration drafts
 database/

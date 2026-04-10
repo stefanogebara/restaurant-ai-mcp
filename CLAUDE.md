@@ -1,3 +1,14 @@
+## Project Wiki (LLM-compiled knowledge base)
+
+Auto-compiled articles live in `docs/wiki/`. Refresh with `node scripts/compile-project-wiki.js`.
+- **[[architecture]]** — Tech stack, file structure, multi-tenancy, testing
+- **[[recent-changes]]** — Last 40 commits summarized by theme
+- **[[api-endpoints]]** — All endpoints, auth patterns, cron schedule
+- **[[database]]** — Schema, key tables, supabaseAdmin vs supabaseClient
+- **[[active-issues]]** — Open TODOs, fragile areas, suggested focus
+
+---
+
 ## Brand Design System — Social Media & Marketing
 
 ### Illustration Style (AI Studio / Nano Banana Prompts)

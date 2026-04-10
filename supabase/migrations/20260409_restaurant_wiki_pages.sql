@@ -4,7 +4,7 @@
 
 CREATE TABLE IF NOT EXISTS restaurant_wiki_pages (
   id             UUID         DEFAULT gen_random_uuid() PRIMARY KEY,
-  restaurant_id  UUID         NOT NULL REFERENCES restaurants(id) ON DELETE CASCADE,
+  restaurant_id  UUID         NOT NULL,
   slug           TEXT         NOT NULL,        -- overview | customers | patterns | performance | operations
   title          TEXT         NOT NULL,
   content        TEXT         NOT NULL,
