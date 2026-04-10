@@ -56,9 +56,9 @@ test.describe('Pricing Section', () => {
     const pricingSection = page.locator('#pricing');
     await expect(pricingSection).toBeAttached();
 
-    // Should have at least 3 plan cards (Starter, Growth, Scale)
+    // Should have at least 3 plan cards (Starter, Growth, Enterprise)
     const pricingText = await pricingSection.textContent();
-    const hasPlanNames = [/starter/i, /growth/i, /scale/i].filter(p => p.test(pricingText!));
+    const hasPlanNames = [/starter/i, /growth/i, /enterprise/i].filter(p => p.test(pricingText!));
     expect(hasPlanNames.length).toBeGreaterThanOrEqual(3);
   });
 
@@ -75,18 +75,13 @@ test.describe('Pricing Section', () => {
   });
 });
 
-test.describe('Contact Section', () => {
-  test('contact form section is accessible', async ({ page }) => {
+test.describe('Final CTA Section', () => {
+  test('final CTA section is accessible', async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
 
-    const contactSection = page.locator('#contact');
-    await expect(contactSection).toBeAttached();
-
-    // Should have email reference
-    const contactText = await contactSection.textContent();
-    const hasContactInfo = contactText!.includes('hello@seatable.one') || contactText!.includes('contact');
-    expect(hasContactInfo).toBeTruthy();
+    await expect(page.getByRole('heading', { name: /ready to reimagine your restaurant/i })).toBeVisible();
+    await expect(page.getByRole('link', { name: /try it free/i }).last()).toBeVisible();
   });
 });
 
@@ -95,32 +90,19 @@ test.describe('FAQ Section', () => {
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
 
-    const faqSection = page.locator('#faq');
-    await expect(faqSection).toBeAttached();
-
-    // Should have clickable FAQ items
-    const faqText = await faqSection.textContent();
-    expect(faqText!.length).toBeGreaterThan(50);
+    await expect(page.getByRole('button', { name: /how does the ai reservation assistant work/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /can i customize the ai's responses/i })).toBeVisible();
   });
 
   test('FAQ items are expandable', async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
 
-    // Find first FAQ button/trigger
-    const faqSection = page.locator('#faq');
-    const faqButtons = faqSection.locator('button, [role="button"], details > summary');
-    const count = await faqButtons.count();
+    const faqButton = page.getByRole('button', { name: /how does the ai reservation assistant work/i });
+    await faqButton.click();
+    await page.waitForTimeout(500);
 
-    if (count > 0) {
-      // Click first FAQ item
-      await faqButtons.first().click();
-      await page.waitForTimeout(500);
-
-      // After click, more content should be visible
-      const faqTextAfter = await faqSection.textContent();
-      expect(faqTextAfter!.length).toBeGreaterThan(100);
-    }
+    await expect(page.getByText(/uses natural language processing/i)).toBeVisible();
   });
 });
 

@@ -15,17 +15,14 @@ test.describe('Landing Page', () => {
   });
 
   test('renders hero section with correct heading and CTAs', async ({ page }) => {
-    await expect(page.locator('h1')).toContainText('Never miss a reservation again');
+    await expect(page.locator('h1')).toContainText(/booked a table at your restaurant/i);
 
-    // Both CTA buttons visible (use .first() since pricing section may also have these)
-    const tryDemo = page.getByRole('button', { name: /try live demo/i }).first();
-    const createDemo = page.getByRole('button', { name: /create.*free demo|create.*demo/i }).first();
-    await expect(tryDemo).toBeVisible();
-    await expect(createDemo).toBeVisible();
+    await expect(page.getByRole('button', { name: /see it live/i }).first()).toBeVisible();
+    await expect(page.getByRole('link', { name: /try free demo/i }).first()).toBeVisible();
   });
 
-  test('"Try Live Demo" navigates to /live-demo', async ({ page }) => {
-    await page.getByRole('button', { name: /try live demo/i }).click();
+  test('"Try the full experience" navigates to /live-demo', async ({ page }) => {
+    await page.getByRole('link', { name: /try the full experience/i }).click();
     await expect(page).toHaveURL(/\/live-demo/);
   });
 
@@ -50,17 +47,17 @@ test.describe('Landing Page', () => {
     }
   });
 
-  test('nav "Login" navigates to /login', async ({ page }) => {
-    const loginBtn = page.locator('nav').getByRole('button', { name: /^login$/i });
-    if (await loginBtn.isVisible()) {
-      await loginBtn.click();
+  test('nav "Sign in" navigates to /login', async ({ page }) => {
+    const loginBtn = page.locator('nav').getByRole('link', { name: /^(sign in|login)$/i });
+    if (await loginBtn.count() > 0 && await loginBtn.first().isVisible()) {
+      await loginBtn.first().click();
       await expect(page).toHaveURL(/\/login/);
     }
   });
 
-  test('renders features section', async ({ page }) => {
-    const featuresSection = page.locator('#features');
-    await expect(featuresSection).toBeAttached();
+  test('renders product walkthrough section', async ({ page }) => {
+    await expect(page.getByRole('heading', { name: /watch the ai work/i })).toBeVisible();
+    await expect(page.getByText(/revenue intelligence/i)).toBeVisible();
   });
 
   test('renders pricing section with three plans', async ({ page }) => {
@@ -69,13 +66,12 @@ test.describe('Landing Page', () => {
   });
 
   test('renders FAQ section', async ({ page }) => {
-    const faqSection = page.locator('#faq');
-    await expect(faqSection).toBeAttached();
+    await expect(page.getByRole('button', { name: /how does the ai reservation assistant work/i })).toBeVisible();
   });
 
-  test('renders contact form section', async ({ page }) => {
-    const contactSection = page.locator('#contact');
-    await expect(contactSection).toBeAttached();
+  test('renders final CTA section', async ({ page }) => {
+    await expect(page.getByRole('heading', { name: /ready to reimagine your restaurant/i })).toBeVisible();
+    await expect(page.getByRole('link', { name: /try it free/i }).last()).toBeVisible();
   });
 
   test('footer links use correct hrefs', async ({ page }) => {
@@ -183,8 +179,9 @@ test.describe('Live AI Demo Page', () => {
     await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(1000);
 
-    await expect(page.getByText('Hear the AI in action.')).toBeVisible();
-    await expect(page.getByText('Natural Conversation')).toBeVisible();
+    await expect(page.getByRole('heading', { name: /talk to our ai host/i })).toBeVisible();
+    await expect(page.getByText(/ask to book a table/i)).toBeVisible();
+    await expect(page.getByRole('button', { name: /tap to talk/i })).toBeVisible();
   });
 
   test('"Get Started" nav link does not go to /onboarding', async ({ page }) => {
@@ -198,23 +195,22 @@ test.describe('Live AI Demo Page', () => {
     }
   });
 
-  test('demo restaurant info card is visible', async ({ page }) => {
+  test('live dashboard card is visible', async ({ page }) => {
     await page.goto('/live-demo');
     await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(2000);
 
-    // Demo restaurant section with the seeded restaurant name
-    await expect(page.getByText('Demo Restaurant', { exact: true })).toBeVisible();
-    await expect(page.getByText('Cantina da Praca')).toBeVisible();
+    await expect(page.getByText(/live dashboard/i)).toBeVisible();
+    await expect(page.getByText(/reservations appear in real-time/i)).toBeVisible();
   });
 });
 
 test.describe('Auth Guards', () => {
   test('/onboarding redirects unauthenticated users to /login', async ({ page }) => {
     await page.goto('/onboarding');
-    // ProtectedRoute should redirect to /login
-    await page.waitForURL(/\/login/, { timeout: 10000 });
-    expect(page.url()).toContain('/login');
+    await page.waitForLoadState('domcontentloaded');
+    // ProtectedRoute redirect can happen after client-side auth initialization.
+    await expect.poll(() => page.url(), { timeout: 20000 }).toContain('/login');
   });
 
   test('/welcome redirects unauthenticated users to /login', async ({ page }) => {
@@ -289,9 +285,10 @@ test.describe('Mobile Responsiveness', () => {
     await menuBtn.click();
 
     // Menu items should be visible
-    await expect(page.getByRole('button', { name: /live demo/i }).last()).toBeVisible();
-    await expect(page.getByRole('button', { name: /features/i }).last()).toBeVisible();
+    await expect(page.getByRole('button', { name: /^demo$/i }).last()).toBeVisible();
     await expect(page.getByRole('button', { name: /pricing/i }).last()).toBeVisible();
+    await expect(page.getByRole('link', { name: /try free demo/i }).last()).toBeVisible();
+    await expect(page.getByRole('link', { name: /sign in/i }).last()).toBeVisible();
   });
 
   test('login page is usable on mobile', async ({ page }) => {
