@@ -99,17 +99,36 @@ class WAHAAdapter extends ChannelAdapter {
     if (!payload) return null;
 
     const rawFrom = payload.from || '';
-    const from = rawFrom.replace('@c.us', '').replace('@s.whatsapp.net', '').replace(/[^0-9+]/g, '') || '';
+    let from = rawFrom.replace('@c.us', '').replace('@s.whatsapp.net', '').replace(/[^0-9+]/g, '') || '';
     const messageId = payload.id || `waha-${Date.now()}`;
     const hasMedia = payload.hasMedia || false;
 
     // Skip messages from self (outgoing)
     if (payload.fromMe) return null;
 
-    // Skip group chats (@g.us) and newsletter/linked-device IDs
-    if (rawFrom.includes('@g.us') || rawFrom.includes('@lid') || rawFrom.includes('@newsletter')) {
+    // Skip group chats and newsletters
+    if (rawFrom.includes('@g.us') || rawFrom.includes('@newsletter')) {
       logger.info('WAHA skipping group/newsletter message from:', rawFrom);
       return null;
+    }
+
+    // Resolve LID (WhatsApp Business linked-device ID) to real phone number
+    if (rawFrom.includes('@lid')) {
+      try {
+        const { session: wahaSession } = getConfig();
+        const resolved = await wahaAPI('GET', `/api/${wahaSession}/lids/${encodeURIComponent(rawFrom)}`);
+        if (resolved?.pn) {
+          const resolvedPhone = resolved.pn.replace('@c.us', '').replace(/[^0-9+]/g, '');
+          logger.info('WAHA LID resolved:', rawFrom, '→', resolvedPhone);
+          from = resolvedPhone;
+        } else {
+          logger.info('WAHA skipping unresolvable LID:', rawFrom);
+          return null;
+        }
+      } catch (err) {
+        logger.info('WAHA LID resolution failed, skipping:', rawFrom, err.message);
+        return null;
+      }
     }
 
     let text = payload.body || '';
