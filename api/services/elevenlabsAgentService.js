@@ -836,7 +836,7 @@ async function createAgent({
             first_message: firstMessage,
             language,
           },
-          tts: { voice_id, model_id: 'eleven_flash_v2_5' },
+          tts: { voice_id, model_id: language === 'en' ? 'eleven_flash_v2' : 'eleven_flash_v2_5' },
           conversation: {
             turn_timeout: 8,
             client_events: ['agent_response', 'agent_response_correction', 'user_transcript', 'internal_tentative_agent_response'],
