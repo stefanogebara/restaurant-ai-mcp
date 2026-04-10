@@ -23,6 +23,60 @@ Restaurant context:
 - Average ticket: €80–€120 per cover | Fine dining, reservations required
 - Style: Contemporary Japanese + European influences, open kitchen sushi counter`,
   },
+
+  italian: {
+    respondIn: 'English',
+    wiki: `### Restaurant Overview
+Trattoria da Marco is a 28-seat Roman-style trattoria in Little Italy. The restaurant seats 28 across 8 tables (terrace, main room, wine bar, and private room). It runs at roughly 65% weekday occupancy and peaks at full capacity on Friday–Saturday evenings.
+
+### Customer Base
+The restaurant has a loyal base of regulars including Giovanni Bianchi (VIP, 14 visits), Alessandro Russo (regular, anniversary dinner tradition), and a steady stream of tourists and date-night couples. Average party size is 3.2. VIPs typically request the private room or terrace.
+
+### Booking Patterns
+Peak booking hours are 19:30–21:00 (dinner service). Lunch sees lighter traffic (12:00–14:00). No-show rate is approximately 8%. Special occasions (anniversaries, birthdays) account for ~22% of dinner reservations.
+
+### Performance Metrics
+Average covers per dinner service: 24. Revenue per cover: ~€38. No-shows last 30 days: 4. Cancellations: 6. Deposits held: 2 reservations. The restaurant runs lean — no major performance gaps.
+
+### Operational Notes
+The kitchen requires 30-minute advance notice for dietary accommodations. The private room seats up to 8 and is popular for corporate dinners. The wine bar section is walk-in only. Marco (the owner) manages the floor personally on weekends.`,
+  },
+
+  japanese: {
+    respondIn: 'English',
+    wiki: `### Restaurant Overview
+Sakura Izakaya is a 32-seat Japanese izakaya-style restaurant. It occupies 8 tables across bar seating, garden terrace, and tatami room. It operates Tuesday–Sunday, 17:00–23:00. Weeknight occupancy averages 70%; weekends are consistently full with a 15-minute waitlist at peak.
+
+### Customer Base
+Core regulars include Yuki Tanaka (VIP, sake enthusiast, 18 visits), David Park (regular, always brings groups of 4–6), and a strong expat professional community. Average party size is 3.8. Walk-ins account for about 40% of covers.
+
+### Booking Patterns
+Peak hours: Friday 19:00–21:30, Saturday 18:30–22:00. Weekday peak: Thursday 19:00–21:00. No-show rate: 6%. Large group bookings (6+) represent 30% of revenue. Common special requests: sake pairing, tatami room for privacy.
+
+### Performance Metrics
+Average covers per service: 28. Revenue per cover: ~€45. Sake and cocktail sales add ~€12 per cover average. No-shows last 30 days: 3. The tatami room books out 4–5 days in advance consistently.
+
+### Operational Notes
+Tatami room requires 48-hour advance booking. The kitchen cannot accommodate shellfish allergies without advance notice (24h minimum). Bar seating is always walk-in only — never reservable. Chef recommends the omakase for first-time guests.`,
+  },
+
+  brazilian: {
+    respondIn: 'Portuguese (Brazil)',
+    wiki: `### Visão Geral do Restaurante
+Cantina da Praça é uma cantina brasileira com 36 lugares no coração da Vila Madalena, São Paulo. O restaurante tem 9 mesas distribuídas entre o salão principal, varanda e área externa. Funciona de terça a domingo, das 12h às 23h. A ocupação média nos fins de semana é de 90%, com fila de espera frequente no almoço de domingo.
+
+### Base de Clientes
+Os clientes fiéis incluem Carlos Mendonça (VIP, 21 visitas, sempre na varanda), família Oliveira (regular, almoço de domingo semanal), e uma clientela local de profissionais e famílias do bairro. Tamanho médio dos grupos: 3.5. Reservas representam 60% dos covers; walk-ins são comuns no almoço.
+
+### Padrões de Reservas
+Picos: domingo 12h–14h (almoço de família) e sexta-sábado 20h–22h. Taxa de no-show: 5%. Comemorações (aniversários, formaturas) representam ~30% das reservas de jantar. Pedidos especiais frequentes: mesa na varanda, bolo surpresa.
+
+### Métricas de Desempenho
+Média de covers por serviço: 30. Receita por cover: ~R$ 95. No-shows nos últimos 30 dias: 4. Cancelamentos: 7. Sexta e sábado são os dias de maior receita — representam 45% do faturamento semanal.
+
+### Notas Operacionais
+A varanda tem capacidade para 12 pessoas (3 mesas) e é o espaço mais requisitado. O chef precisa de 24h de antecedência para menus de degustação especiais. Feijoada completa disponível apenas às sextas (almoço) e domingos. O bar fecha às 22h30 em dias de semana.`,
+  },
 };
 
 module.exports = async function handler(req, res) {
@@ -79,8 +133,12 @@ module.exports = async function handler(req, res) {
     ? (lang === 'pt-BR' ? `R$ ${ctx.totalRevenue}` : `€${ctx.totalRevenue}`)
     : 'not available';
 
+  const wikiBlock = presetMeta.wiki
+    ? `\n\n[RESTAURANT KNOWLEDGE BASE]\n${presetMeta.wiki}`
+    : '';
+
   const systemPrompt = `You are a concise AI restaurant manager assistant for "${restaurantName}".
-${presetMeta.context || ''}
+${presetMeta.context || ''}${wikiBlock}
 
 Current stats:
 - Tables: ${occupied}/${total} occupied (${available} available, ${occupancy}% occupancy)

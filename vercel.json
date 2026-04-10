@@ -345,6 +345,10 @@
     {
       "path": "/api/square/sync?action=cron_refresh",
       "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cron/compile-wiki",
+      "schedule": "30 4 * * *"
     }
   ]
 }

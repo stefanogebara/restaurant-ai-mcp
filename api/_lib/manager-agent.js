@@ -9,11 +9,13 @@ const { getAI, AI_MODEL } = require('./ai-client');
 const { retrieveRelevantMemories, writeMemory } = require('../services/managerMemory');
 const { getRestaurantSnapshot } = require('../services/restaurantSnapshot');
 const { buildRestaurantIdentitySection } = require('./persona-prompt-builder');
+const { getWikiPages } = require('../services/wikiCompiler');
 const { supabaseAdmin } = require('./supabase');
 const { createSecureLogger } = require('./secure-logger');
 const { getPlanLimits } = require('../services/subscription-limits');
 const { trackUsage } = require('./usage-tracking');
 const { comparePeriods } = require('./periodCompare');
+const { getLocalDate, getLocalTime } = require('./timezone');
 
 const logger = createSecureLogger('manager-agent');
 
@@ -132,7 +134,7 @@ async function saveTurn(restaurantId, role, content, channel) {
   }
 }
 
-function buildSystemPrompt(memories, snapshot, config) {
+function buildSystemPrompt(memories, snapshot, config, wikiPages = [], dateInfo = {}) {
   const restaurantName = config?.restaurant_name || config?.name || 'this restaurant';
   const language = config?.agent_language || config?.language || 'en';
 
@@ -144,7 +146,7 @@ function buildSystemPrompt(memories, snapshot, config) {
       : 'No memories stored yet.';
 
   const upcomingLines = snapshot.upcoming_reservations
-    .slice(0, 5)
+    .slice(0, 20)
     .map((r) => {
       const vipTag = r.customer_tier === 'vip'
         ? ' ★VIP'
@@ -182,6 +184,11 @@ function buildSystemPrompt(memories, snapshot, config) {
     .map(f => f.day + ' ' + f.date + ': ' + f.expected_covers + ' covers → ' +
       f.roles.map(r => r.name + ': ' + r.recommended).join(', '))
     .join('\n');
+
+  // Date/time context
+  const timezone = config?.timezone || 'UTC';
+  const localDate = dateInfo.localDate || getLocalDate(timezone);
+  const localTime = dateInfo.localTime || getLocalTime(timezone);
 
   // Build identity section
   const identitySection = buildRestaurantIdentitySection(config || {});
@@ -246,7 +253,16 @@ function buildSystemPrompt(memories, snapshot, config) {
     systemPrompt += feedbackBlock;
   }
 
-  // Strategy doc removed — column doesn't exist yet
+  // Date/time context — always inject so AI knows "today" and "now"
+  systemPrompt += `\n\n[DATE & TIME]\nToday: ${localDate}\nCurrent time: ${localTime} (${timezone})`;
+
+  // Wiki knowledge — compiled daily from raw data (Karpathy wiki pattern)
+  if (wikiPages.length > 0) {
+    systemPrompt += '\n\n[RESTAURANT KNOWLEDGE BASE — compiled from operational data]';
+    for (const page of wikiPages) {
+      systemPrompt += `\n\n### ${page.title}\n${page.content}`;
+    }
+  }
 
   // Response style rules — written in the target language for maximum compliance
   if (isPT) {
@@ -315,20 +331,21 @@ async function runManagerAgent(restaurantId, userMessage, channel) {
   }
   // ─────────────────────────────────────────────────────────────
 
-  const [memories, snapshot, history, configResult] = await Promise.all([
+  const [memories, snapshot, history, configResult, wikiPages] = await Promise.all([
     retrieveRelevantMemories(restaurantId, userMessage),
     getRestaurantSnapshot(restaurantId),
     getConversationHistory(restaurantId),
     supabaseAdmin
       .schema('restaurant')
       .from('restaurant_config')
-      .select('restaurant_name, name, agent_language')
+      .select('restaurant_name, name, agent_language, restaurant_profile, timezone, agent_name, agent_greeting')
       .eq('id', restaurantId)
       .maybeSingle(),
+    getWikiPages(restaurantId),
   ]);
 
   const config = configResult?.data || {};
-  const systemPrompt = buildSystemPrompt(memories, snapshot, config);
+  const systemPrompt = buildSystemPrompt(memories, snapshot, config, wikiPages);
   const messages = [
     ...history.map((h) => ({
       role: h.role === 'manager' ? 'user' : 'assistant',
@@ -424,20 +441,21 @@ async function runManagerAgentStream(restaurantId, userMessage, channel, onToken
     }
   }
 
-  const [memories, snapshot, history, configResult] = await Promise.all([
+  const [memories, snapshot, history, configResult, wikiPages] = await Promise.all([
     retrieveRelevantMemories(restaurantId, userMessage),
     getRestaurantSnapshot(restaurantId),
     getConversationHistory(restaurantId),
     supabaseAdmin
       .schema('restaurant')
       .from('restaurant_config')
-      .select('restaurant_name, name, agent_language')
+      .select('restaurant_name, name, agent_language, restaurant_profile, timezone, agent_name, agent_greeting')
       .eq('id', restaurantId)
       .maybeSingle(),
+    getWikiPages(restaurantId),
   ]);
 
   const config = configResult?.data || {};
-  const systemPrompt = buildSystemPrompt(memories, snapshot, config);
+  const systemPrompt = buildSystemPrompt(memories, snapshot, config, wikiPages);
   const messages = [
     ...history.map((h) => ({
       role: h.role === 'manager' ? 'user' : 'assistant',
