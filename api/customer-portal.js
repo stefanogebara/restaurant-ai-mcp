@@ -47,6 +47,11 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: 'No Stripe customer found for this restaurant' });
     }
 
+    // Guard against onboarding-seeded fake customer IDs (UUIDs, not cus_xxx)
+    if (!customerId.startsWith('cus_')) {
+      return res.status(400).json({ error: 'No active subscription found. Please select a plan to continue.' });
+    }
+
     // Resolve origin against an explicit allowlist to prevent open-redirect via
     // a spoofed Origin header. Attacker-supplied origins fall back to CLIENT_URL.
     const ALLOWED_RETURN_ORIGINS = [

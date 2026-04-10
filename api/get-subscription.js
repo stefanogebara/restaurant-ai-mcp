@@ -42,7 +42,12 @@ module.exports = async (req, res) => {
     const subscriptionId = sub['Subscription ID'];
 
     // If we have a real Stripe subscription, fetch live status from Stripe
-    if (subscriptionId && subscriptionId !== 'onboarding-plan' && customerId) {
+    const isRealStripeSub = subscriptionId &&
+      subscriptionId !== 'onboarding-plan' &&
+      !subscriptionId.startsWith('free_') &&
+      customerId &&
+      customerId.startsWith('cus_');
+    if (isRealStripeSub) {
       try {
         const stripeSub = await stripe.subscriptions.retrieve(subscriptionId);
         const price = stripeSub.items.data[0].price;

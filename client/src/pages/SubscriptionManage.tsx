@@ -74,7 +74,9 @@ export default function SubscriptionManage() {
     return <SkeletonSubscription />;
   }
 
-  if (!subscription || subscription.status === 'none') {
+  // Treat "Free" plan (seeded by onboarding, no real Stripe customer) as no subscription
+  const hasNoRealPlan = !subscription || subscription.status === 'none' || subscription.planName === 'Free';
+  if (hasNoRealPlan) {
     return <NoPlanPricing />;
   }
 
