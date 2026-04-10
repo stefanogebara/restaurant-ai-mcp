@@ -98,12 +98,19 @@ class WAHAAdapter extends ChannelAdapter {
     if (event !== 'message') return null;
     if (!payload) return null;
 
-    const from = payload.from?.replace('@c.us', '').replace('@s.whatsapp.net', '') || '';
+    const rawFrom = payload.from || '';
+    const from = rawFrom.replace('@c.us', '').replace('@s.whatsapp.net', '').replace(/[^0-9+]/g, '') || '';
     const messageId = payload.id || `waha-${Date.now()}`;
     const hasMedia = payload.hasMedia || false;
 
     // Skip messages from self (outgoing)
     if (payload.fromMe) return null;
+
+    // Skip group chats (@g.us) and newsletter/linked-device IDs
+    if (rawFrom.includes('@g.us') || rawFrom.includes('@lid') || rawFrom.includes('@newsletter')) {
+      logger.info('WAHA skipping group/newsletter message from:', rawFrom);
+      return null;
+    }
 
     let text = payload.body || '';
     let messageType = 'text';
