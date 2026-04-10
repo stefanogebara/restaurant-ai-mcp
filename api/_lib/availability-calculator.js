@@ -69,8 +69,10 @@ function getOccupiedSeatsAtTime(reservations, checkTime) {
   let occupiedSeats = 0;
 
   reservations.forEach(reservation => {
-    const resTime = reservation.fields.Time;
-    const partySize = reservation.fields['Party Size'] || 0;
+    const fields = reservation.fields || reservation;
+    const resTime = fields.Time || fields.time;
+    const partySize = fields['Party Size'] || fields.party_size || 0;
+    if (!resTime) return;
     const duration = getDiningDuration(partySize);
     const endTime = addMinutesToTime(resTime, duration);
 

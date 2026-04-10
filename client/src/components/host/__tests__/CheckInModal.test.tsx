@@ -46,7 +46,7 @@ function createReservation(
 function createTable(overrides: Partial<Table> = {}): Table {
   return {
     id: 'table-1',
-    table_number: '5',
+    table_number: 5,
     capacity: 4,
     location: 'Main Floor',
     status: 'Available',

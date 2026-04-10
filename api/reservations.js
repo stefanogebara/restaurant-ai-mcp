@@ -53,6 +53,13 @@ const { validateReservation: validateReservationRules } = require('./_lib/reserv
 
 // Input sanitization
 const { sanitizeStringXSS } = require('./_lib/validation');
+const {
+  getMissingReservationCreateFields,
+  isValidReservationDate,
+  isValidReservationTime,
+  normalizeReservationCreateInput,
+  normalizeReservationModifyInput,
+} = require('../shared/reservation-contract.cjs');
 
 // ============================================================================
 // SMS CONFIRMATION HELPER
@@ -169,6 +176,8 @@ module.exports = async (req, res) => {
 };
 
 async function handleCreate(req, res, restaurantId, timezone) {
+  const input = normalizeReservationCreateInput(req.method === 'POST' ? req.body : req.query);
+  const missingFields = getMissingReservationCreateFields(input);
   const {
     date,
     time,
@@ -178,12 +187,33 @@ async function handleCreate(req, res, restaurantId, timezone) {
     customer_email,
     special_requests,
     source
-  } = req.method === 'POST' ? req.body : req.query;
+  } = input;
 
-  if (!date || !time || !party_size || !customer_name || !customer_phone) {
+  if (missingFields.length > 0) {
     return res.status(400).json({
       success: false,
       error: 'I need a few more details to complete your reservation. Please provide the date, time, party size, your name, and phone number.'
+    });
+  }
+
+  if (party_size < 1 || party_size > 20) {
+    return res.status(400).json({
+      success: false,
+      error: 'Party size must be between 1 and 20 guests.'
+    });
+  }
+
+  if (!isValidReservationDate(date)) {
+    return res.status(400).json({
+      success: false,
+      error: 'The reservation date is invalid. Please use YYYY-MM-DD.'
+    });
+  }
+
+  if (!isValidReservationTime(time)) {
+    return res.status(400).json({
+      success: false,
+      error: 'The reservation time is invalid. Please use HH:MM.'
     });
   }
 
@@ -209,7 +239,7 @@ async function handleCreate(req, res, restaurantId, timezone) {
       .schema('restaurant')
       .from('restaurant_config')
       .select('business_hours, reservation_settings, timezone')
-      .eq('restaurant_id', restaurantId)
+      .eq('id', restaurantId)
       .single();
 
     if (restConfig) {
@@ -261,20 +291,16 @@ async function handleCreate(req, res, restaurantId, timezone) {
   const reservationId = generateReservationId();
 
   const fields = {
-    'Reservation ID': reservationId,
-    'Date': date,
-    'Time': time,
-    'Party Size': parseInt(party_size),
-    'Customer Name': sanitizedName,
-    'Customer Phone': customer_phone,
-    'Customer Email': customer_email || '',
-    'Special Requests': special_requests || '',
-    'Status': 'confirmed',
-    'Created At': getLocalDate(timezone),
-    'Updated At': getLocalDate(timezone),
-    'Confirmation Sent': true,
-    'Reminder Sent': false,
-    'Notes': source === 'dashboard' ? 'Created from dashboard' : 'Created via AI Phone System'
+    reservation_id: reservationId,
+    date,
+    time,
+    party_size,
+    customer_name: sanitizedName,
+    customer_phone,
+    customer_email: customer_email || '',
+    special_requests: special_requests || '',
+    status: 'confirmed',
+    notes: source === 'dashboard' ? 'Created from dashboard' : 'Created via AI Phone System'
   };
 
   const result = await createReservation(restaurantId, fields);
@@ -308,7 +334,7 @@ async function handleCreate(req, res, restaurantId, timezone) {
       reservation_id: reservationId,
       date: date,
       time: time,
-      party_size: parseInt(party_size),
+      party_size,
       customer_name: sanitizedName,
       customer_phone: customer_phone,
       customer_email: customer_email || '',
@@ -338,10 +364,10 @@ async function handleCreate(req, res, restaurantId, timezone) {
     // Update reservation with ML predictions
     if (result.data && result.data.id && prediction) {
       const mlFields = {
-        'ML Risk Score': riskData.riskScore, // Already 0-100
-        'ML Risk Level': riskData.riskLevel, // low, medium, high, very-high
-        'ML Confidence': riskData.confidence, // Already percentage
-        'ML Model Version': riskData.modelVersion
+        ml_risk_score: riskData.riskScore,
+        ml_risk_level: riskData.riskLevel,
+        ml_confidence: riskData.confidence,
+        ml_model_version: riskData.modelVersion
       };
 
       await updateReservation(restaurantId, result.data.id, mlFields);
@@ -350,7 +376,7 @@ async function handleCreate(req, res, restaurantId, timezone) {
       // Log to training dataset for future model retraining
       const reservationWithId = {
         ...reservationForPrediction,
-        reservation_id: result.data.fields['Reservation ID'],
+        reservation_id: result.data.reservation_id,
         created_at: reservationForPrediction.created_at
       };
       await logReservationCreated(reservationWithId, prediction, null);
@@ -418,8 +444,8 @@ async function handleCreate(req, res, restaurantId, timezone) {
     const { data: config } = await supabaseAdmin
       .schema('restaurant')
       .from('restaurant_config')
-      .select('whatsapp_enabled, restaurant_name, agent_language')
-      .eq('restaurant_id', restaurantId)
+      .select('whatsapp_enabled, restaurant_name, agent_language, language')
+      .eq('id', restaurantId)
       .single();
     restaurantConfig = config;
   } catch (error) {
@@ -473,11 +499,11 @@ async function handleCreate(req, res, restaurantId, timezone) {
       customerName: sanitizedName,
       restaurantName: restaurantConfig?.restaurant_name || 'Your Restaurant',
       reservationId,
-      partySize: parseInt(party_size),
+      partySize: party_size,
       date,
       time,
       specialRequests: special_requests,
-      language: restaurantConfig?.language || 'en',
+      language: restaurantConfig?.language || restaurantConfig?.agent_language || 'en',
     }).catch(err => logger.warn('Confirmation email failed (non-fatal):', err.message));
   }
 
@@ -568,19 +594,19 @@ async function handleList(req, res, restaurantId) {
       });
     }
 
-    // Convert Airtable records to simplified format
+    // Convert reservation records to simplified format
     const reservations = result.data.records
       .map(record => ({
-        reservation_id: record.fields['Reservation ID'],
-        customer_name: record.fields['Customer Name'],
-        customer_phone: record.fields['Customer Phone'],
-        customer_email: record.fields['Customer Email'] || '',
-        party_size: record.fields['Party Size'],
-        date: record.fields['Date'],
-        time: record.fields['Time'],
-        special_requests: record.fields['Special Requests'] || '',
-        status: record.fields['Status'] || 'Confirmed',
-        created_at: record.fields['Created At'] || record.createdTime
+        reservation_id: record.reservation_id,
+        customer_name: record.customer_name,
+        customer_phone: record.customer_phone,
+        customer_email: record.customer_email || '',
+        party_size: record.party_size,
+        date: record.date,
+        time: record.time,
+        special_requests: record.special_requests || '',
+        status: record.status || 'confirmed',
+        created_at: record.created_at || `${record.date}T${record.time}:00Z`
       }))
       // Sort by created date (most recent first)
       .sort((a, b) => {
@@ -606,18 +632,40 @@ async function handleList(req, res, restaurantId) {
 }
 
 async function handleModify(req, res, restaurantId) {
+  const input = normalizeReservationModifyInput(req.method === 'POST' ? req.body : req.query);
   const {
     reservation_id,
     date,
     time,
     party_size,
     special_requests
-  } = req.method === 'POST' ? req.body : req.query;
+  } = input;
 
   if (!reservation_id) {
     return res.status(400).json({
       success: false,
       error: 'I need your confirmation number to modify your reservation.'
+    });
+  }
+
+  if (date && !isValidReservationDate(date)) {
+    return res.status(400).json({
+      success: false,
+      error: 'The reservation date is invalid. Please use YYYY-MM-DD.'
+    });
+  }
+
+  if (time && !isValidReservationTime(time)) {
+    return res.status(400).json({
+      success: false,
+      error: 'The reservation time is invalid. Please use HH:MM.'
+    });
+  }
+
+  if (party_size !== undefined && (party_size < 1 || party_size > 20)) {
+    return res.status(400).json({
+      success: false,
+      error: 'Party size must be between 1 and 20 guests.'
     });
   }
 
@@ -627,13 +675,13 @@ async function handleModify(req, res, restaurantId) {
 
   const timezone = req.user.timezone || 'UTC';
   const updateFields = {
-    'Updated At': getLocalDate(timezone)
+    updated_at: getLocalDate(timezone)
   };
 
-  if (date) updateFields['Date'] = date;
-  if (time) updateFields['Time'] = time;
-  if (party_size) updateFields['Party Size'] = parseInt(party_size);
-  if (special_requests !== undefined) updateFields['Special Requests'] = special_requests;
+  if (date) updateFields.date = date;
+  if (time) updateFields.time = time;
+  if (party_size !== undefined) updateFields.party_size = party_size;
+  if (special_requests !== undefined) updateFields.special_requests = special_requests;
 
   const result = await updateReservation(restaurantId, reservation_id, updateFields);
 
@@ -659,7 +707,7 @@ async function handleModify(req, res, restaurantId) {
         .schema('restaurant')
         .from('restaurant_config')
         .select('restaurant_name, language')
-        .eq('restaurant_id', restaurantId)
+        .eq('id', restaurantId)
         .single();
       if (config?.restaurant_name) restaurantName = config.restaurant_name;
       if (config?.language) restaurantLanguage = config.language;
@@ -672,7 +720,7 @@ async function handleModify(req, res, restaurantId) {
       customerName: existingReservation.customer_name,
       restaurantName,
       reservationId: reservation_id,
-      partySize: parseInt(party_size) || existingReservation.party_size,
+      partySize: party_size ?? existingReservation.party_size,
       date: date || existingReservation.date,
       time: time || existingReservation.time,
       changes,

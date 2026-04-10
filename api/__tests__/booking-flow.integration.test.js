@@ -36,7 +36,7 @@ let createdReservationId = RESERVATION_ID;
 const mockCreateReservation = jest.fn(() =>
   Promise.resolve({
     success: true,
-    data: { id: 'rec-001', fields: { 'Reservation ID': RESERVATION_ID } },
+    data: { id: 'rec-001', reservation_id: RESERVATION_ID },
   })
 );
 const mockGenerateReservationId = jest.fn(() => RESERVATION_ID);

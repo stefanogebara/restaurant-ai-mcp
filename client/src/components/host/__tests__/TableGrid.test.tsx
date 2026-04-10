@@ -25,7 +25,7 @@ vi.mock('../TableCard', () => ({
 
 const makeTable = (overrides: Partial<Table> = {}): Table => ({
   id: 'table-1',
-  table_number: 'T1',
+  table_number: 1,
   capacity: 4,
   location: 'Main Room',
   status: 'Available',
@@ -42,10 +42,10 @@ const makeTable = (overrides: Partial<Table> = {}): Table => ({
 });
 
 const sampleTables: Table[] = [
-  makeTable({ id: 'table-1', table_number: 'T1', location: 'Main Room', status: 'Available' }),
-  makeTable({ id: 'table-2', table_number: 'T2', location: 'Main Room', status: 'Occupied', capacity: 6 }),
-  makeTable({ id: 'table-3', table_number: 'T3', location: 'Patio', status: 'Reserved', capacity: 2 }),
-  makeTable({ id: 'table-4', table_number: 'T4', location: 'Patio', status: 'Being Cleaned', capacity: 8 }),
+  makeTable({ id: 'table-1', table_number: 1, location: 'Main Room', status: 'Available' }),
+  makeTable({ id: 'table-2', table_number: 2, location: 'Main Room', status: 'Occupied', capacity: 6 }),
+  makeTable({ id: 'table-3', table_number: 3, location: 'Patio', status: 'Reserved', capacity: 2 }),
+  makeTable({ id: 'table-4', table_number: 4, location: 'Patio', status: 'Being Cleaned', capacity: 8 }),
 ];
 
 // ------------------------------------------------------------------
@@ -101,10 +101,10 @@ describe('TableGrid', () => {
   it('displays correct table numbers', () => {
     render(<TableGrid tables={sampleTables} />);
 
-    expect(screen.getByTestId('table-number-table-1')).toHaveTextContent('T1');
-    expect(screen.getByTestId('table-number-table-2')).toHaveTextContent('T2');
-    expect(screen.getByTestId('table-number-table-3')).toHaveTextContent('T3');
-    expect(screen.getByTestId('table-number-table-4')).toHaveTextContent('T4');
+    expect(screen.getByTestId('table-number-table-1')).toHaveTextContent('1');
+    expect(screen.getByTestId('table-number-table-2')).toHaveTextContent('2');
+    expect(screen.getByTestId('table-number-table-3')).toHaveTextContent('3');
+    expect(screen.getByTestId('table-number-table-4')).toHaveTextContent('4');
   });
 
   it('calls onTableClick with the correct table when a table is clicked', async () => {
@@ -117,13 +117,13 @@ describe('TableGrid', () => {
 
     expect(onTableClick).toHaveBeenCalledTimes(1);
     expect(onTableClick).toHaveBeenCalledWith(
-      expect.objectContaining({ id: 'table-2', table_number: 'T2', status: 'Occupied' }),
+      expect.objectContaining({ id: 'table-2', table_number: 2, status: 'Occupied' }),
     );
   });
 
   it('uses "Unassigned" as location header when table has no location', () => {
     const tablesNoLocation: Table[] = [
-      makeTable({ id: 'table-x', table_number: 'TX', location: '' }),
+      makeTable({ id: 'table-x', table_number: 99, location: '' }),
     ];
 
     render(<TableGrid tables={tablesNoLocation} />);

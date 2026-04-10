@@ -30,7 +30,6 @@ async function getMonthlyReservationCount(restaurantId, customerEmail) {
   let query = supabaseAdmin
     .from('reservations')
     .select('*', { count: 'exact', head: true })
-    .eq('customer_email', customerEmail)
     .gte('date', firstDayOfMonth)
     .lte('date', lastDayOfMonth)
     .in('status', ['Confirmed', 'Seated', 'Completed']);
@@ -59,6 +58,7 @@ async function checkSubscription(req, res, next) {
   try {
     // Get restaurant ID from authenticated user for multi-tenancy
     const restaurantId = req.user?.restaurant_id;
+    let customerEmail = req.user?.email || req.body?.customer_email || req.query?.customer_email || req.headers?.['x-customer-email'];
 
     // Look up subscription by restaurant_id first (covers all team members),
     // then fall back to email-based lookup for backwards compatibility
@@ -74,7 +74,6 @@ async function checkSubscription(req, res, next) {
     }
 
     if (!result?.success) {
-      const customerEmail = req.user?.email || req.body?.customer_email || req.query?.customer_email || req.headers?.['x-customer-email'];
       if (customerEmail) {
         result = await getSubscriptionByEmail(restaurantId, customerEmail);
       }
@@ -242,7 +241,7 @@ async function checkSubscriptionByRestaurantId(restaurantId) {
     // 1. Check subscriptions table
     const { data: subscriptions, error: subError } = await supabaseAdmin
       .from('subscriptions')
-      .select('id, restaurant_id, plan_name, status, subscription_id, customer_id, trial_end, current_period_end, created_at, updated_at')
+      .select('id, restaurant_id, plan_name, status, subscription_id, customer_id, trial_end, current_period_end, canceled_at, created_at, updated_at')
       .eq('restaurant_id', restaurantId)
       .order('created_at', { ascending: false })
       .limit(1);

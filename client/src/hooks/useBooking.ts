@@ -1,7 +1,10 @@
 import { useQuery, useMutation } from '@tanstack/react-query';
 import type { RestaurantInfo, TimeSlot } from '../components/booking/BookingForm';
+import reservationContract from '../../../shared/reservation-contract.js';
+import type { ReservationCreateInput, ReservationSummary } from '../../../shared/reservation-contract.js';
 
 const PORTAL_API = '/api/portal';
+const { normalizeReservationCreateInput } = reservationContract;
 
 // ─── Restaurant ───────────────────────────────────────────────────────────────
 
@@ -22,15 +25,7 @@ export function useRestaurantBySlug(slug: string | undefined) {
 
 // ─── Reservation detail ───────────────────────────────────────────────────────
 
-export interface ReservationData {
-  id: string;
-  name: string;
-  party_size: number;
-  date: string;
-  time: string;
-  status: string;
-  restaurant_name: string;
-}
+export type ReservationData = ReservationSummary;
 
 export function useReservationById(id: string | null, initialData?: ReservationData) {
   return useQuery<ReservationData>({
@@ -71,26 +66,16 @@ export function useTimeSlots(restaurantId: string, date: string, partySize: numb
 
 // ─── Create reservation ───────────────────────────────────────────────────────
 
-interface ReservationInput {
-  restaurant_id: string;
-  customer_name: string;
-  customer_phone: string;
-  customer_email?: string;
-  party_size: number;
-  date: string;
-  time: string;
-  special_requests?: string;
-  deposit_payment_intent_id?: string;
-  deposit_amount?: number;
-}
+type ReservationInput = ReservationCreateInput;
 
 export function useCreateReservation() {
   return useMutation<{ reservation: ReservationData }, Error, ReservationInput>({
     mutationFn: async (input) => {
+      const payload = normalizeReservationCreateInput(input, { requireRestaurantId: true });
       const res = await fetch(`${PORTAL_API}?action=reserve`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(input),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (!data.success) throw new Error(data.error || data.message || 'Could not complete reservation');

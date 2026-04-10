@@ -31,7 +31,7 @@ vi.mock('../../common/ThiingsIcon', () => ({
 function createTable(overrides: Partial<Table> = {}): Table {
   return {
     id: 'table-1',
-    table_number: '5',
+    table_number: 5,
     capacity: 4,
     location: 'Main Floor',
     status: 'Available',
@@ -54,7 +54,7 @@ describe('TableCard', () => {
   });
 
   it('renders the table number', () => {
-    render(<TableCard table={createTable({ table_number: '12' })} />);
+    render(<TableCard table={createTable({ table_number: 12 })} />);
     expect(screen.getByText('12')).toBeInTheDocument();
   });
 

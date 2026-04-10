@@ -38,6 +38,13 @@ interface BookingFormProps {
   restaurant: RestaurantInfo;
 }
 
+function formatLocalDate(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 function SummaryRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between py-2 text-[13px]">
@@ -99,7 +106,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
 
   // Filter out past time slots when the selected date is today
   const timeSlots = useMemo(() => {
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = formatLocalDate(new Date());
     if (selectedDate !== todayStr) return rawTimeSlots;
     const now = new Date();
     const bufferMs = 30 * 60 * 1000; // 30-minute buffer
@@ -116,13 +123,13 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
     const days: { value: string; label: string; dayKey: string; dayNum: number; monthShort: string; weekdayShort: string; isToday: boolean; isFirstOfMonth: boolean }[] = [];
     const limit = restaurant.advance_booking_days || 30;
     const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = formatLocalDate(new Date());
     let prevMonth = -1;
 
     for (let i = 0; i < limit; i++) {
       const d = new Date();
       d.setDate(d.getDate() + i);
-      const value = d.toISOString().split('T')[0];
+      const value = formatLocalDate(d);
       const dayKey = dayNames[d.getDay()];
       const dayHours = restaurant.business_hours[dayKey];
       if (!dayHours || dayHours.is_open === false || dayHours.closed) continue;

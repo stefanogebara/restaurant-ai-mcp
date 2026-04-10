@@ -120,6 +120,14 @@ describe('getOccupiedSeatsAtTime', () => {
     expect(seats).toBe(6); // 4 + 2
   });
 
+  test('counts occupied seats from snake_case reservation records', () => {
+    const reservations = [
+      { time: '19:00', party_size: 4 },
+    ];
+
+    expect(getOccupiedSeatsAtTime(reservations, '19:30')).toBe(4);
+  });
+
   test('does not count non-overlapping reservations', () => {
     const reservations = [
       makeReservation('12:00', 4),  // 12:00-14:00 (120min for 4)

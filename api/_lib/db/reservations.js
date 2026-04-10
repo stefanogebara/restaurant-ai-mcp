@@ -11,7 +11,7 @@ const { sanitizeSearchQuery } = require('../validation');
 // ============ RESERVATIONS ============
 
 const getReservations = async (restaurantId, filter = {}) => {
-  let query = supabase.from('reservations').select('id, reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, special_requests, status, table_ids, checked_in_at, notes, ml_risk_score, ml_risk_level, ml_confidence, ml_model_version, ml_prediction_timestamp')
+  let query = supabase.from('reservations').select('id, reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, special_requests, status, table_ids, checked_in_at, notes, ml_risk_score, ml_risk_level, ml_confidence, ml_model_version, ml_prediction_timestamp, created_at')
     .eq('restaurant_id', restaurantId);
 
   if (filter.status) {
@@ -45,6 +45,7 @@ const getReservations = async (restaurantId, filter = {}) => {
         table_ids: r.table_ids,
         checked_in_at: r.checked_in_at,
         notes: r.notes,
+        created_at: r.created_at,
         ml_risk_score: r.ml_risk_score,
         ml_risk_level: r.ml_risk_level,
         ml_confidence: r.ml_confidence,
@@ -122,25 +123,25 @@ const updateReservation = async (restaurantId, recordId, fields) => {
   const updates = {};
 
   // Core reservation fields
-  if (fields.date) updates.date = fields.date;
-  if (fields.time) updates.time = fields.time;
-  if (fields.party_size) updates.party_size = fields.party_size;
+  if (fields.date !== undefined) updates.date = fields.date;
+  if (fields.time !== undefined) updates.time = fields.time;
+  if (fields.party_size !== undefined) updates.party_size = fields.party_size;
   if (fields.special_requests !== undefined) updates.special_requests = fields.special_requests;
-  if (fields.updated_at) updates.updated_at = fields.updated_at;
+  if (fields.updated_at !== undefined) updates.updated_at = fields.updated_at;
 
   // Status and tracking fields
-  if (fields.status) updates.status = fields.status;
-  if (fields.checked_in_at) updates.checked_in_at = fields.checked_in_at;
-  if (fields.table_ids) updates.table_ids = fields.table_ids;
-  if (fields.notes) updates.notes = fields.notes;
-  if (fields.customer_history) updates.customer_history = fields.customer_history;
+  if (fields.status !== undefined) updates.status = fields.status;
+  if (fields.checked_in_at !== undefined) updates.checked_in_at = fields.checked_in_at;
+  if (fields.table_ids !== undefined) updates.table_ids = fields.table_ids;
+  if (fields.notes !== undefined) updates.notes = fields.notes;
+  if (fields.customer_history !== undefined) updates.customer_history = fields.customer_history;
 
   // ML prediction fields
-  if (fields.ml_risk_score) updates.ml_risk_score = fields.ml_risk_score;
-  if (fields.ml_risk_level) updates.ml_risk_level = fields.ml_risk_level;
-  if (fields.ml_confidence) updates.ml_confidence = fields.ml_confidence;
-  if (fields.ml_model_version) updates.ml_model_version = fields.ml_model_version;
-  if (fields.ml_prediction_timestamp) updates.ml_prediction_timestamp = fields.ml_prediction_timestamp;
+  if (fields.ml_risk_score !== undefined) updates.ml_risk_score = fields.ml_risk_score;
+  if (fields.ml_risk_level !== undefined) updates.ml_risk_level = fields.ml_risk_level;
+  if (fields.ml_confidence !== undefined) updates.ml_confidence = fields.ml_confidence;
+  if (fields.ml_model_version !== undefined) updates.ml_model_version = fields.ml_model_version;
+  if (fields.ml_prediction_timestamp !== undefined) updates.ml_prediction_timestamp = fields.ml_prediction_timestamp;
 
   // Determine if recordId is a UUID or reservation_id
   const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(recordId);
@@ -211,6 +212,8 @@ const findReservation = async (restaurantId, { reservation_id, customer_phone, c
       customer_phone: bestMatch.customer_phone,
       customer_email: bestMatch.customer_email || '',
       party_size: bestMatch.party_size,
+      date: bestMatch.date,
+      time: bestMatch.time,
       reservation_time: `${bestMatch.date} ${bestMatch.time}`,
       special_requests: bestMatch.special_requests || '',
       status: bestMatch.status,

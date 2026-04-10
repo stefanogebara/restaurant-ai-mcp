@@ -33,7 +33,7 @@ export default function TableCombinationSelector({
       setSelectedCombination(suggested[0]);
       onSelect(
         suggested[0].tables.map(t => t.id),
-        suggested[0].tables.map(t => t.table_number)
+        suggested[0].tables.map(t => String(t.table_number))
       );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -43,7 +43,7 @@ export default function TableCombinationSelector({
     setSelectedCombination(combination);
     onSelect(
       combination.tables.map(t => t.id),
-      combination.tables.map(t => t.table_number)
+      combination.tables.map(t => String(t.table_number))
     );
   };
 

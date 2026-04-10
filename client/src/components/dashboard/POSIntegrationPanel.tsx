@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { authFetch } from '../../services/api';
-import ThiingsIcon from '../common/ThiingsIcon';
 
 interface POSConnection {
   id: string;

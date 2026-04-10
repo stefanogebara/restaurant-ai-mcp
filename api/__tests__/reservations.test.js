@@ -20,7 +20,7 @@ const RESTAURANT_ID = 'rest-test-001';
 const mockCreateReservation = jest.fn(() =>
   Promise.resolve({
     success: true,
-    data: { id: 'rec-001', fields: { 'Reservation ID': 'RES-TEST-001' } },
+    data: { id: 'rec-001', reservation_id: 'RES-TEST-001' },
   })
 );
 
@@ -44,17 +44,14 @@ const mockGetReservations = jest.fn(() =>
     data: {
       records: [
         {
-          fields: {
-            'Reservation ID': 'RES-001',
-            'Customer Name': 'Alice',
-            'Customer Phone': '+1111',
-            'Party Size': 2,
-            'Date': '2026-03-15',
-            'Time': '18:00',
-            'Status': 'confirmed',
-            'Created At': '2026-03-10T10:00:00Z',
-          },
-          createdTime: '2026-03-10T10:00:00Z',
+          reservation_id: 'RES-001',
+          customer_name: 'Alice',
+          customer_phone: '+1111',
+          party_size: 2,
+          date: '2026-03-15',
+          time: '18:00',
+          status: 'confirmed',
+          created_at: '2026-03-10T10:00:00Z',
         },
       ],
     },
@@ -237,11 +234,11 @@ describe('POST /api/reservations?action=create', () => {
     expect(mockCreateReservation).toHaveBeenCalledWith(
       RESTAURANT_ID,
       expect.objectContaining({
-        'Customer Name': 'João Silva',
-        'Party Size': 4,
-        'Date': '2026-03-20',
-        'Time': '19:00',
-        'Status': 'confirmed',
+        customer_name: 'João Silva',
+        party_size: 4,
+        date: '2026-03-20',
+        time: '19:00',
+        status: 'confirmed',
       })
     );
 

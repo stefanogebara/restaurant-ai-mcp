@@ -36,7 +36,7 @@ vi.mock('../TableCombinationSelector', () => ({
 const defaultTables: Table[] = [
   {
     id: 'table-1',
-    table_number: 'T1',
+    table_number: 1,
     capacity: 4,
     location: 'Main Room',
     status: 'Available',
@@ -52,7 +52,7 @@ const defaultTables: Table[] = [
   },
   {
     id: 'table-2',
-    table_number: 'T2',
+    table_number: 2,
     capacity: 6,
     location: 'Patio',
     status: 'Available',

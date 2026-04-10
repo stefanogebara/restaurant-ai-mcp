@@ -3,7 +3,9 @@
  * Runs API endpoints locally on port 3001
  */
 
+const path = require('path');
 require('dotenv').config();
+require('dotenv').config({ path: path.join(__dirname, '.env.local'), override: true });
 
 const { validateCritical } = require('./api/_lib/validate-env');
 if (process.env.NODE_ENV !== 'test') {
@@ -39,6 +41,8 @@ const hostDashboard = require('./api/host-dashboard.js');
 const analytics = require('./api/analytics.js');
 const waitlist = require('./api/waitlist.js');
 const batchPredict = require('./api/batch-predict.js');
+const portal = require('./api/portal.js');
+const reservations = require('./api/reservations.js');
 
 const mlPerformance = require('./api/ml-performance.js');
 const ltv = require('./api/ltv.js');
@@ -69,6 +73,17 @@ app.options('/api/onboarding/complete', (req, res) => res.status(200).end());
 app.get('/api/host-dashboard', createHandler(hostDashboard));
 app.post('/api/host-dashboard', createHandler(hostDashboard));
 app.patch('/api/host-dashboard', createHandler(hostDashboard));
+
+// Public booking portal endpoints
+app.get('/api/portal', createHandler(portal));
+app.post('/api/portal', createHandler(portal));
+app.options('/api/portal', (req, res) => res.status(200).end());
+
+// Reservation endpoints
+app.get('/api/reservations', createHandler(reservations));
+app.post('/api/reservations', createHandler(reservations));
+app.patch('/api/reservations', createHandler(reservations));
+app.options('/api/reservations', (req, res) => res.status(200).end());
 
 // Analytics endpoint
 app.get('/api/analytics', createHandler(analytics));

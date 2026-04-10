@@ -1,7 +1,10 @@
 import axios from 'axios';
 import { supabase, authReady, isAuthInitialized } from '../lib/supabase';
+import reservationContract from '../../../shared/reservation-contract.js';
+import type { ReservationCreateInput, ReservationModifyInput } from '../../../shared/reservation-contract.js';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
+const { normalizeReservationCreateInput, normalizeReservationModifyInput } = reservationContract;
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
@@ -169,24 +172,11 @@ export const hostAPI = {
     api.get(`/table-suggestion?party_size=${partySize}`),
 
   // Reservation management (host creates/modifies/cancels from dashboard)
-  createReservation: (data: {
-    date: string;
-    time: string;
-    party_size: number;
-    customer_name: string;
-    customer_phone: string;
-    customer_email?: string;
-    special_requests?: string;
-    source?: string;
-  }) => api.post('/reservations?action=create', data),
+  createReservation: (data: ReservationCreateInput) =>
+    api.post('/reservations?action=create', normalizeReservationCreateInput(data)),
 
-  modifyReservation: (data: {
-    reservation_id: string;
-    date?: string;
-    time?: string;
-    party_size?: number;
-    special_requests?: string;
-  }) => api.post('/reservations?action=modify', data),
+  modifyReservation: (data: ReservationModifyInput) =>
+    api.post('/reservations?action=modify', normalizeReservationModifyInput(data)),
 
   cancelReservation: (data: {
     reservation_id: string;

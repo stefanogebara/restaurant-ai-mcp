@@ -21,6 +21,13 @@ const { createSecureLogger } = require('./_lib/secure-logger');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const { sanitizeStringXSS } = require('./_lib/validation');
 const { validateReservation: validateReservationRules } = require('./_lib/reservation-validator');
+const {
+  getMissingReservationCreateFields,
+  isValidReservationDate,
+  isValidReservationTime,
+  mapReservationSummary,
+  normalizeReservationCreateInput,
+} = require('../shared/reservation-contract.cjs');
 const logger = createSecureLogger('Portal');
 
 module.exports = async (req, res) => {
@@ -168,15 +175,9 @@ async function handleGetReservation(req, res) {
 
   return res.status(200).json({
     success: true,
-    reservation: {
-      id: data.reservation_id,
-      name: data.customer_name,
-      party_size: data.party_size,
-      date: data.date,
-      time: data.time,
-      status: data.status,
+    reservation: mapReservationSummary(data, {
       restaurant_name: rest ? rest.restaurant_name : 'Restaurant'
-    }
+    })
   });
 }
 
@@ -348,6 +349,8 @@ async function handleCreateReservation(req, res) {
     });
   }
 
+  const input = normalizeReservationCreateInput(req.body || {}, { requireRestaurantId: true });
+  const missingFields = getMissingReservationCreateFields(input, { requireRestaurantId: true });
   const {
     restaurant_id,
     customer_name,
@@ -359,10 +362,10 @@ async function handleCreateReservation(req, res) {
     special_requests,
     deposit_payment_intent_id,
     deposit_amount
-  } = req.body || {};
+  } = input;
 
   // Validate required fields
-  if (!restaurant_id || !customer_name || !customer_phone || !party_size || !date || !time) {
+  if (missingFields.length > 0) {
     return res.status(400).json({
       success: false,
       message: 'Missing required fields: restaurant_id, customer_name, customer_phone, party_size, date, time'
@@ -381,16 +384,16 @@ async function handleCreateReservation(req, res) {
   // Sanitize customer name (XSS prevention + max length)
   const sanitizedName = sanitizeStringXSS(customer_name, { maxLength: 200 });
 
-  const partySize = parseInt(party_size, 10);
-  if (isNaN(partySize) || partySize < 1 || partySize > 20) {
+  if (party_size < 1 || party_size > 20) {
     return res.status(400).json({
       success: false,
       message: 'Invalid party_size. Must be between 1 and 20.'
     });
   }
+  const partySize = party_size;
 
   // Validate date format
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+  if (!isValidReservationDate(date)) {
     return res.status(400).json({
       success: false,
       message: 'Invalid date format. Use YYYY-MM-DD.'
@@ -398,7 +401,7 @@ async function handleCreateReservation(req, res) {
   }
 
   // Validate time format
-  if (!/^\d{2}:\d{2}$/.test(time)) {
+  if (!isValidReservationTime(time)) {
     return res.status(400).json({
       success: false,
       message: 'Invalid time format. Use HH:MM.'
@@ -512,14 +515,14 @@ async function handleCreateReservation(req, res) {
       customer_name: sanitizedName,
       customer_phone: customer_phone.trim(),
       customer_email: customer_email ? customer_email.trim() : null,
-      party_size: partySize,
+      party_size,
       date,
       time,
       special_requests: special_requests || null,
       status: 'confirmed',
       source: 'online_portal',
       deposit_payment_intent_id: deposit_payment_intent_id || null,
-      deposit_amount: deposit_amount ? parseFloat(deposit_amount) : null
+      deposit_amount: deposit_amount !== undefined ? deposit_amount : null
     })
     .select('id, reservation_id, customer_name, party_size, date, time, status')
     .single();
@@ -542,7 +545,7 @@ async function handleCreateReservation(req, res) {
       customerName: sanitizedName,
       restaurantName: restaurant.restaurant_name,
       reservationId,
-      partySize,
+      partySize: party_size,
       date,
       time,
       specialRequests: special_requests,
@@ -560,7 +563,7 @@ async function handleCreateReservation(req, res) {
       customerPhone: customer_phone.trim(),
       customerEmail: customer_email ? customer_email.trim() : null,
       reservationId,
-      partySize,
+      partySize: party_size,
       date,
       time,
       specialRequests: special_requests,
@@ -573,7 +576,7 @@ async function handleCreateReservation(req, res) {
       reservationId,
       customerName: sanitizedName,
       customerPhone: customer_phone.trim(),
-      partySize,
+      partySize: party_size,
       date,
       time,
     }).catch(err => logger.error('[Portal] Owner WhatsApp alert failed:', err.message));
@@ -588,22 +591,15 @@ async function handleCreateReservation(req, res) {
       reservationId,
       date,
       time,
-      partySize,
+      partySize: party_size,
     }).catch(err => logger.warn('[Portal] Customer WhatsApp confirmation failed (non-fatal):', err.message));
   }
 
   return res.status(201).json({
     success: true,
-    message: `Reservation confirmed for ${partySize} guests on ${date} at ${time}`,
-    reservation: {
-      id: newRes.reservation_id,
-      name: newRes.customer_name,
-      party_size: newRes.party_size,
-      date: newRes.date,
-      time: newRes.time,
-      status: newRes.status,
+    message: `Reservation confirmed for ${party_size} guests on ${date} at ${time}`,
+    reservation: mapReservationSummary(newRes, {
       restaurant_name: restaurant.restaurant_name
-    }
+    })
   });
 }
-
