@@ -1635,6 +1635,7 @@
   },
   "landing": {
     "badge": "AI-Powered Restaurant Management",
+    "socialProofBadge": "5 restaurants joined this week",
     "socialProof": {
       "label": "Now in early access",
       "heading": "Be one of the first restaurants on Seatable.",

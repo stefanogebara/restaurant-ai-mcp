@@ -1646,6 +1646,7 @@
   },
   "landing": {
     "badge": "Gestão de Restaurantes com IA",
+    "socialProofBadge": "5 restaurantes ingressaram esta semana",
     "socialProof": {
       "label": "Em acesso antecipado",
       "heading": "Seja um dos primeiros restaurantes no Seatable.",
