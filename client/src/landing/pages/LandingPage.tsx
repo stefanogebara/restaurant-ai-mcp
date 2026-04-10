@@ -100,7 +100,7 @@ export default function LandingPage() {
       <div className="text-center py-6">
         <p className="text-sm text-warm-stone font-medium">
           <span className="inline-block w-2 h-2 rounded-full bg-whatsapp mr-1.5 animate-pulse" />
-          {t('landing.socialProof', '12 restaurants joined this month')}
+          {t('landing.socialProof', '5 restaurants joined this week')}
         </p>
       </div>
       <PricingSection />
