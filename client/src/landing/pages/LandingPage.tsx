@@ -10,7 +10,6 @@ import PresetDemoSection from '../components/PresetDemoSection';
 import VoiceWidgetSection from '../components/VoiceWidgetSection';
 import WhatsAppWidgetSection from '../components/WhatsAppWidgetSection';
 import BeforeAfterSection from '../components/BeforeAfterSection';
-import HeroAnimation from '../components/HeroAnimation';
 import DashboardWalkthroughSection from '../components/DashboardWalkthroughSection';
 import PricingSection from '../components/PricingSection';
 import SharePrompt from '../components/SharePrompt';
@@ -84,29 +83,20 @@ export default function LandingPage() {
       {/* 4. Text our AI — WhatsApp widget with real number */}
       <WhatsAppWidgetSection />
 
-      {/* 5. See Seatable in action — Remotion animation showcase */}
-      <ErrorBoundary silent>
-        <section className="py-20 px-6 sm:px-16">
-          <div className="max-w-[1000px] mx-auto text-center">
-            <HeroAnimation />
-          </div>
-        </section>
-      </ErrorBoundary>
+      {/* 5. Before/After — social proof with animated stats */}
+      <BeforeAfterSection />
 
       {/* 6. Dashboard Walkthrough — animated "silent movie" of AI features */}
       <ErrorBoundary silent>
         <DashboardWalkthroughSection />
       </ErrorBoundary>
 
-      {/* 7. Before/After — animated side-by-side visual demo */}
-      <BeforeAfterSection />
-
-      {/* 8. Share prompt — viral referral */}
-      <div className="max-w-md mx-auto px-6 -mt-8 mb-8">
+      {/* 7. Share prompt — viral referral */}
+      <div className="max-w-md mx-auto px-6 mt-4 mb-8">
         <SharePrompt location="landing" />
       </div>
 
-      {/* 9. Social proof + Pricing */}
+      {/* 8. Social proof + Pricing */}
       <div className="text-center py-6">
         <p className="text-sm text-warm-stone font-medium">
           <span className="inline-block w-2 h-2 rounded-full bg-whatsapp mr-1.5 animate-pulse" />
