@@ -155,7 +155,7 @@ async function sendPaymentReceiptEmail({ customerEmail, amount, currency, invoic
           </table>
         </div>
         <p style="color: #78716C; font-size: 13px; text-align: center; margin: 0;">
-          Questions about your bill? Contact us at hello@seatable.one
+          Questions about your bill? Contact us at seatable.ai.br@gmail.com
         </p>
       `),
     });
@@ -193,7 +193,7 @@ async function sendPaymentFailedEmail({ customerEmail, amount, currency, invoice
           </table>
         </div>
         <p style="color: #78716C; font-size: 13px; text-align: center; margin: 0;">
-          Need help? Contact us at hello@seatable.one
+          Need help? Contact us at seatable.ai.br@gmail.com
         </p>
       `),
     });
@@ -231,7 +231,7 @@ async function sendTrialEndingEmail({ customerEmail, trialEndsAt }) {
           </p>
         </div>
         <p style="color: #78716C; font-size: 13px; text-align: center; margin: 0;">
-          Questions? Contact us at hello@seatable.one
+          Questions? Contact us at seatable.ai.br@gmail.com
         </p>
       `),
     });
@@ -461,7 +461,7 @@ async function sendReferralRewardEmail(to, { referrerName, refereeRestaurantName
     'Thanks for being part of Seatable.',
     '',
     'The Seatable Team',
-    'hello@seatable.one',
+    'seatable.ai.br@gmail.com',
   ].join('\n');
 
   try {
@@ -490,7 +490,7 @@ async function sendReferralRewardEmail(to, { referrerName, refereeRestaurantName
           </p>
         </div>
         <p style="color: #78716C; font-size: 13px; text-align: center; margin: 0;">
-          Questions? Contact us at <a href="mailto:hello@seatable.one" style="color: #9F1239;">hello@seatable.one</a>
+          Questions? Contact us at <a href="mailto:seatable.ai.br@gmail.com" style="color: #9F1239;">seatable.ai.br@gmail.com</a>
         </p>
       `),
       text: plainText,

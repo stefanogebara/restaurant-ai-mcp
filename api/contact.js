@@ -59,7 +59,7 @@ module.exports = async (req, res) => {
     const resend = new Resend(process.env.RESEND_API_KEY);
     await resend.emails.send({
       from: 'noreply@seatable.one',
-      to: 'hello@seatable.one',
+      to: 'seatable.ai.br@gmail.com',
       subject: `New contact: ${escapeHtml(name)} — ${escapeHtml(restaurant) || 'no restaurant'}`,
       html: `
         <h2>New Contact Form Submission</h2>

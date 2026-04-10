@@ -56,7 +56,7 @@ export default function SubscriptionManage() {
           navigate('/#pricing');
         } else {
           // Show a helpful contact-support message for portal failures
-          error(t('subscription.portalError', 'Unable to open billing portal. Please contact support at hello@seatable.one'));
+          error(t('subscription.portalError', 'Unable to open billing portal. Please contact support at seatable.ai.br@gmail.com'));
         }
       },
     });
@@ -215,7 +215,7 @@ export default function SubscriptionManage() {
           {/* Help */}
           <p className="text-center text-sm text-muted-stone mt-10">
             {t('subscription.needHelp')}{' '}
-            <a href="mailto:hello@seatable.one" className="text-burgundy hover:text-burgundy-dark transition-colors">{t('subscription.contactSupport')}</a>
+            <a href="mailto:seatable.ai.br@gmail.com" className="text-burgundy hover:text-burgundy-dark transition-colors">{t('subscription.contactSupport')}</a>
           </p>
         </div>
       </div>
@@ -359,7 +359,7 @@ function NoPlanPricing() {
 
           <p className="text-center text-sm text-muted-stone mt-8">
             Precisa de ajuda?{' '}
-            <a href="mailto:hello@seatable.one" className="text-burgundy hover:text-burgundy-dark transition-colors">
+            <a href="mailto:seatable.ai.br@gmail.com" className="text-burgundy hover:text-burgundy-dark transition-colors">
               Fale conosco
             </a>
           </p>
