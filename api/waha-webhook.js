@@ -63,8 +63,11 @@ module.exports = async (req, res) => {
       // Parse the message
       const msg = await adapter.parseIncoming(req);
       if (!msg) {
+        logger.info('WAHA message skipped (null parse) — event:', event, 'body keys:', Object.keys(req.body || {}));
         return res.status(200).json({ status: 'ok' });
       }
+
+      logger.info('WAHA message received from:', msg.from, '— text:', msg.text?.substring(0, 60));
 
       // Return 200 immediately — process in background (async)
       res.status(200).json({ status: 'ok' });
