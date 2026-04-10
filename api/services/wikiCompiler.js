@@ -113,13 +113,13 @@ async function getRestaurantConfig(restaurantId) {
 }
 
 async function getRecentReservationStats(restaurantId) {
-  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
   const { data } = await supabaseAdmin
     .from('reservations')
-    .select('reservation_time, party_size, status, customer_name')
+    .select('date, time, party_size, status, customer_name')
     .eq('restaurant_id', restaurantId)
-    .gte('reservation_time', thirtyDaysAgo)
-    .order('reservation_time', { ascending: false })
+    .gte('date', thirtyDaysAgo)
+    .order('date', { ascending: false })
     .limit(200);
   return data || [];
 }
@@ -211,8 +211,8 @@ async function compileWikiForRestaurant(restaurantId) {
 
   const hourCounts = {};
   for (const r of reservations) {
-    const h = new Date(r.reservation_time).getUTCHours();
-    hourCounts[h] = (hourCounts[h] || 0) + 1;
+    const h = r.time ? parseInt(r.time.split(':')[0], 10) : null;
+    if (h !== null) hourCounts[h] = (hourCounts[h] || 0) + 1;
   }
   const peakHour = Object.entries(hourCounts).sort((a, b) => b[1] - a[1])[0]?.[0];
 
