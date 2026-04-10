@@ -36,12 +36,12 @@ module.exports = async (req, res) => {
 
   try {
     // Find restaurants with reservation activity in last 7 days
-    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
     const { data: activeRestaurants, error: queryErr } = await supabaseAdmin
       .from('reservations')
       .select('restaurant_id')
-      .gte('reservation_time', sevenDaysAgo)
+      .gte('date', sevenDaysAgo)
       .limit(MAX_RESTAURANTS * 10);
 
     if (queryErr) {
