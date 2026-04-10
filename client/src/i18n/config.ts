@@ -40,6 +40,20 @@ export async function preloadAndSwitchLanguage(lng: string) {
   await i18n.changeLanguage(lng);
 }
 
+/** Switch language for demo contexts without corrupting the user's saved language preference.
+ *  The LanguageDetector writes to localStorage on changeLanguage — this function preserves
+ *  the user's original explicit choice stored in seatable-user-lang. */
+export async function preloadAndSwitchDemoLanguage(lng: string) {
+  const savedUserLang = localStorage.getItem('seatable-user-lang');
+  await preloadAndSwitchLanguage(lng);
+  // Restore user's preference so they aren't permanently switched by a demo visit
+  if (savedUserLang !== null) {
+    localStorage.setItem('seatable-user-lang', savedUserLang);
+  } else {
+    localStorage.removeItem('seatable-user-lang');
+  }
+}
+
 // One-time migration: move explicit language choice from old key to new key.
 // Existing users may have 'i18nextLng' set from the old detector config.
 if (!localStorage.getItem('seatable-user-lang') && localStorage.getItem('i18nextLng')) {

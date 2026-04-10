@@ -203,13 +203,6 @@ export function useDemoLocale() {
   const initialLang = forcedLang ?? stored ?? defaultLang;
   const [lang, setLangState] = useState<DemoLang>(initialLang);
 
-  // Sync i18next synchronously before first render so global i18n components
-  // (StatsBar, ReservationsList) display the correct language immediately.
-  // Safe: changeDemoLanguage is idempotent and only mutates i18next state.
-  if (i18n.language !== initialLang) {
-    changeDemoLanguage(initialLang);
-  }
-
   // Sync i18next with demo locale on mount, restore original on unmount.
   // Uses changeDemoLanguage to avoid corrupting the user's saved language.
   const originalLngRef = useRef(i18n.language);
