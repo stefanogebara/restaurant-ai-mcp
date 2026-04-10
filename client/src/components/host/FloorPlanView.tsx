@@ -158,6 +158,15 @@ export default function FloorPlanView({
                       <stop offset="100%" stopColor="white" stopOpacity="0" />
                     </radialGradient>
                   ))}
+                  <style>
+                    {`
+                      @keyframes fpLinkDash {
+                        to {
+                          stroke-dashoffset: -10;
+                        }
+                      }
+                    `}
+                  </style>
                 </defs>
 
                 <rect width="100%" height="100%" fill="#F8F5F0" />
@@ -182,7 +191,8 @@ export default function FloorPlanView({
                         <line key={pairKey}
                           x1={pos.x + pos.w / 2} y1={pos.y + pos.h / 2}
                           x2={linkedPos.x + linkedPos.w / 2} y2={linkedPos.y + linkedPos.h / 2}
-                          stroke="#9F1239" strokeWidth="1.5" strokeDasharray="5,4" opacity="0.4" />,
+                          stroke="#9F1239" strokeWidth="2" strokeDasharray="6,4" opacity="0.4"
+                          strokeLinecap="round" style={{ animation: 'fpLinkDash 1.5s linear infinite' }} />,
                       );
                     });
                   });

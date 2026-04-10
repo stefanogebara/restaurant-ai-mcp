@@ -48,12 +48,13 @@ export default function VoiceSettingsPage() {
   const { t } = useTranslation();
   const toast = useToast();
   const { hasAccess, isLoading: isLoadingAccess } = useFeatureAccess('voice_ai');
+  const canLoadVoiceData = !isLoadingAccess && hasAccess;
 
-  const { data: config, isLoading: isLoadingConfig } = useVoiceSettings();
+  const { data: config, isLoading: isLoadingConfig } = useVoiceSettings({ enabled: canLoadVoiceData });
   const saveMutation = useSaveVoiceSettings();
-  const { data: engineConfig } = useVoiceEngineSettings();
+  const { data: engineConfig } = useVoiceEngineSettings({ enabled: canLoadVoiceData });
   const saveEngineMutation = useSaveVoiceEngine();
-  const { data: waStatus } = useWhatsAppIntegrationStatus();
+  const { data: waStatus } = useWhatsAppIntegrationStatus({ enabled: canLoadVoiceData });
   const queryClient = useQueryClient();
   const retryAgentMutation = useMutation({
     mutationFn: async () => {
@@ -75,9 +76,10 @@ export default function VoiceSettingsPage() {
   const { data: dashData } = useQuery({
     queryKey: ['hostDashboard'],
     queryFn: async () => {
-      const res = await authFetch('/host-dashboard?action=dashboard');
+      const res = await authFetch('/api/host-dashboard?action=dashboard');
       return res.json();
     },
+    enabled: canLoadVoiceData,
     staleTime: 5 * 60 * 1000,
   });
   const slug: string = (dashData as { slug?: string } | undefined)?.slug || '';

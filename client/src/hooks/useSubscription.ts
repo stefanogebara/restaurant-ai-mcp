@@ -108,6 +108,7 @@ export function useFeatureAccess(featureName: string, email?: string) {
       starter: ['ai_reservations', 'host_dashboard', 'basic_analytics', 'email_support'],
       growth: growthFeatures,
       professional: growthFeatures,
+      trial: growthFeatures,
       scale: [
         ...growthFeatures,
         'priority_support',

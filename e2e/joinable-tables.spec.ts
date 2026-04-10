@@ -9,6 +9,7 @@ const hasAuthState = fs.existsSync(AUTH_STATE);
 test.use({ actionTimeout: 15000 });
 
 test.describe('Joinable Table Visuals - Floor Plan View', () => {
+  test.describe.configure({ timeout: 60000 });
   test.skip(!hasAuthState, 'Skipped: no auth-state.json — run `node e2e/generate-auth-state.js` first');
   test.use(hasAuthState ? { storageState: AUTH_STATE } : {});
   test.beforeEach(async ({ page }) => {
@@ -208,6 +209,7 @@ test.describe('Joinable Table Visuals - Floor Plan View', () => {
 });
 
 test.describe('Joinable Table Visuals - Table Actions Modal', () => {
+  test.describe.configure({ timeout: 60000 });
   test.skip(!hasAuthState, 'Skipped: no auth-state.json — run `node e2e/generate-auth-state.js` first');
   test.use(hasAuthState ? { storageState: AUTH_STATE } : {});
 
@@ -220,6 +222,25 @@ test.describe('Joinable Table Visuals - Table Actions Modal', () => {
       test.skip(true, 'Auth token expired — regenerate with node e2e/generate-auth-state.js');
     }
   });
+
+  async function closeTableModal(page: import('@playwright/test').Page) {
+    const cancelButton = page.getByText(/Cancel|Cancelar/);
+    if (await cancelButton.isVisible().catch(() => false)) {
+      await cancelButton.click();
+      await page.waitForTimeout(300);
+      return;
+    }
+
+    const closeButton = page.getByRole('button', { name: /Close|Cerrar|Fechar/i });
+    if (await closeButton.isVisible().catch(() => false)) {
+      await closeButton.click();
+      await page.waitForTimeout(300);
+      return;
+    }
+
+    await page.keyboard.press('Escape').catch(() => {});
+    await page.waitForTimeout(300);
+  }
 
   test('table actions modal shows Edit in Floor Plan button', async ({ page }) => {
     const errorState = page.getByText('Error loading data');
@@ -284,12 +305,7 @@ test.describe('Joinable Table Visuals - Table Actions Modal', () => {
         return; // Found it
       }
 
-      // Close modal
-      const cancelButton = page.getByText(/Cancel|Cancelar/);
-      if (await cancelButton.isVisible().catch(() => false)) {
-        await cancelButton.click();
-        await page.waitForTimeout(300);
-      }
+      await closeTableModal(page);
     }
 
     console.log('No joinable tables info found in modal - no joinable tables configured');

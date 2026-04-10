@@ -127,7 +127,6 @@ export default function DemoAnalyticsPanel({ restaurantName, lang, presetKey }: 
 
   const periodData = period === '7' ? presetData.week : presetData.month;
   const covers = periodData.coversByDay;
-  const maxCovers = Math.max(...covers);
 
   // For 30-day chart, group into weeks for readability (show 4 bars)
   const chartBars = period === '30'

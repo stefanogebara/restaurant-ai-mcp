@@ -47,6 +47,7 @@ const BookingConfirmation = lazyRetry(() => import('./pages/BookingConfirmation'
 const FloorPlanEditor = lazyRetry(() => import('./pages/FloorPlanEditor'));
 const JoinPage = lazyRetry(() => import('./pages/JoinPage'));
 const TeamPage = lazyRetry(() => import('./pages/TeamPage'));
+const LTVPage = lazyRetry(() => import('./pages/LTVPage'));
 const DemoSetupPage = lazyRetry(() => import('./pages/DemoSetupPage'));
 const DemoConversation = lazyRetry(() => import('./pages/DemoConversation'));
 const DemoDashboard = lazyRetry(() => import('./pages/DemoDashboard'));
@@ -148,6 +149,7 @@ function App() {
               <Route path="/host-dashboard/voice-settings" element={<ProtectedRoute><VoiceSettingsPage /></ProtectedRoute>} />
               <Route path="/host-dashboard/whatsapp" element={<ProtectedRoute><WhatsAppSettingsPage /></ProtectedRoute>} />
               <Route path="/host-dashboard/insights" element={<ProtectedRoute><ErrorBoundary fallback={<RouteErrorFallback />}><InsightsPage /></ErrorBoundary></ProtectedRoute>} />
+              <Route path="/host-dashboard/ltv" element={<ProtectedRoute><ErrorBoundary fallback={<RouteErrorFallback />}><LTVPage /></ErrorBoundary></ProtectedRoute>} />
               <Route path="/analytics" element={<Navigate to="/host-dashboard/insights?tab=analytics" replace />} />
               <Route path="/customer" element={<CustomerPortal />} />
               <Route path="/subscription/success" element={<SubscriptionSuccess />} />

@@ -9,7 +9,13 @@ export interface VoiceEngineSettings {
   elevenlabs_agent_id: string | null;
 }
 
-export function useVoiceEngineSettings() {
+interface VoiceEngineSettingsQueryOptions {
+  enabled?: boolean;
+}
+
+export function useVoiceEngineSettings(options: VoiceEngineSettingsQueryOptions = {}) {
+  const { enabled = true } = options;
+
   return useQuery<VoiceEngineSettings>({
     queryKey: ['voiceEngineSettings'],
     queryFn: async () => {
@@ -18,6 +24,7 @@ export function useVoiceEngineSettings() {
       const result = await response.json();
       return result.data;
     },
+    enabled,
     staleTime: SETTINGS_STALE_TIME,
     retry: 1,
   });

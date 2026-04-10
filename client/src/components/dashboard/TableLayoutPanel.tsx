@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import type { Table, ActiveParty } from '../../types/host.types';
 import TableGrid from '../host/TableGrid';
 import FloorPlanView from '../host/FloorPlanView';
@@ -77,7 +78,7 @@ export default function TableLayoutPanel({
     <>
       <div className="overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-[#E5E7EB]">
+        <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-5 border-b border-[#E5E7EB]">
           <div className="flex items-center gap-2.5">
             <span className="text-[13px] font-semibold uppercase tracking-widest text-[#111827] whitespace-nowrap">{t('tableLayout.title')}</span>
             <span className="relative flex items-center gap-1.5 text-xs font-semibold text-rose-700 bg-rose-50 px-2.5 py-1 rounded-full">
@@ -89,32 +90,42 @@ export default function TableLayoutPanel({
             </span>
           </div>
 
-          {/* View Mode Toggle */}
-          <div className="flex items-center bg-soft-gray rounded-lg p-0.5">
-            <button
-              onClick={() => { setViewMode('floorplan'); localStorage.setItem('seatable_table_view_mode', 'floorplan'); }}
-              aria-label={t('tableLayout.floorPlanView', 'Floor Plan View')}
-              className={`min-h-[36px] min-w-[36px] flex items-center justify-center px-2 py-1 text-xs font-medium rounded-lg transition-colors ${
-                viewMode === 'floorplan'
-                  ? 'bg-deep-charcoal text-white'
-                  : 'text-warm-stone hover:text-deep-charcoal'
-              }`}
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <Link
+              to="/host-dashboard/floor-plan"
+              className="inline-flex min-h-[36px] items-center gap-2 rounded-lg border border-[#E5E7EB] px-3 py-2 text-xs font-semibold text-deep-charcoal transition-colors hover:bg-soft-gray"
             >
-              <ThiingsIcon name="map" pxSize={16} />
-            </button>
-            <button
-              onClick={() => { setViewMode('grid'); localStorage.setItem('seatable_table_view_mode', 'grid'); }}
-              aria-label={t('tableLayout.gridView', 'Grid View')}
-              className={`min-h-[36px] min-w-[36px] flex items-center justify-center px-2 py-1 text-xs font-medium rounded-lg transition-colors ${
-                viewMode === 'grid'
-                  ? 'bg-deep-charcoal text-white'
-                  : 'text-warm-stone hover:text-deep-charcoal'
-              }`}
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-              </svg>
-            </button>
+              <ThiingsIcon name="edit" pxSize={14} />
+              <span>{t('tableLayout.editFloorPlan', 'Edit Floor Plan')}</span>
+            </Link>
+
+            {/* View Mode Toggle */}
+            <div className="flex items-center bg-soft-gray rounded-lg p-0.5">
+              <button
+                onClick={() => { setViewMode('floorplan'); localStorage.setItem('seatable_table_view_mode', 'floorplan'); }}
+                aria-label={t('tableLayout.floorPlanView', 'Floor Plan View')}
+                className={`min-h-[36px] min-w-[36px] flex items-center justify-center px-2 py-1 text-xs font-medium rounded-lg transition-colors ${
+                  viewMode === 'floorplan'
+                    ? 'bg-deep-charcoal text-white'
+                    : 'text-warm-stone hover:text-deep-charcoal'
+                }`}
+              >
+                <ThiingsIcon name="map" pxSize={16} />
+              </button>
+              <button
+                onClick={() => { setViewMode('grid'); localStorage.setItem('seatable_table_view_mode', 'grid'); }}
+                aria-label={t('tableLayout.gridView', 'Grid View')}
+                className={`min-h-[36px] min-w-[36px] flex items-center justify-center px-2 py-1 text-xs font-medium rounded-lg transition-colors ${
+                  viewMode === 'grid'
+                    ? 'bg-deep-charcoal text-white'
+                    : 'text-warm-stone hover:text-deep-charcoal'
+                }`}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -231,6 +242,24 @@ export default function TableLayoutPanel({
                   onClick={() => handleUpdateStatus(selectedTable.id, 'Being Cleaned')}
                 />
               )}
+            </div>
+
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <Link
+                to="/host-dashboard/floor-plan"
+                onClick={() => setSelectedTable(null)}
+                className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-[#E5E7EB] px-4 py-3 text-sm font-semibold text-deep-charcoal transition-colors hover:bg-soft-gray"
+              >
+                <ThiingsIcon name="edit" pxSize={16} />
+                <span>{t('tableLayout.editInFloorPlan', 'Edit in Floor Plan')}</span>
+              </Link>
+              <button
+                type="button"
+                onClick={() => setSelectedTable(null)}
+                className="min-h-[44px] rounded-xl border border-[#E5E7EB] px-4 py-3 text-sm font-semibold text-stone-700 transition-colors hover:bg-soft-gray"
+              >
+                {t('common.cancel', 'Cancel')}
+              </button>
             </div>
           </div>
         </div>

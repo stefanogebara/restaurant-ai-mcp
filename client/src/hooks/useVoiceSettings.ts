@@ -2,7 +2,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { authFetch } from '../services/api';
 import { SETTINGS_STALE_TIME } from '../config/constants';
 
-export function useVoiceSettings() {
+interface VoiceSettingsQueryOptions {
+  enabled?: boolean;
+}
+
+export function useVoiceSettings(options: VoiceSettingsQueryOptions = {}) {
+  const { enabled = true } = options;
+
   return useQuery({
     queryKey: ['voiceSettings'],
     queryFn: async () => {
@@ -11,6 +17,7 @@ export function useVoiceSettings() {
       const result = await response.json();
       return result.data;
     },
+    enabled,
     staleTime: SETTINGS_STALE_TIME,
   });
 }

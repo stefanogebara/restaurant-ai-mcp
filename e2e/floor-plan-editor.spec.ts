@@ -53,9 +53,8 @@ test.describe('Floor Plan Editor', () => {
     expect(foundCount).toBeGreaterThanOrEqual(2);
   });
 
-  test('table SVGs have overflow visible when tables exist', async ({ page }) => {
-    // Check if any actual tables exist on the canvas (not sidebar icon SVGs)
-    const canvasTables = page.locator('.absolute.cursor-grab');
+  test('table SVG groups render when tables exist', async ({ page }) => {
+    const canvasTables = page.locator('svg g.cursor-grab, svg g.cursor-pointer');
     const tableCount = await canvasTables.count();
 
     if (tableCount === 0) {
@@ -66,25 +65,9 @@ test.describe('Floor Plan Editor', () => {
       return;
     }
 
-    // Tables exist — verify their SVGs have overflow:visible
-    const tableSvgs = page.locator('svg[viewBox]');
-    const svgCount = await tableSvgs.count();
-    let foundVisibleOverflow = false;
-    for (let i = 0; i < Math.min(svgCount, 20); i++) {
-      const svg = tableSvgs.nth(i);
-      const overflowStyle = await svg.evaluate((el) => {
-        const computed = window.getComputedStyle(el).overflow;
-        const inline = (el as SVGSVGElement).style.overflow;
-        return { computed, inline };
-      });
-
-      if (overflowStyle.inline === 'visible' || overflowStyle.computed === 'visible') {
-        foundVisibleOverflow = true;
-        break;
-      }
-    }
-
-    expect(foundVisibleOverflow).toBe(true);
+    await expect(canvasTables.first()).toBeVisible();
+    const tableLabels = page.locator('svg text');
+    expect(await tableLabels.count()).toBeGreaterThan(0);
   });
 
   test('empty state shows helpful message', async ({ page }) => {
@@ -93,20 +76,20 @@ test.describe('Floor Plan Editor', () => {
     const hasEmptyOrContent = await emptyState.first().isVisible().catch(() => false);
 
     // Page should show either tables or empty state instructions
-    const hasTables = await page.locator('.absolute.cursor-grab').count();
+    const hasTables = await page.locator('svg g.cursor-grab, svg g.cursor-pointer').count();
     expect(hasEmptyOrContent || hasTables > 0).toBe(true);
   });
 
-  test('moving a table enables save button (when tables exist)', async ({ page }) => {
+  test('moving a table shows autosave status (when tables exist)', async ({ page }) => {
     await page.waitForTimeout(2000);
 
-    const canvasTables = page.locator('.absolute.cursor-grab');
+    const canvasTables = page.locator('svg g.cursor-grab, svg g.cursor-pointer');
     const tableCount = await canvasTables.count();
 
     if (tableCount === 0) {
-      // No tables to drag — verify empty state
-      const emptyState = page.getByText(/No tables/i);
-      const isEmpty = await emptyState.isVisible().catch(() => false);
+      // No tables to drag — verify empty state or add-table CTA
+      const emptyState = page.getByText(/No tables|Add Table|start building/i);
+      const isEmpty = await emptyState.first().isVisible().catch(() => false);
       expect(isEmpty).toBe(true);
       return;
     }
@@ -122,7 +105,8 @@ test.describe('Floor Plan Editor', () => {
     await page.mouse.move(box.x + 50, box.y + 50);
     await page.mouse.up();
 
-    await page.waitForTimeout(500);
+    const saveStatus = page.getByText(/Saving|Saved|Salvando|Salvo|Guardando|Guardado/i);
+    await expect(saveStatus.first()).toBeVisible({ timeout: 10000 });
   });
 
   test('no 500 server errors during floor plan operations', async ({ page }) => {

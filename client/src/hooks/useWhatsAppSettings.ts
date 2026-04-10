@@ -16,7 +16,13 @@ export interface WhatsAppIntegrationStatus {
   };
 }
 
-export function useWhatsAppIntegrationStatus() {
+interface WhatsAppIntegrationStatusQueryOptions {
+  enabled?: boolean;
+}
+
+export function useWhatsAppIntegrationStatus(options: WhatsAppIntegrationStatusQueryOptions = {}) {
+  const { enabled = true } = options;
+
   return useQuery({
     queryKey: ['whatsapp-status'],
     queryFn: async (): Promise<WhatsAppIntegrationStatus> => {
@@ -24,6 +30,7 @@ export function useWhatsAppIntegrationStatus() {
       if (!response.ok) throw new Error('Failed to load WhatsApp integration status');
       return response.json();
     },
+    enabled,
     staleTime: SETTINGS_STALE_TIME,
   });
 }
