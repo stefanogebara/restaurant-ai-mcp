@@ -354,10 +354,12 @@ async function handleCheckAvailability(req, res) {
     });
   }
 
-  // Get restaurant from session, request, or body restaurant_id (voice agent)
+  // Get restaurant from session, request, body, or query string restaurant_id (voice agent)
+  // ElevenLabs webhook tools put fixed params (restaurant_id) in the query string even for POST
+  const restaurantIdFromQuery = req.query.restaurant_id || req.query.restaurantId;
   let restaurant = req.restaurant || {};
-  if (!restaurant.id && data.restaurant_id) {
-    restaurant = { id: data.restaurant_id };
+  if (!restaurant.id && (data.restaurant_id || restaurantIdFromQuery)) {
+    restaurant = { id: data.restaurant_id || restaurantIdFromQuery };
   }
   const result = await toolHandlers.checkAvailability(restaurant.id, restaurant, { date, time, party_size });
   logger.info(' check_availability response:', result);
@@ -373,10 +375,11 @@ async function handleCreateReservation(req, res) {
   const { date, time, party_size, customer_name, customer_email, special_requests } = data;
   const customer_phone = data.customer_phone || data.phone;
 
-  // Get restaurant from session, request, or body restaurant_id (voice agent)
+  // Get restaurant from session, request, body, or query string restaurant_id (voice agent)
+  const _createRestaurantIdFromQuery = req.query.restaurant_id || req.query.restaurantId;
   let restaurant = req.multiTenantRestaurant || req.restaurant || {};
-  if (!restaurant.id && data.restaurant_id) {
-    restaurant = { id: data.restaurant_id, restaurant_name: 'the restaurant' };
+  if (!restaurant.id && (data.restaurant_id || _createRestaurantIdFromQuery)) {
+    restaurant = { id: data.restaurant_id || _createRestaurantIdFromQuery, restaurant_name: 'the restaurant' };
   }
   const restaurantName = restaurant.restaurant_name || restaurant.name || 'the restaurant';
 
@@ -517,10 +520,11 @@ async function handleLookupReservation(req, res) {
   // Accept both "name" and "customer_name" field names
   const { phone, reservation_id } = data;
   const name = data.name || data.customer_name;
-  // Get restaurant from session, request, or body restaurant_id (voice agent)
+  // Get restaurant from session, request, body, or query string restaurant_id (voice agent)
+  const _qRid = req.query.restaurant_id || req.query.restaurantId;
   let restaurant = req.restaurant || {};
-  if (!restaurant.id && data.restaurant_id) {
-    restaurant = { id: data.restaurant_id };
+  if (!restaurant.id && (data.restaurant_id || _qRid)) {
+    restaurant = { id: data.restaurant_id || _qRid };
   }
 
   // Log tool call
