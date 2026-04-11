@@ -11,6 +11,7 @@ import StatusBreakdownPie from '../../components/analytics/StatusBreakdownPie';
 import NoShowPredictions from '../../components/analytics/NoShowPredictions';
 import DateRangePicker, { presetToRange, type DateRangeValue } from '../../components/analytics/DateRangePicker';
 import ExportDropdown from '../../components/analytics/ExportDropdown';
+import RevenueOpportunities from '../../components/analytics/RevenueOpportunities';
 import ThiingsIcon from '../../components/common/ThiingsIcon';
 
 const LOADING_TIMEOUT_MS = 10_000;
@@ -113,7 +114,7 @@ export default function AnalyticsTab() {
       </div>
 
       {/* Stats */}
-      <AnalyticsStats overview={data.overview} />
+      <AnalyticsStats overview={data.overview} reservationsByStatus={data.reservations_by_status} />
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -134,6 +135,9 @@ export default function AnalyticsTab() {
 
       {/* Status Breakdown */}
       <StatusBreakdownPie reservationsByStatus={data.reservations_by_status} />
+
+      {/* Revenue Opportunities */}
+      <RevenueOpportunities />
     </div>
   );
 }
