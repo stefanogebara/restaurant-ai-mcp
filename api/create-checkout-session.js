@@ -88,13 +88,31 @@ module.exports = async (req, res) => {
     ];
 
     // Add metered price items for usage-based billing (unique price IDs only)
-    const meteredPriceMap = getMeteredPriceMap();
-    const addedPrices = new Set();
-    for (const [, mapping] of Object.entries(meteredPriceMap)) {
-      const meteredPriceId = mapping.priceId;
-      if (!addedPrices.has(meteredPriceId)) {
-        addedPrices.add(meteredPriceId);
-        lineItems.push({ price: meteredPriceId });
+    // Fetch the base price currency first to avoid Stripe currency mismatch errors
+    let baseCurrency = null;
+    try {
+      const basePrice = await stripe.prices.retrieve(priceId);
+      baseCurrency = basePrice.currency;
+    } catch (e) {
+      logger.warn('Could not retrieve base price currency, skipping metered items:', e.message);
+    }
+
+    if (baseCurrency) {
+      const meteredPriceMap = getMeteredPriceMap();
+      const addedPrices = new Set();
+      for (const [, mapping] of Object.entries(meteredPriceMap)) {
+        const meteredPriceId = mapping.priceId;
+        if (!addedPrices.has(meteredPriceId)) {
+          try {
+            const mp = await stripe.prices.retrieve(meteredPriceId);
+            if (mp.currency === baseCurrency) {
+              addedPrices.add(meteredPriceId);
+              lineItems.push({ price: meteredPriceId });
+            }
+          } catch (e) {
+            logger.warn('Skipping metered price (retrieve failed):', meteredPriceId);
+          }
+        }
       }
     }
 
