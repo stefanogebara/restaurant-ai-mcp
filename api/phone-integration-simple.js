@@ -80,7 +80,7 @@ async function handleRegister(req, res) {
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
 
-  const { restaurant_id } = req.body;
+  const restaurant_id = req.body?.restaurant_id || req._authRestaurantId;
 
   if (!restaurant_id) {
     return res.status(400).json({
@@ -354,7 +354,7 @@ async function handleUnregister(req, res) {
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
 
-  const { restaurant_id } = req.body;
+  const restaurant_id = req.body?.restaurant_id || req._authRestaurantId;
 
   if (!restaurant_id) {
     return res.status(400).json({
@@ -458,7 +458,8 @@ async function handleStatus(req, res) {
  * Test the voice agent by initiating a call
  */
 async function handleTestCall(req, res) {
-  const { restaurant_id, to_number } = req.body || req.query;
+  const restaurant_id = req.body?.restaurant_id || req.query?.restaurant_id || req._authRestaurantId;
+  const to_number = req.body?.to_number || req.query?.to_number;
 
   if (!restaurant_id || !to_number) {
     return res.status(400).json({
