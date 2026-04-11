@@ -276,7 +276,9 @@ async function checkAvailability(restaurantId, restaurant, { date, time, party_s
     );
 
     // Check if we can accommodate this party size using flexible table combinations
-    const accommodationCheck = await canAccommodateParty(restaurantId, partySize);
+    // Pass date + time so already-booked tables are excluded from the check
+    const checkDuration = restaurant?.avg_dining_duration_minutes || 90;
+    const accommodationCheck = await canAccommodateParty(restaurantId, partySize, { date, time, durationMinutes: checkDuration });
 
     if (availabilityCheck.available && accommodationCheck.can_accommodate) {
       const result = {
@@ -392,8 +394,13 @@ async function createReservation(restaurantId, restaurant, params) {
       return status === 'confirmed' || status === 'seated';
     });
 
-    // Check if we can accommodate
-    const accommodationCheck = await canAccommodateParty(restaurantId, parseInt(party_size));
+    // Check if we can accommodate — pass date/time so booked tables are excluded
+    const durationMinutes = restaurant.avg_dining_duration_minutes || 90;
+    const accommodationCheck = await canAccommodateParty(
+      restaurantId,
+      parseInt(party_size),
+      { date, time, durationMinutes }
+    );
     if (!accommodationCheck.can_accommodate) {
       const maxCap = accommodationCheck.max_capacity;
       const capacityMsg = maxCap
@@ -422,7 +429,9 @@ async function createReservation(restaurantId, restaurant, params) {
       customer_email: customer_email || '',
       special_requests: special_requests || '',
       status: 'confirmed',
-      notes: 'Created via AI Voice System'
+      notes: 'Created via AI Voice System',
+      // Link the specific tables that will be used — enables real-time floor plan sync
+      table_ids: accommodationCheck.table_ids || []
     };
 
     const createResult = await dbCreateReservation(restaurantId, fields);

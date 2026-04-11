@@ -736,115 +736,160 @@ const canCombineTables = (table1, table2) => {
 };
 
 /**
- * Check if restaurant can accommodate a party of given size
- * Returns true/false without exposing internal table details
+ * Convert a "HH:MM" or "HH:MM:SS" time string to minutes since midnight.
+ */
+function timeToMinutes(timeStr) {
+  const [h, m] = timeStr.split(':').map(Number);
+  return h * 60 + m;
+}
+
+/**
+ * Get the set of table UUIDs already reserved at a given date/time window.
+ * Only considers confirmed/seated reservations whose time slot overlaps.
+ * @param {string} restaurantId
+ * @param {string} date - YYYY-MM-DD
+ * @param {string} time - HH:MM or HH:MM:SS
+ * @param {number} durationMinutes - length of reservation slot
+ * @returns {Set<string>} occupied table IDs
+ */
+async function getBookedTableIds(restaurantId, date, time, durationMinutes) {
+  const { data, error } = await supabase
+    .from('reservations')
+    .select('table_ids, time')
+    .eq('restaurant_id', restaurantId)
+    .eq('date', date)
+    .in('status', ['confirmed', 'seated']);
+
+  if (error || !data) return new Set();
+
+  const newStart = timeToMinutes(time);
+  const newEnd = newStart + durationMinutes;
+  const occupied = new Set();
+
+  for (const r of data) {
+    if (!r.table_ids || r.table_ids.length === 0) continue;
+    const rStart = timeToMinutes(r.time);
+    const rEnd = rStart + durationMinutes;
+    // Overlap: existing starts before new ends AND existing ends after new starts
+    if (rStart < newEnd && rEnd > newStart) {
+      for (const tid of r.table_ids) occupied.add(tid);
+    }
+  }
+
+  return occupied;
+}
+
+/**
+ * Calculate the maximum seatable capacity from a list of tables.
+ * Checks single, 2-table, and 3-table combinations.
+ */
+function calcMaxCapacity(allTables) {
+  const flex = allTables.filter(t => !t.is_fixed);
+  let max = 0;
+  for (const t of allTables) if (t.capacity > max) max = t.capacity;
+  for (let i = 0; i < flex.length; i++) {
+    for (let j = i + 1; j < flex.length; j++) {
+      if (canCombineTables(flex[i], flex[j])) {
+        const c = flex[i].capacity + flex[j].capacity;
+        if (c > max) max = c;
+        for (let k = j + 1; k < flex.length; k++) {
+          if (canCombineTables(flex[j], flex[k])) {
+            const c3 = c + flex[k].capacity;
+            if (c3 > max) max = c3;
+          }
+        }
+      }
+    }
+  }
+  return max;
+}
+
+/**
+ * Find the best table combination for a party from a pool of available tables.
+ * Returns { can_accommodate, method, tableObjs, total_capacity } or { can_accommodate: false }.
+ * tableObjs are full table objects with id + table_number.
+ */
+function findBestCombo(tables, partySize) {
+  // Single table (prefer tightest fit)
+  const singles = tables.filter(t => t.capacity >= partySize).sort((a, b) => a.capacity - b.capacity);
+  if (singles.length > 0) {
+    return { can_accommodate: true, method: 'single', tableObjs: [singles[0]], total_capacity: singles[0].capacity };
+  }
+
+  const flex = tables.filter(t => !t.is_fixed);
+
+  // 2-table combos
+  for (let i = 0; i < flex.length; i++) {
+    for (let j = i + 1; j < flex.length; j++) {
+      if (!canCombineTables(flex[i], flex[j])) continue;
+      const cap = flex[i].capacity + flex[j].capacity;
+      if (cap >= partySize) {
+        return { can_accommodate: true, method: 'combination', tableObjs: [flex[i], flex[j]], total_capacity: cap };
+      }
+    }
+  }
+
+  // 3-table combos
+  for (let i = 0; i < flex.length; i++) {
+    for (let j = i + 1; j < flex.length; j++) {
+      if (!canCombineTables(flex[i], flex[j])) continue;
+      for (let k = j + 1; k < flex.length; k++) {
+        if (!canCombineTables(flex[j], flex[k])) continue;
+        const cap = flex[i].capacity + flex[j].capacity + flex[k].capacity;
+        if (cap >= partySize) {
+          return { can_accommodate: true, method: 'combination', tableObjs: [flex[i], flex[j], flex[k]], total_capacity: cap };
+        }
+      }
+    }
+  }
+
+  return { can_accommodate: false };
+}
+
+/**
+ * Check if restaurant can accommodate a party of given size.
+ * When date+time are supplied, excludes tables already reserved in that slot.
+ *
  * @param {string} restaurantId - Restaurant UUID
  * @param {number} partySize - Number of guests
+ * @param {object} [options]
+ * @param {string} [options.date] - YYYY-MM-DD (enables date/time-aware check)
+ * @param {string} [options.time] - HH:MM or HH:MM:SS
+ * @param {number} [options.durationMinutes=90] - Estimated dining duration
+ * @returns {{ success, can_accommodate, method?, table_ids?, table_numbers?, total_capacity?, max_capacity?, reason? }}
  */
-const canAccommodateParty = async (restaurantId, partySize) => {
+const canAccommodateParty = async (restaurantId, partySize, options = {}) => {
+  const { date, time, durationMinutes = 90 } = options;
+
   const tablesResult = await getAllTables(restaurantId);
   if (!tablesResult.success) return { success: false, can_accommodate: false };
 
-  // Use ALL active tables for capacity checks — runtime status (occupied/reserved)
-  // reflects current service, not future availability. Time conflicts are checked
-  // separately via existing reservations at the requested date/time.
-  const availableTables = tablesResult.tables;
+  let availableTables = tablesResult.tables;
+  const allTables = availableTables; // keep full list for max capacity calc
 
-  // Check single tables first
-  const singleTable = availableTables.find(t => t.capacity >= partySize);
-  if (singleTable) {
+  // Exclude tables booked at the requested time slot
+  if (date && time) {
+    const bookedIds = await getBookedTableIds(restaurantId, date, time, durationMinutes);
+    if (bookedIds.size > 0) {
+      availableTables = availableTables.filter(t => !bookedIds.has(t.id));
+    }
+  }
+
+  const combo = findBestCombo(availableTables, partySize);
+
+  if (combo.can_accommodate) {
     return {
       success: true,
       can_accommodate: true,
-      method: 'single',
-      tables: [singleTable.table_number],
-      total_capacity: singleTable.capacity
+      method: combo.method,
+      table_ids: combo.tableObjs.map(t => t.id),
+      table_numbers: combo.tableObjs.map(t => t.table_number),
+      total_capacity: combo.total_capacity
     };
   }
 
-  // Check 2-table combinations using adjacency rules
-  const flexibleTables = availableTables.filter(t => !t.is_fixed);
-
-  for (let i = 0; i < flexibleTables.length; i++) {
-    for (let j = i + 1; j < flexibleTables.length; j++) {
-      const table1 = flexibleTables[i];
-      const table2 = flexibleTables[j];
-
-      // Use canCombineTables to check if they can actually combine
-      if (!canCombineTables(table1, table2)) {
-        continue;
-      }
-
-      const totalCapacity = table1.capacity + table2.capacity;
-      if (totalCapacity >= partySize) {
-        return {
-          success: true,
-          can_accommodate: true,
-          method: 'combination',
-          tables: [table1.table_number, table2.table_number],
-          total_capacity: totalCapacity
-        };
-      }
-    }
-  }
-
-  // Check 3-table combinations for larger parties
-  for (let i = 0; i < flexibleTables.length; i++) {
-    for (let j = i + 1; j < flexibleTables.length; j++) {
-      for (let k = j + 1; k < flexibleTables.length; k++) {
-        const table1 = flexibleTables[i];
-        const table2 = flexibleTables[j];
-        const table3 = flexibleTables[k];
-
-        // For 3-table chain: 1-2 must connect and 2-3 must connect
-        if (!canCombineTables(table1, table2) || !canCombineTables(table2, table3)) {
-          continue;
-        }
-
-        const totalCapacity = table1.capacity + table2.capacity + table3.capacity;
-        if (totalCapacity >= partySize) {
-          return {
-            success: true,
-            can_accommodate: true,
-            method: 'combination',
-            tables: [table1.table_number, table2.table_number, table3.table_number],
-            total_capacity: totalCapacity
-          };
-        }
-      }
-    }
-  }
-
-  // Calculate the actual maximum we can seat (for informative error message)
-  let maxCapacity = 0;
-
-  // Max single table
-  for (const t of availableTables) {
-    if (t.capacity > maxCapacity) maxCapacity = t.capacity;
-  }
-
-  // Max 2-table combo
-  for (let i = 0; i < flexibleTables.length; i++) {
-    for (let j = i + 1; j < flexibleTables.length; j++) {
-      if (canCombineTables(flexibleTables[i], flexibleTables[j])) {
-        const cap = flexibleTables[i].capacity + flexibleTables[j].capacity;
-        if (cap > maxCapacity) maxCapacity = cap;
-      }
-    }
-  }
-
-  // Max 3-table combo
-  for (let i = 0; i < flexibleTables.length; i++) {
-    for (let j = i + 1; j < flexibleTables.length; j++) {
-      for (let k = j + 1; k < flexibleTables.length; k++) {
-        if (canCombineTables(flexibleTables[i], flexibleTables[j]) && canCombineTables(flexibleTables[j], flexibleTables[k])) {
-          const cap = flexibleTables[i].capacity + flexibleTables[j].capacity + flexibleTables[k].capacity;
-          if (cap > maxCapacity) maxCapacity = cap;
-        }
-      }
-    }
-  }
-
+  // Not possible — calculate overall restaurant max for a helpful error message
+  const maxCapacity = calcMaxCapacity(allTables);
   return {
     success: true,
     can_accommodate: false,
