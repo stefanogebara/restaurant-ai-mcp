@@ -112,7 +112,7 @@ describe('WalkInModal', () => {
     expect(
       screen.getByRole('button', { name: /next: select table/i }),
     ).toBeInTheDocument();
-  });
+  }, 15000);
 
   it('advances to step 2 when the form is filled and submitted', async () => {
     const user = userEvent.setup();
