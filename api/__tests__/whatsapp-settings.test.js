@@ -47,6 +47,7 @@ jest.mock('../_lib/auth', () => ({ verifyAuth: jest.fn() }));
 jest.mock('../_lib/rate-limit', () => ({ checkAndApplyRateLimit: jest.fn().mockResolvedValue(false) }));
 jest.mock('../_lib/whatsapp-sender', () => ({
   isWhatsAppConfigured: jest.fn(),
+  getWhatsAppProvider: jest.fn(),
   sendWhatsAppMessage: jest.fn(),
 }));
 jest.mock('../_lib/secure-logger', () => ({
@@ -55,7 +56,7 @@ jest.mock('../_lib/secure-logger', () => ({
 
 const handler = require('../whatsapp-settings');
 const { verifyAuth } = require('../_lib/auth');
-const { isWhatsAppConfigured, sendWhatsAppMessage } = require('../_lib/whatsapp-sender');
+const { isWhatsAppConfigured, getWhatsAppProvider, sendWhatsAppMessage } = require('../_lib/whatsapp-sender');
 
 function mkReqRes(overrides = {}) {
   const req = {
@@ -80,6 +81,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   verifyAuth.mockResolvedValue(AUTH_USER);
   isWhatsAppConfigured.mockReturnValue(true);
+  getWhatsAppProvider.mockResolvedValue('meta');
 });
 
 // ============================================================
@@ -290,29 +292,85 @@ describe('WhatsApp Settings: test message', () => {
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: false }));
   });
 
+  test('returns 400 when Twilio provider is selected but Twilio WhatsApp env is missing', async () => {
+    const originalEnv = {
+      sid: process.env.TWILIO_ACCOUNT_SID,
+      token: process.env.TWILIO_AUTH_TOKEN,
+      number: process.env.TWILIO_WHATSAPP_NUMBER,
+    };
+
+    try {
+      delete process.env.TWILIO_ACCOUNT_SID;
+      delete process.env.TWILIO_AUTH_TOKEN;
+      delete process.env.TWILIO_WHATSAPP_NUMBER;
+      getWhatsAppProvider.mockResolvedValueOnce('twilio');
+
+      const { req, res } = mkReqRes({
+        method: 'POST',
+        query: { action: 'test' },
+        body: { phone_number: '+5511999999999' },
+      });
+
+      await handler(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+        success: false,
+        error: expect.stringContaining('Twilio WhatsApp not configured')
+      }));
+    } finally {
+      if (originalEnv.sid) process.env.TWILIO_ACCOUNT_SID = originalEnv.sid;
+      else delete process.env.TWILIO_ACCOUNT_SID;
+      if (originalEnv.token) process.env.TWILIO_AUTH_TOKEN = originalEnv.token;
+      else delete process.env.TWILIO_AUTH_TOKEN;
+      if (originalEnv.number) process.env.TWILIO_WHATSAPP_NUMBER = originalEnv.number;
+      else delete process.env.TWILIO_WHATSAPP_NUMBER;
+    }
+  });
+
   test('sends test message and returns 200', async () => {
-    mockSingle.mockResolvedValueOnce({
-      data: { restaurant_name: 'Boteco do Samba' },
-      error: null,
-    });
-    sendWhatsAppMessage.mockResolvedValueOnce({ success: true, messageId: 'test-msg-1' });
+    const originalEnv = {
+      sid: process.env.TWILIO_ACCOUNT_SID,
+      token: process.env.TWILIO_AUTH_TOKEN,
+      number: process.env.TWILIO_WHATSAPP_NUMBER,
+    };
 
-    const { req, res } = mkReqRes({
-      method: 'POST',
-      query: { action: 'test' },
-      body: { phone_number: '+5511999999999' },
-    });
-    await handler(req, res);
+    try {
+      process.env.TWILIO_ACCOUNT_SID = 'test-sid';
+      process.env.TWILIO_AUTH_TOKEN = 'test-token';
+      process.env.TWILIO_WHATSAPP_NUMBER = '+15551234567';
+      mockSingle.mockResolvedValueOnce({
+        data: { restaurant_name: 'Boteco do Samba' },
+        error: null,
+      });
+      getWhatsAppProvider.mockResolvedValueOnce('twilio');
+      sendWhatsAppMessage.mockResolvedValueOnce({ success: true, messageId: 'test-msg-1' });
 
-    expect(res.status).toHaveBeenCalledWith(200);
-    const json = res.json.mock.calls[0][0];
-    expect(json.success).toBe(true);
-    expect(json.messageId).toBe('test-msg-1');
+      const { req, res } = mkReqRes({
+        method: 'POST',
+        query: { action: 'test' },
+        body: { phone_number: '+5511999999999' },
+      });
+      await handler(req, res);
 
-    expect(sendWhatsAppMessage).toHaveBeenCalledWith(
-      '+5511999999999',
-      expect.stringContaining('Boteco do Samba')
-    );
+      expect(res.status).toHaveBeenCalledWith(200);
+      const json = res.json.mock.calls[0][0];
+      expect(json.success).toBe(true);
+      expect(json.messageId).toBe('test-msg-1');
+
+      expect(sendWhatsAppMessage).toHaveBeenCalledWith(
+        '+5511999999999',
+        expect.stringContaining('Boteco do Samba'),
+        { provider: 'twilio' }
+      );
+    } finally {
+      if (originalEnv.sid) process.env.TWILIO_ACCOUNT_SID = originalEnv.sid;
+      else delete process.env.TWILIO_ACCOUNT_SID;
+      if (originalEnv.token) process.env.TWILIO_AUTH_TOKEN = originalEnv.token;
+      else delete process.env.TWILIO_AUTH_TOKEN;
+      if (originalEnv.number) process.env.TWILIO_WHATSAPP_NUMBER = originalEnv.number;
+      else delete process.env.TWILIO_WHATSAPP_NUMBER;
+    }
   });
 
   test('returns 400 when message send fails', async () => {

@@ -13,7 +13,7 @@
 
 const { verifyAuth } = require('./_lib/auth');
 const { supabaseAdmin } = require('./_lib/supabase');
-const { isWhatsAppConfigured, sendWhatsAppMessage } = require('./_lib/whatsapp-sender');
+const { isWhatsAppConfigured, sendWhatsAppMessage, getWhatsAppProvider } = require('./_lib/whatsapp-sender');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { initSentry, captureException } = require('./_lib/sentry');
@@ -250,10 +250,17 @@ async function handleTest(req, res, restaurantId) {
     return res.status(400).json({ success: false, error: 'phone_number is required' });
   }
 
-  if (!isWhatsAppConfigured()) {
+  const provider = await getWhatsAppProvider(restaurantId);
+  const providerConfigured = provider === 'twilio'
+    ? !!(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_WHATSAPP_NUMBER)
+    : isWhatsAppConfigured();
+
+  if (!providerConfigured) {
     return res.status(400).json({
       success: false,
-      error: 'WhatsApp API not configured. Set WHATSAPP_PHONE_NUMBER_ID and WHATSAPP_ACCESS_TOKEN.'
+      error: provider === 'twilio'
+        ? 'Twilio WhatsApp not configured. Set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_WHATSAPP_NUMBER.'
+        : 'WhatsApp API not configured. Set WHATSAPP_PHONE_NUMBER_ID and WHATSAPP_ACCESS_TOKEN.'
     });
   }
 
@@ -269,7 +276,8 @@ async function handleTest(req, res, restaurantId) {
 
   const result = await sendWhatsAppMessage(
     phone_number,
-    `This is a test message from ${restaurantName} via Seatable. WhatsApp integration is working correctly!`
+    `This is a test message from ${restaurantName} via Seatable. WhatsApp integration is working correctly!`,
+    { provider }
   );
 
   if (!result.success) {
