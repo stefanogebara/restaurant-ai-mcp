@@ -371,6 +371,7 @@ async function processWithAI(userMessage, session, conversationHistory = []) {
     }
     // Prevent confusing "what restaurant?" messages when context is missing
     systemPrompt += '\nIf the customer is continuing a reservation flow (providing a name, date, or other details), continue helping them naturally without asking them to start over.\n';
+    systemPrompt += '\nIMPORTANT: Do NOT confuse a customer\'s name (e.g. "João Silva") with a restaurant name. You are the assistant for this restaurant — never ask the customer to confirm the restaurant name or suggest they contact "João Silva" as if it were a restaurant.\n';
   }
 
   // Inject guest memory context if available
