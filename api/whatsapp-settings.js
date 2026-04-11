@@ -67,6 +67,94 @@ function isTemplateTranslationMissing(result) {
   return errorText.includes('132001') || errorText.includes('does not exist in the translation');
 }
 
+function getMetaTestTemplatePriority(preferredTemplateName) {
+  const priority = [];
+  const seen = new Set();
+
+  function add(name) {
+    if (!name || seen.has(name)) return;
+    seen.add(name);
+    priority.push(name);
+  }
+
+  add(preferredTemplateName);
+  add('seatable_feedback_request');
+  add('seatable_promotion');
+  add('seatable_birthday');
+  add('seatable_reengagement');
+
+  return priority;
+}
+
+function getMetaTemplateBodyParameters(templateName, restaurantName) {
+  if (templateName === 'seatable_promotion') {
+    return ['there', restaurantName, `This is a WhatsApp delivery test from ${restaurantName}.`];
+  }
+  return ['there', restaurantName];
+}
+
+async function fetchApprovedMetaTestTemplates() {
+  const wabaId = process.env.WHATSAPP_WABA_ID;
+  const token = process.env.WHATSAPP_ACCESS_TOKEN || process.env.WHATSAPP_TOKEN || process.env.META_WHATSAPP_TOKEN;
+
+  if (!wabaId || !token) return [];
+
+  try {
+    const response = await fetch(
+      `https://graph.facebook.com/v19.0/${wabaId}/message_templates?fields=name,status,category,language&limit=200`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    if (!response.ok) return [];
+
+    const data = await response.json();
+    return (data.data || []).filter(template => template.status === 'APPROVED' && template.name && template.language);
+  } catch {
+    return [];
+  }
+}
+
+function buildMetaTemplateAttempts({ templates, preferredTemplateName, restaurantLanguage, restaurantName }) {
+  const languageCandidates = getTemplateLanguageCandidates(restaurantLanguage);
+  const attempts = [];
+  const seen = new Set();
+  const priorityNames = getMetaTestTemplatePriority(preferredTemplateName);
+
+  for (const templateName of priorityNames) {
+    const approvedMatches = templates
+      .filter(template => template.name === templateName)
+      .sort((a, b) => {
+        const aIdx = languageCandidates.indexOf(a.language);
+        const bIdx = languageCandidates.indexOf(b.language);
+        const aRank = aIdx === -1 ? Number.MAX_SAFE_INTEGER : aIdx;
+        const bRank = bIdx === -1 ? Number.MAX_SAFE_INTEGER : bIdx;
+        return aRank - bRank;
+      });
+
+    for (const template of approvedMatches) {
+      const key = `${template.name}:${template.language}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      attempts.push({
+        templateName: template.name,
+        language: template.language,
+        bodyParameters: getMetaTemplateBodyParameters(template.name, restaurantName),
+      });
+    }
+  }
+
+  if (attempts.length > 0) {
+    return attempts;
+  }
+
+  const fallbackTemplateName = preferredTemplateName || 'seatable_feedback_request';
+  return languageCandidates.map(language => ({
+    templateName: fallbackTemplateName,
+    language,
+    bodyParameters: getMetaTemplateBodyParameters(fallbackTemplateName, restaurantName),
+  }));
+}
+
 module.exports = async (req, res) => {
   // CORS
   setInternalCors(req, res);
@@ -321,18 +409,21 @@ async function handleTest(req, res, restaurantId) {
   let result;
 
   if (provider === 'meta') {
-    const templateName = process.env.WHATSAPP_TEST_TEMPLATE_NAME || 'seatable_feedback_request';
-    const bodyParameters = templateName === 'seatable_promotion'
-      ? ['there', restaurantName, `This is a WhatsApp delivery test from ${restaurantName}.`]
-      : ['there', restaurantName];
-    const languageCandidates = getTemplateLanguageCandidates(restaurantLanguage);
+    const preferredTemplateName = process.env.WHATSAPP_TEST_TEMPLATE_NAME || 'seatable_feedback_request';
+    const approvedTemplates = await fetchApprovedMetaTestTemplates();
+    const templateAttempts = buildMetaTemplateAttempts({
+      templates: approvedTemplates,
+      preferredTemplateName,
+      restaurantLanguage,
+      restaurantName,
+    });
 
-    for (const templateLanguage of languageCandidates) {
+    for (const attempt of templateAttempts) {
       result = await sendTemplateMessage(
         phone_number,
-        templateName,
-        templateLanguage,
-        bodyParameters
+        attempt.templateName,
+        attempt.language,
+        attempt.bodyParameters
       );
 
       if (result.success || !isTemplateTranslationMissing(result)) {

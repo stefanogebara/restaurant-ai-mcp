@@ -374,7 +374,59 @@ describe('WhatsApp Settings: test message', () => {
     }
   });
 
-  test('Meta provider sends an approved template and returns 200', async () => {
+  test('Meta provider uses approved template language from WABA metadata', async () => {
+    const originalEnv = {
+      wabaId: process.env.WHATSAPP_WABA_ID,
+      token: process.env.WHATSAPP_ACCESS_TOKEN,
+    };
+    const originalFetch = global.fetch;
+
+    try {
+      process.env.WHATSAPP_WABA_ID = 'waba-test';
+      process.env.WHATSAPP_ACCESS_TOKEN = 'meta-test-token';
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          data: [
+            { name: 'seatable_feedback_request', status: 'APPROVED', category: 'UTILITY', language: 'pt_BR' },
+            { name: 'seatable_promotion', status: 'APPROVED', category: 'MARKETING', language: 'en' },
+          ]
+        }),
+      });
+
+      mockSingle.mockResolvedValueOnce({
+        data: { restaurant_name: 'Boteco do Samba', language: 'en' },
+        error: null,
+      });
+      getWhatsAppProvider.mockResolvedValueOnce('meta');
+      sendTemplateMessage.mockResolvedValueOnce({ success: true, messageId: 'wamid.TEST-TEMPLATE-1' });
+
+      const { req, res } = mkReqRes({
+        method: 'POST',
+        query: { action: 'test' },
+        body: { phone_number: '+5511999999999' },
+      });
+
+      await handler(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(sendTemplateMessage).toHaveBeenCalledWith(
+        '+5511999999999',
+        'seatable_feedback_request',
+        'pt_BR',
+        ['there', 'Boteco do Samba']
+      );
+      expect(sendWhatsAppMessage).not.toHaveBeenCalled();
+    } finally {
+      if (originalEnv.wabaId) process.env.WHATSAPP_WABA_ID = originalEnv.wabaId;
+      else delete process.env.WHATSAPP_WABA_ID;
+      if (originalEnv.token) process.env.WHATSAPP_ACCESS_TOKEN = originalEnv.token;
+      else delete process.env.WHATSAPP_ACCESS_TOKEN;
+      global.fetch = originalFetch;
+    }
+  });
+
+  test('Meta provider falls back across template languages when metadata is unavailable', async () => {
     mockSingle.mockResolvedValueOnce({
       data: { restaurant_name: 'Boteco do Samba', language: 'en' },
       error: null,
