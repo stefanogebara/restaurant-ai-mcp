@@ -61,10 +61,10 @@ async function callChatCompletions(messages, tools) {
   }));
 
   // Use fast model for WhatsApp (Haiku: 12x cheaper than Sonnet)
-  // 300 max_tokens is enough for 2-3 sentence WhatsApp replies
+  // 600 max_tokens — agentic tool calls need more headroom than plain chat
   const response = await getAI().messages.create({
     model: AI_MODEL_FAST,
-    max_tokens: 300,
+    max_tokens: 600,
     system: systemContent,
     messages: anthropicMessages,
     tools: anthropicTools.length > 0 ? anthropicTools : undefined,
@@ -248,6 +248,7 @@ function buildWhatsAppPrompt(restaurantConfig, session, currentDateTime) {
 - If a tool call fails (reservation not found, system error), apologize briefly and suggest an alternative
 - If you can't help after 2 attempts, say something like "Desculpe, não consegui completar isso agora. Posso ajudar com outra coisa?"
 - Never leave the customer hanging — always close with a helpful next step or offer to try again later
+- CRITICAL: If a reservation was successfully created or cancelled (tool returned success), your response MUST be a positive confirmation. NEVER say you had difficulties when the action succeeded.
 `;
 
   // Date/time context
@@ -357,16 +358,18 @@ async function processWithAI(userMessage, session, conversationHistory = []) {
 
   // Fallback to generic prompt
   if (!systemPrompt) {
-    systemPrompt = 'You are a friendly restaurant assistant on WhatsApp. A customer has messaged but hasn\'t selected a restaurant yet. Be warm and helpful in Portuguese.\n';
+    systemPrompt = 'You are a friendly restaurant assistant on WhatsApp. Help the customer warmly in Portuguese (pt-BR).\n';
     systemPrompt += `\nCurrent date/time: ${currentDateTime.formatted}\n`;
     systemPrompt += `Today is ${currentDateTime.dayOfWeek}, ${currentDateTime.date}\n`;
 
     if (session?.restaurant) {
-      systemPrompt += `\nThe customer is at: ${session.restaurant.restaurant_name}\n`;
+      systemPrompt += `\nRestaurant: ${session.restaurant.restaurant_name}\n`;
     }
     if (session?.sender_phone) {
-      systemPrompt += `Customer's WhatsApp: ${session.sender_phone} (use as phone for reservations \u{2014} don't ask for it)\n`;
+      systemPrompt += `Customer's WhatsApp: ${session.sender_phone} (use as phone for reservations — don't ask for it)\n`;
     }
+    // Prevent confusing "what restaurant?" messages when context is missing
+    systemPrompt += '\nIf the customer is continuing a reservation flow (providing a name, date, or other details), continue helping them naturally without asking them to start over.\n';
   }
 
   // Inject guest memory context if available
