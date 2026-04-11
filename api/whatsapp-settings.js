@@ -23,6 +23,50 @@ initSentry();
 
 const logger = createSecureLogger('WhatsAppSettings');
 
+function getTemplateLanguageCandidates(language) {
+  const normalized = String(language || '').trim().toLowerCase();
+  const candidates = [];
+  const seen = new Set();
+
+  function add(code) {
+    if (!code || seen.has(code)) return;
+    seen.add(code);
+    candidates.push(code);
+  }
+
+  if (normalized.startsWith('pt-br')) {
+    add('pt_BR');
+    add('pt');
+  } else if (normalized.startsWith('pt')) {
+    add('pt');
+    add('pt_BR');
+  } else if (normalized.startsWith('es')) {
+    add('es');
+    add('es_ES');
+  } else if (normalized.startsWith('en-us')) {
+    add('en_US');
+    add('en');
+  } else if (normalized.startsWith('en')) {
+    add('en');
+    add('en_US');
+  } else if (normalized) {
+    add(language);
+  }
+
+  add('pt_BR');
+  add('pt');
+  add('en');
+  add('en_US');
+  add('es');
+
+  return candidates;
+}
+
+function isTemplateTranslationMissing(result) {
+  const errorText = String(result?.error || '').toLowerCase();
+  return errorText.includes('132001') || errorText.includes('does not exist in the translation');
+}
+
 module.exports = async (req, res) => {
   // CORS
   setInternalCors(req, res);
@@ -268,11 +312,12 @@ async function handleTest(req, res, restaurantId) {
   const { data: config } = await supabaseAdmin
     .schema('restaurant')
     .from('restaurant_config')
-    .select('restaurant_name')
+    .select('restaurant_name, language, agent_language')
     .eq('id', restaurantId)
     .single();
 
   const restaurantName = config?.restaurant_name || 'Your Restaurant';
+  const restaurantLanguage = config?.language || config?.agent_language || 'en';
   let result;
 
   if (provider === 'meta') {
@@ -280,13 +325,20 @@ async function handleTest(req, res, restaurantId) {
     const bodyParameters = templateName === 'seatable_promotion'
       ? ['there', restaurantName, `This is a WhatsApp delivery test from ${restaurantName}.`]
       : ['there', restaurantName];
+    const languageCandidates = getTemplateLanguageCandidates(restaurantLanguage);
 
-    result = await sendTemplateMessage(
-      phone_number,
-      templateName,
-      'en',
-      bodyParameters
-    );
+    for (const templateLanguage of languageCandidates) {
+      result = await sendTemplateMessage(
+        phone_number,
+        templateName,
+        templateLanguage,
+        bodyParameters
+      );
+
+      if (result.success || !isTemplateTranslationMissing(result)) {
+        break;
+      }
+    }
   } else {
     result = await sendWhatsAppMessage(
       phone_number,

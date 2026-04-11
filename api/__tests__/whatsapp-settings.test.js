@@ -376,11 +376,14 @@ describe('WhatsApp Settings: test message', () => {
 
   test('Meta provider sends an approved template and returns 200', async () => {
     mockSingle.mockResolvedValueOnce({
-      data: { restaurant_name: 'Boteco do Samba' },
+      data: { restaurant_name: 'Boteco do Samba', language: 'en' },
       error: null,
     });
     getWhatsAppProvider.mockResolvedValueOnce('meta');
-    sendTemplateMessage.mockResolvedValueOnce({ success: true, messageId: 'wamid.TEST-TEMPLATE-1' });
+    sendTemplateMessage
+      .mockResolvedValueOnce({ success: false, error: '(#132001) Template name does not exist in the translation' })
+      .mockResolvedValueOnce({ success: false, error: '(#132001) Template name does not exist in the translation' })
+      .mockResolvedValueOnce({ success: true, messageId: 'wamid.TEST-TEMPLATE-1' });
 
     const { req, res } = mkReqRes({
       method: 'POST',
@@ -391,17 +394,32 @@ describe('WhatsApp Settings: test message', () => {
     await handler(req, res);
 
     expect(res.status).toHaveBeenCalledWith(200);
-    expect(sendTemplateMessage).toHaveBeenCalledWith(
+    expect(sendTemplateMessage).toHaveBeenNthCalledWith(
+      1,
       '+5511999999999',
       'seatable_feedback_request',
       'en',
+      ['there', 'Boteco do Samba']
+    );
+    expect(sendTemplateMessage).toHaveBeenNthCalledWith(
+      2,
+      '+5511999999999',
+      'seatable_feedback_request',
+      'en_US',
+      ['there', 'Boteco do Samba']
+    );
+    expect(sendTemplateMessage).toHaveBeenNthCalledWith(
+      3,
+      '+5511999999999',
+      'seatable_feedback_request',
+      'pt_BR',
       ['there', 'Boteco do Samba']
     );
     expect(sendWhatsAppMessage).not.toHaveBeenCalled();
   });
 
   test('returns 400 when message send fails', async () => {
-    mockSingle.mockResolvedValueOnce({ data: { restaurant_name: 'Test' }, error: null });
+    mockSingle.mockResolvedValueOnce({ data: { restaurant_name: 'Test', language: 'en' }, error: null });
     sendTemplateMessage.mockResolvedValueOnce({ success: false, error: 'Invalid number' });
 
     const { req, res } = mkReqRes({
