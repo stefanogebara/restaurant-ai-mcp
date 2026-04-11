@@ -7,7 +7,7 @@ import { trackPresetDemoClicked, trackDemoFunnel } from '../../lib/analytics';
 const PRESETS = [
   { id: 'brazilian', flag: '🇧🇷', label: 'Cantina da Praça' },
   { id: 'italian',  flag: '🇮🇹', label: 'Trattoria da Marco' },
-  { id: 'japanese', flag: '🇯🇵', label: 'Sakura Izakaya' },
+  { id: 'japanese', flag: '🇯🇵', label: 'Sakura Izakaya'  },
 ] as const;
 
 export default function InlineDemoSection() {

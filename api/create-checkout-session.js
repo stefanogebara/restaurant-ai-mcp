@@ -88,30 +88,27 @@ module.exports = async (req, res) => {
     ];
 
     // Add metered price items for usage-based billing (unique price IDs only)
-    // Fetch the base price currency first to avoid Stripe currency mismatch errors
-    let baseCurrency = null;
-    try {
-      const basePrice = await stripe.prices.retrieve(priceId);
-      baseCurrency = basePrice.currency;
-    } catch (e) {
-      logger.warn('Could not retrieve base price currency, skipping metered items:', e.message);
-    }
+    // Fetch base price + all unique metered prices in parallel to check currency compatibility
+    const meteredPriceMap = getMeteredPriceMap();
+    const uniqueMeteredIds = [...new Set(Object.values(meteredPriceMap).map(m => m.priceId))];
+    const allPriceIds = [priceId, ...uniqueMeteredIds];
 
-    if (baseCurrency) {
-      const meteredPriceMap = getMeteredPriceMap();
-      const addedPrices = new Set();
-      for (const [, mapping] of Object.entries(meteredPriceMap)) {
-        const meteredPriceId = mapping.priceId;
-        if (!addedPrices.has(meteredPriceId)) {
-          try {
-            const mp = await stripe.prices.retrieve(meteredPriceId);
-            if (mp.currency === baseCurrency) {
-              addedPrices.add(meteredPriceId);
-              lineItems.push({ price: meteredPriceId });
-            }
-          } catch (e) {
-            logger.warn('Skipping metered price (retrieve failed):', meteredPriceId);
-          }
+    const priceResults = await Promise.allSettled(
+      allPriceIds.map(id => stripe.prices.retrieve(id))
+    );
+
+    const basePriceResult = priceResults[0];
+    const baseCurrency = basePriceResult.status === 'fulfilled' ? basePriceResult.value.currency : null;
+
+    if (!baseCurrency) {
+      logger.warn('Could not retrieve base price currency, skipping metered items');
+    } else {
+      for (let i = 1; i < priceResults.length; i++) {
+        const result = priceResults[i];
+        if (result.status === 'fulfilled' && result.value.currency === baseCurrency) {
+          lineItems.push({ price: uniqueMeteredIds[i - 1] });
+        } else if (result.status === 'rejected') {
+          logger.warn('Skipping metered price (retrieve failed):', uniqueMeteredIds[i - 1]);
         }
       }
     }
