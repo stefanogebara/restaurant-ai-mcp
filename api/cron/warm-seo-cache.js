@@ -59,21 +59,32 @@ module.exports = async (req, res) => {
   let warmed = 0;
   let failed = 0;
 
-  for (const { city, cuisine } of missing) {
-    try {
+  // Budget: stop at 45s to stay well under Vercel's 60s limit
+  const DEADLINE_MS = 45_000;
+  const startedAt = Date.now();
+  const CONCURRENCY = 3;
+
+  const warmOne = ({ city, cuisine }) =>
+    new Promise((resolve) => {
+      if (Date.now() - startedAt > DEADLINE_MS) { resolve('skipped'); return; }
       const fakeReq = { method: 'GET', query: { city, cuisine } };
-      await new Promise((resolve) => {
-        const fakeRes = {
-          status: (code) => ({ send: () => { if (code >= 400) failed++; resolve(); } }),
-          setHeader: () => {},
-          send: () => { warmed++; resolve(); },
-        };
-        cityHandler(fakeReq, fakeRes).catch(() => { failed++; resolve(); });
+      const fakeRes = {
+        status: (code) => ({ send: () => { if (code >= 400) { failed++; } else { warmed++; } resolve('done'); } }),
+        setHeader: () => {},
+        send: () => { warmed++; resolve('done'); },
+      };
+      cityHandler(fakeReq, fakeRes).catch((err) => {
+        logger.error('Failed to warm page', { city, cuisine, err: err.message });
+        failed++;
+        resolve('error');
       });
-    } catch (err) {
-      logger.error('Failed to warm page', { city, cuisine, err: err.message });
-      failed++;
-    }
+    });
+
+  // Process in batches of CONCURRENCY
+  for (let i = 0; i < missing.length; i += CONCURRENCY) {
+    if (Date.now() - startedAt > DEADLINE_MS) break;
+    const batch = missing.slice(i, i + CONCURRENCY);
+    await Promise.all(batch.map(warmOne));
   }
 
   await logCronRun('warm-seo-cache', { warmed, failed });
