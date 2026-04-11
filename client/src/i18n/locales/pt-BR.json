@@ -1772,7 +1772,8 @@
       "cta": "Enviar mensagem de teste",
       "previewMessage": "Oi! Gostaria de reservar uma mesa para 4 amanhã às 20h",
       "trust": "Número real: +55 11 5028-9356 · São Paulo, Brasil",
-      "inputPlaceholder": "Digite uma mensagem"
+      "inputPlaceholder": "Digite uma mensagem",
+      "aiReply": "Perfeito! Encontrei uma mesa para 4 amanhã às 20h. Posso confirmar a reserva? Só preciso do seu nome."
     },
     "features": {
       "label": "Além das Reservas",
