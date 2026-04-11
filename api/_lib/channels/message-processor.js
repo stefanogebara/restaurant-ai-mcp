@@ -191,7 +191,10 @@ async function processMessage(adapter, msg, options = {}) {
   // Enrich button replies with structured context so the AI can act on them directly
   let aiMessage = mediaContext ? `${mediaContext}\n${text}` : text;
   if (interactiveSelection?.id) {
-    if (interactiveSelection.id.startsWith('cancel_reservation_')) {
+    if (interactiveSelection.id.startsWith('confirm_reservation_')) {
+      const reservationId = interactiveSelection.id.replace('confirm_reservation_', '');
+      aiMessage = `[BUTTON_ACTION: confirm_reservation id=${reservationId}] ${text}`;
+    } else if (interactiveSelection.id.startsWith('cancel_reservation_')) {
       const reservationId = interactiveSelection.id.replace('cancel_reservation_', '');
       aiMessage = `[BUTTON_ACTION: cancel_reservation id=${reservationId}] ${text}`;
     } else if (interactiveSelection.id === 'action_make_reservation') {

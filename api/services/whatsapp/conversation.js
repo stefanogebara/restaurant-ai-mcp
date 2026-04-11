@@ -221,6 +221,7 @@ function buildWhatsAppPrompt(restaurantConfig, session, currentDateTime) {
 
   // Button actions
   prompt += `\nBUTTON ACTIONS:
+- [BUTTON_ACTION: confirm_reservation id=<id>] → Customer confirmed their reservation. Reply warmly that you're looking forward to seeing them. No tool call needed.
 - [BUTTON_ACTION: cancel_reservation id=<id>] → Call cancel_reservation with that reservation id immediately. No confirmation needed.
 - [BUTTON_ACTION: cancel_reservation] (no id) → Customer wants to cancel but you don't know which reservation. Ask for their name to look it up, then cancel.
 - [BUTTON_ACTION: make_reservation] → Customer wants to make a new reservation. Start the booking flow: ask for date, time, party size.

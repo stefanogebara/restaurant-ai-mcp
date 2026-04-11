@@ -226,13 +226,25 @@ function buildConfirmationMessage(params, restaurant, reservationId) {
 function buildVoiceConfirmation(params, restaurant, reservationId) {
   const { customer_name, party_size, date, time } = params;
   const restaurantName = restaurant.restaurant_name || 'the restaurant';
+  const lang = restaurant.language || restaurant.agent_language || 'pt-BR';
 
   const formattedDate = formatDate(date);
   const formattedTime = formatTime(time);
 
-  return `Perfect! Your reservation at ${restaurantName} is confirmed for ${customer_name}, ` +
-    `party of ${party_size}, on ${formattedDate} at ${formattedTime}. ` +
-    `Your confirmation number is ${reservationId}. We look forward to seeing you!`;
+  // No confirmation code read aloud — it's sent via WhatsApp
+  const confirmations = {
+    'pt-BR': `Perfeito! Sua reserva no ${restaurantName} está confirmada para ${customer_name}, ` +
+      `${party_size} pessoa${party_size > 1 ? 's' : ''}, no dia ${formattedDate} às ${formattedTime}. ` +
+      `Você receberá uma mensagem de confirmação pelo WhatsApp agora. Até logo!`,
+    es: `¡Perfecto! Su reserva en ${restaurantName} está confirmada para ${customer_name}, ` +
+      `${party_size} persona${party_size > 1 ? 's' : ''}, el ${formattedDate} a las ${formattedTime}. ` +
+      `Recibirá una confirmación por WhatsApp ahora. ¡Hasta pronto!`,
+    en: `Perfect! Your reservation at ${restaurantName} is confirmed for ${customer_name}, ` +
+      `party of ${party_size}, on ${formattedDate} at ${formattedTime}. ` +
+      `You'll receive a WhatsApp confirmation shortly. We look forward to seeing you!`,
+  };
+
+  return confirmations[lang] || confirmations['pt-BR'];
 }
 
 module.exports = {

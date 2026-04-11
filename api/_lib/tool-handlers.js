@@ -18,6 +18,52 @@ const { createSecureLogger } = require('./secure-logger');
 const logger = createSecureLogger('ToolHandlers');
 
 // ============================================================================
+// WHATSAPP CONFIRMATION AFTER VOICE RESERVATION
+// ============================================================================
+
+/**
+ * Send a WhatsApp message with Confirm / Cancel buttons after a voice reservation.
+ * Fire-and-forget — caller should .catch() the promise.
+ */
+async function sendVoiceReservationWhatsApp({ phone, restaurantName, restaurantId, reservationId, customerName, partySize, date, time, language }) {
+  const { sendInteractiveButtonMessage } = require('../services/whatsapp/message-sender');
+  const { formatTime, formatDate } = require('./reservation-validator');
+
+  const lang = language || 'pt-BR';
+  const formattedTime = formatTime(time.substring(0, 5));
+  const formattedDate = formatDate(date);
+
+  // Try to get Google Maps link from restaurant config
+  let mapsLine = '';
+  try {
+    const { createClient } = require('@supabase/supabase-js');
+    const sb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+    const { data: rc } = await sb.schema('restaurant').from('restaurant_config').select('address, city').eq('id', restaurantId).single();
+    if (rc?.address) {
+      const q = encodeURIComponent([rc.address, rc.city].filter(Boolean).join(', '));
+      mapsLine = `\n📍 https://maps.google.com/?q=${q}`;
+    }
+  } catch (_) { /* non-fatal */ }
+
+  const bodies = {
+    'pt-BR': `✅ *Reserva confirmada!*\n\n📋 ${customerName}\n👥 ${partySize} pessoa${partySize > 1 ? 's' : ''}\n📅 ${formattedDate}\n🕐 ${formattedTime}\n🍽 ${restaurantName}${mapsLine}\n\nCódigo: ${reservationId}`,
+    es: `✅ *¡Reserva confirmada!*\n\n📋 ${customerName}\n👥 ${partySize} persona${partySize > 1 ? 's' : ''}\n📅 ${formattedDate}\n🕐 ${formattedTime}\n🍽 ${restaurantName}${mapsLine}\n\nCódigo: ${reservationId}`,
+    en: `✅ *Reservation confirmed!*\n\n📋 ${customerName}\n👥 ${partySize} guest${partySize > 1 ? 's' : ''}\n📅 ${formattedDate}\n🕐 ${formattedTime}\n🍽 ${restaurantName}${mapsLine}\n\nCode: ${reservationId}`,
+  };
+
+  const confirmLabel = { 'pt-BR': '✅ Confirmar presença', es: '✅ Confirmar asistencia', en: '✅ Confirm attendance' };
+  const cancelLabel = { 'pt-BR': '❌ Cancelar reserva', es: '❌ Cancelar reserva', en: '❌ Cancel reservation' };
+
+  const body = bodies[lang] || bodies['pt-BR'];
+  const buttons = [
+    { id: `confirm_reservation_${reservationId}`, title: (confirmLabel[lang] || confirmLabel['pt-BR']).substring(0, 20) },
+    { id: `cancel_reservation_${reservationId}`, title: (cancelLabel[lang] || cancelLabel['pt-BR']).substring(0, 20) },
+  ];
+
+  return sendInteractiveButtonMessage(phone, body, buttons);
+}
+
+// ============================================================================
 // GET CURRENT DATETIME
 // ============================================================================
 
@@ -391,7 +437,21 @@ async function createReservation(restaurantId, restaurant, params) {
       };
     }
 
-    // Build voice-friendly confirmation
+    // Fire-and-forget: send WhatsApp confirmation with Confirm/Cancel buttons
+    const normalizedPhone = customer_phone.startsWith('+') ? customer_phone : `+${customer_phone}`;
+    sendVoiceReservationWhatsApp({
+      phone: normalizedPhone,
+      restaurantName,
+      restaurantId,
+      reservationId,
+      customerName: customer_name,
+      partySize: party_size,
+      date,
+      time,
+      language: restaurant.language || restaurant.agent_language || 'pt-BR'
+    }).catch(err => logger.warn('WhatsApp confirmation failed (non-fatal):', err.message));
+
+    // Build voice-friendly confirmation (no confirmation code — sent via WhatsApp)
     const confirmationMessage = buildVoiceConfirmation(
       { customer_name, party_size, date, time, special_requests },
       restaurant,
