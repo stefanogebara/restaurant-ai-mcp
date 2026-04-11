@@ -360,16 +360,16 @@ async function createReservation(restaurantId, restaurant, params) {
     const timezone = restaurant.timezone || 'UTC';
 
     const fields = {
-      'Reservation ID': reservationId,
-      'Date': date,
-      'Time': time,
-      'Party Size': parseInt(party_size),
-      'Customer Name': customer_name,
-      'Customer Phone': customer_phone,
-      'Customer Email': customer_email || '',
-      'Special Requests': special_requests || '',
-      'Status': 'confirmed',
-      'Notes': 'Created via AI Voice System'
+      reservation_id: reservationId,
+      date: date,
+      time: time,
+      party_size: parseInt(party_size),
+      customer_name: customer_name,
+      customer_phone: customer_phone,
+      customer_email: customer_email || '',
+      special_requests: special_requests || '',
+      status: 'confirmed',
+      notes: 'Created via AI Voice System'
     };
 
     const createResult = await dbCreateReservation(restaurantId, fields);

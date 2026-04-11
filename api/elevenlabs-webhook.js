@@ -379,7 +379,19 @@ async function handleCreateReservation(req, res) {
   const _createRestaurantIdFromQuery = req.query.restaurant_id || req.query.restaurantId;
   let restaurant = req.multiTenantRestaurant || req.restaurant || {};
   if (!restaurant.id && (data.restaurant_id || _createRestaurantIdFromQuery)) {
-    restaurant = { id: data.restaurant_id || _createRestaurantIdFromQuery, restaurant_name: 'the restaurant' };
+    const rid = data.restaurant_id || _createRestaurantIdFromQuery;
+    // Fetch full config so validateReservation gets real business_hours, timezone, max_party_size
+    try {
+      const { data: rc } = await supabaseAdmin
+        .schema('restaurant')
+        .from('restaurant_config')
+        .select('id, restaurant_name, business_hours, timezone, max_party_size, language, avg_dining_duration_minutes')
+        .eq('id', rid)
+        .single();
+      restaurant = rc || { id: rid, restaurant_name: 'the restaurant' };
+    } catch (_) {
+      restaurant = { id: rid, restaurant_name: 'the restaurant' };
+    }
   }
   const restaurantName = restaurant.restaurant_name || restaurant.name || 'the restaurant';
 
