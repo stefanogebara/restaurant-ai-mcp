@@ -14,6 +14,7 @@ const { createSecureLogger } = require('./_lib/secure-logger');
 const { rejectOversizedBody } = require('./_lib/rate-limit');
 const { setWebhookCors } = require('./_lib/cors');
 const { updateDeliveryStatus } = require('./services/campaignService');
+const { updateWhatsAppTestMessageStatus } = require('./services/whatsappTestMessageService');
 const { MetaAdapter } = require('./_lib/channels/meta-adapter');
 const { processMessage } = require('./_lib/channels/message-processor');
 
@@ -50,24 +51,26 @@ async function handlePost(req, res) {
   }
 
   try {
-    // Check if we should handle this message (TwinMe forwarding, etc.)
-    const routing = await adapter.shouldHandle(req);
-    if (!routing.handle) {
-      return res.status(200).json({ status: 'ok', handler: routing.reason });
-    }
-
     // Process delivery status updates
     const value = req.body.entry?.[0]?.changes?.[0]?.value;
     if (value?.statuses) {
       for (const statusUpdate of value.statuses) {
-        if (statusUpdate.id && ['delivered', 'read', 'failed'].includes(statusUpdate.status)) {
+        if (statusUpdate.id && ['sent', 'delivered', 'read', 'failed'].includes(statusUpdate.status)) {
           updateDeliveryStatus(statusUpdate.id, statusUpdate.status)
             .catch(err => logger.error('Campaign delivery status update failed:', err.message));
+          updateWhatsAppTestMessageStatus(statusUpdate.id, statusUpdate)
+            .catch(err => logger.error('WhatsApp test status update failed:', err.message));
         }
       }
       if (!value.messages) {
         return res.status(200).json({ status: 'ok' });
       }
+    }
+
+    // Check if we should handle this message (TwinMe forwarding, etc.)
+    const routing = await adapter.shouldHandle(req);
+    if (!routing.handle) {
+      return res.status(200).json({ status: 'ok', handler: routing.reason });
     }
 
     // Parse the message

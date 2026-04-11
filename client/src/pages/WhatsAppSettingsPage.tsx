@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import DashboardLayout from '../components/layout/DashboardLayout';
@@ -11,6 +11,7 @@ import { useToast } from '../contexts/ToastContext';
 import {
   useWhatsAppStatus,
   useWhatsAppStats,
+  useWhatsAppTestMessageStatus,
   useSaveWhatsAppSettings,
   useSendTestMessage,
 } from '../hooks/useWhatsAppSettings';
@@ -43,6 +44,45 @@ const STATUS_DOT: Record<string, string> = {
   REJECTED: 'bg-red-500',
   PAUSED: 'bg-gray-400',
 };
+
+const TEST_STATUS_STYLES: Record<string, string> = {
+  accepted: 'bg-amber-50 text-amber-700',
+  sent: 'bg-amber-50 text-amber-700',
+  delivered: 'bg-rose-50 text-rose-700',
+  read: 'bg-emerald-50 text-emerald-700',
+  failed: 'bg-red-50 text-red-700',
+};
+
+function normalizePhone(value: string) {
+  return value.replace(/\D/g, '');
+}
+
+function formatCooldown(ms: number) {
+  const totalSeconds = Math.max(1, Math.ceil(ms / 1000));
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+
+  if (minutes > 0 && seconds > 0) return `${minutes}m ${seconds}s`;
+  if (minutes > 0) return `${minutes}m`;
+  return `${seconds}s`;
+}
+
+function formatStatusLabel(status: string | null | undefined) {
+  const normalized = String(status || 'accepted');
+  return normalized.charAt(0).toUpperCase() + normalized.slice(1).replace(/_/g, ' ');
+}
+
+function formatStatusTime(iso?: string | null) {
+  if (!iso) return 'Not yet';
+
+  const parsed = new Date(iso);
+  if (Number.isNaN(parsed.getTime())) return 'Not yet';
+
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(parsed);
+}
 
 function WhatsAppTemplateStatusPanel() {
   const { t } = useTranslation();
@@ -234,6 +274,7 @@ export default function WhatsAppSettingsPage() {
   const toast = useToast();
   const { data: status, isLoading: statusLoading } = useWhatsAppStatus();
   const { data: stats, isLoading: statsLoading } = useWhatsAppStats();
+  const { data: latestTestMessage, isLoading: testStatusLoading } = useWhatsAppTestMessageStatus();
   const saveMutation = useSaveWhatsAppSettings();
   const testMutation = useSendTestMessage();
 
@@ -242,10 +283,33 @@ export default function WhatsAppSettingsPage() {
   const [testPhone, setTestPhone] = useState('');
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
   const [copied, setCopied] = useState(false);
+  const [cooldownNowMs, setCooldownNowMs] = useState(() => Date.now());
 
   const currentEnabled = pendingEnabled ?? status?.enabled ?? false;
   const currentPhone = pendingPhone ?? status?.phone_number ?? '';
   const isDirty = pendingEnabled !== null || pendingPhone !== null;
+  const latestTestPhoneDigits = normalizePhone(latestTestMessage?.recipient_phone || '');
+  const currentTestPhoneDigits = normalizePhone(testPhone);
+  const samePhoneCooldownExpiresAt = latestTestMessage?.cooldown_expires_at
+    ? Date.parse(latestTestMessage.cooldown_expires_at)
+    : Number.NaN;
+  const samePhoneCooldownActive = Boolean(
+    latestTestPhoneDigits
+    && latestTestPhoneDigits === currentTestPhoneDigits
+    && Number.isFinite(samePhoneCooldownExpiresAt)
+    && samePhoneCooldownExpiresAt > cooldownNowMs
+  );
+  const samePhoneCooldownRemainingMs = samePhoneCooldownActive
+    ? Math.max(0, samePhoneCooldownExpiresAt - cooldownNowMs)
+    : 0;
+
+  useEffect(() => {
+    if (!samePhoneCooldownActive) return undefined;
+
+    setCooldownNowMs(Date.now());
+    const timer = window.setInterval(() => setCooldownNowMs(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, [samePhoneCooldownActive, samePhoneCooldownExpiresAt]);
 
   const handleSave = () => {
     const updates: { enabled?: boolean; phone_number?: string } = {};
@@ -265,7 +329,7 @@ export default function WhatsAppSettingsPage() {
     if (!testPhone) return;
     setTestResult(null);
     testMutation.mutate(testPhone, {
-      onSuccess: () => setTestResult({ success: true, message: t('settings.testMessageSent') }),
+      onSuccess: (data) => setTestResult({ success: true, message: data.message || t('settings.testMessageSent') }),
       onError: (err) => setTestResult({ success: false, message: (err as Error).message }),
     });
   };
@@ -455,14 +519,18 @@ export default function WhatsAppSettingsPage() {
             />
             <button
               onClick={handleTest}
-              disabled={!testPhone || testMutation.isPending || !status?.api_configured}
+              disabled={!testPhone || testMutation.isPending || !status?.api_configured || samePhoneCooldownActive}
               className={`px-5 py-2 rounded-xl text-sm font-semibold transition-colors ${
-                testPhone && status?.api_configured
+                testPhone && status?.api_configured && !samePhoneCooldownActive
                   ? 'bg-whatsapp hover:bg-whatsapp/80 text-white'
                   : 'bg-border-gray text-muted-stone cursor-not-allowed'
               }`}
             >
-              {testMutation.isPending ? t('settings.sendingTest') : t('settings.sendTest')}
+              {testMutation.isPending
+                ? t('settings.sendingTest')
+                : samePhoneCooldownActive
+                  ? t('settings.retryIn', `Retry in ${formatCooldown(samePhoneCooldownRemainingMs)}`)
+                  : t('settings.sendTest')}
             </button>
           </div>
           {!status?.api_configured && (
@@ -475,10 +543,69 @@ export default function WhatsAppSettingsPage() {
               {t('settings.enterTestPhone', 'Enter a phone number above to send a test message.')}
             </p>
           )}
+          {samePhoneCooldownActive && (
+            <p className="text-xs text-amber-700 mt-2">
+              {t(
+                'settings.testCooldownActive',
+                `A recent test was already sent to this number. Wait ${formatCooldown(samePhoneCooldownRemainingMs)} before sending it again.`
+              )}
+            </p>
+          )}
           {testResult && (
             <p className={`text-sm mt-2 ${testResult.success ? 'text-rose-600' : 'text-red-600'}`}>
               {testResult.message}
             </p>
+          )}
+          {testStatusLoading && (
+            <div className="mt-4 h-24 rounded-2xl bg-soft-gray animate-pulse" aria-label="Loading WhatsApp test delivery status" />
+          )}
+          {!testStatusLoading && latestTestMessage && (
+            <div className="mt-4 rounded-2xl border border-[#E5E7EB] bg-soft-gray/60 p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-widest text-[#6B7280]">
+                    {t('settings.latestTestDelivery', 'Latest test delivery')}
+                  </p>
+                  <p className="mt-1 text-sm font-medium text-deep-charcoal">{latestTestMessage.recipient_phone}</p>
+                  <p className="text-xs text-warm-stone">
+                    {t('settings.providerLabel', 'Provider')}: {latestTestMessage.provider}
+                  </p>
+                </div>
+                <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${TEST_STATUS_STYLES[latestTestMessage.status] || 'bg-gray-100 text-gray-600'}`}>
+                  {formatStatusLabel(latestTestMessage.status)}
+                </span>
+              </div>
+
+              <div className="mt-4 grid grid-cols-1 gap-3 text-xs text-warm-stone sm:grid-cols-2">
+                <div>
+                  <p className="font-medium text-deep-charcoal">{t('settings.requestedAt', 'Requested')}</p>
+                  <p>{formatStatusTime(latestTestMessage.requested_at)}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-deep-charcoal">{t('settings.lastStatusAt', 'Last status update')}</p>
+                  <p>{formatStatusTime(latestTestMessage.status_updated_at)}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-deep-charcoal">{t('settings.deliveredAt', 'Delivered')}</p>
+                  <p>{formatStatusTime(latestTestMessage.delivered_at)}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-deep-charcoal">{t('settings.readAt', 'Read')}</p>
+                  <p>{formatStatusTime(latestTestMessage.read_at)}</p>
+                </div>
+              </div>
+
+              {(latestTestMessage.template_name || latestTestMessage.template_language) && (
+                <p className="mt-3 text-xs text-warm-stone">
+                  {t('settings.templateLabel', 'Template')}: {latestTestMessage.template_name || 'n/a'}
+                  {latestTestMessage.template_language ? ` (${latestTestMessage.template_language})` : ''}
+                </p>
+              )}
+
+              {latestTestMessage.error_message && (
+                <p className="mt-3 text-xs text-red-600">{latestTestMessage.error_message}</p>
+              )}
+            </div>
           )}
         </div>
 

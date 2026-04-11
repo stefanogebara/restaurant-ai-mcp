@@ -54,10 +54,30 @@ jest.mock('../_lib/whatsapp-sender', () => ({
 jest.mock('../_lib/secure-logger', () => ({
   createSecureLogger: () => ({ info: jest.fn(), warn: jest.fn(), error: jest.fn() }),
 }));
+jest.mock('../services/whatsappTestMessageService', () => ({
+  normalizeWhatsAppTestPhone: jest.fn((phone) => {
+    const digits = String(phone || '').replace(/\D/g, '');
+    return digits ? `+${digits}` : '';
+  }),
+  serializeWhatsAppTestMessage: jest.fn((message) => message ? ({
+    ...message,
+    cooldown_remaining_ms: message.cooldown_remaining_ms ?? 0,
+    cooldown_active: (message.cooldown_remaining_ms ?? 0) > 0,
+    cooldown_expires_at: message.cooldown_expires_at ?? null,
+  }) : null),
+  getLatestWhatsAppTestMessage: jest.fn(),
+  getRecentDuplicateWhatsAppTestMessage: jest.fn(),
+  createWhatsAppTestMessage: jest.fn(),
+}));
 
 const handler = require('../whatsapp-settings');
 const { verifyAuth } = require('../_lib/auth');
 const { isWhatsAppConfigured, getWhatsAppProvider, sendWhatsAppMessage, sendTemplateMessage } = require('../_lib/whatsapp-sender');
+const {
+  getLatestWhatsAppTestMessage,
+  getRecentDuplicateWhatsAppTestMessage,
+  createWhatsAppTestMessage,
+} = require('../services/whatsappTestMessageService');
 
 function mkReqRes(overrides = {}) {
   const req = {
@@ -83,6 +103,9 @@ beforeEach(() => {
   verifyAuth.mockResolvedValue(AUTH_USER);
   isWhatsAppConfigured.mockReturnValue(true);
   getWhatsAppProvider.mockResolvedValue('meta');
+  getLatestWhatsAppTestMessage.mockResolvedValue(null);
+  getRecentDuplicateWhatsAppTestMessage.mockResolvedValue(null);
+  createWhatsAppTestMessage.mockResolvedValue(null);
 });
 
 // ============================================================
@@ -346,6 +369,13 @@ describe('WhatsApp Settings: test message', () => {
       });
       getWhatsAppProvider.mockResolvedValueOnce('twilio');
       sendWhatsAppMessage.mockResolvedValueOnce({ success: true, messageId: 'test-msg-1' });
+      createWhatsAppTestMessage.mockResolvedValueOnce({
+        id: 'test-log-1',
+        provider: 'twilio',
+        recipient_phone: '+5511999999999',
+        whatsapp_message_id: 'test-msg-1',
+        status: 'accepted',
+      });
 
       const { req, res } = mkReqRes({
         method: 'POST',
@@ -364,6 +394,12 @@ describe('WhatsApp Settings: test message', () => {
         expect.stringContaining('Boteco do Samba'),
         { provider: 'twilio' }
       );
+      expect(createWhatsAppTestMessage).toHaveBeenCalledWith(expect.objectContaining({
+        restaurantId: 'rest-uuid-1',
+        provider: 'twilio',
+        recipientPhone: '+5511999999999',
+        whatsappMessageId: 'test-msg-1',
+      }));
     } finally {
       if (originalEnv.sid) process.env.TWILIO_ACCOUNT_SID = originalEnv.sid;
       else delete process.env.TWILIO_ACCOUNT_SID;
@@ -400,6 +436,13 @@ describe('WhatsApp Settings: test message', () => {
       });
       getWhatsAppProvider.mockResolvedValueOnce('meta');
       sendTemplateMessage.mockResolvedValueOnce({ success: true, messageId: 'wamid.TEST-TEMPLATE-1' });
+      createWhatsAppTestMessage.mockResolvedValueOnce({
+        id: 'test-log-meta',
+        provider: 'meta',
+        recipient_phone: '+5511999999999',
+        whatsapp_message_id: 'wamid.TEST-TEMPLATE-1',
+        status: 'accepted',
+      });
 
       const { req, res } = mkReqRes({
         method: 'POST',
@@ -417,6 +460,11 @@ describe('WhatsApp Settings: test message', () => {
         ['there', 'Boteco do Samba']
       );
       expect(sendWhatsAppMessage).not.toHaveBeenCalled();
+      expect(createWhatsAppTestMessage).toHaveBeenCalledWith(expect.objectContaining({
+        provider: 'meta',
+        templateName: 'seatable_feedback_request',
+        templateLanguage: 'pt_BR',
+      }));
     } finally {
       if (originalEnv.wabaId) process.env.WHATSAPP_WABA_ID = originalEnv.wabaId;
       else delete process.env.WHATSAPP_WABA_ID;
@@ -483,6 +531,68 @@ describe('WhatsApp Settings: test message', () => {
 
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: 'Invalid number' }));
+  });
+
+  test('returns 429 when the same test number is still in cooldown', async () => {
+    getRecentDuplicateWhatsAppTestMessage.mockResolvedValueOnce({
+      id: 'test-log-dup',
+      recipient_phone: '+5511999999999',
+      status: 'accepted',
+      cooldown_remaining_ms: 61000,
+      cooldown_expires_at: '2026-04-11T18:03:46.000Z',
+    });
+
+    const { req, res } = mkReqRes({
+      method: 'POST',
+      query: { action: 'test' },
+      body: { phone_number: '+55 (11) 99999-9999' },
+    });
+
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(429);
+    expect(sendTemplateMessage).not.toHaveBeenCalled();
+    expect(sendWhatsAppMessage).not.toHaveBeenCalled();
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+      success: false,
+      code: 'TEST_MESSAGE_COOLDOWN',
+      cooldown_remaining_ms: 61000,
+    }));
+  });
+});
+
+// ============================================================
+// action=test_status
+// ============================================================
+describe('WhatsApp Settings: test status', () => {
+  test('returns latest WhatsApp test delivery status', async () => {
+    getLatestWhatsAppTestMessage.mockResolvedValueOnce({
+      id: 'test-log-latest',
+      provider: 'meta',
+      recipient_phone: '+5511999999999',
+      status: 'delivered',
+      delivered_at: '2026-04-11T18:04:00.000Z',
+      requested_at: '2026-04-11T18:02:46.000Z',
+      status_updated_at: '2026-04-11T18:04:00.000Z',
+    });
+
+    const { req, res } = mkReqRes({ query: { action: 'test_status' } });
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+      success: true,
+      data: expect.objectContaining({
+        id: 'test-log-latest',
+        status: 'delivered',
+      }),
+    }));
+  });
+
+  test('returns 405 for non-GET test_status requests', async () => {
+    const { req, res } = mkReqRes({ method: 'POST', query: { action: 'test_status' } });
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(405);
   });
 });
 

@@ -50,6 +50,26 @@ interface WhatsAppStats {
   messages_this_month: number;
 }
 
+export interface WhatsAppTestMessageStatus {
+  id: string;
+  provider: string;
+  recipient_phone: string;
+  template_name: string | null;
+  template_language: string | null;
+  whatsapp_message_id: string;
+  status: string;
+  error_message: string | null;
+  requested_at: string;
+  status_updated_at: string;
+  sent_at: string | null;
+  delivered_at: string | null;
+  read_at: string | null;
+  failed_at: string | null;
+  cooldown_remaining_ms: number;
+  cooldown_active: boolean;
+  cooldown_expires_at: string | null;
+}
+
 export function useWhatsAppStatus() {
   return useQuery({
     queryKey: ['whatsappStatus'],
@@ -76,6 +96,20 @@ export function useWhatsAppStats() {
   });
 }
 
+export function useWhatsAppTestMessageStatus() {
+  return useQuery({
+    queryKey: ['whatsappTestStatus'],
+    queryFn: async (): Promise<WhatsAppTestMessageStatus | null> => {
+      const response = await authFetch('/api/whatsapp-settings?action=test_status');
+      if (!response.ok) throw new Error('Failed to load WhatsApp test status');
+      const result = await response.json();
+      return result.data ?? null;
+    },
+    staleTime: 5 * 1000,
+    refetchInterval: 15 * 1000,
+  });
+}
+
 export function useSaveWhatsAppSettings() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -96,6 +130,8 @@ export function useSaveWhatsAppSettings() {
 }
 
 export function useSendTestMessage() {
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async (phone_number: string) => {
       const response = await authFetch('/api/whatsapp-settings?action=test', {
@@ -103,11 +139,18 @@ export function useSendTestMessage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone_number }),
       });
+      const payload = await response.json();
       if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.error || 'Failed to send test message');
+        const error = new Error(payload.error || 'Failed to send test message') as Error & {
+          cooldownRemainingMs?: number;
+          latestTestMessage?: WhatsAppTestMessageStatus | null;
+        };
+        error.cooldownRemainingMs = payload.cooldown_remaining_ms;
+        error.latestTestMessage = payload.data ?? null;
+        throw error;
       }
-      return response.json();
+      return payload;
     },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['whatsappTestStatus'] }),
   });
 }

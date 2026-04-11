@@ -19,6 +19,13 @@ const { createSecureLogger } = require('./_lib/secure-logger');
 const { initSentry, captureException } = require('./_lib/sentry');
 const { upsertRestaurant, updateRestaurant: updateRegistryRestaurant } = require('./_lib/restaurant-registry');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
+const {
+  normalizeWhatsAppTestPhone,
+  serializeWhatsAppTestMessage,
+  getLatestWhatsAppTestMessage,
+  getRecentDuplicateWhatsAppTestMessage,
+  createWhatsAppTestMessage,
+} = require('./services/whatsappTestMessageService');
 initSentry();
 
 const logger = createSecureLogger('WhatsAppSettings');
@@ -91,6 +98,20 @@ function getMetaTemplateBodyParameters(templateName, restaurantName) {
     return ['there', restaurantName, `This is a WhatsApp delivery test from ${restaurantName}.`];
   }
   return ['there', restaurantName];
+}
+
+function formatCooldownDuration(ms) {
+  const totalSeconds = Math.max(1, Math.ceil(ms / 1000));
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+
+  if (minutes > 0 && seconds > 0) {
+    return `${minutes}m ${seconds}s`;
+  }
+  if (minutes > 0) {
+    return `${minutes}m`;
+  }
+  return `${seconds}s`;
 }
 
 async function fetchApprovedMetaTestTemplates() {
@@ -188,6 +209,8 @@ module.exports = async (req, res) => {
         return await handleUpdate(req, res, restaurantId);
       case 'test':
         return await handleTest(req, res, restaurantId);
+      case 'test_status':
+        return await handleTestStatus(req, res, restaurantId);
       case 'template_status':
         return await handleTemplateStatus(req, res);
       case 'phone_status':
@@ -199,7 +222,7 @@ module.exports = async (req, res) => {
       default:
         return res.status(400).json({
           success: false,
-          error: 'Invalid action. Use: status, stats, update, test, template_status, phone_status, request_verification, submit_verification'
+          error: 'Invalid action. Use: status, stats, update, test, test_status, template_status, phone_status, request_verification, submit_verification'
         });
     }
   } catch (error) {
@@ -382,6 +405,24 @@ async function handleTest(req, res, restaurantId) {
     return res.status(400).json({ success: false, error: 'phone_number is required' });
   }
 
+  const normalizedPhone = normalizeWhatsAppTestPhone(phone_number);
+  const phoneDigits = normalizedPhone.replace(/\D/g, '');
+  if (phoneDigits.length < 10 || phoneDigits.length > 15) {
+    return res.status(400).json({ success: false, error: 'Invalid phone number' });
+  }
+
+  const recentDuplicate = await getRecentDuplicateWhatsAppTestMessage(restaurantId, normalizedPhone);
+  if (recentDuplicate) {
+    const latest = serializeWhatsAppTestMessage(recentDuplicate);
+    return res.status(429).json({
+      success: false,
+      code: 'TEST_MESSAGE_COOLDOWN',
+      error: `A test message was already sent recently. Wait ${formatCooldownDuration(latest.cooldown_remaining_ms)} before retrying.`,
+      cooldown_remaining_ms: latest.cooldown_remaining_ms,
+      data: latest,
+    });
+  }
+
   const provider = await getWhatsAppProvider(restaurantId);
   const providerConfigured = provider === 'twilio'
     ? !!(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_WHATSAPP_NUMBER)
@@ -407,6 +448,8 @@ async function handleTest(req, res, restaurantId) {
   const restaurantName = config?.restaurant_name || 'Your Restaurant';
   const restaurantLanguage = config?.language || config?.agent_language || 'en';
   let result;
+  let usedTemplateName = null;
+  let usedTemplateLanguage = null;
 
   if (provider === 'meta') {
     const preferredTemplateName = process.env.WHATSAPP_TEST_TEMPLATE_NAME || 'seatable_feedback_request';
@@ -419,8 +462,10 @@ async function handleTest(req, res, restaurantId) {
     });
 
     for (const attempt of templateAttempts) {
+      usedTemplateName = attempt.templateName;
+      usedTemplateLanguage = attempt.language;
       result = await sendTemplateMessage(
-        phone_number,
+        normalizedPhone,
         attempt.templateName,
         attempt.language,
         attempt.bodyParameters
@@ -432,7 +477,7 @@ async function handleTest(req, res, restaurantId) {
     }
   } else {
     result = await sendWhatsAppMessage(
-      phone_number,
+      normalizedPhone,
       `This is a test message from ${restaurantName} via Seatable. WhatsApp integration is working correctly!`,
       { provider }
     );
@@ -442,10 +487,36 @@ async function handleTest(req, res, restaurantId) {
     return res.status(400).json({ success: false, error: result.error });
   }
 
+  const persistedMessage = await createWhatsAppTestMessage({
+    restaurantId,
+    provider,
+    recipientPhone: normalizedPhone,
+    templateName: usedTemplateName,
+    templateLanguage: usedTemplateLanguage,
+    whatsappMessageId: result.messageId,
+  });
+
   return res.status(200).json({
     success: true,
     message: 'Test message sent successfully',
     messageId: result.messageId,
+    data: serializeWhatsAppTestMessage(persistedMessage),
+  });
+}
+
+// ============================================================
+// GET ?action=test_status
+// ============================================================
+async function handleTestStatus(req, res, restaurantId) {
+  if (req.method !== 'GET') {
+    return res.status(405).json({ success: false, error: 'Method not allowed. Use GET.' });
+  }
+
+  const latest = await getLatestWhatsAppTestMessage(restaurantId);
+
+  return res.status(200).json({
+    success: true,
+    data: serializeWhatsAppTestMessage(latest),
   });
 }
 

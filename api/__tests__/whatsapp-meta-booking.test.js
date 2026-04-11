@@ -20,6 +20,10 @@ jest.mock('../_lib/secure-logger', () => ({
   }),
 }));
 
+jest.mock('../services/whatsappTestMessageService', () => ({
+  updateWhatsAppTestMessageStatus: jest.fn().mockResolvedValue(true),
+}));
+
 jest.mock('../_lib/whatsapp-interactions', () => ({
   markAsRead: jest.fn().mockResolvedValue(undefined),
   addReaction: jest.fn().mockResolvedValue(undefined),
@@ -140,6 +144,7 @@ jest.useFakeTimers();
 
 const handler = require('../whatsapp-webhook');
 const { isMessageDuplicate, rejectOversizedBody } = require('../_lib/rate-limit');
+const { updateWhatsAppTestMessageStatus } = require('../services/whatsappTestMessageService');
 const {
   getOrCreateSession,
   getSessionByPhone,
@@ -428,6 +433,33 @@ describe('whatsapp-webhook (Meta Cloud API)', () => {
     // Reservation should NOT be inserted
     expect(insertSingle).not.toHaveBeenCalled();
 
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  it('updates persisted WhatsApp test delivery status on webhook status events', async () => {
+    const req = mockReq('POST', {
+      body: {
+        object: 'whatsapp_business_account',
+        entry: [{
+          changes: [{
+            value: {
+              statuses: [{
+                id: 'wamid.TEST-STATUS-1',
+                status: 'delivered',
+              }],
+            },
+          }],
+        }],
+      },
+    });
+    const res = mockRes();
+
+    await handler(req, res);
+
+    expect(updateWhatsAppTestMessageStatus).toHaveBeenCalledWith('wamid.TEST-STATUS-1', expect.objectContaining({
+      id: 'wamid.TEST-STATUS-1',
+      status: 'delivered',
+    }));
     expect(res.status).toHaveBeenCalledWith(200);
   });
 
