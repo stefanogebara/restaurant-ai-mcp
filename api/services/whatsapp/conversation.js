@@ -221,8 +221,11 @@ function buildWhatsAppPrompt(restaurantConfig, session, currentDateTime) {
 
   // Button actions
   prompt += `\nBUTTON ACTIONS:
-- If the message starts with [BUTTON_ACTION: cancel_reservation id=<id>], the customer tapped the cancel button. Call cancel_reservation with that exact reservation id immediately — no confirmation needed, they already confirmed by tapping.
-- If the message starts with [BUTTON_ACTION: <other>], act on it directly without asking for confirmation.
+- [BUTTON_ACTION: cancel_reservation id=<id>] → Call cancel_reservation with that reservation id immediately. No confirmation needed.
+- [BUTTON_ACTION: cancel_reservation] (no id) → Customer wants to cancel but you don't know which reservation. Ask for their name to look it up, then cancel.
+- [BUTTON_ACTION: make_reservation] → Customer wants to make a new reservation. Start the booking flow: ask for date, time, party size.
+- [BUTTON_ACTION: change_reservation] → Customer wants to modify an existing reservation. Ask for their name to find it, then ask what they'd like to change.
+- For all BUTTON_ACTION messages, act directly without asking the customer to rephrase — they already chose the action by tapping.
 `;
 
   // Boundaries

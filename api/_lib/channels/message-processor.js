@@ -194,6 +194,12 @@ async function processMessage(adapter, msg, options = {}) {
     if (interactiveSelection.id.startsWith('cancel_reservation_')) {
       const reservationId = interactiveSelection.id.replace('cancel_reservation_', '');
       aiMessage = `[BUTTON_ACTION: cancel_reservation id=${reservationId}] ${text}`;
+    } else if (interactiveSelection.id === 'action_make_reservation') {
+      aiMessage = `[BUTTON_ACTION: make_reservation] ${text || 'Quero fazer uma reserva'}`;
+    } else if (interactiveSelection.id === 'action_change_reservation') {
+      aiMessage = `[BUTTON_ACTION: change_reservation] ${text || 'Quero alterar uma reserva'}`;
+    } else if (interactiveSelection.id === 'action_cancel_reservation') {
+      aiMessage = `[BUTTON_ACTION: cancel_reservation] ${text || 'Quero cancelar uma reserva'}`;
     }
   }
 
@@ -233,7 +239,48 @@ async function processMessage(adapter, msg, options = {}) {
   // 16. Send response
   await adapter.sendMessage(from, response);
 
+  // 17. Welcome buttons — send on first message of a new session so the user
+  //     can quickly tap to make/change/cancel a reservation without typing
+  if (conversationHistory.length === 0 && session?.restaurant?.id) {
+    sendWelcomeButtons(adapter, from, session).catch(() => {});
+  }
+
   return { response, handled: true };
+}
+
+/**
+ * Send quick-reply buttons after the first greeting so the customer can
+ * tap instead of type for the most common actions.
+ *
+ * @param {import('./channel-adapter').ChannelAdapter} adapter
+ * @param {string} from
+ * @param {object} session
+ */
+async function sendWelcomeButtons(adapter, from, session) {
+  const lang = session?.restaurant?.language || 'pt';
+
+  const bodyText = lang === 'en'
+    ? 'What would you like to do? 😊'
+    : 'O que você gostaria de fazer? 😊';
+
+  const buttons = lang === 'en'
+    ? [
+        { id: 'action_make_reservation',   title: '📅 New reservation' },
+        { id: 'action_change_reservation', title: '✏️ Change booking' },
+        { id: 'action_cancel_reservation', title: '❌ Cancel booking' },
+      ]
+    : [
+        { id: 'action_make_reservation',   title: '📅 Nova reserva' },
+        { id: 'action_change_reservation', title: '✏️ Alterar reserva' },
+        { id: 'action_cancel_reservation', title: '❌ Cancelar reserva' },
+      ];
+
+  try {
+    await adapter.sendButtons(from, bodyText, buttons);
+    logger.info(`[${adapter.providerName}] Welcome buttons sent to ${from}`);
+  } catch (err) {
+    logger.warn('Welcome buttons failed (non-fatal):', err.message);
+  }
 }
 
 module.exports = { processMessage };

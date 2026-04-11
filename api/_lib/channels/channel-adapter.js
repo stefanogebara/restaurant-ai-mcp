@@ -78,6 +78,14 @@ class ChannelAdapter {
   async sendInteractiveList(to, bodyText, buttonText, sections) {}
 
   /**
+   * Send an interactive button message (quick replies). No-op if not supported.
+   * @param {string} to
+   * @param {string} bodyText
+   * @param {Array<{id: string, title: string}>} buttons - max 3
+   */
+  async sendButtons(to, bodyText, buttons) {}
+
+  /**
    * Whether this adapter processes async (returns 200 immediately).
    * Meta returns 200 then processes in background. Twilio needs TwiML response.
    * @returns {boolean}
