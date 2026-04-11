@@ -26,24 +26,27 @@ module.exports = async (req, res) => {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Return 200 immediately — WAHA retries on non-2xx
-  res.status(200).json({ status: 'ok' });
-
   try {
     // Skip non-message events quickly
-    if (req.body?.event !== 'message') return;
+    if (req.body?.event !== 'message') {
+      return res.status(200).json({ status: 'ok' });
+    }
 
     const sigValid = await adapter.verifySignature(req);
     if (!sigValid) {
       logger.error('Invalid WAHA webhook signature');
-      return;
+      return res.status(200).json({ status: 'ok' });
     }
 
     const msg = await adapter.parseIncoming(req);
-    if (!msg) return;
+    if (!msg) {
+      return res.status(200).json({ status: 'ok' });
+    }
 
     await processMessage(adapter, msg);
   } catch (err) {
     logger.error('WAHA webhook error:', err.message);
   }
+
+  return res.status(200).json({ status: 'ok' });
 };
