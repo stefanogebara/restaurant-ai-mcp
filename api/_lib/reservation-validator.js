@@ -22,10 +22,12 @@ function validateReservation(params, restaurant) {
   const config = {
     business_hours: restaurant.business_hours || getDefaultBusinessHours(),
     holidays: restaurant.holidays || [],
-    timezone: restaurant.timezone || 'Europe/Madrid',
-    max_party_size: restaurant.max_party_size || 12,
+    timezone: restaurant.timezone || 'America/Sao_Paulo',
+    // max_party_size is only enforced when explicitly set by the restaurant.
+    // Physical capacity limits are enforced by canAccommodateParty() using real table data.
+    max_party_size: restaurant.max_party_size || null,
     min_advance_hours: restaurant.min_advance_hours || 1,
-    max_advance_days: restaurant.max_advance_days || 30
+    max_advance_days: restaurant.max_advance_days || 90
   };
 
   // Parse the requested date and time
@@ -58,9 +60,10 @@ function validateReservation(params, restaurant) {
     });
   }
 
-  // 4. Check party size
+  // 4. Check party size — only enforce if restaurant has set an explicit cap.
+  // Physical table capacity is checked separately via canAccommodateParty().
   const partySize = parseInt(party_size);
-  if (partySize > config.max_party_size) {
+  if (config.max_party_size && partySize > config.max_party_size) {
     errors.push({
       code: 'PARTY_TOO_LARGE',
       message: `We can accommodate parties up to ${config.max_party_size} guests. For larger groups, please call us directly.`
