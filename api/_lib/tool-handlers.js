@@ -257,7 +257,10 @@ async function checkAvailability(restaurantId, restaurant, { date, time, party_s
 
     let message = `Sorry, we're fully booked for ${partySize} guests at ${time}.`;
     if (!accommodationCheck.can_accommodate) {
-      message = `Sorry, we cannot accommodate a party of ${partySize} at the moment.`;
+      const maxCap = accommodationCheck.max_capacity;
+      message = maxCap
+        ? `Sorry, the largest party we can seat is ${maxCap} guests. We cannot accommodate a party of ${partySize}.`
+        : `Sorry, we cannot accommodate a party of ${partySize} at the moment.`;
     }
 
     const result = {
@@ -346,10 +349,14 @@ async function createReservation(restaurantId, restaurant, params) {
     // Check if we can accommodate
     const accommodationCheck = await canAccommodateParty(restaurantId, parseInt(party_size));
     if (!accommodationCheck.can_accommodate) {
+      const maxCap = accommodationCheck.max_capacity;
+      const capacityMsg = maxCap
+        ? `The largest party we can seat is ${maxCap} guests.`
+        : `We cannot accommodate a party of ${party_size}.`;
       return {
         success: false,
         error: 'no_availability',
-        message: `Sorry, ${restaurantName} cannot accommodate a party of ${party_size} at ${time} on that date. Would you like to try a different time or date?`,
+        message: `Sorry, ${restaurantName} cannot accommodate a party of ${party_size}. ${capacityMsg} Would you like to book for a smaller group, or would you prefer to call us directly?`,
         restaurant_name: restaurantName
       };
     }

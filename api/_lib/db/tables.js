@@ -815,10 +815,41 @@ const canAccommodateParty = async (restaurantId, partySize) => {
     }
   }
 
+  // Calculate the actual maximum we can seat (for informative error message)
+  let maxCapacity = 0;
+
+  // Max single table
+  for (const t of availableTables) {
+    if (t.capacity > maxCapacity) maxCapacity = t.capacity;
+  }
+
+  // Max 2-table combo
+  for (let i = 0; i < flexibleTables.length; i++) {
+    for (let j = i + 1; j < flexibleTables.length; j++) {
+      if (canCombineTables(flexibleTables[i], flexibleTables[j])) {
+        const cap = flexibleTables[i].capacity + flexibleTables[j].capacity;
+        if (cap > maxCapacity) maxCapacity = cap;
+      }
+    }
+  }
+
+  // Max 3-table combo
+  for (let i = 0; i < flexibleTables.length; i++) {
+    for (let j = i + 1; j < flexibleTables.length; j++) {
+      for (let k = j + 1; k < flexibleTables.length; k++) {
+        if (canCombineTables(flexibleTables[i], flexibleTables[j]) && canCombineTables(flexibleTables[j], flexibleTables[k])) {
+          const cap = flexibleTables[i].capacity + flexibleTables[j].capacity + flexibleTables[k].capacity;
+          if (cap > maxCapacity) maxCapacity = cap;
+        }
+      }
+    }
+  }
+
   return {
     success: true,
     can_accommodate: false,
-    reason: `No single table or valid combination can seat ${partySize} guests`
+    max_capacity: maxCapacity,
+    reason: `No single table or valid combination can seat ${partySize} guests. Maximum capacity is ${maxCapacity} guests.`
   };
 };
 
