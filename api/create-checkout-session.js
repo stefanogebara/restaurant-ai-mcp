@@ -24,8 +24,11 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const { planName } = req.body;
+    const { planName, betaCode } = req.body;
     let { priceId } = req.body;
+
+    // Validate beta access code (grants 30-day free trial on any plan)
+    const isBetaAccess = betaCode && process.env.BETA_CODE && betaCode === process.env.BETA_CODE;
 
     // Resolve priceId server-side if not provided by client (VITE_ vars may be missing from bundle)
     if (!priceId && planName) {
@@ -47,6 +50,8 @@ module.exports = async (req, res) => {
     if (!restaurantId) {
       return res.status(400).json({ error: 'Restaurant setup required before subscribing. Please complete onboarding first.' });
     }
+
+    if (isBetaAccess) logger.info('Beta access granted for restaurant:', restaurantId);
 
     // Check if this restaurant was referred — apply referee discount if so
     let discounts;
@@ -129,7 +134,7 @@ module.exports = async (req, res) => {
         restaurant_id: restaurantId || '',
       },
       subscription_data: {
-        ...(planName === 'Growth' ? { trial_period_days: 14 } : {}),
+        ...(isBetaAccess ? { trial_period_days: 30 } : planName === 'Growth' ? { trial_period_days: 14 } : {}),
         metadata: {
           plan_name: planName || 'Unknown Plan',
           restaurant_id: restaurantId || '',

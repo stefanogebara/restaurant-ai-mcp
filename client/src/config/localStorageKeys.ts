@@ -35,3 +35,6 @@ export const LS_SUBSCRIPTION_PLAN = 'subscription_plan';
 
 /** Demo token saved so it survives auth redirects and email/password login */
 export const LS_PENDING_DEMO_TOKEN = 'pending_demo_token';
+
+/** Set to '1' after the post-onboarding launch checklist is dismissed */
+export const LS_LAUNCH_CHECKLIST_DONE = 'seatable_launch_done';

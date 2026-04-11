@@ -41,7 +41,8 @@ import type { UpcomingReservation, ActiveParty, SeatModalData } from '../types/h
 import { trackFirstReservationCreated } from '../lib/analytics';
 import { useRevenueStats } from '../hooks/useRevenueStats';
 import ThiingsIcon from '../components/common/ThiingsIcon';
-import { LS_FIRST_RESERVATION_TRACKED } from '../config/localStorageKeys';
+import { LS_FIRST_RESERVATION_TRACKED, LS_LAUNCH_CHECKLIST_DONE } from '../config/localStorageKeys';
+import LaunchChecklistModal from '../components/dashboard/LaunchChecklistModal';
 import { useToast } from '../contexts/ToastContext';
 
 function maybeTrackFirstReservation() {
@@ -56,11 +57,20 @@ export default function Dashboard() {
   useDocumentTitle(t('pageTitles.dashboard'));
   const { success } = useToast();
 
+  // Launch checklist: show after first subscription
+  const [showLaunchChecklist, setShowLaunchChecklist] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('launch') === '1' && !localStorage.getItem(LS_LAUNCH_CHECKLIST_DONE);
+  });
+
   // Show a one-time welcome toast when arriving from demo conversion
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('converted') === 'demo') {
       success(t('dashboard.welcomeFromDemo'));
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+    if (params.get('launch') === '1') {
       window.history.replaceState({}, '', window.location.pathname);
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -91,6 +101,7 @@ export default function Dashboard() {
   const tables = dashboardData?.data?.tables || [];
   const reservations: UpcomingReservation[] = dashboardData?.data?.upcoming_reservations || [];
   const activeParties: ActiveParty[] = dashboardData?.data?.active_parties || [];
+  const restaurantSlug: string = dashboardData?.data?.slug || '';
 
   const today = new Date().toISOString().split('T')[0];
   const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
@@ -499,6 +510,13 @@ export default function Dashboard() {
           isOpen={!!cancelReservation}
           reservation={cancelReservation}
           onClose={() => setCancelReservation(null)}
+        />
+      )}
+
+      {showLaunchChecklist && (
+        <LaunchChecklistModal
+          bookingSlug={restaurantSlug}
+          onDismiss={() => setShowLaunchChecklist(false)}
         />
       )}
 

@@ -258,6 +258,14 @@ function NoPlanPricing() {
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const { error } = useToast();
 
+  // Beta access: read ?beta=CODE from URL and persist in sessionStorage
+  const betaCode = (() => {
+    const params = new URLSearchParams(window.location.search);
+    const fromUrl = params.get('beta');
+    if (fromUrl) { sessionStorage.setItem('seatable_beta_code', fromUrl); return fromUrl; }
+    return sessionStorage.getItem('seatable_beta_code') || null;
+  })();
+
   const handleCheckout = async (priceId: string, planName: string) => {
     if (!priceId) { error('Price not configured. Please contact support.'); return; }
     try {
@@ -268,7 +276,7 @@ function NoPlanPricing() {
       const response = await authFetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ priceId, planName }),
+        body: JSON.stringify({ priceId, planName, ...(betaCode ? { betaCode } : {}) }),
       });
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
@@ -295,6 +303,16 @@ function NoPlanPricing() {
 
       <div className="flex-1 px-6 sm:px-16 py-12">
         <div className="max-w-[1100px] mx-auto">
+          {betaCode && (
+            <div className="mb-10 bg-amber-50 border border-amber-200 rounded-xl px-5 py-4 flex items-center gap-3">
+              <span className="text-lg">🎉</span>
+              <div>
+                <p className="text-sm font-semibold text-amber-900">Acesso Beta — 30 dias grátis</p>
+                <p className="text-xs text-amber-700 mt-0.5">Seu código beta foi aplicado. Escolha qualquer plano e comece sem pagar nada agora.</p>
+              </div>
+            </div>
+          )}
+
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-burgundy/[6%] rounded-full mb-5">
               <span className="text-xs font-semibold tracking-[1.5px] uppercase text-burgundy">Planos</span>
@@ -303,7 +321,7 @@ function NoPlanPricing() {
               Escolha seu plano
             </h1>
             <p className="text-[17px] text-warm-stone font-light">
-              Sem taxas ocultas. Cancele quando quiser.
+              {betaCode ? '30 dias grátis, depois cancele quando quiser.' : 'Sem taxas ocultas. Cancele quando quiser.'}
             </p>
           </div>
 

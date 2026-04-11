@@ -23,7 +23,7 @@ export default function SubscriptionSuccess() {
     if (data.customer_email) localStorage.setItem(LS_CUSTOMER_EMAIL, data.customer_email);
 
     const timer = setTimeout(() => {
-      navigate('/host-dashboard/simple');
+      navigate('/host-dashboard/simple?launch=1');
     }, 4000);
     return () => clearTimeout(timer);
   }, [data, navigate]);
@@ -68,7 +68,7 @@ export default function SubscriptionSuccess() {
             </p>
 
             <button
-              onClick={() => navigate('/host-dashboard/simple')}
+              onClick={() => navigate('/host-dashboard/simple?launch=1')}
               className="px-7 py-3 bg-deep-charcoal hover:bg-charcoal-dark text-white text-sm font-semibold rounded-full transition-colors"
             >
               {t('subscription.goToDashboard')}
