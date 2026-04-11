@@ -44,6 +44,7 @@ export default function DemoDashboard() {
   const { token: pathToken } = useParams<{ token?: string }>();
   const presetKey = searchParams.get('preset') || undefined;
   const demoToken = searchParams.get('token') || pathToken || undefined;
+  const isEmbed = searchParams.get('embed') === 'true';
 
   // Fetch personalized demo from API when token is present
   const { data: tokenSession, isLoading: tokenLoading } = useDemoSession(demoToken);
@@ -73,7 +74,7 @@ export default function DemoDashboard() {
 
   const [showWalkInModal, setShowWalkInModal] = useState(false);
   const [activeView, setActiveView] = useState<'dashboard' | 'tables' | 'whatsapp' | 'manager-ai' | 'analytics'>('dashboard');
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(isEmbed);
   const [selectedCustomer, setSelectedCustomer] = useState<UpcomingReservation | null>(null);
   const { showPopup: showExitPopup, dismiss: dismissExitPopup } = useExitIntent();
 
@@ -146,7 +147,7 @@ export default function DemoDashboard() {
       />
 
       {/* Language Popup */}
-      {showLangPopup && (
+      {!isEmbed && showLangPopup && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
           <div className="bg-white rounded-lg shadow-lg border border-border-gray p-6 max-w-sm w-full text-center animate-in fade-in zoom-in-95 duration-200">
             <div className="w-12 h-12 rounded-2xl bg-burgundy/10 flex items-center justify-center mx-auto mb-4">
@@ -178,34 +179,36 @@ export default function DemoDashboard() {
         </div>
       )}
 
-      {/* Demo Banner */}
-      <div className={`bg-gradient-to-r from-burgundy to-burgundy-dark text-white ${sidebarCollapsed ? 'lg:ml-[60px]' : 'lg:ml-[220px]'} transition-all duration-300`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
-              <ThiingsIcon name="sparkles" pxSize={12} className="text-white" />
+      {/* Demo Banner — hidden in embed mode */}
+      {!isEmbed && (
+        <div className={`bg-gradient-to-r from-burgundy to-burgundy-dark text-white ${sidebarCollapsed ? 'lg:ml-[60px]' : 'lg:ml-[220px]'} transition-all duration-300`}>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
+                <ThiingsIcon name="sparkles" pxSize={12} className="text-white" />
+              </div>
+              <p className="text-sm font-medium">{t.banner}</p>
             </div>
-            <p className="text-sm font-medium">{t.banner}</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => setLang(lang === 'en' ? 'es' : lang === 'es' ? 'pt-BR' : 'en')}
-              className="text-xs font-medium text-white/70 hover:text-white transition-colors flex items-center gap-1.5"
-              aria-label="Toggle language"
-            >
-              <ThiingsIcon name="globe" pxSize={12} className="text-white/70" />
-              {lang === 'en' ? 'EN' : lang === 'es' ? 'ES' : 'PT'}
-            </button>
-            <Link
-              to="/"
-              className="text-xs font-semibold text-white/80 hover:text-white underline underline-offset-2 transition-colors"
-            >
-              {t.backToHome}
-            </Link>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setLang(lang === 'en' ? 'es' : lang === 'es' ? 'pt-BR' : 'en')}
+                className="text-xs font-medium text-white/70 hover:text-white transition-colors flex items-center gap-1.5"
+                aria-label="Toggle language"
+              >
+                <ThiingsIcon name="globe" pxSize={12} className="text-white/70" />
+                {lang === 'en' ? 'EN' : lang === 'es' ? 'ES' : 'PT'}
+              </button>
+              <Link
+                to="/"
+                className="text-xs font-semibold text-white/80 hover:text-white underline underline-offset-2 transition-colors"
+              >
+                {t.backToHome}
+              </Link>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Loading state for token-based demos */}
       {demoToken && tokenLoading && (
@@ -388,7 +391,7 @@ export default function DemoDashboard() {
       )}
 
       {/* Exit Intent Popup */}
-      {showExitPopup && (
+      {!isEmbed && showExitPopup && (
         <div
           className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[70] p-4"
           onClick={(e) => { if (e.target === e.currentTarget) dismissExitPopup(); }}
@@ -522,8 +525,8 @@ export default function DemoDashboard() {
         </div>
       )}
 
-      {/* Conversion nudge — appears after 60s (hidden for personalized outreach demos) */}
-      {!demoToken && <DemoSlideIn />}
+      {/* Conversion nudge — appears after 60s (hidden for personalized outreach demos and embed mode) */}
+      {!demoToken && !isEmbed && <DemoSlideIn />}
 
       {/* Customer Profile Drawer */}
       <CustomerProfileDrawer

@@ -7,6 +7,7 @@ import ErrorBoundary from '../../components/common/ErrorBoundary';
 import LandingNav from '../components/LandingNav';
 import HeroSection from '../components/HeroSection';
 import PresetDemoSection from '../components/PresetDemoSection';
+import InlineDemoSection from '../components/InlineDemoSection';
 import VoiceWidgetSection from '../components/VoiceWidgetSection';
 import WhatsAppWidgetSection from '../components/WhatsAppWidgetSection';
 import BeforeAfterSection from '../components/BeforeAfterSection';
@@ -72,8 +73,13 @@ export default function LandingPage() {
       {/* 1. Hero — pain-first headline + split-screen WhatsApp/Dashboard animation */}
       <HeroSection />
 
-      {/* 2. Try it — 3 preset restaurant demos, zero friction */}
-      <PresetDemoSection />
+      {/* 2. Try it — 3 preset cards on mobile, inline browser demo on desktop */}
+      <div className="lg:hidden">
+        <PresetDemoSection />
+      </div>
+      <div className="hidden lg:block">
+        <InlineDemoSection />
+      </div>
 
       {/* 3. Call our AI — voice widget with ElevenLabs agent */}
       <ErrorBoundary silent>

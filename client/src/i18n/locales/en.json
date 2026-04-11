@@ -1656,6 +1656,13 @@
       "subtitle2": "Seatable handles WhatsApp, phone calls, and walk-ins — so your team focuses on hospitality.",
       "ctaNew": "See it live ↓"
     },
+    "inlineDemo": {
+      "label": "Live demo",
+      "heading": "Your AI-powered dashboard",
+      "subtitle": "Click around — it's fully interactive. No signup needed.",
+      "cta": "Create your restaurant",
+      "fullscreen": "Open fullscreen"
+    },
     "tryDemo": {
       "label": "Try it right now",
       "heading": "Pick a restaurant. Explore the dashboard.",
