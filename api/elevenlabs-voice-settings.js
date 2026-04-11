@@ -22,14 +22,14 @@ const DEFAULT_VOICE_SETTINGS = {
 
 function buildStoredVoiceResponse(restaurant, overrides = {}) {
   return {
-    voice_id: restaurant?.agent_voice_id || null,
-    voice_name: restaurant?.agent_voice_name || null,
+    voice_id: restaurant?.voice_id || null,
+    voice_name: null,
     language: restaurant?.agent_language || 'en',
-    tts_model_id: restaurant?.tts_model_id || 'eleven_turbo_v2_5',
-    voice_settings: restaurant?.voice_settings || DEFAULT_VOICE_SETTINGS,
+    tts_model_id: 'eleven_flash_v2_5',
+    voice_settings: DEFAULT_VOICE_SETTINGS,
     agent_id: restaurant?.elevenlabs_agent_id || null,
     restaurant_name: restaurant?.restaurant_name || null,
-    agent_updated_at: restaurant?.agent_updated_at || null,
+    agent_updated_at: restaurant?.updated_at || null,
     ...overrides
   };
 }
@@ -107,37 +107,13 @@ async function handleGet(req, res) {
     const { data: restaurant, error: dbError } = await supabaseAdmin
       .schema('restaurant')
       .from('restaurant_config')
-      .select('id, restaurant_name, elevenlabs_agent_id, agent_voice_id, agent_voice_name, agent_language, voice_settings, tts_model_id, agent_updated_at')
+      .select('id, restaurant_name, elevenlabs_agent_id, voice_id, agent_language, updated_at')
       .eq('id', restaurantId)
       .maybeSingle();
 
     if (dbError) {
       logger.error('[VoiceSettings] DB error fetching restaurant:', dbError);
       return res.status(500).json({ success: false, error: 'Database error' });
-    }
-
-    // If agent not in restaurant_config, fall back to restaurant_info by name
-    if (restaurant && !restaurant.elevenlabs_agent_id) {
-      const { data: infoRow } = await supabaseAdmin
-        .schema('restaurant').from('restaurant_info')
-        .select('elevenlabs_agent_id, agent_voice_id, agent_voice_name, agent_language, voice_settings, tts_model_id, agent_updated_at')
-        .eq('restaurant_name', restaurant.restaurant_name)
-        .maybeSingle();
-      if (infoRow?.elevenlabs_agent_id) {
-        // Sync to restaurant_config
-        await supabaseAdmin.schema('restaurant').from('restaurant_config')
-          .update({
-            elevenlabs_agent_id: infoRow.elevenlabs_agent_id,
-            agent_voice_id: infoRow.agent_voice_id,
-            agent_voice_name: infoRow.agent_voice_name,
-            agent_language: infoRow.agent_language || restaurant.agent_language,
-            voice_settings: infoRow.voice_settings,
-            tts_model_id: infoRow.tts_model_id,
-            agent_updated_at: infoRow.agent_updated_at
-          })
-          .eq('id', restaurantId);
-        Object.assign(restaurant, infoRow);
-      }
     }
 
     if (!restaurant || !restaurant.elevenlabs_agent_id) {
@@ -240,27 +216,13 @@ async function handlePatch(req, res) {
     const { data: restaurant, error: dbError } = await supabaseAdmin
       .schema('restaurant')
       .from('restaurant_config')
-      .select('id, restaurant_name, elevenlabs_agent_id')
+      .select('id, restaurant_name, elevenlabs_agent_id, agent_language')
       .eq('id', restaurantId)
       .maybeSingle();
 
     if (dbError) {
       logger.error('[VoiceSettings] DB error on PATCH:', dbError);
       return res.status(500).json({ success: false, error: 'Database error' });
-    }
-
-    // Fallback to restaurant_info by name if agent not in restaurant_config
-    if (restaurant && !restaurant.elevenlabs_agent_id) {
-      const { data: infoRow } = await supabaseAdmin
-        .schema('restaurant').from('restaurant_info')
-        .select('elevenlabs_agent_id, agent_language')
-        .eq('restaurant_name', restaurant.restaurant_name).maybeSingle();
-      if (infoRow?.elevenlabs_agent_id) {
-        await supabaseAdmin.schema('restaurant').from('restaurant_config')
-          .update({ elevenlabs_agent_id: infoRow.elevenlabs_agent_id }).eq('id', restaurantId);
-        restaurant.elevenlabs_agent_id = infoRow.elevenlabs_agent_id;
-        restaurant.agent_language = restaurant.agent_language || infoRow.agent_language;
-      }
     }
 
     if (!restaurant || !restaurant.elevenlabs_agent_id) {
@@ -335,15 +297,12 @@ async function handlePatch(req, res) {
       };
     }
 
-    // Save settings to local DB first — ensures settings persist even if ElevenLabs sync fails
+    // Save settings to local DB (only columns that actually exist)
     const dbUpdates = {
-      agent_updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString()
     };
-    if (voice_id) dbUpdates.agent_voice_id = voice_id;
-    if (voice_name) dbUpdates.agent_voice_name = voice_name;
+    if (voice_id) dbUpdates.voice_id = voice_id;
     if (language) dbUpdates.agent_language = language;
-    if (voice_settings) dbUpdates.voice_settings = voice_settings;
-    if (tts_model_id) dbUpdates.tts_model_id = tts_model_id;
 
     const { error: updateError } = await supabaseAdmin
       .schema('restaurant')
@@ -402,7 +361,7 @@ async function handlePatch(req, res) {
         language: language || null,
         voice_settings: voice_settings || null,
         tts_model_id: tts_model_id || null,
-        agent_updated_at: dbUpdates.agent_updated_at
+        agent_updated_at: dbUpdates.updated_at
       }
     });
   } catch (error) {
