@@ -62,8 +62,31 @@ module.exports = async (req, res) => {
       }
 
       try {
-        // Select prompt in the restaurant's configured language
         const lang = config.agent_language || 'pt-BR';
+
+        // For morning briefings on new restaurants with zero reservations, skip the AI call
+        // and send a purposeful setup guide instead.
+        if (type === 'morning') {
+          const { count: reservationCount } = await supabaseAdmin
+            .from('reservations')
+            .select('id', { count: 'exact', head: true })
+            .eq('restaurant_id', config.id);
+
+          if ((reservationCount ?? 0) === 0) {
+            const onboardingMessages = {
+              'pt-BR': `Bom dia! Seu restaurante ainda não tem reservas. Para começar a receber:\n\n1. Compartilhe seu link: seatable.one/book/seu-slug\n2. Coloque o link na bio do Instagram e no Google Meu Negócio\n3. Ative o WhatsApp nas configurações para receber reservas via mensagem\n\nTudo pronto para quando o primeiro cliente chegar.`,
+              es: `¡Buenos días! Tu restaurante aún no tiene reservas. Para empezar:\n\n1. Comparte tu enlace de reservas en Instagram y Google\n2. Activa WhatsApp en configuración para recibir reservas por mensaje\n3. Prueba hacer una reserva de prueba tú mismo\n\nListo para cuando llegue el primer cliente.`,
+              en: `Good morning! Your restaurant has no reservations yet. To start receiving them:\n\n1. Share your booking link on Instagram and Google\n2. Enable WhatsApp in settings to accept bookings by message\n3. Make a test booking yourself to verify the flow\n\nEverything is set up and ready for your first guest.`,
+            };
+            const message = onboardingMessages[lang] || onboardingMessages['en'];
+            await sendBriefing(config.manager_phone, message, 'text', config.id);
+            sent++;
+            logger.info(`Sent onboarding briefing to new restaurant: ${config.restaurant_name}`);
+            continue;
+          }
+        }
+
+        // Select prompt in the restaurant's configured language
         let promptToSend = promptSet[lang] || promptSet['en'];
 
         // Inject restaurant identity into briefing context

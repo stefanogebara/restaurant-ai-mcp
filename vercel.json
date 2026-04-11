@@ -49,10 +49,6 @@
       "destination": "/api/event-public.js"
     },
     {
-      "source": "/api/waha-webhook",
-      "destination": "/api/waha-webhook.js"
-    },
-    {
       "source": "/api/voice-forward",
       "destination": "/api/voice-forward.js"
     },
@@ -92,14 +88,7 @@
       "source": "/api/pos/table-status",
       "destination": "/api/pos/table-status.js"
     },
-    {
-      "source": "/api/square/auth",
-      "destination": "/api/square/auth.js"
-    },
-    {
-      "source": "/api/square/sync",
-      "destination": "/api/square/sync.js"
-    },
+
     {
       "source": "/api/ical-feed",
       "destination": "/api/ical-feed.js"
@@ -347,14 +336,7 @@
       "path": "/api/cron/validate-conversations",
       "schedule": "*/15 * * * *"
     },
-    {
-      "path": "/api/square/sync?action=cron_catalog",
-      "schedule": "0 4 * * *"
-    },
-    {
-      "path": "/api/square/sync?action=cron_refresh",
-      "schedule": "0 2 * * *"
-    },
+
     {
       "path": "/api/cron/compile-wiki",
       "schedule": "30 4 * * *"

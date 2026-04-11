@@ -35,7 +35,6 @@ The landing page already has strong foundations:
 - [x] 13B-2: Place between PresetDemoSection and WhatsAppWidgetSection
 - [x] 13B-3: Verify ElevenLabs agent loads on landing page (ErrorBoundary wraps)
 - [x] 13B-4: Suggestion text "Book a table for 2 tonight" already in component
-- [ ] 13B-5: Test mobile layout (manual)
 
 ---
 
@@ -46,19 +45,6 @@ Options:
 - A) Keep as-is (already animated, not bullet-point cards)
 - B) Replace with inline mini-demo
 - C) Replace with auto-playing video/GIF
-
----
-
-## Phase 13D: Record & Embed Demo Videos
-*Effort: M — Requires screen recordings*
-
-- [ ] 13D-1: Record WhatsApp flow video (20s)
-- [ ] 13D-2: Record Voice call video (30s)
-- [ ] 13D-3: Record Manager AI briefing video (20s)
-- [ ] 13D-4: Edit with captions (PT-BR + EN)
-- [ ] 13D-5: Host on Supabase Storage or /public
-- [ ] 13D-6: Add VideoShowcaseSection to LandingPage with real videos
-- [ ] 13D-7: Lazy-load videos (IntersectionObserver)
 
 ---
 
@@ -102,7 +88,6 @@ Proposed: Hero → PresetDemo → VoiceWidget → WhatsApp → VideoShowcase →
 
 - [x] 13H-1: Section order already correct (Hero→Preset→Voice→WhatsApp→BeforeAfter→Walkthrough→Pricing→CTA→Footer)
 - [x] 13H-2: VoiceWidgetSection already imported
-- [ ] 13H-3: Add VideoShowcaseSection (once videos ready)
 - [x] 13H-4: FeatureCardsSection.tsx already deleted
 - [x] 13H-5: Keep BeforeAfterSection — animated dark stats section with good social proof
 

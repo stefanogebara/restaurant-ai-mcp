@@ -988,6 +988,10 @@
     "typeYourAnswer": "Escribe tu respuesta...",
     "skipAndFinishLater": "Omitir y terminar después",
     "finishEarlyGenerate": "Terminar antes y generar persona",
+    "yourBookingLink": "Tu enlace de reservas",
+    "bookingLinkDesc": "Comparte este enlace en Instagram, Google y WhatsApp para recibir reservas.",
+    "copy": "Copiar",
+    "copied": "¡Copiado!",
     "referralNudge": "¿Conoces otro restaurante? Comparte Seatable y gana recompensas.",
     "redirectingIn": "Redirigiendo automáticamente en {{count}}s",
     "selectCountry": "Selecciona tu país",
@@ -1517,7 +1521,7 @@
     "cta": {
       "heading": "¿Listo para reimaginar",
       "headingLine2": "tu restaurante?",
-      "subtitle": "Únete a los primeros restaurantes que usan Seatable. Prueba gratis de 14 días, sin tarjeta de crédito.",
+      "subtitle": "Únete a los primeros restaurantes que usan Seatable. Prueba gratis de 30 días, sin tarjeta de crédito.",
       "button": "Empezar Gratis"
     },
     "scrollToTop": "Volver arriba",

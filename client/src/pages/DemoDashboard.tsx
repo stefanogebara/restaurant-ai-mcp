@@ -361,20 +361,22 @@ export default function DemoDashboard() {
 
         </div>
 
-        {/* Footer CTA */}
-        <div className="bg-stone-900 rounded-2xl p-8 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div>
-            <h2 className="text-white text-2xl font-serif font-bold mb-2">{t.readyToGoLive}</h2>
-            <p className="text-stone-400 text-sm">{t.setupYourOwn}</p>
+        {/* Footer CTA — hidden inside embed (landing page has its own CTA below the iframe) */}
+        {!isEmbed && (
+          <div className="bg-stone-900 rounded-2xl p-8 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div>
+              <h2 className="text-white text-2xl font-serif font-bold mb-2">{t.readyToGoLive}</h2>
+              <p className="text-stone-400 text-sm">{t.setupYourOwn}</p>
+            </div>
+            <Link
+              to="/login"
+              onClick={() => trackDemoFunnel({ step: 'signup_started', preset: presetKey })}
+              className="px-8 py-3.5 bg-burgundy text-white rounded-full font-bold text-sm hover:bg-burgundy-dark transition-all"
+            >
+              {t.getStartedFree}
+            </Link>
           </div>
-          <Link
-            to="/login"
-            onClick={() => trackDemoFunnel({ step: 'signup_started', preset: presetKey })}
-            className="px-8 py-3.5 bg-burgundy text-white rounded-full font-bold text-sm hover:bg-burgundy-dark transition-all"
-          >
-            {t.getStartedFree}
-          </Link>
-        </div>
+        )}
       </>)}
       </div>
 

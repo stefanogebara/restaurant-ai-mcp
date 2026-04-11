@@ -50,6 +50,7 @@ export default function Onboarding() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [countdown, setCountdown] = useState(5);
   const [ownReferral, setOwnReferral] = useState<{ code: string; url: string } | null>(null);
+  const [bookingUrl, setBookingUrl] = useState<string | null>(null);
 
   const customerEmail = user?.email || localStorage.getItem(LS_CUSTOMER_EMAIL) || '';
   const [isPreFilledFromDemo, setIsPreFilledFromDemo] = useState(false);
@@ -217,6 +218,9 @@ export default function Onboarding() {
       if (data.restaurant?.restaurant_id) {
         setOnboardingData((prev) => ({ ...prev, restaurant_id: data.restaurant.restaurant_id }));
       }
+      if (data.restaurant?.booking_url) {
+        setBookingUrl(`https://seatable.one${data.restaurant.booking_url}`);
+      }
 
       localStorage.removeItem(LS_ONBOARDING_DATA);
       localStorage.removeItem(LS_ONBOARDING_STEP);
@@ -373,7 +377,7 @@ export default function Onboarding() {
 
       {/* Success Modal */}
       {showSuccessModal && (
-        <OnboardingSuccessModal countdown={countdown} ownReferral={ownReferral} />
+        <OnboardingSuccessModal countdown={countdown} ownReferral={ownReferral} bookingUrl={bookingUrl} />
       )}
     </div>
   );

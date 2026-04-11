@@ -1,13 +1,24 @@
+import { useState } from 'react';
 import ThiingsIcon from '../common/ThiingsIcon';
 import { useTranslation } from 'react-i18next';
 
 interface OnboardingSuccessModalProps {
   countdown: number;
   ownReferral: { code: string; url: string } | null;
+  bookingUrl: string | null;
 }
 
-export default function OnboardingSuccessModal({ countdown, ownReferral }: OnboardingSuccessModalProps) {
+export default function OnboardingSuccessModal({ countdown, ownReferral, bookingUrl }: OnboardingSuccessModalProps) {
   const { t } = useTranslation();
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyBookingUrl = () => {
+    if (!bookingUrl) return;
+    navigator.clipboard.writeText(bookingUrl).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-6">
@@ -20,6 +31,31 @@ export default function OnboardingSuccessModal({ countdown, ownReferral }: Onboa
           <p className="text-[15px] text-stone-gray font-light mb-6">
             {t('onboarding.restaurantReady')}
           </p>
+
+          {/* Booking URL — the most important thing to share */}
+          {bookingUrl && (
+            <div className="mb-6 border border-border-gray rounded-2xl p-4 text-left">
+              <p className="text-[12px] font-semibold uppercase tracking-wider text-burgundy mb-2">
+                {t('onboarding.yourBookingLink', 'Seu link de reservas')}
+              </p>
+              <p className="text-[12px] text-stone-gray mb-3">
+                {t('onboarding.bookingLinkDesc', 'Compartilhe este link no Instagram, Google e WhatsApp para receber reservas.')}
+              </p>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 bg-soft-gray border border-border-gray rounded-lg px-3 py-2 text-[12px] text-deep-charcoal font-mono truncate">
+                  {bookingUrl}
+                </div>
+                <button
+                  type="button"
+                  onClick={handleCopyBookingUrl}
+                  className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 bg-burgundy hover:bg-burgundy-dark text-white text-[12px] font-semibold rounded-lg transition-colors"
+                >
+                  <ThiingsIcon name={copied ? 'check' : 'copy'} pxSize={14} />
+                  {copied ? t('onboarding.copied', 'Copiado!') : t('onboarding.copy', 'Copiar')}
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Referral share nudge */}
           {ownReferral && (() => {

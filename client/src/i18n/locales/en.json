@@ -1012,6 +1012,10 @@
     "typeYourAnswer": "Type your answer...",
     "skipAndFinishLater": "Skip & finish later",
     "finishEarlyGenerate": "Finish early & generate persona",
+    "yourBookingLink": "Your booking link",
+    "bookingLinkDesc": "Share this link on Instagram, Google, and WhatsApp to start receiving reservations.",
+    "copy": "Copy",
+    "copied": "Copied!",
     "referralNudge": "Know another restaurateur? Share Seatable and earn rewards.",
     "redirectingIn": "Redirecting automatically in {{count}}s",
     "selectCountry": "Select your country",
@@ -1805,7 +1809,7 @@
     "cta": {
       "heading": "Ready to reimagine",
       "headingLine2": "your restaurant?",
-      "subtitle": "Join the first restaurants using Seatable. 14-day free trial, no credit card required.",
+      "subtitle": "Join the first restaurants using Seatable. 30-day free trial, no credit card required.",
       "button": "Start Free Trial"
     },
     "scrollToTop": "Scroll to top",

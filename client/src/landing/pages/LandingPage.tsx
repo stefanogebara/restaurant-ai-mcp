@@ -118,7 +118,7 @@ export default function LandingPage() {
             {t('landing.cta.heading', 'Ready to reimagine')}{' '}<br />{t('landing.cta.headingLine2', 'your restaurant?')}
           </h2>
           <p className="text-[16px] text-stone-300 font-light mb-9">
-            {t('landing.cta.subtitle', 'Join the first restaurants using Seatable. Free plan available, no credit card required.')}
+            {t('landing.cta.subtitle', 'Join the first restaurants using Seatable. 30-day free trial, no credit card required.')}
           </p>
           <a
             href="/demo/setup"

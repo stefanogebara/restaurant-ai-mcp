@@ -1010,6 +1010,10 @@
     "typeYourAnswer": "Digite sua resposta...",
     "skipAndFinishLater": "Pular & terminar depois",
     "finishEarlyGenerate": "Finalizar e gerar persona",
+    "yourBookingLink": "Seu link de reservas",
+    "bookingLinkDesc": "Compartilhe este link no Instagram, Google e WhatsApp para receber reservas.",
+    "copy": "Copiar",
+    "copied": "Copiado!",
     "referralNudge": "Conhece outro restaurante? Compartilhe o Seatable e ganhe recompensas.",
     "redirectingIn": "Redirecionando automaticamente em {{count}}s",
     "welcomeAboard": "Bem-vindo a bordo!",
@@ -1816,7 +1820,7 @@
     "cta": {
       "heading": "Pronto para reimaginar",
       "headingLine2": "seu restaurante?",
-      "subtitle": "Seja um dos primeiros restaurantes a usar o Seatable no Brasil. Sem cartão de crédito.",
+      "subtitle": "Seja um dos primeiros restaurantes a usar o Seatable no Brasil. 30 dias grátis, sem cartão de crédito.",
       "button": "Começar Teste Grátis"
     },
     "scrollToTop": "Voltar ao topo",
