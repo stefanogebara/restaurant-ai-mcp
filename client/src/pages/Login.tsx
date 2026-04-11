@@ -54,7 +54,8 @@ export default function Login() {
 
   // Redirect if already logged in — honour the page the user originally tried to visit
   // (ProtectedRoute saves it as location.state.from)
-  const redirectTo = (location.state as { from?: { pathname: string } })?.from?.pathname || '/welcome';
+  const from = (location.state as { from?: { pathname: string; search: string } })?.from;
+  const redirectTo = from ? `${from.pathname}${from.search || ''}` : '/welcome';
   if (!loading && user) {
     return <Navigate to={redirectTo} replace />;
   }
