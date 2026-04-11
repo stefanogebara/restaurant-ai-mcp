@@ -276,7 +276,7 @@ async function handleTest(req, res, restaurantId) {
   let result;
 
   if (provider === 'meta') {
-    const templateName = process.env.WHATSAPP_TEST_TEMPLATE_NAME || 'seatable_promotion';
+    const templateName = process.env.WHATSAPP_TEST_TEMPLATE_NAME || 'seatable_feedback_request';
     const bodyParameters = templateName === 'seatable_promotion'
       ? ['there', restaurantName, `This is a WhatsApp delivery test from ${restaurantName}.`]
       : ['there', restaurantName];

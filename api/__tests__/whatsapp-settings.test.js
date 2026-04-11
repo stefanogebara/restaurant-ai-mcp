@@ -393,9 +393,9 @@ describe('WhatsApp Settings: test message', () => {
     expect(res.status).toHaveBeenCalledWith(200);
     expect(sendTemplateMessage).toHaveBeenCalledWith(
       '+5511999999999',
-      'seatable_promotion',
+      'seatable_feedback_request',
       'en',
-      ['there', 'Boteco do Samba', 'This is a WhatsApp delivery test from Boteco do Samba.']
+      ['there', 'Boteco do Samba']
     );
     expect(sendWhatsAppMessage).not.toHaveBeenCalled();
   });
