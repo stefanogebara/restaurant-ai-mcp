@@ -77,21 +77,21 @@ Options:
 ## Phase 13F: WhatsApp Enhancement
 *Effort: S — Widget already exists, enhance CTA*
 
-- [ ] 13F-1: Phone mockup with pre-filled message preview
-- [ ] 13F-2: Example conversation flow preview
-- [ ] 13F-3: Configurable deep link message per language
-- [ ] 13F-4: Trust badge more prominent
+- [x] 13F-1: Phone mockup with pre-filled message preview
+- [x] 13F-2: Example conversation flow preview
+- [x] 13F-3: Configurable deep link message per language
+- [x] 13F-4: Trust badge more prominent
 
 ---
 
 ## Phase 13G: Post-Demo Viral Loop
 *Effort: M — Conversion prompts + share mechanics*
 
-- [ ] 13G-1: DemoSlideIn triggers on inline demo too
-- [ ] 13G-2: Share prompt with pre-filled WhatsApp share link
-- [ ] 13G-3: "X restaurants joined this week" counter
-- [ ] 13G-4: Grayed-out "Import History" card in demo
-- [ ] 13G-5: PostHog funnel events
+- [x] 13G-1: DemoSlideIn triggers on inline demo too (N/A until 13E built)
+- [x] 13G-2: Share prompt with pre-filled WhatsApp share link
+- [x] 13G-3: "X restaurants joined this week" counter
+- [x] 13G-4: Grayed-out "Import History" card in demo
+- [x] 13G-5: PostHog funnel events
 
 ---
 

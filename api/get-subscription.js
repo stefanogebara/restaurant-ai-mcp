@@ -72,7 +72,7 @@ module.exports = async (req, res) => {
 
         return res.status(200).json(response);
       } catch (stripeErr) {
-        logger.error('Stripe lookup failed, falling back to DB data:', stripeErr.message);
+        logger.warn('Stripe lookup failed, falling back to DB data:', stripeErr.message);
       }
     }
 
