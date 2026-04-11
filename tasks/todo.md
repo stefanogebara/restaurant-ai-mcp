@@ -65,12 +65,12 @@ Options:
 ## Phase 13E: Inline Demo on Landing Page
 *Effort: L — Embed live dashboard without navigation*
 
-- [ ] 13E-1: Create InlineDemoSection component
-- [ ] 13E-2: iframe /demo?preset=italian&embed=true OR direct render
-- [ ] 13E-3: Browser chrome frame around embedded demo
-- [ ] 13E-4: Non-modal slide-in after 60s interaction
-- [ ] 13E-5: Move email capture to AFTER demo usage
-- [ ] 13E-6: Analytics: trackInlineDemoInteracted/Conversion
+- [x] 13E-1: Create InlineDemoSection component
+- [x] 13E-2: iframe /demo?preset=brazilian&embed=true (3 presets: BR/IT/JP)
+- [x] 13E-3: Browser chrome frame around embedded demo (macOS traffic lights + URL bar)
+- [x] 13E-4: DemoSlideIn gated behind !isEmbed in DemoDashboard
+- [x] 13E-5: Demo banner / language popup / exit intent gated behind !isEmbed
+- [x] 13E-6: Analytics: trackPresetDemoClicked + trackDemoFunnel wired
 
 ---
 

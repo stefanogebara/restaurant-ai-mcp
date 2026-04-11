@@ -48,8 +48,7 @@ export default function SubscriptionManage() {
   const handleManageSubscription = () => {
     portal.mutate(undefined, {
       onSuccess: ({ url }) => { window.location.href = url; },
-      onError: (err) => {
-        const message = err.message || t('subscription.failedToOpen');
+      onError: (_err) => {
         // For any portal failure (no subscription, portal not configured, etc.)
         // redirect to pricing so the user can pick/re-subscribe
         error(t('subscription.portalError', 'Não foi possível abrir o portal de cobrança. Redirecionando para os planos…'));
@@ -259,7 +258,8 @@ function NoPlanPricing() {
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const { error } = useToast();
 
-  const handleCheckout = async (planName: string) => {
+  const handleCheckout = async (priceId: string, planName: string) => {
+    if (!priceId) { error('Price not configured. Please contact support.'); return; }
     try {
       setLoadingPlan(planName);
       const apiUrl = import.meta.env.VITE_API_URL
@@ -268,7 +268,7 @@ function NoPlanPricing() {
       const response = await authFetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ planName }),
+        body: JSON.stringify({ priceId, planName }),
       });
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
@@ -336,7 +336,7 @@ function NoPlanPricing() {
                   </ul>
                   <button
                     type="button"
-                    onClick={() => handleCheckout(tier.planName)}
+                    onClick={() => handleCheckout(tier.priceId, tier.planName)}
                     disabled={!!loadingPlan}
                     className={`w-full py-3.5 rounded-full text-sm font-semibold transition-colors flex items-center justify-center gap-2 disabled:opacity-60 ${
                       tier.highlighted
