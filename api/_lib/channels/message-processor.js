@@ -187,7 +187,15 @@ async function processMessage(adapter, msg, options = {}) {
 
   // 11. AI processing
   const conversationHistory = Array.isArray(session.conversation_history) ? session.conversation_history : [];
-  const aiMessage = mediaContext ? `${mediaContext}\n${text}` : text;
+
+  // Enrich button replies with structured context so the AI can act on them directly
+  let aiMessage = mediaContext ? `${mediaContext}\n${text}` : text;
+  if (interactiveSelection?.id) {
+    if (interactiveSelection.id.startsWith('cancel_reservation_')) {
+      const reservationId = interactiveSelection.id.replace('cancel_reservation_', '');
+      aiMessage = `[BUTTON_ACTION: cancel_reservation id=${reservationId}] ${text}`;
+    }
+  }
 
   let response;
   try {

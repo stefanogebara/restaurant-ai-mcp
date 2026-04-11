@@ -219,6 +219,12 @@ function buildWhatsAppPrompt(restaurantConfig, session, currentDateTime) {
 - Check queue position for customers already waiting
 `;
 
+  // Button actions
+  prompt += `\nBUTTON ACTIONS:
+- If the message starts with [BUTTON_ACTION: cancel_reservation id=<id>], the customer tapped the cancel button. Call cancel_reservation with that exact reservation id immediately — no confirmation needed, they already confirmed by tapping.
+- If the message starts with [BUTTON_ACTION: <other>], act on it directly without asking for confirmation.
+`;
+
   // Boundaries
   prompt += `\nBOUNDARIES:
 - Stay focused on the restaurant

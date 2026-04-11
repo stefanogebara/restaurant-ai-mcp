@@ -38,6 +38,22 @@ async function scheduleFeedback(restaurantId, reservationId, customerPhone, cust
     }
   }
 
+  // Cooldown: don't send feedback to same phone+restaurant within 7 days
+  const cooldownCutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  const { data: recentFeedback } = await supabaseAdmin
+    .from('guest_feedback')
+    .select('id, created_at')
+    .eq('restaurant_id', restaurantId)
+    .eq('customer_phone', customerPhone)
+    .gte('created_at', cooldownCutoff)
+    .limit(1)
+    .maybeSingle();
+
+  if (recentFeedback) {
+    logger.info('Feedback cooldown active — skipping', { restaurantId, customerPhone, lastFeedback: recentFeedback.created_at });
+    return null;
+  }
+
   const { data, error } = await supabaseAdmin
     .from('guest_feedback')
     .insert({

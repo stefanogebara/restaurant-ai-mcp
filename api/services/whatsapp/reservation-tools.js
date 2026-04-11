@@ -10,7 +10,7 @@ const { generateSecureReservationId } = require('../../_lib/secure-id');
 const {
   setSessionRestaurant,
 } = require('../../_lib/whatsapp-sessions');
-const { sendTemplateMessage } = require('./message-sender');
+const { sendTemplateMessage, sendInteractiveButtonMessage } = require('./message-sender');
 const { sendReservationConfirmationEmail } = require('../../_lib/email');
 const { addCustomerToQueue, checkQueuePosition } = require('./waitlist-handler');
 
@@ -482,6 +482,38 @@ async function executeTool(toolName, toolInput, session) {
             logger.warn(' Email confirmation failed (non-fatal):', emailErr.message);
           }
         }
+
+        // Fetch address for Google Maps link (non-fatal if missing)
+        let mapsLine = '';
+        try {
+          const { data: rConfig } = await client
+            .schema('restaurant')
+            .from('restaurant_config')
+            .select('address, city')
+            .eq('id', session.restaurant.id)
+            .maybeSingle();
+          const addressParts = [rConfig?.address, rConfig?.city].filter(Boolean);
+          if (addressParts.length > 0) {
+            const mapsQuery = encodeURIComponent(addressParts.join(', '));
+            mapsLine = `\n📍 https://maps.google.com/?q=${mapsQuery}`;
+          }
+        } catch (addrErr) {
+          logger.warn(' Could not fetch address for button message (non-fatal):', addrErr.message);
+        }
+
+        // Send interactive button message so customer can cancel easily
+        const lang = session?.restaurant?.language || 'en';
+        const buttonConfirmText = {
+          'pt-BR': `✅ Reserva confirmada!\n${customer_name} · ${party_size} pessoa${party_size > 1 ? 's' : ''} · ${date} às ${time}${mapsLine}`,
+          es: `✅ ¡Reserva confirmada!\n${customer_name} · ${party_size} persona${party_size > 1 ? 's' : ''} · ${date} a las ${time}${mapsLine}`,
+          en: `✅ Reservation confirmed!\n${customer_name} · ${party_size} guest${party_size > 1 ? 's' : ''} · ${date} at ${time}${mapsLine}`,
+        };
+        const cancelLabel = { 'pt-BR': '❌ Cancelar reserva', es: '❌ Cancelar reserva', en: '❌ Cancel reservation' };
+        sendInteractiveButtonMessage(
+          customer_phone,
+          buttonConfirmText[lang] || buttonConfirmText['en'],
+          [{ id: `cancel_reservation_${reservationId}`, title: cancelLabel[lang] || cancelLabel['en'] }]
+        ).catch(err => logger.warn(' Button message failed (non-fatal):', err.message));
 
         return {
           success: true,

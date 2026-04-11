@@ -158,6 +158,11 @@ class MetaAdapter extends ChannelAdapter {
     return sendInteractiveListMessage(to, bodyText, buttonText, sections);
   }
 
+  async sendButtons(to, bodyText, buttons) {
+    const { sendInteractiveButtonMessage } = require('../../services/whatsapp/message-sender');
+    return sendInteractiveButtonMessage(to, bodyText, buttons);
+  }
+
   /**
    * Check if this message should be handled by Meta (not forwarded to TwinMe or Twilio).
    * Returns { handle: true } or { handle: false, reason: string, response?: object }.

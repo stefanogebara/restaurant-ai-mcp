@@ -2,11 +2,14 @@
 // (jest.mock factories run before const/let declarations are initialized)
 var mockSchemaFrom = jest.fn();
 // Default from() mock returns a dedup chain resolving {data: null} so sendBriefing is reached
-function mockFromChain(data = null) {
+function mockFromChain(data = null, count = 5) {
   const c = {
     select: jest.fn(), eq: jest.fn(), order: jest.fn(),
     limit: jest.fn(), gte: jest.fn(),
   };
+  // Chain methods return 'c', but also make 'c' a thenable so that
+  // `await supabaseAdmin.from('reservations').select(...).eq(...)` resolves to { count, data, error: null }
+  c.then = (resolve) => resolve({ data, count, error: null });
   c.select.mockReturnValue(c);
   c.eq.mockReturnValue(c);
   c.order.mockReturnValue(c);

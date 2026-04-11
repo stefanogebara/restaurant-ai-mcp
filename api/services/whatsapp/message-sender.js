@@ -84,10 +84,74 @@ async function sendInteractiveListMessage(to, bodyText, buttonText, sections) {
   }
 }
 
+/**
+ * Send a WhatsApp Interactive Button message via Meta Cloud API.
+ * Buttons are quick-reply options (max 3, title max 20 chars each).
+ *
+ * @param {string} to - Recipient phone number
+ * @param {string} bodyText - Message body text (max 1024 chars)
+ * @param {Array<{id: string, title: string}>} buttons - Up to 3 buttons
+ * @returns {object} Result with success status
+ */
+async function sendInteractiveButtonMessage(to, bodyText, buttons) {
+  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+  const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
+
+  if (!phoneNumberId || !accessToken) {
+    logger.error(' Missing WHATSAPP_PHONE_NUMBER_ID or WHATSAPP_ACCESS_TOKEN');
+    return { success: false, error: 'WhatsApp not configured' };
+  }
+
+  const payload = {
+    messaging_product: 'whatsapp',
+    recipient_type: 'individual',
+    to,
+    type: 'interactive',
+    interactive: {
+      type: 'button',
+      body: { text: bodyText.substring(0, 1024) },
+      action: {
+        buttons: buttons.slice(0, 3).map(btn => ({
+          type: 'reply',
+          reply: {
+            id: btn.id.substring(0, 256),
+            title: btn.title.substring(0, 20),
+          }
+        }))
+      }
+    }
+  };
+
+  try {
+    const response = await fetch(`${WHATSAPP_API_URL}/${phoneNumberId}/messages`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      logger.error(' Interactive button send error:', data);
+      return { success: false, error: data.error?.message || 'Failed to send buttons' };
+    }
+
+    logger.info(` Interactive buttons sent to ${to}, messageId: ${data.messages?.[0]?.id}`);
+    return { success: true, messageId: data.messages?.[0]?.id };
+  } catch (error) {
+    logger.error(' Interactive button send exception:', error);
+    return { success: false, error: 'Failed to send buttons' };
+  }
+}
+
 module.exports = {
   sendWhatsAppMessage,
   sendTemplateMessage,
   sendInteractiveListMessage,
+  sendInteractiveButtonMessage,
   getWhatsAppProvider,
   WHATSAPP_API_URL,
 };
