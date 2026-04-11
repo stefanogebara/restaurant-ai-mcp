@@ -24,7 +24,18 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const { priceId, planName } = req.body;
+    const { planName } = req.body;
+    let { priceId } = req.body;
+
+    // Resolve priceId server-side if not provided by client (VITE_ vars may be missing from bundle)
+    if (!priceId && planName) {
+      const serverPriceMap = {
+        Starter: process.env.STRIPE_STARTER_PRICE_ID,
+        Growth: process.env.STRIPE_GROWTH_PRICE_ID,
+        Scale: process.env.STRIPE_SCALE_PRICE_ID,
+      };
+      priceId = serverPriceMap[planName] || null;
+    }
 
     if (!priceId) {
       return res.status(400).json({ error: 'Price ID is required' });
