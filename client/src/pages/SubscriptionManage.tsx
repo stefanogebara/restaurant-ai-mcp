@@ -330,7 +330,7 @@ function NoPlanPricing() {
               const isLoading = loadingPlan === tier.planName;
               return (
                 <div key={tier.key} className={`relative px-8 py-12 ${tier.highlighted ? 'bg-deep-charcoal' : 'bg-warm-white'}`}>
-                  {tier.trial && (
+                  {tier.trial && !betaCode && (
                     <div className="absolute top-0 inset-x-0 flex justify-center">
                       <span className="bg-burgundy text-white text-[11px] font-semibold tracking-wide uppercase px-4 py-1 rounded-b-lg">
                         14 dias grátis
