@@ -49,6 +49,7 @@ jest.mock('../_lib/whatsapp-sender', () => ({
   isWhatsAppConfigured: jest.fn(),
   getWhatsAppProvider: jest.fn(),
   sendWhatsAppMessage: jest.fn(),
+  sendTemplateMessage: jest.fn(),
 }));
 jest.mock('../_lib/secure-logger', () => ({
   createSecureLogger: () => ({ info: jest.fn(), warn: jest.fn(), error: jest.fn() }),
@@ -56,7 +57,7 @@ jest.mock('../_lib/secure-logger', () => ({
 
 const handler = require('../whatsapp-settings');
 const { verifyAuth } = require('../_lib/auth');
-const { isWhatsAppConfigured, getWhatsAppProvider, sendWhatsAppMessage } = require('../_lib/whatsapp-sender');
+const { isWhatsAppConfigured, getWhatsAppProvider, sendWhatsAppMessage, sendTemplateMessage } = require('../_lib/whatsapp-sender');
 
 function mkReqRes(overrides = {}) {
   const req = {
@@ -373,9 +374,35 @@ describe('WhatsApp Settings: test message', () => {
     }
   });
 
+  test('Meta provider sends an approved template and returns 200', async () => {
+    mockSingle.mockResolvedValueOnce({
+      data: { restaurant_name: 'Boteco do Samba' },
+      error: null,
+    });
+    getWhatsAppProvider.mockResolvedValueOnce('meta');
+    sendTemplateMessage.mockResolvedValueOnce({ success: true, messageId: 'wamid.TEST-TEMPLATE-1' });
+
+    const { req, res } = mkReqRes({
+      method: 'POST',
+      query: { action: 'test' },
+      body: { phone_number: '+5511999999999' },
+    });
+
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(sendTemplateMessage).toHaveBeenCalledWith(
+      '+5511999999999',
+      'seatable_promotion',
+      'en',
+      ['there', 'Boteco do Samba', 'This is a WhatsApp delivery test from Boteco do Samba.']
+    );
+    expect(sendWhatsAppMessage).not.toHaveBeenCalled();
+  });
+
   test('returns 400 when message send fails', async () => {
     mockSingle.mockResolvedValueOnce({ data: { restaurant_name: 'Test' }, error: null });
-    sendWhatsAppMessage.mockResolvedValueOnce({ success: false, error: 'Invalid number' });
+    sendTemplateMessage.mockResolvedValueOnce({ success: false, error: 'Invalid number' });
 
     const { req, res } = mkReqRes({
       method: 'POST',

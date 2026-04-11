@@ -13,7 +13,7 @@
 
 const { verifyAuth } = require('./_lib/auth');
 const { supabaseAdmin } = require('./_lib/supabase');
-const { isWhatsAppConfigured, sendWhatsAppMessage, getWhatsAppProvider } = require('./_lib/whatsapp-sender');
+const { isWhatsAppConfigured, sendWhatsAppMessage, sendTemplateMessage, getWhatsAppProvider } = require('./_lib/whatsapp-sender');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { initSentry, captureException } = require('./_lib/sentry');
@@ -273,12 +273,27 @@ async function handleTest(req, res, restaurantId) {
     .single();
 
   const restaurantName = config?.restaurant_name || 'Your Restaurant';
+  let result;
 
-  const result = await sendWhatsAppMessage(
-    phone_number,
-    `This is a test message from ${restaurantName} via Seatable. WhatsApp integration is working correctly!`,
-    { provider }
-  );
+  if (provider === 'meta') {
+    const templateName = process.env.WHATSAPP_TEST_TEMPLATE_NAME || 'seatable_promotion';
+    const bodyParameters = templateName === 'seatable_promotion'
+      ? ['there', restaurantName, `This is a WhatsApp delivery test from ${restaurantName}.`]
+      : ['there', restaurantName];
+
+    result = await sendTemplateMessage(
+      phone_number,
+      templateName,
+      'en',
+      bodyParameters
+    );
+  } else {
+    result = await sendWhatsAppMessage(
+      phone_number,
+      `This is a test message from ${restaurantName} via Seatable. WhatsApp integration is working correctly!`,
+      { provider }
+    );
+  }
 
   if (!result.success) {
     return res.status(400).json({ success: false, error: result.error });
