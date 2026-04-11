@@ -62,7 +62,9 @@ module.exports = async (req, res) => {
           status: stripeSub.status,
           planName: planMapping[price.id] || sub['Plan Name'] || 'Unknown Plan',
           planPrice: `R$${(price.unit_amount / 100).toFixed(0)}/${price.recurring.interval === 'month' ? 'mês' : price.recurring.interval}`,
-          currentPeriodEnd: new Date(stripeSub.current_period_end * 1000).toLocaleDateString(),
+          currentPeriodEnd: stripeSub.current_period_end
+            ? new Date(stripeSub.current_period_end * 1000).toLocaleDateString()
+            : null,
           cancelAtPeriodEnd: stripeSub.cancel_at_period_end,
         };
 
