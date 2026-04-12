@@ -62,6 +62,7 @@ function buildPersonaPrompt(restaurantConfig, options = {}) {
   }
 
   const language = options.language
+    || restaurantConfig.agent_language
     || restaurantConfig.ai_config?.language
     || restaurantConfig.language
     || 'en';

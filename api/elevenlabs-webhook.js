@@ -57,10 +57,13 @@ function normalizePhone(raw) {
   if (!digits) return null;
   if (digits.startsWith('00') && digits.length >= 9) return `+${digits.slice(2)}`;  // 00-prefix intl
   if (digits.startsWith('55') && digits.length >= 12) return `+${digits}`;          // BR with country code
-  if (digits.length === 11) return `+55${digits}`;                                   // BR DDD + 9-digit mobile
-  if (digits.length === 10) return `+55${digits}`;                                   // BR DDD + 8-digit landline
+  // Brazilian DDDs are 2 digits, second digit is never 0 (e.g. 11, 21, 31…99).
+  // If second digit is 0, this is a foreign number (e.g. Panama 507xx = starts "50...").
+  const looksLikeBrDdd = digits.length >= 2 && digits[1] !== '0';
+  if (digits.length === 11 && looksLikeBrDdd) return `+55${digits}`;               // BR DDD + 9-digit mobile
+  if (digits.length === 10 && looksLikeBrDdd) return `+55${digits}`;               // BR DDD + 8-digit landline
   if (digits.length >= 8 && digits.length <= 15) {
-    // Could be a foreign number given without country code — can't safely assume country.
+    // Foreign number without country code — can't safely assume country.
     // Return null so caller_phone (Twilio E.164) is used as fallback.
     return null;
   }
