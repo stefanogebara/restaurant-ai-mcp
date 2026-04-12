@@ -344,7 +344,8 @@ async function processReviewRequest(restaurantId, optedOutPhones, config, automa
  */
 function buildUnsubscribeUrl(restaurantId, customerPhone) {
   const crypto = require('crypto');
-  const secret = process.env.CRON_SECRET || 'fallback-secret';
+  const secret = process.env.CRON_SECRET;
+  if (!secret) throw new Error('CRON_SECRET is not configured');
   const payload = `${restaurantId}:${customerPhone}`;
   const signature = crypto.createHmac('sha256', secret).update(payload).digest('hex');
   const baseUrl = process.env.CLIENT_URL || 'https://seatable.one';

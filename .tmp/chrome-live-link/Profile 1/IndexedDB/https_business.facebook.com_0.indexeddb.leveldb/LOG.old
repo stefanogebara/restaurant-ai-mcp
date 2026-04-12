@@ -1,0 +1,7 @@
+2026/03/25-02:32:00.502 b030 Reusing MANIFEST C:\Users\stefa\AppData\Local\Google\Chrome\User Data\Profile 1\IndexedDB\https_business.facebook.com_0.indexeddb.leveldb/MANIFEST-000001
+2026/03/25-02:32:00.505 b030 Recovering log #3
+2026/03/25-02:32:00.508 b030 Reusing old log C:\Users\stefa\AppData\Local\Google\Chrome\User Data\Profile 1\IndexedDB\https_business.facebook.com_0.indexeddb.leveldb/000003.log 
+2026/03/25-11:42:57.209 bbe4 Level-0 table #5: started
+2026/03/25-11:42:57.211 bbe4 Level-0 table #5: 1387 bytes OK
+2026/03/25-11:42:57.213 bbe4 Delete type=0 #3
+2026/03/25-11:42:57.214 bbe4 Manual compaction at level-0 from (begin) .. (end); will stop at (end)

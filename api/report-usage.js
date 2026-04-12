@@ -37,26 +37,9 @@ module.exports = async (req, res) => {
   const cronSecret = process.env.CRON_SECRET;
 
   const isVercelCron = authHeader === `Bearer ${cronSecret}` && cronSecret;
-  const isAdminCall = authHeader?.startsWith('Bearer ') && !isVercelCron;
 
-  if (!isVercelCron && !isAdminCall) {
+  if (!isVercelCron) {
     return res.status(401).json({ error: 'Authentication required' });
-  }
-
-  // If it's a manual admin call, verify the JWT
-  if (isAdminCall) {
-    try {
-      const { verifyAuth } = require('./_lib/auth');
-      const auth = await verifyAuth(req, { required: true });
-      if (auth.error) {
-        return res.status(auth.status || 401).json({ error: auth.error });
-      }
-      if (!auth.user || auth.user.role !== 'admin') {
-        return res.status(403).json({ error: 'Admin access required' });
-      }
-    } catch (err) {
-      return res.status(401).json({ error: 'Authentication required' });
-    }
   }
 
   try {

@@ -88,7 +88,6 @@ module.exports = async (req, res) => {
       // Order matters: delete leaf tables first to respect FK constraints
       const dependentTables = [
         'customer_push_subscriptions',
-        'ml_interventions',    // FK via reservation_id, but clean up by joining
         'service_records',
         'waitlist',
         'customer_ltv',
@@ -106,6 +105,22 @@ module.exports = async (req, res) => {
           .eq('restaurant_id', demo.id);
         if (depError) {
           logger.warn(`Failed to delete ${table} for demo ${demo.id} (non-fatal):`, depError.message);
+        }
+      }
+
+      // Delete ml_interventions via reservation_id join (table has no restaurant_id column)
+      const { data: reservationIds } = await supabaseAdmin
+        .from('reservations')
+        .select('id')
+        .eq('restaurant_id', demo.id);
+      if (reservationIds && reservationIds.length > 0) {
+        const ids = reservationIds.map(r => r.id);
+        const { error: mlError } = await supabaseAdmin
+          .from('ml_interventions')
+          .delete()
+          .in('reservation_id', ids);
+        if (mlError) {
+          logger.warn(`Failed to delete ml_interventions for demo ${demo.id} (non-fatal):`, mlError.message);
         }
       }
 
@@ -135,7 +150,20 @@ module.exports = async (req, res) => {
         logger.warn(`Failed to delete tables for demo ${demo.id} (non-fatal):`, tablesError.message);
       }
 
-      // Step 2: Delete the restaurant_config row
+      // Step 2: Delete ElevenLabs agent (before DB row — prevents orphaned paid agents)
+      try {
+        const { deleteAgent } = require('../services/elevenlabsAgentService');
+        const agentResult = await deleteAgent(demo.id);
+        if (!agentResult.success) {
+          logger.warn(`Failed to delete ElevenLabs agent for demo ${demo.id} (non-fatal): ${agentResult.error}`);
+        } else {
+          logger.info(`Deleted ElevenLabs agent for demo ${demo.id}`);
+        }
+      } catch (agentErr) {
+        logger.warn(`ElevenLabs agent deletion threw for demo ${demo.id} (non-fatal): ${agentErr.message}`);
+      }
+
+      // Step 3: Delete the restaurant_config row
       const { error: configError } = await supabaseAdmin
         .schema('restaurant')
         .from('restaurant_config')

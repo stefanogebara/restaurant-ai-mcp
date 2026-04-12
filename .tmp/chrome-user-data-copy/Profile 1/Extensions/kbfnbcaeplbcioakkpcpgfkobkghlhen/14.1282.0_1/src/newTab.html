@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta charset="UTF-8" />
+  <title>Go Home</title>
+  <!-- preloadFonts -->
+  <link rel="preload" href="fonts/extension-inter-light.woff2" as="font" crossorigin="anonymous" />
+  <link rel="preload" href="fonts/extension-inter-regular.woff2" as="font" crossorigin="anonymous" />
+  <link rel="preload" href="fonts/extension-inter-bold.woff2" as="font" crossorigin="anonymous" />
+  <!-- /preloadFonts -->
+  <!-- stylesheet order matters, most generic, to most specific -->
+  <link rel="stylesheet" href="css/designSystem.styles.css" />
+  <link rel="stylesheet" href="css/assistantUiKit.styles.css" />
+  <link rel="stylesheet" href="css/staticSelectionAgentsCommon.styles.css" />
+  <link rel="stylesheet" href="css/Grammarly-newTab.styles.css" />
+
+  <!-- Setting the inline styles for the loading state -->
+  <style>
+    html, body, #new-tab {
+      height: 100%;
+      margin: 0;
+    }
+    body {
+      @media (prefers-color-scheme: light) {
+        background-color: #ffffff;
+      }
+      @media (prefers-color-scheme: dark) {
+        background-color: #1c1c1c;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="new-tab"></div>
+  <script defer src="js/Grammarly-newTab.js"></script>
+</body>
+
+</html>

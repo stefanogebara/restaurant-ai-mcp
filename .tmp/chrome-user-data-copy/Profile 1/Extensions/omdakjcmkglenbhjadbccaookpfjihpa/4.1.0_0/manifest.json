@@ -1,0 +1,49 @@
+{
+   "action": {
+      "default_icon": "assets/images/icon_off_grey.png",
+      "default_popup": "src/index.html"
+   },
+   "author": "TunnelBear Inc.",
+   "background": {
+      "service_worker": "src/service-worker.js",
+      "type": "module"
+   },
+   "commands": {
+      "incognito-tunnelling": {
+         "description": "Incognito tunnelling",
+         "suggested_key": {
+            "default": "Alt+Shift+N",
+            "mac": "Alt+Shift+N",
+            "windows": "Alt+Shift+N"
+         }
+      }
+   },
+   "content_scripts": [ {
+      "js": [ "src/content-script.js" ],
+      "matches": [ "https://*.tunnelbear.com/*" ]
+   } ],
+   "content_security_policy": {
+      "object-src": "self",
+      "script-src": "self"
+   },
+   "description": "Rawwwr! Put a Bear in your browser and privately access a more open internet in seconds!",
+   "externally_connectable": {
+      "matches": [ "https://*.tunnelbear.com/*" ]
+   },
+   "homepage_url": "https://tunnelbear.com",
+   "host_permissions": [ "\u003Call_urls>" ],
+   "icons": {
+      "128": "assets/images/icon_128.png",
+      "16": "assets/images/icon_16.png"
+   },
+   "incognito": "spanning",
+   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAwQ3Kv088Asz90bPzo4JooQw9+PFQlSDl4bT9iN1AZvEmN4MdnPrBdVvC15VpXzLtvOMFhD5HPgljcY12grNNQfjDw/Xd1DyGqcVbY4jW989Y8RTdAlNNx+2MFstYQScpR7hdo8P3KPAdqJNsZblb5bn0852E4NtZYtAXKirqcXmyX2njBTmda7BY1XJzYp9RPGB+oUjTNSu7SH/u2faOWQvVLMp3qLnSfx0xzakWI9qN6dRhvd6Sf9uTbi5RwTzfctUukV9BDFvXHnUgo21L1aHJry+VFJa+F6ogLp/Ztb317YQ9gGPWj3KH0IqnPazXEiiKuVlwahJVDXssVggWHQIDAQAB",
+   "manifest_version": 3,
+   "minimum_chrome_version": "108.0",
+   "name": "TunnelBear VPN",
+   "offline_enabled": false,
+   "permissions": [ "proxy", "storage", "declarativeNetRequest", "webRequest", "privacy", "management", "webRequestAuthProvider" ],
+   "short_name": "TunnelBear VPN",
+   "update_url": "https://clients2.google.com/service/update2/crx",
+   "version": "4.1.0"
+}

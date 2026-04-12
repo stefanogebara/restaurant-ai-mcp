@@ -1,0 +1,209 @@
+{
+  "baseURL": "https://seatable.one",
+  "startedAt": "2026-04-11T13:03:26.862Z",
+  "finishedAt": "2026-04-11T13:05:45.917Z",
+  "routeResults": [
+    {
+      "kind": "route",
+      "name": "dashboard",
+      "path": "/host-dashboard/simple",
+      "url": "https://seatable.one/host-dashboard/simple",
+      "issues": [],
+      "responses": [],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "C:\\Users\\stefa\\restaurant-ai-mcp\\tasks\\platform-audit-2026-04-11\\deeper-prod-audit\\dashboard.png"
+    },
+    {
+      "kind": "route",
+      "name": "calls",
+      "path": "/host-dashboard/calls",
+      "url": "https://seatable.one/host-dashboard/calls",
+      "issues": [],
+      "responses": [],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "C:\\Users\\stefa\\restaurant-ai-mcp\\tasks\\platform-audit-2026-04-11\\deeper-prod-audit\\calls.png"
+    },
+    {
+      "kind": "route",
+      "name": "tables",
+      "path": "/host-dashboard/tables",
+      "url": "https://seatable.one/host-dashboard/tables",
+      "issues": [],
+      "responses": [],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "C:\\Users\\stefa\\restaurant-ai-mcp\\tasks\\platform-audit-2026-04-11\\deeper-prod-audit\\tables.png"
+    },
+    {
+      "kind": "route",
+      "name": "floor-plan",
+      "path": "/host-dashboard/floor-plan",
+      "url": "https://seatable.one/host-dashboard/floor-plan",
+      "issues": [],
+      "responses": [],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "C:\\Users\\stefa\\restaurant-ai-mcp\\tasks\\platform-audit-2026-04-11\\deeper-prod-audit\\floor-plan.png"
+    },
+    {
+      "kind": "route",
+      "name": "voice-settings",
+      "path": "/host-dashboard/voice-settings",
+      "url": "https://seatable.one/host-dashboard/voice-settings",
+      "issues": [],
+      "responses": [],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "C:\\Users\\stefa\\restaurant-ai-mcp\\tasks\\platform-audit-2026-04-11\\deeper-prod-audit\\voice-settings.png"
+    },
+    {
+      "kind": "route",
+      "name": "whatsapp",
+      "path": "/host-dashboard/whatsapp",
+      "url": "https://seatable.one/host-dashboard/whatsapp",
+      "issues": [],
+      "responses": [],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "C:\\Users\\stefa\\restaurant-ai-mcp\\tasks\\platform-audit-2026-04-11\\deeper-prod-audit\\whatsapp.png"
+    },
+    {
+      "kind": "route",
+      "name": "insights",
+      "path": "/host-dashboard/insights",
+      "url": "https://seatable.one/host-dashboard/insights",
+      "issues": [],
+      "responses": [],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "C:\\Users\\stefa\\restaurant-ai-mcp\\tasks\\platform-audit-2026-04-11\\deeper-prod-audit\\insights.png"
+    },
+    {
+      "kind": "route",
+      "name": "ltv",
+      "path": "/host-dashboard/ltv",
+      "url": "https://seatable.one/host-dashboard/ltv",
+      "issues": [],
+      "responses": [],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "C:\\Users\\stefa\\restaurant-ai-mcp\\tasks\\platform-audit-2026-04-11\\deeper-prod-audit\\ltv.png"
+    },
+    {
+      "kind": "route",
+      "name": "team",
+      "path": "/host-dashboard/team",
+      "url": "https://seatable.one/host-dashboard/team",
+      "issues": [],
+      "responses": [],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "C:\\Users\\stefa\\restaurant-ai-mcp\\tasks\\platform-audit-2026-04-11\\deeper-prod-audit\\team.png"
+    },
+    {
+      "kind": "route",
+      "name": "settings",
+      "path": "/host-dashboard/settings",
+      "url": "https://seatable.one/host-dashboard/settings",
+      "issues": [],
+      "responses": [],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "C:\\Users\\stefa\\restaurant-ai-mcp\\tasks\\platform-audit-2026-04-11\\deeper-prod-audit\\settings.png"
+    },
+    {
+      "kind": "route",
+      "name": "manager-ai",
+      "path": "/host-dashboard/manager-ai",
+      "url": "https://seatable.one/host-dashboard/manager-ai",
+      "issues": [],
+      "responses": [],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "C:\\Users\\stefa\\restaurant-ai-mcp\\tasks\\platform-audit-2026-04-11\\deeper-prod-audit\\manager-ai.png"
+    },
+    {
+      "kind": "route",
+      "name": "campaigns",
+      "path": "/host-dashboard/campaigns",
+      "url": "https://seatable.one/host-dashboard/campaigns",
+      "issues": [],
+      "responses": [],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "C:\\Users\\stefa\\restaurant-ai-mcp\\tasks\\platform-audit-2026-04-11\\deeper-prod-audit\\campaigns.png"
+    },
+    {
+      "kind": "route",
+      "name": "coupons",
+      "path": "/host-dashboard/coupons",
+      "url": "https://seatable.one/host-dashboard/coupons",
+      "issues": [],
+      "responses": [],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "C:\\Users\\stefa\\restaurant-ai-mcp\\tasks\\platform-audit-2026-04-11\\deeper-prod-audit\\coupons.png"
+    },
+    {
+      "kind": "route",
+      "name": "events",
+      "path": "/host-dashboard/events",
+      "url": "https://seatable.one/host-dashboard/events",
+      "issues": [],
+      "responses": [],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "C:\\Users\\stefa\\restaurant-ai-mcp\\tasks\\platform-audit-2026-04-11\\deeper-prod-audit\\events.png"
+    },
+    {
+      "kind": "route",
+      "name": "customers",
+      "path": "/host-dashboard/customers",
+      "url": "https://seatable.one/host-dashboard/customers",
+      "issues": [],
+      "responses": [],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "C:\\Users\\stefa\\restaurant-ai-mcp\\tasks\\platform-audit-2026-04-11\\deeper-prod-audit\\customers.png"
+    },
+    {
+      "kind": "route",
+      "name": "integrations",
+      "path": "/host-dashboard/integrations",
+      "url": "https://seatable.one/host-dashboard/integrations",
+      "issues": [],
+      "responses": [],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "C:\\Users\\stefa\\restaurant-ai-mcp\\tasks\\platform-audit-2026-04-11\\deeper-prod-audit\\integrations.png"
+    }
+  ],
+  "workflowResult": {
+    "kind": "workflow",
+    "name": "reservation-lifecycle",
+    "issues": [],
+    "createdName": "PROD AUDIT 20260411-1305",
+    "createdDate": "2026-04-12",
+    "screenshots": [
+      "C:\\Users\\stefa\\restaurant-ai-mcp\\tasks\\platform-audit-2026-04-11\\deeper-prod-audit\\reservation-after-create.png",
+      "C:\\Users\\stefa\\restaurant-ai-mcp\\tasks\\platform-audit-2026-04-11\\deeper-prod-audit\\reservation-after-edit.png",
+      "C:\\Users\\stefa\\restaurant-ai-mcp\\tasks\\platform-audit-2026-04-11\\deeper-prod-audit\\reservation-after-cancel.png"
+    ],
+    "steps": [
+      "opened add reservation modal",
+      "submitted reservation create",
+      "located created reservation in tomorrow list",
+      "submitted reservation edit",
+      "verified edited reservation note in list",
+      "submitted reservation cancellation",
+      "verified reservation cleanup from list"
+    ]
+  },
+  "summary": {
+    "routesAudited": 16,
+    "routesWithIssues": 0,
+    "workflowIssues": 0
+  }
+}

@@ -1420,7 +1420,16 @@
     "resubscribe": "Reassinar",
     "statusActive": "Ativo",
     "statusPastDue": "Pagamento Pendente",
-    "statusCanceled": "Cancelado"
+    "statusCanceled": "Cancelado",
+    "accessDashboard": "Acessar painel →",
+    "betaTitle": "Acesso Beta — 30 dias grátis",
+    "betaDesc": "Seu código beta foi aplicado. Escolha qualquer plano e comece sem pagar nada agora.",
+    "betaNoFees": "30 dias grátis, depois cancele quando quiser.",
+    "trialBadge": "14 dias grátis",
+    "loading": "Aguarde...",
+    "startTrial": "Começar Teste Grátis",
+    "start": "Começar",
+    "faleConosco": "Fale conosco"
   },
   "team": {
     "title": "Equipe",

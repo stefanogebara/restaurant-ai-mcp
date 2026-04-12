@@ -1,0 +1,68 @@
+[
+  {
+    "name": "Dialetto Ristorante",
+    "email": "contato@dialettoristorante.com.br",
+    "cuisine": "Italiana",
+    "neighborhood": "Chácara Santo Antônio",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T10:43:56.199Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:11:01.553Z"
+  },
+  {
+    "name": "Sushi Isao",
+    "email": "sushiisao@sushiisao.com.br",
+    "cuisine": "Japonesa",
+    "neighborhood": "Liberdade",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T10:44:00.258Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:11:02.753Z"
+  },
+  {
+    "name": "Rinconcito Peruano",
+    "email": "marketing@rinconcitoperuano.com.br",
+    "cuisine": "Peruana",
+    "neighborhood": "Múltiplas unidades",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T10:44:04.327Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:11:02.964Z"
+  },
+  {
+    "name": "Bar da Dona Onça",
+    "email": "comunicacao@bardadonaonca.com.br",
+    "cuisine": "Brasileira/Bar",
+    "neighborhood": "Centro",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T10:44:08.434Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:11:03.175Z"
+  },
+  {
+    "name": "Kazuo",
+    "email": "contato@kazuorestaurante.com.br",
+    "cuisine": "Pan-Asiática",
+    "neighborhood": "Jardim Europa",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T10:44:12.653Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:11:03.292Z"
+  },
+  {
+    "name": "Panvino Wine Bistrô",
+    "email": "contato@panvino.com.br",
+    "cuisine": "Italiana/Wine Bar",
+    "neighborhood": "Brooklin",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T10:44:16.655Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:11:03.511Z"
+  }
+]

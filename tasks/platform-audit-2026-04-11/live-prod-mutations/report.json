@@ -1,0 +1,221 @@
+{
+  "baseURL": "https://seatable.one",
+  "ranAt": "2026-04-11T14:55:24.137Z",
+  "summary": {
+    "totalSteps": 7,
+    "failedSteps": 1,
+    "succeededSteps": 6
+  },
+  "steps": [
+    {
+      "name": "restaurant-settings-save-info",
+      "ok": true,
+      "issue": null,
+      "targetedResponses": [
+        {
+          "status": 200,
+          "method": "PUT",
+          "url": "https://seatable.one/api/restaurant-settings",
+          "json": {
+            "success": true,
+            "message": "Settings updated successfully",
+            "data": {
+              "language": "pt",
+              "restaurant_name": "Cantina Bella Vista"
+            }
+          }
+        }
+      ],
+      "responses": [],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "C:\\Users\\stefa\\restaurant-ai-mcp\\tasks\\platform-audit-2026-04-11\\live-prod-mutations\\restaurant-settings-save-info.png",
+      "notes": []
+    },
+    {
+      "name": "restaurant-settings-save-hours",
+      "ok": true,
+      "issue": null,
+      "targetedResponses": [
+        {
+          "status": 200,
+          "method": "PUT",
+          "url": "https://seatable.one/api/restaurant-settings",
+          "json": {
+            "success": true,
+            "message": "Settings updated successfully",
+            "data": {
+              "language": "pt",
+              "restaurant_name": "Cantina Bella Vista"
+            }
+          }
+        }
+      ],
+      "responses": [],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "C:\\Users\\stefa\\restaurant-ai-mcp\\tasks\\platform-audit-2026-04-11\\live-prod-mutations\\restaurant-settings-save-hours.png",
+      "notes": []
+    },
+    {
+      "name": "restaurant-settings-save-policies",
+      "ok": true,
+      "issue": null,
+      "targetedResponses": [
+        {
+          "status": 200,
+          "method": "PUT",
+          "url": "https://seatable.one/api/restaurant-settings",
+          "json": {
+            "success": true,
+            "message": "Settings updated successfully",
+            "data": {
+              "language": "pt",
+              "restaurant_name": "Cantina Bella Vista"
+            }
+          }
+        }
+      ],
+      "responses": [],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "C:\\Users\\stefa\\restaurant-ai-mcp\\tasks\\platform-audit-2026-04-11\\live-prod-mutations\\restaurant-settings-save-policies.png",
+      "notes": []
+    },
+    {
+      "name": "whatsapp-save-current",
+      "ok": true,
+      "issue": null,
+      "targetedResponses": [
+        {
+          "status": 200,
+          "method": "PATCH",
+          "url": "https://seatable.one/api/whatsapp-settings?action=update",
+          "json": {
+            "success": true,
+            "data": {
+              "enabled": true,
+              "phone_number": "+5511999002121"
+            }
+          }
+        }
+      ],
+      "responses": [],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "C:\\Users\\stefa\\restaurant-ai-mcp\\tasks\\platform-audit-2026-04-11\\live-prod-mutations\\whatsapp-save-current.png",
+      "notes": [
+        "Phone length: 14"
+      ]
+    },
+    {
+      "name": "voice-save-current",
+      "ok": false,
+      "issue": "Could not find selected current voice control for a safe no-op save",
+      "targetedResponses": [],
+      "responses": [],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "C:\\Users\\stefa\\restaurant-ai-mcp\\tasks\\platform-audit-2026-04-11\\live-prod-mutations\\voice-save-current.png",
+      "notes": []
+    },
+    {
+      "name": "floor-plan-drag-and-revert",
+      "ok": true,
+      "issue": null,
+      "targetedResponses": [
+        {
+          "status": 200,
+          "method": "POST",
+          "url": "https://seatable.one/api/host-dashboard?action=update-table-position",
+          "json": {
+            "success": true,
+            "message": "Table position updated successfully",
+            "table": {
+              "id": "a1b2feac-3d8b-4d13-97ef-fd7eb5cf24e3",
+              "table_number": 1,
+              "capacity": 2,
+              "location": "Indoor",
+              "status": "available",
+              "shape": "round",
+              "is_fixed_seating": false,
+              "is_joinable": true,
+              "joinable_with": [],
+              "position_x": 8,
+              "position_y": 9,
+              "width": 1,
+              "height": 1,
+              "rotation": 0,
+              "is_fixed": false,
+              "min_capacity": 1,
+              "max_capacity": null,
+              "adjacent_tables": [],
+              "combination_group": null
+            }
+          }
+        },
+        {
+          "status": 200,
+          "method": "POST",
+          "url": "https://seatable.one/api/host-dashboard?action=update-table-position",
+          "json": {
+            "success": true,
+            "message": "Table position updated successfully",
+            "table": {
+              "id": "a1b2feac-3d8b-4d13-97ef-fd7eb5cf24e3",
+              "table_number": 1,
+              "capacity": 2,
+              "location": "Indoor",
+              "status": "available",
+              "shape": "round",
+              "is_fixed_seating": false,
+              "is_joinable": true,
+              "joinable_with": [],
+              "position_x": 6,
+              "position_y": 9,
+              "width": 1,
+              "height": 1,
+              "rotation": 0,
+              "is_fixed": false,
+              "min_capacity": 1,
+              "max_capacity": null,
+              "adjacent_tables": [],
+              "combination_group": null
+            }
+          }
+        }
+      ],
+      "responses": [],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "C:\\Users\\stefa\\restaurant-ai-mcp\\tasks\\platform-audit-2026-04-11\\live-prod-mutations\\floor-plan-drag-and-revert.png",
+      "notes": [
+        "Dragged first floor-plan table",
+        "Reverted first floor-plan table"
+      ]
+    },
+    {
+      "name": "manager-ai-send-message",
+      "ok": true,
+      "issue": null,
+      "targetedResponses": [
+        {
+          "status": 200,
+          "method": "POST",
+          "url": "https://seatable.one/api/manager-chat",
+          "json": {
+            "success": true,
+            "reply": "manager ai ok"
+          }
+        }
+      ],
+      "responses": [],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "C:\\Users\\stefa\\restaurant-ai-mcp\\tasks\\platform-audit-2026-04-11\\live-prod-mutations\\manager-ai-send-message.png",
+      "notes": [
+        "Reply preview: manager ai ok"
+      ]
+    }
+  ]
+}

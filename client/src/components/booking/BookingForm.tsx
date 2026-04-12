@@ -159,6 +159,15 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
     if (depositRequired && !paymentIntentId) {
       setDepositError(null);
       try {
+        // Fetch a short-lived booking token before creating the PaymentIntent
+        const tokenRes = await fetch('/api/booking-token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ restaurant_id: restaurant.id }),
+        });
+        const tokenData = await tokenRes.json();
+        if (!tokenRes.ok || !tokenData.token) throw new Error('Failed to authorise payment setup');
+
         const res = await fetch('/api/create-deposit-intent', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -166,6 +175,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
             restaurant_id: restaurant.id,
             party_size: partySize,
             customer_email: customerEmail.trim() || undefined,
+            booking_token: tokenData.token,
           }),
         });
         const data = await res.json();

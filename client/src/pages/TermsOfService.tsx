@@ -165,7 +165,7 @@ export default function TermsOfService() {
             <h2 className="text-lg font-semibold text-deep-charcoal mb-3">
               {showPtNotice ? '12. Contato' : '12. Contact'}
             </h2>
-            <p><a href="mailto:seatable.ai.br@gmail.com" className="text-burgundy hover:underline">seatable.ai.br@gmail.com</a></p>
+            <p><a href="mailto:hello@seatable.one" className="text-burgundy hover:underline">hello@seatable.one</a></p>
           </section>
         </div>
 

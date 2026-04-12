@@ -210,7 +210,7 @@ export default function SubscriptionManage() {
           {/* Help */}
           <p className="text-center text-sm text-muted-stone mt-10">
             {t('subscription.needHelp')}{' '}
-            <a href="mailto:seatable.ai.br@gmail.com" className="text-burgundy hover:text-burgundy-dark transition-colors">{t('subscription.contactSupport')}</a>
+            <a href="mailto:hello@seatable.one" className="text-burgundy hover:text-burgundy-dark transition-colors">{t('subscription.contactSupport')}</a>
           </p>
         </div>
       </div>
@@ -220,43 +220,44 @@ export default function SubscriptionManage() {
 
 // ─── Plan picker shown to users with no active subscription ─────────────────
 
-const NO_PLAN_TIERS = [
-  {
-    key: 'starter',
-    name: 'Essencial',
-    priceId: import.meta.env.VITE_STRIPE_STARTER_PRICE_ID || '',
-    brl: 'R$497',
-    desc: 'Perfeito para restaurantes pequenos',
-    features: ['Reservas com IA (Chat + WhatsApp)', 'Painel do anfitrião', 'Análises básicas', 'Suporte por e-mail', 'Até 50 reservas/mês'],
-    highlighted: false,
-    planName: 'Starter',
-  },
-  {
-    key: 'growth',
-    name: 'Profissional',
-    priceId: import.meta.env.VITE_STRIPE_GROWTH_PRICE_ID || '',
-    brl: 'R$1.497',
-    desc: 'Para restaurantes em crescimento',
-    features: ['Tudo do Essencial', 'Agente de voz com IA', 'Análises avançadas', 'Gestão de lista de espera', 'Até 150 reservas/mês', 'Notificações por SMS'],
-    highlighted: true,
-    planName: 'Growth',
-    trial: true,
-  },
-  {
-    key: 'scale',
-    name: 'Enterprise',
-    priceId: import.meta.env.VITE_STRIPE_SCALE_PRICE_ID || '',
-    brl: 'R$2.997',
-    desc: 'Para restaurantes de alto volume',
-    features: ['Tudo do Profissional', 'Reservas ilimitadas', 'SMS ilimitado', 'Suporte prioritário', 'Integrações personalizadas'],
-    highlighted: false,
-    planName: 'Scale',
-  },
-];
-
 function NoPlanPricing() {
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const { error } = useToast();
+  const { t } = useTranslation();
+
+  const NO_PLAN_TIERS = [
+    {
+      key: 'starter',
+      name: t('subscription.starterName'),
+      priceId: import.meta.env.VITE_STRIPE_STARTER_PRICE_ID || '',
+      brl: 'R$497',
+      desc: t('subscription.starterDesc'),
+      features: [t('subscription.starterF1'), t('subscription.starterF2'), t('subscription.starterF3'), t('subscription.starterF4'), t('subscription.starterF5')],
+      highlighted: false,
+      planName: 'Starter',
+    },
+    {
+      key: 'growth',
+      name: t('subscription.growthName'),
+      priceId: import.meta.env.VITE_STRIPE_GROWTH_PRICE_ID || '',
+      brl: 'R$1.497',
+      desc: t('subscription.growthDesc'),
+      features: [t('subscription.growthF1'), t('subscription.growthF2'), t('subscription.growthF3'), t('subscription.growthF4'), t('subscription.growthF5')],
+      highlighted: true,
+      planName: 'Growth',
+      trial: true,
+    },
+    {
+      key: 'scale',
+      name: t('subscription.scaleName'),
+      priceId: import.meta.env.VITE_STRIPE_SCALE_PRICE_ID || '',
+      brl: 'R$2.997',
+      desc: t('subscription.scaleDesc'),
+      features: [t('subscription.scaleF1'), t('subscription.scaleF2'), t('subscription.scaleF3'), t('subscription.scaleF4'), t('subscription.scaleF5')],
+      highlighted: false,
+      planName: 'Scale',
+    },
+  ];
 
   // Beta access: read ?beta=CODE from URL and persist in sessionStorage
   const betaCode = (() => {
@@ -297,7 +298,7 @@ function NoPlanPricing() {
           seatable<span className="text-burgundy">.</span>
         </div>
         <a href="/host-dashboard/simple" className="text-[13px] text-warm-stone hover:text-stone-gray transition-colors">
-          Acessar painel →
+          {t('subscription.accessDashboard')}
         </a>
       </header>
 
@@ -307,21 +308,21 @@ function NoPlanPricing() {
             <div className="mb-10 bg-amber-50 border border-amber-200 rounded-xl px-5 py-4 flex items-center gap-3">
               <span className="text-lg">🎉</span>
               <div>
-                <p className="text-sm font-semibold text-amber-900">Acesso Beta — 30 dias grátis</p>
-                <p className="text-xs text-amber-700 mt-0.5">Seu código beta foi aplicado. Escolha qualquer plano e comece sem pagar nada agora.</p>
+                <p className="text-sm font-semibold text-amber-900">{t('subscription.betaTitle')}</p>
+                <p className="text-xs text-amber-700 mt-0.5">{t('subscription.betaDesc')}</p>
               </div>
             </div>
           )}
 
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-burgundy/[6%] rounded-full mb-5">
-              <span className="text-xs font-semibold tracking-[1.5px] uppercase text-burgundy">Planos</span>
+              <span className="text-xs font-semibold tracking-[1.5px] uppercase text-burgundy">{t('subscription.plans')}</span>
             </div>
             <h1 className="font-serif text-[40px] font-medium tracking-tight text-deep-charcoal mb-3">
-              Escolha seu plano
+              {t('subscription.chooseRightPlan')}
             </h1>
             <p className="text-[17px] text-warm-stone font-light">
-              {betaCode ? '30 dias grátis, depois cancele quando quiser.' : 'Sem taxas ocultas. Cancele quando quiser.'}
+              {betaCode ? t('subscription.betaNoFees') : t('subscription.noHiddenFees')}
             </p>
           </div>
 
@@ -333,7 +334,7 @@ function NoPlanPricing() {
                   {tier.trial && !betaCode && (
                     <div className="absolute top-0 inset-x-0 flex justify-center">
                       <span className="bg-burgundy text-white text-[11px] font-semibold tracking-wide uppercase px-4 py-1 rounded-b-lg">
-                        14 dias grátis
+                        {t('subscription.trialBadge')}
                       </span>
                     </div>
                   )}
@@ -341,7 +342,7 @@ function NoPlanPricing() {
                     {tier.name}
                   </div>
                   <div className={`font-serif text-[42px] font-medium tracking-tight leading-none mb-1 ${tier.highlighted ? 'text-white' : 'text-deep-charcoal'}`}>
-                    {tier.brl}<span className={`text-base font-normal ${tier.highlighted ? 'text-muted-stone' : 'text-warm-stone'}`}>/mês</span>
+                    {tier.brl}<span className={`text-base font-normal ${tier.highlighted ? 'text-muted-stone' : 'text-warm-stone'}`}>{t('subscription.perMonth')}</span>
                   </div>
                   <p className={`text-sm font-light mb-7 mt-2 ${tier.highlighted ? 'text-muted-stone' : 'text-warm-stone'}`}>{tier.desc}</p>
                   <ul className="mb-8 space-y-0">
@@ -363,7 +364,7 @@ function NoPlanPricing() {
                     }`}
                   >
                     {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
-                    {isLoading ? 'Aguarde...' : tier.trial ? 'Começar Teste Grátis' : 'Começar'}
+                    {isLoading ? t('subscription.loading') : tier.trial ? t('subscription.startTrial') : t('subscription.start')}
                   </button>
                 </div>
               );
@@ -371,9 +372,9 @@ function NoPlanPricing() {
           </div>
 
           <p className="text-center text-sm text-muted-stone mt-8">
-            Precisa de ajuda?{' '}
-            <a href="mailto:seatable.ai.br@gmail.com" className="text-burgundy hover:text-burgundy-dark transition-colors">
-              Fale conosco
+            {t('subscription.needHelp')}{' '}
+            <a href="mailto:hello@seatable.one" className="text-burgundy hover:text-burgundy-dark transition-colors">
+              {t('subscription.faleConosco')}
             </a>
           </p>
         </div>

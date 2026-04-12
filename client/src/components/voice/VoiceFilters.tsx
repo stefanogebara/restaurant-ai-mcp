@@ -3,6 +3,7 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import { SUPPORTED_LANGUAGES } from './voiceConstants';
 import type { VoiceFiltersState } from './voiceTypes';
@@ -21,6 +22,7 @@ const GENDER_OPTIONS = [
 ];
 
 export default function VoiceFilters({ filters, onChange, defaultLanguage = 'en', hideSearch = false }: VoiceFiltersProps) {
+  const { t } = useTranslation();
   const [searchInput, setSearchInput] = useState(filters.search);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -81,7 +83,7 @@ export default function VoiceFilters({ filters, onChange, defaultLanguage = 'en'
           </span>
           <input
             type="text"
-            placeholder="Search voices..."
+            placeholder={t('voice.searchVoices', 'Search voices...')}
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             className="w-full pl-9 pr-3 py-2 text-sm border border-border-gray rounded-xl bg-white text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy/50"

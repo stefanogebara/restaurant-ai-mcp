@@ -57,6 +57,7 @@ module.exports = async (req, res) => {
       .select('id, restaurant_id, title, description, event_date, event_time, duration_minutes, max_capacity, current_bookings, price, is_active, refund_policy, cover_image_url, menu_description')
       .eq('id', event_id)
       .eq('restaurant_id', restaurant.id)
+      .eq('is_active', true)
       .single();
 
     if (eventError || !event) {

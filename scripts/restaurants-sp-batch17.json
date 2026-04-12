@@ -1,0 +1,156 @@
+[
+  {
+    "name": "Bar do Juarez",
+    "email": "isabella@bardojuarez.com.br",
+    "cuisine": "Brasileira/Bar e Grill",
+    "neighborhood": "Múltiplas unidades",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T12:24:58.156Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:11:08.200Z"
+  },
+  {
+    "name": "Spot Restaurante",
+    "email": "spot@restaurantespot.com.br",
+    "cuisine": "Brasileira Contemporânea",
+    "neighborhood": "Consolação",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T12:25:02.175Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:11:08.472Z"
+  },
+  {
+    "name": "Piselli Restaurante",
+    "email": "piselli@piselli.com.br",
+    "cuisine": "Italiana",
+    "neighborhood": "Jardins",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T12:25:06.389Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:11:08.562Z"
+  },
+  {
+    "name": "Tutto Bene Cantina Italiana",
+    "email": "tuttobenecantina@tuttobenecantina.com.br",
+    "cuisine": "Italiana",
+    "neighborhood": "Santana",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T12:25:10.400Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:11:13.270Z"
+  },
+  {
+    "name": "Blend Alphaville",
+    "email": "contato@blendalphaville.com.br",
+    "cuisine": "Contemporânea/Pizza Bar",
+    "neighborhood": "Alphaville/Barueri",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T12:25:14.346Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:11:13.401Z"
+  },
+  {
+    "name": "Beco Alfas",
+    "email": "contato@becoalfas.com.br",
+    "cuisine": "Bar/Restaurante",
+    "neighborhood": "Tamboré/Barueri",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T12:25:18.350Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:11:13.617Z"
+  },
+  {
+    "name": "Iroha Lapa",
+    "email": "contato@irohalapa.com.br",
+    "cuisine": "Japonesa",
+    "neighborhood": "Alto da Lapa",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T12:25:22.279Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:11:13.769Z"
+  },
+  {
+    "name": "1900 Pizzeria",
+    "email": "sac@1900.com.br",
+    "cuisine": "Pizza Napolitana",
+    "neighborhood": "Múltiplas unidades",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T12:25:26.377Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:11:13.873Z"
+  },
+  {
+    "name": "Balacotaco",
+    "email": "comercial@balacotaco.com.br",
+    "cuisine": "Mexicana",
+    "neighborhood": "Mooca",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T12:25:30.657Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:11:14.160Z"
+  },
+  {
+    "name": "Sancho Bar y Tapas",
+    "email": "faleconosco@sanchobarytapas.com.br",
+    "cuisine": "Espanhola/Tapas",
+    "neighborhood": "Consolação",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T12:25:34.613Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:11:16.262Z"
+  },
+  {
+    "name": "Montana Grill",
+    "email": "sac@montanagrill.com.br",
+    "cuisine": "Grelhados/Steakhouse",
+    "neighborhood": "Múltiplas unidades",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T12:25:38.591Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:11:16.355Z"
+  },
+  {
+    "name": "Bullguer",
+    "email": "sac@bullguer.com.br",
+    "cuisine": "Hambúrguer Gourmet",
+    "neighborhood": "Múltiplas unidades",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T12:25:42.595Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:11:16.829Z"
+  },
+  {
+    "name": "Sushimar",
+    "email": "contato@sushimar.com.br",
+    "cuisine": "Japonesa",
+    "neighborhood": "Jardins",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T12:25:46.591Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:11:16.954Z"
+  },
+  {
+    "name": "Aoyama Restaurante Japonês",
+    "email": "contato@restauranteaoyama.com.br",
+    "cuisine": "Japonesa/Rodízio",
+    "neighborhood": "Múltiplas unidades",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T12:25:50.899Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:11:17.428Z"
+  }
+]

@@ -12,6 +12,7 @@
       }
     ]
   },
+  "enableAllProjectMcpServers": true,
   "permissions": {
     "allow": [
       "Bash(vercel:*)",

@@ -1,0 +1,90 @@
+[
+  {
+    "name": "No Carvão Churrascaria",
+    "email": "contato@nocarvao.com.br",
+    "cuisine": "Churrascaria/Rodízio",
+    "neighborhood": "Mooca",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T11:01:16.726Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:11:04.920Z"
+  },
+  {
+    "name": "Taco SP",
+    "email": "tacosp@tacosp.com.br",
+    "cuisine": "Mexicana",
+    "neighborhood": "Campo Belo",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T11:01:21.140Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:11:05.050Z"
+  },
+  {
+    "name": "O Boteco Argentino",
+    "email": "faleconosco@obotecoargentino.com.br",
+    "cuisine": "Boteco/Argentina",
+    "neighborhood": "Perdizes",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T11:01:25.435Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:11:05.287Z"
+  },
+  {
+    "name": "7 Mares Restaurante",
+    "email": "falecom@7mares.com.br",
+    "cuisine": "Frutos do Mar",
+    "neighborhood": "Santo André",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T11:01:29.866Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:11:05.572Z"
+  },
+  {
+    "name": "Leggera Pizza Napoletana",
+    "email": "contato@pizzerialeggera.com.br",
+    "cuisine": "Pizza Napolitana",
+    "neighborhood": "Perdizes",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T11:01:34.143Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:11:05.859Z"
+  },
+  {
+    "name": "Don Carlini Ristorante",
+    "email": "restaurante@doncarlini.com.br",
+    "cuisine": "Italiana",
+    "neighborhood": "Mooca",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T11:01:38.826Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:11:06.151Z"
+  },
+  {
+    "name": "Restaurante Industrial BelVit",
+    "email": "belvit@restauranteindustrial.com.br",
+    "cuisine": "Brasileira",
+    "neighborhood": "Mooca",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T11:01:42.916Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:11:06.244Z"
+  },
+  {
+    "name": "Pilão Mineiro",
+    "email": "pilaomineiro@pilaomineiro.com.br",
+    "cuisine": "Mineira/Brasileira",
+    "neighborhood": "Santo André",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T11:01:47.143Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:11:06.444Z"
+  }
+]

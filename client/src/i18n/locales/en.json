@@ -1409,7 +1409,16 @@
     "resubscribe": "Resubscribe",
     "statusActive": "Active",
     "statusPastDue": "Past Due",
-    "statusCanceled": "Canceled"
+    "statusCanceled": "Canceled",
+    "accessDashboard": "Access dashboard →",
+    "betaTitle": "Beta Access — 30 days free",
+    "betaDesc": "Your beta code was applied. Choose any plan and start for free now.",
+    "betaNoFees": "30 days free, then cancel anytime.",
+    "trialBadge": "14 days free",
+    "loading": "Please wait...",
+    "startTrial": "Start Free Trial",
+    "start": "Get Started",
+    "faleConosco": "Talk to us"
   },
   "team": {
     "title": "Team",

@@ -1,0 +1,91 @@
+[
+  {
+    "name": "Antiquarius",
+    "email": "informacoes@antiquarius.com.br",
+    "cuisine": "Portuguesa",
+    "neighborhood": "Jardins",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T12:50:57.456Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:11:17.917Z"
+  },
+  {
+    "name": "Amí Bistrô",
+    "email": "cliente@amibistro.com.br",
+    "cuisine": "Italiana/Wine Bar",
+    "neighborhood": "São Bernardo do Campo",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T12:51:01.688Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:11:19.540Z"
+  },
+  {
+    "name": "Villa Jockey",
+    "email": "reservas@jockeysp.com.br",
+    "cuisine": "Brasileira/Eventos",
+    "neighborhood": "Cidade Jardim",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T12:51:06.297Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:11:19.627Z"
+  },
+  {
+    "name": "Grand Hyatt São Paulo",
+    "email": "hosts.ghsaopaulo@hyatt.com",
+    "cuisine": "Italiana/Japonesa",
+    "neighborhood": "Vila Olímpia",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T12:51:10.415Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:11:19.692Z"
+  },
+  {
+    "name": "Canvas Bar & Restaurant",
+    "email": "reservations.morumbi@hilton.com",
+    "cuisine": "Brasileira Contemporânea",
+    "neighborhood": "Morumbi",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T12:51:14.473Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:11:19.737Z"
+  },
+  {
+    "name": "Eataly São Paulo",
+    "email": "sac@eataly.com.br",
+    "cuisine": "Italiana/Multi-conceito",
+    "neighborhood": "Vila Nova Conceição",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T12:51:19.838Z",
+    "verified": false,
+    "verifyError": "DNS error: ENOTFOUND",
+    "verifiedAt": "2026-03-04T15:11:19.788Z"
+  },
+  {
+    "name": "La Serena São Paulo",
+    "email": "contato@laserenasaopaulo.com",
+    "cuisine": "Italiana/Riviera",
+    "neighborhood": "Vila Olímpia",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T12:51:23.935Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:11:19.861Z"
+  },
+  {
+    "name": "O Gato Que Ri",
+    "email": "contato@ogatoqueri.com.br",
+    "cuisine": "Italiana Tradicional",
+    "neighborhood": "República",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T12:51:28.276Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:11:19.961Z"
+  }
+]

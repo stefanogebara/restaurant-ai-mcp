@@ -15,6 +15,7 @@ export default function InlineDemoSection() {
   const [activePreset, setActivePreset] = useState<string>('brazilian');
   const [iframeLoaded, setIframeLoaded] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+  const [isInteracting, setIsInteracting] = useState(false);
   const sectionRef = useRef<HTMLDivElement>(null);
   const hasTracked = useRef(false);
 
@@ -34,6 +35,7 @@ export default function InlineDemoSection() {
     if (id === activePreset) return;
     setActivePreset(id);
     setIframeLoaded(false);
+    setIsInteracting(false);
     if (!hasTracked.current) {
       hasTracked.current = true;
       trackDemoFunnel({ step: 'demo_started', preset: id });
@@ -82,7 +84,7 @@ export default function InlineDemoSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-60px' }}
           transition={{ duration: 0.5 }}
-          className="rounded-2xl overflow-hidden border border-border-gray shadow-2xl bg-white"
+          className="rounded-2xl overflow-hidden border border-border-gray bg-white"
         >
           {/* Browser top bar */}
           <div className="flex items-center gap-3 px-4 py-3 bg-[#F3F4F6] border-b border-border-gray">
@@ -110,7 +112,7 @@ export default function InlineDemoSection() {
               <div className="absolute inset-0 bg-soft-gray flex items-center justify-center">
                 <div className="flex flex-col items-center gap-3">
                   <div className="w-8 h-8 border-2 border-burgundy border-t-transparent rounded-full animate-spin" />
-                  <p className="text-sm text-warm-stone">Carregando demo...</p>
+                  <p className="text-sm text-warm-stone">{t('landing.inlineDemo.loading', 'Loading demo...')}</p>
                 </div>
               </div>
             )}
@@ -120,10 +122,26 @@ export default function InlineDemoSection() {
                 src={`/demo?preset=${activePreset}&embed=true`}
                 title={`Demo — ${PRESETS.find(p => p.id === activePreset)?.label}`}
                 className="w-full h-full border-0"
+                style={{ pointerEvents: isInteracting ? 'auto' : 'none' }}
                 onLoad={() => setIframeLoaded(true)}
                 loading="lazy"
                 sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
               />
+            )}
+            {/* Click-to-interact overlay — prevents iframe from hijacking page scroll */}
+            {!isInteracting && iframeLoaded && (
+              <div
+                className="absolute inset-0 cursor-pointer flex items-end justify-center pb-6"
+                onClick={() => setIsInteracting(true)}
+                aria-label={t('landing.inlineDemo.clickToInteract', 'Click to interact with demo')}
+              >
+                <div className="bg-deep-charcoal/80 backdrop-blur-sm text-white text-xs font-medium px-4 py-2 rounded-full flex items-center gap-2">
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5" />
+                  </svg>
+                  {t('landing.inlineDemo.clickToInteract', 'Click to interact')}
+                </div>
+              </div>
             )}
           </div>
         </motion.div>

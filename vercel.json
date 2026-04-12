@@ -57,6 +57,10 @@
       "destination": "/api/booking-qr.js"
     },
     {
+      "source": "/api/booking-token",
+      "destination": "/api/booking-token.js"
+    },
+    {
       "source": "/api/widget-config",
       "destination": "/api/widget-config.js"
     },

@@ -1,0 +1,79 @@
+[
+  {
+    "name": "Chalezinho Itaim",
+    "email": "reservas@chalezinho.com",
+    "cuisine": "Europeia/Suíça",
+    "neighborhood": "Itaim Bibi",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T10:21:47.278Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:10:57.713Z"
+  },
+  {
+    "name": "A Pizza da Mooca",
+    "email": "contato@apizzadamooca.com.br",
+    "cuisine": "Pizzaria Napolitana",
+    "neighborhood": "Vila Mariana",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T10:21:51.343Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:10:57.841Z"
+  },
+  {
+    "name": "El Tranvia",
+    "email": "contato@eltranvia.com.br",
+    "cuisine": "Uruguaia/Parrilada",
+    "neighborhood": "Itaim Bibi",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T10:21:55.360Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:10:58.511Z"
+  },
+  {
+    "name": "Tatini",
+    "email": "tatinirestaurante@tatini.com.br",
+    "cuisine": "Italiana",
+    "neighborhood": "Jardim Paulista",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T10:21:59.325Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:10:58.793Z"
+  },
+  {
+    "name": "Jiquitaia",
+    "email": "contato@jiquitaia.com.br",
+    "cuisine": "Brasileira",
+    "neighborhood": "Paraíso",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T10:22:03.377Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:10:58.980Z"
+  },
+  {
+    "name": "Koi Restaurante",
+    "email": "contato@koi.com.br",
+    "cuisine": "Japonesa",
+    "neighborhood": "Moema",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T10:22:07.367Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:10:59.258Z"
+  },
+  {
+    "name": "Tortuga",
+    "email": "contato@tortugarestaurante.com.br",
+    "cuisine": "Contemporânea Franco-Espanhola",
+    "neighborhood": "Pinheiros",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T10:22:11.366Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:10:59.471Z"
+  }
+]

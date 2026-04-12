@@ -31,7 +31,7 @@ export default function PrivacyPolicy() {
               ? 'A Seatable opera a plataforma de gest\u00e3o de restaurantes em seatable.one ("o Servi\u00e7o"). Somos os controladores dos dados pessoais que voc\u00ea nos fornece.'
               : 'Seatable operates the restaurant management platform at seatable.one ("the Service"). We are the data controller for personal data you provide to us.'}
             </p>
-            <p className="mt-2">{showPtNotice ? 'Contato: ' : 'Contact: '}<a href="mailto:seatable.ai.br@gmail.com" className="text-burgundy hover:underline">seatable.ai.br@gmail.com</a></p>
+            <p className="mt-2">{showPtNotice ? 'Contato: ' : 'Contact: '}<a href="mailto:hello@seatable.one" className="text-burgundy hover:underline">hello@seatable.one</a></p>
           </section>
 
           <section>
@@ -123,8 +123,8 @@ export default function PrivacyPolicy() {
               {showPtNotice ? '7. Seus direitos' : '7. Your rights'}
             </h2>
             <p>{showPtNotice
-              ? <>Pela LGPD/GDPR, voc\u00ea tem o direito de: acessar, retificar ou excluir seus dados pessoais; restringir ou se opor ao processamento; e portabilidade de dados. Para exercer qualquer direito, envie e-mail para <a href="mailto:seatable.ai.br@gmail.com" className="text-burgundy hover:underline">seatable.ai.br@gmail.com</a>.</>
-              : <>Under GDPR you have the right to: access, rectify, or erase your personal data; restrict or object to processing; and data portability. To exercise any right, email <a href="mailto:seatable.ai.br@gmail.com" className="text-burgundy hover:underline">seatable.ai.br@gmail.com</a>.</>}
+              ? <>Pela LGPD/GDPR, voc\u00ea tem o direito de: acessar, retificar ou excluir seus dados pessoais; restringir ou se opor ao processamento; e portabilidade de dados. Para exercer qualquer direito, envie e-mail para <a href="mailto:hello@seatable.one" className="text-burgundy hover:underline">hello@seatable.one</a>.</>
+              : <>Under GDPR you have the right to: access, rectify, or erase your personal data; restrict or object to processing; and data portability. To exercise any right, email <a href="mailto:hello@seatable.one" className="text-burgundy hover:underline">hello@seatable.one</a>.</>}
             </p>
           </section>
 
@@ -142,7 +142,7 @@ export default function PrivacyPolicy() {
             <h2 className="text-lg font-semibold text-deep-charcoal mb-3">
               {showPtNotice ? '9. Contato' : '9. Contact'}
             </h2>
-            <p>{showPtNotice ? 'D\u00favidas sobre privacidade: ' : 'For privacy questions: '}<a href="mailto:seatable.ai.br@gmail.com" className="text-burgundy hover:underline">seatable.ai.br@gmail.com</a></p>
+            <p>{showPtNotice ? 'D\u00favidas sobre privacidade: ' : 'For privacy questions: '}<a href="mailto:hello@seatable.one" className="text-burgundy hover:underline">hello@seatable.one</a></p>
           </section>
         </div>
 

@@ -86,7 +86,7 @@ export default function WhatsAppWidgetSection() {
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          <div className="text-xs font-semibold tracking-[2px] uppercase text-[#0B7A2F] mb-4">
+          <div className="text-xs font-semibold tracking-[2px] uppercase text-warm-stone mb-4">
             {t('landing.whatsapp.label', 'Real AI, real WhatsApp')}
           </div>
           <h2 className="font-serif text-4xl sm:text-[48px] font-medium tracking-tight text-deep-charcoal leading-tight mb-4">
@@ -100,13 +100,13 @@ export default function WhatsAppWidgetSection() {
             target="_blank"
             rel="noopener noreferrer"
             onClick={() => trackWhatsAppTapped()}
-            className="inline-flex items-center gap-2 px-8 py-3.5 bg-whatsapp hover:bg-whatsapp/90 text-white text-[15px] font-semibold rounded-full transition-colors mb-6"
+            className="inline-flex items-center gap-2 px-8 py-3.5 bg-burgundy hover:bg-burgundy/90 text-white text-[15px] font-semibold rounded-full transition-colors mb-6"
           >
             {t('landing.whatsapp.cta', 'Send a test message')} &rarr;
           </a>
           <div className="flex items-center gap-2 text-sm text-muted-stone">
-            <span className="w-2 h-2 rounded-full bg-whatsapp animate-pulse" />
-            <span className="font-medium">{t('landing.whatsapp.trust', 'Real number: +55 11 5028-9356 · São Paulo, Brazil')}</span>
+            <span className="w-2 h-2 rounded-full bg-burgundy animate-pulse" />
+            <span className="font-medium">{t('landing.whatsapp.trust', 'Real number: +55 11 5028-2009 · São Paulo, Brazil')}</span>
           </div>
         </motion.div>
       </div>

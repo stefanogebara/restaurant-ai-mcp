@@ -1,0 +1,80 @@
+[
+  {
+    "name": "Paris 6 Bistro",
+    "email": "contato@paris6bistro.com",
+    "cuisine": "Francesa/Bistro",
+    "neighborhood": "Jardins",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T11:08:56.071Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:11:06.697Z"
+  },
+  {
+    "name": "Adega Santiago",
+    "email": "contato@adegasantiago.com.br",
+    "cuisine": "Espanhola/Tapas",
+    "neighborhood": "Jardins",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T11:09:00.040Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:11:06.972Z"
+  },
+  {
+    "name": "EAP Empório Alto dos Pinheiros",
+    "email": "contato@eapsp.com.br",
+    "cuisine": "Gastropub/Cervejaria",
+    "neighborhood": "Pinheiros",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T11:09:04.056Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:11:07.173Z"
+  },
+  {
+    "name": "Veloso Bar",
+    "email": "info@velosobar.com.br",
+    "cuisine": "Bar/Petiscos",
+    "neighborhood": "Vila Mariana",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T11:09:08.110Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:11:07.373Z"
+  },
+  {
+    "name": "Skye Restaurant",
+    "email": "skye@hotelunique.com",
+    "cuisine": "Brasileira Contemporânea/Rooftop",
+    "neighborhood": "Jardim Paulista",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T11:09:11.984Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:11:07.636Z"
+  },
+  {
+    "name": "Gino Wine Bar",
+    "email": "contato@ginowinebar.com",
+    "cuisine": "Wine Bar",
+    "neighborhood": "Pinheiros",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T11:09:16.102Z",
+    "verified": false,
+    "verifyError": "DNS error: ESERVFAIL",
+    "verifiedAt": "2026-03-04T15:11:07.928Z"
+  },
+  {
+    "name": "Clandestina Restaurante",
+    "email": "contato@clandestinorestaurante.com.br",
+    "cuisine": "Brasileira Contemporânea",
+    "neighborhood": "Vila Madalena",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T11:09:20.001Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:11:08.045Z"
+  }
+]

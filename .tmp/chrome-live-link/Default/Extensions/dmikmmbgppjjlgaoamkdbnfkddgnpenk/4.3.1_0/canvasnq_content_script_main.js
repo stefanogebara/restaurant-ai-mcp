@@ -1,0 +1,1 @@
+(()=>{function u(){return{courseId:o(),quizId:i()}}function i(){return document.getElementById("custom_canvas_assignment_id").value}function o(){return document.getElementById("custom_canvas_course_id").value}var e=u;chrome.runtime.onMessage.addListener(function(t,c,n){switch(t.id){case"CANVASNQ_GET_ACTIVITY_INFO":n(e());break}});})();

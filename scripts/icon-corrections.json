@@ -1,0 +1,54 @@
+{
+  "dollar": {
+    "id": "dollar-bill",
+    "fileId": "eFBuNm0r8VaMWxy4MM6UzQWVsUvNz7"
+  },
+  "lock": {
+    "id": "closed-padlock",
+    "fileId": "HbfVfsPVsFP2yVgGkNF9SUo9WXLa1I"
+  },
+  "microphone": {
+    "id": "retro-microphone",
+    "fileId": "KX0Z7pVafk4lcRdERs1cXpiEaqShgP"
+  },
+  "plus": {
+    "id": "plus-sign",
+    "fileId": "gnzjxrOJwkuouX6K6PRVvxhoU3v1WQ"
+  },
+  "ban": {
+    "id": "stop-sign",
+    "fileId": "wWfZbyY0ZhLrQRWyHbElqoLT1m29xJ"
+  },
+  "x-circle": {
+    "id": "x-mark",
+    "fileId": "4JenWOszbnj7MvnUwv3Imqan7lczmR"
+  },
+  "red-x": {
+    "id": "x-mark",
+    "fileId": "4JenWOszbnj7MvnUwv3Imqan7lczmR"
+  },
+  "voice": {
+    "id": "talking-skull",
+    "fileId": "dDM68a0jhOqJzBogodJvImmRLNO8uQ"
+  },
+  "activity": {
+    "id": "pulse-massager",
+    "fileId": "EXhybO6rYdBywPHE945a1FSzTcqm80"
+  },
+  "arrow-right": {
+    "id": "next-computer-cube",
+    "fileId": "EtJlxSmliiLjzL1Ba4rjjqXv2Nlm5g"
+  },
+  "arrow-left": {
+    "id": "backpack-rain-cover",
+    "fileId": "AbvH02C2XqrfmyICpipznmKPdgtcc1"
+  },
+  "chevron-down": {
+    "id": "expandable-barrier",
+    "fileId": "ukbCV2CfEwnzHvb8SohwAYhSjmySE7"
+  },
+  "chevron-up": {
+    "id": "up-arrow",
+    "fileId": "YHtpOpuD12sCS0M3Usudx7zVUwG5fS"
+  }
+}

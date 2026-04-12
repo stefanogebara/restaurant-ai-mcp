@@ -1,0 +1,41 @@
+{
+   "action": {
+      "default_title": "Open Agent"
+   },
+   "background": {
+      "service_worker": "service_worker_binary.js"
+   },
+   "chrome_url_overrides": {
+      "newtab": "static/browserLanding.html"
+   },
+   "content_scripts": [ {
+      "all_frames": true,
+      "js": [ "content_script_binary.js" ],
+      "matches": [ "\u003Call_urls>" ],
+      "run_at": "document_start"
+   } ],
+   "content_security_policy": {
+      "extension_pages": "script-src 'self'; frame-src http://localhost:*;"
+   },
+   "description": "The Antigravity Browser Extension is required for the Antigravity Agent to access the web.",
+   "externally_connectable": {
+      "matches": [ "\u003Call_urls>" ]
+   },
+   "host_permissions": [ "\u003Call_urls>" ],
+   "icons": {
+      "128": "static/icons/128x128.png",
+      "16": "static/icons/16x16.png",
+      "32": "static/icons/32x32.png",
+      "48": "static/icons/48x48.png"
+   },
+   "key": "MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAzGU8KjvGP6USY0bYKCABW3pq/etOWTeFLk/rW0LsvtVR60dr8NOiqm3G+BwRNkr4fysvz+SblHdph8M7GexKCn9BTn0pBoDgkY3nT1eVxeOPM/2PjtKvGGA/GdfovZXAqMU3AN9S6OsX9a7IpHz8BmFDubJbDC61rSToL8txiQuHU7tDPlGaZvP2FXzF7zmoRsNblF5aoBAaOrjM3+sL9XCDckgugyZV4W7ci4JscywnOB/UvbGGERFcTSSGpMQJ8HZImmdXXp1VY1oZOVwsPw7U4+Sag1fVAXoQ7pJNSqmlwNlYeeeoBlHDa5blDeY6OrB0PUsJDzEkvMc75jgQTdN6pe1gxO895xhgIqfBZxIg/Od3pD9pKps4F4hKNmU/LRDMy4zAx5eNDTAU93EWCqpgzBF7TX2Y4z8L79BXL5hAqz2ESQaOp3mIpYWMwj2uLiYCjNx4c3YMwLiwIMuNJUe1l5ML2v0AneQwsbw8AW1/mlYTBEJixs0rj2o0LJHVRTIh8T4qhI4K0PhWzajR2F5fqdGvxBJuIHIizLEYB8nnuiDlyqIE3b9d+pcZUtIkzGiNTCluU4QEy4ciLRbRfT9yiXt9F5m3jX4y47j+Lq8DRwLGxdMz/nFXW8BZJRJVCZy4igUWTrE4NE0OEfIyHxqYz/+meboEEX5RPGOO0E0CAwEAAQ==",
+   "manifest_version": 3,
+   "name": "Antigravity Browser Extension",
+   "permissions": [ "activeTab", "tabs", "webRequest", "storage", "offscreen" ],
+   "update_url": "https://clients2.google.com/service/update2/crx",
+   "version": "1.11.3",
+   "web_accessible_resources": [ {
+      "matches": [ "\u003Call_urls>" ],
+      "resources": [  ]
+   } ]
+}

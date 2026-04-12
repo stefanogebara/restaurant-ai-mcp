@@ -1,0 +1,87 @@
+{
+  "baseURL": "https://seatable.one",
+  "ranAt": "2026-04-11T15:35:59.672Z",
+  "phone": "+5511999002121",
+  "apiSnapshot": {
+    "settingsStatus": {
+      "ok": false,
+      "status": 401,
+      "url": "https://seatable.one/api/whatsapp-settings?action=status",
+      "json": {
+        "success": false,
+        "error": "Unauthorized"
+      }
+    },
+    "integrationStatus": {
+      "ok": false,
+      "status": 401,
+      "url": "https://seatable.one/api/whatsapp-status",
+      "json": {
+        "error": "Unauthorized"
+      }
+    },
+    "phoneStatus": {
+      "ok": false,
+      "status": 401,
+      "url": "https://seatable.one/api/whatsapp-settings?action=phone_status",
+      "json": {
+        "success": false,
+        "error": "Unauthorized"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "method": "POST",
+    "url": "https://seatable.one/api/whatsapp-settings?action=test",
+    "json": {
+      "success": true,
+      "message": "Test message sent successfully",
+      "messageId": "wamid.HBgNNTUxMTk5OTAwMjEyMRUCABEYEkNGNEE5QUM0NzJGNkM2OEYyMwA="
+    }
+  },
+  "resultText": [
+    "WhatsApp",
+    "WhatsApp Integration",
+    "Send reservation confirmations and chat with customers via WhatsApp.",
+    "Enable WhatsApp",
+    "Send reservation confirmations via WhatsApp instead of SMS",
+    "Owner WhatsApp Number",
+    "WHATSAPP LINK",
+    "SEND TEST MESSAGE",
+    "Send Test",
+    "Test message sent!",
+    "Customize how your AI assistant communicates on WhatsApp and phone",
+    "WhatsApp text (default)",
+    "AI-generated audio via WhatsApp",
+    "Send AI-personalized dish suggestions via WhatsApp the day before each reservation",
+    "Daily analytics via WhatsApp",
+    "WhatsApp number for briefing",
+    "Automatically send a WhatsApp message after each dining experience to collect guest feedback.",
+    "Send a satisfaction survey via WhatsApp after each visit. Collect star ratings and comments from your guests."
+  ],
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 401 ()",
+    "Failed to load resource: the server responded with a status of 401 ()",
+    "Failed to load resource: the server responded with a status of 401 ()"
+  ],
+  "pageErrors": [],
+  "errorResponses": [
+    {
+      "status": 401,
+      "method": "GET",
+      "url": "https://seatable.one/api/whatsapp-settings?action=phone_status"
+    },
+    {
+      "status": 401,
+      "method": "GET",
+      "url": "https://seatable.one/api/whatsapp-settings?action=status"
+    },
+    {
+      "status": 401,
+      "method": "GET",
+      "url": "https://seatable.one/api/whatsapp-status"
+    }
+  ],
+  "screenshot": "C:\\Users\\stefa\\restaurant-ai-mcp\\tasks\\platform-audit-2026-04-11\\whatsapp-live-retest-postfix\\whatsapp-test-result.png"
+}

@@ -1347,7 +1347,16 @@
     "resubscribe": "Resuscribirse",
     "statusActive": "Activa",
     "statusPastDue": "Pago Pendiente",
-    "statusCanceled": "Cancelada"
+    "statusCanceled": "Cancelada",
+    "accessDashboard": "Acceder al panel →",
+    "betaTitle": "Acceso Beta — 30 días gratis",
+    "betaDesc": "Tu código beta fue aplicado. Elige cualquier plan y comienza sin pagar ahora.",
+    "betaNoFees": "30 días gratis, luego cancela cuando quieras.",
+    "trialBadge": "14 días gratis",
+    "loading": "Espere...",
+    "startTrial": "Comenzar Prueba Gratis",
+    "start": "Comenzar",
+    "faleConosco": "Contáctanos"
   },
   "landing": {
     "badge": "Gestión de Restaurantes con IA",

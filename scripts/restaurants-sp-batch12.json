@@ -1,0 +1,57 @@
+[
+  {
+    "name": "Le Manjue",
+    "email": "contato@lemanjue.com.br",
+    "cuisine": "Orgânica/Funcional",
+    "neighborhood": "Vila Nova Conceição",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T10:26:40.451Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:10:59.935Z"
+  },
+  {
+    "name": "Nambu",
+    "email": "contato@namburestaurante.com",
+    "cuisine": "Brasileira/Funcional",
+    "neighborhood": "Higienópolis",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T10:26:44.387Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:11:00.529Z"
+  },
+  {
+    "name": "Accanto",
+    "email": "contato@accantorestaurante.com.br",
+    "cuisine": "Italiana",
+    "neighborhood": "Chácara Santo Antônio",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T10:26:48.353Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:11:00.649Z"
+  },
+  {
+    "name": "Forneria San Paolo",
+    "email": "contato@forneria.com.br",
+    "cuisine": "Italiana",
+    "neighborhood": "Vila Olímpia",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T10:26:52.205Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:11:00.926Z"
+  },
+  {
+    "name": "Cantina Maruzzella",
+    "email": "contato@maruzzella.com.br",
+    "cuisine": "Italiana",
+    "neighborhood": "Tatuapé",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T10:26:56.072Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:11:01.269Z"
+  }
+]

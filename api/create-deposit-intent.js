@@ -3,6 +3,7 @@ const { supabaseAdmin } = require('./_lib/supabase');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
+const { verifyBookingToken } = require('./booking-token');
 
 const logger = createSecureLogger('DepositIntent');
 let stripe;
@@ -24,10 +25,14 @@ module.exports = async (req, res) => {
   const rateLimited = await checkAndApplyRateLimit(req, res, 'api');
   if (rateLimited) return;
 
-  const { restaurant_id, party_size, customer_email } = req.body || {};
+  const { restaurant_id, party_size, customer_email, booking_token } = req.body || {};
 
   if (!restaurant_id) {
     return res.status(400).json({ success: false, error: 'Missing restaurant_id' });
+  }
+
+  if (!verifyBookingToken(restaurant_id, booking_token)) {
+    return res.status(403).json({ success: false, error: 'Invalid or expired booking token' });
   }
 
   const parsedPartySize = parseInt(party_size, 10);

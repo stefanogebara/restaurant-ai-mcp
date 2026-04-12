@@ -1,0 +1,367 @@
+{
+  "close": {
+    "id": "cross",
+    "fileId": "Zvrpzfae43icV83ulh1UqctFgDLZUp",
+    "score": 100
+  },
+  "home": {
+    "id": "home",
+    "fileId": "Wvq7585iCYbsHgY7vvs9lvG1MXUZbW",
+    "score": 100
+  },
+  "search": {
+    "id": "magnifying-glass",
+    "fileId": "QPl7zSOxUKmFrWf7nOJIZNsfnurbAG",
+    "score": 100
+  },
+  "filter": {
+    "id": "funnel",
+    "fileId": "LMTOIK0mRCe6ezYBYRy3avykQaTcj2",
+    "score": 100
+  },
+  "edit": {
+    "id": "pencil",
+    "fileId": "uvT8LcYBki2O1QqshT6NUI5Uh81k3r",
+    "score": 100
+  },
+  "refresh": {
+    "id": "refresh-icon",
+    "fileId": "myf9bF24UlhDmMkrTQWdwpd4JJtBaF",
+    "score": 100
+  },
+  "plus": {
+    "id": "paddleboat",
+    "fileId": "Ksj6x6RC2uG3qaDxSdHgg68xDLRwda",
+    "score": 90
+  },
+  "external-link": {
+    "id": "share-icon",
+    "fileId": "BVHddl7TC3E0JCw5eBbJ2NeK5mw4Ir",
+    "score": 100
+  },
+  "chef-hat": {
+    "id": "chef",
+    "fileId": "NNaKBbsk6wEPIDwYDGs485kgjpk8VQ",
+    "score": 100
+  },
+  "plate": {
+    "id": "plate",
+    "fileId": "Swa13h7uaHX7OPgB0ss940lRzX433D",
+    "score": 100
+  },
+  "users": {
+    "id": "group-of-people",
+    "fileId": "WaLIdwjgmqnfE0GndCGu1R9ReZOal5",
+    "score": 100
+  },
+  "user": {
+    "id": "profile",
+    "fileId": "EhKPPiNizhoSfoAbU0fYut9R1LMKyZ",
+    "score": 100
+  },
+  "bot": {
+    "id": "robot",
+    "fileId": "JLGCwuVRfvOMwVMpimP9wXFiu6Nw4x",
+    "score": 100
+  },
+  "dna": {
+    "id": "dna",
+    "fileId": "RSCqQgrjVGAcuRmzFKB3GMNZmCsun8",
+    "score": 100
+  },
+  "brain": {
+    "id": "brain",
+    "fileId": "vCbtdmRUutVmm5NeAk2OPuldTwPzC9",
+    "score": 100
+  },
+  "phone": {
+    "id": "phone",
+    "fileId": "y1Z0TGvr67bblbtRo9exj26PTl4f6J",
+    "score": 100
+  },
+  "phone-call": {
+    "id": "call",
+    "fileId": "fnD4ZPpsMwsuCZ2xt3woz2HobMe80S",
+    "score": 100
+  },
+  "chat": {
+    "id": "chat-bubble",
+    "fileId": "ojyJBpIQ9Ktog9Md3IseRIXqSlExpm",
+    "score": 100
+  },
+  "bell": {
+    "id": "bell",
+    "fileId": "CK4odMSKWdmIj0ueBtNq9HOZR6Fbgv",
+    "score": 100
+  },
+  "trending-up": {
+    "id": "trending-up",
+    "fileId": "viLPTsEn03czmewucv5CSZIDGQ1130",
+    "score": 100
+  },
+  "trending-down": {
+    "id": "trending-down",
+    "fileId": "uOQLRZu07kbHQLo9d9ZK5OccOf1z75",
+    "score": 100
+  },
+  "dollar": {
+    "id": "sand-dollar",
+    "fileId": "z7Y9veRqpazoytCGYQaLDKmg4uTn3l",
+    "score": 50
+  },
+  "credit-card": {
+    "id": "credit-card",
+    "fileId": "xylXWxjRoBYdaH9IPOx1080olvl5Ur",
+    "score": 100
+  },
+  "target": {
+    "id": "target",
+    "fileId": "QUD9QBFZRZ2ZYM6AV1VO3hYmCbUAq1",
+    "score": 100
+  },
+  "activity": {
+    "id": "pulse-massager",
+    "fileId": "EXhybO6rYdBywPHE945a1FSzTcqm80",
+    "score": 50
+  },
+  "clock": {
+    "id": "alarm-clock",
+    "fileId": "ecrt5EpWVPk65L4VgdKcQhSkNgjJfX",
+    "score": 100
+  },
+  "timer": {
+    "id": "timer",
+    "fileId": "f7rdIE4CfBPLp1ltnBHOmQV1WxtMms",
+    "score": 100
+  },
+  "check": {
+    "id": "check-mark",
+    "fileId": "3QgwSXrWjfSV2HYyhqEm4POcAvaRqP",
+    "score": 100
+  },
+  "check-circle": {
+    "id": "verified",
+    "fileId": "SkUK3hw8iUeTtV3ykfIY9vRS5kLuBb",
+    "score": 100
+  },
+  "x-circle": {
+    "id": "noise-cancelling-headphones",
+    "fileId": "xaFT1FlszEsDcOmAn7aePOhEQFXIN3",
+    "score": 50
+  },
+  "alert-circle": {
+    "id": "exclamation-mark",
+    "fileId": "PIOvFwcIsFEsLmoxc2oTkDpV6INzhL",
+    "score": 100
+  },
+  "info": {
+    "id": "info-icon",
+    "fileId": "OY3MUpW2C7znoiJ6DlQN93Ku9ixhDJ",
+    "score": 100
+  },
+  "shield-check": {
+    "id": "shield",
+    "fileId": "CZxT18DNf12Vjv8rrZv8V0tddRi9Xu",
+    "score": 100
+  },
+  "ban": {
+    "id": "banshee",
+    "fileId": "G8FwZPs8vBwEN1hknaQX4bqfL95fqf",
+    "score": 90
+  },
+  "green-check": {
+    "id": "verified",
+    "fileId": "SkUK3hw8iUeTtV3ykfIY9vRS5kLuBb",
+    "score": 100
+  },
+  "red-x": {
+    "id": "noise-cancelling-headphones",
+    "fileId": "xaFT1FlszEsDcOmAn7aePOhEQFXIN3",
+    "score": 50
+  },
+  "lock": {
+    "id": "woodblock",
+    "fileId": "1ZPlDJD8xSzKcCBR9pLigJOHXcrkfy",
+    "score": 90
+  },
+  "crown": {
+    "id": "crown",
+    "fileId": "o82qImf0LoNhDhTch7C2G2CwyVj9Ud",
+    "score": 100
+  },
+  "star": {
+    "id": "star",
+    "fileId": "OhBdiUi1Ac3hO893KYRkNNtW2OQSs6",
+    "score": 100
+  },
+  "zap": {
+    "id": "lightning-bolt",
+    "fileId": "kEc3FuOo6TejgI0tivfA8qPm4YIWfV",
+    "score": 100
+  },
+  "gift": {
+    "id": "gift-box",
+    "fileId": "VCxaluugoXxQ6G57uYpHSlGZL18bLp",
+    "score": 100
+  },
+  "map-pin": {
+    "id": "location-pin",
+    "fileId": "DumK8ISkd9UvCLE6rmGFPz31M62DtG",
+    "score": 100
+  },
+  "dashboard": {
+    "id": "dashboard",
+    "fileId": "Qep2rmAXunWu8R2o1FCgLLDrtiD1q2",
+    "score": 100
+  },
+  "languages": {
+    "id": "japanese-language",
+    "fileId": "dY7UJjMGBYLeRozGgfl3XmFvIJui9V",
+    "score": 50
+  },
+  "accessibility": {
+    "id": "wheelchair",
+    "fileId": "UH9tWPRqaPSAIoA5XEEdgLomQ3wweC",
+    "score": 100
+  },
+  "file-text": {
+    "id": "document",
+    "fileId": "BjimxRD0gb4rZBjr9jbO9LYXmOZJao",
+    "score": 100
+  },
+  "logout": {
+    "id": "log-out",
+    "fileId": "Nm2VSzbxC02ipeqn8dMpb7TwL6nkZw",
+    "score": 100
+  },
+  "help-circle": {
+    "id": "question-mark",
+    "fileId": "GHLlVvoifSdvzv5ojMTLUf8GOVIeee",
+    "score": 100
+  },
+  "volume": {
+    "id": "speaker",
+    "fileId": "U8NVtxQbToN7GSMyZnp0e36cxew3VN",
+    "score": 100
+  },
+  "microphone": {
+    "id": "micrometer",
+    "fileId": "wXCo038Bn4yKUWoh8S8kVQdKoyRAyi",
+    "score": 90
+  },
+  "keyboard": {
+    "id": "keyboard",
+    "fileId": "EIMVgdKNXjK9nAb9LGnRKmVDVMOl9v",
+    "score": 100
+  },
+  "play": {
+    "id": "play-button",
+    "fileId": "wFoKIbVifb9Q6kncGvCfU6jUeyFXuQ",
+    "score": 100
+  },
+  "wifi-off": {
+    "id": "offline-status-icon",
+    "fileId": "NIMq6Lo1RJhEY0UDPQRjLG0WZ5ROKQ",
+    "score": 50
+  },
+  "stethoscope": {
+    "id": "stethoscope",
+    "fileId": "YM427q0rp7oBdrNFxZLbdSyYBZNTjA",
+    "score": 100
+  },
+  "wrench": {
+    "id": "wrench",
+    "fileId": "rwEvYLT3gAQ9WJJXFEV6eMrbaB2EaO",
+    "score": 100
+  },
+  "sun": {
+    "id": "sun",
+    "fileId": "o53JuZpiN3JOy3N3lXQMLmskV0OslK",
+    "score": 100
+  },
+  "moon": {
+    "id": "moon",
+    "fileId": "PtBEjX92ZU74yv9aW8wR5aS9Cd9Ohe",
+    "score": 100
+  },
+  "save": {
+    "id": "floppy-disk",
+    "fileId": "zkoNHNPnebuzf8JJHBPLBbcmvE6422",
+    "score": 100
+  },
+  "trash": {
+    "id": "trash-can",
+    "fileId": "lSpzRMqmwGWoV08dHuh6wchQDokHkw",
+    "score": 100
+  },
+  "unlink": {
+    "id": "chainsaw",
+    "fileId": "OZmpDhdx5UD6TjehUsL3ztjqYzbF4Z",
+    "score": 90
+  },
+  "lightning": {
+    "id": "lightning-bolt",
+    "fileId": "kEc3FuOo6TejgI0tivfA8qPm4YIWfV",
+    "score": 100
+  },
+  "fire": {
+    "id": "flame",
+    "fileId": "NddQdftBhn6rEWlENfoUc4kpma0Ixv",
+    "score": 100
+  },
+  "party": {
+    "id": "party-popper",
+    "fileId": "a8Rmm5MutROTpDBGw2SPLVgjX1k8wT",
+    "score": 100
+  },
+  "heart": {
+    "id": "heart",
+    "fileId": "RQtOXVb8LaWRBM1vFtlMCggGMulrKV",
+    "score": 100
+  },
+  "cycle": {
+    "id": "recycle",
+    "fileId": "3oO1FdYezMT0TBNCoEM47udBNFPzer",
+    "score": 100
+  },
+  "airplane": {
+    "id": "airplane",
+    "fileId": "v0LP91OBaZckcNrHRNpH4uXzImn4v5",
+    "score": 100
+  },
+  "clipboard": {
+    "id": "clipboard",
+    "fileId": "yFtjfKzQBiN4N3in0hmfzJN0a4u71g",
+    "score": 100
+  },
+  "neighborhood": {
+    "id": "neighborhood-block-party",
+    "fileId": "u5aBRmdnTQEGFTm19GseniK6MIqtWr",
+    "score": 50
+  },
+  "classical-building": {
+    "id": "parliament-building",
+    "fileId": "yKHwsV4Zg6Ka6UCoHaYCPBMxMQoLCQ",
+    "score": 50
+  },
+  "scales": {
+    "id": "scales-of-justice",
+    "fileId": "pkwywqQ9PHA9KOcEEwz0YcGDIMDXAk",
+    "score": 50
+  },
+  "gear": {
+    "id": "gear",
+    "fileId": "5WOZbM8gOwMf0RATXQa7UL57OKFSMg",
+    "score": 100
+  },
+  "map": {
+    "id": "map",
+    "fileId": "SsfjxCJh43Hr1dqzkbFWUGH3ICZQbH",
+    "score": 100
+  },
+  "voice": {
+    "id": "invoice",
+    "fileId": "YKe6fRTt2bVGNakAliyzCyEDvhJj3N",
+    "score": 90
+  }
+}

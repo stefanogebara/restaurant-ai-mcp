@@ -55,6 +55,13 @@ const SENSITIVE_KEYS = new Set([
   'cookies',
   'x-api-key',
   'x-auth-token',
+  'phone',
+  'phone_number',
+  'customer_phone',
+  'email',
+  'customer_email',
+  'customer_name',
+  'name',
 ]);
 
 /**

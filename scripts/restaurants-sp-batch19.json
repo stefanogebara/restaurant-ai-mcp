@@ -1,0 +1,146 @@
+[
+  {
+    "name": "Benjamin A Padaria",
+    "email": "aline.maciel@benjaminapadaria.com.br",
+    "cuisine": "Padaria/Brunch",
+    "neighborhood": "Múltiplas unidades",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T14:41:24.851Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:11:20.242Z"
+  },
+  {
+    "name": "Padaria Real",
+    "email": "online@padariareal.com",
+    "cuisine": "Padaria/Bistrô",
+    "neighborhood": "Pinheiros",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T14:41:29.068Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:11:20.295Z"
+  },
+  {
+    "name": "Coffee Lab",
+    "email": "faleconosco@coffeelab.com.br",
+    "cuisine": "Café Especial",
+    "neighborhood": "Vila Madalena",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T14:41:33.045Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:11:20.539Z"
+  },
+  {
+    "name": "Octavio Café",
+    "email": "contato@octaviocafe.com.br",
+    "cuisine": "Café/Restaurante",
+    "neighborhood": "Faria Lima",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T14:41:37.182Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:11:20.808Z"
+  },
+  {
+    "name": "Sofa Café",
+    "email": "contato@sofacafe.com.br",
+    "cuisine": "Café Especial",
+    "neighborhood": "Pinheiros",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T14:41:41.209Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:11:20.923Z"
+  },
+  {
+    "name": "Enoteca Saint VinSaint",
+    "email": "enoteca@saintvinsaint.com.br",
+    "cuisine": "Wine Bar/Orgânica",
+    "neighborhood": "Vila Nova Conceição",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T14:41:45.125Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:11:21.016Z"
+  },
+  {
+    "name": "Chez Claude",
+    "email": "atendimento@chezclaude.com.br",
+    "cuisine": "Francesa Contemporânea",
+    "neighborhood": "Itaim Bibi",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T14:41:49.135Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:11:21.441Z"
+  },
+  {
+    "name": "Jojo Ramen",
+    "email": "info@jojoramen.com.br",
+    "cuisine": "Japonesa/Ramen",
+    "neighborhood": "Paraíso",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T14:41:53.065Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:11:21.753Z"
+  },
+  {
+    "name": "Habib's",
+    "email": "imprensa@habibs.com.br",
+    "cuisine": "Árabe Fast Food",
+    "neighborhood": "São Paulo (HQ)",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T14:41:57.008Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:11:21.843Z"
+  },
+  {
+    "name": "Vivenda do Camarão",
+    "email": "sav@vivendadocamarao.com.br",
+    "cuisine": "Frutos do Mar",
+    "neighborhood": "Múltiplas unidades",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T14:42:01.496Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:11:22.119Z"
+  },
+  {
+    "name": "Padovanella Ristorante",
+    "email": "contato@padovanella.com.br",
+    "cuisine": "Italiana",
+    "neighborhood": "Sorocaba",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T14:42:05.525Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:11:22.402Z"
+  },
+  {
+    "name": "Bumbu Restaurante",
+    "email": "contatobumbu@espacocampolim.com.br",
+    "cuisine": "Contemporânea/Sushi",
+    "neighborhood": "Sorocaba",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T14:42:09.495Z",
+    "verified": true,
+    "verifiedAt": "2026-03-04T15:11:22.753Z"
+  },
+  {
+    "name": "Arpoador Gastronomia",
+    "email": "contato@espacoarpoador.com.br",
+    "cuisine": "Contemporânea/Eventos",
+    "neighborhood": "Ribeirão Preto",
+    "emailSource": "website",
+    "sent": true,
+    "sentAt": "2026-03-04T14:42:13.494Z",
+    "verified": false,
+    "verifyError": "DNS error: ENOTFOUND",
+    "verifiedAt": "2026-03-04T15:11:22.811Z"
+  }
+]

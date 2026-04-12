@@ -64,4 +64,4 @@ export const LATE_THRESHOLD_MINUTES = 20;
  * Seatable WhatsApp number (digits only, no '+')
  * Used in wa.me links across landing pages
  */
-export const SEATABLE_WHATSAPP_NUMBER = '551150289356';
+export const SEATABLE_WHATSAPP_NUMBER = '551150282009';

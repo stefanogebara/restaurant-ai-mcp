@@ -1,0 +1,5 @@
+/**
+ * @grammarly/base64 v0.1.0
+ * @copyright Grammarly, Inc. 2023
+ * @license UNLICENSED
+ */

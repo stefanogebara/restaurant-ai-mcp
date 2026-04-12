@@ -24,7 +24,8 @@ module.exports = async (req, res) => {
  * Verify the HMAC signature on the unsubscribe link.
  */
 function verifySignature(restaurantId, phone, sig) {
-  const secret = process.env.CRON_SECRET || 'fallback-secret';
+  const secret = process.env.CRON_SECRET;
+  if (!secret) throw new Error('CRON_SECRET is not configured');
   const payload = `${restaurantId}:${phone}`;
   const expected = crypto.createHmac('sha256', secret).update(payload).digest('hex');
   return crypto.timingSafeEqual(Buffer.from(expected, 'hex'), Buffer.from(sig, 'hex'));

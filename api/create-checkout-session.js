@@ -123,7 +123,7 @@ module.exports = async (req, res) => {
       mode: 'subscription',
       payment_method_types: ['card'],
       line_items: lineItems,
-      locale: 'en', // Force English — prevents Portuguese copy from browser locale
+      locale: 'auto',
       success_url: `${origin}/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/#pricing`,
       ...(discounts ? { discounts } : { allow_promotion_codes: true }),

@@ -1,0 +1,38 @@
+#smowl-debugger-app{
+    position: fixed;
+    left: 0;
+    top: 0;
+    max-height: 50vh;
+    width: 100vw;
+    pointer-events: none;
+    z-index: 999999;
+    padding: 10px;
+    overflow: hidden;
+}
+
+#smowl-debugger-app-state{
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    max-height: 50vh;
+    width: 100vw;
+    pointer-events: none;
+    z-index: 9999999;
+    padding: 10px;
+}
+
+#smowl-debugger-app-state p{
+    background: rgba(255, 255, 255, 0.5);
+    padding: 0 4px;
+    width: fit-content;
+    margin: 0 0;
+    color: purple;
+}
+
+
+#smowl-debugger-app p{
+    background: rgba(255, 255, 255, 0.5);
+    padding: 0 4px;
+    width: fit-content;
+    margin: 3px 0;
+}

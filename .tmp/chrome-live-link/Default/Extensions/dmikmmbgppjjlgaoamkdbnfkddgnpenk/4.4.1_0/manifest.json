@@ -1,0 +1,36 @@
+{
+   "background": {
+      "service_worker": "background.js",
+      "type": "module"
+   },
+   "content_scripts": [ {
+      "js": [ "content_script_console.js", "lock_content_script_main.js", "canvasnq_content_script_main.js", "blackboard_content_script.js" ],
+      "matches": [ "\u003Call_urls>" ]
+   }, {
+      "all_frames": true,
+      "css": [ "assets/css/style.css" ],
+      "js": [ "lock_content_script_deep.js", "canvasnq_content_script_deep.js", "d2l_content_script.js" ],
+      "match_about_blank": true,
+      "matches": [ "\u003Call_urls>" ],
+      "run_at": "document_end"
+   } ],
+   "description": "Smowl Proctoring extension for Google Chrome.",
+   "externally_connectable": {
+      "matches": [ "\u003Call_urls>" ]
+   },
+   "host_permissions": [ "\u003Call_urls>" ],
+   "icons": {
+      "128": "assets/img/smowl_128.png"
+   },
+   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAyxV+qd5wq8t0DxD2WElkH4Qm7IMnGXEXos/k9MhOyGe1PrftUDloNCv8i7RugI0705msOa48b+C5MdyFtMNjCAH4nIkDSkrf76ffEDd7LgqB/oD4w2aAQksuJiJr0IN902FiSMGe9Z40uMKxWL+ePsOmQcm7Ngg/YDvR1LWUeMI2dwGZ2JMoiHq2K6tlBie2Eh5aTUUHr5iC21n8j+U3aZTg+24JczuG/IHLyAqAFbQLMZEU00sCc4zrOcXBx9rE0tDWH4Fr14D++mD7CUkNUJAima/6GrfRHJjGXomvKXPRl3LUy+fcQSfm7y3A/5FAPNmYEHs4KfL5zblzxRQtuwIDAQAB",
+   "manifest_version": 3,
+   "name": "Smowl",
+   "permissions": [ "management", "system.cpu", "system.memory", "system.display", "tabs", "storage", "offscreen" ],
+   "update_url": "https://clients2.google.com/service/update2/crx",
+   "version": "4.4.1",
+   "version_name": "4.3.1",
+   "web_accessible_resources": [ {
+      "matches": [ "\u003Call_urls>" ],
+      "resources": [ "assets/css/*", "assets/img/*", "assets/*.html", "assets/version.json" ]
+   } ]
+}

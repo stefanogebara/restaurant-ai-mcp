@@ -1,0 +1,60 @@
+{
+  "name": "Antigravity Browser Extension",
+  "description": "The Antigravity Browser Extension is required for the Antigravity Agent to access the web.",
+  "version": "1.11.3",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAg/wAu86aayfkDEvVAGgdtl8FS2/axn1JqdDl9awFDUdSLZrCNJ/7vMJBEUp3IpgzBMF+qFH9UZFQJIuyo2vRHnmIXDMVXEfYLmIJ9WfMYQnu8sUvcTilj7zCzaWSyo1/VqGeahsRX18VZBaMyOc4vauSojZFi66ZkR+dd9JoPhbxFFAMrcZkYeoIL27+ofKRy01gCBN/p3kQtowfvQtxGA+5irSqspXPtFIeTY20ZBhGaYR1KXu9wwa9ghtuQPf00Gy8+FyDzFwemawJ3KjlATokTjqEw9Z8ZM1kB6sS0q50xSJUhlbQ+/FMFN0owm7K5UHTSXGOALS8YPnHASeP3wIDAQAB",
+  "manifest_version": 3,
+  "background": {
+    "service_worker": "service_worker_binary.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content_script_binary.js"
+      ],
+      "run_at": "document_start",
+      "all_frames": true
+    }
+  ],
+  "permissions": [
+    "activeTab",
+    "tabs",
+    "webRequest",
+    "storage",
+    "offscreen"
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; frame-src http://localhost:*;"
+  },
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "externally_connectable": {
+    "matches": [
+      "<all_urls>"
+    ]
+  },
+  "action": {
+    "default_title": "Open Agent"
+  },
+  "chrome_url_overrides": {
+    "newtab": "static/browserLanding.html"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ],
+  "icons": {
+    "16": "static/icons/16x16.png",
+    "32": "static/icons/32x32.png",
+    "48": "static/icons/48x48.png",
+    "128": "static/icons/128x128.png"
+  }
+}

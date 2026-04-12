@@ -174,8 +174,7 @@ async function checkRateLimitRedis(clientId, endpointType) {
     };
   } catch (err) {
     redisFailCount++;
-    const logLevel = redisFailCount >= REDIS_FAIL_CRIT_THRESHOLD ? 'error'
-      : redisFailCount >= REDIS_FAIL_WARN_THRESHOLD ? 'warn' : 'info';
+    const logLevel = redisFailCount >= REDIS_FAIL_CRIT_THRESHOLD ? 'error' : 'warn';
     logger[logLevel]('Redis rate-limit error, falling back to in-memory store', {
       error: err.message,
       clientId,

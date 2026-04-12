@@ -1,0 +1,1020 @@
+punctuation_config {
+  language: "pt_br"
+  punctuation_symbols {
+    orthographic_form: "!"
+    type: FINAL
+    spoken_forms {
+      words: "ponto de exclamação"
+    }
+    upcase_after: true
+  }
+  punctuation_symbols {
+    orthographic_form: "?"
+    type: FINAL
+    spoken_forms {
+      words: "ponto de interrogação"
+    }
+    upcase_after: true
+  }
+  punctuation_symbols {
+    orthographic_form: "."
+    type: FINAL
+    spoken_forms {
+      words: "ponto final"
+    }
+    spoken_forms {
+      words: "ponto"
+      is_ambiguous: true
+    }
+    spoken_forms {
+      words: "pontinho"
+      is_ambiguous: true
+    }
+    upcase_after: true
+  }
+  punctuation_symbols {
+    orthographic_form: ","
+    type: FINAL
+    spoken_forms {
+      words: "vírgula"
+    }
+  }
+  punctuation_symbols {
+    orthographic_form: "..."
+    type: FINAL
+    spoken_forms {
+      words: "reticências"
+    }
+    spoken_forms {
+      words: "três pontos"
+      is_ambiguous: true
+    }
+    spoken_forms {
+      words: "três pontinhos"
+      is_ambiguous: true
+    }
+    upcase_after: true
+  }
+  punctuation_symbols {
+    orthographic_form: "#"
+    type: INITIAL
+    spoken_forms {
+      words: "cerquilha"
+    }
+    spoken_forms {
+      words: "sinal de sustenido"
+    }
+    spoken_forms {
+      words: "tralha"
+      is_ambiguous: true
+    }
+    spoken_forms {
+      words: "jogo da velha"
+    }
+  }
+  punctuation_symbols {
+    orthographic_form: "“"
+    textual_form: "\""
+    remove_whitespace: true
+    type: INITIAL
+    partner: "”"
+    side: LEFT
+    spoken_forms {
+      words: "aspas"
+    }
+    spoken_forms {
+      words: "abre aspas"
+    }
+  }
+  punctuation_symbols {
+    orthographic_form: "”"
+    textual_form: "\""
+    remove_whitespace: true
+    type: FINAL
+    partner: "“"
+    side: RIGHT
+    spoken_forms {
+      words: "aspas"
+    }
+    spoken_forms {
+      words: "fecha aspas"
+    }
+  }
+  punctuation_symbols {
+    orthographic_form: "*"
+    type: FINAL
+    spoken_forms {
+      words: "asterisco"
+    }
+    spoken_forms {
+      words: "estrela"
+      is_ambiguous: true
+      disabled: true
+    }
+    spoken_forms {
+      words: "estrelinha"
+      is_ambiguous: true
+      disabled: true
+    }
+  }
+  punctuation_symbols {
+    orthographic_form: "\n"
+    type: INTERMEDIATE
+    spoken_forms {
+      words: "nova linha"
+    }
+    spoken_forms {
+      words: "linha nova"
+    }
+    spoken_forms {
+      words: "outra linha"
+    }
+    upcase_after: true
+  }
+  punctuation_symbols {
+    orthographic_form: "@"
+    type: INTERMEDIATE
+    spoken_forms {
+      words: "arroba"
+      is_ambiguous: true
+    }
+  }
+  punctuation_symbols {
+    orthographic_form: ")"
+    type: FINAL
+    partner: "("
+    side: RIGHT
+    spoken_forms {
+      words: "parêntese de fechamento"
+    }
+    spoken_forms {
+      words: "parêntese que abre"
+    }
+    spoken_forms {
+      words: "fecha parênteses"
+    }
+  }
+  punctuation_symbols {
+    orthographic_form: "("
+    type: INITIAL
+    partner: ")"
+    side: LEFT
+    spoken_forms {
+      words: "parêntese de abertura"
+    }
+    spoken_forms {
+      words: "parêntese que fecha"
+    }
+    spoken_forms {
+      words: "abre parênteses"
+    }
+  }
+  punctuation_symbols {
+    orthographic_form: "&"
+    remove_whitespace: false
+    spoken_forms {
+      words: "e comercial"
+    }
+    spoken_forms {
+      words: "ampersand"
+    }
+  }
+  punctuation_symbols {
+    orthographic_form: "-"
+    type: INTERMEDIATE
+    spoken_forms {
+      words: "hífen"
+    }
+    spoken_forms {
+      words: "traço de união"
+    }
+  }
+  punctuation_symbols {
+    orthographic_form: "/"
+    type: INTERMEDIATE
+    spoken_forms {
+      words: "barra"
+      is_ambiguous: true
+    }
+  }
+  punctuation_symbols {
+    orthographic_form: "\n\n"
+    type: INTERMEDIATE
+    spoken_forms {
+      words: "novo parágrafo"
+    }
+    spoken_forms {
+      words: "outro parágrafo"
+    }
+    upcase_after: true
+  }
+  punctuation_symbols {
+    orthographic_form: ";"
+    type: FINAL
+    spoken_forms {
+      words: "ponto e vírgula"
+    }
+  }
+  punctuation_symbols {
+    orthographic_form: ":"
+    type: FINAL
+    spoken_forms {
+      words: "dois pontos"
+      is_ambiguous: true
+    }
+    spoken_forms {
+      words: "cólon"
+    }
+  }
+  punctuation_symbols {
+    orthographic_form: "\\"
+    type: INITIAL
+    spoken_forms {
+      words: "barra invertida"
+    }
+  }
+  punctuation_symbols {
+    orthographic_form: "{"
+    type: INITIAL
+    partner: "}"
+    side: LEFT
+    spoken_forms {
+      words: "abre chaves"
+    }
+  }
+  punctuation_symbols {
+    orthographic_form: "}"
+    type: FINAL
+    partner: "{"
+    side: RIGHT
+    spoken_forms {
+      words: "fecha chaves"
+    }
+  }
+  punctuation_symbols {
+    orthographic_form: "["
+    type: INITIAL
+    partner: "]"
+    side: LEFT
+    spoken_forms {
+      words: "abre colchetes"
+    }
+  }
+  punctuation_symbols {
+    orthographic_form: "]"
+    type: FINAL
+    partner: "["
+    side: RIGHT
+    spoken_forms {
+      words: "fecha colchetes"
+    }
+  }
+}
+codepoints: 32
+codepoints: 33
+codepoints: 34
+codepoints: 35
+codepoints: 37
+codepoints: 38
+codepoints: 39
+codepoints: 40
+codepoints: 41
+codepoints: 42
+codepoints: 43
+codepoints: 44
+codepoints: 45
+codepoints: 46
+codepoints: 47
+codepoints: 58
+codepoints: 59
+codepoints: 60
+codepoints: 61
+codepoints: 62
+codepoints: 63
+codepoints: 64
+codepoints: 91
+codepoints: 93
+codepoints: 95
+codepoints: 96
+codepoints: 97
+codepoints: 98
+codepoints: 99
+codepoints: 100
+codepoints: 101
+codepoints: 102
+codepoints: 103
+codepoints: 104
+codepoints: 105
+codepoints: 106
+codepoints: 107
+codepoints: 108
+codepoints: 109
+codepoints: 110
+codepoints: 111
+codepoints: 112
+codepoints: 113
+codepoints: 114
+codepoints: 115
+codepoints: 116
+codepoints: 117
+codepoints: 118
+codepoints: 119
+codepoints: 120
+codepoints: 121
+codepoints: 122
+codepoints: 123
+codepoints: 125
+codepoints: 126
+codepoints: 167
+codepoints: 224
+codepoints: 225
+codepoints: 226
+codepoints: 227
+codepoints: 231
+codepoints: 233
+codepoints: 234
+codepoints: 237
+codepoints: 242
+codepoints: 243
+codepoints: 244
+codepoints: 245
+codepoints: 250
+codepoints: 8208
+codepoints: 8211
+codepoints: 8212
+codepoints: 8216
+codepoints: 8217
+codepoints: 8220
+codepoints: 8221
+codepoints: 8224
+codepoints: 8225
+codepoints: 8230
+codepoints: 8242
+codepoints: 8243
+currency_chars: 36
+currency_chars: 162
+currency_chars: 163
+currency_chars: 164
+currency_chars: 165
+currency_chars: 1423
+currency_chars: 1547
+currency_chars: 2046
+currency_chars: 2047
+currency_chars: 2546
+currency_chars: 2547
+currency_chars: 2555
+currency_chars: 2801
+currency_chars: 3065
+currency_chars: 3647
+currency_chars: 6107
+currency_chars: 8352
+currency_chars: 8353
+currency_chars: 8354
+currency_chars: 8355
+currency_chars: 8356
+currency_chars: 8357
+currency_chars: 8358
+currency_chars: 8359
+currency_chars: 8360
+currency_chars: 8361
+currency_chars: 8362
+currency_chars: 8363
+currency_chars: 8364
+currency_chars: 8365
+currency_chars: 8366
+currency_chars: 8367
+currency_chars: 8368
+currency_chars: 8369
+currency_chars: 8370
+currency_chars: 8371
+currency_chars: 8372
+currency_chars: 8373
+currency_chars: 8374
+currency_chars: 8375
+currency_chars: 8376
+currency_chars: 8377
+currency_chars: 8378
+currency_chars: 8379
+currency_chars: 8380
+currency_chars: 8381
+currency_chars: 8382
+currency_chars: 8383
+currency_chars: 43064
+currency_chars: 65020
+currency_chars: 65129
+currency_chars: 65284
+currency_chars: 65504
+currency_chars: 65505
+currency_chars: 65509
+currency_chars: 65510
+currency_chars: 126128
+digit_chars: 48
+digit_chars: 49
+digit_chars: 50
+digit_chars: 51
+digit_chars: 52
+digit_chars: 53
+digit_chars: 54
+digit_chars: 55
+digit_chars: 56
+digit_chars: 57
+digit_chars: 1632
+digit_chars: 1633
+digit_chars: 1634
+digit_chars: 1635
+digit_chars: 1636
+digit_chars: 1637
+digit_chars: 1638
+digit_chars: 1639
+digit_chars: 1640
+digit_chars: 1641
+digit_chars: 1776
+digit_chars: 1777
+digit_chars: 1778
+digit_chars: 1779
+digit_chars: 1780
+digit_chars: 1781
+digit_chars: 1782
+digit_chars: 1783
+digit_chars: 1784
+digit_chars: 1785
+digit_chars: 1984
+digit_chars: 1985
+digit_chars: 1986
+digit_chars: 1987
+digit_chars: 1988
+digit_chars: 1989
+digit_chars: 1990
+digit_chars: 1991
+digit_chars: 1992
+digit_chars: 1993
+digit_chars: 2406
+digit_chars: 2407
+digit_chars: 2408
+digit_chars: 2409
+digit_chars: 2410
+digit_chars: 2411
+digit_chars: 2412
+digit_chars: 2413
+digit_chars: 2414
+digit_chars: 2415
+digit_chars: 2534
+digit_chars: 2535
+digit_chars: 2536
+digit_chars: 2537
+digit_chars: 2538
+digit_chars: 2539
+digit_chars: 2540
+digit_chars: 2541
+digit_chars: 2542
+digit_chars: 2543
+digit_chars: 2662
+digit_chars: 2663
+digit_chars: 2664
+digit_chars: 2665
+digit_chars: 2666
+digit_chars: 2667
+digit_chars: 2668
+digit_chars: 2669
+digit_chars: 2670
+digit_chars: 2671
+digit_chars: 2790
+digit_chars: 2791
+digit_chars: 2792
+digit_chars: 2793
+digit_chars: 2794
+digit_chars: 2795
+digit_chars: 2796
+digit_chars: 2797
+digit_chars: 2798
+digit_chars: 2799
+digit_chars: 2918
+digit_chars: 2919
+digit_chars: 2920
+digit_chars: 2921
+digit_chars: 2922
+digit_chars: 2923
+digit_chars: 2924
+digit_chars: 2925
+digit_chars: 2926
+digit_chars: 2927
+digit_chars: 3046
+digit_chars: 3047
+digit_chars: 3048
+digit_chars: 3049
+digit_chars: 3050
+digit_chars: 3051
+digit_chars: 3052
+digit_chars: 3053
+digit_chars: 3054
+digit_chars: 3055
+digit_chars: 3174
+digit_chars: 3175
+digit_chars: 3176
+digit_chars: 3177
+digit_chars: 3178
+digit_chars: 3179
+digit_chars: 3180
+digit_chars: 3181
+digit_chars: 3182
+digit_chars: 3183
+digit_chars: 3302
+digit_chars: 3303
+digit_chars: 3304
+digit_chars: 3305
+digit_chars: 3306
+digit_chars: 3307
+digit_chars: 3308
+digit_chars: 3309
+digit_chars: 3310
+digit_chars: 3311
+digit_chars: 3430
+digit_chars: 3431
+digit_chars: 3432
+digit_chars: 3433
+digit_chars: 3434
+digit_chars: 3435
+digit_chars: 3436
+digit_chars: 3437
+digit_chars: 3438
+digit_chars: 3439
+digit_chars: 3558
+digit_chars: 3559
+digit_chars: 3560
+digit_chars: 3561
+digit_chars: 3562
+digit_chars: 3563
+digit_chars: 3564
+digit_chars: 3565
+digit_chars: 3566
+digit_chars: 3567
+digit_chars: 3664
+digit_chars: 3665
+digit_chars: 3666
+digit_chars: 3667
+digit_chars: 3668
+digit_chars: 3669
+digit_chars: 3670
+digit_chars: 3671
+digit_chars: 3672
+digit_chars: 3673
+digit_chars: 3792
+digit_chars: 3793
+digit_chars: 3794
+digit_chars: 3795
+digit_chars: 3796
+digit_chars: 3797
+digit_chars: 3798
+digit_chars: 3799
+digit_chars: 3800
+digit_chars: 3801
+digit_chars: 3872
+digit_chars: 3873
+digit_chars: 3874
+digit_chars: 3875
+digit_chars: 3876
+digit_chars: 3877
+digit_chars: 3878
+digit_chars: 3879
+digit_chars: 3880
+digit_chars: 3881
+digit_chars: 4160
+digit_chars: 4161
+digit_chars: 4162
+digit_chars: 4163
+digit_chars: 4164
+digit_chars: 4165
+digit_chars: 4166
+digit_chars: 4167
+digit_chars: 4168
+digit_chars: 4169
+digit_chars: 4240
+digit_chars: 4241
+digit_chars: 4242
+digit_chars: 4243
+digit_chars: 4244
+digit_chars: 4245
+digit_chars: 4246
+digit_chars: 4247
+digit_chars: 4248
+digit_chars: 4249
+digit_chars: 6112
+digit_chars: 6113
+digit_chars: 6114
+digit_chars: 6115
+digit_chars: 6116
+digit_chars: 6117
+digit_chars: 6118
+digit_chars: 6119
+digit_chars: 6120
+digit_chars: 6121
+digit_chars: 6160
+digit_chars: 6161
+digit_chars: 6162
+digit_chars: 6163
+digit_chars: 6164
+digit_chars: 6165
+digit_chars: 6166
+digit_chars: 6167
+digit_chars: 6168
+digit_chars: 6169
+digit_chars: 6470
+digit_chars: 6471
+digit_chars: 6472
+digit_chars: 6473
+digit_chars: 6474
+digit_chars: 6475
+digit_chars: 6476
+digit_chars: 6477
+digit_chars: 6478
+digit_chars: 6479
+digit_chars: 6608
+digit_chars: 6609
+digit_chars: 6610
+digit_chars: 6611
+digit_chars: 6612
+digit_chars: 6613
+digit_chars: 6614
+digit_chars: 6615
+digit_chars: 6616
+digit_chars: 6617
+digit_chars: 6784
+digit_chars: 6785
+digit_chars: 6786
+digit_chars: 6787
+digit_chars: 6788
+digit_chars: 6789
+digit_chars: 6790
+digit_chars: 6791
+digit_chars: 6792
+digit_chars: 6793
+digit_chars: 6800
+digit_chars: 6801
+digit_chars: 6802
+digit_chars: 6803
+digit_chars: 6804
+digit_chars: 6805
+digit_chars: 6806
+digit_chars: 6807
+digit_chars: 6808
+digit_chars: 6809
+digit_chars: 6992
+digit_chars: 6993
+digit_chars: 6994
+digit_chars: 6995
+digit_chars: 6996
+digit_chars: 6997
+digit_chars: 6998
+digit_chars: 6999
+digit_chars: 7000
+digit_chars: 7001
+digit_chars: 7088
+digit_chars: 7089
+digit_chars: 7090
+digit_chars: 7091
+digit_chars: 7092
+digit_chars: 7093
+digit_chars: 7094
+digit_chars: 7095
+digit_chars: 7096
+digit_chars: 7097
+digit_chars: 7232
+digit_chars: 7233
+digit_chars: 7234
+digit_chars: 7235
+digit_chars: 7236
+digit_chars: 7237
+digit_chars: 7238
+digit_chars: 7239
+digit_chars: 7240
+digit_chars: 7241
+digit_chars: 7248
+digit_chars: 7249
+digit_chars: 7250
+digit_chars: 7251
+digit_chars: 7252
+digit_chars: 7253
+digit_chars: 7254
+digit_chars: 7255
+digit_chars: 7256
+digit_chars: 7257
+digit_chars: 42528
+digit_chars: 42529
+digit_chars: 42530
+digit_chars: 42531
+digit_chars: 42532
+digit_chars: 42533
+digit_chars: 42534
+digit_chars: 42535
+digit_chars: 42536
+digit_chars: 42537
+digit_chars: 43216
+digit_chars: 43217
+digit_chars: 43218
+digit_chars: 43219
+digit_chars: 43220
+digit_chars: 43221
+digit_chars: 43222
+digit_chars: 43223
+digit_chars: 43224
+digit_chars: 43225
+digit_chars: 43264
+digit_chars: 43265
+digit_chars: 43266
+digit_chars: 43267
+digit_chars: 43268
+digit_chars: 43269
+digit_chars: 43270
+digit_chars: 43271
+digit_chars: 43272
+digit_chars: 43273
+digit_chars: 43472
+digit_chars: 43473
+digit_chars: 43474
+digit_chars: 43475
+digit_chars: 43476
+digit_chars: 43477
+digit_chars: 43478
+digit_chars: 43479
+digit_chars: 43480
+digit_chars: 43481
+digit_chars: 43504
+digit_chars: 43505
+digit_chars: 43506
+digit_chars: 43507
+digit_chars: 43508
+digit_chars: 43509
+digit_chars: 43510
+digit_chars: 43511
+digit_chars: 43512
+digit_chars: 43513
+digit_chars: 43600
+digit_chars: 43601
+digit_chars: 43602
+digit_chars: 43603
+digit_chars: 43604
+digit_chars: 43605
+digit_chars: 43606
+digit_chars: 43607
+digit_chars: 43608
+digit_chars: 43609
+digit_chars: 44016
+digit_chars: 44017
+digit_chars: 44018
+digit_chars: 44019
+digit_chars: 44020
+digit_chars: 44021
+digit_chars: 44022
+digit_chars: 44023
+digit_chars: 44024
+digit_chars: 44025
+digit_chars: 65296
+digit_chars: 65297
+digit_chars: 65298
+digit_chars: 65299
+digit_chars: 65300
+digit_chars: 65301
+digit_chars: 65302
+digit_chars: 65303
+digit_chars: 65304
+digit_chars: 65305
+digit_chars: 66720
+digit_chars: 66721
+digit_chars: 66722
+digit_chars: 66723
+digit_chars: 66724
+digit_chars: 66725
+digit_chars: 66726
+digit_chars: 66727
+digit_chars: 66728
+digit_chars: 66729
+digit_chars: 68912
+digit_chars: 68913
+digit_chars: 68914
+digit_chars: 68915
+digit_chars: 68916
+digit_chars: 68917
+digit_chars: 68918
+digit_chars: 68919
+digit_chars: 68920
+digit_chars: 68921
+digit_chars: 69734
+digit_chars: 69735
+digit_chars: 69736
+digit_chars: 69737
+digit_chars: 69738
+digit_chars: 69739
+digit_chars: 69740
+digit_chars: 69741
+digit_chars: 69742
+digit_chars: 69743
+digit_chars: 69872
+digit_chars: 69873
+digit_chars: 69874
+digit_chars: 69875
+digit_chars: 69876
+digit_chars: 69877
+digit_chars: 69878
+digit_chars: 69879
+digit_chars: 69880
+digit_chars: 69881
+digit_chars: 69942
+digit_chars: 69943
+digit_chars: 69944
+digit_chars: 69945
+digit_chars: 69946
+digit_chars: 69947
+digit_chars: 69948
+digit_chars: 69949
+digit_chars: 69950
+digit_chars: 69951
+digit_chars: 70096
+digit_chars: 70097
+digit_chars: 70098
+digit_chars: 70099
+digit_chars: 70100
+digit_chars: 70101
+digit_chars: 70102
+digit_chars: 70103
+digit_chars: 70104
+digit_chars: 70105
+digit_chars: 70384
+digit_chars: 70385
+digit_chars: 70386
+digit_chars: 70387
+digit_chars: 70388
+digit_chars: 70389
+digit_chars: 70390
+digit_chars: 70391
+digit_chars: 70392
+digit_chars: 70393
+digit_chars: 70736
+digit_chars: 70737
+digit_chars: 70738
+digit_chars: 70739
+digit_chars: 70740
+digit_chars: 70741
+digit_chars: 70742
+digit_chars: 70743
+digit_chars: 70744
+digit_chars: 70745
+digit_chars: 70864
+digit_chars: 70865
+digit_chars: 70866
+digit_chars: 70867
+digit_chars: 70868
+digit_chars: 70869
+digit_chars: 70870
+digit_chars: 70871
+digit_chars: 70872
+digit_chars: 70873
+digit_chars: 71248
+digit_chars: 71249
+digit_chars: 71250
+digit_chars: 71251
+digit_chars: 71252
+digit_chars: 71253
+digit_chars: 71254
+digit_chars: 71255
+digit_chars: 71256
+digit_chars: 71257
+digit_chars: 71360
+digit_chars: 71361
+digit_chars: 71362
+digit_chars: 71363
+digit_chars: 71364
+digit_chars: 71365
+digit_chars: 71366
+digit_chars: 71367
+digit_chars: 71368
+digit_chars: 71369
+digit_chars: 71472
+digit_chars: 71473
+digit_chars: 71474
+digit_chars: 71475
+digit_chars: 71476
+digit_chars: 71477
+digit_chars: 71478
+digit_chars: 71479
+digit_chars: 71480
+digit_chars: 71481
+digit_chars: 71904
+digit_chars: 71905
+digit_chars: 71906
+digit_chars: 71907
+digit_chars: 71908
+digit_chars: 71909
+digit_chars: 71910
+digit_chars: 71911
+digit_chars: 71912
+digit_chars: 71913
+digit_chars: 72784
+digit_chars: 72785
+digit_chars: 72786
+digit_chars: 72787
+digit_chars: 72788
+digit_chars: 72789
+digit_chars: 72790
+digit_chars: 72791
+digit_chars: 72792
+digit_chars: 72793
+digit_chars: 73040
+digit_chars: 73041
+digit_chars: 73042
+digit_chars: 73043
+digit_chars: 73044
+digit_chars: 73045
+digit_chars: 73046
+digit_chars: 73047
+digit_chars: 73048
+digit_chars: 73049
+digit_chars: 73120
+digit_chars: 73121
+digit_chars: 73122
+digit_chars: 73123
+digit_chars: 73124
+digit_chars: 73125
+digit_chars: 73126
+digit_chars: 73127
+digit_chars: 73128
+digit_chars: 73129
+digit_chars: 92768
+digit_chars: 92769
+digit_chars: 92770
+digit_chars: 92771
+digit_chars: 92772
+digit_chars: 92773
+digit_chars: 92774
+digit_chars: 92775
+digit_chars: 92776
+digit_chars: 92777
+digit_chars: 93008
+digit_chars: 93009
+digit_chars: 93010
+digit_chars: 93011
+digit_chars: 93012
+digit_chars: 93013
+digit_chars: 93014
+digit_chars: 93015
+digit_chars: 93016
+digit_chars: 93017
+digit_chars: 120782
+digit_chars: 120783
+digit_chars: 120784
+digit_chars: 120785
+digit_chars: 120786
+digit_chars: 120787
+digit_chars: 120788
+digit_chars: 120789
+digit_chars: 120790
+digit_chars: 120791
+digit_chars: 120792
+digit_chars: 120793
+digit_chars: 120794
+digit_chars: 120795
+digit_chars: 120796
+digit_chars: 120797
+digit_chars: 120798
+digit_chars: 120799
+digit_chars: 120800
+digit_chars: 120801
+digit_chars: 120802
+digit_chars: 120803
+digit_chars: 120804
+digit_chars: 120805
+digit_chars: 120806
+digit_chars: 120807
+digit_chars: 120808
+digit_chars: 120809
+digit_chars: 120810
+digit_chars: 120811
+digit_chars: 120812
+digit_chars: 120813
+digit_chars: 120814
+digit_chars: 120815
+digit_chars: 120816
+digit_chars: 120817
+digit_chars: 120818
+digit_chars: 120819
+digit_chars: 120820
+digit_chars: 120821
+digit_chars: 120822
+digit_chars: 120823
+digit_chars: 120824
+digit_chars: 120825
+digit_chars: 120826
+digit_chars: 120827
+digit_chars: 120828
+digit_chars: 120829
+digit_chars: 120830
+digit_chars: 120831
+digit_chars: 125264
+digit_chars: 125265
+digit_chars: 125266
+digit_chars: 125267
+digit_chars: 125268
+digit_chars: 125269
+digit_chars: 125270
+digit_chars: 125271
+digit_chars: 125272
+digit_chars: 125273

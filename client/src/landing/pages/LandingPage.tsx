@@ -78,7 +78,9 @@ export default function LandingPage() {
         <PresetDemoSection />
       </div>
       <div className="hidden lg:block">
-        <InlineDemoSection />
+        <ErrorBoundary silent>
+          <InlineDemoSection />
+        </ErrorBoundary>
       </div>
 
       {/* 3. Call our AI — voice widget with ElevenLabs agent */}
@@ -105,7 +107,7 @@ export default function LandingPage() {
       {/* 8. Social proof + Pricing */}
       <div className="text-center py-6">
         <p className="text-sm text-warm-stone font-medium">
-          <span className="inline-block w-2 h-2 rounded-full bg-whatsapp mr-1.5 animate-pulse" />
+          <span className="inline-block w-2 h-2 rounded-full bg-burgundy mr-1.5 animate-pulse" />
           {t('landing.socialProofBadge', '5 restaurants joined this week')}
         </p>
       </div>
