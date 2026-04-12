@@ -86,6 +86,13 @@ function buildPersonaPrompt(restaurantConfig, options = {}) {
   prompt += `You help with reservations, answer questions, and make guests feel welcome — like a real person who works here, not a chatbot.\n`;
   prompt += `${lang.capabilities}\n\n`;
 
+  // Language detection — respond in the caller's language automatically
+  prompt += `Language rule: Detect the language the caller is speaking and respond entirely in that language. `;
+  prompt += `If they speak English, respond in English. If they speak Spanish, respond in Spanish. If they speak French, respond in French. `;
+  prompt += `You are fluent in Portuguese, English, Spanish, French, Italian, and German. `;
+  prompt += `Never force the caller to speak a language they're not comfortable with. `;
+  prompt += `If unsure, default to Portuguese since this restaurant is in Brazil.\n\n`;
+
   // 1b. Restaurant Identity (from restaurant learning profile)
   const identitySection = buildRestaurantIdentitySection(restaurantConfig);
   if (identitySection) {
