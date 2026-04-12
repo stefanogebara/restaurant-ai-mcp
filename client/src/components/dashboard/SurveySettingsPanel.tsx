@@ -5,6 +5,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSurveyConfig, useUpdateSurveyConfig, useSurveyResults } from '../../hooks/useSurvey';
+import { useToast } from '../../contexts/ToastContext';
 import ThiingsIcon from '../common/ThiingsIcon';
 
 const DELAY_OPTIONS = [
@@ -37,6 +38,7 @@ function RatingBar({ rating, count, max }: { rating: number; count: number; max:
 
 export default function SurveySettingsPanel() {
   const { t } = useTranslation();
+  const toast = useToast();
   const { data: config, isLoading: configLoading } = useSurveyConfig();
   const updateConfig = useUpdateSurveyConfig();
   const { data: results, isLoading: resultsLoading } = useSurveyResults(30);
@@ -55,12 +57,18 @@ export default function SurveySettingsPanel() {
   }, [config]);
 
   const handleSave = () => {
-    updateConfig.mutate({
-      enabled,
-      delay_hours: delayHours,
-      question: question || undefined,
-    });
-    setDirty(false);
+    updateConfig.mutate(
+      { enabled, delay_hours: delayHours, question: question || undefined },
+      {
+        onSuccess: () => {
+          setDirty(false);
+          toast.success(t('dashboard.survey.saved', 'Survey settings saved'));
+        },
+        onError: () => {
+          toast.error(t('dashboard.survey.saveFailed', 'Failed to save survey settings'));
+        },
+      }
+    );
   };
 
   if (configLoading) {

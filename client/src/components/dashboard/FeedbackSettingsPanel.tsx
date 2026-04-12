@@ -5,10 +5,12 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useFeedbackConfig, useUpdateFeedbackConfig } from '../../hooks/useFeedback';
+import { useToast } from '../../contexts/ToastContext';
 import ThiingsIcon from '../common/ThiingsIcon';
 
 export default function FeedbackSettingsPanel() {
   const { t } = useTranslation();
+  const toast = useToast();
   const { data: config, isLoading } = useFeedbackConfig();
   const updateConfig = useUpdateFeedbackConfig();
 
@@ -26,12 +28,18 @@ export default function FeedbackSettingsPanel() {
   }, [config]);
 
   const handleSave = () => {
-    updateConfig.mutate({
-      enabled,
-      delay_minutes: delayMinutes,
-      message_template: template || null,
-    });
-    setDirty(false);
+    updateConfig.mutate(
+      { enabled, delay_minutes: delayMinutes, message_template: template || null },
+      {
+        onSuccess: () => {
+          setDirty(false);
+          toast.success(t('dashboard.feedback.saved', 'Feedback settings saved'));
+        },
+        onError: () => {
+          toast.error(t('dashboard.feedback.saveFailed', 'Failed to save feedback settings'));
+        },
+      }
+    );
   };
 
   if (isLoading) {
