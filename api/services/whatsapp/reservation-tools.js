@@ -320,9 +320,8 @@ async function executeTool(toolName, toolInput, session) {
           return { success: false, error: 'Could not check availability' };
         }
 
-        // Check if party can be accommodated using table-aware logic
-        // This respects is_fixed flag and adjacent_tables configuration
-        const accommodationResult = await canAccommodateParty(session.restaurant.id, party_size);
+        // Check if party can be accommodated using date/time-aware table logic
+        const accommodationResult = await canAccommodateParty(session.restaurant.id, party_size, { date, time });
 
         if (!accommodationResult.success) {
           return { success: false, error: 'Could not check table availability' };
@@ -349,7 +348,7 @@ async function executeTool(toolName, toolInput, session) {
         let message;
         if (canFit) {
           if (accommodationResult.method === 'combination') {
-            message = `Yes, we have availability for ${party_size} guests on ${date} at ${time}. We can seat you at Tables ${accommodationResult.tables.join(' + ')} (${accommodationResult.total_capacity} seats combined).`;
+            message = `Yes, we have availability for ${party_size} guests on ${date} at ${time}. We can seat you at Tables ${(accommodationResult.table_numbers || []).join(' + ')} (${accommodationResult.total_capacity} seats combined).`;
           } else {
             message = `Yes, we have availability for ${party_size} guests on ${date} at ${time}. We have a table that seats ${accommodationResult.total_capacity}.`;
           }
@@ -419,6 +418,7 @@ async function executeTool(toolName, toolInput, session) {
             special_requests: special_requests || '',
             status: 'confirmed',
             source: 'whatsapp_ai',
+            table_ids: accommodationResult.table_ids || [],
             created_at: new Date().toISOString()
           })
           .select()

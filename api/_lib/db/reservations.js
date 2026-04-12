@@ -230,7 +230,8 @@ const cancelReservation = async (restaurantId, reservationId) => {
   }
 
   const updateResult = await updateReservation(restaurantId, result.reservation.record_id, {
-    status: 'cancelled'
+    status: 'cancelled',
+    table_ids: []  // Free up the tables for other reservations
   });
 
   if (!updateResult.success) {

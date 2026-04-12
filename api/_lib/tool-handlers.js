@@ -569,13 +569,10 @@ async function modifyReservation(restaurantId, { reservation_id, new_date, new_t
       };
     }
 
-    const updateFields = {
-      'Updated At': getLocalDate('UTC')
-    };
-
-    if (new_date) updateFields['Date'] = new_date;
-    if (new_time) updateFields['Time'] = new_time;
-    if (new_party_size) updateFields['Party Size'] = parseInt(new_party_size);
+    const updateFields = {};
+    if (new_date) updateFields.date = new_date;
+    if (new_time) updateFields.time = new_time;
+    if (new_party_size) updateFields.party_size = parseInt(new_party_size);
 
     const result = await updateReservation(restaurantId, reservation_id, updateFields);
 
@@ -701,7 +698,7 @@ async function getWaitTime(restaurantId) {
       };
     }
 
-    const capacity = restaurant.fields.Capacity || 60;
+    const capacity = restaurant.capacity || restaurant.fields?.Capacity || 60;
 
     // Get today's reservations
     const today = new Date().toISOString().split('T')[0];
@@ -723,7 +720,7 @@ async function getWaitTime(restaurantId) {
 
     let upcomingReservations = 0;
     reservationsResult.data.records.forEach(record => {
-      const timeStr = record.fields.Time || '';
+      const timeStr = record.time || record.fields?.Time || '';
       if (!timeStr) return;
 
       const [hour, minute] = timeStr.split(':').map(Number);
