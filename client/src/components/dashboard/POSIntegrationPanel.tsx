@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { authFetch } from '../../services/api';
@@ -19,10 +20,42 @@ interface POSStatus {
   menu_items_count: number;
 }
 
+const POS_ERROR_MESSAGES: Record<string, string> = {
+  not_configured: 'Square integration is not yet enabled. Contact hello@seatable.one.',
+  denied: 'Square authorization was denied.',
+  invalid_callback: 'Invalid OAuth callback. Please try again.',
+  invalid_state: 'Security validation failed. Please try again.',
+  token_failed: 'Failed to exchange authorization code. Please try again.',
+  db_error: 'Connection saved but encountered a database error.',
+  server_error: 'An unexpected error occurred. Please try again.',
+};
+
 export default function POSIntegrationPanel() {
   const { t } = useTranslation();
   const toast = useToast();
   const queryClient = useQueryClient();
+
+  // Handle OAuth callback result params in the URL
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const posError = params.get('pos_error');
+    const posConnected = params.get('pos_connected');
+
+    if (posConnected === '1') {
+      toast.success(t('pos.connectSuccess', 'Square connected successfully!'));
+      queryClient.invalidateQueries({ queryKey: ['pos-status'] });
+      // Clean up URL params
+      const url = new URL(window.location.href);
+      url.searchParams.delete('pos_connected');
+      window.history.replaceState({}, '', url.toString());
+    } else if (posError) {
+      const msg = POS_ERROR_MESSAGES[posError] || 'Square connection failed. Please try again.';
+      toast.error(msg);
+      const url = new URL(window.location.href);
+      url.searchParams.delete('pos_error');
+      window.history.replaceState({}, '', url.toString());
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const { data: posStatus, isLoading } = useQuery<POSStatus | null>({
     queryKey: ['pos-status'],
@@ -41,8 +74,12 @@ export default function POSIntegrationPanel() {
       if (!res.ok) throw new Error('Sync failed');
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['pos-status'] });
+      toast.success(data.message || t('pos.syncSuccess', 'Menu synced successfully'));
+    },
+    onError: () => {
+      toast.error(t('pos.syncFailed', 'Menu sync failed. Please try again.'));
     },
   });
 
@@ -54,6 +91,29 @@ export default function POSIntegrationPanel() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pos-status'] });
+      toast.success(t('pos.disconnectSuccess', 'Square disconnected'));
+    },
+    onError: () => {
+      toast.error(t('pos.disconnectFailed', 'Failed to disconnect. Please try again.'));
+    },
+  });
+
+  const connectMutation = useMutation({
+    mutationFn: async () => {
+      const res = await authFetch('/api/square/auth');
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Failed to start Square authorization');
+      }
+      const data = await res.json();
+      if (!data.url) throw new Error('No authorization URL returned');
+      return data.url as string;
+    },
+    onSuccess: (url) => {
+      window.location.href = url;
+    },
+    onError: (err) => {
+      toast.error(err instanceof Error ? err.message : t('pos.connectFailed', 'Failed to connect Square'));
     },
   });
 
@@ -61,9 +121,7 @@ export default function POSIntegrationPanel() {
   const isConnected = connection?.status === 'active';
 
   const handleConnect = () => {
-    toast.info(
-      t('pos.comingSoon', 'Square POS integration is coming soon. Contact hello@seatable.one to request early access.')
-    );
+    connectMutation.mutate();
   };
 
   const handleDisconnect = () => {
@@ -149,9 +207,12 @@ export default function POSIntegrationPanel() {
           <button
             type="button"
             onClick={handleConnect}
-            className="px-4 py-2 bg-burgundy text-white rounded-lg text-sm font-medium hover:bg-burgundy-dark transition-colors"
+            disabled={connectMutation.isPending}
+            className="px-4 py-2 bg-burgundy text-white rounded-lg text-sm font-medium hover:bg-burgundy-dark transition-colors disabled:opacity-50"
           >
-            {t('pos.connectSquare', 'Connect Square')}
+            {connectMutation.isPending
+              ? t('pos.connecting', 'Connecting...')
+              : t('pos.connectSquare', 'Connect Square')}
           </button>
           {connection?.status === 'expired' && (
             <p className="text-xs text-amber-600">

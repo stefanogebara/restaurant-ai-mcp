@@ -90,6 +90,18 @@
     },
 
     {
+      "source": "/api/square/auth",
+      "destination": "/api/square-auth.js"
+    },
+    {
+      "source": "/api/square/callback",
+      "destination": "/api/square-callback.js"
+    },
+    {
+      "source": "/api/square/sync",
+      "destination": "/api/square-sync.js"
+    },
+    {
       "source": "/api/ical-feed",
       "destination": "/api/ical-feed.js"
     },
