@@ -91,7 +91,8 @@ export function usePhoneIntegration() {
     // Mutations
     register: registerMutation.mutate,
     unregister: unregisterMutation.mutate,
-    sendTestCall: (toNumber: string) => testCallMutation.mutate(toNumber),
+    sendTestCall: (toNumber: string, options?: Parameters<typeof testCallMutation.mutate>[1]) =>
+      testCallMutation.mutate(toNumber, options),
 
     // Mutation states
     isRegistering: registerMutation.isPending,

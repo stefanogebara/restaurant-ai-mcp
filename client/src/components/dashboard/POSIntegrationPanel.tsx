@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { authFetch } from '../../services/api';
+import { useToast } from '../../contexts/ToastContext';
 
 interface POSConnection {
   id: string;
@@ -20,6 +21,7 @@ interface POSStatus {
 
 export default function POSIntegrationPanel() {
   const { t } = useTranslation();
+  const toast = useToast();
   const queryClient = useQueryClient();
 
   const { data: posStatus, isLoading } = useQuery<POSStatus | null>({
@@ -59,8 +61,9 @@ export default function POSIntegrationPanel() {
   const isConnected = connection?.status === 'active';
 
   const handleConnect = () => {
-    // Redirect to Square OAuth flow
-    window.location.href = '/api/square/auth';
+    toast.info(
+      t('pos.comingSoon', 'Square POS integration is coming soon. Contact hello@seatable.one to request early access.')
+    );
   };
 
   const handleDisconnect = () => {

@@ -95,8 +95,15 @@ export default function PhoneIntegrationPanel() {
       toast.error(t('phoneIntegration.enterNumber', 'Enter a number to test'));
       return;
     }
-    sendTestCall(trimmed);
     toast.info(t('phoneIntegration.startingTestCall', 'Starting test call...'));
+    sendTestCall(trimmed, {
+      onSuccess: (data) => {
+        const phone = data?.instructions?.manual_test?.replace(/\n/g, ' ') ||
+          t('phoneIntegration.testCallSent', 'Test call initiated successfully');
+        toast.success(phone);
+      },
+      onError: (err) => toast.error(err instanceof Error ? err.message : t('phoneIntegration.testCallFailed', 'Test call failed')),
+    });
   };
 
   // ── Loading skeleton ────────────────────────────────────────────────────────

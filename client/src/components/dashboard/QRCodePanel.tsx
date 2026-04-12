@@ -7,6 +7,7 @@
 import { useTranslation } from 'react-i18next';
 import { useBookingQR } from '../../hooks/useBookingQR';
 import ThiingsIcon from '../common/ThiingsIcon';
+import { useToast } from '../../contexts/ToastContext';
 
 interface Props {
   slug: string;
@@ -14,7 +15,13 @@ interface Props {
 
 export default function QRCodePanel({ slug }: Props) {
   const { t } = useTranslation();
+  const toast = useToast();
   const { qrBlobUrl, isLoading, error, downloadQR, printQR } = useBookingQR(slug);
+
+  const handleDownload = () => {
+    downloadQR();
+    toast.success(t('bookingChannels.downloadStarted', 'QR Code downloaded'));
+  };
 
   return (
     <div className="space-y-4">
@@ -40,7 +47,7 @@ export default function QRCodePanel({ slug }: Props) {
       <div className="flex gap-3">
         <button
           type="button"
-          onClick={downloadQR}
+          onClick={handleDownload}
           disabled={!qrBlobUrl}
           className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-deep-charcoal text-white text-sm font-medium rounded-xl hover:bg-charcoal-dark transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         >
