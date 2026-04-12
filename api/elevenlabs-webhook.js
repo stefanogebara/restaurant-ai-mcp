@@ -44,8 +44,10 @@ const logger = createSecureLogger('ElevenLabs');
  *   "0014155552671"   → "+14155552671"    (US with 00 prefix)
  *   "+447911123456"   → "+447911123456"   (UK number)
  *   "999002121"       → null              (local only — needs fallback)
+ *   "34612345678"     → null (intl caller) → falls back to +34612345678 from caller_phone
+ *   "507XXXXXXXX"     → null (intl caller) → falls back to +507XXXXXXXX from caller_phone
  */
-function normalizePhone(raw) {
+function normalizePhone(raw, callerPhone = null) {
   if (!raw) return null;
   // Strip everything except digits and leading +
   const trimmed = raw.trim();
@@ -57,16 +59,18 @@ function normalizePhone(raw) {
   if (!digits) return null;
   if (digits.startsWith('00') && digits.length >= 9) return `+${digits.slice(2)}`;  // 00-prefix intl
   if (digits.startsWith('55') && digits.length >= 12) return `+${digits}`;          // BR with country code
-  // Brazilian DDDs are 2 digits, second digit is never 0 (e.g. 11, 21, 31…99).
-  // If second digit is 0, this is a foreign number (e.g. Panama 507xx = starts "50...").
-  const looksLikeBrDdd = digits.length >= 2 && digits[1] !== '0';
-  if (digits.length === 11 && looksLikeBrDdd) return `+55${digits}`;               // BR DDD + 9-digit mobile
-  if (digits.length === 10 && looksLikeBrDdd) return `+55${digits}`;               // BR DDD + 8-digit landline
-  if (digits.length >= 8 && digits.length <= 15) {
-    // Foreign number without country code — can't safely assume country.
-    // Return null so caller_phone (Twilio E.164) is used as fallback.
-    return null;
+  // Only apply the BR DDD heuristic when the caller is also Brazilian (or unknown).
+  // International callers (Spain +34, Panama +507, etc.) giving their number without
+  // a + prefix should not have +55 prepended — they fall through to use caller_phone.
+  const callerIsBrazilian = !callerPhone || callerPhone.startsWith('+55');
+  if (callerIsBrazilian) {
+    // Brazilian DDDs are 2 digits, second digit is never 0 (e.g. 11, 21, 31…99).
+    const looksLikeBrDdd = digits.length >= 2 && digits[1] !== '0';
+    if (digits.length === 11 && looksLikeBrDdd) return `+55${digits}`;               // BR DDD + 9-digit mobile
+    if (digits.length === 10 && looksLikeBrDdd) return `+55${digits}`;               // BR DDD + 8-digit landline
   }
+  // Foreign number without country code — can't safely assume country.
+  // Return null so caller_phone (Twilio E.164) is used as fallback.
   return null;
 }
 
@@ -416,7 +420,7 @@ async function handleCreateReservation(req, res) {
   const rawPhone = data.customer_phone || data.phone || '';
   // Normalize to E.164. If the customer gave only local digits (e.g. "999002121"),
   // fall back to the Twilio caller ID which is always E.164.
-  const customer_phone = normalizePhone(rawPhone) || req.caller_phone || rawPhone;
+  const customer_phone = normalizePhone(rawPhone, req.caller_phone) || req.caller_phone || rawPhone;
 
   // Get restaurant from session, request, body, or query string restaurant_id (voice agent)
   const _createRestaurantIdFromQuery = req.query.restaurant_id || req.query.restaurantId;
