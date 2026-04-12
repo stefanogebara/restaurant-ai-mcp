@@ -202,12 +202,27 @@ function buildWhatsAppPrompt(restaurantConfig, session, currentDateTime) {
 - NEVER ignore a customer's question to push a booking. If they ask "qual restaurante?", answer it.
 `;
 
-  // Language
-  prompt += `\nLANGUAGE:
+  // Language — respect restaurant config, fall back to PT-BR
+  const lang = restaurantConfig.language || 'pt';
+  if (lang === 'es') {
+    prompt += `\nLANGUAGE:
+- Respond in Spanish (español) — this restaurant serves Spanish-speaking customers
+- Always write in Spanish regardless of what language the customer writes in
+- Be natural: "¡Hola!", "¡Claro!", "¡Perfecto!", "¡Hasta pronto!"
+`;
+  } else if (lang === 'en') {
+    prompt += `\nLANGUAGE:
+- Respond in English — this restaurant serves English-speaking customers
+- Always write in English regardless of what language the customer writes in
+- Be natural and warm: "Hi!", "Sure!", "Perfect!"
+`;
+  } else {
+    prompt += `\nLANGUAGE:
 - Match the language the customer writes in
 - Default to Brazilian Portuguese (pt-BR) with "voc\u{00EA}" form
 - Be natural \u{2014} "Oi!", "Claro!", "Perfeito!" \u{2014} not formal
 `;
+  }
 
   // Capabilities
   prompt += `\nWHAT YOU CAN DO:
@@ -397,8 +412,15 @@ async function processWithAI(userMessage, session, conversationHistory = []) {
     { role: 'user', content: userMessage }
   ];
 
+  // Exclude identify_restaurant when the session already has a restaurant assigned.
+  // The message-processor handles routing before reaching here, so asking the
+  // customer "which restaurant?" is always wrong at this point.
+  const tools = session?.restaurant?.id
+    ? RESERVATION_TOOLS.filter(t => t.function.name !== 'identify_restaurant')
+    : RESERVATION_TOOLS;
+
   try {
-    let data = await callChatCompletions(messages, RESERVATION_TOOLS);
+    let data = await callChatCompletions(messages, tools);
     let choice = data.choices?.[0];
 
     // Handle tool use loop
@@ -428,7 +450,7 @@ async function processWithAI(userMessage, session, conversationHistory = []) {
       }
 
       // Continue conversation
-      data = await callChatCompletions(messages, RESERVATION_TOOLS);
+      data = await callChatCompletions(messages, tools);
       choice = data.choices?.[0];
     }
 

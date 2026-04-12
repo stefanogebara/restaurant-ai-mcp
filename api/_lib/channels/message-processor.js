@@ -152,8 +152,13 @@ async function processMessage(adapter, msg, options = {}) {
           if (selectedRestaurant) {
             const updated = await setSessionRestaurant(session.id, selectedRestaurant.id);
             if (updated) session = updated;
-            // Send restaurant-specific greeting
-            let greetingMsg = `Oi! Sou o assistente do ${selectedRestaurant.restaurant_name}. Como posso te ajudar? 😊`;
+            // Send restaurant-specific greeting, localised to restaurant language
+            const rLang = selectedRestaurant.language || 'pt';
+            let greetingMsg = rLang === 'es'
+              ? `¡Hola! Soy el asistente de ${selectedRestaurant.restaurant_name}. ¿En qué puedo ayudarte? 😊`
+              : rLang === 'en'
+                ? `Hi! I'm the assistant for ${selectedRestaurant.restaurant_name}. How can I help you? 😊`
+                : `Oi! Sou o assistente do ${selectedRestaurant.restaurant_name}. Como posso te ajudar? 😊`;
             try {
               const { supabaseAdmin } = require('../supabase');
               const { data: rConfig } = await supabaseAdmin
@@ -276,21 +281,29 @@ async function processMessage(adapter, msg, options = {}) {
 async function sendWelcomeButtons(adapter, from, session) {
   const lang = session?.restaurant?.language || 'pt';
 
-  const bodyText = lang === 'en'
-    ? 'What would you like to do? 😊'
-    : 'O que você gostaria de fazer? 😊';
-
-  const buttons = lang === 'en'
-    ? [
-        { id: 'action_make_reservation',   title: '📅 New reservation' },
-        { id: 'action_change_reservation', title: '✏️ Change booking' },
-        { id: 'action_cancel_reservation', title: '❌ Cancel booking' },
-      ]
-    : [
-        { id: 'action_make_reservation',   title: '📅 Nova reserva' },
-        { id: 'action_change_reservation', title: '✏️ Alterar reserva' },
-        { id: 'action_cancel_reservation', title: '❌ Cancelar reserva' },
-      ];
+  let bodyText, buttons;
+  if (lang === 'en') {
+    bodyText = 'What would you like to do? 😊';
+    buttons = [
+      { id: 'action_make_reservation',   title: '📅 New reservation' },
+      { id: 'action_change_reservation', title: '✏️ Change booking' },
+      { id: 'action_cancel_reservation', title: '❌ Cancel booking' },
+    ];
+  } else if (lang === 'es') {
+    bodyText = '¿Qué te gustaría hacer? 😊';
+    buttons = [
+      { id: 'action_make_reservation',   title: '📅 Nueva reserva' },
+      { id: 'action_change_reservation', title: '✏️ Cambiar reserva' },
+      { id: 'action_cancel_reservation', title: '❌ Cancelar reserva' },
+    ];
+  } else {
+    bodyText = 'O que você gostaria de fazer? 😊';
+    buttons = [
+      { id: 'action_make_reservation',   title: '📅 Nova reserva' },
+      { id: 'action_change_reservation', title: '✏️ Alterar reserva' },
+      { id: 'action_cancel_reservation', title: '❌ Cancelar reserva' },
+    ];
+  }
 
   try {
     await adapter.sendButtons(from, bodyText, buttons);
