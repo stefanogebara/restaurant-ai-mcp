@@ -120,11 +120,22 @@ async function getAllActiveRestaurants() {
   }
 
   try {
-    const { data, error } = await centralSupabase
+    // Try with whatsapp_phone_number_id first; fall back if column doesn't exist yet
+    let data, error;
+    ({ data, error } = await centralSupabase
       .from('restaurant_registry')
       .select('id, restaurant_name, restaurant_aliases, language, whatsapp_phone_number_id')
       .eq('is_active', true)
-      .order('restaurant_name');
+      .order('restaurant_name'));
+
+    if (error && error.message?.includes('whatsapp_phone_number_id')) {
+      logger.warn('[RestaurantRegistry] whatsapp_phone_number_id column missing, falling back');
+      ({ data, error } = await centralSupabase
+        .from('restaurant_registry')
+        .select('id, restaurant_name, restaurant_aliases, language')
+        .eq('is_active', true)
+        .order('restaurant_name'));
+    }
 
     if (error) {
       logger.error('[RestaurantRegistry] Error fetching restaurants:', error);
