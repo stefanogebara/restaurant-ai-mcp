@@ -31,6 +31,20 @@ const { sendConfirmationVoiceNote } = require('./services/whatsapp/voice-note-tr
 
 const logger = createSecureLogger('ElevenLabs');
 
+/**
+ * Normalize a phone number to E.164 format.
+ * Returns null if it can't be reliably normalized (e.g. too few digits).
+ */
+function normalizePhone(raw) {
+  if (!raw) return null;
+  const digits = raw.replace(/\D/g, '');
+  if (!digits) return null;
+  if (digits.startsWith('55') && digits.length >= 12) return `+${digits}`;  // already has country code
+  if (digits.length === 11) return `+55${digits}`;  // Brazilian DDD + number (e.g. 11999002121)
+  if (digits.length === 13 || digits.length === 14) return `+${digits}`;    // full intl number
+  return null;  // local-only digits — caller_phone fallback will be used
+}
+
 // Check if multi-tenant mode is enabled
 const MULTI_TENANT_MODE = process.env.MULTI_TENANT_MODE === 'true';
 
@@ -115,8 +129,9 @@ module.exports = async (req, res) => {
       req.body.conversation_started = true;
     }
 
-    // Store conversation ID in request for use in handlers
+    // Store conversation metadata on req for downstream handlers
     req.conversation_id = conversationId;
+    req.caller_phone = callerPhone;  // E.164 caller ID from Twilio — use as phone fallback
 
     // ===== RESTAURANT ROUTING =====
     // Some actions (like get_current_datetime, identify_restaurant) don't need restaurant context upfront
@@ -373,7 +388,10 @@ async function handleCreateReservation(req, res) {
   const data = req.method === 'POST' ? req.body : req.query;
   // Accept both "phone" (voice agent) and "customer_phone" (WhatsApp) field names
   const { date, time, party_size, customer_name, customer_email, special_requests } = data;
-  const customer_phone = data.customer_phone || data.phone;
+  const rawPhone = data.customer_phone || data.phone || '';
+  // Normalize to E.164. If the customer gave only local digits (e.g. "999002121"),
+  // fall back to the Twilio caller ID which is always E.164.
+  const customer_phone = normalizePhone(rawPhone) || req.caller_phone || rawPhone;
 
   // Get restaurant from session, request, body, or query string restaurant_id (voice agent)
   const _createRestaurantIdFromQuery = req.query.restaurant_id || req.query.restaurantId;
