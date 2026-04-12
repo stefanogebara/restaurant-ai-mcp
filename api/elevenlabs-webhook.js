@@ -33,16 +33,38 @@ const logger = createSecureLogger('ElevenLabs');
 
 /**
  * Normalize a phone number to E.164 format.
- * Returns null if it can't be reliably normalized (e.g. too few digits).
+ * Handles Brazilian numbers, international numbers, and various input formats.
+ * Returns null if it can't be reliably normalized — caller_phone fallback is used.
+ *
+ * Examples:
+ *   "+5511999002121"  → "+5511999002121"  (already E.164)
+ *   "5511999002121"   → "+5511999002121"  (BR with country code, no +)
+ *   "11999002121"     → "+5511999002121"  (BR with DDD, no country code)
+ *   "+14155552671"    → "+14155552671"    (US number)
+ *   "0014155552671"   → "+14155552671"    (US with 00 prefix)
+ *   "+447911123456"   → "+447911123456"   (UK number)
+ *   "999002121"       → null              (local only — needs fallback)
  */
 function normalizePhone(raw) {
   if (!raw) return null;
-  const digits = raw.replace(/\D/g, '');
+  // Strip everything except digits and leading +
+  const trimmed = raw.trim();
+  if (trimmed.startsWith('+')) {
+    const digits = trimmed.slice(1).replace(/\D/g, '');
+    if (digits.length >= 7) return `+${digits}`;
+  }
+  const digits = trimmed.replace(/\D/g, '');
   if (!digits) return null;
-  if (digits.startsWith('55') && digits.length >= 12) return `+${digits}`;  // already has country code
-  if (digits.length === 11) return `+55${digits}`;  // Brazilian DDD + number (e.g. 11999002121)
-  if (digits.length === 13 || digits.length === 14) return `+${digits}`;    // full intl number
-  return null;  // local-only digits — caller_phone fallback will be used
+  if (digits.startsWith('00') && digits.length >= 9) return `+${digits.slice(2)}`;  // 00-prefix intl
+  if (digits.startsWith('55') && digits.length >= 12) return `+${digits}`;          // BR with country code
+  if (digits.length === 11) return `+55${digits}`;                                   // BR DDD + 9-digit mobile
+  if (digits.length === 10) return `+55${digits}`;                                   // BR DDD + 8-digit landline
+  if (digits.length >= 8 && digits.length <= 15) {
+    // Could be a foreign number given without country code — can't safely assume country.
+    // Return null so caller_phone (Twilio E.164) is used as fallback.
+    return null;
+  }
+  return null;
 }
 
 // Check if multi-tenant mode is enabled

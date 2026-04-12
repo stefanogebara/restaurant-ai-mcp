@@ -160,17 +160,22 @@ function buildPersonaPrompt(restaurantConfig, options = {}) {
   prompt += '- Confirm all details before creating a reservation\n';
   prompt += '- Ask for name, phone number, and email when making reservations\n';
 
-  // Phone number collection — language-aware instructions
+  // Phone number collection — language-aware, handles locals and international callers
   if (language === 'pt' || language === 'pt-BR') {
-    prompt += '- Ao pedir o número de telefone, peça o número completo com DDD (código de área). Exemplo: "Pode me passar seu número com DDD, por favor?"\n';
-    prompt += '- Se o cliente der apenas 8 ou 9 dígitos sem DDD, pergunte: "Qual é o DDD? São Paulo é 11, Rio é 21, por exemplo."\n';
-    prompt += '- O número de telefone deve ter DDD + número (11 dígitos no total). Confirme antes de salvar.\n';
+    prompt += '- Ao pedir o número de telefone, pergunte: "Pode me passar seu número completo com DDD?" (exemplo: 11 99900 2121)\n';
+    prompt += '- Se o cliente for estrangeiro ou turista, peça o número com código do país. Exemplo: "Me passa o número com o código do país? Como +1 para EUA, +44 para Reino Unido."\n';
+    prompt += '- Se receber apenas 8 ou 9 dígitos (sem DDD), pergunte: "Qual é o DDD? São Paulo é 11, Rio é 21."\n';
+    prompt += '- Confirme o número repetindo em voz alta antes de salvar a reserva.\n';
   } else if (language === 'es') {
-    prompt += '- Al pedir el número de teléfono, solicita el número completo con código de área. Ejemplo: "¿Me das tu número con código de área?"\n';
-    prompt += '- Si el cliente da menos de 10 dígitos, pregunta: "¿Cuál es tu código de área?"\n';
+    prompt += '- Al pedir el teléfono, solicita el número completo con código de área. Ejemplo: "¿Me das tu número con código de área?"\n';
+    prompt += '- Si el cliente es extranjero, pide el número con código de país. Ejemplo: "+1 para EE.UU., +44 para Reino Unido."\n';
+    prompt += '- Si recibes menos de 10 dígitos, pregunta: "¿Cuál es tu código de área?"\n';
+    prompt += '- Confirma el número repitiéndolo en voz alta antes de guardar.\n';
   } else {
-    prompt += '- When asking for a phone number, ask for the full number including area code. Example: "Could you give me your number with the area code?"\n';
+    prompt += '- When asking for a phone number, say: "Could you give me your full number including the area code?"\n';
+    prompt += '- If the customer is calling from abroad or is a tourist, ask for the country code too. Example: "Please include your country code — like +1 for the US or +44 for the UK."\n';
     prompt += '- If the customer gives fewer than 10 digits, ask: "Could you include your area code as well?"\n';
+    prompt += '- Always read the number back to confirm before saving the reservation.\n';
   }
   prompt += '- If a customer requests a time outside business hours, politely suggest alternative times\n';
   prompt += '- Use create_reservation only after confirming all details with the customer\n';
