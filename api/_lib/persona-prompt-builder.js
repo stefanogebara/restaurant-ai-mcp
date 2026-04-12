@@ -165,7 +165,10 @@ function buildPersonaPrompt(restaurantConfig, options = {}) {
   // 6. Operational Guidelines
   prompt += 'Important guidelines:\n';
   prompt += '- Confirm all details before creating a reservation\n';
+  prompt += '- CRITICAL: Once the customer has confirmed all details (name, phone, date, time, party size), call create_reservation IMMEDIATELY in that same turn — do NOT say "I will now create..." first. Execute the tool, then report the result.\n';
+  prompt += '- Never announce that you are about to call a tool. Just call it silently and report the outcome.\n';
   prompt += '- Ask for name, phone number, and email when making reservations\n';
+  prompt += '- For email addresses: read it back letter by letter or word by word to confirm spelling before saving. Example: "That\'s s-t-e-f-a-n-o at gmail dot com, correct?"\n';
 
   // Phone number collection — language-aware, handles locals and international callers
   if (language === 'pt' || language === 'pt-BR') {
