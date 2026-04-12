@@ -23,14 +23,12 @@ const logger = createSecureLogger('elevenlabs-kb-sync');
  * Build a plain-text knowledge document from restaurant data.
  */
 function buildKnowledgeDoc(config, managerFacts, menuItems) {
-  const profile = config.restaurant_profile || {};
   const lines = [];
 
   lines.push(`# ${config.restaurant_name || 'Restaurant'}`);
   lines.push('');
 
   // Basic info
-  if (config.address) lines.push(`Address: ${config.address}`);
   if (config.phone) lines.push(`Phone: ${config.phone}`);
   if (config.email) lines.push(`Email: ${config.email}`);
   if (config.city || config.country) {
@@ -54,8 +52,8 @@ function buildKnowledgeDoc(config, managerFacts, menuItems) {
   }
 
   // Reservation policies
-  if (config.avg_dining_duration_minutes) {
-    lines.push(`Average dining duration: ${config.avg_dining_duration_minutes} minutes`);
+  if (config.average_dining_duration_minutes) {
+    lines.push(`Average dining duration: ${config.average_dining_duration_minutes} minutes`);
   }
   if (config.deposit_config) {
     const dc = config.deposit_config;
@@ -66,63 +64,29 @@ function buildKnowledgeDoc(config, managerFacts, menuItems) {
   lines.push('');
 
   // Persona / profile
-  if (profile.persona_summary) {
-    lines.push('## About');
-    lines.push(profile.persona_summary);
+  if (config.agent_greeting) {
+    lines.push('## Greeting');
+    lines.push(config.agent_greeting);
     lines.push('');
   }
 
-  if (profile.cuisine_identity) {
-    const ci = profile.cuisine_identity;
-    lines.push('## Cuisine');
-    if (ci.primary_cuisine) lines.push(`Cuisine: ${ci.primary_cuisine}`);
-    if (ci.style) lines.push(`Style: ${ci.style}`);
-    if (ci.philosophy) lines.push(`Philosophy: ${ci.philosophy}`);
-    if (ci.influences?.length) lines.push(`Influences: ${ci.influences.join(', ')}`);
+  if (config.persona_prompt_override) {
+    lines.push('## Personality & Persona');
+    lines.push(config.persona_prompt_override);
     lines.push('');
   }
 
-  if (profile.atmosphere) {
-    const atm = profile.atmosphere;
-    lines.push('## Atmosphere');
-    if (atm.vibe) lines.push(`Vibe: ${atm.vibe}`);
-    if (atm.description) lines.push(atm.description);
-    if (atm.dress_code) lines.push(`Dress code: ${atm.dress_code}`);
-    if (atm.music) lines.push(`Music: ${atm.music}`);
-    lines.push('');
-  }
-
-  if (profile.signature_dishes?.length) {
-    lines.push('## Signature Dishes');
-    for (const dish of profile.signature_dishes) {
-      lines.push(`- **${dish.name}**: ${dish.description || ''}${dish.why_special ? ` (${dish.why_special})` : ''}`);
+  if (config.ai_personality) {
+    const p = typeof config.ai_personality === 'string'
+      ? (() => { try { return JSON.parse(config.ai_personality); } catch { return null; } })()
+      : config.ai_personality;
+    if (p) {
+      lines.push('## AI Personality');
+      if (p.tone) lines.push(`Tone: ${p.tone}`);
+      if (p.style) lines.push(`Style: ${p.style}`);
+      if (p.language) lines.push(`Language: ${p.language}`);
+      lines.push('');
     }
-    lines.push('');
-  }
-
-  if (profile.guest_experience) {
-    const ge = profile.guest_experience;
-    lines.push('## Guest Experience');
-    if (ge.promise) lines.push(`Promise: ${ge.promise}`);
-    if (ge.special_occasions) lines.push(`Special occasions: ${ge.special_occasions}`);
-    if (ge.dietary_accommodations) lines.push(`Dietary accommodations: ${ge.dietary_accommodations}`);
-    lines.push('');
-  }
-
-  if (profile.unique_differentiators?.length) {
-    lines.push('## What Makes Us Special');
-    for (const d of profile.unique_differentiators) {
-      lines.push(`- ${d}`);
-    }
-    lines.push('');
-  }
-
-  if (profile.things_to_know?.length) {
-    lines.push('## Important Facts');
-    for (const fact of profile.things_to_know) {
-      lines.push(`- ${fact}`);
-    }
-    lines.push('');
   }
 
   // POS menu items (synced from Square/Toast)
@@ -192,7 +156,7 @@ const handler = async (req, res) => {
       supabaseAdmin
         .schema('restaurant')
         .from('restaurant_config')
-        .select('restaurant_name, phone, email, address, city, country, restaurant_type, timezone, business_hours, avg_dining_duration_minutes, deposit_config, restaurant_profile, elevenlabs_agent_id, elevenlabs_kb_doc_id')
+        .select('restaurant_name, phone, email, city, country, restaurant_type, timezone, business_hours, average_dining_duration_minutes, deposit_config, ai_personality, agent_greeting, persona_prompt_override, elevenlabs_agent_id, elevenlabs_kb_doc_id')
         .eq('id', restaurantId)
         .single(),
       supabaseAdmin
@@ -279,7 +243,7 @@ const handler = async (req, res) => {
         conversation_config: {
           agent: {
             prompt: {
-              knowledge_base: [{ type: 'file', id: documentId }],
+              knowledge_base: [{ type: 'file', id: documentId, name: docName }],
             },
           },
         },

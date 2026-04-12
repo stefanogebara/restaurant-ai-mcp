@@ -144,7 +144,7 @@ async function syncKnowledgeBase(restaurantId) {
       supabaseAdmin
         .schema('restaurant')
         .from('restaurant_config')
-        .select('restaurant_name, phone, email, address, city, country, restaurant_type, timezone, business_hours, avg_dining_duration_minutes, deposit_config, restaurant_profile, elevenlabs_kb_doc_id')
+        .select('restaurant_name, phone, email, city, country, restaurant_type, timezone, business_hours, average_dining_duration_minutes, deposit_config, ai_personality, agent_greeting, persona_prompt_override, elevenlabs_kb_doc_id')
         .eq('id', restaurantId)
         .single(),
       supabaseAdmin
@@ -211,7 +211,7 @@ async function syncKnowledgeBase(restaurantId) {
         conversation_config: {
           agent: {
             prompt: {
-              knowledge_base: [{ type: 'file', id: documentId }],
+              knowledge_base: [{ type: 'file', id: documentId, name: docName }],
             },
           },
         },
