@@ -385,7 +385,7 @@ async function handleCreateReservation(req, res) {
       const { data: rc } = await supabaseAdmin
         .schema('restaurant')
         .from('restaurant_config')
-        .select('id, restaurant_name, business_hours, timezone, max_party_size, language, avg_dining_duration_minutes')
+        .select('id, restaurant_name, business_hours, timezone, agent_language, average_dining_duration_minutes')
         .eq('id', rid)
         .single();
       restaurant = rc || { id: rid, restaurant_name: 'the restaurant' };

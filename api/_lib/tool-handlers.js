@@ -147,94 +147,51 @@ async function checkAvailability(restaurantId, restaurant, { date, time, party_s
 
   try {
     logger.info(`AVAILABILITY CHECK for ${restaurant.name}`, {
-      language: restaurant.language,
+      language: restaurant.agent_language || restaurant.language,
       voice_id: restaurant.voice_id
     });
 
     // Calculate total capacity from table configuration or database
-    let totalCapacity = 0;
-    if (restaurant.table_configuration && Array.isArray(restaurant.table_configuration) && restaurant.table_configuration.length > 0) {
-      restaurant.table_configuration.forEach(area => {
-        if (area.tables && Array.isArray(area.tables)) {
-          area.tables.forEach(table => {
-            totalCapacity += table.capacity || 0;
-          });
-        }
-      });
-    }
+    // Load real tables from DB (snake_case fields)
+    const { getAllTables } = require('./db/tables');
+    const tablesResult = await getAllTables(restaurantId);
+    const dbTables = tablesResult.success ? tablesResult.tables : [];
 
-    // If no capacity from config, calculate from actual tables in database
-    if (totalCapacity === 0) {
-      const dbTablesResult = await getTables(restaurantId);
-      if (dbTablesResult.success) {
-        const dbTables = dbTablesResult.data.records || [];
-        dbTables.forEach(t => {
-          if (t.fields['Is Active']) {
-            totalCapacity += t.fields.Capacity || 0;
-          }
-        });
-      }
-    }
+    // Total seated capacity from active tables
+    const totalCapacity = dbTables.reduce((sum, t) => sum + (t.capacity || 0), 0);
 
-    logger.debug(`Total capacity: ${totalCapacity} seats`);
+    // Currently occupied seats (tables physically in use right now)
+    const currentlyOccupiedSeats = dbTables
+      .filter(t => t.status === 'Occupied' || t.status === 'Reserved')
+      .reduce((sum, t) => sum + (t.capacity || 0), 0);
+
+    logger.debug(`Total capacity: ${totalCapacity} | currently occupied: ${currentlyOccupiedSeats}`);
 
     // Get business hours for the requested date
     const requestedDate = new Date(date);
     const dayOfWeek = requestedDate.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
-    const dayHours = restaurant.business_hours?.[dayOfWeek];
+    const businessHours = restaurant.business_hours || {};
+    // Support both array [{day, open, close, is_open}] and object {monday: {open, close, is_open}}
+    const dayHours = Array.isArray(businessHours)
+      ? businessHours.find(d => d.day && d.day.toLowerCase() === dayOfWeek)
+      : businessHours[dayOfWeek];
 
-    const openTime = dayHours?.open_time || '17:00';
-    const closeTime = dayHours?.close_time || '22:00';
-    const isOpen = dayHours?.is_open !== false;
+    const openTime = dayHours?.open || dayHours?.open_time || '17:00';
+    const closeTime = dayHours?.close || dayHours?.close_time || '22:00';
+    const isOpen = !dayHours || dayHours.is_open !== false;
 
     // Check if restaurant is closed on this day
     if (!isOpen) {
       return {
         success: true,
         available: false,
-        message: `Sorry, ${restaurant.name} is closed on ${dayOfWeek}s. Please choose another day.`,
-        details: {
-          day: dayOfWeek,
-          is_closed: true
-        }
+        message: `Sorry, ${restaurant.restaurant_name || restaurant.name} is closed on ${dayOfWeek}s. Please choose another day.`,
+        details: { day: dayOfWeek, is_closed: true }
       };
     }
 
-    // Get real-time table status from Supabase
-    const rawTablesResult = await getTables(restaurantId);
-
-    // Calculate REAL-TIME occupied seats from Tables table
-    let currentlyOccupiedSeats = 0;
-    const allTables = rawTablesResult.success ? (rawTablesResult.data.records || []) : [];
-
-    logger.debug(`Found ${allTables.length} total tables in database`);
-
-    allTables.forEach(table => {
-      const status = table.fields.Status || 'Available';
-      const capacity = table.fields.Capacity || 0;
-      const tableNum = table.fields['Table Number'];
-      const isActive = table.fields['Is Active'];
-
-      logger.debug(`Table ${tableNum}: ${status}, ${capacity} seats, Active: ${isActive}`);
-
-      if (isActive && (status === 'Occupied' || status === 'Reserved')) {
-        currentlyOccupiedSeats += capacity;
-        logger.debug(`Added ${capacity} occupied seats from Table ${tableNum}`);
-      }
-    });
-
-    logger.debug(`TOTAL currently occupied/reserved: ${currentlyOccupiedSeats} seats out of ${totalCapacity}`);
-
-    // Get reservations for the requested date/time
+    // Get reservations for the requested date (confirmed + seated only)
     const reservationsResult = await getReservations(restaurantId, { date, status: null });
-    // Post-filter for confirmed/seated status
-    if (reservationsResult.success && reservationsResult.data.records) {
-      reservationsResult.data.records = reservationsResult.data.records.filter(r => {
-        const status = (r.fields.Status || '').toLowerCase();
-        return status === 'confirmed' || status === 'seated';
-      });
-    }
-
     if (!reservationsResult.success) {
       return {
         success: false,
@@ -243,10 +200,15 @@ async function checkAvailability(restaurantId, restaurant, { date, time, party_s
       };
     }
 
-    const existingReservations = reservationsResult.data.records || [];
+    // Normalize records — getReservations returns snake_case objects
+    const existingReservations = (reservationsResult.data.records || []).filter(r => {
+      const s = (r.status || r.fields?.Status || '').toLowerCase();
+      return s === 'confirmed' || s === 'seated';
+    });
+
     const partySize = parseInt(party_size);
 
-    // Use the EFFECTIVE capacity (total - currently occupied)
+    // Effective capacity = total minus what's physically occupied right now
     const effectiveCapacity = Math.max(0, totalCapacity - currentlyOccupiedSeats);
 
     logger.debug(`Effective capacity for reservations: ${effectiveCapacity} (${totalCapacity} total - ${currentlyOccupiedSeats} occupied)`);
@@ -277,7 +239,7 @@ async function checkAvailability(restaurantId, restaurant, { date, time, party_s
 
     // Check if we can accommodate this party size using flexible table combinations
     // Pass date + time so already-booked tables are excluded from the check
-    const checkDuration = restaurant?.avg_dining_duration_minutes || 90;
+    const checkDuration = restaurant?.average_dining_duration_minutes || restaurant?.avg_dining_duration_minutes || 90;
     const accommodationCheck = await canAccommodateParty(restaurantId, partySize, { date, time, durationMinutes: checkDuration });
 
     if (availabilityCheck.available && accommodationCheck.can_accommodate) {
@@ -390,12 +352,12 @@ async function createReservation(restaurantId, restaurant, params) {
     const reservationsResult = await getReservations(restaurantId, { date });
     let existingReservations = reservationsResult.success ? (reservationsResult.data.records || []) : [];
     existingReservations = existingReservations.filter(r => {
-      const status = (r.fields.Status || '').toLowerCase();
-      return status === 'confirmed' || status === 'seated';
+      const s = (r.status || r.fields?.Status || '').toLowerCase();
+      return s === 'confirmed' || s === 'seated';
     });
 
     // Check if we can accommodate — pass date/time so booked tables are excluded
-    const durationMinutes = restaurant.avg_dining_duration_minutes || 90;
+    const durationMinutes = restaurant.average_dining_duration_minutes || restaurant.avg_dining_duration_minutes || 90;
     const accommodationCheck = await canAccommodateParty(
       restaurantId,
       parseInt(party_size),
