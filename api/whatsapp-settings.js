@@ -373,6 +373,9 @@ async function handleUpdate(req, res, restaurantId) {
             restaurant_name: config.restaurant_name,
             language: config.language || 'en',
             is_active: true,
+            // Store the restaurant's dedicated phone_number_id if configured in env
+            // (used for per-restaurant WhatsApp routing when each has their own number)
+            whatsapp_phone_number_id: config.whatsapp_phone_number_id || null,
           });
           logger.info(`Registry upserted for ${restaurantId} (${config.restaurant_name})`);
         }

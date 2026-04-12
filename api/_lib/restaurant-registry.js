@@ -122,7 +122,7 @@ async function getAllActiveRestaurants() {
   try {
     const { data, error } = await centralSupabase
       .from('restaurant_registry')
-      .select('id, restaurant_name, restaurant_aliases, language')
+      .select('id, restaurant_name, restaurant_aliases, language, whatsapp_phone_number_id')
       .eq('is_active', true)
       .order('restaurant_name');
 
@@ -251,16 +251,21 @@ async function upsertRestaurant(id, restaurantData) {
   }
 
   try {
+    const upsertData = {
+      id,
+      restaurant_name: restaurantData.restaurant_name,
+      restaurant_aliases: restaurantData.restaurant_aliases || [],
+      language: restaurantData.language || 'en',
+      is_active: restaurantData.is_active !== undefined ? restaurantData.is_active : true,
+      updated_at: new Date().toISOString(),
+    };
+    // Only include whatsapp_phone_number_id if provided (column may not exist yet on older DBs)
+    if (restaurantData.whatsapp_phone_number_id !== undefined) {
+      upsertData.whatsapp_phone_number_id = restaurantData.whatsapp_phone_number_id;
+    }
     const { data, error } = await centralSupabase
       .from('restaurant_registry')
-      .upsert({
-        id,
-        restaurant_name: restaurantData.restaurant_name,
-        restaurant_aliases: restaurantData.restaurant_aliases || [],
-        language: restaurantData.language || 'en',
-        is_active: restaurantData.is_active !== undefined ? restaurantData.is_active : true,
-        updated_at: new Date().toISOString()
-      }, { onConflict: 'id' })
+      .upsert(upsertData, { onConflict: 'id' })
       .select()
       .single();
 

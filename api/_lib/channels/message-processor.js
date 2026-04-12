@@ -35,7 +35,7 @@ const logger = createSecureLogger('MessageProcessor');
  * @returns {Promise<{response?: string, handled: boolean}>}
  */
 async function processMessage(adapter, msg, options = {}) {
-  const { from, messageId, text, mediaContext, interactiveSelection } = msg;
+  const { from, messageId, text, mediaContext, interactiveSelection, phoneNumberId } = msg;
   const providerName = adapter.providerName;
 
   // 1. Mark as read (fire-and-forget)
@@ -114,22 +114,46 @@ async function processMessage(adapter, msg, options = {}) {
     try {
       const activeRestaurants = await Promise.race([
         getAllActiveRestaurants(),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Restaurant lookup timeout')), 20000)),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Restaurant lookup timeout')), 10000)),
       ]);
 
-      if (activeRestaurants.length === 1) {
+      if (activeRestaurants.length === 0) {
+        // No restaurants configured or registry down — don't proceed to AI with broken context
+        logger.error('[MessageProcessor] No active restaurants in registry — cannot route message');
+        await adapter.sendMessage(from, 'Desculpe, nosso sistema está passando por manutenção. Por favor, tente novamente em alguns minutos. 🙏');
+        return { handled: true };
+      }
+
+      // Route by phone_number_id first: if this WhatsApp number belongs to one specific restaurant
+      // (each restaurant can have their own number), skip the picker entirely.
+      let directMatch = null;
+      if (phoneNumberId) {
+        directMatch = activeRestaurants.find(r => r.whatsapp_phone_number_id === phoneNumberId);
+      }
+      // Also check the env-level single-restaurant case (WHATSAPP_PHONE_NUMBER_ID points to one restaurant)
+      const sharedPhoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+      const isSharedNumber = !directMatch && phoneNumberId && phoneNumberId === sharedPhoneNumberId;
+
+      if (directMatch) {
+        // Dedicated number — route directly without picker
+        const updated = await setSessionRestaurant(session.id, directMatch.id);
+        if (updated) session = updated;
+        logger.info(`[MessageProcessor] Routed by phone_number_id to ${directMatch.restaurant_name}`);
+      } else if (activeRestaurants.length === 1 || (!isSharedNumber && !directMatch)) {
+        // Only one active restaurant — auto-assign
         const updated = await setSessionRestaurant(session.id, activeRestaurants[0].id);
         if (updated) session = updated;
-      } else if (activeRestaurants.length > 1) {
-        // Interactive restaurant selection
+      } else {
+        // Multiple restaurants on shared number — show interactive picker
         if (interactiveSelection?.id?.startsWith('restaurant_')) {
+          // Customer just picked a restaurant from the list
           const selectedId = interactiveSelection.id.replace('restaurant_', '');
           const selectedRestaurant = activeRestaurants.find(r => r.id === selectedId);
           if (selectedRestaurant) {
             const updated = await setSessionRestaurant(session.id, selectedRestaurant.id);
             if (updated) session = updated;
-            // Load greeting
-            let greetingMsg = `Oi! Sou o assistente do ${selectedRestaurant.restaurant_name}. Como posso te ajudar?`;
+            // Send restaurant-specific greeting
+            let greetingMsg = `Oi! Sou o assistente do ${selectedRestaurant.restaurant_name}. Como posso te ajudar? 😊`;
             try {
               const { supabaseAdmin } = require('../supabase');
               const { data: rConfig } = await supabaseAdmin
@@ -145,27 +169,17 @@ async function processMessage(adapter, msg, options = {}) {
           }
         }
 
-        // Send interactive list (Meta only)
-        const sections = [];
-        const chunkSize = 10;
-        for (let i = 0; i < activeRestaurants.length; i += chunkSize) {
-          const chunk = activeRestaurants.slice(i, i + chunkSize);
-          sections.push({
-            title: sections.length === 0 ? 'Restaurantes' : `Mais (${sections.length + 1})`,
-            rows: chunk.map(r => ({
-              id: `restaurant_${r.id}`,
-              title: r.restaurant_name,
-              description: r.restaurant_type && r.city
-                ? `${r.restaurant_type} \u00B7 ${r.city}`
-                : (r.restaurant_type || r.city || ''),
-            })),
-          });
-        }
-        await adapter.sendInteractiveList(from, 'Ol\u00E1! Com qual restaurante voc\u00EA gostaria de falar?', 'Ver restaurantes', sections);
+        // Send restaurant picker list
+        await sendRestaurantPicker(adapter, from, activeRestaurants);
         return { handled: true };
       }
     } catch (err) {
-      logger.error('Restaurant routing error (non-fatal):', err.message);
+      logger.error('Restaurant routing error:', err.message);
+      // If routing fails entirely, bail gracefully rather than proceeding with no context
+      if (!session.restaurant) {
+        await adapter.sendMessage(from, 'Desculpe, tive um problema ao identificar o restaurante. Por favor, tente novamente. 🙏');
+        return { handled: true };
+      }
     }
   }
 
@@ -284,6 +298,39 @@ async function sendWelcomeButtons(adapter, from, session) {
   } catch (err) {
     logger.warn('Welcome buttons failed (non-fatal):', err.message);
   }
+}
+
+/**
+ * Send an interactive restaurant picker list to the customer.
+ * Used when multiple restaurants share one WhatsApp number.
+ *
+ * @param {import('./channel-adapter').ChannelAdapter} adapter
+ * @param {string} from
+ * @param {Array} restaurants - List from getAllActiveRestaurants()
+ */
+async function sendRestaurantPicker(adapter, from, restaurants) {
+  const sections = [];
+  const chunkSize = 10;
+  for (let i = 0; i < restaurants.length; i += chunkSize) {
+    const chunk = restaurants.slice(i, i + chunkSize);
+    sections.push({
+      title: sections.length === 0 ? 'Restaurantes' : `Mais restaurantes`,
+      rows: chunk.map(r => ({
+        id: `restaurant_${r.id}`,
+        title: r.restaurant_name,
+        description: r.restaurant_type && r.city
+          ? `${r.restaurant_type} \u00B7 ${r.city}`
+          : (r.restaurant_type || r.city || ''),
+      })),
+    });
+  }
+  await adapter.sendInteractiveList(
+    from,
+    'Ol\u00E1! Com qual restaurante voc\u00EA gostaria de falar?',
+    'Ver restaurantes',
+    sections,
+  );
+  logger.info(`[MessageProcessor] Sent restaurant picker (${restaurants.length} options) to ${from}`);
 }
 
 module.exports = { processMessage };

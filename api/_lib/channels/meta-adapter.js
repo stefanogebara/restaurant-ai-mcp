@@ -135,6 +135,7 @@ class MetaAdapter extends ChannelAdapter {
       mediaContext,
       interactiveSelection,
       profileName: value.contacts?.[0]?.profile?.name || null,
+      phoneNumberId: value.metadata?.phone_number_id || null,
     };
   }
 

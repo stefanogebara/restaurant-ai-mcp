@@ -79,10 +79,13 @@ async function handlePost(req, res) {
       return res.status(200).json({ status: 'ok' });
     }
 
-    // Process first, then return 200 (Vercel kills async work after res.json)
-    // Meta timeout is 20s — our pipeline runs in ~5-10s, well within limits
-    await processMessage(adapter, msg, { oppositeProvider: 'twilio' });
-    return res.status(200).json({ status: 'ok' });
+    // Respond 200 immediately — prevents Meta retry storms (Meta retries if no 200 within 5s,
+    // causing duplicate messages). Vercel Node.js functions continue running after res.json().
+    res.status(200).json({ status: 'ok' });
+
+    // Process the message after responding (fire and continue)
+    processMessage(adapter, msg, { oppositeProvider: 'twilio' })
+      .catch(err => logger.error('processMessage error (post-response):', err.message));
 
   } catch (error) {
     logger.error('Webhook error:', error.message);
