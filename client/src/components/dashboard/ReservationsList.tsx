@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
-import type { UpcomingReservation } from '../../types/host.types';
+import type { UpcomingReservation, Table } from '../../types/host.types';
 import NoShowRiskBadge from './NoShowRiskBadge';
 import DepositBadge from './DepositBadge';
 import CustomerTierBadge from './CustomerTierBadge';
@@ -25,6 +25,7 @@ interface ReservationsListProps {
   byPartySize?: PartySizeRevenue[];
   language?: 'en' | 'es' | 'pt-BR';
   isLoading?: boolean;
+  tables?: Table[];
 }
 
 export default function ReservationsList({
@@ -41,7 +42,14 @@ export default function ReservationsList({
   byPartySize,
   language = 'en',
   isLoading,
+  tables = [],
 }: ReservationsListProps) {
+  // Build id→table_number lookup once for all rows
+  const tableMap = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const t of tables) m.set(t.id, t.table_number);
+    return m;
+  }, [tables]);
   const { t } = useTranslation();
   const [showTomorrow, setShowTomorrow] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -262,6 +270,7 @@ export default function ReservationsList({
               avgSpendPerCover={avgSpendPerCover}
               byPartySize={byPartySize}
               language={language}
+              tableMap={tableMap}
             />
           ))}
         </div>
@@ -283,9 +292,10 @@ interface ReservationRowProps {
   avgSpendPerCover?: number;
   byPartySize?: PartySizeRevenue[];
   language: 'en' | 'es' | 'pt-BR';
+  tableMap?: Map<string, number>;
 }
 
-function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositAction, onEdit, onCancel, onCustomerClick, avgSpendPerCover, byPartySize, language }: ReservationRowProps) {
+function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositAction, onEdit, onCancel, onCustomerClick, avgSpendPerCover, byPartySize, language, tableMap }: ReservationRowProps) {
   const { t } = useTranslation();
   const tl = (key: string) => t(`dashboard.reservationsList.${key}`);
 
@@ -353,6 +363,11 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
         </div>
         <div className="text-[11px] sm:text-xs text-muted-stone mt-0.5 truncate">
           {reservation.party_size} {tl('people')}
+          {tableMap && reservation.table_ids && reservation.table_ids.length > 0 && (
+            <span className="text-burgundy font-medium">
+              {' · '}T{reservation.table_ids.map(id => tableMap.get(id)).filter(Boolean).join(', T')}
+            </span>
+          )}
           {avgSpendPerCover ? (
             <span className="text-rose-600 font-medium"> · ~{formatCurrency(predictReservationRevenue(reservation.party_size, avgSpendPerCover, byPartySize))}</span>
           ) : null}

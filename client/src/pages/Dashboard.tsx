@@ -342,6 +342,7 @@ export default function Dashboard() {
               byPartySize={revenueStats?.by_party_size}
               isLoading={isLoading}
               language={i18n.language === 'es' ? 'es' : 'en'}
+              tables={tables}
             />
           </section>
 

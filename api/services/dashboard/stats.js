@@ -30,6 +30,14 @@ async function handleDashboard(req, res) {
   const restaurantSlug = restaurantConfigResult.data?.slug || null;
 
   const tables = tablesResult.tables;
+
+  // Build a set of table UUIDs that have upcoming reservations (reserved status for floor plan)
+  const reservedTableIds = new Set(
+    (upcomingReservationsResult.reservations || [])
+      .filter(r => Array.isArray(r.table_ids) && r.table_ids.length > 0)
+      .flatMap(r => r.table_ids)
+  );
+
   const activeParties = activePartiesResult.service_records.map(record => {
     const seatedAt = new Date(record.seated_at);
     const estimatedDeparture = new Date(record.estimated_departure);
@@ -151,12 +159,17 @@ async function handleDashboard(req, res) {
       flexible_tables_available: flexibleTables.length,
       fixed_tables_available: fixedTables.length
     },
-    tables: tables.map(t => ({
+    tables: tables.map(t => {
+      // If the table is assigned to an upcoming reservation and not currently occupied, mark it Reserved
+      const effectiveStatus = (!t.status || t.status === 'available' || t.status === 'Available') && reservedTableIds.has(t.id)
+        ? 'Reserved'
+        : (t.status ? t.status.replace(/_/g, ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') : t.status);
+      return ({
       id: t.id,
       table_number: t.table_number,
       capacity: t.capacity,
       location: t.location,
-      status: t.status ? t.status.replace(/_/g, ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') : t.status,
+      status: effectiveStatus,
       current_service_id: t.current_service_id,
       // Shape configuration
       shape: t.shape || 'square',
@@ -172,7 +185,8 @@ async function handleDashboard(req, res) {
       rotation: t.rotation || 0,
       // Legacy fields
       is_fixed: t.is_fixed || false
-    })),
+    });
+    }),
     active_parties: activeParties,
     upcoming_reservations: upcomingReservationsResult.reservations
   });
