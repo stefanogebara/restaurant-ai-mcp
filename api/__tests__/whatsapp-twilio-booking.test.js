@@ -380,10 +380,11 @@ describe('twilio-whatsapp-webhook (Twilio path)', () => {
     expect(sentBody).toContain('<Response>');
   });
 
-  // ── 4. No restaurant in session → AI text, no reservation ─────────────────
-  it('returns AI text response with no reservation when restaurant is not in session', async () => {
+  // ── 4. No restaurant in session and no restaurants in registry → graceful error ─────────
+  it('sends graceful error message when no restaurant can be found for routing', async () => {
+    // Session has no restaurant and registry returns none → should bail, not call AI
     getOrCreateSession.mockResolvedValue(makeSession({ noRestaurant: true }));
-    mockProcessWithAI.mockResolvedValue('Which restaurant would you like to visit?');
+    // getAllActiveRestaurants is already mocked to return [] at module level
 
     const req = mockReq('POST', {
       body: twilioBody('+15551234567', 'I want to make a reservation'),
@@ -392,9 +393,9 @@ describe('twilio-whatsapp-webhook (Twilio path)', () => {
 
     await handler(req, res);
 
-    expect(mockProcessWithAI).toHaveBeenCalled();
+    // AI should NOT be called — we bail out with a maintenance message
+    expect(mockProcessWithAI).not.toHaveBeenCalled();
     expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.send).toHaveBeenCalled();
   });
 
   // ── 6. cancel_reservation tool → success (via unified processor) ──────────

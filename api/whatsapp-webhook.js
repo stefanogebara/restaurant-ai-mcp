@@ -79,13 +79,18 @@ async function handlePost(req, res) {
       return res.status(200).json({ status: 'ok' });
     }
 
-    // Respond 200 immediately — prevents Meta retry storms (Meta retries if no 200 within 5s,
-    // causing duplicate messages). Vercel Node.js functions continue running after res.json().
+    // Respond 200 immediately — prevents Meta retry storms.
+    // Meta retries if no 200 within 5s, causing duplicate messages when processing is slow.
+    // Vercel Node.js functions continue executing after res.json(), so we still await
+    // processMessage for correctness — the response has already been sent to Meta.
     res.status(200).json({ status: 'ok' });
 
-    // Process the message after responding (fire and continue)
-    processMessage(adapter, msg, { oppositeProvider: 'twilio' })
-      .catch(err => logger.error('processMessage error (post-response):', err.message));
+    // Continue processing after response is sent
+    try {
+      await processMessage(adapter, msg, { oppositeProvider: 'twilio' });
+    } catch (processErr) {
+      logger.error('processMessage error (post-response):', processErr.message);
+    }
 
   } catch (error) {
     logger.error('Webhook error:', error.message);
