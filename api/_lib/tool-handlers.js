@@ -38,9 +38,9 @@ async function sendVoiceReservationWhatsApp({ phone, restaurantName, restaurantI
   try {
     const { createClient } = require('@supabase/supabase-js');
     const sb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
-    const { data: rc } = await sb.schema('restaurant').from('restaurant_config').select('address, city').eq('id', restaurantId).single();
-    if (rc?.address) {
-      const q = encodeURIComponent([rc.address, rc.city].filter(Boolean).join(', '));
+    const { data: rc } = await sb.schema('restaurant').from('restaurant_config').select('city, country').eq('id', restaurantId).single();
+    if (rc?.city) {
+      const q = encodeURIComponent([restaurantName, rc.city, rc.country].filter(Boolean).join(', '));
       mapsLine = `\n📍 https://maps.google.com/?q=${q}`;
     }
   } catch (_) { /* non-fatal */ }

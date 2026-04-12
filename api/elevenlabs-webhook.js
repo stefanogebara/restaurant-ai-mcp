@@ -163,7 +163,7 @@ module.exports = async (req, res) => {
             restaurant = {
               id: session.restaurant.id,
               name: session.restaurant.restaurant_name,
-              language: session.restaurant.language || 'en',
+              language: session.restaurant.agent_language || session.restaurant.language || 'pt-BR',
               voice_id: session.restaurant.voice_id,
               // These will need to be loaded from the restaurant's own database
               business_hours: {},
@@ -468,32 +468,15 @@ async function handleCreateReservation(req, res) {
           restaurantName,
         };
 
-        // 1. WhatsApp template confirmation
-        const { isWhatsAppConfigured, sendReservationConfirmation } = require('./_lib/whatsapp-sender');
-        if (isWhatsAppConfigured()) {
-          sendReservationConfirmation(customer_phone, confirmDetails)
-            .catch(err => logger.warn('WhatsApp confirmation failed (non-blocking)', { error: err.message }));
-        }
+        // WhatsApp interactive confirmation with Confirm/Cancel buttons is already sent
+        // inside toolHandlers.createReservation() — do not send a second message here.
 
-        // 2. Email confirmation
+        // Email confirmation
         const { sendReservationConfirmationEmail } = require('./_lib/email');
         if (customer_email) {
           sendReservationConfirmationEmail(customer_email, confirmDetails)
             .catch(err => logger.warn('Email confirmation failed (non-blocking)', { error: err.message }));
         }
-
-        // 3. Voice note confirmation (legacy)
-        sendConfirmationVoiceNote({
-          restaurantId: restaurant.id,
-          customerPhone: customer_phone,
-          customerName: customer_name,
-          partySize: party_size,
-          date,
-          time,
-          restaurantName,
-          voiceId: restaurant.voice_id,
-          language: restaurant.language,
-        }).catch(err => logger.warn('Voice note confirmation failed (non-blocking)', { error: err.message }));
       }
     } else {
       // Log failure
