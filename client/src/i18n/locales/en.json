@@ -2315,7 +2315,8 @@
     "agentCreatingDesc": "This may take up to 2 minutes. If the agent does not appear, try again below.",
     "agentCreationStarted": "Agent creation started. This may take up to 2 minutes.",
     "retryAgentCreation": "Retry Agent Creation",
-    "retrying": "Creating..."
+    "retrying": "Creating...",
+    "searchVoices": "Search voices..."
   },
   "voiceExperiment": {
     "title": "A/B Test Your Voice",

@@ -2005,7 +2005,8 @@
   },
   "voice": {
     "settingsSaved": "Configuración de voz guardada exitosamente",
-    "savedWithSyncWarning": "Configuración guardada localmente. La sincronización del agente se aplicará en la próxima actualización."
+    "savedWithSyncWarning": "Configuración guardada localmente. La sincronización del agente se aplicará en la próxima actualización.",
+    "searchVoices": "Buscar voces..."
   },
   "voiceExperiment": {
     "title": "Prueba A/B de Tu Voz",
