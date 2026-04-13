@@ -323,6 +323,13 @@ async function handleCreate(req, res) {
     special_notes: custom_policy || '',
   };
 
+  // Infer language from country code
+  const COUNTRY_LANGUAGE_MAP = {
+    BR: 'pt', PT: 'pt', ES: 'es', MX: 'es', AR: 'es', CO: 'es',
+    FR: 'fr', IT: 'it', DE: 'de', JP: 'ja', US: 'en', GB: 'en',
+  };
+  const inferredLanguage = COUNTRY_LANGUAGE_MAP[(effectiveCountry || '').toUpperCase()] || 'en';
+
   // Insert demo restaurant config — uses scraped data when available
   const insertPayload = {
     user_id: demoUserId,
@@ -330,6 +337,7 @@ async function handleCreate(req, res) {
     restaurant_type: normalizeRestaurantType(effectiveCuisine.trim()),
     city: city.trim(),
     country: effectiveCountry || 'Unknown',
+    agent_language: inferredLanguage,
     email: contact_email.trim(),
     phone: effectivePhone,
     slug,
