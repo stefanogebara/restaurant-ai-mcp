@@ -349,7 +349,7 @@ async function compressOldHistory(history) {
  * Process a message with AI (OpenAI-compatible API)
  */
 async function processWithAI(userMessage, session, conversationHistory = []) {
-  const language = session?.restaurant?.language || 'en';
+  const language = session?.restaurant?.language || session?.language || 'pt';
   const currentDateTime = getCurrentDateTime(language);
 
   // Compress old history if it's getting long
@@ -358,13 +358,16 @@ async function processWithAI(userMessage, session, conversationHistory = []) {
   // Build system prompt -- use WhatsApp-specific prompt when restaurant config available
   let systemPrompt = null;
 
-  if (session?.restaurant?.id) {
+  // Use restaurant.id from JOIN, or restaurant_id FK column as fallback (JOIN may be null if FK not indexed)
+  const restaurantId = session?.restaurant?.id || session?.restaurant_id;
+
+  if (restaurantId) {
     try {
       const { data: restaurantConfig } = await supabaseAdmin
         .schema('restaurant')
         .from('restaurant_config')
         .select('id, restaurant_name, restaurant_type, phone, email, address, city, country, business_hours, avg_dining_duration_minutes, timezone, language, cancellation_policy, special_notes, advance_booking_days, buffer_time, agent_name, agent_greeting, ai_config, metric_profile')
-        .eq('id', session.restaurant.id)
+        .eq('id', restaurantId)
         .single();
 
       if (restaurantConfig) {
