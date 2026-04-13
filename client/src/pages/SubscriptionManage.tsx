@@ -12,7 +12,24 @@ import { authFetch } from '../services/api';
 
 const planTiers = ['starter', 'growth', 'scale'];
 
-/** Map legacy/orphaned plan names to current plan names (Portuguese) */
+/** Map any plan name variant to the canonical English tier key */
+function planNameToTierKey(raw: string): string {
+  const mapping: Record<string, string> = {
+    starter: 'starter',
+    inicial: 'starter',
+    basic: 'starter',
+    professional: 'growth',
+    growth: 'growth',
+    crescimento: 'growth',
+    pro: 'scale',
+    scale: 'scale',
+    enterprise: 'scale',
+    escala: 'scale',
+  };
+  return mapping[raw.toLowerCase()] ?? raw.toLowerCase();
+}
+
+/** Map legacy/orphaned plan names to current localized display names (Portuguese) */
 function normalizePlanName(raw: string): string {
   const mapping: Record<string, string> = {
     starter: 'Inicial',
@@ -74,8 +91,8 @@ export default function SubscriptionManage() {
   }
 
   const displayPlanName = normalizePlanName(subscription.planName);
-  const currentPlanName = displayPlanName.toLowerCase();
-  const currentTierIndex = planTiers.indexOf(currentPlanName);
+  const currentTierKey = planNameToTierKey(subscription.planName);
+  const currentTierIndex = planTiers.indexOf(currentTierKey);
   // Use locale-aware price from plan cards instead of raw Stripe price
   const currentPlanPrice = plans.find(p => p.key === (planTiers[currentTierIndex] ?? ''))?.price;
 
@@ -106,7 +123,7 @@ export default function SubscriptionManage() {
                 <span className="text-xl font-bold text-deep-charcoal">{t('subscription.plan', { name: displayPlanName })}</span>
                 <span className="text-xs font-semibold tracking-wide uppercase text-burgundy bg-burgundy/[8%] px-3.5 py-1.5 rounded-full">{t('subscription.current')}</span>
               </div>
-              <div className="text-sm text-warm-stone">{currentPlanPrice ?? subscription.planPrice}{t('subscription.perMonth')} &middot; {t('subscription.billedMonthly')}</div>
+              <div className="text-sm text-warm-stone">{(currentPlanPrice ?? (subscription.planPrice ?? '').replace(/\/m[êe]s|\/mo$/i, '')).trim()}{t('subscription.perMonth')} &middot; {t('subscription.billedMonthly')}</div>
             </div>
             <div className="flex items-center gap-5">
               <div>
