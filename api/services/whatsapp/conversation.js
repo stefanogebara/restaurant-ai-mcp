@@ -377,26 +377,26 @@ async function processWithAI(userMessage, session, conversationHistory = []) {
 
   // Fallback to generic prompt
   if (!systemPrompt) {
-    systemPrompt = 'You are a friendly restaurant assistant on WhatsApp. Help the customer warmly in Portuguese (pt-BR).\n';
+    // Determine restaurant name from any available source
+    const fallbackRestaurantName = session?.restaurant?.restaurant_name || 'the restaurant';
+    systemPrompt = `You are a friendly assistant for ${fallbackRestaurantName} on WhatsApp. Help the customer warmly in Portuguese (pt-BR).\n`;
     systemPrompt += `\nCurrent date/time: ${currentDateTime.formatted}\n`;
     systemPrompt += `Today is ${currentDateTime.dayOfWeek}, ${currentDateTime.date}\n`;
-
-    if (session?.restaurant) {
-      systemPrompt += `\nRestaurant: ${session.restaurant.restaurant_name}\n`;
-    }
+    systemPrompt += `\nRestaurant: ${fallbackRestaurantName}\n`;
     if (session?.sender_phone) {
       systemPrompt += `Customer's WhatsApp: ${session.sender_phone} (use as phone for reservations — don't ask for it)\n`;
     }
     // Prevent confusing "what restaurant?" messages when context is missing
-    systemPrompt += '\nIf the customer is continuing a reservation flow (providing a name, date, or other details), continue helping them naturally without asking them to start over.\n';
-    systemPrompt += '\nIMPORTANT: Do NOT confuse a customer\'s name (e.g. "João Silva") with a restaurant name. You are the assistant for this restaurant — never ask the customer to confirm the restaurant name or suggest they contact "João Silva" as if it were a restaurant.\n';
+    systemPrompt += '\nCRITICAL: You are already serving the customer of this restaurant. NEVER ask for the restaurant name — it is already set.\n';
+    systemPrompt += 'If the customer is providing their name, date, time, or party size, continue the reservation flow naturally.\n';
+    systemPrompt += 'IMPORTANT: Do NOT confuse a customer\'s name (e.g. "João Silva") with a restaurant name. Never ask the customer to confirm the restaurant name.\n';
   }
 
   // Inject guest memory context if available
-  if (session?.restaurant?.id && session?.sender_phone) {
+  if ((session?.restaurant?.id || session?.restaurant_id) && session?.sender_phone) {
     try {
       const guestContext = await buildGuestContext(
-        session.restaurant.id,
+        session.restaurant?.id || session.restaurant_id,
         session.sender_phone,
         userMessage
       );
@@ -416,9 +416,11 @@ async function processWithAI(userMessage, session, conversationHistory = []) {
   ];
 
   // Exclude identify_restaurant when the session already has a restaurant assigned.
+  // Check both session.restaurant.id (JOIN present) and session.restaurant_id (JOIN missing but FK set).
   // The message-processor handles routing before reaching here, so asking the
   // customer "which restaurant?" is always wrong at this point.
-  const tools = session?.restaurant?.id
+  const hasRestaurantAssigned = !!(session?.restaurant?.id || session?.restaurant_id);
+  const tools = hasRestaurantAssigned
     ? RESERVATION_TOOLS.filter(t => t.function.name !== 'identify_restaurant')
     : RESERVATION_TOOLS;
 
