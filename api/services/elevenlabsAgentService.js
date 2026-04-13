@@ -659,7 +659,7 @@ function buildToolDefinitions(baseUrl, restaurantId) {
       type: 'webhook', name: 'lookup_reservation',
       description: 'Find an existing reservation by customer phone number or name.',
       api_schema: {
-        url: `${baseUrl}/api/reservations?action=lookup${rp}`, method: 'POST',
+        url: `${baseUrl}/api/elevenlabs-webhook?action=lookup_reservation${rp}`, method: 'POST',
         content_type: 'application/json', request_headers: authHeaders,
         request_body_schema: { type: 'object', properties: {
           customer_phone: { type: 'string', description: 'Phone number for the reservation' },
@@ -671,7 +671,7 @@ function buildToolDefinitions(baseUrl, restaurantId) {
       type: 'webhook', name: 'cancel_reservation',
       description: 'Cancel an existing reservation by ID.',
       api_schema: {
-        url: `${baseUrl}/api/reservations?action=cancel${rp}`, method: 'POST',
+        url: `${baseUrl}/api/elevenlabs-webhook?action=cancel_reservation${rp}`, method: 'POST',
         content_type: 'application/json', request_headers: authHeaders,
         request_body_schema: { type: 'object', properties: {
           reservation_id: { type: 'string', description: 'Reservation ID to cancel' },
@@ -682,7 +682,7 @@ function buildToolDefinitions(baseUrl, restaurantId) {
       type: 'webhook', name: 'modify_reservation',
       description: 'Change date, time, or party size of an existing reservation.',
       api_schema: {
-        url: `${baseUrl}/api/reservations?action=modify${rp}`, method: 'POST',
+        url: `${baseUrl}/api/elevenlabs-webhook?action=modify_reservation${rp}`, method: 'POST',
         content_type: 'application/json', request_headers: authHeaders,
         request_body_schema: { type: 'object', properties: {
           reservation_id: { type: 'string', description: 'Reservation ID to modify' },
