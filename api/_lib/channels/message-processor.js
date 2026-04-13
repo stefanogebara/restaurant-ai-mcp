@@ -130,6 +130,16 @@ async function processMessage(adapter, msg, options = {}) {
       if (phoneNumberId) {
         directMatch = activeRestaurants.find(r => r.whatsapp_phone_number_id === phoneNumberId);
       }
+      // Env var override: TWILIO_RESTAURANT_ID / META_RESTAURANT_ID allow direct routing per
+      // provider without needing the whatsapp_phone_number_id column set on every registry row.
+      if (!directMatch) {
+        const envRestaurantId = providerName === 'twilio'
+          ? process.env.TWILIO_RESTAURANT_ID
+          : process.env.META_RESTAURANT_ID;
+        if (envRestaurantId) {
+          directMatch = activeRestaurants.find(r => r.id === envRestaurantId);
+        }
+      }
       // Also check the env-level single-restaurant case (WHATSAPP_PHONE_NUMBER_ID points to one restaurant)
       const sharedPhoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
       const isSharedNumber = !directMatch && phoneNumberId && phoneNumberId === sharedPhoneNumberId;

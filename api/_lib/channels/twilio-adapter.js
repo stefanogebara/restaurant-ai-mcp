@@ -43,7 +43,7 @@ class TwilioAdapter extends ChannelAdapter {
       }
     }
 
-    const { From, Body, MessageSid, NumMedia, ProfileName } = parsedBody || {};
+    const { From, To, Body, MessageSid, NumMedia, ProfileName } = parsedBody || {};
 
     if (!From || !Body) return null;
 
@@ -62,6 +62,8 @@ class TwilioAdapter extends ChannelAdapter {
       mediaContext: null,
       interactiveSelection: null,
       profileName: ProfileName || null,
+      // Strip whatsapp: prefix so it can match restaurant_registry.whatsapp_phone_number_id
+      phoneNumberId: To ? To.replace('whatsapp:', '') : null,
     };
   }
 
