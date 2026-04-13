@@ -418,7 +418,6 @@ async function executeTool(toolName, toolInput, session) {
             special_requests: special_requests || '',
             status: 'confirmed',
             source: 'whatsapp_ai',
-            table_ids: accommodationResult.table_ids || [],
             created_at: new Date().toISOString()
           })
           .select()
