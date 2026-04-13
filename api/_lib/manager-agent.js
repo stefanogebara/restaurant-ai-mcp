@@ -134,6 +134,23 @@ async function saveTurn(restaurantId, role, content, channel) {
   }
 }
 
+function getCurrencyLocale(country) {
+  const map = {
+    BR: { currency: 'BRL', locale: 'pt-BR' },
+    ES: { currency: 'EUR', locale: 'es-ES' },
+    PT: { currency: 'EUR', locale: 'pt-PT' },
+    JP: { currency: 'JPY', locale: 'ja-JP' },
+    US: { currency: 'USD', locale: 'en-US' },
+    GB: { currency: 'GBP', locale: 'en-GB' },
+    FR: { currency: 'EUR', locale: 'fr-FR' },
+    IT: { currency: 'EUR', locale: 'it-IT' },
+    DE: { currency: 'EUR', locale: 'de-DE' },
+    MX: { currency: 'MXN', locale: 'es-MX' },
+    AR: { currency: 'ARS', locale: 'es-AR' },
+  };
+  return map[(country || '').toUpperCase()] || { currency: 'EUR', locale: 'en-US' };
+}
+
 function buildSystemPrompt(memories, snapshot, config, wikiPages = [], dateInfo = {}) {
   const restaurantName = config?.restaurant_name || config?.name || 'this restaurant';
   const language = config?.agent_language || config?.language || 'en';
@@ -236,7 +253,8 @@ function buildSystemPrompt(memories, snapshot, config, wikiPages = [], dateInfo 
 
   if (snapshot.deposit_summary && snapshot.deposit_summary.count > 0) {
     const { count, total_amount } = snapshot.deposit_summary;
-    const formatted = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0 }).format(total_amount);
+    const { currency, locale } = getCurrencyLocale(config?.country);
+    const formatted = new Intl.NumberFormat(locale, { style: 'currency', currency, minimumFractionDigits: 0 }).format(total_amount);
     systemPrompt += `\n\n[DEPOSITS HELD TONIGHT]\n${count} reservation${count !== 1 ? 's' : ''} with deposits held — total ${formatted} at risk of no-show capture.`;
   }
 

@@ -768,7 +768,7 @@ module.exports = async (req, res) => {
       success: true,
       message: 'Onboarding completed successfully',
       restaurant: {
-        restaurant_id: generatedRestaurantId,
+        restaurant_id: canonicalRestaurantId,
         restaurant_name,
         slug: restaurantSlug,
         booking_url: `/book/${restaurantSlug}`,

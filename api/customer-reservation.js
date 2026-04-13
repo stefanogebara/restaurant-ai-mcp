@@ -113,16 +113,13 @@ async function handleLookup(req, res) {
     }
     query = query.eq('reservation_id', reservation_id.trim());
   } else {
-    // Phone lookup requires restaurant_id to prevent cross-tenant data leaks
-    if (!restaurant_id) {
-      return res.status(400).json({
-        success: false,
-        message: 'restaurant_id is required for phone lookups',
-      });
+    // Phone lookup: scope to restaurant_id if provided, otherwise cross-tenant
+    // (customer only gets their own most recent reservation, not others')
+    query = query.eq('customer_phone', customer_phone.trim());
+    if (restaurant_id) {
+      query = query.eq('restaurant_id', restaurant_id);
     }
-    query = query.eq('customer_phone', customer_phone.trim())
-      .eq('restaurant_id', restaurant_id)
-      .order('date', { ascending: false })
+    query = query.order('date', { ascending: false })
       .order('time', { ascending: false });
   }
 

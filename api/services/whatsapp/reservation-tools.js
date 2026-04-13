@@ -451,7 +451,7 @@ async function executeTool(toolName, toolInput, session) {
         const templateResult = await sendTemplateMessage(
           customer_phone,
           'reservation_confirmed',
-          'en',
+          session.restaurant?.language || 'en',
           [
             customer_name,
             session.restaurant.restaurant_name,

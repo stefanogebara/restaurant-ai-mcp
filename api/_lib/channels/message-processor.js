@@ -66,9 +66,24 @@ async function processMessage(adapter, msg, options = {}) {
     if (pendingFeedback) {
       const result = await processFeedbackReply(pendingFeedback.restaurantId, from, text);
       if (result) {
+        // Determine restaurant language for localized thank-you
+        let feedbackLang = 'en';
+        try {
+          const activeRestaurants = await getAllActiveRestaurants();
+          const restaurant = activeRestaurants.find(r => r.id === pendingFeedback.restaurantId);
+          feedbackLang = restaurant?.language || 'en';
+        } catch (_) { /* fall back to English */ }
         const thankYou = result.rating
-          ? `Thank you for your feedback! You rated us ${result.rating}/5.${result.comment ? ' We appreciate your comments.' : ''} We look forward to welcoming you again!`
-          : 'Thank you for your feedback! We appreciate you taking the time to share your thoughts.';
+          ? feedbackLang === 'pt' || feedbackLang === 'pt-BR'
+            ? `Obrigado pelo seu feedback! Voce nos avaliou ${result.rating}/5.${result.comment ? ' Agradecemos seu comentario.' : ''} Esperamos te ver novamente!`
+            : feedbackLang === 'es'
+              ? `¡Gracias por tu opinion! Nos diste ${result.rating}/5.${result.comment ? ' Apreciamos tus comentarios.' : ''} ¡Esperamos verte pronto!`
+              : `Thank you for your feedback! You rated us ${result.rating}/5.${result.comment ? ' We appreciate your comments.' : ''} We look forward to welcoming you again!`
+          : feedbackLang === 'pt' || feedbackLang === 'pt-BR'
+            ? 'Obrigado pelo seu feedback! Agradecemos o seu tempo.'
+            : feedbackLang === 'es'
+              ? '¡Gracias por tu opinion! Apreciamos que te hayas tomado el tiempo.'
+              : 'Thank you for your feedback! We appreciate you taking the time to share your thoughts.';
         await adapter.sendMessage(from, thankYou);
         return { handled: true };
       }
@@ -81,10 +96,25 @@ async function processMessage(adapter, msg, options = {}) {
   try {
     const surveyResult = await handleSurveyReply(from, text);
     if (surveyResult) {
+      // Determine restaurant language for localized thank-you
+      let surveyLang = 'en';
+      try {
+        const activeRestaurants = await getAllActiveRestaurants();
+        const restaurant = activeRestaurants.find(r => r.id === surveyResult.restaurantId);
+        surveyLang = restaurant?.language || 'en';
+      } catch (_) { /* fall back to English */ }
       const stars = '\u2B50'.repeat(surveyResult.rating);
       const thankYou = surveyResult.comment
-        ? `Obrigado pela avaliacao! ${stars} (${surveyResult.rating}/5)\nSeu comentario foi registrado. Esperamos ve-lo novamente!`
-        : `Obrigado pela avaliacao! ${stars} (${surveyResult.rating}/5)\nEsperamos ve-lo novamente!`;
+        ? surveyLang === 'pt' || surveyLang === 'pt-BR'
+          ? `Obrigado pela avaliacao! ${stars} (${surveyResult.rating}/5)\nSeu comentario foi registrado. Esperamos te ver novamente!`
+          : surveyLang === 'es'
+            ? `¡Gracias por tu valoracion! ${stars} (${surveyResult.rating}/5)\nTu comentario fue registrado. ¡Esperamos verte pronto!`
+            : `Thank you for your rating! ${stars} (${surveyResult.rating}/5)\nYour comment has been recorded. We hope to see you again!`
+        : surveyLang === 'pt' || surveyLang === 'pt-BR'
+          ? `Obrigado pela avaliacao! ${stars} (${surveyResult.rating}/5)\nEsperamos te ver novamente!`
+          : surveyLang === 'es'
+            ? `¡Gracias por tu valoracion! ${stars} (${surveyResult.rating}/5)\n¡Esperamos verte pronto!`
+            : `Thank you for your rating! ${stars} (${surveyResult.rating}/5)\nWe hope to see you again!`;
       await adapter.sendMessage(from, thankYou);
       return { handled: true };
     }

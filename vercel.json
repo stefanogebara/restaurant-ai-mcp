@@ -138,6 +138,10 @@
       "destination": "/api/google-booking/server.js?action=UpdateBooking"
     },
     {
+      "source": "/api/customer-reservation",
+      "destination": "/api/customer-reservation.js"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

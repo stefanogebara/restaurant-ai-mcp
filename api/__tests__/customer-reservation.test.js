@@ -92,14 +92,16 @@ describe('customer-reservation: lookup', () => {
     expect(json.reservation.reservation_id).toBe('CEL-2026-0218-A7K3');
   });
 
-  test('returns 400 for phone lookup without restaurant_id', async () => {
+  test('allows phone lookup without restaurant_id (cross-tenant)', async () => {
+    mockSingle.mockResolvedValueOnce({ data: null, error: { message: 'Not found' } });
+
     const { req, res } = mkReqRes({
       query: { action: 'lookup', customer_phone: '+15550001234' },
     });
     await handler(req, res);
 
-    expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json.mock.calls[0][0].message).toMatch(/restaurant_id/i);
+    // Should proceed to DB lookup and return 404 (no match), not 400 (bad request)
+    expect(res.status).toHaveBeenCalledWith(404);
   });
 
   test('returns reservation by phone with restaurant_id', async () => {

@@ -530,6 +530,16 @@ async function handleConvert(req, res) {
     logger.warn('Failed to move demo reservations (non-fatal):', moveError.message);
   }
 
+  // Move demo tables to real restaurant
+  const { error: moveTablesError } = await supabaseAdmin
+    .from('tables')
+    .update({ restaurant_id: real_restaurant_id })
+    .eq('restaurant_id', demoConfig.id);
+
+  if (moveTablesError) {
+    logger.warn('Failed to move demo tables (non-fatal):', moveTablesError.message);
+  }
+
   // Mark demo as converted
   const { error: markError } = await supabaseAdmin
     .schema('restaurant')
