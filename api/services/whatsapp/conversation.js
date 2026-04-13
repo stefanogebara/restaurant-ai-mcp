@@ -382,7 +382,8 @@ async function processWithAI(userMessage, session, conversationHistory = []) {
   if (!systemPrompt) {
     // Determine restaurant name from any available source
     const fallbackRestaurantName = session?.restaurant?.restaurant_name || 'the restaurant';
-    systemPrompt = `You are a friendly assistant for ${fallbackRestaurantName} on WhatsApp. Help the customer warmly in Portuguese (pt-BR).\n`;
+    const langLabel = language === 'es' ? 'Spanish' : language === 'en' ? 'English' : 'Portuguese (pt-BR)';
+    systemPrompt = `You are a friendly assistant for ${fallbackRestaurantName} on WhatsApp. Help the customer warmly in ${langLabel}.\n`;
     systemPrompt += `\nCurrent date/time: ${currentDateTime.formatted}\n`;
     systemPrompt += `Today is ${currentDateTime.dayOfWeek}, ${currentDateTime.date}\n`;
     systemPrompt += `\nRestaurant: ${fallbackRestaurantName}\n`;

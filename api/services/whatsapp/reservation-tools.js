@@ -250,10 +250,34 @@ const RESERVATION_TOOLS = [
 ];
 
 /**
+ * Resolve the restaurant object from session.
+ * Handles the case where the Supabase JOIN returns null but restaurant_id FK is set.
+ * @param {object} session
+ * @returns {Promise<object|null>}
+ */
+async function resolveSessionRestaurant(session) {
+  if (session?.restaurant) return session.restaurant;
+  if (!session?.restaurant_id) return null;
+  try {
+    const restaurants = await getAllActiveRestaurants();
+    return restaurants.find(r => r.id === session.restaurant_id) || null;
+  } catch (_) {
+    return null;
+  }
+}
+
+/**
  * Execute a tool call
  */
 async function executeTool(toolName, toolInput, session) {
   logger.info(` Executing tool: ${toolName}`, toolInput);
+
+  // Normalize session: if JOIN returned null but FK is set, resolve from registry.
+  // This handles the case where the Supabase restaurant_registry JOIN silently fails.
+  if (!session?.restaurant && session?.restaurant_id) {
+    const resolved = await resolveSessionRestaurant(session);
+    if (resolved) session = { ...session, restaurant: resolved };
+  }
 
   switch (toolName) {
     case 'identify_restaurant': {
@@ -436,16 +460,19 @@ async function executeTool(toolName, toolInput, session) {
         // Send template confirmation message
         // This provides formal confirmation and works outside the 24-hour window
         // Template 'reservation_confirmed' must be approved in Meta Business Manager
-        const formattedDate = new Date(date).toLocaleDateString('en-US', {
+        const restLang = session.restaurant?.language || 'en';
+        const dateLocaleMap = { 'pt-BR': 'pt-BR', pt: 'pt-BR', es: 'es-ES', en: 'en-US' };
+        const dateLocale = dateLocaleMap[restLang] || 'en-US';
+        const formattedDate = new Date(date).toLocaleDateString(dateLocale, {
           weekday: 'long',
           year: 'numeric',
           month: 'long',
           day: 'numeric'
         });
-        const formattedTime = new Date(`2000-01-01 ${time}`).toLocaleTimeString('en-US', {
+        const formattedTime = new Date(`2000-01-01 ${time}`).toLocaleTimeString(dateLocale, {
           hour: 'numeric',
           minute: '2-digit',
-          hour12: true
+          hour12: restLang === 'en'
         });
 
         const templateResult = await sendTemplateMessage(
