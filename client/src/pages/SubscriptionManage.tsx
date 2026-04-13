@@ -6,7 +6,7 @@ import { Loader2 } from 'lucide-react';
 import { SkeletonSubscription } from '../components/common/Skeleton';
 import { useToast } from '../contexts/ToastContext';
 import { useSubscriptionData, useCustomerPortal } from '../hooks/useSubscriptionManage';
-import { currencyFromLanguage, formatPriceLocale } from '../utils/currency';
+import { currencyFromLanguage, formatPriceLocale, type SupportedCurrency } from '../utils/currency';
 import { getPlanPrices } from '../config/planFeatures';
 import { authFetch } from '../services/api';
 
@@ -48,7 +48,13 @@ export default function SubscriptionManage() {
   const { can } = usePermission();
   const navigate = useNavigate();
   const { error } = useToast();
-  const currency = currencyFromLanguage(i18n.language);
+  const { data: subscription, isLoading } = useSubscriptionData();
+  const portal = useCustomerPortal();
+
+  // Derive currency from the active subscription's billing currency (so BRL subs show BRL prices,
+  // EUR subs show EUR prices), falling back to i18n language detection for unauthenticated views.
+  const currency: SupportedCurrency =
+    (subscription?.currency as SupportedCurrency | undefined) ?? currencyFromLanguage(i18n.language);
   const prices = getPlanPrices(currency);
 
   const plans = [
@@ -56,9 +62,6 @@ export default function SubscriptionManage() {
     { key: 'growth', name: t('subscription.growthName'), price: formatPriceLocale(prices.growth, currency), desc: t('subscription.growthDesc'), features: [t('subscription.growthF1'), t('subscription.growthF2'), t('subscription.growthF3'), t('subscription.growthF4'), t('subscription.growthF5')], featured: true },
     { key: 'scale', name: t('subscription.scaleName'), price: formatPriceLocale(prices.scale, currency), desc: t('subscription.scaleDesc'), features: [t('subscription.scaleF1'), t('subscription.scaleF2'), t('subscription.scaleF3'), t('subscription.scaleF4'), t('subscription.scaleF5')] },
   ];
-
-  const { data: subscription, isLoading } = useSubscriptionData();
-  const portal = useCustomerPortal();
 
   const handleManageSubscription = () => {
     portal.mutate(undefined, {
@@ -175,7 +178,7 @@ export default function SubscriptionManage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-px border border-[#E5E7EB] rounded-lg overflow-hidden">
             {plans.map((p) => {
-              const isCurrent = currentPlanName === p.key;
+              const isCurrent = currentTierKey === p.key;
               const isFeatured = !!p.featured;
               const tierIndex = planTiers.indexOf(p.key);
               const isCanceled = subscription.status === 'canceled';

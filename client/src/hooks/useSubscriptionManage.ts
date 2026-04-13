@@ -6,6 +6,7 @@ export interface SubscriptionData {
   status: 'active' | 'trialing' | 'canceled' | 'past_due' | 'none';
   planName: string;
   planPrice: string;
+  currency?: 'BRL' | 'USD' | 'EUR';
   currentPeriodEnd?: string;
   cancelAtPeriodEnd?: boolean;
   trialEnd?: string;

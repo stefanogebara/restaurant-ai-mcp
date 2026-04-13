@@ -58,10 +58,14 @@ module.exports = async (req, res) => {
           [process.env.STRIPE_SCALE_PRICE_ID]: 'Scale',
         };
 
+        const stripeCurrency = (price.currency || 'brl').toUpperCase();
+        const currencySymbols = { BRL: 'R$', EUR: '€', USD: '$' };
+        const symbol = currencySymbols[stripeCurrency] || 'R$';
         const response = {
           status: stripeSub.status,
           planName: planMapping[price.id] || sub['Plan Name'] || 'Unknown Plan',
-          planPrice: `R$${(price.unit_amount / 100).toFixed(0)}/${price.recurring.interval === 'month' ? 'mês' : price.recurring.interval}`,
+          planPrice: `${symbol}${(price.unit_amount / 100).toFixed(0)}/${price.recurring.interval === 'month' ? 'mês' : price.recurring.interval}`,
+          currency: stripeCurrency,
           currentPeriodEnd: stripeSub.current_period_end
             ? new Date(stripeSub.current_period_end * 1000).toLocaleDateString()
             : null,
@@ -86,6 +90,7 @@ module.exports = async (req, res) => {
       status: sub['Status'] || 'active',
       planName,
       planPrice: `${planPriceMap[planName] || 'R$497'}/mês`,
+      currency: 'BRL',
       currentPeriodEnd: sub['Current Period End'] || null,
       cancelAtPeriodEnd: false,
     });
