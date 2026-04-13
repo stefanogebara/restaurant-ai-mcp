@@ -1,6 +1,6 @@
 {
-  "installCommand": "npm install",
-  "buildCommand": "cd client && npm install && npx vite build && node cache-bust-sw.cjs",
+  "installCommand": "npm install && cd client && npm install --legacy-peer-deps",
+  "buildCommand": "cd client && npx vite build && node cache-bust-sw.cjs",
   "outputDirectory": "client/dist",
   "functions": {
     "api/manager-chat.js": {
