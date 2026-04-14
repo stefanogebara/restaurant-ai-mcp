@@ -176,11 +176,9 @@ async function processMessage(adapter, msg, options = {}) {
 
       if (directMatch) {
         // Dedicated number — route directly without picker
-        logger.info(`[MessageProcessor] Step 8: directMatch found: ${directMatch.restaurant_name} (${directMatch.id})`);
         const updated = await setSessionRestaurant(session.id, directMatch.id);
-        logger.info(`[MessageProcessor] Step 8: setSessionRestaurant returned ${updated ? 'session with restaurant=' + updated.restaurant?.restaurant_name : 'null'}`);
         if (updated) session = updated;
-        logger.info(`[MessageProcessor] Routed by phone_number_id to ${directMatch.restaurant_name}`);
+        logger.info(`[MessageProcessor] Routed to ${directMatch.restaurant_name} via ${directMatch.whatsapp_phone_number_id ? 'phone_number_id' : 'env var'}`);
       } else if (activeRestaurants.length === 1 || (!isSharedNumber && !directMatch)) {
         // Only one active restaurant — auto-assign
         const updated = await setSessionRestaurant(session.id, activeRestaurants[0].id);
@@ -231,11 +229,9 @@ async function processMessage(adapter, msg, options = {}) {
   }
 
   // 9. Provider guard — skip if restaurant uses the other provider
-  logger.info(`[${providerName}] Step 9: provider guard. session.restaurant.id=${session?.restaurant?.id || 'null'} session.restaurant_id=${session?.restaurant_id || 'null'} oppositeProvider=${options.oppositeProvider || 'none'}`);
   if (options.oppositeProvider && session?.restaurant?.id) {
     try {
       const provider = await getWhatsAppProvider(session.restaurant.id);
-      logger.info(`[${providerName}] Step 9: whatsapp_provider=${provider}`);
       if (provider === options.oppositeProvider) {
         logger.info(`Restaurant uses ${provider}, not ${providerName} — skipping`);
         return { handled: true };
@@ -249,7 +245,6 @@ async function processMessage(adapter, msg, options = {}) {
   adapter.addReaction(from, messageId, '\uD83D\uDC40').catch(() => {}); // eye emoji
 
   // 11. AI processing
-  logger.info(`[${providerName}] Step 11: starting AI processing`);
   const conversationHistory = Array.isArray(session.conversation_history) ? session.conversation_history : [];
 
   // Enrich button replies with structured context so the AI can act on them directly
@@ -273,7 +268,6 @@ async function processMessage(adapter, msg, options = {}) {
   let response;
   try {
     response = await processWithAI(aiMessage, session, conversationHistory);
-    logger.info(`[${providerName}] Step 11: AI done, response length=${response?.length || 0}`);
   } catch (err) {
     logger.error(`[${providerName}] AI error:`, err.message);
     response = 'Desculpe, tive dificuldade em processar sua mensagem. Por favor, tente novamente.';
@@ -283,7 +277,6 @@ async function processMessage(adapter, msg, options = {}) {
   adapter.removeReaction(from, messageId).catch(() => {});
 
   // 13. Save conversation history
-  logger.info(`[${providerName}] Step 13: saving history (${response ? 'response present' : 'no response'})`);
   const updatedHistory = cleanHistoryForStorage([
     ...conversationHistory,
     { role: 'user', content: text },
