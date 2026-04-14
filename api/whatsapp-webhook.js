@@ -5,9 +5,11 @@
  * Provider-specific logic (signature, parsing, media) lives in MetaAdapter.
  * Shared business logic (session, AI, history) lives in MessageProcessor.
  *
- * Processing order: processMessage runs BEFORE the 200 response is sent.
- * Vercel kills functions after res.json(), so post-response async work is unreliable.
- * We race processMessage against a 4.5s deadline, then reply to Meta.
+ * Processing order: processMessage MUST complete before res.json() is sent.
+ * Vercel terminates functions immediately after the response is sent — any
+ * async work scheduled after res.json() is killed before it runs.
+ * Meta retries if no 200 within 5s, but Redis dedup (24h TTL) prevents
+ * double-processing on retries.
  *
  * Webhook URL: https://seatable.one/api/whatsapp-webhook
  */
@@ -83,27 +85,17 @@ async function handlePost(req, res) {
       return res.status(200).json({ status: 'ok' });
     }
 
-    // Process message BEFORE responding to Meta.
-    // Vercel terminates functions after res.json() is sent, so async work after the
-    // response is unreliable. We must complete processMessage first, then reply.
-    // Meta retries after 5s of no response — we race against a 4.5s deadline so
-    // we always reply to Meta in time even if processing is slow.
-    const processDone = processMessage(adapter, msg, { oppositeProvider: 'twilio' })
+    // Await processMessage fully before sending the response.
+    // Vercel terminates functions immediately after res.json() — any awaits
+    // scheduled after the response are killed before they run. processMessage
+    // must finish first so conversation history is saved.
+    // Meta retries if no 200 within 5s; Redis dedup (24h) prevents double-processing.
+    await processMessage(adapter, msg, { oppositeProvider: 'twilio' })
       .catch(err => logger.error('processMessage error:', err.message));
 
-    await Promise.race([
-      processDone,
-      new Promise(resolve => setTimeout(resolve, 4500)),
-    ]);
-
-    // Send 200 to Meta (prevents retry storm)
     if (!res.headersSent) {
       res.status(200).json({ status: 'ok' });
     }
-
-    // If processMessage didn't finish in 4.5s, wait for it now so the handler
-    // doesn't return (and Vercel doesn't kill the function) until it's done.
-    await processDone;
 
   } catch (error) {
     logger.error('Webhook error:', error.message);
