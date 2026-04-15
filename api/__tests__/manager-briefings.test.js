@@ -29,6 +29,7 @@ const briefings = require('../cron/manager-briefings');
 
 jest.mock('../_lib/briefing-sender', () => ({
   sendBriefing: (...a) => mockSendBriefing(...a),
+  tryLogBriefingSent: jest.fn().mockResolvedValue(true),
 }));
 jest.mock('../_lib/manager-agent', () => ({
   runManagerAgent: jest.fn().mockResolvedValue('End of day: 24 covers served.'),
