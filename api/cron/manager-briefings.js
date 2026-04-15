@@ -1,6 +1,6 @@
 const { supabaseAdmin } = require('../_lib/supabase');
 const { runManagerAgent } = require('../_lib/manager-agent');
-const { sendBriefing } = require('../_lib/briefing-sender');
+const { sendBriefing, tryLogBriefingSent } = require('../_lib/briefing-sender');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { getVIPsForToday } = require('../services/restaurantSnapshot');
 const { logCronRun } = require('../_lib/cron-tracker');
@@ -79,6 +79,11 @@ module.exports = async (req, res) => {
               en: `Good morning! Your restaurant has no reservations yet. To start receiving them:\n\n1. Share your booking link on Instagram and Google\n2. Enable WhatsApp in settings to accept bookings by message\n3. Make a test booking yourself to verify the flow\n\nEverything is set up and ready for your first guest.`,
             };
             const message = onboardingMessages[lang] || onboardingMessages['en'];
+            const okToSend = await tryLogBriefingSent(config.id, 'morning');
+            if (!okToSend) {
+              logger.info(`Skipping duplicate morning briefing for ${config.restaurant_name}`);
+              continue;
+            }
             await sendBriefing(config.manager_phone, message, 'text', config.id);
             sent++;
             logger.info(`Sent onboarding briefing to new restaurant: ${config.restaurant_name}`);
@@ -114,20 +119,11 @@ module.exports = async (req, res) => {
           new Promise((_, reject) => setTimeout(() => reject(new Error('Briefing timeout')), PER_RESTAURANT_TIMEOUT))
         ]);
 
-        // Dedup: skip if identical to last briefing (e.g. "0 reservations" every day)
-        const { data: lastMsg } = await supabaseAdmin
-          .from('manager_conversations')
-          .select('content')
-          .eq('restaurant_id', config.id)
-          .eq('role', 'assistant')
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        // Compare core content (strip whitespace/dates for comparison)
-        const normalize = (s) => (s || '').replace(/\d{1,2}\/\d{1,2}|\d{4}-\d{2}-\d{2}|monday|tuesday|wednesday|thursday|friday|saturday|sunday|hoje|amanha|ontem/gi, '').replace(/\s+/g, ' ').trim();
-        if (lastMsg && normalize(lastMsg.content) === normalize(briefing)) {
-          logger.info(`Skipping duplicate briefing for ${config.restaurant_name}`);
+        // Dedup: use briefings_log table — one send per restaurant per type per day
+        const briefingType = type === 'morning' ? 'morning' : 'end_of_day';
+        const okToSend = await tryLogBriefingSent(config.id, briefingType);
+        if (!okToSend) {
+          logger.info(`Skipping duplicate ${briefingType} briefing for ${config.restaurant_name}`);
           continue;
         }
 

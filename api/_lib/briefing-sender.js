@@ -70,4 +70,35 @@ async function sendVoiceNote(phone, text, restaurantId) {
   await sendWhatsAppAudioMessage(phone, data.signedUrl);
 }
 
-module.exports = { sendBriefing };
+/**
+ * Attempt to log a briefing send in the dedup table.
+ * Returns true if the INSERT succeeded (safe to send).
+ * Returns false if the unique constraint fired (already sent today — skip).
+ *
+ * @param {string} restaurantId
+ * @param {'morning'|'end_of_day'|'analytics'} briefingType
+ * @returns {Promise<boolean>}
+ */
+async function tryLogBriefingSent(restaurantId, briefingType) {
+  try {
+    const { error } = await supabaseAdmin
+      .from('briefings_log')
+      .insert({ restaurant_id: restaurantId, briefing_type: briefingType });
+
+    if (error) {
+      // 23505 = unique_violation — already sent today
+      if (error.code === '23505') {
+        logger.info('Briefing already sent today, skipping', { restaurantId, briefingType });
+        return false;
+      }
+      // Any other DB error: log but allow send (fail-open so restaurants still get briefings)
+      logger.warn('briefings_log insert error (non-dedup)', { error: error.message, restaurantId, briefingType });
+    }
+    return true;
+  } catch (err) {
+    logger.warn('tryLogBriefingSent exception (fail-open)', { error: err.message });
+    return true;
+  }
+}
+
+module.exports = { sendBriefing, tryLogBriefingSent };

@@ -5,6 +5,7 @@ const logger = createSecureLogger('WhatsApp');
 const { getSessionByPhone } = require('../../_lib/whatsapp-sessions');
 const { handleOptOut } = require('../campaignService');
 const { sendWhatsAppMessage } = require('./message-sender');
+const { sendWeeklyReportViaWhatsApp } = require('../pdfReportService');
 
 /**
  * Handle template response keywords (MODIFY, CANCEL, CONFIRM, BOOK, HELP, STOP).
@@ -87,6 +88,34 @@ async function handleKeyword(normalizedText, from) {
           '- Canceling a reservation\n\n' +
           'Just tell me what you need!'
     );
+    return true;
+  }
+
+  // Weekly PDF report on demand
+  if (normalizedText === 'RELATORIO' || normalizedText === 'REPORT') {
+    try {
+      const session = await getSessionByPhone(from);
+      const restaurantId = session?.restaurant?.id;
+      const language = session?.restaurant?.agent_language || 'pt-BR';
+
+      // Acknowledge immediately, send report asynchronously
+      await sendWhatsAppMessage(from,
+        language === 'pt-BR'
+          ? 'Gerando seu relatório semanal... 📊 Você receberá em instantes.'
+          : 'Generating your weekly report... 📊 You will receive it in a moment.'
+      );
+
+      if (restaurantId) {
+        // Fire-and-forget — don't await so the webhook returns quickly
+        sendWeeklyReportViaWhatsApp(restaurantId, from, language).catch(err => {
+          logger.error('RELATORIO async send error', { error: err.message, restaurantId });
+        });
+      } else {
+        logger.warn('RELATORIO keyword: no restaurant found in session', { from });
+      }
+    } catch (e) {
+      logger.error('RELATORIO keyword handling error:', e.message);
+    }
     return true;
   }
 

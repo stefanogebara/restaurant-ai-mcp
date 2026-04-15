@@ -20,6 +20,7 @@
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { supabaseAdmin } = require('../_lib/supabase');
 const { logCronRun } = require('../_lib/cron-tracker');
+const { tryLogBriefingSent } = require('../_lib/briefing-sender');
 const logger = createSecureLogger('AnalyticsBriefing');
 
 const POSTHOG_API_KEY = process.env.POSTHOG_PERSONAL_API_KEY;
@@ -137,12 +138,20 @@ module.exports = async (req, res) => {
           .select('id, notification_preferences, manager_phone')
           .not('notification_preferences', 'is', null);
 
-        const recipients = (configs || [])
-          .filter(c => c.notification_preferences?.analytics_briefing_enabled)
-          .map(c => c.notification_preferences?.analytics_briefing_phone || c.manager_phone)
-          .filter(Boolean);
+        const eligibleConfigs = (configs || [])
+          .filter(c => c.notification_preferences?.analytics_briefing_enabled);
 
-        for (const phone of recipients) {
+        for (const c of eligibleConfigs) {
+          const phone = c.notification_preferences?.analytics_briefing_phone || c.manager_phone;
+          if (!phone) continue;
+
+          // Dedup: skip if already sent analytics briefing to this restaurant today
+          const okToSend = await tryLogBriefingSent(c.id, 'analytics');
+          if (!okToSend) {
+            logger.info('Skipping duplicate analytics briefing', { restaurantId: c.id });
+            continue;
+          }
+
           const to = phone.replace(/[^0-9]/g, '');
           try {
             // Try approved template first (works without 24h conversation window)
@@ -203,7 +212,7 @@ module.exports = async (req, res) => {
             logger.warn('WhatsApp send error:', waErr.message);
           }
         }
-        logger.info(`Analytics briefing sent to ${sentCount}/${recipients.length} recipients`);
+        logger.info(`Analytics briefing sent to ${sentCount}/${eligibleConfigs.length} recipients`);
       } catch (dbErr) {
         logger.warn('Failed to query briefing recipients:', dbErr.message);
       }

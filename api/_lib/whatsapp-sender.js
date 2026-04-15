@@ -391,12 +391,66 @@ async function sendWhatsAppImageMessage(to, imageUrl, caption) {
   }
 }
 
+/**
+ * Send a WhatsApp document message (PDF, etc.) via Meta Cloud API.
+ *
+ * @param {string} to - Recipient phone number (E.164)
+ * @param {string} documentUrl - Publicly accessible document URL
+ * @param {string} [caption=''] - Optional caption text
+ * @param {string} [filename='relatorio.pdf'] - Display filename
+ * @returns {{ success: boolean, messageId?: string, error?: string }}
+ */
+async function sendWhatsAppDocumentMessage(to, documentUrl, caption = '', filename = 'relatorio.pdf') {
+  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+  const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
+
+  if (!phoneNumberId || !accessToken) {
+    logger.error('Missing WHATSAPP_PHONE_NUMBER_ID or WHATSAPP_ACCESS_TOKEN');
+    return { success: false, error: 'WhatsApp not configured' };
+  }
+
+  try {
+    const response = await fetch(`${WHATSAPP_API_URL}/${phoneNumberId}/messages`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        messaging_product: 'whatsapp',
+        recipient_type: 'individual',
+        to,
+        type: 'document',
+        document: {
+          link: documentUrl,
+          filename,
+          ...(caption ? { caption } : {}),
+        },
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      logger.error('WhatsApp document send error:', { status: response.status, data: JSON.stringify(data) });
+      return { success: false, error: data.error?.message || 'Failed to send document' };
+    }
+
+    logger.info(`WhatsApp document sent to ${to}, msgId=${data.messages?.[0]?.id}`);
+    return { success: true, messageId: data.messages?.[0]?.id };
+  } catch (error) {
+    logger.error('WhatsApp document send exception:', error);
+    return { success: false, error: error.message };
+  }
+}
+
 module.exports = {
   isWhatsAppConfigured,
   getWhatsAppProvider,
   sendWhatsAppMessage,
   sendWhatsAppAudioMessage,
   sendWhatsAppImageMessage,
+  sendWhatsAppDocumentMessage,
   sendTemplateMessage,
   sendReservationConfirmation,
   sendNewBookingAlertWhatsApp,

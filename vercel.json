@@ -142,6 +142,10 @@
       "destination": "/api/customer-reservation.js"
     },
     {
+      "source": "/api/report-pdf",
+      "destination": "/api/report-pdf.js"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
@@ -360,6 +364,10 @@
     {
       "path": "/api/cron/compile-wiki",
       "schedule": "30 4 * * *"
+    },
+    {
+      "path": "/api/cron/weekly-report",
+      "schedule": "30 8 * * 1"
     }
   ]
 }
