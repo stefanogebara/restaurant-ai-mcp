@@ -70,6 +70,7 @@ module.exports = async (req, res) => {
             ? new Date(stripeSub.current_period_end * 1000).toLocaleDateString()
             : null,
           cancelAtPeriodEnd: stripeSub.cancel_at_period_end,
+          hasBillingPortal: true,
         };
 
         if (stripeSub.status === 'trialing' && stripeSub.trial_end) {
@@ -82,7 +83,7 @@ module.exports = async (req, res) => {
       }
     }
 
-    // Fallback: return DB data directly
+    // Fallback: return DB data directly (DB override plan — no real Stripe customer)
     const planPriceMap = { Starter: 'R$497', Growth: 'R$1.497', Scale: 'R$2.997' };
     const planName = sub['Plan Name'] || 'Starter';
 
@@ -93,6 +94,7 @@ module.exports = async (req, res) => {
       currency: 'BRL',
       currentPeriodEnd: sub['Current Period End'] || null,
       cancelAtPeriodEnd: false,
+      hasBillingPortal: false,
     });
   } catch (error) {
     logger.error('Error fetching subscription:', error);

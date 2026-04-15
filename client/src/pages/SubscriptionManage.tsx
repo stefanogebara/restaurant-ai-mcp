@@ -12,6 +12,18 @@ import { authFetch } from '../services/api';
 
 const planTiers = ['starter', 'growth', 'scale'];
 
+const PLAN_PRICE_IDS: Record<string, string> = {
+  starter: import.meta.env.VITE_STRIPE_STARTER_PRICE_ID || '',
+  growth: import.meta.env.VITE_STRIPE_GROWTH_PRICE_ID || '',
+  scale: import.meta.env.VITE_STRIPE_SCALE_PRICE_ID || '',
+};
+
+const PLAN_NAMES: Record<string, string> = {
+  starter: 'Starter',
+  growth: 'Growth',
+  scale: 'Scale',
+};
+
 /** Map any plan name variant to the canonical English tier key */
 function planNameToTierKey(raw: string): string {
   const mapping: Record<string, string> = {
@@ -50,6 +62,7 @@ export default function SubscriptionManage() {
   const { error } = useToast();
   const { data: subscription, isLoading } = useSubscriptionData();
   const portal = useCustomerPortal();
+  const [loadingCheckoutPlan, setLoadingCheckoutPlan] = useState<string | null>(null);
 
   // Derive currency from the active subscription's billing currency (so BRL subs show BRL prices,
   // EUR subs show EUR prices), falling back to i18n language detection for unauthenticated views.
@@ -73,6 +86,32 @@ export default function SubscriptionManage() {
         navigate('/subscription/manage#pricing');
       },
     });
+  };
+
+  const handleUpgradeCheckout = async (planKey: string) => {
+    const priceId = PLAN_PRICE_IDS[planKey];
+    const planName = PLAN_NAMES[planKey];
+    if (!priceId) { error('Preço não configurado. Por favor, entre em contato com o suporte.'); return; }
+    try {
+      setLoadingCheckoutPlan(planKey);
+      const apiUrl = import.meta.env.VITE_API_URL
+        ? `${import.meta.env.VITE_API_URL}/api/create-checkout-session`
+        : '/api/create-checkout-session';
+      const response = await authFetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ priceId, planName }),
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || 'Falha ao criar sessão de pagamento');
+      }
+      const { url } = await response.json();
+      window.location.href = url;
+    } catch (err: unknown) {
+      error(err instanceof Error ? err.message : 'Algo deu errado. Tente novamente.');
+      setLoadingCheckoutPlan(null);
+    }
   };
 
   if (!can('manageSubscription')) {
@@ -151,15 +190,17 @@ export default function SubscriptionManage() {
                   <div className="text-[13px] text-warm-stone mt-1.5">{t('subscription.trialEnds')}: {subscription.trialEnd}</div>
                 )}
               </div>
-              <button
-                onClick={handleManageSubscription}
-                disabled={portal.isPending}
-                className="px-5 py-2.5 border border-border-gray rounded-xl text-[13px] font-medium text-stone-gray bg-white hover:border-muted-stone transition-colors disabled:opacity-50 flex items-center gap-2"
-              >
-                {portal.isPending ? (
-                  <><div aria-hidden="true" className="w-3.5 h-3.5 border-2 border-stone-gray border-t-transparent rounded-full animate-spin" />{t('subscription.opening')}</>
-                ) : t('subscription.manageBilling')}
-              </button>
+              {subscription.hasBillingPortal !== false && (
+                <button
+                  onClick={handleManageSubscription}
+                  disabled={portal.isPending}
+                  className="px-5 py-2.5 border border-border-gray rounded-xl text-[13px] font-medium text-stone-gray bg-white hover:border-muted-stone transition-colors disabled:opacity-50 flex items-center gap-2"
+                >
+                  {portal.isPending ? (
+                    <><div aria-hidden="true" className="w-3.5 h-3.5 border-2 border-stone-gray border-t-transparent rounded-full animate-spin" />{t('subscription.opening')}</>
+                  ) : t('subscription.manageBilling')}
+                </button>
+              )}
             </div>
           </div>
 
@@ -207,18 +248,25 @@ export default function SubscriptionManage() {
                     ))}
                   </ul>
                   <button
-                    onClick={(isCurrent && !isCanceled) ? undefined : handleManageSubscription}
-                    disabled={(isCurrent && !isCanceled) || portal.isPending}
+                    onClick={(isCurrent && !isCanceled) ? undefined : () => {
+                      // If no billing portal (DB override plan), route plan changes through Stripe checkout
+                      if (!subscription.hasBillingPortal) {
+                        handleUpgradeCheckout(p.key);
+                      } else {
+                        handleManageSubscription();
+                      }
+                    }}
+                    disabled={(isCurrent && !isCanceled) || portal.isPending || loadingCheckoutPlan === p.key}
                     className={`w-full py-3.5 rounded-full text-sm font-semibold transition-colors flex items-center justify-center gap-2 ${
                       (isCanceled || (isFeatured && !isCurrent)) ? 'bg-burgundy text-white hover:bg-burgundy-dark' :
                       (isCurrent && !isCanceled) ? 'border border-border-gray text-muted-stone cursor-default' :
                       'border border-border-gray text-deep-charcoal hover:border-muted-stone'
-                    } ${portal.isPending && !(isCurrent && !isCanceled) ? 'opacity-60' : ''}`}
+                    } ${(portal.isPending || loadingCheckoutPlan === p.key) && !(isCurrent && !isCanceled) ? 'opacity-60' : ''}`}
                   >
-                    {portal.isPending && !(isCurrent && !isCanceled) && (
+                    {(portal.isPending || loadingCheckoutPlan === p.key) && !(isCurrent && !isCanceled) && (
                       <div aria-hidden="true" className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
                     )}
-                    {portal.isPending && !(isCurrent && !isCanceled) ? t('subscription.opening', 'Opening...') : buttonLabel}
+                    {(portal.isPending || loadingCheckoutPlan === p.key) && !(isCurrent && !isCanceled) ? t('subscription.opening', 'Opening...') : buttonLabel}
                   </button>
                 </div>
               );

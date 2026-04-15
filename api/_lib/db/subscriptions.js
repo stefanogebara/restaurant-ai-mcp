@@ -9,7 +9,8 @@ const { supabase, handleSupabaseResponse } = require('./clients');
 
 const getSubscriptions = async (restaurantId, filter = {}) => {
   let query = supabase.from('subscriptions').select('id, subscription_id, customer_id, customer_email, plan_name, price_id, status, current_period_start, current_period_end, trial_end, canceled_at, created_at')
-    .eq('restaurant_id', restaurantId);
+    .eq('restaurant_id', restaurantId)
+    .order('created_at', { ascending: false });
 
   if (filter.customer_id) {
     query = query.eq('customer_id', filter.customer_id);

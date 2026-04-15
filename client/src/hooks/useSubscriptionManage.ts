@@ -10,6 +10,8 @@ export interface SubscriptionData {
   currentPeriodEnd?: string;
   cancelAtPeriodEnd?: boolean;
   trialEnd?: string;
+  /** false when on a DB override plan with no real Stripe customer — use checkout flow for plan changes */
+  hasBillingPortal?: boolean;
 }
 
 export function useSubscriptionData() {
