@@ -114,18 +114,19 @@ module.exports = async (req, res) => {
           promptToSend += '\n\nEnd your briefing with 1-2 specific suggestions: what to adjust, why, and expected outcome.';
         }
 
-        const briefing = await Promise.race([
-          runManagerAgent(config.id, promptToSend, 'whatsapp'),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('Briefing timeout')), PER_RESTAURANT_TIMEOUT))
-        ]);
-
-        // Dedup: use briefings_log table — one send per restaurant per type per day
+        // Dedup: claim the slot BEFORE the expensive LLM call.
+        // Two concurrent Vercel invocations race here; only one INSERT wins.
         const briefingType = type === 'morning' ? 'morning' : 'end_of_day';
         const okToSend = await tryLogBriefingSent(config.id, briefingType);
         if (!okToSend) {
           logger.info(`Skipping duplicate ${briefingType} briefing for ${config.restaurant_name}`);
           continue;
         }
+
+        const briefing = await Promise.race([
+          runManagerAgent(config.id, promptToSend, 'whatsapp'),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Briefing timeout')), PER_RESTAURANT_TIMEOUT))
+        ]);
 
         await sendBriefing(
           config.manager_phone,
