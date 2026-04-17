@@ -170,6 +170,7 @@ async function processMessage(adapter, msg, options = {}) {
         const envRestaurantId = providerName === 'twilio'
           ? process.env.TWILIO_RESTAURANT_ID
           : process.env.META_RESTAURANT_ID;
+        logger.info(`[MessageProcessor] Routing: provider=${providerName} envId=${envRestaurantId || 'not-set'} restaurants=[${activeRestaurants.map(r => r.id).join(',')}]`);
         if (envRestaurantId) {
           directMatch = activeRestaurants.find(r => r.id === envRestaurantId);
         }
