@@ -61,10 +61,10 @@ async function callChatCompletions(messages, tools) {
   }));
 
   // Use fast model for WhatsApp (Haiku: 12x cheaper than Sonnet)
-  // 600 max_tokens — agentic tool calls need more headroom than plain chat
+  // 1024 max_tokens — tool call + confirmation message after successful reservation needs headroom
   const response = await getAI().messages.create({
     model: AI_MODEL_FAST,
-    max_tokens: 600,
+    max_tokens: 1024,
     system: systemContent,
     messages: anthropicMessages,
     tools: anthropicTools.length > 0 ? anthropicTools : undefined,

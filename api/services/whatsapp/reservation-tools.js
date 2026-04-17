@@ -332,10 +332,11 @@ async function executeTool(toolName, toolInput, session) {
 
         const { date, time, party_size } = toolInput;
 
-        // Get reservations for that date/time
+        // Get reservations for that date/time (scoped to this restaurant)
         const { data: reservations, error } = await client
           .from('reservations')
           .select('id, time, party_size, status')
+          .eq('restaurant_id', session.restaurant.id)
           .eq('date', date)
           .in('status', ['confirmed', 'seated']);
 
@@ -355,10 +356,11 @@ async function executeTool(toolName, toolInput, session) {
         const bookedAtTime = reservations?.filter(r => r.time === time) || [];
         const bookedSeats = bookedAtTime.reduce((sum, r) => sum + (r.party_size || 0), 0);
 
-        // Get total capacity to check overall availability
+        // Get total capacity to check overall availability (scoped to this restaurant)
         const { data: allTables } = await client
           .from('tables')
           .select('capacity')
+          .eq('restaurant_id', session.restaurant.id)
           .eq('is_active', true);
         const totalCapacity = allTables?.reduce((sum, t) => sum + t.capacity, 0) || 30;
         const remainingCapacity = totalCapacity - bookedSeats;
@@ -475,10 +477,13 @@ async function executeTool(toolName, toolInput, session) {
           hour12: restLang === 'en'
         });
 
+        // WhatsApp template language codes use underscore format (pt_BR, not pt-BR or pt)
+        const templateLangMap = { 'pt-BR': 'pt_BR', pt: 'pt_BR', es: 'es', en: 'en' };
+        const templateLang = templateLangMap[session.restaurant?.language] || 'en';
         const templateResult = await sendTemplateMessage(
           customer_phone,
           'reservation_confirmed',
-          session.restaurant?.language || 'en',
+          templateLang,
           [
             customer_name,
             session.restaurant.restaurant_name,
@@ -528,7 +533,9 @@ async function executeTool(toolName, toolInput, session) {
         }
 
         // Send interactive button message so customer can cancel easily
-        const lang = session?.restaurant?.language || 'en';
+        // Normalize language: treat 'pt' as 'pt-BR'
+        const rawLang = session?.restaurant?.language || 'en';
+        const lang = rawLang === 'pt' ? 'pt-BR' : rawLang;
         const buttonConfirmText = {
           'pt-BR': `✅ Reserva confirmada!\n${customer_name} · ${party_size} pessoa${party_size > 1 ? 's' : ''} · ${date} às ${time}${mapsLine}`,
           es: `✅ ¡Reserva confirmada!\n${customer_name} · ${party_size} persona${party_size > 1 ? 's' : ''} · ${date} a las ${time}${mapsLine}`,
