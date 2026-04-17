@@ -193,10 +193,10 @@ async function transcribeVoiceMessage(mediaId) {
  * @param {number} responseLength - Length of the response about to be sent
  * @returns {Promise<void>}
  */
-async function simulateTypingDelay(responseLength) {
-  // 0.5-2.5 seconds based on response length, capped
-  const delay = Math.min(2500, Math.max(500, responseLength * 5));
-  await new Promise(resolve => setTimeout(resolve, delay));
+async function simulateTypingDelay(_responseLength) {
+  // Intentionally removed: artificial delay was pushing pipeline past Meta's
+  // 5s retry window, causing concurrent duplicate invocations that beat Redis dedup.
+  // WhatsApp typing indicators (the "..." bubble) are a better UX signal anyway.
 }
 
 module.exports = {

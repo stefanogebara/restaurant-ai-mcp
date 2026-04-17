@@ -60,66 +60,70 @@ async function processMessage(adapter, msg, options = {}) {
     return { handled: true };
   }
 
-  // 5. Feedback reply detection
+  // 5+6. Feedback and survey reply detection (parallel — independent DB lookups)
+  let pendingFeedback = null;
+  let surveyResult = null;
   try {
-    const pendingFeedback = await findPendingFeedbackForPhone(from);
-    if (pendingFeedback) {
-      const result = await processFeedbackReply(pendingFeedback.restaurantId, from, text);
-      if (result) {
-        // Determine restaurant language for localized thank-you
-        let feedbackLang = 'en';
-        try {
-          const activeRestaurants = await getAllActiveRestaurants();
-          const restaurant = activeRestaurants.find(r => r.id === pendingFeedback.restaurantId);
-          feedbackLang = restaurant?.language || 'en';
-        } catch (_) { /* fall back to English */ }
-        const thankYou = result.rating
-          ? feedbackLang === 'pt' || feedbackLang === 'pt-BR'
-            ? `Obrigado pelo seu feedback! Voce nos avaliou ${result.rating}/5.${result.comment ? ' Agradecemos seu comentario.' : ''} Esperamos te ver novamente!`
-            : feedbackLang === 'es'
-              ? `¡Gracias por tu opinion! Nos diste ${result.rating}/5.${result.comment ? ' Apreciamos tus comentarios.' : ''} ¡Esperamos verte pronto!`
-              : `Thank you for your feedback! You rated us ${result.rating}/5.${result.comment ? ' We appreciate your comments.' : ''} We look forward to welcoming you again!`
-          : feedbackLang === 'pt' || feedbackLang === 'pt-BR'
-            ? 'Obrigado pelo seu feedback! Agradecemos o seu tempo.'
-            : feedbackLang === 'es'
-              ? '¡Gracias por tu opinion! Apreciamos que te hayas tomado el tiempo.'
-              : 'Thank you for your feedback! We appreciate you taking the time to share your thoughts.';
-        await adapter.sendMessage(from, thankYou);
-        return { handled: true };
-      }
-    }
+    [pendingFeedback, surveyResult] = await Promise.all([
+      findPendingFeedbackForPhone(from).catch(err => {
+        logger.error('Feedback reply check failed:', err.message);
+        return null;
+      }),
+      handleSurveyReply(from, text).catch(err => {
+        logger.error('Survey reply check failed:', err.message);
+        return null;
+      }),
+    ]);
   } catch (err) {
-    logger.error('Feedback reply check failed:', err.message);
+    logger.error('Feedback/survey parallel check failed:', err.message);
   }
 
-  // 6. Survey reply detection
-  try {
-    const surveyResult = await handleSurveyReply(from, text);
-    if (surveyResult) {
-      // Determine restaurant language for localized thank-you
-      let surveyLang = 'en';
+  if (pendingFeedback) {
+    const result = await processFeedbackReply(pendingFeedback.restaurantId, from, text).catch(() => null);
+    if (result) {
+      let feedbackLang = 'en';
       try {
         const activeRestaurants = await getAllActiveRestaurants();
-        const restaurant = activeRestaurants.find(r => r.id === surveyResult.restaurantId);
-        surveyLang = restaurant?.language || 'en';
+        const restaurant = activeRestaurants.find(r => r.id === pendingFeedback.restaurantId);
+        feedbackLang = restaurant?.language || 'en';
       } catch (_) { /* fall back to English */ }
-      const stars = '\u2B50'.repeat(surveyResult.rating);
-      const thankYou = surveyResult.comment
-        ? surveyLang === 'pt' || surveyLang === 'pt-BR'
-          ? `Obrigado pela avaliacao! ${stars} (${surveyResult.rating}/5)\nSeu comentario foi registrado. Esperamos te ver novamente!`
-          : surveyLang === 'es'
-            ? `¡Gracias por tu valoracion! ${stars} (${surveyResult.rating}/5)\nTu comentario fue registrado. ¡Esperamos verte pronto!`
-            : `Thank you for your rating! ${stars} (${surveyResult.rating}/5)\nYour comment has been recorded. We hope to see you again!`
-        : surveyLang === 'pt' || surveyLang === 'pt-BR'
-          ? `Obrigado pela avaliacao! ${stars} (${surveyResult.rating}/5)\nEsperamos te ver novamente!`
-          : surveyLang === 'es'
-            ? `¡Gracias por tu valoracion! ${stars} (${surveyResult.rating}/5)\n¡Esperamos verte pronto!`
-            : `Thank you for your rating! ${stars} (${surveyResult.rating}/5)\nWe hope to see you again!`;
+      const thankYou = result.rating
+        ? feedbackLang === 'pt' || feedbackLang === 'pt-BR'
+          ? `Obrigado pelo seu feedback! Voce nos avaliou ${result.rating}/5.${result.comment ? ' Agradecemos seu comentario.' : ''} Esperamos te ver novamente!`
+          : feedbackLang === 'es'
+            ? `¡Gracias por tu opinion! Nos diste ${result.rating}/5.${result.comment ? ' Apreciamos tus comentarios.' : ''} ¡Esperamos verte pronto!`
+            : `Thank you for your feedback! You rated us ${result.rating}/5.${result.comment ? ' We appreciate your comments.' : ''} We look forward to welcoming you again!`
+        : feedbackLang === 'pt' || feedbackLang === 'pt-BR'
+          ? 'Obrigado pelo seu feedback! Agradecemos o seu tempo.'
+          : feedbackLang === 'es'
+            ? '¡Gracias por tu opinion! Apreciamos que te hayas tomado el tiempo.'
+            : 'Thank you for your feedback! We appreciate you taking the time to share your thoughts.';
       await adapter.sendMessage(from, thankYou);
       return { handled: true };
     }
-  } catch (err) {
-    logger.error('Survey reply check failed:', err.message);
+  }
+
+  if (surveyResult) {
+    let surveyLang = 'en';
+    try {
+      const activeRestaurants = await getAllActiveRestaurants();
+      const restaurant = activeRestaurants.find(r => r.id === surveyResult.restaurantId);
+      surveyLang = restaurant?.language || 'en';
+    } catch (_) { /* fall back to English */ }
+    const stars = '\u2B50'.repeat(surveyResult.rating);
+    const thankYou = surveyResult.comment
+      ? surveyLang === 'pt' || surveyLang === 'pt-BR'
+        ? `Obrigado pela avaliacao! ${stars} (${surveyResult.rating}/5)\nSeu comentario foi registrado. Esperamos te ver novamente!`
+        : surveyLang === 'es'
+          ? `¡Gracias por tu valoracion! ${stars} (${surveyResult.rating}/5)\nTu comentario fue registrado. ¡Esperamos verte pronto!`
+          : `Thank you for your rating! ${stars} (${surveyResult.rating}/5)\nYour comment has been recorded. We hope to see you again!`
+      : surveyLang === 'pt' || surveyLang === 'pt-BR'
+        ? `Obrigado pela avaliacao! ${stars} (${surveyResult.rating}/5)\nEsperamos te ver novamente!`
+        : surveyLang === 'es'
+          ? `¡Gracias por tu valoracion! ${stars} (${surveyResult.rating}/5)\n¡Esperamos verte pronto!`
+          : `Thank you for your rating! ${stars} (${surveyResult.rating}/5)\nWe hope to see you again!`;
+    await adapter.sendMessage(from, thankYou);
+    return { handled: true };
   }
 
   // 7. Session management
