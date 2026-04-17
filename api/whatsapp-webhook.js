@@ -85,16 +85,15 @@ async function handlePost(req, res) {
       return res.status(200).json({ status: 'ok' });
     }
 
-    // Await processMessage fully before sending the response.
-    // Vercel terminates functions immediately after res.json() is sent — any async
-    // work scheduled after the response is killed before it runs.
-    // Meta retries if no 200 within 5s; Redis dedup (24h TTL) prevents double-processing.
-    await processMessage(adapter, msg, { oppositeProvider: 'twilio' })
-      .catch(err => logger.error('processMessage error:', err.message));
-
+    // Respond 200 immediately so Meta stops retrying (retries after 5s cause duplicates
+    // when processMessage takes ~40s). The async handler continues running until it returns,
+    // so processMessage completes normally even after the response is flushed.
     if (!res.headersSent) {
       res.status(200).json({ status: 'ok' });
     }
+
+    await processMessage(adapter, msg, { oppositeProvider: 'twilio' })
+      .catch(err => logger.error('processMessage error:', err.message));
 
   } catch (error) {
     logger.error('Webhook error:', error.message);
