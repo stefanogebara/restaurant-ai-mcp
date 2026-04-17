@@ -144,7 +144,9 @@ async function processMessage(adapter, msg, options = {}) {
   }
 
   // 8. Restaurant routing
-  if (!session.restaurant) {
+  // Skip if session already has restaurant_id set (Supabase JOIN may return null for restaurant
+  // object even when FK is set, so check restaurant_id as the authoritative signal)
+  if (!session.restaurant && !session.restaurant_id) {
     try {
       const activeRestaurants = await Promise.race([
         getAllActiveRestaurants(),
