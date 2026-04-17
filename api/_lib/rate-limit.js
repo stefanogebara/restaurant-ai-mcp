@@ -15,6 +15,27 @@ let redisFailCount = 0;
 const REDIS_FAIL_WARN_THRESHOLD = 3;
 const REDIS_FAIL_CRIT_THRESHOLD = 10;
 
+// In-process dedup fallback — catches same-Lambda retries when Redis is unavailable.
+// Map<messageId, expiresAt (ms since epoch)>
+const inProcessDedupMap = new Map();
+const IN_PROCESS_DEDUP_TTL_MS = 30 * 60 * 1000; // 30 minutes
+
+function inProcessDedupCheck(messageId) {
+  const now = Date.now();
+  const expiresAt = inProcessDedupMap.get(messageId);
+  if (expiresAt !== undefined && expiresAt > now) {
+    return true; // duplicate — already seen in this Lambda instance
+  }
+  inProcessDedupMap.set(messageId, now + IN_PROCESS_DEDUP_TTL_MS);
+  // Prune expired entries every ~100 calls to avoid unbounded growth
+  if (inProcessDedupMap.size > 500) {
+    for (const [k, v] of inProcessDedupMap) {
+      if (v < now) inProcessDedupMap.delete(k);
+    }
+  }
+  return false;
+}
+
 // Rate limit configuration per endpoint type
 const RATE_LIMITS = {
   // Strict limits for sensitive endpoints
@@ -303,6 +324,11 @@ const MAX_BODY_BYTES = 1 * 1024 * 1024; // 1 MB
  * @returns {Promise<boolean>} True if message is a duplicate and should be skipped
  */
 async function isMessageDuplicate(messageId, ttlSeconds = 300) {
+  // In-process check first — catches same-Lambda retries even when Redis is unavailable.
+  if (inProcessDedupCheck(messageId)) {
+    return true;
+  }
+
   if (!redis) return false; // no Redis configured — allow (local dev)
 
   try {
@@ -315,7 +341,8 @@ async function isMessageDuplicate(messageId, ttlSeconds = 300) {
       error: err.message,
       consecutiveFailures: redisFailCount,
     });
-    return false; // fail open — better to process twice than drop messages
+    // In-process check already passed (new message) — allow but log Redis issue
+    return false;
   }
 }
 
