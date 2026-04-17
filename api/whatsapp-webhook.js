@@ -49,11 +49,11 @@ function handleVerification(req, res) {
  * Handle incoming POST webhook (messages + status updates)
  */
 async function handlePost(req, res) {
-  // Verify signature
+  // Verify signature — 200 was already sent, so we can only log (not reject with 403)
   const sigValid = await adapter.verifySignature(req);
   if (!sigValid) {
-    logger.error('Invalid Meta webhook signature');
-    return res.status(403).json({ error: 'Invalid signature' });
+    logger.error('Invalid Meta webhook signature — dropping request');
+    return; // 200 already sent; attacker gets no useful error info
   }
 
   try {
@@ -69,27 +69,20 @@ async function handlePost(req, res) {
         }
       }
       if (!value.messages) {
-        return res.status(200).json({ status: 'ok' });
+        return; // status-only event, nothing more to do
       }
     }
 
     // Check if we should handle this message (TwinMe forwarding, etc.)
     const routing = await adapter.shouldHandle(req);
     if (!routing.handle) {
-      return res.status(200).json({ status: 'ok', handler: routing.reason });
+      return; // forwarded or irrelevant
     }
 
     // Parse the message
     const msg = await adapter.parseIncoming(req);
     if (!msg) {
-      return res.status(200).json({ status: 'ok' });
-    }
-
-    // Respond 200 immediately so Meta stops retrying (retries after 5s cause duplicates
-    // when processMessage takes ~40s). The async handler continues running until it returns,
-    // so processMessage completes normally even after the response is flushed.
-    if (!res.headersSent) {
-      res.status(200).json({ status: 'ok' });
+      return; // no actionable message
     }
 
     await processMessage(adapter, msg, { oppositeProvider: 'twilio' })
@@ -97,9 +90,6 @@ async function handlePost(req, res) {
 
   } catch (error) {
     logger.error('Webhook error:', error.message);
-    if (!res.headersSent) {
-      return res.status(200).json({ status: 'error' });
-    }
   }
 }
 
@@ -113,30 +103,42 @@ module.exports = async (req, res) => {
     return res.status(200).end();
   }
 
+  if (req.method === 'GET') {
+    // Capture body for GET (verification doesn't need raw body, but keep consistent)
+    return handleVerification(req, res);
+  }
+
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  // For POST: send 200 OK IMMEDIATELY before body capture / signature verification.
+  // This prevents Meta from retrying after its 5-second timeout — retries on a cold-start
+  // function are the main cause of duplicate bot responses. Redis dedup (86400s TTL) in
+  // processMessage blocks any true duplicate that slips through.
+  if (!res.headersSent) {
+    res.status(200).json({ status: 'ok' });
+  }
+
   // Capture raw body for HMAC signature verification.
   // Vercel auto-parses JSON but we need the raw bytes for HMAC.
-  if (req.method === 'POST') {
-    const chunks = [];
-    await new Promise((resolve, reject) => {
-      req.on('data', (chunk) => chunks.push(chunk));
-      req.on('end', resolve);
-      req.on('error', reject);
-    });
-    const streamBuf = Buffer.concat(chunks);
-    if (streamBuf.length > 0) {
-      req._rawBody = streamBuf.toString('utf8');
-      if (!req.body) {
-        try { req.body = JSON.parse(req._rawBody); } catch { req.body = {}; }
-      }
+  const chunks = [];
+  await new Promise((resolve, reject) => {
+    req.on('data', (chunk) => chunks.push(chunk));
+    req.on('end', resolve);
+    req.on('error', reject);
+  });
+  const streamBuf = Buffer.concat(chunks);
+  if (streamBuf.length > 0) {
+    req._rawBody = streamBuf.toString('utf8');
+    if (!req.body) {
+      try { req.body = JSON.parse(req._rawBody); } catch { req.body = {}; }
     }
   }
 
   if (rejectOversizedBody(req, res)) return;
 
-  if (req.method === 'GET') return handleVerification(req, res);
-  if (req.method === 'POST') return handlePost(req, res);
-
-  return res.status(405).json({ error: 'Method not allowed' });
+  await handlePost(req, res).catch(err => logger.error('Webhook post handler error:', err.message));
 };
 
 module.exports.config = { api: { bodyParser: false } };

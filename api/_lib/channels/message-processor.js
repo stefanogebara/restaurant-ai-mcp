@@ -237,6 +237,26 @@ async function processMessage(adapter, msg, options = {}) {
     }
   }
 
+  // 8b. Re-hydrate session.restaurant when restaurant_id is set but JOIN returned null.
+  //     The Supabase JOIN on restaurant_registry consistently returns null even when the FK is
+  //     set. For fresh sessions the routing block above forces-injects the restaurant object.
+  //     For returning sessions (session already has restaurant_id from a prior message), the
+  //     routing block is skipped, leaving session.restaurant null and the AI without context.
+  if (session.restaurant_id && !session.restaurant) {
+    try {
+      const allRestaurants = await getAllActiveRestaurants();
+      const found = allRestaurants.find(r => r.id === session.restaurant_id);
+      if (found) {
+        session = { ...session, restaurant: found };
+        logger.info(`[${providerName}] Re-hydrated session.restaurant for ${found.restaurant_name}`);
+      } else {
+        logger.warn(`[${providerName}] restaurant_id ${session.restaurant_id} not in active registry`);
+      }
+    } catch (err) {
+      logger.warn(`[${providerName}] Failed to re-hydrate session.restaurant (non-fatal):`, err.message);
+    }
+  }
+
   // 9. Provider guard — skip if restaurant uses the other provider
   if (options.oppositeProvider && session?.restaurant?.id) {
     try {
