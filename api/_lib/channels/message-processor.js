@@ -167,10 +167,9 @@ async function processMessage(adapter, msg, options = {}) {
       // Env var override: TWILIO_RESTAURANT_ID / META_RESTAURANT_ID allow direct routing per
       // provider without needing the whatsapp_phone_number_id column set on every registry row.
       if (!directMatch) {
-        const envRestaurantId = providerName === 'twilio'
+        const envRestaurantId = (providerName === 'twilio'
           ? process.env.TWILIO_RESTAURANT_ID
-          : process.env.META_RESTAURANT_ID;
-        logger.info(`[MessageProcessor] Routing: provider=${providerName} envId=${envRestaurantId || 'not-set'} restaurants=[${activeRestaurants.map(r => r.id).join(',')}]`);
+          : process.env.META_RESTAURANT_ID)?.trim();
         if (envRestaurantId) {
           directMatch = activeRestaurants.find(r => r.id === envRestaurantId);
         }
