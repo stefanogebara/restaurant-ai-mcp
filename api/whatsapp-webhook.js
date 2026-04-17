@@ -85,17 +85,16 @@ async function handlePost(req, res) {
       return res.status(200).json({ status: 'ok' });
     }
 
-    // Respond 200 IMMEDIATELY to prevent Meta retries.
-    // Meta retries after ~5s of no response; AI processing takes 5-15s, causing
-    // concurrent duplicate invocations. Vercel Node.js functions continue executing
-    // after res.json() while there are pending I/O operations (function stays alive
-    // until all async work completes or the 60s maxDuration is hit).
-    res.status(200).json({ status: 'ok' });
-
-    // Process message AFTER responding — Meta has already received its 200 so it
-    // will not retry. Redis dedup (24h TTL) handles any rare concurrent calls.
-    processMessage(adapter, msg, { oppositeProvider: 'twilio' })
+    // Await processMessage fully before sending the response.
+    // Vercel terminates functions immediately after res.json() is sent — any async
+    // work scheduled after the response is killed before it runs.
+    // Meta retries if no 200 within 5s; Redis dedup (24h TTL) prevents double-processing.
+    await processMessage(adapter, msg, { oppositeProvider: 'twilio' })
       .catch(err => logger.error('processMessage error:', err.message));
+
+    if (!res.headersSent) {
+      res.status(200).json({ status: 'ok' });
+    }
 
   } catch (error) {
     logger.error('Webhook error:', error.message);
