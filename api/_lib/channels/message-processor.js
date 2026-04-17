@@ -181,12 +181,13 @@ async function processMessage(adapter, msg, options = {}) {
       if (directMatch) {
         // Dedicated number — route directly without picker
         const updated = await setSessionRestaurant(session.id, directMatch.id);
-        if (updated) session = updated;
+        // Always inject restaurant into in-memory session so AI gets context even if DB write fails
+        session = updated || { ...session, restaurant_id: directMatch.id, restaurant: directMatch };
         logger.info(`[MessageProcessor] Routed to ${directMatch.restaurant_name} via ${directMatch.whatsapp_phone_number_id ? 'phone_number_id' : 'env var'}`);
       } else if (activeRestaurants.length === 1 || (!isSharedNumber && !directMatch)) {
         // Only one active restaurant — auto-assign
         const updated = await setSessionRestaurant(session.id, activeRestaurants[0].id);
-        if (updated) session = updated;
+        session = updated || { ...session, restaurant_id: activeRestaurants[0].id, restaurant: activeRestaurants[0] };
       } else {
         // Multiple restaurants on shared number — show interactive picker
         if (interactiveSelection?.id?.startsWith('restaurant_')) {
