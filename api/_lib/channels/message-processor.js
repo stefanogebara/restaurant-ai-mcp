@@ -181,13 +181,15 @@ async function processMessage(adapter, msg, options = {}) {
       if (directMatch) {
         // Dedicated number — route directly without picker
         const updated = await setSessionRestaurant(session.id, directMatch.id);
-        // Always inject restaurant into in-memory session so AI gets context even if DB write fails
-        session = updated || { ...session, restaurant_id: directMatch.id, restaurant: directMatch };
+        // Supabase JOIN on restaurant_registry consistently returns null even when FK is set.
+        // Always force-inject directMatch so in-memory session always has restaurant context.
+        session = { ...(updated || session), restaurant_id: directMatch.id, restaurant: directMatch };
         logger.info(`[MessageProcessor] Routed to ${directMatch.restaurant_name} via ${directMatch.whatsapp_phone_number_id ? 'phone_number_id' : 'env var'}`);
       } else if (activeRestaurants.length === 1 || (!isSharedNumber && !directMatch)) {
         // Only one active restaurant — auto-assign
-        const updated = await setSessionRestaurant(session.id, activeRestaurants[0].id);
-        session = updated || { ...session, restaurant_id: activeRestaurants[0].id, restaurant: activeRestaurants[0] };
+        const chosen = activeRestaurants[0];
+        const updated = await setSessionRestaurant(session.id, chosen.id);
+        session = { ...(updated || session), restaurant_id: chosen.id, restaurant: chosen };
       } else {
         // Multiple restaurants on shared number — show interactive picker
         if (interactiveSelection?.id?.startsWith('restaurant_')) {
