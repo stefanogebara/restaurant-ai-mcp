@@ -10,6 +10,12 @@ const { supabaseAdmin } = require('./supabase');
 const { createSecureLogger } = require('./secure-logger');
 const logger = createSecureLogger('RestaurantRegistry');
 
+// Module-level cache for getAllActiveRestaurants — prevents repeated slow DB queries
+// on the same Lambda instance. TTL is 60s so routing changes propagate quickly.
+let _restaurantCache = null;
+let _restaurantCacheExpiry = 0;
+const RESTAURANT_CACHE_TTL_MS = 60 * 1000;
+
 /**
  * Get a restaurant by exact name match (case-insensitive)
  * @param {string} name - Restaurant name to search for
@@ -114,13 +120,19 @@ async function getRestaurantById(id) {
  * @returns {Promise<array>} List of active restaurants (name and ID only)
  */
 async function getAllActiveRestaurants() {
+  // Return cached result if still fresh — avoids repeated slow DB queries on the same Lambda.
+  if (_restaurantCache && Date.now() < _restaurantCacheExpiry) {
+    return _restaurantCache;
+  }
+
   if (!isCentralConfigured()) {
     logger.error('[RestaurantRegistry] Central Supabase not configured');
     return [];
   }
 
   try {
-    // Try with whatsapp_phone_number_id first; fall back if column doesn't exist yet
+    // Select core columns; whatsapp_phone_number_id included only if the column exists
+    // (migration 20260412 adds it — safe to always include once migration is applied).
     let data, error;
     ({ data, error } = await centralSupabase
       .from('restaurant_registry')
@@ -128,8 +140,8 @@ async function getAllActiveRestaurants() {
       .eq('is_active', true)
       .order('restaurant_name'));
 
-    if (error && error.message?.includes('whatsapp_phone_number_id')) {
-      logger.warn('[RestaurantRegistry] whatsapp_phone_number_id column missing, falling back');
+    if (error && (error.message?.includes('whatsapp_phone_number_id') || error.code === '42703')) {
+      // Column not yet added — fall back to select without it (no warning spam after first miss)
       ({ data, error } = await centralSupabase
         .from('restaurant_registry')
         .select('id, restaurant_name, restaurant_aliases, language')
@@ -144,29 +156,37 @@ async function getAllActiveRestaurants() {
 
     const restaurants = data || [];
 
-    // Enrich with restaurant_type and city from restaurant.restaurant_config
+    // Enrich with restaurant_type and city from restaurant.restaurant_config (non-blocking, 3s cap)
     if (restaurants.length > 0) {
       try {
         const ids = restaurants.map(r => r.id);
-        const { data: configs, error: configError } = await supabaseAdmin
+        const enrichPromise = supabaseAdmin
           .schema('restaurant')
           .from('restaurant_config')
           .select('id, restaurant_type, city')
           .in('id', ids);
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('config enrich timeout')), 3000));
+        const { data: configs, error: configError } = await Promise.race([enrichPromise, timeoutPromise]);
 
         if (!configError && configs) {
           const configMap = Object.fromEntries(configs.map(c => [c.id, c]));
-          return restaurants.map(r => ({
+          const enriched = restaurants.map(r => ({
             ...r,
             restaurant_type: configMap[r.id]?.restaurant_type || null,
             city: configMap[r.id]?.city || null,
           }));
+          _restaurantCache = enriched;
+          _restaurantCacheExpiry = Date.now() + RESTAURANT_CACHE_TTL_MS;
+          return enriched;
         }
       } catch (configErr) {
         logger.warn('[RestaurantRegistry] Failed to enrich with config data (non-fatal):', configErr.message);
       }
     }
 
+    _restaurantCache = restaurants;
+    _restaurantCacheExpiry = Date.now() + RESTAURANT_CACHE_TTL_MS;
     return restaurants;
   } catch (error) {
     logger.error('[RestaurantRegistry] Error:', error);
