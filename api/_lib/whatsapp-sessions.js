@@ -75,6 +75,19 @@ async function getOrCreateSession(senderPhone, conversationId) {
       .single();
 
     if (createError) {
+      // Race condition: another Lambda beat us to it — re-query for the session it created.
+      if (createError.code === '23505') {
+        logger.warn('[WhatsAppSessions] Concurrent session INSERT conflict, re-querying...');
+        const { data: raceWinner } = await centralSupabase
+          .from('whatsapp_sessions')
+          .select('*, restaurant:restaurant_registry(*)')
+          .eq('sender_phone', normalizedPhone)
+          .gt('expires_at', new Date().toISOString())
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+        if (raceWinner) return raceWinner;
+      }
       logger.error('[WhatsAppSessions] Error creating session:', createError);
       return null;
     }

@@ -112,16 +112,11 @@ module.exports = async (req, res) => {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // For POST: send 200 OK IMMEDIATELY before body capture / signature verification.
-  // This prevents Meta from retrying after its 5-second timeout — retries on a cold-start
-  // function are the main cause of duplicate bot responses. Redis dedup (86400s TTL) in
-  // processMessage blocks any true duplicate that slips through.
-  if (!res.headersSent) {
-    res.status(200).json({ status: 'ok' });
-  }
-
-  // Capture raw body for HMAC signature verification.
-  // Vercel auto-parses JSON but we need the raw bytes for HMAC.
+  // Capture raw body FIRST — body stream must be read before sending the response.
+  // On Vercel, the request stream may become unavailable after res.json() is called,
+  // causing signature verification to silently fail (no raw bytes for HMAC).
+  // Body read is near-instant (<5ms) so this does NOT delay the 200 OK enough for
+  // Meta to retry (Meta's timeout is 20s).
   const chunks = [];
   await new Promise((resolve, reject) => {
     req.on('data', (chunk) => chunks.push(chunk));
@@ -134,6 +129,13 @@ module.exports = async (req, res) => {
     if (!req.body) {
       try { req.body = JSON.parse(req._rawBody); } catch { req.body = {}; }
     }
+  }
+
+  // Send 200 OK immediately after capturing the body — BEFORE processing.
+  // This prevents Meta from retrying on its 5s timeout. Redis dedup (86400s TTL)
+  // in processMessage blocks any duplicate that slips through.
+  if (!res.headersSent) {
+    res.status(200).json({ status: 'ok' });
   }
 
   if (rejectOversizedBody(req, res)) return;
