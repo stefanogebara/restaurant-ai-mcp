@@ -54,8 +54,10 @@ module.exports = async (req, res) => {
   const start = Date.now();
   let outcome = 'processed';
   let errorMsg = null;
+  let restaurantId = null;
   try {
-    await processMessage(adapter, msg);
+    const result = await processMessage(adapter, msg);
+    restaurantId = result?.restaurantId || null;
   } catch (err) {
     outcome = 'failed';
     errorMsg = err.message;
@@ -65,6 +67,7 @@ module.exports = async (req, res) => {
   logWahaEvent(outcome, {
     messageId: msg.messageId,
     phone: msg.from,
+    restaurantId,
     durationMs: Date.now() - start,
     error: errorMsg,
   }).catch(() => {});

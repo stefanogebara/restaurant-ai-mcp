@@ -351,7 +351,7 @@ async function processMessage(adapter, msg, options = {}) {
     sendWelcomeButtons(adapter, from, session).catch(() => {});
   }
 
-  return { response, handled: true };
+  return { response, handled: true, restaurantId: session?.restaurant_id || session?.restaurant?.id || null };
 }
 
 /**

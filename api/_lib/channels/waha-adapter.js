@@ -97,6 +97,13 @@ class WAHAAdapter extends ChannelAdapter {
     // Skip messages we sent ourselves
     if (payload.fromMe) return null;
 
+    // Skip group chats, broadcast lists, and newsletter channels
+    const rawFrom = payload.from || '';
+    if (rawFrom.endsWith('@g.us') || rawFrom.endsWith('@broadcast') || rawFrom.endsWith('@newsletter')) {
+      logger.info('Skipping non-1:1 message from:', rawFrom.substring(0, 30));
+      return null;
+    }
+
     const from = normalizePhone(payload.from);
     const messageId = payload.id;
     const messageType = payload.type || 'chat';
