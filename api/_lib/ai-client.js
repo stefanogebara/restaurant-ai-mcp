@@ -88,19 +88,27 @@ class OpenRouterClient {
     };
     if (oaiTools.length > 0) body.tools = oaiTools;
 
-    const response = await withRetry(
-      () => fetch(this.baseURL, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json',
-          'HTTP-Referer': 'https://seatable.one',
-          'X-Title': 'Seatable AI',
-        },
-        body: JSON.stringify(body),
-      }),
-      { maxAttempts: 2 }
-    );
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30_000);
+    let response;
+    try {
+      response = await withRetry(
+        () => fetch(this.baseURL, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${this.apiKey}`,
+            'Content-Type': 'application/json',
+            'HTTP-Referer': 'https://seatable.one',
+            'X-Title': 'Seatable AI',
+          },
+          body: JSON.stringify(body),
+          signal: controller.signal,
+        }),
+        { maxAttempts: 2 }
+      );
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
     if (!response.ok) {
       const errText = await response.text().catch(() => '');

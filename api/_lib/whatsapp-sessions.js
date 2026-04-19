@@ -36,10 +36,7 @@ async function getOrCreateSession(senderPhone, conversationId) {
     // Check for existing active session
     const { data: existing, error: fetchError } = await centralSupabase
       .from('whatsapp_sessions')
-      .select(`
-        *,
-        restaurant:restaurant_registry(*)
-      `)
+      .select('*')
       .eq('sender_phone', normalizedPhone)
       .gt('expires_at', new Date().toISOString())
       .order('created_at', { ascending: false })
@@ -80,7 +77,7 @@ async function getOrCreateSession(senderPhone, conversationId) {
         logger.warn('[WhatsAppSessions] Concurrent session INSERT conflict, re-querying...');
         const { data: raceWinner } = await centralSupabase
           .from('whatsapp_sessions')
-          .select('*, restaurant:restaurant_registry(*)')
+          .select('*')
           .eq('sender_phone', normalizedPhone)
           .gt('expires_at', new Date().toISOString())
           .order('created_at', { ascending: false })
@@ -154,10 +151,7 @@ async function getSessionByPhone(senderPhone) {
   try {
     const { data, error } = await centralSupabase
       .from('whatsapp_sessions')
-      .select(`
-        *,
-        restaurant:restaurant_registry(*)
-      `)
+      .select('*')
       .eq('sender_phone', normalizedPhone)
       .gt('expires_at', new Date().toISOString())
       .order('created_at', { ascending: false })
@@ -187,10 +181,7 @@ async function getSessionByConversationId(conversationId) {
   try {
     const { data, error } = await centralSupabase
       .from('whatsapp_sessions')
-      .select(`
-        *,
-        restaurant:restaurant_registry(*)
-      `)
+      .select('*')
       .eq('conversation_id', conversationId)
       .gt('expires_at', new Date().toISOString())
       .order('created_at', { ascending: false })
