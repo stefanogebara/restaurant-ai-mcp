@@ -4,7 +4,7 @@ const { createSecureLogger } = require('../../_lib/secure-logger');
 const logger = createSecureLogger('WhatsApp');
 const { getRestaurantByName, getAllActiveRestaurants } = require('../../_lib/restaurant-registry');
 const { getMultiTenantClient } = require('../../_lib/multi-tenant-supabase');
-const { canAccommodateParty } = require('../../_lib/supabase');
+const { canAccommodateParty, supabaseAdmin } = require('../../_lib/supabase');
 const { trackUsage } = require('../../_lib/usage-tracking');
 const { generateSecureReservationId } = require('../../_lib/secure-id');
 const {
@@ -232,6 +232,18 @@ const RESERVATION_TOOLS = [
           }
         },
         required: ['customer_name', 'party_size']
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'get_active_promotions',
+      description: 'Get active promotions and discount coupons available at the restaurant. Use when the customer asks about promotions, discounts, coupons, or deals.',
+      parameters: {
+        type: 'object',
+        properties: {},
+        required: []
       }
     }
   },
@@ -813,6 +825,58 @@ async function executeTool(toolName, toolInput, session) {
       } catch (err) {
         logger.error(' Join waitlist error:', err);
         return { success: false, error: 'Error adding to waitlist' };
+      }
+    }
+
+    case 'get_active_promotions': {
+      if (!session?.restaurant) {
+        return { success: false, error: 'No restaurant selected. Please identify the restaurant first.' };
+      }
+
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        const { data, error } = await supabaseAdmin
+          .schema('restaurant')
+          .from('coupons')
+          .select('code, description, discount_type, discount_value, min_order, valid_until')
+          .eq('restaurant_id', session.restaurant.id)
+          .eq('is_active', true)
+          .or(`valid_from.is.null,valid_from.lte.${today}`)
+          .or(`valid_until.is.null,valid_until.gte.${today}`)
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          logger.error(' get_active_promotions error:', error);
+          return { success: false, error: 'Could not retrieve promotions' };
+        }
+
+        if (!data || data.length === 0) {
+          return { success: true, has_promotions: false, promotions: [], message: 'No active promotions at this time.' };
+        }
+
+        const promotions = data.map(c => {
+          const discountText = c.discount_type === 'percentage'
+            ? `${c.discount_value}% off`
+            : `R$${c.discount_value} off`;
+          return {
+            code: c.code,
+            description: c.description || discountText,
+            discount: discountText,
+            min_order: c.min_order,
+            valid_until: c.valid_until,
+          };
+        });
+
+        return {
+          success: true,
+          has_promotions: true,
+          count: promotions.length,
+          promotions,
+          message: `Found ${promotions.length} active promotion(s).`,
+        };
+      } catch (err) {
+        logger.error(' get_active_promotions error:', err);
+        return { success: false, error: 'Error retrieving promotions' };
       }
     }
 
