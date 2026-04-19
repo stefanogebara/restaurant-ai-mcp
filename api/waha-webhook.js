@@ -42,11 +42,13 @@ module.exports = async (req, res) => {
     return res.status(200).json({ status: 'ok' });
   }
 
-  // Send 200 immediately — AI pipeline can take 10-30s, WAHA has no retry window
-  // but we still need to avoid Vercel's 60s function limit killing mid-processing.
-  // Redis dedup (86400s TTL) in processMessage prevents double-processing on retries.
+  // Send 200 immediately so WAHA doesn't wait for the full AI pipeline.
+  // Then AWAIT processMessage — this keeps the Vercel Lambda alive (up to maxDuration: 120s)
+  // until the pipeline fully completes. Without await, the handler returns immediately and
+  // Vercel may terminate the process before DB writes (restaurant_id, conversation_history) finish.
+  // Redis dedup (86400s TTL) prevents double-processing if WAHA retries.
   res.status(200).json({ status: 'ok' });
 
-  processMessage(adapter, msg)
+  await processMessage(adapter, msg)
     .catch(err => logger.error('WAHA processMessage error:', err.message));
 };
