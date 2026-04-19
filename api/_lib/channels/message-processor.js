@@ -131,7 +131,7 @@ async function processMessage(adapter, msg, options = {}) {
   try {
     session = await Promise.race([
       getOrCreateSession(from, `${providerName}-${Date.now()}`),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('Session timeout')), 20000)),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Session timeout')), 50000)),
     ]);
   } catch (err) {
     logger.error(`[${providerName}] Session failed:`, err.message);
