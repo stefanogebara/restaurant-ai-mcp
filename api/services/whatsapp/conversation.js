@@ -213,7 +213,7 @@ function buildWhatsAppPrompt(restaurantConfig, session, currentDateTime) {
 `;
 
   // Language — respect restaurant config, fall back to PT-BR
-  const lang = restaurantConfig.language || 'pt';
+  const lang = restaurantConfig.agent_language || restaurantConfig.language || 'pt';
   if (lang === 'es') {
     prompt += `\nLANGUAGE:
 - Respond in Spanish (español) — this restaurant serves Spanish-speaking customers
@@ -356,7 +356,7 @@ async function compressOldHistory(history) {
  * Process a message with AI (OpenAI-compatible API)
  */
 async function processWithAI(userMessage, session, conversationHistory = []) {
-  const language = session?.restaurant?.language || session?.language || 'pt';
+  const language = session?.restaurant?.agent_language || session?.restaurant?.language || session?.language || 'pt';
   const currentDateTime = getCurrentDateTime(language);
 
   // Compress old history if it's getting long
@@ -373,7 +373,7 @@ async function processWithAI(userMessage, session, conversationHistory = []) {
       const { data: restaurantConfig } = await supabaseAdmin
         .schema('restaurant')
         .from('restaurant_config')
-        .select('id, restaurant_name, restaurant_type, phone, email, address, city, country, business_hours, avg_dining_duration_minutes, timezone, language, cancellation_policy, special_notes, advance_booking_days, buffer_time, agent_name, agent_greeting, ai_config, metric_profile')
+        .select('id, restaurant_name, restaurant_type, phone, email, city, country, business_hours, average_dining_duration_minutes, timezone, agent_language, agent_name, agent_greeting, ai_config, ai_strategy_doc, ai_personality, persona_prompt_override')
         .eq('id', restaurantId)
         .single();
 
