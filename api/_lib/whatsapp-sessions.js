@@ -122,10 +122,7 @@ async function setSessionRestaurant(sessionId, restaurantId) {
         expires_at: new Date(Date.now() + SESSION_EXPIRY_MS).toISOString()
       })
       .eq('id', sessionId)
-      .select(`
-        *,
-        restaurant:restaurant_registry(*)
-      `)
+      .select('*')
       .single();
 
     if (error) {

@@ -138,7 +138,7 @@ test.describe('WAHA Pipeline — Cold Start & Session Creation', () => {
     }));
 
     expect(session).not.toBeNull();
-    expect(session.sender_phone).toBe(phone);
+    expect(session.sender_phone).toBe('+' + phone);
     expect(session.restaurant_id).toBe(CANTINA_ID);
     console.log('✓ restaurant_id correctly set to Cantina Bella Vista');
   });
