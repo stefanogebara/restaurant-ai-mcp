@@ -141,9 +141,12 @@ module.exports = async (req, res) => {
         const eligibleConfigs = (configs || [])
           .filter(c => c.notification_preferences?.analytics_briefing_enabled);
 
+        const sentPhones = new Set();
         for (const c of eligibleConfigs) {
           const phone = c.notification_preferences?.analytics_briefing_phone || c.manager_phone;
           if (!phone) continue;
+
+          const normalizedPhone = phone.replace(/[^0-9]/g, '');
 
           // Dedup: skip if already sent analytics briefing to this restaurant today
           const okToSend = await tryLogBriefingSent(c.id, 'analytics');
@@ -152,7 +155,14 @@ module.exports = async (req, res) => {
             continue;
           }
 
-          const to = phone.replace(/[^0-9]/g, '');
+          // Phone-level dedup: multiple restaurants may share the same recipient phone
+          if (sentPhones.has(normalizedPhone)) {
+            logger.info('Skipping duplicate analytics briefing — same phone already received today', { restaurantId: c.id, phone: normalizedPhone });
+            continue;
+          }
+          sentPhones.add(normalizedPhone);
+
+          const to = normalizedPhone;
           try {
             // Try approved template first (works without 24h conversation window)
             const templatePayload = {

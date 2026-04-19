@@ -13,6 +13,7 @@ const { createSecureLogger } = require('./_lib/secure-logger');
 const { setWebhookCors } = require('./_lib/cors');
 const { WAHAAdapter } = require('./_lib/channels/waha-adapter');
 const { processMessage } = require('./_lib/channels/message-processor');
+const { logWahaEvent } = require('./_lib/waha-metrics');
 
 const logger = createSecureLogger('WAHAWebhook');
 const adapter = new WAHAAdapter();
@@ -34,6 +35,7 @@ module.exports = async (req, res) => {
   const sigValid = await adapter.verifySignature(req);
   if (!sigValid) {
     logger.error('Invalid WAHA webhook signature');
+    logWahaEvent('sig_invalid').catch(() => {});
     return res.status(200).json({ status: 'ok' });
   }
 
@@ -42,13 +44,30 @@ module.exports = async (req, res) => {
     return res.status(200).json({ status: 'ok' });
   }
 
+  logWahaEvent('received', { messageId: msg.messageId, phone: msg.from }).catch(() => {});
+
   // Run the full pipeline BEFORE sending 200 so Vercel keeps the Lambda alive.
   // Vercel terminates background work shortly after the response is sent, so any
   // DB writes (session, restaurant_id, conversation_history) must complete first.
   // WAHA will wait up to maxDuration:120s — acceptable since Redis dedup prevents
   // double-processing on WAHA retries.
-  await processMessage(adapter, msg)
-    .catch(err => logger.error('WAHA processMessage error:', err.message));
+  const start = Date.now();
+  let outcome = 'processed';
+  let errorMsg = null;
+  try {
+    await processMessage(adapter, msg);
+  } catch (err) {
+    outcome = 'failed';
+    errorMsg = err.message;
+    logger.error('WAHA processMessage error:', err.message);
+  }
+
+  logWahaEvent(outcome, {
+    messageId: msg.messageId,
+    phone: msg.from,
+    durationMs: Date.now() - start,
+    error: errorMsg,
+  }).catch(() => {});
 
   res.status(200).json({ status: 'ok' });
 };
