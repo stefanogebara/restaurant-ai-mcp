@@ -23,8 +23,17 @@ if (!centralUrl || !centralKey) {
   logger.warn('WARNING: Missing Supabase credentials for central registry');
 }
 
+// Wrap fetch with a 10s AbortController timeout so Supabase queries never hang
+// indefinitely inside Vercel Lambdas (supabase-js has no default fetch timeout).
+function fetchWithTimeout(url, options) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10_000);
+  return fetch(url, { ...options, signal: controller.signal })
+    .finally(() => clearTimeout(timeoutId));
+}
+
 const centralSupabase = centralUrl && centralKey
-  ? createClient(centralUrl, centralKey)
+  ? createClient(centralUrl, centralKey, { global: { fetch: fetchWithTimeout } })
   : null;
 
 /**

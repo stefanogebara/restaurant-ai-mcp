@@ -72,18 +72,20 @@ async function getOrCreateSession(senderPhone, conversationId) {
       .single();
 
     if (createError) {
-      // Race condition: another Lambda beat us to it — re-query for the session it created.
-      if (createError.code === '23505') {
-        logger.warn('[WhatsAppSessions] Concurrent session INSERT conflict, re-querying...');
-        const { data: raceWinner } = await centralSupabase
+      const isConflict = createError.code === '23505';
+      const isAborted = createError.name === 'AbortError' || createError.message?.includes('aborted') || createError.message?.includes('signal');
+      // Race condition or fetch timeout — INSERT may have committed. Re-query without expires_at filter.
+      if (isConflict || isAborted) {
+        if (isAborted) logger.warn('[WhatsAppSessions] INSERT fetch timed out, re-querying for committed row...');
+        else logger.warn('[WhatsAppSessions] Concurrent session INSERT conflict, re-querying...');
+        const { data: committed } = await centralSupabase
           .from('whatsapp_sessions')
           .select('*')
           .eq('sender_phone', normalizedPhone)
-          .gt('expires_at', new Date().toISOString())
           .order('created_at', { ascending: false })
           .limit(1)
           .single();
-        if (raceWinner) return raceWinner;
+        if (committed) return committed;
       }
       logger.error('[WhatsAppSessions] Error creating session:', createError);
       return null;
