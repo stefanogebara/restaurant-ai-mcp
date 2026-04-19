@@ -163,7 +163,7 @@ async function processMessage(adapter, msg, options = {}) {
     try {
       const activeRestaurants = await Promise.race([
         getAllActiveRestaurants(),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Restaurant lookup timeout')), 10000)),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Restaurant lookup timeout')), 25000)),
       ]);
 
       if (activeRestaurants.length === 0) {
