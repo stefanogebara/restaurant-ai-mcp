@@ -11,7 +11,7 @@
  */
 
 const { createSecureLogger } = require('../secure-logger');
-const { isMessageDuplicate } = require('../rate-limit');
+const { isMessageDuplicate, acquireProcessingLock, releaseProcessingLock } = require('../rate-limit');
 const { getOrCreateSession, setSessionRestaurant, updateSessionConversationHistory } = require('../whatsapp-sessions');
 const { getAllActiveRestaurants } = require('../restaurant-registry');
 const { getWhatsAppProvider } = require('../whatsapp-sender');
@@ -141,6 +141,19 @@ async function processMessage(adapter, msg, options = {}) {
   if (!session) {
     await adapter.sendMessage(from, 'Desculpe, tive um problema ao iniciar nossa conversa. Por favor, tente novamente.');
     return { handled: true };
+  }
+
+  // 7b. Per-phone lock — prevents concurrent Lambdas from overwriting each other's history.
+  // If another Lambda is already processing a message from this phone, wait 2s then re-read
+  // fresh session state so we don't overwrite context with stale history.
+  const lockAcquired = await acquireProcessingLock(from, 25);
+  if (!lockAcquired) {
+    await new Promise(r => setTimeout(r, 2000));
+    try {
+      const { getSessionByPhone } = require('../whatsapp-sessions');
+      const fresh = await getSessionByPhone(from);
+      if (fresh) session = { ...session, ...fresh };
+    } catch (_) { /* non-fatal — use existing session */ }
   }
 
   // 8. Restaurant routing
@@ -316,6 +329,8 @@ async function processMessage(adapter, msg, options = {}) {
     await updateSessionConversationHistory(session.id, cappedHistory);
   } catch (err) {
     logger.error('Failed to save history (non-fatal):', err.message);
+  } finally {
+    releaseProcessingLock(from).catch(() => {});
   }
 
   // 14. Memory extraction (fire-and-forget)

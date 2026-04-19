@@ -346,6 +346,35 @@ async function isMessageDuplicate(messageId, ttlSeconds = 300) {
   }
 }
 
+// ============ PER-PHONE PROCESSING LOCK ============
+
+/**
+ * Acquire a per-phone processing lock so concurrent Lambdas don't overwrite each other's history.
+ * Returns true if lock was acquired (caller should proceed), false if already held (caller should wait).
+ */
+async function acquireProcessingLock(phone, ttlSeconds = 25) {
+  if (!redis) return true; // fail open in local dev
+  try {
+    const result = await redis.set(`wa:proc_lock:${phone}`, '1', { nx: true, ex: ttlSeconds });
+    return result === 'OK';
+  } catch (err) {
+    logger.warn('Redis processing lock acquire error (fail open):', err.message);
+    return true;
+  }
+}
+
+/**
+ * Release the per-phone processing lock after history is saved.
+ */
+async function releaseProcessingLock(phone) {
+  if (!redis) return;
+  try {
+    await redis.del(`wa:proc_lock:${phone}`);
+  } catch (err) {
+    logger.warn('Redis processing lock release error (non-fatal):', err.message);
+  }
+}
+
 /**
  * Reject requests whose Content-Length exceeds the allowed limit.
  * @param {object} req - Request object
@@ -368,5 +397,7 @@ module.exports = {
   rateLimitMiddleware,
   checkAndApplyRateLimit,
   isMessageDuplicate,
+  acquireProcessingLock,
+  releaseProcessingLock,
   rejectOversizedBody,
 };

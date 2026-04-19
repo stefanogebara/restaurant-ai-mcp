@@ -137,6 +137,13 @@ function buildWhatsAppPrompt(restaurantConfig, session, currentDateTime) {
         prompt += `- ${day.charAt(0).toUpperCase() + day.slice(1)}: ${openTime} - ${closeTime}\n`;
       }
     }
+
+    // Explicit enforcement: never book outside hours
+    prompt += `\nBOOKING HOURS ENFORCEMENT:
+- Before accepting ANY booking time, verify it falls within the Business Hours listed above.
+- If a customer requests a time OUTSIDE our hours (before opening, after closing, or on a closed day), immediately explain: "Infelizmente não atendemos nesse horário. Nosso horário nesse dia é [hours]. Gostaria de reservar para outro horário?"
+- Do NOT silently ignore an out-of-hours request and re-ask for time without explaining why.
+- Do NOT call check_availability for a time that is clearly outside business hours.\n`;
   }
 
   // Strategy doc
