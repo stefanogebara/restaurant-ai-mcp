@@ -49,6 +49,11 @@ function normalizePhone(wahaId) {
 }
 
 class WAHAAdapter extends ChannelAdapter {
+  constructor(options = {}) {
+    super();
+    this.testMode = options.testMode || false;
+  }
+
   get providerName() { return 'waha'; }
   get isAsync() { return true; }
 
@@ -148,6 +153,10 @@ class WAHAAdapter extends ChannelAdapter {
    * Send a text message via WAHA.
    */
   async sendMessage(to, text) {
+    if (this.testMode) {
+      logger.info(`[TEST MODE] Suppressed send to ${to}: ${text.substring(0, 100)}`);
+      return { success: true, testMode: true };
+    }
     const session = process.env.WAHA_SESSION || 'default';
     const chatId = to.includes('@') ? to : `${to}@c.us`;
     try {

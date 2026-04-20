@@ -32,14 +32,20 @@ module.exports = async (req, res) => {
     return res.status(200).json({ status: 'ok' });
   }
 
-  const sigValid = await adapter.verifySignature(req);
+  // X-Test-Mode: true — runs full AI pipeline but suppresses real WhatsApp sends.
+  // Use for curl/E2E tests to avoid messaging real users.
+  const testMode = req.headers['x-test-mode'] === 'true';
+  const requestAdapter = testMode ? new WAHAAdapter({ testMode: true }) : adapter;
+  if (testMode) logger.info('[TEST MODE] Processing without sending real WhatsApp messages');
+
+  const sigValid = await requestAdapter.verifySignature(req);
   if (!sigValid) {
     logger.error('Invalid WAHA webhook signature');
     logWahaEvent('sig_invalid').catch(() => {});
     return res.status(200).json({ status: 'ok' });
   }
 
-  const msg = await adapter.parseIncoming(req);
+  const msg = await requestAdapter.parseIncoming(req);
   if (!msg) {
     return res.status(200).json({ status: 'ok' });
   }
@@ -56,7 +62,7 @@ module.exports = async (req, res) => {
   let errorMsg = null;
   let restaurantId = null;
   try {
-    const result = await processMessage(adapter, msg);
+    const result = await processMessage(requestAdapter, msg);
     restaurantId = result?.restaurantId || null;
   } catch (err) {
     outcome = 'failed';
