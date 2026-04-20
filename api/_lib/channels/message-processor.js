@@ -126,16 +126,21 @@ async function processMessage(adapter, msg, options = {}) {
     return { handled: true };
   }
 
-  // 7. Session management
+  // 7. Session management (with one retry on transient failure)
   let session;
-  try {
-    session = await Promise.race([
-      getOrCreateSession(from, `${providerName}-${Date.now()}`),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('Session timeout')), 50000)),
-    ]);
-  } catch (err) {
-    logger.error(`[${providerName}] Session failed:`, err.message);
-    session = null;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      session = await Promise.race([
+        getOrCreateSession(from, `${providerName}-${Date.now()}`),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Session timeout')), 25000)),
+      ]);
+      if (session) break;
+    } catch (err) {
+      logger.error(`[${providerName}] Session attempt ${attempt + 1} failed:`, err.message);
+    }
+    if (attempt === 0 && !session) {
+      await new Promise(r => setTimeout(r, 1500));
+    }
   }
 
   if (!session) {

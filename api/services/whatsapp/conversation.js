@@ -360,7 +360,14 @@ async function processWithAI(userMessage, session, conversationHistory = []) {
   const currentDateTime = getCurrentDateTime(language);
 
   // Compress old history if it's getting long
-  const compressedHistory = await compressOldHistory(conversationHistory);
+  const rawCompressed = await compressOldHistory(conversationHistory);
+  // compressOldHistory may prepend a {role:'system'} summary — extract it so it's
+  // not silently discarded by callChatCompletions (which strips all system messages).
+  let historySummary = '';
+  const compressedHistory = rawCompressed.filter(msg => {
+    if (msg.role === 'system') { historySummary = msg.content; return false; }
+    return true;
+  });
 
   // Build system prompt -- use WhatsApp-specific prompt when restaurant config available
   let systemPrompt = null;
@@ -403,6 +410,11 @@ async function processWithAI(userMessage, session, conversationHistory = []) {
     systemPrompt += 'IMPORTANT: Do NOT confuse a customer\'s name (e.g. "João Silva") with a restaurant name. Never ask the customer to confirm the restaurant name.\n';
   }
 
+  // Inject conversation summary from compression (avoids losing context across long sessions)
+  if (historySummary) {
+    systemPrompt += '\n\n' + historySummary;
+  }
+
   // Inject guest memory context if available
   if ((session?.restaurant?.id || session?.restaurant_id) && session?.sender_phone) {
     try {
@@ -435,52 +447,59 @@ async function processWithAI(userMessage, session, conversationHistory = []) {
     ? RESERVATION_TOOLS.filter(t => t.function.name !== 'identify_restaurant')
     : RESERVATION_TOOLS;
 
-  try {
-    let data = await callChatCompletions(messages, tools);
-    let choice = data.choices?.[0];
+  // Freeze the base messages so each retry attempt starts from a clean slate,
+  // not accumulating stale tool-call messages from a failed previous attempt.
+  const baseMessages = [...messages];
 
-    // Handle tool use loop
-    while (choice?.finish_reason === 'tool_calls') {
-      const toolCalls = choice.message.tool_calls;
-      if (!toolCalls || toolCalls.length === 0) break;
+  let lastError = null;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const msgs = [...baseMessages];
+      let data = await callChatCompletions(msgs, tools);
+      let choice = data.choices?.[0];
 
-      // Append the assistant message (contains tool_calls)
-      messages.push(choice.message);
+      // Handle tool use loop
+      while (choice?.finish_reason === 'tool_calls') {
+        const toolCalls = choice.message.tool_calls;
+        if (!toolCalls || toolCalls.length === 0) break;
 
-      // Execute each tool and append results
-      for (const toolCall of toolCalls) {
-        const toolName = toolCall.function.name;
-        const toolInput = JSON.parse(toolCall.function.arguments);
-        const toolResult = await executeTool(toolName, toolInput, session);
+        msgs.push(choice.message);
 
-        // If restaurant was identified, update session reference
-        if (toolName === 'identify_restaurant' && toolResult.found && toolResult.restaurant) {
-          session = await getSessionByPhone(session?.sender_phone);
+        for (const toolCall of toolCalls) {
+          const toolName = toolCall.function.name;
+          const toolInput = JSON.parse(toolCall.function.arguments);
+          const toolResult = await executeTool(toolName, toolInput, session);
+
+          if (toolName === 'identify_restaurant' && toolResult.found && toolResult.restaurant) {
+            session = await getSessionByPhone(session?.sender_phone);
+          }
+
+          msgs.push({
+            role: 'tool',
+            tool_call_id: toolCall.id,
+            content: JSON.stringify(toolResult),
+          });
         }
 
-        messages.push({
-          role: 'tool',
-          tool_call_id: toolCall.id,
-          content: JSON.stringify(toolResult),
-        });
+        data = await callChatCompletions(msgs, tools);
+        choice = data.choices?.[0];
       }
 
-      // Continue conversation
-      data = await callChatCompletions(messages, tools);
-      choice = data.choices?.[0];
-    }
+      return choice?.message?.content || 'Desculpe, tive dificuldade em processar isso. Pode tentar novamente?';
 
-    // Extract text response
-    return choice?.message?.content || 'Desculpe, tive dificuldade em processar isso. Pode tentar novamente?';
-
-  } catch (error) {
-    logger.error(' AI error:', error?.message || error, { stack: error?.stack?.substring(0, 300) });
-    // In development, include error detail for debugging
-    if (process.env.NODE_ENV !== 'production') {
-      return `[DEBUG] AI error: ${error?.message || 'unknown'}`;
+    } catch (error) {
+      lastError = error;
+      logger.error(` AI error (attempt ${attempt + 1}):`, error?.message || error, { stack: error?.stack?.substring(0, 300) });
+      if (attempt === 0) {
+        await new Promise(r => setTimeout(r, 1500));
+      }
     }
-    return 'Desculpe, algo deu errado. Por favor, tente novamente ou entre em contato diretamente com o restaurante.';
   }
+
+  if (process.env.NODE_ENV !== 'production') {
+    return `[DEBUG] AI error: ${lastError?.message || 'unknown'}`;
+  }
+  return 'Desculpe, algo deu errado. Por favor, tente novamente ou entre em contato diretamente com o restaurante.';
 }
 
 module.exports = {
