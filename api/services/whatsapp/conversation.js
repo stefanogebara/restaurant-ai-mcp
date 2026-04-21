@@ -489,7 +489,10 @@ async function processWithAI(userMessage, session, conversationHistory = []) {
 
     } catch (error) {
       lastError = error;
-      logger.error(` AI error (attempt ${attempt + 1}):`, error?.message || error, { stack: error?.stack?.substring(0, 300) });
+      const errMsg = error?.message || String(error);
+      const statusMatch = errMsg.match(/API error (\d+)/);
+      logger.error(`AI error attempt=${attempt + 1} status=${statusMatch?.[1] || 'N/A'} model=${AI_MODEL_FAST}`);
+      logger.error(`AI error detail: ${errMsg.substring(0, 150)}`);
       if (attempt === 0) {
         await new Promise(r => setTimeout(r, 1500));
       }
