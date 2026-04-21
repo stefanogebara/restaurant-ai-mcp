@@ -395,6 +395,8 @@ async function processWithAI(userMessage, session, conversationHistory = []) {
     logger.warn('Failed to load restaurant config for prompt (non-fatal):', configResult.reason?.message);
   }
 
+  logger.info(`processWithAI: restaurantId=${restaurantId || 'none'} configFound=${!!restaurantConfig} configName=${restaurantConfig?.restaurant_name || 'N/A'}`);
+
   if (restaurantConfig) {
     systemPrompt = buildWhatsAppPrompt(restaurantConfig, session, currentDateTime);
   }
@@ -426,6 +428,8 @@ async function processWithAI(userMessage, session, conversationHistory = []) {
   } else if (guestCtxResult.status === 'rejected') {
     logger.warn('Guest context injection failed (non-fatal):', guestCtxResult.reason?.message);
   }
+
+  logger.info(`processWithAI: systemPrompt starts with: "${systemPrompt.substring(0, 80).replace(/\n/g, ' ')}"`);
 
   // Build messages array with system prompt as first message
   const messages = [

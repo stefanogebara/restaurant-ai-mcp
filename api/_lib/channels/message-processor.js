@@ -38,6 +38,8 @@ async function processMessage(adapter, msg, options = {}) {
   const { from, messageId, text, mediaContext, interactiveSelection, phoneNumberId } = msg;
   const providerName = adapter.providerName;
 
+  logger.info(`[${providerName}] processMessage ENTRY from=${from} phoneNumId=${phoneNumberId} msgId=${String(messageId).slice(-8)} text="${String(text).slice(0, 40)}"`);
+
   // 1. Mark as read (fire-and-forget)
   adapter.markAsRead(messageId).catch(() => {});
 
