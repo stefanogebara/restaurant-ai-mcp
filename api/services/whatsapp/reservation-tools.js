@@ -328,20 +328,18 @@ async function executeTool(toolName, toolInput, session) {
     case 'check_availability': {
       // Need restaurant context from session
       if (!session?.restaurant) {
+        logger.error('[TOOL_FAIL] check_availability: no session.restaurant');
         return {
           success: false,
           error: 'No restaurant selected. Please identify the restaurant first.'
         };
       }
 
-      try {
-        // Call the multi-tenant availability check - pass full restaurant object
-        const client = supabaseAdmin;
-        if (!client) {
-          return { success: false, error: 'Could not connect to restaurant database' };
-        }
+      const { date, time, party_size } = toolInput;
+      logger.info(`[TOOL] check_availability restaurant=${session.restaurant.id?.slice(0, 8)} date=${date} time=${time} size=${party_size}`);
 
-        const { date, time, party_size } = toolInput;
+      try {
+        const client = supabaseAdmin;
 
         // Get reservations for that date/time (scoped to this restaurant)
         const { data: reservations, error } = await client
@@ -352,15 +350,16 @@ async function executeTool(toolName, toolInput, session) {
           .in('status', ['confirmed', 'seated']);
 
         if (error) {
-          logger.error(' Availability check error:', error);
-          return { success: false, error: 'Could not check availability' };
+          logger.error(`[TOOL_FAIL] check_availability reservations query: code=${error.code || 'N/A'} msg=${error.message?.slice(0, 150)}`);
+          return { success: false, error: `Reservations query failed: ${error.message}` };
         }
 
         // Check if party can be accommodated using date/time-aware table logic
         const accommodationResult = await canAccommodateParty(session.restaurant.id, party_size, { date, time });
 
         if (!accommodationResult.success) {
-          return { success: false, error: 'Could not check table availability' };
+          logger.error(`[TOOL_FAIL] check_availability canAccommodate: ${JSON.stringify(accommodationResult).slice(0, 200)}`);
+          return { success: false, error: 'Could not check table availability — getAllTables failed' };
         }
 
         // Check for time conflicts with existing reservations
