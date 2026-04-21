@@ -148,17 +148,25 @@ async function processMessage(adapter, msg, options = {}) {
     return { handled: true };
   }
 
-  // 7b. Per-phone lock — prevents concurrent Lambdas from overwriting each other's history.
-  // If another Lambda is already processing a message from this phone, wait 2s then re-read
-  // fresh session state so we don't overwrite context with stale history.
-  const lockAcquired = await acquireProcessingLock(from, 25);
+  // 7b. Per-phone lock — serializes concurrent Lambdas for the same phone so
+  // history writes can't race. Wait up to 45s for a prior Lambda to finish.
+  let lockAcquired = await acquireProcessingLock(from, 30);
   if (!lockAcquired) {
-    await new Promise(r => setTimeout(r, 2000));
+    const lockDeadline = Date.now() + 45000;
+    while (Date.now() < lockDeadline) {
+      await new Promise(r => setTimeout(r, 1500));
+      lockAcquired = await acquireProcessingLock(from, 30);
+      if (lockAcquired) break;
+    }
+    // Re-read session — a prior Lambda just committed new history we need.
     try {
       const { getSessionByPhone } = require('../whatsapp-sessions');
       const fresh = await getSessionByPhone(from);
       if (fresh) session = { ...session, ...fresh };
-    } catch (_) { /* non-fatal — use existing session */ }
+    } catch (_) { /* non-fatal */ }
+    if (!lockAcquired) {
+      logger.warn(`[${providerName}] Lock wait exceeded 45s for ${from}, proceeding without lock`);
+    }
   }
 
   // 8. Restaurant routing
@@ -323,15 +331,20 @@ async function processMessage(adapter, msg, options = {}) {
   // 12. Remove processing reaction
   adapter.removeReaction(from, messageId).catch(() => {});
 
-  // 13. Save conversation history
-  const updatedHistory = cleanHistoryForStorage([
-    ...conversationHistory,
+  // 13. Save conversation history — atomic append (re-read DB then merge the new
+  // user+assistant pair) so concurrent Lambdas never clobber each other's writes.
+  const newPair = cleanHistoryForStorage([
     { role: 'user', content: text },
     { role: 'assistant', content: response },
   ]);
-  const cappedHistory = updatedHistory.slice(-20);
+  const updatedHistory = cleanHistoryForStorage([
+    ...conversationHistory,
+    ...newPair,
+  ]);
   try {
-    await updateSessionConversationHistory(session.id, cappedHistory);
+    await updateSessionConversationHistory(session.id, updatedHistory, {
+      appendMessages: newPair,
+    });
   } catch (err) {
     logger.error('Failed to save history (non-fatal):', err.message);
   } finally {

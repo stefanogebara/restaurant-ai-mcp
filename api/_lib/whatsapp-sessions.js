@@ -316,19 +316,41 @@ function normalizePhoneNumber(phone) {
  * @param {Array} conversationHistory - Array of conversation messages
  * @returns {Promise<boolean>} Success status
  */
-async function updateSessionConversationHistory(sessionId, conversationHistory) {
+async function updateSessionConversationHistory(sessionId, conversationHistory, options = {}) {
   if (!isCentralConfigured() || !sessionId) {
     return false;
   }
 
   try {
-    // Limit conversation history to last 20 messages to avoid payload size issues
-    const limitedHistory = conversationHistory.slice(-20);
+    let finalHistory;
+    if (options.appendMessages && Array.isArray(options.appendMessages)) {
+      // Atomic re-read-merge to avoid concurrent-Lambda history loss.
+      // Read current DB state, append the NEW messages, write the union.
+      const { data: current } = await centralSupabase
+        .from('whatsapp_sessions')
+        .select('conversation_history')
+        .eq('id', sessionId)
+        .maybeSingle();
+      const dbHistory = Array.isArray(current?.conversation_history) ? current.conversation_history : [];
+
+      const seen = new Set();
+      const dedupKey = (m) => `${m?.role || ''}:${String(m?.content || '').slice(0, 100)}`;
+      const combined = [...dbHistory, ...options.appendMessages].filter(m => {
+        if (!m?.role || m.content == null) return false;
+        const k = dedupKey(m);
+        if (seen.has(k)) return false;
+        seen.add(k);
+        return true;
+      });
+      finalHistory = combined.slice(-20);
+    } else {
+      finalHistory = conversationHistory.slice(-20);
+    }
 
     const { error } = await centralSupabase
       .from('whatsapp_sessions')
       .update({
-        conversation_history: limitedHistory,
+        conversation_history: finalHistory,
         last_message_at: new Date().toISOString(),
         expires_at: new Date(Date.now() + SESSION_EXPIRY_MS).toISOString()
       })
@@ -339,7 +361,7 @@ async function updateSessionConversationHistory(sessionId, conversationHistory) 
       return false;
     }
 
-    logger.info(`[WhatsAppSessions] Conversation history updated for session ${sessionId} (${limitedHistory.length} messages)`);
+    logger.info(`[WhatsAppSessions] Conversation history updated for session ${sessionId} (${finalHistory.length} messages)`);
     return true;
   } catch (error) {
     logger.error('[WhatsAppSessions] Error:', error);
