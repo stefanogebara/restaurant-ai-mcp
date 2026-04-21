@@ -379,25 +379,38 @@ async function processWithAI(userMessage, session, conversationHistory = []) {
   // Use restaurant.id from JOIN, or restaurant_id FK column as fallback (JOIN may be null if FK not indexed)
   const restaurantId = session?.restaurant?.id || session?.restaurant_id;
 
-  // Fetch restaurant config and guest context in parallel to reduce latency
-  const [configResult, guestCtxResult] = await Promise.allSettled([
-    restaurantId
-      ? supabaseAdmin
+  // Fetch restaurant config with one retry on abort — falling to the fallback prompt
+  // because of a single cold-Lambda fetch timeout would make the bot say 'qual restaurante?'
+  // to every first-message user, which is the exact failure mode we've been chasing.
+  async function fetchRestaurantConfig() {
+    if (!restaurantId) return null;
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        const { data, error } = await supabaseAdmin
           .schema('restaurant')
           .from('restaurant_config')
           .select('id, restaurant_name, restaurant_type, phone, email, city, country, business_hours, average_dining_duration_minutes, timezone, agent_language, agent_name, agent_greeting, ai_config, ai_strategy_doc, ai_personality, persona_prompt_override')
           .eq('id', restaurantId)
-          .single()
-      : Promise.resolve({ data: null }),
+          .single();
+        if (!error && data) return data;
+        logger.warn(`[CONFIG_FAIL] fetch attempt=${attempt} id=${restaurantId.slice(0, 8)} code=${error?.code || 'N/A'} msg=${error?.message?.slice(0, 100) || 'no data'}`);
+      } catch (err) {
+        logger.warn(`[CONFIG_FAIL] fetch attempt=${attempt} id=${restaurantId.slice(0, 8)} threw: ${err?.message?.slice(0, 100)}`);
+      }
+      if (attempt === 1) await new Promise(r => setTimeout(r, 500));
+    }
+    return null;
+  }
+
+  const [restaurantConfig, guestContext] = await Promise.all([
+    fetchRestaurantConfig(),
     restaurantId && session?.sender_phone
-      ? buildGuestContext(restaurantId, session.sender_phone, userMessage)
+      ? buildGuestContext(restaurantId, session.sender_phone, userMessage).catch(err => {
+          logger.warn('Guest context failed (non-fatal):', err?.message?.slice(0, 100));
+          return null;
+        })
       : Promise.resolve(null),
   ]);
-
-  const restaurantConfig = configResult.status === 'fulfilled' ? configResult.value?.data : null;
-  if (configResult.status === 'rejected') {
-    logger.warn('Failed to load restaurant config for prompt (non-fatal):', configResult.reason?.message);
-  }
 
   logger.info(`processWithAI: restaurantId=${restaurantId || 'none'} configFound=${!!restaurantConfig} configName=${restaurantConfig?.restaurant_name || 'N/A'}`);
 
@@ -427,10 +440,8 @@ async function processWithAI(userMessage, session, conversationHistory = []) {
   }
 
   // Inject guest memory context (fetched in parallel above)
-  if (guestCtxResult.status === 'fulfilled' && guestCtxResult.value) {
-    systemPrompt += guestCtxResult.value;
-  } else if (guestCtxResult.status === 'rejected') {
-    logger.warn('Guest context injection failed (non-fatal):', guestCtxResult.reason?.message);
+  if (guestContext) {
+    systemPrompt += guestContext;
   }
 
   logger.info(`processWithAI: systemPrompt starts with: "${systemPrompt.substring(0, 80).replace(/\n/g, ' ')}"`);
