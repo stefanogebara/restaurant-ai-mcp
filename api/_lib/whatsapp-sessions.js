@@ -12,6 +12,36 @@ const logger = createSecureLogger('WhatsAppSessions');
 // Session expiry time in milliseconds (30 minutes)
 const SESSION_EXPIRY_MS = 30 * 60 * 1000;
 
+// In-memory session cache keyed by phone — avoids repeated 1-2s Supabase roundtrips
+// when the same warm Lambda handles consecutive messages from the same number.
+// 60s TTL is short enough that restaurant_id updates from setSessionRestaurant
+// propagate quickly, but long enough to cover a typical conversation burst.
+const SESSION_CACHE_TTL_MS = 60 * 1000;
+const _sessionCache = new Map(); // phone -> { session, expiresAt }
+
+function _getCachedSession(phone) {
+  const entry = _sessionCache.get(phone);
+  if (entry && Date.now() < entry.expiresAt) return entry.session;
+  if (entry) _sessionCache.delete(phone);
+  return null;
+}
+
+function _setCachedSession(phone, session) {
+  if (!phone || !session) return;
+  _sessionCache.set(phone, { session, expiresAt: Date.now() + SESSION_CACHE_TTL_MS });
+  // Lightweight pruning so the Map never grows unbounded in a long-lived Lambda
+  if (_sessionCache.size > 500) {
+    const now = Date.now();
+    for (const [k, v] of _sessionCache) {
+      if (v.expiresAt < now) _sessionCache.delete(k);
+    }
+  }
+}
+
+function _invalidateCachedSession(phone) {
+  if (phone) _sessionCache.delete(phone);
+}
+
 /**
  * Get existing session or create a new one
  * @param {string} senderPhone - Customer's phone number
@@ -31,6 +61,22 @@ async function getOrCreateSession(senderPhone, conversationId) {
 
   // Normalize phone number (remove spaces, ensure + prefix)
   const normalizedPhone = normalizePhoneNumber(senderPhone);
+
+  // Fast path: in-memory cache for warm Lambdas
+  const cached = _getCachedSession(normalizedPhone);
+  if (cached) {
+    logger.info(`[WhatsAppSessions] Cache hit for ${normalizedPhone} (session ${cached.id})`);
+    // Refresh expiry in DB fire-and-forget — don't block the response
+    centralSupabase
+      .from('whatsapp_sessions')
+      .update({
+        last_message_at: new Date().toISOString(),
+        expires_at: new Date(Date.now() + SESSION_EXPIRY_MS).toISOString(),
+      })
+      .eq('id', cached.id)
+      .then(() => {}, err => logger.warn('[WhatsAppSessions] Background expiry refresh failed:', err.message));
+    return cached;
+  }
 
   try {
     // Check for existing active session
@@ -55,6 +101,7 @@ async function getOrCreateSession(senderPhone, conversationId) {
         .eq('id', existing.id);
 
       logger.info(`[WhatsAppSessions] Existing session found for ${normalizedPhone}: ${existing.restaurant?.restaurant_name || 'No restaurant yet'}`);
+      _setCachedSession(normalizedPhone, existing);
       return existing;
     }
 
@@ -92,6 +139,7 @@ async function getOrCreateSession(senderPhone, conversationId) {
     }
 
     logger.info(`[WhatsAppSessions] New session created for ${normalizedPhone}`);
+    _setCachedSession(normalizedPhone, newSession);
     return newSession;
 
   } catch (error) {
@@ -130,6 +178,8 @@ async function setSessionRestaurant(sessionId, restaurantId) {
     }
 
     logger.info(`[WhatsAppSessions] Session ${sessionId} linked to restaurant: ${data.restaurant?.restaurant_name}`);
+    // Refresh cache with the updated session so the next message picks up restaurant_id
+    if (data?.sender_phone) _setCachedSession(data.sender_phone, data);
     return data;
 
   } catch (error) {
@@ -362,6 +412,17 @@ async function updateSessionConversationHistory(sessionId, conversationHistory, 
     }
 
     logger.info(`[WhatsAppSessions] Conversation history updated for session ${sessionId} (${finalHistory.length} messages)`);
+    // Invalidate the cached session so the next message re-reads the fresh history
+    // (we don't have sender_phone here without an extra lookup, so just clear stale entries)
+    for (const [phone, entry] of _sessionCache) {
+      if (entry.session?.id === sessionId) {
+        _sessionCache.set(phone, {
+          session: { ...entry.session, conversation_history: finalHistory },
+          expiresAt: Date.now() + SESSION_CACHE_TTL_MS,
+        });
+        break;
+      }
+    }
     return true;
   } catch (error) {
     logger.error('[WhatsAppSessions] Error:', error);
