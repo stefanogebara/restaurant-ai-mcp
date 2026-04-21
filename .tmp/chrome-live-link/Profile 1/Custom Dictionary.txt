@@ -1,2 +1,0 @@
-intesificacao
-checksum_v1 = 66cb33da9ccbcd83e9264d64e4a75d33

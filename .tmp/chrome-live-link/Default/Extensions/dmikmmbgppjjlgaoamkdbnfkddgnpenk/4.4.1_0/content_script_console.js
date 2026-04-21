@@ -1,1 +1,0 @@
-(()=>{var o="[Smowl Extension][BG]";chrome.runtime.onMessage.addListener((e,n,r)=>{let s="Message received!";switch(e.id){case"BG-CONSOLE":switch(e.type){case"warn":console.warn(o,e.message);break;case"error":console.error(o,e.message);break;case"info":console.info(o,e.message);break;default:console.log(o,e.message)}r(s);break}});})();

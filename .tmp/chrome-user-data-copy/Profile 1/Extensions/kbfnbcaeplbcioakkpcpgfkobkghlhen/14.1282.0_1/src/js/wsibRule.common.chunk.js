@@ -1,1 +1,0 @@
-(self.webpackChunk=self.webpackChunk||[]).push([[4570],{63342:(e,n,a)=>{a.r(n),a.d(n,{WSIB:()=>s});var s,i=a(18122),o=a(3670),r=a(33357);!function(e){const n=r.k.newLayoutRules;e.page=(0,o.$W)({name:"wsib",domain:i.JQ,forceIntegrationEntirelyInsideIframe:!0},n)}(s||(s={}))}}]);

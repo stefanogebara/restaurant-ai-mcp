@@ -1,5 +1,0 @@
-2026/03/30-15:38:44.976 901c Reusing MANIFEST C:\Users\stefa\AppData\Local\Google\Chrome\User Data\Profile 1\IndexedDB\https_vercel.com_0.indexeddb.leveldb/MANIFEST-000001
-2026/03/30-15:38:44.977 901c Recovering log #3
-2026/03/30-15:38:44.979 901c Reusing old log C:\Users\stefa\AppData\Local\Google\Chrome\User Data\Profile 1\IndexedDB\https_vercel.com_0.indexeddb.leveldb/000003.log 
-2026/03/30-15:38:44.985 9094 Manual compaction at level-0 from '\x00\x01\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x02\x00\x00\x00' @ 0 : 0; will stop at (end)
-2026/03/30-15:38:44.987 c768 Manual compaction at level-0 from '\x00\x02\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x03\x00\x00\x00' @ 0 : 0; will stop at (end)

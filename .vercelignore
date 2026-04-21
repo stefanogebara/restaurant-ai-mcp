@@ -30,3 +30,13 @@ client/src/**/__tests__/
 e2e/
 test-screenshots/
 test-results/
+
+# Temp / E2E artifacts (Chrome profiles, screenshots, test reports)
+.tmp/
+.playwright-mcp/
+
+# Migrations/docs/wiki/scripts — not needed in serverless bundle
+api/migrations/
+docs/
+wiki/
+scripts/

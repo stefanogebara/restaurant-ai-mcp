@@ -72,3 +72,9 @@ parallel-agents/
 nul
 .env.outreach
 .mcp.json
+.gstack/
+
+# Temp / E2E artifacts (Chrome profiles, screenshots, reports — can reach GBs)
+.tmp/
+.playwright-mcp/
+CUsersstefa*.txt

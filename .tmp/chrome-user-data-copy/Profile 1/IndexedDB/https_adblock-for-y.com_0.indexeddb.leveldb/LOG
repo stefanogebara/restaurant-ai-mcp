@@ -1,7 +1,0 @@
-2026/03/25-14:49:53.676 aed0 Reusing MANIFEST C:\Users\stefa\AppData\Local\Google\Chrome\User Data\Profile 1\IndexedDB\https_adblock-for-y.com_0.indexeddb.leveldb/MANIFEST-000001
-2026/03/25-14:49:53.679 aed0 Recovering log #3
-2026/03/25-14:49:53.681 aed0 Reusing old log C:\Users\stefa\AppData\Local\Google\Chrome\User Data\Profile 1\IndexedDB\https_adblock-for-y.com_0.indexeddb.leveldb/000003.log 
-2026/03/25-14:49:55.850 bfcc Level-0 table #5: started
-2026/03/25-14:49:55.857 bfcc Level-0 table #5: 1577 bytes OK
-2026/03/25-14:49:55.859 bfcc Delete type=0 #3
-2026/03/25-14:49:55.861 bfcc Manual compaction at level-0 from (begin) .. (end); will stop at (end)
