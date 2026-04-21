@@ -35,7 +35,7 @@ class OpenRouterClient {
 
   /** Convert Anthropic messages.create() params to OpenRouter chat/completions */
   async _create(params) {
-    const { model, max_tokens, system, messages, tools } = params;
+    const { model, max_tokens, system, messages, tools, temperature } = params;
 
     // Build OpenAI-format messages
     const oaiMessages = [];
@@ -86,6 +86,7 @@ class OpenRouterClient {
       max_tokens,
       messages: oaiMessages,
     };
+    if (typeof temperature === 'number') body.temperature = temperature;
     if (oaiTools.length > 0) body.tools = oaiTools;
 
     const controller = new AbortController();

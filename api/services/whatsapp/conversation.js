@@ -61,10 +61,14 @@ async function callChatCompletions(messages, tools) {
   }));
 
   // Use fast model for WhatsApp (Haiku: 12x cheaper than Sonnet)
+  // temperature: 0.3 — Haiku wanders on simple factual questions ("qual o horário?") and
+  //                    falsely says "não consegui acessar" even when the prompt has hours.
+  //                    Low temp anchors it to the prompt facts without making it robotic.
   // 1024 max_tokens — tool call + confirmation message after successful reservation needs headroom
   const response = await getAI().messages.create({
     model: AI_MODEL_FAST,
     max_tokens: 1024,
+    temperature: 0.3,
     system: systemContent,
     messages: anthropicMessages,
     tools: anthropicTools.length > 0 ? anthropicTools : undefined,

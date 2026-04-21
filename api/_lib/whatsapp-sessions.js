@@ -159,33 +159,37 @@ async function setSessionRestaurant(sessionId, restaurantId) {
     return null;
   }
 
-  try {
-    const { data, error } = await centralSupabase
-      .from('whatsapp_sessions')
-      .update({
-        restaurant_id: restaurantId,
-        restaurant_confirmed: true,
-        last_message_at: new Date().toISOString(),
-        expires_at: new Date(Date.now() + SESSION_EXPIRY_MS).toISOString()
-      })
-      .eq('id', sessionId)
-      .select('*')
-      .single();
+  // Retry once on transient failure (cold Supabase connection, fetch abort)
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const { data, error } = await centralSupabase
+        .from('whatsapp_sessions')
+        .update({
+          restaurant_id: restaurantId,
+          restaurant_confirmed: true,
+          last_message_at: new Date().toISOString(),
+          expires_at: new Date(Date.now() + SESSION_EXPIRY_MS).toISOString()
+        })
+        .eq('id', sessionId)
+        .select('*')
+        .single();
 
-    if (error) {
-      logger.error('[WhatsAppSessions] Error setting restaurant:', error);
+      if (error) {
+        logger.error(`[SESSION_FAIL] setRestaurant attempt=${attempt} session=${sessionId} code=${error.code || 'N/A'} msg=${error.message?.slice(0, 120) || 'unknown'}`);
+        if (attempt === 1) { await new Promise(r => setTimeout(r, 800)); continue; }
+        return null;
+      }
+
+      logger.info(`[WhatsAppSessions] Session ${sessionId} linked to restaurant_id=${restaurantId}`);
+      if (data?.sender_phone) _setCachedSession(data.sender_phone, data);
+      return data;
+    } catch (error) {
+      logger.error(`[SESSION_FAIL] setRestaurant attempt=${attempt} threw: ${error?.message?.slice(0, 120)}`);
+      if (attempt === 1) { await new Promise(r => setTimeout(r, 800)); continue; }
       return null;
     }
-
-    logger.info(`[WhatsAppSessions] Session ${sessionId} linked to restaurant: ${data.restaurant?.restaurant_name}`);
-    // Refresh cache with the updated session so the next message picks up restaurant_id
-    if (data?.sender_phone) _setCachedSession(data.sender_phone, data);
-    return data;
-
-  } catch (error) {
-    logger.error('[WhatsAppSessions] Error:', error);
-    return null;
   }
+  return null;
 }
 
 /**
@@ -371,16 +375,18 @@ async function updateSessionConversationHistory(sessionId, conversationHistory, 
     return false;
   }
 
+  let finalHistory;
   try {
-    let finalHistory;
     if (options.appendMessages && Array.isArray(options.appendMessages)) {
       // Atomic re-read-merge to avoid concurrent-Lambda history loss.
-      // Read current DB state, append the NEW messages, write the union.
-      const { data: current } = await centralSupabase
+      const { data: current, error: readErr } = await centralSupabase
         .from('whatsapp_sessions')
         .select('conversation_history')
         .eq('id', sessionId)
         .maybeSingle();
+      if (readErr) {
+        logger.warn(`[SESSION_FAIL] history re-read session=${sessionId} msg=${readErr.message?.slice(0, 100)}`);
+      }
       const dbHistory = Array.isArray(current?.conversation_history) ? current.conversation_history : [];
 
       const seen = new Set();
@@ -396,38 +402,48 @@ async function updateSessionConversationHistory(sessionId, conversationHistory, 
     } else {
       finalHistory = conversationHistory.slice(-20);
     }
+  } catch (prepErr) {
+    logger.error(`[SESSION_FAIL] history prep session=${sessionId} threw: ${prepErr?.message?.slice(0, 120)}`);
+    finalHistory = (conversationHistory || []).slice(-20);
+  }
 
-    const { error } = await centralSupabase
-      .from('whatsapp_sessions')
-      .update({
-        conversation_history: finalHistory,
-        last_message_at: new Date().toISOString(),
-        expires_at: new Date(Date.now() + SESSION_EXPIRY_MS).toISOString()
-      })
-      .eq('id', sessionId);
+  // Retry the UPDATE once on transient failure
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const { error } = await centralSupabase
+        .from('whatsapp_sessions')
+        .update({
+          conversation_history: finalHistory,
+          last_message_at: new Date().toISOString(),
+          expires_at: new Date(Date.now() + SESSION_EXPIRY_MS).toISOString()
+        })
+        .eq('id', sessionId);
 
-    if (error) {
-      logger.error('[WhatsAppSessions] Error updating conversation history:', error);
+      if (error) {
+        logger.error(`[SESSION_FAIL] history update attempt=${attempt} session=${sessionId} code=${error.code || 'N/A'} msg=${error.message?.slice(0, 120) || 'unknown'}`);
+        if (attempt === 1) { await new Promise(r => setTimeout(r, 800)); continue; }
+        return false;
+      }
+      break;
+    } catch (netErr) {
+      logger.error(`[SESSION_FAIL] history update attempt=${attempt} threw: ${netErr?.message?.slice(0, 120)}`);
+      if (attempt === 1) { await new Promise(r => setTimeout(r, 800)); continue; }
       return false;
     }
-
-    logger.info(`[WhatsAppSessions] Conversation history updated for session ${sessionId} (${finalHistory.length} messages)`);
-    // Invalidate the cached session so the next message re-reads the fresh history
-    // (we don't have sender_phone here without an extra lookup, so just clear stale entries)
-    for (const [phone, entry] of _sessionCache) {
-      if (entry.session?.id === sessionId) {
-        _sessionCache.set(phone, {
-          session: { ...entry.session, conversation_history: finalHistory },
-          expiresAt: Date.now() + SESSION_CACHE_TTL_MS,
-        });
-        break;
-      }
-    }
-    return true;
-  } catch (error) {
-    logger.error('[WhatsAppSessions] Error:', error);
-    return false;
   }
+
+  logger.info(`[WhatsAppSessions] History saved session=${sessionId} count=${finalHistory.length}`);
+  // Refresh the cached session so the next message in this warm Lambda sees fresh history
+  for (const [phone, entry] of _sessionCache) {
+    if (entry.session?.id === sessionId) {
+      _sessionCache.set(phone, {
+        session: { ...entry.session, conversation_history: finalHistory },
+        expiresAt: Date.now() + SESSION_CACHE_TTL_MS,
+      });
+      break;
+    }
+  }
+  return true;
 }
 
 /**
