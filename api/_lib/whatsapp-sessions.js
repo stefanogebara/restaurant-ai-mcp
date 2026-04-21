@@ -21,13 +21,24 @@ const _sessionCache = new Map(); // phone -> { session, expiresAt }
 
 function _getCachedSession(phone) {
   const entry = _sessionCache.get(phone);
-  if (entry && Date.now() < entry.expiresAt) return entry.session;
-  if (entry) _sessionCache.delete(phone);
-  return null;
+  if (!entry) return null;
+  // Also verify the underlying session hasn't DB-expired. A warm Lambda could
+  // otherwise keep serving a 3h-old zombie session with restaurant_id=NULL
+  // just because the cache entry itself was refreshed within the TTL.
+  const nowMs = Date.now();
+  const sessionExpiresMs = entry.session?.expires_at ? Date.parse(entry.session.expires_at) : 0;
+  if (nowMs >= entry.expiresAt || (sessionExpiresMs && nowMs >= sessionExpiresMs)) {
+    _sessionCache.delete(phone);
+    return null;
+  }
+  return entry.session;
 }
 
 function _setCachedSession(phone, session) {
   if (!phone || !session) return;
+  // Don't cache a session whose DB row is already expired — it would serve
+  // the bot a dead session on the next cache hit before a real DB lookup.
+  if (session.expires_at && Date.parse(session.expires_at) <= Date.now()) return;
   _sessionCache.set(phone, { session, expiresAt: Date.now() + SESSION_CACHE_TTL_MS });
   // Lightweight pruning so the Map never grows unbounded in a long-lived Lambda
   if (_sessionCache.size > 500) {
