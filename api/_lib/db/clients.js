@@ -23,9 +23,20 @@ if (!anonKey) {
   logger.error('[Supabase] WARNING: Missing SUPABASE_ANON_KEY. RLS-aware client unavailable.');
 }
 
+// supabase-js has no default fetch timeout. On cold Lambdas a slow/hung TLS
+// handshake or Supabase response will freeze the function for its full
+// maxDuration. 28s matches central-supabase.js and is still under both our
+// outer Promise.race (35s) and Lambda budget (120s).
+function fetchWithTimeout(url, options) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 28_000);
+  return fetch(url, { ...options, signal: controller.signal })
+    .finally(() => clearTimeout(timeoutId));
+}
+
 // Admin client – bypasses RLS (for webhooks, crons, health checks, cross-tenant ops)
 const supabaseAdmin = serviceRoleKey
-  ? createClient(supabaseUrl, serviceRoleKey)
+  ? createClient(supabaseUrl, serviceRoleKey, { global: { fetch: fetchWithTimeout } })
   : null;
 
 // Public client – respects RLS (for future per-request auth usage)

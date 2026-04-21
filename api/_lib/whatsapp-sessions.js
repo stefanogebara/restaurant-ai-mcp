@@ -105,40 +105,57 @@ async function getOrCreateSession(senderPhone, conversationId) {
       return existing;
     }
 
-    // Create new session
-    const { data: newSession, error: createError } = await centralSupabase
-      .from('whatsapp_sessions')
-      .insert({
-        sender_phone: normalizedPhone,
-        conversation_id: conversationId,
-        restaurant_confirmed: false,
-        last_message_at: new Date().toISOString(),
-        expires_at: new Date(Date.now() + SESSION_EXPIRY_MS).toISOString()
-      })
-      .select()
-      .single();
+    // Create new session. Retry once on transient failure (cold Supabase, fetch abort)
+    // so a timeout doesn't fall through to a stale/expired committed row.
+    let newSession = null;
+    let lastError = null;
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      const { data, error } = await centralSupabase
+        .from('whatsapp_sessions')
+        .insert({
+          sender_phone: normalizedPhone,
+          conversation_id: conversationId,
+          restaurant_confirmed: false,
+          last_message_at: new Date().toISOString(),
+          expires_at: new Date(Date.now() + SESSION_EXPIRY_MS).toISOString()
+        })
+        .select()
+        .single();
 
-    if (createError) {
-      const isConflict = createError.code === '23505';
-      const isAborted = createError.name === 'AbortError' || createError.message?.includes('aborted') || createError.message?.includes('signal');
-      // Race condition or fetch timeout — INSERT may have committed. Re-query without expires_at filter.
-      if (isConflict || isAborted) {
-        if (isAborted) logger.warn('[WhatsAppSessions] INSERT fetch timed out, re-querying for committed row...');
-        else logger.warn('[WhatsAppSessions] Concurrent session INSERT conflict, re-querying...');
+      if (!error) { newSession = data; break; }
+      lastError = error;
+
+      const isConflict = error.code === '23505';
+      const isAborted = error.name === 'AbortError' || error.message?.includes('aborted') || error.message?.includes('signal');
+      logger.warn(`[SESSION_FAIL] insert attempt=${attempt} phone=${normalizedPhone} code=${error.code || 'N/A'} aborted=${isAborted} conflict=${isConflict} msg=${error.message?.slice(0, 100)}`);
+
+      // Unique-violation means another Lambda won the race — committed row IS the right session.
+      if (isConflict) {
         const { data: committed } = await centralSupabase
           .from('whatsapp_sessions')
           .select('*')
           .eq('sender_phone', normalizedPhone)
+          .gt('expires_at', new Date().toISOString())
           .order('created_at', { ascending: false })
           .limit(1)
-          .single();
-        if (committed) return committed;
+          .maybeSingle();
+        if (committed) { newSession = committed; break; }
       }
-      logger.error('[WhatsAppSessions] Error creating session:', createError);
+
+      // Fetch abort (cold start) — retry once after a short delay
+      if (attempt === 1 && isAborted) {
+        await new Promise(r => setTimeout(r, 800));
+        continue;
+      }
+      break;
+    }
+
+    if (!newSession) {
+      logger.error(`[SESSION_FAIL] insert exhausted retries for ${normalizedPhone}: ${lastError?.message?.slice(0, 120)}`);
       return null;
     }
 
-    logger.info(`[WhatsAppSessions] New session created for ${normalizedPhone}`);
+    logger.info(`[WhatsAppSessions] New session created for ${normalizedPhone} id=${newSession.id}`);
     _setCachedSession(normalizedPhone, newSession);
     return newSession;
 
