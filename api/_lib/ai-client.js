@@ -89,7 +89,7 @@ class OpenRouterClient {
     if (oaiTools.length > 0) body.tools = oaiTools;
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30_000);
+    const timeoutId = setTimeout(() => controller.abort(), 45_000);
     let response;
     try {
       response = await withRetry(
@@ -103,6 +103,9 @@ class OpenRouterClient {
           },
           body: JSON.stringify(body),
           signal: controller.signal,
+        }).catch(err => {
+          if (err?.name === 'AbortError') throw new Error('OpenRouter timeout after 45s');
+          throw err;
         }),
         { maxAttempts: 2 }
       );
