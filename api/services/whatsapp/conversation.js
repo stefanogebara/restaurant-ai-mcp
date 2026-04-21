@@ -375,26 +375,32 @@ async function processWithAI(userMessage, session, conversationHistory = []) {
   // Use restaurant.id from JOIN, or restaurant_id FK column as fallback (JOIN may be null if FK not indexed)
   const restaurantId = session?.restaurant?.id || session?.restaurant_id;
 
-  if (restaurantId) {
-    try {
-      const { data: restaurantConfig } = await supabaseAdmin
-        .schema('restaurant')
-        .from('restaurant_config')
-        .select('id, restaurant_name, restaurant_type, phone, email, city, country, business_hours, average_dining_duration_minutes, timezone, agent_language, agent_name, agent_greeting, ai_config, ai_strategy_doc, ai_personality, persona_prompt_override')
-        .eq('id', restaurantId)
-        .single();
+  // Fetch restaurant config and guest context in parallel to reduce latency
+  const [configResult, guestCtxResult] = await Promise.allSettled([
+    restaurantId
+      ? supabaseAdmin
+          .schema('restaurant')
+          .from('restaurant_config')
+          .select('id, restaurant_name, restaurant_type, phone, email, city, country, business_hours, average_dining_duration_minutes, timezone, agent_language, agent_name, agent_greeting, ai_config, ai_strategy_doc, ai_personality, persona_prompt_override')
+          .eq('id', restaurantId)
+          .single()
+      : Promise.resolve({ data: null }),
+    restaurantId && session?.sender_phone
+      ? buildGuestContext(restaurantId, session.sender_phone, userMessage)
+      : Promise.resolve(null),
+  ]);
 
-      if (restaurantConfig) {
-        systemPrompt = buildWhatsAppPrompt(restaurantConfig, session, currentDateTime);
-      }
-    } catch (configErr) {
-      logger.warn('Failed to load restaurant config for prompt (non-fatal):', configErr.message);
-    }
+  const restaurantConfig = configResult.status === 'fulfilled' ? configResult.value?.data : null;
+  if (configResult.status === 'rejected') {
+    logger.warn('Failed to load restaurant config for prompt (non-fatal):', configResult.reason?.message);
+  }
+
+  if (restaurantConfig) {
+    systemPrompt = buildWhatsAppPrompt(restaurantConfig, session, currentDateTime);
   }
 
   // Fallback to generic prompt
   if (!systemPrompt) {
-    // Determine restaurant name from any available source
     const fallbackRestaurantName = session?.restaurant?.restaurant_name || 'the restaurant';
     const langLabel = language === 'es' ? 'Spanish' : language === 'en' ? 'English' : 'Portuguese (pt-BR)';
     systemPrompt = `You are a friendly assistant for ${fallbackRestaurantName} on WhatsApp. Help the customer warmly in ${langLabel}.\n`;
@@ -404,7 +410,6 @@ async function processWithAI(userMessage, session, conversationHistory = []) {
     if (session?.sender_phone) {
       systemPrompt += `Customer's WhatsApp: ${session.sender_phone} (use as phone for reservations — don't ask for it)\n`;
     }
-    // Prevent confusing "what restaurant?" messages when context is missing
     systemPrompt += '\nCRITICAL: You are already serving the customer of this restaurant. NEVER ask for the restaurant name — it is already set.\n';
     systemPrompt += 'If the customer is providing their name, date, time, or party size, continue the reservation flow naturally.\n';
     systemPrompt += 'IMPORTANT: Do NOT confuse a customer\'s name (e.g. "João Silva") with a restaurant name. Never ask the customer to confirm the restaurant name.\n';
@@ -415,20 +420,11 @@ async function processWithAI(userMessage, session, conversationHistory = []) {
     systemPrompt += '\n\n' + historySummary;
   }
 
-  // Inject guest memory context if available
-  if ((session?.restaurant?.id || session?.restaurant_id) && session?.sender_phone) {
-    try {
-      const guestContext = await buildGuestContext(
-        session.restaurant?.id || session.restaurant_id,
-        session.sender_phone,
-        userMessage
-      );
-      if (guestContext) {
-        systemPrompt += guestContext;
-      }
-    } catch (ctxErr) {
-      logger.warn('Guest context injection failed (non-fatal):', ctxErr.message);
-    }
+  // Inject guest memory context (fetched in parallel above)
+  if (guestCtxResult.status === 'fulfilled' && guestCtxResult.value) {
+    systemPrompt += guestCtxResult.value;
+  } else if (guestCtxResult.status === 'rejected') {
+    logger.warn('Guest context injection failed (non-fatal):', guestCtxResult.reason?.message);
   }
 
   // Build messages array with system prompt as first message
