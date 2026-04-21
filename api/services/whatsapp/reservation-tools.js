@@ -3,7 +3,6 @@
 const { createSecureLogger } = require('../../_lib/secure-logger');
 const logger = createSecureLogger('WhatsApp');
 const { getRestaurantByName, getAllActiveRestaurants } = require('../../_lib/restaurant-registry');
-const { getMultiTenantClient } = require('../../_lib/multi-tenant-supabase');
 const { canAccommodateParty, supabaseAdmin } = require('../../_lib/supabase');
 const { trackUsage } = require('../../_lib/usage-tracking');
 const { generateSecureReservationId } = require('../../_lib/secure-id');
@@ -337,7 +336,7 @@ async function executeTool(toolName, toolInput, session) {
 
       try {
         // Call the multi-tenant availability check - pass full restaurant object
-        const client = getMultiTenantClient(session.restaurant);
+        const client = supabaseAdmin;
         if (!client) {
           return { success: false, error: 'Could not connect to restaurant database' };
         }
@@ -427,7 +426,7 @@ async function executeTool(toolName, toolInput, session) {
 
       try {
         // Pass full restaurant object with credentials
-        const client = getMultiTenantClient(session.restaurant);
+        const client = supabaseAdmin;
         if (!client) {
           return { success: false, error: 'Could not connect to restaurant database' };
         }
@@ -610,7 +609,7 @@ async function executeTool(toolName, toolInput, session) {
       }
 
       try {
-        const client = getMultiTenantClient(session.restaurant);
+        const client = supabaseAdmin;
         if (!client) return { success: false, error: 'Could not connect to restaurant database' };
 
         let query = client.from('reservations').select('reservation_id, customer_name, customer_phone, date, time, party_size, status, special_requests');
@@ -673,7 +672,7 @@ async function executeTool(toolName, toolInput, session) {
       }
 
       try {
-        const client = getMultiTenantClient(session.restaurant);
+        const client = supabaseAdmin;
         if (!client) return { success: false, error: 'Could not connect to restaurant database' };
 
         // Verify reservation exists
@@ -728,7 +727,7 @@ async function executeTool(toolName, toolInput, session) {
       }
 
       try {
-        const client = getMultiTenantClient(session.restaurant);
+        const client = supabaseAdmin;
         if (!client) return { success: false, error: 'Could not connect to restaurant database' };
 
         const { data: existing, error: lookupErr } = await client

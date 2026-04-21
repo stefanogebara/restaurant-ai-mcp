@@ -5,10 +5,11 @@
  * By default uses the main Supabase project, but can be configured to use a
  * separate project via CENTRAL_SUPABASE_URL and CENTRAL_SUPABASE_SERVICE_ROLE_KEY.
  *
- * NOTE: Candidate for removal. See multi-tenant-supabase.js for details.
- * Currently always resolves to the main SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY.
- * Imported by: multi-tenant-supabase.js, restaurant-registry.js,
- * whatsapp/reservation-lookup.js, whatsapp/quick-actions.js, whatsapp-sessions.js.
+ * NOTE: Thin wrapper over the main Supabase project. Historically this was
+ * intended to back a separate central registry DB, but all restaurants share
+ * the same project now. Candidate for consolidation into ./supabase in a
+ * future cleanup — its only real value is the 28s fetchWithTimeout wrapper
+ * (supabase-js has no default timeout, so cold Lambdas would hang indefinitely).
  */
 
 const { createClient } = require('@supabase/supabase-js');

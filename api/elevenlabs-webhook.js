@@ -22,8 +22,7 @@ const conversationLogger = require('./services/conversationLogger');
 const { setWebhookCors, handlePreflight } = require('./_lib/cors');
 const { trackUsage } = require('./_lib/usage-tracking');
 
-// Multi-tenant imports for WhatsApp routing (session lookup in main routing logic)
-const { getRestaurantClient } = require('./_lib/multi-tenant-supabase');
+// WhatsApp routing (session lookup in main routing logic)
 const { supabaseAdmin } = require('./_lib/supabase');
 const { getSessionByPhone } = require('./_lib/whatsapp-sessions');
 const { createSecureLogger } = require('./_lib/secure-logger');
@@ -198,8 +197,8 @@ module.exports = async (req, res) => {
 
           if (session && session.restaurant_confirmed && session.restaurant) {
             logger.info(`Found session with restaurant: ${session.restaurant.restaurant_name}`);
-            // Use the multi-tenant client for this restaurant
-            req.multiTenantClient = getRestaurantClient(session.restaurant);
+            // All restaurants share the central Supabase — use supabaseAdmin directly.
+            req.multiTenantClient = supabaseAdmin;
             req.multiTenantRestaurant = session.restaurant;
             req.session = session;
 
