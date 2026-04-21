@@ -128,13 +128,16 @@ async function processMessage(adapter, msg, options = {}) {
     return { handled: true };
   }
 
-  // 7. Session management (with one retry on transient failure)
+  // 7. Session management (with one retry on transient failure).
+  // 35s per attempt: supabase-js has a 28s fetch timeout, +buffer for
+  // cold Lambda TLS handshake. 2 attempts = up to 70s + 1.5s delay,
+  // still within our 120s Lambda maxDuration budget.
   let session;
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
       session = await Promise.race([
         getOrCreateSession(from, `${providerName}-${Date.now()}`),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Session timeout')), 25000)),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Session timeout')), 35000)),
       ]);
       if (session) break;
     } catch (err) {
