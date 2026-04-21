@@ -131,16 +131,27 @@ module.exports = async (req, res) => {
     }
   }
 
-  // Send 200 OK immediately after capturing the body — BEFORE processing.
-  // This prevents Meta from retrying on its 5s timeout. Redis dedup (86400s TTL)
-  // in processMessage blocks any duplicate that slips through.
+  if (rejectOversizedBody(req, res)) return;
+
+  // Process SYNCHRONOUSLY: await the full pipeline BEFORE sending 200. Evidence
+  // from live testing showed Vercel killing the Lambda mid-INSERT even though
+  // maxDuration was 120s — the Supabase fetch would abort silently, session
+  // creation would fail without producing [SESSION_FAIL] logs, and the bot
+  // would generate a response from a cached zombie session while the new DB
+  // row never landed.
+  //
+  // Waiting for handlePost here keeps the Lambda alive for its full processing.
+  // Meta's 20s webhook-timeout retry budget is handled by Redis dedup
+  // (86400s TTL) in processMessage — retries of the same messageId no-op.
+  try {
+    await handlePost(req, res);
+  } catch (err) {
+    logger.error('Webhook post handler error:', err.message);
+  }
+
   if (!res.headersSent) {
     res.status(200).json({ status: 'ok' });
   }
-
-  if (rejectOversizedBody(req, res)) return;
-
-  await handlePost(req, res).catch(err => logger.error('Webhook post handler error:', err.message));
 };
 
 module.exports.config = { api: { bodyParser: false } };
