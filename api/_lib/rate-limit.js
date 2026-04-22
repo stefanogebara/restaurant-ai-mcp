@@ -390,9 +390,52 @@ async function isMessageDuplicate(messageId, ttlSeconds = 300) {
 /**
  * Acquire a per-phone processing lock so concurrent Lambdas don't overwrite each other's history.
  * Returns true if lock was acquired (caller should proceed), false if already held (caller should wait).
+ *
+ * Primary: Supabase whatsapp_processing_lock table (atomic UNIQUE constraint on phone).
+ *   - Expired locks are cleaned out before the INSERT attempt, so a crashed prior
+ *     Lambda that never called releaseProcessingLock cannot block future messages.
+ * Fallback: Redis SET NX. Kept for resilience, but observed unreliable on Vercel
+ *   (see whatsapp_message_dedup.sql for context).
+ * Last resort: fail open with a warning.
  */
 async function acquireProcessingLock(phone, ttlSeconds = 25) {
-  if (!redis) return true; // fail open in local dev
+  if (!phone) return true;
+  const nowIso = new Date().toISOString();
+  const expiresAt = new Date(Date.now() + ttlSeconds * 1000).toISOString();
+
+  // Primary: Supabase atomic lock
+  try {
+    const { centralSupabase } = require('./central-supabase');
+    if (centralSupabase) {
+      // Clear any expired lock for this phone (no-op if still valid).
+      // Racing with another Lambda's acquire is fine: the INSERT below is
+      // the authoritative step and only one caller's insert wins.
+      await centralSupabase
+        .from('whatsapp_processing_lock')
+        .delete()
+        .eq('phone', phone)
+        .lt('expires_at', nowIso);
+
+      const { error } = await centralSupabase
+        .from('whatsapp_processing_lock')
+        .insert({ phone, expires_at: expiresAt });
+
+      if (!error) return true;              // we hold the lock
+      if (error.code === '23505') return false;  // someone else holds it
+
+      if (error.code === '42P01' || error.code === 'PGRST205') {
+        logger.warn('[Lock] whatsapp_processing_lock table missing — apply migration 20260422_whatsapp_processing_lock.sql');
+      } else {
+        logger.warn(`[Lock] Supabase lock error code=${error.code} msg=${error.message?.slice(0, 100)}`);
+      }
+      // Fall through to Redis
+    }
+  } catch (err) {
+    logger.warn('[Lock] Supabase lock threw:', err.message?.slice(0, 100));
+  }
+
+  // Fallback: Redis SET NX
+  if (!redis) return true;
   try {
     const result = await redis.set(`wa:proc_lock:${phone}`, '1', { nx: true, ex: ttlSeconds });
     return result === 'OK';
@@ -406,6 +449,20 @@ async function acquireProcessingLock(phone, ttlSeconds = 25) {
  * Release the per-phone processing lock after history is saved.
  */
 async function releaseProcessingLock(phone) {
+  if (!phone) return;
+
+  try {
+    const { centralSupabase } = require('./central-supabase');
+    if (centralSupabase) {
+      await centralSupabase
+        .from('whatsapp_processing_lock')
+        .delete()
+        .eq('phone', phone);
+    }
+  } catch (err) {
+    logger.warn('[Lock] Supabase lock release threw:', err.message?.slice(0, 100));
+  }
+
   if (!redis) return;
   try {
     await redis.del(`wa:proc_lock:${phone}`);
