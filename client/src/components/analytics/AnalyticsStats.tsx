@@ -8,6 +8,7 @@ interface AnalyticsStatsProps {
   overview: {
     total_reservations: number;
     total_completed_services: number;
+    total_revenue?: number;
     avg_party_size: number;
     avg_service_time_minutes: number;
     total_capacity: number;
@@ -96,10 +97,14 @@ export default function AnalyticsStats({ overview, reservationsByStatus }: Analy
     return Math.round((rateB - rateA) * 10) / 10;
   })();
 
-  // Estimated revenue = avg_spend_per_cover × total_completed_services × avg_party_size
-  const estimatedRevenue = revenueStats && overview.total_completed_services > 0
-    ? revenueStats.avg_spend_per_cover * overview.total_completed_services * overview.avg_party_size
-    : null;
+  // Prefer server-reported actual revenue from service_records total_bill;
+  // fall back to estimated revenue from avg_spend_per_cover when no bills recorded.
+  const actualRevenue = overview.total_revenue;
+  const estimatedRevenue = (actualRevenue && actualRevenue > 0)
+    ? actualRevenue
+    : (revenueStats && overview.total_completed_services > 0
+        ? revenueStats.avg_spend_per_cover * overview.total_completed_services * overview.avg_party_size
+        : null);
 
   const stats = [
     {

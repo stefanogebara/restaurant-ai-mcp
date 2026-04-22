@@ -406,8 +406,8 @@ describe('Analytics: Table utilization', () => {
     // 2 completed service records, one used table '1', one used table '2'
     mockTableData.service_records = {
       data: [
-        { status: 'Completed', seated_at: `${today}T12:00:00Z`, departed_at: `${today}T13:30:00Z`, table_ids: ['1'] },
-        { status: 'Completed', seated_at: `${today}T19:00:00Z`, departed_at: `${today}T20:30:00Z`, table_ids: ['1'] },
+        { status: 'completed', seated_at: `${today}T12:00:00Z`, actual_departure: `${today}T13:30:00Z`, table_ids: ['1'] },
+        { status: 'completed', seated_at: `${today}T19:00:00Z`, actual_departure: `${today}T20:30:00Z`, table_ids: ['1'] },
       ],
       error: null,
     };
@@ -435,7 +435,7 @@ describe('Analytics: Table utilization', () => {
     // Service record: 60 minutes duration
     mockTableData.service_records = {
       data: [
-        { status: 'Completed', seated_at: `${today}T12:00:00Z`, departed_at: `${today}T13:00:00Z`, table_ids: ['1'] },
+        { status: 'completed', seated_at: `${today}T12:00:00Z`, actual_departure: `${today}T13:00:00Z`, table_ids: ['1'] },
       ],
       error: null,
     };

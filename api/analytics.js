@@ -26,7 +26,7 @@ async function getAllReservations(restaurantId) {
       fields: {
         Date: r.date,
         Time: r.time,
-        Status: r.status,
+        Status: (r.status || 'pending').toLowerCase(),
         'Party Size': r.party_size,
         'Customer Name': r.customer_name,
         'Reservation ID': r.reservation_id,
@@ -44,7 +44,7 @@ async function getAllServiceRecordsData(restaurantId) {
   try {
     const { data, error } = await supabaseAdmin
       .from('service_records')
-      .select('status, seated_at, departed_at, table_ids')
+      .select('status, seated_at, actual_departure, table_ids, total_bill, party_size')
       .eq('restaurant_id', restaurantId);
 
     if (error) throw error;
@@ -52,10 +52,12 @@ async function getAllServiceRecordsData(restaurantId) {
     // Map to Airtable-compatible format
     const records = (data || []).map(r => ({
       fields: {
-        Status: r.status,
+        Status: (r.status || '').toLowerCase(),
         'Seated At': r.seated_at,
-        'Departed At': r.departed_at,
-        'Table IDs': r.table_ids ? r.table_ids.join(',') : '',
+        'Departed At': r.actual_departure,
+        'Table IDs': Array.isArray(r.table_ids) ? r.table_ids.join(',') : (r.table_ids || ''),
+        'Total Bill': r.total_bill,
+        'Party Size': r.party_size,
       }
     }));
     return { success: true, records };
@@ -125,8 +127,16 @@ async function calculateAnalytics(restaurantId, period = '30d', startDate = null
   });
 
   const completedServiceRecords = serviceRecords.filter(r =>
-    r.fields.Status === 'Completed' && r.fields['Departed At']
+    r.fields.Status === 'completed' && r.fields['Departed At']
   );
+
+  // Total revenue from completed services within the date range
+  const totalRevenue = completedServiceRecords
+    .filter(r => {
+      const depDate = r.fields['Departed At'] ? new Date(r.fields['Departed At']) : null;
+      return depDate && depDate >= from && depDate <= to;
+    })
+    .reduce((sum, r) => sum + Number(r.fields['Total Bill'] || 0), 0);
 
   const totalReservations = recentReservations.length;
   const totalCompletedServices = completedServiceRecords.length;
@@ -228,6 +238,7 @@ async function calculateAnalytics(restaurantId, period = '30d', startDate = null
       overview: {
         total_reservations: totalReservations,
         total_completed_services: totalCompletedServices,
+        total_revenue: Math.round(totalRevenue * 100) / 100,
         avg_party_size: parseFloat(avgPartySize.toFixed(1)),
         avg_service_time_minutes: Math.round(avgServiceTime),
         total_capacity: totalCapacity,

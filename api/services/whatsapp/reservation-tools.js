@@ -257,6 +257,18 @@ const RESERVATION_TOOLS = [
         required: []
       }
     }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'list_upcoming_events',
+      description: 'List upcoming ticketed events and experiences at the restaurant (wine tastings, chef dinners, brunch events). Use when the customer asks about events, experiences, tastings, special dinners, or says \'eventos\', \'degustação\', \'brunch\'.',
+      parameters: {
+        type: 'object',
+        properties: {},
+        required: []
+      }
+    }
   }
 ];
 
@@ -901,6 +913,59 @@ async function executeTool(toolName, toolInput, session) {
       } catch (err) {
         logger.error(' Check queue position error:', err);
         return { success: false, error: 'Error checking queue position' };
+      }
+    }
+
+    case 'list_upcoming_events': {
+      if (!session?.restaurant) {
+        return { success: false, error: 'No restaurant selected. Please identify the restaurant first.' };
+      }
+
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        const { data, error } = await supabaseAdmin
+          .schema('restaurant')
+          .from('events')
+          .select('id, title, description, event_date, event_time, duration_minutes, max_capacity, current_bookings, price, refund_policy')
+          .eq('restaurant_id', session.restaurant.id)
+          .eq('is_active', true)
+          .gte('event_date', today)
+          .order('event_date', { ascending: true })
+          .limit(5);
+
+        if (error) {
+          logger.error(' list_upcoming_events error:', error);
+          return { success: false, error: 'Could not retrieve events' };
+        }
+
+        if (!data || data.length === 0) {
+          return { success: true, has_events: false, events: [], message: 'No upcoming events at this time.' };
+        }
+
+        const appUrl = process.env.VITE_APP_URL || process.env.CLIENT_URL || 'https://seatable.one';
+        const slug = session.restaurant.restaurant_slug;
+        const events = data.map(ev => ({
+          title: ev.title,
+          description: ev.description,
+          date: ev.event_date,
+          time: ev.event_time,
+          duration_minutes: ev.duration_minutes,
+          price: ev.price,
+          spots_remaining: Math.max(0, ev.max_capacity - ev.current_bookings),
+          sold_out: ev.current_bookings >= ev.max_capacity,
+          booking_url: slug ? `${appUrl}/events/${slug}/${ev.id}` : null,
+        }));
+
+        return {
+          success: true,
+          has_events: true,
+          count: events.length,
+          events,
+          message: `Found ${events.length} upcoming event(s).`,
+        };
+      } catch (err) {
+        logger.error(' list_upcoming_events error:', err);
+        return { success: false, error: 'Error retrieving events' };
       }
     }
 
