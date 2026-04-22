@@ -1,10 +1,8 @@
 /**
  * Diagnostic endpoint — runs the whatsapp-webhook session+routing+config
- * path manually and returns every intermediate value as JSON so we can
- * see WHY live messages are falling back to the generic prompt.
+ * path manually and returns every intermediate value as JSON.
  *
  * Usage: curl "https://seatable.one/api/diag-session?phone=%2B5511999002121&secret=..."
- *        where secret = process.env.CRON_SECRET (reuse to avoid a new secret).
  */
 
 'use strict';
@@ -12,6 +10,7 @@
 const { getOrCreateSession, setSessionRestaurant } = require('./_lib/whatsapp-sessions');
 const { getAllActiveRestaurants } = require('./_lib/restaurant-registry');
 const { supabaseAdmin } = require('./_lib/supabase');
+const { isMessageDuplicate } = require('./_lib/rate-limit');
 
 module.exports = async (req, res) => {
   const secret = req.query?.secret || req.headers['x-secret'];
@@ -23,9 +22,29 @@ module.exports = async (req, res) => {
   const trace = [];
   const log = (stage, data) => trace.push({ stage, t: Date.now(), ...data });
 
-  try {
-    log('start', { phone, env_has_supabase_url: !!process.env.SUPABASE_URL, env_has_service_key: !!process.env.SUPABASE_SERVICE_ROLE_KEY });
+  log('env', {
+    has_supabase_url: !!process.env.SUPABASE_URL,
+    has_service_key: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+    has_upstash_url: !!process.env.UPSTASH_REDIS_REST_URL,
+    has_upstash_token: !!process.env.UPSTASH_REDIS_REST_TOKEN,
+    has_cron_secret: !!process.env.CRON_SECRET,
+    has_whatsapp_pn_id: !!process.env.WHATSAPP_PHONE_NUMBER_ID,
+  });
 
+  // Test Redis dedup with a synthetic message ID
+  try {
+    const testId = `diag-test-${Date.now()}`;
+    const t0 = Date.now();
+    const first = await isMessageDuplicate(testId, 60);
+    const tr1 = Date.now() - t0;
+    const second = await isMessageDuplicate(testId, 60);
+    const tr2 = Date.now() - t0 - tr1;
+    log('redis_dedup', { firstCall: first, secondCall: second, t1_ms: tr1, t2_ms: tr2, expected_first: false, expected_second: true });
+  } catch (e) {
+    log('redis_dedup_error', { msg: e?.message?.slice(0, 150) });
+  }
+
+  try {
     // 1. getOrCreateSession
     const t1 = Date.now();
     const session = await getOrCreateSession(phone, `diag-${Date.now()}`);
@@ -41,7 +60,7 @@ module.exports = async (req, res) => {
       return res.status(200).json({ phone, trace, conclusion: 'getOrCreateSession returned null' });
     }
 
-    // 2. Routing path (if restaurant not yet set)
+    // 2. Routing
     if (!session.restaurant_id) {
       const t2 = Date.now();
       const restaurants = await getAllActiveRestaurants();
