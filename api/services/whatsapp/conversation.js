@@ -150,6 +150,31 @@ function buildWhatsAppPrompt(restaurantConfig, session, currentDateTime) {
 - Do NOT call check_availability for a time that is clearly outside business hours.\n`;
   }
 
+  // Table capacity (real numbers from DB — inject so the LLM doesn't make up "14 max")
+  if (Array.isArray(restaurantConfig._tables) && restaurantConfig._tables.length > 0) {
+    const tables = restaurantConfig._tables.filter(t => t.is_active !== false);
+    const totalSeats = tables.reduce((s, t) => s + (t.capacity || 0), 0);
+    const maxTable = tables.reduce((m, t) => Math.max(m, t.capacity || 0), 0);
+    prompt += `\nTABLE CAPACITY (authoritative — use these numbers, do NOT invent):\n`;
+    prompt += `- Total tables: ${tables.length}\n`;
+    prompt += `- Total seats across all tables: ${totalSeats}\n`;
+    prompt += `- Largest single table: ${maxTable} seats\n`;
+    prompt += `- For a group larger than ${maxTable}, check if multiple tables combined can accommodate (max combined = ${totalSeats}).\n`;
+    prompt += `- For groups bigger than ${totalSeats}, politely decline and suggest splitting the reservation or contacting the events team.\n`;
+  }
+
+  // Menu items (real names from DB — inject so LLM doesn't invent dish names)
+  if (Array.isArray(restaurantConfig._menu) && restaurantConfig._menu.length > 0) {
+    prompt += `\nMENU (authoritative — only mention these specific dishes):\n`;
+    for (const m of restaurantConfig._menu.slice(0, 40)) {
+      const line = [m.name, m.category ? `(${m.category})` : '', m.price ? `${m.price}` : '']
+        .filter(Boolean).join(' ');
+      prompt += `- ${line}\n`;
+    }
+  } else {
+    prompt += `\nMENU: No menu data loaded. If asked about menu, say "Posso pedir para a equipe te enviar o cardápio completo — tem alguma preferência ou restrição alimentar?" DO NOT invent dish names.\n`;
+  }
+
   // Strategy doc
   if (restaurantConfig.ai_strategy_doc) {
     prompt += '\n[RESTAURANT STRATEGY]\n' + restaurantConfig.ai_strategy_doc + '\n';
@@ -214,6 +239,13 @@ function buildWhatsAppPrompt(restaurantConfig, session, currentDateTime) {
 - When the customer asks if you're open at a time (e.g. "is it open at 4pm?"), call check_availability with that time, tomorrow's or today's date, and their party size
 - Use create_reservation only once the customer has confirmed they want to book
 - NEVER ignore a customer's question to push a booking. If they ask "qual restaurante?", answer it.
+
+ANTI-HALLUCINATION (CRITICAL):
+- NEVER invent specific menu items, dish names, prices, chef names, or capacity numbers. If you don't have it in your context, say "Posso verificar isso e te respondo" or offer to connect with the team.
+- For menu questions: if no menu data is injected above, say "Temos opções variadas — posso pedir para a equipe enviar o cardápio completo?" — DO NOT list made-up dishes like "Ravioli de ricota" unless they're in your context.
+- For capacity questions: only quote numbers from the TABLE CAPACITY block above. If unsure, say "para grupos maiores, posso verificar se conseguimos acomodar" and call check_availability.
+- For prices: never quote a price unless explicitly listed. Say "o valor varia, posso confirmar com a equipe".
+- Invented details break trust. Better to say "I don't have that info right now" than to make something up.
 `;
 
   // Language — respect restaurant config, fall back to PT-BR
@@ -379,38 +411,37 @@ async function processWithAI(userMessage, session, conversationHistory = []) {
   // Use restaurant.id from JOIN, or restaurant_id FK column as fallback (JOIN may be null if FK not indexed)
   const restaurantId = session?.restaurant?.id || session?.restaurant_id;
 
-  // Fetch restaurant config with one retry on abort — falling to the fallback prompt
-  // because of a single cold-Lambda fetch timeout would make the bot say 'qual restaurante?'
-  // to every first-message user, which is the exact failure mode we've been chasing.
-  async function fetchRestaurantConfig() {
-    if (!restaurantId) return null;
-    for (let attempt = 1; attempt <= 2; attempt++) {
-      try {
-        const { data, error } = await supabaseAdmin
+  // Fetch restaurant config, guest context, tables, and menu in parallel to reduce latency.
+  // Tables + menu are injected into the prompt so the LLM doesn't hallucinate capacity/dishes.
+  const [configResult, guestCtxResult, tablesResult, menuResult] = await Promise.allSettled([
+    restaurantId
+      ? supabaseAdmin
           .schema('restaurant')
           .from('restaurant_config')
           .select('id, restaurant_name, restaurant_type, phone, email, city, country, business_hours, average_dining_duration_minutes, timezone, agent_language, agent_name, agent_greeting, ai_config, ai_strategy_doc, ai_personality, persona_prompt_override')
           .eq('id', restaurantId)
-          .single();
-        if (!error && data) return data;
-        logger.warn(`[CONFIG_FAIL] fetch attempt=${attempt} id=${restaurantId.slice(0, 8)} code=${error?.code || 'N/A'} msg=${error?.message?.slice(0, 100) || 'no data'}`);
-      } catch (err) {
-        logger.warn(`[CONFIG_FAIL] fetch attempt=${attempt} id=${restaurantId.slice(0, 8)} threw: ${err?.message?.slice(0, 100)}`);
-      }
-      if (attempt === 1) await new Promise(r => setTimeout(r, 500));
-    }
-    return null;
-  }
-
-  const [restaurantConfig, guestContext] = await Promise.all([
-    fetchRestaurantConfig(),
+          .single()
+      : Promise.resolve({ data: null }),
     restaurantId && session?.sender_phone
-      ? buildGuestContext(restaurantId, session.sender_phone, userMessage).catch(err => {
-          logger.warn('Guest context failed (non-fatal):', err?.message?.slice(0, 100));
-          return null;
-        })
+      ? buildGuestContext(restaurantId, session.sender_phone, userMessage)
       : Promise.resolve(null),
+    restaurantId
+      ? supabaseAdmin.from('tables').select('table_number, capacity, is_active').eq('restaurant_id', restaurantId)
+      : Promise.resolve({ data: null }),
+    restaurantId
+      ? supabaseAdmin.from('pos_menu_items').select('name, category, price, description').eq('restaurant_id', restaurantId).limit(40)
+      : Promise.resolve({ data: null }),
   ]);
+
+  const restaurantConfig = configResult.status === 'fulfilled' ? configResult.value?.data : null;
+  if (configResult.status === 'rejected') {
+    logger.warn('Failed to load restaurant config for prompt (non-fatal):', configResult.reason?.message);
+  }
+  // Attach tables + menu onto the config so buildWhatsAppPrompt can inject them.
+  if (restaurantConfig) {
+    restaurantConfig._tables = tablesResult.status === 'fulfilled' ? (tablesResult.value?.data || []) : [];
+    restaurantConfig._menu = menuResult.status === 'fulfilled' ? (menuResult.value?.data || []) : [];
+  }
 
   logger.info(`processWithAI: restaurantId=${restaurantId || 'none'} configFound=${!!restaurantConfig} configName=${restaurantConfig?.restaurant_name || 'N/A'}`);
 
@@ -440,8 +471,10 @@ async function processWithAI(userMessage, session, conversationHistory = []) {
   }
 
   // Inject guest memory context (fetched in parallel above)
-  if (guestContext) {
-    systemPrompt += guestContext;
+  if (guestCtxResult.status === 'fulfilled' && guestCtxResult.value) {
+    systemPrompt += guestCtxResult.value;
+  } else if (guestCtxResult.status === 'rejected') {
+    logger.warn('Guest context injection failed (non-fatal):', guestCtxResult.reason?.message);
   }
 
   logger.info(`processWithAI: systemPrompt starts with: "${systemPrompt.substring(0, 80).replace(/\n/g, ' ')}"`);
