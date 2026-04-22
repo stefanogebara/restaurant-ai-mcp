@@ -36,30 +36,13 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
-      # On push, wait until Vercel marks the deploy as succeeded before
-      # hitting the URL. Skip the wait for schedule + manual triggers —
-      # they test whatever is already live.
-      - name: Wait for Vercel deploy (push only)
+      # The smoke tests prod health, not this specific commit's deploy
+      # status. Give Vercel a 4 min head-start on push so the odds of
+      # testing a stale build are low, then proceed regardless. Skipped
+      # for schedule + manual triggers (prod is already live).
+      - name: Head-start delay (push only)
         if: github.event_name == 'push'
-        run: |
-          SHA="${{ github.sha }}"
-          echo "Waiting for Vercel deploy of $SHA..."
-          for i in $(seq 1 40); do
-            STATE=$(curl -s "https://api.github.com/repos/${{ github.repository }}/commits/$SHA/status" | jq -r '.state')
-            echo "attempt $i: $STATE"
-            if [ "$STATE" = "success" ]; then
-              echo "Deploy complete. Giving edge cache 20s to warm up."
-              sleep 20
-              exit 0
-            fi
-            if [ "$STATE" = "failure" ]; then
-              echo "Deploy failed — skipping smoke."
-              exit 1
-            fi
-            sleep 15
-          done
-          echo "Timed out waiting for deploy."
-          exit 1
+        run: sleep 240
 
       - name: Run live smoke spec
         run: npm run test:e2e:live
