@@ -317,31 +317,70 @@ async function checkAndApplyRateLimit(req, res, endpointType = 'api') {
 const MAX_BODY_BYTES = 1 * 1024 * 1024; // 1 MB
 
 /**
- * Check if a message has already been processed (Redis-backed dedup).
- * Falls back to allowing the message if Redis is unavailable.
+ * Check if a message has already been processed.
+ *
+ * Primary mechanism: Supabase INSERT on whatsapp_message_dedup (UNIQUE on
+ * message_id) — atomic across Lambda instances via the DB's serializable
+ * unique-constraint check. First Lambda to INSERT wins; any other Lambda
+ * processing the same message_id gets a 23505 conflict and returns true
+ * (duplicate) without running the AI pipeline.
+ *
+ * Fallback: Redis SET NX (legacy) and in-process Map. Redis is unreliable
+ * on Vercel despite UPSTASH_* env vars being set — observed `dbsize=0` for
+ * the dedup key pattern after hours of production traffic (2026-04-22).
+ *
  * @param {string} messageId - Unique message identifier (e.g. Twilio MessageSid or Meta message ID)
  * @param {number} ttlSeconds - How long to remember the message (default 5 min)
- * @returns {Promise<boolean>} True if message is a duplicate and should be skipped
+ * @returns {Promise<boolean>} True if duplicate and should be skipped
  */
 async function isMessageDuplicate(messageId, ttlSeconds = 300) {
-  // In-process check first — catches same-Lambda retries even when Redis is unavailable.
+  if (!messageId) return false;
+
+  // Primary: Supabase unique-constraint dedup. Atomic across Lambdas.
+  try {
+    const { centralSupabase } = require('./central-supabase');
+    if (centralSupabase) {
+      const { error } = await centralSupabase
+        .from('whatsapp_message_dedup')
+        .insert({ message_id: messageId });
+
+      if (!error) {
+        // INSERT succeeded — first Lambda to see this messageId
+        if (!inProcessDedupCheck(messageId)) { /* also record in-process */ }
+        return false;
+      }
+      if (error.code === '23505') {
+        // Unique violation — another Lambda already took this message
+        return true;
+      }
+      if (error.code === '42P01') {
+        // Table doesn't exist yet (migration not applied). Log once and fall through.
+        logger.warn('[Dedup] whatsapp_message_dedup table missing — apply migration 20260422_whatsapp_message_dedup.sql');
+      } else {
+        logger.warn(`[Dedup] Supabase dedup error code=${error.code} msg=${error.message?.slice(0, 100)}`);
+      }
+    }
+  } catch (err) {
+    logger.warn('[Dedup] Supabase dedup threw:', err.message?.slice(0, 100));
+  }
+
+  // Fallback 1: In-process check — catches same-Lambda retries
   if (inProcessDedupCheck(messageId)) {
     return true;
   }
 
-  if (!redis) return false; // no Redis configured — allow (local dev)
+  // Fallback 2: Redis SET NX (legacy — unreliable on Vercel, kept as best-effort)
+  if (!redis) return false;
 
   try {
-    // SET NX: returns "OK" if key was new (not a duplicate), null if key existed (duplicate)
     const result = await redis.set(`wa:dedup:${messageId}`, '1', { nx: true, ex: ttlSeconds });
-    return result === null; // null = key already existed = duplicate
+    return result === null;
   } catch (err) {
     redisFailCount++;
     logger.warn('Redis dedup error, allowing message through:', {
       error: err.message,
       consecutiveFailures: redisFailCount,
     });
-    // In-process check already passed (new message) — allow but log Redis issue
     return false;
   }
 }
