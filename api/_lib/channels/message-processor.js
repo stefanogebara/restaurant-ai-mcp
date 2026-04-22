@@ -368,11 +368,16 @@ async function processMessage(adapter, msg, options = {}) {
   // 16. Send response
   await adapter.sendMessage(from, response);
 
-  // 17. Welcome buttons — send on first message of a new session so the user
-  //     can quickly tap to make/change/cancel a reservation without typing
-  if (conversationHistory.length === 0 && session?.restaurant?.id) {
-    sendWelcomeButtons(adapter, from, session).catch(() => {});
-  }
+  // 17. Welcome buttons — DISABLED.
+  //     Firing on every conversationHistory.length===0 produced a "2 bot replies"
+  //     UX complaint: AI's text reply + "O que você gostaria de fazer?" button card
+  //     arrived together on every new session, which the user read as two agents
+  //     responding (the AI greeting already offers reservation/change/cancel paths).
+  //     Sessions expire every ~30min so the buttons fired constantly, not just
+  //     on true first-contact. The AI reply alone is sufficient.
+  //
+  //     To re-enable for a single scenario (e.g. only on first-ever contact from
+  //     a new phone), gate on customer_history lookups rather than session state.
 
   return { response, handled: true, restaurantId: session?.restaurant_id || session?.restaurant?.id || null };
 }
