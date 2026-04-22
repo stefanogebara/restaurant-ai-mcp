@@ -11,7 +11,6 @@
 
 const { getTemplate } = require('./whatsapp-templates');
 const { createSecureLogger } = require('./secure-logger');
-const { withRetry } = require('./supabase');
 
 const logger = createSecureLogger('WhatsAppSender');
 
