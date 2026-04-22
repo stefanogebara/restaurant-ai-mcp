@@ -58,6 +58,11 @@ async function sendViaMeta(to, message) {
   const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
   const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
 
+  // DIAG: log every sendViaMeta call with caller stack so we can identify the
+  // phantom double-send (two LLM replies reaching user while only one is in DB).
+  const stack = new Error().stack.split('\n').slice(2, 6).map(l => l.trim()).join(' | ');
+  logger.info(`[SEND_META] to=${to} preview="${String(message).slice(0, 50).replace(/\n/g, ' ')}" callers=${stack}`);
+
   if (!phoneNumberId || !accessToken) {
     logger.error('Missing WHATSAPP_PHONE_NUMBER_ID or WHATSAPP_ACCESS_TOKEN');
     return { success: false, error: 'WhatsApp not configured' };
