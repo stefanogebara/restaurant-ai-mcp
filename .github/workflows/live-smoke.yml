@@ -23,8 +23,6 @@ jobs:
   smoke:
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    env:
-      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
     steps:
       - uses: actions/checkout@v4
 

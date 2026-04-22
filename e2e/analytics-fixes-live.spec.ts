@@ -103,28 +103,35 @@ test.describe('Live production fixes verified on seatable.one', () => {
     await page.screenshot({ path: path.join(OUT, 'live-fix-03-heatmap.png'), fullPage: false });
   });
 
-  test('Fix #4: WhatsApp agent list_upcoming_events tool returns events', async ({ request }) => {
+  test('Fix #4: WhatsApp agent list_upcoming_events tool returns events', async ({ page }) => {
     // The executeTool path is server-side. Verify the underlying query
-    // the tool runs returns live events (same filter: is_active=true,
-    // event_date >= today, scoped by restaurant_id).
-    const url = 'https://ckforlwdhewexyqljsaf.supabase.co/rest/v1/events';
+    // the tool runs returns live events by hitting the authenticated
+    // /api/events endpoint (same restaurant_id scope, same is_active filter).
+    await login(page);
+
+    const events = await page.evaluate(async () => {
+      // Pull the Supabase JWT that the app persists for authenticated fetches
+      const keys = Object.keys(localStorage).filter(k => k.startsWith('sb-') && k.endsWith('-auth-token'));
+      const raw = keys.length ? localStorage.getItem(keys[0]) : null;
+      const token = raw ? JSON.parse(raw).access_token : null;
+      const res = await fetch('/api/events?action=list', {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      const json = await res.json();
+      return { status: res.status, events: json?.data?.events || json?.events || [] };
+    });
+
+    console.log('GET /api/events status:', events.status, '| count:', (events.events || []).length);
+    expect(events.status).toBe(200);
+
     const today = new Date().toISOString().slice(0, 10);
-    const res = await request.get(
-      `${url}?restaurant_id=eq.c3368ea1-b278-416f-ad24-de28434fe9ce&is_active=eq.true&event_date=gte.${today}&select=id,title,event_date,current_bookings,max_capacity`,
-      {
-        headers: {
-          'apikey': process.env.SUPABASE_SERVICE_ROLE_KEY || '',
-          'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY || ''}`,
-          'Accept-Profile': 'restaurant',
-        },
-      }
+    const upcomingActive = (events.events || []).filter(
+      e => e.is_active && e.event_date >= today
     );
-    expect(res.status()).toBe(200);
-    const events = await res.json();
-    console.log('Upcoming events the tool will surface:', events.length);
-    expect(events.length).toBeGreaterThanOrEqual(1);
-    expect(events[0]).toHaveProperty('title');
-    expect(events[0]).toHaveProperty('event_date');
+    console.log('Upcoming active events the tool will surface:', upcomingActive.length);
+    expect(upcomingActive.length).toBeGreaterThanOrEqual(1);
+    expect(upcomingActive[0]).toHaveProperty('title');
+    expect(upcomingActive[0]).toHaveProperty('event_date');
   });
 
   test('Dashboard today widgets read live data (upcoming reservations, revenue forecast)', async ({ page }) => {
