@@ -27,37 +27,6 @@ const { processMessage } = require('./_lib/channels/message-processor');
 const logger = createSecureLogger('WhatsApp');
 const adapter = new MetaAdapter();
 
-// DIAG: monkey-patch global fetch to log every Graph API send call.
-// Catches sends that bypass sendViaMeta (e.g. sendInteractiveButton, template,
-// or direct fetches from elsewhere). Each call logs its URL + preview + stack.
-(function instrumentGraphFetch() {
-  if (global.__graphFetchInstrumented) return;
-  global.__graphFetchInstrumented = true;
-  const origFetch = global.fetch;
-  global.fetch = async function(url, opts) {
-    try {
-      const u = String(url || '');
-      if (u.includes('graph.facebook.com') && opts?.method === 'POST' && u.includes('/messages')) {
-        let preview = '';
-        try {
-          const body = typeof opts.body === 'string' ? JSON.parse(opts.body) : opts.body;
-          preview = body?.text?.body || body?.interactive?.body?.text || body?.template?.name || JSON.stringify(body).slice(0, 100);
-        } catch (_) { preview = String(opts.body || '').slice(0, 100); }
-        const stack = new Error().stack.split('\n').slice(2, 7).map(s => s.trim()).join(' | ');
-        logger.error(`[GRAPH_SEND] url=${u.split('?')[0].slice(-50)} preview="${String(preview).slice(0, 100).replace(/\n/g, ' ')}" stack=${stack}`);
-        try {
-          const { centralSupabase } = require('./_lib/central-supabase');
-          if (centralSupabase) {
-            const id = `OUT-GF-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-            centralSupabase.from('whatsapp_message_dedup').insert({ message_id: `${id}|${String(preview).slice(0, 100).replace(/\n/g, ' ')}` }).then(() => {}).catch(() => {});
-          }
-        } catch (_) {}
-      }
-    } catch (_) {}
-    return origFetch.call(this, url, opts);
-  };
-})();
-
 /**
  * Handle webhook verification (GET)
  */
