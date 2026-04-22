@@ -64,24 +64,28 @@ async function sendViaMeta(to, message) {
     return { success: false, error: 'WhatsApp not configured' };
   }
 
+  // NOTE: NO RETRY. Meta's /messages endpoint is NOT idempotent without a
+  // client-side biz_opaque_callback_data key. A fetch-level retry (network
+  // hiccup after Meta already accepted the send) produces two visible
+  // deliveries to the user. Observed in production 2026-04-22: every reply
+  // was sent twice (generic + proper) because a withRetry wrap re-fired
+  // sends. Meta's own webhook retry + our dedup table handle the inverse
+  // case (incoming message delivered twice).
   try {
-    const response = await withRetry(
-      () => fetch(`${WHATSAPP_API_URL}/${phoneNumberId}/messages`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          messaging_product: 'whatsapp',
-          recipient_type: 'individual',
-          to,
-          type: 'text',
-          text: { body: message }
-        })
-      }),
-      { maxAttempts: 2 }
-    );
+    const response = await fetch(`${WHATSAPP_API_URL}/${phoneNumberId}/messages`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        messaging_product: 'whatsapp',
+        recipient_type: 'individual',
+        to,
+        type: 'text',
+        text: { body: message }
+      })
+    });
 
     const data = await response.json();
 
@@ -120,14 +124,15 @@ async function sendViaTwilio(to, message) {
       ? twilioWhatsAppNumber
       : `whatsapp:${twilioWhatsAppNumber}`;
 
-    const result = await withRetry(
-      () => client.messages.create({
-        body: message,
-        from: fromNumber,
-        to: toNumber
-      }),
-      { maxAttempts: 2 }
-    );
+    // NO retry — Twilio's messages.create is not idempotent without an
+    // Idempotency-Key header. Retry on a network glitch after Twilio
+    // already queued the send produces a duplicate delivery. Same rationale
+    // as sendViaMeta above.
+    const result = await client.messages.create({
+      body: message,
+      from: fromNumber,
+      to: toNumber
+    });
 
     logger.info(`Twilio WhatsApp message sent to ${to}, sid=${result.sid}`);
     return { success: true, messageId: result.sid };
