@@ -316,6 +316,9 @@ async function processMessage(adapter, msg, options = {}) {
     } else if (interactiveSelection.id.startsWith('cancel_reservation_')) {
       const reservationId = interactiveSelection.id.replace('cancel_reservation_', '');
       aiMessage = `[BUTTON_ACTION: cancel_reservation id=${reservationId}] ${text}`;
+    } else if (interactiveSelection.id.startsWith('modify_reservation_')) {
+      const reservationId = interactiveSelection.id.replace('modify_reservation_', '');
+      aiMessage = `[BUTTON_ACTION: modify_reservation id=${reservationId}] ${text}`;
     } else if (interactiveSelection.id === 'action_make_reservation') {
       aiMessage = `[BUTTON_ACTION: make_reservation] ${text || 'Quero fazer uma reserva'}`;
     } else if (interactiveSelection.id === 'action_change_reservation') {

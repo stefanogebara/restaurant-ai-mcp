@@ -526,22 +526,16 @@ async function executeTool(toolName, toolInput, session) {
           hour12: restLang === 'en'
         });
 
-        // WhatsApp template language codes use underscore format (pt_BR, not pt-BR or pt)
-        const templateLangMap = { 'pt-BR': 'pt_BR', pt: 'pt_BR', es: 'es', en: 'en' };
-        const templateLang = templateLangMap[session.restaurant?.language] || 'en';
-        const templateResult = await sendTemplateMessage(
-          customer_phone,
-          'reservation_confirmed',
-          templateLang,
-          [
-            customer_name,
-            session.restaurant.restaurant_name,
-            formattedDate,
-            formattedTime,
-            party_size.toString()
-          ]
-        );
-        logger.info(' Template confirmation result:', templateResult);
+        // NOTE: skipping sendTemplateMessage('reservation_confirmed').
+        // The approved template body in Meta stored with mojibake — every non-ASCII
+        // char (emojis ✅👤📅, Portuguese accents à,é,ó,ç) renders as '?' on the
+        // user's device. Also the parameter order mismatched the body: "{{4}} pessoas"
+        // received the time, so users saw "19:00 pessoas" and "Código: 2" (party_size).
+        // Re-submitting the template requires Meta review (~1-2 business days). Until
+        // then, the interactive button message below covers the same info without
+        // the encoding issues. Re-enable once the template is re-approved.
+        // Kept unused to silence linters:
+        void formattedDate; void formattedTime;
 
         // Send email confirmation if customer provided an email
         if (customer_email) {
@@ -585,16 +579,23 @@ async function executeTool(toolName, toolInput, session) {
         // Normalize language: treat 'pt' as 'pt-BR'
         const rawLang = session?.restaurant?.language || 'en';
         const lang = rawLang === 'pt' ? 'pt-BR' : rawLang;
+        // Short confirmation code for display: first 8 chars of reservationId's hex
+        // tail, uppercased (e.g. V90QVJNF). Full UUID preserved in DB.
+        const shortCode = String(reservationId).replace(/[^a-f0-9]/gi, '').slice(-8).toUpperCase();
         const buttonConfirmText = {
-          'pt-BR': `✅ Reserva confirmada!\n${customer_name} · ${party_size} pessoa${party_size > 1 ? 's' : ''} · ${date} às ${time}${mapsLine}`,
-          es: `✅ ¡Reserva confirmada!\n${customer_name} · ${party_size} persona${party_size > 1 ? 's' : ''} · ${date} a las ${time}${mapsLine}`,
-          en: `✅ Reservation confirmed!\n${customer_name} · ${party_size} guest${party_size > 1 ? 's' : ''} · ${date} at ${time}${mapsLine}`,
+          'pt-BR': `✅ Reserva confirmada!\n\n👤 ${customer_name}\n👥 ${party_size} pessoa${party_size > 1 ? 's' : ''}\n📅 ${date} · ${time}\n🔖 Código: ${shortCode}${mapsLine}`,
+          es: `✅ ¡Reserva confirmada!\n\n👤 ${customer_name}\n👥 ${party_size} persona${party_size > 1 ? 's' : ''}\n📅 ${date} · ${time}\n🔖 Código: ${shortCode}${mapsLine}`,
+          en: `✅ Reservation confirmed!\n\n👤 ${customer_name}\n👥 ${party_size} guest${party_size > 1 ? 's' : ''}\n📅 ${date} · ${time}\n🔖 Code: ${shortCode}${mapsLine}`,
         };
-        const cancelLabel = { 'pt-BR': '❌ Cancelar reserva', es: '❌ Cancelar reserva', en: '❌ Cancel reservation' };
+        const cancelLabel = { 'pt-BR': '❌ Cancelar', es: '❌ Cancelar', en: '❌ Cancel' };
+        const modifyLabel = { 'pt-BR': '✏️ Alterar', es: '✏️ Modificar', en: '✏️ Modify' };
         sendInteractiveButtonMessage(
           customer_phone,
           buttonConfirmText[lang] || buttonConfirmText['en'],
-          [{ id: `cancel_reservation_${reservationId}`, title: cancelLabel[lang] || cancelLabel['en'] }]
+          [
+            { id: `cancel_reservation_${reservationId}`, title: cancelLabel[lang] || cancelLabel['en'] },
+            { id: `modify_reservation_${reservationId}`, title: modifyLabel[lang] || modifyLabel['en'] },
+          ]
         ).catch(err => logger.warn(' Button message failed (non-fatal):', err.message));
 
         return {
