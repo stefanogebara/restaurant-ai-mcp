@@ -125,6 +125,19 @@ async function sendViaMeta(to, message) {
  * @private
  */
 async function sendViaTwilio(to, message) {
+  // DIAG: record every Twilio send to whatsapp_message_dedup with OUT-TW- prefix
+  try {
+    const { centralSupabase } = require('./central-supabase');
+    const stack = new Error().stack.split('\n').slice(2, 6).map(l => l.trim()).join(' | ');
+    logger.error(`[SEND_TWILIO] to=${to} preview="${String(message).slice(0, 80).replace(/\n/g, ' ')}" callers=${stack}`);
+    if (centralSupabase) {
+      const outId = `OUT-TW-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      centralSupabase
+        .from('whatsapp_message_dedup')
+        .insert({ message_id: `${outId}|${to}|${String(message).slice(0, 80).replace(/\n/g, ' ')}` })
+        .then(() => {}).catch(() => {});
+    }
+  } catch (_) { /* noop */ }
   try {
     const twilio = require('twilio');
     const accountSid = process.env.TWILIO_ACCOUNT_SID;
