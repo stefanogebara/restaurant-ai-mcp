@@ -275,6 +275,8 @@ const RESERVATION_TOOLS = [
 /**
  * Resolve the restaurant object from session.
  * Handles the case where the Supabase JOIN returns null but restaurant_id FK is set.
+ * Falls back to restaurant_config schema if the central registry is unavailable,
+ * so tools don't fail with "No restaurant selected" when the registry fetch hiccups.
  * @param {object} session
  * @returns {Promise<object|null>}
  */
@@ -283,10 +285,30 @@ async function resolveSessionRestaurant(session) {
   if (!session?.restaurant_id) return null;
   try {
     const restaurants = await getAllActiveRestaurants();
-    return restaurants.find(r => r.id === session.restaurant_id) || null;
-  } catch (_) {
-    return null;
-  }
+    const fromRegistry = restaurants.find(r => r.id === session.restaurant_id);
+    if (fromRegistry) return fromRegistry;
+  } catch (_) { /* fall through to config fallback */ }
+
+  // Fallback: synthesize minimal object from restaurant_config so tools can proceed.
+  // The tools only need id/restaurant_name/language/slug for prompts + messaging.
+  try {
+    const { data } = await supabaseAdmin
+      .schema('restaurant')
+      .from('restaurant_config')
+      .select('id, restaurant_name, restaurant_slug, agent_language, language')
+      .eq('id', session.restaurant_id)
+      .single();
+    if (data) {
+      return {
+        id: data.id,
+        restaurant_name: data.restaurant_name,
+        restaurant_slug: data.restaurant_slug,
+        language: data.agent_language || data.language || 'pt',
+      };
+    }
+  } catch (_) { /* noop */ }
+
+  return null;
 }
 
 /**
@@ -295,11 +317,16 @@ async function resolveSessionRestaurant(session) {
 async function executeTool(toolName, toolInput, session) {
   logger.info(` Executing tool: ${toolName}`, toolInput);
 
-  // Normalize session: if JOIN returned null but FK is set, resolve from registry.
-  // This handles the case where the Supabase restaurant_registry JOIN silently fails.
+  // Normalize session: if JOIN returned null but FK is set, resolve from registry
+  // (with restaurant_config fallback). When resolution hiccups, last-resort synthesize
+  // a stub carrying just the id so tool guards (which check session.restaurant) pass
+  // and the actual DB queries (which only need restaurant_id) can proceed.
   if (!session?.restaurant && session?.restaurant_id) {
     const resolved = await resolveSessionRestaurant(session);
-    if (resolved) session = { ...session, restaurant: resolved };
+    session = {
+      ...session,
+      restaurant: resolved || { id: session.restaurant_id },
+    };
   }
 
   switch (toolName) {
