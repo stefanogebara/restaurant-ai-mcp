@@ -106,10 +106,25 @@ async function handleKeyword(normalizedText, from) {
       );
 
       if (restaurantId) {
-        // Fire-and-forget — don't await so the webhook returns quickly
-        sendWeeklyReportViaWhatsApp(restaurantId, from, language).catch(err => {
-          logger.error('RELATORIO async send error', { error: err.message, restaurantId });
-        });
+        // AWAITED. Fire-and-forget doesn't work on Vercel — the Lambda dies
+        // the moment the outer webhook sends 200 OK, killing this promise.
+        // Previously: user saw "Gerando..." but never received the PDF.
+        // PDF generation (Gotenberg HTML→PDF + storage upload + WhatsApp send)
+        // typically takes 8-15s, well within the whatsapp-webhook's 120s
+        // maxDuration. Meta webhook-retry dedup prevents double-processing.
+        try {
+          const r = await sendWeeklyReportViaWhatsApp(restaurantId, from, language);
+          if (!r?.success) {
+            logger.error('RELATORIO send failed', { restaurantId, error: r?.error });
+            await sendWhatsAppMessage(from,
+              language === 'pt-BR'
+                ? 'Desculpe, não consegui gerar o relatório agora. Tente novamente em alguns minutos.'
+                : 'Sorry, I couldn\'t generate the report right now. Please try again in a few minutes.'
+            ).catch(() => {});
+          }
+        } catch (err) {
+          logger.error('RELATORIO exception', { restaurantId, error: err.message });
+        }
       } else {
         logger.warn('RELATORIO keyword: no restaurant found in session', { from });
       }
