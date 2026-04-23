@@ -18,6 +18,9 @@ const { logCronRun } = require('../_lib/cron-tracker');
 
 const logger = createSecureLogger('CronCleanupWhatsAppDedup');
 const DEDUP_TTL_HOURS = 24;
+if (DEDUP_TTL_HOURS < 1) {
+  throw new Error('DEDUP_TTL_HOURS must be >= 1 to avoid wiping active dedup rows');
+}
 
 module.exports = async (req, res) => {
   const cronSecret = process.env.CRON_SECRET;

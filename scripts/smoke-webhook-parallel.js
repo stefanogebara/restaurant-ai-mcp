@@ -72,8 +72,26 @@ async function fireWebhook(i) {
   return { i, messageId, status: res.status, elapsed };
 }
 
+async function assertLockPrimaryKey() {
+  // Belt-and-suspenders: confirm the UNIQUE/PRIMARY KEY on `phone` is intact.
+  // If someone drops the PK, the lock becomes a suggestion and duplicates sneak through.
+  const probe = `__pk_probe_${Date.now()}`;
+  const expiresAt = new Date(Date.now() + 5000).toISOString();
+  await supabase.from('whatsapp_processing_lock').delete().eq('phone', probe);
+  const first = await supabase.from('whatsapp_processing_lock').insert({ phone: probe, expires_at: expiresAt });
+  if (first.error) throw new Error(`PK probe insert #1 failed: ${first.error.message}`);
+  const second = await supabase.from('whatsapp_processing_lock').insert({ phone: probe, expires_at: expiresAt });
+  if (second.error?.code !== '23505') {
+    throw new Error(`PK probe: expected 23505 unique violation on duplicate insert, got ${second.error?.code || 'OK'} — PRIMARY KEY may be missing`);
+  }
+  await supabase.from('whatsapp_processing_lock').delete().eq('phone', probe);
+  console.log('  PK assertion: phone column is unique (duplicate insert rejected with 23505)');
+}
+
 async function main() {
   console.log(`\nPhone: ${TEST_PHONE}`);
+  console.log('Asserting whatsapp_processing_lock PRIMARY KEY is intact...');
+  await assertLockPrimaryKey();
   console.log('Clearing any prior state for this phone...');
   await supabase.from('whatsapp_processing_lock').delete().eq('phone', TEST_PHONE);
 
