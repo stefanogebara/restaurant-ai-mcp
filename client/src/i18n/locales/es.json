@@ -359,7 +359,31 @@
     "last7days": "Últimos 7 días",
     "reports": "Informes",
     "responseRate": "Tasa de Respuesta",
-    "responses": "respuestas"
+    "responses": "respuestas",
+    "survey": {
+      "title": "Encuesta de Satisfacción",
+      "description": "Envía una encuesta de satisfacción por WhatsApp después de cada visita. Recoge valoraciones con estrellas y comentarios de tus clientes.",
+      "enableToggle": "Activar encuesta post-visita",
+      "sendAfter": "Enviar encuesta después de",
+      "delay30min": "30 min",
+      "delay1h": "1 hora",
+      "delay2h": "2 horas",
+      "delay4h": "4 horas",
+      "delay6h": "6 horas",
+      "delay12h": "12 horas",
+      "delay24h": "24 horas",
+      "questionLabel": "Pregunta de la encuesta",
+      "questionPlaceholder": "¿Cómo fue tu experiencia?",
+      "questionHint": "La pregunta que se envía a los clientes después de su visita.",
+      "saving": "Guardando...",
+      "saveSettings": "Guardar Configuración de Encuesta",
+      "resultsTitle": "Resultados (Últimos 30 Días)",
+      "avgRating": "Valoración Media",
+      "totalResponses": "Respuestas",
+      "recentComments": "Comentarios Recientes",
+      "anonymous": "Anónimo",
+      "noResponses": "Aún no hay respuestas de la encuesta. Los resultados aparecerán aquí cuando los clientes respondan."
+    }
   },
   "bookingChannels": {
     "title": "Canales de Reserva",
@@ -1218,7 +1242,22 @@
     "phoneVerified": "¡Número de teléfono verificado!",
     "metaVerificationHint": "Para la insignia verde de verificado, completa la",
     "metaBusinessVerification": "Verificación de Meta Business",
-    "testMessageSent": "¡Mensaje de prueba enviado!"
+    "testMessageSent": "¡Mensaje de prueba enviado!",
+    "defaultDiningDuration": "Duración Predeterminada de la Comida",
+    "durationMinutes": "{{count}} minutos",
+    "autoConfirm": "Confirmar reservas automáticamente",
+    "phoneVerPending": "Tu número de teléfono aún no está verificado. Solicita un código de verificación a continuación.",
+    "reverifyPhone": "Verificar de Nuevo",
+    "analyticsBriefing": "Informe Diario de Analíticas",
+    "analyticsBriefingLabel": "Analíticas diarias por WhatsApp",
+    "analyticsBriefingDesc": "Recibe un resumen diario a las 9:00 con visitas, embudo de demo y métricas de conversión",
+    "analyticsBriefingPhone": "Número de WhatsApp para el informe",
+    "phoneStatus": {
+      "EXPIRED": "EXPIRADO",
+      "NOT_VERIFIED": "NO VERIFICADO",
+      "VERIFIED": "VERIFICADO"
+    },
+    "loadError": "Error al cargar la configuración del restaurante."
   },
   "customers": {
     "title": "Clientes",
@@ -1889,7 +1928,9 @@
         "emailPlaceholder": "Tu correo profesional",
         "emailHint": "Enviaremos el enlace del demo aquí",
         "launchDemo": "Lanzar mi demo",
-        "creatingDemo": "Creando tu demo..."
+        "creatingDemo": "Creando tu demo...",
+        "searchFailed": "Búsqueda fallida",
+        "networkError": "Error de red. Inténtalo de nuevo."
       }
     },
     "voiceDemo": {
@@ -2006,7 +2047,13 @@
   "voice": {
     "settingsSaved": "Configuración de voz guardada exitosamente",
     "savedWithSyncWarning": "Configuración guardada localmente. La sincronización del agente se aplicará en la próxima actualización.",
-    "searchVoices": "Buscar voces..."
+    "searchVoices": "Buscar voces...",
+    "agentActive": "Agente activo",
+    "agentCreating": "Creando tu agente de voz...",
+    "agentCreatingDesc": "Esto puede tardar hasta 2 minutos. Si el agente no aparece, inténtalo de nuevo a continuación.",
+    "agentCreationStarted": "Creación del agente iniciada. Esto puede tardar hasta 2 minutos.",
+    "retryAgentCreation": "Reintentar Creación del Agente",
+    "retrying": "Creando..."
   },
   "voiceExperiment": {
     "title": "Prueba A/B de Tu Voz",
@@ -2220,7 +2267,27 @@
       "patio": "Patio",
       "bar": "Bar",
       "main": "Principal"
-    }
+    },
+    "tableLabel": "Mesa",
+    "status": {
+      "available": "Disponible",
+      "occupied": "Ocupada",
+      "reserved": "Reservada",
+      "cleaning": "Limpieza",
+      "unknown": "Desconocido"
+    },
+    "shape": {
+      "label": "Forma",
+      "round": "Redonda",
+      "square": "Cuadrada",
+      "rectangle": "Rectangular",
+      "booth": "Cabina",
+      "barStool": "Taburete de Bar"
+    },
+    "capacity": "Capacidad",
+    "saveChanges": "Guardar Cambios",
+    "delete": "Eliminar",
+    "deleteConfirm": "¿Eliminar mesa {{number}}?"
   },
   "insights": {
     "title": "Insights IA",
@@ -2402,7 +2469,32 @@
       "subtitle": "Esto es lo que tus clientes escucharán cuando llamen",
       "clickToTalk": "Haz clic en el widget de abajo para empezar a hablar",
       "loading": "Cargando agente de voz...",
-      "skipToDashboard": "Ir al panel"
+      "skipToDashboard": "Ir al panel",
+      "error": "Agente de voz no disponible",
+      "listening": "Escuchando... toca el orbe para detener",
+      "tapToStart": "Toca el orbe para empezar a hablar"
+    },
+    "banner": {
+      "expired": "Demo expirada",
+      "oneDayLeft": "Modo demo · 1 día restante",
+      "daysLeft": "Modo demo · {{count}} días restantes",
+      "upgrade": "Actualiza para conservar tus datos"
+    },
+    "conversation": {
+      "loading": "Cargando datos del restaurante...",
+      "notFound": "Demo no encontrada o expirada.",
+      "restaurantNotFound": "Restaurante no encontrado. Prueba con otro nombre.",
+      "missingParams": "Proporciona ?token= o ?q= en la URL.",
+      "loadError": "Error al cargar los datos del restaurante.",
+      "settingUp": "Configurando tu panel personalizado...",
+      "fewSeconds": "Esto tarda unos segundos",
+      "placeholder": "Escribe tu mensaje...",
+      "send": "Enviar mensaje",
+      "ariaChat": "Conversación con IA"
+    },
+    "errors": {
+      "createFailed": "No se pudo crear la demo. Inténtalo de nuevo.",
+      "generic": "Algo salió mal. Inténtalo de nuevo."
     }
   },
   "pageTitles": {
@@ -2827,7 +2919,11 @@
     "netRevenue": "Ingreso Neto",
     "refunded": "Reembolsado",
     "noBookings": "Sin reservas aun",
-    "error": "Error al cargar reservas"
+    "error": "Error al cargar reservas",
+    "statusPaid": "Pagado",
+    "statusRefunded": "Reembolsado",
+    "statusFailed": "Fallido",
+    "statusPending": "Pendiente"
   },
   "integrations": {
     "title": "Integración POS",
@@ -2863,5 +2959,50 @@
     "endpointServiceCompletion": "Reportar servicios completados con facturación",
     "endpointReservations": "Consultar reservas por rango de fechas",
     "endpointTableStatus": "Actualizar estado de disponibilidad de mesas"
+  },
+  "events": {
+    "pageTitle": "Eventos y Experiencias",
+    "newEvent": "Nuevo Evento",
+    "totalEvents": "Total",
+    "upcomingEvents": "Próximos",
+    "totalBookings": "Reservas",
+    "estimatedRevenue": "Ingresos Est.",
+    "title": "Título",
+    "titlePlaceholder": "ej. Noche de Cata de Vinos",
+    "description": "Descripción",
+    "descriptionPlaceholder": "Describe la experiencia...",
+    "optional": "opcional",
+    "date": "Fecha",
+    "time": "Hora",
+    "duration": "Duración (min)",
+    "capacity": "Capacidad",
+    "price": "Precio (€)",
+    "refundPolicy": "Política de Reembolso",
+    "refundFull": "Reembolso total",
+    "refundPartial": "Reembolso del 50%",
+    "refundNone": "Sin reembolso",
+    "menuDescription": "Menú / Detalles de la Experiencia",
+    "menuPlaceholder": "Describe el menú o los puntos destacados de la experiencia...",
+    "cancel": "Cancelar",
+    "creating": "Creando...",
+    "createEvent": "Crear Evento",
+    "confirmDeactivate": "¿Desactivar este evento?",
+    "booked": "reservadas",
+    "spotsLeft": "restantes",
+    "hideBookings": "Ocultar",
+    "viewBookings": "Ver Reservas",
+    "deactivate": "Desactivar",
+    "errorLoading": "Error al cargar eventos",
+    "noEvents": "Aún no hay eventos",
+    "noEventsHint": "Crea tu primer evento para ofrecer experiencias únicas",
+    "errorTitleRequired": "El título es obligatorio",
+    "errorDateRequired": "La fecha es obligatoria",
+    "errorTimeRequired": "La hora es obligatoria",
+    "errorCapacityRequired": "La capacidad debe ser al menos 1",
+    "errorPriceRequired": "El precio debe ser 0 o mayor",
+    "statusInactive": "Inactivo",
+    "statusPast": "Finalizado",
+    "statusFull": "Lleno",
+    "statusUpcoming": "Próximo"
   }
 }
