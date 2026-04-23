@@ -27,6 +27,11 @@ CREATE INDEX IF NOT EXISTS idx_usage_tracking_unreported
   ON public.usage_tracking (restaurant_id, period)
   WHERE reported_to_stripe IS NULL;
 
+-- Intentional: no policies. RLS enabled + zero policies means only
+-- service_role (which bypasses RLS) can read/write. All current callers
+-- (trackUsage, stripe-usage-reporter, manager-usage, whatsapp-settings)
+-- use supabaseAdmin. If any user-JWT code path is added later, grant an
+-- explicit SELECT policy for the restaurant owner to avoid silent empties.
 ALTER TABLE public.usage_tracking ENABLE ROW LEVEL SECURITY;
 
 -- Atomic increment: upsert a row and add to its count in one statement.

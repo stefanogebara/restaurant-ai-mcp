@@ -104,9 +104,14 @@ test.describe('Live production fixes verified on seatable.one', () => {
   });
 
   test('Fix #4: WhatsApp agent list_upcoming_events tool returns events', async ({ page }) => {
-    // The executeTool path is server-side. Verify the underlying query
-    // the tool runs returns live events by hitting the authenticated
-    // /api/events endpoint (same restaurant_id scope, same is_active filter).
+    // KNOWN GAP: this verifies the restaurant.events table has upcoming rows
+    // via /api/events, not that the executeTool() function itself works. The
+    // tool lives in api/services/whatsapp/reservation-tools.js and uses
+    // supabaseAdmin.schema('restaurant').from('events') directly. If someone
+    // refactors the tool's query without touching /api/events, this test
+    // would pass while the tool is broken. A proper unit test of the tool
+    // handler is tracked as follow-up. Acceptable trade-off: keeps CI free
+    // of SUPABASE_SERVICE_ROLE_KEY secret management.
     await login(page);
 
     const events = await page.evaluate(async () => {
