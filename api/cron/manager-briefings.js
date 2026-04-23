@@ -9,16 +9,27 @@ const { buildWeeklyReservationsChart, buildNoShowChart } = require('../services/
 
 const logger = createSecureLogger('manager-briefings');
 
+// These briefings are delivered as VOICE NOTES (TTS). Write like you're speaking
+// to a friend, not printing a report. No bullets, headings, markdown, or numbered
+// lists — they read robotically in TTS. Prose flows. Numbers woven into sentences.
+// Aim for 45-75 seconds spoken (roughly 90-150 words). Always end with ONE concrete
+// insight or suggestion, not a summary.
+const VOICE_STYLE_RULES = {
+  en: `STYLE: This will be READ ALOUD as a voice note. Talk like a trusted team member catching up with the manager at the end of service — warm, natural, conversational. Plain prose only. NO bullet points, NO headings, NO asterisks, NO markdown of any kind. Weave numbers into sentences ("we did 28 covers tonight", not "Covers: 28"). Give ONE concrete insight or observation — something you noticed, not a recap. 90-150 words, ~60 seconds spoken.`,
+  'pt-BR': `ESTILO: Isso vai ser OUVIDO como audio. Fala como um membro da equipe conversando com o gerente no fim do expediente — caloroso, natural, de conversa. Prosa simples. SEM marcadores, SEM titulos, SEM asteriscos, SEM markdown. Integra os numeros nas frases ("a gente fez 28 covers hoje", nao "Covers: 28"). Traz UMA observacao concreta — algo que voce notou, nao so um resumo de estatisticas. 90-150 palavras, uns 60 segundos falados.`,
+  es: `ESTILO: Esto se ESCUCHARA como audio. Habla como un miembro del equipo poniendo al gerente al dia al final del servicio — calido, natural, conversacional. Prosa simple. SIN vinetas, SIN titulos, SIN asteriscos, SIN markdown. Integra los numeros en las frases ("hicimos 28 cubiertos esta noche", no "Cubiertos: 28"). Da UNA observacion concreta — algo que notaste, no solo un resumen. 90-150 palabras, unos 60 segundos hablados.`,
+};
+
 const BRIEFING_PROMPTS = {
   end_of_day: {
-    en: 'Give me a concise end-of-day briefing: covers served, notable events, anything to prepare for tomorrow.',
-    'pt-BR': 'Me da um resumo conciso do fim do dia: covers servidos, eventos notaveis, e o que preparar para amanha.',
-    es: 'Dame un resumen conciso del fin del dia: cubiertos servidos, eventos notables, y que preparar para manana.',
+    en: `It's the end of service. Give a spoken end-of-day catch-up: how tonight went (covers, any hiccups, standout moments), what's worth flagging for tomorrow's planning. ${VOICE_STYLE_RULES.en}`,
+    'pt-BR': `O servico acabou. Me da um recap falado do fim do dia: como foi hoje (covers, qualquer problema, momentos de destaque), o que vale a pena anotar para amanha. ${VOICE_STYLE_RULES['pt-BR']}`,
+    es: `Se acabo el servicio. Dame un recap hablado del fin del dia: como fue esta noche (cubiertos, algun problema, momentos destacables), que vale anotar para manana. ${VOICE_STYLE_RULES.es}`,
   },
   morning: {
-    en: 'Give me a morning briefing: reservations today, any upcoming events or prep I should know about.',
-    'pt-BR': 'Me da o briefing da manha: reservas de hoje, eventos ou preparativos que eu deva saber.',
-    es: 'Dame el briefing de la manana: reservas de hoy, eventos o preparativos que deba saber.',
+    en: `Good morning. Give a spoken morning briefing for the day ahead: what the day looks like (reservations, any VIPs or special bookings, events), and one thing worth focusing on today. ${VOICE_STYLE_RULES.en}`,
+    'pt-BR': `Bom dia. Me da um briefing falado para o dia: como o dia ta pintando (reservas, VIPs ou bookings especiais, eventos), e uma coisa que vale focar hoje. ${VOICE_STYLE_RULES['pt-BR']}`,
+    es: `Buenos dias. Dame un briefing hablado para el dia: como viene el dia (reservas, VIPs o reservas especiales, eventos), y una cosa en la que valga la pena enfocarse hoy. ${VOICE_STYLE_RULES.es}`,
   },
 };
 
