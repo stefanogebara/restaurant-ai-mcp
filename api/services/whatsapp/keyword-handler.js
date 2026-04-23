@@ -95,8 +95,10 @@ async function handleKeyword(normalizedText, from) {
   if (normalizedText === 'RELATORIO' || normalizedText === 'REPORT') {
     try {
       const session = await getSessionByPhone(from);
-      const restaurantId = session?.restaurant?.id;
-      const language = session?.restaurant?.agent_language || 'pt-BR';
+      // JOIN on restaurant_registry returns null intermittently; fall back to the FK.
+      const restaurantId = session?.restaurant?.id || session?.restaurant_id;
+      const language = session?.restaurant?.agent_language || session?.restaurant?.language || 'pt-BR';
+      logger.info('[RELATORIO] start', { from, restaurantId, hasSession: !!session, hasRestaurantJoin: !!session?.restaurant });
 
       // Acknowledge immediately, send report asynchronously
       await sendWhatsAppMessage(from,
