@@ -5,6 +5,7 @@
 'use strict';
 
 const { generateWeeklyReportHTML, generateWeeklyReportPDF, uploadReportToStorage } = require('./services/pdfReportService');
+const { sendWhatsAppDocumentMessage } = require('./_lib/whatsapp-sender');
 
 module.exports = async (req, res) => {
   const secret = req.query?.secret || req.headers['x-secret'];
@@ -27,6 +28,21 @@ module.exports = async (req, res) => {
     const url = await uploadReportToStorage(pdf, restaurantId, 'weekly');
     out.steps.push({ step: 'upload:ok', elapsed_ms: Date.now() - t0 });
     out.url = url.slice(0, 150);
+
+    // Optionally also test the document send to a test phone
+    const testPhone = req.query?.phone;
+    if (testPhone) {
+      out.steps.push({ step: 'doc_send:start', elapsed_ms: Date.now() - t0 });
+      const result = await sendWhatsAppDocumentMessage(testPhone, url, 'diag-pdf', 'test.pdf');
+      out.steps.push({
+        step: 'doc_send:done',
+        elapsed_ms: Date.now() - t0,
+        success: result.success,
+        error: result.error,
+        messageId: result.messageId,
+      });
+      out.doc_send_result = result;
+    }
     out.success = true;
   } catch (err) {
     out.success = false;
