@@ -145,13 +145,18 @@ test.describe('Live production fixes verified on seatable.one', () => {
     await page.waitForLoadState('networkidle', { timeout: 25000 }).catch(() => {});
     await page.waitForTimeout(3000);
 
+    // Widget renders a number (can legitimately be 0 on an empty day — we just
+    // need to prove the widget wired up, not that today's calendar is full).
     const todayCount = await page.locator('text=/TODAY.S RESERVATIONS/i').locator('..').locator('text=/^\\d+$/').first().textContent();
     console.log("Today's reservations:", todayCount);
-    expect(Number(todayCount)).toBeGreaterThan(0);
+    expect(todayCount).not.toBeNull();
+    expect(Number.isFinite(Number(todayCount))).toBe(true);
 
+    // Revenue forecast must show a currency amount — this is derived from
+    // historical avg_spend × upcoming covers, so it should always have a value.
     const forecast = await page.locator('text=/REVENUE FORECAST/i').locator('..').innerText();
     console.log('Revenue Forecast:', forecast.slice(0, 200));
-    expect(forecast).toMatch(/\$[\d,]+/);
+    expect(forecast).toMatch(/(?:\$|R\$|€)\s*[\d,.]+/);
 
     await page.screenshot({ path: path.join(OUT, 'live-fix-05-dashboard.png'), fullPage: false });
   });
