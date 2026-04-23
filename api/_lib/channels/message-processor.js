@@ -55,12 +55,8 @@ async function processMessage(adapter, msg, options = {}) {
     return { handled: true };
   }
 
-  // 4. Keyword handling (template responses)
-  const normalizedText = text.trim().toUpperCase();
-  const keywordHandled = await handleKeyword(normalizedText, from);
-  if (keywordHandled) {
-    return { handled: true };
-  }
+  // (Keyword handling moved below session mgmt — keywords like RELATORIO and
+  //  STOP need restaurant_id, which isn't available until step 7+8 completes.)
 
   // 5+6. Feedback and survey reply detection (parallel — independent DB lookups)
   let pendingFeedback = null;
@@ -285,6 +281,23 @@ async function processMessage(adapter, msg, options = {}) {
       }
     } catch (err) {
       logger.warn(`[${providerName}] Failed to re-hydrate session.restaurant (non-fatal):`, err.message);
+    }
+  }
+
+  // 8c. Template keyword handling (MODIFY, CANCEL, CONFIRM, BOOK, HELP, STOP, RELATORIO).
+  //     Runs AFTER session management so keywords that need restaurant_id (RELATORIO,
+  //     STOP) have a valid session. Previously ran at step 4, before session mgmt —
+  //     which caused RELATORIO to silently fail because restaurantId was always null.
+  if (text && typeof text === 'string') {
+    const normalizedText = text.trim().toUpperCase();
+    try {
+      const handled = await handleKeyword(normalizedText, from, session);
+      if (handled) {
+        releaseProcessingLock(from).catch(() => {});
+        return { handled: true };
+      }
+    } catch (err) {
+      logger.error(`[${providerName}] Keyword handler error:`, err.message);
     }
   }
 

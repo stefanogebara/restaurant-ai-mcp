@@ -2,20 +2,23 @@
 
 const { createSecureLogger } = require('../../_lib/secure-logger');
 const logger = createSecureLogger('WhatsApp');
-const { getSessionByPhone } = require('../../_lib/whatsapp-sessions');
 const { handleOptOut } = require('../campaignService');
 const { sendWhatsAppMessage } = require('./message-sender');
 const { sendWeeklyReportViaWhatsApp } = require('../pdfReportService');
 
 /**
- * Handle template response keywords (MODIFY, CANCEL, CONFIRM, BOOK, HELP, STOP).
+ * Handle template response keywords (MODIFY, CANCEL, CONFIRM, BOOK, HELP, STOP, RELATORIO).
  * Supports English, Portuguese (pt-BR), and Spanish.
+ *
+ * Called AFTER session management in message-processor.js so keywords that need
+ * restaurant_id (RELATORIO, STOP) have a valid session object.
  *
  * @param {string} normalizedText - Uppercased, trimmed message text
  * @param {string} from - Sender's WhatsApp number
+ * @param {object} [session] - Active session (optional; RELATORIO + STOP need it)
  * @returns {boolean} true if the keyword was handled, false if not a keyword
  */
-async function handleKeyword(normalizedText, from) {
+async function handleKeyword(normalizedText, from, session = null) {
   if (normalizedText === 'MODIFY' || normalizedText === 'MODIFICAR') {
     await sendWhatsAppMessage(from,
       normalizedText === 'MODIFICAR'
@@ -94,40 +97,13 @@ async function handleKeyword(normalizedText, from) {
   // Weekly PDF report on demand
   if (normalizedText === 'RELATORIO' || normalizedText === 'REPORT') {
     try {
-      // Look up the most recent session regardless of expires_at — keyword handling
-      // runs BEFORE session management (step 7 in message-processor), so a live session
-      // may not exist yet. The FK restaurant_id persists even on expired sessions.
-      // getSessionByPhone filters by expires_at > NOW() and was returning null,
-      // causing RELATORIO to silently skip the PDF send.
-      const { supabaseAdmin } = require('../../_lib/supabase');
-      const { normalizePhoneNumber } = require('../../_lib/whatsapp-sessions');
-      const normalizedPhone = normalizePhoneNumber(from);
-      let restaurantId = null;
-      let language = 'pt-BR';
-      try {
-        // whatsapp_sessions has: restaurant_id (FK), no language column
-        const { data } = await supabaseAdmin
-          .from('whatsapp_sessions')
-          .select('restaurant_id')
-          .eq('sender_phone', normalizedPhone)
-          .not('restaurant_id', 'is', null)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-        restaurantId = data?.restaurant_id || null;
-        // Pull language from restaurant_config once we have the restaurant_id
-        if (restaurantId) {
-          try {
-            const { data: cfg } = await supabaseAdmin
-              .schema('restaurant')
-              .from('restaurant_config')
-              .select('agent_language, language')
-              .eq('id', restaurantId)
-              .maybeSingle();
-            language = cfg?.agent_language || cfg?.language || 'pt-BR';
-          } catch (_) { /* keep default */ }
-        }
-      } catch (_) { /* fall through */ }
+      // Session is now passed in from message-processor (post step-8b), so
+      // restaurant_id and restaurant config are guaranteed available here.
+      const restaurantId = session?.restaurant_id || session?.restaurant?.id || null;
+      const language =
+        session?.restaurant?.agent_language ||
+        session?.restaurant?.language ||
+        'pt-BR';
       logger.info('[RELATORIO] start', { from, restaurantId });
 
       // Acknowledge immediately, send report asynchronously
@@ -168,10 +144,8 @@ async function handleKeyword(normalizedText, from) {
 
   // Opt-out keywords for marketing campaigns
   if (normalizedText === 'STOP' || normalizedText === 'UNSUBSCRIBE' || normalizedText === 'PARAR') {
-    // Opt out from all restaurants (best-effort per-restaurant scoping)
     try {
-      const session = await getSessionByPhone(from);
-      const restaurantId = session?.restaurant?.id;
+      const restaurantId = session?.restaurant_id || session?.restaurant?.id;
       if (restaurantId) {
         await handleOptOut(restaurantId, from);
       }

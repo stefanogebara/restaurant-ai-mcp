@@ -6,21 +6,46 @@ const { getLocalDate } = require('../_lib/timezone');
 
 const logger = createSecureLogger('manager-alerts');
 
+// Alert messages — language-aware + conversational tone.
+// Previous versions were English-only and phrased like robot warnings ('⚠️ Quiet
+// night ahead'). Now written like a team member texting the manager with a heads-up.
 const ALERT_CONFIGS = {
   low_covers: {
     prefKey: 'alert_low_covers',
-    message: (n, capacity) =>
-      `⚠️ Quiet night ahead — only ${n} of ${capacity} covers booked for tonight. Consider running a last-minute promotion.`,
+    message: (n, capacity, lang) => {
+      const pct = capacity > 0 ? Math.round((n / capacity) * 100) : 0;
+      if (lang === 'en') {
+        return `Heads up — tonight is looking quiet. Only ${n} of ${capacity} covers booked so far (${pct}%). Might be worth pushing a last-minute promo or reaching out to regulars.`;
+      }
+      if (lang === 'es') {
+        return `Atencion — esta noche viene tranquila. Llevamos solo ${n} de ${capacity} cubiertos (${pct}%). Quiza valga lanzar una promo de ultimo momento o escribirles a los clientes habituales.`;
+      }
+      return `Ei, fica de olho — hoje a noite ta tranquila. So ${n} de ${capacity} covers reservados ate agora (${pct}%). Talvez valha soltar uma promo de ultima hora ou chamar alguns clientes fieis.`;
+    },
   },
   high_noshows: {
     prefKey: 'alert_high_noshows',
-    message: (n) =>
-      `⚠️ High no-show risk — ${n} reservations tonight have a >70% no-show probability. Consider overbooking or sending reminder SMS.`,
+    message: (n, _secondary, lang) => {
+      if (lang === 'en') {
+        return `Heads up — ${n} reservations tonight are looking risky (>70% no-show probability). Worth sending a reminder text or overbooking by 1-2 to cover.`;
+      }
+      if (lang === 'es') {
+        return `Atencion — ${n} reservas de hoy tienen alto riesgo de no-show (>70%). Vale mandar un recordatorio o sobrerreservar 1-2 para cubrir.`;
+      }
+      return `Ei, ${n} reservas de hoje ta com cara de no-show (>70% de chance). Vale mandar um lembrete ou sobrerreservar 1-2 pra compensar.`;
+    },
   },
   late_cancellations: {
     prefKey: 'alert_late_cancellations',
-    message: (n, remaining) =>
-      `⚠️ ${n} cancellations in the last 2 hours for tonight. ${remaining} covers still confirmed.`,
+    message: (n, remaining, lang) => {
+      if (lang === 'en') {
+        return `${n} cancellations came in over the last 2 hours for tonight — you still have ${remaining} covers confirmed. Might be worth checking the waitlist.`;
+      }
+      if (lang === 'es') {
+        return `${n} cancelaciones entraron en las ultimas 2 horas para esta noche — te quedan ${remaining} cubiertos confirmados. Vale revisar la lista de espera.`;
+      }
+      return `${n} cancelamentos entraram nas ultimas 2h pra hoje — ainda tem ${remaining} covers confirmados. Vale dar uma olhada na fila de espera.`;
+    },
   },
 };
 
@@ -44,7 +69,7 @@ module.exports = async (req, res) => {
     const { data: restaurants, error } = await supabaseAdmin
       .schema('restaurant')
       .from('restaurant_config')
-      .select('id, manager_phone, notification_preferences, timezone')
+      .select('id, manager_phone, notification_preferences, timezone, agent_language, language')
       .eq('manager_whatsapp_verified', true)
       .not('manager_phone', 'is', null);
     if (error) throw new Error(error.message);
@@ -71,7 +96,9 @@ module.exports = async (req, res) => {
         continue;
       }
 
-      const message = alertConfig.message(triggered.n, triggered.secondary);
+      const lang = (restaurant.agent_language || restaurant.language || 'pt-BR').toLowerCase();
+      const normalizedLang = lang.startsWith('pt') ? 'pt-BR' : lang.startsWith('es') ? 'es' : 'en';
+      const message = alertConfig.message(triggered.n, triggered.secondary, normalizedLang);
       await sendWhatsAppMessage(restaurant.manager_phone, message);
       sent++;
       logger.info('alert sent', { restaurantId: restaurant.id, alertType });
