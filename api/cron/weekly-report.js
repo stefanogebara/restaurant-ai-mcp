@@ -1,10 +1,11 @@
 /**
  * Weekly Report Cron — Sends PDF weekly reports to opted-in restaurants
  *
- * Schedule: Every Monday at 8:30 AM (via vercel.json)
- *
- * Loops over restaurants that have `weekly_report_whatsapp: true` in their
- * notification_preferences and sends each a PDF report via WhatsApp.
+ * Schedule: Daily at 8:30 AM UTC (via vercel.json).
+ * Each restaurant chooses its delivery day via notification_preferences.weekly_report_day
+ * (0=Sunday..6=Saturday). Day comparison uses the restaurant's timezone, so a Madrid
+ * restaurant's "Monday" fires at 08:30 UTC = 10:30 Madrid — which is still Monday there.
+ * Default weekly_report_day=1 (Monday) when unset, preserving prior behavior.
  */
 
 const { supabaseAdmin } = require('../_lib/supabase');
@@ -13,6 +14,13 @@ const { sendWeeklyReportViaWhatsApp } = require('../services/pdfReportService');
 const { createSecureLogger } = require('../_lib/secure-logger');
 
 const logger = createSecureLogger('WeeklyReportCron');
+
+/** Day-of-week 0-6 (Sunday-Saturday) in the given IANA timezone. */
+function dayOfWeekInTz(tz) {
+  const fmt = new Intl.DateTimeFormat('en-US', { timeZone: tz || 'UTC', weekday: 'short' });
+  const day = fmt.format(new Date());
+  return { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 }[day] ?? new Date().getUTCDay();
+}
 
 module.exports = async (req, res) => {
   const authHeader = req.headers.authorization || '';
@@ -25,18 +33,20 @@ module.exports = async (req, res) => {
     const { data: configs, error: queryErr } = await supabaseAdmin
       .schema('restaurant')
       .from('restaurant_config')
-      .select('id, restaurant_name, manager_phone, manager_whatsapp_verified, notification_preferences, agent_language')
+      .select('id, restaurant_name, manager_phone, manager_whatsapp_verified, notification_preferences, agent_language, timezone')
       .not('manager_phone', 'is', null);
 
     if (queryErr) {
       logger.error('Weekly report query error', { error: queryErr.message });
     }
 
-    const eligible = (configs || []).filter(
-      c =>
-        c.manager_whatsapp_verified === true &&
-        c.notification_preferences?.weekly_report_whatsapp === true
-    );
+    const eligible = (configs || []).filter(c => {
+      if (c.manager_whatsapp_verified !== true) return false;
+      const prefs = c.notification_preferences || {};
+      if (prefs.weekly_report_whatsapp !== true) return false;
+      const configuredDay = Number.isInteger(prefs.weekly_report_day) ? prefs.weekly_report_day : 1; // default Monday
+      return dayOfWeekInTz(c.timezone) === configuredDay;
+    });
 
     logger.info('Weekly report cron starting', { eligible: eligible.length });
 

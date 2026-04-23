@@ -11,6 +11,9 @@ export interface NotificationPreferences {
   pre_reservation_upsell?: boolean;
   analytics_briefing_enabled?: boolean;
   analytics_briefing_phone?: string;
+  weekly_report_whatsapp?: boolean;
+  /** 0=Sunday, 1=Monday ... 6=Saturday. Defaults to 1 (Monday). */
+  weekly_report_day?: number;
 }
 
 async function fetchPreferences(): Promise<NotificationPreferences> {

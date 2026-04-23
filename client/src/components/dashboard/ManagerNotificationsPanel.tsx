@@ -133,6 +133,47 @@ export default function ManagerNotificationsPanel() {
         </div>
       </div>
 
+      {/* Weekly PDF report */}
+      <div>
+        <p className="text-sm font-medium text-deep-charcoal mb-3">{t('settings.weeklyReport', 'Weekly PDF Report')}</p>
+        <div className="space-y-3">
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={!!getValue('weekly_report_whatsapp')}
+              onChange={e => set('weekly_report_whatsapp', e.target.checked)}
+              aria-label={t('settings.weeklyReportLabel', 'Send weekly PDF report via WhatsApp')}
+              className="mt-0.5 accent-[#9F1239]"
+            />
+            <span>
+              <span className="text-sm font-medium text-deep-charcoal">{t('settings.weeklyReportLabel', 'Send weekly PDF report via WhatsApp')}</span>
+              <span className="block text-xs text-warm-stone">{t('settings.weeklyReportDesc', 'Sends the weekly analytics PDF to the manager phone once a week at 8:30 AM.')}</span>
+            </span>
+          </label>
+          {getValue('weekly_report_whatsapp') && (
+            <div className="ml-6 max-w-xs">
+              <label className="block text-xs font-medium text-warm-stone mb-1" htmlFor="weekly_report_day">
+                {t('settings.weeklyReportDayLabel', 'Delivery day')}
+              </label>
+              <select
+                id="weekly_report_day"
+                value={getValue('weekly_report_day') ?? 1}
+                onChange={e => set('weekly_report_day', Number(e.target.value))}
+                className="w-full px-3 py-2 border border-[#E5E7EB] rounded-xl text-sm text-deep-charcoal bg-white focus:outline-none focus:ring-2 focus:ring-[#9F1239]/30 focus:border-[#9F1239]"
+              >
+                <option value={0}>{t('settings.daySunday', 'Sunday')}</option>
+                <option value={1}>{t('settings.dayMonday', 'Monday')}</option>
+                <option value={2}>{t('settings.dayTuesday', 'Tuesday')}</option>
+                <option value={3}>{t('settings.dayWednesday', 'Wednesday')}</option>
+                <option value={4}>{t('settings.dayThursday', 'Thursday')}</option>
+                <option value={5}>{t('settings.dayFriday', 'Friday')}</option>
+                <option value={6}>{t('settings.daySaturday', 'Saturday')}</option>
+              </select>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Analytics briefing */}
       <div>
         <p className="text-sm font-medium text-deep-charcoal mb-3">{t('settings.analyticsBriefing', 'Daily Analytics Briefing')}</p>

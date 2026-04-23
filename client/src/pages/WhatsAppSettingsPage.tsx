@@ -6,6 +6,7 @@ import ManagerNotificationsPanel from '../components/dashboard/ManagerNotificati
 import FeedbackSettingsPanel from '../components/dashboard/FeedbackSettingsPanel';
 import SurveySettingsPanel from '../components/dashboard/SurveySettingsPanel';
 import AiPersonalityPanel from '../components/dashboard/AiPersonalityPanel';
+import PhoneInput, { type CountryCode } from '../components/common/PhoneInput';
 import { authFetch } from '../services/api';
 import { useToast } from '../contexts/ToastContext';
 import {
@@ -270,8 +271,13 @@ function PhoneVerificationPanel() {
 }
 
 export default function WhatsAppSettingsPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const toast = useToast();
+  const testPhoneDefaultCountry: CountryCode = i18n.language?.startsWith('es')
+    ? 'ES'
+    : i18n.language?.startsWith('en')
+      ? 'US'
+      : 'BR';
   const { data: status, isLoading: statusLoading } = useWhatsAppStatus();
   const { data: stats, isLoading: statsLoading } = useWhatsAppStats();
   const { data: latestTestMessage, isLoading: testStatusLoading } = useWhatsAppTestMessageStatus();
@@ -508,15 +514,15 @@ export default function WhatsAppSettingsPage() {
         <div className="border-t border-[#E5E7EB] mt-8 mb-8" />
         <div className="py-5">
           <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827] mb-3">{t('settings.sendTestMessage')}</h2>
-          <div className="flex gap-3">
-            <input
-              type="tel"
-              placeholder="+5511999999999"
-              value={testPhone}
-              onChange={(e) => setTestPhone(e.target.value)}
-              className="flex-1 px-3 py-2 border border-border-gray rounded-xl text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-whatsapp/40 focus:border-whatsapp"
-              aria-label={t('settings.testPhoneNumber', 'Test phone number')}
-            />
+          <div className="flex gap-3 items-end">
+            <div className="flex-1">
+              <PhoneInput
+                value={testPhone}
+                onChange={(fullNumber) => setTestPhone(fullNumber)}
+                defaultCountry={testPhoneDefaultCountry}
+                label={t('settings.testPhoneNumber', 'Test phone number')}
+              />
+            </div>
             <button
               onClick={handleTest}
               disabled={!testPhone || testMutation.isPending || !status?.api_configured || samePhoneCooldownActive}

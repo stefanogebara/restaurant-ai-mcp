@@ -15,7 +15,14 @@ const ALLOWED_PREF_KEYS = new Set([
   'pre_reservation_upsell',
   'analytics_briefing_enabled',
   'analytics_briefing_phone',
+  'weekly_report_whatsapp',
+  'weekly_report_day',
 ]);
+
+// Day-of-week values match JavaScript getDay() convention: 0=Sunday, 6=Saturday.
+function isValidWeeklyReportDay(v) {
+  return Number.isInteger(v) && v >= 0 && v <= 6;
+}
 
 module.exports = async (req, res) => {
   const rateLimited = await checkAndApplyRateLimit(req, res, 'manager_preferences', 30, 60);
@@ -60,6 +67,9 @@ async function handlePatch(req, res) {
     }
     if (Object.keys(updates).length === 0) {
       return res.status(400).json({ error: 'No preference keys provided' });
+    }
+    if ('weekly_report_day' in updates && !isValidWeeklyReportDay(updates.weekly_report_day)) {
+      return res.status(400).json({ error: 'weekly_report_day must be integer 0-6' });
     }
 
     // Read existing preferences
