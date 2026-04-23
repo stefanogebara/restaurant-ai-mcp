@@ -69,7 +69,7 @@ module.exports = async (req, res) => {
     const { data: restaurants, error } = await supabaseAdmin
       .schema('restaurant')
       .from('restaurant_config')
-      .select('id, manager_phone, notification_preferences, timezone, agent_language, language')
+      .select('id, manager_phone, notification_preferences, timezone, agent_language')
       .eq('manager_whatsapp_verified', true)
       .not('manager_phone', 'is', null);
     if (error) throw new Error(error.message);
@@ -96,7 +96,7 @@ module.exports = async (req, res) => {
         continue;
       }
 
-      const lang = (restaurant.agent_language || restaurant.language || 'pt-BR').toLowerCase();
+      const lang = (restaurant.agent_language || 'pt-BR').toLowerCase();
       const normalizedLang = lang.startsWith('pt') ? 'pt-BR' : lang.startsWith('es') ? 'es' : 'en';
       const message = alertConfig.message(triggered.n, triggered.secondary, normalizedLang);
       await sendWhatsAppMessage(restaurant.manager_phone, message);

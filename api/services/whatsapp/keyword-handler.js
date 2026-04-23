@@ -100,10 +100,7 @@ async function handleKeyword(normalizedText, from, session = null) {
       // Session is now passed in from message-processor (post step-8b), so
       // restaurant_id and restaurant config are guaranteed available here.
       const restaurantId = session?.restaurant_id || session?.restaurant?.id || null;
-      const language =
-        session?.restaurant?.agent_language ||
-        session?.restaurant?.language ||
-        'pt-BR';
+      const language = session?.restaurant?.agent_language || 'pt-BR';
       logger.info('[RELATORIO] start', { from, restaurantId });
 
       // Acknowledge immediately, send report asynchronously
