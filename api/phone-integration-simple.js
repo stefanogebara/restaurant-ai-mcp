@@ -33,8 +33,9 @@ module.exports = async (req, res) => {
   const auth = await verifyAuth(req);
   if (auth.error) return res.status(auth.status).json({ error: auth.error });
 
-  // Make JWT-derived restaurant_id available as a fallback for handlers
+  // Make JWT-derived identity available as a fallback for handlers
   req._authRestaurantId = auth.user?.restaurant_id || null;
+  req._authUserId = auth.user?.id || auth.user?.sub || null;
 
   const action = req.query.action || req.body?.action;
 
@@ -390,7 +391,25 @@ async function handleUnregister(req, res) {
  * Get phone integration status
  */
 async function handleStatus(req, res) {
-  const restaurant_id = req.query.restaurant_id || req.body?.restaurant_id || req._authRestaurantId;
+  // The raw string 'undefined' sometimes arrives when the frontend hook can't
+  // resolve restaurant_id from the JWT metadata (older users created before
+  // the metadata.restaurant_id backfill). Normalize it out.
+  let restaurant_id = req.query.restaurant_id || req.body?.restaurant_id || req._authRestaurantId;
+  if (restaurant_id === 'undefined' || restaurant_id === 'null') restaurant_id = null;
+
+  // Fallback: resolve restaurant by the authenticated user's id via the
+  // restaurant_config.user_id FK. This catches the case where the JWT has
+  // no restaurant_id claim but the user owns exactly one restaurant.
+  if (!restaurant_id && req._authUserId) {
+    const { data: owned } = await supabaseAdmin
+      .schema('restaurant')
+      .from('restaurant_config')
+      .select('id')
+      .eq('user_id', req._authUserId)
+      .limit(1)
+      .maybeSingle();
+    if (owned?.id) restaurant_id = owned.id;
+  }
 
   // Platform status (no restaurant_id needed)
   if (!restaurant_id) {

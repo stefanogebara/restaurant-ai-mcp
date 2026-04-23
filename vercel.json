@@ -351,6 +351,10 @@
       "schedule": "0 4 * * *"
     },
     {
+      "path": "/api/cron/cleanup-whatsapp-dedup",
+      "schedule": "15 4 * * *"
+    },
+    {
       "path": "/api/cron/automated-campaigns",
       "schedule": "0 10 * * *"
     },
