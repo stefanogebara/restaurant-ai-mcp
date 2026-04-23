@@ -68,10 +68,11 @@ async function handleList(req, res, restaurantId) {
   const limit = Math.min(parseInt(req.query.limit) || 20, 100);
   const offset = parseInt(req.query.offset) || 0;
 
-  // TODO: Replace select('*') with explicit columns once guest_feedback schema is confirmed
+  // Explicit columns — omits `whatsapp_message_id` (internal identifier) and
+  // future-proofs against new PII columns auto-leaking via select('*').
   const { data, error } = await supabaseAdmin
     .from('guest_feedback')
-    .select('*')
+    .select('id, restaurant_id, reservation_id, customer_phone, customer_name, rating, comment, channel, status, sent_at, answered_at, created_at')
     .eq('restaurant_id', restaurantId)
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
