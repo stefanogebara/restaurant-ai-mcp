@@ -1,16 +1,21 @@
 ---
 title: "Database Schema"
 slug: database
-compiled_at: "2026-04-10T21:20:50.557Z"
+compiled_at: "2026-04-23T22:25:04.132Z"
 ---
 # Database Architecture
 
-Our platform leverages Supabase PostgreSQL with a sophisticated multi-tenant architecture designed for restaurant management and customer engagement. The database is built on PostgreSQL with Row Level Security (RLS) and pgvector support, enabling granular data access and advanced AI-powered features.
+## Platform and Infrastructure
+The system leverages Supabase PostgreSQL with advanced features including Row Level Security (RLS) and pgvector for vector embeddings. The database is designed for a multi-tenant restaurant management platform, with a carefully structured schema that separates system-wide and restaurant-specific data.
 
-The database schema is strategically divided into two primary namespaces: `public` and `restaurant`. The `public` schema hosts core operational tables like `reservations`, `tables`, `waitlist`, and `service_records`, each containing a `restaurant_id` to ensure strict multi-tenancy. These tables track customer interactions, physical inventory, and active dining sessions. Complementary tables such as `customer_history` and `customer_ltv` provide comprehensive customer insights across restaurant ecosystems.
+## Schema Design
+The database is split into two primary schemas: `public` and `restaurant`. The `public` schema hosts core operational tables like `reservations`, `tables`, `waitlist`, and `service_records`, each implemented with a `restaurant_id` to enable multi-tenant architecture. Each table uses Row Level Security to ensure data isolation, allowing only authorized access to specific restaurant's records.
 
-The `restaurant` schema contains configuration and advanced feature tables, including `restaurant_config` (business policies, hours, timezone), `restaurant_wiki_pages` (internal documentation), and recently added tables like `campaign_automations`, `api_keys`, and `webhook_subscriptions`. Recent migrations indicate expanding capabilities in CRM, AI personality configuration, event bookings, and communication automation.
+## Key Operational Tables
+Critical tables include `reservations` (customer bookings), `tables` (physical inventory), `waitlist` (queued customers), and `service_records` (active dining sessions). The `restaurant_config` table stores business-specific configurations like operating hours and timezone. Recently added tables such as `restaurant_wiki_pages` and `campaign_automations` expand the platform's collaborative and marketing capabilities.
 
-Multi-tenancy is enforced through `restaurant_id` columns and robust Row Level Security policies. Two primary Supabase clients manage data access: `supabaseAdmin` (service role with unrestricted access) and `supabaseClient` (authenticated user with RLS-restricted permissions). This architecture ensures data isolation while enabling complex, restaurant-specific workflows.
+## Multi-Tenancy and Security
+Multi-tenancy is achieved through `restaurant_id` columns and RLS policies, ensuring strict data separation. Two primary Supabase clients are used: `supabaseAdmin` (service role with full access) and `supabaseClient` (anonymous user respecting access restrictions). Recent migrations have expanded functionality with new tables like `voice_experiments`, `customer_notes`, `coupons`, and `pos_connections`.
 
-Notable recent additions include AI-driven features like `voice_experiments`, expanded CRM capabilities with `customer_notes` and `customer_ltv` enhancements, and communication tools such as `campaign_automations` and `upsell_messages_log`. The platform continues to evolve, integrating advanced technologies like pgvector for potential AI and semantic search functionalities.
+## Recent Enhancements
+Recent database migrations demonstrate continuous platform evolution, adding features like WhatsApp integration (`whatsapp_test_messages`), CRM enhancements (`customer_ltv`, `customer_notes`), and automation tools (`campaign_automations`). The modular migration approach allows incremental feature development while maintaining robust database architecture.

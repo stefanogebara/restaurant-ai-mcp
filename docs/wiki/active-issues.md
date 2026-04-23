@@ -1,31 +1,33 @@
 ---
 title: "Active Issues & TODOs"
 slug: active-issues
-compiled_at: "2026-04-10T21:33:53.750Z"
+compiled_at: "2026-04-23T22:25:48.374Z"
 ---
-# Active Issues and Development Focus
+# Active Issues in Codebase
 
-## TODO and FIXME Tracking
+## High Priority TODOs and Potential Risks
 
-High-priority TODOs center around database query patterns and ID generation. Multiple files (`agent-conversations.js`, `guest-feedback.js`, `twilio-sms-webhook.js`) contain `select('*')` warnings requiring explicit column selection. The secure ID generation in `_lib/secure-id.js` uses consistent reservation/service ID formats (RES-YYYYMMDD-XXXX) but lacks comprehensive validation. Phone number input validation in `PhoneInput.tsx` shows complex international regex patterns that may need comprehensive testing.
+Several critical TODO markers indicate incomplete data handling and selection strategies, particularly in API endpoints. Notable locations include `agent-conversations.js` and `guest-feedback.js`, where developers are still using broad `select('*')` database queries instead of explicit column selection. This presents potential security and performance risks by potentially exposing unnecessary data. The `elevenlabs-webhook.js` also has an unresolved international phone number handling edge case that could impact caller identification.
 
-## Recurring Bug Patterns
+## Recurring Bug Patterns and System Fragility
 
-Recent fixes reveal consistent challenges in internationalization (i18n), language handling, and system prompt generation. Multiple commits addressed Spanish language support, system prompt localization, and preventing render/loading issues. Performance and timeout problems appear frequently, with recent fixes increasing routing timeframes from 8 to 20 seconds. AI response quality and token management also emerge as persistent development challenges.
+WhatsApp integration emerges as a consistently problematic subsystem, with multiple recent fixes addressing race conditions, cold-start retries, and webhook synchronization. Vercel Lambda timeouts and database connection issues have been frequent pain points, evidenced by multiple patches increasing timeout windows and implementing retry logic. Phone number and session management also appear brittle, with fixes related to environment variable parsing, JOIN query handling, and international format normalization.
 
-## Cron Job Risks
+## Cron Job Vulnerability Assessment
 
-Critical cron jobs with potential silent failure include time-sensitive operations like reservation checks, manager briefings, and analytics processing. Particularly high-risk jobs run at fixed intervals:
-- Every 15 minutes: Late reservation checks, campaign synchronization
-- Daily morning/evening jobs: Manager briefings, health alerts
-- Analytics and sync jobs risk incomplete data processing if they encounter unexpected errors
+The extensive cron job ecosystem presents significant operational risk. Particularly concerning are time-sensitive jobs like reservation reminders, manager alerts, and data synchronization tasks running every 15-30 minutes. Jobs involving external API interactions (usage reporting, SEO cache warming) and complex data processing (churn scoring, analytics briefing) are most prone to silent failures. The high frequency of WhatsApp and conversation sync jobs (every 15 minutes) suggests potential load and consistency challenges.
 
-## Development Focus Recommendations
+## Recommended Developer Focus Areas
 
-1. Implement comprehensive error handling and logging for cron jobs
-2. Complete database query column explicit selection
-3. Enhance internationalization test coverage
-4. Standardize AI prompt generation and token management
-5. Review and optimize system timeout configurations
+Prioritize refactoring the following subsystems:
+1. WhatsApp webhook and message processing pipeline
+2. Phone number validation and international format handling
+3. Database query optimization, replacing broad selects with explicit column definitions
+4. Cron job error handling and comprehensive logging
+5. Vercel Lambda timeout and cold-start resilience strategies
 
-Immediate technical debt requires addressing query safety, internationalization robustness, and ensuring predictable background job performance.
+Immediate technical debt items include implementing proper error boundaries in asynchronous processes, standardizing phone number parsing across `PhoneInput.tsx`, and adding more robust retry/recovery mechanisms in webhook handlers.
+
+## Mitigation Strategies
+
+Implement comprehensive logging, add explicit error tracking for cron jobs, and develop a centralized error reporting mechanism. Consider introducing circuit breakers for external API interactions and developing more granular timeout management for database and webhook operations.

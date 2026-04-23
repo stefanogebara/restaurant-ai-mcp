@@ -78,3 +78,21 @@ nul
 .tmp/
 .playwright-mcp/
 CUsersstefa*.txt
+
+# Screenshot dirs written by Playwright specs + ad-hoc scripts
+audit-screenshots/
+e2e/screenshots/
+test-results/
+
+# Supabase CLI local state
+supabase/.temp/
+
+# Stored Playwright auth state (sessions with JWTs, OAuth cookies)
+playwright/
+
+# Root-level screenshots from ad-hoc Playwright/debug sessions
+/*.png
+/bash.exe.stackdump
+/nul.*
+/C꠷*
+"/C\ufe36Users*"

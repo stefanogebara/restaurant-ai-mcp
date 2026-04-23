@@ -1,24 +1,16 @@
 ---
 title: "Recent Changes"
 slug: recent-changes
-compiled_at: "2026-04-10T21:33:42.325Z"
+compiled_at: "2026-04-23T22:24:44.155Z"
 ---
 # Recent Changes
 
-## WhatsApp and Message Processing Improvements
-The team has been focusing on enhancing the WAHA (self-hosted WhatsApp) adapter and message processing system. Key improvements include resolving local identifiers to real phone numbers (commit 511ef697), skipping group and newsletter messages to conserve AI tokens (a8f36c53), and improving message handling synchronization to prevent data loss, especially with Vercel deployments (56029c11).
+The development team has been focusing on improving the WhatsApp communication system and weekly reporting features. Key improvements include more robust session management, diagnostic instrumentation, and enhanced messaging capabilities. The team has implemented atomic phone processing locks, improved error handling, and added diagnostic endpoints to trace session and PDF generation flows.
 
-## Multilingual and Demo Enhancements
-A significant effort has been made to improve internationalization and demo experiences. The Makoto demo now supports Spanish locale with real restaurant information, interactive cancellation, and language-specific system prompts (commits 39975eba, 58bfaf60, a1ed95f9). The team has also been carefully managing language switching and translation, ensuring smooth user experiences across different locales.
+WhatsApp functionality has seen significant refinements, with commits addressing duplicate message prevention, session management, and conversational prompt improvements. Notable changes include dropping welcome buttons, implementing Supabase-backed deduplication, and adding fetch timeouts for restaurant configurations. The `keyword-handler.js` and `message-processor.js` files have been extensively modified to support more reliable message processing and routing.
 
-## Project Documentation and Wiki
-A new project wiki compiler has been developed with Obsidian integration (a3cbfb65), resulting in comprehensive documentation across multiple areas including active issues, API endpoints, architecture, and recent changes. The wiki compiler script (scripts/compile-project-wiki.js) represents a substantial addition to the project's documentation infrastructure.
+Weekly reporting features have been expanded to allow user-configurable delivery days. Changes in `weekly-report.js` and `ManagerNotificationsPanel.tsx` enable more flexible report scheduling. The team has also improved input validation, with updates to `validation.js` and `demo.js` to better handle email and phone number formatting, including support for international phone number prefixes.
 
-## Development Patterns
-The recent commit history reveals a consistent focus on:
-- Bug fixes and performance improvements
-- Internationalization support
-- Debugging and logging enhancements
-- Adapter and webhook optimizations
+Diagnostic and monitoring capabilities have been enhanced with new endpoints like `/api/diag-pdf` and `/api/diag-session`, which provide deeper insights into system operations. The recent commits suggest a strong focus on improving system reliability, reducing error rates, and providing more granular observability of critical workflows.
 
-The current development seems concentrated on stabilizing the messaging system, improving multilingual support, and creating robust documentation for the project.
+The overall development pattern shows a mix of bug fixes, feature enhancements, and infrastructure improvements, with a particular emphasis on refining the WhatsApp communication system and weekly reporting mechanisms. Diagnostic instrumentation and error handling remain key priorities for the team.

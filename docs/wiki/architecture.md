@@ -1,23 +1,18 @@
 ---
 title: "Architecture Overview"
 slug: architecture
-compiled_at: "2026-04-10T21:33:32.420Z"
+compiled_at: "2026-04-23T22:24:32.013Z"
 ---
 # Seatable Architecture Overview
 
-Seatable is an AI-powered restaurant management platform that revolutionizes restaurant reservation and communication systems through advanced voice, WhatsApp, and intelligent management technologies. The platform enables restaurants to streamline booking processes, enhance customer interactions, and leverage AI-driven insights across their operations.
+Seatable is an AI-powered restaurant management platform designed to streamline restaurant operations through intelligent reservation, communication, and analytics tools. The platform enables restaurants to manage bookings via voice, WhatsApp, and traditional channels while leveraging AI to enhance guest experiences and operational efficiency.
 
-## Technology Stack
-The project employs a modern JavaScript/TypeScript ecosystem with Supabase as the primary backend infrastructure. Key technologies include Node.js for server-side logic, React with TypeScript for the frontend, and a serverless architecture powered by Vercel/Cloudflare functions. Critical dependencies include OpenAI for AI interactions, Elevenlabs for voice generation, WhatsApp Business API for messaging, and XGBoost for machine learning predictions. The tech stack emphasizes scalability, real-time capabilities, and seamless integration across communication channels.
+The technology stack is built on a modern serverless architecture, utilizing Supabase for database and authentication, React with TypeScript for the frontend, and Node.js for backend services. Key dependencies include OpenAI for language models, ElevenLabs for voice synthesis, and WhatsApp Business API for messaging. The project leverages a comprehensive microservices approach, with modular services organized in the `api/` directory across subdirectories like `services/`, `cron/`, and `ml/`.
 
-## Project Structure
-The project follows a modular architecture organized into distinct directories. The `api/` directory contains serverless functions and core business logic, with subdirectories like `_lib/` for shared utilities, `cron/` for scheduled tasks, and `services/` for complex business logic. The `client/src/` directory hosts the React frontend, structured with components, contexts, pages, and service layers. Specialized directories like `ml_models/` and `ml-training/` support machine learning model development and storage.
+Project structure follows a clear separation of concerns. The `client/src/` directory contains React components, hooks, and application logic, while the `api/` directory hosts server-side functionality. Critical architectural components include multi-tenant Row Level Security (RLS) in Supabase, ensuring that each restaurant can only access its own data through carefully scoped database queries. The `database/migrations/` directory tracks schema evolution, with each migration file representing incremental database changes.
 
-## Multi-Tenancy and Security
-Seatable implements robust multi-tenancy through Supabase Row Level Security (RLS), with `restaurant_id` serving as the primary tenant identifier. Each database query and API endpoint is scoped to a specific restaurant, ensuring data isolation and security. The `_lib/auth.js` and database migration scripts (in `database/migrations/`) enforce strict tenant-based access controls, preventing cross-restaurant data leakage.
+Multi-tenancy is implemented through a `restaurant_id` foreign key pattern across all core tables, with Supabase RLS policies enforcing strict data isolation. Every database query and API endpoint incorporates restaurant-specific scoping, preventing cross-tenant data access. This approach allows seamless onboarding of new restaurants while maintaining robust data separation.
 
-## Architectural Patterns
-The platform leverages serverless functions for scalable, event-driven architectures, with key patterns including background job processing via cron tasks, AI-powered manager agents, and dynamic feature configuration. The `cron/` directory contains automated workflows like analytics briefings, campaign management, and reservation follow-ups. The Manager AI system (implemented in `_lib/manager-agent.js`) uses advanced prompting and context management to provide intelligent restaurant management recommendations.
+The architecture embraces serverless patterns, with most functionality implemented as lightweight, stateless functions. Cron jobs in the `api/cron/` directory handle background tasks like analytics generation, campaign management, and automated communications. The "Manager AI" is a sophisticated agent implemented in `api/_lib/manager-agent.js`, capable of generating insights, drafting communications, and providing predictive recommendations based on restaurant-specific data.
 
-## Testing and Quality Assurance
-Seatable maintains comprehensive test coverage across backend and frontend codebases. The project uses Jest for backend testing (89 test files) and Vitest with React Testing Library for frontend validation (52 test files). Critical paths are covered by end-to-end Playwright tests in the `e2e/` directory, with specific test suites for authentication, booking flows, and complex user journeys. Continuous integration ensures that all code changes are rigorously validated before deployment.
+Testing is comprehensive, with 95 backend Jest tests and 52 frontend Vitest/React Testing Library test files. The `e2e/` directory contains Playwright integration tests covering critical user flows, authentication, and core functionality. Test coverage spans unit tests, integration tests, and end-to-end scenarios, ensuring robust validation of the platform's complex interactions between AI services, database operations, and user interfaces.

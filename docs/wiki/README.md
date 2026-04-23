@@ -5,11 +5,11 @@
 
 ## Articles
 
-- [[architecture]] — **Architecture Overview** _(2026-04-10)_
-- [[recent-changes]] — **Recent Changes** _(2026-04-10)_
-- [[api-endpoints]] — **API Endpoints** _(2026-04-10)_
-- [[database]] — **Database Schema** _(2026-04-10)_
-- [[active-issues]] — **Active Issues & TODOs** _(2026-04-10)_
+- [[architecture]] — **Architecture Overview** _(2026-04-23)_
+- [[recent-changes]] — **Recent Changes** _(2026-04-23)_
+- [[api-endpoints]] — **API Endpoints** _(2026-04-23)_
+- [[database]] — **Database Schema** _(2026-04-23)_
+- [[active-issues]] — **Active Issues & TODOs** _(2026-04-23)_
 
 ## Commands
 
