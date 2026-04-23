@@ -105,16 +105,28 @@ async function handleKeyword(normalizedText, from) {
       let restaurantId = null;
       let language = 'pt-BR';
       try {
+        // whatsapp_sessions has: restaurant_id (FK), no language column
         const { data } = await supabaseAdmin
           .from('whatsapp_sessions')
-          .select('restaurant_id, language')
+          .select('restaurant_id')
           .eq('sender_phone', normalizedPhone)
           .not('restaurant_id', 'is', null)
           .order('created_at', { ascending: false })
           .limit(1)
           .maybeSingle();
         restaurantId = data?.restaurant_id || null;
-        if (data?.language) language = data.language;
+        // Pull language from restaurant_config once we have the restaurant_id
+        if (restaurantId) {
+          try {
+            const { data: cfg } = await supabaseAdmin
+              .schema('restaurant')
+              .from('restaurant_config')
+              .select('agent_language, language')
+              .eq('id', restaurantId)
+              .maybeSingle();
+            language = cfg?.agent_language || cfg?.language || 'pt-BR';
+          } catch (_) { /* keep default */ }
+        }
       } catch (_) { /* fall through */ }
       logger.info('[RELATORIO] start', { from, restaurantId });
 
