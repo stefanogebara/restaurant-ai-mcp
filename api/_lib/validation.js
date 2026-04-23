@@ -53,7 +53,11 @@ function validateEmail(email, required = false) {
     return { valid: true }; // Optional email, empty is OK
   }
 
-  const emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  // Local part: RFC 5322-practical subset including '+' (Gmail-style tags),
+  // letters, digits, and the common '.' '_' '-' separators. The previous
+  // pattern silently rejected valid 'user+tag@domain.com' addresses, producing
+  // a user-facing "Falha ao criar demo" with no useful hint.
+  const emailPattern = /^[a-zA-Z0-9._+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   if (!emailPattern.test(email)) {
     return { valid: false, error: 'Invalid email format' };
   }

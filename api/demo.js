@@ -323,12 +323,33 @@ async function handleCreate(req, res) {
     special_notes: custom_policy || '',
   };
 
-  // Infer language from country code
+  // Infer language. Prefer explicit country code, otherwise derive from the
+  // scraped phone's international prefix. Google Places /v1 doesn't return a
+  // country field, but 'internationalPhoneNumber' gives us '+34 914…' etc.
+  // Without this, a Madrid demo was landing with agent_language='en' because
+  // effectiveCountry fell back to 'Unknown' → default 'en'.
   const COUNTRY_LANGUAGE_MAP = {
-    BR: 'pt', PT: 'pt', ES: 'es', MX: 'es', AR: 'es', CO: 'es',
-    FR: 'fr', IT: 'it', DE: 'de', JP: 'ja', US: 'en', GB: 'en',
+    BR: 'pt', PT: 'pt', ES: 'es', MX: 'es', AR: 'es', CO: 'es', CL: 'es', PE: 'es',
+    FR: 'fr', IT: 'it', DE: 'de', JP: 'ja', US: 'en', GB: 'en', CA: 'en', AU: 'en',
   };
-  const inferredLanguage = COUNTRY_LANGUAGE_MAP[(effectiveCountry || '').toUpperCase()] || 'en';
+  function countryFromPhone(phone) {
+    if (!phone || typeof phone !== 'string') return null;
+    const digits = phone.replace(/[^\d+]/g, '');
+    if (!digits.startsWith('+')) return null;
+    // Order matters: longer prefixes first so '+351' doesn't match '+3'.
+    const prefixes = [
+      ['+351', 'PT'], ['+54', 'AR'], ['+55', 'BR'], ['+56', 'CL'], ['+57', 'CO'],
+      ['+52', 'MX'], ['+51', 'PE'], ['+34', 'ES'], ['+33', 'FR'], ['+39', 'IT'],
+      ['+49', 'DE'], ['+44', 'GB'], ['+81', 'JP'], ['+61', 'AU'], ['+1', 'US'],
+    ];
+    for (const [p, iso] of prefixes) if (digits.startsWith(p)) return iso;
+    return null;
+  }
+  const resolvedCountry =
+    (effectiveCountry && effectiveCountry !== 'Unknown' && effectiveCountry.toUpperCase()) ||
+    countryFromPhone(effectivePhone) ||
+    null;
+  const inferredLanguage = COUNTRY_LANGUAGE_MAP[resolvedCountry] || 'en';
 
   // Insert demo restaurant config — uses scraped data when available
   const insertPayload = {
@@ -336,7 +357,7 @@ async function handleCreate(req, res) {
     restaurant_name: restaurant_name.trim(),
     restaurant_type: normalizeRestaurantType(effectiveCuisine.trim()),
     city: city.trim(),
-    country: effectiveCountry || 'Unknown',
+    country: resolvedCountry || effectiveCountry || 'Unknown',
     agent_language: inferredLanguage,
     email: contact_email.trim(),
     phone: effectivePhone,
