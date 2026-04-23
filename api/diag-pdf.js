@@ -4,7 +4,7 @@
  */
 'use strict';
 
-const { generateWeeklyReportHTML, generateWeeklyReportPDF, uploadReportToStorage } = require('./services/pdfReportService');
+const { generateWeeklyReportHTML, generateWeeklyReportPDF, uploadReportToStorage, sendWeeklyReportViaWhatsApp } = require('./services/pdfReportService');
 const { sendWhatsAppDocumentMessage } = require('./_lib/whatsapp-sender');
 
 module.exports = async (req, res) => {
@@ -42,6 +42,18 @@ module.exports = async (req, res) => {
         messageId: result.messageId,
       });
       out.doc_send_result = result;
+    }
+    // Test the full wrapper that RELATORIO actually calls
+    if (req.query?.fullWrapper === '1' && testPhone) {
+      out.steps.push({ step: 'wrapper:start', elapsed_ms: Date.now() - t0 });
+      const wrapResult = await sendWeeklyReportViaWhatsApp(restaurantId, testPhone, 'pt-BR');
+      out.steps.push({
+        step: 'wrapper:done',
+        elapsed_ms: Date.now() - t0,
+        success: wrapResult.success,
+        error: wrapResult.error,
+      });
+      out.wrapper_result = wrapResult;
     }
     out.success = true;
   } catch (err) {
