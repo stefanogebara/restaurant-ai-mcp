@@ -4,8 +4,42 @@ const { createSecureLogger } = require('./secure-logger');
 
 const logger = createSecureLogger('briefing-sender');
 
-const ELEVENLABS_VOICE_ID = process.env.ELEVENLABS_BRIEFING_VOICE_ID || 'EXAVITQu4vr4xnSDxMaL'; // Rachel
+// Default voice: Camila (Brazilian Portuguese, warm female). Override via env.
+// Previous default was 'EXAVITQu4vr4xnSDxMaL' (Rachel, English-only) which produced
+// mangled Portuguese pronunciation on every briefing.
+const ELEVENLABS_VOICE_ID = process.env.ELEVENLABS_BRIEFING_VOICE_ID || 'cgSgspJ2msm6clMCkdW9'; // Jessica (multilingual, warm)
 const STORAGE_BUCKET = 'manager-briefing-audio';
+
+/**
+ * Strip markdown so TTS doesn't literally read '**' as 'asterisk asterisk' etc.
+ * Also normalizes bullets, headings, and code fences that briefings tend to contain.
+ */
+function stripMarkdownForTTS(md) {
+  if (!md) return '';
+  let s = String(md);
+  // Code fences
+  s = s.replace(/```[\s\S]*?```/g, '');
+  s = s.replace(/`([^`]+)`/g, '$1');
+  // Bold + italic markers
+  s = s.replace(/\*\*\*([^*]+)\*\*\*/g, '$1');
+  s = s.replace(/\*\*([^*]+)\*\*/g, '$1');
+  s = s.replace(/\*([^*]+)\*/g, '$1');
+  s = s.replace(/__([^_]+)__/g, '$1');
+  s = s.replace(/_([^_]+)_/g, '$1');
+  // Headings: '# Title' -> 'Title'
+  s = s.replace(/^#{1,6}\s+/gm, '');
+  // Bullet points: '- item' or '* item' or '• item' -> 'item'
+  s = s.replace(/^\s*[-*•]\s+/gm, '');
+  // Numbered lists keep the number but strip the dot (TTS handles '1' naturally)
+  s = s.replace(/^(\s*)(\d+)\.\s+/gm, '$1$2. ');
+  // Links: '[text](url)' -> 'text'
+  s = s.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+  // Horizontal rules
+  s = s.replace(/^---+$/gm, '');
+  // Collapse repeated whitespace / blank lines
+  s = s.replace(/\n{3,}/g, '\n\n').trim();
+  return s;
+}
 
 /**
  * Send a manager briefing via the channel specified in notification_preferences.
@@ -34,7 +68,10 @@ async function sendPhoneCall(phone, text) {
 }
 
 async function sendVoiceNote(phone, text, restaurantId) {
-  // 1. Generate MP3 via ElevenLabs
+  // Strip markdown — TTS was reading '**' as 'asterisk asterisk' and '-' as 'dash'.
+  const cleanText = stripMarkdownForTTS(text);
+  // 1. Generate MP3 via ElevenLabs multilingual model (monolingual_v1 is English-only
+  //    and was producing garbled Portuguese pronunciation).
   const response = await fetch(
     `https://api.elevenlabs.io/v1/text-to-speech/${ELEVENLABS_VOICE_ID}`,
     {
@@ -43,7 +80,11 @@ async function sendVoiceNote(phone, text, restaurantId) {
         'xi-api-key': process.env.ELEVENLABS_API_KEY,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ text, model_id: 'eleven_monolingual_v1' }),
+      body: JSON.stringify({
+        text: cleanText,
+        model_id: 'eleven_multilingual_v2',
+        voice_settings: { stability: 0.55, similarity_boost: 0.75, style: 0.1 },
+      }),
     }
   );
   if (!response.ok) {
