@@ -94,11 +94,29 @@ async function handleKeyword(normalizedText, from) {
   // Weekly PDF report on demand
   if (normalizedText === 'RELATORIO' || normalizedText === 'REPORT') {
     try {
-      const session = await getSessionByPhone(from);
-      // JOIN on restaurant_registry returns null intermittently; fall back to the FK.
-      const restaurantId = session?.restaurant?.id || session?.restaurant_id;
-      const language = session?.restaurant?.agent_language || session?.restaurant?.language || 'pt-BR';
-      logger.info('[RELATORIO] start', { from, restaurantId, hasSession: !!session, hasRestaurantJoin: !!session?.restaurant });
+      // Look up the most recent session regardless of expires_at — keyword handling
+      // runs BEFORE session management (step 7 in message-processor), so a live session
+      // may not exist yet. The FK restaurant_id persists even on expired sessions.
+      // getSessionByPhone filters by expires_at > NOW() and was returning null,
+      // causing RELATORIO to silently skip the PDF send.
+      const { supabaseAdmin } = require('../../_lib/supabase');
+      const { normalizePhoneNumber } = require('../../_lib/whatsapp-sessions');
+      const normalizedPhone = normalizePhoneNumber(from);
+      let restaurantId = null;
+      let language = 'pt-BR';
+      try {
+        const { data } = await supabaseAdmin
+          .from('whatsapp_sessions')
+          .select('restaurant_id, language')
+          .eq('sender_phone', normalizedPhone)
+          .not('restaurant_id', 'is', null)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        restaurantId = data?.restaurant_id || null;
+        if (data?.language) language = data.language;
+      } catch (_) { /* fall through */ }
+      logger.info('[RELATORIO] start', { from, restaurantId });
 
       // Acknowledge immediately, send report asynchronously
       await sendWhatsAppMessage(from,
