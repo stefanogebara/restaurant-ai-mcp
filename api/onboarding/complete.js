@@ -543,7 +543,12 @@ module.exports = async (req, res) => {
       restaurant_type: mappedType,
       slug: restaurantSlug,
       city,
-      country,
+      // Store ISO country code on the config row so downstream consumers
+      // (timezone, weekly-report day filter, etc.) get the same answer here
+      // as from restaurant_info. Fall back to the raw form value if we
+      // couldn't resolve.
+      country: resolvedCountryIso || country,
+      agent_language: resolvedLanguage,
       email: email || customer_email,
       phone: phone_number,
       website: website || null,
