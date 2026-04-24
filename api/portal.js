@@ -540,9 +540,17 @@ async function handleCreateReservation(req, res) {
   // Track usage for metered billing
   trackUsage(restaurant_id, 'portal_booking');
 
-  // Send confirmation email to customer (fire-and-forget)
+  // Confirmation channels — must be awaited before res.json(201). Vercel
+  // terminates the Lambda the instant the response is sent, killing any
+  // in-flight Resend / Graph API requests. Verified: booking POST returned
+  // 201 in 1.7s while `Reservation confirmation email sent` log never
+  // landed → customer received NO email. Same shape as the RELATORIO PDF
+  // bug (commit 34b786f2). Run all 4 channels in parallel via
+  // Promise.allSettled so total wall time is bounded by the slowest one
+  // (~2s for Resend) rather than the sum.
+  const notifications = [];
   if (customer_email) {
-    sendReservationConfirmationEmail({
+    notifications.push(sendReservationConfirmationEmail({
       customerEmail: customer_email.trim(),
       customerName: sanitizedName,
       restaurantName: restaurant.restaurant_name,
@@ -553,12 +561,10 @@ async function handleCreateReservation(req, res) {
       specialRequests: special_requests,
       cancellationPolicy: (restaurant.reservation_settings || {}).cancellation_policy,
       language: restaurant.language || 'en',
-    }).catch(err => logger.error('[Portal] Customer email failed:', err.message));
+    }).catch(err => logger.error('[Portal] Customer email failed:', err.message)));
   }
-
-  // Send new booking alert to restaurant owner (fire-and-forget)
   if (restaurant.email) {
-    sendNewBookingAlertEmail({
+    notifications.push(sendNewBookingAlertEmail({
       ownerEmail: restaurant.email,
       restaurantName: restaurant.restaurant_name,
       customerName: sanitizedName,
@@ -569,24 +575,20 @@ async function handleCreateReservation(req, res) {
       date,
       time,
       specialRequests: special_requests,
-    }).catch(err => logger.error('[Portal] Owner alert email failed:', err.message));
+    }).catch(err => logger.error('[Portal] Owner alert email failed:', err.message)));
   }
-
-  // Send WhatsApp alert to restaurant owner (fire-and-forget)
   if (restaurant.whatsapp_enabled && restaurant.whatsapp_phone_number && isWhatsAppConfigured()) {
-    sendNewBookingAlertWhatsApp(restaurant.whatsapp_phone_number, {
+    notifications.push(sendNewBookingAlertWhatsApp(restaurant.whatsapp_phone_number, {
       reservationId,
       customerName: sanitizedName,
       customerPhone: customer_phone.trim(),
       partySize: party_size,
       date,
       time,
-    }).catch(err => logger.error('[Portal] Owner WhatsApp alert failed:', err.message));
+    }).catch(err => logger.error('[Portal] Owner WhatsApp alert failed:', err.message)));
   }
-
-  // Send WhatsApp confirmation to customer (fire-and-forget)
   if (restaurant.whatsapp_enabled && isWhatsAppConfigured() && customer_phone) {
-    sendReservationConfirmation(customer_phone.trim(), {
+    notifications.push(sendReservationConfirmation(customer_phone.trim(), {
       customerName: sanitizedName,
       restaurantName: restaurant.restaurant_name,
       language: restaurant.agent_language || 'en',
@@ -594,8 +596,16 @@ async function handleCreateReservation(req, res) {
       date,
       time,
       partySize: party_size,
-    }).catch(err => logger.warn('[Portal] Customer WhatsApp confirmation failed (non-fatal):', err.message));
+    }).catch(err => logger.warn('[Portal] Customer WhatsApp confirmation failed (non-fatal):', err.message)));
   }
+  // 8s ceiling so a stuck integration can't blow the Lambda's maxDuration.
+  // Resend/Graph API both normally complete in <2s; if they don't, the
+  // reservation is already saved and the customer can retrieve it via
+  // confirmation page or contact the restaurant.
+  await Promise.race([
+    Promise.allSettled(notifications),
+    new Promise(resolve => setTimeout(resolve, 8000)),
+  ]);
 
   return res.status(201).json({
     success: true,
