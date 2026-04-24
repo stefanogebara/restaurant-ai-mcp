@@ -10,10 +10,13 @@ import { formatCurrency } from '../../utils/currency';
 import { predictReservationRevenue, type PartySizeRevenue } from '../../utils/revenuePredictor';
 
 type StatusFilter = 'all' | 'confirmed' | 'at_risk' | 'checked_in';
+type DayFilter = 'today' | 'tomorrow' | 'week';
 
 interface ReservationsListProps {
   todayReservations: UpcomingReservation[];
   tomorrowReservations: UpcomingReservation[];
+  /** Reservations from day+2 through day+7. Optional for backwards compat. */
+  weekReservations?: UpcomingReservation[];
   onCheckIn: (reservation: UpcomingReservation) => void;
   onIntervention: (reservation: UpcomingReservation) => void;
   onDepositAction?: () => void;
@@ -31,6 +34,7 @@ interface ReservationsListProps {
 export default function ReservationsList({
   todayReservations,
   tomorrowReservations,
+  weekReservations = [],
   onCheckIn,
   onIntervention,
   onDepositAction,
@@ -51,12 +55,15 @@ export default function ReservationsList({
     return m;
   }, [tables]);
   const { t } = useTranslation();
-  const [showTomorrow, setShowTomorrow] = useState(false);
+  const [dayFilter, setDayFilter] = useState<DayFilter>('today');
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const displayed = showTomorrow ? tomorrowReservations : todayReservations;
+  const displayed =
+    dayFilter === 'tomorrow' ? tomorrowReservations :
+    dayFilter === 'week' ? weekReservations :
+    todayReservations;
   const tl = (key: string) => t(`dashboard.reservationsList.${key}`);
 
   // Debounce search query (300ms)
@@ -131,7 +138,7 @@ export default function ReservationsList({
             <span className="text-[11px] font-semibold bg-[#9F1239]/[8%] text-[#9F1239] px-2.5 py-0.5 rounded-full">
               {displayed.length}
             </span>
-            {displayed.length > 0 && !showTomorrow && (
+            {displayed.length > 0 && dayFilter === 'today' && (
               <span className="flex items-center gap-1 text-[10px] font-medium text-rose-600">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
@@ -145,25 +152,36 @@ export default function ReservationsList({
             <div className="flex border border-[#E5E7EB] rounded-lg text-[11px] font-medium overflow-hidden flex-shrink-0">
               <button
                 type="button"
-                onClick={() => setShowTomorrow(false)}
-                className={`px-4 py-1.5 transition-all ${
-                  !showTomorrow
-                    ? 'bg-[#F9FAFB] text-[#111827] border-r border-[#E5E7EB]'
-                    : 'text-[#9CA3AF] hover:text-[#111827] border-r border-[#E5E7EB]'
+                onClick={() => setDayFilter('today')}
+                className={`px-4 py-1.5 transition-all border-r border-[#E5E7EB] ${
+                  dayFilter === 'today' ? 'bg-[#F9FAFB] text-[#111827]' : 'text-[#9CA3AF] hover:text-[#111827]'
                 }`}
               >
                 {tl('today')}
               </button>
               <button
                 type="button"
-                onClick={() => setShowTomorrow(true)}
-                className={`px-4 py-1.5 transition-all ${
-                  showTomorrow
-                    ? 'bg-[#F9FAFB] text-[#111827]'
-                    : 'text-[#9CA3AF] hover:text-[#111827]'
+                onClick={() => setDayFilter('tomorrow')}
+                className={`px-4 py-1.5 transition-all border-r border-[#E5E7EB] ${
+                  dayFilter === 'tomorrow' ? 'bg-[#F9FAFB] text-[#111827]' : 'text-[#9CA3AF] hover:text-[#111827]'
                 }`}
               >
                 {tl('tomorrow')}
+              </button>
+              <button
+                type="button"
+                onClick={() => setDayFilter('week')}
+                className={`px-4 py-1.5 transition-all ${
+                  dayFilter === 'week' ? 'bg-[#F9FAFB] text-[#111827]' : 'text-[#9CA3AF] hover:text-[#111827]'
+                }`}
+                title={tl('thisWeekHint')}
+              >
+                {tl('thisWeek')}
+                {weekReservations.length > 0 && (
+                  <span className="ml-1.5 inline-flex items-center justify-center min-w-[16px] h-4 px-1 rounded-full bg-[#9F1239]/[10%] text-[10px] font-semibold text-[#9F1239]">
+                    {weekReservations.length}
+                  </span>
+                )}
               </button>
             </div>
             {onAdd && (
@@ -234,9 +252,11 @@ export default function ReservationsList({
           </div>
           <p className="text-sm font-semibold text-deep-charcoal mb-1">{tl('allClear')}</p>
           <p className="text-xs text-stone-gray">
-            {showTomorrow ? tl('noTomorrow') : tl('noUpcoming')}
+            {dayFilter === 'tomorrow' ? tl('noTomorrow')
+              : dayFilter === 'week' ? tl('noThisWeek')
+              : tl('noUpcoming')}
           </p>
-          {!showTomorrow && <p className="text-xs text-muted-stone mt-1">{tl('aiHint')}</p>}
+          {dayFilter === 'today' && <p className="text-xs text-muted-stone mt-1">{tl('aiHint')}</p>}
           {onAdd && (
             <button
               type="button"

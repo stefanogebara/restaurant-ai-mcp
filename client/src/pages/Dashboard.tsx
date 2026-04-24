@@ -105,8 +105,13 @@ export default function Dashboard() {
 
   const today = new Date().toISOString().split('T')[0];
   const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+  // Day+2..Day+7 so a restaurant sees any booking made up to a week ahead.
+  // Before: anything past tomorrow was invisible on the dashboard — caught
+  // by an E2E that booked 2 days out and had the reservation vanish.
+  const weekEnd = new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0];
   const todayReservations = reservations.filter((r) => r.date === today);
   const tomorrowReservations = reservations.filter((r) => r.date === tomorrow);
+  const weekReservations = reservations.filter((r) => r.date > tomorrow && r.date <= weekEnd);
 
   // Revenue stats (used by ReservationsList for per-reservation predictions)
   const { data: revenueStats } = useRevenueStats();
@@ -333,6 +338,7 @@ export default function Dashboard() {
             <ReservationsList
               todayReservations={todayReservations}
               tomorrowReservations={tomorrowReservations}
+              weekReservations={weekReservations}
               onCheckIn={handleCheckIn}
               onIntervention={(r) => setInterventionReservation(r)}
               onAdd={() => setShowAddReservation(true)}
