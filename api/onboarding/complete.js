@@ -752,7 +752,7 @@ module.exports = async (req, res) => {
           .update({
             elevenlabs_agent_id: agentId,
             agent_voice_id: voiceIdToSave,
-            agent_language: selected_voice_language || 'en',
+            agent_language: selected_voice_language || resolvedLanguage || 'en',
             agent_created_at: new Date().toISOString()
           })
           .eq('id', restaurantInfoResult.id);
@@ -764,7 +764,7 @@ module.exports = async (req, res) => {
             .from('restaurant_config')
             .update({
               elevenlabs_agent_id: agentId,
-              agent_language: selected_voice_language || 'en'
+              agent_language: selected_voice_language || resolvedLanguage || 'en'
             })
             .eq('id', canonicalRestaurantId);
 
