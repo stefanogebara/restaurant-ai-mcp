@@ -129,10 +129,17 @@ async function handleHistory(req, res) {
     const rateLimited = await checkAndApplyRateLimit(req, res, 'api');
     if (rateLimited) return;
 
+    // Only return turns that originated in the app chat. WhatsApp briefings
+    // and cron-driven runs save turns with channel='whatsapp'; their 'user'
+    // message is the VOICE_STYLE_RULES prompt, not anything the manager
+    // typed, and rendering those in the dashboard leaks system-level prompt
+    // engineering into the user-visible history. The LLM still sees all
+    // channels for context continuity — only the UI is filtered.
     const { data, error } = await supabaseAdmin
       .from('manager_conversations')
       .select('role, content, channel, created_at')
       .eq('restaurant_id', restaurantId)
+      .eq('channel', 'app')
       .order('created_at', { ascending: true })
       .limit(100);
     if (error) throw new Error(error.message);
