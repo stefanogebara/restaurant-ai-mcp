@@ -44,6 +44,61 @@ function getDefaultVoiceId(language) {
   return DEFAULT_VOICE_IDS[language] || DEFAULT_VOICE_IDS['en'];
 }
 
+// ============ Country + Language Inference ============
+
+// The onboarding form submits country as a display name ("Brazil", "Spain"), not
+// an ISO code. Downstream helpers like suggestTimezone() only recognise ISO
+// codes — without this mapping timezone silently falls back to UTC and
+// agent_language stays 'en' for every non-US restaurant.
+const COUNTRY_NAME_TO_ISO = {
+  brazil: 'BR', brasil: 'BR',
+  spain: 'ES', espana: 'ES', 'españa': 'ES',
+  portugal: 'PT',
+  france: 'FR',
+  italy: 'IT', italia: 'IT',
+  germany: 'DE', deutschland: 'DE',
+  'united kingdom': 'GB', uk: 'GB',
+  'united states': 'US', usa: 'US',
+  canada: 'CA',
+  mexico: 'MX', 'méxico': 'MX',
+  argentina: 'AR', colombia: 'CO', chile: 'CL', peru: 'PE',
+  japan: 'JP', australia: 'AU',
+};
+const COUNTRY_LANGUAGE_MAP = {
+  BR: 'pt', PT: 'pt', ES: 'es', MX: 'es', AR: 'es', CO: 'es', CL: 'es', PE: 'es',
+  FR: 'fr', IT: 'it', DE: 'de', JP: 'ja', US: 'en', GB: 'en', CA: 'en', AU: 'en',
+};
+const PHONE_PREFIX_TO_ISO = [
+  ['+351', 'PT'], ['+54', 'AR'], ['+55', 'BR'], ['+56', 'CL'], ['+57', 'CO'],
+  ['+52', 'MX'], ['+51', 'PE'], ['+34', 'ES'], ['+33', 'FR'], ['+39', 'IT'],
+  ['+49', 'DE'], ['+44', 'GB'], ['+81', 'JP'], ['+61', 'AU'], ['+1', 'US'],
+];
+
+function countryFromPhone(phone) {
+  if (!phone || typeof phone !== 'string') return null;
+  const digits = phone.replace(/[^\d+]/g, '');
+  if (!digits.startsWith('+')) return null;
+  for (const [p, iso] of PHONE_PREFIX_TO_ISO) if (digits.startsWith(p)) return iso;
+  return null;
+}
+
+function resolveCountryIso(countryInput, phone) {
+  if (!countryInput) return countryFromPhone(phone);
+  const s = String(countryInput).trim();
+  if (/^[A-Z]{2}$/.test(s)) return s;                   // already ISO
+  const iso = COUNTRY_NAME_TO_ISO[s.toLowerCase()];
+  return iso || countryFromPhone(phone);
+}
+
+// DB enum restaurant.restaurant_type_enum accepts only this whitelist (as of
+// 2026-04 — observed by querying existing rows). The onboarding form surfaces
+// more user-friendly options (Pizzaria, Bar, Café…) that the enum doesn't
+// accept. Anything outside the whitelist is folded into 'other' rather than
+// silently failing the insert.
+const VALID_CONFIG_RESTAURANT_TYPES = new Set([
+  'casual_dining', 'fine_dining', 'italian', 'japanese', 'mexican', 'steakhouse', 'other',
+]);
+
 // ============ Slug Generation ============
 
 /**
@@ -208,6 +263,13 @@ module.exports = async (req, res) => {
       logger.warn(` Invalid restaurant_type "${restaurant_type}". Must be one of: ${ALLOWED_RESTAURANT_TYPES.join(', ')}. Setting to null.`);
     }
 
+    // Resolve ISO country code + language. The form submits the country name
+    // ("Brazil"), not the ISO code; without this, timezone falls back to UTC
+    // and agent_language stays 'en' regardless of where the restaurant is.
+    const resolvedCountryIso = resolveCountryIso(country, phone_number);
+    const resolvedLanguage = COUNTRY_LANGUAGE_MAP[resolvedCountryIso] || 'en';
+    const resolvedTimezone = suggestTimezone(resolvedCountryIso || country, city);
+
     // STEP 1: Update restaurant_info table
     logger.info(' Step 1: Updating restaurant_info...');
 
@@ -219,8 +281,8 @@ module.exports = async (req, res) => {
       address: `${city}, ${country}`,
       business_hours: validatedBusinessHours,
       avg_dining_duration_minutes: average_dining_duration || 90,  // Schema uses this name
-      timezone: suggestTimezone(country, city),
-      language: 'en',
+      timezone: resolvedTimezone,
+      language: resolvedLanguage,
       // Store additional metadata in metric_profile JSON field
       // Template is auto-derived from subscription plan:
       // - Basic/Free → simple template
@@ -395,7 +457,17 @@ module.exports = async (req, res) => {
       'seafood': 'seafood',
       'other': 'other',
     };
-    const mappedType = typeMapping[restaurant_type] || 'other';
+    // Fold anything outside the DB enum whitelist into 'other'. Previously
+    // onboarding submitted types like 'pizzeria' or 'cafe' that typeMapping
+    // passed through unchanged, which blew up with
+    //   22P02: invalid input value for enum restaurant_type
+    // inside a silent try/catch — leaving the user without a restaurant_config
+    // row and a broken dashboard.
+    const preferredType = typeMapping[restaurant_type] || 'other';
+    const mappedType = VALID_CONFIG_RESTAURANT_TYPES.has(preferredType) ? preferredType : 'other';
+    if (preferredType !== mappedType) {
+      logger.warn(`restaurant_type "${preferredType}" not in DB enum; using 'other'`);
+    }
 
     // Language code to locale mapping (e.g., 'es' → 'es-ES')
     const languageToLocale = {
@@ -455,7 +527,7 @@ module.exports = async (req, res) => {
     };
 
     // Get language-specific messages
-    const voiceLanguage = selected_voice_language || 'en';
+    const voiceLanguage = selected_voice_language || resolvedLanguage || 'en';
     const locale = languageToLocale[voiceLanguage] || 'en-US';
     const greetingMessage = greetingMessages[voiceLanguage] || greetingMessages['en'];
     const farewellMessage = farewellMessages[voiceLanguage] || farewellMessages['en'];
@@ -496,7 +568,7 @@ module.exports = async (req, res) => {
         allow_waitlist: true
       },
       average_dining_duration_minutes: average_dining_duration || 90,
-      timezone: suggestTimezone(country, city),
+      timezone: resolvedTimezone,
       max_concurrent_reservations: 50,
       team_members: (team_members || []).map(tm => ({
         email: tm.email,
@@ -580,9 +652,27 @@ module.exports = async (req, res) => {
         }
       }
     } catch (configError) {
-      logger.error(' Error saving restaurant_config:', configError);
-      // Don't fail the whole onboarding if config save fails
-      logger.warn(' Continuing despite restaurant_config error');
+      logger.error(' Error saving restaurant_config:', {
+        message: configError?.message,
+        code: configError?.code,
+        details: configError?.details,
+      });
+      // Roll back the half-created restaurant so the user isn't stranded with
+      // a dashboard-less account. Without this, the previous implementation
+      // returned 200 OK while the user's dashboard / AI agent / WhatsApp
+      // router were all invisible to them.
+      try {
+        await supabaseAdmin.from('tables').delete().eq('restaurant_id', restaurantInfoResult.id);
+        await supabaseAdmin.schema('restaurant').from('restaurant_info').delete().eq('id', restaurantInfoResult.id);
+        logger.info(' Rolled back restaurant_info + tables after config failure');
+      } catch (rollbackErr) {
+        logger.warn(' Rollback failed (leaving orphaned rows):', rollbackErr.message);
+      }
+      return res.status(500).json({
+        success: false,
+        error: 'restaurant_config_insert_failed',
+        message: configError?.message || 'Could not save restaurant configuration. Please try again.',
+      });
     }
 
 
