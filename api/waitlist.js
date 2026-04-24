@@ -13,7 +13,7 @@ const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { validateWaitlistEntry, sanitizeInput } = require('./_lib/validation');
 const { trackUsage } = require('./_lib/usage-tracking');
 const { sendWhatsAppMessage, isWhatsAppConfigured } = require('./_lib/whatsapp-sender');
-const { inlineRequireFeature, checkSubscriptionByRestaurantId } = require('./_lib/subscription-middleware');
+const { checkSubscriptionByRestaurantId, hasFeature } = require('./_lib/subscription-middleware');
 const { initSentry, captureException } = require('./_lib/sentry');
 initSentry();
 
@@ -46,12 +46,24 @@ module.exports = async (req, res) => {
     return res.status(400).json({ success: false, error: 'No restaurant associated with this account' });
   }
 
-  // Subscription + feature check (single DB call)
+  // Subscription + feature check (single DB call). For GET we degrade
+  // gracefully to an empty list instead of 403 — the dashboard pre-fetches
+  // this on every load for the "LISTA DE ESPERA" KPI, and a 403 splash in
+  // devtools on every page view for fresh/Starter accounts is unhelpful
+  // noise. Mutations still hard-reject.
   const subResult = await checkSubscriptionByRestaurantId(restaurantId);
-  if (!subResult.active) {
+  const plan = subResult.plan?.toLowerCase();
+  const gated = !subResult.active || !hasFeature(plan, 'waitlist_management');
+  if (gated) {
+    if (req.method === 'GET') {
+      return res.status(200).json({ success: true, items: [], plan_gated: true, feature: 'waitlist_management' });
+    }
     return res.status(403).json({
       success: false,
-      error: 'No active subscription found. Please subscribe to access this feature.',
+      error: subResult.active
+        ? 'Your plan does not include waitlist management. Upgrade to unlock.'
+        : 'No active subscription found. Please subscribe to access this feature.',
+      feature: 'waitlist_management',
       status: subResult.status,
       upgrade_url: `${process.env.CLIENT_URL || 'https://seatable.one'}/#pricing`,
     });
@@ -59,8 +71,6 @@ module.exports = async (req, res) => {
   if (subResult.warning === 'past_due') {
     res.setHeader('X-Subscription-Warning', 'past_due');
   }
-  const plan = subResult.plan?.toLowerCase();
-  if (inlineRequireFeature(plan, 'waitlist_management', res)) return;
 
   const { id } = req.query;
 

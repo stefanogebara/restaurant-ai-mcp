@@ -33,6 +33,7 @@ module.exports = async (req, res) => {
   if (auth.error) {
     return res.status(auth.status).json({ success: false, error: auth.error });
   }
+  req.user = auth.user; // downstream handlers (handleWeeklyReport) read this
 
   // Subscription check
   const subBlocked = await inlineCheckSubscription(auth.user.restaurant_id, res);
@@ -68,6 +69,10 @@ module.exports = async (req, res) => {
 async function handleWeeklyReport(req, res) {
   // Parse date range from query params
   const { start_date, end_date } = req.query;
+  const restaurantId = req.user?.restaurant_id;
+  if (!restaurantId) {
+    return res.status(400).json({ success: false, error: 'No restaurant associated with this account' });
+  }
 
   // Default to current week if not specified
   const endDate = end_date ? new Date(end_date) : new Date();
@@ -90,10 +95,22 @@ async function handleWeeklyReport(req, res) {
     // CURRENT WEEK DATA
     // ============================================================================
 
+    // NOTE: all four queries below MUST include restaurant_id — previously
+    // they queried globally, which both caused 42703 (on columns that don't
+    // exist anywhere in this DB) and would have been a multi-tenant leak
+    // had the schema matched.
+    //
+    // Columns 'customer_type', 'dietary_restrictions', 'language_preference',
+    // 'seating_preference', 'special_occasion', 'first_time_visitor' don't
+    // exist on public.reservations; every call returned 42703 → caught as
+    // 500. Dropped from the SELECTs. If those metrics become interesting
+    // later, add the columns via migration and put them back.
+
     // Get completed service records (actual covers served)
     const { data: currentServices, error: currentServicesError } = await supabaseAdmin
       .from('service_records')
       .select('id, seated_at, party_size, status, reservation_id')
+      .eq('restaurant_id', restaurantId)
       .gte('seated_at', currentStart)
       .lte('seated_at', currentEnd)
       .eq('status', 'completed');
@@ -103,7 +120,8 @@ async function handleWeeklyReport(req, res) {
     // Get reservations data for current week
     const { data: currentReservations, error: currentReservationsError } = await supabaseAdmin
       .from('reservations')
-      .select('id, date, time, party_size, status, customer_type, dietary_restrictions, language_preference, seating_preference, special_occasion, first_time_visitor')
+      .select('id, date, time, party_size, status')
+      .eq('restaurant_id', restaurantId)
       .gte('date', currentStart)
       .lte('date', currentEnd);
 
@@ -116,6 +134,7 @@ async function handleWeeklyReport(req, res) {
     const { data: prevServices, error: prevServicesError } = await supabaseAdmin
       .from('service_records')
       .select('id, seated_at, party_size, status, reservation_id')
+      .eq('restaurant_id', restaurantId)
       .gte('seated_at', prevStart)
       .lte('seated_at', prevEnd)
       .eq('status', 'completed');
@@ -124,7 +143,8 @@ async function handleWeeklyReport(req, res) {
 
     const { data: prevReservations, error: prevReservationsError } = await supabaseAdmin
       .from('reservations')
-      .select('id, date, time, party_size, status, customer_type, dietary_restrictions, language_preference, seating_preference, special_occasion, first_time_visitor')
+      .select('id, date, time, party_size, status')
+      .eq('restaurant_id', restaurantId)
       .gte('date', prevStart)
       .lte('date', prevEnd);
 

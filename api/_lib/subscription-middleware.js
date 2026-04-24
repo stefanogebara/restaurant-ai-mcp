@@ -406,4 +406,5 @@ module.exports = {
   inlineCheckSubscription,
   softCheckSubscription,
   inlineRequireFeature,
+  hasFeature, // side-effect-free check for endpoints that want to soft-degrade
 };
