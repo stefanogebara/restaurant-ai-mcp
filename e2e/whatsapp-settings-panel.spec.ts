@@ -23,43 +23,22 @@ async function loginAsCantina(page: Page) {
     return;
   }
 
-  await page.goto(`${BASE_URL}/login`);
-  await page.waitForLoadState('domcontentloaded');
-  await page.waitForTimeout(1500); // Let React hydrate
-
-  // Look for the email input — Supabase Auth UI uses "Email address" label
-  const emailInput = page.locator('input[type="email"], input[name="email"]').first();
-  const isEmailVisible = await emailInput.isVisible({ timeout: 8000 }).catch(() => false);
-
-  if (isEmailVisible) {
-    await emailInput.fill(CANTINA_EMAIL);
-
-    const passInput = page.locator('input[type="password"]').first();
-    await passInput.waitFor({ state: 'visible', timeout: 5000 });
-    await passInput.fill(CANTINA_PASSWORD);
-
-    // Click the submit button — try specific text first, then any submit button
-    const signInBtn = page.getByRole('button', { name: /^sign in$/i })
-      .or(page.getByRole('button', { name: /^entrar$/i }))
-      .or(page.locator('button[type="submit"]'))
-      .first();
-    await signInBtn.click();
-  } else {
-    console.warn('Email input not found on login page — may already be logged in or page failed to load');
-  }
-
-  // Wait for navigation away from login (up to 20s for Supabase auth round-trip)
-  await page.waitForURL(url => !url.includes('/login'), { timeout: 20000 })
-    .catch(() => console.warn('URL did not leave /login — proceeding anyway'));
-
-  // Wait for the dashboard to actually render (look for the nav or a known element)
-  await page.waitForLoadState('domcontentloaded');
+  // Use the same selectors that analytics-fixes-live.spec.ts proved work
+  // against seatable.one. Generic input[type=email] matches the wrong field
+  // on this app's login page, so use the placeholder text instead.
+  await page.goto(`${BASE_URL}/login`, { waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(1500);
+  await page.getByPlaceholder(/you@restaurant.com/i).fill(CANTINA_EMAIL);
+  await page.getByPlaceholder(/your password/i).fill(CANTINA_PASSWORD);
+  await page.getByRole('button', { name: /^Sign In$/i }).click();
 
-  // Navigate to WhatsApp settings
-  await page.goto(`${BASE_URL}/host-dashboard/whatsapp`);
-  await page.waitForLoadState('domcontentloaded');
-  await page.waitForTimeout(2000); // Give React time to mount
+  // Hard-fail if login doesn't navigate — silent .catch() turned every test
+  // into a no-op against /login (which trivially passes most assertions).
+  await page.waitForURL(/host-dashboard|analytics|welcome|onboarding/, { timeout: 30000 });
+  await page.waitForTimeout(2500);
+
+  await page.goto(`${BASE_URL}/host-dashboard/whatsapp`, { waitUntil: 'domcontentloaded' });
+  await page.waitForTimeout(2000);
 }
 
 // ── test suite ────────────────────────────────────────────────────────────────
