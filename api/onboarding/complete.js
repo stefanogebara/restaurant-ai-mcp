@@ -656,6 +656,47 @@ module.exports = async (req, res) => {
           logger.info(` Tables aligned to config id: ${configResult.id}`);
         }
       }
+
+      // STEP 3c: Register in restaurant_registry so the WhatsApp router can
+      // see this restaurant. Without this row, inbound WA messages never
+      // reach the new account — getAllActiveRestaurants() reads from here,
+      // not from restaurant_config, so a fresh signup is invisible to the
+      // webhook until a registry row exists. We reuse configResult.id as
+      // the registry id so directMatch / restaurant_aliases lookups resolve
+      // to the same row the rest of the stack uses.
+      if (configResult) {
+        const aliasBase = (restaurant_name || '').trim().toLowerCase();
+        const restaurantAliases = Array.from(new Set([
+          aliasBase,
+          // Drop any trailing numeric suffix / stray punctuation for a softer alias
+          aliasBase.replace(/[\s-]+\d+$/, '').trim(),
+        ].filter(Boolean)));
+
+        const { error: registryError } = await supabaseAdmin
+          .from('restaurant_registry')
+          .upsert({
+            id: configResult.id,
+            restaurant_name: configResult.restaurant_name,
+            restaurant_aliases: restaurantAliases,
+            customer_email: email || customer_email,
+            language: resolvedLanguage,
+            timezone: resolvedTimezone,
+            plan_name: (plan || 'starter').toLowerCase(),
+            subscription_status: plan ? 'active' : 'trialing',
+            is_active: true,
+          }, { onConflict: 'id' });
+
+        if (registryError) {
+          // Not a hard-fail yet — existing restaurants created before this
+          // step shipped survive without a registry row (they just can't
+          // receive WA). Log loudly so we catch regressions.
+          logger.warn(' Could not insert into restaurant_registry:', {
+            message: registryError.message, code: registryError.code,
+          });
+        } else {
+          logger.info(` Restaurant registered in registry: ${configResult.id}`);
+        }
+      }
     } catch (configError) {
       logger.error(' Error saving restaurant_config:', {
         message: configError?.message,
