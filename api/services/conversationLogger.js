@@ -201,10 +201,16 @@ async function endConversation(conversationId, outcomeData) {
 
     logger.info(`✅ [ConversationLogger] Ended conversation ${conversationId} (outcome: ${outcome})`);
 
-    // Fire-and-forget memory extraction (don't block the response)
-    extractMemoriesFromConversation(conversationId).catch(err => {
-      logger.error('[ConversationLogger] Memory extraction failed:', err.message);
-    });
+    // Memory extraction. Awaited (with 8s ceiling) so the ElevenLabs
+    // post-call webhook doesn't race Lambda shutdown — without this,
+    // every voice call that wrapped fast enough to return before the
+    // memory extractor finished was silently losing its memories.
+    await Promise.race([
+      extractMemoriesFromConversation(conversationId).catch(err => {
+        logger.error('[ConversationLogger] Memory extraction failed:', err.message);
+      }),
+      new Promise(resolve => setTimeout(resolve, 8000)),
+    ]);
 
   } catch (error) {
     logger.error('[ConversationLogger] Exception ending conversation:', error);
