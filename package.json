@@ -12,7 +12,8 @@
     "test:coverage": "jest --coverage",
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
-    "test:e2e:live": "playwright test e2e/analytics-fixes-live.spec.ts --project=chromium"
+    "test:e2e:live": "playwright test e2e/analytics-fixes-live.spec.ts --project=chromium",
+    "audit:fire-and-forget": "node scripts/audit-fire-and-forget.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",

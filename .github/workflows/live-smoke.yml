@@ -33,6 +33,15 @@ jobs:
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
 
+      # Fast static check — fails the workflow if a new fire-and-forget
+      # Promise is added to an api/ handler that returns a response.
+      # Catches the Lambda-shutdown race that bit us 7 times in one week
+      # (RELATORIO PDF, registry insert, booking emails, manager-AI fact
+      # extraction, voice-call memory extraction, etc.). Allow-list lives
+      # in scripts/audit-fire-and-forget.js.
+      - name: Audit fire-and-forget promises
+        run: npm run audit:fire-and-forget
+
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
