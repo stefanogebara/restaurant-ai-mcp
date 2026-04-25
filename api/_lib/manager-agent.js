@@ -429,13 +429,20 @@ async function runManagerAgent(restaurantId, userMessage, channel) {
     saveTurn(restaurantId, 'assistant', assistantText, channel),
   ]);
 
-  // Fire-and-forget: extract facts without blocking the response
-  extractFactsFromConversation(restaurantId, userMessage).catch((err) => {
-    logger.error('extractFactsFromConversation failed', { error: err.message });
-  });
-
-  // Fire-and-forget usage tracking
-  trackUsage(restaurantId, 'manager_ai_call');
+  // Bundle background work and bound the wait. Without this, fact
+  // extraction and metered-billing increments lose the race against
+  // Lambda shutdown the moment the caller returns the response —
+  // memory enrichment is silently dropped and the customer doesn't
+  // get billed for the AI call.
+  await Promise.race([
+    Promise.allSettled([
+      extractFactsFromConversation(restaurantId, userMessage).catch((err) => {
+        logger.error('extractFactsFromConversation failed', { error: err.message });
+      }),
+      trackUsage(restaurantId, 'manager_ai_call'),
+    ]),
+    new Promise(resolve => setTimeout(resolve, 6000)),
+  ]);
 
   return assistantText;
 }
@@ -538,11 +545,16 @@ async function runManagerAgentStream(restaurantId, userMessage, channel, onToken
     saveTurn(restaurantId, 'assistant', assistantText, channel),
   ]);
 
-  extractFactsFromConversation(restaurantId, userMessage).catch((err) => {
-    logger.error('extractFactsFromConversation failed', { error: err.message });
-  });
-
-  trackUsage(restaurantId, 'manager_ai_call');
+  // Same Lambda-shutdown safeguard as runManagerAgent above.
+  await Promise.race([
+    Promise.allSettled([
+      extractFactsFromConversation(restaurantId, userMessage).catch((err) => {
+        logger.error('extractFactsFromConversation failed', { error: err.message });
+      }),
+      trackUsage(restaurantId, 'manager_ai_call'),
+    ]),
+    new Promise(resolve => setTimeout(resolve, 6000)),
+  ]);
 
   return assistantText;
 }

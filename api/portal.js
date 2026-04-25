@@ -537,9 +537,6 @@ async function handleCreateReservation(req, res) {
     });
   }
 
-  // Track usage for metered billing
-  trackUsage(restaurant_id, 'portal_booking');
-
   // Confirmation channels — must be awaited before res.json(201). Vercel
   // terminates the Lambda the instant the response is sent, killing any
   // in-flight Resend / Graph API requests. Verified: booking POST returned
@@ -548,7 +545,11 @@ async function handleCreateReservation(req, res) {
   // bug (commit 34b786f2). Run all 4 channels in parallel via
   // Promise.allSettled so total wall time is bounded by the slowest one
   // (~2s for Resend) rather than the sum.
-  const notifications = [];
+  const notifications = [
+    // Metered-billing increment now part of the awaited bundle so it
+    // doesn't lose the race with Lambda shutdown either.
+    trackUsage(restaurant_id, 'portal_booking'),
+  ];
   if (customer_email) {
     notifications.push(sendReservationConfirmationEmail({
       customerEmail: customer_email.trim(),

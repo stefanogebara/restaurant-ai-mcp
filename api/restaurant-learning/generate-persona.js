@@ -93,10 +93,15 @@ module.exports = async (req, res) => {
         .eq('id', restaurantId);
     }
 
-    // Sync voice agent prompt with new persona (fire-and-forget)
-    refreshVoiceAgentPrompt(restaurantId).catch(err =>
-      logger.error('Voice prompt refresh failed after persona generation:', err.message)
-    );
+    // Sync voice agent prompt with new persona. Awaited so the agent
+    // actually picks up the new persona before this endpoint returns;
+    // otherwise the next voice call lands on the stale prompt.
+    await Promise.race([
+      refreshVoiceAgentPrompt(restaurantId).catch(err =>
+        logger.error('Voice prompt refresh failed after persona generation:', err.message)
+      ),
+      new Promise(resolve => setTimeout(resolve, 8000)),
+    ]);
 
     logger.info('Persona generated successfully:', {
       session_id,

@@ -60,18 +60,23 @@ function getLastDayOfMonth() {
 function trackUsage(restaurantId, metricType) {
   if (!restaurantId || !metricType) {
     logger.warn('trackUsage called with missing params', { restaurantId, metricType });
-    return;
+    return Promise.resolve();
   }
 
   if (!supabaseAdmin) {
     logger.warn('supabaseAdmin not available, skipping usage tracking');
-    return;
+    return Promise.resolve();
   }
 
   const period = getTodayUTC();
 
-  // Fire-and-forget: call increment_usage() PL/pgSQL function via RPC
-  supabaseAdmin
+  // Returns the underlying promise. Callers that don't care can keep
+  // ignoring it (still effectively fire-and-forget). Revenue-critical
+  // call sites — portal booking, manager AI chat, voice calls — should
+  // await before res.json so the increment isn't lost when Vercel kills
+  // the Lambda on response. Same Lambda-shutdown-race that bit
+  // confirmation emails (see commit a39320c0).
+  return supabaseAdmin
     .rpc('increment_usage', {
       p_restaurant_id: restaurantId,
       p_metric_type: metricType,

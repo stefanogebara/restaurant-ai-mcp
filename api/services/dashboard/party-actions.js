@@ -321,13 +321,19 @@ async function handleCompleteService(req, res) {
     await logCustomerShowedUp(reservationId, seatedAt, departedAt);
   }
 
-  // Schedule post-visit feedback (fire-and-forget)
+  // Schedule post-visit feedback. Awaited so Vercel doesn't kill the
+  // Lambda before the schedule row lands — without this, every
+  // complete-service that ran fast enough to return before scheduleFeedback
+  // resolved silently dropped its post-visit survey.
   const guestName = updateResult.service_record.guest_name;
   const guestPhone = updateResult.service_record.customer_phone;
   if (guestPhone) {
-    scheduleFeedback(restaurantId, reservationId, guestPhone, guestName).catch(err => {
-      logger.error('Failed to schedule feedback', { error: err.message });
-    });
+    await Promise.race([
+      scheduleFeedback(restaurantId, reservationId, guestPhone, guestName).catch(err => {
+        logger.error('Failed to schedule feedback', { error: err.message });
+      }),
+      new Promise(resolve => setTimeout(resolve, 5000)),
+    ]);
   }
 
   const tableIdsRaw = updateResult.service_record.table_ids;

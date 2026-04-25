@@ -51,9 +51,15 @@ module.exports = async (req, res) => {
       if (!result.success) return res.status(400).json({ success: false, error: result.error });
 
       const inviteUrl = `${process.env.CLIENT_URL || 'https://seatable.one'}/join?token=${result.member.invite_token}`;
-      sendInviteEmail({ to: email, inviteUrl, role }).catch(err => {
-        logger.error('Failed to send invite email:', err.message);
-      });
+      // Await so Vercel doesn't kill the Lambda mid-Resend (same shape as
+      // booking confirmation race fixed in a39320c0). Wrapped in race+timeout
+      // to bound worst-case latency.
+      await Promise.race([
+        sendInviteEmail({ to: email, inviteUrl, role }).catch(err => {
+          logger.error('Failed to send invite email:', err.message);
+        }),
+        new Promise(resolve => setTimeout(resolve, 6000)),
+      ]);
 
       logger.info(`Team member invited: ${email} as ${role}`);
       return res.status(201).json({ success: true, member: result.member });

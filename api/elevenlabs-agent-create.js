@@ -289,10 +289,17 @@ module.exports = async (req, res) => {
 
         logger.info(`Saved agent_id to restaurant_config for restaurant: ${restaurant_id}`);
 
-        // Refresh prompt with full restaurant persona (fire-and-forget)
-        refreshVoiceAgentPrompt(restaurant_id).catch(err =>
-          logger.error('Voice prompt refresh failed after agent create:', err.message)
-        );
+        // Refresh prompt with full restaurant persona. Awaited so the
+        // newly-linked agent has its real persona prompt before the
+        // response returns (otherwise the customer's first call hits the
+        // default ElevenLabs prompt). Bounded by 8s — refresh that takes
+        // longer is logged and continues; the agent_id is already saved.
+        await Promise.race([
+          refreshVoiceAgentPrompt(restaurant_id).catch(err =>
+            logger.error('Voice prompt refresh failed after agent create:', err.message)
+          ),
+          new Promise(resolve => setTimeout(resolve, 8000)),
+        ]);
       } catch (dbError) {
         logger.error('Failed to save agent_id to restaurant_config — agent exists in ElevenLabs but is unlinked:', dbError.message);
       }
