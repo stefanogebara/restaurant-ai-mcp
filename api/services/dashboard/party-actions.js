@@ -192,16 +192,15 @@ async function handleSeatParty(req, res) {
   });
 
   const serviceFields = {
-    'Service ID': serviceId,
-    'Reservation ID': reservation_id || '',
-    'Customer Name': sanitizedName,
-    'Customer Phone': sanitizedPhone,
-    'Party Size': parseInt(party_size),
-    'Table IDs': tableNumbers,  // Pass table numbers (integers), not UUIDs
-    'Seated At': seatedAt,
-    'Estimated Departure': estimatedDeparture,
-    'Special Requests': sanitizedRequests,
-    'Status': 'Active'
+    service_id: serviceId,
+    reservation_id: reservation_id || null,
+    customer_name: sanitizedName,
+    customer_phone: sanitizedPhone,
+    party_size: parseInt(party_size),
+    table_ids: tableNumbers,  // Table numbers (integers); DB col is integer[]
+    seated_at: seatedAt,
+    estimated_departure: estimatedDeparture,
+    special_requests: sanitizedRequests,
   };
 
   // BEGIN TRANSACTION: Create service record and update tables atomically
@@ -226,8 +225,8 @@ async function handleSeatParty(req, res) {
 
     const updatePromises = tableRecordIds.map(async (recordId) => {
       const result = await updateTable(restaurantId, recordId, {
-        'Status': 'occupied',
-        'Current Service ID': null  // Don't set service ID - link is in service_records.table_ids
+        status: 'occupied',
+        current_service_id: null  // Don't set service ID - link is in service_records.table_ids
       });
       if (!result.success) {
         throw new Error(`Failed to update table ${recordId}`);
@@ -266,8 +265,8 @@ async function handleSeatParty(req, res) {
       logger.info(`Rolling back: Resetting ${tablesUpdated.length} tables`);
       const rollbackPromises = tablesUpdated.map(recordId =>
         updateTable(restaurantId, recordId, {
-          'Status': 'available',
-          'Current Service ID': ''
+          status: 'available',
+          current_service_id: null
         }).catch(err => logger.error(`Failed to rollback table ${recordId}`, err))
       );
       await Promise.all(rollbackPromises);
@@ -296,8 +295,8 @@ async function handleCompleteService(req, res) {
   const departedAt = new Date().toISOString();
 
   const recordUpdates = {
-    'Actual Departure': departedAt,
-    'Status': 'completed',
+    actual_departure: departedAt,
+    status: 'completed',
   };
   if (total_bill !== undefined && total_bill !== null) {
     const parsed = parseFloat(total_bill);
@@ -364,8 +363,8 @@ async function handleCompleteService(req, res) {
 
   const updatePromises = tableRecordIds.map(recordId =>
     updateTable(restaurantId, recordId, {
-      'Status': 'available',
-      'Current Service ID': null
+      status: 'available',
+      current_service_id: null
     })
   );
 

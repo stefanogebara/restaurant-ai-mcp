@@ -14,7 +14,7 @@ async function handleMarkTableClean(req, res) {
   }
 
   const updateResult = await updateTable(restaurantId, table_id, {
-    'Status': 'available'
+    status: 'available'
   });
 
   if (!updateResult.success) {
@@ -26,7 +26,7 @@ async function handleMarkTableClean(req, res) {
 
   return res.status(200).json({
     success: true,
-    message: `Table ${updateResult.data.fields['Table Number']} is now available`
+    message: `Table ${updateResult.data.table_number} is now available`
   });
 }
 
@@ -61,7 +61,7 @@ async function handleUpdateTableStatus(req, res) {
   }
 
   const updateResult = await updateTable(restaurantId, table_id, {
-    'Status': dbStatus
+    status: dbStatus
   });
 
   if (!updateResult.success) {
@@ -73,10 +73,10 @@ async function handleUpdateTableStatus(req, res) {
 
   return res.status(200).json({
     success: true,
-    message: `Table ${updateResult.data.fields['Table Number']} status updated to ${normalizedStatus}`,
+    message: `Table ${updateResult.data.table_number} status updated to ${normalizedStatus}`,
     table: {
       id: table_id,
-      table_number: updateResult.data.fields['Table Number'],
+      table_number: updateResult.data.table_number,
       status: normalizedStatus
     }
   });

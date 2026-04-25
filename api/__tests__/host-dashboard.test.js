@@ -313,7 +313,7 @@ describe('POST complete-service action', () => {
     expect(mockUpdateServiceRecord).toHaveBeenCalledWith(
       RESTAURANT_ID,
       'SRV-001',
-      expect.objectContaining({ Status: 'completed' })
+      expect.objectContaining({ status: 'completed' })
     );
   });
 
@@ -617,7 +617,7 @@ describe('POST mark-table-clean action', () => {
     await dashboardHandler(req, res);
 
     expect(res.status).toHaveBeenCalledWith(200);
-    expect(mockUpdateTable).toHaveBeenCalledWith(RESTAURANT_ID, 't1', { 'Status': 'available' });
+    expect(mockUpdateTable).toHaveBeenCalledWith(RESTAURANT_ID, 't1', { status: 'available' });
     const data = res.json.mock.calls[0][0];
     expect(data.success).toBe(true);
   });
@@ -667,7 +667,7 @@ describe('POST update-table-status action', () => {
     await dashboardHandler(req, res);
 
     expect(res.status).toHaveBeenCalledWith(200);
-    expect(mockUpdateTable).toHaveBeenCalledWith(RESTAURANT_ID, 't1', { 'Status': 'available' });
+    expect(mockUpdateTable).toHaveBeenCalledWith(RESTAURANT_ID, 't1', { status: 'available' });
   });
 
   test('handles "being cleaned" status (maps space to underscore)', async () => {
@@ -678,7 +678,7 @@ describe('POST update-table-status action', () => {
     await dashboardHandler(req, res);
 
     expect(res.status).toHaveBeenCalledWith(200);
-    expect(mockUpdateTable).toHaveBeenCalledWith(RESTAURANT_ID, 't1', { 'Status': 'being_cleaned' });
+    expect(mockUpdateTable).toHaveBeenCalledWith(RESTAURANT_ID, 't1', { status: 'being_cleaned' });
   });
 
   test('returns 500 when DB update fails', async () => {
