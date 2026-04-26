@@ -42,6 +42,17 @@ jobs:
       - name: Audit fire-and-forget promises
         run: npm run audit:fire-and-forget
 
+      # Drift check — every CREATE TABLE in supabase/migrations/ must exist
+      # in prod. Caught whatsapp_test_messages + voice_experiments missing
+      # on 2026-04-26: migrations in repo but never applied → cooldown
+      # protection silently disabled, voice-experiments endpoint silently
+      # broken. Fix by applying the migration in Supabase Studio.
+      - name: Audit migrations applied
+        run: npm run audit:migrations
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 

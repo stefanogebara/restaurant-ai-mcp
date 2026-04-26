@@ -13,7 +13,8 @@
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:live": "playwright test e2e/analytics-fixes-live.spec.ts --project=chromium",
-    "audit:fire-and-forget": "node scripts/audit-fire-and-forget.js"
+    "audit:fire-and-forget": "node scripts/audit-fire-and-forget.js",
+    "audit:migrations": "node scripts/audit-migrations-applied.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
