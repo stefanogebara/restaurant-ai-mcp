@@ -1,15 +1,28 @@
 
-## 2026-04-27: WAHA pipeline silently broken since 2026-04-24
+## 2026-04-27: WAHA pipeline — false-alarm investigation, real lesson is the gate
 
-**Mistake**: WAHA on Fly.io and Vercel got out of sync on `WAHA_API_KEY` around 2026-04-24. From that point on, every inbound WhatsApp event hit the webhook, failed signature check at `waha-adapter.js:71`, and was silently dropped. 3 days, 660 rejected events, zero successful messages, zero alerts. Real customer WhatsApps to the restaurant were being lost the whole time.
+**Investigation**: Vercel logs showed ~15 `[WAHAAdapter] WAHA webhook: invalid X-Api-Key` errors/day. `waha_events` table showed 660 sig_invalid in recent history vs only 125 successful (received+processed), with the most recent `processed` event on 2026-04-24. Initial conclusion: 3-day silent regression from key drift between Vercel and Fly.io.
 
-**Why it stayed silent**: webhook returns 200 by design (don't leak signature-mismatch info to attackers). The `waha_events` audit table tracked every drop but nothing watched the table. `/api/waha-status` exists but isn't wired to any alerting surface.
+**Actual state**: All 3 key sources are byte-identical (`seatable-waha-key-2026`) — verified by hex compare:
+- Local `.env.local` (22 bytes)
+- `vercel env pull` (22 bytes)
+- WAHA's session config from `GET seatable-waha.fly.dev/api/sessions/default` (22 bytes)
 
-**Rule**: When rotating a webhook auth secret, rotate it on the SENDER and RECEIVER as a single atomic operation. If you rotate one without the other, you get exactly this — silent message loss until someone notices customers complaining.
+A direct probe (`POST /api/waha-webhook` with the matching header + non-group payload) successfully fired a `received` row, proving the auth chain is intact today.
 
-**CI gate**: `scripts/audit-waha-health.js` queries `waha_events` for the last 24h. If `sig_invalid >= 5` with zero `received`/`processed`, exits 1. Wired into `live-smoke.yml`.
+The historical `sig_invalid` events were likely a mix of: (a) probe traffic / scanners, (b) retries from a since-fixed misconfig, (c) my own debug probes. We can't distinguish from the data because `logWahaEvent('sig_invalid')` is called with no metadata.
 
-**Caught by**: scanning Vercel runtime logs for `level=error` after sweeping the visible product surfaces. The error message "WAHA webhook: invalid X-Api-Key" was repeating ~2-3x/hour across 24h.
+**Rules (still load-bearing)**:
+1. When rotating a webhook auth secret, do it on SENDER + RECEIVER atomically. The window where they disagree = silent message loss.
+2. Always log enough metadata on signature failures to distinguish probe traffic from real misconfig (at minimum `headers['user-agent']` or remote IP).
+
+**CI gate**: `scripts/audit-waha-health.js` (real value, regardless of false alarm). Fails if 24h has `sig_invalid >= 5` AND zero `received`/`processed`. Skips when traffic is zero. Currently passes.
+
+**Diagnostic toolkit** (saved for next investigation):
+- `flyctl secrets list -a seatable-waha`
+- `flyctl config show -a seatable-waha`  (env vars are here, not in secrets)
+- `npx vercel env pull` (after `vercel link`)
+- `GET ${WAHA_URL}/api/sessions/default` (reveals webhook config including X-Api-Key value)
 
 ---
 
