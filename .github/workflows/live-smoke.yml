@@ -69,6 +69,13 @@ jobs:
         env:
           PW_BASE_URL: https://seatable.one
 
+      # Slow 3G dashboard smoke — confirms skeleton loaders fire and content
+      # renders without white-screen / infinite spinner under throttling.
+      - name: Slow 3G dashboard smoke
+        run: node scripts/test-slow-network.js
+        env:
+          PW_BASE_URL: https://seatable.one
+
       - name: Upload screenshots on failure
         if: failure()
         uses: actions/upload-artifact@v5

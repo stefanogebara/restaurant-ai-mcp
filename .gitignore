@@ -48,6 +48,8 @@ scripts/test-*
 scripts/fix-*
 scripts/check-*
 scripts/generate-*
+# CI-tracked smoke tests (allowlist exceptions to scripts/test-*)
+!scripts/test-slow-network.js
 scripts/setup-*
 scripts/train-ml-model.py
 
