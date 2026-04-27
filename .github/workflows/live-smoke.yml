@@ -53,6 +53,17 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
+      # WAHA pipeline health — fails if 24h shows sig_invalid traffic with
+      # zero successful events. Caught the 2026-04-24 key drift on
+      # 2026-04-27: 660 silent rejections accumulated while real customer
+      # messages dropped. Fix: rotate WAHA_API_KEY on both Vercel + Fly.io
+      # to match.
+      - name: Audit WAHA pipeline health
+        run: npm run audit:waha
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 

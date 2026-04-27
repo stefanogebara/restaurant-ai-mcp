@@ -1,4 +1,18 @@
 
+## 2026-04-27: WAHA pipeline silently broken since 2026-04-24
+
+**Mistake**: WAHA on Fly.io and Vercel got out of sync on `WAHA_API_KEY` around 2026-04-24. From that point on, every inbound WhatsApp event hit the webhook, failed signature check at `waha-adapter.js:71`, and was silently dropped. 3 days, 660 rejected events, zero successful messages, zero alerts. Real customer WhatsApps to the restaurant were being lost the whole time.
+
+**Why it stayed silent**: webhook returns 200 by design (don't leak signature-mismatch info to attackers). The `waha_events` audit table tracked every drop but nothing watched the table. `/api/waha-status` exists but isn't wired to any alerting surface.
+
+**Rule**: When rotating a webhook auth secret, rotate it on the SENDER and RECEIVER as a single atomic operation. If you rotate one without the other, you get exactly this — silent message loss until someone notices customers complaining.
+
+**CI gate**: `scripts/audit-waha-health.js` queries `waha_events` for the last 24h. If `sig_invalid >= 5` with zero `received`/`processed`, exits 1. Wired into `live-smoke.yml`.
+
+**Caught by**: scanning Vercel runtime logs for `level=error` after sweeping the visible product surfaces. The error message "WAHA webhook: invalid X-Api-Key" was repeating ~2-3x/hour across 24h.
+
+---
+
 ## 2026-04-26: Migration files in repo aren't auto-applied to prod
 
 **Mistake**: `supabase/migrations/20260411_whatsapp_test_messages.sql` and `20260316_voice_experiments.sql` shipped in the repo but were never executed against the live DB. Code that reads/writes those tables silently failed: WhatsApp test cooldown protection was disabled (real test messages dispatched without rate limiting), and `/api/voice-experiments.js` had 4 broken queries.
