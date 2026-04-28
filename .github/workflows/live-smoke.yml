@@ -64,6 +64,17 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
+      # Cron endpoint health — probes every cron in vercel.json with the
+      # CRON_SECRET. Catches handlers that are silently broken between
+      # schedule runs (file moved, env var missing, db query crashes,
+      # function timeout). 2026-04-28: caught compile-wiki timing out
+      # at 60s default — bumped its maxDuration to 300s.
+      - name: Audit cron endpoint health
+        run: npm run audit:crons
+        env:
+          PW_BASE_URL: https://seatable.one
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 

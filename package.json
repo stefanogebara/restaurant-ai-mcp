@@ -15,7 +15,8 @@
     "test:e2e:live": "playwright test e2e/analytics-fixes-live.spec.ts --project=chromium",
     "audit:fire-and-forget": "node scripts/audit-fire-and-forget.js",
     "audit:migrations": "node scripts/audit-migrations-applied.js",
-    "audit:waha": "node scripts/audit-waha-health.js"
+    "audit:waha": "node scripts/audit-waha-health.js",
+    "audit:crons": "node scripts/audit-cron-health.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
