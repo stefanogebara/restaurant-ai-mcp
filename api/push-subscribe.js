@@ -40,13 +40,14 @@ module.exports = async (req, res) => {
   }
 
   try {
-    // Validate restaurant_id exists to prevent flooding with arbitrary UUIDs
+    // Validate restaurant_id exists. .maybeSingle() so 0 rows returns
+    // null instead of throwing PGRST116 (which masquerades as a 500).
     const { data: restaurant, error: lookupError } = await supabaseAdmin
       .schema('restaurant')
       .from('restaurant_config')
       .select('id')
       .eq('id', restaurant_id)
-      .single();
+      .maybeSingle();
     if (lookupError) {
       logger.error('push-subscribe: restaurant lookup failed', lookupError.message);
       return res.status(500).json({ success: false, error: 'Internal server error' });
