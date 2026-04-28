@@ -180,19 +180,19 @@ function buildSystemPrompt(memories, snapshot, config, wikiPages = [], dateInfo 
         : '';
       const seatingInfo = r.special_occasions?._seating_preference ? ` [SEATING: ${r.special_occasions._seating_preference}]` : '';
       const crmTags = [dietaryInfo, occasionInfo ? ` [${occasionInfo}]` : '', seatingInfo].filter(Boolean).join('');
+      // Format time from separate date+time columns (no reservation_time exists).
+      const timeLabel = r.time
+        ? r.time.slice(0, 5)  // 'HH:MM' from 'HH:MM:SS'
+        : '';
       return (
         '  - ' +
-        r.guest_name +
+        (r.customer_name || 'Guest') +
         vipTag +
         visitInfo +
         crmTags +
         ', party of ' +
         r.party_size +
-        ' at ' +
-        new Date(r.reservation_time).toLocaleTimeString(
-          language === 'pt' || language === 'pt-BR' ? 'pt-BR' : language === 'es' ? 'es-ES' : 'en-US',
-          { hour: '2-digit', minute: '2-digit' }
-        )
+        (timeLabel ? ' at ' + timeLabel : '')
       );
     })
     .join('\n');

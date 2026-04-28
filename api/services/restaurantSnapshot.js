@@ -12,13 +12,18 @@ const DEFAULT_STAFFING_ROLES = [
 ];
 
 async function getRestaurantSnapshot(restaurantId) {
+  // Today as YYYY-MM-DD for the date filter (reservations.date is a date column,
+  // reservations.time is a separate time column — no combined reservation_time exists).
+  const todayStr = new Date().toISOString().split('T')[0];
+
   const [reservationsRes, waitlistRes, activeRes, configRes, depositRes] = await Promise.all([
     supabaseAdmin
       .from('reservations')
-      .select('id, guest_name, party_size, reservation_time, status, date, customer_phone')
+      .select('id, customer_name, party_size, time, status, date, customer_phone')
       .eq('restaurant_id', restaurantId)
-      .gte('reservation_time', new Date().toISOString())
-      .order('reservation_time')
+      .gte('date', todayStr)
+      .order('date')
+      .order('time')
       .limit(20),
     supabaseAdmin
       .from('waitlist')
@@ -28,7 +33,7 @@ async function getRestaurantSnapshot(restaurantId) {
       .limit(1),
     supabaseAdmin
       .from('service_records')
-      .select('id, guest_name, party_size, table_id, seated_at')
+      .select('id, customer_name, party_size, table_ids, seated_at')
       .eq('restaurant_id', restaurantId)
       .eq('status', 'active')
       .limit(50),
@@ -100,7 +105,7 @@ async function getRestaurantSnapshot(restaurantId) {
     coversByDate[d.toISOString().split('T')[0]] = 0;
   }
   reservations.forEach(r => {
-    const dateKey = r.date || (r.reservation_time ? r.reservation_time.split('T')[0] : null);
+    const dateKey = r.date;
     if (dateKey && coversByDate[dateKey] !== undefined) {
       coversByDate[dateKey] += r.party_size || 0;
     }
