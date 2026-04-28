@@ -50,18 +50,20 @@ module.exports = async (req, res) => {
       // Reservations from this phone
       supabaseAdmin
         .from('reservations')
-        .select('id, guest_name, party_size, reservation_date, reservation_time, status, created_at')
+        .select('id, customer_name, party_size, date, time, status, created_at')
         .eq('restaurant_id', restaurant_id)
         .eq('customer_phone', phone)
-        .order('reservation_date', { ascending: false })
+        .order('date', { ascending: false })
         .limit(20),
 
-      // Customer LTV data
+      // Customer LTV data — lives in restaurant schema, real columns are
+      // total_revenue / avg_revenue_per_visit / customer_phone / customer_tier.
       supabaseAdmin
+        .schema('restaurant')
         .from('customer_ltv')
-        .select('total_visits, total_spend, average_spend, last_visit_date, churn_risk_score, tier, tags')
+        .select('total_visits, total_revenue, avg_revenue_per_visit, last_visit_date, churn_risk_score, customer_tier, tags')
         .eq('restaurant_id', restaurant_id)
-        .eq('phone', phone)
+        .eq('customer_phone', phone)
         .maybeSingle(),
     ]);
 
@@ -71,7 +73,7 @@ module.exports = async (req, res) => {
 
     // Derive guest name from most recent source
     const guestName = calls.find(c => c.customer_name)?.customer_name
-      || reservations.find(r => r.guest_name)?.guest_name
+      || reservations.find(r => r.customer_name)?.customer_name
       || null;
 
     // Compute call stats
@@ -104,15 +106,15 @@ module.exports = async (req, res) => {
         },
         reservation_stats: {
           total_reservations: reservations.length,
-          upcoming: reservations.filter(r => r.status === 'confirmed' && new Date(r.reservation_date) >= new Date()).length,
+          upcoming: reservations.filter(r => r.status === 'confirmed' && new Date(r.date) >= new Date()).length,
         },
         ltv: ltv ? {
           total_visits: ltv.total_visits,
-          total_spend: ltv.total_spend,
-          average_spend: ltv.average_spend,
+          total_spend: ltv.total_revenue,
+          average_spend: ltv.avg_revenue_per_visit,
           last_visit: ltv.last_visit_date,
           churn_risk: ltv.churn_risk_score,
-          tier: ltv.tier,
+          tier: ltv.customer_tier,
           tags: ltv.tags,
         } : null,
         recent_calls: calls.slice(0, 5).map(c => ({
@@ -125,11 +127,11 @@ module.exports = async (req, res) => {
         })),
         recent_reservations: reservations.slice(0, 5).map(r => ({
           id: r.id,
-          date: r.reservation_date,
-          time: r.reservation_time,
+          date: r.date,
+          time: r.time,
           party_size: r.party_size,
           status: r.status,
-          name: r.guest_name,
+          name: r.customer_name,
         })),
       },
     });

@@ -16,7 +16,8 @@
     "audit:fire-and-forget": "node scripts/audit-fire-and-forget.js",
     "audit:migrations": "node scripts/audit-migrations-applied.js",
     "audit:waha": "node scripts/audit-waha-health.js",
-    "audit:crons": "node scripts/audit-cron-health.js"
+    "audit:crons": "node scripts/audit-cron-health.js",
+    "audit:phantom-columns": "node scripts/audit-phantom-columns.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",

@@ -57,36 +57,34 @@ module.exports = async (req, res) => {
       .from('reservations')
       .select('*', { count: 'exact' })
       .eq('restaurant_id', restaurantId)
-      .order('reservation_time', { ascending: true })
+      .order('date', { ascending: true })
+      .order('time', { ascending: true })
       .range(offset, offset + limit - 1);
 
-    // Date filtering
+    // Date filtering. reservations stores `date` (date) + `time` (time)
+    // separately — no combined reservation_time column exists.
     if (date) {
       if (!DATE_REGEX.test(date)) {
         return res.status(400).json({ error: 'Invalid date format. Use YYYY-MM-DD.' });
       }
-      query = query
-        .gte('reservation_time', `${date}T00:00:00`)
-        .lt('reservation_time', `${date}T23:59:59`);
+      query = query.eq('date', date);
     } else if (start_date || end_date) {
       if (start_date) {
         if (!DATE_REGEX.test(start_date)) {
           return res.status(400).json({ error: 'Invalid start_date format. Use YYYY-MM-DD.' });
         }
-        query = query.gte('reservation_time', `${start_date}T00:00:00`);
+        query = query.gte('date', start_date);
       }
       if (end_date) {
         if (!DATE_REGEX.test(end_date)) {
           return res.status(400).json({ error: 'Invalid end_date format. Use YYYY-MM-DD.' });
         }
-        query = query.lte('reservation_time', `${end_date}T23:59:59`);
+        query = query.lte('date', end_date);
       }
     } else {
       // Default: today
       const today = new Date().toISOString().slice(0, 10);
-      query = query
-        .gte('reservation_time', `${today}T00:00:00`)
-        .lt('reservation_time', `${today}T23:59:59`);
+      query = query.eq('date', today);
     }
 
     // Status filter

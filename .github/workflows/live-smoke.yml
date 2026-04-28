@@ -42,6 +42,15 @@ jobs:
       - name: Audit fire-and-forget promises
         run: npm run audit:fire-and-forget
 
+      # Phantom columns — Title-Case → snake_case migration left several
+      # callers querying columns that don't exist (reservations.guest_name,
+      # service_records.table_id, customer_ltv.phone). Manager AI received
+      # an empty snapshot for weeks because of one such drift. Caught
+      # 2026-04-28 in api/services/restaurantSnapshot.js + guest-profile.js
+      # + pos/reservations.js. Static scan keeps them fixed.
+      - name: Audit phantom column references
+        run: npm run audit:phantom-columns
+
       # Drift check — every CREATE TABLE in supabase/migrations/ must exist
       # in prod. Caught whatsapp_test_messages + voice_experiments missing
       # on 2026-04-26: migrations in repo but never applied → cooldown
