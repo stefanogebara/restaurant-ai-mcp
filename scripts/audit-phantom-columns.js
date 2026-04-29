@@ -24,7 +24,7 @@ const ROOT = path.join(__dirname, '..', 'api');
 const KNOWN_PHANTOMS = {
   reservations: new Set(['guest_name', 'reservation_time', 'reservation_date']),
   service_records: new Set(['guest_name', 'table_id', 'guest_phone']),
-  customer_ltv: new Set(['phone', 'total_spend', 'average_spend', 'tier', 'churn_risk', 'ltv_score']),
+  customer_ltv: new Set(['phone', 'total_spend', 'average_spend', 'tier', 'churn_risk', 'ltv_score', 'total_spent', 'visit_count', 'avg_spend_per_visit']),
 };
 
 // Files allowed to mention these strings (they accept them as inbound API params, not as DB queries)
@@ -58,11 +58,19 @@ for (const file of walk(ROOT)) {
       if (!lines[i].includes(`from('${table}')`)) continue;
       // Look at next 25 lines for select/eq/order using phantoms
       const window = lines.slice(i, Math.min(i + 25, lines.length)).join('\n');
+      // Confine the search to the content of single-quoted JS strings in the
+      // window. This avoids false positives from JS variables/object-property
+      // names that share a name with a phantom column (e.g. the `phone` param
+      // in `.eq('customer_phone', phone)` or `reservation_time` used as a JS
+      // computed property). String extraction uses matchAll, not RegExp.exec.
+      const stringContents = [...window.matchAll(/'([^'\\]|\\.)*'/g)].map(m => m[0]).join('\n');
+
       for (const phantom of phantoms) {
         // Match phantom column name but not as a prefix of a longer column name
-        // (e.g. 'churn_risk' must not match 'churn_risk_score')
-        const re = new RegExp(`['"\\.]${phantom}(?![\\w])`, 'g');
-        if (re.test(window)) {
+        // (e.g. 'churn_risk' must not match 'churn_risk_score').
+        // Preceded by: quote, dot, or comma+optional-space (subsequent select items).
+        const re = new RegExp(`(?:['".,]\\s*)${phantom}(?![\\w])`, 'g');
+        if (re.test(stringContents)) {
           violations.push({ file: rel, line: i + 1, table, phantom });
         }
       }

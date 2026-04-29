@@ -140,41 +140,46 @@ module.exports = async (req, res) => {
  * Upserts into customer_ltv table
  */
 async function updateCustomerLTV(restaurantId, phone, name, billAmount, partySize) {
-  // Check if customer exists
+  // customer_id stores the phone number (matches update-churn-scores.js convention)
   const { data: existing } = await supabaseAdmin
+    .schema('restaurant')
     .from('customer_ltv')
-    .select('id, total_spent, visit_count')
+    .select('customer_id, total_revenue, total_visits')
     .eq('restaurant_id', restaurantId)
     .eq('customer_phone', phone)
-    .single();
+    .maybeSingle();
 
   if (existing) {
-    // Update existing customer
-    const newTotalSpent = (existing.total_spent || 0) + billAmount;
-    const newVisitCount = (existing.visit_count || 0) + 1;
-    const avgSpend = newTotalSpent / newVisitCount;
+    const newRevenue = (Number(existing.total_revenue) || 0) + billAmount;
+    const newVisits = (existing.total_visits || 0) + 1;
+    const avgRevenue = newRevenue / newVisits;
 
     await supabaseAdmin
+      .schema('restaurant')
       .from('customer_ltv')
       .update({
-        total_spent: newTotalSpent,
-        visit_count: newVisitCount,
-        avg_spend_per_visit: avgSpend,
-        last_visit_date: new Date().toISOString(),
+        total_revenue: Math.round(newRevenue * 100) / 100,
+        total_visits: newVisits,
+        avg_revenue_per_visit: Math.round(avgRevenue * 100) / 100,
+        last_visit_date: new Date().toISOString().split('T')[0],
+        updated_at: new Date().toISOString(),
       })
-      .eq('id', existing.id);
+      .eq('customer_id', existing.customer_id)
+      .eq('restaurant_id', restaurantId);
   } else {
-    // Create new customer record
     await supabaseAdmin
+      .schema('restaurant')
       .from('customer_ltv')
       .insert({
+        customer_id: phone,
         restaurant_id: restaurantId,
         customer_phone: phone,
         customer_name: name,
-        total_spent: billAmount,
-        visit_count: 1,
-        avg_spend_per_visit: billAmount,
-        last_visit_date: new Date().toISOString(),
+        total_revenue: Math.round(billAmount * 100) / 100,
+        total_visits: 1,
+        avg_revenue_per_visit: Math.round(billAmount * 100) / 100,
+        last_visit_date: new Date().toISOString().split('T')[0],
+        updated_at: new Date().toISOString(),
       });
   }
 }

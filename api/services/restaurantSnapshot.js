@@ -157,7 +157,7 @@ async function getVIPsForToday(restaurantId) {
 
   const { data: reservations } = await supabaseAdmin
     .from('reservations')
-    .select('customer_phone, guest_name')
+    .select('customer_phone, customer_name')
     .eq('restaurant_id', restaurantId)
     .eq('date', today)
     .not('customer_phone', 'is', null)

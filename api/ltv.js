@@ -176,7 +176,7 @@ async function handleGet(req, res) {
 
     const { data, error } = await ltvDb()
       .from('customer_ltv')
-      .select('customer_id, restaurant_id, customer_name, customer_email, customer_phone, total_visits, total_revenue, avg_revenue_per_visit, first_visit_date, last_visit_date, churn_risk, ltv_score, tags, allergies, dietary_restrictions, seating_preferences, special_occasions, notes, merged_into, created_at, updated_at')
+      .select('customer_id, restaurant_id, customer_name, customer_email, customer_phone, total_visits, total_revenue, avg_revenue_per_visit, lifetime_value, churn_risk_score, customer_tier, first_visit_date, last_visit_date, tags, allergies, dietary_restrictions, seating_preferences, special_occasions, notes, merged_into, created_at, updated_at')
       .eq('customer_id', customer_id)
       .eq('restaurant_id', restaurantId)
       .single();
