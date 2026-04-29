@@ -106,14 +106,14 @@ async function mergeCustomers(restaurantId, keepId, mergeId) {
   const [keepResult, mergeResult] = await Promise.all([
     crmDb()
       .from('customer_ltv')
-      .select('customer_id, restaurant_id, customer_name, customer_email, customer_phone, total_visits, total_revenue, avg_revenue_per_visit, lifetime_value, churn_risk_score, customer_tier, first_visit_date, last_visit_date, tags, allergies, dietary_restrictions, seating_preferences, special_occasions, notes, merged_into, created_at, updated_at')
+      .select('customer_id, restaurant_id, customer_name, customer_email, customer_phone, total_visits, total_revenue, avg_revenue_per_visit, lifetime_value, churn_risk_score, customer_tier, first_visit_date, last_visit_date, tags, allergies, dietary_restrictions, seating_preferences, special_occasions, merged_into, created_at, updated_at')
       .eq('customer_id', keepId)
       .eq('restaurant_id', restaurantId)
       .is('merged_into', null)
       .single(),
     crmDb()
       .from('customer_ltv')
-      .select('customer_id, restaurant_id, customer_name, customer_email, customer_phone, total_visits, total_revenue, avg_revenue_per_visit, lifetime_value, churn_risk_score, customer_tier, first_visit_date, last_visit_date, tags, allergies, dietary_restrictions, seating_preferences, special_occasions, notes, merged_into, created_at, updated_at')
+      .select('customer_id, restaurant_id, customer_name, customer_email, customer_phone, total_visits, total_revenue, avg_revenue_per_visit, lifetime_value, churn_risk_score, customer_tier, first_visit_date, last_visit_date, tags, allergies, dietary_restrictions, seating_preferences, special_occasions, merged_into, created_at, updated_at')
       .eq('customer_id', mergeId)
       .eq('restaurant_id', restaurantId)
       .is('merged_into', null)
@@ -191,7 +191,7 @@ async function mergeCustomers(restaurantId, keepId, mergeId) {
     })
     .eq('customer_id', keepId)
     .eq('restaurant_id', restaurantId)
-    .select('customer_id, restaurant_id, customer_name, customer_email, customer_phone, total_visits, total_revenue, avg_revenue_per_visit, lifetime_value, churn_risk_score, customer_tier, first_visit_date, last_visit_date, tags, allergies, dietary_restrictions, seating_preferences, special_occasions, notes, merged_into, created_at, updated_at')
+    .select('customer_id, restaurant_id, customer_name, customer_email, customer_phone, total_visits, total_revenue, avg_revenue_per_visit, lifetime_value, churn_risk_score, customer_tier, first_visit_date, last_visit_date, tags, allergies, dietary_restrictions, seating_preferences, special_occasions, merged_into, created_at, updated_at')
     .single();
 
   if (updateError) {
