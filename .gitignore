@@ -50,6 +50,7 @@ scripts/check-*
 scripts/generate-*
 # CI-tracked smoke tests (allowlist exceptions to scripts/test-*)
 !scripts/test-slow-network.js
+!scripts/test-admin-pages.js
 scripts/setup-*
 scripts/train-ml-model.py
 

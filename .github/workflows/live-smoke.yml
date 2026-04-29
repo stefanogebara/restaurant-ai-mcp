@@ -107,6 +107,16 @@ jobs:
         env:
           PW_BASE_URL: https://seatable.one
 
+      # Admin pages + LTV + AddReservationModal + EditReservationModal smoke
+      # Requires sandbox credentials (secrets.SANDBOX_EMAIL/SANDBOX_PASSWORD).
+      # 2026-04-29: caught customer detail 500 (churn_risk/ltv_score phantom columns).
+      - name: Admin pages smoke
+        if: ${{ secrets.SANDBOX_EMAIL != '' }}
+        run: node scripts/test-admin-pages.js
+        env:
+          SANDBOX_EMAIL: ${{ secrets.SANDBOX_EMAIL }}
+          SANDBOX_PASSWORD: ${{ secrets.SANDBOX_PASSWORD }}
+
       - name: Upload screenshots on failure
         if: failure()
         uses: actions/upload-artifact@v5

@@ -24,12 +24,13 @@ const ROOT = path.join(__dirname, '..', 'api');
 const KNOWN_PHANTOMS = {
   reservations: new Set(['guest_name', 'reservation_time', 'reservation_date']),
   service_records: new Set(['guest_name', 'table_id', 'guest_phone']),
-  customer_ltv: new Set(['phone', 'total_spend', 'average_spend', 'tier']),
+  customer_ltv: new Set(['phone', 'total_spend', 'average_spend', 'tier', 'churn_risk', 'ltv_score']),
 };
 
 // Files allowed to mention these strings (they accept them as inbound API params, not as DB queries)
 const ALLOWLIST_FILES = new Set([
   'external-booking-webhook.js',  // Accepts guest_name/reservation_time as request body, maps to real cols
+  'proactive-comms.js',           // Uses churn_risk as a JS object key/alias, not a DB column
 ]);
 
 function* walk(dir) {
@@ -58,7 +59,9 @@ for (const file of walk(ROOT)) {
       // Look at next 25 lines for select/eq/order using phantoms
       const window = lines.slice(i, Math.min(i + 25, lines.length)).join('\n');
       for (const phantom of phantoms) {
-        const re = new RegExp(`['"\\.]${phantom}\\b`);
+        // Match phantom column name but not as a prefix of a longer column name
+        // (e.g. 'churn_risk' must not match 'churn_risk_score')
+        const re = new RegExp(`['"\\.]${phantom}(?![\\w])`, 'g');
         if (re.test(window)) {
           violations.push({ file: rel, line: i + 1, table, phantom });
         }
