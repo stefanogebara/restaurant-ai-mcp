@@ -465,6 +465,8 @@
     "needHelp": "Precisa de ajuda? Contate o restaurante",
     "loadingReservation": "Carregando reserva...",
     "noReservationFound": "Nenhum detalhe de reserva encontrado.",
+    "noReservationFoundTitle": "Reserva não encontrada",
+    "noReservationFoundDesc": "Não conseguimos encontrar os detalhes desta reserva. Talvez você tenha acessado esta página diretamente ou o link expirou. Faça uma nova reserva abaixo.",
     "makeReservation": "Fazer uma Reserva",
     "reservationCancelled": "Esta reserva foi cancelada",
     "reservationConfirmed": "Reserva Confirmada",

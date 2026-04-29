@@ -100,20 +100,35 @@ export default function BookingConfirmation() {
 
   if (!reservation) {
     return (
-      <div className="min-h-screen bg-warm-white flex flex-col items-center justify-center p-6">
-        <div className="bg-white border border-border-gray rounded-2xl p-8 max-w-md text-center shadow-sm">
-          <h1 className="text-xl font-bold text-deep-charcoal mb-2">{t('reservations.title')}</h1>
-          <p className="text-sm text-stone-gray mb-6">{t('reservations.noReservationFound')}</p>
-          {slug && (
-            <button
-              type="button"
-              onClick={() => navigate(`/book/${slug}`)}
-              className="px-6 py-3 bg-burgundy hover:bg-burgundy-dark text-white font-semibold rounded-full transition-colors"
-            >
-              {t('reservations.makeReservation')}
-            </button>
-          )}
-        </div>
+      <div className="min-h-screen bg-warm-white flex flex-col">
+        <header className="flex justify-between items-center px-6 sm:px-10 py-4 border-b border-border-gray bg-white">
+          <div className="font-serif text-lg font-semibold text-deep-charcoal">
+            seatable<span className="text-burgundy">.</span>
+          </div>
+          <span className="text-[13px] text-warm-stone">{t('reservations.needHelp')}</span>
+        </header>
+        <main className="flex-1 flex items-center justify-center p-6 sm:p-12">
+          <div className="max-w-[440px] w-full text-center">
+            <div className="w-20 h-20 rounded-full bg-burgundy/[6%] flex items-center justify-center mx-auto mb-7">
+              <ThiingsIcon name="calendar" pxSize={36} className="text-burgundy" />
+            </div>
+            <h1 className="font-serif text-3xl sm:text-4xl font-medium text-deep-charcoal tracking-tight mb-3">
+              {t('reservations.noReservationFoundTitle')}
+            </h1>
+            <p className="text-[15px] text-warm-stone font-light mb-8">
+              {t('reservations.noReservationFoundDesc')}
+            </p>
+            {slug && (
+              <button
+                type="button"
+                onClick={() => navigate(`/book/${slug}`)}
+                className="px-7 py-3.5 bg-burgundy hover:bg-burgundy-dark text-white font-semibold rounded-full text-sm transition-colors"
+              >
+                {t('reservations.makeReservation')}
+              </button>
+            )}
+          </div>
+        </main>
       </div>
     );
   }

@@ -86,6 +86,9 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
     });
   }, [selectedDate, partySize]);
 
+  // Auto-select the first available open date so the slot grid renders immediately.
+  // (Prior behaviour: blank slot area until user clicked a date — looked broken.)
+
   // Auto-dismiss the hint after 4 seconds
   useEffect(() => {
     if (!timeResetHint) return;
@@ -103,6 +106,10 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
     restaurant.id, selectedDate, partySize
   );
   const reserve = useCreateReservation();
+
+  // Auto-select first available open date once the date list is computed.
+  // Without this the slot grid stays blank on first load — looked broken to testers.
+  // We compute availableDates below; this effect runs after each render that produces a list.
 
   // Filter out past time slots when the selected date is today
   const timeSlots = useMemo(() => {
@@ -142,6 +149,12 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
     }
     return days;
   }, [restaurant, dateLocale]);
+
+  // Default to the first available open date once the list is ready.
+  useEffect(() => {
+    if (selectedDate || availableDates.length === 0) return;
+    setSelectedDate(availableDates[0].value);
+  }, [availableDates, selectedDate]);
 
   const formatTime = (time: string) => {
     const [h, m] = time.split(':').map(Number);

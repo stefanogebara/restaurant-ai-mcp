@@ -1,10 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Menu, X, Globe } from 'lucide-react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
 export default function LandingNav() {
-  const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -81,18 +80,13 @@ export default function LandingNav() {
         </button>
       </div>
 
-      {/* Desktop CTA */}
-      <button
-        type="button"
-        onClick={() => {
-          const el = document.getElementById('pricing');
-          if (el) el.scrollIntoView({ behavior: 'smooth' });
-          else navigate('/#pricing');
-        }}
+      {/* Desktop CTA — sends to demo setup, the lowest-friction conversion path */}
+      <Link
+        to="/demo/setup"
         className="hidden md:flex items-center px-6 py-2.5 min-h-[44px] bg-deep-charcoal text-white text-sm font-semibold rounded-full hover:bg-charcoal-dark transition-colors"
       >
         {t('landing.nav.getStarted')}
-      </button>
+      </Link>
 
       {/* Mobile Menu Button */}
       <button
@@ -147,18 +141,13 @@ export default function LandingNav() {
           {currentLang}
         </button>
         <div className="pt-4 border-t border-border-gray">
-          <button
-            type="button"
-            onClick={() => {
-              closeMobileMenu();
-              const el = document.getElementById('pricing');
-              if (el) el.scrollIntoView({ behavior: 'smooth' });
-              else navigate('/#pricing');
-            }}
+          <Link
+            to="/demo/setup"
+            onClick={closeMobileMenu}
             className="block w-full bg-deep-charcoal text-white text-center px-6 py-3 text-sm font-semibold rounded-full hover:bg-charcoal-dark transition-colors"
           >
             {t('landing.nav.getStarted')}
-          </button>
+          </Link>
         </div>
       </div>
     </nav>

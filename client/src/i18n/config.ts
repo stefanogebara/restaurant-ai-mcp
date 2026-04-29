@@ -63,11 +63,15 @@ if (!localStorage.getItem('seatable-user-lang') && localStorage.getItem('i18next
 }
 
 /** Normalize detected language codes to our supported set (en, es, pt-BR).
- *  Unsupported languages default to English. */
+ *  Brazilian-first product: cold visitors default to PT-BR. Many BR users have
+ *  English-locale browsers (work laptops, EN-default OS) but want a PT product
+ *  experience. Only Spanish navigator hint switches to ES; everyone else lands
+ *  in PT-BR and can toggle to EN/ES via the language switcher.
+ *  Returning users keep their explicit choice via localStorage (seatable-user-lang). */
 function normalizeLanguage(lng: string): string {
   if (lng === 'pt' || lng.startsWith('pt-')) return 'pt-BR';
   if (lng.startsWith('es')) return 'es';
-  return 'en';
+  return 'pt-BR';
 }
 
 i18n

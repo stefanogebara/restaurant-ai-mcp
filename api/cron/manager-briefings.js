@@ -20,6 +20,17 @@ const VOICE_STYLE_RULES = {
   es: `ESTILO: Esto se ESCUCHARA como audio. Habla como un miembro del equipo poniendo al gerente al dia al final del servicio — calido, natural, conversacional. Prosa simple. SIN vinetas, SIN titulos, SIN asteriscos, SIN markdown. Integra los numeros en las frases ("hicimos 28 cubiertos esta noche", no "Cubiertos: 28"). Da UNA observacion concreta — algo que notaste, no solo un resumen. 90-150 palabras, unos 60 segundos hablados.`,
 };
 
+/** DB stores agent_language as either 'pt'/'pt-BR' for Portuguese, 'es'/'es-ES' for
+ *  Spanish, or 'en'/'en-US' for English. Briefing prompts are keyed on 'pt-BR' / 'es'
+ *  / 'en' so we normalise here — without this, 'pt' falls through to English. */
+function normalizeLang(lng) {
+  if (!lng) return 'pt-BR';
+  if (lng === 'pt' || lng.startsWith('pt-')) return 'pt-BR';
+  if (lng.startsWith('es')) return 'es';
+  if (lng.startsWith('en')) return 'en';
+  return 'pt-BR';
+}
+
 const BRIEFING_PROMPTS = {
   end_of_day: {
     en: `It's the end of service. Give a spoken end-of-day catch-up: how tonight went (covers, any hiccups, standout moments), what's worth flagging for tomorrow's planning. ${VOICE_STYLE_RULES.en}`,
@@ -73,7 +84,7 @@ module.exports = async (req, res) => {
       }
 
       try {
-        const lang = config.agent_language || 'pt-BR';
+        const lang = normalizeLang(config.agent_language);
 
         // For morning briefings on new restaurants with zero reservations, skip the AI call
         // and send a purposeful setup guide instead.
@@ -89,7 +100,7 @@ module.exports = async (req, res) => {
               es: `¡Buenos días! Tu restaurante aún no tiene reservas. Para empezar:\n\n1. Comparte tu enlace de reservas en Instagram y Google\n2. Activa WhatsApp en configuración para recibir reservas por mensaje\n3. Prueba hacer una reserva de prueba tú mismo\n\nListo para cuando llegue el primer cliente.`,
               en: `Good morning! Your restaurant has no reservations yet. To start receiving them:\n\n1. Share your booking link on Instagram and Google\n2. Enable WhatsApp in settings to accept bookings by message\n3. Make a test booking yourself to verify the flow\n\nEverything is set up and ready for your first guest.`,
             };
-            const message = onboardingMessages[lang] || onboardingMessages['en'];
+            const message = onboardingMessages[lang] || onboardingMessages['pt-BR'];
             const okToSend = await tryLogBriefingSent(config.id, 'morning');
             if (!okToSend) {
               logger.info(`Skipping duplicate morning briefing for ${config.restaurant_name}`);
@@ -103,7 +114,8 @@ module.exports = async (req, res) => {
         }
 
         // Select prompt in the restaurant's configured language
-        let promptToSend = promptSet[lang] || promptSet['en'];
+        // (PT-BR default — this is a Brazilian-first product)
+        let promptToSend = promptSet[lang] || promptSet['pt-BR'];
 
         // Inject restaurant identity into briefing context
         if (config.restaurant_name) {
