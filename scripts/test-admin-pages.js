@@ -27,6 +27,11 @@ const PASSWORD = process.env.SANDBOX_PASSWORD || 'Sandbox2026!';
 
 const PROFILE_DIR = path.join(__dirname, '../.tmp/admin-test-profile');
 
+// Unique per run so repeated executions don't conflict with duplicate-reservation checks
+const TEST_TS = Date.now();
+const GUEST_NAME = `Playwright Test ${TEST_TS}`;
+const GUEST_PHONE = `119${String(TEST_TS).slice(-8)}`; // 11-digit BR mobile, unique each run
+
 async function shot(page, n, name) {
   const p = path.join(__dirname, '..', `admin-${String(n).padStart(2, '0')}-${name}.png`);
   await page.screenshot({ path: p, fullPage: false });
@@ -329,13 +334,13 @@ async function login(page) {
         // Scope ALL field fills inside the dialog to avoid picking dashboard inputs
         const nameInput = dialog.locator('input[type="text"]').first();
         if (await nameInput.isVisible().catch(() => false)) {
-          await nameInput.fill('Playwright Test Guest');
+          await nameInput.fill(GUEST_NAME);
           pass('AddReservationModal: name field fillable');
         }
 
         const phoneInput = dialog.locator('input[type="tel"]').first();
         if (await phoneInput.isVisible().catch(() => false)) {
-          await phoneInput.fill('11987654321');
+          await phoneInput.fill(GUEST_PHONE);
           pass('AddReservationModal: phone field fillable');
         }
 
@@ -396,7 +401,7 @@ async function login(page) {
     // 7. EditReservationModal — click edit on the reservation just created
     // -----------------------------------------------------------------------
     console.log('\n[7] EditReservationModal');
-    // We just added "Playwright Test Guest" in step [6]. The dashboard list should
+    // We just added GUEST_NAME in step [6]. The dashboard list should
     // have refreshed. The edit button is an icon button with aria-label="Editar"/"Edit".
     // ReservationRow renders: div.flex > ... button[aria-label=edit/editar]
     // It only shows on sm: breakpoints, our viewport (1400px) is fine.
@@ -423,7 +428,7 @@ async function login(page) {
     } else {
       // Hover over a reservation row first to reveal the edit button
       // Find reservation row containing "Playwright Test Guest"
-      const guestRow = page.locator('div').filter({ hasText: /Playwright Test Guest/ }).first();
+      const guestRow = page.locator('div').filter({ hasText: GUEST_NAME }).first();
       if (await guestRow.isVisible().catch(() => false)) {
         await guestRow.hover();
         await page.waitForTimeout(400);
@@ -442,7 +447,7 @@ async function login(page) {
           pass('EditReservationModal: edit button only appears on hover (CSS visibility) — skipped');
         }
       } else {
-        fail('EditReservationModal: reservation row for "Playwright Test Guest" not found', 'may be on a different date tab');
+        fail(`EditReservationModal: reservation row for "${GUEST_NAME}" not found`, 'may be on a different date tab');
       }
     }
 
@@ -450,6 +455,8 @@ async function login(page) {
     // 8. Landing page / marketing
     // -----------------------------------------------------------------------
     console.log('\n[8] Landing page');
+    // Snapshot error count before navigation so we only check errors from this page load
+    const errorsBeforeLanding = errors.length;
     await page.goto(`${BASE}/`, { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(3000);
     await shot(page, 14, 'landing-page');
@@ -469,8 +476,8 @@ async function login(page) {
       fail('landing: no CTA button visible', '');
     }
 
-    // Check for console/JS errors on landing
-    const landingErrors = errors.filter(e => !e.includes('sentry') && !e.includes('posthog'));
+    // Check for console/JS errors only from the landing page navigation (not prior sections)
+    const landingErrors = errors.slice(errorsBeforeLanding).filter(e => !e.includes('sentry') && !e.includes('posthog'));
     if (landingErrors.length === 0) {
       pass('landing: no JS errors');
     } else {
