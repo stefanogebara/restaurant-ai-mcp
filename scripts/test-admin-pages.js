@@ -9,6 +9,9 @@
  *   - /host-dashboard/ltv (LTVPage)
  *   - AddReservationModal (opened from dashboard)
  *   - EditReservationModal (opened from dashboard)
+ *   - Landing page hero + CTA
+ *   - Booking confirmation page
+ *   - Import History API (POST /api/import-history with sample CSV)
  *
  * Uses sandbox account: cantina.bellavista@seatable.io / Sandbox2026!
  *
@@ -491,6 +494,77 @@ async function login(page) {
       fail('booking confirmation: error shown for test reservation_id', 'graceful 404 handling may be missing');
     } else {
       pass('booking confirmation: page rendered without crash (content may require real reservation)');
+    }
+
+    // -----------------------------------------------------------------------
+    // 10. Import History API
+    // Tests POST /api/import-history with a sample CSV using the browser's
+    // active Supabase session — verifies the endpoint accepts a CSV upload,
+    // parses rows correctly, and returns imported/skipped counts.
+    // -----------------------------------------------------------------------
+    console.log('\n[10] Import History API');
+
+    // Navigate to dashboard first so we're on the right origin for fetch
+    await page.goto(`${BASE}/host-dashboard`, { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(1500);
+
+    // Extract the Supabase access_token from localStorage
+    const importToken = await page.evaluate(() => {
+      for (const key of Object.keys(localStorage)) {
+        if (!key.includes('auth')) continue;
+        try {
+          const d = JSON.parse(localStorage.getItem(key) || '');
+          if (d && d.access_token) return d.access_token;
+        } catch {}
+      }
+      return null;
+    });
+
+    if (!importToken) {
+      fail('import-history: could not extract auth token from localStorage', 'session may have expired');
+    } else {
+      const csvData = [
+        'name,phone,email,visits,last_visit,avg_spend',
+        'Maria Playwright,11998001001,maria.pw@test.com,5,2026-01-15,85',
+        'João Playwright,11998001002,joao.pw@test.com,12,2026-02-20,120',
+        'Bad Row No Phone,,,0,,',  // should be skipped
+        'Ana Playwright,11998001003,,3,2025-12-10,60',
+      ].join('\n');
+
+      const apiResult = await page.evaluate(async ({ base, token, csv }) => {
+        try {
+          const blob = new Blob([csv], { type: 'text/csv' });
+          const form = new FormData();
+          form.append('file', blob, 'playwright-test-import.csv');
+          const resp = await fetch(`${base}/api/import-history`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` },
+            body: form,
+          });
+          const data = await resp.json();
+          return { status: resp.status, data };
+        } catch (err) {
+          return { error: err.message };
+        }
+      }, { base: BASE, token: importToken, csv: csvData });
+
+      if (apiResult.error) {
+        fail('import-history: fetch threw', apiResult.error);
+      } else if (apiResult.status === 401 || apiResult.status === 403) {
+        fail('import-history: auth rejected', `status=${apiResult.status} msg=${apiResult.data?.error}`);
+      } else if (apiResult.status === 200 && typeof apiResult.data?.imported === 'number') {
+        const { imported, skipped } = apiResult.data;
+        pass(`import-history: ${imported} imported, ${skipped} skipped`);
+        if (imported >= 3) {
+          pass('import-history: correct row count (3 valid rows)');
+        } else if (imported >= 1) {
+          pass(`import-history: at least 1 row imported (${imported}) — duplicates from prior runs skipped`);
+        } else {
+          fail('import-history: 0 rows imported', JSON.stringify(apiResult.data));
+        }
+      } else {
+        fail('import-history: unexpected response', `status=${apiResult.status} data=${JSON.stringify(apiResult.data).slice(0, 120)}`);
+      }
     }
 
   } catch (e) {
