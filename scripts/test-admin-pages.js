@@ -344,11 +344,14 @@ async function login(page) {
           pass('AddReservationModal: phone field fillable');
         }
 
-        // Date field
+        // Date field — force tomorrow so the reservation isn't in the past when the test runs in the evening
         const dateInput = dialog.locator('input[type="date"]').first();
         if (await dateInput.isVisible().catch(() => false)) {
-          const dateVal = await dateInput.inputValue();
-          if (dateVal) pass(`AddReservationModal: date defaults to ${dateVal}`);
+          const tomorrow = new Date();
+          tomorrow.setDate(tomorrow.getDate() + 1);
+          const tomorrowStr = tomorrow.toISOString().split('T')[0];
+          await dateInput.fill(tomorrowStr);
+          pass(`AddReservationModal: date set to ${tomorrowStr}`);
         }
 
         await shot(page, 11, 'add-reservation-filled');
