@@ -28,6 +28,7 @@ import ManagerNotesPanel from '../components/dashboard/ManagerNotesPanel';
 import StaffingForecastWidget from '../components/dashboard/StaffingForecastWidget';
 import RevenueStatsWidget from '../components/dashboard/RevenueStatsWidget';
 import RevenueByPartySizeWidget from '../components/dashboard/RevenueByPartySizeWidget';
+import ProactiveCommsPanel from '../components/dashboard/ProactiveCommsPanel';
 // ActivityFeedWidget removed — dead feature
 // FeedbackWidget removed — dead feature
 import WalkInModal from '../components/host/WalkInModal';
@@ -402,6 +403,9 @@ export default function Dashboard() {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 mt-6 sm:mt-8">
                 <StaffingForecastWidget />
                 <RevenueStatsWidget />
+              </div>
+              <div className="mt-6 sm:mt-8">
+                <ProactiveCommsPanel />
               </div>
             </>
           )}

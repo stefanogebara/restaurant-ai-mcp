@@ -434,6 +434,27 @@
     "removedFromWaitlist": "{{name}} saiu da fila",
     "partyOf": "Mesa para"
   },
+  "proactiveComms": {
+    "title": "Oportunidades de re-engajamento",
+    "loading": "Carregando oportunidades...",
+    "empty": "Nenhuma oportunidade no momento. A Sofia vai destacar aqui aniversários, datas especiais e clientes que estão sumindo.",
+    "pending": "pendente",
+    "approved": "aprovada",
+    "sent": "enviada",
+    "readyToSend": "prontas para enviar",
+    "typeOccasion": "Ocasião",
+    "typeChurnRisk": "Risco de churn",
+    "typeLongAbsent": "Ausente há muito",
+    "draftLabel": "Rascunho da mensagem (edite à vontade)",
+    "draftPlaceholder": "A IA está rascunhando — escreva o seu se preferir.",
+    "approve": "Aprovar",
+    "dismiss": "Descartar",
+    "sendWhatsApp": "Enviar via WhatsApp",
+    "approved2": "Aprovada — pronta para enviar",
+    "dismissed": "Descartada",
+    "sentAt": "Enviada em",
+    "lastSendError": "Última tentativa de envio falhou"
+  },
   "reservations": {
     "title": "Reservas",
     "newReservation": "Nova Reserva",

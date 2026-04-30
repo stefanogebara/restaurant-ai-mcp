@@ -71,15 +71,27 @@ module.exports = async (req, res) => {
       c.manager_whatsapp_verified === true && c.notification_preferences?.[prefKey]
     );
 
-    const MAX_RESTAURANTS = 3;
-    const PER_RESTAURANT_TIMEOUT = 25000; // 25s per restaurant, fits 2-3 in 60s
+    // No hard restaurant cap — process all eligible briefings until the time
+    // budget runs out. Earlier behaviour (MAX_RESTAURANTS=3) silently dropped
+    // every 4th+ restaurant on every cron run, even when time remained.
+    // Vercel max is 60s; reserve ~15s for tail flushing → 45s working budget.
+    const TIME_BUDGET_MS = 45_000;
     const startTime = Date.now();
 
     let sent = 0;
-    for (const config of eligible.slice(0, MAX_RESTAURANTS)) {
-      // Time budget guard: stop if less than 15s remaining
-      if (Date.now() - startTime > 45000) {
-        logger.warn('Time budget exceeded, stopping briefings', { sent, remaining: eligible.length - sent });
+    let processed = 0;
+    for (const config of eligible) {
+      processed++;
+      // Time budget guard: stop if less than 15s remaining. The next cron run
+      // (12h later for end-of-day, 24h for morning) will retry — but log loud
+      // so we know to scale (e.g. shard by restaurant_id hash).
+      if (Date.now() - startTime > TIME_BUDGET_MS) {
+        logger.warn('Time budget exceeded, stopping briefings', {
+          sent,
+          processed: processed - 1,
+          eligible: eligible.length,
+          dropped: eligible.length - (processed - 1),
+        });
         break;
       }
 

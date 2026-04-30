@@ -248,25 +248,49 @@ function buildSystemPrompt(memories, snapshot, config, wikiPages = [], dateInfo 
     (isPT ? 'Lista de espera: ' : isES ? 'Lista de espera: ' : 'Waitlist: ') + snapshot.waitlist_count;
 
   if (staffingLines) {
-    systemPrompt += '\n\n[STAFFING FORECAST - NEXT 3 DAYS]\n' + staffingLines;
+    const staffingHeader = isPT
+      ? '\n\n[PREVISÃO DE EQUIPE — PRÓXIMOS 3 DIAS]\n'
+      : isES
+        ? '\n\n[PREVISIÓN DE PERSONAL — PRÓXIMOS 3 DÍAS]\n'
+        : '\n\n[STAFFING FORECAST - NEXT 3 DAYS]\n';
+    systemPrompt += staffingHeader + staffingLines;
   }
 
   if (snapshot.deposit_summary && snapshot.deposit_summary.count > 0) {
     const { count, total_amount } = snapshot.deposit_summary;
     const { currency, locale } = getCurrencyLocale(config?.country);
     const formatted = new Intl.NumberFormat(locale, { style: 'currency', currency, minimumFractionDigits: 0 }).format(total_amount);
-    systemPrompt += `\n\n[DEPOSITS HELD TONIGHT]\n${count} reservation${count !== 1 ? 's' : ''} with deposits held — total ${formatted} at risk of no-show capture.`;
+    if (isPT) {
+      systemPrompt += `\n\n[DEPÓSITOS RETIDOS HOJE]\n${count} reserva${count !== 1 ? 's' : ''} com depósito retido — total de ${formatted} sob risco de captura por no-show.`;
+    } else if (isES) {
+      systemPrompt += `\n\n[DEPÓSITOS RETENIDOS HOY]\n${count} reserva${count !== 1 ? 's' : ''} con depósito retenido — total de ${formatted} en riesgo de captura por no-show.`;
+    } else {
+      systemPrompt += `\n\n[DEPOSITS HELD TONIGHT]\n${count} reservation${count !== 1 ? 's' : ''} with deposits held — total ${formatted} at risk of no-show capture.`;
+    }
   }
 
   if (snapshot.feedback_summary && snapshot.feedback_summary.total > 0) {
     const fb = snapshot.feedback_summary;
-    let feedbackBlock = `\n\n[RECENT GUEST FEEDBACK — LAST 7 DAYS]`;
+    let feedbackBlock = isPT
+      ? `\n\n[FEEDBACK RECENTE DOS CLIENTES — ÚLTIMOS 7 DIAS]`
+      : isES
+        ? `\n\n[FEEDBACK RECIENTE DE CLIENTES — ÚLTIMOS 7 DÍAS]`
+        : `\n\n[RECENT GUEST FEEDBACK — LAST 7 DAYS]`;
     if (fb.avg_rating != null) {
-      feedbackBlock += `\nAvg rating: ${fb.avg_rating}/5 (${fb.answered_count} responses, ${fb.response_rate}% response rate)`;
+      if (isPT) {
+        feedbackBlock += `\nNota média: ${fb.avg_rating}/5 (${fb.answered_count} respostas, ${fb.response_rate}% de taxa de resposta)`;
+      } else if (isES) {
+        feedbackBlock += `\nValoración media: ${fb.avg_rating}/5 (${fb.answered_count} respuestas, ${fb.response_rate}% de tasa de respuesta)`;
+      } else {
+        feedbackBlock += `\nAvg rating: ${fb.avg_rating}/5 (${fb.answered_count} responses, ${fb.response_rate}% response rate)`;
+      }
     }
     if (fb.recent?.length > 0) {
       const latest = fb.recent[0];
-      feedbackBlock += `\nLatest: "${latest.comment || 'No comment'}" (${latest.rating}★) — ${latest.customer_name || 'Anonymous'}`;
+      const noComment = isPT ? 'Sem comentário' : isES ? 'Sin comentario' : 'No comment';
+      const anonymous = isPT ? 'Anônimo' : isES ? 'Anónimo' : 'Anonymous';
+      const latestLabel = isPT ? 'Mais recente' : isES ? 'Más reciente' : 'Latest';
+      feedbackBlock += `\n${latestLabel}: "${latest.comment || noComment}" (${latest.rating}★) — ${latest.customer_name || anonymous}`;
     }
     systemPrompt += feedbackBlock;
   }

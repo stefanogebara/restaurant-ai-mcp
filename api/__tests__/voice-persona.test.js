@@ -19,6 +19,10 @@ jest.mock('../_lib/subscription-middleware', () => ({
   checkReservationLimits: jest.fn((req, res, next) => next()),
   isDemoRestaurant: jest.fn().mockResolvedValue(false),
 }));
+// triggerKbSync calls into ElevenLabs — mock so tests don't make real network calls
+jest.mock('../_lib/kb-sync-trigger', () => ({
+  triggerKbSync: jest.fn().mockResolvedValue({ success: true, durationMs: 0 }),
+}));
 
 function makeChain(data) {
   const chain = {
@@ -55,14 +59,18 @@ it('GET returns agent_name and agent_greeting', async () => {
   expect(res.json).toHaveBeenCalledWith({ agent_name: 'Sofia', agent_greeting: 'Welcome!' });
 });
 
-it('PATCH updates agent_name and agent_greeting', async () => {
+it('PATCH updates agent_name and agent_greeting (and reports kb_synced)', async () => {
   const res = mockRes();
   await handler({
     method: 'PATCH',
     headers: { authorization: 'Bearer tok' },
     body: { agent_name: 'Marco', agent_greeting: 'Ciao!' },
   }, res);
-  expect(res.json).toHaveBeenCalledWith({ agent_name: 'Sofia', agent_greeting: 'Welcome!' });
+  expect(res.json).toHaveBeenCalledWith({
+    agent_name: 'Sofia',
+    agent_greeting: 'Welcome!',
+    kb_synced: true,
+  });
 });
 
 it('PATCH returns 400 when agent_name exceeds 50 chars', async () => {

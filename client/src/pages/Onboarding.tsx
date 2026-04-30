@@ -154,12 +154,17 @@ export default function Onboarding() {
     localStorage.setItem('onboarding_step', currentStep.toString());
   }, [onboardingData, currentStep]);
 
-  // Countdown redirect after onboarding success
+  // Countdown redirect after onboarding success.
+  // Lands the user IN their dashboard with the LaunchChecklist modal open
+  // (?launch=1 triggers it in Dashboard.tsx) — not on a Stripe billing page.
+  // The billing/upgrade nudge belongs inside the product, not as the first
+  // post-setup screen. Use window.location.href (not navigate) so React
+  // Query / context state are reset cleanly for the new restaurant.
   useEffect(() => {
     if (!showSuccessModal) return;
     const interval = setInterval(() => {
       setCountdown((prev) => {
-        if (prev <= 1) { clearInterval(interval); window.location.href = '/subscription/manage'; return 0; }
+        if (prev <= 1) { clearInterval(interval); window.location.href = '/host-dashboard/simple?launch=1'; return 0; }
         return prev - 1;
       });
     }, 1000);

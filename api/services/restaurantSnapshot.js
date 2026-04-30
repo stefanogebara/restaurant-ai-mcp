@@ -62,8 +62,16 @@ async function getRestaurantSnapshot(restaurantId) {
     logger.error('getRestaurantSnapshot service_records query failed', { restaurantId, error: activeRes.error.message });
   }
 
-  // Enrich upcoming reservations with regulars data from customer_ltv
-  const rawReservations = reservationsRes.data || [];
+  // Drop today's reservations whose start time has already passed — Manager AI
+  // should treat 12pm bookings as "history" once it's 10pm, not "upcoming".
+  // Compare HH:MM strings directly (lexicographic order matches chronological).
+  const now = new Date();
+  const nowHHMM = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  const rawReservations = (reservationsRes.data || []).filter(r => {
+    if (r.date !== todayStr) return true; // future days always included
+    if (!r.time) return true;             // missing time → keep, can't compare
+    return String(r.time).slice(0, 5) >= nowHHMM;
+  });
   const phones = [...new Set(rawReservations.map(r => r.customer_phone).filter(Boolean))];
 
   let phoneToLTV = {};

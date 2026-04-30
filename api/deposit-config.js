@@ -4,6 +4,7 @@ const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { inlineCheckSubscription } = require('./_lib/subscription-middleware');
+const { triggerKbSync } = require('./_lib/kb-sync-trigger');
 
 const logger = createSecureLogger('DepositConfig');
 
@@ -107,8 +108,13 @@ async function handlePatch(restaurantId, req, res) {
   }
 
   logger.info('deposit_config updated', { restaurantId, enabled });
+
+  // Sync KB so the voice agent can quote current deposit policy on calls.
+  const kbSync = await triggerKbSync(restaurantId, { reason: 'deposit_config' });
+
   return res.status(200).json({
     success: true,
     deposit_config: config,
+    kb_synced: kbSync.success,
   });
 }

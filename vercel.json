@@ -155,6 +155,10 @@
       "destination": "/api/report-pdf.js"
     },
     {
+      "source": "/api/(.*)",
+      "destination": "/api/api-not-found"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

@@ -1,23 +1,39 @@
 /**
- * Cron Job: Proactive Guest Communications
+ * Cron Job: Proactive Guest Communications (C6)
  *
- * Identifies re-engagement opportunities and generates personalized
- * outreach messages. Runs weekly and queues messages for manager approval.
+ * Identifies re-engagement opportunities, generates AI-drafted personalised
+ * messages, and queues them in `restaurant.proactive_comms_queue` for manager
+ * review. Managers approve/edit drafts in the dashboard, then the API sends
+ * the message via WhatsApp.
  *
- * Triggers:
- * 1. Upcoming birthdays/anniversaries (within 7 days)
- * 2. At-risk churning customers (from customer_ltv)
- * 3. Long-absent regulars (no visit in 2x their average frequency)
+ * Triggers (per restaurant):
+ *   1. Upcoming birthdays/anniversaries from customer_ltv.special_occasions (next 14 days)
+ *   2. At-risk churning customers (churn_risk_score >= 70, total_visits >= 3)
  *
- * Runs weekly (Sundays at 10 AM UTC) via Vercel Cron Jobs
+ * Lifecycle of a queued opportunity:
+ *   pending -> approved (manager) -> sent (POST /api/proactive-comms?action=send)
+ *           -> dismissed (manager declined)
+ *           -> expired (no manager action within 14 days)
+ *
+ * Schedule: weekly Sundays at 10 AM UTC (cron: "0 10 * * 0").
+ *
+ * Defensive: gracefully no-ops if the proactive_comms_queue table doesn't
+ * exist yet (deploy may land before the migration is applied via Studio).
  */
 
 const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
-const { buildGuestContext } = require('../services/guestMemory');
 const { logCronRun } = require('../_lib/cron-tracker');
+const { getAI, AI_MODEL_FAST } = require('../_lib/ai-client');
 
 const logger = createSecureLogger('CronProactiveComms');
+
+const QUEUE_TTL_DAYS = 14;             // pending opportunities expire after 14 days
+const MIN_DAYS_BEFORE_OCCASION = 3;    // queue an occasion 14 → 3 days out
+const MAX_DAYS_BEFORE_OCCASION = 14;
+const MIN_CHURN_RISK = 70;
+const MIN_VISITS_FOR_CHURN = 3;
+const MAX_OPPORTUNITIES_PER_RESTAURANT_PER_RUN = 25;
 
 module.exports = async (req, res) => {
   // Verify cron auth
@@ -30,144 +46,334 @@ module.exports = async (req, res) => {
     return res.status(401).json({ error: 'Authentication required' });
   }
 
+  const stats = {
+    restaurants_processed: 0,
+    occasions_queued: 0,
+    churn_queued: 0,
+    skipped_duplicate: 0,
+    expired: 0,
+    errors: 0,
+  };
+
   try {
     logger.info('Starting weekly proactive comms scan...');
 
-    const opportunities = [];
+    // 1. Expire stale pending items first (cleans up after manager inactivity)
+    stats.expired = await expireStalePendingItems();
 
-    // 1. Check for upcoming occasions (birthdays, anniversaries within 7 days)
-    const upcomingOccasions = await findUpcomingOccasions();
-    opportunities.push(...upcomingOccasions);
+    // 2. List all active restaurants
+    const { data: restaurants, error: restErr } = await supabaseAdmin
+      .schema('restaurant')
+      .from('restaurant_config')
+      .select('id, restaurant_name, agent_language, country');
 
-    // 2. Check for at-risk customers (high churn risk)
-    const atRiskCustomers = await findAtRiskCustomers();
-    opportunities.push(...atRiskCustomers);
-
-    logger.info('Proactive comms scan complete', {
-      occasions: upcomingOccasions.length,
-      atRisk: atRiskCustomers.length,
-      total: opportunities.length
-    });
-
-    // Store opportunities for manager review
-    if (opportunities.length > 0) {
-      await storeOpportunities(opportunities);
+    if (restErr) {
+      logger.error('Failed to load restaurants', { error: restErr.message });
+      return res.status(500).json({ success: false, error: 'restaurant_load_failed' });
     }
 
-    await logCronRun('proactive-comms', { opportunities: opportunities.length });
+    // 3. For each restaurant, find opportunities and queue them
+    for (const restaurant of restaurants || []) {
+      try {
+        const occasions = await findUpcomingOccasionsForRestaurant(restaurant.id);
+        const atRisk = await findAtRiskCustomersForRestaurant(restaurant.id);
 
-    return res.status(200).json({
-      success: true,
-      opportunities: opportunities.length,
-      breakdown: {
-        occasions: upcomingOccasions.length,
-        at_risk: atRiskCustomers.length
+        const opportunities = [
+          ...occasions.map(o => ({ ...o, type: 'occasion' })),
+          ...atRisk.map(c => ({ ...c, type: 'churn_risk' })),
+        ].slice(0, MAX_OPPORTUNITIES_PER_RESTAURANT_PER_RUN);
+
+        for (const opp of opportunities) {
+          const result = await queueOpportunity(restaurant, opp);
+          if (result.queued) {
+            if (opp.type === 'occasion') stats.occasions_queued++;
+            else stats.churn_queued++;
+          } else if (result.duplicate) {
+            stats.skipped_duplicate++;
+          }
+        }
+
+        stats.restaurants_processed++;
+      } catch (err) {
+        logger.error('Error processing restaurant', { restaurantId: restaurant.id, error: err.message });
+        stats.errors++;
       }
-    });
+    }
+
+    logger.info('Proactive comms scan complete', stats);
+
+    await logCronRun('proactive-comms', stats);
+
+    return res.status(200).json({ success: true, ...stats });
   } catch (error) {
     logger.error('Proactive comms cron error:', error.message);
+    await logCronRun('proactive-comms', { ...stats, fatal_error: error.message });
     return res.status(500).json({ success: false, error: 'Proactive comms processing failed' });
   }
 };
 
-/**
- * Find guest memories of type 'occasion' with dates in the next 7 days
- */
-async function findUpcomingOccasions() {
-  try {
-    const { data: occasions, error } = await supabaseAdmin
-      .from('guest_memories')
-      .select('restaurant_id, guest_phone, content, importance')
-      .eq('is_active', true)
-      .eq('memory_type', 'occasion')
-      .order('importance', { ascending: false })
-      .limit(100);
+// ────────────────────────────────────────────────────────────────────────────
+// OPPORTUNITY DETECTION
+// ────────────────────────────────────────────────────────────────────────────
 
-    if (error || !occasions) return [];
+/** Birthdays / anniversaries stored on customer_ltv.special_occasions JSONB */
+async function findUpcomingOccasionsForRestaurant(restaurantId) {
+  try {
+    const { data: customers, error } = await supabaseAdmin
+      .schema('restaurant')
+      .from('customer_ltv')
+      .select('customer_id, customer_phone, customer_name, customer_tier, special_occasions, total_visits')
+      .eq('restaurant_id', restaurantId)
+      .not('special_occasions', 'is', null)
+      .not('customer_phone', 'is', null);
+
+    if (error || !customers) return [];
 
     const now = new Date();
-    const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const minDate = addDays(now, MIN_DAYS_BEFORE_OCCASION);
+    const maxDate = addDays(now, MAX_DAYS_BEFORE_OCCASION);
     const thisYear = now.getFullYear();
 
     const upcoming = [];
-
-    for (const occ of occasions) {
-      // Try to extract a date from the content (e.g., "Wedding anniversary Feb 14")
-      const dateMatch = occ.content.match(
-        /(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+\d{1,2}/i
-      );
-
-      if (dateMatch) {
-        const parsedDate = new Date(`${dateMatch[0]} ${thisYear}`);
-        if (!isNaN(parsedDate.getTime()) && parsedDate >= now && parsedDate <= sevenDaysFromNow) {
+    for (const c of customers) {
+      const occasions = c.special_occasions || {};
+      // special_occasions schema is flexible: { birthday: '06-15', anniversary: '12-20', ... }
+      // We accept MM-DD or YYYY-MM-DD strings
+      for (const [label, dateStr] of Object.entries(occasions)) {
+        if (typeof dateStr !== 'string') continue;
+        const occDate = parseOccasionDate(dateStr, thisYear);
+        if (!occDate) continue;
+        if (occDate >= minDate && occDate <= maxDate) {
           upcoming.push({
-            type: 'occasion',
-            restaurant_id: occ.restaurant_id,
-            guest_phone: occ.guest_phone,
-            content: occ.content,
-            trigger_date: parsedDate.toISOString().split('T')[0],
-            suggested_action: `Send a personalized message about their upcoming ${occ.content}`
+            customer_id: c.customer_id,
+            customer_phone: c.customer_phone,
+            customer_name: c.customer_name,
+            customer_tier: c.customer_tier,
+            total_visits: c.total_visits,
+            occasion_label: label,
+            occasion_date: occDate.toISOString().split('T')[0],
+            suggested_action: `${label} on ${occDate.toISOString().split('T')[0]} — invite ${c.customer_name || c.customer_phone}`,
           });
         }
       }
     }
-
     return upcoming;
   } catch (error) {
-    logger.error('Error finding upcoming occasions:', error.message);
+    logger.error('findUpcomingOccasionsForRestaurant error', { error: error.message });
     return [];
   }
 }
 
-/**
- * Find customers with high churn risk from customer_ltv
- */
-async function findAtRiskCustomers() {
+/** High-churn-risk customers from customer_ltv */
+async function findAtRiskCustomersForRestaurant(restaurantId) {
   try {
-    // DATA-HIGH-01: customer_ltv lives in restaurant schema and has restaurant_id
     const { data: atRisk, error } = await supabaseAdmin
       .schema('restaurant')
       .from('customer_ltv')
-      .select('customer_id, customer_phone, churn_risk_score, customer_tier, last_visit_date, total_visits, restaurant_id')
-      .gte('churn_risk_score', 70)
-      .gte('total_visits', 3)
+      .select('customer_id, customer_phone, customer_name, customer_tier, churn_risk_score, last_visit_date, total_visits, avg_revenue_per_visit')
+      .eq('restaurant_id', restaurantId)
+      .gte('churn_risk_score', MIN_CHURN_RISK)
+      .gte('total_visits', MIN_VISITS_FOR_CHURN)
+      .not('customer_phone', 'is', null)
       .order('churn_risk_score', { ascending: false })
-      .limit(50);
+      .limit(MAX_OPPORTUNITIES_PER_RESTAURANT_PER_RUN);
 
     if (error || !atRisk) return [];
 
     return atRisk.map(c => ({
-      type: 'churn_risk',
       customer_id: c.customer_id,
-      guest_phone: c.customer_phone || c.customer_id,
-      churn_risk: c.churn_risk_score,
-      tier: c.customer_tier,
-      last_visit: c.last_visit_date,
+      customer_phone: c.customer_phone,
+      customer_name: c.customer_name,
+      customer_tier: c.customer_tier,
       total_visits: c.total_visits,
-      suggested_action: `Re-engage ${c.customer_tier} customer (${c.total_visits} visits, churn risk: ${c.churn_risk_score}%)`
+      avg_revenue_per_visit: c.avg_revenue_per_visit,
+      churn_risk: c.churn_risk_score,
+      last_visit: c.last_visit_date,
+      suggested_action: `${c.customer_tier || 'regular'} guest at ${c.churn_risk_score}% churn risk — ${c.total_visits} visits, last seen ${c.last_visit_date || 'unknown'}`,
     }));
   } catch (error) {
-    logger.error('Error finding at-risk customers:', error.message);
+    logger.error('findAtRiskCustomersForRestaurant error', { error: error.message });
     return [];
   }
 }
 
-/**
- * Store opportunities as manager notes for review
- * Managers will see these in their dashboard and can approve sending messages
- */
-async function storeOpportunities(opportunities) {
+// ────────────────────────────────────────────────────────────────────────────
+// QUEUE WRITES
+// ────────────────────────────────────────────────────────────────────────────
+
+/** Try to queue one opportunity. Returns { queued, duplicate, error }.
+ *  The partial unique index `idx_pcq_active_dedup` blocks duplicate PENDING
+ *  rows for the same (restaurant, type, phone) so we just ignore the conflict. */
+async function queueOpportunity(restaurant, opp) {
+  const expiresAt = addDays(new Date(), QUEUE_TTL_DAYS).toISOString();
+  const lang = normaliseLang(restaurant.agent_language);
+
+  // Generate AI message draft (Haiku — cheap)
+  let draftMessage = null;
   try {
-    // For now, log opportunities. In a future iteration, these would be
-    // stored in a dedicated `proactive_comms_queue` table for manager approval.
-    logger.info('Proactive comm opportunities identified', {
-      count: opportunities.length,
-      types: opportunities.reduce((acc, o) => {
-        acc[o.type] = (acc[o.type] || 0) + 1;
-        return acc;
-      }, {})
+    draftMessage = await generateDraftMessage(restaurant, opp, lang);
+  } catch (err) {
+    logger.warn('Draft message generation failed (will queue without draft)', {
+      restaurantId: restaurant.id,
+      type: opp.type,
+      error: err.message,
     });
-  } catch (error) {
-    logger.error('Error storing opportunities:', error.message);
+  }
+
+  const triggerData = opp.type === 'occasion'
+    ? { occasion_label: opp.occasion_label, occasion_date: opp.occasion_date, total_visits: opp.total_visits }
+    : { churn_risk: opp.churn_risk, customer_tier: opp.customer_tier, total_visits: opp.total_visits, last_visit: opp.last_visit, avg_spend: opp.avg_revenue_per_visit };
+
+  const row = {
+    restaurant_id: restaurant.id,
+    type: opp.type,
+    customer_phone: opp.customer_phone,
+    customer_name: opp.customer_name || null,
+    customer_id: opp.customer_id || null,
+    trigger_data: triggerData,
+    draft_message: draftMessage,
+    suggested_action: opp.suggested_action,
+    status: 'pending',
+    expires_at: expiresAt,
+  };
+
+  const { error } = await supabaseAdmin
+    .schema('restaurant')
+    .from('proactive_comms_queue')
+    .insert(row);
+
+  if (error) {
+    // 23505 = unique_violation — partial index already has a pending row. Expected.
+    if (error.code === '23505') return { queued: false, duplicate: true };
+    // 42P01 = relation does not exist — migration not yet applied. Skip silently.
+    if (error.code === '42P01') {
+      logger.warn('proactive_comms_queue table missing — apply migration 20260430_proactive_comms_queue.sql', { restaurantId: restaurant.id });
+      return { queued: false, error: 'table_missing' };
+    }
+    logger.error('Failed to queue opportunity', { restaurantId: restaurant.id, type: opp.type, error: error.message });
+    return { queued: false, error: error.message };
+  }
+
+  return { queued: true };
+}
+
+/** Expire pending items past their TTL. Returns count expired. */
+async function expireStalePendingItems() {
+  try {
+    const { data, error } = await supabaseAdmin
+      .schema('restaurant')
+      .from('proactive_comms_queue')
+      .update({ status: 'expired' })
+      .eq('status', 'pending')
+      .lt('expires_at', new Date().toISOString())
+      .select('id');
+
+    if (error) {
+      if (error.code !== '42P01') {
+        logger.warn('expireStalePendingItems failed', { error: error.message });
+      }
+      return 0;
+    }
+    return (data || []).length;
+  } catch (err) {
+    return 0;
   }
 }
+
+// ────────────────────────────────────────────────────────────────────────────
+// AI DRAFT GENERATION
+// ────────────────────────────────────────────────────────────────────────────
+
+/** Generate a personalised WhatsApp-friendly draft (PT/ES/EN) using Haiku. */
+async function generateDraftMessage(restaurant, opp, lang) {
+  const ai = getAI();
+  if (!ai) return null;
+
+  const customerName = opp.customer_name || (lang === 'pt-BR' ? 'cliente' : lang === 'es' ? 'cliente' : 'guest');
+
+  const systemPrompt = lang === 'pt-BR'
+    ? 'Você escreve mensagens curtas de WhatsApp para clientes de um restaurante. 2-3 frases, calorosas, personalizadas, sem emojis exagerados (máximo 1). Em português brasileiro.'
+    : lang === 'es'
+      ? 'Escribes mensajes cortos de WhatsApp para clientes de un restaurante. 2-3 frases, cálidas, personalizadas, sin emojis excesivos (máximo 1). En español.'
+      : 'You write short WhatsApp messages to a restaurant\'s customers. 2-3 sentences, warm, personalised, max 1 emoji. In English.';
+
+  let userPrompt;
+  if (opp.type === 'occasion') {
+    userPrompt = lang === 'pt-BR'
+      ? `Restaurante: "${restaurant.restaurant_name}". Cliente: ${customerName}. Ocasião: ${opp.occasion_label} em ${opp.occasion_date}. Já veio ${opp.total_visits || 0}x. Escreva uma mensagem convidando para celebrar conosco.`
+      : lang === 'es'
+        ? `Restaurante: "${restaurant.restaurant_name}". Cliente: ${customerName}. Ocasión: ${opp.occasion_label} el ${opp.occasion_date}. Ha venido ${opp.total_visits || 0} veces. Escribe un mensaje invitándole a celebrar con nosotros.`
+        : `Restaurant: "${restaurant.restaurant_name}". Guest: ${customerName}. Occasion: ${opp.occasion_label} on ${opp.occasion_date}. Visited ${opp.total_visits || 0}x. Write a message inviting them to celebrate with us.`;
+  } else {
+    // churn_risk
+    userPrompt = lang === 'pt-BR'
+      ? `Restaurante: "${restaurant.restaurant_name}". Cliente regular: ${customerName} (${opp.total_visits} visitas). Não vem desde ${opp.last_visit || 'há tempo'}. Escreva uma mensagem genuína convidando para voltar — sem soar como spam.`
+      : lang === 'es'
+        ? `Restaurante: "${restaurant.restaurant_name}". Cliente habitual: ${customerName} (${opp.total_visits} visitas). No viene desde ${opp.last_visit || 'hace tiempo'}. Escribe un mensaje genuino invitándole a volver — sin sonar a spam.`
+        : `Restaurant: "${restaurant.restaurant_name}". Regular guest: ${customerName} (${opp.total_visits} visits). Hasn't visited since ${opp.last_visit || 'a while'}. Write a genuine welcome-back message — not spammy.`;
+  }
+
+  const response = await ai.messages.create({
+    model: AI_MODEL_FAST,
+    max_tokens: 200,
+    system: systemPrompt,
+    messages: [{ role: 'user', content: userPrompt }],
+    temperature: 0.7,
+  });
+
+  const text = (response.content || []).map(b => b.text || '').join('').trim();
+  return text || null;
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// HELPERS
+// ────────────────────────────────────────────────────────────────────────────
+
+function addDays(date, days) {
+  const d = new Date(date);
+  d.setDate(d.getDate() + days);
+  return d;
+}
+
+/** Accept "MM-DD", "YYYY-MM-DD", or month-name strings. Returns Date for THIS year. */
+function parseOccasionDate(dateStr, thisYear) {
+  const trimmed = String(dateStr).trim();
+
+  // YYYY-MM-DD or MM-DD
+  let m = trimmed.match(/^(?:(\d{4})-)?(\d{1,2})-(\d{1,2})$/);
+  if (m) {
+    const month = parseInt(m[2], 10) - 1;
+    const day = parseInt(m[3], 10);
+    if (month < 0 || month > 11 || day < 1 || day > 31) return null;
+    const d = new Date(thisYear, month, day);
+    // If the date already passed this year, use next year
+    if (d < new Date()) d.setFullYear(thisYear + 1);
+    return d;
+  }
+
+  // Month name + day: "March 15", "Mar 15"
+  m = trimmed.match(/^(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+(\d{1,2})$/i);
+  if (m) {
+    const months = { jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11 };
+    const month = months[m[1].toLowerCase()];
+    const day = parseInt(m[2], 10);
+    const d = new Date(thisYear, month, day);
+    if (d < new Date()) d.setFullYear(thisYear + 1);
+    return d;
+  }
+  return null;
+}
+
+function normaliseLang(lng) {
+  if (!lng) return 'pt-BR';
+  if (lng === 'pt' || lng.startsWith('pt-')) return 'pt-BR';
+  if (lng.startsWith('es')) return 'es';
+  if (lng.startsWith('en')) return 'en';
+  return 'pt-BR';
+}
+
+// Exported for testing
+module.exports.findUpcomingOccasionsForRestaurant = findUpcomingOccasionsForRestaurant;
+module.exports.findAtRiskCustomersForRestaurant = findAtRiskCustomersForRestaurant;
+module.exports.parseOccasionDate = parseOccasionDate;
+module.exports.normaliseLang = normaliseLang;

@@ -3,6 +3,7 @@ const { supabaseAdmin } = require('./_lib/supabase');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { inlineRequireFeature, checkSubscriptionByRestaurantId } = require('./_lib/subscription-middleware');
+const { triggerKbSync } = require('./_lib/kb-sync-trigger');
 
 const logger = createSecureLogger('voice-persona');
 
@@ -94,9 +95,16 @@ async function handlePatch(req, res) {
     if (error) throw new Error(error.message);
 
     logger.info('voice persona updated', { restaurantId });
+
+    // Push the change to the live ElevenLabs voice agent so callers hear the
+    // new persona on the next call. Awaited (bounded) so stale-KB drift is
+    // impossible by design — see api/_lib/kb-sync-trigger.js for rationale.
+    const kbSync = await triggerKbSync(restaurantId, { reason: 'voice_persona' });
+
     return res.json({
       agent_name: data.agent_name,
       agent_greeting: data.agent_greeting,
+      kb_synced: kbSync.success,
     });
   } catch (err) {
     if (err.message === 'UNAUTHORIZED') return res.status(401).json({ error: 'Authentication required' });

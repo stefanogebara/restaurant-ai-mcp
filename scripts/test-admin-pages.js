@@ -404,11 +404,19 @@ async function login(page) {
     // 7. EditReservationModal — click edit on the reservation just created
     // -----------------------------------------------------------------------
     console.log('\n[7] EditReservationModal');
-    // We just added GUEST_NAME in step [6]. The dashboard list should
-    // have refreshed. The edit button is an icon button with aria-label="Editar"/"Edit".
-    // ReservationRow renders: div.flex > ... button[aria-label=edit/editar]
-    // It only shows on sm: breakpoints, our viewport (1400px) is fine.
+    // We just added GUEST_NAME in step [6] for *tomorrow*'s date (Section 6
+    // fixes a business-rules 400 by booking tomorrow). The dashboard's
+    // ReservationsList defaults to the "today" tab, so the row we just
+    // created is invisible until we switch tabs. Click "Amanhã"/"Tomorrow"
+    // before searching.
     await page.waitForTimeout(2000); // wait for React Query refetch after create
+    const tomorrowTab = page.locator('button', {
+      hasText: /^(Amanh[ãa]|Tomorrow|Mañana)$/i,
+    }).first();
+    if (await tomorrowTab.isVisible().catch(() => false)) {
+      await tomorrowTab.click();
+      await page.waitForTimeout(600);
+    }
 
     const editIconBtn = page.locator('button[aria-label="Editar"], button[aria-label="Edit"], button[aria-label="Editar"]').first();
     if (await editIconBtn.isVisible().catch(() => false)) {

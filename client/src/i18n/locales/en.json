@@ -434,6 +434,27 @@
     "removedFromWaitlist": "{{name}} removed from waitlist",
     "partyOf": "Party of"
   },
+  "proactiveComms": {
+    "title": "Re-engagement opportunities",
+    "loading": "Loading opportunities...",
+    "empty": "No opportunities right now. Sofia will surface birthdays, anniversaries, and customers slipping away here.",
+    "pending": "pending",
+    "approved": "approved",
+    "sent": "sent",
+    "readyToSend": "ready to send",
+    "typeOccasion": "Occasion",
+    "typeChurnRisk": "Churn risk",
+    "typeLongAbsent": "Long absent",
+    "draftLabel": "Draft message (edit as needed)",
+    "draftPlaceholder": "AI is drafting this — write your own if you prefer.",
+    "approve": "Approve",
+    "dismiss": "Dismiss",
+    "sendWhatsApp": "Send via WhatsApp",
+    "approved2": "Approved — ready to send",
+    "dismissed": "Dismissed",
+    "sentAt": "Sent",
+    "lastSendError": "Last send attempt failed"
+  },
   "reservations": {
     "title": "Reservations",
     "newReservation": "New Reservation",

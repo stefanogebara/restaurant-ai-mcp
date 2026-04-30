@@ -8,16 +8,46 @@ import { useVoiceAgent } from '../components/voice/useVoiceAgent';
 import VoiceDemoDashboard from './VoiceDemoDashboard';
 import type { MockReservation } from './VoiceDemoDashboard';
 
-/** Parse agent messages for reservation keywords */
+/** Parse agent messages for reservation keywords.
+ *  Multilingual — Sofia speaks PT-BR by default for Brazilian prospects, so
+ *  we have to recognise PT/ES confirmation patterns too. Without these the
+ *  live demo dashboard stayed empty whenever the agent confirmed in PT, which
+ *  killed the "magic real-time" effect for our primary market. */
+const CONFIRMED_KEYWORDS = [
+  // English
+  'confirmed', 'booked', 'reserved',
+  // Portuguese
+  'confirmada', 'confirmado', 'reservado', 'reservada', 'marcada', 'marcado', 'reservei', 'agendada', 'agendado',
+  // Spanish
+  'confirmada', 'reservada', 'reservado', 'agendada', 'reservé',
+];
+
+const CANCELLED_KEYWORDS = [
+  // English
+  'cancelled', 'canceled',
+  // Portuguese
+  'cancelada', 'cancelado', 'cancelei',
+  // Spanish
+  'cancelada', 'cancelado', 'cancelé',
+];
+
+const NAME_RE = /(?:for|name[:\s]+|para|nombre[:\s]+|nome[:\s]+|em nome de|a nombre de)\s*([A-Z][a-záéíóúñãõâêôç]+(?:\s[A-Z][a-záéíóúñãõâêôç]*)?)/i;
+const SIZE_RE = /(?:table for|party of|for|para|mesa para|mesa de|reserva para)\s*(\d+)\s*(?:people|pessoas?|personas?|guests?)?/i;
+const TIME_RE = /(\d{1,2}(?::\d{2})?\s*(?:pm|am|h|horas?)?)/i;
+
+function containsAny(haystack: string, needles: string[]): boolean {
+  return needles.some(n => haystack.includes(n));
+}
+
 function parseReservationFromText(text: string): MockReservation | null {
   const lower = text.toLowerCase();
 
-  if (lower.includes('confirmed') || lower.includes('booked') || lower.includes('reserved')) {
-    const nameMatch = text.match(/(?:for|name[:\s]+)\s*([A-Z][a-z]+(?:\s[A-Z][a-z]*)?)/);
+  if (containsAny(lower, CONFIRMED_KEYWORDS)) {
+    const nameMatch = text.match(NAME_RE);
     const name = nameMatch?.[1] || 'Guest';
-    const sizeMatch = text.match(/(?:table for|party of|for)\s*(\d+)/i);
+    const sizeMatch = text.match(SIZE_RE);
     const size = sizeMatch ? parseInt(sizeMatch[1], 10) : 2;
-    const timeMatch = text.match(/(\d{1,2}(?::\d{2})?\s*(?:pm|am)?)/i);
+    const timeMatch = text.match(TIME_RE);
     const time = timeMatch?.[1] || '20:00';
 
     return {
@@ -30,8 +60,8 @@ function parseReservationFromText(text: string): MockReservation | null {
     };
   }
 
-  if (lower.includes('cancelled') || lower.includes('canceled')) {
-    const nameMatch = text.match(/(?:for|name[:\s]+)\s*([A-Z][a-z]+(?:\s[A-Z][a-z]*)?)/);
+  if (containsAny(lower, CANCELLED_KEYWORDS)) {
+    const nameMatch = text.match(NAME_RE);
     return {
       id: `voice-cancel-${Date.now()}`,
       name: nameMatch?.[1] || 'Guest',

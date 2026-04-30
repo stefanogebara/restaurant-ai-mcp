@@ -8,7 +8,23 @@ const { supabaseAdmin: supabase } = require('./_lib/supabase');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
+const { triggerKbSync } = require('./_lib/kb-sync-trigger');
 const logger = createSecureLogger('RestaurantSettings');
+
+// Fields that, when changed, should propagate to the live ElevenLabs voice
+// agent's knowledge base. Things like business_hours, restaurant_name,
+// reservation_settings — Sofia needs to know them on her next call.
+const KB_RELEVANT_FIELDS = new Set([
+  'business_hours',
+  'restaurant_name',
+  'reservation_settings',
+  'phone',
+  'email',
+  'city',
+  'country',
+  'timezone',
+  'language',
+]);
 
 const ALLOWED_LANGUAGES = ['en', 'es', 'pt', 'pt-BR', 'fr', 'it'];
 
@@ -296,10 +312,19 @@ module.exports = async function handler(req, res) {
         return res.status(500).json({ success: false, error: 'Failed to update restaurant settings' });
       }
 
+      // Sync KB to ElevenLabs if the changed fields affect what Sofia knows.
+      const touchedKbFields = Object.keys(req.body).some(f => KB_RELEVANT_FIELDS.has(f));
+      let kbSynced = null;
+      if (touchedKbFields) {
+        const result = await triggerKbSync(restaurantId, { reason: 'restaurant_settings' });
+        kbSynced = result.success;
+      }
+
       return res.status(200).json({
         success: true,
         message: 'Settings updated successfully',
         data: { language: data.agent_language, restaurant_name: data.restaurant_name },
+        kb_synced: kbSynced,
       });
     }
 
