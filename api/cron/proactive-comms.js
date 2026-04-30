@@ -245,8 +245,9 @@ async function queueOpportunity(restaurant, opp) {
   if (error) {
     // 23505 = unique_violation — partial index already has a pending row. Expected.
     if (error.code === '23505') return { queued: false, duplicate: true };
-    // 42P01 = relation does not exist — migration not yet applied. Skip silently.
-    if (error.code === '42P01') {
+    // 42P01 (postgres) / PGRST205 (PostgREST cache miss) — migration not yet
+    // applied. Skip silently so the cron doesn't fail loudly until ready.
+    if (error.code === '42P01' || error.code === 'PGRST205') {
       logger.warn('proactive_comms_queue table missing — apply migration 20260430_proactive_comms_queue.sql', { restaurantId: restaurant.id });
       return { queued: false, error: 'table_missing' };
     }
@@ -269,7 +270,8 @@ async function expireStalePendingItems() {
       .select('id');
 
     if (error) {
-      if (error.code !== '42P01') {
+      // 42P01 (postgres) / PGRST205 (PostgREST) — migration not applied yet
+      if (error.code !== '42P01' && error.code !== 'PGRST205') {
         logger.warn('expireStalePendingItems failed', { error: error.message });
       }
       return 0;

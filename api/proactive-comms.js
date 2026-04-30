@@ -27,6 +27,17 @@ const { sendWhatsAppMessage, isWhatsAppConfigured } = require('./_lib/whatsapp-s
 const logger = createSecureLogger('proactive-comms-api');
 
 const VALID_STATUSES = ['pending', 'approved', 'sent', 'dismissed', 'expired'];
+
+/**
+ * "Table doesn't exist" can show up as either the postgres-native code 42P01
+ * (raw connection) or PGRST205 (PostgREST schema-cache miss — what the
+ * Supabase JS client actually returns). Both are treated as "migration not
+ * yet applied" for graceful degradation.
+ */
+function isMissingTableError(error) {
+  if (!error) return false;
+  return error.code === '42P01' || error.code === 'PGRST205';
+}
 const ALLOWED_TRANSITIONS = {
   pending: new Set(['approved', 'dismissed']),
   approved: new Set(['pending', 'dismissed']),
@@ -95,7 +106,7 @@ async function handleGet(req, res, restaurantId) {
   const { data, error } = await query;
 
   if (error) {
-    if (error.code === '42P01') {
+    if (isMissingTableError(error)) {
       // Table doesn't exist yet — return empty list so UI degrades gracefully
       return res.status(200).json({ success: true, items: [], migration_pending: true });
     }
@@ -272,7 +283,7 @@ async function fetchById(restaurantId, id) {
     .eq('restaurant_id', restaurantId)
     .maybeSingle();
 
-  if (error && error.code !== '42P01') {
+  if (error && !isMissingTableError(error)) {
     logger.error('fetchById error', { id, error: error.message });
   }
   return data || null;

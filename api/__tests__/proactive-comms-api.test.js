@@ -109,13 +109,37 @@ describe('proactive-comms API — GET', () => {
     expect(json.counts.approved).toBe(1);
   });
 
-  test('returns empty list (200) with migration_pending when table missing', async () => {
+  test('returns empty list (200) with migration_pending when table missing (postgres 42P01)', async () => {
     mockSchemaFrom.mockReturnValue({
       select: () => ({
         eq: () => ({
           order: () => ({
             limit: () => ({
               in: () => Promise.resolve({ data: null, error: { code: '42P01', message: 'relation does not exist' } }),
+            }),
+          }),
+        }),
+      }),
+    });
+    const res = mockRes();
+    await handler({ method: 'GET', headers: {}, query: {} }, res);
+    expect(res.status).toHaveBeenCalledWith(200);
+    const json = res.json.mock.calls[0][0];
+    expect(json.items).toEqual([]);
+    expect(json.migration_pending).toBe(true);
+  });
+
+  // Regression test: in production the Supabase JS client surfaces missing
+  // tables as PostgREST schema-cache miss (PGRST205), not the postgres-native
+  // 42P01. The smoke test caught this on the first deploy — handler returned
+  // 500 instead of the graceful migration_pending response.
+  test('returns empty list (200) with migration_pending when PostgREST schema cache misses (PGRST205)', async () => {
+    mockSchemaFrom.mockReturnValue({
+      select: () => ({
+        eq: () => ({
+          order: () => ({
+            limit: () => ({
+              in: () => Promise.resolve({ data: null, error: { code: 'PGRST205', message: "Could not find the table 'restaurant.proactive_comms_queue' in the schema cache" } }),
             }),
           }),
         }),
