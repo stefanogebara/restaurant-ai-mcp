@@ -574,7 +574,7 @@
     "name": "Name",
     "namePlaceholder": "Your full name",
     "phone": "Phone",
-    "phonePlaceholder": "+55 11 91234 5678",
+    "phonePlaceholder": "+55 (11) 91234-5678",
     "email": "Email",
     "emailPlaceholder": "your@email.com",
     "optional": "optional",
@@ -1674,6 +1674,8 @@
   },
   "landing": {
     "badge": "AI-Powered Restaurant Management",
+    "betaBadge": "Beta partners welcome",
+    "betaSubtitle": "30-day free trial · no credit card · cancel anytime",
     "socialProofBadge": "5 restaurants joined this week",
     "socialProof": {
       "label": "Now in early access",
@@ -2031,7 +2033,12 @@
     "footer": {
       "privacy": "Privacy Policy",
       "terms": "Terms of Service",
-      "faq": "Frequently Asked Questions"
+      "faq": "Frequently Asked Questions",
+      "contact": "Contact",
+      "responseTime": "Response within 24h",
+      "product": "Product",
+      "legal": "Legal",
+      "tagline": "AI-powered restaurant management."
     },
     "share": {
       "heading": "Know another restaurant owner?",
@@ -2209,6 +2216,8 @@
       }
     },
     "voiceDemo": {
+      "midCallCtaLabel": "This could be YOUR restaurant",
+      "midCallCta": "Set up your AI in 2 minutes — free",
       "backToSite": "← Back",
       "title": "Talk to our AI host",
       "subtitle": "Ask to book a table, check availability, or inquire about the menu",

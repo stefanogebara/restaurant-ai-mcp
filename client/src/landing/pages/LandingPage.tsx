@@ -83,35 +83,40 @@ export default function LandingPage() {
         </ErrorBoundary>
       </div>
 
-      {/* 3. Call our AI — voice widget with ElevenLabs agent */}
+      {/* 3. Pricing — M19: moved up from position 8 to 3. Serious prospects
+          want to know cost early, before scrolling through deep product
+          demos. The "Beta partners welcome" badge below adds context without
+          fabricating testimonials. */}
+      <div className="text-center pt-12 pb-2">
+        <p className="text-xs uppercase tracking-[2px] text-burgundy font-semibold mb-2">
+          {t('landing.betaBadge', 'Beta partners welcome')}
+        </p>
+        <p className="text-sm text-warm-stone font-light max-w-md mx-auto px-6">
+          {t('landing.betaSubtitle', '30-day free trial · no credit card · cancel anytime')}
+        </p>
+      </div>
+      <PricingSection />
+
+      {/* 4. Call our AI — voice widget with ElevenLabs agent */}
       <ErrorBoundary silent>
         <VoiceWidgetSection />
       </ErrorBoundary>
 
-      {/* 4. Text our AI — WhatsApp widget with real number */}
+      {/* 5. Text our AI — WhatsApp widget with real number */}
       <WhatsAppWidgetSection />
 
-      {/* 5. Before/After — social proof with animated stats */}
+      {/* 6. Before/After — social proof with animated stats */}
       <BeforeAfterSection />
 
-      {/* 6. Dashboard Walkthrough — animated "silent movie" of AI features */}
+      {/* 7. Dashboard Walkthrough — animated "silent movie" of AI features */}
       <ErrorBoundary silent>
         <DashboardWalkthroughSection />
       </ErrorBoundary>
 
-      {/* 7. Share prompt — viral referral */}
+      {/* 8. Share prompt — viral referral */}
       <div className="max-w-md mx-auto px-6 mt-4 mb-8">
         <SharePrompt location="landing" />
       </div>
-
-      {/* 8. Social proof + Pricing */}
-      <div className="text-center py-6">
-        <p className="text-sm text-warm-stone font-medium">
-          <span className="inline-block w-2 h-2 rounded-full bg-burgundy mr-1.5 animate-pulse" />
-          {t('landing.socialProofBadge', '5 restaurants joined this week')}
-        </p>
-      </div>
-      <PricingSection />
 
       {/* 10. Final CTA */}
       <section className="px-6 sm:px-16 pb-24">

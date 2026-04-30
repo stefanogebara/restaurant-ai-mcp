@@ -16,7 +16,7 @@ async function getRestaurantSnapshot(restaurantId) {
   // reservations.time is a separate time column — no combined reservation_time exists).
   const todayStr = new Date().toISOString().split('T')[0];
 
-  const [reservationsRes, waitlistRes, activeRes, configRes, depositRes] = await Promise.all([
+  const [reservationsRes, waitlistRes, activeRes, configRes, depositRes, capacityRes] = await Promise.all([
     supabaseAdmin
       .from('reservations')
       .select('id, customer_name, party_size, time, status, date, customer_phone')
@@ -37,12 +37,14 @@ async function getRestaurantSnapshot(restaurantId) {
       .eq('restaurant_id', restaurantId)
       .eq('status', 'active')
       .limit(50),
+    // M18: maybeSingle so a missing config row returns data:null cleanly
+    // instead of throwing PGRST116 ("0 rows when exactly 1 expected").
     supabaseAdmin
       .schema('restaurant')
       .from('restaurant_config')
       .select('staffing_config')
       .eq('id', restaurantId)
-      .single(),
+      .maybeSingle(),
     supabaseAdmin
       .from('reservations')
       .select('deposit_amount')
@@ -50,6 +52,13 @@ async function getRestaurantSnapshot(restaurantId) {
       .not('deposit_amount', 'is', null)
       .in('status', ['confirmed', 'pending'])
       .gte('date', new Date().toISOString().split('T')[0]),
+    // M10: total seating capacity — Manager AI can now answer "are we full
+    // tonight?" by comparing tonight's covers to this number.
+    supabaseAdmin
+      .from('tables')
+      .select('capacity')
+      .eq('restaurant_id', restaurantId)
+      .eq('is_active', true),
   ]);
 
   if (reservationsRes.error) {
@@ -60,6 +69,13 @@ async function getRestaurantSnapshot(restaurantId) {
   }
   if (activeRes.error) {
     logger.error('getRestaurantSnapshot service_records query failed', { restaurantId, error: activeRes.error.message });
+  }
+  if (configRes.error) {
+    // M18: log explicitly — silent failures here masked staffing-config drift.
+    logger.warn('getRestaurantSnapshot restaurant_config query failed', { restaurantId, error: configRes.error.message });
+  }
+  if (capacityRes.error) {
+    logger.warn('getRestaurantSnapshot tables capacity query failed', { restaurantId, error: capacityRes.error.message });
   }
 
   // Drop today's reservations whose start time has already passed — Manager AI
@@ -138,6 +154,23 @@ async function getRestaurantSnapshot(restaurantId) {
     logger.error('Failed to fetch feedback stats for snapshot', { error: e.message });
   }
 
+  // M10: total seating capacity (sum of active table capacities)
+  const total_capacity = (capacityRes.data || []).reduce(
+    (sum, t) => sum + (Number(t.capacity) || 0),
+    0
+  );
+
+  // Tonight's projected covers (sum of confirmed/pending reservations for today)
+  const todayCovers = enrichedReservations
+    .filter(r => r.date === todayStr && (r.status === 'confirmed' || r.status === 'pending'))
+    .reduce((sum, r) => sum + (Number(r.party_size) || 0), 0);
+
+  const capacity_summary = {
+    total_capacity,
+    tonight_covers: todayCovers,
+    occupancy_pct: total_capacity > 0 ? Math.round((todayCovers / total_capacity) * 100) : null,
+  };
+
   return {
     snapshot_time: new Date().toISOString(),
     upcoming_reservations: enrichedReservations,
@@ -146,6 +179,7 @@ async function getRestaurantSnapshot(restaurantId) {
     staffing_forecast,
     deposit_summary,
     feedback_summary,
+    capacity_summary,
     errors: [
       reservationsRes.error && 'reservations',
       waitlistRes.error && 'waitlist',

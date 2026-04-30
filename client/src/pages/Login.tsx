@@ -84,6 +84,14 @@ export default function Login() {
     if (fromParam) extraRedirectParams['from'] = fromParam;
     if (tokenParam) extraRedirectParams['token'] = tokenParam;
 
+    // H8: preserve the user's intended destination through OAuth. ProtectedRoute
+    // saves it as location.state.from, but state is lost on the OAuth round-trip
+    // — pass it as a URL query param (`next`) so Welcome.tsx can honour it.
+    const fromState = (location.state as { from?: { pathname: string; search: string } })?.from;
+    if (fromState?.pathname && fromState.pathname !== '/login') {
+      extraRedirectParams['next'] = `${fromState.pathname}${fromState.search || ''}`;
+    }
+
     try {
       await signInWithGoogle(Object.keys(extraRedirectParams).length > 0 ? extraRedirectParams : undefined);
     } catch (err: unknown) {

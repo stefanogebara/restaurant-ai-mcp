@@ -73,20 +73,38 @@ module.exports = async (req, res) => {
 
     logger.info(`Found ${eligibleGuests.length} guests eligible for reflection`);
 
+    // H14: time budget — bounds the cron well under Vercel's 60s ceiling even
+    // as the eligible guest pool grows. Each LLM reflection is ~2-3s; the 20
+    // hard cap below is now combined with a 45s wall-clock check so a stuck
+    // model call can't blow the function timeout.
+    const TIME_BUDGET_MS = 45_000;
+    const startTime = Date.now();
+
     let totalReflections = 0;
+    let processed = 0;
     const errors = [];
 
-    // Process each eligible guest (limit to 20 per run to manage API costs)
+    // Process each eligible guest (capped at 20/run for cost; time budget
+    // stops earlier if the API is slow that day).
     for (const guest of eligibleGuests.slice(0, 20)) {
+      if (Date.now() - startTime > TIME_BUDGET_MS) {
+        logger.warn('generate-reflections time budget exceeded', {
+          processed,
+          eligible: Math.min(eligibleGuests.length, 20),
+        });
+        break;
+      }
       try {
         const count = await generateReflectionsForGuest(
           guest.restaurantId,
           guest.guestPhone
         );
         totalReflections += count;
+        processed++;
       } catch (guestErr) {
         logger.error('Error generating reflections for guest:', guestErr.message);
         errors.push({ restaurantId: guest.restaurantId, guestPhone: guest.guestPhone, error: guestErr.message });
+        processed++;
       }
     }
 

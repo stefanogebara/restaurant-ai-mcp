@@ -76,6 +76,7 @@ module.exports = async (req, res) => {
     // every 4th+ restaurant on every cron run, even when time remained.
     // Vercel max is 60s; reserve ~15s for tail flushing → 45s working budget.
     const TIME_BUDGET_MS = 45_000;
+    const PER_RESTAURANT_TIMEOUT = 25_000; // 25s per restaurant — fits 2-3 in 60s
     const startTime = Date.now();
 
     let sent = 0;
@@ -98,21 +99,44 @@ module.exports = async (req, res) => {
       try {
         const lang = normalizeLang(config.agent_language);
 
-        // For morning briefings on new restaurants with zero reservations, skip the AI call
-        // and send a purposeful setup guide instead.
+        // M17: morning briefing has two zero-data fallbacks. Both skip the
+        // expensive AI call:
+        //   1) Restaurant has NO reservations ever → send onboarding setup guide
+        //      (truly new account, hasn't received their first booking yet)
+        //   2) Restaurant has history but ZERO TODAY → send a short "quiet day"
+        //      acknowledgement (don't burn a Sonnet call to say "tudo tranquilo")
+        // Previously only checked all-time count, so a restaurant with CSV
+        // imports but nothing today got a full AI briefing about historical data.
         if (type === 'morning') {
-          const { count: reservationCount } = await supabaseAdmin
-            .from('reservations')
-            .select('id', { count: 'exact', head: true })
-            .eq('restaurant_id', config.id);
+          const todayStr = new Date().toISOString().split('T')[0];
+          const [{ count: reservationCount }, { count: todayCount }] = await Promise.all([
+            supabaseAdmin
+              .from('reservations')
+              .select('id', { count: 'exact', head: true })
+              .eq('restaurant_id', config.id),
+            supabaseAdmin
+              .from('reservations')
+              .select('id', { count: 'exact', head: true })
+              .eq('restaurant_id', config.id)
+              .eq('date', todayStr),
+          ]);
 
-          if ((reservationCount ?? 0) === 0) {
+          const isNewRestaurant = (reservationCount ?? 0) === 0;
+          const isQuietToday = !isNewRestaurant && (todayCount ?? 0) === 0;
+
+          if (isNewRestaurant || isQuietToday) {
             const onboardingMessages = {
               'pt-BR': `Bom dia! Seu restaurante ainda não tem reservas. Para começar a receber:\n\n1. Compartilhe seu link: seatable.one/book/seu-slug\n2. Coloque o link na bio do Instagram e no Google Meu Negócio\n3. Ative o WhatsApp nas configurações para receber reservas via mensagem\n\nTudo pronto para quando o primeiro cliente chegar.`,
               es: `¡Buenos días! Tu restaurante aún no tiene reservas. Para empezar:\n\n1. Comparte tu enlace de reservas en Instagram y Google\n2. Activa WhatsApp en configuración para recibir reservas por mensaje\n3. Prueba hacer una reserva de prueba tú mismo\n\nListo para cuando llegue el primer cliente.`,
               en: `Good morning! Your restaurant has no reservations yet. To start receiving them:\n\n1. Share your booking link on Instagram and Google\n2. Enable WhatsApp in settings to accept bookings by message\n3. Make a test booking yourself to verify the flow\n\nEverything is set up and ready for your first guest.`,
             };
-            const message = onboardingMessages[lang] || onboardingMessages['pt-BR'];
+            const quietDayMessages = {
+              'pt-BR': `Bom dia! Hoje está tranquilo — nenhuma reserva no calendário. Bom momento para revisar o cardápio, treinar a equipe ou impulsionar uma promoção via WhatsApp.`,
+              es: `¡Buenos días! Hoy está tranquilo — sin reservas en el calendario. Buen momento para revisar la carta, formar al equipo o lanzar una promoción por WhatsApp.`,
+              en: `Good morning! Today's quiet — no reservations on the books. Good moment to refresh the menu, train staff, or push a WhatsApp promo.`,
+            };
+            const messageSet = isNewRestaurant ? onboardingMessages : quietDayMessages;
+            const message = messageSet[lang] || messageSet['pt-BR'];
             const okToSend = await tryLogBriefingSent(config.id, 'morning');
             if (!okToSend) {
               logger.info(`Skipping duplicate morning briefing for ${config.restaurant_name}`);
@@ -120,7 +144,7 @@ module.exports = async (req, res) => {
             }
             await sendBriefing(config.manager_phone, message, 'text', config.id);
             sent++;
-            logger.info(`Sent onboarding briefing to new restaurant: ${config.restaurant_name}`);
+            logger.info(`Sent ${isNewRestaurant ? 'onboarding' : 'quiet-day'} briefing: ${config.restaurant_name}`);
             continue;
           }
         }
@@ -159,7 +183,10 @@ module.exports = async (req, res) => {
         }
 
         const briefing = await Promise.race([
-          runManagerAgent(config.id, promptToSend, 'whatsapp'),
+          // M16: skipQuota — cron-driven briefings are not charged against the
+          // restaurant's manager_ai_call monthly counter (they would otherwise
+          // consume most of a Starter plan's 100/mo allowance just for autos).
+          runManagerAgent(config.id, promptToSend, 'whatsapp', { skipQuota: true }),
           new Promise((_, reject) => setTimeout(() => reject(new Error('Briefing timeout')), PER_RESTAURANT_TIMEOUT))
         ]);
 

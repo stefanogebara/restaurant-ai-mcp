@@ -156,6 +156,25 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
     setSelectedDate(availableDates[0].value);
   }, [availableDates, selectedDate]);
 
+  // M1: paginate the date strip — earlier behaviour showed only the first 21
+  // days with no way to scroll forward. Now we show 14 days at a time with
+  // < / > buttons so the customer can book up to advance_booking_days out.
+  const DATE_PAGE_SIZE = 14;
+  const [datePageStart, setDatePageStart] = useState(0);
+  const visibleDates = useMemo(
+    () => availableDates.slice(datePageStart, datePageStart + DATE_PAGE_SIZE),
+    [availableDates, datePageStart]
+  );
+  const canPageBack = datePageStart > 0;
+  const canPageForward = datePageStart + DATE_PAGE_SIZE < availableDates.length;
+  const currentMonthLabel = useMemo(() => {
+    if (visibleDates.length === 0) return '';
+    const first = visibleDates[0];
+    const last = visibleDates[visibleDates.length - 1];
+    if (first.monthShort === last.monthShort) return first.monthShort;
+    return `${first.monthShort} – ${last.monthShort}`;
+  }, [visibleDates]);
+
   const formatTime = (time: string) => {
     const [h, m] = time.split(':').map(Number);
     // PT-BR and ES use 24-hour format; EN uses 12-hour AM/PM
@@ -271,13 +290,39 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
         </p>
       </div>
 
-      {/* Date Selection */}
+      {/* Date Selection — paginated with month nav (M1) */}
       <div className="mb-8">
-        <div className="text-xs font-semibold tracking-wider uppercase text-warm-stone mb-3">
-          {t('booking.selectDate')}
+        <div className="flex items-center justify-between mb-3">
+          <div className="text-xs font-semibold tracking-wider uppercase text-warm-stone">
+            {t('booking.selectDate')} <span className="ml-1.5 text-deep-charcoal normal-case">{currentMonthLabel}</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => setDatePageStart(Math.max(0, datePageStart - DATE_PAGE_SIZE))}
+              disabled={!canPageBack}
+              aria-label={t('booking.previousDates', 'Previous dates')}
+              className="w-8 h-8 flex items-center justify-center rounded-lg border border-border-gray text-stone-gray hover:text-deep-charcoal hover:border-stone-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            >
+              <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              onClick={() => setDatePageStart(Math.min(availableDates.length - DATE_PAGE_SIZE, datePageStart + DATE_PAGE_SIZE))}
+              disabled={!canPageForward}
+              aria-label={t('booking.nextDates', 'Next dates')}
+              className="w-8 h-8 flex items-center justify-center rounded-lg border border-border-gray text-stone-gray hover:text-deep-charcoal hover:border-stone-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            >
+              <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </button>
+          </div>
         </div>
         <div className="grid grid-cols-4 sm:grid-cols-7 gap-1.5">
-          {availableDates.slice(0, 21).map((d) => (
+          {visibleDates.map((d) => (
             <button
               type="button"
               key={d.value}
@@ -518,9 +563,18 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
           )}
         </button>
       )}
-      <p className="text-center text-xs text-muted-stone mt-3">
-        {t('reservations.cancellationPolicy')}
-      </p>
+      {/* M2: cancellation policy moved out of the buried "tiny gray text"
+          state into a proper info card. Same content, but the surrounding
+          card + icon makes it actually readable instead of a footnote. */}
+      <div className="mt-4 px-4 py-3 bg-soft-gray/60 border border-border-gray rounded-xl flex items-start gap-2.5">
+        <svg className="w-4 h-4 text-burgundy flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M12 2L2 7v10l10 5 10-5V7l-10-5z" />
+          <path d="M9 12l2 2 4-4" />
+        </svg>
+        <p className="text-[12.5px] text-stone-gray leading-relaxed">
+          {restaurant.cancellation_policy?.trim() || t('reservations.cancellationPolicy')}
+        </p>
+      </div>
     </div>
   );
 }

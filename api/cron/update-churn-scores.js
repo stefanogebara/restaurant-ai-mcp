@@ -147,16 +147,34 @@ module.exports = async (req, res) => {
       return res.status(200).json({ success: true, message: 'No restaurants to process', updated: 0 });
     }
 
+    // H13: time budget so this cron can't push past Vercel's 60s ceiling as
+    // restaurant count grows. Stops processing more restaurants when <15s
+    // remain — the next daily run picks up from the same set (idempotent
+    // upsert means it's safe to redo).
+    const TIME_BUDGET_MS = 45_000;
+    const startTime = Date.now();
+
     let totalUpserted = 0;
+    let processed = 0;
     const errors = [];
 
     for (const restaurant of restaurants) {
+      if (Date.now() - startTime > TIME_BUDGET_MS) {
+        logger.warn('update-churn-scores time budget exceeded', {
+          processed,
+          total: restaurants.length,
+          dropped: restaurants.length - processed,
+        });
+        break;
+      }
       try {
         const count = await refreshLTVForRestaurant(restaurant.id);
         totalUpserted += count;
+        processed++;
       } catch (err) {
         logger.error(`Failed to refresh LTV for restaurant ${restaurant.id}:`, err.message);
         errors.push({ restaurant_id: restaurant.id, error: err.message });
+        processed++;
       }
     }
 

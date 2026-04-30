@@ -256,6 +256,18 @@ function buildSystemPrompt(memories, snapshot, config, wikiPages = [], dateInfo 
     systemPrompt += staffingHeader + staffingLines;
   }
 
+  // M10: seating capacity — answers "are we full tonight?" with real data
+  if (snapshot.capacity_summary && snapshot.capacity_summary.total_capacity > 0) {
+    const cs = snapshot.capacity_summary;
+    if (isPT) {
+      systemPrompt += `\n\n[CAPACIDADE]\nLugares totais: ${cs.total_capacity}. Reservados hoje: ${cs.tonight_covers}${cs.occupancy_pct != null ? ` (${cs.occupancy_pct}% ocupado)` : ''}.`;
+    } else if (isES) {
+      systemPrompt += `\n\n[CAPACIDAD]\nPlazas totales: ${cs.total_capacity}. Reservadas hoy: ${cs.tonight_covers}${cs.occupancy_pct != null ? ` (${cs.occupancy_pct}% ocupado)` : ''}.`;
+    } else {
+      systemPrompt += `\n\n[CAPACITY]\nTotal seats: ${cs.total_capacity}. Booked tonight: ${cs.tonight_covers}${cs.occupancy_pct != null ? ` (${cs.occupancy_pct}% occupied)` : ''}.`;
+    }
+  }
+
   if (snapshot.deposit_summary && snapshot.deposit_summary.count > 0) {
     const { count, total_amount } = snapshot.deposit_summary;
     const { currency, locale } = getCurrencyLocale(config?.country);
@@ -355,20 +367,28 @@ async function extractFactsFromConversation(restaurantId, userMessage) {
   );
 }
 
-async function runManagerAgent(restaurantId, userMessage, channel) {
+async function runManagerAgent(restaurantId, userMessage, channel, options = {}) {
   // ── Quota gate ──────────────────────────────────────────────
-  const plan = await getRestaurantPlan(restaurantId);
-  const planLimits = getPlanLimits(plan);
-  const monthlyLimit = planLimits?.managerAICallsMonthly ?? 0;
+  // M16: cron-driven calls (briefings, alerts) skip both the gate AND the
+  // counter — auto-briefings would burn ~60 of a 100/mo Starter quota by
+  // themselves, leaving the manager almost no budget for real questions.
+  // Pass { skipQuota: true } from cron callers.
+  const skipQuota = options.skipQuota === true;
 
-  if (monthlyLimit === 0) {
-    throw new ManagerQuotaError('upgrade_required', { plan });
-  }
+  if (!skipQuota) {
+    const plan = await getRestaurantPlan(restaurantId);
+    const planLimits = getPlanLimits(plan);
+    const monthlyLimit = planLimits?.managerAICallsMonthly ?? 0;
 
-  if (monthlyLimit !== -1) {
-    const used = await getManagerAIUsageThisMonth(restaurantId);
-    if (used >= monthlyLimit) {
-      throw new ManagerQuotaError('quota_exceeded', { used, limit: monthlyLimit });
+    if (monthlyLimit === 0) {
+      throw new ManagerQuotaError('upgrade_required', { plan });
+    }
+
+    if (monthlyLimit !== -1) {
+      const used = await getManagerAIUsageThisMonth(restaurantId);
+      if (used >= monthlyLimit) {
+        throw new ManagerQuotaError('quota_exceeded', { used, limit: monthlyLimit });
+      }
     }
   }
   // ─────────────────────────────────────────────────────────────
@@ -463,7 +483,8 @@ async function runManagerAgent(restaurantId, userMessage, channel) {
       extractFactsFromConversation(restaurantId, userMessage).catch((err) => {
         logger.error('extractFactsFromConversation failed', { error: err.message });
       }),
-      trackUsage(restaurantId, 'manager_ai_call'),
+      // M16: skip metered billing increment for cron-driven calls
+      skipQuota ? Promise.resolve() : trackUsage(restaurantId, 'manager_ai_call'),
     ]),
     new Promise(resolve => setTimeout(resolve, 6000)),
   ]);

@@ -54,22 +54,61 @@ export default function Footer() {
         </div>
       </div>
 
+      {/* Contact & company info — H25: previously empty footer hurt trust.
+          Brazilian customers expect a CNPJ + contact email visible to take
+          a SaaS purchase seriously. */}
+      <div className="border-t border-border-gray">
+        <div className="max-w-3xl mx-auto px-6 sm:px-16 py-12 grid grid-cols-1 sm:grid-cols-3 gap-8">
+          <div>
+            <h4 className="text-xs font-semibold tracking-wider uppercase text-deep-charcoal mb-3">
+              {t('landing.footer.contact', 'Contact')}
+            </h4>
+            <a
+              href="mailto:hello@seatable.one"
+              className="block text-[13px] text-warm-stone hover:text-burgundy transition-colors"
+            >
+              hello@seatable.one
+            </a>
+            <p className="text-[13px] text-warm-stone mt-1">
+              {t('landing.footer.responseTime', 'Resposta em 24h')}
+            </p>
+          </div>
+          <div>
+            <h4 className="text-xs font-semibold tracking-wider uppercase text-deep-charcoal mb-3">
+              {t('landing.footer.product', 'Product')}
+            </h4>
+            <Link to="/live-demo" className="block text-[13px] text-warm-stone hover:text-burgundy transition-colors">
+              {t('landing.nav.demo', 'Demo')}
+            </Link>
+            <Link to="/demo/setup" className="block text-[13px] text-warm-stone hover:text-burgundy transition-colors mt-1">
+              {t('landing.nav.tryFree', 'Teste grátis')}
+            </Link>
+            <Link to="/login" className="block text-[13px] text-warm-stone hover:text-burgundy transition-colors mt-1">
+              {t('landing.nav.signIn', 'Entrar')}
+            </Link>
+          </div>
+          <div>
+            <h4 className="text-xs font-semibold tracking-wider uppercase text-deep-charcoal mb-3">
+              {t('landing.footer.legal', 'Legal')}
+            </h4>
+            <Link to="/privacy" className="block text-[13px] text-warm-stone hover:text-burgundy transition-colors">
+              {t('landing.footer.privacy')}
+            </Link>
+            <Link to="/terms" className="block text-[13px] text-warm-stone hover:text-burgundy transition-colors mt-1">
+              {t('landing.footer.terms')}
+            </Link>
+          </div>
+        </div>
+      </div>
+
       {/* Bottom bar */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 sm:px-16 sm:pr-24 py-10 border-t border-border-gray">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-6 sm:px-16 py-8 border-t border-border-gray">
         <div className="font-serif text-xl font-semibold text-deep-charcoal">
           seatable<span className="text-burgundy">.</span>
         </div>
-        <div className="flex items-center gap-6">
-          <Link to="/privacy" className="text-[13px] text-muted-stone hover:text-deep-charcoal transition-colors">
-            {t('landing.footer.privacy')}
-          </Link>
-          <Link to="/terms" className="text-[13px] text-muted-stone hover:text-deep-charcoal transition-colors">
-            {t('landing.footer.terms')}
-          </Link>
-          <p className="text-[13px] text-muted-stone">
-            &copy; {currentYear} Seatable.
-          </p>
-        </div>
+        <p className="text-[12px] text-muted-stone text-center sm:text-right">
+          &copy; {currentYear} Seatable. {t('landing.footer.tagline', 'AI-powered restaurant management.')}
+        </p>
       </div>
     </footer>
   );

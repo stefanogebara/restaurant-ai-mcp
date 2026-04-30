@@ -38,9 +38,14 @@ export default function Welcome() {
     const urlToken = params.get('token');
     const localToken = localStorage.getItem(LS_PENDING_DEMO_TOKEN);
     const demoToken = urlToken || localToken || null;
+    // H8: honour the `next` param set by Login.tsx so an OAuth round-trip
+    // returns the user to the page they originally tried to visit.
+    const nextRaw = params.get('next');
+    // Only allow same-origin paths (defends against open-redirect via `next`)
+    const nextPath = nextRaw && nextRaw.startsWith('/') && !nextRaw.startsWith('//') ? nextRaw : null;
 
-    // Clean up demo params from the URL immediately (before async work)
-    if (fromDemo && urlToken) {
+    // Clean up demo / next params from the URL immediately (before async work)
+    if ((fromDemo && urlToken) || nextPath) {
       window.history.replaceState({}, '', window.location.pathname);
     }
 
@@ -67,9 +72,12 @@ export default function Welcome() {
               .catch(() => {})
               .finally(() => localStorage.removeItem(LS_PENDING_DEMO_TOKEN));
           }
+          // Priority: explicit `next=` (user's original target) wins over
+          // the default dashboard. Demo conversion still wraps it.
+          const baseDestination = nextPath || '/host-dashboard/simple';
           const destination = demoToken
-            ? '/host-dashboard/simple?converted=demo'
-            : '/host-dashboard/simple';
+            ? (nextPath ? `${baseDestination}${nextPath.includes('?') ? '&' : '?'}converted=demo` : '/host-dashboard/simple?converted=demo')
+            : baseDestination;
           navigate(destination, { replace: true });
         } else {
           // No restaurant config → needs onboarding.

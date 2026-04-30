@@ -138,7 +138,11 @@ it('sends morning briefing to opted-in restaurants', async () => {
 
   const { runManagerAgent } = require('../_lib/manager-agent');
   // Prompt is in the restaurant's language (agent_language not set → pt-BR default)
-  expect(runManagerAgent).toHaveBeenCalledWith('rest-1', expect.any(String), 'whatsapp');
+  // M16: cron-driven briefings pass { skipQuota: true } as the 4th arg so they
+  // don't burn through the restaurant's monthly manager_ai_call quota.
+  expect(runManagerAgent).toHaveBeenCalledWith(
+    'rest-1', expect.any(String), 'whatsapp', expect.objectContaining({ skipQuota: true })
+  );
   expect(mockSendBriefing).toHaveBeenCalledWith('+15551234567', expect.any(String), 'phone_call', 'rest-1');
   expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ sent: 1 }));
 });

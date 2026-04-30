@@ -207,16 +207,25 @@ export default function Onboarding() {
         throw new Error(`${errorMessage}${errorDetails}`);
       }
 
-      // Attach any referral code that was captured at sign-up (fire-and-forget)
+      // M15: attach referral code BEFORE clearing localStorage. The previous
+      // version cleared LS_REFERRAL_CODE in the same tick as a fire-and-forget
+      // attach call — if the network request errored, the code was permanently
+      // lost. Now we await the attach and only remove the LS key on success.
       const pendingReferralCode = localStorage.getItem(LS_REFERRAL_CODE);
+      let referralAttached = false;
       if (pendingReferralCode) {
-        authFetch('/api/referral?action=attach', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ referral_code: pendingReferralCode }),
-        }).catch(() => {
-          /* best-effort — referral attach is non-critical */
-        });
+        try {
+          const refRes = await authFetch('/api/referral?action=attach', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ referral_code: pendingReferralCode }),
+          });
+          referralAttached = refRes.ok;
+        } catch {
+          // Network error — keep the code in localStorage so a later retry
+          // (e.g. user navigates and we re-attempt) doesn't lose the credit.
+          referralAttached = false;
+        }
       }
 
       // Persist the restaurant_id so Step 5 can POST to /api/manager-documents
@@ -229,7 +238,10 @@ export default function Onboarding() {
 
       localStorage.removeItem(LS_ONBOARDING_DATA);
       localStorage.removeItem(LS_ONBOARDING_STEP);
-      localStorage.removeItem(LS_REFERRAL_CODE);
+      // Only remove referral code if it was successfully attached (or never present)
+      if (!pendingReferralCode || referralAttached) {
+        localStorage.removeItem(LS_REFERRAL_CODE);
+      }
 
       trackOnboardingCompleted({
         plan: onboardingData.plan ?? 'unknown',

@@ -141,6 +141,44 @@ function buildPersonaPrompt(restaurantConfig, options = {}) {
     prompt += '\n';
   }
 
+  // 3b. Reservation policies — deposit + cancellation. M11/L4: voice agent
+  // can now answer "do I need to pay a deposit?" / "what if I cancel last
+  // minute?" without escalating to staff. Pulled from the same DB fields the
+  // booking page + KB doc use.
+  const policyLines = [];
+  const dep = restaurantConfig.deposit_config;
+  if (dep && dep.enabled === true && dep.amount) {
+    const minParty = dep.min_party_size || 1;
+    const amount = dep.amount;
+    const type = dep.type === 'per_person' ? 'per person' : 'flat';
+    const isPT = language === 'pt' || language === 'pt-BR';
+    const isES = language === 'es';
+    if (isPT) {
+      const t = type === 'per person' ? `R$${amount} por pessoa` : `R$${amount} fixo`;
+      policyLines.push(`- Depósito: para grupos de ${minParty}+ pedimos um depósito de ${t} no momento da reserva. É retido (não cobrado) e devolvido se você comparecer.`);
+    } else if (isES) {
+      const t = type === 'per person' ? `${amount} por persona` : `${amount} fijo`;
+      policyLines.push(`- Depósito: para grupos de ${minParty}+ pedimos un depósito de ${t} al reservar. Se retiene (no se cobra) y se libera al venir.`);
+    } else {
+      const t = type === 'per person' ? `${amount} per person` : `flat ${amount}`;
+      policyLines.push(`- Deposit: parties of ${minParty}+ require a ${t} deposit at booking time. It's held (not charged) and released when you arrive.`);
+    }
+  }
+  // cancellation_policy may live on restaurant_config or on
+  // reservation_settings.cancellation_policy depending on schema version.
+  const cancelPolicy = restaurantConfig.cancellation_policy
+    || restaurantConfig.reservation_settings?.cancellation_policy
+    || null;
+  if (cancelPolicy && typeof cancelPolicy === 'string' && cancelPolicy.trim().length > 0) {
+    const isPT = language === 'pt' || language === 'pt-BR';
+    const isES = language === 'es';
+    const label = isPT ? 'Política de cancelamento' : isES ? 'Política de cancelación' : 'Cancellation policy';
+    policyLines.push(`- ${label}: ${cancelPolicy.trim()}`);
+  }
+  if (policyLines.length > 0) {
+    prompt += 'Reservation Policies:\n' + policyLines.join('\n') + '\n\n';
+  }
+
   // 4. Tool descriptions
   prompt += 'Available tools:\n';
   prompt += '- get_current_datetime: Get current date/time. Use at conversation start.\n';

@@ -26,7 +26,7 @@ export default function VoiceDemoDashboard({
   reservations,
   className = '',
 }: VoiceDemoDashboardProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const allReservations = [...reservations, ...BASE_RESERVATIONS];
   const confirmedCount = allReservations.filter((r) => r.status === 'confirmed').length;
@@ -67,7 +67,11 @@ export default function VoiceDemoDashboard({
               {t('landing.voiceDemo.dashboard', 'Dashboard')}
             </div>
             <div className="text-[10px] text-white/30">
-              {t('landing.voiceDemo.todayDate', 'Today \u00b7 March 15')}
+              {/* H6: live, locale-aware date so the demo never shows a stale "March 15" */}
+              {t('landing.voiceDemo.today', 'Today')} \u00b7 {new Date().toLocaleDateString(
+                i18n.language === 'pt-BR' ? 'pt-BR' : i18n.language === 'es' ? 'es-ES' : 'en-US',
+                { day: 'numeric', month: 'long' }
+              )}
             </div>
           </div>
           <div className="flex items-center gap-1.5">

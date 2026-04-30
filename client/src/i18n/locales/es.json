@@ -574,7 +574,7 @@
     "name": "Nombre",
     "namePlaceholder": "Tu nombre completo",
     "phone": "Teléfono",
-    "phonePlaceholder": "+55 11 91234 5678",
+    "phonePlaceholder": "+55 (11) 91234-5678",
     "email": "Correo Electrónico",
     "emailPlaceholder": "tu@email.com",
     "optional": "opcional",
@@ -1425,6 +1425,8 @@
   },
   "landing": {
     "badge": "Gestión de Restaurantes con IA",
+    "betaBadge": "Programa beta abierto",
+    "betaSubtitle": "30 días gratis · sin tarjeta · cancela cuando quieras",
     "socialProofBadge": "5 restaurantes se unieron esta semana",
     "socialProof": {
       "label": "En acceso anticipado",
@@ -1825,7 +1827,12 @@
     "footer": {
       "privacy": "Política de Privacidad",
       "terms": "Términos de Servicio",
-      "faq": "Preguntas Frecuentes"
+      "faq": "Preguntas Frecuentes",
+      "contact": "Contacto",
+      "responseTime": "Respuesta en 24h",
+      "product": "Producto",
+      "legal": "Legal",
+      "tagline": "Gestión de restaurantes con IA."
     },
     "share": {
       "heading": "¿Conoces a otro dueño de restaurante?",
@@ -1960,6 +1967,8 @@
       }
     },
     "voiceDemo": {
+      "midCallCtaLabel": "Esto podría ser TU restaurante",
+      "midCallCta": "Configura tu IA en 2 minutos — gratis",
       "backToSite": "← Volver",
       "title": "Habla con nuestro anfitrión IA",
       "subtitle": "Pide reservar una mesa, consulta disponibilidad o pregunta sobre el menú",

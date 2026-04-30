@@ -57,6 +57,30 @@ module.exports = async (req, res) => {
   const action = req.query.action || (req.body && req.body.action);
 
   try {
+    // Per-action method enforcement (M21). Returns 405 with Allow header for
+    // wrong-method requests instead of falling through to a 400.
+    const ACTION_METHODS = {
+      restaurant: ['GET'],
+      availability: ['GET'],
+      reserve: ['POST'],
+      reservation: ['GET'],
+    };
+    const allowed = ACTION_METHODS[action];
+    if (!allowed) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid action. Use: restaurant, availability, reserve, reservation',
+      });
+    }
+    if (!allowed.includes(req.method)) {
+      res.setHeader('Allow', allowed.join(', '));
+      return res.status(405).json({
+        success: false,
+        error: 'method_not_allowed',
+        message: `Action '${action}' requires ${allowed.join(' or ')}`,
+      });
+    }
+
     switch (action) {
       case 'restaurant':
         return await handleGetRestaurant(req, res);
@@ -66,11 +90,6 @@ module.exports = async (req, res) => {
         return await handleCreateReservation(req, res);
       case 'reservation':
         return await handleGetReservation(req, res);
-      default:
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid action. Use: restaurant, availability, reserve, reservation'
-        });
     }
   } catch (error) {
     logger.error('[Portal] Unhandled error:', error);

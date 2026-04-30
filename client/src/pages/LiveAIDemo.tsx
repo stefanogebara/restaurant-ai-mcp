@@ -259,6 +259,35 @@ export default function LiveAIDemo() {
             )}
           </AnimatePresence>
 
+          {/* H9: Mid-call CTA — appears after the call has been going for 12s
+              (long enough that the prospect heard a real interaction). This is
+              the highest-engagement moment in the funnel; previously the only
+              CTA was the bottom-bar link visible after the call ended. */}
+          <AnimatePresence>
+            {isActive && callDuration >= 12 && (
+              <motion.div
+                initial={{ opacity: 0, y: 12, scale: 0.96 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 12 }}
+                transition={{ duration: 0.3 }}
+                className="w-full max-w-sm"
+              >
+                <Link
+                  to="/demo/setup"
+                  className="block bg-gradient-to-r from-burgundy to-rose-600 hover:from-burgundy-dark hover:to-rose-500 text-white rounded-2xl px-5 py-4 transition-all shadow-lg shadow-burgundy/20"
+                >
+                  <div className="text-[11px] uppercase tracking-wider text-white/70 mb-0.5">
+                    {t('landing.voiceDemo.midCallCtaLabel', 'This could be YOUR restaurant')}
+                  </div>
+                  <div className="text-sm font-semibold flex items-center justify-between gap-2">
+                    <span>{t('landing.voiceDemo.midCallCta', 'Set up your AI in 2 minutes — free')}</span>
+                    <span aria-hidden>&rarr;</span>
+                  </div>
+                </Link>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           {/* Error */}
           {error && (
             <p className="text-sm text-red-400/80 text-center max-w-xs">{error}</p>
