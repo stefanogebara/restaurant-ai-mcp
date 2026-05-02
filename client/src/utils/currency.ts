@@ -1,11 +1,13 @@
 /**
  * Currency Detection Utility
  *
- * Auto-detects currency from browser locale / i18n language:
+ * Auto-detects currency from i18n language (preferred) or browser locale:
  *   pt-BR → BRL (R$)
  *   es    → EUR (€)
  *   *     → USD ($)
  */
+
+import i18n from '../i18n/config';
 
 export type SupportedCurrency = 'USD' | 'BRL' | 'EUR';
 
@@ -74,15 +76,24 @@ export function currencyFromLanguage(language: string): SupportedCurrency {
 }
 
 /**
- * Lazily detected currency — cached after first call.
+ * Get the default currency for formatting when no currency is explicitly provided.
+ *
+ * Priority order:
+ *   1. i18n active language (user's explicit choice / app default = pt-BR)
+ *   2. navigator.language / timezone detection (fallback for early-render edge cases)
+ *
+ * Why prefer i18n: when a Brazilian restaurant manager opens the dashboard from
+ * a US-locale work laptop (en-US navigator, UTC timezone), navigator detection
+ * gave them USD. The i18n language is the SOURCE OF TRUTH for the user's chosen
+ * locale — fall back to navigator only if i18n hasn't initialised.
+ *
+ * NOT cached — i18n.language can change at runtime (language toggle).
  */
-let _detectedCurrency: SupportedCurrency | null = null;
-
 function getDefaultCurrency(): SupportedCurrency {
-  if (_detectedCurrency === null) {
-    _detectedCurrency = detectCurrency();
+  if (i18n?.language) {
+    return currencyFromLanguage(i18n.language);
   }
-  return _detectedCurrency;
+  return detectCurrency();
 }
 
 /** Map currency code to Intl locale */

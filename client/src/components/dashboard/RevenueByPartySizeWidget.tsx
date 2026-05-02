@@ -1,10 +1,14 @@
 import { useTranslation } from 'react-i18next';
 import { useRevenueStats } from '../../hooks/useRevenueStats';
-import { formatCurrency } from '../../utils/currency';
+import { formatCurrency, currencyFromLanguage } from '../../utils/currency';
 import ThiingsIcon from '../common/ThiingsIcon';
 
 export default function RevenueByPartySizeWidget() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  // H2: explicit language → currency lookup. Without this, formatCurrency()
+  // falls back to navigator detection which gives en-US callers $ on a
+  // Brazilian restaurant's dashboard. Browser locale ≠ restaurant locale.
+  const currency = currencyFromLanguage(i18n.language);
   const { data: stats, isLoading } = useRevenueStats();
 
   if (isLoading) {
@@ -39,10 +43,10 @@ export default function RevenueByPartySizeWidget() {
                 </span>
                 <div className="flex items-center gap-3 text-xs">
                   <span className="text-muted-stone">
-                    {formatCurrency(b.avg_per_cover)}/{t('dashboard.cover', 'cover')}
+                    {formatCurrency(b.avg_per_cover, currency)}/{t('dashboard.cover', 'cover')}
                   </span>
                   <span className="font-semibold text-deep-charcoal min-w-[64px] text-right">
-                    {formatCurrency(b.avg_total)}/{t('dashboard.table', 'table')}
+                    {formatCurrency(b.avg_total, currency)}/{t('dashboard.table', 'table')}
                   </span>
                 </div>
               </div>

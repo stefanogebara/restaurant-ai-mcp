@@ -224,6 +224,11 @@ async function queueOpportunity(restaurant, opp) {
     ? { occasion_label: opp.occasion_label, occasion_date: opp.occasion_date, total_visits: opp.total_visits }
     : { churn_risk: opp.churn_risk, customer_tier: opp.customer_tier, total_visits: opp.total_visits, last_visit: opp.last_visit, avg_spend: opp.avg_revenue_per_visit };
 
+  // H3: render suggested_action in the restaurant's language so Brazilian
+  // managers don't see "at_risk guest at 75% churn risk — 4 visits, last
+  // seen 2026-04-17" on their PT-BR dashboard.
+  const localizedAction = formatSuggestedAction(opp, lang);
+
   const row = {
     restaurant_id: restaurant.id,
     type: opp.type,
@@ -232,7 +237,7 @@ async function queueOpportunity(restaurant, opp) {
     customer_id: opp.customer_id || null,
     trigger_data: triggerData,
     draft_message: draftMessage,
-    suggested_action: opp.suggested_action,
+    suggested_action: localizedAction,
     status: 'pending',
     expires_at: expiresAt,
   };
@@ -374,8 +379,38 @@ function normaliseLang(lng) {
   return 'pt-BR';
 }
 
+/** Format the dashboard subtitle for a queued opportunity in the restaurant's
+ *  language. This text shows up on each card in the Re-engagement
+ *  Opportunities panel — Brazilian managers should see PT, not English. */
+function formatSuggestedAction(opp, lang) {
+  const TIER_LABELS = {
+    'pt-BR': { vip: 'VIP', regular: 'cliente regular', occasional: 'cliente ocasional', at_risk: 'cliente em risco', new: 'novo cliente' },
+    es: { vip: 'VIP', regular: 'cliente habitual', occasional: 'cliente ocasional', at_risk: 'cliente en riesgo', new: 'cliente nuevo' },
+    en: { vip: 'VIP', regular: 'regular guest', occasional: 'occasional guest', at_risk: 'at-risk guest', new: 'new guest' },
+  };
+  const tierLabel = (TIER_LABELS[lang] || TIER_LABELS['pt-BR'])[opp.customer_tier] || 'cliente';
+
+  if (opp.type === 'occasion') {
+    const guestName = opp.customer_name || opp.customer_phone;
+    if (lang === 'pt-BR') return `${opp.occasion_label} em ${opp.occasion_date} — convidar ${guestName}`;
+    if (lang === 'es') return `${opp.occasion_label} el ${opp.occasion_date} — invitar a ${guestName}`;
+    return `${opp.occasion_label} on ${opp.occasion_date} — invite ${guestName}`;
+  }
+
+  // churn_risk
+  const lastSeen = opp.last_visit || (lang === 'pt-BR' ? 'desconhecido' : lang === 'es' ? 'desconocido' : 'unknown');
+  if (lang === 'pt-BR') {
+    return `${tierLabel} com ${opp.churn_risk}% de risco de churn — ${opp.total_visits} visitas, última em ${lastSeen}`;
+  }
+  if (lang === 'es') {
+    return `${tierLabel} con ${opp.churn_risk}% de riesgo de fuga — ${opp.total_visits} visitas, última el ${lastSeen}`;
+  }
+  return `${tierLabel} at ${opp.churn_risk}% churn risk — ${opp.total_visits} visits, last seen ${lastSeen}`;
+}
+
 // Exported for testing
 module.exports.findUpcomingOccasionsForRestaurant = findUpcomingOccasionsForRestaurant;
 module.exports.findAtRiskCustomersForRestaurant = findAtRiskCustomersForRestaurant;
 module.exports.parseOccasionDate = parseOccasionDate;
 module.exports.normaliseLang = normaliseLang;
+module.exports.formatSuggestedAction = formatSuggestedAction;

@@ -1287,6 +1287,7 @@
   },
   "tableLayout": {
     "title": "Table Layout",
+    "editFloorPlan": "Edit Floor Plan",
     "table": "Table",
     "seats": "seats",
     "joinableTables": "Joinable Tables",

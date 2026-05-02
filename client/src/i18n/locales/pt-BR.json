@@ -1293,6 +1293,7 @@
   },
   "tableLayout": {
     "title": "Mapa de Mesas",
+    "editFloorPlan": "Editar Layout",
     "table": "Mesa",
     "seats": "lugares",
     "joinableTables": "Mesas Combináveis",

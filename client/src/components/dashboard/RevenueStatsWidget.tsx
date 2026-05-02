@@ -1,10 +1,13 @@
 import { useTranslation } from 'react-i18next';
 import { useRevenueStats } from '../../hooks/useRevenueStats';
 import { useStaffingForecast } from '../../hooks/useStaffingForecast';
-import { formatCurrency } from '../../utils/currency';
+import { formatCurrency, currencyFromLanguage } from '../../utils/currency';
 
 export default function RevenueStatsWidget() {
   const { t, i18n } = useTranslation();
+  // H2: pin currency to the i18n language (PT-BR → BRL) so a Brazilian
+  // restaurant's dashboard never shows $ regardless of browser locale.
+  const currency = currencyFromLanguage(i18n.language);
   const { data: stats, isLoading: statsLoading } = useRevenueStats();
   const { data: forecast, isLoading: forecastLoading } = useStaffingForecast();
 
@@ -37,7 +40,7 @@ export default function RevenueStatsWidget() {
           {t('dashboard.revenueForecast')}
         </h2>
         <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold text-deep-charcoal">{formatCurrency(totalProjected)}</span>
+          <span className="text-sm font-semibold text-deep-charcoal">{formatCurrency(totalProjected, currency)}</span>
           <span className="text-xs text-warm-stone">/ 7 {t('dashboard.days', 'days')}</span>
         </div>
       </div>
@@ -58,7 +61,7 @@ export default function RevenueStatsWidget() {
                 />
               </div>
               <span className="text-xs font-medium text-deep-charcoal min-w-[64px] truncate text-right">
-                {formatCurrency(projected)}
+                {formatCurrency(projected, currency)}
               </span>
             </div>
           );
