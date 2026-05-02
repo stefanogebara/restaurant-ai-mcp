@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import Sidebar from './Sidebar';
 import { useSidebar } from '../../contexts/SidebarContext';
+import { useRestaurantCurrency } from '../../hooks/useRestaurantCurrency';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -8,6 +9,11 @@ interface DashboardLayoutProps {
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const { isCollapsed } = useSidebar();
+  // Pull restaurant.country into the global currency cache so every dashboard
+  // widget — and every formatCurrency() callsite without an explicit currency
+  // arg — renders in the restaurant's actual currency, regardless of the
+  // manager's UI language. Side effect runs inside the hook.
+  useRestaurantCurrency();
 
   return (
     <div className="min-h-screen bg-soft-gray flex">

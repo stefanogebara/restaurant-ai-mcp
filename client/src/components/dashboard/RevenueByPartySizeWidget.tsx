@@ -1,14 +1,14 @@
 import { useTranslation } from 'react-i18next';
 import { useRevenueStats } from '../../hooks/useRevenueStats';
-import { formatCurrency, currencyFromLanguage } from '../../utils/currency';
+import { useRestaurantCurrency } from '../../hooks/useRestaurantCurrency';
+import { formatCurrency } from '../../utils/currency';
 import ThiingsIcon from '../common/ThiingsIcon';
 
 export default function RevenueByPartySizeWidget() {
-  const { t, i18n } = useTranslation();
-  // H2: explicit language → currency lookup. Without this, formatCurrency()
-  // falls back to navigator detection which gives en-US callers $ on a
-  // Brazilian restaurant's dashboard. Browser locale ≠ restaurant locale.
-  const currency = currencyFromLanguage(i18n.language);
+  const { t } = useTranslation();
+  // Currency derived from restaurant.country — a Spanish restaurant whose
+  // manager is browsing in PT-BR still sees EUR, not R$.
+  const currency = useRestaurantCurrency();
   const { data: stats, isLoading } = useRevenueStats();
 
   if (isLoading) {

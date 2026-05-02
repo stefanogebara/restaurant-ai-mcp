@@ -1,13 +1,13 @@
 import { useTranslation } from 'react-i18next';
 import { useRevenueStats } from '../../hooks/useRevenueStats';
 import { useStaffingForecast } from '../../hooks/useStaffingForecast';
-import { formatCurrency, currencyFromLanguage } from '../../utils/currency';
+import { useRestaurantCurrency } from '../../hooks/useRestaurantCurrency';
+import { formatCurrency } from '../../utils/currency';
 
 export default function RevenueStatsWidget() {
   const { t, i18n } = useTranslation();
-  // H2: pin currency to the i18n language (PT-BR → BRL) so a Brazilian
-  // restaurant's dashboard never shows $ regardless of browser locale.
-  const currency = currencyFromLanguage(i18n.language);
+  // Currency from restaurant.country — multi-country safe.
+  const currency = useRestaurantCurrency();
   const { data: stats, isLoading: statsLoading } = useRevenueStats();
   const { data: forecast, isLoading: forecastLoading } = useStaffingForecast();
 

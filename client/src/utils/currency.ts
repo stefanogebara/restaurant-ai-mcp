@@ -76,20 +76,73 @@ export function currencyFromLanguage(language: string): SupportedCurrency {
 }
 
 /**
+ * Map a restaurant's country to its currency. SOURCE OF TRUTH for dashboard
+ * currency display — the manager's UI language should NOT determine which
+ * currency their financials show in. A Spanish restaurant whose manager
+ * happens to be browsing in PT-BR still has EUR as their actual currency.
+ *
+ * Supports the 3 currencies the platform handles natively (BRL/USD/EUR).
+ * Other LATAM markets fall back to USD until we add MXN/ARS/CLP/etc.
+ *
+ * @param country Country name (e.g. "Brazil", "Spain") OR ISO code (e.g. "BR", "ES")
+ */
+export function currencyFromCountry(country: string | null | undefined): SupportedCurrency {
+  if (!country) return DEFAULT_CURRENCY;
+  const c = String(country).trim().toLowerCase();
+
+  // Brazil
+  if (c === 'br' || c === 'brazil' || c === 'brasil') return 'BRL';
+
+  // Eurozone (ISO codes + common English/native names of the bigger markets)
+  const eurISO = new Set(['es', 'it', 'fr', 'de', 'pt', 'at', 'be', 'cy', 'ee', 'fi', 'gr', 'ie', 'lt', 'lu', 'lv', 'mt', 'nl', 'si', 'sk', 'hr']);
+  const eurNames = new Set([
+    'spain', 'españa', 'espana', 'italy', 'italia', 'france', 'germany', 'deutschland',
+    'portugal', 'austria', 'österreich', 'belgium', 'cyprus', 'estonia', 'finland',
+    'greece', 'ireland', 'lithuania', 'luxembourg', 'latvia', 'malta', 'netherlands',
+    'nederland', 'slovenia', 'slovakia', 'croatia',
+  ]);
+  if (eurISO.has(c) || eurNames.has(c)) return 'EUR';
+
+  // USD
+  const usdISO = new Set(['us', 'usa', 'ca']);
+  const usdNames = new Set(['united states', 'united states of america', 'canada']);
+  if (usdISO.has(c) || usdNames.has(c)) return 'USD';
+
+  // Default — better safe than wrong-currency
+  return DEFAULT_CURRENCY;
+}
+
+/**
+ * Module-level restaurant country, set by useRestaurantSettings (or any component
+ * that has loaded the restaurant config). All formatCurrency() calls without
+ * an explicit currency arg fall back to this — meaning every dashboard widget,
+ * customer card, deposit step, etc. shows the right currency for the actual
+ * restaurant, NOT for whatever language the manager happens to be browsing in.
+ *
+ * Set via setActiveRestaurantCountry(country) — typically in a top-level effect
+ * inside Dashboard / DashboardLayout when settings finish loading.
+ */
+let _activeRestaurantCountry: string | null = null;
+
+/** Set the active restaurant's country so all currency formatters can use it.
+ *  Pass null to clear (e.g. on logout). */
+export function setActiveRestaurantCountry(country: string | null): void {
+  _activeRestaurantCountry = country;
+}
+
+/**
  * Get the default currency for formatting when no currency is explicitly provided.
  *
  * Priority order:
- *   1. i18n active language (user's explicit choice / app default = pt-BR)
- *   2. navigator.language / timezone detection (fallback for early-render edge cases)
- *
- * Why prefer i18n: when a Brazilian restaurant manager opens the dashboard from
- * a US-locale work laptop (en-US navigator, UTC timezone), navigator detection
- * gave them USD. The i18n language is the SOURCE OF TRUTH for the user's chosen
- * locale — fall back to navigator only if i18n hasn't initialised.
- *
- * NOT cached — i18n.language can change at runtime (language toggle).
+ *   1. Active restaurant country (set by setActiveRestaurantCountry — source
+ *      of truth: a Spanish restaurant is in EUR no matter the UI language)
+ *   2. i18n active language (best guess while restaurant settings load)
+ *   3. navigator.language / timezone detection (last-resort fallback)
  */
 function getDefaultCurrency(): SupportedCurrency {
+  if (_activeRestaurantCountry) {
+    return currencyFromCountry(_activeRestaurantCountry);
+  }
   if (i18n?.language) {
     return currencyFromLanguage(i18n.language);
   }
