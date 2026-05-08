@@ -2235,6 +2235,7 @@
   },
   "tableLayout": {
     "title": "Distribución de Mesas",
+    "dropToAssign": "Suelta para asignar",
     "editFloorPlan": "Editar Distribución",
     "table": "Mesa",
     "seats": "asientos",

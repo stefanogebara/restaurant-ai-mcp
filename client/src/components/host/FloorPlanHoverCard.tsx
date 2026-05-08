@@ -74,7 +74,7 @@ export default function FloorPlanHoverCard({
             fontSize: 10, fontWeight: 600, padding: '2px 7px', borderRadius: 6,
             background: st.fill, color: st.text, border: `1px solid ${st.stroke}`,
           }}>
-            {statusLabel(table.status)}
+            {statusLabel(table.status, t)}
           </span>
         </div>
 

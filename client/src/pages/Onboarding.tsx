@@ -287,7 +287,11 @@ export default function Onboarding() {
         <div className="flex items-center gap-4">
           <span className="text-[13px] text-warm-stone">{t('onboarding.stepOf', { current: currentStep, total: TOTAL_STEPS })}</span>
           <button
-            onClick={() => navigate('/')}
+            onClick={() => {
+              // H1 fix: route an authenticated mid-onboarding owner to their dashboard,
+              // not to the public marketing landing page (which is in EN by default).
+              navigate(user ? '/host-dashboard/simple' : '/');
+            }}
             className="text-[13px] text-burgundy font-medium hover:text-burgundy-dark transition-colors"
           >
             {t('onboarding.saveAndExit')}

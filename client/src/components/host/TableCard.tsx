@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useDroppable } from '@dnd-kit/core';
+import { useTranslation } from 'react-i18next';
 import type { Table } from '../../types/host.types';
 import TableActionMenu from './TableActionMenu';
 import ThiingsIcon, { type IconName } from '../common/ThiingsIcon';
@@ -9,8 +10,19 @@ interface TableCardProps {
   onClick?: () => void;
 }
 
+// Maps the DB status enum (canonical English values stored in `tables.status`)
+// to its i18n key. The DB value never changes; only the display does.
+const STATUS_I18N_KEY: Record<string, string> = {
+  Available: 'tableStatus.available',
+  Occupied: 'tableStatus.occupied',
+  'Being Cleaned': 'tableStatus.cleaning',
+  Reserved: 'tableStatus.reserved',
+};
+
 export default function TableCard({ table, onClick }: TableCardProps) {
+  const { t } = useTranslation();
   const [showMenu, setShowMenu] = useState(false);
+  const localizedStatus = t(STATUS_I18N_KEY[table.status] || '', table.status);
 
   // Make table droppable for drag-and-drop
   const { setNodeRef, isOver } = useDroppable({
@@ -70,7 +82,7 @@ export default function TableCard({ table, onClick }: TableCardProps) {
               setShowMenu(true);
             }
           }}
-          aria-label={`Manage table ${table.table_number} — ${table.status}`}
+          aria-label={`${t('tableLayout.table', 'Table')} ${table.table_number} — ${localizedStatus}`}
           className={`
             w-full p-4 rounded-2xl transition-all duration-200
             bg-white border border-border-gray
@@ -97,7 +109,7 @@ export default function TableCard({ table, onClick }: TableCardProps) {
           {/* Capacity */}
           <div className="flex items-center gap-1.5 text-stone-gray text-sm mb-2">
             <ThiingsIcon name="users" size="xs" />
-            <span className="font-medium">{table.capacity} seats</span>
+            <span className="font-medium">{table.capacity} {t('tableLayout.seats', 'seats')}</span>
           </div>
 
           {/* Location */}
@@ -109,7 +121,7 @@ export default function TableCard({ table, onClick }: TableCardProps) {
           <div className="flex items-center justify-between">
             <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${config.statusPill}`}>
               <span className="w-1.5 h-1.5 rounded-full bg-current" />
-              {table.status}
+              {localizedStatus}
             </div>
           </div>
         </button>
@@ -118,8 +130,8 @@ export default function TableCard({ table, onClick }: TableCardProps) {
         {isOver && table.status === 'Available' && (
           <div className="absolute inset-0 bg-burgundy/20 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center gap-2 pointer-events-none ring-2 ring-burgundy ring-dashed">
             <ThiingsIcon name="arrow-down" size="md" />
-            <div className="text-deep-charcoal font-semibold">Drop to Assign</div>
-            <div className="text-burgundy text-sm">Table {table.table_number}</div>
+            <div className="text-deep-charcoal font-semibold">{t('tableLayout.dropToAssign', 'Drop to Assign')}</div>
+            <div className="text-burgundy text-sm">{t('tableLayout.table', 'Table')} {table.table_number}</div>
           </div>
         )}
       </div>

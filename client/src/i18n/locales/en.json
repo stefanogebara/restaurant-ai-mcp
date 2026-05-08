@@ -1287,6 +1287,7 @@
   },
   "tableLayout": {
     "title": "Table Layout",
+    "dropToAssign": "Drop to assign",
     "editFloorPlan": "Edit Floor Plan",
     "table": "Table",
     "seats": "seats",

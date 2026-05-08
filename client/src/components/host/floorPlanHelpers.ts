@@ -27,14 +27,33 @@ export const formatTime = (min: number): string => {
   return h > 0 ? `${h}h ${m}m` : `${m}m`;
 };
 
-export const statusLabel = (s: string) => {
-  switch (s?.toLowerCase()) {
-    case 'available':     return 'Available';
-    case 'occupied':      return 'Occupied';
-    case 'reserved':      return 'Reserved';
-    case 'being cleaned': return 'Cleaning';
-    default:              return s || 'Unknown';
-  }
+/**
+ * Localized status label. Pass i18n's `t` function to translate per locale.
+ * If `t` is omitted (legacy call sites), returns the canonical English label
+ * for backward compatibility — but every render path on the dashboard should
+ * pass `t` so Brazilian users see "Disponível" not "Available".
+ */
+export const statusLabel = (s: string, t?: (key: string, fallback?: string) => string) => {
+  const key = (() => {
+    switch (s?.toLowerCase()) {
+      case 'available':     return 'tableStatus.available';
+      case 'occupied':      return 'tableStatus.occupied';
+      case 'reserved':      return 'tableStatus.reserved';
+      case 'being cleaned': return 'tableStatus.cleaning';
+      default:              return null;
+    }
+  })();
+  const fallback = (() => {
+    switch (s?.toLowerCase()) {
+      case 'available':     return 'Available';
+      case 'occupied':      return 'Occupied';
+      case 'reserved':      return 'Reserved';
+      case 'being cleaned': return 'Cleaning';
+      default:              return s || 'Unknown';
+    }
+  })();
+  if (key && t) return t(key, fallback);
+  return fallback;
 };
 
 export const getStatusStyle = (status: string): StatusStyle => {
