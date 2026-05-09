@@ -36,10 +36,10 @@ export const formatTime = (min: number): string => {
 export const statusLabel = (s: string, t?: (key: string, fallback?: string) => string) => {
   const key = (() => {
     switch (s?.toLowerCase()) {
-      case 'available':     return 'tableStatus.available';
-      case 'occupied':      return 'tableStatus.occupied';
-      case 'reserved':      return 'tableStatus.reserved';
-      case 'being cleaned': return 'tableStatus.cleaning';
+      case 'available':     return 'settings.tableStatus.available';
+      case 'occupied':      return 'settings.tableStatus.occupied';
+      case 'reserved':      return 'settings.tableStatus.reserved';
+      case 'being cleaned': return 'settings.tableStatus.cleaning';
       default:              return null;
     }
   })();

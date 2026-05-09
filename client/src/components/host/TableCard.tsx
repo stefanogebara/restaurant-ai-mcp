@@ -12,11 +12,14 @@ interface TableCardProps {
 
 // Maps the DB status enum (canonical English values stored in `tables.status`)
 // to its i18n key. The DB value never changes; only the display does.
+// Note: the i18n keys live under settings.tableStatus.* (verified across pt-BR,
+// en, es). My first attempt used a top-level `tableStatus.X` path which doesn't
+// exist — the t() call silently fell back to the English fallback string.
 const STATUS_I18N_KEY: Record<string, string> = {
-  Available: 'tableStatus.available',
-  Occupied: 'tableStatus.occupied',
-  'Being Cleaned': 'tableStatus.cleaning',
-  Reserved: 'tableStatus.reserved',
+  Available: 'settings.tableStatus.available',
+  Occupied: 'settings.tableStatus.occupied',
+  'Being Cleaned': 'settings.tableStatus.cleaning',
+  Reserved: 'settings.tableStatus.reserved',
 };
 
 export default function TableCard({ table, onClick }: TableCardProps) {
