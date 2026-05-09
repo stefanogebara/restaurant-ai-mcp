@@ -255,16 +255,25 @@ export default function TableConfigPage() {
                     </div>
 
                     <div className="flex items-center gap-2 mb-3">
-                      <span
-                        className={`w-2 h-2 rounded-full ${
-                          table.status === 'available'
-                            ? 'bg-rose-500'
-                            : table.status === 'occupied'
-                            ? 'bg-red-600'
-                            : 'bg-amber-600'
-                        }`}
-                      ></span>
-                      <span className="text-sm text-warm-stone">{t(`settings.tableStatus.${table.status}`, table.status)}</span>
+                      {(() => {
+                        // DB enum is capitalised ("Available", "Occupied", "Being Cleaned",
+                        // "Reserved"); the i18n keys (and the colour matchers below) are
+                        // lowercase. Normalise once: lowercase + map "being cleaned" → "cleaning".
+                        const lower = (table.status || '').toLowerCase();
+                        const statusKey = lower === 'being cleaned' ? 'cleaning' : lower;
+                        const dotClass =
+                          statusKey === 'available' ? 'bg-rose-500'
+                          : statusKey === 'occupied' ? 'bg-red-600'
+                          : 'bg-amber-600';
+                        return (
+                          <>
+                            <span className={`w-2 h-2 rounded-full ${dotClass}`}></span>
+                            <span className="text-sm text-warm-stone">
+                              {t(`settings.tableStatus.${statusKey}`, table.status)}
+                            </span>
+                          </>
+                        );
+                      })()}
                     </div>
 
                     {table.adjacent_tables && table.adjacent_tables.length > 0 && (
