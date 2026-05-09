@@ -90,7 +90,8 @@ async function handleDashboard(req, res) {
   }
 
   // Calculate flexible table metrics
-  const availableTables = tables.filter(t => t.status === 'available');
+  // DB stores capitalised enum ('Available'); normalise so the filter is drift-proof.
+  const availableTables = tables.filter(t => (t.status || '').toLowerCase() === 'available');
   const flexibleTables = availableTables.filter(t => !t.is_fixed);
   const fixedTables = availableTables.filter(t => t.is_fixed);
 

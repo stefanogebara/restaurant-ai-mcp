@@ -13,6 +13,7 @@
  */
 
 import { useState, useMemo, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
@@ -57,6 +58,7 @@ export default function Dashboard() {
   const { t, i18n } = useTranslation();
   useDocumentTitle(t('pageTitles.dashboard'));
   const { success } = useToast();
+  const navigate = useNavigate();
 
   // Launch checklist: show after first subscription
   const [showLaunchChecklist, setShowLaunchChecklist] = useState(() => {
@@ -83,8 +85,6 @@ export default function Dashboard() {
   const [selectedParty, setSelectedParty] = useState<SeatModalData | null>(null);
   const [selectedReservation, setSelectedReservation] = useState<UpcomingReservation | null>(null);
   const [interventionReservation, setInterventionReservation] = useState<UpcomingReservation | null>(null);
-  const [showCompleteModal, setShowCompleteModal] = useState(false);
-  const [serviceToComplete, setServiceToComplete] = useState<ActiveParty | null>(null);
   const [showAddReservation, setShowAddReservation] = useState(false);
   const [editReservation, setEditReservation] = useState<UpcomingReservation | null>(null);
   const [cancelReservation, setCancelReservation] = useState<UpcomingReservation | null>(null);
@@ -263,10 +263,10 @@ export default function Dashboard() {
             </div>
             <div className="flex items-center gap-2 sm:gap-3 pl-12 lg:pl-0">
               <button
-                onClick={() => window.location.href = '/host-dashboard/reports'}
+                onClick={() => navigate('/host-dashboard/reports')}
                 className="px-3 sm:px-4 py-2 border border-border-gray rounded-lg text-[12px] sm:text-[13px] font-medium bg-transparent hover:bg-soft-gray transition-colors text-deep-charcoal"
               >
-                {t('dashboard.reports', 'Export')}
+                {t('dashboard.reports', 'Reports')}
               </button>
               <button
                 onClick={() => setShowWalkInModal(true)}
@@ -472,35 +472,6 @@ export default function Dashboard() {
         />
       )}
 
-      {/* Complete Service Confirmation */}
-      {showCompleteModal && serviceToComplete && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl border border-border-gray p-6 max-w-sm w-full">
-            <h3 className="text-lg font-bold text-deep-charcoal mb-2">{t('dashboard.completeService')}</h3>
-            <p className="text-sm text-muted-stone mb-6">
-              {t('dashboard.completeServiceFor', { name: serviceToComplete.customer_name })}
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => { setShowCompleteModal(false); setServiceToComplete(null); }}
-                className="flex-1 px-4 py-2.5 border border-border-gray text-muted-stone rounded-lg hover:bg-soft-gray transition-colors font-medium"
-              >
-                {t('common.cancel')}
-              </button>
-              <button
-                onClick={() => {
-                  handleCompleteService(serviceToComplete);
-                  setShowCompleteModal(false);
-                  setServiceToComplete(null);
-                }}
-                className="flex-1 px-4 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white font-semibold rounded-lg transition-colors"
-              >
-                {t('dashboard.complete')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
       {showAddReservation && (
         <AddReservationModal
           isOpen={showAddReservation}
