@@ -1,4 +1,39 @@
 
+## 2026-05-09: M3 status pill — 3 commits because I kept fixing the wrong renderer
+
+**Mistake**: Audit flagged tables page rendering raw English DB enum ("Available") in PT-BR UI. Took 3 commits to actually fix:
+
+1. `d4a885f6` — fixed `client/src/components/host/TableCard.tsx` with `STATUS_I18N_KEY` map but used wrong i18n path `tableStatus.X`. Real path is `settings.tableStatus.X`. `t()` silently fell back to the canonical English string. **Production unchanged.**
+
+2. `28d12e06` — corrected the i18n path. Capacity label now translated ("X assentos" ✓), but status pill on `/host-dashboard/tables` still showed "Available". Reason: `/host-dashboard/tables` is rendered by `client/src/pages/TableConfigPage.tsx`, NOT `TableCard.tsx`. Different file, different inline component. **Production still showed "Available".**
+
+3. `35e1915f` — fixed `TableConfigPage.tsx` (the actual renderer), with two sub-bugs:
+   - Color comparisons (`table.status === 'available'`) checked lowercase but DB stores capitalized enum (`'Available'`) → always fell to amber default
+   - i18n lookup `t(\`settings.tableStatus.${table.status}\`)` interpolated raw `'Available'` but JSON keys are lowercase
+
+**Final fix pattern (reusable)**:
+```tsx
+const lower = (table.status || '').toLowerCase();
+const statusKey = lower === 'being cleaned' ? 'cleaning' : lower;  // DB enum → JSON key
+// Use `statusKey` for BOTH color switch and i18n lookup
+```
+
+**Rules**:
+1. **Identify the renderer first.** Before fixing UI bugs, grep the route file for the component name actually mounted on that route, then trace its children. `/host-dashboard/tables` → `TableConfigPage.tsx`, not the obviously-named `TableCard.tsx`.
+
+2. **DB enums and JSON keys must agree on case.** Any `t(\`namespace.${dbValue}\`)` lookup is a bug if `dbValue` is from a DB enum and the JSON keys are lowercase. Normalize at the boundary.
+
+3. **Verify production bundle, not just commits.** Probe: `curl /assets/<chunk>.js | grep <fix-pattern>`. Bundle hash changes = new deploy. Confirms code shipped without needing an authenticated browser session.
+
+4. **Diff bundles before re-running visual tests.** If the bundle hasn't changed, the fix isn't live — don't waste a Playwright run.
+
+**Verification toolkit** (saved for next time):
+- `Invoke-WebRequest /assets/index-X.js` then regex for asset chunk names → find the route's lazy chunk
+- Grep chunk for fix-distinctive strings (e.g., the literal `"being cleaned"?"cleaning"` mapping)
+- Grep main bundle for i18n catalog: `[regex]::Matches($c, 'tableStatus:\{[^}]+\}')` returned all 3 locales (en/pt-BR/es) in one shot
+
+---
+
 ## 2026-04-27: WAHA pipeline — false-alarm investigation, real lesson is the gate
 
 **Investigation**: Vercel logs showed ~15 `[WAHAAdapter] WAHA webhook: invalid X-Api-Key` errors/day. `waha_events` table showed 660 sig_invalid in recent history vs only 125 successful (received+processed), with the most recent `processed` event on 2026-04-24. Initial conclusion: 3-day silent regression from key drift between Vercel and Fly.io.
