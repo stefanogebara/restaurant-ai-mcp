@@ -12,13 +12,11 @@ const STATUS_LABEL_KEYS: Record<string, string> = {
   default:   'floorPlan.status.unknown',
 };
 
-const SHAPE_LABEL_KEYS: Record<string, string> = {
-  round:       'floorPlan.shape.round',
-  square:      'floorPlan.shape.square',
-  rectangle:   'floorPlan.shape.rectangle',
-  booth:       'floorPlan.shape.booth',
-  'bar-stool': 'floorPlan.shape.barStool',
-};
+// Build the shape→i18n key map from the canonical SHAPES list so we don't
+// drift if a shape is added or renamed.
+const SHAPE_LABEL_KEYS: Record<string, string> = Object.fromEntries(
+  SHAPES.map(s => [s.value, `floorPlan.shape.${s.i18nKey}`]),
+);
 
 interface Props {
   table: Table;
@@ -35,11 +33,18 @@ export default function TablePopover({ table, position, onClose, onDelete, onUpd
   const popoverRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handler = (e: MouseEvent) => {
+    const handleMouse = (e: MouseEvent) => {
       if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) onClose();
     };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('mousedown', handleMouse);
+    document.addEventListener('keydown', handleKey);
+    return () => {
+      document.removeEventListener('mousedown', handleMouse);
+      document.removeEventListener('keydown', handleKey);
+    };
   }, [onClose]);
 
   const hasChanges = shape !== table.shape || capacity !== table.capacity;

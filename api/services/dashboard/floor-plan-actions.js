@@ -6,11 +6,17 @@ const {
   linkTables,
   unlinkTables,
   getTableById,
+  query: supabase,
 } = require('../../_lib/supabase');
 
 const { createSecureLogger } = require('../../_lib/secure-logger');
 
 const logger = createSecureLogger('HostDashboard');
+
+// Floor-plan grid bounds — kept in sync with client/src/components/floor-plan/floorPlanConstants.ts
+// Used for server-side bounds-checking on position updates (defence in depth — the client clamps too).
+const GRID_COLS = 24;
+const GRID_ROWS = 20;
 
 /**
  * Update table position (for floor plan editor drag-and-drop)
@@ -35,9 +41,20 @@ async function handleUpdateTablePosition(req, res) {
   }
 
   // Build update object
+  const px = parseInt(position_x, 10);
+  const py = parseInt(position_y, 10);
+
+  // Server-side bounds check — the canvas is a fixed grid; don't trust the client.
+  if (!Number.isFinite(px) || !Number.isFinite(py) || px < 0 || py < 0 || px >= GRID_COLS || py >= GRID_ROWS) {
+    return res.status(400).json({
+      success: false,
+      error: `position_x must be 0..${GRID_COLS - 1}, position_y must be 0..${GRID_ROWS - 1}`
+    });
+  }
+
   const updates = {
-    position_x: parseInt(position_x, 10),
-    position_y: parseInt(position_y, 10)
+    position_x: px,
+    position_y: py
   };
 
   // Optional size and rotation fields
@@ -245,6 +262,31 @@ async function handleDeleteTable(req, res) {
     return res.status(400).json({
       success: false,
       error: 'Cannot delete a table that is currently occupied'
+    });
+  }
+
+  // Refuse to delete if upcoming reservations still reference this table —
+  // otherwise a customer arrives tomorrow with a confirmation pointing at a
+  // table that no longer exists in the floor plan.
+  const todayStr = new Date().toISOString().split('T')[0];
+  const { data: orphanRows, error: orphanErr } = await supabase
+    .from('reservations')
+    .select('reservation_id, customer_name, date, time')
+    .eq('restaurant_id', restaurantId)
+    .gte('date', todayStr)
+    .in('status', ['confirmed', 'pending'])
+    .contains('table_ids', [table_id])
+    .limit(5);
+
+  if (orphanErr) {
+    // Don't block the delete on a check-query failure — log + continue.
+    logger.warn('Orphan-reservation check failed; proceeding with delete', { table_id, error: orphanErr.message });
+  } else if (orphanRows && orphanRows.length > 0) {
+    return res.status(400).json({
+      success: false,
+      error: `Cannot delete — ${orphanRows.length} upcoming reservation(s) reference this table`,
+      code: 'TABLE_HAS_RESERVATIONS',
+      reservations: orphanRows
     });
   }
 
