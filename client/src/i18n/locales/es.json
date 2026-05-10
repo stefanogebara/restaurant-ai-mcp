@@ -2324,7 +2324,21 @@
     "capacity": "Capacidad",
     "saveChanges": "Guardar Cambios",
     "delete": "Eliminar",
-    "deleteConfirm": "¿Eliminar mesa {{number}}?"
+    "deleteConfirm": "¿Eliminar mesa {{number}}?",
+    "linkBanner": {
+      "clickFirst": "Haz clic en la primera mesa para empezar a vincular",
+      "clickSecond": "Haz clic en otra mesa para vincular o desvincular"
+    },
+    "addTableModal": {
+      "title": "Añadir Mesa",
+      "subtitle": "Configura la nueva mesa",
+      "tableNumber": "Número de Mesa",
+      "capacity": "Capacidad",
+      "section": "Sección",
+      "addNew": "+ Nuevo"
+    },
+    "loadingAriaLabel": "Cargando plano de planta",
+    "errorTitle": "No se pudo cargar el plano de planta"
   },
   "insights": {
     "title": "Insights IA",

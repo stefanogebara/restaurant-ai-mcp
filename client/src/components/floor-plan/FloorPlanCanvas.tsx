@@ -76,7 +76,7 @@ export default function FloorPlanCanvas({
       style={{ background: '#F5F2EC' }}
     >
       {isLoading ? (
-        <div role="status" aria-label="Loading floor plan" className="flex items-center justify-center" style={{ height: 420 }}>
+        <div role="status" aria-label={t('floorPlan.loadingAriaLabel', 'Loading floor plan')} className="flex items-center justify-center" style={{ height: 420 }}>
           <div aria-hidden="true" className="animate-spin rounded-full h-7 w-7 border-2 border-border-gray border-t-burgundy" />
         </div>
       ) : filteredTables.length === 0 ? (

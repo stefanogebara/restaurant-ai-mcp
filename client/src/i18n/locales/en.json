@@ -1514,7 +1514,21 @@
     "capacity": "Capacity",
     "saveChanges": "Save Changes",
     "delete": "Delete",
-    "deleteConfirm": "Delete table {{number}}?"
+    "deleteConfirm": "Delete table {{number}}?",
+    "linkBanner": {
+      "clickFirst": "Click the first table to start linking",
+      "clickSecond": "Click another table to link or unlink it"
+    },
+    "addTableModal": {
+      "title": "Add Table",
+      "subtitle": "Configure the new table",
+      "tableNumber": "Table Number",
+      "capacity": "Capacity",
+      "section": "Section",
+      "addNew": "+ New"
+    },
+    "loadingAriaLabel": "Loading floor plan",
+    "errorTitle": "Could not load the floor plan"
   },
   "insights": {
     "title": "AI Insights",

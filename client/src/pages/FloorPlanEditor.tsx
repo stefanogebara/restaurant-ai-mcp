@@ -7,8 +7,11 @@
 
 import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { hostAPI } from '../services/api';
+import { useToast } from '../contexts/ToastContext';
 import DashboardLayout from '../components/layout/DashboardLayout';
+import ThiingsIcon from '../components/common/ThiingsIcon';
 import type { Table, TableShape } from '../types/host.types';
 import { getTableSize as getTableGridSize } from '../types/host.types';
 
@@ -23,11 +26,13 @@ import { CELL, GRID_COLS, SVG_W, SVG_H, snapToGrid, getTablePxSize } from '../co
 
 export default function FloorPlanEditor() {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
+  const { error: toastError } = useToast();
 
   // ─── Data fetching ────────────────────────────────────────────────────────────
 
-  const { data: tables = [], isLoading } = useQuery({
-    queryKey: ['floorPlanTables'],
+  const { data: tables = [], isLoading, isError, refetch } = useQuery({
+    queryKey: ['dashboard'],
     queryFn: () => hostAPI.getDashboard(),
     select: (res) => (res.data.tables || []) as Table[],
   });
@@ -170,8 +175,8 @@ export default function FloorPlanEditor() {
           ? hostAPI.unlinkTables(linkSource, table.id)
           : hostAPI.linkTables(linkSource, table.id);
         promise
-          .then(() => { queryClient.invalidateQueries({ queryKey: ['floorPlanTables'] }); showSaved(); })
-          .catch(() => setSaveStatus('idle'));
+          .then(() => { queryClient.invalidateQueries({ queryKey: ['dashboard'] }); showSaved(); })
+          .catch(() => { setSaveStatus('idle'); toastError(t('errors.serverError')); });
         setLinkSource(null);
       }
       return;
@@ -205,13 +210,14 @@ export default function FloorPlanEditor() {
     showSaving();
     try {
       await hostAPI.updateTablePosition(draggingId, gx, gy);
-      queryClient.invalidateQueries({ queryKey: ['floorPlanTables'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       showSaved();
     } catch (err) {
       console.error('Failed to save position:', err);
       setSaveStatus('idle');
+      toastError(t('errors.serverError'));
     }
-  }, [draggingId, dragPos, queryClient, showSaving, showSaved]);
+  }, [draggingId, dragPos, queryClient, showSaving, showSaved, toastError, t]);
 
   // ─── Table click ──────────────────────────────────────────────────────────────
 
@@ -230,26 +236,28 @@ export default function FloorPlanEditor() {
     setShowAddModal(false); showSaving();
     try {
       await hostAPI.createTable(data);
-      queryClient.invalidateQueries({ queryKey: ['floorPlanTables'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       if (!locations.includes(data.location)) setActiveLocation(data.location);
       showSaved();
     } catch (err) {
       console.error('Failed to create table:', err);
       setSaveStatus('idle');
+      toastError(t('errors.serverError'));
     }
-  }, [queryClient, locations, showSaving, showSaved]);
+  }, [queryClient, locations, showSaving, showSaved, toastError, t]);
 
   const handleDeleteTable = useCallback(async (tableId: string) => {
     showSaving();
     try {
       await hostAPI.deleteTable(tableId);
-      queryClient.invalidateQueries({ queryKey: ['floorPlanTables'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       showSaved();
     } catch (err) {
       console.error('Failed to delete table:', err);
       setSaveStatus('idle');
+      toastError(t('errors.serverError'));
     }
-  }, [queryClient, showSaving, showSaved]);
+  }, [queryClient, showSaving, showSaved, toastError, t]);
 
   const handleUpdateProps = useCallback(async (data: {
     table_id: string; shape?: string; capacity?: number;
@@ -257,15 +265,38 @@ export default function FloorPlanEditor() {
     showSaving();
     try {
       await hostAPI.updateTableProperties(data);
-      queryClient.invalidateQueries({ queryKey: ['floorPlanTables'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       showSaved();
     } catch (err) {
       console.error('Failed to update table:', err);
       setSaveStatus('idle');
+      toastError(t('errors.serverError'));
     }
-  }, [queryClient, showSaving, showSaved]);
+  }, [queryClient, showSaving, showSaved, toastError, t]);
 
   // ─── Render ───────────────────────────────────────────────────────────────────
+
+  if (isError && !isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex flex-col items-center justify-center min-h-[60vh] p-6">
+          <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-8 max-w-md text-center">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <ThiingsIcon name="alert-circle" pxSize={32} className="text-red-600" />
+            </div>
+            <h3 className="text-lg font-bold text-red-900 mb-2">{t('floorPlan.errorTitle')}</h3>
+            <p className="text-sm text-red-700 mb-4">{t('errors.serverError')}</p>
+            <button
+              onClick={() => refetch()}
+              className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl transition-colors"
+            >
+              {t('common.retry')}
+            </button>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>

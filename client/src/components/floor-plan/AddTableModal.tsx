@@ -52,13 +52,13 @@ export default function AddTableModal({ onClose, onAdd, nextNumber, locations, a
       >
         <div className="px-6 py-5 border-b border-border-gray flex items-center justify-between">
           <div>
-            <h2 className="text-base font-semibold text-deep-charcoal">Add Table</h2>
-            <p className="text-xs text-warm-stone mt-0.5">Configure the new table</p>
+            <h2 className="text-base font-semibold text-deep-charcoal">{t('floorPlan.addTableModal.title')}</h2>
+            <p className="text-xs text-warm-stone mt-0.5">{t('floorPlan.addTableModal.subtitle')}</p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close"
+            aria-label={t('common.close')}
             className="p-1.5 hover:bg-soft-gray rounded-xl transition-colors text-muted-stone hover:text-stone-gray"
           >
             <ThiingsIcon name="close" pxSize={18} />
@@ -69,7 +69,7 @@ export default function AddTableModal({ onClose, onAdd, nextNumber, locations, a
           {/* Table Number */}
           <div>
             <label className="block text-[11px] font-semibold text-warm-stone mb-1.5 uppercase tracking-wider">
-              Table Number
+              {t('floorPlan.addTableModal.tableNumber')}
             </label>
             <input
               type="number"
@@ -83,7 +83,7 @@ export default function AddTableModal({ onClose, onAdd, nextNumber, locations, a
           {/* Capacity */}
           <div>
             <label className="block text-[11px] font-semibold text-warm-stone mb-2 uppercase tracking-wider">
-              Capacity
+              {t('floorPlan.addTableModal.capacity')}
             </label>
             <div className="flex gap-2">
               {CAPACITIES.map(c => (
@@ -106,7 +106,7 @@ export default function AddTableModal({ onClose, onAdd, nextNumber, locations, a
           {/* Shape */}
           <div>
             <label className="block text-[11px] font-semibold text-warm-stone mb-2 uppercase tracking-wider">
-              Shape
+              {t('floorPlan.shape.label')}
             </label>
             <div className="grid grid-cols-3 gap-2">
               {SHAPES.map(s => (
@@ -120,7 +120,7 @@ export default function AddTableModal({ onClose, onAdd, nextNumber, locations, a
                       : 'bg-white text-stone-gray border-border-gray hover:border-burgundy/40'
                   }`}
                 >
-                  {s.label}
+                  {t(`floorPlan.shape.${s.i18nKey}`, s.label)}
                 </button>
               ))}
             </div>
@@ -129,7 +129,7 @@ export default function AddTableModal({ onClose, onAdd, nextNumber, locations, a
           {/* Location */}
           <div>
             <label className="block text-[11px] font-semibold text-warm-stone mb-2 uppercase tracking-wider">
-              Section
+              {t('floorPlan.addTableModal.section')}
             </label>
             {!showNewLoc ? (
               <div className="flex gap-2">
@@ -145,7 +145,7 @@ export default function AddTableModal({ onClose, onAdd, nextNumber, locations, a
                   onClick={() => setShowNewLoc(true)}
                   className="px-3 py-2.5 border border-border-gray rounded-xl text-sm text-stone-gray hover:border-burgundy/40 transition-colors"
                 >
-                  + New
+                  {t('floorPlan.addTableModal.addNew')}
                 </button>
               </div>
             ) : (
@@ -173,7 +173,7 @@ export default function AddTableModal({ onClose, onAdd, nextNumber, locations, a
             type="submit"
             className="w-full py-2.5 bg-deep-charcoal hover:bg-stone-mid text-white font-semibold rounded-xl transition-colors text-sm"
           >
-            {t('tables.addTable', 'Add Table')}
+            {t('floorPlan.addTable')}
           </button>
         </form>
       </div>

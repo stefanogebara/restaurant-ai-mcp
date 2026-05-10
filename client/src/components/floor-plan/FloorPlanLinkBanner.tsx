@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 
 interface Props {
@@ -6,6 +7,7 @@ interface Props {
 }
 
 export default function FloorPlanLinkBanner({ linkSource, onCancel }: Props) {
+  const { t } = useTranslation();
   return (
     <div className="mb-4 px-4 py-3 bg-burgundy/[0.06] border border-burgundy/20 rounded-xl flex items-center gap-3">
       <span style={{ color: '#9F1239' }}>
@@ -13,15 +15,15 @@ export default function FloorPlanLinkBanner({ linkSource, onCancel }: Props) {
       </span>
       <span className="text-sm text-burgundy font-medium">
         {linkSource
-          ? 'Click another table to link or unlink it'
-          : 'Click the first table to start linking'}
+          ? t('floorPlan.linkBanner.clickSecond')
+          : t('floorPlan.linkBanner.clickFirst')}
       </span>
       <button
         type="button"
         onClick={onCancel}
         className="ml-auto text-xs text-burgundy/70 hover:text-burgundy font-medium hover:underline transition-colors"
       >
-        Cancel
+        {t('common.cancel')}
       </button>
     </div>
   );

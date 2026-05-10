@@ -1525,7 +1525,21 @@
     "capacity": "Capacidade",
     "saveChanges": "Salvar Alterações",
     "delete": "Excluir",
-    "deleteConfirm": "Excluir mesa {{number}}?"
+    "deleteConfirm": "Excluir mesa {{number}}?",
+    "linkBanner": {
+      "clickFirst": "Clique na primeira mesa para começar a vincular",
+      "clickSecond": "Clique em outra mesa para vincular ou desvincular"
+    },
+    "addTableModal": {
+      "title": "Adicionar Mesa",
+      "subtitle": "Configure a nova mesa",
+      "tableNumber": "Número da Mesa",
+      "capacity": "Capacidade",
+      "section": "Setor",
+      "addNew": "+ Novo"
+    },
+    "loadingAriaLabel": "Carregando planta do salão",
+    "errorTitle": "Erro ao carregar o salão"
   },
   "insights": {
     "title": "Central IA",

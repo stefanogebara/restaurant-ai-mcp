@@ -55,12 +55,14 @@ export const snapToGrid = (px: number, py: number) => ({
 
 // ── Shape / capacity options ──────────────────────────────────────────────────
 
-export const SHAPES: { value: TableShape; label: string }[] = [
-  { value: 'round',     label: 'Round' },
-  { value: 'square',    label: 'Square' },
-  { value: 'rectangle', label: 'Rectangle' },
-  { value: 'booth',     label: 'Booth' },
-  { value: 'bar-stool', label: 'Bar Stool' },
+// i18nKey maps to floorPlan.shape.{i18nKey} in the locale files.
+// label is the canonical English fallback if the key is missing.
+export const SHAPES: { value: TableShape; i18nKey: string; label: string }[] = [
+  { value: 'round',     i18nKey: 'round',     label: 'Round' },
+  { value: 'square',    i18nKey: 'square',    label: 'Square' },
+  { value: 'rectangle', i18nKey: 'rectangle', label: 'Rectangle' },
+  { value: 'booth',     i18nKey: 'booth',     label: 'Booth' },
+  { value: 'bar-stool', i18nKey: 'barStool',  label: 'Bar Stool' },
 ];
 
 export const CAPACITIES = [2, 4, 6, 8, 10];
