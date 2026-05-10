@@ -238,7 +238,10 @@ async function handleDeleteTable(req, res) {
     });
   }
 
-  if (tableResult.table.status === 'occupied') {
+  // Normalise: DB stores 'occupied' lowercase, normalizeStatus() returns 'Occupied'
+  // capitalised to the frontend. The check has to be case-insensitive or it
+  // silently lets you delete a table mid-service.
+  if ((tableResult.table.status || '').toLowerCase() === 'occupied') {
     return res.status(400).json({
       success: false,
       error: 'Cannot delete a table that is currently occupied'

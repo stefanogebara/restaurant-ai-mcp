@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import type { Table, TableShape } from '../../types/host.types';
+import { getTableSize } from '../../types/host.types';
 import { SHAPES, CAPACITIES, GRID_COLS, GRID_ROWS } from './floorPlanConstants';
 
 interface Props {
@@ -28,16 +29,40 @@ export default function AddTableModal({ onClose, onAdd, nextNumber, locations, a
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const loc = showNewLoc && newLocation.trim() ? newLocation.trim() : location;
-    const occupied = new Set(
-      tables.filter(t => (t.location || 'Main') === loc)
-        .map(t => `${t.position_x},${t.position_y}`),
-    );
-    let px = 1, py = 1;
-    for (let row = 1; row < GRID_ROWS - 1; row++) {
-      for (let col = 1; col < GRID_COLS - 2; col++) {
-        if (!occupied.has(`${col},${row}`)) { px = col; py = row; row = GRID_ROWS; break; }
+
+    // Build the occupied-cell set from each existing table's full footprint —
+    // not just its anchor cell. Previously a 1x1 anchor check let new
+    // rectangles/booths render on top of adjacent tables until the user
+    // dragged them apart.
+    const sameLocationTables = tables.filter(t => (t.location || 'Main') === loc);
+    const occupied = new Set<string>();
+    for (const t of sameLocationTables) {
+      const tShape = (t.shape?.toLowerCase() || 'round') as TableShape;
+      const tSize = getTableSize(tShape, t.capacity || 2);
+      const tx = t.position_x || 0;
+      const ty = t.position_y || 0;
+      for (let dy = 0; dy < tSize.height; dy++) {
+        for (let dx = 0; dx < tSize.width; dx++) {
+          occupied.add(`${tx + dx},${ty + dy}`);
+        }
       }
     }
+
+    // Find a position where the new table's full footprint clears all neighbors.
+    const newSize = getTableSize(shape, capacity);
+    let px = 1, py = 1, fits = false;
+    for (let row = 1; row <= GRID_ROWS - newSize.height - 1 && !fits; row++) {
+      for (let col = 1; col <= GRID_COLS - newSize.width - 1 && !fits; col++) {
+        let clear = true;
+        for (let dy = 0; dy < newSize.height && clear; dy++) {
+          for (let dx = 0; dx < newSize.width && clear; dx++) {
+            if (occupied.has(`${col + dx},${row + dy}`)) clear = false;
+          }
+        }
+        if (clear) { px = col; py = row; fits = true; }
+      }
+    }
+
     onAdd({ table_number: tableNumber, capacity, shape, location: loc, position_x: px, position_y: py });
   };
 

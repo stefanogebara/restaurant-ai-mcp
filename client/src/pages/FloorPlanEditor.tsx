@@ -139,10 +139,20 @@ export default function FloorPlanEditor() {
 
   // ─── Save status helpers ──────────────────────────────────────────────────────
 
+  const savedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const showSaving = useCallback(() => setSaveStatus('saving'), []);
   const showSaved = useCallback(() => {
     setSaveStatus('saved');
-    setTimeout(() => setSaveStatus('idle'), 2000);
+    if (savedTimeoutRef.current) clearTimeout(savedTimeoutRef.current);
+    savedTimeoutRef.current = setTimeout(() => setSaveStatus('idle'), 2000);
+  }, []);
+
+  // Clear pending "saved" timeout on unmount — prevents setState-on-unmounted warning
+  useEffect(() => {
+    return () => {
+      if (savedTimeoutRef.current) clearTimeout(savedTimeoutRef.current);
+    };
   }, []);
 
   // ─── Coordinate helper ────────────────────────────────────────────────────────
@@ -197,11 +207,15 @@ export default function FloorPlanEditor() {
     if (!draggingId) return;
     e.preventDefault();
     const pt = svgPoint(e.clientX, e.clientY);
+    // Clamp using the dragged table's actual footprint — multi-cell tables
+    // (e.g. rectangle, booth) must not hang off the right or bottom edge.
+    const dragging = filteredTables.find(t => t.id === draggingId);
+    const { w, h } = dragging ? getTablePxSize(dragging) : { w: CELL, h: CELL };
     setDragPos({
-      x: Math.max(0, Math.min(SVG_W - CELL, pt.x - dragOffset.x)),
-      y: Math.max(0, Math.min(SVG_H - CELL, pt.y - dragOffset.y)),
+      x: Math.max(0, Math.min(SVG_W - w, pt.x - dragOffset.x)),
+      y: Math.max(0, Math.min(SVG_H - h, pt.y - dragOffset.y)),
     });
-  }, [draggingId, svgPoint, dragOffset]);
+  }, [draggingId, filteredTables, svgPoint, dragOffset]);
 
   const handlePointerUp = useCallback(async () => {
     if (!draggingId || !dragPos) return;

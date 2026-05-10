@@ -151,10 +151,10 @@ export const hostAPI = {
   }) => api.post('/host-dashboard?action=update-table-properties', data),
 
   linkTables: (tableId: string, linkWithId: string) =>
-    api.post('/host-dashboard?action=link-tables', { table_id: tableId, link_with_id: linkWithId }),
+    api.post('/host-dashboard?action=link-tables', { table_id: tableId, linked_table_id: linkWithId }),
 
   unlinkTables: (tableId: string, unlinkFromId: string) =>
-    api.post('/host-dashboard?action=unlink-tables', { table_id: tableId, unlink_from_id: unlinkFromId }),
+    api.post('/host-dashboard?action=unlink-tables', { table_id: tableId, linked_table_id: unlinkFromId }),
 
   deleteTable: (tableId: string) =>
     api.post('/host-dashboard?action=delete-table', { table_id: tableId }),
