@@ -2308,6 +2308,7 @@
     "changeSettingsHint": "Change a setting above to enable saving",
     "voiceLoadError": "Could not load voices",
     "voiceLoadErrorHint": "The voice service may be temporarily unavailable. Please try again.",
+    "loadingAriaLabel": "Loading voice settings",
     "waQuality": {
       "green": "Good",
       "yellow": "Warning",
@@ -2371,7 +2372,10 @@
     "agentCreationStarted": "Agent creation started. This may take up to 2 minutes.",
     "retryAgentCreation": "Retry Agent Creation",
     "retrying": "Creating...",
-    "searchVoices": "Search voices..."
+    "searchVoices": "Search voices...",
+    "createAgentFailed": "Failed to create agent",
+    "saveSettingsFailed": "Failed to save voice settings",
+    "saveEngineFailed": "Failed to save engine settings"
   },
   "voiceExperiment": {
     "title": "A/B Test Your Voice",

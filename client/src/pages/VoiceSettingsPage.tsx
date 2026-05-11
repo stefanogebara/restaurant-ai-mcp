@@ -5,7 +5,7 @@
  * UI is delegated to focused subcomponents in components/voice/.
  */
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import { Skeleton } from '../components/common/Skeleton';
@@ -38,7 +38,7 @@ import POSIntegrationPanel from '../components/dashboard/POSIntegrationPanel';
 import PhoneIntegrationPanel from '../components/voice/PhoneIntegrationPanel';
 // AIStrategyPanel removed — dead feature
 // StrategyMetricsWidget moved to insights-only (removed from voice settings)
-import { authFetch } from '../services/api';
+import { authFetch, hostAPI } from '../services/api';
 
 import { DEFAULT_VOICE_SETTINGS } from '../components/voice/voiceTypes';
 import type { VoiceSettings } from '../components/voice/voiceTypes';
@@ -56,33 +56,45 @@ export default function VoiceSettingsPage() {
   const saveEngineMutation = useSaveVoiceEngine();
   const { data: waStatus } = useWhatsAppIntegrationStatus({ enabled: canLoadVoiceData });
   const queryClient = useQueryClient();
+  const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Clean up the post-retry 5s invalidate-queries timeout if the user navigates
+  // away before it fires — prevents setState-on-unmounted-component warnings.
+  useEffect(() => {
+    return () => {
+      if (retryTimeoutRef.current) clearTimeout(retryTimeoutRef.current);
+    };
+  }, []);
+
   const retryAgentMutation = useMutation({
     mutationFn: async () => {
       const res = await authFetch('/api/elevenlabs-agent-create', { method: 'POST' });
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || 'Failed to create agent');
+        throw new Error(err.error || t('voice.createAgentFailed', 'Failed to create agent'));
       }
       return res.json();
     },
     onSuccess: () => {
       toast.success(t('voice.agentCreationStarted', 'Agent creation started. This may take up to 2 minutes.'));
-      setTimeout(() => queryClient.invalidateQueries({ queryKey: ['voiceSettings'] }), 5000);
+      if (retryTimeoutRef.current) clearTimeout(retryTimeoutRef.current);
+      retryTimeoutRef.current = setTimeout(() => queryClient.invalidateQueries({ queryKey: ['voiceSettings'] }), 5000);
     },
     onError: (err) => {
-      toast.error(err instanceof Error ? err.message : 'Failed to create agent');
+      toast.error(err instanceof Error ? err.message : t('voice.createAgentFailed', 'Failed to create agent'));
     },
   });
+  // Share React Query cache with Dashboard.tsx and FloorPlanEditor.tsx — same
+  // queryKey AND queryFn so all three pages read the same axios-wrapped shape.
+  // Different queryFns under the same key would clobber each other's cached
+  // payload depending on render order.
   const { data: dashData } = useQuery({
-    queryKey: ['hostDashboard'],
-    queryFn: async () => {
-      const res = await authFetch('/api/host-dashboard?action=dashboard');
-      return res.json();
-    },
+    queryKey: ['dashboard'],
+    queryFn: hostAPI.getDashboard,
     enabled: canLoadVoiceData,
     staleTime: 5 * 60 * 1000,
   });
-  const slug: string = (dashData as { slug?: string } | undefined)?.slug || '';
+  const slug: string = (dashData as { data?: { slug?: string } } | undefined)?.data?.slug || '';
 
   // ─── Pending changes ──────────────────────────────────────────────────────────
 
@@ -150,16 +162,15 @@ export default function VoiceSettingsPage() {
     const expectedCalls = (hasElevenLabsChanges ? 1 : 0) + (hasEngineChanges ? 1 : 0);
     if (expectedCalls === 0) return;
 
+    // Partial-save fix: clear pending state per-mutation in each onSuccess so
+    // that if one half fails the other half's pending state doesn't linger,
+    // which previously made users hit Save again on already-persisted values.
+    // Combined success toast still requires BOTH halves to succeed.
     let completedCalls = 0;
-    const onCallComplete = () => {
+    const onAllComplete = () => {
       completedCalls++;
       if (completedCalls >= expectedCalls) {
         toast.success(t('voice.settingsSaved', 'Voice settings saved successfully'));
-        setPendingVoiceId(null);
-        setPendingSettings(null);
-        setPendingLanguage(null);
-        setPendingEngine(null);
-        setPendingOpenAIVoice(null);
       }
     };
 
@@ -171,12 +182,16 @@ export default function VoiceSettingsPage() {
       if (pendingLanguage) body.language = pendingLanguage;
       saveMutation.mutate(body, {
         onSuccess: (result) => {
+          // Clear this half's pending state regardless of the other half.
+          setPendingVoiceId(null);
+          setPendingSettings(null);
+          setPendingLanguage(null);
           if (result?.sync_warning) {
             toast.info(t('voice.savedWithSyncWarning', 'Settings saved locally. Agent sync will apply on next refresh.'));
           }
-          onCallComplete();
+          onAllComplete();
         },
-        onError: (error) => toast.error(error instanceof Error ? error.message : 'Failed to save voice settings'),
+        onError: (error) => toast.error(error instanceof Error ? error.message : t('voice.saveSettingsFailed', 'Failed to save voice settings')),
       });
     }
 
@@ -185,8 +200,12 @@ export default function VoiceSettingsPage() {
       if (pendingEngine) engineBody.voice_engine = pendingEngine;
       if (pendingOpenAIVoice) engineBody.openai_voice_id = pendingOpenAIVoice;
       saveEngineMutation.mutate(engineBody, {
-        onSuccess: onCallComplete,
-        onError: (error) => toast.error(error instanceof Error ? error.message : 'Failed to save engine settings'),
+        onSuccess: () => {
+          setPendingEngine(null);
+          setPendingOpenAIVoice(null);
+          onAllComplete();
+        },
+        onError: (error) => toast.error(error instanceof Error ? error.message : t('voice.saveEngineFailed', 'Failed to save engine settings')),
       });
     }
   };
@@ -206,7 +225,7 @@ export default function VoiceSettingsPage() {
   if (isLoadingConfig || isLoadingAccess) {
     return (
       <DashboardLayout>
-        <div className="p-6 lg:p-8 max-w-5xl" role="status" aria-label="Loading voice settings">
+        <div className="p-6 lg:p-8 max-w-5xl" role="status" aria-label={t('voiceSettings.loadingAriaLabel', 'Loading voice settings')}>
           <Skeleton className="h-4 w-48 mb-2" />
           <Skeleton className="h-8 w-64 mb-1" />
           <Skeleton className="h-4 w-80 mb-6" />

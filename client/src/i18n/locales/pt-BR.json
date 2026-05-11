@@ -2327,6 +2327,7 @@
     "changeSettingsHint": "Altere uma configuração acima para habilitar o salvamento",
     "voiceLoadError": "Não foi possível carregar as vozes",
     "voiceLoadErrorHint": "O serviço de voz pode estar temporariamente indisponível. Tente novamente.",
+    "loadingAriaLabel": "Carregando configurações de voz",
     "waQuality": {
       "green": "Boa",
       "yellow": "Atenção",
@@ -2390,7 +2391,10 @@
     "agentCreationStarted": "Criação do agente iniciada. Isso pode levar até 2 minutos.",
     "retryAgentCreation": "Tentar Criar Novamente",
     "retrying": "Criando...",
-    "searchVoices": "Buscar vozes..."
+    "searchVoices": "Buscar vozes...",
+    "createAgentFailed": "Falha ao criar o agente",
+    "saveSettingsFailed": "Falha ao salvar as configurações de voz",
+    "saveEngineFailed": "Falha ao salvar as configurações do motor"
   },
   "voiceExperiment": {
     "title": "Teste A/B da Sua Voz",
