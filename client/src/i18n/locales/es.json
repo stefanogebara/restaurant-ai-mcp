@@ -2510,7 +2510,11 @@
     "resets": "Se reinicia",
     "loadingHistory": "Cargando historial...",
     "failedToSend": "Error al enviar. Intenta de nuevo.",
-    "sendMessage": "Enviar mensaje"
+    "sendMessage": "Enviar mensaje",
+    "backToDashboard": "Volver al panel",
+    "thinkingAriaLabel": "La IA está pensando",
+    "assistantAvatarAlt": "Avatar de la IA del Gerente",
+    "charCount": "{{used}}/{{max}} caracteres"
   },
   "demo": {
     "voice": {

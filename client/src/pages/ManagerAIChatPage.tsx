@@ -45,12 +45,15 @@ const SUGGESTED_PROMPTS = {
 
 // ---------- Page component ----------
 
+const MAX_INPUT_CHARS = 2000;
+
 export default function ManagerAIChatPage() {
   const { t, i18n } = useTranslation();
   const lang = i18n.language as keyof typeof SUGGESTED_PROMPTS;
   const [input, setInput] = useState('');
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const isFirstScrollRef = useRef(true);
   const qc = useQueryClient();
 
   const { data, isLoading } = useQuery<{ history: Message[] }>({
@@ -74,12 +77,17 @@ export default function ManagerAIChatPage() {
     usageData?.limit !== undefined &&
     (usageData?.used ?? 0) >= (usageData?.limit ?? Infinity);
 
-  // Deduplicate messages by content+role to handle race conditions
+  // Deduplicate DB-persisted turns by (role, created_at) to handle race
+  // conditions between optimistic updates and background refetches. Optimistic
+  // turns (no created_at) always render — they're added once via onMutate and
+  // replaced via onSuccess. Keying on content like the previous implementation
+  // hid legitimate repeat questions ("Quantas reservas hoje?" asked twice).
   const messages: Message[] = useMemo(() => {
     const history = data?.history || [];
     const seen = new Set<string>();
     return history.filter((m) => {
-      const key = `${m.role}:${m.content}`;
+      if (!m.created_at) return true;
+      const key = `${m.role}:${m.created_at}`;
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
@@ -122,14 +130,20 @@ export default function ManagerAIChatPage() {
   });
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    bottomRef.current?.scrollIntoView({
+      behavior: isFirstScrollRef.current ? 'auto' : 'smooth',
+    });
+    isFirstScrollRef.current = false;
   }, [messages.length, sendMutation.isPending]);
 
   const handleSend = () => {
     const trimmed = input.trim();
     if (!trimmed || sendMutation.isPending || isQuotaExhausted) return;
+    // Defensive: the textarea has maxLength but a paste-and-keystroke race
+    // could in theory squeeze past it. Hard-cap here too.
+    const capped = trimmed.length > MAX_INPUT_CHARS ? trimmed.slice(0, MAX_INPUT_CHARS) : trimmed;
     setInput('');
-    sendMutation.mutate(trimmed);
+    sendMutation.mutate(capped);
     // Reset textarea height
     if (inputRef.current) inputRef.current.style.height = 'auto';
   };
@@ -143,6 +157,8 @@ export default function ManagerAIChatPage() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value);
+    // Clear stale error banner as soon as the user starts typing a new message
+    if (sendMutation.isError) sendMutation.reset();
     // Auto-grow textarea
     const el = e.target;
     el.style.height = 'auto';
@@ -165,7 +181,7 @@ export default function ManagerAIChatPage() {
           </Link>
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-burgundy/10 flex items-center justify-center overflow-hidden">
-              <img src="/favicon.svg" alt="seatable" className="w-5 h-5" />
+              <img src="/favicon.svg" alt="" aria-hidden="true" className="w-5 h-5" />
             </div>
             <div>
               <h1 className="text-sm font-bold text-deep-charcoal leading-tight">
@@ -194,7 +210,7 @@ export default function ManagerAIChatPage() {
             <div className="flex flex-col items-center justify-center py-16 space-y-8">
               <div className="text-center space-y-3">
                 <div className="w-16 h-16 rounded-2xl bg-burgundy/10 flex items-center justify-center mx-auto overflow-hidden">
-                  <img src="/favicon.svg" alt="seatable" className="w-10 h-10" />
+                  <img src="/favicon.svg" alt="" aria-hidden="true" className="w-10 h-10" />
                 </div>
                 <h2 className="text-xl font-bold text-deep-charcoal">
                   {t('dashboard.managerAssistant', 'Manager AI')}
@@ -223,10 +239,10 @@ export default function ManagerAIChatPage() {
 
           {/* Messages */}
           {messages.map((m, i) => (
-            <div key={i} className={'flex ' + (m.role === 'manager' ? 'justify-end' : 'justify-start')}>
+            <div key={m.created_at ? `${m.role}-${m.created_at}` : `opt-${m.role}-${i}`} className={'flex ' + (m.role === 'manager' ? 'justify-end' : 'justify-start')}>
               {m.role === 'assistant' && (
                 <div className="w-7 h-7 rounded-full bg-burgundy/10 flex items-center justify-center flex-shrink-0 mt-1 mr-2 overflow-hidden">
-                  <img src="/favicon.svg" alt="S" className="w-4 h-4" />
+                  <img src="/favicon.svg" alt={t('managerAI.assistantAvatarAlt', 'Manager AI avatar')} className="w-4 h-4" />
                 </div>
               )}
               <div
@@ -244,7 +260,7 @@ export default function ManagerAIChatPage() {
 
           {/* Thinking indicator */}
           {sendMutation.isPending && (
-            <div className="flex justify-start" role="status" aria-label="AI is thinking">
+            <div className="flex justify-start" role="status" aria-label={t('managerAI.thinkingAriaLabel', 'AI is thinking')}>
               <div className="w-7 h-7 rounded-full bg-burgundy/10 flex items-center justify-center flex-shrink-0 mt-1 mr-2">
                 <ThiingsIcon name="sparkles" pxSize={14} className="text-burgundy animate-spin" />
               </div>
@@ -285,20 +301,28 @@ export default function ManagerAIChatPage() {
       {/* Input area */}
       <div className="bg-white border-t border-border-gray px-4 sm:px-6 py-4 flex-shrink-0">
         <div className="max-w-3xl mx-auto flex gap-3 items-end">
-          <textarea
-            ref={inputRef}
-            className="flex-1 min-w-0 rounded-xl border border-border-gray px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy max-h-40"
-            placeholder={
-              isQuotaExhausted
-                ? t('dashboard.limitReachedUpgrade', 'Upgrade to send more messages')
-                : t('dashboard.managerInputPlaceholder', 'Ask about your restaurant...')
-            }
-            value={input}
-            onChange={handleInputChange}
-            onKeyDown={handleKeyDown}
-            disabled={sendMutation.isPending || isQuotaExhausted}
-            rows={1}
-          />
+          <div className="flex-1 min-w-0 flex flex-col gap-1">
+            <textarea
+              ref={inputRef}
+              className="w-full rounded-xl border border-border-gray px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy max-h-40"
+              placeholder={
+                isQuotaExhausted
+                  ? t('dashboard.limitReachedUpgrade', 'Upgrade to send more messages')
+                  : t('dashboard.managerInputPlaceholder', 'Ask about your restaurant...')
+              }
+              value={input}
+              onChange={handleInputChange}
+              onKeyDown={handleKeyDown}
+              disabled={sendMutation.isPending || isQuotaExhausted}
+              maxLength={MAX_INPUT_CHARS}
+              rows={1}
+            />
+            {input.length >= MAX_INPUT_CHARS * 0.8 && (
+              <p className={`text-xs text-right ${input.length >= MAX_INPUT_CHARS ? 'text-red-500' : 'text-muted-stone'}`}>
+                {t('managerAI.charCount', { used: input.length, max: MAX_INPUT_CHARS, defaultValue: `${input.length}/${MAX_INPUT_CHARS} characters` })}
+              </p>
+            )}
+          </div>
           <button
             type="button"
             onClick={handleSend}

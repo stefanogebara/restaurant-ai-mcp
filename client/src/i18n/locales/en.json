@@ -2270,7 +2270,11 @@
     "resets": "Resets",
     "loadingHistory": "Loading history...",
     "failedToSend": "Failed to send. Please try again.",
-    "sendMessage": "Send message"
+    "sendMessage": "Send message",
+    "backToDashboard": "Back to dashboard",
+    "thinkingAriaLabel": "AI is thinking",
+    "assistantAvatarAlt": "Manager AI avatar",
+    "charCount": "{{used}}/{{max}} characters"
   },
   "upgrade": {
     "featureAvailable": "This feature is available on the {{planName}} plan",

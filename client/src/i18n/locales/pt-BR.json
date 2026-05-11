@@ -2289,7 +2289,11 @@
     "resets": "Renova em",
     "loadingHistory": "Carregando histórico...",
     "failedToSend": "Falha ao enviar. Tente novamente.",
-    "sendMessage": "Enviar mensagem"
+    "sendMessage": "Enviar mensagem",
+    "backToDashboard": "Voltar ao painel",
+    "thinkingAriaLabel": "IA está pensando",
+    "assistantAvatarAlt": "Avatar da IA do Gerente",
+    "charCount": "{{used}}/{{max}} caracteres"
   },
   "upgrade": {
     "featureAvailable": "Este recurso está disponível no plano {{planName}}",
