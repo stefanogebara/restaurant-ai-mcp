@@ -19,6 +19,9 @@ const COUNTRY_NAMES_PT: Record<string, string> = {
   mexico: 'México', argentina: 'Argentina', colombia: 'Colômbia',
   chile: 'Chile', peru: 'Peru', portugal: 'Portugal', italy: 'Itália',
   france: 'França', japan: 'Japão', germany: 'Alemanha',
+  uruguay: 'Uruguai', paraguay: 'Paraguai', venezuela: 'Venezuela',
+  bolivia: 'Bolívia', ecuador: 'Equador', 'costa rica': 'Costa Rica',
+  panama: 'Panamá', cuba: 'Cuba', 'dominican republic': 'República Dominicana',
 };
 
 const COUNTRY_NAMES_ES: Record<string, string> = {
@@ -26,6 +29,9 @@ const COUNTRY_NAMES_ES: Record<string, string> = {
   mexico: 'México', argentina: 'Argentina', colombia: 'Colombia',
   chile: 'Chile', peru: 'Perú', portugal: 'Portugal', italy: 'Italia',
   france: 'Francia', japan: 'Japón', germany: 'Alemania',
+  uruguay: 'Uruguay', paraguay: 'Paraguay', venezuela: 'Venezuela',
+  bolivia: 'Bolivia', ecuador: 'Ecuador', 'costa rica': 'Costa Rica',
+  panama: 'Panamá', cuba: 'Cuba', 'dominican republic': 'República Dominicana',
 };
 
 export default function BookingPage() {
@@ -57,7 +63,7 @@ export default function BookingPage() {
   useEffect(() => {
     if (!restaurant) return;
 
-    const DEFAULT_TITLE = 'seatable - AI Restaurant Management';
+    const DEFAULT_TITLE = t('pageTitles.home', 'seatable - AI Restaurant Management');
     const title = t('pageTitles.bookingPage', { name: restaurant.name });
     const description = t('pageTitles.bookingDescription', { name: restaurant.name, city: restaurant.city, country: translatedCountry });
     const canonicalUrl = `${window.location.origin}/book/${restaurant.slug}`;
@@ -142,7 +148,7 @@ export default function BookingPage() {
 
   if (isLoading) {
     return (
-      <div role="status" aria-label="Loading" className="min-h-screen bg-warm-white flex flex-col items-center justify-center gap-4">
+      <div role="status" aria-label={t('common.loading', 'Loading')} className="min-h-screen bg-warm-white flex flex-col items-center justify-center gap-4">
         <div aria-hidden="true" className="font-serif text-2xl text-deep-charcoal opacity-50">
           seatable<span className="text-burgundy">.</span>
         </div>

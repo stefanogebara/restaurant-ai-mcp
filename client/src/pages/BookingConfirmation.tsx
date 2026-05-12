@@ -52,17 +52,29 @@ export default function BookingConfirmation() {
             restaurant_id: restaurantId,
           }),
         });
-      } catch {
-        // Push subscription is non-critical — silently ignore errors
+      } catch (err) {
+        // Non-critical — log so Sentry catches a population-wide push outage.
+        console.error('[BookingConfirmation] push subscribe failed', err);
       }
-    }).catch(() => {
-      // Permission request failed — non-critical
+    }).catch((err) => {
+      console.error('[BookingConfirmation] notification permission request failed', err);
     });
   }, [id, restaurantIdParam]);
 
-  // Notify parent window (widget iframe) that booking was confirmed
+  // Notify parent window (widget iframe) that booking was confirmed.
+  // Security: targetOrigin must NOT be '*' — that broadcasts customer PII
+  // (name, date, time, party_size) to any malicious site that iframes us
+  // with a known reservation ID. Derive the parent origin from document.referrer
+  // and only post when we have a concrete origin to address.
   useEffect(() => {
     if (!reservation || !window.parent || window.parent === window) return;
+    let targetOrigin = '';
+    try {
+      if (document.referrer) targetOrigin = new URL(document.referrer).origin;
+    } catch {
+      // Malformed referrer — fall through; we won't post.
+    }
+    if (!targetOrigin) return;
     window.parent.postMessage({
       type: 'seatable-booking-confirmed',
       payload: {
@@ -73,7 +85,7 @@ export default function BookingConfirmation() {
         time: reservation.time,
         party_size: reservation.party_size,
       },
-    }, '*');
+    }, targetOrigin);
   }, [reservation, id, slug]);
 
   const formatTime = (time: string) => {

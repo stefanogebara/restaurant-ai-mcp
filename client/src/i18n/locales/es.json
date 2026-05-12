@@ -2608,7 +2608,8 @@
     "reports": "Informes | seatable",
     "bookingPage": "{{name}} — Reservar Mesa | Seatable",
     "bookingDescription": "Reserva una mesa en {{name}} en {{city}}, {{country}}. Consulta disponibilidad y reserva en línea — rápido y fácil.",
-    "integrations": "Integraciones | seatable"
+    "integrations": "Integraciones | seatable",
+    "home": "seatable — Gestión de Restaurantes con IA"
   },
   "campaigns": {
     "title": "Campañas",
