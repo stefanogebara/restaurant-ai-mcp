@@ -43,8 +43,19 @@ export default function DemoSetupPage() {
         throw new Error(result.error || t('demo.errors.createFailed', 'Failed to create demo. Please try again.'));
       }
 
+      // Open-redirect guard: only navigate to relative same-origin paths.
+      // A compromised backend or upstream bug returning an attacker-controlled
+      // URL (e.g. "https://evil.com/phish") would otherwise carry the user off
+      // the site silently.
+      const demoUrl = String(result.demo_url || '');
+      const isSafeRedirect = demoUrl.startsWith('/') && !demoUrl.startsWith('//');
+      if (!isSafeRedirect) {
+        console.error('[DemoSetup] backend returned non-relative demo_url', demoUrl);
+        throw new Error(t('demo.errors.createFailed', 'Failed to create demo. Please try again.'));
+      }
+
       trackDemoCompleted({ demo_token: result.demo_token || '' });
-      window.location.href = result.demo_url;
+      window.location.href = demoUrl;
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : t('demo.errors.generic', 'Something went wrong. Please try again.');
       setSubmitError(message);
