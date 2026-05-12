@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../../components/common/ThiingsIcon';
 import { SkeletonWeeklyReport } from '../../components/common/Skeleton';
@@ -43,6 +43,19 @@ export default function ReportsTab() {
 
   const [shareToast, setShareToast] = useState<string | null>(null);
   const [sendingPdf, setSendingPdf] = useState(false);
+  const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Single auto-dismiss effect for shareToast — replaces 3 separate inline
+  // setTimeouts that lacked unmount cleanup and could fire setState on an
+  // unmounted component if the user navigated mid-toast.
+  useEffect(() => {
+    if (!shareToast) return undefined;
+    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    toastTimeoutRef.current = setTimeout(() => setShareToast(null), 3000);
+    return () => {
+      if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    };
+  }, [shareToast]);
 
   const handleSendWhatsApp = async () => {
     setSendingPdf(true);
@@ -54,15 +67,15 @@ export default function ReportsTab() {
       });
       const data = await res.json();
       if (data.success) {
-        setShareToast(t('reports.pdfSent', 'Relatório enviado via WhatsApp!'));
+        setShareToast(t('reports.pdfSent', 'Report sent via WhatsApp!'));
       } else {
-        setShareToast(data.error || t('reports.pdfError', 'Erro ao enviar relatório'));
+        setShareToast(data.error || t('reports.pdfError', 'Failed to send report'));
       }
-    } catch {
-      setShareToast(t('reports.pdfError', 'Erro ao enviar relatório'));
+    } catch (err) {
+      console.error('[ReportsTab] send WhatsApp failed', err);
+      setShareToast(t('reports.pdfError', 'Failed to send report'));
     } finally {
       setSendingPdf(false);
-      setTimeout(() => setShareToast(null), 3000);
     }
   };
 
@@ -72,17 +85,17 @@ export default function ReportsTab() {
       try {
         await navigator.share({ title: `${t('analytics.weeklyReports')} ${startDate} – ${endDate}`, url });
         return;
-      } catch {
-        // user cancelled or share failed — fall through to clipboard
+      } catch (err) {
+        // User cancelled or share failed — log + fall through to clipboard.
+        console.error('[ReportsTab] navigator.share failed', err);
       }
     }
     try {
       await navigator.clipboard.writeText(url);
       setShareToast(t('common.copiedToClipboard', 'Link copied!'));
-      setTimeout(() => setShareToast(null), 2000);
-    } catch {
+    } catch (err) {
+      console.error('[ReportsTab] clipboard write failed', err);
       setShareToast(t('common.shareFailed', 'Could not copy link'));
-      setTimeout(() => setShareToast(null), 2000);
     }
   };
 
@@ -127,17 +140,17 @@ export default function ReportsTab() {
               onClick={handleSendWhatsApp}
               disabled={sendingPdf}
               className="inline-flex items-center gap-2 px-4 py-2 bg-[#25D366] hover:bg-[#1DA851] disabled:opacity-60 text-white text-sm font-semibold rounded-xl transition-colors whitespace-nowrap"
-              aria-label={t('reports.sendWhatsApp', 'Enviar por WhatsApp')}
+              aria-label={t('reports.sendWhatsApp', 'Send via WhatsApp')}
             >
               {sendingPdf ? (
                 <>
                   <span className="inline-block w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" aria-hidden="true" />
-                  {t('reports.generating', 'Gerando...')}
+                  {t('reports.generating', 'Generating...')}
                 </>
               ) : (
                 <>
                   <ThiingsIcon name="chat" size="xs" />
-                  {t('reports.sendWhatsApp', 'Enviar por WhatsApp')}
+                  {t('reports.sendWhatsApp', 'Send via WhatsApp')}
                 </>
               )}
             </button>

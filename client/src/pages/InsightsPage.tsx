@@ -29,11 +29,12 @@ const TABS: readonly TabConfig[] = [
 ] as const;
 
 function TabSpinner() {
+  const { t } = useTranslation();
   return (
     <div className="flex items-center justify-center min-h-[40vh]">
       <div
         role="status"
-        aria-label="Loading tab"
+        aria-label={t('common.loading', 'Loading')}
         className="animate-spin rounded-full h-8 w-8 border-2 border-border-gray border-t-burgundy"
       />
     </div>
@@ -148,7 +149,7 @@ export default function InsightsPage() {
 
         {/* Tabs */}
         <div className="border-b border-[#E5E7EB] mb-8">
-          <nav className="flex gap-0 -mb-px" aria-label="Insights tabs">
+          <nav className="flex gap-0 -mb-px" aria-label={t('insights.tabsAriaLabel', 'Insights tabs')}>
             {TABS.map((tab) => {
               const isActive = activeTab === tab.id;
               const hasAccess = hasFeatureAccess(planType, tab.requiredFeature);

@@ -639,6 +639,7 @@
     "weeklyReportsDesc": "Análisis semanales detallados e informes de rendimiento. Disponible en el plan Profesional.",
     "professionalPlanFeature": "Función del Plan Profesional",
     "upgradePlan": "Actualizar Plan",
+    "upgradeRequired": "Actualiza tu plan para desbloquear los análisis completos con datos en tiempo real, tendencias e insights de IA.",
     "downloadPdf": "Descargar PDF",
     "shareReport": "Compartir Informe",
     "totalReservations": "Total de Reservas",
@@ -2433,7 +2434,14 @@
       "overview": "Vista General",
       "analytics": "Análisis",
       "reports": "Informes"
-    }
+    },
+    "tabsAriaLabel": "Pestañas de Insights"
+  },
+  "reports": {
+    "pdfSent": "¡Informe enviado por WhatsApp!",
+    "pdfError": "Error al enviar el informe",
+    "sendWhatsApp": "Enviar por WhatsApp",
+    "generating": "Generando..."
   },
   "callTracking": {
     "title": "Historial de Llamadas",
