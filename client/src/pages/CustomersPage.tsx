@@ -29,19 +29,28 @@ function useDebounce<T>(value: T, delay: number): T {
   return debouncedValue;
 }
 
-function formatRelativeDate(dateStr: string | null): string {
+type TFunction = (key: string, options?: Record<string, unknown> | string, fallback?: string) => string;
+
+function formatRelativeDate(dateStr: string | null, t: TFunction): string {
   if (!dateStr) return '--';
   const date = new Date(dateStr);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-  if (diffDays === 0) return 'Hoje';
-  if (diffDays === 1) return 'Ontem';
-  if (diffDays < 7) return `${diffDays}d`;
-  if (diffDays < 30) return `${Math.floor(diffDays / 7)}sem`;
-  if (diffDays < 365) return `${Math.floor(diffDays / 30)}m`;
-  return `${Math.floor(diffDays / 365)}a`;
+  if (diffDays === 0) return t('crm.relativeDate.today', 'Today');
+  if (diffDays === 1) return t('crm.relativeDate.yesterday', 'Yesterday');
+  if (diffDays < 7) return t('crm.relativeDate.days', { count: diffDays, defaultValue: `${diffDays}d` });
+  if (diffDays < 30) {
+    const count = Math.floor(diffDays / 7);
+    return t('crm.relativeDate.weeks', { count, defaultValue: `${count}w` });
+  }
+  if (diffDays < 365) {
+    const count = Math.floor(diffDays / 30);
+    return t('crm.relativeDate.months', { count, defaultValue: `${count}mo` });
+  }
+  const count = Math.floor(diffDays / 365);
+  return t('crm.relativeDate.years', { count, defaultValue: `${count}y` });
 }
 
 export default function CustomersPage() {
@@ -87,11 +96,11 @@ export default function CustomersPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6 pl-10 sm:pl-0">
           <div>
             <h1 className="text-xl font-bold text-stone-900">
-              {t('crm.pageTitle', 'Clientes')}
+              {t('crm.pageTitle', 'Customers')}
             </h1>
             {total > 0 && (
               <p className="text-sm text-stone-500 mt-0.5">
-                {t('crm.totalCustomers', '{{count}} clientes', { count: total })}
+                {t('crm.totalCustomers', { count: total, defaultValue: '{{count}} customers' })}
               </p>
             )}
           </div>
@@ -124,7 +133,8 @@ export default function CustomersPage() {
               type="text"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              placeholder={t('crm.searchPlaceholder', 'Buscar por nome, telefone ou email...')}
+              placeholder={t('crm.searchPlaceholder', 'Search by name, phone or email...')}
+              aria-label={t('crm.ariaSearch', 'Search customers')}
               className="w-full pl-10 pr-4 py-2.5 text-sm border border-[#E5E7EB] rounded-lg text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-1 focus:ring-[#9F1239]/30 focus:border-[#9F1239]/30"
             />
           </div>
@@ -134,9 +144,10 @@ export default function CustomersPage() {
             <select
               value={tierFilter}
               onChange={(e) => setTierFilter(e.target.value)}
+              aria-label={t('crm.ariaTierFilter', 'Filter by tier')}
               className="flex-1 min-w-[120px] sm:flex-none text-sm border border-[#E5E7EB] rounded-lg px-3 py-2 text-stone-700 bg-white focus:outline-none focus:ring-1 focus:ring-[#9F1239]/30 focus:border-[#9F1239]/30"
             >
-              <option value="">{t('crm.allTiers', 'Todos os niveis')}</option>
+              <option value="">{t('crm.allTiers', 'All tiers')}</option>
               {TIER_OPTIONS.filter(Boolean).map((tier) => (
                 <option key={tier} value={tier}>
                   {t(`crm.tier_${tier}`, tier)}
@@ -148,13 +159,15 @@ export default function CustomersPage() {
               type="text"
               value={tagFilter}
               onChange={(e) => setTagFilter(e.target.value)}
-              placeholder={t('crm.filterByTag', 'Filtrar por tag...')}
+              placeholder={t('crm.filterByTag', 'Filter by tag...')}
+              aria-label={t('crm.filterByTag', 'Filter by tag...')}
               className="flex-1 min-w-[120px] sm:flex-none text-sm border border-[#E5E7EB] rounded-lg px-3 py-2 text-stone-700 placeholder:text-stone-400 bg-white focus:outline-none focus:ring-1 focus:ring-[#9F1239]/30 focus:border-[#9F1239]/30"
             />
 
             <select
               value={allergyFilter}
               onChange={(e) => setAllergyFilter(e.target.value)}
+              aria-label={t('crm.ariaAllergyFilter', 'Filter by allergy')}
               className="flex-1 min-w-[120px] sm:flex-none text-sm border border-[#E5E7EB] rounded-lg px-3 py-2 text-stone-700 bg-white focus:outline-none focus:ring-1 focus:ring-[#9F1239]/30 focus:border-[#9F1239]/30"
             >
               <option value="">{t('crm.allAllergies', 'All allergies')}</option>
@@ -168,6 +181,7 @@ export default function CustomersPage() {
             <select
               value={dietaryFilter}
               onChange={(e) => setDietaryFilter(e.target.value)}
+              aria-label={t('crm.ariaDietaryFilter', 'Filter by dietary preference')}
               className="flex-1 min-w-[120px] sm:flex-none text-sm border border-[#E5E7EB] rounded-lg px-3 py-2 text-stone-700 bg-white focus:outline-none focus:ring-1 focus:ring-[#9F1239]/30 focus:border-[#9F1239]/30"
             >
               <option value="">{t('crm.allDietary', 'All dietary')}</option>
@@ -183,23 +197,23 @@ export default function CustomersPage() {
         {/* Table */}
         <div className="bg-white border border-[#E5E7EB] rounded-xl overflow-hidden">
           {isLoading ? (
-            <div className="flex items-center justify-center py-20">
-              <div className="animate-spin rounded-full h-8 w-8 border-2 border-stone-200 border-t-[#9F1239]" />
+            <div className="flex items-center justify-center py-20" role="status" aria-label={t('crm.ariaLoading', 'Loading customers')}>
+              <div className="animate-spin rounded-full h-8 w-8 border-2 border-stone-200 border-t-[#9F1239]" aria-hidden="true" />
             </div>
           ) : isError ? (
             <div className="text-center py-20">
-              <p className="text-sm text-red-600">{t('crm.loadError', 'Erro ao carregar clientes')}</p>
+              <p className="text-sm text-red-600">{t('crm.loadError', 'Failed to load customers')}</p>
             </div>
           ) : customers.length === 0 ? (
             <div className="text-center py-20">
-              <p className="text-sm text-stone-500">{t('crm.noCustomers', 'Nenhum cliente encontrado')}</p>
+              <p className="text-sm text-stone-500">{t('crm.noCustomers', 'No customers found')}</p>
               {(debouncedSearch || tierFilter || tagFilter || allergyFilter || dietaryFilter) && (
                 <button
                   type="button"
                   onClick={() => { setSearchInput(''); setTierFilter(''); setTagFilter(''); setAllergyFilter(''); setDietaryFilter(''); }}
                   className="mt-2 text-sm text-[#9F1239] hover:underline"
                 >
-                  {t('crm.clearFilters', 'Limpar filtros')}
+                  {t('crm.clearFilters', 'Clear filters')}
                 </button>
               )}
             </div>
@@ -211,16 +225,16 @@ export default function CustomersPage() {
                   <thead>
                     <tr className="border-b border-[#E5E7EB] bg-stone-50">
                       <th className="text-left px-4 py-3 text-[10px] font-bold text-stone-500 uppercase tracking-widest">
-                        {t('crm.colName', 'Cliente')}
+                        {t('crm.colName', 'Customer')}
                       </th>
                       <th className="text-left px-4 py-3 text-[10px] font-bold text-stone-500 uppercase tracking-widest">
-                        {t('crm.colTier', 'Nivel')}
+                        {t('crm.colTier', 'Tier')}
                       </th>
                       <th className="text-right px-4 py-3 text-[10px] font-bold text-stone-500 uppercase tracking-widest">
-                        {t('crm.colVisits', 'Visitas')}
+                        {t('crm.colVisits', 'Visits')}
                       </th>
                       <th className="text-right px-4 py-3 text-[10px] font-bold text-stone-500 uppercase tracking-widest">
-                        {t('crm.colLastVisit', 'Ultima Visita')}
+                        {t('crm.colLastVisit', 'Last Visit')}
                       </th>
                       <th className="text-right px-4 py-3 text-[10px] font-bold text-stone-500 uppercase tracking-widest">
                         {t('crm.colLTV', 'LTV')}
@@ -257,7 +271,7 @@ export default function CustomersPage() {
                           {c.total_visits}
                         </td>
                         <td className="px-4 py-3 text-right text-stone-500">
-                          {formatRelativeDate(c.last_visit_date)}
+                          {formatRelativeDate(c.last_visit_date, t)}
                         </td>
                         <td className="px-4 py-3 text-right text-stone-700 font-medium">
                           {c.lifetime_value ? formatCurrency(Math.round(c.lifetime_value)) : '--'}
@@ -289,10 +303,11 @@ export default function CustomersPage() {
               {totalPages > 1 && (
                 <div className="flex items-center justify-between px-4 py-3 border-t border-[#E5E7EB]">
                   <p className="text-xs text-stone-500">
-                    {t('crm.showing', 'Mostrando {{from}}-{{to}} de {{total}}', {
+                    {t('crm.showing', {
                       from: page * PAGE_SIZE + 1,
                       to: Math.min((page + 1) * PAGE_SIZE, total),
                       total,
+                      defaultValue: 'Showing {{from}}-{{to}} of {{total}}',
                     })}
                   </p>
                   <div className="flex items-center gap-2">
@@ -302,7 +317,7 @@ export default function CustomersPage() {
                       disabled={page === 0}
                       className="px-3 py-1.5 text-xs font-medium border border-[#E5E7EB] rounded-lg text-stone-600 hover:bg-stone-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                     >
-                      {t('crm.prev', 'Anterior')}
+                      {t('crm.prev', 'Previous')}
                     </button>
                     <button
                       type="button"
@@ -310,7 +325,7 @@ export default function CustomersPage() {
                       disabled={page >= totalPages - 1}
                       className="px-3 py-1.5 text-xs font-medium border border-[#E5E7EB] rounded-lg text-stone-600 hover:bg-stone-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                     >
-                      {t('crm.next', 'Proximo')}
+                      {t('crm.next', 'Next')}
                     </button>
                   </div>
                 </div>

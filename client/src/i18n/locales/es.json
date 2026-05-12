@@ -2851,7 +2851,20 @@
   "crm": {
     "pageTitle": "Clientes",
     "totalCustomers": "{{count}} clientes",
-    "searchPlaceholder": "Buscar por nombre, telefono o email...",
+    "searchPlaceholder": "Buscar por nombre, teléfono o email...",
+    "relativeDate": {
+      "today": "Hoy",
+      "yesterday": "Ayer",
+      "days": "{{count}}d",
+      "weeks": "{{count}}sem",
+      "months": "{{count}}m",
+      "years": "{{count}}a"
+    },
+    "ariaSearch": "Buscar clientes",
+    "ariaTierFilter": "Filtrar por nivel",
+    "ariaAllergyFilter": "Filtrar por alergia",
+    "ariaDietaryFilter": "Filtrar por preferencia alimentaria",
+    "ariaLoading": "Cargando clientes",
     "allTiers": "Todos los niveles",
     "filterByTag": "Filtrar por etiqueta...",
     "colName": "Cliente",
