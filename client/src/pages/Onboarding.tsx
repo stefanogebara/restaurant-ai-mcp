@@ -23,7 +23,7 @@ import Step2Contact from '../components/onboarding/Step2Contact';
 import Step3TablesAndSettings from '../components/onboarding/Step3TablesAndSettings';
 import Step4Review from '../components/onboarding/Step4Review';
 import Step5ImportHistory from '../components/onboarding/Step5ImportHistory';
-import Step6TeachAI from '../components/onboarding/Step5TeachAI';
+import Step6TeachAI from '../components/onboarding/Step6TeachAI';
 import OnboardingSuccessModal from '../components/onboarding/OnboardingSuccessModal';
 import OnboardingStepSidebar from '../components/onboarding/OnboardingStepSidebar';
 import type { OnboardingData } from '../types/onboarding.types';
@@ -144,14 +144,21 @@ export default function Onboarding() {
         });
         setIsPreFilledFromDemo(true);
       })
-      .catch(() => { /* non-fatal — user fills in manually */ })
+      .catch((err) => {
+        // Non-fatal — user fills in manually. Log to Sentry/Posthog so we can
+        // catch a population-wide demo-prefill outage instead of silently
+        // serving empty forms.
+        console.error('[Onboarding] demo prefill failed', err);
+      })
       .finally(() => { setIsDemoLoading(false); });
   }, []);
 
-  // Persist progress
+  // Persist progress — use the imported constants instead of raw strings to
+  // stay in sync with the cleanup calls below that already use LS_ONBOARDING_DATA
+  // and LS_ONBOARDING_STEP.
   useEffect(() => {
-    localStorage.setItem('onboarding_data', JSON.stringify(onboardingData));
-    localStorage.setItem('onboarding_step', currentStep.toString());
+    localStorage.setItem(LS_ONBOARDING_DATA, JSON.stringify(onboardingData));
+    localStorage.setItem(LS_ONBOARDING_STEP, currentStep.toString());
   }, [onboardingData, currentStep]);
 
   // Countdown redirect after onboarding success.
@@ -202,7 +209,7 @@ export default function Onboarding() {
       const data = await response.json();
 
       if (!response.ok) {
-        const errorMessage = data.message || data.error || 'Failed to complete onboarding';
+        const errorMessage = data.message || data.error || t('onboarding.completeError', 'Failed to complete onboarding');
         const errorDetails = data.details ? `\n\nDetails: ${data.details}` : '';
         throw new Error(`${errorMessage}${errorDetails}`);
       }
@@ -220,10 +227,17 @@ export default function Onboarding() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ referral_code: pendingReferralCode }),
           });
-          referralAttached = refRes.ok;
-        } catch {
+          // Backend can return 200 with {success: false, error: "..."} —
+          // checking refRes.ok alone would have removed the localStorage key
+          // and lost the referral credit. Inspect the payload too.
+          if (refRes.ok) {
+            const refBody = await refRes.json().catch(() => null);
+            referralAttached = refBody?.success === true;
+          }
+        } catch (err) {
           // Network error — keep the code in localStorage so a later retry
-          // (e.g. user navigates and we re-attempt) doesn't lose the credit.
+          // doesn't lose the credit.
+          console.error('[Onboarding] referral attach failed', err);
           referralAttached = false;
         }
       }
@@ -262,7 +276,7 @@ export default function Onboarding() {
       // Advance to Step 5 (Teach Your AI) — the success modal fires after Step 5
       setCurrentStep(5);
     } catch (err: unknown) {
-      showError(err instanceof Error ? err.message : 'Failed to complete onboarding. Please try again.');
+      showError(err instanceof Error ? err.message : t('onboarding.completeError', 'Failed to complete onboarding. Please try again.'));
       setSubmitError(true);
     } finally {
       setIsSubmitting(false);

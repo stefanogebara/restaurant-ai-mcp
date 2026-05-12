@@ -901,6 +901,7 @@
     "loadingDemoData": "Cargando datos de tu demo...",
     "setupFailed": "Error en la configuración. Tus datos han sido guardados — inténtalo de nuevo.",
     "tryAgain": "Intentar de nuevo",
+    "completeError": "Error al completar el registro. Inténtalo de nuevo.",
     "step1Heading": "¿Cómo se llama tu restaurante?",
     "step1Subtitle": "Cuéntanos un poco sobre tu restaurante para empezar",
     "restaurantNameLabel": "Nombre del Restaurante *",

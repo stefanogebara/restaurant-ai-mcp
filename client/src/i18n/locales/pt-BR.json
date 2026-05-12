@@ -899,6 +899,7 @@
     "loadingDemoData": "Carregando dados do seu demo…",
     "setupFailed": "Falha na configuração. Seus dados foram salvos — tente novamente.",
     "tryAgain": "Tentar novamente",
+    "completeError": "Falha ao concluir o cadastro. Tente novamente.",
     "step1Heading": "Como se chama o seu restaurante?",
     "step1Subtitle": "Conte um pouco sobre seu restaurante para começar",
     "restaurantNameLabel": "Nome do Restaurante *",

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import Step5TeachAI from '../Step5TeachAI';
+import Step6TeachAI from '../Step6TeachAI';
 
 // Mock scrollIntoView (not available in jsdom)
 Element.prototype.scrollIntoView = vi.fn();
@@ -28,7 +28,7 @@ vi.mock('../../../services/api', () => ({
   },
 }));
 
-describe('Step5TeachAI (Chat Interview)', () => {
+describe('Step6TeachAI (Chat Interview)', () => {
   const defaultProps = {
     restaurantId: 'restaurant-123',
     restaurantName: 'Test Bistro',
@@ -42,20 +42,20 @@ describe('Step5TeachAI (Chat Interview)', () => {
   });
 
   it('renders the heading and description in idle state', () => {
-    render(<Step5TeachAI {...defaultProps} />);
+    render(<Step6TeachAI {...defaultProps} />);
     expect(screen.getByText('Teach Your AI')).toBeInTheDocument();
     expect(screen.getByText(/quick conversation/)).toBeInTheDocument();
   });
 
   it('renders Start Interview and Skip buttons', () => {
-    render(<Step5TeachAI {...defaultProps} />);
+    render(<Step6TeachAI {...defaultProps} />);
     expect(screen.getByRole('button', { name: /start interview/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /skip for now/i })).toBeInTheDocument();
   });
 
   it('clicking skip calls onNext without API call', async () => {
     const user = userEvent.setup();
-    render(<Step5TeachAI {...defaultProps} />);
+    render(<Step6TeachAI {...defaultProps} />);
 
     await user.click(screen.getByRole('button', { name: /skip for now/i }));
 
@@ -68,7 +68,7 @@ describe('Step5TeachAI (Chat Interview)', () => {
     mockPost.mockReturnValue(new Promise(() => {}));
 
     const user = userEvent.setup();
-    render(<Step5TeachAI {...defaultProps} />);
+    render(<Step6TeachAI {...defaultProps} />);
 
     await user.click(screen.getByRole('button', { name: /start interview/i }));
 
@@ -85,7 +85,7 @@ describe('Step5TeachAI (Chat Interview)', () => {
     });
 
     const user = userEvent.setup();
-    render(<Step5TeachAI {...defaultProps} />);
+    render(<Step6TeachAI {...defaultProps} />);
 
     await user.click(screen.getByRole('button', { name: /start interview/i }));
 
@@ -103,7 +103,7 @@ describe('Step5TeachAI (Chat Interview)', () => {
     });
 
     const user = userEvent.setup();
-    render(<Step5TeachAI {...defaultProps} />);
+    render(<Step6TeachAI {...defaultProps} />);
 
     await user.click(screen.getByRole('button', { name: /start interview/i }));
 
@@ -133,7 +133,7 @@ describe('Step5TeachAI (Chat Interview)', () => {
     });
 
     const user = userEvent.setup();
-    render(<Step5TeachAI {...defaultProps} />);
+    render(<Step6TeachAI {...defaultProps} />);
 
     await user.click(screen.getByRole('button', { name: /start interview/i }));
     await waitFor(() => screen.getByText('Hello!'));
@@ -155,7 +155,7 @@ describe('Step5TeachAI (Chat Interview)', () => {
     mockPost.mockRejectedValueOnce(new Error('Network error'));
 
     const user = userEvent.setup();
-    render(<Step5TeachAI {...defaultProps} />);
+    render(<Step6TeachAI {...defaultProps} />);
 
     await user.click(screen.getByRole('button', { name: /start interview/i }));
 
@@ -184,7 +184,7 @@ describe('Step5TeachAI (Chat Interview)', () => {
     mockPost.mockResolvedValueOnce({ data: { success: true } });
 
     const user = userEvent.setup();
-    render(<Step5TeachAI {...defaultProps} />);
+    render(<Step6TeachAI {...defaultProps} />);
 
     await user.click(screen.getByRole('button', { name: /start interview/i }));
     await waitFor(() => screen.getByText('Hello!'));

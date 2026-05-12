@@ -901,6 +901,7 @@
     "loadingDemoData": "Loading your demo data…",
     "setupFailed": "Setup failed. Your data is saved — please try again.",
     "tryAgain": "Try again",
+    "completeError": "Failed to complete onboarding. Please try again.",
     "step1Heading": "What's your restaurant called?",
     "step1Subtitle": "Tell us a bit about your restaurant to get started",
     "restaurantNameLabel": "Restaurant Name *",

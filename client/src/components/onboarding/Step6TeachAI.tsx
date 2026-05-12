@@ -16,7 +16,7 @@ import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import { api } from '../../services/api';
 
-interface Step5TeachAIProps {
+interface Step6TeachAIProps {
   restaurantId: string;
   restaurantName?: string;
   city?: string;
@@ -47,14 +47,14 @@ interface ChatResponse {
 
 type InterviewPhase = 'idle' | 'researching' | 'chatting' | 'generating' | 'complete';
 
-export default function Step5TeachAI({
+export default function Step6TeachAI({
   restaurantId: _restaurantId, // eslint-disable-line @typescript-eslint/no-unused-vars
   restaurantName,
   city,
   country,
   website,
   onNext,
-}: Step5TeachAIProps) {
+}: Step6TeachAIProps) {
   const { t } = useTranslation();
   const [phase, setPhase] = useState<InterviewPhase>('idle');
   const [sessionId, setSessionId] = useState<string | null>(null);
