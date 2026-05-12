@@ -2680,6 +2680,8 @@
     "cancel": "Cancel",
     "reachCount": "This will reach {{count}} customers",
     "created": "Campaign created successfully",
+    "createFailed": "Failed to create campaign",
+    "unnamedCampaign": "Campaign",
     "segmentAll": "All Customers",
     "segmentAllDesc": "Every customer with a phone number",
     "segmentVip": "VIP",

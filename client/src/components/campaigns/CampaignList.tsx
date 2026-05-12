@@ -92,11 +92,13 @@ export default function CampaignList() {
               onClick={() => setExpandedId(isExpanded ? null : c.id)}
               className="w-full text-left grid grid-cols-1 sm:grid-cols-[1fr_1fr_100px_80px_160px_120px] gap-2 px-4 py-3 border-b border-[#E5E7EB] hover:bg-[#FAFAFA] transition-colors items-center"
             >
-              {/* Name */}
+              {/* Name — message preview is the most identifying content because
+                  the user-entered `name` field from CampaignBuilder is silently
+                  dropped at the backend (campaignService.js doesn't persist it).
+                  Falls back to a localized generic label so we never render the
+                  raw campaign_type enum string or hardcoded English "Campaign". */}
               <span className="text-sm font-medium text-deep-charcoal truncate">
-                {c.campaign_type === 'win_back' ? c.message?.slice(0, 40) || 'Campaign' : c.campaign_type}
-                {/* Use segment_name + campaign_type as fallback for name display */}
-                {c.segment_name && !c.message ? t(segmentLabel) : ''}
+                {c.message?.slice(0, 60) || t('campaigns.unnamedCampaign', 'Campaign')}
               </span>
 
               {/* Segment */}

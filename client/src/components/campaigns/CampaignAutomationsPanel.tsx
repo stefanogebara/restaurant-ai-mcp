@@ -36,7 +36,7 @@ export default function CampaignAutomationsPanel() {
   if (error) {
     return (
       <div className="text-center py-12 text-red-600 text-sm">
-        {t('campaigns.automations.updateFailed', 'Falha ao carregar automações')}
+        {t('campaigns.automations.updateFailed', 'Failed to load automations')}
       </div>
     );
   }

@@ -2694,6 +2694,8 @@
     "cancel": "Cancelar",
     "reachCount": "Alcançará {{count}} clientes",
     "created": "Campanha criada com sucesso",
+    "createFailed": "Falha ao criar campanha",
+    "unnamedCampaign": "Campanha",
     "segmentAll": "Todos os Clientes",
     "segmentAllDesc": "Todos com número de telefone",
     "segmentVip": "VIP",

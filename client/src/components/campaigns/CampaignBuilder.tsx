@@ -48,7 +48,8 @@ export default function CampaignBuilder({ onCreated, onCancel }: CampaignBuilder
       });
       toast.success(t('campaigns.created'));
       onCreated();
-    } catch {
+    } catch (err) {
+      console.error('[CampaignBuilder] create failed', err);
       toast.error(t('campaigns.createFailed', 'Failed to create campaign'));
     }
   };
