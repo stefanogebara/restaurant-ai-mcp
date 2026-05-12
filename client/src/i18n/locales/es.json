@@ -23,6 +23,7 @@
     "retry": "Reintentar",
     "settingUp": "Preparando todo...",
     "saved": "Guardado",
+    "saveFailed": "Error al guardar la configuración",
     "searchPlaceholder": "Buscar...",
     "skipToContent": "Saltar al contenido",
     "goBack": "Volver",
@@ -1174,6 +1175,38 @@
     "sendTestMessage": "Enviar Mensaje de Prueba",
     "sendTest": "Enviar Prueba",
     "sendingTest": "Enviando...",
+    "connectedButPaused": "WhatsApp está conectado pero las notificaciones están pausadas. Actívalo para empezar a enviar mensajes.",
+    "deliveredAt": "Entregado el",
+    "disableWhatsApp": "Desactivar WhatsApp",
+    "enableWhatsAppLabel": "Activar WhatsApp",
+    "enterTestPhone": "Ingresa un número de teléfono arriba para enviar un mensaje de prueba.",
+    "lastStatusAt": "Última actualización de estado",
+    "latestTestDelivery": "Última entrega de prueba",
+    "loadingTemplates": "Cargando plantillas",
+    "loadingStatistics": "Cargando estadísticas",
+    "loadingTestDelivery": "Cargando estado de entrega de prueba",
+    "notYet": "Aún no",
+    "phoneStatus": {
+      "PENDING": "Pendiente",
+      "VERIFIED": "Verificado",
+      "EXPIRED": "Expirado",
+      "NOT_VERIFIED": "No verificado"
+    },
+    "providerLabel": "Proveedor",
+    "readAt": "Leído el",
+    "requestedAt": "Solicitado el",
+    "retryIn": "Reintentar en {{time}}",
+    "templateLabel": "Plantilla",
+    "testCooldownActive": "Ya se envió una prueba reciente a este número. Espera {{time}} antes de enviarlo de nuevo.",
+    "testPhoneNumber": "Número de prueba",
+    "testRequiresApi": "La API de WhatsApp debe estar configurada antes de enviar mensajes de prueba. Contacta al soporte para completar la configuración.",
+    "testStatus": {
+      "accepted": "Aceptado",
+      "sent": "Enviado",
+      "delivered": "Entregado",
+      "read": "Leído",
+      "failed": "Fallido"
+    },
     "managerNotifications": "Notificaciones del Gerente",
     "notificationsSaved": "Preferencias de notificación guardadas",
     "notificationsSaveFailed": "Error al guardar preferencias",
@@ -2793,10 +2826,14 @@
   },
   "whatsapp": {
     "contactSupport": "Por favor, contacta al soporte para completar tu configuración de WhatsApp.",
-    "status.APPROVED": "aprobado",
-    "status.PENDING": "pendiente",
-    "status.REJECTED": "rechazado",
-    "status.NOT_SUBMITTED": "no enviado"
+    "status": {
+      "APPROVED": "Aprobado",
+      "PENDING": "Pendiente",
+      "IN_REVIEW": "En revisión",
+      "REJECTED": "Rechazado",
+      "PAUSED": "Pausado",
+      "NOT_SUBMITTED": "No enviado"
+    }
   },
   "manager": {
     "sendFailed": "Error al enviar. Por favor, inténtalo de nuevo."

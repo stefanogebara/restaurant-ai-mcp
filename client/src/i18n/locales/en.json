@@ -23,6 +23,7 @@
     "retry": "Retry",
     "settingUp": "Setting things up...",
     "saved": "Saved",
+    "saveFailed": "Failed to save settings",
     "searchPlaceholder": "Search...",
     "skipToContent": "Skip to content",
     "goBack": "Go back",
@@ -1163,6 +1164,38 @@
     "sendTestMessage": "Send Test Message",
     "sendTest": "Send Test",
     "sendingTest": "Sending...",
+    "connectedButPaused": "WhatsApp is connected but notifications are paused. Enable to start sending messages.",
+    "deliveredAt": "Delivered at",
+    "disableWhatsApp": "Disable WhatsApp",
+    "enableWhatsAppLabel": "Enable WhatsApp",
+    "enterTestPhone": "Enter a phone number above to send a test message.",
+    "lastStatusAt": "Last status update",
+    "latestTestDelivery": "Latest test delivery",
+    "loadingTemplates": "Loading templates",
+    "loadingStatistics": "Loading statistics",
+    "loadingTestDelivery": "Loading test delivery status",
+    "notYet": "Not yet",
+    "phoneStatus": {
+      "PENDING": "Pending",
+      "VERIFIED": "Verified",
+      "EXPIRED": "Expired",
+      "NOT_VERIFIED": "Not verified"
+    },
+    "providerLabel": "Provider",
+    "readAt": "Read at",
+    "requestedAt": "Requested at",
+    "retryIn": "Retry in {{time}}",
+    "templateLabel": "Template",
+    "testCooldownActive": "A recent test was already sent to this number. Wait {{time}} before sending it again.",
+    "testPhoneNumber": "Test phone number",
+    "testRequiresApi": "WhatsApp API must be configured before sending test messages. Contact support to complete setup.",
+    "testStatus": {
+      "accepted": "Accepted",
+      "sent": "Sent",
+      "delivered": "Delivered",
+      "read": "Read",
+      "failed": "Failed"
+    },
     "managerNotifications": "Manager Notifications",
     "notificationsSaved": "Notification preferences saved",
     "notificationsSaveFailed": "Failed to save preferences",
@@ -2610,10 +2643,14 @@
   },
   "whatsapp": {
     "contactSupport": "Please contact support to complete your WhatsApp setup.",
-    "status.APPROVED": "approved",
-    "status.PENDING": "pending",
-    "status.REJECTED": "rejected",
-    "status.NOT_SUBMITTED": "not submitted"
+    "status": {
+      "APPROVED": "Approved",
+      "PENDING": "Pending",
+      "IN_REVIEW": "In review",
+      "REJECTED": "Rejected",
+      "PAUSED": "Paused",
+      "NOT_SUBMITTED": "Not submitted"
+    }
   },
   "manager": {
     "sendFailed": "Failed to send. Please try again."

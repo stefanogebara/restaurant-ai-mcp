@@ -68,16 +68,17 @@ function formatCooldown(ms: number) {
   return `${seconds}s`;
 }
 
-function formatStatusLabel(status: string | null | undefined) {
-  const normalized = String(status || 'accepted');
-  return normalized.charAt(0).toUpperCase() + normalized.slice(1).replace(/_/g, ' ');
+function formatStatusLabel(status: string | null | undefined, t: (key: string, fallback: string) => string) {
+  const normalized = String(status || 'accepted').toLowerCase();
+  const fallback = normalized.charAt(0).toUpperCase() + normalized.slice(1).replace(/_/g, ' ');
+  return t(`settings.testStatus.${normalized}`, fallback);
 }
 
-function formatStatusTime(iso?: string | null) {
-  if (!iso) return 'Not yet';
+function formatStatusTime(iso: string | null | undefined, notYetLabel: string) {
+  if (!iso) return notYetLabel;
 
   const parsed = new Date(iso);
-  if (Number.isNaN(parsed.getTime())) return 'Not yet';
+  if (Number.isNaN(parsed.getTime())) return notYetLabel;
 
   return new Intl.DateTimeFormat(undefined, {
     dateStyle: 'medium',
@@ -103,7 +104,7 @@ function WhatsAppTemplateStatusPanel() {
       <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827] mb-4">{t('settings.messageTemplates')}</h2>
 
       {isLoading && (
-        <div role="status" aria-label="Loading templates" className="animate-pulse space-y-3">
+        <div role="status" aria-label={t('settings.loadingTemplates', 'Loading templates')} className="animate-pulse space-y-3">
           {[1, 2, 3, 4].map(i => <div key={i} className="h-8 bg-soft-gray rounded-lg" />)}
         </div>
       )}
@@ -145,10 +146,18 @@ function WhatsAppTemplateStatusPanel() {
 }
 
 function PhoneVerificationPanel() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const qc = useQueryClient();
   const [code, setCode] = useState('');
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  // Auto-dismiss success/error feedback after 5s so it doesn't linger across
+  // the next interaction.
+  useEffect(() => {
+    if (!message) return undefined;
+    const id = window.setTimeout(() => setMessage(null), 5000);
+    return () => window.clearTimeout(id);
+  }, [message]);
 
   const { data: phoneData, isLoading } = useQuery({
     queryKey: ['whatsapp-phone-status'],
@@ -159,17 +168,27 @@ function PhoneVerificationPanel() {
     staleTime: 2 * 60 * 1000,
   });
 
+  // Meta accepts a 2-char language hint for the verification SMS. Derive from
+  // the active UI locale so a Brazilian owner gets a PT-BR SMS, not English.
+  const verificationLanguage = i18n.language?.startsWith('pt')
+    ? 'pt_BR'
+    : i18n.language?.startsWith('es')
+      ? 'es'
+      : 'en';
+
   const requestMutation = useMutation({
     mutationFn: async () => {
       const res = await authFetch('/api/whatsapp-settings?action=request_verification', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code_method: 'SMS', language: 'en' }),
+        body: JSON.stringify({ code_method: 'SMS', language: verificationLanguage }),
       });
       return res.json();
     },
     onSuccess: (data) => {
       setMessage({ type: data.success ? 'success' : 'error', text: data.message || data.error });
+      // Meta's phone status flips to PENDING after a successful request — refresh.
+      if (data.success) qc.invalidateQueries({ queryKey: ['whatsapp-phone-status'] });
     },
   });
 
@@ -294,6 +313,7 @@ export default function WhatsAppSettingsPage() {
   const currentEnabled = pendingEnabled ?? status?.enabled ?? false;
   const currentPhone = pendingPhone ?? status?.phone_number ?? '';
   const isDirty = pendingEnabled !== null || pendingPhone !== null;
+  const notYetLabel = t('settings.notYet', 'Not yet');
   const latestTestPhoneDigits = normalizePhone(latestTestMessage?.recipient_phone || '');
   const currentTestPhoneDigits = normalizePhone(testPhone);
   const samePhoneCooldownExpiresAt = latestTestMessage?.cooldown_expires_at
@@ -317,6 +337,14 @@ export default function WhatsAppSettingsPage() {
     return () => window.clearInterval(timer);
   }, [samePhoneCooldownActive, samePhoneCooldownExpiresAt]);
 
+  // Auto-dismiss test-send result banner after 5s — otherwise the green
+  // "Sent" message hangs around through the next interaction.
+  useEffect(() => {
+    if (!testResult) return undefined;
+    const id = window.setTimeout(() => setTestResult(null), 5000);
+    return () => window.clearTimeout(id);
+  }, [testResult]);
+
   const handleSave = () => {
     const updates: { enabled?: boolean; phone_number?: string } = {};
     if (pendingEnabled !== null) updates.enabled = pendingEnabled;
@@ -327,6 +355,9 @@ export default function WhatsAppSettingsPage() {
         setPendingEnabled(null);
         setPendingPhone(null);
         toast.success(t('common.saved', 'Settings saved'));
+      },
+      onError: (err) => {
+        toast.error(err instanceof Error ? err.message : t('common.saveFailed', 'Failed to save settings'));
       },
     });
   };
@@ -344,7 +375,7 @@ export default function WhatsAppSettingsPage() {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <div role="status" aria-label="Loading" className="animate-spin rounded-full h-8 w-8 border-2 border-border-gray border-t-burgundy" />
+          <div role="status" aria-label={t('common.loading', 'Loading')} className="animate-spin rounded-full h-8 w-8 border-2 border-border-gray border-t-burgundy" />
         </div>
       </DashboardLayout>
     );
@@ -424,9 +455,11 @@ export default function WhatsAppSettingsPage() {
             <input
               id="wa-phone"
               type="tel"
+              inputMode="tel"
+              pattern="^\+?[0-9 ]*$"
               placeholder="+5511999999999"
               value={currentPhone}
-              onChange={(e) => setPendingPhone(e.target.value)}
+              onChange={(e) => setPendingPhone(e.target.value.replace(/[^\d+ ]/g, ''))}
               className="w-full px-3 py-2 border border-border-gray rounded-xl text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-whatsapp/40 focus:border-whatsapp"
             />
             <p className="text-xs text-warm-stone mt-1">{t('settings.ownerWhatsAppHint')}</p>
@@ -487,7 +520,7 @@ export default function WhatsAppSettingsPage() {
         <div className="py-5">
           <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827] mb-4">{t('settings.statistics')}</h2>
           {statsLoading ? (
-            <div role="status" aria-label="Loading statistics" className="animate-pulse flex gap-6">
+            <div role="status" aria-label={t('settings.loadingStatistics', 'Loading statistics')} className="animate-pulse flex gap-6">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="h-16 w-28 bg-soft-gray rounded-xl" />
               ))}
@@ -535,7 +568,7 @@ export default function WhatsAppSettingsPage() {
               {testMutation.isPending
                 ? t('settings.sendingTest')
                 : samePhoneCooldownActive
-                  ? t('settings.retryIn', `Retry in ${formatCooldown(samePhoneCooldownRemainingMs)}`)
+                  ? t('settings.retryIn', { time: formatCooldown(samePhoneCooldownRemainingMs), defaultValue: `Retry in ${formatCooldown(samePhoneCooldownRemainingMs)}` })
                   : t('settings.sendTest')}
             </button>
           </div>
@@ -551,10 +584,10 @@ export default function WhatsAppSettingsPage() {
           )}
           {samePhoneCooldownActive && (
             <p className="text-xs text-amber-700 mt-2">
-              {t(
-                'settings.testCooldownActive',
-                `A recent test was already sent to this number. Wait ${formatCooldown(samePhoneCooldownRemainingMs)} before sending it again.`
-              )}
+              {t('settings.testCooldownActive', {
+                time: formatCooldown(samePhoneCooldownRemainingMs),
+                defaultValue: `A recent test was already sent to this number. Wait ${formatCooldown(samePhoneCooldownRemainingMs)} before sending it again.`,
+              })}
             </p>
           )}
           {testResult && (
@@ -563,7 +596,7 @@ export default function WhatsAppSettingsPage() {
             </p>
           )}
           {testStatusLoading && (
-            <div className="mt-4 h-24 rounded-2xl bg-soft-gray animate-pulse" aria-label="Loading WhatsApp test delivery status" />
+            <div className="mt-4 h-24 rounded-2xl bg-soft-gray animate-pulse" aria-label={t('settings.loadingTestDelivery', 'Loading test delivery status')} />
           )}
           {!testStatusLoading && latestTestMessage && (
             <div className="mt-4 rounded-2xl border border-[#E5E7EB] bg-soft-gray/60 p-4">
@@ -578,26 +611,26 @@ export default function WhatsAppSettingsPage() {
                   </p>
                 </div>
                 <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${TEST_STATUS_STYLES[latestTestMessage.status] || 'bg-gray-100 text-gray-600'}`}>
-                  {formatStatusLabel(latestTestMessage.status)}
+                  {formatStatusLabel(latestTestMessage.status, t)}
                 </span>
               </div>
 
               <div className="mt-4 grid grid-cols-1 gap-3 text-xs text-warm-stone sm:grid-cols-2">
                 <div>
                   <p className="font-medium text-deep-charcoal">{t('settings.requestedAt', 'Requested')}</p>
-                  <p>{formatStatusTime(latestTestMessage.requested_at)}</p>
+                  <p>{formatStatusTime(latestTestMessage.requested_at, notYetLabel)}</p>
                 </div>
                 <div>
                   <p className="font-medium text-deep-charcoal">{t('settings.lastStatusAt', 'Last status update')}</p>
-                  <p>{formatStatusTime(latestTestMessage.status_updated_at)}</p>
+                  <p>{formatStatusTime(latestTestMessage.status_updated_at, notYetLabel)}</p>
                 </div>
                 <div>
                   <p className="font-medium text-deep-charcoal">{t('settings.deliveredAt', 'Delivered')}</p>
-                  <p>{formatStatusTime(latestTestMessage.delivered_at)}</p>
+                  <p>{formatStatusTime(latestTestMessage.delivered_at, notYetLabel)}</p>
                 </div>
                 <div>
                   <p className="font-medium text-deep-charcoal">{t('settings.readAt', 'Read')}</p>
-                  <p>{formatStatusTime(latestTestMessage.read_at)}</p>
+                  <p>{formatStatusTime(latestTestMessage.read_at, notYetLabel)}</p>
                 </div>
               </div>
 

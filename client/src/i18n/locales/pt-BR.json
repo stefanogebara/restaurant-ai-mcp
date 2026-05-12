@@ -23,6 +23,7 @@
     "retry": "Tentar Novamente",
     "settingUp": "Configurando tudo...",
     "saved": "Salvo",
+    "saveFailed": "Falha ao salvar as configurações",
     "searchPlaceholder": "Buscar...",
     "skipToContent": "Pular para o conteúdo",
     "goBack": "Voltar",
@@ -1168,6 +1169,33 @@
     "connectedButPaused": "WhatsApp está conectado mas as notificações estão pausadas. Ative para começar a enviar mensagens.",
     "disableWhatsApp": "Desativar WhatsApp",
     "enableWhatsAppLabel": "Ativar WhatsApp",
+    "deliveredAt": "Entregue em",
+    "lastStatusAt": "Última atualização",
+    "latestTestDelivery": "Última entrega de teste",
+    "loadingTemplates": "Carregando modelos",
+    "loadingStatistics": "Carregando estatísticas",
+    "loadingTestDelivery": "Carregando status de entrega de teste",
+    "notYet": "Ainda não",
+    "phoneStatus": {
+      "PENDING": "Pendente",
+      "VERIFIED": "Verificado",
+      "EXPIRED": "Expirado",
+      "NOT_VERIFIED": "Não verificado"
+    },
+    "providerLabel": "Provedor",
+    "readAt": "Lido em",
+    "requestedAt": "Solicitado em",
+    "retryIn": "Tentar novamente em {{time}}",
+    "templateLabel": "Modelo",
+    "testCooldownActive": "Um teste recente já foi enviado para este número. Aguarde {{time}} antes de enviar novamente.",
+    "testRequiresApi": "A API do WhatsApp deve estar configurada antes de enviar mensagens de teste. Entre em contato com o suporte para concluir a configuração.",
+    "testStatus": {
+      "accepted": "Aceito",
+      "sent": "Enviado",
+      "delivered": "Entregue",
+      "read": "Lido",
+      "failed": "Falhou"
+    },
     "sendingTest": "Enviando...",
     "managerNotifications": "Notificações do Gerente",
     "notificationsSaved": "Preferências de notificação salvas",
@@ -2629,10 +2657,14 @@
   },
   "whatsapp": {
     "contactSupport": "Entre em contato com o suporte para completar a configuração do WhatsApp.",
-    "status.APPROVED": "aprovado",
-    "status.PENDING": "pendente",
-    "status.REJECTED": "rejeitado",
-    "status.NOT_SUBMITTED": "não enviado"
+    "status": {
+      "APPROVED": "Aprovado",
+      "PENDING": "Pendente",
+      "IN_REVIEW": "Em revisão",
+      "REJECTED": "Rejeitado",
+      "PAUSED": "Pausado",
+      "NOT_SUBMITTED": "Não enviado"
+    }
   },
   "manager": {
     "sendFailed": "Falha ao enviar. Tente novamente."
