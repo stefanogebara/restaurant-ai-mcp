@@ -12,6 +12,24 @@ import { authFetch } from '../services/api';
 
 const planTiers = ['starter', 'growth', 'scale'];
 
+// Open-redirect guard for /api/create-checkout-session responses. Stripe
+// hosted checkout returns absolute https URLs on a known set of domains. Reject
+// anything that doesn't match — a compromised backend or upstream bug returning
+// an attacker-controlled URL would otherwise carry the user off seatable.one
+// to a phishing page right when they're about to enter card details.
+const ALLOWED_CHECKOUT_HOSTS = new Set(['checkout.stripe.com', 'billing.stripe.com']);
+function isSafeCheckoutUrl(url: unknown): url is string {
+  if (typeof url !== 'string' || !url) return false;
+  // Allow same-origin relative paths too (some flows return /something).
+  if (url.startsWith('/') && !url.startsWith('//')) return true;
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'https:' && ALLOWED_CHECKOUT_HOSTS.has(parsed.hostname);
+  } catch {
+    return false;
+  }
+}
+
 const PLAN_PRICE_IDS: Record<string, string> = {
   starter: import.meta.env.VITE_STRIPE_STARTER_PRICE_ID || '',
   growth: import.meta.env.VITE_STRIPE_GROWTH_PRICE_ID || '',
@@ -82,7 +100,7 @@ export default function SubscriptionManage() {
       onError: (_err) => {
         // For any portal failure (no subscription, portal not configured, etc.)
         // redirect to pricing so the user can pick/re-subscribe
-        error(t('subscription.portalError', 'Não foi possível abrir o portal de cobrança. Redirecionando para os planos…'));
+        error(t('subscription.portalError', 'Could not open the billing portal. Redirecting to plans...'));
         navigate('/subscription/manage#pricing');
       },
     });
@@ -91,7 +109,7 @@ export default function SubscriptionManage() {
   const handleUpgradeCheckout = async (planKey: string) => {
     const priceId = PLAN_PRICE_IDS[planKey];
     const planName = PLAN_NAMES[planKey];
-    if (!priceId) { error('Preço não configurado. Por favor, entre em contato com o suporte.'); return; }
+    if (!priceId) { error(t('subscription.priceNotConfigured', 'Price not configured. Please contact support.')); return; }
     try {
       setLoadingCheckoutPlan(planKey);
       const apiUrl = import.meta.env.VITE_API_URL
@@ -104,12 +122,16 @@ export default function SubscriptionManage() {
       });
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || 'Falha ao criar sessão de pagamento');
+        throw new Error(data.error || t('subscription.checkoutFailed', 'Failed to create checkout session'));
       }
       const { url } = await response.json();
+      if (!isSafeCheckoutUrl(url)) {
+        console.error('[SubscriptionManage] backend returned unsafe checkout URL', url);
+        throw new Error(t('subscription.checkoutFailed', 'Failed to create checkout session'));
+      }
       window.location.href = url;
     } catch (err: unknown) {
-      error(err instanceof Error ? err.message : 'Algo deu errado. Tente novamente.');
+      error(err instanceof Error ? err.message : t('subscription.genericError', 'Something went wrong. Please try again.'));
       setLoadingCheckoutPlan(null);
     }
   };
@@ -334,7 +356,7 @@ function NoPlanPricing() {
   })();
 
   const handleCheckout = async (priceId: string, planName: string) => {
-    if (!priceId) { error('Price not configured. Please contact support.'); return; }
+    if (!priceId) { error(t('subscription.priceNotConfigured', 'Price not configured. Please contact support.')); return; }
     try {
       setLoadingPlan(planName);
       const apiUrl = import.meta.env.VITE_API_URL
@@ -347,12 +369,16 @@ function NoPlanPricing() {
       });
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || 'Failed to create checkout session');
+        throw new Error(data.error || t('subscription.checkoutFailed', 'Failed to create checkout session'));
       }
       const { url } = await response.json();
+      if (!isSafeCheckoutUrl(url)) {
+        console.error('[SubscriptionManage] backend returned unsafe checkout URL', url);
+        throw new Error(t('subscription.checkoutFailed', 'Failed to create checkout session'));
+      }
       window.location.href = url;
     } catch (err: unknown) {
-      error(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
+      error(err instanceof Error ? err.message : t('subscription.genericError', 'Something went wrong. Please try again.'));
       setLoadingPlan(null);
     }
   };
