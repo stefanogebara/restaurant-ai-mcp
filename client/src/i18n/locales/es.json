@@ -1111,7 +1111,15 @@
     "resetPasswordSubtitle": "Ingresa tu correo y te enviaremos un enlace para restablecerla",
     "sendResetLink": "Enviar enlace",
     "backToSignIn": "Volver a Iniciar Sesión",
-    "resetLinkSent": "Revisa tu correo para un enlace de restablecimiento de contraseña."
+    "resetLinkSent": "Revisa tu correo para un enlace de restablecimiento de contraseña.",
+    "setNewPasswordTitle": "Establece una nueva contraseña",
+    "setNewPasswordSubtitle": "Elige una nueva contraseña para tu cuenta.",
+    "newPassword": "Nueva contraseña",
+    "confirmNewPassword": "Confirmar nueva contraseña",
+    "updatePassword": "Actualizar contraseña",
+    "updatingPassword": "Actualizando...",
+    "passwordUpdated": "¡Contraseña actualizada con éxito! Ya has iniciado sesión.",
+    "passwordsDoNotMatch": "Las contraseñas no coinciden."
   },
   "settings": {
     "title": "Configuración",

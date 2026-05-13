@@ -16,7 +16,7 @@ import { useTranslation } from 'react-i18next';
 import LoginBrandPanel from '../components/auth/LoginBrandPanel';
 import { supabase } from '../lib/supabase';
 
-type AuthMode = 'signin' | 'signup' | 'forgot';
+type AuthMode = 'signin' | 'signup' | 'forgot' | 'reset';
 
 // Translate common Supabase auth error messages
 const AUTH_ERROR_KEYS: Record<string, string> = {
@@ -41,6 +41,11 @@ export default function Login() {
   // Email/password form state
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  // True only after Supabase fires PASSWORD_RECOVERY on this page load —
+  // means user clicked the recovery link in their email. Without this guard,
+  // ?reset=true is just a URL hint with no token, and updateUser would 401.
+  const [hasRecoverySession, setHasRecoverySession] = useState(false);
 
   // Persist demo token to localStorage so it survives OAuth redirects and
   // email/password sign-in (which doesn't go through signInWithGoogle's redirectTo)
@@ -52,18 +57,40 @@ export default function Login() {
     }
   }, [searchParams]);
 
+  // Password-recovery flow: Supabase fires onAuthStateChange('PASSWORD_RECOVERY')
+  // when the user lands here from the reset email (Supabase parses the token
+  // from the URL fragment and signs the user in temporarily). Switch UI into
+  // "set new password" mode and arm the updatePassword call.
+  // ?reset=true is just a URL hint; the real signal is the auth event.
+  useEffect(() => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setHasRecoverySession(true);
+        setMode('reset');
+        setError(null);
+        setSuccessMessage(null);
+      }
+    });
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
   // Redirect if already logged in — honour the page the user originally tried to visit
-  // (ProtectedRoute saves it as location.state.from)
+  // (ProtectedRoute saves it as location.state.from).
+  // EXCEPT during a password-recovery flow: Supabase temporarily signs the user
+  // in to let them call updateUser, so we must NOT redirect them away from the
+  // "set new password" form. mode==='reset' && hasRecoverySession means the
+  // PASSWORD_RECOVERY event already fired and we're waiting on the new password.
   const from = (location.state as { from?: { pathname: string; search: string } })?.from;
   const redirectTo = from ? `${from.pathname}${from.search || ''}` : '/welcome';
-  if (!loading && user) {
+  const isInRecoveryFlow = mode === 'reset' && hasRecoverySession;
+  if (!loading && user && !isInRecoveryFlow) {
     return <Navigate to={redirectTo} replace />;
   }
 
   // While auth is resolving (e.g. returning from OAuth callback), show spinner
   if (loading) {
     return (
-      <div role="status" aria-label="Loading" className="min-h-screen bg-warm-white flex flex-col items-center justify-center gap-4">
+      <div role="status" aria-label={t('common.loading', 'Loading')} className="min-h-screen bg-warm-white flex flex-col items-center justify-center gap-4">
         <div aria-hidden="true" className="font-serif text-2xl text-deep-charcoal opacity-50">
           seatable<span className="text-burgundy">.</span>
         </div>
@@ -165,6 +192,37 @@ export default function Login() {
     }
   };
 
+  // Called from the "set new password" form once PASSWORD_RECOVERY has fired
+  // and the user types + confirms a new password. Supabase has a temporary
+  // recovery session attached, so updateUser({ password }) finalises the change.
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setSuccessMessage(null);
+
+    const pwError = validatePasswordStrength(password);
+    if (pwError) { setError(pwError); return; }
+    if (password !== confirmPassword) {
+      setError(t('login.passwordsDoNotMatch', 'Passwords do not match.'));
+      return;
+    }
+
+    setIsSigningIn(true);
+    try {
+      const { error: updateError } = await supabase.auth.updateUser({ password });
+      if (updateError) throw updateError;
+      setSuccessMessage(t('login.passwordUpdated'));
+      // The recovery session is now a real session — redirect to welcome shortly
+      // so the user lands in their dashboard with the new password applied.
+      setTimeout(() => { window.location.href = redirectTo; }, 1500);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : '';
+      const key = AUTH_ERROR_KEYS[msg.toLowerCase()];
+      setError(key ? t(key) : (msg || t('login.errors.generic')));
+      setIsSigningIn(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex">
       {/* Left Panel - Brand + Features (hidden on mobile) */}
@@ -203,10 +261,16 @@ export default function Login() {
                 </span>
               </Link>
               <h1 className="font-serif text-2xl text-deep-charcoal mb-2">
-                {mode === 'forgot' ? t('login.resetPasswordTitle') : mode === 'signin' ? t('login.welcomeBack') : t('login.createAccount')}
+                {mode === 'reset' ? t('login.setNewPasswordTitle')
+                  : mode === 'forgot' ? t('login.resetPasswordTitle')
+                  : mode === 'signin' ? t('login.welcomeBack')
+                  : t('login.createAccount')}
               </h1>
               <p className="text-stone-gray font-light">
-                {mode === 'forgot' ? t('login.resetPasswordSubtitle') : mode === 'signin' ? t('login.signInSubtitle') : t('login.signUpSubtitle')}
+                {mode === 'reset' ? t('login.setNewPasswordSubtitle')
+                  : mode === 'forgot' ? t('login.resetPasswordSubtitle')
+                  : mode === 'signin' ? t('login.signInSubtitle')
+                  : t('login.signUpSubtitle')}
               </p>
             </div>
 
@@ -232,7 +296,69 @@ export default function Login() {
               </motion.div>
             )}
 
-            {mode === 'forgot' ? (
+            {mode === 'reset' ? (
+              /* Set New Password Form — shown only after PASSWORD_RECOVERY fires */
+              <>
+                <form onSubmit={handleResetPassword} className="space-y-4">
+                  <div>
+                    <label htmlFor="new-password" className="block text-[13px] font-medium text-stone-gray mb-1.5">
+                      {t('login.newPassword')}
+                    </label>
+                    <input
+                      id="new-password"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder={t('login.passwordMinChars')}
+                      required
+                      minLength={8}
+                      autoFocus
+                      className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm text-deep-charcoal placeholder-stone-300 focus:outline-none focus:ring-[3px] focus:ring-burgundy/[6%] focus:border-burgundy transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="confirm-password" className="block text-[13px] font-medium text-stone-gray mb-1.5">
+                      {t('login.confirmNewPassword')}
+                    </label>
+                    <input
+                      id="confirm-password"
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required
+                      minLength={8}
+                      className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm text-deep-charcoal placeholder-stone-300 focus:outline-none focus:ring-[3px] focus:ring-burgundy/[6%] focus:border-burgundy transition-all"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isSigningIn || !hasRecoverySession}
+                    className={`
+                      w-full flex items-center justify-center gap-3 px-6 py-3.5
+                      bg-burgundy hover:bg-burgundy-dark
+                      text-white font-semibold text-[15px] rounded-full
+                      transition-all duration-200
+                      ${(isSigningIn || !hasRecoverySession) ? 'opacity-70 cursor-not-allowed' : ''}
+                    `}
+                  >
+                    {isSigningIn ? (
+                      <div aria-hidden="true" className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                    ) : null}
+                    <span>{isSigningIn ? t('login.updatingPassword') : t('login.updatePassword')}</span>
+                  </button>
+                </form>
+
+                <div className="text-center mt-6">
+                  <button
+                    onClick={() => { setMode('signin'); setError(null); setSuccessMessage(null); setPassword(''); setConfirmPassword(''); }}
+                    className="text-burgundy font-semibold text-sm hover:underline"
+                  >
+                    {t('login.backToSignIn')}
+                  </button>
+                </div>
+              </>
+            ) : mode === 'forgot' ? (
               /* Forgot Password Form */
               <>
                 <form onSubmit={handleForgotPassword} className="space-y-4">
