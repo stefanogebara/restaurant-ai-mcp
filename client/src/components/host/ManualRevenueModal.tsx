@@ -11,6 +11,7 @@ import { authFetch } from '../../services/api';
 import ThiingsIcon from '../common/ThiingsIcon';
 import Spinner from '../common/Spinner';
 import { getCurrencySymbol } from '../../utils/currency';
+import { todayLocalISO } from '../../utils/timeFormatting';
 import { getManualRevenueTranslations } from './manualRevenueTranslations';
 import { useCustomerSearch } from '../../hooks/useCustomerSearch';
 import type { Customer } from '../../hooks/useCustomerSearch';
@@ -62,7 +63,8 @@ export default function ManualRevenueModal({
   const [totalRevenue, setTotalRevenue] = useState('');
   const [tipAmount, setTipAmount] = useState('');
   const [partySize, setPartySize] = useState('2');
-  const [serviceDate, setServiceDate] = useState(new Date().toISOString().split('T')[0]);
+  // Local timezone, NOT UTC — see todayLocalISO docs.
+  const [serviceDate, setServiceDate] = useState(todayLocalISO());
   const [serviceTime, setServiceTime] = useState('');
   const [notes, setNotes] = useState('');
 

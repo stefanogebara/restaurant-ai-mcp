@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useTimeSlots, useCreateReservation } from '../../hooks/useBooking';
+import { formatLocalDate } from '../../utils/timeFormatting';
 import DepositPaymentStep from './DepositPaymentStep';
 import GuestDetailsForm from './GuestDetailsForm';
 
@@ -36,13 +37,6 @@ export interface TimeSlot {
 
 interface BookingFormProps {
   restaurant: RestaurantInfo;
-}
-
-function formatLocalDate(date: Date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
 }
 
 function SummaryRow({ label, value }: { label: string; value: string }) {

@@ -8,6 +8,7 @@
 
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { todayLocalISO } from '../../utils/timeFormatting';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { hostAPI } from '../../services/api';
 import { useToast } from '../../contexts/ToastContext';
@@ -24,7 +25,9 @@ export default function AddReservationModal({ isOpen, onClose }: AddReservationM
   const toast = useToast();
   const queryClient = useQueryClient();
 
-  const today = new Date().toISOString().split('T')[0];
+  // Local timezone, NOT UTC — see todayLocalISO docs. A São Paulo host at
+  // 23:00 local would otherwise get tomorrow's date here.
+  const today = todayLocalISO();
 
   const [form, setForm] = useState({
     customer_name: '',

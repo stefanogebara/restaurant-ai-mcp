@@ -5,6 +5,28 @@
  */
 
 /**
+ * Format a Date as YYYY-MM-DD using LOCAL timezone (not UTC).
+ *
+ * Critical: do NOT use `date.toISOString().split('T')[0]` for this — that
+ * shifts to UTC, so a user in Brazil at 23:00 local time gets *tomorrow's*
+ * date string when they expected "today". This caused real bugs: hosts in
+ * São Paulo would click "today" on AddReservationModal at 11 PM and book
+ * for the next calendar day. Always use this helper when serialising a
+ * date for a backend that expects the user's local calendar day.
+ */
+export function formatLocalDate(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+/** Today's date in the user's local timezone as YYYY-MM-DD. */
+export function todayLocalISO(): string {
+  return formatLocalDate(new Date());
+}
+
+/**
  * Format a date as "X time ago" with smart unit selection
  *
  * @param date - The date to format

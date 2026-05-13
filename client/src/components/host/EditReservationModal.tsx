@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { hostAPI } from '../../services/api';
 import { useToast } from '../../contexts/ToastContext';
+import { todayLocalISO } from '../../utils/timeFormatting';
 import type { UpcomingReservation } from '../../types/host.types';
 import ThiingsIcon from '../common/ThiingsIcon';
 
@@ -24,7 +25,8 @@ export default function EditReservationModal({ isOpen, reservation, onClose }: E
   const toast = useToast();
   const queryClient = useQueryClient();
 
-  const today = new Date().toISOString().split('T')[0];
+  // Local timezone, NOT UTC — see todayLocalISO docs.
+  const today = todayLocalISO();
 
   const [form, setForm] = useState({
     date: reservation.date,
