@@ -62,15 +62,30 @@ export default function Welcome() {
           .single();
 
         if (!error && data) {
-          // User has completed onboarding → attempt demo conversion if pending
+          // User has completed onboarding → attempt demo conversion if pending.
+          // Fire-and-forget so we don't block navigation by ~1s, BUT preserve the
+          // token in localStorage if the conversion fails — the previous .finally
+          // dropped the token unconditionally, which orphaned the user's demo
+          // data (scrape, reservations, AI agent setup) on any network blip.
+          // Same anti-pattern fixed in Onboarding's referral-attach (9e271d13 L4).
           if (demoToken) {
-            // Fire-and-forget — clear localStorage regardless of outcome
             authFetch('/api/demo?action=convert', {
               method: 'POST',
               body: JSON.stringify({ token: demoToken }),
             })
-              .catch(() => {})
-              .finally(() => localStorage.removeItem(LS_PENDING_DEMO_TOKEN));
+              .then(async (response) => {
+                const body = await response.json().catch(() => null);
+                if (response.ok && body?.success === true) {
+                  localStorage.removeItem(LS_PENDING_DEMO_TOKEN);
+                } else {
+                  console.error('[Welcome] demo convert failed', { status: response.status, body });
+                  // Keep token in localStorage so the next page load retries.
+                }
+              })
+              .catch((err) => {
+                console.error('[Welcome] demo convert network error', err);
+                // Keep token for retry on next page load.
+              });
           }
           // Priority: explicit `next=` (user's original target) wins over
           // the default dashboard. Demo conversion still wraps it.
@@ -85,8 +100,11 @@ export default function Welcome() {
           // onboarding completes and the user returns here.
           navigate('/onboarding', { replace: true });
         }
-      } catch {
-        // On error, default to onboarding
+      } catch (err) {
+        // Log so Sentry catches a population-wide config-lookup outage instead
+        // of silently treating every user as a new signup. Falls back to
+        // onboarding by design.
+        console.error('[Welcome] restaurant_config lookup failed', err);
         navigate('/onboarding', { replace: true });
       } finally {
         setChecking(false);
