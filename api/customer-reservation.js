@@ -15,9 +15,12 @@ const { setWebhookCors, handlePreflight } = require('./_lib/cors');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const logger = createSecureLogger('CustomerReservation');
 
-// Fields safe to return to the customer
+// Fields safe to return to the customer. restaurant_id is included so we can
+// follow-up with a restaurant_config lookup to enrich the response with the
+// restaurant_name — the customer portal header (CustomerPortal.tsx) needs it
+// for white-label branding. We do NOT echo restaurant_id back to the client.
 const CUSTOMER_FIELDS =
-  'reservation_id, customer_name, customer_email, customer_phone, date, time, party_size, special_requests, status';
+  'reservation_id, customer_name, customer_email, customer_phone, date, time, party_size, special_requests, status, restaurant_id';
 
 // M-02: Per-reservation-ID rate limit for phone verification attempts.
 // After 5 failed phone matches for the same reservation_id, block for 15 minutes.
@@ -130,7 +133,27 @@ async function handleLookup(req, res) {
     return res.status(404).json({ success: false, error: 'Reservation not found' });
   }
 
-  return res.status(200).json({ success: true, reservation: data });
+  // Enrich with the restaurant_name for the white-label customer portal header.
+  // Strip the FK out of the response before returning — clients don't need it
+  // and exposing it would weaken the existing tenancy boundary on phone lookups.
+  let restaurant_name = null;
+  if (data.restaurant_id) {
+    try {
+      const { data: restaurant } = await supabaseAdmin
+        .schema('restaurant')
+        .from('restaurant_config')
+        .select('restaurant_name')
+        .eq('id', data.restaurant_id)
+        .single();
+      if (restaurant?.restaurant_name) restaurant_name = restaurant.restaurant_name;
+    } catch (lookupErr) {
+      // Non-fatal — fall through with restaurant_name = null. Header will render
+      // the generic seatable logo. Worth logging for telemetry.
+      logger.warn('Restaurant name lookup failed', { restaurant_id: data.restaurant_id, error: lookupErr?.message });
+    }
+  }
+  const { restaurant_id: _stripped, ...reservation } = data;
+  return res.status(200).json({ success: true, reservation: { ...reservation, restaurant_name } });
 }
 
 /**

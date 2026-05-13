@@ -1,7 +1,8 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from '@tanstack/react-query';
 import { useToast } from '../contexts/ToastContext';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
 interface Reservation {
   reservation_id: string;
@@ -14,6 +15,7 @@ interface Reservation {
   party_size: number;
   special_requests?: string;
   status: string;
+  restaurant_name?: string | null; // Returned by /api/customer-reservation?action=lookup for white-label branding
 }
 
 // Helper to parse reservation_time into date and time
@@ -27,7 +29,7 @@ function parseReservationDateTime(reservation: Reservation) {
 
 export default function CustomerPortal() {
   const { t, i18n } = useTranslation();
-  const restaurantName = null;
+  useDocumentTitle(t('pageTitles.customerPortal', 'Manage Reservation | seatable'));
   const [lookupMethod, setLookupMethod] = useState<'id' | 'phone'>('id');
   const [reservationId, setReservationId] = useState('');
   const [phone, setPhone] = useState('');
@@ -38,7 +40,18 @@ export default function CustomerPortal() {
   const lastLookupRef = useRef<{ method: string; value: string } | null>(null);
   const { success, error: showError } = useToast();
 
-  const lookupMutation = useMutation<Reservation, Error, { method: string; value: string } | undefined>({
+  // L2: dismiss the cancel-confirm UI when the user presses Esc. Keeps keyboard
+  // users from being trapped in the 2-step confirm if they change their mind.
+  useEffect(() => {
+    if (!showCancelConfirm) return undefined;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setShowCancelConfirm(false); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [showCancelConfirm]);
+
+  // `silent` skips the success toast — used by modify's onSuccess re-lookup so
+  // the user doesn't see two green toasts ("Updated" AND "Found") after saving.
+  const lookupMutation = useMutation<Reservation, Error, { method: string; value: string; silent?: boolean } | undefined>({
     mutationFn: async (override) => {
       const currentMethod = override?.method ?? lookupMethod;
       const currentValue = override?.value ?? (lookupMethod === 'id' ? reservationId : phone);
@@ -59,11 +72,11 @@ export default function CustomerPortal() {
       if (!data.success || !data.reservation) throw new Error(data.error || data.message || t('reservations.reservationNotFoundLookup'));
       return data.reservation;
     },
-    onSuccess: (res) => {
+    onSuccess: (res, override) => {
       setReservation(res);
       const { date, time } = parseReservationDateTime(res);
       setModifiedData({ ...res, date, time });
-      success(t('reservations.reservationFound'));
+      if (!override?.silent) success(t('reservations.reservationFound'));
     },
     onError: (err) => showError(err.message),
   });
@@ -88,7 +101,10 @@ export default function CustomerPortal() {
     },
     onSuccess: () => {
       if (lastLookupRef.current) {
-        lookupMutation.mutate(lastLookupRef.current);
+        // silent: true — modify already toasted; the re-lookup is just to refresh
+        // the displayed data, so the second "Reservation found" toast would
+        // confuse the user.
+        lookupMutation.mutate({ ...lastLookupRef.current, silent: true });
       }
       setIsModifying(false);
       success(t('reservations.reservationUpdated'));
@@ -139,9 +155,9 @@ export default function CustomerPortal() {
       {/* Top Bar */}
       <header className="flex justify-between items-center px-6 sm:px-10 py-4 border-b border-border-gray bg-white">
         <div className="min-w-0 flex-1">
-          {restaurantName ? (
+          {reservation?.restaurant_name ? (
             <>
-              <div className="font-serif text-lg font-semibold text-deep-charcoal truncate">{restaurantName}</div>
+              <div className="font-serif text-lg font-semibold text-deep-charcoal truncate">{reservation.restaurant_name}</div>
               <div className="text-[11px] text-muted-stone">{t('common.poweredBy')} seatable<span className="text-burgundy">.</span></div>
             </>
           ) : (
@@ -176,8 +192,10 @@ export default function CustomerPortal() {
                   <label className="block text-[13px] font-medium text-stone-gray mb-1.5">{t('reservations.phoneNumber')}</label>
                   <input
                     type="tel"
+                    inputMode="tel"
+                    pattern="^\+?[0-9 ]*$"
                     value={phone}
-                    onChange={(e) => { setPhone(e.target.value); setLookupMethod('phone'); }}
+                    onChange={(e) => { setPhone(e.target.value.replace(/[^\d+ ]/g, '')); setLookupMethod('phone'); }}
                     placeholder="+XX XXXXXXXXX"
                     className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-stone-300 focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-burgundy/[6%]"
                     onKeyDown={(e) => e.key === 'Enter' && lookupMutation.mutate(undefined)}

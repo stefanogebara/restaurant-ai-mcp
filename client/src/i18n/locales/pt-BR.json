@@ -2635,7 +2635,8 @@
     "bookingPage": "{{name}} — Reservar Mesa | Seatable",
     "bookingDescription": "Reserve uma mesa no {{name}} em {{city}}, {{country}}. Verifique disponibilidade e reserve online — rápido e fácil.",
     "integrations": "Integrações | seatable",
-    "home": "seatable — Gestão de Restaurantes com IA"
+    "home": "seatable — Gestão de Restaurantes com IA",
+    "customerPortal": "Gerenciar Reserva | seatable"
   },
   "strategy": {
     "title": "Documento de Estratégia IA",

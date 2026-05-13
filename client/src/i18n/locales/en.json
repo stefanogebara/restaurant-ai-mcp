@@ -2621,7 +2621,8 @@
     "bookingPage": "{{name}} — Reserve a Table | Seatable",
     "bookingDescription": "Book a table at {{name}} in {{city}}, {{country}}. Check availability and reserve online — quick and easy.",
     "integrations": "Integrations | seatable",
-    "home": "seatable — AI Restaurant Management"
+    "home": "seatable — AI Restaurant Management",
+    "customerPortal": "Manage Reservation | seatable"
   },
   "strategy": {
     "title": "AI Strategy Document",
