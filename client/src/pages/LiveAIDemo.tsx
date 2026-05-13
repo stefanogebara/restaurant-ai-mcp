@@ -80,6 +80,14 @@ export default function LiveAIDemo() {
   useDocumentTitle(t('pageTitles.voiceDemo'));
   const agentId = import.meta.env.VITE_ELEVENLABS_AGENT_ID || '';
 
+  // Catch config drift early: if the env var is missing in production, the
+  // orb silently no-ops on click. Log so Sentry surfaces the misconfig.
+  useEffect(() => {
+    if (!agentId) {
+      console.error('[LiveAIDemo] VITE_ELEVENLABS_AGENT_ID is unset — voice demo will not start');
+    }
+  }, [agentId]);
+
   const {
     agentState,
     error,
@@ -127,6 +135,13 @@ export default function LiveAIDemo() {
       }
     }
   }, [transcript]);
+
+  // Surface voice-agent errors to Sentry. The error string is already rendered
+  // inline to the user, but without logging an ElevenLabs outage or signed-URL
+  // backend break would never appear in telemetry.
+  useEffect(() => {
+    if (error) console.error('[LiveAIDemo] voice agent error', error);
+  }, [error]);
 
   const handleOrbClick = useCallback(() => {
     if (!agentId) return;
@@ -288,10 +303,24 @@ export default function LiveAIDemo() {
             )}
           </AnimatePresence>
 
+          {/* Config drift: env var unset (production misconfig). Visible so
+              users don't sit tapping a dead orb wondering why nothing happens. */}
+          {!agentId && (
+            <p className="text-sm text-amber-300/80 text-center max-w-xs">
+              {t('landing.voiceDemo.unavailable', 'The voice demo is temporarily unavailable. Please try again in a few minutes.')}
+            </p>
+          )}
+
           {/* Error */}
           {error && (
             <p className="text-sm text-red-400/80 text-center max-w-xs">{error}</p>
           )}
+
+          {/* L3: tell mobile users the live dashboard is desktop-only — the
+              magic real-time moment is hidden behind `lg:block`. */}
+          <p className="lg:hidden text-xs text-white/30 text-center max-w-xs italic">
+            {t('landing.voiceDemo.liveDashboardMobileHint', 'Open this on desktop to watch reservations appear in real-time during your call.')}
+          </p>
 
           {/* Transcript */}
           <AnimatePresence>

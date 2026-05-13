@@ -2024,6 +2024,8 @@
       "cancel": "Cancelar",
       "endCall": "Finalizar llamada",
       "liveDashboard": "Panel en vivo — las reservas aparecen en tiempo real",
+      "liveDashboardMobileHint": "Abre esta página en computadora para ver las reservas aparecer en tiempo real durante tu llamada.",
+      "unavailable": "La demo de voz no está disponible temporalmente. Inténtalo de nuevo en unos minutos.",
       "powered": "Desarrollado con ElevenLabs · Seatable IA",
       "tryDashboard": "Prueba el panel completo",
       "pricing": "Precios",

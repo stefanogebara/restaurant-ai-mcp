@@ -2296,6 +2296,8 @@
       "cancel": "Cancel",
       "endCall": "End call",
       "liveDashboard": "Live dashboard — reservations appear in real-time",
+      "liveDashboardMobileHint": "Open this on desktop to watch reservations appear in real-time during your call.",
+      "unavailable": "The voice demo is temporarily unavailable. Please try again in a few minutes.",
       "powered": "Powered by ElevenLabs · Seatable AI",
       "tryDashboard": "Try the full dashboard",
       "pricing": "Pricing",
