@@ -28,7 +28,7 @@ export default function ActivePartiesPanel({
   }, [parties.length]);
   if (isLoading) {
     return (
-      <div role="status" aria-label="Loading active parties" className="p-5">
+      <div role="status" aria-label={t('common.loading', 'Loading')} className="p-5">
         <div className="h-5 w-32 bg-border-gray rounded animate-pulse mb-4" />
         <div className="space-y-3">
           {[1, 2].map((i) => (

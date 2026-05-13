@@ -5,6 +5,8 @@
  * while content is loading. Styled to match the premium stone palette.
  */
 
+import { useTranslation } from 'react-i18next';
+
 interface SkeletonProps {
   className?: string;
 }
@@ -80,8 +82,9 @@ export function SkeletonActiveParty() {
 
 // Full dashboard loading skeleton
 export function DashboardSkeleton() {
+  const { t } = useTranslation();
   return (
-    <div className="space-y-6" aria-label="Loading dashboard..." role="status">
+    <div className="space-y-6" aria-label={t('common.loading', 'Loading')} role="status">
       {/* Stats Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {Array.from({ length: 4 }).map((_, i) => (
@@ -104,8 +107,9 @@ export function DashboardSkeleton() {
 
 // Skeleton for analytics dashboard: header + stats + chart grid
 export function SkeletonAnalytics() {
+  const { t } = useTranslation();
   return (
-    <div className="min-h-screen bg-warm-white" aria-label="Loading analytics..." role="status">
+    <div className="min-h-screen bg-warm-white" aria-label={t('common.loading', 'Loading')} role="status">
       {/* Header */}
       <div className="bg-white border-b border-border-gray/50 px-6 py-5">
         <div className="max-w-[1600px] mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -150,8 +154,9 @@ export function SkeletonAnalytics() {
 
 // Skeleton for table config: header + stat cards + table card grid
 export function SkeletonTableConfig() {
+  const { t } = useTranslation();
   return (
-    <div className="min-h-screen bg-warm-white" aria-label="Loading tables..." role="status">
+    <div className="min-h-screen bg-warm-white" aria-label={t('common.loading', 'Loading')} role="status">
       <header className="bg-white/80 backdrop-blur-sm border-b border-border-gray sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -197,8 +202,9 @@ export function SkeletonTableConfig() {
 
 // Skeleton for call tracking: stats + conversation list
 export function SkeletonCallTracking() {
+  const { t } = useTranslation();
   return (
-    <div className="space-y-6 p-6" aria-label="Loading call data..." role="status">
+    <div className="space-y-6 p-6" aria-label={t('common.loading', 'Loading')} role="status">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="space-y-2">
@@ -253,8 +259,9 @@ export function SkeletonCallTracking() {
 
 // Skeleton for subscription management page
 export function SkeletonSubscription() {
+  const { t } = useTranslation();
   return (
-    <div className="min-h-screen bg-warm-white" aria-label="Loading subscription..." role="status">
+    <div className="min-h-screen bg-warm-white" aria-label={t('common.loading', 'Loading')} role="status">
       <div className="max-w-4xl mx-auto px-6 py-12 space-y-8">
         <div className="space-y-2">
           <Skeleton className="h-8 w-56" />
@@ -297,8 +304,9 @@ export function SkeletonSubscription() {
 
 // Skeleton for weekly report page
 export function SkeletonWeeklyReport() {
+  const { t } = useTranslation();
   return (
-    <div className="space-y-6" aria-label="Loading report..." role="status">
+    <div className="space-y-6" aria-label={t('common.loading', 'Loading')} role="status">
       {/* Date range selector */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <Skeleton className="h-8 w-48" />

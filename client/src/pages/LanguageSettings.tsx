@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import LanguageSelector from '../components/common/LanguageSelector';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 import DashboardLayout from '../components/layout/DashboardLayout';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
 export default function LanguageSettings() {
   const { t } = useTranslation();
+  useDocumentTitle(t('pageTitles.settings'));
   const navigate = useNavigate();
 
   return (

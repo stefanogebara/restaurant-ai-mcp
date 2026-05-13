@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import CustomerTierBadge from './CustomerTierBadge';
 import { formatCurrency } from '../../utils/currency';
+import { authFetch } from '../../services/api';
+import { useAuth } from '../../contexts/AuthContext';
 import type { UpcomingReservation } from '../../types/host.types';
 
 interface CustomerProfileDrawerProps {
@@ -44,18 +46,23 @@ export default function CustomerProfileDrawer({ reservation, onClose }: Customer
   const isOpen = !!reservation;
   const phone = reservation?.customer_phone;
 
-  // Fetch guest context (memories)
-  const authToken = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
-  const hasAuth = !!authToken;
+  // Source the auth gate from the Supabase session — the previous code read
+  // 'auth_token' from localStorage, but that key is NEVER written anywhere in
+  // the codebase. Every getItem returned null, hasAuth was always false, both
+  // queries below were permanently disabled, and the drawer rendered with
+  // reservation-only data — guest memories, preferences, notes, occasions,
+  // and the real churn_risk_score were ALL silently missing in production.
+  // Same root cause as the LS_RESTAURANT_ID purge (commit 26231a8d).
+  // authFetch reads from supabase.auth.getSession() so we don't need to thread
+  // the token explicitly anywhere here.
+  const { user } = useAuth();
+  const hasAuth = !!user;
 
   // Fetch guest context (memories) — only when authenticated
   const { data: guestCtx } = useQuery<GuestContext>({
     queryKey: ['guest-context', phone],
     queryFn: async () => {
-      const apiBase = import.meta.env.VITE_API_BASE_URL || '/api';
-      const res = await fetch(`${apiBase}/guest-context?phone=${encodeURIComponent(phone!)}`, {
-        headers: { Authorization: `Bearer ${authToken}` },
-      });
+      const res = await authFetch(`/api/guest-context?phone=${encodeURIComponent(phone!)}`);
       if (!res.ok) return null;
       return res.json();
     },
@@ -67,10 +74,7 @@ export default function CustomerProfileDrawer({ reservation, onClose }: Customer
   const { data: ltvData } = useQuery<LtvData>({
     queryKey: ['customer-ltv', phone],
     queryFn: async () => {
-      const apiBase = import.meta.env.VITE_API_BASE_URL || '/api';
-      const res = await fetch(`${apiBase}/ltv?action=get&customer_id=${encodeURIComponent(phone!)}`, {
-        headers: { Authorization: `Bearer ${authToken}` },
-      });
+      const res = await authFetch(`/api/ltv?action=get&customer_id=${encodeURIComponent(phone!)}`);
       if (!res.ok) return null;
       const data = await res.json();
       return data.customer || data;

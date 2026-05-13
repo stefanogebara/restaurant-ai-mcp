@@ -199,7 +199,8 @@
       "policy": "Política",
       "guest": "Cliente",
       "errorSave": "Falha ao salvar nota",
-      "errorDelete": "Falha ao excluir nota"
+      "errorDelete": "Falha ao excluir nota",
+      "deleteNote": "Excluir nota"
     },
     "stats": {
       "reservations": "Reservas de Hoje",

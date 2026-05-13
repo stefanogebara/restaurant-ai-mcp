@@ -199,7 +199,8 @@
       "policy": "Policy",
       "guest": "Guest",
       "errorSave": "Failed to save note",
-      "errorDelete": "Failed to delete note"
+      "errorDelete": "Failed to delete note",
+      "deleteNote": "Delete note"
     },
     "stats": {
       "reservations": "Today's Reservations",

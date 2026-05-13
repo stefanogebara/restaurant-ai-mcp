@@ -123,7 +123,7 @@ export default function ManagerNotesPanel() {
       )}
 
       {isLoading ? (
-        <div role="status" aria-label="Loading notes" className="animate-pulse space-y-2">
+        <div role="status" aria-label={t('common.loading', 'Loading')} className="animate-pulse space-y-2">
           <div className="h-4 bg-border-gray rounded w-3/4" />
           <div className="h-4 bg-border-gray rounded w-1/2" />
         </div>
@@ -160,7 +160,7 @@ export default function ManagerNotesPanel() {
               <button
                 type="button"
                 onClick={() => handleDelete(note.id)}
-                aria-label="Delete note"
+                aria-label={t('dashboard.managerNotes.deleteNote', 'Delete note')}
                 className="shrink-0 opacity-0 group-hover:opacity-100 focus:opacity-100 text-muted-stone hover:text-red-500 transition-all p-1.5 rounded-lg"
               >
                 <ThiingsIcon name="close" pxSize={14} />

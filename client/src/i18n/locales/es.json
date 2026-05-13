@@ -216,7 +216,8 @@
       "policy": "Política",
       "guest": "Cliente",
       "errorSave": "Error al guardar la nota",
-      "errorDelete": "Error al eliminar la nota"
+      "errorDelete": "Error al eliminar la nota",
+      "deleteNote": "Eliminar nota"
     },
     "activityFeed": "Actividad Reciente",
     "revenueByPartySize": "Ingresos por Tamaño de Grupo",
