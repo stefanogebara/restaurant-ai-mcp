@@ -1398,6 +1398,10 @@
   "subscription": {
     "verifying": "Verificando tu suscripción...",
     "welcomeTo": "¡Bienvenido a {{plan}}!",
+    "welcomeGeneric": "¡Pago confirmado!",
+    "verifyFailedTitle": "No pudimos verificar tu pago",
+    "verifyFailedDesc": "Es posible que se haya cobrado tu tarjeta, pero no pudimos verificar la sesión. Si se realizó el cobro, tu suscripción se activará pronto. Contacta al soporte si esto persiste.",
+    "contactSupport": "Contactar Soporte",
     "upgradeActive": "Tu actualización está activa. Ahora tienes acceso al Agente de Voz con IA y análisis avanzados.",
     "redirecting": "Redirigiendo al panel de control...",
     "goToDashboard": "Ir al Panel",
@@ -2624,7 +2628,8 @@
     "bookingDescription": "Reserva una mesa en {{name}} en {{city}}, {{country}}. Consulta disponibilidad y reserva en línea — rápido y fácil.",
     "integrations": "Integraciones | seatable",
     "home": "seatable — Gestión de Restaurantes con IA",
-    "customerPortal": "Gestionar Reserva | seatable"
+    "customerPortal": "Gestionar Reserva | seatable",
+    "subscriptionSuccess": "Pago Confirmado | seatable"
   },
   "campaigns": {
     "title": "Campañas",

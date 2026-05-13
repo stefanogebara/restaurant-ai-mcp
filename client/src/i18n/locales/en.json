@@ -1423,6 +1423,10 @@
   "subscription": {
     "verifying": "Verifying your subscription...",
     "welcomeTo": "Welcome to {{plan}}!",
+    "welcomeGeneric": "Payment confirmed!",
+    "verifyFailedTitle": "We couldn't verify your payment",
+    "verifyFailedDesc": "Your card may have been charged, but we couldn't verify the session. If you were charged, your subscription will activate shortly. Contact support if this persists.",
+    "contactSupport": "Contact Support",
     "upgradeActive": "Your upgrade is active. You now have access to the AI Voice Agent and advanced analytics.",
     "redirecting": "Redirecting to your dashboard...",
     "goToDashboard": "Go to Dashboard",
@@ -2624,7 +2628,8 @@
     "bookingDescription": "Book a table at {{name}} in {{city}}, {{country}}. Check availability and reserve online — quick and easy.",
     "integrations": "Integrations | seatable",
     "home": "seatable — AI Restaurant Management",
-    "customerPortal": "Manage Reservation | seatable"
+    "customerPortal": "Manage Reservation | seatable",
+    "subscriptionSuccess": "Payment Confirmed | seatable"
   },
   "strategy": {
     "title": "AI Strategy Document",

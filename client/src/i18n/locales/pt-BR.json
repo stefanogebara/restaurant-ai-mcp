@@ -1424,6 +1424,10 @@
   "subscription": {
     "verifying": "Verificando sua assinatura...",
     "welcomeTo": "Bem-vindo ao {{plan}}!",
+    "welcomeGeneric": "Pagamento confirmado!",
+    "verifyFailedTitle": "Não foi possível confirmar o pagamento",
+    "verifyFailedDesc": "Seu cartão pode ter sido cobrado, mas não conseguimos verificar a sessão. Se a cobrança foi feita, sua assinatura será ativada em breve. Entre em contato com o suporte se o problema persistir.",
+    "contactSupport": "Falar com o Suporte",
     "upgradeActive": "Sua atualização está ativa. Agora você tem acesso ao Agente de Voz com IA e análises avançadas.",
     "redirecting": "Redirecionando para o processo de configuração em 3 segundos...",
     "goToDashboard": "Ir para o Painel",
@@ -2638,7 +2642,8 @@
     "bookingDescription": "Reserve uma mesa no {{name}} em {{city}}, {{country}}. Verifique disponibilidade e reserve online — rápido e fácil.",
     "integrations": "Integrações | seatable",
     "home": "seatable — Gestão de Restaurantes com IA",
-    "customerPortal": "Gerenciar Reserva | seatable"
+    "customerPortal": "Gerenciar Reserva | seatable",
+    "subscriptionSuccess": "Pagamento Confirmado | seatable"
   },
   "strategy": {
     "title": "Documento de Estratégia IA",
