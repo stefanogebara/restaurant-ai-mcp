@@ -2643,7 +2643,8 @@
     "integrations": "Integrações | seatable",
     "home": "seatable — Gestão de Restaurantes com IA",
     "customerPortal": "Gerenciar Reserva | seatable",
-    "subscriptionSuccess": "Pagamento Confirmado | seatable"
+    "subscriptionSuccess": "Pagamento Confirmado | seatable",
+    "tableConfig": "Configuração de Mesas | seatable"
   },
   "strategy": {
     "title": "Documento de Estratégia IA",

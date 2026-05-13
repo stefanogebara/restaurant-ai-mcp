@@ -2629,7 +2629,8 @@
     "integrations": "Integrations | seatable",
     "home": "seatable — AI Restaurant Management",
     "customerPortal": "Manage Reservation | seatable",
-    "subscriptionSuccess": "Payment Confirmed | seatable"
+    "subscriptionSuccess": "Payment Confirmed | seatable",
+    "tableConfig": "Table Setup | seatable"
   },
   "strategy": {
     "title": "AI Strategy Document",

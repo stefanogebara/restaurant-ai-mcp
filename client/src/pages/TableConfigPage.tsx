@@ -11,6 +11,9 @@ import DashboardLayout from '../components/layout/DashboardLayout';
 import TableConfigForm from '../components/host/TableConfigForm';
 import type { TableFormData } from '../components/host/TableConfigForm';
 import TableAdjacencyModal from '../components/host/TableAdjacencyModal';
+import ThiingsIcon from '../components/common/ThiingsIcon';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
+import { useToast } from '../contexts/ToastContext';
 
 const defaultFormData: TableFormData = {
   table_number: 1,
@@ -22,15 +25,19 @@ const defaultFormData: TableFormData = {
 
 export default function TableConfigPage() {
   const { t } = useTranslation();
+  useDocumentTitle(t('pageTitles.tableConfig', 'Table Setup | seatable'));
   const queryClient = useQueryClient();
+  // M2: use the global ToastContext instead of a local toast + setTimeout —
+  // matches the rest of the codebase, eliminates the no-cleanup setTimeout (L1),
+  // and gives consistent visual styling across pages.
+  const { success: toastSuccess, error: toastError } = useToast();
   const [selectedTable, setSelectedTable] = useState<TableConfig | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showAdjacencyModal, setShowAdjacencyModal] = useState(false);
   const [formData, setFormData] = useState<TableFormData>(defaultFormData);
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
-  const { data: tablesResponse, isLoading } = useQuery({
+  const { data: tablesResponse, isLoading, isError, refetch } = useQuery({
     queryKey: ['tableConfig'],
     queryFn: tableConfigAPI.listTables,
   });
@@ -45,10 +52,10 @@ export default function TableConfigPage() {
       queryClient.invalidateQueries({ queryKey: ['tableConfig'] });
       setShowAddModal(false);
       setFormData(defaultFormData);
-      showToast(t('settings.tableCreated'), 'success');
+      toastSuccess(t('settings.tableCreated'));
     },
     onError: (error: ApiError) => {
-      showToast(error.response?.data?.error || t('settings.tableCreateFailed'), 'error');
+      toastError(error.response?.data?.error || t('settings.tableCreateFailed'));
     },
   });
 
@@ -58,10 +65,10 @@ export default function TableConfigPage() {
       queryClient.invalidateQueries({ queryKey: ['tableConfig'] });
       setShowEditModal(false);
       setSelectedTable(null);
-      showToast(t('settings.tableUpdated'), 'success');
+      toastSuccess(t('settings.tableUpdated'));
     },
     onError: (error: ApiError) => {
-      showToast(error.response?.data?.error || t('settings.tableUpdateFailed'), 'error');
+      toastError(error.response?.data?.error || t('settings.tableUpdateFailed'));
     },
   });
 
@@ -71,10 +78,10 @@ export default function TableConfigPage() {
       queryClient.invalidateQueries({ queryKey: ['tableConfig'] });
       setShowEditModal(false);
       setSelectedTable(null);
-      showToast(t('settings.tableDeactivated'), 'success');
+      toastSuccess(t('settings.tableDeactivated'));
     },
     onError: (error: ApiError) => {
-      showToast(error.response?.data?.error || t('settings.tableDeactivateFailed'), 'error');
+      toastError(error.response?.data?.error || t('settings.tableDeactivateFailed'));
     },
   });
 
@@ -85,17 +92,12 @@ export default function TableConfigPage() {
       queryClient.invalidateQueries({ queryKey: ['tableConfig'] });
       setShowAdjacencyModal(false);
       setSelectedTable(null);
-      showToast(t('settings.adjacencyUpdated'), 'success');
+      toastSuccess(t('settings.adjacencyUpdated'));
     },
     onError: (error: ApiError) => {
-      showToast(error.response?.data?.error || t('settings.adjacencyUpdateFailed'), 'error');
+      toastError(error.response?.data?.error || t('settings.adjacencyUpdateFailed'));
     },
   });
-
-  const showToast = (message: string, type: 'success' | 'error') => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
-  };
 
   const handleAddTable = () => {
     createMutation.mutate({
@@ -147,6 +149,33 @@ export default function TableConfigPage() {
 
   if (isLoading) {
     return <DashboardLayout><SkeletonTableConfig /></DashboardLayout>;
+  }
+
+  // M1: fail loud instead of rendering a fake empty state. A list-query failure
+  // (network drop, 500, RLS glitch) previously dropped the user into the "No
+  // tables yet" prompt as if they'd never created any — terrifying for an
+  // owner who has 12 active tables. Same anti-pattern as SubscriptionSuccess
+  // H1; same fix.
+  if (isError) {
+    return (
+      <DashboardLayout>
+        <div className="flex flex-col items-center justify-center min-h-[60vh] p-6">
+          <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-8 max-w-md text-center">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <ThiingsIcon name="alert-circle" pxSize={32} className="text-red-600" />
+            </div>
+            <h3 className="text-lg font-bold text-red-900 mb-2">{t('dashboard.errorTitle')}</h3>
+            <p className="text-sm text-red-700 mb-4">{t('errors.serverError')}</p>
+            <button
+              onClick={() => refetch()}
+              className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl transition-colors"
+            >
+              {t('common.retry')}
+            </button>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
   }
 
   return (
@@ -390,16 +419,7 @@ export default function TableConfigPage() {
         />
       )}
 
-      {/* Toast */}
-      {toast && (
-        <div
-          className={`fixed bottom-4 right-4 px-6 py-3 rounded-xl z-50 ${
-            toast.type === 'success' ? 'bg-deep-charcoal text-white' : 'bg-red-600 text-white'
-          }`}
-        >
-          {toast.message}
-        </div>
-      )}
+      {/* Toast — now handled by global ToastContext via useToast() */}
     </div>
     </DashboardLayout>
   );
