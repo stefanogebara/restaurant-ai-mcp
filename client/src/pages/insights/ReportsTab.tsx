@@ -9,6 +9,7 @@ import WeeklyBusiestTimesChart from '../../components/dashboard/WeeklyBusiestTim
 import WeeklyDemographicsPanel from '../../components/dashboard/WeeklyDemographicsPanel';
 import WeeklyPreferencesPanel from '../../components/dashboard/WeeklyPreferencesPanel';
 import { useAuth } from '../../contexts/AuthContext';
+import { formatLocalDate } from '../../utils/timeFormatting';
 
 export default function ReportsTab() {
   const today = new Date();
@@ -16,8 +17,10 @@ export default function ReportsTab() {
   const { t } = useTranslation();
   const { session } = useAuth();
 
-  const [startDate, setStartDate] = useState(weekAgo.toISOString().split('T')[0]);
-  const [endDate, setEndDate] = useState(today.toISOString().split('T')[0]);
+  // Local timezone — see formatLocalDate docs. UTC made São Paulo at 23:00 see
+  // tomorrow's date as the report endpoint.
+  const [startDate, setStartDate] = useState(formatLocalDate(weekAgo));
+  const [endDate, setEndDate] = useState(formatLocalDate(today));
 
   const { data: report, isLoading, refetch } = useWeeklyReport(startDate, endDate);
 
@@ -27,8 +30,8 @@ export default function ReportsTab() {
     const diffMs = end.getTime() - start.getTime();
     const newEnd = new Date(start.getTime() - 24 * 60 * 60 * 1000);
     const newStart = new Date(newEnd.getTime() - diffMs);
-    setStartDate(newStart.toISOString().split('T')[0]);
-    setEndDate(newEnd.toISOString().split('T')[0]);
+    setStartDate(formatLocalDate(newStart));
+    setEndDate(formatLocalDate(newEnd));
   };
 
   const handleNext = () => {
@@ -37,8 +40,8 @@ export default function ReportsTab() {
     const diffMs = end.getTime() - start.getTime();
     const newStart = new Date(end.getTime() + 24 * 60 * 60 * 1000);
     const newEnd = new Date(newStart.getTime() + diffMs);
-    setStartDate(newStart.toISOString().split('T')[0]);
-    setEndDate(newEnd.toISOString().split('T')[0]);
+    setStartDate(formatLocalDate(newStart));
+    setEndDate(formatLocalDate(newEnd));
   };
 
   const [shareToast, setShareToast] = useState<string | null>(null);

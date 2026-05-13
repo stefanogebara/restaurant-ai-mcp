@@ -1,11 +1,13 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import type { UpcomingReservation, ActiveParty } from '../types/host.types';
 import { DEMO_PRESETS, type DemoPreset } from '../data/demoPresets';
+import { formatLocalDate, todayLocalISO } from '../utils/timeFormatting';
 
 // ---------- Seed data helpers ----------
 
-const today = new Date().toISOString().split('T')[0];
-const tomorrow = new Date(Date.now() + 86_400_000).toISOString().split('T')[0];
+// Local timezone — see todayLocalISO docs.
+const today = todayLocalISO();
+const tomorrow = formatLocalDate(new Date(Date.now() + 86_400_000));
 
 function departureAt(minutesFromNow: number): string {
   return new Date(Date.now() + minutesFromNow * 60_000).toISOString();

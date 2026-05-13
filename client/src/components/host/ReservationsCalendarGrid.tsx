@@ -9,6 +9,7 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import type { UpcomingReservation } from '../../types/host.types';
+import { formatLocalDate } from '../../utils/timeFormatting';
 
 interface ReservationsCalendarGridProps {
   reservations: UpcomingReservation[];
@@ -85,9 +86,8 @@ export default function ReservationsCalendarGrid({
     return map;
   }, [reservations]);
 
-  const formatDate = (date: Date) => {
-    return date.toISOString().split('T')[0];
-  };
+  // Use shared util to avoid São Paulo @ 23:00 → tomorrow's date bug.
+  const formatDate = formatLocalDate;
 
   const formatDayHeader = (date: Date) => {
     const today = new Date();

@@ -8,9 +8,12 @@
 
 import type { UpcomingReservation, ActiveParty } from '../types/host.types';
 import type { DemoWaitlistEntry } from '../hooks/useDemoState';
+import { formatLocalDate, todayLocalISO } from '../utils/timeFormatting';
 
-const today = new Date().toISOString().split('T')[0];
-const tomorrow = new Date(Date.now() + 86_400_000).toISOString().split('T')[0];
+// Local timezone — see todayLocalISO docs. UTC made São Paulo @ 23:00 see
+// tomorrow as today, mis-seeding the demo dashboard's date columns.
+const today = todayLocalISO();
+const tomorrow = formatLocalDate(new Date(Date.now() + 86_400_000));
 
 function departureAt(minutesFromNow: number): string {
   return new Date(Date.now() + minutesFromNow * 60_000).toISOString();

@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { formatLocalDate } from '../../utils/timeFormatting';
 
 export type DatePreset = 'today' | '7d' | '30d' | '90d' | 'this_month' | 'last_month' | 'custom';
 
@@ -11,24 +12,27 @@ export interface DateRangeValue {
 // eslint-disable-next-line react-refresh/only-export-components
 export function presetToRange(preset: DatePreset): { startDate: string; endDate: string } {
   const now = new Date();
-  const fmt = (d: Date) => d.toISOString().split('T')[0];
-  const today = fmt(now);
+  // Local calendar throughout — using UTC here gave São Paulo users at 23:00
+  // tomorrow's date as "today", shifting the entire reporting range by 1 day.
+  const today = formatLocalDate(now);
   switch (preset) {
     case 'today':
       return { startDate: today, endDate: today };
     case '7d':
-      return { startDate: fmt(new Date(now.getTime() - 7 * 86400000)), endDate: today };
+      return { startDate: formatLocalDate(new Date(now.getTime() - 7 * 86400000)), endDate: today };
     case '30d':
-      return { startDate: fmt(new Date(now.getTime() - 30 * 86400000)), endDate: today };
+      return { startDate: formatLocalDate(new Date(now.getTime() - 30 * 86400000)), endDate: today };
     case '90d':
-      return { startDate: fmt(new Date(now.getTime() - 90 * 86400000)), endDate: today };
+      return { startDate: formatLocalDate(new Date(now.getTime() - 90 * 86400000)), endDate: today };
     case 'this_month': {
-      const y = now.getUTCFullYear(); const m = now.getUTCMonth(); return { startDate: fmt(new Date(Date.UTC(y, m, 1))), endDate: today };
+      const y = now.getFullYear(); const m = now.getMonth();
+      return { startDate: formatLocalDate(new Date(y, m, 1)), endDate: today };
     }
     case 'last_month': {
-      const y2 = now.getUTCFullYear(); const m2 = now.getUTCMonth(); const first = new Date(Date.UTC(y2, m2 - 1, 1));
-      const last  = new Date(Date.UTC(y2, m2, 0));
-      return { startDate: fmt(first), endDate: fmt(last) };
+      const y2 = now.getFullYear(); const m2 = now.getMonth();
+      const first = new Date(y2, m2 - 1, 1);
+      const last  = new Date(y2, m2, 0);
+      return { startDate: formatLocalDate(first), endDate: formatLocalDate(last) };
     }
     default:
       return { startDate: today, endDate: today };

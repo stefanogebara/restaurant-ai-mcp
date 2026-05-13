@@ -5,6 +5,7 @@ import ReservationDetailsModal from './ReservationDetailsModal';
 import RiskBadge from './RiskBadge';
 import { hostAPI } from '../../services/api';
 import ThiingsIcon from '../common/ThiingsIcon';
+import { formatLocalDate, todayLocalISO } from '../../utils/timeFormatting';
 
 interface ReservationsCalendarProps {
   reservations: UpcomingReservation[];
@@ -77,8 +78,8 @@ export default function ReservationsCalendar({ reservations, onCheckIn, onRecord
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    const todayStr = today.toISOString().split('T')[0];
-    const tomorrowStr = tomorrow.toISOString().split('T')[0];
+    const todayStr = formatLocalDate(today);
+    const tomorrowStr = formatLocalDate(tomorrow);
 
     if (dateStr === todayStr) return t('reservationsCalendar.today');
     if (dateStr === tomorrowStr) return t('reservationsCalendar.tomorrow');
@@ -140,7 +141,7 @@ export default function ReservationsCalendar({ reservations, onCheckIn, onRecord
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
-    const dateStr = new Date().toISOString().split('T')[0];
+    const dateStr = todayLocalISO();
 
     link.setAttribute('href', url);
     link.setAttribute('download', `reservations-${dateStr}.csv`);
@@ -169,7 +170,7 @@ export default function ReservationsCalendar({ reservations, onCheckIn, onRecord
         {sortedDates.map(date => {
           const count = getReservationCount(date);
           const isSelected = selectedDate === date;
-          const isToday = date === new Date().toISOString().split('T')[0];
+          const isToday = date === todayLocalISO();
 
           return (
             <button

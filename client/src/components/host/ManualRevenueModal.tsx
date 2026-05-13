@@ -108,7 +108,7 @@ export default function ManualRevenueModal({
     setTotalRevenue('');
     setTipAmount('');
     setPartySize('2');
-    setServiceDate(new Date().toISOString().split('T')[0]);
+    setServiceDate(todayLocalISO());
     setServiceTime('');
     setNotes('');
     clearSearch();

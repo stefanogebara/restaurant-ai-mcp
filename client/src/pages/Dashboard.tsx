@@ -46,6 +46,7 @@ import ThiingsIcon from '../components/common/ThiingsIcon';
 import { LS_FIRST_RESERVATION_TRACKED, LS_LAUNCH_CHECKLIST_DONE } from '../config/localStorageKeys';
 import LaunchChecklistModal from '../components/dashboard/LaunchChecklistModal';
 import { useToast } from '../contexts/ToastContext';
+import { formatLocalDate, todayLocalISO } from '../utils/timeFormatting';
 
 function maybeTrackFirstReservation() {
   if (!localStorage.getItem(LS_FIRST_RESERVATION_TRACKED)) {
@@ -104,12 +105,14 @@ export default function Dashboard() {
   const activeParties: ActiveParty[] = dashboardData?.data?.active_parties || [];
   const restaurantSlug: string = dashboardData?.data?.slug || '';
 
-  const today = new Date().toISOString().split('T')[0];
-  const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+  // Local timezone — see todayLocalISO docs. Anti-pattern toISOString().split('T')[0]
+  // gave hosts in São Paulo at 23:00 tomorrow's date, hiding actual-today reservations.
+  const today = todayLocalISO();
+  const tomorrow = formatLocalDate(new Date(Date.now() + 86400000));
   // Day+2..Day+7 so a restaurant sees any booking made up to a week ahead.
   // Before: anything past tomorrow was invisible on the dashboard — caught
   // by an E2E that booked 2 days out and had the reservation vanish.
-  const weekEnd = new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0];
+  const weekEnd = formatLocalDate(new Date(Date.now() + 7 * 86400000));
   const todayReservations = reservations.filter((r) => r.date === today);
   const tomorrowReservations = reservations.filter((r) => r.date === tomorrow);
   const weekReservations = reservations.filter((r) => r.date > tomorrow && r.date <= weekEnd);
