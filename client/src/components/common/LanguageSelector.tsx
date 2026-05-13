@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { useMutation } from '@tanstack/react-query';
 import { languageOptions, preloadAndSwitchLanguage } from '../../i18n/config';
 import { authFetch } from '../../services/api';
-import { LS_LANGUAGE, LS_RESTAURANT_ID } from '../../config/localStorageKeys';
+import { LS_LANGUAGE } from '../../config/localStorageKeys';
 
 interface LanguageSelectorProps {
   onLanguageChange?: (language: string) => void;
@@ -26,18 +26,20 @@ export default function LanguageSelector({
       await preloadAndSwitchLanguage(languageCode);
       localStorage.setItem(LS_LANGUAGE, languageCode);
 
-      const restaurantId = localStorage.getItem(LS_RESTAURANT_ID);
-      if (restaurantId) {
-        try {
-          await authFetch('/api/restaurant-settings', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ language: languageCode }),
-          });
-        } catch (dbError) {
-          console.warn('Failed to save language to database:', dbError);
-          // Best-effort — local storage already persists the change
-        }
+      // LS_RESTAURANT_ID is read but never written anywhere — every read
+      // returned null and silently skipped the PUT. Result: language toggle
+      // persisted locally but reverted on next OAuth session.
+      // The backend resolves restaurant_id from the JWT, so we can fire the
+      // PUT unconditionally as long as the user is authenticated. Best-effort
+      // — localStorage already persists the local change.
+      try {
+        await authFetch('/api/restaurant-settings', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ language: languageCode }),
+        });
+      } catch (dbError) {
+        console.warn('Failed to save language to database:', dbError);
       }
       return languageCode;
     },

@@ -10,7 +10,7 @@ import { useTranslation } from 'react-i18next';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import { SkeletonCallTracking } from '../components/common/Skeleton';
 import { useToast } from '../contexts/ToastContext';
-import { LS_RESTAURANT_ID } from '../config/localStorageKeys';
+import { useAuth } from '../contexts/AuthContext';
 
 import { toCsv, downloadCsv } from '../utils/exportCsv';
 import CallPhoneStatusCard from '../components/call-tracking/CallPhoneStatusCard';
@@ -42,7 +42,18 @@ export default function CallTrackingDashboard() {
   const [guestProfilePhone, setGuestProfilePhone] = useState<string | null>(null);
 
   const { success: toastSuccess, error: toastError, info: toastInfo } = useToast();
-  const restaurant_id = localStorage.getItem(LS_RESTAURANT_ID) || '';
+  const { user } = useAuth();
+  // Source of truth is the JWT, not localStorage. LS_RESTAURANT_ID was read in
+  // 3 places but written nowhere — every read returned empty string, which
+  // tripped the !restaurant_id guards in all 4 mutation handlers below and
+  // bailed out with a "noRestaurantId" toast before the backend ever saw the
+  // request. usePhoneStatus was also disabled (enabled: !!restaurantId).
+  //
+  // Supabase puts the value in user_metadata.restaurant_id; the backend has
+  // a JWT-bound fallback (_authRestaurantId in phone-integration-simple.js)
+  // but we still need a truthy client-side string so the React Query enabled
+  // guard and the mutation guards pass.
+  const restaurant_id = (user?.user_metadata as { restaurant_id?: string } | undefined)?.restaurant_id || '';
 
   // ─── Queries ─────────────────────────────────────────────────────────────────
 

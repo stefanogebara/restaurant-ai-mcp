@@ -8,9 +8,6 @@
 /** Authenticated user's email address */
 export const LS_CUSTOMER_EMAIL = 'customer_email';
 
-/** Restaurant ID from JWT / OAuth flow */
-export const LS_RESTAURANT_ID = 'restaurant_id';
-
 /** Referral code captured from ?ref= query param on landing page */
 export const LS_REFERRAL_CODE = 'referral_code';
 

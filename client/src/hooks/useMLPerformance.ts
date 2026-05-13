@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { authFetch } from '../services/api';
 import { DASHBOARD_POLL_INTERVAL, ANALYTICS_POLL_INTERVAL, ANALYTICS_STALE_TIME } from '../config/constants';
-import { LS_RESTAURANT_ID } from '../config/localStorageKeys';
 
 export interface MLROIData {
   summary: {
@@ -54,9 +53,9 @@ export function useQuickStats() {
   return useQuery<QuickStats>({
     queryKey: ['ml-quick-stats'],
     queryFn: async () => {
-      const restaurant_id = localStorage.getItem(LS_RESTAURANT_ID) || '';
-      const restaurantParam = restaurant_id ? `&restaurant_id=${restaurant_id}` : '';
-      const response = await authFetch(`/api/ml-performance?action=quick-stats${restaurantParam}`);
+      // Backend resolves restaurant_id from the JWT — no need to read from
+      // localStorage (which was never populated). Drop the empty query param.
+      const response = await authFetch(`/api/ml-performance?action=quick-stats`);
       if (!response.ok) throw new Error('Failed to fetch quick stats');
       const result = await response.json();
       if (!result.success) throw new Error(result.error || 'Failed to fetch stats');
