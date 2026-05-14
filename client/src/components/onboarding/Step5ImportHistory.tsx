@@ -52,11 +52,11 @@ export default function Step5ImportHistory({ onNext }: Step5ImportHistoryProps) 
       });
       setResult(data);
     } catch (err: unknown) {
-      const msg =
+      const backendError =
         err && typeof err === 'object' && 'response' in err
-          ? ((err as { response?: { data?: { error?: string } } }).response?.data?.error ?? 'Upload failed')
-          : 'Upload failed';
-      setError(msg);
+          ? (err as { response?: { data?: { error?: string } } }).response?.data?.error
+          : undefined;
+      setError(backendError || t('onboarding.importError'));
     } finally {
       setIsUploading(false);
     }

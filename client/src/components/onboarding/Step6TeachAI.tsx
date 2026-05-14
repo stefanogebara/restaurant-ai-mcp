@@ -92,13 +92,11 @@ export default function Step6TeachAI({
       setPhase('chatting');
       setTimeout(() => inputRef.current?.focus(), 100);
     } catch (err: unknown) {
-      const message = axios.isAxiosError(err)
-        ? (err.response?.data?.error as string) || 'Failed to start interview.'
-        : 'Failed to start interview.';
-      setError(message);
+      const backendError = axios.isAxiosError(err) ? (err.response?.data?.error as string) : undefined;
+      setError(backendError || t('onboarding.interviewStartFailed'));
       setPhase('idle');
     }
-  }, [restaurantName, city, country, website]);
+  }, [restaurantName, city, country, website, t]);
 
   // Send a message in the interview
   async function sendMessage(text: string) {
@@ -127,17 +125,17 @@ export default function Step6TeachAI({
         setPhase('generating');
         try {
           await api.post('/restaurant-learning/generate-persona', { session_id: sessionId });
-          setPhase('complete');
-        } catch {
-          // Persona generation failed but interview data is saved
-          setPhase('complete');
+        } catch (personaErr) {
+          // Persona generation failed — the interview transcript is still
+          // saved server-side and the persona can be regenerated later, so we
+          // don't block the user. Log it so Sentry catches a wide outage.
+          console.error('[Step6TeachAI] persona generation failed', personaErr);
         }
+        setPhase('complete');
       }
     } catch (err: unknown) {
-      const message = axios.isAxiosError(err)
-        ? (err.response?.data?.error as string) || 'Failed to send message.'
-        : 'Failed to send message.';
-      setError(message);
+      const backendError = axios.isAxiosError(err) ? (err.response?.data?.error as string) : undefined;
+      setError(backendError || t('onboarding.interviewSendFailed'));
     } finally {
       setIsSending(false);
       setTimeout(() => inputRef.current?.focus(), 100);
@@ -397,8 +395,9 @@ export default function Step6TeachAI({
               setPhase('generating');
               try {
                 await api.post('/restaurant-learning/generate-persona', { session_id: sessionId });
-              } catch {
-                // Best effort
+              } catch (personaErr) {
+                // Best effort — transcript is saved, persona regenerable later.
+                console.error('[Step6TeachAI] persona generation failed (finish early)', personaErr);
               }
               setPhase('complete');
             }}
