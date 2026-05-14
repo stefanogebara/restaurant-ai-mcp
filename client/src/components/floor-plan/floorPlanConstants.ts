@@ -48,9 +48,14 @@ export function getTablePxSize(table: Table) {
   return { w: gridSize.width * CELL, h: gridSize.height * CELL };
 }
 
-export const snapToGrid = (px: number, py: number) => ({
-  gx: Math.max(0, Math.min(GRID_COLS - 1, Math.round(px / CELL))),
-  gy: Math.max(0, Math.min(GRID_ROWS - 1, Math.round(py / CELL))),
+/**
+ * Snap a pixel position to the grid. tableW/tableH are the table's footprint
+ * in grid cells — the snapped cell is clamped so a multi-cell table (rectangle,
+ * booth) can't be saved hanging off the right/bottom edge of the grid.
+ */
+export const snapToGrid = (px: number, py: number, tableW = 1, tableH = 1) => ({
+  gx: Math.max(0, Math.min(GRID_COLS - tableW, Math.round(px / CELL))),
+  gy: Math.max(0, Math.min(GRID_ROWS - tableH, Math.round(py / CELL))),
 });
 
 // ── Shape / capacity options ──────────────────────────────────────────────────
@@ -66,6 +71,24 @@ export const SHAPES: { value: TableShape; i18nKey: string; label: string }[] = [
 ];
 
 export const CAPACITIES = [2, 4, 6, 8, 10];
+
+// Raw table.shape value → floorPlan.shape.* i18n key. Covers legacy/aliased
+// shapes ('circle' → round, 'oval' → rectangle) not offered in the picker.
+const SHAPE_I18N_KEY: Record<string, string> = {
+  round: 'round',
+  circle: 'round',
+  square: 'square',
+  rectangle: 'rectangle',
+  oval: 'rectangle',
+  booth: 'booth',
+  'bar-stool': 'barStool',
+};
+
+/** i18n key under floorPlan.shape.* for a raw table.shape value. */
+export function getShapeLabelKey(shape?: string | null): string {
+  const key = SHAPE_I18N_KEY[(shape || 'round').toLowerCase()] ?? 'round';
+  return `floorPlan.shape.${key}`;
+}
 
 // ── Legend items ──────────────────────────────────────────────────────────────
 

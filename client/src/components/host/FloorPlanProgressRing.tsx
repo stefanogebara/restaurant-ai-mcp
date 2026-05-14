@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { formatTime } from './floorPlanHelpers';
 import type { PartyInfo } from './floorPlanHelpers';
 
@@ -9,6 +10,7 @@ interface ProgressRingProps {
 }
 
 export default function FloorPlanProgressRing({ cx, cy, radius, party }: ProgressRingProps) {
+  const { t } = useTranslation();
   const total = party.timeElapsed + party.timeRemaining;
   const progress = party.isOverdue ? 1 : (total > 0 ? Math.min(party.timeElapsed / total, 1) : 0);
   const circ = 2 * Math.PI * radius;
@@ -32,7 +34,7 @@ export default function FloorPlanProgressRing({ cx, cy, radius, party }: Progres
         fontSize={9} fontWeight={600} fill={ringColor}
         fontFamily="Inter,-apple-system,sans-serif">
         {party.isOverdue
-          ? `+${formatTime(Math.abs(party.timeRemaining))} over`
+          ? `+${formatTime(Math.abs(party.timeRemaining))} ${t('floorPlan.over', 'over')}`
           : formatTime(party.timeElapsed)}
       </text>
     </g>

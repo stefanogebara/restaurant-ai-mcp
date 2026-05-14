@@ -3,6 +3,7 @@ import type { Table } from '../../types/host.types';
 import { getStatusStyle, statusLabel } from './floorPlanHelpers';
 import type { PartyInfo } from './floorPlanHelpers';
 import { formatTime } from './floorPlanHelpers';
+import { getShapeLabelKey } from '../floor-plan/floorPlanConstants';
 
 interface HoverCardProps {
   table: Table;
@@ -29,7 +30,7 @@ export default function FloorPlanHoverCard({
         .map(t => t!.table_number)
     : [];
   const combinedCapacity = joinableNames.length > 0 && allTables
-    ? table.capacity + table.joinable_with
+    ? (table.capacity || 0) + table.joinable_with
         .map(id => allTables.find(t => t.id === id))
         .filter(Boolean)
         .reduce((sum, t) => sum + (t!.capacity || 0), 0)
@@ -68,7 +69,7 @@ export default function FloorPlanHoverCard({
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ fontWeight: 700, fontSize: 13 }}>
-            Table {table.table_number}
+            {t('floorPlan.tableLabel', 'Table')} {table.table_number}
           </span>
           <span style={{
             fontSize: 10, fontWeight: 600, padding: '2px 7px', borderRadius: 6,
@@ -80,7 +81,7 @@ export default function FloorPlanHoverCard({
 
         <div style={{ color: '#78716C', fontSize: 11, marginTop: 2 }}>
           {table.capacity} {t('floorPlan.seats', 'seats')} &middot;{' '}
-          {(table.shape || 'Round').charAt(0).toUpperCase() + (table.shape || 'round').slice(1)}{' '}
+          {t(getShapeLabelKey(table.shape))}{' '}
           &middot; {t(`floorPlan.location.${(table.location || 'Indoor').toLowerCase()}`, table.location || 'Indoor')}
         </div>
 

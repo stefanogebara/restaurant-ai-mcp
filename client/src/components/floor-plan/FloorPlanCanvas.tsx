@@ -99,7 +99,10 @@ export default function FloorPlanCanvas({
             style={{ minHeight: 380, minWidth: 400, maxWidth: '100%', touchAction: 'none' }}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
-            onPointerLeave={onPointerUp}
+            /* No onPointerLeave={onPointerUp}: handlePointerDown calls
+               setPointerCapture, so pointerup is delivered even when the
+               cursor leaves the SVG. Binding onPointerLeave here committed a
+               premature save mid-drag whenever the cursor grazed the edge. */
           >
             <defs>
               <style>{EDITOR_CSS}</style>

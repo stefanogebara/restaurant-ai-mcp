@@ -49,7 +49,10 @@ export default function FloorPlanView({
     activeParties.forEach(party => {
       (party.tables || []).forEach(tid => {
         map.set(tid, {
-          guestName: party.customer_name,
+          // customer_name is typed string but the payload is untrusted — a
+          // null name would crash `guestName.split(' ')` and white-screen the
+          // whole SVG. Coerce here so PartyInfo.guestName stays an honest string.
+          guestName: party.customer_name || '',
           partySize: party.party_size,
           isVIP: party.is_vip,
           specialOccasion: party.special_occasion,

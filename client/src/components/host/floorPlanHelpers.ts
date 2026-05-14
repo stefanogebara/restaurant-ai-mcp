@@ -88,9 +88,16 @@ export const getTableSize = (table: Table) => {
   return { w: s, h: s };
 };
 
+/**
+ * True if a location has any deliberately-positioned table. Uses `.some()`,
+ * not `.every()`: a freshly-added table sits at (0,0) until dragged, and with
+ * `.every()` that one origin table would flip the whole location back to
+ * auto-layout — scrambling every hand-placed table on the dashboard. This
+ * matches the editor's own `needsAutoLayout = !some(...)` logic.
+ */
 export const hasPositionData = (tables: Table[]) =>
   tables.length > 0 &&
-  tables.every(t =>
+  tables.some(t =>
     (t.position_x !== undefined && t.position_x !== null) &&
     (t.position_y !== undefined && t.position_y !== null) &&
     (t.position_x !== 0 || t.position_y !== 0),

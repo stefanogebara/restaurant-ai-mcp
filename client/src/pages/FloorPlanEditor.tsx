@@ -6,7 +6,7 @@
  */
 
 import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { hostAPI } from '../services/api';
 import { useToast } from '../contexts/ToastContext';
@@ -155,6 +155,67 @@ export default function FloorPlanEditor() {
     };
   }, []);
 
+  // ─── Cache patching ───────────────────────────────────────────────────────────
+
+  // Immutably patch a single table inside the raw ['dashboard'] cache shape.
+  // Note: setQueryData operates on the *un-selected* cache (res.data.tables),
+  // not the Table[] the `select` produces.
+  type DashboardCache = { data?: { tables?: Table[] } } | undefined;
+  const patchTableInCache = useCallback((tableId: string, patch: Partial<Table>) => {
+    queryClient.setQueryData<DashboardCache>(['dashboard'], (old) => {
+      if (!old?.data?.tables) return old;
+      return {
+        ...old,
+        data: {
+          ...old.data,
+          tables: old.data.tables.map((tbl) =>
+            tbl.id === tableId ? { ...tbl, ...patch } : tbl,
+          ),
+        },
+      };
+    });
+  }, [queryClient]);
+
+  // ─── Mutations ────────────────────────────────────────────────────────────────
+
+  // Drag-save as a proper optimistic mutation. onMutate cancels any in-flight
+  // ['dashboard'] refetch (closing the race where a stale refetch resolving
+  // after our save snapped the table back to its old cell), patches the cache
+  // optimistically, and snapshots the previous state for rollback on error.
+  const positionMutation = useMutation({
+    mutationFn: ({ id, gx, gy }: { id: string; gx: number; gy: number }) =>
+      hostAPI.updateTablePosition(id, gx, gy),
+    onMutate: async ({ id, gx, gy }) => {
+      await queryClient.cancelQueries({ queryKey: ['dashboard'] });
+      const previous = queryClient.getQueryData<DashboardCache>(['dashboard']);
+      patchTableInCache(id, { position_x: gx, position_y: gy });
+      return { previous };
+    },
+    onError: (err, _vars, context) => {
+      console.error('Failed to save position:', err);
+      if (context?.previous) queryClient.setQueryData(['dashboard'], context.previous);
+      setSaveStatus('idle');
+      toastError(t('errors.serverError'));
+    },
+    onSuccess: () => showSaved(),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
+  });
+
+  // Link/unlink as a proper mutation — the previous fire-and-forget
+  // promise.then().catch() had no cache reconciliation and swallowed which
+  // pair failed. onSettled re-syncs joinable_with from the server.
+  const linkMutation = useMutation({
+    mutationFn: ({ sourceId, targetId, isLinked }: { sourceId: string; targetId: string; isLinked: boolean }) =>
+      isLinked ? hostAPI.unlinkTables(sourceId, targetId) : hostAPI.linkTables(sourceId, targetId),
+    onError: (err) => {
+      console.error('Failed to link/unlink tables:', err);
+      setSaveStatus('idle');
+      toastError(t('errors.serverError'));
+    },
+    onSuccess: () => showSaved(),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
+  });
+
   // ─── Coordinate helper ────────────────────────────────────────────────────────
 
   const svgPoint = useCallback((clientX: number, clientY: number) => {
@@ -177,16 +238,12 @@ export default function FloorPlanEditor() {
       if (!linkSource) {
         setLinkSource(table.id);
       } else if (linkSource !== table.id) {
-        const isLinked =
+        const isLinked = Boolean(
           table.joinable_with?.includes(linkSource) ||
-          tables.find(t => t.id === linkSource)?.joinable_with?.includes(table.id);
+          tables.find(t => t.id === linkSource)?.joinable_with?.includes(table.id),
+        );
         showSaving();
-        const promise = isLinked
-          ? hostAPI.unlinkTables(linkSource, table.id)
-          : hostAPI.linkTables(linkSource, table.id);
-        promise
-          .then(() => { queryClient.invalidateQueries({ queryKey: ['dashboard'] }); showSaved(); })
-          .catch(() => { setSaveStatus('idle'); toastError(t('errors.serverError')); });
+        linkMutation.mutate({ sourceId: linkSource, targetId: table.id, isLinked });
         setLinkSource(null);
       }
       return;
@@ -201,7 +258,7 @@ export default function FloorPlanEditor() {
     setDraggingId(table.id);
     setDragPos({ x: gx * CELL, y: gy * CELL });
     setSelectedTable(null);
-  }, [linkMode, linkSource, tables, svgPoint, autoPositions, queryClient, showSaving, showSaved]);
+  }, [linkMode, linkSource, tables, svgPoint, autoPositions, showSaving, linkMutation]);
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
     if (!draggingId) return;
@@ -217,21 +274,22 @@ export default function FloorPlanEditor() {
     });
   }, [draggingId, filteredTables, svgPoint, dragOffset]);
 
-  const handlePointerUp = useCallback(async () => {
+  const handlePointerUp = useCallback(() => {
     if (!draggingId || !dragPos) return;
-    const { gx, gy } = snapToGrid(dragPos.x, dragPos.y);
+    // Clamp the snap to the table's grid footprint so a multi-cell table
+    // can't be saved hanging off the right/bottom edge of the grid.
+    const dragging = filteredTables.find(tbl => tbl.id === draggingId);
+    const { w, h } = dragging ? getTablePxSize(dragging) : { w: CELL, h: CELL };
+    const { gx, gy } = snapToGrid(
+      dragPos.x, dragPos.y, Math.round(w / CELL), Math.round(h / CELL),
+    );
+    const id = draggingId;
     setDraggingId(null); setDragPos(null);
     showSaving();
-    try {
-      await hostAPI.updateTablePosition(draggingId, gx, gy);
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      showSaved();
-    } catch (err) {
-      console.error('Failed to save position:', err);
-      setSaveStatus('idle');
-      toastError(t('errors.serverError'));
-    }
-  }, [draggingId, dragPos, queryClient, showSaving, showSaved, toastError, t]);
+    // Optimistic mutation: onMutate cancels in-flight refetches + patches the
+    // cache, onError rolls back, onSettled re-syncs. No drag-save ↔ refetch race.
+    positionMutation.mutate({ id, gx, gy });
+  }, [draggingId, dragPos, filteredTables, showSaving, positionMutation]);
 
   // ─── Table click ──────────────────────────────────────────────────────────────
 
