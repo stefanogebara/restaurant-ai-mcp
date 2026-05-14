@@ -937,6 +937,7 @@
     "emailInvalid": "Formato de e-mail inválido",
     "websiteLabel": "Website (Opcional)",
     "websitePlaceholder": "https://seurestaurante.com.br",
+    "emailPlaceholder": "contato@restaurante.com.br",
     "serviceTypeLabel": "Que tipo de serviço seu restaurante oferece?",
     "serviceBreakfastLunch": "Café da Manhã & Almoço",
     "serviceBreakfastLunchDesc": "Abre cedo, fecha à tarde",

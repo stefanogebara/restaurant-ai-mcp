@@ -82,6 +82,19 @@ const DAY_KEYS: Record<string, string> = {
   Sunday: 'onboarding.daySunday',
 };
 
+/**
+ * A day's hours are valid when close is after open — OR close is exactly
+ * '00:00', which the availability backend (api/portal.js) explicitly treats
+ * as midnight / end-of-day. Any *other* close <= open is a real
+ * misconfiguration: general overnight hours (e.g. 18:00→02:00) are not yet
+ * supported downstream, so they must stay blocked here rather than silently
+ * produce zero bookable slots.
+ */
+function isDayHoursValid(openTime: string, closeTime: string): boolean {
+  if (closeTime === '00:00') return true;
+  return closeTime > openTime;
+}
+
 export default function Step2Contact({ data, updateData, onNext, onBack }: OnboardingStepProps) {
   const { t } = useTranslation();
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -143,8 +156,26 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
     return Object.keys(newErrors).length === 0;
   };
 
+  // Full sweep of every open day's hours. hoursErrors is otherwise only
+  // populated incrementally by updateDayHours — a user who never touches a
+  // time field could previously Continue past invalid restored/preset hours.
+  const validateAllHours = (): boolean => {
+    const newHoursErrors: Record<string, string> = {};
+    data.business_hours.forEach((day) => {
+      if (day.is_open && !isDayHoursValid(day.open_time, day.close_time)) {
+        newHoursErrors[day.day] = t('onboarding.closingAfterOpening');
+      }
+    });
+    setHoursErrors(newHoursErrors);
+    return Object.keys(newHoursErrors).length === 0;
+  };
+
   const handleContinue = () => {
-    if (validate() && Object.keys(hoursErrors).length === 0 && onNext) {
+    // Compute both before the &&, so phone/email AND hours errors both render
+    // even when the first check fails.
+    const contactOk = validate();
+    const hoursOk = validateAllHours();
+    if (contactOk && hoursOk && onNext) {
       onNext();
     }
   };
@@ -166,15 +197,8 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
     updatedHours[index] = updatedDay;
     updateData({ business_hours: updatedHours });
 
-    if (field === 'close_time' && typeof value === 'string') {
-      if (value <= updatedDay.open_time) {
-        setHoursErrors(prev => ({ ...prev, [updatedDay.day]: t('onboarding.closingAfterOpening') }));
-      } else {
-        setHoursErrors(prev => { const next = { ...prev }; delete next[updatedDay.day]; return next; });
-      }
-    }
-    if (field === 'open_time' && typeof value === 'string') {
-      if (updatedDay.close_time <= value) {
+    if ((field === 'close_time' || field === 'open_time') && typeof value === 'string') {
+      if (!isDayHoursValid(updatedDay.open_time, updatedDay.close_time)) {
         setHoursErrors(prev => ({ ...prev, [updatedDay.day]: t('onboarding.closingAfterOpening') }));
       } else {
         setHoursErrors(prev => { const next = { ...prev }; delete next[updatedDay.day]; return next; });
@@ -223,7 +247,7 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
               setErrors((prev) => ({ ...prev, email: t('onboarding.emailInvalid') }));
             }
           }}
-          placeholder="contact@restaurant.com"
+          placeholder={t('onboarding.emailPlaceholder', 'contact@restaurant.com')}
           className="w-full px-4 py-3 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent transition-all"
         />
         {errors.email && (
