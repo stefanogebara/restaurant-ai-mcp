@@ -10,7 +10,7 @@
  * - Average dining duration
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import type { OnboardingStepProps } from '../../types/onboarding.types';
@@ -69,6 +69,9 @@ const SERVICE_PRESETS = {
 
 type ServiceType = keyof typeof SERVICE_PRESETS;
 
+// Default service type shown when the step first renders.
+const DEFAULT_SERVICE_TYPE: ServiceType = 'lunch_dinner';
+
 const DAY_KEYS: Record<string, string> = {
   Monday: 'onboarding.dayMonday',
   Tuesday: 'onboarding.dayTuesday',
@@ -83,8 +86,14 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
   const { t } = useTranslation();
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [hoursErrors, setHoursErrors] = useState<Record<string, string>>({});
-  const [selectedServiceType, setSelectedServiceType] = useState<ServiceType>('lunch_dinner');
-  const [useMultiplePeriods, setUseMultiplePeriods] = useState(false);
+  const [selectedServiceType, setSelectedServiceType] = useState<ServiceType>(DEFAULT_SERVICE_TYPE);
+  // Seed from the default preset so the multi-period banner + service-periods
+  // summary render correctly on first paint. (The old init effect guarded on
+  // open_time === '09:00', but the orchestrator default is '12:00' — so it
+  // was dead code and this flag was wrongly stuck at false.)
+  const [useMultiplePeriods, setUseMultiplePeriods] = useState(
+    SERVICE_PRESETS[DEFAULT_SERVICE_TYPE].periods.length > 1
+  );
 
   const handlePhoneChange = useCallback((fullNumber: string, isValid: boolean) => {
     updateData({ phone_number: fullNumber });
@@ -113,14 +122,6 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
     }));
     updateData({ business_hours: updatedHours });
   };
-
-  // Initialize with lunch_dinner preset on first render
-  useEffect(() => {
-    if (data.business_hours[0]?.open_time === '09:00') {
-      applyServicePreset('lunch_dinner');
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
