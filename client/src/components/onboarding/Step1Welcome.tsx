@@ -29,8 +29,20 @@ const RESTAURANT_TYPES = [
   { value: 'other', label: 'Other' },
 ];
 
+/**
+ * Human-readable name for a BCP-47 language code, localized to the active UI
+ * language. Falls back to the raw code if Intl.DisplayNames can't resolve it.
+ */
+function languageDisplayName(code: string, uiLocale: string): string {
+  try {
+    return new Intl.DisplayNames([uiLocale], { type: 'language' }).of(code) || code;
+  } catch {
+    return code;
+  }
+}
+
 export default function Step1Welcome({ data, updateData, onNext, isDemoLoading }: OnboardingStepProps & { isDemoLoading?: boolean }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const validate = () => {
@@ -164,7 +176,7 @@ export default function Step1Welcome({ data, updateData, onNext, isDemoLoading }
                 {t('onboarding.languageAutoSet')}
               </p>
               <p className="text-xs text-stone-gray">
-                {t('onboarding.languageBasedOnCountry')} <span className="text-burgundy font-medium">{data.language}</span>
+                {t('onboarding.languageBasedOnCountry')} <span className="text-burgundy font-medium">{languageDisplayName(data.language, i18n.language)}</span>
               </p>
             </div>
           </div>

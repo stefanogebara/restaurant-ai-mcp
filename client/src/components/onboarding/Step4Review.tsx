@@ -29,7 +29,10 @@ export default function Step4Review({ data, onBack, onComplete, isSubmitting, go
       step: 1,
       items: [
         { label: t('onboarding.labelName'), value: data.restaurant_name },
-        { label: t('onboarding.labelType'), value: data.restaurant_type },
+        // Resolve the restaurant_type slug to its localized label, the same
+        // way Step1 renders it — otherwise the review screen shows the raw
+        // enum value ("fine-dining") instead of "Fine Dining" / "Alta Gastronomia".
+        { label: t('onboarding.labelType'), value: t(`onboarding.restaurantTypes.${data.restaurant_type}`, data.restaurant_type) },
         { label: t('onboarding.labelLocation'), value: `${data.city}, ${data.country}` },
       ],
     },
