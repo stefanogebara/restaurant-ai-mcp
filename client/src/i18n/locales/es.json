@@ -164,7 +164,8 @@
       "occupancy": "Ocupación",
       "activeParties": "Mesas Activas",
       "estWaitTime": "Tiempo de Espera",
-      "noWait": "Sin Espera"
+      "noWait": "Sin Espera",
+      "minAvg": "~{{count}} min prom."
     },
     "paymentFailed": "Pago fallido",
     "paymentFailedHint": "Actualiza tu método de pago para mantener tu suscripción activa.",

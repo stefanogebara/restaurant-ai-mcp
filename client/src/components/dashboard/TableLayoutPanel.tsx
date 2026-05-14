@@ -63,7 +63,7 @@ export default function TableLayoutPanel({
 
   if (isLoading) {
     return (
-      <div role="status" aria-label="Loading table layout" className="p-6">
+      <div role="status" aria-label={t('common.loading')} className="p-6">
         <div className="h-6 w-40 bg-border-gray rounded-lg animate-pulse mb-4" />
         <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
           {Array.from({ length: 10 }).map((_, i) => (
@@ -171,7 +171,7 @@ export default function TableLayoutPanel({
               </div>
               <button
                 onClick={() => setSelectedTable(null)}
-                aria-label="Close"
+                aria-label={t('common.close')}
                 className="text-muted-stone hover:text-stone-gray transition-colors p-1.5 rounded-lg"
               >
                 <ThiingsIcon name="close" pxSize={20} />

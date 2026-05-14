@@ -217,7 +217,8 @@
       "occupancy": "Occupancy",
       "activeParties": "Active Parties",
       "estWaitTime": "Est. Wait Time",
-      "noWait": "No Wait"
+      "noWait": "No Wait",
+      "minAvg": "~{{count}} min avg"
     },
     "survey": {
       "title": "Satisfaction Survey",

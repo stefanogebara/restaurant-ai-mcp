@@ -36,7 +36,7 @@ export default function StatsBar({
 
   if (isLoading) {
     return (
-      <div role="status" aria-label="Loading stats" className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+      <div role="status" aria-label={t('common.loading')} className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
         {Array.from({ length: 4 }).map((_, i) => (
           <div key={i} className="rounded-lg p-5 border border-border-gray">
             <div className="h-3 w-20 bg-border-gray rounded-full animate-pulse mb-3" />
@@ -80,8 +80,8 @@ export default function StatsBar({
         label={t('dashboard.stats.guests')}
         value={String(totalGuests)}
         change={waitlistCount > 0
-          ? `${waitlistCount} ${t('dashboard.stats.waiting')}${estimatedWaitTime ? ` · ~${estimatedWaitTime} min avg` : ''}`
-          : estimatedWaitTime ? `~${estimatedWaitTime} min avg` : ''}
+          ? `${waitlistCount} ${t('dashboard.stats.waiting')}${estimatedWaitTime ? ` · ${t('dashboard.stats.minAvg', { count: estimatedWaitTime })}` : ''}`
+          : estimatedWaitTime ? t('dashboard.stats.minAvg', { count: estimatedWaitTime }) : ''}
         changeColor="text-amber-600"
         barPercent={totalGuests > 0 ? Math.min(Math.round((totalGuests / (reservationsToday * 3 || 1)) * 100), 100) : 0}
         barColor={colors.stoneGray}

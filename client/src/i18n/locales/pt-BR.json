@@ -217,7 +217,8 @@
       "occupancy": "Ocupação",
       "activeParties": "Mesas Ativas",
       "estWaitTime": "Tempo de Espera",
-      "noWait": "Sem Espera"
+      "noWait": "Sem Espera",
+      "minAvg": "~{{count}} min em média"
     },
     "survey": {
       "title": "Pesquisa de Satisfação",
