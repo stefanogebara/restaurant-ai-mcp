@@ -186,9 +186,17 @@ function PhoneVerificationPanel() {
       return res.json();
     },
     onSuccess: (data) => {
-      setMessage({ type: data.success ? 'success' : 'error', text: data.message || data.error });
+      setMessage({
+        type: data.success ? 'success' : 'error',
+        text: data.message || data.error || t('settings.requestCodeFailed'),
+      });
       // Meta's phone status flips to PENDING after a successful request — refresh.
       if (data.success) qc.invalidateQueries({ queryKey: ['whatsapp-phone-status'] });
+    },
+    // Without this, a network error or non-JSON response (res.json() throws)
+    // left the button silently re-enabled with zero feedback.
+    onError: () => {
+      setMessage({ type: 'error', text: t('settings.requestCodeFailed') });
     },
   });
 
@@ -207,8 +215,12 @@ function PhoneVerificationPanel() {
         setCode('');
         qc.invalidateQueries({ queryKey: ['whatsapp-phone-status'] });
       } else {
-        setMessage({ type: 'error', text: data.error });
+        setMessage({ type: 'error', text: data.error || t('settings.verifyFailed') });
       }
+    },
+    // Network error / non-JSON response — surface it instead of failing silently.
+    onError: () => {
+      setMessage({ type: 'error', text: t('settings.verifyFailed') });
     },
   });
 
@@ -499,9 +511,16 @@ export default function WhatsAppSettingsPage() {
               </a>
               <button
                 onClick={() => {
-                  navigator.clipboard.writeText(status.wa_me_link || '');
-                  setCopied(true);
-                  setTimeout(() => setCopied(false), 2000);
+                  // writeText can reject (insecure context, permissions, no
+                  // browser support) — don't show "Copied!" unless it resolved.
+                  navigator.clipboard.writeText(status.wa_me_link || '')
+                    .then(() => {
+                      setCopied(true);
+                      setTimeout(() => setCopied(false), 2000);
+                    })
+                    .catch(() => {
+                      toast.error(t('settings.copyFailed'));
+                    });
                 }}
                 className="flex-shrink-0 px-3 py-1.5 text-xs font-medium bg-soft-gray hover:bg-border-gray rounded-xl transition-colors text-stone-gray"
               >
