@@ -179,7 +179,7 @@ function PartyRow({ party, billValue, onBillChange, onComplete }: PartyRowProps)
           value={billValue}
           onChange={e => onBillChange(e.target.value)}
           className="w-24 sm:w-28 border border-border-gray rounded-lg px-2 py-1 text-xs text-deep-charcoal focus:outline-none focus:ring-1 focus:ring-[#9F1239]/30"
-          aria-label={t('dashboard.activeParties.billAmount', 'Valor da conta')}
+          aria-label={t('dashboard.activePartiesPanel.billAmount')}
         />
         <button
           type="button"

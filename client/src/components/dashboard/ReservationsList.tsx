@@ -110,7 +110,7 @@ export default function ReservationsList({
 
   if (isLoading) {
     return (
-      <div role="status" aria-label="Loading reservations" className="p-5">
+      <div role="status" aria-label={t('common.loading')} className="p-5">
         <div className="h-6 w-52 bg-border-gray rounded-lg animate-pulse mb-4" />
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
@@ -336,9 +336,13 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
 
   const isHighRisk = reservation.ml_risk_level === 'high' || reservation.ml_risk_level === 'very-high';
 
-  const initials = reservation.customer_name
+  // customer_name is typed `string`, but the search filter and avatar-hue
+  // computation both guard it with `?.` — the backend has been seen to
+  // return null here. Guard the split too, or the whole row crashes.
+  const initials = (reservation.customer_name ?? '')
     .split(' ')
     .map((n) => n[0])
+    .filter(Boolean)
     .slice(0, 2)
     .join('')
     .toUpperCase();
