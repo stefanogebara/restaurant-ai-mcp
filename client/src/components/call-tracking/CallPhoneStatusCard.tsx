@@ -99,8 +99,11 @@ export default function CallPhoneStatusCard({
               ) : (
                 <ThiingsIcon name="wifi-off" size="xs" />
               )}
-              <span className="text-sm font-medium text-deep-charcoal capitalize">
-                {phoneStatus.status === 'not_configured' ? t('callTracking.statusNotConnected') : phoneStatus.status}
+              <span className="text-sm font-medium text-deep-charcoal">
+                {phoneStatus.status === 'active' ? t('callTracking.statusActive')
+                  : phoneStatus.status === 'pending' ? t('callTracking.statusPending')
+                  : phoneStatus.status === 'error' ? t('callTracking.statusError')
+                  : t('callTracking.statusNotConnected')}
               </span>
             </div>
           </div>

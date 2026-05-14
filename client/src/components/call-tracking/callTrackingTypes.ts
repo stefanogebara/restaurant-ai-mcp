@@ -88,8 +88,11 @@ export interface CallFilter {
 
 // ─── Helper functions ──────────────────────────────────────────────────────────
 
-export function formatDate(dateString: string): string {
-  return new Date(dateString).toLocaleString(undefined, {
+export function formatDate(dateString: string | null | undefined): string {
+  if (!dateString) return '';
+  const d = new Date(dateString);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleString(undefined, {
     month: 'short',
     day: 'numeric',
     hour: '2-digit',
@@ -99,7 +102,9 @@ export function formatDate(dateString: string): string {
 
 export function formatConfiguredDate(dateString: string | null): string {
   if (!dateString) return 'N/A';
-  return new Date(dateString).toLocaleString(undefined, {
+  const d = new Date(dateString);
+  if (Number.isNaN(d.getTime())) return 'N/A';
+  return d.toLocaleString(undefined, {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
@@ -135,6 +140,16 @@ export function getSentimentColor(sentiment?: string): string {
     case 'neutral':  return 'bg-blue-500/10 text-blue-600';
     case 'negative': return 'bg-red-600/10 text-red-600';
     default:         return 'bg-warm-stone/10 text-stone-gray';
+  }
+}
+
+/** Returns an i18n key under callTracking.* — caller must pass through t() */
+export function getSentimentLabelKey(sentiment?: string): string {
+  switch (sentiment) {
+    case 'positive': return 'callTracking.sentimentPositive';
+    case 'neutral':  return 'callTracking.sentimentNeutral';
+    case 'negative': return 'callTracking.sentimentNegative';
+    default:         return 'callTracking.sentimentUnknown';
   }
 }
 

@@ -29,7 +29,7 @@ export default function CallDiagnosticsPanel({
         <button
           type="button"
           onClick={onClose}
-          aria-label="Close"
+          aria-label={t('common.close')}
           className="p-1.5 hover:bg-soft-gray rounded-lg transition-colors"
         >
           <ThiingsIcon name="close" size="sm" />

@@ -30,7 +30,10 @@ export function useCallConversations(filter: CallFilter, restaurantId: string) {
       );
       if (!res.ok) throw new Error('Failed to fetch conversations');
       const data = await res.json();
-      return { conversations: data.success ? (data.conversations || []) : [] };
+      // A 200 with { success:false } is still a failure — throwing lets React
+      // Query surface isError/retry instead of rendering a fake empty list.
+      if (!data.success) throw new Error(data.error || 'Failed to fetch conversations');
+      return { conversations: data.conversations || [] };
     },
     staleTime: ANALYTICS_STALE_TIME,
     refetchInterval: ANALYTICS_POLL_INTERVAL,
@@ -48,7 +51,8 @@ export function useCallStats(filter: CallFilter, restaurantId: string) {
       );
       if (!res.ok) throw new Error('Failed to fetch stats');
       const data = await res.json();
-      return data.success ? data.stats : null;
+      if (!data.success) throw new Error(data.error || 'Failed to fetch stats');
+      return data.stats ?? null;
     },
     staleTime: ANALYTICS_STALE_TIME,
     refetchInterval: ANALYTICS_POLL_INTERVAL,
@@ -65,7 +69,8 @@ export function usePhoneStatus(restaurantId: string) {
       );
       if (!res.ok) throw new Error('Failed to fetch phone status');
       const data = await res.json();
-      return data.success && data.restaurant ? data.restaurant : null;
+      if (!data.success) throw new Error(data.error || 'Failed to fetch phone status');
+      return data.restaurant ?? null;
     },
     enabled: !!restaurantId,
     staleTime: ANALYTICS_STALE_TIME,
@@ -79,7 +84,8 @@ export function useConversationDetail(conversationId: string | null) {
       const res = await authFetch(`/api/agent-conversations?action=get&id=${conversationId}`);
       if (!res.ok) throw new Error('Failed to fetch conversation');
       const data = await res.json();
-      return data.success ? data.conversation : null;
+      if (!data.success) throw new Error(data.error || 'Failed to fetch conversation');
+      return data.conversation ?? null;
     },
     enabled: !!conversationId,
     staleTime: Infinity,

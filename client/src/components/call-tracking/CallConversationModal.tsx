@@ -1,25 +1,78 @@
+import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
-import { type Conversation, formatDate, getOutcomeColor, getOutcomeLabelKey, getSentimentColor } from './callTrackingTypes';
+import { type Conversation, formatDate, getOutcomeColor, getOutcomeLabelKey, getSentimentColor, getSentimentLabelKey } from './callTrackingTypes';
 
 interface Props {
   conversation: Conversation;
   onClose: () => void;
 }
 
+const FOCUSABLE_SELECTOR =
+  'a[href], button:not([disabled]), textarea, input, select, audio[controls], [tabindex]:not([tabindex="-1"])';
+
 export default function CallConversationModal({ conversation, onClose }: Props) {
   const { t } = useTranslation();
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  // Modal a11y: Escape to close, body-scroll lock, focus capture + Tab trap.
+  // The audit flagged all four as missing — keyboard/screen-reader users were
+  // trapped behind the overlay with no way out.
+  useEffect(() => {
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    document.body.style.overflow = 'hidden';
+    // Move focus into the dialog so the keyboard context is the modal.
+    dialogRef.current?.focus();
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+        return;
+      }
+      if (e.key !== 'Tab' || !dialogRef.current) return;
+      const focusables = Array.from(
+        dialogRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)
+      ).filter((el) => el.offsetParent !== null);
+      if (focusables.length === 0) {
+        e.preventDefault();
+        return;
+      }
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      const active = document.activeElement;
+      if (e.shiftKey && (active === first || active === dialogRef.current)) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && active === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = '';
+      previouslyFocused?.focus?.();
+    };
+  }, [onClose]);
+
   const durationText = conversation.duration_seconds
     ? `${Math.floor(conversation.duration_seconds / 60)}m ${conversation.duration_seconds % 60}s`
     : t('callTracking.durationUnknown');
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-label={t('callTracking.conversationDetails')}
-        className="bg-white rounded-2xl border border-border-gray shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+        tabIndex={-1}
+        className="bg-white rounded-2xl border border-border-gray shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto focus:outline-none"
       >
         {/* Header */}
         <div className="sticky top-0 bg-white border-b border-border-gray p-6 flex items-center justify-between">
@@ -30,7 +83,7 @@ export default function CallConversationModal({ conversation, onClose }: Props) 
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close"
+            aria-label={t('common.close')}
             className="p-2 hover:bg-soft-gray rounded-xl transition-colors"
           >
             <ThiingsIcon name="close" size="sm" />
@@ -82,7 +135,7 @@ export default function CallConversationModal({ conversation, onClose }: Props) 
               <div>
                 <p className="text-sm text-stone-gray">{t('callTracking.sentiment', 'Sentiment')}</p>
                 <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium mt-1 ${getSentimentColor(conversation.customer_sentiment)}`}>
-                  {conversation.customer_sentiment}
+                  {t(getSentimentLabelKey(conversation.customer_sentiment))}
                 </span>
               </div>
             )}

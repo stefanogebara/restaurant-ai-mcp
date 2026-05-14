@@ -71,10 +71,12 @@ export default function CallConversationList({
       ) : (
         <div>
           {conversations.map((conv) => {
-            const startTime = new Date(conv.started_at).toLocaleTimeString(undefined, {
-              hour: '2-digit',
-              minute: '2-digit',
-            });
+            // started_at is typed string but the payload is untrusted — an
+            // invalid/missing value would otherwise render "Invalid Date".
+            const startedDate = conv.started_at ? new Date(conv.started_at) : null;
+            const startTime = startedDate && !Number.isNaN(startedDate.getTime())
+              ? startedDate.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+              : '';
             const duration = conv.duration_seconds
               ? `${Math.floor(conv.duration_seconds / 60)}:${String(conv.duration_seconds % 60).padStart(2, '0')}`
               : t('common.live', 'Live');

@@ -13,6 +13,8 @@ import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
 
 import { toCsv, downloadCsv } from '../utils/exportCsv';
+import { todayLocalISO } from '../utils/timeFormatting';
+import ThiingsIcon from '../components/common/ThiingsIcon';
 import CallPhoneStatusCard from '../components/call-tracking/CallPhoneStatusCard';
 import CallDiagnosticsPanel from '../components/call-tracking/CallDiagnosticsPanel';
 import CallFilters from '../components/call-tracking/CallFilters';
@@ -57,7 +59,7 @@ export default function CallTrackingDashboard() {
 
   // ─── Queries ─────────────────────────────────────────────────────────────────
 
-  const { data: convsResult, isLoading, refetch: refetchConversations } = useCallConversations(filter, restaurant_id);
+  const { data: convsResult, isLoading, isError, refetch: refetchConversations } = useCallConversations(filter, restaurant_id);
   const { data: stats } = useCallStats(filter, restaurant_id);
   const phoneStatusQuery = usePhoneStatus(restaurant_id);
   const { data: selectedConversation } = useConversationDetail(selectedConversationId);
@@ -138,6 +140,33 @@ export default function CallTrackingDashboard() {
     );
   }
 
+  // A failed conversations fetch must not render as an empty "no calls" page —
+  // that tells a restaurant with live call history it has none. Surface the
+  // failure explicitly with a retry, matching the dashboard error-card pattern.
+  if (isError) {
+    return (
+      <DashboardLayout>
+        <div className="min-h-[60vh] flex items-center justify-center p-6">
+          <div className="border border-[#E5E7EB] rounded-lg p-8 max-w-md text-center">
+            <div className="w-14 h-14 mx-auto mb-3 bg-red-50 rounded-2xl flex items-center justify-center">
+              <ThiingsIcon name="alert-circle" pxSize={24} />
+            </div>
+            <h2 className="text-lg font-bold text-deep-charcoal mb-2">{t('dashboard.errorTitle')}</h2>
+            <p className="text-sm text-stone-gray mb-6">{t('errors.serverError')}</p>
+            <button
+              type="button"
+              onClick={() => refetchConversations()}
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-xl transition-colors"
+            >
+              <ThiingsIcon name="refresh" size="xs" />
+              {t('common.retry')}
+            </button>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout>
       <div className="min-h-screen bg-white p-4 sm:p-6 md:p-8 lg:px-10 lg:py-8">
@@ -170,7 +199,7 @@ export default function CallTrackingDashboard() {
                     party_size: c.party_size ?? '',
                   }));
                   const columns = ['date', 'caller', 'duration_seconds', 'outcome', 'language', 'customer_name', 'party_size'];
-                  downloadCsv(`calls-${new Date().toISOString().slice(0, 10)}.csv`, toCsv(rows, columns));
+                  downloadCsv(`calls-${todayLocalISO()}.csv`, toCsv(rows, columns));
                 }}
                 disabled={!conversations.length}
                 title={!conversations.length ? t('callTracking.noCallsToExport', 'No calls to export') : ''}
