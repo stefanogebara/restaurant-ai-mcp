@@ -12,9 +12,9 @@ import { test, expect } from '@playwright/test';
  *   - Reservation submission
  *   - Confirmation page
  *
- * Uses the production "Cantina da Praca" demo restaurant (slug: cantina-da-praca)
- * which is always seeded in the database. Falls back to a generic 404 check if
- * the slug is not found (avoids false negatives in staging/preview environments).
+ * Uses the production "Race Demo Restaurant" (slug: test-restaurant-ai) which is
+ * permanently seeded in the database. Falls back to a generic 404 check if the
+ * slug is not found (avoids false negatives in staging/preview environments).
  *
  * NOTE: This test does NOT complete Stripe payment. It verifies the UI
  * renders correctly up to the point of submission. For full payment E2E,
@@ -24,7 +24,7 @@ import { test, expect } from '@playwright/test';
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 // The live-demo restaurant slug seeded permanently in the DB
-const DEMO_SLUG = 'cantina-da-praca';
+const DEMO_SLUG = 'test-restaurant-ai';
 const BOOKING_URL = `/book/${DEMO_SLUG}`;
 
 // Test guest details
@@ -47,9 +47,12 @@ function isCriticalError(text: string): boolean {
 async function isRestaurantAvailable(page: import('@playwright/test').Page): Promise<boolean> {
   const body = await page.locator('body').textContent();
   const text = body ?? '';
-  if (/not found|encountered an error|something went wrong/i.test(text)) return false;
+  // Not-found / error states are localized — the production page renders in
+  // pt-BR/es, so an English-only regex here false-positives on the error
+  // page's own <h1> and the test fails instead of skipping cleanly.
+  if (/not found|encountered an error|something went wrong|não encontrado|no encontrado|não está aceitando|no está aceptando/i.test(text)) return false;
   // Check for booking form heading or restaurant name
-  if (/reserve a table|faça sua reserva|reservar mesa/i.test(text)) return true;
+  if (/reserve a table|reserve uma mesa|faça sua reserva|reservar mesa|reservar una mesa/i.test(text)) return true;
   // Check for h1 or h2 (restaurant name)
   const hasH1 = await page.locator('h1').isVisible({ timeout: 2_000 }).catch(() => false);
   const hasH2 = await page.locator('h2').isVisible({ timeout: 2_000 }).catch(() => false);
@@ -164,8 +167,9 @@ test.describe('Booking Page — Form Interactions', () => {
       return;
     }
 
-    // BookingForm renders h1 "Reserve a Table" (or translated equivalent)
-    const heading = page.locator('h1').filter({ hasText: /reserve a table|reservar mesa|faça sua reserva/i });
+    // BookingForm renders h1 "Reserve a Table" (or translated equivalent).
+    // pt-BR: "Reserve uma mesa" · es: "Reservar una mesa"
+    const heading = page.locator('h1').filter({ hasText: /reserve a table|reserve uma mesa|reservar uma mesa|reservar una mesa|faça sua reserva/i });
     await expect(heading).toBeVisible({ timeout: 10_000 });
   });
 
@@ -196,13 +200,17 @@ test.describe('Booking Page — Form Interactions', () => {
     await expect(dateButtons.first()).toBeVisible({ timeout: 10_000 });
     await dateButtons.first().click();
 
-    // Time slot section should appear or show "no slots" message
-    await page.waitForTimeout(1_500); // wait for API response
-    const bodyText = await page.locator('body').textContent();
+    // Time slot section should appear: heading, the loading spinner copy, the
+    // "no slots" message, or actual slot buttons. pt-BR/es use 24h time
+    // ("19:00") — not AM/PM — so match a HH:MM pattern too.
+    await page.waitForTimeout(3_000); // wait for availability API response
+    const bodyText = await page.locator('body').textContent() ?? '';
     const hasTimeSection =
-      /select time|selecionar hora|seleccionar hora/i.test(bodyText ?? '') ||
-      /no available|sem horários|no hay horarios/i.test(bodyText ?? '') ||
-      /am|pm/i.test(bodyText ?? '');
+      /select time|selecionar horário|seleccionar hora/i.test(bodyText) ||
+      /checking availability|verificando disponibilidade|verificando disponibilidad/i.test(bodyText) ||
+      /no available times|sem horários|no hay horarios/i.test(bodyText) ||
+      /\b\d{1,2}:\d{2}\b/.test(bodyText) ||
+      /\b(am|pm)\b/i.test(bodyText);
     expect(hasTimeSection).toBe(true);
   });
 
@@ -212,8 +220,9 @@ test.describe('Booking Page — Form Interactions', () => {
       return;
     }
 
-    // Party size is shown as labelled pill buttons (1, 2, 3, 4, 5, 6, 7, 8+)
-    const partySizeLabel = page.locator('div').filter({ hasText: /party size|tamanho do grupo|tamaño del grupo/i }).first();
+    // Party size is shown as labelled pill buttons (1, 2, 3, 4, 5, 6, 7, 8+).
+    // pt-BR: "Número de Pessoas" · es: "Tamaño del Grupo"
+    const partySizeLabel = page.locator('div').filter({ hasText: /party size|número de pessoas|tamaño del grupo/i }).first();
     await expect(partySizeLabel).toBeVisible({ timeout: 10_000 });
   });
 
@@ -442,8 +451,10 @@ test.describe('Booking Confirmation Page', () => {
     const body = await page.locator('body').textContent();
     expect(body?.trim().length).toBeGreaterThan(20);
 
-    // Should show a "Make a Reservation" button linking back to /book/:slug
-    const makeBtn = page.getByRole('button', { name: /make a reservation|fazer reserva|hacer reserva/i });
+    // Should show a "Make a Reservation" button linking back to /book/:slug.
+    // pt-BR renders "Fazer uma Reserva" / es "Hacer una Reserva" — the optional
+    // article must be in the regex or it won't match the localized button.
+    const makeBtn = page.getByRole('button', { name: /make a reservation|fazer (uma )?reserva|hacer (una )?reserva/i });
     const isVisible = await makeBtn.isVisible({ timeout: 5_000 }).catch(() => false);
     // Either the make-reservation button or the loading spinner is shown
     const hasSpinner = await page.locator('[role="status"]').isVisible({ timeout: 2_000 }).catch(() => false);
