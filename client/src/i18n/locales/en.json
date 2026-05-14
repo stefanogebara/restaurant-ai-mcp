@@ -629,7 +629,14 @@
     "phoneNumber": "Phone Number",
     "emailOptional": "Email (Optional)",
     "specialRequests": "Tags / Special Requests",
-    "adding": "Adding..."
+    "adding": "Adding...",
+    "removeConfirm": "Remove <1>{{name}}</1> from the waitlist?",
+    "notifyFailed": "Could not notify the customer. Please try again.",
+    "removeFailed": "Could not remove the entry. Please try again.",
+    "statusFilterLabel": "Waitlist status filter",
+    "sourceFilterLabel": "Source filter",
+    "searchLabel": "Search waitlist",
+    "guestFallback": "Guest"
   },
   "analytics": {
     "title": "Analytics",

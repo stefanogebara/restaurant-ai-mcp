@@ -1,9 +1,10 @@
 import { useState, useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useTranslation, Trans } from 'react-i18next';
 import { authFetch } from '../../services/api';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { WAITLIST_POLL_INTERVAL } from '../../config/constants';
 import { useRealtimeSubscription } from '../../hooks/useRealtimeSubscription';
+import { useToast } from '../../contexts/ToastContext';
 import ThiingsIcon from '../common/ThiingsIcon';
 import WaitlistEntryCard from './WaitlistEntryCard';
 import AddToWaitlistModal from './AddToWaitlistModal';
@@ -16,6 +17,7 @@ interface WaitlistPanelProps {
 
 export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanelProps) {
   const { t } = useTranslation();
+  const toast = useToast();
   const queryClient = useQueryClient();
   const [showAddModal, setShowAddModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'active' | 'seated' | 'removed'>('active');
@@ -46,6 +48,9 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
       return response.json();
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['waitlist'] }),
+    // Without this the failure was silent — the button just re-enabled and the
+    // host believed the "table ready" notification went out when it never did.
+    onError: () => toast.error(t('waitlist.notifyFailed')),
   });
 
   const removeMutation = useMutation({
@@ -55,6 +60,7 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
       return response.json();
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['waitlist'] }),
+    onError: () => toast.error(t('waitlist.removeFailed')),
   });
 
   const rawWaitlist = data?.waitlist;
@@ -139,7 +145,7 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex gap-0.5 bg-soft-gray rounded-lg p-0.5" role="tablist" aria-label="Waitlist status filter">
+          <div className="flex gap-0.5 bg-soft-gray rounded-lg p-0.5" role="tablist" aria-label={t('waitlist.statusFilterLabel')}>
             {[
               { key: 'active', label: t('waitlist.tabActive'), count: activeCount },
               { key: 'seated', label: t('waitlist.tabSeated'), count: seatedCount },
@@ -166,7 +172,7 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
             ))}
           </div>
 
-          <div className="flex gap-1" role="group" aria-label="Source filter">
+          <div className="flex gap-1" role="group" aria-label={t('waitlist.sourceFilterLabel')}>
             {([
               { key: 'all', label: t('common.all', 'All') },
               { key: 'walk_in', label: t('waitlist.walkIn', 'Walk-in') },
@@ -192,7 +198,7 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
             <input
               type="text"
               placeholder={t('common.searchPlaceholder', 'Search...')}
-              aria-label="Search waitlist"
+              aria-label={t('waitlist.searchLabel')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-8 pr-3 py-1.5 bg-soft-gray border border-border-gray rounded-xl text-xs focus:ring-2 focus:ring-[#9F1239] focus:border-transparent outline-none"
@@ -232,7 +238,7 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
                     entry={entry}
                     isTableReady
                     onNotify={(id) => notifyMutation.mutate(id)}
-                    onRemove={(id) => setConfirmRemove({ id, name: entry.customer_name || 'Guest' })}
+                    onRemove={(id) => setConfirmRemove({ id, name: entry.customer_name || t('waitlist.guestFallback') })}
                     onSeatNow={onSeatNow}
                     isNotifying={notifyMutation.isPending}
                     isRemoving={removeMutation.isPending}
@@ -253,7 +259,7 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
                     key={entry.id}
                     entry={entry}
                     onNotify={(id) => notifyMutation.mutate(id)}
-                    onRemove={(id) => setConfirmRemove({ id, name: entry.customer_name || 'Guest' })}
+                    onRemove={(id) => setConfirmRemove({ id, name: entry.customer_name || t('waitlist.guestFallback') })}
                     onSeatNow={onSeatNow}
                     isNotifying={notifyMutation.isPending}
                     isRemoving={removeMutation.isPending}
@@ -293,7 +299,11 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
           <div className="bg-white rounded-2xl shadow-2xl border border-border-gray p-6 max-w-sm w-full">
             <h3 className="text-lg font-bold text-deep-charcoal mb-2">{t('waitlist.removeFromWaitlist')}</h3>
             <p className="text-sm text-stone-gray mb-6">
-              Remove <span className="font-semibold text-deep-charcoal">{confirmRemove.name}</span> from the waitlist?
+              <Trans
+                i18nKey="waitlist.removeConfirm"
+                values={{ name: confirmRemove.name }}
+                components={{ 1: <span className="font-semibold text-deep-charcoal" /> }}
+              />
             </p>
             <div className="flex gap-3">
               <button

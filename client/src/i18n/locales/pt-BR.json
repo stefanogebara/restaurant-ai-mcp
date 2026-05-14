@@ -629,7 +629,14 @@
     "phoneNumber": "Número de Telefone",
     "emailOptional": "E-mail (Opcional)",
     "specialRequests": "Etiquetas / Pedidos Especiais",
-    "adding": "Adicionando..."
+    "adding": "Adicionando...",
+    "removeConfirm": "Remover <1>{{name}}</1> da lista de espera?",
+    "notifyFailed": "Não foi possível notificar o cliente. Tente novamente.",
+    "removeFailed": "Não foi possível remover a entrada. Tente novamente.",
+    "statusFilterLabel": "Filtro de status da lista de espera",
+    "sourceFilterLabel": "Filtro de origem",
+    "searchLabel": "Buscar na lista de espera",
+    "guestFallback": "Convidado"
   },
   "analytics": {
     "title": "Análises",
