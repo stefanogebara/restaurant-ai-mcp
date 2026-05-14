@@ -585,7 +585,17 @@
     "depositError": "Payment setup failed. Please try again.",
     "locationFormat": "{{city}}, {{country}}",
     "timeResetHint": "Time slot cleared — please re-select for your updated party size.",
-    "phoneInvalid": "Please enter a valid phone number (at least 10 digits)."
+    "phoneInvalid": "Please enter a valid phone number (at least 10 digits).",
+    "deposit": {
+      "heading": "Reservation Deposit",
+      "holdNotice": "A hold of {{amount}} will be placed on your card. It will be released when you arrive.",
+      "back": "Back",
+      "processing": "Processing...",
+      "confirmAndHold": "Confirm & Hold {{amount}}",
+      "paymentFailed": "Payment failed",
+      "unexpectedStatus": "Unexpected payment status. Please try again.",
+      "unavailable": "Payment is temporarily unavailable. Please try again later or contact the restaurant directly."
+    }
   },
   "waitlist": {
     "title": "Waitlist",

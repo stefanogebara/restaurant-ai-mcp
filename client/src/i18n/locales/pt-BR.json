@@ -585,7 +585,17 @@
     "depositError": "Falha na configuração do pagamento. Tente novamente.",
     "locationFormat": "{{city}}, {{country}}",
     "timeResetHint": "Horário desmarcado — selecione novamente para o novo número de pessoas.",
-    "phoneInvalid": "Por favor, insira um número de telefone válido (mínimo 10 dígitos)."
+    "phoneInvalid": "Por favor, insira um número de telefone válido (mínimo 10 dígitos).",
+    "deposit": {
+      "heading": "Depósito da Reserva",
+      "holdNotice": "Uma reserva de {{amount}} será feita no seu cartão. Ela será liberada quando você chegar.",
+      "back": "Voltar",
+      "processing": "Processando...",
+      "confirmAndHold": "Confirmar e Reservar {{amount}}",
+      "paymentFailed": "O pagamento falhou",
+      "unexpectedStatus": "Status de pagamento inesperado. Tente novamente.",
+      "unavailable": "O pagamento está temporariamente indisponível. Tente mais tarde ou entre em contato diretamente com o restaurante."
+    }
   },
   "waitlist": {
     "title": "Lista de Espera",
