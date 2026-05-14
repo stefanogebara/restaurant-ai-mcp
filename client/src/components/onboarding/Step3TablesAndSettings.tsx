@@ -71,6 +71,16 @@ function calculateTableDistribution(size: RestaurantSize, totalSeats: number): {
   return result;
 }
 
+/** Immutably set one field on a table config (keeps the value's type narrow). */
+function applyTableField(
+  config: TableConfiguration,
+  field: 'count' | 'is_fixed_seating' | 'is_joinable',
+  value: number | boolean,
+): TableConfiguration {
+  if (field === 'count') return { ...config, count: value as number };
+  return { ...config, [field]: value as boolean };
+}
+
 export default function Step3TablesAndSettings({ data, updateData, onNext, onBack }: OnboardingStepProps) {
   const { t } = useTranslation();
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -159,14 +169,22 @@ export default function Step3TablesAndSettings({ data, updateData, onNext, onBac
   };
 
   const updateTableConfig = (areaIndex: number, capacity: number, shape: TableShape, field: 'count' | 'is_fixed_seating' | 'is_joinable', value: number | boolean) => {
-    const updatedAreas = [...data.areas];
-    const area = updatedAreas[areaIndex];
-    let configIndex = area.tables.findIndex(t => t.capacity === capacity && t.shape === shape);
-    if (configIndex === -1) {
-      area.tables.push({ capacity, count: 0, shape, is_fixed_seating: false, is_joinable: true });
-      configIndex = area.tables.length - 1;
-    }
-    (area.tables[configIndex] as unknown as Record<string, unknown>)[field] = value;
+    // Fully immutable update — the previous version did `[...data.areas]`
+    // (shallow) then mutated `area.tables` and the table object in place,
+    // violating the project immutability rule and defeating referential
+    // equality (memoized children, the localStorage persist snapshot).
+    const updatedAreas = data.areas.map((area, i) => {
+      if (i !== areaIndex) return area;
+      const existingIdx = area.tables.findIndex(tc => tc.capacity === capacity && tc.shape === shape);
+      if (existingIdx === -1) {
+        const fresh: TableConfiguration = { capacity, count: 0, shape, is_fixed_seating: false, is_joinable: true };
+        return { ...area, tables: [...area.tables, applyTableField(fresh, field, value)] };
+      }
+      return {
+        ...area,
+        tables: area.tables.map((tc, ti) => (ti === existingIdx ? applyTableField(tc, field, value) : tc)),
+      };
+    });
     updateData({ areas: updatedAreas });
   };
 
