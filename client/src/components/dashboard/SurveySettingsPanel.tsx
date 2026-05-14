@@ -18,8 +18,6 @@ const DELAY_OPTIONS = [
   { value: 24, labelKey: 'dashboard.survey.delay24h', fallback: '24 hours' },
 ];
 
-const STAR_LABELS: Record<number, string> = { 1: 'Poor', 2: 'Fair', 3: 'Good', 4: 'Very Good', 5: 'Excellent' };
-
 function RatingBar({ rating, count, max }: { rating: number; count: number; max: number }) {
   const pct = max > 0 ? Math.round((count / max) * 100) : 0;
   return (
@@ -48,13 +46,16 @@ export default function SurveySettingsPanel() {
   const [question, setQuestion] = useState('');
   const [dirty, setDirty] = useState(false);
 
+  // Only hydrate from the server while there are no unsaved local edits.
+  // A background React Query refetch (refetchOnWindowFocus is on by default)
+  // would otherwise silently clobber what the user just typed.
   useEffect(() => {
-    if (config) {
+    if (config && !dirty) {
       setEnabled(config.enabled);
       setDelayHours(config.delay_hours);
       setQuestion(config.question || '');
     }
-  }, [config]);
+  }, [config, dirty]);
 
   const handleSave = () => {
     updateConfig.mutate(
@@ -221,7 +222,7 @@ export default function SurveySettingsPanel() {
                     <div key={r.id} className="bg-soft-gray rounded-lg px-3 py-2">
                       <div className="flex items-center gap-1.5 mb-0.5">
                         <span className="text-xs text-amber-500">
-                          {STAR_LABELS[r.rating] || r.rating}
+                          {t(`dashboard.survey.star${r.rating}`, String(r.rating))}
                         </span>
                         <span className="text-[10px] text-warm-stone">
                           {r.customer_name || t('dashboard.survey.anonymous', 'Anonymous')}

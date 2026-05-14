@@ -241,7 +241,12 @@
       "totalResponses": "Responses",
       "recentComments": "Recent Comments",
       "anonymous": "Anonymous",
-      "noResponses": "No survey responses yet. Results will appear here after guests respond."
+      "noResponses": "No survey responses yet. Results will appear here after guests respond.",
+      "star1": "Poor",
+      "star2": "Fair",
+      "star3": "Good",
+      "star4": "Very Good",
+      "star5": "Excellent"
     },
     "activityFeed": "Recent Activity",
     "revenueByPartySize": "Revenue by Party Size",

@@ -387,7 +387,12 @@
       "totalResponses": "Respuestas",
       "recentComments": "Comentarios Recientes",
       "anonymous": "Anónimo",
-      "noResponses": "Aún no hay respuestas de la encuesta. Los resultados aparecerán aquí cuando los clientes respondan."
+      "noResponses": "Aún no hay respuestas de la encuesta. Los resultados aparecerán aquí cuando los clientes respondan.",
+      "star1": "Malo",
+      "star2": "Regular",
+      "star3": "Bueno",
+      "star4": "Muy Bueno",
+      "star5": "Excelente"
     }
   },
   "bookingChannels": {

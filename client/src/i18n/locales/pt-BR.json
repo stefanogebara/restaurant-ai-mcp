@@ -241,7 +241,12 @@
       "totalResponses": "Respostas",
       "recentComments": "Comentários Recentes",
       "anonymous": "Anônimo",
-      "noResponses": "Nenhuma resposta de pesquisa ainda. Os resultados aparecerão aqui após os clientes responderem."
+      "noResponses": "Nenhuma resposta de pesquisa ainda. Os resultados aparecerão aqui após os clientes responderem.",
+      "star1": "Ruim",
+      "star2": "Regular",
+      "star3": "Bom",
+      "star4": "Muito Bom",
+      "star5": "Excelente"
     },
     "activityFeed": "Atividade Recente",
     "revenueByPartySize": "Receita por Tamanho de Mesa",

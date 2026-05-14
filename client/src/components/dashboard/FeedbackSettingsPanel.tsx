@@ -19,13 +19,16 @@ export default function FeedbackSettingsPanel() {
   const [template, setTemplate] = useState('');
   const [dirty, setDirty] = useState(false);
 
+  // Only hydrate from the server while there are no unsaved local edits.
+  // A background React Query refetch (refetchOnWindowFocus is on by default)
+  // would otherwise silently clobber what the user just typed.
   useEffect(() => {
-    if (config) {
+    if (config && !dirty) {
       setEnabled(config.enabled);
       setDelayMinutes(config.delay_minutes);
       setTemplate(config.message_template || '');
     }
-  }, [config]);
+  }, [config, dirty]);
 
   const handleSave = () => {
     updateConfig.mutate(
