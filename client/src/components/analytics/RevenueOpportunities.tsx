@@ -59,6 +59,48 @@ const TIMELINE_I18N: Record<string, Record<string, string>> = {
   },
 };
 
+// Backend-generated action steps — translated on the frontend, same set the
+// RevenueQuickWinsCard maps. Without this the expanded action list rendered
+// in raw English for pt-BR/es users.
+const ACTION_I18N: Record<string, Record<string, string>> = {
+  'pt-BR': {
+    'Send SMS reminders 24h before reservation': 'Enviar lembretes SMS 24h antes da reserva',
+    'Require credit card for parties of 6+': 'Exigir cartão de crédito para grupos de 6+',
+    'Implement waitlist for last-minute fills': 'Implementar lista de espera para preencher cancelamentos',
+    'Call high-risk reservations to confirm': 'Ligar para reservas de alto risco para confirmar',
+    'Early bird special (5-6:30 PM): 15% off': 'Desconto antecipado (17h-18h30): 15% off',
+    'Weekday lunch promotion': 'Promoção de almoço durante a semana',
+    'Happy hour menu extension': 'Extensão do cardápio de happy hour',
+    'Partner with local offices for lunch programs': 'Parcerias com escritórios locais para programas de almoço',
+    'Optimize menu for faster service': 'Otimizar cardápio para serviço mais rápido',
+    'Implement pre-ordering for large parties': 'Implementar pré-pedido para grupos grandes',
+    'Streamline payment process (QR code menus)': 'Agilizar pagamento (cardápio por QR code)',
+    'Better kitchen-floor communication': 'Melhorar comunicação entre cozinha e salão',
+    'Train staff on wine pairing suggestions': 'Treinar equipe em sugestões de harmonização de vinhos',
+    'Highlight premium menu items': 'Destacar itens premium do cardápio',
+    'Offer tasting menus for special occasions': 'Oferecer menus degustação para ocasiões especiais',
+    'Dessert and after-dinner drink promotions': 'Promoções de sobremesas e drinks pós-jantar',
+  },
+  es: {
+    'Send SMS reminders 24h before reservation': 'Enviar recordatorios SMS 24h antes de la reserva',
+    'Require credit card for parties of 6+': 'Exigir tarjeta de crédito para grupos de 6+',
+    'Implement waitlist for last-minute fills': 'Implementar lista de espera para cubrir cancelaciones',
+    'Call high-risk reservations to confirm': 'Llamar a reservas de alto riesgo para confirmar',
+    'Early bird special (5-6:30 PM): 15% off': 'Descuento anticipado (17h-18h30): 15% off',
+    'Weekday lunch promotion': 'Promoción de almuerzo entre semana',
+    'Happy hour menu extension': 'Extensión del menú de happy hour',
+    'Partner with local offices for lunch programs': 'Alianzas con oficinas locales para programas de almuerzo',
+    'Optimize menu for faster service': 'Optimizar el menú para un servicio más rápido',
+    'Implement pre-ordering for large parties': 'Implementar pre-pedidos para grupos grandes',
+    'Streamline payment process (QR code menus)': 'Agilizar el pago (menús con código QR)',
+    'Better kitchen-floor communication': 'Mejorar la comunicación entre cocina y salón',
+    'Train staff on wine pairing suggestions': 'Capacitar al personal en sugerencias de maridaje de vinos',
+    'Highlight premium menu items': 'Destacar los platos premium del menú',
+    'Offer tasting menus for special occasions': 'Ofrecer menús de degustación para ocasiones especiales',
+    'Dessert and after-dinner drink promotions': 'Promociones de postres y tragos de sobremesa',
+  },
+};
+
 export default function RevenueOpportunities() {
   const { t, i18n } = useTranslation();
   const tCat = (cat: string) => CATEGORY_I18N[i18n.language]?.[cat] ?? cat;
@@ -66,6 +108,7 @@ export default function RevenueOpportunities() {
   const tPriority = (p: string) => PRIORITY_I18N[i18n.language]?.[p] ?? p.charAt(0).toUpperCase() + p.slice(1);
   const tDifficulty = (d: string) => DIFFICULTY_I18N[i18n.language]?.[d] ?? d;
   const tTimeline = (tl: string) => TIMELINE_I18N[i18n.language]?.[tl] ?? tl;
+  const tAction = (action: string) => ACTION_I18N[i18n.language]?.[action] ?? action;
   const { data, isLoading, isError } = useRevenueOpportunities();
   const opportunities = data?.opportunities ?? [];
   const summary = data?.summary ?? null;
@@ -196,18 +239,18 @@ export default function RevenueOpportunities() {
                     <h4 className="font-semibold text-deep-charcoal">{t('analytics.actionSteps')}</h4>
                   </div>
                   <div className="space-y-2">
-                    {opp.actions.map((action, idx) => (
+                    {(opp.actions ?? []).map((action, idx) => (
                       <div key={idx} className="flex items-start gap-3 bg-white border border-border-gray rounded-xl p-3">
                         <div className="w-6 h-6 rounded-full bg-burgundy text-white flex items-center justify-center text-xs font-bold mt-0.5">
                           {idx + 1}
                         </div>
-                        <div className="flex-1 text-sm text-deep-charcoal">{action}</div>
+                        <div className="flex-1 text-sm text-deep-charcoal">{tAction(action)}</div>
                       </div>
                     ))}
                   </div>
                   <div className="mt-4 pt-4 border-t border-border-gray flex justify-between items-center">
                     <div className="text-xs text-warm-stone">
-                      <span className="font-semibold">{t('analytics.roiPotential')}</span> {tPriority('high')}
+                      <span className="font-semibold">{t('analytics.roiPotential')}</span> {tPriority(opp.priority)}
                     </div>
                     <button
                       type="button"

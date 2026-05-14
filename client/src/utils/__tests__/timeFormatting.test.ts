@@ -5,6 +5,9 @@ import {
   formatWaitTime,
   formatAbsoluteTime,
   getTimeAgoWithFrequency,
+  formatLocalDate,
+  todayLocalISO,
+  parseLocalDate,
 } from '../timeFormatting';
 
 describe('formatTimeAgo', () => {
@@ -178,5 +181,53 @@ describe('getTimeAgoWithFrequency', () => {
     const result = getTimeAgoWithFrequency(new Date('2026-01-15T12:00:00Z'));
     expect(result.text).toBe('2h ago');
     expect(result.shouldUpdateFrequently).toBe(false);
+  });
+});
+
+describe('formatLocalDate', () => {
+  it('formats a date as YYYY-MM-DD using local components', () => {
+    // Construct via local-time fields so the test is timezone-independent.
+    const d = new Date(2026, 4, 14, 9, 30, 0); // 2026-05-14 local
+    expect(formatLocalDate(d)).toBe('2026-05-14');
+  });
+
+  it('zero-pads single-digit months and days', () => {
+    expect(formatLocalDate(new Date(2026, 0, 3, 12, 0, 0))).toBe('2026-01-03');
+  });
+
+  it('uses local — not UTC — components (no toISOString shift)', () => {
+    // 23:00 local on the 14th. toISOString().split would yield the next day
+    // for any positive-UTC offset; formatLocalDate must stay on the 14th.
+    const lateNight = new Date(2026, 4, 14, 23, 0, 0);
+    expect(formatLocalDate(lateNight)).toBe('2026-05-14');
+  });
+});
+
+describe('todayLocalISO', () => {
+  afterEach(() => vi.useRealTimers());
+
+  it("returns today's local calendar date as YYYY-MM-DD", () => {
+    vi.useFakeTimers({ now: new Date(2026, 4, 14, 8, 0, 0) });
+    expect(todayLocalISO()).toBe('2026-05-14');
+  });
+});
+
+describe('parseLocalDate', () => {
+  it('parses a YYYY-MM-DD string to the intended local calendar day', () => {
+    const d = parseLocalDate('2026-05-14');
+    expect(d.getFullYear()).toBe(2026);
+    expect(d.getMonth()).toBe(4); // May (0-indexed)
+    expect(d.getDate()).toBe(14);
+  });
+
+  it('anchors to local noon so it stays on-day regardless of timezone', () => {
+    // `new Date('2026-05-14')` would be UTC midnight — the previous day for
+    // negative-UTC users. parseLocalDate anchors to 12:00 local instead.
+    expect(parseLocalDate('2026-05-14').getHours()).toBe(12);
+  });
+
+  it('round-trips with formatLocalDate', () => {
+    expect(formatLocalDate(parseLocalDate('2026-12-31'))).toBe('2026-12-31');
+    expect(formatLocalDate(parseLocalDate('2026-01-01'))).toBe('2026-01-01');
   });
 });

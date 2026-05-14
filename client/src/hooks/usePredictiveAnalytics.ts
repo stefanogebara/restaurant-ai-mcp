@@ -35,6 +35,9 @@ export function useNoShowPredictions() {
       const response = await authFetch('/api/predictive-analytics?type=no-show');
       if (!response.ok) throw new Error('Failed to fetch no-show predictions');
       const result = await response.json();
+      // A 200 with { success:false } is a backend failure — throw so React
+      // Query surfaces isError instead of rendering a fake "all clear" state.
+      if (result.success === false) throw new Error(result.error || 'Failed to fetch no-show predictions');
       return { predictions: result.predictions || [], summary: result.summary || null };
     },
     staleTime: ANALYTICS_STALE_TIME,
@@ -74,6 +77,7 @@ export function useRevenueOpportunities() {
       const response = await authFetch('/api/predictive-analytics?type=revenue');
       if (!response.ok) throw new Error('Failed to fetch revenue opportunities');
       const result = await response.json();
+      if (result.success === false) throw new Error(result.error || 'Failed to fetch revenue opportunities');
       return { opportunities: result.opportunities || [], summary: result.summary || null };
     },
     staleTime: ANALYTICS_STALE_TIME,

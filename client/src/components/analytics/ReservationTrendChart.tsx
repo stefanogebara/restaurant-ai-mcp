@@ -59,7 +59,7 @@ export default function ReservationTrendChart({ dailyTrend }: ReservationTrendCh
         <span className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{t('analytics.reservationsOverTime')}</span>
         <span className={`text-[11px] font-semibold ${trendInfo.color} px-2.5 py-0.5 rounded-full`}>{t(trendInfo.key)}</span>
       </div>
-      <div role="img" aria-label="Line chart showing reservation trends over time" className="p-6">
+      <div role="img" aria-label={t('analytics.charts.reservationTrendAria')} className="p-6">
 
       <ResponsiveContainer width="100%" height={300}>
         <LineChart

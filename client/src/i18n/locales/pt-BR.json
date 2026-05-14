@@ -654,6 +654,14 @@
     "errorTitle": "Erro ao carregar análises",
     "errorDescription": "Não foi possível carregar os dados de análise. Por favor, tente novamente.",
     "noData": "Nenhum dado de análise disponível",
+    "cancellationCount": "{{n}} canceladas",
+    "revenueEstimate": "Com base no gasto médio",
+    "charts": {
+      "statusBreakdownAria": "Gráfico de pizza com a distribuição de status das reservas",
+      "dayOfWeekAria": "Gráfico de barras de reservas por dia da semana",
+      "peakHoursAria": "Gráfico de barras dos horários de pico de reservas",
+      "reservationTrendAria": "Gráfico de linhas da tendência de reservas ao longo do tempo"
+    },
     "thirtyDays": "30 dias",
     "sevenDays": "7 dias",
     "today": "Hoje",
@@ -1576,6 +1584,7 @@
     "guests": "pessoas",
     "overdue": "Atrasado",
     "left": "restantes",
+    "over": "excedido",
     "joinWith": "Juntar c/ Mesa",
     "location": {
       "indoor": "Interior",
@@ -1670,6 +1679,7 @@
     "lockedTitle": "Atualize para acessar",
     "locked_advancedAnalytics": "Atualize seu plano para desbloquear análises completas com gráficos, tendências e exportação.",
     "locked_weeklyReports": "Atualize seu plano para desbloquear relatórios semanais com demografia e preferências.",
+    "locked_overview": "Atualize seu plano para desbloquear o resumo de análises.",
     "tabs": {
       "overview": "Visão Geral",
       "analytics": "Análises",
@@ -1781,7 +1791,14 @@
     "noTranscriptAvailable": "Nenhuma transcrição disponível para esta conversa.",
     "caller": "Chamador",
     "noCallsToExport": "Nenhuma chamada para exportar",
-    "noRestaurantId": "Nenhum restaurante configurado. Complete o cadastro primeiro."
+    "noRestaurantId": "Nenhum restaurante configurado. Complete o cadastro primeiro.",
+    "searchPlaceholder": "Buscar chamadas...",
+    "sentiment": "Sentimento",
+    "sentimentPositive": "Positivo",
+    "sentimentNeutral": "Neutro",
+    "sentimentNegative": "Negativo",
+    "sentimentUnknown": "Desconhecido",
+    "recording": "Gravação"
   },
   "landing": {
     "badge": "Gestão de Restaurantes com IA",
@@ -2841,7 +2858,18 @@
       "visits": "visitas",
       "analyzed": "Analisado",
       "confidence": "Confiança",
-      "dataSources": "Fontes de dados:"
+      "dataSources": "Fontes de dados:",
+      "aiInsights": {
+        "title": "Análise de IA",
+        "basedOn": "Com base em {{count}} fontes de texto (confiança da IA: {{confidence}}%)",
+        "keyPhrases": "Frases-Chave",
+        "detectedOccasions": "Ocasiões Detectadas",
+        "seatingPreferences": "Preferências de Mesa (IA)",
+        "sentiment": "Sentimento da IA",
+        "empty": "Ainda não há análises de IA disponíveis.",
+        "emptyHint": "Execute a análise para extrair sinais dos dados de texto.",
+        "analyzeButton": "Analisar com IA"
+      }
     },
     "dnaCustomerList": {
       "title": "Perfis de Clientes",

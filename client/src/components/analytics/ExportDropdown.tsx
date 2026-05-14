@@ -64,7 +64,7 @@ export default function ExportDropdown({ data, dateLabel, onExportAll, isExporti
 
           <button
             type="button"
-            onClick={() => dl('summary', data.daily_trend.map(d => ({
+            onClick={() => dl('summary', (data.daily_trend ?? []).map(d => ({
               date: d.date, day: d.dayName,
               reservations: d.reservations, completed_services: d.completed_services,
             })), ['date', 'day', 'reservations', 'completed_services'])}
@@ -75,7 +75,7 @@ export default function ExportDropdown({ data, dateLabel, onExportAll, isExporti
 
           <button
             type="button"
-            onClick={() => dl('tables', data.table_utilization.map(t => ({
+            onClick={() => dl('tables', (data.table_utilization ?? []).map(t => ({
               table: t.table_number, capacity: t.capacity, location: t.location,
               times_used: t.times_used, utilization_pct: t.utilization_rate,
             })), ['table', 'capacity', 'location', 'times_used', 'utilization_pct'])}

@@ -654,6 +654,14 @@
     "errorTitle": "Error al cargar análisis",
     "errorDescription": "No se pudieron cargar los datos de análisis. Por favor, inténtalo de nuevo.",
     "noData": "No hay datos de análisis disponibles",
+    "cancellationCount": "{{n}} canceladas",
+    "revenueEstimate": "Según el gasto promedio",
+    "charts": {
+      "statusBreakdownAria": "Gráfico circular del desglose de estados de reservas",
+      "dayOfWeekAria": "Gráfico de barras de reservas por día de la semana",
+      "peakHoursAria": "Gráfico de barras de las horas pico de reservas",
+      "reservationTrendAria": "Gráfico de líneas de la tendencia de reservas en el tiempo"
+    },
     "thirtyDays": "30 días",
     "sevenDays": "7 días",
     "today": "Hoy",
@@ -2385,6 +2393,7 @@
     "guests": "personas",
     "overdue": "Atrasado",
     "left": "restantes",
+    "over": "excedido",
     "joinWith": "Unir c/ Mesa",
     "location": {
       "indoor": "Interior",
@@ -2480,6 +2489,7 @@
     "lockedTitle": "Actualiza para acceder",
     "locked_advancedAnalytics": "Actualiza tu plan para desbloquear análisis completos con gráficos, tendencias y exportación.",
     "locked_weeklyReports": "Actualiza tu plan para desbloquear informes semanales con demografía y preferencias.",
+    "locked_overview": "Actualiza tu plan para desbloquear el resumen de análisis.",
     "tabs": {
       "overview": "Vista General",
       "analytics": "Análisis",
@@ -2591,7 +2601,14 @@
     "noTranscriptAvailable": "No hay transcripción disponible para esta conversación.",
     "caller": "Llamante",
     "noCallsToExport": "No hay llamadas para exportar",
-    "noRestaurantId": "No hay restaurante configurado. Complete el registro primero."
+    "noRestaurantId": "No hay restaurante configurado. Complete el registro primero.",
+    "searchPlaceholder": "Buscar llamadas...",
+    "sentiment": "Sentimiento",
+    "sentimentPositive": "Positivo",
+    "sentimentNeutral": "Neutral",
+    "sentimentNegative": "Negativo",
+    "sentimentUnknown": "Desconocido",
+    "recording": "Grabación"
   },
   "managerAI": {
     "title": "IA del Gerente",
@@ -2773,7 +2790,18 @@
       "visits": "visitas",
       "analyzed": "Analizado",
       "confidence": "Confianza",
-      "dataSources": "Fuentes de datos:"
+      "dataSources": "Fuentes de datos:",
+      "aiInsights": {
+        "title": "Análisis de IA",
+        "basedOn": "Basado en {{count}} fuentes de texto (confianza de IA: {{confidence}}%)",
+        "keyPhrases": "Frases Clave",
+        "detectedOccasions": "Ocasiones Detectadas",
+        "seatingPreferences": "Preferencias de Mesa (IA)",
+        "sentiment": "Sentimiento de IA",
+        "empty": "Aún no hay análisis de IA disponibles.",
+        "emptyHint": "Ejecuta el análisis para extraer señales de los datos de texto.",
+        "analyzeButton": "Analizar con IA"
+      }
     },
     "dnaCustomerList": {
       "title": "Perfiles de Clientes",

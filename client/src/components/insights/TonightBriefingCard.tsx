@@ -77,7 +77,7 @@ export default function TonightBriefingCard() {
                     <span className="text-sm font-semibold text-deep-charcoal truncate">{p.customer_name}</span>
                     <span className="text-xs text-warm-stone flex-shrink-0">{t('analytics.partyOf', { size: p.party_size })} @ {p.time}</span>
                   </div>
-                  {p.recommendations[0] && (
+                  {p.recommendations?.[0] && (
                     <p className="text-xs text-red-700 mt-0.5">{p.recommendations[0]}</p>
                   )}
                 </div>

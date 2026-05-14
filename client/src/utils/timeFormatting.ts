@@ -27,6 +27,19 @@ export function todayLocalISO(): string {
 }
 
 /**
+ * Parse a YYYY-MM-DD string as a LOCAL date — the inverse of formatLocalDate.
+ *
+ * `new Date('2026-05-14')` parses the string as UTC midnight, so a user in a
+ * negative-UTC timezone (e.g. Brazil, UTC-3) gets the *previous* calendar day.
+ * This anchors to local noon, which stays on the intended day regardless of
+ * the user's offset (immune to ±12h shifts).
+ */
+export function parseLocalDate(dateStr: string): Date {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  return new Date(year, (month || 1) - 1, day || 1, 12, 0, 0, 0);
+}
+
+/**
  * Format a date as "X time ago" with smart unit selection
  *
  * @param date - The date to format

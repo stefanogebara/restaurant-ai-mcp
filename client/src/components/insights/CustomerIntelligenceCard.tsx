@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import { useLTVAtRisk, useLTVTopVIPs, useSendCampaign } from '../../hooks/useLTVData';
 import { useToast } from '../../contexts/ToastContext';
+import { parseLocalDate } from '../../utils/timeFormatting';
 import type { Customer } from '../host/ltvDashboard.types';
 
 const RE_ENGAGEMENT_MESSAGE =
@@ -111,7 +112,7 @@ function CustomerRow({ customer, showChurn, onSend }: CustomerRowProps) {
   const localeMap: Record<string, string> = { 'pt-BR': 'pt-BR', es: 'es', en: 'en-US' };
   const dateLocale = localeMap[i18n.language] ?? 'en-US';
   const lastVisit = customer.last_visit_date
-    ? new Date(customer.last_visit_date).toLocaleDateString(dateLocale, { month: 'short', day: 'numeric' })
+    ? parseLocalDate(customer.last_visit_date).toLocaleDateString(dateLocale, { month: 'short', day: 'numeric' })
     : '—';
 
   return (

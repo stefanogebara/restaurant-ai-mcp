@@ -654,6 +654,14 @@
     "errorTitle": "Error loading analytics",
     "errorDescription": "Failed to load analytics data. Please try again.",
     "noData": "No analytics data available",
+    "cancellationCount": "{{n}} cancelled",
+    "revenueEstimate": "Based on avg spend",
+    "charts": {
+      "statusBreakdownAria": "Pie chart showing reservation status breakdown",
+      "dayOfWeekAria": "Bar chart showing number of reservations by day of the week",
+      "peakHoursAria": "Bar chart showing peak reservation hours",
+      "reservationTrendAria": "Line chart showing reservation trends over time"
+    },
     "thirtyDays": "30 days",
     "sevenDays": "7 days",
     "today": "Today",
@@ -1570,6 +1578,7 @@
     "guests": "guests",
     "overdue": "Overdue",
     "left": "left",
+    "over": "over",
     "joinWith": "Join w/ Table",
     "location": {
       "indoor": "Indoor",
@@ -1664,6 +1673,7 @@
     "lockedTitle": "Upgrade to access",
     "locked_advancedAnalytics": "Upgrade your plan to unlock full analytics with charts, trends, and export.",
     "locked_weeklyReports": "Upgrade your plan to unlock weekly reports with demographics and preferences.",
+    "locked_overview": "Upgrade your plan to unlock the insights overview.",
     "tabs": {
       "overview": "Overview",
       "analytics": "Analytics",
@@ -1775,7 +1785,14 @@
     "noTranscriptAvailable": "No transcript available for this conversation.",
     "caller": "Caller",
     "noCallsToExport": "No calls to export",
-    "noRestaurantId": "No restaurant configured. Please complete onboarding first."
+    "noRestaurantId": "No restaurant configured. Please complete onboarding first.",
+    "searchPlaceholder": "Search calls...",
+    "sentiment": "Sentiment",
+    "sentimentPositive": "Positive",
+    "sentimentNeutral": "Neutral",
+    "sentimentNegative": "Negative",
+    "sentimentUnknown": "Unknown",
+    "recording": "Recording"
   },
   "landing": {
     "badge": "AI-Powered Restaurant Management",
@@ -2827,7 +2844,18 @@
       "visits": "visits",
       "analyzed": "Analyzed",
       "confidence": "Confidence",
-      "dataSources": "Data sources:"
+      "dataSources": "Data sources:",
+      "aiInsights": {
+        "title": "AI Insights",
+        "basedOn": "Based on {{count}} text sources (AI confidence: {{confidence}}%)",
+        "keyPhrases": "Key Phrases",
+        "detectedOccasions": "Detected Occasions",
+        "seatingPreferences": "Seating Preferences (AI)",
+        "sentiment": "AI Sentiment",
+        "empty": "No AI insights available yet.",
+        "emptyHint": "Run analysis to extract signals from text data.",
+        "analyzeButton": "Analyze with AI"
+      }
     },
     "dnaCustomerList": {
       "title": "Customer Profiles",

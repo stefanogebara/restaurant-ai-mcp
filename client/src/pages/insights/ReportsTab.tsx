@@ -9,7 +9,7 @@ import WeeklyBusiestTimesChart from '../../components/dashboard/WeeklyBusiestTim
 import WeeklyDemographicsPanel from '../../components/dashboard/WeeklyDemographicsPanel';
 import WeeklyPreferencesPanel from '../../components/dashboard/WeeklyPreferencesPanel';
 import { useAuth } from '../../contexts/AuthContext';
-import { formatLocalDate } from '../../utils/timeFormatting';
+import { formatLocalDate, parseLocalDate } from '../../utils/timeFormatting';
 
 export default function ReportsTab() {
   const today = new Date();
@@ -22,11 +22,13 @@ export default function ReportsTab() {
   const [startDate, setStartDate] = useState(formatLocalDate(weekAgo));
   const [endDate, setEndDate] = useState(formatLocalDate(today));
 
-  const { data: report, isLoading, refetch } = useWeeklyReport(startDate, endDate);
+  const { data: report, isLoading, isError, refetch } = useWeeklyReport(startDate, endDate);
 
   const handlePrevious = () => {
-    const start = new Date(startDate);
-    const end = new Date(endDate);
+    // parseLocalDate, not `new Date(str)` — the latter parses YYYY-MM-DD as
+    // UTC midnight, shifting the pagination an extra day for negative-UTC users.
+    const start = parseLocalDate(startDate);
+    const end = parseLocalDate(endDate);
     const diffMs = end.getTime() - start.getTime();
     const newEnd = new Date(start.getTime() - 24 * 60 * 60 * 1000);
     const newStart = new Date(newEnd.getTime() - diffMs);
@@ -35,8 +37,8 @@ export default function ReportsTab() {
   };
 
   const handleNext = () => {
-    const start = new Date(startDate);
-    const end = new Date(endDate);
+    const start = parseLocalDate(startDate);
+    const end = parseLocalDate(endDate);
     const diffMs = end.getTime() - start.getTime();
     const newStart = new Date(end.getTime() + 24 * 60 * 60 * 1000);
     const newEnd = new Date(newStart.getTime() + diffMs);
@@ -104,6 +106,30 @@ export default function ReportsTab() {
 
   if (isLoading) {
     return <SkeletonWeeklyReport />;
+  }
+
+  // A failed report fetch must not fall through to the "no data" empty state —
+  // that tells a user with real data they have none and offers no retry.
+  if (isError) {
+    return (
+      <div className="flex items-center justify-center min-h-[40vh]">
+        <div className="text-center">
+          <div className="w-14 h-14 mx-auto mb-3 bg-red-50 rounded-2xl flex items-center justify-center">
+            <ThiingsIcon name="alert-circle" pxSize={24} />
+          </div>
+          <p className="font-semibold text-deep-charcoal">{t('dashboard.errorTitle')}</p>
+          <p className="text-sm text-stone-gray mt-1 mb-4">{t('errors.serverError')}</p>
+          <button
+            type="button"
+            onClick={() => refetch()}
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-xl transition-colors"
+          >
+            <ThiingsIcon name="refresh" size="xs" />
+            {t('common.retry')}
+          </button>
+        </div>
+      </div>
+    );
   }
 
   if (!report) {

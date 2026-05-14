@@ -39,10 +39,13 @@ export default function StatusBreakdownPie({ reservationsByStatus }: StatusBreak
     no_show: '#f97316',
   };
 
-  // Custom label to show percentage
+  // Custom label to show percentage. Guard the divisor — an empty/all-zero
+  // status object would otherwise render literal "NaN%" slice labels.
   const renderLabel = (entry: PieLabelRenderProps) => {
     const entryValue = typeof entry.value === 'number' ? entry.value : 0;
-    const percent = ((entryValue / chartData.reduce((sum, e) => sum + e.value, 0)) * 100).toFixed(0);
+    const total = chartData.reduce((sum, e) => sum + e.value, 0);
+    if (total <= 0) return '';
+    const percent = ((entryValue / total) * 100).toFixed(0);
     return `${percent}%`;
   };
 
@@ -50,7 +53,7 @@ export default function StatusBreakdownPie({ reservationsByStatus }: StatusBreak
   const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Array<{ name: string; value: number; payload: { fill: string } }> }) => {
     if (active && payload && payload.length) {
       const total = chartData.reduce((sum, e) => sum + e.value, 0);
-      const percent = ((payload[0].value / total) * 100).toFixed(1);
+      const percent = total > 0 ? ((payload[0].value / total) * 100).toFixed(1) : '0';
       return (
         <div className="bg-white border border-border-gray/50 rounded-2xl p-3 shadow-lg">
           <p className="text-sm font-semibold text-deep-charcoal mb-1">{payload[0].name}</p>
@@ -71,7 +74,7 @@ export default function StatusBreakdownPie({ reservationsByStatus }: StatusBreak
       <div className="flex items-center justify-between py-5 border-b border-[#E5E7EB]">
         <span className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{t('analytics.statusBreakdown')}</span>
       </div>
-      <div role="img" aria-label="Pie chart showing reservation status breakdown" className="p-6">
+      <div role="img" aria-label={t('analytics.charts.statusBreakdownAria')} className="p-6">
 
       <div className="flex items-center justify-center">
         <ResponsiveContainer width="100%" height={300}>

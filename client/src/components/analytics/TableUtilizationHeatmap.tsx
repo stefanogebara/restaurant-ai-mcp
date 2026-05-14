@@ -116,13 +116,13 @@ export default function TableUtilizationHeatmap({ tableUtilization }: TableUtili
             <div className="p-3 bg-burgundy/10 border border-burgundy/20 rounded-xl">
               <p className="text-xs text-warm-stone">
                 <span className="font-semibold text-deep-charcoal">{t('analytics.mostUsed')}:</span>{' '}
-                Table {mostUsed.table_number} ({mostUsed.utilization_rate}%) - {mostUsed.times_used} {t('analytics.services')}
+                {t('floorPlan.tableLabel')} {mostUsed.table_number} ({mostUsed.utilization_rate}%) - {mostUsed.times_used} {t('analytics.services')}
               </p>
             </div>
             <div className="p-3 bg-soft-gray/50 border border-border-gray/50 rounded-xl">
               <p className="text-xs text-warm-stone">
                 <span className="font-semibold text-deep-charcoal">{t('analytics.leastUsed')}:</span>{' '}
-                Table {leastUsed.table_number} ({leastUsed.utilization_rate}%) - {leastUsed.times_used} {t('analytics.services')}
+                {t('floorPlan.tableLabel')} {leastUsed.table_number} ({leastUsed.utilization_rate}%) - {leastUsed.times_used} {t('analytics.services')}
               </p>
             </div>
           </div>

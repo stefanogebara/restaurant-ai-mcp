@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useAnalytics } from '../../hooks/useAnalytics';
+import { useAnalytics, type AnalyticsData } from '../../hooks/useAnalytics';
 import { SkeletonAnalytics } from '../../components/common/Skeleton';
 import AnalyticsStats from '../../components/analytics/AnalyticsStats';
 import ReservationTrendChart from '../../components/analytics/ReservationTrendChart';
@@ -29,6 +29,18 @@ export default function AnalyticsTab() {
     endDate: dateRange.endDate,
     includeExport,
   });
+
+  // Once the export-enriched payload (raw_reservations) has arrived, capture
+  // it into separate state and drop the includeExport flag — otherwise it
+  // stays in the query key forever and every 30s poll keeps re-fetching the
+  // heavy raw_reservations array for the rest of the session.
+  const [exportReservations, setExportReservations] = useState<AnalyticsData['raw_reservations']>(undefined);
+  useEffect(() => {
+    if (includeExport && data?.raw_reservations) {
+      setExportReservations(data.raw_reservations);
+      setIncludeExport(false);
+    }
+  }, [includeExport, data?.raw_reservations]);
 
   // Timeout fallback: if loading takes > 10s, stop showing skeleton
   useEffect(() => {
@@ -104,7 +116,7 @@ export default function AnalyticsTab() {
           <DateRangePicker value={dateRange} onChange={setDateRange} />
           <div className="self-end">
             <ExportDropdown
-              data={data}
+              data={{ ...data, raw_reservations: data.raw_reservations ?? exportReservations }}
               dateLabel={`${dateRange.startDate}_${dateRange.endDate}`}
               onExportAll={() => setIncludeExport(true)}
               isExporting={isLoading && includeExport}

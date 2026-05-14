@@ -89,8 +89,10 @@ const DAY_KEYS: Record<string, string> = {
  * misconfiguration: general overnight hours (e.g. 18:00→02:00) are not yet
  * supported downstream, so they must stay blocked here rather than silently
  * produce zero bookable slots.
+ *
+ * Exported for unit testing.
  */
-function isDayHoursValid(openTime: string, closeTime: string): boolean {
+export function isDayHoursValid(openTime: string, closeTime: string): boolean {
   if (closeTime === '00:00') return true;
   return closeTime > openTime;
 }

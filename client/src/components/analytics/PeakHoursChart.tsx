@@ -34,8 +34,9 @@ export default function PeakHoursChart({ reservationsByTimeSlot }: PeakHoursChar
     count,
   }));
 
-  // Find max value to determine color intensity
-  const maxCount = Math.max(...chartData.map(d => d.count));
+  // Find max value to determine color intensity. Math.max() of an empty array
+  // is -Infinity, which makes every `count / maxCount` ratio NaN/-0 below.
+  const maxCount = chartData.length > 0 ? Math.max(...chartData.map(d => d.count)) : 0;
 
   // Custom tooltip with shadcn/ui styling
   const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Array<{ value: number; payload: { time: string } }> }) => {
@@ -54,6 +55,7 @@ export default function PeakHoursChart({ reservationsByTimeSlot }: PeakHoursChar
 
   // Dynamic color based on count (darker = more reservations)
   const getBarColor = (count: number) => {
+    if (maxCount <= 0) return colors.warmStone;
     const intensity = count / maxCount;
     if (intensity > 0.7) return colors.burgundy;
     if (intensity > 0.4) return colors.stoneGray;
@@ -65,7 +67,12 @@ export default function PeakHoursChart({ reservationsByTimeSlot }: PeakHoursChar
       <div className="flex items-center justify-between py-5 border-b border-[#E5E7EB]">
         <span className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{t('analytics.peakHoursLabel')}</span>
       </div>
-      <div role="img" aria-label="Bar chart showing peak reservation hours" className="p-6">
+      <div role="img" aria-label={t('analytics.charts.peakHoursAria')} className="p-6">
+      {chartData.length === 0 ? (
+        <div className="flex items-center justify-center h-[220px] text-sm text-warm-stone">
+          {t('analytics.noData')}
+        </div>
+      ) : (
       <ResponsiveContainer width="100%" height={220}>
         <BarChart
           data={chartData}
@@ -94,6 +101,7 @@ export default function PeakHoursChart({ reservationsByTimeSlot }: PeakHoursChar
           </Bar>
         </BarChart>
       </ResponsiveContainer>
+      )}
 
       </div>
     </div>

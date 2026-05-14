@@ -53,9 +53,14 @@ export default function AnalyticsStats({ overview, reservationsByStatus }: Analy
     queryKey: ['analytics-compare'],
     queryFn: async () => {
       const res = await authFetch('/api/analytics/compare?period_a=last_week&period_b=this_week');
-      if (!res.ok) return null;
+      // Throw, don't `return null` — a queryFn returning null is treated by
+      // React Query as a successful result, so it never retries and isError
+      // never fires. The week-over-week delta badges would silently vanish
+      // forever after one transient failure.
+      if (!res.ok) throw new Error('Failed to fetch comparison data');
       const json = await res.json();
-      return json.success ? json : null;
+      if (!json.success) throw new Error(json.error || 'Failed to fetch comparison data');
+      return json as CompareData;
     },
     staleTime: 5 * 60 * 1000,
   });

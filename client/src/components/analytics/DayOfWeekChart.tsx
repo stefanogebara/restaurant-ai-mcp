@@ -26,6 +26,9 @@ export default function DayOfWeekChart({ reservationsByDay }: DayOfWeekChartProp
   }));
 
   const maxCount = Math.max(...chartData.map(c => c.count));
+  // When there's no data every count is 0 and `count >= maxCount * 0.8` is
+  // `0 >= 0` → true, painting every bar burgundy as if all days were peak.
+  const hasData = maxCount > 0;
 
   const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Array<{ value: number; payload: { day: string } }> }) => {
     if (active && payload && payload.length) {
@@ -47,7 +50,7 @@ export default function DayOfWeekChart({ reservationsByDay }: DayOfWeekChartProp
       <div className="flex items-center justify-between py-5 border-b border-[#E5E7EB]">
         <span className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{t('analytics.reservationsByDay')}</span>
       </div>
-      <div role="img" aria-label="Bar chart showing number of reservations by day of the week" className="p-6">
+      <div role="img" aria-label={t('analytics.charts.dayOfWeekAria')} className="p-6">
         <ResponsiveContainer width="100%" height={220}>
           <BarChart
             data={chartData}
@@ -72,7 +75,7 @@ export default function DayOfWeekChart({ reservationsByDay }: DayOfWeekChartProp
               {chartData.map((entry) => (
                 <Cell
                   key={entry.day}
-                  fill={entry.count >= maxCount * 0.8 ? colors.burgundy : colors.borderGray}
+                  fill={hasData && entry.count >= maxCount * 0.8 ? colors.burgundy : colors.borderGray}
                 />
               ))}
             </Bar>

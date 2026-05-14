@@ -54,6 +54,24 @@ const ACTION_I18N: Record<string, Record<string, string>> = {
     'Offer tasting menus for special occasions': 'Oferecer menus degustação para ocasiões especiais',
     'Dessert and after-dinner drink promotions': 'Promoções de sobremesas e drinks pós-jantar',
   },
+  es: {
+    'Send SMS reminders 24h before reservation': 'Enviar recordatorios SMS 24h antes de la reserva',
+    'Require credit card for parties of 6+': 'Exigir tarjeta de crédito para grupos de 6+',
+    'Implement waitlist for last-minute fills': 'Implementar lista de espera para cubrir cancelaciones',
+    'Call high-risk reservations to confirm': 'Llamar a reservas de alto riesgo para confirmar',
+    'Early bird special (5-6:30 PM): 15% off': 'Descuento anticipado (17h-18h30): 15% off',
+    'Weekday lunch promotion': 'Promoción de almuerzo entre semana',
+    'Happy hour menu extension': 'Extensión del menú de happy hour',
+    'Partner with local offices for lunch programs': 'Alianzas con oficinas locales para programas de almuerzo',
+    'Optimize menu for faster service': 'Optimizar el menú para un servicio más rápido',
+    'Implement pre-ordering for large parties': 'Implementar pre-pedidos para grupos grandes',
+    'Streamline payment process (QR code menus)': 'Agilizar el pago (menús con código QR)',
+    'Better kitchen-floor communication': 'Mejorar la comunicación entre cocina y salón',
+    'Train staff on wine pairing suggestions': 'Capacitar al personal en sugerencias de maridaje de vinos',
+    'Highlight premium menu items': 'Destacar los platos premium del menú',
+    'Offer tasting menus for special occasions': 'Ofrecer menús de degustación para ocasiones especiales',
+    'Dessert and after-dinner drink promotions': 'Promociones de postres y tragos de sobremesa',
+  },
 };
 
 const TIMELINE_I18N: Record<string, Record<string, string>> = {
@@ -76,9 +94,14 @@ export default function RevenueQuickWinsCard() {
   const tDesc = (desc: string) => DESC_I18N[i18n.language]?.[desc] ?? desc;
   const tAction = (action: string) => ACTION_I18N[i18n.language]?.[action] ?? action;
   const tTimeline = (tl: string) => TIMELINE_I18N[i18n.language]?.[tl] ?? tl;
-  const [expanded, setExpanded] = useState<number | null>(0);
+  // Track the expanded card by its stable `rank`, not array index — the
+  // opportunities list comes from a poll and can reorder between fetches.
+  // `null` = nothing toggled yet (first card open by default); -1 = the user
+  // explicitly collapsed everything.
+  const [expandedRank, setExpandedRank] = useState<number | null>(null);
 
   const opportunities = (data?.opportunities ?? []).slice(0, 3);
+  const activeRank = expandedRank ?? opportunities[0]?.rank ?? null;
 
   if (isLoading) {
     return (
@@ -111,11 +134,13 @@ export default function RevenueQuickWinsCard() {
         {opportunities.length === 0 ? (
           <p className="text-sm text-warm-stone text-center py-4">{t('analytics.noOpportunities')}</p>
         ) : (
-          opportunities.map((opp, index) => (
-            <div key={index} className="border border-border-gray rounded-xl overflow-hidden">
+          opportunities.map((opp) => {
+            const isExpanded = activeRank === opp.rank;
+            return (
+            <div key={opp.rank} className="border border-border-gray rounded-xl overflow-hidden">
               <button
                 type="button"
-                onClick={() => setExpanded(expanded === index ? null : index)}
+                onClick={() => setExpandedRank(isExpanded ? -1 : opp.rank)}
                 className="w-full flex items-center gap-3 p-4 text-left hover:bg-soft-gray/30 transition-colors"
               >
                 <div className={`w-2 h-2 rounded-full flex-shrink-0 ${opp.priority === 'high' ? 'bg-red-500' : opp.priority === 'medium' ? 'bg-amber-500' : 'bg-rose-500'}`} />
@@ -130,15 +155,15 @@ export default function RevenueQuickWinsCard() {
                 <ThiingsIcon
                   name="chevron-down"
                   pxSize={16}
-                  className={`text-warm-stone flex-shrink-0 transition-transform ${expanded === index ? 'rotate-180' : ''}`}
+                  className={`text-warm-stone flex-shrink-0 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
                 />
               </button>
 
-              {expanded === index && (
+              {isExpanded && (
                 <div className="px-4 pb-4 pt-0 border-t border-border-gray bg-soft-gray/20">
                   <p className="text-xs font-semibold text-deep-charcoal mb-2 pt-3">{t('insights.actions')}</p>
                   <ul className="space-y-1.5">
-                    {opp.actions.map((action, i) => (
+                    {(opp.actions ?? []).map((action, i) => (
                       <li key={i} className="flex items-start gap-2 text-xs text-stone-gray">
                         <span className="text-burgundy mt-0.5 flex-shrink-0">•</span>
                         <span>{tAction(action)}</span>
@@ -148,7 +173,8 @@ export default function RevenueQuickWinsCard() {
                 </div>
               )}
             </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>

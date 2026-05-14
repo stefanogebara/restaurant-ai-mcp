@@ -65,13 +65,15 @@ export default function WeeklyForecastCard() {
             </div>
 
             <div className="space-y-0">
-              <StatRow label={t('insights.totalCustomers')} value={stats.total_customers} />
-              <StatRow label={t('insights.avgLifetimeValue')} value={formatCurrency(stats.avg_ltv)} />
-              <StatRow label={t('insights.totalLtv')} value={formatCurrency(stats.total_ltv)} />
+              {/* Guard numeric fields with ?? 0 — a partial stats payload would
+                  otherwise render "R$ NaN" via formatCurrency(undefined). */}
+              <StatRow label={t('insights.totalCustomers')} value={stats.total_customers ?? 0} />
+              <StatRow label={t('insights.avgLifetimeValue')} value={formatCurrency(stats.avg_ltv ?? 0)} />
+              <StatRow label={t('insights.totalLtv')} value={formatCurrency(stats.total_ltv ?? 0)} />
               <StatRow
                 label={t('insights.highChurnRisk')}
-                value={stats.high_risk_customers > 0 ? `${stats.high_risk_customers} ${t('insights.customers')}` : t('insights.none')}
-                accent={stats.high_risk_customers > 0}
+                value={(stats.high_risk_customers ?? 0) > 0 ? `${stats.high_risk_customers} ${t('insights.customers')}` : t('insights.none')}
+                accent={(stats.high_risk_customers ?? 0) > 0}
               />
             </div>
           </>
