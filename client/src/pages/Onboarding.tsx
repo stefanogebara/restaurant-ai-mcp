@@ -12,7 +12,7 @@
  * to post-onboarding settings to reduce friction.
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import ThiingsIcon from '../components/common/ThiingsIcon';
@@ -43,7 +43,6 @@ export default function Onboarding() {
   const { error: showError } = useToast();
   const { user } = useAuth();
   const showSubscribeBanner = searchParams.get('reason') === 'subscribe';
-  const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(false);
   const [isDemoLoading, setIsDemoLoading] = useState(false);
@@ -55,7 +54,7 @@ export default function Onboarding() {
   const customerEmail = user?.email || localStorage.getItem(LS_CUSTOMER_EMAIL) || '';
   const [isPreFilledFromDemo, setIsPreFilledFromDemo] = useState(false);
 
-  const [onboardingData, setOnboardingData] = useState<OnboardingData>({
+  const buildDefaultData = (): OnboardingData => ({
     customer_email: customerEmail,
     restaurant_id: '',
     plan: 'Starter',
@@ -98,6 +97,37 @@ export default function Onboarding() {
     // Team setup moved to Settings post-onboarding
     team_members: [],
   });
+
+  // Restore in-progress onboarding from localStorage so "Save & Exit" and a
+  // mid-wizard page refresh don't silently discard everything the user typed.
+  // Only steps 1–4 are restored: those run *before* the restaurant exists.
+  // Steps 5–6 are post-creation and optional — rehydrating a stale wizard
+  // there risks a duplicate restaurant, so we fall back to a fresh start.
+  const restoreOnboarding = (): { step: number; data: OnboardingData } => {
+    const fresh = { step: 1, data: buildDefaultData() };
+    try {
+      const savedStep = parseInt(localStorage.getItem(LS_ONBOARDING_STEP) || '', 10);
+      if (!Number.isFinite(savedStep) || savedStep < 1 || savedStep > 4) return fresh;
+      const savedRaw = localStorage.getItem(LS_ONBOARDING_DATA);
+      if (!savedRaw) return fresh;
+      const saved = JSON.parse(savedRaw) as Partial<OnboardingData>;
+      // A persisted restaurant_id means the restaurant was already created —
+      // never rehydrate into a pre-creation step in that case.
+      if (saved.restaurant_id) return fresh;
+      return { step: savedStep, data: { ...fresh.data, ...saved } };
+    } catch {
+      return fresh;
+    }
+  };
+
+  const [restored] = useState(restoreOnboarding);
+  const [currentStep, setCurrentStep] = useState(restored.step);
+  const [onboardingData, setOnboardingData] = useState<OnboardingData>(restored.data);
+
+  // Once onboarding completes we stop persisting — otherwise the persist
+  // effect below immediately re-writes the localStorage keys that
+  // completeOnboarding() just cleared, leaving stale data behind.
+  const completedRef = useRef(false);
 
   // Pre-fill from demo session if user arrived via demo conversion
   useEffect(() => {
@@ -153,10 +183,10 @@ export default function Onboarding() {
       .finally(() => { setIsDemoLoading(false); });
   }, []);
 
-  // Persist progress — use the imported constants instead of raw strings to
-  // stay in sync with the cleanup calls below that already use LS_ONBOARDING_DATA
-  // and LS_ONBOARDING_STEP.
+  // Persist progress so "Save & Exit" and accidental refreshes are recoverable
+  // (restored on mount by restoreOnboarding). Stops once onboarding completes.
   useEffect(() => {
+    if (completedRef.current) return;
     localStorage.setItem(LS_ONBOARDING_DATA, JSON.stringify(onboardingData));
     localStorage.setItem(LS_ONBOARDING_STEP, currentStep.toString());
   }, [onboardingData, currentStep]);
@@ -250,6 +280,10 @@ export default function Onboarding() {
         setBookingUrl(`https://seatable.one${data.restaurant.booking_url}`);
       }
 
+      // Mark complete BEFORE clearing storage so the persist effect doesn't
+      // re-write the keys when the upcoming setCurrentStep(5)/setOnboardingData
+      // calls re-trigger it.
+      completedRef.current = true;
       localStorage.removeItem(LS_ONBOARDING_DATA);
       localStorage.removeItem(LS_ONBOARDING_STEP);
       // Only remove referral code if it was successfully attached (or never present)
