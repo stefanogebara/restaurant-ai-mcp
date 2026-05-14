@@ -50,7 +50,7 @@ export default function VoiceSettingsPage() {
   const { hasAccess, isLoading: isLoadingAccess } = useFeatureAccess('voice_ai');
   const canLoadVoiceData = !isLoadingAccess && hasAccess;
 
-  const { data: config, isLoading: isLoadingConfig } = useVoiceSettings({ enabled: canLoadVoiceData });
+  const { data: config, isLoading: isLoadingConfig, isError: isConfigError, refetch: refetchConfig } = useVoiceSettings({ enabled: canLoadVoiceData });
   const saveMutation = useSaveVoiceSettings();
   const { data: engineConfig } = useVoiceEngineSettings({ enabled: canLoadVoiceData });
   const saveEngineMutation = useSaveVoiceEngine();
@@ -247,6 +247,36 @@ export default function VoiceSettingsPage() {
                   </div>
                 ))}
               </div>
+            </div>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // A failed voice-settings fetch must NOT fall through to the "!config?.agent_id"
+  // branch below — that would tell a restaurant with a fully-working agent that
+  // they have "No agent configured" and push them back to /onboarding. Surface
+  // the fetch failure explicitly with a retry instead.
+  if (isConfigError) {
+    return (
+      <DashboardLayout>
+        <div className="p-6 lg:p-8 max-w-5xl">
+          <div className="mt-8 text-center py-16">
+            <div className="border border-[#E5E7EB] rounded-lg p-8 max-w-md mx-auto">
+              <div className="w-14 h-14 mx-auto mb-3 bg-red-50 rounded-2xl flex items-center justify-center">
+                <ThiingsIcon name="alert-circle" pxSize={24} />
+              </div>
+              <h2 className="text-lg font-bold text-deep-charcoal mb-2">{t('dashboard.errorTitle')}</h2>
+              <p className="text-sm text-stone-gray mb-6">{t('errors.serverError')}</p>
+              <button
+                type="button"
+                onClick={() => refetchConfig()}
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-xl transition-colors"
+              >
+                <ThiingsIcon name="refresh" size="xs" />
+                {t('common.retry')}
+              </button>
             </div>
           </div>
         </div>
