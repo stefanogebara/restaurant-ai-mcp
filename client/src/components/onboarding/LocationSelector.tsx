@@ -29,11 +29,27 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
   onCityChange,
   error,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [isCountryOpen, setIsCountryOpen] = useState(false);
   const [isCityOpen, setIsCityOpen] = useState(false);
   const [countrySearchQuery, setCountrySearchQuery] = useState('');
   const [citySearchQuery, setCitySearchQuery] = useState('');
+
+  // Diacritic-insensitive lowercase (espana → matches España, brasil → matches Brasil).
+  const normalize = (s: string) =>
+    s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+
+  // Localized country names via Intl.DisplayNames. The data file stores English
+  // names ("Brazil", "Spain") but pt-BR/es users naturally type "Brasil"/"España".
+  // Without this, search returns "no countries found" for the correct local name.
+  const localizedCountryName = useMemo(() => {
+    try {
+      const display = new Intl.DisplayNames([i18n.language || 'en'], { type: 'region' });
+      return (code: string) => display.of(code) || '';
+    } catch {
+      return () => '';
+    }
+  }, [i18n.language]);
 
   // Get selected country details
   const selectedCountry = useMemo(() => {
@@ -45,28 +61,31 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
     return selectedCountryCode ? getCitiesByCountryCode(selectedCountryCode) : [];
   }, [selectedCountryCode]);
 
-  // Filter countries by search query
+  // Filter countries by search query — matches English name, language-group
+  // display name, AND locale-translated name (so pt-BR users typing "Brasil"
+  // and es users typing "España" / "Espana" both hit).
   const filteredLanguageGroups = useMemo(() => {
     if (!countrySearchQuery.trim()) return LANGUAGE_GROUPS;
 
-    const query = countrySearchQuery.toLowerCase();
+    const query = normalize(countrySearchQuery);
     return LANGUAGE_GROUPS.map(group => ({
       ...group,
       countries: group.countries.filter(country =>
-        country.name.toLowerCase().includes(query) ||
-        group.displayName.toLowerCase().includes(query)
+        normalize(country.name).includes(query) ||
+        normalize(group.displayName).includes(query) ||
+        normalize(localizedCountryName(country.code)).includes(query)
       ),
     })).filter(group => group.countries.length > 0);
-  }, [countrySearchQuery]);
+  }, [countrySearchQuery, localizedCountryName]);
 
-  // Filter cities by search query
+  // Filter cities by search query (diacritic-insensitive).
   const filteredCities = useMemo(() => {
     if (!citySearchQuery.trim()) return availableCities;
 
-    const query = citySearchQuery.toLowerCase();
+    const query = normalize(citySearchQuery);
     return availableCities.filter(city =>
-      city.name.toLowerCase().includes(query) ||
-      (city.region && city.region.toLowerCase().includes(query))
+      normalize(city.name).includes(query) ||
+      (city.region && normalize(city.region).includes(query))
     );
   }, [citySearchQuery, availableCities]);
 
