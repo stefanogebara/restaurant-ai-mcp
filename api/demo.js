@@ -425,14 +425,18 @@ async function handleCreate(req, res) {
     logger.warn('Exception seeding fake reservations (non-fatal):', err.message);
   }
 
-  const demoUrl = `${BASE_URL}/demo/${demo_token}`;
+  // Email needs an absolute URL; the frontend redirect guard requires a
+  // relative same-origin path (fb840e4d). Send the absolute URL only to the
+  // mailer and return the relative path to the browser.
+  const demoPath = `/demo/${demo_token}`;
+  const demoUrlAbsolute = `${BASE_URL}${demoPath}`;
 
   // Send welcome email (fire-and-forget — don't fail if email fails)
   sendDemoWelcomeEmail({
     contactName: effectiveName.trim(),
     contactEmail: contact_email.trim(),
     restaurantName: restaurant_name.trim(),
-    demoUrl,
+    demoUrl: demoUrlAbsolute,
   }).catch(err => logger.error('sendDemoWelcomeEmail threw:', err.message));
 
   logger.info(`Demo created: ${restaurantId} for ${contact_email}`);
@@ -440,7 +444,7 @@ async function handleCreate(req, res) {
   return res.status(201).json({
     success: true,
     demo_token,
-    demo_url: demoUrl,
+    demo_url: demoPath,
   });
 }
 
