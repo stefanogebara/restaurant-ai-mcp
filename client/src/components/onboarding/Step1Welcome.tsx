@@ -124,28 +124,44 @@ export default function Step1Welcome({ data, updateData, onNext, isDemoLoading }
         )}
       </div>
 
-      {/* Restaurant Type - Card Selection */}
+      {/* Restaurant Type - Card Selection. Each tile shows a short
+          example so a non-restaurateur doesn't have to guess whether
+          "Fast Casual" applies to their sanduicheria. */}
       <div>
         <label className="block text-sm font-semibold text-deep-charcoal mb-3">
           {t('onboarding.restaurantTypeLabel')}
         </label>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          {RESTAURANT_TYPES.map(({ value, label }) => (
-            <button
-              key={value}
-              type="button"
-              onClick={() => updateData({ restaurant_type: value })}
-              className={`
-                p-4 rounded-2xl border-2 transition-all duration-200 text-center font-semibold text-sm
-                ${data.restaurant_type === value
-                  ? 'border-burgundy bg-burgundy/10 text-burgundy'
-                  : 'border-border-gray bg-white text-stone-gray hover:border-burgundy/50 hover:bg-warm-white'
-                }
-              `}
-            >
-              {t(`onboarding.restaurantTypes.${value}`, label)}
-            </button>
-          ))}
+          {RESTAURANT_TYPES.map(({ value, label }) => {
+            // i18n key may not exist for every type yet — fall back to empty,
+            // and the example block hides itself when there's nothing to show.
+            const example = t(`onboarding.restaurantTypeExamples.${value}`, { defaultValue: '' });
+            return (
+              <button
+                key={value}
+                type="button"
+                onClick={() => updateData({ restaurant_type: value })}
+                className={`
+                  p-4 rounded-2xl border-2 transition-all duration-200 text-left font-semibold text-sm
+                  ${data.restaurant_type === value
+                    ? 'border-burgundy bg-burgundy/10 text-burgundy'
+                    : 'border-border-gray bg-white text-stone-gray hover:border-burgundy/50 hover:bg-warm-white'
+                  }
+                `}
+              >
+                <span className="block">{t(`onboarding.restaurantTypes.${value}`, label)}</span>
+                {example && (
+                  <span
+                    className={`block mt-1 text-[11px] font-normal leading-snug ${
+                      data.restaurant_type === value ? 'text-burgundy/70' : 'text-muted-stone'
+                    }`}
+                  >
+                    {example}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
         {errors.restaurant_type && (
           <p className="mt-2 text-sm text-burgundy">{errors.restaurant_type}</p>

@@ -40,7 +40,7 @@ export default function Onboarding() {
   useDocumentTitle(t('pageTitles.onboarding'));
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { error: showError } = useToast();
+  const { error: showError, success: showSuccessToast } = useToast();
   const { user } = useAuth();
   const showSubscribeBanner = searchParams.get('reason') === 'subscribe';
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -341,7 +341,18 @@ export default function Onboarding() {
         <div className="flex items-center gap-4">
           <span className="text-[13px] text-warm-stone">{t('onboarding.stepOf', { current: currentStep, total: TOTAL_STEPS })}</span>
           <button
+            type="button"
             onClick={() => {
+              // Confirm to the user that their progress was actually persisted
+              // — the previous version navigated away silently and Maria
+              // didn't know whether she'd just lost everything.
+              // Note: steps 1-4 are persisted by the `useEffect` that mirrors
+              // `onboardingData` to localStorage; we just surface that fact.
+              showSuccessToast(
+                currentStep >= 5
+                  ? t('onboarding.saveExitDone', 'Your restaurant is live. Finish the optional steps from your dashboard whenever you like.')
+                  : t('onboarding.saveExitProgress', 'Progress saved — come back any time to finish.')
+              );
               // H1 fix: route an authenticated mid-onboarding owner to their dashboard,
               // not to the public marketing landing page (which is in EN by default).
               navigate(user ? '/host-dashboard/simple' : '/');

@@ -168,18 +168,57 @@ export default function Step5ImportHistory({ onNext }: Step5ImportHistoryProps) 
               {t('onboarding.csvFormat')}
             </p>
             <p className="mt-2 text-[11px] text-warm-stone/70">
-              {t('onboarding.csvOnlyHint', 'Only .csv files are accepted. Max columns: name, phone, email, visits, last_visit, avg_spend')}
+              {t('onboarding.csvOnlyHint', 'Only .csv files. Need only the phone column — the rest are optional.')}
             </p>
           </>
         )}
       </div>
 
-      {/* Format hint */}
-      <div className="rounded-xl bg-soft-gray p-4 text-xs text-stone-gray space-y-1">
-        <p className="font-medium text-deep-charcoal">{t('onboarding.expectedFormat')}</p>
-        <code className="block text-[11px] text-warm-stone">
-          name, phone, email, visits, last_visit, avg_spend
-        </code>
+      {/* Format hint — a friendly table preview + a downloadable template.
+          The previous version showed `name, phone, email, visits, last_visit,
+          avg_spend` as raw snake_case to a non-technical owner — most users
+          guessed wrong on date format or currency and skipped the step. */}
+      <div className="rounded-xl bg-soft-gray p-4 text-xs text-stone-gray space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <p className="font-medium text-deep-charcoal">{t('onboarding.expectedFormat')}</p>
+          <a
+            href={`data:text/csv;charset=utf-8,${encodeURIComponent(
+              [
+                'name,phone,email,visits,last_visit,avg_spend',
+                'Maria Silva,+5511999990001,maria@example.com,5,2025-12-12,180',
+                'João Pereira,+5511999990002,joao@example.com,2,2026-01-04,95',
+              ].join('\n')
+            )}`}
+            download="seatable-import-template.csv"
+            className="text-[11px] font-semibold text-burgundy hover:text-burgundy-dark underline underline-offset-2"
+          >
+            {t('onboarding.downloadTemplate', 'Download example file')}
+          </a>
+        </div>
+        <div className="overflow-x-auto -mx-1">
+          <table className="w-full text-[11px]">
+            <thead>
+              <tr className="text-left text-deep-charcoal">
+                <th className="font-semibold px-2 py-1">{t('onboarding.csvCol.name', 'Name')}</th>
+                <th className="font-semibold px-2 py-1">{t('onboarding.csvCol.phone', 'Phone')} *</th>
+                <th className="font-semibold px-2 py-1">{t('onboarding.csvCol.email', 'Email')}</th>
+                <th className="font-semibold px-2 py-1">{t('onboarding.csvCol.visits', 'Visits')}</th>
+                <th className="font-semibold px-2 py-1">{t('onboarding.csvCol.lastVisit', 'Last visit (YYYY-MM-DD)')}</th>
+                <th className="font-semibold px-2 py-1">{t('onboarding.csvCol.avgSpend', 'Average spend')}</th>
+              </tr>
+            </thead>
+            <tbody className="text-warm-stone">
+              <tr>
+                <td className="px-2 py-1">Maria Silva</td>
+                <td className="px-2 py-1">+5511999990001</td>
+                <td className="px-2 py-1">maria@…</td>
+                <td className="px-2 py-1">5</td>
+                <td className="px-2 py-1">2025-12-12</td>
+                <td className="px-2 py-1">180</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
         <p>{t('onboarding.formatHint')}</p>
       </div>
 

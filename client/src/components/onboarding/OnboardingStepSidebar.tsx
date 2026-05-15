@@ -38,8 +38,25 @@ export default function OnboardingStepSidebar({ currentStep, goToStep }: Onboard
                 type="button"
                 onClick={() => { if (isCompleted) goToStep(stepNumber); }}
                 disabled={!isCompleted}
-                aria-label={isCompleted ? `Go back to step ${stepNumber}` : undefined}
-                className={`flex items-center gap-4 w-full text-left ${isCompleted ? 'cursor-pointer hover:opacity-75 transition-opacity' : 'cursor-default'}`}
+                // Previously this button silently did nothing for not-yet-reached
+                // steps — Maria would click and assume the page was broken. Now
+                // the aria-label and title both explain why nothing happens, and
+                // the button stays focusable for screen readers.
+                aria-label={
+                  isCompleted
+                    ? t('onboarding.sidebarGoBack', 'Go back to {{name}}', { name })
+                    : isActive
+                      ? t('onboarding.sidebarCurrent', '{{name}} — current step', { name })
+                      : t('onboarding.sidebarLocked', 'Finish the current step first to unlock {{name}}', { name })
+                }
+                title={
+                  isCompleted
+                    ? undefined
+                    : isActive
+                      ? undefined
+                      : t('onboarding.sidebarLocked', 'Finish the current step first to unlock {{name}}', { name })
+                }
+                className={`flex items-center gap-4 w-full text-left ${isCompleted ? 'cursor-pointer hover:opacity-75 transition-opacity' : 'cursor-not-allowed'}`}
               >
                 <div
                   className={`relative z-10 w-8 h-8 rounded-full border-2 flex items-center justify-center text-[13px] font-semibold flex-shrink-0 ${
