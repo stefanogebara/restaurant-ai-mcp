@@ -13,6 +13,13 @@ interface Props {
   onEngineSwitch: (target: VoiceEngineSettings['voice_engine']) => void;
 }
 
+/**
+ * The two voice engines are presented to the user by what they FEEL like
+ * (premium / fast), not by their vendor name. João doesn't know what
+ * "ElevenLabs" or "OpenAI Realtime" mean — those are implementation
+ * details. The vendor still drives the dropdowns and configuration
+ * downstream; we just stop exposing the brand on the primary choice.
+ */
 export default function VoiceEngineSelector({ currentEngine, pendingEngine, engineStatus, onEngineSwitch }: Props) {
   const { t } = useTranslation();
 
@@ -28,6 +35,9 @@ export default function VoiceEngineSelector({ currentEngine, pendingEngine, engi
       </div>
 
       <div className="p-6">
+        <p className="text-sm text-stone-gray mb-4">
+          {t('voiceEngine.intro', 'Which voice should answer your phone? You can switch later — no calls are missed during the change.')}
+        </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <button
             type="button"
@@ -39,13 +49,15 @@ export default function VoiceEngineSelector({ currentEngine, pendingEngine, engi
             }`}
           >
             <div className="flex items-center justify-between mb-2">
-              <span className="text-base font-semibold text-deep-charcoal">ElevenLabs</span>
+              <span className="text-base font-semibold text-deep-charcoal">
+                {t('voiceEngine.premiumName', 'Premium voice')}
+              </span>
               {currentEngine === 'elevenlabs' && (
                 <span className="text-xs font-medium text-burgundy bg-burgundy/10 px-2 py-0.5 rounded-full">{t('voiceEngine.current', 'Current')}</span>
               )}
             </div>
             <p className="text-sm text-stone-gray">
-              {t('voiceEngine.elevenlabsDesc', 'Managed voice agent with premium voice quality, voice cloning, and multilingual support.')}
+              {t('voiceEngine.elevenlabsDesc', 'The most human-sounding voice. Pick from 100+ accents and tones. Best for restaurants where the voice is part of your brand.')}
             </p>
           </button>
 
@@ -59,20 +71,22 @@ export default function VoiceEngineSelector({ currentEngine, pendingEngine, engi
             }`}
           >
             <div className="flex items-center justify-between mb-2">
-              <span className="text-base font-semibold text-deep-charcoal">OpenAI Realtime</span>
+              <span className="text-base font-semibold text-deep-charcoal">
+                {t('voiceEngine.fastName', 'Fast voice')}
+              </span>
               {currentEngine === 'openai_realtime' && (
                 <span className="text-xs font-medium text-burgundy bg-burgundy/10 px-2 py-0.5 rounded-full">{t('voiceEngine.current', 'Current')}</span>
               )}
             </div>
             <p className="text-sm text-stone-gray">
-              {t('voiceEngine.openaiDesc', 'Lower cost, native tool calling with WebSocket-based real-time voice.')}
+              {t('voiceEngine.openaiDesc', 'Replies faster and costs less. The voice is good but less customisable. Best for high-volume restaurants.')}
             </p>
           </button>
         </div>
 
         {pendingEngine && (
           <p className="mt-3 text-xs text-amber-600 bg-amber-600/10 rounded-xl px-3 py-2">
-            {t('voiceEngine.changePending', 'Engine change pending. Click "Save Changes" to apply.')}
+            {t('voiceEngine.changePending', 'Change pending. Click "Save Changes" to apply.')}
           </p>
         )}
       </div>
