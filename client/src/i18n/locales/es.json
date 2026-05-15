@@ -1650,7 +1650,7 @@
       "cta": "Enviar mensaje de prueba",
       "previewMessage": "¡Hola! Me gustaría reservar una mesa para 4 mañana a las 8pm",
       "inputPlaceholder": "Escribe un mensaje",
-      "trust": "Número real: +55 11 5028-2009 · São Paulo, Brasil",
+      "trust": "Número real: {{phone}} · São Paulo, Brasil",
       "aiReply": "¡Perfecto! Encontré una mesa para 4 mañana a las 8pm. ¿Confirmo la reserva? Solo necesito tu nombre."
     },
     "features": {

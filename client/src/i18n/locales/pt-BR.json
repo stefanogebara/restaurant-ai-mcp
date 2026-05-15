@@ -1936,7 +1936,7 @@
       "subtitle": "Envie uma mensagem no WhatsApp e receba uma resposta instantânea da nossa IA. Sem app, sem cadastro.",
       "cta": "Enviar mensagem de teste",
       "previewMessage": "Oi! Gostaria de reservar uma mesa para 4 amanhã às 20h",
-      "trust": "Número real: +55 11 5028-2009 · São Paulo, Brasil",
+      "trust": "Número real: {{phone}} · São Paulo, Brasil",
       "inputPlaceholder": "Digite uma mensagem",
       "aiReply": "Perfeito! Encontrei uma mesa para 4 amanhã às 20h. Posso confirmar a reserva? Só preciso do seu nome."
     },
