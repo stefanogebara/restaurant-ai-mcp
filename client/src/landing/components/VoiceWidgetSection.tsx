@@ -196,7 +196,7 @@ export default function VoiceWidgetSection() {
             transition={{ duration: 0.5, delay: 0.5 }}
             className="text-xs text-white/50 mt-5"
           >
-            {t('landing.voice.powered', 'Powered by ElevenLabs \u00b7 English, Portuguese, Spanish')}
+            {t('landing.voice.powered', 'Answers 24/7 in English, Portuguese, and Spanish')}
           </motion.p>
         )}
       </div>

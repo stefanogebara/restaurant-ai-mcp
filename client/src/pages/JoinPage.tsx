@@ -11,10 +11,12 @@
 import { useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 
 export default function JoinPage() {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -70,9 +72,11 @@ export default function JoinPage() {
   }, [validateQuery.data, user]);
 
   const inviteInfo = validateQuery.data ?? null;
-  const roleLabel = inviteInfo?.role
-    ? inviteInfo.role.charAt(0).toUpperCase() + inviteInfo.role.slice(1)
-    : 'Team Member';
+  const rawRole = inviteInfo?.role;
+  // Translate role labels; fall back to a Title-cased version of whatever the API sent.
+  const roleLabel = rawRole
+    ? t(`join.role.${rawRole}`, rawRole.charAt(0).toUpperCase() + rawRole.slice(1))
+    : t('join.role.teamMember', 'Team Member');
 
   const handleSignIn = () => {
     supabase.auth.signInWithOAuth({
@@ -86,7 +90,9 @@ export default function JoinPage() {
 
   // ─── Loading / accepting ────────────────────────────────────────────────────
   if (!token || validateQuery.isLoading || acceptMutation.isPending) {
-    const msg = acceptMutation.isPending ? 'Activating your account…' : 'Loading…';
+    const msg = acceptMutation.isPending
+      ? t('join.activating', 'Activating your account…')
+      : t('join.loading', 'Loading…');
     return (
       <div className="min-h-screen bg-warm-white flex items-center justify-center">
         <div className="text-center">
@@ -102,8 +108,8 @@ export default function JoinPage() {
     return (
       <div className="min-h-screen bg-warm-white flex items-center justify-center p-6">
         <div className="bg-white border border-border-gray rounded-2xl p-8 max-w-sm text-center shadow-sm">
-          <h2 className="text-lg font-bold text-deep-charcoal mb-2">You're in!</h2>
-          <p className="text-sm text-stone-gray">Redirecting to your dashboard…</p>
+          <h2 className="text-lg font-bold text-deep-charcoal mb-2">{t('join.success', "You're in!")}</h2>
+          <p className="text-sm text-stone-gray">{t('join.redirecting', 'Redirecting to your dashboard…')}</p>
         </div>
       </div>
     );
@@ -114,18 +120,18 @@ export default function JoinPage() {
     const validateErr = validateQuery.error as (Error & { expired?: boolean }) | null;
     const isExpired = validateErr?.expired;
     const errorMsg = acceptMutation.isError
-      ? (acceptMutation.error instanceof Error ? acceptMutation.error.message : 'Failed to accept')
+      ? (acceptMutation.error instanceof Error ? acceptMutation.error.message : t('join.acceptFailed', 'Failed to accept invitation'))
       : '';
     return (
       <div className="min-h-screen bg-warm-white flex items-center justify-center p-6">
         <div className="bg-white border border-border-gray rounded-2xl p-8 max-w-sm text-center shadow-sm">
           <h2 className="text-lg font-bold text-deep-charcoal mb-2">
-            {isExpired ? 'Invitation expired' : 'Invalid invitation'}
+            {isExpired ? t('join.expiredTitle', 'Invitation expired') : t('join.invalidTitle', 'Invalid invitation')}
           </h2>
           <p className="text-sm text-stone-gray">
             {isExpired
-              ? 'This invite link has expired. Ask the restaurant owner to send a new one.'
-              : errorMsg || 'This invite link is not valid.'}
+              ? t('join.expiredBody', 'This invite link has expired. Ask the restaurant owner to send a new one.')
+              : errorMsg || t('join.invalidBody', 'This invite link is not valid.')}
           </p>
         </div>
       </div>
@@ -136,18 +142,22 @@ export default function JoinPage() {
   return (
     <div className="min-h-screen bg-warm-white flex items-center justify-center p-6">
       <div className="bg-white border border-border-gray rounded-2xl p-8 max-w-sm text-center shadow-sm">
-        <h2 className="text-xl font-bold text-deep-charcoal mb-2">You're invited!</h2>
+        <h2 className="text-xl font-bold text-deep-charcoal mb-2">{t('join.invitedTitle', "You're invited!")}</h2>
         <p className="text-sm text-stone-gray mb-1">
-          Join as <span className="font-semibold text-deep-charcoal">{roleLabel}</span>
+          {t('join.joinAs', 'Join as')}{' '}
+          <span className="font-semibold text-deep-charcoal">{roleLabel}</span>
         </p>
         {inviteInfo?.email && (
-          <p className="text-xs text-muted-stone mb-6">Invitation sent to {inviteInfo.email}</p>
+          <p className="text-xs text-muted-stone mb-6">
+            {t('join.sentTo', 'Invitation sent to {{email}}', { email: inviteInfo.email })}
+          </p>
         )}
         <button
+          type="button"
           onClick={handleSignIn}
           className="w-full py-3 bg-burgundy hover:bg-burgundy-dark text-white font-semibold rounded-xl transition-colors text-sm"
         >
-          Sign in with Google to accept
+          {t('join.signInToAccept', 'Sign in with Google to accept')}
         </button>
       </div>
     </div>

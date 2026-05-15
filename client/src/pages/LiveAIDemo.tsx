@@ -374,7 +374,7 @@ export default function LiveAIDemo() {
       {/* Bottom bar */}
       <div className="border-t border-white/[5%] px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-3">
         <p className="text-xs text-white/20">
-          {t('landing.voiceDemo.powered', 'Powered by ElevenLabs \u00b7 Seatable AI')}
+          {t('landing.voiceDemo.powered', 'Seatable AI \u2014 answers in your guest\'s language')}
         </p>
         <div className="flex items-center gap-4">
           <Link

@@ -42,17 +42,22 @@ export default function WaitlistEntryCard({
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="font-semibold text-deep-charcoal text-sm truncate">{entry.customer_name || 'Guest'}</span>
+            <span className="font-semibold text-deep-charcoal text-sm truncate">{entry.customer_name || t('waitlist.guestFallback', 'Guest')}</span>
             {(entry.source === 'whatsapp' || entry.source === 'whatsapp_ai') && (
-              <span className="inline-flex items-center gap-1 text-[10px] font-medium text-green-700 bg-green-50 px-1.5 py-0.5 rounded-full flex-shrink-0">
-                WA
+              <span
+                className="inline-flex items-center gap-1 text-[10px] font-medium text-green-700 bg-green-50 px-1.5 py-0.5 rounded-full flex-shrink-0"
+                title="WhatsApp"
+                aria-label="WhatsApp"
+              >
+                <span aria-hidden="true">💬</span>
+                WhatsApp
               </span>
             )}
             <span className="px-1.5 py-0.5 bg-soft-gray rounded-lg text-[10px] font-medium text-stone-gray flex-shrink-0">
-              {entry.party_size}p
+              {t('waitlist.partyCount', '{{count}}p', { count: entry.party_size })}
             </span>
             <span className={`px-1.5 py-0.5 text-[10px] font-semibold rounded-lg ${getStatusColor(entry.status)} flex-shrink-0`}>
-              {entry.status}
+              {t(`waitlist.status.${entry.status.toLowerCase()}`, entry.status)}
             </span>
           </div>
           <div className="text-[11px] text-stone-gray">{entry.customer_phone}</div>
@@ -85,7 +90,7 @@ export default function WaitlistEntryCard({
       {/* Notified timestamp */}
       {entry.status === 'Notified' && entry.notified_at && (
         <div className="text-[10px] text-amber-600 ml-10 mt-1">
-          Notified {formatTimeAgo(entry.notified_at)}
+          {t('waitlist.notifiedAt', 'Notified')} {formatTimeAgo(entry.notified_at)}
         </div>
       )}
 

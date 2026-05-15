@@ -1,6 +1,8 @@
 {
   "common": {
     "save": "Save",
+    "saving": "Saving...",
+    "send": "Send",
     "cancel": "Cancel",
     "delete": "Delete",
     "edit": "Edit",
@@ -100,7 +102,7 @@
     "goodEvening": "Good evening",
     "noFeedbackYet": "No feedback collected yet. Ratings will appear here after guests respond.",
     "todayReservations": "Today's Reservations",
-    "activeParties": "Active Parties",
+    "activeParties": "Currently Dining",
     "revenue": "Revenue",
     "occupancy": "Occupancy",
     "quickStats": "Quick Stats",
@@ -218,7 +220,7 @@
       "availableSeats": "Available Seats",
       "occupiedSeats": "Occupied Seats",
       "occupancy": "Occupancy",
-      "activeParties": "Active Parties",
+      "activeParties": "Currently Dining",
       "estWaitTime": "Est. Wait Time",
       "noWait": "No Wait",
       "minAvg": "~{{count}} min avg"
@@ -629,6 +631,15 @@
     "ready": "Ready",
     "seat": "Seat",
     "remove": "Remove",
+    "guestFallback": "Guest",
+    "partyCount": "{{count}}p",
+    "notifiedAt": "Notified",
+    "status": {
+      "waiting": "Waiting",
+      "notified": "Notified",
+      "seated": "Seated",
+      "removed": "Removed"
+    },
     "customerName": "Customer Name",
     "phoneNumber": "Phone Number",
     "emailOptional": "Email (Optional)",
@@ -639,8 +650,54 @@
     "removeFailed": "Could not remove the entry. Please try again.",
     "statusFilterLabel": "Waitlist status filter",
     "sourceFilterLabel": "Source filter",
-    "searchLabel": "Search waitlist",
-    "guestFallback": "Guest"
+    "searchLabel": "Search waitlist"
+  },
+  "ltv": {
+    "atRisk": {
+      "heading": "Haven't seen them in a while",
+      "lastVisit": "Last visit",
+      "visitsCount": "{{count}} visits",
+      "anonymousGuest": "Anonymous guest",
+      "sendWinBack": "Send a win-back message",
+      "launchCampaign": "Send win-back message to everyone",
+      "unknown": "Unknown"
+    }
+  },
+  "tableConfig": {
+    "tableNumber": "Table number",
+    "seats": "How many people fit?",
+    "location": "Area",
+    "newLocation": "+ New area",
+    "newLocationName": "New area name",
+    "newLocationPlaceholder": "e.g. Terrace, Bar, Patio",
+    "tableType": "Can this table be joined with others?",
+    "flexible": "Yes — can join with nearby tables for bigger parties",
+    "fixed": "No — stays as a single table (booth, round, etc.)",
+    "combinationGroup": "Which tables can be joined? (optional)",
+    "combinationPlaceholder": "e.g. window-row, terrace-front",
+    "combinationHint": "Give the same name to tables that sit next to each other so the AI can join them into bigger groups."
+  },
+  "join": {
+    "loading": "Loading…",
+    "activating": "Activating your account…",
+    "success": "You're in!",
+    "redirecting": "Redirecting to your dashboard…",
+    "expiredTitle": "Invitation expired",
+    "expiredBody": "This invite link has expired. Ask the restaurant owner to send a new one.",
+    "invalidTitle": "Invalid invitation",
+    "invalidBody": "This invite link is not valid.",
+    "acceptFailed": "Failed to accept invitation",
+    "invitedTitle": "You're invited!",
+    "joinAs": "Join as",
+    "sentTo": "Invitation sent to {{email}}",
+    "signInToAccept": "Sign in with Google to accept",
+    "role": {
+      "owner": "Owner",
+      "manager": "Manager",
+      "host": "Host",
+      "staff": "Staff",
+      "teamMember": "Team Member"
+    }
   },
   "analytics": {
     "title": "Analytics",
@@ -1850,7 +1907,7 @@
       "label": "Try it live",
       "heading": "Call our AI host",
       "subtitle": "Have a real conversation. Ask to book a table for 4 tonight — and hear the AI respond naturally.",
-      "powered": "Powered by ElevenLabs · English, Portuguese, Spanish",
+      "powered": "Answers 24/7 in English, Portuguese, and Spanish",
       "micHint": "Click the mic to start talking",
       "tapToTalk": "Tap to talk",
       "connecting": "Connecting...",
@@ -2358,7 +2415,7 @@
       "liveDashboard": "Live dashboard — reservations appear in real-time",
       "liveDashboardMobileHint": "Open this on desktop to watch reservations appear in real-time during your call.",
       "unavailable": "The voice demo is temporarily unavailable. Please try again in a few minutes.",
-      "powered": "Powered by ElevenLabs · Seatable AI",
+      "powered": "Seatable AI — answers in your guest's language",
       "tryDashboard": "Try the full dashboard",
       "pricing": "Pricing",
       "tables": "Tables",

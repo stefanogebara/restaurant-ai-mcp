@@ -1,4 +1,5 @@
 import type { Dispatch, SetStateAction } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export interface TableFormData {
   table_number: number;
@@ -27,34 +28,42 @@ export default function TableConfigForm({
   isLoading,
   submitLabel,
 }: TableConfigFormProps) {
+  const { t } = useTranslation();
+
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-stone-gray mb-1">Table Number</label>
+          <label className="block text-sm font-medium text-stone-gray mb-1">
+            {t('tableConfig.tableNumber', 'Table number')}
+          </label>
           <input
             type="number"
             min="1"
             value={formData.table_number}
-            onChange={(e) => setFormData({ ...formData, table_number: parseInt(e.target.value) || 1 })}
+            onChange={(e) => setFormData({ ...formData, table_number: parseInt(e.target.value, 10) || 1 })}
             className="w-full px-3 py-2 border border-border-gray rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-stone-gray mb-1">Capacity</label>
+          <label className="block text-sm font-medium text-stone-gray mb-1">
+            {t('tableConfig.seats', 'How many people fit?')}
+          </label>
           <input
             type="number"
             min="1"
             max="20"
             value={formData.capacity}
-            onChange={(e) => setFormData({ ...formData, capacity: parseInt(e.target.value) || 1 })}
+            onChange={(e) => setFormData({ ...formData, capacity: parseInt(e.target.value, 10) || 1 })}
             className="w-full px-3 py-2 border border-border-gray rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
           />
         </div>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-stone-gray mb-1">Location</label>
+        <label className="block text-sm font-medium text-stone-gray mb-1">
+          {t('tableConfig.location', 'Area')}
+        </label>
         <div className="flex gap-2">
           <select
             value={formData.location}
@@ -66,14 +75,14 @@ export default function TableConfigForm({
                 {loc}
               </option>
             ))}
-            <option value="__new__">+ New Location</option>
+            <option value="__new__">{t('tableConfig.newLocation', '+ New area')}</option>
           </select>
         </div>
         {formData.location === '__new__' && (
           <input
             type="text"
-            aria-label="New location name"
-            placeholder="Enter new location name"
+            aria-label={t('tableConfig.newLocationName', 'New area name')}
+            placeholder={t('tableConfig.newLocationPlaceholder', 'e.g. Terrace, Bar, Patio')}
             onChange={(e) => setFormData({ ...formData, location: e.target.value })}
             className="mt-2 w-full px-3 py-2 border border-border-gray rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
           />
@@ -81,7 +90,9 @@ export default function TableConfigForm({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-stone-gray mb-1">Table Type</label>
+        <label className="block text-sm font-medium text-stone-gray mb-1">
+          {t('tableConfig.tableType', 'Can this table be joined with others?')}
+        </label>
         <div className="flex gap-3">
           <label className="flex items-center gap-2 cursor-pointer">
             <input
@@ -90,7 +101,7 @@ export default function TableConfigForm({
               onChange={() => setFormData({ ...formData, is_fixed: false })}
               className="w-4 h-4 text-rose-500 accent-rose-500"
             />
-            <span className="text-sm text-warm-stone">Flexible (can combine)</span>
+            <span className="text-sm text-warm-stone">{t('tableConfig.flexible', 'Yes — can join with nearby tables for bigger parties')}</span>
           </label>
           <label className="flex items-center gap-2 cursor-pointer">
             <input
@@ -99,7 +110,7 @@ export default function TableConfigForm({
               onChange={() => setFormData({ ...formData, is_fixed: true })}
               className="w-4 h-4 text-amber-600 accent-amber-600"
             />
-            <span className="text-sm text-warm-stone">Fixed (booth/round)</span>
+            <span className="text-sm text-warm-stone">{t('tableConfig.fixed', 'No — stays as a single table (booth, round, etc.)')}</span>
           </label>
         </div>
       </div>
@@ -107,34 +118,36 @@ export default function TableConfigForm({
       {!formData.is_fixed && (
         <div>
           <label className="block text-sm font-medium text-stone-gray mb-1">
-            Combination Group (optional)
+            {t('tableConfig.combinationGroup', 'Which tables can be joined? (optional)')}
           </label>
           <input
             type="text"
             value={formData.combination_group}
             onChange={(e) => setFormData({ ...formData, combination_group: e.target.value })}
-            placeholder="e.g., window-row, center-section"
+            placeholder={t('tableConfig.combinationPlaceholder', 'e.g. window-row, terrace-front')}
             className="w-full px-3 py-2 border border-border-gray rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
           />
           <p className="text-xs text-muted-stone mt-1">
-            Tables in the same group can be combined together
+            {t('tableConfig.combinationHint', 'Give the same name to tables that sit next to each other so the AI can join them into bigger groups.')}
           </p>
         </div>
       )}
 
       <div className="flex gap-3 pt-4">
         <button
+          type="button"
           onClick={onCancel}
           className="flex-1 px-4 py-2 border border-border-gray text-stone-gray rounded-xl hover:bg-soft-gray transition-colors"
         >
-          Cancel
+          {t('common.cancel', 'Cancel')}
         </button>
         <button
+          type="button"
           onClick={onSubmit}
           disabled={isLoading}
           className="flex-1 px-4 py-2 bg-deep-charcoal text-white rounded-xl hover:bg-charcoal-dark transition-colors disabled:opacity-50"
         >
-          {isLoading ? 'Saving...' : submitLabel}
+          {isLoading ? t('common.saving', 'Saving...') : submitLabel}
         </button>
       </div>
     </div>

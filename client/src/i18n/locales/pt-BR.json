@@ -1,6 +1,8 @@
 {
   "common": {
     "save": "Salvar",
+    "saving": "Salvando...",
+    "send": "Enviar",
     "cancel": "Cancelar",
     "delete": "Excluir",
     "edit": "Editar",
@@ -154,7 +156,7 @@
     "showInsights": "Mostrar análises e insights",
     "welcomeGuide": {
       "title": "Seu painel está pronto!",
-      "description": "Reservas, lista de espera e atividades aparecerão aqui conforme seu restaurante receber clientes. Adicione um walk-in ou crie uma reserva para começar."
+      "description": "Reservas, lista de espera e atividades aparecerão aqui conforme seu restaurante receber clientes. Adicione um cliente sem reserva ou crie uma reserva para começar."
     },
     "todayLabel": "Hoje",
     "tomorrowLabel": "Amanhã",
@@ -629,6 +631,14 @@
     "ready": "Pronto",
     "seat": "Sentar",
     "remove": "Remover",
+    "partyCount": "{{count}}p",
+    "notifiedAt": "Avisado",
+    "status": {
+      "waiting": "Aguardando",
+      "notified": "Avisado",
+      "seated": "Sentado",
+      "removed": "Removido"
+    },
     "customerName": "Nome do Cliente",
     "phoneNumber": "Número de Telefone",
     "emailOptional": "E-mail (Opcional)",
@@ -641,6 +651,53 @@
     "sourceFilterLabel": "Filtro de origem",
     "searchLabel": "Buscar na lista de espera",
     "guestFallback": "Convidado"
+  },
+  "ltv": {
+    "atRisk": {
+      "heading": "Faz tempo que não aparecem",
+      "lastVisit": "Última visita",
+      "visitsCount": "{{count}} visitas",
+      "anonymousGuest": "Cliente sem nome",
+      "sendWinBack": "Enviar mensagem para trazer de volta",
+      "launchCampaign": "Enviar mensagem para todos",
+      "unknown": "Desconhecido"
+    }
+  },
+  "tableConfig": {
+    "tableNumber": "Número da mesa",
+    "seats": "Quantas pessoas cabem?",
+    "location": "Área",
+    "newLocation": "+ Nova área",
+    "newLocationName": "Nome da nova área",
+    "newLocationPlaceholder": "ex. Terraço, Bar, Pátio",
+    "tableType": "Essa mesa pode ser juntada com outras?",
+    "flexible": "Sim — pode ser juntada com mesas próximas para grupos maiores",
+    "fixed": "Não — fica como mesa única (booth, redonda, etc.)",
+    "combinationGroup": "Quais mesas podem ser juntadas? (opcional)",
+    "combinationPlaceholder": "ex. fileira-janela, terraço-frente",
+    "combinationHint": "Coloque o mesmo nome para mesas que ficam lado a lado, assim a IA pode juntá-las em grupos maiores."
+  },
+  "join": {
+    "loading": "Carregando…",
+    "activating": "Ativando sua conta…",
+    "success": "Pronto!",
+    "redirecting": "Redirecionando para o painel…",
+    "expiredTitle": "Convite expirado",
+    "expiredBody": "Este link de convite expirou. Peça ao dono do restaurante para enviar um novo.",
+    "invalidTitle": "Convite inválido",
+    "invalidBody": "Este link de convite não é válido.",
+    "acceptFailed": "Não foi possível aceitar o convite",
+    "invitedTitle": "Você foi convidado!",
+    "joinAs": "Entrar como",
+    "sentTo": "Convite enviado para {{email}}",
+    "signInToAccept": "Entre com o Google para aceitar",
+    "role": {
+      "owner": "Dono",
+      "manager": "Gerente",
+      "host": "Anfitrião",
+      "staff": "Equipe",
+      "teamMember": "Membro da equipe"
+    }
   },
   "analytics": {
     "title": "Análises",
@@ -1122,7 +1179,7 @@
     "brandFeature1Title": "Agente de Voz IA",
     "brandFeature1Desc": "Atende ligações e reservas com a voz e personalidade únicas do seu restaurante.",
     "brandFeature2Title": "Painel Inteligente",
-    "brandFeature2Desc": "Reservas em tempo real, walk-ins e gestão de mesas em uma única tela.",
+    "brandFeature2Desc": "Reservas em tempo real, clientes sem reserva e gestão de mesas em uma única tela.",
     "brandFeature3Title": "Memória de Clientes",
     "brandFeature3Desc": "Cada cliente que retorna se sente reconhecido com experiências personalizadas.",
     "statResponse": "Tempo de Resposta",
@@ -1825,7 +1882,7 @@
       "typingPrefix": "Sua IA atendeu",
       "headlineB": "O anfitrião que nunca falta.",
       "headlineC": "Seu restaurante nunca dorme.",
-      "subtitle2": "O Seatable cuida do WhatsApp, ligações e walk-ins — para sua equipe focar na hospitalidade.",
+      "subtitle2": "O Seatable cuida do WhatsApp, ligações e clientes sem reserva — para sua equipe focar na hospitalidade.",
       "ctaNew": "Veja ao vivo ↓"
     },
     "inlineDemo": {
@@ -1856,7 +1913,7 @@
       "label": "Teste ao vivo",
       "heading": "Ligue para nossa IA",
       "subtitle": "Tenha uma conversa real. Peça para reservar uma mesa para 4 hoje à noite — e ouça a IA responder naturalmente.",
-      "powered": "Desenvolvido com ElevenLabs · Inglês, Português, Espanhol",
+      "powered": "Atende 24h em português, inglês e espanhol",
       "micHint": "Clique no microfone para começar",
       "tapToTalk": "Toque para falar",
       "connecting": "Conectando...",
@@ -2372,7 +2429,7 @@
       "liveDashboard": "Painel ao vivo — reservas aparecem em tempo real",
       "liveDashboardMobileHint": "Acesse pelo computador para ver as reservas aparecerem em tempo real durante a chamada.",
       "unavailable": "A demo de voz está temporariamente indisponível. Tente novamente em alguns minutos.",
-      "powered": "Desenvolvido com ElevenLabs · Seatable IA",
+      "powered": "Seatable IA — responde no idioma do cliente",
       "tryDashboard": "Experimente o painel completo",
       "pricing": "Preços",
       "tables": "Mesas",

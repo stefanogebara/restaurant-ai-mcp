@@ -99,7 +99,10 @@ export function ManagerChatPanel({ onClose }: ManagerChatPanelProps) {
           <p className="text-xs text-muted-stone text-center mt-8">{t('dashboard.managerAssistantHint')}</p>
         )}
         {messages.map((m, i) => (
-          <div key={i} className={'flex ' + (m.role === 'manager' ? 'justify-end' : 'justify-start')}>
+          // Use `created_at` as the stable identity. Falling back to the index
+          // with a tag distinguishes optimistic-but-unpersisted messages from
+          // saved ones so React doesn't reuse the wrong DOM node mid-stream.
+          <div key={m.created_at ?? `opt-${i}`} className={'flex ' + (m.role === 'manager' ? 'justify-end' : 'justify-start')}>
             <div className={'max-w-[80%] rounded-xl px-3 py-2 text-sm break-words ' + (m.role === 'manager' ? 'bg-burgundy text-white' : 'bg-soft-gray text-deep-charcoal')}>
               {m.role === 'assistant' ? renderMarkdown(m.content) : m.content}
             </div>
@@ -141,7 +144,7 @@ export function ManagerChatPanel({ onClose }: ManagerChatPanelProps) {
           disabled={!input.trim() || sendMutation.isPending || isQuotaExhausted}
           className="bg-burgundy hover:bg-burgundy-dark disabled:opacity-40 text-white rounded-lg px-3 py-2 text-sm font-medium flex-shrink-0"
         >
-          Send
+          {t('common.send', 'Send')}
         </button>
       </div>
     </div>
