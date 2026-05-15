@@ -474,24 +474,49 @@ export default function VoiceSettingsPage() {
                   )}
                 </div>
               ) : waStatus.meta.configured && !waStatus.meta.error ? (
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
                     <span className="w-1.5 h-1.5 rounded-full bg-yellow-500" />
                     {t('voiceSettings.waPendingApproval', 'Pending Approval')}
                   </span>
-                  <a href="https://business.facebook.com/" target="_blank" rel="noreferrer" className="text-xs text-blue-600 hover:underline block">
-                    {t('voiceSettings.waCheckMeta', 'Check Meta Business Manager')} &rarr;
+                  {/* Previously this just dropped the user on the Meta dashboard
+                      with no instructions. Now we explain what they're going
+                      there to do BEFORE they click. */}
+                  <div className="bg-soft-gray rounded-xl p-3 text-xs text-warm-stone space-y-2">
+                    <p className="text-deep-charcoal font-medium">{t('voiceSettings.waPendingHelpTitle', 'What happens next')}</p>
+                    <ol className="list-decimal list-inside space-y-1">
+                      <li>{t('voiceSettings.waPendingStep1', 'Meta reviews your number — usually takes 1–2 business days.')}</li>
+                      <li>{t('voiceSettings.waPendingStep2', 'You can check the review status in Meta Business Manager (link below).')}</li>
+                      <li>{t('voiceSettings.waPendingStep3', 'When approved, this page flips to "Connected" automatically.')}</li>
+                    </ol>
+                  </div>
+                  <a href="https://business.facebook.com/" target="_blank" rel="noreferrer" className="text-xs text-blue-600 hover:underline inline-flex items-center gap-1">
+                    {t('voiceSettings.waCheckMeta', 'Open Meta Business Manager')} &rarr;
                   </a>
                 </div>
               ) : (
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
                     <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
                     {t('voiceSettings.waNotConfigured', 'Not Configured')}
                   </span>
                   {waStatus.meta.error && <p className="text-xs text-red-600">{waStatus.meta.error}</p>}
-                  <a href="https://business.facebook.com/" target="_blank" rel="noreferrer" className="text-xs text-blue-600 hover:underline block">
-                    {t('voiceSettings.waCheckMeta', 'Check Meta Business Manager')} &rarr;
+                  <div className="bg-soft-gray rounded-xl p-3 text-xs text-warm-stone space-y-2">
+                    <p className="text-deep-charcoal font-medium">{t('voiceSettings.waSetupHelpTitle', 'How to connect WhatsApp')}</p>
+                    <ol className="list-decimal list-inside space-y-1">
+                      <li>{t('voiceSettings.waSetupStep1', 'Open Meta Business Manager with the Facebook account that owns your restaurant page.')}</li>
+                      <li>{t('voiceSettings.waSetupStep2', 'Go to WhatsApp Accounts → Approve the connection request from Seatable.')}</li>
+                      <li>{t('voiceSettings.waSetupStep3', 'Come back here — it flips to "Connected" in about a minute.')}</li>
+                    </ol>
+                    <p className="pt-1">
+                      {t('voiceSettings.waSetupHelp', 'Stuck?')}{' '}
+                      <a href="mailto:hello@seatable.one?subject=WhatsApp%20setup" className="text-burgundy hover:text-burgundy-dark underline underline-offset-2 font-medium">
+                        hello@seatable.one
+                      </a>
+                    </p>
+                  </div>
+                  <a href="https://business.facebook.com/" target="_blank" rel="noreferrer" className="text-xs text-blue-600 hover:underline inline-flex items-center gap-1">
+                    {t('voiceSettings.waCheckMeta', 'Open Meta Business Manager')} &rarr;
                   </a>
                 </div>
               )}
