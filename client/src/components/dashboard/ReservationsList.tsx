@@ -379,11 +379,31 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
             {reservation.customer_name}
           </button>
           <CustomerTierBadge tier={reservation.customer_tier} visitCount={reservation.visit_count} compact />
-          {reservation.source && reservation.source !== 'seatable' && (
-            <span className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-blue-500/10 text-blue-600 uppercase">
-              {reservation.source}
-            </span>
-          )}
+          {reservation.source && reservation.source !== 'seatable' && (() => {
+            // Previously the source rendered as raw uppercase (e.g. "WA",
+            // "WHATSAPP_AI") which read as a cryptic acronym to hosts. Map
+            // to friendly labels.
+            const src = reservation.source.toLowerCase();
+            const isWhatsApp = src === 'whatsapp' || src === 'whatsapp_ai' || src === 'wa';
+            const label = isWhatsApp
+              ? 'WhatsApp'
+              : src === 'voice' || src === 'phone' || src === 'voice_ai'
+                ? tl('byPhone')
+                : src === 'manual'
+                  ? tl('addedByStaff')
+                  : reservation.source;
+            return (
+              <span
+                className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-medium ${
+                  isWhatsApp ? 'bg-green-50 text-green-700' : 'bg-blue-500/10 text-blue-600'
+                }`}
+                title={label}
+              >
+                {isWhatsApp && <span aria-hidden="true">💬</span>}
+                {label}
+              </span>
+            );
+          })()}
         </div>
         <div className="text-[11px] sm:text-xs text-muted-stone mt-0.5 truncate">
           {reservation.party_size} {tl('people')}
@@ -393,7 +413,15 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
             </span>
           )}
           {avgSpendPerCover ? (
-            <span className="text-rose-600 font-medium"> · ~{formatCurrency(predictReservationRevenue(reservation.party_size, avgSpendPerCover, byPartySize))}</span>
+            // Previously rendered as a bare "~€120" next to the party size,
+            // which read as if the guest cost the restaurant money. Now
+            // explicitly labelled "Expected spend".
+            <span
+              className="text-rose-600 font-medium"
+              title={tl('expectedSpendHint')}
+            >
+              {' · '}{tl('expectedSpendShort')} ~{formatCurrency(predictReservationRevenue(reservation.party_size, avgSpendPerCover, byPartySize))}
+            </span>
           ) : null}
           {reservation.special_requests && <span className="hidden sm:inline"> · {reservation.special_requests}</span>}
         </div>
@@ -434,15 +462,17 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
             </span>
           </button>
         ) : isHighRisk && !reservation.intervention_taken ? (
+          // Previously rendered as a pill that looked identical to passive
+          // status badges. Now a filled call-to-action button with a verb-
+          // first label ("Send reminder") so hosts can tell it's clickable.
           <button
             type="button"
             onClick={onIntervention}
-            className="text-xs font-semibold px-3 py-1 rounded-full bg-amber-600/[8%] text-amber-600"
+            aria-label={tl('takeActionAriaLabel')}
+            className="text-xs font-semibold px-3 py-1.5 rounded-full bg-amber-600 hover:bg-amber-700 text-white transition-colors inline-flex items-center gap-1.5 shadow-sm"
           >
-            <span className="inline-flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60 flex-shrink-0" />
-              {tl('takeAction')}
-            </span>
+            <span aria-hidden="true">⚡</span>
+            {tl('takeActionButton')}
           </button>
         ) : reservation.intervention_taken ? (
           <span className="text-xs font-semibold px-3 py-1 rounded-full bg-rose-600/[8%] text-rose-600">

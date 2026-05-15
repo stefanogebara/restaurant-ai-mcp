@@ -278,7 +278,13 @@
       "checkIn": "Check In",
       "seated": "Seated",
       "takeAction": "Take Action",
+      "takeActionButton": "Send reminder",
+      "takeActionAriaLabel": "Send a reminder to this at-risk guest",
       "actionTaken": "Action taken",
+      "byPhone": "By phone",
+      "addedByStaff": "Added by staff",
+      "expectedSpendShort": "Expected spend",
+      "expectedSpendHint": "Estimated based on similar past reservations and your average spend per guest.",
       "people": "people",
       "lunch": "Lunch",
       "dinner": "Dinner",
@@ -677,6 +683,14 @@
       "sendWinBack": "Send a win-back message",
       "launchCampaign": "Send win-back message to everyone",
       "unknown": "Unknown"
+    },
+    "maintenance": {
+      "toggle": "Maintenance",
+      "recalcHint": "These numbers refresh automatically every day. You only need to trigger a manual rebuild after a large CSV import.",
+      "recalcButton": "Refresh all customer values now",
+      "recalcRunning": "Refreshing...",
+      "recalcDone": "Refreshed values for {{count}} customers",
+      "recalcFailed": "Could not refresh customer values. Please try again."
     }
   },
   "tableConfig": {

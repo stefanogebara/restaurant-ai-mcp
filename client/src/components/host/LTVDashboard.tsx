@@ -102,16 +102,34 @@ export default function LTVDashboard() {
             highRiskCount={stats.high_risk_customers}
             onOpenCampaignModal={openCampaignModal}
           />
-          <button
-            className="w-full px-4 py-3 bg-burgundy hover:bg-burgundy-dark text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2"
-            onClick={() => recalculate.mutate(undefined, {
-              onSuccess: (result) => success(`Calculated LTV for ${result.total_customers} customers`),
-              onError: () => error('Failed to calculate LTV for all customers'),
-            })}
-          >
-            <ThiingsIcon name="activity" size="sm" />
-            Recalculate All Customer LTV
-          </button>
+          {/* Recalculate is a maintenance-grade database job that previously
+              took primary CTA real-estate. Hosts don't need it for daily
+              shifts — the values refresh automatically on the next cron pass.
+              Tucked into a small disclosure so admins can still trigger it. */}
+          <details className="text-xs">
+            <summary className="cursor-pointer text-muted-stone hover:text-deep-charcoal underline underline-offset-2 select-none">
+              {t('ltv.maintenance.toggle', 'Maintenance')}
+            </summary>
+            <div className="mt-3 p-3 bg-soft-gray rounded-xl space-y-2">
+              <p className="text-xs text-warm-stone">
+                {t('ltv.maintenance.recalcHint', 'These numbers refresh automatically every day. You only need to trigger a manual rebuild after a large CSV import.')}
+              </p>
+              <button
+                type="button"
+                className="w-full px-3 py-2 bg-soft-gray hover:bg-border-gray border border-border-gray text-xs font-medium text-deep-charcoal rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                disabled={recalculate.isPending}
+                onClick={() => recalculate.mutate(undefined, {
+                  onSuccess: (result) => success(t('ltv.maintenance.recalcDone', 'Refreshed values for {{count}} customers', { count: result.total_customers })),
+                  onError: () => error(t('ltv.maintenance.recalcFailed', 'Could not refresh customer values. Please try again.')),
+                })}
+              >
+                {recalculate.isPending ? <Spinner size="sm" /> : <ThiingsIcon name="activity" size="sm" />}
+                {recalculate.isPending
+                  ? t('ltv.maintenance.recalcRunning', 'Refreshing...')
+                  : t('ltv.maintenance.recalcButton', 'Refresh all customer values now')}
+              </button>
+            </div>
+          </details>
         </div>
       )}
 

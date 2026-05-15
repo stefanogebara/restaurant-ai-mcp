@@ -249,7 +249,13 @@
       "checkIn": "Check In",
       "seated": "Sentado",
       "takeAction": "Tomar Acción",
+      "takeActionButton": "Enviar recordatorio",
+      "takeActionAriaLabel": "Enviar un recordatorio a este cliente en riesgo",
       "actionTaken": "Acción tomada",
+      "byPhone": "Por teléfono",
+      "addedByStaff": "Agregado por el equipo",
+      "expectedSpendShort": "Gasto previsto",
+      "expectedSpendHint": "Estimado a partir de reservas similares pasadas y tu gasto promedio por cliente.",
       "people": "personas",
       "lunch": "Almuerzo",
       "dinner": "Cena",
@@ -677,6 +683,14 @@
       "sendWinBack": "Enviar mensaje de reconquista",
       "launchCampaign": "Enviar mensaje de reconquista a todos",
       "unknown": "Desconocido"
+    },
+    "maintenance": {
+      "toggle": "Mantenimiento",
+      "recalcHint": "Estos números se actualizan automáticamente cada día. Solo necesitas activar una recalculación manual después de una importación grande de CSV.",
+      "recalcButton": "Recalcular todos los valores ahora",
+      "recalcRunning": "Recalculando...",
+      "recalcDone": "Valores actualizados para {{count}} clientes",
+      "recalcFailed": "No se pudieron recalcular los valores. Inténtalo de nuevo."
     }
   },
   "tableConfig": {
