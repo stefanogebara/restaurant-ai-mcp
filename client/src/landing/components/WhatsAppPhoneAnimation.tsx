@@ -80,6 +80,15 @@ export default function WhatsAppPhoneAnimation({
       window.matchMedia('(prefers-reduced-motion: reduce)').matches
   );
 
+  // Keep `onMessageStep` in a ref so a fresh parent callback identity does
+  // NOT restart the entire animation loop. The previous version listed
+  // `onMessageStep` in the effect deps, so every parent re-render that didn't
+  // memoize the callback would tear down and rebuild the whole sequence.
+  const onMessageStepRef = useRef(onMessageStep);
+  useEffect(() => {
+    onMessageStepRef.current = onMessageStep;
+  }, [onMessageStep]);
+
   const clearTimer = useCallback(() => {
     if (timerRef.current) {
       clearTimeout(timerRef.current);
@@ -117,7 +126,7 @@ export default function WhatsAppPhoneAnimation({
           }
 
           setVisibleMessages((prev) => [...prev, i]);
-          onMessageStep?.(i);
+          onMessageStepRef.current?.(i);
 
           if (i < messages.length - 1) {
             await sleep(MESSAGE_DELAY);
@@ -135,8 +144,12 @@ export default function WhatsAppPhoneAnimation({
       cancelled = true;
       clearTimer();
     };
+    // `messages` is a stable array of strings re-derived from t() — t is
+    // referentially stable per language. The animation should only restart
+    // on language change, which is implicit through `messages` content.
+    // `onMessageStep` is intentionally NOT a dep — we read it via ref.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onMessageStep, clearTimer]);
+  }, [clearTimer]);
 
   return (
     <div

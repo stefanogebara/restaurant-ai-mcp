@@ -14,6 +14,7 @@ interface SharePromptProps {
 export default function SharePrompt({ location }: SharePromptProps) {
   const { t } = useTranslation();
   const [dismissed, setDismissed] = useState(false);
+  const [copyState, setCopyState] = useState<'idle' | 'copied' | 'error'>('idle');
 
   if (dismissed) return null;
 
@@ -25,11 +26,28 @@ export default function SharePrompt({ location }: SharePromptProps) {
 
   const whatsappLink = `https://wa.me/?text=${encodeURIComponent(shareMessage)}`;
 
-  const handleShare = (channel: 'whatsapp' | 'copy_link') => {
+  const handleShare = async (channel: 'whatsapp' | 'copy_link') => {
     trackShareClicked({ location, channel });
     trackDemoFunnel({ step: 'demo_share_clicked' });
-    if (channel === 'copy_link') {
-      navigator.clipboard.writeText(SHARE_URL).catch(() => {});
+    if (channel !== 'copy_link') return;
+
+    // Previously this was `.catch(() => {})` — user clicked Copy, nothing
+    // happened, no feedback. Now: surface success and (rare) failure so the
+    // user always knows whether the share-link is in their clipboard.
+    if (typeof navigator === 'undefined' || !navigator.clipboard?.writeText) {
+      console.error('[SharePrompt] clipboard API unavailable');
+      setCopyState('error');
+      setTimeout(() => setCopyState('idle'), 2500);
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(SHARE_URL);
+      setCopyState('copied');
+    } catch (err) {
+      console.error('[SharePrompt] clipboard write failed', err);
+      setCopyState('error');
+    } finally {
+      setTimeout(() => setCopyState('idle'), 2500);
     }
   };
 
@@ -78,9 +96,20 @@ export default function SharePrompt({ location }: SharePromptProps) {
               <button
                 type="button"
                 onClick={() => handleShare('copy_link')}
-                className="px-4 py-1.5 border border-border-gray hover:border-burgundy/40 text-xs font-medium text-warm-stone hover:text-deep-charcoal rounded-full transition-all"
+                aria-live="polite"
+                className={`px-4 py-1.5 border text-xs font-medium rounded-full transition-all ${
+                  copyState === 'copied'
+                    ? 'border-burgundy/40 text-burgundy'
+                    : copyState === 'error'
+                      ? 'border-red-300 text-red-600'
+                      : 'border-border-gray hover:border-burgundy/40 text-warm-stone hover:text-deep-charcoal'
+                }`}
               >
-                {t('landing.share.copyLink', 'Copy link')}
+                {copyState === 'copied'
+                  ? t('landing.share.copied', 'Link copied!')
+                  : copyState === 'error'
+                    ? t('landing.share.copyFailed', 'Copy failed')
+                    : t('landing.share.copyLink', 'Copy link')}
               </button>
             </div>
           </div>

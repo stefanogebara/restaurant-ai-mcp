@@ -39,11 +39,12 @@ export default function PricingSection() {
   const toast = useToast();
   const currency = currencyFromLanguage(i18n.language);
 
-  const scrollToContact = () => {
-    const element = document.getElementById('contact');
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
+  // The landing page has no `#contact` section — this used to be a silent
+  // no-op for both the enterprise "contact us" link and the no-priceId tier
+  // fallback. Route both to the demo setup flow, which is the lowest-friction
+  // conversion path and what the rest of the landing CTAs use.
+  const goToContact = () => {
+    navigate('/demo/setup');
   };
 
   const handleSubscribe = async (priceId: string, planName: string, price = 0) => {
@@ -79,6 +80,16 @@ export default function PricingSection() {
       }
 
       const { url } = await response.json();
+      // Guard against open-redirect and undefined URL. The previous version
+      // would assign `window.location.href = undefined` (navigates to /undefined)
+      // on a 200 + missing-url response, and would happily redirect off-domain
+      // if the checkout-session endpoint were ever compromised or buggy.
+      if (typeof url !== 'string' || !url.startsWith('https://checkout.stripe.com/')) {
+        console.error('[PricingSection] checkout session returned an invalid url', url);
+        toast.error(t('landing.pricing.checkoutError'));
+        setLoadingPlan(null);
+        return;
+      }
       window.location.href = url;
     } catch (error) {
       console.error('Error creating checkout session:', error);
@@ -149,7 +160,7 @@ export default function PricingSection() {
                       handleSubscribe(id, tier.name);
                     } else {
                       trackCtaClicked({ cta: 'pricing_cta', location: `pricing_${tier.name.toLowerCase()}` });
-                      scrollToContact();
+                      goToContact();
                     }
                   }}
                   disabled={loadingPlan === tier.name}
@@ -184,7 +195,7 @@ export default function PricingSection() {
         {/* Bottom Note */}
         <p className="text-center text-sm text-muted-stone mt-6">
           {t('landing.pricing.customSolution')}{' '}
-          <button type="button" onClick={scrollToContact} className="text-burgundy hover:text-burgundy-dark font-medium transition-colors min-h-[44px] inline-flex items-center">
+          <button type="button" onClick={goToContact} className="text-burgundy hover:text-burgundy-dark font-medium transition-colors min-h-[44px] inline-flex items-center">
             {t('landing.pricing.enterpriseLink')}
           </button>
         </p>

@@ -10,14 +10,21 @@ const PRESETS = [
   { id: 'japanese', flag: '🇯🇵', label: 'Sakura Izakaya'  },
 ] as const;
 
+// If the iframe hasn't fired onLoad within this window, assume the embedded
+// demo can't render here (ad-blocker, CSP, network issue, slow build) and
+// surface a graceful fallback instead of spinning forever.
+const IFRAME_LOAD_TIMEOUT_MS = 12000;
+
 export default function InlineDemoSection() {
   const { t } = useTranslation();
   const [activePreset, setActivePreset] = useState<string>('brazilian');
   const [iframeLoaded, setIframeLoaded] = useState(false);
+  const [iframeFailed, setIframeFailed] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [isInteracting, setIsInteracting] = useState(false);
   const sectionRef = useRef<HTMLDivElement>(null);
   const hasTracked = useRef(false);
+  const loadTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Lazy-load: only start the iframe when the section enters viewport
   useEffect(() => {
@@ -31,10 +38,35 @@ export default function InlineDemoSection() {
     return () => observer.disconnect();
   }, []);
 
+  // Start a fallback timer whenever a new preset begins loading. If onLoad
+  // doesn't fire in time, give up and show the error state.
+  useEffect(() => {
+    if (!isVisible || iframeLoaded || iframeFailed) return;
+    loadTimeoutRef.current = setTimeout(() => {
+      setIframeFailed(true);
+    }, IFRAME_LOAD_TIMEOUT_MS);
+    return () => {
+      if (loadTimeoutRef.current) {
+        clearTimeout(loadTimeoutRef.current);
+        loadTimeoutRef.current = null;
+      }
+    };
+  }, [isVisible, iframeLoaded, iframeFailed, activePreset]);
+
+  const handleIframeLoad = () => {
+    setIframeLoaded(true);
+    setIframeFailed(false);
+    if (loadTimeoutRef.current) {
+      clearTimeout(loadTimeoutRef.current);
+      loadTimeoutRef.current = null;
+    }
+  };
+
   const handlePresetSwitch = (id: string) => {
     if (id === activePreset) return;
     setActivePreset(id);
     setIframeLoaded(false);
+    setIframeFailed(false);
     setIsInteracting(false);
     if (!hasTracked.current) {
       hasTracked.current = true;
@@ -44,7 +76,7 @@ export default function InlineDemoSection() {
   };
 
   return (
-    <section ref={sectionRef} className="py-24 px-6 sm:px-16 bg-soft-gray border-t border-border-gray" id="inline-demo">
+    <section ref={sectionRef} className="py-24 px-6 sm:px-16 bg-soft-gray border-t border-border-gray" id="try-demo" data-section="inline-demo">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="text-center mb-10">
@@ -108,7 +140,7 @@ export default function InlineDemoSection() {
           {/* iframe */}
           <div className="relative" style={{ height: '600px' }}>
             {/* Skeleton while loading */}
-            {!iframeLoaded && (
+            {!iframeLoaded && !iframeFailed && (
               <div className="absolute inset-0 bg-soft-gray flex items-center justify-center">
                 <div className="flex flex-col items-center gap-3">
                   <div className="w-8 h-8 border-2 border-burgundy border-t-transparent rounded-full animate-spin" />
@@ -116,14 +148,33 @@ export default function InlineDemoSection() {
                 </div>
               </div>
             )}
-            {isVisible && (
+            {/* Fallback when the iframe couldn't load in time (CSP, blocker, network) */}
+            {iframeFailed && (
+              <div className="absolute inset-0 bg-soft-gray flex items-center justify-center px-6">
+                <div className="flex flex-col items-center gap-3 text-center max-w-md">
+                  <p className="text-base font-medium text-deep-charcoal">
+                    {t('landing.inlineDemo.loadError', "We couldn't load the demo here.")}
+                  </p>
+                  <p className="text-sm text-warm-stone">
+                    {t('landing.inlineDemo.loadErrorHint', 'Try opening it fullscreen instead.')}
+                  </p>
+                  <Link
+                    to={`/demo?preset=${activePreset}`}
+                    className="mt-2 inline-flex items-center gap-2 px-5 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-full transition-colors"
+                  >
+                    {t('landing.inlineDemo.fullscreen', 'Open fullscreen')}
+                  </Link>
+                </div>
+              </div>
+            )}
+            {isVisible && !iframeFailed && (
               <iframe
                 key={activePreset}
                 src={`/demo?preset=${activePreset}&embed=true`}
                 title={`Demo — ${PRESETS.find(p => p.id === activePreset)?.label}`}
                 className="w-full h-full border-0"
                 style={{ pointerEvents: isInteracting ? 'auto' : 'none' }}
-                onLoad={() => setIframeLoaded(true)}
+                onLoad={handleIframeLoad}
                 loading="lazy"
                 sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
               />

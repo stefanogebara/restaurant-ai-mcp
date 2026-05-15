@@ -20,17 +20,19 @@ export default function HeroSplitScreen() {
     setCurrentStep(step);
   }, []);
 
-  // Reset loop: after step 3 (last message), wait 5s then restart
+  // Reset loop: after step 3 (last message), wait 5s then return to idle.
+  // The previous version scheduled an inner setTimeout(() => setCurrentStep(-1), 100)
+  // that (a) was dead code — currentStep was already -1 from the outer callback —
+  // and (b) leaked on unmount because only the outer ref was tracked.
   useEffect(() => {
-    if (currentStep >= 3) {
-      timerRef.current = setTimeout(() => {
-        setCurrentStep(-1);
-        // Small delay before restarting
-        setTimeout(() => setCurrentStep(-1), 100);
-      }, 5000);
-    }
+    if (currentStep < 3) return;
+    const timer = setTimeout(() => {
+      setCurrentStep(-1);
+    }, 5000);
+    timerRef.current = timer;
     return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
+      clearTimeout(timer);
+      if (timerRef.current === timer) timerRef.current = null;
     };
   }, [currentStep]);
 

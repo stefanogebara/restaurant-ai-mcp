@@ -18,6 +18,48 @@ interface DemoVoiceAgentProps {
 }
 
 const AGENT_ID = import.meta.env.VITE_ELEVENLABS_AGENT_ID as string | undefined;
+const CONVAI_SCRIPT_SRC = '/js/convai-widget-embed.js';
+const CONVAI_SCRIPT_DATA_ATTR = 'data-convai-loader';
+
+/**
+ * Loads the ElevenLabs Convai script exactly once per page. Returns a promise
+ * that resolves when the script is ready, or rejects if the script tag errors.
+ *
+ * Previously each DemoVoiceAgent mount appended its own <script> and the
+ * cleanup removed it from <body>. With multiple instances or quick
+ * mount/unmount cycles (Strict Mode, parent re-render), the second mount
+ * removed a script that the first instance was still using, breaking the
+ * widget without any console error.
+ */
+let convaiScriptPromise: Promise<void> | null = null;
+function loadConvaiScript(): Promise<void> {
+  if (convaiScriptPromise) return convaiScriptPromise;
+  convaiScriptPromise = new Promise((resolve, reject) => {
+    const existing = document.querySelector<HTMLScriptElement>(
+      `script[${CONVAI_SCRIPT_DATA_ATTR}]`
+    );
+    if (existing) {
+      // If a previous load left a script tag in the DOM, assume it's ready —
+      // the convai widget defines its custom element synchronously on load.
+      resolve();
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = CONVAI_SCRIPT_SRC;
+    script.async = true;
+    script.type = 'text/javascript';
+    script.setAttribute(CONVAI_SCRIPT_DATA_ATTR, 'true');
+    script.onload = () => resolve();
+    script.onerror = () => {
+      // Reset so a subsequent mount can retry from scratch.
+      convaiScriptPromise = null;
+      script.remove();
+      reject(new Error('Failed to load ElevenLabs Convai widget script'));
+    };
+    document.body.appendChild(script);
+  });
+  return convaiScriptPromise;
+}
 
 export default function DemoVoiceAgent({ restaurantName, scrapedData, onContinue }: DemoVoiceAgentProps) {
   const { t } = useTranslation();
@@ -35,52 +77,46 @@ export default function DemoVoiceAgent({ restaurantName, scrapedData, onContinue
     }
   }, [onContinue]);
 
-  // Load ElevenLabs widget script and create element (hidden)
+  // Load ElevenLabs widget script (once per page) and create the widget element.
+  // Cleanup removes the widget element ONLY — the shared script tag is left in
+  // place for subsequent mounts, preventing the cross-instance race where one
+  // mount removed the script another mount was still consuming.
   useEffect(() => {
     if (!AGENT_ID) return;
+    let cancelled = false;
+    const containerEl = widgetContainerRef.current;
 
-    const script = document.createElement('script');
-    script.src = '/js/convai-widget-embed.js';
-    script.async = true;
-    script.type = 'text/javascript';
+    loadConvaiScript()
+      .then(() => {
+        if (cancelled || !containerEl) return;
+        const widget = document.createElement('elevenlabs-convai') as HTMLElement;
+        widget.setAttribute('agent-id', AGENT_ID);
 
-    script.onerror = () => {
-      setScriptError(true);
-    };
+        const systemPrompt = buildDemoPrompt(scrapedData);
+        const firstMessage = buildDemoFirstMessage(scrapedData);
 
-    script.onload = () => {
-      if (!widgetContainerRef.current) return;
+        widget.setAttribute('overrides', JSON.stringify({
+          agent: {
+            prompt: { prompt: systemPrompt },
+            first_message: firstMessage,
+          },
+        }));
 
-      const widget = document.createElement('elevenlabs-convai') as HTMLElement;
-      widget.setAttribute('agent-id', AGENT_ID);
+        containerEl.appendChild(widget);
+        widgetRef.current = widget;
+        setWidgetLoaded(true);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        console.error('[DemoVoiceAgent] failed to load convai widget', err);
+        setScriptError(true);
+      });
 
-      const systemPrompt = buildDemoPrompt(scrapedData);
-      const firstMessage = buildDemoFirstMessage(scrapedData);
-
-      widget.setAttribute('overrides', JSON.stringify({
-        agent: {
-          prompt: { prompt: systemPrompt },
-          first_message: firstMessage,
-        },
-      }));
-
-      widgetContainerRef.current.appendChild(widget);
-      widgetRef.current = widget;
-      setWidgetLoaded(true);
-    };
-
-    document.body.appendChild(script);
-
-    const containerRef = widgetContainerRef.current;
     return () => {
-      if (document.body.contains(script)) {
-        document.body.removeChild(script);
-      }
-      if (containerRef) {
-        const widget = containerRef.querySelector('elevenlabs-convai');
-        if (widget) {
-          containerRef.removeChild(widget);
-        }
+      cancelled = true;
+      if (containerEl) {
+        const widget = containerEl.querySelector('elevenlabs-convai');
+        if (widget) containerEl.removeChild(widget);
       }
       widgetRef.current = null;
     };

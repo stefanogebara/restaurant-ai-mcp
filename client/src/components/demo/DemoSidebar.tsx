@@ -25,6 +25,33 @@ const NAV_LABELS: Record<string, Record<string, string>> = {
   },
 };
 
+// aria-labels for screen readers. Previously hardcoded English even when the
+// demo was rendering in PT-BR or ES, leaving visually-impaired non-English
+// users with mismatched landmark cues.
+const ARIA_STRINGS: Record<string, { closeMenu: string; openMenu: string; closeNav: string; openNav: string }> = {
+  en: {
+    closeMenu: 'Close menu',
+    openMenu: 'Open menu',
+    closeNav: 'Close navigation',
+    openNav: 'Open navigation',
+  },
+  'pt-BR': {
+    closeMenu: 'Fechar menu',
+    openMenu: 'Abrir menu',
+    closeNav: 'Fechar navegação',
+    openNav: 'Abrir navegação',
+  },
+  es: {
+    closeMenu: 'Cerrar menú',
+    openMenu: 'Abrir menú',
+    closeNav: 'Cerrar navegación',
+    openNav: 'Abrir navegación',
+  },
+};
+function ariaFor(lang: string) {
+  return ARIA_STRINGS[lang] ?? ARIA_STRINGS.en;
+}
+
 const navSections: { label: string; items: DemoNavItem[] }[] = [
   {
     label: 'Main',
@@ -74,6 +101,7 @@ export default function DemoSidebar({ lang, activeView = 'dashboard', onNavigate
   };
 
   const t = (key: string) => NAV_LABELS[lang]?.[key] ?? key;
+  const aria = ariaFor(lang);
   const signupText = lang === 'pt-BR' ? 'Cadastre-se para acessar' : lang === 'es' ? 'Regístrate para acceder' : 'Sign up to access';
   const signupCTA = lang === 'pt-BR' ? 'Criar conta grátis' : lang === 'es' ? 'Comenzar gratis' : 'Start free';
 
@@ -103,7 +131,7 @@ export default function DemoSidebar({ lang, activeView = 'dashboard', onNavigate
           <button
             onClick={() => setIsMobileOpen(false)}
             className="lg:hidden p-1.5 hover:bg-white/5 rounded-lg text-stone-gray"
-            aria-label="Close menu"
+            aria-label={aria.closeMenu}
           >
             <ThiingsIcon name="close" pxSize={18} />
           </button>
@@ -212,7 +240,7 @@ export default function DemoSidebar({ lang, activeView = 'dashboard', onNavigate
       <button
         onClick={() => setIsMobileOpen(!isMobileOpen)}
         className="lg:hidden fixed top-[60px] left-4 z-50 p-2.5 bg-deep-charcoal rounded-xl shadow-lg border border-charcoal-dark text-white focus:outline-none focus:ring-2 focus:ring-burgundy"
-        aria-label={isMobileOpen ? 'Close navigation' : 'Open navigation'}
+        aria-label={isMobileOpen ? aria.closeNav : aria.openNav}
         aria-expanded={isMobileOpen}
       >
         <ThiingsIcon name="menu" pxSize={20} />

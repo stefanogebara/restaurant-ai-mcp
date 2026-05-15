@@ -6,6 +6,9 @@
     "edit": "Editar",
     "add": "Adicionar",
     "close": "Fechar",
+    "closeMenu": "Fechar menu",
+    "openMenu": "Abrir menu",
+    "toggleLanguage": "Alternar idioma",
     "confirm": "Confirmar",
     "back": "Voltar",
     "next": "Avançar",
@@ -1830,7 +1833,11 @@
       "heading": "Seu painel com IA",
       "subtitle": "Clique e explore — é totalmente interativo. Sem cadastro.",
       "cta": "Crie seu restaurante",
-      "fullscreen": "Abrir em tela cheia"
+      "fullscreen": "Abrir em tela cheia",
+      "loading": "Carregando demo...",
+      "clickToInteract": "Clique para interagir",
+      "loadError": "Não foi possível carregar a demo aqui.",
+      "loadErrorHint": "Tente abri-la em tela cheia."
     },
     "tryDemo": {
       "label": "Experimente agora",
@@ -2175,7 +2182,8 @@
       "message": "Conheça o Seatable — IA que atende ligações, WhatsApp e gerencia reservas para restaurantes. Teste a demo: {{url}}",
       "whatsapp": "Compartilhar via WhatsApp",
       "copyLink": "Copiar link",
-      "copied": "Link copiado!"
+      "copied": "Link copiado!",
+      "copyFailed": "Falha ao copiar"
     },
     "pricing": {
       "title": "Planos e Preços",
@@ -2671,7 +2679,12 @@
       "fewSeconds": "Isso leva alguns segundos",
       "placeholder": "Digite sua mensagem...",
       "send": "Enviar mensagem",
-      "ariaChat": "Conversa com IA"
+      "ariaChat": "Conversa com IA",
+      "convertError": "Não foi possível criar seu demo. Tente novamente.",
+      "suggestedHowItWorks": "Como funciona a reserva por WhatsApp?",
+      "suggestedPricing": "Quanto custa?",
+      "suggestedNoShows": "Como vocês reduzem no-shows?",
+      "suggestedMyRestaurant": "Quero ver como ficaria pro meu restaurante"
     },
     "errors": {
       "createFailed": "Falha ao criar demo. Tente novamente.",

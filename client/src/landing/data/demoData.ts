@@ -1,7 +1,29 @@
 /**
  * Demo Restaurant Data
  * Cantina da Praca - Cozinha Brasileira Contemporanea
+ *
+ * Reservation/waitlist dates and timestamps are computed RELATIVE TO NOW at
+ * module load — previously they were hard-coded to 2026-02-12 / 2026-02-13,
+ * which made the demo look broken/stale within weeks of launch. Centralised
+ * here so any module re-import (e.g. SSR + client hydrate) sees a consistent
+ * snapshot. Format matches the historical strings: `YYYY-MM-DD` for `date`,
+ * `YYYY-MM-DDTHH:MM:SS` (LOCAL, no Z) for `reservation_time` / `added_at`.
  */
+function pad2(n: number): string {
+  return String(n).padStart(2, '0');
+}
+function localDateISO(d: Date): string {
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+}
+function localDateTimeISO(d: Date, hours: number, minutes: number): string {
+  return `${localDateISO(d)}T${pad2(hours)}:${pad2(minutes)}:00`;
+}
+const _now = new Date();
+const _today = new Date(_now.getFullYear(), _now.getMonth(), _now.getDate());
+const _tomorrow = new Date(_today);
+_tomorrow.setDate(_today.getDate() + 1);
+const DEMO_TODAY_DATE = localDateISO(_today);
+const DEMO_TOMORROW_DATE = localDateISO(_tomorrow);
 
 export const DEMO_RESTAURANT = {
   name: "Cantina da Praca",
@@ -65,9 +87,9 @@ export const DEMO_RESERVATIONS = [
     customer_name: "Ana Clara Santos",
     customer_phone: "+55 (11) 98234-5678",
     party_size: 4,
-    date: "2026-02-12",
+    date: DEMO_TODAY_DATE,
     time: "19:00",
-    reservation_time: "2026-02-12T19:00:00",
+    reservation_time: localDateTimeISO(_today, 19, 0),
     special_requests: "Mesa perto da janela",
     status: "confirmed",
   },
@@ -76,9 +98,9 @@ export const DEMO_RESERVATIONS = [
     customer_name: "Pedro Henrique Oliveira",
     customer_phone: "+55 (11) 97345-6789",
     party_size: 2,
-    date: "2026-02-12",
+    date: DEMO_TODAY_DATE,
     time: "20:00",
-    reservation_time: "2026-02-12T20:00:00",
+    reservation_time: localDateTimeISO(_today, 20, 0),
     status: "confirmed",
   },
   {
@@ -86,9 +108,9 @@ export const DEMO_RESERVATIONS = [
     customer_name: "Camila Rodrigues",
     customer_phone: "+55 (11) 96456-7890",
     party_size: 6,
-    date: "2026-02-13",
+    date: DEMO_TOMORROW_DATE,
     time: "18:30",
-    reservation_time: "2026-02-13T18:30:00",
+    reservation_time: localDateTimeISO(_tomorrow, 18, 30),
     special_requests: "Aniversario — pedir bolo",
     status: "confirmed",
   },
@@ -101,7 +123,7 @@ export const DEMO_WAITLIST = [
     customer_phone: "+55 (11) 99567-8901",
     party_size: 2,
     estimated_wait: 15,
-    added_at: "2026-02-12T18:15:00",
+    added_at: localDateTimeISO(_today, 18, 15),
     status: "Waiting",
   },
   {
@@ -110,7 +132,7 @@ export const DEMO_WAITLIST = [
     customer_phone: "+55 (11) 99678-9012",
     party_size: 4,
     estimated_wait: 25,
-    added_at: "2026-02-12T18:20:00",
+    added_at: localDateTimeISO(_today, 18, 20),
     status: "Waiting",
   },
 ];

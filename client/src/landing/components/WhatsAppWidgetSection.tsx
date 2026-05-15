@@ -3,10 +3,30 @@ import { useTranslation } from 'react-i18next';
 import { trackWhatsAppTapped } from '../../lib/analytics';
 import { SEATABLE_WHATSAPP_NUMBER } from '../../config/constants';
 
+/**
+ * Format the E.164 WhatsApp number into a human-readable Brazilian form.
+ * SEATABLE_WHATSAPP_NUMBER is a digits-only E.164 string ('5511…'); the
+ * fallback below shouldn't claim a phone number that has drifted from the
+ * source of truth, so we derive a display form from it.
+ */
+function formatDisplayPhone(e164: string): string {
+  // Expecting "55" country code + Brazilian number; degrade gracefully if not.
+  const digits = e164.replace(/\D/g, '');
+  if (digits.startsWith('55') && digits.length >= 12) {
+    const cc = digits.slice(0, 2);
+    const area = digits.slice(2, 4);
+    const rest = digits.slice(4);
+    const half = Math.ceil(rest.length / 2);
+    return `+${cc} ${area} ${rest.slice(0, half)}-${rest.slice(half)}`;
+  }
+  return `+${digits}`;
+}
+
 export default function WhatsAppWidgetSection() {
   const { t } = useTranslation();
   const messageText = t('landing.whatsapp.previewMessage', "Hi! I'd like to book a table for 4 tomorrow at 8pm");
   const waUrl = `https://wa.me/${SEATABLE_WHATSAPP_NUMBER}?text=${encodeURIComponent(messageText)}`;
+  const displayPhone = formatDisplayPhone(SEATABLE_WHATSAPP_NUMBER);
 
   return (
     <section className="py-24 px-6 bg-soft-gray border-t border-border-gray">
@@ -106,7 +126,9 @@ export default function WhatsAppWidgetSection() {
           </a>
           <div className="flex items-center gap-2 text-sm text-muted-stone">
             <span className="w-2 h-2 rounded-full bg-burgundy animate-pulse" />
-            <span className="font-medium">{t('landing.whatsapp.trust', 'Real number: +55 11 5028-2009 · São Paulo, Brazil')}</span>
+            <span className="font-medium">
+              {t('landing.whatsapp.trust', 'Real number: {{phone}} · São Paulo, Brazil', { phone: displayPhone })}
+            </span>
           </div>
         </motion.div>
       </div>

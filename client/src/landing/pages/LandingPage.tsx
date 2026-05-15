@@ -48,7 +48,12 @@ export default function LandingPage() {
           history.replaceState(null, '', newUrl);
         }
       })
-      .catch(() => {});
+      .catch((err) => {
+        // Referral tracking is best-effort — never block the landing page on
+        // a failed track — but log so Sentry/Posthog sees the breakage instead
+        // of the previous silent swallow that masked an outage for weeks.
+        console.error('[LandingPage] referral tracking failed', err);
+      });
   }, []);
 
   // Smooth scroll + scroll-to-top button

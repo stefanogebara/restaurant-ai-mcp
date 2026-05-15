@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { currencyFromLanguage } from '../../utils/currency';
@@ -826,8 +826,47 @@ export default function DashboardWalkthroughSection() {
   const [scene, setScene] = useState(0);
   const [progress, setProgress] = useState(0);
   const labels = SCENE_LABEL_KEYS.map(key => t(key));
+  const sectionRef = useRef<HTMLElement>(null);
+  // Pause the 50ms ticker when:
+  //   - section is offscreen (IntersectionObserver)
+  //   - tab is hidden (document.hidden)
+  //   - user prefers reduced motion
+  // Without these gates the interval fires 20×/sec forever, even on background
+  // tabs — drains battery on mobile and burns React reconciles for no reason.
+  const [isOnScreen, setIsOnScreen] = useState(false);
+  const [isTabVisible, setIsTabVisible] = useState(
+    typeof document === 'undefined' ? true : !document.hidden
+  );
+  const prefersReducedMotion =
+    typeof window !== 'undefined' &&
+    window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
   useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsOnScreen(entry.isIntersecting),
+      { rootMargin: '100px' }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const onVis = () => setIsTabVisible(!document.hidden);
+    document.addEventListener('visibilitychange', onVis);
+    return () => document.removeEventListener('visibilitychange', onVis);
+  }, []);
+
+  useEffect(() => {
+    if (prefersReducedMotion) {
+      // Still cycle scenes for users with reduced motion, but skip the
+      // per-frame progress animation — just show each scene at its final state.
+      setProgress(1);
+      return;
+    }
+    if (!isOnScreen || !isTabVisible) return;
     const interval = setInterval(() => {
       setProgress(p => {
         if (p >= 1) {
@@ -838,7 +877,7 @@ export default function DashboardWalkthroughSection() {
       });
     }, 50);
     return () => clearInterval(interval);
-  }, []);
+  }, [isOnScreen, isTabVisible, prefersReducedMotion]);
 
   useEffect(() => {
     setProgress(0);
@@ -848,7 +887,7 @@ export default function DashboardWalkthroughSection() {
   const ActiveScene = scenes[scene];
 
   return (
-    <section className="py-24 px-6 bg-deep-charcoal relative overflow-hidden">
+    <section ref={sectionRef} className="py-24 px-6 bg-deep-charcoal relative overflow-hidden">
       {/* Background grid */}
       <div
         className="absolute inset-0 opacity-[0.02]"

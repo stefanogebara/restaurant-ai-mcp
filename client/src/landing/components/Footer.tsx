@@ -70,7 +70,7 @@ export default function Footer() {
               hello@seatable.one
             </a>
             <p className="text-[13px] text-warm-stone mt-1">
-              {t('landing.footer.responseTime', 'Resposta em 24h')}
+              {t('landing.footer.responseTime', 'Reply within 24h')}
             </p>
           </div>
           <div>
@@ -81,10 +81,10 @@ export default function Footer() {
               {t('landing.nav.demo', 'Demo')}
             </Link>
             <Link to="/demo/setup" className="block text-[13px] text-warm-stone hover:text-burgundy transition-colors mt-1">
-              {t('landing.nav.tryFree', 'Teste grátis')}
+              {t('landing.nav.tryFree', 'Try free demo')}
             </Link>
             <Link to="/login" className="block text-[13px] text-warm-stone hover:text-burgundy transition-colors mt-1">
-              {t('landing.nav.signIn', 'Entrar')}
+              {t('landing.nav.signIn', 'Sign in')}
             </Link>
           </div>
           <div>
