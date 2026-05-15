@@ -161,17 +161,24 @@ export default function CallPhoneStatusCard({
           </button>
         )}
 
+        {/* Diagnose was previously a primary-row button visible to every host
+            — it triggers an internal "check the AI's tool calls" job that
+            Carla shouldn't see during a shift. Moved into a smaller, muted
+            "Troubleshooting" toggle that lives next to the main actions but
+            doesn't compete with them visually. */}
         {phoneStatus?.has_agent && (
           <button
             type="button"
             onClick={onDiagnose}
             disabled={diagnoseLoading}
-            className="px-4 py-2 bg-soft-gray hover:bg-border-gray text-deep-charcoal rounded-xl text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
+            aria-label={t('callTracking.troubleshootAriaLabel', 'Open troubleshooting tools (for support)')}
+            title={t('callTracking.troubleshootHint', 'For support staff — checks the AI is configured correctly.')}
+            className="px-3 py-2 text-muted-stone hover:text-deep-charcoal text-xs font-medium transition-colors disabled:opacity-50 flex items-center gap-1.5 underline underline-offset-2"
           >
             {diagnoseLoading ? (
               <><Spinner size="sm" />{t('callTracking.diagnosing')}</>
             ) : (
-              <><ThiingsIcon name="stethoscope" size="xs" />{t('callTracking.diagnoseAgent')}</>
+              <><ThiingsIcon name="stethoscope" size="xs" />{t('callTracking.troubleshoot', 'Troubleshooting')}</>
             )}
           </button>
         )}

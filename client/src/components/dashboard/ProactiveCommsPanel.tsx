@@ -48,11 +48,11 @@ export default function ProactiveCommsPanel() {
         <div className="flex items-center gap-2 mb-3">
           <ThiingsIcon name="sparkles" size="xs" className="text-burgundy" />
           <h3 className="text-sm font-semibold text-[#111827]">
-            {t('proactiveComms.title', 'Re-engagement opportunities')}
+            {t('proactiveComms.title', 'Guests to reach out to')}
           </h3>
         </div>
         <p className="text-sm text-[#6B7280]">
-          {t('proactiveComms.empty', 'No opportunities right now. Sofia will surface birthdays, anniversaries, and customers slipping away here.')}
+          {t('proactiveComms.empty', "No win-back ideas right now. Birthdays, anniversaries, and guests who haven't visited in a while will appear here automatically.")}
         </p>
       </section>
     );
@@ -100,7 +100,7 @@ export default function ProactiveCommsPanel() {
         <div className="flex items-center gap-2">
           <ThiingsIcon name="sparkles" size="xs" className="text-burgundy" />
           <h3 className="text-sm font-semibold text-[#111827]">
-            {t('proactiveComms.title', 'Re-engagement opportunities')}
+            {t('proactiveComms.title', 'Guests to reach out to')}
           </h3>
           {(pendingCount > 0 || approvedCount > 0) && (
             <span className="text-xs text-[#9CA3AF]">
@@ -153,11 +153,13 @@ function ProactiveCommCard({
   onSetDraft, onApprove, onDismiss, onSend, isSending, isUpdating, t,
 }: CardProps) {
   const draft = draftOverride !== undefined ? draftOverride : (item.draft_message || '');
+  // Carla-friendly labels: dropped "Churn risk" (analytics term) and "Long
+  // absent" (vague). Now phrased as actions a host actually takes.
   const typeLabel = item.type === 'occasion'
-    ? t('proactiveComms.typeOccasion', 'Occasion')
+    ? t('proactiveComms.typeOccasion', 'Birthday coming up')
     : item.type === 'churn_risk'
-      ? t('proactiveComms.typeChurnRisk', 'Churn risk')
-      : t('proactiveComms.typeLongAbsent', 'Long absent');
+      ? t('proactiveComms.typeChurnRisk', 'Likely to drift away')
+      : t('proactiveComms.typeLongAbsent', "Haven't seen in a while");
 
   const statusBadge = (() => {
     switch (item.status) {
