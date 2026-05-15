@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 import { useTranslation } from 'react-i18next';
@@ -19,18 +19,32 @@ export default function SubscriptionSuccess() {
   // can be undefined even when isError=false (e.g. session_id missing).
   const verificationFailed = !isLoading && (isError || !data);
 
-  // Side effects: persist to localStorage + redirect after successful verification
+  // Visible auto-redirect countdown. Previously this page silently jumped
+  // away after 4 seconds — owners trying to screenshot the receipt for
+  // accounting, or just read the page, lost the context with no warning.
+  // Now we show a countdown and let the owner cancel it.
+  const [redirectIn, setRedirectIn] = useState<number | null>(null);
+  const [autoRedirectCancelled, setAutoRedirectCancelled] = useState(false);
+
+  // Side effects: persist to localStorage on successful verification
   useEffect(() => {
     if (!data) return;
     if (data.customer_id) localStorage.setItem(LS_STRIPE_CUSTOMER_ID, data.customer_id);
     if (data.plan) localStorage.setItem(LS_SUBSCRIPTION_PLAN, data.plan);
     if (data.customer_email) localStorage.setItem(LS_CUSTOMER_EMAIL, data.customer_email);
+    setRedirectIn(5);
+  }, [data]);
 
-    const timer = setTimeout(() => {
+  // Tick down the countdown each second, redirect at zero unless cancelled.
+  useEffect(() => {
+    if (redirectIn === null || autoRedirectCancelled) return;
+    if (redirectIn <= 0) {
       navigate('/host-dashboard/simple?launch=1');
-    }, 4000);
+      return;
+    }
+    const timer = setTimeout(() => setRedirectIn((n) => (n ?? 0) - 1), 1000);
     return () => clearTimeout(timer);
-  }, [data, navigate]);
+  }, [redirectIn, autoRedirectCancelled, navigate]);
 
   // Log verification failures so Sentry catches Stripe/JWT outages
   useEffect(() => {
@@ -125,16 +139,35 @@ export default function SubscriptionSuccess() {
               {t('subscription.upgradeActive')}
             </p>
 
-            <p className="text-[13px] text-rose-600 font-medium mb-6">
-              {t('subscription.redirecting')}
-            </p>
+            {redirectIn !== null && !autoRedirectCancelled ? (
+              <p className="text-[13px] text-rose-600 font-medium mb-2">
+                {t('subscription.redirectingIn', 'Redirecting to your dashboard in {{seconds}}s', { seconds: Math.max(0, redirectIn) })}
+              </p>
+            ) : (
+              <p className="text-[13px] text-warm-stone mb-2">
+                {t('subscription.staying', 'You can take your time on this page.')}
+              </p>
+            )}
 
-            <button
-              onClick={() => navigate('/host-dashboard/simple?launch=1')}
-              className="px-7 py-3 bg-deep-charcoal hover:bg-charcoal-dark text-white text-sm font-semibold rounded-full transition-colors"
-            >
-              {t('subscription.goToDashboard')}
-            </button>
+            {redirectIn !== null && !autoRedirectCancelled && (
+              <button
+                type="button"
+                onClick={() => setAutoRedirectCancelled(true)}
+                className="text-xs text-burgundy hover:text-burgundy-dark underline underline-offset-2 mb-6"
+              >
+                {t('subscription.stayHere', 'Stay on this page')}
+              </button>
+            )}
+
+            <div className="flex justify-center mt-2">
+              <button
+                type="button"
+                onClick={() => navigate('/host-dashboard/simple?launch=1')}
+                className="px-7 py-3 bg-deep-charcoal hover:bg-charcoal-dark text-white text-sm font-semibold rounded-full transition-colors"
+              >
+                {t('subscription.goToDashboard')}
+              </button>
+            </div>
           </div>
         </div>
       </div>

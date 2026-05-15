@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useSSEChat, type ChatMessage } from '../hooks/useSSEChat';
@@ -20,35 +20,57 @@ interface RestaurantContext {
   city?: string;
 }
 
-const SUGGESTED_PROMPTS = [
-  'Como funciona a reserva por WhatsApp?',
-  'Quanto custa?',
-  'Como vocês reduzem no-show?',
-  'Quero ver como ficaria pro meu restaurante',
-];
-
 export default function DemoConversation() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const token = searchParams.get('token') || undefined;
   const query = searchParams.get('q') || undefined;
-  const city = searchParams.get('city') || 'São Paulo';
+  // Previously hard-coded "São Paulo" as the default city — a Madrid or
+  // Lisbon owner arriving without a city param saw the AI talking about
+  // São Paulo. Now we infer a sensible default from the active locale and
+  // only override when the URL explicitly provides ?city=.
+  const localeDefaultCity = i18n.language?.startsWith('es')
+    ? 'Madrid'
+    : i18n.language?.startsWith('en')
+      ? 'New York'
+      : 'São Paulo';
+  const city = searchParams.get('city') || localeDefaultCity;
+
+  // Localized suggested prompts. The previous version hardcoded them in
+  // pt-BR — pt-BR is the app's default locale, but English- and Spanish-
+  // speaking visitors landed on the conversion-critical demo intro page
+  // staring at Portuguese suggestions they couldn't read.
+  const SUGGESTED_PROMPTS = useMemo(() => [
+    t('demo.conversation.suggestedHowItWorks', 'How does the WhatsApp reservation flow work?'),
+    t('demo.conversation.suggestedPricing', 'How much does it cost?'),
+    t('demo.conversation.suggestedNoShows', 'How do you reduce no-shows?'),
+    t('demo.conversation.suggestedMyRestaurant', 'I want to see what it would look like for my restaurant'),
+  ], [t]);
 
   const [context, setContext] = useState<RestaurantContext | null>(null);
   const [isLoadingContext, setIsLoadingContext] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isConverting, setIsConverting] = useState(false);
+  const [convertError, setConvertError] = useState<string | null>(null);
   const [input, setInput] = useState('');
   const [initSent, setInitSent] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  // Track the post-success navigation timeout so we can cancel it on unmount —
+  // otherwise React warns about setState-on-unmounted-component, and the user
+  // gets a ghost navigation if they click Back during the 2s pause.
+  const navTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => {
+    if (navTimeoutRef.current) clearTimeout(navTimeoutRef.current);
+  }, []);
 
   // Handle demo creation
   const handleAction = useCallback(async (action: string, data: unknown) => {
     if (action !== 'create_demo' || isConverting) return;
     setIsConverting(true);
+    setConvertError(null);
 
     try {
       const apiBase = import.meta.env.VITE_API_BASE_URL || '/api';
@@ -68,17 +90,26 @@ export default function DemoConversation() {
         }),
       });
 
-      const result = await res.json();
-      if (result.demo_token) {
-        // Brief delay for user to see the "configurando..." message
-        setTimeout(() => {
-          navigate(`/demo?token=${result.demo_token}`);
-        }, 2000);
+      const result = await res.json().catch(() => null);
+      // Three failure modes the previous code all silently swallowed: !res.ok,
+      // res.ok with no demo_token, and res.ok with { success:false }. All left
+      // the "Setting up your dashboard…" overlay stuck forever — user abandons.
+      if (!res.ok || !result?.demo_token) {
+        const message = result?.error || t('demo.conversation.convertError', 'Could not create your demo. Please try again.');
+        console.error('[DemoConversation] create_demo failed', { status: res.status, body: result });
+        setConvertError(message);
+        setIsConverting(false);
+        return;
       }
-    } catch {
+      navTimeoutRef.current = setTimeout(() => {
+        navigate(`/demo?token=${result.demo_token}`);
+      }, 2000);
+    } catch (err) {
+      console.error('[DemoConversation] create_demo network error', err);
+      setConvertError(t('demo.conversation.convertError', 'Could not create your demo. Please try again.'));
       setIsConverting(false);
     }
-  }, [context, city, isConverting, navigate]);
+  }, [context, city, isConverting, navigate, t]);
 
   const { messages, isStreaming, sendMessage } = useSSEChat({
     endpoint: '/demo-conversation',
@@ -105,7 +136,7 @@ export default function DemoConversation() {
               const scrapeRes = await fetch(`${apiBase}/scrape-restaurant`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ query: r.restaurant_name, city: r.city || 'São Paulo' }),
+                body: JSON.stringify({ query: r.restaurant_name, city: r.city || localeDefaultCity }),
               });
               const scrapeData = await scrapeRes.json();
               if (scrapeData.results?.[0]) scraped = scrapeData.results[0];
@@ -124,10 +155,10 @@ export default function DemoConversation() {
               hours_text: scraped.hours_text as string[] ?? null,
               website: r.website || scraped.website || null,
               google_maps_url: scraped.google_maps_url ?? null,
-              city: r.city || 'São Paulo',
+              city: r.city || localeDefaultCity,
             });
           } else {
-            setLoadError(t('demo.conversation.notFound', 'Demo não encontrada ou expirada.'));
+            setLoadError(t('demo.conversation.notFound', 'Demo not found or expired.'));
           }
         } else if (query) {
           // Path B: Scrape on the fly
@@ -146,13 +177,14 @@ export default function DemoConversation() {
               city,
             });
           } else {
-            setLoadError(t('demo.conversation.restaurantNotFound', 'Restaurante não encontrado. Tente outro nome.'));
+            setLoadError(t('demo.conversation.restaurantNotFound', 'Restaurant not found. Try another name.'));
           }
         } else {
-          setLoadError(t('demo.conversation.missingParams', 'Forneça ?token= ou ?q= na URL.'));
+          setLoadError(t('demo.conversation.missingParams', 'Please provide ?token= or ?q= in the URL.'));
         }
       } catch (err) {
-        setLoadError(t('demo.conversation.loadError', 'Erro ao carregar dados do restaurante.'));
+        console.error('[DemoConversation] loadContext failed', err);
+        setLoadError(t('demo.conversation.loadError', 'Could not load restaurant data.'));
       } finally {
         setIsLoadingContext(false);
       }
@@ -169,10 +201,12 @@ export default function DemoConversation() {
       sendMessage('__init__', {
         restaurant_context: context,
         demo_token: token,
-        lang: 'pt-BR',
+        // Use the active i18n language — the previous hardcoded 'pt-BR' made
+        // the AI respond in Portuguese to every visitor regardless of locale.
+        lang: i18n.language,
       });
     }
-  }, [context, initSent, isLoadingContext, sendMessage, token]);
+  }, [context, initSent, isLoadingContext, sendMessage, token, i18n.language]);
 
   // ─── Auto-scroll ────────────────────────────────────────────────────────
 
@@ -186,7 +220,7 @@ export default function DemoConversation() {
     const text = input.trim();
     if (!text || isStreaming) return;
     setInput('');
-    sendMessage(text, { lang: 'pt-BR' });
+    sendMessage(text, { lang: i18n.language });
     inputRef.current?.focus();
   };
 
@@ -199,7 +233,7 @@ export default function DemoConversation() {
 
   const handleSuggestedPrompt = (prompt: string) => {
     if (isStreaming) return;
-    sendMessage(prompt, { lang: 'pt-BR' });
+    sendMessage(prompt, { lang: i18n.language });
   };
 
   // ─── Render ─────────────────────────────────────────────────────────────
@@ -212,7 +246,7 @@ export default function DemoConversation() {
           seatable<span className="text-burgundy">.</span>
         </div>
         <div className="w-8 h-8 border-2 border-burgundy border-t-transparent rounded-full animate-spin" />
-        <p className="text-warm-stone text-sm">{t('demo.conversation.loading', 'Carregando dados do restaurante...')}</p>
+        <p className="text-warm-stone text-sm">{t('demo.conversation.loading', 'Loading restaurant data...')}</p>
       </div>
     );
   }
@@ -252,15 +286,23 @@ export default function DemoConversation() {
 
       {/* Conversion overlay */}
       {isConverting && (
-        <div className="fixed inset-0 bg-white/90 backdrop-blur-sm z-50 flex flex-col items-center justify-center gap-4">
+        <div className="fixed inset-0 bg-white/90 backdrop-blur-sm z-50 flex flex-col items-center justify-center gap-4 p-6 text-center">
           <div className="w-10 h-10 border-2 border-burgundy border-t-transparent rounded-full animate-spin" />
-          <p className="text-deep-charcoal font-medium">{t('demo.conversation.settingUp', 'Configurando seu dashboard personalizado...')}</p>
-          <p className="text-warm-stone text-sm">{t('demo.conversation.fewSeconds', 'Isso leva alguns segundos')}</p>
+          <p className="text-deep-charcoal font-medium">{t('demo.conversation.settingUp', 'Setting up your personalised dashboard...')}</p>
+          <p className="text-warm-stone text-sm">{t('demo.conversation.fewSeconds', 'This takes a few seconds')}</p>
+        </div>
+      )}
+
+      {/* Conversion error banner — surfaces a stuck overlay if the create_demo
+          call fails, instead of leaving the user with a perpetual spinner. */}
+      {convertError && !isConverting && (
+        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 max-w-md w-[calc(100%-2rem)] bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700 shadow-lg">
+          {convertError}
         </div>
       )}
 
       {/* Chat area */}
-      <div className="flex-1 overflow-y-auto" role="log" aria-label={t('demo.conversation.ariaChat', 'Conversa com IA')} aria-live="polite">
+      <div className="flex-1 overflow-y-auto" role="log" aria-label={t('demo.conversation.ariaChat', 'AI conversation')} aria-live="polite">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6 space-y-4">
           {messages.map((msg) => (
             <MessageBubble key={msg.id} message={msg} isStreaming={isStreaming && msg === messages[messages.length - 1] && msg.role === 'assistant'} />
@@ -294,8 +336,8 @@ export default function DemoConversation() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={t('demo.conversation.placeholder', 'Digite sua mensagem...')}
-            aria-label={t('demo.conversation.placeholder', 'Digite sua mensagem...')}
+            placeholder={t('demo.conversation.placeholder', 'Type your message...')}
+            aria-label={t('demo.conversation.placeholder', 'Type your message...')}
             rows={1}
             disabled={isStreaming || isConverting}
             className="flex-1 resize-none rounded-xl border border-border-gray px-4 py-2.5 text-sm text-deep-charcoal placeholder:text-muted-stone focus:outline-none focus:border-burgundy/40 disabled:opacity-50 transition-colors"
@@ -310,7 +352,7 @@ export default function DemoConversation() {
             type="button"
             onClick={handleSend}
             disabled={!input.trim() || isStreaming || isConverting}
-            aria-label={t('demo.conversation.send', 'Enviar mensagem')}
+            aria-label={t('demo.conversation.send', 'Send message')}
             className="flex-shrink-0 w-10 h-10 rounded-xl bg-burgundy hover:bg-burgundy-dark disabled:opacity-30 text-white flex items-center justify-center transition-colors"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

@@ -530,6 +530,14 @@
     "makeReservation": "Make a Reservation",
     "reservationConfirmed": "Reservation Confirmed",
     "confirmationSent": "We've sent a confirmation to your email and phone.",
+    "confirmation": {
+      "whatsNext": "What's next?",
+      "reminder": "We'll send you a WhatsApp reminder 24 hours before your reservation.",
+      "callRestaurant": "Need to talk to the restaurant?",
+      "openMaps": "Open in Maps",
+      "howToCancel": "Need to cancel or change?",
+      "manageHere": "Manage your reservation"
+    },
     "reservationDetails": "Reservation details",
     "guest": "Guest",
     "confirmationId": "Confirmation ID",
@@ -1591,6 +1599,9 @@
     "contactSupport": "Contact Support",
     "upgradeActive": "Your upgrade is active. You now have access to the AI Voice Agent and advanced analytics.",
     "redirecting": "Redirecting to your dashboard...",
+    "redirectingIn": "Redirecting to your dashboard in {{seconds}}s",
+    "staying": "You can take your time on this page.",
+    "stayHere": "Stay on this page",
     "goToDashboard": "Go to Dashboard",
     "title": "Subscription & Billing",
     "manageSubtitle": "Manage your plan, billing info, and usage.",
@@ -1652,9 +1663,9 @@
     "statusPastDue": "Past Due",
     "statusCanceled": "Canceled",
     "accessDashboard": "Access dashboard →",
-    "betaTitle": "Beta Access — 30 days free",
+    "betaTitle": "Beta Access — 14 days free",
     "betaDesc": "Your beta code was applied. Choose any plan and start for free now.",
-    "betaNoFees": "30 days free, then cancel anytime.",
+    "betaNoFees": "14 days free, then cancel anytime.",
     "trialBadge": "14 days free",
     "loading": "Please wait...",
     "startTrial": "Start Free Trial",
@@ -1923,7 +1934,7 @@
   "landing": {
     "badge": "AI-Powered Restaurant Management",
     "betaBadge": "Beta partners welcome",
-    "betaSubtitle": "30-day free trial · no credit card · cancel anytime",
+    "betaSubtitle": "14-day free trial · no credit card · cancel anytime",
     "socialProofBadge": "5 restaurants joined this week",
     "socialProof": {
       "label": "Now in early access",
@@ -2098,7 +2109,7 @@
     "cta": {
       "heading": "Ready to reimagine",
       "headingLine2": "your restaurant?",
-      "subtitle": "Join the first restaurants using Seatable. 30-day free trial, no credit card required.",
+      "subtitle": "Join the first restaurants using Seatable. 14-day free trial, no credit card required.",
       "button": "Start Free Trial"
     },
     "scrollToTop": "Scroll to top",

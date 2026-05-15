@@ -528,6 +528,14 @@
     "noReservationFoundDesc": "No pudimos encontrar los detalles de esta reserva. Es posible que hayas accedido a esta página directamente o que el enlace haya expirado. Haz una nueva reserva abajo.",
     "makeReservation": "Hacer una Reserva",
     "reservationConfirmed": "Reserva Confirmada",
+    "confirmation": {
+      "whatsNext": "¿Y ahora qué?",
+      "reminder": "Te enviaremos un recordatorio por WhatsApp 24 horas antes de tu reserva.",
+      "callRestaurant": "¿Necesitas hablar con el restaurante?",
+      "openMaps": "Abrir en Maps",
+      "howToCancel": "¿Necesitas cancelar o cambiar?",
+      "manageHere": "Gestionar tu reserva"
+    },
     "confirmationSent": "Hemos enviado una confirmación a tu correo y teléfono.",
     "reservationDetails": "Detalles de la reserva",
     "guest": "Huésped",
@@ -1566,6 +1574,9 @@
     "contactSupport": "Contactar Soporte",
     "upgradeActive": "Tu actualización está activa. Ahora tienes acceso al Agente de Voz con IA y análisis avanzados.",
     "redirecting": "Redirigiendo al panel de control...",
+    "redirectingIn": "Redirigiendo al panel en {{seconds}}s",
+    "staying": "Tómate tu tiempo en esta página.",
+    "stayHere": "Quedarme en esta página",
     "goToDashboard": "Ir al Panel",
     "title": "Suscripción y Facturación",
     "manageSubtitle": "Administra tu plan, información de facturación y uso.",
@@ -1627,9 +1638,9 @@
     "statusPastDue": "Pago Pendiente",
     "statusCanceled": "Cancelada",
     "accessDashboard": "Acceder al panel →",
-    "betaTitle": "Acceso Beta — 30 días gratis",
+    "betaTitle": "Acceso Beta — 14 días gratis",
     "betaDesc": "Tu código beta fue aplicado. Elige cualquier plan y comienza sin pagar ahora.",
-    "betaNoFees": "30 días gratis, luego cancela cuando quieras.",
+    "betaNoFees": "14 días gratis, luego cancela cuando quieras.",
     "trialBadge": "14 días gratis",
     "loading": "Espere...",
     "startTrial": "Comenzar Prueba Gratis",
@@ -1639,7 +1650,7 @@
   "landing": {
     "badge": "Gestión de Restaurantes con IA",
     "betaBadge": "Programa beta abierto",
-    "betaSubtitle": "30 días gratis · sin tarjeta · cancela cuando quieras",
+    "betaSubtitle": "14 días gratis · sin tarjeta · cancela cuando quieras",
     "socialProofBadge": "5 restaurantes se unieron esta semana",
     "socialProof": {
       "label": "En acceso anticipado",
@@ -1814,7 +1825,7 @@
     "cta": {
       "heading": "¿Listo para reimaginar",
       "headingLine2": "tu restaurante?",
-      "subtitle": "Únete a los primeros restaurantes que usan Seatable. Prueba gratis de 30 días, sin tarjeta de crédito.",
+      "subtitle": "Únete a los primeros restaurantes que usan Seatable. Prueba gratis de 14 días, sin tarjeta de crédito.",
       "button": "Empezar Gratis"
     },
     "scrollToTop": "Volver arriba",

@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import ThiingsIcon from '../components/common/ThiingsIcon';
-import { useReservationById, type ReservationData } from '../hooks/useBooking';
+import { useReservationById, useRestaurantBySlug, type ReservationData } from '../hooks/useBooking';
 
 export default function BookingConfirmation() {
   const { slug } = useParams<{ slug: string }>();
@@ -17,6 +17,12 @@ export default function BookingConfirmation() {
   const restaurantIdParam = searchParams.get('rid') || state?.restaurant_id;
 
   const { data: reservation, isLoading } = useReservationById(id, state?.reservation);
+  // Fetch the restaurant alongside the reservation so the confirmation page
+  // can actually answer Patricia's "where is it / can I cancel / will I get
+  // a reminder" questions — previously it was a thin receipt with none of
+  // that. The query is cached by useRestaurantBySlug so this is free when
+  // arriving from the booking flow.
+  const { data: restaurantInfo } = useRestaurantBySlug(slug);
 
   // Request push notification permission after booking is confirmed
   useEffect(() => {
@@ -220,6 +226,66 @@ export default function BookingConfirmation() {
             </div>
           </div>
 
+          {/* What's next — answers the questions Patricia closed the tab
+              wondering: where is it, what reminders will I get, how do I
+              cancel? Previously this page was a receipt only. */}
+          <div className="bg-white border border-border-gray rounded-2xl p-6 text-left mb-6 space-y-3">
+            <h2 className="text-sm font-semibold text-deep-charcoal mb-2">
+              {t('reservations.confirmation.whatsNext', "What's next?")}
+            </h2>
+            <ul className="space-y-2.5 text-sm text-deep-charcoal">
+              <li className="flex items-start gap-3">
+                <span className="w-7 h-7 rounded-full bg-green-50 text-green-700 flex items-center justify-center flex-shrink-0 text-base" aria-hidden="true">💬</span>
+                <span className="leading-snug">
+                  {t('reservations.confirmation.reminder', "We'll send you a WhatsApp reminder 24 hours before your reservation.")}
+                </span>
+              </li>
+              {restaurantInfo?.phone && (
+                <li className="flex items-start gap-3">
+                  <span className="w-7 h-7 rounded-full bg-soft-gray text-deep-charcoal flex items-center justify-center flex-shrink-0 text-base" aria-hidden="true">📞</span>
+                  <span className="leading-snug">
+                    {t('reservations.confirmation.callRestaurant', 'Need to talk to the restaurant?')}{' '}
+                    <a
+                      href={`tel:${restaurantInfo.phone}`}
+                      className="font-medium text-burgundy hover:text-burgundy-dark"
+                    >
+                      {restaurantInfo.phone}
+                    </a>
+                  </span>
+                </li>
+              )}
+              {(restaurantInfo?.city || restaurantInfo?.country) && (
+                <li className="flex items-start gap-3">
+                  <span className="w-7 h-7 rounded-full bg-soft-gray text-deep-charcoal flex items-center justify-center flex-shrink-0 text-base" aria-hidden="true">📍</span>
+                  <span className="leading-snug">
+                    {[restaurantInfo.city, restaurantInfo.country].filter(Boolean).join(', ')}{' '}
+                    <a
+                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([reservation.restaurant_name, restaurantInfo.city, restaurantInfo.country].filter(Boolean).join(' '))}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-medium text-burgundy hover:text-burgundy-dark underline underline-offset-2"
+                    >
+                      {t('reservations.confirmation.openMaps', 'Open in Maps')}
+                    </a>
+                  </span>
+                </li>
+              )}
+              <li className="flex items-start gap-3">
+                <span className="w-7 h-7 rounded-full bg-soft-gray text-deep-charcoal flex items-center justify-center flex-shrink-0 text-base" aria-hidden="true">↩️</span>
+                <span className="leading-snug">
+                  {t('reservations.confirmation.howToCancel', 'Need to cancel or change?')}{' '}
+                  <button
+                    type="button"
+                    onClick={() => navigate('/customer')}
+                    className="font-medium text-burgundy hover:text-burgundy-dark underline underline-offset-2"
+                  >
+                    {t('reservations.confirmation.manageHere', 'Manage your reservation')}
+                  </button>
+                </span>
+              </li>
+            </ul>
+          </div>
+
           {/* Action Buttons */}
           <div className="flex gap-3">
             <button
@@ -246,12 +312,12 @@ export default function BookingConfirmation() {
         </div>
       </main>
 
-      {/* Powered by Seatable badge */}
+      {/* Powered by Seatable badge — opens same-tab now. The previous
+          `target="_blank"` yanked the customer to a B2B marketing page
+          and broke their confirmation context. */}
       <div className="mt-8 pb-8 flex justify-center">
         <a
           href="/?ref=badge"
-          target="_blank"
-          rel="noopener noreferrer"
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border-gray bg-warm-white hover:bg-soft-gray transition-colors text-xs text-muted-stone hover:text-warm-stone"
         >
           <span className="text-burgundy font-semibold">{'\u26A1'}</span>
