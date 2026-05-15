@@ -66,18 +66,20 @@ export default function TableAreaCard({
                     onChange={(e) => updateTableConfig(areaIndex, capacity, shape, 'count', parseInt(e.target.value) || 0)}
                     className="w-full px-3 py-2 bg-white border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy text-sm"
                   />
-                  <div className="flex items-center gap-2 mt-2">
+                  <label className="flex items-start gap-2 mt-2 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={getTableConfig(areaIndex, capacity, shape)?.is_fixed_seating || false}
                       onChange={(e) => updateTableConfig(areaIndex, capacity, shape, 'is_fixed_seating', e.target.checked)}
-                      className="w-4 h-4 rounded border-border-gray text-burgundy focus:ring-burgundy"
+                      className="mt-0.5 w-4 h-4 rounded border-border-gray text-burgundy focus:ring-burgundy"
                     />
-                    <span className="text-xs text-stone-gray">
-                      {t('onboarding.fixedSeating')}{' '}
-                      <span title={t('onboarding.fixedSeatingHint')} className="cursor-help">ⓘ</span>
+                    {/* Explanation is rendered inline (not in a `title=` tooltip)
+                        so it's actually readable on touch devices. */}
+                    <span className="text-xs text-stone-gray leading-snug">
+                      <span className="font-medium">{t('onboarding.fixedSeating')}</span>
+                      <span className="block text-[11px] text-muted-stone">{t('onboarding.fixedSeatingHint')}</span>
                     </span>
-                  </div>
+                  </label>
                 </div>
               ))}
             </div>

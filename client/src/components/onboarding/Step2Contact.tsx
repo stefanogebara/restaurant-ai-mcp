@@ -144,7 +144,7 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
     if (!data.phone_number.trim()) {
       newErrors.phone_number = t('onboarding.phoneRequired');
     } else if (!/^\+\d{7,14}$/.test(data.phone_number.replace(/\s/g, ''))) {
-      newErrors.phone_number = t('onboarding.phoneInvalidFormat', 'Phone must start with + followed by 7-14 digits (E.164 format)');
+      newErrors.phone_number = t('onboarding.phoneInvalidFormat', 'Please use international format starting with the country code, e.g. +55 11 98765-4321.');
     } else if (errors.phone_number) {
       newErrors.phone_number = errors.phone_number;
     }

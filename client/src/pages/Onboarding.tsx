@@ -44,7 +44,10 @@ export default function Onboarding() {
   const { user } = useAuth();
   const showSubscribeBanner = searchParams.get('reason') === 'subscribe';
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState(false);
+  // Previously this was a bare boolean — the user saw "Setup failed" with no
+  // explanation, no detail, and no way to know what to do. Now we keep the
+  // actual server-side message so it can be surfaced inline.
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [isDemoLoading, setIsDemoLoading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [countdown, setCountdown] = useState(5);
@@ -310,8 +313,11 @@ export default function Onboarding() {
       // Advance to Step 5 (Teach Your AI) — the success modal fires after Step 5
       setCurrentStep(5);
     } catch (err: unknown) {
-      showError(err instanceof Error ? err.message : t('onboarding.completeError', 'Failed to complete onboarding. Please try again.'));
-      setSubmitError(true);
+      const message = err instanceof Error
+        ? err.message
+        : t('onboarding.completeError', 'Failed to complete onboarding. Please try again.');
+      showError(message);
+      setSubmitError(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -404,15 +410,36 @@ export default function Onboarding() {
             />
           )}
           {currentStep === 4 && submitError && (
-            <div className="mb-4 bg-red-50 border border-red-200 rounded-xl p-4 flex items-center justify-between gap-4">
-              <p className="text-sm text-red-700">{t('onboarding.setupFailed')}</p>
-              <button
-                type="button"
-                onClick={() => { setSubmitError(false); completeOnboarding(); }}
-                className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 flex-shrink-0"
-              >
-                {t('onboarding.tryAgain')}
-              </button>
+            <div className="mb-4 bg-red-50 border border-red-200 rounded-xl p-4 space-y-3">
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-red-800">{t('onboarding.setupFailed')}</p>
+                  {/* The previous version showed the friendly "Setup failed"
+                      banner with NO indication of what actually went wrong.
+                      Maria would click Try Again, hit the same error, and
+                      give up. Surface the server message inline. */}
+                  <p className="mt-1 text-xs text-red-700 break-words whitespace-pre-wrap">{submitError}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { setSubmitError(null); completeOnboarding(); }}
+                  className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 flex-shrink-0"
+                >
+                  {t('onboarding.tryAgain')}
+                </button>
+              </div>
+              {/* Human escape hatch — if Try Again keeps failing, Maria needs
+                  a path to a real person, not just "try again". */}
+              <p className="text-xs text-red-700/80">
+                {t('onboarding.setupFailedSupport', 'Still stuck?')}{' '}
+                <a
+                  href="mailto:hello@seatable.one?subject=Setup%20stuck"
+                  className="font-semibold underline hover:no-underline"
+                >
+                  hello@seatable.one
+                </a>{' '}
+                {t('onboarding.setupFailedSupportSuffix', "— we'll get you set up in minutes.")}
+              </p>
             </div>
           )}
           {currentStep === 4 && (

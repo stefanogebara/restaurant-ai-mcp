@@ -42,14 +42,18 @@ export default function ReservationSettingsPanel({ advanceBookingDays, bufferTim
       {showSettings && (
         <div className="px-5 py-4 space-y-4 bg-white">
           <div>
-            <label htmlFor="advance_booking_days" className="block text-sm font-semibold text-deep-charcoal mb-2">
-              {t('onboarding.advanceBookingLabel')}{' '}
-              <span title={t('onboarding.advanceBookingHint')} className="text-muted-stone cursor-help font-normal">ⓘ</span>
+            <label htmlFor="advance_booking_days" className="block text-sm font-semibold text-deep-charcoal">
+              {t('onboarding.advanceBookingLabel')}
             </label>
+            {/* The previous ⓘ icon used the HTML `title` attribute, which only
+                appears on mouse hover. Onboarding is mostly run on phones —
+                Maria never saw any of these hints. Inline muted text works
+                everywhere. */}
+            <p className="text-xs text-warm-stone mb-2 mt-0.5">{t('onboarding.advanceBookingHint')}</p>
             <select
               id="advance_booking_days"
               value={advanceBookingDays}
-              onChange={(e) => onUpdate('advance_booking_days', parseInt(e.target.value))}
+              onChange={(e) => onUpdate('advance_booking_days', parseInt(e.target.value, 10))}
               className="w-full px-4 py-3 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-burgundy"
             >
               <option value={7}>{t('onboarding.days7')}</option>
@@ -61,14 +65,14 @@ export default function ReservationSettingsPanel({ advanceBookingDays, bufferTim
           </div>
 
           <div>
-            <label htmlFor="buffer_time" className="block text-sm font-semibold text-deep-charcoal mb-2">
-              {t('onboarding.bufferTimeLabel')}{' '}
-              <span title={t('onboarding.bufferTimeHint')} className="text-muted-stone cursor-help font-normal">ⓘ</span>
+            <label htmlFor="buffer_time" className="block text-sm font-semibold text-deep-charcoal">
+              {t('onboarding.bufferTimeLabel')}
             </label>
+            <p className="text-xs text-warm-stone mb-2 mt-0.5">{t('onboarding.bufferTimeHint')}</p>
             <select
               id="buffer_time"
               value={bufferTime}
-              onChange={(e) => onUpdate('buffer_time', parseInt(e.target.value))}
+              onChange={(e) => onUpdate('buffer_time', parseInt(e.target.value, 10))}
               className="w-full px-4 py-3 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-burgundy"
             >
               <option value={0}>{t('onboarding.buffer0')}</option>
