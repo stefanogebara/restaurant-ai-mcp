@@ -56,9 +56,12 @@ function TypeFx({ words, className = '' }: { words: string[]; className?: string
 
 // ─── Cycling words per language ─────────────────────────────────
 const TYPING_WORDS: Record<string, string[]> = {
+  // English keeps "walk-in" — it's natural English. Portuguese and Spanish
+  // had the anglicism leaking through; replaced with natural phrasings the
+  // audit identified (cliente sem reserva / cliente sin reserva).
   en: ['a reservation.', 'a WhatsApp message.', 'a phone call.', 'a walk-in question.'],
-  pt: ['uma reserva.', 'uma mensagem no WhatsApp.', 'uma ligação.', 'uma pergunta de walk-in.'],
-  es: ['una reserva.', 'un mensaje de WhatsApp.', 'una llamada.', 'una pregunta de walk-in.'],
+  pt: ['uma reserva.', 'uma mensagem no WhatsApp.', 'uma ligação.', 'uma pergunta de cliente sem reserva.'],
+  es: ['una reserva.', 'un mensaje de WhatsApp.', 'una llamada.', 'una pregunta de un cliente sin reserva.'],
 };
 
 function getTypingWords(lang: string): string[] {
