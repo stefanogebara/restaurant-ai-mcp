@@ -20,6 +20,7 @@ import { useVoiceBrowser } from '../hooks/useVoiceBrowser';
 import { useAudioPlayback } from '../hooks/useAudioPlayback';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 
+import SettingsTabs, { type SettingsTabDef } from '../components/common/SettingsTabs';
 import VoiceEngineSelector from '../components/voice/VoiceEngineSelector';
 import VoiceCurrentCard from '../components/voice/VoiceCurrentCard';
 import VoiceTuningPanel from '../components/voice/VoiceTuningPanel';
@@ -368,91 +369,104 @@ export default function VoiceSettingsPage() {
           </div>
         </div>
 
-        <div className="space-y-6">
-          <VoiceEngineSelector currentEngine={currentEngine} pendingEngine={pendingEngine} engineStatus={engineConfig?.voice_engine_status} onEngineSwitch={handleEngineSwitch} />
+        {(() => {
+          // Tabs split the previous wall-of-10-sections page into focused
+          // panes. All panes stay mounted (hidden via Tailwind) so dirty
+          // pending edits survive tab switches and the shared Save button
+          // still saves everything in one shot.
+          const voiceTab = (
+            <div className="space-y-6">
+              <VoiceEngineSelector currentEngine={currentEngine} pendingEngine={pendingEngine} engineStatus={engineConfig?.voice_engine_status} onEngineSwitch={handleEngineSwitch} />
 
-          {currentEngine === 'elevenlabs' && (
-            <>
-              <VoiceCurrentCard
-                currentVoiceId={currentVoiceId}
-                pendingVoiceId={pendingVoiceId}
-                selectedBrowserVoice={selectedBrowserVoice}
-                savedVoiceName={config.voice_name}
-                savedVoiceId={config.voice_id}
-                currentLanguage={currentLanguage}
-                restaurantName={config.restaurant_name || undefined}
-                isBrowserOpen={isBrowserOpen}
-                loadingAudio={loadingAudio}
-                playingVoiceId={playingVoiceId}
-                onPlay={handlePlayVoice}
-                onToggleBrowser={() => setIsBrowserOpen(!isBrowserOpen)}
-              />
-              <VoiceTuningPanel
-                settings={currentSettings}
-                currentVoiceId={currentVoiceId}
-                loadingAudio={loadingAudio}
-                onSettingChange={handleSettingChange}
-                onReset={() => setPendingSettings({ ...DEFAULT_VOICE_SETTINGS })}
-                onPreview={() => handlePreviewWithSettings(toast)}
-              />
-              {isBrowserOpen && (
-                <section className="py-5">
-                  <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827] mb-4 flex items-center gap-2">
-                    <ThiingsIcon name="search" pxSize={20} />
-                    {t('voiceSettings.voiceLibrary', 'Voice Library')}
-                  </h2>
-                  {voiceBrowserError ? (
-                    <div className="text-center py-10">
-                      <div className="w-14 h-14 mx-auto mb-3 bg-red-50 rounded-2xl flex items-center justify-center">
-                        <ThiingsIcon name="alert-circle" pxSize={24} />
-                      </div>
-                      <p className="text-sm font-semibold text-deep-charcoal">
-                        {t('voiceSettings.voiceLoadError', 'Could not load voices')}
-                      </p>
-                      <p className="text-xs text-stone-gray mt-1 mb-4">
-                        {t('voiceSettings.voiceLoadErrorHint', 'The voice service may be temporarily unavailable. Please try again.')}
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => refetchVoices()}
-                        className="px-5 py-2 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-medium rounded-xl transition-colors"
-                      >
-                        {t('common.retry', 'Retry')}
-                      </button>
-                    </div>
-                  ) : (
-                    <>
-                      <VoiceFilters filters={filters} onChange={setFilters} defaultLanguage={currentLanguage} hideSearch={voicesSource === 'own_voices_fallback'} />
-                      <VoiceGrid
-                        voices={voices}
-                        selectedVoiceId={pendingVoiceId || config.voice_id || ''}
-                        playingVoiceId={playingVoiceId}
-                        loadingAudioId={loadingAudio}
-                        hasMore={hasMore}
-                        isLoadingMore={isLoadingMore}
-                        onSelectVoice={setPendingVoiceId}
-                        onPlayVoice={handlePlayVoice}
-                        onLoadMore={handleLoadMore}
-                        isLoading={isLoadingVoices}
-                        source={voicesSource}
-                      />
-                    </>
+              {currentEngine === 'elevenlabs' && (
+                <>
+                  <VoiceCurrentCard
+                    currentVoiceId={currentVoiceId}
+                    pendingVoiceId={pendingVoiceId}
+                    selectedBrowserVoice={selectedBrowserVoice}
+                    savedVoiceName={config.voice_name}
+                    savedVoiceId={config.voice_id}
+                    currentLanguage={currentLanguage}
+                    restaurantName={config.restaurant_name || undefined}
+                    isBrowserOpen={isBrowserOpen}
+                    loadingAudio={loadingAudio}
+                    playingVoiceId={playingVoiceId}
+                    onPlay={handlePlayVoice}
+                    onToggleBrowser={() => setIsBrowserOpen(!isBrowserOpen)}
+                  />
+                  <VoiceTuningPanel
+                    settings={currentSettings}
+                    currentVoiceId={currentVoiceId}
+                    loadingAudio={loadingAudio}
+                    onSettingChange={handleSettingChange}
+                    onReset={() => setPendingSettings({ ...DEFAULT_VOICE_SETTINGS })}
+                    onPreview={() => handlePreviewWithSettings(toast)}
+                  />
+                  {isBrowserOpen && (
+                    <section className="py-5">
+                      <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827] mb-4 flex items-center gap-2">
+                        <ThiingsIcon name="search" pxSize={20} />
+                        {t('voiceSettings.voiceLibrary', 'Voice Library')}
+                      </h2>
+                      {voiceBrowserError ? (
+                        <div className="text-center py-10">
+                          <div className="w-14 h-14 mx-auto mb-3 bg-red-50 rounded-2xl flex items-center justify-center">
+                            <ThiingsIcon name="alert-circle" pxSize={24} />
+                          </div>
+                          <p className="text-sm font-semibold text-deep-charcoal">
+                            {t('voiceSettings.voiceLoadError', 'Could not load voices')}
+                          </p>
+                          <p className="text-xs text-stone-gray mt-1 mb-4">
+                            {t('voiceSettings.voiceLoadErrorHint', 'The voice service may be temporarily unavailable. Please try again.')}
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => refetchVoices()}
+                            className="px-5 py-2 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-medium rounded-xl transition-colors"
+                          >
+                            {t('common.retry', 'Retry')}
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          <VoiceFilters filters={filters} onChange={setFilters} defaultLanguage={currentLanguage} hideSearch={voicesSource === 'own_voices_fallback'} />
+                          <VoiceGrid
+                            voices={voices}
+                            selectedVoiceId={pendingVoiceId || config.voice_id || ''}
+                            playingVoiceId={playingVoiceId}
+                            loadingAudioId={loadingAudio}
+                            hasMore={hasMore}
+                            isLoadingMore={isLoadingMore}
+                            onSelectVoice={setPendingVoiceId}
+                            onPlayVoice={handlePlayVoice}
+                            onLoadMore={handleLoadMore}
+                            isLoading={isLoadingVoices}
+                            source={voicesSource}
+                          />
+                        </>
+                      )}
+                    </section>
                   )}
-                </section>
+                  <VoiceLanguagePicker currentLanguage={currentLanguage} savedLanguage={config?.language} onChange={setPendingLanguage} />
+                  <VoicePersonaPanel />
+                  <VoiceAgentInfo agentId={config.agent_id} updatedAt={config.agent_updated_at} createdAt={config.created_at} />
+                </>
               )}
-              <VoiceLanguagePicker currentLanguage={currentLanguage} savedLanguage={config?.language} onChange={setPendingLanguage} />
-              <VoiceAgentInfo agentId={config.agent_id} updatedAt={config.agent_updated_at} createdAt={config.created_at} />
-            </>
-          )}
 
-          {currentEngine === 'openai_realtime' && (
-            <>
-              <OpenAIVoicePicker currentOpenAIVoice={currentOpenAIVoice} savedOpenAIVoice={engineConfig?.openai_voice_id} onSelect={setPendingOpenAIVoice} />
-              <OpenAIEngineInfo engineStatus={engineConfig?.voice_engine_status} currentOpenAIVoice={currentOpenAIVoice} />
-            </>
-          )}
-          {waStatus && (
-            <div className="py-5 border-t border-[#E5E7EB] mt-8">
+              {currentEngine === 'openai_realtime' && (
+                <>
+                  <OpenAIVoicePicker currentOpenAIVoice={currentOpenAIVoice} savedOpenAIVoice={engineConfig?.openai_voice_id} onSelect={setPendingOpenAIVoice} />
+                  <VoicePersonaPanel />
+                  <OpenAIEngineInfo engineStatus={engineConfig?.voice_engine_status} currentOpenAIVoice={currentOpenAIVoice} />
+                </>
+              )}
+            </div>
+          );
+
+          const phoneTab = <PhoneIntegrationPanel />;
+
+          const whatsappTab = waStatus ? (
+            <div>
               <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827] mb-3">
                 {t('voiceSettings.whatsappStatus', 'WhatsApp Status')}
               </h2>
@@ -479,9 +493,6 @@ export default function VoiceSettingsPage() {
                     <span className="w-1.5 h-1.5 rounded-full bg-yellow-500" />
                     {t('voiceSettings.waPendingApproval', 'Pending Approval')}
                   </span>
-                  {/* Previously this just dropped the user on the Meta dashboard
-                      with no instructions. Now we explain what they're going
-                      there to do BEFORE they click. */}
                   <div className="bg-soft-gray rounded-xl p-3 text-xs text-warm-stone space-y-2">
                     <p className="text-deep-charcoal font-medium">{t('voiceSettings.waPendingHelpTitle', 'What happens next')}</p>
                     <ol className="list-decimal list-inside space-y-1">
@@ -521,14 +532,25 @@ export default function VoiceSettingsPage() {
                 </div>
               )}
             </div>
-          )}
-          <PhoneIntegrationPanel />
-          <VoicePersonaPanel />
-          <POSIntegrationPanel />
-          {/* VoiceExperimentPanel removed — buttons were non-functional (K-1) */}
-          {/* AIStrategyPanel + StrategyMetricsWidget removed — dead features */}
-          {slug && <BookingChannelsPanel slug={slug} />}
-        </div>
+          ) : (
+            <p className="text-sm text-warm-stone">{t('voiceSettings.waLoading', 'Loading WhatsApp connection status...')}</p>
+          );
+
+          const posTab = <POSIntegrationPanel />;
+          const widgetTab = slug
+            ? <BookingChannelsPanel slug={slug} />
+            : <p className="text-sm text-warm-stone">{t('voiceSettings.widgetUnavailable', 'Your booking widget will appear here once your restaurant is set up.')}</p>;
+
+          const tabs: SettingsTabDef[] = [
+            { id: 'voice',    label: t('voiceSettings.tab.voice', 'Voice & language'), content: voiceTab },
+            { id: 'phone',    label: t('voiceSettings.tab.phone', 'Phone'),            content: phoneTab },
+            { id: 'whatsapp', label: t('voiceSettings.tab.whatsapp', 'WhatsApp link'), content: whatsappTab },
+            { id: 'pos',      label: t('voiceSettings.tab.pos', 'POS'),                content: posTab },
+            { id: 'widget',   label: t('voiceSettings.tab.widget', 'Booking widget'),  content: widgetTab },
+          ];
+
+          return <SettingsTabs tabs={tabs} hashKey="voice-settings" />;
+        })()}
 
         <VoiceEngineSwitchModal isOpen={showEngineSwitchConfirm} engineSwitchTarget={engineSwitchTarget} onConfirm={confirmEngineSwitch} onClose={() => setShowEngineSwitchConfirm(false)} />
       </div>

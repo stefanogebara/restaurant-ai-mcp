@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import DashboardLayout from '../components/layout/DashboardLayout';
+import SettingsTabs, { type SettingsTabDef } from '../components/common/SettingsTabs';
 import ManagerNotificationsPanel from '../components/dashboard/ManagerNotificationsPanel';
 import FeedbackSettingsPanel from '../components/dashboard/FeedbackSettingsPanel';
 import SurveySettingsPanel from '../components/dashboard/SurveySettingsPanel';
@@ -393,18 +394,12 @@ export default function WhatsAppSettingsPage() {
     );
   }
 
-  return (
-    <DashboardLayout>
-      <div className="max-w-3xl mx-auto p-6 bg-white">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-[#111827]">{t('settings.whatsApp')}</h1>
-          <p className="text-sm text-[#9CA3AF] mt-1">
-            {t('settings.whatsAppDesc')}
-          </p>
-        </div>
-
-        {/* Connection Status */}
+  // Tabs split the previous 11-section scroll wall into focused panes.
+  // Every pane stays mounted (hidden via Tailwind) so dirty pending edits
+  // and the shared save flow survive tab switches.
+  const setupPane = (
+    <div className="space-y-0">
+      {/* Connection Status */}
         <div className="py-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{t('settings.connectionStatus')}</h2>
@@ -534,10 +529,14 @@ export default function WhatsAppSettingsPage() {
           </>
         )}
 
-        {/* Statistics */}
-        <div className="border-t border-[#E5E7EB] mt-8 mb-8" />
-        <div className="py-5">
-          <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827] mb-4">{t('settings.statistics')}</h2>
+    </div>
+  );
+
+  const testPane = (
+    <div className="space-y-0">
+      {/* Statistics */}
+      <div className="py-5">
+        <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827] mb-4">{t('settings.statistics')}</h2>
           {statsLoading ? (
             <div role="status" aria-label={t('settings.loadingStatistics', 'Loading statistics')} className="animate-pulse flex gap-6">
               {[1, 2, 3].map((i) => (
@@ -667,23 +666,46 @@ export default function WhatsAppSettingsPage() {
           )}
         </div>
 
-        {/* Phone Verification */}
-        <PhoneVerificationPanel />
+    </div>
+  );
 
-        {/* WhatsApp Template Status */}
-        <WhatsAppTemplateStatusPanel />
+  const verificationPane = (
+    <div className="space-y-0">
+      <PhoneVerificationPanel />
+      <WhatsAppTemplateStatusPanel />
+    </div>
+  );
 
-        {/* AI Personality */}
-        <AiPersonalityPanel />
+  const personalityPane = <AiPersonalityPanel />;
 
-        {/* Manager Notifications */}
-        <ManagerNotificationsPanel />
+  const notificationsPane = (
+    <div className="space-y-0">
+      <ManagerNotificationsPanel />
+      <FeedbackSettingsPanel />
+      <SurveySettingsPanel />
+    </div>
+  );
 
-        {/* Post-Visit Feedback */}
-        <FeedbackSettingsPanel />
+  const tabs: SettingsTabDef[] = [
+    { id: 'setup',         label: t('settings.tab.setup', 'Setup & status'),     content: setupPane },
+    { id: 'test',          label: t('settings.tab.test', 'Test & stats'),        content: testPane },
+    { id: 'verification',  label: t('settings.tab.verification', 'Verification'),content: verificationPane },
+    { id: 'personality',   label: t('settings.tab.personality', 'AI personality'), content: personalityPane },
+    { id: 'notifications', label: t('settings.tab.notifications', 'Notifications'), content: notificationsPane },
+  ];
 
-        {/* Satisfaction Survey */}
-        <SurveySettingsPanel />
+  return (
+    <DashboardLayout>
+      <div className="max-w-3xl mx-auto p-6 bg-white">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-[#111827]">{t('settings.whatsApp')}</h1>
+          <p className="text-sm text-[#9CA3AF] mt-1">
+            {t('settings.whatsAppDesc')}
+          </p>
+        </div>
+
+        <SettingsTabs tabs={tabs} hashKey="whatsapp-settings" />
       </div>
     </DashboardLayout>
   );

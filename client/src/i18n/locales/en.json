@@ -200,7 +200,8 @@
       "save": "Save Note",
       "noNotesTitle": "No notes yet",
       "noNotes": "Add notes to teach the AI about your guests and policies.",
-      "deleteConfirm": "Delete this note?",
+      "deleteTitle": "Delete this note?",
+      "deleteConfirm": "This will remove the note from the AI's memory. You can add it again later.",
       "policy": "Policy",
       "guest": "Guest",
       "errorSave": "Failed to save note",
@@ -1290,6 +1291,13 @@
   },
   "settings": {
     "title": "Settings",
+    "tab": {
+      "setup": "Setup & status",
+      "test": "Test & stats",
+      "verification": "Verification",
+      "personality": "AI personality",
+      "notifications": "Notifications"
+    },
     "general": "General",
     "notifications": "Notifications",
     "billing": "Billing",
@@ -1828,6 +1836,8 @@
     "phoneConnected": "Phone number connected successfully",
     "phoneSetupFailed": "Failed to set up phone",
     "confirmDisconnect": "Are you sure you want to disconnect this phone number?",
+    "disconnectTitle": "Disconnect AI phone?",
+    "disconnect": "Disconnect",
     "phoneDisconnected": "Phone number disconnected",
     "disconnectFailed": "Failed to disconnect phone",
     "diagnosticsLoaded": "Agent diagnostics loaded",
@@ -1934,6 +1944,9 @@
   "landing": {
     "badge": "AI-Powered Restaurant Management",
     "betaBadge": "Beta partners welcome",
+    "trustLgpd": "LGPD-compliant · Data stays in Brazil",
+    "trustEncrypted": "End-to-end encrypted",
+    "trustHumanSupport": "Real humans answer in 24h",
     "betaSubtitle": "14-day free trial · no credit card · cancel anytime",
     "socialProofBadge": "5 restaurants joined this week",
     "socialProof": {
@@ -2316,6 +2329,7 @@
       "label": "Pricing",
       "heading": "Simple, transparent pricing.",
       "subheading": "No hidden fees. Cancel anytime.",
+      "authWallHint": "Clicking a plan opens a quick Google sign-in, then Stripe checkout. Your card is only charged after the 14-day free trial.",
       "usageBased": "Usage-based fees apply",
       "usageDetail": "beyond plan limits: additional reservations, AI phone calls, SMS notifications, and WhatsApp messages are billed per use. All prices in {{currency}}. Cancel or upgrade anytime.",
       "checkoutError": "Failed to start checkout. Please try again.",
@@ -2550,6 +2564,15 @@
     "waConnected": "Connected",
     "waPhone": "Phone",
     "waQualityRating": "Quality rating",
+    "waLoading": "Loading WhatsApp connection status...",
+    "widgetUnavailable": "Your booking widget will appear here once your restaurant is set up.",
+    "tab": {
+      "voice": "Voice & language",
+      "phone": "Phone",
+      "whatsapp": "WhatsApp link",
+      "pos": "POS",
+      "widget": "Booking widget"
+    },
     "waPendingApproval": "Pending Approval",
     "waCheckMeta": "Open Meta Business Manager",
     "waNotConfigured": "Not Configured",

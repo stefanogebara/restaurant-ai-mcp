@@ -9,6 +9,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
+import ConfirmModal from '../common/ConfirmModal';
 import { useManagerNotes, useAddManagerNote, useDeleteManagerNote } from '../../hooks/useManagerNotes';
 
 export default function ManagerNotesPanel() {
@@ -22,6 +23,9 @@ export default function ManagerNotesPanel() {
   const [guestPhone, setGuestPhone] = useState('');
   const [noteContent, setNoteContent] = useState('');
   const [noteType, setNoteType] = useState<'vip_instruction' | 'general_policy' | 'guest_preference'>('vip_instruction');
+  // Confirm-delete modal state. Replaces the native window.confirm() prompt
+  // that broke the design system on every page-load.
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const handleSave = async () => {
     if (!noteContent.trim()) return;
@@ -36,8 +40,7 @@ export default function ManagerNotesPanel() {
   };
 
   const handleDelete = (noteId: string) => {
-    if (!confirm(t('dashboard.managerNotes.deleteConfirm'))) return;
-    deleteNote.mutate(noteId);
+    setConfirmDeleteId(noteId);
   };
 
   return (
@@ -169,6 +172,20 @@ export default function ManagerNotesPanel() {
           ))}
         </div>
       )}
+
+      <ConfirmModal
+        open={!!confirmDeleteId}
+        title={t('dashboard.managerNotes.deleteTitle', 'Delete this note?')}
+        message={t('dashboard.managerNotes.deleteConfirm')}
+        confirmLabel={t('common.delete', 'Delete')}
+        confirmTone="danger"
+        isLoading={deleteNote.isPending}
+        onCancel={() => setConfirmDeleteId(null)}
+        onConfirm={() => {
+          if (confirmDeleteId) deleteNote.mutate(confirmDeleteId);
+          setConfirmDeleteId(null);
+        }}
+      />
     </div>
   );
 }

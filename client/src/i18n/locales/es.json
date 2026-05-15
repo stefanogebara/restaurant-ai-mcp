@@ -218,7 +218,8 @@
       "save": "Guardar Nota",
       "noNotesTitle": "Sin notas aún",
       "noNotes": "Agrega notas para enseñar a la IA sobre tus clientes y políticas.",
-      "deleteConfirm": "¿Eliminar esta nota?",
+      "deleteTitle": "¿Eliminar esta nota?",
+      "deleteConfirm": "Se eliminará de la memoria de la IA. Puedes volver a añadirla más tarde.",
       "policy": "Política",
       "guest": "Cliente",
       "errorSave": "Error al guardar la nota",
@@ -1290,6 +1291,13 @@
   },
   "settings": {
     "title": "Configuración",
+    "tab": {
+      "setup": "Configuración y estado",
+      "test": "Pruebas y estadísticas",
+      "verification": "Verificación",
+      "personality": "Personalidad IA",
+      "notifications": "Notificaciones"
+    },
     "general": "General",
     "notifications": "Notificaciones",
     "billing": "Facturación",
@@ -1650,6 +1658,9 @@
   "landing": {
     "badge": "Gestión de Restaurantes con IA",
     "betaBadge": "Programa beta abierto",
+    "trustLgpd": "Cumple LGPD · Los datos quedan en tu país",
+    "trustEncrypted": "Cifrado de extremo a extremo",
+    "trustHumanSupport": "Atención humana en menos de 24h",
     "betaSubtitle": "14 días gratis · sin tarjeta · cancela cuando quieras",
     "socialProofBadge": "5 restaurantes se unieron esta semana",
     "socialProof": {
@@ -1833,6 +1844,7 @@
       "label": "Precios",
       "heading": "Precios simples y transparentes.",
       "subheading": "Sin costos ocultos. Cancela cuando quieras.",
+      "authWallHint": "Al elegir un plan abrirá un inicio de sesión rápido con Google y luego Stripe Checkout. Solo se cobra después de la prueba gratuita de 14 días.",
       "usageBased": "Se aplican tarifas por uso",
       "usageDetail": "más allá de los límites del plan: reservas adicionales, llamadas de IA, notificaciones SMS y mensajes de WhatsApp se facturan por uso. Todos los precios en {{currency}}. Cancela o actualiza cuando quieras.",
       "customSolution": "¿Necesitas una solución personalizada?",
@@ -2248,6 +2260,15 @@
     "waConnected": "Conectado",
     "waPhone": "Teléfono",
     "waQualityRating": "Calificación de calidad",
+    "waLoading": "Cargando estado de la conexión de WhatsApp...",
+    "widgetUnavailable": "Tu widget de reservas aparecerá aquí cuando termines de configurar tu restaurante.",
+    "tab": {
+      "voice": "Voz e idioma",
+      "phone": "Teléfono",
+      "whatsapp": "Enlace de WhatsApp",
+      "pos": "POS",
+      "widget": "Widget de reservas"
+    },
     "waPendingApproval": "Pendiente de Aprobación",
     "waCheckMeta": "Abrir Meta Business Manager",
     "waNotConfigured": "No Configurado",
@@ -2688,6 +2709,8 @@
     "phoneConnected": "Número de teléfono conectado exitosamente",
     "phoneSetupFailed": "Error al configurar el teléfono",
     "confirmDisconnect": "¿Estás seguro de que deseas desconectar este número de teléfono?",
+    "disconnectTitle": "¿Desconectar el teléfono de la IA?",
+    "disconnect": "Desconectar",
     "phoneDisconnected": "Número de teléfono desconectado",
     "disconnectFailed": "Error al desconectar teléfono",
     "diagnosticsLoaded": "Diagnóstico del agente cargado",

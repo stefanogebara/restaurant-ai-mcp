@@ -200,7 +200,8 @@
       "save": "Salvar Nota",
       "noNotesTitle": "Nenhuma nota ainda",
       "noNotes": "Adicione notas para ensinar a IA sobre seus clientes e políticas.",
-      "deleteConfirm": "Excluir esta nota?",
+      "deleteTitle": "Excluir esta nota?",
+      "deleteConfirm": "Vai ser removida da memória da IA. Você pode adicionar de novo depois.",
       "policy": "Política",
       "guest": "Cliente",
       "errorSave": "Falha ao salvar nota",
@@ -1291,6 +1292,13 @@
   },
   "settings": {
     "title": "Configurações",
+    "tab": {
+      "setup": "Configuração e status",
+      "test": "Teste e estatísticas",
+      "verification": "Verificação",
+      "personality": "Personalidade da IA",
+      "notifications": "Notificações"
+    },
     "general": "Geral",
     "notifications": "Notificações",
     "billing": "Cobrança",
@@ -1834,6 +1842,8 @@
     "phoneConnected": "Número de telefone conectado com sucesso",
     "phoneSetupFailed": "Falha ao configurar telefone",
     "confirmDisconnect": "Tem certeza que deseja desconectar este número de telefone?",
+    "disconnectTitle": "Desconectar o telefone da IA?",
+    "disconnect": "Desconectar",
     "phoneDisconnected": "Número de telefone desconectado",
     "disconnectFailed": "Falha ao desconectar telefone",
     "diagnosticsLoaded": "Diagnóstico do agente carregado",
@@ -1940,6 +1950,9 @@
   "landing": {
     "badge": "Gestão de Restaurantes com IA",
     "betaBadge": "Programa beta aberto",
+    "trustLgpd": "Conforme com a LGPD · Seus dados ficam no Brasil",
+    "trustEncrypted": "Criptografado de ponta a ponta",
+    "trustHumanSupport": "Atendimento humano em até 24h",
     "betaSubtitle": "14 dias grátis · sem cartão · cancele quando quiser",
     "socialProofBadge": "5 restaurantes ingressaram esta semana",
     "socialProof": {
@@ -2324,6 +2337,7 @@
       "label": "Planos",
       "heading": "Planos simples e transparentes.",
       "subheading": "Sem taxas ocultas. Cancele quando quiser.",
+      "authWallHint": "Clicar em um plano abre um login rápido com o Google e depois o Stripe Checkout. Seu cartão só é cobrado depois dos 14 dias grátis.",
       "subtitle": "Escolha o plano ideal para seu restaurante",
       "free": "Grátis",
       "perMonth": "mês",
@@ -2564,6 +2578,15 @@
     "waConnected": "Conectado",
     "waPhone": "Telefone",
     "waQualityRating": "Classificação de qualidade",
+    "waLoading": "Carregando status da conexão do WhatsApp...",
+    "widgetUnavailable": "Seu widget de reservas aparecerá aqui depois que o restaurante estiver configurado.",
+    "tab": {
+      "voice": "Voz e idioma",
+      "phone": "Telefone",
+      "whatsapp": "Link do WhatsApp",
+      "pos": "POS",
+      "widget": "Widget de reservas"
+    },
     "waPendingApproval": "Aprovação Pendente",
     "waCheckMeta": "Abrir Meta Business Manager",
     "waNotConfigured": "Não Configurado",

@@ -15,6 +15,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { toCsv, downloadCsv } from '../utils/exportCsv';
 import { todayLocalISO } from '../utils/timeFormatting';
 import ThiingsIcon from '../components/common/ThiingsIcon';
+import ConfirmModal from '../components/common/ConfirmModal';
 import CallPhoneStatusCard from '../components/call-tracking/CallPhoneStatusCard';
 import CallDiagnosticsPanel from '../components/call-tracking/CallDiagnosticsPanel';
 import CallFilters from '../components/call-tracking/CallFilters';
@@ -42,6 +43,8 @@ export default function CallTrackingDashboard() {
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [showDiagnosePanel, setShowDiagnosePanel] = useState(false);
   const [guestProfilePhone, setGuestProfilePhone] = useState<string | null>(null);
+  // Confirm-disconnect modal state — replaces the native window.confirm() prompt.
+  const [showDisconnectConfirm, setShowDisconnectConfirm] = useState(false);
 
   const { success: toastSuccess, error: toastError, info: toastInfo } = useToast();
   const { user } = useAuth();
@@ -91,7 +94,12 @@ export default function CallTrackingDashboard() {
       toastError(t('callTracking.noRestaurantId', 'No restaurant configured. Please complete onboarding first.'));
       return;
     }
-    if (!confirm(t('callTracking.confirmDisconnect'))) return;
+    setShowDisconnectConfirm(true);
+  };
+
+  const performDisconnect = () => {
+    if (!restaurant_id) return;
+    setShowDisconnectConfirm(false);
     disconnectPhone.mutate(restaurant_id, {
       onSuccess: () => {
         toastSuccess(t('callTracking.phoneDisconnected'));
@@ -259,6 +267,17 @@ export default function CallTrackingDashboard() {
               onClose={() => setGuestProfilePhone(null)}
             />
           )}
+
+          <ConfirmModal
+            open={showDisconnectConfirm}
+            title={t('callTracking.disconnectTitle', 'Disconnect AI phone?')}
+            message={t('callTracking.confirmDisconnect')}
+            confirmLabel={t('callTracking.disconnect', 'Disconnect')}
+            confirmTone="danger"
+            isLoading={disconnectPhone.isPending}
+            onCancel={() => setShowDisconnectConfirm(false)}
+            onConfirm={performDisconnect}
+          />
 
         </div>
       </div>

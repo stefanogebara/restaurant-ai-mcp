@@ -110,6 +110,14 @@ export default function PricingSection() {
           <p className="text-lg text-warm-stone font-light">{t('landing.pricing.subheading')}</p>
         </div>
 
+        {/* Auth-wall hint — clicking a plan goes through a Google sign-in
+            before Stripe Checkout. Previously this was a silent surprise
+            ("clicked Start trial, got dumped on /login") so we now warn
+            inline above the grid. */}
+        <p className="text-center text-xs text-warm-stone mb-6">
+          {t('landing.pricing.authWallHint', 'Clicking a plan opens a quick Google sign-in, then Stripe checkout. Your card is only charged after the 14-day free trial.')}
+        </p>
+
         {/* Pricing Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-[2px] bg-border-gray rounded-[20px] overflow-hidden">
           {PRICING_TIERS.map((tier, index) => {

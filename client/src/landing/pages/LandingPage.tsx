@@ -90,15 +90,31 @@ export default function LandingPage() {
 
       {/* 3. Pricing — M19: moved up from position 8 to 3. Serious prospects
           want to know cost early, before scrolling through deep product
-          demos. The "Beta partners welcome" badge below adds context without
-          fabricating testimonials. */}
-      <div className="text-center pt-12 pb-2">
-        <p className="text-xs uppercase tracking-[2px] text-burgundy font-semibold mb-2">
-          {t('landing.betaBadge', 'Beta partners welcome')}
-        </p>
-        <p className="text-sm text-warm-stone font-light max-w-md mx-auto px-6">
-          {t('landing.betaSubtitle', '30-day free trial · no credit card · cancel anytime')}
-        </p>
+          demos. The trust strip below answers the LGPD / "is my data safe"
+          questions before pricing, which a Brazilian SMB owner ALWAYS asks. */}
+      <div className="pt-12 pb-2">
+        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 px-6 mb-3">
+          <span className="inline-flex items-center gap-1.5 text-[11px] text-warm-stone">
+            <span aria-hidden="true">🔒</span>
+            {t('landing.trustLgpd', 'LGPD-compliant · Data stays in Brazil')}
+          </span>
+          <span className="inline-flex items-center gap-1.5 text-[11px] text-warm-stone">
+            <span aria-hidden="true">🛡️</span>
+            {t('landing.trustEncrypted', 'End-to-end encrypted')}
+          </span>
+          <span className="inline-flex items-center gap-1.5 text-[11px] text-warm-stone">
+            <span aria-hidden="true">📞</span>
+            {t('landing.trustHumanSupport', 'Real humans answer in 24h')}
+          </span>
+        </div>
+        <div className="text-center">
+          <p className="text-xs uppercase tracking-[2px] text-burgundy font-semibold mb-2">
+            {t('landing.betaBadge', 'Beta partners welcome')}
+          </p>
+          <p className="text-sm text-warm-stone font-light max-w-md mx-auto px-6">
+            {t('landing.betaSubtitle', '14-day free trial · no credit card · cancel anytime')}
+          </p>
+        </div>
       </div>
       <PricingSection />
 
