@@ -116,22 +116,41 @@ export default function BookingChannelsPanel({ slug }: Props) {
           </div>
         </ChannelCard>
 
-        {/* 2. Widget Embed */}
+        {/* 2. Widget Embed - reframed for non-technical owners. The raw
+            <script> snippet is still here for developers who know what to
+            do with it, but the primary action is now an "Email to my web
+            person" link that mailto's a prefilled message + the snippet so
+            João doesn't have to figure out how to send it. */}
         <ChannelCard
-          title={t('bookingChannels.widgetEmbed', 'Website Widget')}
-          description={t('bookingChannels.widgetEmbedDesc', 'Add a floating booking button to any website.')}
+          title={t('bookingChannels.widgetEmbed', 'Add a booking button to your website')}
+          description={t('bookingChannels.widgetEmbedDesc', "Drops a 'Book a table' button on any page. If you have a web developer, email it to them in one click.")}
         >
-          <div className="flex items-start gap-2">
-            <pre className="flex-1 bg-soft-gray rounded-lg px-3 py-2 text-xs text-deep-charcoal overflow-x-auto whitespace-pre-wrap break-all leading-relaxed">
-              {widgetSnippet}
-            </pre>
-            <CopyButton
-              text={widgetSnippet}
-              copiedKey={copiedKey}
-              myKey="widget"
-              onCopy={handleCopy}
-              label={t('bookingChannels.copyWidget', 'Copy widget code')}
-            />
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <a
+                href={`mailto:?subject=${encodeURIComponent('Please add this booking button to our website')}&body=${encodeURIComponent(
+                  `Hi,\n\nPlease add this snippet anywhere on our website (just before </body> works) so customers can book a table directly from the site.\n\n${widgetSnippet}\n\nLet me know when it's live — I'd like to test it.\n\nThanks!`
+                )}`}
+                className="px-3 py-1.5 bg-burgundy hover:bg-burgundy-dark text-white text-xs font-semibold rounded-lg transition-colors"
+              >
+                {t('bookingChannels.emailToWebmaster', 'Email to my web person')}
+              </a>
+              <CopyButton
+                text={widgetSnippet}
+                copiedKey={copiedKey}
+                myKey="widget"
+                onCopy={handleCopy}
+                label={t('bookingChannels.copyWidget', 'Copy code')}
+              />
+            </div>
+            <details className="text-xs">
+              <summary className="text-muted-stone hover:text-deep-charcoal cursor-pointer underline underline-offset-2">
+                {t('bookingChannels.showSnippet', 'Show the code')}
+              </summary>
+              <pre className="mt-2 bg-soft-gray rounded-lg px-3 py-2 text-xs text-deep-charcoal overflow-x-auto whitespace-pre-wrap break-all leading-relaxed">
+                {widgetSnippet}
+              </pre>
+            </details>
           </div>
         </ChannelCard>
 

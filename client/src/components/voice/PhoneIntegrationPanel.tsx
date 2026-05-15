@@ -139,7 +139,7 @@ export default function PhoneIntegrationPanel() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">
-          {t('phoneIntegration.title', 'AI Phone — Voice')}
+          {t('phoneIntegration.title', 'AI receptionist phone')}
         </h2>
         <StatusBadge status={restaurant.status} t={t} />
       </div>
@@ -148,12 +148,15 @@ export default function PhoneIntegrationPanel() {
       {!restaurant.has_agent && (
         <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs font-medium">
           <span aria-hidden="true">⚠</span>
-          {t('phoneIntegration.noAgentWarning', 'Voice agent not configured. Set up a voice agent before connecting the phone.')}
+          {t('phoneIntegration.noAgentWarning', 'AI receptionist not set up yet. Finish the AI receptionist setup above before connecting the phone.')}
         </div>
       )}
 
-      {/* Platform phone info */}
-      <div className="flex items-center gap-3">
+      {/* Platform phone info — previously rendered "Platform number: +55…"
+          with zero context. João couldn't tell if it was HIS number, a
+          shared line, or whether his existing restaurant number still
+          worked. Now we explain it and show what to do next. */}
+      <div className="flex items-start gap-3">
         <div className="w-9 h-9 rounded-full bg-soft-gray flex items-center justify-center flex-shrink-0">
           <svg
             className="w-4 h-4 text-warm-stone"
@@ -165,9 +168,15 @@ export default function PhoneIntegrationPanel() {
             <path d="M6.62 10.79a15.05 15.05 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 1.01-.24c1.12.37 2.33.57 3.58.57a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1C9.61 21 3 14.39 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.46.57 3.58a1 1 0 0 1-.25 1.01l-2.2 2.2z" />
           </svg>
         </div>
-        <div>
-          <p className="text-xs text-warm-stone">{t('phoneIntegration.platformNumber', 'Platform number')}</p>
+        <div className="min-w-0">
+          <p className="text-xs text-warm-stone">{t('phoneIntegration.platformNumber', 'Your AI receptionist number')}</p>
           <p className="text-sm font-semibold text-deep-charcoal">{displayPhone}</p>
+          <p className="text-xs text-warm-stone mt-1 leading-snug">
+            {t('phoneIntegration.platformNumberHelp', 'This is the phone number where your AI receptionist takes calls. Forward your restaurant\'s main line to this number so every call (including the ones you miss) gets answered.')}{' '}
+            <a href="mailto:hello@seatable.one?subject=Forwarding%20my%20restaurant%20number" className="font-medium text-burgundy hover:text-burgundy-dark underline underline-offset-2">
+              {t('phoneIntegration.helpWithForwarding', 'Help me forward my number')}
+            </a>
+          </p>
         </div>
       </div>
 
