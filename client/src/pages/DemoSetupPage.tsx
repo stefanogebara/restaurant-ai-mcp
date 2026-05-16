@@ -6,7 +6,7 @@
 
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import DemoSetupForm from '../components/landing/DemoSetupForm';
 import { trackDemoCompleted } from '../lib/analytics';
@@ -14,6 +14,7 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
 export default function DemoSetupPage() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const handleSubmit = async (data: {
@@ -55,7 +56,13 @@ export default function DemoSetupPage() {
       }
 
       trackDemoCompleted({ demo_token: result.demo_token || '' });
-      window.location.href = demoUrl;
+      // Pass scraped_data via router state so the demo dashboard can render
+      // the "Here's your restaurant — already in our system" wow card with
+      // the user's actual rating, address, editorial summary, and reviews.
+      // The backend currently drops everything except hours/cuisine/phone,
+      // so this is the only path that surfaces the rich Google Places data
+      // on the demo dashboard.
+      navigate(demoUrl, { state: { scraped_data: data.scraped_data } });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : t('demo.errors.generic', 'Something went wrong. Please try again.');
       setSubmitError(message);

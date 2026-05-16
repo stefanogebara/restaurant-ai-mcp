@@ -2838,6 +2838,18 @@
     "charCount": "{{used}}/{{max}} caracteres"
   },
   "demo": {
+    "realCard": {
+      "liveBadge": "Obtenido de Google en tiempo real",
+      "heading": "Aquí está tu restaurante — ya en nuestro sistema",
+      "subtitle": "Tu recepcionista IA está configurada con toda esta información. Echa un vistazo — cuando estés listo, haz clic en Comenzar Gratis para tomar el control.",
+      "reviewsCount": "{{count}} reseñas",
+      "reviewsCountK": "{{k}}k reseñas",
+      "openMaps": "Abrir en Maps",
+      "website": "Web",
+      "priceRange": "rango de precio",
+      "recentReviews": "Reseñas recientes en Google",
+      "scrapeNote": "Lo obtuvimos de Google Places en tiempo real — del mismo modo que tu recepcionista IA lo hará cuando los clientes pregunten por tu menú, horario o dirección."
+    },
     "voice": {
       "unavailable": "Vista previa de voz no disponible",
       "redirecting": "Redirigiendo a tu panel...",

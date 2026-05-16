@@ -1,11 +1,12 @@
 import { useState, useMemo, useRef } from 'react';
-import { Link, useSearchParams, useParams } from 'react-router-dom';
+import { Link, useSearchParams, useParams, useLocation } from 'react-router-dom';
 import DemoSlideIn from '../landing/components/DemoSlideIn';
 import DemoSidebar from '../components/demo/DemoSidebar';
 import DemoTablesGrid from '../components/demo/DemoTablesGrid';
 import DemoWhatsAppSim from '../components/demo/DemoWhatsAppSim';
 import DemoAnalyticsPanel from '../components/demo/DemoAnalyticsPanel';
 import DemoRestaurantInfoCard from '../components/demo/DemoRestaurantInfoCard';
+import RealRestaurantCard, { type ScrapedRestaurantData } from '../components/demo/RealRestaurantCard';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 import StatsBar from '../components/dashboard/StatsBar';
 import ReservationsList from '../components/dashboard/ReservationsList';
@@ -42,12 +43,16 @@ const CUISINE_DISPLAY: Record<string, string> = {
 export default function DemoDashboard() {
   const [searchParams] = useSearchParams();
   const { token: pathToken } = useParams<{ token?: string }>();
+  const location = useLocation();
+  // Real Google Places data piped through router state from /demo/setup.
+  // Hides on refresh (no state) — falls back to the existing preset/demo UI.
+  const realScrapedData = (location.state as { scraped_data?: ScrapedRestaurantData } | null)?.scraped_data ?? null;
   const presetKey = searchParams.get('preset') || undefined;
   const demoToken = searchParams.get('token') || pathToken || undefined;
   const isEmbed = searchParams.get('embed') === 'true';
 
   // Fetch personalized demo from API when token is present
-  const { data: tokenSession, isLoading: tokenLoading } = useDemoSession(demoToken);
+  const { data: tokenSession, isLoading: tokenLoading, isError: tokenError } = useDemoSession(demoToken);
 
   // Build override data from API response
   const overrideData = useMemo(() => {
@@ -194,7 +199,7 @@ export default function DemoDashboard() {
                 type="button"
                 onClick={() => setLang(lang === 'en' ? 'es' : lang === 'es' ? 'pt-BR' : 'en')}
                 className="text-xs font-medium text-white/70 hover:text-white transition-colors flex items-center gap-1.5"
-                aria-label="Toggle language"
+                aria-label={t.toggleLanguage}
               >
                 <ThiingsIcon name="globe" pxSize={12} className="text-white/70" />
                 {lang === 'en' ? 'EN' : lang === 'es' ? 'ES' : 'PT'}
@@ -215,7 +220,27 @@ export default function DemoDashboard() {
         <div className="flex items-center justify-center h-[60vh]">
           <div className="text-center space-y-3">
             <div className="w-8 h-8 border-2 border-burgundy border-t-transparent rounded-full animate-spin mx-auto" />
-            <p className="text-warm-stone text-sm">{t.loadingDemo || 'Carregando demo...'}</p>
+            <p className="text-warm-stone text-sm">{t.loadingDemo}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Invalid/expired demo token — the previous version silently fell back
+          to the default preset, so a user with a broken link saw a generic
+          demo and never knew their personalised one had failed to load. */}
+      {demoToken && tokenError && !tokenLoading && (
+        <div className={`${sidebarCollapsed ? 'lg:ml-[60px]' : 'lg:ml-[220px]'} px-4 sm:px-8 pt-4 transition-all duration-300`}>
+          <div className="max-w-7xl mx-auto bg-amber-50 border border-amber-200 rounded-xl px-5 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold text-amber-900">{t.tokenErrorTitle}</p>
+              <p className="text-xs text-amber-800 mt-0.5">{t.tokenErrorBody}</p>
+            </div>
+            <Link
+              to="/demo/setup"
+              className="px-4 py-2 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-lg transition-colors whitespace-nowrap"
+            >
+              {t.createNewDemo}
+            </Link>
           </div>
         </div>
       )}
@@ -306,8 +331,12 @@ export default function DemoDashboard() {
           isLoading={false}
         />
 
-        {/* Restaurant info card (only for presets that have real info, e.g. makoto) */}
-        {presetInfo && (
+        {/* Real Google Places data card — only for users who came through
+            /demo/setup with a real scrape. Falls back to preset info for
+            users hitting hardcoded preset URLs (e.g. /demo?preset=italian). */}
+        {realScrapedData ? (
+          <RealRestaurantCard data={realScrapedData} />
+        ) : presetInfo && (
           <DemoRestaurantInfoCard info={presetInfo} lang={lang} />
         )}
 
@@ -450,7 +479,7 @@ export default function DemoDashboard() {
               <button
                 type="button"
                 onClick={() => setShowWalkInModal(false)}
-                aria-label="Close"
+                aria-label={t.close}
                 className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-soft-gray text-muted-stone hover:text-deep-charcoal transition-colors"
               >
                 <ThiingsIcon name="close" pxSize={16} />

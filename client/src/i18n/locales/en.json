@@ -2838,6 +2838,18 @@
     "close": "Close"
   },
   "demo": {
+    "realCard": {
+      "liveBadge": "Pulled from Google in real time",
+      "heading": "Here's your restaurant — already in our system",
+      "subtitle": "Your AI receptionist is configured with all of this. Take a look around — when you're ready, click Get Started Free to take over.",
+      "reviewsCount": "{{count}} reviews",
+      "reviewsCountK": "{{k}}k reviews",
+      "openMaps": "Open in Maps",
+      "website": "Website",
+      "priceRange": "price range",
+      "recentReviews": "Recent reviews on Google",
+      "scrapeNote": "We pulled this from Google Places in real time — the same way your AI receptionist will when guests ask about your menu, hours, or address."
+    },
     "voice": {
       "unavailable": "Voice preview unavailable",
       "redirecting": "Redirecting to your dashboard...",
