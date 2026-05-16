@@ -279,6 +279,10 @@
       "checkIn": "Check In",
       "seated": "Seated",
       "takeAction": "Take Action",
+      "rowActionsAriaLabel": "Reservation actions",
+      "callGuest": "Call guest",
+      "editFull": "Edit reservation",
+      "cancelFull": "Cancel reservation",
       "takeActionButton": "Send reminder",
       "takeActionAriaLabel": "Send a reminder to this at-risk guest",
       "actionTaken": "Action taken",
@@ -1421,6 +1425,7 @@
     "adjacentTables_one": "Adjacent to {{count}} table",
     "adjacentTables_other": "Adjacent to {{count}} tables",
     "combinationGroup": "Group",
+    "tableStatusLabel": "Status:",
     "tableStatus": {
       "available": "Available",
       "occupied": "Occupied",

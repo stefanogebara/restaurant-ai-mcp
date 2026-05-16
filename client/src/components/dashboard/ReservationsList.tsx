@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
+import StatusLegend, { chipClassesForStatus, type StatusLegendItem } from '../common/StatusLegend';
 import type { UpcomingReservation, Table } from '../../types/host.types';
 import NoShowRiskBadge from './NoShowRiskBadge';
 import DepositBadge from './DepositBadge';
@@ -196,6 +197,19 @@ export default function ReservationsList({
           </div>
         </div>
 
+        {/* Status legend — answers Carla's "what does each color mean?"
+            question once at the top of the panel so individual badges below
+            don't need labels. Hidden on mobile where header space is tight. */}
+        <div className="hidden sm:flex mt-3 pt-3 border-t border-[#F3F4F6]">
+          <StatusLegend
+            items={[
+              { label: tl('confirmed'), token: 'good' },
+              { label: tl('seated'),    token: 'active' },
+              { label: tl('atRisk'),    token: 'warn' },
+            ] as StatusLegendItem[]}
+          />
+        </div>
+
         {/* Search input */}
         <div className="relative mt-3">
           <ThiingsIcon
@@ -318,6 +332,11 @@ interface ReservationRowProps {
 function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositAction, onEdit, onCancel, onCustomerClick, avgSpendPerCover, byPartySize, language, tableMap }: ReservationRowProps) {
   const { t } = useTranslation();
   const tl = (key: string) => t(`dashboard.reservationsList.${key}`);
+  // Mobile-only bottom sheet for Edit / Cancel / Call. Desktop has its own
+  // hover-icon row; on touch devices the 14px icons were unreachable and
+  // hidden behind `hidden sm:flex` which left mobile hosts with NO way to
+  // act on a reservation row.
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const formatTime = (time: string) => {
     const [hours, minutes] = time.split(':');
@@ -347,11 +366,15 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
     .join('')
     .toUpperCase();
 
+  // Status badge colors now map to the canonical semantic palette
+  // (emerald/blue/amber/red). Previously: confirmed=rose, seated=violet,
+  // at-risk=amber — three different random palettes that didn't match the
+  // floor-plan table colors or any other status-bearing surface.
   const statusBadge = reservation.checked_in
-    ? { label: tl('seated'), classes: 'bg-violet-600/[8%] text-violet-600' }
+    ? { label: tl('seated'),    classes: `${chipClassesForStatus('active')}` }
     : isHighRisk
-    ? { label: tl('atRisk'), classes: 'bg-amber-600/[8%] text-amber-600' }
-    : { label: tl('confirmed'), classes: 'bg-rose-600/[8%] text-rose-600' };
+    ? { label: tl('atRisk'),    classes: `${chipClassesForStatus('warn')}` }
+    : { label: tl('confirmed'), classes: `${chipClassesForStatus('good')}` };
 
   const hue = (reservation.customer_name?.charCodeAt(0) ?? 65) * 137 % 360;
   const avatarStyle = { background: `linear-gradient(135deg, hsl(${hue},50%,75%), hsl(${(hue + 40) % 360},50%,65%))` };
@@ -517,9 +540,13 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
             </span>
           </button>
         ) : (
+          // Previously this rendered just a colored dot with no label —
+          // hosts on iPad / phone couldn't tell what the colored circle
+          // meant. Now we also surface the short status label.
           <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusBadge.classes}`}>
             <span className="inline-flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60 flex-shrink-0" />
+              {statusBadge.label}
             </span>
           </span>
         )}
@@ -536,7 +563,7 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
         </div>
       )}
 
-      {/* Edit / Cancel actions */}
+      {/* Edit / Cancel — desktop hover-icon row */}
       {(onEdit || onCancel) && !reservation.checked_in && (
         <div className="flex-shrink-0 hidden sm:flex items-center gap-1">
           {onEdit && (
@@ -558,6 +585,79 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
             >
               <ThiingsIcon name="close" pxSize={14} />
             </button>
+          )}
+        </div>
+      )}
+
+      {/* Mobile-only 3-dot trigger + bottom sheet menu. Replaces the 14px
+          icons hidden behind `sm:flex` which left mobile hosts with NO
+          discoverable way to edit or cancel a row. */}
+      {(onEdit || onCancel || reservation.customer_phone) && !reservation.checked_in && (
+        <div className="flex-shrink-0 sm:hidden">
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen(true)}
+            aria-label={tl('rowActionsAriaLabel', 'Reservation actions')}
+            className="p-2 -m-2 rounded-lg text-muted-stone hover:text-deep-charcoal hover:bg-soft-gray transition-colors"
+          >
+            <ThiingsIcon name="more-horizontal" pxSize={18} />
+          </button>
+          {mobileMenuOpen && (
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-label={tl('rowActionsAriaLabel', 'Reservation actions')}
+              className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-end"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <div
+                className="bg-white w-full rounded-t-2xl shadow-2xl border-t border-border-gray p-2 pb-6 max-h-[70vh] overflow-y-auto"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Drag-handle affordance */}
+                <div className="mx-auto mb-2 w-12 h-1.5 rounded-full bg-stone-200" aria-hidden="true" />
+                <div className="px-2 pb-2 text-xs font-medium text-stone-gray truncate">
+                  {reservation.customer_name}
+                </div>
+                {reservation.customer_phone && (
+                  <a
+                    href={`tel:${reservation.customer_phone}`}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="w-full flex items-center gap-3 px-4 py-3.5 text-sm font-medium text-deep-charcoal hover:bg-soft-gray rounded-xl transition-colors"
+                  >
+                    <ThiingsIcon name="phone" pxSize={18} className="text-stone-gray" />
+                    {tl('callGuest', 'Call guest')}
+                  </a>
+                )}
+                {onEdit && (
+                  <button
+                    type="button"
+                    onClick={() => { setMobileMenuOpen(false); onEdit(); }}
+                    className="w-full flex items-center gap-3 px-4 py-3.5 text-sm font-medium text-deep-charcoal hover:bg-soft-gray rounded-xl transition-colors"
+                  >
+                    <ThiingsIcon name="pencil" pxSize={18} className="text-stone-gray" />
+                    {tl('editFull', 'Edit reservation')}
+                  </button>
+                )}
+                {onCancel && (
+                  <button
+                    type="button"
+                    onClick={() => { setMobileMenuOpen(false); onCancel(); }}
+                    className="w-full flex items-center gap-3 px-4 py-3.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-xl transition-colors"
+                  >
+                    <ThiingsIcon name="close" pxSize={18} className="text-red-600" />
+                    {tl('cancelFull', 'Cancel reservation')}
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="w-full mt-2 px-4 py-3 text-sm font-medium text-stone-gray hover:bg-soft-gray rounded-xl transition-colors"
+                >
+                  {t('common.cancel', 'Cancel')}
+                </button>
+              </div>
+            </div>
           )}
         </div>
       )}

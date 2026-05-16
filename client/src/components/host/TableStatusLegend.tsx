@@ -1,23 +1,18 @@
-import { useTranslation } from 'react-i18next';
+import StatusLegend, { type StatusLegendItem } from '../common/StatusLegend';
 
-const statuses = [
-  { key: 'available', dotColor: 'bg-rose-500' },
-  { key: 'occupied', dotColor: 'bg-burgundy' },
-  { key: 'cleaning', dotColor: 'bg-amber-500' },
-  { key: 'reserved', dotColor: 'bg-violet-600' },
-] as const;
+/**
+ * Floor-plan table status legend. Used to use a hand-rolled palette where
+ * "available" was rose and "occupied" was burgundy — the available state
+ * looked alarming and the occupied state looked like a primary CTA. Now
+ * delegates to the shared <StatusLegend /> with semantic tokens.
+ */
+const ITEMS: StatusLegendItem[] = [
+  { label: 'settings.tableStatus.available', token: 'good' },     // emerald = ready for guests
+  { label: 'settings.tableStatus.occupied',  token: 'active' },   // blue = in service / dining
+  { label: 'settings.tableStatus.cleaning',  token: 'warn' },     // amber = transitioning
+  { label: 'settings.tableStatus.reserved',  token: 'neutral' },  // stone = held, no action yet
+];
 
 export default function TableStatusLegend() {
-  const { t } = useTranslation();
-  return (
-    <div className="flex items-center gap-3 flex-wrap">
-      <span className="text-xs text-stone-gray font-medium">Status:</span>
-      {statuses.map((status) => (
-        <div key={status.key} className="flex items-center gap-1.5">
-          <span className={`w-2 h-2 rounded-full flex-shrink-0 ${status.dotColor}`} />
-          <span className="text-xs text-stone-gray">{t(`settings.tableStatus.${status.key}`)}</span>
-        </div>
-      ))}
-    </div>
-  );
+  return <StatusLegend items={ITEMS} caption="settings.tableStatusLabel" />;
 }

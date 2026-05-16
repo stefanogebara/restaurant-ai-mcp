@@ -279,6 +279,10 @@
       "checkIn": "Confirmar",
       "seated": "Sentado",
       "takeAction": "Tomar Ação",
+      "rowActionsAriaLabel": "Ações da reserva",
+      "callGuest": "Ligar para o cliente",
+      "editFull": "Editar reserva",
+      "cancelFull": "Cancelar reserva",
       "takeActionButton": "Enviar lembrete",
       "takeActionAriaLabel": "Enviar um lembrete para este cliente em risco",
       "actionTaken": "Ação realizada",
@@ -1438,6 +1442,7 @@
     "adjacentTables_one": "Adjacente a {{count}} mesa",
     "adjacentTables_other": "Adjacente a {{count}} mesas",
     "combinationGroup": "Grupo",
+    "tableStatusLabel": "Status:",
     "tableStatus": {
       "available": "Disponível",
       "occupied": "Ocupada",
