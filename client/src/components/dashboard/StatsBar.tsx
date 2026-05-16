@@ -95,7 +95,11 @@ export default function StatsBar({
           value={formatCurrency(predictedRevenue)}
           change={`${activeParties} ${t('dashboard.stats.activeParties', 'active')} · ${totalGuests} ${t('dashboard.stats.seated', 'seated')}`}
           changeColor="text-rose-600"
-          barPercent={Math.min(100, Math.round((predictedRevenue / Math.max(predictedRevenue * 1.3, 1)) * 100))}
+          // Previously: barPercent={Math.round((predictedRevenue / Math.max(predictedRevenue * 1.3, 1)) * 100)}
+          //   — a self-referential fraction that ALWAYS resolved to ~77%.
+          // Carla (and her boss) read "this bar is 3/4 full" as a real
+          // signal, which it wasn't. Until we have a meaningful denominator
+          // (yesterday's actual revenue or a target), skip the bar entirely.
           barColor="#10b981"
           icon={<ThiingsIcon name="trending-up" pxSize={16} className="text-muted-stone" />}
         />
@@ -121,7 +125,13 @@ interface StatCardProps {
   valueColor?: string;
   change: string;
   changeColor: string;
-  barPercent: number;
+  /**
+   * Progress bar fill in percent. Pass `undefined` to skip the bar entirely —
+   * preferable to passing a meaningless gauge (the predicted-revenue card
+   * previously rendered a constant ~77% bar that eroded trust in every other
+   * stat on the page).
+   */
+  barPercent?: number;
   barColor: string;
   icon?: ReactElement;
 }
@@ -152,12 +162,18 @@ function StatCard({ label, value, valueSuffix, valueColor, change, changeColor, 
           {change}
         </div>
       )}
-      <div className="w-full bg-stone-100 h-1 rounded-full overflow-hidden mt-auto">
-        <div
-          className="h-full rounded-full transition-all duration-700 ease-out"
-          style={{ width: mounted ? `${barPercent}%` : '0%', backgroundColor: barColor }}
-        />
-      </div>
+      {/* mt-auto keeps the card content bottom-aligned even when the bar
+          isn't rendered, so the row of cards stays the same height. */}
+      {barPercent !== undefined ? (
+        <div className="w-full bg-stone-100 h-1 rounded-full overflow-hidden mt-auto">
+          <div
+            className="h-full rounded-full transition-all duration-700 ease-out"
+            style={{ width: mounted ? `${barPercent}%` : '0%', backgroundColor: barColor }}
+          />
+        </div>
+      ) : (
+        <div className="mt-auto" />
+      )}
     </div>
   );
 }

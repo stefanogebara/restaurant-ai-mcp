@@ -278,13 +278,18 @@ interface ActionButtonProps {
   onClick: () => void;
 }
 
+// "green" → ACTUAL green palette. Previously this used Tailwind's rose
+// tokens (the brand's primary action color), so "Free this table" — a
+// positive available-status action — rendered identical to destructive
+// red/burgundy CTAs. Carla on a busy shift could not tell the difference,
+// which is exactly the problem flagged in audit Finding 13.
 const actionColors = {
   green: {
-    bg: 'bg-rose-50 hover:bg-rose-100',
-    border: 'border-rose-200',
-    iconBg: 'bg-rose-600',
-    title: 'text-rose-900',
-    sub: 'text-rose-700',
+    bg: 'bg-emerald-50 hover:bg-emerald-100',
+    border: 'border-emerald-200',
+    iconBg: 'bg-emerald-600',
+    title: 'text-emerald-900',
+    sub: 'text-emerald-700',
   },
   blue: {
     bg: 'bg-blue-50 hover:bg-blue-100',
