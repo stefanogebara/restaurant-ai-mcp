@@ -27,7 +27,11 @@ export default function DemoSetupPage() {
     setSubmitError(null);
 
     try {
-      const response = await fetch(`${API_BASE}/api/demo?action=create`, {
+      // RESTful path (rewritten to /api/demo?action=create server-side). The
+      // `?action=create` query pattern matches some aggressive adblock filter
+      // lists (uBlock Origin etc.), which silently aborts the POST before it
+      // leaves the browser. The path-based form survives those filters.
+      const response = await fetch(`${API_BASE}/api/demo/create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

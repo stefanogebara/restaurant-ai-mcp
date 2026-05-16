@@ -76,7 +76,7 @@ export default function DemoConversation() {
       const apiBase = import.meta.env.VITE_API_BASE_URL || '/api';
       const ctx = (data || context) as RestaurantContext;
 
-      const res = await fetch(`${apiBase}/demo?action=create`, {
+      const res = await fetch(`${apiBase}/demo/create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -125,7 +125,7 @@ export default function DemoConversation() {
       try {
         if (token) {
           // Path A: Load from demo session + scrape for reviews
-          const sessionRes = await fetch(`${apiBase}/demo?action=session&token=${encodeURIComponent(token)}`);
+          const sessionRes = await fetch(`${apiBase}/demo/session?token=${encodeURIComponent(token)}`);
           const sessionData = await sessionRes.json();
 
           if (sessionData.success && sessionData.restaurant) {

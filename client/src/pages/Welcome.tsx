@@ -69,7 +69,7 @@ export default function Welcome() {
           // data (scrape, reservations, AI agent setup) on any network blip.
           // Same anti-pattern fixed in Onboarding's referral-attach (9e271d13 L4).
           if (demoToken) {
-            authFetch('/api/demo?action=convert', {
+            authFetch('/api/demo/convert', {
               method: 'POST',
               body: JSON.stringify({ token: demoToken }),
             })

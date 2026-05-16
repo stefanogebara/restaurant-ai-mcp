@@ -30,6 +30,18 @@
       "destination": "/api/sitemap"
     },
     {
+      "source": "/api/demo/create",
+      "destination": "/api/demo?action=create"
+    },
+    {
+      "source": "/api/demo/session",
+      "destination": "/api/demo?action=session"
+    },
+    {
+      "source": "/api/demo/convert",
+      "destination": "/api/demo?action=convert"
+    },
+    {
       "source": "/restaurants/:city/:cuisine",
       "destination": "/api/seo/city-cuisine?city=:city&cuisine=:cuisine"
     },

@@ -139,7 +139,7 @@ export default function Onboarding() {
 
     const apiBase = import.meta.env.VITE_API_BASE_URL || '/api';
     setIsDemoLoading(true);
-    fetch(`${apiBase}/demo?action=session&token=${encodeURIComponent(demoToken)}`)
+    fetch(`${apiBase}/demo/session?token=${encodeURIComponent(demoToken)}`)
       .then((r) => r.json())
       .then((data) => {
         if (!data.success || !data.restaurant) return;

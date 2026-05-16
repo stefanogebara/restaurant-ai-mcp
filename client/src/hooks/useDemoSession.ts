@@ -26,7 +26,7 @@ export function useDemoSession(token: string | undefined) {
     queryKey: ['demo-session', token],
     queryFn: async () => {
       const apiBase = import.meta.env.VITE_API_BASE_URL || '/api';
-      const res = await fetch(`${apiBase}/demo?action=session&token=${encodeURIComponent(token!)}`);
+      const res = await fetch(`${apiBase}/demo/session?token=${encodeURIComponent(token!)}`);
       const data = await res.json();
       if (!data.success) throw new Error('This demo link is invalid or has expired.');
       return data;
