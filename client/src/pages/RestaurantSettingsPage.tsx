@@ -5,11 +5,12 @@
  * Route: /host-dashboard/settings
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useRestaurantSettings, useUpdateRestaurantSettings } from '../hooks/useRestaurantSettings';
 import type { BusinessHours, ReservationSettings } from '../hooks/useRestaurantSettings';
+import { localizeCancellationPolicy } from '../utils/cancellationPolicy';
 import { useToast } from '../contexts/ToastContext';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import ThiingsIcon from '../components/common/ThiingsIcon';
@@ -18,6 +19,20 @@ import DepositSettingsPanel from '../components/settings/DepositSettingsPanel';
 import BookingChannelsPanel from '../components/dashboard/BookingChannelsPanel';
 import { useQuery } from '@tanstack/react-query';
 import { authFetch } from '../services/api';
+import { isDayHoursValid } from '../components/onboarding/Step2Contact';
+
+// Number-input setter that doesn't snap to `fallback` on every keystroke. The
+// previous `parseInt(v) || fallback` pattern (a) ignored the radix and (b) hit
+// the `||` branch on a legit `0` value AND on a momentarily-empty input,
+// preventing 0-buffer entry and making every clear-and-retype revert mid-edit.
+const parseIntOrKeep = (raw: string, current: number, fallback: number): number => {
+  if (raw === '') return current;
+  const parsed = parseInt(raw, 10);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
+const PHONE_RE = /^\+\d{7,14}$/;
 
 const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const;
 
@@ -68,9 +83,14 @@ export default function RestaurantSettingsPage() {
     auto_confirm: true,
   });
 
-  // Sync from server
+  // ONE-TIME hydration from server. The previous version re-ran on every
+  // settings ref change — React Query refetches on window focus / mutation
+  // success, so any unsaved typing in the cancellation-policy textarea
+  // got silently overwritten when the host switched tabs and came back.
+  const hasHydrated = useRef(false);
   useEffect(() => {
-    if (!settings) return;
+    if (!settings || hasHydrated.current) return;
+    hasHydrated.current = true;
     setInfo({
       restaurant_name: settings.restaurant_name || '',
       phone: settings.phone || '',
@@ -79,42 +99,118 @@ export default function RestaurantSettingsPage() {
       country: settings.country || '',
       timezone: settings.timezone || 'America/Sao_Paulo',
     });
-    if (settings.business_hours) setHours(settings.business_hours);
+    // Seed all 7 days from the server payload (or sensible defaults). Saves
+    // need the complete week — without this, a partial server payload meant
+    // the days the host never touched were missing from the PUT.
+    const seeded: BusinessHours = {};
+    for (const day of DAYS) {
+      const existing = settings.business_hours?.[day];
+      seeded[day] = existing ?? { is_open: false, open_time: '12:00', close_time: '23:00' };
+    }
+    setHours(seeded);
     if (settings.reservation_settings) {
       setPolicies((prev) => ({ ...prev, ...settings.reservation_settings }));
     }
   }, [settings]);
 
+  // Track which section is dirty — used to warn before tab close.
+  const [dirty, setDirty] = useState({ info: false, hours: false, policies: false });
+  const isAnyDirty = dirty.info || dirty.hours || dirty.policies;
+
+  // beforeunload warning when the host has unsaved edits in any section. The
+  // page has three independent save buttons — easy to think you saved one
+  // section when you saved another and navigate away losing the rest.
+  useEffect(() => {
+    if (!isAnyDirty) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      // Modern browsers ignore the message and show their own — return value
+      // just needs to be truthy.
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [isAnyDirty]);
+
   const handleSaveInfo = () => {
+    const phone = info.phone.trim();
+    const email = info.email.trim();
+    // Match the validation Step2Contact already runs during onboarding —
+    // this page was accepting "abc" as email and "123" as phone, both of
+    // which then break Twilio/WhatsApp/Resend dispatchers downstream.
+    if (phone && !PHONE_RE.test(phone.replace(/\s/g, ''))) {
+      toast.error(t('onboarding.phoneInvalidFormat', 'Phone must start with + followed by 7-14 digits (E.164 format)'));
+      return;
+    }
+    if (email && !EMAIL_RE.test(email)) {
+      toast.error(t('onboarding.emailInvalid', 'Please enter a valid email address'));
+      return;
+    }
     updateMutation.mutate(info, {
-      onSuccess: () => toast.success(t('settings.saved', 'Settings saved')),
-      onError: () => toast.error(t('settings.saveFailed', 'Failed to save settings')),
+      onSuccess: () => { toast.success(t('settings.saved', 'Settings saved')); setDirty((d) => ({ ...d, info: false })); },
+      onError: (err) => toast.error(err.message || t('settings.saveFailed', 'Failed to save settings')),
     });
   };
 
   const handleSaveHours = () => {
+    // Validate every open day. The previous version had ZERO validation —
+    // a host could enter open=20:00 close=02:00, get a success toast, and
+    // their availability backend (api/portal.js) would silently produce
+    // zero bookable slots for that day. isDayHoursValid allows midnight
+    // (00:00) close — the only overnight case the slot generator handles.
+    const invalidDays: string[] = [];
+    for (const day of DAYS) {
+      const dh = hours[day];
+      if (!dh || !dh.is_open) continue;
+      if (!dh.open_time || !dh.close_time) {
+        invalidDays.push(day);
+        continue;
+      }
+      if (!isDayHoursValid(dh.open_time, dh.close_time)) {
+        invalidDays.push(day);
+      }
+    }
+    if (invalidDays.length > 0) {
+      const names = invalidDays.map((d) => dayLabels[d]).join(', ');
+      toast.error(`${t('onboarding.closingAfterOpening', 'Closing time must be after opening time')} (${names})`);
+      return;
+    }
     updateMutation.mutate({ business_hours: hours }, {
-      onSuccess: () => toast.success(t('settings.hoursSaved', 'Business hours saved')),
-      onError: () => toast.error(t('settings.saveFailed', 'Failed to save')),
+      onSuccess: () => { toast.success(t('settings.hoursSaved', 'Business hours saved')); setDirty((d) => ({ ...d, hours: false })); },
+      onError: (err) => toast.error(err.message || t('settings.saveFailed', 'Failed to save')),
     });
   };
 
   const handleSavePolicies = () => {
     updateMutation.mutate({ reservation_settings: policies } as Record<string, unknown>, {
-      onSuccess: () => toast.success(t('settings.policiesSaved', 'Policies saved')),
-      onError: () => toast.error(t('settings.saveFailed', 'Failed to save')),
+      onSuccess: () => { toast.success(t('settings.policiesSaved', 'Policies saved')); setDirty((d) => ({ ...d, policies: false })); },
+      onError: (err) => toast.error(err.message || t('settings.saveFailed', 'Failed to save')),
     });
   };
 
+  // Patch helpers also flip the dirty flag for the section — required so the
+  // beforeunload warning + the disabled-save logic actually fire.
+  const patchInfo = (patch: Partial<typeof info>) => {
+    setInfo((prev) => ({ ...prev, ...patch }));
+    setDirty((d) => ({ ...d, info: true }));
+  };
+  const patchPolicies = (patch: Partial<ReservationSettings>) => {
+    setPolicies((prev) => ({ ...prev, ...patch }));
+    setDirty((d) => ({ ...d, policies: true }));
+  };
   const updateHour = (day: string, field: 'open_time' | 'close_time' | 'is_open', value: string | boolean) => {
     setHours((prev) => ({
       ...prev,
       [day]: { ...prev[day], [field]: value },
     }));
+    setDirty((d) => ({ ...d, hours: true }));
   };
 
-  const lang = (i18n.language || 'en') as keyof typeof DAY_LABELS;
-  const dayLabels = DAY_LABELS[lang] || DAY_LABELS.en;
+  // Normalize "en-US" → "en" so unsupported sub-locales fall back to the
+  // language root before hitting English. The cast was a type lie before.
+  const langRoot = (i18n.language?.split('-')[0] || 'en');
+  const langKey = (DAY_LABELS[i18n.language] ? i18n.language : langRoot) as keyof typeof DAY_LABELS;
+  const dayLabels = DAY_LABELS[langKey] || DAY_LABELS.en;
 
   if (isLoading) {
     return (
@@ -169,16 +265,16 @@ export default function RestaurantSettingsPage() {
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label={t('settings.name', 'Restaurant Name')} value={info.restaurant_name} onChange={(v) => setInfo({ ...info, restaurant_name: v })} />
-            <Field label={t('settings.phone', 'Phone')} value={info.phone} onChange={(v) => setInfo({ ...info, phone: v })} type="tel" />
-            <Field label={t('settings.email', 'Email')} value={info.email} onChange={(v) => setInfo({ ...info, email: v })} type="email" />
-            <Field label={t('settings.city', 'City')} value={info.city} onChange={(v) => setInfo({ ...info, city: v })} />
-            <Field label={t('settings.country', 'Country')} value={info.country} onChange={(v) => setInfo({ ...info, country: v })} />
-            <TimezoneSelect label={t('settings.timezone', 'Timezone')} value={info.timezone} onChange={(v) => setInfo({ ...info, timezone: v })} selectPlaceholder={t('common.select', '— Select —')} />
+            <Field label={t('settings.name', 'Restaurant Name')} value={info.restaurant_name} onChange={(v) => patchInfo({ restaurant_name: v })} />
+            <Field label={t('settings.phone', 'Phone')} value={info.phone} onChange={(v) => patchInfo({ phone: v })} type="tel" />
+            <Field label={t('settings.email', 'Email')} value={info.email} onChange={(v) => patchInfo({ email: v })} type="email" />
+            <Field label={t('settings.city', 'City')} value={info.city} onChange={(v) => patchInfo({ city: v })} />
+            <Field label={t('settings.country', 'Country')} value={info.country} onChange={(v) => patchInfo({ country: v })} />
+            <TimezoneSelect label={t('settings.timezone', 'Timezone')} value={info.timezone} onChange={(v) => patchInfo({ timezone: v })} selectPlaceholder={t('common.select', '— Select —')} />
           </div>
 
           <div className="flex justify-end pt-2">
-            <SaveButton onClick={handleSaveInfo} loading={updateMutation.isPending} label={t('settings.saveInfo', 'Save Info')} />
+            <SaveButton onClick={handleSaveInfo} loading={updateMutation.isPending} disabled={!dirty.info} label={t('settings.saveInfo', 'Save Info')} />
           </div>
         </section>
 
@@ -234,7 +330,7 @@ export default function RestaurantSettingsPage() {
           </div>
 
           <div className="flex justify-end pt-2">
-            <SaveButton onClick={handleSaveHours} loading={updateMutation.isPending} label={t('settings.saveHours', 'Save Hours')} />
+            <SaveButton onClick={handleSaveHours} loading={updateMutation.isPending} disabled={!dirty.hours} label={t('settings.saveHours', 'Save Hours')} />
           </div>
         </section>
 
@@ -255,7 +351,7 @@ export default function RestaurantSettingsPage() {
                 min="1"
                 max="365"
                 value={policies.advance_booking_days ?? 30}
-                onChange={(e) => setPolicies({ ...policies, advance_booking_days: parseInt(e.target.value) || 30 })}
+                onChange={(e) => patchPolicies({ advance_booking_days: parseIntOrKeep(e.target.value, policies.advance_booking_days ?? 30, 30) })}
                 className="w-full px-3 py-2 bg-soft-gray border border-border-gray rounded-xl text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
               />
             </div>
@@ -265,7 +361,7 @@ export default function RestaurantSettingsPage() {
               </label>
               <select
                 value={policies.default_dining_duration ?? 90}
-                onChange={(e) => setPolicies({ ...policies, default_dining_duration: parseInt(e.target.value) })}
+                onChange={(e) => patchPolicies({ default_dining_duration: parseInt(e.target.value, 10) })}
                 className="w-full px-3 py-2 bg-soft-gray border border-border-gray rounded-xl text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
               >
                 <option value={60}>{t('settings.durationMinutes', '{{count}} minutes', { count: 60 })}</option>
@@ -283,7 +379,7 @@ export default function RestaurantSettingsPage() {
                 min="0"
                 max="120"
                 value={policies.buffer_time_minutes ?? 15}
-                onChange={(e) => setPolicies({ ...policies, buffer_time_minutes: parseInt(e.target.value) || 15 })}
+                onChange={(e) => patchPolicies({ buffer_time_minutes: parseIntOrKeep(e.target.value, policies.buffer_time_minutes ?? 15, 15) })}
                 className="w-full px-3 py-2 bg-soft-gray border border-border-gray rounded-xl text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
               />
             </div>
@@ -296,7 +392,7 @@ export default function RestaurantSettingsPage() {
                 min="1"
                 max="20"
                 value={policies.min_party_size ?? 1}
-                onChange={(e) => setPolicies({ ...policies, min_party_size: parseInt(e.target.value) || 1 })}
+                onChange={(e) => patchPolicies({ min_party_size: parseIntOrKeep(e.target.value, policies.min_party_size ?? 1, 1) })}
                 className="w-full px-3 py-2 bg-soft-gray border border-border-gray rounded-xl text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
               />
             </div>
@@ -309,7 +405,7 @@ export default function RestaurantSettingsPage() {
                 min="1"
                 max="50"
                 value={policies.max_party_size ?? 12}
-                onChange={(e) => setPolicies({ ...policies, max_party_size: parseInt(e.target.value) || 12 })}
+                onChange={(e) => patchPolicies({ max_party_size: parseIntOrKeep(e.target.value, policies.max_party_size ?? 12, 12) })}
                 className="w-full px-3 py-2 bg-soft-gray border border-border-gray rounded-xl text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
               />
             </div>
@@ -321,8 +417,12 @@ export default function RestaurantSettingsPage() {
             </label>
             <textarea
               rows={2}
-              value={policies.cancellation_policy || ''}
-              onChange={(e) => setPolicies({ ...policies, cancellation_policy: e.target.value })}
+              maxLength={1000}
+              // If the stored value is a stable preset key (set during onboarding),
+              // show the localized preset text so the owner reads it in their
+              // language. Any edit replaces with the typed text (custom policy).
+              value={localizeCancellationPolicy(policies.cancellation_policy, t, '')}
+              onChange={(e) => patchPolicies({ cancellation_policy: e.target.value })}
               className="w-full px-3 py-2 bg-soft-gray border border-border-gray rounded-xl text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30 resize-none"
               placeholder={t('settings.cancellationPlaceholder', 'Free cancellation up to 24 hours before...')}
             />
@@ -332,7 +432,7 @@ export default function RestaurantSettingsPage() {
             <input
               type="checkbox"
               checked={policies.auto_confirm ?? true}
-              onChange={(e) => setPolicies({ ...policies, auto_confirm: e.target.checked })}
+              onChange={(e) => patchPolicies({ auto_confirm: e.target.checked })}
               className="w-4 h-4 rounded border-border-gray text-burgundy focus:ring-burgundy/30"
             />
             <span className="text-sm text-deep-charcoal">{t('settings.autoConfirm', 'Automatically confirm reservations')}</span>
@@ -342,14 +442,14 @@ export default function RestaurantSettingsPage() {
             <input
               type="checkbox"
               checked={policies.allow_waitlist ?? true}
-              onChange={(e) => setPolicies({ ...policies, allow_waitlist: e.target.checked })}
+              onChange={(e) => patchPolicies({ allow_waitlist: e.target.checked })}
               className="w-4 h-4 rounded border-border-gray text-burgundy focus:ring-burgundy/30"
             />
             <span className="text-sm text-deep-charcoal">{t('settings.allowWaitlist', 'Allow waitlist when fully booked')}</span>
           </label>
 
           <div className="flex justify-end pt-2">
-            <SaveButton onClick={handleSavePolicies} loading={updateMutation.isPending} label={t('settings.savePolicies', 'Save Policies')} />
+            <SaveButton onClick={handleSavePolicies} loading={updateMutation.isPending} disabled={!dirty.policies} label={t('settings.savePolicies', 'Save Policies')} />
           </div>
         </section>
 
@@ -409,6 +509,13 @@ const COMMON_TIMEZONES = [
 ];
 
 function TimezoneSelect({ label, value, onChange, selectPlaceholder = '— Select —' }: { label: string; value: string; onChange: (v: string) => void; selectPlaceholder?: string }) {
+  // If the stored timezone is outside the curated list (e.g. America/Halifax),
+  // include it as an extra option. Otherwise the <select> silently rendered no
+  // selection and saving the form would overwrite the host's real timezone
+  // with the empty placeholder value.
+  const options = value && !COMMON_TIMEZONES.includes(value)
+    ? [value, ...COMMON_TIMEZONES]
+    : COMMON_TIMEZONES;
   return (
     <div>
       <label className="block text-xs font-medium text-muted-stone mb-1">{label}</label>
@@ -418,7 +525,7 @@ function TimezoneSelect({ label, value, onChange, selectPlaceholder = '— Selec
         className="w-full px-3 py-2 bg-soft-gray border border-border-gray rounded-xl text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
       >
         <option value="">{selectPlaceholder}</option>
-        {COMMON_TIMEZONES.map((tz) => (
+        {options.map((tz) => (
           <option key={tz} value={tz}>{tz.replace(/_/g, ' ')}</option>
         ))}
       </select>
@@ -426,12 +533,13 @@ function TimezoneSelect({ label, value, onChange, selectPlaceholder = '— Selec
   );
 }
 
-function SaveButton({ onClick, loading, label }: { onClick: () => void; loading: boolean; label: string }) {
+function SaveButton({ onClick, loading, label, disabled }: { onClick: () => void; loading: boolean; label: string; disabled?: boolean }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      disabled={loading}
+      disabled={loading || disabled}
+      aria-busy={loading}
       className="px-5 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-xl transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
     >
       {loading ? '...' : label}

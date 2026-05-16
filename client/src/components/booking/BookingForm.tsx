@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useTimeSlots, useCreateReservation } from '../../hooks/useBooking';
 import { formatLocalDate } from '../../utils/timeFormatting';
+import { localizeCancellationPolicy } from '../../utils/cancellationPolicy';
 import DepositPaymentStep from './DepositPaymentStep';
 import GuestDetailsForm from './GuestDetailsForm';
 
@@ -566,7 +567,10 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
           <path d="M9 12l2 2 4-4" />
         </svg>
         <p className="text-[12.5px] text-stone-gray leading-relaxed">
-          {restaurant.cancellation_policy?.trim() || t('reservations.cancellationPolicy')}
+          {/* Use the locale-aware resolver — previously this rendered the
+              language-frozen literal from the DB, so a customer browsing in
+              pt-BR at a restaurant onboarded in English saw English. */}
+          {localizeCancellationPolicy(restaurant.cancellation_policy, t)}
         </p>
       </div>
     </div>

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 import { useReservationById, useRestaurantBySlug, type ReservationData } from '../hooks/useBooking';
+import { localizeCancellationPolicy } from '../utils/cancellationPolicy';
 
 export default function BookingConfirmation() {
   const { slug } = useParams<{ slug: string }>();
@@ -307,7 +308,9 @@ export default function BookingConfirmation() {
           </div>
 
           <p className="text-xs text-muted-stone mt-5">
-            {t('reservations.cancellationPolicy')}
+            {/* Honor the restaurant's chosen preset (e.g. cancelFree24h) but
+                always render it in the customer's locale, never the owner's. */}
+            {localizeCancellationPolicy(restaurantInfo?.cancellation_policy, t)}
           </p>
         </div>
       </main>

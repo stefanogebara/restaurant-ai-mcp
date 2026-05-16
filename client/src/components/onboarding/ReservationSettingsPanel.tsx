@@ -1,13 +1,9 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
+import { POLICY_KEYS, policyValueForStorage, detectPolicyKey } from '../../utils/cancellationPolicy';
 
-const CANCELLATION_POLICY_I18N_KEYS = [
-  'onboarding.cancelFree2h',
-  'onboarding.cancelFree24h',
-  'onboarding.cancelFree48h',
-  'onboarding.cancelNone',
-];
+const CANCELLATION_POLICY_I18N_KEYS = POLICY_KEYS.map((k) => `onboarding.${k}` as const);
 
 interface ReservationSettingsPanelProps {
   advanceBookingDays: number;
@@ -89,12 +85,20 @@ export default function ReservationSettingsPanel({ advanceBookingDays, bufferTim
             </label>
             <select
               id="cancellation_policy"
-              value={cancellationPolicy}
+              // Save a stable language-independent key (e.g. "cancellationPreset:cancelFree2h")
+              // instead of the translated label. The booking page resolves the
+              // key in the customer's locale via localizeCancellationPolicy —
+              // so a restaurant onboarded in PT-BR shows EN customers the
+              // English version automatically (and vice versa).
+              value={(() => {
+                const detected = detectPolicyKey(cancellationPolicy);
+                return detected ? policyValueForStorage(detected) : cancellationPolicy;
+              })()}
               onChange={(e) => onUpdate('cancellation_policy', e.target.value)}
               className="w-full px-4 py-3 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-burgundy"
             >
-              {CANCELLATION_POLICY_I18N_KEYS.map((key) => (
-                <option key={key} value={t(key)}>{t(key)}</option>
+              {POLICY_KEYS.map((key) => (
+                <option key={key} value={policyValueForStorage(key)}>{t(`onboarding.${key}`)}</option>
               ))}
             </select>
           </div>
