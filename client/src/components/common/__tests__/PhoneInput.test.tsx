@@ -56,26 +56,33 @@ describe('PhoneInput', () => {
     expect(input).toHaveValue('123');
   });
 
-  it('validates phone number format per country', async () => {
+  it('validates phone number length (accepts landlines + mobiles, 7-15 digits)', async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
-    render(<PhoneInput {...defaultProps} onChange={onChange} defaultCountry="ES" />);
+    render(<PhoneInput {...defaultProps} onChange={onChange} defaultCountry="BR" />);
 
     const input = screen.getByRole('textbox');
 
-    // Invalid Spanish number (starts with 1)
-    await user.type(input, '123456789');
+    // Too short — 6 digits
+    await user.type(input, '112951');
     let lastCall = onChange.mock.calls[onChange.mock.calls.length - 1];
-    expect(lastCall[1]).toBe(false); // invalid
+    expect(lastCall[1]).toBe(false);
 
-    // Clear and type valid Spanish number (starts with 6 or 7)
+    // BR landline (10 digits) — the regression we just fixed. Mocotó's real
+    // Google-Maps number was rejected before f6f1310d8.
     await user.clear(input);
-    await user.type(input, '639672963');
+    await user.type(input, '1129513056');
     lastCall = onChange.mock.calls[onChange.mock.calls.length - 1];
-    expect(lastCall[1]).toBe(true); // valid
+    expect(lastCall[1]).toBe(true);
+
+    // BR mobile (11 digits) — also valid
+    await user.clear(input);
+    await user.type(input, '11987654321');
+    lastCall = onChange.mock.calls[onChange.mock.calls.length - 1];
+    expect(lastCall[1]).toBe(true);
   });
 
-  it('shows validation warning for invalid number', async () => {
+  it('shows length-based warning for too-short number', async () => {
     const user = userEvent.setup();
     render(<PhoneInput {...defaultProps} defaultCountry="ES" />);
 
@@ -83,7 +90,7 @@ describe('PhoneInput', () => {
     await user.type(input, '123');
 
     expect(
-      screen.getByText('Please enter a valid Spain phone number')
+      screen.getByText(/too short/i)
     ).toBeInTheDocument();
   });
 

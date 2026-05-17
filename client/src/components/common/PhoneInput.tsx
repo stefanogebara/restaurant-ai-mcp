@@ -108,10 +108,20 @@ export default function PhoneInput({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Validate and emit changes
+  // Validate and emit changes.
+  // The per-country `pattern` regex is mobile-only by design (`^[1-9]\d{10}$`
+  // for BR, `^3\d{8,9}$` for IT, etc.) — every restaurant with a landline
+  // could not pass onboarding. Real-world audit: Mocotó's actual Google-Maps
+  // number `+55 11 2951-3056` (São Paulo landline) was rejected.
+  //
+  // Accept any national-significant number with 7–15 digits (E.164 range).
+  // Keep the strict regex only as a "preferred format" signal — the format
+  // hint + placeholder still nudge users toward a mobile, but landlines now
+  // proceed.
   useEffect(() => {
     const cleanNumber = localNumber.replace(/[^\d]/g, '');
-    const valid = selectedCountry.pattern.test(cleanNumber);
+    const validLength = cleanNumber.length >= 7 && cleanNumber.length <= 15;
+    const valid = validLength;
     setIsValid(valid);
 
     // Emit full international number
@@ -212,7 +222,9 @@ export default function PhoneInput({
       )}
       {localNumber && !isValid && !error && (
         <p className="mt-1 text-sm text-amber-600">
-          Please enter a valid {selectedCountry.name} phone number
+          {localNumber.replace(/[^\d]/g, '').length < 7
+            ? 'Phone number too short — add the area code'
+            : 'Phone number too long'}
         </p>
       )}
     </div>
