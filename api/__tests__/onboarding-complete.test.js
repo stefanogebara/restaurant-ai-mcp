@@ -323,8 +323,16 @@ describe('Validation', () => {
     await handler(req, res);
 
     expect(res.status).toHaveBeenCalledWith(400);
+    // Hardened validation now names the FIRST offending field in the error
+    // message (rather than a generic "Missing required fields") so the UI
+    // can surface a targeted message. Structured `details[]` enumerates
+    // every missing field so the form can highlight all of them at once.
     expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({ error: 'Missing required fields' })
+      expect.objectContaining({
+        field: expect.any(String),
+        reason: expect.any(String),
+        details: expect.any(Array),
+      })
     );
   });
 
@@ -536,5 +544,107 @@ describe('ElevenLabs agent creation', () => {
     const callArgs = createAgent.mock.calls[0][0];
     // configResult.id from mock is 'config-uuid'
     expect(callArgs.restaurantId).toBe('config-uuid');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Input validation — locks the hardened contract that rejects empty strings,
+// malformed emails, and unreasonable phone numbers BEFORE any DB write.
+// The previous version just checked truthiness, so `"   "` and arbitrary
+// strings would pass and land in the DB / WhatsApp router.
+// ---------------------------------------------------------------------------
+describe('Input validation — required field hardening', () => {
+  test('rejects whitespace-only customer_email', async () => {
+    const { req, res } = mockReqRes({ ...BASE_BODY, customer_email: '   ' });
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    const body = res.json.mock.calls[0][0];
+    expect(body.field).toBe('customer_email');
+    expect(body.reason).toBe('required');
+  });
+
+  test('rejects malformed customer_email', async () => {
+    const { req, res } = mockReqRes({ ...BASE_BODY, customer_email: 'not-an-email' });
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json.mock.calls[0][0].field).toBe('customer_email');
+    expect(res.json.mock.calls[0][0].reason).toMatch(/invalid email format/i);
+  });
+
+  test('rejects whitespace-only restaurant_name', async () => {
+    const { req, res } = mockReqRes({ ...BASE_BODY, restaurant_name: '   ' });
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json.mock.calls[0][0].field).toBe('restaurant_name');
+  });
+
+  test('rejects restaurant_name longer than 255 characters', async () => {
+    const { req, res } = mockReqRes({ ...BASE_BODY, restaurant_name: 'x'.repeat(256) });
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json.mock.calls[0][0].reason).toMatch(/255/);
+  });
+
+  test('rejects phone with non-numeric content', async () => {
+    const { req, res } = mockReqRes({ ...BASE_BODY, phone_number: 'call-me-maybe' });
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json.mock.calls[0][0].field).toBe('phone_number');
+  });
+
+  test('rejects phone shorter than 7 chars (avoid junk like "123")', async () => {
+    const { req, res } = mockReqRes({ ...BASE_BODY, phone_number: '+123' });
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json.mock.calls[0][0].field).toBe('phone_number');
+  });
+
+  test('rejects malformed contact email', async () => {
+    const { req, res } = mockReqRes({ ...BASE_BODY, email: '@missing-local' });
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json.mock.calls[0][0].field).toBe('email');
+  });
+
+  test('accepts the canonical BASE_BODY without complaint', async () => {
+    const { req, res } = mockReqRes(BASE_BODY);
+    await handler(req, res);
+    // We don't care here whether the full flow succeeds (DB mocks may not
+    // reach 200); we ONLY care that validation didn't 400 the request.
+    const firstCall = res.status.mock.calls[0]?.[0];
+    expect(firstCall).not.toBe(400);
+  });
+
+  test('trims whitespace around valid values (does not 400 on padded input)', async () => {
+    const { req, res } = mockReqRes({
+      ...BASE_BODY,
+      customer_email: '  test@example.com  ',
+      restaurant_name: '  Test Restaurant  ',
+      phone_number: '  +5511999999999  ',
+      email: '  test@example.com  ',
+    });
+    await handler(req, res);
+    const firstCall = res.status.mock.calls[0]?.[0];
+    expect(firstCall).not.toBe(400);
+  });
+
+  test('returns structured details listing all field errors', async () => {
+    const { req, res } = mockReqRes({
+      customer_email: 'bad',
+      restaurant_name: '',
+      phone_number: '',
+      email: 'also-bad',
+      // ...minimal payload, hours/areas not required by validation
+    });
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    const body = res.json.mock.calls[0][0];
+    expect(Array.isArray(body.details)).toBe(true);
+    // Should report ALL field problems, not just the first one. This
+    // lets the client show one inline message per field instead of
+    // forcing the user to fix-and-retry one field at a time.
+    expect(body.details.length).toBeGreaterThanOrEqual(4);
+    const fields = body.details.map(d => d.field);
+    expect(fields).toEqual(expect.arrayContaining(['customer_email', 'restaurant_name', 'phone_number', 'email']));
   });
 });

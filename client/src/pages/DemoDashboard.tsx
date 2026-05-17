@@ -57,9 +57,31 @@ export default function DemoDashboard() {
   // Fetch personalized demo from API when token is present
   const { data: tokenSession, isLoading: tokenLoading, isError: tokenError } = useDemoSession(demoToken);
 
-  // Composite resolver: prefer fresh router state, fall back to DB-persisted
-  // payload from session API. Both have the same ScrapedRestaurantData shape.
-  const realScrapedData = stateScrapedData ?? tokenSession?.restaurant?.scraped_data ?? null;
+  // Composite resolver. Three sources of truth in order of freshness:
+  //   1. Router state — set by /demo/setup → /demo/<token> navigate.
+  //      Contains raw Google Places scrape ONLY (menu + insights are added
+  //      later by the LLM enrichment running inline in /api/demo/create).
+  //   2. DB-persisted scraped_data from the session API — includes the
+  //      enrichment fields (menu, insights, enriched_at, ai_voice_notes...).
+  //   3. null — the wow card hides entirely.
+  //
+  // The previous resolver picked state-OR-db (state always wins when present)
+  // which meant the AIKnowsCard never rendered on the post-create landing:
+  // state had the base scrape but no enrichment, so the menu/insights props
+  // came through undefined and the card returned null. We now MERGE — state
+  // is the base, DB's enrichment fields layer on top when present.
+  const dbScrapedData = tokenSession?.restaurant?.scraped_data ?? null;
+  const realScrapedData = stateScrapedData
+    ? {
+        ...stateScrapedData,
+        // Pull enrichment from DB if it exists, regardless of whether the
+        // state version had it. This is safe because DB enrichment only
+        // ever ADDS info; the base Google Places fields are identical.
+        ...(dbScrapedData?.menu       ? { menu: dbScrapedData.menu }       : {}),
+        ...(dbScrapedData?.insights   ? { insights: dbScrapedData.insights } : {}),
+        ...(dbScrapedData?.enriched_at ? { enriched_at: dbScrapedData.enriched_at } : {}),
+      }
+    : dbScrapedData;
 
   // Build override data from API response
   const overrideData = useMemo(() => {

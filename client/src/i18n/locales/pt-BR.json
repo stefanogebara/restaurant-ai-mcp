@@ -1068,6 +1068,8 @@
     "setupFailedSupportSuffix": "— a gente te configura em minutos.",
     "phoneInvalidFormat": "Use o formato internacional com código do país, ex. +55 11 98765-4321.",
     "tryAgain": "Tentar novamente",
+    "fixOnStep": "Corrigir no passo {{step}}",
+    "fieldError": "Seu {{label}} {{reason}}. Toque em \"Editar\" para corrigir.",
     "completeError": "Falha ao concluir o cadastro. Tente novamente.",
     "importError": "Falha no envio. Verifique seu arquivo e tente novamente.",
     "interviewStartFailed": "Não foi possível iniciar a entrevista. Tente novamente.",

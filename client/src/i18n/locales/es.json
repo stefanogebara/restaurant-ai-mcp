@@ -1070,6 +1070,8 @@
     "setupFailedSupportSuffix": "— te configuramos en minutos.",
     "phoneInvalidFormat": "Usa el formato internacional con código de país, ej. +52 55 1234-5678.",
     "tryAgain": "Intentar de nuevo",
+    "fixOnStep": "Corregir en el paso {{step}}",
+    "fieldError": "Tu {{label}} {{reason}}. Toca \"Editar\" para corregirlo.",
     "completeError": "Error al completar el registro. Inténtalo de nuevo.",
     "importError": "Error al subir el archivo. Verifica tu archivo e inténtalo de nuevo.",
     "interviewStartFailed": "No se pudo iniciar la entrevista. Inténtalo de nuevo.",

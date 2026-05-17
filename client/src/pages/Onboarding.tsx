@@ -31,6 +31,7 @@ import { authFetch } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { trackOnboardingStepCompleted, trackOnboardingCompleted } from '../lib/analytics';
 import { LS_CUSTOMER_EMAIL, LS_REFERRAL_CODE, LS_ONBOARDING_DATA, LS_ONBOARDING_STEP, LS_PENDING_DEMO_TOKEN } from '../config/localStorageKeys';
+import { parseOnboardingError } from '../utils/onboardingErrorMessage';
 
 const STEP_NAME_KEYS = ['onboarding.stepName1', 'onboarding.stepName2', 'onboarding.stepName3', 'onboarding.stepName4', 'onboarding.stepName5', 'onboarding.stepName6'];
 const TOTAL_STEPS = 6;
@@ -53,6 +54,9 @@ export default function Onboarding() {
   const [countdown, setCountdown] = useState(5);
   const [ownReferral, setOwnReferral] = useState<{ code: string; url: string } | null>(null);
   const [bookingUrl, setBookingUrl] = useState<string | null>(null);
+  // If the server tells us *which* field is bad we can offer a one-click jump
+  // back to the step that owns it instead of making the owner hunt for it.
+  const [submitErrorJumpStep, setSubmitErrorJumpStep] = useState<number | null>(null);
 
   const customerEmail = user?.email || localStorage.getItem(LS_CUSTOMER_EMAIL) || '';
   const [isPreFilledFromDemo, setIsPreFilledFromDemo] = useState(false);
@@ -263,9 +267,13 @@ export default function Onboarding() {
       const data = await response.json();
 
       if (!response.ok) {
-        const errorMessage = data.message || data.error || t('onboarding.completeError', 'Failed to complete onboarding');
-        const errorDetails = data.details ? `\n\nDetails: ${data.details}` : '';
-        throw new Error(`${errorMessage}${errorDetails}`);
+        // Hand the structured response to parseOnboardingError so the user
+        // gets a clean "Your phone number is required" instead of a
+        // serialized "[object Object],[object Object]" or a raw Postgres
+        // error like "22P02: invalid input value for enum restaurant_type".
+        const parsed = parseOnboardingError(data, t);
+        setSubmitErrorJumpStep(parsed.jumpToStep ?? null);
+        throw new Error(parsed.message);
       }
 
       // M15: attach referral code BEFORE clearing localStorage. The previous
@@ -458,13 +466,33 @@ export default function Onboarding() {
                       give up. Surface the server message inline. */}
                   <p className="mt-1 text-xs text-red-700 break-words whitespace-pre-wrap">{submitError}</p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => { setSubmitError(null); completeOnboarding(); }}
-                  className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 flex-shrink-0"
-                >
-                  {t('onboarding.tryAgain')}
-                </button>
+                <div className="flex flex-col gap-2 flex-shrink-0">
+                  {/* When the backend tells us WHICH step has the bad field,
+                      offer a single-click jump. The user otherwise has to
+                      mentally map "Your phone is invalid" → "that lives on
+                      Step 2" → click Edit on the right Review row. */}
+                  {submitErrorJumpStep && submitErrorJumpStep !== currentStep && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const stepToVisit = submitErrorJumpStep;
+                        setSubmitError(null);
+                        setSubmitErrorJumpStep(null);
+                        goToStep(stepToVisit);
+                      }}
+                      className="px-4 py-2 bg-white border border-red-300 text-red-700 text-sm font-medium rounded-lg hover:bg-red-50"
+                    >
+                      {t('onboarding.fixOnStep', 'Fix on step {{step}}', { step: submitErrorJumpStep })}
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => { setSubmitError(null); setSubmitErrorJumpStep(null); completeOnboarding(); }}
+                    className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700"
+                  >
+                    {t('onboarding.tryAgain')}
+                  </button>
+                </div>
               </div>
               {/* Human escape hatch — if Try Again keeps failing, Maria needs
                   a path to a real person, not just "try again". */}

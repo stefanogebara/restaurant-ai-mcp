@@ -1070,6 +1070,8 @@
     "setupFailedSupportSuffix": "— we'll get you set up in minutes.",
     "phoneInvalidFormat": "Please use international format starting with the country code, e.g. +55 11 98765-4321.",
     "tryAgain": "Try again",
+    "fixOnStep": "Fix on step {{step}}",
+    "fieldError": "Your {{label}} {{reason}}. Tap \"Edit\" to fix it.",
     "completeError": "Failed to complete onboarding. Please try again.",
     "importError": "Upload failed. Please check your file and try again.",
     "interviewStartFailed": "Could not start the interview. Please try again.",

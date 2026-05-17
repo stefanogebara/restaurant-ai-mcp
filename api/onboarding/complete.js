@@ -183,15 +183,20 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const {
+    // `let` (not `const`) for the 4 string fields below — we reassign them
+    // to their trimmed/validated form after the input check so downstream
+    // code can never accidentally consume the raw req.body values.
+    let {
       customer_email,
-      restaurant_id,
       restaurant_name,
+      phone_number,
+      email,
+    } = req.body;
+    const {
+      restaurant_id,
       restaurant_type,
       city,
       country,
-      phone_number,
-      email,
       website,
       business_hours,
       average_dining_duration,
@@ -207,13 +212,50 @@ module.exports = async (req, res) => {
       restaurant_learning, // AI restaurant learning data (session_id, restaurant_profile)
     } = req.body;
 
-    // Validate required fields
-    if (!customer_email || !restaurant_name || !phone_number || !email) {
+    // Validate required fields — hardened to reject empty strings and
+    // obviously malformed input rather than letting them land in the DB.
+    // The previous version only checked truthiness, so `"   "` and an
+    // unvalidated email would pass and crash downstream lookups.
+    const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+    const PHONE_RE = /^\+?[0-9\s().-]{7,32}$/;
+    const trimStr = (v) => (typeof v === 'string' ? v.trim() : '');
+
+    const trimmedCustomerEmail = trimStr(customer_email);
+    const trimmedRestaurantName = trimStr(restaurant_name);
+    const trimmedPhone = trimStr(phone_number);
+    const trimmedEmail = trimStr(email);
+
+    const fieldErrors = [];
+    if (!trimmedCustomerEmail) fieldErrors.push({ field: 'customer_email', reason: 'required' });
+    else if (!EMAIL_RE.test(trimmedCustomerEmail)) fieldErrors.push({ field: 'customer_email', reason: 'invalid email format' });
+
+    if (!trimmedRestaurantName) fieldErrors.push({ field: 'restaurant_name', reason: 'required' });
+    else if (trimmedRestaurantName.length > 255) fieldErrors.push({ field: 'restaurant_name', reason: 'must be 255 characters or less' });
+
+    if (!trimmedPhone) fieldErrors.push({ field: 'phone_number', reason: 'required' });
+    else if (!PHONE_RE.test(trimmedPhone)) fieldErrors.push({ field: 'phone_number', reason: 'invalid phone format' });
+
+    if (!trimmedEmail) fieldErrors.push({ field: 'email', reason: 'required' });
+    else if (!EMAIL_RE.test(trimmedEmail)) fieldErrors.push({ field: 'email', reason: 'invalid email format' });
+
+    if (fieldErrors.length > 0) {
+      // Build a user-friendly message that names the first offending field
+      // so the client can map it back to a specific input. Keeps the full
+      // structured details available for Sentry / dashboard error logs.
+      const first = fieldErrors[0];
       return res.status(400).json({
-        error: 'Missing required fields',
-        required: ['customer_email', 'restaurant_name', 'phone_number', 'email'],
+        error: `Invalid ${first.field}: ${first.reason}`,
+        field: first.field,
+        reason: first.reason,
+        details: fieldErrors,
       });
     }
+
+    // Reassign so the rest of the handler always uses the trimmed values.
+    customer_email = trimmedCustomerEmail;
+    restaurant_name = trimmedRestaurantName;
+    phone_number = trimmedPhone;
+    email = trimmedEmail;
 
     logger.info(' Starting onboarding for:', customer_email);
     logger.info(' Restaurant:', restaurant_name);
