@@ -57,7 +57,8 @@
     "preview": "Preview",
     "pause": "Pause",
     "guests": "guests",
-    "partyOf": "Party of {{size}}"
+    "partyOf": "Party of {{size}}",
+    "all": "All"
   },
   "navigation": {
     "dashboard": "Dashboard",
@@ -1235,7 +1236,21 @@
     "dayThursday": "Thursday",
     "dayFriday": "Friday",
     "daySaturday": "Saturday",
-    "daySunday": "Sunday"
+    "daySunday": "Sunday",
+    "csvOnlyHint": "Only .csv files. Need only the phone column — the rest are optional."
+  },
+  "launch": {
+    "badge": "Setup complete",
+    "title": "Ready to launch? 3 quick steps",
+    "step1Title": "Test your voice agent",
+    "step1Hint": "Call your agent and make a test booking",
+    "step1CTA": "Open Voice Settings →",
+    "step2Title": "Share your booking link",
+    "step2Loading": "Loading your booking link…",
+    "step3Title": "Add your first reservation",
+    "step3Hint": "Use the dashboard to manually add a booking",
+    "skipForNow": "Skip for now",
+    "allDone": "All done — let's go!"
   },
   "login": {
     "welcomeBack": "Welcome back",

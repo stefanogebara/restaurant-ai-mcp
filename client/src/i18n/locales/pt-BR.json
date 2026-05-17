@@ -57,7 +57,8 @@
     "preview": "Prévia",
     "pause": "Pausar",
     "guests": "convidados",
-    "partyOf": "Grupo de {{size}}"
+    "partyOf": "Grupo de {{size}}",
+    "all": "Todos"
   },
   "navigation": {
     "dashboard": "Painel",
@@ -1236,7 +1237,21 @@
     "dayThursday": "Quinta",
     "dayFriday": "Sexta",
     "daySaturday": "Sábado",
-    "daySunday": "Domingo"
+    "daySunday": "Domingo",
+    "csvOnlyHint": "Apenas arquivos .csv. Precisamos só da coluna de telefone — o resto é opcional."
+  },
+  "launch": {
+    "badge": "Configuração concluída",
+    "title": "Pronto para lançar? 3 passos rápidos",
+    "step1Title": "Teste seu agente de voz",
+    "step1Hint": "Ligue para seu agente e faça uma reserva de teste",
+    "step1CTA": "Abrir Configurações de Voz →",
+    "step2Title": "Compartilhe seu link de reserva",
+    "step2Loading": "Carregando seu link de reserva…",
+    "step3Title": "Adicione sua primeira reserva",
+    "step3Hint": "Use o painel para adicionar uma reserva manualmente",
+    "skipForNow": "Pular por agora",
+    "allDone": "Tudo pronto — vamos lá!"
   },
   "login": {
     "welcomeBack": "Bem-vindo de volta",

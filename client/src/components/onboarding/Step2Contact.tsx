@@ -82,6 +82,22 @@ const DAY_KEYS: Record<string, string> = {
   Sunday: 'onboarding.daySunday',
 };
 
+// Country-localised TLD for placeholder hints. The previous
+// `t('onboarding.emailPlaceholder')` resolved to `contato@restaurante.com.br`
+// regardless of selected country, so an Italian/Spanish/French signup still
+// saw a `.com.br` ghost — caught in 2026-05-17 E2E audit. We compute the
+// placeholder from the selected country code at render time.
+const COUNTRY_TLD: Record<string, string> = {
+  BR: '.com.br', PT: '.pt', ES: '.es', FR: '.fr', IT: '.it', DE: '.de',
+  NL: '.nl', BE: '.be', CH: '.ch', AT: '.at', GB: '.co.uk',
+  US: '.com', CA: '.ca', MX: '.com.mx', AR: '.com.ar', CO: '.co',
+  CL: '.cl', PE: '.pe', JP: '.jp', CN: '.cn', IN: '.in',
+  AU: '.com.au', NZ: '.co.nz', KR: '.co.kr', SG: '.com.sg', AE: '.ae',
+  ZA: '.co.za', NG: '.com.ng', EG: '.eg', MA: '.ma',
+};
+const tldFor = (countryCode: string | undefined): string =>
+  COUNTRY_TLD[(countryCode || '').toUpperCase()] || '.com';
+
 /**
  * A day's hours are valid when close is after open — OR close is exactly
  * '00:00', which the availability backend (api/portal.js) explicitly treats
@@ -249,7 +265,7 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
               setErrors((prev) => ({ ...prev, email: t('onboarding.emailInvalid') }));
             }
           }}
-          placeholder={t('onboarding.emailPlaceholder', 'contact@restaurant.com')}
+          placeholder={`contact@restaurant${tldFor(data.country_code)}`}
           className="w-full px-4 py-3 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent transition-all"
         />
         {errors.email && (
@@ -267,7 +283,7 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
           type="url"
           value={data.website || ''}
           onChange={(e) => updateData({ website: e.target.value })}
-          placeholder={t('onboarding.websitePlaceholder')}
+          placeholder={`https://yourrestaurant${tldFor(data.country_code)}`}
           className="w-full px-4 py-3 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent transition-all"
         />
       </div>

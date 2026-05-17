@@ -57,7 +57,8 @@
     "dismiss": "Cerrar",
     "live": "En vivo",
     "nDays": "{{count}} días",
-    "select": "Seleccionar"
+    "select": "Seleccionar",
+    "all": "Todos"
   },
   "navigation": {
     "dashboard": "Panel",
@@ -1235,7 +1236,21 @@
     "dayThursday": "Jueves",
     "dayFriday": "Viernes",
     "daySaturday": "Sábado",
-    "daySunday": "Domingo"
+    "daySunday": "Domingo",
+    "csvOnlyHint": "Solo archivos .csv. Necesitamos solo la columna de teléfono — el resto es opcional."
+  },
+  "launch": {
+    "badge": "Configuración completa",
+    "title": "¿Listo para lanzar? 3 pasos rápidos",
+    "step1Title": "Prueba tu agente de voz",
+    "step1Hint": "Llama a tu agente y haz una reserva de prueba",
+    "step1CTA": "Abrir Configuración de Voz →",
+    "step2Title": "Comparte tu enlace de reservas",
+    "step2Loading": "Cargando tu enlace de reservas…",
+    "step3Title": "Añade tu primera reserva",
+    "step3Hint": "Usa el panel para añadir una reserva manualmente",
+    "skipForNow": "Omitir por ahora",
+    "allDone": "¡Todo listo — vamos!"
   },
   "login": {
     "welcomeBack": "Bienvenido de nuevo",

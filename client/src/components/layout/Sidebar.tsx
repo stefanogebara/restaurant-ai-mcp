@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useSidebar } from '../../contexts/SidebarContext';
 import { useSubscription } from '../../hooks/useSubscription';
 import { useAuth } from '../../contexts/AuthContext';
+import { useRestaurantSettings } from '../../hooks/useRestaurantSettings';
 import { usePermission } from '../../hooks/usePermission';
 import { hasFeatureAccess, type PlanFeatures, type PlanType } from '../../config/planFeatures';
 import { languageOptions, preloadAndSwitchLanguage } from '../../i18n/config';
@@ -123,7 +124,14 @@ export default function Sidebar() {
     return location.pathname.startsWith(path);
   };
 
-  const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
+  // Prefer the restaurant name (brand identity) over the auth email in the
+  // sidebar — caught in 2026-05-17 audit: post-onboarding owners saw their
+  // signup email instead of "Mocotó" right after the most emotional moment
+  // of setup. Falls back to email-prefix while the config query is loading
+  // or on routes that don't have an associated restaurant (e.g. /onboarding).
+  const { data: restaurantSettings } = useRestaurantSettings();
+  const restaurantName = restaurantSettings?.restaurant_name?.trim();
+  const userName = restaurantName || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
   const userEmail = user?.email || 'Not signed in';
 
   return (

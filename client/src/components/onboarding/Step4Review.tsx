@@ -16,6 +16,27 @@ interface Step4ReviewProps extends OnboardingStepProps {
   goToStep?: (step: number) => void;
 }
 
+// PhoneInput stores the number as `+<cc> <digits>` (e.g. "+55 11987654321").
+// The review summary previously echoed that raw form — readable as "+55
+// 11987654321" but visually jarring vs. the dial-code prefix box on Step 2.
+// Pretty-print for display only: keep "+<cc>", then group local digits as
+// "DDD HEAD-LAST4" — matches how the number was typed/read.
+function formatPhoneForDisplay(raw: string): string {
+  if (!raw) return '';
+  const m = raw.match(/^(\+\d{1,3})\s*(\d+)$/);
+  if (!m) return raw;
+  const cc = m[1];
+  const digits = m[2];
+  if (digits.length < 6) return `${cc} ${digits}`;
+  const last4 = digits.slice(-4);
+  const middle = digits.slice(0, -4);
+  // For BR/AR/MX 10-11 digit local (2-digit area code), split off DDD.
+  if (middle.length >= 4 && (cc === '+55' || cc === '+54' || cc === '+52')) {
+    return `${cc} ${middle.slice(0, 2)} ${middle.slice(2)}-${last4}`;
+  }
+  return `${cc} ${middle}-${last4}`;
+}
+
 export default function Step4Review({ data, onBack, onComplete, isSubmitting, goToStep }: Step4ReviewProps) {
   const { t } = useTranslation();
   const totalTables = data.areas.reduce((sum, area) => sum + area.tables.reduce((s, tbl) => s + tbl.count, 0), 0);
@@ -40,7 +61,7 @@ export default function Step4Review({ data, onBack, onComplete, isSubmitting, go
       title: t('onboarding.sectionContactHours'),
       step: 2,
       items: [
-        { label: t('onboarding.labelPhone'), value: data.phone_number },
+        { label: t('onboarding.labelPhone'), value: formatPhoneForDisplay(data.phone_number) },
         { label: t('onboarding.labelEmail'), value: data.email },
         ...(data.website ? [{ label: t('onboarding.labelWebsite'), value: data.website }] : []),
         { label: t('onboarding.labelOpenDays'), value: t('onboarding.daysPerWeek', { count: openDays }) },
