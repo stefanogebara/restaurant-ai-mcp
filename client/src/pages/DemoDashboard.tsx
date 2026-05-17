@@ -21,6 +21,7 @@ import { useDemoSession } from '../hooks/useDemoSession';
 import { useExitIntent } from '../hooks/useExitIntent';
 import { DEMO_PRESETS } from '../data/demoPresets';
 import { trackDemoFunnel } from '../lib/analytics';
+import { LS_PENDING_DEMO_TOKEN } from '../config/localStorageKeys';
 import type { UpcomingReservation, ActiveParty } from '../types/host.types';
 
 // Map DB table rows to the shape useDemoState expects
@@ -367,7 +368,26 @@ export default function DemoDashboard() {
           <>
             <RealRestaurantCard
               data={realScrapedData}
-              onConversionClick={() => trackDemoFunnel({ step: 'signup_started', preset: presetKey })}
+              // Carry the demo token through to /login so that Login.tsx's
+              // `?from=demo&token=...` handler can stash it in localStorage
+              // for Onboarding.tsx's prefill effect to pick up after the
+              // Google OAuth round-trip. Previously this CTA went to bare
+              // `/login` and the demo prefill silently dropped the user's
+              // hours / phone / website / cuisine on the way in — Maria
+              // would have to re-type everything she just saw on the demo.
+              conversionHref={demoToken ? `/login?from=demo&token=${encodeURIComponent(demoToken)}` : '/login'}
+              onConversionClick={() => {
+                trackDemoFunnel({ step: 'signup_started', preset: presetKey });
+                // Defense in depth: write the token straight to localStorage
+                // so even if a future routing change strips the query params
+                // (open-redirect guard, OAuth provider rewrite, adblock,
+                // someone middle-clicking the link...), the prefill still
+                // fires. Login.tsx will overwrite this if it sees a fresh
+                // token in the URL.
+                if (demoToken) {
+                  try { localStorage.setItem(LS_PENDING_DEMO_TOKEN, demoToken); } catch { /* private mode */ }
+                }
+              }}
             />
             {/* "Your AI already knows" — populated by Phase K enrichment pass.
                 Hides itself if neither menu nor insights came back from the LLM. */}
