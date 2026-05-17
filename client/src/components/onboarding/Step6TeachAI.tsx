@@ -47,6 +47,28 @@ interface ChatResponse {
 
 type InterviewPhase = 'idle' | 'researching' | 'chatting' | 'generating' | 'complete';
 
+// Extract a renderable string from whatever the backend returned. The previous
+// `(err.response?.data?.error as string)` cast was a lie: Supabase / PostgREST
+// errors propagate as `{ code, message }` objects. setError() then held the
+// object, React tried to render `<span>{error}</span>`, and the whole
+// onboarding page crashed with Minified React Error #31 — ErrorBoundary
+// swallowed everything, the user lost the whole flow on one /research failure.
+function extractErrorMessage(err: unknown): string | undefined {
+  if (!axios.isAxiosError(err)) return undefined;
+  const data = err.response?.data;
+  if (typeof data === 'string') return data;
+  if (data && typeof data === 'object') {
+    const e = (data as Record<string, unknown>).error;
+    if (typeof e === 'string') return e;
+    if (e && typeof e === 'object' && 'message' in e && typeof (e as { message: unknown }).message === 'string') {
+      return (e as { message: string }).message;
+    }
+    const m = (data as Record<string, unknown>).message;
+    if (typeof m === 'string') return m;
+  }
+  return err.message || undefined;
+}
+
 export default function Step6TeachAI({
   restaurantId: _restaurantId, // eslint-disable-line @typescript-eslint/no-unused-vars
   restaurantName,
@@ -92,8 +114,7 @@ export default function Step6TeachAI({
       setPhase('chatting');
       setTimeout(() => inputRef.current?.focus(), 100);
     } catch (err: unknown) {
-      const backendError = axios.isAxiosError(err) ? (err.response?.data?.error as string) : undefined;
-      setError(backendError || t('onboarding.interviewStartFailed'));
+      setError(extractErrorMessage(err) || t('onboarding.interviewStartFailed'));
       setPhase('idle');
     }
   }, [restaurantName, city, country, website, t]);
@@ -134,8 +155,7 @@ export default function Step6TeachAI({
         setPhase('complete');
       }
     } catch (err: unknown) {
-      const backendError = axios.isAxiosError(err) ? (err.response?.data?.error as string) : undefined;
-      setError(backendError || t('onboarding.interviewSendFailed'));
+      setError(extractErrorMessage(err) || t('onboarding.interviewSendFailed'));
     } finally {
       setIsSending(false);
       setTimeout(() => inputRef.current?.focus(), 100);
