@@ -2838,6 +2838,17 @@
     "close": "Close"
   },
   "demo": {
+    "aiKnows": {
+      "badge": "Your AI is already trained",
+      "heading": "Here's what your AI receptionist already knows",
+      "subtitle": "We read your website and recent reviews so the AI can actually help guests — not just answer with generic scripts.",
+      "theVibe": "The vibe:",
+      "signatureDishes": "Signature dishes",
+      "whatGuestsLove": "What guests love",
+      "handleProactively": "Handle proactively",
+      "menuPreview": "Menu (from your website)",
+      "aiWillSay": "Your AI will know to:"
+    },
     "realCard": {
       "liveBadge": "Pulled from Google in real time",
       "heading": "Here's your restaurant — already in our system",

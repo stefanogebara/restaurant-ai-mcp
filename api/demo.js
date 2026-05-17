@@ -17,6 +17,7 @@ const { createSecureLogger } = require('./_lib/secure-logger');
 const { initSentry, captureException } = require('./_lib/sentry');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { validateEmail } = require('./_lib/validation');
+const { enrichRestaurant } = require('./enrich-restaurant');
 const { Resend } = require('resend');
 
 // HTML-escape helper — prevents XSS when interpolating user data into email HTML
@@ -382,7 +383,32 @@ async function handleCreate(req, res) {
   // flows into onboarding pre-fill. Without this the wow card vanishes on F5
   // and the user has to re-type their address during conversion.
   if (hasScrape) {
-    insertPayload.scraped_data = scraped_data;
+    // BEFORE persisting, enrich with website-menu scrape + review insights.
+    // Both run via LLM in parallel and are time-capped — if either misses the
+    // window the demo still gets created with the raw scrape. Fire-and-forget
+    // is unsafe on Vercel (the lambda dies after the response is sent), so we
+    // await with a hard ceiling. ~5–15s typical, 20s cap.
+    let enrichment = null;
+    try {
+      enrichment = await Promise.race([
+        enrichRestaurant({
+          website: effectiveWebsite,
+          reviews: scraped_data.top_reviews,
+          restaurant_name: restaurant_name.trim(),
+          cuisine_type: effectiveCuisine,
+        }),
+        new Promise(resolve => setTimeout(() => resolve(null), 20_000)),
+      ]);
+    } catch (err) {
+      logger.warn('Enrichment threw — proceeding without it:', err?.message);
+    }
+
+    insertPayload.scraped_data = {
+      ...scraped_data,
+      ...(enrichment?.menu ? { menu: enrichment.menu } : {}),
+      ...(enrichment?.insights ? { insights: enrichment.insights } : {}),
+      ...(enrichment ? { enriched_at: new Date().toISOString() } : {}),
+    };
   }
 
   const { data: demoConfig, error: insertError } = await supabaseAdmin
@@ -445,6 +471,9 @@ async function handleCreate(req, res) {
     restaurantName: restaurant_name.trim(),
     demoUrl: demoUrlAbsolute,
   }).catch(err => logger.error('sendDemoWelcomeEmail threw:', err.message));
+
+  // Enrichment already happened inline above before the insert — no second
+  // pass needed here.
 
   logger.info(`Demo created: ${restaurantId} for ${contact_email}`);
 

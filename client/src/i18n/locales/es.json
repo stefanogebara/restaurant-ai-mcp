@@ -2838,6 +2838,17 @@
     "charCount": "{{used}}/{{max}} caracteres"
   },
   "demo": {
+    "aiKnows": {
+      "badge": "Tu IA ya está entrenada",
+      "heading": "Esto es lo que tu recepcionista IA ya sabe",
+      "subtitle": "Leímos tu sitio web y reseñas recientes para que la IA pueda ayudar de verdad — no solo responder con guiones genéricos.",
+      "theVibe": "El ambiente:",
+      "signatureDishes": "Platos estrella",
+      "whatGuestsLove": "Lo que les encanta",
+      "handleProactively": "Manejar de forma proactiva",
+      "menuPreview": "Menú (de tu web)",
+      "aiWillSay": "Tu IA sabrá:"
+    },
     "realCard": {
       "liveBadge": "Obtenido de Google en tiempo real",
       "heading": "Aquí está tu restaurante — ya en nuestro sistema",

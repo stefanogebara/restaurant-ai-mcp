@@ -7,6 +7,7 @@ import DemoWhatsAppSim from '../components/demo/DemoWhatsAppSim';
 import DemoAnalyticsPanel from '../components/demo/DemoAnalyticsPanel';
 import DemoRestaurantInfoCard from '../components/demo/DemoRestaurantInfoCard';
 import RealRestaurantCard, { type ScrapedRestaurantData } from '../components/demo/RealRestaurantCard';
+import AIKnowsCard from '../components/demo/AIKnowsCard';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 import StatsBar from '../components/dashboard/StatsBar';
 import ReservationsList from '../components/dashboard/ReservationsList';
@@ -341,10 +342,15 @@ export default function DemoDashboard() {
             /demo/setup with a real scrape. Falls back to preset info for
             users hitting hardcoded preset URLs (e.g. /demo?preset=italian). */}
         {realScrapedData ? (
-          <RealRestaurantCard
-            data={realScrapedData}
-            onConversionClick={() => trackDemoFunnel({ step: 'signup_started', preset: presetKey })}
-          />
+          <>
+            <RealRestaurantCard
+              data={realScrapedData}
+              onConversionClick={() => trackDemoFunnel({ step: 'signup_started', preset: presetKey })}
+            />
+            {/* "Your AI already knows" — populated by Phase K enrichment pass.
+                Hides itself if neither menu nor insights came back from the LLM. */}
+            <AIKnowsCard menu={realScrapedData.menu} insights={realScrapedData.insights} />
+          </>
         ) : presetInfo && (
           <DemoRestaurantInfoCard info={presetInfo} lang={lang} />
         )}

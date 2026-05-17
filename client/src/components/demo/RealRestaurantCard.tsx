@@ -30,6 +30,24 @@ export interface ScrapedRestaurantData {
   top_reviews?: Array<{ text?: string; rating?: number; author?: string; time?: string }>;
   photo_ref?: string | null;
   price_level?: string | number | null;
+  // Phase K enrichment: populated by /api/enrich-restaurant during demo
+  // creation. Either field may be absent when the LLM pass didn't run or
+  // didn't find anything. AIKnowsCard handles all empties gracefully.
+  menu?: {
+    menu_items?: Array<{ name?: string; price?: string | null; description?: string | null; category?: string | null }>;
+    popular_dishes?: string[];
+    social_handles?: { instagram?: string | null; facebook?: string | null };
+    hours_text?: string | null;
+    source_url?: string;
+  } | null;
+  insights?: {
+    popular_dishes?: string[];
+    praise_themes?: string[];
+    complaint_themes?: string[];
+    vibe_tags?: string[];
+    ai_voice_notes?: string[];
+  } | null;
+  enriched_at?: string;
 }
 
 interface RealRestaurantCardProps {

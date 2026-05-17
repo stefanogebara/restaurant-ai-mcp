@@ -2852,6 +2852,17 @@
     "close": "Fechar"
   },
   "demo": {
+    "aiKnows": {
+      "badge": "Sua IA já foi treinada",
+      "heading": "Veja o que sua recepcionista IA já sabe",
+      "subtitle": "Lemos seu site e avaliações recentes para a IA realmente ajudar os clientes — não só responder com roteiros genéricos.",
+      "theVibe": "O clima:",
+      "signatureDishes": "Pratos clássicos",
+      "whatGuestsLove": "O que os clientes amam",
+      "handleProactively": "Tratar com antecedência",
+      "menuPreview": "Cardápio (do seu site)",
+      "aiWillSay": "Sua IA vai saber:"
+    },
     "realCard": {
       "liveBadge": "Buscado no Google em tempo real",
       "heading": "Aqui está seu restaurante — já no nosso sistema",
