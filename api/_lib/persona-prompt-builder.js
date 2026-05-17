@@ -100,6 +100,14 @@ function buildPersonaPrompt(restaurantConfig, options = {}) {
     prompt += identitySection;
   }
 
+  // 1c. Scraped knowledge (from /api/enrich-restaurant — auto-extracted at
+  // demo creation from the restaurant's website + Google reviews). This runs
+  // BEFORE the user has ever opened onboarding, so the AI is already trained.
+  const scrapedSection = buildScrapedKnowledgeSection(restaurantConfig);
+  if (scrapedSection) {
+    prompt += scrapedSection;
+  }
+
   // 2. Restaurant details
   if (restaurantConfig.phone) {
     prompt += `Restaurant Phone: ${restaurantConfig.phone}\n`;
@@ -396,9 +404,91 @@ function buildFirstMessage(restaurantConfig, language) {
   return greetings[lang] || greetings.en;
 }
 
+/**
+ * Build a system prompt section from the Phase K scraped_data.menu +
+ * scraped_data.insights. Auto-generated at demo creation — gives the AI
+ * working knowledge of the menu, popular dishes, and known guest pain
+ * points BEFORE the owner has done any manual setup.
+ *
+ * @param {Object} restaurantConfig - Restaurant configuration from DB
+ * @returns {string|null} Knowledge section or null if no scraped enrichment
+ */
+function buildScrapedKnowledgeSection(restaurantConfig) {
+  const scrape = restaurantConfig.scraped_data;
+  if (!scrape || typeof scrape !== 'object') return null;
+  const menu = scrape.menu;
+  const insights = scrape.insights;
+  if (!menu && !insights) return null;
+
+  let section = '=== Auto-Extracted Knowledge (from your website + reviews) ===\n\n';
+
+  // Vibe → tells the AI HOW to speak.
+  if (insights?.vibe_tags?.length > 0) {
+    section += `The vibe of this restaurant: ${insights.vibe_tags.join(', ')}.\n`;
+    section += `Match this tone in your responses.\n\n`;
+  }
+
+  // Signature/popular dishes — first from review insights (what guests
+  // actually mention), then from the website's own "our specialty" labels.
+  const popularSet = new Set();
+  for (const d of [...(insights?.popular_dishes || []), ...(menu?.popular_dishes || [])]) {
+    if (typeof d === 'string' && d.trim()) popularSet.add(d.trim());
+  }
+  if (popularSet.size > 0) {
+    section += `Signature dishes guests rave about: ${Array.from(popularSet).slice(0, 5).join(', ')}.\n`;
+    section += `If a guest asks "what should I order?" or "what are you known for?", recommend these first.\n\n`;
+  }
+
+  // Menu — list a few items with prices so the AI can answer pricing questions.
+  if (menu?.menu_items?.length > 0) {
+    const items = menu.menu_items
+      .filter(it => it?.name)
+      .slice(0, 12);
+    if (items.length > 0) {
+      section += 'Menu items we know about:\n';
+      for (const item of items) {
+        section += `- ${item.name}`;
+        if (item.price) section += ` (${item.price})`;
+        if (item.description) section += ` — ${String(item.description).slice(0, 80)}`;
+        section += '\n';
+      }
+      section += `\nIf a guest asks about an item not on this list, say you'll check with the kitchen rather than guess.\n\n`;
+    }
+  }
+
+  // Praise themes — confirm-with-confidence.
+  if (insights?.praise_themes?.length > 0) {
+    section += `What guests consistently love: ${insights.praise_themes.join('; ')}.\n`;
+    section += `When asked "what makes you special?", lead with one of these.\n\n`;
+  }
+
+  // Complaint themes — handle proactively, not defensively.
+  if (insights?.complaint_themes?.length > 0) {
+    section += `Common guest complaints to address proactively:\n`;
+    for (const c of insights.complaint_themes) {
+      section += `- ${c}\n`;
+    }
+    section += `For each: acknowledge before the guest brings it up if relevant (e.g. mention typical wait time when taking a reservation rather than waiting for them to complain).\n\n`;
+  }
+
+  // Explicit voice notes from the review-insights extractor — these are
+  // already action-oriented suggestions the LLM identified.
+  if (insights?.ai_voice_notes?.length > 0) {
+    section += 'Specific behaviors for this restaurant:\n';
+    for (const n of insights.ai_voice_notes) {
+      section += `- ${n}\n`;
+    }
+    section += '\n';
+  }
+
+  section += '=== End Auto-Extracted Knowledge ===\n\n';
+  return section;
+}
+
 module.exports = {
   buildPersonaPrompt,
   buildFirstMessage,
   buildRestaurantIdentitySection,
+  buildScrapedKnowledgeSection,
   LANGUAGE_CONFIG
 };
