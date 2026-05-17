@@ -18,6 +18,7 @@ const { initSentry, captureException } = require('./_lib/sentry');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { validateEmail } = require('./_lib/validation');
 const { enrichRestaurant } = require('./enrich-restaurant');
+const { derivePersonalityFromScrape } = require('./_lib/vibe-to-persona-preset');
 const { Resend } = require('resend');
 
 // HTML-escape helper — prevents XSS when interpolating user data into email HTML
@@ -409,6 +410,17 @@ async function handleCreate(req, res) {
       ...(enrichment?.insights ? { insights: enrichment.insights } : {}),
       ...(enrichment ? { enriched_at: new Date().toISOString() } : {}),
     };
+
+    // Auto-seed ai_personality from the enriched vibe tags so the demo
+    // restaurant's voice agent already has a coherent personality without
+    // anyone touching the personality panel. Skips silently if vibe extraction
+    // didn't produce a confident match (deriveBestPresetFromVibes returns
+    // null below the score floor) so we don't surprise the user with a
+    // wrong auto-pick they have to override.
+    const autoPersonality = derivePersonalityFromScrape(insertPayload.scraped_data);
+    if (autoPersonality) {
+      insertPayload.ai_personality = autoPersonality;
+    }
   }
 
   const { data: demoConfig, error: insertError } = await supabaseAdmin
