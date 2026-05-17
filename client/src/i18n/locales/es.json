@@ -1037,6 +1037,7 @@
       "other": "Otro"
     },
     "prefilledFromDemo": "Hemos rellenado los datos de tu demo — siéntete libre de ajustar.",
+    "prefilledStep2": "Teléfono, horarios y sitio web traídos de Google Maps — confirma o edita abajo.",
     "loadingDemoData": "Cargando datos de tu demo...",
     "saveExitProgress": "Progreso guardado — vuelve cuando quieras para terminar.",
     "saveExitDone": "Tu restaurante está activo. Termina los pasos opcionales desde tu panel cuando quieras.",

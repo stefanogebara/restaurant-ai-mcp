@@ -12,9 +12,42 @@
  * generic layout — no broken empty card.
  */
 
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import ThiingsIcon from '../common/ThiingsIcon';
+
+/**
+ * Restaurant hero photo — proxied through /api/places-photo so we can attach
+ * our Google Places key server-side. Hides itself on load failure (broken
+ * photoUri from a stale ref or a 502 from Google) so the card never shows
+ * an empty image frame. The endpoint itself returns a 302 to Google's CDN,
+ * so the bandwidth doesn't pass through Vercel.
+ */
+function RestaurantHeroPhoto({ photoRef, alt }: { photoRef: string; alt: string }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) return null;
+  // Encode the ref defensively — Google's photo resource names contain only
+  // [A-Za-z0-9_-]+, but encoding is cheap insurance against a future ref
+  // format that introduces reserved chars.
+  const src = `/api/places-photo?ref=${encodeURIComponent(photoRef)}&maxWidth=1200`;
+  return (
+    <div className="relative -mx-6 -mt-2 aspect-[21/9] overflow-hidden bg-soft-gray">
+      <img
+        src={src}
+        alt={alt}
+        loading="eager"
+        decoding="async"
+        onError={() => setFailed(true)}
+        className="absolute inset-0 w-full h-full object-cover"
+      />
+      {/* Subtle bottom fade so the rating/editorial text beneath the photo
+          stays comfortably readable when a bright photo butts up against
+          the white card background. */}
+      <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-b from-transparent to-white/60 pointer-events-none" />
+    </div>
+  );
+}
 
 export interface ScrapedRestaurantData {
   name?: string;
@@ -103,6 +136,7 @@ export default function RealRestaurantCard({
   if (!data) return null;
 
   const {
+    name,
     rating,
     review_count = 0,
     address,
@@ -111,6 +145,7 @@ export default function RealRestaurantCard({
     google_maps_url,
     website,
     price_level,
+    photo_ref,
   } = data;
 
   // Don't render the card at all if we have nothing interesting to show
@@ -188,6 +223,11 @@ export default function RealRestaurantCard({
           </p>
         </div>
       </header>
+
+      {/* Hero photo — only renders when the scrape captured a photo_ref.
+          Bleeds to card edges (-mx-6) for a magazine-style proof shot
+          right under the "Pulled from Google in real time" badge. */}
+      {photo_ref && <RestaurantHeroPhoto photoRef={photo_ref} alt={name || ''} />}
 
       {/* Stats row */}
       <div className="flex items-center gap-6 flex-wrap pt-1">

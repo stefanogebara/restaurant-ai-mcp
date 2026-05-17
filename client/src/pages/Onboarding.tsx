@@ -425,6 +425,12 @@ export default function Onboarding() {
               isDemoLoading={isDemoLoading}
             />
           )}
+          {currentStep === 2 && isPreFilledFromDemo && (
+            <div className="mb-5 flex items-center gap-2.5 px-4 py-3 rounded-xl bg-burgundy/[0.06] border border-burgundy/20 text-[13px] text-burgundy font-medium">
+              <ThiingsIcon name="sparkles" pxSize={15} />
+              {t('onboarding.prefilledStep2')}
+            </div>
+          )}
           {currentStep === 2 && (
             <Step2Contact
               data={onboardingData}
