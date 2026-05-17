@@ -2862,6 +2862,9 @@
       "website": "Site",
       "priceRange": "faixa de preço",
       "recentReviews": "Avaliações recentes no Google",
+      "ctaHeading": "Pronto para assumir esse restaurante?",
+      "ctaSubtitle": "14 dias grátis, sem cartão. Seus dados continuam aqui.",
+      "ctaButton": "Assumir",
       "scrapeNote": "Buscamos no Google Places em tempo real — do mesmo jeito que sua recepcionista IA vai fazer quando os clientes perguntarem sobre o menu, horários ou endereço."
     },
     "voice": {

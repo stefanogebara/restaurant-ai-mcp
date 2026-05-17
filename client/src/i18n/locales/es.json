@@ -2848,6 +2848,9 @@
       "website": "Web",
       "priceRange": "rango de precio",
       "recentReviews": "Reseñas recientes en Google",
+      "ctaHeading": "¿Listo para tomar el control de este restaurante?",
+      "ctaSubtitle": "Prueba gratuita de 14 días, sin tarjeta. Tus datos se mantienen.",
+      "ctaButton": "Tomar el control",
       "scrapeNote": "Lo obtuvimos de Google Places en tiempo real — del mismo modo que tu recepcionista IA lo hará cuando los clientes pregunten por tu menú, horario o dirección."
     },
     "voice": {

@@ -154,6 +154,27 @@ export default function Onboarding() {
           // Step 2: Contact & Hours (from Google Maps scrape)
           if (r.phone) updates.phone_number = r.phone;
           if (r.email) updates.email = r.email;
+          // Pull richer fields from the persisted Google Places scrape so the
+          // owner doesn't have to re-type info we already proved we know on
+          // the demo dashboard (address, website, editorial summary, etc).
+          // scraped_data is the same JSONB returned by /api/scrape-restaurant.
+          const scraped = r.scraped_data && typeof r.scraped_data === 'object' ? r.scraped_data : null;
+          if (scraped) {
+            // Website: prefer scrape (canonical from Google) over user-typed.
+            if (!updates.website && typeof scraped.website === 'string' && scraped.website) {
+              updates.website = scraped.website;
+            }
+            // Phone fallback: if column was empty but scrape has it, use scrape.
+            if (!updates.phone_number && typeof scraped.phone === 'string' && scraped.phone) {
+              updates.phone_number = scraped.phone;
+            }
+            // Cuisine: scrape is more accurate than restaurant_type fallback
+            // ('Restaurant' default) because Google Places types are specific.
+            if (typeof scraped.cuisine_type === 'string' && scraped.cuisine_type
+                && (!updates.restaurant_type || updates.restaurant_type.toLowerCase() === 'restaurant')) {
+              updates.restaurant_type = scraped.cuisine_type;
+            }
+          }
           if (r.business_hours && typeof r.business_hours === 'object') {
             // Convert scraped hours to onboarding format
             const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];

@@ -13,6 +13,7 @@
  */
 
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import ThiingsIcon from '../common/ThiingsIcon';
 
 export interface ScrapedRestaurantData {
@@ -35,6 +36,14 @@ interface RealRestaurantCardProps {
   data: ScrapedRestaurantData | null | undefined;
   /** Render compact summary only — for the dashboard top bar */
   compact?: boolean;
+  /**
+   * Path the inline "Take over this restaurant" CTA points at. Default
+   * /login. Hide entirely by passing `null` (e.g. on /demo?preset=italian
+   * where we don't want a conversion CTA in the wow card itself).
+   */
+  conversionHref?: string | null;
+  /** Optional analytics callback fired when the inline CTA is clicked */
+  onConversionClick?: () => void;
 }
 
 function StarRow({ rating }: { rating: number }) {
@@ -66,7 +75,12 @@ function formatReviewCount(count: number, t: ReturnType<typeof useTranslation>['
   return t('demo.realCard.reviewsCount', '{{count}} reviews', { count });
 }
 
-export default function RealRestaurantCard({ data, compact = false }: RealRestaurantCardProps) {
+export default function RealRestaurantCard({
+  data,
+  compact = false,
+  conversionHref = '/login',
+  onConversionClick,
+}: RealRestaurantCardProps) {
   const { t, i18n } = useTranslation();
   if (!data) return null;
 
@@ -230,6 +244,30 @@ export default function RealRestaurantCard({ data, compact = false }: RealRestau
               );
             })}
           </div>
+        </div>
+      )}
+
+      {/* Inline conversion CTA — the wow moment and the ask happen in the
+          same card so the user doesn't have to scroll 1500px to find "Get
+          Started Free" after seeing their real restaurant materialize. */}
+      {conversionHref && (
+        <div className="pt-3 border-t border-border-gray flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <p className="text-sm font-semibold text-deep-charcoal">
+              {t('demo.realCard.ctaHeading', 'Ready to take over this restaurant?')}
+            </p>
+            <p className="text-xs text-warm-stone mt-0.5">
+              {t('demo.realCard.ctaSubtitle', "14-day free trial, no credit card. Your data carries over.")}
+            </p>
+          </div>
+          <Link
+            to={conversionHref}
+            onClick={onConversionClick}
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-full transition-colors whitespace-nowrap flex-shrink-0"
+          >
+            {t('demo.realCard.ctaButton', 'Take it over')}
+            <span aria-hidden="true">→</span>
+          </Link>
         </div>
       )}
 

@@ -2848,6 +2848,9 @@
       "website": "Website",
       "priceRange": "price range",
       "recentReviews": "Recent reviews on Google",
+      "ctaHeading": "Ready to take over this restaurant?",
+      "ctaSubtitle": "14-day free trial, no credit card. Your data carries over.",
+      "ctaButton": "Take it over",
       "scrapeNote": "We pulled this from Google Places in real time — the same way your AI receptionist will when guests ask about your menu, hours, or address."
     },
     "voice": {

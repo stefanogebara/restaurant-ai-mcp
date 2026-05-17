@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import type { Table, UpcomingReservation } from '../types/host.types';
+import type { ScrapedRestaurantData } from '../components/demo/RealRestaurantCard';
 
 interface DemoRestaurant {
   id: string;
@@ -12,6 +13,10 @@ interface DemoRestaurant {
   business_hours: Record<string, unknown>;
   max_party_size: number;
   slug?: string;
+  // Full Google Places scrape payload persisted at demo creation. Drives the
+  // "wow card" on the dashboard even after refresh (where router state is lost)
+  // and powers richer onboarding pre-fill on conversion.
+  scraped_data?: ScrapedRestaurantData | null;
 }
 
 export interface DemoSession {

@@ -378,6 +378,13 @@ async function handleCreate(req, res) {
   // on restaurant_config — they live on restaurant_info. Only set website here.
   if (effectiveWebsite) insertPayload.website = effectiveWebsite;
 
+  // Persist the full scrape payload so it survives demo dashboard refreshes and
+  // flows into onboarding pre-fill. Without this the wow card vanishes on F5
+  // and the user has to re-type their address during conversion.
+  if (hasScrape) {
+    insertPayload.scraped_data = scraped_data;
+  }
+
   const { data: demoConfig, error: insertError } = await supabaseAdmin
     .schema('restaurant')
     .from('restaurant_config')
@@ -464,7 +471,7 @@ async function handleSession(req, res) {
   const { data: config, error } = await supabaseAdmin
     .schema('restaurant')
     .from('restaurant_config')
-    .select('id, restaurant_name, restaurant_type, city, country, phone, email, slug, business_hours, reservation_settings, is_active, is_demo, demo_token, demo_expires_at, demo_contact_email, demo_contact_name, onboarding_completed')
+    .select('id, restaurant_name, restaurant_type, city, country, phone, email, slug, business_hours, reservation_settings, is_active, is_demo, demo_token, demo_expires_at, demo_contact_email, demo_contact_name, onboarding_completed, scraped_data')
     .eq('demo_token', token)
     .gt('demo_expires_at', now)
     .single();

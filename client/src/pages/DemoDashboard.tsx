@@ -44,15 +44,21 @@ export default function DemoDashboard() {
   const [searchParams] = useSearchParams();
   const { token: pathToken } = useParams<{ token?: string }>();
   const location = useLocation();
-  // Real Google Places data piped through router state from /demo/setup.
-  // Hides on refresh (no state) — falls back to the existing preset/demo UI.
-  const realScrapedData = (location.state as { scraped_data?: ScrapedRestaurantData } | null)?.scraped_data ?? null;
+  // Real Google Places data — first checked from router state (fastest, set
+  // when arriving from /demo/setup) then falls back to the persisted JSONB
+  // column returned by the session API. This means the wow card survives
+  // page refreshes and deep-links from email.
+  const stateScrapedData = (location.state as { scraped_data?: ScrapedRestaurantData } | null)?.scraped_data ?? null;
   const presetKey = searchParams.get('preset') || undefined;
   const demoToken = searchParams.get('token') || pathToken || undefined;
   const isEmbed = searchParams.get('embed') === 'true';
 
   // Fetch personalized demo from API when token is present
   const { data: tokenSession, isLoading: tokenLoading, isError: tokenError } = useDemoSession(demoToken);
+
+  // Composite resolver: prefer fresh router state, fall back to DB-persisted
+  // payload from session API. Both have the same ScrapedRestaurantData shape.
+  const realScrapedData = stateScrapedData ?? tokenSession?.restaurant?.scraped_data ?? null;
 
   // Build override data from API response
   const overrideData = useMemo(() => {
@@ -335,7 +341,10 @@ export default function DemoDashboard() {
             /demo/setup with a real scrape. Falls back to preset info for
             users hitting hardcoded preset URLs (e.g. /demo?preset=italian). */}
         {realScrapedData ? (
-          <RealRestaurantCard data={realScrapedData} />
+          <RealRestaurantCard
+            data={realScrapedData}
+            onConversionClick={() => trackDemoFunnel({ step: 'signup_started', preset: presetKey })}
+          />
         ) : presetInfo && (
           <DemoRestaurantInfoCard info={presetInfo} lang={lang} />
         )}
