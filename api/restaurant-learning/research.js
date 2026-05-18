@@ -139,9 +139,19 @@ module.exports = async (req, res) => {
       topics_covered: []
     });
   } catch (error) {
-    logger.error('Research endpoint error:', error);
+    // Stringify the full error shape so it actually shows up in Vercel logs
+    // (otherwise `error` prints as "[object Object]"). The audit 2026-05-18
+    // hit a `FUNCTION_INVOCATION_FAILED` here that gave us zero signal.
+    logger.error('Research endpoint error', {
+      message: error?.message,
+      code: error?.code,
+      name: error?.name,
+      stack: error?.stack?.split('\n').slice(0, 6).join('\n'),
+    });
 
-    // Reset learning status so user can retry
+    // Reset learning status so user can retry. Best-effort — schema fixed in
+    // 20260518_restaurant_learning_tables migration, but if the column is
+    // still missing we don't want the cleanup itself to mask the real error.
     if (supabaseAdmin && restaurantId) {
       await supabaseAdmin
         .schema('restaurant')
@@ -151,8 +161,12 @@ module.exports = async (req, res) => {
         .catch(cleanupErr => logger.error('Failed to reset learning_status:', cleanupErr));
     }
 
+    // Surface the actual error message to the client. The frontend's
+    // extractErrorMessage() already only renders strings, and this string
+    // helps diagnose 500s without needing Vercel log access. Stack is NOT
+    // included — only the user-safe message.
     return res.status(500).json({
-      error: 'Failed to complete restaurant research'
+      error: error?.message || 'Failed to complete restaurant research'
     });
   }
 };
