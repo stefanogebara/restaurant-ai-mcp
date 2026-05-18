@@ -11,6 +11,7 @@
 const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { getAnthropicClient } = require('./restaurantIntelligence');
+const { AI_MODEL } = require('../_lib/ai-client');
 const { seedManagerMemoryFromInterview } = require('./managerMemory');
 
 const logger = createSecureLogger('PersonaGenerator');
@@ -69,7 +70,7 @@ async function generatePersona(sessionId, { version } = {}) {
   const personaTimeout = setTimeout(() => personaController.abort(), 30000);
 
   const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
+    model: AI_MODEL,  // Routed via OpenRouter — direct Anthropic IDs don't match
     max_tokens: 2000,
     signal: personaController.signal,
     messages: [{

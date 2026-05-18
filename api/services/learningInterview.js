@@ -12,6 +12,7 @@
 const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { getAnthropicClient } = require('./restaurantIntelligence');
+const { AI_MODEL, AI_MODEL_FAST } = require('../_lib/ai-client');
 
 const logger = createSecureLogger('LearningInterview');
 
@@ -271,7 +272,7 @@ ${session.intelligence_context ? `\nPre-gathered intelligence:\n${session.intell
 
   const [response, newKnowledge] = await Promise.all([
     anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: AI_MODEL,  // Routed via OpenRouter; the SDK-format Anthropic ID
       max_tokens: 500,
       system: `${SYSTEM_PROMPT}\n\n${contextInfo}`,
       messages: claudeMessages,
@@ -374,7 +375,7 @@ async function extractInterviewKnowledge(existingKnowledge, topicId, userMessage
     const extractionTimeout = setTimeout(() => extractionController.abort(), 15000);
 
     const response = await anthropic.messages.create({
-      model: 'claude-haiku-4-20250414',
+      model: AI_MODEL_FAST,  // Haiku via OpenRouter for fast knowledge extraction
       max_tokens: 500,
       signal: extractionController.signal,
       messages: [{
