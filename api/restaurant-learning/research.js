@@ -92,6 +92,11 @@ module.exports = async (req, res) => {
       }
     }
 
+    // DEBUG: bisect — return after first Supabase update to confirm DB call works.
+    if (req.query?.debug === '2') {
+      return res.status(200).json({ debug: 'after_first_update', restaurantId });
+    }
+
     // Gather intelligence (all 3 tiers in parallel). The tiers' own internal
     // timeouts can chain to ~96s worst case (Tier 2 fetch + extraction + Tier 2
     // retry after Tier 1 discovers a website), past Vercel's 60s lambda budget.
@@ -142,6 +147,11 @@ module.exports = async (req, res) => {
       }
     }
 
+    // DEBUG: bisect — return before startOrResumeInterview.
+    if (req.query?.debug === '3') {
+      return res.status(200).json({ debug: 'before_start_interview', restaurantId });
+    }
+
     // Create interview session
     const sessionId = crypto.randomUUID();
     const interviewState = await startOrResumeInterview(
@@ -149,6 +159,11 @@ module.exports = async (req, res) => {
       restaurantId,
       intelligenceResults
     );
+
+    // DEBUG: bisect — return after startOrResumeInterview.
+    if (req.query?.debug === '4') {
+      return res.status(200).json({ debug: 'after_start_interview', sessionId, hasAiMessage: !!interviewState?.ai_message });
+    }
 
     // Update learning status
     if (supabaseAdmin) {
