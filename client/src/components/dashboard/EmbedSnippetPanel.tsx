@@ -1,17 +1,26 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useToast } from '../../contexts/ToastContext';
 
 interface Props { slug: string; }
 
 export default function EmbedSnippetPanel({ slug }: Props) {
   const { t } = useTranslation();
+  const toast = useToast();
   const [copied, setCopied] = useState(false);
   const snippet = `<script src="${window.location.origin}/widget.js?slug=${slug}"></script>`;
 
   const handleCopy = () => {
+    // Older browsers, non-HTTPS contexts, and "clipboard blocked by permissions
+    // policy" iframes all reject the promise. Without a catch the button silently
+    // does nothing and the owner can't tell if it worked. Surface a toast so they
+    // know to copy manually from the visible <pre>.
     navigator.clipboard.writeText(snippet).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+    }).catch((err) => {
+      console.error('[EmbedSnippetPanel] clipboard write failed', err);
+      toast.error(t('settings.copyFailed'));
     });
   };
 

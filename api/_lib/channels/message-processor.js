@@ -38,7 +38,13 @@ async function processMessage(adapter, msg, options = {}) {
   const { from, messageId, text, mediaContext, interactiveSelection, phoneNumberId } = msg;
   const providerName = adapter.providerName;
 
-  logger.info(`[${providerName}] processMessage ENTRY from=${from} phoneNumId=${phoneNumberId} msgId=${String(messageId).slice(-8)} text="${String(text).slice(0, 40)}"`);
+  // Privacy: customer message bodies often contain PII (names, dietary needs,
+  // celebration context, sometimes credit-card last-4 typed in panic). Never
+  // log the content — only enough metadata to triage problems. The previous
+  // version logged the first 40 chars verbatim, which leaked PII into every
+  // Vercel log line and any downstream log aggregator.
+  const textLen = typeof text === 'string' ? text.length : 0;
+  logger.info(`[${providerName}] processMessage ENTRY from=${from} phoneNumId=${phoneNumberId} msgId=${String(messageId).slice(-8)} textLen=${textLen}`);
 
   // 1. Mark as read (fire-and-forget)
   adapter.markAsRead(messageId).catch(() => {});

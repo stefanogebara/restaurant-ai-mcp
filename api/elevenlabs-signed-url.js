@@ -29,21 +29,47 @@ module.exports = async (req, res) => {
     return res.status(500).json({ error: 'ElevenLabs API key not configured' });
   }
 
-  let agentId = req.query.agent_id;
-  if (!agentId) {
-    // Auto-resolve from restaurant config
-    const restaurantId = user.restaurant_id;
-    if (restaurantId) {
-      const { data: config } = await supabaseAdmin
-        .schema('restaurant')
-        .from('restaurant_config')
-        .select('elevenlabs_agent_id')
-        .eq('id', restaurantId)
-        .single();
-      agentId = config?.elevenlabs_agent_id;
+  // Resolve the agent_id this user is allowed to issue a signed URL for.
+  //
+  // The browser may pass ?agent_id=... but it has NO authority — we ALWAYS
+  // look up the caller's own restaurant_id → elevenlabs_agent_id from the
+  // DB and use THAT. The query param is honored ONLY when it matches what
+  // the user already owns (which is just a sanity check / legacy path),
+  // or when there is no DB-resolved agent and we fall through to the
+  // global demo agent. Previously the query param was used verbatim,
+  // which would let any authenticated user open a conversation against
+  // any other restaurant's voice agent by guessing the ID.
+  const restaurantId = user.restaurant_id;
+  let ownedAgentId = null;
+  if (restaurantId) {
+    const { data: config } = await supabaseAdmin
+      .schema('restaurant')
+      .from('restaurant_config')
+      .select('elevenlabs_agent_id')
+      .eq('id', restaurantId)
+      .single();
+    ownedAgentId = config?.elevenlabs_agent_id || null;
+  }
+
+  const requestedAgentId = req.query.agent_id;
+  let agentId = ownedAgentId;
+
+  if (requestedAgentId) {
+    if (ownedAgentId && requestedAgentId === ownedAgentId) {
+      // Caller explicitly named their own agent — fine.
+      agentId = ownedAgentId;
+    } else if (!ownedAgentId && requestedAgentId === (process.env.ELEVENLABS_AGENT_ID || process.env.VITE_ELEVENLABS_AGENT_ID)) {
+      // No owned agent (e.g. fresh signup mid-onboarding) AND caller asked
+      // for the public demo agent — also fine.
+      agentId = requestedAgentId;
+    } else {
+      // Cross-tenant request — reject.
+      logger.warn('signed-url cross-tenant agent_id rejected', { userRestaurantId: restaurantId });
+      return res.status(403).json({ error: 'You do not own this agent' });
     }
   }
-  // Final fallback to global agent (for demo/testing)
+
+  // Final fallback to global agent (demo/testing) when nothing resolved.
   if (!agentId) {
     agentId = process.env.ELEVENLABS_AGENT_ID || process.env.VITE_ELEVENLABS_AGENT_ID;
   }
