@@ -486,6 +486,74 @@ function rejectOversizedBody(req, res) {
   return false;
 }
 
+// ============================================================================
+// Failure counter — a lightweight per-IP counter for tracking suspicious
+// behaviour patterns OTHER than raw request volume. Use case: an attacker
+// enumerating restaurant slugs by varying the slug param every request
+// would slip past a normal rate limit (different inputs, same low rate)
+// but stands out clearly when you count 404 responses per IP.
+//
+// Pattern:
+//   1. Before the work, call peekFailureCount() — if it's over your floor,
+//      reject immediately with a 429.
+//   2. Do the work.
+//   3. If the result is a "failure" (404, invalid lookup, etc), call
+//      bumpFailureCount() to increment.
+//   4. Success paths do NOT bump — that's the whole point of the counter.
+//
+// Gracefully degrades when Redis is unavailable (returns 0 / no-ops),
+// matching the existing in-memory fallback philosophy: never block legit
+// users because of an ops issue.
+// ============================================================================
+
+/**
+ * Read the current failure count for an IP+namespace without changing it.
+ * Returns 0 if Redis is unavailable or the key doesn't exist.
+ *
+ * @param {object} req - Request object (used to derive client IP)
+ * @param {string} namespace - Logical bucket name (e.g. 'slug-lookup-fail')
+ * @returns {Promise<number>}
+ */
+async function peekFailureCount(req, namespace) {
+  if (!redis) return 0; // No counter persistence available — fail open.
+  try {
+    const clientId = getClientId(req);
+    const key = `rl:fail:${namespace}:${clientId}`;
+    const value = await redis.get(key);
+    if (value == null) return 0;
+    const n = Number(value);
+    return Number.isFinite(n) ? n : 0;
+  } catch (err) {
+    logger.warn('peekFailureCount failed, returning 0', { error: err.message, namespace });
+    return 0;
+  }
+}
+
+/**
+ * Increment the failure counter for an IP+namespace. Sets TTL on first hit
+ * so the counter naturally expires after the window closes.
+ *
+ * @param {object} req - Request object
+ * @param {string} namespace - Logical bucket name
+ * @param {number} windowSeconds - TTL on first increment (default 1h)
+ * @returns {Promise<number>} The new count, or 0 on Redis failure
+ */
+async function bumpFailureCount(req, namespace, windowSeconds = 3600) {
+  if (!redis) return 0; // No counter persistence — silently no-op.
+  try {
+    const clientId = getClientId(req);
+    const key = `rl:fail:${namespace}:${clientId}`;
+    const newCount = await redis.incr(key);
+    if (newCount === 1) {
+      await redis.expire(key, windowSeconds);
+    }
+    return newCount;
+  } catch (err) {
+    logger.warn('bumpFailureCount failed, returning 0', { error: err.message, namespace });
+    return 0;
+  }
+}
+
 module.exports = {
   RATE_LIMITS,
   getClientId,
@@ -496,4 +564,6 @@ module.exports = {
   acquireProcessingLock,
   releaseProcessingLock,
   rejectOversizedBody,
+  peekFailureCount,
+  bumpFailureCount,
 };

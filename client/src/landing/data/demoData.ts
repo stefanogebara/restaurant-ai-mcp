@@ -9,6 +9,8 @@
  * snapshot. Format matches the historical strings: `YYYY-MM-DD` for `date`,
  * `YYYY-MM-DDTHH:MM:SS` (LOCAL, no Z) for `reservation_time` / `added_at`.
  */
+import { PLAN_PRICES_BRL, PLAN_PRICES_EUR, PLAN_PRICES_USD } from '../../config/planFeatures';
+import { formatPriceLocale } from '../../utils/currency';
 function pad2(n: number): string {
   return String(n).padStart(2, '0');
 }
@@ -182,12 +184,31 @@ export const FEATURES = [
   },
 ];
 
+/**
+ * Price strings are derived from planFeatures.ts at module load.
+ *
+ * Before this consolidation, demoData.ts and planFeatures.ts each
+ * hardcoded their own copies of the BRL / USD / EUR amounts:
+ *   demoData.ts:    "$97",  "R$497",   "€89"  (display strings)
+ *   planFeatures:    97,     497,       89    (numeric for math)
+ * Two places to update meant guaranteed drift the next time someone
+ * adjusted pricing — the landing page would say one number while the
+ * Subscription Manage UI showed another. Now planFeatures.ts is the
+ * single source of truth; demoData.ts just formats the numbers.
+ *
+ * NOTE: These display strings are STILL independent of Stripe's actual
+ * billing amounts. If the Stripe price ID configured under
+ * VITE_STRIPE_*_PRICE_ID has a different amount than what
+ * PLAN_PRICES_* says, customers will see one price on the landing
+ * page and be charged a different price at checkout. Stripe is the
+ * legal source of truth — these values must match it.
+ */
 export const PRICING_TIERS = [
   {
     name: "Essencial",
-    price: "$97",
-    brlPrice: "R$497",
-    eurPrice: "€89",
+    price: formatPriceLocale(PLAN_PRICES_USD.starter, 'USD'),
+    brlPrice: formatPriceLocale(PLAN_PRICES_BRL.starter, 'BRL'),
+    eurPrice: formatPriceLocale(PLAN_PRICES_EUR.starter, 'EUR'),
     period: "/month",
     brlPeriod: "/mês",
     description: "WhatsApp AI + reservations for your restaurant",
@@ -205,9 +226,9 @@ export const PRICING_TIERS = [
   },
   {
     name: "Profissional",
-    price: "$297",
-    brlPrice: "R$1.497",
-    eurPrice: "€269",
+    price: formatPriceLocale(PLAN_PRICES_USD.growth, 'USD'),
+    brlPrice: formatPriceLocale(PLAN_PRICES_BRL.growth, 'BRL'),
+    eurPrice: formatPriceLocale(PLAN_PRICES_EUR.growth, 'EUR'),
     period: "/month",
     brlPeriod: "/mês",
     description: "Voice AI + WhatsApp + full analytics",
@@ -226,9 +247,9 @@ export const PRICING_TIERS = [
   },
   {
     name: "Enterprise",
-    price: "$597",
-    brlPrice: "R$2.997",
-    eurPrice: "€539",
+    price: formatPriceLocale(PLAN_PRICES_USD.scale, 'USD'),
+    brlPrice: formatPriceLocale(PLAN_PRICES_BRL.scale, 'BRL'),
+    eurPrice: formatPriceLocale(PLAN_PRICES_EUR.scale, 'EUR'),
     period: "/month",
     brlPeriod: "/mês",
     description: "Unlimited AI for high-volume restaurants",

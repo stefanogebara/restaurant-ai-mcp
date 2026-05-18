@@ -47,8 +47,15 @@ jest.mock('../_lib/supabase', () => ({
   },
 }));
 
+// Failure counter is mockable per-test: tests that want to assert the
+// 429 budget kicks in override peekFailureCount.mockResolvedValueOnce(50).
+const mockPeekFailureCount = jest.fn().mockResolvedValue(0);
+const mockBumpFailureCount = jest.fn().mockResolvedValue(0);
+
 jest.mock('../_lib/rate-limit', () => ({
   checkAndApplyRateLimit: jest.fn().mockResolvedValue(false),
+  peekFailureCount: (...args) => mockPeekFailureCount(...args),
+  bumpFailureCount: (...args) => mockBumpFailureCount(...args),
 }));
 
 jest.mock('../_lib/secure-id', () => ({
@@ -206,6 +213,48 @@ describe('Portal: restaurant action', () => {
     const { req, res } = createMockReqRes({ query: { action: 'restaurant', slug: 'a'.repeat(101) } });
     await handler(req, res);
     expect(res.status).toHaveBeenCalledWith(400);
+  });
+
+  // Per-IP failure budget — the actual defense against slug enumeration.
+  // attackers vary the slug every request, so a per-slug counter is
+  // useless. Per-IP-per-failure counter, scoped to the slug-lookup
+  // namespace, is what catches the scan.
+  test('returns 429 when IP has burned through slug-lookup failure budget', async () => {
+    mockPeekFailureCount.mockResolvedValueOnce(50); // == SLUG_LOOKUP_FAIL_LIMIT
+    const { req, res } = createMockReqRes({ query: { action: 'restaurant', slug: 'valid-slug' } });
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(429);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+      success: false,
+      message: expect.stringMatching(/too many/i),
+    }));
+  });
+
+  test('bumps the slug-lookup failure counter on 404', async () => {
+    mockBumpFailureCount.mockClear();
+    mockSingle.mockResolvedValueOnce({ data: null, error: { message: 'Not found' } });
+    const { req, res } = createMockReqRes({ query: { action: 'restaurant', slug: 'no-such-place' } });
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(mockBumpFailureCount).toHaveBeenCalledTimes(1);
+    expect(mockBumpFailureCount).toHaveBeenCalledWith(expect.anything(), 'slug-lookup-fail', 3600);
+  });
+
+  test('does NOT bump the failure counter on successful lookup', async () => {
+    mockBumpFailureCount.mockClear();
+    mockSingle.mockResolvedValueOnce({
+      data: {
+        id: 'rest-1', restaurant_name: 'Test', restaurant_type: 'Italian',
+        city: 'X', country: 'BR', phone: '+55', email: 't@t.com', website: '',
+        slug: 'test-restaurant', business_hours: {}, reservation_settings: {},
+        average_dining_duration_minutes: 90,
+      },
+      error: null,
+    });
+    const { req, res } = createMockReqRes({ query: { action: 'restaurant', slug: 'test-restaurant' } });
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(mockBumpFailureCount).not.toHaveBeenCalled();
   });
 
   test('accepts valid lowercase + digits + hyphens slug', async () => {

@@ -4,6 +4,7 @@ const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const { verifyBookingToken } = require('./booking-token');
+const { resolveDepositCurrency, minChargeAmount } = require('./_lib/currency');
 
 const logger = createSecureLogger('DepositIntent');
 let stripe;
@@ -45,11 +46,15 @@ module.exports = async (req, res) => {
   }
 
   try {
-    // Fetch deposit config for this restaurant
+    // Fetch deposit config + country for this restaurant. Country drives
+    // the currency the customer is actually charged in — previously this
+    // was hardcoded to EUR, which silently mis-charged Brazilian restaurants
+    // (R$50 was being interpreted as €50, ~5x the intended price after FX)
+    // and US restaurants (same direction).
     const { data: config, error: configError } = await supabaseAdmin
       .schema('restaurant')
       .from('restaurant_config')
-      .select('deposit_config, restaurant_name')
+      .select('deposit_config, restaurant_name, country')
       .eq('id', restaurant_id)
       .single();
 
@@ -71,17 +76,28 @@ module.exports = async (req, res) => {
       depositAmount = depositConfig.amount;
     }
 
+    // Resolve the actual currency to charge in. Precedence:
+    //   1. deposit_config.currency explicit override (3-letter ISO)
+    //   2. country → currency mapping
+    //   3. EUR fallback (keeps historical behaviour for restaurants without
+    //      a country populated)
+    const currency = resolveDepositCurrency(config.country, depositConfig.currency);
+    const minAmount = minChargeAmount(currency);
+
+    if (depositAmount < minAmount) {
+      return res.status(400).json({
+        success: false,
+        error: `Deposit amount too small (minimum ${currency.toUpperCase()} ${minAmount.toFixed(2)})`,
+      });
+    }
+
     // Amount in cents for Stripe
     const amountInCents = Math.round(depositAmount * 100);
-
-    if (amountInCents < 50) {
-      return res.status(400).json({ success: false, error: 'Deposit amount too small (minimum EUR 0.50)' });
-    }
 
     // Create PaymentIntent with manual capture
     const paymentIntent = await getStripe().paymentIntents.create({
       amount: amountInCents,
-      currency: 'eur',
+      currency,
       capture_method: 'manual',
       automatic_payment_methods: { enabled: true },
       description: `Reservation deposit at ${config.restaurant_name}`,
@@ -89,6 +105,7 @@ module.exports = async (req, res) => {
         restaurant_id,
         party_size: String(parsedPartySize),
         type: 'reservation_deposit',
+        currency,
       },
       ...(customer_email ? { receipt_email: customer_email } : {}),
     });

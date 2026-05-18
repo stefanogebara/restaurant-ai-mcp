@@ -66,7 +66,7 @@ async function handleGet(restaurantId, res) {
 }
 
 async function handlePatch(restaurantId, req, res) {
-  const { enabled, type, amount } = req.body || {};
+  const { enabled, type, amount, currency } = req.body || {};
 
   // Validate
   if (typeof enabled !== 'boolean') {
@@ -83,6 +83,25 @@ async function handlePatch(restaurantId, req, res) {
     }
   }
 
+  // Optional currency override — restaurant can pick e.g. 'usd' even if
+  // their country defaults to BRL (think: Argentinian beachfront place
+  // billing US tourists). Validated against a shortlist of currencies
+  // the platform actually supports end-to-end.
+  let normalisedCurrency;
+  if (currency !== undefined && currency !== null && currency !== '') {
+    if (typeof currency !== 'string' || !/^[a-z]{3}$/i.test(currency)) {
+      return res.status(400).json({ success: false, error: 'currency must be a 3-letter ISO code' });
+    }
+    const code = currency.toLowerCase();
+    if (!['usd', 'eur', 'brl', 'gbp', 'cad', 'aud', 'mxn'].includes(code)) {
+      return res.status(400).json({
+        success: false,
+        error: 'currency must be one of: usd, eur, brl, gbp, cad, aud, mxn',
+      });
+    }
+    normalisedCurrency = code;
+  }
+
   // Read existing config so that disabling doesn't wipe type/amount
   const { data: existing } = await supabaseAdmin
     .schema('restaurant')
@@ -94,7 +113,13 @@ async function handlePatch(restaurantId, req, res) {
   const currentConfig = existing?.deposit_config || { enabled: false, type: 'flat', amount: 0 };
 
   const config = enabled
-    ? { ...currentConfig, enabled: true, type, amount: parseFloat(amount) }
+    ? {
+        ...currentConfig,
+        enabled: true,
+        type,
+        amount: parseFloat(amount),
+        ...(normalisedCurrency ? { currency: normalisedCurrency } : {}),
+      }
     : { ...currentConfig, enabled: false };
 
   const { error } = await supabaseAdmin

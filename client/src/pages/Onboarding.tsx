@@ -219,6 +219,36 @@ export default function Onboarding() {
     localStorage.setItem(LS_ONBOARDING_STEP, currentStep.toString());
   }, [onboardingData, currentStep]);
 
+  // Cross-tab sync — without this, opening /onboarding in two tabs lets the
+  // user advance Tab B to Step 4, submit, and create the restaurant, while
+  // Tab A still shows Step 2 stale state. If they then click Continue in
+  // Tab A, they submit outdated data on top of the just-created restaurant.
+  //
+  // Listen to `storage` events (only fire in OTHER tabs of the same origin):
+  //   - LS_ONBOARDING_STEP removed (means another tab completed) → banner
+  //     "You finished onboarding in another tab — reload to continue."
+  //   - LS_ONBOARDING_STEP advanced past this tab's step → banner
+  //     "Onboarding continued in another tab. Reload to sync."
+  // Show a single dismissible banner. Do NOT auto-overwrite the user's
+  // typed state — they might be intentionally editing in this tab.
+  const [staleReason, setStaleReason] = useState<'completed' | 'advanced' | null>(null);
+  useEffect(() => {
+    function handleStorage(e: StorageEvent) {
+      if (e.key !== LS_ONBOARDING_STEP) return;
+      // Onboarding completed elsewhere — both LS keys get removed.
+      if (e.newValue === null) {
+        setStaleReason('completed');
+        return;
+      }
+      const otherStep = parseInt(e.newValue, 10);
+      if (Number.isFinite(otherStep) && otherStep > currentStep) {
+        setStaleReason('advanced');
+      }
+    }
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, [currentStep]);
+
   // Countdown redirect after onboarding success.
   // Lands the user IN their dashboard with the LaunchChecklist modal open
   // (?launch=1 triggers it in Dashboard.tsx) — not on a Stripe billing page.
@@ -400,6 +430,36 @@ export default function Onboarding() {
           style={{ width: `${progressPercent}%` }}
         />
       </div>
+
+      {/* Cross-tab staleness banner — fires when another tab advances or
+          completes onboarding while this tab still shows older state.
+          Reload syncs; Dismiss lets the user keep editing here (will
+          overwrite the other tab's state on next save). */}
+      {staleReason && (
+        <div className="bg-amber-50 border-b border-amber-200 px-6 py-3 flex items-center justify-between gap-4 flex-wrap" role="status">
+          <p className="text-[13px] text-amber-900 font-medium">
+            {staleReason === 'completed'
+              ? t('onboarding.staleCompleted', 'You finished onboarding in another tab — reload to continue to your dashboard.')
+              : t('onboarding.staleAdvanced', 'Onboarding continued in another tab. Reload to sync your progress.')}
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="px-3 py-1.5 text-[12px] font-semibold bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-colors"
+            >
+              {t('onboarding.staleReload', 'Reload')}
+            </button>
+            <button
+              type="button"
+              onClick={() => setStaleReason(null)}
+              className="px-3 py-1.5 text-[12px] font-medium text-amber-900 hover:bg-amber-100 rounded-lg transition-colors"
+            >
+              {t('onboarding.staleDismiss', 'Dismiss')}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Mobile Step Dots */}
       <div className="flex md:hidden items-center justify-center gap-2 py-3 border-b border-border-gray">

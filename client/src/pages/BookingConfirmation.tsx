@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import ThiingsIcon from '../components/common/ThiingsIcon';
@@ -25,48 +25,78 @@ export default function BookingConfirmation() {
   // arriving from the booking flow.
   const { data: restaurantInfo } = useRestaurantBySlug(slug);
 
-  // Request push notification permission after booking is confirmed
+  // Push notification opt-in — UX defer (see push prompt state below).
+  //
+  // The previous version fired `Notification.requestPermission()` immediately
+  // on confirmation-page mount. On mobile that pops the system "Allow
+  // notifications?" prompt the instant the customer lands on the page,
+  // before they've read anything. Most users deny reflexively, permanently
+  // losing the ability to receive reservation reminders (browsers don't
+  // let you ask twice).
+  //
+  // Now we show a small opt-in card explaining the benefit. The actual
+  // requestPermission() call only fires when the user clicks "Turn on
+  // reminders" — converting fewer permissions but at a much higher
+  // grant rate, and a far better first impression for the brand.
+  type PushPromptState = 'unavailable' | 'denied' | 'granted' | 'idle' | 'requesting';
+  const [pushPromptState, setPushPromptState] = useState<PushPromptState>('idle');
+
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
+      setPushPromptState('unavailable');
+      return;
+    }
+    // Map browser permission state to our prompt state.
+    const perm = Notification.permission;
+    if (perm === 'denied') setPushPromptState('denied');
+    else if (perm === 'granted') setPushPromptState('granted');
+    else setPushPromptState('idle');
+  }, []);
+
+  const subscribeToPush = async () => {
     const restaurantId = restaurantIdParam;
     const reservationId = id;
-
     if (!restaurantId || !reservationId) return;
-    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
-
-    Notification.requestPermission().then(async (permission) => {
-      if (permission !== 'granted') return;
-
-      try {
-        const registration = await navigator.serviceWorker.ready;
-        const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined;
-        if (!vapidPublicKey) return;
-
-        // I-3: Avoid duplicate subscriptions on re-render or page reload
-        const existing = await registration.pushManager.getSubscription();
-        if (existing) return;
-
-        const subscription = await registration.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: vapidPublicKey,
-        });
-
-        await fetch('/api/push-subscribe', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            subscription,
-            reservation_id: reservationId,
-            restaurant_id: restaurantId,
-          }),
-        });
-      } catch (err) {
-        // Non-critical — log so Sentry catches a population-wide push outage.
-        console.error('[BookingConfirmation] push subscribe failed', err);
+    setPushPromptState('requesting');
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') {
+        setPushPromptState(permission === 'denied' ? 'denied' : 'idle');
+        return;
       }
-    }).catch((err) => {
-      console.error('[BookingConfirmation] notification permission request failed', err);
-    });
-  }, [id, restaurantIdParam]);
+      const registration = await navigator.serviceWorker.ready;
+      const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined;
+      if (!vapidPublicKey) {
+        setPushPromptState('granted'); // permission OK but server-side push not configured
+        return;
+      }
+      // Avoid duplicate subscriptions on re-click or page reload.
+      const existing = await registration.pushManager.getSubscription();
+      if (existing) {
+        setPushPromptState('granted');
+        return;
+      }
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: vapidPublicKey,
+      });
+      await fetch('/api/push-subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subscription,
+          reservation_id: reservationId,
+          restaurant_id: restaurantId,
+        }),
+      });
+      setPushPromptState('granted');
+    } catch (err) {
+      // Non-critical — log so Sentry catches a population-wide push outage.
+      console.error('[BookingConfirmation] push subscribe failed', err);
+      setPushPromptState('idle');
+    }
+  };
 
   // Notify parent window (widget iframe) that booking was confirmed.
   // Security: targetOrigin must NOT be '*' — that broadcasts customer PII
@@ -226,6 +256,48 @@ export default function BookingConfirmation() {
               <span className="text-[13px] font-mono font-medium text-burgundy bg-burgundy/[6%] px-2.5 py-0.5 rounded-lg truncate max-w-[180px] sm:max-w-none">{reservation.id}</span>
             </div>
           </div>
+
+          {/* Push opt-in — only shows when notifications are available and
+              not already granted/denied. Renders BEFORE the system prompt
+              fires so the customer sees the value proposition first. */}
+          {pushPromptState === 'idle' && (
+            <div className="bg-burgundy/[0.04] border border-burgundy/15 rounded-2xl p-4 text-left mb-6 flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-start gap-3 min-w-0">
+                <span className="w-9 h-9 rounded-full bg-burgundy/[8%] flex items-center justify-center flex-shrink-0 text-base" aria-hidden="true">🔔</span>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-deep-charcoal">
+                    {t('reservations.confirmation.pushTeaserTitle', 'Get a reminder on the day')}
+                  </p>
+                  <p className="text-[12px] text-warm-stone mt-0.5">
+                    {t('reservations.confirmation.pushTeaserBody', "We'll ping your browser an hour before your reservation. No email spam.")}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={subscribeToPush}
+                className="px-4 py-2 text-[13px] font-semibold bg-burgundy hover:bg-burgundy-dark text-white rounded-lg transition-colors flex-shrink-0"
+              >
+                {t('reservations.confirmation.pushTeaserCta', 'Turn on reminders')}
+              </button>
+            </div>
+          )}
+          {pushPromptState === 'requesting' && (
+            <div className="bg-burgundy/[0.04] border border-burgundy/15 rounded-2xl p-4 text-left mb-6 flex items-center gap-3">
+              <span className="animate-spin rounded-full h-4 w-4 border-2 border-burgundy border-t-transparent" aria-hidden="true" />
+              <p className="text-[13px] text-warm-stone">
+                {t('reservations.confirmation.pushRequesting', 'Setting up reminders…')}
+              </p>
+            </div>
+          )}
+          {pushPromptState === 'granted' && (
+            <div className="bg-green-50 border border-green-200 rounded-2xl p-4 text-left mb-6 flex items-center gap-3">
+              <span className="text-base" aria-hidden="true">✅</span>
+              <p className="text-[13px] text-green-800">
+                {t('reservations.confirmation.pushGranted', "Reminders are on. We'll ping you an hour before.")}
+              </p>
+            </div>
+          )}
 
           {/* What's next — answers the questions Patricia closed the tab
               wondering: where is it, what reminders will I get, how do I
