@@ -97,39 +97,35 @@ module.exports = async (req, res) => {
     // can start with a generic greeting if intelligence times out; the user
     // can still answer the 12 topics, and a cron later can backfill the
     // restaurant_intelligence row.
-    const INTELLIGENCE_BUDGET_MS = 45000;
-    const intelligenceResults = await Promise.race([
-      gatherRestaurantIntelligence({
-        restaurant_name,
-        city,
-        country,
-        website,
+    // Gather intelligence — DEFERRED. The previous synchronous gather chained
+    // 3 parallel tiers (Google Places + website scrape + Custom Search) and
+    // crashed Vercel with FUNCTION_INVOCATION_FAILED on every fresh account
+    // during 2026-05-18 audit, even after the table migrations. Fire-and-
+    // forget the gather and return an empty profile immediately so the
+    // interview can start with a generic greeting; a follow-up cron / on-demand
+    // refresh can backfill restaurant_intelligence later.
+    const intelligenceResults = {
+      restaurant_name,
+      google_places: null,
+      website_extraction: null,
+      search_results: null,
+      summary: {
+        rating: null, review_count: 0, price_level: null,
+        cuisine_type: null, atmosphere: null, description: null,
+        signature_dishes: [], address: null, website: null
+      },
+      tiers_completed: { google_places: false, website_extraction: false, google_search: false },
+      gathered_at: new Date().toISOString(),
+      _deferred: true
+    };
+    // .catch is essential: unhandled rejection on a detached promise can crash
+    // the lambda even after we've already returned a response.
+    Promise.resolve()
+      .then(() => gatherRestaurantIntelligence({
+        restaurant_name, city, country, website,
         restaurant_config_id: restaurantId
-      }),
-      new Promise((resolve) => setTimeout(() => {
-        logger.warn('Intelligence gathering exceeded 45s budget; proceeding with empty profile', {
-          restaurantId,
-          restaurant_name
-        });
-        // Return the shape synthesizeProfile would produce when all 3 tiers
-        // return null — keeps downstream code (startOrResumeInterview's
-        // buildIntelligenceContext) safe to call without null checks.
-        resolve({
-          restaurant_name,
-          google_places: null,
-          website_extraction: null,
-          search_results: null,
-          summary: {
-            rating: null, review_count: 0, price_level: null,
-            cuisine_type: null, atmosphere: null, description: null,
-            signature_dishes: [], address: null, website: null
-          },
-          tiers_completed: { google_places: false, website_extraction: false, google_search: false },
-          gathered_at: new Date().toISOString(),
-          _timed_out: true
-        });
-      }, INTELLIGENCE_BUDGET_MS)),
-    ]);
+      }))
+      .catch(err => logger.warn('Deferred intelligence gather failed (non-fatal):', err?.message || err));
 
     // Update learning status
     if (supabaseAdmin) {
