@@ -182,7 +182,9 @@ async function startOrResumeInterview(sessionId, restaurantConfigId, intelligenc
 
   if (error) {
     logger.error('Failed to create interview session:', error);
-    throw new Error('Failed to create interview session');
+    // Surface the actual Postgres error so we can see column/FK/RLS failures
+    // instead of the opaque generic message. Audit 2026-05-18.
+    throw new Error(`Failed to create interview session: ${error.message || error.code || JSON.stringify(error).slice(0, 200)}`);
   }
 
   return {
