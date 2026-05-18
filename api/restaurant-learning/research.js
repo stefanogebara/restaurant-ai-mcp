@@ -79,13 +79,24 @@ module.exports = async (req, res) => {
 
     logger.info('Starting restaurant research:', { restaurant_name, city, country });
 
+    // DEBUG: step-by-step trace to pinpoint FUNCTION_INVOCATION_FAILED. Each
+    // step that succeeds prints to logs. The first missing log line is the
+    // step that crashed. Remove once root cause is identified.
+    if (req.query?.debug === '1') {
+      const probe = { step: 'entered_try', restaurantId, hasSupabaseAdmin: !!supabaseAdmin };
+      logger.info('[research-debug]', probe);
+      return res.status(200).json({ debug: probe });
+    }
+
     // Update learning status
     if (supabaseAdmin) {
+      logger.info('[research-debug] before learning_status=scraping');
       await supabaseAdmin
         .schema('restaurant')
         .from('restaurant_config')
         .update({ learning_status: 'scraping' })
         .eq('id', restaurantId);
+      logger.info('[research-debug] after learning_status=scraping');
     }
 
     // Gather intelligence (all 3 tiers in parallel). The tiers' own internal
@@ -127,6 +138,7 @@ module.exports = async (req, res) => {
       }))
       .catch(err => logger.warn('Deferred intelligence gather failed (non-fatal):', err?.message || err));
 
+    logger.info('[research-debug] before learning_status=scraped');
     // Update learning status
     if (supabaseAdmin) {
       await supabaseAdmin
@@ -135,6 +147,7 @@ module.exports = async (req, res) => {
         .update({ learning_status: 'scraped' })
         .eq('id', restaurantId);
     }
+    logger.info('[research-debug] after learning_status=scraped, before startOrResumeInterview');
 
     // Create interview session
     const sessionId = crypto.randomUUID();
