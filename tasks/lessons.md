@@ -1,4 +1,70 @@
 
+## 2026-05-18: /research's "5-layer 500" — missing GRANTs on new tables hide behind 4 other bugs
+
+**Symptom**: Step 6 "Iniciar Entrevista" → `/api/restaurant-learning/research` returned `FUNCTION_INVOCATION_FAILED` on every fresh account, even after a full day of audit fixes. Took 5 sequential root-cause peels to fully unblock.
+
+**The 5 layers, in order**:
+
+1. **`restaurant.learning_interviews` table didn't exist** — code wrote to it but only `public.restaurant_intelligence` existed (empty orphan). Fixed in `20260518_restaurant_learning_tables.sql`.
+
+2. **`restaurant_config.learning_status` column didn't exist** — code called `.update({ learning_status: 'scraping' })` to track interview progress. Fixed in `20260518_add_learning_status_column.sql`.
+
+3. **Intelligence-gathering Promise.race chained past lambda budget** — Tier 1 (Google Places) + Tier 2 (website + LLM extract) + Tier 3 (Custom Search) timeouts could overlap to ~96s on a 60s lambda. Tried a 45s budget race; introduced an unhandled-rejection race.
+
+4. **Detached fire-and-forget promise crashed the lambda** — Vercel kills serverless functions immediately after `res.json()` returns. The deferred gather's pending fetches got aborted mid-flight, raising an uncaught rejection that the runtime reported as FUNCTION_INVOCATION_FAILED (NOT the standard 500 my catch would have produced). Pinpointed by `?debug=1` short-circuit returning 200 cleanly while the full path still 500'd. Fix: drop the deferred gather entirely; backfill via cron or on-demand endpoint.
+
+5. **service_role had no privileges on the new tables** — `CREATE TABLE` doesn't auto-GRANT to Supabase roles. Direct SQL via the dashboard worked (postgres superuser). supabase-js calls from the lambda returned "permission denied for table learning_interviews". Surfaced only by wrapping `startOrResumeInterview` in an isolated try/catch that included `error.message` in the response. Fixed in `20260518_grant_service_role_learning_tables.sql`.
+
+**Rule for new Supabase tables outside the default `public` schema**:
+Every migration that creates a table in a non-public schema MUST end with:
+```sql
+GRANT USAGE ON SCHEMA <schema> TO service_role, authenticated, anon;
+GRANT ALL ON <schema>.<table> TO service_role;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA <schema> TO service_role;
+```
+Otherwise supabase-js from the lambda fails with "permission denied" — but if a higher-level catch swallows it, you'll see FUNCTION_INVOCATION_FAILED or a generic re-thrown error, and spend hours chasing the wrong layer.
+
+**Rule for diagnosing FUNCTION_INVOCATION_FAILED on Vercel**:
+The standard 500-with-body path is bypassed; this means an unhandled rejection or a runtime kill. Don't trust `res.json({error: 'generic'})` — wrap the suspected await in its own try/catch and include `err.message` directly in the response body. Then bisect by adding `?debug=N` short-circuits that return 200 at known checkpoints. The probe that returns 200 immediately above the first failing one identifies the throw.
+
+**Rule for detached promises in serverless**:
+Never do `Promise.resolve().then(...)` fire-and-forget in a Vercel function. The runtime kills the process when the response sends and pending I/O surfaces as a failed-invocation rather than a logged warning. Either complete the work synchronously, defer via a queue/cron, or use `context.waitUntil()` if you're on Edge.
+
+**Caught by**: Full E2E onboarding audit — clicking "Iniciar Entrevista" on a freshly-created account. Took 9 commits + 3 migrations to fully resolve.
+
+---
+
+## 2026-05-17: Demo create silently aborted by adblock filters — three layered bugs in one button
+
+**Symptom**: User on Brave clicked "Iniciar meu demo" → saw "Falha ao criar demo. Tente novamente." Vercel logs showed ZERO POST requests reaching `/api/demo?action=create` from that IP. curl from CLI worked. The failure mode looked like a backend bug; it was three independent client-side problems stacked.
+
+**Bug 1 — Open-redirect guard rejected absolute URLs from our own backend** (`e8203b4a`):
+`DemoSetupPage.tsx` had a safety check `demo_url.startsWith('/') && !demo_url.startsWith('//')` to prevent backend-injected phishing redirects. But `api/demo.js` returned `https://seatable.one/demo/<token>` (absolute, for use in the welcome email). Same URL was reused for the browser redirect → guard rejected it → generic createFailed toast. The user's first failure had nothing to do with adblock.
+
+**Rule**: When the same value powers both an email link (must be absolute) and a browser redirect (must be relative per safety guard), DON'T conflate them. Emit two fields, or keep relative in the response and have the email handler prefix `BASE_URL`. Anti-pattern: `return res.json({ demo_url: demoUrl })` where `demoUrl` is whichever the email needed.
+
+**Bug 2 — i18n country picker only matched English names** (`6f1310d8`):
+`LocationSelector.tsx` filtered countries by `country.name.toLowerCase().includes(query)`. The data file stores English names ("Brazil", "Spain"). A pt-BR user typing "Brasil" got "Nenhum país encontrado" — the natural localized spelling failed in the localized UI.
+
+**Rule**: When you have a fixed English data set rendered in a localized UI, the search filter MUST include `Intl.DisplayNames([i18n.language], { type: 'region' })` (or equivalent for other taxonomies) so users typing the native term hit results. Also normalize for diacritics (`.normalize('NFD').replace(/[̀-ͯ]/g, '')`) — "espana" should match "España", "brasilia" should match "Brasília". Search inputs that don't strip combining marks are broken for half the planet.
+
+**Bug 3 — `?action=create` query pattern aborted by adblock filters** (`ce2ba6c3`):
+`/api/demo?action=create` is shaped exactly like a tracking pixel URL. Aggressive uBlock Origin / Brave Shields filter lists match the `*?action=*` family heavily. User's Brave silently aborted the POST before it hit the network — Vercel never saw the request. Default Brave with stock Shields was fine; the user had a more aggressive extension or list. Renamed to RESTful `/api/demo/{create,session,convert}` via three `vercel.json` rewrites — backend code unchanged, old paths kept working for cached bundles.
+
+**Rule**: Same-origin API endpoints should NOT use URL shapes that resemble ad/tracker pixels:
+- ❌ `/api/X?action=create` (matches `*?action=*` filters)
+- ❌ `/api/X?event=...` or `/api/track/...` (obvious)
+- ❌ `/api/X?type=pixel|beacon|track|ping`
+- ✅ `/api/X/create` (path-based verb, RESTful — safe across filter lists)
+
+If you must keep the query-string form for legacy callers, add a path-based rewrite in `vercel.json` and migrate the frontend to the path version. Old bundles in users' caches don't break (additive change), new bundles dodge the filter.
+
+**Diagnosis**: Vercel `get_runtime_logs` showed zero `/api/demo` hits while user was actively clicking. That gap (button clicked, no server log) was the smoking gun pointing at client-side blocking. Reproduced by launching Playwright against the real Brave executable (`scripts/brave-repro.mjs`), watched the request abort in `requestfailed` events. Stock Brave didn't reproduce it — only after adding aggressive filter rules did `/api/demo?action=create` get aborted, confirming the URL pattern as the trigger.
+
+**Caught by**: User report → Vercel runtime logs filter on `/api/demo` showed zero requests in 90 min while user was actively retrying. Verification: `scripts/brave-full-verify.mjs` exercises all three fixes against real Brave in CI-runnable form.
+
+---
+
 ## 2026-05-09: M3 status pill — 3 commits because I kept fixing the wrong renderer
 
 **Mistake**: Audit flagged tables page rendering raw English DB enum ("Available") in PT-BR UI. Took 3 commits to actually fix:
