@@ -12,7 +12,7 @@ const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { verifyAuth } = require('../_lib/auth');
 const { checkAndApplyRateLimit } = require('../_lib/rate-limit');
-const { gatherRestaurantIntelligence, isUrlSafe } = require('../services/restaurantIntelligence');
+const { isUrlSafe } = require('../services/restaurantIntelligence');
 const { startOrResumeInterview } = require('../services/learningInterview');
 const crypto = require('crypto');
 
@@ -79,35 +79,16 @@ module.exports = async (req, res) => {
 
     logger.info('Starting restaurant research:', { restaurant_name, city, country });
 
-    // DEBUG: step-by-step trace to pinpoint FUNCTION_INVOCATION_FAILED. Each
-    // step that succeeds prints to logs. The first missing log line is the
-    // step that crashed. Remove once root cause is identified.
-    if (req.query?.debug === '1') {
-      const probe = { step: 'entered_try', restaurantId, hasSupabaseAdmin: !!supabaseAdmin };
-      logger.info('[research-debug]', probe);
-      return res.status(200).json({ debug: probe });
-    }
-
-    // Update learning status. The Supabase call here was crashing the lambda
-    // with FUNCTION_INVOCATION_FAILED on every fresh account — try/catch around
-    // it to surface the actual error instead of letting an unhandled promise
-    // rejection kill the function. Skip the schema('restaurant') call entirely
-    // if it fails, since learning_status tracking is best-effort.
+    // Update learning status (best-effort, doesn't block on failure).
     if (supabaseAdmin) {
-      logger.info('[research-debug] before learning_status=scraping');
       try {
-        const { error: updateErr } = await supabaseAdmin
+        await supabaseAdmin
           .schema('restaurant')
           .from('restaurant_config')
           .update({ learning_status: 'scraping' })
           .eq('id', restaurantId);
-        logger.info('[research-debug] after learning_status=scraping', { updateErr: updateErr?.message });
-      } catch (updateThrow) {
-        logger.error('[research-debug] learning_status=scraping THREW', {
-          message: updateThrow?.message,
-          code: updateThrow?.code,
-          name: updateThrow?.name,
-        });
+      } catch (e) {
+        logger.warn('learning_status=scraping update failed (non-fatal):', e?.message);
       }
     }
 
@@ -141,25 +122,25 @@ module.exports = async (req, res) => {
       gathered_at: new Date().toISOString(),
       _deferred: true
     };
-    // .catch is essential: unhandled rejection on a detached promise can crash
-    // the lambda even after we've already returned a response.
-    Promise.resolve()
-      .then(() => gatherRestaurantIntelligence({
-        restaurant_name, city, country, website,
-        restaurant_config_id: restaurantId
-      }))
-      .catch(err => logger.warn('Deferred intelligence gather failed (non-fatal):', err?.message || err));
+    // NO fire-and-forget gather here. The previous attempt to defer it (d96bdc87)
+    // still crashed the lambda with FUNCTION_INVOCATION_FAILED: Vercel kills the
+    // serverless function once res.json() returns, and the detached promise gets
+    // aborted mid-flight, raising an unhandled rejection that the runtime reports
+    // as a function failure. Intelligence backfill should be a separate cron or
+    // a /refresh-intelligence endpoint that the dashboard can hit on demand.
 
-    logger.info('[research-debug] before learning_status=scraped');
-    // Update learning status
+    // Update learning status (best-effort).
     if (supabaseAdmin) {
-      await supabaseAdmin
-        .schema('restaurant')
-        .from('restaurant_config')
-        .update({ learning_status: 'scraped' })
-        .eq('id', restaurantId);
+      try {
+        await supabaseAdmin
+          .schema('restaurant')
+          .from('restaurant_config')
+          .update({ learning_status: 'scraped' })
+          .eq('id', restaurantId);
+      } catch (e) {
+        logger.warn('learning_status=scraped update failed (non-fatal):', e?.message);
+      }
     }
-    logger.info('[research-debug] after learning_status=scraped, before startOrResumeInterview');
 
     // Create interview session
     const sessionId = crypto.randomUUID();
@@ -171,11 +152,15 @@ module.exports = async (req, res) => {
 
     // Update learning status
     if (supabaseAdmin) {
-      await supabaseAdmin
-        .schema('restaurant')
-        .from('restaurant_config')
-        .update({ learning_status: 'interviewing' })
-        .eq('id', restaurantId);
+      try {
+        await supabaseAdmin
+          .schema('restaurant')
+          .from('restaurant_config')
+          .update({ learning_status: 'interviewing' })
+          .eq('id', restaurantId);
+      } catch (e) {
+        logger.warn('learning_status=interviewing update failed (non-fatal):', e?.message);
+      }
     }
 
     logger.info('Research complete, interview started:', {
