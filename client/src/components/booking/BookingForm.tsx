@@ -344,7 +344,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
       {!selectedDate && (
         <div className="mb-8">
           <p className="text-sm text-warm-stone">
-            {t('booking.selectDateToSeeSlots', 'Selecione a data e o número de pessoas para ver os horários disponíveis')}
+            {t('booking.selectDateToSeeSlots', 'Select a date and party size to see available time slots.')}
           </p>
         </div>
       )}

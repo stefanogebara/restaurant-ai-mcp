@@ -6,7 +6,17 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { supabase } from '../lib/supabase';
 import type { User, Session } from '@supabase/supabase-js';
-import { LS_CUSTOMER_EMAIL } from '../config/localStorageKeys';
+import {
+  LS_CUSTOMER_EMAIL,
+  LS_PENDING_DEMO_TOKEN,
+  LS_ONBOARDING_DATA,
+  LS_ONBOARDING_STEP,
+  LS_REFERRAL_CODE,
+  LS_STRIPE_CUSTOMER_ID,
+  LS_SUBSCRIPTION_PLAN,
+  LS_LAUNCH_CHECKLIST_DONE,
+  LS_FIRST_RESERVATION_TRACKED,
+} from '../config/localStorageKeys';
 import { identifyUser } from '../lib/analytics';
 
 type RestaurantRole = 'owner' | 'manager' | 'host' | 'staff';
@@ -129,7 +139,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    localStorage.removeItem(LS_CUSTOMER_EMAIL);
+    // Clear every auth-scoped localStorage key on signOut so the next user
+    // who signs in on the same browser doesn't inherit the previous user's
+    // onboarding draft (restaurant name, phone, email…), demo conversion
+    // token, referral code, or Stripe customer hint.
+    //
+    // Privacy leak the audit flagged: previous version only cleared
+    // LS_CUSTOMER_EMAIL, leaving 8 other keys behind. User B signing in on
+    // user A's laptop would land in /onboarding with user A's restaurant
+    // pre-filled — names, phone, the whole form. Could submit it under
+    // their own auth token if they don't notice.
+    //
+    // Deliberately NOT cleared: LS_LANGUAGE — that's a per-browser
+    // preference (i18next picks it up), not auth-scoped state.
+    const authScopedKeys = [
+      LS_CUSTOMER_EMAIL,
+      LS_PENDING_DEMO_TOKEN,
+      LS_ONBOARDING_DATA,
+      LS_ONBOARDING_STEP,
+      LS_REFERRAL_CODE,
+      LS_STRIPE_CUSTOMER_ID,
+      LS_SUBSCRIPTION_PLAN,
+      LS_LAUNCH_CHECKLIST_DONE,
+      LS_FIRST_RESERVATION_TRACKED,
+    ];
+    for (const key of authScopedKeys) {
+      try { localStorage.removeItem(key); } catch { /* private mode */ }
+    }
     try {
       await supabase.auth.signOut();
     } catch {

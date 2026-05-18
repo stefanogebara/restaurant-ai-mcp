@@ -173,6 +173,49 @@ describe('Portal: restaurant action', () => {
     expect(res.status).toHaveBeenCalledWith(404);
   });
 
+  // Slug validation — locks the regex guard added during the security
+  // audit. Without it, junk slugs (path traversal, SQL fragments, quotes)
+  // reached Supabase's query logs even though RLS rejected them. Now
+  // they 400 cheaply at the edge.
+  test('returns 400 for slug with uppercase characters', async () => {
+    const { req, res } = createMockReqRes({ query: { action: 'restaurant', slug: 'My-Restaurant' } });
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ message: 'Invalid slug format' }));
+  });
+
+  test('returns 400 for slug with spaces', async () => {
+    const { req, res } = createMockReqRes({ query: { action: 'restaurant', slug: 'my restaurant' } });
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+
+  test('returns 400 for slug with SQL-injection-flavoured payload', async () => {
+    const { req, res } = createMockReqRes({ query: { action: 'restaurant', slug: "x'; DROP TABLE--" } });
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+
+  test('returns 400 for slug with path traversal', async () => {
+    const { req, res } = createMockReqRes({ query: { action: 'restaurant', slug: '../etc/passwd' } });
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+
+  test('returns 400 for slug longer than 100 chars', async () => {
+    const { req, res } = createMockReqRes({ query: { action: 'restaurant', slug: 'a'.repeat(101) } });
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+
+  test('accepts valid lowercase + digits + hyphens slug', async () => {
+    mockSingle.mockResolvedValueOnce({ data: null, error: { message: 'Not found' } });
+    const { req, res } = createMockReqRes({ query: { action: 'restaurant', slug: 'pizzeria-da-romano-42' } });
+    await handler(req, res);
+    // Must NOT 400 — slug pattern OK, downstream 404 is allowed here.
+    expect(res.status).not.toHaveBeenCalledWith(400);
+  });
+
   test('returns restaurant data for valid slug', async () => {
     mockSingle.mockResolvedValueOnce({
       data: {

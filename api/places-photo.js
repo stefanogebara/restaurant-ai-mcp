@@ -76,12 +76,22 @@ module.exports = async function handler(req, res) {
     // cache headers on the 302 instead of inheriting Google's. Without this
     // flag the endpoint returns the binary directly, which routes the
     // bandwidth through Vercel.
+    //
+    // API key is sent via X-Goog-Api-Key header (NOT ?key= query param) so
+    // it never lands in:
+    //   - Vercel access logs (URLs are logged; headers are not)
+    //   - CDN edge caches keyed on URL
+    //   - browser network panels of any future server-rendered redirect
+    // This is also the pattern api/scrape-restaurant.js uses for the
+    // searchText call against the same Google Places API.
     const url = `https://places.googleapis.com/v1/${ref}/media`
       + `?maxWidthPx=${maxWidth}`
-      + `&skipHttpRedirect=true`
-      + `&key=${apiKey}`;
+      + `&skipHttpRedirect=true`;
 
-    const googleRes = await fetch(url, { method: 'GET' });
+    const googleRes = await fetch(url, {
+      method: 'GET',
+      headers: { 'X-Goog-Api-Key': apiKey },
+    });
     if (!googleRes.ok) {
       const text = await googleRes.text().catch(() => '');
       logger.warn('Google Places photo media failed', { status: googleRes.status, body: text.slice(0, 200) });

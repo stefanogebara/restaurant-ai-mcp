@@ -104,6 +104,14 @@ module.exports = async (req, res) => {
 // GET ?action=restaurant&slug=X
 // Look up restaurant public info by slug
 // ============================================================
+/**
+ * Restaurant slugs are normalised lowercase letters / digits / hyphens, 1-100
+ * chars. Validating before the query keeps junk like `'; DROP TABLE …` from
+ * appearing in Supabase's query logs, and short-circuits brute-force scans
+ * with weird payloads (path traversal, quotes, embedded HTML) cheaply.
+ */
+const SLUG_PATTERN = /^[a-z0-9-]{1,100}$/;
+
 async function handleGetRestaurant(req, res) {
   const { slug } = req.query;
 
@@ -111,6 +119,13 @@ async function handleGetRestaurant(req, res) {
     return res.status(400).json({
       success: false,
       message: 'Missing required parameter: slug'
+    });
+  }
+
+  if (typeof slug !== 'string' || !SLUG_PATTERN.test(slug)) {
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid slug format'
     });
   }
 

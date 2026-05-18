@@ -48,12 +48,24 @@ export default function Login() {
   const [hasRecoverySession, setHasRecoverySession] = useState(false);
 
   // Persist demo token to localStorage so it survives OAuth redirects and
-  // email/password sign-in (which doesn't go through signInWithGoogle's redirectTo)
+  // email/password sign-in (which doesn't go through signInWithGoogle's redirectTo).
+  // After capturing, scrub the params from the URL so the token doesn't sit in
+  // the browser address bar / history / outbound Referer headers — the
+  // localStorage copy is enough for the rest of the auth flow.
   useEffect(() => {
     const from = searchParams.get('from');
     const token = searchParams.get('token');
     if (from === 'demo' && token) {
-      localStorage.setItem(LS_PENDING_DEMO_TOKEN, token);
+      try { localStorage.setItem(LS_PENDING_DEMO_TOKEN, token); } catch { /* private mode */ }
+      // Strip ?from=demo&token=... from the URL without firing a navigation.
+      // Without this, the token leaks via:
+      //   - browser history (back button shows it)
+      //   - Referer header on any outbound link click from this page
+      //   - screenshots / screen-sharing during the login step
+      const url = new URL(window.location.href);
+      url.searchParams.delete('from');
+      url.searchParams.delete('token');
+      window.history.replaceState({}, '', url.pathname + url.search + url.hash);
     }
   }, [searchParams]);
 
@@ -179,8 +191,24 @@ export default function Login() {
     setSuccessMessage(null);
 
     try {
+      // Preserve the pending demo token through the reset-email round-trip.
+      // Without this, a user who started a password reset after clicking
+      // "Take it over" on the demo dashboard would lose their demo
+      // prefill — they'd open the reset email on their phone (different
+      // browser, empty localStorage), set a new password, and land in
+      // onboarding having to re-type everything we just proved we knew.
+      const pendingDemoToken = (() => {
+        try { return localStorage.getItem(LS_PENDING_DEMO_TOKEN); }
+        catch { return null; }
+      })();
+      const resetUrl = new URL(window.location.origin + '/login');
+      resetUrl.searchParams.set('reset', 'true');
+      if (pendingDemoToken) {
+        resetUrl.searchParams.set('from', 'demo');
+        resetUrl.searchParams.set('token', pendingDemoToken);
+      }
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: window.location.origin + '/login?reset=true',
+        redirectTo: resetUrl.toString(),
       });
       if (resetError) throw resetError;
       setSuccessMessage(t('login.resetLinkSent'));

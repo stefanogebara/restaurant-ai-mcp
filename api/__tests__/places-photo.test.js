@@ -115,6 +115,26 @@ describe('GET /api/places-photo', () => {
     expect(res.headers.Location).not.toMatch(/key=/);
   });
 
+  it('sends API key via X-Goog-Api-Key header, not query param', async () => {
+    // Audit finding: key in ?key= query param leaks via URL logging / CDN
+    // edge caches keyed on URL. The header-based form lands in NEITHER.
+    const fetchMock = jest.fn().mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ photoUri: 'https://lh3.googleusercontent.com/photo' }),
+    });
+    global.fetch = fetchMock;
+
+    const res = createRes();
+    await handler(createReq('GET', { ref: 'places/abc/photos/xyz' }), res);
+
+    const [urlArg, optsArg] = fetchMock.mock.calls[0];
+    // URL must NOT carry the key in any form
+    expect(urlArg).not.toContain('test-key');
+    expect(urlArg).not.toMatch(/[?&]key=/);
+    // Header must carry the key
+    expect(optsArg?.headers?.['X-Goog-Api-Key']).toBe('test-key');
+  });
+
   it('clamps maxWidth to the absolute ceiling (1600px)', async () => {
     const fetchMock = jest.fn().mockResolvedValueOnce({
       ok: true,

@@ -40,6 +40,20 @@ module.exports = async (req, res) => {
     return res.status(400).json({ error: 'Invalid email address' });
   }
 
+  // Length caps — prevent a malicious caller from POSTing a 10MB message
+  // and forcing an expensive Resend email send / a huge DB row. The
+  // server has the final word; the form should also enforce these.
+  const LIMITS = { name: 120, email: 254, phone: 32, restaurant: 200, message: 5000 };
+  const lengthErrors = [];
+  if (typeof name === 'string' && name.length > LIMITS.name) lengthErrors.push(`name must be ${LIMITS.name} characters or less`);
+  if (typeof email === 'string' && email.length > LIMITS.email) lengthErrors.push(`email must be ${LIMITS.email} characters or less`);
+  if (typeof phone === 'string' && phone.length > LIMITS.phone) lengthErrors.push(`phone must be ${LIMITS.phone} characters or less`);
+  if (typeof restaurant === 'string' && restaurant.length > LIMITS.restaurant) lengthErrors.push(`restaurant must be ${LIMITS.restaurant} characters or less`);
+  if (typeof message === 'string' && message.length > LIMITS.message) lengthErrors.push(`message must be ${LIMITS.message} characters or less`);
+  if (lengthErrors.length > 0) {
+    return res.status(400).json({ error: lengthErrors[0], details: lengthErrors });
+  }
+
   // Save to DB (non-fatal if it fails — email alert is the priority)
   try {
     await supabaseAdmin.from('contacts').insert({
