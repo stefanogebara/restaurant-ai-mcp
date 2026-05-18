@@ -88,15 +88,27 @@ module.exports = async (req, res) => {
       return res.status(200).json({ debug: probe });
     }
 
-    // Update learning status
+    // Update learning status. The Supabase call here was crashing the lambda
+    // with FUNCTION_INVOCATION_FAILED on every fresh account — try/catch around
+    // it to surface the actual error instead of letting an unhandled promise
+    // rejection kill the function. Skip the schema('restaurant') call entirely
+    // if it fails, since learning_status tracking is best-effort.
     if (supabaseAdmin) {
       logger.info('[research-debug] before learning_status=scraping');
-      await supabaseAdmin
-        .schema('restaurant')
-        .from('restaurant_config')
-        .update({ learning_status: 'scraping' })
-        .eq('id', restaurantId);
-      logger.info('[research-debug] after learning_status=scraping');
+      try {
+        const { error: updateErr } = await supabaseAdmin
+          .schema('restaurant')
+          .from('restaurant_config')
+          .update({ learning_status: 'scraping' })
+          .eq('id', restaurantId);
+        logger.info('[research-debug] after learning_status=scraping', { updateErr: updateErr?.message });
+      } catch (updateThrow) {
+        logger.error('[research-debug] learning_status=scraping THREW', {
+          message: updateThrow?.message,
+          code: updateThrow?.code,
+          name: updateThrow?.name,
+        });
+      }
     }
 
     // Gather intelligence (all 3 tiers in parallel). The tiers' own internal
