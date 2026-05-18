@@ -104,9 +104,14 @@ module.exports = async (req, res) => {
       topics_covered: result.topics_covered
     });
   } catch (error) {
-    logger.error('Chat endpoint error:', error);
+    logger.error('Chat endpoint error', {
+      message: error?.message,
+      code: error?.code,
+      name: error?.name,
+      stack: error?.stack?.split('\n').slice(0, 5).join(' | '),
+    });
     return res.status(500).json({
-      error: 'Failed to process message'
+      error: error?.message || 'Failed to process message',
     });
   }
 };
