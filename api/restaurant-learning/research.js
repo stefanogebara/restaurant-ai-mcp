@@ -92,27 +92,14 @@ module.exports = async (req, res) => {
       }
     }
 
-    // DEBUG: bisect — return after first Supabase update to confirm DB call works.
-    if (req.query?.debug === '2') {
-      return res.status(200).json({ debug: 'after_first_update', restaurantId });
-    }
-
-    // Gather intelligence (all 3 tiers in parallel). The tiers' own internal
-    // timeouts can chain to ~96s worst case (Tier 2 fetch + extraction + Tier 2
-    // retry after Tier 1 discovers a website), past Vercel's 60s lambda budget.
-    // Hit during 2026-05-18 audit: every fresh account 500'd with
-    // FUNCTION_INVOCATION_FAILED. Wrap in a hard 45s race so we always have
-    // time to insert the interview session + return a 201 — the interview
-    // can start with a generic greeting if intelligence times out; the user
-    // can still answer the 12 topics, and a cron later can backfill the
-    // restaurant_intelligence row.
-    // Gather intelligence — DEFERRED. The previous synchronous gather chained
-    // 3 parallel tiers (Google Places + website scrape + Custom Search) and
-    // crashed Vercel with FUNCTION_INVOCATION_FAILED on every fresh account
-    // during 2026-05-18 audit, even after the table migrations. Fire-and-
-    // forget the gather and return an empty profile immediately so the
-    // interview can start with a generic greeting; a follow-up cron / on-demand
-    // refresh can backfill restaurant_intelligence later.
+    // Intelligence gathering DEFERRED. The synchronous gather chained 3
+    // parallel tiers (Google Places + website scrape + Custom Search) and
+    // could chain to ~96s of wall time on a 60s Vercel lambda. Even a
+    // fire-and-forget version crashed the lambda post-response because
+    // Vercel kills detached promises on serverless. Backfill should be a
+    // separate cron / on-demand /refresh-intelligence endpoint that the
+    // dashboard can hit. The interview's 12 questions don't actually need
+    // pre-gathered context — they ask the same things regardless.
     const intelligenceResults = {
       restaurant_name,
       google_places: null,
@@ -147,7 +134,11 @@ module.exports = async (req, res) => {
       }
     }
 
-    // Create interview session
+    // Create interview session. Isolated try/catch so the actual Postgres
+    // error (FK / RLS / permission) shows up in the response and Vercel logs
+    // instead of being swallowed as a generic 500. Audit 2026-05-18 used this
+    // surfacing to identify a missing GRANT on restaurant.learning_interviews;
+    // the structured logger entry stays as a permanent diagnostic aid.
     const sessionId = crypto.randomUUID();
     let interviewState;
     try {
@@ -164,9 +155,7 @@ module.exports = async (req, res) => {
         stack: startErr?.stack?.split('\n').slice(0, 5).join(' | '),
       });
       return res.status(500).json({
-        error: `Interview session creation failed: ${startErr?.message || 'unknown'}`,
-        _bisect: 'startOrResumeInterview',
-        _stack: startErr?.stack?.split('\n').slice(0, 3).join(' | '),
+        error: startErr?.message || 'Could not start interview session',
       });
     }
 
