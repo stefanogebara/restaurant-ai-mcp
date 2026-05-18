@@ -147,22 +147,27 @@ module.exports = async (req, res) => {
       }
     }
 
-    // DEBUG: bisect — return before startOrResumeInterview.
-    if (req.query?.debug === '3') {
-      return res.status(200).json({ debug: 'before_start_interview', restaurantId });
-    }
-
     // Create interview session
     const sessionId = crypto.randomUUID();
-    const interviewState = await startOrResumeInterview(
-      sessionId,
-      restaurantId,
-      intelligenceResults
-    );
-
-    // DEBUG: bisect — return after startOrResumeInterview.
-    if (req.query?.debug === '4') {
-      return res.status(200).json({ debug: 'after_start_interview', sessionId, hasAiMessage: !!interviewState?.ai_message });
+    let interviewState;
+    try {
+      interviewState = await startOrResumeInterview(
+        sessionId,
+        restaurantId,
+        intelligenceResults
+      );
+    } catch (startErr) {
+      logger.error('startOrResumeInterview threw', {
+        message: startErr?.message,
+        name: startErr?.name,
+        code: startErr?.code,
+        stack: startErr?.stack?.split('\n').slice(0, 5).join(' | '),
+      });
+      return res.status(500).json({
+        error: `Interview session creation failed: ${startErr?.message || 'unknown'}`,
+        _bisect: 'startOrResumeInterview',
+        _stack: startErr?.stack?.split('\n').slice(0, 3).join(' | '),
+      });
     }
 
     // Update learning status
