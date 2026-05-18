@@ -88,14 +88,48 @@ module.exports = async (req, res) => {
         .eq('id', restaurantId);
     }
 
-    // Gather intelligence (all 3 tiers in parallel)
-    const intelligenceResults = await gatherRestaurantIntelligence({
-      restaurant_name,
-      city,
-      country,
-      website,
-      restaurant_config_id: restaurantId
-    });
+    // Gather intelligence (all 3 tiers in parallel). The tiers' own internal
+    // timeouts can chain to ~96s worst case (Tier 2 fetch + extraction + Tier 2
+    // retry after Tier 1 discovers a website), past Vercel's 60s lambda budget.
+    // Hit during 2026-05-18 audit: every fresh account 500'd with
+    // FUNCTION_INVOCATION_FAILED. Wrap in a hard 45s race so we always have
+    // time to insert the interview session + return a 201 — the interview
+    // can start with a generic greeting if intelligence times out; the user
+    // can still answer the 12 topics, and a cron later can backfill the
+    // restaurant_intelligence row.
+    const INTELLIGENCE_BUDGET_MS = 45000;
+    const intelligenceResults = await Promise.race([
+      gatherRestaurantIntelligence({
+        restaurant_name,
+        city,
+        country,
+        website,
+        restaurant_config_id: restaurantId
+      }),
+      new Promise((resolve) => setTimeout(() => {
+        logger.warn('Intelligence gathering exceeded 45s budget; proceeding with empty profile', {
+          restaurantId,
+          restaurant_name
+        });
+        // Return the shape synthesizeProfile would produce when all 3 tiers
+        // return null — keeps downstream code (startOrResumeInterview's
+        // buildIntelligenceContext) safe to call without null checks.
+        resolve({
+          restaurant_name,
+          google_places: null,
+          website_extraction: null,
+          search_results: null,
+          summary: {
+            rating: null, review_count: 0, price_level: null,
+            cuisine_type: null, atmosphere: null, description: null,
+            signature_dishes: [], address: null, website: null
+          },
+          tiers_completed: { google_places: false, website_extraction: false, google_search: false },
+          gathered_at: new Date().toISOString(),
+          _timed_out: true
+        });
+      }, INTELLIGENCE_BUDGET_MS)),
+    ]);
 
     // Update learning status
     if (supabaseAdmin) {
