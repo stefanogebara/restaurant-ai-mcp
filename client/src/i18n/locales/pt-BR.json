@@ -2602,7 +2602,7 @@
   },
   "voiceSettings": {
     "upgradeFeature": "Agente de Voz com IA",
-    "upgradeDescription": "Configure seu agente de voz com IA para atender reservas por telefone automaticamente. Disponível nos planos Growth e Scale.",
+    "upgradeDescription": "Configure seu agente de voz com IA para atender reservas por telefone automaticamente. Disponível no plano Profissional.",
     "saving": "Salvando...",
     "saveChanges": "Salvar Alterações",
     "voiceLibrary": "Biblioteca de Vozes",

@@ -2284,7 +2284,7 @@
   },
   "voiceSettings": {
     "upgradeFeature": "Agente de Voz con IA",
-    "upgradeDescription": "Configura tu agente de voz con IA para gestionar reservas por teléfono automáticamente. Disponible en los planes Growth y Scale.",
+    "upgradeDescription": "Configura tu agente de voz con IA para gestionar reservas por teléfono automáticamente. Disponible en el plan Profesional.",
     "saving": "Guardando...",
     "saveChanges": "Guardar Cambios",
     "voiceLibrary": "Biblioteca de Voces",
@@ -2671,7 +2671,7 @@
   "insights": {
     "title": "Insights IA",
     "subtitle": "¿Qué deberías hacer hoy? Tu centro de comando personalizado.",
-    "upgradeTitle": "Insights IA en Growth y Scale",
+    "upgradeTitle": "Insights IA en Profesional",
     "upgradeDescription": "Actualiza para acceder al briefing de esta noche, inteligencia de clientes, oportunidades de ingresos y pronósticos de retención.",
     "upgradePlan": "Actualizar Plan",
     "tonightBriefing": "Briefing de Esta Noche",
