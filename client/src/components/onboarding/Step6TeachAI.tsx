@@ -47,6 +47,26 @@ interface ChatResponse {
 
 type InterviewPhase = 'idle' | 'researching' | 'chatting' | 'generating' | 'complete';
 
+// Topic preview shown in the idle state — kept in sync with INTERVIEW_TOPICS
+// in api/services/learningInterview.js. Owners previously saw an opaque
+// "12 tópicos sobre culinária..." card and didn't know what they were
+// committing to → most clicked Skip. Showing the actual topics lowers the
+// perceived commitment ("oh, these are easy questions about MY restaurant").
+const INTERVIEW_TOPIC_KEYS = [
+  'onboarding.topic.cuisineIdentity',
+  'onboarding.topic.atmosphereVibe',
+  'onboarding.topic.signatureDishes',
+  'onboarding.topic.guestExperience',
+  'onboarding.topic.uniqueDifferentiators',
+  'onboarding.topic.communicationStyle',
+  'onboarding.topic.specialOccasions',
+  'onboarding.topic.thingsToKnow',
+  'onboarding.topic.operationsPhilosophy',
+  'onboarding.topic.teamCulture',
+  'onboarding.topic.businessGoals',
+  'onboarding.topic.aiExpectations',
+] as const;
+
 // Extract a renderable string from whatever the backend returned. The previous
 // `(err.response?.data?.error as string)` cast was a lie: Supabase / PostgREST
 // errors propagate as `{ code, message }` objects. setError() then held the
@@ -186,7 +206,7 @@ export default function Step6TeachAI({
           </p>
         </div>
 
-        <div className="bg-burgundy/5 border border-burgundy/10 rounded-xl p-5 space-y-3">
+        <div className="bg-burgundy/5 border border-burgundy/10 rounded-xl p-5 space-y-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-burgundy/10 rounded-full flex items-center justify-center">
               <ThiingsIcon name="chat" pxSize={20} className="text-burgundy" />
@@ -196,6 +216,22 @@ export default function Step6TeachAI({
               <p className="text-xs text-stone-gray">{t('onboarding.interviewTopics')}</p>
             </div>
           </div>
+
+          {/* Topic preview — let owners see the 12 conversation topics upfront
+              so they know what they're committing to (5-min chat about THEIR
+              restaurant) rather than guessing. Caught in 2026-05-18 audit. */}
+          <div className="grid grid-cols-2 gap-1.5">
+            {INTERVIEW_TOPIC_KEYS.map((key, idx) => (
+              <div
+                key={key}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/60 border border-burgundy/10"
+              >
+                <span className="text-[10px] font-mono text-burgundy/60 w-4">{idx + 1}.</span>
+                <span className="text-xs text-deep-charcoal truncate">{t(key)}</span>
+              </div>
+            ))}
+          </div>
+
           <p className="text-xs text-stone-gray">
             {t('onboarding.interviewExplainer')}
           </p>

@@ -1247,7 +1247,21 @@
     "dayFriday": "Viernes",
     "daySaturday": "Sábado",
     "daySunday": "Domingo",
-    "csvOnlyHint": "Solo archivos .csv. Necesitamos solo la columna de teléfono — el resto es opcional."
+    "csvOnlyHint": "Solo archivos .csv. Necesitamos solo la columna de teléfono — el resto es opcional.",
+    "topic": {
+      "cuisineIdentity": "Identidad culinaria",
+      "atmosphereVibe": "Ambiente y vibra",
+      "signatureDishes": "Platos estrella",
+      "guestExperience": "Experiencia del cliente",
+      "uniqueDifferentiators": "Lo que les diferencia",
+      "communicationStyle": "Estilo de comunicación",
+      "specialOccasions": "Ocasiones especiales",
+      "thingsToKnow": "Detalles importantes",
+      "operationsPhilosophy": "Filosofía operativa",
+      "teamCulture": "Cultura del equipo",
+      "businessGoals": "Metas del negocio",
+      "aiExpectations": "Expectativas con la IA"
+    }
   },
   "launch": {
     "badge": "Configuración completa",

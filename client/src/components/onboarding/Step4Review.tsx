@@ -19,21 +19,72 @@ interface Step4ReviewProps extends OnboardingStepProps {
 // PhoneInput stores the number as `+<cc> <digits>` (e.g. "+55 11987654321").
 // The review summary previously echoed that raw form — readable as "+55
 // 11987654321" but visually jarring vs. the dial-code prefix box on Step 2.
-// Pretty-print for display only: keep "+<cc>", then group local digits as
-// "DDD HEAD-LAST4" — matches how the number was typed/read.
+// Pretty-print for display only with country-specific grouping. Some countries
+// mix separators within a single number (BR: "11 98765-4321" — space after
+// DDD, dash between the last two), so each rule is a callback that knows
+// its country's convention.
+type PhoneFormatter = (digits: string) => string | null;
+
+const PHONE_FORMATTERS: Record<string, PhoneFormatter> = {
+  // BR: DDD (2) + body. Mobile (11d) = "DD XXXXX-XXXX". Landline (10d) = "DD XXXX-XXXX".
+  '+55': d => {
+    if (d.length === 11) return `${d.slice(0, 2)} ${d.slice(2, 7)}-${d.slice(7)}`;
+    if (d.length === 10) return `${d.slice(0, 2)} ${d.slice(2, 6)}-${d.slice(6)}`;
+    return null;
+  },
+  // AR: similar grouping
+  '+54': d => {
+    if (d.length === 11) return `${d.slice(0, 2)} ${d.slice(2, 6)}-${d.slice(6)}`;
+    if (d.length === 10) return `${d.slice(0, 2)} ${d.slice(2, 6)}-${d.slice(6)}`;
+    return null;
+  },
+  // MX
+  '+52': d => d.length === 10 ? `${d.slice(0, 2)} ${d.slice(2, 6)} ${d.slice(6)}` : null,
+  // IT: landline 02 XXXX XXXX (10), mobile 3XX XXX XXXX (9-10)
+  '+39': d => {
+    if (d.length === 10) return `${d.slice(0, 2)} ${d.slice(2, 6)} ${d.slice(6)}`;
+    if (d.length === 9) return `${d.slice(0, 3)} ${d.slice(3, 6)} ${d.slice(6)}`;
+    return null;
+  },
+  // ES: XXX XXX XXX
+  '+34': d => d.length === 9 ? `${d.slice(0, 3)} ${d.slice(3, 6)} ${d.slice(6)}` : null,
+  // FR: X XX XX XX XX
+  '+33': d => d.length === 9
+    ? `${d.slice(0, 1)} ${d.slice(1, 3)} ${d.slice(3, 5)} ${d.slice(5, 7)} ${d.slice(7)}`
+    : null,
+  // PT: XXX XXX XXX
+  '+351': d => d.length === 9 ? `${d.slice(0, 3)} ${d.slice(3, 6)} ${d.slice(6)}` : null,
+  // DE: variable, leading area code 2-5 digits — keep simple "XXX XXXXXXX" split
+  '+49': d => d.length >= 10 ? `${d.slice(0, 3)} ${d.slice(3)}` : null,
+  // GB: 4+6 or 4+7
+  '+44': d => {
+    if (d.length === 10) return `${d.slice(0, 4)} ${d.slice(4)}`;
+    if (d.length === 11) return `${d.slice(0, 4)} ${d.slice(4)}`;
+    return null;
+  },
+  // US/CA: (XXX) XXX-XXXX
+  '+1': d => d.length === 10
+    ? `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}`
+    : null,
+};
+
 function formatPhoneForDisplay(raw: string): string {
   if (!raw) return '';
-  const m = raw.match(/^(\+\d{1,3})\s*(\d+)$/);
+  // Allow internal whitespace in the digits part too — stored format is
+  // canonical `+<cc> <digits>` but we shouldn't break on legacy values.
+  const m = raw.match(/^(\+\d{1,3})\s*([\d\s-]+)$/);
   if (!m) return raw;
   const cc = m[1];
-  const digits = m[2];
+  const digits = m[2].replace(/\D/g, '');
   if (digits.length < 6) return `${cc} ${digits}`;
+
+  const formatter = PHONE_FORMATTERS[cc];
+  const formatted = formatter ? formatter(digits) : null;
+  if (formatted) return `${cc} ${formatted}`;
+
+  // Generic fallback: head-last4 with a dash.
   const last4 = digits.slice(-4);
   const middle = digits.slice(0, -4);
-  // For BR/AR/MX 10-11 digit local (2-digit area code), split off DDD.
-  if (middle.length >= 4 && (cc === '+55' || cc === '+54' || cc === '+52')) {
-    return `${cc} ${middle.slice(0, 2)} ${middle.slice(2)}-${last4}`;
-  }
   return `${cc} ${middle}-${last4}`;
 }
 
