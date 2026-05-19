@@ -52,6 +52,39 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: 'No active subscription found. Please select a plan to continue.' });
     }
 
+    // Defense in depth: cross-check Stripe customer metadata.restaurant_id
+    // against the caller's JWT restaurant_id BEFORE opening a portal session.
+    // The subscriptions table lookup is the primary control (RLS + JWT-scoped
+    // query), but if the DB row were ever corrupted or hijacked, opening the
+    // portal for the wrong customer would let one tenant manage another
+    // tenant's billing — change card, cancel subscription, etc. Stripe is
+    // the source of truth for which restaurant_id owns which cus_xxx, so we
+    // verify there too.
+    try {
+      const stripeCustomer = await stripe.customers.retrieve(customerId);
+      const metaRestaurantId = stripeCustomer?.metadata?.restaurant_id;
+      if (metaRestaurantId && metaRestaurantId !== restaurantId) {
+        logger.warn('Customer-portal ownership mismatch detected', {
+          jwtRestaurantId: restaurantId,
+          stripeMetaRestaurantId: metaRestaurantId,
+          customerId,
+        });
+        return res.status(403).json({ error: 'Subscription does not belong to this restaurant' });
+      }
+      // If metadata is missing (legacy customers from before metadata
+      // backfill), we DON'T block — opening the portal there is still the
+      // best option for that legitimate tenant — but the subscriptions
+      // table mapping is the only guard for that case.
+    } catch (lookupErr) {
+      // Stripe customer lookup failures (404, network blip) shouldn't block
+      // the portal — that would be more disruptive than the rare cross-tenant
+      // risk. Log loudly so ops can catch a pattern.
+      logger.warn('Stripe customer lookup failed (proceeding with portal)', {
+        customerId,
+        error: lookupErr?.message,
+      });
+    }
+
     // Resolve origin against an explicit allowlist to prevent open-redirect via
     // a spoofed Origin header. Attacker-supplied origins fall back to CLIENT_URL.
     const ALLOWED_RETURN_ORIGINS = [
@@ -75,11 +108,13 @@ module.exports = async (req, res) => {
     });
   } catch (error) {
     logger.error('Error creating portal session:', error);
-    // Forward the Stripe error message so the frontend can react meaningfully
-    const stripeMessage = error?.message || 'Failed to create portal session';
-    return res.status(400).json({
-      error: stripeMessage,
-      message: stripeMessage,
+    // Don't forward raw Stripe error messages — they can leak customer IDs,
+    // API-key-location hints ("you provided a key in the ... body"),
+    // webhook-secret hints, and other implementation details the user
+    // can't act on anyway. Use a generic message and rely on logs +
+    // Sentry for ops triage.
+    return res.status(500).json({
+      error: 'Unable to open the billing portal. Please try again or contact support.',
     });
   }
 };

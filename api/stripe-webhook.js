@@ -217,6 +217,34 @@ module.exports = async (req, res) => {
     return res.status(400).json({ error: 'Invalid webhook request' });
   }
 
+  // Idempotency guard: every Stripe event handler used to assume single
+  // delivery, but Stripe retries every webhook on 5xx for ~3 days. Before
+  // this guard, a duplicate `customer.subscription.deleted` could cancel
+  // the same restaurant twice; `invoice.payment_succeeded` could send the
+  // receipt email + claim the referral reward twice; `subscription.updated`
+  // could re-run the plan transition. Atomic insert into
+  // stripe_webhook_events_processed — if it succeeds we process; on 23505
+  // (unique violation) we silently 200 and Stripe stops retrying.
+  try {
+    const { error: idempErr } = await supabaseAdmin
+      .from('stripe_webhook_events_processed')
+      .insert({ event_id: event.id, event_type: event.type });
+    if (idempErr) {
+      if (idempErr.code === '23505') {
+        // Already processed by an earlier invocation. 200 so Stripe stops
+        // retrying; no side effects.
+        logger.info('Webhook event already processed, skipping', { event_id: event.id, type: event.type });
+        return res.status(200).json({ received: true, deduplicated: true });
+      }
+      // Any other DB error here — log and continue. We'd rather process
+      // the event once (double-send a receipt) than not at all
+      // (lose a subscription event entirely).
+      logger.error('Webhook idempotency insert failed (continuing)', { event_id: event.id, error: idempErr.message });
+    }
+  } catch (idempThrow) {
+    logger.error('Webhook idempotency insert threw (continuing)', { event_id: event.id, error: idempThrow?.message });
+  }
+
   // Handle the event
   try {
     switch (event.type) {

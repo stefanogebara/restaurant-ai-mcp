@@ -140,8 +140,30 @@ async function reportUsageForSubscription(subscription) {
       allRowIds.push(row.id);
     }
 
-    // Report each metric total to Stripe via Meter Events API
-    for (const [eventName, { total }] of Object.entries(eventTotals)) {
+    // Report each metric total to Stripe via Meter Events API.
+    //
+    // Two correctness guarantees layered together:
+    //
+    //   1. IDEMPOTENCY KEY (R.3): Stripe meter events accept `identifier`
+    //      in the payload — events with the same (stripe_customer_id,
+    //      identifier) within 24h are dedup'd by Stripe. If the cron
+    //      retries (Vercel restart, ops replay), the second send is a
+    //      no-op rather than a double-charge. The key is deterministic:
+    //      ${restaurantId}-${eventName}-${UTC date}, so the same logical
+    //      "today's usage for this metric" maps to one event ID.
+    //
+    //   2. PER-EVENT SUCCESS TRACKING (R.4): Previously the code marked
+    //      ALL rows as reported as long as ANY event succeeded. If
+    //      meterEvents.create succeeded for `reservation_created` but
+    //      threw for `ai_call_completed`, the ai_call rows were marked
+    //      reported anyway and that usage was permanently lost. Now we
+    //      track which event names succeeded and only mark THOSE rows;
+    //      the failed-event rows stay unreported and the next cron run
+    //      picks them back up.
+    const todayUtc = new Date().toISOString().split('T')[0];
+    const succeededRowIds = [];
+
+    for (const [eventName, { total, rowIds }] of Object.entries(eventTotals)) {
       try {
         await stripe.billing.meterEvents.create({
           event_name: eventName,
@@ -149,9 +171,11 @@ async function reportUsageForSubscription(subscription) {
             stripe_customer_id: stripeCustomerId,
             value: String(total),
           },
+          identifier: `${restaurantId}-${eventName}-${todayUtc}`,
         });
 
         reported += total;
+        succeededRowIds.push(...rowIds);
         logger.info('Reported meter event to Stripe', {
           eventName,
           total,
@@ -164,15 +188,18 @@ async function reportUsageForSubscription(subscription) {
           eventName,
           error: stripeErr.message,
         });
+        // Intentionally NOT pushing this event's rowIds into
+        // succeededRowIds — those rows stay unreported so the next cron
+        // run will retry them.
       }
     }
 
-    // Mark rows as reported
-    if (allRowIds.length > 0 && reported > 0) {
+    // Mark only the rows whose event actually succeeded.
+    if (succeededRowIds.length > 0) {
       const { error: updateError } = await supabaseAdmin
         .from('usage_tracking')
         .update({ reported_to_stripe: new Date().toISOString() })
-        .in('id', allRowIds);
+        .in('id', succeededRowIds);
 
       if (updateError) {
         logger.error('Failed to mark usage as reported', { error: updateError.message });

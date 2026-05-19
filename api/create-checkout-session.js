@@ -31,17 +31,32 @@ module.exports = async (req, res) => {
     const isBetaAccess = betaCode && process.env.BETA_CODE && betaCode === process.env.BETA_CODE;
 
     // Resolve priceId server-side if not provided by client (VITE_ vars may be missing from bundle)
+    const serverPriceMap = {
+      Starter: process.env.STRIPE_STARTER_PRICE_ID,
+      Growth: process.env.STRIPE_GROWTH_PRICE_ID,
+      Scale: process.env.STRIPE_SCALE_PRICE_ID,
+    };
     if (!priceId && planName) {
-      const serverPriceMap = {
-        Starter: process.env.STRIPE_STARTER_PRICE_ID,
-        Growth: process.env.STRIPE_GROWTH_PRICE_ID,
-        Scale: process.env.STRIPE_SCALE_PRICE_ID,
-      };
       priceId = serverPriceMap[planName] || null;
     }
 
     if (!priceId) {
       return res.status(400).json({ error: 'Price ID is required' });
+    }
+
+    // CRITICAL: validate priceId is one of OUR plan prices, not an arbitrary
+    // Stripe price the caller picked from the URL. Before this gate, an
+    // attacker could pass `{ priceId: 'price_test_one_cent' }` and check out
+    // at $0.01 — the Stripe API happily creates a session with any active
+    // price in the account, including test prices, draft prices, or
+    // promotional prices we forgot to retire. The allowlist below is the
+    // ONLY thing distinguishing "real plan" from "anything else in Stripe".
+    const ALLOWED_PRICE_IDS = new Set(
+      Object.values(serverPriceMap).filter(Boolean),
+    );
+    if (!ALLOWED_PRICE_IDS.has(priceId)) {
+      logger.warn('Rejected checkout with non-plan priceId', { restaurantIdHint: auth.user?.restaurant_id });
+      return res.status(400).json({ error: 'Invalid plan selected' });
     }
 
     // Get restaurant_id from authenticated user for multi-tenancy

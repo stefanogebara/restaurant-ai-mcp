@@ -48,6 +48,14 @@ export default function PricingSection() {
   };
 
   const handleSubscribe = async (priceId: string, planName: string, price = 0) => {
+    // Double-click guard. setLoadingPlan() is async (React state update)
+    // so the button's `disabled` prop doesn't apply for ~50ms after the
+    // first click — long enough for an impatient user to click twice and
+    // create two checkout sessions for the same plan (we eat the cost of
+    // the duplicate Stripe Checkout session AND the second confused
+    // browser-redirect race). Read the latest state synchronously via
+    // the closure: if a previous click is still in flight, drop this one.
+    if (loadingPlan) return;
     trackPricingPlanClicked({ plan: planName, price });
     try {
       setLoadingPlan(planName);
@@ -159,7 +167,13 @@ export default function PricingSection() {
                   ))}
                 </ul>
 
-                {/* CTA Button */}
+                {/* CTA Button — a11y notes:
+                    - aria-label spells out the plan + price + period so
+                      screen readers don't have to depend on visual layout
+                      of card → button to derive context.
+                    - aria-busy mirrors the spinner state so AT users
+                      hear "busy" rather than "button" while we navigate
+                      to Stripe. */}
                 <button
                   type="button"
                   onClick={() => {
@@ -172,6 +186,8 @@ export default function PricingSection() {
                     }
                   }}
                   disabled={loadingPlan === tier.name}
+                  aria-busy={loadingPlan === tier.name}
+                  aria-label={`${tier.name} — ${tierPrice(tier, currency)} ${currency === 'BRL' ? tier.brlPeriod : tier.period}`}
                   className={`w-full py-3.5 rounded-full text-sm font-semibold transition-colors disabled:opacity-50 flex items-center justify-center gap-2 ${
                     isFeatured
                       ? 'bg-burgundy text-white hover:bg-burgundy-dark'

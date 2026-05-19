@@ -74,7 +74,11 @@ function DepositForm({ depositAmount, onSuccess, onCancel }: Omit<DepositPayment
       />
 
       {error && (
-        <div className="bg-red-600/10 border border-red-600/20 rounded-xl p-3">
+        // role="alert" + aria-live ensures screen readers announce
+        // payment failures immediately. Without it, a blind user who
+        // submitted a declined card would hear nothing — the visual
+        // red banner is the only feedback the page currently provides.
+        <div className="bg-red-600/10 border border-red-600/20 rounded-xl p-3" role="alert" aria-live="assertive">
           <p className="text-sm text-red-600">{error}</p>
         </div>
       )}
