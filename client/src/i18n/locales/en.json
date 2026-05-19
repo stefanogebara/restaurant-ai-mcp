@@ -2567,6 +2567,8 @@
     "resets": "Resets",
     "loadingHistory": "Loading history...",
     "failedToSend": "Failed to send. Please try again.",
+    "retry": "Retry",
+    "conversationLabel": "Manager AI conversation",
     "sendMessage": "Send message",
     "backToDashboard": "Back to dashboard",
     "thinkingAriaLabel": "AI is thinking",

@@ -2581,6 +2581,8 @@
     "resets": "Renova em",
     "loadingHistory": "Carregando histórico...",
     "failedToSend": "Falha ao enviar. Tente novamente.",
+    "retry": "Tentar novamente",
+    "conversationLabel": "Conversa com a IA do Gerente",
     "sendMessage": "Enviar mensagem",
     "backToDashboard": "Voltar ao painel",
     "thinkingAriaLabel": "IA está pensando",

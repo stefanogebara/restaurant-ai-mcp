@@ -85,3 +85,64 @@ it('defaults to text channel when channel is unknown', async () => {
   await sendBriefing('+15551234567', 'Hello!', 'unknown_channel', 'rest-1');
   expect(mockSendWhatsApp).toHaveBeenCalledWith('+15551234567', 'Hello!');
 });
+
+// ---------------------------------------------------------------------------
+// Phase Q channel-fallback contract.
+//
+// voice_note and phone_call have several failure modes the plain-text path
+// can't have (ElevenLabs down, Supabase Storage upload reject, Twilio call
+// rejection, signed URL minted past TTL). Without fallback the manager got
+// NOTHING — not even a degraded text version of the briefing they were
+// waiting for. The hardened sendBriefing wraps the channel-specific code
+// in try/catch and falls back to plain WhatsApp text on any failure.
+// ---------------------------------------------------------------------------
+describe('channel fallback to text when delivery fails', () => {
+  beforeEach(() => {
+    mockSendWhatsApp.mockClear();
+    mockSendWhatsAppAudio.mockClear();
+    mockCallsCreate.mockClear();
+    mockStorageFrom.mockReset();
+    mockElevenLabsFetch.mockReset();
+  });
+
+  it('falls back to text when ElevenLabs TTS returns non-OK', async () => {
+    mockElevenLabsFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 503,
+      text: async () => 'service unavailable',
+    });
+    await sendBriefing('+15551234567', 'Daily briefing.', 'voice_note', 'rest-1');
+    expect(mockSendWhatsAppAudio).not.toHaveBeenCalled();
+    expect(mockSendWhatsApp).toHaveBeenCalledWith('+15551234567', 'Daily briefing.');
+  });
+
+  it('falls back to text when Supabase Storage upload rejects', async () => {
+    mockElevenLabsFetch.mockResolvedValueOnce({
+      ok: true,
+      arrayBuffer: async () => new ArrayBuffer(1024),
+    });
+    mockStorageFrom.mockReturnValue({
+      upload: jest.fn().mockResolvedValue({ error: { message: 'bucket quota exceeded' } }),
+      createSignedUrl: jest.fn(),
+    });
+    await sendBriefing('+15551234567', 'Daily briefing.', 'voice_note', 'rest-1');
+    expect(mockSendWhatsAppAudio).not.toHaveBeenCalled();
+    expect(mockSendWhatsApp).toHaveBeenCalledWith('+15551234567', 'Daily briefing.');
+  });
+
+  it('falls back to text when Twilio phone_call throws', async () => {
+    mockCallsCreate.mockRejectedValueOnce(new Error('Twilio: account suspended'));
+    await sendBriefing('+15551234567', 'Daily briefing.', 'phone_call', 'rest-1');
+    expect(mockSendWhatsApp).toHaveBeenCalledWith('+15551234567', 'Daily briefing.');
+  });
+
+  it('does NOT fallback if the text channel itself fails (no infinite loop)', async () => {
+    // Sanity: text-channel rejections must surface — we shouldn't catch &
+    // re-text our way into an infinite retry. The 'text' branch
+    // short-circuits at the top of sendBriefing, before the try/catch.
+    mockSendWhatsApp.mockRejectedValueOnce(new Error('Meta API rate-limited'));
+    await expect(sendBriefing('+15551234567', 'Daily briefing.', 'text', 'rest-1'))
+      .rejects.toThrow(/rate-limited/);
+    expect(mockSendWhatsApp).toHaveBeenCalledTimes(1);
+  });
+});

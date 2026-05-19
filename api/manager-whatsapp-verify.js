@@ -70,7 +70,7 @@ module.exports = async (req, res) => {
       const { data, error } = await supabaseAdmin
         .schema('restaurant')
         .from('restaurant_config')
-        .select('manager_whatsapp_code, manager_whatsapp_code_expires_at')
+        .select('manager_phone, manager_whatsapp_code, manager_whatsapp_code_expires_at')
         .eq('id', restaurantId)
         .single();
 
@@ -88,11 +88,50 @@ module.exports = async (req, res) => {
         return res.status(400).json({ error: 'Invalid verification code' });
       }
 
-      await supabaseAdmin
+      // Cross-tenant phone collision guard. Before this check, restaurant
+      // B could verify the SAME phone restaurant A already owns; the
+      // confirm UPDATE would silently flip the row association and
+      // restaurant A's manager would be locked out of their own
+      // WhatsApp channel with no audit trail. Now we explicitly reject
+      // duplicates. The partial unique index
+      // `manager_phone_verified_unique` is the atomic safety net under
+      // this — catches the race when two confirms land within the same
+      // ms — but the friendly 409 here is what users actually see.
+      if (data.manager_phone) {
+        const { data: existing, error: existingErr } = await supabaseAdmin
+          .schema('restaurant')
+          .from('restaurant_config')
+          .select('id')
+          .eq('manager_phone', data.manager_phone)
+          .eq('manager_whatsapp_verified', true)
+          .neq('id', restaurantId)
+          .maybeSingle();
+        if (existingErr) throw new Error(existingErr.message);
+        if (existing) {
+          return res.status(409).json({
+            error: 'Phone already linked to another restaurant. Use a different number or contact support to release it.',
+            code: 'manager_phone_taken',
+          });
+        }
+      }
+
+      const { error: updateError } = await supabaseAdmin
         .schema('restaurant')
         .from('restaurant_config')
         .update({ manager_whatsapp_verified: true, manager_whatsapp_code: null, manager_whatsapp_code_expires_at: null })
         .eq('id', restaurantId);
+
+      // Postgres unique-violation = 23505. Surface a 409 so the client
+      // can distinguish "taken by someone else" from any other failure.
+      if (updateError) {
+        if (updateError.code === '23505') {
+          return res.status(409).json({
+            error: 'Phone already linked to another restaurant. Use a different number or contact support to release it.',
+            code: 'manager_phone_taken',
+          });
+        }
+        throw new Error(updateError.message);
+      }
 
       return res.json({ verified: true });
     }

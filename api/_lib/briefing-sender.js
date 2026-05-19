@@ -43,16 +43,41 @@ function stripMarkdownForTTS(md) {
 
 /**
  * Send a manager briefing via the channel specified in notification_preferences.
+ *
+ * Channel fallback: voice_note and phone_call can fail in ways the text
+ * channel can't (ElevenLabs down, Supabase Storage upload reject, Twilio
+ * call decline, signed URL minted past TTL...). The previous version
+ * propagated those failures up to the cron, which had no try-catch, so
+ * the manager got NOTHING — not even a degraded text version of the
+ * briefing they were waiting for. Now we catch any non-text channel
+ * failure and re-send via plain WhatsApp text. The owner gets the
+ * briefing content; the channel preference just degrades for that send.
+ *
  * @param {string} phone - E.164 phone number
  * @param {string} text - Briefing text
  * @param {'text'|'voice_note'|'phone_call'} channel
  * @param {string} restaurantId
  */
 async function sendBriefing(phone, text, channel, restaurantId) {
-  if (channel === 'phone_call') return sendPhoneCall(phone, text);
-  if (channel === 'voice_note') return sendVoiceNote(phone, text, restaurantId);
-  // Default: text (also covers unknown channels)
-  return sendWhatsAppMessage(phone, text);
+  if (channel === 'text' || !channel) {
+    return sendWhatsAppMessage(phone, text);
+  }
+  try {
+    if (channel === 'phone_call') return await sendPhoneCall(phone, text);
+    if (channel === 'voice_note') return await sendVoiceNote(phone, text, restaurantId);
+    // Unknown channel — fall through to text.
+    return sendWhatsAppMessage(phone, text);
+  } catch (channelErr) {
+    // Channel-specific delivery failed. Log loudly so ops can see the
+    // pattern (e.g. ElevenLabs outage), then degrade to plain text so
+    // the manager doesn't miss the briefing entirely.
+    logger.warn('briefing channel delivery failed, falling back to text', {
+      channel,
+      restaurantId,
+      error: channelErr?.message,
+    });
+    return sendWhatsAppMessage(phone, text);
+  }
 }
 
 async function sendPhoneCall(phone, text) {

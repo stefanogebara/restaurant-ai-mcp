@@ -51,6 +51,10 @@ export default function ManagerAIChatPage() {
   const { t, i18n } = useTranslation();
   const lang = i18n.language as keyof typeof SUGGESTED_PROMPTS;
   const [input, setInput] = useState('');
+  // Track the last message that failed to send so the user can retry with
+  // one click instead of re-typing. Cleared when a fresh send starts (in
+  // onMutate) or when the user starts typing again.
+  const [lastFailedMessage, setLastFailedMessage] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const isFirstScrollRef = useRef(true);
@@ -102,12 +106,18 @@ export default function ManagerAIChatPage() {
       qc.setQueryData<{ history: Message[] }>(['manager-chat-history'], (old) => ({
         history: [...(old?.history || []), { role: 'manager', content: message }],
       }));
+      // Clear any prior failure now that a fresh send is in flight.
+      setLastFailedMessage(null);
       return { previous };
     },
-    onError: (_err, _message, context) => {
+    onError: (_err, message, context) => {
       if (context?.previous) {
         qc.setQueryData(['manager-chat-history'], context.previous);
       }
+      // Remember what failed so the Retry button below can resend without
+      // the user having to re-type their question. Cleared on successful
+      // send (onSuccess) and on every new send attempt (onMutate above).
+      setLastFailedMessage(message);
     },
     onSuccess: ({ reply }, sentMessage, context) => {
       // Rebuild from the pre-mutation snapshot to avoid duplicates caused by
@@ -126,6 +136,8 @@ export default function ManagerAIChatPage() {
       );
       // Also refetch from backend to reconcile (fire-and-forget tracking may lag)
       qc.invalidateQueries({ queryKey: ['manager-usage'] });
+      // Successful send → drop any stale retry hint.
+      setLastFailedMessage(null);
     },
   });
 
@@ -198,9 +210,19 @@ export default function ManagerAIChatPage() {
         </div>
       </div>
 
-      {/* Messages area */}
+      {/* Messages area
+          role="log" + aria-live="polite" announces NEW assistant messages
+          to screen readers without preempting whatever the user was doing.
+          aria-relevant="additions" so the entire history isn't re-read
+          when prior messages re-render. */}
       <div className="flex-1 overflow-y-auto">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 space-y-4">
+        <div
+          className="max-w-3xl mx-auto px-4 sm:px-6 py-6 space-y-4"
+          role="log"
+          aria-live="polite"
+          aria-relevant="additions"
+          aria-label={t('managerAI.conversationLabel', 'Manager AI conversation')}
+        >
           {isLoading && (
             <p className="text-sm text-muted-stone text-center py-12">{t('managerAI.loadingHistory', 'Loading history...')}</p>
           )}
@@ -275,12 +297,27 @@ export default function ManagerAIChatPage() {
             </div>
           )}
 
-          {/* Error state */}
+          {/* Error state — now with a Retry button that resends the
+              exact message that failed, so the user doesn't have to
+              re-type it. The optimistic-append already rolled the
+              failed message back in onError, so retry effectively
+              re-attempts a fresh send. */}
           {sendMutation.isError && (
-            <div className="text-center">
+            <div className="text-center space-y-2" role="alert">
               <p className="text-sm text-red-500 bg-red-50 rounded-xl px-4 py-2 inline-block">
                 {t('managerAI.failedToSend', 'Failed to send. Please try again.')}
               </p>
+              {lastFailedMessage && (
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => sendMutation.mutate(lastFailedMessage)}
+                    className="text-sm font-semibold text-burgundy hover:text-burgundy-dark underline underline-offset-2"
+                  >
+                    {t('managerAI.retry', 'Retry')}
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
