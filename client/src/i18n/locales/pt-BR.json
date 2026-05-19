@@ -58,7 +58,8 @@
     "pause": "Pausar",
     "guests": "convidados",
     "partyOf": "Grupo de {{size}}",
-    "all": "Todos"
+    "all": "Todos",
+    "more": "Mais"
   },
   "navigation": {
     "dashboard": "Painel",

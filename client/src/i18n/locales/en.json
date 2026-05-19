@@ -58,7 +58,8 @@
     "pause": "Pause",
     "guests": "guests",
     "partyOf": "Party of {{size}}",
-    "all": "All"
+    "all": "All",
+    "more": "More"
   },
   "navigation": {
     "dashboard": "Dashboard",

@@ -58,7 +58,8 @@
     "live": "En vivo",
     "nDays": "{{count}} días",
     "select": "Seleccionar",
-    "all": "Todos"
+    "all": "Todos",
+    "more": "Más"
   },
   "navigation": {
     "dashboard": "Panel",
