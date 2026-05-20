@@ -13,6 +13,7 @@ const { createSecureLogger } = require('../_lib/secure-logger');
 const { regeneratePersona } = require('../services/personaGenerator');
 const { initSentry, captureMessage } = require('../_lib/sentry');
 const { logCronRun } = require('../_lib/cron-tracker');
+const { isCronEnabled } = require('../_lib/cron-config');
 initSentry();
 
 const logger = createSecureLogger('CronRefreshProfiles');
@@ -37,6 +38,12 @@ module.exports = async (req, res) => {
   const authHeader = req.headers.authorization;
   if (authHeader !== `Bearer ${cronSecret}`) {
     return res.status(401).json({ error: 'Authentication required' });
+  }
+
+  // Phase U.3 kill switch — ops can disable via cron_config table.
+  if (!(await isCronEnabled('refresh-restaurant-profiles'))) {
+    logger.warn('refresh-restaurant-profiles cron disabled by ops, skipping run');
+    return res.status(200).json({ success: true, skipped: 'disabled_by_ops' });
   }
 
   if (!supabaseAdmin) {

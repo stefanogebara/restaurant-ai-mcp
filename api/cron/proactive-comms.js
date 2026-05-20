@@ -25,6 +25,7 @@ const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { logCronRun } = require('../_lib/cron-tracker');
 const { getAI, AI_MODEL_FAST } = require('../_lib/ai-client');
+const { isCronEnabled } = require('../_lib/cron-config');
 
 const logger = createSecureLogger('CronProactiveComms');
 
@@ -44,6 +45,12 @@ module.exports = async (req, res) => {
   const authHeader = req.headers.authorization;
   if (authHeader !== `Bearer ${cronSecret}`) {
     return res.status(401).json({ error: 'Authentication required' });
+  }
+
+  // Phase U.3 kill switch — ops can disable via cron_config table.
+  if (!(await isCronEnabled('proactive-comms'))) {
+    logger.warn('proactive-comms cron disabled by ops, skipping run');
+    return res.status(200).json({ success: true, skipped: 'disabled_by_ops' });
   }
 
   const stats = {

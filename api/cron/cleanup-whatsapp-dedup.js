@@ -15,6 +15,7 @@
 const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { logCronRun } = require('../_lib/cron-tracker');
+const { isCronEnabled } = require('../_lib/cron-config');
 
 const logger = createSecureLogger('CronCleanupWhatsAppDedup');
 const DEDUP_TTL_HOURS = 24;
@@ -29,6 +30,12 @@ module.exports = async (req, res) => {
   }
   if (req.headers.authorization !== `Bearer ${cronSecret}`) {
     return res.status(401).json({ error: 'Authentication required' });
+  }
+
+  // Phase U.3 kill switch — ops can disable via cron_config table.
+  if (!(await isCronEnabled('cleanup-whatsapp-dedup'))) {
+    logger.warn('cleanup-whatsapp-dedup cron disabled by ops, skipping run');
+    return res.status(200).json({ success: true, skipped: 'disabled_by_ops' });
   }
   if (!supabaseAdmin) {
     return res.status(500).json({ success: false, error: 'Database not configured' });

@@ -9,6 +9,7 @@ const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { slugify } = require('../_lib/seo-html');
 const { logCronRun } = require('../_lib/cron-tracker');
+const { isCronEnabled } = require('../_lib/cron-config');
 const cityHandler = require('../seo/city-cuisine');
 
 const logger = createSecureLogger('warm-seo-cache');
@@ -16,6 +17,12 @@ const logger = createSecureLogger('warm-seo-cache');
 module.exports = async (req, res) => {
   if (req.headers.authorization !== `Bearer ${process.env.CRON_SECRET}`) {
     return res.status(401).json({ error: 'Authentication required' });
+  }
+
+  // Phase U.3 kill switch — ops can disable via cron_config table.
+  if (!(await isCronEnabled('warm-seo-cache'))) {
+    logger.warn('warm-seo-cache cron disabled by ops, skipping run');
+    return res.status(200).json({ success: true, skipped: 'disabled_by_ops' });
   }
 
   // Fetch all unique (city, restaurant_type) pairs from active restaurants

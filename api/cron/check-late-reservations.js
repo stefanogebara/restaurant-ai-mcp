@@ -11,6 +11,8 @@ const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { initSentry, captureMessage } = require('../_lib/sentry');
 const { logCronRun } = require('../_lib/cron-tracker');
+const { localToUtcDate } = require('../_lib/timezone');
+const { isCronEnabled } = require('../_lib/cron-config');
 initSentry();
 
 const logger = createSecureLogger('CronLateReservations');
@@ -33,6 +35,13 @@ module.exports = async (req, res) => {
     return res.status(500).json({ success: false, error: 'Database not configured' });
   }
 
+  // Phase U.3 kill switch — every-15-min fire so ops needs a quick way
+  // to stop it if it starts mass-flagging valid reservations as no-show.
+  if (!(await isCronEnabled('check-late-reservations'))) {
+    logger.warn('check-late-reservations cron disabled by ops, skipping run');
+    return res.status(200).json({ success: true, skipped: 'disabled_by_ops' });
+  }
+
   try {
     logger.info('Starting late reservation check...');
 
@@ -42,20 +51,31 @@ module.exports = async (req, res) => {
     // where the local date may be one day behind UTC after midnight
     const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-    // Calculate time 20 minutes ago
-    const twentyMinutesAgo = new Date(now.getTime() - LATE_THRESHOLD_MINUTES * 60 * 1000);
-    const lateTimeThreshold = twentyMinutesAgo.toTimeString().slice(0, 5); // HH:MM
+    // V.2 timezone fix.
+    //
+    // The previous query computed lateTimeThreshold = `now - 20 min` in
+    // LAMBDA local time (which is UTC on Vercel), then filtered the DB
+    // with `.lte('time', lateTimeThreshold)`. The `time` column stores
+    // each reservation's LOCAL time-of-day, so the comparison was
+    // mixing two different clocks. Concrete bug: a São Paulo restaurant
+    // (UTC-3) booking at 21:00 local = 00:00 UTC next day; at 21:21
+    // local (00:21 UTC) the threshold was '00:01' UTC and the query
+    // filter `time <= '00:01'` against the stored `time='21:00'` failed
+    // → reservation never flagged late.
+    //
+    // Fix: drop the time filter from the DB query (fetch ALL confirmed
+    // unchecked reservations for today/yesterday), then per-row build
+    // the UTC instant from (date, time, restaurant_timezone) and
+    // compare against `now`. Cron fires every 15 minutes, candidate
+    // set per tick is small (a handful of reservations per active
+    // restaurant), so the wider fetch is cheap.
+    logger.info(`Looking for reservations on [${yesterday}, ${today}] across all restaurants`);
 
-    logger.info(`Looking for reservations on [${yesterday}, ${today}] with time <= ${lateTimeThreshold}`);
-
-    // Find all "confirmed" reservations for today (and yesterday UTC for non-UTC timezones)
-    // that haven't been checked in and whose reservation time was more than 20 minutes ago
-    const { data: lateReservations, error } = await supabaseAdmin
+    const { data: candidateReservations, error } = await supabaseAdmin
       .from('reservations')
       .select('id, reservation_id, customer_name, time, table_ids, restaurant_id, status, date')
       .in('date', [today, yesterday])
       .eq('status', 'confirmed')
-      .lte('time', lateTimeThreshold)
       .is('checked_in_at', null);
 
     if (error) {
@@ -66,7 +86,37 @@ module.exports = async (req, res) => {
       });
     }
 
-    logger.info(`Found ${lateReservations?.length || 0} late reservations`);
+    // Pull each involved restaurant's timezone in one batch. Default to
+    // UTC for any row missing a configured tz — that matches the
+    // pre-fix behaviour for those restaurants instead of silently
+    // mis-flagging them.
+    const restaurantIds = [...new Set((candidateReservations || []).map((r) => r.restaurant_id))];
+    const timezoneByRestaurant = {};
+    if (restaurantIds.length > 0) {
+      const { data: tzRows } = await supabaseAdmin
+        .schema('restaurant')
+        .from('restaurant_info')
+        .select('id, timezone')
+        .in('id', restaurantIds);
+      for (const row of (tzRows || [])) {
+        timezoneByRestaurant[row.id] = row.timezone || 'UTC';
+      }
+    }
+
+    // Now filter to TRULY-late rows: reservation_at_utc <= now - 20 min.
+    const lateThresholdMs = now.getTime() - LATE_THRESHOLD_MINUTES * 60 * 1000;
+    const lateReservations = (candidateReservations || []).filter((r) => {
+      const tz = timezoneByRestaurant[r.restaurant_id] || 'UTC';
+      try {
+        const reservationUtc = localToUtcDate(r.date, r.time, tz);
+        return reservationUtc.getTime() <= lateThresholdMs;
+      } catch {
+        // Malformed date/time/tz — skip (don't mass-no-show on bad data).
+        return false;
+      }
+    });
+
+    logger.info(`Found ${lateReservations.length} late reservations (timezone-aware)`);
 
     const markedAsNoShow = [];
     const errors = [];

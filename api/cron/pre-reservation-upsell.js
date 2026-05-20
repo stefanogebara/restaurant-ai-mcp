@@ -22,6 +22,7 @@ const { generateUpsellMessage, buildFallbackMessage } = require('../_lib/upsell-
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { initSentry } = require('../_lib/sentry');
 const { logCronRun } = require('../_lib/cron-tracker');
+const { isCronEnabled } = require('../_lib/cron-config');
 const { getLocalDate } = require('../_lib/timezone');
 
 initSentry();
@@ -55,6 +56,12 @@ module.exports = async (req, res) => {
   const authHeader = req.headers.authorization;
   if (authHeader !== `Bearer ${cronSecret}`) {
     return res.status(401).json({ error: 'Authentication required' });
+  }
+
+  // Phase U.3 kill switch — ops can disable via cron_config table.
+  if (!(await isCronEnabled('pre-reservation-upsell'))) {
+    logger.warn('pre-reservation-upsell cron disabled by ops, skipping run');
+    return res.status(200).json({ success: true, skipped: 'disabled_by_ops' });
   }
 
   if (!supabaseAdmin) {

@@ -11,11 +11,47 @@ const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { initSentry, captureMessage } = require('../_lib/sentry');
 const { logCronRun } = require('../_lib/cron-tracker');
+const { isCronEnabled } = require('../_lib/cron-config');
 initSentry();
 
 const logger = createSecureLogger('CronChurnScores');
 
-const AVG_REVENUE_PER_COVER = 45;
+// V.3 default fallback when a restaurant has no service_records yet.
+// Before, this constant was used for ALL restaurants — wildly wrong for
+// steakhouses (~€100/cover) vs cafés (~€15/cover). The new flow
+// computes a per-restaurant average from service_records.total_bill and
+// only falls back here when the row count is too low for a useful mean.
+const AVG_REVENUE_PER_COVER_DEFAULT = 45;
+const MIN_ROWS_FOR_PER_RESTAURANT_AVG = 5; // need at least 5 closed services
+
+/**
+ * Compute this restaurant's average revenue per cover from the most
+ * recent ~90 days of service_records. Returns the default if not enough
+ * data points to trust the mean (e.g. a new restaurant with 2 services).
+ */
+async function getAvgRevenuePerCover(restaurantId) {
+  try {
+    const ninetyDaysAgo = new Date(Date.now() - 90 * 86400000).toISOString();
+    const { data, error } = await supabaseAdmin
+      .from('service_records')
+      .select('total_bill, party_size')
+      .eq('restaurant_id', restaurantId)
+      .gte('started_at', ninetyDaysAgo)
+      .not('total_bill', 'is', null);
+    if (error || !Array.isArray(data) || data.length < MIN_ROWS_FOR_PER_RESTAURANT_AVG) {
+      return AVG_REVENUE_PER_COVER_DEFAULT;
+    }
+    const totalBill = data.reduce((s, r) => s + (r.total_bill || 0), 0);
+    const totalCovers = data.reduce((s, r) => s + (r.party_size || 1), 0);
+    if (totalCovers === 0) return AVG_REVENUE_PER_COVER_DEFAULT;
+    const avg = totalBill / totalCovers;
+    // Sanity-clamp to a reasonable band so a single garbage row (€10,000
+    // typo for a wedding event) doesn't blow up every LTV downstream.
+    return Math.max(5, Math.min(500, avg));
+  } catch {
+    return AVG_REVENUE_PER_COVER_DEFAULT;
+  }
+}
 
 /**
  * Calculate and upsert LTV + churn scores for all customers of a single restaurant.
@@ -23,6 +59,8 @@ const AVG_REVENUE_PER_COVER = 45;
  */
 async function refreshLTVForRestaurant(restaurantId) {
   const now = new Date();
+  // V.3 per-restaurant avg revenue (was hardcoded €45 for every tenant).
+  const avgRevenuePerCover = await getAvgRevenuePerCover(restaurantId);
 
   const { data: reservations, error } = await supabaseAdmin
     .from('reservations')
@@ -59,7 +97,7 @@ async function refreshLTVForRestaurant(restaurantId) {
     const visits = cust.visits.sort((a, b) => a - b);
     const total_visits = visits.length;
     const avg_party = cust.party_sizes.reduce((s, p) => s + p, 0) / cust.party_sizes.length;
-    const avg_revenue = avg_party * AVG_REVENUE_PER_COVER;
+    const avg_revenue = avg_party * avgRevenuePerCover;
     const total_revenue = total_visits * avg_revenue;
 
     let avg_days = null;
@@ -102,7 +140,7 @@ async function refreshLTVForRestaurant(restaurantId) {
         avg_party_size: Math.round(avg_party * 10) / 10,
         avg_revenue_per_visit: Math.round(avg_revenue),
         total_revenue: Math.round(total_revenue),
-        highest_single_visit_revenue: Math.round(Math.max(...cust.party_sizes) * AVG_REVENUE_PER_COVER),
+        highest_single_visit_revenue: Math.round(Math.max(...cust.party_sizes) * avgRevenuePerCover),
         lifetime_value: Math.round(lifetime_value),
         churn_risk_score: churn,
         customer_tier: tier,
@@ -130,6 +168,12 @@ module.exports = async (req, res) => {
   if (!supabaseAdmin) {
     logger.error('Supabase admin client not available');
     return res.status(500).json({ success: false, error: 'Database not configured' });
+  }
+
+  // Phase U.3 kill switch.
+  if (!(await isCronEnabled('update-churn-scores'))) {
+    logger.warn('update-churn-scores cron disabled by ops, skipping run');
+    return res.status(200).json({ success: true, skipped: 'disabled_by_ops' });
   }
 
   try {

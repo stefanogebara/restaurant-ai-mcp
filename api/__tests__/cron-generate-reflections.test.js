@@ -137,8 +137,20 @@ describe('cron/generate-reflections', () => {
       }),
     };
 
+    // Phase V.5 adds an isCronEnabled() lookup that hits
+    // supabaseAdmin.from('cron_config') BEFORE the real queries. The
+    // kill-switch helper is fail-open, so any chain that doesn't match
+    // (or that throws) just defaults to enabled=true — we ignore that
+    // call here and count only the queries the cron actually cares
+    // about. Filter by table name so the test stays stable across new
+    // pre-query hooks.
     let callCount = 0;
-    mockFrom.mockImplementation(() => {
+    mockFrom.mockImplementation((table) => {
+      if (table === 'cron_config') {
+        // Fail-open path: return a chain that won't match maybeSingle().
+        // The thrown TypeError is swallowed by getCronConfig().
+        return { select: () => ({ eq: () => ({ maybeSingle: () => Promise.resolve({ data: null, error: null }) }) }) };
+      }
       callCount++;
       if (callCount === 1) return candidateChain;
       return observationChain;

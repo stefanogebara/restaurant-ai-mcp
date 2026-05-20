@@ -1,8 +1,26 @@
 var mockFrom = jest.fn();
+var mockSchema = jest.fn();
 var mockSupabaseAdmin = {
   from: mockFrom,
-  schema: jest.fn(),
+  schema: mockSchema,
 };
+
+// V.2 fetches each reservation's restaurant timezone via
+//   supabaseAdmin.schema('restaurant').from('restaurant_info')...
+// Default the schema mock to return UTC for every restaurant_id so
+// tests don't need to wire it up per case.
+function defaultSchemaMock() {
+  return {
+    from: jest.fn().mockReturnValue({
+      select: jest.fn().mockReturnValue({
+        in: jest.fn().mockResolvedValue({
+          data: [{ id: 'rest-1', timezone: 'UTC' }],
+          error: null,
+        }),
+      }),
+    }),
+  };
+}
 
 jest.mock('../_lib/supabase', () => ({ supabaseAdmin: mockSupabaseAdmin }));
 jest.mock('../_lib/secure-logger', () => ({
@@ -28,7 +46,10 @@ function mockRes() {
 
 beforeAll(() => { process.env.CRON_SECRET = 'test-cron-secret'; });
 afterAll(() => { delete process.env.CRON_SECRET; });
-beforeEach(() => jest.clearAllMocks());
+beforeEach(() => {
+  jest.clearAllMocks();
+  mockSchema.mockImplementation(defaultSchemaMock);
+});
 
 describe('cron/check-late-reservations', () => {
   test('returns 401 for wrong CRON_SECRET', async () => {
@@ -39,13 +60,13 @@ describe('cron/check-late-reservations', () => {
   });
 
   test('returns 200 with 0 no-shows when no late reservations', async () => {
+    // V.2 chain: select → in → eq → is (no .lte — that filtered local
+    // time-of-day against UTC wall clock, which was the timezone bug).
     mockFrom.mockReturnValue({
       select: jest.fn().mockReturnValue({
         in: jest.fn().mockReturnValue({
           eq: jest.fn().mockReturnValue({
-            lte: jest.fn().mockReturnValue({
-              is: jest.fn().mockResolvedValue({ data: [], error: null }),
-            }),
+            is: jest.fn().mockResolvedValue({ data: [], error: null }),
           }),
         }),
       }),
@@ -66,16 +87,14 @@ describe('cron/check-late-reservations', () => {
       time: '18:00', table_ids: ['t1'], restaurant_id: 'rest-1', status: 'confirmed', date: '2026-04-08',
     }];
 
-    // For the SELECT query
+    // For the SELECT query — V.2 chain is select→in→eq→is (no .lte).
     mockFrom.mockImplementation((table) => {
       if (table === 'reservations') {
         return {
           select: jest.fn().mockReturnValue({
             in: jest.fn().mockReturnValue({
               eq: jest.fn().mockReturnValue({
-                lte: jest.fn().mockReturnValue({
-                  is: jest.fn().mockResolvedValue({ data: lateRes, error: null }),
-                }),
+                is: jest.fn().mockResolvedValue({ data: lateRes, error: null }),
               }),
             }),
           }),
@@ -110,9 +129,7 @@ describe('cron/check-late-reservations', () => {
       select: jest.fn().mockReturnValue({
         in: jest.fn().mockReturnValue({
           eq: jest.fn().mockReturnValue({
-            lte: jest.fn().mockReturnValue({
-              is: jest.fn().mockResolvedValue({ data: null, error: { message: 'Connection lost' } }),
-            }),
+            is: jest.fn().mockResolvedValue({ data: null, error: { message: 'Connection lost' } }),
           }),
         }),
       }),

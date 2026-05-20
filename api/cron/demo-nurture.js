@@ -14,6 +14,7 @@ const { createSecureLogger } = require('../_lib/secure-logger');
 const { initSentry, captureMessage } = require('../_lib/sentry');
 const { Resend } = require('resend');
 const { logCronRun } = require('../_lib/cron-tracker');
+const { isCronEnabled } = require('../_lib/cron-config');
 
 initSentry();
 const logger = createSecureLogger('CronDemoNurture');
@@ -250,6 +251,12 @@ module.exports = async (req, res) => {
     return res.status(401).json({ error: 'Authentication required' });
   }
 
+  // Phase U.3 kill switch — ops can disable via cron_config table.
+  if (!(await isCronEnabled('demo-nurture'))) {
+    logger.warn('demo-nurture cron disabled by ops, skipping run');
+    return res.status(200).json({ success: true, skipped: 'disabled_by_ops' });
+  }
+
   // Verify Supabase admin client is available
   if (!supabaseAdmin) {
     logger.error('supabaseAdmin not initialized - missing Supabase credentials');
@@ -351,9 +358,23 @@ module.exports = async (req, res) => {
      * Process a batch of demos: send emails sequentially (Resend rate limit),
      * then batch-update all successful IDs in a single DB call.
      */
+    /**
+     * V.4 fix: claim-then-send, with rollback on failure.
+     *
+     * Previously the batch sent ALL emails first, THEN updated the dedup
+     * column at the end. If Vercel retried after Resend success but before
+     * the batch DB write, every email in the batch went out twice on the
+     * retry. Now the order is:
+     *
+     *   1. Compare-and-set the dedup column to NOW WHERE col IS NULL.
+     *      If 0 rows updated, somebody else already claimed this slot
+     *      (concurrent invocation or in-flight retry) — skip silently.
+     *   2. Fire the Resend send.
+     *   3. If send fails, NULL the column back so the next cron run can
+     *      retry. This gives at-most-once delivery semantics: each demo
+     *      either gets one email or none, never two.
+     */
     async function processDemoBatch(demos, sendFn, dedupCol, dayKey) {
-      const successIds = [];
-
       for (const demo of (demos || [])) {
         if (!demo.demo_contact_email) {
           logger.info(`Skipping ${dayKey} for demo ${demo.id} — no contact email`);
@@ -361,6 +382,31 @@ module.exports = async (req, res) => {
           continue;
         }
 
+        // Step 1: atomically claim the dedup slot. Filter on `dedupCol IS NULL`
+        // so the UPDATE only fires when nobody else has sent this email yet.
+        const { data: claimed, error: claimErr } = await supabaseAdmin
+          .schema('restaurant')
+          .from('restaurant_config')
+          .update({ [dedupCol]: nowIso })
+          .eq('id', demo.id)
+          .is(dedupCol, null)
+          .select('id');
+
+        if (claimErr) {
+          logger.error(`Failed to claim ${dedupCol} for demo ${demo.id}:`, claimErr.message);
+          results[dayKey].failed++;
+          await sleep(100);
+          continue;
+        }
+        if (!claimed || claimed.length === 0) {
+          // Already sent (or being sent by another instance). Skip.
+          results[dayKey].skipped++;
+          continue;
+        }
+
+        // Step 2: fire the send. Slot is already claimed, so a Vercel
+        // retry that lands here AFTER the send will find the column
+        // populated and skip via the .is(dedupCol, null) filter above.
         const emailResult = await sendFn({
           contactName: demo.demo_contact_name || 'there',
           contactEmail: demo.demo_contact_email,
@@ -370,24 +416,22 @@ module.exports = async (req, res) => {
 
         if (emailResult.success) {
           results[dayKey].sent++;
-          successIds.push(demo.id);
         } else {
+          // Step 3: rollback the claim so a future run can retry this
+          // customer. Without the rollback a transient Resend error
+          // (500, rate-limit) would permanently mark the demo as
+          // "nurtured" with no email actually delivered.
           results[dayKey].failed++;
+          const { error: rollbackErr } = await supabaseAdmin
+            .schema('restaurant')
+            .from('restaurant_config')
+            .update({ [dedupCol]: null })
+            .eq('id', demo.id);
+          if (rollbackErr) {
+            logger.warn(`Send failed AND rollback failed for demo ${demo.id} — manual fix needed:`, rollbackErr.message);
+          }
         }
         await sleep(100);
-      }
-
-      // Batch-update all successful sends in a single DB call
-      if (successIds.length > 0) {
-        const { error: updateError } = await supabaseAdmin
-          .schema('restaurant')
-          .from('restaurant_config')
-          .update({ [dedupCol]: nowIso })
-          .in('id', successIds);
-
-        if (updateError) {
-          logger.error(`Failed to batch-update ${dedupCol} for ${successIds.length} demos:`, updateError.message);
-        }
       }
     }
 

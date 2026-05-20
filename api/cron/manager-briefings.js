@@ -78,14 +78,29 @@ module.exports = async (req, res) => {
     }
 
     // Filter in JS: verified + has the right preference enabled
-    const eligible = (configs || []).filter((c) =>
+    const eligibleRaw = (configs || []).filter((c) =>
       c.manager_whatsapp_verified === true && c.notification_preferences?.[prefKey]
     );
 
-    // No hard restaurant cap — process all eligible briefings until the time
-    // budget runs out. Earlier behaviour (MAX_RESTAURANTS=3) silently dropped
-    // every 4th+ restaurant on every cron run, even when time remained.
-    // Vercel max is 60s; reserve ~15s for tail flushing → 45s working budget.
+    // V.1 Round-robin fairness. Before this shuffle, the eligible list came
+    // back in DB row order — same first N restaurants got processed every
+    // run, restaurant N+1 NEVER received briefings if the time budget kept
+    // cutting off before reaching it. Shuffling once per invocation
+    // distributes the cut-off across the population over many runs, so
+    // every restaurant gets briefed eventually rather than some always
+    // and some never.
+    const eligible = eligibleRaw
+      .map((c) => ({ c, sort: Math.random() }))
+      .sort((a, b) => a.sort - b.sort)
+      .map((x) => x.c);
+
+    // V.1 Fail-safe hard cap. Even with the elapsed-time guard below, a
+    // misconfigured PER_RESTAURANT_TIMEOUT or a hung LLM call could let
+    // a single invocation run past 60s and get killed by Vercel mid-write
+    // (corrupting briefing dedup state). The cap is a belt around the
+    // elapsed-time suspenders: we will NEVER attempt more than 50
+    // restaurants in one run, regardless of remaining budget.
+    const MAX_RESTAURANTS_PER_RUN = 50;
     const TIME_BUDGET_MS = 45_000;
     const PER_RESTAURANT_TIMEOUT = 25_000; // 25s per restaurant — fits 2-3 in 60s
     const startTime = Date.now();
@@ -93,6 +108,20 @@ module.exports = async (req, res) => {
     let sent = 0;
     let processed = 0;
     for (const config of eligible) {
+      // V.1 Hard cap: never attempt more than MAX_RESTAURANTS_PER_RUN in a
+      // single invocation. At 25s timeout each, even a worst-case run is
+      // bounded; combined with the elapsed-time check below, this keeps
+      // us well clear of Vercel's 60s kill.
+      if (processed >= MAX_RESTAURANTS_PER_RUN) {
+        logger.warn('Hard cap MAX_RESTAURANTS_PER_RUN reached, stopping', {
+          sent,
+          processed,
+          cap: MAX_RESTAURANTS_PER_RUN,
+          eligible: eligible.length,
+          dropped: eligible.length - processed,
+        });
+        break;
+      }
       processed++;
       // Time budget guard: stop if less than 15s remaining. The next cron run
       // (12h later for end-of-day, 24h for morning) will retry — but log loud
