@@ -8,7 +8,7 @@ const { supabase, handleSupabaseResponse } = require('./clients');
 // ============ SUBSCRIPTIONS ============
 
 const getSubscriptions = async (restaurantId, filter = {}) => {
-  let query = supabase.from('subscriptions').select('id, subscription_id, customer_id, customer_email, plan_name, price_id, status, current_period_start, current_period_end, trial_end, canceled_at, created_at')
+  let query = supabase.from('subscriptions').select('id, subscription_id, customer_id, customer_email, plan_name, price_id, status, current_period_start, current_period_end, trial_end, canceled_at, downgrade_grace_until, created_at')
     .eq('restaurant_id', restaurantId)
     .order('created_at', { ascending: false });
 
@@ -81,7 +81,7 @@ const getSubscriptionByEmail = async (restaurantId, email) => {
   // First, try to get from subscriptions table
   const { data: subscriptions, error: subError } = await supabase
     .from('subscriptions')
-    .select('id, subscription_id, customer_id, customer_email, plan_name, price_id, status, current_period_start, current_period_end, trial_end, canceled_at, created_at')
+    .select('id, subscription_id, customer_id, customer_email, plan_name, price_id, status, current_period_start, current_period_end, trial_end, canceled_at, downgrade_grace_until, created_at')
     .eq('restaurant_id', restaurantId)
     .eq('customer_email', email)
     .limit(1);
@@ -205,6 +205,7 @@ const updateSubscription = async (restaurantId, subscriptionId, fields) => {
   if (fields['Plan Name']) updates.plan_name = fields['Plan Name'];
   if (fields['Price ID']) updates.price_id = fields['Price ID'];
   if ('Trial End' in fields) updates.trial_end = fields['Trial End']; // explicit null is meaningful
+  if ('Downgrade Grace Until' in fields) updates.downgrade_grace_until = fields['Downgrade Grace Until']; // null on clear
 
   const { data, error } = await supabase
     .from('subscriptions')

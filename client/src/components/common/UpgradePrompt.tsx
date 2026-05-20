@@ -1,7 +1,8 @@
 import { useTranslation } from 'react-i18next';
 import ThiingsIcon from './ThiingsIcon';
 import { PLAN_NAMES, getPlanPrices, type PlanType } from '../../config/planFeatures';
-import { currencyFromLanguage, formatPriceLocale } from '../../utils/currency';
+import { currencyFromLanguage, formatPriceLocale, type SupportedCurrency } from '../../utils/currency';
+import { useSubscriptionData } from '../../hooks/useSubscriptionManage';
 
 interface UpgradePromptProps {
   requiredPlan: PlanType;
@@ -12,7 +13,16 @@ interface UpgradePromptProps {
 export default function UpgradePrompt({ requiredPlan, feature, description }: UpgradePromptProps) {
   const { t, i18n } = useTranslation();
   const planName = PLAN_NAMES[requiredPlan];
-  const currency = currencyFromLanguage(i18n.language);
+  // T.2 currency parity: an authenticated owner sees an upgrade prompt
+  // because they're already a customer. Show the price in THEIR billing
+  // currency (from the subscription record), not the language-derived
+  // currency — otherwise an English-speaking BR-billed owner sees $97
+  // here but gets charged R$497 at checkout. Falls back to language-
+  // derived currency only if the subscription hasn't loaded yet
+  // (e.g. on the first paint before useSubscriptionData resolves).
+  const { data: subscription } = useSubscriptionData();
+  const currency: SupportedCurrency =
+    (subscription?.currency as SupportedCurrency | undefined) ?? currencyFromLanguage(i18n.language);
   const prices = getPlanPrices(currency);
   const price = prices[requiredPlan as keyof typeof prices];
   const priceDisplay = price ? formatPriceLocale(price, currency) : '';

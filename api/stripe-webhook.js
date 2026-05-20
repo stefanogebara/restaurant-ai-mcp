@@ -2,7 +2,7 @@ const Stripe = require('stripe');
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 const { createSecureLogger } = require('./_lib/secure-logger');
 const logger = createSecureLogger('StripeWebhook');
-const { getPlanFromPriceId } = require('./services/subscription-limits');
+const { getPlanFromPriceId, getPlanLimits } = require('./services/subscription-limits');
 const {
   createSubscription,
   updateSubscription,
@@ -409,14 +409,67 @@ module.exports = async (req, res) => {
           break;
         }
 
-        const updateResult = await updateSubscription(updateRestaurantId, subscriptionUpdated.id, {
+        // T.1 Downgrade detection. Read the previous plan from our DB and
+        // compare its monthly reservation limit against the new plan's.
+        // If the new limit is strictly lower (downgrade), set
+        // downgrade_grace_until = current_period_end so the middleware
+        // continues soft-billing overages until the period closes. After
+        // that the middleware hard-blocks at the new limit. If the new
+        // limit is HIGHER or equal (upgrade or same), clear any in-flight
+        // grace from a prior downgrade.
+        let downgradeGraceValue = null;       // value to write (ISO string or null)
+        let hasDowngradeDecision = false;     // whether to include the key
+        try {
+          const { data: prevSub } = await supabase
+            .from('subscriptions')
+            .select('plan_name, downgrade_grace_until')
+            .eq('subscription_id', subscriptionUpdated.id)
+            .maybeSingle();
+          if (prevSub?.plan_name && updatedPlanName) {
+            const prevLimit = getPlanLimits(prevSub.plan_name)?.maxReservationsPerMonth ?? -1;
+            const newLimit = getPlanLimits(updatedPlanName)?.maxReservationsPerMonth ?? -1;
+            // -1 = unlimited. Any → unlimited is an upgrade.
+            const isDowngrade = newLimit !== -1 && (prevLimit === -1 || newLimit < prevLimit);
+            if (isDowngrade) {
+              hasDowngradeDecision = true;
+              downgradeGraceValue = new Date(subscriptionUpdated.current_period_end * 1000).toISOString();
+              logger.info('Downgrade detected — extending soft-bill grace to period end', {
+                metric: 'downgrade_grace_set',
+                restaurantId: updateRestaurantId,
+                prevPlan: prevSub.plan_name,
+                newPlan: updatedPlanName,
+                prevLimit,
+                newLimit,
+                graceUntil: downgradeGraceValue,
+              });
+            } else if (prevSub.downgrade_grace_until) {
+              hasDowngradeDecision = true;
+              downgradeGraceValue = null;
+              logger.info('Plan upgraded/unchanged — clearing downgrade grace', {
+                metric: 'downgrade_grace_cleared',
+                restaurantId: updateRestaurantId,
+                prevPlan: prevSub.plan_name,
+                newPlan: updatedPlanName,
+              });
+            }
+          }
+        } catch (graceErr) {
+          logger.warn('Downgrade detection failed (non-fatal)', { error: graceErr?.message });
+        }
+
+        const subscriptionUpdateFields = {
           'Plan Name': updatedPlanName || 'unknown',
           'Price ID': updatedPriceId,
           'Status': subscriptionUpdated.status,
           'Current Period Start': new Date(subscriptionUpdated.current_period_start * 1000).toISOString().split('T')[0],
           'Current Period End': new Date(subscriptionUpdated.current_period_end * 1000).toISOString().split('T')[0],
           'Trial End': subscriptionUpdated.trial_end ? new Date(subscriptionUpdated.trial_end * 1000).toISOString().split('T')[0] : null,
-        });
+        };
+        if (hasDowngradeDecision) {
+          subscriptionUpdateFields['Downgrade Grace Until'] = downgradeGraceValue;
+        }
+
+        const updateResult = await updateSubscription(updateRestaurantId, subscriptionUpdated.id, subscriptionUpdateFields);
 
         if (!updateResult.success) {
           logger.error('Failed to update subscription in database:', updateResult.message);

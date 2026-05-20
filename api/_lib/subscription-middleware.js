@@ -180,7 +180,34 @@ async function checkReservationLimits(req, res, next) {
     req.reservationLimit = limitCheck;
 
     if (!limitCheck.allowed) {
-      // Soft limit: allow overage but flag it for billing
+      // T.1 Grace-window enforcement.
+      //
+      // Previously: always soft-billed overage — the request was let
+      // through with isOverage=true, and the customer found out at the
+      // next invoice. After a downgrade this meant the customer kept
+      // the higher-plan usage forever, defeating the purpose of
+      // choosing a smaller plan.
+      //
+      // Now: if there's no downgrade in flight (or grace hasn't started)
+      // we still soft-bill (status quo for organic growth past the
+      // limit). But if downgrade_grace_until has PASSED, we hard-block
+      // — they downgraded, the grace period gave them the rest of the
+      // current cycle, and now the new plan's limit is binding.
+      const grace = req.subscription.downgrade_grace_until;
+      const graceActive = grace && new Date(grace).getTime() > Date.now();
+      if (grace && !graceActive) {
+        // Grace has expired and we're still over the new plan's limit.
+        return res.status(402).json({
+          error: 'Plan limit reached',
+          message: `Your ${plan} plan allows ${limitCheck.limit} reservations per month and you've reached the limit. Upgrade or wait for the next billing period.`,
+          plan,
+          limit: limitCheck.limit,
+          used: currentMonthReservations,
+          upgrade_url: `${process.env.CLIENT_URL || 'https://seatable.one'}/#pricing`,
+          metric: 'limit_blocked_post_downgrade',
+        });
+      }
+      // Soft limit: allow overage but flag it for billing.
       req.isOverage = true;
       req.overageCount = currentMonthReservations - limitCheck.limit + 1;
       req.overagePlan = plan;
@@ -241,7 +268,7 @@ async function checkSubscriptionByRestaurantId(restaurantId) {
     // 1. Check subscriptions table
     const { data: subscriptions, error: subError } = await supabaseAdmin
       .from('subscriptions')
-      .select('id, restaurant_id, plan_name, status, subscription_id, customer_id, trial_end, current_period_end, canceled_at, created_at, updated_at')
+      .select('id, restaurant_id, plan_name, status, subscription_id, customer_id, trial_end, current_period_end, canceled_at, downgrade_grace_until, created_at, updated_at')
       .eq('restaurant_id', restaurantId)
       .order('created_at', { ascending: false })
       .limit(1);
