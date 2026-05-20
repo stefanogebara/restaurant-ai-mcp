@@ -563,7 +563,6 @@
     "lookingUp": "Buscando...",
     "lookUpReservation": "Buscar Reserva",
     "yourReservation": "Sua Reserva",
-    "confirmationId": "ID de Confirmação",
     "editReservation": "Editar Reserva",
     "cancelReservation": "Cancelar Reserva",
     "lookUpAnother": "Buscar outra reserva",
@@ -1547,11 +1546,6 @@
     "analyticsBriefingLabel": "Análises diárias via WhatsApp",
     "analyticsBriefingDesc": "Receba um resumo diário às 9h com visitantes, funil de demo e métricas de conversão",
     "analyticsBriefingPhone": "Número do WhatsApp para o briefing",
-    "phoneStatus": {
-      "EXPIRED": "EXPIRADO",
-      "NOT_VERIFIED": "NÃO VERIFICADO",
-      "VERIFIED": "VERIFICADO"
-    },
     "loadError": "Falha ao carregar configurações do restaurante."
   },
   "tableLayout": {
@@ -1687,7 +1681,7 @@
     "downgrade": "Rebaixar",
     "ownerOnly": "Apenas o proprietário do restaurante pode gerenciar a assinatura.",
     "needHelp": "Precisa de ajuda?",
-    "contactSupport": "Contate nossa equipe de suporte",
+    "contactSupportLink": "Contate nossa equipe de suporte",
     "starterName": "Essencial",
     "starterPrice": "R$497",
     "starterDesc": "WhatsApp AI + reservas para seu restaurante.",
@@ -1954,7 +1948,6 @@
     "troubleshoot": "Solução de problemas",
     "troubleshootAriaLabel": "Abrir ferramentas de suporte técnico",
     "troubleshootHint": "Para equipe de suporte — verifica se a IA está configurada corretamente.",
-    "disconnect": "Desconectar",
     "disconnecting": "Desconectando...",
     "refreshStatus": "Atualizar Status",
     "agentDiagnostics": "Diagnóstico do Agente",
@@ -3508,12 +3501,5 @@
     "statusPast": "Encerrado",
     "statusFull": "Lotado",
     "statusUpcoming": "Próximo"
-  },
-  "strategy": {
-    "noShowRate": "Taxa de No-show",
-    "avgRevenue": "Receita Média / Couvert",
-    "conversionRate": "Taxa de Conversão",
-    "target": "meta",
-    "notEnoughData": "Dados insuficientes"
   }
 }

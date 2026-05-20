@@ -562,7 +562,6 @@
     "lookingUp": "Looking up...",
     "lookUpReservation": "Look Up Reservation",
     "yourReservation": "Your Reservation",
-    "confirmationId": "Confirmation",
     "editReservation": "Edit Reservation",
     "cancelReservation": "Cancel Reservation",
     "reservationCancelled": "This reservation has been cancelled",
@@ -1546,11 +1545,6 @@
     "analyticsBriefingLabel": "Daily analytics via WhatsApp",
     "analyticsBriefingDesc": "Receive a daily summary at 9 AM with visitors, demo funnel, and conversion metrics",
     "analyticsBriefingPhone": "WhatsApp number for briefing",
-    "phoneStatus": {
-      "EXPIRED": "EXPIRED",
-      "NOT_VERIFIED": "NOT VERIFIED",
-      "VERIFIED": "VERIFIED"
-    },
     "loadError": "Failed to load restaurant settings."
   },
   "tableLayout": {
@@ -1686,7 +1680,7 @@
     "downgrade": "Downgrade",
     "ownerOnly": "Only the restaurant owner can manage the subscription.",
     "needHelp": "Need help?",
-    "contactSupport": "Contact our support team",
+    "contactSupportLink": "Contact our support team",
     "starterName": "Essential",
     "starterPrice": "$97",
     "starterDesc": "WhatsApp AI + reservations for your restaurant.",
@@ -1948,7 +1942,6 @@
     "troubleshoot": "Troubleshooting",
     "troubleshootAriaLabel": "Open troubleshooting tools (for support)",
     "troubleshootHint": "For support staff — checks the AI is configured correctly.",
-    "disconnect": "Disconnect",
     "disconnecting": "Disconnecting...",
     "refreshStatus": "Refresh Status",
     "agentDiagnostics": "Agent Diagnostics",
@@ -3494,12 +3487,5 @@
     "statusPast": "Past",
     "statusFull": "Full",
     "statusUpcoming": "Upcoming"
-  },
-  "strategy": {
-    "noShowRate": "No-show Rate",
-    "avgRevenue": "Avg Revenue / Cover",
-    "conversionRate": "Conversion Rate",
-    "target": "target",
-    "notEnoughData": "Not enough data yet"
   }
 }

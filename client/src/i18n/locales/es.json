@@ -561,7 +561,6 @@
     "lookingUp": "Buscando...",
     "lookUpReservation": "Buscar Reserva",
     "yourReservation": "Tu Reserva",
-    "confirmationId": "Confirmación",
     "editReservation": "Editar Reserva",
     "cancelReservation": "Cancelar Reserva",
     "reservationCancelled": "Esta reserva ha sido cancelada",
@@ -1546,11 +1545,6 @@
     "analyticsBriefingLabel": "Analíticas diarias por WhatsApp",
     "analyticsBriefingDesc": "Recibe un resumen diario a las 9:00 con visitas, embudo de demo y métricas de conversión",
     "analyticsBriefingPhone": "Número de WhatsApp para el informe",
-    "phoneStatus": {
-      "EXPIRED": "EXPIRADO",
-      "NOT_VERIFIED": "NO VERIFICADO",
-      "VERIFIED": "VERIFICADO"
-    },
     "loadError": "Error al cargar la configuración del restaurante."
   },
   "customers": {
@@ -1661,7 +1655,7 @@
     "downgrade": "Bajar plan",
     "ownerOnly": "Solo el propietario del restaurante puede gestionar la suscripción.",
     "needHelp": "¿Necesitas ayuda?",
-    "contactSupport": "Contacta a nuestro equipo de soporte",
+    "contactSupportLink": "Contacta a nuestro equipo de soporte",
     "starterName": "Inicial",
     "starterPrice": "€89",
     "starterDesc": "WhatsApp AI + reservas para tu restaurante.",
@@ -2821,7 +2815,6 @@
     "troubleshoot": "Solución de problemas",
     "troubleshootAriaLabel": "Abrir herramientas de soporte técnico",
     "troubleshootHint": "Para personal de soporte — verifica que la IA esté bien configurada.",
-    "disconnect": "Desconectar",
     "disconnecting": "Desconectando...",
     "refreshStatus": "Actualizar Estado",
     "agentDiagnostics": "Diagnósticos del Agente",
