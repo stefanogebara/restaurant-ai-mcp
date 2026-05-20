@@ -83,11 +83,51 @@ describe('cron/cleanup-expired-demos', () => {
       }),
     }));
 
-    // Mock dependent table deletes and reservations delete
-    mockFrom.mockReturnValue({
-      delete: jest.fn().mockReturnValue({
-        eq: jest.fn().mockResolvedValue({ error: null, count: 5 }),
-      }),
+    // Mock per-table to cover BOTH shapes the cron uses on public schema:
+    //  - delete().eq()       — dependent tables + reservations + tables
+    //  - delete().in()       — ml_interventions (by reservation_id list)
+    //  - select('id').eq()   — reservations lookup that feeds ml_interventions
+    //  - select.eq.maybeSingle — V.5 cron_config kill-switch probe
+    mockFrom.mockImplementation((table) => {
+      if (table === 'cron_config') {
+        // V.5 kill switch: return a chain whose maybeSingle resolves
+        // to no row → fail-open, cron stays enabled.
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+            }),
+          }),
+        };
+      }
+      if (table === 'reservations') {
+        // Cron calls both `.select('id').eq(...)` (to feed ml_interventions
+        // cleanup) AND `.delete({count}).eq(...)` (to delete rows).
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockResolvedValue({
+              data: [{ id: 'res-1' }, { id: 'res-2' }],
+              error: null,
+            }),
+          }),
+          delete: jest.fn().mockReturnValue({
+            eq: jest.fn().mockResolvedValue({ error: null, count: 2 }),
+          }),
+        };
+      }
+      if (table === 'ml_interventions') {
+        return {
+          delete: jest.fn().mockReturnValue({
+            in: jest.fn().mockResolvedValue({ error: null }),
+          }),
+        };
+      }
+      // All other dependent tables + final `tables` delete.
+      return {
+        delete: jest.fn().mockReturnValue({
+          eq: jest.fn().mockResolvedValue({ error: null, count: 5 }),
+        }),
+      };
     });
 
     const req = { headers: { authorization: 'Bearer test-cron-secret' } };
