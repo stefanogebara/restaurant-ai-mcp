@@ -620,6 +620,19 @@ async function handleCancelReservation(req, res) {
   }
 
   const result = await toolHandlers.cancelReservation(restaurant.id, { reservation_id });
+
+  // Track cancellation for metered billing — Stripe reporter nets these
+  // against reservation_created so the restaurant isn't charged for
+  // bookings the voice agent cancelled. Fire-and-forget; only fire on
+  // a successful cancel so we don't double-count failed attempts.
+  if (restaurant.id && result?.success !== false) {
+    try {
+      trackUsage(restaurant.id, 'reservation_cancelled');
+    } catch (e) {
+      // Non-fatal: billing accuracy must never block a cancel UX.
+    }
+  }
+
   return res.status(200).json(result);
 }
 

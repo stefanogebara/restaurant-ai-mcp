@@ -194,6 +194,17 @@ const updateSubscription = async (restaurantId, subscriptionId, fields) => {
   if (fields['Canceled At']) updates.canceled_at = fields['Canceled At'];
   if (fields['Current Period Start']) updates.current_period_start = fields['Current Period Start'];
   if (fields['Current Period End']) updates.current_period_end = fields['Current Period End'];
+  // Plan transitions: when an owner upgrades Growth → Scale (or downgrades)
+  // via the Stripe customer portal, the customer.subscription.updated
+  // webhook hands us the new Plan Name + Price ID. Before this change we
+  // silently dropped both, so the DB row kept showing the old plan and
+  // the dashboard's plan-gated features (Manager AI quota, voice agent
+  // enabled, metered billing tier) stayed stuck on the prior plan until
+  // someone manually edited the row. Trial End similarly belongs here so
+  // that a trial extension or upgrade-out-of-trial flips correctly.
+  if (fields['Plan Name']) updates.plan_name = fields['Plan Name'];
+  if (fields['Price ID']) updates.price_id = fields['Price ID'];
+  if ('Trial End' in fields) updates.trial_end = fields['Trial End']; // explicit null is meaningful
 
   const { data, error } = await supabase
     .from('subscriptions')

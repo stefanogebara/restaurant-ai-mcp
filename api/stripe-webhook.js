@@ -86,21 +86,57 @@ async function resolveRestaurantId(stripeObject, customerEmail = null, eventType
     return null;
   }
 
-  // Method 4: Email lookup in restaurant_config (LAST RESORT, non-creation events only)
+  // Method 4: Email lookup in restaurant_config (LAST RESORT, non-creation events only).
+  //
+  // S.4 OBSERVABILITY: This fallback ONLY exists for legacy Stripe customers
+  // that predate the metadata.restaurant_id backfill. Every hit here is a
+  // signal that:
+  //   (a) Stripe customer.metadata.restaurant_id is missing (backfill gap), or
+  //   (b) The subscriptions table lookup by subscription_id failed, or
+  //   (c) The event is genuinely orphaned and email is the only link.
+  // The structured `metric: 'webhook_email_fallback_fired'` tag below
+  // is the canary ops can alert on — once hits drop to ~0/week we can
+  // safely remove the fallback entirely.
+  //
+  // Cross-tenant safety: refuse the resolution when MULTIPLE restaurants
+  // share the email (the previous code took the first one with .single()
+  // and would have thrown). Now we explicitly fetch up to 2 rows and
+  // refuse if both come back.
   if (customerEmail) {
-    logger.error('UNSAFE FALLBACK: Resolving restaurant_id via email lookup — this may match the wrong restaurant. Email:', customerEmail, 'Event:', eventType);
+    logger.error('UNSAFE FALLBACK: Resolving restaurant_id via email lookup', {
+      metric: 'webhook_email_fallback_fired',
+      email: customerEmail,
+      eventType,
+    });
     try {
-      const { data, error } = await supabase
+      const { data: matches, error } = await supabase
         .schema('restaurant')
         .from('restaurant_config')
         .select('id')
         .eq('email', customerEmail)
-        .limit(1)
-        .single();
+        .limit(2);
 
-      if (!error && data) {
-        logger.error('Restaurant ID resolved from email (unsafe):', data.id, 'Email:', customerEmail);
-        return data.id;
+      if (error) {
+        logger.warn('Email-fallback supabase query errored:', error.message);
+      } else if (matches && matches.length > 1) {
+        // Two or more restaurants share this email — refuse to guess
+        // which one the event belongs to. Better to drop the event
+        // (Stripe will retry) than silently update the wrong tenant.
+        logger.error('Email fallback REFUSED: multiple restaurants share email', {
+          metric: 'webhook_email_fallback_ambiguous',
+          email: customerEmail,
+          eventType,
+          matchCount: matches.length,
+        });
+        return null;
+      } else if (matches && matches.length === 1) {
+        logger.error('Restaurant ID resolved from email (unsafe):', {
+          metric: 'webhook_email_fallback_resolved',
+          restaurantId: matches[0].id,
+          email: customerEmail,
+          eventType,
+        });
+        return matches[0].id;
       }
     } catch (err) {
       logger.warn('Could not look up restaurant by email:', err.message);
@@ -208,10 +244,31 @@ module.exports = async (req, res) => {
   let event;
 
   try {
-    // Verify webhook signature
-    // Vercel exposes req.rawBody for webhook endpoints; fall back to re-serializing
-    const rawBody = req.rawBody ?? JSON.stringify(req.body);
-    event = stripe.webhooks.constructEvent(rawBody, sig, endpointSecret);
+    // Verify webhook signature. Stripe's HMAC is computed over the EXACT
+    // raw request bytes; any re-serialisation (which JSON.stringify(req.body)
+    // would do) reorders keys + drops whitespace and the signature check
+    // fails. The previous code path used `req.rawBody ?? JSON.stringify(req.body)`
+    // — that fallback would silently re-serialise a parsed body and let
+    // attackers feed handcrafted events that "verify" against any signature.
+    //
+    // Accept the body in any form that's still the raw wire bytes:
+    //   - req.rawBody (Buffer or string) — Vercel's standard exposure
+    //   - req.body (Buffer) — alternate runtimes
+    //   - req.body (string) — express-raw or similar middleware
+    // PARSED OBJECT bodies are rejected — that's the dangerous case.
+    let bodyForVerify = null;
+    if (req.rawBody) {
+      bodyForVerify = req.rawBody;
+    } else if (Buffer.isBuffer(req.body)) {
+      bodyForVerify = req.body;
+    } else if (typeof req.body === 'string') {
+      bodyForVerify = req.body;
+    }
+    if (!bodyForVerify) {
+      logger.error('Webhook rejected: no raw body available for signature verification (parsed-body endpoint?)');
+      return res.status(400).json({ error: 'Invalid webhook request' });
+    }
+    event = stripe.webhooks.constructEvent(bodyForVerify, sig, endpointSecret);
   } catch (err) {
     logger.error('Webhook signature verification failed:', err.message);
     return res.status(400).json({ error: 'Invalid webhook request' });

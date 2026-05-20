@@ -762,6 +762,11 @@ async function handleCancel(req, res, restaurantId) {
   // Log cancellation for ML training data
   await logCustomerCancelled(reservation_id);
 
+  // Track cancellation for metered billing — the daily Stripe reporter
+  // nets these against reservation_created so we don't charge for
+  // bookings that never happened. Fire-and-forget.
+  trackUsage(restaurantId, 'reservation_cancelled');
+
   // Send cancellation email (fire-and-forget, non-fatal)
   if (reservation?.customer_email) {
     let restaurantName = 'Your Restaurant';

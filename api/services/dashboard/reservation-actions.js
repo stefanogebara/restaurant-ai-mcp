@@ -133,6 +133,17 @@ async function handleCancelReservation(req, res) {
     logger.warn('ML log failed (non-fatal):', err.message);
   });
 
+  // Track cancellation for metered billing — the daily Stripe reporter
+  // nets these against reservation_created so we don't charge the
+  // restaurant for bookings that never happened. Fire-and-forget;
+  // billing accuracy must never block a cancellation UX.
+  try {
+    const { trackUsage } = require('../../_lib/usage-tracking');
+    trackUsage(restaurantId, 'reservation_cancelled');
+  } catch (e) {
+    logger.warn('trackUsage(reservation_cancelled) failed:', e.message);
+  }
+
   // Fetch restaurant config for the email
   let restaurantName = 'Your Restaurant';
   let restaurantLanguage = 'en';

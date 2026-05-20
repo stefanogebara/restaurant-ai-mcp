@@ -263,10 +263,12 @@ async function handleCancel(req, res) {
     return res.status(429).json({ success: false, error: 'Too many attempts. Please try again later.' });
   }
 
-  // Verify ownership
+  // Verify ownership. restaurant_id is pulled so we can record the
+  // cancellation as a billable-usage delta in trackUsage below — daily
+  // Stripe reporter nets cancellations against creations.
   const { data: existing, error: fetchError } = await supabaseAdmin
     .from('reservations')
-    .select('id, status, customer_phone')
+    .select('id, status, customer_phone, restaurant_id')
     .eq('reservation_id', reservation_id)
     .single();
 
@@ -298,6 +300,19 @@ async function handleCancel(req, res) {
   if (error) {
     logger.error('Failed to cancel reservation', error);
     return res.status(500).json({ success: false, error: 'Failed to cancel reservation' });
+  }
+
+  // Track cancellation for metered billing — Stripe reporter nets these
+  // against reservation_created so we don't charge for bookings that
+  // never happened. Fire-and-forget. Guarded against missing restaurant_id
+  // (legacy reservation rows without the FK column populated).
+  if (existing.restaurant_id) {
+    try {
+      const { trackUsage } = require('./_lib/usage-tracking');
+      trackUsage(existing.restaurant_id, 'reservation_cancelled');
+    } catch (e) {
+      logger.warn('trackUsage(reservation_cancelled) failed:', e.message);
+    }
   }
 
   logger.info('Reservation cancelled by customer', { reservation_id });

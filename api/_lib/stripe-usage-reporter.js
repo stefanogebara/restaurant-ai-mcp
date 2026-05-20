@@ -33,30 +33,42 @@ const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
  * Maps internal metric types to Stripe Meter event names.
  * Only metrics with a configured price ID will be reported to Stripe.
  * Meters were created via scripts/setup-stripe-metered-prices.js.
+ *
+ * Each mapping has a `delta` field:
+ *   delta=+1 → add this metric's count to the meter total (default)
+ *   delta=-1 → subtract from the meter total (used for cancellations)
+ *
+ * Cancellations net against creations so we don't charge the restaurant
+ * for a booking that the customer or owner cancelled before service.
+ * Stripe Meter Events API doesn't accept negative values — we floor
+ * the net at 0 before sending (caller side).
  */
 function getMeteredPriceMap() {
   const map = {};
 
   if (process.env.STRIPE_METERED_PRICE_RESERVATION) {
-    map.reservation_created = { priceId: process.env.STRIPE_METERED_PRICE_RESERVATION, eventName: 'seatable_reservation' };
-    map.portal_booking      = { priceId: process.env.STRIPE_METERED_PRICE_RESERVATION, eventName: 'seatable_reservation' };
-    map.whatsapp_reservation = { priceId: process.env.STRIPE_METERED_PRICE_RESERVATION, eventName: 'seatable_reservation' };
+    map.reservation_created  = { priceId: process.env.STRIPE_METERED_PRICE_RESERVATION, eventName: 'seatable_reservation', delta: +1 };
+    map.portal_booking       = { priceId: process.env.STRIPE_METERED_PRICE_RESERVATION, eventName: 'seatable_reservation', delta: +1 };
+    map.whatsapp_reservation = { priceId: process.env.STRIPE_METERED_PRICE_RESERVATION, eventName: 'seatable_reservation', delta: +1 };
+    // Cancellations nett against creations — bookings that never
+    // happened shouldn't bill the restaurant.
+    map.reservation_cancelled = { priceId: process.env.STRIPE_METERED_PRICE_RESERVATION, eventName: 'seatable_reservation', delta: -1 };
   }
 
   if (process.env.STRIPE_METERED_PRICE_AI_CALL) {
-    map.ai_call_completed = { priceId: process.env.STRIPE_METERED_PRICE_AI_CALL, eventName: 'seatable_ai_call' };
+    map.ai_call_completed = { priceId: process.env.STRIPE_METERED_PRICE_AI_CALL, eventName: 'seatable_ai_call', delta: +1 };
   }
 
   if (process.env.STRIPE_METERED_PRICE_SMS) {
-    map.sms_sent = { priceId: process.env.STRIPE_METERED_PRICE_SMS, eventName: 'seatable_sms' };
+    map.sms_sent = { priceId: process.env.STRIPE_METERED_PRICE_SMS, eventName: 'seatable_sms', delta: +1 };
   }
 
   if (process.env.STRIPE_METERED_PRICE_MANAGER_AI) {
-    map.manager_ai_call = { priceId: process.env.STRIPE_METERED_PRICE_MANAGER_AI, eventName: 'seatable_manager_ai' };
+    map.manager_ai_call = { priceId: process.env.STRIPE_METERED_PRICE_MANAGER_AI, eventName: 'seatable_manager_ai', delta: +1 };
   }
 
   if (process.env.STRIPE_METERED_PRICE_WHATSAPP) {
-    map.whatsapp_reservation = { priceId: process.env.STRIPE_METERED_PRICE_WHATSAPP, eventName: 'seatable_whatsapp' };
+    map.whatsapp_reservation = { priceId: process.env.STRIPE_METERED_PRICE_WHATSAPP, eventName: 'seatable_whatsapp', delta: +1 };
   }
 
   return map;
@@ -123,7 +135,10 @@ async function reportUsageForSubscription(subscription) {
       return { reported: 0, errors: 0, skipped: 'no_unreported_usage' };
     }
 
-    // Group by meter event name and sum counts
+    // Group by meter event name and sum (delta-weighted) counts.
+    // The `delta` on each mapping is +1 for creations / -1 for
+    // cancellations, so the aggregator naturally produces the NET
+    // billable count per meter event without a second pass.
     const eventTotals = {}; // { eventName: { total, rowIds } }
     const allRowIds = [];
 
@@ -131,11 +146,11 @@ async function reportUsageForSubscription(subscription) {
       const mapping = meteredPriceMap[row.metric_type];
       if (!mapping) continue; // Metric not billable
 
-      const { eventName } = mapping;
+      const { eventName, delta = 1 } = mapping;
       if (!eventTotals[eventName]) {
         eventTotals[eventName] = { total: 0, rowIds: [] };
       }
-      eventTotals[eventName].total += row.count;
+      eventTotals[eventName].total += row.count * delta;
       eventTotals[eventName].rowIds.push(row.id);
       allRowIds.push(row.id);
     }
@@ -164,21 +179,31 @@ async function reportUsageForSubscription(subscription) {
     const succeededRowIds = [];
 
     for (const [eventName, { total, rowIds }] of Object.entries(eventTotals)) {
+      // Floor at 0 — Stripe Meter Events API rejects negative values.
+      // A net-negative happens when cancellations in this reporting
+      // window exceed creations from the same window (e.g. all of
+      // today's cancellations refer to bookings made BEFORE this
+      // window). Floor + mark all rows reported so the next cron run
+      // doesn't replay them. Any "credit" the customer is owed is
+      // surfaced via the cancellation log + manual refund flow, not
+      // by sending negative meter values.
+      const netValue = Math.max(0, total);
       try {
         await stripe.billing.meterEvents.create({
           event_name: eventName,
           payload: {
             stripe_customer_id: stripeCustomerId,
-            value: String(total),
+            value: String(netValue),
           },
           identifier: `${restaurantId}-${eventName}-${todayUtc}`,
         });
 
-        reported += total;
+        reported += netValue;
         succeededRowIds.push(...rowIds);
         logger.info('Reported meter event to Stripe', {
           eventName,
-          total,
+          netValue,
+          rawTotal: total, // includes negative deltas from cancellations
           stripeCustomerId,
           restaurantId,
         });
