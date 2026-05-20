@@ -562,7 +562,7 @@
     "lookingUp": "Looking up...",
     "lookUpReservation": "Look Up Reservation",
     "yourReservation": "Your Reservation",
-    "confirmation": "Confirmation",
+    "confirmationId": "Confirmation",
     "editReservation": "Edit Reservation",
     "cancelReservation": "Cancel Reservation",
     "reservationCancelled": "This reservation has been cancelled",

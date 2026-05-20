@@ -292,7 +292,7 @@ export default function CustomerPortal() {
                               <span className="text-sm font-medium text-deep-charcoal">{reservation.customer_name}</span>
                             </div>
                             <div className="flex justify-between py-2.5">
-                              <span className="text-[13px] text-warm-stone">{t('reservations.confirmation')}</span>
+                              <span className="text-[13px] text-warm-stone">{t('reservations.confirmationId')}</span>
                               <span className="text-[13px] font-mono font-medium text-burgundy">{reservation.reservation_id}</span>
                             </div>
                           </div>
