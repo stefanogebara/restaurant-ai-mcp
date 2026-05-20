@@ -72,12 +72,15 @@ export default function AddTableModal({ onClose, onAdd, nextNumber, locations, a
       onClick={onClose}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="add-table-modal-title"
         className="bg-white rounded-2xl shadow-xl w-full max-w-md border border-border-gray"
         onClick={e => e.stopPropagation()}
       >
         <div className="px-6 py-5 border-b border-border-gray flex items-center justify-between">
           <div>
-            <h2 className="text-base font-semibold text-deep-charcoal">{t('floorPlan.addTableModal.title')}</h2>
+            <h2 id="add-table-modal-title" className="text-base font-semibold text-deep-charcoal">{t('floorPlan.addTableModal.title')}</h2>
             <p className="text-xs text-warm-stone mt-0.5">{t('floorPlan.addTableModal.subtitle')}</p>
           </div>
           <button
