@@ -18,13 +18,15 @@ interface Reservation {
   restaurant_name?: string | null; // Returned by /api/customer-reservation?action=lookup for white-label branding
 }
 
-// Helper to parse reservation_time into date and time
+// Helper to parse reservation_time into date and time. Strip trailing seconds
+// from the time field — the API sometimes returns "20:00:00" (full
+// PostgreSQL time literal) and we want to display "20:00" everywhere.
 function parseReservationDateTime(reservation: Reservation) {
   if (reservation.reservation_time) {
     const [datePart, timePart] = reservation.reservation_time.split(' ');
     return { date: datePart, time: timePart?.slice(0, 5) || '' };
   }
-  return { date: reservation.date || '', time: reservation.time || '' };
+  return { date: reservation.date || '', time: (reservation.time || '').slice(0, 5) };
 }
 
 export default function CustomerPortal() {
