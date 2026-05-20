@@ -71,17 +71,22 @@ const FACT_PATTERNS = [
 
 async function getRestaurantPlan(restaurantId) {
   try {
+    // Same dup-row hazard as manager-usage: Brazil onboarding inserts a
+    // 'Free' status='active' row, and the Stripe webhook later inserts the
+    // paid status='active' row without canceling the first. Order by
+    // created_at DESC so the paid row wins after upgrade.
     const { data, error } = await supabaseAdmin
       .from('subscriptions')
       .select('plan_name, status')
       .eq('restaurant_id', restaurantId)
       .in('status', ['active', 'trialing'])
-      .maybeSingle();
+      .order('created_at', { ascending: false })
+      .limit(1);
     if (error) {
       logger.error('getRestaurantPlan failed', { restaurantId, error: error.message });
       return 'free';
     }
-    return (data?.plan_name || 'free').toLowerCase();
+    return (data?.[0]?.plan_name || 'free').toLowerCase();
   } catch (err) {
     logger.error('getRestaurantPlan unexpected error', { restaurantId, error: err.message });
     return 'free';

@@ -381,6 +381,21 @@ module.exports = async (req, res) => {
           logger.error('Failed to create subscription in database:', createResult.message);
         } else {
           logger.info('Subscription saved to database:', subscriptionCreated.id);
+
+          // Cancel the synthetic 'Free' subscription created at onboarding
+          // (Brazil only). Otherwise both rows stay active=true and lookups
+          // like manager-usage.maybeSingle() pick nondeterministically,
+          // rolling paying customers back to free-tier limits.
+          const { error: cancelFreeErr } = await supabase
+            .from('subscriptions')
+            .update({ status: 'canceled', canceled_at: new Date().toISOString().split('T')[0] })
+            .eq('restaurant_id', createRestaurantId)
+            .eq('plan_name', 'Free')
+            .eq('status', 'active')
+            .neq('subscription_id', subscriptionCreated.id);
+          if (cancelFreeErr) {
+            logger.warn('Could not cancel pre-existing Free row', { restaurantId: createRestaurantId, error: cancelFreeErr.message });
+          }
         }
 
         // Also update restaurant_info.metric_profile.plan as fallback

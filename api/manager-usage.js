@@ -26,12 +26,19 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const { data: sub, error: subError } = await supabaseAdmin
+    // A restaurant can have multiple status='active' rows (the onboarding-time
+    // 'Free' row for Brazil + a paid row from Stripe webhook). maybeSingle()
+    // without ordering returned the wrong row randomly, silently rolling
+    // paying customers back to free-tier limits. Pick the most recently
+    // created row — that's the post-upgrade one.
+    const { data: subs, error: subError } = await supabaseAdmin
       .from('subscriptions')
       .select('plan_name')
       .eq('restaurant_id', restaurantId)
       .in('status', ['active', 'trialing'])
-      .maybeSingle();
+      .order('created_at', { ascending: false })
+      .limit(1);
+    const sub = subs?.[0] || null;
 
     if (subError) {
       logger.error('manager-usage: subscriptions query failed', { error: subError.message });

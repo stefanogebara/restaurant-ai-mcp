@@ -259,12 +259,17 @@ async function reportAllUsage() {
     return { total_reported: 0, total_errors: 1, subscriptions_processed: 0 };
   }
 
-  // Get all active subscriptions with Stripe subscription IDs
+  // Get all active subscriptions with REAL Stripe subscription IDs.
+  // Brazilian onboarding writes a synthetic 'free_<rid>' subscription_id —
+  // it satisfies `not null` but isn't a real Stripe sub, so any usage
+  // reported against it would error every day. Filter to real Stripe IDs
+  // (prefix `sub_`) only.
   const { data: subscriptions, error } = await supabaseAdmin
     .from('subscriptions')
     .select('subscription_id, restaurant_id, current_period_start, status')
     .in('status', ['active', 'trialing'])
-    .not('subscription_id', 'is', null);
+    .not('subscription_id', 'is', null)
+    .like('subscription_id', 'sub_%');
 
   if (error) {
     logger.error('Failed to fetch active subscriptions', { error: error.message });
