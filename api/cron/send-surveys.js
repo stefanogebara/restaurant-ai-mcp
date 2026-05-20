@@ -13,6 +13,7 @@ const { supabaseAdmin } = require('../_lib/supabase');
 const { sendWhatsAppMessage, isWhatsAppConfigured } = require('../_lib/whatsapp-sender');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { logCronRun } = require('../_lib/cron-tracker');
+const { isCronEnabled } = require('../_lib/cron-config');
 
 const logger = createSecureLogger('CronSendSurveys');
 
@@ -36,6 +37,14 @@ module.exports = async (req, res) => {
   if (!isWhatsAppConfigured()) {
     logger.info('WhatsApp not configured, skipping survey sends');
     return res.status(200).json({ success: true, sent: 0, reason: 'whatsapp_not_configured' });
+  }
+
+  // Phase U.3 kill switch — hourly fire × BATCH_SIZE=30 surveys/run
+  // is up to 720 messages/day. Ops can stop a misbehaving survey
+  // template (wrong copy, broken link) within the next hour.
+  if (!(await isCronEnabled('send-surveys'))) {
+    logger.warn('send-surveys cron disabled by ops, skipping run');
+    return res.status(200).json({ success: true, skipped: 'disabled_by_ops' });
   }
 
   try {

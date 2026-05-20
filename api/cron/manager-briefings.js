@@ -44,11 +44,22 @@ const BRIEFING_PROMPTS = {
   },
 };
 
+const { isCronEnabled } = require('../_lib/cron-config');
+
 module.exports = async (req, res) => {
   const authHeader = req.headers.authorization || '';
   const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
   if (token !== process.env.CRON_SECRET) {
     return res.status(401).json({ error: 'Authentication required' });
+  }
+
+  // Phase U.3 kill switch — `UPDATE cron_config SET enabled=false
+  // WHERE job_name='manager-briefings'` stops both the morning AND the
+  // end-of-day fire without a redeploy. Either type sharing one row
+  // is fine; if ops needs per-type granularity later, this can split.
+  if (!(await isCronEnabled('manager-briefings'))) {
+    logger.warn('manager-briefings cron disabled by ops, skipping run');
+    return res.status(200).json({ success: true, skipped: 'disabled_by_ops' });
   }
 
   const type = req.query.type || 'end_of_day';

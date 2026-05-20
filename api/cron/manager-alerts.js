@@ -49,6 +49,8 @@ const ALERT_CONFIGS = {
   },
 };
 
+const { isCronEnabled } = require('../_lib/cron-config');
+
 module.exports = async (req, res) => {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
@@ -56,6 +58,15 @@ module.exports = async (req, res) => {
   const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
   if (token !== process.env.CRON_SECRET) {
     return res.status(401).json({ error: 'Authentication required' });
+  }
+
+  // Phase U.3 kill switch — all 3 alert types (low_covers, high_noshows,
+  // late_cancellations) share one row in cron_config. Disable the row
+  // and all 5 daily firings (12/14/16/18/20h for late_cancellations
+  // plus the morning low_covers + 15h high_noshows) stop together.
+  if (!(await isCronEnabled('manager-alerts'))) {
+    logger.warn('manager-alerts cron disabled by ops, skipping run');
+    return res.status(200).json({ success: true, skipped: 'disabled_by_ops' });
   }
 
   const alertType = req.query.type;

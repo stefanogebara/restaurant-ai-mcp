@@ -9,6 +9,7 @@
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { processActiveCampaigns } = require('../services/campaignService');
 const { logCronRun } = require('../_lib/cron-tracker');
+const { isCronEnabled } = require('../_lib/cron-config');
 
 const logger = createSecureLogger('CronSendCampaigns');
 
@@ -25,6 +26,16 @@ module.exports = async (req, res) => {
   const authHeader = req.headers.authorization;
   if (authHeader !== `Bearer ${cronSecret}`) {
     return res.status(401).json({ error: 'Authentication required' });
+  }
+
+  // Phase U.3 kill switch. This cron fires every 15 minutes per
+  // CLAUDE.md's post-incident schedule — a misbehaving send-campaigns
+  // can blast WhatsApp messages 96 times a day until someone redeploys.
+  // Now ops can flip the bit in cron_config and stop the fire at the
+  // next tick (~15 min worst case).
+  if (!(await isCronEnabled('send-campaigns'))) {
+    logger.warn('send-campaigns cron disabled by ops, skipping run');
+    return res.status(200).json({ success: true, skipped: 'disabled_by_ops' });
   }
 
   try {

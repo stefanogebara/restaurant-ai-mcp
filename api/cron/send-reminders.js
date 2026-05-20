@@ -14,6 +14,7 @@ const { initSentry, captureMessage } = require('../_lib/sentry');
 const { logCronRun } = require('../_lib/cron-tracker');
 const { getLocalDate } = require('../_lib/timezone');
 const { sendReminderVoiceNote } = require('../services/whatsapp/voice-note-trigger');
+const { isCronEnabled } = require('../_lib/cron-config');
 initSentry();
 const logger = createSecureLogger('CronReminders');
 
@@ -89,6 +90,14 @@ module.exports = async (req, res) => {
     return res.status(500).json({ success: false, error: 'Database not configured' });
   }
 
+  // Phase U.3 kill switch — ops can disable this cron via
+  // `UPDATE public.cron_config SET enabled=false WHERE job_name='send-reminders'`
+  // without waiting for a redeploy. Fail-open if the lookup itself errors.
+  if (!(await isCronEnabled('send-reminders'))) {
+    logger.warn('send-reminders cron disabled by ops, skipping run');
+    return res.status(200).json({ success: true, skipped: 'disabled_by_ops' });
+  }
+
   try {
     logger.info(' Starting reservation reminder job...');
 
@@ -154,11 +163,16 @@ module.exports = async (req, res) => {
         restaurantNameMap[row.id] = row.restaurant_name;
       }
 
-      // Fetch voice config for voice note reminders
+      // Fetch voice config for voice note reminders. reminder_voice_notes_enabled
+      // is now an explicit opt-in flag (Phase U.2) — having a voice_id alone
+      // no longer triggers TTS, because that would fire ~$0.03 of ElevenLabs
+      // cost for every reservation reminder at every restaurant with voice
+      // configured. The flag defaults to false so existing restaurants get
+      // only the free text reminder until they actively opt in.
       const { data: configRows, error: configError } = await supabaseAdmin
         .schema('restaurant')
         .from('restaurant_config')
-        .select('id, voice_id, ai_config')
+        .select('id, voice_id, ai_config, reminder_voice_notes_enabled')
         .in('id', uniqueRestaurantIds);
       if (configError) {
         logger.warn('Error fetching restaurant voice config:', configError);
@@ -167,6 +181,7 @@ module.exports = async (req, res) => {
         restaurantVoiceMap[row.id] = {
           voice_id: row.voice_id,
           language: row.ai_config?.language || 'en',
+          voice_notes_enabled: row.reminder_voice_notes_enabled === true,
         };
       }
     }
@@ -243,9 +258,14 @@ module.exports = async (req, res) => {
           messageId: sendResult.messageId
         });
 
-        // Fire-and-forget: also send a voice note reminder if voice is configured
+        // Fire-and-forget: also send a voice note reminder if voice is
+        // configured AND the restaurant has opted in. The voice_notes_enabled
+        // flag (Phase U.2) gates a ~$0.03/reminder ElevenLabs TTS cost — at
+        // 100 restaurants × 5 reminders/day that's $450/mo of TTS spend if
+        // left at the previous "any voice_id triggers it" semantics. Now
+        // off by default; restaurants can flip it via the voice-settings UI.
         const voiceConfig = restaurantVoiceMap[restaurant_id];
-        if (voiceConfig?.voice_id) {
+        if (voiceConfig?.voice_id && voiceConfig?.voice_notes_enabled) {
           sendReminderVoiceNote({
             restaurantId: restaurant_id,
             customerPhone: customer_phone,
