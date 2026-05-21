@@ -44,6 +44,15 @@ function LiveCountdown({ seatedMinutesAgo, estimatedDurationMinutes }: { seatedM
   const remainingMinutes = estimatedDurationMinutes - elapsedMinutes;
   const isOverdue = remainingMinutes < 0;
 
+  // DD.2 — re-sync local elapsed counter when the server returns a fresh
+  // seatedMinutesAgo (every dashboard refetch). Before this fix, the
+  // counter drifted forever after first mount because the effect below
+  // ran with empty deps and the local +1/min advance compounded on top of
+  // whatever new value the server pushed.
+  useEffect(() => {
+    setElapsedMinutes(seatedMinutesAgo);
+  }, [seatedMinutesAgo]);
+
   useEffect(() => {
     const interval = setInterval(() => {
       setElapsedMinutes((prev) => prev + 1);

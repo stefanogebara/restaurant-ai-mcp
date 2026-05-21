@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import ThiingsIcon from '../common/ThiingsIcon';
 import type { IconName } from '../common/ThiingsIcon';
@@ -89,10 +89,25 @@ interface DemoSidebarProps {
 export default function DemoSidebar({ lang, activeView = 'dashboard', onNavigate, collapsed = false, onToggleCollapse }: DemoSidebarProps) {
   const [toast, setToast] = useState<string | null>(null);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // DD.2 — clear any pending toast timer on unmount AND on each new
+  // click. Without this, rapid clicks stack timers (the last one wins,
+  // so the toast hides early) and unmounting mid-toast triggered a
+  // setState-on-unmounted warning + memory leak.
+  useEffect(() => {
+    return () => {
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    };
+  }, []);
 
   const handleLockedClick = (label: string) => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     setToast(label);
-    setTimeout(() => setToast(null), 2500);
+    toastTimerRef.current = setTimeout(() => {
+      setToast(null);
+      toastTimerRef.current = null;
+    }, 2500);
   };
 
   const handleNavigate = (view: string) => {

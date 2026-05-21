@@ -29,7 +29,10 @@ function TypeFx({ words, className = '' }: { words: string[]; className?: string
 
     if (isDeleting && displayed === '') {
       setIsDeleting(false);
-      setIndex((index + 1) % words.length);
+      // DD.2 — functional updater so back-to-back triggers (StrictMode
+      // double-invoke, fast successive word completions) advance from
+      // the current index instead of a stale closure value.
+      setIndex((prev) => (prev + 1) % words.length);
       return;
     }
 

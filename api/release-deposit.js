@@ -56,15 +56,39 @@ module.exports = async (req, res) => {
       reservation.deposit_payment_intent_id
     );
 
-    // Clear deposit fields on the reservation — scoped by both id and restaurant_id
-    await supabaseAdmin
+    // DD.1 — chain .select('id'). Without this, a race where the row is
+    // deleted between fetch and update leaves Stripe's hold released but
+    // any cached UI row still shows the deposit as held, with no error
+    // surfaced to the operator.
+    const { data: cleared, error: clearErr } = await supabaseAdmin
       .from('reservations')
       .update({
         deposit_payment_intent_id: null,
         deposit_amount: null,
       })
       .eq('id', reservation.id)
-      .eq('restaurant_id', reservation.restaurant_id);
+      .eq('restaurant_id', reservation.restaurant_id)
+      .select('id');
+
+    if (clearErr) {
+      logger.error('Deposit released on Stripe but DB clear failed', {
+        reservation_id,
+        payment_intent_id: paymentIntent.id,
+        error: clearErr.message,
+      });
+      // Stripe-side hold is already cancelled; surface the inconsistency
+      // so the operator can reconcile, but DON'T retry-storm them.
+      return res.status(500).json({
+        success: false,
+        error: 'Hold released on Stripe but local row update failed — see logs',
+      });
+    }
+    if (!cleared || cleared.length === 0) {
+      logger.warn('release-deposit: DB clear matched 0 rows', {
+        reservation_id,
+        payment_intent_id: paymentIntent.id,
+      });
+    }
 
     logger.info('Deposit released', {
       reservation_id,

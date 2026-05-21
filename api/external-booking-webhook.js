@@ -127,10 +127,19 @@ module.exports = async (req, res) => {
       if (existing) {
         // Update existing reservation instead of creating duplicate
         if (status === 'cancelled') {
-          await supabaseAdmin
+          // DD.1 — chain .select('id') so a 0-row match (deleted mid-flight)
+          // reports 500 instead of telling the external booking platform
+          // we cancelled their booking when we didn't.
+          const { data: cancelData, error: cancelErr } = await supabaseAdmin
             .from('reservations')
             .update({ status: 'cancelled', updated_at: new Date().toISOString() })
-            .eq('id', existing.id);
+            .eq('id', existing.id)
+            .select('id');
+
+          if (cancelErr || !cancelData || cancelData.length === 0) {
+            logger.error(`[ExternalBooking] cancel update failed/no-rows`, { id: existing.id, err: cancelErr?.message });
+            return res.status(500).json({ success: false, error: 'Failed to cancel reservation' });
+          }
 
           logger.info(`[ExternalBooking] Cancelled existing reservation ${existing.id} from ${source}`);
           return res.status(200).json({
@@ -140,8 +149,8 @@ module.exports = async (req, res) => {
           });
         }
 
-        // Update fields
-        await supabaseAdmin
+        // Update fields — same .select('id') guard as the cancel branch.
+        const { data: updData, error: updErr } = await supabaseAdmin
           .from('reservations')
           .update({
             customer_name: customerName,
@@ -154,7 +163,13 @@ module.exports = async (req, res) => {
             status,
             updated_at: new Date().toISOString(),
           })
-          .eq('id', existing.id);
+          .eq('id', existing.id)
+          .select('id');
+
+        if (updErr || !updData || updData.length === 0) {
+          logger.error(`[ExternalBooking] update failed/no-rows`, { id: existing.id, err: updErr?.message });
+          return res.status(500).json({ success: false, error: 'Failed to update reservation' });
+        }
 
         logger.info(`[ExternalBooking] Updated existing reservation ${existing.id} from ${source}`);
         return res.status(200).json({

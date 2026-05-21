@@ -28,11 +28,25 @@ async function handleList(req, res) {
   try {
     const restaurantId = req.user.restaurant_id;
 
-    const { data, error } = await eventsDb()
+    // DD.1 — accept `limit` (capped at 200) + optional `upcoming_only` so
+    // a restaurant with years of historical events doesn't pay for a full
+    // table scan on every dashboard tab open.
+    const requestedLimit = Math.min(200, Math.max(1, parseInt(req.query.limit, 10) || 100));
+    const upcomingOnly = req.query.upcoming_only === 'true';
+    const todayISO = new Date().toISOString().split('T')[0];
+
+    let query = eventsDb()
       .from('events')
       .select('id, restaurant_id, title, description, event_date, event_time, duration_minutes, max_capacity, current_bookings, price, refund_policy, cover_image_url, menu_description, is_active, created_at, updated_at')
       .eq('restaurant_id', restaurantId)
-      .order('event_date', { ascending: true });
+      .order('event_date', { ascending: true })
+      .limit(requestedLimit);
+
+    if (upcomingOnly) {
+      query = query.gte('event_date', todayISO);
+    }
+
+    const { data, error } = await query;
 
     if (error) throw error;
 

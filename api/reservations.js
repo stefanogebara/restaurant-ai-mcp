@@ -581,10 +581,16 @@ async function handleLookup(req, res, restaurantId) {
 
 async function handleList(req, res, restaurantId) {
   const { limit = 5, sort = 'created_at_desc' } = req.query;
+  // DD.1 — clamp + push limit down to DB instead of pulling the entire
+  // reservation history and slicing in JS.
+  const safeLimit = Math.min(500, Math.max(1, parseInt(limit, 10) || 5));
 
   try {
-    // Fetch all reservations sorted by created date (most recent first)
-    const result = await getReservations(restaurantId);
+    const result = await getReservations(restaurantId, {
+      limit: safeLimit,
+      order_by: 'created_at',
+      ascending: sort !== 'created_at_desc',
+    });
 
     if (!result.success || !result.data || !result.data.records) {
       return res.status(200).json({
@@ -594,7 +600,7 @@ async function handleList(req, res, restaurantId) {
       });
     }
 
-    // Convert reservation records to simplified format
+    // DB layer already applied limit + order; just shape the response.
     const reservations = result.data.records
       .map(record => ({
         reservation_id: record.reservation_id,
@@ -607,15 +613,7 @@ async function handleList(req, res, restaurantId) {
         special_requests: record.special_requests || '',
         status: record.status || 'confirmed',
         created_at: record.created_at || `${record.date}T${record.time}:00Z`
-      }))
-      // Sort by created date (most recent first)
-      .sort((a, b) => {
-        const dateA = new Date(a.created_at);
-        const dateB = new Date(b.created_at);
-        return sort === 'created_at_desc' ? dateB - dateA : dateA - dateB;
-      })
-      // Limit results
-      .slice(0, parseInt(limit));
+      }));
 
     return res.status(200).json({
       success: true,

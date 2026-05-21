@@ -24,7 +24,15 @@ const getReservations = async (restaurantId, filter = {}) => {
     query = query.eq('customer_phone', filter.customer_phone);
   }
 
-  const { data, error } = await query.order('date', { ascending: true });
+  // DD.1 — push limit + sort down to DB. The previous version pulled the
+  // entire history (could be 50k rows for a busy restaurant) then sliced
+  // in JS. `limit` is clamped to 500 to avoid runaway memory; pass a
+  // smaller value via filter for cheaper list calls.
+  const limit = Math.min(500, Math.max(1, Number(filter.limit) || 200));
+  const orderBy = filter.order_by === 'created_at' ? 'created_at' : 'date';
+  const ascending = filter.ascending !== false; // default true
+
+  const { data, error } = await query.order(orderBy, { ascending }).limit(limit);
 
   if (error) return handleSupabaseResponse(null, error, 'GET reservations');
 

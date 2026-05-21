@@ -81,7 +81,11 @@ export default function BookingConfirmation() {
         userVisibleOnly: true,
         applicationServerKey: vapidPublicKey,
       });
-      await fetch('/api/push-subscribe', {
+      // DD.2 — check res.ok before flipping UI state. The old version
+      // treated any HTTP response as success, so a 4xx from the server
+      // (e.g. missing VAPID config) would land the user on a "granted"
+      // UI while their subscription wasn't actually persisted.
+      const res = await fetch('/api/push-subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -90,6 +94,11 @@ export default function BookingConfirmation() {
           restaurant_id: restaurantId,
         }),
       });
+      if (!res.ok) {
+        console.error('[BookingConfirmation] push subscribe non-OK', res.status);
+        setPushPromptState('idle');
+        return;
+      }
       setPushPromptState('granted');
     } catch (err) {
       // Non-critical — log so Sentry catches a population-wide push outage.

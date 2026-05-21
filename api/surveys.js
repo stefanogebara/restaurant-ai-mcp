@@ -216,13 +216,34 @@ async function handleSubmit(req, res) {
     return res.status(400).json({ success: false, error: 'rating must be an integer between 1 and 5' });
   }
 
+  // DD.1 — if the caller supplies a reservation_id, verify it actually
+  // belongs to this restaurant before linking. Without this check, the
+  // public submit endpoint accepted arbitrary FKs — letting one tenant
+  // flood another tenant's survey results by guessing reservation codes.
+  let verifiedReservationId = null;
+  if (reservation_id) {
+    const trimmed = String(reservation_id).trim().slice(0, 64);
+    if (trimmed) {
+      const { data: matchedRes } = await db()
+        .from('reservations')
+        .select('reservation_id')
+        .eq('restaurant_id', restaurant_id)
+        .eq('reservation_id', trimmed)
+        .maybeSingle();
+      if (matchedRes) verifiedReservationId = trimmed;
+      // If unmatched: drop the link silently. We still accept the survey
+      // (a guest might submit feedback without a matching booking) so the
+      // response isn't lost — but we don't fabricate a fake link.
+    }
+  }
+
   const insertData = {
     restaurant_id,
     rating: parsedRating,
     comment: comment ? String(comment).slice(0, 1000) : null,
     customer_phone: customer_phone ? String(customer_phone).slice(0, 20) : null,
     customer_name: customer_name ? String(customer_name).slice(0, 100) : null,
-    reservation_id: reservation_id || null,
+    reservation_id: verifiedReservationId,
   };
 
   try {

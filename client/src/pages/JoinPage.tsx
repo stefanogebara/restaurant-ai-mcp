@@ -54,8 +54,18 @@ export default function JoinPage() {
       if (!data.success) throw new Error(data.error || 'Failed to accept');
       return data;
     },
-    onSuccess: () => setTimeout(() => navigate('/host-dashboard/simple'), 1500),
+    // DD.2 — navigation moved into useEffect below so unmount cancels
+    // the pending setTimeout. The old `setTimeout(() => navigate(...), 1500)`
+    // here had no cleanup; if the user navigated away before 1.5s the
+    // timer still fired and yanked them off the destination page.
   });
+
+  // Effectful redirect once accept succeeds — cancellable on unmount.
+  useEffect(() => {
+    if (!acceptMutation.isSuccess) return;
+    const t = setTimeout(() => navigate('/host-dashboard/simple'), 1500);
+    return () => clearTimeout(t);
+  }, [acceptMutation.isSuccess, navigate]);
 
   // Auto-accept once token is validated and user is logged in
   useEffect(() => {

@@ -222,14 +222,48 @@ async function handleModify(req, res) {
     return res.status(400).json({ success: false, error: 'No changes provided' });
   }
 
-  const { error } = await supabaseAdmin
+  // DD.1 — bounds-check party_size before write (was: Number() with no range).
+  if (Object.prototype.hasOwnProperty.call(updates, 'party_size')) {
+    const ps = Number(updates.party_size);
+    if (!Number.isFinite(ps) || ps < 1 || ps > 50) {
+      return res.status(400).json({ success: false, error: 'Invalid party_size (must be 1–50)' });
+    }
+    updates.party_size = ps;
+  }
+  // DD.1 — date sanity: must be today or future, YYYY-MM-DD.
+  if (Object.prototype.hasOwnProperty.call(updates, 'date')) {
+    const d = String(updates.date);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) {
+      return res.status(400).json({ success: false, error: 'Invalid date format (YYYY-MM-DD)' });
+    }
+    const today = new Date().toISOString().split('T')[0];
+    if (d < today) {
+      return res.status(400).json({ success: false, error: 'Cannot move a reservation to a past date' });
+    }
+  }
+  // DD.1 — time format check (HH:MM, 24-hour).
+  if (Object.prototype.hasOwnProperty.call(updates, 'time')) {
+    if (!/^\d{2}:\d{2}$/.test(String(updates.time))) {
+      return res.status(400).json({ success: false, error: 'Invalid time format (HH:MM)' });
+    }
+  }
+
+  // DD.1 — chain .select('id') so a 0-row match surfaces as a failure
+  // instead of a silent success. Without this, a race that already
+  // cancelled or deleted the row returned 200 "updated" to the customer.
+  const { data, error } = await supabaseAdmin
     .from('reservations')
     .update(updates)
-    .eq('id', existing.id);
+    .eq('id', existing.id)
+    .select('id');
 
   if (error) {
     logger.error('Failed to update reservation', error);
     return res.status(500).json({ success: false, error: 'Failed to update reservation' });
+  }
+  if (!data || data.length === 0) {
+    logger.warn('Reservation modify matched 0 rows — likely cancelled mid-flight', { reservation_id });
+    return res.status(409).json({ success: false, error: 'Reservation no longer modifiable' });
   }
 
   logger.info('Reservation modified by customer', { reservation_id });
@@ -292,14 +326,24 @@ async function handleCancel(req, res) {
     return res.status(400).json({ success: false, error: 'Reservation is already cancelled' });
   }
 
-  const { error } = await supabaseAdmin
+  // DD.1 — chain .select('id') so a 0-row match (concurrent cancel /
+  // RLS race) surfaces instead of returning 200 with no rows changed.
+  // The prior version would also fire trackUsage('reservation_cancelled')
+  // below — billing the tenant for a phantom cancellation that nets
+  // against a real prior creation in the Stripe metered reporter.
+  const { data: cancelled, error } = await supabaseAdmin
     .from('reservations')
     .update({ status: 'Cancelled' })
-    .eq('id', existing.id);
+    .eq('id', existing.id)
+    .select('id');
 
   if (error) {
     logger.error('Failed to cancel reservation', error);
     return res.status(500).json({ success: false, error: 'Failed to cancel reservation' });
+  }
+  if (!cancelled || cancelled.length === 0) {
+    logger.warn('Reservation cancel matched 0 rows', { reservation_id });
+    return res.status(409).json({ success: false, error: 'Reservation could not be cancelled' });
   }
 
   // Track cancellation for metered billing — Stripe reporter nets these
