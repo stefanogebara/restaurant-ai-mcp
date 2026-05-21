@@ -386,6 +386,10 @@
       "schedule": "15 4 * * *"
     },
     {
+      "path": "/api/cron/compress-memories",
+      "schedule": "30 4 * * 6"
+    },
+    {
       "path": "/api/cron/automated-campaigns",
       "schedule": "0 10 * * *"
     },
