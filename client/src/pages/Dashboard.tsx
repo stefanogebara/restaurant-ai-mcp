@@ -504,12 +504,15 @@ export default function Dashboard() {
 
       {/* AA.5 — deposit-suggest chip opens this. Generates a Stripe Checkout
           URL via /api/request-deposit-link and surfaces copy / WhatsApp
-          share buttons. Closing the modal triggers a dashboard refetch
-          via React Query (a separate hook below could also be wired). */}
+          share buttons. AA.6 — onLinkGenerated triggers a dashboard
+          refetch so the suggest chip disappears in this render cycle
+          (the endpoint atomically wrote deposit_payment_intent_id onto
+          the reservation before returning). */}
       <DepositRequestModal
         open={!!depositRequestReservation}
         reservation={depositRequestReservation}
         onClose={() => setDepositRequestReservation(null)}
+        onLinkGenerated={() => refetch()}
       />
 
       {showLaunchChecklist && (

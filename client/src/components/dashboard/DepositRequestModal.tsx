@@ -15,6 +15,11 @@ interface DepositRequestModalProps {
   } | null;
   /** Caller closes the modal — typically clears the selected reservation. */
   onClose: () => void;
+  /** Fires ONCE per successful link generation. Parent uses this to refetch
+   *  the dashboard so the chip disappears immediately (the endpoint sets
+   *  deposit_payment_intent_id atomically so the next dashboard fetch will
+   *  no longer flag the reservation as deposit_suggested). */
+  onLinkGenerated?: () => void;
 }
 
 interface LinkPayload {
@@ -42,6 +47,7 @@ export default function DepositRequestModal({
   open,
   reservation,
   onClose,
+  onLinkGenerated,
 }: DepositRequestModalProps) {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
@@ -72,6 +78,10 @@ export default function DepositRequestModal({
           return;
         }
         setPayload(json as LinkPayload);
+        // The endpoint atomically wrote deposit_payment_intent_id onto the
+        // reservation before returning; tell the parent so it can refetch
+        // and the chip disappears in this render cycle.
+        onLinkGenerated?.();
       })
       .catch((err) => {
         if (cancelled) return;
