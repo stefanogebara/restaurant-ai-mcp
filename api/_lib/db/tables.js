@@ -406,25 +406,21 @@ const linkTables = async (restaurantId, tableId1, tableId2) => {
   const newJoinable1 = [...new Set([...(table1.joinable_with || []), tableId2])];
   const newJoinable2 = [...new Set([...(table2.joinable_with || []), tableId1])];
 
-  // Update both tables. Chain `.select()` so Supabase returns the affected
-  // rows — without it, an UPDATE that matched 0 rows looks identical to one
-  // that matched 1 (no error, no count). The audit caught a real instance
-  // where this masked silent persistence failure: linkTables returned
-  // success but joinable_with stayed [] in the DB. Defensive: also verify
-  // we got back exactly one row per update.
+  // Return both id + joinable_with so we can VERIFY the persisted value
+  // actually changed. Earlier audit found a case where the API said
+  // "success: 1 row updated" but a follow-up SELECT showed joinable_with
+  // unchanged. Returning the updated value here lets us confirm.
   const [update1, update2] = await Promise.all([
     supabase.from('tables').update({ joinable_with: newJoinable1 })
-      .eq('restaurant_id', restaurantId).eq('id', tableId1).select('id'),
+      .eq('restaurant_id', restaurantId).eq('id', tableId1).select('id, joinable_with'),
     supabase.from('tables').update({ joinable_with: newJoinable2 })
-      .eq('restaurant_id', restaurantId).eq('id', tableId2).select('id'),
+      .eq('restaurant_id', restaurantId).eq('id', tableId2).select('id, joinable_with'),
   ]);
 
   if (update1.error || update2.error) {
     return handleSupabaseResponse(null, update1.error || update2.error, 'LINK tables');
   }
 
-  // Both updates must have touched exactly one row. Anything else means the
-  // filter didn't match — surface it instead of pretending success.
   if (!update1.data?.length || !update2.data?.length) {
     logger?.error?.('linkTables silent no-op', {
       restaurantId, tableId1, tableId2,
@@ -432,6 +428,26 @@ const linkTables = async (restaurantId, tableId1, tableId2) => {
       update2Count: update2.data?.length ?? 0,
     });
     return { success: false, error: true, message: 'Failed to link tables (no rows updated)' };
+  }
+
+  // Verify the persisted joinable_with actually contains the new IDs. If it
+  // doesn't, something downstream (trigger, second update, etc) is stripping
+  // the column. Surface that to the caller and log loudly.
+  const persisted1 = update1.data[0].joinable_with || [];
+  const persisted2 = update2.data[0].joinable_with || [];
+  const both = persisted1.includes(tableId2) && persisted2.includes(tableId1);
+  if (!both) {
+    logger?.error?.('linkTables persisted mismatch', {
+      restaurantId, tableId1, tableId2,
+      sent1: newJoinable1, sent2: newJoinable2,
+      persisted1, persisted2,
+    });
+    return {
+      success: false,
+      error: true,
+      message: 'Failed to link tables (persisted value did not include sent IDs)',
+      debug: { sent1: newJoinable1, sent2: newJoinable2, persisted1, persisted2 },
+    };
   }
 
   return {

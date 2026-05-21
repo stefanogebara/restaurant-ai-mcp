@@ -182,10 +182,11 @@ async function handleLinkTables(req, res) {
   const result = await linkTables(restaurantId, table_id, linked_table_id);
 
   if (!result.success) {
-    logger.error('Failed to link tables', { table_id, linked_table_id, error: result.message });
+    logger.error('Failed to link tables', { table_id, linked_table_id, error: result.message, debug: result.debug });
     return res.status(400).json({
       success: false,
-      error: result.message || 'Failed to link tables'
+      error: result.message || 'Failed to link tables',
+      debug: result.debug,
     });
   }
 
