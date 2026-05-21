@@ -47,6 +47,15 @@ module.exports = async (req, res) => {
     return res.status(400).json({ error: 'Missing restaurant_id' });
   }
 
+  // Fail fast with a distinct error when the HMAC secret isn't configured.
+  // Previously this threw inside the try/catch below and surfaced as a
+  // generic 500, which masked a config issue (env var never set on Vercel)
+  // as if it were a runtime bug. Now we return 503 with a clear log line.
+  if (!process.env.BOOKING_HMAC_SECRET) {
+    logger.error('BOOKING_HMAC_SECRET not configured — deposit booking disabled');
+    return res.status(503).json({ error: 'Payments temporarily unavailable. Please contact the restaurant.' });
+  }
+
   try {
     // Verify the restaurant exists and has deposits enabled
     const { data: config, error } = await supabaseAdmin
