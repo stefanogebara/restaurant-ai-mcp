@@ -288,8 +288,11 @@ Restaurant config lives in `restaurant.restaurant_config` schema.
 | Daily 6 PM | `/api/cron/manager-alerts?type=low_covers` | Alerts on low cover count |
 | Every 2h 12-8 PM | `/api/cron/manager-alerts?type=late_cancellations` | Alerts on late cancellations |
 | Daily 11 PM | `/api/cron/manager-briefings?type=end_of_day` | End-of-day manager briefing |
+| Every 15 min | `/api/cron/sync-conversation-data` | Pulls ElevenLabs voice transcripts before 48h purge window |
+| Every 15 min | `/api/cron/validate-conversations` | Flags AI booking errors for manager review |
+| Daily 10 AM | `/api/cron/health-alert` | WhatsApp alert when other crons go stale (14-day window) |
 
-All cron jobs are secured with `CRON_SECRET` Bearer token and use `createSecureLogger`.
+All cron jobs are secured with `CRON_SECRET` Bearer token and use `createSecureLogger`. All have an operational kill switch via `public.cron_config.enabled` — flip the row to `false` via Supabase Studio to disable a misbehaving cron without a redeploy.
 
 ---
 

@@ -11,6 +11,7 @@ const { checkCronHealth } = require('./health');
 const { sendWhatsAppMessage, isWhatsAppConfigured } = require('../_lib/whatsapp-sender');
 const { logCronRun } = require('../_lib/cron-tracker');
 const { createSecureLogger } = require('../_lib/secure-logger');
+const { isCronEnabled } = require('../_lib/cron-config');
 
 const logger = createSecureLogger('CronHealthAlert');
 
@@ -50,6 +51,12 @@ module.exports = async (req, res) => {
   const authHeader = (req.headers.authorization || '').replace('Bearer ', '').trim();
   if (!cronSecret || authHeader !== cronSecret) {
     return res.status(401).json({ error: 'Authentication required' });
+  }
+
+  // Phase Y.5 kill switch.
+  if (!(await isCronEnabled('health-alert'))) {
+    logger.warn('health-alert cron disabled by ops, skipping run');
+    return res.status(200).json({ success: true, skipped: 'disabled_by_ops' });
   }
 
   try {

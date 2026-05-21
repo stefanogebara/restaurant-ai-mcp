@@ -16,6 +16,7 @@
 const { supabaseAdmin } = require('../_lib/supabase');
 const { logCronRun, logCronError } = require('../_lib/cron-tracker');
 const { createSecureLogger } = require('../_lib/secure-logger');
+const { isCronEnabled } = require('../_lib/cron-config');
 
 const logger = createSecureLogger('SyncConversationData');
 
@@ -28,6 +29,13 @@ module.exports = async (req, res) => {
   const authHeader = req.headers.authorization;
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  // Phase Y.5 kill switch — fires every 15 min, so flipping the row off
+  // in public.cron_config is the fastest way to stop a misbehaving sync.
+  if (!(await isCronEnabled(JOB_NAME))) {
+    logger.warn(`${JOB_NAME} cron disabled by ops, skipping run`);
+    return res.status(200).json({ success: true, skipped: 'disabled_by_ops' });
   }
 
   try {
