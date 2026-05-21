@@ -139,6 +139,10 @@ export interface UpcomingReservation {
   // Deposit fields (Phase 10)
   deposit_amount?: number;
   deposit_payment_intent_id?: string;
+  // Phase AA: backend signal that this booking is risky AND the
+  // restaurant accepts deposits AND none has been collected yet.
+  deposit_suggested?: boolean;
+  deposit_suggested_reason?: string | null;
   // External platform source
   source?: string;
   external_id?: string;

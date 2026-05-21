@@ -4,6 +4,7 @@ import ThiingsIcon from '../common/ThiingsIcon';
 import StatusLegend, { chipClassesForStatus, type StatusLegendItem } from '../common/StatusLegend';
 import type { UpcomingReservation, Table } from '../../types/host.types';
 import NoShowRiskBadge from './NoShowRiskBadge';
+import DepositSuggestChip from './DepositSuggestChip';
 import DepositBadge from './DepositBadge';
 import CustomerTierBadge from './CustomerTierBadge';
 import DepositActions from './DepositActions';
@@ -21,6 +22,11 @@ interface ReservationsListProps {
   onCheckIn: (reservation: UpcomingReservation) => void;
   onIntervention: (reservation: UpcomingReservation) => void;
   onDepositAction?: () => void;
+  /** Phase AA: triggered by the deposit-suggest chip on high-risk
+   *  bookings. Parent decides how to surface the request (modal /
+   *  WhatsApp link / email). Optional — when absent, the chip renders
+   *  as a passive info badge instead of a clickable button. */
+  onRequestDeposit?: (reservation: UpcomingReservation) => void;
   onAdd?: () => void;
   onEdit?: (reservation: UpcomingReservation) => void;
   onCancel?: (reservation: UpcomingReservation) => void;
@@ -39,6 +45,7 @@ export default function ReservationsList({
   onCheckIn,
   onIntervention,
   onDepositAction,
+  onRequestDeposit,
   onAdd,
   onEdit,
   onCancel,
@@ -298,6 +305,9 @@ export default function ReservationsList({
               onCheckIn={() => onCheckIn(reservation)}
               onIntervention={() => onIntervention(reservation)}
               onDepositAction={onDepositAction}
+              onRequestDeposit={onRequestDeposit
+                ? () => onRequestDeposit(reservation)
+                : undefined}
               onEdit={onEdit ? () => onEdit(reservation) : undefined}
               onCancel={onCancel ? () => onCancel(reservation) : undefined}
               onCustomerClick={onCustomerClick ? () => onCustomerClick(reservation) : undefined}
@@ -320,6 +330,8 @@ interface ReservationRowProps {
   onCheckIn: () => void;
   onIntervention: () => void;
   onDepositAction?: () => void;
+  /** Phase AA: fires when host clicks the deposit-suggest chip. */
+  onRequestDeposit?: () => void;
   onEdit?: () => void;
   onCancel?: () => void;
   onCustomerClick?: () => void;
@@ -329,7 +341,7 @@ interface ReservationRowProps {
   tableMap?: Map<string, number>;
 }
 
-function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositAction, onEdit, onCancel, onCustomerClick, avgSpendPerCover, byPartySize, language, tableMap }: ReservationRowProps) {
+function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositAction, onRequestDeposit, onEdit, onCancel, onCustomerClick, avgSpendPerCover, byPartySize, language, tableMap }: ReservationRowProps) {
   const { t } = useTranslation();
   const tl = (key: string) => t(`dashboard.reservationsList.${key}`);
   // Mobile-only bottom sheet for Edit / Cancel / Call. Desktop has its own
@@ -449,13 +461,24 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
           {reservation.special_requests && <span className="hidden sm:inline"> · {reservation.special_requests}</span>}
         </div>
         {/* Risk + Deposit badges */}
-        {(reservation.ml_risk_score != null || reservation.deposit_amount) && (
-          <div className="flex items-center gap-1.5 mt-1">
+        {(reservation.ml_risk_score != null || reservation.deposit_amount || reservation.deposit_suggested) && (
+          <div className="flex items-center gap-1.5 mt-1 flex-wrap">
             <NoShowRiskBadge
               riskScore={reservation.ml_risk_score}
               riskLevel={reservation.ml_risk_level}
             />
             <DepositBadge amount={reservation.deposit_amount} />
+            {/* Phase AA: shows when backend says risk is high enough to
+                warrant requesting a deposit AND none is collected yet.
+                Clicking would hand off to the existing deposit-request
+                flow; the wiring lives one level up in the parent so
+                each surface can decide what "request" means (modal,
+                link copy, WhatsApp share, etc.). */}
+            <DepositSuggestChip
+              suggested={reservation.deposit_suggested}
+              reason={reservation.deposit_suggested_reason}
+              onRequestDeposit={onRequestDeposit}
+            />
           </div>
         )}
         {/* CRM preference icons — hide on mobile to save space */}

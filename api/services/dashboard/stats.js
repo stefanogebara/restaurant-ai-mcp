@@ -4,10 +4,14 @@ const {
   getUpcomingReservations,
   query: supabase
 } = require('../../_lib/supabase');
+const { decorateWithDepositSuggestion } = require('../../_lib/deposit-suggest');
 
 async function handleDashboard(req, res) {
   const restaurantId = req.user.restaurant_id;
   const timezone = req.user.timezone || 'UTC';
+  // Pull deposit_config alongside slug — `decorateWithDepositSuggestion`
+  // below uses `deposit_config.enabled` as a gate (no suggestion when the
+  // restaurant hasn't opted into taking deposits at all).
   const [tablesResult, activePartiesResult, upcomingReservationsResult, restaurantConfigResult] = await Promise.all([
     getAllTables(restaurantId),
     getActiveServiceRecords(restaurantId),
@@ -15,7 +19,7 @@ async function handleDashboard(req, res) {
     supabase
       .schema('restaurant')
       .from('restaurant_config')
-      .select('slug')
+      .select('slug, deposit_config')
       .eq('id', restaurantId)
       .single()
   ]);
@@ -28,6 +32,14 @@ async function handleDashboard(req, res) {
   }
 
   const restaurantSlug = restaurantConfigResult.data?.slug || null;
+  const depositConfig = restaurantConfigResult.data?.deposit_config || { enabled: false };
+
+  // AA.2: decorate each upcoming reservation with deposit_suggested +
+  // deposit_suggested_reason. Done here (not inside getUpcomingReservations)
+  // so the DB layer stays free of business-logic policy decisions.
+  upcomingReservationsResult.reservations = (upcomingReservationsResult.reservations || []).map(
+    (r) => decorateWithDepositSuggestion(r, depositConfig),
+  );
 
   const tables = tablesResult.tables;
 
