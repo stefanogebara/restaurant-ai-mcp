@@ -16,32 +16,88 @@ initSentry();
 
 const logger = createSecureLogger('CronChurnScores');
 
-// V.3 default fallback when a restaurant has no service_records yet.
-// Before, this constant was used for ALL restaurants — wildly wrong for
-// steakhouses (~€100/cover) vs cafés (~€15/cover). The new flow
-// computes a per-restaurant average from service_records.total_bill and
-// only falls back here when the row count is too low for a useful mean.
+// V.3 default fallback when a restaurant has no per-cover data yet.
+// Before V.3, this constant was used for ALL restaurants — wildly wrong
+// for steakhouses (~€100/cover) vs cafés (~€15/cover).
 const AVG_REVENUE_PER_COVER_DEFAULT = 45;
 const MIN_ROWS_FOR_PER_RESTAURANT_AVG = 5; // need at least 5 closed services
+const LOOKBACK_DAYS = 90;
 
 /**
- * Compute this restaurant's average revenue per cover from the most
- * recent ~90 days of service_records. Returns the default if not enough
- * data points to trust the mean (e.g. a new restaurant with 2 services).
+ * Compute this restaurant's average revenue per cover.
+ *
+ * Z.4 source-of-truth hierarchy (most accurate → least):
+ *   1. public.revenue_records  — REAL POS transactions ingested by the
+ *      Square (or future) webhook. Amounts already in cents, joined to
+ *      reservations.party_size when matched.
+ *   2. public.service_records  — fallback when no POS is connected. The
+ *      manager entered total_bill via the dashboard's Complete Service
+ *      action. Less reliable (cash-only restaurants miss entries) but
+ *      better than nothing.
+ *   3. AVG_REVENUE_PER_COVER_DEFAULT — when the restaurant has fewer
+ *      than 5 data points in either source.
+ *
+ * V.3 originally pulled from service_records with `.gte('started_at', …)`
+ * — but `service_records` has no `started_at` column (it's `seated_at`).
+ * That query silently returned zero rows for every restaurant, so V.3
+ * effectively always fell back to the €45 default. Z.4 fixes the column
+ * name AND prefers the POS-sourced data when available.
  */
 async function getAvgRevenuePerCover(restaurantId) {
+  const lookbackIso = new Date(Date.now() - LOOKBACK_DAYS * 86400000).toISOString();
+
+  // 1. revenue_records (POS-ingested, primary source)
   try {
-    const ninetyDaysAgo = new Date(Date.now() - 90 * 86400000).toISOString();
+    const { data: revRows, error: revErr } = await supabaseAdmin
+      .from('revenue_records')
+      .select('amount_cents, reservation_id')
+      .eq('restaurant_id', restaurantId)
+      .gte('recorded_at', lookbackIso)
+      .not('amount_cents', 'is', null);
+    if (!revErr && Array.isArray(revRows) && revRows.length >= MIN_ROWS_FOR_PER_RESTAURANT_AVG) {
+      // Each revenue row may or may not match a reservation. For matched
+      // rows, lift the actual party_size; for unmatched, fall back to 2
+      // covers (industry-typical average) so the row still contributes.
+      const matchedIds = [...new Set(revRows.map((r) => r.reservation_id).filter(Boolean))];
+      const partySizeById = new Map();
+      if (matchedIds.length > 0) {
+        const { data: resRows } = await supabaseAdmin
+          .from('reservations')
+          .select('reservation_id, party_size')
+          .eq('restaurant_id', restaurantId)
+          .in('reservation_id', matchedIds);
+        for (const r of (resRows || [])) {
+          partySizeById.set(r.reservation_id, r.party_size || 2);
+        }
+      }
+      let totalCents = 0;
+      let totalCovers = 0;
+      for (const r of revRows) {
+        const partySize = r.reservation_id ? (partySizeById.get(r.reservation_id) || 2) : 2;
+        totalCents += Number(r.amount_cents) || 0;
+        totalCovers += partySize;
+      }
+      if (totalCovers > 0) {
+        const avgUnits = (totalCents / 100) / totalCovers;
+        return Math.max(5, Math.min(500, avgUnits));
+      }
+    }
+  } catch {
+    // fall through to service_records
+  }
+
+  // 2. service_records (manager-entered fallback)
+  try {
     const { data, error } = await supabaseAdmin
       .from('service_records')
       .select('total_bill, party_size')
       .eq('restaurant_id', restaurantId)
-      .gte('started_at', ninetyDaysAgo)
+      .gte('seated_at', lookbackIso)  // Z.4 column fix: was 'started_at' (no such column)
       .not('total_bill', 'is', null);
     if (error || !Array.isArray(data) || data.length < MIN_ROWS_FOR_PER_RESTAURANT_AVG) {
       return AVG_REVENUE_PER_COVER_DEFAULT;
     }
-    const totalBill = data.reduce((s, r) => s + (r.total_bill || 0), 0);
+    const totalBill = data.reduce((s, r) => s + (Number(r.total_bill) || 0), 0);
     const totalCovers = data.reduce((s, r) => s + (r.party_size || 1), 0);
     if (totalCovers === 0) return AVG_REVENUE_PER_COVER_DEFAULT;
     const avg = totalBill / totalCovers;

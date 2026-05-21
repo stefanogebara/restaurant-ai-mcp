@@ -127,6 +127,10 @@
       "destination": "/api/square-sync.js"
     },
     {
+      "source": "/api/square/webhook",
+      "destination": "/api/square-webhook.js"
+    },
+    {
       "source": "/api/ical-feed",
       "destination": "/api/ical-feed.js"
     },

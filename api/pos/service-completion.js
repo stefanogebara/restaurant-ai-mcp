@@ -9,12 +9,10 @@
  */
 
 const { verifyApiKey, hasPermission } = require('../_lib/api-key-auth');
-const { supabaseAdmin } = require('../_lib/supabase');
 const { setWebhookCors, handlePreflight } = require('../_lib/cors');
 const { rejectOversizedBody } = require('../_lib/rate-limit');
 const { createSecureLogger } = require('../_lib/secure-logger');
-const { validatePhoneNumber } = require('../_lib/validation');
-const { generateSecureServiceId } = require('../_lib/secure-id');
+const { recordServiceCompletion } = require('../_lib/pos/service-completion-core');
 
 const logger = createSecureLogger('POS-ServiceCompletion');
 
@@ -51,82 +49,27 @@ module.exports = async (req, res) => {
       payment_method,
     } = req.body || {};
 
-    // Validate required fields
-    if (!customer_phone || !customer_name || !party_size || total_bill === undefined) {
-      return res.status(400).json({
-        error: 'Missing required fields: customer_phone, customer_name, party_size, total_bill',
-      });
-    }
-
-    const phoneValidation = validatePhoneNumber(customer_phone);
-    if (!phoneValidation.valid) {
-      return res.status(400).json({ error: phoneValidation.error });
-    }
-
-    if (typeof total_bill !== 'number' || total_bill < 0) {
-      return res.status(400).json({ error: 'total_bill must be a non-negative number' });
-    }
-
-    if (typeof party_size !== 'number' || party_size < 1 || party_size > 100) {
-      return res.status(400).json({ error: 'party_size must be between 1 and 100' });
-    }
-
-    // Create service record
-    const serviceId = generateSecureServiceId();
-    const now = new Date().toISOString();
-
-    const { data: serviceRecord, error: serviceError } = await supabaseAdmin
-      .from('service_records')
-      .insert({
-        restaurant_id: restaurantId,
-        service_id: serviceId,
-        reservation_id: reservation_id || null,
-        customer_name,
-        customer_phone,
-        party_size,
-        total_bill,
-        seated_at: now,
-        actual_departure: now,
-        status: 'completed',
-      })
-      .select('id, service_id')
-      .single();
-
-    if (serviceError) {
-      logger.error('Failed to create service record', serviceError);
-      return res.status(500).json({ error: 'Failed to create service record' });
-    }
-
-    // Update customer_ltv (fire-and-forget)
-    updateCustomerLTV(restaurantId, customer_phone, customer_name, total_bill, party_size)
-      .catch((err) => logger.warn('LTV update failed (non-fatal)', { error: err.message }));
-
-    // Dispatch webhook event (fire-and-forget)
-    try {
-      const { dispatchEvent } = require('../services/webhookDispatcher');
-      dispatchEvent(restaurantId, 'service.completed', {
-        service_id: serviceId,
-        reservation_id: reservation_id || null,
-        customer_phone,
-        customer_name,
-        party_size,
-        total_bill,
-        payment_method: payment_method || null,
-        completed_at: now,
-      }).catch((err) => logger.warn('Webhook dispatch failed (non-fatal)', { error: err.message }));
-    } catch {
-      // webhookDispatcher not available — skip
-    }
-
-    logger.info('Service completion recorded', {
-      serviceId,
-      restaurant: restaurantId,
+    const result = await recordServiceCompletion({
+      restaurantId,
+      customerPhone: customer_phone,
+      customerName: customer_name,
+      partySize: party_size,
       totalBill: total_bill,
+      paymentMethod: payment_method,
+      reservationId: reservation_id,
+      // Generic API-key path has no POS-side transaction ID; caller can
+      // supply their own dedup via `reservation_id` if needed.
+      posProvider: 'api-key',
+      posTransactionId: null,
     });
+
+    if (!result.ok) {
+      return res.status(result.status || 500).json({ error: result.error });
+    }
 
     return res.status(201).json({
       success: true,
-      service_id: serviceId,
+      service_id: result.service_id,
       message: 'Service completion recorded',
     });
   } catch (err) {
@@ -134,52 +77,3 @@ module.exports = async (req, res) => {
     return res.status(500).json({ error: 'Internal server error' });
   }
 };
-
-/**
- * Update customer lifetime value
- * Upserts into customer_ltv table
- */
-async function updateCustomerLTV(restaurantId, phone, name, billAmount, partySize) {
-  // customer_id stores the phone number (matches update-churn-scores.js convention)
-  const { data: existing } = await supabaseAdmin
-    .schema('restaurant')
-    .from('customer_ltv')
-    .select('customer_id, total_revenue, total_visits')
-    .eq('restaurant_id', restaurantId)
-    .eq('customer_phone', phone)
-    .maybeSingle();
-
-  if (existing) {
-    const newRevenue = (Number(existing.total_revenue) || 0) + billAmount;
-    const newVisits = (existing.total_visits || 0) + 1;
-    const avgRevenue = newRevenue / newVisits;
-
-    await supabaseAdmin
-      .schema('restaurant')
-      .from('customer_ltv')
-      .update({
-        total_revenue: Math.round(newRevenue * 100) / 100,
-        total_visits: newVisits,
-        avg_revenue_per_visit: Math.round(avgRevenue * 100) / 100,
-        last_visit_date: new Date().toISOString().split('T')[0],
-        updated_at: new Date().toISOString(),
-      })
-      .eq('customer_id', existing.customer_id)
-      .eq('restaurant_id', restaurantId);
-  } else {
-    await supabaseAdmin
-      .schema('restaurant')
-      .from('customer_ltv')
-      .insert({
-        customer_id: phone,
-        restaurant_id: restaurantId,
-        customer_phone: phone,
-        customer_name: name,
-        total_revenue: Math.round(billAmount * 100) / 100,
-        total_visits: 1,
-        avg_revenue_per_visit: Math.round(billAmount * 100) / 100,
-        last_visit_date: new Date().toISOString().split('T')[0],
-        updated_at: new Date().toISOString(),
-      });
-  }
-}
