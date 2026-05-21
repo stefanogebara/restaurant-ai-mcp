@@ -39,6 +39,7 @@ import QuickInterventionModal from '../components/host/QuickInterventionModal';
 import AddReservationModal from '../components/host/AddReservationModal';
 import EditReservationModal from '../components/host/EditReservationModal';
 import CancelReservationDialog from '../components/host/CancelReservationDialog';
+import DepositRequestModal from '../components/dashboard/DepositRequestModal';
 import type { UpcomingReservation, ActiveParty, SeatModalData } from '../types/host.types';
 import { trackFirstReservationCreated } from '../lib/analytics';
 import { useRevenueStats } from '../hooks/useRevenueStats';
@@ -89,6 +90,8 @@ export default function Dashboard() {
   const [showAddReservation, setShowAddReservation] = useState(false);
   const [editReservation, setEditReservation] = useState<UpcomingReservation | null>(null);
   const [cancelReservation, setCancelReservation] = useState<UpcomingReservation | null>(null);
+  // Phase AA.5: deposit-suggest chip → request modal.
+  const [depositRequestReservation, setDepositRequestReservation] = useState<UpcomingReservation | null>(null);
   const [showInsightsWidgets, setShowInsightsWidgets] = useState(false);
 
   // ---- Data fetching ----
@@ -348,6 +351,7 @@ export default function Dashboard() {
               onAdd={() => setShowAddReservation(true)}
               onEdit={(r) => setEditReservation(r)}
               onCancel={(r) => setCancelReservation(r)}
+              onRequestDeposit={(r) => setDepositRequestReservation(r)}
               avgSpendPerCover={avgSpendPerCover}
               byPartySize={revenueStats?.by_party_size}
               isLoading={isLoading}
@@ -497,6 +501,16 @@ export default function Dashboard() {
           onClose={() => setCancelReservation(null)}
         />
       )}
+
+      {/* AA.5 — deposit-suggest chip opens this. Generates a Stripe Checkout
+          URL via /api/request-deposit-link and surfaces copy / WhatsApp
+          share buttons. Closing the modal triggers a dashboard refetch
+          via React Query (a separate hook below could also be wired). */}
+      <DepositRequestModal
+        open={!!depositRequestReservation}
+        reservation={depositRequestReservation}
+        onClose={() => setDepositRequestReservation(null)}
+      />
 
       {showLaunchChecklist && (
         <LaunchChecklistModal

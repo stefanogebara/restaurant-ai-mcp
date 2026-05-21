@@ -131,6 +131,10 @@
       "destination": "/api/square-webhook.js"
     },
     {
+      "source": "/api/request-deposit-link",
+      "destination": "/api/request-deposit-link.js"
+    },
+    {
       "source": "/api/ical-feed",
       "destination": "/api/ical-feed.js"
     },
