@@ -220,11 +220,15 @@ async function handleSubmit(req, res) {
   // belongs to this restaurant before linking. Without this check, the
   // public submit endpoint accepted arbitrary FKs — letting one tenant
   // flood another tenant's survey results by guessing reservation codes.
+  //
+  // NOTE: lookup uses the default (public) schema explicitly — the
+  // helper db() above scopes to schema('restaurant'), but live
+  // reservations data lives in public.reservations.
   let verifiedReservationId = null;
   if (reservation_id) {
     const trimmed = String(reservation_id).trim().slice(0, 64);
     if (trimmed) {
-      const { data: matchedRes } = await db()
+      const { data: matchedRes } = await supabaseAdmin
         .from('reservations')
         .select('reservation_id')
         .eq('restaurant_id', restaurant_id)
