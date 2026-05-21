@@ -406,14 +406,32 @@ const linkTables = async (restaurantId, tableId1, tableId2) => {
   const newJoinable1 = [...new Set([...(table1.joinable_with || []), tableId2])];
   const newJoinable2 = [...new Set([...(table2.joinable_with || []), tableId1])];
 
-  // Update both tables
+  // Update both tables. Chain `.select()` so Supabase returns the affected
+  // rows — without it, an UPDATE that matched 0 rows looks identical to one
+  // that matched 1 (no error, no count). The audit caught a real instance
+  // where this masked silent persistence failure: linkTables returned
+  // success but joinable_with stayed [] in the DB. Defensive: also verify
+  // we got back exactly one row per update.
   const [update1, update2] = await Promise.all([
-    supabase.from('tables').update({ joinable_with: newJoinable1 }).eq('restaurant_id', restaurantId).eq('id', tableId1),
-    supabase.from('tables').update({ joinable_with: newJoinable2 }).eq('restaurant_id', restaurantId).eq('id', tableId2)
+    supabase.from('tables').update({ joinable_with: newJoinable1 })
+      .eq('restaurant_id', restaurantId).eq('id', tableId1).select('id'),
+    supabase.from('tables').update({ joinable_with: newJoinable2 })
+      .eq('restaurant_id', restaurantId).eq('id', tableId2).select('id'),
   ]);
 
   if (update1.error || update2.error) {
     return handleSupabaseResponse(null, update1.error || update2.error, 'LINK tables');
+  }
+
+  // Both updates must have touched exactly one row. Anything else means the
+  // filter didn't match — surface it instead of pretending success.
+  if (!update1.data?.length || !update2.data?.length) {
+    logger?.error?.('linkTables silent no-op', {
+      restaurantId, tableId1, tableId2,
+      update1Count: update1.data?.length ?? 0,
+      update2Count: update2.data?.length ?? 0,
+    });
+    return { success: false, error: true, message: 'Failed to link tables (no rows updated)' };
   }
 
   return {
@@ -448,14 +466,25 @@ const unlinkTables = async (restaurantId, tableId1, tableId2) => {
   const newJoinable1 = (table1.joinable_with || []).filter(id => id !== tableId2);
   const newJoinable2 = (table2.joinable_with || []).filter(id => id !== tableId1);
 
-  // Update both tables
+  // Update both tables — see linkTables for why we use .select() here.
   const [update1, update2] = await Promise.all([
-    supabase.from('tables').update({ joinable_with: newJoinable1 }).eq('restaurant_id', restaurantId).eq('id', tableId1),
-    supabase.from('tables').update({ joinable_with: newJoinable2 }).eq('restaurant_id', restaurantId).eq('id', tableId2)
+    supabase.from('tables').update({ joinable_with: newJoinable1 })
+      .eq('restaurant_id', restaurantId).eq('id', tableId1).select('id'),
+    supabase.from('tables').update({ joinable_with: newJoinable2 })
+      .eq('restaurant_id', restaurantId).eq('id', tableId2).select('id'),
   ]);
 
   if (update1.error || update2.error) {
     return handleSupabaseResponse(null, update1.error || update2.error, 'UNLINK tables');
+  }
+
+  if (!update1.data?.length || !update2.data?.length) {
+    logger?.error?.('unlinkTables silent no-op', {
+      restaurantId, tableId1, tableId2,
+      update1Count: update1.data?.length ?? 0,
+      update2Count: update2.data?.length ?? 0,
+    });
+    return { success: false, error: true, message: 'Failed to unlink tables (no rows updated)' };
   }
 
   return {
