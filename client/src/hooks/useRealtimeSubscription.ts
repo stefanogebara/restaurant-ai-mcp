@@ -115,6 +115,10 @@ export function useRealtimeDashboard(restaurantId: string | undefined): void {
           if (queryKey) {
             queryClient.invalidateQueries({ queryKey: [queryKey] });
           }
+          // BB.2: Dashboard.tsx uses ['dashboard']; older surfaces use
+          // ['hostDashboard'] / ['simpleDashboard']. Invalidate all three
+          // so every consumer refetches regardless of which key it picked.
+          queryClient.invalidateQueries({ queryKey: ['dashboard'] });
           queryClient.invalidateQueries({ queryKey: ['hostDashboard'] });
           queryClient.invalidateQueries({ queryKey: ['simpleDashboard'] });
         },

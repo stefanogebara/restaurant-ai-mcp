@@ -18,6 +18,7 @@ import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { hostAPI } from '../services/api';
+import { useRealtimeDashboard } from '../hooks/useRealtimeSubscription';
 import { useCompleteService } from '../hooks/useCompleteService';
 import { usePlanInfo } from '../hooks/useSubscription';
 import DashboardLayout from '../components/layout/DashboardLayout';
@@ -95,10 +96,16 @@ export default function Dashboard() {
   const [showInsightsWidgets, setShowInsightsWidgets] = useState(false);
 
   // ---- Data fetching ----
+  // BB.2: dropped from 30s → 5min poll. Supabase Realtime now invalidates
+  // the cache on every reservations / tables / waitlist / service_records
+  // change (see useRealtimeDashboard below), so the 30s safety net was
+  // costing ~120 function calls/hour per open tab for nothing. Keep a
+  // 5-minute heartbeat as belt-and-suspenders in case the realtime
+  // channel drops mid-session.
   const { data: dashboardData, refetch, isLoading, isError } = useQuery({
     queryKey: ['dashboard'],
     queryFn: hostAPI.getDashboard,
-    refetchInterval: 30000,
+    refetchInterval: 5 * 60 * 1000,
   });
 
   // ---- Data extraction ----
@@ -107,6 +114,13 @@ export default function Dashboard() {
   const reservations: UpcomingReservation[] = dashboardData?.data?.upcoming_reservations || [];
   const activeParties: ActiveParty[] = dashboardData?.data?.active_parties || [];
   const restaurantSlug: string = dashboardData?.data?.slug || '';
+  const restaurantId: string | undefined = dashboardData?.data?.restaurant_id;
+
+  // BB.2: subscribe to live changes the moment we know which tenant we are.
+  // Each INSERT/UPDATE/DELETE on reservations, tables, waitlist, or
+  // service_records triggers a dashboard refetch — sub-second perceived
+  // latency vs the old 30s poll. Cleans itself up on unmount.
+  useRealtimeDashboard(restaurantId);
 
   // Local timezone — see todayLocalISO docs. Anti-pattern toISOString().split('T')[0]
   // gave hosts in São Paulo at 23:00 tomorrow's date, hiding actual-today reservations.
