@@ -77,6 +77,36 @@ test.describe('Phase AA — UI bundle markers shipped to production', () => {
   });
 });
 
+test.describe('Phase AA.5 — request-deposit-link endpoint contract', () => {
+  test('GET → 405 (POST-only)', async ({ request }) => {
+    const res = await request.get(`${PROD}/api/request-deposit-link`);
+    expect(res.status()).toBe(405);
+  });
+
+  test('POST without JWT → 401', async ({ request }) => {
+    const res = await request.post(`${PROD}/api/request-deposit-link`, {
+      data: {},
+    });
+    expect([401, 403]).toContain(res.status());
+  });
+
+  test('POST with garbage Bearer → 401', async ({ request }) => {
+    const res = await request.post(`${PROD}/api/request-deposit-link`, {
+      headers: { authorization: 'Bearer obviously-wrong' },
+      data: { reservation_id: 'RES-X' },
+    });
+    expect([401, 403]).toContain(res.status());
+  });
+
+  test('error response does not leak Stripe secret key', async ({ request }) => {
+    const res = await request.post(`${PROD}/api/request-deposit-link`, {
+      data: {},
+    });
+    const body = await res.text();
+    expect(body).not.toMatch(/sk_(test|live)_[A-Za-z0-9]/);
+  });
+});
+
 test.describe('Phase AA — earlier-phase contracts still hold', () => {
   test('Phase Z Square webhook still 405 on GET', async ({ request }) => {
     const res = await request.get(`${PROD}/api/square/webhook`);
