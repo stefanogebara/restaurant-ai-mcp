@@ -15,7 +15,7 @@
  */
 
 import { useMemo, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { hostAPI } from '../services/api';
@@ -26,73 +26,7 @@ import { useRestaurantSettings } from '../hooks/useRestaurantSettings';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import type { UpcomingReservation } from '../types/host.types';
 import { todayLocalISO } from '../utils/timeFormatting';
-
-// ─── Sidebar ────────────────────────────────────────────────────────────────
-
-interface NavItem {
-  label: string;
-  href: string;
-  icon: string; // emoji or single-letter (kept simple — design system uses these)
-}
-
-const NAV: NavItem[] = [
-  { label: 'Visão geral',  href: '/host-dashboard/v2',         icon: '⌂' },
-  { label: 'Reservas',     href: '/host-dashboard/simple',     icon: '📅' },
-  { label: 'Clientes',     href: '/host-dashboard/insights',   icon: '👥' },
-  { label: 'Mesas',        href: '/host-dashboard/floor-plan', icon: '▦'  },
-  { label: 'WhatsApp',     href: '/host-dashboard/whatsapp',   icon: '💬' },
-  { label: 'Análises',     href: '/analytics',                 icon: '📊' },
-  { label: 'Marketing',    href: '/host-dashboard/insights',   icon: '✦'  },
-  { label: 'Configurações', href: '/host-dashboard/settings',  icon: '⚙'  },
-];
-
-function SidebarV2({ managerName }: { managerName: string }) {
-  const { pathname } = useLocation();
-  return (
-    <aside className="w-[240px] shrink-0 bg-[#1C1917] text-white flex flex-col" role="navigation" aria-label="Main navigation">
-      {/* Brand */}
-      <div className="px-6 py-5 border-b border-white/[0.06]">
-        <div className="flex items-center gap-2">
-          <span className="w-7 h-7 rounded-md bg-[#9F1239] flex items-center justify-center font-bold text-sm">S</span>
-          <span className="text-[15px] font-medium tracking-tight">Seatable</span>
-        </div>
-      </div>
-      {/* Nav */}
-      <nav className="flex-1 px-3 py-4 space-y-0.5">
-        {NAV.map(item => {
-          const active = pathname === item.href || (item.href !== '/host-dashboard/v2' && pathname.startsWith(item.href));
-          return (
-            <Link
-              key={item.href}
-              to={item.href}
-              className={`flex items-center gap-3 px-3 py-2 rounded-md text-[13px] transition-colors ${
-                active
-                  ? 'bg-[#9F1239] text-white font-medium'
-                  : 'text-white/70 hover:text-white hover:bg-white/[0.06]'
-              }`}
-              aria-current={active ? 'page' : undefined}
-            >
-              <span className="w-4 inline-block text-center opacity-80">{item.icon}</span>
-              <span>{item.label}</span>
-            </Link>
-          );
-        })}
-      </nav>
-      {/* Manager footer card */}
-      <div className="m-3 p-3 rounded-lg bg-white/[0.06] border border-white/[0.04]">
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#D97706] to-[#9F1239] flex items-center justify-center text-sm font-semibold">
-            {managerName?.[0]?.toUpperCase() || 'M'}
-          </div>
-          <div className="min-w-0">
-            <div className="text-[13px] font-medium truncate">{managerName || 'Gerente'}</div>
-            <div className="text-[11px] text-white/50">Gerente · online</div>
-          </div>
-        </div>
-      </div>
-    </aside>
-  );
-}
+import SidebarV2, { getManagerName } from '../components/v2/SidebarV2';
 
 // ─── Greeting ───────────────────────────────────────────────────────────────
 
@@ -344,9 +278,8 @@ export default function DashboardV2() {
   const avgTicket = (summary as { avg_ticket?: number }).avg_ticket;
   const avgDwell = (summary as { avg_dwell_minutes?: number }).avg_dwell_minutes;
 
-  // Friendly greeting name — prefer user's display name, fall back to "Marina" from design
-  const firstName = (user?.email?.split('@')[0]?.split('.')[0] || 'lá').replace(/^./, c => c.toUpperCase());
-  const managerName = firstName !== 'Lá' ? firstName : 'Gerente';
+  // Friendly greeting name — prefer user's display name, fall back to "Gerente"
+  const managerName = getManagerName(user?.email);
 
   const openToday = (() => {
     // business_hours is a Record<dayName, { is_open, open_time, close_time }>
