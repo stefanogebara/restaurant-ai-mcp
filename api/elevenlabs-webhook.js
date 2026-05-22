@@ -112,7 +112,10 @@ module.exports = async (req, res) => {
   }
 
   // Path 2: Bearer token (ElevenLabs agent tool calls)
-  if (!authenticated && authHeader && cronSecret && authHeader === cronSecret) {
+  // EE.1 — timing-safe compare. HMAC path (Path 1) is already constant-time
+  // via crypto.timingSafeEqual; the Bearer fallback was a `===` compare
+  // that leaked the prefix-match length through response time.
+  if (!authenticated && authHeader && cronSecret && require('./_lib/secure-compare').secureEquals(authHeader, cronSecret)) {
     authenticated = true;
   }
 

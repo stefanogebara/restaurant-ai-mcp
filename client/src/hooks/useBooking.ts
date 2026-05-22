@@ -13,6 +13,9 @@ export function useRestaurantBySlug(slug: string | undefined) {
     queryKey: ['restaurant-booking', slug],
     queryFn: async () => {
       const res = await fetch(`${PORTAL_API}?action=restaurant&slug=${encodeURIComponent(slug!)}`);
+      // EE.3 — check res.ok before parsing JSON. A 500 returning HTML
+      // threw "Unexpected token <" instead of a meaningful error.
+      if (!res.ok) throw new Error(`Restaurant lookup failed (${res.status})`);
       const data = await res.json();
       if (!data.success || !data.data) throw new Error('Restaurant not found');
       return data.data;
@@ -32,6 +35,8 @@ export function useReservationById(id: string | null, initialData?: ReservationD
     queryKey: ['reservation', id],
     queryFn: async () => {
       const res = await fetch(`${PORTAL_API}?action=reservation&id=${encodeURIComponent(id!)}`);
+      // EE.3 — guard against non-OK HTML responses.
+      if (!res.ok) throw new Error(`Reservation lookup failed (${res.status})`);
       const data = await res.json();
       if (!data.success || !data.reservation) throw new Error('Reservation not found');
       return data.reservation;
@@ -56,6 +61,10 @@ export function useTimeSlots(restaurantId: string, date: string, partySize: numb
         party_size: String(partySize),
       });
       const res = await fetch(`${PORTAL_API}?${params}`);
+      // EE.3 — throw on non-OK so the calling component can show an
+      // error state instead of "no availability." Previously a 5xx was
+      // indistinguishable from a real "no slots open" response.
+      if (!res.ok) throw new Error(`Availability lookup failed (${res.status})`);
       const data = await res.json();
       return data.success && data.slots ? data.slots : [];
     },

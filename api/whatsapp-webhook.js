@@ -33,10 +33,14 @@ const adapter = new MetaAdapter();
 function handleVerification(req, res) {
   const mode = req.query['hub.mode'];
   const token = req.query['hub.verify_token'];
+  // EE.1 — Meta hub.verify_token compared timing-safely so an attacker
+  // probing the verify endpoint can't byte-leak the secret via response
+  // time. Required at webhook-subscription time only, but cheap to harden.
+  const { secureEquals } = require('./_lib/secure-compare');
   const challenge = req.query['hub.challenge'];
   const expectedToken = process.env.WHATSAPP_VERIFY_TOKEN;
 
-  if (mode === 'subscribe' && token === expectedToken) {
+  if (mode === 'subscribe' && secureEquals(token, expectedToken)) {
     logger.info('Webhook verified successfully');
     return res.status(200).send(challenge);
   }

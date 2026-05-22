@@ -133,14 +133,25 @@ async function handleRegister(req, res) {
       .single();
     agentId = infoRow?.elevenlabs_agent_id || null;
 
-    // Sync back to restaurant_config so future lookups work
+    // Sync back to restaurant_config so future lookups work.
+    // EE.2 — chain .select('id') so a 0-row match (RLS block / restaurant
+    // deleted mid-flight) surfaces in the logs instead of silently
+    // failing — the cached agentId would never make it back to DB and
+    // the next register attempt would re-fetch from restaurant_info.
     if (agentId) {
-      await supabaseAdmin
+      const { error: syncErr, data: syncedRows } = await supabaseAdmin
         .schema('restaurant')
         .from('restaurant_config')
         .update({ elevenlabs_agent_id: agentId })
-        .eq('id', restaurant_id);
-      logger.info(`Synced agent ${agentId} from restaurant_info to restaurant_config`);
+        .eq('id', restaurant_id)
+        .select('id');
+      if (syncErr || !syncedRows || syncedRows.length === 0) {
+        logger.warn('Sync-back of agentId failed (non-fatal — register proceeds)', {
+          restaurant_id, error: syncErr?.message, rows: syncedRows?.length,
+        });
+      } else {
+        logger.info(`Synced agent ${agentId} from restaurant_info to restaurant_config`);
+      }
     }
   }
 
@@ -155,15 +166,25 @@ async function handleRegister(req, res) {
   // Use the resolved agent ID going forward
   restaurant.elevenlabs_agent_id = agentId;
 
-  // Update status to pending (stored in ai_config.phone to avoid schema migration dependency)
-  await supabaseAdmin
+  // Update status to pending (stored in ai_config.phone to avoid schema migration dependency).
+  // EE.2 — chain .select('id') so we abort the register flow if the row
+  // vanished. Without this, ElevenLabs would still be called with a
+  // restaurant whose local row no longer exists.
+  const { data: pendingRows, error: pendingErr } = await supabaseAdmin
     .schema('restaurant')
     .from('restaurant_config')
     .update({
       ai_config: { ...(restaurant.ai_config || {}), phone: { status: 'pending' } },
       updated_at: new Date().toISOString()
     })
-    .eq('id', restaurant_id);
+    .eq('id', restaurant_id)
+    .select('id');
+  if (pendingErr || !pendingRows || pendingRows.length === 0) {
+    logger.error('Failed to mark phone as pending — restaurant row missing or RLS-blocked', {
+      restaurant_id, error: pendingErr?.message,
+    });
+    return res.status(500).json({ success: false, error: 'Could not initialize phone registration' });
+  }
 
   try {
     // Step 1: Check if phone number already exists in ElevenLabs
@@ -364,20 +385,34 @@ async function handleUnregister(req, res) {
     });
   }
 
-  // Clear phone status from ai_config (but don't delete from ElevenLabs - reusable)
+  // Clear phone status from ai_config (but don't delete from ElevenLabs - reusable).
+  // EE.2 — chain .select('id'). Without this, a 0-row match (restaurant
+  // deleted mid-flight, RLS block) would silently return success while
+  // the ElevenLabs side keeps thinking the phone is still registered.
   const { data: currentConfig } = await supabaseAdmin
     .schema('restaurant').from('restaurant_config')
     .select('ai_config').eq('id', restaurant_id).single();
   const currentAiConfig = currentConfig?.ai_config || {};
   const { phone: _removedPhone, ...aiConfigWithoutPhone } = currentAiConfig;
-  await supabaseAdmin
+  const { data: unregRows, error: unregErr } = await supabaseAdmin
     .schema('restaurant')
     .from('restaurant_config')
     .update({
       ai_config: aiConfigWithoutPhone,
       updated_at: new Date().toISOString()
     })
-    .eq('id', restaurant_id);
+    .eq('id', restaurant_id)
+    .select('id');
+
+  if (unregErr || !unregRows || unregRows.length === 0) {
+    logger.error('Phone unregister DB write matched 0 rows', {
+      restaurant_id, error: unregErr?.message,
+    });
+    return res.status(500).json({
+      success: false,
+      error: 'Could not unregister phone — restaurant row not updated',
+    });
+  }
 
   logger.info(`Unregistered phone for restaurant ${restaurant_id}`);
 

@@ -229,8 +229,12 @@ async function handlePost(req, res, restaurantId, user) {
     });
 
     if (!sendResult.success) {
-      // Record the failure so the manager can see it and retry / dismiss
-      await supabaseAdmin
+      // Record the failure so the manager can see it and retry / dismiss.
+      // EE.2 — chain .select('id') so we log when the error-record UPDATE
+      // itself hits 0 rows (stale id dispatched, RLS race). Without this
+      // the manager dashboard would still show "pending" while we 502 the
+      // caller.
+      const { data: errRows, error: errUpdErr } = await supabaseAdmin
         .schema('restaurant')
         .from('proactive_comms_queue')
         .update({
@@ -238,7 +242,13 @@ async function handlePost(req, res, restaurantId, user) {
           updated_at: new Date().toISOString(),
         })
         .eq('id', id)
-        .eq('restaurant_id', restaurantId);
+        .eq('restaurant_id', restaurantId)
+        .select('id');
+      if (errUpdErr || !errRows || errRows.length === 0) {
+        logger.warn('proactive-comms: error-record UPDATE matched 0 rows', {
+          id, restaurantId, dbError: errUpdErr?.message,
+        });
+      }
       return res.status(502).json({ success: false, error: 'send_failed', detail: sendResult.error });
     }
 

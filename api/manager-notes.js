@@ -104,12 +104,15 @@ async function handleCreate(req, res, restaurantId) {
 
 async function handleList(req, res, restaurantId) {
   const { guest_phone, limit = 50 } = req.query;
+  // EE.3 — clamp limit so a caller can't force a 999999-row scan of
+  // manager_memory by passing an enormous limit query param.
+  const safeLimit = Math.min(200, Math.max(1, parseInt(limit, 10) || 50));
 
   const memories = await listMemories(
     restaurantId,
     guest_phone || null,
     'manager_note',
-    parseInt(limit)
+    safeLimit
   );
 
   return res.status(200).json({

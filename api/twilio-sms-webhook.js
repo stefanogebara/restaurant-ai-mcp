@@ -104,7 +104,9 @@ module.exports = async (req, res) => {
   if (req.method === 'GET') {
     const cronSecret = process.env.CRON_SECRET;
     const authHeader = req.headers.authorization || '';
-    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+    // EE.1 — constant-time bearer compare to close timing-leak on CRON_SECRET.
+    const { bearerEquals } = require('./_lib/secure-compare');
+    if (cronSecret && !bearerEquals(authHeader, cronSecret)) {
       return res.status(401).json({ error: 'Authentication required' });
     }
     try {

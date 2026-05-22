@@ -17,9 +17,11 @@ const logger = createSecureLogger('PushSend');
 // VAPID details are set inside the handler (C-1: avoid cold-start crash when keys absent)
 
 module.exports = async (req, res) => {
-  // Internal endpoint — secured with CRON_SECRET
+  // Internal endpoint — secured with CRON_SECRET.
+  // EE.1 — constant-time bearer compare to close timing-leak.
+  const { bearerEquals } = require('./_lib/secure-compare');
   const authHeader = req.headers.authorization || '';
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!bearerEquals(authHeader, process.env.CRON_SECRET)) {
     return res.status(401).json({ error: 'Authentication required' });
   }
 
