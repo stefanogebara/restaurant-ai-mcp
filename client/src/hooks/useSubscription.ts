@@ -54,8 +54,17 @@ export function useSubscription(options: UseSubscriptionOptions = {}) {
 
   const queryEmail = email || sessionEmail || localStorage.getItem(LS_CUSTOMER_EMAIL) || '';
 
+  // FF.1 — queryKey was `['subscription', queryEmail]` which mixed two
+  // axes: the caller's `email` prop AND the session email. The request
+  // body never sent `email` — authFetch uses the session token only —
+  // so passing a different `email` prop returned cached data from an
+  // earlier session. Cache key now reflects the *authoritative* source:
+  // the session user. The `email` prop stays as a gate (queries don't
+  // fire without one) but doesn't drive the cache key anymore.
+  const cacheKey = sessionEmail || 'anonymous';
+
   return useQuery<SubscriptionResponse>({
-    queryKey: ['subscription', queryEmail || 'current-user'],
+    queryKey: ['subscription', cacheKey],
     queryFn: async () => {
       const apiUrl = import.meta.env.VITE_API_URL || '';
 
