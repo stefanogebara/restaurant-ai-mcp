@@ -135,6 +135,10 @@
       "destination": "/api/request-deposit-link.js"
     },
     {
+      "source": "/api/admin-health",
+      "destination": "/api/admin-health.js"
+    },
+    {
       "source": "/api/ical-feed",
       "destination": "/api/ical-feed.js"
     },

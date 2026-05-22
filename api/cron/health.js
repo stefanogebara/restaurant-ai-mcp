@@ -146,13 +146,14 @@ async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Auth: CRON_SECRET Bearer token
+  // Auth: CRON_SECRET Bearer token.
+  // HH.1 — constant-time compare (EE.1 missed this site).
+  const { bearerEquals } = require('../_lib/secure-compare');
   const cronSecret = process.env.CRON_SECRET;
   if (!cronSecret) {
     return res.status(500).json({ error: 'CRON_SECRET not configured' });
   }
-  const authHeader = req.headers.authorization;
-  if (authHeader !== `Bearer ${cronSecret}`) {
+  if (!bearerEquals(req.headers.authorization, cronSecret)) {
     return res.status(401).json({ error: 'Authentication required' });
   }
 
