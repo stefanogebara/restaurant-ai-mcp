@@ -18,7 +18,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
-import { useVoicePersona, useSaveVoicePersona } from '../hooks/useVoicePersona';
+import { useVoicePersona, useSaveVoicePersona, VoicePersonaForbiddenError } from '../hooks/useVoicePersona';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useToast } from '../contexts/ToastContext';
 import SidebarV2, { getManagerName } from '../components/v2/SidebarV2';
@@ -239,7 +239,7 @@ export default function SofiaV2() {
   const [personality, setPersonality] = useState<Personality>('warm');
   const [formalidade, setFormalidade] = useState(30); // 0 = casual, 100 = formal
 
-  const { data: persona } = useVoicePersona();
+  const { data: persona, error: personaError } = useVoicePersona();
   const save = useSaveVoicePersona();
   const [agentName, setAgentName] = useState('Sofia');
   const [greeting, setGreeting] = useState('');
@@ -260,6 +260,13 @@ export default function SofiaV2() {
       }
     );
   };
+
+  // Account lacks the paid plan with `voice_ai`. Surface a clear upsell card
+  // in place of the Identity form instead of silently falling back to
+  // default values — the previous behavior left users wondering why their
+  // changes never persisted.
+  const personaLocked = personaError instanceof VoicePersonaForbiddenError;
+  const upgradeUrl = personaLocked ? (personaError.upgradeUrl || '/subscription/manage') : null;
 
   return (
     <div className="min-h-screen bg-[#FAFAF9] flex">
@@ -316,44 +323,69 @@ export default function SofiaV2() {
             <div className="grid grid-cols-[1fr_360px] gap-6 mt-6">
               {/* Left: agent config */}
               <div className="space-y-6">
-                {/* Identity */}
-                <section className="bg-white border border-[#E5E7EB] rounded-xl p-5">
-                  <h3 className="text-[14px] font-semibold text-[#1C1917]">Identidade da Sofia</h3>
-                  <p className="text-[12px] text-[#706A65] mt-1 mb-4">
-                    Personalize o nome e a saudação. Aparece no WhatsApp e na ligação de voz.
-                  </p>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[12px] font-medium text-[#706A65] mb-1.5">Nome</label>
-                      <input
-                        type="text"
-                        value={agentName}
-                        onChange={e => setAgentName(e.target.value)}
-                        className="w-full h-9 px-3 rounded-md border border-[#E5E7EB] bg-white text-[14px] focus:outline-none focus:border-[#9F1239]"
-                      />
+                {/* Identity — gated behind a paid plan via personaLocked */}
+                {personaLocked ? (
+                  <section className="bg-white border border-[#E5E7EB] rounded-xl p-6">
+                    <div className="flex items-start gap-4">
+                      <span className="w-10 h-10 rounded-full bg-[#9F1239]/[0.1] text-[#9F1239] flex items-center justify-center text-lg shrink-0">
+                        🔒
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-[14px] font-semibold text-[#1C1917]">
+                          Personalizar Sofia requer plano Profissional
+                        </h3>
+                        <p className="text-[12px] text-[#706A65] mt-1.5">
+                          A Sofia trabalha no plano gratuito com configurações padrão. Para escolher
+                          nome, saudação e personalidade, ative o plano Profissional (14 dias grátis).
+                        </p>
+                        <a
+                          href={upgradeUrl || '/subscription/manage'}
+                          className="inline-flex items-center mt-4 h-9 px-4 rounded-md bg-[#9F1239] text-white text-[13px] font-medium hover:bg-[#7F0F2D] transition-colors"
+                        >
+                          Começar teste grátis
+                        </a>
+                      </div>
                     </div>
-                    <div>
-                      <label className="block text-[12px] font-medium text-[#706A65] mb-1.5">Saudação</label>
-                      <input
-                        type="text"
-                        value={greeting}
-                        onChange={e => setGreeting(e.target.value)}
-                        placeholder="Oi, sou a Sofia do [restaurante]!"
-                        className="w-full h-9 px-3 rounded-md border border-[#E5E7EB] bg-white text-[14px] focus:outline-none focus:border-[#9F1239]"
-                      />
+                  </section>
+                ) : (
+                  <section className="bg-white border border-[#E5E7EB] rounded-xl p-5">
+                    <h3 className="text-[14px] font-semibold text-[#1C1917]">Identidade da Sofia</h3>
+                    <p className="text-[12px] text-[#706A65] mt-1 mb-4">
+                      Personalize o nome e a saudação. Aparece no WhatsApp e na ligação de voz.
+                    </p>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-[12px] font-medium text-[#706A65] mb-1.5">Nome</label>
+                        <input
+                          type="text"
+                          value={agentName}
+                          onChange={e => setAgentName(e.target.value)}
+                          className="w-full h-9 px-3 rounded-md border border-[#E5E7EB] bg-white text-[14px] focus:outline-none focus:border-[#9F1239]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[12px] font-medium text-[#706A65] mb-1.5">Saudação</label>
+                        <input
+                          type="text"
+                          value={greeting}
+                          onChange={e => setGreeting(e.target.value)}
+                          placeholder="Oi, sou a Sofia do [restaurante]!"
+                          className="w-full h-9 px-3 rounded-md border border-[#E5E7EB] bg-white text-[14px] focus:outline-none focus:border-[#9F1239]"
+                        />
+                      </div>
                     </div>
-                  </div>
-                  <div className="mt-4 flex justify-end">
-                    <button
-                      type="button"
-                      onClick={onSavePersona}
-                      disabled={save.isPending}
-                      className="h-9 px-4 rounded-md bg-[#9F1239] text-white text-[13px] font-medium hover:bg-[#7F0F2D] disabled:opacity-50 transition-colors"
-                    >
-                      {save.isPending ? 'Salvando…' : 'Salvar identidade'}
-                    </button>
-                  </div>
-                </section>
+                    <div className="mt-4 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={onSavePersona}
+                        disabled={save.isPending}
+                        className="h-9 px-4 rounded-md bg-[#9F1239] text-white text-[13px] font-medium hover:bg-[#7F0F2D] disabled:opacity-50 transition-colors"
+                      >
+                        {save.isPending ? 'Salvando…' : 'Salvar identidade'}
+                      </button>
+                    </div>
+                  </section>
+                )}
 
                 {/* Channels */}
                 <section>

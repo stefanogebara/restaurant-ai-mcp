@@ -77,8 +77,21 @@ export default function SidebarV2({ managerName }: { managerName: string }) {
   );
 }
 
-/** Resolves a friendly first-name display for the greeting/avatar. */
+/** Resolves a friendly first-name display for the greeting/avatar.
+ *
+ * Picks the first alphabetic-only segment of the local part, so emails with
+ * hyphens or digits ("v2-audit-1779442200794@...") still produce a clean
+ * name ("Audit") instead of dumping the full prefix into the greeting.
+ *   stefano@example.com         → "Stefano"
+ *   mariana.rocha@example.com   → "Mariana"
+ *   v2-audit-17794@example.com  → "Audit"
+ *   12345@example.com           → "Gerente" (no alpha segment)
+ */
 export function getManagerName(email: string | null | undefined): string {
-  const first = (email?.split('@')[0]?.split('.')[0] || 'lá').replace(/^./, c => c.toUpperCase());
-  return first !== 'Lá' ? first : 'Gerente';
+  const local = (email?.split('@')[0] || '').toLowerCase();
+  // Split on any non-Portuguese-letter char, then take the first usable segment.
+  const segments = local.split(/[^a-záéíóúçãõâêîôûü]+/i).filter(s => s.length >= 2);
+  const first = segments[0];
+  if (!first) return 'Gerente';
+  return first.charAt(0).toUpperCase() + first.slice(1);
 }
