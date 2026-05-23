@@ -38,13 +38,17 @@ The landing page already has strong foundations:
 
 ---
 
-## Phase 13C: Replace BeforeAfterSection
-*Effort: M — Decision needed: keep, replace with video, or replace with inline demo*
+## Phase 13C: Replace BeforeAfterSection ✅ DECIDED (2026-05-24)
 
-Options:
-- A) Keep as-is (already animated, not bullet-point cards)
-- B) Replace with inline mini-demo
-- C) Replace with auto-playing video/GIF
+**Decision: A — Keep as-is.**
+
+Rationale:
+- Already animated (chaos→calm story arc, 3 missed calls → 3 auto-confirmed reservations + revenue prediction bar). Not bullet-point cards.
+- Dark `bg-[#0d0d14]` between light sections functions as deliberate visual punctuation (Apple/Notion pattern), not a Nordic Clean violation.
+- Option B (inline demo) would duplicate `InlineDemoSection` already at position 2 on desktop — bad fit.
+- Option C (video) is tempting because the Quatro Restaurantes ad tells the same story, but it's 9:16 Reels-paced/PT-BR/no voiceover. Real production work, not a drop-in. Defer until we have a desktop-format brand video.
+
+Confirms the meta-decision already recorded at 13H-5. Closes Open Decision #1.
 
 ---
 
@@ -110,7 +114,7 @@ Recommended order: 13B → 13H → 13A → 13F → 13G → 13D → 13C → 13E
 
 ## Open Decisions
 
-1. BeforeAfterSection: keep, replace, or remove?
+1. ~~BeforeAfterSection: keep, replace, or remove?~~ → **KEEP** (Phase 13C, 2026-05-24)
 2. Inline Demo (13E): iframe vs direct component render?
 3. Demo Videos (13D): Who records the screen captures?
 4. Section kill list: confirm which sections to remove
@@ -272,7 +276,7 @@ Sandbox account:
 
 ## 8. Quarterly drift checks (auto in CI, verify allowlists)
 
-- [ ] Run `npm run audit:fire-and-forget` locally
-- [ ] Run `npm run audit:migrations` locally
-- [ ] Review `scripts/audit-fire-and-forget.js` ALLOWLIST — every entry still justified?
-- [ ] Walk Vercel cron schedule in `vercel.json` — any cron > every 15 min still needed? ($375 incident lesson)
+- [x] Run `npm run audit:fire-and-forget` locally — 2026-05-24: 1 stale violation in `cron/warm-seo-cache.js:83` added to ALLOWLIST (outer Promise is awaited via Promise.all; .catch is error path). Re-run clean.
+- [x] Run `npm run audit:migrations` locally — 2026-05-24: all 25 CREATE TABLE declarations present in prod.
+- [x] Review `scripts/audit-fire-and-forget.js` ALLOWLIST — 2026-05-24: all entries still justified; updated comment on warm-seo-cache to reflect current line.
+- [x] Walk Vercel cron schedule in `vercel.json` — 2026-05-24: nothing faster than `*/15`. The 4 `*/15` crons (check-late-reservations, send-campaigns, sync-conversation-data, validate-conversations) all time-sensitive and justified.

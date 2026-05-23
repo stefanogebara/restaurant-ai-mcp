@@ -40,8 +40,11 @@ const ALLOWLIST = new Set([
   '_lib/channels/meta-adapter.js:87',
   '_lib/channels/meta-adapter.js:89',
   '_lib/channels/meta-adapter.js:97',
-  // Cron loop iterating cities — its own Lambda, not racing a user response.
+  // Cron loop iterating cities — cityHandler resolves the outer Promise via
+  // fake-response callbacks (lines 79, 81); .catch handles the throw path.
+  // The outer Promise is awaited via Promise.all at line 94. Not fire-and-forget.
   'cron/warm-seo-cache.js:76',
+  'cron/warm-seo-cache.js:83',
   // Telemetry-only logging; no user impact if it drops.
   'waha-webhook.js:44',
   'waha-webhook.js:53',
