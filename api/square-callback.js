@@ -98,27 +98,48 @@ module.exports = async (req, res) => {
       logger.warn('Could not fetch locations', { error: err.message });
     }
 
-    // Upsert pos_connections (one per restaurant, replace on conflict)
-    const { error: dbErr } = await supabaseAdmin
+    const row = {
+      restaurant_id: restaurantId,
+      pos_provider: 'square',
+      merchant_id: merchant_id || null,
+      location_id: locationId,
+      access_token,
+      refresh_token: refresh_token || null,
+      token_expires_at: expires_at || null,
+      status: 'active',
+      sync_error: null,
+      updated_at: new Date().toISOString(),
+    };
+
+    // The unique index on (restaurant_id, pos_provider) is partial
+    // (WHERE status <> 'disconnected'), so .upsert(...,{onConflict})
+    // does not work — Postgres requires a non-partial constraint for
+    // ON CONFLICT. Look up the active row first; UPDATE if it exists,
+    // INSERT otherwise.
+    const { data: existing, error: selErr } = await supabaseAdmin
       .schema('restaurant').from('pos_connections')
-      .upsert(
-        {
-          restaurant_id: restaurantId,
-          pos_provider: 'square',
-          merchant_id: merchant_id || null,
-          location_id: locationId,
-          access_token,
-          refresh_token: refresh_token || null,
-          token_expires_at: expires_at || null,
-          status: 'active',
-          sync_error: null,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: 'restaurant_id,pos_provider' }
-      );
+      .select('id')
+      .eq('restaurant_id', restaurantId)
+      .eq('pos_provider', 'square')
+      .neq('status', 'disconnected')
+      .maybeSingle();
+
+    if (selErr) {
+      logger.error('Lookup failed', { error: selErr.message });
+      return res.redirect(`${SETTINGS_REDIRECT}?pos_error=db_error`);
+    }
+
+    const { error: dbErr } = existing
+      ? await supabaseAdmin
+          .schema('restaurant').from('pos_connections')
+          .update(row)
+          .eq('id', existing.id)
+      : await supabaseAdmin
+          .schema('restaurant').from('pos_connections')
+          .insert(row);
 
     if (dbErr) {
-      logger.error('DB upsert failed', { error: dbErr.message });
+      logger.error('DB write failed', { error: dbErr.message });
       return res.redirect(`${SETTINGS_REDIRECT}?pos_error=db_error`);
     }
 
