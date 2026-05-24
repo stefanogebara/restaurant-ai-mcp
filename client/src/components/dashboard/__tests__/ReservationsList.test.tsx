@@ -17,6 +17,8 @@ const enTranslations: Record<string, string> = {
   'dashboard.reservationsList.checkIn': 'Check In',
   'dashboard.reservationsList.seated': 'Seated',
   'dashboard.reservationsList.takeAction': 'Take Action',
+  'dashboard.reservationsList.takeActionButton': 'Send reminder',
+  'dashboard.reservationsList.takeActionAriaLabel': 'Send a reminder to this at-risk guest',
   'dashboard.reservationsList.actionTaken': 'Action taken',
   'dashboard.reservationsList.people': 'people',
   'dashboard.reservationsList.lunch': 'Lunch',
@@ -141,7 +143,9 @@ describe('ReservationsList', () => {
 
   it('shows "Seated" badge for checked-in reservations', () => {
     render(<ReservationsList {...defaultProps} />);
-    expect(screen.getByText('Seated')).toBeInTheDocument();
+    // Multiple seated reservations in the fixture render multiple "Seated"
+    // badges. Assert at least one is present rather than uniqueness.
+    expect(screen.getAllByText('Seated').length).toBeGreaterThan(0);
   });
 
   it('calls onCheckIn when Check In button is clicked', async () => {
@@ -231,7 +235,7 @@ describe('ReservationsList', () => {
         todayReservations={riskyReservations}
       />
     );
-    expect(screen.getByRole('button', { name: /take action/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /send a reminder/i })).toBeInTheDocument();
   });
 
   it('shows per-reservation predicted revenue when avgSpendPerCover provided', () => {
@@ -272,7 +276,7 @@ describe('ReservationsList', () => {
       />
     );
 
-    await user.click(screen.getByRole('button', { name: /take action/i }));
+    await user.click(screen.getByRole('button', { name: /send a reminder/i }));
     expect(onIntervention).toHaveBeenCalledTimes(1);
   });
 

@@ -36,7 +36,7 @@ describe('UpgradeBanner', () => {
     render(<UpgradeBanner feature="Advanced Analytics" />);
 
     expect(
-      screen.getByText('Upgrade to Growth or Scale to access this feature'),
+      screen.getByText('Upgrade to the Profissional plan to access this feature'),
     ).toBeInTheDocument();
   });
 
@@ -69,12 +69,12 @@ describe('UpgradeBanner', () => {
 
   // -- Compact variant --
 
-  it('renders compact variant with feature name and "available on Growth"', () => {
+  it('renders compact variant with feature name and "available on Profissional"', () => {
     render(<UpgradeBanner feature="Custom Reports" compact />);
 
     expect(screen.getByText('Custom Reports')).toBeInTheDocument();
     expect(screen.getByText(/available/i)).toBeInTheDocument();
-    expect(screen.getByText(/on Growth/i)).toBeInTheDocument();
+    expect(screen.getByText(/Profissional/i)).toBeInTheDocument();
   });
 
   it('renders "Upgrade" button in compact variant', () => {

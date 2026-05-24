@@ -85,7 +85,8 @@ describe('TableCard', () => {
 
   it('shows Being Cleaned status', () => {
     render(<TableCard table={createTable({ status: 'Being Cleaned' })} />);
-    expect(screen.getByText('Being Cleaned')).toBeInTheDocument();
+    // i18n key settings.tableStatus.cleaning renders as "Cleaning" in en.
+    expect(screen.getByText('Cleaning')).toBeInTheDocument();
   });
 
   it('renders the correct status icon for Available', () => {

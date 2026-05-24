@@ -49,7 +49,7 @@ describe('ActivePartiesPanel', () => {
 
   it('displays header with party count', () => {
     render(<ActivePartiesPanel {...defaultProps} />);
-    expect(screen.getByText('Active Parties')).toBeInTheDocument();
+    expect(screen.getByText('Currently Dining')).toBeInTheDocument();
     expect(screen.getByText('2')).toBeInTheDocument();
   });
 
@@ -112,7 +112,7 @@ describe('ActivePartiesPanel', () => {
     // The language prop is no longer used internally
     render(<ActivePartiesPanel {...defaultProps} language="es" />);
     // Should still render with English fallback (i18n default in tests)
-    expect(screen.getByText('Active Parties')).toBeInTheDocument();
+    expect(screen.getByText('Currently Dining')).toBeInTheDocument();
     expect(screen.getByText('4 guests')).toBeInTheDocument();
     expect(screen.getAllByText('Complete Service').length).toBe(2);
   });

@@ -101,7 +101,7 @@ describe('DashboardSkeleton', () => {
     render(<DashboardSkeleton />);
     const status = screen.getByRole('status');
     expect(status).toBeInTheDocument();
-    expect(status).toHaveAttribute('aria-label', 'Loading dashboard...');
+    expect(status).toHaveAttribute('aria-label', 'Loading...');
   });
 
   it('renders stat card skeletons in the stats grid', () => {

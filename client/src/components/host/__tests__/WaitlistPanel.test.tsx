@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { renderWithProviders } from '../../../test/renderWithProviders';
 import WaitlistPanel from '../WaitlistPanel';
 
 // Mock authFetch used by react-query mutations and queries
@@ -25,24 +25,9 @@ vi.mock('../../../utils/timeFormatting', () => ({
 }));
 
 // ------------------------------------------------------------------
-// Helpers
+// Helpers — renderWithProviders comes from src/test/renderWithProviders
+// (wraps ToastProvider + QueryClientProvider with retry-disabled client).
 // ------------------------------------------------------------------
-
-function createQueryClient() {
-  return new QueryClient({
-    defaultOptions: {
-      queries: { retry: false },
-      mutations: { retry: false },
-    },
-  });
-}
-
-function renderWithProviders(ui: React.ReactElement) {
-  const queryClient = createQueryClient();
-  return render(
-    <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>,
-  );
-}
 
 const makeEntry = (overrides: Record<string, unknown> = {}) => ({
   id: 'entry-1',

@@ -58,7 +58,7 @@ describe('StatsBar', () => {
 
   it('displays active parties and guests seated', () => {
     render(<StatsBar {...defaultProps} />);
-    expect(screen.getByText('Active Parties')).toBeInTheDocument();
+    expect(screen.getByText('Currently Dining')).toBeInTheDocument();
     expect(screen.getByText('18 seated')).toBeInTheDocument();
   });
 
@@ -72,7 +72,7 @@ describe('StatsBar', () => {
     expect(screen.getByText("Today's Reservations")).toBeInTheDocument();
     expect(screen.getByText('Tables Available')).toBeInTheDocument();
     expect(screen.getByText('Guests Expected')).toBeInTheDocument();
-    expect(screen.getByText('Active Parties')).toBeInTheDocument();
+    expect(screen.getByText('Currently Dining')).toBeInTheDocument();
   });
 
   it('shows predicted revenue card when predictedRevenue > 0', () => {

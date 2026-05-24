@@ -20,6 +20,12 @@ vi.mock('../../components/dashboard/ActivePartiesPanel', () => ({
   ),
 }));
 
+// CustomerProfileDrawer transitively imports useAuth and needs AuthProvider.
+// Mock it out since the DemoDashboard test isn't asserting drawer content.
+vi.mock('../../components/dashboard/CustomerProfileDrawer', () => ({
+  default: () => null,
+}));
+
 vi.mock('../../components/demo/DemoWaitlistPanel', () => ({
   default: (props: { entries: unknown[] }) => (
     <div data-testid="waitlist-panel">{props.entries.length} waiting</div>

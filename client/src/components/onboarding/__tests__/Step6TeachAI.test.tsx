@@ -160,7 +160,8 @@ describe('Step6TeachAI (Chat Interview)', () => {
     await user.click(screen.getByRole('button', { name: /start interview/i }));
 
     await waitFor(() => {
-      expect(screen.getByText(/failed to start interview/i)).toBeInTheDocument();
+      // i18n key onboarding.interviewStartFailed → "Could not start the interview. Please try again."
+      expect(screen.getByText(/could not start the interview/i)).toBeInTheDocument();
     });
     // Should return to idle — start button visible again
     expect(screen.getByRole('button', { name: /start interview/i })).toBeInTheDocument();

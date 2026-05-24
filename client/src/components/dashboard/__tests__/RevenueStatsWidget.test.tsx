@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
+import { renderWithProviders as render } from '../../../test/renderWithProviders';
 
 vi.mock('../../../hooks/useRevenueStats', () => ({ useRevenueStats: vi.fn() }));
 vi.mock('../../../hooks/useStaffingForecast', () => ({ useStaffingForecast: vi.fn() }));
@@ -44,13 +45,15 @@ describe('RevenueStatsWidget', () => {
   it('renders nothing when using_default is true', () => {
     mockStats.mockReturnValue({ data: { avg_spend_per_cover: 40, data_points: 2, using_default: true }, isLoading: false });
     const { container } = render(<RevenueStatsWidget />);
-    expect(container.innerHTML).toBe('');
+    // Component returns null; only the test-wrapper's ToastContainer remains.
+    expect(container.querySelector('[data-testid="revenue-stats-widget"], h3, span, p')).toBeNull();
   });
 
   it('renders nothing when stats missing', () => {
     mockStats.mockReturnValue({ data: undefined, isLoading: false });
     mockForecast.mockReturnValue({ data: [], isLoading: false });
     const { container } = render(<RevenueStatsWidget />);
-    expect(container.innerHTML).toBe('');
+    // Component returns null; only the test-wrapper's ToastContainer remains.
+    expect(container.querySelector('[data-testid="revenue-stats-widget"], h3, span, p')).toBeNull();
   });
 });
