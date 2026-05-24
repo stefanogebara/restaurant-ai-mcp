@@ -18,10 +18,11 @@ beforeEach(() => {
   emptyLtvChain.select.mockReturnValue(emptyLtvChain);
   emptyLtvChain.eq.mockReturnValue(emptyLtvChain);
   emptyLtvChain.in.mockResolvedValue({ data: [], error: null });
-  const defaultConfigChain = { select: jest.fn(), eq: jest.fn(), single: jest.fn() };
+  const defaultConfigChain = { select: jest.fn(), eq: jest.fn(), single: jest.fn(), maybeSingle: jest.fn() };
   defaultConfigChain.select.mockReturnValue(defaultConfigChain);
   defaultConfigChain.eq.mockReturnValue(defaultConfigChain);
   defaultConfigChain.single.mockResolvedValue({ data: { staffing_config: null }, error: null });
+  defaultConfigChain.maybeSingle.mockResolvedValue({ data: { staffing_config: null }, error: null });
   mockSchema.mockReturnValue({
     from: jest.fn().mockImplementation((table) => {
       if (table === 'restaurant_config') return defaultConfigChain;
@@ -53,10 +54,13 @@ function mockDepositChain(data) {
 }
 
 function mockSingleChain(data) {
-  const chain = { select: jest.fn(), eq: jest.fn(), single: jest.fn() };
+  // Source calls either .single() (legacy) or .maybeSingle() (post-M18).
+  // Mock both so the test suite is resilient to either form.
+  const chain = { select: jest.fn(), eq: jest.fn(), single: jest.fn(), maybeSingle: jest.fn() };
   chain.select.mockReturnValue(chain);
   chain.eq.mockReturnValue(chain);
   chain.single.mockResolvedValue({ data, error: null });
+  chain.maybeSingle.mockResolvedValue({ data, error: null });
   return chain;
 }
 
@@ -140,10 +144,11 @@ it('enriches upcoming reservations with is_regular and customer_tier when phone 
   ltvChain.select.mockReturnValue(ltvChain);
   ltvChain.eq.mockReturnValue(ltvChain);
   ltvChain.in.mockResolvedValue({ data: [{ customer_phone: '+353861234567', customer_tier: 'vip', total_visits: 14, avg_revenue_per_visit: 65 }], error: null });
-  const configChain = { select: jest.fn(), eq: jest.fn(), single: jest.fn() };
+  const configChain = { select: jest.fn(), eq: jest.fn(), single: jest.fn(), maybeSingle: jest.fn() };
   configChain.select.mockReturnValue(configChain);
   configChain.eq.mockReturnValue(configChain);
   configChain.single.mockResolvedValue({ data: { staffing_config: null }, error: null });
+  configChain.maybeSingle.mockResolvedValue({ data: { staffing_config: null }, error: null });
   mockSchema.mockReturnValue({
     from: jest.fn().mockImplementation((table) => {
       if (table === 'restaurant_config') return configChain;

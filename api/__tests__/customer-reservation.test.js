@@ -30,7 +30,17 @@ jest.mock('../_lib/supabase', () => ({
       order: jest.fn().mockReturnThis(),
       limit: jest.fn().mockReturnThis(),
       single: () => mockSingle(),
-      update: (...args) => { mockUpdate(...args); return { eq: jest.fn(() => Promise.resolve({ error: null })) }; },
+      update: (...args) => {
+        mockUpdate(...args);
+        // Source chains .update().eq().select('id') — return a thenable that
+        // supports .select() so the cancel/modify happy paths land on 200.
+        return {
+          eq: jest.fn(() => ({
+            select: jest.fn(() => Promise.resolve({ data: [{ id: 'row-1' }], error: null })),
+            then: (onResolve) => Promise.resolve({ error: null }).then(onResolve),
+          })),
+        };
+      },
     })),
   },
 }));
@@ -192,13 +202,17 @@ describe('customer-reservation: modify', () => {
       error: null,
     });
 
+    // Use a future date so the past-date guard doesn't 400 the test.
+    const futureDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+      .toISOString().split('T')[0];
+
     const { req, res } = mkReqRes({
       method: 'POST',
       query: { action: 'modify' },
       body: {
         reservation_id: 'CEL-2026-0218-A7K3',
         customer_phone: '+15550001234',
-        date: '2026-03-05',
+        date: futureDate,
         party_size: 6,
       },
     });
@@ -206,7 +220,7 @@ describe('customer-reservation: modify', () => {
 
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json.mock.calls[0][0].success).toBe(true);
-    expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({ date: '2026-03-05', party_size: 6 }));
+    expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({ date: futureDate, party_size: 6 }));
   });
 });
 

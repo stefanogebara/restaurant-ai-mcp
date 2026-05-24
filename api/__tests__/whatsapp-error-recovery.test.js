@@ -60,22 +60,33 @@ jest.mock('../_lib/whatsapp-interactions', () => ({
 
 jest.mock('../_lib/supabase', () => ({
   canAccommodateParty: jest.fn().mockResolvedValue({ success: true, can_accommodate: true, tables: [], total_capacity: 0 }),
-  supabaseAdmin: {
-    from: jest.fn().mockReturnValue({
-      select: jest.fn().mockReturnThis(),
-      eq:     jest.fn().mockReturnThis(),
-      single: jest.fn().mockResolvedValue({ data: null, error: null }),
-      maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
-    }),
-    schema: jest.fn().mockReturnValue({
-      from: jest.fn().mockReturnValue({
-        select: jest.fn().mockReturnThis(),
-        eq:     jest.fn().mockReturnThis(),
-        single: jest.fn().mockResolvedValue({ data: { agent_language: 'pt-BR' }, error: null }),
-        maybeSingle: jest.fn().mockResolvedValue({ data: { agent_language: 'pt-BR' }, error: null }),
+  // Lenient chain: processWithAI now fetches tables + pos_menu_items + config
+  // in parallel; chain needs .limit, .order, and to be thenable.
+  supabaseAdmin: (() => {
+    const makeChain = (data = null) => {
+      const chain = {};
+      chain.select = jest.fn().mockReturnValue(chain);
+      chain.eq = jest.fn().mockReturnValue(chain);
+      chain.in = jest.fn().mockReturnValue(chain);
+      chain.gte = jest.fn().mockReturnValue(chain);
+      chain.lte = jest.fn().mockReturnValue(chain);
+      chain.not = jest.fn().mockReturnValue(chain);
+      chain.order = jest.fn().mockReturnValue(chain);
+      chain.limit = jest.fn().mockReturnValue(chain);
+      chain.insert = jest.fn().mockReturnValue(chain);
+      chain.update = jest.fn().mockReturnValue(chain);
+      chain.single = jest.fn().mockResolvedValue({ data, error: null });
+      chain.maybeSingle = jest.fn().mockResolvedValue({ data, error: null });
+      chain.then = (r) => Promise.resolve({ data: data ? [data] : [], error: null }).then(r);
+      return chain;
+    };
+    return {
+      from: jest.fn().mockImplementation(() => makeChain()),
+      schema: jest.fn().mockReturnValue({
+        from: jest.fn().mockImplementation(() => makeChain({ agent_language: 'pt-BR' })),
       }),
-    }),
-  },
+    };
+  })(),
 }));
 
 jest.mock('../_lib/multi-tenant-supabase', () => ({

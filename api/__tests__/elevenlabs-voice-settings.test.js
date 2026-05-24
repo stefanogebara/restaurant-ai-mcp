@@ -108,8 +108,8 @@ describe('ElevenLabs Voice Settings degradation', () => {
         id: 'rest-1',
         restaurant_name: 'Seatable Bistro',
         elevenlabs_agent_id: 'agent-123',
-        agent_voice_id: 'voice-123',
-        agent_voice_name: 'Mila',
+        // Column renamed: agent_voice_id → voice_id (matches handler SELECT)
+        voice_id: 'voice-123',
         agent_language: 'pt',
         voice_settings: { stability: 0.7, similarity_boost: 0.8, style: 0.2, speed: 1.0 },
         tts_model_id: 'eleven_turbo_v2_5',
@@ -127,7 +127,9 @@ describe('ElevenLabs Voice Settings degradation', () => {
       data: expect.objectContaining({
         source: 'database_only',
         voice_id: 'voice-123',
-        voice_name: 'Mila',
+        // voice_name is hardcoded null in buildStoredVoiceResponse (not
+        // surfaced from DB on the no-API-key fallback path).
+        voice_name: null,
         language: 'pt',
       }),
     }));
@@ -164,8 +166,9 @@ describe('ElevenLabs Voice Settings degradation', () => {
 
     expect(res.status).toHaveBeenCalledWith(200);
     expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({
-      agent_voice_id: 'voice-456',
-      agent_voice_name: 'Noah',
+      // Column renamed: agent_voice_id → voice_id. voice_name no longer
+      // persisted on the no-API-key PATCH path.
+      voice_id: 'voice-456',
       agent_language: 'en',
     }));
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({

@@ -60,6 +60,10 @@ jest.mock('../_lib/rate-limit', () => ({
   isMessageDuplicate: jest.fn().mockResolvedValue(false),
   rejectOversizedBody: jest.fn().mockReturnValue(false),
   checkAndApplyRateLimit: jest.fn().mockResolvedValue({ allowed: true }),
+  // Added 2026-Q2: message-processor.js acquires a per-phone processing lock
+  // (Upstash Redis SETNX-style) to serialize WhatsApp message handling.
+  acquireProcessingLock: jest.fn().mockResolvedValue(true),
+  releaseProcessingLock: jest.fn().mockResolvedValue(undefined),
 }));
 
 const mockGetOrCreateSession = jest.fn();
@@ -135,22 +139,35 @@ jest.mock('../_lib/supabase', () => ({
     total_capacity: 10,
     reason: null,
   }),
-  supabaseAdmin: {
-    from: jest.fn().mockReturnValue({
-      select: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      insert: jest.fn().mockReturnThis(),
-      maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
-      single: jest.fn().mockResolvedValue({ data: null, error: null }),
-    }),
-    schema: jest.fn().mockReturnValue({
-      from: jest.fn().mockReturnValue({
-        select: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        maybeSingle: jest.fn().mockResolvedValue({ data: { agent_language: 'pt-BR' }, error: null }),
+  // Lenient permissive chain: returns empty data for any terminator.
+  // processWithAI now fetches tables + pos_menu_items + restaurant_config in
+  // parallel via supabaseAdmin.from/schema. The chain needs to support .limit,
+  // .single, .maybeSingle, and be thenable so plain `await chain` resolves.
+  supabaseAdmin: (() => {
+    const makeChain = (data = null) => {
+      const chain = {};
+      chain.select = jest.fn().mockReturnValue(chain);
+      chain.eq = jest.fn().mockReturnValue(chain);
+      chain.in = jest.fn().mockReturnValue(chain);
+      chain.gte = jest.fn().mockReturnValue(chain);
+      chain.lte = jest.fn().mockReturnValue(chain);
+      chain.not = jest.fn().mockReturnValue(chain);
+      chain.order = jest.fn().mockReturnValue(chain);
+      chain.limit = jest.fn().mockReturnValue(chain);
+      chain.insert = jest.fn().mockReturnValue(chain);
+      chain.update = jest.fn().mockReturnValue(chain);
+      chain.single = jest.fn().mockResolvedValue({ data, error: null });
+      chain.maybeSingle = jest.fn().mockResolvedValue({ data, error: null });
+      chain.then = (onResolve) => Promise.resolve({ data: data ? [data] : [], error: null }).then(onResolve);
+      return chain;
+    };
+    return {
+      from: jest.fn().mockImplementation(() => makeChain()),
+      schema: jest.fn().mockReturnValue({
+        from: jest.fn().mockImplementation(() => makeChain({ agent_language: 'pt-BR' })),
       }),
-    }),
-  },
+    };
+  })(),
 }));
 
 jest.mock('../_lib/usage-tracking', () => ({

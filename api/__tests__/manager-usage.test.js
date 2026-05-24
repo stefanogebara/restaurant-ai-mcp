@@ -30,7 +30,7 @@ describe('GET /api/manager-usage', () => {
     mockSupabaseFrom.mockImplementation((table) => {
       if (table === 'subscriptions') {
         return {
-          select: () => ({ eq: () => ({ in: () => ({ maybeSingle: async () => ({ data: { plan_name: 'starter' }, error: null }) }) }) })
+          select: () => ({ eq: () => ({ in: () => ({ order: () => ({ limit: async () => ({ data: [{ plan_name: 'starter' }], error: null }) }) }) }) })
         };
       }
       // usage_tracking
@@ -68,7 +68,7 @@ describe('GET /api/manager-usage', () => {
     mockSupabaseFrom.mockImplementation((table) => {
       if (table === 'subscriptions') {
         return {
-          select: () => ({ eq: () => ({ in: () => ({ maybeSingle: async () => ({ data: { plan_name: 'scale' }, error: null }) }) }) })
+          select: () => ({ eq: () => ({ in: () => ({ order: () => ({ limit: async () => ({ data: [{ plan_name: 'scale' }], error: null }) }) }) }) })
         };
       }
       return {
@@ -86,7 +86,7 @@ describe('GET /api/manager-usage', () => {
     mockSupabaseFrom.mockImplementation((table) => {
       if (table === 'subscriptions') {
         return {
-          select: () => ({ eq: () => ({ in: () => ({ maybeSingle: async () => ({ data: { plan_name: 'growth' }, error: null }) }) }) })
+          select: () => ({ eq: () => ({ in: () => ({ order: () => ({ limit: async () => ({ data: [{ plan_name: 'growth' }], error: null }) }) }) }) })
         };
       }
       return {

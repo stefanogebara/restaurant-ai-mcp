@@ -37,6 +37,8 @@ jest.mock('../_lib/rate-limit', () => ({
   isMessageDuplicate: jest.fn().mockResolvedValue(false),
   rejectOversizedBody: jest.fn().mockReturnValue(false),
   checkAndApplyRateLimit: jest.fn().mockResolvedValue({ allowed: true }),
+  acquireProcessingLock: jest.fn().mockResolvedValue(true),
+  releaseProcessingLock: jest.fn().mockResolvedValue(undefined),
 }));
 
 jest.mock('../_lib/whatsapp-sessions', () => ({
@@ -103,13 +105,35 @@ jest.mock('../_lib/supabase', () => ({
     total_capacity: 10,
     reason: null,
   }),
-  supabaseAdmin: {
-    from: jest.fn().mockReturnValue({
-      select: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      single: jest.fn().mockResolvedValue({ data: null, error: null }),
-    }),
-  },
+  // Lenient chain: source now calls .order, .limit, and .schema(...).from()
+  // from multiple new code paths (feedback reply check, provider lookup,
+  // table/menu fetch for prompt). Build a chain that supports all common
+  // terminators and is thenable so plain awaits resolve.
+  supabaseAdmin: (() => {
+    const makeChain = (data = null) => {
+      const chain = {};
+      chain.select = jest.fn().mockReturnValue(chain);
+      chain.eq = jest.fn().mockReturnValue(chain);
+      chain.in = jest.fn().mockReturnValue(chain);
+      chain.gte = jest.fn().mockReturnValue(chain);
+      chain.lte = jest.fn().mockReturnValue(chain);
+      chain.not = jest.fn().mockReturnValue(chain);
+      chain.order = jest.fn().mockReturnValue(chain);
+      chain.limit = jest.fn().mockReturnValue(chain);
+      chain.insert = jest.fn().mockReturnValue(chain);
+      chain.update = jest.fn().mockReturnValue(chain);
+      chain.single = jest.fn().mockResolvedValue({ data, error: null });
+      chain.maybeSingle = jest.fn().mockResolvedValue({ data, error: null });
+      chain.then = (r) => Promise.resolve({ data: data ? [data] : [], error: null }).then(r);
+      return chain;
+    };
+    return {
+      from: jest.fn().mockImplementation(() => makeChain()),
+      schema: jest.fn().mockReturnValue({
+        from: jest.fn().mockImplementation(() => makeChain({ agent_language: 'pt-BR' })),
+      }),
+    };
+  })(),
 }));
 
 jest.mock('../_lib/usage-tracking', () => ({

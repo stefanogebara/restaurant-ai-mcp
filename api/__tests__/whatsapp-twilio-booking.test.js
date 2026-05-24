@@ -23,6 +23,8 @@ jest.mock('../_lib/rate-limit', () => ({
   isMessageDuplicate: jest.fn().mockResolvedValue(false),
   rejectOversizedBody: jest.fn().mockReturnValue(false),
   checkAndApplyRateLimit: jest.fn().mockResolvedValue({ allowed: true }),
+  acquireProcessingLock: jest.fn().mockResolvedValue(true),
+  releaseProcessingLock: jest.fn().mockResolvedValue(undefined),
 }));
 
 jest.mock('../services/feedbackService', () => ({
