@@ -131,6 +131,10 @@
       "destination": "/api/square-webhook.js"
     },
     {
+      "source": "/api/stripe/connect/onboarding",
+      "destination": "/api/stripe-connect-onboarding.js"
+    },
+    {
       "source": "/api/request-deposit-link",
       "destination": "/api/request-deposit-link.js"
     },
