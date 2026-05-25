@@ -368,12 +368,14 @@ module.exports = async (req, res) => {
   const rateLimited = await checkAndApplyRateLimit(req, res, 'api');
   if (rateLimited) return; // 429 response already sent
 
-  // Verify authentication
+  // Verify authentication. Envelope mirrors the other protected endpoints
+  // (success/error keys) so frontend error handlers keyed on `success: false`
+  // don't have to special-case this route.
   const authResult = await verifyAuth(req, { required: true });
   if (authResult.error) {
     return res.status(authResult.status || 401).json({
+      success: false,
       error: authResult.error,
-      message: 'Authentication required to access LTV data'
     });
   }
   req.user = authResult.user;

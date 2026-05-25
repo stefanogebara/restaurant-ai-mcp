@@ -54,7 +54,7 @@ function clearPhoneVerifyFailures(reservationId) {
 // Clean up expired entries every 10 minutes
 // Removes blocked entries whose block has expired AND stale entries older than 30 minutes
 const PHONE_VERIFY_STALE_MS = 30 * 60 * 1000; // 30 minutes
-setInterval(() => {
+const phoneVerifyCleanup = setInterval(() => {
   const now = Date.now();
   for (const [id, entry] of phoneVerifyAttempts) {
     const isBlockExpired = entry.failures >= PHONE_VERIFY_MAX_ATTEMPTS && now > entry.blockedUntil;
@@ -64,6 +64,8 @@ setInterval(() => {
     }
   }
 }, 10 * 60 * 1000);
+// .unref() so Jest workers (and any short-lived require) can exit cleanly.
+if (typeof phoneVerifyCleanup.unref === 'function') phoneVerifyCleanup.unref();
 
 module.exports = async (req, res) => {
   setWebhookCors(req, res);

@@ -13,7 +13,9 @@ function isRateLimited(phone) {
   return false;
 }
 
-setInterval(() => {
+// .unref() so Jest workers (and any short-lived require) can exit cleanly.
+// The interval still fires while the long-running serverless instance is up.
+const cleanupInterval = setInterval(() => {
   const oneMinuteAgo = Date.now() - 60 * 1000;
   for (const [phone, timestamps] of phoneRateLimits) {
     const active = timestamps.filter(ts => ts > oneMinuteAgo);
@@ -21,5 +23,6 @@ setInterval(() => {
     else phoneRateLimits.set(phone, active);
   }
 }, 5 * 60 * 1000);
+if (typeof cleanupInterval.unref === 'function') cleanupInterval.unref();
 
 module.exports = { isRateLimited };

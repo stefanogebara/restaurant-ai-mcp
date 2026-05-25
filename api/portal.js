@@ -38,6 +38,33 @@ module.exports = async (req, res) => {
     return res.status(200).end();
   }
 
+  // Cheap envelope validation BEFORE the rate-limit roundtrip so bots sending
+  // garbage `action=` strings don't burn a Lambda or consume a rate-limit token
+  // waiting on Upstash. Real attackers exercising a valid action still hit the
+  // limiter below; this just short-circuits the obviously-invalid traffic.
+  const action = req.query.action || (req.body && req.body.action);
+  const ACTION_METHODS = {
+    restaurant: ['GET'],
+    availability: ['GET'],
+    reserve: ['POST'],
+    reservation: ['GET'],
+  };
+  const allowed = ACTION_METHODS[action];
+  if (!allowed) {
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid action. Use: restaurant, availability, reserve, reservation',
+    });
+  }
+  if (!allowed.includes(req.method)) {
+    res.setHeader('Allow', allowed.join(', '));
+    return res.status(405).json({
+      success: false,
+      error: 'method_not_allowed',
+      message: `Action '${action}' requires ${allowed.join(' or ')}`,
+    });
+  }
+
   // Rate limit: 30 requests per minute for public endpoints
   const rateLimited = await checkAndApplyRateLimit(req, res, 'api');
   if (rateLimited) return;
@@ -54,32 +81,7 @@ module.exports = async (req, res) => {
     }
   }
 
-  const action = req.query.action || (req.body && req.body.action);
-
   try {
-    // Per-action method enforcement (M21). Returns 405 with Allow header for
-    // wrong-method requests instead of falling through to a 400.
-    const ACTION_METHODS = {
-      restaurant: ['GET'],
-      availability: ['GET'],
-      reserve: ['POST'],
-      reservation: ['GET'],
-    };
-    const allowed = ACTION_METHODS[action];
-    if (!allowed) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid action. Use: restaurant, availability, reserve, reservation',
-      });
-    }
-    if (!allowed.includes(req.method)) {
-      res.setHeader('Allow', allowed.join(', '));
-      return res.status(405).json({
-        success: false,
-        error: 'method_not_allowed',
-        message: `Action '${action}' requires ${allowed.join(' or ')}`,
-      });
-    }
 
     switch (action) {
       case 'restaurant':
