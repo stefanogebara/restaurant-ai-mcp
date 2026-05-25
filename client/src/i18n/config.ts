@@ -63,14 +63,16 @@ if (!localStorage.getItem('seatable-user-lang') && localStorage.getItem('i18next
 }
 
 /** Normalize detected language codes to our supported set (en, es, pt-BR).
- *  Brazilian-first product: cold visitors default to PT-BR. Many BR users have
- *  English-locale browsers (work laptops, EN-default OS) but want a PT product
- *  experience. Only Spanish navigator hint switches to ES; everyone else lands
- *  in PT-BR and can toggle to EN/ES via the language switcher.
- *  Returning users keep their explicit choice via localStorage (seatable-user-lang). */
+ *  Brazilian-first product: cold visitors with `navigator: en-US` (BR users on
+ *  EN-locale OS — common on work laptops) default to PT-BR. But explicit
+ *  signals like `?lang=en` or a stored `seatable-user-lang=en` arrive here as
+ *  the exact string 'en' and must survive normalization so shared links and
+ *  saved choices actually work. Spanish stays via the `es` prefix.
+ *  Anything we don't recognize falls back to PT-BR. */
 function normalizeLanguage(lng: string): string {
   if (lng === 'pt' || lng.startsWith('pt-')) return 'pt-BR';
   if (lng.startsWith('es')) return 'es';
+  if (lng === 'en') return 'en';
   return 'pt-BR';
 }
 
@@ -89,9 +91,11 @@ i18n
       escapeValue: false, // React already escapes values
     },
     detection: {
-      // Explicit user choice (seatable-user-lang) takes priority.
+      // ?lang=en wins for shared links / outbound campaigns.
+      // Then explicit user choice (seatable-user-lang) takes priority.
       // i18nextLng is the auto-written cache — only used as secondary fallback.
-      order: ['localStorage', 'navigator'],
+      order: ['querystring', 'localStorage', 'navigator'],
+      lookupQuerystring: 'lang',
       caches: ['localStorage'],
       lookupLocalStorage: 'seatable-user-lang',
       convertDetectedLanguage: normalizeLanguage,
