@@ -82,7 +82,17 @@ function mockSupabase(fetchResults) {
         return Promise.resolve(result);
       }),
       update: jest.fn().mockReturnValue({
-        eq: jest.fn().mockResolvedValue({ error: null }),
+        // Source post-2026 chains: update().eq().is(sent_at, null).select() —
+        // .is() guards against double-send (only update rows where sent_at
+        // is still null); .select() returns the rows that actually got
+        // updated so the cron can detect a race and count it as 'skipped'.
+        eq: jest.fn().mockReturnValue({
+          is: jest.fn().mockReturnValue({
+            select: jest.fn().mockResolvedValue({ data: [{ id: 'demo-id-1' }], error: null }),
+            then: (r) => Promise.resolve({ data: [{ id: 'demo-id-1' }], error: null }).then(r),
+          }),
+          then: (r) => Promise.resolve({ error: null }).then(r),
+        }),
         in: jest.fn().mockResolvedValue({ error: null }),
       }),
     };

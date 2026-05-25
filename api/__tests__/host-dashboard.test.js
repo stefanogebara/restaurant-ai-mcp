@@ -137,6 +137,11 @@ jest.mock('../_lib/supabase', () => ({
     schema: jest.fn(() => ({
       from: jest.fn(() => mockCreateChainableMock({ data: { slug: 'test-restaurant' }, error: null })),
     })),
+    // Source post-2026 also uses query.from() directly for an orphan-reservation
+    // check on delete-table (line 272 of floor-plan-actions.js). Default to
+    // empty result so the delete proceeds — tests asserting blocked-delete
+    // can override the chain explicitly.
+    from: jest.fn(() => mockCreateChainableMock({ data: [], error: null })),
   },
 }));
 
@@ -225,6 +230,13 @@ function mockReqRes({ action, method = 'POST', body = {} } = {}) {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  // clearAllMocks resets call history but does NOT drain mockResolvedValueOnce
+  // queues. Tests using `.mockResolvedValueOnce(failure)` can leak failure
+  // responses into the next test. Reset + re-init the mocks that use Once.
+  mockUpdateTableConfig.mockReset();
+  mockUpdateTableConfig.mockResolvedValue({ success: true, table: {} });
+  mockDeleteTable.mockReset();
+  mockDeleteTable.mockResolvedValue({ success: true });
 });
 
 // ---------------------------------------------------------------------------
@@ -795,9 +807,11 @@ describe('POST update-table-position action', () => {
   });
 
   test('updates position successfully', async () => {
+    // Floor-plan grid is 24x20; server-side bounds check rejects anything
+    // out of range. Use values inside the grid.
     const { req, res } = mockReqRes({
       action: 'update-table-position',
-      body: { table_id: 't1', position_x: 100, position_y: 200 },
+      body: { table_id: 't1', position_x: 10, position_y: 15 },
     });
     await dashboardHandler(req, res);
 
@@ -805,14 +819,14 @@ describe('POST update-table-position action', () => {
     expect(mockUpdateTableConfig).toHaveBeenCalledWith(
       RESTAURANT_ID,
       't1',
-      expect.objectContaining({ position_x: 100, position_y: 200 })
+      expect.objectContaining({ position_x: 10, position_y: 15 })
     );
   });
 
   test('includes optional width, height, rotation when provided', async () => {
     const { req, res } = mockReqRes({
       action: 'update-table-position',
-      body: { table_id: 't1', position_x: 50, position_y: 75, width: 120, height: 80, rotation: 45 },
+      body: { table_id: 't1', position_x: 5, position_y: 7, width: 120, height: 80, rotation: 45 },
     });
     await dashboardHandler(req, res);
 

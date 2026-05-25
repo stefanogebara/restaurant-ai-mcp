@@ -111,6 +111,9 @@ jest.mock('../_lib/subscription-middleware', () => ({
   requireFeature: jest.fn(() => (req, res, next) => next()),
   checkReservationLimits: jest.fn((req, res, next) => next()),
   isDemoRestaurant: jest.fn().mockResolvedValue(false),
+  // Added when waitlist.js gained inline feature-gate check (line 56:
+  // `!hasFeature(plan, 'waitlist_management')`). Default-allow in tests.
+  hasFeature: jest.fn().mockReturnValue(true),
 }));
 
 // ---------------------------------------------------------------------------

@@ -360,9 +360,15 @@ describe('proactive-comms API — POST send', () => {
       }),
       update: (updates) => {
         updateCapture = updates;
+        // Source post-2026 chains: update().eq().eq().select('id') so the
+        // error-record path can detect a race where the row vanished
+        // mid-update. Tests need to support .select() as the terminal step.
         return {
           eq: () => ({
-            eq: () => Promise.resolve({ data: null, error: null }),
+            eq: () => ({
+              select: () => Promise.resolve({ data: [{ id: 'item-1' }], error: null }),
+              then: (r) => Promise.resolve({ data: null, error: null }).then(r),
+            }),
           }),
         };
       },

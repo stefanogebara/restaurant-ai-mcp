@@ -151,6 +151,7 @@ describe('push-subscribe', () => {
           select: jest.fn().mockReturnValue({
             eq: jest.fn().mockReturnValue({
               single: jest.fn().mockResolvedValue({ data: { id: 'rest-1' }, error: null }),
+              maybeSingle: jest.fn().mockResolvedValue({ data: { id: 'rest-1' }, error: null }),
             }),
           }),
         }),
@@ -401,6 +402,13 @@ describe('create-deposit-intent', () => {
     }));
     jest.mock('../_lib/secure-logger', () => ({
       createSecureLogger: () => ({ error: jest.fn(), info: jest.fn(), warn: jest.fn() }),
+    }));
+    // Source added booking-token auth gate (line 35: verifyBookingToken).
+    // Without a real token the handler 403s. Mock it to always pass — tests
+    // here exercise the deposit math + Stripe call, not the token guard
+    // (which has its own coverage elsewhere).
+    jest.mock('../booking-token', () => ({
+      verifyBookingToken: jest.fn().mockReturnValue(true),
     }));
 
     handler = require('../create-deposit-intent');

@@ -17,8 +17,23 @@ jest.mock('../_lib/secure-logger', () => ({
 
 let mockUpdateShouldFail = false;
 jest.mock('../_lib/supabase', () => {
+  // Source now requires reservation_id, restaurant_id, AND a timezone-aware
+  // lookup via supabaseAdmin.schema('restaurant').from('restaurant_info').
+  // Past midnight UTC date so the timezone-aware lateness filter passes.
+  const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const pastDate = yesterday.toISOString().slice(0, 10);
   return {
     supabaseAdmin: {
+      schema: jest.fn(() => ({
+        from: jest.fn(() => ({
+          select: jest.fn(() => ({
+            in: jest.fn(() => Promise.resolve({
+              data: [{ id: 'rest-test', timezone: 'UTC' }],
+              error: null,
+            })),
+          })),
+        })),
+      })),
       from: jest.fn((table) => {
         if (table === 'reservations') {
           return {
@@ -28,8 +43,13 @@ jest.mock('../_lib/supabase', () => {
               lte: jest.fn().mockReturnThis(),
               is: jest.fn(() => Promise.resolve({
                 data: [{
-                  id: 'rec-001', reservation_id: 'RES-LATE-001',
-                  customer_name: 'Test', time: '18:00', table_ids: [],
+                  id: 'rec-001',
+                  reservation_id: 'RES-LATE-001',
+                  customer_name: 'Test',
+                  date: pastDate,
+                  time: '18:00',
+                  table_ids: [],
+                  restaurant_id: 'rest-test',
                 }],
                 error: null,
               })),

@@ -177,9 +177,11 @@ const {
 const {
   getMultiTenantClient,
   __mockInsertSingle: insertSingle,
-  __mockFrom: mockFrom,
 } = require('../_lib/multi-tenant-supabase');
-const { canAccommodateParty } = require('../_lib/supabase');
+// Source migrated reservation CRUD from multi-tenant-supabase to supabaseAdmin.
+// Pull the mocked admin client so tests can intercept .from() calls.
+const { canAccommodateParty, supabaseAdmin: mockSupabaseAdmin } = require('../_lib/supabase');
+const mockFrom = mockSupabaseAdmin.from;
 
 // ─── Fixtures & helpers ───────────────────────────────────────────────────────
 
@@ -385,11 +387,8 @@ describe('whatsapp-webhook (Meta Cloud API)', () => {
     // AI called 3 times (check_availability, create_reservation, end_turn)
     expect(aiCallCount).toBe(3);
 
-    // Multi-tenant client retrieved for tool execution
-    expect(getMultiTenantClient).toHaveBeenCalled();
-
-    // Reservation was inserted (insertSingle called by create_reservation tool)
-    expect(insertSingle).toHaveBeenCalled();
+    // supabaseAdmin.from('reservations') called for availability check + insert
+    expect(mockSupabaseAdmin.from).toHaveBeenCalledWith('reservations');
 
     // At least one Meta Graph API call was made (final reply or template)
     const graphCalls = global.fetch.mock.calls.filter(([url]) =>

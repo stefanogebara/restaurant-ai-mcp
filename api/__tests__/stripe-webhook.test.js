@@ -3,6 +3,13 @@
  * Stripe payment webhook handler
  */
 
+// Set Stripe price-ID env vars before requiring the handler — the
+// PRICE_ID_TO_PLAN map is built at module load from process.env. Tests use
+// these IDs in the webhook event fixtures.
+process.env.STRIPE_STARTER_PRICE_ID = 'price_starter';
+process.env.STRIPE_GROWTH_PRICE_ID = 'price_growth';
+process.env.STRIPE_SCALE_PRICE_ID = 'price_scale';
+
 // --- Mock dependencies ---
 const mockCustomersRetrieve = jest.fn();
 const mockCustomersUpdate = jest.fn();
@@ -56,6 +63,19 @@ jest.mock('../_lib/supabase', () => ({
     }),
     from: jest.fn().mockReturnValue({
       select: mockSubscriptionsSelect,
+      // Source post-2026 also issues a defensive UPDATE that cancels the
+      // synthetic onboarding 'Free' row when a real paid subscription gets
+      // created (avoids both rows being active=true and manager-usage
+      // picking nondeterministically). Chain: update().eq().eq().eq().neq()
+      update: jest.fn().mockReturnValue({
+        eq: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              neq: jest.fn().mockResolvedValue({ data: null, error: null }),
+            }),
+          }),
+        }),
+      }),
     }),
   },
 }));
