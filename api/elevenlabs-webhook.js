@@ -128,12 +128,13 @@ module.exports = async (req, res) => {
     return res.status(403).json({ error: 'Authentication failed' });
   }
 
-  // Log incoming request for debugging
-  logger.info(' Incoming request:', {
+  // Log only the action discriminator — req.body contains PII
+  // (customer_name, customer_phone, customer_email, date, time)
+  // that the generic secure-logger sanitizer doesn't mask.
+  logger.info('Incoming request:', {
     method: req.method,
     url: req.url,
-    body: req.body,
-    query: req.query
+    action: req.query?.action || req.body?.action,
   });
 
   try {
