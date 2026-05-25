@@ -116,7 +116,7 @@ export default function InlineDemoSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-60px' }}
           transition={{ duration: 0.5 }}
-          className="rounded-2xl overflow-hidden border border-border-gray bg-white"
+          className="rounded-2xl overflow-hidden border border-border-gray bg-warm-white"
         >
           {/* Browser top bar */}
           <div className="flex items-center gap-3 px-4 py-3 bg-[#F3F4F6] border-b border-border-gray">

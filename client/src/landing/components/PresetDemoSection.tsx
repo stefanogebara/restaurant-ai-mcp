@@ -26,7 +26,12 @@ export default function PresetDemoSection() {
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {presets.map((p, i) => (
+          {presets.map((p, i) => {
+            // Brazilian is the featured preset (primary market). Give it the
+            // burgundy ring so the eye lands there first instead of bouncing
+            // across three equal-weight cards.
+            const isFeatured = p.id === 'brazilian';
+            return (
             <motion.div
               key={p.id}
               initial={{ opacity: 0, y: 24 }}
@@ -41,10 +46,12 @@ export default function PresetDemoSection() {
                   trackDemoFunnel({ step: 'demo_started', preset: p.id });
                 }}
                 aria-label={t('landing.tryDemo.cardAria', { name: p.name, defaultValue: `Explore ${p.name} demo` })}
-                className="group relative flex flex-col items-center gap-3 p-8 bg-white rounded-2xl border border-border-gray
+                className={`group relative flex flex-col items-center gap-3 p-8 bg-warm-white rounded-2xl border
                   hover:border-burgundy hover:-translate-y-1
                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-burgundy focus-visible:ring-offset-2
-                  transition-all duration-200"
+                  transition-all duration-200 ${
+                    isFeatured ? 'border-burgundy ring-1 ring-burgundy/20' : 'border-border-gray'
+                  }`}
               >
                 <span className="text-4xl">{p.flag}</span>
                 <h3 className="font-serif text-lg font-semibold text-deep-charcoal">{p.name}</h3>
@@ -53,7 +60,8 @@ export default function PresetDemoSection() {
                 <span className="absolute bottom-4 right-4 text-muted-stone opacity-0 group-hover:opacity-100 transition-opacity" aria-hidden="true">&rarr;</span>
               </Link>
             </motion.div>
-          ))}
+            );
+          })}
         </div>
 
         <p className="mt-12 text-sm text-warm-stone">

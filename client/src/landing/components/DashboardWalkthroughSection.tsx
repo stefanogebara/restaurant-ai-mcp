@@ -105,7 +105,7 @@ function AmbientOrbs() {
 // ─── Dashboard Chrome ───────────────────────────────────────────
 function DashboardChrome({ children, accentColor }: { children: React.ReactNode; accentColor: string }) {
   return (
-    <div className="relative rounded-2xl overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.5)]">
+    <div className="relative rounded-2xl overflow-hidden ring-1 ring-white/10">
       {/* Animated border glow */}
       <motion.div
         className="absolute inset-0 rounded-2xl pointer-events-none z-10"

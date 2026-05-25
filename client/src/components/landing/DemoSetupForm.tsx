@@ -75,17 +75,23 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query: restaurantName.trim(), city: city.trim() }),
       });
-      const data = await res.json();
-      if (!res.ok) {
-        setSearchError(data.error || t('landing.demoSetup.form.searchFailed', 'Search failed'));
+      const data = await res.json().catch(() => null);
+      // A 200 + { success:false } from the scrape API was previously rendered
+      // as "no exact match" — silent search failure on a conversion-critical
+      // form. Treat both !res.ok and explicit {success:false} as failures.
+      if (!res.ok || data?.success === false) {
+        setSearchError(data?.error || t('landing.demoSetup.form.searchFailed', 'Search failed'));
         return;
       }
-      setSearchResults(data.results || []);
+      setSearchResults(data?.results || []);
       // Auto-select first result
-      if (data.results?.length === 1) {
+      if (data?.results?.length === 1) {
         setSelectedResult(data.results[0]);
       }
-    } catch {
+    } catch (err) {
+      // Surface network errors to Sentry — the previous empty catch hid
+      // population-wide scrape outages from ops.
+      console.error('[DemoSetupForm] search failed', err);
       setSearchError(t('landing.demoSetup.form.networkError', 'Network error. Please try again.'));
     } finally {
       setIsSearching(false);
@@ -93,7 +99,10 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
-    if (e.key === 'Enter' && canSearch && !searchResults) {
+    // Gate on isSearching (not !searchResults) so the user can hit Enter to
+    // re-search after a zero-result attempt. The previous version locked
+    // keyboard-search after any first search, even an empty one.
+    if (e.key === 'Enter' && canSearch && !isSearching) {
       e.preventDefault();
       handleSearch();
     }
@@ -120,7 +129,7 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
   const showEmailStep = showResults;
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white border border-border-gray rounded-[2rem] p-8 sm:p-10 space-y-6">
+    <form onSubmit={handleSubmit} className="bg-warm-white border border-border-gray rounded-[2rem] p-8 sm:p-10 space-y-6">
       {/* Step 1: Find your restaurant */}
       <div>
         <p className="text-[11px] font-semibold uppercase tracking-[1.6px] text-muted-stone mb-4">

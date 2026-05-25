@@ -107,7 +107,7 @@ export default function PricingSection() {
   };
 
   return (
-    <section id="pricing" className="py-24 px-6 sm:px-16 bg-white border-t border-border-gray">
+    <section id="pricing" className="py-24 px-6 sm:px-16 bg-warm-white border-t border-border-gray">
       <div className="max-w-[1100px] mx-auto">
         {/* Header */}
         <div className="text-center mb-16">
