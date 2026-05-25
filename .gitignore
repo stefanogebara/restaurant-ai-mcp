@@ -99,3 +99,6 @@ playwright/
 /nul.*
 /C꠷*
 "/C\ufe36Users*"
+
+# Design audit screenshots — regenerable via scripts/design-audit-visual.mjs
+design-audit/**/*.png
