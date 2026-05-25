@@ -24,11 +24,22 @@ const crypto = require('crypto');
  * @param {unknown} expected
  * @returns {boolean}
  */
+// Per-process nonce for HMAC-wrapped comparisons. Re-derived once at module
+// load — never reused between processes, never exposed. The point is that
+// HMAC(provided) and HMAC(expected) are both fixed-length (32 bytes) regardless
+// of the input length, so timingSafeEqual can't leak length information.
+const COMPARE_NONCE = crypto.randomBytes(32);
+
+function hmac(input) {
+  return crypto.createHmac('sha256', COMPARE_NONCE).update(input).digest();
+}
+
 function secureEquals(provided, expected) {
   if (typeof provided !== 'string' || typeof expected !== 'string') return false;
-  if (provided.length !== expected.length) return false;
   try {
-    return crypto.timingSafeEqual(Buffer.from(provided), Buffer.from(expected));
+    // Compare HMACs rather than raw strings so unequal-length inputs don't
+    // fast-path out and leak the expected length through response time.
+    return crypto.timingSafeEqual(hmac(provided), hmac(expected));
   } catch {
     return false;
   }

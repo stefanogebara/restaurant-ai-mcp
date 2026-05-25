@@ -17,6 +17,7 @@ const { supabaseAdmin } = require('../_lib/supabase');
 const { logCronRun, logCronError } = require('../_lib/cron-tracker');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { isCronEnabled } = require('../_lib/cron-config');
+const { bearerEquals } = require('../_lib/secure-compare');
 
 const logger = createSecureLogger('SyncConversationData');
 
@@ -27,7 +28,7 @@ const ELEVENLABS_API_BASE = 'https://api.elevenlabs.io/v1';
 module.exports = async (req, res) => {
   // Verify cron secret
   const authHeader = req.headers.authorization;
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!bearerEquals(authHeader, process.env.CRON_SECRET)) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 

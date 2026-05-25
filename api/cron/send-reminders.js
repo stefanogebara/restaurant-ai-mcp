@@ -15,6 +15,7 @@ const { logCronRun } = require('../_lib/cron-tracker');
 const { getLocalDate } = require('../_lib/timezone');
 const { sendReminderVoiceNote } = require('../services/whatsapp/voice-note-trigger');
 const { isCronEnabled } = require('../_lib/cron-config');
+const { bearerEquals } = require('../_lib/secure-compare');
 initSentry();
 const logger = createSecureLogger('CronReminders');
 
@@ -80,7 +81,7 @@ module.exports = async (req, res) => {
     return res.status(500).json({ success: false, error: 'Cron not configured' });
   }
   const authHeader = req.headers.authorization;
-  if (authHeader !== `Bearer ${cronSecret}`) {
+  if (!bearerEquals(authHeader, cronSecret)) {
     return res.status(401).json({ error: 'Authentication required' });
   }
 

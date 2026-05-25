@@ -10,12 +10,13 @@ const { createSecureLogger } = require('../_lib/secure-logger');
 const { slugify } = require('../_lib/seo-html');
 const { logCronRun } = require('../_lib/cron-tracker');
 const { isCronEnabled } = require('../_lib/cron-config');
+const { bearerEquals } = require('../_lib/secure-compare');
 const cityHandler = require('../seo/city-cuisine');
 
 const logger = createSecureLogger('warm-seo-cache');
 
 module.exports = async (req, res) => {
-  if (req.headers.authorization !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!bearerEquals(req.headers.authorization, process.env.CRON_SECRET)) {
     return res.status(401).json({ error: 'Authentication required' });
   }
 

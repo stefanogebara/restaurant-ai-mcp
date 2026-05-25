@@ -13,6 +13,7 @@ const { initSentry, captureMessage } = require('../_lib/sentry');
 const { logCronRun } = require('../_lib/cron-tracker');
 const { localToUtcDate } = require('../_lib/timezone');
 const { isCronEnabled } = require('../_lib/cron-config');
+const { bearerEquals } = require('../_lib/secure-compare');
 initSentry();
 
 const logger = createSecureLogger('CronLateReservations');
@@ -26,7 +27,7 @@ module.exports = async (req, res) => {
     return res.status(500).json({ success: false, error: 'Cron not configured' });
   }
   const authHeader = req.headers.authorization;
-  if (authHeader !== `Bearer ${cronSecret}`) {
+  if (!bearerEquals(authHeader, cronSecret)) {
     return res.status(401).json({ error: 'Authentication required' });
   }
 
