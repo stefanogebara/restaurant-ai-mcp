@@ -28,6 +28,9 @@ export interface RestaurantInfo {
     type?: 'flat' | 'per_person';
     amount?: number;
   };
+  /** True when the restaurant has WhatsApp notifications enabled. Used by
+   *  the confirmation page to decide whether to promise a reminder (BUG #25). */
+  whatsapp_enabled?: boolean;
 }
 
 export interface TimeSlot {

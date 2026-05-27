@@ -159,7 +159,7 @@ async function handleGetRestaurant(req, res) {
   const { data, error } = await supabaseAdmin
     .schema('restaurant')
     .from('restaurant_config')
-    .select('id, restaurant_name, restaurant_type, city, country, phone, email, website, business_hours, reservation_settings, average_dining_duration_minutes, slug, deposit_config')
+    .select('id, restaurant_name, restaurant_type, city, country, phone, email, website, business_hours, reservation_settings, average_dining_duration_minutes, slug, deposit_config, whatsapp_enabled')
     .eq('slug', slug)
     .eq('is_active', true)
     .eq('onboarding_completed', true)
@@ -197,7 +197,10 @@ async function handleGetRestaurant(req, res) {
       advance_booking_days: reservationSettings.advance_booking_days || 30,
       average_dining_duration: data.average_dining_duration_minutes || 90,
       cancellation_policy: reservationSettings.cancellation_policy || null,
-      deposit_config: data.deposit_config || { enabled: false }
+      deposit_config: data.deposit_config || { enabled: false },
+      // Honest signal for the booking confirmation page so it doesn't promise
+      // a WhatsApp reminder the restaurant can't actually send (audit BUG #25).
+      whatsapp_enabled: data.whatsapp_enabled === true
     }
   });
 }

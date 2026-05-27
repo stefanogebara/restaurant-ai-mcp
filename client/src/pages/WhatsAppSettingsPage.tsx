@@ -17,6 +17,7 @@ import {
   useSaveWhatsAppSettings,
   useSendTestMessage,
 } from '../hooks/useWhatsAppSettings';
+import { useRestaurantSettings } from '../hooks/useRestaurantSettings';
 
 interface TemplateStatus {
   name: string;
@@ -305,11 +306,19 @@ function PhoneVerificationPanel() {
 export default function WhatsAppSettingsPage() {
   const { t, i18n } = useTranslation();
   const toast = useToast();
-  const testPhoneDefaultCountry: CountryCode = i18n.language?.startsWith('es')
-    ? 'ES'
-    : i18n.language?.startsWith('en')
-      ? 'US'
-      : 'BR';
+  // Default the test-phone country to the RESTAURANT's country, not the
+  // manager's UI language. A Brazilian restaurant managed in English used
+  // to default the test phone to 🇺🇸+1, which is the wrong country for
+  // every realistic test message they'd send (audit BUG #20).
+  const { data: restaurantSettings } = useRestaurantSettings();
+  const restaurantCountry = (restaurantSettings?.country || '').toUpperCase();
+  const testPhoneDefaultCountry: CountryCode =
+    (restaurantCountry as CountryCode) ||
+    (i18n.language?.startsWith('es')
+      ? 'ES'
+      : i18n.language?.startsWith('en')
+        ? 'US'
+        : 'BR');
   const { data: status, isLoading: statusLoading } = useWhatsAppStatus();
   const { data: stats, isLoading: statsLoading } = useWhatsAppStats();
   const { data: latestTestMessage, isLoading: testStatusLoading } = useWhatsAppTestMessageStatus();

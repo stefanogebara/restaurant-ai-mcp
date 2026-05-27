@@ -316,10 +316,17 @@ export default function BookingConfirmation() {
               {t('reservations.confirmation.whatsNext', "What's next?")}
             </h2>
             <ul className="space-y-2.5 text-sm text-deep-charcoal">
+              {/* Only promise the WhatsApp reminder when the restaurant has it
+                  actually enabled — otherwise the line is a lie that erodes
+                  trust the moment the customer notices no reminder arrives
+                  (audit BUG #25). When WhatsApp is off we still show a useful
+                  "save this confirmation" prompt instead of nothing. */}
               <li className="flex items-start gap-3">
                 <span className="w-7 h-7 rounded-full bg-green-50 text-green-700 flex items-center justify-center flex-shrink-0 text-base" aria-hidden="true">💬</span>
                 <span className="leading-snug">
-                  {t('reservations.confirmation.reminder', "We'll send you a WhatsApp reminder 24 hours before your reservation.")}
+                  {restaurantInfo?.whatsapp_enabled
+                    ? t('reservations.confirmation.reminder', "We'll send you a WhatsApp reminder 24 hours before your reservation.")
+                    : t('reservations.confirmation.saveConfirmation', "Save this confirmation — the restaurant has your phone number if anything changes.")}
                 </span>
               </li>
               {restaurantInfo?.phone && (
