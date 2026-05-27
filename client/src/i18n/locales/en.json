@@ -3019,7 +3019,7 @@
     "creating": "Creating...",
     "createAndSend": "Create & Send Campaign",
     "noCampaigns": "No campaigns yet",
-    "noCampaignsHint": "Create your first WhatsApp campaign to re-engage guests",
+    "noCampaignsHint": "Create your first campaign to re-engage guests",
     "messageRequired": "Message is required",
     "messagePlaceholder": "Hi {name}, we miss you at our restaurant! Book your next visit...",
     "campaignName": "Campaign Name",

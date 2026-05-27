@@ -6,6 +6,7 @@ import ThiingsIcon from '../components/common/ThiingsIcon';
 import ManagerAIUsageBar from '../components/dashboard/ManagerAIUsageBar';
 import { api } from '../services/api';
 import { renderMarkdown } from '../utils/markdownRenderer';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
 // ---------- Types ----------
 
@@ -49,6 +50,7 @@ const MAX_INPUT_CHARS = 2000;
 
 export default function ManagerAIChatPage() {
   const { t, i18n } = useTranslation();
+  useDocumentTitle(t('pageTitles.managerAI', 'Manager AI | seatable'));
   const lang = i18n.language as keyof typeof SUGGESTED_PROMPTS;
   const [input, setInput] = useState('');
   // Track the last message that failed to send so the user can retry with

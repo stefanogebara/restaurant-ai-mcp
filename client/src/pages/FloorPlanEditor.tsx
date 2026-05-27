@@ -23,10 +23,12 @@ import FloorPlanLegend from '../components/floor-plan/FloorPlanLegend';
 import TablePopover from '../components/floor-plan/TablePopover';
 import AddTableModal from '../components/floor-plan/AddTableModal';
 import { CELL, GRID_COLS, SVG_W, SVG_H, snapToGrid, getTablePxSize } from '../components/floor-plan/floorPlanConstants';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
 export default function FloorPlanEditor() {
   const queryClient = useQueryClient();
   const { t } = useTranslation();
+  useDocumentTitle(t('pageTitles.floorPlan', 'Floor Plan | seatable'));
   const { error: toastError } = useToast();
 
   // ─── Data fetching ────────────────────────────────────────────────────────────

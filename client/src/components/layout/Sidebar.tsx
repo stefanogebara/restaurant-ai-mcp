@@ -213,30 +213,33 @@ export default function Sidebar() {
                   const isLocked = isSubscriptionLoading ? false : !hasAccess;
 
                   if (isLocked) {
+                    // Audit BUG #10 — locked items used to be disabled buttons
+                    // with no click handler, so the lock icon felt like a
+                    // dead end. Route clicks to /subscription/manage so users
+                    // have a discoverable path to unlock the feature.
                     return (
-                      <button
+                      <Link
                         key={item.path}
+                        to="/subscription/manage"
+                        onClick={() => setIsMobileOpen(false)}
                         className={`
                           w-full flex items-center gap-3 text-left transition-all duration-150
-                          opacity-30 cursor-not-allowed text-stone-400
+                          opacity-60 hover:opacity-100 hover:bg-white/[0.03] text-stone-400 hover:text-stone-200
                           ${isCollapsed ? 'justify-center px-6 py-3' : 'px-6 py-3'}
                         `}
                         title={isCollapsed
                           ? `${t(NAV_KEYS[item.label] ?? item.label, item.label)} - ${t('navigation.upgradeToUnlock', 'Upgrade to unlock')}`
                           : t('navigation.upgradePlanToUnlock', 'Upgrade to Professional plan to unlock')}
                         aria-label={`${t(NAV_KEYS[item.label] ?? item.label, item.label)} - ${t('navigation.lockedFeature', 'Locked feature')}`}
-                        aria-disabled="true"
                       >
-                        <span
-                          className="w-1.5 h-1.5 rounded-full bg-current opacity-40 flex-shrink-0"
-                        />
+                        <span className="w-1.5 h-1.5 rounded-full bg-current opacity-40 flex-shrink-0" />
                         {!isCollapsed && (
                           <span className="text-sm flex items-center gap-2">
                             {t(NAV_KEYS[item.label] ?? item.label, item.label)}
                             <ThiingsIcon name="lock" pxSize={10} />
                           </span>
                         )}
-                      </button>
+                      </Link>
                     );
                   }
 

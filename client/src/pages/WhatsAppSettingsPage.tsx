@@ -18,6 +18,7 @@ import {
   useSendTestMessage,
 } from '../hooks/useWhatsAppSettings';
 import { useRestaurantSettings } from '../hooks/useRestaurantSettings';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
 interface TemplateStatus {
   name: string;
@@ -305,6 +306,7 @@ function PhoneVerificationPanel() {
 
 export default function WhatsAppSettingsPage() {
   const { t, i18n } = useTranslation();
+  useDocumentTitle(t('pageTitles.whatsapp', 'WhatsApp | seatable'));
   const toast = useToast();
   // Default the test-phone country to the RESTAURANT's country, not the
   // manager's UI language. A Brazilian restaurant managed in English used

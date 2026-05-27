@@ -53,7 +53,7 @@ export default function LaunchChecklistModal({ bookingSlug, onDismiss }: Props) 
               type="button"
               onClick={handleDismiss}
               className="text-[#9CA3AF] hover:text-deep-charcoal mt-0.5 flex-shrink-0"
-              aria-label="Fechar"
+              aria-label={t('common.close', 'Close')}
             >
               <ThiingsIcon name="close" pxSize={20} />
             </button>
@@ -70,7 +70,7 @@ export default function LaunchChecklistModal({ bookingSlug, onDismiss }: Props) 
               className={`w-5 h-5 rounded border flex-shrink-0 mt-0.5 flex items-center justify-center transition-colors ${
                 checked[0] ? 'bg-burgundy border-burgundy' : 'border-[#D1D5DB] hover:border-burgundy'
               }`}
-              aria-label="Marcar passo 1"
+              aria-label={t('launchChecklist.markStep', 'Mark step {{n}}', { n: 1 })}
             >
               {checked[0] && <ThiingsIcon name="check" pxSize={12} className="text-white" />}
             </button>
@@ -99,7 +99,7 @@ export default function LaunchChecklistModal({ bookingSlug, onDismiss }: Props) 
               className={`w-5 h-5 rounded border flex-shrink-0 mt-0.5 flex items-center justify-center transition-colors ${
                 checked[1] ? 'bg-burgundy border-burgundy' : 'border-[#D1D5DB] hover:border-burgundy'
               }`}
-              aria-label="Marcar passo 2"
+              aria-label={t('launchChecklist.markStep', 'Mark step {{n}}', { n: 2 })}
             >
               {checked[1] && <ThiingsIcon name="check" pxSize={12} className="text-white" />}
             </button>
@@ -134,7 +134,7 @@ export default function LaunchChecklistModal({ bookingSlug, onDismiss }: Props) 
               className={`w-5 h-5 rounded border flex-shrink-0 mt-0.5 flex items-center justify-center transition-colors ${
                 checked[2] ? 'bg-burgundy border-burgundy' : 'border-[#D1D5DB] hover:border-burgundy'
               }`}
-              aria-label="Marcar passo 3"
+              aria-label={t('launchChecklist.markStep', 'Mark step {{n}}', { n: 3 })}
             >
               {checked[2] && <ThiingsIcon name="check" pxSize={12} className="text-white" />}
             </button>

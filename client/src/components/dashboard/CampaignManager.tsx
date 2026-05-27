@@ -71,7 +71,7 @@ export default function CampaignManager() {
           <div className="w-8 h-8 rounded-lg bg-rose-50 flex items-center justify-center">
             <ThiingsIcon name="send" pxSize={16} className="text-rose-600" />
           </div>
-          <h3 className="text-sm font-semibold text-deep-charcoal">{t('insights.emailCampaigns', 'Email Campaigns')}</h3>
+          <h3 className="text-sm font-semibold text-deep-charcoal">{t('insights.campaigns', 'Campaigns')}</h3>
         </div>
         <button
           onClick={() => setShowCreate(!showCreate)}

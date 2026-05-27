@@ -478,7 +478,10 @@ function NoPlanPricing() {
                     }`}
                   >
                     {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
-                    {isLoading ? t('subscription.loading') : tier.trial ? t('subscription.startTrial') : t('subscription.start')}
+                    {/* Consistent label across plans (audit BUG #15). The
+                        "14 DAYS FREE" badge above the Professional card already
+                        communicates the trial — we don't need to mix labels. */}
+                    {isLoading ? t('subscription.loading') : t('subscription.start')}
                   </button>
                 </div>
               );

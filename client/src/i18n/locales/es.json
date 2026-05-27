@@ -2965,7 +2965,7 @@
     "creating": "Creando...",
     "createAndSend": "Crear y Enviar Campaña",
     "noCampaigns": "Sin campañas aún",
-    "noCampaignsHint": "Crea tu primera campaña de WhatsApp para reactivar clientes",
+    "noCampaignsHint": "Crea tu primera campaña para reactivar clientes",
     "messageRequired": "El mensaje es obligatorio",
     "messagePlaceholder": "Hola {name}, te echamos de menos! Reserva tu próxima visita...",
     "campaignName": "Nombre de Campaña",
