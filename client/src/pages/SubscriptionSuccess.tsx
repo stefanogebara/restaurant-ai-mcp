@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import Spinner from '../components/common/Spinner';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useVerifySession } from '../hooks/useVerifySession';
-import { LS_STRIPE_CUSTOMER_ID, LS_SUBSCRIPTION_PLAN, LS_CUSTOMER_EMAIL } from '../config/localStorageKeys';
+import { LS_STRIPE_CUSTOMER_ID, LS_SUBSCRIPTION_PLAN, LS_CUSTOMER_EMAIL, LS_PAYMENT_VERIFIED_AT } from '../config/localStorageKeys';
 
 export default function SubscriptionSuccess() {
   const navigate = useNavigate();
@@ -32,6 +32,10 @@ export default function SubscriptionSuccess() {
     if (data.customer_id) localStorage.setItem(LS_STRIPE_CUSTOMER_ID, data.customer_id);
     if (data.plan) localStorage.setItem(LS_SUBSCRIPTION_PLAN, data.plan);
     if (data.customer_email) localStorage.setItem(LS_CUSTOMER_EMAIL, data.customer_email);
+    // Record the moment we confirmed the payment so /subscription/manage can
+    // distinguish "user paid but our webhook hasn't landed yet" from "user has
+    // no plan" and avoid showing the upsell cards to a paying customer.
+    localStorage.setItem(LS_PAYMENT_VERIFIED_AT, String(Date.now()));
     setRedirectIn(5);
   }, [data]);
 

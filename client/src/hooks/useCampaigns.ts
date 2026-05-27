@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api as apiClient } from '../services/api';
+import { usePlanFeature } from './usePlanFeature';
 
 export interface Campaign {
   id: string;
@@ -38,12 +39,17 @@ export interface SegmentCounts {
 }
 
 export function useCampaignList() {
+  // Retention campaigns piggyback on the customer-LTV feature gate — the
+  // backend rejects trial users with 403 and there's no UI to use the data
+  // without LTV anyway.
+  const { hasAccess } = usePlanFeature('customerLTV');
   return useQuery({
     queryKey: ['campaigns'],
     queryFn: async () => {
       const res = await apiClient.get('/retention-campaigns?action=list&limit=50');
       return res.data.data.campaigns as Campaign[];
     },
+    enabled: hasAccess,
     staleTime: 2 * 60 * 1000,
   });
 }
@@ -61,12 +67,14 @@ export function useCampaignDeliveryStats(campaignId: string | null) {
 }
 
 export function useSegmentCounts() {
+  const { hasAccess } = usePlanFeature('customerLTV');
   return useQuery({
     queryKey: ['segment-counts'],
     queryFn: async () => {
       const res = await apiClient.get('/retention-campaigns?action=segments');
       return res.data.data as SegmentCounts;
     },
+    enabled: hasAccess,
     staleTime: 5 * 60 * 1000,
   });
 }

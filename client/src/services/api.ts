@@ -65,9 +65,14 @@ api.interceptors.response.use(
 /**
  * Authenticated fetch wrapper - use instead of raw fetch() for API calls.
  * Automatically attaches the Supabase session token as Bearer auth.
+ *
+ * Waits for `authReady` (INITIAL_SESSION) before reading the session so calls
+ * made on first mount (e.g. /subscription/success after a Stripe redirect)
+ * don't race and ship without an Authorization header → 401.
  */
 export async function authFetch(url: string, options: RequestInit = {}): Promise<Response> {
   try {
+    await authReady;
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.access_token) {
       const headers = new Headers(options.headers || {});

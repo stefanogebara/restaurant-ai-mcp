@@ -1,9 +1,15 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { authFetch } from '../services/api';
 import { LTV_POLL_INTERVAL, ANALYTICS_STALE_TIME } from '../config/constants';
+import { usePlanFeature } from './usePlanFeature';
 import type { Customer, LTVStats } from '../components/host/ltvDashboard.types';
 
+// All LTV queries are gated on `customerLTV` plan access. Audit BUG #22 found
+// the Insights page was firing 12 × 403s per mount because the hooks ran
+// unconditionally for trial users who don't have the feature.
+
 export function useLTVStats() {
+  const { hasAccess } = usePlanFeature('customerLTV');
   return useQuery<LTVStats | null>({
     queryKey: ['ltv', 'stats'],
     queryFn: async () => {
@@ -12,12 +18,14 @@ export function useLTVStats() {
       const result = await response.json();
       return result.success ? result.data : null;
     },
+    enabled: hasAccess,
     staleTime: ANALYTICS_STALE_TIME,
     refetchInterval: LTV_POLL_INTERVAL,
   });
 }
 
 export function useLTVTopVIPs() {
+  const { hasAccess } = usePlanFeature('customerLTV');
   return useQuery<Customer[]>({
     queryKey: ['ltv', 'vips'],
     queryFn: async () => {
@@ -26,12 +34,14 @@ export function useLTVTopVIPs() {
       const result = await response.json();
       return result.success ? (result.data.customers || []) : [];
     },
+    enabled: hasAccess,
     staleTime: ANALYTICS_STALE_TIME,
     refetchInterval: LTV_POLL_INTERVAL,
   });
 }
 
 export function useLTVAtRisk() {
+  const { hasAccess } = usePlanFeature('customerLTV');
   return useQuery<Customer[]>({
     queryKey: ['ltv', 'at-risk'],
     queryFn: async () => {
@@ -44,6 +54,7 @@ export function useLTVAtRisk() {
         .sort((a, b) => b.churn_risk_score - a.churn_risk_score)
         .slice(0, 5);
     },
+    enabled: hasAccess,
     staleTime: ANALYTICS_STALE_TIME,
     refetchInterval: LTV_POLL_INTERVAL,
   });

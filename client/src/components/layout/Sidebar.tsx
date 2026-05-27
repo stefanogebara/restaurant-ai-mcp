@@ -465,6 +465,21 @@ export default function Sidebar() {
                   <span className="text-sm">{t('navigation.integrations', 'Integrations')}</span>
                 </Link>
 
+                {/* Subscription & Billing — owner only. Audit found this was
+                    only reachable via the Manager-AI upsell link, leaving
+                    paying customers with no in-app path to manage their plan,
+                    view the trial expiry, or open the Stripe portal. */}
+                {can('manageSubscription') && (
+                  <Link
+                    to="/subscription/manage"
+                    onClick={() => setIsSettingsOpen(false)}
+                    className="w-full px-4 py-3 flex items-center gap-3 hover:bg-white/[0.05] transition-colors text-stone-300"
+                  >
+                    <ThiingsIcon name="credit-card" pxSize={16} />
+                    <span className="text-sm">{t('navigation.subscription', 'Subscription & Billing')}</span>
+                  </Link>
+                )}
+
                 <div className="border-t border-stone-mid" />
 
                 {/* Logout */}

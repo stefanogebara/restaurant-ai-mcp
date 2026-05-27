@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { authFetch } from '../services/api';
 import { ANALYTICS_STALE_TIME } from '../config/constants';
+import { usePlanFeature } from './usePlanFeature';
 
 export interface NoShowPrediction {
   reservation_id: string;
@@ -29,6 +30,10 @@ interface NoShowData {
 }
 
 export function useNoShowPredictions() {
+  // Gated on mlPerformance (No-Show Prevention) — without this gate, trial
+  // users hit /api/predictive-analytics?type=no-show twice on every Insights
+  // mount and get 403s twice (BUG #22, also BUG #23 duplicate call source).
+  const { hasAccess } = usePlanFeature('mlPerformance');
   return useQuery<NoShowData>({
     queryKey: ['no-show-predictions'],
     queryFn: async () => {
@@ -40,6 +45,7 @@ export function useNoShowPredictions() {
       if (result.success === false) throw new Error(result.error || 'Failed to fetch no-show predictions');
       return { predictions: result.predictions || [], summary: result.summary || null };
     },
+    enabled: hasAccess,
     staleTime: ANALYTICS_STALE_TIME,
   });
 }
@@ -71,6 +77,7 @@ interface RevenueData {
 }
 
 export function useRevenueOpportunities() {
+  const { hasAccess } = usePlanFeature('revenueOpportunities');
   return useQuery<RevenueData>({
     queryKey: ['revenue-opportunities'],
     queryFn: async () => {
@@ -80,6 +87,7 @@ export function useRevenueOpportunities() {
       if (result.success === false) throw new Error(result.error || 'Failed to fetch revenue opportunities');
       return { opportunities: result.opportunities || [], summary: result.summary || null };
     },
+    enabled: hasAccess,
     staleTime: ANALYTICS_STALE_TIME,
   });
 }

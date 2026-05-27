@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { usePermission } from '../hooks/usePermission';
 import { useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { SkeletonSubscription } from '../components/common/Skeleton';
 import { useToast } from '../contexts/ToastContext';
@@ -9,6 +9,20 @@ import { useSubscriptionData, useCustomerPortal } from '../hooks/useSubscription
 import { currencyFromLanguage, formatPriceLocale, type SupportedCurrency } from '../utils/currency';
 import { getPlanPrices } from '../config/planFeatures';
 import { authFetch } from '../services/api';
+import { LS_PAYMENT_VERIFIED_AT } from '../config/localStorageKeys';
+
+/** Window during which we treat a fresh Stripe payment as "subscription pending
+ *  activation" rather than "no subscription". Webhooks usually land within
+ *  seconds; we give them 10 minutes before falling back to the upsell page. */
+const PENDING_ACTIVATION_WINDOW_MS = 10 * 60 * 1000;
+
+function readPendingActivationMarker(): boolean {
+  const raw = localStorage.getItem(LS_PAYMENT_VERIFIED_AT);
+  if (!raw) return false;
+  const ts = Number(raw);
+  if (!Number.isFinite(ts)) return false;
+  return Date.now() - ts < PENDING_ACTIVATION_WINDOW_MS;
+}
 
 const planTiers = ['starter', 'growth', 'scale'];
 
@@ -78,7 +92,7 @@ export default function SubscriptionManage() {
   const { can } = usePermission();
   const navigate = useNavigate();
   const { error } = useToast();
-  const { data: subscription, isLoading } = useSubscriptionData();
+  const { data: subscription, isLoading, refetch: refetchSubscription } = useSubscriptionData();
   const portal = useCustomerPortal();
   const [loadingCheckoutPlan, setLoadingCheckoutPlan] = useState<string | null>(null);
 
@@ -151,6 +165,14 @@ export default function SubscriptionManage() {
   // Treat "Free" plan (seeded by onboarding, no real Stripe customer) as no subscription
   const hasNoRealPlan = !subscription || subscription.status === 'none' || subscription.planName === 'Free';
   if (hasNoRealPlan) {
+    // If the user JUST paid (verify-session set LS_PAYMENT_VERIFIED_AT within the
+    // last 10 min) but Stripe's customer.subscription.created webhook hasn't
+    // landed in our DB yet, render an "activating" state with polling instead of
+    // the upsell cards. Showing the upsell to someone whose card was just
+    // charged looks like the payment failed.
+    if (readPendingActivationMarker()) {
+      return <PendingActivation onRefetch={() => refetchSubscription()} />;
+    }
     return <NoPlanPricing />;
   }
 
@@ -469,6 +491,50 @@ function NoPlanPricing() {
               {t('subscription.faleConosco')}
             </a>
           </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── "We're activating your subscription" shown right after Stripe success ──
+// Polls the subscription endpoint every 4 seconds until the webhook lands and
+// the real plan data shows up. Bounded by PENDING_ACTIVATION_WINDOW_MS via the
+// marker check in the parent — once that window passes we fall through to
+// NoPlanPricing on next render.
+
+function PendingActivation({ onRefetch }: { onRefetch: () => void }) {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const id = setInterval(() => onRefetch(), 4000);
+    return () => clearInterval(id);
+  }, [onRefetch]);
+
+  return (
+    <div className="min-h-screen bg-white flex flex-col">
+      <header className="flex justify-between items-center px-6 sm:px-10 py-4 border-b border-border-gray bg-white">
+        <div className="font-serif text-lg font-semibold text-deep-charcoal">
+          seatable<span className="text-burgundy">.</span>
+        </div>
+      </header>
+      <div className="flex-1 flex items-center justify-center p-6">
+        <div className="max-w-[480px] w-full bg-white border border-border-gray rounded-2xl p-12 text-center">
+          <Loader2 className="w-8 h-8 text-burgundy animate-spin mx-auto mb-5" />
+          <h1 className="font-serif text-2xl font-medium text-deep-charcoal mb-2">
+            {t('subscription.activatingTitle', 'Activating your subscription')}
+          </h1>
+          <p className="text-sm text-warm-stone font-light mb-6">
+            {t('subscription.activatingDesc', "Payment received. We're finalising your plan — this usually takes 30 seconds. You can stay on this page or head to your dashboard.")}
+          </p>
+          <button
+            type="button"
+            onClick={() => navigate('/host-dashboard/simple')}
+            className="px-7 py-3 border border-border-gray text-stone-gray text-sm font-medium rounded-full hover:border-muted-stone transition-colors"
+          >
+            {t('subscription.goToDashboard')}
+          </button>
         </div>
       </div>
     </div>

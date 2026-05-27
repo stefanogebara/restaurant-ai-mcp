@@ -30,6 +30,12 @@ export const LS_STRIPE_CUSTOMER_ID = 'stripe_customer_id';
 /** Subscription plan name set after successful subscription */
 export const LS_SUBSCRIPTION_PLAN = 'subscription_plan';
 
+/** Timestamp (ms) when verify-session last confirmed a Stripe payment.
+ *  Used by /subscription/manage to render an "activating" state instead of
+ *  the upsell page during the brief window between Stripe redirect and the
+ *  customer.subscription.created webhook landing in our DB. */
+export const LS_PAYMENT_VERIFIED_AT = 'payment_verified_at';
+
 /** Demo token saved so it survives auth redirects and email/password login */
 export const LS_PENDING_DEMO_TOKEN = 'pending_demo_token';
 
