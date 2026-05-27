@@ -641,6 +641,10 @@
     "depositError": "Falha na configuração do pagamento. Tente novamente.",
     "locationFormat": "{{city}}, {{country}}",
     "timeResetHint": "Horário desmarcado — selecione novamente para o novo número de pessoas.",
+    "missingDate": "Escolha uma data para continuar",
+    "missingTime": "Escolha um horário para continuar",
+    "missingName": "Adicione seu nome para continuar",
+    "missingPhone": "Adicione um telefone válido para continuar",
     "phoneInvalid": "Por favor, insira um número de telefone válido (mínimo 10 dígitos).",
     "deposit": {
       "heading": "Depósito da Reserva",

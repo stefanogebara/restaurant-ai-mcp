@@ -641,6 +641,10 @@
     "depositError": "Payment setup failed. Please try again.",
     "locationFormat": "{{city}}, {{country}}",
     "timeResetHint": "Time slot cleared — please re-select for your updated party size.",
+    "missingDate": "Pick a date to continue",
+    "missingTime": "Pick a time to continue",
+    "missingName": "Add your name to continue",
+    "missingPhone": "Add a valid phone number to continue",
     "phoneInvalid": "Please enter a valid phone number (at least 10 digits).",
     "deposit": {
       "heading": "Reservation Deposit",
