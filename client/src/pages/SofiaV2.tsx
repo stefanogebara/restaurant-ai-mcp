@@ -16,7 +16,7 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useVoicePersona, useSaveVoicePersona, VoicePersonaForbiddenError } from '../hooks/useVoicePersona';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
@@ -42,17 +42,11 @@ const PERSONALITIES: { key: Personality; title: string; body: string }[] = [
 
 // ─── Header ─────────────────────────────────────────────────────────────────
 
-function AgentHeader({
-  active,
-  onToggle,
-  todayMessages,
-  responseRate,
-}: {
-  active: boolean;
-  onToggle: () => void;
-  todayMessages: number;
-  responseRate: number;
-}) {
+// AgentHeader. Pause toggle + live counters were in the mock but neither
+// has a backend yet — pausing Sofia requires a settings.is_active flag and
+// the WhatsApp/voice routers would have to honour it, and the counters
+// need a metrics endpoint. Both removed until they're real.
+function AgentHeader() {
   return (
     <header className="bg-white border border-[#E5E7EB] rounded-xl px-6 py-5 flex items-center gap-5">
       <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#D97706] to-[#9F1239] flex items-center justify-center text-white text-xl font-semibold">
@@ -68,28 +62,11 @@ function AgentHeader({
         <p className="text-[13px] text-[#706A65] mt-1">
           Sua atendente virtual, atende no WhatsApp e chamadas de voz.
         </p>
-        <div className="flex items-center gap-4 mt-2.5 text-[12px]">
-          <span className="flex items-center gap-1.5">
-            <span className={`w-1.5 h-1.5 rounded-full ${active ? 'bg-[#16A34A] animate-pulse' : 'bg-[#706A65]'}`} />
-            <span className={active ? 'text-[#16A34A] font-medium' : 'text-[#706A65]'}>
-              {active ? 'Sofia online' : 'Sofia pausada'}
-            </span>
-          </span>
-          <span className="text-[#706A65]">·</span>
-          <span className="text-[#706A65]">{todayMessages} mensagens hoje</span>
-          <span className="text-[#706A65]">·</span>
-          <span className="text-[#706A65]">taxa de resposta {responseRate.toFixed(1)}%</span>
+        <div className="flex items-center gap-2 mt-2.5 text-[12px]">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A] animate-pulse" />
+          <span className="text-[#16A34A] font-medium">Sofia online</span>
         </div>
       </div>
-      <button
-        type="button"
-        onClick={onToggle}
-        aria-pressed={active}
-        aria-label={active ? 'Pausar Sofia' : 'Ativar Sofia'}
-        className={`relative w-11 h-6 rounded-full transition-colors ${active ? 'bg-[#9F1239]' : 'bg-[#E5E7EB]'}`}
-      >
-        <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-all ${active ? 'left-[22px]' : 'left-0.5'}`} />
-      </button>
     </header>
   );
 }
@@ -229,13 +206,14 @@ function ChatPreview() {
 // ─── Page ───────────────────────────────────────────────────────────────────
 
 export default function SofiaV2() {
-  const { t } = useTranslation();
   useDocumentTitle('Sofia · seatable');
   const { user } = useAuth();
   const managerName = useMemo(() => getManagerName(user?.email), [user]);
   const { success, error } = useToast();
   const [tab, setTab] = useState<TabKey>('agent');
-  const [active, setActive] = useState(true);
+  // Personality + formalidade live in local state only — there's no backend
+  // column for them yet. Labels below make this explicit so users don't
+  // configure things that quietly disappear on reload.
   const [personality, setPersonality] = useState<Personality>('warm');
   const [formalidade, setFormalidade] = useState(30); // 0 = casual, 100 = formal
 
@@ -273,28 +251,17 @@ export default function SofiaV2() {
       <SidebarV2 managerName={managerName} />
 
       <main className="flex-1 min-w-0">
-        {/* Top bar */}
-        <div className="h-14 border-b border-[#E5E7EB] bg-white px-8 flex items-center justify-between">
+        {/* Top bar — no /api/search yet, so the mocked input is dropped. */}
+        <div className="h-14 border-b border-[#E5E7EB] bg-white px-8 flex items-center">
           <nav aria-label="Breadcrumb" className="text-[12px] text-[#706A65]">
-            <span>Início</span>
+            <Link to="/host-dashboard/v2" className="hover:text-[#1C1917] transition-colors">Início</Link>
             <span className="mx-2">›</span>
             <span className="text-[#1C1917] font-medium">Sofia</span>
           </nav>
-          <input
-            type="search"
-            placeholder="Buscar…"
-            aria-label={t('common.search', 'Buscar')}
-            className="h-9 w-64 px-3 rounded-md border border-[#E5E7EB] bg-[#FAFAF9] text-[13px] focus:outline-none focus:border-[#9F1239] focus:bg-white transition-colors"
-          />
         </div>
 
         <div className="max-w-[1400px] mx-auto px-8 py-7">
-          <AgentHeader
-            active={active}
-            onToggle={() => setActive(v => !v)}
-            todayMessages={23}
-            responseRate={99.4}
-          />
+          <AgentHeader />
 
           {/* Tab nav */}
           <nav className="mt-6 border-b border-[#E5E7EB] flex gap-1" role="tablist">
@@ -393,7 +360,7 @@ export default function SofiaV2() {
                   <div className="grid grid-cols-2 gap-3">
                     <ChannelCard
                       title="WhatsApp Business"
-                      status="Conectado · responde em &lt;3s"
+                      status="Conectado · responde em <3s"
                       configured={true}
                       onConfigure={() => window.location.assign('/host-dashboard/whatsapp')}
                     />
@@ -409,8 +376,11 @@ export default function SofiaV2() {
                 {/* Personality */}
                 <section>
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-[14px] font-semibold text-[#1C1917]">Personalidade</h3>
-                    <span className="text-[11px] text-[#706A65]">Escolha como Sofia conversa com seus clientes</span>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-[14px] font-semibold text-[#1C1917]">Personalidade</h3>
+                      <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-[#F5F0EB] text-[#706A65]">prévia</span>
+                    </div>
+                    <span className="text-[11px] text-[#706A65]">Não salva ainda — em breve</span>
                   </div>
                   <PersonalityGrid selected={personality} onSelect={setPersonality} />
                 </section>
@@ -418,7 +388,10 @@ export default function SofiaV2() {
                 {/* Formality slider */}
                 <section className="bg-white border border-[#E5E7EB] rounded-xl p-5">
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-[14px] font-semibold text-[#1C1917]">Formalidade</h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-[14px] font-semibold text-[#1C1917]">Formalidade</h3>
+                      <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-[#F5F0EB] text-[#706A65]">prévia</span>
+                    </div>
                     <span className="text-[12px] text-[#706A65]">
                       {formalidade < 25 ? 'Bem informal' : formalidade < 50 ? 'Casual' : formalidade < 75 ? 'Cordial' : 'Formal'}
                     </span>

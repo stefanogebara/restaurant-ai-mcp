@@ -15,7 +15,7 @@
  */
 
 import { useState, useMemo, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useRestaurantSettings, useUpdateRestaurantSettings } from '../hooks/useRestaurantSettings';
 import type { BusinessHours } from '../hooks/useRestaurantSettings';
@@ -112,7 +112,7 @@ function ProfileSection() {
           <div className="text-[15px] font-semibold text-[#1C1917] truncate">{name || 'Seu Restaurante'}</div>
           <div className="flex gap-1.5 mt-1">
             <span className="text-[10px] font-medium px-2 py-0.5 rounded-full border border-[#9F1239] text-[#9F1239]">Reservas IA</span>
-            <span className="text-[10px] font-medium px-2 py-0.5 rounded-full border border-[#E5E7EB] text-[#706A65]">Para Cardápio</span>
+            <span className="text-[10px] font-medium px-2 py-0.5 rounded-full border border-[#E5E7EB] text-[#706A65]">Cardápio</span>
           </div>
         </div>
         <button type="button" className="text-[13px] text-[#9F1239] hover:underline">Alterar foto</button>
@@ -251,7 +251,6 @@ function PlaceholderSection({ title, message }: { title: string; message: string
 // ─── Page ───────────────────────────────────────────────────────────────────
 
 export default function SettingsV2() {
-  const { t } = useTranslation();
   useDocumentTitle('Configurações · seatable');
   const { user } = useAuth();
   const managerName = useMemo(() => getManagerName(user?.email), [user]);
@@ -262,19 +261,13 @@ export default function SettingsV2() {
       <SidebarV2 managerName={managerName} />
 
       <main className="flex-1 min-w-0">
-        {/* Top bar */}
-        <div className="h-14 border-b border-[#E5E7EB] bg-white px-8 flex items-center justify-between">
+        {/* Top bar — no /api/search yet, so the mocked input is dropped. */}
+        <div className="h-14 border-b border-[#E5E7EB] bg-white px-8 flex items-center">
           <nav aria-label="Breadcrumb" className="text-[12px] text-[#706A65]">
-            <span>Início</span>
+            <Link to="/host-dashboard/v2" className="hover:text-[#1C1917] transition-colors">Início</Link>
             <span className="mx-2">›</span>
             <span className="text-[#1C1917] font-medium">Configurações</span>
           </nav>
-          <input
-            type="search"
-            placeholder="Buscar…"
-            aria-label={t('common.search', 'Buscar')}
-            className="h-9 w-64 px-3 rounded-md border border-[#E5E7EB] bg-[#FAFAF9] text-[13px] focus:outline-none focus:border-[#9F1239] focus:bg-white transition-colors"
-          />
         </div>
 
         <div className="max-w-[1200px] mx-auto px-8 py-8">

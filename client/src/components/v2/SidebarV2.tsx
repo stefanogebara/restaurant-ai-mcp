@@ -14,6 +14,9 @@ interface NavItem {
   icon: string;
 }
 
+// Marketing was a placeholder pointing at /insights (duplicate of Clientes).
+// Removed until there's an actual Marketing page — having a nav item that
+// silently routes to the wrong place is worse than not having it at all.
 const NAV: NavItem[] = [
   { label: 'Visão geral',    href: '/host-dashboard/v2',           icon: '⌂' },
   { label: 'Reservas',       href: '/host-dashboard/simple',       icon: '📅' },
@@ -21,7 +24,6 @@ const NAV: NavItem[] = [
   { label: 'Mesas',          href: '/host-dashboard/floor-plan',   icon: '▦'  },
   { label: 'WhatsApp',       href: '/host-dashboard/sofia/v2',     icon: '💬' },
   { label: 'Análises',       href: '/analytics',                   icon: '📊' },
-  { label: 'Marketing',      href: '/host-dashboard/insights',     icon: '✦'  },
   { label: 'Configurações',  href: '/host-dashboard/settings/v2',  icon: '⚙'  },
 ];
 

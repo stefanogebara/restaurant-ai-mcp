@@ -17,7 +17,6 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { useTranslation } from 'react-i18next';
 import { hostAPI } from '../services/api';
 import { useRealtimeDashboard } from '../hooks/useRealtimeSubscription';
 import { useActivityFeed } from '../hooks/useActivityFeed';
@@ -251,16 +250,18 @@ function AgentActivityPanel() {
 // ─── Page ───────────────────────────────────────────────────────────────────
 
 export default function DashboardV2() {
-  const { t } = useTranslation();
   useDocumentTitle('Visão geral · seatable');
   const { user } = useAuth();
   // useRestaurantSettings wraps useQuery — restaurant settings live on `data`.
   const { data: settings } = useRestaurantSettings();
 
+  // refetchInterval would double up with useRealtimeDashboard (Phase BB.2 —
+  // realtime invalidates ['dashboard'] on any reservation/table/service
+  // change). Polling on top of that just burns API calls for already-fresh
+  // data. Trust the realtime channel.
   const { data: dashboardData } = useQuery({
     queryKey: ['dashboard'],
     queryFn: hostAPI.getDashboard,
-    refetchInterval: 5 * 60 * 1000,
   });
 
   const summary = dashboardData?.data?.summary || {};
@@ -296,19 +297,13 @@ export default function DashboardV2() {
       <SidebarV2 managerName={managerName} />
 
       <main className="flex-1 min-w-0">
-        {/* Top bar */}
+        {/* Top bar — global search is mocked in the Stitch design but no
+            global-search backend exists yet. Until /api/search lands, keep
+            the top bar to breadcrumb + date so we don't ship a dead input. */}
         <div className="h-14 border-b border-[#E5E7EB] bg-white px-8 flex items-center justify-between">
           <nav aria-label="Breadcrumb" className="text-[12px] text-[#706A65]">
             <span>Visão geral</span>
           </nav>
-          <div className="flex-1 max-w-md mx-8">
-            <input
-              type="search"
-              placeholder="Buscar reservas, cliente, mesa…"
-              aria-label={t('common.search', 'Buscar')}
-              className="w-full h-9 px-3 rounded-md border border-[#E5E7EB] bg-[#FAFAF9] text-[13px] focus:outline-none focus:border-[#9F1239] focus:bg-white transition-colors"
-            />
-          </div>
           <div className="text-[12px] text-[#706A65]">
             {new Intl.DateTimeFormat('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' }).format(new Date())}
           </div>
@@ -347,7 +342,7 @@ export default function DashboardV2() {
             <KpiCard value={String(todayCount)} label="Reservas hoje" hint="Confirmadas + pendentes" />
             <KpiCard value={`${occupancyPct}%`} label="Ocupação atual" hint={`${occupied} de ${totalTables} mesas`} />
             <KpiCard value={avgTicket ? `R$ ${Math.round(avgTicket)}` : '—'} label="Ticket médio" hint="Últimos 30 dias" />
-            <KpiCard value={avgDwell ? `${Math.floor(avgDwell / 60)}h ${avgDwell % 60}` : '—'} label="Tempo médio" hint="Por mesa" />
+            <KpiCard value={avgDwell ? `${Math.floor(avgDwell / 60)}h ${String(avgDwell % 60).padStart(2, '0')}min` : '—'} label="Tempo médio" hint="Por mesa" />
           </section>
 
           <SalonGrid tables={tables} />
