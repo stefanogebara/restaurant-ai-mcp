@@ -6,15 +6,29 @@ import BookingForm from '../components/booking/BookingForm';
 import { useRestaurantBySlug } from '../hooks/useBooking';
 import { preloadAndSwitchLanguage } from '../i18n/config';
 
-// Map restaurant country → i18n language code
+// Map restaurant country → i18n language code. Onboarding stores country as
+// an ISO-3166-1 alpha-2 code ("BR", "ES", "MX"), so without the codes here
+// the lookup misses every restaurant and the booking page stays in English —
+// rendering "8:00 PM" times on a São Paulo restaurant (audit BUG #6).
 const COUNTRY_LANG: Record<string, string> = {
-  brazil: 'pt-BR', brasil: 'pt-BR',
+  // ISO alpha-2 codes (what restaurant_config actually stores)
+  br: 'pt-BR', pt: 'pt-BR',
+  es: 'es', mx: 'es', ar: 'es', co: 'es', cl: 'es', pe: 'es', uy: 'es', py: 'es', ve: 'es', bo: 'es', ec: 'es', cr: 'es', pa: 'es', cu: 'es', do: 'es',
+  // Long names (kept for legacy / Google-Maps-scraped restaurants)
+  brazil: 'pt-BR', brasil: 'pt-BR', portugal: 'pt-BR',
   spain: 'es', españa: 'es', mexico: 'es', méxico: 'es',
   argentina: 'es', colombia: 'es', chile: 'es', peru: 'es', perú: 'es',
 };
 
-// Translate country names for PT-BR locale (DB stores English names)
+// Translate country names for PT-BR locale (DB may store ISO codes or names)
 const COUNTRY_NAMES_PT: Record<string, string> = {
+  // ISO alpha-2
+  br: 'Brasil', us: 'Estados Unidos', es: 'Espanha', mx: 'México',
+  ar: 'Argentina', co: 'Colômbia', cl: 'Chile', pe: 'Peru', pt: 'Portugal',
+  it: 'Itália', fr: 'França', jp: 'Japão', de: 'Alemanha', uy: 'Uruguai',
+  py: 'Paraguai', ve: 'Venezuela', bo: 'Bolívia', ec: 'Equador', cr: 'Costa Rica',
+  pa: 'Panamá', cu: 'Cuba', do: 'República Dominicana',
+  // Long names
   brazil: 'Brasil', 'united states': 'Estados Unidos', spain: 'Espanha',
   mexico: 'México', argentina: 'Argentina', colombia: 'Colômbia',
   chile: 'Chile', peru: 'Peru', portugal: 'Portugal', italy: 'Itália',
@@ -25,6 +39,13 @@ const COUNTRY_NAMES_PT: Record<string, string> = {
 };
 
 const COUNTRY_NAMES_ES: Record<string, string> = {
+  // ISO alpha-2
+  br: 'Brasil', us: 'Estados Unidos', es: 'España', mx: 'México',
+  ar: 'Argentina', co: 'Colombia', cl: 'Chile', pe: 'Perú', pt: 'Portugal',
+  it: 'Italia', fr: 'Francia', jp: 'Japón', de: 'Alemania', uy: 'Uruguay',
+  py: 'Paraguay', ve: 'Venezuela', bo: 'Bolivia', ec: 'Ecuador', cr: 'Costa Rica',
+  pa: 'Panamá', cu: 'Cuba', do: 'República Dominicana',
+  // Long names
   brazil: 'Brasil', 'united states': 'Estados Unidos', spain: 'España',
   mexico: 'México', argentina: 'Argentina', colombia: 'Colombia',
   chile: 'Chile', peru: 'Perú', portugal: 'Portugal', italy: 'Italia',

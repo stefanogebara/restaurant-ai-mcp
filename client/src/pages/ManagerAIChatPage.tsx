@@ -76,10 +76,21 @@ export default function ManagerAIChatPage() {
     retry: false,
   });
 
+  // Distinguish "feature not on this plan" from "you've used up this month".
+  // The audit found we showed "Monthly limit reached" with usage 0 / 0 for
+  // trial users who never had Manager AI in the first place — confusing,
+  // because nothing was actually "reached". Limit === 0 is the
+  // feature-not-included case, anything > 0 is real quota.
+  const isFeatureUnavailable =
+    usageData?.limit !== null &&
+    usageData?.limit !== undefined &&
+    usageData.limit === 0;
   const isQuotaExhausted =
+    !isFeatureUnavailable &&
     usageData?.limit !== null &&
     usageData?.limit !== undefined &&
     (usageData?.used ?? 0) >= (usageData?.limit ?? Infinity);
+  const isInputBlocked = isFeatureUnavailable || isQuotaExhausted;
 
   // Deduplicate DB-persisted turns by (role, created_at) to handle race
   // conditions between optimistic updates and background refetches. Optimistic
@@ -150,7 +161,7 @@ export default function ManagerAIChatPage() {
 
   const handleSend = () => {
     const trimmed = input.trim();
-    if (!trimmed || sendMutation.isPending || isQuotaExhausted) return;
+    if (!trimmed || sendMutation.isPending || isInputBlocked) return;
     // Defensive: the textarea has maxLength but a paste-and-keystroke race
     // could in theory squeeze past it. Hard-cap here too.
     const capped = trimmed.length > MAX_INPUT_CHARS ? trimmed.slice(0, MAX_INPUT_CHARS) : trimmed;
@@ -325,10 +336,14 @@ export default function ManagerAIChatPage() {
         </div>
       </div>
 
-      {/* Quota banner */}
-      {isQuotaExhausted && (
+      {/* Quota / not-included banner */}
+      {(isFeatureUnavailable || isQuotaExhausted) && (
         <div className="px-4 py-2 text-sm text-amber-700 bg-amber-50 border-t border-amber-100 flex items-center justify-center gap-2 flex-shrink-0">
-          <span>{t('dashboard.limitReached', 'Message limit reached')}</span>
+          <span>
+            {isFeatureUnavailable
+              ? t('dashboard.featureNotIncluded', 'Manager AI is not included on your current plan')
+              : t('dashboard.limitReached', 'Message limit reached')}
+          </span>
           <a href="/subscription/manage" className="underline font-medium">
             {t('managerAI.upgrade', 'Upgrade')} &rarr;
           </a>
@@ -343,14 +358,16 @@ export default function ManagerAIChatPage() {
               ref={inputRef}
               className="w-full rounded-xl border border-border-gray px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy max-h-40"
               placeholder={
-                isQuotaExhausted
+                isFeatureUnavailable
+                  ? t('dashboard.featureUpgradePlaceholder', 'Upgrade your plan to chat with Manager AI')
+                  : isQuotaExhausted
                   ? t('dashboard.limitReachedUpgrade', 'Upgrade to send more messages')
                   : t('dashboard.managerInputPlaceholder', 'Ask about your restaurant...')
               }
               value={input}
               onChange={handleInputChange}
               onKeyDown={handleKeyDown}
-              disabled={sendMutation.isPending || isQuotaExhausted}
+              disabled={sendMutation.isPending || isInputBlocked}
               maxLength={MAX_INPUT_CHARS}
               rows={1}
             />
@@ -363,7 +380,7 @@ export default function ManagerAIChatPage() {
           <button
             type="button"
             onClick={handleSend}
-            disabled={!input.trim() || sendMutation.isPending || isQuotaExhausted}
+            disabled={!input.trim() || sendMutation.isPending || isInputBlocked}
             aria-label={t('managerAI.sendMessage', 'Send message')}
             className="bg-burgundy hover:bg-burgundy-dark disabled:opacity-40 text-white rounded-xl px-4 py-3 text-sm font-medium flex-shrink-0 transition-colors flex items-center gap-2"
           >

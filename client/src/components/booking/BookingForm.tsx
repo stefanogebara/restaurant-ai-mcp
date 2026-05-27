@@ -73,13 +73,20 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
   const [timeResetHint, setTimeResetHint] = useState(false);
   const [phoneError, setPhoneError] = useState('');
 
-  // Reset time when date or party size changes
+  // Reset time only when the date changes (slots change entirely). For party
+  // size changes we used to also clear — but in practice the slot list is
+  // typically identical or a strict subset, so the previously-picked time
+  // is usually still valid. Clearing silently was confusing (audit BUG #24:
+  // user picks 8pm → clicks party size 4 → Confirm goes disabled with no
+  // visible reason because the amber hint was below the click point).
+  // Now we keep the selection and let the slot-validation effect below clear
+  // it ONLY if the new available list no longer contains it.
   useEffect(() => {
     setSelectedTime(prev => {
       if (prev) setTimeResetHint(true);
       return '';
     });
-  }, [selectedDate, partySize]);
+  }, [selectedDate]);
 
   // Auto-select the first available open date so the slot grid renders immediately.
   // (Prior behaviour: blank slot area until user clicked a date — looked broken.)
@@ -95,6 +102,19 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
   useEffect(() => {
     if (selectedTime) setTimeResetHint(false);
   }, [selectedTime]);
+
+  // If the slot list reloads (e.g. after party-size change) and the previously
+  // picked time is no longer available, clear it and show the reset hint.
+  // (BUG #24 — keep user's selection across party-size changes when possible.)
+  useEffect(() => {
+    if (!selectedTime) return;
+    if (rawTimeSlots.length === 0) return; // still loading
+    const stillAvailable = rawTimeSlots.some(s => s.time === selectedTime && s.available);
+    if (!stillAvailable) {
+      setSelectedTime('');
+      setTimeResetHint(true);
+    }
+  }, [rawTimeSlots, selectedTime]);
 
   // ─── Server state ────────────────────────────────────────────────────────────
   const { data: rawTimeSlots = [], isLoading: loadingSlots } = useTimeSlots(
@@ -272,6 +292,15 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
   const isPhoneValid = (phone: string) => phone.replace(/\D/g, '').length >= 10;
 
   const canSubmit = customerName.trim() !== '' && customerPhone.trim() !== '' && isPhoneValid(customerPhone) && selectedDate && selectedTime;
+
+  // Explain WHY confirm is disabled — audit BUG #24 showed a paying customer
+  // staring at a grey button with no signal that they were missing a time
+  // (silently cleared when they bumped party size).
+  let disabledReason = '';
+  if (!selectedDate) disabledReason = t('booking.missingDate', 'Pick a date to continue');
+  else if (!selectedTime) disabledReason = t('booking.missingTime', 'Pick a time to continue');
+  else if (!customerName.trim()) disabledReason = t('booking.missingName', 'Add your name to continue');
+  else if (!customerPhone.trim() || !isPhoneValid(customerPhone)) disabledReason = t('booking.missingPhone', 'Add a valid phone number to continue');
 
   return (
     <div className="flex-1 max-w-[540px]">
@@ -536,6 +565,15 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
         <div className="bg-red-600/10 border border-red-600/20 rounded-xl p-3 mb-4">
           <p className="text-sm text-red-600">{reserve.error.message}</p>
         </div>
+      )}
+
+      {/* Disabled-reason hint — only shown when the button is disabled and
+          we have something specific to say. Keeps users moving instead of
+          staring at a grey button. */}
+      {!depositStep && !canSubmit && disabledReason && (
+        <p className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 mb-3">
+          {disabledReason}
+        </p>
       )}
 
       {/* Submit Button */}

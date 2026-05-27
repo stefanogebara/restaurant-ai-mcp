@@ -36,10 +36,18 @@ export function ManagerChatPanel({ onClose }: ManagerChatPanelProps) {
     staleTime: 5 * 60 * 1000,
   });
 
+  // Same split as ManagerAIChatPage: limit === 0 = feature not on plan,
+  // anything > 0 with used >= limit = actual quota exhaustion.
+  const isFeatureUnavailable =
+    usageData?.limit !== null &&
+    usageData?.limit !== undefined &&
+    usageData.limit === 0;
   const isQuotaExhausted =
+    !isFeatureUnavailable &&
     usageData?.limit !== null &&
     usageData?.limit !== undefined &&
     (usageData?.used ?? 0) >= (usageData?.limit ?? Infinity);
+  const isInputBlocked = isFeatureUnavailable || isQuotaExhausted;
 
   const messages: Message[] = data?.history || [];
 
@@ -78,7 +86,7 @@ export function ManagerChatPanel({ onClose }: ManagerChatPanelProps) {
 
   const handleSend = () => {
     const trimmed = input.trim();
-    if (!trimmed || sendMutation.isPending || isQuotaExhausted) return;
+    if (!trimmed || sendMutation.isPending || isInputBlocked) return;
     setInput('');
     sendMutation.mutate(trimmed);
   };
@@ -122,9 +130,13 @@ export function ManagerChatPanel({ onClose }: ManagerChatPanelProps) {
         </div>
       )}
 
-      {isQuotaExhausted && (
+      {(isFeatureUnavailable || isQuotaExhausted) && (
         <div className="px-4 py-2 text-xs text-amber-700 bg-amber-50 border-t border-amber-100 flex items-center justify-between">
-          <span>{t('dashboard.limitReached')}</span>
+          <span>
+            {isFeatureUnavailable
+              ? t('dashboard.featureNotIncluded', 'Manager AI is not included on your current plan')
+              : t('dashboard.limitReached')}
+          </span>
           <a href="/subscription/manage" className="underline font-medium">Upgrade &rarr;</a>
         </div>
       )}
@@ -132,16 +144,22 @@ export function ManagerChatPanel({ onClose }: ManagerChatPanelProps) {
       <div className="flex gap-2 px-4 py-3 border-t border-border-gray">
         <input
           className="flex-1 min-w-0 rounded-lg border border-border-gray px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
-          placeholder={isQuotaExhausted ? t('dashboard.limitReachedUpgrade') : t('dashboard.managerInputPlaceholder')}
+          placeholder={
+            isFeatureUnavailable
+              ? t('dashboard.featureUpgradePlaceholder', 'Upgrade your plan to chat with Manager AI')
+              : isQuotaExhausted
+              ? t('dashboard.limitReachedUpgrade')
+              : t('dashboard.managerInputPlaceholder')
+          }
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
-          disabled={sendMutation.isPending || isQuotaExhausted}
+          disabled={sendMutation.isPending || isInputBlocked}
         />
         <button
           type="button"
           onClick={handleSend}
-          disabled={!input.trim() || sendMutation.isPending || isQuotaExhausted}
+          disabled={!input.trim() || sendMutation.isPending || isInputBlocked}
           className="bg-burgundy hover:bg-burgundy-dark disabled:opacity-40 text-white rounded-lg px-3 py-2 text-sm font-medium flex-shrink-0"
         >
           {t('common.send', 'Send')}

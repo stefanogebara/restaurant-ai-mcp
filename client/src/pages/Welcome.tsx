@@ -52,6 +52,9 @@ export default function Welcome() {
     // Check if user has completed onboarding (has restaurant_config)
     const checkOnboardingStatus = async () => {
       try {
+        // Use maybeSingle() — for a fresh user with no restaurant yet, .single()
+        // returns a 406 (PGRST116) that floods the console (audit BUG #3).
+        // maybeSingle() returns { data: null } cleanly for the 0-row case.
         const { data, error } = await supabase
           .schema('restaurant')
           .from('restaurant_config')
@@ -59,7 +62,7 @@ export default function Welcome() {
           .eq('user_id', user.id)
           .eq('is_active', true)
           .limit(1)
-          .single();
+          .maybeSingle();
 
         if (!error && data) {
           // User has completed onboarding → attempt demo conversion if pending.
