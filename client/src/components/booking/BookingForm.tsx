@@ -106,9 +106,18 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
     if (selectedTime) setTimeResetHint(false);
   }, [selectedTime]);
 
+  // ─── Server state ────────────────────────────────────────────────────────────
+  const { data: rawTimeSlots = [], isLoading: loadingSlots } = useTimeSlots(
+    restaurant.id, selectedDate, partySize
+  );
+  const reserve = useCreateReservation();
+
   // If the slot list reloads (e.g. after party-size change) and the previously
   // picked time is no longer available, clear it and show the reset hint.
-  // (BUG #24 — keep user's selection across party-size changes when possible.)
+  // (BUG #24 — keep user's selection across party-size changes when possible.
+  // This effect MUST be declared AFTER the useTimeSlots() call above — placing
+  // it before triggered a TDZ "Cannot access rawTimeSlots before initialization"
+  // that errored the entire BookingPage in prod.)
   useEffect(() => {
     if (!selectedTime) return;
     if (rawTimeSlots.length === 0) return; // still loading
@@ -118,12 +127,6 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
       setTimeResetHint(true);
     }
   }, [rawTimeSlots, selectedTime]);
-
-  // ─── Server state ────────────────────────────────────────────────────────────
-  const { data: rawTimeSlots = [], isLoading: loadingSlots } = useTimeSlots(
-    restaurant.id, selectedDate, partySize
-  );
-  const reserve = useCreateReservation();
 
   // Auto-select first available open date once the date list is computed.
   // Without this the slot grid stays blank on first load — looked broken to testers.
