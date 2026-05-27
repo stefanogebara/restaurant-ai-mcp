@@ -390,19 +390,27 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
           ))}
         </div>
 
-        {/* Service periods summary */}
+        {/* Service periods explainer for "Lunch & Dinner" service type.
+            Audit BUG #4: the panel previously read like a contract ("Service
+            Periods (based on first open day): Lunch 12:00-15:30 / Break /
+            Dinner 19:00-23:00") even though the hours editor below shows ONE
+            continuous range. That disconnect made users think the break was
+            real and saved — it wasn't. Honest framing: these are example
+            split times, fine-tunable later in Settings. */}
         {selectedServiceType === 'lunch_dinner' && (
           <div className="mt-3 p-3 bg-soft-gray rounded-xl border border-border-gray">
-            <p className="text-xs text-stone-gray mb-2">{t('onboarding.servicePeriodsLabel')}</p>
+            <p className="text-xs text-stone-gray mb-2">
+              {t('onboarding.servicePeriodsExampleLabel', 'Typical split (you can fine-tune in Settings)')}
+            </p>
             <div className="flex flex-wrap gap-2">
               <span className="px-2 py-1 text-xs bg-burgundy/10 text-burgundy border border-burgundy/20 rounded-lg font-medium">
-                {t('onboarding.lunch')}: 12:00 - 15:30
+                {t('onboarding.lunch')}: 12:00 – 15:30
               </span>
               <span className="px-2 py-1 text-xs bg-soft-gray text-muted-stone border border-border-gray rounded-xl">
-                {t('onboarding.break')}: 15:30 - 19:00
+                {t('onboarding.break')}: 15:30 – 19:00
               </span>
               <span className="px-2 py-1 text-xs bg-burgundy/10 text-burgundy border border-burgundy/20 rounded-lg font-medium">
-                {t('onboarding.dinner')}: 19:00 - 23:00
+                {t('onboarding.dinner')}: 19:00 – 23:00
               </span>
             </div>
           </div>
