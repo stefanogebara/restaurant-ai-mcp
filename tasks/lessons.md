@@ -1,4 +1,28 @@
 
+## 2026-05-27: bundle-grep + typecheck don't catch TDZ — load the page
+
+**Symptom**: a BUG #24 fix added a `useEffect(() => {…}, [rawTimeSlots, selectedTime])` to BookingForm.tsx. I placed the new effect ABOVE the `useTimeSlots()` call that defines `rawTimeSlots`. TypeScript compiled clean. `npx tsc --noEmit` passed. Bundle-grep verified the new disabled-reason strings shipped to prod. Smoke-tests called "verified". For ~1 hour every visitor of `/book/:slug` hit the React error boundary ("Esta página encontrou um erro") because reading `rawTimeSlots` in the deps array threw `ReferenceError: Cannot access 'T' before initialization`.
+
+**Why nothing caught it**:
+- **TypeScript** can't see TDZ — `const` is hoisted-by-name, initialized at the binding site; tsc allows referencing a `const` before its declaration in the same scope. The runtime error is JavaScript semantics, not a type error.
+- **Bundle-grep** found the new strings ("Pick a date to continue"), confirming the code shipped. But minified output contains the strings whether the surrounding code throws or not.
+- **Vitest** is currently broken at the env-setup level on this repo (jsdom not loading in 377/394 files) — couldn't have helped here even if I'd run it.
+
+**Rule**: any change that adds, reorders, or moves a hook/effect in a React component MUST be browser-verified by actually loading the affected page in Playwright before declaring the fix shipped. Bundle-grep + typecheck = necessary, not sufficient. The check is one extra `browser_navigate` + read `document.body.innerText` (look for "encontrou um erro" / "Caught error" / empty body) — costs seconds, catches every TDZ + render-time crash.
+
+**Mechanical fix recipe**: in the BookingForm case the corrected ordering is:
+
+```tsx
+// All useState declarations first
+// THEN useTimeSlots() etc. that produce `rawTimeSlots`
+const { data: rawTimeSlots = [] } = useTimeSlots(...);
+
+// THEN any useEffect that references `rawTimeSlots`
+useEffect(() => { /* read rawTimeSlots */ }, [rawTimeSlots, ...]);
+```
+
+Always put effects that depend on a derived value *after* the line that creates it.
+
 ## 2026-05-18: /research's "5-layer 500" — missing GRANTs on new tables hide behind 4 other bugs
 
 **Symptom**: Step 6 "Iniciar Entrevista" → `/api/restaurant-learning/research` returned `FUNCTION_INVOCATION_FAILED` on every fresh account, even after a full day of audit fixes. Took 5 sequential root-cause peels to fully unblock.
