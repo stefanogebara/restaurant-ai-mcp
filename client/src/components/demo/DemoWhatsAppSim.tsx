@@ -17,12 +17,31 @@ const labels = {
   es: { title: 'WhatsApp IA', subtitle: 'Asistente de Reservas', replay: 'Repetir', typing: 'escribiendo...' },
 } as const;
 
+/**
+ * Next-Friday date label in locale-appropriate format. The previous version
+ * hardcoded "28/03" / "03/28" — the flagship WhatsApp demo always quoted the
+ * same historical date regardless of when the prospect saw it, making the
+ * demo feel stale by mid-March.
+ */
+function nextFridayLabel(lang: string): string {
+  const now = new Date();
+  // 0=Sun..6=Sat. Days until next Friday; if today IS Friday, jump a week so
+  // the demo always shows an upcoming Friday.
+  const daysUntilFri = ((5 - now.getDay() + 7) % 7) || 7;
+  const next = new Date(now);
+  next.setDate(now.getDate() + daysUntilFri);
+  const day = String(next.getDate()).padStart(2, '0');
+  const month = String(next.getMonth() + 1).padStart(2, '0');
+  return lang === 'en' ? `${month}/${day}` : `${day}/${month}`;
+}
+
 function buildScript(name: string, lang: string): SimMessage[] {
+  const friday = nextFridayLabel(lang);
   if (lang === 'pt-BR') {
     return [
       { role: 'customer', text: 'Oi, quero fazer uma reserva para 4 pessoas sexta às 20h' },
       { role: 'ai', text: `Olá! Claro, vou verificar a disponibilidade no ${name} para sexta, 4 pessoas às 20h...` },
-      { role: 'ai', text: `Temos mesa disponível! Posso confirmar:\n\n📍 ${name}\n📅 Sexta, 28/03\n🕗 20:00\n👥 4 pessoas\n\nQual seu nome completo?` },
+      { role: 'ai', text: `Temos mesa disponível! Posso confirmar:\n\n📍 ${name}\n📅 Sexta, ${friday}\n🕗 20:00\n👥 4 pessoas\n\nQual seu nome completo?` },
       { role: 'customer', text: 'João Silva' },
       { role: 'ai', text: 'Perfeito, João! ✅ Reserva confirmada.\n\nEnviaremos um lembrete 2h antes. Até sexta!' },
     ];
@@ -31,7 +50,7 @@ function buildScript(name: string, lang: string): SimMessage[] {
     return [
       { role: 'customer', text: 'Hola, quisiera reservar mesa para 4 personas el viernes a las 21h' },
       { role: 'ai', text: `¡Hola! Claro, déjame verificar disponibilidad en ${name} para el viernes, 4 personas a las 21:00...` },
-      { role: 'ai', text: `¡Tenemos mesa disponible! ¿Puedo confirmar?\n\n📍 ${name}\n📅 Viernes, 28/03\n🕗 21:00\n👥 4 personas\n\n¿Cuál es tu nombre completo?` },
+      { role: 'ai', text: `¡Tenemos mesa disponible! ¿Puedo confirmar?\n\n📍 ${name}\n📅 Viernes, ${friday}\n🕗 21:00\n👥 4 personas\n\n¿Cuál es tu nombre completo?` },
       { role: 'customer', text: 'Carlos García' },
       { role: 'ai', text: '¡Perfecto, Carlos! ✅ Reserva confirmada.\n\nTe enviaremos un recordatorio 2 horas antes. ¡Hasta el viernes!' },
     ];
@@ -39,7 +58,7 @@ function buildScript(name: string, lang: string): SimMessage[] {
   return [
     { role: 'customer', text: "Hi, I'd like to book a table for 4 on Friday at 8pm" },
     { role: 'ai', text: `Hello! Sure, let me check availability at ${name} for Friday, 4 guests at 8pm...` },
-    { role: 'ai', text: `We have a table available! Can I confirm:\n\n📍 ${name}\n📅 Friday, 03/28\n🕗 8:00 PM\n👥 4 guests\n\nWhat's your full name?` },
+    { role: 'ai', text: `We have a table available! Can I confirm:\n\n📍 ${name}\n📅 Friday, ${friday}\n🕗 8:00 PM\n👥 4 guests\n\nWhat's your full name?` },
     { role: 'customer', text: 'John Smith' },
     { role: 'ai', text: "Perfect, John! ✅ Reservation confirmed.\n\nWe'll send a reminder 2 hours before. See you Friday!" },
   ];
@@ -156,7 +175,7 @@ export default function DemoWhatsAppSim({ restaurantName, lang }: DemoWhatsAppSi
           </button>
         ) : (
           <div className="text-xs text-muted-stone mx-auto">
-            {lang === 'pt-BR' ? 'Simulação de conversa com IA' : 'AI conversation simulation'}
+            {lang === 'pt-BR' ? 'Simulação de conversa com IA' : lang === 'es' ? 'Simulación de conversación con IA' : 'AI conversation simulation'}
           </div>
         )}
       </div>

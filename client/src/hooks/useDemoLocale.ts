@@ -68,6 +68,12 @@ const strings = {
     exitContinue: 'Continue Demo',
     // Loading
     loadingDemo: 'Loading demo...',
+    // A11y / banners
+    toggleLanguage: 'Toggle language',
+    close: 'Close',
+    tokenErrorTitle: 'We could not load your personalised demo',
+    tokenErrorBody: 'The link may have expired. Showing a generic demo — create a fresh one to see your restaurant.',
+    createNewDemo: 'Create a new demo',
   },
   'pt-BR': {
     banner: 'Demo Interativa — todas as ações são locais, nenhum dado real é afetado',
@@ -114,6 +120,12 @@ const strings = {
     exitContinue: 'Continuar Demo',
     // Loading
     loadingDemo: 'Carregando demo...',
+    // A11y / banners
+    toggleLanguage: 'Alternar idioma',
+    close: 'Fechar',
+    tokenErrorTitle: 'Não foi possível carregar seu demo personalizado',
+    tokenErrorBody: 'O link pode ter expirado. Mostrando um demo genérico — crie um novo para ver seu restaurante.',
+    createNewDemo: 'Criar novo demo',
   },
   'es': {
     banner: 'Demo Interactiva — todas las acciones son locales, ningún dato real se ve afectado',
@@ -160,6 +172,12 @@ const strings = {
     exitContinue: 'Continuar demo',
     // Loading
     loadingDemo: 'Cargando demo...',
+    // A11y / banners
+    toggleLanguage: 'Cambiar idioma',
+    close: 'Cerrar',
+    tokenErrorTitle: 'No pudimos cargar tu demo personalizado',
+    tokenErrorBody: 'El enlace puede haber expirado. Mostrando un demo genérico — crea uno nuevo para ver tu restaurante.',
+    createNewDemo: 'Crear nuevo demo',
   },
 } as const;
 

@@ -9,14 +9,21 @@ export default function LandingNav() {
   const menuRef = useRef<HTMLDivElement>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
 
-  const currentLang = i18n.language?.startsWith('pt') ? 'PT' : 'EN';
+  // 3-way locale cycle EN → PT → ES → EN. The previous toggle ignored Spanish
+  // entirely — Spanish visitors saw "EN" displayed (wrong) and toggling sent
+  // them away from ES with no way back via the nav.
+  const currentLang = i18n.language?.startsWith('pt')
+    ? 'PT'
+    : i18n.language?.startsWith('es')
+      ? 'ES'
+      : 'EN';
 
   const closeMobileMenu = useCallback(() => {
     setIsMobileMenuOpen(false);
   }, []);
 
   const toggleLanguage = () => {
-    const next = currentLang === 'PT' ? 'en' : 'pt-BR';
+    const next = currentLang === 'EN' ? 'pt-BR' : currentLang === 'PT' ? 'es' : 'en';
     i18n.changeLanguage(next);
   };
 
@@ -73,7 +80,7 @@ export default function LandingNav() {
           type="button"
           onClick={toggleLanguage}
           className="flex items-center gap-1.5 text-sm font-medium text-stone-gray hover:text-deep-charcoal transition-colors min-h-[44px]"
-          aria-label="Toggle language"
+          aria-label={t('common.toggleLanguage', 'Toggle language')}
         >
           <Globe className="w-4 h-4" />
           {currentLang}
@@ -94,7 +101,7 @@ export default function LandingNav() {
         type="button"
         className="md:hidden relative z-[51] text-deep-charcoal p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center"
         onClick={() => setIsMobileMenuOpen((prev) => !prev)}
-        aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
+        aria-label={isMobileMenuOpen ? t('common.closeMenu', 'Close menu') : t('common.openMenu', 'Open menu')}
         aria-expanded={isMobileMenuOpen}
       >
         {isMobileMenuOpen ? <X aria-hidden="true" size={24} /> : <Menu aria-hidden="true" size={24} />}

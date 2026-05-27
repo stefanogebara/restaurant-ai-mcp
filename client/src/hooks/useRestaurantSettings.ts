@@ -50,9 +50,18 @@ export function useRestaurantSettings() {
 
 export function useUpdateRestaurantSettings() {
   const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (updates: Partial<RestaurantSettings>) =>
-      api.put('/restaurant-settings', updates),
+  return useMutation<RestaurantSettings, Error, Partial<RestaurantSettings>>({
+    mutationFn: async (updates) => {
+      const res = await api.put('/restaurant-settings', updates);
+      // Throw on { success:false } — the previous version only relied on
+      // axios's HTTP-status throw, so a 200 + { success:false, error:'...' }
+      // (which this endpoint can return) was rendering a green "Saved" toast
+      // while the host's hours/policies/phone were silently discarded.
+      if (!res.data?.success) {
+        throw new Error(res.data?.error || 'Failed to save settings');
+      }
+      return res.data.data as RestaurantSettings;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['restaurant-settings'] });
     },

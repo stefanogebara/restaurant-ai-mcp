@@ -68,7 +68,7 @@ export default function VoiceDemoDashboard({
             </div>
             <div className="text-[10px] text-white/30">
               {/* H6: live, locale-aware date so the demo never shows a stale "March 15" */}
-              {t('landing.voiceDemo.today', 'Today')} \u00b7 {new Date().toLocaleDateString(
+              {t('landing.voiceDemo.today', 'Today')} · {new Date().toLocaleDateString(
                 i18n.language === 'pt-BR' ? 'pt-BR' : i18n.language === 'es' ? 'es-ES' : 'en-US',
                 { day: 'numeric', month: 'long' }
               )}

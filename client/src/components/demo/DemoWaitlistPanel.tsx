@@ -10,7 +10,7 @@ interface DemoWaitlistPanelProps {
 
 const labels = {
   en: { title: 'Waitlist', empty: 'No one waiting', emptyDesc: 'Guests added to the waitlist will appear here', guests: 'guests', waited: 'waited', seat: 'Seat' },
-  'pt-BR': { title: 'Lista de Espera', empty: 'Ninguem esperando', emptyDesc: 'Clientes adicionados a lista de espera aparecerao aqui', guests: 'pessoas', waited: 'espera', seat: 'Sentar' },
+  'pt-BR': { title: 'Lista de Espera', empty: 'Ninguém esperando', emptyDesc: 'Clientes adicionados à lista de espera aparecerão aqui', guests: 'pessoas', waited: 'espera', seat: 'Sentar' },
   es: { title: 'Lista de Espera', empty: 'Nadie esperando', emptyDesc: 'Los clientes añadidos a la lista de espera aparecerán aquí', guests: 'personas', waited: 'espera', seat: 'Sentar' },
 } as const;
 
@@ -47,9 +47,10 @@ export default function DemoWaitlistPanel({ entries, onSeat, lang }: DemoWaitlis
       ) : (
         <div className="divide-y divide-warm-white">
           {entries.map((entry) => {
-            const initials = entry.customer_name
+            const initials = (entry.customer_name ?? '')
               .split(' ')
               .map((n) => n[0])
+              .filter(Boolean)
               .slice(0, 2)
               .join('')
               .toUpperCase();
