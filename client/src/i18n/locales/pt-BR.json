@@ -1650,6 +1650,8 @@
     "welcomeGeneric": "Pagamento confirmado!",
     "verifyFailedTitle": "Não foi possível confirmar o pagamento",
     "verifyFailedDesc": "Seu cartão pode ter sido cobrado, mas não conseguimos verificar a sessão. Se a cobrança foi feita, sua assinatura será ativada em breve. Entre em contato com o suporte se o problema persistir.",
+    "activatingTitle": "Ativando sua assinatura",
+    "activatingDesc": "Pagamento recebido. Estamos finalizando seu plano — leva uns 30 segundos. Você pode ficar nesta página ou ir para o painel.",
     "contactSupport": "Falar com o Suporte",
     "upgradeActive": "Sua atualização está ativa. Agora você tem acesso ao Agente de Voz com IA e análises avançadas.",
     "redirecting": "Redirecionando para o painel...",

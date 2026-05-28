@@ -1624,6 +1624,8 @@
     "welcomeGeneric": "¡Pago confirmado!",
     "verifyFailedTitle": "No pudimos verificar tu pago",
     "verifyFailedDesc": "Es posible que se haya cobrado tu tarjeta, pero no pudimos verificar la sesión. Si se realizó el cobro, tu suscripción se activará pronto. Contacta al soporte si esto persiste.",
+    "activatingTitle": "Activando tu suscripción",
+    "activatingDesc": "Pago recibido. Estamos finalizando tu plan — suele tardar unos 30 segundos. Puedes quedarte en esta página o ir al panel.",
     "contactSupport": "Contactar Soporte",
     "upgradeActive": "Tu actualización está activa. Ahora tienes acceso al Agente de Voz con IA y análisis avanzados.",
     "redirecting": "Redirigiendo al panel de control...",

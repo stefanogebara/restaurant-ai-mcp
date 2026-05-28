@@ -1649,6 +1649,8 @@
     "welcomeGeneric": "Payment confirmed!",
     "verifyFailedTitle": "We couldn't verify your payment",
     "verifyFailedDesc": "Your card may have been charged, but we couldn't verify the session. If you were charged, your subscription will activate shortly. Contact support if this persists.",
+    "activatingTitle": "Activating your subscription",
+    "activatingDesc": "Payment received. We're finalising your plan — this usually takes 30 seconds. You can stay on this page or head to your dashboard.",
     "contactSupport": "Contact Support",
     "upgradeActive": "Your upgrade is active. You now have access to the AI Voice Agent and advanced analytics.",
     "redirecting": "Redirecting to your dashboard...",
