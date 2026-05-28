@@ -79,6 +79,11 @@ module.exports = async (req, res) => {
   try {
     event = stripe.webhooks.constructEvent(bodyForVerify, sig, endpointSecret);
   } catch (err) {
+    // Diag: console.log so Vercel logs the full line. Reports body_len and
+    // first 30 chars to diagnose whether Vercel is consuming the stream
+    // before our handler reads it.
+    // eslint-disable-next-line no-console
+    console.log(`STRIPE_CONNECT_WEBHOOK_DIAG body_len=${bodyForVerify.length} body_head=${JSON.stringify(bodyForVerify.slice(0, 30))} err=${err.message}`);
     logger.error('Signature verification failed', { error: err.message });
     return res.status(400).json({ error: 'Invalid webhook request', reason: 'bad_signature' });
   }
