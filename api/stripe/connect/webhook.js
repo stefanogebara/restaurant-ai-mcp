@@ -90,10 +90,13 @@ module.exports = async (req, res) => {
   } catch (err) {
     // Diag-only (logs, never response body): 8-char SHA256 prefix of the
     // secret + body length so we can rule out env-snapshot drift and
-    // body-encoding mismatch. Remove once verified.
+    // body-encoding mismatch. Plain console.log so Vercel doesn't truncate.
+    // Remove once verified.
     const crypto = require('crypto');
     const secretFp = crypto.createHash('sha256').update(endpointSecret).digest('hex').slice(0, 8);
-    logger.error('Signature verification failed', { error: err.message, secret_fp: secretFp, body_len: bodyForVerify.length });
+    // eslint-disable-next-line no-console
+    console.log(`STRIPE_CONNECT_WEBHOOK_DIAG secret_fp=${secretFp} body_len=${bodyForVerify.length} err=${err.message}`);
+    logger.error('Signature verification failed', { error: err.message });
     return res.status(400).json({ error: 'Invalid webhook request', reason: 'bad_signature' });
   }
 
