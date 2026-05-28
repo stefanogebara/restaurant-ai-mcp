@@ -55,9 +55,9 @@ module.exports = async (req, res) => {
 
   // 1. Raw-body signature verify. Stripe HMAC is over the exact wire bytes;
   // any reserialisation (JSON.stringify on a parsed body) reorders keys and
-  // strips whitespace, so the signature check fails. We disabled Vercel's
-  // body parser via `module.exports.config` below, so read the stream
-  // directly into a Buffer.
+  // strips whitespace, so the signature check fails. Mirror the OG
+  // api/stripe-webhook.js pattern exactly — Vercel exposes req.rawBody for
+  // serverless functions when the filename maps to the URL path.
   let bodyForVerify = null;
   if (req.rawBody) {
     bodyForVerify = req.rawBody;
@@ -65,20 +65,8 @@ module.exports = async (req, res) => {
     bodyForVerify = req.body;
   } else if (typeof req.body === 'string') {
     bodyForVerify = req.body;
-  } else {
-    try {
-      bodyForVerify = await new Promise((resolve, reject) => {
-        const chunks = [];
-        req.on('data', (c) => chunks.push(c));
-        req.on('end', () => resolve(Buffer.concat(chunks)));
-        req.on('error', reject);
-      });
-    } catch (e) {
-      logger.error('Webhook rejected: raw-body read failed', { error: e?.message });
-      return res.status(400).json({ error: 'Invalid webhook request', reason: 'raw_body_read_failed' });
-    }
   }
-  if (!bodyForVerify || bodyForVerify.length === 0) {
+  if (!bodyForVerify) {
     logger.error('Webhook rejected: no raw body for signature verification (parsed-body endpoint?)');
     return res.status(400).json({ error: 'Invalid webhook request', reason: 'no_raw_body' });
   }
@@ -203,10 +191,3 @@ module.exports = async (req, res) => {
   }
 };
 
-// Tell Vercel not to parse the body — we need the exact wire bytes for
-// Stripe's HMAC signature verification.
-module.exports.config = {
-  api: {
-    bodyParser: false,
-  },
-};
