@@ -1,5 +1,5 @@
 /**
- * Tests for api/stripe-connect-webhook.js
+ * Tests for api/stripe/connect/webhook.js
  * Stripe Connect (platform-side) webhook handler.
  */
 
@@ -60,7 +60,7 @@ jest.mock('../_lib/cors', () => ({
   setWebhookCors: jest.fn(),
 }));
 
-const handler = require('../stripe-connect-webhook');
+const handler = require('../stripe/connect/webhook');
 
 // --- Helpers ---
 function makeRes() {
