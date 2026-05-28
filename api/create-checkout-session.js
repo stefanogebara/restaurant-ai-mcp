@@ -133,6 +133,20 @@ module.exports = async (req, res) => {
       }
     }
 
+    // Tier-specific description shown on Stripe Checkout + invoices + receipts.
+    // Audit BUG #16: all three plan prices hang off a single Stripe Product
+    // named "Seatable Subscription", so the Checkout page can't tell the
+    // tiers apart. The shared product name is now generic ("Seatable —
+    // Gestão de Restaurantes com IA", via stripe-rename-products.cjs); this
+    // subscription description is what disambiguates "Plano Profissional"
+    // from "Plano Essencial" for the customer.
+    const PLAN_DISPLAY = {
+      Starter: 'Plano Essencial · R$ 497/mês',
+      Growth: 'Plano Profissional · R$ 1.497/mês',
+      Scale: 'Plano Enterprise · R$ 2.997/mês',
+    };
+    const subscriptionDescription = PLAN_DISPLAY[planName] || undefined;
+
     // Create Checkout Session
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
@@ -150,6 +164,7 @@ module.exports = async (req, res) => {
       },
       subscription_data: {
         ...(isBetaAccess ? { trial_period_days: 30 } : planName === 'Growth' ? { trial_period_days: 14 } : {}),
+        ...(subscriptionDescription ? { description: subscriptionDescription } : {}),
         metadata: {
           plan_name: planName || 'Unknown Plan',
           restaurant_id: restaurantId || '',
