@@ -1,6 +1,6 @@
 /**
  * Stripe Connect (Standard) onboarding
- * POST /api/stripe/connect/onboarding
+ * POST /api/stripe-connect-onboarding
  *
  * Returns a Stripe-hosted AccountLink URL the restaurant can redirect
  * to. On first call we create a Stripe Standard Account for the
@@ -26,10 +26,10 @@
  */
 
 const Stripe = require('stripe');
-const { verifyJWT } = require('../../_lib/auth');
-const { supabaseAdmin } = require('../../_lib/supabase');
-const { createSecureLogger } = require('../../_lib/secure-logger');
-const { checkAndApplyRateLimit } = require('../../_lib/rate-limit');
+const { verifyJWT } = require('./_lib/auth');
+const { supabaseAdmin } = require('./_lib/supabase');
+const { createSecureLogger } = require('./_lib/secure-logger');
+const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 
 const logger = createSecureLogger('stripe-connect-onboarding');
 

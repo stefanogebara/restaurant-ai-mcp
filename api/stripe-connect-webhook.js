@@ -1,6 +1,6 @@
 /**
  * Stripe Connect (platform-side) webhook
- * POST /api/stripe/connect/webhook
+ * POST /api/stripe-connect-webhook
  *
  * Stripe Connect events fire on the *platform* (Seatable) account
  * when something changes on a connected restaurant's account. These
@@ -20,9 +20,9 @@
 
 const Stripe = require('stripe');
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
-const { createSecureLogger } = require('../../_lib/secure-logger');
-const { supabaseAdmin } = require('../../_lib/supabase');
-const { setWebhookCors } = require('../../_lib/cors');
+const { createSecureLogger } = require('./_lib/secure-logger');
+const { supabaseAdmin } = require('./_lib/supabase');
+const { setWebhookCors } = require('./_lib/cors');
 
 const logger = createSecureLogger('StripeConnectWebhook');
 const endpointSecret = process.env.STRIPE_CONNECT_WEBHOOK_SECRET;
