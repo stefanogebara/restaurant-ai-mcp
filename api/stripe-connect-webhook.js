@@ -54,20 +54,23 @@ module.exports = async (req, res) => {
   }
 
   // 1. Raw-body signature verify. Stripe HMAC is over the exact wire bytes;
-  // any reserialisation (JSON.stringify on a parsed body) reorders keys and
-  // strips whitespace, so the signature check fails. Mirror the OG
-  // api/stripe-webhook.js pattern exactly — Vercel exposes req.rawBody for
-  // serverless functions when the filename maps to the URL path.
-  let bodyForVerify = null;
-  if (req.rawBody) {
-    bodyForVerify = req.rawBody;
-  } else if (Buffer.isBuffer(req.body)) {
-    bodyForVerify = req.body;
-  } else if (typeof req.body === 'string') {
-    bodyForVerify = req.body;
+  // bodyParser:false (below) tells Vercel not to consume the stream, so we
+  // read it ourselves into a UTF-8 string. Mirrors api/square-webhook.js.
+  let bodyForVerify;
+  try {
+    const chunks = [];
+    await new Promise((resolve, reject) => {
+      req.on('data', (c) => chunks.push(c));
+      req.on('end', resolve);
+      req.on('error', reject);
+    });
+    bodyForVerify = Buffer.concat(chunks).toString('utf8');
+  } catch (err) {
+    logger.error('Webhook rejected: raw-body read failed', { error: err.message });
+    return res.status(400).json({ error: 'Invalid webhook request', reason: 'raw_body_read_failed' });
   }
   if (!bodyForVerify) {
-    logger.error('Webhook rejected: no raw body for signature verification (parsed-body endpoint?)');
+    logger.error('Webhook rejected: empty body');
     return res.status(400).json({ error: 'Invalid webhook request', reason: 'no_raw_body' });
   }
 
@@ -76,14 +79,6 @@ module.exports = async (req, res) => {
   try {
     event = stripe.webhooks.constructEvent(bodyForVerify, sig, endpointSecret);
   } catch (err) {
-    // Diag-only (logs, never response body): 8-char SHA256 prefix of the
-    // secret + body length so we can rule out env-snapshot drift and
-    // body-encoding mismatch. Plain console.log so Vercel doesn't truncate.
-    // Remove once verified.
-    const crypto = require('crypto');
-    const secretFp = crypto.createHash('sha256').update(endpointSecret).digest('hex').slice(0, 8);
-    // eslint-disable-next-line no-console
-    console.log(`STRIPE_CONNECT_WEBHOOK_DIAG secret_fp=${secretFp} body_len=${bodyForVerify.length} err=${err.message}`);
     logger.error('Signature verification failed', { error: err.message });
     return res.status(400).json({ error: 'Invalid webhook request', reason: 'bad_signature' });
   }
@@ -190,4 +185,8 @@ module.exports = async (req, res) => {
     return res.status(500).json({ error: 'Webhook processing failed' });
   }
 };
+
+// Disable Vercel's auto JSON body parser so we can read the raw bytes for
+// Stripe HMAC verification. Mirrors api/square-webhook.js.
+module.exports.config = { api: { bodyParser: false } };
 
