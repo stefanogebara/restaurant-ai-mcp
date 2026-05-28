@@ -1,4 +1,25 @@
 
+## 2026-05-28: "fixed" the auth race, missed the auth expiry — two distinct failure modes look identical from one screenshot
+
+**Symptom**: Live E2E customer signup → Stripe Checkout → Santander 3DS sat for ~2h → return to `/subscription/success` → "Não foi possível confirmar o pagamento". The exact UI I thought I'd permanently fixed with the BUG #17 patch a session earlier.
+
+**What I missed**: BUG #17 was the *race-on-mount* case — `authFetch` fired before `INITIAL_SESSION` resolved, sending no Authorization header → 401. My fix added `await authReady` so the call waited for Supabase to hydrate. Verified live, shipped, closed.
+
+The screenshot from production looked identical, but the underlying mode was different: the user *had* a Supabase session for ~2 hours, then the JWT actually expired during the 3DS wait. `authReady` resolved instantly (it had long since fired). `getSession()` returned the stale token. `verify-session` got 401 with a real Authorization header. Same UI, completely different fix.
+
+**Rule**: two screenshots that show the same error message don't necessarily share a root cause. When closing an auth/race bug, enumerate the failure modes explicitly:
+1. Token *not yet present* (mount race) — the case I fixed
+2. Token *expired* (long flow, idle session, etc.) — the case I missed
+3. Token *invalid* (signed by wrong key, malformed, etc.) — separate
+
+The fix for (1) is "wait for auth to be ready". The fix for (2) is "refresh before calling". They're orthogonal — handling (1) does not handle (2). My audit report celebrated 19/20 fixes and verified the race fix in prod; I never simulated a 2h-stale session.
+
+**Verification recipe for long-flow auth**: if the fix involves auth tokens AND the user is redirected away from your app for an indeterminate amount of time, you MUST test the case where the token has expired between leaving and returning. Two ways:
+1. Manually mutate `localStorage` (set the Supabase session's `expires_at` to 5 minutes ago) before triggering the return path.
+2. Use a real long delay — Stripe Checkout with a 3DS step that you don't approve is a natural source.
+
+The fix here was: refresh `supabase.auth.refreshSession()` before `authFetch`, retry once on 401, and even if the verify-session call ultimately fails, still set `LS_PAYMENT_VERIFIED_AT` and render the "Activating" state — because the URL having `session_id=` is itself proof that Stripe processed the customer. Don't let a backend-read failure render as a "payment failed" UX when the source of truth (Stripe) says otherwise.
+
 ## 2026-05-27: bundle-grep + typecheck don't catch TDZ — load the page
 
 **Symptom**: a BUG #24 fix added a `useEffect(() => {…}, [rawTimeSlots, selectedTime])` to BookingForm.tsx. I placed the new effect ABOVE the `useTimeSlots()` call that defines `rawTimeSlots`. TypeScript compiled clean. `npx tsc --noEmit` passed. Bundle-grep verified the new disabled-reason strings shipped to prod. Smoke-tests called "verified". For ~1 hour every visitor of `/book/:slug` hit the React error boundary ("Esta página encontrou um erro") because reading `rawTimeSlots` in the deps array threw `ReferenceError: Cannot access 'T' before initialization`.
