@@ -1,5 +1,5 @@
 /**
- * Tests for api/stripe/connect/webhook.js
+ * Tests for api/stripe-connect-webhook.js
  * Stripe Connect (platform-side) webhook handler.
  */
 
@@ -60,7 +60,7 @@ jest.mock('../_lib/cors', () => ({
   setWebhookCors: jest.fn(),
 }));
 
-const handler = require('../stripe/connect/webhook');
+const handler = require('../stripe-connect-webhook');
 
 // --- Helpers ---
 function makeRes() {
@@ -74,11 +74,27 @@ function makeRes() {
     setHeader(k, v) { this.headers[k] = v; },
   };
 }
-function makeReq({ method = 'POST', rawBody = '{}', headers = {} } = {}) {
+// Handler now reads raw bytes via the Node stream API (bodyParser: false).
+// Build a minimal EventEmitter that emits the payload bytes synchronously.
+function makeReq({ method = 'POST', body = '{}', headers = {} } = {}) {
+  const handlers = { data: [], end: [], error: [] };
   return {
     method,
-    rawBody,
     headers: { 'stripe-signature': 't=1,v1=valid', ...headers },
+    on(event, fn) {
+      if (handlers[event]) handlers[event].push(fn);
+      // Once 'end' is registered, fire data then end on next tick so the
+      // awaited Promise resolves naturally.
+      if (event === 'end') {
+        process.nextTick(() => {
+          if (body !== null && body !== undefined) {
+            for (const fn of handlers.data) fn(Buffer.from(body));
+          }
+          for (const fn of handlers.end) fn();
+        });
+      }
+      return this;
+    },
   };
 }
 
@@ -106,10 +122,11 @@ describe('method + CORS guards', () => {
 });
 
 describe('signature verification', () => {
-  test('missing raw body → 400 (parsed-body endpoints are blocked)', async () => {
+  test('empty body → 400 (no_raw_body)', async () => {
     const res = makeRes();
-    await handler({ method: 'POST', headers: { 'stripe-signature': 'sig' } }, res);
+    await handler(makeReq({ body: null }), res);
     expect(res.statusCode).toBe(400);
+    expect(res.body.reason).toBe('no_raw_body');
     expect(mockConstructEvent).not.toHaveBeenCalled();
   });
 
@@ -119,30 +136,24 @@ describe('signature verification', () => {
     await handler(makeReq(), res);
     expect(res.statusCode).toBe(400);
     expect(res.body.error).toMatch(/Invalid webhook/);
+    expect(res.body.reason).toBe('bad_signature');
   });
 
-  test('Buffer body is accepted', async () => {
-    mockConstructEvent.mockReturnValue({
-      id: 'evt_buf',
-      type: 'capability.updated',
-      account: 'acct_x',
-      data: { object: { id: 'cap_a', status: 'active', requested: true } },
+  test('stream is read into UTF-8 string before signature verify', async () => {
+    let observedBody = null;
+    mockConstructEvent.mockImplementation((body) => {
+      observedBody = body;
+      return {
+        id: 'evt_str',
+        type: 'capability.updated',
+        account: 'acct_x',
+        data: { object: { id: 'cap_a', status: 'active', requested: true } },
+      };
     });
     const res = makeRes();
-    await handler({ method: 'POST', rawBody: undefined, body: Buffer.from('{}'), headers: { 'stripe-signature': 'sig' } }, res);
+    await handler(makeReq({ body: '{"hello":"world"}' }), res);
     expect(res.statusCode).toBe(200);
-  });
-
-  test('string body is accepted', async () => {
-    mockConstructEvent.mockReturnValue({
-      id: 'evt_str',
-      type: 'capability.updated',
-      account: 'acct_x',
-      data: { object: { id: 'cap_a', status: 'active', requested: true } },
-    });
-    const res = makeRes();
-    await handler({ method: 'POST', body: '{}', headers: { 'stripe-signature': 'sig' } }, res);
-    expect(res.statusCode).toBe(200);
+    expect(observedBody).toBe('{"hello":"world"}');
   });
 });
 
