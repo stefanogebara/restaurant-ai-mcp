@@ -57,6 +57,19 @@ export default function SubscriptionSuccess() {
     }
   }, [verificationFailed, sessionId, isError]);
 
+  // Even when verify-session fails, the Stripe redirect itself is proof that
+  // the customer reached Checkout. If they have a session_id we still mark
+  // them as "just paid" so /subscription/manage shows the pending-activation
+  // state instead of the upsell cards (which would gaslight someone whose
+  // card was just charged). Real-world trigger: 2h Stripe flow expired the
+  // Supabase JWT, verify-session 401'd, but the subscription was actually
+  // created on Stripe's side.
+  useEffect(() => {
+    if (verificationFailed && sessionId) {
+      localStorage.setItem(LS_PAYMENT_VERIFIED_AT, String(Date.now()));
+    }
+  }, [verificationFailed, sessionId]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-warm-white flex items-center justify-center">
@@ -68,9 +81,13 @@ export default function SubscriptionSuccess() {
     );
   }
 
-  // H1: verification failure — explicit error UI with support contact.
-  // The card may have been charged (Stripe is the source of truth, not our
-  // session verifier) so we tell the user that and offer support.
+  // Verification failed but the customer reached this page from Stripe (we
+  // have a session_id in the URL). Render an "activating" state instead of
+  // a hard error — the subscription almost certainly exists on Stripe's
+  // side; what failed is our local read of it. Auto-redirect to the dashboard
+  // so they're not stuck on this screen. The pending-activation marker we
+  // set above means /subscription/manage will keep showing the activating
+  // state until the webhook lands rather than flipping to the upsell page.
   if (verificationFailed) {
     return (
       <div className="min-h-screen bg-warm-white flex flex-col">
@@ -82,28 +99,29 @@ export default function SubscriptionSuccess() {
         <div className="flex-1 flex items-center justify-center p-6">
           <div className="max-w-[480px] w-full">
             <div className="bg-white border border-border-gray rounded-2xl p-12 text-center">
-              <div className="w-16 h-16 rounded-full bg-amber-500/[8%] flex items-center justify-center mx-auto mb-5">
-                <ThiingsIcon name="alert-circle" pxSize={28} className="text-amber-600" />
+              <div className="w-16 h-16 rounded-full bg-rose-600/[8%] flex items-center justify-center mx-auto mb-5">
+                <Spinner size="lg" />
               </div>
               <h1 className="font-serif text-2xl font-medium text-deep-charcoal mb-2">
-                {t('subscription.verifyFailedTitle', "We couldn't verify your payment")}
+                {t('subscription.activatingTitle', 'Activating your subscription')}
               </h1>
               <p className="text-sm text-warm-stone font-light mb-6">
-                {t('subscription.verifyFailedDesc', 'Your card may have been charged, but we couldn\'t verify the session. If you were charged, your subscription will activate shortly. Contact support if this persists.')}
+                {t('subscription.activatingDesc', "Payment received. We're finalising your plan — this usually takes 30 seconds. You can stay on this page or head to your dashboard.")}
               </p>
               <div className="flex items-center justify-center gap-3">
-                <a
-                  href="mailto:hello@seatable.one"
-                  className="px-7 py-3 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-full transition-colors"
-                >
-                  {t('subscription.contactSupport', 'Contact Support')}
-                </a>
                 <button
-                  onClick={() => navigate('/host-dashboard/simple')}
-                  className="px-7 py-3 border border-border-gray text-stone-gray text-sm font-medium rounded-full hover:border-muted-stone transition-colors"
+                  type="button"
+                  onClick={() => navigate('/host-dashboard/simple?launch=1')}
+                  className="px-7 py-3 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-full transition-colors"
                 >
                   {t('subscription.goToDashboard')}
                 </button>
+                <a
+                  href="mailto:hello@seatable.one"
+                  className="px-7 py-3 border border-border-gray text-stone-gray text-sm font-medium rounded-full hover:border-muted-stone transition-colors"
+                >
+                  {t('subscription.contactSupport', 'Contact Support')}
+                </a>
               </div>
             </div>
           </div>
