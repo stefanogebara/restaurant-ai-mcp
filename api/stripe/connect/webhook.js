@@ -66,7 +66,7 @@ module.exports = async (req, res) => {
   }
   if (!bodyForVerify) {
     logger.error('Webhook rejected: no raw body for signature verification (parsed-body endpoint?)');
-    return res.status(400).json({ error: 'Invalid webhook request' });
+    return res.status(400).json({ error: 'Invalid webhook request', reason: 'no_raw_body' });
   }
 
   const sig = req.headers['stripe-signature'];
@@ -75,7 +75,7 @@ module.exports = async (req, res) => {
     event = stripe.webhooks.constructEvent(bodyForVerify, sig, endpointSecret);
   } catch (err) {
     logger.error('Signature verification failed', { error: err.message });
-    return res.status(400).json({ error: 'Invalid webhook request' });
+    return res.status(400).json({ error: 'Invalid webhook request', reason: 'bad_signature' });
   }
 
   // 2. Idempotency guard. Atomic insert into stripe_webhook_events_processed;
