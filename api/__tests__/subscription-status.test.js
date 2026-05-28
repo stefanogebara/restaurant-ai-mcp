@@ -7,6 +7,10 @@ jest.mock('../_lib/supabase', () => ({
   getSubscriptionByEmail: jest.fn(),
 }));
 
+jest.mock('../_lib/subscription-middleware', () => ({
+  checkSubscriptionByRestaurantId: jest.fn(),
+}));
+
 jest.mock('../_lib/auth', () => ({
   verifyAuth: jest.fn(),
 }));
@@ -22,6 +26,7 @@ jest.mock('../_lib/secure-logger', () => ({
 const handler = require('../subscription-status');
 const { verifyAuth } = require('../_lib/auth');
 const { getSubscriptionByEmail } = require('../_lib/supabase');
+const { checkSubscriptionByRestaurantId } = require('../_lib/subscription-middleware');
 
 function createMockReqRes(overrides = {}) {
   const req = {
@@ -106,10 +111,11 @@ describe('SubscriptionStatus: Input validation', () => {
 // Data fetching
 // ============================================================
 describe('SubscriptionStatus: Data fetching', () => {
-  test('returns 200 with no subscription when subscription not found', async () => {
+  test('returns 200 with no subscription when neither lookup succeeds', async () => {
     verifyAuth.mockResolvedValueOnce({
       user: { restaurant_id: 'rest-1', email: 'admin@test.com' },
     });
+    checkSubscriptionByRestaurantId.mockResolvedValueOnce({ active: false });
     getSubscriptionByEmail.mockResolvedValueOnce({ success: false });
 
     const { req, res } = createMockReqRes({ query: { email: 'customer@test.com' } });
@@ -120,12 +126,12 @@ describe('SubscriptionStatus: Data fetching', () => {
     }));
   });
 
-  test('returns 200 with subscription data on success', async () => {
+  test('returns 200 with subscription data when restaurant_id lookup succeeds', async () => {
     verifyAuth.mockResolvedValueOnce({
       user: { restaurant_id: 'rest-1', email: 'admin@test.com' },
     });
-    getSubscriptionByEmail.mockResolvedValueOnce({
-      success: true,
+    checkSubscriptionByRestaurantId.mockResolvedValueOnce({
+      active: true,
       subscription: {
         plan_name: 'Growth',
         status: 'active',
@@ -143,14 +149,16 @@ describe('SubscriptionStatus: Data fetching', () => {
     expect(data.subscription.status).toBe('active');
     expect(data.subscription.is_active).toBe(true);
     expect(data.subscription.is_trial).toBe(false);
+    // Email-based fallback must NOT be called when restaurant_id wins
+    expect(getSubscriptionByEmail).not.toHaveBeenCalled();
   });
 
   test('marks trialing subscriptions correctly', async () => {
     verifyAuth.mockResolvedValueOnce({
       user: { restaurant_id: 'rest-1', email: 'admin@test.com' },
     });
-    getSubscriptionByEmail.mockResolvedValueOnce({
-      success: true,
+    checkSubscriptionByRestaurantId.mockResolvedValueOnce({
+      active: true,
       subscription: {
         plan_name: 'Growth',
         status: 'trialing',
@@ -166,11 +174,61 @@ describe('SubscriptionStatus: Data fetching', () => {
     expect(data.subscription.is_active).toBe(true);
   });
 
+  // Regression: Stripe normalises Gmail '+alias' tags out of customer email
+  // at Checkout, so a user signed up as foo+t@gmail.com ends up with the
+  // subscription row filed under foo@gmail.com (different from their JWT
+  // email). The handler must still find the sub via restaurant_id.
+  test('finds Growth sub when Stripe stripped +alias from email', async () => {
+    verifyAuth.mockResolvedValueOnce({
+      user: { restaurant_id: 'rest-7', email: 'stefanogebara+e2etest4@gmail.com' },
+    });
+    checkSubscriptionByRestaurantId.mockResolvedValueOnce({
+      active: true,
+      subscription: {
+        // Stripe customer_email — different from JWT email
+        customer_email: 'stefanogebara@gmail.com',
+        plan_name: 'Growth',
+        status: 'trialing',
+        current_period_end: '2026-06-11',
+        trial_end: '2026-06-11',
+      },
+    });
+
+    const { req, res } = createMockReqRes();
+    await handler(req, res);
+    const data = res.json.mock.calls[0][0];
+    expect(data.has_subscription).toBe(true);
+    expect(data.subscription.plan).toBe('Growth');
+    expect(data.subscription.is_active).toBe(true);
+  });
+
+  test('falls back to email lookup when restaurant_id lookup returns inactive', async () => {
+    verifyAuth.mockResolvedValueOnce({
+      user: { restaurant_id: 'rest-1', email: 'owner@test.com' },
+    });
+    checkSubscriptionByRestaurantId.mockResolvedValueOnce({ active: false });
+    getSubscriptionByEmail.mockResolvedValueOnce({
+      success: true,
+      subscription: {
+        plan_name: 'Starter',
+        status: 'active',
+        current_period_end: '2026-04-01',
+        trial_end: null,
+      },
+    });
+
+    const { req, res } = createMockReqRes();
+    await handler(req, res);
+    const data = res.json.mock.calls[0][0];
+    expect(data.has_subscription).toBe(true);
+    expect(data.subscription.plan).toBe('Starter');
+  });
+
   test('returns 500 on unexpected error', async () => {
     verifyAuth.mockResolvedValueOnce({
       user: { restaurant_id: 'rest-1', email: 'admin@test.com' },
     });
-    getSubscriptionByEmail.mockRejectedValueOnce(new Error('DB connection failed'));
+    checkSubscriptionByRestaurantId.mockRejectedValueOnce(new Error('DB connection failed'));
 
     const { req, res } = createMockReqRes({ query: { email: 'customer@test.com' } });
     await handler(req, res);

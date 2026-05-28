@@ -5,6 +5,7 @@
  */
 
 const { getSubscriptionByEmail } = require('./_lib/supabase');
+const { checkSubscriptionByRestaurantId } = require('./_lib/subscription-middleware');
 const { verifyAuth } = require('./_lib/auth');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
@@ -36,7 +37,9 @@ module.exports = async (req, res) => {
   try {
     const restaurantId = req.user.restaurant_id;
 
-    // Get customer email from JWT (never from URL — avoids PII in logs)
+    // Get customer email from JWT (never from URL — avoids PII in logs).
+    // We don't *filter by* email anymore (see below), but we still require
+    // it as a basic auth-completeness check.
     const customerEmail = req.user.email;
 
     if (!customerEmail) {
@@ -46,10 +49,35 @@ module.exports = async (req, res) => {
       });
     }
 
-    // Get subscription from database
-    const result = await getSubscriptionByEmail(restaurantId, customerEmail);
+    // Primary lookup: by restaurant_id — matches what the plan-gate
+    // middleware (inlineCheckSubscription / softCheckSubscription) uses, so
+    // sidebar gating and API gating stay consistent. Email-based lookup
+    // (the original implementation) broke down in two real cases:
+    //   1) Stripe customer email != JWT email — Gmail strips '+alias' tags
+    //      when normalising customer email at Checkout, so a user logged in
+    //      as foo+test@gmail.com couldn't see their own foo@gmail.com sub.
+    //   2) Team members — a second user on the same restaurant_id has a
+    //      different email from the subscription owner, but should still
+    //      see the team's active plan.
+    let result;
+    if (restaurantId) {
+      const rs = await checkSubscriptionByRestaurantId(restaurantId);
+      if (rs.active && rs.subscription) {
+        result = { success: true, subscription: rs.subscription };
+      }
+    }
 
-    if (!result.success) {
+    // Fallback: email-based lookup for legacy paths where the JWT doesn't
+    // carry restaurant_id (shouldn't happen post-auth-refresh, but keep the
+    // path so we never 500 a logged-in user).
+    if (!result) {
+      const er = await getSubscriptionByEmail(restaurantId, customerEmail);
+      if (er.success) {
+        result = { success: true, subscription: er.subscription };
+      }
+    }
+
+    if (!result?.success) {
       return res.status(200).json({
         has_subscription: false
       });
