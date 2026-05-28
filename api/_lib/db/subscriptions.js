@@ -78,12 +78,20 @@ const getSubscriptionByCustomerId = async (restaurantId, customerId) => {
 };
 
 const getSubscriptionByEmail = async (restaurantId, email) => {
-  // First, try to get from subscriptions table
+  // First, try to get from subscriptions table.
+  // ORDER BY created_at DESC so the newest row wins when a restaurant has
+  // multiple rows for the same email (e.g., the synthetic 'Free' placeholder
+  // created at onboarding gets cancelled when the real Stripe subscription
+  // lands — without the ordering, Postgres returned them in undefined order
+  // and `.limit(1)` sometimes picked the canceled Free row, which made the
+  // sidebar (useSubscription → planType=free) lock Voice & Calls / Marketing /
+  // Customers for paying customers.
   const { data: subscriptions, error: subError } = await supabase
     .from('subscriptions')
     .select('id, subscription_id, customer_id, customer_email, plan_name, price_id, status, current_period_start, current_period_end, trial_end, canceled_at, downgrade_grace_until, created_at')
     .eq('restaurant_id', restaurantId)
     .eq('customer_email', email)
+    .order('created_at', { ascending: false })
     .limit(1);
 
   if (!subError && subscriptions && subscriptions.length > 0) {
