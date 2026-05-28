@@ -88,8 +88,18 @@ module.exports = async (req, res) => {
   try {
     event = stripe.webhooks.constructEvent(bodyForVerify, sig, endpointSecret);
   } catch (err) {
-    logger.error('Signature verification failed', { error: err.message });
-    return res.status(400).json({ error: 'Invalid webhook request', reason: 'bad_signature' });
+    // Diag-only: 4-char hash of the secret + body length so we can rule out
+    // env-snapshot drift and body-encoding mismatch without leaking the
+    // secret. Remove once verified.
+    const crypto = require('crypto');
+    const secretFp = crypto.createHash('sha256').update(endpointSecret).digest('hex').slice(0, 8);
+    logger.error('Signature verification failed', { error: err.message, secret_fp: secretFp, body_len: bodyForVerify.length });
+    return res.status(400).json({
+      error: 'Invalid webhook request',
+      reason: 'bad_signature',
+      secret_fp: secretFp,
+      body_len: bodyForVerify.length,
+    });
   }
 
   // 2. Idempotency guard. Atomic insert into stripe_webhook_events_processed;
