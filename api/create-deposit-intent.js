@@ -94,6 +94,46 @@ module.exports = async (req, res) => {
     // Amount in cents for Stripe
     const amountInCents = Math.round(depositAmount * 100);
 
+    // If this restaurant has finished Stripe Connect onboarding, route the
+    // deposit to their account (destination charges). Pre-conditions:
+    //   - row exists with status='active'
+    //   - charges_enabled=true (Stripe blocks transfer_data otherwise)
+    //   - currency matches the connected account's default_currency, since
+    //     transfer_data requires a presentment currency the destination
+    //     supports for settlement
+    // Any failed check → graceful fallback to platform-only so the booking
+    // doesn't break for restaurants who haven't onboarded yet.
+    let connectRouting = null;
+    let routedTo = 'platform';
+    try {
+      const { data: connectRow } = await supabaseAdmin
+        .schema('restaurant')
+        .from('stripe_connect_accounts')
+        .select('stripe_account_id, status, charges_enabled, default_currency')
+        .eq('restaurant_id', restaurant_id)
+        .maybeSingle();
+
+      if (connectRow?.status === 'active' && connectRow.charges_enabled) {
+        const destCurrency = (connectRow.default_currency || '').toLowerCase();
+        if (destCurrency && destCurrency !== currency) {
+          logger.warn('Skipping Connect routing — currency mismatch', {
+            restaurant_id,
+            presentment_currency: currency,
+            connect_default_currency: destCurrency,
+          });
+        } else {
+          connectRouting = {
+            on_behalf_of: connectRow.stripe_account_id,
+            transfer_data: { destination: connectRow.stripe_account_id },
+          };
+          routedTo = 'connect';
+        }
+      }
+    } catch (connectErr) {
+      // Don't let a Connect lookup failure break the booking flow.
+      logger.warn('Connect routing lookup failed (falling back to platform)', { error: connectErr.message });
+    }
+
     // Create PaymentIntent with manual capture
     const paymentIntent = await getStripe().paymentIntents.create({
       amount: amountInCents,
@@ -106,7 +146,10 @@ module.exports = async (req, res) => {
         party_size: String(parsedPartySize),
         type: 'reservation_deposit',
         currency,
+        routed_to: routedTo,
+        ...(connectRouting ? { connect_account_id: connectRouting.on_behalf_of } : {}),
       },
+      ...(connectRouting || {}),
       ...(customer_email ? { receipt_email: customer_email } : {}),
     });
 
@@ -114,6 +157,7 @@ module.exports = async (req, res) => {
       restaurant_id,
       amount: depositAmount,
       payment_intent_id: paymentIntent.id,
+      routed_to: routedTo,
     });
 
     return res.status(200).json({
