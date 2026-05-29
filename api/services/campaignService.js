@@ -140,6 +140,14 @@ async function createCampaign(restaurantId, { name, segment, message, scheduledA
     .from('retention_campaigns')
     .insert({
       restaurant_id: restaurantId,
+      // `customer_id` was originally the per-customer identifier when this
+      // table only held 1:1 win-back campaigns. The bulk segment-based
+      // WhatsApp campaign feature reuses the same row to represent one
+      // logical campaign covering N customers — there's no single
+      // customer to point at. We mark the row with a sentinel so it's
+      // visibly a bulk campaign in raw queries, AND it satisfies the
+      // historical NOT NULL even when PostgREST has a stale schema cache.
+      customer_id: `segment:${segment}`,
       campaign_type: campaignType || 'win_back',
       message,
       channel: channelOverride || 'whatsapp',
