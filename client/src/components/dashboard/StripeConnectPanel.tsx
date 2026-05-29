@@ -1,20 +1,9 @@
 import { useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { authFetch } from '../../services/api';
 import { useToast } from '../../contexts/ToastContext';
-
-interface ConnectStatus {
-  success: boolean;
-  connected: boolean;
-  account_id?: string;
-  status?: 'pending' | 'active' | 'restricted' | 'disabled' | 'revoked';
-  charges_enabled?: boolean;
-  payouts_enabled?: boolean;
-  details_submitted?: boolean;
-  default_currency?: string | null;
-  country?: string;
-}
+import { useStripeConnectStatus, type StripeConnectStatusValue } from '../../hooks/useStripeConnectStatus';
 
 interface OnboardingResponse {
   success: boolean;
@@ -24,7 +13,7 @@ interface OnboardingResponse {
   error?: string;
 }
 
-const STATUS_TONE: Record<NonNullable<ConnectStatus['status']>, { dot: string; bg: string; text: string }> = {
+const STATUS_TONE: Record<StripeConnectStatusValue, { dot: string; bg: string; text: string }> = {
   active:     { dot: 'bg-emerald-500', bg: 'bg-emerald-100', text: 'text-emerald-800' },
   pending:    { dot: 'bg-amber-500',   bg: 'bg-amber-100',   text: 'text-amber-800'   },
   restricted: { dot: 'bg-amber-500',   bg: 'bg-amber-100',   text: 'text-amber-800'   },
@@ -54,15 +43,7 @@ export default function StripeConnectPanel() {
     window.history.replaceState({}, '', url.toString());
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const { data, isLoading } = useQuery<ConnectStatus>({
-    queryKey: ['stripe-connect-status'],
-    queryFn: async () => {
-      const res = await authFetch('/api/stripe-connect-status');
-      if (!res.ok) return { success: false, connected: false };
-      return res.json();
-    },
-    staleTime: 60_000,
-  });
+  const { data, isLoading } = useStripeConnectStatus();
 
   const onboardingMutation = useMutation<string, Error>({
     mutationFn: async () => {

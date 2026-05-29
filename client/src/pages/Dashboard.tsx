@@ -28,6 +28,7 @@ import ActivePartiesPanel from '../components/dashboard/ActivePartiesPanel';
 import WaitlistPanel from '../components/host/WaitlistPanel';
 import ManagerNotesPanel from '../components/dashboard/ManagerNotesPanel';
 import StaffingForecastWidget from '../components/dashboard/StaffingForecastWidget';
+import StripeConnectStatusBadge from '../components/dashboard/StripeConnectStatusBadge';
 import RevenueStatsWidget from '../components/dashboard/RevenueStatsWidget';
 import RevenueByPartySizeWidget from '../components/dashboard/RevenueByPartySizeWidget';
 import ProactiveCommsPanel from '../components/dashboard/ProactiveCommsPanel';
@@ -277,9 +278,12 @@ export default function Dashboard() {
               <h1 className="font-sans text-xl sm:text-2xl font-semibold tracking-tight text-deep-charcoal">
                 {t('dashboard.overview')}
               </h1>
-              <p className="text-[12px] sm:text-[13px] text-muted-stone font-mono uppercase tracking-widest mt-1">
-                {fullDateStr}
-              </p>
+              <div className="flex items-center gap-2 mt-1 flex-wrap">
+                <p className="text-[12px] sm:text-[13px] text-muted-stone font-mono uppercase tracking-widest">
+                  {fullDateStr}
+                </p>
+                <StripeConnectStatusBadge />
+              </div>
             </div>
             <div className="flex items-center gap-2 sm:gap-3 pl-12 lg:pl-0">
               <button
