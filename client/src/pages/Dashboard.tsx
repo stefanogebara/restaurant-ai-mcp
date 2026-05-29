@@ -29,6 +29,7 @@ import WaitlistPanel from '../components/host/WaitlistPanel';
 import ManagerNotesPanel from '../components/dashboard/ManagerNotesPanel';
 import StaffingForecastWidget from '../components/dashboard/StaffingForecastWidget';
 import StripeConnectStatusBadge from '../components/dashboard/StripeConnectStatusBadge';
+import StripeConnectNudgeBanner from '../components/dashboard/StripeConnectNudgeBanner';
 import RevenueStatsWidget from '../components/dashboard/RevenueStatsWidget';
 import RevenueByPartySizeWidget from '../components/dashboard/RevenueByPartySizeWidget';
 import ProactiveCommsPanel from '../components/dashboard/ProactiveCommsPanel';
@@ -235,6 +236,9 @@ export default function Dashboard() {
     <DashboardLayout>
       <div className="dashboard min-h-screen bg-white px-4 sm:px-6 lg:px-10 pt-6 sm:pt-10 pb-24 sm:pb-20">
         <div className="max-w-[1240px]">
+
+          {/* ---- Stripe Connect Adoption Nudge ---- */}
+          <StripeConnectNudgeBanner />
 
           {/* ---- Payment Failure Banner ---- */}
           {subStatus === 'past_due' && (
