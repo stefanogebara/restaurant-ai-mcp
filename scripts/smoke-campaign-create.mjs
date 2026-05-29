@@ -135,7 +135,8 @@ try {
   console.log(`      respBody=${JSON.stringify(respBody).slice(0, 300)}`);
 
   if (res.status !== 200) throw new Error(`expected 200, got ${res.status}: ${JSON.stringify(respBody)}`);
-  createdCampaignId = respBody?.campaign?.id || respBody?.data?.campaign?.id || respBody?.id;
+  // Response shape: { success: true, data: { id, customer_id, ... metadata: {...}, recipient_count } }
+  createdCampaignId = respBody?.data?.id || respBody?.campaign?.id || respBody?.id;
   if (!createdCampaignId) throw new Error(`no campaign id in response: ${JSON.stringify(respBody)}`);
   console.log(`      campaign_id=${createdCampaignId}`);
 
