@@ -36,6 +36,7 @@ import VoicePersonaPanel from '../components/dashboard/VoicePersonaPanel';
 // VoiceExperimentPanel removed — non-functional (K-1)
 import BookingChannelsPanel from '../components/dashboard/BookingChannelsPanel';
 import POSIntegrationPanel from '../components/dashboard/POSIntegrationPanel';
+import StripeConnectPanel from '../components/dashboard/StripeConnectPanel';
 import PhoneIntegrationPanel from '../components/voice/PhoneIntegrationPanel';
 // AIStrategyPanel removed — dead feature
 // StrategyMetricsWidget moved to insights-only (removed from voice settings)
@@ -536,7 +537,12 @@ export default function VoiceSettingsPage() {
             <p className="text-sm text-warm-stone">{t('voiceSettings.waLoading', 'Loading WhatsApp connection status...')}</p>
           );
 
-          const posTab = <POSIntegrationPanel />;
+          const posTab = (
+            <>
+              <POSIntegrationPanel />
+              <StripeConnectPanel />
+            </>
+          );
           const widgetTab = slug
             ? <BookingChannelsPanel slug={slug} />
             : <p className="text-sm text-warm-stone">{t('voiceSettings.widgetUnavailable', 'Your booking widget will appear here once your restaurant is set up.')}</p>;
