@@ -145,6 +145,10 @@ async function handleList(req, res) {
           failed_count: 0,
           recipient_count: 0,
           segment_name: campaign.metadata?.segment_name || '',
+          // Surface the user-entered campaign name (stored in metadata —
+          // the table has no `name` column) so CampaignList can render it
+          // instead of falling back to the message preview.
+          name: campaign.metadata?.name || null,
         }))
       }
     });

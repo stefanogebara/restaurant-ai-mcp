@@ -127,7 +127,14 @@ async function createCampaign(restaurantId, { name, segment, message, scheduledA
     return { success: false, error: 'All customers in this segment have opted out' };
   }
 
-  // Create campaign record
+  // Create campaign record.
+  // `segment_name` and the user-entered `name` go into the JSON `metadata`
+  // column, not top-level columns — those columns don't exist on the
+  // restaurant.retention_campaigns table and writing them at the top level
+  // was returning PostgREST PGRST204 ("Could not find the 'segment_name'
+  // column in the schema cache"), making campaign creation 400 for every
+  // user. The list endpoint (handleList → segment_name: campaign.metadata?.segment_name)
+  // already reads from metadata, so this aligns writer with reader.
   const { data: campaign, error: campaignErr } = await supabaseAdmin
     .schema('restaurant')
     .from('retention_campaigns')
@@ -139,7 +146,10 @@ async function createCampaign(restaurantId, { name, segment, message, scheduledA
       whatsapp_template_name: whatsappTemplateName || SEGMENT_TEMPLATE_MAP[segment] || 'seatable_promotion',
       status: scheduledAt ? 'scheduled' : 'active',
       scheduled_at: scheduledAt || null,
-      segment_name: segment,
+      metadata: {
+        segment_name: segment,
+        name: name || null,
+      },
       created_at: new Date().toISOString(),
     })
     .select()
