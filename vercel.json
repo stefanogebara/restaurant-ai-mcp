@@ -402,6 +402,10 @@
       "schedule": "0 10 * * *"
     },
     {
+      "path": "/api/cron/sync-stripe-connect-accounts",
+      "schedule": "30 4 * * *"
+    },
+    {
       "path": "/api/cron/sync-conversation-data",
       "schedule": "*/15 * * * *"
     },

@@ -160,6 +160,39 @@ module.exports = async (req, res) => {
       routed_to: routedTo,
     });
 
+    // Fire-and-forget: capture the routing decision in an append-only
+    // analytics log so we can measure Connect adoption over time. Unique
+    // index on payment_intent_id makes this safely retryable; ON CONFLICT
+    // DO NOTHING means a retry storm can't double-count. We deliberately
+    // don't await — never let analytics block the customer's checkout.
+    supabaseAdmin
+      .from('stripe_deposit_routing_events')
+      .insert({
+        restaurant_id,
+        payment_intent_id: paymentIntent.id,
+        routed_to: routedTo,
+        connect_account_id: connectRouting ? connectRouting.on_behalf_of : null,
+        amount_cents: amountInCents,
+        currency,
+        party_size: parsedPartySize,
+      })
+      .then(({ error: analyticsErr }) => {
+        if (analyticsErr && analyticsErr.code !== '23505') {
+          // 23505 = unique-violation on payment_intent_id (retry storm) —
+          // expected, ignored. Anything else gets logged.
+          logger.warn('Deposit routing analytics insert failed (non-fatal)', {
+            payment_intent_id: paymentIntent.id,
+            error: analyticsErr.message,
+          });
+        }
+      })
+      .catch((analyticsThrow) => {
+        logger.warn('Deposit routing analytics insert threw (non-fatal)', {
+          payment_intent_id: paymentIntent.id,
+          error: analyticsThrow?.message,
+        });
+      });
+
     return res.status(200).json({
       success: true,
       client_secret: paymentIntent.client_secret,

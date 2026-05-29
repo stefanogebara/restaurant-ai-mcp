@@ -19,29 +19,39 @@ jest.mock('stripe', () => jest.fn().mockImplementation(() => ({
 })));
 
 // --- Supabase chain mocks ---
-// restaurant_config single() returns deposit_config + name + country
-// stripe_connect_accounts maybeSingle() returns the connect row (or null)
+// .schema('restaurant').from('restaurant_config').select().eq().single()
+// .schema('restaurant').from('stripe_connect_accounts').select().eq().maybeSingle()
+// .from('stripe_deposit_routing_events').insert(...).then(cb) — analytics
 const mockConfigSingle = jest.fn();
 const mockConnectMaybeSingle = jest.fn();
+const mockAnalyticsInsert = jest.fn();
 
 const mockConfigEq = jest.fn(() => ({ single: mockConfigSingle }));
 const mockConfigSelect = jest.fn(() => ({ eq: mockConfigEq }));
 const mockConnectEq = jest.fn(() => ({ maybeSingle: mockConnectMaybeSingle }));
 const mockConnectSelect = jest.fn(() => ({ eq: mockConnectEq }));
 
-const mockFrom = jest.fn((tableName) => {
+const mockRestaurantSchemaFrom = jest.fn((tableName) => {
   if (tableName === 'restaurant_config') {
     return { select: mockConfigSelect };
   }
   if (tableName === 'stripe_connect_accounts') {
     return { select: mockConnectSelect };
   }
-  throw new Error(`Unexpected from('${tableName}')`);
+  throw new Error(`Unexpected restaurant.from('${tableName}')`);
+});
+
+const mockPublicFrom = jest.fn((tableName) => {
+  if (tableName === 'stripe_deposit_routing_events') {
+    return { insert: mockAnalyticsInsert };
+  }
+  throw new Error(`Unexpected public.from('${tableName}')`);
 });
 
 jest.mock('../_lib/supabase', () => ({
   supabaseAdmin: {
-    schema: jest.fn(() => ({ from: mockFrom })),
+    schema: jest.fn(() => ({ from: mockRestaurantSchemaFrom })),
+    from: (...args) => mockPublicFrom(...args),
   },
 }));
 
@@ -113,6 +123,9 @@ beforeEach(() => {
     client_secret: 'pi_test_123_secret',
     amount: 5000,
   });
+  // Analytics insert is fire-and-forget; default to success so the
+  // .then() callback is a noop.
+  mockAnalyticsInsert.mockResolvedValue({ error: null });
 });
 
 describe('Connect routing — no connected account', () => {
@@ -241,5 +254,68 @@ describe('Connect routing — not eligible', () => {
     const args = mockPaymentIntentCreate.mock.calls[0][0];
     expect(args.on_behalf_of).toBeUndefined();
     expect(args.metadata.routed_to).toBe('platform');
+  });
+});
+
+describe('routing analytics — append-only adoption log', () => {
+  // The .then() resolves on a microtask after the response is returned.
+  // Each test awaits handler() + an extra microtask flush so the assertion
+  // sees the analytics insert side effect.
+  const flushMicrotasks = () => new Promise((r) => setImmediate(r));
+
+  test('platform-only path → analytics row with connect_account_id=null', async () => {
+    mockConnectMaybeSingle.mockResolvedValue({ data: null, error: null });
+    await handler(makeReq(), makeRes());
+    await flushMicrotasks();
+
+    expect(mockAnalyticsInsert).toHaveBeenCalledTimes(1);
+    expect(mockAnalyticsInsert).toHaveBeenCalledWith(expect.objectContaining({
+      restaurant_id: 'rest-1',
+      payment_intent_id: 'pi_test_123',
+      routed_to: 'platform',
+      connect_account_id: null,
+      amount_cents: 5000,
+      currency: 'brl',
+      party_size: 2,
+    }));
+  });
+
+  test('Connect-routed path → analytics row with connect_account_id set', async () => {
+    mockConnectMaybeSingle.mockResolvedValue({
+      data: {
+        stripe_account_id: 'acct_connect_xyz',
+        status: 'active',
+        charges_enabled: true,
+        default_currency: 'brl',
+      },
+      error: null,
+    });
+    await handler(makeReq(), makeRes());
+    await flushMicrotasks();
+
+    expect(mockAnalyticsInsert).toHaveBeenCalledWith(expect.objectContaining({
+      routed_to: 'connect',
+      connect_account_id: 'acct_connect_xyz',
+    }));
+  });
+
+  test('analytics insert error 23505 (dup PI) → swallowed silently', async () => {
+    mockAnalyticsInsert.mockResolvedValue({ error: { code: '23505', message: 'dup' } });
+    const res = makeRes();
+    await handler(makeReq(), res);
+    await flushMicrotasks();
+    // The booking response is unaffected.
+    expect(res.statusCode).toBe(200);
+    expect(res.body.success).toBe(true);
+  });
+
+  test('analytics insert throws → does NOT break the booking response', async () => {
+    mockAnalyticsInsert.mockRejectedValue(new Error('analytics service down'));
+    const res = makeRes();
+    await handler(makeReq(), res);
+    await flushMicrotasks();
+    expect(res.statusCode).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.payment_intent_id).toBe('pi_test_123');
   });
 });
