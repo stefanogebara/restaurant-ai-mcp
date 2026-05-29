@@ -85,8 +85,15 @@ module.exports = async (req, res) => {
     // Remove once verified.
     const crypto = require('crypto');
     const secretFp = crypto.createHash('sha256').update(endpointSecret || '').digest('hex').slice(0, 8);
+    const secretLen = (endpointSecret || '').length;
+    // Split into multiple lines because Vercel runtime logs UI truncates the
+    // preview after ~30 chars. Each console.log becomes its own log row.
     // eslint-disable-next-line no-console
-    console.log(`STRIPE_CONNECT_WEBHOOK_DIAG secret_fp=${secretFp} body_len=${bodyForVerify.length} body_head=${JSON.stringify(bodyForVerify.slice(0, 30))} err=${err.message.slice(0, 80)}`);
+    console.log(`STRIPECONN_DIAG_FP=${secretFp}`);
+    // eslint-disable-next-line no-console
+    console.log(`STRIPECONN_DIAG_LEN=${secretLen}`);
+    // eslint-disable-next-line no-console
+    console.log(`STRIPECONN_DIAG_BODY=${bodyForVerify.length}`);
     logger.error('Signature verification failed', { error: err.message });
     return res.status(400).json({ error: 'Invalid webhook request', reason: 'bad_signature' });
   }
