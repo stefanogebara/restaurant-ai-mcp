@@ -30,13 +30,18 @@ if (!SECRET) { console.error('Missing STRIPE_CONNECT_WEBHOOK_SECRET'); process.e
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const sbAdmin = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
+// Sign with network time so local OS-clock drift doesn't blow up signature
+// verification on prod. See scripts/_lib/network-time.mjs.
+import { networkUnixSeconds, warnIfDriftExceedsTolerance } from './_lib/network-time.mjs';
+warnIfDriftExceedsTolerance();
+
 // --- Helpers ---
 function signedPost(eventObj, secretOverride) {
   const payload = JSON.stringify(eventObj);
   const header = stripe.webhooks.generateTestHeaderString({
     payload,
     secret: secretOverride || SECRET,
-    timestamp: Math.floor(Date.now() / 1000),
+    timestamp: networkUnixSeconds(),
   });
   return fetch(ENDPOINT, {
     method: 'POST',

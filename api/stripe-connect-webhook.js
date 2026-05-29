@@ -79,8 +79,20 @@ module.exports = async (req, res) => {
   try {
     event = stripe.webhooks.constructEvent(bodyForVerify, sig, endpointSecret);
   } catch (err) {
-    logger.error('Signature verification failed', { error: err.message });
-    return res.status(400).json({ error: 'Invalid webhook request', reason: 'bad_signature' });
+    // Stripe's StripeSignatureVerificationError lumps two distinct failures
+    // under one exception type. Distinguish them in the response so the
+    // next "bad signature" doesn't burn six hours of debugging:
+    //   - "Timestamp outside the tolerance zone" → caller's clock drifted
+    //     past the 5-min window (likely an unsynced machine running the
+    //     signed-test script, not a real Stripe delivery — Stripe's
+    //     infra is NTP-synced).
+    //   - anything else → genuine secret/body mismatch.
+    const isClockSkew = /tolerance zone/i.test(err.message || '');
+    logger.error('Signature verification failed', { error: err.message, clock_skew: isClockSkew });
+    return res.status(400).json({
+      error: 'Invalid webhook request',
+      reason: isClockSkew ? 'clock_skew' : 'bad_signature',
+    });
   }
 
   // 2. Idempotency guard. Atomic insert into stripe_webhook_events_processed;

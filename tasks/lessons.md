@@ -1,4 +1,32 @@
 
+## 2026-05-29: "bad_signature" from Stripe was actually local clock drift — 6 hours of redirected debugging
+
+**Symptom**: Live signed probes to the new `/api/stripe-connect-webhook` all returned HTTP 400 `{reason: "bad_signature"}`, despite:
+- Local roundtrip (sign + verify with same secret) succeeding instantly
+- `vercel env pull` confirming the secret was the rotated value
+- Server-side SHA-256 fingerprint of `process.env.STRIPE_CONNECT_WEBHOOK_SECRET` exactly matching the local fingerprint
+- Body length matching between what the client sent and what the server's stream reader collected
+
+**What I missed**: My local Windows clock had drifted ~3h33m behind UTC (`date -u` showed 08:06, real UTC was 11:39). Stripe's `generateTestHeaderString` stamps `t={UnixSeconds}` onto the signature header. `constructEvent` on the server then rejects payloads whose `t` is more than 5 minutes outside the receiver's clock. The error string is literally `Timestamp outside the tolerance zone` but the SDK rethrows under the same `StripeSignatureVerificationError` constructor and our handler returned a generic `bad_signature`.
+
+I spent 6+ hours chasing this through:
+- 3 separate Stripe webhook secret rotations
+- moving the file 3 times (`api/stripe-connect-webhook.js` → `api/stripe/connect/webhook.js` → back)
+- adding/removing `module.exports.config = { api: { bodyParser: false } }`
+- writing a stream-reader fallback
+- pushing diag commits to read `secret_fp` out of Vercel runtime logs
+
+The root cause was 4 lines of Node:
+```js
+console.log('local: ', Math.floor(Date.now()/1000));
+console.log('actual:', Math.floor(new Date((await fetch('https://www.google.com',{method:'HEAD'})).headers.get('date')).getTime()/1000));
+```
+
+**Rules**:
+1. **When signature verification fails, log the receiver's error message verbatim before assuming "bad secret"**. Stripe distinguishes "No signatures found matching the expected signature for payload" (secret/body mismatch) from "Timestamp outside the tolerance zone" (clock skew). Surface that distinction in the handler's catch.
+2. **Compare clocks before chasing crypto**. Any HMAC scheme with a `t=` field will fail identically for clock drift and for wrong-key — and the fix is completely different. First thing to check on a signature failure is `Date.now()` vs an authoritative source.
+3. **Signed-test scripts must use network time, not OS time.** `scripts/_lib/network-time.mjs` is the durable fix — every future signed probe imports `networkUnixSeconds()` and `warnIfDriftExceedsTolerance()` from there.
+
 ## 2026-05-28: "fixed" the auth race, missed the auth expiry — two distinct failure modes look identical from one screenshot
 
 **Symptom**: Live E2E customer signup → Stripe Checkout → Santander 3DS sat for ~2h → return to `/subscription/success` → "Não foi possível confirmar o pagamento". The exact UI I thought I'd permanently fixed with the BUG #17 patch a session earlier.
