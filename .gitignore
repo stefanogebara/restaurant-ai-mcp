@@ -105,3 +105,6 @@ design-audit/**/*.png
 
 # Stripe Connect audit screenshots — regenerable via e2e/stripe-connect-audit.spec.ts
 audit-stripe-connect/**/*.png
+
+# Onboarding Step 0 audit screenshots — regenerable via e2e/onboarding-step0.spec.ts
+audit-onboarding-step0/**/*.png
