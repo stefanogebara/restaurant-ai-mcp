@@ -6,9 +6,16 @@
  *
  * Two enrichment passes that run in parallel:
  *
- *   1. Website scrape — fetches the restaurant's homepage, extracts menu
- *      items + prices, popular/signature dishes mentioned, social handles,
- *      hours fallback. Uses cheap Claude Haiku for structured extraction.
+ *   1. Website scrape — fetches the restaurant's homepage, extracts:
+ *        - menu items + prices
+ *        - popular/signature dishes
+ *        - social handles
+ *        - hours_text (one-line summary)
+ *        - contact { phone, address, email }  ← used by onboarding Step 0
+ *        - business_hours (structured weekly schedule, same shape as
+ *          /api/scrape-restaurant returns, so the client can use one
+ *          converter for both sources)
+ *      Uses cheap Claude Haiku for structured extraction.
  *
  *   2. Review insights — passes the top reviews to Claude, returns popular
  *      dishes mentioned by guests, praise themes, complaint themes, and
@@ -16,7 +23,9 @@
  *
  * Returns a single JSON envelope with both `.menu` and `.insights` fields,
  * either of which may be `null` if extraction failed (best-effort — the
- * demo dashboard renders whatever is present).
+ * demo dashboard renders whatever is present). Within `.menu`, `contact`
+ * and `business_hours` may each be `null` independently when the site
+ * didn't surface those fields with confidence.
  *
  * Public endpoint (no auth) — used by demo-create flow + on-demand re-runs.
  * Rate-limited.
@@ -148,7 +157,21 @@ Schema (return EXACTLY this shape, all fields required, use null when unknown):
   "menu_items": [{ "name": string, "price": string | null, "description": string | null, "category": string | null }],  // up to 12 items
   "popular_dishes": [string],  // up to 5 names of signature/most-mentioned dishes
   "social_handles": { "instagram": string | null, "facebook": string | null },
-  "hours_text": string | null  // one-line summary if visible, else null
+  "hours_text": string | null,  // one-line summary if visible, else null
+  "contact": {                  // best-effort lift from the site's contact/footer
+    "phone": string | null,     // include country code if visible (e.g. "+55 11 5555 1234")
+    "address": string | null,   // single-line postal address
+    "email": string | null
+  },
+  "business_hours": {           // structured weekly schedule when the site lists per-day hours
+    "monday":    { "open_time": string | null, "close_time": string | null, "is_open": boolean },
+    "tuesday":   { "open_time": string | null, "close_time": string | null, "is_open": boolean },
+    "wednesday": { "open_time": string | null, "close_time": string | null, "is_open": boolean },
+    "thursday":  { "open_time": string | null, "close_time": string | null, "is_open": boolean },
+    "friday":    { "open_time": string | null, "close_time": string | null, "is_open": boolean },
+    "saturday":  { "open_time": string | null, "close_time": string | null, "is_open": boolean },
+    "sunday":    { "open_time": string | null, "close_time": string | null, "is_open": boolean }
+  } | null
 }
 
 Rules:
@@ -156,6 +179,11 @@ Rules:
 - popular_dishes: only include if the website explicitly highlights them (e.g. "our specialty", "signature dish", "most popular"). Else empty array.
 - social_handles: extract from links/icons, return just the URL.
 - Return at most 12 menu items — prioritize variety across categories.
+- contact.phone: prefer the most prominent number (booking/reservations line), strip formatting except spaces and +.
+- contact.address: most prominent street address, single line, no "Address:" prefix.
+- business_hours: ONLY when the site lists actual times. If it just says "open daily" without times, return null.
+- business_hours times: 24h "HH:MM" format. is_open=false for closed days. If a day isn't listed at all on the site, is_open=false.
+- Return null for any field you cannot find with confidence — fabricated phones / addresses / hours are worse than missing ones.
 
 Website text:
 ${text}`;
@@ -172,8 +200,60 @@ ${text}`;
     popular_dishes: Array.isArray(parsed.popular_dishes) ? parsed.popular_dishes.slice(0, 5) : [],
     social_handles: parsed.social_handles && typeof parsed.social_handles === 'object' ? parsed.social_handles : {},
     hours_text: typeof parsed.hours_text === 'string' ? parsed.hours_text : null,
+    contact: normaliseContact(parsed.contact),
+    business_hours: normaliseBusinessHours(parsed.business_hours),
     source_url: fetched.finalUrl || websiteUrl,
   };
+}
+
+/**
+ * Normalise the LLM-returned contact bag — drop empty strings, validate that
+ * each field is actually a string, and surface a flat { phone, address, email }
+ * object. Returns null when nothing usable came back so callers can short-circuit.
+ */
+function normaliseContact(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const out = {};
+  for (const key of ['phone', 'address', 'email']) {
+    const v = raw[key];
+    if (typeof v === 'string' && v.trim().length > 0) {
+      out[key] = v.trim();
+    } else {
+      out[key] = null;
+    }
+  }
+  // If every field is null, treat the whole bag as null so downstream code
+  // can fall through to "no contact info" branches without a key dance.
+  if (!out.phone && !out.address && !out.email) return null;
+  return out;
+}
+
+/**
+ * Normalise the LLM-returned weekly schedule into the same shape
+ * /api/scrape-restaurant emits, so applyScrapedData on the client can treat
+ * both sources identically. Returns null when the structure is missing or
+ * has zero open days (which is what we want — better to fall through to
+ * the form defaults than render an all-closed week).
+ */
+function normaliseBusinessHours(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+  const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
+  const out = {};
+  let anyOpen = false;
+  for (const day of DAYS) {
+    const entry = raw[day];
+    if (entry && typeof entry === 'object') {
+      const open = typeof entry.open_time === 'string' && TIME_RE.test(entry.open_time) ? entry.open_time : null;
+      const close = typeof entry.close_time === 'string' && TIME_RE.test(entry.close_time) ? entry.close_time : null;
+      const isOpen = entry.is_open === true && open !== null && close !== null;
+      out[day] = { open_time: open, close_time: close, is_open: isOpen };
+      if (isOpen) anyOpen = true;
+    } else {
+      out[day] = { open_time: null, close_time: null, is_open: false };
+    }
+  }
+  return anyOpen ? out : null;
 }
 
 /**

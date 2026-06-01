@@ -88,10 +88,19 @@ export default function Step0Search({ onPrefill, onSkip }: Step0SearchProps) {
         setEnrichError(body.error || t('onboarding.step0.enrichFailed', 'Could not read that website.'));
         return;
       }
-      // The enrich endpoint primarily returns menu + insights — pass them
-      // through plus the website URL itself so the parent at least gets the
-      // website populated.
-      onPrefill({ name: name.trim(), website: url });
+      // Pull contact + business_hours out of the enrich response — both may
+      // be null if the site didn't surface them with confidence, but when
+      // they exist they shave a chunk of typing off Step 2.
+      const menu = body?.menu ?? null;
+      const contact = menu?.contact && typeof menu.contact === 'object' ? menu.contact : null;
+      const business_hours = menu?.business_hours && typeof menu.business_hours === 'object' ? menu.business_hours : null;
+      onPrefill({
+        name: name.trim(),
+        website: url,
+        phone: contact?.phone ?? null,
+        address: contact?.address ?? null,
+        business_hours,
+      });
     } catch (err) {
       setEnrichError(err instanceof Error ? err.message : 'network_error');
     } finally {

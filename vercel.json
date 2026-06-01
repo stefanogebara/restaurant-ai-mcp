@@ -402,6 +402,10 @@
       "schedule": "0 10 * * *"
     },
     {
+      "path": "/api/cron/check-meta-token-expiry",
+      "schedule": "0 10 * * *"
+    },
+    {
       "path": "/api/cron/sync-stripe-connect-accounts",
       "schedule": "30 4 * * *"
     },
