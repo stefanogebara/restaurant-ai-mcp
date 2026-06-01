@@ -403,7 +403,7 @@
     },
     {
       "path": "/api/cron/monitor-meta-token-expiry",
-      "schedule": "0 10 * * *"
+      "schedule": "5 10 * * *"
     },
     {
       "path": "/api/cron/sync-stripe-connect-accounts",

@@ -46,8 +46,13 @@ const ALERT_THRESHOLD_DAYS = 14;
 async function inspectToken(token) {
   if (!token) return { ok: false, error: 'WHATSAPP_ACCESS_TOKEN env var not set' };
   try {
-    const url = `https://graph.facebook.com/v18.0/debug_token?input_token=${encodeURIComponent(token)}&access_token=${encodeURIComponent(token)}`;
-    const res = await fetch(url);
+    // Pass the token via Authorization header rather than the query string —
+    // URLs land in HTTP proxy logs, Vercel request logs, and any network tap;
+    // headers do not. input_token still goes in the query because it's the
+    // token being inspected (not an auth credential), and Graph requires it
+    // there. Meta documents Authorization: Bearer as supported on this endpoint.
+    const url = `https://graph.facebook.com/v18.0/debug_token?input_token=${encodeURIComponent(token)}`;
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
     if (!res.ok) {
       return { ok: false, error: `Graph debug_token HTTP ${res.status}` };
     }

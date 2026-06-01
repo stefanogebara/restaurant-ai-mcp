@@ -59,21 +59,28 @@ module.exports = async (req, res) => {
     //   2) Team members — a second user on the same restaurant_id has a
     //      different email from the subscription owner, but should still
     //      see the team's active plan.
+    // Audit note: a previous version added an email-based fallback "for
+    // legacy paths where the JWT doesn't carry restaurant_id". It was dead
+    // code — getSubscriptionByEmail always filters by .eq('restaurant_id',
+    // restaurantId) internally, so a missing restaurant_id returns zero
+    // rows from that path too. If the JWT genuinely has no restaurant_id
+    // (truly unconfigured / pre-onboarding user), the correct response is
+    // has_subscription: false — they don't have a subscription because
+    // they don't have a restaurant yet.
     let result;
     if (restaurantId) {
       const rs = await checkSubscriptionByRestaurantId(restaurantId);
       if (rs.active && rs.subscription) {
         result = { success: true, subscription: rs.subscription };
-      }
-    }
-
-    // Fallback: email-based lookup for legacy paths where the JWT doesn't
-    // carry restaurant_id (shouldn't happen post-auth-refresh, but keep the
-    // path so we never 500 a logged-in user).
-    if (!result) {
-      const er = await getSubscriptionByEmail(restaurantId, customerEmail);
-      if (er.success) {
-        result = { success: true, subscription: er.subscription };
+      } else if (customerEmail) {
+        // Restaurant exists but the primary lookup returned nothing active.
+        // Try the email path with restaurant_id scoped — covers the rare
+        // case of an inactive/canceled row that the gate middleware
+        // ignores but the user-facing status display wants to surface.
+        const er = await getSubscriptionByEmail(restaurantId, customerEmail);
+        if (er.success) {
+          result = { success: true, subscription: er.subscription };
+        }
       }
     }
 
