@@ -18,6 +18,7 @@ import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '../contexts/ToastContext';
+import Step0Search from '../components/onboarding/Step0Search';
 import Step1Welcome from '../components/onboarding/Step1Welcome';
 import Step2Contact from '../components/onboarding/Step2Contact';
 import Step3TablesAndSettings from '../components/onboarding/Step3TablesAndSettings';
@@ -27,6 +28,7 @@ import Step6TeachAI from '../components/onboarding/Step6TeachAI';
 import OnboardingSuccessModal from '../components/onboarding/OnboardingSuccessModal';
 import OnboardingStepSidebar from '../components/onboarding/OnboardingStepSidebar';
 import type { OnboardingData } from '../types/onboarding.types';
+import { applyScrapedData, type ScrapedRestaurant } from '../lib/applyScrapedData';
 import { authFetch } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { trackOnboardingStepCompleted, trackOnboardingCompleted } from '../lib/analytics';
@@ -131,6 +133,25 @@ export default function Onboarding() {
   const [currentStep, setCurrentStep] = useState(restored.step);
   const [onboardingData, setOnboardingData] = useState<OnboardingData>(restored.data);
 
+  // Step 0 (Google Places discovery) — runs BEFORE step 1 for fresh signups.
+  // Two ways it's bypassed:
+  //   1. Demo→signup converts get scraped_data from the demo restaurant via
+  //      the prefill effect below; we mark step 0 done so they jump straight
+  //      to Step 1 with everything already filled in.
+  //   2. Anyone resuming a wizard mid-flight from localStorage (restored.step
+  //      > 1) clearly already moved past step 0; don't show it again.
+  //
+  // The skip button on Step 0 also flips this so a brand-new restaurant with
+  // no Google presence can proceed.
+  const [step0Done, setStep0Done] = useState(restored.step > 1);
+  const [hasPrefillFromScrape, setHasPrefillFromScrape] = useState(false);
+
+  function applyAndAdvancePastStep0(scraped: ScrapedRestaurant) {
+    setOnboardingData((prev) => ({ ...prev, ...applyScrapedData(scraped) }));
+    setHasPrefillFromScrape(true);
+    setStep0Done(true);
+  }
+
   // Once onboarding completes we stop persisting — otherwise the persist
   // effect below immediately re-writes the localStorage keys that
   // completeOnboarding() just cleared, leaving stale data behind.
@@ -201,6 +222,11 @@ export default function Onboarding() {
           return { ...prev, ...updates };
         });
         setIsPreFilledFromDemo(true);
+        // Demo converts already went through Google Places when they created
+        // the demo — skip Step 0 (search) and surface the same ✨ prefill
+        // banner on Steps 1+2.
+        setHasPrefillFromScrape(true);
+        setStep0Done(true);
       })
       .catch((err) => {
         // Non-fatal — user fills in manually. Log to Sentry/Posthog so we can
@@ -398,7 +424,9 @@ export default function Onboarding() {
           seatable<span className="text-burgundy">.</span>
         </div>
         <div className="flex items-center gap-4">
-          <span className="text-[13px] text-warm-stone">{t('onboarding.stepOf', { current: currentStep, total: TOTAL_STEPS })}</span>
+          {step0Done && (
+            <span className="text-[13px] text-warm-stone">{t('onboarding.stepOf', { current: currentStep, total: TOTAL_STEPS })}</span>
+          )}
           <button
             type="button"
             onClick={() => {
@@ -461,6 +489,22 @@ export default function Onboarding() {
         </div>
       )}
 
+      {/* Step 0 — Google Places discovery, shown before the wizard for
+          fresh signups. Demo converts (scraped_data already on file) and
+          resumed-mid-wizard sessions bypass this via step0Done=true. */}
+      {!step0Done && (
+        <div className="flex-1 flex max-w-[640px] mx-auto w-full px-6 sm:px-12 py-12">
+          <div className="flex-1">
+            <Step0Search
+              onPrefill={(scraped) => applyAndAdvancePastStep0(scraped)}
+              onSkip={() => setStep0Done(true)}
+            />
+          </div>
+        </div>
+      )}
+
+      {step0Done && (
+        <>
       {/* Mobile Step Dots */}
       <div className="flex md:hidden items-center justify-center gap-2 py-3 border-b border-border-gray">
         {[1, 2, 3, 4, 5, 6].map((s) => (
@@ -479,10 +523,12 @@ export default function Onboarding() {
 
         {/* Form Content */}
         <div className="flex-1 max-w-[480px]">
-          {currentStep === 1 && isPreFilledFromDemo && (
+          {currentStep === 1 && (isPreFilledFromDemo || hasPrefillFromScrape) && (
             <div className="mb-5 flex items-center gap-2.5 px-4 py-3 rounded-xl bg-burgundy/[0.06] border border-burgundy/20 text-[13px] text-burgundy font-medium">
               <ThiingsIcon name="sparkles" pxSize={15} />
-              {t('onboarding.prefilledFromDemo')}
+              {isPreFilledFromDemo
+                ? t('onboarding.prefilledFromDemo')
+                : t('onboarding.prefilledStep1FromGoogle', 'Restaurant info pulled from Google Maps — confirm or edit below.')}
             </div>
           )}
           {currentStep === 1 && (
@@ -493,7 +539,7 @@ export default function Onboarding() {
               isDemoLoading={isDemoLoading}
             />
           )}
-          {currentStep === 2 && isPreFilledFromDemo && (
+          {currentStep === 2 && (isPreFilledFromDemo || hasPrefillFromScrape) && (
             <div className="mb-5 flex items-center gap-2.5 px-4 py-3 rounded-xl bg-burgundy/[0.06] border border-burgundy/20 text-[13px] text-burgundy font-medium">
               <ThiingsIcon name="sparkles" pxSize={15} />
               {t('onboarding.prefilledStep2')}
@@ -596,6 +642,8 @@ export default function Onboarding() {
           )}
         </div>
       </div>
+        </>
+      )}
 
       {/* Success Modal */}
       {showSuccessModal && (
