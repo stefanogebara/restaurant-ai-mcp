@@ -9,58 +9,9 @@ Auto-compiled articles live in `docs/wiki/`. Refresh with `node scripts/compile-
 
 ---
 
-## Brand Design System — Social Media & Marketing
+## Design System
 
-### Illustration Style (AI Studio / Nano Banana Prompts)
-All social media backgrounds use a **consistent editorial illustration style**. When generating new illustrations, ALWAYS attach 3 reference images from `~/seatable-ads/output/insta-final/` as style anchors.
-
-**Style**: Flat vector editorial illustration with depth, ambient lighting, and subtle shadows. Think Monocle magazine meets restaurant ambiance.
-
-**Color Palette**:
-- Burgundy/wine: #9F1239 (primary accent)
-- Warm amber/golden: #D97706, #F59E0B
-- Cream/off-white: #F5F0EB (backgrounds, text areas)
-- Warm brown: #78350F, #92400E
-- Deep charcoal: #1C1917 (dark variants)
-
-**Key Elements**:
-- Warm golden lighting from windows, pendant lamps, candles, string lights
-- Stylized simplified human figures (no detailed faces)
-- Clean lines, flat colors with subtle gradients and shadows
-- Restaurant scenes: interiors, exteriors, terraces, bars, kitchens
-- European bistro / sophisticated dining atmosphere
-- Perspective depth with foreground/background elements
-
-**Post Design System** (from `~/seatable-ads/output/insta-final/generate-100-v4.js`):
-- Typography: Playfair Display (serif headlines), Inter (body)
-- Key words in burgundy italic
-- S. logo with burgundy dot — top-left
-- "seatable.one" watermark — bottom-right
-- Semi-transparent overlay for text readability over illustrations
-- 4 content types: stat, headline, quote, cta
-
-**Reference Images** (attach these to AI Studio prompts):
-- `illust-night.png` — Night exterior with warm window glow
-- `illust-rooftop.png` — Rooftop dining at sunset
-- `illust-bar.png` — Warm bar interior
-- `illust-interior.png` — Classic restaurant dining room
-- `illust-terrace.png` — Garden terrace with string lights
-
-**AI Studio Default Prompt Template**:
-```
-[Attach 3 reference images from ~/seatable-ads/output/insta-final/]
-
-These images show my exact illustration style. Create a NEW illustration in the EXACT SAME STYLE.
-Match: flat vector editorial look, warm color palette (burgundy, amber, golden orange, cream, warm browns),
-stylized simplified figures, clean lines, flat colors with subtle gradients and ambient shadows,
-depth with perspective, warm golden lighting.
-
-NEW SCENE: [describe scene here]
-
-Square 1:1. No text. No logos.
-```
-
-**Website Style Match**: Nordic Clean — white bg, 1px borders #E5E7EB, burgundy #9F1239, Inter + JetBrains Mono, zero shadows. The illustrations complement the clean UI with warmth.
+**Canonical source: [`DESIGN.md`](./DESIGN.md)** — covers product UI ("Nordic Clean"), brand illustrations, social posts, the AI Studio prompt template, and the per-surface checklist. When in doubt, that file wins over Tailwind config or component code; update them to match.
 
 ---
 
@@ -169,42 +120,9 @@ Square 1:1. No text. No logos.
 
 ---
 
-## Design System — Nordic Clean
+## Design System
 
-### Typography
-- **Font stack**: Inter (body), Playfair Display (landing headings), JetBrains Mono (code/mono)
-- **Section headings**: `text-4xl sm:text-[48px]` (36px mobile, 48px desktop)
-- **Subtitles**: `text-lg` (18px)
-- **Body**: `text-sm` (14px) or `text-base` (16px)
-- Never mix font sizes within the same hierarchy level
-
-### Color Palette
-| Token | Value | Usage |
-|-------|-------|-------|
-| **Background** | `#FAFAF9` (warm white) | Page background — never pure white |
-| **Primary accent** | `#9F1239` (burgundy) | CTAs, links, highlights |
-| **Text primary** | `#1C1917` (deep charcoal) | Headings, body text |
-| **Text secondary** | `#706A65` (muted stone) | Captions, placeholders (WCAG-compliant, was #A8A29E) |
-| **Borders** | `#E5E7EB` (1px) | Cards, panels, dividers |
-
-- **No shadows** on cards/panels — borders only
-- **Shadows allowed** on: modals, dropdowns, tooltips, FABs
-- Semantic green OK for status indicators (online dots, positive trends)
-
-### WCAG Contrast Rules
-- Normal text (< 18px): minimum **4.5:1** contrast ratio
-- Large text (>= 18px bold or >= 24px): minimum **3:1** contrast ratio
-- Text over images: minimum **60% overlay opacity**
-- Never use opacity below 0.5 for readable text (`white/50` minimum on dark, `dark/50` minimum on light)
-
-### Instagram Post Design
-- **Style**: Flat illustration with soft gradients
-- **Color palette**: cream, brown, burgundy, gold
-- **Typography**: Playfair Display (headlines), Inter (body)
-- Key words in burgundy italic
-- Dark backgrounds: white text with dark gradient overlay
-- Light backgrounds: overlay opacity **0.45–0.55 minimum** at midpoint
-- Always include `seatable.one` watermark
+See **[`DESIGN.md`](./DESIGN.md)** for the full design system (typography, palette, shadow/border rules, WCAG, brand illustrations, social posts).
 
 ---
 
