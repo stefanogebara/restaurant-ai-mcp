@@ -402,7 +402,7 @@
       "schedule": "0 10 * * *"
     },
     {
-      "path": "/api/cron/check-meta-token-expiry",
+      "path": "/api/cron/monitor-meta-token-expiry",
       "schedule": "0 10 * * *"
     },
     {
