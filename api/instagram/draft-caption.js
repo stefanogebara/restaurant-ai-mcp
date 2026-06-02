@@ -76,11 +76,13 @@ module.exports = async (req, res) => {
     return res.status(400).json({ ok: false, error: `topic is too long (max ${MAX_TOPIC_LEN} chars)` });
   }
 
-  // 1. Look up the tone profile
+  // 1. Look up the tone profile. Column is `restaurant_name`, NOT `name`
+  // (caught a 500 in the live status-endpoint smoke that revealed both
+  // bugs originated in the same wrong column assumption).
   const { data: rest, error: restErr } = await supabaseAdmin
     .schema('restaurant')
     .from('restaurant_config')
-    .select('instagram_tone_profile, name')
+    .select('instagram_tone_profile, restaurant_name')
     .eq('id', user.restaurant_id)
     .maybeSingle();
 
@@ -98,7 +100,7 @@ module.exports = async (req, res) => {
   const tone = rest.instagram_tone_profile;
 
   // 2. Build the prompt
-  const systemPrompt = `You are drafting Instagram captions for a restaurant named "${rest.name || 'this restaurant'}". Match the restaurant's existing voice precisely.
+  const systemPrompt = `You are drafting Instagram captions for a restaurant named "${rest.restaurant_name || 'this restaurant'}". Match the restaurant's existing voice precisely.
 
 Voice profile (from their last 30 posts):
 - Formality: ${tone.formality}/10 (1 = casual slang, 10 = formal hospitality)
