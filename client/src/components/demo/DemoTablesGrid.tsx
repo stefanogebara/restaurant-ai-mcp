@@ -64,7 +64,7 @@ export default function DemoTablesGrid({ tables, lang }: DemoTablesGridProps) {
               return (
                 <div
                   key={table.id}
-                  className={`rounded-lg border border-[#E5E7EB] p-4 transition-shadow hover:shadow-sm ${style.bg}`}
+                  className={`rounded-lg border border-border-gray p-4 transition-colors ${style.bg}`}
                 >
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-lg font-bold text-deep-charcoal">#{table.table_number}</span>

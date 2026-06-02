@@ -13,7 +13,7 @@ export default function DemoBanner({ daysLeft, token }: DemoBannerProps) {
       ? 'bg-red-50 border-b border-red-200 text-red-700'
       : daysLeft <= 2
       ? 'bg-amber-50 border-b border-amber-200 text-amber-800'
-      : 'bg-burgundy/[4%] border-b border-burgundy/15 text-deep-charcoal';
+      : 'bg-warm-white border-b border-border-gray text-deep-charcoal';
 
   const expiryLabel =
     daysLeft <= 0

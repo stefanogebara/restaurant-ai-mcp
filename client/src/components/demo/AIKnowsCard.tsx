@@ -76,7 +76,7 @@ export default function AIKnowsCard({ menu, insights }: AIKnowsCardProps) {
   if (!hasAnything) return null;
 
   return (
-    <section className="bg-gradient-to-br from-burgundy/[0.04] to-amber-50 border border-burgundy/15 rounded-2xl p-6 space-y-5">
+    <section className="bg-warm-white border border-burgundy/15 rounded-2xl p-6 space-y-5">
       <header>
         <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-widest text-burgundy bg-burgundy/[0.08] px-2.5 py-1 rounded-full mb-3">
           <ThiingsIcon name="sparkles" size="xs" />

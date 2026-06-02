@@ -177,7 +177,7 @@ export default function DemoAnalyticsPanel({ restaurantName, lang, presetKey }: 
         {/* Left: bar chart + KPIs */}
         <div className="space-y-6">
           {/* Bar chart */}
-          <div className="bg-white border border-[#E5E7EB] rounded-lg p-5">
+          <div className="bg-warm-white border border-border-gray rounded-lg p-5">
             <p className="text-sm font-semibold text-stone-700 mb-4">{ui.covers}</p>
             <div className={`flex items-end gap-2 h-36 ${period === '30' ? 'gap-4' : 'gap-2'}`}>
               {chartBars.map((bar, i) => {
@@ -209,7 +209,7 @@ export default function DemoAnalyticsPanel({ restaurantName, lang, presetKey }: 
               { label: ui.noShow, value: periodData.noShowRate },
               { label: ui.peak, value: periodData.peakHour },
             ].map(({ label, value }) => (
-              <div key={label} className="bg-white border border-[#E5E7EB] rounded-lg p-4">
+              <div key={label} className="bg-warm-white border border-border-gray rounded-lg p-4">
                 <p className="text-[11px] text-stone-400 mb-1">{label}</p>
                 <p className="text-lg font-bold text-stone-900">{value}</p>
               </div>
@@ -221,18 +221,18 @@ export default function DemoAnalyticsPanel({ restaurantName, lang, presetKey }: 
         <div className="space-y-4">
           {/* Revenue + satisfaction */}
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-white border border-[#E5E7EB] rounded-lg p-4">
+            <div className="bg-warm-white border border-border-gray rounded-lg p-4">
               <p className="text-[11px] text-stone-400 mb-1">{revenueLabel}</p>
               <p className="text-xl font-bold text-stone-900">{periodData.revenue}</p>
             </div>
-            <div className="bg-white border border-[#E5E7EB] rounded-lg p-4">
+            <div className="bg-warm-white border border-border-gray rounded-lg p-4">
               <p className="text-[11px] text-stone-400 mb-1">{ui.satisfaction}</p>
               <p className="text-xl font-bold text-stone-900">{periodData.satisfaction} <span className="text-sm text-stone-400">/5</span></p>
             </div>
           </div>
 
           {/* Top dishes */}
-          <div className="bg-white border border-[#E5E7EB] rounded-lg p-5">
+          <div className="bg-warm-white border border-border-gray rounded-lg p-5">
             <p className="text-sm font-semibold text-stone-700 mb-4">{ui.topDishes}</p>
             <div className="space-y-3">
               {presetData.topDishes.map((dish) => (

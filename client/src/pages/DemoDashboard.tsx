@@ -166,7 +166,7 @@ export default function DemoDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-soft-gray">
+    <div className="min-h-screen bg-warm-white">
       <DemoSidebar
         lang={lang}
         activeView={activeView}
@@ -184,7 +184,7 @@ export default function DemoDashboard() {
       {/* Language Popup */}
       {!isEmbed && showLangPopup && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
-          <div className="bg-white rounded-lg shadow-lg border border-border-gray p-6 max-w-sm w-full text-center animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-warm-white rounded-lg shadow-lg border border-border-gray p-6 max-w-sm w-full text-center animate-in fade-in zoom-in-95 duration-200">
             <div className="w-12 h-12 rounded-2xl bg-burgundy/10 flex items-center justify-center mx-auto mb-4">
               <ThiingsIcon name="globe" pxSize={24} className="text-burgundy" />
             </div>
@@ -216,7 +216,7 @@ export default function DemoDashboard() {
 
       {/* Demo Banner — hidden in embed mode */}
       {!isEmbed && (
-        <div className={`bg-gradient-to-r from-burgundy to-burgundy-dark text-white ${sidebarCollapsed ? 'lg:ml-[60px]' : 'lg:ml-[220px]'} transition-all duration-300`}>
+        <div className={`bg-burgundy text-white ${sidebarCollapsed ? 'lg:ml-[60px]' : 'lg:ml-[220px]'} transition-all duration-300`}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-3 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
@@ -488,7 +488,7 @@ export default function DemoDashboard() {
             role="dialog"
             aria-modal="true"
             aria-label={t.exitTitle}
-            className="bg-white rounded-lg shadow-lg border border-border-gray p-6 max-w-sm w-full text-center animate-in fade-in zoom-in-95 duration-200"
+            className="bg-warm-white rounded-lg shadow-lg border border-border-gray p-6 max-w-sm w-full text-center animate-in fade-in zoom-in-95 duration-200"
           >
             <div className="w-14 h-14 rounded-2xl bg-burgundy/10 flex items-center justify-center mx-auto mb-4">
               <ThiingsIcon name="star" pxSize={28} className="text-burgundy" />
@@ -529,7 +529,7 @@ export default function DemoDashboard() {
             role="dialog"
             aria-modal="true"
             aria-label={t.walkInTitle}
-            className="bg-white rounded-lg shadow-lg border border-border-gray p-6 max-w-md w-full"
+            className="bg-warm-white rounded-lg shadow-lg border border-border-gray p-6 max-w-md w-full"
           >
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold text-deep-charcoal">{t.walkInTitle}</h2>

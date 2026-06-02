@@ -63,7 +63,7 @@ export default function DemoWaitlistPanel({ entries, onSeat, lang }: DemoWaitlis
                 className="flex items-center gap-4 px-6 py-4 hover:bg-warm-white/50 transition-colors"
               >
                 {/* Avatar */}
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-200 to-orange-300 flex items-center justify-center text-[13px] font-semibold text-amber-900 flex-shrink-0">
+                <div className="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center text-[13px] font-semibold text-amber-900 flex-shrink-0">
                   {initials}
                 </div>
 

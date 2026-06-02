@@ -160,7 +160,7 @@ export default function RealRestaurantCard({
   if (compact) {
     // Slim banner — fits at top of dashboard. No reviews block.
     return (
-      <section className="bg-white border border-border-gray rounded-2xl p-4 sm:p-5">
+      <section className="bg-warm-white border border-border-gray rounded-2xl p-4 sm:p-5">
         <div className="flex items-start gap-4 flex-wrap">
           <div className="flex items-center gap-2">
             <span className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full">
@@ -208,7 +208,7 @@ export default function RealRestaurantCard({
 
   // Full card with reviews + editorial summary
   return (
-    <section className="bg-white border border-border-gray rounded-2xl p-6 space-y-4">
+    <section className="bg-warm-white border border-border-gray rounded-2xl p-6 space-y-4">
       <header className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-widest text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full mb-3">

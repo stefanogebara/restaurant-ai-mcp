@@ -12,12 +12,14 @@ function renderBanner(daysLeft: number, token = 'test-token') {
 }
 
 describe('DemoBanner', () => {
-  it('renders default (burgundy-tinted) style when daysLeft > 2', () => {
+  it('renders neutral warm-white style when daysLeft > 2', () => {
+    // Per DESIGN.md, burgundy is reserved for action (CTAs) — the demo banner's
+    // non-urgent state must use a neutral background, not a burgundy tint.
     const { container } = renderBanner(5);
     const banner = container.firstChild as HTMLElement;
-    expect(banner.className).toMatch(/bg-burgundy/);
-    expect(banner.className).not.toMatch(/bg-amber/);
-    expect(banner.className).not.toMatch(/bg-red/);
+    expect(banner.className).toMatch(/bg-warm-white/);
+    expect(banner.className).not.toMatch(/bg-amber-50/);
+    expect(banner.className).not.toMatch(/bg-red-50/);
   });
 
   it('renders amber style when daysLeft === 2', () => {

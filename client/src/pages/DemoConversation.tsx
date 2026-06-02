@@ -266,7 +266,7 @@ export default function DemoConversation() {
   return (
     <div className="min-h-screen bg-warm-white flex flex-col">
       {/* Top bar */}
-      <header className="flex-shrink-0 border-b border-border-gray bg-white px-4 sm:px-6 py-3">
+      <header className="flex-shrink-0 border-b border-border-gray bg-warm-white px-4 sm:px-6 py-3">
         <div className="max-w-2xl mx-auto flex items-center justify-between">
           <div className="font-serif text-lg font-semibold text-deep-charcoal">
             seatable<span className="text-burgundy">.</span>
@@ -296,7 +296,7 @@ export default function DemoConversation() {
       {/* Conversion error banner — surfaces a stuck overlay if the create_demo
           call fails, instead of leaving the user with a perpetual spinner. */}
       {convertError && !isConverting && (
-        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 max-w-md w-[calc(100%-2rem)] bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700 shadow-lg">
+        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 max-w-md w-[calc(100%-2rem)] bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
           {convertError}
         </div>
       )}
@@ -329,7 +329,7 @@ export default function DemoConversation() {
       </div>
 
       {/* Input area */}
-      <div className="flex-shrink-0 border-t border-border-gray bg-white px-4 sm:px-6 py-3">
+      <div className="flex-shrink-0 border-t border-border-gray bg-warm-white px-4 sm:px-6 py-3">
         <div className="max-w-2xl mx-auto flex items-end gap-3">
           <textarea
             ref={inputRef}
