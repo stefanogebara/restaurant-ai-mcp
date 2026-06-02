@@ -37,6 +37,7 @@ import VoicePersonaPanel from '../components/dashboard/VoicePersonaPanel';
 import BookingChannelsPanel from '../components/dashboard/BookingChannelsPanel';
 import POSIntegrationPanel from '../components/dashboard/POSIntegrationPanel';
 import StripeConnectPanel from '../components/dashboard/StripeConnectPanel';
+import InstagramPanel from '../components/dashboard/InstagramPanel';
 import PhoneIntegrationPanel from '../components/voice/PhoneIntegrationPanel';
 // AIStrategyPanel removed — dead feature
 // StrategyMetricsWidget moved to insights-only (removed from voice settings)
@@ -548,11 +549,12 @@ export default function VoiceSettingsPage() {
             : <p className="text-sm text-warm-stone">{t('voiceSettings.widgetUnavailable', 'Your booking widget will appear here once your restaurant is set up.')}</p>;
 
           const tabs: SettingsTabDef[] = [
-            { id: 'voice',    label: t('voiceSettings.tab.voice', 'Voice & language'), content: voiceTab },
-            { id: 'phone',    label: t('voiceSettings.tab.phone', 'Phone'),            content: phoneTab },
-            { id: 'whatsapp', label: t('voiceSettings.tab.whatsapp', 'WhatsApp link'), content: whatsappTab },
-            { id: 'pos',      label: t('voiceSettings.tab.pos', 'POS'),                content: posTab },
-            { id: 'widget',   label: t('voiceSettings.tab.widget', 'Booking widget'),  content: widgetTab },
+            { id: 'voice',     label: t('voiceSettings.tab.voice', 'Voice & language'), content: voiceTab },
+            { id: 'phone',     label: t('voiceSettings.tab.phone', 'Phone'),            content: phoneTab },
+            { id: 'whatsapp',  label: t('voiceSettings.tab.whatsapp', 'WhatsApp link'), content: whatsappTab },
+            { id: 'pos',       label: t('voiceSettings.tab.pos', 'POS'),                content: posTab },
+            { id: 'instagram', label: t('voiceSettings.tab.instagram', 'Instagram'),    content: <InstagramPanel /> },
+            { id: 'widget',    label: t('voiceSettings.tab.widget', 'Booking widget'),  content: widgetTab },
           ];
 
           return <SettingsTabs tabs={tabs} hashKey="voice-settings" />;
