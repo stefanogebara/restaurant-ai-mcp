@@ -92,6 +92,27 @@ export default function InstagramPanel() {
     },
   });
 
+  // Refresh-tone mutation: re-runs the LLM extractor over the last 30 posts.
+  // Triggered by the small button under the IG handle row. Surfaces a toast
+  // with the result so users see "Tone profile updated" or the upstream error.
+  const refreshToneMutation = useMutation<unknown, Error>({
+    mutationFn: async () => {
+      const res = await authFetch('/api/instagram/recompute-tone', { method: 'POST' });
+      const body = (await res.json().catch(() => null)) as { ok?: boolean; error?: string; profile?: unknown } | null;
+      if (!res.ok || !body?.ok) {
+        throw new Error(body?.error || `Refresh failed (HTTP ${res.status})`);
+      }
+      return body.profile;
+    },
+    onSuccess: () => {
+      toast.success(t('instagram.toneRefreshed', 'Tone profile updated from your recent posts.'));
+      queryClient.invalidateQueries({ queryKey: INSTAGRAM_STATUS_QUERY_KEY });
+    },
+    onError: (err) => {
+      toast.error(err.message);
+    },
+  });
+
   if (isLoading) {
     return <div className="text-sm text-muted-stone" data-testid="instagram-panel-loading">Loading Instagram status…</div>;
   }
@@ -146,6 +167,15 @@ export default function InstagramPanel() {
               {data.tone_profile_ready ? 'Tone profile ready' : 'Building tone profile…'}
             </p>
           </div>
+          <button
+            type="button"
+            onClick={() => refreshToneMutation.mutate()}
+            disabled={refreshToneMutation.isPending}
+            className="text-xs text-burgundy underline underline-offset-2 hover:text-burgundy-dark disabled:opacity-50"
+            data-testid="instagram-panel-refresh-tone-cta"
+          >
+            {refreshToneMutation.isPending ? 'Refreshing…' : data.tone_profile_ready ? 'Refresh tone' : 'Build now'}
+          </button>
         </div>
       )}
 
