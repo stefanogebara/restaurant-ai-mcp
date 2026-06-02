@@ -30,7 +30,7 @@ export default function OnboardingChat() {
   const customerEmail = user?.email || localStorage.getItem(LS_CUSTOMER_EMAIL) || '';
 
   const flow = onboardingFlow;
-  const { state, pick, send } = useChatFlow(flow, {
+  const { state, pick, send, extracting, extractError } = useChatFlow(flow, {
     data: { customer_email: customerEmail, restaurant_id: '', plan: 'Starter' },
   });
 
@@ -111,9 +111,9 @@ export default function OnboardingChat() {
           <ChatComposer
             node={currentNode}
             onPick={pick}
-            onSend={send}
-            lastError={state.lastError}
-            disabled={false}
+            onSend={(raw) => { void send(raw); }}
+            lastError={state.lastError ?? extractError}
+            disabled={extracting}
           />
         )}
       </main>

@@ -140,9 +140,41 @@ const nodes: Node[] = [
       'Mon–Thu noon to 11pm, Fri–Sat noon to 11:30pm, Sun noon to 10pm. Sound right?',
     ],
     options: [
-      { id: 'hours-ok',     label: 'Looks good',          value: DEFAULT_HOURS },
-      { id: 'hours-closed-mon', label: 'Same but closed Mon', value: DEFAULT_HOURS.map((h) => h.day === 'Monday' ? { ...h, is_open: false } : h) },
+      { id: 'hours-ok',          label: 'Looks good',          value: DEFAULT_HOURS },
+      { id: 'hours-closed-mon',  label: 'Same but closed Mon', value: DEFAULT_HOURS.map((h) => h.day === 'Monday' ? { ...h, is_open: false } : h) },
+      { id: 'hours-custom',      label: 'Tell me yours' },
     ],
+    writes: 'business_hours',
+    branches: [
+      { when: { kind: 'option_id', equals: 'hours-custom' }, next: 'ask-hours-custom' },
+      { when: { kind: 'always' }, next: 'ask-duration' },
+    ],
+  },
+  {
+    id: 'ask-hours-custom',
+    say: [
+      'Sure — describe your hours in your own words and I will structure them.',
+      'e.g. "Mon-Thu 12 to 11, Fri-Sat 12 to 11:30pm, closed Sunday"',
+    ],
+    input: {
+      kind: 'hours',
+      placeholder: 'Describe your weekly hours…',
+      // The extract key matches the server's SUPPORTED_KINDS in
+      // api/onboarding/extract.js. The LLM returns a BusinessHours[]
+      // array which lands on data.business_hours via `writes`.
+      extract: 'hours',
+      validate: (raw, extracted) => {
+        // Require the LLM to have produced a structured array — accepting
+        // raw text here would write a string to data.business_hours and
+        // break the API contract. If the extractor failed we stay on this
+        // node and the user retries with rephrased input or hits Back to
+        // pick a default.
+        if (Array.isArray(extracted)) return null;
+        return raw.trim().length < 6
+          ? 'Need a bit more detail — try "Mon-Sun 12 to 23, closed Tuesday"'
+          : "I couldn't parse that — can you rephrase or use one of the presets?";
+      },
+    },
     writes: 'business_hours',
     branches: [{ when: { kind: 'always' }, next: 'ask-duration' }],
   },
