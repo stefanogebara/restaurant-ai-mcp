@@ -69,8 +69,13 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ ok: false, error: 'Method not allowed' });
   }
 
+  // verifyAuth returns { user } on success, { error, status } on failure.
+  // First version of this handler checked auth.ok which is always
+  // undefined → every request 401'd. Fixed.
   const auth = await verifyAuth(req);
-  if (!auth.ok) return res.status(401).json({ ok: false, error: 'Unauthorized' });
+  if (auth.error || !auth.user) {
+    return res.status(auth.status || 401).json({ ok: false, error: auth.error || 'Unauthorized' });
+  }
 
   // 20/min/user — extraction is cheap but we don't want a runaway client
   // burning OpenRouter credit if there's a UI bug.
