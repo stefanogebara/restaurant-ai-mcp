@@ -22,7 +22,7 @@ export default function DemoWaitlistPanel({ entries, onSeat, lang }: DemoWaitlis
   const t = labels[lang as keyof typeof labels] ?? labels.en;
 
   return (
-    <div className="bg-white border border-border-gray rounded-2xl overflow-hidden">
+    <div className="bg-warm-white border border-border-gray rounded-2xl overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-5 border-b border-soft-gray">
         <div className="flex items-center gap-2.5">

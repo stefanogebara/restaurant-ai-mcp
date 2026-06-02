@@ -184,8 +184,8 @@ export default function DemoAIInsightsBar({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.3 }}
           className="flex-1 min-w-0 flex flex-col rounded-lg overflow-hidden
-            bg-white
-            border border-[#E5E7EB]
+            bg-warm-white
+            border border-border-gray
           "
         >
           {/* Chat header */}
