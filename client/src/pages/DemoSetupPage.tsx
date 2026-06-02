@@ -108,18 +108,18 @@ export default function DemoSetupPage() {
             />
           </motion.div>
 
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35, duration: 0.4 }} className="mt-10 flex justify-center gap-10 text-center">
-            <div>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35, duration: 0.4 }} className="mt-10 flex justify-center gap-12 text-center">
+            <div className="py-2">
               <div className="text-xl font-serif font-bold text-deep-charcoal">30s</div>
               <div className="text-xs text-muted-stone uppercase tracking-wider">{t('landing.demoSetup.trust.setupTime', 'Setup Time')}</div>
             </div>
             <div className="w-px bg-border-gray" />
-            <div>
+            <div className="py-2">
               <div className="text-xl font-serif font-bold text-burgundy">{t('landing.demoSetup.trust.realData', 'Real Data')}</div>
               <div className="text-xs text-muted-stone uppercase tracking-wider">{t('landing.demoSetup.trust.hoursReviews', 'Your Hours & Reviews')}</div>
             </div>
             <div className="w-px bg-border-gray" />
-            <div>
+            <div className="py-2">
               <div className="text-xl font-serif font-bold text-deep-charcoal">24/7</div>
               <div className="text-xs text-muted-stone uppercase tracking-wider">{t('landing.demoSetup.trust.aiBooking')}</div>
             </div>

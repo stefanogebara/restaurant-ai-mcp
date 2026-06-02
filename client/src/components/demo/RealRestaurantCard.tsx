@@ -277,7 +277,7 @@ export default function RealRestaurantCard({
 
       {/* Top reviews — proof we know the restaurant */}
       {top_reviews && top_reviews.length > 0 && (
-        <div className="pt-2 border-t border-border-gray space-y-3">
+        <div className="pt-4 border-t border-border-gray space-y-3">
           <p className="text-xs font-semibold uppercase tracking-widest text-warm-stone">
             {t('demo.realCard.recentReviews', 'Recent reviews on Google')}
           </p>

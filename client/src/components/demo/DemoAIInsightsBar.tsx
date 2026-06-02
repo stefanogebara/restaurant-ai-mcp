@@ -201,7 +201,7 @@ export default function DemoAIInsightsBar({
           </div>
 
           {/* Messages area */}
-          <div className="flex-1 px-4 py-4 space-y-3 min-h-[120px] max-h-[320px] overflow-y-auto scrollbar-thin">
+          <div className="flex-1 px-4 py-4 space-y-3 min-h-[160px] max-h-[320px] overflow-y-auto scrollbar-thin">
             {messages.length === 0 && (
               <div className="text-center py-4">
                 <p className="text-xs text-muted-stone/70 italic">

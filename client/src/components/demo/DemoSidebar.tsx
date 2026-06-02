@@ -155,9 +155,9 @@ export default function DemoSidebar({ lang, activeView = 'dashboard', onNavigate
         {/* Navigation */}
         <nav aria-label="Demo navigation" className="flex-1 overflow-y-auto">
           {navSections.map((section) => (
-            <div key={section.label} className="mb-5">
+            <div key={section.label} className="mb-4">
               {!collapsed && (
-                <div className="px-5 mb-2 text-[11px] font-semibold tracking-widest uppercase text-stone-gray/70">
+                <div className="px-5 mb-1.5 text-[11px] font-semibold tracking-widest uppercase text-stone-gray/70">
                   {t(section.label)}
                 </div>
               )}

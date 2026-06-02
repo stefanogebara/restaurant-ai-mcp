@@ -323,7 +323,7 @@ export default function DemoDashboard() {
         {/* View: Dashboard (default) */}
         {activeView !== 'tables' && activeView !== 'whatsapp' && activeView !== 'manager-ai' && activeView !== 'analytics' && (<>
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-1">
           <div>
             <div className="flex items-baseline gap-2">
               <h1 className="font-serif text-[22px] font-bold text-deep-charcoal tracking-tight">

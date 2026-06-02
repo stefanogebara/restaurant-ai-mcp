@@ -303,7 +303,7 @@ export default function DemoConversation() {
 
       {/* Chat area */}
       <div className="flex-1 overflow-y-auto" role="log" aria-label={t('demo.conversation.ariaChat', 'AI conversation')} aria-live="polite">
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6 space-y-4">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 space-y-4">
           {messages.map((msg) => (
             <MessageBubble key={msg.id} message={msg} isStreaming={isStreaming && msg === messages[messages.length - 1] && msg.role === 'assistant'} />
           ))}

@@ -202,7 +202,7 @@ export default function DemoAnalyticsPanel({ restaurantName, lang, presetKey }: 
           </div>
 
           {/* KPI grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
             {[
               { label: ui.avgTicket, value: periodData.avgTicket },
               { label: ui.occupancy, value: periodData.occupancy },

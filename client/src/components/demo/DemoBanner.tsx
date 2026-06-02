@@ -23,7 +23,7 @@ export default function DemoBanner({ daysLeft, token }: DemoBannerProps) {
       : t('demo.banner.daysLeft', 'Demo mode \u00b7 {{count}} days left', { count: daysLeft });
 
   return (
-    <div className={`sticky top-0 z-50 flex items-center justify-between px-4 sm:px-6 py-2.5 ${urgencyClass}`}>
+    <div className={`sticky top-0 z-50 flex items-center justify-between px-4 sm:px-6 py-2 ${urgencyClass}`}>
       <span className="text-sm font-medium">{expiryLabel}</span>
       <a
         href={`/login?from=demo&token=${token}`}
