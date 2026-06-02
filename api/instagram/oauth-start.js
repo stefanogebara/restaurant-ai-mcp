@@ -29,7 +29,13 @@ const { setInternalCors, handlePreflight } = require('../_lib/cors');
 const logger = createSecureLogger('instagram-oauth-start');
 
 const META_APP_ID = process.env.META_APP_ID;
+const META_APP_SECRET = process.env.META_APP_SECRET;
 const CLIENT_URL = process.env.CLIENT_URL || 'https://seatable.one';
+
+// State HMAC TTL: a state issued by oauth-start is only honored by the
+// callback for this long. Bounds the window for replay attacks; the user
+// has plenty of time (10 min) to complete the Meta authorization dialog.
+const STATE_TTL_SEC = 10 * 60;
 
 // Meta's current OAuth dialog endpoint (Graph API v21.0; bump when Meta
 // retires this version — they typically give 24mo notice).
@@ -61,8 +67,8 @@ module.exports = async (req, res) => {
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
 
-  if (!META_APP_ID) {
-    logger.error('META_APP_ID not configured');
+  if (!META_APP_ID || !META_APP_SECRET) {
+    logger.error('Meta app credentials missing');
     return res.status(503).json({
       success: false,
       error: 'Instagram connector not yet configured. Contact hello@seatable.one for early access.',
@@ -77,11 +83,25 @@ module.exports = async (req, res) => {
     return res.status(401).json({ success: false, error: 'Unauthorized' });
   }
 
-  // State = base64url(restaurant_id:nonce) — opaque to the user but
-  // structured enough that we can pluck the restaurant_id back out at
-  // callback time and verify it matches the JWT presented THEN.
+  // State binds restaurant_id + user_id + a fresh nonce + an HMAC over all
+  // of them. The callback recomputes the HMAC with the same secret and
+  // rejects on mismatch — this proves the state was issued by us, so the
+  // restaurant_id pluck at callback time is not forgeable.
+  //
+  // Also includes an issued-at timestamp so the callback can reject states
+  // older than STATE_TTL_SEC, bounding the window for replay attacks.
+  //
+  // We can't enforce a server-side single-use rule cheaply here without a
+  // DB round-trip, so STATE_TTL_SEC IS the replay window. 10 minutes is
+  // tight enough for OAuth UX while making targeted replays impractical.
   const nonce = crypto.randomBytes(16).toString('hex');
-  const state = Buffer.from(`${user.restaurant_id}:${nonce}`).toString('base64url');
+  const issuedAtSec = Math.floor(Date.now() / 1000);
+  const payload = `${user.restaurant_id}:${user.id || ''}:${issuedAtSec}:${nonce}`;
+  const sig = crypto
+    .createHmac('sha256', META_APP_SECRET)
+    .update(payload)
+    .digest('hex');
+  const state = Buffer.from(`${payload}:${sig}`).toString('base64url');
 
   const redirectUri = `${CLIENT_URL}/api/instagram/oauth-callback`;
   const url =

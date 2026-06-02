@@ -16,6 +16,7 @@
  * error" instead of a single generic "something broke".
  */
 
+const crypto = require('crypto');
 const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { checkAndApplyRateLimit } = require('../_lib/rate-limit');
@@ -27,6 +28,44 @@ const META_APP_SECRET = process.env.META_APP_SECRET;
 const CLIENT_URL = process.env.CLIENT_URL || 'https://seatable.one';
 
 const GRAPH_BASE = 'https://graph.facebook.com/v21.0';
+
+// Must match oauth-start.js. If we ever change it there, change it here too.
+const STATE_TTL_SEC = 10 * 60;
+
+/**
+ * Verifies the HMAC-signed state from oauth-start. Returns the decoded
+ * restaurant_id on success or null on any failure (forged HMAC, expired,
+ * malformed). Uses crypto.timingSafeEqual to defeat HMAC timing attacks.
+ */
+function verifyState(state) {
+  let decoded;
+  try {
+    decoded = Buffer.from(String(state), 'base64url').toString('utf-8');
+  } catch {
+    return null;
+  }
+  const parts = decoded.split(':');
+  if (parts.length !== 5) return null;
+  const [restaurantId, userId, issuedAtStr, nonce, providedSig] = parts;
+  if (!restaurantId || !nonce || nonce.length < 8 || !providedSig) return null;
+
+  const issuedAtSec = Number(issuedAtStr);
+  if (!Number.isFinite(issuedAtSec)) return null;
+  const ageSec = Math.floor(Date.now() / 1000) - issuedAtSec;
+  if (ageSec < 0 || ageSec > STATE_TTL_SEC) return null;
+
+  const payload = `${restaurantId}:${userId}:${issuedAtStr}:${nonce}`;
+  const expectedSig = crypto
+    .createHmac('sha256', META_APP_SECRET)
+    .update(payload)
+    .digest('hex');
+  const a = Buffer.from(providedSig, 'hex');
+  const b = Buffer.from(expectedSig, 'hex');
+  if (a.length !== b.length) return null;
+  if (!crypto.timingSafeEqual(a, b)) return null;
+
+  return { restaurantId, userId };
+}
 
 function redirectWithStatus(res, reason) {
   const dest = `${CLIENT_URL}/host-dashboard/voice-settings?instagram_connect=${encodeURIComponent(reason)}#tab=instagram`;
@@ -56,17 +95,16 @@ module.exports = async (req, res) => {
     return redirectWithStatus(res, 'missing_params');
   }
 
-  // 1. Decode + validate state
-  let restaurantId;
-  try {
-    const decoded = Buffer.from(String(state), 'base64url').toString('utf-8');
-    const [rid, nonce] = decoded.split(':');
-    if (!rid || !nonce || nonce.length < 8) throw new Error('malformed state');
-    restaurantId = rid;
-  } catch (err) {
-    logger.warn('Invalid state param', { err: err.message });
+  // 1. Verify HMAC-signed state (issued by our oauth-start handler, with
+  // a 10-minute TTL). Without HMAC verification an attacker could craft
+  // a state with any restaurant_id and bind THEIR Meta account to OUR
+  // user's restaurant — see security-review note in the original commit.
+  const decoded = verifyState(state);
+  if (!decoded) {
+    logger.warn('Invalid or expired state');
     return redirectWithStatus(res, 'invalid_state');
   }
+  const { restaurantId } = decoded;
 
   try {
     // 2. Exchange code → short-lived user access token
