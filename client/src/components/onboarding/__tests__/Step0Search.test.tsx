@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterAll } from 'vitest';
 import { screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders as render } from '../../../test/renderWithProviders';
@@ -44,7 +44,7 @@ describe('Step0Search', () => {
     expect(cta).toBeEnabled();
   });
 
-  it('hits /api/scrape-restaurant on submit and shows the top hit card', async () => {
+  it('hits /api/scrape-restaurant on submit and shows the candidates list with a single card', async () => {
     fetchMock.mockResolvedValueOnce(ok({
       results: [
         {
@@ -64,36 +64,74 @@ describe('Step0Search', () => {
     await user.type(screen.getByLabelText(/City/i), 'São Paulo');
     await user.click(screen.getByRole('button', { name: /Search Google Maps/i }));
 
-    // Top hit card visible
-    expect(await screen.findByTestId('step0-top-hit')).toBeInTheDocument();
+    expect(await screen.findByTestId('step0-candidates')).toBeInTheDocument();
+    expect(screen.getByTestId('step0-candidate-0')).toBeInTheDocument();
+    expect(screen.queryByTestId('step0-candidate-1')).toBeNull();
     expect(screen.getByText(/Rua das Flores 123, São Paulo/i)).toBeInTheDocument();
     expect(screen.getByText(/Italian/i)).toBeInTheDocument();
+    expect(screen.getByText(/Found one match/i)).toBeInTheDocument();
 
     expect(fetchMock).toHaveBeenCalledWith('/api/scrape-restaurant', expect.objectContaining({ method: 'POST' }));
   });
 
-  it('calls onPrefill with the chosen hit when user clicks "That\'s us"', async () => {
-    const hit = {
-      name: 'Cantina Bella',
-      cuisine_type: 'Italian',
-      phone: '+55 11 5555 1234',
-      website: 'https://cantinabella.example',
-    };
-    fetchMock.mockResolvedValueOnce(ok({ results: [hit] }));
+  it('renders up to 3 candidate cards when Google returns multiple matches', async () => {
+    const hits = [
+      { name: 'Cantina Bella', address: 'São Paulo, BR' },
+      { name: 'Cantina Bella', address: 'Rio de Janeiro, BR' },
+      { name: 'Cantina Bella', address: 'Lisbon, PT' },
+      { name: 'Cantina Bella', address: 'Buenos Aires, AR' },  // 4th, should be sliced off
+    ];
+    fetchMock.mockResolvedValueOnce(ok({ results: hits }));
+    const user = userEvent.setup();
+    render(<Step0Search onPrefill={vi.fn()} onSkip={vi.fn()} />);
+    await user.type(screen.getByLabelText(/Restaurant name/i), 'Cantina Bella');
+    await user.type(screen.getByLabelText(/City/i), 'São Paulo');
+    await user.click(screen.getByRole('button', { name: /Search Google Maps/i }));
+
+    expect(await screen.findByTestId('step0-candidate-0')).toBeInTheDocument();
+    expect(screen.getByTestId('step0-candidate-1')).toBeInTheDocument();
+    expect(screen.getByTestId('step0-candidate-2')).toBeInTheDocument();
+    expect(screen.queryByTestId('step0-candidate-3')).toBeNull();
+    expect(screen.getByText(/Which one is yours\?/i)).toBeInTheDocument();
+  });
+
+  it('calls onPrefill with the picked hit (not just the top one) when user clicks "Use this one" on candidate #2', async () => {
+    const hits = [
+      { name: 'Cantina Bella', address: 'São Paulo, BR' },
+      { name: 'Cantina Bella', address: 'Rio de Janeiro, BR' },
+      { name: 'Cantina Bella', address: 'Lisbon, PT' },
+    ];
+    fetchMock.mockResolvedValueOnce(ok({ results: hits }));
     const onPrefill = vi.fn();
     const user = userEvent.setup();
     render(<Step0Search onPrefill={onPrefill} onSkip={vi.fn()} />);
     await user.type(screen.getByLabelText(/Restaurant name/i), 'Cantina Bella');
     await user.type(screen.getByLabelText(/City/i), 'São Paulo');
     await user.click(screen.getByRole('button', { name: /Search Google Maps/i }));
-    await user.click(await screen.findByTestId('step0-confirm-cta'));
+    await user.click(await screen.findByTestId('step0-pick-2'));
 
     expect(onPrefill).toHaveBeenCalledTimes(1);
     expect(onPrefill).toHaveBeenCalledWith(expect.objectContaining({
       name: 'Cantina Bella',
-      cuisine_type: 'Italian',
-      phone: '+55 11 5555 1234',
+      address: 'Lisbon, PT',
     }));
+  });
+
+  it('"None of these — got a website?" reveals the website fallback even when there are hits', async () => {
+    fetchMock.mockResolvedValueOnce(ok({
+      results: [{ name: 'Cantina Bella', address: 'São Paulo, BR' }],
+    }));
+    const user = userEvent.setup();
+    render(<Step0Search onPrefill={vi.fn()} onSkip={vi.fn()} />);
+    await user.type(screen.getByLabelText(/Restaurant name/i), 'Cantina Bella');
+    await user.type(screen.getByLabelText(/City/i), 'São Paulo');
+    await user.click(screen.getByRole('button', { name: /Search Google Maps/i }));
+
+    expect(await screen.findByTestId('step0-candidates')).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText(/your-restaurant\.com/i)).toBeNull();
+
+    await user.click(screen.getByTestId('step0-none-of-these'));
+    expect(screen.getByPlaceholderText(/your-restaurant\.com/i)).toBeInTheDocument();
   });
 
   it('shows the no-match hint + website fallback when /scrape returns 0 results', async () => {

@@ -39,10 +39,13 @@ export default function Step0Search({ onPrefill, onSkip }: Step0SearchProps) {
   const [hits, setHits] = useState<ScrapeResult[] | null>(null);
   const [searchError, setSearchError] = useState<string | null>(null);
 
-  // Website-fallback state — only shown when Google search returns 0 hits.
+  // Website-fallback state — shown when Google search returns 0 hits OR
+  // when the user clicks "None of these — got a website?" under the 3-card
+  // picker.
   const [website, setWebsite] = useState('');
   const [enriching, setEnriching] = useState(false);
   const [enrichError, setEnrichError] = useState<string | null>(null);
+  const [showWebsiteFallback, setShowWebsiteFallback] = useState(false);
 
   const canSearch = name.trim().length > 0 && city.trim().length > 0 && !searching;
 
@@ -109,7 +112,11 @@ export default function Step0Search({ onPrefill, onSkip }: Step0SearchProps) {
   }
 
   const showNoMatch = hits !== null && hits.length === 0;
-  const topHit = hits && hits.length > 0 ? hits[0] : null;
+  // Top 3 results so a user whose name is shared across cities (Cantina Bella
+  // exists in São Paulo, Rio, AND Lisbon) doesn't get force-matched to the
+  // wrong one by Google's relevance heuristic.
+  const candidates = hits ? hits.slice(0, 3) : [];
+  const showWebsiteForm = showNoMatch || showWebsiteFallback;
 
   return (
     <div className="space-y-6" data-testid="step0-search">
@@ -167,47 +174,80 @@ export default function Step0Search({ onPrefill, onSkip }: Step0SearchProps) {
         <p className="text-sm text-red-700" data-testid="step0-search-error">{searchError}</p>
       )}
 
-      {/* TOP HIT — confirm card */}
-      {topHit && (
-        <div className="border border-[#E5E7EB] rounded-xl p-4 space-y-3" data-testid="step0-top-hit">
-          <div>
-            <p className="text-sm font-semibold text-deep-charcoal">{topHit.name || name}</p>
-            {topHit.address && <p className="text-xs text-muted-stone mt-0.5">{topHit.address}</p>}
-            <div className="flex items-center gap-3 mt-2 text-xs text-muted-stone">
-              {topHit.cuisine_type && <span>{topHit.cuisine_type}</span>}
-              {topHit.rating && <span>★ {topHit.rating} ({topHit.review_count || 0})</span>}
-              {topHit.phone && <span>{topHit.phone}</span>}
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => onPrefill(topHit)}
-              className="px-4 py-2 bg-burgundy text-white rounded-lg text-sm font-medium hover:bg-[#831a3a] transition-colors"
-              data-testid="step0-confirm-cta"
+      {/* CANDIDATES — up to 3 cards, user picks the right one */}
+      {candidates.length > 0 && (
+        <div className="space-y-3" data-testid="step0-candidates">
+          <p className="text-sm font-medium text-deep-charcoal">
+            {candidates.length === 1
+              ? t('onboarding.step0.singleResultLabel', 'Found one match:')
+              : t('onboarding.step0.multiResultLabel', 'Which one is yours?')}
+          </p>
+          {candidates.map((hit, i) => (
+            <div
+              key={(hit.name || '') + '-' + i}
+              className="border border-[#E5E7EB] rounded-xl p-4 space-y-3"
+              data-testid={`step0-candidate-${i}`}
             >
-              {t('onboarding.step0.confirmCta', "That's us — continue")}
-            </button>
+              <div>
+                <p className="text-sm font-semibold text-deep-charcoal">{hit.name || name}</p>
+                {hit.address && <p className="text-xs text-muted-stone mt-0.5">{hit.address}</p>}
+                <div className="flex items-center gap-3 mt-2 text-xs text-muted-stone">
+                  {hit.cuisine_type && <span>{hit.cuisine_type}</span>}
+                  {hit.rating && <span>★ {hit.rating} ({hit.review_count || 0})</span>}
+                  {hit.phone && <span>{hit.phone}</span>}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => onPrefill(hit)}
+                className="px-4 py-2 bg-burgundy text-white rounded-lg text-sm font-medium hover:bg-[#831a3a] transition-colors"
+                data-testid={`step0-pick-${i}`}
+              >
+                {t('onboarding.step0.pickThisCta', 'Use this one')}
+              </button>
+            </div>
+          ))}
+          <div className="flex flex-wrap gap-2 pt-1">
             <button
               type="button"
-              onClick={() => { setHits(null); setSearchError(null); }}
+              onClick={() => { setHits(null); setSearchError(null); setShowWebsiteFallback(false); }}
               className="px-4 py-2 border border-[#E5E7EB] rounded-lg text-sm font-medium text-deep-charcoal hover:bg-soft-gray transition-colors"
             >
               {t('onboarding.step0.searchAgainCta', 'Search again')}
             </button>
+            {!showWebsiteFallback && (
+              <button
+                type="button"
+                onClick={() => setShowWebsiteFallback(true)}
+                className="px-4 py-2 text-sm text-muted-stone underline underline-offset-2 hover:text-deep-charcoal transition-colors"
+                data-testid="step0-none-of-these"
+              >
+                {t('onboarding.step0.noneOfTheseCta', 'None of these — got a website?')}
+              </button>
+            )}
           </div>
         </div>
       )}
 
-      {/* NO-MATCH HINT + website fallback */}
-      {showNoMatch && (
+      {/* NO-MATCH HINT + website fallback. Visible when Google returned 0
+          hits OR when the user clicked "None of these — got a website?" under
+          a populated candidates list. */}
+      {showWebsiteForm && (
         <div className="border border-amber-200 bg-amber-50 rounded-xl p-4 space-y-3" data-testid="step0-no-match">
           <p className="text-sm text-amber-800">
-            <span className="font-semibold">
-              {t('onboarding.step0.noMatchTitle', "We couldn't find your restaurant on Google Maps.")}
-            </span>
-            {' '}
-            {t('onboarding.step0.noMatchPrompt', 'Got a website? We can read the basics from there.')}
+            {showNoMatch ? (
+              <>
+                <span className="font-semibold">
+                  {t('onboarding.step0.noMatchTitle', "We couldn't find your restaurant on Google Maps.")}
+                </span>
+                {' '}
+                {t('onboarding.step0.noMatchPrompt', 'Got a website? We can read the basics from there.')}
+              </>
+            ) : (
+              <span className="font-semibold">
+                {t('onboarding.step0.websiteFallbackPrompt', 'Drop your website and we can read the basics from there.')}
+              </span>
+            )}
           </p>
           <form onSubmit={runWebsiteEnrich} className="space-y-2">
             <input
