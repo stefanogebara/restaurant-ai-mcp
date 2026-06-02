@@ -1,4 +1,24 @@
 
+## 2026-06-02: sentinel string in a FK-shaped column is a time-bomb (campaigns)
+
+**Context**: `retention_campaigns` was originally designed 1:1 — one row per (customer, win-back) pair. `customer_id` was `TEXT NOT NULL`, semantically the phone number of the recipient. When bulk segment WhatsApp campaigns were bolted on, ONE row represents N customers, so there's no single recipient to point at.
+
+The pragmatic fix this session was to set `customer_id = 'segment:${segment}'` (e.g. `segment:all`, `segment:vip`). Combined with a `DROP NOT NULL` migration, this got the feature working without a schema redesign. Both the audit's security and reviewer agents flagged it as a smell.
+
+**Why it's a time-bomb**:
+- `customer_id` reads as a foreign key. Future me (or a teammate) will see it and assume `JOIN customer_ltv ON customer_id` works.
+- That JOIN will silently produce zero rows for bulk campaigns — no error, just empty result sets that look like "no data" rather than "bad query".
+- The sentinel prefix is invisible in dashboards, JSON dumps, and most SELECT * outputs.
+
+**Why we deferred the cleanup**:
+- Today, no code path actually JOINs against `retention_campaigns.customer_id` from a customer table. The risk is purely future-tense.
+- A proper fix is non-trivial: NULL out existing sentinel rows in a migration, audit every callsite that reads `customer_id` back, and switch to a `kind: 'bulk' | '1:1'` column or repurpose `campaign_type` for that distinction.
+
+**Rules**:
+1. **At design review for any query that reads `retention_campaigns.customer_id`**: if it's being JOINed or compared against `customer_ltv.customer_id`, STOP and either filter by `customer_id LIKE 'segment:%'` to exclude bulk rows, or finally do the refactor.
+2. **Never use a sentinel string in a column whose name suggests a FK.** If the column has to live, rename it (e.g. `customer_id` → `customer_id_or_segment_sentinel` — ugly but honest). Better: make the column nullable + add a discriminator column.
+3. **When bolting a new use-case onto an existing table**, the cost of one migration to add `discriminator` is much lower than the cost of a year of "why are my JOINs empty for half the rows" debugging.
+
 ## 2026-05-29: "bad_signature" from Stripe was actually local clock drift — 6 hours of redirected debugging
 
 **Symptom**: Live signed probes to the new `/api/stripe-connect-webhook` all returned HTTP 400 `{reason: "bad_signature"}`, despite:
