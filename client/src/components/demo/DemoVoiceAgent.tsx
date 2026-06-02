@@ -159,7 +159,7 @@ export default function DemoVoiceAgent({ restaurantName, scrapedData, onContinue
 
   if (!AGENT_ID) {
     return (
-      <div className="fixed inset-0 z-[100] bg-[#1a1a2e] flex flex-col items-center justify-center text-white">
+      <div className="fixed inset-0 z-[100] bg-deep-charcoal flex flex-col items-center justify-center text-white">
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -174,7 +174,7 @@ export default function DemoVoiceAgent({ restaurantName, scrapedData, onContinue
   }
 
   return (
-    <div className="fixed inset-0 z-[100] bg-[#1a1a2e] flex flex-col items-center justify-center overflow-hidden">
+    <div className="fixed inset-0 z-[100] bg-deep-charcoal flex flex-col items-center justify-center overflow-hidden">
       {/* Hide the default ElevenLabs floating bubble — we use the orb instead */}
       <style>{`
         .elevenlabs-demo-container elevenlabs-convai {

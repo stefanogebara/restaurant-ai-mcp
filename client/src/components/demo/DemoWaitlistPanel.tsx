@@ -45,7 +45,7 @@ export default function DemoWaitlistPanel({ entries, onSeat, lang }: DemoWaitlis
           <p className="text-xs text-stone-gray">{t.emptyDesc}</p>
         </div>
       ) : (
-        <div className="divide-y divide-warm-white">
+        <div className="divide-y divide-border-gray">
           {entries.map((entry) => {
             const initials = (entry.customer_name ?? '')
               .split(' ')

@@ -78,7 +78,7 @@ export default function AIKnowsCard({ menu, insights }: AIKnowsCardProps) {
   return (
     <section className="bg-warm-white border border-burgundy/15 rounded-2xl p-6 space-y-5">
       <header>
-        <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-widest text-burgundy bg-burgundy/[0.08] px-2.5 py-1 rounded-full mb-3">
+        <span className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-burgundy bg-burgundy/[0.08] px-2.5 py-1 rounded-full mb-3">
           <ThiingsIcon name="sparkles" size="xs" />
           {t('demo.aiKnows.badge', "Your AI is already trained")}
         </span>
@@ -125,7 +125,7 @@ export default function AIKnowsCard({ menu, insights }: AIKnowsCardProps) {
         {/* Praise themes — what guests love */}
         {praise.length > 0 && (
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-emerald-700 mb-2">
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-warm-stone mb-2">
               {t('demo.aiKnows.whatGuestsLove', 'What guests love')}
             </p>
             <ul className="space-y-1.5 text-sm text-deep-charcoal">
@@ -142,7 +142,7 @@ export default function AIKnowsCard({ menu, insights }: AIKnowsCardProps) {
         {/* Complaint themes — what to handle */}
         {complaints.length > 0 && (
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-amber-700 mb-2">
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-warm-stone mb-2">
               {t('demo.aiKnows.handleProactively', 'Handle proactively')}
             </p>
             <ul className="space-y-1.5 text-sm text-deep-charcoal">

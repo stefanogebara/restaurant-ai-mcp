@@ -326,14 +326,14 @@ export default function DemoDashboard() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <div className="flex items-baseline gap-2">
-              <h1 className="font-serif text-[22px] font-bold text-stone-900 tracking-tight">
+              <h1 className="font-serif text-[22px] font-bold text-deep-charcoal tracking-tight">
                 {restaurantName}
               </h1>
-              <span className="text-stone-400 text-sm font-light">
+              <span className="text-muted-stone text-sm font-light">
                 &mdash; {cuisineLabel} &middot; {neighborhoodLabel}
               </span>
             </div>
-            <p className="text-stone-500 text-[13px] mt-0.5">{dayName}, {dateStr}</p>
+            <p className="text-warm-stone text-[13px] mt-0.5">{dayName}, {dateStr}</p>
           </div>
 
           <div className="flex items-center gap-4">
@@ -449,7 +449,7 @@ export default function DemoDashboard() {
 
         {/* Footer CTA — hidden inside embed (landing page has its own CTA below the iframe) */}
         {!isEmbed && (
-          <div className="bg-stone-900 rounded-2xl p-8 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="bg-deep-charcoal rounded-2xl p-8 flex flex-col md:flex-row items-center justify-between gap-6">
             <div>
               <h2 className="text-white text-2xl font-serif font-bold mb-2">{t.readyToGoLive}</h2>
               <p className="text-stone-400 text-sm">{t.setupYourOwn}</p>

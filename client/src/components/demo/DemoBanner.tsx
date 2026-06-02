@@ -27,7 +27,7 @@ export default function DemoBanner({ daysLeft, token }: DemoBannerProps) {
       <span className="text-sm font-medium">{expiryLabel}</span>
       <a
         href={`/login?from=demo&token=${token}`}
-        className="px-4 py-1.5 bg-burgundy text-white rounded-full text-xs font-semibold hover:bg-burgundy-dark transition-colors whitespace-nowrap"
+        className="px-4 py-1.5 bg-burgundy text-white rounded-lg text-xs font-semibold hover:bg-burgundy-dark transition-colors whitespace-nowrap"
       >
         {t('demo.banner.upgrade', 'Upgrade to keep your data')} &rarr;
       </a>

@@ -247,7 +247,7 @@ export default function RealRestaurantCard({
       </div>
 
       {editorial_summary && (
-        <p className="text-sm text-stone-700 italic leading-relaxed border-l-2 border-burgundy/40 pl-3">
+        <p className="text-sm text-stone-700 italic leading-relaxed border-l-2 border-border-gray pl-3">
           "{editorial_summary}"
         </p>
       )}
@@ -288,7 +288,7 @@ export default function RealRestaurantCard({
               return (
                 <div
                   key={i}
-                  className="bg-soft-gray rounded-xl p-3 text-xs text-stone-700 space-y-2"
+                  className="bg-soft-gray border border-border-gray rounded-xl p-3 text-xs text-stone-700 space-y-2"
                 >
                   <div className="flex items-center justify-between gap-2">
                     {typeof review.rating === 'number' && <StarRow rating={review.rating} />}

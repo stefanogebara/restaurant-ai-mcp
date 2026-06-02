@@ -189,8 +189,8 @@ export default function DemoAIInsightsBar({
           "
         >
           {/* Chat header */}
-          <div className="flex items-center gap-2.5 px-4 py-3 border-b border-[#E5E7EB]">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-burgundy to-burgundy-dark flex items-center justify-center shadow-sm">
+          <div className="flex items-center gap-2.5 px-4 py-3 border-b border-border-gray">
+            <div className="w-7 h-7 rounded-lg bg-burgundy flex items-center justify-center">
               <span className="text-white"><SparkleIcon /></span>
             </div>
             <div className="flex-1 min-w-0">
@@ -225,7 +225,7 @@ export default function DemoAIInsightsBar({
                   className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
                   {msg.role === 'assistant' && (
-                    <div className="w-6 h-6 rounded-md bg-gradient-to-br from-burgundy to-burgundy-dark flex items-center justify-center mr-2 mt-0.5 flex-shrink-0 shadow-sm">
+                    <div className="w-6 h-6 rounded-md bg-burgundy flex items-center justify-center mr-2 mt-0.5 flex-shrink-0">
                       <SparkleIcon />
                     </div>
                   )}
@@ -249,7 +249,7 @@ export default function DemoAIInsightsBar({
                 animate={{ opacity: 1 }}
                 className="flex items-center gap-2"
               >
-                <div className="w-6 h-6 rounded-md bg-gradient-to-br from-burgundy to-burgundy-dark flex items-center justify-center flex-shrink-0 shadow-sm">
+                <div className="w-6 h-6 rounded-md bg-burgundy flex items-center justify-center flex-shrink-0">
                   <SparkleIcon />
                 </div>
                 <div className="bg-white/80 border border-border-gray/50 rounded-2xl rounded-bl-md px-4 py-2.5">

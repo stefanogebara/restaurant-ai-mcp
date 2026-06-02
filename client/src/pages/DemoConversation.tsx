@@ -286,7 +286,7 @@ export default function DemoConversation() {
 
       {/* Conversion overlay */}
       {isConverting && (
-        <div className="fixed inset-0 bg-white/90 backdrop-blur-sm z-50 flex flex-col items-center justify-center gap-4 p-6 text-center">
+        <div className="fixed inset-0 bg-warm-white/90 backdrop-blur-sm z-50 flex flex-col items-center justify-center gap-4 p-6 text-center">
           <div className="w-10 h-10 border-2 border-burgundy border-t-transparent rounded-full animate-spin" />
           <p className="text-deep-charcoal font-medium">{t('demo.conversation.settingUp', 'Setting up your personalised dashboard...')}</p>
           <p className="text-warm-stone text-sm">{t('demo.conversation.fewSeconds', 'This takes a few seconds')}</p>
@@ -316,7 +316,7 @@ export default function DemoConversation() {
                   key={prompt}
                   type="button"
                   onClick={() => handleSuggestedPrompt(prompt)}
-                  className="text-[13px] px-3.5 py-2 border border-border-gray rounded-full text-warm-stone hover:text-deep-charcoal hover:border-deep-charcoal/30 transition-colors bg-white"
+                  className="text-[13px] px-3.5 py-2 border border-border-gray rounded-full text-warm-stone hover:text-deep-charcoal hover:border-deep-charcoal/30 transition-colors bg-warm-white"
                 >
                   {prompt}
                 </button>

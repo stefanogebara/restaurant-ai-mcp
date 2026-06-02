@@ -63,7 +63,7 @@ export default function DemoRestaurantInfoCard({ info, lang }: Props) {
       {info.recognition && <InfoRow icon={<StarIcon />} value={info.recognition} />}
 
       {info.menu && info.menu.length > 0 && (
-        <div className="pt-1 border-t border-[#F3F4F6]">
+        <div className="pt-1 border-t border-border-gray">
           <p className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider mb-2">{ui.menu}</p>
           <div className="flex flex-wrap gap-1.5">
             {info.menu.map((dish) => (

@@ -119,7 +119,7 @@ export default function DemoWhatsAppSim({ restaurantName, lang }: DemoWhatsAppSi
               className={`flex ${msg.role === 'customer' ? 'justify-end' : 'justify-start'}`}
             >
               <div
-                className={`max-w-[80%] px-3 py-2 rounded-lg text-[13px] leading-relaxed shadow-sm whitespace-pre-line ${
+                className={`max-w-[80%] px-3 py-2 rounded-lg text-[13px] leading-relaxed whitespace-pre-line ${
                   msg.role === 'customer'
                     ? 'bg-[#DCF8C6] text-[#111] rounded-tr-none'
                     : 'bg-white text-[#111] rounded-tl-none'

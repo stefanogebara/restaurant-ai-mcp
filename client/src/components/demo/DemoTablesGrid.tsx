@@ -16,10 +16,13 @@ const LOCATION_LABELS: Record<string, Record<string, string>> = {
   es: { window: 'Ventana', indoor: 'Salón', terrace: 'Terraza', patio: 'Patio', bar: 'Bar', Window: 'Ventana', Indoor: 'Salón', Terrace: 'Terraza', Patio: 'Patio', Bar: 'Bar' },
 };
 
+// Per Nordic Clean: cards stay neutral; status is conveyed by the dot + text
+// only, not by a full-card background tint. Previous "traffic-light grid" of
+// emerald-50 / rose-50 / amber-50 cards dominated the layout.
 const STATUS_STYLES: Record<string, { dot: string; text: string; bg: string }> = {
-  Available: { dot: 'bg-emerald-500', text: 'text-emerald-700', bg: 'bg-emerald-50' },
-  Occupied:  { dot: 'bg-rose-500',    text: 'text-rose-700',    bg: 'bg-rose-50' },
-  Reserved:  { dot: 'bg-amber-500',   text: 'text-amber-700',   bg: 'bg-amber-50' },
+  Available: { dot: 'bg-emerald-500', text: 'text-emerald-700', bg: 'bg-warm-white' },
+  Occupied:  { dot: 'bg-rose-500',    text: 'text-rose-700',    bg: 'bg-warm-white' },
+  Reserved:  { dot: 'bg-amber-500',   text: 'text-amber-700',   bg: 'bg-warm-white' },
 };
 
 export default function DemoTablesGrid({ tables, lang }: DemoTablesGridProps) {

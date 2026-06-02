@@ -147,7 +147,7 @@ export default function DemoManagerChat({
   };
 
   return (
-    <div className="fixed bottom-20 sm:bottom-6 right-20 sm:right-24 z-50 w-[360px] max-h-[480px] bg-warm-white rounded-2xl shadow-lg border border-border-gray flex flex-col overflow-hidden">
+    <div className="fixed bottom-20 sm:bottom-6 right-20 sm:right-24 z-50 w-[360px] max-h-[480px] bg-warm-white rounded-2xl shadow-lg flex flex-col overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-soft-gray bg-deep-charcoal rounded-t-2xl">
         <div>

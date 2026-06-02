@@ -274,7 +274,7 @@ export default function DemoSidebar({ lang, activeView = 'dashboard', onNavigate
       {/* Toast notification */}
       {toast && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[80] animate-in fade-in slide-in-from-bottom-4 duration-200">
-          <div className="flex items-center gap-3 bg-deep-charcoal text-white px-5 py-3 rounded-xl shadow-2xl border border-charcoal-dark">
+          <div className="flex items-center gap-3 bg-deep-charcoal text-white px-5 py-3 rounded-xl shadow-lg border border-charcoal-dark">
             <ThiingsIcon name="lock" pxSize={14} className="text-burgundy" />
             <span className="text-sm">
               <strong>{toast}</strong> &mdash; {signupText}

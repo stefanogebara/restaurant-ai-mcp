@@ -144,10 +144,10 @@ export default function DemoAnalyticsPanel({ restaurantName, lang, presetKey }: 
       {/* Header + period toggle */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="font-serif text-[22px] font-bold text-stone-900 tracking-tight">{restaurantName}</h1>
-          <p className="text-stone-500 text-[13px] mt-0.5">{ui.heading}</p>
+          <h1 className="font-serif text-[22px] font-bold text-deep-charcoal tracking-tight">{restaurantName}</h1>
+          <p className="text-warm-stone text-[13px] mt-0.5">{ui.heading}</p>
         </div>
-        <div className="flex items-center gap-1 bg-stone-100 rounded-lg p-1 flex-shrink-0">
+        <div className="flex items-center gap-1 bg-soft-gray rounded-lg p-1 flex-shrink-0">
           {(['7', '30'] as const).map(p => (
             <button
               key={p}
@@ -155,8 +155,8 @@ export default function DemoAnalyticsPanel({ restaurantName, lang, presetKey }: 
               onClick={() => setPeriod(p)}
               className={`px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors ${
                 period === p
-                  ? 'bg-white text-stone-900 shadow-sm'
-                  : 'text-stone-500 hover:text-stone-700'
+                  ? 'bg-warm-white text-deep-charcoal border border-border-gray'
+                  : 'text-warm-stone hover:text-deep-charcoal'
               }`}
             >
               {p === '7' ? ui.period7 : ui.period30}
@@ -178,7 +178,7 @@ export default function DemoAnalyticsPanel({ restaurantName, lang, presetKey }: 
         <div className="space-y-6">
           {/* Bar chart */}
           <div className="bg-warm-white border border-border-gray rounded-lg p-5">
-            <p className="text-sm font-semibold text-stone-700 mb-4">{ui.covers}</p>
+            <p className="text-sm font-medium text-warm-stone mb-4">{ui.covers}</p>
             <div className={`flex items-end gap-2 h-36 ${period === '30' ? 'gap-4' : 'gap-2'}`}>
               {chartBars.map((bar, i) => {
                 const heightPct = chartMax > 0 ? (bar.value / chartMax) * 100 : 0;
@@ -233,7 +233,7 @@ export default function DemoAnalyticsPanel({ restaurantName, lang, presetKey }: 
 
           {/* Top dishes */}
           <div className="bg-warm-white border border-border-gray rounded-lg p-5">
-            <p className="text-sm font-semibold text-stone-700 mb-4">{ui.topDishes}</p>
+            <p className="text-sm font-medium text-warm-stone mb-4">{ui.topDishes}</p>
             <div className="space-y-3">
               {presetData.topDishes.map((dish) => (
                 <div key={dish.name}>
