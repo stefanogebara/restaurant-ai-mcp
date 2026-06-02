@@ -18,6 +18,7 @@ import { useTranslation } from 'react-i18next';
 import { authFetch } from '../../services/api';
 import { useToast } from '../../contexts/ToastContext';
 import { useInstagramStatus, type InstagramStatus, INSTAGRAM_STATUS_QUERY_KEY } from '../../hooks/useInstagramStatus';
+import InstagramCaptionDrafter from './InstagramCaptionDrafter';
 
 const STATUS_TONE: Record<InstagramStatus, { dot: string; bg: string; text: string; label: string }> = {
   active:     { dot: 'bg-emerald-500', bg: 'bg-emerald-100', text: 'text-emerald-800', label: 'Connected' },
@@ -183,6 +184,10 @@ export default function InstagramPanel() {
         <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
           Last error from Meta: {data.last_error}
         </p>
+      )}
+
+      {connected && (
+        <InstagramCaptionDrafter toneProfileReady={!!data?.tone_profile_ready} />
       )}
 
       <div>
