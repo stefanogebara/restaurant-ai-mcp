@@ -48,39 +48,25 @@ module.exports = async (req, res) => {
   }
 
   try {
-    // The partial-unique index on instagram_connections(restaurant_id) WHERE
-    // status IN ('active','restricted') guarantees ≤1 such row, so the
-    // chained .order().limit().maybeSingle() the v1 code used was both
-    // redundant AND was failing in supabase-js 2.x when combined with .in()
-    // (the combination produced "Cannot coerce the result to a single JSON
-    // object" because PostgREST returned 2 rows when 'expired' was also
-    // included). Splitting the lookups + dropping the order/limit fixes it.
-    const { data: active, error: activeErr } = await supabaseAdmin
+    // Use .select() (returns array) instead of .maybeSingle() because the
+    // supabase-js .maybeSingle() chained after .in([...]) was erroring with
+    // an internal coercion problem even when 0 rows matched. Array form is
+    // also fewer surprises across pg-rest versions. The partial-unique
+    // index on (restaurant_id) WHERE status IN ('active','restricted')
+    // already guarantees ≤1 such row, so taking [0] is safe.
+    const { data: rows, error: queryErr } = await supabaseAdmin
       .schema('restaurant')
       .from('instagram_connections')
-      .select('status, ig_username, ig_profile_picture_url, ig_followers_count, last_sync_at, last_error, token_expires_at')
+      .select('status, ig_username, ig_profile_picture_url, ig_followers_count, last_sync_at, last_error, token_expires_at, updated_at')
       .eq('restaurant_id', user.restaurant_id)
-      .in('status', ['active', 'restricted'])
-      .maybeSingle();
+      .order('updated_at', { ascending: false })
+      .limit(1);
 
-    if (activeErr) {
-      logger.error('active connection query failed', { err: activeErr.message });
+    if (queryErr) {
+      logger.error('connection query failed', { err: queryErr.message });
       return res.status(500).json({ success: false, error: 'Status query failed' });
     }
-
-    // If no active/restricted row exists, look up the latest expired/revoked
-    // one so the UI can still surface "your IG connection expired — reconnect".
-    let conn = active;
-    if (!conn) {
-      const { data: stale } = await supabaseAdmin
-        .schema('restaurant')
-        .from('instagram_connections')
-        .select('status, ig_username, ig_profile_picture_url, ig_followers_count, last_sync_at, last_error, token_expires_at, updated_at')
-        .eq('restaurant_id', user.restaurant_id)
-        .order('updated_at', { ascending: false })
-        .limit(1);
-      conn = Array.isArray(stale) && stale.length ? stale[0] : null;
-    }
+    const conn = Array.isArray(rows) && rows.length ? rows[0] : null;
 
     const { data: rest } = await supabaseAdmin
       .schema('restaurant')
