@@ -71,11 +71,13 @@ export function init(flow: Flow, options: InitOptions = {}): FlowState {
   if (!startNode) {
     throw new Error(`engine.init: start node "${startId}" not in flow`);
   }
+  const data = options.data ?? {};
+  const context = options.context ?? {};
   return {
     currentNodeId: startId,
-    messages: botMessagesFor(startNode, options.context ?? {}),
-    data: options.data ?? {},
-    context: options.context ?? {},
+    messages: botMessagesFor(startNode, { ...data, ...context }),
+    data,
+    context,
     done: false,
     lastError: null,
   };
@@ -129,11 +131,15 @@ export function advance(flow: Flow, state: FlowState, answer: Answer): FlowState
   }
 
   // 5. Compose the transcript: echo the user, then the next bot turn(s).
+  // For interpolation, the bot can read from both data (just-written values
+  // like restaurant_name) and context (ephemeral state like hit counts).
+  // Context wins on key collision because context is the "live" view.
   const userText = resolved.kind === 'option' ? resolved.optionLabel : resolved.raw;
+  const interpolationScope = { ...nextData, ...state.context };
   const newMessages: ChatMessage[] = [
     ...state.messages,
     userMessage(node.id, userText),
-    ...(nextNode ? botMessagesFor(nextNode, state.context) : []),
+    ...(nextNode ? botMessagesFor(nextNode, interpolationScope) : []),
   ];
 
   return {
