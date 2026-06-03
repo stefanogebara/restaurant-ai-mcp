@@ -628,7 +628,7 @@ export default function WhatsAppSettingsPage() {
             <div className="mt-4 h-24 rounded-2xl bg-soft-gray animate-pulse" aria-label={t('settings.loadingTestDelivery', 'Loading test delivery status')} />
           )}
           {!testStatusLoading && latestTestMessage && (
-            <div className="mt-4 rounded-2xl border border-[#E5E7EB] bg-soft-gray/60 p-4">
+            <div className="mt-4 glass-card p-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-widest text-[#6B7280]">
@@ -707,7 +707,7 @@ export default function WhatsAppSettingsPage() {
 
   return (
     <DashboardLayout>
-      <div className="max-w-3xl mx-auto p-6 bg-white">
+      <div className="max-w-3xl mx-auto p-6">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-[#111827]">{t('settings.whatsApp')}</h1>

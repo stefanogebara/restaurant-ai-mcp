@@ -90,7 +90,7 @@ export default function TeamPage() {
 
   return (
     <DashboardLayout>
-    <div className="max-w-2xl mx-auto py-8 px-4 bg-white">
+    <div className="max-w-2xl mx-auto py-8 px-4">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-[#111827]">{t('team.title')}</h1>
         <p className="text-sm text-[#9CA3AF] mt-1">{t('team.subtitle')}</p>
@@ -171,7 +171,7 @@ export default function TeamPage() {
       {/* Remove confirmation dialog */}
       {confirmRemoveId && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl border border-border-gray p-6 max-w-sm w-full">
+          <div className="glass-modal p-6 max-w-sm w-full">
             <h3 className="text-lg font-bold text-deep-charcoal mb-2">{t('team.removeTitle')}</h3>
             <p className="text-sm text-stone-gray mb-6">
               {t('team.removeConfirm')}

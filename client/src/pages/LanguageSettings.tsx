@@ -24,7 +24,7 @@ export default function LanguageSettings() {
           </button>
 
           {/* Settings card */}
-          <div className="bg-white rounded-2xl border border-border-gray p-8">
+          <div className="glass-panel p-8">
             {/* Header */}
             <div className="flex items-center gap-3 mb-8">
               <div className="p-3 bg-burgundy/10 rounded-xl">
@@ -43,7 +43,7 @@ export default function LanguageSettings() {
 
             {/* Language selector */}
             <div className="space-y-6">
-              <div className="p-6 bg-warm-white rounded-xl">
+              <div className="p-6 bg-white/50 backdrop-blur-glass-chip border border-glass-border-dark rounded-xl">
                 <LanguageSelector
                   variant="buttons"
                   size="lg"
@@ -69,7 +69,7 @@ export default function LanguageSettings() {
           <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
             <button
               onClick={() => navigate('/host-dashboard')}
-              className="p-6 bg-white rounded-2xl border border-border-gray hover:border-burgundy/30 transition-colors text-left group"
+              className="p-6 glass-card hover:border-burgundy/30 transition-colors text-left group"
             >
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-10 h-10 rounded-xl bg-burgundy/10 flex items-center justify-center">
@@ -86,7 +86,7 @@ export default function LanguageSettings() {
 
             <button
               onClick={() => navigate('/subscription/manage')}
-              className="p-6 bg-white rounded-2xl border border-border-gray hover:border-burgundy/30 transition-colors text-left group"
+              className="p-6 glass-card hover:border-burgundy/30 transition-colors text-left group"
             >
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-10 h-10 rounded-xl bg-burgundy/10 flex items-center justify-center">

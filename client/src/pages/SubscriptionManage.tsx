@@ -183,9 +183,9 @@ export default function SubscriptionManage() {
   const currentPlanPrice = plans.find(p => p.key === (planTiers[currentTierIndex] ?? ''))?.price;
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div className="min-h-screen flex flex-col">
       {/* Top Bar */}
-      <header className="flex justify-between items-center px-6 sm:px-10 py-4 border-b border-border-gray bg-white">
+      <header className="flex justify-between items-center px-6 sm:px-10 py-4 border-b border-glass-border-dark bg-glass-panel backdrop-blur-glass-nav">
         <div className="font-serif text-lg font-semibold text-deep-charcoal">
           seatable<span className="text-burgundy">.</span>
         </div>
@@ -238,7 +238,7 @@ export default function SubscriptionManage() {
                 <button
                   onClick={handleManageSubscription}
                   disabled={portal.isPending}
-                  className="px-5 py-2.5 border border-border-gray rounded-xl text-[13px] font-medium text-stone-gray bg-white hover:border-muted-stone transition-colors disabled:opacity-50 flex items-center gap-2"
+                  className="px-5 py-2.5 border border-glass-border-dark rounded-xl text-[13px] font-medium text-stone-gray bg-white/60 hover:bg-white/85 hover:border-muted-stone transition-colors disabled:opacity-50 flex items-center gap-2"
                 >
                   {portal.isPending ? (
                     <><div aria-hidden="true" className="w-3.5 h-3.5 border-2 border-stone-gray border-t-transparent rounded-full animate-spin" />{t('subscription.opening')}</>
@@ -261,7 +261,7 @@ export default function SubscriptionManage() {
             <p className="text-[15px] text-warm-stone font-light">{t('subscription.noHiddenFees')}</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-px border border-[#E5E7EB] rounded-lg overflow-hidden">
+          <div className="glass-panel grid grid-cols-1 md:grid-cols-3 gap-px bg-glass-border-dark rounded-lg overflow-hidden">
             {plans.map((p) => {
               const isCurrent = currentTierKey === p.key;
               const isFeatured = !!p.featured;
@@ -272,7 +272,7 @@ export default function SubscriptionManage() {
                 : isCurrent ? t('subscription.currentPlan') : tierIndex > currentTierIndex ? t('subscription.upgrade') : t('subscription.downgrade');
 
               return (
-                <div key={p.key} className={`relative px-8 py-10 ${isFeatured ? 'bg-deep-charcoal' : 'bg-white'}`}>
+                <div key={p.key} className={`relative px-8 py-10 ${isFeatured ? 'bg-deep-charcoal' : 'bg-white/45 backdrop-blur-glass-card'}`}>
                   {isCurrent && (
                     <span className={`absolute top-4 right-4 text-xs font-semibold px-3 py-1 rounded-full ${isFeatured ? 'bg-burgundy/30 text-white' : 'bg-burgundy/[8%] text-burgundy'}`}>
                       {t('subscription.currentPlan')}
@@ -406,8 +406,8 @@ function NoPlanPricing() {
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
-      <header className="flex justify-between items-center px-6 sm:px-10 py-4 border-b border-border-gray bg-white">
+    <div className="min-h-screen flex flex-col">
+      <header className="flex justify-between items-center px-6 sm:px-10 py-4 border-b border-glass-border-dark bg-glass-panel backdrop-blur-glass-nav">
         <div className="font-serif text-lg font-semibold text-deep-charcoal">
           seatable<span className="text-burgundy">.</span>
         </div>
@@ -440,11 +440,11 @@ function NoPlanPricing() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-[2px] bg-border-gray rounded-[20px] overflow-hidden">
+          <div className="glass-panel grid grid-cols-1 md:grid-cols-3 gap-px bg-glass-border-dark rounded-[20px] overflow-hidden">
             {NO_PLAN_TIERS.map((tier) => {
               const isLoading = loadingPlan === tier.planName;
               return (
-                <div key={tier.key} className={`relative px-8 py-12 ${tier.highlighted ? 'bg-deep-charcoal' : 'bg-warm-white'}`}>
+                <div key={tier.key} className={`relative px-8 py-12 ${tier.highlighted ? 'bg-deep-charcoal' : 'bg-white/45 backdrop-blur-glass-card'}`}>
                   {tier.trial && !betaCode && (
                     <div className="absolute top-0 inset-x-0 flex justify-center">
                       <span className="bg-burgundy text-white text-[11px] font-semibold tracking-wide uppercase px-4 py-1 rounded-b-lg">
@@ -474,7 +474,7 @@ function NoPlanPricing() {
                     className={`w-full py-3.5 rounded-full text-sm font-semibold transition-colors flex items-center justify-center gap-2 disabled:opacity-60 ${
                       tier.highlighted
                         ? 'bg-burgundy text-white hover:bg-burgundy-dark'
-                        : 'border border-border-gray text-deep-charcoal hover:border-muted-stone bg-white'
+                        : 'border border-glass-border-dark text-deep-charcoal hover:border-muted-stone bg-white/70'
                     }`}
                   >
                     {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
@@ -516,14 +516,14 @@ function PendingActivation({ onRefetch }: { onRefetch: () => void }) {
   }, [onRefetch]);
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
-      <header className="flex justify-between items-center px-6 sm:px-10 py-4 border-b border-border-gray bg-white">
+    <div className="min-h-screen flex flex-col">
+      <header className="flex justify-between items-center px-6 sm:px-10 py-4 border-b border-glass-border-dark bg-glass-panel backdrop-blur-glass-nav">
         <div className="font-serif text-lg font-semibold text-deep-charcoal">
           seatable<span className="text-burgundy">.</span>
         </div>
       </header>
       <div className="flex-1 flex items-center justify-center p-6">
-        <div className="max-w-[480px] w-full bg-white border border-border-gray rounded-2xl p-12 text-center">
+        <div className="max-w-[480px] w-full glass-panel p-12 text-center">
           <Loader2 className="w-8 h-8 text-burgundy animate-spin mx-auto mb-5" />
           <h1 className="font-serif text-2xl font-medium text-deep-charcoal mb-2">
             {t('subscription.activatingTitle', 'Activating your subscription')}

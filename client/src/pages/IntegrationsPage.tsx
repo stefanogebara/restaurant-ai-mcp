@@ -78,20 +78,20 @@ export default function IntegrationsPage() {
               : t('integrations.showEndpoints', 'Show REST API reference')}
           </button>
           {showEndpoints && (
-            <div className="mt-4 bg-[#FAFAF9] border border-[#E5E7EB] rounded-xl p-4 space-y-2">
+            <div className="mt-4 glass-card p-4 space-y-2 rounded-xl">
               <h3 className="text-xs font-semibold uppercase tracking-widest text-[#111827]">
                 {t('integrations.endpointsTitle', 'Available Endpoints')}
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-[#706A65]">
-                <div className="border border-[#E5E7EB] rounded-lg p-3 bg-white">
+                <div className="border border-glass-border-dark rounded-lg p-3 bg-white/60">
                   <p className="font-mono text-[#1C1917] font-medium">POST /api/pos/service-completion</p>
                   <p className="mt-1">{t('integrations.endpointServiceCompletion', 'Report completed services with billing')}</p>
                 </div>
-                <div className="border border-[#E5E7EB] rounded-lg p-3 bg-white">
+                <div className="border border-glass-border-dark rounded-lg p-3 bg-white/60">
                   <p className="font-mono text-[#1C1917] font-medium">GET /api/pos/reservations</p>
                   <p className="mt-1">{t('integrations.endpointReservations', 'Pull reservations by date range')}</p>
                 </div>
-                <div className="border border-[#E5E7EB] rounded-lg p-3 bg-white">
+                <div className="border border-glass-border-dark rounded-lg p-3 bg-white/60">
                   <p className="font-mono text-[#1C1917] font-medium">POST /api/pos/table-status</p>
                   <p className="mt-1">{t('integrations.endpointTableStatus', 'Update table availability status')}</p>
                 </div>
