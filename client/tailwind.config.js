@@ -95,6 +95,43 @@ export default {
         // Custom neutrals (not exact Tailwind matches)
         'stone-mid': '#3a3533',
         'stone-pale': '#EEECEB',
+        // Warm Glass — light-mode glass tokens per DESIGN.md
+        // Translucent whites stacked over the body's 4-orb warm gradient.
+        // Use these instead of pure bg-white or bg-warm-white on flow surfaces.
+        'glass-card': 'rgba(255, 255, 255, 0.62)',         // flow-level cards
+        'glass-panel': 'rgba(255, 255, 255, 0.55)',        // larger surfaces
+        'glass-modal': 'rgba(255, 255, 255, 0.78)',        // elevated modals — more opaque for legibility
+        'glass-subtle': 'rgba(255, 255, 255, 0.40)',       // secondary surfaces, chips
+        'glass-border': 'rgba(255, 255, 255, 0.70)',       // warm white edge
+        'glass-border-dark': 'rgba(28, 25, 23, 0.06)',     // dark fine inner border for busy gradient regions
+      },
+      backdropBlur: {
+        // Warm Glass tier values. DESIGN.md spec:
+        // navbar 16px / card 18px / panel 24px / modal 32px / chip 12px
+        'glass-chip': '12px',
+        'glass-nav': '16px',
+        'glass-card': '18px',
+        'glass-panel': '24px',
+        'glass-modal': '32px',
+      },
+      boxShadow: {
+        // Soft drop shadows replace Nordic Clean's borders-only rule.
+        // The blur reads as glass depth; the shadow grounds the surface above
+        // the body gradient. Together they replace the flat 1-px border.
+        'glass-card': '0 1px 2px rgba(28, 25, 23, 0.04), 0 8px 24px rgba(28, 25, 23, 0.04)',
+        'glass-nav':  '0 1px 2px rgba(28, 25, 23, 0.04)',
+        'glass-modal': '0 4px 12px rgba(28, 25, 23, 0.08), 0 24px 48px rgba(28, 25, 23, 0.10)',
+      },
+      backgroundImage: {
+        // The 4-orb warm-glass page background, matching DESIGN.md spec.
+        // Use as `bg-warm-orbs` on body or page wrappers. background-attachment: fixed
+        // is set globally in index.css so this stays anchored during scroll.
+        'warm-orbs': [
+          'radial-gradient(ellipse 70% 50% at 12% 18%, rgba(217, 119, 6, 0.10) 0%, transparent 55%)',
+          'radial-gradient(ellipse 60% 45% at 88% 22%, rgba(245, 158, 11, 0.08) 0%, transparent 55%)',
+          'radial-gradient(ellipse 80% 55% at 50% 95%, rgba(159, 18, 57, 0.06) 0%, transparent 60%)',
+          'radial-gradient(ellipse 50% 40% at 90% 80%, rgba(120, 53, 15, 0.05) 0%, transparent 50%)',
+        ].join(', '),
       },
       keyframes: {
         fadeInUp: {

@@ -47,7 +47,19 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    /* Warm Glass page background — 4 overlapping radial gradients over warm-white.
+       Anchored with background-attachment: fixed so the orbs stay still during scroll
+       and glass surfaces above the fold and below the fold both refract over the same
+       gradient region. See DESIGN.md "Page background — warm orbs" for the spec. */
+    color: #1C1917;
+    background-color: #FAFAF9;
+    background-image:
+      radial-gradient(ellipse 70% 50% at 12% 18%, rgba(217, 119, 6, 0.10) 0%, transparent 55%),
+      radial-gradient(ellipse 60% 45% at 88% 22%, rgba(245, 158, 11, 0.08) 0%, transparent 55%),
+      radial-gradient(ellipse 80% 55% at 50% 95%, rgba(159, 18, 57, 0.06) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 40% at 90% 80%, rgba(120, 53, 15, 0.05) 0%, transparent 50%);
+    background-attachment: fixed;
+    background-repeat: no-repeat;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', sans-serif;
     margin: 0;
     min-width: 320px;
@@ -55,6 +67,58 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+  }
+
+  /* ------------------------------------------------------------------
+     Warm Glass utility classes — apply to any element to inherit the
+     spec'd glass tier without typing out 5 Tailwind classes by hand.
+     See DESIGN.md "Glass surface tiers" for the values these mirror.
+     ------------------------------------------------------------------ */
+
+  .glass-card {
+    background-color: rgba(255, 255, 255, 0.62);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border: 1px solid rgba(255, 255, 255, 0.70);
+    border-radius: 1rem; /* 16px — matches rounded-2xl */
+    box-shadow: 0 1px 2px rgba(28, 25, 23, 0.04), 0 8px 24px rgba(28, 25, 23, 0.04);
+  }
+
+  .glass-panel {
+    background-color: rgba(255, 255, 255, 0.55);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.65);
+    border-radius: 1.25rem; /* 20px */
+    box-shadow: 0 1px 2px rgba(28, 25, 23, 0.04), 0 8px 24px rgba(28, 25, 23, 0.04);
+  }
+
+  .glass-modal {
+    background-color: rgba(255, 255, 255, 0.78);
+    backdrop-filter: blur(32px);
+    -webkit-backdrop-filter: blur(32px);
+    border: 1px solid rgba(255, 255, 255, 0.80);
+    border-radius: 1.25rem; /* 20px */
+    box-shadow: 0 4px 12px rgba(28, 25, 23, 0.08), 0 24px 48px rgba(28, 25, 23, 0.10);
+  }
+
+  .glass-pill {
+    background-color: rgba(255, 255, 255, 0.55);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.65);
+    border-radius: 46px; /* DESIGN.md: chips are not rounded-full */
+  }
+
+  /* Reduced-motion: the static blur stays (it's structural), only blur
+     transitions are killed. The body gradient is naturally still anyway. */
+  @media (prefers-reduced-motion: reduce) {
+    .glass-card,
+    .glass-panel,
+    .glass-modal,
+    .glass-pill {
+      transition: none !important;
+    }
   }
 
   h1, h2, h3, h4, h5, h6 {

@@ -11,7 +11,7 @@ Auto-compiled articles live in `docs/wiki/`. Refresh with `node scripts/compile-
 
 ## Design System
 
-**Canonical source: [`DESIGN.md`](./DESIGN.md)** — covers product UI ("Nordic Clean"), brand illustrations, social posts, the AI Studio prompt template, and the per-surface checklist. When in doubt, that file wins over Tailwind config or component code; update them to match.
+**Canonical source: [`DESIGN.md`](./DESIGN.md)** — covers product UI ("Warm Glass" — light-mode glass adapted from TwinMe's dark glass system), brand illustrations, social posts, the AI Studio prompt template, and the per-surface checklist. When in doubt, that file wins over Tailwind config or component code; update them to match. Glass primitives live at `client/src/components/common/glass/` (`<GlassCard>`, `<GlassPanel>`, `<GlassModal>`, `<GlassPill>`); page body has a fixed 4-orb warm radial gradient (`client/src/index.css`).
 
 ---
 
