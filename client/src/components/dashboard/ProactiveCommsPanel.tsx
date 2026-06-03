@@ -32,7 +32,7 @@ export default function ProactiveCommsPanel() {
 
   if (isLoading) {
     return (
-      <div className="border border-[#E5E7EB] rounded-2xl bg-white p-6">
+      <div className="glass-card p-6">
         <div className="text-sm text-[#9CA3AF]">{t('proactiveComms.loading', 'Loading opportunities...')}</div>
       </div>
     );
@@ -44,7 +44,7 @@ export default function ProactiveCommsPanel() {
 
   if (items.length === 0) {
     return (
-      <section className="border border-[#E5E7EB] rounded-2xl bg-white p-6">
+      <section className="glass-card p-6">
         <div className="flex items-center gap-2 mb-3">
           <ThiingsIcon name="sparkles" size="xs" className="text-burgundy" />
           <h3 className="text-sm font-semibold text-[#111827]">
@@ -95,7 +95,7 @@ export default function ProactiveCommsPanel() {
   };
 
   return (
-    <section className="border border-[#E5E7EB] rounded-2xl bg-white p-6">
+    <section className="glass-card p-6">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <ThiingsIcon name="sparkles" size="xs" className="text-burgundy" />

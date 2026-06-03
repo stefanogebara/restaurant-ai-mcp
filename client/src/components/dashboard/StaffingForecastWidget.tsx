@@ -11,7 +11,7 @@ export default function StaffingForecastWidget() {
 
   if (isLoading) {
     return (
-      <div className="p-6 animate-pulse space-y-3">
+      <div className="glass-card p-6 animate-pulse space-y-3">
         <div className="h-4 bg-gray-100 rounded w-40" />
         {[0, 1, 2].map((i) => (
           <div key={i} className="h-12 bg-gray-100 rounded" />
@@ -24,7 +24,7 @@ export default function StaffingForecastWidget() {
   if (isEmpty) return null;
 
   return (
-    <div className="p-6 space-y-4">
+    <div className="glass-card p-6 space-y-4">
       <h2 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#111827]">
         {t('dashboard.staffingForecast')}
       </h2>

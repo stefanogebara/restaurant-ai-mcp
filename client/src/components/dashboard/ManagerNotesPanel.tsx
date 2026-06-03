@@ -44,7 +44,7 @@ export default function ManagerNotesPanel() {
   };
 
   return (
-    <div className="p-5">
+    <div className="glass-card p-5">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#111827]">

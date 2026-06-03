@@ -13,7 +13,7 @@ export default function RevenueStatsWidget() {
 
   if (statsLoading || forecastLoading) {
     return (
-      <div className="p-6 animate-pulse space-y-3">
+      <div className="glass-card p-6 animate-pulse space-y-3">
         <div className="h-4 bg-gray-100 rounded w-40" />
         {[0, 1, 2].map((i) => <div key={i} className="h-8 bg-gray-100 rounded" />)}
       </div>
@@ -34,7 +34,7 @@ export default function RevenueStatsWidget() {
   const maxProjected = Math.max(...days.map(d => d.expected_covers * stats.avg_spend_per_cover), 1);
 
   return (
-    <div className="p-6 space-y-4">
+    <div className="glass-card p-6 space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#111827]">
           {t('dashboard.revenueForecast')}

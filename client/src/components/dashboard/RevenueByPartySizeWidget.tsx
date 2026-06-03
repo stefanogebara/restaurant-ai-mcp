@@ -13,7 +13,7 @@ export default function RevenueByPartySizeWidget() {
 
   if (isLoading) {
     return (
-      <div className="p-6 animate-pulse space-y-3">
+      <div className="glass-card p-6 animate-pulse space-y-3">
         <div className="h-4 bg-gray-100 rounded w-48" />
         <div className="h-8 bg-gray-100 rounded" />
       </div>
@@ -26,7 +26,7 @@ export default function RevenueByPartySizeWidget() {
   const maxAvg = Math.max(...breakdown.map((b) => b.avg_total), 1);
 
   return (
-    <div className="p-6 space-y-4">
+    <div className="glass-card p-6 space-y-4">
       <h2 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#111827] flex items-center gap-2">
         <ThiingsIcon name="users" pxSize={14} className="text-muted-stone" />
         {t('dashboard.revenueByPartySize', 'Revenue by Party Size')}
