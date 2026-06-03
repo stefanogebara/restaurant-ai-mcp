@@ -193,9 +193,9 @@ export default function ManagerAIChatPage() {
   const prompts = SUGGESTED_PROMPTS[lang] || SUGGESTED_PROMPTS.en;
 
   return (
-    <div className="h-screen flex flex-col bg-white">
+    <div className="h-screen flex flex-col">
       {/* Header */}
-      <div className="bg-white border-b border-border-gray px-4 sm:px-6 py-3 flex items-center justify-between flex-shrink-0">
+      <div className="bg-glass-panel backdrop-blur-glass-nav border-b border-glass-border-dark px-4 sm:px-6 py-3 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-3">
           <Link
             to="/host-dashboard/simple"
@@ -263,7 +263,7 @@ export default function ManagerAIChatPage() {
                       setInput(prompt);
                       inputRef.current?.focus();
                     }}
-                    className="text-left px-4 py-3 bg-white border border-border-gray rounded-xl text-sm text-deep-charcoal hover:bg-soft-gray hover:border-burgundy/30 transition-colors"
+                    className="text-left px-4 py-3 bg-glass-card backdrop-blur-glass-card border border-glass-border rounded-xl text-sm text-deep-charcoal hover:bg-white/80 hover:border-burgundy/30 transition-colors"
                   >
                     {prompt}
                   </button>
@@ -285,7 +285,7 @@ export default function ManagerAIChatPage() {
                   'max-w-[75%] rounded-2xl px-4 py-3 text-sm break-words leading-relaxed ' +
                   (m.role === 'manager'
                     ? 'bg-burgundy text-white'
-                    : 'bg-white border border-border-gray text-deep-charcoal')
+                    : 'bg-glass-card backdrop-blur-glass-card border border-glass-border text-deep-charcoal')
                 }
               >
                 {m.role === 'assistant' ? renderMarkdown(m.content) : m.content}
@@ -299,7 +299,7 @@ export default function ManagerAIChatPage() {
               <div className="w-7 h-7 rounded-full bg-burgundy/10 flex items-center justify-center flex-shrink-0 mt-1 mr-2">
                 <ThiingsIcon name="sparkles" pxSize={14} className="text-burgundy animate-spin" />
               </div>
-              <div className="bg-white border border-border-gray rounded-2xl px-4 py-3 text-sm text-muted-stone flex items-center gap-1.5">
+              <div className="bg-glass-card backdrop-blur-glass-card border border-glass-border rounded-2xl px-4 py-3 text-sm text-muted-stone flex items-center gap-1.5">
                 <span>{t('dashboard.thinking', 'Thinking')}</span>
                 <span className="flex gap-0.5">
                   <span className="w-1.5 h-1.5 bg-burgundy/40 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
@@ -353,12 +353,12 @@ export default function ManagerAIChatPage() {
       )}
 
       {/* Input area */}
-      <div className="bg-white border-t border-border-gray px-4 sm:px-6 py-4 flex-shrink-0">
+      <div className="bg-glass-panel backdrop-blur-glass-nav border-t border-glass-border-dark px-4 sm:px-6 py-4 flex-shrink-0">
         <div className="max-w-3xl mx-auto flex gap-3 items-end">
           <div className="flex-1 min-w-0 flex flex-col gap-1">
             <textarea
               ref={inputRef}
-              className="w-full rounded-xl border border-border-gray px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy max-h-40"
+              className="w-full rounded-xl border border-glass-border-dark bg-white/60 px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy max-h-40"
               placeholder={
                 isFeatureUnavailable
                   ? t('dashboard.featureUpgradePlaceholder', 'Upgrade your plan to chat with Manager AI')

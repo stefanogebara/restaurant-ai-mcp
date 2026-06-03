@@ -166,7 +166,7 @@ export default function DemoDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-warm-white">
+    <div className="min-h-screen">
       <DemoSidebar
         lang={lang}
         activeView={activeView}
@@ -184,7 +184,7 @@ export default function DemoDashboard() {
       {/* Language Popup */}
       {!isEmbed && showLangPopup && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
-          <div className="bg-warm-white rounded-lg shadow-lg border border-border-gray p-6 max-w-sm w-full text-center animate-in fade-in zoom-in-95 duration-200">
+          <div className="glass-modal p-6 max-w-sm w-full text-center animate-in fade-in zoom-in-95 duration-200">
             <div className="w-12 h-12 rounded-2xl bg-burgundy/10 flex items-center justify-center mx-auto mb-4">
               <ThiingsIcon name="globe" pxSize={24} className="text-burgundy" />
             </div>
@@ -488,7 +488,7 @@ export default function DemoDashboard() {
             role="dialog"
             aria-modal="true"
             aria-label={t.exitTitle}
-            className="bg-warm-white rounded-lg shadow-lg border border-border-gray p-6 max-w-sm w-full text-center animate-in fade-in zoom-in-95 duration-200"
+            className="glass-modal p-6 max-w-sm w-full text-center animate-in fade-in zoom-in-95 duration-200"
           >
             <div className="w-14 h-14 rounded-2xl bg-burgundy/10 flex items-center justify-center mx-auto mb-4">
               <ThiingsIcon name="star" pxSize={28} className="text-burgundy" />
