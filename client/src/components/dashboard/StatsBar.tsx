@@ -38,7 +38,7 @@ export default function StatsBar({
     return (
       <div role="status" aria-label={t('common.loading')} className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="rounded-lg p-5 border border-border-gray">
+          <div key={i} className="glass-card p-5">
             <div className="h-3 w-20 bg-border-gray rounded-full animate-pulse mb-3" />
             <div className="h-9 w-16 bg-border-gray rounded-lg animate-pulse mb-2" />
             <div className="h-3 w-24 bg-soft-gray rounded animate-pulse mb-3" />
@@ -141,7 +141,7 @@ function StatCard({ label, value, valueSuffix, valueColor, change, changeColor, 
   useEffect(() => { const t = setTimeout(() => setMounted(true), 50); return () => clearTimeout(t); }, []);
 
   return (
-    <div className="bg-white rounded-lg p-5 border border-[#E5E7EB]/60 flex flex-col transition-all duration-300 opacity-0 translate-y-2 animate-[fadeInUp_0.4s_ease-out_forwards]">
+    <div className="glass-card p-5 flex flex-col transition-all duration-300 opacity-0 translate-y-2 animate-[fadeInUp_0.4s_ease-out_forwards]">
       {icon && (
         <div className="mb-3">
           {icon}
