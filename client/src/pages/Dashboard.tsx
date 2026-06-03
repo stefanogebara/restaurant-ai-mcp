@@ -234,7 +234,7 @@ export default function Dashboard() {
 
   return (
     <DashboardLayout>
-      <div className="dashboard min-h-screen bg-white px-4 sm:px-6 lg:px-10 pt-6 sm:pt-10 pb-24 sm:pb-20">
+      <div className="dashboard min-h-screen px-4 sm:px-6 lg:px-10 pt-6 sm:pt-10 pb-24 sm:pb-20">
         <div className="max-w-[1240px]">
 
           {/* ---- Stripe Connect Adoption Nudge ---- */}
@@ -307,7 +307,7 @@ export default function Dashboard() {
 
           {/* ---- Metrics Row ---- */}
           {isLoading ? (
-            <section className="grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-12 mb-8 sm:mb-12 pb-8 sm:pb-12 border-b border-border-gray">
+            <section className="glass-panel grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-12 p-6 sm:p-8 mb-8 sm:mb-12">
               {Array.from({ length: 4 }).map((_, i) => (
                 <div key={i}>
                   <div className="h-7 w-16 bg-border-gray rounded animate-pulse mb-3" />
@@ -316,7 +316,7 @@ export default function Dashboard() {
               ))}
             </section>
           ) : (
-            <section className="grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-12 mb-8 sm:mb-12 pb-8 sm:pb-12 border-b border-border-gray">
+            <section className="glass-panel grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-12 p-6 sm:p-8 mb-8 sm:mb-12">
               {/* Reservations */}
               <div>
                 <p className="font-mono text-[22px] sm:text-[28px] font-medium leading-none text-deep-charcoal">{todayReservations.length}</p>
@@ -363,7 +363,7 @@ export default function Dashboard() {
           )}
 
           {/* ---- Reservations Section ---- */}
-          <section className="mb-8 sm:mb-16">
+          <section className="glass-panel mb-8 sm:mb-16">
             <ReservationsList
               todayReservations={todayReservations}
               tomorrowReservations={tomorrowReservations}
@@ -383,9 +383,9 @@ export default function Dashboard() {
           </section>
 
           {/* ---- Two-Column Split: Floor Plan (col-span-7) + Waitlist/Active (col-span-5) ---- */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-16">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8">
             {/* Left: Floor Plan / Table Layout */}
-            <section className="lg:col-span-7">
+            <section className="glass-panel lg:col-span-7">
               <TableLayoutPanel
                 tables={tables}
                 activeParties={activeParties}
@@ -395,21 +395,22 @@ export default function Dashboard() {
             </section>
 
             {/* Right: Waitlist + Active Parties */}
-            <section className="lg:col-span-5 space-y-14">
-              <div>
+            <div className="lg:col-span-5 space-y-6 sm:space-y-8">
+              <section className="glass-panel">
                 <WaitlistPanel onSeatNow={handleSeatFromWaitlist} />
-              </div>
+              </section>
 
-              <ActivePartiesPanel
-                parties={activeParties}
-                onCompleteService={handleCompleteService}
-                isLoading={isLoading}
-              />
-            </section>
+              <section className="glass-panel">
+                <ActivePartiesPanel
+                  parties={activeParties}
+                  onCompleteService={handleCompleteService}
+                  isLoading={isLoading}
+                />
+              </section>
+            </div>
           </div>
 
-          {/* ---- Section Divider ---- */}
-          <div className="border-t border-border-gray mt-10 sm:mt-16 mb-8 sm:mb-12" />
+          <div className="mt-10 sm:mt-16 mb-8 sm:mb-12" />
 
           {/* ---- Additional Widgets (progressive disclosure for new users) ---- */}
           {isDashboardEmpty && !showInsightsWidgets ? (

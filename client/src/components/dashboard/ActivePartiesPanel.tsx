@@ -45,7 +45,7 @@ export default function ActivePartiesPanel({
   return (
     <div className="overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-5 border-b border-[#E5E7EB]">
+      <div className="flex items-center justify-between px-6 py-5 border-b border-glass-border-dark">
         <div>
           <div className="flex items-center gap-2.5">
             <h3 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{t('dashboard.activeParties')}</h3>
@@ -82,7 +82,7 @@ export default function ActivePartiesPanel({
       ) : (
         <div className="max-h-[400px] overflow-y-auto py-1">
           {parties.map((party) => (
-            <div key={party.service_id} className="px-6 py-4 border-b border-[#E5E7EB] last:border-b-0">
+            <div key={party.service_id} className="px-6 py-4 border-b border-glass-border-dark last:border-b-0">
               <PartyRow
                 party={party}
                 billValue={billInputs[party.service_id] || ''}

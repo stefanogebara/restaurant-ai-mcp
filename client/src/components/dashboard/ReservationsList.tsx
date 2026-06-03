@@ -139,7 +139,7 @@ export default function ReservationsList({
   return (
     <div className="overflow-hidden">
       {/* Panel Header */}
-      <div className="px-3 sm:px-6 py-4 sm:py-5 border-b border-[#E5E7EB]">
+      <div className="px-3 sm:px-6 py-4 sm:py-5 border-b border-glass-border-dark">
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-2.5">
             <span className="text-[12px] sm:text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{tl('upcoming')}</span>
@@ -157,11 +157,11 @@ export default function ReservationsList({
             )}
           </div>
           <div className="flex items-center gap-2">
-            <div className="flex border border-[#E5E7EB] rounded-lg text-[11px] font-medium overflow-hidden flex-shrink-0">
+            <div className="flex border border-glass-border-dark rounded-lg text-[11px] font-medium overflow-hidden flex-shrink-0">
               <button
                 type="button"
                 onClick={() => setDayFilter('today')}
-                className={`px-4 py-1.5 transition-all border-r border-[#E5E7EB] ${
+                className={`px-4 py-1.5 transition-all border-r border-glass-border-dark ${
                   dayFilter === 'today' ? 'bg-[#F9FAFB] text-[#111827]' : 'text-[#9CA3AF] hover:text-[#111827]'
                 }`}
               >
@@ -170,7 +170,7 @@ export default function ReservationsList({
               <button
                 type="button"
                 onClick={() => setDayFilter('tomorrow')}
-                className={`px-4 py-1.5 transition-all border-r border-[#E5E7EB] ${
+                className={`px-4 py-1.5 transition-all border-r border-glass-border-dark ${
                   dayFilter === 'tomorrow' ? 'bg-[#F9FAFB] text-[#111827]' : 'text-[#9CA3AF] hover:text-[#111827]'
                 }`}
               >
@@ -230,7 +230,7 @@ export default function ReservationsList({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={tl('searchPlaceholder')}
-            className="w-full pl-9 pr-3 py-2 text-sm font-[Inter] border border-[#E5E7EB] rounded-lg bg-white placeholder-[#9CA3AF] text-[#111827] focus:outline-none focus:ring-1 focus:ring-[#9F1239]/30 focus:border-[#9F1239]/40 transition-colors"
+            className="w-full pl-9 pr-3 py-2 text-sm font-[Inter] border border-glass-border-dark rounded-lg bg-white/60 placeholder-[#9CA3AF] text-[#111827] focus:outline-none focus:ring-1 focus:ring-[#9F1239]/30 focus:border-[#9F1239]/40 transition-colors"
             aria-label={tl('searchPlaceholder')}
           />
         </div>
@@ -634,7 +634,7 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
               onClick={() => setMobileMenuOpen(false)}
             >
               <div
-                className="bg-white w-full rounded-t-2xl shadow-2xl border-t border-border-gray p-2 pb-6 max-h-[70vh] overflow-y-auto"
+                className="bg-glass-modal backdrop-blur-glass-modal w-full rounded-t-2xl shadow-glass-modal border-t border-glass-border p-2 pb-6 max-h-[70vh] overflow-y-auto"
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* Drag-handle affordance */}

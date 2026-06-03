@@ -78,7 +78,7 @@ export default function TableLayoutPanel({
     <>
       <div className="overflow-hidden">
         {/* Header */}
-        <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-5 border-b border-[#E5E7EB]">
+        <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-5 border-b border-glass-border-dark">
           <div className="flex items-center gap-2.5">
             <span className="text-[13px] font-semibold uppercase tracking-widest text-[#111827] whitespace-nowrap">{t('tableLayout.title')}</span>
             <span className="relative flex items-center gap-1.5 text-xs font-semibold text-rose-700 bg-rose-50 px-2.5 py-1 rounded-full">
@@ -93,7 +93,7 @@ export default function TableLayoutPanel({
           <div className="flex flex-wrap items-center justify-end gap-2">
             <Link
               to="/host-dashboard/floor-plan"
-              className="inline-flex min-h-[36px] items-center gap-2 rounded-lg border border-[#E5E7EB] px-3 py-2 text-xs font-semibold text-deep-charcoal transition-colors hover:bg-soft-gray"
+              className="inline-flex min-h-[36px] items-center gap-2 rounded-lg border border-glass-border-dark px-3 py-2 text-xs font-semibold text-deep-charcoal transition-colors hover:bg-soft-gray"
             >
               <ThiingsIcon name="edit" pxSize={14} />
               <span>{t('tableLayout.editFloorPlan', 'Edit Floor Plan')}</span>
@@ -156,7 +156,7 @@ export default function TableLayoutPanel({
           className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-4"
           onClick={(e) => { if (e.target === e.currentTarget) setSelectedTable(null); }}
         >
-          <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl border border-border-gray max-w-md w-full p-5 max-h-[90vh] overflow-y-auto">
+          <div className="bg-glass-modal backdrop-blur-glass-modal rounded-t-2xl sm:rounded-2xl shadow-glass-modal border border-glass-border max-w-md w-full p-5 max-h-[90vh] overflow-y-auto">
             {/* Header */}
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-3">
@@ -186,7 +186,7 @@ export default function TableLayoutPanel({
                   {selectedTable.joinable_with.map((linkedId: string) => {
                     const linked = tables.find((tbl) => tbl.id === linkedId);
                     return linked ? (
-                      <span key={linkedId} className="px-2 py-0.5 bg-white border border-border-gray rounded-lg text-xs font-medium">
+                      <span key={linkedId} className="px-2 py-0.5 bg-white/60 border border-glass-border-dark rounded-lg text-xs font-medium">
                         {t('tableLayout.table')} {linked.table_number}
                       </span>
                     ) : null;
@@ -248,7 +248,7 @@ export default function TableLayoutPanel({
               <Link
                 to="/host-dashboard/floor-plan"
                 onClick={() => setSelectedTable(null)}
-                className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-[#E5E7EB] px-4 py-3 text-sm font-semibold text-deep-charcoal transition-colors hover:bg-soft-gray"
+                className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-glass-border-dark px-4 py-3 text-sm font-semibold text-deep-charcoal transition-colors hover:bg-soft-gray"
               >
                 <ThiingsIcon name="edit" pxSize={16} />
                 <span>{t('tableLayout.editInFloorPlan', 'Edit in Floor Plan')}</span>
@@ -256,7 +256,7 @@ export default function TableLayoutPanel({
               <button
                 type="button"
                 onClick={() => setSelectedTable(null)}
-                className="min-h-[44px] rounded-xl border border-[#E5E7EB] px-4 py-3 text-sm font-semibold text-stone-700 transition-colors hover:bg-soft-gray"
+                className="min-h-[44px] rounded-xl border border-glass-border-dark px-4 py-3 text-sm font-semibold text-stone-700 transition-colors hover:bg-soft-gray"
               >
                 {t('common.cancel', 'Cancel')}
               </button>

@@ -128,7 +128,7 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
   return (
     <>
       {/* Header */}
-      <div className="p-4 border-b border-[#E5E7EB]">
+      <div className="p-4 border-b border-glass-border-dark">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
           <div className="flex items-center gap-2.5">
             <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{t('waitlist.title')}</h2>
@@ -185,7 +185,7 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
                 className={`px-2 py-1 text-xs font-medium rounded-full border transition-all ${
                   sourceFilter === pill.key
                     ? 'border-[#9F1239] bg-[#9F1239]/[8%] text-[#9F1239]'
-                    : 'border-[#E5E7EB] text-stone-gray hover:border-[#9F1239]/40 hover:text-deep-charcoal'
+                    : 'border-glass-border-dark text-stone-gray hover:border-[#9F1239]/40 hover:text-deep-charcoal'
                 }`}
               >
                 {pill.label}
@@ -296,7 +296,7 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
 
       {confirmRemove && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl border border-border-gray p-6 max-w-sm w-full">
+          <div className="glass-modal p-6 max-w-sm w-full">
             <h3 className="text-lg font-bold text-deep-charcoal mb-2">{t('waitlist.removeFromWaitlist')}</h3>
             <p className="text-sm text-stone-gray mb-6">
               <Trans
