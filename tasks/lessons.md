@@ -1,4 +1,23 @@
 
+## 2026-06-03: the single-project `supabase` MCP can be pointed at the wrong project
+
+**Context**: spent ~2 hours debugging "PostgREST returns PGRST205 — table not in schema cache" for `restaurant.instagram_connections`. NOTIFY pgrst, DROP+CREATE, GRANTs, RLS policies — none helped. Eventually restarted the project. STILL got 404.
+
+**Root cause**: the `mcp__supabase__*` tools (no project_id param — they're scoped to one project at MCP-init time) were silently pointed at a DIFFERENT project (`lurebwaudisfilhuhmnj`, probably twin-ai-learn), NOT the project I was working on (`ckforlwdhewexyqljsaf` = seatable-eu). Every `apply_migration` and `execute_sql` call landed in the wrong DB.
+
+Misleading clues that made this hard to spot:
+- `list_tables` showed `restaurant.pos_connections` + `restaurant_config` — looks like the right project. But twin-ai-learn ALSO has a `restaurant` schema with similar tables (it shares the seatable family of projects).
+- Migrations succeeded silently. apply_migration returned `{success: true}`.
+- `restart_project` "worked" but on the wrong project.
+- The lurebwaudisfilhuhmnj appeared in `get_logs` output but I assumed it was log aggregation across projects, not the actual target.
+
+**Fix**:
+- Use `mcp__claude_ai_Supabase__*` (the multi-project variant) with explicit `project_id: 'ckforlwdhewexyqljsaf'` for anything touching seatable.
+- Call `mcp__supabase__get_project_url` at the start of every Supabase MCP session — if the URL doesn't match `SUPABASE_URL` in `.env.local`, switch to the multi-project variant.
+- When PGRST205 persists after migration + restart, suspect the migration didn't run where you think.
+
+**Cost**: 5 commits chasing imaginary cache problems, one project restart on seatable that wasn't needed, ~2h of session time.
+
 ## 2026-06-02: sentinel string in a FK-shaped column is a time-bomb (campaigns)
 
 **Context**: `retention_campaigns` was originally designed 1:1 — one row per (customer, win-back) pair. `customer_id` was `TEXT NOT NULL`, semantically the phone number of the recipient. When bulk segment WhatsApp campaigns were bolted on, ONE row represents N customers, so there's no single recipient to point at.
