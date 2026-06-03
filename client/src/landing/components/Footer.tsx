@@ -10,7 +10,7 @@ function FAQItem({ questionKey, answerKey }: { questionKey: string; answerKey: s
   const { t } = useTranslation();
 
   return (
-    <div className="border-b border-border-gray last:border-b-0">
+    <div className="border-b border-glass-border-dark last:border-b-0">
       <button
         type="button"
         onClick={() => setOpen(!open)}
@@ -41,13 +41,13 @@ export default function Footer() {
   }));
 
   return (
-    <footer className="border-t border-border-gray">
+    <footer className="border-t border-glass-border-dark">
       {/* FAQ Accordion */}
       <div className="max-w-3xl mx-auto px-6 sm:px-16 py-16">
         <h3 className="font-serif text-2xl font-medium text-deep-charcoal text-center mb-8">
           {t('landing.footer.faq', 'Frequently Asked Questions')}
         </h3>
-        <div className="border-t border-border-gray">
+        <div className="border-t border-glass-border-dark">
           {faqKeys.map((faq) => (
             <FAQItem key={faq.q} questionKey={faq.q} answerKey={faq.a} />
           ))}
@@ -57,7 +57,7 @@ export default function Footer() {
       {/* Contact & company info — H25: previously empty footer hurt trust.
           Brazilian customers expect a CNPJ + contact email visible to take
           a SaaS purchase seriously. */}
-      <div className="border-t border-border-gray">
+      <div className="border-t border-glass-border-dark">
         <div className="max-w-3xl mx-auto px-6 sm:px-16 py-12 grid grid-cols-1 sm:grid-cols-3 gap-8">
           <div>
             <h4 className="text-xs font-semibold tracking-wider uppercase text-deep-charcoal mb-3">
@@ -102,7 +102,7 @@ export default function Footer() {
       </div>
 
       {/* Bottom bar */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-6 sm:px-16 py-8 border-t border-border-gray">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-6 sm:px-16 py-8 border-t border-glass-border-dark">
         <div className="font-serif text-xl font-semibold text-deep-charcoal">
           seatable<span className="text-burgundy">.</span>
         </div>

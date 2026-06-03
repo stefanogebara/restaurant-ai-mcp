@@ -76,7 +76,7 @@ export default function InlineDemoSection() {
   };
 
   return (
-    <section ref={sectionRef} className="py-24 px-6 sm:px-16 bg-soft-gray border-t border-border-gray" id="try-demo" data-section="inline-demo">
+    <section ref={sectionRef} className="py-24 px-6 sm:px-16 border-t border-glass-border-dark" id="try-demo" data-section="inline-demo">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="text-center mb-10">
@@ -101,7 +101,7 @@ export default function InlineDemoSection() {
               className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all border ${
                 activePreset === p.id
                   ? 'bg-deep-charcoal text-white border-deep-charcoal'
-                  : 'bg-white text-warm-stone border-border-gray hover:border-burgundy/40 hover:text-deep-charcoal'
+                  : 'bg-white text-warm-stone border-glass-border-dark hover:border-burgundy/40 hover:text-deep-charcoal'
               }`}
             >
               <span>{p.flag}</span>
@@ -116,10 +116,10 @@ export default function InlineDemoSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-60px' }}
           transition={{ duration: 0.5 }}
-          className="rounded-2xl overflow-hidden border border-border-gray bg-warm-white"
+          className="glass-panel overflow-hidden"
         >
           {/* Browser top bar */}
-          <div className="flex items-center gap-3 px-4 py-3 bg-[#F3F4F6] border-b border-border-gray">
+          <div className="flex items-center gap-3 px-4 py-3 bg-[#F3F4F6] border-b border-glass-border-dark">
             {/* Traffic lights */}
             <div className="flex items-center gap-1.5">
               <div className="w-3 h-3 rounded-full bg-[#FF5F57]" />
@@ -128,7 +128,7 @@ export default function InlineDemoSection() {
             </div>
             {/* URL bar */}
             <div className="flex-1 max-w-[320px] mx-auto">
-              <div className="flex items-center gap-2 bg-white border border-border-gray rounded-md px-3 py-1.5 text-xs text-warm-stone">
+              <div className="flex items-center gap-2 bg-white border border-glass-border-dark rounded-md px-3 py-1.5 text-xs text-warm-stone">
                 <svg className="w-3 h-3 text-[#28C840] flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                   <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
                 </svg>

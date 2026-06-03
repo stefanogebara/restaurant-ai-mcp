@@ -53,7 +53,7 @@ export default function LandingNav() {
   }, [isMobileMenuOpen, closeMobileMenu]);
 
   return (
-    <nav className="relative sticky top-0 z-50 flex items-center justify-between px-6 sm:px-16 py-6 bg-[rgba(250,250,249,0.8)] backdrop-blur-xl border-b border-border-gray">
+    <nav className="relative sticky top-0 z-50 flex items-center justify-between px-6 sm:px-16 py-6 bg-glass-panel backdrop-blur-glass-nav border-b border-glass-border-dark">
       {/* Logo */}
       <Link
         to="/"
@@ -120,7 +120,7 @@ export default function LandingNav() {
       {/* Mobile Menu Dropdown */}
       <div
         ref={menuRef}
-        className={`md:hidden absolute top-full left-0 right-0 bg-white border-b border-border-gray shadow-lg px-6 py-6 space-y-1 transition-all duration-200 ease-out origin-top ${
+        className={`md:hidden absolute top-full left-0 right-0 bg-glass-modal backdrop-blur-glass-modal border-b border-glass-border-dark shadow-glass-modal px-6 py-6 space-y-1 transition-all duration-200 ease-out origin-top ${
           isMobileMenuOpen
             ? 'opacity-100 scale-y-100 translate-y-0'
             : 'opacity-0 scale-y-95 -translate-y-2 pointer-events-none'

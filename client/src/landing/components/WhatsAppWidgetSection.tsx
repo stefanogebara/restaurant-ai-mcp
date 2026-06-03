@@ -29,7 +29,7 @@ export default function WhatsAppWidgetSection() {
   const displayPhone = formatDisplayPhone(SEATABLE_WHATSAPP_NUMBER);
 
   return (
-    <section className="py-24 px-6 bg-soft-gray border-t border-border-gray">
+    <section className="py-24 px-6 border-t border-glass-border-dark">
       <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
         {/* Left — Phone mockup */}
         <motion.div

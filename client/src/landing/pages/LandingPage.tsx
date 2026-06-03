@@ -72,7 +72,7 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-warm-white text-deep-charcoal font-sans selection:bg-burgundy selection:text-white overflow-x-hidden">
+    <div className="min-h-screen text-deep-charcoal font-sans selection:bg-burgundy selection:text-white overflow-x-hidden">
       <LandingNav />
 
       {/* 1. Hero — pain-first headline + split-screen WhatsApp/Dashboard animation */}

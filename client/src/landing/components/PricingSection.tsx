@@ -107,7 +107,7 @@ export default function PricingSection() {
   };
 
   return (
-    <section id="pricing" className="py-24 px-6 sm:px-16 bg-warm-white border-t border-border-gray">
+    <section id="pricing" className="py-24 px-6 sm:px-16">
       <div className="max-w-[1100px] mx-auto">
         {/* Header */}
         <div className="text-center mb-16">
@@ -127,13 +127,13 @@ export default function PricingSection() {
         </p>
 
         {/* Pricing Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-[2px] bg-border-gray rounded-[20px] overflow-hidden">
+        <div className="glass-panel grid grid-cols-1 md:grid-cols-3 gap-[1px] bg-glass-border-dark overflow-hidden">
           {PRICING_TIERS.map((tier, index) => {
             const isFeatured = !!tier.highlighted;
             const tierKey = TIER_KEYS[tier.name] || tier.name.toLowerCase();
             const featureCount = FEATURE_COUNTS[tierKey] || tier.features.length;
             return (
-              <div key={index} className={`relative px-8 sm:px-9 py-12 ${isFeatured ? 'bg-deep-charcoal' : 'bg-warm-white'}`}>
+              <div key={index} className={`relative px-8 sm:px-9 py-12 ${isFeatured ? 'bg-deep-charcoal' : 'bg-white/45 backdrop-blur-[18px]'}`}>
                 {/* Plan label */}
                 <div className={`text-xs font-semibold tracking-[1.5px] uppercase mb-2 ${isFeatured ? 'text-rose-400' : 'text-warm-stone'}`}>
                   {t(`landing.pricing.${tierKey}.name`, tier.name)}
@@ -158,7 +158,7 @@ export default function PricingSection() {
                     <li
                       key={i}
                       className={`text-sm py-3 border-b flex items-center gap-2.5 ${
-                        isFeatured ? 'text-stone-300 border-charcoal-dark' : 'text-deep-charcoal border-border-gray'
+                        isFeatured ? 'text-stone-300 border-charcoal-dark' : 'text-deep-charcoal border-glass-border-dark'
                       }`}
                     >
                       <span className="w-[5px] h-[5px] rounded-full bg-burgundy flex-shrink-0" />
@@ -209,7 +209,7 @@ export default function PricingSection() {
         </div>
 
         {/* Metered Billing Disclosure */}
-        <div className="mt-10 p-5 bg-soft-gray rounded-2xl border border-border-gray text-center">
+        <div className="mt-10 p-5 glass-card text-center">
           <p className="text-xs text-stone-gray leading-relaxed">
             <span className="font-semibold text-deep-charcoal">{t('landing.pricing.usageBased')}</span>{' '}
             {t('landing.pricing.usageDetail', { currency })}

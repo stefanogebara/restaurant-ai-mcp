@@ -13,7 +13,7 @@ export default function PresetDemoSection() {
   const { t } = useTranslation();
 
   return (
-    <section id="try-demo" data-section="preset-demo" className="py-24 px-6 sm:px-16 bg-warm-white">
+    <section id="try-demo" data-section="preset-demo" className="py-24 px-6 sm:px-16">
       <div className="max-w-5xl mx-auto text-center">
         <p className="text-xs font-semibold tracking-[2px] uppercase text-burgundy mb-3">
           {t('landing.tryDemo.label', 'Try it right now')}
@@ -46,11 +46,11 @@ export default function PresetDemoSection() {
                   trackDemoFunnel({ step: 'demo_started', preset: p.id });
                 }}
                 aria-label={t('landing.tryDemo.cardAria', { name: p.name, defaultValue: `Explore ${p.name} demo` })}
-                className={`group relative flex flex-col items-center gap-3 p-8 bg-warm-white rounded-2xl border
+                className={`group relative flex flex-col items-center gap-3 p-8 bg-glass-card backdrop-blur-glass-card rounded-2xl border
                   hover:border-burgundy hover:-translate-y-1
                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-burgundy focus-visible:ring-offset-2
                   transition-all duration-200 ${
-                    isFeatured ? 'border-burgundy ring-1 ring-burgundy/20' : 'border-border-gray'
+                    isFeatured ? 'border-burgundy ring-1 ring-burgundy/20' : 'border-glass-border-dark'
                   }`}
               >
                 <span className="text-4xl">{p.flag}</span>
