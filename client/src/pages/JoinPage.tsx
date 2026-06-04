@@ -104,7 +104,7 @@ export default function JoinPage() {
       ? t('join.activating', 'Activating your account…')
       : t('join.loading', 'Loading…');
     return (
-      <div className="min-h-screen bg-warm-white flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div aria-hidden="true" className="animate-spin rounded-full h-8 w-8 border-2 border-border-gray border-t-burgundy mx-auto mb-3" />
           <p className="text-sm text-stone-gray" role="status">{msg}</p>
@@ -116,8 +116,8 @@ export default function JoinPage() {
   // ─── Done ───────────────────────────────────────────────────────────────────
   if (acceptMutation.isSuccess) {
     return (
-      <div className="min-h-screen bg-warm-white flex items-center justify-center p-6">
-        <div className="bg-white border border-border-gray rounded-2xl p-8 max-w-sm text-center shadow-sm">
+      <div className="min-h-screen flex items-center justify-center p-6">
+        <div className="glass-modal p-8 max-w-sm text-center">
           <h2 className="text-lg font-bold text-deep-charcoal mb-2">{t('join.success', "You're in!")}</h2>
           <p className="text-sm text-stone-gray">{t('join.redirecting', 'Redirecting to your dashboard…')}</p>
         </div>
@@ -133,8 +133,8 @@ export default function JoinPage() {
       ? (acceptMutation.error instanceof Error ? acceptMutation.error.message : t('join.acceptFailed', 'Failed to accept invitation'))
       : '';
     return (
-      <div className="min-h-screen bg-warm-white flex items-center justify-center p-6">
-        <div className="bg-white border border-border-gray rounded-2xl p-8 max-w-sm text-center shadow-sm">
+      <div className="min-h-screen flex items-center justify-center p-6">
+        <div className="glass-modal p-8 max-w-sm text-center">
           <h2 className="text-lg font-bold text-deep-charcoal mb-2">
             {isExpired ? t('join.expiredTitle', 'Invitation expired') : t('join.invalidTitle', 'Invalid invitation')}
           </h2>
@@ -150,7 +150,7 @@ export default function JoinPage() {
 
   // ─── Valid, user not logged in ──────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-warm-white flex items-center justify-center p-6">
+    <div className="min-h-screen flex items-center justify-center p-6">
       <div className="bg-white border border-border-gray rounded-2xl p-8 max-w-sm text-center shadow-sm">
         <h2 className="text-xl font-bold text-deep-charcoal mb-2">{t('join.invitedTitle', "You're invited!")}</h2>
         <p className="text-sm text-stone-gray mb-1">

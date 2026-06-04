@@ -130,7 +130,7 @@ function PaymentForm({
           type="button"
           onClick={onCancel}
           disabled={isProcessing}
-          className="flex-1 py-3 border border-[#E5E7EB] bg-white text-[#706A65] font-medium rounded-full text-sm hover:border-[#706A65] transition-colors disabled:opacity-50"
+          className="flex-1 py-3 border border-glass-border-dark bg-white/60 hover:bg-white/85 text-[#706A65] font-medium rounded-full text-sm hover:border-[#706A65] transition-colors disabled:opacity-50"
         >
           {t('eventBooking.back', 'Back')}
         </button>
@@ -263,7 +263,7 @@ export default function EventBookingPage() {
   if (step === 'confirmed') {
     return (
       <div className="min-h-screen bg-[#FAFAF9] flex items-center justify-center px-4">
-        <div className="max-w-md w-full bg-white border border-[#E5E7EB] rounded-2xl p-6 text-center">
+        <div className="max-w-md w-full glass-modal p-6 text-center">
           <div className="w-14 h-14 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4">
             <svg className="w-7 h-7 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -296,9 +296,9 @@ export default function EventBookingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAFAF9]">
+    <div className="min-h-screen">
       {/* Header */}
-      <header className="bg-white border-b border-[#E5E7EB] px-4 py-3">
+      <header className="bg-glass-panel backdrop-blur-glass-nav border-b border-glass-border-dark px-4 py-3">
         <div className="max-w-lg mx-auto flex items-center justify-between">
           <div className="font-serif text-lg text-[#1C1917]">
             seatable<span className="text-[#9F1239]">.</span>
@@ -318,7 +318,7 @@ export default function EventBookingPage() {
         )}
 
         {/* Event details card */}
-        <div className="bg-white border border-[#E5E7EB] rounded-xl p-5 mb-5">
+        <div className="glass-panel p-5 mb-5">
           <h1 className="text-xl font-bold text-[#1C1917] mb-2">{event.title}</h1>
 
           {event.description && (
@@ -368,7 +368,7 @@ export default function EventBookingPage() {
 
         {/* Booking form or payment */}
         {isUnavailable ? (
-          <div className="bg-white border border-[#E5E7EB] rounded-xl p-5 text-center">
+          <div className="glass-card p-5 text-center">
             <p className="text-sm font-medium text-[#1C1917]">
               {isPast
                 ? t('eventBooking.eventPast', 'This event has already taken place')
@@ -378,7 +378,7 @@ export default function EventBookingPage() {
             </p>
           </div>
         ) : step === 'details' ? (
-          <form onSubmit={handleDetailsSubmit} className="bg-white border border-[#E5E7EB] rounded-xl p-5 space-y-4">
+          <form onSubmit={handleDetailsSubmit} className="glass-panel p-5 space-y-4">
             <h2 className="text-sm font-bold text-[#1C1917]">
               {t('eventBooking.guestDetails', 'Guest Details')}
             </h2>
@@ -475,7 +475,7 @@ export default function EventBookingPage() {
             </button>
           </form>
         ) : step === 'payment' && checkoutData ? (
-          <div className="bg-white border border-[#E5E7EB] rounded-xl p-5">
+          <div className="glass-panel p-5">
             <h2 className="text-sm font-bold text-[#1C1917] mb-4">
               {t('eventBooking.payment', 'Payment')}
             </h2>

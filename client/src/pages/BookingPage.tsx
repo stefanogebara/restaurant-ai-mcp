@@ -169,7 +169,7 @@ export default function BookingPage() {
 
   if (isLoading) {
     return (
-      <div role="status" aria-label={t('common.loading', 'Loading')} className="min-h-screen bg-warm-white flex flex-col items-center justify-center gap-4">
+      <div role="status" aria-label={t('common.loading', 'Loading')} className="min-h-screen flex flex-col items-center justify-center gap-4">
         <div aria-hidden="true" className="font-serif text-2xl text-deep-charcoal opacity-50">
           seatable<span className="text-burgundy">.</span>
         </div>
@@ -180,8 +180,8 @@ export default function BookingPage() {
 
   if (isError || !restaurant) {
     return (
-      <div className="min-h-screen bg-warm-white flex flex-col items-center justify-center p-6">
-        <div className="bg-white border border-border-gray rounded-2xl p-8 max-w-md text-center">
+      <div className="min-h-screen flex flex-col items-center justify-center p-6">
+        <div className="glass-panel p-8 max-w-md text-center">
           <div className="w-16 h-16 bg-red-600/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <ThiingsIcon name="close" pxSize={32} className="text-red-600" />
           </div>
@@ -209,10 +209,10 @@ export default function BookingPage() {
   const restaurantType = t(`onboarding.restaurantTypes.${typeKey}`, restaurant.type.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()));
 
   return (
-    <div className="min-h-screen bg-warm-white">
+    <div className="min-h-screen">
       {/* Top Bar */}
       {!isEmbed && (
-        <header className="flex justify-between items-center px-6 sm:px-10 py-4 border-b border-border-gray bg-white">
+        <header className="flex justify-between items-center px-6 sm:px-10 py-4 border-b border-glass-border-dark bg-glass-panel backdrop-blur-glass-nav">
           <div className="font-serif text-lg font-semibold text-deep-charcoal">
             seatable<span className="text-burgundy">.</span>
           </div>
@@ -271,7 +271,7 @@ export default function BookingPage() {
               trackCtaClicked({ cta: 'primary', location: 'booking_page_badge' })
             );
           }}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border-gray bg-warm-white hover:bg-soft-gray transition-colors text-xs text-muted-stone hover:text-warm-stone"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-glass-border-dark bg-white/50 backdrop-blur-glass-chip hover:bg-white/80 transition-colors text-xs text-muted-stone hover:text-warm-stone"
         >
           <span className="text-burgundy font-semibold">⚡</span>
           {t('common.poweredBy')} Seatable

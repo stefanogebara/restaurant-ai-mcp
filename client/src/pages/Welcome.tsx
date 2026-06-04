@@ -120,7 +120,7 @@ export default function Welcome() {
   // Show loading while checking
   if (authLoading || checking) {
     return (
-      <div className="min-h-screen bg-warm-white flex flex-col items-center justify-center gap-4">
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
         <div className="font-serif text-2xl text-deep-charcoal opacity-50">
           seatable<span className="text-burgundy">.</span>
         </div>

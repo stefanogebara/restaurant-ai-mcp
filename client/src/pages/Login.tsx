@@ -102,7 +102,7 @@ export default function Login() {
   // While auth is resolving (e.g. returning from OAuth callback), show spinner
   if (loading) {
     return (
-      <div role="status" aria-label={t('common.loading', 'Loading')} className="min-h-screen bg-warm-white flex flex-col items-center justify-center gap-4">
+      <div role="status" aria-label={t('common.loading', 'Loading')} className="min-h-screen flex flex-col items-center justify-center gap-4">
         <div aria-hidden="true" className="font-serif text-2xl text-deep-charcoal opacity-50">
           seatable<span className="text-burgundy">.</span>
         </div>
@@ -257,7 +257,7 @@ export default function Login() {
       <LoginBrandPanel />
 
       {/* Right Panel - Login Form */}
-      <div className="w-full lg:w-1/2 bg-warm-white flex items-center justify-center px-6 py-12 relative">
+      <div className="w-full lg:w-1/2 flex items-center justify-center px-6 py-12 relative">
         {/* Back Button */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
@@ -280,7 +280,7 @@ export default function Login() {
           transition={{ duration: 0.5 }}
           className="w-full max-w-md"
         >
-          <div className="bg-white border border-border-gray rounded-2xl p-8 sm:p-10">
+          <div className="glass-panel p-8 sm:p-10">
             {/* Logo and Title */}
             <div className="text-center mb-8">
               <Link to="/" className="inline-block mb-6 lg:hidden">
@@ -441,7 +441,7 @@ export default function Login() {
                   disabled={isSigningIn}
                   className={`
                     w-full flex items-center justify-center gap-3 px-6 py-4
-                    bg-white border border-border-gray hover:border-stone-300 hover:bg-warm-white
+                    bg-white/65 backdrop-blur-glass-card border border-glass-border-dark hover:border-stone-300 hover:bg-white/85
                     text-deep-charcoal font-medium text-[15px] rounded-xl
                     transition-all duration-300
                     ${isSigningIn ? 'opacity-70 cursor-not-allowed' : 'hover:border-stone-300'}

@@ -411,7 +411,7 @@ export default function Onboarding() {
   const progressPercent = (currentStep / TOTAL_STEPS) * 100;
 
   return (
-    <div className="min-h-screen bg-warm-white flex flex-col">
+    <div className="min-h-screen flex flex-col">
       {/* Subscribe redirect banner */}
       {showSubscribeBanner && (
         <div className="bg-burgundy text-white text-[13px] text-center py-2.5 px-4">
@@ -419,7 +419,7 @@ export default function Onboarding() {
         </div>
       )}
       {/* Top Bar */}
-      <header className="flex items-center justify-between px-6 sm:px-12 py-5 border-b border-border-gray bg-white">
+      <header className="flex items-center justify-between px-6 sm:px-12 py-5 border-b border-glass-border-dark bg-glass-panel backdrop-blur-glass-nav">
         <div className="font-serif text-xl font-semibold text-deep-charcoal">
           seatable<span className="text-burgundy">.</span>
         </div>
@@ -586,7 +586,7 @@ export default function Onboarding() {
                         setSubmitErrorJumpStep(null);
                         goToStep(stepToVisit);
                       }}
-                      className="px-4 py-2 bg-white border border-red-300 text-red-700 text-sm font-medium rounded-lg hover:bg-red-50"
+                      className="px-4 py-2 bg-white/70 backdrop-blur-glass-chip border border-red-300 text-red-700 text-sm font-medium rounded-lg hover:bg-red-50"
                     >
                       {t('onboarding.fixOnStep', 'Fix on step {{step}}', { step: submitErrorJumpStep })}
                     </button>

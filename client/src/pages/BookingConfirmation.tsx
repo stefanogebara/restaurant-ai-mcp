@@ -147,7 +147,7 @@ export default function BookingConfirmation() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-warm-white flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div role="status" className="flex items-center gap-3">
           <div aria-hidden="true" className="animate-spin rounded-full h-5 w-5 border-2 border-border-gray border-t-burgundy" />
           <span className="text-sm text-warm-stone">{t('reservations.loadingReservation')}</span>
@@ -158,8 +158,8 @@ export default function BookingConfirmation() {
 
   if (!reservation) {
     return (
-      <div className="min-h-screen bg-warm-white flex flex-col">
-        <header className="flex justify-between items-center px-6 sm:px-10 py-4 border-b border-border-gray bg-white">
+      <div className="min-h-screen flex flex-col">
+        <header className="flex justify-between items-center px-6 sm:px-10 py-4 border-b border-glass-border-dark bg-glass-panel backdrop-blur-glass-nav">
           <div className="font-serif text-lg font-semibold text-deep-charcoal">
             seatable<span className="text-burgundy">.</span>
           </div>
@@ -192,7 +192,7 @@ export default function BookingConfirmation() {
   }
 
   return (
-    <div className="min-h-screen bg-warm-white flex flex-col">
+    <div className="min-h-screen flex flex-col">
       {/* Top Bar */}
       <header className="flex justify-between items-center px-6 sm:px-10 py-4 border-b border-border-gray bg-white">
         <div className="font-serif text-lg font-semibold text-deep-charcoal">
@@ -221,7 +221,7 @@ export default function BookingConfirmation() {
           </p>
 
           {/* Details Card */}
-          <div className="bg-white border border-border-gray rounded-2xl p-8 text-left mb-6">
+          <div className="glass-panel p-8 text-left mb-6">
             {/* Restaurant Row */}
             <div className="flex items-center gap-4 pb-5 mb-5 border-b border-soft-gray">
               <div className="w-14 h-14 rounded-[14px] bg-gradient-to-br from-burgundy/80 via-burgundy/50 to-stone-700 flex-shrink-0" />
@@ -311,7 +311,7 @@ export default function BookingConfirmation() {
           {/* What's next — answers the questions Patricia closed the tab
               wondering: where is it, what reminders will I get, how do I
               cancel? Previously this page was a receipt only. */}
-          <div className="bg-white border border-border-gray rounded-2xl p-6 text-left mb-6 space-y-3">
+          <div className="glass-card p-6 text-left mb-6 space-y-3">
             <h2 className="text-sm font-semibold text-deep-charcoal mb-2">
               {t('reservations.confirmation.whatsNext', "What's next?")}
             </h2>
@@ -380,7 +380,7 @@ export default function BookingConfirmation() {
             <button
               type="button"
               onClick={() => navigate('/customer')}
-              className="flex-1 py-3.5 border border-border-gray bg-white text-stone-gray font-medium rounded-full text-sm hover:border-muted-stone transition-colors"
+              className="flex-1 py-3.5 border border-glass-border-dark bg-white/60 hover:bg-white/85 text-stone-gray font-medium rounded-full text-sm hover:border-muted-stone transition-colors"
             >
               {t('reservations.manageReservation')}
             </button>
@@ -409,7 +409,7 @@ export default function BookingConfirmation() {
       <div className="mt-8 pb-8 flex justify-center">
         <a
           href="/?ref=badge"
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border-gray bg-warm-white hover:bg-soft-gray transition-colors text-xs text-muted-stone hover:text-warm-stone"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-glass-border-dark bg-white/50 backdrop-blur-glass-chip hover:bg-white/80 transition-colors text-xs text-muted-stone hover:text-warm-stone"
         >
           <span className="text-burgundy font-semibold">{'\u26A1'}</span>
           {t('common.poweredBy')} Seatable

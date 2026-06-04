@@ -153,9 +153,9 @@ export default function CustomerPortal() {
   ));
 
   return (
-    <div className="min-h-screen bg-warm-white flex flex-col">
+    <div className="min-h-screen flex flex-col">
       {/* Top Bar */}
-      <header className="flex justify-between items-center px-6 sm:px-10 py-4 border-b border-border-gray bg-white">
+      <header className="flex justify-between items-center px-6 sm:px-10 py-4 border-b border-glass-border-dark bg-glass-panel backdrop-blur-glass-nav">
         <div className="min-w-0 flex-1">
           {reservation?.restaurant_name ? (
             <>
@@ -186,7 +186,7 @@ export default function CustomerPortal() {
           {!reservation ? (
             <>
               {/* Lookup Card */}
-              <div className="bg-white border border-border-gray rounded-2xl p-8 mb-6">
+              <div className="glass-panel p-8 mb-6">
                 <h3 className="text-[15px] font-semibold text-deep-charcoal mb-5">{t('reservations.findReservation')}</h3>
 
                 {/* Phone Input */}
@@ -199,7 +199,7 @@ export default function CustomerPortal() {
                     value={phone}
                     onChange={(e) => { setPhone(e.target.value.replace(/[^\d+ ]/g, '')); setLookupMethod('phone'); }}
                     placeholder="+XX XXXXXXXXX"
-                    className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-stone-300 focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-burgundy/[6%]"
+                    className="w-full px-4 py-3 border border-glass-border-dark rounded-[10px] text-sm bg-white/60 text-deep-charcoal placeholder:text-stone-300 focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-burgundy/[6%]"
                     onKeyDown={(e) => e.key === 'Enter' && lookupMutation.mutate(undefined)}
                   />
                 </div>
@@ -219,7 +219,7 @@ export default function CustomerPortal() {
                     value={reservationId}
                     onChange={(e) => { setReservationId(e.target.value); setLookupMethod('id'); }}
                     placeholder={t('reservations.confirmationIdPlaceholder', 'e.g. CEL-0218-A7K3')}
-                    className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-stone-300 focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-burgundy/[6%]"
+                    className="w-full px-4 py-3 border border-glass-border-dark rounded-[10px] text-sm bg-white/60 text-deep-charcoal placeholder:text-stone-300 focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-burgundy/[6%]"
                     onKeyDown={(e) => e.key === 'Enter' && lookupMutation.mutate(undefined)}
                   />
                 </div>
@@ -243,7 +243,7 @@ export default function CustomerPortal() {
           ) : (
             <div className="space-y-4">
               {/* Result Card */}
-              <div className="bg-white border border-border-gray rounded-2xl overflow-hidden">
+              <div className="glass-panel overflow-hidden">
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-5 border-b border-soft-gray">
                   <span className="text-[15px] font-semibold">{t('reservations.yourReservation')}</span>
@@ -312,22 +312,22 @@ export default function CustomerPortal() {
                     <div className="space-y-4">
                       <div>
                         <label className="block text-[13px] font-medium text-stone-gray mb-1.5">{t('reservations.date')}</label>
-                        <input type="date" value={modifiedData.date} onChange={(e) => setModifiedData({ ...modifiedData, date: e.target.value })} className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-burgundy/[6%]" />
+                        <input type="date" value={modifiedData.date} onChange={(e) => setModifiedData({ ...modifiedData, date: e.target.value })} className="w-full px-4 py-3 border border-glass-border-dark rounded-[10px] text-sm bg-white/60 text-deep-charcoal focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-burgundy/[6%]" />
                       </div>
                       <div>
                         <label className="block text-[13px] font-medium text-stone-gray mb-1.5">{t('reservations.time')}</label>
-                        <input type="time" value={modifiedData.time} onChange={(e) => setModifiedData({ ...modifiedData, time: e.target.value })} className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-burgundy/[6%]" />
+                        <input type="time" value={modifiedData.time} onChange={(e) => setModifiedData({ ...modifiedData, time: e.target.value })} className="w-full px-4 py-3 border border-glass-border-dark rounded-[10px] text-sm bg-white/60 text-deep-charcoal focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-burgundy/[6%]" />
                       </div>
                       <div>
                         <label className="block text-[13px] font-medium text-stone-gray mb-1.5">{t('reservations.partySize')}</label>
-                        <input type="number" min="1" max="20" value={modifiedData.party_size} onChange={(e) => setModifiedData({ ...modifiedData, party_size: parseInt(e.target.value) })} className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-burgundy/[6%]" />
+                        <input type="number" min="1" max="20" value={modifiedData.party_size} onChange={(e) => setModifiedData({ ...modifiedData, party_size: parseInt(e.target.value) })} className="w-full px-4 py-3 border border-glass-border-dark rounded-[10px] text-sm bg-white/60 text-deep-charcoal focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-burgundy/[6%]" />
                       </div>
                       <div>
                         <label className="block text-[13px] font-medium text-stone-gray mb-1.5">{t('reservations.specialRequests')}</label>
-                        <textarea value={modifiedData.special_requests || ''} onChange={(e) => setModifiedData({ ...modifiedData, special_requests: e.target.value })} rows={3} placeholder={t('booking.specialRequestsPlaceholder')} className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-stone-300 focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-burgundy/[6%] resize-none" />
+                        <textarea value={modifiedData.special_requests || ''} onChange={(e) => setModifiedData({ ...modifiedData, special_requests: e.target.value })} rows={3} placeholder={t('booking.specialRequestsPlaceholder')} className="w-full px-4 py-3 border border-glass-border-dark rounded-[10px] text-sm bg-white/60 text-deep-charcoal placeholder:text-stone-300 focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-burgundy/[6%] resize-none" />
                       </div>
                       <div className="flex gap-2.5 pt-2">
-                        <button type="button" onClick={() => { setIsModifying(false); setModifiedData(reservation); }} className="flex-1 py-3 border border-border-gray bg-white text-stone-gray font-medium rounded-[10px] text-[13px] hover:border-muted-stone transition-colors">{t('common.cancel')}</button>
+                        <button type="button" onClick={() => { setIsModifying(false); setModifiedData(reservation); }} className="flex-1 py-3 border border-glass-border-dark bg-white/60 hover:bg-white/85 text-stone-gray font-medium rounded-[10px] text-[13px] hover:border-muted-stone transition-colors">{t('common.cancel')}</button>
                         <button type="button" onClick={() => modifyMutation.mutate()} disabled={!hasChanges || modifyMutation.isPending} className="flex-1 py-3 bg-burgundy text-white font-semibold rounded-[10px] text-[13px] hover:bg-burgundy-dark transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
                           {modifyMutation.isPending ? (<><div aria-hidden="true" className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />{t('reservations.saving')}</>) : t('reservations.saveChanges')}
                         </button>
@@ -339,7 +339,7 @@ export default function CustomerPortal() {
                 {/* Actions */}
                 {!isModifying && reservation.status !== 'Cancelled' && (
                   <div className="flex gap-2.5 px-6 py-5 border-t border-soft-gray">
-                    <button type="button" onClick={() => setIsModifying(true)} className="flex-1 py-3 border border-border-gray bg-white text-stone-gray font-medium rounded-[10px] text-[13px] hover:border-muted-stone transition-colors">
+                    <button type="button" onClick={() => setIsModifying(true)} className="flex-1 py-3 border border-glass-border-dark bg-white/60 hover:bg-white/85 text-stone-gray font-medium rounded-[10px] text-[13px] hover:border-muted-stone transition-colors">
                       {t('reservations.editReservation')}
                     </button>
                     {showCancelConfirm ? (
@@ -347,7 +347,7 @@ export default function CustomerPortal() {
                         <button type="button" onClick={handleCancel} disabled={cancelMutation.isPending} className="flex-1 py-3 border border-red-600/20 bg-red-600 text-white font-medium rounded-[10px] text-[13px] hover:bg-red-700 transition-colors disabled:opacity-50">
                           {cancelMutation.isPending ? t('common.cancelling', 'Cancelling...') : t('reservations.yesCancelReservation')}
                         </button>
-                        <button type="button" onClick={() => setShowCancelConfirm(false)} className="flex-1 py-3 border border-border-gray bg-white text-stone-gray font-medium rounded-[10px] text-[13px] hover:border-muted-stone transition-colors">
+                        <button type="button" onClick={() => setShowCancelConfirm(false)} className="flex-1 py-3 border border-glass-border-dark bg-white/60 hover:bg-white/85 text-stone-gray font-medium rounded-[10px] text-[13px] hover:border-muted-stone transition-colors">
                           {t('reservations.keepReservation')}
                         </button>
                       </div>
