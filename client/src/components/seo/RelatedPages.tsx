@@ -1,5 +1,5 @@
-/**
- * RelatedPages — internal linking for SEO pages.
+﻿/**
+ * RelatedPages â€” internal linking for SEO pages.
  * Shows "Veja tambem" cards linking to related cuisine/city pages.
  */
 
@@ -16,7 +16,7 @@ function RelatedCard({ page }: { readonly page: SeoPageData }) {
   return (
     <Link
       to={`/para/${page.slug}`}
-      className="group block border border-border-gray rounded-2xl p-5 bg-white hover:border-burgundy transition-colors"
+      className="group block border border-glass-border-dark rounded-2xl p-5 bg-white hover:border-burgundy transition-colors"
     >
       <p className="text-xs font-medium text-burgundy mb-1">
         {page.city}, {page.state}
@@ -41,7 +41,7 @@ export default function RelatedPages({ currentSlug }: RelatedPagesProps) {
   if (related.length === 0) return null;
 
   return (
-    <section className="py-16 border-t border-border-gray">
+    <section className="py-16 border-t border-glass-border-dark">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <h2 className="font-serif text-2xl sm:text-3xl font-bold text-deep-charcoal mb-8">
           Veja tamb&eacute;m

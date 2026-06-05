@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import { POLICY_KEYS, policyValueForStorage, detectPolicyKey } from '../../utils/cancellationPolicy';
@@ -17,7 +17,7 @@ export default function ReservationSettingsPanel({ advanceBookingDays, bufferTim
   const [showSettings, setShowSettings] = useState(false);
 
   return (
-    <div className="border border-border-gray rounded-xl overflow-hidden">
+    <div className="border border-glass-border-dark rounded-xl overflow-hidden">
       <button
         onClick={() => setShowSettings(!showSettings)}
         aria-expanded={showSettings}
@@ -36,13 +36,13 @@ export default function ReservationSettingsPanel({ advanceBookingDays, bufferTim
       </button>
 
       {showSettings && (
-        <div className="px-5 py-4 space-y-4 bg-white">
+        <div className="px-5 py-4 space-y-4">
           <div>
             <label htmlFor="advance_booking_days" className="block text-sm font-semibold text-deep-charcoal">
               {t('onboarding.advanceBookingLabel')}
             </label>
-            {/* The previous ⓘ icon used the HTML `title` attribute, which only
-                appears on mouse hover. Onboarding is mostly run on phones —
+            {/* The previous â“˜ icon used the HTML `title` attribute, which only
+                appears on mouse hover. Onboarding is mostly run on phones â€”
                 Maria never saw any of these hints. Inline muted text works
                 everywhere. */}
             <p className="text-xs text-warm-stone mb-2 mt-0.5">{t('onboarding.advanceBookingHint')}</p>
@@ -50,7 +50,7 @@ export default function ReservationSettingsPanel({ advanceBookingDays, bufferTim
               id="advance_booking_days"
               value={advanceBookingDays}
               onChange={(e) => onUpdate('advance_booking_days', parseInt(e.target.value, 10))}
-              className="w-full px-4 py-3 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-burgundy"
+              className="w-full px-4 py-3 bg-soft-gray border border-glass-border-dark rounded-xl text-deep-charcoal appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-burgundy"
             >
               <option value={7}>{t('onboarding.days7')}</option>
               <option value={14}>{t('onboarding.days14')}</option>
@@ -69,7 +69,7 @@ export default function ReservationSettingsPanel({ advanceBookingDays, bufferTim
               id="buffer_time"
               value={bufferTime}
               onChange={(e) => onUpdate('buffer_time', parseInt(e.target.value, 10))}
-              className="w-full px-4 py-3 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-burgundy"
+              className="w-full px-4 py-3 bg-soft-gray border border-glass-border-dark rounded-xl text-deep-charcoal appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-burgundy"
             >
               <option value={0}>{t('onboarding.buffer0')}</option>
               <option value={15}>{t('onboarding.buffer15')}</option>
@@ -87,7 +87,7 @@ export default function ReservationSettingsPanel({ advanceBookingDays, bufferTim
               id="cancellation_policy"
               // Save a stable language-independent key (e.g. "cancellationPreset:cancelFree2h")
               // instead of the translated label. The booking page resolves the
-              // key in the customer's locale via localizeCancellationPolicy —
+              // key in the customer's locale via localizeCancellationPolicy â€”
               // so a restaurant onboarded in PT-BR shows EN customers the
               // English version automatically (and vice versa).
               value={(() => {
@@ -95,7 +95,7 @@ export default function ReservationSettingsPanel({ advanceBookingDays, bufferTim
                 return detected ? policyValueForStorage(detected) : cancellationPolicy;
               })()}
               onChange={(e) => onUpdate('cancellation_policy', e.target.value)}
-              className="w-full px-4 py-3 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-burgundy"
+              className="w-full px-4 py-3 bg-soft-gray border border-glass-border-dark rounded-xl text-deep-charcoal appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-burgundy"
             >
               {POLICY_KEYS.map((key) => (
                 <option key={key} value={policyValueForStorage(key)}>{t(`onboarding.${key}`)}</option>

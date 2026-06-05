@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Step 1: Welcome & Restaurant Info - Modern Elegant Design
  *
  * Collects basic restaurant information:
@@ -117,7 +117,7 @@ export default function Step1Welcome({ data, updateData, onNext, isDemoLoading }
           onFocus={() => setErrors((prev) => ({ ...prev, restaurant_name: '' }))}
           onBlur={(e) => { if (!e.target.value.trim()) setErrors((prev) => ({ ...prev, restaurant_name: t('onboarding.restaurantNameRequired') })); }}
           placeholder={t('onboarding.restaurantNamePlaceholder')}
-          className="w-full px-4 py-3 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent transition-all"
+          className="w-full px-4 py-3 bg-soft-gray border border-glass-border-dark rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent transition-all"
         />
         {errors.restaurant_name && (
           <p className="mt-1 text-sm text-burgundy">{errors.restaurant_name}</p>
@@ -133,7 +133,7 @@ export default function Step1Welcome({ data, updateData, onNext, isDemoLoading }
         </label>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           {RESTAURANT_TYPES.map(({ value, label }) => {
-            // i18n key may not exist for every type yet — fall back to empty,
+            // i18n key may not exist for every type yet â€” fall back to empty,
             // and the example block hides itself when there's nothing to show.
             const example = t(`onboarding.restaurantTypeExamples.${value}`, { defaultValue: '' });
             return (
@@ -145,7 +145,7 @@ export default function Step1Welcome({ data, updateData, onNext, isDemoLoading }
                   p-4 rounded-2xl border-2 transition-all duration-200 text-left font-semibold text-sm
                   ${data.restaurant_type === value
                     ? 'border-burgundy bg-burgundy/10 text-burgundy'
-                    : 'border-border-gray bg-white text-stone-gray hover:border-burgundy/50 hover:bg-warm-white'
+                    : 'border-glass-border-dark bg-white/60 backdrop-blur-glass-chip text-stone-gray hover:border-burgundy/50 hover:bg-white/85'
                   }
                 `}
               >

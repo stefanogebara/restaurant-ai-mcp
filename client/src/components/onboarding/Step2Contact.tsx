@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Step 2: Contact & Business Hours - Modern Elegant Design
  *
  * Collects contact information and operating hours:
@@ -22,21 +22,21 @@ import ThiingsIcon from '../common/ThiingsIcon';
 const SERVICE_PRESETS = {
   breakfast_lunch: {
     labelKey: 'onboarding.serviceBreakfastLunch',
-    icon: '🌅',
+    icon: 'ðŸŒ…',
     descKey: 'onboarding.serviceBreakfastLunchDesc',
     defaultHours: { open: '07:00', close: '15:00' },
     periods: [{ open: '07:00', close: '15:00' }]
   },
   lunch_only: {
     labelKey: 'onboarding.serviceLunchOnly',
-    icon: '☀️',
+    icon: 'â˜€ï¸',
     descKey: 'onboarding.serviceLunchOnlyDesc',
     defaultHours: { open: '11:30', close: '15:30' },
     periods: [{ open: '11:30', close: '15:30' }]
   },
   lunch_dinner: {
     labelKey: 'onboarding.serviceLunchDinner',
-    icon: '🍽️',
+    icon: 'ðŸ½ï¸',
     descKey: 'onboarding.serviceLunchDinnerDesc',
     defaultHours: { open: '12:00', close: '23:00' },
     periods: [
@@ -46,21 +46,21 @@ const SERVICE_PRESETS = {
   },
   dinner_only: {
     labelKey: 'onboarding.serviceDinnerOnly',
-    icon: '🌙',
+    icon: 'ðŸŒ™',
     descKey: 'onboarding.serviceDinnerOnlyDesc',
     defaultHours: { open: '18:00', close: '23:00' },
     periods: [{ open: '18:00', close: '23:00' }]
   },
   all_day: {
     labelKey: 'onboarding.serviceAllDay',
-    icon: '🕐',
+    icon: 'ðŸ•',
     descKey: 'onboarding.serviceAllDayDesc',
     defaultHours: { open: '08:00', close: '23:00' },
     periods: [{ open: '08:00', close: '23:00' }]
   },
   custom: {
     labelKey: 'onboarding.serviceCustom',
-    icon: '⚙️',
+    icon: 'âš™ï¸',
     descKey: 'onboarding.serviceCustomDesc',
     defaultHours: { open: '12:00', close: '22:00' },
     periods: [{ open: '12:00', close: '22:00' }]
@@ -85,7 +85,7 @@ const DAY_KEYS: Record<string, string> = {
 // Country-localised TLD for placeholder hints. The previous
 // `t('onboarding.emailPlaceholder')` resolved to `contato@restaurante.com.br`
 // regardless of selected country, so an Italian/Spanish/French signup still
-// saw a `.com.br` ghost — caught in 2026-05-17 E2E audit. We compute the
+// saw a `.com.br` ghost â€” caught in 2026-05-17 E2E audit. We compute the
 // placeholder from the selected country code at render time.
 const COUNTRY_TLD: Record<string, string> = {
   BR: '.com.br', PT: '.pt', ES: '.es', FR: '.fr', IT: '.it', DE: '.de',
@@ -99,10 +99,10 @@ const tldFor = (countryCode: string | undefined): string =>
   COUNTRY_TLD[(countryCode || '').toUpperCase()] || '.com';
 
 /**
- * A day's hours are valid when close is after open — OR close is exactly
+ * A day's hours are valid when close is after open â€” OR close is exactly
  * '00:00', which the availability backend (api/portal.js) explicitly treats
  * as midnight / end-of-day. Any *other* close <= open is a real
- * misconfiguration: general overnight hours (e.g. 18:00→02:00) are not yet
+ * misconfiguration: general overnight hours (e.g. 18:00â†’02:00) are not yet
  * supported downstream, so they must stay blocked here rather than silently
  * produce zero bookable slots.
  *
@@ -120,7 +120,7 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
   const [selectedServiceType, setSelectedServiceType] = useState<ServiceType>(DEFAULT_SERVICE_TYPE);
   // Seed from the default preset so the multi-period banner + service-periods
   // summary render correctly on first paint. (The old init effect guarded on
-  // open_time === '09:00', but the orchestrator default is '12:00' — so it
+  // open_time === '09:00', but the orchestrator default is '12:00' â€” so it
   // was dead code and this flag was wrongly stuck at false.)
   const [useMultiplePeriods, setUseMultiplePeriods] = useState(
     SERVICE_PRESETS[DEFAULT_SERVICE_TYPE].periods.length > 1
@@ -175,7 +175,7 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
   };
 
   // Full sweep of every open day's hours. hoursErrors is otherwise only
-  // populated incrementally by updateDayHours — a user who never touches a
+  // populated incrementally by updateDayHours â€” a user who never touches a
   // time field could previously Continue past invalid restored/preset hours.
   const validateAllHours = (): boolean => {
     const newHoursErrors: Record<string, string> = {};
@@ -266,7 +266,7 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
             }
           }}
           placeholder={`contact@restaurant${tldFor(data.country_code)}`}
-          className="w-full px-4 py-3 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent transition-all"
+          className="w-full px-4 py-3 bg-soft-gray border border-glass-border-dark rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent transition-all"
         />
         {errors.email && (
           <p className="mt-1 text-sm text-burgundy">{errors.email}</p>
@@ -284,7 +284,7 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
           value={data.website || ''}
           onChange={(e) => updateData({ website: e.target.value })}
           placeholder={`https://yourrestaurant${tldFor(data.country_code)}`}
-          className="w-full px-4 py-3 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent transition-all"
+          className="w-full px-4 py-3 bg-soft-gray border border-glass-border-dark rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent transition-all"
         />
       </div>
 
@@ -306,7 +306,7 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
                   p-3 rounded-2xl border-2 text-left transition-all
                   ${isSelected
                     ? 'border-burgundy bg-burgundy/5'
-                    : 'border-border-gray bg-white hover:border-burgundy/50'
+                    : 'border-glass-border-dark bg-white/60 backdrop-blur-glass-chip hover:bg-white/85 hover:border-burgundy/50'
                   }
                 `}
               >
@@ -324,7 +324,7 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
         {useMultiplePeriods && (
           <div className="mb-4 p-3 bg-burgundy/5 border border-burgundy/20 rounded-xl">
             <div className="flex items-start gap-2">
-              <span className="text-burgundy">ℹ️</span>
+              <span className="text-burgundy">â„¹ï¸</span>
               <div>
                 <p className="text-sm text-burgundy font-medium">{t('onboarding.splitServiceTitle')}</p>
                 <p className="text-xs text-stone-gray mt-1">
@@ -352,7 +352,7 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
         <div className="space-y-2 max-h-64 overflow-y-auto pr-2">
           {data.business_hours.map((day, index) => (
             <div key={day.day}>
-              <div className="flex flex-wrap items-center gap-3 p-3 bg-soft-gray rounded-xl border border-border-gray">
+              <div className="flex flex-wrap items-center gap-3 p-3 bg-soft-gray rounded-xl border border-glass-border-dark">
                 <div className="w-20 sm:w-24">
                   <span className="text-deep-charcoal font-medium text-sm">{t(DAY_KEYS[day.day] || day.day)}</span>
                 </div>
@@ -361,7 +361,7 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
                     type="checkbox"
                     checked={day.is_open}
                     onChange={(e) => updateDayHours(index, 'is_open', e.target.checked)}
-                    className="w-4 h-4 text-burgundy bg-white border-border-gray rounded focus:ring-2 focus:ring-burgundy"
+                    className="w-4 h-4 text-burgundy bg-white/60 border-glass-border-dark rounded focus:ring-2 focus:ring-burgundy"
                   />
                   <span className="ml-2 text-deep-charcoal text-sm">{t('onboarding.open')}</span>
                 </label>
@@ -371,14 +371,14 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
                       type="time"
                       value={day.open_time}
                       onChange={(e) => updateDayHours(index, 'open_time', e.target.value)}
-                      className="px-3 py-1.5 bg-white border border-border-gray rounded-xl text-deep-charcoal text-sm focus:outline-none focus:ring-2 focus:ring-burgundy"
+                      className="px-3 py-1.5 glass-panel rounded-xl text-deep-charcoal text-sm focus:outline-none focus:ring-2 focus:ring-burgundy"
                     />
                     <span className="text-stone-gray text-sm">{t('onboarding.to')}</span>
                     <input
                       type="time"
                       value={day.close_time}
                       onChange={(e) => updateDayHours(index, 'close_time', e.target.value)}
-                      className="px-3 py-1.5 bg-white border border-border-gray rounded-xl text-deep-charcoal text-sm focus:outline-none focus:ring-2 focus:ring-burgundy"
+                      className="px-3 py-1.5 glass-panel rounded-xl text-deep-charcoal text-sm focus:outline-none focus:ring-2 focus:ring-burgundy"
                     />
                   </>
                 )}
@@ -395,22 +395,22 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
             Periods (based on first open day): Lunch 12:00-15:30 / Break /
             Dinner 19:00-23:00") even though the hours editor below shows ONE
             continuous range. That disconnect made users think the break was
-            real and saved — it wasn't. Honest framing: these are example
+            real and saved â€” it wasn't. Honest framing: these are example
             split times, fine-tunable later in Settings. */}
         {selectedServiceType === 'lunch_dinner' && (
-          <div className="mt-3 p-3 bg-soft-gray rounded-xl border border-border-gray">
+          <div className="mt-3 p-3 bg-soft-gray rounded-xl border border-glass-border-dark">
             <p className="text-xs text-stone-gray mb-2">
               {t('onboarding.servicePeriodsExampleLabel', 'Typical split (you can fine-tune in Settings)')}
             </p>
             <div className="flex flex-wrap gap-2">
               <span className="px-2 py-1 text-xs bg-burgundy/10 text-burgundy border border-burgundy/20 rounded-lg font-medium">
-                {t('onboarding.lunch')}: 12:00 – 15:30
+                {t('onboarding.lunch')}: 12:00 â€“ 15:30
               </span>
-              <span className="px-2 py-1 text-xs bg-soft-gray text-muted-stone border border-border-gray rounded-xl">
-                {t('onboarding.break')}: 15:30 – 19:00
+              <span className="px-2 py-1 text-xs bg-soft-gray text-muted-stone border border-glass-border-dark rounded-xl">
+                {t('onboarding.break')}: 15:30 â€“ 19:00
               </span>
               <span className="px-2 py-1 text-xs bg-burgundy/10 text-burgundy border border-burgundy/20 rounded-lg font-medium">
-                {t('onboarding.dinner')}: 19:00 – 23:00
+                {t('onboarding.dinner')}: 19:00 â€“ 23:00
               </span>
             </div>
           </div>
@@ -426,7 +426,7 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
           id="average_dining_duration"
           value={data.average_dining_duration}
           onChange={(e) => updateData({ average_dining_duration: parseInt(e.target.value) })}
-          className="w-full px-4 py-3 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent transition-all"
+          className="w-full px-4 py-3 bg-soft-gray border border-glass-border-dark rounded-xl text-deep-charcoal appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent transition-all"
         >
           <option value={60}>{t('onboarding.duration60')}</option>
           <option value={90}>{t('onboarding.duration90')}</option>
@@ -440,7 +440,7 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
       <div className="flex justify-between pt-4">
         <button
           onClick={onBack}
-          className="px-6 py-3 bg-white hover:bg-soft-gray border border-border-gray text-deep-charcoal font-semibold rounded-xl transition-all flex items-center gap-2"
+          className="px-6 py-3 bg-white/60 backdrop-blur-glass-chip hover:bg-white/85 border border-glass-border-dark text-deep-charcoal font-semibold rounded-xl transition-all flex items-center gap-2"
         >
           <ThiingsIcon name="chevron-left" pxSize={20} />
           {t('onboarding.back')}

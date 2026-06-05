@@ -1,5 +1,5 @@
-/**
- * SeoNav — lightweight navigation bar for SEO landing pages.
+﻿/**
+ * SeoNav â€” lightweight navigation bar for SEO landing pages.
  * No auth state needed. Links to home, demo, and login.
  */
 
@@ -7,7 +7,7 @@ import { Link } from 'react-router-dom';
 
 export default function SeoNav() {
   return (
-    <nav className="border-b border-border-gray bg-white">
+    <nav className="border-b border-glass-border-dark bg-white">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between h-16">
         <Link
           to="/"

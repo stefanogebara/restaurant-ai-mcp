@@ -1,5 +1,5 @@
-/**
- * SeoSolution — "How Seatable solves it" section.
+﻿/**
+ * SeoSolution â€” "How Seatable solves it" section.
  * Highlights WhatsApp AI, waitlist, no-show reduction, analytics.
  */
 
@@ -14,32 +14,32 @@ const SOLUTIONS = [
   {
     icon: MessageSquare,
     title: 'IA no WhatsApp 24/7',
-    description: 'Sua IA responde automaticamente no WhatsApp do restaurante, confirma horarios, faz reservas e envia lembretes. Sem intervenção humana.',
+    description: 'Sua IA responde automaticamente no WhatsApp do restaurante, confirma horarios, faz reservas e envia lembretes. Sem intervenÃ§Ã£o humana.',
   },
   {
     icon: Users,
     title: 'Fila de espera digital',
-    description: 'Clientes entram na fila pelo WhatsApp e recebem atualizações em tempo real. Sem fila na porta, sem desistências.',
+    description: 'Clientes entram na fila pelo WhatsApp e recebem atualizaÃ§Ãµes em tempo real. Sem fila na porta, sem desistÃªncias.',
   },
   {
     icon: BarChart3,
-    title: 'Previsão de no-show com ML',
-    description: 'Algoritmo de machine learning prevê a probabilidade de no-show por cliente e sugere overbooking inteligente para maximizar a ocupação.',
+    title: 'PrevisÃ£o de no-show com ML',
+    description: 'Algoritmo de machine learning prevÃª a probabilidade de no-show por cliente e sugere overbooking inteligente para maximizar a ocupaÃ§Ã£o.',
   },
   {
     icon: Phone,
     title: 'Agente de voz AI',
-    description: 'Atende ligações automaticamente, entende sotaques e faz reservas por telefone. Funciona 24 horas, inclusive feriados.',
+    description: 'Atende ligaÃ§Ãµes automaticamente, entende sotaques e faz reservas por telefone. Funciona 24 horas, inclusive feriados.',
   },
   {
     icon: Shield,
-    title: 'Depósito antecipado',
-    description: 'Cobranças via Stripe no momento da reserva, com devolução automática após a visita. Reduz no-shows em até 40%.',
+    title: 'DepÃ³sito antecipado',
+    description: 'CobranÃ§as via Stripe no momento da reserva, com devoluÃ§Ã£o automÃ¡tica apÃ³s a visita. Reduz no-shows em atÃ© 40%.',
   },
   {
     icon: Zap,
     title: 'Dashboard em tempo real',
-    description: 'Painel completo com ocupação, receita prevista, alertas proativos e relatórios semanais. Tudo no navegador ou tablet.',
+    description: 'Painel completo com ocupaÃ§Ã£o, receita prevista, alertas proativos e relatÃ³rios semanais. Tudo no navegador ou tablet.',
   },
 ];
 
@@ -51,7 +51,7 @@ export default function SeoSolution({ page }: SeoSolutionProps) {
           Como o Seatable resolve isso para {page.cuisine.toLowerCase()}
         </h2>
         <p className="text-warm-stone text-center mb-12 max-w-2xl mx-auto">
-          Tecnologia feita para restaurantes brasileiros. Sem complicação,
+          Tecnologia feita para restaurantes brasileiros. Sem complicaÃ§Ã£o,
           sem contratos longos, sem surpresas.
         </p>
 
@@ -61,7 +61,7 @@ export default function SeoSolution({ page }: SeoSolutionProps) {
             return (
               <div
                 key={sol.title}
-                className="border border-border-gray rounded-2xl p-6 bg-white"
+                className="border border-glass-border-dark rounded-2xl p-6 bg-white"
               >
                 <div className="w-10 h-10 rounded-xl bg-burgundy/10 flex items-center justify-center mb-4">
                   <Icon className="w-5 h-5 text-burgundy" />

@@ -1,5 +1,5 @@
-/**
- * SeoFaq — cuisine-specific FAQ section with accordion.
+﻿/**
+ * SeoFaq â€” cuisine-specific FAQ section with accordion.
  * FAQ content comes from the data layer for uniqueness per page.
  */
 
@@ -15,7 +15,7 @@ function FaqItem({ question, answer }: { readonly question: string; readonly ans
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="border-b border-border-gray last:border-b-0">
+    <div className="border-b border-glass-border-dark last:border-b-0">
       <button
         type="button"
         onClick={() => setOpen(!open)}
@@ -54,7 +54,7 @@ export default function SeoFaq({ page }: SeoFaqProps) {
           {page.city} sobre o Seatable.
         </p>
 
-        <div className="border border-border-gray rounded-2xl bg-white p-6">
+        <div className="border border-glass-border-dark rounded-2xl bg-white p-6">
           {page.faqs.map((faq) => (
             <FaqItem
               key={faq.question}

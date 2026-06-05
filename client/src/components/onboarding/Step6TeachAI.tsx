@@ -1,11 +1,11 @@
-/**
+﻿/**
  * Step 6: Teach Your AI (Chat Interview)
  *
  * Interactive chat-based interview that deeply learns about the restaurant.
  * Uses the /api/restaurant-learning/research + /chat endpoints to run an
  * adaptive 12-topic conversation. Replaces the old 5-textarea approach.
  *
- * The interview is optional — "Skip for now" proceeds without any API call.
+ * The interview is optional â€” "Skip for now" proceeds without any API call.
  * Progress is shown via a topic progress bar + completion percentage.
  */
 
@@ -47,10 +47,10 @@ interface ChatResponse {
 
 type InterviewPhase = 'idle' | 'researching' | 'chatting' | 'generating' | 'complete';
 
-// Topic preview shown in the idle state — kept in sync with INTERVIEW_TOPICS
+// Topic preview shown in the idle state â€” kept in sync with INTERVIEW_TOPICS
 // in api/services/learningInterview.js. Owners previously saw an opaque
-// "12 tópicos sobre culinária..." card and didn't know what they were
-// committing to → most clicked Skip. Showing the actual topics lowers the
+// "12 tÃ³picos sobre culinÃ¡ria..." card and didn't know what they were
+// committing to â†’ most clicked Skip. Showing the actual topics lowers the
 // perceived commitment ("oh, these are easy questions about MY restaurant").
 const INTERVIEW_TOPIC_KEYS = [
   'onboarding.topic.cuisineIdentity',
@@ -71,7 +71,7 @@ const INTERVIEW_TOPIC_KEYS = [
 // `(err.response?.data?.error as string)` cast was a lie: Supabase / PostgREST
 // errors propagate as `{ code, message }` objects. setError() then held the
 // object, React tried to render `<span>{error}</span>`, and the whole
-// onboarding page crashed with Minified React Error #31 — ErrorBoundary
+// onboarding page crashed with Minified React Error #31 â€” ErrorBoundary
 // swallowed everything, the user lost the whole flow on one /research failure.
 function extractErrorMessage(err: unknown): string | undefined {
   if (!axios.isAxiosError(err)) return undefined;
@@ -167,7 +167,7 @@ export default function Step6TeachAI({
         try {
           await api.post('/restaurant-learning/generate-persona', { session_id: sessionId });
         } catch (personaErr) {
-          // Persona generation failed — the interview transcript is still
+          // Persona generation failed â€” the interview transcript is still
           // saved server-side and the persona can be regenerated later, so we
           // don't block the user. Log it so Sentry catches a wide outage.
           console.error('[Step6TeachAI] persona generation failed', personaErr);
@@ -189,7 +189,7 @@ export default function Step6TeachAI({
     }
   }
 
-  // ── Idle state: start button ──
+  // â”€â”€ Idle state: start button â”€â”€
   if (phase === 'idle') {
     return (
       <motion.div
@@ -217,7 +217,7 @@ export default function Step6TeachAI({
             </div>
           </div>
 
-          {/* Topic preview — let owners see the 12 conversation topics upfront
+          {/* Topic preview â€” let owners see the 12 conversation topics upfront
               so they know what they're committing to (5-min chat about THEIR
               restaurant) rather than guessing. Caught in 2026-05-18 audit. */}
           <div className="grid grid-cols-2 gap-1.5">
@@ -265,7 +265,7 @@ export default function Step6TeachAI({
     );
   }
 
-  // ── Researching state ──
+  // â”€â”€ Researching state â”€â”€
   if (phase === 'researching') {
     return (
       <motion.div
@@ -280,7 +280,7 @@ export default function Step6TeachAI({
     );
   }
 
-  // ── Complete state ──
+  // â”€â”€ Complete state â”€â”€
   if (phase === 'complete') {
     return (
       <motion.div
@@ -315,7 +315,7 @@ export default function Step6TeachAI({
     );
   }
 
-  // ── Generating state ──
+  // â”€â”€ Generating state â”€â”€
   if (phase === 'generating') {
     return (
       <motion.div
@@ -330,7 +330,7 @@ export default function Step6TeachAI({
     );
   }
 
-  // ── Chat state ──
+  // â”€â”€ Chat state â”€â”€
   return (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
@@ -396,7 +396,7 @@ export default function Step6TeachAI({
               key={i}
               type="button"
               onClick={() => sendMessage(reply)}
-              className="px-3 py-1.5 text-xs bg-white border border-border-gray rounded-full text-deep-charcoal hover:bg-soft-gray transition-colors"
+              className="px-3 py-1.5 text-xs bg-white/60 backdrop-blur-glass-chip border border-glass-border-dark rounded-full text-deep-charcoal hover:bg-white/85 transition-colors"
             >
               {reply}
             </button>
@@ -414,7 +414,7 @@ export default function Step6TeachAI({
           disabled={isSending}
           placeholder={t('onboarding.typeYourAnswer')}
           rows={1}
-          className="flex-1 border border-border-gray rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy resize-none bg-white placeholder:text-muted-stone transition-colors disabled:opacity-50"
+          className="flex-1 border border-glass-border-dark rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy resize-none bg-white/60 placeholder:text-muted-stone transition-colors disabled:opacity-50"
         />
         <button
           type="button"
@@ -452,7 +452,7 @@ export default function Step6TeachAI({
               try {
                 await api.post('/restaurant-learning/generate-persona', { session_id: sessionId });
               } catch (personaErr) {
-                // Best effort — transcript is saved, persona regenerable later.
+                // Best effort â€” transcript is saved, persona regenerable later.
                 console.error('[Step6TeachAI] persona generation failed (finish early)', personaErr);
               }
               setPhase('complete');

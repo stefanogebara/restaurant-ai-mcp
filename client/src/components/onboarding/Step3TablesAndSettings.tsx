@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Step 3: Tables & Settings (Merged)
  *
  * Combined step for the simplified 4-step onboarding flow.
@@ -169,7 +169,7 @@ export default function Step3TablesAndSettings({ data, updateData, onNext, onBac
   };
 
   const updateTableConfig = (areaIndex: number, capacity: number, shape: TableShape, field: 'count' | 'is_fixed_seating' | 'is_joinable', value: number | boolean) => {
-    // Fully immutable update — the previous version did `[...data.areas]`
+    // Fully immutable update â€” the previous version did `[...data.areas]`
     // (shallow) then mutated `area.tables` and the table object in place,
     // violating the project immutability rule and defeating referential
     // equality (memoized children, the localStorage persist snapshot).
@@ -195,7 +195,7 @@ export default function Step3TablesAndSettings({ data, updateData, onNext, onBac
         <p className="text-stone-gray text-sm">{t('onboarding.step3Subtitle')}</p>
       </div>
 
-      <div className="bg-soft-gray border border-border-gray rounded-xl p-4">
+      <div className="bg-soft-gray border border-glass-border-dark rounded-xl p-4">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-deep-charcoal font-semibold text-lg">{t('onboarding.totalCapacity')}</p>
@@ -232,7 +232,7 @@ export default function Step3TablesAndSettings({ data, updateData, onNext, onBac
               key={template}
               onClick={() => addArea(template)}
               disabled={template !== 'Custom' && data.areas.some((a) => a.name === template || a.name === t(AREA_TEMPLATE_KEYS[template] || ''))}
-              className="px-4 py-2 bg-white hover:bg-soft-gray disabled:bg-soft-gray disabled:text-muted-stone disabled:cursor-not-allowed text-deep-charcoal border border-border-gray rounded-xl transition-colors text-sm"
+              className="px-4 py-2 bg-white/60 backdrop-blur-glass-chip hover:bg-white/85 disabled:bg-white/30 disabled:text-muted-stone disabled:cursor-not-allowed text-deep-charcoal border border-glass-border-dark rounded-xl transition-colors text-sm"
             >
               + {t(AREA_TEMPLATE_KEYS[template] || template)}
             </button>
@@ -253,7 +253,7 @@ export default function Step3TablesAndSettings({ data, updateData, onNext, onBac
       <p className="text-xs text-muted-stone">{t('onboarding.adjustLater')}</p>
 
       <div className="flex justify-between pt-4">
-        <button onClick={onBack} className="px-6 py-3 bg-white hover:bg-soft-gray border border-border-gray text-deep-charcoal font-semibold rounded-xl transition-all flex items-center gap-2">
+        <button onClick={onBack} className="px-6 py-3 bg-white/60 backdrop-blur-glass-chip hover:bg-white/85 border border-glass-border-dark text-deep-charcoal font-semibold rounded-xl transition-all flex items-center gap-2">
           <ThiingsIcon name="chevron-left" pxSize={20} />
           {t('onboarding.back')}
         </button>

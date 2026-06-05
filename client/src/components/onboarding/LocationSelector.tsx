@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+﻿import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { colors } from '../../utils/colors';
 import ThiingsIcon from '../common/ThiingsIcon';
@@ -35,12 +35,12 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
   const [countrySearchQuery, setCountrySearchQuery] = useState('');
   const [citySearchQuery, setCitySearchQuery] = useState('');
 
-  // Diacritic-insensitive lowercase (espana → matches España, brasil → matches Brasil).
+  // Diacritic-insensitive lowercase (espana â†’ matches EspaÃ±a, brasil â†’ matches Brasil).
   const normalize = (s: string) =>
-    s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+    s.normalize('NFD').replace(/[Ì€-Í¯]/g, '').toLowerCase();
 
   // Localized country names via Intl.DisplayNames. The data file stores English
-  // names ("Brazil", "Spain") but pt-BR/es users naturally type "Brasil"/"España".
+  // names ("Brazil", "Spain") but pt-BR/es users naturally type "Brasil"/"EspaÃ±a".
   // Without this, search returns "no countries found" for the correct local name.
   const localizedCountryName = useMemo(() => {
     try {
@@ -61,9 +61,9 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
     return selectedCountryCode ? getCitiesByCountryCode(selectedCountryCode) : [];
   }, [selectedCountryCode]);
 
-  // Filter countries by search query — matches English name, language-group
+  // Filter countries by search query â€” matches English name, language-group
   // display name, AND locale-translated name (so pt-BR users typing "Brasil"
-  // and es users typing "España" / "Espana" both hit).
+  // and es users typing "EspaÃ±a" / "Espana" both hit).
   const filteredLanguageGroups = useMemo(() => {
     if (!countrySearchQuery.trim()) return LANGUAGE_GROUPS;
 
@@ -135,7 +135,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
           className={`w-full px-4 py-3 rounded-xl bg-soft-gray border ${
             error?.country
               ? 'border-burgundy focus:border-burgundy'
-              : 'border-border-gray focus:border-burgundy'
+              : 'border-glass-border-dark focus:border-burgundy'
           } text-left text-deep-charcoal flex items-center justify-between hover:bg-border-gray/50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-burgundy`}
         >
           <div className="flex items-center gap-3">
@@ -160,15 +160,15 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
 
         {/* Country Dropdown */}
         {isCountryOpen && (
-          <div className="absolute z-50 w-full mt-2 rounded-xl bg-white border border-border-gray shadow-xl max-h-96 overflow-hidden">
+          <div className="absolute z-50 w-full mt-2 rounded-xl bg-glass-modal backdrop-blur-glass-modal border border-glass-border-dark shadow-glass-modal max-h-96 overflow-hidden">
             {/* Search Input */}
-            <div className="p-3 border-b border-border-gray">
+            <div className="p-3 border-b border-glass-border-dark">
               <input
                 type="text"
                 placeholder={t('onboarding.searchCountries')}
                 value={countrySearchQuery}
                 onChange={(e) => setCountrySearchQuery(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-soft-gray border border-border-gray text-deep-charcoal placeholder-muted-stone focus:outline-none focus:border-burgundy focus:ring-2 focus:ring-burgundy transition-colors"
+                className="w-full px-3 py-2 rounded-xl bg-soft-gray border border-glass-border-dark text-deep-charcoal placeholder-muted-stone focus:outline-none focus:border-burgundy focus:ring-2 focus:ring-burgundy transition-colors"
                 autoFocus
               />
             </div>
@@ -181,7 +181,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
                 </div>
               ) : (
                 filteredLanguageGroups.map((group) => (
-                  <div key={group.language} className="border-b border-border-gray last:border-0">
+                  <div key={group.language} className="border-b border-glass-border-dark last:border-0">
                     {/* Language Group Header */}
                     <div className="px-4 py-2 bg-soft-gray">
                       <span className="text-xs font-semibold text-stone-gray uppercase tracking-wider flex items-center gap-2">
@@ -229,10 +229,10 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
           disabled={!selectedCountryCode}
           className={`w-full px-4 py-3 rounded-xl bg-soft-gray border ${
             !selectedCountryCode
-              ? 'border-border-gray cursor-not-allowed opacity-50'
+              ? 'border-glass-border-dark cursor-not-allowed opacity-50'
               : error?.city
               ? 'border-burgundy focus:border-burgundy'
-              : 'border-border-gray focus:border-burgundy'
+              : 'border-glass-border-dark focus:border-burgundy'
           } text-left text-deep-charcoal flex items-center justify-between hover:bg-border-gray/50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-burgundy ${
             !selectedCountryCode ? 'hover:bg-soft-gray' : ''
           }`}
@@ -258,15 +258,15 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
 
         {/* City Dropdown */}
         {isCityOpen && selectedCountryCode && (
-          <div className="absolute z-50 w-full mt-2 rounded-xl bg-white border border-border-gray shadow-xl max-h-96 overflow-hidden">
+          <div className="absolute z-50 w-full mt-2 rounded-xl bg-glass-modal backdrop-blur-glass-modal border border-glass-border-dark shadow-glass-modal max-h-96 overflow-hidden">
             {/* Search Input */}
-            <div className="p-3 border-b border-border-gray">
+            <div className="p-3 border-b border-glass-border-dark">
               <input
                 type="text"
                 placeholder={t('onboarding.searchCities')}
                 value={citySearchQuery}
                 onChange={(e) => setCitySearchQuery(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-soft-gray border border-border-gray text-deep-charcoal placeholder-muted-stone focus:outline-none focus:border-burgundy focus:ring-2 focus:ring-burgundy transition-colors"
+                className="w-full px-3 py-2 rounded-xl bg-soft-gray border border-glass-border-dark text-deep-charcoal placeholder-muted-stone focus:outline-none focus:border-burgundy focus:ring-2 focus:ring-burgundy transition-colors"
                 autoFocus
               />
             </div>

@@ -1,5 +1,5 @@
-/**
- * SeoPricing — competitor comparison + Seatable pricing.
+﻿/**
+ * SeoPricing â€” competitor comparison + Seatable pricing.
  * Shows a feature comparison table and the three plans.
  *
  * NOTE: SEO pages are exclusively PT-BR content targeting the Brazilian market,
@@ -20,11 +20,11 @@ interface SeoPricingProps {
 const COMPARISON_FEATURES = [
   'Reservas via WhatsApp AI',
   'Agente de voz 24/7',
-  'Previsão de no-show (ML)',
+  'PrevisÃ£o de no-show (ML)',
   'Fila de espera digital',
   'Dashboard em tempo real',
-  'Depósito antecipado',
-  'Suporte em português',
+  'DepÃ³sito antecipado',
+  'Suporte em portuguÃªs',
   'Sem taxa por reserva',
 ];
 
@@ -39,40 +39,40 @@ const PLANS = [
   {
     name: 'Essencial',
     price: formatPriceLocale(PLAN_PRICES_BRL.starter, 'BRL'),
-    period: '/mês',
+    period: '/mÃªs',
     features: [
-      'Até 50 reservas/mês',
+      'AtÃ© 50 reservas/mÃªs',
       'WhatsApp AI',
-      'Dashboard básico',
+      'Dashboard bÃ¡sico',
       'Suporte por email',
       'Fila de espera digital',
     ],
-    cta: 'Começar com Essencial',
+    cta: 'ComeÃ§ar com Essencial',
     highlighted: false,
   },
   {
     name: 'Profissional',
     price: formatPriceLocale(PLAN_PRICES_BRL.growth, 'BRL'),
-    period: '/mês',
+    period: '/mÃªs',
     features: [
-      'Até 150 reservas/mês',
+      'AtÃ© 150 reservas/mÃªs',
       'WhatsApp + Voz AI',
-      'Analytics avançado',
-      'Previsão de no-show',
-      'Suporte prioritário',
-      '14 dias grátis',
+      'Analytics avanÃ§ado',
+      'PrevisÃ£o de no-show',
+      'Suporte prioritÃ¡rio',
+      '14 dias grÃ¡tis',
     ],
-    cta: 'Teste 14 dias grátis',
+    cta: 'Teste 14 dias grÃ¡tis',
     highlighted: true,
   },
   {
     name: 'Enterprise',
     price: formatPriceLocale(PLAN_PRICES_BRL.scale, 'BRL'),
-    period: '/mês',
+    period: '/mÃªs',
     features: [
       'Reservas ilimitadas',
       'Todas as funcionalidades',
-      'Integrações customizadas',
+      'IntegraÃ§Ãµes customizadas',
       'Suporte dedicado',
       'SMS ilimitado',
       'Multi-unidade',
@@ -100,13 +100,13 @@ export default function SeoPricing({ page }: SeoPricingProps) {
           <table className="w-full min-w-[600px] text-sm">
             <thead>
               <tr>
-                <th className="text-left py-3 px-4 text-warm-stone font-medium border-b border-border-gray">
+                <th className="text-left py-3 px-4 text-warm-stone font-medium border-b border-glass-border-dark">
                   Funcionalidade
                 </th>
                 {Object.keys(COMPETITORS).map((name) => (
                   <th
                     key={name}
-                    className={`py-3 px-4 text-center font-semibold border-b border-border-gray ${
+                    className={`py-3 px-4 text-center font-semibold border-b border-glass-border-dark ${
                       name === 'Seatable' ? 'text-burgundy bg-burgundy/5' : 'text-deep-charcoal'
                     }`}
                   >
@@ -118,13 +118,13 @@ export default function SeoPricing({ page }: SeoPricingProps) {
             <tbody>
               {COMPARISON_FEATURES.map((feature, i) => (
                 <tr key={feature}>
-                  <td className="py-3 px-4 text-deep-charcoal border-b border-border-gray">
+                  <td className="py-3 px-4 text-deep-charcoal border-b border-glass-border-dark">
                     {feature}
                   </td>
                   {Object.entries(COMPETITORS).map(([name, values]) => (
                     <td
                       key={name}
-                      className={`py-3 px-4 text-center border-b border-border-gray ${
+                      className={`py-3 px-4 text-center border-b border-glass-border-dark ${
                         name === 'Seatable' ? 'bg-burgundy/5' : ''
                       }`}
                     >
@@ -152,7 +152,7 @@ export default function SeoPricing({ page }: SeoPricingProps) {
               className={`rounded-2xl p-6 ${
                 plan.highlighted
                   ? 'border-2 border-burgundy bg-burgundy/5'
-                  : 'border border-border-gray bg-white'
+                  : 'border border-glass-border-dark bg-white'
               }`}
             >
               {plan.highlighted && (
@@ -182,7 +182,7 @@ export default function SeoPricing({ page }: SeoPricingProps) {
                 className={`flex items-center justify-center gap-2 w-full py-3 rounded-xl text-sm font-semibold transition-colors ${
                   plan.highlighted
                     ? 'bg-burgundy hover:bg-burgundy-dark text-white'
-                    : 'border border-border-gray hover:border-burgundy text-deep-charcoal'
+                    : 'border border-glass-border-dark hover:border-burgundy text-deep-charcoal'
                 }`}
               >
                 {plan.cta}

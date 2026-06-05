@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+﻿import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useTimeSlots, useCreateReservation } from '../../hooks/useBooking';
@@ -58,7 +58,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
 
-  // ─── UI state ───────────────────────────────────────────────────────────────
+  // â”€â”€â”€ UI state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const [partySize, setPartySize] = useState(2);
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTime, setSelectedTime] = useState('');
@@ -77,10 +77,10 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
   const [phoneError, setPhoneError] = useState('');
 
   // Reset time only when the date changes (slots change entirely). For party
-  // size changes we used to also clear — but in practice the slot list is
+  // size changes we used to also clear â€” but in practice the slot list is
   // typically identical or a strict subset, so the previously-picked time
   // is usually still valid. Clearing silently was confusing (audit BUG #24:
-  // user picks 8pm → clicks party size 4 → Confirm goes disabled with no
+  // user picks 8pm â†’ clicks party size 4 â†’ Confirm goes disabled with no
   // visible reason because the amber hint was below the click point).
   // Now we keep the selection and let the slot-validation effect below clear
   // it ONLY if the new available list no longer contains it.
@@ -92,7 +92,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
   }, [selectedDate]);
 
   // Auto-select the first available open date so the slot grid renders immediately.
-  // (Prior behaviour: blank slot area until user clicked a date — looked broken.)
+  // (Prior behaviour: blank slot area until user clicked a date â€” looked broken.)
 
   // Auto-dismiss the hint after 4 seconds
   useEffect(() => {
@@ -106,7 +106,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
     if (selectedTime) setTimeResetHint(false);
   }, [selectedTime]);
 
-  // ─── Server state ────────────────────────────────────────────────────────────
+  // â”€â”€â”€ Server state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const { data: rawTimeSlots = [], isLoading: loadingSlots } = useTimeSlots(
     restaurant.id, selectedDate, partySize
   );
@@ -114,8 +114,8 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
 
   // If the slot list reloads (e.g. after party-size change) and the previously
   // picked time is no longer available, clear it and show the reset hint.
-  // (BUG #24 — keep user's selection across party-size changes when possible.
-  // This effect MUST be declared AFTER the useTimeSlots() call above — placing
+  // (BUG #24 â€” keep user's selection across party-size changes when possible.
+  // This effect MUST be declared AFTER the useTimeSlots() call above â€” placing
   // it before triggered a TDZ "Cannot access rawTimeSlots before initialization"
   // that errored the entire BookingPage in prod.)
   useEffect(() => {
@@ -129,7 +129,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
   }, [rawTimeSlots, selectedTime]);
 
   // Auto-select first available open date once the date list is computed.
-  // Without this the slot grid stays blank on first load — looked broken to testers.
+  // Without this the slot grid stays blank on first load â€” looked broken to testers.
   // We compute availableDates below; this effect runs after each render that produces a list.
 
   // Filter out past time slots when the selected date is today
@@ -146,7 +146,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
     });
   }, [rawTimeSlots, selectedDate]);
 
-  // ─── Derived ─────────────────────────────────────────────────────────────────
+  // â”€â”€â”€ Derived â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const availableDates = useMemo(() => {
     const days: { value: string; label: string; dayKey: string; dayNum: number; monthShort: string; weekdayShort: string; isToday: boolean; isFirstOfMonth: boolean }[] = [];
     const limit = restaurant.advance_booking_days || 30;
@@ -177,7 +177,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
     setSelectedDate(availableDates[0].value);
   }, [availableDates, selectedDate]);
 
-  // M1: paginate the date strip — earlier behaviour showed only the first 21
+  // M1: paginate the date strip â€” earlier behaviour showed only the first 21
   // days with no way to scroll forward. Now we show 14 days at a time with
   // < / > buttons so the customer can book up to advance_booking_days out.
   const DATE_PAGE_SIZE = 14;
@@ -193,7 +193,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
     const first = visibleDates[0];
     const last = visibleDates[visibleDates.length - 1];
     if (first.monthShort === last.monthShort) return first.monthShort;
-    return `${first.monthShort} – ${last.monthShort}`;
+    return `${first.monthShort} â€“ ${last.monthShort}`;
   }, [visibleDates]);
 
   const formatTime = (time: string) => {
@@ -299,7 +299,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
 
   const canSubmit = customerName.trim() !== '' && customerPhone.trim() !== '' && isPhoneValid(customerPhone) && selectedDate && selectedTime;
 
-  // Explain WHY confirm is disabled — audit BUG #24 showed a paying customer
+  // Explain WHY confirm is disabled â€” audit BUG #24 showed a paying customer
   // staring at a grey button with no signal that they were missing a time
   // (silently cleared when they bumped party size).
   let disabledReason = '';
@@ -320,7 +320,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
         </p>
       </div>
 
-      {/* Date Selection — paginated with month nav (M1) */}
+      {/* Date Selection â€” paginated with month nav (M1) */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-3">
           <div className="text-xs font-semibold tracking-wider uppercase text-warm-stone">
@@ -332,7 +332,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
               onClick={() => setDatePageStart(Math.max(0, datePageStart - DATE_PAGE_SIZE))}
               disabled={!canPageBack}
               aria-label={t('booking.previousDates', 'Previous dates')}
-              className="w-8 h-8 flex items-center justify-center rounded-lg border border-border-gray text-stone-gray hover:text-deep-charcoal hover:border-stone-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              className="w-8 h-8 flex items-center justify-center rounded-lg border border-glass-border-dark text-stone-gray hover:text-deep-charcoal hover:border-stone-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             >
               <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.5}>
                 <polyline points="15 18 9 12 15 6" />
@@ -343,7 +343,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
               onClick={() => setDatePageStart(Math.min(availableDates.length - DATE_PAGE_SIZE, datePageStart + DATE_PAGE_SIZE))}
               disabled={!canPageForward}
               aria-label={t('booking.nextDates', 'Next dates')}
-              className="w-8 h-8 flex items-center justify-center rounded-lg border border-border-gray text-stone-gray hover:text-deep-charcoal hover:border-stone-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              className="w-8 h-8 flex items-center justify-center rounded-lg border border-glass-border-dark text-stone-gray hover:text-deep-charcoal hover:border-stone-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             >
               <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.5}>
                 <polyline points="9 18 15 12 9 6" />
@@ -390,7 +390,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
           </div>
           {loadingSlots ? (
             <div role="status" className="flex items-center justify-center py-8 gap-3">
-              <div aria-hidden="true" className="animate-spin rounded-full h-6 w-6 border-2 border-border-gray border-t-burgundy" />
+              <div aria-hidden="true" className="animate-spin rounded-full h-6 w-6 border-2 border-glass-border-dark border-t-burgundy" />
               <span className="text-sm text-stone-gray">{t('booking.checkingAvailability')}</span>
             </div>
           ) : timeSlots.length === 0 ? (
@@ -407,7 +407,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
                     selectedTime === slot.time
                       ? 'border-burgundy bg-burgundy/[4%] text-burgundy font-semibold'
                       : slot.available
-                        ? 'border-border-gray bg-white text-stone-gray hover:border-stone-300 hover:bg-warm-white'
+                        ? 'border-glass-border-dark bg-white text-stone-gray hover:border-stone-300 hover:bg-warm-white'
                         : 'border-soft-gray bg-warm-white text-stone-300 cursor-not-allowed'
                   }`}
                 >
@@ -438,7 +438,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
               className={`w-12 h-12 rounded-xl border text-[15px] font-medium transition-colors ${
                 partySize === n
                   ? 'border-burgundy bg-burgundy/[4%] text-burgundy font-bold'
-                  : 'border-border-gray bg-white text-stone-gray hover:border-stone-300'
+                  : 'border-glass-border-dark bg-white text-stone-gray hover:border-stone-300'
               }`}
             >
               {n}
@@ -451,7 +451,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
               className={`w-12 h-12 rounded-xl border text-[15px] font-medium transition-colors ${
                 partySize > 7
                   ? 'border-burgundy bg-burgundy/[4%] text-burgundy font-bold'
-                  : 'border-border-gray bg-white text-stone-gray hover:border-stone-300'
+                  : 'border-glass-border-dark bg-white text-stone-gray hover:border-stone-300'
               }`}
             >
               {partySize > 7 ? partySize : '8+'}
@@ -495,7 +495,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
               <button
                 type="button"
                 onClick={() => setShowPartySizeInput(false)}
-                className="h-12 px-3 rounded-xl border border-border-gray text-stone-gray text-sm font-medium hover:bg-soft-gray transition-colors"
+                className="h-12 px-3 rounded-xl border border-glass-border-dark text-stone-gray text-sm font-medium hover:bg-soft-gray transition-colors"
               >
                 {t('common.cancel', 'Cancel')}
               </button>
@@ -524,7 +524,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
 
       {/* Summary Card */}
       {selectedDate && selectedTime && (
-        <div className="bg-white border border-border-gray rounded-2xl p-6 mb-6">
+        <div className="glass-card p-6 mb-6">
           <h3 className="text-sm font-semibold text-deep-charcoal mb-4">{t('booking.reservationSummary')}</h3>
           <SummaryRow label={t('booking.restaurant')} value={restaurant.name} />
           <SummaryRow
@@ -537,7 +537,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
           <SummaryRow label={t('booking.partySize')} value={`${partySize} ${t('booking.guests', { count: partySize })}`} />
           {restaurant.average_dining_duration && (
             <>
-              <hr className="border-0 border-t border-dashed border-border-gray my-3" />
+              <hr className="border-0 border-t border-dashed border-glass-border-dark my-3" />
               <SummaryRow
                 label={t('booking.estimatedDuration')}
                 value={`~${Math.floor(restaurant.average_dining_duration / 60)}h ${restaurant.average_dining_duration % 60}min`}
@@ -573,7 +573,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
         </div>
       )}
 
-      {/* Disabled-reason hint — only shown when the button is disabled and
+      {/* Disabled-reason hint â€” only shown when the button is disabled and
           we have something specific to say. Keeps users moving instead of
           staring at a grey button. */}
       {!depositStep && !canSubmit && disabledReason && (
@@ -605,13 +605,13 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
       {/* M2: cancellation policy moved out of the buried "tiny gray text"
           state into a proper info card. Same content, but the surrounding
           card + icon makes it actually readable instead of a footnote. */}
-      <div className="mt-4 px-4 py-3 bg-soft-gray/60 border border-border-gray rounded-xl flex items-start gap-2.5">
+      <div className="mt-4 px-4 py-3 bg-soft-gray/60 border border-glass-border-dark rounded-xl flex items-start gap-2.5">
         <svg className="w-4 h-4 text-burgundy flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M12 2L2 7v10l10 5 10-5V7l-10-5z" />
           <path d="M9 12l2 2 4-4" />
         </svg>
         <p className="text-[12.5px] text-stone-gray leading-relaxed">
-          {/* Use the locale-aware resolver — previously this rendered the
+          {/* Use the locale-aware resolver â€” previously this rendered the
               language-frozen literal from the DB, so a customer browsing in
               pt-BR at a restaurant onboarded in English saw English. */}
           {localizeCancellationPolicy(restaurant.cancellation_policy, t)}

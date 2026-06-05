@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+﻿import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import type { RestaurantArea, TableShape, TableConfiguration } from '../../types/onboarding.types';
 
@@ -28,7 +28,7 @@ export default function TableAreaCard({
 }: TableAreaCardProps) {
   const { t } = useTranslation();
   return (
-    <div className="bg-soft-gray border border-border-gray rounded-xl p-5">
+    <div className="bg-soft-gray border border-glass-border-dark rounded-xl p-5">
       <div className="flex items-center justify-between mb-4">
         <input
           type="text"
@@ -49,7 +49,7 @@ export default function TableAreaCard({
 
       <div className="space-y-4">
         {TABLE_CAPACITIES.map((capacity) => (
-          <div key={capacity} className="bg-white rounded-xl p-4 border border-border-gray">
+          <div key={capacity} className="glass-card p-4">
             <h4 className="text-sm font-semibold text-deep-charcoal mb-3">{t('onboarding.personTables', { count: capacity })}</h4>
             <div className="grid grid-cols-2 gap-3">
               {(['round', 'square'] as TableShape[]).map((shape) => (
@@ -64,14 +64,14 @@ export default function TableAreaCard({
                     value={getTableCount(areaIndex, capacity, shape) || ''}
                     placeholder="0"
                     onChange={(e) => updateTableConfig(areaIndex, capacity, shape, 'count', parseInt(e.target.value) || 0)}
-                    className="w-full px-3 py-2 bg-white border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy text-sm"
+                    className="w-full px-3 py-2 glass-panel rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy text-sm"
                   />
                   <label className="flex items-start gap-2 mt-2 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={getTableConfig(areaIndex, capacity, shape)?.is_fixed_seating || false}
                       onChange={(e) => updateTableConfig(areaIndex, capacity, shape, 'is_fixed_seating', e.target.checked)}
-                      className="mt-0.5 w-4 h-4 rounded border-border-gray text-burgundy focus:ring-burgundy"
+                      className="mt-0.5 w-4 h-4 rounded border-glass-border-dark text-burgundy focus:ring-burgundy"
                     />
                     {/* Explanation is rendered inline (not in a `title=` tooltip)
                         so it's actually readable on touch devices. */}

@@ -1,5 +1,5 @@
-/**
- * SeoFooter — minimal footer for SEO landing pages.
+﻿/**
+ * SeoFooter â€” minimal footer for SEO landing pages.
  * Links to key pages and displays copyright.
  */
 
@@ -9,7 +9,7 @@ export default function SeoFooter() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="border-t border-border-gray bg-warm-white py-10">
+    <footer className="border-t border-glass-border-dark bg-warm-white py-10">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <Link

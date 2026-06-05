@@ -1,4 +1,4 @@
-import ThiingsIcon from '../common/ThiingsIcon';
+﻿import ThiingsIcon from '../common/ThiingsIcon';
 import { useTranslation } from 'react-i18next';
 
 const STEP_NAME_KEYS = ['onboarding.stepName1', 'onboarding.stepName2', 'onboarding.stepName3', 'onboarding.stepName4', 'onboarding.stepName5', 'onboarding.stepName6'];
@@ -39,14 +39,14 @@ export default function OnboardingStepSidebar({ currentStep, goToStep }: Onboard
                 onClick={() => { if (isCompleted) goToStep(stepNumber); }}
                 disabled={!isCompleted}
                 // Previously this button silently did nothing for not-yet-reached
-                // steps — Maria would click and assume the page was broken. Now
+                // steps â€” Maria would click and assume the page was broken. Now
                 // the aria-label and title both explain why nothing happens, and
                 // the button stays focusable for screen readers.
                 aria-label={
                   isCompleted
                     ? t('onboarding.sidebarGoBack', 'Go back to {{name}}', { name })
                     : isActive
-                      ? t('onboarding.sidebarCurrent', '{{name}} — current step', { name })
+                      ? t('onboarding.sidebarCurrent', '{{name}} â€” current step', { name })
                       : t('onboarding.sidebarLocked', 'Finish the current step first to unlock {{name}}', { name })
                 }
                 title={
@@ -64,7 +64,7 @@ export default function OnboardingStepSidebar({ currentStep, goToStep }: Onboard
                       ? 'border-burgundy bg-burgundy text-white'
                       : isActive
                         ? 'border-burgundy bg-burgundy/[0.06] text-burgundy'
-                        : 'border-border-gray bg-white text-muted-stone'
+                        : 'border-glass-border-dark bg-white/50 text-muted-stone'
                   }`}
                 >
                   {isCompleted ? (

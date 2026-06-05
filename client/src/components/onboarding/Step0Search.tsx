@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ScrapedRestaurant } from '../../lib/applyScrapedData';
 
@@ -16,15 +16,15 @@ interface ScrapeResult extends ScrapedRestaurant {
 }
 
 /**
- * Onboarding Step 0 — auto-prefill via Google Places.
+ * Onboarding Step 0 â€” auto-prefill via Google Places.
  *
  * Two paths:
- *   1. Google match → top hit card → user confirms or tries again
- *   2. No match    → "got a website?" URL input → /api/enrich-restaurant
+ *   1. Google match â†’ top hit card â†’ user confirms or tries again
+ *   2. No match    â†’ "got a website?" URL input â†’ /api/enrich-restaurant
  *      (best-effort menu/dishes extraction; doesn't currently surface
  *      contact/hours from the website but still primes Manager AI memory)
  *
- * Always offers a "Skip — I'll fill manually" link so a brand-new restaurant
+ * Always offers a "Skip â€” I'll fill manually" link so a brand-new restaurant
  * with no Google presence and no website can proceed.
  *
  * On any prefill the parent gets a Partial<ScrapedRestaurant> via onPrefill,
@@ -39,8 +39,8 @@ export default function Step0Search({ onPrefill, onSkip }: Step0SearchProps) {
   const [hits, setHits] = useState<ScrapeResult[] | null>(null);
   const [searchError, setSearchError] = useState<string | null>(null);
 
-  // Website-fallback state — shown when Google search returns 0 hits OR
-  // when the user clicks "None of these — got a website?" under the 3-card
+  // Website-fallback state â€” shown when Google search returns 0 hits OR
+  // when the user clicks "None of these â€” got a website?" under the 3-card
   // picker.
   const [website, setWebsite] = useState('');
   const [enriching, setEnriching] = useState(false);
@@ -91,7 +91,7 @@ export default function Step0Search({ onPrefill, onSkip }: Step0SearchProps) {
         setEnrichError(body.error || t('onboarding.step0.enrichFailed', 'Could not read that website.'));
         return;
       }
-      // Pull contact + business_hours out of the enrich response — both may
+      // Pull contact + business_hours out of the enrich response â€” both may
       // be null if the site didn't surface them with confidence, but when
       // they exist they shave a chunk of typing off Step 2.
       const menu = body?.menu ?? null;
@@ -113,7 +113,7 @@ export default function Step0Search({ onPrefill, onSkip }: Step0SearchProps) {
 
   const showNoMatch = hits !== null && hits.length === 0;
   // Top 3 results so a user whose name is shared across cities (Cantina Bella
-  // exists in São Paulo, Rio, AND Lisbon) doesn't get force-matched to the
+  // exists in SÃ£o Paulo, Rio, AND Lisbon) doesn't get force-matched to the
   // wrong one by Google's relevance heuristic.
   const candidates = hits ? hits.slice(0, 3) : [];
   const showWebsiteForm = showNoMatch || showWebsiteFallback;
@@ -127,7 +127,7 @@ export default function Step0Search({ onPrefill, onSkip }: Step0SearchProps) {
         <p className="text-sm text-muted-stone">
           {t(
             'onboarding.step0.subtitle',
-            "Type your restaurant name + city — we'll pull the basics from Google Maps so you don't have to retype them.",
+            "Type your restaurant name + city â€” we'll pull the basics from Google Maps so you don't have to retype them.",
           )}
         </p>
       </div>
@@ -143,7 +143,7 @@ export default function Step0Search({ onPrefill, onSkip }: Step0SearchProps) {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder={t('onboarding.step0.namePlaceholder', 'e.g. Cantina Bella')}
-            className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-burgundy"
+            className="w-full px-4 py-2.5 border border-glass-border-dark rounded-lg text-sm focus:outline-none focus:border-burgundy"
           />
         </div>
         <div>
@@ -155,8 +155,8 @@ export default function Step0Search({ onPrefill, onSkip }: Step0SearchProps) {
             type="text"
             value={city}
             onChange={(e) => setCity(e.target.value)}
-            placeholder={t('onboarding.step0.cityPlaceholder', 'e.g. São Paulo')}
-            className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-burgundy"
+            placeholder={t('onboarding.step0.cityPlaceholder', 'e.g. SÃ£o Paulo')}
+            className="w-full px-4 py-2.5 border border-glass-border-dark rounded-lg text-sm focus:outline-none focus:border-burgundy"
           />
         </div>
         <button
@@ -165,7 +165,7 @@ export default function Step0Search({ onPrefill, onSkip }: Step0SearchProps) {
           className="px-4 py-2 bg-burgundy text-white rounded-lg text-sm font-medium hover:bg-[#831a3a] transition-colors disabled:opacity-50"
         >
           {searching
-            ? t('onboarding.step0.searching', 'Searching…')
+            ? t('onboarding.step0.searching', 'Searchingâ€¦')
             : t('onboarding.step0.searchCta', 'Search Google Maps')}
         </button>
       </form>
@@ -174,7 +174,7 @@ export default function Step0Search({ onPrefill, onSkip }: Step0SearchProps) {
         <p className="text-sm text-red-700" data-testid="step0-search-error">{searchError}</p>
       )}
 
-      {/* CANDIDATES — up to 3 cards, user picks the right one */}
+      {/* CANDIDATES â€” up to 3 cards, user picks the right one */}
       {candidates.length > 0 && (
         <div className="space-y-3" data-testid="step0-candidates">
           <p className="text-sm font-medium text-deep-charcoal">
@@ -185,7 +185,7 @@ export default function Step0Search({ onPrefill, onSkip }: Step0SearchProps) {
           {candidates.map((hit, i) => (
             <div
               key={(hit.name || '') + '-' + i}
-              className="border border-[#E5E7EB] rounded-xl p-4 space-y-3"
+              className="border border-glass-border-dark rounded-xl p-4 space-y-3"
               data-testid={`step0-candidate-${i}`}
             >
               <div>
@@ -193,7 +193,7 @@ export default function Step0Search({ onPrefill, onSkip }: Step0SearchProps) {
                 {hit.address && <p className="text-xs text-muted-stone mt-0.5">{hit.address}</p>}
                 <div className="flex items-center gap-3 mt-2 text-xs text-muted-stone">
                   {hit.cuisine_type && <span>{hit.cuisine_type}</span>}
-                  {hit.rating && <span>★ {hit.rating} ({hit.review_count || 0})</span>}
+                  {hit.rating && <span>â˜… {hit.rating} ({hit.review_count || 0})</span>}
                   {hit.phone && <span>{hit.phone}</span>}
                 </div>
               </div>
@@ -211,7 +211,7 @@ export default function Step0Search({ onPrefill, onSkip }: Step0SearchProps) {
             <button
               type="button"
               onClick={() => { setHits(null); setSearchError(null); setShowWebsiteFallback(false); }}
-              className="px-4 py-2 border border-[#E5E7EB] rounded-lg text-sm font-medium text-deep-charcoal hover:bg-soft-gray transition-colors"
+              className="px-4 py-2 border border-glass-border-dark rounded-lg text-sm font-medium text-deep-charcoal hover:bg-soft-gray transition-colors"
             >
               {t('onboarding.step0.searchAgainCta', 'Search again')}
             </button>
@@ -222,7 +222,7 @@ export default function Step0Search({ onPrefill, onSkip }: Step0SearchProps) {
                 className="px-4 py-2 text-sm text-muted-stone underline underline-offset-2 hover:text-deep-charcoal transition-colors"
                 data-testid="step0-none-of-these"
               >
-                {t('onboarding.step0.noneOfTheseCta', 'None of these — got a website?')}
+                {t('onboarding.step0.noneOfTheseCta', 'None of these â€” got a website?')}
               </button>
             )}
           </div>
@@ -230,7 +230,7 @@ export default function Step0Search({ onPrefill, onSkip }: Step0SearchProps) {
       )}
 
       {/* NO-MATCH HINT + website fallback. Visible when Google returned 0
-          hits OR when the user clicked "None of these — got a website?" under
+          hits OR when the user clicked "None of these â€” got a website?" under
           a populated candidates list. */}
       {showWebsiteForm && (
         <div className="border border-amber-200 bg-amber-50 rounded-xl p-4 space-y-3" data-testid="step0-no-match">
@@ -255,7 +255,7 @@ export default function Step0Search({ onPrefill, onSkip }: Step0SearchProps) {
               value={website}
               onChange={(e) => setWebsite(e.target.value)}
               placeholder="https://your-restaurant.com"
-              className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-burgundy"
+              className="w-full px-4 py-2.5 border border-glass-border-dark rounded-lg text-sm focus:outline-none focus:border-burgundy"
             />
             <button
               type="submit"
@@ -264,7 +264,7 @@ export default function Step0Search({ onPrefill, onSkip }: Step0SearchProps) {
               data-testid="step0-enrich-cta"
             >
               {enriching
-                ? t('onboarding.step0.enriching', 'Reading website…')
+                ? t('onboarding.step0.enriching', 'Reading websiteâ€¦')
                 : t('onboarding.step0.enrichCta', 'Read website')}
             </button>
           </form>
@@ -274,15 +274,15 @@ export default function Step0Search({ onPrefill, onSkip }: Step0SearchProps) {
         </div>
       )}
 
-      {/* SKIP — always available */}
-      <div className="pt-2 border-t border-[#E5E7EB]">
+      {/* SKIP â€” always available */}
+      <div className="pt-2 border-t border-glass-border-dark">
         <button
           type="button"
           onClick={onSkip}
           className="text-sm text-muted-stone underline underline-offset-2 hover:text-deep-charcoal transition-colors"
           data-testid="step0-skip"
         >
-          {t('onboarding.step0.skipCta', "Skip — I'll fill it in manually")}
+          {t('onboarding.step0.skipCta', "Skip â€” I'll fill it in manually")}
         </button>
       </div>
     </div>

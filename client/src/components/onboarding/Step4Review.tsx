@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Step 4: Review & Launch
  *
  * Summary card showing all configured settings with edit links.
@@ -17,10 +17,10 @@ interface Step4ReviewProps extends OnboardingStepProps {
 }
 
 // PhoneInput stores the number as `+<cc> <digits>` (e.g. "+55 11987654321").
-// The review summary previously echoed that raw form — readable as "+55
+// The review summary previously echoed that raw form â€” readable as "+55
 // 11987654321" but visually jarring vs. the dial-code prefix box on Step 2.
 // Pretty-print for display only with country-specific grouping. Some countries
-// mix separators within a single number (BR: "11 98765-4321" — space after
+// mix separators within a single number (BR: "11 98765-4321" â€” space after
 // DDD, dash between the last two), so each rule is a callback that knows
 // its country's convention.
 type PhoneFormatter = (digits: string) => string | null;
@@ -54,7 +54,7 @@ const PHONE_FORMATTERS: Record<string, PhoneFormatter> = {
     : null,
   // PT: XXX XXX XXX
   '+351': d => d.length === 9 ? `${d.slice(0, 3)} ${d.slice(3, 6)} ${d.slice(6)}` : null,
-  // DE: variable, leading area code 2-5 digits — keep simple "XXX XXXXXXX" split
+  // DE: variable, leading area code 2-5 digits â€” keep simple "XXX XXXXXXX" split
   '+49': d => d.length >= 10 ? `${d.slice(0, 3)} ${d.slice(3)}` : null,
   // GB: 4+6 or 4+7
   '+44': d => {
@@ -70,7 +70,7 @@ const PHONE_FORMATTERS: Record<string, PhoneFormatter> = {
 
 function formatPhoneForDisplay(raw: string): string {
   if (!raw) return '';
-  // Allow internal whitespace in the digits part too — stored format is
+  // Allow internal whitespace in the digits part too â€” stored format is
   // canonical `+<cc> <digits>` but we shouldn't break on legacy values.
   const m = raw.match(/^(\+\d{1,3})\s*([\d\s-]+)$/);
   if (!m) return raw;
@@ -102,7 +102,7 @@ export default function Step4Review({ data, onBack, onComplete, isSubmitting, go
       items: [
         { label: t('onboarding.labelName'), value: data.restaurant_name },
         // Resolve the restaurant_type slug to its localized label, the same
-        // way Step1 renders it — otherwise the review screen shows the raw
+        // way Step1 renders it â€” otherwise the review screen shows the raw
         // enum value ("fine-dining") instead of "Fine Dining" / "Alta Gastronomia".
         { label: t('onboarding.labelType'), value: t(`onboarding.restaurantTypes.${data.restaurant_type}`, data.restaurant_type) },
         { label: t('onboarding.labelLocation'), value: `${data.city}, ${data.country}` },
@@ -145,7 +145,7 @@ export default function Step4Review({ data, onBack, onComplete, isSubmitting, go
       {/* Summary Sections */}
       <div className="space-y-4">
         {sections.map((section) => (
-          <div key={section.title} className="bg-soft-gray border border-border-gray rounded-xl p-5">
+          <div key={section.title} className="bg-soft-gray border border-glass-border-dark rounded-xl p-5">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-semibold text-deep-charcoal">{section.title}</h3>
               {goToStep && (
@@ -190,7 +190,7 @@ export default function Step4Review({ data, onBack, onComplete, isSubmitting, go
       <div className="flex justify-between pt-4">
         <button
           onClick={onBack}
-          className="px-6 py-3 bg-white hover:bg-soft-gray border border-border-gray text-deep-charcoal font-semibold rounded-xl transition-all flex items-center gap-2"
+          className="px-6 py-3 bg-white/60 backdrop-blur-glass-chip hover:bg-white/85 border border-glass-border-dark text-deep-charcoal font-semibold rounded-xl transition-all flex items-center gap-2"
         >
           <ThiingsIcon name="chevron-left" pxSize={20} />
           {t('onboarding.back')}

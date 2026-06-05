@@ -1,4 +1,4 @@
-import ThiingsIcon from '../common/ThiingsIcon';
+﻿import ThiingsIcon from '../common/ThiingsIcon';
 import type { DemoWaitlistEntry } from '../../hooks/useDemoState';
 import type { DemoLang } from '../../hooks/useDemoLocale';
 
@@ -10,8 +10,8 @@ interface DemoWaitlistPanelProps {
 
 const labels = {
   en: { title: 'Waitlist', empty: 'No one waiting', emptyDesc: 'Guests added to the waitlist will appear here', guests: 'guests', waited: 'waited', seat: 'Seat' },
-  'pt-BR': { title: 'Lista de Espera', empty: 'Ninguém esperando', emptyDesc: 'Clientes adicionados à lista de espera aparecerão aqui', guests: 'pessoas', waited: 'espera', seat: 'Sentar' },
-  es: { title: 'Lista de Espera', empty: 'Nadie esperando', emptyDesc: 'Los clientes añadidos a la lista de espera aparecerán aquí', guests: 'personas', waited: 'espera', seat: 'Sentar' },
+  'pt-BR': { title: 'Lista de Espera', empty: 'NinguÃ©m esperando', emptyDesc: 'Clientes adicionados Ã  lista de espera aparecerÃ£o aqui', guests: 'pessoas', waited: 'espera', seat: 'Sentar' },
+  es: { title: 'Lista de Espera', empty: 'Nadie esperando', emptyDesc: 'Los clientes aÃ±adidos a la lista de espera aparecerÃ¡n aquÃ­', guests: 'personas', waited: 'espera', seat: 'Sentar' },
 } as const;
 
 function minutesAgo(isoString: string): number {
@@ -22,7 +22,7 @@ export default function DemoWaitlistPanel({ entries, onSeat, lang }: DemoWaitlis
   const t = labels[lang as keyof typeof labels] ?? labels.en;
 
   return (
-    <div className="bg-warm-white border border-border-gray rounded-2xl overflow-hidden">
+    <div className="bg-warm-white border border-glass-border-dark rounded-2xl overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-soft-gray">
         <div className="flex items-center gap-2.5">

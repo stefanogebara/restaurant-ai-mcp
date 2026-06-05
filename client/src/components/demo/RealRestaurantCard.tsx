@@ -1,15 +1,15 @@
-/**
+﻿/**
  * RealRestaurantCard
  *
- * The "wow moment" on the demo dashboard — surfaces all the rich Google
+ * The "wow moment" on the demo dashboard â€” surfaces all the rich Google
  * Places data we already scraped at /demo/setup but were silently throwing
- * away. The user types "Famiglia Mancini, São Paulo" and 30 seconds later
+ * away. The user types "Famiglia Mancini, SÃ£o Paulo" and 30 seconds later
  * lands on a dashboard showing their actual rating, address, editorial
  * summary, top reviews, and map link.
  *
  * Renders ONLY when scraped_data was passed via location.state. On a refresh
  * (no state) the card hides and the dashboard falls back to its existing
- * generic layout — no broken empty card.
+ * generic layout â€” no broken empty card.
  */
 
 import { useState } from 'react';
@@ -18,7 +18,7 @@ import { Link } from 'react-router-dom';
 import ThiingsIcon from '../common/ThiingsIcon';
 
 /**
- * Restaurant hero photo — proxied through /api/places-photo so we can attach
+ * Restaurant hero photo â€” proxied through /api/places-photo so we can attach
  * our Google Places key server-side. Hides itself on load failure (broken
  * photoUri from a stale ref or a 502 from Google) so the card never shows
  * an empty image frame. The endpoint itself returns a 302 to Google's CDN,
@@ -27,7 +27,7 @@ import ThiingsIcon from '../common/ThiingsIcon';
 function RestaurantHeroPhoto({ photoRef, alt }: { photoRef: string; alt: string }) {
   const [failed, setFailed] = useState(false);
   if (failed) return null;
-  // Encode the ref defensively — Google's photo resource names contain only
+  // Encode the ref defensively â€” Google's photo resource names contain only
   // [A-Za-z0-9_-]+, but encoding is cheap insurance against a future ref
   // format that introduces reserved chars.
   const src = `/api/places-photo?ref=${encodeURIComponent(photoRef)}&maxWidth=1200`;
@@ -85,7 +85,7 @@ export interface ScrapedRestaurantData {
 
 interface RealRestaurantCardProps {
   data: ScrapedRestaurantData | null | undefined;
-  /** Render compact summary only — for the dashboard top bar */
+  /** Render compact summary only â€” for the dashboard top bar */
   compact?: boolean;
   /**
    * Path the inline "Take over this restaurant" CTA points at. Default
@@ -158,9 +158,9 @@ export default function RealRestaurantCard({
     : null;
 
   if (compact) {
-    // Slim banner — fits at top of dashboard. No reviews block.
+    // Slim banner â€” fits at top of dashboard. No reviews block.
     return (
-      <section className="bg-warm-white border border-border-gray rounded-2xl p-4 sm:p-5">
+      <section className="bg-warm-white border border-glass-border-dark rounded-2xl p-4 sm:p-5">
         <div className="flex items-start gap-4 flex-wrap">
           <div className="flex items-center gap-2">
             <span className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full">
@@ -172,12 +172,12 @@ export default function RealRestaurantCard({
             <div className="flex items-center gap-1.5">
               <StarRow rating={rating!} />
               <span className="text-sm font-semibold text-deep-charcoal">{ratingDisplay}</span>
-              <span className="text-xs text-warm-stone">· {formatReviewCount(review_count, t)}</span>
+              <span className="text-xs text-warm-stone">Â· {formatReviewCount(review_count, t)}</span>
             </div>
           )}
           {address && (
             <div className="flex items-center gap-1.5 text-xs text-warm-stone min-w-0">
-              <span aria-hidden="true">📍</span>
+              <span aria-hidden="true">ðŸ“</span>
               <span className="truncate">{address}</span>
               {google_maps_url && (
                 <a
@@ -208,7 +208,7 @@ export default function RealRestaurantCard({
 
   // Full card with reviews + editorial summary
   return (
-    <section className="bg-warm-white border border-border-gray rounded-2xl p-6 space-y-4">
+    <section className="bg-warm-white border border-glass-border-dark rounded-2xl p-6 space-y-4">
       <header className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-widest text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full mb-3">
@@ -216,15 +216,15 @@ export default function RealRestaurantCard({
             {t('demo.realCard.liveBadge', 'Pulled from Google in real time')}
           </span>
           <h2 className="text-base font-semibold text-deep-charcoal">
-            {t('demo.realCard.heading', "Here's your restaurant — already in our system")}
+            {t('demo.realCard.heading', "Here's your restaurant â€” already in our system")}
           </h2>
           <p className="text-xs text-warm-stone mt-1">
-            {t('demo.realCard.subtitle', "Your AI receptionist is configured with all of this. Take a look around — when you're ready, click Get Started Free to take over.")}
+            {t('demo.realCard.subtitle', "Your AI receptionist is configured with all of this. Take a look around â€” when you're ready, click Get Started Free to take over.")}
           </p>
         </div>
       </header>
 
-      {/* Hero photo — only renders when the scrape captured a photo_ref.
+      {/* Hero photo â€” only renders when the scrape captured a photo_ref.
           Bleeds to card edges (-mx-6) for a magazine-style proof shot
           right under the "Pulled from Google in real time" badge. */}
       {photo_ref && <RestaurantHeroPhoto photoRef={photo_ref} alt={name || ''} />}
@@ -235,7 +235,7 @@ export default function RealRestaurantCard({
           <div className="flex items-center gap-2">
             <StarRow rating={rating!} />
             <span className="text-lg font-bold text-deep-charcoal leading-none">{ratingDisplay}</span>
-            <span className="text-xs text-warm-stone">· {formatReviewCount(review_count, t)}</span>
+            <span className="text-xs text-warm-stone">Â· {formatReviewCount(review_count, t)}</span>
           </div>
         )}
         {price_level && (
@@ -247,7 +247,7 @@ export default function RealRestaurantCard({
       </div>
 
       {editorial_summary && (
-        <p className="text-sm text-stone-700 italic leading-relaxed border-l-2 border-border-gray pl-3">
+        <p className="text-sm text-stone-700 italic leading-relaxed border-l-2 border-glass-border-dark pl-3">
           "{editorial_summary}"
         </p>
       )}
@@ -255,12 +255,12 @@ export default function RealRestaurantCard({
       {/* Address + maps */}
       {address && (
         <div className="text-sm text-warm-stone flex items-start gap-2">
-          <span aria-hidden="true" className="text-base flex-shrink-0">📍</span>
+          <span aria-hidden="true" className="text-base flex-shrink-0">ðŸ“</span>
           <span className="flex-1">
             {address}
             {google_maps_url && (
               <>
-                {' · '}
+                {' Â· '}
                 <a
                   href={google_maps_url}
                   target="_blank"
@@ -275,20 +275,20 @@ export default function RealRestaurantCard({
         </div>
       )}
 
-      {/* Top reviews — proof we know the restaurant */}
+      {/* Top reviews â€” proof we know the restaurant */}
       {top_reviews && top_reviews.length > 0 && (
-        <div className="pt-4 border-t border-border-gray space-y-3">
+        <div className="pt-4 border-t border-glass-border-dark space-y-3">
           <p className="text-xs font-semibold uppercase tracking-widest text-warm-stone">
             {t('demo.realCard.recentReviews', 'Recent reviews on Google')}
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {top_reviews.slice(0, 3).map((review, i) => {
               if (!review?.text) return null;
-              const snippet = review.text.length > 160 ? `${review.text.slice(0, 160).trim()}…` : review.text;
+              const snippet = review.text.length > 160 ? `${review.text.slice(0, 160).trim()}â€¦` : review.text;
               return (
                 <div
                   key={i}
-                  className="bg-soft-gray border border-border-gray rounded-xl p-3 text-xs text-stone-700 space-y-2"
+                  className="bg-soft-gray border border-glass-border-dark rounded-xl p-3 text-xs text-stone-700 space-y-2"
                 >
                   <div className="flex items-center justify-between gap-2">
                     {typeof review.rating === 'number' && <StarRow rating={review.rating} />}
@@ -296,7 +296,7 @@ export default function RealRestaurantCard({
                   </div>
                   <p className="leading-relaxed line-clamp-4">{snippet}</p>
                   {review.author && (
-                    <p className="text-[10px] text-muted-stone">— {review.author}</p>
+                    <p className="text-[10px] text-muted-stone">â€” {review.author}</p>
                   )}
                 </div>
               );
@@ -305,11 +305,11 @@ export default function RealRestaurantCard({
         </div>
       )}
 
-      {/* Inline conversion CTA — the wow moment and the ask happen in the
+      {/* Inline conversion CTA â€” the wow moment and the ask happen in the
           same card so the user doesn't have to scroll 1500px to find "Get
           Started Free" after seeing their real restaurant materialize. */}
       {conversionHref && (
-        <div className="pt-3 border-t border-border-gray flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="pt-3 border-t border-glass-border-dark flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <p className="text-sm font-semibold text-deep-charcoal">
               {t('demo.realCard.ctaHeading', 'Ready to take over this restaurant?')}
@@ -324,13 +324,13 @@ export default function RealRestaurantCard({
             className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-full transition-colors whitespace-nowrap flex-shrink-0"
           >
             {t('demo.realCard.ctaButton', 'Take it over')}
-            <span aria-hidden="true">→</span>
+            <span aria-hidden="true">â†’</span>
           </Link>
         </div>
       )}
 
       <div className="pt-2 text-[11px] text-muted-stone leading-relaxed">
-        {t('demo.realCard.scrapeNote', "We pulled this from Google Places in real time — the same way your AI receptionist will when guests ask about your menu, hours, or address.")}
+        {t('demo.realCard.scrapeNote', "We pulled this from Google Places in real time â€” the same way your AI receptionist will when guests ask about your menu, hours, or address.")}
       </div>
     </section>
   );

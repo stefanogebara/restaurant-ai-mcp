@@ -1,5 +1,5 @@
-/**
- * SeoHero — hero section for programmatic SEO pages.
+﻿/**
+ * SeoHero â€” hero section for programmatic SEO pages.
  * Headline, subheading, and CTA targeting cuisine+city.
  */
 
@@ -61,7 +61,7 @@ export default function SeoHero({ page }: SeoHeroProps) {
               href="https://wa.me/5511950289356?text=Ol%C3%A1%2C%20quero%20saber%20mais%20sobre%20o%20Seatable"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-2 px-6 py-3.5 border border-border-gray bg-white hover:border-burgundy text-deep-charcoal font-semibold rounded-xl transition-colors text-sm"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3.5 border border-glass-border-dark bg-white hover:border-burgundy text-deep-charcoal font-semibold rounded-xl transition-colors text-sm"
             >
               <Phone className="w-4 h-4" />
               Falar no WhatsApp

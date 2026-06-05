@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+﻿import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Share2, Check } from 'lucide-react';
 import type { CalculatorOutput } from '../../pages/NoShowCalculator';
@@ -102,7 +102,7 @@ export default function CalculatorResults({ output, onShare }: Props) {
   return (
     <div className="space-y-4">
       {/* Monthly potential */}
-      <div className="bg-white border border-border-gray rounded-2xl p-6">
+      <div className="glass-card p-6">
         <p className="text-sm text-warm-stone mb-1">
           {t('calculator.results.monthlyPotential', 'Receita potencial mensal')}
         </p>
@@ -138,7 +138,7 @@ export default function CalculatorResults({ output, onShare }: Props) {
       </div>
 
       {/* Empty tables visual */}
-      <div className="bg-white border border-border-gray rounded-2xl p-6">
+      <div className="glass-card p-6">
         <EmptyTablesVisual count={output.emptyTablesPerWeek} />
       </div>
 
@@ -166,7 +166,7 @@ export default function CalculatorResults({ output, onShare }: Props) {
       <button
         type="button"
         onClick={handleShare}
-        className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-border-gray bg-white text-sm font-medium text-stone-gray hover:text-deep-charcoal hover:border-stone-gray transition-colors"
+        className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-glass-border-dark bg-white text-sm font-medium text-stone-gray hover:text-deep-charcoal hover:border-stone-gray transition-colors"
       >
         {copied ? (
           <>

@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+﻿import { useTranslation } from 'react-i18next';
 import type { CalculatorInputs } from '../../pages/NoShowCalculator';
 
 interface Props {
@@ -83,7 +83,7 @@ function TurnSelector({
             className={`flex-1 px-4 py-2.5 rounded-xl text-sm font-medium border transition-colors ${
               value === opt.value
                 ? 'border-burgundy bg-burgundy/5 text-burgundy'
-                : 'border-border-gray bg-white text-stone-gray hover:border-stone-gray'
+                : 'border-glass-border-dark bg-white text-stone-gray hover:border-stone-gray'
             }`}
           >
             {opt.label}
@@ -98,7 +98,7 @@ export default function CalculatorSliders({ inputs, onChange }: Props) {
   const { t } = useTranslation();
 
   return (
-    <div className="bg-white border border-border-gray rounded-2xl p-6 sm:p-8 space-y-6">
+    <div className="glass-card p-6 sm:p-8 space-y-6">
       <h2 className="text-lg font-semibold text-deep-charcoal">
         {t('calculator.inputs.title', 'Dados do seu restaurante')}
       </h2>
@@ -147,7 +147,7 @@ export default function CalculatorSliders({ inputs, onChange }: Props) {
       />
 
       <SliderField
-        label={t('calculator.inputs.occupancy', 'Lotação média')}
+        label={t('calculator.inputs.occupancy', 'LotaÃ§Ã£o mÃ©dia')}
         value={inputs.occupancy}
         min={50}
         max={100}

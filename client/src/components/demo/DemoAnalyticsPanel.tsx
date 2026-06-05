@@ -1,7 +1,7 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 
 /**
- * DemoAnalyticsPanel — mock analytics view shown when clicking Analytics in the demo sidebar.
+ * DemoAnalyticsPanel â€” mock analytics view shown when clicking Analytics in the demo sidebar.
  * Displays realistic-looking weekly/monthly data tailored per preset.
  */
 
@@ -15,24 +15,24 @@ const PRESET_ANALYTICS = {
   makoto: {
     week: {
       coversByDay: [8, 14, 12, 16, 24, 28, 20],
-      avgTicket: '€92',
+      avgTicket: 'â‚¬92',
       occupancy: '81%',
       noShowRate: '3%',
-      peakHour: '21:30 – 22:30',
-      revenue: '€24.500',
+      peakHour: '21:30 â€“ 22:30',
+      revenue: 'â‚¬24.500',
       satisfaction: '4.6',
     },
     month: {
       coversByDay: [28, 32, 24, 36, 44, 52, 38, 30, 26, 34, 42, 56, 48, 40, 22, 28, 36, 44, 52, 60, 50, 32, 28, 38, 46, 58, 54, 42, 36, 30],
-      avgTicket: '€94',
+      avgTicket: 'â‚¬94',
       occupancy: '83%',
       noShowRate: '3%',
-      peakHour: '21:30 – 22:30',
-      revenue: '€98.400',
+      peakHour: '21:30 â€“ 22:30',
+      revenue: 'â‚¬98.400',
       satisfaction: '4.7',
     },
     topDishes: [
-      { name: 'Menú Omakase', pct: 34 },
+      { name: 'MenÃº Omakase', pct: 34 },
       { name: 'Wagyu con yema curada', pct: 22 },
       { name: 'Rock Shrimp', pct: 18 },
       { name: 'Nigiri Edomae', pct: 15 },
@@ -44,25 +44,25 @@ const PRESET_ANALYTICS = {
 const DEFAULT_ANALYTICS = {
   week: {
     coversByDay: [22, 30, 28, 35, 48, 56, 40],
-    avgTicket: '€45',
+    avgTicket: 'â‚¬45',
     occupancy: '74%',
     noShowRate: '5%',
-    peakHour: '20:00 – 21:30',
-    revenue: '€12.600',
+    peakHour: '20:00 â€“ 21:30',
+    revenue: 'â‚¬12.600',
     satisfaction: '4.3',
   },
   month: {
     coversByDay: [20, 28, 24, 32, 44, 54, 38, 22, 26, 30, 40, 52, 46, 36, 20, 24, 32, 40, 48, 58, 44, 30, 24, 34, 42, 54, 50, 40, 32, 28],
-    avgTicket: '€46',
+    avgTicket: 'â‚¬46',
     occupancy: '76%',
     noShowRate: '5%',
-    peakHour: '20:00 – 21:30',
-    revenue: '€51.200',
+    peakHour: '20:00 â€“ 21:30',
+    revenue: 'â‚¬51.200',
     satisfaction: '4.4',
   },
   topDishes: [
-    { name: 'Plato del día', pct: 30 },
-    { name: 'Menú degustación', pct: 25 },
+    { name: 'Plato del dÃ­a', pct: 30 },
+    { name: 'MenÃº degustaciÃ³n', pct: 25 },
     { name: 'Ensalada especial', pct: 20 },
     { name: 'Postre de temporada', pct: 15 },
     { name: 'Entrante de la casa', pct: 10 },
@@ -71,36 +71,36 @@ const DEFAULT_ANALYTICS = {
 
 const I18N = {
   es: {
-    heading: 'Análisis',
-    period7: 'Últimos 7 días',
-    period30: 'Últimos 30 días',
-    covers: 'Cubiertos por día',
-    weekDays: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
+    heading: 'AnÃ¡lisis',
+    period7: 'Ãšltimos 7 dÃ­as',
+    period30: 'Ãšltimos 30 dÃ­as',
+    covers: 'Cubiertos por dÃ­a',
+    weekDays: ['Lun', 'Mar', 'MiÃ©', 'Jue', 'Vie', 'SÃ¡b', 'Dom'],
     avgTicket: 'Ticket medio',
-    occupancy: 'Ocupación media',
+    occupancy: 'OcupaciÃ³n media',
     noShow: 'Tasa de no-show',
     peak: 'Hora punta',
-    topDishes: 'Platos más pedidos',
-    revenue7: 'Facturación semanal',
-    revenue30: 'Facturación mensual',
-    satisfaction: 'Satisfacción',
-    previewNote: 'Los datos reales estarán disponibles tras tu primer mes de servicio.',
+    topDishes: 'Platos mÃ¡s pedidos',
+    revenue7: 'FacturaciÃ³n semanal',
+    revenue30: 'FacturaciÃ³n mensual',
+    satisfaction: 'SatisfacciÃ³n',
+    previewNote: 'Los datos reales estarÃ¡n disponibles tras tu primer mes de servicio.',
   },
   'pt-BR': {
-    heading: 'Análises',
-    period7: 'Últimos 7 dias',
-    period30: 'Últimos 30 dias',
+    heading: 'AnÃ¡lises',
+    period7: 'Ãšltimos 7 dias',
+    period30: 'Ãšltimos 30 dias',
     covers: 'Cobertos por dia',
-    weekDays: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'],
-    avgTicket: 'Ticket médio',
-    occupancy: 'Ocupação média',
+    weekDays: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'SÃ¡b', 'Dom'],
+    avgTicket: 'Ticket mÃ©dio',
+    occupancy: 'OcupaÃ§Ã£o mÃ©dia',
     noShow: 'Taxa de no-show',
-    peak: 'Horário de pico',
+    peak: 'HorÃ¡rio de pico',
     topDishes: 'Pratos mais pedidos',
     revenue7: 'Faturamento semanal',
     revenue30: 'Faturamento mensal',
-    satisfaction: 'Satisfação',
-    previewNote: 'Os dados reais estarão disponíveis após o primeiro mês de serviço.',
+    satisfaction: 'SatisfaÃ§Ã£o',
+    previewNote: 'Os dados reais estarÃ£o disponÃ­veis apÃ³s o primeiro mÃªs de serviÃ§o.',
   },
   en: {
     heading: 'Analytics',
@@ -155,7 +155,7 @@ export default function DemoAnalyticsPanel({ restaurantName, lang, presetKey }: 
               onClick={() => setPeriod(p)}
               className={`px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors ${
                 period === p
-                  ? 'bg-warm-white text-deep-charcoal border border-border-gray'
+                  ? 'bg-warm-white text-deep-charcoal border border-glass-border-dark'
                   : 'text-warm-stone hover:text-deep-charcoal'
               }`}
             >
@@ -177,7 +177,7 @@ export default function DemoAnalyticsPanel({ restaurantName, lang, presetKey }: 
         {/* Left: bar chart + KPIs */}
         <div className="space-y-6">
           {/* Bar chart */}
-          <div className="bg-warm-white border border-border-gray rounded-lg p-5">
+          <div className="bg-warm-white border border-glass-border-dark rounded-lg p-5">
             <p className="text-sm font-medium text-warm-stone mb-4">{ui.covers}</p>
             <div className={`flex items-end gap-2 h-36 ${period === '30' ? 'gap-4' : 'gap-2'}`}>
               {chartBars.map((bar, i) => {
@@ -209,7 +209,7 @@ export default function DemoAnalyticsPanel({ restaurantName, lang, presetKey }: 
               { label: ui.noShow, value: periodData.noShowRate },
               { label: ui.peak, value: periodData.peakHour },
             ].map(({ label, value }) => (
-              <div key={label} className="bg-warm-white border border-border-gray rounded-lg p-4">
+              <div key={label} className="bg-warm-white border border-glass-border-dark rounded-lg p-4">
                 <p className="text-[11px] text-stone-400 mb-1">{label}</p>
                 <p className="text-lg font-bold text-stone-900">{value}</p>
               </div>
@@ -221,18 +221,18 @@ export default function DemoAnalyticsPanel({ restaurantName, lang, presetKey }: 
         <div className="space-y-4">
           {/* Revenue + satisfaction */}
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-warm-white border border-border-gray rounded-lg p-4">
+            <div className="bg-warm-white border border-glass-border-dark rounded-lg p-4">
               <p className="text-[11px] text-stone-400 mb-1">{revenueLabel}</p>
               <p className="text-xl font-bold text-stone-900">{periodData.revenue}</p>
             </div>
-            <div className="bg-warm-white border border-border-gray rounded-lg p-4">
+            <div className="bg-warm-white border border-glass-border-dark rounded-lg p-4">
               <p className="text-[11px] text-stone-400 mb-1">{ui.satisfaction}</p>
               <p className="text-xl font-bold text-stone-900">{periodData.satisfaction} <span className="text-sm text-stone-400">/5</span></p>
             </div>
           </div>
 
           {/* Top dishes */}
-          <div className="bg-warm-white border border-border-gray rounded-lg p-5">
+          <div className="bg-warm-white border border-glass-border-dark rounded-lg p-5">
             <p className="text-sm font-medium text-warm-stone mb-4">{ui.topDishes}</p>
             <div className="space-y-3">
               {presetData.topDishes.map((dish) => (

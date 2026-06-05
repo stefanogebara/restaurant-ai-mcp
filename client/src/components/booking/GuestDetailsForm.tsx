@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+﻿import { useTranslation } from 'react-i18next';
 
 interface GuestDetailsFormProps {
   customerName: string;
@@ -39,7 +39,7 @@ export default function GuestDetailsForm({
             value={customerName}
             onChange={e => onNameChange(e.target.value)}
             placeholder={t('booking.namePlaceholder')}
-            className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-stone-300 focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-burgundy/[6%]"
+            className="w-full px-4 py-3 border border-glass-border-dark rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-stone-300 focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-burgundy/[6%]"
           />
         </div>
         <div>
@@ -53,7 +53,7 @@ export default function GuestDetailsForm({
             className={`w-full px-4 py-3 border rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-stone-300 focus:outline-none focus:ring-[3px] ${
               phoneError
                 ? 'border-red-500 focus:border-red-500 focus:ring-red-500/[6%]'
-                : 'border-border-gray focus:border-burgundy focus:ring-burgundy/[6%]'
+                : 'border-glass-border-dark focus:border-burgundy focus:ring-burgundy/[6%]'
             }`}
           />
           {phoneError && (
@@ -70,7 +70,7 @@ export default function GuestDetailsForm({
           value={customerEmail}
           onChange={e => onEmailChange(e.target.value)}
           placeholder={t('booking.emailPlaceholder')}
-          className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-stone-300 focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-burgundy/[6%]"
+          className="w-full px-4 py-3 border border-glass-border-dark rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-stone-300 focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-burgundy/[6%]"
         />
       </div>
       <div>
@@ -82,7 +82,7 @@ export default function GuestDetailsForm({
           onChange={e => onSpecialRequestsChange(e.target.value)}
           placeholder={t('booking.specialRequestsPlaceholder')}
           rows={3}
-          className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-stone-300 focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-burgundy/[6%] resize-none"
+          className="w-full px-4 py-3 border border-glass-border-dark rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-stone-300 focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-burgundy/[6%] resize-none"
         />
       </div>
     </div>

@@ -1,5 +1,5 @@
-/**
- * DemoRestaurantInfoCard — shows real restaurant details (address, hours, menu)
+﻿/**
+ * DemoRestaurantInfoCard â€” shows real restaurant details (address, hours, menu)
  * Only rendered when the preset has an `info` field (e.g. makoto).
  */
 
@@ -11,8 +11,8 @@ interface Props {
 }
 
 const LABELS = {
-  es: { address: 'Dirección', phone: 'Teléfono', hours: 'Horario', website: 'Web', chef: 'Chef', recognition: 'Reconocimiento', menu: 'Carta destacada' },
-  'pt-BR': { address: 'Endereço', phone: 'Telefone', hours: 'Horário', website: 'Site', chef: 'Chef', recognition: 'Reconhecimento', menu: 'Destaques do cardápio' },
+  es: { address: 'DirecciÃ³n', phone: 'TelÃ©fono', hours: 'Horario', website: 'Web', chef: 'Chef', recognition: 'Reconocimiento', menu: 'Carta destacada' },
+  'pt-BR': { address: 'EndereÃ§o', phone: 'Telefone', hours: 'HorÃ¡rio', website: 'Site', chef: 'Chef', recognition: 'Reconhecimento', menu: 'Destaques do cardÃ¡pio' },
   en: { address: 'Address', phone: 'Phone', hours: 'Hours', website: 'Website', chef: 'Chef', recognition: 'Recognition', menu: 'Featured dishes' },
 };
 
@@ -55,7 +55,7 @@ export default function DemoRestaurantInfoCard({ info, lang }: Props) {
   const ui = LABELS[lang as keyof typeof LABELS] ?? LABELS.en;
 
   return (
-    <div className="bg-warm-white border border-border-gray rounded-lg p-4 space-y-3">
+    <div className="bg-warm-white border border-glass-border-dark rounded-lg p-4 space-y-3">
       {info.address && <InfoRow icon={<PinIcon />} value={info.address} />}
       {info.phone && <InfoRow icon={<PhoneIcon />} value={info.phone} />}
       {info.hours && <InfoRow icon={<ClockIcon />} value={info.hours} />}
@@ -63,7 +63,7 @@ export default function DemoRestaurantInfoCard({ info, lang }: Props) {
       {info.recognition && <InfoRow icon={<StarIcon />} value={info.recognition} />}
 
       {info.menu && info.menu.length > 0 && (
-        <div className="pt-1 border-t border-border-gray">
+        <div className="pt-1 border-t border-glass-border-dark">
           <p className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider mb-2">{ui.menu}</p>
           <div className="flex flex-wrap gap-1.5">
             {info.menu.map((dish) => (

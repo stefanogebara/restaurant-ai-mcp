@@ -1,5 +1,5 @@
-/**
- * SeoPainPoints — displays cuisine-specific pain points
+﻿/**
+ * SeoPainPoints â€” displays cuisine-specific pain points
  * that the target audience will recognize.
  */
 
@@ -30,7 +30,7 @@ export default function SeoPainPoints({ page }: SeoPainPointsProps) {
             return (
               <div
                 key={point.title}
-                className="border border-border-gray rounded-2xl p-6 bg-warm-white"
+                className="border border-glass-border-dark rounded-2xl p-6 bg-warm-white"
               >
                 <div className="w-10 h-10 rounded-xl bg-burgundy/10 flex items-center justify-center mb-4">
                   <Icon className="w-5 h-5 text-burgundy" />

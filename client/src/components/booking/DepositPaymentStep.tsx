@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { loadStripe } from '@stripe/stripe-js';
 import type { StripeElementLocale } from '@stripe/stripe-js';
@@ -56,7 +56,7 @@ function DepositForm({ depositAmount, onSuccess, onCancel }: Omit<DepositPayment
       <div className="bg-violet-600/[6%] border border-violet-600/20 rounded-xl p-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-violet-600/[10%] flex items-center justify-center text-violet-600 text-lg">
-            💳
+            ðŸ’³
           </div>
           <div>
             <p className="text-sm font-semibold text-deep-charcoal">{t('booking.deposit.heading')}</p>
@@ -76,7 +76,7 @@ function DepositForm({ depositAmount, onSuccess, onCancel }: Omit<DepositPayment
       {error && (
         // role="alert" + aria-live ensures screen readers announce
         // payment failures immediately. Without it, a blind user who
-        // submitted a declined card would hear nothing — the visual
+        // submitted a declined card would hear nothing â€” the visual
         // red banner is the only feedback the page currently provides.
         <div className="bg-red-600/10 border border-red-600/20 rounded-xl p-3" role="alert" aria-live="assertive">
           <p className="text-sm text-red-600">{error}</p>
@@ -88,7 +88,7 @@ function DepositForm({ depositAmount, onSuccess, onCancel }: Omit<DepositPayment
           type="button"
           onClick={onCancel}
           disabled={isProcessing}
-          className="flex-1 py-3.5 border border-border-gray bg-white text-stone-gray font-medium rounded-xl text-sm hover:border-muted-stone transition-colors disabled:opacity-50"
+          className="flex-1 py-3.5 border border-glass-border-dark bg-white text-stone-gray font-medium rounded-xl text-sm hover:border-muted-stone transition-colors disabled:opacity-50"
         >
           {t('booking.deposit.back')}
         </button>
@@ -117,10 +117,10 @@ export default function DepositPaymentStep({ clientSecret, depositAmount, onSucc
 
   if (!clientSecret) return null;
 
-  // Stripe key missing at build time — surface a clear message instead of
+  // Stripe key missing at build time â€” surface a clear message instead of
   // rendering a silently-broken <Elements> tree.
   if (!stripePromise) {
-    console.error('[DepositPaymentStep] VITE_STRIPE_PUBLISHABLE_KEY is unset — cannot render payment form');
+    console.error('[DepositPaymentStep] VITE_STRIPE_PUBLISHABLE_KEY is unset â€” cannot render payment form');
     return (
       <div className="bg-red-600/10 border border-red-600/20 rounded-xl p-3">
         <p className="text-sm text-red-600">{t('booking.deposit.unavailable')}</p>
