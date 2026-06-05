@@ -118,7 +118,7 @@ export default {
         // Soft drop shadows replace Nordic Clean's borders-only rule.
         // The blur reads as glass depth; the shadow grounds the surface above
         // the body gradient. Together they replace the flat 1-px border.
-        'glass-card': '0 1px 2px rgba(28, 25, 23, 0.04), 0 8px 24px rgba(28, 25, 23, 0.04)',
+        'glass-card': '0 1px 2px rgba(28, 25, 23, 0.05), 0 8px 24px rgba(28, 25, 23, 0.08)',
         'glass-nav':  '0 1px 2px rgba(28, 25, 23, 0.04)',
         'glass-modal': '0 4px 12px rgba(28, 25, 23, 0.08), 0 24px 48px rgba(28, 25, 23, 0.10)',
       },
@@ -127,10 +127,10 @@ export default {
         // Use as `bg-warm-orbs` on body or page wrappers. background-attachment: fixed
         // is set globally in index.css so this stays anchored during scroll.
         'warm-orbs': [
-          'radial-gradient(ellipse 70% 50% at 12% 18%, rgba(217, 119, 6, 0.10) 0%, transparent 55%)',
-          'radial-gradient(ellipse 60% 45% at 88% 22%, rgba(245, 158, 11, 0.08) 0%, transparent 55%)',
-          'radial-gradient(ellipse 80% 55% at 50% 95%, rgba(159, 18, 57, 0.06) 0%, transparent 60%)',
-          'radial-gradient(ellipse 50% 40% at 90% 80%, rgba(120, 53, 15, 0.05) 0%, transparent 50%)',
+          'radial-gradient(ellipse 65% 45% at 12% 18%, rgba(217, 119, 6, 0.18) 0%, transparent 60%)',
+          'radial-gradient(ellipse 55% 40% at 88% 22%, rgba(245, 158, 11, 0.15) 0%, transparent 60%)',
+          'radial-gradient(ellipse 75% 50% at 50% 95%, rgba(159, 18, 57, 0.12) 0%, transparent 65%)',
+          'radial-gradient(ellipse 45% 35% at 90% 80%, rgba(120, 53, 15, 0.10) 0%, transparent 55%)',
         ].join(', '),
       },
       keyframes: {

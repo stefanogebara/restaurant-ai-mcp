@@ -51,15 +51,15 @@ Pages **never** use a flat fill. The body has four overlapping radial gradients 
 body {
   background-color: #FAFAF9;
   background-image:
-    radial-gradient(ellipse 70% 50% at 12% 18%, rgba(217, 119, 6, 0.10) 0%, transparent 55%),
-    radial-gradient(ellipse 60% 45% at 88% 22%, rgba(245, 158, 11, 0.08) 0%, transparent 55%),
-    radial-gradient(ellipse 80% 55% at 50% 95%, rgba(159, 18, 57, 0.06) 0%, transparent 60%),
-    radial-gradient(ellipse 50% 40% at 90% 80%, rgba(120, 53, 15, 0.05) 0%, transparent 50%);
+    radial-gradient(ellipse 65% 45% at 12% 18%, rgba(217, 119, 6, 0.18) 0%, transparent 60%),
+    radial-gradient(ellipse 55% 40% at 88% 22%, rgba(245, 158, 11, 0.15) 0%, transparent 60%),
+    radial-gradient(ellipse 75% 50% at 50% 95%, rgba(159, 18, 57, 0.12) 0%, transparent 65%),
+    radial-gradient(ellipse 45% 35% at 90% 80%, rgba(120, 53, 15, 0.10) 0%, transparent 55%);
   background-attachment: fixed;
 }
 ```
 
-Lighter than TwinMe's dark-mode orbs by design — the warm hues sit just under the perception threshold on first glance, but emerge when glass cards stack over them.
+Orb opacities tuned so the warm hues are clearly visible on first glance — the original 6 %–10 % range read as flat white in practice (glass surfaces refract nothing), so the spec was lifted to 10 %–18 % after a 2026-06-05 visual review.
 
 ### Color palette
 
@@ -111,7 +111,7 @@ Notes:
 
 - Normal text (< 18 px): minimum **4.5:1** contrast ratio
 - Large text (≥ 18 px bold or ≥ 24 px regular): minimum **3:1** contrast ratio
-- Critical: text on glass must clear contrast **against the gradient bg at its darkest orb**, not against pure white. The warm orbs sit at ≤ 10 % opacity so headroom is comfortable, but verify with WebAIM Contrast Checker for borderline cases (e.g. amber text on amber-orb region).
+- Critical: text on glass must clear contrast **against the gradient bg at its darkest orb**, not against pure white. The warm orbs sit at ≤ 18 % opacity so headroom is comfortable, but verify with WebAIM Contrast Checker for borderline cases (e.g. amber text on amber-orb region).
 - Never use opacity below 0.5 for readable text (`text-deep-charcoal/50` minimum on glass)
 
 ### Reduced-motion + low-end perf

@@ -183,10 +183,7 @@ export default function DemoAIInsightsBar({
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.3 }}
-          className="flex-1 min-w-0 flex flex-col rounded-lg overflow-hidden
-            bg-warm-white
-            border border-glass-border-dark
-          "
+          className="flex-1 min-w-0 flex flex-col rounded-lg overflow-hidden glass-card"
         >
           {/* Chat header */}
           <div className="flex items-center gap-2.5 px-4 py-3 border-b border-glass-border-dark">
