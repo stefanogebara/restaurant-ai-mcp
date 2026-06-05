@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useManagerPreferences, useSaveManagerPreferences } from '../../hooks/useManagerPreferences';
 import type { NotificationPreferences } from '../../hooks/useManagerPreferences';
@@ -159,7 +159,7 @@ export default function ManagerNotificationsPanel() {
                 id="weekly_report_day"
                 value={getValue('weekly_report_day') ?? 1}
                 onChange={e => set('weekly_report_day', Number(e.target.value))}
-                className="w-full px-3 py-2 border border-glass-border-dark rounded-xl text-sm text-deep-charcoal bg-white/60 focus:outline-none focus:ring-2 focus:ring-[#9F1239]/30 focus:border-[#9F1239]"
+                className="w-full px-3 py-2 border border-glass-border-input rounded-xl text-sm text-deep-charcoal bg-white/60 focus:outline-none focus:ring-2 focus:ring-[#9F1239]/30 focus:border-[#9F1239]"
               >
                 <option value={0}>{t('settings.daySunday', 'Sunday')}</option>
                 <option value={1}>{t('settings.dayMonday', 'Monday')}</option>

@@ -104,7 +104,7 @@ export default function WalkInModal({ isOpen, onClose, onSuccess, availableTable
               aria-label="Party size"
               value={formData.party_size}
               onChange={(e) => setFormData({ ...formData, party_size: e.target.value })}
-              className="w-full px-4 py-2.5 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent"
+              className="w-full px-4 py-2.5 bg-soft-gray border border-glass-border-input rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent"
             />
           </div>
 
@@ -118,7 +118,7 @@ export default function WalkInModal({ isOpen, onClose, onSuccess, availableTable
               aria-label="Customer name"
               value={formData.customer_name}
               onChange={(e) => setFormData({ ...formData, customer_name: e.target.value })}
-              className="w-full px-4 py-2.5 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent"
+              className="w-full px-4 py-2.5 bg-soft-gray border border-glass-border-input rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent"
             />
           </div>
 
@@ -133,7 +133,7 @@ export default function WalkInModal({ isOpen, onClose, onSuccess, availableTable
               placeholder="+55 11 91234 5678"
               value={formData.customer_phone}
               onChange={(e) => setFormData({ ...formData, customer_phone: e.target.value })}
-              className="w-full px-4 py-3 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent"
+              className="w-full px-4 py-3 bg-soft-gray border border-glass-border-input rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent"
             />
             <p className="text-xs text-muted-stone mt-1">{t('dashboard.walkIn.phoneFormatHint')}</p>
           </div>
@@ -146,7 +146,7 @@ export default function WalkInModal({ isOpen, onClose, onSuccess, availableTable
               aria-label="Preferred location"
               value={formData.preferred_location}
               onChange={(e) => setFormData({ ...formData, preferred_location: e.target.value })}
-              className="w-full px-4 py-2.5 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent"
+              className="w-full px-4 py-2.5 bg-soft-gray border border-glass-border-input rounded-xl text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent"
             >
               <option value="">{t('dashboard.walkIn.noPreference')}</option>
               {locations.map(loc => (

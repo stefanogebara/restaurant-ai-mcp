@@ -31,7 +31,7 @@ interface DemoSetupFormProps {
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
-const inputBase = 'w-full px-4 py-3.5 border border-border-gray rounded-xl text-sm text-deep-charcoal placeholder-muted-stone bg-white focus:outline-none focus:ring-[3px] focus:ring-burgundy/20 focus:border-burgundy transition-all';
+const inputBase = 'w-full px-4 py-3.5 border border-glass-border-input rounded-xl text-sm text-deep-charcoal placeholder-muted-stone bg-white focus:outline-none focus:ring-[3px] focus:ring-burgundy/20 focus:border-burgundy transition-all';
 
 function StarRating({ rating }: { rating: number }) {
   const full = Math.floor(rating);

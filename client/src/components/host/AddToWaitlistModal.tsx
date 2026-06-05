@@ -86,7 +86,7 @@ export default function AddToWaitlistModal({ onClose, onSuccess }: AddToWaitlist
                 required
                 value={formData.customer_name}
                 onChange={(e) => setFormData({ ...formData, customer_name: e.target.value })}
-                className="w-full px-4 py-2.5 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent transition-all"
+                className="w-full px-4 py-2.5 bg-soft-gray border border-glass-border-input rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent transition-all"
                 placeholder={t('placeholders.name', 'John Smith')}
               />
             </div>
@@ -100,7 +100,7 @@ export default function AddToWaitlistModal({ onClose, onSuccess }: AddToWaitlist
                 required
                 value={formData.customer_phone}
                 onChange={(e) => setFormData({ ...formData, customer_phone: e.target.value })}
-                className="w-full px-4 py-2.5 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent transition-all"
+                className="w-full px-4 py-2.5 bg-soft-gray border border-glass-border-input rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent transition-all"
                 placeholder={t('placeholders.phone', '+1 234 567 8900')}
               />
             </div>
@@ -113,7 +113,7 @@ export default function AddToWaitlistModal({ onClose, onSuccess }: AddToWaitlist
                 type="email"
                 value={formData.customer_email}
                 onChange={(e) => setFormData({ ...formData, customer_email: e.target.value })}
-                className="w-full px-4 py-2.5 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent transition-all"
+                className="w-full px-4 py-2.5 bg-soft-gray border border-glass-border-input rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent transition-all"
                 placeholder={t('placeholders.email', 'john@example.com')}
               />
             </div>
@@ -127,7 +127,7 @@ export default function AddToWaitlistModal({ onClose, onSuccess }: AddToWaitlist
                 required
                 value={formData.party_size}
                 onChange={(e) => setFormData({ ...formData, party_size: e.target.value })}
-                className="w-full px-4 py-2.5 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent transition-all"
+                className="w-full px-4 py-2.5 bg-soft-gray border border-glass-border-input rounded-xl text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent transition-all"
               >
                 {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(size => (
                   <option key={size} value={size}>{size} {size === 1 ? 'guest' : 'guests'}</option>
@@ -173,7 +173,7 @@ export default function AddToWaitlistModal({ onClose, onSuccess }: AddToWaitlist
               <textarea
                 value={formData.special_requests}
                 onChange={(e) => setFormData({ ...formData, special_requests: e.target.value })}
-                className="w-full px-4 py-2.5 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent transition-all resize-none"
+                className="w-full px-4 py-2.5 bg-soft-gray border border-glass-border-input rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent transition-all resize-none"
                 rows={2}
                 placeholder={t('placeholders.tags', 'Add comma-separated tags or notes...')}
               />

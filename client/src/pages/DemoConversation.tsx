@@ -340,7 +340,7 @@ export default function DemoConversation() {
             aria-label={t('demo.conversation.placeholder', 'Type your message...')}
             rows={1}
             disabled={isStreaming || isConverting}
-            className="flex-1 resize-none rounded-xl border border-border-gray px-4 py-2.5 text-sm text-deep-charcoal placeholder:text-muted-stone focus:outline-none focus:border-burgundy/40 disabled:opacity-50 transition-colors"
+            className="flex-1 resize-none rounded-xl border border-glass-border-input px-4 py-2.5 text-sm text-deep-charcoal placeholder:text-muted-stone focus:outline-none focus:border-burgundy/40 disabled:opacity-50 transition-colors"
             style={{ minHeight: '42px', maxHeight: '120px' }}
             onInput={(e) => {
               const el = e.currentTarget;

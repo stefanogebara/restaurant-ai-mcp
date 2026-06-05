@@ -104,6 +104,7 @@ export default {
         'glass-subtle': 'rgba(255, 255, 255, 0.40)',       // secondary surfaces, chips
         'glass-border': 'rgba(255, 255, 255, 0.70)',       // warm white edge
         'glass-border-dark': 'rgba(28, 25, 23, 0.06)',     // dark fine inner border for busy gradient regions
+        'glass-border-input': 'rgba(28, 25, 23, 0.12)',    // 2x stronger — form fields need a visible box outline against gradient
       },
       backdropBlur: {
         // Warm Glass tier values. DESIGN.md spec:

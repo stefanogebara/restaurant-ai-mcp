@@ -358,7 +358,7 @@ export default function ManagerAIChatPage() {
           <div className="flex-1 min-w-0 flex flex-col gap-1">
             <textarea
               ref={inputRef}
-              className="w-full rounded-xl border border-glass-border-dark bg-white/60 px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy max-h-40"
+              className="w-full rounded-xl border border-glass-border-input bg-white/60 px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy max-h-40"
               placeholder={
                 isFeatureUnavailable
                   ? t('dashboard.featureUpgradePlaceholder', 'Upgrade your plan to chat with Manager AI')

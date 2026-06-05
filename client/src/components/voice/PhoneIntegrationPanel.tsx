@@ -222,7 +222,7 @@ export default function PhoneIntegrationPanel() {
               placeholder="+1 (555) 000-0000"
               value={testNumber}
               onChange={(e) => setTestNumber(e.target.value)}
-              className="flex-1 border border-glass-border-dark rounded-lg px-3 py-2 text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
+              className="flex-1 border border-glass-border-input rounded-lg px-3 py-2 text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
               aria-label={t('phoneIntegration.testCallNumber', 'Number for test call')}
             />
             <button

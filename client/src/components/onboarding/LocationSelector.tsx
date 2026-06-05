@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { colors } from '../../utils/colors';
 import ThiingsIcon from '../common/ThiingsIcon';
@@ -139,7 +139,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
           className={`w-full px-4 py-3 rounded-xl bg-soft-gray border ${
             error?.country
               ? 'border-burgundy focus:border-burgundy'
-              : 'border-glass-border-dark focus:border-burgundy'
+              : 'border-glass-border-input focus:border-burgundy'
           } text-left text-deep-charcoal flex items-center justify-between hover:bg-border-gray/50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-burgundy`}
         >
           <div className="flex items-center gap-3">
@@ -172,7 +172,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
                 placeholder={t('onboarding.searchCountries')}
                 value={countrySearchQuery}
                 onChange={(e) => setCountrySearchQuery(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-soft-gray border border-glass-border-dark text-deep-charcoal placeholder-muted-stone focus:outline-none focus:border-burgundy focus:ring-2 focus:ring-burgundy transition-colors"
+                className="w-full px-3 py-2 rounded-xl bg-soft-gray border border-glass-border-input text-deep-charcoal placeholder-muted-stone focus:outline-none focus:border-burgundy focus:ring-2 focus:ring-burgundy transition-colors"
                 autoFocus
               />
             </div>
@@ -236,7 +236,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
               ? 'border-glass-border-dark cursor-not-allowed opacity-50'
               : error?.city
               ? 'border-burgundy focus:border-burgundy'
-              : 'border-glass-border-dark focus:border-burgundy'
+              : 'border-glass-border-input focus:border-burgundy'
           } text-left text-deep-charcoal flex items-center justify-between hover:bg-border-gray/50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-burgundy ${
             !selectedCountryCode ? 'hover:bg-soft-gray' : ''
           }`}
@@ -270,7 +270,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
                 placeholder={t('onboarding.searchCities')}
                 value={citySearchQuery}
                 onChange={(e) => setCitySearchQuery(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-soft-gray border border-glass-border-dark text-deep-charcoal placeholder-muted-stone focus:outline-none focus:border-burgundy focus:ring-2 focus:ring-burgundy transition-colors"
+                className="w-full px-3 py-2 rounded-xl bg-soft-gray border border-glass-border-input text-deep-charcoal placeholder-muted-stone focus:outline-none focus:border-burgundy focus:ring-2 focus:ring-burgundy transition-colors"
                 autoFocus
               />
             </div>

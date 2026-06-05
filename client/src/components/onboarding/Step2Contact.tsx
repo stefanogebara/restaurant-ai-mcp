@@ -266,7 +266,7 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
             }
           }}
           placeholder={`contact@restaurant${tldFor(data.country_code)}`}
-          className="w-full px-4 py-3 bg-white/60 backdrop-blur-glass-chip border border-glass-border-dark rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent transition-all"
+          className="w-full px-4 py-3 bg-white/60 backdrop-blur-glass-chip border border-glass-border-input rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent transition-all"
         />
         {errors.email && (
           <p className="mt-1 text-sm text-burgundy">{errors.email}</p>
@@ -284,7 +284,7 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
           value={data.website || ''}
           onChange={(e) => updateData({ website: e.target.value })}
           placeholder={`https://yourrestaurant${tldFor(data.country_code)}`}
-          className="w-full px-4 py-3 bg-white/60 backdrop-blur-glass-chip border border-glass-border-dark rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent transition-all"
+          className="w-full px-4 py-3 bg-white/60 backdrop-blur-glass-chip border border-glass-border-input rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent transition-all"
         />
       </div>
 
@@ -361,7 +361,7 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
                     type="checkbox"
                     checked={day.is_open}
                     onChange={(e) => updateDayHours(index, 'is_open', e.target.checked)}
-                    className="w-4 h-4 text-burgundy bg-white/60 border-glass-border-dark rounded focus:ring-2 focus:ring-burgundy"
+                    className="w-4 h-4 text-burgundy bg-white/60 border-glass-border-input rounded focus:ring-2 focus:ring-burgundy"
                   />
                   <span className="ml-2 text-deep-charcoal text-sm">{t('onboarding.open')}</span>
                 </label>
@@ -371,14 +371,14 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
                       type="time"
                       value={day.open_time}
                       onChange={(e) => updateDayHours(index, 'open_time', e.target.value)}
-                      className="px-3 py-1.5 bg-white/60 backdrop-blur-glass-chip border border-glass-border-dark rounded-xl text-deep-charcoal text-sm focus:outline-none focus:ring-2 focus:ring-burgundy"
+                      className="px-3 py-1.5 bg-white/60 backdrop-blur-glass-chip border border-glass-border-input rounded-xl text-deep-charcoal text-sm focus:outline-none focus:ring-2 focus:ring-burgundy"
                     />
                     <span className="text-stone-gray text-sm">{t('onboarding.to')}</span>
                     <input
                       type="time"
                       value={day.close_time}
                       onChange={(e) => updateDayHours(index, 'close_time', e.target.value)}
-                      className="px-3 py-1.5 bg-white/60 backdrop-blur-glass-chip border border-glass-border-dark rounded-xl text-deep-charcoal text-sm focus:outline-none focus:ring-2 focus:ring-burgundy"
+                      className="px-3 py-1.5 bg-white/60 backdrop-blur-glass-chip border border-glass-border-input rounded-xl text-deep-charcoal text-sm focus:outline-none focus:ring-2 focus:ring-burgundy"
                     />
                   </>
                 )}
@@ -426,7 +426,7 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
           id="average_dining_duration"
           value={data.average_dining_duration}
           onChange={(e) => updateData({ average_dining_duration: parseInt(e.target.value) })}
-          className="w-full px-4 py-3 bg-white/60 backdrop-blur-glass-chip border border-glass-border-dark rounded-xl text-deep-charcoal appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent transition-all"
+          className="w-full px-4 py-3 bg-white/60 backdrop-blur-glass-chip border border-glass-border-input rounded-xl text-deep-charcoal appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent transition-all"
         >
           <option value={60}>{t('onboarding.duration60')}</option>
           <option value={90}>{t('onboarding.duration90')}</option>

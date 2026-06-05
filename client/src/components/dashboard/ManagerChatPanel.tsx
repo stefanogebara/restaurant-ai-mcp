@@ -143,7 +143,7 @@ export function ManagerChatPanel({ onClose }: ManagerChatPanelProps) {
 
       <div className="flex gap-2 px-4 py-3 border-t border-border-gray">
         <input
-          className="flex-1 min-w-0 rounded-lg border border-border-gray px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
+          className="flex-1 min-w-0 rounded-lg border border-glass-border-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
           placeholder={
             isFeatureUnavailable
               ? t('dashboard.featureUpgradePlaceholder', 'Upgrade your plan to chat with Manager AI')

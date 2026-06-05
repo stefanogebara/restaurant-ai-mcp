@@ -115,7 +115,7 @@ export default function FeedbackSettingsPanel() {
               onChange={(e) => { setTemplate(e.target.value); setDirty(true); }}
               placeholder={t('dashboard.feedback.customPlaceholder', 'Leave blank for default message. Use {name} and {restaurant} as placeholders.')}
               rows={3}
-              className="w-full border border-glass-border-dark rounded-xl px-3 py-2 text-sm text-deep-charcoal resize-none"
+              className="w-full border border-glass-border-input rounded-xl px-3 py-2 text-sm text-deep-charcoal resize-none"
               maxLength={1000}
             />
             <p className="text-[10px] text-muted-stone mt-0.5">

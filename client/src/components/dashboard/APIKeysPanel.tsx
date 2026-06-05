@@ -1,4 +1,4 @@
-﻿/**
+/**
  * APIKeysPanel
  *
  * Create/revoke API keys for POS integration.
@@ -117,7 +117,7 @@ export default function APIKeysPanel() {
             value={newKeyName}
             onChange={(e) => setNewKeyName(e.target.value)}
             placeholder={t('integrations.keyNamePlaceholder', 'e.g. POS Terminal 1')}
-            className="w-full px-3 py-2 text-sm border border-glass-border-dark rounded-lg focus:outline-none focus:ring-1 focus:ring-[#9F1239]"
+            className="w-full px-3 py-2 text-sm border border-glass-border-input rounded-lg focus:outline-none focus:ring-1 focus:ring-[#9F1239]"
             maxLength={100}
           />
           <div className="flex gap-2 justify-end">

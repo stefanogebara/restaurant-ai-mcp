@@ -24,7 +24,7 @@ const variantStyles: Record<ButtonVariant, string> = {
   secondary: 'bg-soft-gray text-deep-charcoal hover:bg-border-gray focus:ring-border-gray',
   danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-600',
   ghost: 'bg-transparent hover:bg-soft-gray text-deep-charcoal focus:ring-warm-stone',
-  outline: 'border-2 border-border-gray bg-transparent hover:bg-soft-gray text-deep-charcoal focus:ring-border-gray',
+  outline: 'border-2 border-glass-border-input bg-transparent hover:bg-soft-gray text-deep-charcoal focus:ring-border-gray',
 };
 
 const sizeStyles: Record<ButtonSize, string> = {

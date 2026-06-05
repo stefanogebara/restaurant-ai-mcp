@@ -157,7 +157,7 @@ export default function PhoneInput({
             aria-expanded={isOpen}
             aria-haspopup="listbox"
             aria-label={`Country code: ${selectedCountry.name} ${selectedCountry.dial}`}
-            className="flex items-center gap-2 px-3 py-3 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal hover:bg-border-gray/50 focus:outline-none focus:ring-2 focus:ring-burgundy transition-all min-w-[120px]"
+            className="flex items-center gap-2 px-3 py-3 bg-soft-gray border border-glass-border-input rounded-xl text-deep-charcoal hover:bg-border-gray/50 focus:outline-none focus:ring-2 focus:ring-burgundy transition-all min-w-[120px]"
           >
             <span className="text-xl">{selectedCountry.flag}</span>
             <span className="text-sm font-medium">{selectedCountry.dial}</span>

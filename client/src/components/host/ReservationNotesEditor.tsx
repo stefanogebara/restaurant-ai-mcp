@@ -102,7 +102,7 @@ export default function ReservationNotesEditor({
                 type="checkbox"
                 checked={firstTimeVisitor}
                 onChange={(e) => setFirstTimeVisitor(e.target.checked)}
-                className="w-4 h-4 rounded border-border-gray bg-soft-gray text-burgundy focus:ring-burgundy"
+                className="w-4 h-4 rounded border-glass-border-input bg-soft-gray text-burgundy focus:ring-burgundy"
               />
               <span className="text-sm text-stone-gray">First Time Visitor</span>
               <ThiingsIcon name="star" pxSize={16} />
@@ -281,7 +281,7 @@ export default function ReservationNotesEditor({
             value={internalNotes}
             onChange={(e) => setInternalNotes(e.target.value)}
             placeholder="VIP status, previous visits, preferences..."
-            className="w-full p-3 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent"
+            className="w-full p-3 bg-soft-gray border border-glass-border-input rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent"
             rows={3}
           />
         </div>

@@ -50,7 +50,7 @@ export default function ReservationSettingsPanel({ advanceBookingDays, bufferTim
               id="advance_booking_days"
               value={advanceBookingDays}
               onChange={(e) => onUpdate('advance_booking_days', parseInt(e.target.value, 10))}
-              className="w-full px-4 py-3 bg-soft-gray border border-glass-border-dark rounded-xl text-deep-charcoal appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-burgundy"
+              className="w-full px-4 py-3 bg-soft-gray border border-glass-border-input rounded-xl text-deep-charcoal appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-burgundy"
             >
               <option value={7}>{t('onboarding.days7')}</option>
               <option value={14}>{t('onboarding.days14')}</option>
@@ -69,7 +69,7 @@ export default function ReservationSettingsPanel({ advanceBookingDays, bufferTim
               id="buffer_time"
               value={bufferTime}
               onChange={(e) => onUpdate('buffer_time', parseInt(e.target.value, 10))}
-              className="w-full px-4 py-3 bg-soft-gray border border-glass-border-dark rounded-xl text-deep-charcoal appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-burgundy"
+              className="w-full px-4 py-3 bg-soft-gray border border-glass-border-input rounded-xl text-deep-charcoal appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-burgundy"
             >
               <option value={0}>{t('onboarding.buffer0')}</option>
               <option value={15}>{t('onboarding.buffer15')}</option>
@@ -95,7 +95,7 @@ export default function ReservationSettingsPanel({ advanceBookingDays, bufferTim
                 return detected ? policyValueForStorage(detected) : cancellationPolicy;
               })()}
               onChange={(e) => onUpdate('cancellation_policy', e.target.value)}
-              className="w-full px-4 py-3 bg-soft-gray border border-glass-border-dark rounded-xl text-deep-charcoal appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-burgundy"
+              className="w-full px-4 py-3 bg-soft-gray border border-glass-border-input rounded-xl text-deep-charcoal appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-burgundy"
             >
               {POLICY_KEYS.map((key) => (
                 <option key={key} value={policyValueForStorage(key)}>{t(`onboarding.${key}`)}</option>

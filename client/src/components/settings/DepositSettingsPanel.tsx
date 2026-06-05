@@ -99,7 +99,7 @@ export default function DepositSettingsPanel() {
                 min="1"
                 max="500"
                 step="1"
-                className="w-full pl-12 pr-3 py-2.5 border border-border-gray rounded-lg text-sm text-deep-charcoal focus:outline-none focus:border-burgundy"
+                className="w-full pl-12 pr-3 py-2.5 border border-glass-border-input rounded-lg text-sm text-deep-charcoal focus:outline-none focus:border-burgundy"
               />
             </div>
             {type === 'per_person' && (

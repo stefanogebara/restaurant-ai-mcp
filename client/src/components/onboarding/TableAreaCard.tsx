@@ -1,4 +1,4 @@
-﻿import { useTranslation } from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import type { RestaurantArea, TableShape, TableConfiguration } from '../../types/onboarding.types';
 
@@ -71,7 +71,7 @@ export default function TableAreaCard({
                       type="checkbox"
                       checked={getTableConfig(areaIndex, capacity, shape)?.is_fixed_seating || false}
                       onChange={(e) => updateTableConfig(areaIndex, capacity, shape, 'is_fixed_seating', e.target.checked)}
-                      className="mt-0.5 w-4 h-4 rounded border-glass-border-dark text-burgundy focus:ring-burgundy"
+                      className="mt-0.5 w-4 h-4 rounded border-glass-border-input text-burgundy focus:ring-burgundy"
                     />
                     {/* Explanation is rendered inline (not in a `title=` tooltip)
                         so it's actually readable on touch devices. */}

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Voice filter bar with gender toggle pills, language dropdown, and search input.
  */
 
@@ -66,7 +66,7 @@ export default function VoiceFilters({ filters, onChange, defaultLanguage = 'en'
         value={filters.language || defaultLanguage}
         onChange={(e) => onChange({ ...filters, language: e.target.value })}
         aria-label="Filter by language"
-        className="px-3 py-2 text-sm border border-glass-border-dark rounded-xl bg-white/60 backdrop-blur-glass-chip text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/50"
+        className="px-3 py-2 text-sm border border-glass-border-input rounded-xl bg-white/60 backdrop-blur-glass-chip text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/50"
       >
         {SUPPORTED_LANGUAGES.map((lang) => (
           <option key={lang.code} value={lang.code}>
@@ -86,7 +86,7 @@ export default function VoiceFilters({ filters, onChange, defaultLanguage = 'en'
             placeholder={t('voice.searchVoices', 'Search voices...')}
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 text-sm border border-glass-border-dark rounded-xl bg-white/60 backdrop-blur-glass-chip text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy/50"
+            className="w-full pl-9 pr-3 py-2 text-sm border border-glass-border-input rounded-xl bg-white/60 backdrop-blur-glass-chip text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy/50"
           />
         </div>
       )}

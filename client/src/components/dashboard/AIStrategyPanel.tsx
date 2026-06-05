@@ -185,7 +185,7 @@ export default function AIStrategyPanel() {
           onChange={e => setDoc(e.target.value)}
           placeholder={PLACEHOLDERS[i18n.language] || PLACEHOLDERS.en}
           rows={12}
-          className="w-full text-sm font-mono text-deep-charcoal bg-white/60 backdrop-blur-glass-chip border border-glass-border-dark rounded-xl px-4 py-3 resize-y focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy/40 transition-colors placeholder:text-muted-stone/60"
+          className="w-full text-sm font-mono text-deep-charcoal bg-white/60 backdrop-blur-glass-chip border border-glass-border-input rounded-xl px-4 py-3 resize-y focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy/40 transition-colors placeholder:text-muted-stone/60"
         />
       )}
 

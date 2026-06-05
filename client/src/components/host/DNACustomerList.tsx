@@ -1,4 +1,4 @@
-﻿import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import { formatCurrency } from '../../utils/currency';
@@ -43,7 +43,7 @@ export default function DNACustomerList({
             placeholder={t('host.dnaCustomerList.searchPlaceholder', 'Search by name or phone...')}
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 text-sm bg-white/60 backdrop-blur-glass-chip border border-glass-border-dark rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-600/30 focus:border-violet-600"
+            className="w-full pl-9 pr-3 py-2 text-sm bg-white/60 backdrop-blur-glass-chip border border-glass-border-input rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-600/30 focus:border-violet-600"
           />
         </div>
         <div className="relative">
@@ -52,7 +52,7 @@ export default function DNACustomerList({
             value={styleFilter}
             onChange={(e) => onStyleFilterChange(e.target.value)}
             aria-label="Filter by dining style"
-            className="pl-9 pr-8 py-2 text-sm bg-white/60 backdrop-blur-glass-chip border border-glass-border-dark rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-600/30 focus:border-violet-600 appearance-none cursor-pointer"
+            className="pl-9 pr-8 py-2 text-sm bg-white/60 backdrop-blur-glass-chip border border-glass-border-input rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-600/30 focus:border-violet-600 appearance-none cursor-pointer"
           >
             <option value="">All Styles</option>
             <option value="solo">Solo</option>

@@ -341,7 +341,7 @@ export default function Login() {
                       required
                       minLength={8}
                       autoFocus
-                      className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm text-deep-charcoal placeholder-stone-300 focus:outline-none focus:ring-[3px] focus:ring-burgundy/[6%] focus:border-burgundy transition-all"
+                      className="w-full px-4 py-3 border border-glass-border-input rounded-[10px] text-sm text-deep-charcoal placeholder-stone-300 focus:outline-none focus:ring-[3px] focus:ring-burgundy/[6%] focus:border-burgundy transition-all"
                     />
                   </div>
                   <div>
@@ -355,7 +355,7 @@ export default function Login() {
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       required
                       minLength={8}
-                      className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm text-deep-charcoal placeholder-stone-300 focus:outline-none focus:ring-[3px] focus:ring-burgundy/[6%] focus:border-burgundy transition-all"
+                      className="w-full px-4 py-3 border border-glass-border-input rounded-[10px] text-sm text-deep-charcoal placeholder-stone-300 focus:outline-none focus:ring-[3px] focus:ring-burgundy/[6%] focus:border-burgundy transition-all"
                     />
                   </div>
 
@@ -401,7 +401,7 @@ export default function Login() {
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="you@restaurant.com"
                       required
-                      className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm text-deep-charcoal placeholder-stone-300 focus:outline-none focus:ring-[3px] focus:ring-burgundy/[6%] focus:border-burgundy transition-all"
+                      className="w-full px-4 py-3 border border-glass-border-input rounded-[10px] text-sm text-deep-charcoal placeholder-stone-300 focus:outline-none focus:ring-[3px] focus:ring-burgundy/[6%] focus:border-burgundy transition-all"
                     />
                   </div>
 
@@ -492,7 +492,7 @@ export default function Login() {
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="you@restaurant.com"
                       required
-                      className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm text-deep-charcoal placeholder-stone-300 focus:outline-none focus:ring-[3px] focus:ring-burgundy/[6%] focus:border-burgundy transition-all"
+                      className="w-full px-4 py-3 border border-glass-border-input rounded-[10px] text-sm text-deep-charcoal placeholder-stone-300 focus:outline-none focus:ring-[3px] focus:ring-burgundy/[6%] focus:border-burgundy transition-all"
                     />
                   </div>
                   <div>
@@ -507,7 +507,7 @@ export default function Login() {
                       placeholder={mode === 'signup' ? t('login.passwordMinChars') : t('login.yourPassword')}
                       required
                       minLength={mode === 'signup' ? 8 : 6}
-                      className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm text-deep-charcoal placeholder-stone-300 focus:outline-none focus:ring-[3px] focus:ring-burgundy/[6%] focus:border-burgundy transition-all"
+                      className="w-full px-4 py-3 border border-glass-border-input rounded-[10px] text-sm text-deep-charcoal placeholder-stone-300 focus:outline-none focus:ring-[3px] focus:ring-burgundy/[6%] focus:border-burgundy transition-all"
                     />
                   </div>
 

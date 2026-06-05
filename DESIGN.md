@@ -75,6 +75,7 @@ Orb opacities tuned so the warm hues are clearly visible on first glance — the
 | **Glass subtle** | `rgba(255, 255, 255, 0.40)` | Secondary surfaces, chips |
 | **Glass border** | `rgba(255, 255, 255, 0.70)` | Soft white edge on glass cards |
 | **Glass border subtle** | `rgba(28, 25, 23, 0.06)` | Dark fine line on the warm side of glass |
+| **Glass border input** | `rgba(28, 25, 23, 0.12)` | Form input boxes — 2× the subtle border so the input outline registers against the gradient (subtle = 6 %, input = 12 %). Use on `<input>` / `<select>` / `<textarea>` chrome. |
 
 Status colours are **semantic-only**:
 - Emerald `bg-emerald-500` = positive trends, online dots

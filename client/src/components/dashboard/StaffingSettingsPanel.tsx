@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useStaffingConfig, useSaveStaffingConfig } from '../../hooks/useStaffingConfig';
 import type { StaffingConfig, StaffingRole } from '../../hooks/useStaffingConfig';
@@ -85,7 +85,7 @@ export default function StaffingSettingsPanel() {
                     : role.covers_per_staff
                 }
                 onChange={(e) => handleChange(index, e.target.value)}
-                className="w-16 border border-glass-border-dark rounded-lg px-2 py-1 text-sm text-deep-charcoal text-right focus:outline-none focus:ring-2 focus:ring-burgundy/30"
+                className="w-16 border border-glass-border-input rounded-lg px-2 py-1 text-sm text-deep-charcoal text-right focus:outline-none focus:ring-2 focus:ring-burgundy/30"
                 aria-label={`${role.name} covers per staff`}
               />
             </div>

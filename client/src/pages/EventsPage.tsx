@@ -126,7 +126,7 @@ function EventCreateForm({ onCreated, onCancel }: { onCreated: () => void; onCan
             placeholder={t('events.titlePlaceholder', 'e.g. Wine Tasting Evening')}
             maxLength={120}
             required
-            className="w-full px-3 py-2 border border-glass-border-dark bg-white/60 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]"
+            className="w-full px-3 py-2 border border-glass-border-input bg-white/60 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]"
           />
         </div>
 
@@ -140,47 +140,47 @@ function EventCreateForm({ onCreated, onCancel }: { onCreated: () => void; onCan
             placeholder={t('events.descriptionPlaceholder', 'Describe the experience...')}
             maxLength={1000}
             rows={2}
-            className="w-full px-3 py-2 border border-glass-border-dark bg-white/60 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239] resize-none"
+            className="w-full px-3 py-2 border border-glass-border-input bg-white/60 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239] resize-none"
           />
         </div>
 
         <div>
           <label className="block text-xs font-medium text-stone-gray mb-1">{t('events.date', 'Date')}</label>
           <input type="date" value={eventDate} onChange={(e) => setEventDate(e.target.value)} required
-            className="w-full px-3 py-2 border border-glass-border-dark bg-white/60 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]" />
+            className="w-full px-3 py-2 border border-glass-border-input bg-white/60 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]" />
         </div>
 
         <div>
           <label className="block text-xs font-medium text-stone-gray mb-1">{t('events.time', 'Time')}</label>
           <input type="time" value={eventTime} onChange={(e) => setEventTime(e.target.value)} required
-            className="w-full px-3 py-2 border border-glass-border-dark bg-white/60 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]" />
+            className="w-full px-3 py-2 border border-glass-border-input bg-white/60 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]" />
         </div>
 
         <div>
           <label className="block text-xs font-medium text-stone-gray mb-1">{t('events.duration', 'Duration (min)')}</label>
           <input type="number" value={durationMinutes} onChange={(e) => setDurationMinutes(e.target.value)}
             placeholder="120" min="15" max="720" required
-            className="w-full px-3 py-2 border border-glass-border-dark bg-white/60 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]" />
+            className="w-full px-3 py-2 border border-glass-border-input bg-white/60 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]" />
         </div>
 
         <div>
           <label className="block text-xs font-medium text-stone-gray mb-1">{t('events.capacity', 'Capacity')}</label>
           <input type="number" value={maxCapacity} onChange={(e) => setMaxCapacity(e.target.value)}
             placeholder="20" min="1" required
-            className="w-full px-3 py-2 border border-glass-border-dark bg-white/60 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]" />
+            className="w-full px-3 py-2 border border-glass-border-input bg-white/60 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]" />
         </div>
 
         <div>
           <label className="block text-xs font-medium text-stone-gray mb-1">{t('events.price', 'Price (R$)')}</label>
           <input type="number" value={price} onChange={(e) => setPrice(e.target.value)}
             placeholder="150.00" min="0" step="0.01" required
-            className="w-full px-3 py-2 border border-glass-border-dark bg-white/60 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]" />
+            className="w-full px-3 py-2 border border-glass-border-input bg-white/60 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]" />
         </div>
 
         <div>
           <label className="block text-xs font-medium text-stone-gray mb-1">{t('events.refundPolicy', 'Refund Policy')}</label>
           <select value={refundPolicy} onChange={(e) => setRefundPolicy(e.target.value)}
-            className="w-full px-3 py-2 border border-glass-border-dark bg-white/60 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239] bg-white">
+            className="w-full px-3 py-2 border border-glass-border-input bg-white/60 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239] bg-white">
             <option value="full">{t('events.refundFull', 'Full refund')}</option>
             <option value="partial">{t('events.refundPartial', '50% refund')}</option>
             <option value="none">{t('events.refundNone', 'No refund')}</option>
@@ -197,7 +197,7 @@ function EventCreateForm({ onCreated, onCancel }: { onCreated: () => void; onCan
             placeholder={t('events.menuPlaceholder', 'Describe the menu or experience highlights...')}
             maxLength={2000}
             rows={3}
-            className="w-full px-3 py-2 border border-glass-border-dark bg-white/60 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239] resize-none"
+            className="w-full px-3 py-2 border border-glass-border-input bg-white/60 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239] resize-none"
           />
         </div>
       </div>

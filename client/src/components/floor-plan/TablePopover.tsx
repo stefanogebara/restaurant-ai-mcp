@@ -1,4 +1,4 @@
-﻿import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import type { Table, TableShape } from '../../types/host.types';
@@ -88,7 +88,7 @@ export default function TablePopover({ table, position, onClose, onDelete, onUpd
           <select
             value={shape}
             onChange={e => setShape(e.target.value as TableShape)}
-            className="w-full px-3 py-2 bg-soft-gray border border-glass-border-dark rounded-xl text-xs text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
+            className="w-full px-3 py-2 bg-soft-gray border border-glass-border-input rounded-xl text-xs text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
           >
             {SHAPES.map(s => <option key={s.value} value={s.value}>{t(SHAPE_LABEL_KEYS[s.value] || s.label, s.label)}</option>)}
           </select>

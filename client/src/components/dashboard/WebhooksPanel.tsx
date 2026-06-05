@@ -1,4 +1,4 @@
-﻿/**
+/**
  * WebhooksPanel
  *
  * Add/delete webhook URLs. Select events to subscribe to.
@@ -150,7 +150,7 @@ export default function WebhooksPanel() {
             value={newUrl}
             onChange={(e) => setNewUrl(e.target.value)}
             placeholder="https://your-server.com/webhook"
-            className="w-full px-3 py-2 text-sm border border-glass-border-dark rounded-lg focus:outline-none focus:ring-1 focus:ring-[#9F1239]"
+            className="w-full px-3 py-2 text-sm border border-glass-border-input rounded-lg focus:outline-none focus:ring-1 focus:ring-[#9F1239]"
           />
 
           <label className="block text-xs font-medium text-[#1C1917] mt-2">

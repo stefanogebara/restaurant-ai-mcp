@@ -42,7 +42,7 @@ export default function TableConfigForm({
             min="1"
             value={formData.table_number}
             onChange={(e) => setFormData({ ...formData, table_number: parseInt(e.target.value, 10) || 1 })}
-            className="w-full px-3 py-2 border border-border-gray rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
+            className="w-full px-3 py-2 border border-glass-border-input rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
           />
         </div>
         <div>
@@ -55,7 +55,7 @@ export default function TableConfigForm({
             max="20"
             value={formData.capacity}
             onChange={(e) => setFormData({ ...formData, capacity: parseInt(e.target.value, 10) || 1 })}
-            className="w-full px-3 py-2 border border-border-gray rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
+            className="w-full px-3 py-2 border border-glass-border-input rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
           />
         </div>
       </div>
@@ -68,7 +68,7 @@ export default function TableConfigForm({
           <select
             value={formData.location}
             onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-            className="flex-1 px-3 py-2 border border-border-gray rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
+            className="flex-1 px-3 py-2 border border-glass-border-input rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
           >
             {locations.map((loc) => (
               <option key={loc} value={loc}>
@@ -84,7 +84,7 @@ export default function TableConfigForm({
             aria-label={t('tableConfig.newLocationName', 'New area name')}
             placeholder={t('tableConfig.newLocationPlaceholder', 'e.g. Terrace, Bar, Patio')}
             onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-            className="mt-2 w-full px-3 py-2 border border-border-gray rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
+            className="mt-2 w-full px-3 py-2 border border-glass-border-input rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
           />
         )}
       </div>
@@ -125,7 +125,7 @@ export default function TableConfigForm({
             value={formData.combination_group}
             onChange={(e) => setFormData({ ...formData, combination_group: e.target.value })}
             placeholder={t('tableConfig.combinationPlaceholder', 'e.g. window-row, terrace-front')}
-            className="w-full px-3 py-2 border border-border-gray rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
+            className="w-full px-3 py-2 border border-glass-border-input rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
           />
           <p className="text-xs text-muted-stone mt-1">
             {t('tableConfig.combinationHint', 'Give the same name to tables that sit next to each other so the AI can join them into bigger groups.')}

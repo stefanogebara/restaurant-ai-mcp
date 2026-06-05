@@ -397,7 +397,7 @@ export default function EventBookingPage() {
                 onChange={(e) => setName(e.target.value)}
                 required
                 maxLength={200}
-                className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]"
+                className="w-full px-3 py-2 border border-glass-border-input rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]"
               />
             </div>
 
@@ -410,7 +410,7 @@ export default function EventBookingPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]"
+                className="w-full px-3 py-2 border border-glass-border-input rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]"
               />
             </div>
 
@@ -423,7 +423,7 @@ export default function EventBookingPage() {
                 type="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]"
+                className="w-full px-3 py-2 border border-glass-border-input rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]"
               />
             </div>
 
@@ -438,7 +438,7 @@ export default function EventBookingPage() {
                 min="1"
                 max={spotsLeft}
                 required
-                className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]"
+                className="w-full px-3 py-2 border border-glass-border-input rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]"
               />
               <p className="text-xs text-[#706A65] mt-1">
                 {t('eventBooking.total', 'Total')}: {formatPrice(event.price * (parseInt(partySize, 10) || 0))}
@@ -455,7 +455,7 @@ export default function EventBookingPage() {
                 onChange={(e) => setSpecialRequests(e.target.value)}
                 maxLength={500}
                 rows={2}
-                className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239] resize-none"
+                className="w-full px-3 py-2 border border-glass-border-input rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239] resize-none"
               />
             </div>
 

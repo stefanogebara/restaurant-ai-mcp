@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useVoicePersona, useSaveVoicePersona } from '../../hooks/useVoicePersona';
 import type { VoicePersona } from '../../hooks/useVoicePersona';
@@ -89,7 +89,7 @@ export default function VoicePersonaPanel() {
             placeholder={t('placeholders.agentName', 'e.g. Sofia')}
             value={getValue('agent_name')}
             onChange={e => set('agent_name', e.target.value)}
-            className="w-full border border-glass-border-dark rounded-lg px-3 py-2 text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
+            className="w-full border border-glass-border-input rounded-lg px-3 py-2 text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
           />
         </div>
         <div>
@@ -103,7 +103,7 @@ export default function VoicePersonaPanel() {
             placeholder={t('placeholders.agentGreeting', 'e.g. Welcome to our restaurant!')}
             value={getValue('agent_greeting')}
             onChange={e => set('agent_greeting', e.target.value)}
-            className="w-full border border-glass-border-dark rounded-lg px-3 py-2 text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
+            className="w-full border border-glass-border-input rounded-lg px-3 py-2 text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
           />
         </div>
       </div>

@@ -414,7 +414,7 @@ export default function Step6TeachAI({
           disabled={isSending}
           placeholder={t('onboarding.typeYourAnswer')}
           rows={1}
-          className="flex-1 border border-glass-border-dark rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy resize-none bg-white/60 placeholder:text-muted-stone transition-colors disabled:opacity-50"
+          className="flex-1 border border-glass-border-input rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy resize-none bg-white/60 placeholder:text-muted-stone transition-colors disabled:opacity-50"
         />
         <button
           type="button"

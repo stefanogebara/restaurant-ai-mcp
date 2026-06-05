@@ -143,7 +143,7 @@ export default function Step0Search({ onPrefill, onSkip }: Step0SearchProps) {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder={t('onboarding.step0.namePlaceholder', 'e.g. Cantina Bella')}
-            className="w-full px-4 py-2.5 border border-glass-border-dark rounded-lg text-sm focus:outline-none focus:border-burgundy"
+            className="w-full px-4 py-2.5 border border-glass-border-input rounded-lg text-sm focus:outline-none focus:border-burgundy"
           />
         </div>
         <div>
@@ -156,7 +156,7 @@ export default function Step0Search({ onPrefill, onSkip }: Step0SearchProps) {
             value={city}
             onChange={(e) => setCity(e.target.value)}
             placeholder={t('onboarding.step0.cityPlaceholder', 'e.g. São Paulo')}
-            className="w-full px-4 py-2.5 border border-glass-border-dark rounded-lg text-sm focus:outline-none focus:border-burgundy"
+            className="w-full px-4 py-2.5 border border-glass-border-input rounded-lg text-sm focus:outline-none focus:border-burgundy"
           />
         </div>
         <button
@@ -255,7 +255,7 @@ export default function Step0Search({ onPrefill, onSkip }: Step0SearchProps) {
               value={website}
               onChange={(e) => setWebsite(e.target.value)}
               placeholder="https://your-restaurant.com"
-              className="w-full px-4 py-2.5 border border-glass-border-dark rounded-lg text-sm focus:outline-none focus:border-burgundy"
+              className="w-full px-4 py-2.5 border border-glass-border-input rounded-lg text-sm focus:outline-none focus:border-burgundy"
             />
             <button
               type="submit"

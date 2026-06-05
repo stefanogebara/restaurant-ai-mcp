@@ -278,7 +278,7 @@ export default function QuickInterventionModal({
                   value={staffName}
                   onChange={(e) => setStaffName(e.target.value)}
                   placeholder={t.staffPlaceholder}
-                  className="w-full px-4 py-2 border border-glass-border-dark rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
+                  className="w-full px-4 py-2 border border-glass-border-input rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
                 />
               </div>
 
@@ -292,7 +292,7 @@ export default function QuickInterventionModal({
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder={t.notesPlaceholder}
                   rows={2}
-                  className="w-full px-4 py-2 border border-glass-border-dark rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors resize-none"
+                  className="w-full px-4 py-2 border border-glass-border-input rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors resize-none"
                 />
               </div>
             </>

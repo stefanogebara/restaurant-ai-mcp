@@ -104,7 +104,7 @@ export default function AddTableModal({ onClose, onAdd, nextNumber, locations, a
               value={tableNumber}
               onChange={e => setTableNumber(Number(e.target.value))}
               min={1}
-              className="w-full px-3 py-2.5 border border-glass-border-dark rounded-xl text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
+              className="w-full px-3 py-2.5 border border-glass-border-input rounded-xl text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
             />
           </div>
 
@@ -164,7 +164,7 @@ export default function AddTableModal({ onClose, onAdd, nextNumber, locations, a
                 <select
                   value={location}
                   onChange={e => setLocation(e.target.value)}
-                  className="flex-1 px-3 py-2.5 border border-glass-border-dark rounded-xl text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
+                  className="flex-1 px-3 py-2.5 border border-glass-border-input rounded-xl text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
                 >
                   {locations.map(l => <option key={l} value={l}>{l}</option>)}
                 </select>
@@ -184,7 +184,7 @@ export default function AddTableModal({ onClose, onAdd, nextNumber, locations, a
                   onChange={e => setNewLocation(e.target.value)}
                   placeholder={t('placeholders.tableName', 'e.g. Terrace')}
                   autoFocus
-                  className="flex-1 px-3 py-2.5 border border-glass-border-dark rounded-xl text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
+                  className="flex-1 px-3 py-2.5 border border-glass-border-input rounded-xl text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
                 />
                 <button
                   type="button"

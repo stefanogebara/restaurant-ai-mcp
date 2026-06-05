@@ -120,7 +120,7 @@ export default function CampaignManager() {
               onChange={(e) => setFormMessage(e.target.value)}
               placeholder={t('campaigns.messagePlaceholder', 'Hi {name}, we miss you at our restaurant! Book your next visit...')}
               rows={3}
-              className="w-full border border-glass-border-dark rounded-xl px-3 py-2 text-sm text-deep-charcoal resize-none"
+              className="w-full border border-glass-border-input rounded-xl px-3 py-2 text-sm text-deep-charcoal resize-none"
               maxLength={500}
             />
             <p className="text-[10px] text-muted-stone mt-0.5">

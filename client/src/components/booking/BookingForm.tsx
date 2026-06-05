@@ -407,7 +407,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
                     selectedTime === slot.time
                       ? 'border-burgundy bg-burgundy/[4%] text-burgundy font-semibold'
                       : slot.available
-                        ? 'border-glass-border-dark bg-white text-stone-gray hover:border-stone-300 hover:bg-warm-white'
+                        ? 'border-glass-border-input bg-white text-stone-gray hover:border-stone-300 hover:bg-warm-white'
                         : 'border-soft-gray bg-warm-white text-stone-300 cursor-not-allowed'
                   }`}
                 >
@@ -438,7 +438,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
               className={`w-12 h-12 rounded-xl border text-[15px] font-medium transition-colors ${
                 partySize === n
                   ? 'border-burgundy bg-burgundy/[4%] text-burgundy font-bold'
-                  : 'border-glass-border-dark bg-white text-stone-gray hover:border-stone-300'
+                  : 'border-glass-border-input bg-white text-stone-gray hover:border-stone-300'
               }`}
             >
               {n}
@@ -451,7 +451,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
               className={`w-12 h-12 rounded-xl border text-[15px] font-medium transition-colors ${
                 partySize > 7
                   ? 'border-burgundy bg-burgundy/[4%] text-burgundy font-bold'
-                  : 'border-glass-border-dark bg-white text-stone-gray hover:border-stone-300'
+                  : 'border-glass-border-input bg-white text-stone-gray hover:border-stone-300'
               }`}
             >
               {partySize > 7 ? partySize : '8+'}

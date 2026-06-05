@@ -196,7 +196,7 @@ export default function DemoManagerChat({
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder={ui.placeholder}
-            className="flex-1 px-3.5 py-2.5 bg-white/60 backdrop-blur-glass-chip border border-glass-border-dark rounded-xl text-sm text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy/30"
+            className="flex-1 px-3.5 py-2.5 bg-white/60 backdrop-blur-glass-chip border border-glass-border-input rounded-xl text-sm text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy/30"
           />
           <button
             type="submit"

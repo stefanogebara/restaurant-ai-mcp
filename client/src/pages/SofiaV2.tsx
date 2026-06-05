@@ -189,7 +189,7 @@ function ChatPreview() {
           value={input}
           onChange={e => setInput(e.target.value)}
           placeholder="Escreva uma mensagem…"
-          className="flex-1 h-9 px-3 rounded-md border border-[#E5E7EB] bg-[#FAFAF9] text-[13px] focus:outline-none focus:border-[#9F1239] focus:bg-white transition-colors"
+          className="flex-1 h-9 px-3 rounded-md border border-glass-border-input bg-[#FAFAF9] text-[13px] focus:outline-none focus:border-[#9F1239] focus:bg-white transition-colors"
         />
         <button
           type="submit"
@@ -327,7 +327,7 @@ export default function SofiaV2() {
                           type="text"
                           value={agentName}
                           onChange={e => setAgentName(e.target.value)}
-                          className="w-full h-9 px-3 rounded-md border border-[#E5E7EB] bg-white text-[14px] focus:outline-none focus:border-[#9F1239]"
+                          className="w-full h-9 px-3 rounded-md border border-glass-border-input bg-white text-[14px] focus:outline-none focus:border-[#9F1239]"
                         />
                       </div>
                       <div>
@@ -337,7 +337,7 @@ export default function SofiaV2() {
                           value={greeting}
                           onChange={e => setGreeting(e.target.value)}
                           placeholder="Oi, sou a Sofia do [restaurante]!"
-                          className="w-full h-9 px-3 rounded-md border border-[#E5E7EB] bg-white text-[14px] focus:outline-none focus:border-[#9F1239]"
+                          className="w-full h-9 px-3 rounded-md border border-glass-border-input bg-white text-[14px] focus:outline-none focus:border-[#9F1239]"
                         />
                       </div>
                     </div>

@@ -117,7 +117,7 @@ export default function Step1Welcome({ data, updateData, onNext, isDemoLoading }
           onFocus={() => setErrors((prev) => ({ ...prev, restaurant_name: '' }))}
           onBlur={(e) => { if (!e.target.value.trim()) setErrors((prev) => ({ ...prev, restaurant_name: t('onboarding.restaurantNameRequired') })); }}
           placeholder={t('onboarding.restaurantNamePlaceholder')}
-          className="w-full px-4 py-3 bg-soft-gray border border-glass-border-dark rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent transition-all"
+          className="w-full px-4 py-3 bg-soft-gray border border-glass-border-input rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent transition-all"
         />
         {errors.restaurant_name && (
           <p className="mt-1 text-sm text-burgundy">{errors.restaurant_name}</p>

@@ -213,7 +213,7 @@ function ProactiveCommCard({
               onChange={(e) => onSetDraft(e.target.value)}
               disabled={item.status === 'sent'}
               rows={4}
-              className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm text-[#111827] placeholder-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy disabled:bg-[#F3F4F6] disabled:text-[#6B7280]"
+              className="w-full px-3 py-2 border border-glass-border-input rounded-lg text-sm text-[#111827] placeholder-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy disabled:bg-[#F3F4F6] disabled:text-[#6B7280]"
               placeholder={t('proactiveComms.draftPlaceholder', 'AI is drafting this — write your own if you prefer.')}
             />
           </div>

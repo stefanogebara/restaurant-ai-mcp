@@ -135,7 +135,7 @@ export default function CustomersPage() {
               onChange={(e) => setSearchInput(e.target.value)}
               placeholder={t('crm.searchPlaceholder', 'Search by name, phone or email...')}
               aria-label={t('crm.ariaSearch', 'Search customers')}
-              className="w-full pl-10 pr-4 py-2.5 text-sm border border-glass-border-dark rounded-lg bg-white/60 backdrop-blur-glass-chip text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-1 focus:ring-[#9F1239]/30 focus:border-[#9F1239]/30"
+              className="w-full pl-10 pr-4 py-2.5 text-sm border border-glass-border-input rounded-lg bg-white/60 backdrop-blur-glass-chip text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-1 focus:ring-[#9F1239]/30 focus:border-[#9F1239]/30"
             />
           </div>
 
@@ -145,7 +145,7 @@ export default function CustomersPage() {
               value={tierFilter}
               onChange={(e) => setTierFilter(e.target.value)}
               aria-label={t('crm.ariaTierFilter', 'Filter by tier')}
-              className="flex-1 min-w-[120px] sm:flex-none text-sm border border-glass-border-dark rounded-lg px-3 py-2 text-stone-700 bg-white/60 focus:outline-none focus:ring-1 focus:ring-[#9F1239]/30 focus:border-[#9F1239]/30"
+              className="flex-1 min-w-[120px] sm:flex-none text-sm border border-glass-border-input rounded-lg px-3 py-2 text-stone-700 bg-white/60 focus:outline-none focus:ring-1 focus:ring-[#9F1239]/30 focus:border-[#9F1239]/30"
             >
               <option value="">{t('crm.allTiers', 'All tiers')}</option>
               {TIER_OPTIONS.filter(Boolean).map((tier) => (
@@ -161,14 +161,14 @@ export default function CustomersPage() {
               onChange={(e) => setTagFilter(e.target.value)}
               placeholder={t('crm.filterByTag', 'Filter by tag...')}
               aria-label={t('crm.filterByTag', 'Filter by tag...')}
-              className="flex-1 min-w-[120px] sm:flex-none text-sm border border-[#E5E7EB] rounded-lg px-3 py-2 text-stone-700 placeholder:text-stone-400 bg-white focus:outline-none focus:ring-1 focus:ring-[#9F1239]/30 focus:border-[#9F1239]/30"
+              className="flex-1 min-w-[120px] sm:flex-none text-sm border border-glass-border-input rounded-lg px-3 py-2 text-stone-700 placeholder:text-stone-400 bg-white focus:outline-none focus:ring-1 focus:ring-[#9F1239]/30 focus:border-[#9F1239]/30"
             />
 
             <select
               value={allergyFilter}
               onChange={(e) => setAllergyFilter(e.target.value)}
               aria-label={t('crm.ariaAllergyFilter', 'Filter by allergy')}
-              className="flex-1 min-w-[120px] sm:flex-none text-sm border border-glass-border-dark rounded-lg px-3 py-2 text-stone-700 bg-white/60 focus:outline-none focus:ring-1 focus:ring-[#9F1239]/30 focus:border-[#9F1239]/30"
+              className="flex-1 min-w-[120px] sm:flex-none text-sm border border-glass-border-input rounded-lg px-3 py-2 text-stone-700 bg-white/60 focus:outline-none focus:ring-1 focus:ring-[#9F1239]/30 focus:border-[#9F1239]/30"
             >
               <option value="">{t('crm.allAllergies', 'All allergies')}</option>
               {ALLERGY_FILTER_OPTIONS.map((a) => (
@@ -182,7 +182,7 @@ export default function CustomersPage() {
               value={dietaryFilter}
               onChange={(e) => setDietaryFilter(e.target.value)}
               aria-label={t('crm.ariaDietaryFilter', 'Filter by dietary preference')}
-              className="flex-1 min-w-[120px] sm:flex-none text-sm border border-glass-border-dark rounded-lg px-3 py-2 text-stone-700 bg-white/60 focus:outline-none focus:ring-1 focus:ring-[#9F1239]/30 focus:border-[#9F1239]/30"
+              className="flex-1 min-w-[120px] sm:flex-none text-sm border border-glass-border-input rounded-lg px-3 py-2 text-stone-700 bg-white/60 focus:outline-none focus:ring-1 focus:ring-[#9F1239]/30 focus:border-[#9F1239]/30"
             >
               <option value="">{t('crm.allDietary', 'All dietary')}</option>
               {DIETARY_FILTER_OPTIONS.map((d) => (

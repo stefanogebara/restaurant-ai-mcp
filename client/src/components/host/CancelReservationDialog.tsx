@@ -96,7 +96,7 @@ export default function CancelReservationDialog({ isOpen, reservation, onClose }
           <select
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            className="w-full px-3 py-2 bg-soft-gray border border-border-gray rounded-lg text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
+            className="w-full px-3 py-2 bg-soft-gray border border-glass-border-input rounded-lg text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
           >
             {CANCEL_REASONS.map((r) => (
               <option key={r.value} value={r.value}>

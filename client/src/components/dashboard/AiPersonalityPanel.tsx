@@ -356,7 +356,7 @@ export default function AiPersonalityPanel() {
                   value={customTrait}
                   onChange={e => setCustomTrait(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addCustomTrait(); } }}
-                  className="flex-1 border border-glass-border-dark rounded-lg px-3 py-1.5 text-xs text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
+                  className="flex-1 border border-glass-border-input rounded-lg px-3 py-1.5 text-xs text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
                 />
                 <button
                   type="button"
@@ -388,7 +388,7 @@ export default function AiPersonalityPanel() {
               placeholder={t('dashboard.aiPersonality.verbalQuirksPlaceholder', 'e.g. uses Brazilian slang, always says "com certeza", ends messages with a food emoji')}
               value={getValue('verbal_quirks') || ''}
               onChange={e => set('verbal_quirks', e.target.value)}
-              className="w-full border border-glass-border-dark rounded-lg px-3 py-2 text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30 resize-none"
+              className="w-full border border-glass-border-input rounded-lg px-3 py-2 text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30 resize-none"
             />
           </div>
         </div>

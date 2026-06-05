@@ -196,7 +196,7 @@ export default function RevenueOpportunities() {
               role="button"
               tabIndex={0}
               aria-expanded={expandedCard === opp.rank}
-              className="border border-glass-border-dark rounded-lg overflow-hidden hover:bg-[#FAFAFA] transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#9F1239]/20"
+              className="border border-glass-border-input rounded-lg overflow-hidden hover:bg-[#FAFAFA] transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#9F1239]/20"
               onClick={() => setExpandedCard(expandedCard === opp.rank ? null : opp.rank)}
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setExpandedCard(expandedCard === opp.rank ? null : opp.rank); } }}
             >

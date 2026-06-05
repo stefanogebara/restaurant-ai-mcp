@@ -199,7 +199,7 @@ export default function CustomerPortal() {
                     value={phone}
                     onChange={(e) => { setPhone(e.target.value.replace(/[^\d+ ]/g, '')); setLookupMethod('phone'); }}
                     placeholder="+XX XXXXXXXXX"
-                    className="w-full px-4 py-3 border border-glass-border-dark rounded-[10px] text-sm bg-white/60 text-deep-charcoal placeholder:text-stone-300 focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-burgundy/[6%]"
+                    className="w-full px-4 py-3 border border-glass-border-input rounded-[10px] text-sm bg-white/60 text-deep-charcoal placeholder:text-stone-300 focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-burgundy/[6%]"
                     onKeyDown={(e) => e.key === 'Enter' && lookupMutation.mutate(undefined)}
                   />
                 </div>
@@ -219,7 +219,7 @@ export default function CustomerPortal() {
                     value={reservationId}
                     onChange={(e) => { setReservationId(e.target.value); setLookupMethod('id'); }}
                     placeholder={t('reservations.confirmationIdPlaceholder', 'e.g. CEL-0218-A7K3')}
-                    className="w-full px-4 py-3 border border-glass-border-dark rounded-[10px] text-sm bg-white/60 text-deep-charcoal placeholder:text-stone-300 focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-burgundy/[6%]"
+                    className="w-full px-4 py-3 border border-glass-border-input rounded-[10px] text-sm bg-white/60 text-deep-charcoal placeholder:text-stone-300 focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-burgundy/[6%]"
                     onKeyDown={(e) => e.key === 'Enter' && lookupMutation.mutate(undefined)}
                   />
                 </div>
@@ -312,19 +312,19 @@ export default function CustomerPortal() {
                     <div className="space-y-4">
                       <div>
                         <label className="block text-[13px] font-medium text-stone-gray mb-1.5">{t('reservations.date')}</label>
-                        <input type="date" value={modifiedData.date} onChange={(e) => setModifiedData({ ...modifiedData, date: e.target.value })} className="w-full px-4 py-3 border border-glass-border-dark rounded-[10px] text-sm bg-white/60 text-deep-charcoal focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-burgundy/[6%]" />
+                        <input type="date" value={modifiedData.date} onChange={(e) => setModifiedData({ ...modifiedData, date: e.target.value })} className="w-full px-4 py-3 border border-glass-border-input rounded-[10px] text-sm bg-white/60 text-deep-charcoal focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-burgundy/[6%]" />
                       </div>
                       <div>
                         <label className="block text-[13px] font-medium text-stone-gray mb-1.5">{t('reservations.time')}</label>
-                        <input type="time" value={modifiedData.time} onChange={(e) => setModifiedData({ ...modifiedData, time: e.target.value })} className="w-full px-4 py-3 border border-glass-border-dark rounded-[10px] text-sm bg-white/60 text-deep-charcoal focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-burgundy/[6%]" />
+                        <input type="time" value={modifiedData.time} onChange={(e) => setModifiedData({ ...modifiedData, time: e.target.value })} className="w-full px-4 py-3 border border-glass-border-input rounded-[10px] text-sm bg-white/60 text-deep-charcoal focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-burgundy/[6%]" />
                       </div>
                       <div>
                         <label className="block text-[13px] font-medium text-stone-gray mb-1.5">{t('reservations.partySize')}</label>
-                        <input type="number" min="1" max="20" value={modifiedData.party_size} onChange={(e) => setModifiedData({ ...modifiedData, party_size: parseInt(e.target.value) })} className="w-full px-4 py-3 border border-glass-border-dark rounded-[10px] text-sm bg-white/60 text-deep-charcoal focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-burgundy/[6%]" />
+                        <input type="number" min="1" max="20" value={modifiedData.party_size} onChange={(e) => setModifiedData({ ...modifiedData, party_size: parseInt(e.target.value) })} className="w-full px-4 py-3 border border-glass-border-input rounded-[10px] text-sm bg-white/60 text-deep-charcoal focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-burgundy/[6%]" />
                       </div>
                       <div>
                         <label className="block text-[13px] font-medium text-stone-gray mb-1.5">{t('reservations.specialRequests')}</label>
-                        <textarea value={modifiedData.special_requests || ''} onChange={(e) => setModifiedData({ ...modifiedData, special_requests: e.target.value })} rows={3} placeholder={t('booking.specialRequestsPlaceholder')} className="w-full px-4 py-3 border border-glass-border-dark rounded-[10px] text-sm bg-white/60 text-deep-charcoal placeholder:text-stone-300 focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-burgundy/[6%] resize-none" />
+                        <textarea value={modifiedData.special_requests || ''} onChange={(e) => setModifiedData({ ...modifiedData, special_requests: e.target.value })} rows={3} placeholder={t('booking.specialRequestsPlaceholder')} className="w-full px-4 py-3 border border-glass-border-input rounded-[10px] text-sm bg-white/60 text-deep-charcoal placeholder:text-stone-300 focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-burgundy/[6%] resize-none" />
                       </div>
                       <div className="flex gap-2.5 pt-2">
                         <button type="button" onClick={() => { setIsModifying(false); setModifiedData(reservation); }} className="flex-1 py-3 border border-glass-border-dark bg-white/60 hover:bg-white/85 text-stone-gray font-medium rounded-[10px] text-[13px] hover:border-muted-stone transition-colors">{t('common.cancel')}</button>

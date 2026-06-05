@@ -63,7 +63,7 @@ function Field({ label, value, onChange, type = 'text', placeholder, span = 1 }:
         value={value}
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full h-9 px-3 rounded-md border border-[#E5E7EB] bg-white text-[14px] text-[#1C1917] focus:outline-none focus:border-[#9F1239] transition-colors"
+        className="w-full h-9 px-3 rounded-md border border-glass-border-input bg-white text-[14px] text-[#1C1917] focus:outline-none focus:border-[#9F1239] transition-colors"
       />
     </div>
   );

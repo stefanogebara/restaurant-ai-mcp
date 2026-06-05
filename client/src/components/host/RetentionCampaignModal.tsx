@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import type { IconName } from '../common/ThiingsIcon';
@@ -146,7 +146,7 @@ export function RetentionCampaignModal({ isOpen, onClose, customer, onSendCampai
                 value={customMessage || template.message}
                 onChange={(e) => setCustomMessage(e.target.value)}
                 rows={4}
-                className="w-full px-3 py-2 border border-glass-border-dark rounded-xl text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy"
+                className="w-full px-3 py-2 border border-glass-border-input rounded-xl text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy"
                 placeholder={t('retentionCampaign.customizePlaceholder')}
               />
               <p className="text-xs text-stone-gray">{t('retentionCampaign.personalizeHint')}</p>

@@ -128,7 +128,7 @@ export default function InstagramCaptionDrafter({ toneProfileReady, language }: 
           onChange={(e) => setTopic(e.target.value)}
           placeholder="e.g. our new sourdough pizza"
           maxLength={300}
-          className="w-full px-3 py-2 border border-glass-border-dark rounded-lg text-sm focus:outline-none focus:border-burgundy"
+          className="w-full px-3 py-2 border border-glass-border-input rounded-lg text-sm focus:outline-none focus:border-burgundy"
           data-testid="instagram-caption-drafter-topic"
         />
       </div>

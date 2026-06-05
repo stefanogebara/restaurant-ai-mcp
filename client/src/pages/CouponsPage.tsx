@@ -101,7 +101,7 @@ function CouponCreateForm({ onCreated, onCancel }: { onCreated: () => void; onCa
             onChange={(e) => setCode(e.target.value.toUpperCase())}
             placeholder="SAVE20AB"
             maxLength={20}
-            className="w-full px-3 py-2 border border-glass-border-dark bg-white/60 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239] font-mono"
+            className="w-full px-3 py-2 border border-glass-border-input bg-white/60 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239] font-mono"
           />
         </div>
 
@@ -114,7 +114,7 @@ function CouponCreateForm({ onCreated, onCancel }: { onCreated: () => void; onCa
             onChange={(e) => setDescription(e.target.value)}
             placeholder={t('coupons.descriptionPlaceholder', 'ex. Desconto de fim de semana')}
             maxLength={200}
-            className="w-full px-3 py-2 border border-glass-border-dark bg-white/60 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]"
+            className="w-full px-3 py-2 border border-glass-border-input bg-white/60 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]"
           />
         </div>
 
@@ -124,7 +124,7 @@ function CouponCreateForm({ onCreated, onCancel }: { onCreated: () => void; onCa
           <select
             value={discountType}
             onChange={(e) => setDiscountType(e.target.value as 'percentage' | 'fixed')}
-            className="w-full px-3 py-2 border border-glass-border-dark bg-white/60 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239] bg-white"
+            className="w-full px-3 py-2 border border-glass-border-input bg-white/60 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239] bg-white"
           >
             <option value="percentage">{t('coupons.typePercentage', 'Porcentagem (%)')}</option>
             <option value="fixed">{t('coupons.typeFixed', 'Valor fixo (R$)')}</option>
@@ -142,7 +142,7 @@ function CouponCreateForm({ onCreated, onCancel }: { onCreated: () => void; onCa
             min="0.01"
             step="0.01"
             required
-            className="w-full px-3 py-2 border border-glass-border-dark bg-white/60 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]"
+            className="w-full px-3 py-2 border border-glass-border-input bg-white/60 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]"
           />
         </div>
 
@@ -156,7 +156,7 @@ function CouponCreateForm({ onCreated, onCancel }: { onCreated: () => void; onCa
             placeholder="0"
             min="0"
             step="0.01"
-            className="w-full px-3 py-2 border border-glass-border-dark bg-white/60 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]"
+            className="w-full px-3 py-2 border border-glass-border-input bg-white/60 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]"
           />
         </div>
 
@@ -170,7 +170,7 @@ function CouponCreateForm({ onCreated, onCancel }: { onCreated: () => void; onCa
             placeholder={t('coupons.unlimited', 'Ilimitado')}
             min="1"
             step="1"
-            className="w-full px-3 py-2 border border-glass-border-dark bg-white/60 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]"
+            className="w-full px-3 py-2 border border-glass-border-input bg-white/60 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]"
           />
         </div>
 
@@ -181,7 +181,7 @@ function CouponCreateForm({ onCreated, onCancel }: { onCreated: () => void; onCa
             type="datetime-local"
             value={validFrom}
             onChange={(e) => setValidFrom(e.target.value)}
-            className="w-full px-3 py-2 border border-glass-border-dark bg-white/60 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]"
+            className="w-full px-3 py-2 border border-glass-border-input bg-white/60 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]"
           />
         </div>
 
@@ -192,7 +192,7 @@ function CouponCreateForm({ onCreated, onCancel }: { onCreated: () => void; onCa
             type="datetime-local"
             value={validUntil}
             onChange={(e) => setValidUntil(e.target.value)}
-            className="w-full px-3 py-2 border border-glass-border-dark bg-white/60 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]"
+            className="w-full px-3 py-2 border border-glass-border-input bg-white/60 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]"
           />
         </div>
       </div>

@@ -271,7 +271,7 @@ function PhoneVerificationPanel() {
               value={code}
               onChange={e => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
               placeholder={t('settings.sixDigitCode')}
-              className="flex-1 text-sm border border-border-gray rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-burgundy"
+              className="flex-1 text-sm border border-glass-border-input rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-burgundy"
               maxLength={6}
             />
             <button
@@ -478,7 +478,7 @@ export default function WhatsAppSettingsPage() {
               placeholder="+5511999999999"
               value={currentPhone}
               onChange={(e) => setPendingPhone(e.target.value.replace(/[^\d+ ]/g, ''))}
-              className="w-full px-3 py-2 border border-border-gray rounded-xl text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-whatsapp/40 focus:border-whatsapp"
+              className="w-full px-3 py-2 border border-glass-border-input rounded-xl text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-whatsapp/40 focus:border-whatsapp"
             />
             <p className="text-xs text-warm-stone mt-1">{t('settings.ownerWhatsAppHint')}</p>
           </div>

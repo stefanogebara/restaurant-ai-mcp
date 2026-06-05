@@ -67,7 +67,7 @@ function SendModal({ customer, onClose }: SendModalProps) {
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               rows={4}
-              className="w-full text-sm text-deep-charcoal border border-glass-border-dark rounded-xl p-3 resize-none focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
+              className="w-full text-sm text-deep-charcoal border border-glass-border-input rounded-xl p-3 resize-none focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
             />
           </div>
         </div>

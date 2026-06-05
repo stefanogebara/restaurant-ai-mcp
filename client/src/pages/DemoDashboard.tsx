@@ -554,7 +554,7 @@ export default function DemoDashboard() {
                   value={walkInForm.customer_name}
                   onChange={(e) => setWalkInForm({ ...walkInForm, customer_name: e.target.value })}
                   placeholder={t.namePlaceholder}
-                  className="w-full px-4 py-2.5 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent"
+                  className="w-full px-4 py-2.5 bg-soft-gray border border-glass-border-input rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent"
                 />
               </div>
 
@@ -567,7 +567,7 @@ export default function DemoDashboard() {
                   value={walkInForm.customer_phone}
                   onChange={(e) => setWalkInForm({ ...walkInForm, customer_phone: e.target.value })}
                   placeholder={t.phonePlaceholder}
-                  className="w-full px-4 py-2.5 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent"
+                  className="w-full px-4 py-2.5 bg-soft-gray border border-glass-border-input rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent"
                 />
               </div>
 
@@ -583,7 +583,7 @@ export default function DemoDashboard() {
                   value={walkInForm.party_size}
                   onChange={(e) => setWalkInForm({ ...walkInForm, party_size: e.target.value })}
                   placeholder="2"
-                  className="w-full px-4 py-2.5 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent"
+                  className="w-full px-4 py-2.5 bg-soft-gray border border-glass-border-input rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent"
                 />
               </div>
 

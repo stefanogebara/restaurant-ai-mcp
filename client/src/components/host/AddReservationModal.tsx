@@ -124,7 +124,7 @@ export default function AddReservationModal({ isOpen, onClose }: AddReservationM
               required
               value={form.customer_name}
               onChange={(e) => update('customer_name', e.target.value)}
-              className="w-full px-4 py-2.5 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
+              className="w-full px-4 py-2.5 bg-soft-gray border border-glass-border-input rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
               placeholder={t('placeholders.name', 'John Smith')}
             />
           </div>
@@ -146,7 +146,7 @@ export default function AddReservationModal({ isOpen, onClose }: AddReservationM
               type="email"
               value={form.customer_email}
               onChange={(e) => update('customer_email', e.target.value)}
-              className="w-full px-4 py-2.5 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
+              className="w-full px-4 py-2.5 bg-soft-gray border border-glass-border-input rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
               placeholder={t('placeholders.email', 'john@example.com')}
             />
           </div>
@@ -163,7 +163,7 @@ export default function AddReservationModal({ isOpen, onClose }: AddReservationM
                 min={today}
                 value={form.date}
                 onChange={(e) => update('date', e.target.value)}
-                className="w-full px-4 py-2.5 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
+                className="w-full px-4 py-2.5 bg-soft-gray border border-glass-border-input rounded-xl text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
               />
             </div>
             <div>
@@ -175,7 +175,7 @@ export default function AddReservationModal({ isOpen, onClose }: AddReservationM
                 required
                 value={form.time}
                 onChange={(e) => update('time', e.target.value)}
-                className="w-full px-4 py-2.5 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
+                className="w-full px-4 py-2.5 bg-soft-gray border border-glass-border-input rounded-xl text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
               />
             </div>
           </div>
@@ -192,7 +192,7 @@ export default function AddReservationModal({ isOpen, onClose }: AddReservationM
               max="20"
               value={form.party_size}
               onChange={(e) => update('party_size', e.target.value)}
-              className="w-full px-4 py-2.5 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
+              className="w-full px-4 py-2.5 bg-soft-gray border border-glass-border-input rounded-xl text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
             />
           </div>
 
@@ -205,7 +205,7 @@ export default function AddReservationModal({ isOpen, onClose }: AddReservationM
               rows={2}
               value={form.special_requests}
               onChange={(e) => update('special_requests', e.target.value)}
-              className="w-full px-4 py-2.5 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy resize-none"
+              className="w-full px-4 py-2.5 bg-soft-gray border border-glass-border-input rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy resize-none"
               placeholder={t('reservations.specialRequestsPlaceholder', 'Birthday celebration, high chair needed...')}
             />
           </div>

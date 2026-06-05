@@ -230,7 +230,7 @@ export default function ReservationsList({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={tl('searchPlaceholder')}
-            className="w-full pl-9 pr-3 py-2 text-sm font-[Inter] border border-glass-border-dark rounded-lg bg-white/60 placeholder-[#9CA3AF] text-[#111827] focus:outline-none focus:ring-1 focus:ring-[#9F1239]/30 focus:border-[#9F1239]/40 transition-colors"
+            className="w-full pl-9 pr-3 py-2 text-sm font-[Inter] border border-glass-border-input rounded-lg bg-white/60 placeholder-[#9CA3AF] text-[#111827] focus:outline-none focus:ring-1 focus:ring-[#9F1239]/30 focus:border-[#9F1239]/40 transition-colors"
             aria-label={tl('searchPlaceholder')}
           />
         </div>

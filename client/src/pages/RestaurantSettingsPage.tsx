@@ -299,7 +299,7 @@ export default function RestaurantSettingsPage() {
                         type="checkbox"
                         checked={dayHours.is_open}
                         onChange={(e) => updateHour(day, 'is_open', e.target.checked)}
-                        className="w-4 h-4 rounded border-border-gray text-burgundy focus:ring-burgundy/30"
+                        className="w-4 h-4 rounded border-glass-border-input text-burgundy focus:ring-burgundy/30"
                       />
                       <span className="text-xs text-muted-stone">{t('settings.open', 'Open')}</span>
                     </label>
@@ -313,14 +313,14 @@ export default function RestaurantSettingsPage() {
                         type="time"
                         value={dayHours.open_time || '12:00'}
                         onChange={(e) => updateHour(day, 'open_time', e.target.value)}
-                        className="min-w-0 flex-1 sm:flex-none sm:w-[120px] px-2 py-1.5 bg-soft-gray border border-border-gray rounded-lg text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
+                        className="min-w-0 flex-1 sm:flex-none sm:w-[120px] px-2 py-1.5 bg-soft-gray border border-glass-border-input rounded-lg text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
                       />
                       <span className="text-xs text-muted-stone flex-shrink-0">—</span>
                       <input
                         type="time"
                         value={dayHours.close_time || '23:00'}
                         onChange={(e) => updateHour(day, 'close_time', e.target.value)}
-                        className="min-w-0 flex-1 sm:flex-none sm:w-[120px] px-2 py-1.5 bg-soft-gray border border-border-gray rounded-lg text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
+                        className="min-w-0 flex-1 sm:flex-none sm:w-[120px] px-2 py-1.5 bg-soft-gray border border-glass-border-input rounded-lg text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
                       />
                     </div>
                   )}
@@ -352,7 +352,7 @@ export default function RestaurantSettingsPage() {
                 max="365"
                 value={policies.advance_booking_days ?? 30}
                 onChange={(e) => patchPolicies({ advance_booking_days: parseIntOrKeep(e.target.value, policies.advance_booking_days ?? 30, 30) })}
-                className="w-full px-3 py-2 bg-soft-gray border border-border-gray rounded-xl text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
+                className="w-full px-3 py-2 bg-soft-gray border border-glass-border-input rounded-xl text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
               />
             </div>
             <div>
@@ -362,7 +362,7 @@ export default function RestaurantSettingsPage() {
               <select
                 value={policies.default_dining_duration ?? 90}
                 onChange={(e) => patchPolicies({ default_dining_duration: parseInt(e.target.value, 10) })}
-                className="w-full px-3 py-2 bg-soft-gray border border-border-gray rounded-xl text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
+                className="w-full px-3 py-2 bg-soft-gray border border-glass-border-input rounded-xl text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
               >
                 <option value={60}>{t('settings.durationMinutes', '{{count}} minutes', { count: 60 })}</option>
                 <option value={90}>{t('settings.durationMinutes', '{{count}} minutes', { count: 90 })}</option>
@@ -380,7 +380,7 @@ export default function RestaurantSettingsPage() {
                 max="120"
                 value={policies.buffer_time_minutes ?? 15}
                 onChange={(e) => patchPolicies({ buffer_time_minutes: parseIntOrKeep(e.target.value, policies.buffer_time_minutes ?? 15, 15) })}
-                className="w-full px-3 py-2 bg-soft-gray border border-border-gray rounded-xl text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
+                className="w-full px-3 py-2 bg-soft-gray border border-glass-border-input rounded-xl text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
               />
             </div>
             <div>
@@ -393,7 +393,7 @@ export default function RestaurantSettingsPage() {
                 max="20"
                 value={policies.min_party_size ?? 1}
                 onChange={(e) => patchPolicies({ min_party_size: parseIntOrKeep(e.target.value, policies.min_party_size ?? 1, 1) })}
-                className="w-full px-3 py-2 bg-soft-gray border border-border-gray rounded-xl text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
+                className="w-full px-3 py-2 bg-soft-gray border border-glass-border-input rounded-xl text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
               />
             </div>
             <div>
@@ -406,7 +406,7 @@ export default function RestaurantSettingsPage() {
                 max="50"
                 value={policies.max_party_size ?? 12}
                 onChange={(e) => patchPolicies({ max_party_size: parseIntOrKeep(e.target.value, policies.max_party_size ?? 12, 12) })}
-                className="w-full px-3 py-2 bg-soft-gray border border-border-gray rounded-xl text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
+                className="w-full px-3 py-2 bg-soft-gray border border-glass-border-input rounded-xl text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
               />
             </div>
           </div>
@@ -423,7 +423,7 @@ export default function RestaurantSettingsPage() {
               // language. Any edit replaces with the typed text (custom policy).
               value={localizeCancellationPolicy(policies.cancellation_policy, t, '')}
               onChange={(e) => patchPolicies({ cancellation_policy: e.target.value })}
-              className="w-full px-3 py-2 bg-soft-gray border border-border-gray rounded-xl text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30 resize-none"
+              className="w-full px-3 py-2 bg-soft-gray border border-glass-border-input rounded-xl text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30 resize-none"
               placeholder={t('settings.cancellationPlaceholder', 'Free cancellation up to 24 hours before...')}
             />
           </div>
@@ -433,7 +433,7 @@ export default function RestaurantSettingsPage() {
               type="checkbox"
               checked={policies.auto_confirm ?? true}
               onChange={(e) => patchPolicies({ auto_confirm: e.target.checked })}
-              className="w-4 h-4 rounded border-border-gray text-burgundy focus:ring-burgundy/30"
+              className="w-4 h-4 rounded border-glass-border-input text-burgundy focus:ring-burgundy/30"
             />
             <span className="text-sm text-deep-charcoal">{t('settings.autoConfirm', 'Automatically confirm reservations')}</span>
           </label>
@@ -443,7 +443,7 @@ export default function RestaurantSettingsPage() {
               type="checkbox"
               checked={policies.allow_waitlist ?? true}
               onChange={(e) => patchPolicies({ allow_waitlist: e.target.checked })}
-              className="w-4 h-4 rounded border-border-gray text-burgundy focus:ring-burgundy/30"
+              className="w-4 h-4 rounded border-glass-border-input text-burgundy focus:ring-burgundy/30"
             />
             <span className="text-sm text-deep-charcoal">{t('settings.allowWaitlist', 'Allow waitlist when fully booked')}</span>
           </label>
@@ -493,7 +493,7 @@ function Field({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full px-3 py-2 bg-soft-gray border border-border-gray rounded-xl text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
+        className="w-full px-3 py-2 bg-soft-gray border border-glass-border-input rounded-xl text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
       />
     </div>
   );
@@ -522,7 +522,7 @@ function TimezoneSelect({ label, value, onChange, selectPlaceholder = '— Selec
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full px-3 py-2 bg-soft-gray border border-border-gray rounded-xl text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
+        className="w-full px-3 py-2 bg-soft-gray border border-glass-border-input rounded-xl text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
       >
         <option value="">{selectPlaceholder}</option>
         {options.map((tz) => (
