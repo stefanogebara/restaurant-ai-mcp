@@ -1,7 +1,7 @@
-/**
+﻿/**
  * Individual Customer Profile View
  *
- * Orchestrator — manages data fetching and delegates rendering
+ * Orchestrator â€” manages data fetching and delegates rendering
  * to focused subcomponents in components/host/.
  */
 
@@ -45,7 +45,7 @@ export default function CustomerProfileView() {
         <button type="button" onClick={() => navigate('/host-dashboard/dna')} className="flex items-center gap-2 text-stone-gray hover:text-deep-charcoal transition-colors">
           <ThiingsIcon name="arrow-left" size="xs" /> Back to DNA Dashboard
         </button>
-        <div className="bg-white rounded-2xl border border-border-gray p-8 text-center">
+        <div className="glass-panel p-8 text-center">
           <ThiingsIcon name="alert-circle" pxSize={48} className="mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-deep-charcoal mb-2">
             {error instanceof Error ? error.message : 'Profile not found'}

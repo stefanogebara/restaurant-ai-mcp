@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Inline Upgrade Prompt - Compact version for dashboard panels
  *
  * Shows a teaser for Pro features within the dashboard layout
@@ -22,7 +22,7 @@ export default function UpgradePromptInline({
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm p-6 border border-border-gray relative overflow-hidden">
+    <div className="bg-white rounded-2xl shadow-sm p-6 border border-glass-border-dark relative overflow-hidden">
       {/* Background gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-burgundy/5 via-transparent to-soft-gray/50 pointer-events-none" />
 

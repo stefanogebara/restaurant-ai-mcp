@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ML ROI Widget
  *
  * Replaces QuickStats with ML-focused metrics
@@ -19,7 +19,7 @@ export default function MLROIWidget() {
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-2xl p-6 border border-border-gray">
+      <div className="glass-card p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold text-deep-charcoal flex items-center gap-2">
             <ThiingsIcon name="trending-up" size="sm" />
@@ -36,7 +36,7 @@ export default function MLROIWidget() {
 
   if (!data) {
     return (
-      <div className="bg-white rounded-2xl p-6 border border-border-gray">
+      <div className="glass-card p-6">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-full bg-soft-gray flex items-center justify-center">
             <ThiingsIcon name="alert-triangle" pxSize={24} />
@@ -54,7 +54,7 @@ export default function MLROIWidget() {
   const meetsTarget = data.summary.meets_target;
 
   return (
-    <div className="bg-white rounded-2xl border border-border-gray">
+    <div className="glass-panel">
       {/* Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
@@ -111,7 +111,7 @@ export default function MLROIWidget() {
               </div>
             </div>
             <div className="mt-2 text-xs text-stone-gray">
-              {formatCurrency(Number(data.summary.total_value_saved))} {t('host.mlRoi.saved', 'saved')} • {formatCurrency(Number(data.summary.total_cost))} {t('host.mlRoi.spent', 'spent')}
+              {formatCurrency(Number(data.summary.total_value_saved))} {t('host.mlRoi.saved', 'saved')} â€¢ {formatCurrency(Number(data.summary.total_cost))} {t('host.mlRoi.spent', 'spent')}
             </div>
           </div>
 
@@ -129,12 +129,12 @@ export default function MLROIWidget() {
                     content="Percentage of interventions that successfully prevented a no-show.
 
 Calculation:
-(Customers who showed up after intervention) ÷ (Total interventions)
+(Customers who showed up after intervention) Ã· (Total interventions)
 
 Example:
-• 34 interventions (calls made)
-• 23 customers showed up
-• Success Rate: 67.6%"
+â€¢ 34 interventions (calls made)
+â€¢ 23 customers showed up
+â€¢ Success Rate: 67.6%"
                     position="right"
                     size="sm"
                   />
@@ -161,10 +161,10 @@ Example:
                     content="Actions taken to prevent no-shows based on ML risk predictions.
 
 Types of Interventions:
-• Confirmation calls
-• Reminder emails/SMS
-• Deposit requests
-• Premium table upgrades
+â€¢ Confirmation calls
+â€¢ Reminder emails/SMS
+â€¢ Deposit requests
+â€¢ Premium table upgrades
 
 Each intervention has a cost and potential value saved."
                     position="right"

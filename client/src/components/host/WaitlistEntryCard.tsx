@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+﻿import { useTranslation } from 'react-i18next';
 import { formatTimeAgo } from '../../utils/timeFormatting';
 import WaitlistTimeDisplay from './WaitlistTimeDisplay';
 import { getTags, getStatusColor } from './waitlistHelpers';
@@ -32,7 +32,7 @@ export default function WaitlistEntryCard({
   const tags = getTags(entry.special_requests);
 
   return (
-    <div className={`px-3 py-4 border-b border-border-gray/50 hover:bg-warm-white transition-colors ${
+    <div className={`px-3 py-4 border-b border-glass-border-dark/50 hover:bg-warm-white transition-colors ${
       isTableReady ? 'bg-rose-600/5' : ''
     }`}>
       {/* Row 1: Avatar, Name, Party Size, Status */}
@@ -49,7 +49,7 @@ export default function WaitlistEntryCard({
                 title="WhatsApp"
                 aria-label="WhatsApp"
               >
-                <span aria-hidden="true">💬</span>
+                <span aria-hidden="true">ðŸ’¬</span>
                 WhatsApp
               </span>
             )}

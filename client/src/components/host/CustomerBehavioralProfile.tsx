@@ -1,4 +1,4 @@
-import ThiingsIcon from '../common/ThiingsIcon';
+﻿import ThiingsIcon from '../common/ThiingsIcon';
 import { getDiningStyleColor, getSentimentColor } from './customerProfileHelpers';
 import type { Profile, TextSignals } from './customerProfile.types';
 
@@ -9,7 +9,7 @@ interface CustomerBehavioralProfileProps {
 
 export default function CustomerBehavioralProfile({ profile, textSignals }: CustomerBehavioralProfileProps) {
   return (
-    <div className="bg-white rounded-2xl border border-border-gray p-6">
+    <div className="glass-card p-6">
       <h2 className="text-lg font-semibold font-serif text-deep-charcoal mb-4 flex items-center gap-2">
         <ThiingsIcon name="brain" size="sm" />
         Behavioral Profile

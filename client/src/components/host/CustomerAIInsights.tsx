@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+﻿import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import { getSentimentColor } from './customerProfileHelpers';
 import type { TextSignals } from './customerProfile.types';
@@ -12,7 +12,7 @@ export default function CustomerAIInsights({ textSignals, onAnalyze }: CustomerA
   const { t } = useTranslation();
 
   return (
-    <div className="bg-white rounded-2xl border border-border-gray p-6">
+    <div className="glass-card p-6">
       <h2 className="text-lg font-semibold font-serif text-deep-charcoal mb-4 flex items-center gap-2">
         <ThiingsIcon name="sparkles" size="sm" />
         {t('host.customerProfile.aiInsights.title')}

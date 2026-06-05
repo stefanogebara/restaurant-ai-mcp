@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+﻿import { useTranslation } from 'react-i18next';
 import ThiingsIcon, { type IconName } from '../common/ThiingsIcon';
 import { LARGE_PARTY_THRESHOLD, DEPOSIT_RECOMMENDATION } from '../../config/businessDefaults';
 
@@ -82,9 +82,9 @@ export default function RiskExplanationModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div role="dialog" aria-modal="true" aria-label="Risk Explanation" className="bg-white rounded-2xl border border-border-gray shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div role="dialog" aria-modal="true" aria-label="Risk Explanation" className="glass-modal max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-border-gray p-6 flex items-center justify-between rounded-t-2xl">
+        <div className="sticky top-0 bg-glass-panel backdrop-blur-glass-nav border-b border-glass-border-dark p-6 flex items-center justify-between rounded-t-2xl">
           <div className="flex items-center gap-3">
             <div className={`w-12 h-12 rounded-full ${levelInfo.bg} flex items-center justify-center`}>
               <ThiingsIcon name={levelInfo.iconName} size="md" />
@@ -92,7 +92,7 @@ export default function RiskExplanationModal({
             <div>
               <h2 className="text-xl font-semibold text-deep-charcoal">No-Show Risk Analysis</h2>
               <p className="text-sm text-stone-gray">
-                {reservation.customer_name} • Party of {reservation.party_size}
+                {reservation.customer_name} â€¢ Party of {reservation.party_size}
               </p>
             </div>
           </div>
@@ -108,7 +108,7 @@ export default function RiskExplanationModal({
         {/* Content */}
         <div className="p-6 space-y-6">
           {/* Risk Score Summary */}
-          <div className={`${levelInfo.bg} rounded-xl p-4 border border-border-gray`}>
+          <div className={`${levelInfo.bg} rounded-xl p-4 border border-glass-border-dark`}>
             <div className="flex items-center justify-between mb-2">
               <span className={`text-lg font-semibold ${levelInfo.color}`}>
                 {levelInfo.label}
@@ -154,7 +154,7 @@ export default function RiskExplanationModal({
                 {riskIncreasing.map((factor, idx) => (
                   <div
                     key={idx}
-                    className="flex items-start gap-3 p-3 bg-soft-gray rounded-xl border border-border-gray"
+                    className="flex items-start gap-3 p-3 bg-soft-gray rounded-xl border border-glass-border-dark"
                   >
                     <div className="w-12 h-12 rounded-full bg-amber-600/10 flex items-center justify-center flex-shrink-0">
                       <span className="text-amber-600 font-bold">
@@ -186,7 +186,7 @@ export default function RiskExplanationModal({
                 {riskDecreasing.map((factor, idx) => (
                   <div
                     key={idx}
-                    className="flex items-start gap-3 p-3 bg-soft-gray rounded-xl border border-border-gray"
+                    className="flex items-start gap-3 p-3 bg-soft-gray rounded-xl border border-glass-border-dark"
                   >
                     <div className="w-12 h-12 rounded-full bg-rose-600/10 flex items-center justify-center flex-shrink-0">
                       <span className="text-rose-600 font-bold">
@@ -219,7 +219,7 @@ export default function RiskExplanationModal({
         </div>
 
         {/* Footer */}
-        <div className="sticky bottom-0 bg-white border-t border-border-gray p-4 rounded-b-2xl">
+        <div className="sticky bottom-0 bg-glass-panel backdrop-blur-glass-nav border-t border-glass-border-dark p-4 rounded-b-2xl">
           <button
             onClick={onClose}
             className="w-full px-4 py-3 bg-burgundy text-white rounded-xl font-medium hover:bg-burgundy-dark transition-colors"

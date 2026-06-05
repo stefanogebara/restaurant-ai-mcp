@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+﻿import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '../../contexts/ToastContext';
 import type { Table } from '../../types/host.types';
 import { hostAPI } from '../../services/api';
@@ -60,16 +60,16 @@ export default function TableActionMenu({ table, onClose }: TableActionMenuProps
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl shadow-2xl max-w-sm w-full border border-border-gray"
+        className="bg-white rounded-2xl shadow-2xl max-w-sm w-full border border-glass-border-dark"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="px-6 py-5 border-b border-border-gray">
+        <div className="px-6 py-5 border-b border-glass-border-dark">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-xl font-bold text-deep-charcoal">Table {table.table_number}</h3>
               <p className="text-sm text-stone-gray mt-1">
-                {table.capacity} seats • {table.location}
+                {table.capacity} seats â€¢ {table.location}
               </p>
             </div>
             <button
@@ -127,7 +127,7 @@ export default function TableActionMenu({ table, onClose }: TableActionMenuProps
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-border-gray">
+        <div className="px-6 py-4 border-t border-glass-border-dark">
           <button
             onClick={onClose}
             className="w-full px-4 py-2.5 bg-deep-charcoal hover:bg-burgundy text-white font-medium rounded-xl transition-colors"

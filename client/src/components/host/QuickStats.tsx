@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
@@ -19,7 +19,7 @@ export default function QuickStats({ analyticsData, isLoading }: QuickStatsProps
 
   if (isLoading) {
     return (
-      <div className="bg-white border border-border-gray rounded-2xl p-6">
+      <div className="glass-card p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold text-deep-charcoal flex items-center gap-2">
             <ThiingsIcon name="bar-chart" size="sm" />
@@ -39,7 +39,7 @@ export default function QuickStats({ analyticsData, isLoading }: QuickStatsProps
   }
 
   return (
-    <div className="bg-white border border-border-gray rounded-2xl">
+    <div className="glass-panel">
       {/* Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}

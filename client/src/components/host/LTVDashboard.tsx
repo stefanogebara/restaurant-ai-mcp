@@ -1,7 +1,7 @@
-/**
+﻿/**
  * Customer Lifetime Value (LTV) Dashboard
  *
- * Orchestrator — manages data fetching and delegates rendering
+ * Orchestrator â€” manages data fetching and delegates rendering
  * to focused subcomponents in components/host/.
  */
 
@@ -47,7 +47,7 @@ export default function LTVDashboard() {
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-2xl p-6 border border-border-gray">
+      <div className="glass-card p-6">
         <h2 className="text-xl font-bold text-deep-charcoal flex items-center gap-2 mb-4">
           <ThiingsIcon name="users" size="sm" />
           Customer Lifetime Value
@@ -62,7 +62,7 @@ export default function LTVDashboard() {
 
   if (!stats || stats.total_customers === 0) {
     return (
-      <div className="bg-white rounded-2xl p-6 border border-border-gray">
+      <div className="glass-card p-6">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-full bg-soft-gray flex items-center justify-center">
             <ThiingsIcon name="users" pxSize={24} />
@@ -77,7 +77,7 @@ export default function LTVDashboard() {
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-border-gray">
+    <div className="glass-panel">
       <button
         onClick={() => setIsExpanded(!isExpanded)}
         aria-expanded={isExpanded}
@@ -104,7 +104,7 @@ export default function LTVDashboard() {
           />
           {/* Recalculate is a maintenance-grade database job that previously
               took primary CTA real-estate. Hosts don't need it for daily
-              shifts — the values refresh automatically on the next cron pass.
+              shifts â€” the values refresh automatically on the next cron pass.
               Tucked into a small disclosure so admins can still trigger it. */}
           <details className="text-xs">
             <summary className="cursor-pointer text-muted-stone hover:text-deep-charcoal underline underline-offset-2 select-none">
@@ -116,7 +116,7 @@ export default function LTVDashboard() {
               </p>
               <button
                 type="button"
-                className="w-full px-3 py-2 bg-soft-gray hover:bg-border-gray border border-border-gray text-xs font-medium text-deep-charcoal rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                className="w-full px-3 py-2 bg-soft-gray hover:bg-border-gray border border-glass-border-dark text-xs font-medium text-deep-charcoal rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
                 disabled={recalculate.isPending}
                 onClick={() => recalculate.mutate(undefined, {
                   onSuccess: (result) => success(t('ltv.maintenance.recalcDone', 'Refreshed values for {{count}} customers', { count: result.total_customers })),

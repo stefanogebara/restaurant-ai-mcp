@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Quick Stats Widget
  *
  * Displays key ML intervention metrics at a glance on the main dashboard
@@ -14,7 +14,7 @@ export default function QuickStatsWidget() {
 
   if (isError) {
     return (
-      <div className="bg-white rounded-2xl border border-border-gray p-4 shadow-sm">
+      <div className="glass-card p-4">
         <div className="flex items-center gap-2 text-warm-stone">
           <ThiingsIcon name="alert-circle" size="xs" />
           <span className="text-sm">ML stats temporarily unavailable</span>
@@ -25,7 +25,7 @@ export default function QuickStatsWidget() {
 
   if (isLoading) {
     return (
-      <div role="status" aria-label="Loading stats" className="bg-white rounded-2xl border border-border-gray p-4 shadow-sm">
+      <div role="status" aria-label="Loading stats" className="glass-card p-4">
         <div className="flex items-center gap-3 mb-3">
           <div className="w-5 h-5 bg-soft-gray rounded animate-pulse"></div>
           <div className="h-4 w-32 bg-soft-gray rounded animate-pulse"></div>
@@ -89,9 +89,9 @@ export default function QuickStatsWidget() {
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-border-gray shadow-sm overflow-hidden">
+    <div className="glass-panel overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border-gray bg-soft-gray/30">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-glass-border-dark bg-soft-gray/30">
         <div className="flex items-center gap-2">
           <ThiingsIcon name="target" size="sm" />
           <span className="font-semibold text-deep-charcoal">ML Performance Snapshot</span>
@@ -125,7 +125,7 @@ export default function QuickStatsWidget() {
           </div>
 
           {/* Weekly ROI */}
-          <div className={`${getRoiBg(stats.roi_status)} rounded-xl p-4 border ${!hasData ? 'border-border-gray' : 'border-rose-100'}`}>
+          <div className={`${getRoiBg(stats.roi_status)} rounded-xl p-4 border ${!hasData ? 'border-glass-border-dark' : 'border-rose-100'}`}>
             <div className="flex items-center gap-2 mb-2">
               <div className={`w-8 h-8 ${!hasData ? 'bg-soft-gray' : stats.roi_status === 'below' ? 'bg-amber-100' : 'bg-rose-100'} rounded-lg flex items-center justify-center`}>
                 <ThiingsIcon name="trending-up" size="xs" />
@@ -163,7 +163,7 @@ export default function QuickStatsWidget() {
           </div>
 
           {/* Success Rate */}
-          <div className={`${getSuccessBg(stats.success_status)} rounded-xl p-4 border ${!hasData ? 'border-border-gray' : stats.success_status === 'good' ? 'border-rose-100' : stats.success_status === 'fair' ? 'border-amber-100' : 'border-red-100'}`}>
+          <div className={`${getSuccessBg(stats.success_status)} rounded-xl p-4 border ${!hasData ? 'border-glass-border-dark' : stats.success_status === 'good' ? 'border-rose-100' : stats.success_status === 'fair' ? 'border-amber-100' : 'border-red-100'}`}>
             <div className="flex items-center gap-2 mb-2">
               <div className={`w-8 h-8 ${!hasData ? 'bg-soft-gray' : stats.success_status === 'good' ? 'bg-rose-100' : stats.success_status === 'fair' ? 'bg-amber-100' : 'bg-red-100'} rounded-lg flex items-center justify-center`}>
                 <ThiingsIcon name="check-circle" size="xs" />

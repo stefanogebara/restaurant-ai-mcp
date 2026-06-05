@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+﻿import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import type { Prediction, Occasion } from './customerProfile.types';
 
@@ -12,7 +12,7 @@ export default function CustomerPredictions({ predictions, occasions }: Customer
   const dateLocale = i18n.language === 'pt-BR' ? 'pt-BR' : i18n.language === 'es' ? 'es-ES' : 'en-US';
 
   return (
-    <div className="bg-white rounded-2xl border border-border-gray p-6">
+    <div className="glass-card p-6">
       <h2 className="text-lg font-semibold font-serif text-deep-charcoal mb-4 flex items-center gap-2">
         <ThiingsIcon name="trending-up" size="sm" />
         {t('customerPredictions.title')}
@@ -41,7 +41,7 @@ export default function CustomerPredictions({ predictions, occasions }: Customer
       )}
 
       {occasions.length > 0 && (
-        <div className="mt-4 pt-4 border-t border-border-gray">
+        <div className="mt-4 pt-4 border-t border-glass-border-dark">
           <div className="text-sm font-semibold text-deep-charcoal mb-2">{t('customerPredictions.upcomingOccasions')}</div>
           {occasions.map((occ, i) => (
             <div key={i} className="flex items-center justify-between p-2 bg-burgundy/5 rounded-xl mb-1">

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import type { IconName } from '../common/ThiingsIcon';
@@ -75,9 +75,9 @@ export function RetentionCampaignModal({ isOpen, onClose, customer, onSendCampai
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div role="dialog" aria-modal="true" aria-label="Retention Campaign" className="bg-white rounded-2xl shadow-xl max-w-lg w-full mx-4 overflow-hidden">
+      <div role="dialog" aria-modal="true" aria-label="Retention Campaign" className="glass-modal max-w-lg w-full mx-4 overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-border-gray">
+        <div className="flex items-center justify-between p-4 border-b border-glass-border-dark">
           <h2 className="text-lg font-semibold text-deep-charcoal">
             {t('retentionCampaign.title')}
           </h2>
@@ -99,7 +99,7 @@ export function RetentionCampaignModal({ isOpen, onClose, customer, onSendCampai
         ) : (
           <>
             {/* Customer Info */}
-            <div className="p-4 bg-soft-gray border-b border-border-gray">
+            <div className="p-4 bg-soft-gray border-b border-glass-border-dark">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-amber-600/10 rounded-full flex items-center justify-center">
                   <span className="text-amber-600 font-medium text-sm">
@@ -109,7 +109,7 @@ export function RetentionCampaignModal({ isOpen, onClose, customer, onSendCampai
                 <div>
                   <p className="font-medium text-deep-charcoal">{customerName}</p>
                   <p className="text-sm text-stone-gray">
-                    {t('retentionCampaign.lastVisit')}: {new Date(customer.last_visit_date).toLocaleDateString(dateLocale)} · {t('retentionCampaign.visits', { count: customer.total_visits })} · {new Intl.NumberFormat(dateLocale, { style: 'currency', currency: dateLocale.startsWith('pt') ? 'BRL' : 'USD' }).format(customer.lifetime_value)} LTV
+                    {t('retentionCampaign.lastVisit')}: {new Date(customer.last_visit_date).toLocaleDateString(dateLocale)} Â· {t('retentionCampaign.visits', { count: customer.total_visits })} Â· {new Intl.NumberFormat(dateLocale, { style: 'currency', currency: dateLocale.startsWith('pt') ? 'BRL' : 'USD' }).format(customer.lifetime_value)} LTV
                   </p>
                 </div>
               </div>
@@ -129,7 +129,7 @@ export function RetentionCampaignModal({ isOpen, onClose, customer, onSendCampai
                       className={`p-3 rounded-2xl border text-center transition-colors ${
                         selectedCampaign === key
                           ? 'border-burgundy bg-burgundy/10'
-                          : 'border-border-gray hover:bg-soft-gray'
+                          : 'border-glass-border-dark hover:bg-soft-gray'
                       }`}
                     >
                       <div className="flex justify-center mb-1"><ThiingsIcon name={tmpl.iconName} pxSize={20} /></div>
@@ -146,17 +146,17 @@ export function RetentionCampaignModal({ isOpen, onClose, customer, onSendCampai
                 value={customMessage || template.message}
                 onChange={(e) => setCustomMessage(e.target.value)}
                 rows={4}
-                className="w-full px-3 py-2 border border-border-gray rounded-xl text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy"
+                className="w-full px-3 py-2 border border-glass-border-dark rounded-xl text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy"
                 placeholder={t('retentionCampaign.customizePlaceholder')}
               />
               <p className="text-xs text-stone-gray">{t('retentionCampaign.personalizeHint')}</p>
             </div>
 
             {/* Actions */}
-            <div className="p-4 border-t border-border-gray flex gap-3">
+            <div className="p-4 border-t border-glass-border-dark flex gap-3">
               <button
                 onClick={onClose}
-                className="flex-1 px-4 py-2 border border-border-gray rounded-xl hover:bg-soft-gray text-deep-charcoal font-medium transition-colors"
+                className="flex-1 px-4 py-2 border border-glass-border-dark rounded-xl hover:bg-soft-gray text-deep-charcoal font-medium transition-colors"
               >
                 {t('retentionCampaign.cancel')}
               </button>

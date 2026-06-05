@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Customer DNA Profiling Dashboard
  *
  * Displays deep behavioral insights about customers
@@ -46,7 +46,7 @@ export default function CustomerDNADashboard() {
 
   if (isLoading || analyze.isPending) {
     return (
-      <div className="bg-white rounded-2xl p-6 border border-border-gray">
+      <div className="glass-card p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold font-serif text-deep-charcoal flex items-center gap-2">
             <ThiingsIcon name="brain" pxSize={20} />
@@ -63,7 +63,7 @@ export default function CustomerDNADashboard() {
 
   if (!stats || stats.total_profiles === 0) {
     return (
-      <div className="bg-white rounded-2xl p-6 border border-border-gray">
+      <div className="glass-card p-6">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-12 h-12 rounded-full bg-soft-gray flex items-center justify-center">
             <ThiingsIcon name="brain" pxSize={24} />
@@ -85,7 +85,7 @@ export default function CustomerDNADashboard() {
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-border-gray">
+    <div className="glass-panel">
       {/* Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Quick Intervention Modal
  *
  * Shows reservation details and risk information with quick action
@@ -87,26 +87,26 @@ export default function QuickInterventionModal({
       people: 'people'
     },
     es: {
-      title: 'Tomar Acción',
-      riskScore: 'Puntuación de Riesgo',
+      title: 'Tomar AcciÃ³n',
+      riskScore: 'PuntuaciÃ³n de Riesgo',
       riskFactors: 'Factores de Riesgo',
-      quickActions: 'Acciones Rápidas',
-      called: 'Llamé al Cliente',
-      sentSMS: 'Envié SMS',
-      sentWhatsApp: 'Envié WhatsApp',
-      depositRequired: 'Depósito Requerido',
-      other: 'Otra Acción',
+      quickActions: 'Acciones RÃ¡pidas',
+      called: 'LlamÃ© al Cliente',
+      sentSMS: 'EnviÃ© SMS',
+      sentWhatsApp: 'EnviÃ© WhatsApp',
+      depositRequired: 'DepÃ³sito Requerido',
+      other: 'Otra AcciÃ³n',
       staffName: 'Tu Nombre',
       staffPlaceholder: 'Ingresa tu nombre',
       notes: 'Notas',
-      notesPlaceholder: 'Cliente confirmó, llegará a tiempo...',
+      notesPlaceholder: 'Cliente confirmÃ³, llegarÃ¡ a tiempo...',
       cancel: 'Cancelar',
-      save: 'Registrar Intervención',
+      save: 'Registrar IntervenciÃ³n',
       saving: 'Guardando...',
-      success: '¡Intervención registrada exitosamente!',
-      errorSelect: 'Por favor selecciona una acción',
-      errorSave: 'Error al registrar la intervención',
-      alreadyTaken: 'Intervención ya registrada',
+      success: 'Â¡IntervenciÃ³n registrada exitosamente!',
+      errorSelect: 'Por favor selecciona una acciÃ³n',
+      errorSave: 'Error al registrar la intervenciÃ³n',
+      alreadyTaken: 'IntervenciÃ³n ya registrada',
       people: 'personas'
     }
   };
@@ -155,9 +155,9 @@ export default function QuickInterventionModal({
       />
 
       {/* Modal */}
-      <div role="dialog" aria-modal="true" aria-label="Quick Intervention" className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
+      <div role="dialog" aria-modal="true" aria-label="Quick Intervention" className="relative glass-modal w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="sticky top-0 bg-white px-6 py-4 border-b border-border-gray flex items-center justify-between rounded-t-2xl">
+        <div className="sticky top-0 bg-glass-panel backdrop-blur-glass-nav px-6 py-4 border-b border-glass-border-dark flex items-center justify-between rounded-t-2xl">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-orange-600/15 rounded-xl">
               <ThiingsIcon name="alert-triangle" size="sm" />
@@ -215,7 +215,7 @@ export default function QuickInterventionModal({
               <div className="space-y-1">
                 {reservation.ml_risk_factors.slice(0, 3).map((factor, idx) => (
                   <div key={idx} className="text-sm text-stone-gray flex items-start gap-2">
-                    <span className="text-orange-600">•</span>
+                    <span className="text-orange-600">â€¢</span>
                     <span>{factor.description}</span>
                   </div>
                 ))}
@@ -253,7 +253,7 @@ export default function QuickInterventionModal({
                         className={`flex items-center gap-2 p-3 rounded-2xl border-2 transition-all ${
                           isSelected
                             ? 'border-burgundy bg-burgundy/5'
-                            : 'border-border-gray hover:border-burgundy/50 hover:bg-soft-gray'
+                            : 'border-glass-border-dark hover:border-burgundy/50 hover:bg-soft-gray'
                         }`}
                       >
                         <div className={`p-1.5 rounded-lg ${action.color}`}>
@@ -278,7 +278,7 @@ export default function QuickInterventionModal({
                   value={staffName}
                   onChange={(e) => setStaffName(e.target.value)}
                   placeholder={t.staffPlaceholder}
-                  className="w-full px-4 py-2 border border-border-gray rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
+                  className="w-full px-4 py-2 border border-glass-border-dark rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
                 />
               </div>
 
@@ -292,7 +292,7 @@ export default function QuickInterventionModal({
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder={t.notesPlaceholder}
                   rows={2}
-                  className="w-full px-4 py-2 border border-border-gray rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors resize-none"
+                  className="w-full px-4 py-2 border border-glass-border-dark rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors resize-none"
                 />
               </div>
             </>
@@ -321,7 +321,7 @@ export default function QuickInterventionModal({
               <button
                 onClick={onClose}
                 disabled={logIntervention.isPending}
-                className="flex-1 px-4 py-3 border border-border-gray rounded-xl text-stone-gray font-medium hover:bg-soft-gray transition-colors disabled:opacity-50"
+                className="flex-1 px-4 py-3 border border-glass-border-dark rounded-xl text-stone-gray font-medium hover:bg-soft-gray transition-colors disabled:opacity-50"
               >
                 {t.cancel}
               </button>

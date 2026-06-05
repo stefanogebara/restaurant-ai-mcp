@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import type { TableConfig } from '../../services/api';
 
 interface TableAdjacencyModalProps {
@@ -52,7 +52,7 @@ export default function TableAdjacencyModal({
                   className={`p-3 rounded-2xl border-2 transition-all text-left ${
                     selectedIds.includes(t.id)
                       ? 'border-deep-charcoal bg-soft-gray'
-                      : 'border-border-gray hover:border-muted-stone'
+                      : 'border-glass-border-dark hover:border-muted-stone'
                   }`}
                 >
                   <div className="font-medium text-deep-charcoal">Table {t.table_number}</div>
@@ -69,10 +69,10 @@ export default function TableAdjacencyModal({
           </div>
         )}
 
-        <div className="flex gap-3 mt-6 pt-4 border-t border-border-gray">
+        <div className="flex gap-3 mt-6 pt-4 border-t border-glass-border-dark">
           <button
             onClick={onCancel}
-            className="flex-1 px-4 py-2 border border-border-gray text-stone-gray rounded-xl hover:bg-soft-gray transition-colors"
+            className="flex-1 px-4 py-2 border border-glass-border-dark text-stone-gray rounded-xl hover:bg-soft-gray transition-colors"
           >
             Cancel
           </button>

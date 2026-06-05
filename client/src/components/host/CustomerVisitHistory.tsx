@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+﻿import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import type { Reservation } from './customerProfile.types';
 
@@ -14,7 +14,7 @@ export default function CustomerVisitHistory({ reservations, showAll, onToggle }
   const visible = showAll ? reservations : reservations.slice(0, 5);
 
   return (
-    <div className="bg-white rounded-2xl border border-border-gray p-6">
+    <div className="glass-card p-6">
       <button onClick={onToggle} aria-expanded={showAll} className="w-full flex items-center justify-between">
         <h2 className="text-lg font-semibold font-serif text-deep-charcoal flex items-center gap-2">
           <ThiingsIcon name="utensils" size="sm" />

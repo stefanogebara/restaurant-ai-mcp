@@ -1,4 +1,4 @@
-import { useMutation } from '@tanstack/react-query';
+﻿import { useMutation } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { authFetch } from '../../services/api';
 import type { TableRecommendation, SeatModalData } from '../../types/host.types';
@@ -81,7 +81,7 @@ export default function WaitlistSeatModal({ isOpen, entry, onClose, onSuccess }:
       className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div role="dialog" aria-modal="true" aria-label="Seat Waitlist Customer" className="bg-white rounded-2xl shadow-2xl border border-border-gray max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div role="dialog" aria-modal="true" aria-label="Seat Waitlist Customer" className="bg-white rounded-2xl shadow-2xl border border-glass-border-dark max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-2xl font-bold text-deep-charcoal">Seat Waitlist Customer</h2>
@@ -96,7 +96,7 @@ export default function WaitlistSeatModal({ isOpen, entry, onClose, onSuccess }:
           </div>
 
           {/* Customer Details */}
-          <div className="bg-soft-gray rounded-xl p-5 mb-6 border border-border-gray">
+          <div className="bg-soft-gray rounded-xl p-5 mb-6 border border-glass-border-dark">
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <div className="text-sm text-muted-stone mb-1">Customer</div>
@@ -116,7 +116,7 @@ export default function WaitlistSeatModal({ isOpen, entry, onClose, onSuccess }:
               </div>
             </div>
             {entry.special_requests && (
-              <div className="mt-4 pt-4 border-t border-border-gray">
+              <div className="mt-4 pt-4 border-t border-glass-border-dark">
                 <div className="text-sm text-muted-stone mb-1">Special Requests</div>
                 <div className="text-sm text-stone-gray italic">"{entry.special_requests}"</div>
               </div>
@@ -128,7 +128,7 @@ export default function WaitlistSeatModal({ isOpen, entry, onClose, onSuccess }:
             <div className="flex gap-3">
               <button
                 onClick={onClose}
-                className="flex-1 px-4 py-3 border border-border-gray text-stone-gray rounded-xl hover:bg-soft-gray transition-colors font-medium disabled:opacity-50"
+                className="flex-1 px-4 py-3 border border-glass-border-dark text-stone-gray rounded-xl hover:bg-soft-gray transition-colors font-medium disabled:opacity-50"
                 disabled={findTablesMutation.isPending}
               >
                 Cancel
@@ -161,7 +161,7 @@ export default function WaitlistSeatModal({ isOpen, entry, onClose, onSuccess }:
                       ${
                         selectedTables.join(',') === option.tables.join(',')
                           ? 'border-rose-600 bg-rose-600/10'
-                          : 'border-border-gray hover:border-rose-600/50 bg-white'
+                          : 'border-glass-border-dark hover:border-rose-600/50 bg-white'
                       }
                     `}
                   >
@@ -192,7 +192,7 @@ export default function WaitlistSeatModal({ isOpen, entry, onClose, onSuccess }:
                 <button
                   type="button"
                   onClick={onClose}
-                  className="flex-1 px-4 py-3 border border-border-gray text-stone-gray rounded-xl hover:bg-soft-gray transition-colors font-medium"
+                  className="flex-1 px-4 py-3 border border-glass-border-dark text-stone-gray rounded-xl hover:bg-soft-gray transition-colors font-medium"
                 >
                   Cancel
                 </button>

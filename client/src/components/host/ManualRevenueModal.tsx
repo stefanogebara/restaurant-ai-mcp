@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Manual Revenue Entry Modal
  *
  * Allows staff to manually enter revenue data for customers
@@ -63,7 +63,7 @@ export default function ManualRevenueModal({
   const [totalRevenue, setTotalRevenue] = useState('');
   const [tipAmount, setTipAmount] = useState('');
   const [partySize, setPartySize] = useState('2');
-  // Local timezone, NOT UTC — see todayLocalISO docs.
+  // Local timezone, NOT UTC â€” see todayLocalISO docs.
   const [serviceDate, setServiceDate] = useState(todayLocalISO());
   const [serviceTime, setServiceTime] = useState('');
   const [notes, setNotes] = useState('');
@@ -126,9 +126,9 @@ export default function ManualRevenueModal({
       />
 
       {/* Modal */}
-      <div role="dialog" aria-modal="true" aria-label="Log Revenue" className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
+      <div role="dialog" aria-modal="true" aria-label="Log Revenue" className="relative glass-modal w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="sticky top-0 bg-white px-6 py-4 border-b border-border-gray flex items-center justify-between rounded-t-2xl">
+        <div className="sticky top-0 bg-glass-panel backdrop-blur-glass-nav px-6 py-4 border-b border-glass-border-dark flex items-center justify-between rounded-t-2xl">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-rose-600/10 rounded-xl">
               <ThiingsIcon name="dollar" size="sm" />
@@ -158,7 +158,7 @@ export default function ManualRevenueModal({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={t.searchPlaceholder}
-                className="w-full pl-10 pr-4 py-2 border border-border-gray rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
+                className="w-full pl-10 pr-4 py-2 border border-glass-border-dark rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
               />
               {isSearching && (
                 <Spinner size="sm" className="absolute right-3 top-1/2 -translate-y-1/2" />
@@ -167,7 +167,7 @@ export default function ManualRevenueModal({
 
             {/* Search Results */}
             {searchResults.length > 0 && (
-              <div className="absolute z-10 w-full mt-1 bg-white border border-border-gray rounded-2xl shadow-lg max-h-40 overflow-y-auto">
+              <div className="absolute z-10 w-full mt-1 bg-glass-modal backdrop-blur-glass-modal border border-glass-border-dark rounded-2xl shadow-glass-modal max-h-40 overflow-y-auto">
                 {searchResults.map((customer) => (
                   <button
                     key={customer.customer_id}
@@ -202,7 +202,7 @@ export default function ManualRevenueModal({
                 value={customerPhone}
                 onChange={(e) => setCustomerPhone(e.target.value)}
                 placeholder="+55 11 91234 5678"
-                className="w-full px-4 py-2 border border-border-gray rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
+                className="w-full px-4 py-2 border border-glass-border-dark rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
               />
             </div>
             <div>
@@ -215,7 +215,7 @@ export default function ManualRevenueModal({
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
                 placeholder="Maria Garcia"
-                className="w-full px-4 py-2 border border-border-gray rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
+                className="w-full px-4 py-2 border border-glass-border-dark rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
               />
             </div>
           </div>
@@ -230,7 +230,7 @@ export default function ManualRevenueModal({
               value={customerEmail}
               onChange={(e) => setCustomerEmail(e.target.value)}
               placeholder="maria@example.com"
-              className="w-full px-4 py-2 border border-border-gray rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
+              className="w-full px-4 py-2 border border-glass-border-dark rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
             />
           </div>
 
@@ -251,7 +251,7 @@ export default function ManualRevenueModal({
                   onChange={(e) => setTotalRevenue(e.target.value)}
                   placeholder="85.50"
                   required
-                  className="w-full pl-8 pr-4 py-2 border border-border-gray rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
+                  className="w-full pl-8 pr-4 py-2 border border-glass-border-dark rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
                 />
               </div>
             </div>
@@ -268,7 +268,7 @@ export default function ManualRevenueModal({
                   value={tipAmount}
                   onChange={(e) => setTipAmount(e.target.value)}
                   placeholder="10.00"
-                  className="w-full pl-8 pr-4 py-2 border border-border-gray rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
+                  className="w-full pl-8 pr-4 py-2 border border-glass-border-dark rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
                 />
               </div>
             </div>
@@ -286,7 +286,7 @@ export default function ManualRevenueModal({
                 value={serviceDate}
                 onChange={(e) => setServiceDate(e.target.value)}
                 required
-                className="w-full px-4 py-2 border border-border-gray rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
+                className="w-full px-4 py-2 border border-glass-border-dark rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
               />
             </div>
             <div>
@@ -297,7 +297,7 @@ export default function ManualRevenueModal({
                 type="time"
                 value={serviceTime}
                 onChange={(e) => setServiceTime(e.target.value)}
-                className="w-full px-4 py-2 border border-border-gray rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
+                className="w-full px-4 py-2 border border-glass-border-dark rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
               />
             </div>
             <div>
@@ -309,7 +309,7 @@ export default function ManualRevenueModal({
                 id="manual-revenue-party-size"
                 value={partySize}
                 onChange={(e) => setPartySize(e.target.value)}
-                className="w-full px-4 py-2 border border-border-gray rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
+                className="w-full px-4 py-2 border border-glass-border-dark rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
               >
                 {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 15, 20].map((size) => (
                   <option key={size} value={size}>
@@ -330,7 +330,7 @@ export default function ManualRevenueModal({
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Anniversary dinner, special menu..."
               rows={2}
-              className="w-full px-4 py-2 border border-border-gray rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors resize-none"
+              className="w-full px-4 py-2 border border-glass-border-dark rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors resize-none"
             />
           </div>
 
@@ -347,7 +347,7 @@ export default function ManualRevenueModal({
               type="button"
               onClick={onClose}
               disabled={createRevenue.isPending}
-              className="flex-1 px-4 py-3 border border-border-gray rounded-xl text-stone-gray font-medium hover:bg-soft-gray transition-colors disabled:opacity-50"
+              className="flex-1 px-4 py-3 border border-glass-border-dark rounded-xl text-stone-gray font-medium hover:bg-soft-gray transition-colors disabled:opacity-50"
             >
               {t.cancel}
             </button>
