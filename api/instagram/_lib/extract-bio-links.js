@@ -92,13 +92,15 @@ async function extractBioLinks(url) {
     return [];
   }
 
-  // Beacons.ai serializes link data inside RSC streaming chunks
-  // (self.__next_f.push) rather than __NEXT_DATA__, so neither
-  // extractFromNextData nor the anchor scrape find the data on a fresh
-  // server-rendered page. Use a Beacons-specific strategy first.
-  if (aggHost === 'beacons.ai' || aggHost === 'beacons.page') {
-    const fromBeacons = extractFromScriptUrls(html, aggHost);
-    if (fromBeacons.length > 0) return capAndDedupe(fromBeacons);
+  // Aggregators that ship link data inside <script> bodies rather than
+  // __NEXT_DATA__ or <a href> tags:
+  //   - beacons.ai / beacons.page → Next.js RSC stream (self.__next_f.push)
+  //   - taplink.cc → SPA with link data embedded in inline JS
+  // Use the script-URL extraction strategy first for these.
+  const SCRIPT_FIRST_HOSTS = new Set(['beacons.ai', 'beacons.page', 'taplink.cc']);
+  if (SCRIPT_FIRST_HOSTS.has(aggHost)) {
+    const fromScripts = extractFromScriptUrls(html, aggHost);
+    if (fromScripts.length > 0) return capAndDedupe(fromScripts);
     // fall through to other strategies just in case
   }
 
@@ -358,6 +360,7 @@ function extractFromScriptUrls(html, aggHost) {
     try { host = new URL(url).host.toLowerCase(); } catch { continue; }
     if (host.endsWith(aggHost)) continue;
     if (SKIP_HOSTS.some((h) => host === h || host.endsWith('.' + h))) continue;
+    if (isAggregatorShareLink(url, aggHost)) continue;
     // Skip static asset URLs (Beacons emits CDN avatar/thumbnail URLs in the stream).
     if (/\.(?:png|jpe?g|gif|svg|webp|ico|css|js|json|woff2?|map|mp4|mov|webm)(?:[?#]|$)/i.test(url)) continue;
     out.push({
@@ -391,6 +394,15 @@ const HOST_BRAND_MAP = {
   'podcasts.apple.com': 'Apple Podcasts',
   'wa.me': 'WhatsApp',
   'whatsapp.com': 'WhatsApp',
+  't.me': 'Telegram',
+  'telegram.me': 'Telegram',
+  'viber.click': 'Viber',
+  'viber.com': 'Viber',
+  'docs.google.com': 'Google Docs',
+  'forms.gle': 'Google Form',
+  'linkedin.com': 'LinkedIn',
+  'pinterest.com': 'Pinterest',
+  'snapchat.com': 'Snapchat',
   'opentable.com': 'OpenTable',
   'opentable.com.br': 'OpenTable',
   'resy.com': 'Resy',
@@ -437,11 +449,32 @@ function extractFromAnchors(html, aggHost) {
       const u = new URL(url);
       const host = u.host.toLowerCase();
       if (host.endsWith(aggHost)) continue;  // self-link
+      if (isAggregatorShareLink(url, aggHost)) continue;  // share-this-page button
       if (!label) label = host;
       out.push({ label: label.slice(0, 100), url, host });
     } catch { /* skip */ }
   }
   return out;
+}
+
+/**
+ * Filters out "share this page" buttons that point at facebook.com /
+ * twitter.com / reddit.com / linkedin.com / wa.me / etc. with the
+ * aggregator's own URL stuffed into a query parameter. These appear on
+ * Lnk.Bio and many other aggregator pages as social-share widgets.
+ *
+ * The signal: an external URL whose query string OR path contains the
+ * aggregator host (e.g. "?u=https://lnk.bio/justinbieber" or
+ * "?text=Check out lnk.bio/x").
+ */
+function isAggregatorShareLink(url, aggHost) {
+  try {
+    const u = new URL(url);
+    const haystack = decodeURIComponent(u.search + u.pathname).toLowerCase();
+    return haystack.includes(aggHost.toLowerCase());
+  } catch {
+    return false;
+  }
 }
 
 function capAndDedupe(links) {

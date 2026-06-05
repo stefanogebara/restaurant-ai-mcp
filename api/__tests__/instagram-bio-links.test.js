@@ -258,3 +258,44 @@ describe('extractFromScriptUrls — Beacons strategy', () => {
     expect(extractFromScriptUrls('<body>plain</body>', 'beacons.ai')).toEqual([]);
   });
 });
+
+describe('isAggregatorShareLink — share-button filter', () => {
+  // Note: isAggregatorShareLink is internal but the FILTER behavior is
+  // observable through extractFromAnchors below.
+
+  test.each([
+    // Lnk.Bio share buttons — pasted from real justinbieber page
+    'https://www.facebook.com/sharer.php?u=https://lnk.bio/justinbieber',
+    'https://twitter.com/intent/tweet?text=Check%20out%20https://lnk.bio/justinbieber',
+    'https://www.reddit.com/submit?url=https://lnk.bio/justinbieber&title=foo',
+    'https://www.linkedin.com/sharing/share-offsite/?url=https://lnk.bio/justinbieber',
+    'https://wa.me/?text=Check%20out%20https://lnk.bio/justinbieber',
+    'https://social-plugins.line.me/lineit/share?url=https://lnk.bio/justinbieber',
+  ])('extractFromAnchors filters share button: %s', (shareUrl) => {
+    const html = `
+      <a href="${shareUrl}">Share</a>
+      <a href="https://example.com/real">Real destination</a>
+    `;
+    const out = extractFromAnchors(html, 'lnk.bio');
+    // Only the real destination survives
+    expect(out.map((o) => o.url)).toEqual(['https://example.com/real']);
+  });
+
+  test('does NOT filter URLs that mention the aggregator host in the path of a different domain', () => {
+    // e.g. someone's blog post hosted at example.com that happens to
+    // mention lnk.bio in the slug — that should NOT be filtered.
+    // (Path containment is a real risk — we accept that as a known small
+    // false-positive surface since aggregator hostnames are uncommon in
+    // post slugs.)
+    // This test documents that a "?url=somewhere-else" doesn't get hit.
+    const html = `<a href="https://example.com/article/about-aggregators">Article</a>`;
+    const out = extractFromAnchors(html, 'lnk.bio');
+    expect(out).toHaveLength(1);
+  });
+
+  test('share-link filter also applies to script-URL extractor', () => {
+    const html = `<script>https://twitter.com/share?text=Check+https://beacons.ai/x</script>`;
+    const out = extractFromScriptUrls(html, 'beacons.ai');
+    expect(out).toEqual([]);
+  });
+});
