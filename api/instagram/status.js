@@ -57,7 +57,7 @@ module.exports = async (req, res) => {
     const { data: rows, error: queryErr } = await supabaseAdmin
       .schema('restaurant')
       .from('instagram_connections')
-      .select('status, ig_username, display_name, biography, website, ig_profile_picture_url, ig_followers_count, last_sync_at, last_error, token_expires_at, updated_at')
+      .select('status, ig_username, display_name, biography, website, bio_links, ig_profile_picture_url, ig_followers_count, last_sync_at, last_error, token_expires_at, updated_at')
       .eq('restaurant_id', user.restaurant_id)
       .order('updated_at', { ascending: false })
       .limit(1);
@@ -98,6 +98,7 @@ module.exports = async (req, res) => {
       display_name: conn.display_name,
       biography: conn.biography,
       website: conn.website,
+      bio_links: Array.isArray(conn.bio_links) ? conn.bio_links : null,
       profile_picture_url: conn.ig_profile_picture_url,
       followers_count: conn.ig_followers_count,
       last_sync_at: conn.last_sync_at,

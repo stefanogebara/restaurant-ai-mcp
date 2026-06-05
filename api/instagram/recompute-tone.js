@@ -26,6 +26,7 @@ const { setInternalCors, handlePreflight } = require('../_lib/cors');
 const { fetchRecentMedia, TokenInvalidError } = require('./_lib/fetch-recent-media');
 const { fetchProfile } = require('./_lib/fetch-profile');
 const { extractToneProfile } = require('./_lib/extract-tone-profile');
+const { extractBioLinks } = require('./_lib/extract-bio-links');
 
 const logger = createSecureLogger('instagram-recompute-tone');
 
@@ -177,6 +178,23 @@ module.exports = async (req, res) => {
     connUpdate.ig_profile_picture_url = profile.profile_picture_url || null;
     if (typeof profile.followers_count === 'number') {
       connUpdate.ig_followers_count = profile.followers_count;
+    }
+  }
+
+  // Phase C.2: when website points at a Linktree-style aggregator, fetch +
+  // parse it into structured destinations. Non-fatal — failure leaves
+  // bio_links unchanged. extractBioLinks returns null for non-aggregator
+  // URLs (we skip the write rather than overwrite a previously-good list
+  // with null).
+  const websiteToCheck = connUpdate.website || conn.website || null;
+  if (websiteToCheck) {
+    try {
+      const bioLinks = await extractBioLinks(websiteToCheck);
+      if (bioLinks !== null) {
+        connUpdate.bio_links = bioLinks;
+      }
+    } catch (err) {
+      logger.warn('bio_links extraction failed (non-fatal)', { err: err.message });
     }
   }
 

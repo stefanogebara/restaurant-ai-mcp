@@ -98,12 +98,15 @@ module.exports = async (req, res) => {
     });
   }
 
-  // Pull bio + website from the IG connection row. Non-fatal if missing
-  // (older connections won't have them until they're refreshed).
+  // Pull bio + website + bio_links from the IG connection row. Non-fatal
+  // if missing (older connections won't have them until they're refreshed).
+  // bio_links is the parsed Linktree-style destination list (Phase C.2);
+  // when present, captions can naturally reference "reserve at X" / "order
+  // on Y" instead of just saying "link in bio".
   const { data: conn } = await supabaseAdmin
     .schema('restaurant')
     .from('instagram_connections')
-    .select('biography, website, display_name')
+    .select('biography, website, display_name, bio_links')
     .eq('restaurant_id', user.restaurant_id)
     .in('status', ['active', 'restricted'])
     .maybeSingle();
@@ -125,9 +128,16 @@ module.exports = async (req, res) => {
   const websiteBlock = conn?.website
     ? `\nWEBSITE: ${conn.website} (use this URL if a CTA would naturally point at it)\n`
     : '';
+  // Phase C.2: feed bio_links so the drafter can reference real destinations.
+  // Cap at 8 so the prompt stays focused.
+  const bioLinksBlock = Array.isArray(conn?.bio_links) && conn.bio_links.length > 0
+    ? `\nDESTINATIONS the account links to (you may reference these naturally — e.g. "reservas no OpenTable", "peça pelo iFood" — instead of generic "link na bio"):\n${
+        conn.bio_links.slice(0, 8).map((l) => `- ${l.label} → ${l.host}`).join('\n')
+      }\n`
+    : '';
 
   const systemPrompt = `You are drafting Instagram captions for a restaurant named "${conn?.display_name || rest.restaurant_name || 'this restaurant'}". Match the restaurant's existing voice precisely.
-${bioBlock}${websiteBlock}
+${bioBlock}${websiteBlock}${bioLinksBlock}
 Voice profile (from their last 30 posts):
 - Language: ${language} (you MUST write all 3 drafts IN THIS LANGUAGE, do NOT translate to English)
 - Formality: ${tone.formality}/10 (1 = casual slang, 10 = formal hospitality)
