@@ -47,6 +47,34 @@ interface OAuthStartResponse {
   error?: string;
 }
 
+/**
+ * Returns the URL when its scheme is http(s), otherwise null. Defends
+ * against XSS via `javascript:`/`data:`/`vbscript:` URLs in the IG bio
+ * field — Meta does not sanitise the website field and an attacker who
+ * owns the IG account could set it to a hostile scheme that would
+ * execute when a host (the restaurant owner) clicks it from our panel.
+ */
+function safeHttpUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  try {
+    const u = new URL(url);
+    if (u.protocol === 'http:' || u.protocol === 'https:') return url;
+  } catch { /* malformed url — refuse */ }
+  return null;
+}
+
+/**
+ * Friendly label for the bio website link: shows "View on linktr.ee" when
+ * the URL is a known aggregator (we know that because the server populated
+ * bio_links for it), otherwise shows the host.
+ */
+function websiteLabel(url: string, bioLinks: ReadonlyArray<{ host: string }> | null): string {
+  let host = '';
+  try { host = new URL(url).host.replace(/^www\./, ''); } catch { host = url; }
+  if (bioLinks && bioLinks.length > 0) return `View on ${host} (${bioLinks.length} links)`;
+  return host;
+}
+
 export default function InstagramPanel() {
   const { t } = useTranslation();
   const toast = useToast();
@@ -192,9 +220,9 @@ export default function InstagramPanel() {
             </p>
           )}
 
-          {data.website && (
+          {data.website && safeHttpUrl(data.website) && (
             <a
-              href={data.website}
+              href={safeHttpUrl(data.website)!}
               target="_blank"
               rel="noreferrer noopener"
               className="inline-flex items-center gap-1.5 text-xs text-burgundy hover:text-burgundy-dark underline underline-offset-2"
