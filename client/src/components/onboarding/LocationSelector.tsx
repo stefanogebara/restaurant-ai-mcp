@@ -35,9 +35,13 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
   const [countrySearchQuery, setCountrySearchQuery] = useState('');
   const [citySearchQuery, setCitySearchQuery] = useState('');
 
-  // Diacritic-insensitive lowercase (espana â†’ matches EspaÃ±a, brasil â†’ matches Brasil).
+  // Diacritic-insensitive lowercase (espana -> matches Espana, brasil -> matches Brasil).
+  // NOTE: the range ̀-ͯ is "Combining Diacritical Marks" — DO NOT replace
+  // these escapes with the literal characters, because the file's encoding has been
+  // round-tripped through cp1252 before and the literal chars produce an invalid
+  // regex range that breaks the Vite build.
   const normalize = (s: string) =>
-    s.normalize('NFD').replace(/[Ì€-Í¯]/g, '').toLowerCase();
+    s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
   // Localized country names via Intl.DisplayNames. The data file stores English
   // names ("Brazil", "Spain") but pt-BR/es users naturally type "Brasil"/"EspaÃ±a".
