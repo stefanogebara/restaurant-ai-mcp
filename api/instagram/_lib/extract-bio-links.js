@@ -26,6 +26,7 @@
  * a logged warning so the caller can proceed.
  */
 
+const dns = require('node:dns/promises');
 const { createSecureLogger } = require('../../_lib/secure-logger');
 
 const logger = createSecureLogger('instagram-bio-links');
@@ -33,6 +34,7 @@ const logger = createSecureLogger('instagram-bio-links');
 const MAX_LINKS = 20;
 const FETCH_TIMEOUT_MS = 8000;
 const MAX_HTML_BYTES = 1.5 * 1024 * 1024; // 1.5 MB — aggregator pages are usually <500KB
+const MAX_REDIRECT_HOPS = 3;
 
 // User-Agent that several aggregators accept; default Node fetch UA gets
 // blocked by Cloudflare on some of them.
@@ -101,36 +103,131 @@ async function extractBioLinks(url) {
   return capAndDedupe(fromScrape);
 }
 
-async function fetchHtml(url) {
+/**
+ * Checks whether an IP literal falls inside any private/loopback/link-local
+ * range. We resolve every URL host through DNS before fetching to block
+ * SSRF against AWS/GCP metadata endpoints (169.254.169.254), internal
+ * service meshes (10.0.0.0/8), and loopback. Aggregator URLs go through
+ * public CDN IPs, so this is purely defensive: if the aggregator OR a
+ * follow-on redirect resolves to a private IP we refuse to fetch.
+ */
+function isPrivateIp(ip) {
+  if (typeof ip !== 'string') return true;
+  // IPv6
+  if (ip.includes(':')) {
+    const lower = ip.toLowerCase();
+    if (lower === '::1' || lower === '::') return true;
+    // Unique-local fc00::/7 (fc.. or fd..)
+    if (/^fc[0-9a-f]{2}:|^fd[0-9a-f]{2}:/.test(lower)) return true;
+    // Link-local fe80::/10
+    if (/^fe[89ab][0-9a-f]:/.test(lower)) return true;
+    // IPv4-mapped IPv6: ::ffff:x.x.x.x — fall through to v4 check
+    const m = lower.match(/::ffff:([0-9.]+)$/);
+    if (m) return isPrivateIp(m[1]);
+    return false;
+  }
+  // IPv4
+  const parts = ip.split('.').map(Number);
+  if (parts.length !== 4 || parts.some((n) => !Number.isInteger(n) || n < 0 || n > 255)) return true;
+  const [a, b] = parts;
+  // 10/8, 127/8, 0/8
+  if (a === 10 || a === 127 || a === 0) return true;
+  // 172.16/12
+  if (a === 172 && b >= 16 && b <= 31) return true;
+  // 192.168/16
+  if (a === 192 && b === 168) return true;
+  // 169.254/16 — link-local incl. AWS metadata
+  if (a === 169 && b === 254) return true;
+  // 100.64/10 — carrier-grade NAT (RFC 6598), sometimes used internally
+  if (a === 100 && b >= 64 && b <= 127) return true;
+  return false;
+}
+
+async function assertPublicHost(hostname) {
+  let records;
+  try {
+    records = await dns.lookup(hostname, { all: true, verbatim: true });
+  } catch (err) {
+    throw new Error(`dns lookup failed for ${hostname}: ${err.code || err.message}`);
+  }
+  if (!records || records.length === 0) {
+    throw new Error(`no DNS records for ${hostname}`);
+  }
+  for (const r of records) {
+    if (isPrivateIp(r.address)) {
+      throw new Error(`refusing to fetch private IP ${r.address} (for ${hostname})`);
+    }
+  }
+}
+
+/**
+ * Manual redirect-follower. Validates every hop's URL via assertPublicHost
+ * to prevent SSRF: a 302 to http://169.254.169.254/... would otherwise let
+ * an attacker who controls the IG website field (or compromises an
+ * aggregator) pivot through our serverless function to internal endpoints.
+ *
+ * fetch(redirect: 'manual') is required so we see 3xx responses instead of
+ * silently following them.
+ */
+async function fetchHtml(initialUrl) {
   const aborter = new AbortController();
   const timer = setTimeout(() => aborter.abort(), FETCH_TIMEOUT_MS);
+  let url = initialUrl;
+
   try {
-    const resp = await fetch(url, {
-      headers: {
-        'User-Agent': UA,
-        Accept: 'text/html,application/xhtml+xml',
-      },
-      signal: aborter.signal,
-      redirect: 'follow',
-    });
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-    // Read body but cap to MAX_HTML_BYTES so a maliciously huge response
-    // can't blow our memory.
-    const reader = resp.body.getReader();
-    const chunks = [];
-    let total = 0;
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      total += value.length;
-      if (total > MAX_HTML_BYTES) {
-        reader.cancel().catch(() => {});
-        break;
+    for (let hop = 0; hop <= MAX_REDIRECT_HOPS; hop++) {
+      let parsed;
+      try {
+        parsed = new URL(url);
+      } catch {
+        throw new Error(`invalid url: ${url}`);
       }
-      chunks.push(value);
+      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+        throw new Error(`refusing non-http protocol: ${parsed.protocol}`);
+      }
+      await assertPublicHost(parsed.hostname);
+
+      const resp = await fetch(url, {
+        headers: {
+          'User-Agent': UA,
+          Accept: 'text/html,application/xhtml+xml',
+        },
+        signal: aborter.signal,
+        redirect: 'manual',
+      });
+
+      // Manual redirect handling — validate the next hop before following.
+      if (resp.status >= 300 && resp.status < 400) {
+        const location = resp.headers.get('location');
+        if (!location) throw new Error(`${resp.status} with no Location header`);
+        if (hop >= MAX_REDIRECT_HOPS) throw new Error(`exceeded ${MAX_REDIRECT_HOPS} redirect hops`);
+        // Resolve relative locations against the current URL
+        url = new URL(location, url).toString();
+        continue;
+      }
+
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+
+      // Read body but cap to MAX_HTML_BYTES so a maliciously huge response
+      // can't blow our memory.
+      const reader = resp.body.getReader();
+      const chunks = [];
+      let total = 0;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        total += value.length;
+        if (total > MAX_HTML_BYTES) {
+          reader.cancel().catch(() => {});
+          break;
+        }
+        chunks.push(value);
+      }
+      const buf = Buffer.concat(chunks.map((c) => Buffer.from(c)), total);
+      return buf.toString('utf-8');
     }
-    const buf = Buffer.concat(chunks.map((c) => Buffer.from(c)), total);
-    return buf.toString('utf-8');
+    // Should be unreachable — the loop either returns or throws.
+    throw new Error('redirect loop did not terminate');
   } finally {
     clearTimeout(timer);
   }
@@ -246,5 +343,5 @@ function capAndDedupe(links) {
 module.exports = {
   extractBioLinks,
   // Exposed for unit tests
-  __test__: { hostMatches, extractFromAnchors, extractFromNextData, capAndDedupe, AGGREGATOR_HOSTS },
+  __test__: { hostMatches, extractFromAnchors, extractFromNextData, capAndDedupe, isPrivateIp, AGGREGATOR_HOSTS },
 };
