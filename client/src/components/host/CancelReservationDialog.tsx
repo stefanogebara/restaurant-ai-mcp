@@ -72,7 +72,7 @@ export default function CancelReservationDialog({ isOpen, reservation, onClose }
         role="dialog"
         aria-modal="true"
         aria-label={t('reservations.cancelTitle', 'Cancel Reservation')}
-        className="bg-white rounded-2xl shadow-2xl border border-border-gray p-6 max-w-sm w-full mx-4"
+        className="glass-modal p-6 max-w-sm w-full mx-4"
       >
         <h3 className="text-lg font-bold text-deep-charcoal mb-2">
           {t('reservations.cancelTitle', 'Cancel Reservation')}

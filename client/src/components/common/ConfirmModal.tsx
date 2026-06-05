@@ -83,7 +83,7 @@ export default function ConfirmModal({
       onClick={onCancel}
     >
       <div
-        className="bg-white rounded-2xl shadow-2xl border border-border-gray p-6 max-w-sm w-full"
+        className="glass-modal p-6 max-w-sm w-full"
         onClick={(e) => e.stopPropagation()}
       >
         <h3 id="confirm-modal-title" className="text-lg font-bold text-deep-charcoal mb-2">
@@ -97,7 +97,7 @@ export default function ConfirmModal({
             type="button"
             onClick={onCancel}
             disabled={isLoading}
-            className="flex-1 px-4 py-2.5 border border-border-gray text-stone-gray rounded-xl hover:bg-soft-gray transition-colors font-medium disabled:opacity-50"
+            className="flex-1 px-4 py-2.5 border border-glass-border-dark bg-white/50 hover:bg-white/80 text-stone-gray rounded-xl transition-colors font-medium disabled:opacity-50"
           >
             {cancelLabel ?? t('common.cancel', 'Cancel')}
           </button>

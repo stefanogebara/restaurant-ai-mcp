@@ -96,7 +96,7 @@ export default function AddReservationModal({ isOpen, onClose }: AddReservationM
         role="dialog"
         aria-modal="true"
         aria-label={t('reservations.addTitle', 'Add Reservation')}
-        className="bg-white rounded-2xl shadow-2xl border border-border-gray p-6 max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto"
+        className="glass-modal p-6 max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto"
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-5">

@@ -54,7 +54,7 @@ export default function ReservationDetailsModal({ isOpen, reservation, onClose, 
         role="dialog"
         aria-modal="true"
         aria-label="Reservation Details"
-        className="bg-white rounded-2xl shadow-2xl p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto border border-border-gray"
+        className="glass-modal p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

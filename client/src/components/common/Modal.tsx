@@ -60,8 +60,8 @@ export default function Modal({
         aria-modal="true"
         aria-label={title}
         className={`
-          bg-white shadow-2xl border border-border-gray w-full max-h-[90vh] overflow-y-auto
-          ${mobileSheet ? 'rounded-t-2xl sm:rounded-2xl' : 'rounded-2xl'}
+          glass-modal w-full max-h-[90vh] overflow-y-auto
+          ${mobileSheet ? 'rounded-t-2xl sm:rounded-2xl' : ''}
           ${sizeClasses[size]}
         `}
       >
@@ -79,7 +79,7 @@ export default function Modal({
             <button
               onClick={onClose}
               aria-label="Close"
-              className="text-muted-stone hover:text-stone-gray transition-colors p-1.5 rounded-xl hover:bg-soft-gray"
+              className="text-muted-stone hover:text-stone-gray transition-colors p-1.5 rounded-xl hover:bg-white/40"
             >
               <ThiingsIcon name="close" pxSize={20} />
             </button>
