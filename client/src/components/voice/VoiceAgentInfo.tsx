@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import { useToast } from '../../contexts/ToastContext';
@@ -10,9 +10,9 @@ interface Props {
 }
 
 /**
- * Lead with the host-facing fact: "Ready to take calls — last updated 3 days
+ * Lead with the host-facing fact: "Ready to take calls â€” last updated 3 days
  * ago." The previous version showed "Voice Engine: turbo_v2.5" and a copyable
- * UUID Agent ID as primary surface area — neither means anything to a
+ * UUID Agent ID as primary surface area â€” neither means anything to a
  * restaurant owner. Keep the technical details available behind a disclosure
  * for support.
  */
@@ -26,7 +26,7 @@ export default function VoiceAgentInfo({ agentId, updatedAt, createdAt }: Props)
     : null;
 
   return (
-    <section className="py-5 border-b border-[#E5E7EB]">
+    <section className="py-5 border-b border-glass-border-dark">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827] flex items-center gap-2">
           <ThiingsIcon name="info" pxSize={20} />

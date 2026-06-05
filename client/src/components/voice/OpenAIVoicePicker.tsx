@@ -1,4 +1,4 @@
-import ThiingsIcon from '../common/ThiingsIcon';
+﻿import ThiingsIcon from '../common/ThiingsIcon';
 import { OPENAI_VOICES } from './voiceConstants';
 
 interface Props {
@@ -9,7 +9,7 @@ interface Props {
 
 export default function OpenAIVoicePicker({ currentOpenAIVoice, savedOpenAIVoice, onSelect }: Props) {
   return (
-    <section className="py-5 border-b border-[#E5E7EB]">
+    <section className="py-5 border-b border-glass-border-dark">
       <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827] mb-4 flex items-center gap-2">
         <ThiingsIcon name="volume" pxSize={20} />
         OpenAI Voice
@@ -24,7 +24,7 @@ export default function OpenAIVoicePicker({ currentOpenAIVoice, savedOpenAIVoice
             className={`text-left p-4 rounded-2xl border-2 transition-all ${
               currentOpenAIVoice === voice.id
                 ? 'border-burgundy bg-burgundy/5'
-                : 'border-border-gray hover:border-muted-stone'
+                : 'border-glass-border-dark hover:border-muted-stone'
             }`}
           >
             <p className="text-sm font-semibold text-deep-charcoal">{voice.name}</p>

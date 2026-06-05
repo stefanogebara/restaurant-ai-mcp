@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+﻿import { useTranslation } from 'react-i18next';
 import type { VoiceEngineSettings } from '../../hooks/useVoiceEngineSettings';
 
 const STATUS_STYLES: Record<string, string> = {
@@ -15,8 +15,8 @@ interface Props {
 
 /**
  * The two voice engines are presented to the user by what they FEEL like
- * (premium / fast), not by their vendor name. João doesn't know what
- * "ElevenLabs" or "OpenAI Realtime" mean — those are implementation
+ * (premium / fast), not by their vendor name. JoÃ£o doesn't know what
+ * "ElevenLabs" or "OpenAI Realtime" mean â€” those are implementation
  * details. The vendor still drives the dropdowns and configuration
  * downstream; we just stop exposing the brand on the primary choice.
  */
@@ -24,8 +24,8 @@ export default function VoiceEngineSelector({ currentEngine, pendingEngine, engi
   const { t } = useTranslation();
 
   return (
-    <section className="overflow-hidden pb-5 border-b border-[#E5E7EB]">
-      <div className="flex items-center justify-between py-5 border-b border-[#E5E7EB]">
+    <section className="overflow-hidden pb-5 border-b border-glass-border-dark">
+      <div className="flex items-center justify-between py-5 border-b border-glass-border-dark">
         <span className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{t('settings.voiceEngine')}</span>
         {engineStatus && (
           <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${STATUS_STYLES[engineStatus] ?? 'bg-soft-gray text-stone-gray'}`}>
@@ -36,7 +36,7 @@ export default function VoiceEngineSelector({ currentEngine, pendingEngine, engi
 
       <div className="p-6">
         <p className="text-sm text-stone-gray mb-4">
-          {t('voiceEngine.intro', 'Which voice should answer your phone? You can switch later — no calls are missed during the change.')}
+          {t('voiceEngine.intro', 'Which voice should answer your phone? You can switch later â€” no calls are missed during the change.')}
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <button
@@ -45,7 +45,7 @@ export default function VoiceEngineSelector({ currentEngine, pendingEngine, engi
             className={`text-left p-4 rounded-2xl border-2 transition-all ${
               currentEngine === 'elevenlabs'
                 ? 'border-burgundy bg-burgundy/5'
-                : 'border-border-gray hover:border-muted-stone'
+                : 'border-glass-border-dark hover:border-muted-stone'
             }`}
           >
             <div className="flex items-center justify-between mb-2">
@@ -67,7 +67,7 @@ export default function VoiceEngineSelector({ currentEngine, pendingEngine, engi
             className={`text-left p-4 rounded-2xl border-2 transition-all ${
               currentEngine === 'openai_realtime'
                 ? 'border-burgundy bg-burgundy/5'
-                : 'border-border-gray hover:border-muted-stone'
+                : 'border-glass-border-dark hover:border-muted-stone'
             }`}
           >
             <div className="flex items-center justify-between mb-2">

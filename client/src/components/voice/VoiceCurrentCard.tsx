@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+﻿import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import Spinner from '../common/Spinner';
 import { getPreviewText } from './voiceConstants';
@@ -36,8 +36,8 @@ export default function VoiceCurrentCard({
   const { t } = useTranslation();
 
   return (
-    <section className="overflow-hidden pb-5 border-b border-[#E5E7EB]">
-      <div className="py-5 border-b border-[#E5E7EB]">
+    <section className="overflow-hidden pb-5 border-b border-glass-border-dark">
+      <div className="py-5 border-b border-glass-border-dark">
         <span className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{t('voiceCurrentCard.chooseAVoice', 'Choose a Voice')}</span>
       </div>
 
@@ -60,13 +60,13 @@ export default function VoiceCurrentCard({
               {selectedBrowserVoice?.gender && (
                 <>
                   <span className="capitalize">{selectedBrowserVoice.gender}</span>
-                  <span>·</span>
+                  <span>Â·</span>
                 </>
               )}
               <span>{currentLanguage.toUpperCase()}</span>
               {selectedBrowserVoice?.accent && (
                 <>
-                  <span>·</span>
+                  <span>Â·</span>
                   <span>{selectedBrowserVoice.accent}</span>
                 </>
               )}

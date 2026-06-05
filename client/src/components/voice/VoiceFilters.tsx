@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Voice filter bar with gender toggle pills, language dropdown, and search input.
  */
 
@@ -42,7 +42,7 @@ export default function VoiceFilters({ filters, onChange, defaultLanguage = 'en'
   return (
     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-4">
       {/* Gender Toggle Pills */}
-      <div className="flex rounded-lg border border-border-gray overflow-hidden">
+      <div className="flex rounded-lg border border-glass-border-dark overflow-hidden">
         {GENDER_OPTIONS.map((opt) => (
           <button
             key={opt.value}
@@ -52,7 +52,7 @@ export default function VoiceFilters({ filters, onChange, defaultLanguage = 'en'
               px-4 py-2 text-sm font-medium transition-colors
               ${filters.gender === opt.value
                 ? 'bg-burgundy text-white'
-                : 'bg-white text-stone-gray hover:bg-soft-gray'
+                : 'bg-white/60 text-stone-gray hover:bg-white/85'
               }
             `}
           >
@@ -66,7 +66,7 @@ export default function VoiceFilters({ filters, onChange, defaultLanguage = 'en'
         value={filters.language || defaultLanguage}
         onChange={(e) => onChange({ ...filters, language: e.target.value })}
         aria-label="Filter by language"
-        className="px-3 py-2 text-sm border border-border-gray rounded-xl bg-white text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/50"
+        className="px-3 py-2 text-sm border border-glass-border-dark rounded-xl bg-white/60 backdrop-blur-glass-chip text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/50"
       >
         {SUPPORTED_LANGUAGES.map((lang) => (
           <option key={lang.code} value={lang.code}>
@@ -86,7 +86,7 @@ export default function VoiceFilters({ filters, onChange, defaultLanguage = 'en'
             placeholder={t('voice.searchVoices', 'Search voices...')}
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 text-sm border border-border-gray rounded-xl bg-white text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy/50"
+            className="w-full pl-9 pr-3 py-2 text-sm border border-glass-border-dark rounded-xl bg-white/60 backdrop-blur-glass-chip text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy/50"
           />
         </div>
       )}

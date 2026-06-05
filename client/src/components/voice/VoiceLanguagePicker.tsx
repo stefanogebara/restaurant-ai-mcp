@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+﻿import { useTranslation } from 'react-i18next';
 import { SUPPORTED_LANGUAGES } from './voiceConstants';
 
 interface Props {
@@ -10,8 +10,8 @@ interface Props {
 export default function VoiceLanguagePicker({ currentLanguage, savedLanguage, onChange }: Props) {
   const { t } = useTranslation();
   return (
-    <section className="overflow-hidden pb-5 border-b border-[#E5E7EB]">
-      <div className="py-5 border-b border-[#E5E7EB]">
+    <section className="overflow-hidden pb-5 border-b border-glass-border-dark">
+      <div className="py-5 border-b border-glass-border-dark">
         <span className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{t('voiceSettings.languages')}</span>
       </div>
 
@@ -25,7 +25,7 @@ export default function VoiceLanguagePicker({ currentLanguage, savedLanguage, on
               className={`px-4 py-2 rounded-full text-[13px] font-medium border transition-colors ${
                 currentLanguage === lang.code
                   ? 'border-burgundy bg-burgundy/[6%] text-burgundy font-semibold'
-                  : 'border-border-gray text-stone-gray bg-white hover:border-muted-stone'
+                  : 'border-glass-border-dark text-stone-gray bg-white/60 backdrop-blur-glass-chip hover:border-muted-stone hover:bg-white/85'
               }`}
             >
               {lang.flag} {lang.label}

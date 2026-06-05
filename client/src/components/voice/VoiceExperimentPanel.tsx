@@ -1,4 +1,4 @@
-import {
+﻿import {
   useVoiceExperiment,
   usePromoteExperiment,
   useRollbackExperiment,
@@ -17,7 +17,7 @@ export default function VoiceExperimentPanel() {
   if (experiment && (experiment.status === 'completed' || experiment.status === 'promoted')) {
     const winner = experiment.result?.winner === 'variant' ? 'Variant' : 'Control';
     return (
-      <div className="bg-white rounded-lg border p-6">
+      <div className="glass-card p-6">
         <h3 className="text-lg font-semibold mb-4">A/B Test Result</h3>
         <p className="text-sm text-gray-600 mb-2">
           Experiment <span className="font-medium">{experiment.branch_name}</span> has ended.
@@ -38,7 +38,7 @@ export default function VoiceExperimentPanel() {
   // Running experiment
   if (experiment && experiment.status === 'running') {
     return (
-      <div className="bg-white rounded-lg border p-6">
+      <div className="glass-card p-6">
         <h3 className="text-lg font-semibold mb-4">Running Experiment</h3>
         <p className="text-sm text-gray-600 mb-1">
           <span className="font-medium">{experiment.branch_name}</span>
@@ -78,7 +78,7 @@ export default function VoiceExperimentPanel() {
 
   // No experiment
   return (
-    <div className="bg-white rounded-lg border p-6">
+    <div className="glass-card p-6">
       <h3 className="text-lg font-semibold mb-2">A/B Test Your Voice</h3>
       <p className="text-sm text-gray-600 mb-4">
         Test different voice configurations to find the best fit for your restaurant.
