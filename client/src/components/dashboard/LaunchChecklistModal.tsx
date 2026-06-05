@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import ThiingsIcon from '../common/ThiingsIcon';
@@ -37,9 +37,9 @@ export default function LaunchChecklistModal({ bookingSlug, onDismiss }: Props) 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30">
-      <div className="bg-white border border-[#E5E7EB] rounded-2xl w-full max-w-md shadow-lg">
+      <div className="glass-modal w-full max-w-md">
         {/* Header */}
-        <div className="px-7 pt-7 pb-5 border-b border-[#E5E7EB]">
+        <div className="px-7 pt-7 pb-5 border-b border-glass-border-dark">
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-xs font-semibold uppercase tracking-widest text-burgundy mb-1">
@@ -86,7 +86,7 @@ export default function LaunchChecklistModal({ bookingSlug, onDismiss }: Props) 
                 onClick={() => navigate('/host-dashboard/voice-settings')}
                 className="mt-2 text-xs font-semibold text-burgundy hover:underline"
               >
-                {t('launch.step1CTA', 'Open Voice Settings →')}
+                {t('launch.step1CTA', 'Open Voice Settings â†’')}
               </button>
             </div>
           </div>
@@ -108,7 +108,7 @@ export default function LaunchChecklistModal({ bookingSlug, onDismiss }: Props) 
                 {t('launch.step2Title', 'Share your booking link')}
               </p>
               {bookingSlug ? (
-                <div className="mt-2 flex items-center gap-2 bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg px-3 py-2">
+                <div className="mt-2 flex items-center gap-2 bg-[#F9FAFB] border border-glass-border-dark rounded-lg px-3 py-2">
                   <span className="text-xs text-[#706A65] truncate flex-1">{bookingUrl}</span>
                   <button
                     type="button"
@@ -120,7 +120,7 @@ export default function LaunchChecklistModal({ bookingSlug, onDismiss }: Props) 
                 </div>
               ) : (
                 <p className="text-xs text-[#9CA3AF] mt-0.5">
-                  {t('launch.step2Loading', 'Loading your booking link…')}
+                  {t('launch.step2Loading', 'Loading your booking linkâ€¦')}
                 </p>
               )}
             </div>
@@ -161,7 +161,7 @@ export default function LaunchChecklistModal({ bookingSlug, onDismiss }: Props) 
             }`}
           >
             {allChecked
-              ? t('launch.allDone', "All done — let's go!")
+              ? t('launch.allDone', "All done â€” let's go!")
               : t('launch.skipForNow', 'Skip for now')}
           </button>
         </div>

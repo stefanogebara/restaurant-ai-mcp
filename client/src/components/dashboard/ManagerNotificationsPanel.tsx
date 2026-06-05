@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useManagerPreferences, useSaveManagerPreferences } from '../../hooks/useManagerPreferences';
 import type { NotificationPreferences } from '../../hooks/useManagerPreferences';
@@ -49,7 +49,7 @@ export default function ManagerNotificationsPanel() {
   if (isLoading) return null;
 
   return (
-    <div className="py-5 border-t border-[#E5E7EB] mt-8 space-y-6">
+    <div className="py-5 border-t border-glass-border-dark mt-8 space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">
           {t('settings.managerNotifications')}
@@ -159,7 +159,7 @@ export default function ManagerNotificationsPanel() {
                 id="weekly_report_day"
                 value={getValue('weekly_report_day') ?? 1}
                 onChange={e => set('weekly_report_day', Number(e.target.value))}
-                className="w-full px-3 py-2 border border-[#E5E7EB] rounded-xl text-sm text-deep-charcoal bg-white focus:outline-none focus:ring-2 focus:ring-[#9F1239]/30 focus:border-[#9F1239]"
+                className="w-full px-3 py-2 border border-glass-border-dark rounded-xl text-sm text-deep-charcoal bg-white/60 focus:outline-none focus:ring-2 focus:ring-[#9F1239]/30 focus:border-[#9F1239]"
               >
                 <option value={0}>{t('settings.daySunday', 'Sunday')}</option>
                 <option value={1}>{t('settings.dayMonday', 'Monday')}</option>

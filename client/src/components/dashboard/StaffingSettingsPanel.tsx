@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useStaffingConfig, useSaveStaffingConfig } from '../../hooks/useStaffingConfig';
 import type { StaffingConfig, StaffingRole } from '../../hooks/useStaffingConfig';
@@ -39,7 +39,7 @@ export default function StaffingSettingsPanel() {
 
   if (isLoading) {
     return (
-      <div className="py-5 border-t border-[#E5E7EB] mt-8 animate-pulse space-y-3">
+      <div className="py-5 border-t border-glass-border-dark mt-8 animate-pulse space-y-3">
         <div className="h-4 bg-gray-100 rounded w-40" />
         {[0, 1, 2].map((i) => <div key={i} className="h-10 bg-gray-100 rounded" />)}
       </div>
@@ -47,7 +47,7 @@ export default function StaffingSettingsPanel() {
   }
 
   return (
-    <div className="py-5 border-t border-[#E5E7EB] mt-8 space-y-4">
+    <div className="py-5 border-t border-glass-border-dark mt-8 space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">
           {t('settings.staffingRatios')}
@@ -85,7 +85,7 @@ export default function StaffingSettingsPanel() {
                     : role.covers_per_staff
                 }
                 onChange={(e) => handleChange(index, e.target.value)}
-                className="w-16 border border-border-gray rounded-lg px-2 py-1 text-sm text-deep-charcoal text-right focus:outline-none focus:ring-2 focus:ring-burgundy/30"
+                className="w-16 border border-glass-border-dark rounded-lg px-2 py-1 text-sm text-deep-charcoal text-right focus:outline-none focus:ring-2 focus:ring-burgundy/30"
                 aria-label={`${role.name} covers per staff`}
               />
             </div>

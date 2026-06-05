@@ -1,4 +1,4 @@
-/**
+﻿/**
  * APIKeysPanel
  *
  * Create/revoke API keys for POS integration.
@@ -108,7 +108,7 @@ export default function APIKeysPanel() {
 
       {/* Create form */}
       {showCreate && (
-        <div className="border border-[#E5E7EB] rounded-xl p-4 space-y-3">
+        <div className="border border-glass-border-dark rounded-xl p-4 space-y-3">
           <label className="block text-xs font-medium text-[#1C1917]">
             {t('integrations.keyName', 'Key Name')}
           </label>
@@ -117,7 +117,7 @@ export default function APIKeysPanel() {
             value={newKeyName}
             onChange={(e) => setNewKeyName(e.target.value)}
             placeholder={t('integrations.keyNamePlaceholder', 'e.g. POS Terminal 1')}
-            className="w-full px-3 py-2 text-sm border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#9F1239]"
+            className="w-full px-3 py-2 text-sm border border-glass-border-dark rounded-lg focus:outline-none focus:ring-1 focus:ring-[#9F1239]"
             maxLength={100}
           />
           <div className="flex gap-2 justify-end">
@@ -149,11 +149,11 @@ export default function APIKeysPanel() {
       {isLoading ? (
         <p className="text-xs text-[#706A65]">{t('common.loading', 'Loading...')}</p>
       ) : !keys || keys.length === 0 ? (
-        <p className="text-xs text-[#706A65] py-4 text-center border border-dashed border-[#E5E7EB] rounded-xl">
+        <p className="text-xs text-[#706A65] py-4 text-center border border-dashed border-glass-border-dark rounded-xl">
           {t('integrations.noApiKeys', 'No API keys yet. Create one to get started.')}
         </p>
       ) : (
-        <div className="divide-y divide-[#E5E7EB] border border-[#E5E7EB] rounded-xl overflow-hidden">
+        <div className="divide-y divide-[#E5E7EB] border border-glass-border-dark rounded-xl overflow-hidden">
           {keys.map((key) => (
             <div key={key.id} className="px-4 py-3 flex items-center justify-between">
               <div className="space-y-0.5">

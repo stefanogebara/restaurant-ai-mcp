@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import CustomerTierBadge from './CustomerTierBadge';
 import { useFindDuplicates, useMergeCustomers } from '../../hooks/useCustomers';
@@ -36,9 +36,9 @@ export default function DuplicateCustomersPanel({ onClose }: DuplicateCustomersP
 
   return (
     <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl border border-[#E5E7EB] w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+      <div className="glass-modal w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#E5E7EB]">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-glass-border-dark">
           <div>
             <h2 className="text-lg font-bold text-stone-900">
               {t('crm.findDuplicates', 'Find Duplicates')}
@@ -100,7 +100,7 @@ export default function DuplicateCustomersPanel({ onClose }: DuplicateCustomersP
       {/* Merge Confirmation Modal */}
       {confirmGroup && (
         <div className="fixed inset-0 bg-black/40 z-[60] flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl border border-[#E5E7EB] w-full max-w-md p-6">
+          <div className="glass-modal w-full max-w-md p-6">
             <h3 className="text-base font-bold text-stone-900 mb-3">
               {t('crm.confirmMerge', 'Confirm Merge')}
             </h3>
@@ -115,7 +115,7 @@ export default function DuplicateCustomersPanel({ onClose }: DuplicateCustomersP
                   className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
                     keepId === c.customer_id
                       ? 'border-[#9F1239] bg-rose-50'
-                      : 'border-[#E5E7EB] hover:bg-stone-50'
+                      : 'border-glass-border-dark hover:bg-stone-50'
                   }`}
                 >
                   <input
@@ -148,7 +148,7 @@ export default function DuplicateCustomersPanel({ onClose }: DuplicateCustomersP
                   setConfirmGroup(null);
                   setKeepId(null);
                 }}
-                className="px-4 py-2 text-sm font-medium text-stone-600 border border-[#E5E7EB] rounded-lg hover:bg-stone-50 transition-colors"
+                className="px-4 py-2 text-sm font-medium text-stone-600 border border-glass-border-dark rounded-lg hover:bg-stone-50 transition-colors"
               >
                 {t('common.cancel', 'Cancel')}
               </button>
@@ -170,7 +170,7 @@ export default function DuplicateCustomersPanel({ onClose }: DuplicateCustomersP
   );
 }
 
-// ─── Sub-component ───────────────────────────────────────────
+// â”€â”€â”€ Sub-component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function DuplicateGroupCard({
   group,
@@ -182,7 +182,7 @@ function DuplicateGroupCard({
   const { t } = useTranslation();
 
   return (
-    <div className="border border-[#E5E7EB] rounded-lg p-4">
+    <div className="border border-glass-border-dark rounded-lg p-4">
       <div className="flex items-center justify-between mb-3">
         <span className="text-[10px] font-bold text-stone-500 uppercase tracking-widest">
           {t('crm.matchedBy', 'Matched by')}: {group.match_type}

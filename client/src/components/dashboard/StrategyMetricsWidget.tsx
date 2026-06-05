@@ -1,7 +1,7 @@
-/**
+﻿/**
  * StrategyMetricsWidget
  *
- * The "val_bpb" scoreboard for the autoresearch loop — shows whether
+ * The "val_bpb" scoreboard for the autoresearch loop â€” shows whether
  * the AI strategy is actually moving the 3 key business metrics:
  *   1. No-show rate (target < 5%)
  *   2. Avg revenue per cover (target R$90+)
@@ -99,7 +99,7 @@ function MetricCard({
     .filter(p => p.value !== null);
 
   return (
-    <div className="bg-white border border-border-gray rounded-xl p-4">
+    <div className="glass-card p-4">
       <div className="flex items-center justify-between mb-1">
         <span className="text-xs font-medium text-stone-gray uppercase tracking-wide">
           {t(metric.i18nKey, metric.label)}
@@ -109,7 +109,7 @@ function MetricCard({
 
       <div className="flex items-baseline gap-2 mb-1">
         <span className={`text-2xl font-semibold font-serif ${bad ? 'text-red-600' : good ? 'text-rose-700' : 'text-deep-charcoal'}`}>
-          {value !== null ? metric.format(value) : '—'}
+          {value !== null ? metric.format(value) : 'â€”'}
         </span>
         <span className="text-xs text-muted-stone">
           {t('strategy.target', 'target')} {metric.key === 'revenue' ? `${formatCurrency(target)}+` : metric.targetLabel}
@@ -184,7 +184,7 @@ export default function StrategyMetricsWidget() {
           <select
             value={range}
             onChange={e => setRange(Number(e.target.value))}
-            className="text-xs text-deep-charcoal bg-warm-white border border-border-gray rounded-lg px-2 py-1.5 cursor-pointer focus:outline-none"
+            className="text-xs text-deep-charcoal bg-warm-white border border-glass-border-dark rounded-lg px-2 py-1.5 cursor-pointer focus:outline-none"
           >
             <option value={7}>{t('common.nDays', '{{count}} days', { count: 7 })}</option>
             <option value={30}>{t('common.nDays', '{{count}} days', { count: 30 })}</option>
@@ -194,7 +194,7 @@ export default function StrategyMetricsWidget() {
           <button
             onClick={() => refetch()}
             disabled={isFetching}
-            className="p-1.5 rounded-lg border border-border-gray hover:bg-warm-white cursor-pointer disabled:opacity-40 transition-colors"
+            className="p-1.5 rounded-lg border border-glass-border-dark hover:bg-warm-white cursor-pointer disabled:opacity-40 transition-colors"
           >
             <RefreshCw className={`w-3.5 h-3.5 text-muted-stone ${isFetching ? 'animate-spin' : ''}`} />
           </button>
@@ -231,12 +231,12 @@ export default function StrategyMetricsWidget() {
 
           {data.summary.total_reservations === 0 ? (
             <p className="text-xs text-muted-stone text-center mt-4">
-              {t('strategy.noReservations', 'No reservations in this period yet — metrics will appear as data comes in')}
+              {t('strategy.noReservations', 'No reservations in this period yet â€” metrics will appear as data comes in')}
             </p>
           ) : (
             <p className="text-xs text-muted-stone mt-4">
               {t('strategy.basedOn', 'Based on {{count}} reservations', { count: data.summary.total_reservations })}
-              {data.summary.data_points > 0 ? ` · ${t('strategy.completedServices', '{{count}} completed services', { count: data.summary.data_points })}` : ''}
+              {data.summary.data_points > 0 ? ` Â· ${t('strategy.completedServices', '{{count}} completed services', { count: data.summary.data_points })}` : ''}
               {' '}{(() => {
                 const sinceDate = new Date(data.since);
                 const isFuture = sinceDate.getTime() > Date.now();
@@ -245,7 +245,7 @@ export default function StrategyMetricsWidget() {
                 }
                 return t('strategy.since', 'since {{date}}', { date: data.since });
               })()}
-              {' · '}{t('strategy.dashedLine', 'Dashed line = target')}
+              {' Â· '}{t('strategy.dashedLine', 'Dashed line = target')}
             </p>
           )}
         </>

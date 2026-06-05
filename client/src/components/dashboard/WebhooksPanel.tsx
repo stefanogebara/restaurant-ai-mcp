@@ -1,4 +1,4 @@
-/**
+﻿/**
  * WebhooksPanel
  *
  * Add/delete webhook URLs. Select events to subscribe to.
@@ -141,7 +141,7 @@ export default function WebhooksPanel() {
 
       {/* Create form */}
       {showCreate && (
-        <div className="border border-[#E5E7EB] rounded-xl p-4 space-y-3">
+        <div className="border border-glass-border-dark rounded-xl p-4 space-y-3">
           <label className="block text-xs font-medium text-[#1C1917]">
             {t('integrations.webhookUrl', 'Webhook URL')}
           </label>
@@ -150,7 +150,7 @@ export default function WebhooksPanel() {
             value={newUrl}
             onChange={(e) => setNewUrl(e.target.value)}
             placeholder="https://your-server.com/webhook"
-            className="w-full px-3 py-2 text-sm border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#9F1239]"
+            className="w-full px-3 py-2 text-sm border border-glass-border-dark rounded-lg focus:outline-none focus:ring-1 focus:ring-[#9F1239]"
           />
 
           <label className="block text-xs font-medium text-[#1C1917] mt-2">
@@ -165,7 +165,7 @@ export default function WebhooksPanel() {
                 className={`px-3 py-1 text-xs rounded-full border transition-colors ${
                   selectedEvents.includes(event)
                     ? 'bg-[#1C1917] text-white border-[#1C1917]'
-                    : 'bg-white text-[#706A65] border-[#E5E7EB] hover:border-[#1C1917]'
+                    : 'bg-white/60 text-[#706A65] border-glass-border-dark hover:border-[#1C1917]'
                 }`}
               >
                 {event === '*' ? t('integrations.allEvents', 'All Events') : event}
@@ -202,11 +202,11 @@ export default function WebhooksPanel() {
       {isLoading ? (
         <p className="text-xs text-[#706A65]">{t('common.loading', 'Loading...')}</p>
       ) : webhooks.length === 0 ? (
-        <p className="text-xs text-[#706A65] py-4 text-center border border-dashed border-[#E5E7EB] rounded-xl">
+        <p className="text-xs text-[#706A65] py-4 text-center border border-dashed border-glass-border-dark rounded-xl">
           {t('integrations.noWebhooks', 'No webhooks configured. Add one to receive event notifications.')}
         </p>
       ) : (
-        <div className="divide-y divide-[#E5E7EB] border border-[#E5E7EB] rounded-xl overflow-hidden">
+        <div className="divide-y divide-[#E5E7EB] border border-glass-border-dark rounded-xl overflow-hidden">
           {webhooks.map((wh) => (
             <div key={wh.id} className="px-4 py-3 space-y-1">
               <div className="flex items-center justify-between">

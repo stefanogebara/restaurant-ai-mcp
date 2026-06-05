@@ -1,5 +1,5 @@
-/**
- * FeedbackSettingsPanel — enable/disable feedback, configure delay and template.
+﻿/**
+ * FeedbackSettingsPanel â€” enable/disable feedback, configure delay and template.
  * Placed in WhatsApp Settings page.
  */
 import { useState, useEffect } from 'react';
@@ -47,7 +47,7 @@ export default function FeedbackSettingsPanel() {
 
   if (isLoading) {
     return (
-      <div className="py-5 border-t border-[#E5E7EB] mt-8 animate-pulse">
+      <div className="py-5 border-t border-glass-border-dark mt-8 animate-pulse">
         <div className="h-5 bg-gray-200 rounded w-40 mb-4" />
         <div className="h-10 bg-gray-100 rounded" />
       </div>
@@ -55,7 +55,7 @@ export default function FeedbackSettingsPanel() {
   }
 
   return (
-    <div className="py-5 border-t border-[#E5E7EB] mt-8">
+    <div className="py-5 border-t border-glass-border-dark mt-8">
       <div className="flex items-center gap-2 mb-4">
         <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center">
           <ThiingsIcon name="chat" pxSize={16} className="text-amber-600" />
@@ -93,7 +93,7 @@ export default function FeedbackSettingsPanel() {
             <select
               value={delayMinutes}
               onChange={(e) => { setDelayMinutes(parseInt(e.target.value)); setDirty(true); }}
-              className="w-full border border-border-gray rounded-xl px-3 py-2 text-sm text-deep-charcoal"
+              className="w-full border border-glass-border-dark rounded-xl px-3 py-2 text-sm text-deep-charcoal"
             >
               <option value={30}>{t('dashboard.feedback.time30min', '30 min')}</option>
               <option value={60}>{t('dashboard.feedback.time1hour', '1 hour')}</option>
@@ -115,7 +115,7 @@ export default function FeedbackSettingsPanel() {
               onChange={(e) => { setTemplate(e.target.value); setDirty(true); }}
               placeholder={t('dashboard.feedback.customPlaceholder', 'Leave blank for default message. Use {name} and {restaurant} as placeholders.')}
               rows={3}
-              className="w-full border border-border-gray rounded-xl px-3 py-2 text-sm text-deep-charcoal resize-none"
+              className="w-full border border-glass-border-dark rounded-xl px-3 py-2 text-sm text-deep-charcoal resize-none"
               maxLength={1000}
             />
             <p className="text-[10px] text-muted-stone mt-0.5">

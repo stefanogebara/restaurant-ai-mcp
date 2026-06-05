@@ -1,13 +1,13 @@
-/**
+﻿/**
  * AIStrategyPanel
  *
  * Implements the Karpathy autoresearch loop for restaurant operations:
  *   1. Owner writes their strategy doc (hypotheses about what will improve the business)
  *   2. Manager AI + Voice Agent use the strategy doc as context
  *   3. Nightly briefing includes strategy suggestions based on real metrics
- *   4. Owner updates the strategy → repeat
+ *   4. Owner updates the strategy â†’ repeat
  *
- * The strategy doc acts as "program.md" — the human's instruction to the AI agent.
+ * The strategy doc acts as "program.md" â€” the human's instruction to the AI agent.
  */
 
 import { useState } from 'react';
@@ -29,42 +29,42 @@ TONE & EXPERIENCE:
 - Weekday calls: promote lunch business menu (value positioning)
 
 PROMOTIONS:
-- Tuesday–Thursday: offer complimentary amuse-bouche for parties of 4+
+- Tuesdayâ€“Thursday: offer complimentary amuse-bouche for parties of 4+
 - Mention the private dining room for groups of 8+
 
 GOALS:
 - Target no-show rate below 5%
 - Increase average revenue per cover`,
-  'pt-BR': `Exemplo de estratégia para seus agentes de IA:
+  'pt-BR': `Exemplo de estratÃ©gia para seus agentes de IA:
 
-ÁREAS DE FOCO:
-- Aumentar ticket médio sugerindo harmonizações de vinho e sobremesas
-- Reduzir no-shows: priorizar confirmação de clientes que já cancelaram
+ÃREAS DE FOCO:
+- Aumentar ticket mÃ©dio sugerindo harmonizaÃ§Ãµes de vinho e sobremesas
+- Reduzir no-shows: priorizar confirmaÃ§Ã£o de clientes que jÃ¡ cancelaram
 
-TOM E EXPERIÊNCIA:
-- Chamadas de fim de semana: destacar o menu degustação (experiência exclusiva)
-- Chamadas durante a semana: promover o menu executivo (valor acessível)
+TOM E EXPERIÃŠNCIA:
+- Chamadas de fim de semana: destacar o menu degustaÃ§Ã£o (experiÃªncia exclusiva)
+- Chamadas durante a semana: promover o menu executivo (valor acessÃ­vel)
 
-PROMOÇÕES:
-- Terça a quinta: oferecer cortesia para mesas de 4+ pessoas
+PROMOÃ‡Ã•ES:
+- TerÃ§a a quinta: oferecer cortesia para mesas de 4+ pessoas
 - Mencionar a sala privativa para grupos de 8+
 
 METAS:
 - Taxa de no-show abaixo de 5%
-- Aumentar receita média por couvert`,
+- Aumentar receita mÃ©dia por couvert`,
   es: `Ejemplo de estrategia para sus agentes de IA:
 
-ÁREAS DE ENFOQUE:
+ÃREAS DE ENFOQUE:
 - Aumentar cuenta promedio sugiriendo maridajes y postres
-- Reducir no-shows: priorizar confirmación de clientes que ya cancelaron
+- Reducir no-shows: priorizar confirmaciÃ³n de clientes que ya cancelaron
 
 TONO Y EXPERIENCIA:
-- Llamadas de fin de semana: destacar el menú degustación (experiencia exclusiva)
-- Llamadas entre semana: promover el menú ejecutivo (propuesta de valor)
+- Llamadas de fin de semana: destacar el menÃº degustaciÃ³n (experiencia exclusiva)
+- Llamadas entre semana: promover el menÃº ejecutivo (propuesta de valor)
 
 PROMOCIONES:
-- Martes a jueves: ofrecer cortesía para mesas de 4+ personas
-- Mencionar el salón privado para grupos de 8+
+- Martes a jueves: ofrecer cortesÃ­a para mesas de 4+ personas
+- Mencionar el salÃ³n privado para grupos de 8+
 
 METAS:
 - Tasa de no-show por debajo del 5%
@@ -112,7 +112,7 @@ export default function AIStrategyPanel() {
     try {
       await saveMutation.mutateAsync(currentDoc);
       setDoc(null); // reset dirty state
-      toast.success(t('strategy.saved', 'Strategy saved — AI agents will use this on their next run'));
+      toast.success(t('strategy.saved', 'Strategy saved â€” AI agents will use this on their next run'));
     } catch {
       toast.error(t('strategy.saveFailed', 'Failed to save strategy'));
     }
@@ -134,7 +134,7 @@ export default function AIStrategyPanel() {
       : suggestions;
     setDoc(newDoc);
     setSuggestions(null);
-    toast.info(t('strategy.suggestionsAdded', 'Suggestions added to your strategy — review and save when ready'));
+    toast.info(t('strategy.suggestionsAdded', 'Suggestions added to your strategy â€” review and save when ready'));
   }
 
   const updatedAt = data?.updated_at
@@ -144,7 +144,7 @@ export default function AIStrategyPanel() {
     : null;
 
   return (
-    <div className="py-5 border-t border-[#E5E7EB] mt-8">
+    <div className="py-5 border-t border-glass-border-dark mt-8">
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
@@ -154,7 +154,7 @@ export default function AIStrategyPanel() {
           <div>
             <h3 className="font-semibold text-deep-charcoal text-sm">{t('strategy.title', 'AI Strategy Document')}</h3>
             <p className="text-xs text-muted-stone mt-0.5">
-              {t('strategy.subtitle', 'Your instructions to the AI — applied by Manager AI & Voice Agent')}
+              {t('strategy.subtitle', 'Your instructions to the AI â€” applied by Manager AI & Voice Agent')}
             </p>
           </div>
         </div>
@@ -170,7 +170,7 @@ export default function AIStrategyPanel() {
       <div className="flex items-center gap-1.5 text-xs text-burgundy bg-burgundy/5 border border-burgundy/15 rounded-lg px-3 py-2 mb-4">
         <Sparkles className="w-3.5 h-3.5 flex-shrink-0" />
         <span>
-          {t('strategy.howItWorks', 'The AI reads this every night — suggest it updates, then you edit and save. Repeat.')}
+          {t('strategy.howItWorks', 'The AI reads this every night â€” suggest it updates, then you edit and save. Repeat.')}
         </span>
       </div>
 
@@ -185,7 +185,7 @@ export default function AIStrategyPanel() {
           onChange={e => setDoc(e.target.value)}
           placeholder={PLACEHOLDERS[i18n.language] || PLACEHOLDERS.en}
           rows={12}
-          className="w-full text-sm font-mono text-deep-charcoal bg-warm-white border border-border-gray rounded-xl px-4 py-3 resize-y focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy/40 transition-colors placeholder:text-muted-stone/60"
+          className="w-full text-sm font-mono text-deep-charcoal bg-warm-white border border-glass-border-dark rounded-xl px-4 py-3 resize-y focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy/40 transition-colors placeholder:text-muted-stone/60"
         />
       )}
 
@@ -233,7 +233,7 @@ export default function AIStrategyPanel() {
         <button
           onClick={handleSuggest}
           disabled={suggestMutation.isPending}
-          className="flex items-center gap-2 px-4 py-2 border border-border-gray hover:border-burgundy/40 hover:bg-burgundy/5 disabled:opacity-40 disabled:cursor-not-allowed text-deep-charcoal text-sm font-medium rounded-lg transition-colors cursor-pointer"
+          className="flex items-center gap-2 px-4 py-2 border border-glass-border-dark hover:border-burgundy/40 hover:bg-burgundy/5 disabled:opacity-40 disabled:cursor-not-allowed text-deep-charcoal text-sm font-medium rounded-lg transition-colors cursor-pointer"
         >
           {suggestMutation.isPending ? (
             <Spinner size="sm" />

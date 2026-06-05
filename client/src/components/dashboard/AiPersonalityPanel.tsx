@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+﻿import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAiPersonality, useSaveAiPersonality } from '../../hooks/useAiPersonality';
 import type { AiPersonality } from '../../hooks/useAiPersonality';
@@ -16,8 +16,8 @@ const SUGGESTED_TRAITS = [
 ];
 
 /**
- * Persona presets. The previous version asked João to combine 5 humor types
- * × 3 communication styles × 4 tones × 5 traits from a pool of 12 — a
+ * Persona presets. The previous version asked JoÃ£o to combine 5 humor types
+ * Ã— 3 communication styles Ã— 4 tones Ã— 5 traits from a pool of 12 â€” a
  * factor-explosion of choices nobody knows how to navigate. Now we lead with
  * 4 named presets that fill in all 4 dimensions at once, and keep the
  * granular pickers behind a "Customise" disclosure for power users.
@@ -139,7 +139,7 @@ export default function AiPersonalityPanel() {
 
   if (isLoading) {
     return (
-      <div className="py-5 border-t border-[#E5E7EB] mt-8 animate-pulse space-y-3">
+      <div className="py-5 border-t border-glass-border-dark mt-8 animate-pulse space-y-3">
         <div className="h-4 bg-gray-100 rounded w-48" />
         <div className="h-10 bg-gray-100 rounded" />
         <div className="h-10 bg-gray-100 rounded" />
@@ -156,7 +156,7 @@ export default function AiPersonalityPanel() {
   ];
 
   return (
-    <div className="py-5 border-t border-[#E5E7EB] mt-8 space-y-5">
+    <div className="py-5 border-t border-glass-border-dark mt-8 space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -189,7 +189,7 @@ export default function AiPersonalityPanel() {
               className={`text-left p-4 rounded-2xl border-2 transition-all ${
                 isSelected
                   ? 'border-burgundy bg-burgundy/5'
-                  : 'border-border-gray hover:border-muted-stone'
+                  : 'border-glass-border-dark hover:border-muted-stone'
               }`}
             >
               <div className="flex items-center justify-between mb-1">
@@ -213,7 +213,7 @@ export default function AiPersonalityPanel() {
       >
         {showCustomize
           ? t('dashboard.aiPersonality.hideCustomize', 'Hide fine controls')
-          : t('dashboard.aiPersonality.showCustomize', 'Customise further…')}
+          : t('dashboard.aiPersonality.showCustomize', 'Customise furtherâ€¦')}
       </button>
 
       {showCustomize && (
@@ -230,7 +230,7 @@ export default function AiPersonalityPanel() {
                   className={`inline-flex items-center gap-1.5 px-3 py-1.5 border rounded-full text-xs font-medium cursor-pointer transition-colors ${
                     getValue('humor_type') === option
                       ? 'border-burgundy bg-burgundy/5 text-burgundy'
-                      : 'border-border-gray text-warm-stone hover:border-gray-400'
+                      : 'border-glass-border-dark text-warm-stone hover:border-gray-400'
                   }`}
                 >
                   <input
@@ -259,7 +259,7 @@ export default function AiPersonalityPanel() {
                   className={`inline-flex items-center gap-1.5 px-3 py-1.5 border rounded-full text-xs font-medium cursor-pointer transition-colors ${
                     getValue('communication_style') === option
                       ? 'border-burgundy bg-burgundy/5 text-burgundy'
-                      : 'border-border-gray text-warm-stone hover:border-gray-400'
+                      : 'border-glass-border-dark text-warm-stone hover:border-gray-400'
                   }`}
                 >
                   <input
@@ -288,7 +288,7 @@ export default function AiPersonalityPanel() {
                   className={`inline-flex items-center gap-1.5 px-3 py-1.5 border rounded-full text-xs font-medium cursor-pointer transition-colors ${
                     getValue('language_tone') === option
                       ? 'border-burgundy bg-burgundy/5 text-burgundy'
-                      : 'border-border-gray text-warm-stone hover:border-gray-400'
+                      : 'border-glass-border-dark text-warm-stone hover:border-gray-400'
                   }`}
                 >
                   <input
@@ -356,13 +356,13 @@ export default function AiPersonalityPanel() {
                   value={customTrait}
                   onChange={e => setCustomTrait(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addCustomTrait(); } }}
-                  className="flex-1 border border-border-gray rounded-lg px-3 py-1.5 text-xs text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
+                  className="flex-1 border border-glass-border-dark rounded-lg px-3 py-1.5 text-xs text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
                 />
                 <button
                   type="button"
                   onClick={addCustomTrait}
                   disabled={!customTrait.trim()}
-                  className="px-3 py-1.5 border border-border-gray hover:bg-soft-gray text-warm-stone text-xs font-medium rounded-lg transition-colors disabled:opacity-40"
+                  className="px-3 py-1.5 border border-glass-border-dark hover:bg-soft-gray text-warm-stone text-xs font-medium rounded-lg transition-colors disabled:opacity-40"
                 >
                   {t('common.add', 'Add')}
                 </button>
@@ -370,7 +370,7 @@ export default function AiPersonalityPanel() {
             )}
           </div>
 
-          {/* Verbal Quirks — renamed in copy from the previous "Verbal Quirks"
+          {/* Verbal Quirks â€” renamed in copy from the previous "Verbal Quirks"
               which read as a clinical/linguistic term to a non-technical
               owner. Now: "Catchphrases the AI should use". */}
           <div>
@@ -388,7 +388,7 @@ export default function AiPersonalityPanel() {
               placeholder={t('dashboard.aiPersonality.verbalQuirksPlaceholder', 'e.g. uses Brazilian slang, always says "com certeza", ends messages with a food emoji')}
               value={getValue('verbal_quirks') || ''}
               onChange={e => set('verbal_quirks', e.target.value)}
-              className="w-full border border-border-gray rounded-lg px-3 py-2 text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30 resize-none"
+              className="w-full border border-glass-border-dark rounded-lg px-3 py-2 text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30 resize-none"
             />
           </div>
         </div>

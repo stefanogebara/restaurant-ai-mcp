@@ -1,4 +1,4 @@
-/**
+﻿/**
  * QRCodePanel
  *
  * Shows QR code preview, download button, and "Print for table tents" button.
@@ -28,7 +28,7 @@ export default function QRCodePanel({ slug }: Props) {
       <div className="flex items-center justify-center bg-soft-gray rounded-xl p-6">
         {isLoading && (
           <div className="w-[200px] h-[200px] flex items-center justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-2 border-border-gray border-t-burgundy" />
+            <div className="animate-spin rounded-full h-8 w-8 border-2 border-glass-border-dark border-t-burgundy" />
           </div>
         )}
         {error && (
@@ -58,7 +58,7 @@ export default function QRCodePanel({ slug }: Props) {
           type="button"
           onClick={printQR}
           disabled={!qrBlobUrl}
-          className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 border border-[#E5E7EB] text-deep-charcoal text-sm font-medium rounded-xl hover:bg-soft-gray transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 border border-glass-border-dark text-deep-charcoal text-sm font-medium rounded-xl hover:bg-soft-gray transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <ThiingsIcon name="external-link" size="xs" />
           {t('bookingChannels.printTableTent', 'Print for Table Tents')}

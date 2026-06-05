@@ -1,7 +1,7 @@
-/**
- * CampaignManager — Email campaign creation, listing, and delivery stats.
+﻿/**
+ * CampaignManager â€” Email campaign creation, listing, and delivery stats.
  * Added as a section in the AI Insights page.
- * WhatsApp and SMS channels removed — email is the only channel that actually sends.
+ * WhatsApp and SMS channels removed â€” email is the only channel that actually sends.
  */
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -65,7 +65,7 @@ export default function CampaignManager() {
   };
 
   return (
-    <div className="bg-white border border-border-gray rounded-2xl p-5">
+    <div className="glass-card p-5">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-rose-50 flex items-center justify-center">
@@ -96,7 +96,7 @@ export default function CampaignManager() {
                   className={`text-left px-3 py-2 rounded-lg border text-xs transition-colors ${
                     formSegment === s.value
                       ? 'border-burgundy bg-burgundy/5 text-burgundy'
-                      : 'border-border-gray hover:border-muted-stone text-deep-charcoal'
+                      : 'border-glass-border-dark hover:border-muted-stone text-deep-charcoal'
                   }`}
                 >
                   <span className="font-medium">{t(s.i18nLabel, s.label)}</span>
@@ -120,7 +120,7 @@ export default function CampaignManager() {
               onChange={(e) => setFormMessage(e.target.value)}
               placeholder={t('campaigns.messagePlaceholder', 'Hi {name}, we miss you at our restaurant! Book your next visit...')}
               rows={3}
-              className="w-full border border-border-gray rounded-xl px-3 py-2 text-sm text-deep-charcoal resize-none"
+              className="w-full border border-glass-border-dark rounded-xl px-3 py-2 text-sm text-deep-charcoal resize-none"
               maxLength={500}
             />
             <p className="text-[10px] text-muted-stone mt-0.5">
@@ -206,7 +206,7 @@ function CampaignRow({
     : segmentKey || t('campaigns.title', 'Campaign');
 
   return (
-    <div className="border border-border-gray rounded-lg overflow-hidden">
+    <div className="border border-glass-border-dark rounded-lg overflow-hidden">
       <button
         type="button"
         onClick={onSelect}
@@ -235,7 +235,7 @@ function CampaignRow({
 
       {/* Expanded stats */}
       {isSelected && (
-        <div className="border-t border-border-gray bg-gray-50 p-3">
+        <div className="border-t border-glass-border-dark bg-gray-50 p-3">
           {stats ? (
             <div className="grid grid-cols-4 gap-2 text-center">
               <Stat label={t('campaigns.sent', 'Sent')} value={stats.sent + stats.delivered + stats.read} />

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { authFetch } from '../../services/api';
@@ -32,11 +32,11 @@ export default function ReferralWidget() {
   const { referral_url, stats } = data;
 
   const whatsappText = encodeURIComponent(
-    t('referral.whatsappText', 'I use Seatable – the AI that manages restaurant reservations. Try it free: {{url}}', { url: referral_url })
+    t('referral.whatsappText', 'I use Seatable â€“ the AI that manages restaurant reservations. Try it free: {{url}}', { url: referral_url })
   );
-  const emailSubject = encodeURIComponent(t('referral.emailSubject', 'Try Seatable – AI reservations for restaurants'));
+  const emailSubject = encodeURIComponent(t('referral.emailSubject', 'Try Seatable â€“ AI reservations for restaurants'));
   const emailBody = encodeURIComponent(
-    t('referral.emailBody', 'Hey,\n\nI use Seatable – it handles restaurant reservations with AI. Thought you might find it useful.\n\nTry it free here: {{url}}\n\nCheers', { url: referral_url })
+    t('referral.emailBody', 'Hey,\n\nI use Seatable â€“ it handles restaurant reservations with AI. Thought you might find it useful.\n\nTry it free here: {{url}}\n\nCheers', { url: referral_url })
   );
 
   const handleCopy = async () => {
@@ -50,8 +50,8 @@ export default function ReferralWidget() {
   };
 
   return (
-    <div className="bg-warm-white border border-border-gray rounded-2xl overflow-hidden">
-      {/* Header row — always visible, toggles expansion */}
+    <div className="bg-warm-white border border-glass-border-dark rounded-2xl overflow-hidden">
+      {/* Header row â€” always visible, toggles expansion */}
       <button
         type="button"
         aria-expanded={isExpanded}
@@ -72,14 +72,14 @@ export default function ReferralWidget() {
 
       {/* Expanded content */}
       {isExpanded && (
-        <div className="px-5 pb-5 space-y-4 border-t border-border-gray">
+        <div className="px-5 pb-5 space-y-4 border-t border-glass-border-dark">
           {/* Referral URL + Copy */}
           <div className="mt-4">
             <p className="text-xs text-muted-stone mb-2 font-medium tracking-wide uppercase">
               {t('referral.yourLink', 'Your referral link')}
             </p>
             <div className="flex items-center gap-2">
-              <div className="flex-1 min-w-0 bg-soft-gray border border-border-gray rounded-xl px-3 py-2">
+              <div className="flex-1 min-w-0 bg-soft-gray border border-glass-border-dark rounded-xl px-3 py-2">
                 <p className="text-xs text-stone-gray truncate font-mono">{referral_url}</p>
               </div>
               <button
@@ -88,7 +88,7 @@ export default function ReferralWidget() {
                 className={`flex-shrink-0 px-3 py-2 rounded-xl text-xs font-medium transition-colors ${
                   copied
                     ? 'bg-rose-100 text-rose-700 border border-rose-200'
-                    : 'bg-white border border-border-gray text-deep-charcoal hover:border-muted-stone'
+                    : 'bg-white/60 border border-glass-border-dark text-deep-charcoal hover:border-muted-stone'
                 }`}
               >
                 {copied ? t('common.copied', 'Copied!') : t('common.copy', 'Copy')}

@@ -1,5 +1,5 @@
-/**
- * SurveySettingsPanel — NPS/satisfaction survey config + results summary.
+﻿/**
+ * SurveySettingsPanel â€” NPS/satisfaction survey config + results summary.
  * Placed in WhatsApp Settings page.
  */
 import { useState, useEffect } from 'react';
@@ -74,7 +74,7 @@ export default function SurveySettingsPanel() {
 
   if (configLoading) {
     return (
-      <div className="py-5 border-t border-[#E5E7EB] mt-8 animate-pulse">
+      <div className="py-5 border-t border-glass-border-dark mt-8 animate-pulse">
         <div className="h-5 bg-gray-200 rounded w-40 mb-4" />
         <div className="h-10 bg-gray-100 rounded" />
       </div>
@@ -85,7 +85,7 @@ export default function SurveySettingsPanel() {
   const maxCount = Math.max(...Object.values(dist), 1);
 
   return (
-    <div className="py-5 border-t border-[#E5E7EB] mt-8">
+    <div className="py-5 border-t border-glass-border-dark mt-8">
       {/* Header */}
       <div className="flex items-center gap-2 mb-4">
         <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center">
@@ -132,7 +132,7 @@ export default function SurveySettingsPanel() {
             <select
               value={delayHours}
               onChange={(e) => { setDelayHours(parseFloat(e.target.value)); setDirty(true); }}
-              className="w-full border border-border-gray rounded-xl px-3 py-2 text-sm text-deep-charcoal"
+              className="w-full border border-glass-border-dark rounded-xl px-3 py-2 text-sm text-deep-charcoal"
             >
               {DELAY_OPTIONS.map(opt => (
                 <option key={opt.value} value={opt.value}>
@@ -152,7 +152,7 @@ export default function SurveySettingsPanel() {
               value={question}
               onChange={(e) => { setQuestion(e.target.value); setDirty(true); }}
               placeholder={t('dashboard.survey.questionPlaceholder', 'Como foi sua experiencia?')}
-              className="w-full border border-border-gray rounded-xl px-3 py-2 text-sm text-deep-charcoal"
+              className="w-full border border-glass-border-dark rounded-xl px-3 py-2 text-sm text-deep-charcoal"
               maxLength={500}
             />
             <p className="text-[10px] text-muted-stone mt-0.5">
@@ -178,7 +178,7 @@ export default function SurveySettingsPanel() {
 
       {/* Results summary */}
       {enabled && !resultsLoading && results && results.count > 0 && (
-        <div className="mt-4 pt-4 border-t border-border-gray">
+        <div className="mt-4 pt-4 border-t border-glass-border-dark">
           <h4 className="text-xs font-semibold uppercase tracking-widest text-[#111827] mb-3">
             {t('dashboard.survey.resultsTitle', 'Results (Last 30 Days)')}
           </h4>
@@ -239,7 +239,7 @@ export default function SurveySettingsPanel() {
 
       {/* Empty state */}
       {enabled && !resultsLoading && results && results.count === 0 && (
-        <div className="mt-4 pt-4 border-t border-border-gray text-center py-6">
+        <div className="mt-4 pt-4 border-t border-glass-border-dark text-center py-6">
           <p className="text-xs text-muted-stone">
             {t('dashboard.survey.noResponses', 'No survey responses yet. Results will appear here after guests respond.')}
           </p>

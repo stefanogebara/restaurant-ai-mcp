@@ -1,4 +1,4 @@
-import { useLTVStats } from '../../hooks/useLTVData';
+﻿import { useLTVStats } from '../../hooks/useLTVData';
 import { formatCurrency } from '../../utils/currency';
 import type { LTVStats } from '../host/ltvDashboard.types';
 
@@ -20,11 +20,11 @@ export default function CustomerStatsWidget({ isDemo }: CustomerStatsWidgetProps
 
   if (!isDemo && isLoading) {
     return (
-      <div className="bg-white rounded-lg border border-[#E5E7EB] p-5">
+      <div className="glass-card p-5">
         <div className="h-3 w-40 bg-border-gray rounded-full animate-pulse mb-5" />
         <div className="grid grid-cols-2 gap-3">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="rounded-lg border border-[#E5E7EB]/60 p-4">
+            <div key={i} className="rounded-lg border border-glass-border-dark/60 p-4">
               <div className="h-2.5 w-16 bg-border-gray rounded-full animate-pulse mb-3" />
               <div className="h-7 w-12 bg-border-gray rounded-lg animate-pulse" />
             </div>
@@ -37,9 +37,9 @@ export default function CustomerStatsWidget({ isDemo }: CustomerStatsWidgetProps
   if (!stats) return null;
 
   return (
-    <div className="bg-white rounded-lg border border-[#E5E7EB] p-5">
+    <div className="glass-card p-5">
       <div className="text-[11px] font-bold text-stone-500 uppercase tracking-widest mb-5">
-        Inteligência de Clientes
+        InteligÃªncia de Clientes
       </div>
       <div className="grid grid-cols-2 gap-3">
         <MetricBox
@@ -57,7 +57,7 @@ export default function CustomerStatsWidget({ isDemo }: CustomerStatsWidgetProps
           valueColor="text-red-600"
         />
         <MetricBox
-          label="LTV Médio"
+          label="LTV MÃ©dio"
           value={formatCurrency(stats.avg_ltv)}
         />
       </div>
@@ -73,7 +73,7 @@ interface MetricBoxProps {
 
 function MetricBox({ label, value, valueColor }: MetricBoxProps) {
   return (
-    <div className="rounded-lg border border-[#E5E7EB]/60 p-4">
+    <div className="rounded-lg border border-glass-border-dark/60 p-4">
       <div className="text-[10px] font-bold text-stone-500 uppercase tracking-widest mb-2">
         {label}
       </div>

@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+﻿import { useTranslation } from 'react-i18next';
 import { useWhatsAppStatus, useWhatsAppStats } from '../../hooks/useWhatsAppSettings';
 
 export default function WhatsAppStatsCard() {
@@ -10,7 +10,7 @@ export default function WhatsAppStatsCard() {
   if (statusLoading || !status?.enabled) return null;
 
   return (
-    <div className="bg-white border border-border-gray rounded-2xl p-5">
+    <div className="glass-card p-5">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-whatsapp/10 flex items-center justify-center">

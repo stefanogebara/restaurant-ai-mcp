@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+﻿import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
 interface TagEditorProps {
@@ -102,7 +102,7 @@ export default function TagEditor({ tags, onTagsChange, maxTags = 20 }: TagEdito
 
           {/* Suggestions dropdown */}
           {showSuggestions && availableSuggestions.length > 0 && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-[#E5E7EB] rounded-lg shadow-sm z-10 py-1">
+            <div className="absolute top-full left-0 right-0 mt-1 bg-glass-modal backdrop-blur-glass-modal border border-glass-border-dark rounded-lg shadow-glass-modal z-10 py-1">
               <p className="px-3 py-1 text-[10px] font-bold text-stone-400 uppercase tracking-widest">
                 {t('crm.suggestions', 'Sugestoes')}
               </p>

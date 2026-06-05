@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useVoicePersona, useSaveVoicePersona } from '../../hooks/useVoicePersona';
 import type { VoicePersona } from '../../hooks/useVoicePersona';
@@ -45,7 +45,7 @@ export default function VoicePersonaPanel() {
 
   if (isLoading) {
     return (
-      <div className="py-5 border-t border-[#E5E7EB] mt-8 animate-pulse space-y-3">
+      <div className="py-5 border-t border-glass-border-dark mt-8 animate-pulse space-y-3">
         <div className="h-4 bg-gray-100 rounded w-40" />
         <div className="h-10 bg-gray-100 rounded" />
         <div className="h-10 bg-gray-100 rounded" />
@@ -54,7 +54,7 @@ export default function VoicePersonaPanel() {
   }
 
   return (
-    <div className="py-5 border-t border-[#E5E7EB] mt-8 space-y-4">
+    <div className="py-5 border-t border-glass-border-dark mt-8 space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{t('dashboard.voicePersona.title', 'Agent Persona')}</h2>
         <div className="flex items-center gap-2">
@@ -63,7 +63,7 @@ export default function VoicePersonaPanel() {
             onClick={() => refreshMutation.mutate()}
             disabled={refreshMutation.isPending}
             title="Re-sync ElevenLabs agent prompt with current restaurant persona"
-            className="px-3 py-1.5 border border-border-gray hover:bg-soft-gray text-warm-stone text-xs font-medium rounded-full transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-3 py-1.5 border border-glass-border-dark hover:bg-soft-gray text-warm-stone text-xs font-medium rounded-full transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {refreshMutation.isPending ? t('dashboard.voicePersona.refreshing', 'Refreshing...') : t('dashboard.voicePersona.refreshPrompt', 'Refresh Agent Prompt')}
           </button>
@@ -89,7 +89,7 @@ export default function VoicePersonaPanel() {
             placeholder={t('placeholders.agentName', 'e.g. Sofia')}
             value={getValue('agent_name')}
             onChange={e => set('agent_name', e.target.value)}
-            className="w-full border border-border-gray rounded-lg px-3 py-2 text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
+            className="w-full border border-glass-border-dark rounded-lg px-3 py-2 text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
           />
         </div>
         <div>
@@ -103,7 +103,7 @@ export default function VoicePersonaPanel() {
             placeholder={t('placeholders.agentGreeting', 'e.g. Welcome to our restaurant!')}
             value={getValue('agent_greeting')}
             onChange={e => set('agent_greeting', e.target.value)}
-            className="w-full border border-border-gray rounded-lg px-3 py-2 text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
+            className="w-full border border-glass-border-dark rounded-lg px-3 py-2 text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
           />
         </div>
       </div>
