@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+﻿import { useTranslation } from 'react-i18next';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { colors } from '../../utils/colors';
 
@@ -9,7 +9,7 @@ interface PeakHoursChartProps {
 // Translate backend-generated time slot labels on the frontend
 const TIME_SLOT_I18N: Record<string, Record<string, string>> = {
   'pt-BR': {
-    'Lunch (11AM-2PM)': 'Almoço (11h-14h)',
+    'Lunch (11AM-2PM)': 'AlmoÃ§o (11h-14h)',
     'Early Dinner (5PM-7PM)': 'Jantar Cedo (17h-19h)',
     'Prime Dinner (7PM-10PM)': 'Jantar Principal (19h-22h)',
     'Late Night (10PM+)': 'Noite (22h+)',
@@ -42,7 +42,7 @@ export default function PeakHoursChart({ reservationsByTimeSlot }: PeakHoursChar
   const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Array<{ value: number; payload: { time: string } }> }) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white border border-border-gray/50 rounded-2xl p-3 shadow-lg">
+        <div className="bg-glass-modal backdrop-blur-glass-modal border border-glass-border-dark rounded-2xl p-3 shadow-glass-modal">
           <p className="text-sm font-semibold text-deep-charcoal mb-1">{payload[0].payload.time}</p>
           <p className="text-sm text-burgundy">
             {t('analytics.reservations')}: <span className="font-bold">{payload[0].value}</span>
@@ -64,7 +64,7 @@ export default function PeakHoursChart({ reservationsByTimeSlot }: PeakHoursChar
 
   return (
     <div className="overflow-hidden">
-      <div className="flex items-center justify-between py-5 border-b border-[#E5E7EB]">
+      <div className="flex items-center justify-between py-5 border-b border-glass-border-dark">
         <span className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{t('analytics.peakHoursLabel')}</span>
       </div>
       <div role="img" aria-label={t('analytics.charts.peakHoursAria')} className="p-6">

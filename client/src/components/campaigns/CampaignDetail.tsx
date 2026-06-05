@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+﻿import { useTranslation } from 'react-i18next';
 import type { Campaign } from '../../hooks/useCampaigns';
 import { useCampaignDeliveryStats } from '../../hooks/useCampaigns';
 
@@ -36,7 +36,7 @@ export default function CampaignDetail({ campaign }: CampaignDetailProps) {
   const failed = stats?.failed ?? campaign.failed_count ?? 0;
 
   return (
-    <div className="px-4 py-3 bg-[#FAFAFA] border-t border-[#E5E7EB]">
+    <div className="px-4 py-3 bg-[#FAFAFA] border-t border-glass-border-dark">
       {/* Message preview */}
       {campaign.message && (
         <div className="mb-3">

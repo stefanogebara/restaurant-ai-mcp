@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+﻿import { useTranslation } from 'react-i18next';
 import { useSegmentCounts } from '../../hooks/useCampaigns';
 import type { SegmentCounts } from '../../hooks/useCampaigns';
 import ThiingsIcon from '../common/ThiingsIcon';
@@ -48,7 +48,7 @@ export default function SegmentPicker({ value, onChange }: SegmentPickerProps) {
                 relative flex flex-col items-start gap-1 p-3 rounded-lg border text-left transition-colors
                 ${isSelected
                   ? 'border-burgundy bg-burgundy/5'
-                  : 'border-[#E5E7EB] bg-white hover:border-burgundy/40'
+                  : 'border-glass-border-dark bg-white/60 backdrop-blur-glass-chip hover:bg-white/85 hover:border-burgundy/40'
                 }
               `}
             >

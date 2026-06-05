@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+﻿import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import { type Conversation, type CallFilter, getOutcomeLabelKey, getOutcomePillColor } from './callTrackingTypes';
 
@@ -38,7 +38,7 @@ export default function CallConversationList({
   return (
     <div className="overflow-hidden">
       {/* Header + tabs */}
-      <div className="flex items-center justify-between py-5 border-b border-[#E5E7EB]">
+      <div className="flex items-center justify-between py-5 border-b border-glass-border-dark">
         <span className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{t('callTracking.recentCalls')}</span>
         <div className="flex gap-0">
           {OUTCOME_TABS.map((tab) => (
@@ -71,7 +71,7 @@ export default function CallConversationList({
       ) : (
         <div>
           {conversations.map((conv) => {
-            // started_at is typed string but the payload is untrusted — an
+            // started_at is typed string but the payload is untrusted â€” an
             // invalid/missing value would otherwise render "Invalid Date".
             const startedDate = conv.started_at ? new Date(conv.started_at) : null;
             const startTime = startedDate && !Number.isNaN(startedDate.getTime())
@@ -105,8 +105,8 @@ export default function CallConversationList({
                         {conv.caller_phone}
                       </button>
                     ) : t('callTracking.noNumber')}
-                    {conv.party_size ? ` · ${t('callTracking.partyOf', { size: conv.party_size })}` : ''}
-                    {conv.language ? ` · ${conv.language.toUpperCase()}` : ''}
+                    {conv.party_size ? ` Â· ${t('callTracking.partyOf', { size: conv.party_size })}` : ''}
+                    {conv.language ? ` Â· ${conv.language.toUpperCase()}` : ''}
                   </div>
                 </div>
 

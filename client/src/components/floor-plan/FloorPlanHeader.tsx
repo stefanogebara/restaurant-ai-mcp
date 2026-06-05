@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+﻿import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 
 interface Props {
@@ -41,7 +41,7 @@ export default function FloorPlanHeader({ saveStatus, linkMode, onToggleLinkMode
           className={`min-h-[38px] px-4 py-2 rounded-xl text-sm font-medium border transition-all flex items-center gap-1.5 ${
             linkMode
               ? 'bg-burgundy/8 text-burgundy border-burgundy/25'
-              : 'bg-white text-stone-gray border-border-gray hover:border-stone-gray/60 hover:text-deep-charcoal'
+              : 'bg-white text-stone-gray border-glass-border-dark hover:border-stone-gray/60 hover:text-deep-charcoal'
           }`}
         >
           <ThiingsIcon name="link" pxSize={15} />

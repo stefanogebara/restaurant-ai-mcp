@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import { useLTVAtRisk, useLTVTopVIPs, useSendCampaign } from '../../hooks/useLTVData';
@@ -37,8 +37,8 @@ function SendModal({ customer, onClose }: SendModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md border border-border-gray">
-        <div className="p-5 border-b border-border-gray flex items-center justify-between">
+      <div className="glass-modal w-full max-w-md">
+        <div className="p-5 border-b border-glass-border-dark flex items-center justify-between">
           <h3 className="text-sm font-semibold text-deep-charcoal">{t('insights.sendReEngagement')}</h3>
           <button
             type="button"
@@ -54,7 +54,7 @@ function SendModal({ customer, onClose }: SendModalProps) {
             <div className="w-9 h-9 rounded-full bg-gradient-to-br from-burgundy to-rose-700 flex-shrink-0" />
             <div>
               <div className="text-sm font-semibold text-deep-charcoal">{customer.customer_name || customer.customer_id}</div>
-              <div className="text-xs text-warm-stone">{t('insights.churnRisk', { score: customer.churn_risk_score })} · {t('insights.visits', { count: customer.total_visits })}</div>
+              <div className="text-xs text-warm-stone">{t('insights.churnRisk', { score: customer.churn_risk_score })} Â· {t('insights.visits', { count: customer.total_visits })}</div>
             </div>
           </div>
 
@@ -67,7 +67,7 @@ function SendModal({ customer, onClose }: SendModalProps) {
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               rows={4}
-              className="w-full text-sm text-deep-charcoal border border-border-gray rounded-xl p-3 resize-none focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
+              className="w-full text-sm text-deep-charcoal border border-glass-border-dark rounded-xl p-3 resize-none focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
             />
           </div>
         </div>
@@ -76,7 +76,7 @@ function SendModal({ customer, onClose }: SendModalProps) {
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 py-2.5 border border-border-gray text-deep-charcoal text-sm font-semibold rounded-xl hover:bg-soft-gray transition-colors"
+            className="flex-1 py-2.5 border border-glass-border-dark text-deep-charcoal text-sm font-semibold rounded-xl hover:bg-soft-gray transition-colors"
           >
             {t('common.cancel')}
           </button>
@@ -113,14 +113,14 @@ function CustomerRow({ customer, showChurn, onSend }: CustomerRowProps) {
   const dateLocale = localeMap[i18n.language] ?? 'en-US';
   const lastVisit = customer.last_visit_date
     ? parseLocalDate(customer.last_visit_date).toLocaleDateString(dateLocale, { month: 'short', day: 'numeric' })
-    : '—';
+    : 'â€”';
 
   return (
-    <div className="flex items-center gap-3 py-2.5 border-b border-border-gray last:border-0">
+    <div className="flex items-center gap-3 py-2.5 border-b border-glass-border-dark last:border-0">
       <div className="w-7 h-7 rounded-full bg-gradient-to-br from-stone-200 to-stone-300 flex-shrink-0" />
       <div className="flex-1 min-w-0">
         <div className="text-sm font-medium text-deep-charcoal truncate">{customer.customer_name || customer.customer_id}</div>
-        <div className="text-xs text-warm-stone">{t('insights.visits', { count: customer.total_visits })} · {t('insights.lastVisit', 'Last')}: {lastVisit}</div>
+        <div className="text-xs text-warm-stone">{t('insights.visits', { count: customer.total_visits })} Â· {t('insights.lastVisit', 'Last')}: {lastVisit}</div>
       </div>
       {showChurn && (
         <span className={`text-xs font-semibold flex-shrink-0 ${churnColor}`}>
@@ -160,8 +160,8 @@ export default function CustomerIntelligenceCard() {
 
   return (
     <>
-      <div className="border border-[#E5E7EB] rounded-lg overflow-hidden">
-        <div className="p-5 border-b border-border-gray flex items-center gap-3">
+      <div className="border border-glass-border-dark rounded-lg overflow-hidden">
+        <div className="p-5 border-b border-glass-border-dark flex items-center gap-3">
           <div className="w-8 h-8 rounded-xl bg-rose-50 flex items-center justify-center flex-shrink-0">
             <ThiingsIcon name="user" pxSize={16} className="text-rose-600" />
           </div>
@@ -172,7 +172,7 @@ export default function CustomerIntelligenceCard() {
         </div>
 
         {/* Tab switcher */}
-        <div className="flex border-b border-border-gray">
+        <div className="flex border-b border-glass-border-dark">
           {(['at-risk', 'vips'] as const).map((tabKey) => (
             <button
               key={tabKey}

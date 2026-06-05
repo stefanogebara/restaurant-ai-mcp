@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+﻿import { useTranslation } from 'react-i18next';
 import type { Table } from '../../types/host.types';
 
 interface Props {
@@ -25,7 +25,7 @@ export default function FloorPlanLocationTabs({ tables, locations, activeLocatio
             className={`h-9 px-4 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${
               isActive
                 ? 'bg-deep-charcoal text-white shadow-sm'
-                : 'bg-white text-warm-stone border border-border-gray hover:text-deep-charcoal hover:border-stone-gray/50'
+                : 'bg-white text-warm-stone border border-glass-border-dark hover:text-deep-charcoal hover:border-stone-gray/50'
             }`}
           >
             {t(`floorPlan.location.${loc.toLowerCase()}`, loc)}

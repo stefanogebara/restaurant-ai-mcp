@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAutomations, useUpdateAutomation } from '../../hooks/useCampaignAutomations';
 import type { CampaignAutomation } from '../../hooks/useCampaignAutomations';
@@ -133,7 +133,7 @@ function AutomationRow({ triggerType, automation, onUpdate, isUpdating }: Automa
               value={channel}
               onChange={(e) => onUpdate({ trigger_type: triggerType, channel: e.target.value })}
               disabled={isUpdating}
-              className="w-full text-sm border border-gray-200 rounded-md px-3 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-burgundy"
+              className="w-full text-sm border border-glass-border-dark rounded-md px-3 py-1.5 bg-white/60 focus:outline-none focus:ring-1 focus:ring-burgundy"
             >
               {CHANNEL_OPTIONS.map(opt => (
                 <option key={opt.value} value={opt.value}>{t(opt.labelKey)}</option>
@@ -150,7 +150,7 @@ function AutomationRow({ triggerType, automation, onUpdate, isUpdating }: Automa
               value={delayMinutes}
               onChange={(e) => onUpdate({ trigger_type: triggerType, delay_minutes: Number(e.target.value) })}
               disabled={isUpdating}
-              className="w-full text-sm border border-gray-200 rounded-md px-3 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-burgundy"
+              className="w-full text-sm border border-glass-border-dark rounded-md px-3 py-1.5 bg-white/60 focus:outline-none focus:ring-1 focus:ring-burgundy"
             >
               <option value={60}>{t('campaigns.automations.delay1h')}</option>
               <option value={120}>{t('campaigns.automations.delay2h')}</option>
@@ -173,7 +173,7 @@ function AutomationRow({ triggerType, automation, onUpdate, isUpdating }: Automa
                   value={reviewUrl}
                   onChange={(e) => setReviewUrl(e.target.value)}
                   placeholder="https://g.page/r/..."
-                  className="flex-1 text-sm border border-gray-200 rounded-md px-3 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-burgundy"
+                  className="flex-1 text-sm border border-glass-border-dark rounded-md px-3 py-1.5 bg-white/60 focus:outline-none focus:ring-1 focus:ring-burgundy"
                 />
                 <button
                   type="button"

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useCampaignList } from '../../hooks/useCampaigns';
 import type { Campaign } from '../../hooks/useCampaigns';
@@ -48,7 +48,7 @@ export default function CampaignList() {
 
   if (isLoading) {
     return (
-      <div className="border border-[#E5E7EB] rounded-lg bg-white p-8 text-center">
+      <div className="glass-panel p-8 text-center">
         <p className="text-sm text-stone-gray">{t('campaigns.loading')}</p>
       </div>
     );
@@ -56,7 +56,7 @@ export default function CampaignList() {
 
   if (!campaigns || campaigns.length === 0) {
     return (
-      <div className="border border-[#E5E7EB] rounded-lg bg-white p-10 text-center">
+      <div className="glass-panel p-10 text-center">
         <div className="w-12 h-12 bg-[#F3F4F6] rounded-full flex items-center justify-center mx-auto mb-3">
           <ThiingsIcon name="send" size="xs" className="text-stone-gray" />
         </div>
@@ -67,9 +67,9 @@ export default function CampaignList() {
   }
 
   return (
-    <div className="border border-[#E5E7EB] rounded-lg bg-white overflow-hidden">
+    <div className="glass-panel overflow-hidden">
       {/* Header row */}
-      <div className="hidden sm:grid grid-cols-[1fr_1fr_100px_80px_160px_120px] gap-2 px-4 py-2.5 bg-[#FAFAFA] border-b border-[#E5E7EB] text-xs font-medium text-stone-gray">
+      <div className="hidden sm:grid grid-cols-[1fr_1fr_100px_80px_160px_120px] gap-2 px-4 py-2.5 bg-[#FAFAFA] border-b border-glass-border-dark text-xs font-medium text-stone-gray">
         <span>{t('campaigns.colName')}</span>
         <span>{t('campaigns.colSegment')}</span>
         <span>{t('campaigns.colStatus')}</span>
@@ -90,9 +90,9 @@ export default function CampaignList() {
             <button
               type="button"
               onClick={() => setExpandedId(isExpanded ? null : c.id)}
-              className="w-full text-left grid grid-cols-1 sm:grid-cols-[1fr_1fr_100px_80px_160px_120px] gap-2 px-4 py-3 border-b border-[#E5E7EB] hover:bg-[#FAFAFA] transition-colors items-center"
+              className="w-full text-left grid grid-cols-1 sm:grid-cols-[1fr_1fr_100px_80px_160px_120px] gap-2 px-4 py-3 border-b border-glass-border-dark hover:bg-[#FAFAFA] transition-colors items-center"
             >
-              {/* Name — message preview is the most identifying content because
+              {/* Name â€” message preview is the most identifying content because
                   the user-entered `name` field from CampaignBuilder is silently
                   dropped at the backend (campaignService.js doesn't persist it).
                   Falls back to a localized generic label so we never render the
@@ -113,7 +113,7 @@ export default function CampaignList() {
 
               {/* Recipients */}
               <span className="text-xs text-deep-charcoal text-right">
-                {c.recipient_count ?? '—'}
+                {c.recipient_count ?? 'â€”'}
               </span>
 
               {/* Delivery stats */}

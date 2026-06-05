@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+﻿import { useTranslation } from 'react-i18next';
 
 interface TableUtilizationHeatmapProps {
   tableUtilization: Array<{
@@ -48,7 +48,7 @@ export default function TableUtilizationHeatmap({ tableUtilization }: TableUtili
 
   return (
     <div className="overflow-hidden">
-      <div className="flex items-center justify-between py-5 border-b border-[#E5E7EB]">
+      <div className="flex items-center justify-between py-5 border-b border-glass-border-dark">
         <span className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{t('analytics.bookingHeatmap')}</span>
         <span className="text-[11px] font-semibold bg-burgundy/[8%] text-burgundy px-2.5 py-0.5 rounded-full">{t('analytics.peakHoursLabel')}</span>
       </div>
@@ -104,7 +104,7 @@ export default function TableUtilizationHeatmap({ tableUtilization }: TableUtili
         const allZero = sortedTables.every(table => table.times_used === 0);
         if (allZero) {
           return (
-            <div className="p-3 bg-soft-gray/50 border border-border-gray/50 rounded-xl">
+            <div className="p-3 bg-soft-gray/50 border border-glass-border-dark/50 rounded-xl">
               <p className="text-xs text-warm-stone text-center">
                 {t('analytics.noTableUtilizationData', 'No table utilization data yet')}
               </p>
@@ -119,7 +119,7 @@ export default function TableUtilizationHeatmap({ tableUtilization }: TableUtili
                 {t('floorPlan.tableLabel')} {mostUsed.table_number} ({mostUsed.utilization_rate}%) - {mostUsed.times_used} {t('analytics.services')}
               </p>
             </div>
-            <div className="p-3 bg-soft-gray/50 border border-border-gray/50 rounded-xl">
+            <div className="p-3 bg-soft-gray/50 border border-glass-border-dark/50 rounded-xl">
               <p className="text-xs text-warm-stone">
                 <span className="font-semibold text-deep-charcoal">{t('analytics.leastUsed')}:</span>{' '}
                 {t('floorPlan.tableLabel')} {leastUsed.table_number} ({leastUsed.utilization_rate}%) - {leastUsed.times_used} {t('analytics.services')}

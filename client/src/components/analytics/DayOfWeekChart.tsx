@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+﻿import { useTranslation } from 'react-i18next';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { colors } from '../../utils/colors';
 interface DayOfWeekChartProps {
@@ -27,14 +27,14 @@ export default function DayOfWeekChart({ reservationsByDay }: DayOfWeekChartProp
 
   const maxCount = Math.max(...chartData.map(c => c.count));
   // When there's no data every count is 0 and `count >= maxCount * 0.8` is
-  // `0 >= 0` → true, painting every bar burgundy as if all days were peak.
+  // `0 >= 0` â†’ true, painting every bar burgundy as if all days were peak.
   const hasData = maxCount > 0;
 
   const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Array<{ value: number; payload: { day: string } }> }) => {
     if (active && payload && payload.length) {
       const fullDay = daysOrder[chartData.findIndex(d => d.day === payload[0].payload.day)];
       return (
-        <div className="bg-white border border-border-gray rounded-2xl p-3 shadow-lg">
+        <div className="glass-panel p-3 shadow-lg">
           <p className="text-sm font-semibold text-deep-charcoal mb-1">{fullDay}</p>
           <p className="text-sm text-burgundy">
             {t('analytics.reservations')}: <span className="font-bold">{payload[0].value}</span>
@@ -47,7 +47,7 @@ export default function DayOfWeekChart({ reservationsByDay }: DayOfWeekChartProp
 
   return (
     <div className="overflow-hidden">
-      <div className="flex items-center justify-between py-5 border-b border-[#E5E7EB]">
+      <div className="flex items-center justify-between py-5 border-b border-glass-border-dark">
         <span className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{t('analytics.reservationsByDay')}</span>
       </div>
       <div role="img" aria-label={t('analytics.charts.dayOfWeekAria')} className="p-6">

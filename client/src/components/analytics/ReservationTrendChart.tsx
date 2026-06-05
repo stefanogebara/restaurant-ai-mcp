@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+﻿import { useTranslation } from 'react-i18next';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { colors } from '../../utils/colors';
 
@@ -40,7 +40,7 @@ export default function ReservationTrendChart({ dailyTrend }: ReservationTrendCh
   const CustomTooltip = ({ active, payload, label }: { active?: boolean; label?: string; payload?: Array<{ name: string; value: number; color: string }> }) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white border border-border-gray/50 rounded-2xl p-3 shadow-lg">
+        <div className="bg-glass-modal backdrop-blur-glass-modal border border-glass-border-dark rounded-2xl p-3 shadow-glass-modal">
           <p className="text-sm font-semibold text-deep-charcoal mb-2">{label}</p>
           {payload.map((entry, index: number) => (
             <p key={index} className="text-sm" style={{ color: entry.color }}>
@@ -55,7 +55,7 @@ export default function ReservationTrendChart({ dailyTrend }: ReservationTrendCh
 
   return (
     <div className="overflow-hidden">
-      <div className="flex items-center justify-between py-5 border-b border-[#E5E7EB]">
+      <div className="flex items-center justify-between py-5 border-b border-glass-border-dark">
         <span className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{t('analytics.reservationsOverTime')}</span>
         <span className={`text-[11px] font-semibold ${trendInfo.color} px-2.5 py-0.5 rounded-full`}>{t(trendInfo.key)}</span>
       </div>

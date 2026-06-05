@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+﻿import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import { type Conversation, formatDate, getOutcomeColor, getOutcomeLabelKey, getSentimentColor, getSentimentLabelKey } from './callTrackingTypes';
@@ -16,7 +16,7 @@ export default function CallConversationModal({ conversation, onClose }: Props) 
   const dialogRef = useRef<HTMLDivElement>(null);
 
   // Modal a11y: Escape to close, body-scroll lock, focus capture + Tab trap.
-  // The audit flagged all four as missing — keyboard/screen-reader users were
+  // The audit flagged all four as missing â€” keyboard/screen-reader users were
   // trapped behind the overlay with no way out.
   useEffect(() => {
     const previouslyFocused = document.activeElement as HTMLElement | null;
@@ -72,10 +72,10 @@ export default function CallConversationModal({ conversation, onClose }: Props) 
         aria-modal="true"
         aria-label={t('callTracking.conversationDetails')}
         tabIndex={-1}
-        className="bg-white rounded-2xl border border-border-gray shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto focus:outline-none"
+        className="glass-panel shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto focus:outline-none"
       >
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-border-gray p-6 flex items-center justify-between">
+        <div className="sticky top-0 bg-glass-panel backdrop-blur-glass-nav border-b border-glass-border-dark p-6 flex items-center justify-between">
           <div>
             <h2 className="text-xl font-semibold text-deep-charcoal">{t('callTracking.conversationDetails')}</h2>
             <p className="text-sm text-stone-gray mt-1">{formatDate(conversation.started_at)}</p>
@@ -211,7 +211,7 @@ export default function CallConversationModal({ conversation, onClose }: Props) 
         </div>
 
         {/* Footer */}
-        <div className="sticky bottom-0 bg-white border-t border-border-gray p-4">
+        <div className="sticky bottom-0 bg-glass-panel backdrop-blur-glass-nav border-t border-glass-border-dark p-4">
           <button
             type="button"
             onClick={onClose}

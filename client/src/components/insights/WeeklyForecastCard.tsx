@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+﻿import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import { useLTVStats } from '../../hooks/useLTVData';
 import { formatCurrency } from '../../utils/currency';
@@ -11,7 +11,7 @@ interface StatRowProps {
 
 function StatRow({ label, value, accent }: StatRowProps) {
   return (
-    <div className="flex items-center justify-between py-2 border-b border-border-gray last:border-0">
+    <div className="flex items-center justify-between py-2 border-b border-glass-border-dark last:border-0">
       <span className="text-xs text-warm-stone">{label}</span>
       <span className={`text-sm font-semibold ${accent ? 'text-red-600' : 'text-deep-charcoal'}`}>{value}</span>
     </div>
@@ -32,8 +32,8 @@ export default function WeeklyForecastCard() {
   }
 
   return (
-    <div className="border border-[#E5E7EB] rounded-lg overflow-hidden">
-      <div className="p-5 border-b border-border-gray flex items-center gap-3">
+    <div className="border border-glass-border-dark rounded-lg overflow-hidden">
+      <div className="p-5 border-b border-glass-border-dark flex items-center gap-3">
         <div className="w-8 h-8 rounded-xl bg-purple-50 flex items-center justify-center flex-shrink-0">
           <ThiingsIcon name="calendar" pxSize={16} className="text-purple-600" />
         </div>
@@ -65,7 +65,7 @@ export default function WeeklyForecastCard() {
             </div>
 
             <div className="space-y-0">
-              {/* Guard numeric fields with ?? 0 — a partial stats payload would
+              {/* Guard numeric fields with ?? 0 â€” a partial stats payload would
                   otherwise render "R$ NaN" via formatCurrency(undefined). */}
               <StatRow label={t('insights.totalCustomers')} value={stats.total_customers ?? 0} />
               <StatRow label={t('insights.avgLifetimeValue')} value={formatCurrency(stats.avg_ltv ?? 0)} />

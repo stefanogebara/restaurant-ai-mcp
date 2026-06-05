@@ -1,4 +1,4 @@
-import type { RefObject } from 'react';
+﻿import type { RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import type { Table } from '../../types/host.types';
@@ -7,7 +7,7 @@ import {
   EDITOR_CSS, getStatusStyle, getTablePxSize, snapToGrid,
 } from './floorPlanConstants';
 
-// ── Chair rendering ───────────────────────────────────────────────────────────
+// â”€â”€ Chair rendering â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function renderChairs(
   cx: number, cy: number, w: number, h: number,
@@ -43,7 +43,7 @@ function renderChairs(
   return chairs;
 }
 
-// ── Canvas props ──────────────────────────────────────────────────────────────
+// â”€â”€ Canvas props â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 interface Props {
   filteredTables: Table[];
@@ -72,16 +72,16 @@ export default function FloorPlanCanvas({
   const { t } = useTranslation();
   return (
     <div
-      className="rounded-lg border border-[#E5E7EB] overflow-hidden"
+      className="rounded-lg border border-glass-border-dark overflow-hidden"
       style={{ background: '#F5F2EC' }}
     >
       {isLoading ? (
         <div role="status" aria-label={t('floorPlan.loadingAriaLabel', 'Loading floor plan')} className="flex items-center justify-center" style={{ height: 420 }}>
-          <div aria-hidden="true" className="animate-spin rounded-full h-7 w-7 border-2 border-border-gray border-t-burgundy" />
+          <div aria-hidden="true" className="animate-spin rounded-full h-7 w-7 border-2 border-glass-border-dark border-t-burgundy" />
         </div>
       ) : filteredTables.length === 0 ? (
         <div className="flex flex-col items-center justify-center text-center py-20 px-6">
-          <div className="w-16 h-16 rounded-lg border border-[#E5E7EB] flex items-center justify-center mb-5">
+          <div className="w-16 h-16 rounded-lg border border-glass-border-dark flex items-center justify-center mb-5">
             <span className="text-muted-stone"><ThiingsIcon name="map" pxSize={30} /></span>
           </div>
           <p className="font-semibold text-deep-charcoal text-base">{t('floorPlan.noTablesTitle', { area: activeLocation })}</p>
@@ -125,7 +125,7 @@ export default function FloorPlanCanvas({
             <rect width="100%" height="100%" fill="url(#edDots)" />
             <rect width="100%" height="100%" fill="url(#edGrid)" />
 
-            {/* ── Joinable link lines (behind tables) ── */}
+            {/* â”€â”€ Joinable link lines (behind tables) â”€â”€ */}
             {(() => {
               const lines: React.ReactElement[] = [];
               const processed = new Set<string>();
@@ -151,7 +151,7 @@ export default function FloorPlanCanvas({
               return lines;
             })()}
 
-            {/* ── Tables ── */}
+            {/* â”€â”€ Tables â”€â”€ */}
             {filteredTables.map(table => {
               const isDragging = table.id === draggingId;
               const { w, h } = getTablePxSize(table);
@@ -266,7 +266,7 @@ export default function FloorPlanCanvas({
               );
             })}
 
-            {/* ── Snap indicator while dragging ── */}
+            {/* â”€â”€ Snap indicator while dragging â”€â”€ */}
             {draggingId && dragPos && (() => {
               const { gx, gy } = snapToGrid(dragPos.x, dragPos.y);
               return (

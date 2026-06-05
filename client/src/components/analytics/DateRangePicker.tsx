@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+﻿import { useTranslation } from 'react-i18next';
 import { formatLocalDate } from '../../utils/timeFormatting';
 
 export type DatePreset = 'today' | '7d' | '30d' | '90d' | 'this_month' | 'last_month' | 'custom';
@@ -12,7 +12,7 @@ export interface DateRangeValue {
 // eslint-disable-next-line react-refresh/only-export-components
 export function presetToRange(preset: DatePreset): { startDate: string; endDate: string } {
   const now = new Date();
-  // Local calendar throughout — using UTC here gave São Paulo users at 23:00
+  // Local calendar throughout â€” using UTC here gave SÃ£o Paulo users at 23:00
   // tomorrow's date as "today", shifting the entire reporting range by 1 day.
   const today = formatLocalDate(now);
   switch (preset) {
@@ -69,7 +69,7 @@ export default function DateRangePicker({ value, onChange }: Props) {
           className={`px-3 py-1.5 min-h-[44px] sm:min-h-0 rounded-xl text-[13px] font-medium transition-colors ${
             value.preset === key
               ? 'bg-deep-charcoal text-white border border-deep-charcoal'
-              : 'bg-white border border-border-gray text-stone-gray hover:border-muted-stone'
+              : 'bg-white border border-glass-border-dark text-stone-gray hover:border-muted-stone'
           }`}
         >
           {label}
@@ -82,15 +82,15 @@ export default function DateRangePicker({ value, onChange }: Props) {
             value={value.startDate}
             max={value.endDate}
             onChange={e => onChange({ ...value, startDate: e.target.value })}
-            className="px-3 py-1.5 min-h-[44px] sm:min-h-0 bg-white border border-border-gray rounded-xl text-[13px] text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy"
+            className="px-3 py-1.5 min-h-[44px] sm:min-h-0 glass-panel rounded-xl text-[13px] text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy"
           />
-          <span className="text-stone-gray text-sm">→</span>
+          <span className="text-stone-gray text-sm">â†’</span>
           <input
             type="date"
             value={value.endDate}
             min={value.startDate}
             onChange={e => onChange({ ...value, endDate: e.target.value })}
-            className="px-3 py-1.5 min-h-[44px] sm:min-h-0 bg-white border border-border-gray rounded-xl text-[13px] text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy"
+            className="px-3 py-1.5 min-h-[44px] sm:min-h-0 glass-panel rounded-xl text-[13px] text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy"
           />
         </div>
       )}

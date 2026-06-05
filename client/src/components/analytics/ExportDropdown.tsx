@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+﻿import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import type { AnalyticsData } from '../../hooks/useAnalytics';
@@ -37,7 +37,7 @@ export default function ExportDropdown({ data, dateLabel, onExportAll, isExporti
         type="button"
         onClick={() => setOpen(o => !o)}
         disabled={isExporting}
-        className="flex items-center gap-1.5 px-4 py-2 bg-white border border-border-gray text-stone-gray hover:border-muted-stone rounded-xl text-[13px] font-medium transition-colors"
+        className="flex items-center gap-1.5 px-4 py-2 bg-white/60 backdrop-blur-glass-chip border border-glass-border-dark text-stone-gray hover:bg-white/85 hover:border-muted-stone rounded-xl text-[13px] font-medium transition-colors"
       >
         {isExporting
           ? <span className="w-4 h-4 border border-stone-gray border-t-transparent rounded-full animate-spin inline-block" />
@@ -48,7 +48,7 @@ export default function ExportDropdown({ data, dateLabel, onExportAll, isExporti
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-1 z-50 bg-white border border-border-gray rounded-xl shadow-lg min-w-[210px] py-1">
+        <div className="absolute right-0 top-full mt-1 z-50 glass-panel rounded-xl shadow-lg min-w-[210px] py-1">
           <button
             type="button"
             disabled={!hasReservations}
@@ -84,7 +84,7 @@ export default function ExportDropdown({ data, dateLabel, onExportAll, isExporti
             {t('analytics.export.tablesCsv', 'Tables CSV')}
           </button>
 
-          <div className="border-t border-border-gray my-1" />
+          <div className="border-t border-glass-border-dark my-1" />
 
           <button
             type="button"

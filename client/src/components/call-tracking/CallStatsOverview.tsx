@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+﻿import { useTranslation } from 'react-i18next';
 import type { Stats } from './callTrackingTypes';
 
 interface Props {
@@ -13,7 +13,7 @@ export default function CallStatsOverview({ stats }: Props) {
     : 0;
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 py-5 border-b border-[#E5E7EB]">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 py-5 border-b border-glass-border-dark">
       <div className="py-5">
         <div className="text-xs font-medium text-muted-stone mb-2">{t('callTracking.totalCallsToday')}</div>
         <div className="text-[32px] font-bold tracking-tight leading-none text-deep-charcoal">

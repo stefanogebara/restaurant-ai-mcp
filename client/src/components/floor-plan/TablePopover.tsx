@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+﻿import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import type { Table, TableShape } from '../../types/host.types';
@@ -12,7 +12,7 @@ const STATUS_LABEL_KEYS: Record<string, string> = {
   default:   'floorPlan.status.unknown',
 };
 
-// Build the shape→i18n key map from the canonical SHAPES list so we don't
+// Build the shapeâ†’i18n key map from the canonical SHAPES list so we don't
 // drift if a shape is added or renamed.
 const SHAPE_LABEL_KEYS: Record<string, string> = Object.fromEntries(
   SHAPES.map(s => [s.value, `floorPlan.shape.${s.i18nKey}`]),
@@ -54,11 +54,11 @@ export default function TablePopover({ table, position, onClose, onDelete, onUpd
   return (
     <div
       ref={popoverRef}
-      className="absolute z-30 w-60 rounded-2xl border border-border-gray shadow-xl bg-white"
+      className="absolute z-30 w-60 glass-modal"
       style={{ left: position.x, top: position.y }}
     >
       {/* Header */}
-      <div className="px-4 py-3.5 border-b border-border-gray flex items-start justify-between">
+      <div className="px-4 py-3.5 border-b border-glass-border-dark flex items-start justify-between">
         <div>
           <div className="font-semibold text-sm text-deep-charcoal">{t('floorPlan.tableLabel', 'Table')} {table.table_number}</div>
           <div className="flex items-center gap-1.5 mt-1">
@@ -88,7 +88,7 @@ export default function TablePopover({ table, position, onClose, onDelete, onUpd
           <select
             value={shape}
             onChange={e => setShape(e.target.value as TableShape)}
-            className="w-full px-3 py-2 bg-soft-gray border border-border-gray rounded-xl text-xs text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
+            className="w-full px-3 py-2 bg-soft-gray border border-glass-border-dark rounded-xl text-xs text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
           >
             {SHAPES.map(s => <option key={s.value} value={s.value}>{t(SHAPE_LABEL_KEYS[s.value] || s.label, s.label)}</option>)}
           </select>
@@ -107,7 +107,7 @@ export default function TablePopover({ table, position, onClose, onDelete, onUpd
                 className={`flex-1 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
                   capacity === c
                     ? 'bg-burgundy text-white border-burgundy'
-                    : 'bg-white text-stone-gray border-border-gray hover:border-burgundy/40'
+                    : 'bg-white text-stone-gray border-glass-border-dark hover:border-burgundy/40'
                 }`}
               >
                 {c}
@@ -116,7 +116,7 @@ export default function TablePopover({ table, position, onClose, onDelete, onUpd
           </div>
         </div>
 
-        <div className="flex gap-2 pt-1 border-t border-border-gray">
+        <div className="flex gap-2 pt-1 border-t border-glass-border-dark">
           {hasChanges && (
             <button
               type="button"

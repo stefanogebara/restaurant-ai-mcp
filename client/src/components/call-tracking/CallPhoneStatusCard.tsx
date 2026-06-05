@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+﻿import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import Spinner from '../common/Spinner';
 import { formatConfiguredDate, type PhoneStatusData } from './callTrackingTypes';
@@ -69,7 +69,7 @@ export default function CallPhoneStatusCard({
         : t('callTracking.phoneStatusConnect');
 
   return (
-    <div className="py-5 border-b border-[#E5E7EB]">
+    <div className="py-5 border-b border-glass-border-dark">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <div className="flex items-center gap-3">
@@ -162,7 +162,7 @@ export default function CallPhoneStatusCard({
         )}
 
         {/* Diagnose was previously a primary-row button visible to every host
-            — it triggers an internal "check the AI's tool calls" job that
+            â€” it triggers an internal "check the AI's tool calls" job that
             Carla shouldn't see during a shift. Moved into a smaller, muted
             "Troubleshooting" toggle that lives next to the main actions but
             doesn't compete with them visually. */}
@@ -172,7 +172,7 @@ export default function CallPhoneStatusCard({
             onClick={onDiagnose}
             disabled={diagnoseLoading}
             aria-label={t('callTracking.troubleshootAriaLabel', 'Open troubleshooting tools (for support)')}
-            title={t('callTracking.troubleshootHint', 'For support staff — checks the AI is configured correctly.')}
+            title={t('callTracking.troubleshootHint', 'For support staff â€” checks the AI is configured correctly.')}
             className="px-3 py-2 text-muted-stone hover:text-deep-charcoal text-xs font-medium transition-colors disabled:opacity-50 flex items-center gap-1.5 underline underline-offset-2"
           >
             {diagnoseLoading ? (

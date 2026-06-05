@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useCreateWhatsAppCampaign, useSegmentCounts } from '../../hooks/useCampaigns';
 import { useToast } from '../../contexts/ToastContext';
@@ -57,7 +57,7 @@ export default function CampaignBuilder({ onCreated, onCancel }: CampaignBuilder
   return (
     <form
       onSubmit={handleSubmit}
-      className="border border-[#E5E7EB] rounded-lg bg-white p-5 space-y-5"
+      className="glass-card p-5 space-y-5"
     >
       {/* Campaign name */}
       <div>
@@ -70,7 +70,7 @@ export default function CampaignBuilder({ onCreated, onCancel }: CampaignBuilder
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder={t('campaigns.campaignNamePlaceholder')}
-          className="w-full border border-[#E5E7EB] rounded-lg px-3 py-2 text-sm text-deep-charcoal placeholder:text-stone-gray focus:outline-none focus:ring-1 focus:ring-burgundy focus:border-burgundy"
+          className="w-full border border-glass-border-dark rounded-lg px-3 py-2 text-sm text-deep-charcoal placeholder:text-stone-gray focus:outline-none focus:ring-1 focus:ring-burgundy focus:border-burgundy"
           required
         />
       </div>
@@ -87,7 +87,7 @@ export default function CampaignBuilder({ onCreated, onCancel }: CampaignBuilder
           id="campaign-template"
           value={template}
           onChange={(e) => setTemplate(e.target.value)}
-          className="w-full border border-[#E5E7EB] rounded-lg px-3 py-2 text-sm text-deep-charcoal bg-white focus:outline-none focus:ring-1 focus:ring-burgundy focus:border-burgundy"
+          className="w-full border border-glass-border-dark rounded-lg px-3 py-2 text-sm text-deep-charcoal bg-white/60 focus:outline-none focus:ring-1 focus:ring-burgundy focus:border-burgundy"
         >
           {TEMPLATES.map((tpl) => (
             <option key={tpl.value} value={tpl.value}>
@@ -109,7 +109,7 @@ export default function CampaignBuilder({ onCreated, onCancel }: CampaignBuilder
           placeholder={t('campaigns.messagePlaceholder')}
           rows={4}
           maxLength={MAX_MESSAGE_LENGTH}
-          className="w-full border border-[#E5E7EB] rounded-lg px-3 py-2 text-sm text-deep-charcoal placeholder:text-stone-gray resize-none focus:outline-none focus:ring-1 focus:ring-burgundy focus:border-burgundy"
+          className="w-full border border-glass-border-dark rounded-lg px-3 py-2 text-sm text-deep-charcoal placeholder:text-stone-gray resize-none focus:outline-none focus:ring-1 focus:ring-burgundy focus:border-burgundy"
         />
         <p className="text-xs text-stone-gray text-right mt-1">
           {message.length}/{MAX_MESSAGE_LENGTH}
@@ -152,7 +152,7 @@ export default function CampaignBuilder({ onCreated, onCancel }: CampaignBuilder
               value={scheduledAt}
               onChange={(e) => setScheduledAt(e.target.value)}
               min={new Date().toISOString().slice(0, 16)}
-              className="border border-[#E5E7EB] rounded-lg px-3 py-2 text-sm text-deep-charcoal focus:outline-none focus:ring-1 focus:ring-burgundy focus:border-burgundy"
+              className="border border-glass-border-dark rounded-lg px-3 py-2 text-sm text-deep-charcoal focus:outline-none focus:ring-1 focus:ring-burgundy focus:border-burgundy"
               required={isScheduled}
             />
           </div>

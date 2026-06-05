@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+﻿import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import Spinner from '../common/Spinner';
 import type { DiagnoseData } from './callTrackingTypes';
@@ -20,7 +20,7 @@ export default function CallDiagnosticsPanel({
 }: Props) {
   const { t } = useTranslation();
   return (
-    <div className="py-5 border-b border-[#E5E7EB]">
+    <div className="py-5 border-b border-glass-border-dark">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <ThiingsIcon name="stethoscope" size="sm" />
@@ -73,7 +73,7 @@ export default function CallDiagnosticsPanel({
                 {diagnoseData.tools.map((tool, idx) => (
                   <span
                     key={idx}
-                    className="px-2.5 py-1 bg-soft-gray text-deep-charcoal text-xs font-medium rounded-full border border-border-gray/50"
+                    className="px-2.5 py-1 bg-soft-gray text-deep-charcoal text-xs font-medium rounded-full border border-glass-border-dark/50"
                   >
                     {tool.name}
                   </span>
@@ -90,7 +90,7 @@ export default function CallDiagnosticsPanel({
                 {diagnoseData.tool_ids.map((id, idx) => (
                   <span
                     key={idx}
-                    className="px-2.5 py-1 bg-soft-gray text-stone-gray text-xs font-mono rounded-full border border-border-gray/50"
+                    className="px-2.5 py-1 bg-soft-gray text-stone-gray text-xs font-mono rounded-full border border-glass-border-dark/50"
                     title={id}
                   >
                     {id.substring(0, 16)}...

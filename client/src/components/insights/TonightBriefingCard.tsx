@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+﻿import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import { useNoShowPredictions } from '../../hooks/usePredictiveAnalytics';
 
@@ -22,8 +22,8 @@ export default function TonightBriefingCard() {
   }
 
   return (
-    <div className="border border-[#E5E7EB] rounded-lg overflow-hidden">
-      <div className="p-5 border-b border-border-gray flex items-center gap-3">
+    <div className="border border-glass-border-dark rounded-lg overflow-hidden">
+      <div className="p-5 border-b border-glass-border-dark flex items-center gap-3">
         <div className="w-8 h-8 rounded-xl bg-amber-50 flex items-center justify-center flex-shrink-0">
           <ThiingsIcon name="star" pxSize={16} className="text-amber-600" />
         </div>
@@ -89,7 +89,7 @@ export default function TonightBriefingCard() {
 
         {/* Upcoming week alert */}
         {predictions.filter((p) => p.days_until > 0 && p.risk_level === 'high').length > 0 && (
-          <p className="text-xs text-warm-stone mt-3 pt-3 border-t border-border-gray">
+          <p className="text-xs text-warm-stone mt-3 pt-3 border-t border-glass-border-dark">
             {t('insights.moreHighRisk', { count: predictions.filter((p) => p.days_until > 0 && p.risk_level === 'high').length })}
           </p>
         )}

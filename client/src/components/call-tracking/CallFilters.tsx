@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { CallFilter } from './callTrackingTypes';
 
@@ -13,7 +13,7 @@ export default function CallFilters({ filter, onChange }: Props) {
 
   // Hold the latest filter in a ref so the debounced search merges into the
   // *freshest* filter. The previous version closed over `filter` from when the
-  // effect ran — changing the period/outcome during the 300ms debounce window
+  // effect ran â€” changing the period/outcome during the 300ms debounce window
   // would get silently reverted when the stale-closure timer fired.
   const filterRef = useRef(filter);
   filterRef.current = filter;
@@ -36,7 +36,7 @@ export default function CallFilters({ filter, onChange }: Props) {
   ] as const;
 
   return (
-    <div className="border-b border-[#E5E7EB]">
+    <div className="border-b border-glass-border-dark">
       <div className="flex flex-wrap items-center gap-4 sm:gap-6 py-4">
         {/* Search */}
         <div className="flex items-center gap-2">

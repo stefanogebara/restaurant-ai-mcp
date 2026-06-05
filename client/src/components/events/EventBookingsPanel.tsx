@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+﻿import { useTranslation } from 'react-i18next';
 import { useEventBookings, useRefundEventBooking } from '../../hooks/useEvents';
 import type { EventBooking } from '../../hooks/useEvents';
 
@@ -42,7 +42,7 @@ function BookingRow({ booking }: { booking: EventBooking }) {
   };
 
   return (
-    <div className="flex items-center justify-between py-2.5 border-b border-[#E5E7EB] last:border-0">
+    <div className="flex items-center justify-between py-2.5 border-b border-glass-border-dark last:border-0">
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <p className="text-sm font-medium text-deep-charcoal truncate">{booking.customer_name}</p>
@@ -87,7 +87,7 @@ export default function EventBookingsPanel({ eventId }: EventBookingsPanelProps)
   if (isLoading) {
     return (
       <div className="py-4 flex justify-center">
-        <div className="animate-spin rounded-full h-5 w-5 border-2 border-[#E5E7EB] border-t-[#9F1239]" />
+        <div className="animate-spin rounded-full h-5 w-5 border-2 border-glass-border-dark border-t-[#9F1239]" />
       </div>
     );
   }
@@ -100,7 +100,7 @@ export default function EventBookingsPanel({ eventId }: EventBookingsPanelProps)
   const summary = data?.summary;
 
   return (
-    <div className="mt-3 border-t border-[#E5E7EB] pt-3">
+    <div className="mt-3 border-t border-glass-border-dark pt-3">
       {/* Revenue summary */}
       {summary && summary.total_bookings > 0 && (
         <div className="grid grid-cols-3 gap-2 mb-3">

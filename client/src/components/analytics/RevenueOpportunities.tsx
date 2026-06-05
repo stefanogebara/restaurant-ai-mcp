@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import { useRevenueOpportunities } from '../../hooks/usePredictiveAnalytics';
@@ -7,15 +7,15 @@ import { formatCurrency } from '../../utils/currency';
 // Translate backend-generated category strings on the frontend
 const CATEGORY_I18N: Record<string, Record<string, string>> = {
   'pt-BR': {
-    'Off-Peak Optimization': 'Otimização Fora de Pico',
+    'Off-Peak Optimization': 'OtimizaÃ§Ã£o Fora de Pico',
     'Table Turnover': 'Rotatividade de Mesas',
-    'No-Show Reduction': 'Redução de No-Shows',
+    'No-Show Reduction': 'ReduÃ§Ã£o de No-Shows',
     'Upselling': 'Vendas Adicionais',
   },
   es: {
-    'Off-Peak Optimization': 'Optimización Fuera de Pico',
-    'Table Turnover': 'Rotación de Mesas',
-    'No-Show Reduction': 'Reducción de No-Shows',
+    'Off-Peak Optimization': 'OptimizaciÃ³n Fuera de Pico',
+    'Table Turnover': 'RotaciÃ³n de Mesas',
+    'No-Show Reduction': 'ReducciÃ³n de No-Shows',
     'Upselling': 'Ventas Adicionales',
   },
 };
@@ -23,26 +23,26 @@ const CATEGORY_I18N: Record<string, Record<string, string>> = {
 // Translate backend-generated description strings on the frontend
 const DESCRIPTION_I18N: Record<string, Record<string, string>> = {
   'pt-BR': {
-    'Implement confirmation reminders and deposits to reduce no-shows': 'Implemente lembretes de confirmação e depósitos para reduzir no-shows',
-    'Fill empty tables during slow hours with promotions': 'Preencha mesas vazias em horários de baixo movimento com promoções',
-    'Improve table turnover rate during peak hours': 'Melhore a rotatividade de mesas nos horários de pico',
-    'Increase average revenue per customer through upselling': 'Aumente a receita média por cliente com vendas adicionais',
+    'Implement confirmation reminders and deposits to reduce no-shows': 'Implemente lembretes de confirmaÃ§Ã£o e depÃ³sitos para reduzir no-shows',
+    'Fill empty tables during slow hours with promotions': 'Preencha mesas vazias em horÃ¡rios de baixo movimento com promoÃ§Ãµes',
+    'Improve table turnover rate during peak hours': 'Melhore a rotatividade de mesas nos horÃ¡rios de pico',
+    'Increase average revenue per customer through upselling': 'Aumente a receita mÃ©dia por cliente com vendas adicionais',
   },
   es: {
-    'Implement confirmation reminders and deposits to reduce no-shows': 'Implemente recordatorios de confirmación y depósitos para reducir ausencias',
-    'Fill empty tables during slow hours with promotions': 'Llene mesas vacías en horas de baja demanda con promociones',
-    'Improve table turnover rate during peak hours': 'Mejore la rotación de mesas en horas pico',
+    'Implement confirmation reminders and deposits to reduce no-shows': 'Implemente recordatorios de confirmaciÃ³n y depÃ³sitos para reducir ausencias',
+    'Fill empty tables during slow hours with promotions': 'Llene mesas vacÃ­as en horas de baja demanda con promociones',
+    'Improve table turnover rate during peak hours': 'Mejore la rotaciÃ³n de mesas en horas pico',
     'Increase average revenue per customer through upselling': 'Aumente los ingresos promedio por cliente con ventas adicionales',
   },
 };
 
 const PRIORITY_I18N: Record<string, Record<string, string>> = {
-  'pt-BR': { high: 'Alto', medium: 'Médio', low: 'Baixo' },
+  'pt-BR': { high: 'Alto', medium: 'MÃ©dio', low: 'Baixo' },
   es: { high: 'Alto', medium: 'Medio', low: 'Bajo' },
 };
 
 const DIFFICULTY_I18N: Record<string, Record<string, string>> = {
-  'pt-BR': { low: 'baixa', medium: 'média', high: 'alta' },
+  'pt-BR': { low: 'baixa', medium: 'mÃ©dia', high: 'alta' },
   es: { low: 'baja', medium: 'media', high: 'alta' },
 };
 
@@ -59,44 +59,44 @@ const TIMELINE_I18N: Record<string, Record<string, string>> = {
   },
 };
 
-// Backend-generated action steps — translated on the frontend, same set the
+// Backend-generated action steps â€” translated on the frontend, same set the
 // RevenueQuickWinsCard maps. Without this the expanded action list rendered
 // in raw English for pt-BR/es users.
 const ACTION_I18N: Record<string, Record<string, string>> = {
   'pt-BR': {
     'Send SMS reminders 24h before reservation': 'Enviar lembretes SMS 24h antes da reserva',
-    'Require credit card for parties of 6+': 'Exigir cartão de crédito para grupos de 6+',
+    'Require credit card for parties of 6+': 'Exigir cartÃ£o de crÃ©dito para grupos de 6+',
     'Implement waitlist for last-minute fills': 'Implementar lista de espera para preencher cancelamentos',
     'Call high-risk reservations to confirm': 'Ligar para reservas de alto risco para confirmar',
     'Early bird special (5-6:30 PM): 15% off': 'Desconto antecipado (17h-18h30): 15% off',
-    'Weekday lunch promotion': 'Promoção de almoço durante a semana',
-    'Happy hour menu extension': 'Extensão do cardápio de happy hour',
-    'Partner with local offices for lunch programs': 'Parcerias com escritórios locais para programas de almoço',
-    'Optimize menu for faster service': 'Otimizar cardápio para serviço mais rápido',
-    'Implement pre-ordering for large parties': 'Implementar pré-pedido para grupos grandes',
-    'Streamline payment process (QR code menus)': 'Agilizar pagamento (cardápio por QR code)',
-    'Better kitchen-floor communication': 'Melhorar comunicação entre cozinha e salão',
-    'Train staff on wine pairing suggestions': 'Treinar equipe em sugestões de harmonização de vinhos',
-    'Highlight premium menu items': 'Destacar itens premium do cardápio',
-    'Offer tasting menus for special occasions': 'Oferecer menus degustação para ocasiões especiais',
-    'Dessert and after-dinner drink promotions': 'Promoções de sobremesas e drinks pós-jantar',
+    'Weekday lunch promotion': 'PromoÃ§Ã£o de almoÃ§o durante a semana',
+    'Happy hour menu extension': 'ExtensÃ£o do cardÃ¡pio de happy hour',
+    'Partner with local offices for lunch programs': 'Parcerias com escritÃ³rios locais para programas de almoÃ§o',
+    'Optimize menu for faster service': 'Otimizar cardÃ¡pio para serviÃ§o mais rÃ¡pido',
+    'Implement pre-ordering for large parties': 'Implementar prÃ©-pedido para grupos grandes',
+    'Streamline payment process (QR code menus)': 'Agilizar pagamento (cardÃ¡pio por QR code)',
+    'Better kitchen-floor communication': 'Melhorar comunicaÃ§Ã£o entre cozinha e salÃ£o',
+    'Train staff on wine pairing suggestions': 'Treinar equipe em sugestÃµes de harmonizaÃ§Ã£o de vinhos',
+    'Highlight premium menu items': 'Destacar itens premium do cardÃ¡pio',
+    'Offer tasting menus for special occasions': 'Oferecer menus degustaÃ§Ã£o para ocasiÃµes especiais',
+    'Dessert and after-dinner drink promotions': 'PromoÃ§Ãµes de sobremesas e drinks pÃ³s-jantar',
   },
   es: {
     'Send SMS reminders 24h before reservation': 'Enviar recordatorios SMS 24h antes de la reserva',
-    'Require credit card for parties of 6+': 'Exigir tarjeta de crédito para grupos de 6+',
+    'Require credit card for parties of 6+': 'Exigir tarjeta de crÃ©dito para grupos de 6+',
     'Implement waitlist for last-minute fills': 'Implementar lista de espera para cubrir cancelaciones',
     'Call high-risk reservations to confirm': 'Llamar a reservas de alto riesgo para confirmar',
     'Early bird special (5-6:30 PM): 15% off': 'Descuento anticipado (17h-18h30): 15% off',
-    'Weekday lunch promotion': 'Promoción de almuerzo entre semana',
-    'Happy hour menu extension': 'Extensión del menú de happy hour',
+    'Weekday lunch promotion': 'PromociÃ³n de almuerzo entre semana',
+    'Happy hour menu extension': 'ExtensiÃ³n del menÃº de happy hour',
     'Partner with local offices for lunch programs': 'Alianzas con oficinas locales para programas de almuerzo',
-    'Optimize menu for faster service': 'Optimizar el menú para un servicio más rápido',
+    'Optimize menu for faster service': 'Optimizar el menÃº para un servicio mÃ¡s rÃ¡pido',
     'Implement pre-ordering for large parties': 'Implementar pre-pedidos para grupos grandes',
-    'Streamline payment process (QR code menus)': 'Agilizar el pago (menús con código QR)',
-    'Better kitchen-floor communication': 'Mejorar la comunicación entre cocina y salón',
+    'Streamline payment process (QR code menus)': 'Agilizar el pago (menÃºs con cÃ³digo QR)',
+    'Better kitchen-floor communication': 'Mejorar la comunicaciÃ³n entre cocina y salÃ³n',
     'Train staff on wine pairing suggestions': 'Capacitar al personal en sugerencias de maridaje de vinos',
-    'Highlight premium menu items': 'Destacar los platos premium del menú',
-    'Offer tasting menus for special occasions': 'Ofrecer menús de degustación para ocasiones especiales',
+    'Highlight premium menu items': 'Destacar los platos premium del menÃº',
+    'Offer tasting menus for special occasions': 'Ofrecer menÃºs de degustaciÃ³n para ocasiones especiales',
     'Dessert and after-dinner drink promotions': 'Promociones de postres y tragos de sobremesa',
   },
 };
@@ -158,7 +158,7 @@ export default function RevenueOpportunities() {
   return (
     <div className="overflow-hidden">
       {/* Header */}
-      <div className="py-5 border-b border-[#E5E7EB]">
+      <div className="py-5 border-b border-glass-border-dark">
         <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827] mb-1">{t('analytics.revenueOpportunities')}</h2>
         <p className="text-sm text-warm-stone">
           {t('analytics.revenueOpportunitiesDesc')}
@@ -167,7 +167,7 @@ export default function RevenueOpportunities() {
 
       {/* Summary Stats */}
       {summary && (
-        <div className="grid grid-cols-2 gap-8 py-5 border-b border-[#E5E7EB]">
+        <div className="grid grid-cols-2 gap-8 py-5 border-b border-glass-border-dark">
           <div className="text-center">
             <div className="text-3xl font-bold text-rose-600">{formatCurrency(summary.total_potential_revenue)}</div>
             <div className="text-xs text-warm-stone mt-1">{t('analytics.totalPotential')}</div>
@@ -196,12 +196,12 @@ export default function RevenueOpportunities() {
               role="button"
               tabIndex={0}
               aria-expanded={expandedCard === opp.rank}
-              className="border border-[#E5E7EB] rounded-lg overflow-hidden hover:bg-[#FAFAFA] transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#9F1239]/20"
+              className="border border-glass-border-dark rounded-lg overflow-hidden hover:bg-[#FAFAFA] transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#9F1239]/20"
               onClick={() => setExpandedCard(expandedCard === opp.rank ? null : opp.rank)}
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setExpandedCard(expandedCard === opp.rank ? null : opp.rank); } }}
             >
               {/* Card Header */}
-              <div className="p-5 border-b border-border-gray">
+              <div className="p-5 border-b border-glass-border-dark">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center ${getPriorityColor(opp.priority)} text-white font-bold`}>
@@ -221,7 +221,7 @@ export default function RevenueOpportunities() {
                     <div className="text-2xl font-bold text-rose-700">{formatCurrency(opp.potential_gain)}</div>
                     <div className="text-xs text-rose-600 mt-1">{t('analytics.recoveryRate', { rate: opp.recovery_rate })}</div>
                   </div>
-                  <div className="bg-soft-gray/50 border border-border-gray rounded-xl p-3">
+                  <div className="bg-soft-gray/50 border border-glass-border-dark rounded-xl p-3">
                     <div className="text-xs text-warm-stone font-medium mb-1">{t('analytics.timeline')}</div>
                     <div className="text-lg font-bold text-deep-charcoal">{tTimeline(opp.estimated_timeline)}</div>
                     <div className={`text-xs px-2 py-1 rounded-full inline-block mt-1 ${getDifficultyBadge(opp.implementation_difficulty)}`}>
@@ -240,7 +240,7 @@ export default function RevenueOpportunities() {
                   </div>
                   <div className="space-y-2">
                     {(opp.actions ?? []).map((action, idx) => (
-                      <div key={idx} className="flex items-start gap-3 bg-white border border-border-gray rounded-xl p-3">
+                      <div key={idx} className="flex items-start gap-3 glass-panel rounded-xl p-3">
                         <div className="w-6 h-6 rounded-full bg-burgundy text-white flex items-center justify-center text-xs font-bold mt-0.5">
                           {idx + 1}
                         </div>
@@ -248,7 +248,7 @@ export default function RevenueOpportunities() {
                       </div>
                     ))}
                   </div>
-                  <div className="mt-4 pt-4 border-t border-border-gray flex justify-between items-center">
+                  <div className="mt-4 pt-4 border-t border-glass-border-dark flex justify-between items-center">
                     <div className="text-xs text-warm-stone">
                       <span className="font-semibold">{t('analytics.roiPotential')}</span> {tPriority(opp.priority)}
                     </div>
@@ -268,7 +268,7 @@ export default function RevenueOpportunities() {
       </div>
 
       {/* Footer Info */}
-      <div className="py-4 border-t border-[#E5E7EB]">
+      <div className="py-4 border-t border-glass-border-dark">
         <div className="flex items-center gap-2 text-xs text-warm-stone">
           <ThiingsIcon name="lightbulb" pxSize={16} />
           <span>

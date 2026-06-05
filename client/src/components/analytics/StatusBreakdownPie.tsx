@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+﻿import { useTranslation } from 'react-i18next';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import type { Formatter as LegendFormatter, LegendPayload } from 'recharts/types/component/DefaultLegendContent';
 import type { PieLabelRenderProps } from 'recharts';
@@ -39,7 +39,7 @@ export default function StatusBreakdownPie({ reservationsByStatus }: StatusBreak
     no_show: '#f97316',
   };
 
-  // Custom label to show percentage. Guard the divisor — an empty/all-zero
+  // Custom label to show percentage. Guard the divisor â€” an empty/all-zero
   // status object would otherwise render literal "NaN%" slice labels.
   const renderLabel = (entry: PieLabelRenderProps) => {
     const entryValue = typeof entry.value === 'number' ? entry.value : 0;
@@ -55,7 +55,7 @@ export default function StatusBreakdownPie({ reservationsByStatus }: StatusBreak
       const total = chartData.reduce((sum, e) => sum + e.value, 0);
       const percent = total > 0 ? ((payload[0].value / total) * 100).toFixed(1) : '0';
       return (
-        <div className="bg-white border border-border-gray/50 rounded-2xl p-3 shadow-lg">
+        <div className="bg-glass-modal backdrop-blur-glass-modal border border-glass-border-dark rounded-2xl p-3 shadow-glass-modal">
           <p className="text-sm font-semibold text-deep-charcoal mb-1">{payload[0].name}</p>
           <p className="text-sm" style={{ color: payload[0].payload.fill }}>
             {t('analytics.count')}: <span className="font-bold">{payload[0].value}</span>
@@ -71,7 +71,7 @@ export default function StatusBreakdownPie({ reservationsByStatus }: StatusBreak
 
   return (
     <div className="overflow-hidden">
-      <div className="flex items-center justify-between py-5 border-b border-[#E5E7EB]">
+      <div className="flex items-center justify-between py-5 border-b border-glass-border-dark">
         <span className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{t('analytics.statusBreakdown')}</span>
       </div>
       <div role="img" aria-label={t('analytics.charts.statusBreakdownAria')} className="p-6">

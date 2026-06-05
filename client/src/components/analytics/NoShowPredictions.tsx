@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import { parseLocalDate } from '../../utils/timeFormatting';
@@ -20,7 +20,7 @@ export default function NoShowPredictions() {
       case 'high': return 'text-red-600 bg-red-600/10 border-red-600/20';
       case 'medium': return 'text-amber-600 bg-amber-600/10 border-amber-600/20';
       case 'low': return 'text-rose-600 bg-rose-500/10 border-rose-500/20';
-      default: return 'text-stone-gray bg-warm-white border-border-gray';
+      default: return 'text-stone-gray bg-warm-white border-glass-border-dark';
     }
   };
 
@@ -44,7 +44,7 @@ export default function NoShowPredictions() {
     );
   }
 
-  // A failed fetch must not render the green "all upcoming look good" state —
+  // A failed fetch must not render the green "all upcoming look good" state â€”
   // that tells the host there's no no-show risk when the model never ran.
   if (isError) {
     return (
@@ -69,7 +69,7 @@ export default function NoShowPredictions() {
   return (
     <div className="overflow-hidden">
       {/* Header */}
-      <div className="py-5 border-b border-[#E5E7EB]">
+      <div className="py-5 border-b border-glass-border-dark">
         <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827] mb-1">{t('analytics.noShowPredictions')}</h2>
         <p className="text-sm text-warm-stone">
           {t('analytics.noShowPredictionsDesc')}
@@ -78,7 +78,7 @@ export default function NoShowPredictions() {
 
       {/* Summary Stats */}
       {summary && (
-        <div className="grid grid-cols-2 gap-8 py-5 border-b border-[#E5E7EB]">
+        <div className="grid grid-cols-2 gap-8 py-5 border-b border-glass-border-dark">
           <div className="text-center">
             <div className="text-3xl font-bold text-deep-charcoal">{summary.total_upcoming}</div>
             <div className="text-xs text-warm-stone mt-1">{t('analytics.upcomingSevenDays')}</div>
@@ -152,7 +152,7 @@ export default function NoShowPredictions() {
                     <ul className="space-y-2">
                       {(prediction.recommendations ?? []).map((rec, idx) => (
                         <li key={idx} className="flex items-start gap-2 text-sm">
-                          <span className="text-burgundy mt-0.5">•</span>
+                          <span className="text-burgundy mt-0.5">â€¢</span>
                           <span>{rec}</span>
                         </li>
                       ))}
@@ -166,7 +166,7 @@ export default function NoShowPredictions() {
       </div>
 
       {/* Footer Info */}
-      <div className="py-4 border-t border-[#E5E7EB]">
+      <div className="py-4 border-t border-glass-border-dark">
         <div className="flex items-center gap-2 text-xs text-warm-stone">
           <ThiingsIcon name="info" pxSize={16} />
           <span>

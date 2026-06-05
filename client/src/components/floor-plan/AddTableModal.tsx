@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import type { Table, TableShape } from '../../types/host.types';
@@ -30,7 +30,7 @@ export default function AddTableModal({ onClose, onAdd, nextNumber, locations, a
     e.preventDefault();
     const loc = showNewLoc && newLocation.trim() ? newLocation.trim() : location;
 
-    // Build the occupied-cell set from each existing table's full footprint —
+    // Build the occupied-cell set from each existing table's full footprint â€”
     // not just its anchor cell. Previously a 1x1 anchor check let new
     // rectangles/booths render on top of adjacent tables until the user
     // dragged them apart.
@@ -75,10 +75,10 @@ export default function AddTableModal({ onClose, onAdd, nextNumber, locations, a
         role="dialog"
         aria-modal="true"
         aria-labelledby="add-table-modal-title"
-        className="bg-white rounded-2xl shadow-xl w-full max-w-md border border-border-gray"
+        className="glass-modal w-full max-w-md"
         onClick={e => e.stopPropagation()}
       >
-        <div className="px-6 py-5 border-b border-border-gray flex items-center justify-between">
+        <div className="px-6 py-5 border-b border-glass-border-dark flex items-center justify-between">
           <div>
             <h2 id="add-table-modal-title" className="text-base font-semibold text-deep-charcoal">{t('floorPlan.addTableModal.title')}</h2>
             <p className="text-xs text-warm-stone mt-0.5">{t('floorPlan.addTableModal.subtitle')}</p>
@@ -104,7 +104,7 @@ export default function AddTableModal({ onClose, onAdd, nextNumber, locations, a
               value={tableNumber}
               onChange={e => setTableNumber(Number(e.target.value))}
               min={1}
-              className="w-full px-3 py-2.5 border border-border-gray rounded-xl text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
+              className="w-full px-3 py-2.5 border border-glass-border-dark rounded-xl text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
             />
           </div>
 
@@ -122,7 +122,7 @@ export default function AddTableModal({ onClose, onAdd, nextNumber, locations, a
                   className={`flex-1 py-2 rounded-xl text-sm font-medium border transition-all ${
                     capacity === c
                       ? 'bg-burgundy text-white border-burgundy'
-                      : 'bg-white text-stone-gray border-border-gray hover:border-burgundy/40'
+                      : 'bg-white text-stone-gray border-glass-border-dark hover:border-burgundy/40'
                   }`}
                 >
                   {c}
@@ -145,7 +145,7 @@ export default function AddTableModal({ onClose, onAdd, nextNumber, locations, a
                   className={`py-2 px-3 rounded-xl text-sm font-medium border transition-all ${
                     shape === s.value
                       ? 'bg-burgundy text-white border-burgundy'
-                      : 'bg-white text-stone-gray border-border-gray hover:border-burgundy/40'
+                      : 'bg-white text-stone-gray border-glass-border-dark hover:border-burgundy/40'
                   }`}
                 >
                   {t(`floorPlan.shape.${s.i18nKey}`, s.label)}
@@ -164,14 +164,14 @@ export default function AddTableModal({ onClose, onAdd, nextNumber, locations, a
                 <select
                   value={location}
                   onChange={e => setLocation(e.target.value)}
-                  className="flex-1 px-3 py-2.5 border border-border-gray rounded-xl text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
+                  className="flex-1 px-3 py-2.5 border border-glass-border-dark rounded-xl text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
                 >
                   {locations.map(l => <option key={l} value={l}>{l}</option>)}
                 </select>
                 <button
                   type="button"
                   onClick={() => setShowNewLoc(true)}
-                  className="px-3 py-2.5 border border-border-gray rounded-xl text-sm text-stone-gray hover:border-burgundy/40 transition-colors"
+                  className="px-3 py-2.5 border border-glass-border-dark rounded-xl text-sm text-stone-gray hover:border-burgundy/40 transition-colors"
                 >
                   {t('floorPlan.addTableModal.addNew')}
                 </button>
@@ -184,12 +184,12 @@ export default function AddTableModal({ onClose, onAdd, nextNumber, locations, a
                   onChange={e => setNewLocation(e.target.value)}
                   placeholder={t('placeholders.tableName', 'e.g. Terrace')}
                   autoFocus
-                  className="flex-1 px-3 py-2.5 border border-border-gray rounded-xl text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
+                  className="flex-1 px-3 py-2.5 border border-glass-border-dark rounded-xl text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
                 />
                 <button
                   type="button"
                   onClick={() => setShowNewLoc(false)}
-                  className="px-3 py-2.5 border border-border-gray rounded-xl text-sm text-stone-gray hover:border-burgundy/40 transition-colors"
+                  className="px-3 py-2.5 border border-glass-border-dark rounded-xl text-sm text-stone-gray hover:border-burgundy/40 transition-colors"
                 >
                   {t('common.cancel')}
                 </button>

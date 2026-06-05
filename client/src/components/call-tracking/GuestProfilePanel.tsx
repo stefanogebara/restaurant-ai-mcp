@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+﻿import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { authFetch } from '../../services/api';
 import ThiingsIcon from '../common/ThiingsIcon';
@@ -67,9 +67,9 @@ export default function GuestProfilePanel({ phone, onClose }: Props) {
   });
 
   return (
-    <div className="fixed inset-y-0 right-0 w-96 bg-white border-l border-[#E5E7EB] shadow-lg z-40 overflow-y-auto">
+    <div className="fixed inset-y-0 right-0 w-96 bg-glass-modal backdrop-blur-glass-modal border-l border-glass-border-dark shadow-glass-modal z-40 overflow-y-auto">
       {/* Header */}
-      <div className="sticky top-0 bg-white border-b border-[#E5E7EB] p-4 flex items-center justify-between">
+      <div className="sticky top-0 bg-glass-panel backdrop-blur-glass-nav border-b border-glass-border-dark p-4 flex items-center justify-between">
         <div>
           <h3 className="text-base font-semibold text-deep-charcoal">
             {t('callTracking.guestProfile', 'Guest Profile')}
@@ -101,7 +101,7 @@ export default function GuestProfilePanel({ phone, onClose }: Props) {
       {profile && (
         <div className="p-4 space-y-5">
           {/* Name + Tier */}
-          <div className="text-center pb-4 border-b border-[#E5E7EB]">
+          <div className="text-center pb-4 border-b border-glass-border-dark">
             <p className="text-lg font-semibold text-deep-charcoal">
               {profile.name || t('callTracking.unknownCaller', 'Unknown Caller')}
             </p>
