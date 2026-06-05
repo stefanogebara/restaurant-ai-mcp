@@ -6,7 +6,10 @@
  */
 
 const { __test__ } = require('../instagram/_lib/extract-bio-links');
-const { hostMatches, extractFromAnchors, extractFromNextData, capAndDedupe, isPrivateIp, AGGREGATOR_HOSTS } = __test__;
+const {
+  hostMatches, extractFromAnchors, extractFromNextData, capAndDedupe,
+  isPrivateIp, extractFromScriptUrls, hostToLabel, AGGREGATOR_HOSTS,
+} = __test__;
 
 describe('hostMatches', () => {
   test.each([
@@ -178,5 +181,80 @@ describe('capAndDedupe', () => {
   test('caps at 20', () => {
     const many = Array.from({ length: 50 }, (_, i) => ({ label: `L${i}`, url: `https://x.com/${i}`, host: 'x.com' }));
     expect(capAndDedupe(many)).toHaveLength(20);
+  });
+});
+
+describe('hostToLabel — Beacons brand mapping', () => {
+  test.each([
+    ['instagram.com', 'Instagram'],
+    ['www.instagram.com', 'Instagram'],
+    ['tiktok.com', 'TikTok'],
+    ['youtube.com', 'YouTube'],
+    ['youtu.be', 'YouTube'],
+    ['m.youtube.com', 'YouTube'],     // subdomain rule
+    ['twitter.com', 'X (Twitter)'],
+    ['x.com', 'X (Twitter)'],
+    ['facebook.com', 'Facebook'],
+    ['twitch.tv', 'Twitch'],
+    ['wa.me', 'WhatsApp'],
+    ['opentable.com', 'OpenTable'],
+    ['opentable.com.br', 'OpenTable'],
+    ['ifood.com.br', 'iFood'],
+    ['open.spotify.com', 'Spotify'],
+  ])('%s → %s', (host, expected) => {
+    expect(hostToLabel(host)).toBe(expected);
+  });
+
+  test('unmapped host returns the host stripped of www', () => {
+    expect(hostToLabel('aliabdaal.com')).toBe('aliabdaal.com');
+    expect(hostToLabel('www.example.org')).toBe('example.org');
+  });
+});
+
+describe('extractFromScriptUrls — Beacons strategy', () => {
+  test('picks up plain http(s) URLs from inline scripts', () => {
+    const html = `
+      <script>self.__next_f.push([1,"some-data {\\"url\\":\\"https://instagram.com/u\\"} more https://tiktok.com/@u"])</script>
+      <script>nope</script>
+      <script>visible https://twitter.com/u text</script>
+    `;
+    const out = extractFromScriptUrls(html, 'beacons.ai');
+    const hosts = out.map((o) => o.host).sort();
+    expect(hosts).toEqual(['instagram.com', 'tiktok.com', 'twitter.com']);
+    // Labels should come from HOST_BRAND_MAP
+    const ig = out.find((o) => o.host === 'instagram.com');
+    expect(ig.label).toBe('Instagram');
+  });
+
+  test('skips beacons-self, infra hosts (cloudflare, schema.org), and asset URLs', () => {
+    const html = `
+      <script>
+        https://beacons.ai/_next/static/chunks/x.js
+        https://stefano.beacons.ai/profile
+        https://static.cloudflareinsights.com/beacon.min.js/abc
+        https://www.w3.org/2000/svg
+        https://schema.org/Person
+        https://example.com/avatar.png
+        https://example.com/stylesheet.css
+        https://example.com/data.json
+        https://instagram.com/realtarget
+      </script>
+    `;
+    const out = extractFromScriptUrls(html, 'beacons.ai');
+    expect(out.map((o) => o.url)).toEqual(['https://instagram.com/realtarget']);
+  });
+
+  test('dedupes when the same URL appears in multiple script blocks', () => {
+    const html = `
+      <script>https://instagram.com/u</script>
+      <script>https://instagram.com/u again</script>
+      <script>https://tiktok.com/u</script>
+    `;
+    const out = extractFromScriptUrls(html, 'beacons.ai');
+    expect(out).toHaveLength(2);
+  });
+
+  test('returns [] on HTML with no script tags', () => {
+    expect(extractFromScriptUrls('<body>plain</body>', 'beacons.ai')).toEqual([]);
   });
 });

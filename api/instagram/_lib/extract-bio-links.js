@@ -92,7 +92,17 @@ async function extractBioLinks(url) {
     return [];
   }
 
-  // Try JSON-in-script first (most accurate for Linktree/Beacons)
+  // Beacons.ai serializes link data inside RSC streaming chunks
+  // (self.__next_f.push) rather than __NEXT_DATA__, so neither
+  // extractFromNextData nor the anchor scrape find the data on a fresh
+  // server-rendered page. Use a Beacons-specific strategy first.
+  if (aggHost === 'beacons.ai' || aggHost === 'beacons.page') {
+    const fromBeacons = extractFromScriptUrls(html, aggHost);
+    if (fromBeacons.length > 0) return capAndDedupe(fromBeacons);
+    // fall through to other strategies just in case
+  }
+
+  // Try JSON-in-script (most accurate for Linktree)
   const fromJson = extractFromNextData(html, aggHost);
   if (fromJson && fromJson.length > 0) {
     return capAndDedupe(fromJson);
@@ -301,6 +311,112 @@ function pickString(obj, keys) {
 }
 
 /**
+ * Beacons.ai-specific extractor. Their App Router pages don't expose
+ * __NEXT_DATA__; instead they stream Server Components via inline
+ * self.__next_f.push([1, "..."]) calls. The link data is in those
+ * streamed strings but in a complex RSC format that's not worth
+ * fully parsing — happily, every destination URL appears verbatim
+ * inside one of these scripts, so a regex pass over the combined
+ * script bodies gives us what we need.
+ *
+ * We can't recover proper labels from RSC without writing a real
+ * parser, so we pretty-print the host as the label
+ * (instagram.com → "Instagram"). The drafter can still reference
+ * destinations naturally with just the host.
+ */
+function extractFromScriptUrls(html, aggHost) {
+  const out = [];
+  // Concat every <script> body — the RSC stream is spread across many of them.
+  const scripts = [];
+  const re = /<script\b[^>]*>([\s\S]*?)<\/script>/gi;
+  let m;
+  while ((m = re.exec(html)) !== null) scripts.push(m[1]);
+  const combined = scripts.join('\n');
+
+  // Match any http(s) URL. Beacons' streamed JSON escapes URLs verbatim
+  // (no double-encoding), so a literal scan works.
+  const urlRe = /https?:\/\/[a-zA-Z0-9._-]+(?:\/[a-zA-Z0-9._~!$&'()*+,;=:@/\-?#%]*)?/g;
+  const seen = new Set();
+
+  // Hosts we always want to skip even if Beacons emits them: their own
+  // domain, asset CDNs, infrastructure hosts, schema/standards.
+  const SKIP_HOSTS = [
+    'cloudflareinsights.com', 'cloudflare.com',
+    'schema.org', 'www.w3.org',
+    'fonts.googleapis.com', 'fonts.gstatic.com',
+    'googletagmanager.com', 'google-analytics.com',
+    'sentry.io', 'sentry-cdn.com',
+    'beacons-static.s3.amazonaws.com',
+  ];
+
+  let u;
+  while ((u = urlRe.exec(combined)) !== null) {
+    const url = u[0];
+    if (seen.has(url)) continue;
+    seen.add(url);
+    let host;
+    try { host = new URL(url).host.toLowerCase(); } catch { continue; }
+    if (host.endsWith(aggHost)) continue;
+    if (SKIP_HOSTS.some((h) => host === h || host.endsWith('.' + h))) continue;
+    // Skip static asset URLs (Beacons emits CDN avatar/thumbnail URLs in the stream).
+    if (/\.(?:png|jpe?g|gif|svg|webp|ico|css|js|json|woff2?|map|mp4|mov|webm)(?:[?#]|$)/i.test(url)) continue;
+    out.push({
+      label: hostToLabel(host),
+      url,
+      host,
+    });
+  }
+  return out;
+}
+
+/**
+ * Pretty-print a host as a human-readable label.
+ * "www.instagram.com" → "Instagram"
+ * "tiktok.com/@user"  → "TikTok"
+ * "aliabdaal.com"     → "aliabdaal.com" (no obvious brand → keep host)
+ */
+const HOST_BRAND_MAP = {
+  'instagram.com': 'Instagram',
+  'tiktok.com': 'TikTok',
+  'youtube.com': 'YouTube',
+  'youtu.be': 'YouTube',
+  'twitter.com': 'X (Twitter)',
+  'x.com': 'X (Twitter)',
+  'facebook.com': 'Facebook',
+  'twitch.tv': 'Twitch',
+  'spotify.com': 'Spotify',
+  'apple.com': 'Apple',
+  'open.spotify.com': 'Spotify',
+  'music.apple.com': 'Apple Music',
+  'podcasts.apple.com': 'Apple Podcasts',
+  'wa.me': 'WhatsApp',
+  'whatsapp.com': 'WhatsApp',
+  'opentable.com': 'OpenTable',
+  'opentable.com.br': 'OpenTable',
+  'resy.com': 'Resy',
+  'ifood.com.br': 'iFood',
+  'rappi.com': 'Rappi',
+  'ubereats.com': 'Uber Eats',
+  'doordash.com': 'DoorDash',
+  'patreon.com': 'Patreon',
+  'discord.gg': 'Discord',
+  'discord.com': 'Discord',
+  'github.com': 'GitHub',
+  'medium.com': 'Medium',
+  'substack.com': 'Substack',
+  'tumblr.com': 'Tumblr',
+};
+function hostToLabel(host) {
+  const stripped = host.replace(/^www\./, '');
+  if (HOST_BRAND_MAP[stripped]) return HOST_BRAND_MAP[stripped];
+  // host.endsWith('.x.com') etc.
+  for (const [key, brand] of Object.entries(HOST_BRAND_MAP)) {
+    if (stripped.endsWith('.' + key)) return brand;
+  }
+  return stripped;
+}
+
+/**
  * Generic fallback: find every <a href="http(s)://..."> in the HTML, dedupe,
  * filter out self-references. Less accurate than __NEXT_DATA__ but works
  * for aggregators we don't have a specific parser for.
@@ -343,5 +459,8 @@ function capAndDedupe(links) {
 module.exports = {
   extractBioLinks,
   // Exposed for unit tests
-  __test__: { hostMatches, extractFromAnchors, extractFromNextData, capAndDedupe, isPrivateIp, AGGREGATOR_HOSTS },
+  __test__: {
+    hostMatches, extractFromAnchors, extractFromNextData, capAndDedupe,
+    isPrivateIp, extractFromScriptUrls, hostToLabel, AGGREGATOR_HOSTS,
+  },
 };
