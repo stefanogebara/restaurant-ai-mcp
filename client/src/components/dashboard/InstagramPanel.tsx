@@ -152,31 +152,58 @@ export default function InstagramPanel() {
       </header>
 
       {connected && data?.username && (
-        <div className="flex items-center gap-3 p-3 bg-white/60 backdrop-blur-glass-chip border border-glass-border-dark rounded-xl">
-          {data.profile_picture_url && (
-            <img
-              src={data.profile_picture_url}
-              alt=""
-              className="w-10 h-10 rounded-full object-cover"
-              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
-            />
-          )}
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-deep-charcoal truncate">@{data.username}</p>
-            <p className="text-xs text-muted-stone">
-              {typeof data.followers_count === 'number' && `${data.followers_count.toLocaleString()} followers · `}
-              {data.tone_profile_ready ? 'Tone profile ready' : 'Building tone profile…'}
-            </p>
+        <div className="p-3 bg-white/60 backdrop-blur-glass-chip border border-glass-border-dark rounded-xl space-y-3" data-testid="instagram-panel-connected-card">
+          <div className="flex items-center gap-3">
+            {data.profile_picture_url && (
+              <img
+                src={data.profile_picture_url}
+                alt=""
+                className="w-10 h-10 rounded-full object-cover"
+                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+              />
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-deep-charcoal truncate">
+                {data.display_name || `@${data.username}`}
+                {data.display_name && <span className="text-muted-stone font-normal"> @{data.username}</span>}
+              </p>
+              <p className="text-xs text-muted-stone">
+                {typeof data.followers_count === 'number' && `${data.followers_count.toLocaleString()} followers · `}
+                {data.tone_profile_ready ? 'Tone profile ready' : 'Building tone profile…'}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => refreshToneMutation.mutate()}
+              disabled={refreshToneMutation.isPending}
+              className="text-xs text-burgundy underline underline-offset-2 hover:text-burgundy-dark disabled:opacity-50"
+              data-testid="instagram-panel-refresh-tone-cta"
+            >
+              {refreshToneMutation.isPending ? 'Refreshing…' : data.tone_profile_ready ? 'Refresh tone' : 'Build now'}
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={() => refreshToneMutation.mutate()}
-            disabled={refreshToneMutation.isPending}
-            className="text-xs text-burgundy underline underline-offset-2 hover:text-burgundy-dark disabled:opacity-50"
-            data-testid="instagram-panel-refresh-tone-cta"
-          >
-            {refreshToneMutation.isPending ? 'Refreshing…' : data.tone_profile_ready ? 'Refresh tone' : 'Build now'}
-          </button>
+
+          {data.biography && (
+            <p
+              className="text-xs text-muted-stone whitespace-pre-line border-t border-glass-border-dark pt-3"
+              data-testid="instagram-panel-bio"
+            >
+              {data.biography}
+            </p>
+          )}
+
+          {data.website && (
+            <a
+              href={data.website}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="inline-flex items-center gap-1.5 text-xs text-burgundy hover:text-burgundy-dark underline underline-offset-2"
+              data-testid="instagram-panel-website-link"
+            >
+              {websiteLabel(data.website, data.bio_links)}
+              <span aria-hidden>↗</span>
+            </a>
+          )}
         </div>
       )}
 
@@ -187,7 +214,10 @@ export default function InstagramPanel() {
       )}
 
       {connected && (
-        <InstagramCaptionDrafter toneProfileReady={!!data?.tone_profile_ready} />
+        <InstagramCaptionDrafter
+          toneProfileReady={!!data?.tone_profile_ready}
+          language={data?.tone_language ?? null}
+        />
       )}
 
       <div>

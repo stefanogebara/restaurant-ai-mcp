@@ -9,17 +9,32 @@ import { authFetch } from '../services/api';
 
 export type InstagramStatus = 'active' | 'expired' | 'revoked' | 'restricted';
 
+/** One parsed destination from a Linktree-style aggregator page. */
+export interface InstagramBioLink {
+  label: string;
+  url: string;
+  host: string;
+}
+
+/** Two-letter ISO language code the tone profile was inferred in. */
+export type InstagramToneLanguage = 'pt' | 'es' | 'fr' | 'it' | 'en';
+
 export interface InstagramStatusValue {
   success: boolean;
   connected: boolean;
   status: InstagramStatus | null;
   username: string | null;
+  display_name: string | null;
+  biography: string | null;
+  website: string | null;
+  bio_links: InstagramBioLink[] | null;
   profile_picture_url: string | null;
   followers_count: number | null;
   last_sync_at: string | null;
   last_error: string | null;
   token_expires_at: string | null;
   tone_profile_ready: boolean;
+  tone_language: InstagramToneLanguage | null;
 }
 
 const STATUS_QUERY_KEY = ['instagram-status'] as const;
