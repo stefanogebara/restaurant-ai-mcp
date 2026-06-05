@@ -156,10 +156,18 @@ module.exports = async (req, res) => {
       return redirectWithStatus(res, 'no_ig_account');
     }
 
-    // 5. Fetch IG profile metadata
+    // 5. Fetch IG profile metadata. We pull MORE than the v1 set: biography
+    // and website are the most concentrated voice signal on the whole
+    // account, so they feed both the tone extractor (C.1b) and the caption
+    // drafter (C.1c). name is the human-friendly display name (distinct
+    // from username).
     const igId = pageWithIg.instagram_business_account.id;
+    const igFields = [
+      'id', 'username', 'name', 'biography', 'website',
+      'profile_picture_url', 'followers_count',
+    ].join(',');
     const igResp = await fetch(
-      `${GRAPH_BASE}/${igId}?fields=id,username,profile_picture_url,followers_count&access_token=${encodeURIComponent(longToken)}`,
+      `${GRAPH_BASE}/${igId}?fields=${igFields}&access_token=${encodeURIComponent(longToken)}`,
     );
     const igBody = await igResp.json();
     if (!igResp.ok) {
@@ -184,6 +192,9 @@ module.exports = async (req, res) => {
       fb_page_name: pageWithIg.name || null,
       ig_business_account_id: igId,
       ig_username: igBody?.username || null,
+      display_name: igBody?.name || null,
+      biography: igBody?.biography || null,
+      website: igBody?.website || null,
       ig_profile_picture_url: igBody?.profile_picture_url || null,
       ig_followers_count: typeof igBody?.followers_count === 'number' ? igBody.followers_count : null,
       access_token: longToken,

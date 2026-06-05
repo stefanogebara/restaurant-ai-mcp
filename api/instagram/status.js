@@ -57,7 +57,7 @@ module.exports = async (req, res) => {
     const { data: rows, error: queryErr } = await supabaseAdmin
       .schema('restaurant')
       .from('instagram_connections')
-      .select('status, ig_username, ig_profile_picture_url, ig_followers_count, last_sync_at, last_error, token_expires_at, updated_at')
+      .select('status, ig_username, display_name, biography, website, ig_profile_picture_url, ig_followers_count, last_sync_at, last_error, token_expires_at, updated_at')
       .eq('restaurant_id', user.restaurant_id)
       .order('updated_at', { ascending: false })
       .limit(1);
@@ -95,12 +95,17 @@ module.exports = async (req, res) => {
       connected: conn.status === 'active',
       status: conn.status,
       username: conn.ig_username,
+      display_name: conn.display_name,
+      biography: conn.biography,
+      website: conn.website,
       profile_picture_url: conn.ig_profile_picture_url,
       followers_count: conn.ig_followers_count,
       last_sync_at: conn.last_sync_at,
       last_error: conn.last_error,
       token_expires_at: conn.token_expires_at,
       tone_profile_ready: !!rest?.instagram_tone_profile,
+      // Surface the detected language so the UI can show "Drafting in Portuguese..."
+      tone_language: rest?.instagram_tone_profile?.language ?? null,
     });
   } catch (err) {
     logger.error('status handler failed', { err: err.message });

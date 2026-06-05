@@ -7,7 +7,7 @@
  */
 
 const { __test__ } = require('../instagram/_lib/extract-tone-profile');
-const { postprocess, safeJSONParse } = __test__;
+const { postprocess, safeJSONParse, extractHashtags, topHashtagsFrom, detectLanguage } = __test__;
 
 const valid = {
   formality: 4,
@@ -81,5 +81,63 @@ describe('safeJSONParse', () => {
 
   test('returns null on bad JSON', () => {
     expect(safeJSONParse('not json')).toBeNull();
+  });
+});
+
+describe('extractHashtags', () => {
+  test('parses simple ascii hashtags', () => {
+    expect(extractHashtags('hello #foo #bar baz')).toEqual(['foo', 'bar']);
+  });
+
+  test('handles unicode tags (Portuguese/Spanish)', () => {
+    expect(extractHashtags('algo #GestãoDeRestaurante #SãoPaulo'))
+      .toEqual(['GestãoDeRestaurante', 'SãoPaulo']);
+  });
+
+  test('strips trailing punctuation outside the tag', () => {
+    expect(extractHashtags('end of caption #tag.')).toEqual(['tag']);
+  });
+
+  test('returns [] on non-string input', () => {
+    expect(extractHashtags(null)).toEqual([]);
+    expect(extractHashtags(42)).toEqual([]);
+  });
+});
+
+describe('topHashtagsFrom', () => {
+  test('counts + dedupes case-insensitively, ranks by frequency', () => {
+    const txt = '#Tag1 #tag2 #TAG1 #tag1 #tag2 #tag3';
+    const out = topHashtagsFrom([txt]);
+    expect(out[0]).toEqual({ tag: '#tag1', count: 3 });
+    expect(out[1]).toEqual({ tag: '#tag2', count: 2 });
+    expect(out[2]).toEqual({ tag: '#tag3', count: 1 });
+  });
+
+  test('caps at 10 entries', () => {
+    const tags = Array.from({ length: 30 }, (_, i) => `#t${i}`).join(' ');
+    expect(topHashtagsFrom([tags]).length).toBe(10);
+  });
+
+  test('returns [] for input with no hashtags', () => {
+    expect(topHashtagsFrom(['hello world'])).toEqual([]);
+  });
+});
+
+describe('detectLanguage', () => {
+  test('detects Portuguese from cedilha + word "reserva"', () => {
+    expect(detectLanguage('IA para restaurantes 🍽️ Reservas e gestão inteligente.')).toBe('pt');
+  });
+
+  test('detects Spanish from ñ', () => {
+    expect(detectLanguage('Mañana abrimos a las 12, ¿reservas?')).toBe('es');
+  });
+
+  test('detects French from accents', () => {
+    expect(detectLanguage('Notre restaurant ouvre à 12h pour votre réservation gratuite.')).toBe('fr');
+  });
+
+  test('falls back to en on short or unknown text', () => {
+    expect(detectLanguage('hi')).toBe('en');
+    expect(detectLanguage('quick brown fox jumps over lazy dog')).toBe('en');
   });
 });

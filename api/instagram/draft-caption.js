@@ -76,9 +76,10 @@ module.exports = async (req, res) => {
     return res.status(400).json({ ok: false, error: `topic is too long (max ${MAX_TOPIC_LEN} chars)` });
   }
 
-  // 1. Look up the tone profile. Column is `restaurant_name`, NOT `name`
-  // (caught a 500 in the live status-endpoint smoke that revealed both
-  // bugs originated in the same wrong column assumption).
+  // 1. Look up the tone profile + IG connection bio/website. The bio is
+  // the most concentrated voice signal we have, so it's part of the
+  // drafter's prompt for stronger voice grounding than the tone profile
+  // summary alone.
   const { data: rest, error: restErr } = await supabaseAdmin
     .schema('restaurant')
     .from('restaurant_config')
@@ -97,25 +98,54 @@ module.exports = async (req, res) => {
     });
   }
 
+  // Pull bio + website from the IG connection row. Non-fatal if missing
+  // (older connections won't have them until they're refreshed).
+  const { data: conn } = await supabaseAdmin
+    .schema('restaurant')
+    .from('instagram_connections')
+    .select('biography, website, display_name')
+    .eq('restaurant_id', user.restaurant_id)
+    .in('status', ['active', 'restricted'])
+    .maybeSingle();
+
   const tone = rest.instagram_tone_profile;
+  const language = tone.language || 'en';
+
+  // top_hashtags is the structured list parsed deterministically in the
+  // extractor (Phase C.1). Surface them so Haiku can re-use them verbatim
+  // instead of inventing generic ones.
+  const topHashtagsLine = Array.isArray(tone.top_hashtags) && tone.top_hashtags.length > 0
+    ? tone.top_hashtags.map((h) => h.tag).join(' ')
+    : '(none)';
 
   // 2. Build the prompt
-  const systemPrompt = `You are drafting Instagram captions for a restaurant named "${rest.restaurant_name || 'this restaurant'}". Match the restaurant's existing voice precisely.
+  const bioBlock = conn?.biography
+    ? `\nACCOUNT BIO (highest-signal voice statement — match this tone closely):\n"""${conn.biography}"""\n`
+    : '';
+  const websiteBlock = conn?.website
+    ? `\nWEBSITE: ${conn.website} (use this URL if a CTA would naturally point at it)\n`
+    : '';
 
+  const systemPrompt = `You are drafting Instagram captions for a restaurant named "${conn?.display_name || rest.restaurant_name || 'this restaurant'}". Match the restaurant's existing voice precisely.
+${bioBlock}${websiteBlock}
 Voice profile (from their last 30 posts):
+- Language: ${language} (you MUST write all 3 drafts IN THIS LANGUAGE, do NOT translate to English)
 - Formality: ${tone.formality}/10 (1 = casual slang, 10 = formal hospitality)
 - Emoji density: ${tone.emoji_density}
 - Hashtag style: ${tone.hashtag_style}
 - Recurring themes: ${(tone.recurring_themes || []).join(', ') || '(none)'}
 - Signature phrases (use sparingly, only if they fit): ${(tone.signature_phrases || []).join(' | ') || '(none)'}
+- Top hashtags from the account (re-use these instead of inventing new ones): ${topHashtagsLine}
 - Voice summary: ${tone.voice_summary}
 
 You will produce 3 distinct caption drafts for the user-supplied topic. Each draft should:
+- Be WRITTEN IN ${language === 'pt' ? 'PORTUGUESE' : language === 'es' ? 'SPANISH' : language === 'fr' ? 'FRENCH' : language === 'it' ? 'ITALIAN' : 'ENGLISH'} (this is the account's posting language)
 - Match the voice profile above (formality, emoji density, hashtag style)
 - Be ${LENGTH_HINTS[length]}
 - Be different from the other two (vary the hook or angle)
 - Not start with "Hey" or "Hello" unless that matches the formality
-- Include hashtags only if hashtag_style is 'sparse' or 'descriptive' (skip if 'none')
+- Include hashtags only if hashtag_style is 'sparse', 'descriptive', or 'trending' (skip if 'none').
+  When including hashtags, PREFER the top hashtags from the account above.
 
 Output ONLY valid JSON, no prose. Schema:
 { "drafts": [string, string, string] }
