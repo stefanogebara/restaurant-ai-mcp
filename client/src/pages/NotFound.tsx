@@ -4,9 +4,9 @@ import { useTranslation } from 'react-i18next';
 export default function NotFound() {
   const { t } = useTranslation();
   return (
-    <div className="min-h-screen bg-warm-white flex flex-col">
+    <div className="min-h-screen flex flex-col">
       {/* Nav */}
-      <nav className="flex items-center justify-between px-8 sm:px-16 py-6 border-b border-border-gray">
+      <nav className="flex items-center justify-between px-8 sm:px-16 py-6 border-b border-glass-border-dark">
         <Link to="/" className="font-serif text-2xl font-semibold tracking-tight text-deep-charcoal">
           seatable<span className="text-burgundy">.</span>
         </Link>
@@ -38,7 +38,7 @@ export default function NotFound() {
           </Link>
           <button
             onClick={() => window.history.back()}
-            className="text-[15px] font-medium text-stone-gray border border-border-gray hover:border-muted-stone px-8 py-3.5 rounded-full transition-colors"
+            className="text-[15px] font-medium text-stone-gray border border-glass-border-dark hover:border-muted-stone px-8 py-3.5 rounded-full transition-colors"
           >
             {t('notFound.goBack')}
           </button>
@@ -46,7 +46,7 @@ export default function NotFound() {
       </div>
 
       {/* Footer */}
-      <footer className="px-8 sm:px-16 py-6 border-t border-border-gray text-center">
+      <footer className="px-8 sm:px-16 py-6 border-t border-glass-border-dark text-center">
         <p className="text-[13px] text-muted-stone">{t('notFound.copyright')}</p>
       </footer>
     </div>

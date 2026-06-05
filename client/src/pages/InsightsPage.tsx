@@ -106,7 +106,7 @@ export default function InsightsPage() {
     return (
       <DashboardLayout>
         <div className="flex flex-col items-center justify-center min-h-[60vh] p-6">
-          <div className="border border-[#E5E7EB] rounded-lg p-10 max-w-md text-center">
+          <div className="glass-panel rounded-lg p-10 max-w-md text-center">
             <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-5">
               <ThiingsIcon name="star" pxSize={32} className="text-amber-600" />
             </div>
@@ -131,7 +131,7 @@ export default function InsightsPage() {
 
   return (
     <DashboardLayout>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 bg-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         {/* Header */}
         <div className="mb-6 mt-14 sm:mt-0">
           <div className="flex items-center gap-3 mb-1">
@@ -148,7 +148,7 @@ export default function InsightsPage() {
         </div>
 
         {/* Tabs */}
-        <div className="border-b border-[#E5E7EB] mb-8">
+        <div className="border-b border-glass-border-dark mb-8">
           <nav className="flex gap-0 -mb-px" aria-label={t('insights.tabsAriaLabel', 'Insights tabs')}>
             {TABS.map((tab) => {
               const isActive = activeTab === tab.id;

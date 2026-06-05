@@ -79,7 +79,7 @@ function CouponCreateForm({ onCreated, onCancel }: { onCreated: () => void; onCa
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white border border-[#E5E7EB] rounded-xl p-5 space-y-4">
+    <form onSubmit={handleSubmit} className="glass-panel p-5 space-y-4">
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-sm font-bold text-deep-charcoal">{t('coupons.newCoupon', 'Novo Cupom')}</h3>
         <button type="button" onClick={onCancel} className="text-stone-gray hover:text-deep-charcoal transition-colors">
@@ -101,7 +101,7 @@ function CouponCreateForm({ onCreated, onCancel }: { onCreated: () => void; onCa
             onChange={(e) => setCode(e.target.value.toUpperCase())}
             placeholder="SAVE20AB"
             maxLength={20}
-            className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239] font-mono"
+            className="w-full px-3 py-2 border border-glass-border-dark bg-white/60 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239] font-mono"
           />
         </div>
 
@@ -114,7 +114,7 @@ function CouponCreateForm({ onCreated, onCancel }: { onCreated: () => void; onCa
             onChange={(e) => setDescription(e.target.value)}
             placeholder={t('coupons.descriptionPlaceholder', 'ex. Desconto de fim de semana')}
             maxLength={200}
-            className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]"
+            className="w-full px-3 py-2 border border-glass-border-dark bg-white/60 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]"
           />
         </div>
 
@@ -124,7 +124,7 @@ function CouponCreateForm({ onCreated, onCancel }: { onCreated: () => void; onCa
           <select
             value={discountType}
             onChange={(e) => setDiscountType(e.target.value as 'percentage' | 'fixed')}
-            className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239] bg-white"
+            className="w-full px-3 py-2 border border-glass-border-dark bg-white/60 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239] bg-white"
           >
             <option value="percentage">{t('coupons.typePercentage', 'Porcentagem (%)')}</option>
             <option value="fixed">{t('coupons.typeFixed', 'Valor fixo (R$)')}</option>
@@ -142,7 +142,7 @@ function CouponCreateForm({ onCreated, onCancel }: { onCreated: () => void; onCa
             min="0.01"
             step="0.01"
             required
-            className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]"
+            className="w-full px-3 py-2 border border-glass-border-dark bg-white/60 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]"
           />
         </div>
 
@@ -156,7 +156,7 @@ function CouponCreateForm({ onCreated, onCancel }: { onCreated: () => void; onCa
             placeholder="0"
             min="0"
             step="0.01"
-            className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]"
+            className="w-full px-3 py-2 border border-glass-border-dark bg-white/60 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]"
           />
         </div>
 
@@ -170,7 +170,7 @@ function CouponCreateForm({ onCreated, onCancel }: { onCreated: () => void; onCa
             placeholder={t('coupons.unlimited', 'Ilimitado')}
             min="1"
             step="1"
-            className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]"
+            className="w-full px-3 py-2 border border-glass-border-dark bg-white/60 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]"
           />
         </div>
 
@@ -181,7 +181,7 @@ function CouponCreateForm({ onCreated, onCancel }: { onCreated: () => void; onCa
             type="datetime-local"
             value={validFrom}
             onChange={(e) => setValidFrom(e.target.value)}
-            className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]"
+            className="w-full px-3 py-2 border border-glass-border-dark bg-white/60 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]"
           />
         </div>
 
@@ -192,7 +192,7 @@ function CouponCreateForm({ onCreated, onCancel }: { onCreated: () => void; onCa
             type="datetime-local"
             value={validUntil}
             onChange={(e) => setValidUntil(e.target.value)}
-            className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]"
+            className="w-full px-3 py-2 border border-glass-border-dark bg-white/60 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]"
           />
         </div>
       </div>
@@ -240,7 +240,7 @@ function CouponRow({ coupon }: { coupon: Coupon }) {
   };
 
   return (
-    <div className="flex items-center gap-4 px-4 py-3 border-b border-[#E5E7EB] last:border-b-0 hover:bg-gray-50/50 transition-colors">
+    <div className="flex items-center gap-4 px-4 py-3 border-b border-glass-border-dark last:border-b-0 hover:bg-gray-50/50 transition-colors">
       {/* Code + copy */}
       <div className="flex items-center gap-2 min-w-[120px]">
         <span className="font-mono text-sm font-bold text-deep-charcoal">{coupon.code}</span>
@@ -323,15 +323,15 @@ export default function CouponsPage() {
 
         {/* Stats bar */}
         <div className="grid grid-cols-3 gap-4 mb-6">
-          <div className="bg-white border border-[#E5E7EB] rounded-xl p-4 text-center">
+          <div className="glass-card p-4 text-center">
             <div className="text-2xl font-bold text-deep-charcoal">{totalCoupons}</div>
             <div className="text-xs text-stone-gray mt-1">{t('coupons.totalCoupons', 'Total')}</div>
           </div>
-          <div className="bg-white border border-[#E5E7EB] rounded-xl p-4 text-center">
+          <div className="glass-card p-4 text-center">
             <div className="text-2xl font-bold text-green-700">{activeCoupons}</div>
             <div className="text-xs text-stone-gray mt-1">{t('coupons.activeCoupons', 'Ativos')}</div>
           </div>
-          <div className="bg-white border border-[#E5E7EB] rounded-xl p-4 text-center">
+          <div className="glass-card p-4 text-center">
             <div className="text-2xl font-bold text-[#9F1239]">{totalRedemptions}</div>
             <div className="text-xs text-stone-gray mt-1">{t('coupons.totalRedemptions', 'Resgates')}</div>
           </div>
@@ -348,7 +348,7 @@ export default function CouponsPage() {
         )}
 
         {/* Coupon list */}
-        <div className="bg-white border border-[#E5E7EB] rounded-xl overflow-hidden">
+        <div className="glass-panel overflow-hidden">
           {isLoading && (
             <div className="flex items-center justify-center py-12">
               <div className="animate-spin rounded-full h-6 w-6 border-2 border-[#E5E7EB] border-t-[#9F1239]" />
@@ -371,7 +371,7 @@ export default function CouponsPage() {
           {!isLoading && !error && Array.isArray(coupons) && coupons.length > 0 && (
             <div>
               {/* Table header */}
-              <div className="flex items-center gap-4 px-4 py-2 border-b border-[#E5E7EB] bg-gray-50/50 text-xs font-medium text-stone-gray uppercase tracking-wide">
+              <div className="flex items-center gap-4 px-4 py-2 border-b border-glass-border-dark bg-gray-50/50 text-xs font-medium text-stone-gray uppercase tracking-wide">
                 <div className="min-w-[120px]">{t('coupons.code', 'Código')}</div>
                 <div className="flex-1">{t('coupons.description', 'Descrição')}</div>
                 <div>{t('coupons.discount', 'Desconto')}</div>

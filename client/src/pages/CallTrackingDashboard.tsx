@@ -155,7 +155,7 @@ export default function CallTrackingDashboard() {
     return (
       <DashboardLayout>
         <div className="min-h-[60vh] flex items-center justify-center p-6">
-          <div className="border border-[#E5E7EB] rounded-lg p-8 max-w-md text-center">
+          <div className="glass-panel rounded-lg p-8 max-w-md text-center">
             <div className="w-14 h-14 mx-auto mb-3 bg-red-50 rounded-2xl flex items-center justify-center">
               <ThiingsIcon name="alert-circle" pxSize={24} />
             </div>
@@ -177,7 +177,7 @@ export default function CallTrackingDashboard() {
 
   return (
     <DashboardLayout>
-      <div className="min-h-screen bg-white p-4 sm:p-6 md:p-8 lg:px-10 lg:py-8">
+      <div className="min-h-screen p-4 sm:p-6 md:p-8 lg:px-10 lg:py-8">
         <div className="max-w-7xl mx-auto space-y-12">
 
           {/* Header */}
@@ -189,7 +189,7 @@ export default function CallTrackingDashboard() {
               <button
                 type="button"
                 onClick={() => refetchConversations()}
-                className="px-4 py-2 border border-[#E5E7EB] text-[#9CA3AF] hover:border-[#111827] rounded-lg text-[13px] font-medium transition-colors"
+                className="px-4 py-2 border border-glass-border-dark bg-white/50 backdrop-blur-glass-chip text-[#9CA3AF] hover:border-[#111827] hover:bg-white/80 rounded-lg text-[13px] font-medium transition-colors"
               >
                 {t('callTracking.refresh')}
               </button>
@@ -211,8 +211,8 @@ export default function CallTrackingDashboard() {
                 }}
                 disabled={!conversations.length}
                 title={!conversations.length ? t('callTracking.noCallsToExport', 'No calls to export') : ''}
-                className={`px-4 py-2 border border-[#E5E7EB] rounded-lg text-[13px] font-medium transition-colors ${
-                  conversations.length ? 'text-[#9CA3AF] hover:border-[#111827]' : 'text-[#9CA3AF] cursor-not-allowed opacity-40'
+                className={`px-4 py-2 border border-glass-border-dark bg-white/50 backdrop-blur-glass-chip rounded-lg text-[13px] font-medium transition-colors ${
+                  conversations.length ? 'text-[#9CA3AF] hover:bg-white/80 hover:border-[#111827]' : 'text-[#9CA3AF] cursor-not-allowed opacity-40'
                 }`}
               >
                 {t('common.export')}

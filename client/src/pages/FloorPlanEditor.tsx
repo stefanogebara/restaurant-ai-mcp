@@ -374,7 +374,7 @@ export default function FloorPlanEditor() {
 
   return (
     <DashboardLayout>
-      <div className="bg-white p-3 sm:p-6 lg:p-8 max-w-[1280px] mx-auto mt-14 sm:mt-0 pb-20 sm:pb-8">
+      <div className="p-3 sm:p-6 lg:p-8 max-w-[1280px] mx-auto mt-14 sm:mt-0 pb-20 sm:pb-8">
 
         <FloorPlanHeader
           saveStatus={saveStatus}

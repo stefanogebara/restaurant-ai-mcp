@@ -104,7 +104,7 @@ function EventCreateForm({ onCreated, onCancel }: { onCreated: () => void; onCan
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white border border-[#E5E7EB] rounded-xl p-5 space-y-4">
+    <form onSubmit={handleSubmit} className="glass-panel p-5 space-y-4">
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-sm font-bold text-deep-charcoal">{t('events.newEvent', 'New Event')}</h3>
         <button type="button" onClick={onCancel} className="text-stone-gray hover:text-deep-charcoal transition-colors">
@@ -126,7 +126,7 @@ function EventCreateForm({ onCreated, onCancel }: { onCreated: () => void; onCan
             placeholder={t('events.titlePlaceholder', 'e.g. Wine Tasting Evening')}
             maxLength={120}
             required
-            className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]"
+            className="w-full px-3 py-2 border border-glass-border-dark bg-white/60 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]"
           />
         </div>
 
@@ -140,47 +140,47 @@ function EventCreateForm({ onCreated, onCancel }: { onCreated: () => void; onCan
             placeholder={t('events.descriptionPlaceholder', 'Describe the experience...')}
             maxLength={1000}
             rows={2}
-            className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239] resize-none"
+            className="w-full px-3 py-2 border border-glass-border-dark bg-white/60 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239] resize-none"
           />
         </div>
 
         <div>
           <label className="block text-xs font-medium text-stone-gray mb-1">{t('events.date', 'Date')}</label>
           <input type="date" value={eventDate} onChange={(e) => setEventDate(e.target.value)} required
-            className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]" />
+            className="w-full px-3 py-2 border border-glass-border-dark bg-white/60 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]" />
         </div>
 
         <div>
           <label className="block text-xs font-medium text-stone-gray mb-1">{t('events.time', 'Time')}</label>
           <input type="time" value={eventTime} onChange={(e) => setEventTime(e.target.value)} required
-            className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]" />
+            className="w-full px-3 py-2 border border-glass-border-dark bg-white/60 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]" />
         </div>
 
         <div>
           <label className="block text-xs font-medium text-stone-gray mb-1">{t('events.duration', 'Duration (min)')}</label>
           <input type="number" value={durationMinutes} onChange={(e) => setDurationMinutes(e.target.value)}
             placeholder="120" min="15" max="720" required
-            className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]" />
+            className="w-full px-3 py-2 border border-glass-border-dark bg-white/60 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]" />
         </div>
 
         <div>
           <label className="block text-xs font-medium text-stone-gray mb-1">{t('events.capacity', 'Capacity')}</label>
           <input type="number" value={maxCapacity} onChange={(e) => setMaxCapacity(e.target.value)}
             placeholder="20" min="1" required
-            className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]" />
+            className="w-full px-3 py-2 border border-glass-border-dark bg-white/60 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]" />
         </div>
 
         <div>
           <label className="block text-xs font-medium text-stone-gray mb-1">{t('events.price', 'Price (R$)')}</label>
           <input type="number" value={price} onChange={(e) => setPrice(e.target.value)}
             placeholder="150.00" min="0" step="0.01" required
-            className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]" />
+            className="w-full px-3 py-2 border border-glass-border-dark bg-white/60 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239]" />
         </div>
 
         <div>
           <label className="block text-xs font-medium text-stone-gray mb-1">{t('events.refundPolicy', 'Refund Policy')}</label>
           <select value={refundPolicy} onChange={(e) => setRefundPolicy(e.target.value)}
-            className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239] bg-white">
+            className="w-full px-3 py-2 border border-glass-border-dark bg-white/60 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239] bg-white">
             <option value="full">{t('events.refundFull', 'Full refund')}</option>
             <option value="partial">{t('events.refundPartial', '50% refund')}</option>
             <option value="none">{t('events.refundNone', 'No refund')}</option>
@@ -197,7 +197,7 @@ function EventCreateForm({ onCreated, onCancel }: { onCreated: () => void; onCan
             placeholder={t('events.menuPlaceholder', 'Describe the menu or experience highlights...')}
             maxLength={2000}
             rows={3}
-            className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239] resize-none"
+            className="w-full px-3 py-2 border border-glass-border-dark bg-white/60 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#9F1239] resize-none"
           />
         </div>
       </div>
@@ -231,7 +231,7 @@ function EventCard({ event }: { event: EventItem }) {
   const spotsLeft = event.max_capacity - event.current_bookings;
 
   return (
-    <div className="bg-white border border-[#E5E7EB] rounded-xl p-4 hover:bg-gray-50/50 transition-colors">
+    <div className="glass-card p-4 hover:bg-white/85 transition-colors">
       <div className="flex items-start justify-between gap-3 mb-3">
         <h3 className="text-sm font-bold text-deep-charcoal leading-tight">{event.title}</h3>
         <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full whitespace-nowrap ${badge.color}`}>
@@ -258,7 +258,7 @@ function EventCard({ event }: { event: EventItem }) {
         </div>
       </div>
 
-      <div className="flex items-center justify-between pt-2 border-t border-[#E5E7EB]">
+      <div className="flex items-center justify-between pt-2 border-t border-glass-border-dark">
         <div className="text-xs text-stone-gray">
           <span className="font-semibold text-deep-charcoal">{event.current_bookings}/{event.max_capacity}</span>{' '}
           {t('events.booked', 'booked')}
@@ -330,19 +330,19 @@ export default function EventsPage() {
 
         {/* Stats bar */}
         <div className="grid grid-cols-4 gap-4 mb-6">
-          <div className="bg-white border border-[#E5E7EB] rounded-xl p-4 text-center">
+          <div className="glass-card p-4 text-center">
             <div className="text-2xl font-bold text-deep-charcoal">{totalEvents}</div>
             <div className="text-xs text-stone-gray mt-1">{t('events.totalEvents', 'Total')}</div>
           </div>
-          <div className="bg-white border border-[#E5E7EB] rounded-xl p-4 text-center">
+          <div className="glass-card p-4 text-center">
             <div className="text-2xl font-bold text-green-700">{upcomingEvents}</div>
             <div className="text-xs text-stone-gray mt-1">{t('events.upcomingEvents', 'Upcoming')}</div>
           </div>
-          <div className="bg-white border border-[#E5E7EB] rounded-xl p-4 text-center">
+          <div className="glass-card p-4 text-center">
             <div className="text-2xl font-bold text-[#9F1239]">{totalBookings}</div>
             <div className="text-xs text-stone-gray mt-1">{t('events.totalBookings', 'Bookings')}</div>
           </div>
-          <div className="bg-white border border-[#E5E7EB] rounded-xl p-4 text-center">
+          <div className="glass-card p-4 text-center">
             <div className="text-2xl font-bold text-deep-charcoal">{formatPrice(totalRevenue)}</div>
             <div className="text-xs text-stone-gray mt-1">{t('events.estimatedRevenue', 'Est. Revenue')}</div>
           </div>
@@ -372,7 +372,7 @@ export default function EventsPage() {
         )}
 
         {!isLoading && !error && events && events.length === 0 && (
-          <div className="bg-white border border-[#E5E7EB] rounded-xl text-center py-12">
+          <div className="glass-panel text-center py-12">
             <p className="text-sm font-medium text-deep-charcoal">{t('events.noEvents', 'No events yet')}</p>
             <p className="text-xs text-stone-gray mt-1">{t('events.noEventsHint', 'Create your first event to offer unique experiences')}</p>
           </div>
