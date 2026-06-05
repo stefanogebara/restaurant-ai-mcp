@@ -1,5 +1,5 @@
-﻿/**
- * SeoFaq â€” cuisine-specific FAQ section with accordion.
+/**
+ * SeoFaq — cuisine-specific FAQ section with accordion.
  * FAQ content comes from the data layer for uniqueness per page.
  */
 

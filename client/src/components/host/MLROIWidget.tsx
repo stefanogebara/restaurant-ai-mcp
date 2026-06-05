@@ -1,4 +1,4 @@
-﻿/**
+/**
  * ML ROI Widget
  *
  * Replaces QuickStats with ML-focused metrics
@@ -111,7 +111,7 @@ export default function MLROIWidget() {
               </div>
             </div>
             <div className="mt-2 text-xs text-stone-gray">
-              {formatCurrency(Number(data.summary.total_value_saved))} {t('host.mlRoi.saved', 'saved')} â€¢ {formatCurrency(Number(data.summary.total_cost))} {t('host.mlRoi.spent', 'spent')}
+              {formatCurrency(Number(data.summary.total_value_saved))} {t('host.mlRoi.saved', 'saved')} • {formatCurrency(Number(data.summary.total_cost))} {t('host.mlRoi.spent', 'spent')}
             </div>
           </div>
 
@@ -129,12 +129,12 @@ export default function MLROIWidget() {
                     content="Percentage of interventions that successfully prevented a no-show.
 
 Calculation:
-(Customers who showed up after intervention) Ã· (Total interventions)
+(Customers who showed up after intervention) ÷ (Total interventions)
 
 Example:
-â€¢ 34 interventions (calls made)
-â€¢ 23 customers showed up
-â€¢ Success Rate: 67.6%"
+• 34 interventions (calls made)
+• 23 customers showed up
+• Success Rate: 67.6%"
                     position="right"
                     size="sm"
                   />
@@ -161,10 +161,10 @@ Example:
                     content="Actions taken to prevent no-shows based on ML risk predictions.
 
 Types of Interventions:
-â€¢ Confirmation calls
-â€¢ Reminder emails/SMS
-â€¢ Deposit requests
-â€¢ Premium table upgrades
+• Confirmation calls
+• Reminder emails/SMS
+• Deposit requests
+• Premium table upgrades
 
 Each intervention has a cost and potential value saved."
                     position="right"

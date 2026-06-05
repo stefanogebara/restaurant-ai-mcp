@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 
@@ -15,8 +15,8 @@ const STATUS_LIGHT_STYLES: Record<string, string> = {
 /**
  * Status card for the Fast Voice engine. Previously this surfaced
  * "WebSocket Endpoint: seatable-voice.fly.dev" and "Engine: OpenAI Realtime API"
- * to non-technical restaurant owners â€” implementation details that read as
- * "is this broken?" to JoÃ£o. Now we lead with a plain-English status, and
+ * to non-technical restaurant owners — implementation details that read as
+ * "is this broken?" to João. Now we lead with a plain-English status, and
  * keep the technical breadcrumbs behind a "Technical details" disclosure so
  * support can still grab them on demand.
  */
@@ -41,8 +41,8 @@ export default function OpenAIEngineInfo({ engineStatus, currentOpenAIVoice }: P
         <div>
           <p className="text-sm font-semibold text-deep-charcoal">
             {isActive
-              ? t('voiceEngine.statusActive', 'Running normally â€” ready to take calls.')
-              : t('voiceEngine.statusTesting', 'In test mode â€” calls are previewed but not answered yet.')}
+              ? t('voiceEngine.statusActive', 'Running normally — ready to take calls.')
+              : t('voiceEngine.statusTesting', 'In test mode — calls are previewed but not answered yet.')}
           </p>
           <p className="text-xs text-warm-stone mt-0.5">
             {t('voiceEngine.statusVoice', 'Voice: {{voice}}', { voice: currentOpenAIVoice })}

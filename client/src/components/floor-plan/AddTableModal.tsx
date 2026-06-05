@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import type { Table, TableShape } from '../../types/host.types';
@@ -30,7 +30,7 @@ export default function AddTableModal({ onClose, onAdd, nextNumber, locations, a
     e.preventDefault();
     const loc = showNewLoc && newLocation.trim() ? newLocation.trim() : location;
 
-    // Build the occupied-cell set from each existing table's full footprint â€”
+    // Build the occupied-cell set from each existing table's full footprint —
     // not just its anchor cell. Previously a 1x1 anchor check let new
     // rectangles/booths render on top of adjacent tables until the user
     // dragged them apart.

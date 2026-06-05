@@ -1,5 +1,5 @@
-﻿/**
- * DemoRestaurantInfoCard â€” shows real restaurant details (address, hours, menu)
+/**
+ * DemoRestaurantInfoCard — shows real restaurant details (address, hours, menu)
  * Only rendered when the preset has an `info` field (e.g. makoto).
  */
 
@@ -11,8 +11,8 @@ interface Props {
 }
 
 const LABELS = {
-  es: { address: 'DirecciÃ³n', phone: 'TelÃ©fono', hours: 'Horario', website: 'Web', chef: 'Chef', recognition: 'Reconocimiento', menu: 'Carta destacada' },
-  'pt-BR': { address: 'EndereÃ§o', phone: 'Telefone', hours: 'HorÃ¡rio', website: 'Site', chef: 'Chef', recognition: 'Reconhecimento', menu: 'Destaques do cardÃ¡pio' },
+  es: { address: 'Dirección', phone: 'Teléfono', hours: 'Horario', website: 'Web', chef: 'Chef', recognition: 'Reconocimiento', menu: 'Carta destacada' },
+  'pt-BR': { address: 'Endereço', phone: 'Telefone', hours: 'Horário', website: 'Site', chef: 'Chef', recognition: 'Reconhecimento', menu: 'Destaques do cardápio' },
   en: { address: 'Address', phone: 'Phone', hours: 'Hours', website: 'Website', chef: 'Chef', recognition: 'Recognition', menu: 'Featured dishes' },
 };
 

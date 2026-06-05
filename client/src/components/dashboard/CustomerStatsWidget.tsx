@@ -1,4 +1,4 @@
-﻿import { useLTVStats } from '../../hooks/useLTVData';
+import { useLTVStats } from '../../hooks/useLTVData';
 import { formatCurrency } from '../../utils/currency';
 import type { LTVStats } from '../host/ltvDashboard.types';
 
@@ -39,7 +39,7 @@ export default function CustomerStatsWidget({ isDemo }: CustomerStatsWidgetProps
   return (
     <div className="glass-card p-5">
       <div className="text-[11px] font-bold text-stone-500 uppercase tracking-widest mb-5">
-        InteligÃªncia de Clientes
+        Inteligência de Clientes
       </div>
       <div className="grid grid-cols-2 gap-3">
         <MetricBox
@@ -57,7 +57,7 @@ export default function CustomerStatsWidget({ isDemo }: CustomerStatsWidgetProps
           valueColor="text-red-600"
         />
         <MetricBox
-          label="LTV MÃ©dio"
+          label="LTV Médio"
           value={formatCurrency(stats.avg_ltv)}
         />
       </div>

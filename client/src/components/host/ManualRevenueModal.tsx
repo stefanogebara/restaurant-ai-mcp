@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Manual Revenue Entry Modal
  *
  * Allows staff to manually enter revenue data for customers
@@ -63,7 +63,7 @@ export default function ManualRevenueModal({
   const [totalRevenue, setTotalRevenue] = useState('');
   const [tipAmount, setTipAmount] = useState('');
   const [partySize, setPartySize] = useState('2');
-  // Local timezone, NOT UTC â€” see todayLocalISO docs.
+  // Local timezone, NOT UTC — see todayLocalISO docs.
   const [serviceDate, setServiceDate] = useState(todayLocalISO());
   const [serviceTime, setServiceTime] = useState('');
   const [notes, setNotes] = useState('');

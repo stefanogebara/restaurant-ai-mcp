@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import { useToast } from '../../contexts/ToastContext';
@@ -10,9 +10,9 @@ interface Props {
 }
 
 /**
- * Lead with the host-facing fact: "Ready to take calls â€” last updated 3 days
+ * Lead with the host-facing fact: "Ready to take calls — last updated 3 days
  * ago." The previous version showed "Voice Engine: turbo_v2.5" and a copyable
- * UUID Agent ID as primary surface area â€” neither means anything to a
+ * UUID Agent ID as primary surface area — neither means anything to a
  * restaurant owner. Keep the technical details available behind a disclosure
  * for support.
  */

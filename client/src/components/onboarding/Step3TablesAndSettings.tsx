@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Step 3: Tables & Settings (Merged)
  *
  * Combined step for the simplified 4-step onboarding flow.
@@ -169,7 +169,7 @@ export default function Step3TablesAndSettings({ data, updateData, onNext, onBac
   };
 
   const updateTableConfig = (areaIndex: number, capacity: number, shape: TableShape, field: 'count' | 'is_fixed_seating' | 'is_joinable', value: number | boolean) => {
-    // Fully immutable update â€” the previous version did `[...data.areas]`
+    // Fully immutable update — the previous version did `[...data.areas]`
     // (shallow) then mutated `area.tables` and the table object in place,
     // violating the project immutability rule and defeating referential
     // equality (memoized children, the localStorage persist snapshot).

@@ -1,4 +1,4 @@
-﻿import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import ThiingsIcon from '../common/ThiingsIcon';
 import type { DemoLang } from '../../hooks/useDemoLocale';
 
@@ -51,18 +51,18 @@ function buildResponsePT(input: string, ctx: Ctx): string {
   const occ = ctx.totalTables > 0 ? Math.round((ctx.occupiedTables / ctx.totalTables) * 100) : 0;
 
   if (lower.includes('mesa') || lower.includes('disponiv') || lower.includes('table'))
-    return `VocÃª tem ${avail} de ${ctx.totalTables} mesas disponÃ­veis (${occ}% de ocupaÃ§Ã£o). ${avail <= 2 ? 'Ficando apertado â€” considere a lista de espera.' : 'Bastante espaÃ§o para walk-ins.'}`;
+    return `Você tem ${avail} de ${ctx.totalTables} mesas disponíveis (${occ}% de ocupação). ${avail <= 2 ? 'Ficando apertado — considere a lista de espera.' : 'Bastante espaço para walk-ins.'}`;
   if (lower.includes('espera') || lower.includes('fila') || lower.includes('waitlist'))
-    return ctx.waitlistCount > 0 ? `${ctx.waitlistCount === 1 ? 'HÃ¡ 1 grupo' : `HÃ¡ ${ctx.waitlistCount} grupos`} na lista de espera. VocÃª tem ${avail} mesas livres.` : 'Lista de espera vazia â€” ninguÃ©m esperando.';
+    return ctx.waitlistCount > 0 ? `${ctx.waitlistCount === 1 ? 'Há 1 grupo' : `Há ${ctx.waitlistCount} grupos`} na lista de espera. Você tem ${avail} mesas livres.` : 'Lista de espera vazia — ninguém esperando.';
   if (lower.includes('reserva') || lower.includes('booking'))
-    return `VocÃª tem ${ctx.reservationsToday} reservas para hoje. ${ctx.reservationsToday > 4 ? 'Dia cheio pela frente.' : 'Carga tranquila para hoje.'}`;
+    return `Você tem ${ctx.reservationsToday} reservas para hoje. ${ctx.reservationsToday > 4 ? 'Dia cheio pela frente.' : 'Carga tranquila para hoje.'}`;
   if (lower.includes('cliente') || lower.includes('pessoa') || lower.includes('guest'))
     return `${ctx.totalGuests} clientes sentados em ${ctx.activeParties} ${ctx.activeParties === 1 ? 'grupo ativo' : 'grupos ativos'}.`;
   if (lower.includes('status') || lower.includes('resumo') || lower.includes('como'))
     return `Resumo: ${ctx.occupiedTables}/${ctx.totalTables} mesas ocupadas (${occ}%), ${ctx.activeParties} grupos ativos com ${ctx.totalGuests} clientes, ${ctx.reservationsToday} reservas hoje, ${ctx.waitlistCount} na espera.`;
 
   if (lower.includes('equipe') || lower.includes('func') || lower.includes('staff'))
-    return `Com ${ctx.activeParties} grupos ativos, recomendo pelo menos ${Math.max(2, Math.ceil(ctx.activeParties / 2))} garÃ§ons e 1 hostess no salÃ£o.`;
+    return `Com ${ctx.activeParties} grupos ativos, recomendo pelo menos ${Math.max(2, Math.ceil(ctx.activeParties / 2))} garçons e 1 hostess no salão.`;
   if (lower.includes('ajuda') || lower.includes('o que'))
     return 'Posso ajudar com: mesas, lista de espera, reservas, clientes, equipe e resumo geral.';
   if (lower.includes('oi') || lower.includes('ola') || lower.includes('bom'))
@@ -73,7 +73,7 @@ function buildResponsePT(input: string, ctx: Ctx): string {
 const uiLabels = {
   en: { title: 'Manager AI', subtitle: 'Demo mode -- no real data', close: 'Close chat', placeholder: 'Ask about your restaurant...', send: 'Send message' },
   'pt-BR': { title: 'Gerente IA', subtitle: 'Modo demo -- sem dados reais', close: 'Fechar chat', placeholder: 'Pergunte sobre seu restaurante...', send: 'Enviar mensagem' },
-  es: { title: 'IA del Gerente', subtitle: 'Modo demo â€” sin datos reales', close: 'Cerrar chat', placeholder: 'Pregunta sobre tu restaurante...', send: 'Enviar mensaje' },
+  es: { title: 'IA del Gerente', subtitle: 'Modo demo — sin datos reales', close: 'Cerrar chat', placeholder: 'Pregunta sobre tu restaurante...', send: 'Enviar mensaje' },
 } as const;
 
 let msgCounter = 0;
@@ -111,7 +111,7 @@ export default function DemoManagerChat({
   const introMsg = lang === 'pt-BR'
     ? `Oi! Sou seu gerente IA. Voce tem ${activeParties} grupos ativos e ${reservationsToday} reservas hoje. Pergunte qualquer coisa!`
     : lang === 'es'
-    ? `Â¡Hola! Soy tu asistente IA. Tienes ${activeParties} grupos activos y ${reservationsToday} reservas hoy. Â¡PregÃºntame lo que quieras!`
+    ? `¡Hola! Soy tu asistente IA. Tienes ${activeParties} grupos activos y ${reservationsToday} reservas hoy. ¡Pregúntame lo que quieras!`
     : `Hi! I'm your AI manager assistant. You have ${activeParties} active parties and ${reservationsToday} reservations today. Ask me anything!`;
 
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -196,7 +196,7 @@ export default function DemoManagerChat({
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder={ui.placeholder}
-            className="flex-1 px-3.5 py-2.5 bg-soft-gray border border-glass-border-dark rounded-xl text-sm text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy/30"
+            className="flex-1 px-3.5 py-2.5 bg-white/60 backdrop-blur-glass-chip border border-glass-border-dark rounded-xl text-sm text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy/30"
           />
           <button
             type="submit"

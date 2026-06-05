@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import { POLICY_KEYS, policyValueForStorage, detectPolicyKey } from '../../utils/cancellationPolicy';
@@ -41,8 +41,8 @@ export default function ReservationSettingsPanel({ advanceBookingDays, bufferTim
             <label htmlFor="advance_booking_days" className="block text-sm font-semibold text-deep-charcoal">
               {t('onboarding.advanceBookingLabel')}
             </label>
-            {/* The previous â“˜ icon used the HTML `title` attribute, which only
-                appears on mouse hover. Onboarding is mostly run on phones â€”
+            {/* The previous ⓘ icon used the HTML `title` attribute, which only
+                appears on mouse hover. Onboarding is mostly run on phones —
                 Maria never saw any of these hints. Inline muted text works
                 everywhere. */}
             <p className="text-xs text-warm-stone mb-2 mt-0.5">{t('onboarding.advanceBookingHint')}</p>
@@ -87,7 +87,7 @@ export default function ReservationSettingsPanel({ advanceBookingDays, bufferTim
               id="cancellation_policy"
               // Save a stable language-independent key (e.g. "cancellationPreset:cancelFree2h")
               // instead of the translated label. The booking page resolves the
-              // key in the customer's locale via localizeCancellationPolicy â€”
+              // key in the customer's locale via localizeCancellationPolicy —
               // so a restaurant onboarded in PT-BR shows EN customers the
               // English version automatically (and vice versa).
               value={(() => {

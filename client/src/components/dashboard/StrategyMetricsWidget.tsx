@@ -1,7 +1,7 @@
-﻿/**
+/**
  * StrategyMetricsWidget
  *
- * The "val_bpb" scoreboard for the autoresearch loop â€” shows whether
+ * The "val_bpb" scoreboard for the autoresearch loop — shows whether
  * the AI strategy is actually moving the 3 key business metrics:
  *   1. No-show rate (target < 5%)
  *   2. Avg revenue per cover (target R$90+)
@@ -109,7 +109,7 @@ function MetricCard({
 
       <div className="flex items-baseline gap-2 mb-1">
         <span className={`text-2xl font-semibold font-serif ${bad ? 'text-red-600' : good ? 'text-rose-700' : 'text-deep-charcoal'}`}>
-          {value !== null ? metric.format(value) : 'â€”'}
+          {value !== null ? metric.format(value) : '—'}
         </span>
         <span className="text-xs text-muted-stone">
           {t('strategy.target', 'target')} {metric.key === 'revenue' ? `${formatCurrency(target)}+` : metric.targetLabel}
@@ -231,12 +231,12 @@ export default function StrategyMetricsWidget() {
 
           {data.summary.total_reservations === 0 ? (
             <p className="text-xs text-muted-stone text-center mt-4">
-              {t('strategy.noReservations', 'No reservations in this period yet â€” metrics will appear as data comes in')}
+              {t('strategy.noReservations', 'No reservations in this period yet — metrics will appear as data comes in')}
             </p>
           ) : (
             <p className="text-xs text-muted-stone mt-4">
               {t('strategy.basedOn', 'Based on {{count}} reservations', { count: data.summary.total_reservations })}
-              {data.summary.data_points > 0 ? ` Â· ${t('strategy.completedServices', '{{count}} completed services', { count: data.summary.data_points })}` : ''}
+              {data.summary.data_points > 0 ? ` · ${t('strategy.completedServices', '{{count}} completed services', { count: data.summary.data_points })}` : ''}
               {' '}{(() => {
                 const sinceDate = new Date(data.since);
                 const isFuture = sinceDate.getTime() > Date.now();
@@ -245,7 +245,7 @@ export default function StrategyMetricsWidget() {
                 }
                 return t('strategy.since', 'since {{date}}', { date: data.since });
               })()}
-              {' Â· '}{t('strategy.dashedLine', 'Dashed line = target')}
+              {' · '}{t('strategy.dashedLine', 'Dashed line = target')}
             </p>
           )}
         </>

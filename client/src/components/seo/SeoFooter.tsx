@@ -1,5 +1,5 @@
-﻿/**
- * SeoFooter â€” minimal footer for SEO landing pages.
+/**
+ * SeoFooter — minimal footer for SEO landing pages.
  * Links to key pages and displays copyright.
  */
 

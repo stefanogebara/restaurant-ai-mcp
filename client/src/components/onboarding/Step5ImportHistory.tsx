@@ -1,13 +1,13 @@
-﻿/**
+/**
  * Step 5: Import Customer History
  *
  * Optional onboarding step that lets restaurant managers upload a CSV
  * of past customers so the AI has historical context from day 1.
  *
  * CSV format: name, phone, email, visits, last_visit, avg_spend
- * Only `phone` is required â€” all other columns are optional.
+ * Only `phone` is required — all other columns are optional.
  *
- * The step is entirely optional â€” "Skip for now" proceeds without any upload.
+ * The step is entirely optional — "Skip for now" proceeds without any upload.
  */
 
 import { useState, useRef } from 'react';
@@ -168,15 +168,15 @@ export default function Step5ImportHistory({ onNext }: Step5ImportHistoryProps) 
               {t('onboarding.csvFormat')}
             </p>
             <p className="mt-2 text-[11px] text-warm-stone/70">
-              {t('onboarding.csvOnlyHint', 'Only .csv files. Need only the phone column â€” the rest are optional.')}
+              {t('onboarding.csvOnlyHint', 'Only .csv files. Need only the phone column — the rest are optional.')}
             </p>
           </>
         )}
       </div>
 
-      {/* Format hint â€” a friendly table preview + a downloadable template.
+      {/* Format hint — a friendly table preview + a downloadable template.
           The previous version showed `name, phone, email, visits, last_visit,
-          avg_spend` as raw snake_case to a non-technical owner â€” most users
+          avg_spend` as raw snake_case to a non-technical owner — most users
           guessed wrong on date format or currency and skipped the step. */}
       <div className="rounded-xl bg-soft-gray p-4 text-xs text-stone-gray space-y-3">
         <div className="flex items-center justify-between gap-3">
@@ -186,7 +186,7 @@ export default function Step5ImportHistory({ onNext }: Step5ImportHistoryProps) 
               [
                 'name,phone,email,visits,last_visit,avg_spend',
                 'Maria Silva,+5511999990001,maria@example.com,5,2025-12-12,180',
-                'JoÃ£o Pereira,+5511999990002,joao@example.com,2,2026-01-04,95',
+                'João Pereira,+5511999990002,joao@example.com,2,2026-01-04,95',
               ].join('\n')
             )}`}
             download="seatable-import-template.csv"
@@ -211,7 +211,7 @@ export default function Step5ImportHistory({ onNext }: Step5ImportHistoryProps) 
               <tr>
                 <td className="px-2 py-1">Maria Silva</td>
                 <td className="px-2 py-1">+5511999990001</td>
-                <td className="px-2 py-1">maria@â€¦</td>
+                <td className="px-2 py-1">maria@…</td>
                 <td className="px-2 py-1">5</td>
                 <td className="px-2 py-1">2025-12-12</td>
                 <td className="px-2 py-1">180</td>

@@ -282,3 +282,25 @@ curl -X POST https://seatable.one/api/waha-webhook \
   -H "Content-Type: application/json" \
   -d '{"event":"message","session":"default","payload":{"id":"test-001","from":"5511977665544@c.us","fromMe":false,"body":"...","type":"chat","hasMedia":false}}'
 ```
+
+## 2026-06-05 — PowerShell mass-replace corrupts UTF-8 multi-byte sequences
+
+**Symptom:** Vercel build errors with `Invalid regular expression: /[\xCC\x80-\xCD\xAF]/g: Range out of order` and Portuguese text shows mojibake (`Previsão` → `PrevisÃ£o`).
+
+**Root cause:** Used PowerShell's `Get-Content -Raw` + `Set-Content -NoNewline -Encoding UTF8` for mass-replace passes. On Windows, `Get-Content` reads as the default ANSI codepage (cp1252) when the file lacks a BOM, then writes back as UTF-8 — every non-ASCII byte sequence gets re-encoded into garbage.
+
+**Prevention:** For mass-replace across many files, use Python (which always handles UTF-8 cleanly):
+```python
+with open(f, 'rb') as fp: raw = fp.read()
+text = raw.decode('utf-8')
+text = text.replace('bg-white', 'glass-card')  # etc
+with open(f, 'wb') as fp: fp.write(text.encode('utf-8'))
+```
+Or use `iconv`/`sed` with explicit encoding flags. Never use Get-Content + Set-Content on files with non-ASCII content on Windows.
+
+**Recovery:** If already corrupted, reverse via:
+```python
+repaired = corrupted_text.encode('cp1252').decode('utf-8')
+```
+Files containing PT-BR / accented chars often need this; pure-ASCII files are fine.
+

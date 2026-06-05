@@ -1,4 +1,4 @@
-﻿import { useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { authFetch } from '../../services/api';
 import { useRevenueStats } from '../../hooks/useRevenueStats';
@@ -53,7 +53,7 @@ export default function AnalyticsStats({ overview, reservationsByStatus }: Analy
     queryKey: ['analytics-compare'],
     queryFn: async () => {
       const res = await authFetch('/api/analytics/compare?period_a=last_week&period_b=this_week');
-      // Throw, don't `return null` â€” a queryFn returning null is treated by
+      // Throw, don't `return null` — a queryFn returning null is treated by
       // React Query as a successful result, so it never retries and isError
       // never fires. The week-over-week delta badges would silently vanish
       // forever after one transient failure.

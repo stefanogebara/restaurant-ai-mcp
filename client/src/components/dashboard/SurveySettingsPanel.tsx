@@ -1,5 +1,5 @@
-﻿/**
- * SurveySettingsPanel â€” NPS/satisfaction survey config + results summary.
+/**
+ * SurveySettingsPanel — NPS/satisfaction survey config + results summary.
  * Placed in WhatsApp Settings page.
  */
 import { useState, useEffect } from 'react';

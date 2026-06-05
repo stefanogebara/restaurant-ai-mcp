@@ -1,5 +1,5 @@
-﻿/**
- * SeoPainPoints â€” displays cuisine-specific pain points
+/**
+ * SeoPainPoints — displays cuisine-specific pain points
  * that the target audience will recognize.
  */
 

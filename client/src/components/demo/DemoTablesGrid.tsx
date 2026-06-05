@@ -1,4 +1,4 @@
-﻿import type { DemoTable } from '../../hooks/useDemoState';
+import type { DemoTable } from '../../hooks/useDemoState';
 
 interface DemoTablesGridProps {
   tables: DemoTable[];
@@ -7,13 +7,13 @@ interface DemoTablesGridProps {
 
 const labels = {
   en: { title: 'Tables', seats: 'seats', available: 'Available', occupied: 'Occupied', reserved: 'Reserved' },
-  'pt-BR': { title: 'Mesas', seats: 'lugares', available: 'DisponÃ­vel', occupied: 'Ocupada', reserved: 'Reservada' },
+  'pt-BR': { title: 'Mesas', seats: 'lugares', available: 'Disponível', occupied: 'Ocupada', reserved: 'Reservada' },
   es: { title: 'Mesas', seats: 'plazas', available: 'Disponible', occupied: 'Ocupada', reserved: 'Reservada' },
 } as const;
 
 const LOCATION_LABELS: Record<string, Record<string, string>> = {
-  'pt-BR': { window: 'Janela', indoor: 'SalÃ£o', terrace: 'TerraÃ§o', patio: 'PÃ¡tio', bar: 'Bar', Window: 'Janela', Indoor: 'SalÃ£o', Terrace: 'TerraÃ§o', Patio: 'PÃ¡tio', Bar: 'Bar' },
-  es: { window: 'Ventana', indoor: 'SalÃ³n', terrace: 'Terraza', patio: 'Patio', bar: 'Bar', Window: 'Ventana', Indoor: 'SalÃ³n', Terrace: 'Terraza', Patio: 'Patio', Bar: 'Bar' },
+  'pt-BR': { window: 'Janela', indoor: 'Salão', terrace: 'Terraço', patio: 'Pátio', bar: 'Bar', Window: 'Janela', Indoor: 'Salão', Terrace: 'Terraço', Patio: 'Pátio', Bar: 'Bar' },
+  es: { window: 'Ventana', indoor: 'Salón', terrace: 'Terraza', patio: 'Patio', bar: 'Bar', Window: 'Ventana', Indoor: 'Salón', Terrace: 'Terraza', Patio: 'Patio', Bar: 'Bar' },
 };
 
 // Per Nordic Clean: cards stay neutral; status is conveyed by the dot + text
@@ -46,7 +46,7 @@ export default function DemoTablesGrid({ tables, lang }: DemoTablesGridProps) {
         <div>
           <h2 className="text-xl font-bold text-deep-charcoal tracking-tight">{t.title}</h2>
           <p className="text-sm text-warm-stone mt-0.5">
-            {available} {t.available.toLowerCase()} Â· {occupied} {t.occupied.toLowerCase()}
+            {available} {t.available.toLowerCase()} · {occupied} {t.occupied.toLowerCase()}
           </p>
         </div>
       </div>

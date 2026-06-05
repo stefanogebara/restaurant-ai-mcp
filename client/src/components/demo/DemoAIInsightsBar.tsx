@@ -1,4 +1,4 @@
-﻿import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface DemoAIInsightsBarProps {
@@ -20,7 +20,7 @@ interface ChatMessage {
   text: string;
 }
 
-// â”€â”€ i18n â”€â”€
+// ── i18n ──
 
 const labels = {
   en: {
@@ -45,7 +45,7 @@ const labels = {
   },
   es: {
     title: 'IA del Gerente',
-    inputPlaceholder: 'Â¿CÃ³mo va la noche? Â¿AlgÃºn consejo?',
+    inputPlaceholder: '¿Cómo va la noche? ¿Algún consejo?',
     typing: 'Pensando...',
     insightCapLabel: 'Capacidad',
     insightStaffLabel: 'Personal',
@@ -59,24 +59,24 @@ const labels = {
 const cannedResponses: Record<string, Array<{ keywords: string[]; response: string }>> = {
   en: [
     { keywords: ['today', 'tonight', 'movement', 'busy', 'how'], response: `Right now we have ${'{occupied}'} tables occupied out of ${'{total}'}. ${'{waitlist}'} groups on the waitlist. I'd recommend preparing for the dinner rush.` },
-    { keywords: ['staff', 'team', 'server', 'waiter'], response: "Your average table turn time this week is 52 minutes â€” 8% faster than last week. Great efficiency from the team." },
+    { keywords: ['staff', 'team', 'server', 'waiter'], response: "Your average table turn time this week is 52 minutes — 8% faster than last week. Great efficiency from the team." },
     { keywords: ['revenue', 'money', 'sales', 'billing'], response: "Based on current reservations and average spend, I'd estimate tonight's revenue around $3,200. Consider upselling desserts to boost the average ticket." },
     { keywords: ['reservation', 'booking', 'table'], response: "Looking at your reservation patterns, Fridays between 19:00-20:30 consistently fill up. Consider adding a second seating window." },
   ],
   'pt-BR': [
-    { keywords: ['hoje', 'movimento', 'como', 'noite', 'ocupaÃ§Ã£o'], response: `Agora temos ${'{occupied}'} mesas ocupadas de ${'{total}'}. ${'{waitlist}'} grupos na lista de espera. Recomendo preparar a equipe para o pico do jantar.` },
-    { keywords: ['equipe', 'garÃ§om', 'staff', 'time'], response: "O tempo mÃ©dio de rotaÃ§Ã£o de mesa esta semana Ã© de 52 minutos â€” 8% mais rÃ¡pido que semana passada. Ã“tima eficiÃªncia da equipe." },
-    { keywords: ['receita', 'faturamento', 'dinheiro', 'venda'], response: "Com base nas reservas atuais e gasto mÃ©dio, estimo o faturamento de hoje em torno de R$ 8.500. Considere sugerir sobremesas para aumentar o ticket mÃ©dio." },
-    { keywords: ['reserva', 'mesa', 'disponÃ­vel'], response: "Analisando seus padrÃµes de reserva, sextas entre 19:00-20:30 lotam consistentemente. Considere adicionar um segundo turno." },
-    { keywords: ['no-show', 'cancelamento', 'falta'], response: "Hoje temos 1 reserva com risco de no-show. Os lembretes automÃ¡ticos por WhatsApp jÃ¡ foram enviados â€” historicamente reduzimos no-shows em 40%." },
+    { keywords: ['hoje', 'movimento', 'como', 'noite', 'ocupação'], response: `Agora temos ${'{occupied}'} mesas ocupadas de ${'{total}'}. ${'{waitlist}'} grupos na lista de espera. Recomendo preparar a equipe para o pico do jantar.` },
+    { keywords: ['equipe', 'garçom', 'staff', 'time'], response: "O tempo médio de rotação de mesa esta semana é de 52 minutos — 8% mais rápido que semana passada. Ótima eficiência da equipe." },
+    { keywords: ['receita', 'faturamento', 'dinheiro', 'venda'], response: "Com base nas reservas atuais e gasto médio, estimo o faturamento de hoje em torno de R$ 8.500. Considere sugerir sobremesas para aumentar o ticket médio." },
+    { keywords: ['reserva', 'mesa', 'disponível'], response: "Analisando seus padrões de reserva, sextas entre 19:00-20:30 lotam consistentemente. Considere adicionar um segundo turno." },
+    { keywords: ['no-show', 'cancelamento', 'falta'], response: "Hoje temos 1 reserva com risco de no-show. Os lembretes automáticos por WhatsApp já foram enviados — historicamente reduzimos no-shows em 40%." },
   ],
   es: [
-    { keywords: ['noche', 'hoy', 'movimiento', 'ocupaciÃ³n', 'cÃ³mo'], response: `Ahora mismo tenemos ${'{occupied}'} mesas ocupadas de ${'{total}'}. ${'{waitlist}'} grupos en lista de espera. Recomiendo preparar al equipo para el servicio de cena.` },
-    { keywords: ['equipo', 'personal', 'camarero', 'staff'], response: "El tiempo medio de rotaciÃ³n de mesa esta semana es de 55 minutos â€” ideal para el ritmo de alta cocina. El equipo estÃ¡ trabajando muy bien." },
-    { keywords: ['factura', 'ingresos', 'ventas', 'dinero', 'ticket'], response: "Con las reservas actuales y el ticket medio del Omakase (~â‚¬90/cubierto), el servicio de esta noche podrÃ­a superar los â‚¬3.800. Considera ofrecer el maridaje sake para subir el ticket." },
-    { keywords: ['reserva', 'mesa', 'disponible', 'omakase'], response: "Los viernes y sÃ¡bados entre 21:00â€“22:30 son vuestros horarios de mayor demanda. El menÃº omakase tiene lista de espera â€” considera limitar plazas para mantener la calidad." },
-    { keywords: ['no-show', 'cancelaciÃ³n', 'falta'], response: "Tienes 1 reserva con riesgo de no-show esta noche. Los recordatorios automÃ¡ticos por WhatsApp se han enviado â€” histÃ³ricament reducimos no-shows un 38%." },
-    { keywords: ['wagyu', 'sushi', 'carta', 'menu', 'plato'], response: "El menÃº omakase y el wagyu con yema curada son tus platos mÃ¡s populares. Esta noche tienes 3 mesas que han pedido el omakase â€” verifica que hay stock suficiente." },
+    { keywords: ['noche', 'hoy', 'movimiento', 'ocupación', 'cómo'], response: `Ahora mismo tenemos ${'{occupied}'} mesas ocupadas de ${'{total}'}. ${'{waitlist}'} grupos en lista de espera. Recomiendo preparar al equipo para el servicio de cena.` },
+    { keywords: ['equipo', 'personal', 'camarero', 'staff'], response: "El tiempo medio de rotación de mesa esta semana es de 55 minutos — ideal para el ritmo de alta cocina. El equipo está trabajando muy bien." },
+    { keywords: ['factura', 'ingresos', 'ventas', 'dinero', 'ticket'], response: "Con las reservas actuales y el ticket medio del Omakase (~€90/cubierto), el servicio de esta noche podría superar los €3.800. Considera ofrecer el maridaje sake para subir el ticket." },
+    { keywords: ['reserva', 'mesa', 'disponible', 'omakase'], response: "Los viernes y sábados entre 21:00–22:30 son vuestros horarios de mayor demanda. El menú omakase tiene lista de espera — considera limitar plazas para mantener la calidad." },
+    { keywords: ['no-show', 'cancelación', 'falta'], response: "Tienes 1 reserva con riesgo de no-show esta noche. Los recordatorios automáticos por WhatsApp se han enviado — históricament reducimos no-shows un 38%." },
+    { keywords: ['wagyu', 'sushi', 'carta', 'menu', 'plato'], response: "El menú omakase y el wagyu con yema curada son tus platos más populares. Esta noche tienes 3 mesas que han pedido el omakase — verifica que hay stock suficiente." },
   ],
 };
 
@@ -87,10 +87,10 @@ function pickCannedResponse(text: string, langKey: string): string {
   return match?.response || responses[0].response;
 }
 
-// Placeholder for stats injection â€” component will override this
+// Placeholder for stats injection — component will override this
 let _statsForFallback = { occupied: '2', total: '8', waitlist: '2' };
 
-// â”€â”€ Sparkle Icon â”€â”€
+// ── Sparkle Icon ──
 
 const SparkleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -99,7 +99,7 @@ const SparkleIcon = () => (
   </svg>
 );
 
-// â”€â”€ Component â”€â”€
+// ── Component ──
 
 function injectStats(text: string): string {
   return text
@@ -178,7 +178,7 @@ export default function DemoAIInsightsBar({
       data-testid="ai-insights-bar"
     >
       <div className="flex flex-col gap-4">
-        {/* â”€â”€ Full-width Manager AI Chat â”€â”€ */}
+        {/* ── Full-width Manager AI Chat ── */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -206,9 +206,9 @@ export default function DemoAIInsightsBar({
               <div className="text-center py-4">
                 <p className="text-xs text-muted-stone/70 italic">
                   {langKey === 'pt-BR'
-                    ? '"Como estÃ¡ o movimento hoje?" ou "Sugira algo para o jantar"'
+                    ? '"Como está o movimento hoje?" ou "Sugira algo para o jantar"'
                     : langKey === 'es'
-                    ? '"Â¿CÃ³mo va la noche?" o "Â¿AlgÃºn consejo para el servicio?"'
+                    ? '"¿Cómo va la noche?" o "¿Algún consejo para el servicio?"'
                     : '"How is tonight looking?" or "Suggest something for dinner service"'}
                 </p>
               </div>

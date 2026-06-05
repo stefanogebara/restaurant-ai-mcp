@@ -1,4 +1,4 @@
-﻿import { useTranslation } from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import { useLTVStats } from '../../hooks/useLTVData';
 import { formatCurrency } from '../../utils/currency';
@@ -65,7 +65,7 @@ export default function WeeklyForecastCard() {
             </div>
 
             <div className="space-y-0">
-              {/* Guard numeric fields with ?? 0 â€” a partial stats payload would
+              {/* Guard numeric fields with ?? 0 — a partial stats payload would
                   otherwise render "R$ NaN" via formatCurrency(undefined). */}
               <StatRow label={t('insights.totalCustomers')} value={stats.total_customers ?? 0} />
               <StatRow label={t('insights.avgLifetimeValue')} value={formatCurrency(stats.avg_ltv ?? 0)} />

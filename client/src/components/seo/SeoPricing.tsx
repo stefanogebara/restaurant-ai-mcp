@@ -1,5 +1,5 @@
-﻿/**
- * SeoPricing â€” competitor comparison + Seatable pricing.
+/**
+ * SeoPricing — competitor comparison + Seatable pricing.
  * Shows a feature comparison table and the three plans.
  *
  * NOTE: SEO pages are exclusively PT-BR content targeting the Brazilian market,
@@ -20,11 +20,11 @@ interface SeoPricingProps {
 const COMPARISON_FEATURES = [
   'Reservas via WhatsApp AI',
   'Agente de voz 24/7',
-  'PrevisÃ£o de no-show (ML)',
+  'Previsão de no-show (ML)',
   'Fila de espera digital',
   'Dashboard em tempo real',
-  'DepÃ³sito antecipado',
-  'Suporte em portuguÃªs',
+  'Depósito antecipado',
+  'Suporte em português',
   'Sem taxa por reserva',
 ];
 
@@ -39,40 +39,40 @@ const PLANS = [
   {
     name: 'Essencial',
     price: formatPriceLocale(PLAN_PRICES_BRL.starter, 'BRL'),
-    period: '/mÃªs',
+    period: '/mês',
     features: [
-      'AtÃ© 50 reservas/mÃªs',
+      'Até 50 reservas/mês',
       'WhatsApp AI',
-      'Dashboard bÃ¡sico',
+      'Dashboard básico',
       'Suporte por email',
       'Fila de espera digital',
     ],
-    cta: 'ComeÃ§ar com Essencial',
+    cta: 'Começar com Essencial',
     highlighted: false,
   },
   {
     name: 'Profissional',
     price: formatPriceLocale(PLAN_PRICES_BRL.growth, 'BRL'),
-    period: '/mÃªs',
+    period: '/mês',
     features: [
-      'AtÃ© 150 reservas/mÃªs',
+      'Até 150 reservas/mês',
       'WhatsApp + Voz AI',
-      'Analytics avanÃ§ado',
-      'PrevisÃ£o de no-show',
-      'Suporte prioritÃ¡rio',
-      '14 dias grÃ¡tis',
+      'Analytics avançado',
+      'Previsão de no-show',
+      'Suporte prioritário',
+      '14 dias grátis',
     ],
-    cta: 'Teste 14 dias grÃ¡tis',
+    cta: 'Teste 14 dias grátis',
     highlighted: true,
   },
   {
     name: 'Enterprise',
     price: formatPriceLocale(PLAN_PRICES_BRL.scale, 'BRL'),
-    period: '/mÃªs',
+    period: '/mês',
     features: [
       'Reservas ilimitadas',
       'Todas as funcionalidades',
-      'IntegraÃ§Ãµes customizadas',
+      'Integrações customizadas',
       'Suporte dedicado',
       'SMS ilimitado',
       'Multi-unidade',

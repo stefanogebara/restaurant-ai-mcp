@@ -1,16 +1,16 @@
-﻿/**
- * Instagram connector panel â€” lives in /host-dashboard/voice-settings under
+/**
+ * Instagram connector panel — lives in /host-dashboard/voice-settings under
  * the "Instagram" tab. Lets the user connect their IG Business account so
  * Seatable can learn their tone of voice (C2) and draft captions (C3).
  *
  * Modeled after StripeConnectPanel for visual + behavior parity.
  *
  * State machine:
- *   - not connected â†’ "Connect Instagram" button â†’ opens Meta OAuth in new tab
- *   - active        â†’ shows handle + picture + followers + tone profile status
- *   - expired       â†’ "Reconnect Instagram" (token past 60d)
- *   - restricted    â†’ amber pill, shows last_error
- *   - revoked       â†’ red pill, "Reconnect"
+ *   - not connected → "Connect Instagram" button → opens Meta OAuth in new tab
+ *   - active        → shows handle + picture + followers + tone profile status
+ *   - expired       → "Reconnect Instagram" (token past 60d)
+ *   - restricted    → amber pill, shows last_error
+ *   - revoked       → red pill, "Reconnect"
  */
 import { useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -30,15 +30,15 @@ const STATUS_TONE: Record<InstagramStatus, { dot: string; bg: string; text: stri
 // Map the callback's redirect reasons to user-facing toast copy. Same
 // pattern as POSIntegrationPanel for Square return params.
 const RETURN_REASONS: Record<string, { kind: 'success' | 'info' | 'error'; copy: string }> = {
-  ok:                       { kind: 'success', copy: 'Instagram connected. Learning your tone nowâ€¦' },
-  denied:                   { kind: 'info',    copy: 'You declined the Instagram permissions â€” no harm done.' },
+  ok:                       { kind: 'success', copy: 'Instagram connected. Learning your tone now…' },
+  denied:                   { kind: 'info',    copy: 'You declined the Instagram permissions — no harm done.' },
   no_ig_account:            { kind: 'error',   copy: "We couldn't find an Instagram Business account on any of your Pages. Convert your IG to a Business account and try again." },
-  invalid_state:            { kind: 'error',   copy: 'That connect link expired (10 min limit) â€” please try again.' },
+  invalid_state:            { kind: 'error',   copy: 'That connect link expired (10 min limit) — please try again.' },
   token_exchange_failed:    { kind: 'error',   copy: 'Meta refused the connection. Please retry.' },
   long_token_exchange_failed: { kind: 'error', copy: 'Meta refused the long-lived token. Please retry.' },
   pages_fetch_failed:       { kind: 'error',   copy: "Couldn't list your Facebook Pages. Check you granted page permissions." },
   not_configured:           { kind: 'error',   copy: 'Instagram connector not yet configured on the server.' },
-  server_error:             { kind: 'error',   copy: 'Something broke on our end â€” please try again or contact support.' },
+  server_error:             { kind: 'error',   copy: 'Something broke on our end — please try again or contact support.' },
 };
 
 interface OAuthStartResponse {
@@ -84,7 +84,7 @@ export default function InstagramPanel() {
       return body.url;
     },
     onSuccess: (url) => {
-      // Open in same tab â€” Meta redirects back to /host-dashboard/voice-settings
+      // Open in same tab — Meta redirects back to /host-dashboard/voice-settings
       // with the ?instagram_connect=<reason> param the useEffect above handles.
       window.location.href = url;
     },
@@ -115,7 +115,7 @@ export default function InstagramPanel() {
   });
 
   if (isLoading) {
-    return <div className="text-sm text-muted-stone" data-testid="instagram-panel-loading">Loading Instagram statusâ€¦</div>;
+    return <div className="text-sm text-muted-stone" data-testid="instagram-panel-loading">Loading Instagram status…</div>;
   }
   if (isError) {
     return (
@@ -152,7 +152,7 @@ export default function InstagramPanel() {
       </header>
 
       {connected && data?.username && (
-        <div className="flex items-center gap-3 p-3 bg-warm-white border border-glass-border-dark rounded-xl">
+        <div className="flex items-center gap-3 p-3 bg-white/60 backdrop-blur-glass-chip border border-glass-border-dark rounded-xl">
           {data.profile_picture_url && (
             <img
               src={data.profile_picture_url}
@@ -164,8 +164,8 @@ export default function InstagramPanel() {
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-deep-charcoal truncate">@{data.username}</p>
             <p className="text-xs text-muted-stone">
-              {typeof data.followers_count === 'number' && `${data.followers_count.toLocaleString()} followers Â· `}
-              {data.tone_profile_ready ? 'Tone profile ready' : 'Building tone profileâ€¦'}
+              {typeof data.followers_count === 'number' && `${data.followers_count.toLocaleString()} followers · `}
+              {data.tone_profile_ready ? 'Tone profile ready' : 'Building tone profile…'}
             </p>
           </div>
           <button
@@ -175,7 +175,7 @@ export default function InstagramPanel() {
             className="text-xs text-burgundy underline underline-offset-2 hover:text-burgundy-dark disabled:opacity-50"
             data-testid="instagram-panel-refresh-tone-cta"
           >
-            {refreshToneMutation.isPending ? 'Refreshingâ€¦' : data.tone_profile_ready ? 'Refresh tone' : 'Build now'}
+            {refreshToneMutation.isPending ? 'Refreshing…' : data.tone_profile_ready ? 'Refresh tone' : 'Build now'}
           </button>
         </div>
       )}
@@ -199,7 +199,7 @@ export default function InstagramPanel() {
           data-testid="instagram-panel-connect-cta"
         >
           {connectMutation.isPending
-            ? 'Opening Metaâ€¦'
+            ? 'Opening Meta…'
             : connected ? 'Reconnect Instagram' : 'Connect Instagram'}
         </button>
       </div>

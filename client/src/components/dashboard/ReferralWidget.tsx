@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { authFetch } from '../../services/api';
@@ -32,11 +32,11 @@ export default function ReferralWidget() {
   const { referral_url, stats } = data;
 
   const whatsappText = encodeURIComponent(
-    t('referral.whatsappText', 'I use Seatable â€“ the AI that manages restaurant reservations. Try it free: {{url}}', { url: referral_url })
+    t('referral.whatsappText', 'I use Seatable – the AI that manages restaurant reservations. Try it free: {{url}}', { url: referral_url })
   );
-  const emailSubject = encodeURIComponent(t('referral.emailSubject', 'Try Seatable â€“ AI reservations for restaurants'));
+  const emailSubject = encodeURIComponent(t('referral.emailSubject', 'Try Seatable – AI reservations for restaurants'));
   const emailBody = encodeURIComponent(
-    t('referral.emailBody', 'Hey,\n\nI use Seatable â€“ it handles restaurant reservations with AI. Thought you might find it useful.\n\nTry it free here: {{url}}\n\nCheers', { url: referral_url })
+    t('referral.emailBody', 'Hey,\n\nI use Seatable – it handles restaurant reservations with AI. Thought you might find it useful.\n\nTry it free here: {{url}}\n\nCheers', { url: referral_url })
   );
 
   const handleCopy = async () => {
@@ -51,7 +51,7 @@ export default function ReferralWidget() {
 
   return (
     <div className="bg-warm-white border border-glass-border-dark rounded-2xl overflow-hidden">
-      {/* Header row â€” always visible, toggles expansion */}
+      {/* Header row — always visible, toggles expansion */}
       <button
         type="button"
         aria-expanded={isExpanded}

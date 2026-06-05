@@ -1,4 +1,4 @@
-﻿import { useTranslation } from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 import type { VoiceEngineSettings } from '../../hooks/useVoiceEngineSettings';
 
 const STATUS_STYLES: Record<string, string> = {
@@ -15,8 +15,8 @@ interface Props {
 
 /**
  * The two voice engines are presented to the user by what they FEEL like
- * (premium / fast), not by their vendor name. JoÃ£o doesn't know what
- * "ElevenLabs" or "OpenAI Realtime" mean â€” those are implementation
+ * (premium / fast), not by their vendor name. João doesn't know what
+ * "ElevenLabs" or "OpenAI Realtime" mean — those are implementation
  * details. The vendor still drives the dropdowns and configuration
  * downstream; we just stop exposing the brand on the primary choice.
  */
@@ -36,7 +36,7 @@ export default function VoiceEngineSelector({ currentEngine, pendingEngine, engi
 
       <div className="p-6">
         <p className="text-sm text-stone-gray mb-4">
-          {t('voiceEngine.intro', 'Which voice should answer your phone? You can switch later â€” no calls are missed during the change.')}
+          {t('voiceEngine.intro', 'Which voice should answer your phone? You can switch later — no calls are missed during the change.')}
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <button

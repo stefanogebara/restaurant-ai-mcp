@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import ThiingsIcon from '../common/ThiingsIcon';
@@ -86,7 +86,7 @@ export default function LaunchChecklistModal({ bookingSlug, onDismiss }: Props) 
                 onClick={() => navigate('/host-dashboard/voice-settings')}
                 className="mt-2 text-xs font-semibold text-burgundy hover:underline"
               >
-                {t('launch.step1CTA', 'Open Voice Settings â†’')}
+                {t('launch.step1CTA', 'Open Voice Settings →')}
               </button>
             </div>
           </div>
@@ -120,7 +120,7 @@ export default function LaunchChecklistModal({ bookingSlug, onDismiss }: Props) 
                 </div>
               ) : (
                 <p className="text-xs text-[#9CA3AF] mt-0.5">
-                  {t('launch.step2Loading', 'Loading your booking linkâ€¦')}
+                  {t('launch.step2Loading', 'Loading your booking link…')}
                 </p>
               )}
             </div>
@@ -161,7 +161,7 @@ export default function LaunchChecklistModal({ bookingSlug, onDismiss }: Props) 
             }`}
           >
             {allChecked
-              ? t('launch.allDone', "All done â€” let's go!")
+              ? t('launch.allDone', "All done — let's go!")
               : t('launch.skipForNow', 'Skip for now')}
           </button>
         </div>

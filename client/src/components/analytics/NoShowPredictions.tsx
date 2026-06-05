@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import { parseLocalDate } from '../../utils/timeFormatting';
@@ -44,7 +44,7 @@ export default function NoShowPredictions() {
     );
   }
 
-  // A failed fetch must not render the green "all upcoming look good" state â€”
+  // A failed fetch must not render the green "all upcoming look good" state —
   // that tells the host there's no no-show risk when the model never ran.
   if (isError) {
     return (
@@ -152,7 +152,7 @@ export default function NoShowPredictions() {
                     <ul className="space-y-2">
                       {(prediction.recommendations ?? []).map((rec, idx) => (
                         <li key={idx} className="flex items-start gap-2 text-sm">
-                          <span className="text-burgundy mt-0.5">â€¢</span>
+                          <span className="text-burgundy mt-0.5">•</span>
                           <span>{rec}</span>
                         </li>
                       ))}

@@ -1,5 +1,5 @@
-﻿/**
- * RelatedPages â€” internal linking for SEO pages.
+/**
+ * RelatedPages — internal linking for SEO pages.
  * Shows "Veja tambem" cards linking to related cuisine/city pages.
  */
 

@@ -1,6 +1,6 @@
-﻿/**
+/**
  * One chat bubble. Bot bubbles are left-aligned, user bubbles right-aligned.
- * Bubble copy is plain text â€” formatting like the scraped-data card lives
+ * Bubble copy is plain text — formatting like the scraped-data card lives
  * in {@link RestaurantCard} which renders OUTSIDE this component.
  */
 import type { ChatMessage } from '../../lib/onboarding-chat/flow.types';

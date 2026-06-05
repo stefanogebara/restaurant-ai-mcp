@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import { type Conversation, formatDate, getOutcomeColor, getOutcomeLabelKey, getSentimentColor, getSentimentLabelKey } from './callTrackingTypes';
@@ -16,7 +16,7 @@ export default function CallConversationModal({ conversation, onClose }: Props) 
   const dialogRef = useRef<HTMLDivElement>(null);
 
   // Modal a11y: Escape to close, body-scroll lock, focus capture + Tab trap.
-  // The audit flagged all four as missing â€” keyboard/screen-reader users were
+  // The audit flagged all four as missing — keyboard/screen-reader users were
   // trapped behind the overlay with no way out.
   useEffect(() => {
     const previouslyFocused = document.activeElement as HTMLElement | null;

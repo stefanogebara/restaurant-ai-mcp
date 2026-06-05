@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import { useLTVAtRisk, useLTVTopVIPs, useSendCampaign } from '../../hooks/useLTVData';
@@ -54,7 +54,7 @@ function SendModal({ customer, onClose }: SendModalProps) {
             <div className="w-9 h-9 rounded-full bg-gradient-to-br from-burgundy to-rose-700 flex-shrink-0" />
             <div>
               <div className="text-sm font-semibold text-deep-charcoal">{customer.customer_name || customer.customer_id}</div>
-              <div className="text-xs text-warm-stone">{t('insights.churnRisk', { score: customer.churn_risk_score })} Â· {t('insights.visits', { count: customer.total_visits })}</div>
+              <div className="text-xs text-warm-stone">{t('insights.churnRisk', { score: customer.churn_risk_score })} · {t('insights.visits', { count: customer.total_visits })}</div>
             </div>
           </div>
 
@@ -113,14 +113,14 @@ function CustomerRow({ customer, showChurn, onSend }: CustomerRowProps) {
   const dateLocale = localeMap[i18n.language] ?? 'en-US';
   const lastVisit = customer.last_visit_date
     ? parseLocalDate(customer.last_visit_date).toLocaleDateString(dateLocale, { month: 'short', day: 'numeric' })
-    : 'â€”';
+    : '—';
 
   return (
     <div className="flex items-center gap-3 py-2.5 border-b border-glass-border-dark last:border-0">
       <div className="w-7 h-7 rounded-full bg-gradient-to-br from-stone-200 to-stone-300 flex-shrink-0" />
       <div className="flex-1 min-w-0">
         <div className="text-sm font-medium text-deep-charcoal truncate">{customer.customer_name || customer.customer_id}</div>
-        <div className="text-xs text-warm-stone">{t('insights.visits', { count: customer.total_visits })} Â· {t('insights.lastVisit', 'Last')}: {lastVisit}</div>
+        <div className="text-xs text-warm-stone">{t('insights.visits', { count: customer.total_visits })} · {t('insights.lastVisit', 'Last')}: {lastVisit}</div>
       </div>
       {showChurn && (
         <span className={`text-xs font-semibold flex-shrink-0 ${churnColor}`}>

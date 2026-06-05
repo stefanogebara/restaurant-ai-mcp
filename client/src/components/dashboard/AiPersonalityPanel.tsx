@@ -1,4 +1,4 @@
-﻿import { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAiPersonality, useSaveAiPersonality } from '../../hooks/useAiPersonality';
 import type { AiPersonality } from '../../hooks/useAiPersonality';
@@ -16,8 +16,8 @@ const SUGGESTED_TRAITS = [
 ];
 
 /**
- * Persona presets. The previous version asked JoÃ£o to combine 5 humor types
- * Ã— 3 communication styles Ã— 4 tones Ã— 5 traits from a pool of 12 â€” a
+ * Persona presets. The previous version asked João to combine 5 humor types
+ * × 3 communication styles × 4 tones × 5 traits from a pool of 12 — a
  * factor-explosion of choices nobody knows how to navigate. Now we lead with
  * 4 named presets that fill in all 4 dimensions at once, and keep the
  * granular pickers behind a "Customise" disclosure for power users.
@@ -213,7 +213,7 @@ export default function AiPersonalityPanel() {
       >
         {showCustomize
           ? t('dashboard.aiPersonality.hideCustomize', 'Hide fine controls')
-          : t('dashboard.aiPersonality.showCustomize', 'Customise furtherâ€¦')}
+          : t('dashboard.aiPersonality.showCustomize', 'Customise further…')}
       </button>
 
       {showCustomize && (
@@ -370,7 +370,7 @@ export default function AiPersonalityPanel() {
             )}
           </div>
 
-          {/* Verbal Quirks â€” renamed in copy from the previous "Verbal Quirks"
+          {/* Verbal Quirks — renamed in copy from the previous "Verbal Quirks"
               which read as a clinical/linguistic term to a non-technical
               owner. Now: "Catchphrases the AI should use". */}
           <div>

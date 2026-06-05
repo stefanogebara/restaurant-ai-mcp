@@ -1,4 +1,4 @@
-﻿import { useTranslation } from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { colors } from '../../utils/colors';
 
@@ -9,7 +9,7 @@ interface PeakHoursChartProps {
 // Translate backend-generated time slot labels on the frontend
 const TIME_SLOT_I18N: Record<string, Record<string, string>> = {
   'pt-BR': {
-    'Lunch (11AM-2PM)': 'AlmoÃ§o (11h-14h)',
+    'Lunch (11AM-2PM)': 'Almoço (11h-14h)',
     'Early Dinner (5PM-7PM)': 'Jantar Cedo (17h-19h)',
     'Prime Dinner (7PM-10PM)': 'Jantar Principal (19h-22h)',
     'Late Night (10PM+)': 'Noite (22h+)',

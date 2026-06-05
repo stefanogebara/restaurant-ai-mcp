@@ -1,7 +1,7 @@
-﻿/**
- * CampaignManager â€” Email campaign creation, listing, and delivery stats.
+/**
+ * CampaignManager — Email campaign creation, listing, and delivery stats.
  * Added as a section in the AI Insights page.
- * WhatsApp and SMS channels removed â€” email is the only channel that actually sends.
+ * WhatsApp and SMS channels removed — email is the only channel that actually sends.
  */
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';

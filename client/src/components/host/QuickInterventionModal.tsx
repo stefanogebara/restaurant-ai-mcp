@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Quick Intervention Modal
  *
  * Shows reservation details and risk information with quick action
@@ -87,26 +87,26 @@ export default function QuickInterventionModal({
       people: 'people'
     },
     es: {
-      title: 'Tomar AcciÃ³n',
-      riskScore: 'PuntuaciÃ³n de Riesgo',
+      title: 'Tomar Acción',
+      riskScore: 'Puntuación de Riesgo',
       riskFactors: 'Factores de Riesgo',
-      quickActions: 'Acciones RÃ¡pidas',
-      called: 'LlamÃ© al Cliente',
-      sentSMS: 'EnviÃ© SMS',
-      sentWhatsApp: 'EnviÃ© WhatsApp',
-      depositRequired: 'DepÃ³sito Requerido',
-      other: 'Otra AcciÃ³n',
+      quickActions: 'Acciones Rápidas',
+      called: 'Llamé al Cliente',
+      sentSMS: 'Envié SMS',
+      sentWhatsApp: 'Envié WhatsApp',
+      depositRequired: 'Depósito Requerido',
+      other: 'Otra Acción',
       staffName: 'Tu Nombre',
       staffPlaceholder: 'Ingresa tu nombre',
       notes: 'Notas',
-      notesPlaceholder: 'Cliente confirmÃ³, llegarÃ¡ a tiempo...',
+      notesPlaceholder: 'Cliente confirmó, llegará a tiempo...',
       cancel: 'Cancelar',
-      save: 'Registrar IntervenciÃ³n',
+      save: 'Registrar Intervención',
       saving: 'Guardando...',
-      success: 'Â¡IntervenciÃ³n registrada exitosamente!',
-      errorSelect: 'Por favor selecciona una acciÃ³n',
-      errorSave: 'Error al registrar la intervenciÃ³n',
-      alreadyTaken: 'IntervenciÃ³n ya registrada',
+      success: '¡Intervención registrada exitosamente!',
+      errorSelect: 'Por favor selecciona una acción',
+      errorSave: 'Error al registrar la intervención',
+      alreadyTaken: 'Intervención ya registrada',
       people: 'personas'
     }
   };
@@ -215,7 +215,7 @@ export default function QuickInterventionModal({
               <div className="space-y-1">
                 {reservation.ml_risk_factors.slice(0, 3).map((factor, idx) => (
                   <div key={idx} className="text-sm text-stone-gray flex items-start gap-2">
-                    <span className="text-orange-600">â€¢</span>
+                    <span className="text-orange-600">•</span>
                     <span>{factor.description}</span>
                   </div>
                 ))}

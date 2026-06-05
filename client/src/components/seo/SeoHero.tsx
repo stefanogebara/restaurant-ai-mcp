@@ -1,5 +1,5 @@
-﻿/**
- * SeoHero â€” hero section for programmatic SEO pages.
+/**
+ * SeoHero — hero section for programmatic SEO pages.
  * Headline, subheading, and CTA targeting cuisine+city.
  */
 

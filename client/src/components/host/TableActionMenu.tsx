@@ -1,4 +1,4 @@
-﻿import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '../../contexts/ToastContext';
 import type { Table } from '../../types/host.types';
 import { hostAPI } from '../../services/api';
@@ -69,7 +69,7 @@ export default function TableActionMenu({ table, onClose }: TableActionMenuProps
             <div>
               <h3 className="text-xl font-bold text-deep-charcoal">Table {table.table_number}</h3>
               <p className="text-sm text-stone-gray mt-1">
-                {table.capacity} seats â€¢ {table.location}
+                {table.capacity} seats • {table.location}
               </p>
             </div>
             <button

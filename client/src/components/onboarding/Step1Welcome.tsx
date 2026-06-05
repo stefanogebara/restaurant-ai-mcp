@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Step 1: Welcome & Restaurant Info - Modern Elegant Design
  *
  * Collects basic restaurant information:
@@ -133,7 +133,7 @@ export default function Step1Welcome({ data, updateData, onNext, isDemoLoading }
         </label>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           {RESTAURANT_TYPES.map(({ value, label }) => {
-            // i18n key may not exist for every type yet â€” fall back to empty,
+            // i18n key may not exist for every type yet — fall back to empty,
             // and the example block hides itself when there's nothing to show.
             const example = t(`onboarding.restaurantTypeExamples.${value}`, { defaultValue: '' });
             return (

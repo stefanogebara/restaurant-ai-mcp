@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useTimeSlots, useCreateReservation } from '../../hooks/useBooking';
@@ -58,7 +58,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
 
-  // â”€â”€â”€ UI state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ─── UI state ───────────────────────────────────────────────────────────────
   const [partySize, setPartySize] = useState(2);
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTime, setSelectedTime] = useState('');
@@ -77,10 +77,10 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
   const [phoneError, setPhoneError] = useState('');
 
   // Reset time only when the date changes (slots change entirely). For party
-  // size changes we used to also clear â€” but in practice the slot list is
+  // size changes we used to also clear — but in practice the slot list is
   // typically identical or a strict subset, so the previously-picked time
   // is usually still valid. Clearing silently was confusing (audit BUG #24:
-  // user picks 8pm â†’ clicks party size 4 â†’ Confirm goes disabled with no
+  // user picks 8pm → clicks party size 4 → Confirm goes disabled with no
   // visible reason because the amber hint was below the click point).
   // Now we keep the selection and let the slot-validation effect below clear
   // it ONLY if the new available list no longer contains it.
@@ -92,7 +92,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
   }, [selectedDate]);
 
   // Auto-select the first available open date so the slot grid renders immediately.
-  // (Prior behaviour: blank slot area until user clicked a date â€” looked broken.)
+  // (Prior behaviour: blank slot area until user clicked a date — looked broken.)
 
   // Auto-dismiss the hint after 4 seconds
   useEffect(() => {
@@ -106,7 +106,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
     if (selectedTime) setTimeResetHint(false);
   }, [selectedTime]);
 
-  // â”€â”€â”€ Server state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ─── Server state ────────────────────────────────────────────────────────────
   const { data: rawTimeSlots = [], isLoading: loadingSlots } = useTimeSlots(
     restaurant.id, selectedDate, partySize
   );
@@ -114,8 +114,8 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
 
   // If the slot list reloads (e.g. after party-size change) and the previously
   // picked time is no longer available, clear it and show the reset hint.
-  // (BUG #24 â€” keep user's selection across party-size changes when possible.
-  // This effect MUST be declared AFTER the useTimeSlots() call above â€” placing
+  // (BUG #24 — keep user's selection across party-size changes when possible.
+  // This effect MUST be declared AFTER the useTimeSlots() call above — placing
   // it before triggered a TDZ "Cannot access rawTimeSlots before initialization"
   // that errored the entire BookingPage in prod.)
   useEffect(() => {
@@ -129,7 +129,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
   }, [rawTimeSlots, selectedTime]);
 
   // Auto-select first available open date once the date list is computed.
-  // Without this the slot grid stays blank on first load â€” looked broken to testers.
+  // Without this the slot grid stays blank on first load — looked broken to testers.
   // We compute availableDates below; this effect runs after each render that produces a list.
 
   // Filter out past time slots when the selected date is today
@@ -146,7 +146,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
     });
   }, [rawTimeSlots, selectedDate]);
 
-  // â”€â”€â”€ Derived â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ─── Derived ─────────────────────────────────────────────────────────────────
   const availableDates = useMemo(() => {
     const days: { value: string; label: string; dayKey: string; dayNum: number; monthShort: string; weekdayShort: string; isToday: boolean; isFirstOfMonth: boolean }[] = [];
     const limit = restaurant.advance_booking_days || 30;
@@ -177,7 +177,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
     setSelectedDate(availableDates[0].value);
   }, [availableDates, selectedDate]);
 
-  // M1: paginate the date strip â€” earlier behaviour showed only the first 21
+  // M1: paginate the date strip — earlier behaviour showed only the first 21
   // days with no way to scroll forward. Now we show 14 days at a time with
   // < / > buttons so the customer can book up to advance_booking_days out.
   const DATE_PAGE_SIZE = 14;
@@ -193,7 +193,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
     const first = visibleDates[0];
     const last = visibleDates[visibleDates.length - 1];
     if (first.monthShort === last.monthShort) return first.monthShort;
-    return `${first.monthShort} â€“ ${last.monthShort}`;
+    return `${first.monthShort} – ${last.monthShort}`;
   }, [visibleDates]);
 
   const formatTime = (time: string) => {
@@ -299,7 +299,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
 
   const canSubmit = customerName.trim() !== '' && customerPhone.trim() !== '' && isPhoneValid(customerPhone) && selectedDate && selectedTime;
 
-  // Explain WHY confirm is disabled â€” audit BUG #24 showed a paying customer
+  // Explain WHY confirm is disabled — audit BUG #24 showed a paying customer
   // staring at a grey button with no signal that they were missing a time
   // (silently cleared when they bumped party size).
   let disabledReason = '';
@@ -320,7 +320,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
         </p>
       </div>
 
-      {/* Date Selection â€” paginated with month nav (M1) */}
+      {/* Date Selection — paginated with month nav (M1) */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-3">
           <div className="text-xs font-semibold tracking-wider uppercase text-warm-stone">
@@ -573,7 +573,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
         </div>
       )}
 
-      {/* Disabled-reason hint â€” only shown when the button is disabled and
+      {/* Disabled-reason hint — only shown when the button is disabled and
           we have something specific to say. Keeps users moving instead of
           staring at a grey button. */}
       {!depositStep && !canSubmit && disabledReason && (
@@ -611,7 +611,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
           <path d="M9 12l2 2 4-4" />
         </svg>
         <p className="text-[12.5px] text-stone-gray leading-relaxed">
-          {/* Use the locale-aware resolver â€” previously this rendered the
+          {/* Use the locale-aware resolver — previously this rendered the
               language-frozen literal from the DB, so a customer browsing in
               pt-BR at a restaurant onboarded in English saw English. */}
           {localizeCancellationPolicy(restaurant.cancellation_policy, t)}

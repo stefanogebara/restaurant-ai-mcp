@@ -1,4 +1,4 @@
-﻿import { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import Spinner from '../common/Spinner';
@@ -16,24 +16,24 @@ interface Props {
 
 /**
  * Voice tuning previously surfaced four ML-jargon sliders to a non-technical
- * audience: Stability, Similarity Boost, Style, Speed. JoÃ£o had no idea
+ * audience: Stability, Similarity Boost, Style, Speed. João had no idea
  * which way to move "Similarity Boost". Now we lead with three named
- * presets â€” Calm / Warm / Energetic â€” that map to ElevenLabs setting
+ * presets — Calm / Warm / Energetic — that map to ElevenLabs setting
  * triples used in production. The granular sliders are still there for
  * users who want to fine-tune, hidden behind an "Advanced" disclosure.
  *
  * Speed stays as a separate slider because it's the only one with an
- * obvious user mental model ("Slow â†” Fast").
+ * obvious user mental model ("Slow ↔ Fast").
  */
 
 type PresetKey = 'calm' | 'warm' | 'energetic';
 
 const TUNING_PRESETS: Record<PresetKey, { stability: number; similarity_boost: number; style: number }> = {
-  // Reliable, low-variance reading â€” best for confirmations + numbers.
+  // Reliable, low-variance reading — best for confirmations + numbers.
   calm:      { stability: 0.75, similarity_boost: 0.85, style: 0.10 },
-  // Friendly, mid-variance â€” the default for most restaurants.
+  // Friendly, mid-variance — the default for most restaurants.
   warm:      { stability: 0.55, similarity_boost: 0.80, style: 0.25 },
-  // Higher variance + style â€” punchier, more expressive replies.
+  // Higher variance + style — punchier, more expressive replies.
   energetic: { stability: 0.35, similarity_boost: 0.75, style: 0.55 },
 };
 
@@ -123,7 +123,7 @@ export default function VoiceTuningPanel({
           })}
         </div>
 
-        {/* Speed always-visible â€” only slider with an obvious mental model. */}
+        {/* Speed always-visible — only slider with an obvious mental model. */}
         <div className="max-w-md">
           <VoiceSlider
             label={t('voiceTuning.speed', 'Speaking speed')}

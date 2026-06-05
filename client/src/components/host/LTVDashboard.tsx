@@ -1,7 +1,7 @@
-﻿/**
+/**
  * Customer Lifetime Value (LTV) Dashboard
  *
- * Orchestrator â€” manages data fetching and delegates rendering
+ * Orchestrator — manages data fetching and delegates rendering
  * to focused subcomponents in components/host/.
  */
 
@@ -104,7 +104,7 @@ export default function LTVDashboard() {
           />
           {/* Recalculate is a maintenance-grade database job that previously
               took primary CTA real-estate. Hosts don't need it for daily
-              shifts â€” the values refresh automatically on the next cron pass.
+              shifts — the values refresh automatically on the next cron pass.
               Tucked into a small disclosure so admins can still trigger it. */}
           <details className="text-xs">
             <summary className="cursor-pointer text-muted-stone hover:text-deep-charcoal underline underline-offset-2 select-none">

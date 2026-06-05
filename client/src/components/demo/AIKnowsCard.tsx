@@ -1,13 +1,13 @@
-﻿/**
+/**
  * AIKnowsCard
  *
- * "Your AI already knows your restaurant" â€” surfaces the enriched data
+ * "Your AI already knows your restaurant" — surfaces the enriched data
  * (menu items extracted from the website, popular dishes mentioned in
  * reviews, vibe tags, praise/complaint themes) so the user trusts that
  * when they sign up, the AI receptionist will actually use this.
  *
  * Renders only when at least one enrichment section is present. Defensive
- * about the shape â€” every nested field is optional.
+ * about the shape — every nested field is optional.
  */
 
 import { useTranslation } from 'react-i18next';
@@ -86,11 +86,11 @@ export default function AIKnowsCard({ menu, insights }: AIKnowsCardProps) {
           {t('demo.aiKnows.heading', "Here's what your AI receptionist already knows")}
         </h2>
         <p className="text-xs text-warm-stone mt-1">
-          {t('demo.aiKnows.subtitle', "We read your website and recent reviews so the AI can actually help guests â€” not just answer with generic scripts.")}
+          {t('demo.aiKnows.subtitle', "We read your website and recent reviews so the AI can actually help guests — not just answer with generic scripts.")}
         </p>
       </header>
 
-      {/* Vibe tags â€” quick scannable identity */}
+      {/* Vibe tags — quick scannable identity */}
       {vibeTags.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           <span className="text-[10px] font-semibold uppercase tracking-wider text-warm-stone self-center mr-1">
@@ -114,7 +114,7 @@ export default function AIKnowsCard({ menu, insights }: AIKnowsCardProps) {
             <ul className="space-y-1.5 text-sm text-deep-charcoal">
               {allPopular.map((dish, i) => (
                 <li key={i} className="flex items-start gap-2">
-                  <span aria-hidden="true" className="text-burgundy text-base leading-tight">â€¢</span>
+                  <span aria-hidden="true" className="text-burgundy text-base leading-tight">•</span>
                   <span>{dish}</span>
                 </li>
               ))}
@@ -122,7 +122,7 @@ export default function AIKnowsCard({ menu, insights }: AIKnowsCardProps) {
           </div>
         )}
 
-        {/* Praise themes â€” what guests love */}
+        {/* Praise themes — what guests love */}
         {praise.length > 0 && (
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-widest text-warm-stone mb-2">
@@ -131,7 +131,7 @@ export default function AIKnowsCard({ menu, insights }: AIKnowsCardProps) {
             <ul className="space-y-1.5 text-sm text-deep-charcoal">
               {praise.map((theme, i) => (
                 <li key={i} className="flex items-start gap-2">
-                  <span aria-hidden="true" className="text-emerald-600 text-base leading-tight">âœ“</span>
+                  <span aria-hidden="true" className="text-emerald-600 text-base leading-tight">✓</span>
                   <span>{theme}</span>
                 </li>
               ))}
@@ -139,7 +139,7 @@ export default function AIKnowsCard({ menu, insights }: AIKnowsCardProps) {
           </div>
         )}
 
-        {/* Complaint themes â€” what to handle */}
+        {/* Complaint themes — what to handle */}
         {complaints.length > 0 && (
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-widest text-warm-stone mb-2">
@@ -176,7 +176,7 @@ export default function AIKnowsCard({ menu, insights }: AIKnowsCardProps) {
         )}
       </div>
 
-      {/* AI voice notes â€” show how the AI will use this */}
+      {/* AI voice notes — show how the AI will use this */}
       {voiceNotes.length > 0 && (
         <div className="pt-3 border-t border-burgundy/10">
           <p className="text-[11px] font-semibold uppercase tracking-widest text-warm-stone mb-2">
@@ -185,7 +185,7 @@ export default function AIKnowsCard({ menu, insights }: AIKnowsCardProps) {
           <ul className="space-y-1 text-xs text-stone-700">
             {voiceNotes.map((note, i) => (
               <li key={i} className="flex items-start gap-2">
-                <span aria-hidden="true" className="text-burgundy">â†’</span>
+                <span aria-hidden="true" className="text-burgundy">→</span>
                 <span>{note}</span>
               </li>
             ))}

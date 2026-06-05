@@ -1,7 +1,7 @@
-﻿/**
+/**
  * Individual Customer Profile View
  *
- * Orchestrator â€” manages data fetching and delegates rendering
+ * Orchestrator — manages data fetching and delegates rendering
  * to focused subcomponents in components/host/.
  */
 

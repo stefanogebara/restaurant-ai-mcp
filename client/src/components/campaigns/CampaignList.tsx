@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useCampaignList } from '../../hooks/useCampaigns';
 import type { Campaign } from '../../hooks/useCampaigns';
@@ -92,7 +92,7 @@ export default function CampaignList() {
               onClick={() => setExpandedId(isExpanded ? null : c.id)}
               className="w-full text-left grid grid-cols-1 sm:grid-cols-[1fr_1fr_100px_80px_160px_120px] gap-2 px-4 py-3 border-b border-glass-border-dark hover:bg-[#FAFAFA] transition-colors items-center"
             >
-              {/* Name â€” message preview is the most identifying content because
+              {/* Name — message preview is the most identifying content because
                   the user-entered `name` field from CampaignBuilder is silently
                   dropped at the backend (campaignService.js doesn't persist it).
                   Falls back to a localized generic label so we never render the
@@ -113,7 +113,7 @@ export default function CampaignList() {
 
               {/* Recipients */}
               <span className="text-xs text-deep-charcoal text-right">
-                {c.recipient_count ?? 'â€”'}
+                {c.recipient_count ?? '—'}
               </span>
 
               {/* Delivery stats */}

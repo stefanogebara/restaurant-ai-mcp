@@ -1,4 +1,4 @@
-﻿import { useTranslation } from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import type { Formatter as LegendFormatter, LegendPayload } from 'recharts/types/component/DefaultLegendContent';
 import type { PieLabelRenderProps } from 'recharts';
@@ -39,7 +39,7 @@ export default function StatusBreakdownPie({ reservationsByStatus }: StatusBreak
     no_show: '#f97316',
   };
 
-  // Custom label to show percentage. Guard the divisor â€” an empty/all-zero
+  // Custom label to show percentage. Guard the divisor — an empty/all-zero
   // status object would otherwise render literal "NaN%" slice labels.
   const renderLabel = (entry: PieLabelRenderProps) => {
     const entryValue = typeof entry.value === 'number' ? entry.value : 0;

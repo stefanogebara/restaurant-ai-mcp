@@ -1,4 +1,4 @@
-﻿import { useTranslation } from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 import ThiingsIcon, { type IconName } from '../common/ThiingsIcon';
 import { LARGE_PARTY_THRESHOLD, DEPOSIT_RECOMMENDATION } from '../../config/businessDefaults';
 
@@ -92,7 +92,7 @@ export default function RiskExplanationModal({
             <div>
               <h2 className="text-xl font-semibold text-deep-charcoal">No-Show Risk Analysis</h2>
               <p className="text-sm text-stone-gray">
-                {reservation.customer_name} â€¢ Party of {reservation.party_size}
+                {reservation.customer_name} • Party of {reservation.party_size}
               </p>
             </div>
           </div>

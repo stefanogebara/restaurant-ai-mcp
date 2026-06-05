@@ -1,4 +1,4 @@
-﻿/**
+/**
  * PhoneIntegrationPanel
  *
  * Shows the platform Twilio phone integration status and lets the restaurant
@@ -9,9 +9,9 @@ import { useTranslation } from 'react-i18next';
 import { useToast } from '../../contexts/ToastContext';
 import { usePhoneIntegration } from '../../hooks/usePhoneIntegration';
 
-// â”€â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-/** Formats a raw E.164 number like "+551150289356" â†’ "+55 11 5028-9356" */
+/** Formats a raw E.164 number like "+551150289356" → "+55 11 5028-9356" */
 function formatBrazilianPhone(raw: string): string {
   // Match +55 (country) + 2-digit area + 4-digit + 4-digit
   const match = raw.replace(/\s/g, '').match(/^(\+55)(\d{2})(\d{4})(\d{4})$/);
@@ -19,7 +19,7 @@ function formatBrazilianPhone(raw: string): string {
   return raw;
 }
 
-// â”€â”€â”€ Sub-components â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Sub-components ───────────────────────────────────────────────────────────
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function StatusBadge({ status, t }: { status: 'active' | 'not_configured' | 'error'; t: any }) {
@@ -56,7 +56,7 @@ function Spinner() {
   );
 }
 
-// â”€â”€â”€ Main component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Main component ───────────────────────────────────────────────────────────
 
 export default function PhoneIntegrationPanel() {
   const { t } = useTranslation();
@@ -106,7 +106,7 @@ export default function PhoneIntegrationPanel() {
     });
   };
 
-  // â”€â”€ Loading skeleton â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Loading skeleton ────────────────────────────────────────────────────────
 
   if (isLoading) {
     return (
@@ -122,7 +122,7 @@ export default function PhoneIntegrationPanel() {
     );
   }
 
-  // â”€â”€ No data fallback â€” hide entirely instead of showing raw error â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── No data fallback — hide entirely instead of showing raw error ────────
 
   if (!status?.restaurant || !status?.platform) {
     return null;
@@ -132,7 +132,7 @@ export default function PhoneIntegrationPanel() {
   const isActive = restaurant.status === 'active';
   const displayPhone = formatBrazilianPhone(platform.twilio_phone);
 
-  // â”€â”€ Render â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Render ──────────────────────────────────────────────────────────────────
 
   return (
     <div className="py-5 border-t border-glass-border-dark mt-8 space-y-4">
@@ -147,13 +147,13 @@ export default function PhoneIntegrationPanel() {
       {/* No-agent warning */}
       {!restaurant.has_agent && (
         <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs font-medium">
-          <span aria-hidden="true">âš </span>
+          <span aria-hidden="true">⚠</span>
           {t('phoneIntegration.noAgentWarning', 'AI receptionist not set up yet. Finish the AI receptionist setup above before connecting the phone.')}
         </div>
       )}
 
-      {/* Platform phone info â€” previously rendered "Platform number: +55â€¦"
-          with zero context. JoÃ£o couldn't tell if it was HIS number, a
+      {/* Platform phone info — previously rendered "Platform number: +55…"
+          with zero context. João couldn't tell if it was HIS number, a
           shared line, or whether his existing restaurant number still
           worked. Now we explain it and show what to do next. */}
       <div className="flex items-start gap-3">
@@ -212,7 +212,7 @@ export default function PhoneIntegrationPanel() {
         )}
       </div>
 
-      {/* Test call â€” shown only when active */}
+      {/* Test call — shown only when active */}
       {isActive && (
         <div className="border-t border-glass-border-dark pt-4 space-y-2">
           <p className="text-xs font-medium text-warm-stone">{t('phoneIntegration.testCall', 'Test call')}</p>

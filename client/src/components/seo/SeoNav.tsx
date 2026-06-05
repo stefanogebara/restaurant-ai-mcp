@@ -1,5 +1,5 @@
-﻿/**
- * SeoNav â€” lightweight navigation bar for SEO landing pages.
+/**
+ * SeoNav — lightweight navigation bar for SEO landing pages.
  * No auth state needed. Links to home, demo, and login.
  */
 

@@ -1,5 +1,5 @@
-﻿/**
- * FeedbackSettingsPanel â€” enable/disable feedback, configure delay and template.
+/**
+ * FeedbackSettingsPanel — enable/disable feedback, configure delay and template.
  * Placed in WhatsApp Settings page.
  */
 import { useState, useEffect } from 'react';
