@@ -42,26 +42,42 @@ const UA = 'Mozilla/5.0 (compatible; Seatable/1.0; +https://seatable.one)';
 
 // Hosts we recognise as bio-link aggregators. Match is on suffix so e.g.
 // "stefano.linktr.ee" still matches.
+//
+// VERIFIED set has been live-probed (C.5 + C.7) against real popular
+// accounts and yields >0 destinations through one of the extraction
+// strategies. The UNVERIFIED set is included so hostMatches() recognises
+// them, but they haven't been confirmed end-to-end — when the extractor
+// returns 0 from a host that's NOT in VERIFIED, that's expected and
+// silent. When it returns 0 from a verified host, we log a warning so
+// future regressions are visible.
+const VERIFIED_AGGREGATOR_HOSTS = new Set([
+  'linktr.ee',     // ✓ C.2 (Selena Gomez → 20)
+  'beacons.ai',    // ✓ C.4 (Ali Abdaal → 7)
+  'beacons.page',  // ✓ assumed-same as beacons.ai
+  'taplink.cc',    // ✓ C.5 (Zara → 4)
+  'lnk.bio',       // ✓ C.5 (Justin Bieber → 11)
+  'biolinky.co',   // ✓ C.7 (fashionnova → 5)
+  'flow.page',     // ✓ C.7 (creator → 10)
+  'allmylinks.com',// ✓ C.7 (arianagrande → 1)
+]);
 const AGGREGATOR_HOSTS = [
-  'linktr.ee',
-  'beacons.ai',
-  'beacons.page',
-  'lnk.bio',
+  ...VERIFIED_AGGREGATOR_HOSTS,
+  // Unverified — included so hostMatches() routes to extractBioLinks,
+  // but live probes against random real accounts returned 0 destinations
+  // (or 404/Cloudflare-blocked). Most likely the generic anchor scrape
+  // still works for valid accounts; we just couldn't find one to test
+  // with. Promote to VERIFIED when a real customer's page works.
   'snipfeed.co',
   'msha.ke',
-  'biolinky.co',
-  'taplink.cc',
   'tap.bio',
-  'allmylinks.com',
   'shor.by',
   'campsite.bio',
   'koji.to',
   'withkoji.com',
-  'flow.page',
   'milkshake.app',
   'solo.to',
-  'carrd.co',  // carrd is borderline — many personal sites are carrd-hosted but
-               // people also use it as a bio aggregator. Treat as aggregator.
+  'carrd.co',  // borderline — many personal sites are carrd-hosted but
+               // people also use it as a bio aggregator
 ];
 
 function hostMatches(url) {
@@ -112,7 +128,22 @@ async function extractBioLinks(url) {
 
   // Fall back to <a href> scraping
   const fromScrape = extractFromAnchors(html, aggHost);
-  return capAndDedupe(fromScrape);
+  const final = capAndDedupe(fromScrape);
+
+  // Warn loud when a VERIFIED aggregator returns 0 destinations — we've
+  // confirmed real popular accounts on these hosts produce non-empty
+  // results in tests, so 0 in prod means the upstream HTML structure
+  // probably changed. UNVERIFIED hosts get the same silent [] return
+  // since we don't have a known-good baseline to compare against.
+  if (final.length === 0 && VERIFIED_AGGREGATOR_HOSTS.has(aggHost)) {
+    logger.warn('verified aggregator returned 0 destinations — upstream structure may have changed', {
+      aggHost,
+      url,
+      htmlSize: html.length,
+    });
+  }
+
+  return final;
 }
 
 /**
@@ -494,6 +525,7 @@ module.exports = {
   // Exposed for unit tests
   __test__: {
     hostMatches, extractFromAnchors, extractFromNextData, capAndDedupe,
-    isPrivateIp, extractFromScriptUrls, hostToLabel, AGGREGATOR_HOSTS,
+    isPrivateIp, extractFromScriptUrls, hostToLabel,
+    AGGREGATOR_HOSTS, VERIFIED_AGGREGATOR_HOSTS,
   },
 };

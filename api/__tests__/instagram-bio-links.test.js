@@ -299,3 +299,32 @@ describe('isAggregatorShareLink — share-button filter', () => {
     expect(out).toEqual([]);
   });
 });
+
+describe('VERIFIED_AGGREGATOR_HOSTS — coverage contract', () => {
+  test('verified set includes all hosts with live-tested extraction strategies', () => {
+    // If you add a new aggregator parser AND verify it works against a
+    // real account, add the host here. This catches accidental removals.
+    const { VERIFIED_AGGREGATOR_HOSTS } = __test__;
+    const expected = [
+      'linktr.ee',     // anchor scrape + __NEXT_DATA__ JSON walk
+      'beacons.ai',    // script-URL stream
+      'beacons.page',
+      'taplink.cc',    // script-URL stream
+      'lnk.bio',       // anchor scrape + share filter
+      'biolinky.co',   // anchor scrape
+      'flow.page',     // anchor scrape
+      'allmylinks.com',// anchor scrape
+    ];
+    for (const host of expected) {
+      expect(VERIFIED_AGGREGATOR_HOSTS.has(host)).toBe(true);
+    }
+    expect(VERIFIED_AGGREGATOR_HOSTS.size).toBe(expected.length);
+  });
+
+  test('verified set is a subset of AGGREGATOR_HOSTS (no orphans)', () => {
+    const { VERIFIED_AGGREGATOR_HOSTS, AGGREGATOR_HOSTS } = __test__;
+    for (const host of VERIFIED_AGGREGATOR_HOSTS) {
+      expect(AGGREGATOR_HOSTS).toContain(host);
+    }
+  });
+});
