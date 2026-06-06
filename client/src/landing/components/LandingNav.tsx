@@ -70,10 +70,12 @@ export default function LandingNav() {
         <button type="button" onClick={() => scrollToSection('pricing')} className="text-sm font-medium text-stone-gray hover:text-deep-charcoal transition-colors min-h-[44px] flex items-center">
           {t('landing.nav.pricing')}
         </button>
-        <Link to="/demo/setup" className="text-sm font-medium text-burgundy hover:text-burgundy-dark transition-colors min-h-[44px] flex items-center">
-          {t('landing.nav.tryFree', 'Try free demo')}
-        </Link>
-        <Link to="/login" className="text-sm font-semibold text-deep-charcoal border border-deep-charcoal rounded-full px-5 py-2 hover:bg-deep-charcoal hover:text-white transition-colors min-h-[44px] flex items-center">
+        {/* Removed the burgundy "Try free demo" text-link — it sent to the same
+            destination as the primary "Comece grátis" CTA at the right edge,
+            and the three competing CTAs (this + Entrar + Começar) read as
+            three different actions to first-time visitors. SEO landing
+            pattern (single primary + Entrar link) converts better. */}
+        <Link to="/login" className="text-sm font-medium text-stone-gray hover:text-deep-charcoal transition-colors min-h-[44px] flex items-center">
           {t('landing.nav.signIn')}
         </Link>
         <button
@@ -133,10 +135,11 @@ export default function LandingNav() {
         <button type="button" onClick={() => scrollToSection('pricing')} className="block w-full text-left text-sm font-medium text-stone-gray hover:text-deep-charcoal hover:bg-stone-50 transition-colors py-3 px-2 rounded-lg">
           {t('landing.nav.pricing')}
         </button>
-        <Link to="/demo/setup" onClick={closeMobileMenu} className="block text-left text-sm font-medium text-burgundy hover:text-burgundy-dark hover:bg-stone-50 transition-colors py-3 px-2 rounded-lg">
-          {t('landing.nav.tryFree', 'Try free demo')}
-        </Link>
-        <Link to="/login" onClick={closeMobileMenu} className="block text-center text-sm font-semibold text-deep-charcoal border border-deep-charcoal rounded-full py-3 px-4 hover:bg-deep-charcoal hover:text-white transition-colors">
+        {/* Mirror desktop: dropped the redundant "Try free demo" link since it
+            shared the destination with the bottom primary CTA. Sign-in moves
+            to a plain text link so the primary CTA at the bottom is the only
+            CTA-style affordance in this drawer. */}
+        <Link to="/login" onClick={closeMobileMenu} className="block w-full text-left text-sm font-medium text-stone-gray hover:text-deep-charcoal hover:bg-stone-50 transition-colors py-3 px-2 rounded-lg">
           {t('landing.nav.signIn')}
         </Link>
         <button

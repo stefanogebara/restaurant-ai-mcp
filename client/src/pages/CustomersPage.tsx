@@ -104,13 +104,17 @@ export default function CustomersPage() {
               </p>
             )}
           </div>
-          <button
-            type="button"
-            onClick={() => setShowDuplicates(true)}
-            className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-stone-700 border border-glass-border-dark rounded-lg bg-white/40 hover:bg-white/70 transition-colors"
-          >
-            {t('crm.findDuplicates', 'Find Duplicates')}
-          </button>
+          {/* "Find Duplicates" is meaningless with zero customers; hide it on
+              an empty CRM so the page doesn't suggest a non-action. */}
+          {total > 0 && (
+            <button
+              type="button"
+              onClick={() => setShowDuplicates(true)}
+              className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-stone-700 border border-glass-border-dark rounded-lg bg-white/40 hover:bg-white/70 transition-colors"
+            >
+              {t('crm.findDuplicates', 'Find Duplicates')}
+            </button>
+          )}
         </div>
 
         {/* Filters */}
@@ -205,9 +209,10 @@ export default function CustomersPage() {
               <p className="text-sm text-red-600">{t('crm.loadError', 'Failed to load customers')}</p>
             </div>
           ) : customers.length === 0 ? (
-            <div className="text-center py-20">
-              <p className="text-sm text-stone-500">{t('crm.noCustomers', 'No customers found')}</p>
-              {(debouncedSearch || tierFilter || tagFilter || allergyFilter || dietaryFilter) && (
+            (debouncedSearch || tierFilter || tagFilter || allergyFilter || dietaryFilter) ? (
+              // Filter-result empty state: keep the existing concise "no match + clear" affordance
+              <div className="text-center py-20">
+                <p className="text-sm text-stone-500">{t('crm.noCustomers', 'No customers found')}</p>
                 <button
                   type="button"
                   onClick={() => { setSearchInput(''); setTierFilter(''); setTagFilter(''); setAllergyFilter(''); setDietaryFilter(''); }}
@@ -215,8 +220,24 @@ export default function CustomersPage() {
                 >
                   {t('crm.clearFilters', 'Clear filters')}
                 </button>
-              )}
-            </div>
+              </div>
+            ) : (
+              // True empty state: warm explanation of how customers populate
+              // Brazilian owner who just signed up needs to know this isn't broken.
+              <div className="text-center py-16 max-w-md mx-auto">
+                <div className="mx-auto mb-4 w-12 h-12 rounded-full bg-burgundy/10 flex items-center justify-center">
+                  <svg className="w-6 h-6 text-burgundy" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                </div>
+                <h3 className="text-base font-semibold text-deep-charcoal mb-1">
+                  {t('crm.emptyTitle', 'Seu CRM está esperando os primeiros clientes')}
+                </h3>
+                <p className="text-sm text-stone-500 leading-relaxed">
+                  {t('crm.emptyHint', 'Cada vez que alguém faz uma reserva — pelo widget, pelo WhatsApp ou pelo telefone — o cliente aparece aqui automaticamente com histórico, alergias e tags.')}
+                </p>
+              </div>
+            )
           ) : (
             <>
               {/* Desktop table */}

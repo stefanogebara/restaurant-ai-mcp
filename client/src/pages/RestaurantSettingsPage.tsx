@@ -269,7 +269,7 @@ export default function RestaurantSettingsPage() {
             <Field label={t('settings.phone', 'Phone')} value={info.phone} onChange={(v) => patchInfo({ phone: v })} type="tel" />
             <Field label={t('settings.email', 'Email')} value={info.email} onChange={(v) => patchInfo({ email: v })} type="email" />
             <Field label={t('settings.city', 'City')} value={info.city} onChange={(v) => patchInfo({ city: v })} />
-            <Field label={t('settings.country', 'Country')} value={info.country} onChange={(v) => patchInfo({ country: v })} />
+            <CountrySelect label={t('settings.country', 'Country')} value={info.country} onChange={(v) => patchInfo({ country: v })} selectPlaceholder={t('common.select', '— Select —')} />
             <TimezoneSelect label={t('settings.timezone', 'Timezone')} value={info.timezone} onChange={(v) => patchInfo({ timezone: v })} selectPlaceholder={t('common.select', '— Select —')} />
           </div>
 
@@ -499,23 +499,46 @@ function Field({
   );
 }
 
-const COMMON_TIMEZONES = [
-  'America/Sao_Paulo', 'America/New_York', 'America/Chicago', 'America/Denver',
-  'America/Los_Angeles', 'America/Mexico_City', 'America/Buenos_Aires', 'America/Bogota',
-  'Europe/London', 'Europe/Paris', 'Europe/Berlin', 'Europe/Madrid', 'Europe/Rome',
-  'Europe/Lisbon', 'Europe/Amsterdam', 'Europe/Zurich', 'Europe/Vienna',
-  'Asia/Tokyo', 'Asia/Shanghai', 'Asia/Dubai', 'Asia/Singapore', 'Asia/Kolkata',
-  'Australia/Sydney', 'Pacific/Auckland',
+// Friendly labels for each timezone the picker offers — IANA strings like
+// "America/Sao_Paulo" leak technical detail to restaurant owners who'd rather
+// see "São Paulo (GMT-3)". Order kept stable across the list.
+const TZ_OPTIONS: ReadonlyArray<{ tz: string; label: string }> = [
+  { tz: 'America/Sao_Paulo',    label: 'São Paulo (GMT-3)' },
+  { tz: 'America/New_York',     label: 'New York (GMT-5)' },
+  { tz: 'America/Chicago',      label: 'Chicago (GMT-6)' },
+  { tz: 'America/Denver',       label: 'Denver (GMT-7)' },
+  { tz: 'America/Los_Angeles',  label: 'Los Angeles (GMT-8)' },
+  { tz: 'America/Mexico_City',  label: 'Cidade do México (GMT-6)' },
+  { tz: 'America/Buenos_Aires', label: 'Buenos Aires (GMT-3)' },
+  { tz: 'America/Bogota',       label: 'Bogotá (GMT-5)' },
+  { tz: 'Europe/London',        label: 'London (GMT+0)' },
+  { tz: 'Europe/Paris',         label: 'Paris (GMT+1)' },
+  { tz: 'Europe/Berlin',        label: 'Berlin (GMT+1)' },
+  { tz: 'Europe/Madrid',        label: 'Madrid (GMT+1)' },
+  { tz: 'Europe/Rome',          label: 'Rome (GMT+1)' },
+  { tz: 'Europe/Lisbon',        label: 'Lisbon (GMT+0)' },
+  { tz: 'Europe/Amsterdam',     label: 'Amsterdam (GMT+1)' },
+  { tz: 'Europe/Zurich',        label: 'Zurich (GMT+1)' },
+  { tz: 'Europe/Vienna',        label: 'Vienna (GMT+1)' },
+  { tz: 'Asia/Tokyo',           label: 'Tokyo (GMT+9)' },
+  { tz: 'Asia/Shanghai',        label: 'Shanghai (GMT+8)' },
+  { tz: 'Asia/Dubai',           label: 'Dubai (GMT+4)' },
+  { tz: 'Asia/Singapore',       label: 'Singapore (GMT+8)' },
+  { tz: 'Asia/Kolkata',         label: 'Kolkata (GMT+5:30)' },
+  { tz: 'Australia/Sydney',     label: 'Sydney (GMT+10)' },
+  { tz: 'Pacific/Auckland',     label: 'Auckland (GMT+12)' },
 ];
+const COMMON_TIMEZONES = TZ_OPTIONS.map((o) => o.tz);
 
 function TimezoneSelect({ label, value, onChange, selectPlaceholder = '— Select —' }: { label: string; value: string; onChange: (v: string) => void; selectPlaceholder?: string }) {
   // If the stored timezone is outside the curated list (e.g. America/Halifax),
   // include it as an extra option. Otherwise the <select> silently rendered no
   // selection and saving the form would overwrite the host's real timezone
   // with the empty placeholder value.
-  const options = value && !COMMON_TIMEZONES.includes(value)
-    ? [value, ...COMMON_TIMEZONES]
-    : COMMON_TIMEZONES;
+  const options: ReadonlyArray<{ tz: string; label: string }> =
+    value && !COMMON_TIMEZONES.includes(value)
+      ? [{ tz: value, label: value.replace(/_/g, ' ') }, ...TZ_OPTIONS]
+      : TZ_OPTIONS;
   return (
     <div>
       <label className="block text-xs font-medium text-muted-stone mb-1">{label}</label>
@@ -525,8 +548,50 @@ function TimezoneSelect({ label, value, onChange, selectPlaceholder = '— Selec
         className="w-full px-3 py-2 bg-soft-gray border border-glass-border-input rounded-xl text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
       >
         <option value="">{selectPlaceholder}</option>
-        {options.map((tz) => (
-          <option key={tz} value={tz}>{tz.replace(/_/g, ' ')}</option>
+        {options.map(({ tz, label }) => (
+          <option key={tz} value={tz}>{label}</option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+// Curated country list — keeps the dropdown short and surfaces the home
+// markets first. ISO-3166 alpha-2 codes are still what we persist; the label
+// the owner sees is the localized country name.
+const COUNTRY_OPTIONS: ReadonlyArray<{ code: string; label: string }> = [
+  { code: 'BR', label: 'Brasil' },
+  { code: 'PT', label: 'Portugal' },
+  { code: 'ES', label: 'España' },
+  { code: 'MX', label: 'México' },
+  { code: 'AR', label: 'Argentina' },
+  { code: 'US', label: 'United States' },
+  { code: 'GB', label: 'United Kingdom' },
+  { code: 'FR', label: 'France' },
+  { code: 'IT', label: 'Italia' },
+  { code: 'DE', label: 'Deutschland' },
+  { code: 'JP', label: '日本' },
+];
+const COUNTRY_CODES = COUNTRY_OPTIONS.map((o) => o.code);
+
+function CountrySelect({ label, value, onChange, selectPlaceholder = '— Select —' }: { label: string; value: string; onChange: (v: string) => void; selectPlaceholder?: string }) {
+  // Preserve any out-of-list value the same way TimezoneSelect does, so
+  // saving with an unfamiliar legacy code doesn't silently wipe it.
+  const options: ReadonlyArray<{ code: string; label: string }> =
+    value && !COUNTRY_CODES.includes(value.toUpperCase())
+      ? [{ code: value, label: value }, ...COUNTRY_OPTIONS]
+      : COUNTRY_OPTIONS;
+  return (
+    <div>
+      <label className="block text-xs font-medium text-muted-stone mb-1">{label}</label>
+      <select
+        value={value.toUpperCase()}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full px-3 py-2 bg-soft-gray border border-glass-border-input rounded-xl text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
+      >
+        <option value="">{selectPlaceholder}</option>
+        {options.map(({ code, label }) => (
+          <option key={code} value={code}>{label}</option>
         ))}
       </select>
     </div>

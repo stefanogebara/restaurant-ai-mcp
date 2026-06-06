@@ -135,7 +135,16 @@ export default function TeamPage() {
         ) : (isError || loadingTimedOut) ? (
           <div className="p-6 text-center text-sm text-stone-gray">{t('team.noMembers')}</div>
         ) : members.length === 0 ? (
-          <div className="p-6 text-center text-sm text-stone-gray">{t('team.noMembers')}</div>
+          <div className="p-8 text-center max-w-md mx-auto">
+            <div className="mx-auto mb-3 w-10 h-10 rounded-full bg-burgundy/10 flex items-center justify-center">
+              <svg className="w-5 h-5 text-burgundy" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+            </div>
+            <p className="text-sm text-stone-gray leading-relaxed">
+              {t('team.emptyHint', 'Convide seus anfitriões, gerentes e garçons para gerenciar reservas em equipe. Cada membro recebe acesso ao painel com permissões do papel escolhido.')}
+            </p>
+          </div>
         ) : members.map(member => (
           <div key={member.id} className="flex items-center justify-between px-6 py-4">
             <div className="min-w-0">
