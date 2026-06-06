@@ -102,16 +102,18 @@ module.exports = async (req, res) => {
     return res.status(502).json({ ok: false, error: `Instagram API: ${err.message}` });
   }
 
-  // Shape the response — keep it small + drop tokens / per-post URLs that
-  // aren't useful to the client.
-  // For VIDEO posts we expose thumbnail_url as image_url so the
-  // single-image publish path can re-ingest the still frame.
+  // Shape the response — keep it small + drop fields that aren't useful to
+  // the client. Per-media-type URL resolution:
+  //   IMAGE          → media_url is the image
+  //   VIDEO          → media_url is the video URL (not usable for single-
+  //                    image publish), so fall back to thumbnail_url
+  //   CAROUSEL_ALBUM → media_url is NOT set on the parent; the actual
+  //                    image lives on the first child. We take child[0]'s
+  //                    media_url (or its thumbnail if it's a VIDEO child).
   const shaped = (media || [])
     .map((m) => ({
       id: m.id,
-      // CAROUSEL_ALBUM responses also have a media_url that points at the
-      // first image — good enough for thumbnail display + as a publish input.
-      image_url: m.media_type === 'VIDEO' ? (m.thumbnail_url || m.media_url) : m.media_url,
+      image_url: resolveDisplayUrl(m),
       thumbnail_url: m.thumbnail_url || null,
       media_type: m.media_type,
       permalink: m.permalink,
@@ -124,7 +126,34 @@ module.exports = async (req, res) => {
   return res.status(200).json({ ok: true, media: shaped, cached: false });
 };
 
+/**
+ * Picks the URL we surface to the client for a given media item. Returns
+ * null when the item has no usable image URL (e.g. a stale carousel with
+ * no children — should be unreachable but caller filters defensively).
+ *
+ * Exposed for unit tests so the per-media-type rules are pinned.
+ */
+function resolveDisplayUrl(item) {
+  if (!item || typeof item !== 'object') return null;
+  const type = item.media_type;
+  if (type === 'IMAGE') return item.media_url || null;
+  if (type === 'VIDEO') return item.thumbnail_url || null;
+  if (type === 'CAROUSEL_ALBUM') {
+    const children = Array.isArray(item.children?.data)
+      ? item.children.data
+      : Array.isArray(item.children)
+        ? item.children
+        : [];
+    const first = children[0];
+    if (!first) return null;
+    if (first.media_type === 'VIDEO') return first.thumbnail_url || null;
+    return first.media_url || null;
+  }
+  return item.media_url || item.thumbnail_url || null;
+}
+
 // Exposed for tests — clears the in-memory cache between runs.
 module.exports.__test__ = {
   _clearCacheForTests: () => CACHE.clear(),
+  resolveDisplayUrl,
 };

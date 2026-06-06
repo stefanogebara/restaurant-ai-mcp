@@ -29,12 +29,28 @@ async function fetchRecentMedia({ igBusinessAccountId, accessToken, limit = 30 }
   }
 
   const url = new URL(`${GRAPH_BASE}/${igBusinessAccountId}/media`);
-  // Only request the fields we actually use for tone extraction — keeps the
-  // response payload small and lets Meta apply field-level rate limits more
-  // permissively.
+  // Fields used by BOTH callers:
+  //   - extract-tone-profile: id, caption, media_type, like_count, comments_count
+  //   - recent-media (C.12 picker): id, media_url, thumbnail_url, media_type,
+  //     permalink, timestamp, plus children{media_url} for CAROUSEL_ALBUM
+  //     parents (Meta puts the actual image URL on the children, not on the
+  //     parent — without children, the picker would silently drop every
+  //     carousel post). Field-level cost is negligible compared to a second
+  //     roundtrip, so we request the union.
   url.searchParams.set(
     'fields',
-    ['id', 'caption', 'media_type', 'timestamp', 'permalink', 'like_count', 'comments_count'].join(','),
+    [
+      'id',
+      'caption',
+      'media_type',
+      'media_url',
+      'thumbnail_url',
+      'timestamp',
+      'permalink',
+      'like_count',
+      'comments_count',
+      'children{id,media_url,media_type,thumbnail_url}',
+    ].join(','),
   );
   url.searchParams.set('limit', String(Math.min(limit, 50)));
   url.searchParams.set('access_token', accessToken);
