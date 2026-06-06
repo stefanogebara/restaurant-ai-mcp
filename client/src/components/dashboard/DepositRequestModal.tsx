@@ -132,7 +132,7 @@ export default function DepositRequestModal({
       onClick={onClose}
     >
       <div
-        className="bg-warm-white border border-border-default rounded-2xl max-w-md w-full p-6 shadow-xl"
+        className="glass-modal max-w-md w-full p-6"
         onClick={(e) => e.stopPropagation()}
       >
         <h2 id="deposit-request-title" className="text-lg font-semibold text-deep-charcoal mb-1">
@@ -164,7 +164,7 @@ export default function DepositRequestModal({
 
         {payload && (
           <div className="space-y-3">
-            <div className="px-3 py-2 rounded-lg bg-stone-50 border border-border-default text-sm">
+            <div className="px-3 py-2 rounded-lg bg-white/60 backdrop-blur-glass-chip border border-glass-border-dark text-sm">
               <div className="text-deep-charcoal font-medium mb-1">
                 {payload.currency.toUpperCase()} {payload.deposit_amount.toFixed(2)}
               </div>
@@ -175,7 +175,7 @@ export default function DepositRequestModal({
               <button
                 type="button"
                 onClick={copy}
-                className="flex-1 px-3 py-2 rounded-lg border border-border-default text-sm font-medium hover:bg-stone-50 transition-colors"
+                className="flex-1 px-3 py-2 rounded-lg border border-glass-border-input bg-white/60 hover:bg-white/85 text-sm font-medium transition-colors"
               >
                 {copyOk
                   ? t('dashboard.depositSuggest.modal.copied', 'Copied!')

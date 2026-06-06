@@ -529,7 +529,7 @@ export default function DemoDashboard() {
             role="dialog"
             aria-modal="true"
             aria-label={t.walkInTitle}
-            className="bg-warm-white rounded-lg shadow-lg border border-border-gray p-6 max-w-md w-full"
+            className="glass-modal p-6 max-w-md w-full"
           >
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold text-deep-charcoal">{t.walkInTitle}</h2>
