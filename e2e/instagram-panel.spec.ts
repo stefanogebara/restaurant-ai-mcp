@@ -354,3 +354,250 @@ test.describe('Caption drafter — full draft cycle', () => {
     expect(captured).toMatchObject({ topic: 'topic xyz', length: 'long' });
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+test.describe('Publish — single image flow (C.8)', () => {
+  test('paste URL → Post now → success toast with permalink', async ({ page, context }) => {
+    await stubStatus(context, {
+      connected: true,
+      status: 'active',
+      username: 'cantinabella',
+      tone_profile_ready: true,
+      tone_language: 'pt',
+    });
+    await stubDraftCaption(context, ['Draft about the new menu.', 'Second draft.', 'Third.']);
+    let publishBody: { caption?: string; image_urls?: string[]; image_url?: string } | null = null;
+    await context.route('**/api/instagram/publish-post', async (route) => {
+      publishBody = route.request().postDataJSON?.() ?? null;
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          ok: true,
+          media_id: 'MOCK_MEDIA_123',
+          permalink: 'https://www.instagram.com/p/MOCK/',
+          post_kind: 'single',
+        }),
+      });
+    });
+
+    await page.goto(INSTAGRAM_TAB_URL);
+    await waitForInstagramPanel(page);
+
+    await page.getByTestId('instagram-caption-drafter-topic').fill('new menu launch');
+    await page.getByTestId('instagram-caption-drafter-submit').click();
+    await expect(page.getByTestId('instagram-caption-drafter-card-0')).toBeVisible();
+
+    await page.getByTestId('instagram-caption-drafter-post-toggle-0').click();
+    await expect(page.getByTestId('instagram-caption-drafter-post-form-0')).toBeVisible();
+
+    await page.getByTestId('instagram-caption-drafter-image-url-0').fill('https://cdn.example.com/dish.jpg');
+    await page.getByTestId('instagram-caption-drafter-add-url-0').click();
+    await expect(page.getByTestId('instagram-caption-drafter-thumb-0-0')).toBeVisible();
+    await expect(page.getByTestId('instagram-caption-drafter-publish-0')).toContainText(/Post now/i);
+
+    await page.getByTestId('instagram-caption-drafter-publish-0').click();
+    await expect(page.locator('body')).toContainText(/instagram\.com\/p\/MOCK/, { timeout: 5_000 });
+
+    expect(publishBody?.image_urls).toEqual(['https://cdn.example.com/dish.jpg']);
+    expect(publishBody?.caption).toBeTruthy();
+  });
+
+  test('publish API error surfaces upstream message', async ({ page, context }) => {
+    await stubStatus(context, {
+      connected: true,
+      status: 'active',
+      username: 'cantinabella',
+      tone_profile_ready: true,
+    });
+    await stubDraftCaption(context, ['Draft 1', 'Draft 2', 'Draft 3']);
+    await context.route('**/api/instagram/publish-post', (route) =>
+      route.fulfill({
+        status: 502,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          ok: false,
+          error: 'Instagram is processing this image, please retry shortly.',
+          code: 36003,
+        }),
+      }),
+    );
+
+    await page.goto(INSTAGRAM_TAB_URL);
+    await waitForInstagramPanel(page);
+
+    await page.getByTestId('instagram-caption-drafter-topic').fill('test');
+    await page.getByTestId('instagram-caption-drafter-submit').click();
+    await expect(page.getByTestId('instagram-caption-drafter-card-0')).toBeVisible();
+
+    await page.getByTestId('instagram-caption-drafter-post-toggle-0').click();
+    await page.getByTestId('instagram-caption-drafter-image-url-0').fill('https://cdn.example.com/dish.jpg');
+    await page.getByTestId('instagram-caption-drafter-add-url-0').click();
+    await page.getByTestId('instagram-caption-drafter-publish-0').click();
+
+    await expect(page.locator('body')).toContainText(/processing this image/i, { timeout: 5_000 });
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+test.describe('Upload — file → URL auto-fill (C.9)', () => {
+  test('selecting an image file uploads + appends a thumbnail', async ({ page, context }) => {
+    await stubStatus(context, {
+      connected: true,
+      status: 'active',
+      username: 'cantinabella',
+      tone_profile_ready: true,
+    });
+    await stubDraftCaption(context, ['A', 'B', 'C']);
+
+    let uploadBody: { filename?: string; content_type?: string; data_b64?: string } | null = null;
+    await context.route('**/api/instagram/upload-image', async (route) => {
+      uploadBody = route.request().postDataJSON?.() ?? null;
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          ok: true,
+          url: 'https://storage.example.com/instagram-uploads/r1/abc.png',
+          path: 'r1/abc.png',
+        }),
+      });
+    });
+
+    await page.goto(INSTAGRAM_TAB_URL);
+    await waitForInstagramPanel(page);
+
+    await page.getByTestId('instagram-caption-drafter-topic').fill('upload test');
+    await page.getByTestId('instagram-caption-drafter-submit').click();
+    await expect(page.getByTestId('instagram-caption-drafter-card-0')).toBeVisible();
+
+    await page.getByTestId('instagram-caption-drafter-post-toggle-0').click();
+
+    // Synthetic 1x1 PNG so the client-side content_type/size checks pass.
+    const pngBytes = Buffer.from([
+      0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
+      0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44, 0x52,
+      0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
+      0x08, 0x06, 0x00, 0x00, 0x00, 0x1f, 0x15, 0xc4,
+      0x89, 0x00, 0x00, 0x00, 0x0d, 0x49, 0x44, 0x41,
+      0x54, 0x78, 0x9c, 0x63, 0x00, 0x01, 0x00, 0x00,
+      0x05, 0x00, 0x01, 0x0d, 0x0a, 0x2d, 0xb4, 0x00,
+      0x00, 0x00, 0x00, 0x49, 0x45, 0x4e, 0x44, 0xae,
+      0x42, 0x60, 0x82,
+    ]);
+    await page.locator('[data-testid="instagram-caption-drafter-upload-0"] input[type="file"]').setInputFiles({
+      name: 'menu.png', mimeType: 'image/png', buffer: pngBytes,
+    });
+
+    await expect(page.getByTestId('instagram-caption-drafter-thumb-0-0')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('body')).toContainText(/Uploaded 1 image/i);
+
+    expect(uploadBody?.filename).toBe('menu.png');
+    expect(uploadBody?.content_type).toBe('image/png');
+    expect(uploadBody?.data_b64).toBeTruthy();
+    expect(uploadBody?.data_b64?.startsWith('iVBORw')).toBe(true);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+test.describe('Carousel — 2-10 images (C.10)', () => {
+  test('two pasted URLs → Post button reads "Post carousel (2)"', async ({ page, context }) => {
+    await stubStatus(context, {
+      connected: true, status: 'active', username: 'x', tone_profile_ready: true,
+    });
+    await stubDraftCaption(context, ['a', 'b', 'c']);
+
+    await page.goto(INSTAGRAM_TAB_URL);
+    await waitForInstagramPanel(page);
+
+    await page.getByTestId('instagram-caption-drafter-topic').fill('carousel test');
+    await page.getByTestId('instagram-caption-drafter-submit').click();
+    await page.getByTestId('instagram-caption-drafter-post-toggle-0').click();
+
+    const urlInput = page.getByTestId('instagram-caption-drafter-image-url-0');
+    const addBtn = page.getByTestId('instagram-caption-drafter-add-url-0');
+
+    await urlInput.fill('https://cdn.example.com/a.jpg');
+    await addBtn.click();
+    await expect(page.getByTestId('instagram-caption-drafter-publish-0')).toContainText(/Post now/i);
+
+    await urlInput.fill('https://cdn.example.com/b.jpg');
+    await addBtn.click();
+    await expect(page.getByTestId('instagram-caption-drafter-publish-0')).toContainText(/Post carousel \(2\)/i);
+
+    await expect(page.getByTestId('instagram-caption-drafter-thumb-0-0')).toBeVisible();
+    await expect(page.getByTestId('instagram-caption-drafter-thumb-0-1')).toBeVisible();
+  });
+
+  test('thumbnail × removes the image — carousel falls back to single label', async ({ page, context }) => {
+    await stubStatus(context, {
+      connected: true, status: 'active', username: 'x', tone_profile_ready: true,
+    });
+    await stubDraftCaption(context, ['a', 'b', 'c']);
+
+    await page.goto(INSTAGRAM_TAB_URL);
+    await waitForInstagramPanel(page);
+
+    await page.getByTestId('instagram-caption-drafter-topic').fill('remove test');
+    await page.getByTestId('instagram-caption-drafter-submit').click();
+    await page.getByTestId('instagram-caption-drafter-post-toggle-0').click();
+
+    const urlInput = page.getByTestId('instagram-caption-drafter-image-url-0');
+    const addBtn = page.getByTestId('instagram-caption-drafter-add-url-0');
+
+    for (const u of ['https://x.com/a.jpg', 'https://x.com/b.jpg', 'https://x.com/c.jpg']) {
+      await urlInput.fill(u);
+      await addBtn.click();
+    }
+    await expect(page.getByTestId('instagram-caption-drafter-publish-0')).toContainText(/Post carousel \(3\)/i);
+
+    await page.getByTestId('instagram-caption-drafter-thumb-remove-0-1').click();
+    await expect(page.getByTestId('instagram-caption-drafter-publish-0')).toContainText(/Post carousel \(2\)/i);
+
+    await page.getByTestId('instagram-caption-drafter-thumb-remove-0-0').click();
+    await expect(page.getByTestId('instagram-caption-drafter-publish-0')).toContainText(/Post now/i);
+  });
+
+  test('carousel publish posts image_urls array, surfaces "Carousel posted" toast', async ({ page, context }) => {
+    await stubStatus(context, {
+      connected: true, status: 'active', username: 'x', tone_profile_ready: true,
+    });
+    await stubDraftCaption(context, ['a', 'b', 'c']);
+
+    let publishBody: { caption?: string; image_urls?: string[] } | null = null;
+    await context.route('**/api/instagram/publish-post', async (route) => {
+      publishBody = route.request().postDataJSON?.() ?? null;
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          ok: true, media_id: 'M1', permalink: 'https://instagram.com/p/CAROUSEL', post_kind: 'carousel',
+        }),
+      });
+    });
+
+    await page.goto(INSTAGRAM_TAB_URL);
+    await waitForInstagramPanel(page);
+
+    await page.getByTestId('instagram-caption-drafter-topic').fill('menu showcase');
+    await page.getByTestId('instagram-caption-drafter-submit').click();
+    await page.getByTestId('instagram-caption-drafter-post-toggle-0').click();
+
+    const urlInput = page.getByTestId('instagram-caption-drafter-image-url-0');
+    const addBtn = page.getByTestId('instagram-caption-drafter-add-url-0');
+    for (const u of ['https://x.com/1.jpg', 'https://x.com/2.jpg', 'https://x.com/3.jpg']) {
+      await urlInput.fill(u);
+      await addBtn.click();
+    }
+
+    await page.getByTestId('instagram-caption-drafter-publish-0').click();
+    await expect(page.locator('body')).toContainText(/Carousel posted/i, { timeout: 5_000 });
+
+    expect(publishBody?.image_urls).toEqual([
+      'https://x.com/1.jpg', 'https://x.com/2.jpg', 'https://x.com/3.jpg',
+    ]);
+  });
+});
