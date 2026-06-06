@@ -183,43 +183,68 @@ export default function InstagramCaptionDrafter({ toneProfileReady, language }: 
  * image URL field appears) keeps the default layout uncluttered —
  * users who only want Copy don't see the post controls at all.
  */
+const CAROUSEL_MAX = 10;
+
 function DraftCard({ draft, index, onCopy }: { draft: string; index: number; onCopy: () => void }) {
   const { t } = useTranslation();
   const toast = useToast();
   const [postingOpen, setPostingOpen] = useState(false);
-  const [imageUrl, setImageUrl] = useState('');
+  // imageUrls[] is the source of truth — single posts have 1 entry,
+  // carousels have 2-10. The "or paste URL" input still lives, but it
+  // now APPENDS to imageUrls rather than replacing.
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [pasteUrl, setPasteUrl] = useState('');
   const [uploading, setUploading] = useState(false);
 
-  const publishMutation = useMutation<{ permalink: string | null }, Error, { caption: string; image_url: string }>({
+  const publishMutation = useMutation<
+    { permalink: string | null; post_kind?: string },
+    Error,
+    { caption: string; image_urls: string[] }
+  >({
     mutationFn: async (input) => {
       const res = await authFetch('/api/instagram/publish-post', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(input),
       });
-      const body = (await res.json().catch(() => null)) as { ok?: boolean; error?: string; media_id?: string; permalink?: string | null } | null;
+      const body = (await res.json().catch(() => null)) as {
+        ok?: boolean; error?: string; media_id?: string; permalink?: string | null; post_kind?: string;
+      } | null;
       if (!res.ok || !body?.ok) {
         throw new Error(body?.error || `Publish failed (HTTP ${res.status})`);
       }
-      return { permalink: body.permalink ?? null };
+      return { permalink: body.permalink ?? null, post_kind: body.post_kind };
     },
-    onSuccess: ({ permalink }) => {
+    onSuccess: ({ permalink, post_kind }) => {
+      const verb = post_kind === 'carousel' ? 'Carousel posted' : 'Posted';
       toast.success(
         permalink
-          ? t('instagram.publishedWithLink', `Posted to Instagram → ${permalink}`)
-          : t('instagram.published', 'Posted to Instagram.'),
+          ? t('instagram.publishedWithLink', `${verb} → ${permalink}`)
+          : t('instagram.published', `${verb}.`),
       );
-      // Collapse the post UI and clear the URL so the card looks "done".
+      // Reset the form so the card looks "done".
       setPostingOpen(false);
-      setImageUrl('');
+      setImageUrls([]);
+      setPasteUrl('');
     },
     onError: (err) => toast.error(err.message),
   });
 
   const onPublish = () => {
     if (publishMutation.isPending) return;
-    if (imageUrl.trim().length < 8) return;
-    publishMutation.mutate({ caption: draft, image_url: imageUrl.trim() });
+    if (imageUrls.length === 0) return;
+    publishMutation.mutate({ caption: draft, image_urls: imageUrls });
+  };
+
+  const onAddPastedUrl = () => {
+    const url = pasteUrl.trim();
+    if (url.length < 8 || imageUrls.length >= CAROUSEL_MAX) return;
+    setImageUrls((prev) => [...prev, url]);
+    setPasteUrl('');
+  };
+
+  const onRemoveImage = (i: number) => {
+    setImageUrls((prev) => prev.filter((_, idx) => idx !== i));
   };
 
   /**
@@ -239,32 +264,58 @@ function DraftCard({ draft, index, onCopy }: { draft: string; index: number; onC
     reader.readAsDataURL(file);
   });
 
-  const onFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    e.target.value = '';  // reset so re-selecting same file fires onChange
+  /**
+   * Uploads ONE file to Supabase Storage via /api/instagram/upload-image.
+   * Returns the public URL on success, throws on error. Used by
+   * onFilesSelected to upload multi-selected files sequentially —
+   * sequential keeps the order deterministic AND keeps the burst under
+   * Vercel's per-call timeout.
+   */
+  const uploadOneFile = async (file: File): Promise<string> => {
     if (!/^image\/(jpe?g|png|webp)$/i.test(file.type)) {
-      toast.error(t('instagram.uploadInvalidType', 'Only JPEG, PNG, or WebP images are supported.'));
-      return;
+      throw new Error(t('instagram.uploadInvalidType', `${file.name}: only JPEG, PNG, or WebP supported.`));
     }
     if (file.size > 4 * 1024 * 1024) {
-      toast.error(t('instagram.uploadTooLarge', 'Image must be 4 MB or smaller.'));
+      throw new Error(t('instagram.uploadTooLarge', `${file.name}: must be 4 MB or smaller.`));
+    }
+    const dataB64 = await fileToBase64(file);
+    const res = await authFetch('/api/instagram/upload-image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ filename: file.name, content_type: file.type, data_b64: dataB64 }),
+    });
+    const body = (await res.json().catch(() => null)) as { ok?: boolean; url?: string; error?: string } | null;
+    if (!res.ok || !body?.ok || !body.url) {
+      throw new Error(body?.error || `Upload failed (HTTP ${res.status})`);
+    }
+    return body.url;
+  };
+
+  const onFilesSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    e.target.value = '';  // reset so re-picking the same file fires onChange
+    if (files.length === 0) return;
+
+    const room = CAROUSEL_MAX - imageUrls.length;
+    if (room <= 0) {
+      toast.error(t('instagram.uploadMaxReached', `Maximum ${CAROUSEL_MAX} images per post.`));
       return;
     }
+    const accepted = files.slice(0, room);
+    if (files.length > room) {
+      toast.info(t('instagram.uploadTrimmed', `Only ${room} more images fit — ignoring ${files.length - room}.`));
+    }
+
     setUploading(true);
+    const uploadedUrls: string[] = [];
     try {
-      const dataB64 = await fileToBase64(file);
-      const res = await authFetch('/api/instagram/upload-image', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ filename: file.name, content_type: file.type, data_b64: dataB64 }),
-      });
-      const body = (await res.json().catch(() => null)) as { ok?: boolean; url?: string; error?: string } | null;
-      if (!res.ok || !body?.ok || !body.url) {
-        throw new Error(body?.error || `Upload failed (HTTP ${res.status})`);
+      for (const file of accepted) {
+        const url = await uploadOneFile(file);
+        uploadedUrls.push(url);
+        // Append progressively so the user sees thumbnails landing
+        setImageUrls((prev) => [...prev, url]);
       }
-      setImageUrl(body.url);
-      toast.success(t('instagram.uploadOk', 'Image uploaded — ready to post.'));
+      toast.success(t('instagram.uploadOk', `Uploaded ${uploadedUrls.length} image${uploadedUrls.length === 1 ? '' : 's'}.`));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t('instagram.uploadFailed', 'Upload failed.'));
     } finally {
@@ -296,39 +347,96 @@ function DraftCard({ draft, index, onCopy }: { draft: string; index: number; onC
 
       {postingOpen && (
         <div className="border-t border-glass-border-dark pt-2 space-y-2" data-testid={`instagram-caption-drafter-post-form-${index}`}>
-          <label className="text-xs text-muted-stone block">Image</label>
+          <label className="text-xs text-muted-stone block">
+            Images {imageUrls.length > 0 && <span className="text-deep-charcoal">({imageUrls.length}/{CAROUSEL_MAX})</span>}
+          </label>
+
+          {/* Thumbnail grid — appears once at least one image is added. */}
+          {imageUrls.length > 0 && (
+            <div className="flex flex-wrap gap-2" data-testid={`instagram-caption-drafter-thumbs-${index}`}>
+              {imageUrls.map((u, i) => (
+                <div
+                  key={u + '#' + i}
+                  className="relative w-16 h-16 rounded-lg overflow-hidden border border-glass-border-dark bg-white"
+                  data-testid={`instagram-caption-drafter-thumb-${index}-${i}`}
+                >
+                  <img src={u} alt="" className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => onRemoveImage(i)}
+                    disabled={publishMutation.isPending || uploading}
+                    className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-burgundy text-white text-xs leading-none flex items-center justify-center hover:bg-burgundy-dark disabled:opacity-50"
+                    aria-label={`Remove image ${i + 1}`}
+                    data-testid={`instagram-caption-drafter-thumb-remove-${index}-${i}`}
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
           <div className="flex items-center gap-2">
             <label
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-glass-border-input rounded-lg text-xs text-deep-charcoal cursor-pointer hover:border-burgundy transition-colors"
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-glass-border-input rounded-lg text-xs text-deep-charcoal hover:border-burgundy transition-colors ${
+                uploading || publishMutation.isPending || imageUrls.length >= CAROUSEL_MAX
+                  ? 'opacity-50 cursor-not-allowed'
+                  : 'cursor-pointer'
+              }`}
               data-testid={`instagram-caption-drafter-upload-${index}`}
             >
               <input
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
-                onChange={onFileSelected}
-                disabled={uploading || publishMutation.isPending}
+                multiple
+                onChange={onFilesSelected}
+                disabled={uploading || publishMutation.isPending || imageUrls.length >= CAROUSEL_MAX}
                 className="hidden"
               />
-              {uploading ? 'Uploading…' : 'Upload image'}
+              {uploading ? 'Uploading…' : imageUrls.length === 0 ? 'Upload images' : 'Add more'}
             </label>
-            <span className="text-xs text-muted-stone">or paste a URL</span>
+            <span className="text-xs text-muted-stone">or paste URLs</span>
           </div>
-          <input
-            type="url"
-            value={imageUrl}
-            onChange={(e) => setImageUrl(e.target.value)}
-            placeholder="https://your-cdn.com/photo.jpg"
-            className="w-full px-3 py-2 border border-glass-border-input rounded-lg text-sm focus:outline-none focus:border-burgundy"
-            data-testid={`instagram-caption-drafter-image-url-${index}`}
-          />
+
+          <div className="flex gap-2">
+            <input
+              type="url"
+              value={pasteUrl}
+              onChange={(e) => setPasteUrl(e.target.value)}
+              placeholder="https://your-cdn.com/photo.jpg"
+              disabled={publishMutation.isPending || imageUrls.length >= CAROUSEL_MAX}
+              className="flex-1 px-3 py-2 border border-glass-border-input rounded-lg text-sm focus:outline-none focus:border-burgundy disabled:opacity-50"
+              data-testid={`instagram-caption-drafter-image-url-${index}`}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  onAddPastedUrl();
+                }
+              }}
+            />
+            <button
+              type="button"
+              onClick={onAddPastedUrl}
+              disabled={pasteUrl.trim().length < 8 || imageUrls.length >= CAROUSEL_MAX || publishMutation.isPending}
+              className="px-3 py-2 text-xs text-burgundy border border-glass-border-input rounded-lg hover:border-burgundy disabled:opacity-50 transition-colors"
+              data-testid={`instagram-caption-drafter-add-url-${index}`}
+            >
+              Add
+            </button>
+          </div>
+
           <button
             type="button"
             onClick={onPublish}
-            disabled={publishMutation.isPending || uploading || imageUrl.trim().length < 8}
+            disabled={publishMutation.isPending || uploading || imageUrls.length === 0}
             className="px-3 py-1.5 bg-burgundy text-white rounded-lg text-xs font-medium hover:bg-burgundy-dark disabled:opacity-50 transition-colors"
             data-testid={`instagram-caption-drafter-publish-${index}`}
           >
-            {publishMutation.isPending ? 'Posting…' : 'Post now'}
+            {publishMutation.isPending
+              ? 'Posting…'
+              : imageUrls.length >= 2
+                ? `Post carousel (${imageUrls.length})`
+                : 'Post now'}
           </button>
         </div>
       )}
