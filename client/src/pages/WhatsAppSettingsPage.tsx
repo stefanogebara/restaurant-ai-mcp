@@ -483,20 +483,34 @@ export default function WhatsAppSettingsPage() {
             <p className="text-xs text-warm-stone mt-1">{t('settings.ownerWhatsAppHint')}</p>
           </div>
 
-          {/* Save Button */}
-          <button
-            onClick={handleSave}
-            disabled={!isDirty || saveMutation.isPending}
-            className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
-              isDirty
-                ? 'bg-burgundy hover:bg-burgundy-dark text-white'
-                : 'bg-border-gray text-muted-stone cursor-not-allowed'
-            }`}
-          >
-            {saveMutation.isPending ? t('common.loading') : t('common.save')}
-          </button>
+          {/* Save Button + jump-to-test affordance. The Test pane already
+              has the actual send flow; this just makes it discoverable from
+              the Setup pane so the owner doesn't have to hunt for it after
+              finishing the connection. Only render when WhatsApp is fully
+              configured — otherwise there's nothing meaningful to test. */}
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              onClick={handleSave}
+              disabled={!isDirty || saveMutation.isPending}
+              className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
+                isDirty
+                  ? 'bg-burgundy hover:bg-burgundy-dark text-white'
+                  : 'bg-border-gray text-muted-stone cursor-not-allowed'
+              }`}
+            >
+              {saveMutation.isPending ? t('common.loading') : t('common.save')}
+            </button>
+            {status?.api_configured && (
+              <a
+                href="#whatsapp-settings:test"
+                className="text-sm text-burgundy hover:text-burgundy-dark underline underline-offset-2"
+              >
+                {t('settings.sendTestNudge', 'Enviar mensagem de teste →')}
+              </a>
+            )}
+          </div>
           {saveMutation.isError && (
-            <p className="text-sm text-red-600">{(saveMutation.error as Error).message}</p>
+            <p className="text-sm text-red-600 mt-2">{(saveMutation.error as Error).message}</p>
           )}
         </div>
 
