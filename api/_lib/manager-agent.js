@@ -497,19 +497,19 @@ async function runManagerAgent(restaurantId, userMessage, channel, options = {})
   // English. Logging the config + derived targetLang into Vercel function logs
   // so we can see what the deployed code actually reads. Will be removed once
   // the bug is pinned down.
-  console.log('[manager-agent:lang]', JSON.stringify({
-    rid: restaurantId,
+  logger.error('manager-agent:lang config', {
+    restaurantId,
     agent_language: config?.agent_language,
     country: config?.country,
     hasSchemaError: !!configResult?.error,
     schemaError: configResult?.error?.message,
-  }));
+  });
   const systemPrompt = buildSystemPrompt(memories, snapshot, config, wikiPages);
   const targetLang =
     config?.agent_language ||
     config?.language ||
     languageFromCountry(config?.country);
-  console.log('[manager-agent:lang]', 'targetLang=', targetLang);
+  logger.error('manager-agent:lang targetLang', { restaurantId, targetLang });
   const usableHistory = shouldResetHistoryForLanguage(history, targetLang) ? [] : history;
   // Belt-and-braces against the LLM's tendency to mirror the conversation's
   // prior output language: even after dropping stale-language history, the
@@ -640,19 +640,19 @@ async function runManagerAgentStream(restaurantId, userMessage, channel, onToken
   // English. Logging the config + derived targetLang into Vercel function logs
   // so we can see what the deployed code actually reads. Will be removed once
   // the bug is pinned down.
-  console.log('[manager-agent:lang]', JSON.stringify({
-    rid: restaurantId,
+  logger.error('manager-agent:lang config', {
+    restaurantId,
     agent_language: config?.agent_language,
     country: config?.country,
     hasSchemaError: !!configResult?.error,
     schemaError: configResult?.error?.message,
-  }));
+  });
   const systemPrompt = buildSystemPrompt(memories, snapshot, config, wikiPages);
   const targetLang =
     config?.agent_language ||
     config?.language ||
     languageFromCountry(config?.country);
-  console.log('[manager-agent:lang]', 'targetLang=', targetLang);
+  logger.error('manager-agent:lang targetLang', { restaurantId, targetLang });
   const usableHistory = shouldResetHistoryForLanguage(history, targetLang) ? [] : history;
   // Belt-and-braces against the LLM's tendency to mirror the conversation's
   // prior output language: even after dropping stale-language history, the
