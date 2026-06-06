@@ -149,6 +149,44 @@ function shouldResetHistoryForLanguage(history, targetLanguage) {
   return false;
 }
 
+// Build a synthetic two-turn priming exchange that locks the model into the
+// target language regardless of what the prior conversation history was in.
+// Anthropic models follow multi-turn examples more reliably than system-prompt
+// directives — even a stern "ALWAYS RESPOND IN PORTUGUESE" in the system gets
+// overridden when the assistant's prior turns are in English. A fake
+// user→assistant pair right before the actual user message primes the model to
+// match the assistant pattern.
+//
+// Returns an array of messages that should be prepended to the actual user
+// message, or empty for English targets where no priming is needed.
+function buildLanguagePrimer(targetLanguage) {
+  if (targetLanguage === 'pt' || targetLanguage === 'pt-BR') {
+    return [
+      { role: 'user', content: 'Em que idioma você responde?' },
+      { role: 'assistant', content: 'Sempre respondo em português brasileiro.' },
+    ];
+  }
+  if (targetLanguage === 'es') {
+    return [
+      { role: 'user', content: '¿En qué idioma respondes?' },
+      { role: 'assistant', content: 'Siempre respondo en español.' },
+    ];
+  }
+  if (targetLanguage === 'fr') {
+    return [
+      { role: 'user', content: 'Dans quelle langue répondez-vous?' },
+      { role: 'assistant', content: 'Je réponds toujours en français.' },
+    ];
+  }
+  if (targetLanguage === 'it') {
+    return [
+      { role: 'user', content: 'In quale lingua rispondi?' },
+      { role: 'assistant', content: 'Rispondo sempre in italiano.' },
+    ];
+  }
+  return [];
+}
+
 async function saveTurn(restaurantId, role, content, channel) {
   const { error } = await supabaseAdmin.from('manager_conversations').insert({
     restaurant_id: restaurantId,
@@ -461,11 +499,19 @@ async function runManagerAgent(restaurantId, userMessage, channel, options = {})
     config?.language ||
     languageFromCountry(config?.country);
   const usableHistory = shouldResetHistoryForLanguage(history, targetLang) ? [] : history;
+  // Belt-and-braces against the LLM's tendency to mirror the conversation's
+  // prior output language: even after dropping stale-language history, the
+  // model would still occasionally drift back to English on PT/ES restaurants.
+  // The two-turn primer right before the user's real message wins reliably in
+  // testing because Anthropic models follow multi-turn examples over system
+  // prompts.
+  const languagePrimer = buildLanguagePrimer(targetLang);
   const messages = [
     ...usableHistory.map((h) => ({
       role: h.role === 'manager' ? 'user' : 'assistant',
       content: h.content,
     })),
+    ...languagePrimer,
     { role: 'user', content: userMessage },
   ];
 
@@ -584,11 +630,19 @@ async function runManagerAgentStream(restaurantId, userMessage, channel, onToken
     config?.language ||
     languageFromCountry(config?.country);
   const usableHistory = shouldResetHistoryForLanguage(history, targetLang) ? [] : history;
+  // Belt-and-braces against the LLM's tendency to mirror the conversation's
+  // prior output language: even after dropping stale-language history, the
+  // model would still occasionally drift back to English on PT/ES restaurants.
+  // The two-turn primer right before the user's real message wins reliably in
+  // testing because Anthropic models follow multi-turn examples over system
+  // prompts.
+  const languagePrimer = buildLanguagePrimer(targetLang);
   const messages = [
     ...usableHistory.map((h) => ({
       role: h.role === 'manager' ? 'user' : 'assistant',
       content: h.content,
     })),
+    ...languagePrimer,
     { role: 'user', content: userMessage },
   ];
 
