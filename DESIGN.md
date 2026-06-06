@@ -234,4 +234,34 @@ When this file changes, update:
 
 ---
 
-_Last sync: 2026-06-01 — extracted from inline CLAUDE.md sections._
+## Rebrand changelog
+
+### 2026-06-05 — Warm Glass v1 fully shipped
+
+Multi-phase migration from Nordic Clean (hard 1-px borders + flat fills) to the warm-glass light-mode system documented above. ~250 component + page files converted across 10 deploys.
+
+**Foundation (`139bbd51`)**: this DESIGN.md + Tailwind tokens (`bg-glass-*`, `border-glass-*`, `backdrop-blur-glass-*`, `shadow-glass-*`) + body 4-orb radial gradient + 4 utility classes (`.glass-card` / `.glass-panel` / `.glass-modal` / `.glass-pill`) + 4 React primitives at `client/src/components/common/glass/`.
+
+**Phases 2A–2F (~30 commits)**: landing page, host dashboard + 5 panels, manager AI, customer CRM, demo dashboard, and all 7 settings tabs. `DashboardLayout` dropped its `bg-soft-gray` flex shell so every authenticated page exposes the body gradient automatically.
+
+**Phase 3 (`4799f941`)**: 8 customer-facing surfaces — BookingPage, CustomerPortal, EventBookingPage, JoinPage, BookingConfirmation, Welcome, Onboarding, Login.
+
+**Phase 4 (`464c70e2`)**: 6 remaining product pages — Insights, FloorPlanEditor, CallTrackingDashboard, CouponsPage, EventsPage, NotFound.
+
+**Phase 5 Tier 1–2 (5 commits, ~101 files)**: leverage primitives (`common/Modal`, `common/ConfirmModal`, `common/Skeleton`), 8 host modals, 2 CRM drawers, the entire `voice/` folder, 21 settings-internal panels, the host customer + LTV + table cluster (23 files), then analytics / insights / call-tracking / campaigns / floor-plan / events folders (32 files).
+
+**Phase 6 (`ad760b3c`)**: onboarding wizard, demo internals, calculator, booking forms, OnboardingSuccessModal. 37 files. (`DemoVoiceAgent` + `DemoWhatsAppSim` intentionally kept solid white — they mimic real WhatsApp/voice UIs and the realism is the point. `seo/*` pages kept their own marketing aesthetic.)
+
+**Encoding recovery (`36da9e84`)**: a PowerShell mass-replace in Phase 5/6 round-tripped 45 files through cp1252, mangling PT-BR accents (`Previsão` → `PrevisÃ£o`) and breaking LocationSelector's `[̀-ͯ]` regex. Python `text.encode('cp1252').decode('utf-8')` reverse-fix repaired 42 files; 3 were restored from earlier clean commits then re-converted via Edit. Lesson captured in `tasks/lessons.md` — future mass-replace passes use Python or Edit, never PowerShell.
+
+**Visual review round 2 (`5e5ac883`)**: orb opacities lifted from 0.06–0.10 to 0.10–0.18 (gradient was invisible against `#FAFAF9`, glass surfaces refracted nothing). `shadow-glass-card` second drop doubled from 0.04 to 0.08 so cards lift off the background. DemoAIInsightsBar migrated to `.glass-card` (was missed in Phase 6).
+
+**Visual review round 3 (`d03cc0d2` retried as `c7218587`)**: new `glass-border-input` token at `rgba(28, 25, 23, 0.12)` — 2× `glass-border-dark`. Booking form inputs had been invisible (placeholder text floating with no box outline) once the gradient became visible in round 2. Swept across 66 files via a UTF-8-safe Python heuristic that only swaps when the className contains a form-input signal (`placeholder:` / `focus:ring-` / `focus:border-` / `resize-` / `appearance-none`).
+
+**Plus** an unrelated security fix (`d2af0e7e`): `safeHttpUrl()` scheme guard on Instagram bio website href — Meta does not sanitise the bio website field, and a malicious IG account could set their bio to `javascript:...` and execute when a restaurant owner clicks it.
+
+**Intentionally deferred**: `DemoVoiceAgent` + `DemoWhatsAppSim` (mimic real chat UIs), `seo/*` (independent marketing aesthetic), the inline-demo browser chrome on the landing page.
+
+---
+
+_Last sync: 2026-06-05 — Warm Glass v1 rebrand changelog appended._
