@@ -1,3 +1,6 @@
+// Force rebuild — Vercel's API build was not picking up the
+// buildLanguagePrimer / shouldResetHistoryForLanguage additions in
+// manager-agent.js when only the deep-import changed.
 const { verifyJWT } = require('./_lib/auth');
 const { runManagerAgent, runManagerAgentStream, ManagerQuotaError } = require('./_lib/manager-agent');
 const { supabaseAdmin } = require('./_lib/supabase');
