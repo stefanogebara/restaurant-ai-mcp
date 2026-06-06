@@ -561,6 +561,53 @@ test.describe('Carousel — 2-10 images (C.10)', () => {
     await expect(page.getByTestId('instagram-caption-drafter-publish-0')).toContainText(/Post now/i);
   });
 
+  test('drag-to-reorder (C.13): drag thumb 2 onto thumb 0 → request body shows new order, cover badge moves', async ({ page, context }) => {
+    await stubStatus(context, {
+      connected: true, status: 'active', username: 'x', tone_profile_ready: true,
+    });
+    await stubDraftCaption(context, ['a', 'b', 'c']);
+
+    let publishBody: { image_urls?: string[] } | null = null;
+    await context.route('**/api/instagram/publish-post', async (route) => {
+      publishBody = route.request().postDataJSON?.() ?? null;
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ ok: true, media_id: 'M', permalink: 'https://instagram.com/p/X', post_kind: 'carousel' }),
+      });
+    });
+
+    await page.goto(INSTAGRAM_TAB_URL);
+    await waitForInstagramPanel(page);
+
+    await page.getByTestId('instagram-caption-drafter-topic').fill('reorder');
+    await page.getByTestId('instagram-caption-drafter-submit').click();
+    await page.getByTestId('instagram-caption-drafter-post-toggle-0').click();
+
+    const urlInput = page.getByTestId('instagram-caption-drafter-image-url-0');
+    const addBtn = page.getByTestId('instagram-caption-drafter-add-url-0');
+    for (const u of ['https://x.com/A.jpg', 'https://x.com/B.jpg', 'https://x.com/C.jpg']) {
+      await urlInput.fill(u);
+      await addBtn.click();
+    }
+
+    // Cover badge initially on the first thumb (index 0)
+    await expect(page.getByTestId('instagram-caption-drafter-thumb-cover-0')).toBeVisible();
+
+    // Drag thumb 2 (C.jpg) onto thumb 0 (A.jpg) — expected new order: C, A, B
+    await page.getByTestId('instagram-caption-drafter-thumb-0-2').dragTo(
+      page.getByTestId('instagram-caption-drafter-thumb-0-0'),
+    );
+
+    // Publish and assert request body reflects the new order
+    await page.getByTestId('instagram-caption-drafter-publish-0').click();
+    await expect(page.locator('body')).toContainText(/Carousel posted/i, { timeout: 5_000 });
+
+    expect(publishBody?.image_urls).toEqual([
+      'https://x.com/C.jpg', 'https://x.com/A.jpg', 'https://x.com/B.jpg',
+    ]);
+  });
+
   test('recent-posts picker (C.12): grid renders, click adds to imageUrls, dupe shows check', async ({ page, context }) => {
     await stubStatus(context, {
       connected: true, status: 'active', username: 'x', tone_profile_ready: true,

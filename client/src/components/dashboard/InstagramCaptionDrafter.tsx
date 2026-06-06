@@ -262,6 +262,61 @@ function DraftCard({ draft, index, onCopy }: { draft: string; index: number; onC
   };
 
   /**
+   * Reorders imageUrls by moving the item at fromIdx to toIdx. Critical
+   * for IG carousels because the first slide is the carousel's cover in
+   * feed — restaurants need to control which dish photo greets a scroller.
+   *
+   * Stable for fromIdx === toIdx (returns the same array reference so
+   * React skips the re-render).
+   */
+  const moveImage = (fromIdx: number, toIdx: number) => {
+    if (fromIdx === toIdx) return;
+    setImageUrls((prev) => {
+      if (fromIdx < 0 || fromIdx >= prev.length || toIdx < 0 || toIdx >= prev.length) return prev;
+      const next = [...prev];
+      const [moved] = next.splice(fromIdx, 1);
+      next.splice(toIdx, 0, moved);
+      return next;
+    });
+  };
+
+  // Drag state — the index of the currently-dragged thumb (or null if
+  // not dragging). Tracking this in component state instead of relying
+  // solely on the DataTransfer payload makes the visual feedback
+  // (highlighted source + drop target) work consistently across browsers.
+  const [draggingIdx, setDraggingIdx] = useState<number | null>(null);
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
+
+  const onDragStart = (idx: number) => (e: React.DragEvent<HTMLDivElement>) => {
+    setDraggingIdx(idx);
+    e.dataTransfer.effectAllowed = 'move';
+    // setData is required for Firefox to fire any drag events at all.
+    // The payload itself doesn't matter — we use component state instead.
+    try { e.dataTransfer.setData('text/plain', String(idx)); } catch { /* IE */ }
+  };
+
+  const onDragOver = (idx: number) => (e: React.DragEvent<HTMLDivElement>) => {
+    if (draggingIdx === null || draggingIdx === idx) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (dragOverIdx !== idx) setDragOverIdx(idx);
+  };
+
+  const onDrop = (idx: number) => (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    // Prefer component state, fall back to DataTransfer for safety.
+    const from = draggingIdx ?? Number(e.dataTransfer.getData('text/plain'));
+    if (Number.isFinite(from) && from !== idx) moveImage(from, idx);
+    setDraggingIdx(null);
+    setDragOverIdx(null);
+  };
+
+  const onDragEnd = () => {
+    setDraggingIdx(null);
+    setDragOverIdx(null);
+  };
+
+  /**
    * Loads /api/instagram/recent-media on first picker-open + caches in
    * component state. Re-opens are instant. The user can also force a
    * refresh via the reload button.
@@ -406,16 +461,37 @@ function DraftCard({ draft, index, onCopy }: { draft: string; index: number; onC
             Images {imageUrls.length > 0 && <span className="text-deep-charcoal">({imageUrls.length}/{CAROUSEL_MAX})</span>}
           </label>
 
-          {/* Thumbnail grid — appears once at least one image is added. */}
+          {/* Thumbnail grid — appears once at least one image is added.
+              Drag a thumb onto another to reorder. The first slide is the
+              carousel cover on IG, so order matters. */}
           {imageUrls.length > 0 && (
             <div className="flex flex-wrap gap-2" data-testid={`instagram-caption-drafter-thumbs-${index}`}>
               {imageUrls.map((u, i) => (
                 <div
                   key={u + '#' + i}
-                  className="relative w-16 h-16 rounded-lg overflow-hidden border border-glass-border-dark bg-white"
+                  draggable={!publishMutation.isPending && !uploading && imageUrls.length > 1}
+                  onDragStart={onDragStart(i)}
+                  onDragOver={onDragOver(i)}
+                  onDrop={onDrop(i)}
+                  onDragEnd={onDragEnd}
+                  className={
+                    'relative w-16 h-16 rounded-lg overflow-hidden border bg-white cursor-move transition-opacity ' +
+                    (draggingIdx === i ? 'opacity-30 ' : '') +
+                    (dragOverIdx === i ? 'border-burgundy ring-2 ring-burgundy/40 ' : 'border-glass-border-dark ')
+                  }
                   data-testid={`instagram-caption-drafter-thumb-${index}-${i}`}
+                  aria-grabbed={draggingIdx === i || undefined}
+                  title={imageUrls.length > 1 ? `Drag to reorder. Slide ${i + 1} of ${imageUrls.length}${i === 0 ? ' (cover)' : ''}` : undefined}
                 >
-                  <img src={u} alt="" className="w-full h-full object-cover" />
+                  {i === 0 && imageUrls.length > 1 && (
+                    <span
+                      className="absolute top-0.5 left-0.5 px-1 rounded text-[9px] bg-burgundy text-white font-medium uppercase tracking-wide pointer-events-none"
+                      data-testid={`instagram-caption-drafter-thumb-cover-${index}`}
+                    >
+                      Cover
+                    </span>
+                  )}
+                  <img src={u} alt="" className="w-full h-full object-cover pointer-events-none" />
                   <button
                     type="button"
                     onClick={() => onRemoveImage(i)}
