@@ -185,6 +185,15 @@ export default function InstagramCaptionDrafter({ toneProfileReady, language }: 
  */
 const CAROUSEL_MAX = 10;
 
+interface RecentMediaItem {
+  id: string;
+  image_url: string;
+  thumbnail_url: string | null;
+  media_type: 'IMAGE' | 'VIDEO' | 'CAROUSEL_ALBUM';
+  permalink: string;
+  timestamp: string;
+}
+
 function DraftCard({ draft, index, onCopy }: { draft: string; index: number; onCopy: () => void }) {
   const { t } = useTranslation();
   const toast = useToast();
@@ -195,6 +204,11 @@ function DraftCard({ draft, index, onCopy }: { draft: string; index: number; onC
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [pasteUrl, setPasteUrl] = useState('');
   const [uploading, setUploading] = useState(false);
+  // Recent-media picker state
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [recentMedia, setRecentMedia] = useState<RecentMediaItem[] | null>(null);
+  const [recentMediaLoading, setRecentMediaLoading] = useState(false);
+  const [recentMediaError, setRecentMediaError] = useState<string | null>(null);
 
   const publishMutation = useMutation<
     { permalink: string | null; post_kind?: string },
@@ -245,6 +259,47 @@ function DraftCard({ draft, index, onCopy }: { draft: string; index: number; onC
 
   const onRemoveImage = (i: number) => {
     setImageUrls((prev) => prev.filter((_, idx) => idx !== i));
+  };
+
+  /**
+   * Loads /api/instagram/recent-media on first picker-open + caches in
+   * component state. Re-opens are instant. The user can also force a
+   * refresh via the reload button.
+   */
+  const loadRecentMedia = async (force = false) => {
+    if (!force && recentMedia !== null) return;  // already loaded
+    setRecentMediaLoading(true);
+    setRecentMediaError(null);
+    try {
+      const res = await authFetch('/api/instagram/recent-media', { method: 'GET' });
+      const body = (await res.json().catch(() => null)) as { ok?: boolean; media?: RecentMediaItem[]; error?: string } | null;
+      if (!res.ok || !body?.ok || !Array.isArray(body.media)) {
+        throw new Error(body?.error || `Recent media failed (HTTP ${res.status})`);
+      }
+      setRecentMedia(body.media);
+    } catch (err) {
+      setRecentMediaError(err instanceof Error ? err.message : 'Failed to load recent posts');
+    } finally {
+      setRecentMediaLoading(false);
+    }
+  };
+
+  const onTogglePicker = () => {
+    const next = !pickerOpen;
+    setPickerOpen(next);
+    if (next) void loadRecentMedia();
+  };
+
+  const onPickFromRecent = (item: RecentMediaItem) => {
+    if (imageUrls.includes(item.image_url)) {
+      toast.info(t('instagram.alreadyAdded', "You've already added that one."));
+      return;
+    }
+    if (imageUrls.length >= CAROUSEL_MAX) {
+      toast.error(t('instagram.uploadMaxReached', `Maximum ${CAROUSEL_MAX} images per post.`));
+      return;
+    }
+    setImageUrls((prev) => [...prev, item.image_url]);
   };
 
   /**
@@ -376,7 +431,7 @@ function DraftCard({ draft, index, onCopy }: { draft: string; index: number; onC
             </div>
           )}
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <label
               className={`inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-glass-border-input rounded-lg text-xs text-deep-charcoal hover:border-burgundy transition-colors ${
                 uploading || publishMutation.isPending || imageUrls.length >= CAROUSEL_MAX
@@ -395,8 +450,77 @@ function DraftCard({ draft, index, onCopy }: { draft: string; index: number; onC
               />
               {uploading ? 'Uploading…' : imageUrls.length === 0 ? 'Upload images' : 'Add more'}
             </label>
+            <button
+              type="button"
+              onClick={onTogglePicker}
+              disabled={publishMutation.isPending || imageUrls.length >= CAROUSEL_MAX}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-glass-border-input rounded-lg text-xs text-deep-charcoal hover:border-burgundy transition-colors disabled:opacity-50"
+              data-testid={`instagram-caption-drafter-picker-toggle-${index}`}
+            >
+              {pickerOpen ? 'Hide recent posts' : 'From your posts'}
+            </button>
             <span className="text-xs text-muted-stone">or paste URLs</span>
           </div>
+
+          {pickerOpen && (
+            <div
+              className="border border-glass-border-dark rounded-lg p-2 space-y-2 bg-warm-white"
+              data-testid={`instagram-caption-drafter-picker-${index}`}
+            >
+              {recentMediaLoading && (
+                <p className="text-xs text-muted-stone py-2 text-center">Loading your recent posts…</p>
+              )}
+              {recentMediaError && (
+                <div className="flex items-center justify-between gap-2 text-xs">
+                  <p className="text-red-700">{recentMediaError}</p>
+                  <button
+                    type="button"
+                    onClick={() => void loadRecentMedia(true)}
+                    className="text-burgundy underline underline-offset-2"
+                  >
+                    Retry
+                  </button>
+                </div>
+              )}
+              {!recentMediaLoading && !recentMediaError && recentMedia !== null && recentMedia.length === 0 && (
+                <p className="text-xs text-muted-stone py-2 text-center">
+                  No recent posts found. Post something on Instagram first, then come back.
+                </p>
+              )}
+              {!recentMediaLoading && recentMedia !== null && recentMedia.length > 0 && (
+                <div
+                  className="grid grid-cols-4 sm:grid-cols-6 gap-2"
+                  data-testid={`instagram-caption-drafter-picker-grid-${index}`}
+                >
+                  {recentMedia.map((item, mediaIdx) => {
+                    const alreadyAdded = imageUrls.includes(item.image_url);
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => onPickFromRecent(item)}
+                        disabled={alreadyAdded || publishMutation.isPending}
+                        className={`relative aspect-square rounded-md overflow-hidden border transition-colors ${
+                          alreadyAdded
+                            ? 'border-emerald-500 ring-2 ring-emerald-200 cursor-default'
+                            : 'border-glass-border-dark hover:border-burgundy cursor-pointer'
+                        }`}
+                        title={alreadyAdded ? 'Already added' : `Use this image (${new Date(item.timestamp).toLocaleDateString()})`}
+                        data-testid={`instagram-caption-drafter-picker-item-${index}-${mediaIdx}`}
+                      >
+                        <img src={item.image_url} alt="" className="w-full h-full object-cover" />
+                        {alreadyAdded && (
+                          <span className="absolute inset-0 bg-emerald-500/30 flex items-center justify-center text-white text-lg font-semibold">
+                            ✓
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="flex gap-2">
             <input

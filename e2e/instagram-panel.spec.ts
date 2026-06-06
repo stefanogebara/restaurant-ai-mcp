@@ -561,6 +561,51 @@ test.describe('Carousel — 2-10 images (C.10)', () => {
     await expect(page.getByTestId('instagram-caption-drafter-publish-0')).toContainText(/Post now/i);
   });
 
+  test('recent-posts picker (C.12): grid renders, click adds to imageUrls, dupe shows check', async ({ page, context }) => {
+    await stubStatus(context, {
+      connected: true, status: 'active', username: 'x', tone_profile_ready: true,
+    });
+    await stubDraftCaption(context, ['a', 'b', 'c']);
+    await context.route('**/api/instagram/recent-media', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          ok: true,
+          media: [
+            { id: 'm1', image_url: 'https://cdn.example.com/1.jpg', thumbnail_url: null, media_type: 'IMAGE',  permalink: 'https://instagram.com/p/A', timestamp: '2026-06-01T00:00:00Z' },
+            { id: 'm2', image_url: 'https://cdn.example.com/2.jpg', thumbnail_url: null, media_type: 'IMAGE',  permalink: 'https://instagram.com/p/B', timestamp: '2026-05-30T00:00:00Z' },
+            { id: 'm3', image_url: 'https://cdn.example.com/3.jpg', thumbnail_url: null, media_type: 'IMAGE',  permalink: 'https://instagram.com/p/C', timestamp: '2026-05-28T00:00:00Z' },
+          ],
+        }),
+      }),
+    );
+
+    await page.goto(INSTAGRAM_TAB_URL);
+    await waitForInstagramPanel(page);
+
+    await page.getByTestId('instagram-caption-drafter-topic').fill('picker test');
+    await page.getByTestId('instagram-caption-drafter-submit').click();
+    await page.getByTestId('instagram-caption-drafter-post-toggle-0').click();
+
+    // Open the picker
+    await page.getByTestId('instagram-caption-drafter-picker-toggle-0').click();
+    await expect(page.getByTestId('instagram-caption-drafter-picker-grid-0')).toBeVisible();
+
+    // Click item 0 → thumbnail appears in the imageUrls grid
+    await page.getByTestId('instagram-caption-drafter-picker-item-0-0').click();
+    await expect(page.getByTestId('instagram-caption-drafter-thumb-0-0')).toBeVisible();
+    await expect(page.getByTestId('instagram-caption-drafter-publish-0')).toContainText(/Post now/i);
+
+    // Click item 1 → second thumbnail, button flips to carousel
+    await page.getByTestId('instagram-caption-drafter-picker-item-0-1').click();
+    await expect(page.getByTestId('instagram-caption-drafter-thumb-0-1')).toBeVisible();
+    await expect(page.getByTestId('instagram-caption-drafter-publish-0')).toContainText(/Post carousel \(2\)/i);
+
+    // Item 0 is now disabled (already added — emerald check)
+    await expect(page.getByTestId('instagram-caption-drafter-picker-item-0-0')).toBeDisabled();
+  });
+
   test('carousel publish posts image_urls array, surfaces "Carousel posted" toast', async ({ page, context }) => {
     await stubStatus(context, {
       connected: true, status: 'active', username: 'x', tone_profile_ready: true,
