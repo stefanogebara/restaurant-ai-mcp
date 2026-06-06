@@ -188,6 +188,7 @@ function DraftCard({ draft, index, onCopy }: { draft: string; index: number; onC
   const toast = useToast();
   const [postingOpen, setPostingOpen] = useState(false);
   const [imageUrl, setImageUrl] = useState('');
+  const [uploading, setUploading] = useState(false);
 
   const publishMutation = useMutation<{ permalink: string | null }, Error, { caption: string; image_url: string }>({
     mutationFn: async (input) => {
@@ -221,6 +222,56 @@ function DraftCard({ draft, index, onCopy }: { draft: string; index: number; onC
     publishMutation.mutate({ caption: draft, image_url: imageUrl.trim() });
   };
 
+  /**
+   * Read a File as base64 (without the data:URL prefix) so we can POST it
+   * as JSON to /api/instagram/upload-image. Resolves with the bare b64
+   * string or rejects on read error.
+   */
+  const fileToBase64 = (file: File): Promise<string> => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result;
+      if (typeof result !== 'string') return reject(new Error('Read result was not a string'));
+      const comma = result.indexOf(',');
+      resolve(comma === -1 ? result : result.slice(comma + 1));
+    };
+    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.readAsDataURL(file);
+  });
+
+  const onFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = '';  // reset so re-selecting same file fires onChange
+    if (!/^image\/(jpe?g|png|webp)$/i.test(file.type)) {
+      toast.error(t('instagram.uploadInvalidType', 'Only JPEG, PNG, or WebP images are supported.'));
+      return;
+    }
+    if (file.size > 4 * 1024 * 1024) {
+      toast.error(t('instagram.uploadTooLarge', 'Image must be 4 MB or smaller.'));
+      return;
+    }
+    setUploading(true);
+    try {
+      const dataB64 = await fileToBase64(file);
+      const res = await authFetch('/api/instagram/upload-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filename: file.name, content_type: file.type, data_b64: dataB64 }),
+      });
+      const body = (await res.json().catch(() => null)) as { ok?: boolean; url?: string; error?: string } | null;
+      if (!res.ok || !body?.ok || !body.url) {
+        throw new Error(body?.error || `Upload failed (HTTP ${res.status})`);
+      }
+      setImageUrl(body.url);
+      toast.success(t('instagram.uploadOk', 'Image uploaded — ready to post.'));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t('instagram.uploadFailed', 'Upload failed.'));
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
     <div className="bg-white/65 backdrop-blur-glass-card border border-glass-border-dark rounded-lg p-3 space-y-2" data-testid={`instagram-caption-drafter-card-${index}`}>
       <p className="text-sm text-deep-charcoal whitespace-pre-wrap">{draft}</p>
@@ -245,9 +296,23 @@ function DraftCard({ draft, index, onCopy }: { draft: string; index: number; onC
 
       {postingOpen && (
         <div className="border-t border-glass-border-dark pt-2 space-y-2" data-testid={`instagram-caption-drafter-post-form-${index}`}>
-          <label className="text-xs text-muted-stone block">
-            Image URL <span className="text-muted-stone/70">(publicly accessible https URL, e.g. on your site or Cloudinary)</span>
-          </label>
+          <label className="text-xs text-muted-stone block">Image</label>
+          <div className="flex items-center gap-2">
+            <label
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-glass-border-input rounded-lg text-xs text-deep-charcoal cursor-pointer hover:border-burgundy transition-colors"
+              data-testid={`instagram-caption-drafter-upload-${index}`}
+            >
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={onFileSelected}
+                disabled={uploading || publishMutation.isPending}
+                className="hidden"
+              />
+              {uploading ? 'Uploading…' : 'Upload image'}
+            </label>
+            <span className="text-xs text-muted-stone">or paste a URL</span>
+          </div>
           <input
             type="url"
             value={imageUrl}
@@ -259,7 +324,7 @@ function DraftCard({ draft, index, onCopy }: { draft: string; index: number; onC
           <button
             type="button"
             onClick={onPublish}
-            disabled={publishMutation.isPending || imageUrl.trim().length < 8}
+            disabled={publishMutation.isPending || uploading || imageUrl.trim().length < 8}
             className="px-3 py-1.5 bg-burgundy text-white rounded-lg text-xs font-medium hover:bg-burgundy-dark disabled:opacity-50 transition-colors"
             data-testid={`instagram-caption-drafter-publish-${index}`}
           >
