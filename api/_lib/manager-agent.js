@@ -127,6 +127,28 @@ async function getConversationHistory(restaurantId) {
   return (data || []).reverse();
 }
 
+// When the target chat language doesn't match what the prior assistant turns
+// were written in, the LLM tends to mirror the previous output language
+// regardless of the system prompt. Detect a language mismatch and drop the
+// stale history so the system prompt's language directive can win.
+//
+// We score the last assistant turn for PT/ES/EN markers and compare against
+// the target language. Cheap heuristic — false positives just mean we drop
+// history that would have stayed; false negatives leave the bug in place.
+function shouldResetHistoryForLanguage(history, targetLanguage) {
+  const lastAssistant = [...history].reverse().find((m) => m.role === 'assistant');
+  if (!lastAssistant?.content) return false;
+  const txt = lastAssistant.content.toLowerCase();
+  // Cheap language signature — common words that only appear in one language.
+  const isEN = /\b(quiet|reservations|tonight|currently|tomorrow|please|the\b)/i.test(txt);
+  const isPT = /\b(reservas|hoje|amanhã|noite|todo|tudo|você)/i.test(txt);
+  const isES = /\b(reservas|hoy|mañana|noche|usted|por favor)/i.test(txt) && !isPT;
+  if ((targetLanguage === 'pt' || targetLanguage === 'pt-BR') && isEN && !isPT) return true;
+  if (targetLanguage === 'es' && isEN && !isES) return true;
+  if (targetLanguage === 'en' && (isPT || isES)) return true;
+  return false;
+}
+
 async function saveTurn(restaurantId, role, content, channel) {
   const { error } = await supabaseAdmin.from('manager_conversations').insert({
     restaurant_id: restaurantId,
@@ -434,8 +456,13 @@ async function runManagerAgent(restaurantId, userMessage, channel, options = {})
 
   const config = configResult?.data || {};
   const systemPrompt = buildSystemPrompt(memories, snapshot, config, wikiPages);
+  const targetLang =
+    config?.agent_language ||
+    config?.language ||
+    languageFromCountry(config?.country);
+  const usableHistory = shouldResetHistoryForLanguage(history, targetLang) ? [] : history;
   const messages = [
-    ...history.map((h) => ({
+    ...usableHistory.map((h) => ({
       role: h.role === 'manager' ? 'user' : 'assistant',
       content: h.content,
     })),
@@ -552,8 +579,13 @@ async function runManagerAgentStream(restaurantId, userMessage, channel, onToken
 
   const config = configResult?.data || {};
   const systemPrompt = buildSystemPrompt(memories, snapshot, config, wikiPages);
+  const targetLang =
+    config?.agent_language ||
+    config?.language ||
+    languageFromCountry(config?.country);
+  const usableHistory = shouldResetHistoryForLanguage(history, targetLang) ? [] : history;
   const messages = [
-    ...history.map((h) => ({
+    ...usableHistory.map((h) => ({
       role: h.role === 'manager' ? 'user' : 'assistant',
       content: h.content,
     })),

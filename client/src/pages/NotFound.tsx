@@ -37,11 +37,33 @@ export default function NotFound() {
             {t('notFound.goHome')}
           </Link>
           <button
-            onClick={() => window.history.back()}
+            onClick={() => {
+              // history.back() silently does nothing if the user landed here
+              // from an external link or a fresh tab. Fall back to the home
+              // route in that case so the secondary CTA always recovers.
+              if (window.history.length > 1) window.history.back();
+              else window.location.href = '/';
+            }}
             className="text-[15px] font-medium text-stone-gray border border-glass-border-dark hover:border-muted-stone px-8 py-3.5 rounded-full transition-colors"
           >
             {t('notFound.goBack')}
           </button>
+        </div>
+
+        {/* Recovery chips — three common destinations the user may have been
+            after. Keeps the page from being a dead-end when the broken link
+            text didn't quite match what they meant to click. */}
+        <div className="flex flex-wrap items-center justify-center gap-2 mt-8 text-xs text-muted-stone">
+          <span className="text-stone-gray">{t('notFound.suggestionsLabel', 'Procurando algo?')}</span>
+          <Link to="/host-dashboard/simple" className="px-3 py-1.5 rounded-full border border-glass-border-dark bg-white/60 backdrop-blur-glass-chip text-deep-charcoal hover:bg-white/85 transition-colors">
+            {t('notFound.suggestDashboard', 'Painel')}
+          </Link>
+          <Link to="/host-dashboard/settings" className="px-3 py-1.5 rounded-full border border-glass-border-dark bg-white/60 backdrop-blur-glass-chip text-deep-charcoal hover:bg-white/85 transition-colors">
+            {t('notFound.suggestSettings', 'Configurações')}
+          </Link>
+          <Link to="/login" className="px-3 py-1.5 rounded-full border border-glass-border-dark bg-white/60 backdrop-blur-glass-chip text-deep-charcoal hover:bg-white/85 transition-colors">
+            {t('notFound.suggestSignIn', 'Entrar')}
+          </Link>
         </div>
       </div>
 
