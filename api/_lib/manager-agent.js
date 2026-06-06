@@ -156,9 +156,30 @@ function getCurrencyLocale(country) {
   return map[(country || '').toUpperCase()] || { currency: 'EUR', locale: 'en-US' };
 }
 
+// Derive a default chat language from the restaurant's country when the owner
+// hasn't explicitly set agent_language. Falling back to 'en' for a Brazilian
+// restaurant was a CX bug — owners ask "Como estão as reservas?" and got
+// English back. This mirrors getCurrencyLocale()'s country mapping.
+function languageFromCountry(country) {
+  const map = {
+    BR: 'pt-BR',
+    PT: 'pt-BR',
+    ES: 'es',
+    MX: 'es',
+    AR: 'es',
+    FR: 'fr',
+    IT: 'it',
+    DE: 'en', // German not yet supported in the prompt switch — fall through to English
+  };
+  return map[(country || '').toUpperCase()] || 'en';
+}
+
 function buildSystemPrompt(memories, snapshot, config, wikiPages = [], dateInfo = {}) {
   const restaurantName = config?.restaurant_name || config?.name || 'this restaurant';
-  const language = config?.agent_language || config?.language || 'en';
+  const language =
+    config?.agent_language ||
+    config?.language ||
+    languageFromCountry(config?.country);
 
   const memoryBlock =
     memories.length > 0
@@ -405,7 +426,7 @@ async function runManagerAgent(restaurantId, userMessage, channel, options = {})
     supabaseAdmin
       .schema('restaurant')
       .from('restaurant_config')
-      .select('restaurant_name, name, agent_language, restaurant_profile, timezone, agent_name, agent_greeting')
+      .select('restaurant_name, name, agent_language, restaurant_profile, timezone, agent_name, agent_greeting, country')
       .eq('id', restaurantId)
       .maybeSingle(),
     getWikiPages(restaurantId),
@@ -523,7 +544,7 @@ async function runManagerAgentStream(restaurantId, userMessage, channel, onToken
     supabaseAdmin
       .schema('restaurant')
       .from('restaurant_config')
-      .select('restaurant_name, name, agent_language, restaurant_profile, timezone, agent_name, agent_greeting')
+      .select('restaurant_name, name, agent_language, restaurant_profile, timezone, agent_name, agent_greeting, country')
       .eq('id', restaurantId)
       .maybeSingle(),
     getWikiPages(restaurantId),

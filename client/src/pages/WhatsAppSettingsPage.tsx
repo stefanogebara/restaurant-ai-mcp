@@ -243,9 +243,9 @@ function PhoneVerificationPanel() {
           <p className="text-xs text-warm-stone">{phone?.verified_name}</p>
         </div>
         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
-          isVerified ? 'bg-rose-50 text-rose-700' : 'bg-amber-50 text-amber-700'
+          isVerified ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
         }`}>
-          <span className={`w-1.5 h-1.5 rounded-full ${isVerified ? 'bg-rose-500' : 'bg-amber-500'}`} />
+          <span className={`w-1.5 h-1.5 rounded-full ${isVerified ? 'bg-emerald-500' : 'bg-amber-500'}`} />
           {isVerified ? t('settings.verified') : String(t(`settings.phoneStatus.${phone?.code_verification_status}`, (phone?.code_verification_status || 'Unknown').replace(/_/g, ' ')))}
         </span>
       </div>
@@ -417,11 +417,11 @@ export default function WhatsAppSettingsPage() {
             <span
               className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
                 status?.api_configured
-                  ? 'bg-rose-50 text-rose-700'
+                  ? 'bg-emerald-50 text-emerald-700'
                   : 'bg-amber-50 text-amber-700'
               }`}
             >
-              <span className={`w-1.5 h-1.5 rounded-full ${status?.api_configured ? 'bg-rose-500' : 'bg-amber-500'}`} />
+              <span className={`w-1.5 h-1.5 rounded-full ${status?.api_configured ? 'bg-emerald-500' : 'bg-amber-500'}`} />
               {status?.api_configured ? t('settings.apiConnected') : t('settings.apiNotConfigured')}
             </span>
           </div>
