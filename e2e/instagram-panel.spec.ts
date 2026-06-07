@@ -561,6 +561,53 @@ test.describe('Carousel — 2-10 images (C.10)', () => {
     await expect(page.getByTestId('instagram-caption-drafter-publish-0')).toContainText(/Post now/i);
   });
 
+  test('AI image generation (C.16): generator toggle → prompt + model → URL appends to imageUrls', async ({ page, context }) => {
+    await stubStatus(context, {
+      connected: true, status: 'active', username: 'x', tone_profile_ready: true,
+    });
+    await stubDraftCaption(context, ['a', 'b', 'c']);
+
+    let genBody: { prompt?: string; model?: string } | null = null;
+    await context.route('**/api/instagram/generate-image', async (route) => {
+      genBody = route.request().postDataJSON?.() ?? null;
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          ok: true,
+          url: 'https://cdn.example.com/generated/abc.png',
+          model: genBody?.model || 'gpt-image-1',
+          cost_cents: 4,
+        }),
+      });
+    });
+
+    await page.goto(INSTAGRAM_TAB_URL);
+    await waitForInstagramPanel(page);
+
+    await page.getByTestId('instagram-caption-drafter-topic').fill('ai gen');
+    await page.getByTestId('instagram-caption-drafter-submit').click();
+    await page.getByTestId('instagram-caption-drafter-post-toggle-0').click();
+
+    // Open the generator panel
+    await page.getByTestId('instagram-caption-drafter-generator-toggle-0').click();
+    await expect(page.getByTestId('instagram-caption-drafter-generator-0')).toBeVisible();
+
+    // Fill prompt + switch to nano-banana
+    await page.getByTestId('instagram-caption-drafter-gen-prompt-0').fill('a beautifully plated tiramisu with espresso art on slate');
+    await page.getByTestId('instagram-caption-drafter-gen-model-0').selectOption('nano-banana');
+
+    await page.getByTestId('instagram-caption-drafter-gen-submit-0').click();
+    await expect(page.locator('body')).toContainText(/generated and added/i, { timeout: 10_000 });
+
+    // Thumbnail appears with the returned URL
+    await expect(page.getByTestId('instagram-caption-drafter-thumb-0-0')).toBeVisible();
+    await expect(page.getByTestId('instagram-caption-drafter-publish-0')).toContainText(/Post now/i);
+
+    expect(genBody?.model).toBe('nano-banana');
+    expect(genBody?.prompt).toMatch(/tiramisu/);
+  });
+
   test('schedule for later (C.15): toggle → pick datetime → request body has ISO scheduled_at, success toast', async ({ page, context }) => {
     await stubStatus(context, {
       connected: true, status: 'active', username: 'x', tone_profile_ready: true,

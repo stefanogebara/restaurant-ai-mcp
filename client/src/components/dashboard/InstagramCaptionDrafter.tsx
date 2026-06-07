@@ -226,6 +226,53 @@ function DraftCard({ draft, index, onCopy }: { draft: string; index: number; onC
   const [recentMediaLoading, setRecentMediaLoading] = useState(false);
   const [recentMediaError, setRecentMediaError] = useState<string | null>(null);
 
+  // ─── AI image generation state (C.16) ──────────────────────────────
+  const [generatorOpen, setGeneratorOpen] = useState(false);
+  const [genPrompt, setGenPrompt] = useState('');
+  const [genModel, setGenModel] = useState<'gpt-image-1' | 'nano-banana'>('gpt-image-1');
+
+  const generateMutation = useMutation<
+    { url: string; model: string; cost_cents: number },
+    Error,
+    { prompt: string; model: string }
+  >({
+    mutationFn: async (input) => {
+      const res = await authFetch('/api/instagram/generate-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      });
+      const body = (await res.json().catch(() => null)) as {
+        ok?: boolean; error?: string; url?: string; model?: string; cost_cents?: number;
+      } | null;
+      if (!res.ok || !body?.ok || !body.url) {
+        throw new Error(body?.error || `Generation failed (HTTP ${res.status})`);
+      }
+      return { url: body.url, model: body.model || input.model, cost_cents: body.cost_cents ?? 0 };
+    },
+    onSuccess: ({ url }) => {
+      if (imageUrls.includes(url)) return;  // shouldn't happen — UUID path
+      if (imageUrls.length >= CAROUSEL_MAX) {
+        toast.error(t('instagram.uploadMaxReached', `Maximum ${CAROUSEL_MAX} images per post.`));
+        return;
+      }
+      setImageUrls((prev) => [...prev, url]);
+      toast.success(t('instagram.generated', 'Image generated and added.'));
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const onGenerate = () => {
+    if (generateMutation.isPending) return;
+    const p = genPrompt.trim();
+    if (p.length < 3) return;
+    if (imageUrls.length >= CAROUSEL_MAX) {
+      toast.error(t('instagram.uploadMaxReached', `Maximum ${CAROUSEL_MAX} images per post.`));
+      return;
+    }
+    generateMutation.mutate({ prompt: p, model: genModel });
+  };
+
   const publishMutation = useMutation<
     { permalink: string | null; post_kind?: string },
     Error,
@@ -600,8 +647,60 @@ function DraftCard({ draft, index, onCopy }: { draft: string; index: number; onC
             >
               {pickerOpen ? 'Hide recent posts' : 'From your posts'}
             </button>
+            <button
+              type="button"
+              onClick={() => setGeneratorOpen((v) => !v)}
+              disabled={publishMutation.isPending || imageUrls.length >= CAROUSEL_MAX}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-glass-border-input rounded-lg text-xs text-deep-charcoal hover:border-burgundy transition-colors disabled:opacity-50"
+              data-testid={`instagram-caption-drafter-generator-toggle-${index}`}
+            >
+              <span aria-hidden>✨</span>
+              {generatorOpen ? 'Hide AI generator' : 'Generate with AI'}
+            </button>
             <span className="text-xs text-muted-stone">or paste URLs</span>
           </div>
+
+          {generatorOpen && (
+            <div
+              className="border border-glass-border-dark rounded-lg p-2 space-y-2 bg-warm-white"
+              data-testid={`instagram-caption-drafter-generator-${index}`}
+            >
+              <label className="text-xs text-muted-stone block">
+                Describe the image you want (e.g. "wood-fired margherita pizza on a marble table, soft natural light")
+              </label>
+              <textarea
+                value={genPrompt}
+                onChange={(e) => setGenPrompt(e.target.value)}
+                placeholder="A beautifully plated tiramisu with espresso art…"
+                rows={2}
+                maxLength={1000}
+                className="w-full px-3 py-2 border border-glass-border-input rounded-lg text-sm focus:outline-none focus:border-burgundy resize-y"
+                data-testid={`instagram-caption-drafter-gen-prompt-${index}`}
+              />
+              <div className="flex items-center gap-2 flex-wrap">
+                <select
+                  value={genModel}
+                  onChange={(e) => setGenModel(e.target.value as 'gpt-image-1' | 'nano-banana')}
+                  disabled={generateMutation.isPending}
+                  className="px-2 py-1.5 border border-glass-border-input rounded-lg text-xs bg-white text-deep-charcoal"
+                  data-testid={`instagram-caption-drafter-gen-model-${index}`}
+                >
+                  <option value="gpt-image-1">GPT Image</option>
+                  <option value="nano-banana">Nano Banana (Gemini)</option>
+                </select>
+                <button
+                  type="button"
+                  onClick={onGenerate}
+                  disabled={generateMutation.isPending || genPrompt.trim().length < 3}
+                  className="px-3 py-1.5 bg-burgundy text-white rounded-lg text-xs font-medium hover:bg-burgundy-dark disabled:opacity-50 transition-colors"
+                  data-testid={`instagram-caption-drafter-gen-submit-${index}`}
+                >
+                  {generateMutation.isPending ? 'Generating… (20-40s)' : 'Generate'}
+                </button>
+                <span className="text-[10px] text-muted-stone">~4¢ per image · added to your post on success</span>
+              </div>
+            </div>
+          )}
 
           {pickerOpen && (
             <div
