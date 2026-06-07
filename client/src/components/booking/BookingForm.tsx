@@ -62,6 +62,12 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
   const [partySize, setPartySize] = useState(2);
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTime, setSelectedTime] = useState('');
+  // Meal-period filter for the time slot grid. Audit found a 4-col grid of
+  // 15+ slots was overwhelming on first glance — most diners want either
+  // lunch or dinner, not both, but the grid forced them to scan the whole
+  // list. Default to "all" so we don't change behaviour for restaurants
+  // that only run dinner (in which case the lunch tab won't appear at all).
+  const [mealPeriodFilter, setMealPeriodFilter] = useState<'all' | 'lunch' | 'dinner'>('all');
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
@@ -145,6 +151,33 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
       return slotDate.getTime() > now.getTime() + bufferMs;
     });
   }, [rawTimeSlots, selectedDate]);
+
+  // Derive which meal periods the day actually has slots for so we only
+  // render the tab strip when both lunch AND dinner are available — single-
+  // period restaurants (e.g. dinner only) shouldn't see a useless "Almoço"
+  // tab that returns nothing.
+  // Cutoff at 17:00 — matches how Brazilian restaurants split lunch/dinner
+  // service. Adjust here if a future restaurant config field overrides it.
+  const LUNCH_DINNER_CUTOFF_HOUR = 17;
+  const hasLunchSlots = useMemo(
+    () => timeSlots.some(s => Number(s.time.split(':')[0]) < LUNCH_DINNER_CUTOFF_HOUR),
+    [timeSlots],
+  );
+  const hasDinnerSlots = useMemo(
+    () => timeSlots.some(s => Number(s.time.split(':')[0]) >= LUNCH_DINNER_CUTOFF_HOUR),
+    [timeSlots],
+  );
+  const showMealPeriodTabs = hasLunchSlots && hasDinnerSlots;
+
+  const visibleTimeSlots = useMemo(() => {
+    if (!showMealPeriodTabs || mealPeriodFilter === 'all') return timeSlots;
+    return timeSlots.filter(slot => {
+      const hour = Number(slot.time.split(':')[0]);
+      return mealPeriodFilter === 'lunch'
+        ? hour < LUNCH_DINNER_CUTOFF_HOUR
+        : hour >= LUNCH_DINNER_CUTOFF_HOUR;
+    });
+  }, [timeSlots, mealPeriodFilter, showMealPeriodTabs]);
 
   // ─── Derived ─────────────────────────────────────────────────────────────────
   const availableDates = useMemo(() => {
@@ -385,19 +418,52 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
       )}
       {selectedDate && (
         <div className="mb-8">
-          <div className="text-xs font-semibold tracking-wider uppercase text-warm-stone mb-3">
-            {t('booking.selectTime')}
+          <div className="flex items-baseline justify-between mb-3 gap-3">
+            <div className="text-xs font-semibold tracking-wider uppercase text-warm-stone">
+              {t('booking.selectTime')}
+            </div>
+            {/* Meal-period tabs only render when the day actually has both
+                lunch AND dinner slots — restaurants that only serve dinner
+                shouldn't see an empty "Almoço" tab. */}
+            {!loadingSlots && showMealPeriodTabs && (
+              <div
+                role="tablist"
+                aria-label={t('booking.mealPeriodLabel', 'Filtrar por período')}
+                className="inline-flex items-center gap-1 rounded-full bg-soft-gray p-1"
+              >
+                {(['all', 'lunch', 'dinner'] as const).map((key) => (
+                  <button
+                    key={key}
+                    role="tab"
+                    type="button"
+                    aria-selected={mealPeriodFilter === key}
+                    onClick={() => setMealPeriodFilter(key)}
+                    className={`px-3 py-1 text-[11px] font-semibold rounded-full transition-colors ${
+                      mealPeriodFilter === key
+                        ? 'bg-white text-deep-charcoal shadow-sm'
+                        : 'text-stone-gray hover:text-deep-charcoal'
+                    }`}
+                  >
+                    {key === 'all'
+                      ? t('booking.mealPeriodAll', 'Todos')
+                      : key === 'lunch'
+                        ? t('booking.mealPeriodLunch', 'Almoço')
+                        : t('booking.mealPeriodDinner', 'Jantar')}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
           {loadingSlots ? (
             <div role="status" className="flex items-center justify-center py-8 gap-3">
               <div aria-hidden="true" className="animate-spin rounded-full h-6 w-6 border-2 border-glass-border-dark border-t-burgundy" />
               <span className="text-sm text-stone-gray">{t('booking.checkingAvailability')}</span>
             </div>
-          ) : timeSlots.length === 0 ? (
+          ) : visibleTimeSlots.length === 0 ? (
             <p className="text-sm text-warm-stone py-4">{t('booking.noAvailableTimes')}</p>
           ) : (
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-              {timeSlots.map(slot => (
+              {visibleTimeSlots.map(slot => (
                 <button
                   type="button"
                   key={slot.time}

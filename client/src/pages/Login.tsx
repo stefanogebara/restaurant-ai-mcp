@@ -512,11 +512,16 @@ export default function Login() {
                   </div>
 
                   {mode === 'signin' && (
+                    /* Audit found the recovery link was a small grey-burgundy
+                        text-link tucked under the password field — easy to
+                        miss when you actually need it. Promote to a full-row
+                        button with always-on underline so it scans as an
+                        actionable affordance, not body copy. */
                     <div className="text-right">
                       <button
                         type="button"
                         onClick={() => { setMode('forgot'); setError(null); setSuccessMessage(null); }}
-                        className="text-sm text-burgundy hover:underline"
+                        className="text-sm font-semibold text-burgundy hover:text-burgundy-dark underline underline-offset-2 decoration-burgundy/40 hover:decoration-burgundy"
                       >
                         {t('login.forgotPassword')}
                       </button>

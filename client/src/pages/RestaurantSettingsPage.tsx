@@ -206,6 +206,29 @@ export default function RestaurantSettingsPage() {
     setDirty((d) => ({ ...d, hours: true }));
   };
 
+  // "Copy to all days" — propagates the first day's config (Monday in our
+  // DAYS array order) to the other 6. Audit found owners with consistent
+  // weekday/weekend hours had to fill 7 sets of fields by hand. Pulled from
+  // the source day so a user can configure Monday once and broadcast.
+  const copyHoursToAllDays = () => {
+    setHours((prev) => {
+      const source = prev[DAYS[0]];
+      if (!source) return prev;
+      const next: BusinessHours = { ...prev };
+      for (const day of DAYS) {
+        // Preserve a fresh object per day so React Query/serialisation later
+        // doesn't see referential equality with the source.
+        next[day] = {
+          is_open: source.is_open,
+          open_time: source.open_time,
+          close_time: source.close_time,
+        };
+      }
+      return next;
+    });
+    setDirty((d) => ({ ...d, hours: true }));
+  };
+
   // Normalize "en-US" → "en" so unsupported sub-locales fall back to the
   // language root before hitting English. The cast was a type lie before.
   const langRoot = (i18n.language?.split('-')[0] || 'en');
@@ -280,10 +303,22 @@ export default function RestaurantSettingsPage() {
 
         {/* ── Business Hours ── */}
         <section className="py-5 border-b border-[#E5E7EB] space-y-4">
-          <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827] flex items-center gap-2">
-            <ThiingsIcon name="clock" pxSize={16} className="text-muted-stone" />
-            {t('settings.businessHours', 'Business Hours')}
-          </h2>
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827] flex items-center gap-2">
+              <ThiingsIcon name="clock" pxSize={16} className="text-muted-stone" />
+              {t('settings.businessHours', 'Business Hours')}
+            </h2>
+            {/* Quick-fill shortcut: copies Monday's open/close + open flag to
+                the other 6 days so consistent-hours restaurants don't have
+                to enter 7 sets of fields by hand. */}
+            <button
+              type="button"
+              onClick={copyHoursToAllDays}
+              className="text-xs font-medium text-burgundy hover:text-burgundy-dark underline underline-offset-2"
+            >
+              {t('settings.copyHoursToAll', 'Copiar horários da segunda para todos os dias')}
+            </button>
+          </div>
 
           <div className="space-y-2">
             {DAYS.map((day) => {
