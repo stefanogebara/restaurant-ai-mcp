@@ -258,23 +258,61 @@ export default function Dashboard() {
           )}
 
           {/* ---- Trial Banner ---- */}
-          {isTrial && isActive && trialDaysLeft !== null && (
-            <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 sm:px-5 py-3 sm:py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 mb-6 sm:mb-8">
-              <p className="text-sm text-amber-800 flex-1 min-w-0">
-                <span className="font-semibold">{t('dashboard.freeTrial')}</span>
-                {' — '}
-                {trialDaysLeft === 0 ? t('dashboard.trialExpiresToday') : t('dashboard.trialDaysRemaining', { count: trialDaysLeft })}
-                {'. '}
-                {t('dashboard.trialUpgradeHint')}
-              </p>
-              <a
-                href="/subscription/manage"
-                className="text-sm font-semibold text-amber-700 hover:text-amber-900 underline underline-offset-2 whitespace-nowrap transition-colors"
+          {/* The audit found the previous amber-on-amber strip read as a
+              passive note rather than a time-bounded prompt. Promote the
+              countdown into a glanceable widget: large day count + bold
+              "Atualizar" pill, with urgency colours (burgundy when ≤2 days
+              left, amber otherwise). The whole row remains a single banner —
+              not a card — so it doesn't compete with the page header below. */}
+          {isTrial && isActive && trialDaysLeft !== null && (() => {
+            const urgent = trialDaysLeft <= 2;
+            return (
+              <div
+                className={`rounded-xl px-4 sm:px-5 py-3 sm:py-3.5 flex items-center gap-3 mb-6 sm:mb-8 ${
+                  urgent
+                    ? 'bg-burgundy/5 border border-burgundy/30'
+                    : 'bg-amber-50 border border-amber-200'
+                }`}
+                role="status"
+                aria-live="polite"
               >
-                {t('dashboard.viewPlans')}
-              </a>
-            </div>
-          )}
+                {/* Countdown badge — the headline number */}
+                <div
+                  className={`flex-shrink-0 flex flex-col items-center justify-center w-14 h-14 rounded-lg ${
+                    urgent ? 'bg-burgundy text-white' : 'bg-amber-100 text-amber-900'
+                  }`}
+                  aria-hidden="true"
+                >
+                  <span className="text-xl font-bold leading-none">{trialDaysLeft}</span>
+                  <span className="text-[10px] uppercase tracking-wider mt-0.5 font-semibold">
+                    {trialDaysLeft === 1
+                      ? t('dashboard.trialDayUnit', 'dia')
+                      : t('dashboard.trialDaysUnit', 'dias')}
+                  </span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className={`text-sm font-semibold ${urgent ? 'text-burgundy-dark' : 'text-amber-900'}`}>
+                    {trialDaysLeft === 0
+                      ? t('dashboard.trialExpiresToday')
+                      : t('dashboard.trialHeadline', 'Teste Gratuito termina em breve')}
+                  </p>
+                  <p className={`text-xs mt-0.5 ${urgent ? 'text-burgundy/80' : 'text-amber-700'}`}>
+                    {t('dashboard.trialUpgradeHint')}
+                  </p>
+                </div>
+                <a
+                  href="/subscription/manage"
+                  className={`flex-shrink-0 inline-flex items-center px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                    urgent
+                      ? 'bg-burgundy hover:bg-burgundy-dark text-white'
+                      : 'bg-amber-700 hover:bg-amber-800 text-white'
+                  }`}
+                >
+                  {t('dashboard.viewPlans')}
+                </a>
+              </div>
+            );
+          })()}
 
           {/* ---- Header Section ---- */}
           <header className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-8 sm:mb-14 mt-14 sm:mt-0 gap-3 sm:gap-4">

@@ -221,7 +221,7 @@ export const PRICING_TIERS = [
       "Customer CRM",
       "Up to 100 reservations/month",
     ],
-    cta: "Get Started",
+    cta: "Start Free Trial",
     highlighted: false,
   },
   {

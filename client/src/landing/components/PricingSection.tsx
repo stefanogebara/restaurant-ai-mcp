@@ -134,6 +134,21 @@ export default function PricingSection() {
             const featureCount = FEATURE_COUNTS[tierKey] || tier.features.length;
             return (
               <div key={index} className={`relative px-8 sm:px-9 py-12 ${isFeatured ? 'bg-deep-charcoal' : 'bg-white/45 backdrop-blur-[18px]'}`}>
+                {/* "Mais popular" badge on the featured tier — anchors the
+                    visitor's eye to the recommended plan. The audit found
+                    the dark-charcoal background was doing all the work to
+                    signal "this one's the default", but visitors who don't
+                    read visual hierarchy that way had to guess. Pill sits
+                    over the top edge of the card so it reads as a tag,
+                    not part of the layout. */}
+                {isFeatured && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
+                    <span className="inline-block px-3 py-1 rounded-full bg-burgundy text-white text-[10px] font-bold tracking-[1.5px] uppercase shadow-sm">
+                      {t('landing.pricing.mostPopular', 'Mais popular')}
+                    </span>
+                  </div>
+                )}
+
                 {/* Plan label */}
                 <div className={`text-xs font-semibold tracking-[1.5px] uppercase mb-2 ${isFeatured ? 'text-rose-400' : 'text-warm-stone'}`}>
                   {t(`landing.pricing.${tierKey}.name`, tier.name)}

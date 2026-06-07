@@ -5,9 +5,52 @@ import CustomerIntelligenceCard from '../../components/insights/CustomerIntellig
 import WeeklyForecastCard from '../../components/insights/WeeklyForecastCard';
 import CampaignManager from '../../components/dashboard/CampaignManager';
 import StrategyMetricsWidget from '../../components/dashboard/StrategyMetricsWidget';
+import { useHostDashboard } from '../../hooks/useHostDashboard';
 
 export default function OverviewTab() {
   const { t } = useTranslation();
+  const { data: dashboard, isLoading } = useHostDashboard();
+
+  // Brand-new restaurant detector: zero reservations + zero active parties
+  // means every insight card below would render its own "Nenhuma X" empty box.
+  // Five identical empty boxes read as "broken" to a new owner — show a single
+  // page-level explainer instead until there's data to display.
+  const isBrandNew = !isLoading && !!dashboard
+    && (dashboard.upcoming_reservations?.length ?? 0) === 0
+    && (dashboard.active_parties?.length ?? 0) === 0
+    && (dashboard.summary?.upcoming_reservations ?? 0) === 0;
+
+  if (isBrandNew) {
+    return (
+      <div className="text-center py-16 max-w-lg mx-auto">
+        <div className="mx-auto mb-4 w-12 h-12 rounded-full bg-burgundy/10 flex items-center justify-center">
+          <svg className="w-6 h-6 text-burgundy" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+        </div>
+        <h2 className="text-base font-semibold text-deep-charcoal mb-1">
+          {t('insights.emptyTitle', 'Seus insights aparecem após as primeiras reservas')}
+        </h2>
+        <p className="text-sm text-stone-500 leading-relaxed mb-6">
+          {t('insights.emptyHint', 'Briefing da noite, inteligência de clientes, previsão semanal — tudo isso é calculado a partir do histórico do seu restaurante. Compartilhe seu link de reservas ou adicione um walk-in para começar a ver dados aqui.')}
+        </p>
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          <Link
+            to="/host-dashboard/simple"
+            className="inline-flex items-center px-5 py-2.5 rounded-full bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold transition-colors"
+          >
+            {t('insights.emptyGoToDashboard', 'Ir para o painel')}
+          </Link>
+          <Link
+            to="/host-dashboard/settings"
+            className="inline-flex items-center px-4 py-2 rounded-full border border-glass-border-dark bg-white/60 backdrop-blur-glass-chip text-deep-charcoal text-sm font-medium hover:bg-white/85 transition-colors"
+          >
+            {t('insights.emptyConfigure', 'Configurar restaurante')}
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
