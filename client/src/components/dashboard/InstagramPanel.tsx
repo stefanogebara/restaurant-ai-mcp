@@ -19,6 +19,7 @@ import { authFetch } from '../../services/api';
 import { useToast } from '../../contexts/ToastContext';
 import { useInstagramStatus, type InstagramStatus, INSTAGRAM_STATUS_QUERY_KEY } from '../../hooks/useInstagramStatus';
 import InstagramCaptionDrafter from './InstagramCaptionDrafter';
+import InstagramScheduledPostsPanel from './InstagramScheduledPostsPanel';
 
 const STATUS_TONE: Record<InstagramStatus, { dot: string; bg: string; text: string; label: string }> = {
   active:     { dot: 'bg-emerald-500', bg: 'bg-emerald-100', text: 'text-emerald-800', label: 'Connected' },
@@ -247,6 +248,8 @@ export default function InstagramPanel() {
           language={data?.tone_language ?? null}
         />
       )}
+
+      {connected && <InstagramScheduledPostsPanel />}
 
       <div>
         <button

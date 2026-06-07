@@ -12,7 +12,7 @@
  * Refresh button on the parent.
  */
 import { useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { authFetch } from '../../services/api';
 import { useToast } from '../../contexts/ToastContext';
@@ -213,6 +213,7 @@ interface RecentMediaItem {
 function DraftCard({ draft, index, onCopy }: { draft: string; index: number; onCopy: () => void }) {
   const { t } = useTranslation();
   const toast = useToast();
+  const queryClient = useQueryClient();
   const [postingOpen, setPostingOpen] = useState(false);
   // imageUrls[] is the source of truth — single posts have 1 entry,
   // carousels have 2-10. The "or paste URL" input still lives, but it
@@ -348,6 +349,8 @@ function DraftCard({ draft, index, onCopy }: { draft: string; index: number; onC
       setPasteUrl('');
       setScheduleMode(false);
       setScheduledAt(defaultScheduledAt());
+      // Refresh the scheduled-posts panel so the new row appears immediately.
+      queryClient.invalidateQueries({ queryKey: ['instagram-scheduled-posts'] });
     },
     onError: (err) => toast.error(err.message),
   });

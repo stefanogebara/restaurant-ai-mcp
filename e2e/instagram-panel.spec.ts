@@ -608,6 +608,84 @@ test.describe('Carousel — 2-10 images (C.10)', () => {
     expect(genBody?.prompt).toMatch(/tiramisu/);
   });
 
+  test('scheduled posts panel (C.17): pending row Cancel → DELETE → toast → row disappears', async ({ page, context }) => {
+    await stubStatus(context, {
+      connected: true, status: 'active', username: 'x', tone_profile_ready: true,
+    });
+    await stubDraftCaption(context, ['a', 'b', 'c']);
+
+    // First GET returns one pending + one completed + one failed post.
+    // Second GET (after Cancel) returns only the completed + failed (pending dropped).
+    let getCallCount = 0;
+    const post1 = {
+      id: 'p1', caption: 'Pending lunch promo',
+      image_urls: ['https://cdn.example.com/1.jpg'],
+      scheduled_at: '2027-01-15T12:30:00Z',
+      status: 'pending', ig_permalink: null, error: null, attempts: 0,
+      created_at: '2026-06-06T10:00:00Z', completed_at: null,
+    };
+    const post2 = {
+      id: 'p2', caption: 'Yesterday post',
+      image_urls: ['https://cdn.example.com/2.jpg', 'https://cdn.example.com/3.jpg'],
+      scheduled_at: '2026-06-05T18:00:00Z',
+      status: 'completed', ig_permalink: 'https://www.instagram.com/p/COMPLETED/',
+      error: null, attempts: 1,
+      created_at: '2026-06-04T10:00:00Z', completed_at: '2026-06-05T18:02:00Z',
+    };
+    const post3 = {
+      id: 'p3', caption: 'A broken post',
+      image_urls: ['https://cdn.example.com/4.jpg'],
+      scheduled_at: '2026-06-04T18:00:00Z',
+      status: 'failed', ig_permalink: null,
+      error: 'Instagram returned 36003 — please retry shortly.',
+      attempts: 3,
+      created_at: '2026-06-04T08:00:00Z', completed_at: null,
+    };
+
+    await context.route('**/api/instagram/schedule-post', async (route) => {
+      if (route.request().method() === 'GET') {
+        getCallCount += 1;
+        const posts = getCallCount === 1 ? [post1, post2, post3] : [post2, post3];
+        await route.fulfill({
+          status: 200, contentType: 'application/json',
+          body: JSON.stringify({ ok: true, posts }),
+        });
+      } else if (route.request().method() === 'DELETE') {
+        await route.fulfill({
+          status: 200, contentType: 'application/json',
+          body: JSON.stringify({ ok: true, canceled: true }),
+        });
+      } else {
+        await route.continue();
+      }
+    });
+
+    await page.goto(INSTAGRAM_TAB_URL);
+    await waitForInstagramPanel(page);
+
+    // Panel mounts with the 3 sections visible
+    await expect(page.getByTestId('instagram-scheduled-posts-panel')).toBeVisible();
+    await expect(page.getByTestId('instagram-scheduled-pending')).toBeVisible();
+    await expect(page.getByTestId('instagram-scheduled-failed')).toBeVisible();
+    // Published section is collapsed by default — expand it
+    await expect(page.getByTestId('instagram-scheduled-published')).toBeVisible();
+
+    // Pending row visible with Cancel
+    const pendingRow = page.getByTestId('instagram-pending-row-p1');
+    await expect(pendingRow).toContainText(/Pending lunch promo/);
+    await expect(page.getByTestId('instagram-pending-cancel-p1')).toBeVisible();
+
+    // Failed row shows error message
+    await expect(page.getByTestId('instagram-failed-row-p3')).toContainText(/36003/);
+
+    // Click Cancel
+    await page.getByTestId('instagram-pending-cancel-p1').click();
+    await expect(page.locator('body')).toContainText(/canceled/i, { timeout: 5_000 });
+
+    // After invalidation the GET re-runs, pending row vanishes
+    await expect(page.getByTestId('instagram-pending-row-p1')).toHaveCount(0, { timeout: 5_000 });
+  });
+
   test('schedule for later (C.15): toggle → pick datetime → request body has ISO scheduled_at, success toast', async ({ page, context }) => {
     await stubStatus(context, {
       connected: true, status: 'active', username: 'x', tone_profile_ready: true,
