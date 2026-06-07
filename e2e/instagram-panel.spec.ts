@@ -561,6 +561,57 @@ test.describe('Carousel — 2-10 images (C.10)', () => {
     await expect(page.getByTestId('instagram-caption-drafter-publish-0')).toContainText(/Post now/i);
   });
 
+  test('schedule for later (C.15): toggle → pick datetime → request body has ISO scheduled_at, success toast', async ({ page, context }) => {
+    await stubStatus(context, {
+      connected: true, status: 'active', username: 'x', tone_profile_ready: true,
+    });
+    await stubDraftCaption(context, ['a', 'b', 'c']);
+
+    let scheduleBody: { caption?: string; image_urls?: string[]; scheduled_at?: string } | null = null;
+    await context.route('**/api/instagram/schedule-post', async (route) => {
+      if (route.request().method() !== 'POST') return route.continue();
+      scheduleBody = route.request().postDataJSON?.() ?? null;
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ ok: true, id: 'sched-1', scheduled_at: scheduleBody?.scheduled_at || '' }),
+      });
+    });
+
+    await page.goto(INSTAGRAM_TAB_URL);
+    await waitForInstagramPanel(page);
+
+    await page.getByTestId('instagram-caption-drafter-topic').fill('schedule');
+    await page.getByTestId('instagram-caption-drafter-submit').click();
+    await page.getByTestId('instagram-caption-drafter-post-toggle-0').click();
+
+    // Add an image
+    await page.getByTestId('instagram-caption-drafter-image-url-0').fill('https://cdn.example.com/x.jpg');
+    await page.getByTestId('instagram-caption-drafter-add-url-0').click();
+
+    // Default mode: "Schedule for later" link is visible, "Post now" button shown
+    await expect(page.getByTestId('instagram-caption-drafter-publish-0')).toBeVisible();
+    await expect(page.getByTestId('instagram-caption-drafter-schedule-toggle-0')).toContainText(/Schedule for later/i);
+
+    // Toggle into schedule mode
+    await page.getByTestId('instagram-caption-drafter-schedule-toggle-0').click();
+    await expect(page.getByTestId('instagram-caption-drafter-schedule-panel-0')).toBeVisible();
+    await expect(page.getByTestId('instagram-caption-drafter-publish-0')).toHaveCount(0);
+    await expect(page.getByTestId('instagram-caption-drafter-schedule-submit-0')).toBeVisible();
+
+    // Override the default with a known future timestamp (in local time)
+    // Pick a date safely ≥1 min ahead AND ≤90 days out.
+    await page.getByTestId('instagram-caption-drafter-scheduled-at-0').fill('2027-01-15T18:30');
+
+    await page.getByTestId('instagram-caption-drafter-schedule-submit-0').click();
+    await expect(page.locator('body')).toContainText(/Scheduled for/i, { timeout: 5_000 });
+
+    expect(scheduleBody?.caption).toBeTruthy();
+    expect(scheduleBody?.image_urls).toEqual(['https://cdn.example.com/x.jpg']);
+    // ISO string round-trips back to a 2027-01-15 date
+    expect(scheduleBody?.scheduled_at).toMatch(/^2027-01-15T/);
+  });
+
   test('drag-to-reorder (C.13): drag thumb 2 onto thumb 0 → request body shows new order, cover badge moves', async ({ page, context }) => {
     await stubStatus(context, {
       connected: true, status: 'active', username: 'x', tone_profile_ready: true,

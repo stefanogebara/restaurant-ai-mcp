@@ -185,6 +185,22 @@ export default function InstagramCaptionDrafter({ toneProfileReady, language }: 
  */
 const CAROUSEL_MAX = 10;
 
+/**
+ * Sensible default scheduled time: tomorrow at noon LOCAL. The cron
+ * polls every 15 min so 0-15 min delivery jitter from this exact time
+ * is expected; we tell the user that in the inline copy.
+ *
+ * Returned as a "YYYY-MM-DDTHH:mm" string that's directly bindable to
+ * <input type="datetime-local"> without further formatting.
+ */
+function defaultScheduledAt(): string {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  d.setHours(12, 0, 0, 0);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 interface RecentMediaItem {
   id: string;
   image_url: string;
@@ -248,6 +264,55 @@ function DraftCard({ draft, index, onCopy }: { draft: string; index: number; onC
     if (publishMutation.isPending) return;
     if (imageUrls.length === 0) return;
     publishMutation.mutate({ caption: draft, image_urls: imageUrls });
+  };
+
+  // ─── Schedule-for-later (C.15) ─────────────────────────────────────
+  // The "Schedule" path inserts a row into scheduled_instagram_posts
+  // and the every-15-min cron handles the actual publish at the right
+  // time. We default the picker to "tomorrow 12:00 local" — a sane
+  // restaurant default — but let the user override.
+  const [scheduleMode, setScheduleMode] = useState(false);
+  const [scheduledAt, setScheduledAt] = useState<string>(() => defaultScheduledAt());
+
+  const scheduleMutation = useMutation<
+    { id: string; scheduled_at: string },
+    Error,
+    { caption: string; image_urls: string[]; scheduled_at: string }
+  >({
+    mutationFn: async (input) => {
+      const res = await authFetch('/api/instagram/schedule-post', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      });
+      const body = (await res.json().catch(() => null)) as {
+        ok?: boolean; error?: string; id?: string; scheduled_at?: string;
+      } | null;
+      if (!res.ok || !body?.ok || !body.id || !body.scheduled_at) {
+        throw new Error(body?.error || `Schedule failed (HTTP ${res.status})`);
+      }
+      return { id: body.id, scheduled_at: body.scheduled_at };
+    },
+    onSuccess: ({ scheduled_at }) => {
+      const when = new Date(scheduled_at).toLocaleString();
+      toast.success(t('instagram.scheduled', `Scheduled for ${when}.`));
+      setPostingOpen(false);
+      setImageUrls([]);
+      setPasteUrl('');
+      setScheduleMode(false);
+      setScheduledAt(defaultScheduledAt());
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const onSchedule = () => {
+    if (scheduleMutation.isPending) return;
+    if (imageUrls.length === 0 || !scheduledAt) return;
+    // The <input type="datetime-local"> value is "YYYY-MM-DDTHH:mm" in
+    // LOCAL time. The Date constructor parses that as local → ISO. The
+    // backend re-validates so a stale value is rejected cleanly.
+    const iso = new Date(scheduledAt).toISOString();
+    scheduleMutation.mutate({ caption: draft, image_urls: imageUrls, scheduled_at: iso });
   };
 
   const onAddPastedUrl = () => {
@@ -625,19 +690,68 @@ function DraftCard({ draft, index, onCopy }: { draft: string; index: number; onC
             </button>
           </div>
 
-          <button
-            type="button"
-            onClick={onPublish}
-            disabled={publishMutation.isPending || uploading || imageUrls.length === 0}
-            className="px-3 py-1.5 bg-burgundy text-white rounded-lg text-xs font-medium hover:bg-burgundy-dark disabled:opacity-50 transition-colors"
-            data-testid={`instagram-caption-drafter-publish-${index}`}
-          >
-            {publishMutation.isPending
-              ? 'Posting…'
-              : imageUrls.length >= 2
-                ? `Post carousel (${imageUrls.length})`
-                : 'Post now'}
-          </button>
+          {/* Schedule-for-later panel — appears when the user toggles
+              the "Schedule" link. Hidden by default to keep the post
+              flow uncluttered for the "just post it now" case. */}
+          {scheduleMode && (
+            <div
+              className="border border-glass-border-dark rounded-lg p-2 space-y-2 bg-warm-white"
+              data-testid={`instagram-caption-drafter-schedule-panel-${index}`}
+            >
+              <label className="text-xs text-muted-stone block">
+                Post on
+              </label>
+              <input
+                type="datetime-local"
+                value={scheduledAt}
+                onChange={(e) => setScheduledAt(e.target.value)}
+                disabled={scheduleMutation.isPending}
+                className="w-full px-3 py-2 border border-glass-border-input rounded-lg text-sm focus:outline-none focus:border-burgundy disabled:opacity-50"
+                data-testid={`instagram-caption-drafter-scheduled-at-${index}`}
+              />
+              <p className="text-[10px] text-muted-stone">
+                Actually posts within 0–15 min of this time (cron polls every 15 min).
+              </p>
+            </div>
+          )}
+
+          <div className="flex items-center gap-2">
+            {!scheduleMode ? (
+              <button
+                type="button"
+                onClick={onPublish}
+                disabled={publishMutation.isPending || uploading || imageUrls.length === 0}
+                className="px-3 py-1.5 bg-burgundy text-white rounded-lg text-xs font-medium hover:bg-burgundy-dark disabled:opacity-50 transition-colors"
+                data-testid={`instagram-caption-drafter-publish-${index}`}
+              >
+                {publishMutation.isPending
+                  ? 'Posting…'
+                  : imageUrls.length >= 2
+                    ? `Post carousel (${imageUrls.length})`
+                    : 'Post now'}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={onSchedule}
+                disabled={scheduleMutation.isPending || uploading || imageUrls.length === 0 || !scheduledAt}
+                className="px-3 py-1.5 bg-burgundy text-white rounded-lg text-xs font-medium hover:bg-burgundy-dark disabled:opacity-50 transition-colors"
+                data-testid={`instagram-caption-drafter-schedule-submit-${index}`}
+              >
+                {scheduleMutation.isPending ? 'Scheduling…' : 'Schedule'}
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={() => setScheduleMode((v) => !v)}
+              disabled={publishMutation.isPending || scheduleMutation.isPending || uploading}
+              className="text-xs text-burgundy underline underline-offset-2 hover:text-burgundy-dark disabled:opacity-50"
+              data-testid={`instagram-caption-drafter-schedule-toggle-${index}`}
+            >
+              {scheduleMode ? 'Cancel scheduling' : 'Schedule for later'}
+            </button>
+          </div>
         </div>
       )}
     </div>

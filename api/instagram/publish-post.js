@@ -35,16 +35,13 @@ const { verifyJWT } = require('../_lib/auth');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { checkAndApplyRateLimit } = require('../_lib/rate-limit');
 const { setInternalCors, handlePreflight } = require('../_lib/cors');
+const { runPublish, MetaError, CAROUSEL_MAX: CAROUSEL_MAX_LIB } = require('./_lib/publish-flow');
 
 const logger = createSecureLogger('instagram-publish-post');
 
-const GRAPH_BASE = 'https://graph.facebook.com/v21.0';
-
 const MAX_CAPTION_LEN = 2200;   // Instagram's per-post caption limit
 const MAX_HASHTAGS = 30;        // Instagram's per-post hashtag limit
-const PUBLISH_TIMEOUT_MS = 20_000;
-const CAROUSEL_MIN = 2;         // Meta requires ≥2 children to be a carousel
-const CAROUSEL_MAX = 10;        // Meta's per-carousel cap (was 10 in v21)
+const CAROUSEL_MAX = CAROUSEL_MAX_LIB;  // alias for readability
 
 module.exports = async (req, res) => {
   if (handlePreflight(req, res)) return;
@@ -139,48 +136,27 @@ module.exports = async (req, res) => {
     });
   }
 
-  const { ig_business_account_id: igId, access_token: token } = conn;
-  const postKind = imageUrls.length >= CAROUSEL_MIN ? 'carousel' : 'single';
-
-  // Step 1: create the container(s). For single image, one container with
-  // the caption; for carousel, N child containers (no caption) + one
-  // parent CAROUSEL container that carries the caption + children list.
-  let containerId;
+  let result;
   try {
-    if (postKind === 'single') {
-      containerId = await createMediaContainer({ igId, token, imageUrl: imageUrls[0], caption });
-    } else {
-      // Children are created in parallel — independent Graph calls. Order
-      // is preserved by index, so IG's swipe-through order matches the
-      // user's upload order.
-      const childIds = await Promise.all(
-        imageUrls.map((imageUrl) =>
-          createMediaContainer({ igId, token, imageUrl, isCarouselItem: true }),
-        ),
-      );
-      containerId = await createCarouselContainer({ igId, token, childIds, caption });
-    }
+    result = await runPublish({
+      igBusinessAccountId: conn.ig_business_account_id,
+      accessToken: conn.access_token,
+      caption,
+      imageUrls,
+      tokenInvalidCallback: async (err) => {
+        await supabaseAdmin
+          .schema('restaurant')
+          .from('instagram_connections')
+          .update({
+            status: 'expired',
+            last_error: err.message.slice(0, 500),
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', conn.id);
+      },
+    });
   } catch (err) {
-    return surfaceMetaError(res, 'container_create', err, conn.id);
-  }
-
-  // Step 2: publish the container. Single-image and carousel both publish
-  // synchronously when the children are images (video carousels would need
-  // status polling — deferred to reels work).
-  let mediaId;
-  try {
-    mediaId = await publishMediaContainer({ igId, token, containerId });
-  } catch (err) {
-    return surfaceMetaError(res, 'publish', err, conn.id);
-  }
-
-  // Step 3: fetch the permalink so we can show the user where their post
-  // landed. Non-fatal — if this fails we still return success.
-  let permalink = null;
-  try {
-    permalink = await fetchPermalink({ mediaId, token });
-  } catch (err) {
-    logger.warn('permalink fetch failed (non-fatal)', { err: err.message });
+    return surfaceMetaError(res, err.stage || 'publish', err, conn.id);
   }
 
   // Bump last_sync_at + clear last_error since the connection just
@@ -191,142 +167,42 @@ module.exports = async (req, res) => {
     .update({ last_sync_at: new Date().toISOString(), last_error: null, updated_at: new Date().toISOString() })
     .eq('id', conn.id);
 
-  logger.info('post published', { restaurantId: user.restaurant_id, mediaId, postKind, imageCount: imageUrls.length });
-  return res.status(200).json({ ok: true, media_id: mediaId, permalink, post_kind: postKind });
+  logger.info('post published', {
+    restaurantId: user.restaurant_id,
+    mediaId: result.mediaId,
+    postKind: result.postKind,
+    imageCount: result.imageCount,
+  });
+  return res.status(200).json({
+    ok: true,
+    media_id: result.mediaId,
+    permalink: result.permalink,
+    post_kind: result.postKind,
+  });
 };
 
 module.exports.config = {
   api: { bodyParser: { sizeLimit: '16kb' } },
 };
 
-// ─── Graph API helpers ──────────────────────────────────────────────────
+// ─── Helpers ─────────────────────────────────────────────────────────
 
 /**
- * Creates an image media container. For single posts this is the only
- * container needed (caption included). For carousel children, pass
- * isCarouselItem=true and omit caption — Meta requires children to be
- * created with `is_carousel_item=true` and the caption to live on the
- * parent carousel container.
+ * Maps a Meta Graph API error from runPublish() to an HTTP response.
+ * Token-invalid errors flip connection.status='expired' (the
+ * tokenInvalidCallback passed to runPublish already updates that row,
+ * but we still send back 401 here so the UI prompts a reconnect). Other
+ * Meta errors stamp last_error on the connection for surfacing on the
+ * next status poll.
  */
-async function createMediaContainer({ igId, token, imageUrl, caption, isCarouselItem = false }) {
-  const url = new URL(`${GRAPH_BASE}/${igId}/media`);
-  url.searchParams.set('image_url', imageUrl);
-  if (isCarouselItem) {
-    url.searchParams.set('is_carousel_item', 'true');
-  } else if (caption) {
-    url.searchParams.set('caption', caption);
-  }
-  url.searchParams.set('access_token', token);
-
-  const resp = await fetchWithTimeout(url.toString(), { method: 'POST' });
-  const body = await resp.json().catch(() => null);
-  if (!resp.ok || !body?.id) {
-    throw normalizeMetaError(body, resp.status);
-  }
-  return body.id;
-}
-
-/**
- * Creates a carousel parent container that ties N child image containers
- * together. The caption lives on the carousel container, not the children.
- */
-async function createCarouselContainer({ igId, token, childIds, caption }) {
-  const url = new URL(`${GRAPH_BASE}/${igId}/media`);
-  url.searchParams.set('media_type', 'CAROUSEL');
-  url.searchParams.set('children', childIds.join(','));
-  if (caption) url.searchParams.set('caption', caption);
-  url.searchParams.set('access_token', token);
-
-  const resp = await fetchWithTimeout(url.toString(), { method: 'POST' });
-  const body = await resp.json().catch(() => null);
-  if (!resp.ok || !body?.id) {
-    throw normalizeMetaError(body, resp.status);
-  }
-  return body.id;
-}
-
-async function publishMediaContainer({ igId, token, containerId }) {
-  const url = new URL(`${GRAPH_BASE}/${igId}/media_publish`);
-  url.searchParams.set('creation_id', containerId);
-  url.searchParams.set('access_token', token);
-
-  const resp = await fetchWithTimeout(url.toString(), { method: 'POST' });
-  const body = await resp.json().catch(() => null);
-  if (!resp.ok || !body?.id) {
-    throw normalizeMetaError(body, resp.status);
-  }
-  return body.id;
-}
-
-async function fetchPermalink({ mediaId, token }) {
-  const url = `${GRAPH_BASE}/${mediaId}?fields=permalink&access_token=${encodeURIComponent(token)}`;
-  const resp = await fetchWithTimeout(url, { method: 'GET' });
-  const body = await resp.json().catch(() => null);
-  if (!resp.ok || !body?.permalink) {
-    throw new Error(body?.error?.message || `HTTP ${resp.status}`);
-  }
-  return body.permalink;
-}
-
-async function fetchWithTimeout(url, opts) {
-  const aborter = new AbortController();
-  const timer = setTimeout(() => aborter.abort(), PUBLISH_TIMEOUT_MS);
-  try {
-    return await fetch(url, { ...opts, signal: aborter.signal });
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
-/**
- * Maps a Meta Graph API error to a structured Error subclass that the
- * caller can inspect. We preserve the upstream code so we can give
- * specific guidance for known classes:
- *   - 190        → token expired/revoked (flip connection status)
- *   - 36003      → Instagram processing error (transient)
- *   - 25 (subtype) → captioning issue (caption too long, hashtags etc.)
- *   - 9          → app rate limit hit
- */
-class MetaError extends Error {
-  constructor(message, { code, subcode, fbtraceId, status } = {}) {
-    super(message);
-    this.name = 'MetaError';
-    this.code = code;
-    this.subcode = subcode;
-    this.fbtraceId = fbtraceId;
-    this.status = status;
-  }
-}
-
-function normalizeMetaError(body, httpStatus) {
-  const e = body?.error || {};
-  return new MetaError(e.message || `HTTP ${httpStatus}`, {
-    code: e.code,
-    subcode: e.error_subcode,
-    fbtraceId: e.fbtrace_id,
-    status: httpStatus,
-  });
-}
-
 async function surfaceMetaError(res, stage, err, connId) {
   const isTokenInvalid = err instanceof MetaError && (err.code === 190 || err.status === 401);
 
   if (isTokenInvalid) {
-    await supabaseAdmin
-      .schema('restaurant')
-      .from('instagram_connections')
-      .update({
-        status: 'expired',
-        last_error: err.message.slice(0, 500),
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', connId);
-    logger.warn('IG token invalid on publish — marked expired', { stage });
+    logger.warn('IG token invalid on publish', { stage });
     return res.status(401).json({ ok: false, error: 'Instagram token expired. Reconnect required.' });
   }
 
-  // Stamp last_error on the connection so we can show context next time
-  // the dashboard polls /api/instagram/status.
   await supabaseAdmin
     .schema('restaurant')
     .from('instagram_connections')

@@ -306,6 +306,10 @@
       "schedule": "*/15 * * * *"
     },
     {
+      "path": "/api/cron/process-scheduled-ig-posts",
+      "schedule": "*/15 * * * *"
+    },
+    {
       "path": "/api/cron/send-reminders",
       "schedule": "0 9 * * *"
     },
