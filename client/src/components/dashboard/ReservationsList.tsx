@@ -236,21 +236,38 @@ export default function ReservationsList({
         </div>
 
         {/* Status filter chips */}
+        {/* "at_risk" gets warning semantic colors instead of brand burgundy
+            so the pill telegraphs its meaning before the host reads the
+            label — amber for the active state (matches the at-risk
+            reservation badge below) and a tiny amber dot before the label
+            when inactive. Other filters keep the burgundy/neutral pair. */}
         <div className="flex items-center gap-1.5 mt-2.5 overflow-x-auto sm:overflow-x-visible sm:flex-wrap pb-1 sm:pb-0 -mx-3 px-3 sm:mx-0 sm:px-0 scrollbar-hide">
-          {statusFilters.map(({ key, label }) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setStatusFilter(key)}
-              className={`text-[11px] font-medium px-3 py-1 rounded-full transition-colors whitespace-nowrap flex-shrink-0 ${
-                statusFilter === key
-                  ? 'bg-[#9F1239] text-white'
-                  : 'bg-[#F3F4F6] text-[#6B7280] hover:bg-[#E5E7EB] hover:text-[#111827]'
-              }`}
-            >
-              {label}
-            </button>
-          ))}
+          {statusFilters.map(({ key, label }) => {
+            const isActive = statusFilter === key;
+            const isRisk = key === 'at_risk';
+            const activeClasses = isRisk
+              ? 'bg-amber-500 text-white'
+              : 'bg-[#9F1239] text-white';
+            const inactiveClasses = 'bg-[#F3F4F6] text-[#6B7280] hover:bg-[#E5E7EB] hover:text-[#111827]';
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setStatusFilter(key)}
+                className={`text-[11px] font-medium px-3 py-1 rounded-full transition-colors whitespace-nowrap flex-shrink-0 inline-flex items-center gap-1.5 ${
+                  isActive ? activeClasses : inactiveClasses
+                }`}
+              >
+                {isRisk && (
+                  <span
+                    aria-hidden="true"
+                    className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-white/80' : 'bg-amber-500'}`}
+                  />
+                )}
+                {label}
+              </button>
+            );
+          })}
         </div>
 
         {/* Showing X of Y */}
