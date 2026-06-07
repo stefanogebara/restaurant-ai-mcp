@@ -608,6 +608,73 @@ test.describe('Carousel — 2-10 images (C.10)', () => {
     expect(genBody?.prompt).toMatch(/tiramisu/);
   });
 
+  test('reel panel (C.18): upload → caption → publish → success toast', async ({ page, context }) => {
+    await stubStatus(context, {
+      connected: true, status: 'active', username: 'x', tone_profile_ready: true,
+    });
+    await stubDraftCaption(context, ['a', 'b', 'c']);
+
+    let uploadBody: { filename?: string; content_type?: string; data_b64?: string } | null = null;
+    await context.route('**/api/instagram/upload-video', async (route) => {
+      uploadBody = route.request().postDataJSON?.() ?? null;
+      await route.fulfill({
+        status: 200, contentType: 'application/json',
+        body: JSON.stringify({
+          ok: true,
+          url: 'https://storage.example.com/instagram-uploads/r/reel.mp4',
+          path: 'r/reel.mp4',
+        }),
+      });
+    });
+
+    let publishBody: { caption?: string; video_url?: string } | null = null;
+    await context.route('**/api/instagram/publish-reel', async (route) => {
+      publishBody = route.request().postDataJSON?.() ?? null;
+      await route.fulfill({
+        status: 200, contentType: 'application/json',
+        body: JSON.stringify({
+          ok: true,
+          media_id: 'reel_42',
+          permalink: 'https://www.instagram.com/reel/REELID/',
+          post_kind: 'reel',
+        }),
+      });
+    });
+
+    await page.goto(INSTAGRAM_TAB_URL);
+    await waitForInstagramPanel(page);
+
+    // Toggle shown by default, panel hidden
+    await expect(page.getByTestId('instagram-reel-panel-toggle')).toBeVisible();
+    await expect(page.getByTestId('instagram-reel-panel')).toHaveCount(0);
+
+    await page.getByTestId('instagram-reel-panel-toggle').click();
+    await expect(page.getByTestId('instagram-reel-panel')).toBeVisible();
+
+    // Synthetic minimal mp4 — 16 bytes with size prefix, ftyp box, isom brand
+    const mp4Bytes = Buffer.from([
+      0x00, 0x00, 0x00, 0x10,                       // box size
+      0x66, 0x74, 0x79, 0x70,                       // 'ftyp'
+      0x69, 0x73, 0x6f, 0x6d,                       // 'isom' brand
+      0x00, 0x00, 0x00, 0x00,                       // minor version
+    ]);
+    await page.locator('[data-testid="instagram-reel-upload"] input[type="file"]').setInputFiles({
+      name: 'cool.mp4', mimeType: 'video/mp4', buffer: mp4Bytes,
+    });
+
+    // Wait for the upload toast + file name reveal
+    await expect(page.getByTestId('instagram-reel-video-name')).toContainText('cool.mp4', { timeout: 10_000 });
+    expect(uploadBody?.content_type).toBe('video/mp4');
+    expect(uploadBody?.data_b64).toBeTruthy();
+
+    await page.getByTestId('instagram-reel-caption').fill('Behind the scenes — tonight\'s dinner service.');
+    await page.getByTestId('instagram-reel-publish').click();
+
+    await expect(page.locator('body')).toContainText(/Reel posted/i, { timeout: 5_000 });
+    expect(publishBody?.caption).toMatch(/Behind the scenes/);
+    expect(publishBody?.video_url).toBe('https://storage.example.com/instagram-uploads/r/reel.mp4');
+  });
+
   test('scheduled posts panel (C.17): pending row Cancel → DELETE → toast → row disappears', async ({ page, context }) => {
     await stubStatus(context, {
       connected: true, status: 'active', username: 'x', tone_profile_ready: true,
