@@ -231,15 +231,41 @@ export default function BookingPage() {
         {/* Left: Restaurant Info */}
         <div className="md:flex-shrink-0 md:w-[340px]">
           <div className="w-full h-[220px] rounded-2xl bg-gradient-to-br from-burgundy via-burgundy/80 to-stone-700 mb-7 flex items-end p-6 relative overflow-hidden">
-            {/* M3: Background watermark removed `whitespace-nowrap` so long
-                restaurant names ("Cantina Bella Vista") wrap inside the card
-                instead of getting clipped (audit saw "Cantina Bella V"). */}
-            <span
-              aria-hidden="true"
-              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 font-serif text-[40px] sm:text-[48px] font-bold text-white/[0.06] leading-tight select-none pointer-events-none text-center max-w-[92%] overflow-hidden break-words"
-            >
-              {restaurant.name}
-            </span>
+            {/* Cuisine-type emoji watermark — audit found the booking left
+                card had no visual personality (just burgundy gradient + name).
+                Until we ship a real photo upload, render a large semi-
+                transparent emoji that maps to the restaurant's cuisine. Same
+                slot the name watermark used; emoji-only if we have a match,
+                otherwise the original name watermark takes over. */}
+            {(() => {
+              const cuisineEmoji: Record<string, string> = {
+                'fine-dining':   '🍽️',
+                'casual-dining': '🍴',
+                'fast-casual':   '🥗',
+                'cafe':          '☕',
+                'bar':           '🍷',
+                'bistro':        '🥐',
+                'pizzeria':      '🍕',
+                'steakhouse':    '🥩',
+                'seafood':       '🦐',
+              };
+              const emoji = cuisineEmoji[typeKey];
+              return emoji ? (
+                <span
+                  aria-hidden="true"
+                  className="absolute top-1/2 right-6 -translate-y-1/2 text-[120px] sm:text-[140px] leading-none select-none pointer-events-none opacity-[0.13]"
+                >
+                  {emoji}
+                </span>
+              ) : (
+                <span
+                  aria-hidden="true"
+                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 font-serif text-[40px] sm:text-[48px] font-bold text-white/[0.06] leading-tight select-none pointer-events-none text-center max-w-[92%] overflow-hidden break-words"
+                >
+                  {restaurant.name}
+                </span>
+              );
+            })()}
             <div className="relative z-10 max-w-full">
               <h2 className="font-serif text-[24px] sm:text-[28px] font-medium text-white tracking-tight mb-1 break-words">
                 {restaurant.name}
