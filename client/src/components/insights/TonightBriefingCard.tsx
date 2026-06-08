@@ -58,9 +58,13 @@ export default function TonightBriefingCard() {
 
         {/* High-risk list */}
         {highRiskTonight.length === 0 ? (
-          <div className="flex items-center gap-2 py-3 px-4 bg-rose-500/8 rounded-xl border border-rose-500/20">
-            <ThiingsIcon name="check-circle" pxSize={16} className="text-rose-600 flex-shrink-0" />
-            <span className="text-sm text-rose-700 font-medium">{t('insights.noHighRiskTonight')}</span>
+          /* Same fix as the CRM Em Risco tab — "no high-risk tonight" is
+             great news, so the chip uses emerald (clear/positive) rather
+             than burgundy/rose which the eye reads as a warning even with
+             a friendly check-circle icon. */
+          <div className="flex items-center gap-2 py-3 px-4 bg-emerald-50 rounded-xl border border-emerald-200">
+            <ThiingsIcon name="check-circle" pxSize={16} className="text-emerald-600 flex-shrink-0" />
+            <span className="text-sm text-emerald-700 font-medium">{t('insights.noHighRiskTonight')}</span>
           </div>
         ) : (
           <div className="space-y-2">

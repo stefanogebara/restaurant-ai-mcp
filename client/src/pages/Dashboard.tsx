@@ -317,6 +317,24 @@ export default function Dashboard() {
           {/* ---- Header Section ---- */}
           <header className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-8 sm:mb-14 mt-14 sm:mt-0 gap-3 sm:gap-4">
             <div className="pl-12 lg:pl-0">
+              {/* Greeting line — Bom dia / boa tarde / boa noite. Audit found
+                  the dashboard read as "task-oriented, no warmth" — a
+                  hospitality product should at least say hello. Time-of-day
+                  bucketed in 4-hour windows; matches typical Brazilian usage
+                  (early morning still gets "Bom dia"). Drops the optional
+                  first-name slot when the auth display name isn't set. */}
+              <p className="text-sm text-muted-stone mb-0.5">
+                {(() => {
+                  const hour = new Date().getHours();
+                  const greetingKey = hour < 12
+                    ? 'dashboard.greetingMorning'
+                    : hour < 18
+                      ? 'dashboard.greetingAfternoon'
+                      : 'dashboard.greetingEvening';
+                  const fallback = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite';
+                  return `${t(greetingKey, fallback)} 👋`;
+                })()}
+              </p>
               <h1 className="font-sans text-xl sm:text-2xl font-semibold tracking-tight text-deep-charcoal">
                 {t('dashboard.overview')}
               </h1>

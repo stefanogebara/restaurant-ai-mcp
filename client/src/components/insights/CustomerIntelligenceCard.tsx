@@ -192,9 +192,12 @@ export default function CustomerIntelligenceCard() {
         <div className="p-5">
           {tab === 'at-risk' && (
             atRisk.length === 0 ? (
-              <div className="flex items-center gap-2 py-3 px-4 bg-rose-500/8 rounded-xl border border-rose-500/20">
-                <ThiingsIcon name="check-circle" pxSize={16} className="text-rose-600 flex-shrink-0" />
-                <span className="text-sm text-rose-700 font-medium">{t('insights.noHighRiskCustomers')}</span>
+              /* "Nenhum cliente em risco" is GOOD news — emerald reads as
+                 "all clear" rather than the prior rose palette which copied
+                 the at-risk warning color even when there was nothing wrong. */
+              <div className="flex items-center gap-2 py-3 px-4 bg-emerald-50 rounded-xl border border-emerald-200">
+                <ThiingsIcon name="check-circle" pxSize={16} className="text-emerald-600 flex-shrink-0" />
+                <span className="text-sm text-emerald-700 font-medium">{t('insights.noHighRiskCustomers')}</span>
               </div>
             ) : (
               <div>
