@@ -608,7 +608,13 @@ test.describe('Carousel — 2-10 images (C.10)', () => {
     expect(genBody?.prompt).toMatch(/tiramisu/);
   });
 
+  // The C.19 test polls every 5s; happy path is ~10-15s + setup overhead +
+  // teardown, which crowds the 30s default. test.slow() triples to 90s and
+  // applies to beforeEach + the test body (test.setTimeout from inside the
+  // body would NOT cover the beforeEach hook where newPage runs).
   test('reel AI video generation (C.19): start → poll → URL auto-fills', async ({ page, context }) => {
+    test.slow();
+
     await stubStatus(context, {
       connected: true, status: 'active', username: 'x', tone_profile_ready: true,
     });
