@@ -17,6 +17,7 @@ import { useTranslation } from 'react-i18next';
 import { authFetch } from '../../services/api';
 import { useToast } from '../../contexts/ToastContext';
 import { sendCaptionToReel } from './instagramCaptionBus';
+import InstagramGenSpendPill from './InstagramGenSpendPill';
 
 type Length = 'short' | 'medium' | 'long';
 
@@ -109,16 +110,19 @@ export default function InstagramCaptionDrafter({ toneProfileReady, language }: 
           <p className="text-sm font-medium text-deep-charcoal">Caption drafter</p>
           <p className="text-xs text-muted-stone mt-1">Tell us what you want to post about, we'll draft 3 captions in your voice.</p>
         </div>
-        {langDisplay && (
-          <span
-            className="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] bg-warm-white border border-glass-border-dark text-muted-stone"
-            title={`Drafts will be written in ${langDisplay.label} (detected from your IG posts)`}
-            data-testid="instagram-caption-drafter-language"
-          >
-            <span aria-hidden>{langDisplay.flag}</span>
-            <span>Drafting in {langDisplay.label}</span>
-          </span>
-        )}
+        <div className="flex items-center gap-2 flex-wrap justify-end">
+          <InstagramGenSpendPill />
+          {langDisplay && (
+            <span
+              className="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] bg-warm-white border border-glass-border-dark text-muted-stone"
+              title={`Drafts will be written in ${langDisplay.label} (detected from your IG posts)`}
+              data-testid="instagram-caption-drafter-language"
+            >
+              <span aria-hidden>{langDisplay.flag}</span>
+              <span>Drafting in {langDisplay.label}</span>
+            </span>
+          )}
+        </div>
       </div>
 
       <div className="space-y-2">

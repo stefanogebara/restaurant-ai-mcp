@@ -27,6 +27,7 @@ const { verifyJWT } = require('../_lib/auth');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { checkAndApplyRateLimit } = require('../_lib/rate-limit');
 const { setInternalCors, handlePreflight } = require('../_lib/cors');
+const { logGenEvent } = require('./_lib/log-gen-event');
 
 const logger = createSecureLogger('instagram-generate-image');
 
@@ -152,6 +153,18 @@ module.exports = async (req, res) => {
     model: modelKey,
     promptLen: prompt.length,
     bytes: buf.length,
+  });
+
+  // Fire-and-forget cost ledger (C.22). Don't await — a logging failure
+  // shouldn't block the user's gen response.
+  void logGenEvent({
+    restaurantId: user.restaurant_id,
+    kind: 'image',
+    provider: modelCfg.provider,
+    model: modelKey,
+    costCents: modelCfg.costCents,
+    promptChars: prompt.length,
+    assetUrl: pub.publicUrl,
   });
 
   return res.status(200).json({

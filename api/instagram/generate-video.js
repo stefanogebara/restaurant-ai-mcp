@@ -29,6 +29,7 @@ const { verifyJWT } = require('../_lib/auth');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { checkAndApplyRateLimit } = require('../_lib/rate-limit');
 const { setInternalCors, handlePreflight } = require('../_lib/cors');
+const { logGenEvent } = require('./_lib/log-gen-event');
 
 const logger = createSecureLogger('instagram-generate-video');
 
@@ -44,6 +45,10 @@ const PROVIDERS = {
     // Higgsfield's text-to-video endpoint. Their default model is
     // "video-2.5" — fast + cheap, good enough for Reels previews.
     defaultModel: 'video-2.5',
+    // Cost snapshot at write time for the cost ledger (C.22). Higgsfield
+    // video-2.5 5s clip ≈ $0.50. Stored in cents — update if pricing
+    // shifts (historical rows preserve their snapshot cost).
+    costCents: 50,
   },
 };
 
@@ -144,7 +149,7 @@ async function handlePoll(req, res, user) {
   const { data: row, error: fetchErr } = await supabaseAdmin
     .schema('restaurant')
     .from('instagram_video_jobs')
-    .select('id, restaurant_id, provider, provider_job_id, status, video_url, error, created_at')
+    .select('id, restaurant_id, provider, provider_job_id, prompt, status, video_url, error, created_at')
     .eq('id', jobId)
     .eq('restaurant_id', user.restaurant_id)
     .maybeSingle();
@@ -215,6 +220,19 @@ async function handlePoll(req, res, user) {
     .eq('id', row.id);
 
   logger.info('video job completed', { jobId, restaurantId: user.restaurant_id });
+
+  // Cost ledger (C.22). Fire-and-forget — never block the user.
+  const providerCfg = PROVIDERS[row.provider] || {};
+  void logGenEvent({
+    restaurantId: user.restaurant_id,
+    kind: 'video',
+    provider: row.provider,
+    model: providerCfg.defaultModel || row.provider,
+    costCents: providerCfg.costCents || 0,
+    promptChars: typeof row.prompt === 'string' ? row.prompt.length : 0,
+    assetUrl: publicUrl,
+  });
+
   return res.status(200).json({ ok: true, status: 'completed', url: publicUrl });
 }
 

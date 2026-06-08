@@ -670,6 +670,47 @@ test.describe('Carousel — 2-10 images (C.10)', () => {
     expect(scheduleBody?.scheduled_at).toMatch(/^2027-01-15T/);
   });
 
+  test('gen spend pill (C.22): renders when month total > 0, hides when 0', async ({ page, context }) => {
+    await stubStatus(context, {
+      connected: true, status: 'active', username: 'x', tone_profile_ready: true,
+    });
+    await stubDraftCaption(context, ['a', 'b', 'c']);
+
+    // First load: stub spend with $2.43 this month
+    let spendCall = 0;
+    await context.route('**/api/instagram/gen-spend', async (route) => {
+      spendCall += 1;
+      const totalCents = spendCall === 1 ? 243 : 0;
+      await route.fulfill({
+        status: 200, contentType: 'application/json',
+        body: JSON.stringify({
+          ok: true,
+          month: {
+            total_cents: totalCents,
+            by_kind: { image: spendCall === 1 ? 200 : 0, video: spendCall === 1 ? 43 : 0 },
+            gen_count: spendCall === 1 ? 7 : 0,
+          },
+          all_time: { total_cents: totalCents, gen_count: spendCall === 1 ? 7 : 0 },
+          recent: [],
+        }),
+      });
+    });
+
+    await page.goto(INSTAGRAM_TAB_URL);
+    await waitForInstagramPanel(page);
+
+    // Pill renders with the $2.43 figure
+    const pill = page.getByTestId('instagram-gen-spend-pill');
+    await expect(pill).toBeVisible();
+    await expect(pill).toContainText(/\$2\.43/);
+    await expect(pill).toContainText(/this month/i);
+
+    // Reload + the stub flips to total=0 → pill hides
+    await page.reload();
+    await waitForInstagramPanel(page);
+    await expect(page.getByTestId('instagram-gen-spend-pill')).toHaveCount(0);
+  });
+
   test('drafter → Reel caption (C.20): "Send to Reel" prefills Reel textarea + opens panel', async ({ page, context }) => {
     await stubStatus(context, {
       connected: true, status: 'active', username: 'x', tone_profile_ready: true,
