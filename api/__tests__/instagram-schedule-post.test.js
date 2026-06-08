@@ -156,3 +156,130 @@ describe('cron lock semantics', () => {
     expect(tryClaim(requeued).matchedRows).toBe(1);
   });
 });
+
+// ─── C.21: media_type discriminator + reel-specific validation ────────
+
+const CAROUSEL_MAX = 10;
+const MAX_CAPTION_LEN = 2200;
+
+/**
+ * Mirrors the handler's media_type + payload validation. If the rules
+ * change in schedule-post.js, this should change with them — keeps a
+ * single source of truth for what the cron will actually accept.
+ */
+function validateScheduleBody(body) {
+  const caption = typeof body.caption === 'string' ? body.caption.trim() : '';
+  const mediaTypeRaw = typeof body.media_type === 'string' ? body.media_type.toLowerCase() : 'feed';
+  if (mediaTypeRaw !== 'feed' && mediaTypeRaw !== 'reel') {
+    return { error: "media_type must be 'feed' or 'reel'" };
+  }
+  if (!caption) return { error: 'caption is required' };
+  if (caption.length > MAX_CAPTION_LEN) return { error: 'caption is too long' };
+
+  if (mediaTypeRaw === 'feed') {
+    const rawUrls = Array.isArray(body.image_urls) ? body.image_urls : [];
+    const imageUrls = rawUrls.map((u) => (typeof u === 'string' ? u.trim() : '')).filter((u) => u.length > 0);
+    if (imageUrls.length === 0) return { error: 'image_urls is required' };
+    if (imageUrls.length > CAROUSEL_MAX) return { error: `too many images (max ${CAROUSEL_MAX})` };
+    for (let i = 0; i < imageUrls.length; i++) {
+      const u = imageUrls[i];
+      if (!/^https?:\/\//i.test(u)) return { error: `image url #${i + 1} must be http(s)://` };
+      try { new URL(u); } catch { return { error: `image url #${i + 1} is not a valid URL` }; }
+    }
+    return { error: null, mediaType: 'feed', imageUrls, videoUrl: null };
+  }
+
+  // reel
+  const videoUrl = typeof body.video_url === 'string' ? body.video_url.trim() : '';
+  if (!videoUrl) return { error: 'video_url is required for reels' };
+  if (!/^https?:\/\//i.test(videoUrl)) return { error: 'video_url must be http(s)://' };
+  try { new URL(videoUrl); } catch { return { error: 'video_url is not a valid URL' }; }
+  return { error: null, mediaType: 'reel', imageUrls: null, videoUrl };
+}
+
+describe('media_type discriminator', () => {
+  test('defaults to feed when omitted (back-compat with old clients)', () => {
+    const r = validateScheduleBody({
+      caption: 'x', image_urls: ['https://x.com/a.jpg'],
+    });
+    expect(r.error).toBeNull();
+    expect(r.mediaType).toBe('feed');
+  });
+
+  test('case-insensitive: REEL accepted', () => {
+    const r = validateScheduleBody({
+      caption: 'x', media_type: 'REEL', video_url: 'https://x.com/v.mp4',
+    });
+    expect(r.error).toBeNull();
+    expect(r.mediaType).toBe('reel');
+  });
+
+  test('rejects unknown media_type', () => {
+    const r = validateScheduleBody({
+      caption: 'x', media_type: 'story', video_url: 'https://x.com/v.mp4',
+    });
+    expect(r.error).toMatch(/'feed' or 'reel'/);
+  });
+});
+
+describe('reel-specific validation', () => {
+  test('rejects reel without video_url', () => {
+    const r = validateScheduleBody({ caption: 'x', media_type: 'reel' });
+    expect(r.error).toMatch(/video_url is required/);
+  });
+
+  test('rejects reel with javascript: video_url (XSS guard)', () => {
+    const r = validateScheduleBody({
+      caption: 'x', media_type: 'reel', video_url: 'javascript:alert(1)',
+    });
+    expect(r.error).toMatch(/must be http\(s\)/);
+  });
+
+  test('rejects reel with data: video_url (XSS guard)', () => {
+    const r = validateScheduleBody({
+      caption: 'x', media_type: 'reel', video_url: 'data:video/mp4;base64,XYZ',
+    });
+    expect(r.error).toMatch(/must be http\(s\)/);
+  });
+
+  test('rejects reel with file: video_url (SSRF guard)', () => {
+    const r = validateScheduleBody({
+      caption: 'x', media_type: 'reel', video_url: 'file:///etc/passwd',
+    });
+    expect(r.error).toMatch(/must be http\(s\)/);
+  });
+
+  test('accepts reel with valid https video_url', () => {
+    const r = validateScheduleBody({
+      caption: 'New menu!', media_type: 'reel',
+      video_url: 'https://storage.example.com/instagram-uploads/r/abc.mp4',
+    });
+    expect(r.error).toBeNull();
+    expect(r.videoUrl).toBe('https://storage.example.com/instagram-uploads/r/abc.mp4');
+    expect(r.imageUrls).toBeNull();
+  });
+
+  test('reel mode ignores image_urls even if provided (wrong shape, right intent)', () => {
+    const r = validateScheduleBody({
+      caption: 'x', media_type: 'reel', video_url: 'https://x.com/v.mp4',
+      image_urls: ['https://x.com/a.jpg'],  // ignored
+    });
+    expect(r.error).toBeNull();
+    expect(r.imageUrls).toBeNull();
+    expect(r.videoUrl).toBe('https://x.com/v.mp4');
+  });
+});
+
+describe('feed validation unchanged after C.21 migration', () => {
+  test('feed without image_urls still rejected', () => {
+    expect(validateScheduleBody({ caption: 'x', media_type: 'feed' }).error)
+      .toMatch(/image_urls is required/);
+  });
+
+  test('feed with 10 images OK, 11 rejected', () => {
+    const ten = Array.from({ length: 10 }, (_, i) => `https://x.com/${i}.jpg`);
+    expect(validateScheduleBody({ caption: 'x', media_type: 'feed', image_urls: ten }).error).toBeNull();
+    expect(validateScheduleBody({ caption: 'x', media_type: 'feed', image_urls: [...ten, 'https://x.com/11.jpg'] }).error)
+      .toMatch(/too many images/);
+  });
+});

@@ -71,13 +71,22 @@ async function handleCreate(req, res, user) {
   const body = (typeof req.body === 'object' && req.body) || {};
   const caption = typeof body.caption === 'string' ? body.caption.trim() : '';
   const scheduledAtRaw = typeof body.scheduled_at === 'string' ? body.scheduled_at : '';
+  // media_type discriminates the cron worker's publish branch:
+  //   'feed' (default — single image or carousel) uses image_urls[]
+  //   'reel' uses video_url
+  // We treat missing media_type as 'feed' for back-compat with old clients.
+  const mediaTypeRaw = typeof body.media_type === 'string' ? body.media_type.toLowerCase() : 'feed';
+  if (mediaTypeRaw !== 'feed' && mediaTypeRaw !== 'reel') {
+    return res.status(400).json({ ok: false, error: "media_type must be 'feed' or 'reel'" });
+  }
+  const mediaType = mediaTypeRaw;
+  const videoUrl = typeof body.video_url === 'string' ? body.video_url.trim() : '';
   const rawUrls = Array.isArray(body.image_urls) ? body.image_urls : [];
   const imageUrls = rawUrls
     .map((u) => (typeof u === 'string' ? u.trim() : ''))
     .filter((u) => u.length > 0);
 
-  // Validation — same rules as publish-post so the cron can't fail on
-  // data that the dashboard would have accepted.
+  // Caption rules — same shape for feed AND reel (Meta enforces 2200 / 30 tags on both).
   if (!caption) return res.status(400).json({ ok: false, error: 'caption is required' });
   if (caption.length > MAX_CAPTION_LEN) {
     return res.status(400).json({ ok: false, error: `caption is too long (max ${MAX_CAPTION_LEN} chars)` });
@@ -86,17 +95,29 @@ async function handleCreate(req, res, user) {
   if (hashtagCount > MAX_HASHTAGS) {
     return res.status(400).json({ ok: false, error: `too many hashtags (max ${MAX_HASHTAGS}, you have ${hashtagCount})` });
   }
-  if (imageUrls.length === 0) return res.status(400).json({ ok: false, error: 'image_urls is required' });
-  if (imageUrls.length > CAROUSEL_MAX) {
-    return res.status(400).json({ ok: false, error: `too many images (max ${CAROUSEL_MAX})` });
-  }
-  for (let i = 0; i < imageUrls.length; i++) {
-    const u = imageUrls[i];
-    if (!/^https?:\/\//i.test(u)) {
-      return res.status(400).json({ ok: false, error: `image url #${i + 1} must be http(s)://` });
+
+  if (mediaType === 'feed') {
+    if (imageUrls.length === 0) return res.status(400).json({ ok: false, error: 'image_urls is required' });
+    if (imageUrls.length > CAROUSEL_MAX) {
+      return res.status(400).json({ ok: false, error: `too many images (max ${CAROUSEL_MAX})` });
     }
-    try { new URL(u); } catch {
-      return res.status(400).json({ ok: false, error: `image url #${i + 1} is not a valid URL` });
+    for (let i = 0; i < imageUrls.length; i++) {
+      const u = imageUrls[i];
+      if (!/^https?:\/\//i.test(u)) {
+        return res.status(400).json({ ok: false, error: `image url #${i + 1} must be http(s)://` });
+      }
+      try { new URL(u); } catch {
+        return res.status(400).json({ ok: false, error: `image url #${i + 1} is not a valid URL` });
+      }
+    }
+  } else {
+    // reel
+    if (!videoUrl) return res.status(400).json({ ok: false, error: 'video_url is required for reels' });
+    if (!/^https?:\/\//i.test(videoUrl)) {
+      return res.status(400).json({ ok: false, error: 'video_url must be http(s)://' });
+    }
+    try { new URL(videoUrl); } catch {
+      return res.status(400).json({ ok: false, error: 'video_url is not a valid URL' });
     }
   }
 
@@ -137,7 +158,12 @@ async function handleCreate(req, res, user) {
     .insert({
       restaurant_id: user.restaurant_id,
       caption,
-      image_urls: imageUrls,
+      media_type: mediaType,
+      // Feed posts populate image_urls (1-10), reels populate video_url.
+      // The other column stays null per the C.21 migration that dropped
+      // image_urls NOT NULL.
+      image_urls: mediaType === 'feed' ? imageUrls : null,
+      video_url: mediaType === 'reel' ? videoUrl : null,
       scheduled_at: scheduledAt.toISOString(),
       status: 'pending',
     })
@@ -149,7 +175,8 @@ async function handleCreate(req, res, user) {
   }
 
   logger.info('post scheduled', {
-    restaurantId: user.restaurant_id, id: row.id, scheduledAt: row.scheduled_at, imageCount: imageUrls.length,
+    restaurantId: user.restaurant_id, id: row.id, scheduledAt: row.scheduled_at,
+    mediaType, imageCount: mediaType === 'feed' ? imageUrls.length : 0,
   });
   return res.status(200).json({ ok: true, id: row.id, scheduled_at: row.scheduled_at });
 }
@@ -160,7 +187,7 @@ async function handleList(req, res, user) {
   const { data, error } = await supabaseAdmin
     .schema('restaurant')
     .from('scheduled_instagram_posts')
-    .select('id, caption, image_urls, scheduled_at, status, ig_permalink, error, attempts, created_at, completed_at')
+    .select('id, caption, media_type, image_urls, video_url, scheduled_at, status, ig_permalink, error, attempts, created_at, completed_at')
     .eq('restaurant_id', user.restaurant_id)
     .order('scheduled_at', { ascending: true })
     .limit(50);

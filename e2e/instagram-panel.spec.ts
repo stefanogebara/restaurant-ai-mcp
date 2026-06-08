@@ -608,6 +608,68 @@ test.describe('Carousel — 2-10 images (C.10)', () => {
     expect(genBody?.prompt).toMatch(/tiramisu/);
   });
 
+  test('schedule a Reel (C.21): toggle → datetime → request body has media_type=reel + video_url', async ({ page, context }) => {
+    await stubStatus(context, {
+      connected: true, status: 'active', username: 'x', tone_profile_ready: true,
+    });
+    await stubDraftCaption(context, ['a', 'b', 'c']);
+
+    // Stub the upload + schedule endpoints
+    await context.route('**/api/instagram/upload-video', async (route) => {
+      await route.fulfill({
+        status: 200, contentType: 'application/json',
+        body: JSON.stringify({
+          ok: true,
+          url: 'https://storage.example.com/instagram-uploads/r/reel.mp4',
+          path: 'r/reel.mp4',
+        }),
+      });
+    });
+
+    let scheduleBody: { caption?: string; video_url?: string; media_type?: string; scheduled_at?: string } | null = null;
+    await context.route('**/api/instagram/schedule-post**', async (route) => {
+      if (route.request().method() !== 'POST') return route.continue();
+      scheduleBody = route.request().postDataJSON?.() ?? null;
+      await route.fulfill({
+        status: 200, contentType: 'application/json',
+        body: JSON.stringify({ ok: true, id: 'sched-reel-1', scheduled_at: scheduleBody?.scheduled_at || '' }),
+      });
+    });
+
+    await page.goto(INSTAGRAM_TAB_URL);
+    await waitForInstagramPanel(page);
+
+    await page.getByTestId('instagram-reel-panel-toggle').click();
+
+    // Upload a synthetic mp4
+    const mp4Bytes = Buffer.from([
+      0x00, 0x00, 0x00, 0x10, 0x66, 0x74, 0x79, 0x70,
+      0x69, 0x73, 0x6f, 0x6d, 0x00, 0x00, 0x00, 0x00,
+    ]);
+    await page.locator('[data-testid="instagram-reel-upload"] input[type="file"]').setInputFiles({
+      name: 'tonight.mp4', mimeType: 'video/mp4', buffer: mp4Bytes,
+    });
+    await expect(page.getByTestId('instagram-reel-video-name')).toContainText('tonight.mp4', { timeout: 10_000 });
+
+    await page.getByTestId('instagram-reel-caption').fill('Tonight: live jazz + small plates.');
+
+    // Default mode: Post button + Schedule link visible
+    await expect(page.getByTestId('instagram-reel-publish')).toBeVisible();
+    await page.getByTestId('instagram-reel-schedule-toggle').click();
+    await expect(page.getByTestId('instagram-reel-schedule-panel')).toBeVisible();
+    await expect(page.getByTestId('instagram-reel-publish')).toHaveCount(0);
+
+    await page.getByTestId('instagram-reel-scheduled-at').fill('2027-01-15T18:30');
+    await page.getByTestId('instagram-reel-schedule-submit').click();
+
+    await expect(page.locator('body')).toContainText(/Reel scheduled for/i, { timeout: 5_000 });
+
+    expect(scheduleBody?.media_type).toBe('reel');
+    expect(scheduleBody?.video_url).toBe('https://storage.example.com/instagram-uploads/r/reel.mp4');
+    expect(scheduleBody?.caption).toMatch(/jazz/);
+    expect(scheduleBody?.scheduled_at).toMatch(/^2027-01-15T/);
+  });
+
   test('drafter → Reel caption (C.20): "Send to Reel" prefills Reel textarea + opens panel', async ({ page, context }) => {
     await stubStatus(context, {
       connected: true, status: 'active', username: 'x', tone_profile_ready: true,

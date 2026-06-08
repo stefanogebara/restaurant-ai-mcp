@@ -20,7 +20,11 @@ import { useToast } from '../../contexts/ToastContext';
 interface ScheduledPost {
   id: string;
   caption: string;
-  image_urls: string[];
+  // media_type can be missing on rows created before the C.21 migration
+  // backfill ran — treat undefined as 'feed' for back-compat.
+  media_type?: 'feed' | 'reel' | null;
+  image_urls: string[] | null;
+  video_url?: string | null;
   scheduled_at: string;
   status: 'pending' | 'processing' | 'completed' | 'failed' | 'canceled';
   ig_permalink: string | null;
@@ -28,6 +32,18 @@ interface ScheduledPost {
   attempts: number;
   created_at: string;
   completed_at: string | null;
+}
+
+function MediaTypeBadge({ post }: { post: ScheduledPost }) {
+  if (post.media_type !== 'reel') return null;
+  return (
+    <span
+      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-burgundy/10 text-burgundy text-[9px] uppercase font-medium tracking-wide"
+      data-testid={`instagram-scheduled-reel-badge-${post.id}`}
+    >
+      Reel
+    </span>
+  );
 }
 
 const QUERY_KEY = ['instagram-scheduled-posts'] as const;
@@ -192,17 +208,26 @@ function Section({
 }
 
 function PendingRow({ post, onCancel, canceling }: { post: ScheduledPost; onCancel: () => void; canceling: boolean }) {
+  const isReel = post.media_type === 'reel';
+  const imageCount = post.image_urls?.length ?? 0;
   return (
     <div
       className="flex items-start gap-3 p-2 border border-glass-border-input rounded-lg bg-white"
       data-testid={`instagram-pending-row-${post.id}`}
     >
-      <Thumb urls={post.image_urls} />
+      <Thumb post={post} />
       <div className="flex-1 min-w-0">
-        <p className="text-xs text-deep-charcoal line-clamp-2">{post.caption}</p>
+        <p className="text-xs text-deep-charcoal line-clamp-2">
+          <MediaTypeBadge post={post} />
+          {isReel ? <> </> : null}
+          {post.caption}
+        </p>
         <p className="text-[11px] text-muted-stone mt-1">
-          {new Date(post.scheduled_at).toLocaleString()} · {post.image_urls.length} image
-          {post.image_urls.length === 1 ? '' : 's'}
+          {new Date(post.scheduled_at).toLocaleString()}
+          {isReel
+            ? <> · video reel</>
+            : <> · {imageCount} image{imageCount === 1 ? '' : 's'}</>
+          }
           {post.status === 'processing' && <span className="text-amber-700"> · publishing now…</span>}
         </p>
       </div>
@@ -225,9 +250,13 @@ function PublishedRow({ post }: { post: ScheduledPost }) {
       className="flex items-start gap-3 p-2 border border-glass-border-input rounded-lg bg-white"
       data-testid={`instagram-published-row-${post.id}`}
     >
-      <Thumb urls={post.image_urls} />
+      <Thumb post={post} />
       <div className="flex-1 min-w-0">
-        <p className="text-xs text-deep-charcoal line-clamp-2">{post.caption}</p>
+        <p className="text-xs text-deep-charcoal line-clamp-2">
+          <MediaTypeBadge post={post} />
+          {post.media_type === 'reel' ? <> </> : null}
+          {post.caption}
+        </p>
         <p className="text-[11px] text-muted-stone mt-1">
           Posted {post.completed_at ? new Date(post.completed_at).toLocaleString() : '—'}
         </p>
@@ -253,9 +282,13 @@ function FailedRow({ post }: { post: ScheduledPost }) {
       className="flex items-start gap-3 p-2 border border-red-300 rounded-lg bg-red-50"
       data-testid={`instagram-failed-row-${post.id}`}
     >
-      <Thumb urls={post.image_urls} />
+      <Thumb post={post} />
       <div className="flex-1 min-w-0">
-        <p className="text-xs text-deep-charcoal line-clamp-2">{post.caption}</p>
+        <p className="text-xs text-deep-charcoal line-clamp-2">
+          <MediaTypeBadge post={post} />
+          {post.media_type === 'reel' ? <> </> : null}
+          {post.caption}
+        </p>
         <p className="text-[11px] text-red-700 mt-1">
           {post.error || 'Publish failed.'} · attempted {post.attempts}× ·{' '}
           {new Date(post.scheduled_at).toLocaleString()}
@@ -265,7 +298,24 @@ function FailedRow({ post }: { post: ScheduledPost }) {
   );
 }
 
-function Thumb({ urls }: { urls: string[] }) {
+/**
+ * Thumbnail tile. Feed posts use image_urls[0] (the cover slide of a
+ * carousel, or the only image of a single). Reels don't carry a poster
+ * frame in the schedule row (we don't generate one server-side yet), so
+ * we render a play-icon placeholder instead.
+ */
+function Thumb({ post }: { post: ScheduledPost }) {
+  if (post.media_type === 'reel') {
+    return (
+      <div
+        className="relative w-10 h-10 rounded overflow-hidden border border-glass-border-dark bg-deep-charcoal flex items-center justify-center flex-shrink-0"
+        data-testid={`instagram-thumb-reel-${post.id}`}
+      >
+        <span aria-hidden className="text-white text-base leading-none">▶</span>
+      </div>
+    );
+  }
+  const urls = post.image_urls || [];
   const first = urls[0];
   if (!first) return null;
   return (

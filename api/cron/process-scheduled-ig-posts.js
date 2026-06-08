@@ -26,7 +26,7 @@
 
 const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
-const { runPublish, MetaError } = require('../instagram/_lib/publish-flow');
+const { runPublish, runPublishReel, MetaError } = require('../instagram/_lib/publish-flow');
 
 const logger = createSecureLogger('cron-process-scheduled-ig-posts');
 
@@ -69,7 +69,7 @@ module.exports = async (req, res) => {
   const { data: candidates, error: fetchErr } = await supabaseAdmin
     .schema('restaurant')
     .from('scheduled_instagram_posts')
-    .select('id, restaurant_id, caption, image_urls, scheduled_at, attempts')
+    .select('id, restaurant_id, caption, media_type, image_urls, video_url, scheduled_at, attempts')
     .eq('status', 'pending')
     .lte('scheduled_at', new Date().toISOString())
     .order('scheduled_at', { ascending: true })
@@ -148,32 +148,50 @@ async function processOne(row) {
     return failRow(row, 'No active Instagram connection at processing time.', /* terminal */ true);
   }
 
-  const imageUrls = Array.isArray(row.image_urls)
-    ? row.image_urls
-    : (typeof row.image_urls === 'string' ? safeJsonArray(row.image_urls) : []);
-  if (imageUrls.length === 0) {
-    return failRow(row, 'image_urls missing or invalid', /* terminal */ true);
-  }
+  const mediaType = row.media_type === 'reel' ? 'reel' : 'feed';
+
+  // Reused token-expired handler — same for both branches.
+  const tokenInvalidCallback = async (err) => {
+    await supabaseAdmin
+      .schema('restaurant')
+      .from('instagram_connections')
+      .update({
+        status: 'expired',
+        last_error: err.message.slice(0, 500),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', conn.id);
+  };
 
   let result;
   try {
-    result = await runPublish({
-      igBusinessAccountId: conn.ig_business_account_id,
-      accessToken: conn.access_token,
-      caption: row.caption,
-      imageUrls,
-      tokenInvalidCallback: async (err) => {
-        await supabaseAdmin
-          .schema('restaurant')
-          .from('instagram_connections')
-          .update({
-            status: 'expired',
-            last_error: err.message.slice(0, 500),
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', conn.id);
-      },
-    });
+    if (mediaType === 'reel') {
+      const videoUrl = typeof row.video_url === 'string' ? row.video_url.trim() : '';
+      if (!videoUrl) {
+        return failRow(row, 'video_url missing for reel row', /* terminal */ true);
+      }
+      result = await runPublishReel({
+        igBusinessAccountId: conn.ig_business_account_id,
+        accessToken: conn.access_token,
+        caption: row.caption,
+        videoUrl,
+        tokenInvalidCallback,
+      });
+    } else {
+      const imageUrls = Array.isArray(row.image_urls)
+        ? row.image_urls
+        : (typeof row.image_urls === 'string' ? safeJsonArray(row.image_urls) : []);
+      if (imageUrls.length === 0) {
+        return failRow(row, 'image_urls missing or invalid', /* terminal */ true);
+      }
+      result = await runPublish({
+        igBusinessAccountId: conn.ig_business_account_id,
+        accessToken: conn.access_token,
+        caption: row.caption,
+        imageUrls,
+        tokenInvalidCallback,
+      });
+    }
   } catch (err) {
     // Token expired → terminal (no retry helps without a new token).
     const isTokenInvalid = err instanceof MetaError && (err.code === 190 || err.status === 401);

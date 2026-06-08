@@ -25,6 +25,21 @@ const MAX_CAPTION_LEN = 2200;
 const POLL_INTERVAL_MS = 5_000;
 const POLL_TIMEOUT_MS = 5 * 60_000;  // give up after 5 min — Higgsfield rarely exceeds 2 min
 
+/**
+ * Default scheduled time: tomorrow at noon LOCAL. Returned in the
+ * "YYYY-MM-DDTHH:mm" shape that <input type="datetime-local"> binds to.
+ * Mirrors the helper in InstagramCaptionDrafter — kept duplicated here
+ * because cross-importing one tiny helper between two leaf components
+ * isn't worth it.
+ */
+function defaultScheduledAt(): string {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  d.setHours(12, 0, 0, 0);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 export default function InstagramReelPanel({ disabled = false }: { disabled?: boolean }) {
   const { t } = useTranslation();
   const toast = useToast();
@@ -137,6 +152,52 @@ export default function InstagramReelPanel({ disabled = false }: { disabled?: bo
     if (publishMutation.isPending) return;
     if (!videoUrl || caption.trim().length < 1) return;
     publishMutation.mutate({ caption: caption.trim(), video_url: videoUrl });
+  };
+
+  // ─── Schedule-for-later (C.21) ─────────────────────────────────────
+  // Same pattern as the feed drafter's schedule path — POST to
+  // /api/instagram/schedule-post with media_type='reel'. Cron worker
+  // branches on media_type.
+  const [scheduleMode, setScheduleMode] = useState(false);
+  const [scheduledAt, setScheduledAt] = useState<string>(() => defaultScheduledAt());
+
+  const scheduleMutation = useMutation<
+    { id: string; scheduled_at: string },
+    Error,
+    { caption: string; video_url: string; scheduled_at: string }
+  >({
+    mutationFn: async (input) => {
+      const res = await authFetch('/api/instagram/schedule-post', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...input, media_type: 'reel' }),
+      });
+      const body = (await res.json().catch(() => null)) as {
+        ok?: boolean; error?: string; id?: string; scheduled_at?: string;
+      } | null;
+      if (!res.ok || !body?.ok || !body.id || !body.scheduled_at) {
+        throw new Error(body?.error || `Schedule failed (HTTP ${res.status})`);
+      }
+      return { id: body.id, scheduled_at: body.scheduled_at };
+    },
+    onSuccess: ({ scheduled_at }) => {
+      const when = new Date(scheduled_at).toLocaleString();
+      toast.success(t('instagram.reelScheduled', `Reel scheduled for ${when}.`));
+      setOpen(false);
+      setCaption('');
+      setVideoUrl(null);
+      setVideoName(null);
+      setScheduleMode(false);
+      setScheduledAt(defaultScheduledAt());
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const onSchedule = () => {
+    if (scheduleMutation.isPending) return;
+    if (!videoUrl || caption.trim().length < 1 || !scheduledAt) return;
+    const iso = new Date(scheduledAt).toISOString();
+    scheduleMutation.mutate({ caption: caption.trim(), video_url: videoUrl, scheduled_at: iso });
   };
 
   // ─── AI video generation (C.19) ──────────────────────────────────
@@ -360,17 +421,63 @@ export default function InstagramReelPanel({ disabled = false }: { disabled?: bo
         data-testid="instagram-reel-caption"
       />
 
-      <button
-        type="button"
-        onClick={onPublish}
-        disabled={publishMutation.isPending || uploading || !videoUrl || caption.trim().length < 1}
-        className="px-3 py-1.5 bg-burgundy text-white rounded-lg text-xs font-medium hover:bg-burgundy-dark disabled:opacity-50 transition-colors"
-        data-testid="instagram-reel-publish"
-      >
-        {publishMutation.isPending ? 'Processing… (up to a minute)' : 'Post as Reel'}
-      </button>
+      {scheduleMode && (
+        <div
+          className="border border-glass-border-dark rounded-lg p-2 space-y-2 bg-white/65"
+          data-testid="instagram-reel-schedule-panel"
+        >
+          <label className="text-xs text-muted-stone block">Post on</label>
+          <input
+            type="datetime-local"
+            value={scheduledAt}
+            onChange={(e) => setScheduledAt(e.target.value)}
+            disabled={scheduleMutation.isPending}
+            className="w-full px-3 py-2 border border-glass-border-input rounded-lg text-sm focus:outline-none focus:border-burgundy disabled:opacity-50"
+            data-testid="instagram-reel-scheduled-at"
+          />
+          <p className="text-[10px] text-muted-stone">
+            Actually posts within 0–15 min of this time (cron polls every 15 min).
+          </p>
+        </div>
+      )}
+
+      <div className="flex items-center gap-2 flex-wrap">
+        {!scheduleMode ? (
+          <button
+            type="button"
+            onClick={onPublish}
+            disabled={publishMutation.isPending || uploading || !videoUrl || caption.trim().length < 1}
+            className="px-3 py-1.5 bg-burgundy text-white rounded-lg text-xs font-medium hover:bg-burgundy-dark disabled:opacity-50 transition-colors"
+            data-testid="instagram-reel-publish"
+          >
+            {publishMutation.isPending ? 'Processing… (up to a minute)' : 'Post as Reel'}
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={onSchedule}
+            disabled={scheduleMutation.isPending || uploading || !videoUrl || caption.trim().length < 1 || !scheduledAt}
+            className="px-3 py-1.5 bg-burgundy text-white rounded-lg text-xs font-medium hover:bg-burgundy-dark disabled:opacity-50 transition-colors"
+            data-testid="instagram-reel-schedule-submit"
+          >
+            {scheduleMutation.isPending ? 'Scheduling…' : 'Schedule Reel'}
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={() => setScheduleMode((v) => !v)}
+          disabled={publishMutation.isPending || scheduleMutation.isPending || uploading}
+          className="text-xs text-burgundy underline underline-offset-2 hover:text-burgundy-dark disabled:opacity-50"
+          data-testid="instagram-reel-schedule-toggle"
+        >
+          {scheduleMode ? 'Cancel scheduling' : 'Schedule for later'}
+        </button>
+      </div>
+
       <p className="text-[10px] text-muted-stone">
-        Meta processes Reels server-side — the post may take 30–60s to land.
+        {scheduleMode
+          ? 'Cron picks up scheduled reels every 15 min and runs the same publish flow.'
+          : 'Meta processes Reels server-side — the post may take 30–60s to land.'}
       </p>
     </section>
   );
