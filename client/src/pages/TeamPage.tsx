@@ -126,6 +126,20 @@ export default function TeamPage() {
               {feedback.msg}
             </p>
           )}
+          {/* Role permissions key — audit found owners had no way to know
+              what each role could actually do before sending the invite.
+              Compact one-line legend right under the form so the choice is
+              informed without opening a separate help page. */}
+          <details className="text-xs text-muted-stone -mt-2">
+            <summary className="cursor-pointer hover:text-deep-charcoal w-fit underline underline-offset-2 decoration-stone-300">
+              {t('team.rolePermissionsLabel', 'O que cada papel pode fazer?')}
+            </summary>
+            <ul className="mt-2 space-y-1 pl-1">
+              <li><strong>{t('team.roleHost', 'Anfitrião')}:</strong> {t('team.permHost', 'Reservas, walk-ins, lista de espera. Sem acesso a configurações ou faturamento.')}</li>
+              <li><strong>{t('team.roleManager', 'Gerente')}:</strong> {t('team.permManager', 'Tudo do anfitrião + relatórios, equipe, configurações do restaurante.')}</li>
+              <li><strong>{t('team.roleStaff', 'Garçom')}:</strong> {t('team.permStaff', 'Apenas visualizar reservas e mesas ativas. Sem permissão para alterar.')}</li>
+            </ul>
+          </details>
         </form>
       )}
 
