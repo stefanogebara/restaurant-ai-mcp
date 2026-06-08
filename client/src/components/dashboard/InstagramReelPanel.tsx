@@ -18,6 +18,7 @@ import { useMutation } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { authFetch } from '../../services/api';
 import { useToast } from '../../contexts/ToastContext';
+import { subscribeReelCaption } from './instagramCaptionBus';
 
 const MAX_VIDEO_BYTES = 32 * 1024 * 1024;
 const MAX_CAPTION_LEN = 2200;
@@ -33,6 +34,24 @@ export default function InstagramReelPanel({ disabled = false }: { disabled?: bo
   const [videoName, setVideoName] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const sectionRef = useRef<HTMLElement>(null);
+
+  // C.20: subscribe to "send caption to reel" events from the feed-post
+  // drafter above. On a caption arriving: pre-fill the textarea, open
+  // the panel, scroll into view. Toast tells the user where it landed.
+  useEffect(() => {
+    const unsubscribe = subscribeReelCaption((incoming) => {
+      setCaption(incoming);
+      setOpen(true);
+      // Defer scroll until after the panel actually mounts (open: false → true
+      // means the section ref was null when the event fired). One microtask
+      // is enough — the panel re-render runs synchronously after setOpen.
+      requestAnimationFrame(() => {
+        sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+    return unsubscribe;
+  }, []);
 
   const publishMutation = useMutation<
     { permalink: string | null },
@@ -230,6 +249,7 @@ export default function InstagramReelPanel({ disabled = false }: { disabled?: bo
 
   return (
     <section
+      ref={sectionRef}
       className="border border-glass-border-dark rounded-xl p-4 space-y-3 bg-warm-white"
       data-testid="instagram-reel-panel"
     >

@@ -608,6 +608,39 @@ test.describe('Carousel — 2-10 images (C.10)', () => {
     expect(genBody?.prompt).toMatch(/tiramisu/);
   });
 
+  test('drafter → Reel caption (C.20): "Send to Reel" prefills Reel textarea + opens panel', async ({ page, context }) => {
+    await stubStatus(context, {
+      connected: true, status: 'active', username: 'x', tone_profile_ready: true,
+    });
+    // Pre-known caption so we can assert the exact roundtrip
+    const draftText = 'Tonight: wood-fired pizza, slow-fermented dough. Reserva pelo link na bio.';
+    await stubDraftCaption(context, [draftText, 'B', 'C']);
+
+    await page.goto(INSTAGRAM_TAB_URL);
+    await waitForInstagramPanel(page);
+
+    // Initially the Reel panel is collapsed
+    await expect(page.getByTestId('instagram-reel-panel-toggle')).toBeVisible();
+    await expect(page.getByTestId('instagram-reel-panel')).toHaveCount(0);
+
+    // Generate drafts
+    await page.getByTestId('instagram-caption-drafter-topic').fill('pizza launch');
+    await page.getByTestId('instagram-caption-drafter-submit').click();
+    await expect(page.getByTestId('instagram-caption-drafter-card-0')).toBeVisible();
+
+    // Click "Send to Reel" on the first draft
+    await page.getByTestId('instagram-caption-drafter-send-to-reel-0').click();
+
+    // Toast confirms it landed
+    await expect(page.locator('body')).toContainText(/Sent to the Reel panel/i, { timeout: 5_000 });
+
+    // Reel panel opens automatically
+    await expect(page.getByTestId('instagram-reel-panel')).toBeVisible();
+
+    // Caption textarea is pre-populated with the exact draft
+    await expect(page.getByTestId('instagram-reel-caption')).toHaveValue(draftText);
+  });
+
   // The C.19 test polls every 5s; happy path is ~10-15s + setup overhead +
   // teardown, which crowds the 30s default. test.slow() triples to 90s and
   // applies to beforeEach + the test body (test.setTimeout from inside the

@@ -16,6 +16,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { authFetch } from '../../services/api';
 import { useToast } from '../../contexts/ToastContext';
+import { sendCaptionToReel } from './instagramCaptionBus';
 
 type Length = 'short' | 'medium' | 'long';
 
@@ -567,6 +568,17 @@ function DraftCard({ draft, index, onCopy }: { draft: string; index: number; onC
           data-testid={`instagram-caption-drafter-post-toggle-${index}`}
         >
           {postingOpen ? 'Hide post fields' : 'Post to Instagram'}
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            sendCaptionToReel(draft);
+            toast.success(t('instagram.sentToReel', 'Sent to the Reel panel below.'));
+          }}
+          className="text-xs text-burgundy underline underline-offset-2 hover:text-burgundy-dark"
+          data-testid={`instagram-caption-drafter-send-to-reel-${index}`}
+        >
+          Send to Reel
         </button>
       </div>
 
