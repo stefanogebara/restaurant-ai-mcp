@@ -63,10 +63,25 @@ const MANAGER_TOOLS = [
   },
 ];
 
-// Fact patterns that trigger background memory extraction
+// Fact patterns that trigger background memory extraction.
+// Brazilian + Spanish patterns added in the 2026-06 Manager AI audit — the
+// previous English-only set silently dropped memory enrichment for every
+// non-English restaurant, so the AI never accumulated facts about how the
+// owner described their own operations.
 const FACT_PATTERNS = [
+  // English
   /we (open|close|serve|offer|have|use)/i,
   /our (menu|policy|staff|hours|special)/i,
+  // Portuguese (BR + PT). Includes both "abrimos/fechamos" (1p plural) and
+  // "abre/fecha" (3p singular) since owners alternate between "we open" and
+  // "the restaurant opens".
+  /n[óo]s (abrimos|fechamos|servimos|temos|usamos|oferecemos)/i,
+  /\b(abrimos|fechamos|servimos|oferecemos)\b/i,
+  /nosso[as]? (menu|cardápio|cardapio|política|politica|equipe|horário|horario|especial|prato)/i,
+  // Spanish
+  /nosotros (abrimos|cerramos|servimos|ofrecemos|tenemos|usamos)/i,
+  /\b(abrimos|cerramos|servimos|ofrecemos)\b/i,
+  /nuestr[oa]s? (menú|menu|política|politica|personal|horario|especial|plato|carta)/i,
 ];
 
 async function getRestaurantPlan(restaurantId) {

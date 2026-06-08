@@ -4,9 +4,27 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 import ManagerAIUsageBar from '../components/dashboard/ManagerAIUsageBar';
-import { api } from '../services/api';
+import { api, authFetch } from '../services/api';
 import { renderMarkdown } from '../utils/markdownRenderer';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
+import { useToast } from '../contexts/ToastContext';
+
+// Format a stored `created_at` timestamp into a friendly, locale-aware
+// chip: today's messages show "14:32", anything older shows "ontem 14:32"
+// or "12 jun 14:32". Returns null when no timestamp exists so optimistic
+// messages don't render an empty chip during the brief in-flight window.
+function formatTimestamp(iso: string | undefined, locale: string): string | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  const now = new Date();
+  const isToday = d.toDateString() === now.toDateString();
+  const yesterday = new Date(now.getTime() - 86_400_000).toDateString() === d.toDateString();
+  const time = d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
+  if (isToday) return time;
+  if (yesterday) return `${locale.startsWith('pt') ? 'ontem' : locale.startsWith('es') ? 'ayer' : 'yesterday'} ${time}`;
+  return `${d.toLocaleDateString(locale, { day: 'numeric', month: 'short' })} ${time}`;
+}
 
 // ---------- Types ----------
 
@@ -52,7 +70,11 @@ export default function ManagerAIChatPage() {
   const { t, i18n } = useTranslation();
   useDocumentTitle(t('pageTitles.managerAI', 'Manager AI | seatable'));
   const lang = i18n.language as keyof typeof SUGGESTED_PROMPTS;
+  const toast = useToast();
   const [input, setInput] = useState('');
+  // Tracks which assistant bubble just got copied — used to show a transient
+  // "Copiado" check state for ~1.5s without needing a per-message ref.
+  const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
   // Track the last message that failed to send so the user can retry with
   // one click instead of re-typing. Cleared when a fresh send starts (in
   // onMutate) or when the user starts typing again.
@@ -65,10 +87,13 @@ export default function ManagerAIChatPage() {
   const { data, isLoading } = useQuery<{ history: Message[] }>({
     queryKey: ['manager-chat-history'],
     queryFn: () => api.get('/manager-chat').then((r) => r.data),
-    // Disable automatic refetch to prevent duplicate messages from race conditions
-    // between optimistic updates and background refetches
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
+    // Audit 2026-06: was `refetchOnWindowFocus: false` to dodge dup-message
+    // races between optimistic updates and background refetches. The
+    // `(role, created_at)` dedupe at line ~110 handles those races correctly
+    // now, so we can re-enable focus refetch — without it, a tab left open
+    // overnight showed yesterday's data until manual reload.
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
   });
 
   const { data: usageData } = useQuery<UsageData>({
@@ -111,14 +136,96 @@ export default function ManagerAIChatPage() {
     });
   }, [data?.history]);
 
+  // Track the assistant's in-flight reply text as it streams in so the UI can
+  // render incremental tokens before the full response is persisted to DB.
+  // Kept as a ref-like piece of state (not a ref) so React re-renders on each
+  // token write — the streaming bubble lives in this state, the persisted
+  // turn lives in messages[] once the SSE 'done' event lands.
+  const [streamingReply, setStreamingReply] = useState<string>('');
+
   const sendMutation = useMutation({
-    mutationFn: (message: string) =>
-      api.post('/manager-chat', { message }).then((r) => r.data),
+    // Streaming sender — consumes the SSE endpoint that the backend's
+    // handleChatStream emits. The non-streaming POST still exists as the
+    // server-side path (for cron/WhatsApp callers), but the in-app UI now
+    // surfaces tokens as they arrive, which is the difference between
+    // "Thinking…" for 8s and a typewriter effect that feels alive.
+    mutationFn: async (message: string): Promise<{ reply: string }> => {
+      const res = await authFetch('/api/manager-chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          // Tells the route handler to dispatch to handleChatStream rather
+          // than the legacy handleChat. Matches the
+          // `req.headers.accept.includes('text/event-stream')` branch in
+          // api/manager-chat.js line 22.
+          Accept: 'text/event-stream',
+        },
+        body: JSON.stringify({ message }),
+      });
+      if (!res.ok || !res.body) {
+        // Surface HTTP errors so onError can catch them and rebuild the
+        // retry banner with the original message. Quota responses (403/429)
+        // arrive as plain JSON, not SSE, so parse defensively.
+        let errMsg = `Stream error (HTTP ${res.status})`;
+        try {
+          const body = await res.json();
+          if (body?.error) errMsg = body.error;
+        } catch { /* not JSON, keep generic */ }
+        throw new Error(errMsg);
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let fullReply = '';
+
+      // SSE frame parser. The backend writes one `data: {...}\n\n` frame
+      // per token (and one `start`/`done` frame each side). We accumulate
+      // bytes across reads, split on the double-newline frame boundary,
+      // and parse each frame's JSON payload.
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const frames = buffer.split('\n\n');
+        // Keep the last (possibly partial) frame in the buffer for the next
+        // read; emit everything else now.
+        buffer = frames.pop() || '';
+        for (const frame of frames) {
+          const line = frame.trim();
+          if (!line.startsWith('data:')) continue;
+          const payload = line.slice('data:'.length).trim();
+          if (!payload) continue;
+          try {
+            const evt = JSON.parse(payload);
+            if (evt.type === 'token' && typeof evt.text === 'string') {
+              fullReply += evt.text;
+              setStreamingReply(fullReply);
+            } else if (evt.type === 'error') {
+              throw new Error(evt.error || 'stream error');
+            }
+            // 'start' and 'done' frames are informational — no UI change.
+          } catch (err) {
+            // Tolerate malformed frames; if it was an error frame we
+            // already threw above.
+            if (err instanceof Error && err.message !== 'stream error') {
+              // Other parse errors fall through silently — partial JSON.
+            } else {
+              throw err;
+            }
+          }
+        }
+      }
+
+      return { reply: fullReply };
+    },
     onMutate: (message) => {
       const previous = qc.getQueryData<{ history: Message[] }>(['manager-chat-history']);
       qc.setQueryData<{ history: Message[] }>(['manager-chat-history'], (old) => ({
         history: [...(old?.history || []), { role: 'manager', content: message }],
       }));
+      // Reset the streaming bubble for the new turn.
+      setStreamingReply('');
       // Clear any prior failure now that a fresh send is in flight.
       setLastFailedMessage(null);
       return { previous };
@@ -127,12 +234,16 @@ export default function ManagerAIChatPage() {
       if (context?.previous) {
         qc.setQueryData(['manager-chat-history'], context.previous);
       }
+      setStreamingReply('');
       // Remember what failed so the Retry button below can resend without
       // the user having to re-type their question. Cleared on successful
       // send (onSuccess) and on every new send attempt (onMutate above).
       setLastFailedMessage(message);
     },
     onSuccess: ({ reply }, sentMessage, context) => {
+      // Drop the streaming-bubble buffer now that the persisted turn is
+      // about to render in messages[].
+      setStreamingReply('');
       // Rebuild from the pre-mutation snapshot to avoid duplicates caused by
       // a concurrent query refetch that already contains the DB-persisted turns.
       const base = context?.previous?.history || [];
@@ -159,7 +270,10 @@ export default function ManagerAIChatPage() {
       behavior: isFirstScrollRef.current ? 'auto' : 'smooth',
     });
     isFirstScrollRef.current = false;
-  }, [messages.length, sendMutation.isPending]);
+    // Re-trigger on streamingReply.length too so the view tails the
+    // typewriter effect — without this the user has to manually scroll
+    // every time a long reply spills past the viewport.
+  }, [messages.length, sendMutation.isPending, streamingReply]);
 
   const handleSend = () => {
     const trimmed = input.trim();
@@ -190,6 +304,57 @@ export default function ManagerAIChatPage() {
     el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
   };
 
+  // Copy an assistant reply to clipboard. Audit found owners constantly want
+  // to forward AI insights to WhatsApp / their team but had to drag-select.
+  // Uses navigator.clipboard.writeText with a silent fallback on older browsers
+  // (Safari iOS < 13.4) via a hidden textarea + execCommand.
+  const handleCopy = async (text: string, idx: number) => {
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        // Legacy fallback — keeps the action working when clipboard API is
+        // missing (some embedded webviews) or blocked by HTTP origin.
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); } finally { document.body.removeChild(ta); }
+      }
+      setCopiedIdx(idx);
+      window.setTimeout(() => setCopiedIdx((current) => (current === idx ? null : current)), 1500);
+    } catch {
+      toast.error(t('managerAI.copyFailed', 'Não foi possível copiar.'));
+    }
+  };
+
+  // "Nova conversa" — hard-deletes the app-channel history for this restaurant
+  // so the user can start fresh without the conversation context bleeding into
+  // future replies. The DELETE hits the same /api/manager-chat route handler.
+  const newConversationMutation = useMutation({
+    mutationFn: () => authFetch('/api/manager-chat', { method: 'DELETE' }).then((r) => {
+      if (!r.ok) throw new Error(`Reset failed (${r.status})`);
+      return r.json();
+    }),
+    onSuccess: () => {
+      qc.setQueryData<{ history: Message[] }>(['manager-chat-history'], { history: [] });
+      setStreamingReply('');
+      setLastFailedMessage(null);
+      toast.success(t('managerAI.newConversationDone', 'Nova conversa iniciada.'));
+    },
+    onError: () => {
+      toast.error(t('managerAI.newConversationFailed', 'Não foi possível limpar a conversa.'));
+    },
+  });
+
+  const handleNewConversation = () => {
+    if (messages.length === 0 || newConversationMutation.isPending) return;
+    if (!window.confirm(t('managerAI.newConversationConfirm', 'Limpar conversa? O Manager AI esquecerá o contexto atual.'))) return;
+    newConversationMutation.mutate();
+  };
+
   const prompts = SUGGESTED_PROMPTS[lang] || SUGGESTED_PROMPTS.en;
 
   return (
@@ -218,8 +383,24 @@ export default function ManagerAIChatPage() {
             </div>
           </div>
         </div>
-        <div className="hidden sm:block w-48">
-          <ManagerAIUsageBar />
+        <div className="flex items-center gap-3">
+          {/* "Nova conversa" — only renders when there's history to clear,
+              so empty-state users don't see an action they can't take. */}
+          {messages.length > 0 && (
+            <button
+              type="button"
+              onClick={handleNewConversation}
+              disabled={newConversationMutation.isPending}
+              className="text-xs font-medium text-muted-stone hover:text-deep-charcoal transition-colors disabled:opacity-40 flex items-center gap-1.5"
+              aria-label={t('managerAI.newConversation', 'Nova conversa')}
+            >
+              <ThiingsIcon name="refresh" pxSize={14} />
+              <span className="hidden sm:inline">{t('managerAI.newConversation', 'Nova conversa')}</span>
+            </button>
+          )}
+          <div className="hidden sm:block w-48">
+            <ManagerAIUsageBar />
+          </div>
         </div>
       </div>
 
@@ -273,28 +454,76 @@ export default function ManagerAIChatPage() {
           )}
 
           {/* Messages */}
-          {messages.map((m, i) => (
-            <div key={m.created_at ? `${m.role}-${m.created_at}` : `opt-${m.role}-${i}`} className={'flex ' + (m.role === 'manager' ? 'justify-end' : 'justify-start')}>
-              {m.role === 'assistant' && (
-                <div className="w-7 h-7 rounded-full bg-burgundy/10 flex items-center justify-center flex-shrink-0 mt-1 mr-2 overflow-hidden">
-                  <img src="/favicon.svg" alt={t('managerAI.assistantAvatarAlt', 'Manager AI avatar')} className="w-4 h-4" />
-                </div>
-              )}
+          {messages.map((m, i) => {
+            const ts = formatTimestamp(m.created_at, i18n.language);
+            const isAssistant = m.role === 'assistant';
+            const isCopied = copiedIdx === i;
+            return (
               <div
-                className={
-                  'max-w-[75%] rounded-2xl px-4 py-3 text-sm break-words leading-relaxed ' +
-                  (m.role === 'manager'
-                    ? 'bg-burgundy text-white'
-                    : 'bg-glass-card backdrop-blur-glass-card border border-glass-border text-deep-charcoal')
-                }
+                key={m.created_at ? `${m.role}-${m.created_at}` : `opt-${m.role}-${i}`}
+                className={'flex group ' + (isAssistant ? 'justify-start' : 'justify-end')}
               >
-                {m.role === 'assistant' ? renderMarkdown(m.content) : m.content}
+                {isAssistant && (
+                  <div className="w-7 h-7 rounded-full bg-burgundy/10 flex items-center justify-center flex-shrink-0 mt-1 mr-2 overflow-hidden">
+                    <img src="/favicon.svg" alt={t('managerAI.assistantAvatarAlt', 'Manager AI avatar')} className="w-4 h-4" />
+                  </div>
+                )}
+                <div className={'flex flex-col gap-1 max-w-[75%] ' + (isAssistant ? 'items-start' : 'items-end')}>
+                  <div
+                    className={
+                      'relative rounded-2xl px-4 py-3 text-sm break-words leading-relaxed ' +
+                      (isAssistant
+                        ? 'bg-glass-card backdrop-blur-glass-card border border-glass-border text-deep-charcoal'
+                        : 'bg-burgundy text-white')
+                    }
+                  >
+                    {isAssistant ? renderMarkdown(m.content) : m.content}
+                    {/* Copy affordance — hover-revealed on desktop, always
+                        visible on touch via group-focus. Assistant bubbles
+                        only; the user's own messages don't need copy. */}
+                    {isAssistant && (
+                      <button
+                        type="button"
+                        onClick={() => handleCopy(m.content, i)}
+                        aria-label={t('managerAI.copyMessage', 'Copiar mensagem')}
+                        className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity w-7 h-7 rounded-full bg-white border border-glass-border-input shadow-sm flex items-center justify-center text-muted-stone hover:text-deep-charcoal hover:border-burgundy/30"
+                      >
+                        <ThiingsIcon name={isCopied ? 'check' : 'copy'} pxSize={12} />
+                      </button>
+                    )}
+                  </div>
+                  {/* Timestamp chip — subtle, only renders when we have a
+                      persisted created_at (optimistic in-flight turns skip). */}
+                  {ts && (
+                    <span className="text-[10px] text-muted-stone/70 px-1">{ts}</span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+
+          {/* Streaming reply bubble — shows assistant tokens as they arrive
+              from the SSE endpoint. Replaces the "Thinking…" indicator once
+              the first token lands. The persisted bubble takes over via
+              messages[] once onSuccess fires and we set streamingReply=''. */}
+          {sendMutation.isPending && streamingReply && (
+            <div className="flex justify-start">
+              <div className="w-7 h-7 rounded-full bg-burgundy/10 flex items-center justify-center flex-shrink-0 mt-1 mr-2 overflow-hidden">
+                <img src="/favicon.svg" alt={t('managerAI.assistantAvatarAlt', 'Manager AI avatar')} className="w-4 h-4" />
+              </div>
+              <div className="max-w-[75%] rounded-2xl px-4 py-3 text-sm break-words leading-relaxed bg-glass-card backdrop-blur-glass-card border border-glass-border text-deep-charcoal">
+                {renderMarkdown(streamingReply)}
+                {/* Blinking cursor while streaming — tactile signal that
+                    more tokens are coming. Hidden by reduced-motion. */}
+                <span aria-hidden="true" className="inline-block w-[2px] h-[1em] bg-burgundy/60 align-middle ml-0.5 animate-pulse motion-reduce:hidden" />
               </div>
             </div>
-          ))}
+          )}
 
-          {/* Thinking indicator */}
-          {sendMutation.isPending && (
+          {/* Thinking indicator — only while we're waiting on the first
+              streamed token. Once the streamingReply has any content, the
+              bubble above takes over. */}
+          {sendMutation.isPending && !streamingReply && (
             <div className="flex justify-start" role="status" aria-label={t('managerAI.thinkingAriaLabel', 'AI is thinking')}>
               <div className="w-7 h-7 rounded-full bg-burgundy/10 flex items-center justify-center flex-shrink-0 mt-1 mr-2">
                 <ThiingsIcon name="sparkles" pxSize={14} className="text-burgundy animate-spin" />

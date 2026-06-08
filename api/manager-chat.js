@@ -18,6 +18,7 @@ module.exports = async (req, res) => {
 
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method === 'GET') return handleHistory(req, res);
+  if (req.method === 'DELETE') return handleClearHistory(req, res);
   if (req.method === 'POST') {
     const wantsStream = (req.headers.accept || '').includes('text/event-stream');
     return wantsStream ? handleChatStream(req, res) : handleChat(req, res);
@@ -116,6 +117,43 @@ function handleQuotaOrError(err, res) {
   logger.error('manager-chat error', { error: err.message });
   if (err.message === 'UNAUTHORIZED') return res.status(401).json({ success: false, error: 'Authentication required' });
   return res.status(500).json({ success: false, error: 'Internal error' });
+}
+
+/**
+ * "Nova conversa" — clears the in-app chat history for this restaurant so the
+ * manager can start fresh without prior context bleeding into the LLM's reply.
+ *
+ * Scope is intentionally narrow: only rows with channel='app' are deleted, so
+ * WhatsApp-driven briefings + cron-driven turns survive — those are the
+ * context Manager AI uses across channels and shouldn't be wiped by a UI
+ * button. Memory (manager_memory) is also preserved; only the verbatim chat
+ * log is gone. The next message starts a fresh conversation but the AI still
+ * knows everything it learned from prior facts + restaurant snapshot.
+ */
+async function handleClearHistory(req, res) {
+  try {
+    const user = await verifyJWT(req.headers.authorization?.replace('Bearer ', ''));
+    if (!user || !user.restaurant_id) {
+      return res.status(401).json({ success: false, error: 'Authentication required' });
+    }
+    const restaurantId = user.restaurant_id;
+
+    const rateLimited = await checkAndApplyRateLimit(req, res, 'api');
+    if (rateLimited) return;
+
+    const { error } = await supabaseAdmin
+      .from('manager_conversations')
+      .delete()
+      .eq('restaurant_id', restaurantId)
+      .eq('channel', 'app');
+    if (error) throw new Error(error.message);
+
+    return res.json({ success: true });
+  } catch (err) {
+    logger.error('manager-chat clear history error', { error: err.message });
+    if (err.message === 'UNAUTHORIZED') return res.status(401).json({ success: false, error: 'Authentication required' });
+    return res.status(500).json({ success: false, error: 'Internal error' });
+  }
 }
 
 async function handleHistory(req, res) {
