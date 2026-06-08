@@ -21,6 +21,14 @@ export default function NotFound() {
           <div className="absolute bottom-5 left-1/2 -translate-x-1/2 w-[120px] h-1 bg-burgundy rounded-full" />
         </div>
 
+        {/* Restaurant-themed pre-title — softens the 404 from a system error
+            page into a hospitality moment, while the formal "Page not found"
+            headline below preserves the actual signal for users who need it.
+            Falls back to a generic spinner if i18n hasn't loaded yet. */}
+        <p className="text-sm font-medium text-burgundy mb-2">
+          {t('notFound.preTitle', 'Esta mesa está vazia 🍽️')}
+        </p>
+
         <h1 className="font-serif text-2xl sm:text-4xl font-medium tracking-tight mb-3">
           {t('notFound.title')}
         </h1>

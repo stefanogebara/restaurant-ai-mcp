@@ -1632,8 +1632,9 @@
     "december": "Diciembre"
   },
   "notFound": {
+    "preTitle": "Esta mesa está vacía 🍽️",
     "title": "Página no encontrada",
-    "description": "La página que buscas no existe o ha sido movida. Regresemos al camino correcto.",
+    "description": "La página que buscas no existe o ha sido movida. Te acomodamos de vuelta en el salón.",
     "goHome": "Ir al inicio",
     "goBack": "Volver",
     "copyright": "© 2026 Seatable. Todos los derechos reservados."

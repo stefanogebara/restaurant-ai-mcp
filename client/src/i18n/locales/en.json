@@ -1657,8 +1657,9 @@
     "december": "December"
   },
   "notFound": {
+    "preTitle": "This table is empty 🍽️",
     "title": "Page not found",
-    "description": "The page you're looking for doesn't exist or has been moved. Let's get you back on track.",
+    "description": "The page you're looking for doesn't exist or has been moved. Let's get you back to your seat.",
     "goHome": "Go Home",
     "goBack": "Go Back",
     "copyright": "© 2026 Seatable. All rights reserved."
