@@ -709,7 +709,8 @@ test.describe('Carousel — 2-10 images (C.10)', () => {
       created_at: '2026-06-04T08:00:00Z', completed_at: null,
     };
 
-    await context.route('**/api/instagram/schedule-post', async (route) => {
+    // Use a glob that matches the GET (no query) AND the DELETE (?id=...).
+    await context.route('**/api/instagram/schedule-post**', async (route) => {
       if (route.request().method() === 'GET') {
         getCallCount += 1;
         const posts = getCallCount === 1 ? [post1, post2, post3] : [post2, post3];

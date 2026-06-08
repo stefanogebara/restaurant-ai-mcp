@@ -85,6 +85,35 @@ describe('validateScheduledAt — time bounds', () => {
 // Model: a tiny in-memory representation of the row + a function that
 // mimics what postgres does for `UPDATE...WHERE id=$1 AND status=$2`.
 
+describe('cancel — UUID guard before SQL', () => {
+  // Mirrors the UUID_RE check in schedule-post.js handleCancel. Without
+  // this, postgres rejects non-UUID `WHERE id = $1` casts and the
+  // handler returned the cryptic "Database error" surfaced as a toast.
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const isValidUuid = (s) => typeof s === 'string' && UUID_RE.test(s);
+
+  test.each([
+    '00000000-0000-0000-0000-000000000000',                  // nil UUID
+    '550e8400-e29b-41d4-a716-446655440000',                  // v4
+    'A3F6E59C-5D6E-4F00-B6F2-1F0C5E6D2A11',                  // uppercase ok
+    '0bfaf2ba-31ab-48ae-868f-6a53345a6a86',                  // a real one from prod
+  ])('accepts a real UUID: %s', (id) => {
+    expect(isValidUuid(id)).toBe(true);
+  });
+
+  test.each([
+    'p1',                                                    // test fixture id
+    'fake-uuid-test',                                        // smoke probe id
+    '',                                                      // empty
+    'definitely-not-a-uuid',                                 // close but no
+    "00000000-0000-0000-0000-000000000000'; DROP TABLE--",   // sql injection attempt
+    '00000000-0000-0000-0000',                               // too short
+    '00000000-0000-0000-0000-0000000000001',                 // too long
+  ])('rejects non-UUID input: %p', (id) => {
+    expect(isValidUuid(id)).toBe(false);
+  });
+});
+
 describe('cron lock semantics', () => {
   function tryClaim(row, claimedStatus = 'pending') {
     if (row.status !== claimedStatus) return { matchedRows: 0, row };

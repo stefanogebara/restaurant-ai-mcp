@@ -174,12 +174,23 @@ async function handleList(req, res, user) {
 
 // ─── DELETE: cancel a pending post (tenant-scoped + status-guarded) ────
 
+// Bare RFC 4122 UUID shape — used to reject garbage ids before the
+// Supabase UPDATE so a non-UUID can't cause a postgres cast error
+// that surfaces to the UI as the cryptic "Database error".
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 async function handleCancel(req, res, user) {
   // id arrives either in query string (RESTful) or body
   const idFromQuery = typeof req.query?.id === 'string' ? req.query.id : null;
   const idFromBody = req.body && typeof req.body === 'object' && typeof req.body.id === 'string' ? req.body.id : null;
   const id = idFromQuery || idFromBody;
   if (!id) return res.status(400).json({ ok: false, error: 'id is required' });
+  if (!UUID_RE.test(id)) {
+    // Not a UUID — bail out with 404 so the UI's "already published"
+    // info-toast path fires (canceled:false handling) instead of the
+    // generic 500 "Database error" that postgres would otherwise emit.
+    return res.status(200).json({ ok: true, canceled: false });
+  }
 
   // Tenant scoping + status guard in one statement: only flip rows that
   // (a) belong to this restaurant and (b) are still 'pending'. If the
