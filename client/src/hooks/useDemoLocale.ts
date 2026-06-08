@@ -49,7 +49,7 @@ const strings = {
     waitlistEmpty: 'Guests added to the waitlist will appear here',
     guests: 'guests',
     waited: 'waited',
-    seat: 'Seat',
+    seat: 'Seat now',
     // Chat
     managerAI: 'Manager AI',
     demoMode: 'Demo mode — no real data',
@@ -101,7 +101,10 @@ const strings = {
     waitlistEmpty: 'Clientes adicionados à lista de espera aparecerão aqui',
     guests: 'pessoas',
     waited: 'espera',
-    seat: 'Sentar',
+    // Audit copy: "Sentar" → "Acomodar" — softer hospitality verb. Same
+    // change shipped to DemoWaitlistPanel earlier; this second locale table
+    // is used by the preset-driven demo flows, so kept in sync here.
+    seat: 'Acomodar',
     // Chat
     managerAI: 'Gerente IA',
     demoMode: 'Modo demo — sem dados reais',
@@ -153,7 +156,7 @@ const strings = {
     waitlistEmpty: 'Los clientes añadidos a la lista de espera aparecerán aquí',
     guests: 'personas',
     waited: 'espera',
-    seat: 'Sentar',
+    seat: 'Acomodar',
     // Chat
     managerAI: 'IA del Gerente',
     demoMode: 'Modo demo — sin datos reales',
