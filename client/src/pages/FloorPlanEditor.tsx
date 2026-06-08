@@ -320,6 +320,52 @@ export default function FloorPlanEditor() {
     }
   }, [queryClient, locations, showSaving, showSaved, toastError, t]);
 
+  // ─── Starter templates (audit) ────────────────────────────────────────────────
+  // Brand-new restaurants land on a blank floor plan grid with no obvious way
+  // to start — the audit recommended Pequeno/Médio/Grande quick-start layouts.
+  // Three templates that map to typical SMB sizes; each fires the same
+  // createTable endpoint that the manual modal uses, in sequence, so we don't
+  // need any new backend work. Position offsets use the existing CELL/GRID
+  // constants so the templates respect the same layout grid the user can later
+  // drag around. Aborts cleanly on the first failure.
+  const applyStarterTemplate = useCallback(async (size: 'small' | 'medium' | 'large') => {
+    // Generate a sensible grid for each preset. Counts chosen from typical
+    // Brazilian restaurant sizes (bistros 6-8 covers, neighborhood 12, full
+    // service 20). Mix capacities so the host has variety to work with.
+    const presets: Record<typeof size, Array<{ capacity: number; shape: TableShape }>> = {
+      small:  [2, 2, 2, 4, 4, 6].map((c) => ({ capacity: c, shape: c >= 6 ? 'rectangle' : 'round' as TableShape })),
+      medium: [2, 2, 2, 4, 4, 4, 4, 6, 6, 8].map((c) => ({ capacity: c, shape: c >= 6 ? 'rectangle' : 'round' as TableShape })),
+      large:  [2, 2, 2, 2, 4, 4, 4, 4, 4, 6, 6, 6, 8, 8, 10].map((c) => ({ capacity: c, shape: c >= 6 ? 'rectangle' : 'round' as TableShape })),
+    };
+    const tablesToCreate = presets[size];
+    showSaving();
+    try {
+      for (let i = 0; i < tablesToCreate.length; i++) {
+        const t = tablesToCreate[i];
+        // Place tables in a tidy 4-column grid; rows of 4 fit on most screens
+        // and avoid spilling outside the SVG canvas at SVG_W default. Multiply
+        // by CELL+0.5 so each tile has a half-cell gutter for breathing room.
+        const col = i % 4;
+        const row = Math.floor(i / 4);
+        await hostAPI.createTable({
+          table_number: i + 1,
+          capacity: t.capacity,
+          shape: t.shape,
+          location: 'Salão Principal',
+          position_x: 1 + col * 3,
+          position_y: 1 + row * 3,
+        });
+      }
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      setActiveLocation('Salão Principal');
+      showSaved();
+    } catch (err) {
+      console.error('Failed to apply starter template:', err);
+      setSaveStatus('idle');
+      toastError(t('errors.serverError'));
+    }
+  }, [queryClient, showSaving, showSaved, toastError, t]);
+
   const handleDeleteTable = useCallback(async (tableId: string) => {
     showSaving();
     try {
@@ -389,6 +435,48 @@ export default function FloorPlanEditor() {
           activeLocation={activeLocation}
           onLocationChange={(loc) => { setActiveLocation(loc); setSelectedTable(null); setLinkSource(null); }}
         />
+
+        {/* Starter templates banner — only renders for brand-new restaurants
+            (zero tables, not loading) so it doesn't compete with the canvas
+            once the floor plan has any content. Three preset sizes get the
+            owner from blank → workable layout in one click; they can still
+            drag-position or delete after. */}
+        {!isLoading && tables.length === 0 && (
+          <div className="my-4 rounded-2xl border border-glass-border-dark bg-white/60 backdrop-blur-glass-card p-5">
+            <h2 className="text-sm font-semibold text-deep-charcoal mb-1">
+              {t('floorPlan.starterTitle', 'Comece com um modelo')}
+            </h2>
+            <p className="text-xs text-stone-gray mb-3">
+              {t('floorPlan.starterHint', 'Escolha um tamanho de salão para preencher o layout. Você pode arrastar, editar e remover mesas depois.')}
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <button
+                type="button"
+                onClick={() => applyStarterTemplate('small')}
+                className="text-left px-4 py-3 rounded-xl border border-glass-border-dark hover:border-burgundy/40 hover:bg-burgundy/5 transition-colors"
+              >
+                <div className="text-sm font-semibold text-deep-charcoal">{t('floorPlan.starterSmallName', 'Bistrô')}</div>
+                <div className="text-[11px] text-stone-gray mt-0.5">{t('floorPlan.starterSmallDesc', '6 mesas · 2-6 lugares')}</div>
+              </button>
+              <button
+                type="button"
+                onClick={() => applyStarterTemplate('medium')}
+                className="text-left px-4 py-3 rounded-xl border border-glass-border-dark hover:border-burgundy/40 hover:bg-burgundy/5 transition-colors"
+              >
+                <div className="text-sm font-semibold text-deep-charcoal">{t('floorPlan.starterMediumName', 'Médio')}</div>
+                <div className="text-[11px] text-stone-gray mt-0.5">{t('floorPlan.starterMediumDesc', '10 mesas · 2-8 lugares')}</div>
+              </button>
+              <button
+                type="button"
+                onClick={() => applyStarterTemplate('large')}
+                className="text-left px-4 py-3 rounded-xl border border-glass-border-dark hover:border-burgundy/40 hover:bg-burgundy/5 transition-colors"
+              >
+                <div className="text-sm font-semibold text-deep-charcoal">{t('floorPlan.starterLargeName', 'Restaurante completo')}</div>
+                <div className="text-[11px] text-stone-gray mt-0.5">{t('floorPlan.starterLargeDesc', '15 mesas · 2-10 lugares')}</div>
+              </button>
+            </div>
+          </div>
+        )}
 
         {linkMode && (
           <FloorPlanLinkBanner

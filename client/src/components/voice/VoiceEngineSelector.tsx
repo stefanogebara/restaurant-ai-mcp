@@ -56,9 +56,26 @@ export default function VoiceEngineSelector({ currentEngine, pendingEngine, engi
                 <span className="text-xs font-medium text-burgundy bg-burgundy/10 px-2 py-0.5 rounded-full">{t('voiceEngine.current', 'Current')}</span>
               )}
             </div>
-            <p className="text-sm text-stone-gray">
+            <p className="text-sm text-stone-gray mb-3">
               {t('voiceEngine.elevenlabsDesc', 'The most human-sounding voice. Pick from 100+ accents and tones. Best for restaurants where the voice is part of your brand.')}
             </p>
+            {/* Cost + latency badges — audit found owners couldn't compare
+                the two engines without hearing them; until we ship audio
+                samples, surface the concrete numbers so the tradeoff
+                (premium-but-pricier vs fast-and-cheaper) is legible. */}
+            <div className="flex flex-wrap items-center gap-2 text-[11px]">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-soft-gray text-stone-gray">
+                <span aria-hidden="true">⏱</span>
+                {t('voiceEngine.elevenlabsLatency', '~1.2 s')}
+              </span>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-soft-gray text-stone-gray">
+                <span aria-hidden="true">💰</span>
+                {t('voiceEngine.elevenlabsCost', '~R$ 0.40/min')}
+              </span>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">
+                {t('voiceEngine.elevenlabsTag', 'Mais humano')}
+              </span>
+            </div>
           </button>
 
           <button
@@ -78,9 +95,22 @@ export default function VoiceEngineSelector({ currentEngine, pendingEngine, engi
                 <span className="text-xs font-medium text-burgundy bg-burgundy/10 px-2 py-0.5 rounded-full">{t('voiceEngine.current', 'Current')}</span>
               )}
             </div>
-            <p className="text-sm text-stone-gray">
+            <p className="text-sm text-stone-gray mb-3">
               {t('voiceEngine.openaiDesc', 'Replies faster and costs less. The voice is good but less customisable. Best for high-volume restaurants.')}
             </p>
+            <div className="flex flex-wrap items-center gap-2 text-[11px]">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-soft-gray text-stone-gray">
+                <span aria-hidden="true">⏱</span>
+                {t('voiceEngine.openaiLatency', '~0.6 s')}
+              </span>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-soft-gray text-stone-gray">
+                <span aria-hidden="true">💰</span>
+                {t('voiceEngine.openaiCost', '~R$ 0.18/min')}
+              </span>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">
+                {t('voiceEngine.openaiTag', 'Mais rápido')}
+              </span>
+            </div>
           </button>
         </div>
 
