@@ -608,6 +608,66 @@ test.describe('Carousel — 2-10 images (C.10)', () => {
     expect(genBody?.prompt).toMatch(/tiramisu/);
   });
 
+  test('reel AI video generation (C.19): start → poll → URL auto-fills', async ({ page, context }) => {
+    await stubStatus(context, {
+      connected: true, status: 'active', username: 'x', tone_profile_ready: true,
+    });
+    await stubDraftCaption(context, ['a', 'b', 'c']);
+
+    // POST starts the job → return job_id
+    // GET polls: first 2 calls return 'processing', 3rd returns 'completed' with URL
+    let pollCount = 0;
+    await context.route('**/api/instagram/generate-video**', async (route) => {
+      const method = route.request().method();
+      if (method === 'POST') {
+        await route.fulfill({
+          status: 200, contentType: 'application/json',
+          body: JSON.stringify({ ok: true, job_id: 'd9b2c5d8-1234-4abc-9def-0123456789ab' }),
+        });
+        return;
+      }
+      if (method === 'GET') {
+        pollCount += 1;
+        if (pollCount < 2) {
+          await route.fulfill({
+            status: 200, contentType: 'application/json',
+            body: JSON.stringify({ ok: true, status: 'processing', progress: pollCount * 30 }),
+          });
+        } else {
+          await route.fulfill({
+            status: 200, contentType: 'application/json',
+            body: JSON.stringify({
+              ok: true, status: 'completed',
+              url: 'https://storage.example.com/instagram-uploads/r/gen.mp4',
+            }),
+          });
+        }
+        return;
+      }
+      await route.continue();
+    });
+
+    await page.goto(INSTAGRAM_TAB_URL);
+    await waitForInstagramPanel(page);
+
+    // Open reel panel + generator
+    await page.getByTestId('instagram-reel-panel-toggle').click();
+    await page.getByTestId('instagram-reel-gen-toggle').click();
+    await expect(page.getByTestId('instagram-reel-gen-panel')).toBeVisible();
+
+    // Fill prompt + submit
+    await page.getByTestId('instagram-reel-gen-prompt').fill('Slow zoom on a sizzling steak, restaurant lighting');
+    await page.getByTestId('instagram-reel-gen-submit').click();
+
+    // The Generate button label switches to "Generating… Ns" while we poll.
+    await expect(page.getByTestId('instagram-reel-gen-submit')).toContainText(/Generating/i, { timeout: 10_000 });
+
+    // After ~10s of polling at 5s intervals, the second poll completes →
+    // videoUrl auto-fills + filename is set → toast surfaces.
+    await expect(page.getByTestId('instagram-reel-video-name')).toContainText('AI-generated', { timeout: 30_000 });
+    await expect(page.locator('body')).toContainText(/Video generated/i, { timeout: 5_000 });
+  });
+
   test('reel panel (C.18): upload → caption → publish → success toast', async ({ page, context }) => {
     await stubStatus(context, {
       connected: true, status: 'active', username: 'x', tone_profile_ready: true,

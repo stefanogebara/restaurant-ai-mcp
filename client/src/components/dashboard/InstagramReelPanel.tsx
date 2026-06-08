@@ -13,7 +13,7 @@
  * We show "Processing… (this can take up to a minute)" so the user
  * knows we haven't hung.
  */
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { authFetch } from '../../services/api';
@@ -21,6 +21,8 @@ import { useToast } from '../../contexts/ToastContext';
 
 const MAX_VIDEO_BYTES = 32 * 1024 * 1024;
 const MAX_CAPTION_LEN = 2200;
+const POLL_INTERVAL_MS = 5_000;
+const POLL_TIMEOUT_MS = 5 * 60_000;  // give up after 5 min — Higgsfield rarely exceeds 2 min
 
 export default function InstagramReelPanel({ disabled = false }: { disabled?: boolean }) {
   const { t } = useTranslation();
@@ -118,6 +120,100 @@ export default function InstagramReelPanel({ disabled = false }: { disabled?: bo
     publishMutation.mutate({ caption: caption.trim(), video_url: videoUrl });
   };
 
+  // ─── AI video generation (C.19) ──────────────────────────────────
+  const [genOpen, setGenOpen] = useState(false);
+  const [genPrompt, setGenPrompt] = useState('');
+  const [genProvider, setGenProvider] = useState<'higgsfield'>('higgsfield');
+  const [genJobId, setGenJobId] = useState<string | null>(null);
+  const [genStatus, setGenStatus] = useState<'idle' | 'starting' | 'processing' | 'failed' | 'completed'>('idle');
+  const [genError, setGenError] = useState<string | null>(null);
+  const genStartedAtRef = useRef<number | null>(null);
+
+  const startGenMutation = useMutation<{ job_id: string }, Error, { prompt: string; provider: string }>({
+    mutationFn: async (input) => {
+      const res = await authFetch('/api/instagram/generate-video', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      });
+      const body = (await res.json().catch(() => null)) as { ok?: boolean; job_id?: string; error?: string } | null;
+      if (!res.ok || !body?.ok || !body.job_id) {
+        throw new Error(body?.error || `Generation start failed (HTTP ${res.status})`);
+      }
+      return { job_id: body.job_id };
+    },
+    onSuccess: ({ job_id }) => {
+      setGenJobId(job_id);
+      setGenStatus('processing');
+      setGenError(null);
+      genStartedAtRef.current = Date.now();
+    },
+    onError: (err) => {
+      setGenStatus('failed');
+      setGenError(err.message);
+      toast.error(err.message);
+    },
+  });
+
+  // Poll while processing. The interval kicks off when genStatus moves
+  // to 'processing' (set in startGenMutation.onSuccess) and clears on
+  // unmount or status transition.
+  useEffect(() => {
+    if (genStatus !== 'processing' || !genJobId) return;
+    let canceled = false;
+    const poll = async () => {
+      if (canceled) return;
+      if (genStartedAtRef.current && Date.now() - genStartedAtRef.current > POLL_TIMEOUT_MS) {
+        setGenStatus('failed');
+        setGenError('Generation took longer than 5 minutes — please try again.');
+        return;
+      }
+      try {
+        const res = await authFetch(`/api/instagram/generate-video?job_id=${encodeURIComponent(genJobId)}`, { method: 'GET' });
+        const body = (await res.json().catch(() => null)) as { ok?: boolean; status?: string; url?: string; error?: string } | null;
+        if (canceled) return;
+        if (!res.ok || !body?.ok) {
+          setGenStatus('failed');
+          setGenError(body?.error || `Poll failed (HTTP ${res.status})`);
+          return;
+        }
+        if (body.status === 'completed' && body.url) {
+          // Video ready — populate the upload field so the existing publish
+          // flow takes over. User still types caption + clicks Post as Reel.
+          setVideoUrl(body.url);
+          setVideoName('AI-generated.mp4');
+          setGenStatus('completed');
+          toast.success(t('instagram.videoGenerated', 'Video generated — caption it and post.'));
+          return;
+        }
+        if (body.status === 'failed') {
+          setGenStatus('failed');
+          setGenError(body.error || 'Generation failed');
+          return;
+        }
+        // still processing — wait + try again
+        setTimeout(poll, POLL_INTERVAL_MS);
+      } catch (err) {
+        if (canceled) return;
+        setGenStatus('failed');
+        setGenError(err instanceof Error ? err.message : 'Poll failed');
+      }
+    };
+    setTimeout(poll, POLL_INTERVAL_MS);
+    return () => { canceled = true; };
+  }, [genStatus, genJobId, t, toast]);
+
+  const onStartGen = () => {
+    if (startGenMutation.isPending || genStatus === 'processing') return;
+    const p = genPrompt.trim();
+    if (p.length < 3) return;
+    setGenStatus('starting');
+    setGenError(null);
+    startGenMutation.mutate({ prompt: p, provider: genProvider });
+  };
+
+  const elapsedSec = genStartedAtRef.current ? Math.floor((Date.now() - genStartedAtRef.current) / 1000) : 0;
+
   if (!open) {
     return (
       <button
@@ -168,12 +264,71 @@ export default function InstagramReelPanel({ disabled = false }: { disabled?: bo
           />
           {uploading ? 'Uploading…' : videoUrl ? 'Replace video' : 'Upload video'}
         </label>
+        <button
+          type="button"
+          onClick={() => setGenOpen((v) => !v)}
+          disabled={uploading || publishMutation.isPending || genStatus === 'processing'}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-glass-border-input rounded-lg text-xs text-deep-charcoal hover:border-burgundy transition-colors disabled:opacity-50"
+          data-testid="instagram-reel-gen-toggle"
+        >
+          <span aria-hidden>✨</span>
+          {genOpen ? 'Hide AI generator' : 'Generate with AI'}
+        </button>
         {videoName && (
           <span className="text-xs text-muted-stone truncate" data-testid="instagram-reel-video-name">
             {videoName}
           </span>
         )}
       </div>
+
+      {genOpen && (
+        <div
+          className="border border-glass-border-dark rounded-lg p-2 space-y-2 bg-white/65"
+          data-testid="instagram-reel-gen-panel"
+        >
+          <label className="text-xs text-muted-stone block">
+            Describe the video clip you want (5s vertical 9:16 — works best for product shots, b-roll)
+          </label>
+          <textarea
+            value={genPrompt}
+            onChange={(e) => setGenPrompt(e.target.value)}
+            placeholder="Slow zoom on a sizzling steak, soft restaurant lighting, steam rising…"
+            rows={2}
+            maxLength={1000}
+            disabled={genStatus === 'processing' || startGenMutation.isPending}
+            className="w-full px-3 py-2 border border-glass-border-input rounded-lg text-sm focus:outline-none focus:border-burgundy resize-y disabled:opacity-50"
+            data-testid="instagram-reel-gen-prompt"
+          />
+          <div className="flex items-center gap-2 flex-wrap">
+            <select
+              value={genProvider}
+              onChange={(e) => setGenProvider(e.target.value as 'higgsfield')}
+              disabled={genStatus === 'processing' || startGenMutation.isPending}
+              className="px-2 py-1.5 border border-glass-border-input rounded-lg text-xs bg-white text-deep-charcoal disabled:opacity-50"
+              data-testid="instagram-reel-gen-provider"
+            >
+              <option value="higgsfield">Higgsfield</option>
+            </select>
+            <button
+              type="button"
+              onClick={onStartGen}
+              disabled={startGenMutation.isPending || genStatus === 'processing' || genPrompt.trim().length < 3}
+              className="px-3 py-1.5 bg-burgundy text-white rounded-lg text-xs font-medium hover:bg-burgundy-dark disabled:opacity-50 transition-colors"
+              data-testid="instagram-reel-gen-submit"
+            >
+              {startGenMutation.isPending
+                ? 'Starting…'
+                : genStatus === 'processing'
+                  ? `Generating… ${elapsedSec}s`
+                  : 'Generate'}
+            </button>
+            <span className="text-[10px] text-muted-stone">~60–120s · ~$0.50 per clip · added on success</span>
+          </div>
+          {genStatus === 'failed' && genError && (
+            <p className="text-[11px] text-red-700" data-testid="instagram-reel-gen-error">{genError}</p>
+          )}
+        </div>
+      )}
 
       <label className="text-xs text-muted-stone block">Caption</label>
       <textarea
