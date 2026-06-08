@@ -35,9 +35,27 @@ export default function VoiceEngineSelector({ currentEngine, pendingEngine, engi
       </div>
 
       <div className="p-6">
-        <p className="text-sm text-stone-gray mb-4">
+        <p className="text-sm text-stone-gray mb-2">
           {t('voiceEngine.intro', 'Which voice should answer your phone? You can switch later — no calls are missed during the change.')}
         </p>
+        {/* Disclosure: 2-sentence guidance so owners don't have to guess from
+            the cards alone. Native <details> so no JS / state required —
+            collapsible, accessible, no library. */}
+        <details className="mb-4 text-sm">
+          <summary className="text-burgundy hover:text-burgundy-dark cursor-pointer underline underline-offset-2 select-none w-fit">
+            {t('voiceEngine.helpToggle', 'Qual escolher?')}
+          </summary>
+          <div className="mt-2 text-stone-gray leading-relaxed bg-soft-gray rounded-xl p-3">
+            <p className="mb-2">
+              <strong>{t('voiceEngine.premiumName', 'Premium voice')}:</strong>{' '}
+              {t('voiceEngine.helpPremium', 'Escolha quando a voz faz parte da sua marca — fine dining, hotelaria, atendimento VIP. Soa humana, mas custa mais e responde um pouco mais devagar.')}
+            </p>
+            <p>
+              <strong>{t('voiceEngine.fastName', 'Fast voice')}:</strong>{' '}
+              {t('voiceEngine.helpFast', 'Escolha quando o volume é alto e o tempo de resposta importa — pizzaria, casual dining, delivery. Custa metade, responde em meio segundo.')}
+            </p>
+          </div>
+        </details>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <button
             type="button"

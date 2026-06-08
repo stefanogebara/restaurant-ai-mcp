@@ -203,11 +203,14 @@ export default function SubscriptionManage() {
           </div>
 
           {/* Current Plan */}
+          {/* Audit found double-labeling: the "ATUAL" pill here AND the
+              "Plano Atual" badge on the matching tier card below repeated
+              the same signal twice. Dropped the inline pill; the in-card
+              badge already anchors which plan is current spatially. */}
           <div className="border-b border-[#E5E7EB] px-0 py-7 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-12">
             <div>
               <div className="flex items-center gap-2.5 mb-1">
                 <span className="text-xl font-bold text-deep-charcoal">{t('subscription.plan', { name: displayPlanName })}</span>
-                <span className="text-xs font-semibold tracking-wide uppercase text-burgundy bg-burgundy/[8%] px-3.5 py-1.5 rounded-full">{t('subscription.current')}</span>
               </div>
               <div className="text-sm text-warm-stone">{(currentPlanPrice ?? (subscription.planPrice ?? '').replace(/\/m[êe]s|\/mo$/i, '')).trim()}{t('subscription.perMonth')} &middot; {t('subscription.billedMonthly')}</div>
             </div>
