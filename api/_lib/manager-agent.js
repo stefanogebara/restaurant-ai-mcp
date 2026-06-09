@@ -155,9 +155,14 @@ function shouldResetHistoryForLanguage(history, targetLanguage) {
   if (!lastAssistant?.content) return false;
   const txt = lastAssistant.content.toLowerCase();
   // Cheap language signature — common words that only appear in one language.
-  const isEN = /\b(quiet|reservations|tonight|currently|tomorrow|please|the\b)/i.test(txt);
-  const isPT = /\b(reservas|hoje|amanhã|noite|todo|tudo|você)/i.test(txt);
-  const isES = /\b(reservas|hoy|mañana|noche|usted|por favor)/i.test(txt) && !isPT;
+  // Every alternative needs BOTH word boundaries: the first version of this
+  // regex lacked the trailing \b, so English "reservations" matched
+  // \breservas as a prefix → English history false-positived as Portuguese
+  // → never reset → the model kept mirroring English for PT-BR restaurants
+  // with long English histories (caught live on Cantina Bella Vista 2026-06-09).
+  const isEN = /\b(quiet|reservations|tonight|currently|tomorrow|please|the)\b/i.test(txt);
+  const isPT = /\b(reservas|hoje|amanhã|noite|tudo|você|nenhuma|vazio)\b/i.test(txt);
+  const isES = /\b(reservas|hoy|mañana|noche|usted|favor)\b/i.test(txt) && !isPT;
   if ((targetLanguage === 'pt' || targetLanguage === 'pt-BR') && isEN && !isPT) return true;
   if (targetLanguage === 'es' && isEN && !isES) return true;
   if (targetLanguage === 'en' && (isPT || isES)) return true;
