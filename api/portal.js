@@ -156,14 +156,29 @@ async function handleGetRestaurant(req, res) {
     });
   }
 
-  const { data, error } = await supabaseAdmin
+  // cover_image_url ships in migration 20260609 — select it, but fall back to
+  // the legacy column list if the migration hasn't been applied yet so the
+  // public booking page never 404s on a schema race.
+  const BASE_COLS = 'id, restaurant_name, restaurant_type, city, country, phone, email, website, business_hours, reservation_settings, average_dining_duration_minutes, slug, deposit_config, whatsapp_enabled';
+  let { data, error } = await supabaseAdmin
     .schema('restaurant')
     .from('restaurant_config')
-    .select('id, restaurant_name, restaurant_type, city, country, phone, email, website, business_hours, reservation_settings, average_dining_duration_minutes, slug, deposit_config, whatsapp_enabled')
+    .select(`${BASE_COLS}, cover_image_url`)
     .eq('slug', slug)
     .eq('is_active', true)
     .eq('onboarding_completed', true)
     .single();
+
+  if (error && /cover_image_url|column .* does not exist/i.test(error.message || '')) {
+    ({ data, error } = await supabaseAdmin
+      .schema('restaurant')
+      .from('restaurant_config')
+      .select(BASE_COLS)
+      .eq('slug', slug)
+      .eq('is_active', true)
+      .eq('onboarding_completed', true)
+      .single());
+  }
 
   if (error || !data) {
     // 404 — bump the failure counter so an enumeration scan progressively
@@ -200,7 +215,10 @@ async function handleGetRestaurant(req, res) {
       deposit_config: data.deposit_config || { enabled: false },
       // Honest signal for the booking confirmation page so it doesn't promise
       // a WhatsApp reminder the restaurant can't actually send (audit BUG #25).
-      whatsapp_enabled: data.whatsapp_enabled === true
+      whatsapp_enabled: data.whatsapp_enabled === true,
+      // Owner-uploaded cover photo (restaurant-photos bucket). null → booking
+      // page falls back to the gradient + cuisine-emoji card.
+      cover_image_url: data.cover_image_url || null
     }
   });
 }

@@ -27,6 +27,7 @@ interface AuthContextType {
   loading: boolean;
   role: RestaurantRole | null;
   signInWithGoogle: (extraRedirectParams?: Record<string, string>) => Promise<void>;
+  signInWithApple: (extraRedirectParams?: Record<string, string>) => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<void>;
   signUpWithEmail: (email: string, password: string) => Promise<{ needsConfirmation: boolean }>;
   signOut: () => Promise<void>;
@@ -119,6 +120,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Apple SSO — mirrors signInWithGoogle. Only reachable when
+  // VITE_APPLE_SSO_ENABLED=true (Login.tsx gates the button) because the
+  // Supabase provider needs Apple Developer credentials configured first;
+  // an ungated button would 400 at Apple's authorize endpoint.
+  // Setup steps live in .env.example under "Apple SSO".
+  const signInWithApple = async (extraRedirectParams?: Record<string, string>) => {
+    let redirectTo = `${window.location.origin}/welcome`;
+    if (extraRedirectParams && Object.keys(extraRedirectParams).length > 0) {
+      const qs = new URLSearchParams(extraRedirectParams).toString();
+      redirectTo = `${redirectTo}?${qs}`;
+    }
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'apple',
+      options: { redirectTo },
+    });
+    if (error) throw error;
+  };
+
   const signInWithEmail = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
@@ -176,7 +195,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, role, signInWithGoogle, signInWithEmail, signUpWithEmail, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, role, signInWithGoogle, signInWithApple, signInWithEmail, signUpWithEmail, signOut }}>
       {children}
     </AuthContext.Provider>
   );

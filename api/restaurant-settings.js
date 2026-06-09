@@ -241,12 +241,25 @@ module.exports = async function handler(req, res) {
     // GET / - Basic settings
     // restaurant_config uses agent_language (not language) as the column name
     if (method === 'GET' && !path.includes('/profile')) {
-      const { data: restaurant, error } = await supabase
+      // cover_image_url ships in migration 20260609 — try the full select,
+      // fall back to the legacy column list pre-migration so settings never
+      // 500 on a schema race.
+      const SETTINGS_COLS = 'agent_language, restaurant_name, city, country, phone, email, business_hours, timezone, reservation_settings';
+      let { data: restaurant, error } = await supabase
         .schema('restaurant')
         .from('restaurant_config')
-        .select('agent_language, restaurant_name, city, country, phone, email, business_hours, timezone, reservation_settings')
+        .select(`${SETTINGS_COLS}, cover_image_url`)
         .eq('id', restaurantId)
         .single();
+
+      if (error && /cover_image_url|column .* does not exist/i.test(error.message || '')) {
+        ({ data: restaurant, error } = await supabase
+          .schema('restaurant')
+          .from('restaurant_config')
+          .select(SETTINGS_COLS)
+          .eq('id', restaurantId)
+          .single());
+      }
 
       if (error) {
         logger.error('Error fetching restaurant settings:', error);
@@ -269,6 +282,7 @@ module.exports = async function handler(req, res) {
           business_hours: restaurant.business_hours || null,
           timezone: restaurant.timezone || 'America/Sao_Paulo',
           reservation_settings: restaurant.reservation_settings || null,
+          cover_image_url: restaurant.cover_image_url || null,
         },
       });
     }

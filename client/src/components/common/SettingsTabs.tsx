@@ -68,13 +68,37 @@ export default function SettingsTabs({ tabs, defaultTabId, hashKey, className = 
     return () => window.removeEventListener('hashchange', onHashChange);
   }, [hashKey, tabs]);
 
+  // Roving-tabindex arrow-key navigation (WAI-ARIA tabs pattern). The
+  // tabIndex juggling was already here but without key handlers the roving
+  // index was a trap: keyboard users couldn't reach inactive tabs at all.
+  const handleTablistKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft' && e.key !== 'Home' && e.key !== 'End') return;
+    e.preventDefault();
+    const idx = tabs.findIndex((t) => t.id === activeId);
+    let nextIdx = idx;
+    if (e.key === 'ArrowRight') nextIdx = (idx + 1) % tabs.length;
+    if (e.key === 'ArrowLeft') nextIdx = (idx - 1 + tabs.length) % tabs.length;
+    if (e.key === 'Home') nextIdx = 0;
+    if (e.key === 'End') nextIdx = tabs.length - 1;
+    const next = tabs[nextIdx];
+    if (next) {
+      setActiveId(next.id);
+      document.getElementById(`settings-tab-${next.id}`)?.focus();
+    }
+  };
+
   return (
     <div className={className}>
-      {/* Tab bar */}
+      {/* Tab bar — wraps into multiple rows instead of horizontal scroll.
+          The audit found 6-tab pages (Voice settings) overflowed with no
+          visible scroll affordance: desktop users never realised more tabs
+          existed past the fold. Wrapping rows (GitHub-settings style) keep
+          every tab visible at every width. */}
       <div
         role="tablist"
         aria-orientation="horizontal"
-        className="flex gap-1 overflow-x-auto border-b border-[#E5E7EB] -mx-1 px-1"
+        onKeyDown={handleTablistKeyDown}
+        className="flex flex-wrap gap-x-1 gap-y-0 border-b border-[#E5E7EB] -mx-1 px-1"
       >
         {tabs.map((tab) => {
           const isActive = tab.id === activeId;

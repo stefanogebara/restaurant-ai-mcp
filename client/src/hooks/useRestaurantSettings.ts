@@ -30,6 +30,8 @@ export interface RestaurantSettings {
   business_hours: BusinessHours | null;
   timezone: string;
   reservation_settings: ReservationSettings | null;
+  /** Owner-uploaded booking-page cover photo (public URL). null = none. */
+  cover_image_url?: string | null;
 }
 
 async function fetchSettings(): Promise<RestaurantSettings> {

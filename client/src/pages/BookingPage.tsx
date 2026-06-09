@@ -231,13 +231,27 @@ export default function BookingPage() {
         {/* Left: Restaurant Info */}
         <div className="md:flex-shrink-0 md:w-[340px]">
           <div className="w-full h-[220px] rounded-2xl bg-gradient-to-br from-burgundy via-burgundy/80 to-stone-700 mb-7 flex items-end p-6 relative overflow-hidden">
+            {/* Owner-uploaded cover photo (restaurant-photos bucket) — the
+                real fix for the audit's "biggest emotional-connection miss".
+                Renders as a full-bleed background with a darkening gradient
+                so the name/cuisine overlay stays legible on any photo. Falls
+                through to the gradient + emoji treatment when absent. */}
+            {restaurant.cover_image_url && (
+              <>
+                <img
+                  src={restaurant.cover_image_url}
+                  alt=""
+                  aria-hidden="true"
+                  className="absolute inset-0 w-full h-full object-cover"
+                  loading="eager"
+                />
+                <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+              </>
+            )}
             {/* Cuisine-type emoji watermark — audit found the booking left
                 card had no visual personality (just burgundy gradient + name).
-                Until we ship a real photo upload, render a large semi-
-                transparent emoji that maps to the restaurant's cuisine. Same
-                slot the name watermark used; emoji-only if we have a match,
-                otherwise the original name watermark takes over. */}
-            {(() => {
+                Skipped entirely when a real photo is present. */}
+            {!restaurant.cover_image_url && (() => {
               const cuisineEmoji: Record<string, string> = {
                 'fine-dining':   '🍽️',
                 'casual-dining': '🍴',

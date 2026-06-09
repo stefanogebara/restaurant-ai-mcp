@@ -31,6 +31,9 @@ export interface RestaurantInfo {
   /** True when the restaurant has WhatsApp notifications enabled. Used by
    *  the confirmation page to decide whether to promise a reminder (BUG #25). */
   whatsapp_enabled?: boolean;
+  /** Owner-uploaded cover photo (public URL in the restaurant-photos bucket).
+   *  null/absent → BookingPage renders the gradient + cuisine-emoji card. */
+  cover_image_url?: string | null;
 }
 
 export interface TimeSlot {

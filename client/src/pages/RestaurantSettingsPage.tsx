@@ -16,6 +16,7 @@ import DashboardLayout from '../components/layout/DashboardLayout';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 import StaffingSettingsPanel from '../components/dashboard/StaffingSettingsPanel';
 import DepositSettingsPanel from '../components/settings/DepositSettingsPanel';
+import CoverPhotoPanel from '../components/settings/CoverPhotoPanel';
 import BookingChannelsPanel from '../components/dashboard/BookingChannelsPanel';
 import { useQuery } from '@tanstack/react-query';
 import { authFetch } from '../services/api';
@@ -298,6 +299,12 @@ export default function RestaurantSettingsPage() {
 
           <div className="flex justify-end pt-2">
             <SaveButton onClick={handleSaveInfo} loading={updateMutation.isPending} disabled={!dirty.info} label={t('settings.saveInfo', 'Save Info')} />
+          </div>
+
+          {/* Booking-page cover photo — self-contained panel that saves
+              immediately on upload/remove (no Save button dependency). */}
+          <div className="pt-4 border-t border-[#F3F4F6]">
+            <CoverPhotoPanel coverImageUrl={settings?.cover_image_url} />
           </div>
         </section>
 

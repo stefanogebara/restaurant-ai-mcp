@@ -88,7 +88,7 @@ export function trackPricingPlanClicked(props: { plan: string; price: number }):
   safeCapture('pricing_plan_clicked', props);
 }
 
-export function trackSignupStarted(props: { method: 'google' | 'email' }): void {
+export function trackSignupStarted(props: { method: 'google' | 'apple' | 'email' }): void {
   safeCapture('signup_started', props);
 }
 
