@@ -32,9 +32,8 @@
  */
 
 const { createSecureLogger } = require('./secure-logger');
-const { setInternalCors, handlePreflight } = require('./cors');
-const { checkAndApplyRateLimit } = require('./rate-limit');
 const { getAI, AI_MODEL_FAST } = require('./ai-client');
+const { safeFetchText } = require('./safe-fetch');
 
 const logger = createSecureLogger('EnrichRestaurant');
 
@@ -77,30 +76,23 @@ function htmlToText(html) {
  * Best-effort: any failure (DNS, timeout, 4xx/5xx, oversize) returns ok:false
  * and the caller falls back gracefully.
  */
+/**
+ * SSRF-safe website fetch. `url` here comes from the restaurant's
+ * `scraped_data.website` field which is ultimately user-controlled
+ * (Google Places result → demo setup form → DB). Without per-hop
+ * private-IP rejection, an attacker could set `website` to a 302
+ * redirector that points at http://169.254.169.254/ (AWS metadata)
+ * and our lambda would happily exfiltrate the response. The shared
+ * safeFetchText helper handles DNS resolution, IP-range allowlisting,
+ * manual redirect with per-hop revalidation, and body-size capping.
+ */
 async function fetchHtmlSafely(url) {
   try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), WEBSITE_FETCH_TIMEOUT_MS);
-    const res = await fetch(url, {
-      method: 'GET',
-      headers: {
-        // Many restaurant sites block bare fetch UAs (Cloudflare/Sucuri).
-        // Identify as a desktop browser so we look ordinary.
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml',
-        'Accept-Language': 'en;q=0.7,pt;q=0.7,es;q=0.7',
-      },
-      redirect: 'follow',
-      signal: controller.signal,
+    const { text, finalUrl, truncated } = await safeFetchText(url, {
+      timeoutMs: WEBSITE_FETCH_TIMEOUT_MS,
+      maxBytes: MAX_HTML_BYTES,
     });
-    clearTimeout(timer);
-    if (!res.ok) return { ok: false, error: `http ${res.status}` };
-    // Read up to MAX_HTML_BYTES — protects us from a multi-MB site dump.
-    const text = await res.text();
-    if (text.length > MAX_HTML_BYTES) {
-      return { ok: true, text: text.slice(0, MAX_HTML_BYTES), finalUrl: res.url, truncated: true };
-    }
-    return { ok: true, text, finalUrl: res.url };
+    return { ok: true, text, finalUrl, truncated };
   } catch (err) {
     return { ok: false, error: err?.name === 'AbortError' ? 'timeout' : (err?.message || 'fetch failed') };
   }

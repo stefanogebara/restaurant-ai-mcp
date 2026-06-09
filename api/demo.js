@@ -279,7 +279,24 @@ async function handleCreate(req, res) {
   const effectiveCountry = (country || '').trim() || null;
   const effectiveName = contact_name || contact_email.split('@')[0];
   const effectivePhone = scraped_data?.phone || 'N/A';
-  const effectiveWebsite = scraped_data?.website || null;
+  // SSRF defense-in-depth: even though safe-fetch in _lib/enrich-restaurant
+  // re-validates via DNS+per-hop, drop obviously bad inputs at the boundary
+  // so a malicious website value never reaches the fetch layer. The
+  // scraped_data envelope comes from Google Places / our own scraper and
+  // is untrusted by the time it lands here. We require http(s) and a
+  // parseable URL — anything else gets nulled out so enrichment skips it
+  // entirely. The same check is enforced server-side in safe-fetch.
+  const rawWebsite = scraped_data?.website || null;
+  const effectiveWebsite = (() => {
+    if (!rawWebsite || typeof rawWebsite !== 'string') return null;
+    try {
+      const u = new URL(rawWebsite);
+      if (u.protocol !== 'http:' && u.protocol !== 'https:') return null;
+      return rawWebsite;
+    } catch {
+      return null;
+    }
+  })();
 
   const demo_token = crypto.randomUUID();
   const demo_expires_at = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
