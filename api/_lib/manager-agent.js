@@ -154,18 +154,23 @@ function shouldResetHistoryForLanguage(history, targetLanguage) {
   const lastAssistant = [...history].reverse().find((m) => m.role === 'assistant');
   if (!lastAssistant?.content) return false;
   const txt = lastAssistant.content.toLowerCase();
-  // Cheap language signature — common words that only appear in one language.
-  // Every alternative needs BOTH word boundaries: the first version of this
-  // regex lacked the trailing \b, so English "reservations" matched
-  // \breservas as a prefix → English history false-positived as Portuguese
-  // → never reset → the model kept mirroring English for PT-BR restaurants
-  // with long English histories (caught live on Cantina Bella Vista 2026-06-09).
-  const isEN = /\b(quiet|reservations|tonight|currently|tomorrow|please|the)\b/i.test(txt);
-  const isPT = /\b(reservas|hoje|amanhã|noite|tudo|você|nenhuma|vazio)\b/i.test(txt);
-  const isES = /\b(reservas|hoy|mañana|noche|usted|favor)\b/i.test(txt) && !isPT;
-  if ((targetLanguage === 'pt' || targetLanguage === 'pt-BR') && isEN && !isPT) return true;
-  if (targetLanguage === 'es' && isEN && !isES) return true;
-  if (targetLanguage === 'en' && (isPT || isES)) return true;
+  // Score-based comparison, not binary signatures. Two prior versions failed
+  // in production:
+  //   v1: /\breservas/ without trailing \b — English "reservations" matched
+  //       as a prefix, so English turns false-positived as Portuguese.
+  //   v2: binary any-marker test — a MIXED turn ("Tudo tranquilo por aqui!
+  //       The restaurant is very quiet right now...") set isPT=true off a
+  //       single "tudo" and blocked the reset even though the turn was
+  //       majority-English (caught live on Cantina Bella Vista 2026-06-09).
+  // Counting markers and comparing magnitudes handles both: a majority-
+  // English turn resets even when a few Portuguese words appear in it.
+  const count = (re) => (txt.match(re) || []).length;
+  const enScore = count(/\b(quiet|reservations?|tonight|currently|tomorrow|please|the|and|with|you|today|right now|no active)\b/gi);
+  const ptScore = count(/\b(reservas?|hoje|amanhã|noite|tudo|você|nenhuma|vazio|temos|mesas?|por aqui|sem|nada)\b/gi);
+  const esScore = count(/\b(reservas?|hoy|mañana|noche|usted|favor|tenemos|ahora|nada|vacío)\b/gi);
+  if (targetLanguage === 'pt' || targetLanguage === 'pt-BR') return enScore > ptScore;
+  if (targetLanguage === 'es') return enScore > esScore;
+  if (targetLanguage === 'en') return ptScore > enScore || esScore > enScore;
   return false;
 }
 

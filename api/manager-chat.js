@@ -1,6 +1,8 @@
-// Force rebuild — Vercel's API build was not picking up the
-// buildLanguagePrimer / shouldResetHistoryForLanguage additions in
-// manager-agent.js when only the deep-import changed.
+// Force rebuild (2nd time) — Vercel's API bundler does not re-emit this
+// function when only the _lib/manager-agent.js deep-import changes. Touch
+// this header whenever manager-agent.js changes or the deployed Lambda
+// keeps serving the stale bundle (caught twice: 302414aa and 2026-06-09's
+// score-based language-reset fix).
 const { verifyJWT } = require('./_lib/auth');
 const { runManagerAgent, runManagerAgentStream, ManagerQuotaError } = require('./_lib/manager-agent');
 const { supabaseAdmin } = require('./_lib/supabase');
