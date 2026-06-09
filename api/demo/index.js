@@ -9,16 +9,16 @@
  */
 
 const crypto = require('crypto');
-const { generateSecureReservationId } = require('./_lib/secure-id');
-const { supabaseAdmin, getAllTables, getUpcomingReservations } = require('./_lib/supabase');
-const { verifyAuth } = require('./_lib/auth');
-const { setInternalCors, handlePreflight } = require('./_lib/cors');
-const { createSecureLogger } = require('./_lib/secure-logger');
-const { initSentry, captureException } = require('./_lib/sentry');
-const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
-const { validateEmail } = require('./_lib/validation');
-const { enrichRestaurant } = require('./_lib/enrich-restaurant');
-const { derivePersonalityFromScrape } = require('./_lib/vibe-to-persona-preset');
+const { generateSecureReservationId } = require('../_lib/secure-id');
+const { supabaseAdmin, getAllTables, getUpcomingReservations } = require('../_lib/supabase');
+const { verifyAuth } = require('../_lib/auth');
+const { setInternalCors, handlePreflight } = require('../_lib/cors');
+const { createSecureLogger } = require('../_lib/secure-logger');
+const { initSentry, captureException } = require('../_lib/sentry');
+const { checkAndApplyRateLimit } = require('../_lib/rate-limit');
+const { validateEmail } = require('../_lib/validation');
+const { enrichRestaurant } = require('../_lib/enrich-restaurant');
+const { derivePersonalityFromScrape } = require('../_lib/vibe-to-persona-preset');
 const { Resend } = require('resend');
 
 // HTML-escape helper — prevents XSS when interpolating user data into email HTML
