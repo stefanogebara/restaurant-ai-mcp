@@ -6,15 +6,22 @@ import { sentryVitePlugin } from '@sentry/vite-plugin'
 export default defineConfig({
   plugins: [
     react(),
-    sentryVitePlugin({
+    // Only run Sentry's source-map upload when the auth token is set
+    // (i.e. real prod deploys). Locally + on PR previews this skips the
+    // upload step, which previously added 1-2 min to the build.
+    ...(process.env.SENTRY_AUTH_TOKEN ? [sentryVitePlugin({
       org: process.env.SENTRY_ORG || 'seatable',
       project: process.env.SENTRY_PROJECT || 'node-express',
       authToken: process.env.SENTRY_AUTH_TOKEN,
       telemetry: false,
-    }),
+    })] : []),
   ],
   build: {
-    sourcemap: true,
+    // 'hidden' generates maps for Sentry upload but does NOT inject the
+    // //# sourceMappingURL comment, so browsers don't download .js.map
+    // files. Cuts shipped dist size roughly in half and prevents the
+    // maps from showing up in the network panel of every visitor.
+    sourcemap: 'hidden',
     rollupOptions: {
       output: {
         manualChunks: {

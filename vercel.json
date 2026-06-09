@@ -1,5 +1,5 @@
 {
-  "installCommand": "npm install && cd client && npm install --legacy-peer-deps",
+  "installCommand": "npm ci --prefer-offline --no-audit && cd client && npm ci --legacy-peer-deps --prefer-offline --no-audit",
   "buildCommand": "cd client && npx vite build && node cache-bust-sw.cjs",
   "outputDirectory": "client/dist",
   "functions": {
