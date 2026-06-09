@@ -38,8 +38,9 @@ describe('SkeletonStatCard', () => {
     const { container } = render(<SkeletonStatCard />);
     const card = container.firstChild as HTMLElement;
     expect(card).toHaveAttribute('aria-hidden', 'true');
-    expect(card.className).toContain('bg-white');
-    expect(card.className).toContain('rounded-2xl');
+    // Warm Glass rebrand: the inline bg-white/rounded-2xl classes became the
+    // .glass-card utility (white bg + 16px radius live in index.css now).
+    expect(card.className).toContain('glass-card');
   });
 
   it('contains skeleton elements inside', () => {
@@ -70,8 +71,8 @@ describe('SkeletonTableCard', () => {
     const { container } = render(<SkeletonTableCard />);
     const card = container.firstChild as HTMLElement;
     expect(card).toHaveAttribute('aria-hidden', 'true');
-    expect(card.className).toContain('bg-white');
-    expect(card.className).toContain('rounded-2xl');
+    // Warm Glass rebrand — see SkeletonStatCard note above.
+    expect(card.className).toContain('glass-card');
   });
 
   it('contains multiple skeleton placeholders', () => {

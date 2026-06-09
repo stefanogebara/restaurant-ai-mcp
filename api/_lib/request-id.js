@@ -5,14 +5,17 @@ const REQUEST_ID_KEY = Symbol('requestId');
 
 function addRequestId(req, res) {
   if (req[REQUEST_ID_KEY]) return req[REQUEST_ID_KEY];
-  const id = req.headers['x-request-id'] || randomUUID();
+  // Optional-chain: real requests always carry headers, but unit-test mocks
+  // frequently construct bare { method, body } objects — don't make every
+  // endpoint test responsible for knowing this lib reads headers.
+  const id = req.headers?.['x-request-id'] || randomUUID();
   req[REQUEST_ID_KEY] = id;
-  res.setHeader('x-request-id', id);
+  res.setHeader?.('x-request-id', id);
   return id;
 }
 
 function getRequestId(req) {
-  return req[REQUEST_ID_KEY] || req.headers['x-request-id'] || null;
+  return req[REQUEST_ID_KEY] || req.headers?.['x-request-id'] || null;
 }
 
 module.exports = { addRequestId, getRequestId };

@@ -44,6 +44,18 @@ vi.mock('../../services/api', () => ({
     get: vi.fn().mockResolvedValue({ data: { history: [] } }),
     post: vi.fn().mockResolvedValue({ data: { reply: 'test' } }),
   },
+  // The 2026-06 streaming rewrite sends via authFetch + SSE instead of
+  // api.post. A minimal OK response with an empty streaming body keeps the
+  // send path harmless in tests that don't exercise streaming.
+  authFetch: vi.fn().mockResolvedValue({
+    ok: true,
+    body: new ReadableStream({ start(c) { c.close(); } }),
+    json: () => Promise.resolve({}),
+  }),
+}));
+
+vi.mock('../../contexts/ToastContext', () => ({
+  useToast: () => ({ success: vi.fn(), error: vi.fn(), info: vi.fn() }),
 }));
 
 function renderPage() {

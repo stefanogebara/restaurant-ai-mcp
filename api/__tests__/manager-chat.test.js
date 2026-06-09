@@ -78,11 +78,38 @@ describe('POST /api/manager-chat', () => {
     expect(res.status).toHaveBeenCalledWith(400);
   });
 
-  it('returns 405 for non-POST/GET', async () => {
-    const req = { method: 'DELETE', headers: {}, body: {} };
+  it('returns 405 for unsupported methods', async () => {
+    // DELETE became a real route (clear chat history / "Nova conversa")
+    // in the 2026-06 Manager AI audit — PATCH is the unsupported example now.
+    const req = { method: 'PATCH', headers: {}, body: {} };
     const res = mockRes();
     await managerChat(req, res);
     expect(res.status).toHaveBeenCalledWith(405);
+  });
+
+  it('DELETE clears app-channel history for the authenticated restaurant', async () => {
+    // delete().eq().eq() chain — awaiting a non-thenable resolves to the
+    // object itself, so a chain without an `error` prop is the success path.
+    const chain = { delete: jest.fn(), eq: jest.fn() };
+    chain.delete.mockReturnValue(chain);
+    chain.eq.mockReturnValue(chain);
+    mockSupabaseAdmin.from.mockReturnValue(chain);
+
+    const req = { method: 'DELETE', headers: { authorization: 'Bearer tok' }, body: {} };
+    const res = mockRes();
+    await managerChat(req, res);
+    expect(chain.delete).toHaveBeenCalled();
+    expect(chain.eq).toHaveBeenCalledWith('channel', 'app');
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
+  });
+
+  it('DELETE returns 401 without a valid JWT', async () => {
+    const { verifyJWT } = require('../_lib/auth');
+    verifyJWT.mockResolvedValueOnce(null);
+    const req = { method: 'DELETE', headers: { authorization: 'Bearer bad' }, body: {} };
+    const res = mockRes();
+    await managerChat(req, res);
+    expect(res.status).toHaveBeenCalledWith(401);
   });
 
   it('returns 401 when JWT is invalid', async () => {

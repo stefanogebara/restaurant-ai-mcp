@@ -388,7 +388,15 @@ describe('create-deposit-intent', () => {
     });
 
     const schemaChain = { from: jest.fn() };
-    mockSupabaseAdmin = { schema: jest.fn().mockReturnValue(schemaChain) };
+    mockSupabaseAdmin = {
+      schema: jest.fn().mockReturnValue(schemaChain),
+      // Top-level .from() serves the fire-and-forget routing-analytics insert
+      // (stripe_deposit_routing_events, added in bf2a2adc). Without it the
+      // handler threw TypeError before responding → 500 instead of 200.
+      from: jest.fn().mockReturnValue({
+        insert: jest.fn().mockResolvedValue({ error: null }),
+      }),
+    };
     mockSupabaseAdmin._schemaChain = schemaChain;
 
     jest.mock('stripe', () => {
