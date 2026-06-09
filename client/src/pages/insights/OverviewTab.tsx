@@ -6,19 +6,30 @@ import WeeklyForecastCard from '../../components/insights/WeeklyForecastCard';
 import CampaignManager from '../../components/dashboard/CampaignManager';
 import StrategyMetricsWidget from '../../components/dashboard/StrategyMetricsWidget';
 import { useHostDashboard } from '../../hooks/useHostDashboard';
+import { useCustomerList } from '../../hooks/useCustomers';
 
 export default function OverviewTab() {
   const { t } = useTranslation();
   const { data: dashboard, isLoading } = useHostDashboard();
+  // Lifetime signal for the brand-new detector below. limit:1 keeps the
+  // payload tiny — we only need `total`.
+  const { data: customerProbe, isLoading: customersLoading } = useCustomerList({ limit: 1, offset: 0 });
 
   // Brand-new restaurant detector: zero reservations + zero active parties
   // means every insight card below would render its own "Nenhuma X" empty box.
   // Five identical empty boxes read as "broken" to a new owner — show a single
   // page-level explainer instead until there's data to display.
-  const isBrandNew = !isLoading && !!dashboard
+  //
+  // E2E sweep 2026-06-09 caught a false positive: an ESTABLISHED restaurant
+  // (18 CRM customers) on a quiet night with zero upcoming reservations was
+  // shown "Seus insights aparecem após as primeiras reservas" — wrong and
+  // mildly insulting. "Right now" signals aren't enough; also require a
+  // zero LIFETIME signal (no customers ever) before claiming brand-new.
+  const isBrandNew = !isLoading && !customersLoading && !!dashboard
     && (dashboard.upcoming_reservations?.length ?? 0) === 0
     && (dashboard.active_parties?.length ?? 0) === 0
-    && (dashboard.summary?.upcoming_reservations ?? 0) === 0;
+    && (dashboard.summary?.upcoming_reservations ?? 0) === 0
+    && (customerProbe?.total ?? 0) === 0;
 
   if (isBrandNew) {
     return (
