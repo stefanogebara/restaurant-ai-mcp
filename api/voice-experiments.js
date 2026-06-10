@@ -10,7 +10,7 @@ const {
   deployTrafficSplit,
   deleteBranch,
   getBranchConversationCount,
-} = require('./services/elevenlabsAgentService');
+} = require('./_services/elevenlabsAgentService');
 
 const logger = createSecureLogger('voice-experiments');
 

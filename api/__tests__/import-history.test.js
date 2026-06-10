@@ -21,7 +21,7 @@ const { EventEmitter } = require('events');
 const Busboy = require('busboy');
 const { verifyJWT } = require('../_lib/auth');
 const { supabaseAdmin } = require('../_lib/supabase');
-const { writeMemory } = require('../services/managerMemory');
+const { writeMemory } = require('../_services/managerMemory');
 const handler = require('../import-history');
 
 /**

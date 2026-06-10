@@ -11,7 +11,7 @@ const {
   checkReservationLimit,
   getUpgradeMessage,
   getPlanFromPriceId,
-} = require('../services/subscription-limits');
+} = require('../_services/subscription-limits');
 
 describe('PLAN_LIMITS structure', () => {
   test('free plan exists with correct reservation limit', () => {

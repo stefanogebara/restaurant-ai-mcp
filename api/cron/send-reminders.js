@@ -13,7 +13,7 @@ const { createSecureLogger } = require('../_lib/secure-logger');
 const { initSentry, captureMessage } = require('../_lib/sentry');
 const { logCronRun } = require('../_lib/cron-tracker');
 const { getLocalDate } = require('../_lib/timezone');
-const { sendReminderVoiceNote } = require('../services/whatsapp/voice-note-trigger');
+const { sendReminderVoiceNote } = require('../_services/whatsapp/voice-note-trigger');
 const { isCronEnabled } = require('../_lib/cron-config');
 const { bearerEquals } = require('../_lib/secure-compare');
 initSentry();

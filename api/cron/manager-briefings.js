@@ -2,10 +2,10 @@ const { supabaseAdmin } = require('../_lib/supabase');
 const { runManagerAgent } = require('../_lib/manager-agent');
 const { sendBriefing, tryLogBriefingSent } = require('../_lib/briefing-sender');
 const { createSecureLogger } = require('../_lib/secure-logger');
-const { getVIPsForToday } = require('../services/restaurantSnapshot');
+const { getVIPsForToday } = require('../_services/restaurantSnapshot');
 const { logCronRun } = require('../_lib/cron-tracker');
 const { isWhatsAppConfigured, sendWhatsAppImageMessage } = require('../_lib/whatsapp-sender');
-const { buildWeeklyReservationsChart, buildNoShowChart } = require('../services/chartService');
+const { buildWeeklyReservationsChart, buildNoShowChart } = require('../_services/chartService');
 
 const logger = createSecureLogger('manager-briefings');
 

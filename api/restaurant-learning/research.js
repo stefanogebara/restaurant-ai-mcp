@@ -12,8 +12,8 @@ const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { verifyAuth } = require('../_lib/auth');
 const { checkAndApplyRateLimit } = require('../_lib/rate-limit');
-const { isUrlSafe } = require('../services/restaurantIntelligence');
-const { startOrResumeInterview } = require('../services/learningInterview');
+const { isUrlSafe } = require('../_services/restaurantIntelligence');
+const { startOrResumeInterview } = require('../_services/learningInterview');
 const crypto = require('crypto');
 
 const logger = createSecureLogger('RestaurantResearch');

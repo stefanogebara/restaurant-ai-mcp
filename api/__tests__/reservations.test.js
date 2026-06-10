@@ -642,7 +642,7 @@ describe('Subscription limits', () => {
 // ---------------------------------------------------------------------------
 describe('ML prediction - high risk intervention', () => {
   test('triggers intervention creation for high-risk reservations', async () => {
-    const { calculateRiskScore, getRecommendedIntervention } = require('../services/mlRiskScoring');
+    const { calculateRiskScore, getRecommendedIntervention } = require('../_services/mlRiskScoring');
 
     calculateRiskScore.mockResolvedValueOnce({
       riskScore: 80,
@@ -679,7 +679,7 @@ describe('ML prediction - high risk intervention', () => {
   });
 
   test('handles medium risk (maps to high for intervention type)', async () => {
-    const { calculateRiskScore, getRecommendedIntervention } = require('../services/mlRiskScoring');
+    const { calculateRiskScore, getRecommendedIntervention } = require('../_services/mlRiskScoring');
 
     calculateRiskScore.mockResolvedValueOnce({
       riskScore: 45,
@@ -713,7 +713,7 @@ describe('ML prediction - high risk intervention', () => {
 // ---------------------------------------------------------------------------
 describe('Guest memory creation', () => {
   test('creates memory entries for booking and special_requests', async () => {
-    const { createMemory } = require('../services/guestMemory');
+    const { createMemory } = require('../_services/guestMemory');
 
     const { req, res } = mockReqRes({
       action: 'create',

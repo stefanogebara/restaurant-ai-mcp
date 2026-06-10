@@ -10,7 +10,7 @@ function getPdfParse() {
   return pdfParse;
 }
 const { verifyJWT } = require('./_lib/auth');
-const { writeMemory } = require('./services/managerMemory');
+const { writeMemory } = require('./_services/managerMemory');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');

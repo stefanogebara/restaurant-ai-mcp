@@ -12,8 +12,8 @@ const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { verifyAuth } = require('../_lib/auth');
 const { checkAndApplyRateLimit } = require('../_lib/rate-limit');
-const { generatePersona } = require('../services/personaGenerator');
-const { refreshVoiceAgentPrompt } = require('../services/voiceAgentService');
+const { generatePersona } = require('../_services/personaGenerator');
+const { refreshVoiceAgentPrompt } = require('../_services/voiceAgentService');
 
 const logger = createSecureLogger('GeneratePersona');
 

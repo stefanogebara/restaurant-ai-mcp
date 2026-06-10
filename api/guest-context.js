@@ -11,7 +11,7 @@
 const { verifyAuth } = require('./_lib/auth');
 const { setWebhookCors, handlePreflight } = require('./_lib/cors');
 const { createSecureLogger } = require('./_lib/secure-logger');
-const { buildGuestContext, getRecentMemories } = require('./services/guestMemory');
+const { buildGuestContext, getRecentMemories } = require('./_services/guestMemory');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { inlineCheckSubscription } = require('./_lib/subscription-middleware');
 

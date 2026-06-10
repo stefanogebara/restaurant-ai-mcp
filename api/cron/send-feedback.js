@@ -7,7 +7,7 @@
  */
 
 const { createSecureLogger } = require('../_lib/secure-logger');
-const { sendPendingFeedback, expireOldFeedback } = require('../services/feedbackService');
+const { sendPendingFeedback, expireOldFeedback } = require('../_services/feedbackService');
 const { logCronRun } = require('../_lib/cron-tracker');
 const { isCronEnabled } = require('../_lib/cron-config');
 const { bearerEquals } = require('../_lib/secure-compare');

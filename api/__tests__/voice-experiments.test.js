@@ -26,7 +26,7 @@ const {
   deployTrafficSplit,
   deleteBranch,
   getBranchConversationCount,
-} = require('../services/elevenlabsAgentService');
+} = require('../_services/elevenlabsAgentService');
 const nodeFetch = require('node-fetch');
 
 function makeChain(data) {

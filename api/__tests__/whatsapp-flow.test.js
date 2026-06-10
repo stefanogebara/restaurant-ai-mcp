@@ -447,7 +447,7 @@ describe('WhatsApp conversation flows', () => {
       mockGetOrCreateSession.mockResolvedValue(session);
       mockGetSessionByPhone.mockResolvedValue(session);
 
-      const { handleOptOut } = require('../services/campaignService');
+      const { handleOptOut } = require('../_services/campaignService');
 
       const body = buildMetaBody(CUSTOMER_PHONE, 'PARAR');
       const req = mockReq(body);
@@ -477,7 +477,7 @@ describe('WhatsApp conversation flows', () => {
       mockGetOrCreateSession.mockResolvedValue(managerSession);
       mockGetSessionByPhone.mockResolvedValue(managerSession);
 
-      const { sendWeeklyReportViaWhatsApp } = require('../services/pdfReportService');
+      const { sendWeeklyReportViaWhatsApp } = require('../_services/pdfReportService');
 
       const body = buildMetaBody(MANAGER_PHONE, 'RELATORIO');
       const req = mockReq(body);

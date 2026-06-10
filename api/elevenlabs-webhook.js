@@ -18,7 +18,7 @@
 
 const crypto = require('crypto');
 const { getRestaurantByPhone, getRestaurantById, getRestaurantByAgentId } = require('./_lib/restaurant-loader');
-const conversationLogger = require('./services/conversationLogger');
+const conversationLogger = require('./_services/conversationLogger');
 const { setWebhookCors, handlePreflight } = require('./_lib/cors');
 const { trackUsage } = require('./_lib/usage-tracking');
 
@@ -26,7 +26,7 @@ const { trackUsage } = require('./_lib/usage-tracking');
 const { supabaseAdmin } = require('./_lib/supabase');
 const { getSessionByPhone } = require('./_lib/whatsapp-sessions');
 const { createSecureLogger } = require('./_lib/secure-logger');
-const { sendConfirmationVoiceNote } = require('./services/whatsapp/voice-note-trigger');
+const { sendConfirmationVoiceNote } = require('./_services/whatsapp/voice-note-trigger');
 
 const logger = createSecureLogger('ElevenLabs');
 

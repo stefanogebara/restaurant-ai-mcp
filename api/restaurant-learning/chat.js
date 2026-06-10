@@ -12,7 +12,7 @@ const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { verifyAuth } = require('../_lib/auth');
 const { checkAndApplyRateLimit } = require('../_lib/rate-limit');
-const { processInterviewMessage, INTERVIEW_TOPICS } = require('../services/learningInterview');
+const { processInterviewMessage, INTERVIEW_TOPICS } = require('../_services/learningInterview');
 
 const logger = createSecureLogger('RestaurantChat');
 

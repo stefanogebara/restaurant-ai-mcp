@@ -14,7 +14,7 @@ const { verifyAuth } = require('./_lib/auth');
 const { checkSubscription, requireFeature } = require('./_lib/subscription-middleware');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { setInternalCors } = require('./_lib/cors');
-const { findDuplicates, mergeCustomers } = require('./services/customerMergeService');
+const { findDuplicates, mergeCustomers } = require('./_services/customerMergeService');
 
 const logger = createSecureLogger('Customers');
 

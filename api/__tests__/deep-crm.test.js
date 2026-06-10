@@ -92,7 +92,7 @@ describe('customerMergeService', () => {
       }),
     }));
 
-    ({ findDuplicates, mergeCustomers } = require('../services/customerMergeService'));
+    ({ findDuplicates, mergeCustomers } = require('../_services/customerMergeService'));
   });
 
   describe('findDuplicates', () => {
@@ -175,7 +175,7 @@ describe('customerMergeService', () => {
       }));
       jest.doMock('../../api/_lib/secure-logger', () => ({ createSecureLogger: () => ({ info: jest.fn(), error: jest.fn(), warn: jest.fn() }) }));
 
-      const { mergeCustomers: mc } = require('../services/customerMergeService');
+      const { mergeCustomers: mc } = require('../_services/customerMergeService');
       await expect(mc('rest-1', 'c1', 'c2')).rejects.toThrow('Keep customer not found');
     });
 
@@ -207,7 +207,7 @@ describe('customerMergeService', () => {
       }));
       jest.doMock('../../api/_lib/secure-logger', () => ({ createSecureLogger: () => ({ info: jest.fn(), error: jest.fn(), warn: jest.fn() }) }));
 
-      const { mergeCustomers: mc } = require('../services/customerMergeService');
+      const { mergeCustomers: mc } = require('../_services/customerMergeService');
       await expect(mc('rest-1', 'c1', 'c2')).rejects.toThrow('Merge customer not found');
     });
 
@@ -334,7 +334,7 @@ describe('customerMergeService', () => {
         }),
       }));
 
-      const { mergeCustomers: mergeLocal } = require('../services/customerMergeService');
+      const { mergeCustomers: mergeLocal } = require('../_services/customerMergeService');
       const result = await mergeLocal('rest-1', 'c1', 'c2');
 
       expect(result.total_visits).toBe(8);
@@ -582,7 +582,7 @@ describe('calculateTier — auto VIP classification', () => {
         info: jest.fn(), error: jest.fn(), warn: jest.fn(),
       }),
     }));
-    ({ calculateTier } = require('../services/ltvCalculator'));
+    ({ calculateTier } = require('../_services/ltvCalculator'));
   });
 
   it('returns "new" for 1 visit', () => {

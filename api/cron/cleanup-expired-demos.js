@@ -160,7 +160,7 @@ module.exports = async (req, res) => {
 
       // Step 2: Delete ElevenLabs agent (before DB row — prevents orphaned paid agents)
       try {
-        const { deleteAgent } = require('../services/elevenlabsAgentService');
+        const { deleteAgent } = require('../_services/elevenlabsAgentService');
         const agentResult = await deleteAgent(demo.id);
         if (!agentResult.success) {
           logger.warn(`Failed to delete ElevenLabs agent for demo ${demo.id} (non-fatal): ${agentResult.error}`);

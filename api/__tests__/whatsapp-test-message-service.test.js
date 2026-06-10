@@ -62,7 +62,7 @@ const {
   getRecentDuplicateWhatsAppTestMessage,
   createWhatsAppTestMessage,
   updateWhatsAppTestMessageStatus,
-} = require('../services/whatsappTestMessageService');
+} = require('../_services/whatsappTestMessageService');
 
 beforeEach(() => {
   maybeSingleQueue.length = 0;

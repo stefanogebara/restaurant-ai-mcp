@@ -77,6 +77,45 @@ describe('normalizeRow', () => {
     const norm = normalizeRow(row);
     expect(norm.customer_phone).toBe('+353861234567');
   });
+
+  // 2026-06-10 audit: BR/ES owners export CSVs from local POS systems with
+  // localized headers — every row was silently skipped and the import failed
+  // with "No valid rows found".
+  test('maps Portuguese headers (telefone, nome, visitas)', () => {
+    const row = { nome: 'Maria Silva', telefone: '+5511999990001', visitas: '5', ultima_visita: '2025-12-12', gasto_medio: '180' };
+    const norm = normalizeRow(row);
+    expect(norm.customer_name).toBe('Maria Silva');
+    expect(norm.customer_phone).toBe('+5511999990001');
+    expect(norm.visit_count).toBe(5);
+    expect(norm.last_visit_date).toBe('2025-12-12');
+    expect(norm.avg_spend).toBe(180);
+  });
+
+  test('maps Spanish headers (teléfono with accent, nombre, correo)', () => {
+    const row = { nombre: 'Juan', 'teléfono': '+5215512345678', correo: 'juan@test.mx', visitas: '2' };
+    const norm = normalizeRow(row);
+    expect(norm.customer_name).toBe('Juan');
+    expect(norm.customer_phone).toBe('+5215512345678');
+    expect(norm.customer_email).toBe('juan@test.mx');
+  });
+
+  test('matches headers case-insensitively and with accents/spaces', () => {
+    const row = { 'Nome': 'Ana', 'Telefone': '+5511988887777', 'Última Visita': '2026-01-15' };
+    const norm = normalizeRow(row);
+    expect(norm.customer_name).toBe('Ana');
+    expect(norm.customer_phone).toBe('+5511988887777');
+    expect(norm.last_visit_date).toBe('2026-01-15');
+  });
+
+  test('maps celular and whatsapp as phone aliases', () => {
+    expect(normalizeRow({ celular: '+5511977776666' }).customer_phone).toBe('+5511977776666');
+    expect(normalizeRow({ whatsapp: '+5511966665555' }).customer_phone).toBe('+5511966665555');
+  });
+
+  test('maps e-mail (hyphenated) as email alias', () => {
+    const norm = normalizeRow({ telefone: '+5511955554444', 'E-mail': 'x@test.com' });
+    expect(norm.customer_email).toBe('x@test.com');
+  });
 });
 
 describe('computeTier', () => {

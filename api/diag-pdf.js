@@ -4,7 +4,7 @@
  */
 'use strict';
 
-const { generateWeeklyReportHTML, generateWeeklyReportPDF, uploadReportToStorage, sendWeeklyReportViaWhatsApp } = require('./services/pdfReportService');
+const { generateWeeklyReportHTML, generateWeeklyReportPDF, uploadReportToStorage, sendWeeklyReportViaWhatsApp } = require('./_services/pdfReportService');
 const { sendWhatsAppDocumentMessage } = require('./_lib/whatsapp-sender');
 
 module.exports = async (req, res) => {

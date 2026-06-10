@@ -11,7 +11,7 @@
 
 const crypto = require('crypto');
 const { verifyAuth } = require('./_lib/auth');
-const { signPayload } = require('./services/webhookDispatcher');
+const { signPayload } = require('./_services/webhookDispatcher');
 const { supabaseAdmin } = require('./_lib/supabase');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const { checkAndApplyRateLimit, rejectOversizedBody } = require('./_lib/rate-limit');

@@ -2,7 +2,7 @@
 
 const { verifyJWT } = require('./_lib/auth');
 const { supabaseAdmin } = require('./_lib/supabase');
-const { getPlanLimits } = require('./services/subscription-limits');
+const { getPlanLimits } = require('./_services/subscription-limits');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 

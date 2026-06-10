@@ -208,7 +208,7 @@ Format as numbered list. Be specific and data-driven. Under 250 words total.`;
 
   // Store suggestion in manager memory so it appears in briefings
   try {
-    const { writeMemory } = require('./services/managerMemory');
+    const { writeMemory } = require('./_services/managerMemory');
     if (writeMemory) {
       await writeMemory(restaurantId, 'insight', 'strategy',
         `[AI STRATEGY SUGGESTION]\n${suggestions}`, 'ai_strategy', 6);

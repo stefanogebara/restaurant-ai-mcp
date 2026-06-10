@@ -6,7 +6,7 @@ const {
 
 const { verifyAuth } = require('./_lib/auth');
 const { checkSubscription } = require('./_lib/subscription-middleware');
-const { hasFeature } = require('./services/subscription-limits');
+const { hasFeature } = require('./_services/subscription-limits');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');

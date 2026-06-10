@@ -9,7 +9,7 @@ jest.mock('../_lib/secure-logger', () => ({
   createSecureLogger: () => ({ error: jest.fn(), info: jest.fn(), warn: jest.fn() }),
 }));
 
-const { getRestaurantSnapshot } = require('../services/restaurantSnapshot');
+const { getRestaurantSnapshot } = require('../_services/restaurantSnapshot');
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -190,7 +190,7 @@ it('marks is_regular false when reservation has no customer_phone', async () => 
 });
 
 it('getVIPsForToday returns regulars booked for today', async () => {
-  const { getVIPsForToday } = require('../services/restaurantSnapshot');
+  const { getVIPsForToday } = require('../_services/restaurantSnapshot');
 
   let fromCallCount = 0;
   mockFrom.mockImplementation(() => {

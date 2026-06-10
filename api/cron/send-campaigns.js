@@ -7,7 +7,7 @@
  */
 
 const { createSecureLogger } = require('../_lib/secure-logger');
-const { processActiveCampaigns } = require('../services/campaignService');
+const { processActiveCampaigns } = require('../_services/campaignService');
 const { logCronRun } = require('../_lib/cron-tracker');
 const { isCronEnabled } = require('../_lib/cron-config');
 const { bearerEquals } = require('../_lib/secure-compare');

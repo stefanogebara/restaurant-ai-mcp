@@ -25,7 +25,7 @@ const {
   getLatestWhatsAppTestMessage,
   getRecentDuplicateWhatsAppTestMessage,
   createWhatsAppTestMessage,
-} = require('./services/whatsappTestMessageService');
+} = require('./_services/whatsappTestMessageService');
 initSentry();
 
 const logger = createSecureLogger('WhatsAppSettings');

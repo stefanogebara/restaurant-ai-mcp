@@ -88,7 +88,7 @@ async function handleRefreshPrompt(req, res) {
       });
     }
 
-    const { refreshVoiceAgentPrompt } = require('./services/voiceAgentService');
+    const { refreshVoiceAgentPrompt } = require('./_services/voiceAgentService');
     const result = await refreshVoiceAgentPrompt(req.user?.restaurant_id);
     return res.status(200).json({ success: true, ...result });
   } catch (error) {

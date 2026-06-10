@@ -7,10 +7,10 @@ const { initSentry, captureException } = require('./_lib/sentry');
 initSentry();
 
 // Dashboard action handlers (split into focused modules)
-const { handleDashboard } = require('./services/dashboard/stats');
-const { handleCheckIn, handleCheckWalkIn, handleSeatParty, handleCompleteService } = require('./services/dashboard/party-actions');
-const { handleMarkTableClean, handleUpdateTableStatus } = require('./services/dashboard/table-actions');
-const { handleUpdateReservation, handleCancelReservation } = require('./services/dashboard/reservation-actions');
+const { handleDashboard } = require('./_services/dashboard/stats');
+const { handleCheckIn, handleCheckWalkIn, handleSeatParty, handleCompleteService } = require('./_services/dashboard/party-actions');
+const { handleMarkTableClean, handleUpdateTableStatus } = require('./_services/dashboard/table-actions');
+const { handleUpdateReservation, handleCancelReservation } = require('./_services/dashboard/reservation-actions');
 const {
   handleUpdateTablePosition,
   handleUpdateTableProperties,
@@ -19,7 +19,7 @@ const {
   handleDeleteTable,
   handleCreateTable,
   handleAutoAssignShapes
-} = require('./services/dashboard/floor-plan-actions');
+} = require('./_services/dashboard/floor-plan-actions');
 
 const logger = createSecureLogger('HostDashboard');
 

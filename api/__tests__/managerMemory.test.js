@@ -16,7 +16,7 @@ jest.mock('openai', () => ({
   })),
 }));
 
-const { writeMemory, retrieveRelevantMemories } = require('../services/managerMemory');
+const { writeMemory, retrieveRelevantMemories } = require('../_services/managerMemory');
 
 const mockSupabaseAdmin = require('../_lib/supabase').supabaseAdmin;
 const mockOpenAI = { embeddings: { create: mockEmbeddingsCreate } };

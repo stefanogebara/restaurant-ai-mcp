@@ -22,7 +22,7 @@ const { twilioToOpenAI, openAIToTwilio } = require('./audio-converter');
 const { createSession, getSession, destroySession, getActiveSessions } = require('./session-manager');
 const { executeToolCall } = require('./tool-handler');
 const OpenAIRealtimeBackend = require('./backends/openai-realtime');
-const { buildGuestContext } = require('../services/guestMemory');
+const { buildGuestContext } = require('../_services/guestMemory');
 
 const logger = createSecureLogger('VoiceWSServer');
 

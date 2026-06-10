@@ -31,7 +31,7 @@ jest.mock('../services/customerDNA', () => ({
   listCustomerProfiles: (...a) => mockListCustomerProfiles(...a),
 }));
 
-const { compileWikiForRestaurant, getWikiPages } = require('../services/wikiCompiler');
+const { compileWikiForRestaurant, getWikiPages } = require('../_services/wikiCompiler');
 
 const RESTAURANT_ID = 'rest-abc-123';
 

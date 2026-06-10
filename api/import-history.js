@@ -3,7 +3,7 @@
 const Busboy = require('busboy');
 const { verifyJWT } = require('./_lib/auth');
 const { supabaseAdmin } = require('./_lib/supabase');
-const { writeMemory } = require('./services/managerMemory');
+const { writeMemory } = require('./_services/managerMemory');
 const { parseCSVBuffer, normalizeRow, buildLTVRecord, buildServiceRecord } = require('./_lib/importPipeline');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { createSecureLogger } = require('./_lib/secure-logger');
@@ -113,7 +113,16 @@ module.exports = async (req, res) => {
     }
 
     if (ltvRecords.length === 0) {
-      return res.status(400).json({ error: 'No valid rows found — ensure CSV has a phone/customer_phone column' });
+      // Tell the user WHICH columns we saw so they can fix the header instead
+      // of guessing — the bare "No valid rows found" was the top abandonment
+      // point of this step (2026-06-10 audit). error_code lets the frontend
+      // render a localized message.
+      const foundColumns = rawRows.length > 0 ? Object.keys(rawRows[0]).slice(0, 10) : [];
+      return res.status(400).json({
+        error: `No valid rows found. Columns in your file: ${foundColumns.join(', ') || '(none)'}. We need at least a phone column (accepted names: phone, telefone, celular, whatsapp).`,
+        error_code: 'no_phone_column',
+        found_columns: foundColumns,
+      });
     }
 
     // Batch upsert customer_ltv records

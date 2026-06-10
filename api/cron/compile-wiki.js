@@ -14,7 +14,7 @@
 const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { logCronRun } = require('../_lib/cron-tracker');
-const { compileWikiForRestaurant } = require('../services/wikiCompiler');
+const { compileWikiForRestaurant } = require('../_services/wikiCompiler');
 
 const logger = createSecureLogger('compile-wiki');
 

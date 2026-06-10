@@ -168,7 +168,7 @@ jest.useFakeTimers();
 
 const handler = require('../whatsapp-webhook');
 const { isMessageDuplicate, rejectOversizedBody } = require('../_lib/rate-limit');
-const { updateWhatsAppTestMessageStatus } = require('../services/whatsappTestMessageService');
+const { updateWhatsAppTestMessageStatus } = require('../_services/whatsappTestMessageService');
 const {
   getOrCreateSession,
   getSessionByPhone,

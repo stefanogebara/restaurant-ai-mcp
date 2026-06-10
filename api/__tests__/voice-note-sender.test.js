@@ -46,8 +46,8 @@ jest.mock('../_lib/secure-logger', () => ({
 const mockFetch = jest.fn();
 global.fetch = mockFetch;
 
-const { sendVoiceNote } = require('../services/whatsapp/voice-note-sender');
-const { sendConfirmationVoiceNote, sendReminderVoiceNote } = require('../services/whatsapp/voice-note-trigger');
+const { sendVoiceNote } = require('../_services/whatsapp/voice-note-sender');
+const { sendConfirmationVoiceNote, sendReminderVoiceNote } = require('../_services/whatsapp/voice-note-trigger');
 
 // ============================================================
 // Setup

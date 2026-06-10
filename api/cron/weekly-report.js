@@ -10,7 +10,7 @@
 
 const { supabaseAdmin } = require('../_lib/supabase');
 const { logCronRun } = require('../_lib/cron-tracker');
-const { sendWeeklyReportViaWhatsApp } = require('../services/pdfReportService');
+const { sendWeeklyReportViaWhatsApp } = require('../_services/pdfReportService');
 const { createSecureLogger } = require('../_lib/secure-logger');
 
 const logger = createSecureLogger('WeeklyReportCron');

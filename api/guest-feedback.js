@@ -13,7 +13,7 @@ const { verifyAuth } = require('./_lib/auth');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const { createSecureLogger } = require('./_lib/secure-logger');
-const { getFeedbackStats } = require('./services/feedbackService');
+const { getFeedbackStats } = require('./_services/feedbackService');
 
 const logger = createSecureLogger('GuestFeedbackAPI');
 

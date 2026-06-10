@@ -11,7 +11,7 @@ const {
   transcribeVoiceMessage,
   downloadMedia,
 } = require('../whatsapp-interactions');
-const { sendInteractiveListMessage } = require('../../services/whatsapp/message-sender');
+const { sendInteractiveListMessage } = require('../../_services/whatsapp/message-sender');
 
 const logger = createSecureLogger('MetaAdapter');
 
@@ -160,7 +160,7 @@ class MetaAdapter extends ChannelAdapter {
   }
 
   async sendButtons(to, bodyText, buttons) {
-    const { sendInteractiveButtonMessage } = require('../../services/whatsapp/message-sender');
+    const { sendInteractiveButtonMessage } = require('../../_services/whatsapp/message-sender');
     return sendInteractiveButtonMessage(to, bodyText, buttons);
   }
 

@@ -15,7 +15,7 @@
 const { getAI, AI_MODEL_FAST } = require('../_lib/ai-client');
 const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
-const { createMemory } = require('../services/guestMemory');
+const { createMemory } = require('../_services/guestMemory');
 const { initSentry, captureMessage } = require('../_lib/sentry');
 const { logCronRun } = require('../_lib/cron-tracker');
 const { isCronEnabled } = require('../_lib/cron-config');

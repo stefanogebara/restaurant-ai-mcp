@@ -75,7 +75,7 @@ module.exports = async (req, res) => {
         return res.status(400).json({ error: 'confirm: true is required for delete action' });
       }
 
-      const { deleteAgent } = require('./services/elevenlabsAgentService');
+      const { deleteAgent } = require('./_services/elevenlabsAgentService');
       const result = await deleteAgent(restaurant_id);
 
       if (!result.success) {

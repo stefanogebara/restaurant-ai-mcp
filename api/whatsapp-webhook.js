@@ -19,8 +19,8 @@
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { rejectOversizedBody } = require('./_lib/rate-limit');
 const { setWebhookCors } = require('./_lib/cors');
-const { updateDeliveryStatus } = require('./services/campaignService');
-const { updateWhatsAppTestMessageStatus } = require('./services/whatsappTestMessageService');
+const { updateDeliveryStatus } = require('./_services/campaignService');
+const { updateWhatsAppTestMessageStatus } = require('./_services/whatsappTestMessageService');
 const { MetaAdapter } = require('./_lib/channels/meta-adapter');
 const { processMessage } = require('./_lib/channels/message-processor');
 

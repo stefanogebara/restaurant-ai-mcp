@@ -473,7 +473,7 @@ describe('User management edge cases', () => {
 // ============================================================
 describe('ElevenLabs agent creation', () => {
   test('handles agent creation success via service', async () => {
-    const { createAgent } = require('../services/elevenlabsAgentService');
+    const { createAgent } = require('../_services/elevenlabsAgentService');
     createAgent.mockResolvedValueOnce({
       success: true,
       agent_id: 'agent-elevenlabs-123',
@@ -497,7 +497,7 @@ describe('ElevenLabs agent creation', () => {
   });
 
   test('handles agent creation failure gracefully', async () => {
-    const { createAgent } = require('../services/elevenlabsAgentService');
+    const { createAgent } = require('../_services/elevenlabsAgentService');
     createAgent.mockResolvedValueOnce({
       success: false,
       error: 'ElevenLabs API key not configured',
@@ -510,7 +510,7 @@ describe('ElevenLabs agent creation', () => {
   });
 
   test('handles agent creation exception gracefully', async () => {
-    const { createAgent } = require('../services/elevenlabsAgentService');
+    const { createAgent } = require('../_services/elevenlabsAgentService');
     createAgent.mockRejectedValueOnce(new Error('Network error'));
 
     const { req, res } = mockReqRes(BASE_BODY);
@@ -520,7 +520,7 @@ describe('ElevenLabs agent creation', () => {
   });
 
   test('uses configResult.id as restaurantId (not REST-xxx string)', async () => {
-    const { createAgent } = require('../services/elevenlabsAgentService');
+    const { createAgent } = require('../_services/elevenlabsAgentService');
     const { verifyAuth } = require('../_lib/auth');
 
     // Provide sub (JWT subject) so userId is set and restaurant_config is created

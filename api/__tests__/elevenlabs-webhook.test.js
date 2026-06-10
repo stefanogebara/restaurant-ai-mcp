@@ -918,7 +918,7 @@ describe('Tool handlers (smoke tests)', () => {
 // CREATE RESERVATION — CONFIRMATION SIDE-EFFECTS
 // ===========================================================================
 describe('create_reservation — confirmations', () => {
-  const conversationLogger = require('../services/conversationLogger');
+  const conversationLogger = require('../_services/conversationLogger');
   const { trackUsage } = require('../_lib/usage-tracking');
 
   beforeEach(() => {
@@ -1116,7 +1116,7 @@ describe('Error handling', () => {
 // CONVERSATION LOGGING
 // ===========================================================================
 describe('Conversation logging', () => {
-  const conversationLogger = require('../services/conversationLogger');
+  const conversationLogger = require('../_services/conversationLogger');
 
   test('starts conversation when conversation_id is present', async () => {
     const body = {

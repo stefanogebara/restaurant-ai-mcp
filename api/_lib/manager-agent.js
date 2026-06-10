@@ -6,13 +6,13 @@
  */
 
 const { getAI, AI_MODEL } = require('./ai-client');
-const { retrieveRelevantMemories, writeMemory } = require('../services/managerMemory');
-const { getRestaurantSnapshot } = require('../services/restaurantSnapshot');
+const { retrieveRelevantMemories, writeMemory } = require('../_services/managerMemory');
+const { getRestaurantSnapshot } = require('../_services/restaurantSnapshot');
 const { buildRestaurantIdentitySection } = require('./persona-prompt-builder');
-const { getWikiPages } = require('../services/wikiCompiler');
+const { getWikiPages } = require('../_services/wikiCompiler');
 const { supabaseAdmin } = require('./supabase');
 const { createSecureLogger } = require('./secure-logger');
-const { getPlanLimits } = require('../services/subscription-limits');
+const { getPlanLimits } = require('../_services/subscription-limits');
 const { trackUsage } = require('./usage-tracking');
 const { comparePeriods } = require('./periodCompare');
 const { getLocalDate, getLocalTime } = require('./timezone');

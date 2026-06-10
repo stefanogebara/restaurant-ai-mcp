@@ -5,7 +5,7 @@
  * Goes beyond LTV to understand WHO customers are and WHAT they prefer
  */
 
-const { analyzeCustomerDNA, analyzeAllCustomersDNA, getCustomerDNAProfile, getFullCustomerProfile, listCustomerProfiles } = require('./services/customerDNA');
+const { analyzeCustomerDNA, analyzeAllCustomersDNA, getCustomerDNAProfile, getFullCustomerProfile, listCustomerProfiles } = require('./_services/customerDNA');
 const { verifyAuth } = require('./_lib/auth');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const { checkSubscription, requireFeature } = require('./_lib/subscription-middleware');

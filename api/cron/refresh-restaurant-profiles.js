@@ -10,7 +10,7 @@
 
 const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
-const { regeneratePersona } = require('../services/personaGenerator');
+const { regeneratePersona } = require('../_services/personaGenerator');
 const { initSentry, captureMessage } = require('../_lib/sentry');
 const { logCronRun } = require('../_lib/cron-tracker');
 const { isCronEnabled } = require('../_lib/cron-config');

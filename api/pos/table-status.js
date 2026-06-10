@@ -82,7 +82,7 @@ module.exports = async (req, res) => {
 
     // Dispatch webhook event (fire-and-forget)
     try {
-      const { dispatchEvent } = require('../services/webhookDispatcher');
+      const { dispatchEvent } = require('../_services/webhookDispatcher');
       dispatchEvent(restaurantId, 'table.status_changed', {
         table_number: updated.table_number,
         previous_status: table.status,

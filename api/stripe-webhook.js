@@ -2,7 +2,7 @@ const Stripe = require('stripe');
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 const { createSecureLogger } = require('./_lib/secure-logger');
 const logger = createSecureLogger('StripeWebhook');
-const { getPlanFromPriceId, getPlanLimits } = require('./services/subscription-limits');
+const { getPlanFromPriceId, getPlanLimits } = require('./_services/subscription-limits');
 const {
   createSubscription,
   updateSubscription,

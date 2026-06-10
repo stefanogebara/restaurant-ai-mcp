@@ -20,21 +20,58 @@ function parseCSVBuffer(buf) {
 }
 
 /**
- * Map raw CSV row to canonical fields. Returns null if phone is missing.
+ * Normalize a CSV header for alias lookup: lowercase, strip accents, trim,
+ * collapse spaces/hyphens to underscores ("Ultima Visita" -> "ultima_visita",
+ * "E-mail" -> "e_mail").
+ */
+function normalizeHeaderKey(key) {
+  return String(key || '')
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .trim()
+    .replace(/[\s-]+/g, '_');
+}
+
+// Accepted header aliases per canonical field. PT/ES names included because
+// BR/MX POS exports use localized headers -- before this, every row was
+// silently skipped and the import failed (2026-06-10 audit).
+const HEADER_ALIASES = {
+  phone: ['phone', 'customer_phone', 'phone_number', 'telefone', 'telefono', 'celular', 'whatsapp', 'tel'],
+  name: ['name', 'customer_name', 'nome', 'nombre', 'cliente'],
+  email: ['email', 'customer_email', 'e_mail', 'correo'],
+  visits: ['visits', 'visit_count', 'total_visits', 'visitas'],
+  last_visit: ['last_visit', 'last_visit_date', 'ultima_visita', 'data_ultima_visita'],
+  avg_spend: ['avg_spend', 'average_spend', 'spend', 'gasto_medio', 'gasto_promedio', 'consumo_medio'],
+};
+
+/**
+ * Map raw CSV row to canonical fields. Header matching is case-, accent- and
+ * separator-insensitive. Returns null if phone is missing.
  * @param {Record<string, string>} row
  * @returns {{ customer_name, customer_phone, customer_email, visit_count, last_visit_date, avg_spend } | null}
  */
 function normalizeRow(row) {
-  const phone = (row.phone || row.customer_phone || row.phone_number || '').trim();
+  const normalized = {};
+  for (const [key, value] of Object.entries(row)) {
+    normalized[normalizeHeaderKey(key)] = value;
+  }
+  const pick = (field) => {
+    for (const alias of HEADER_ALIASES[field]) {
+      const v = normalized[alias];
+      if (v !== undefined && v !== null && String(v).trim()) return String(v);
+    }
+    return '';
+  };
+
+  const phone = pick('phone').trim();
   if (!phone) return null;
 
-  const name = (row.name || row.customer_name || '').trim();
-  const email = (row.email || row.customer_email || '').trim() || null;
-  const visitsRaw = row.visits || row.visit_count || row.total_visits || '1';
-  const visit_count = Math.max(1, parseInt(visitsRaw, 10) || 1);
-  const lastVisitRaw = row.last_visit || row.last_visit_date;
-  const last_visit_date = lastVisitRaw && lastVisitRaw.trim() ? lastVisitRaw.trim() : null;
-  const spendRaw = row.avg_spend || row.average_spend || row.spend;
+  const name = pick('name').trim();
+  const email = pick('email').trim() || null;
+  const visit_count = Math.max(1, parseInt(pick('visits') || '1', 10) || 1);
+  const last_visit_date = pick('last_visit').trim() || null;
+  const spendRaw = pick('avg_spend');
   const avg_spend = spendRaw ? parseFloat(spendRaw) || null : null;
 
   return { customer_name: name, customer_phone: phone, customer_email: email, visit_count, last_visit_date, avg_spend };

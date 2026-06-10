@@ -142,7 +142,7 @@ async function recordServiceCompletion({
 
   // -- 4. Webhook dispatch (non-fatal) -------------------------------------
   try {
-    const { dispatchEvent } = require('../../services/webhookDispatcher');
+    const { dispatchEvent } = require('../../_services/webhookDispatcher');
     dispatchEvent(restaurantId, 'service.completed', {
       service_id: serviceId,
       reservation_id: reservationId || null,

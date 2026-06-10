@@ -18,7 +18,7 @@ const {
   createDefaultPricingRules,
   getBasePrice,
   getDemandLevel
-} = require('./services/dynamicPricing');
+} = require('./_services/dynamicPricing');
 
 /**
  * Calculate dynamic price for a reservation

@@ -1,4 +1,4 @@
-const { calculateStaffing, buildForecast } = require('../services/staffingService');
+const { calculateStaffing, buildForecast } = require('../_services/staffingService');
 
 const DEFAULT_ROLES = [
   { name: 'FOH', covers_per_staff: 15 },

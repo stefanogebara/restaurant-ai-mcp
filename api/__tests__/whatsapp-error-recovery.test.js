@@ -114,7 +114,7 @@ jest.mock('../services/surveyReplyHandler', () => ({ handleSurveyReply: jest.fn(
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const { processMessage } = require('../_lib/channels/message-processor');
-const { processWithAI, callChatCompletions } = require('../services/whatsapp/conversation');
+const { processWithAI, callChatCompletions } = require('../_services/whatsapp/conversation');
 
 const RESTAURANT = {
   id: 'rest-abc',

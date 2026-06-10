@@ -12,7 +12,7 @@
 const { verifyAuth } = require('./_lib/auth');
 const { setWebhookCors, handlePreflight } = require('./_lib/cors');
 const { createSecureLogger } = require('./_lib/secure-logger');
-const { createMemory, listMemories, deleteMemory } = require('./services/guestMemory');
+const { createMemory, listMemories, deleteMemory } = require('./_services/guestMemory');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 
 const logger = createSecureLogger('ManagerNotes');

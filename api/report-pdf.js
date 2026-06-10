@@ -19,7 +19,7 @@ const {
   generateWeeklyReportPDF,
   uploadReportToStorage,
   sendWeeklyReportViaWhatsApp,
-} = require('./services/pdfReportService');
+} = require('./_services/pdfReportService');
 
 const logger = createSecureLogger('ReportPdf');
 

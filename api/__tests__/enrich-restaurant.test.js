@@ -28,27 +28,31 @@ jest.mock('../_lib/rate-limit', () => ({
   checkAndApplyRateLimit: jest.fn().mockResolvedValue(false),
 }));
 
-const { enrichRestaurant } = require('../enrich-restaurant');
+// The website fetch goes through the SSRF-safe helper (per-hop private-IP
+// rejection), not global fetch — mock it so tests can drive the HTML body.
+const mockSafeFetchText = jest.fn();
+jest.mock('../_lib/safe-fetch', () => ({
+  safeFetchText: (...args) => mockSafeFetchText(...args),
+}));
 
-// Helper: stub global.fetch with a single HTML body. The website-extraction
-// path calls fetch(url) → reads text(). Each test reassigns this.
-const originalFetch = global.fetch;
+// Helpers were extracted to _lib in c531f237 (demo.js bundling fix); the
+// handler file now only exports the HTTP handler.
+const { enrichRestaurant } = require('../_lib/enrich-restaurant');
+
+// Helper: stub the safe fetch with a single HTML body. Each test reassigns this.
 function stubFetch(html) {
-  global.fetch = jest.fn().mockResolvedValue({
-    ok: true,
-    url: 'https://example.test/',
-    text: () => Promise.resolve(html),
+  mockSafeFetchText.mockResolvedValue({
+    text: html,
+    finalUrl: 'https://example.test/',
+    truncated: false,
   });
 }
 function stubFetchError(error = 'network down') {
-  global.fetch = jest.fn().mockRejectedValue(new Error(error));
+  mockSafeFetchText.mockRejectedValue(new Error(error));
 }
 
 beforeEach(() => {
   jest.clearAllMocks();
-});
-afterAll(() => {
-  global.fetch = originalFetch;
 });
 
 function llmReturns(jsonObj) {

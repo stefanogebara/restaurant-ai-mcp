@@ -13,7 +13,7 @@ const { supabaseAdmin } = require('./_lib/supabase');
 const { verifyAuth } = require('./_lib/auth');
 const { setWebhookCors, handlePreflight } = require('./_lib/cors');
 const { createSecureLogger } = require('./_lib/secure-logger');
-const { importFromDNA } = require('./services/guestMemory');
+const { importFromDNA } = require('./_services/guestMemory');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 
 const logger = createSecureLogger('GuestMemoryImport');

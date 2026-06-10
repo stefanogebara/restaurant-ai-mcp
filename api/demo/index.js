@@ -17,8 +17,6 @@ const { createSecureLogger } = require('../_lib/secure-logger');
 const { initSentry, captureException } = require('../_lib/sentry');
 const { checkAndApplyRateLimit } = require('../_lib/rate-limit');
 const { validateEmail } = require('../_lib/validation');
-const { enrichRestaurant } = require('../_lib/enrich-restaurant');
-const { derivePersonalityFromScrape } = require('../_lib/vibe-to-persona-preset');
 const { Resend } = require('resend');
 
 // HTML-escape helper — prevents XSS when interpolating user data into email HTML
@@ -362,7 +360,23 @@ async function handleCreate(req, res) {
   // Persist the full scrape payload so it survives demo dashboard refreshes and
   // flows into onboarding pre-fill. Without this the wow card vanishes on F5
   // and the user has to re-type their address during conversion.
-  // SKIPPED: lines 403-441 (if (hasScrape) block with enrichRestaurant + derivePersonalityFromScrape)
+  // Enrich scraped_data + auto-seed personality via helper (lives in
+  // _lib/demo-enrichment.js — keeping it out of this handler is what
+  // unblocks Vercel's per-function NFT from silently dropping demo).
+  if (hasScrape) {
+    const { buildDemoEnrichmentPayload } = require('../_lib/demo-enrichment');
+    const enrichedPayload = await buildDemoEnrichmentPayload({
+      scrapedData: scraped_data,
+      restaurantName: restaurant_name.trim(),
+      website: effectiveWebsite,
+      cuisineType: effectiveCuisine,
+      warn: (msg, meta) => logger.warn(msg, meta),
+    });
+    insertPayload.scraped_data = enrichedPayload.scraped_data;
+    if (enrichedPayload.ai_personality) {
+      insertPayload.ai_personality = enrichedPayload.ai_personality;
+    }
+  }
 
   const { data: demoConfig, error: insertError } = await supabaseAdmin
     .schema('restaurant')

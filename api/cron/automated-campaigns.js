@@ -9,7 +9,7 @@
 
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { supabaseAdmin } = require('../_lib/supabase');
-const { processAllTriggers } = require('../services/automatedCampaignService');
+const { processAllTriggers } = require('../_services/automatedCampaignService');
 const { logCronRun } = require('../_lib/cron-tracker');
 const { bearerEquals } = require('../_lib/secure-compare');
 

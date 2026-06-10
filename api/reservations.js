@@ -12,7 +12,7 @@ const {
 const { verifyAuth } = require('./_lib/auth');
 
 // Use heuristic model for restaurant-specific predictions (more accurate than hotel-trained Lambda)
-const { calculateRiskScore, getRecommendedIntervention } = require('./services/mlRiskScoring');
+const { calculateRiskScore, getRecommendedIntervention } = require('./_services/mlRiskScoring');
 const { logReservationCreated, logCustomerCancelled } = require('./ml/data-logger');
 
 // Twilio for SMS confirmations
@@ -40,7 +40,7 @@ initSentry();
 const logger = createSecureLogger('Reservations');
 
 // Guest memory (fire-and-forget memory creation from booking requests)
-const { createMemory } = require('./services/guestMemory');
+const { createMemory } = require('./_services/guestMemory');
 
 // WhatsApp confirmation for customers
 const { isWhatsAppConfigured, sendReservationConfirmation } = require('./_lib/whatsapp-sender');

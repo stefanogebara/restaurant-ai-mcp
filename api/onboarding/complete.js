@@ -812,7 +812,7 @@ module.exports = async (req, res) => {
 
     let agentId = null;
     try {
-      const { createAgent, syncKnowledgeBase } = require('../services/elevenlabsAgentService');
+      const { createAgent, syncKnowledgeBase } = require('../_services/elevenlabsAgentService');
 
       const agentResult = await createAgent({
         restaurantId: canonicalRestaurantId,

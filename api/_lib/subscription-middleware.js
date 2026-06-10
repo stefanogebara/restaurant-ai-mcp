@@ -6,7 +6,7 @@
  */
 
 const { getSubscriptionByEmail, supabaseAdmin } = require('./supabase');
-const { hasFeature, checkReservationLimit, getUpgradeMessage } = require('../services/subscription-limits');
+const { hasFeature, checkReservationLimit, getUpgradeMessage } = require('../_services/subscription-limits');
 const { createSecureLogger } = require('./secure-logger');
 
 const logger = createSecureLogger('SubscriptionMiddleware');

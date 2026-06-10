@@ -18,7 +18,7 @@
  * Returns { success, durationMs, error? } — never throws.
  */
 
-const { syncKnowledgeBase } = require('../services/elevenlabsAgentService');
+const { syncKnowledgeBase } = require('../_services/elevenlabsAgentService');
 const { createSecureLogger } = require('./secure-logger');
 
 const logger = createSecureLogger('kb-sync-trigger');

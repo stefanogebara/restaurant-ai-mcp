@@ -14,7 +14,7 @@ const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { sendRetentionCampaignEmail } = require('./_lib/email');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
-const { createCampaign, sendCampaignBatch, getCampaignStats, getSegmentCustomers } = require('./services/campaignService');
+const { createCampaign, sendCampaignBatch, getCampaignStats, getSegmentCustomers } = require('./_services/campaignService');
 const logger = createSecureLogger('RetentionCampaigns');
 
 /**

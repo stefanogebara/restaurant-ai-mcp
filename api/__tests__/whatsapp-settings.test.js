@@ -77,7 +77,7 @@ const {
   getLatestWhatsAppTestMessage,
   getRecentDuplicateWhatsAppTestMessage,
   createWhatsAppTestMessage,
-} = require('../services/whatsappTestMessageService');
+} = require('../_services/whatsappTestMessageService');
 
 function mkReqRes(overrides = {}) {
   const req = {

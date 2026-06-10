@@ -2,7 +2,7 @@ const { getAllTables } = require('./_lib/supabase');
 const { verifyAuth } = require('./_lib/auth');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
-const { suggestTable } = require('./services/tableAssignmentService');
+const { suggestTable } = require('./_services/tableAssignmentService');
 const { createSecureLogger } = require('./_lib/secure-logger');
 
 const logger = createSecureLogger('TableSuggestion');
