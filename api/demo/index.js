@@ -331,7 +331,110 @@ async function handleCreate(req, res) {
     countryFromPhone(effectivePhone) ||
     null;
   const inferredLanguage = COUNTRY_LANGUAGE_MAP[resolvedCountry] || 'en';
-  return res.status(200).json({ bisect: 'handleCreate-first-half' });
+
+  // Insert demo restaurant config — uses scraped data when available
+  const insertPayload = {
+    user_id: demoUserId,
+    restaurant_name: restaurant_name.trim(),
+    restaurant_type: normalizeRestaurantType(effectiveCuisine.trim()),
+    city: city.trim(),
+    country: resolvedCountry || effectiveCountry || 'Unknown',
+    agent_language: inferredLanguage,
+    email: contact_email.trim(),
+    phone: effectivePhone,
+    slug,
+    business_hours,
+    reservation_settings,
+    is_active: true,
+    onboarding_completed: true,
+    is_demo: true,
+    demo_token,
+    demo_expires_at,
+    demo_contact_email: contact_email.trim(),
+    demo_contact_name: effectiveName.trim(),
+  };
+
+  // Add optional fields from scrape (only columns that exist in restaurant_config)
+  // NOTE: address, google_rating, google_review_count, google_maps_url do NOT exist
+  // on restaurant_config — they live on restaurant_info. Only set website here.
+  if (effectiveWebsite) insertPayload.website = effectiveWebsite;
+
+  // Persist the full scrape payload so it survives demo dashboard refreshes and
+  // flows into onboarding pre-fill. Without this the wow card vanishes on F5
+  // and the user has to re-type their address during conversion.
+  // SKIPPED: lines 403-441 (if (hasScrape) block with enrichRestaurant + derivePersonalityFromScrape)
+
+  const { data: demoConfig, error: insertError } = await supabaseAdmin
+    .schema('restaurant')
+    .from('restaurant_config')
+    .insert(insertPayload)
+    .select()
+    .single();
+
+  if (insertError) {
+    logger.error('Failed to insert demo restaurant config:', insertError);
+    captureException(insertError);
+    return res.status(500).json({ error: 'Failed to create demo restaurant' });
+  }
+
+  const restaurantId = demoConfig.id;
+
+  // Seed fake tables (fire best-effort — don't fail if it errors)
+  try {
+    const fakeTables = buildFakeTables(restaurantId);
+    const { error: tableError } = await supabaseAdmin
+      .from('tables')
+      .insert(fakeTables);
+
+    if (tableError) {
+      logger.warn('Failed to seed fake tables (non-fatal):', tableError.message);
+    } else {
+      logger.info(`Seeded ${fakeTables.length} fake tables for demo ${restaurantId}`);
+    }
+  } catch (err) {
+    logger.warn('Exception seeding fake tables (non-fatal):', err.message);
+  }
+
+  // Seed fake reservations (fire best-effort — don't fail if it errors)
+  try {
+    const fakeReservations = buildFakeReservations(restaurantId);
+    const { error: seedError } = await supabaseAdmin
+      .from('reservations')
+      .insert(fakeReservations);
+
+    if (seedError) {
+      logger.warn('Failed to seed fake reservations (non-fatal):', seedError.message);
+    } else {
+      logger.info(`Seeded ${fakeReservations.length} fake reservations for demo ${restaurantId}`);
+    }
+  } catch (err) {
+    logger.warn('Exception seeding fake reservations (non-fatal):', err.message);
+  }
+
+  // Email needs an absolute URL; the frontend redirect guard requires a
+  // relative same-origin path (fb840e4d). Send the absolute URL only to the
+  // mailer and return the relative path to the browser.
+  const demoPath = `/demo/${demo_token}`;
+  const demoUrlAbsolute = `${BASE_URL}${demoPath}`;
+
+  // Send welcome email (fire-and-forget — don't fail if email fails)
+  sendDemoWelcomeEmail({
+    contactName: effectiveName.trim(),
+    contactEmail: contact_email.trim(),
+    restaurantName: restaurant_name.trim(),
+    demoUrl: demoUrlAbsolute,
+  }).catch(err => logger.error('sendDemoWelcomeEmail threw:', err.message));
+
+  // Enrichment already happened inline above before the insert — no second
+  // pass needed here.
+
+  logger.info(`Demo created: ${restaurantId} for ${contact_email}`);
+
+  return res.status(201).json({
+    success: true,
+    demo_token,
+    demo_url: demoPath,
+  });
 }
 async function handleSession(req, res) {
   const { token } = req.query;
