@@ -8,8 +8,11 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter', 'Lato', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
-        serif: ['Playfair Display', 'Georgia', 'serif'],
+        // 2026-06-10 rebrand: DM Sans + Instrument Serif (just-br.com pairing).
+        // Instrument Serif only ships weight 400 — index.css disables bold
+        // synthesis on serif so headings render the authentic light face.
+        sans: ['DM Sans', 'Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+        serif: ['Instrument Serif', 'Georgia', 'serif'],
         mono: ['JetBrains Mono', 'monospace'],
       },
       colors: {

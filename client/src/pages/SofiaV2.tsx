@@ -55,7 +55,7 @@ function AgentHeader() {
       <div className="flex-1 min-w-0">
         <h1
           className="text-[24px] font-semibold tracking-tight text-[#1C1917] leading-none"
-          style={{ fontFamily: '"Playfair Display", Inter, serif' }}
+          style={{ fontFamily: '"Instrument Serif", Inter, serif' }}
         >
           Sofia
         </h1>

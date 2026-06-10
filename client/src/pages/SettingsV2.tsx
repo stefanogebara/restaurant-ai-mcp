@@ -274,7 +274,7 @@ export default function SettingsV2() {
           <header className="mb-8">
             <h1
               className="text-[28px] font-semibold tracking-tight text-[#1C1917]"
-              style={{ fontFamily: '"Playfair Display", Inter, serif' }}
+              style={{ fontFamily: '"Instrument Serif", Inter, serif' }}
             >
               Configurações
             </h1>

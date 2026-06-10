@@ -33,8 +33,11 @@ Inspired by TwinMe's dark glass system, adapted for light mode to preserve Seata
 
 ### Typography
 
-- **Body**: Inter
-- **Landing headings**: Playfair Display
+- **Body**: DM Sans (Inter fallback)
+- **Headings (`font-serif`)**: Instrument Serif — weight 400 ONLY. The font
+  ships no bold; `font-synthesis: none` in index.css blocks faux-bold, so
+  `font-bold` on serif headings intentionally renders the light 400 face.
+  Reference pairing: just-br.com (DM Sans body + Instrument Serif display).
 - **Code / mono**: JetBrains Mono
 - **Section headings**: `text-4xl sm:text-[48px]` (36 px mobile, 48 px desktop)
 - **Subtitles**: `text-lg` (18 px)
@@ -189,7 +192,7 @@ Instagram-first; the layout system carries over to LinkedIn / Twitter cards by c
 ### Layout system
 
 - **Aspect**: Square 1:1
-- **Typography**: Playfair Display (headlines), Inter (body)
+- **Typography**: Instrument Serif (headlines), DM Sans (body)
 - **Brand marks**:
   - `S.` logo with burgundy dot — **top-left**
   - `seatable.one` watermark — **bottom-right**

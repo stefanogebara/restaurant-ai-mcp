@@ -314,7 +314,7 @@ export default function DashboardV2() {
           {/* Greeting */}
           <header className="flex items-end justify-between mb-7">
             <div>
-              <h1 className="text-[28px] font-semibold tracking-tight text-[#1C1917]" style={{ fontFamily: '"Playfair Display", Inter, serif' }}>
+              <h1 className="text-[28px] font-semibold tracking-tight text-[#1C1917]" style={{ fontFamily: '"Instrument Serif", Inter, serif' }}>
                 {getGreeting()}, {managerName}.
               </h1>
               <p className="text-[14px] text-[#706A65] mt-1">
