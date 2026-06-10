@@ -189,14 +189,150 @@ async function sendDemoWelcomeEmail({ contactName, contactEmail, restaurantName,
 // Action: create
 // ---------------------------------------------------------------------------
 async function handleCreate(req, res) {
-  // BISECT: handleCreate body stubbed to test if it's the cause of
-  // Vercel silently dropping this function from the deploy manifest.
-  return res.status(200).json({ bisect: 'handleCreate-stubbed', method: req.method });
-}
+  const {
+    restaurant_name,
+    cuisine_type,
+    city,
+    contact_email,
+    contact_name,
+    country,
+    open_time = '12:00',
+    close_time = '23:00',
+    max_party_size = 8,
+    advance_booking_days = 30,
+    cancellation_policy,
+    custom_policy,
+    scraped_data, // Optional: Google Places data from /api/scrape-restaurant
+  } = req.body || {};
 
-// ---------------------------------------------------------------------------
-// Action: session
-// ---------------------------------------------------------------------------
+  // With scraped_data, only restaurant_name + city + contact_email are required
+  // Without scraped_data, cuisine_type and contact_name are also required (legacy flow)
+  const hasScrape = scraped_data && typeof scraped_data === 'object';
+
+  const required = hasScrape
+    ? { restaurant_name, city, contact_email }
+    : { restaurant_name, cuisine_type, city, contact_email, contact_name };
+
+  for (const [field, value] of Object.entries(required)) {
+    if (!value || typeof value !== 'string' || !value.trim()) {
+      return res.status(400).json({ error: `Missing required field: ${field}` });
+    }
+  }
+
+  // Validate email format
+  const emailValidation = validateEmail(contact_email);
+  if (!emailValidation.valid) {
+    return res.status(400).json({ success: false, message: 'Invalid contact_email format' });
+  }
+
+  // Validate numeric bounds
+  const parsedMaxParty = parseInt(max_party_size) || 8;
+  if (parsedMaxParty < 1 || parsedMaxParty > 100) {
+    return res.status(400).json({ success: false, message: 'max_party_size must be between 1 and 100' });
+  }
+
+  const parsedAdvanceDays = parseInt(advance_booking_days) || 30;
+  if (parsedAdvanceDays < 1 || parsedAdvanceDays > 365) {
+    return res.status(400).json({ success: false, message: 'advance_booking_days must be between 1 and 365' });
+  }
+
+  // Derive fields from scraped data when available
+  const effectiveCuisine = cuisine_type || scraped_data?.cuisine_type || 'Restaurant';
+  const effectiveCountry = (country || '').trim() || null;
+  const effectiveName = contact_name || contact_email.split('@')[0];
+  const effectivePhone = scraped_data?.phone || 'N/A';
+  // SSRF defense-in-depth: even though safe-fetch in _lib/enrich-restaurant
+  // re-validates via DNS+per-hop, drop obviously bad inputs at the boundary
+  // so a malicious website value never reaches the fetch layer. The
+  // scraped_data envelope comes from Google Places / our own scraper and
+  // is untrusted by the time it lands here. We require http(s) and a
+  // parseable URL — anything else gets nulled out so enrichment skips it
+  // entirely. The same check is enforced server-side in safe-fetch.
+  const rawWebsite = scraped_data?.website || null;
+  const effectiveWebsite = (() => {
+    if (!rawWebsite || typeof rawWebsite !== 'string') return null;
+    try {
+      const u = new URL(rawWebsite);
+      if (u.protocol !== 'http:' && u.protocol !== 'https:') return null;
+      return rawWebsite;
+    } catch {
+      return null;
+    }
+  })();
+
+  const demo_token = crypto.randomUUID();
+  const demo_expires_at = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+  const slug = `demo-${demo_token.slice(0, 8)}`;
+
+  // Each demo needs its own user_id to satisfy the UNIQUE(user_id) constraint
+  // on restaurant_config. Generate a fresh UUID per demo instead of reusing
+  // DEMO_SYSTEM_USER_ID (which only allows one demo at a time).
+  const demoUserId = crypto.randomUUID();
+
+  // Use scraped business hours if available, otherwise build from open/close times
+  const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+  let business_hours;
+  if (scraped_data?.business_hours && typeof scraped_data.business_hours === 'object') {
+    // Validate scraped hours have the right shape, fill gaps with defaults
+    business_hours = {};
+    days.forEach(d => {
+      const scraped = scraped_data.business_hours[d];
+      if (scraped && scraped.is_open && scraped.open_time && scraped.close_time) {
+        business_hours[d] = { open_time: scraped.open_time, close_time: scraped.close_time, is_open: true };
+      } else if (scraped && scraped.is_open === false) {
+        business_hours[d] = { open_time: null, close_time: null, is_open: false };
+      } else {
+        business_hours[d] = { open_time, close_time, is_open: true };
+      }
+    });
+  } else {
+    business_hours = {};
+    days.forEach(d => {
+      business_hours[d] = { open_time, close_time, is_open: true };
+    });
+  }
+
+  // Build reservation_settings JSONB (where max_party_size etc. live)
+  const reservation_settings = {
+    max_party_size: parsedMaxParty,
+    min_party_size: 1,
+    advance_booking_days: parsedAdvanceDays,
+    allow_waitlist: true,
+    buffer_time_minutes: 15,
+    require_credit_card: false,
+    cancellation_policy: cancellation_policy || 'Cancelamento gratuito até 2 horas antes da reserva',
+    special_notes: custom_policy || '',
+  };
+
+  // Infer language. Prefer explicit country code, otherwise derive from the
+  // scraped phone's international prefix. Google Places /v1 doesn't return a
+  // country field, but 'internationalPhoneNumber' gives us '+34 914…' etc.
+  // Without this, a Madrid demo was landing with agent_language='en' because
+  // effectiveCountry fell back to 'Unknown' → default 'en'.
+  const COUNTRY_LANGUAGE_MAP = {
+    BR: 'pt', PT: 'pt', ES: 'es', MX: 'es', AR: 'es', CO: 'es', CL: 'es', PE: 'es',
+    FR: 'fr', IT: 'it', DE: 'de', JP: 'ja', US: 'en', GB: 'en', CA: 'en', AU: 'en',
+  };
+  function countryFromPhone(phone) {
+    if (!phone || typeof phone !== 'string') return null;
+    const digits = phone.replace(/[^\d+]/g, '');
+    if (!digits.startsWith('+')) return null;
+    // Order matters: longer prefixes first so '+351' doesn't match '+3'.
+    const prefixes = [
+      ['+351', 'PT'], ['+54', 'AR'], ['+55', 'BR'], ['+56', 'CL'], ['+57', 'CO'],
+      ['+52', 'MX'], ['+51', 'PE'], ['+34', 'ES'], ['+33', 'FR'], ['+39', 'IT'],
+      ['+49', 'DE'], ['+44', 'GB'], ['+81', 'JP'], ['+61', 'AU'], ['+1', 'US'],
+    ];
+    for (const [p, iso] of prefixes) if (digits.startsWith(p)) return iso;
+    return null;
+  }
+  const resolvedCountry =
+    (effectiveCountry && effectiveCountry !== 'Unknown' && effectiveCountry.toUpperCase()) ||
+    countryFromPhone(effectivePhone) ||
+    null;
+  const inferredLanguage = COUNTRY_LANGUAGE_MAP[resolvedCountry] || 'en';
+  return res.status(200).json({ bisect: 'handleCreate-first-half' });
+}
 async function handleSession(req, res) {
   const { token } = req.query;
 
