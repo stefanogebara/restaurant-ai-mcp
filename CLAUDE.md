@@ -49,11 +49,12 @@ NFT-trace/bundle time per deploy.
 
 ## Workflow Orchestration
 
-### 1. Plan Node Default
-- Enter plan mode for ANY non-trivial task (3+ steps or architectural decisions)
+### 1. Plan when it pays off
+- Use plan mode for architecturally consequential or genuinely multi-step work
+  where approving the approach first saves rework — not as a reflex on every
+  task. A clear, bounded change: just do it.
 - If something goes sideways, STOP and re-plan immediately — don't keep pushing
-- Use plan mode for verification steps, not just building
-- Write detailed specs upfront to reduce ambiguity
+- Write specs upfront when ambiguity is the risk; skip ceremony when it isn't
 
 ### 2. Subagent Strategy
 - Use subagents liberally to keep main context window clean
