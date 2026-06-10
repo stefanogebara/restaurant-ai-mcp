@@ -115,15 +115,15 @@
     },
     {
       "source": "/api/square/auth",
-      "destination": "/api/square-auth.js"
+      "destination": "/api/square?route=auth"
     },
     {
       "source": "/api/square/callback",
-      "destination": "/api/square-callback.js"
+      "destination": "/api/square?route=callback"
     },
     {
       "source": "/api/square/sync",
-      "destination": "/api/square-sync.js"
+      "destination": "/api/square?route=sync"
     },
     {
       "source": "/api/square/webhook",
