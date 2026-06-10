@@ -3,7 +3,7 @@
 // All mocks must use factory functions so supabaseAdmin is defined correctly
 jest.mock('busboy');
 jest.mock('../_lib/auth', () => ({ verifyJWT: jest.fn() }));
-jest.mock('../services/managerMemory', () => ({ writeMemory: jest.fn() }));
+jest.mock('../_services/managerMemory', () => ({ writeMemory: jest.fn() }));
 jest.mock('../_lib/supabase', () => ({
   supabaseAdmin: {
     schema: jest.fn(),

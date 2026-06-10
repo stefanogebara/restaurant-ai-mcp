@@ -24,10 +24,10 @@ jest.mock('../_lib/ai-client', () => ({
   getAI: () => mockGetAI(),
   AI_MODEL_FAST: 'test-fast-model',
 }));
-jest.mock('../services/restaurantSnapshot', () => ({
+jest.mock('../_services/restaurantSnapshot', () => ({
   getRestaurantSnapshot: (...a) => mockGetRestaurantSnapshot(...a),
 }));
-jest.mock('../services/customerDNA', () => ({
+jest.mock('../_services/customerDNA', () => ({
   listCustomerProfiles: (...a) => mockListCustomerProfiles(...a),
 }));
 

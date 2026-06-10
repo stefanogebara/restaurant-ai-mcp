@@ -9,7 +9,7 @@ var mockSetInternalCors = jest.fn();
 var mockHandlePreflight = jest.fn().mockReturnValue(false);
 
 jest.mock('../_lib/auth', () => ({ verifyJWT: mockVerifyJWT }));
-jest.mock('../services/managerMemory', () => ({ writeMemory: mockWriteMemory }));
+jest.mock('../_services/managerMemory', () => ({ writeMemory: mockWriteMemory }));
 jest.mock('../_lib/ai-client', () => ({
   getAI: () => ({ messages: { create: mockAnthropicCreate } }),
   AI_MODEL: 'anthropic/claude-3.5-sonnet',

@@ -178,20 +178,20 @@ jest.mock('../_lib/secure-id', () => ({
   generateSecureReservationId: jest.fn().mockReturnValue('RES-TEST-001'),
 }));
 
-jest.mock('../services/memoryExtractor', () => ({
+jest.mock('../_services/memoryExtractor', () => ({
   extractMemoriesFromWhatsApp: jest.fn().mockResolvedValue(null),
 }));
 
-jest.mock('../services/guestMemory', () => ({
+jest.mock('../_services/guestMemory', () => ({
   buildGuestContext: jest.fn().mockResolvedValue(''),
 }));
 
-jest.mock('../services/campaignService', () => ({
+jest.mock('../_services/campaignService', () => ({
   handleOptOut: jest.fn().mockResolvedValue(true),
 }));
 
 // Mock PDF report service so RELATORIO tests don't hit Gotenberg
-jest.mock('../services/pdfReportService', () => ({
+jest.mock('../_services/pdfReportService', () => ({
   sendWeeklyReportViaWhatsApp: jest.fn().mockResolvedValue({ success: true, url: 'https://example.com/report.pdf' }),
   generateWeeklyReportPDF: jest.fn().mockResolvedValue(Buffer.from('%PDF-1.4 mock')),
   generateWeeklyReportHTML: jest.fn().mockResolvedValue('<html>mock</html>'),

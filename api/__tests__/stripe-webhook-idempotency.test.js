@@ -46,7 +46,7 @@ jest.mock('../_lib/supabase', () => ({
 
 // Stub everything downstream of the idempotency check — we only assert
 // that duplicate events SKIP the work.
-jest.mock('../services/subscription-limits', () => ({
+jest.mock('../_services/subscription-limits', () => ({
   getPlanFromPriceId: jest.fn(() => 'Starter'),
 }));
 jest.mock('../_lib/email', () => ({

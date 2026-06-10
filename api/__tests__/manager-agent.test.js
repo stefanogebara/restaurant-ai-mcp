@@ -17,13 +17,13 @@ const mockComparePeriods = jest.fn();
 const mockGetPlanLimits = jest.fn();
 const mockTrackUsage = jest.fn();
 
-jest.mock('../services/managerMemory', () => ({
+jest.mock('../_services/managerMemory', () => ({
   retrieveRelevantMemories: mockRetrieveRelevantMemories,
   writeMemory: mockWriteMemory,
   embedText: mockEmbedText,
 }));
 
-jest.mock('../services/restaurantSnapshot', () => ({
+jest.mock('../_services/restaurantSnapshot', () => ({
   getRestaurantSnapshot: mockGetRestaurantSnapshot,
 }));
 
@@ -51,7 +51,7 @@ jest.mock('../_lib/persona-prompt-builder', () => ({
   buildRestaurantIdentitySection: jest.fn().mockReturnValue(null),
 }));
 
-jest.mock('../services/subscription-limits', () => ({
+jest.mock('../_services/subscription-limits', () => ({
   getPlanLimits: (...args) => mockGetPlanLimits(...args),
 }));
 

@@ -9,7 +9,7 @@ jest.mock('../_lib/cors', () => ({ setWebhookCors: jest.fn(), handlePreflight: j
 jest.mock('../_lib/secure-logger', () => ({
   createSecureLogger: () => ({ info: jest.fn(), warn: jest.fn(), error: jest.fn() }),
 }));
-jest.mock('../services/guestMemory', () => ({
+jest.mock('../_services/guestMemory', () => ({
   createMemory: (...args) => mockCreateMemory(...args),
   listMemories: (...args) => mockListMemories(...args),
   deleteMemory: (...args) => mockDeleteMemory(...args),

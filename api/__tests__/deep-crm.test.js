@@ -415,7 +415,7 @@ describe('customers API — update_profile', () => {
     jest.doMock('../../api/_lib/cors', () => ({
       setInternalCors: jest.fn(),
     }));
-    jest.doMock('../../api/services/customerMergeService', () => ({
+    jest.doMock('../../api/_services/customerMergeService', () => ({
       findDuplicates: jest.fn(),
       mergeCustomers: jest.fn(),
     }));
@@ -704,7 +704,7 @@ describe('customers API — find_duplicates and merge routing', () => {
     jest.doMock('../../api/_lib/cors', () => ({
       setInternalCors: jest.fn(),
     }));
-    jest.doMock('../../api/services/customerMergeService', () => ({
+    jest.doMock('../../api/_services/customerMergeService', () => ({
       findDuplicates: jest.fn().mockResolvedValue([
         { match_field: 'phone', match_value: '+5511999', customers: [{ customer_id: 'c1' }, { customer_id: 'c2' }] },
       ]),

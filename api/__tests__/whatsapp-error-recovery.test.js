@@ -102,14 +102,14 @@ jest.mock('../_lib/multi-tenant-supabase', () => ({
 
 jest.mock('../_lib/usage-tracking',    () => ({ trackUsage: jest.fn().mockResolvedValue(true) }));
 jest.mock('../_lib/secure-id',         () => ({ generateSecureReservationId: jest.fn().mockReturnValue('RES-TEST') }));
-jest.mock('../services/memoryExtractor', () => ({ extractMemoriesFromWhatsApp: jest.fn().mockResolvedValue(null) }));
-jest.mock('../services/guestMemory',   () => ({ buildGuestContext: jest.fn().mockResolvedValue('') }));
-jest.mock('../services/campaignService', () => ({ handleOptOut: jest.fn().mockResolvedValue(true) }));
-jest.mock('../services/feedbackService', () => ({
+jest.mock('../_services/memoryExtractor', () => ({ extractMemoriesFromWhatsApp: jest.fn().mockResolvedValue(null) }));
+jest.mock('../_services/guestMemory',   () => ({ buildGuestContext: jest.fn().mockResolvedValue('') }));
+jest.mock('../_services/campaignService', () => ({ handleOptOut: jest.fn().mockResolvedValue(true) }));
+jest.mock('../_services/feedbackService', () => ({
   findPendingFeedbackForPhone: jest.fn().mockResolvedValue(null),
   processFeedbackReply:        jest.fn().mockResolvedValue(null),
 }));
-jest.mock('../services/surveyReplyHandler', () => ({ handleSurveyReply: jest.fn().mockResolvedValue(null) }));
+jest.mock('../_services/surveyReplyHandler', () => ({ handleSurveyReply: jest.fn().mockResolvedValue(null) }));
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

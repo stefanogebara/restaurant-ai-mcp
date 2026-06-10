@@ -11,7 +11,7 @@ jest.mock('../_lib/auth', () => ({ verifyJWT: mockVerifyJWT }));
 jest.mock('../_lib/supabase', () => ({
   supabaseAdmin: { from: mockSupabaseFrom }
 }));
-jest.mock('../services/subscription-limits', () => ({
+jest.mock('../_services/subscription-limits', () => ({
   getPlanLimits: mockGetPlanLimits
 }));
 jest.mock('../_lib/secure-logger', () => ({

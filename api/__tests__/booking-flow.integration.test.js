@@ -299,13 +299,13 @@ jest.mock('../_lib/whatsapp-sender', () => ({
   sendReservationConfirmation: jest.fn(() => Promise.resolve({ success: true })),
 }));
 
-jest.mock('../ml/data-logger', () => ({
+jest.mock('../_ml/data-logger', () => ({
   logCustomerShowedUp: jest.fn(() => Promise.resolve()),
   logCustomerCancelled: jest.fn(() => Promise.resolve()),
   logReservationCreated: jest.fn(() => Promise.resolve()),
 }));
 
-jest.mock('../services/mlRiskScoring', () => ({
+jest.mock('../_services/mlRiskScoring', () => ({
   calculateRiskScore: jest.fn(() => Promise.resolve({
     riskScore: 78,
     riskLevel: 'high',
@@ -335,7 +335,7 @@ jest.mock('../_lib/timezone', () => ({
   getLocalDate: jest.fn(() => '2026-03-15'),
 }));
 
-jest.mock('../services/guestMemory', () => ({
+jest.mock('../_services/guestMemory', () => ({
   createMemory: jest.fn(() => Promise.resolve()),
 }));
 

@@ -32,7 +32,7 @@ jest.mock('../_lib/supabase', () => ({
   },
 }));
 
-jest.mock('../services/subscription-limits', () => ({
+jest.mock('../_services/subscription-limits', () => ({
   getPlanFromPriceId: jest.fn(() => 'growth'),
 }));
 

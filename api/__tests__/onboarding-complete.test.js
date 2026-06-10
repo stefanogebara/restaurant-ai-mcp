@@ -114,7 +114,7 @@ jest.mock('node-fetch', () =>
 );
 
 // Mock elevenlabsAgentService to prevent actual ElevenLabs API calls
-jest.mock('../services/elevenlabsAgentService', () => ({
+jest.mock('../_services/elevenlabsAgentService', () => ({
   createAgent: jest.fn(() =>
     Promise.resolve({ success: false, error: 'mock: no API key' })
   ),

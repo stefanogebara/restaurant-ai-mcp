@@ -9,7 +9,7 @@ jest.mock('../_lib/supabase', () => ({ supabaseAdmin: mockSupabaseAdmin }));
 jest.mock('../_lib/secure-logger', () => ({
   createSecureLogger: () => ({ error: jest.fn(), info: jest.fn(), warn: jest.fn() }),
 }));
-jest.mock('../services/automatedCampaignService', () => ({
+jest.mock('../_services/automatedCampaignService', () => ({
   processAllTriggers: (...a) => mockProcessAllTriggers(...a),
 }));
 jest.mock('../_lib/cron-tracker', () => ({

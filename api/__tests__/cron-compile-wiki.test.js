@@ -22,7 +22,7 @@ jest.mock('../_lib/secure-logger', () => ({
 jest.mock('../_lib/cron-tracker', () => ({
   logCronRun: (...a) => mockLogCronRun(...a),
 }));
-jest.mock('../services/wikiCompiler', () => ({
+jest.mock('../_services/wikiCompiler', () => ({
   compileWikiForRestaurant: (...a) => mockCompileWikiForRestaurant(...a),
 }));
 

@@ -20,7 +20,7 @@ jest.mock('../_lib/secure-logger', () => ({
   }),
 }));
 
-jest.mock('../services/whatsappTestMessageService', () => ({
+jest.mock('../_services/whatsappTestMessageService', () => ({
   updateWhatsAppTestMessageStatus: jest.fn().mockResolvedValue(true),
 }));
 
@@ -144,11 +144,11 @@ jest.mock('../_lib/secure-id', () => ({
   generateSecureReservationId: jest.fn().mockReturnValue('RES-TEST-001'),
 }));
 
-jest.mock('../services/memoryExtractor', () => ({
+jest.mock('../_services/memoryExtractor', () => ({
   extractMemoriesFromWhatsApp: jest.fn().mockResolvedValue(null),
 }));
 
-jest.mock('../services/guestMemory', () => ({
+jest.mock('../_services/guestMemory', () => ({
   buildGuestContext: jest.fn().mockResolvedValue(''),
 }));
 

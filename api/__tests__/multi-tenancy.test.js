@@ -91,7 +91,7 @@ jest.mock('../_lib/secure-id', () => ({
 // ---------------------------------------------------------------------------
 // Mocks for host-dashboard dependencies (hoisted to top level)
 // ---------------------------------------------------------------------------
-jest.mock('../ml/data-logger', () => ({
+jest.mock('../_ml/data-logger', () => ({
   logCustomerShowedUp: jest.fn(),
   logCustomerCancelled: jest.fn(),
 }));

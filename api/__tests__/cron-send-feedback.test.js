@@ -4,7 +4,7 @@ var mockExpireOldFeedback = jest.fn();
 jest.mock('../_lib/secure-logger', () => ({
   createSecureLogger: () => ({ error: jest.fn(), info: jest.fn(), warn: jest.fn() }),
 }));
-jest.mock('../services/feedbackService', () => ({
+jest.mock('../_services/feedbackService', () => ({
   sendPendingFeedback: (...a) => mockSendPendingFeedback(...a),
   expireOldFeedback: (...a) => mockExpireOldFeedback(...a),
 }));

@@ -57,7 +57,7 @@ describe('table-suggestion', () => {
 
     jest.mock('../_lib/auth', () => ({ verifyAuth: (...a) => mockVerifyAuth(...a) }));
     jest.mock('../_lib/supabase', () => ({ getAllTables: (...a) => mockGetAllTables(...a) }));
-    jest.mock('../services/tableAssignmentService', () => ({ suggestTable: (...a) => mockSuggestTable(...a) }));
+    jest.mock('../_services/tableAssignmentService', () => ({ suggestTable: (...a) => mockSuggestTable(...a) }));
     jest.mock('../_lib/cors', () => ({
       setInternalCors: jest.fn(),
       handlePreflight: jest.fn(() => false),

@@ -117,7 +117,7 @@ jest.mock('../_lib/auth', () => ({
   ),
 }));
 
-jest.mock('../services/mlRiskScoring', () => ({
+jest.mock('../_services/mlRiskScoring', () => ({
   calculateRiskScore: jest.fn(() =>
     Promise.resolve({
       riskScore: 15,
@@ -130,7 +130,7 @@ jest.mock('../services/mlRiskScoring', () => ({
   getRecommendedIntervention: jest.fn(() => Promise.resolve(null)),
 }));
 
-jest.mock('../ml/data-logger', () => ({
+jest.mock('../_ml/data-logger', () => ({
   logReservationCreated: jest.fn(() => Promise.resolve()),
   logCustomerCancelled: jest.fn(() => Promise.resolve()),
 }));
@@ -176,7 +176,7 @@ jest.mock('../_lib/reservation-validator', () => ({
   validateReservation: jest.fn(() => ({ valid: true, message: null })),
 }));
 
-jest.mock('../services/guestMemory', () => ({
+jest.mock('../_services/guestMemory', () => ({
   createMemory: jest.fn(() => Promise.resolve()),
 }));
 

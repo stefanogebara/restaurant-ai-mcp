@@ -14,7 +14,7 @@ jest.mock('../_lib/ai-client', () => ({
   getAI: () => mockGetAI(),
   AI_MODEL_FAST: 'test-model',
 }));
-jest.mock('../services/guestMemory', () => ({
+jest.mock('../_services/guestMemory', () => ({
   createMemory: (...a) => mockCreateMemory(...a),
 }));
 jest.mock('../_lib/sentry', () => ({

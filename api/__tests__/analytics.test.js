@@ -58,7 +58,7 @@ jest.mock('../_lib/subscription-middleware', () => ({
   requireFeature: jest.fn().mockReturnValue((req, res, next) => next()),
 }));
 
-jest.mock('../services/subscription-limits', () => ({
+jest.mock('../_services/subscription-limits', () => ({
   hasFeature: jest.fn().mockReturnValue(true),
 }));
 

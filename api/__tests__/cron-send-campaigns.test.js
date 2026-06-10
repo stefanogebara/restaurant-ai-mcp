@@ -3,7 +3,7 @@ var mockProcessActiveCampaigns = jest.fn();
 jest.mock('../_lib/secure-logger', () => ({
   createSecureLogger: () => ({ error: jest.fn(), info: jest.fn(), warn: jest.fn() }),
 }));
-jest.mock('../services/campaignService', () => ({
+jest.mock('../_services/campaignService', () => ({
   processActiveCampaigns: (...a) => mockProcessActiveCampaigns(...a),
 }));
 jest.mock('../_lib/cron-tracker', () => ({

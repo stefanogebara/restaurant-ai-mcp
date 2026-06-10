@@ -65,7 +65,7 @@ jest.mock('../_lib/restaurant-loader', () => ({
 }));
 
 // Conversation logger mock
-jest.mock('../services/conversationLogger', () => ({
+jest.mock('../_services/conversationLogger', () => ({
   startConversation: jest.fn(() => Promise.resolve()),
   logToolCall: jest.fn(() => Promise.resolve()),
   updateConversation: jest.fn(() => Promise.resolve()),
@@ -166,7 +166,7 @@ jest.mock('../_lib/email', () => ({
 }));
 
 // Voice note trigger mock
-jest.mock('../services/whatsapp/voice-note-trigger', () => ({
+jest.mock('../_services/whatsapp/voice-note-trigger', () => ({
   sendConfirmationVoiceNote: jest.fn(() => Promise.resolve()),
 }));
 

@@ -27,31 +27,31 @@ jest.mock('../_lib/rate-limit', () => ({
   releaseProcessingLock: jest.fn().mockResolvedValue(undefined),
 }));
 
-jest.mock('../services/feedbackService', () => ({
+jest.mock('../_services/feedbackService', () => ({
   findPendingFeedbackForPhone: jest.fn().mockResolvedValue(null),
   processFeedbackReply: jest.fn().mockResolvedValue(null),
 }));
 
-jest.mock('../services/surveyReplyHandler', () => ({
+jest.mock('../_services/surveyReplyHandler', () => ({
   handleSurveyReply: jest.fn().mockResolvedValue(null),
 }));
 
-jest.mock('../services/memoryExtractor', () => ({
+jest.mock('../_services/memoryExtractor', () => ({
   extractMemoriesFromWhatsApp: jest.fn().mockResolvedValue(undefined),
 }));
 
-jest.mock('../services/whatsapp/keyword-handler', () => ({
+jest.mock('../_services/whatsapp/keyword-handler', () => ({
   handleKeyword: jest.fn().mockResolvedValue(false),
 }));
 
 // Mock the unified conversation processor — the message-processor imports this
 const mockProcessWithAI = jest.fn().mockResolvedValue('I can help you with your reservation.');
-jest.mock('../services/whatsapp/conversation', () => ({
+jest.mock('../_services/whatsapp/conversation', () => ({
   processWithAI: mockProcessWithAI,
   cleanHistoryForStorage: jest.fn(h => h),
 }));
 
-jest.mock('../services/whatsapp/rate-limiter', () => ({
+jest.mock('../_services/whatsapp/rate-limiter', () => ({
   isRateLimited: jest.fn().mockReturnValue(false),
 }));
 

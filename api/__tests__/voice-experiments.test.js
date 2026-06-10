@@ -9,7 +9,7 @@ jest.mock('../_lib/secure-logger', () => ({
 jest.mock('../_lib/rate-limit', () => ({
   checkAndApplyRateLimit: jest.fn().mockResolvedValue(false),
 }));
-jest.mock('../services/elevenlabsAgentService', () => ({
+jest.mock('../_services/elevenlabsAgentService', () => ({
   getAgentIdForRestaurant: jest.fn(),
   enableVersioning: jest.fn(),
   createBranch: jest.fn(),

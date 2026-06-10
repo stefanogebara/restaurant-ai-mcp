@@ -9,7 +9,7 @@ jest.mock('../_lib/supabase', () => ({ supabaseAdmin: mockSupabaseAdmin }));
 jest.mock('../_lib/secure-logger', () => ({
   createSecureLogger: () => ({ error: jest.fn(), info: jest.fn(), warn: jest.fn() }),
 }));
-jest.mock('../services/personaGenerator', () => ({
+jest.mock('../_services/personaGenerator', () => ({
   regeneratePersona: (...a) => mockRegeneratePersona(...a),
 }));
 jest.mock('../_lib/sentry', () => ({

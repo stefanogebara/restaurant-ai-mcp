@@ -145,7 +145,7 @@ jest.mock('../_lib/supabase', () => ({
   },
 }));
 
-jest.mock('../ml/data-logger', () => ({
+jest.mock('../_ml/data-logger', () => ({
   logCustomerShowedUp: jest.fn(() => Promise.resolve()),
   logCustomerCancelled: jest.fn(() => Promise.resolve()),
 }));

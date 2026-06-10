@@ -5,7 +5,7 @@ var mockSupabaseAdmin = { from: jest.fn() };
 const verify = require('../manager-whatsapp-verify');
 
 jest.mock('../_lib/auth', () => ({ verifyJWT: jest.fn().mockReturnValue({ restaurant_id: 'rest-1' }) }));
-// whatsapp-sender.js lives in api/_lib/ (not api/services/)
+// whatsapp-sender.js lives in api/_lib/ (not api/_services/)
 jest.mock('../_lib/whatsapp-sender', () => ({ sendWhatsAppMessage: jest.fn().mockResolvedValue({ success: true }) }));
 jest.mock('../_lib/supabase', () => ({ supabaseAdmin: mockSupabaseAdmin }));
 jest.mock('../_lib/secure-logger', () => ({

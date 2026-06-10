@@ -27,7 +27,7 @@ jest.mock('../_lib/manager-agent', () => {
   };
 });
 jest.mock('../_lib/supabase', () => ({ supabaseAdmin: mockSupabaseAdmin }));
-// whatsapp-sender.js lives in api/_lib/ (not api/services/)
+// whatsapp-sender.js lives in api/_lib/ (not api/_services/)
 jest.mock('../_lib/whatsapp-sender', () => ({
   sendWhatsAppMessage: jest.fn().mockResolvedValue({ success: true }),
 }));

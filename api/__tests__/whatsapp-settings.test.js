@@ -54,7 +54,7 @@ jest.mock('../_lib/whatsapp-sender', () => ({
 jest.mock('../_lib/secure-logger', () => ({
   createSecureLogger: () => ({ info: jest.fn(), warn: jest.fn(), error: jest.fn() }),
 }));
-jest.mock('../services/whatsappTestMessageService', () => ({
+jest.mock('../_services/whatsappTestMessageService', () => ({
   normalizeWhatsAppTestPhone: jest.fn((phone) => {
     const digits = String(phone || '').replace(/\D/g, '');
     return digits ? `+${digits}` : '';
