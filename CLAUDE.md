@@ -17,11 +17,35 @@ Auto-compiled articles live in `docs/wiki/`. Refresh with `node scripts/compile-
 
 ## Vercel Cost Rules (CRITICAL — $375 bill incident March 2026)
 
-- **Crons**: NEVER more than */15. Check-late-reservations and send-campaigns should be */15, not */5.
+**What actually bills you: cron + function INVOCATIONS, not build minutes.**
+Build minutes are within the included Pro quota (6000/mo) — a 13-min build
+× 100 deploys ≈ 1300 min, well inside free. Optimize invocations first.
+
+- **Crons**: NEVER more than */15. Only keep */15 for genuinely drift-sensitive
+  jobs (late-reservation detection, campaign sends with promised fire times).
+  Batch jobs whose work is internally bounded (sync, validate, cache-warm,
+  rollups) → hourly or daily. Each */15 → hourly cut saves 72 invocations/day.
 - **maxDuration**: Keep at 60s or less. Double duration = double cost.
-- **Deploys**: ONE per push (Vercel Git integration handles it). No duplicate GitHub Action hooks.
-- **Batch commits** — don't push 10 times in a row. Stage changes, push once.
-- **New crons**: Must justify frequency. Default to hourly or daily, not every-N-minutes.
+- **Deploys**: ONE per push (Vercel Git integration handles it). No duplicate
+  GitHub Action hooks. Batch commits — stage changes, push once.
+
+### Function bundling (deploy time + dead-URL hygiene)
+Every `.js` file under `api/` becomes a serverless function UNLESS it's in a
+directory starting with `_` (`api/_lib/`, `api/_services/`, `api/_ml/`). Library
+code accidentally placed in a non-underscore dir gets deployed as a broken
+function (returns FUNCTION_INVOCATION_FAILED on every hit) AND adds ~3.4s of
+NFT-trace/bundle time per deploy.
+- **Helpers/services → `api/_*/` dirs.** Never put `module.exports = {...}`
+  library modules in a function-eligible path.
+- **Never `require()` a sibling handler file** (`require('./other-handler')`
+  where that file is `module.exports = async (req,res)`). Vercel's NFT silently
+  DROPS the importing function from the deploy manifest with no build error —
+  the endpoint 404s in prod. Extract shared logic to `api/_lib/` instead.
+  (This was the /api/demo 404 root cause, June 2026.)
+- **Family consolidation** (folding `square-{auth,callback,sync}` → `square.js`
+  with `?route=`) is available but yields sub-noise build deltas (~7s for 2
+  functions, inside ±1min build variance). Only worth it for code hygiene, not
+  cost. A webhook member with `bodyParser:false` must stay standalone.
 
 ## Workflow Orchestration
 
@@ -386,7 +410,7 @@ Push to `main` branch triggers automatic Vercel deployment.
 
 ---
 
-**Last Updated**: March 1, 2026
+**Last Updated**: June 10, 2026
 
 ---
 

@@ -316,3 +316,35 @@ repaired = corrupted_text.encode('cp1252').decode('utf-8')
 ```
 Files containing PT-BR / accented chars often need this; pure-ASCII files are fine.
 
+
+## 2026-06-10 — Vercel silently drops functions that require() sibling handlers
+
+**Symptom:** `/api/demo` and `/api/contact` returned the api-not-found catch-all (404) in prod despite the files existing, passing `node --check`, and having a valid `module.exports = async (req,res)` signature. No error in the 19-min build log. `vercel inspect` showed 236 functions deployed vs 238 expected.
+
+**Root cause:** `api/demo.js` had `require('./enrich-restaurant')` — a sibling handler file whose own export was `module.exports = httpHandler`. Vercel's NFT (per-function dependency tracer) treats a function-importing-a-function as a loop and silently DROPS the importing function from the deploy manifest. The 3-line diagnostic stub deployed fine, proving it was content/import-graph dependent, not the file path.
+
+**Diagnosis method that worked:** bisect the handler over multiple deploys — stub the whole body (deployed → imports fine), restore body but stub one block at a time. Narrowed 660 lines → the `if(hasScrape)` block calling `enrichRestaurant` + `derivePersonalityFromScrape`.
+
+**Prevention:** NEVER `require()` a sibling handler from another handler. Extract shared logic to `api/_lib/`. Both callers import the `_lib` module; neither imports the other.
+
+**Detection:** `scripts/find-missing-funcs.mjs` curl-probes every expected `/api/<name>` and flags any returning the catch-all JSON. Run after big refactors.
+
+## 2026-06-10 — Library code under api/ deploys as broken functions
+
+**Symptom:** `/api/services/chartService` etc. returned FUNCTION_INVOCATION_FAILED (500) in prod; deploys traced + bundled 43 service files + 8 ml + 6 voice-server as serverless functions, ~146s wasted build.
+
+**Root cause:** Vercel deploys every `.js` under `api/` as a function unless the dir starts with `_`. `api/services/`, `api/ml/`, `api/voice-server/` were all library code (`module.exports = {...}`) in function-eligible paths.
+
+**Fix:** `git mv api/services api/_services` (and `_ml`, `_voice-server`); rewrite all `require('...services/...')` import paths. Underscore-prefixed dirs are bundled as deps for importing handlers but never deployed as standalone functions.
+
+**Caveat:** A rename script that regex-rewrites `services/` imports will ALSO hit `client/src/services/` (an unrelated frontend tree). Scope the rewrite to `api/` + `scripts/` only, or revert `client/` afterward.
+
+## 2026-06-10 — CRON_SECRET must never be embedded in third-party configs
+
+**Symptom (security review):** `elevenlabsAgentService` put `CRON_SECRET` as a Bearer header in ElevenLabs agent tool definitions — stored on ElevenLabs's servers, and not tenant-scoped (any holder could act as any restaurant via the restaurant_id query param).
+
+**Fix:** per-restaurant secret (`elevenlabs_webhook_secret` column, `el_whsec_<hex>`), validated in the webhook BY the claimed restaurant_id (tenant-bound). Rotation script re-pointed all 21 agents, then CRON_SECRET was rotated dead.
+
+**Prevention:** Internal credentials (CRON_SECRET, service-role keys) NEVER leave our infra. Anything handed to a third party (webhook tool defs, embed snippets) gets a dedicated, rotatable, tenant-scoped secret.
+
+**Vercel CLI gotcha:** `vercel env add` via piped stdin silently stored empty/garbage values and created write-only "sensitive" vars. Use the Vercel REST API (`POST /v10/projects/{id}/env`) with `decrypt=true` round-trip verification instead.
