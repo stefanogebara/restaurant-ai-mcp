@@ -4,6 +4,10 @@ import { renderWithProviders as render } from '../../../test/renderWithProviders
 
 vi.mock('../../../hooks/useRevenueStats', () => ({ useRevenueStats: vi.fn() }));
 vi.mock('../../../hooks/useStaffingForecast', () => ({ useStaffingForecast: vi.fn() }));
+// useRestaurantCurrency → useRestaurantSettings fires an unmocked axios GET
+// /restaurant-settings on every render; the leaked jsdom XHRs surfaced as
+// unhandled rejections (UND_ERR_INVALID_ARG) that failed the whole run.
+vi.mock('../../../hooks/useRestaurantCurrency', () => ({ useRestaurantCurrency: () => 'USD' }));
 
 import { useRevenueStats } from '../../../hooks/useRevenueStats';
 import { useStaffingForecast } from '../../../hooks/useStaffingForecast';

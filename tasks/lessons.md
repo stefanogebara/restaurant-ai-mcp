@@ -1,4 +1,16 @@
 
+## 2026-06-10: git stash dance + concurrent session = silent loss of client-side work
+
+**Context**: To verify a test failure was pre-existing, I ran `git stash push && vitest && git stash pop` while ANOTHER Claude session was actively committing to the same repo (the demo.js bisect / services→_services rename session). Between my push and pop, the other session committed `2a1ef96c`, which swept up my popped backend changes (good luck) — but its cleanup wiped ALL my uncommitted client-side onboarding fixes (~10 files). Had to redo them from context.
+
+**Rules**:
+- NEVER use a stash push/pop round-trip to test HEAD when a concurrent session may be active. Use `git worktree add` (isolated copy) or just accept the dirty-tree test result.
+- When `git status` shows huge unexplained churn (hundreds of untracked files, renames you didn't make), ASSUME a concurrent session is active and commit your own work IMMEDIATELY with explicit `git add <my-files-only>`.
+- Detection signals: HEAD hash changes between commands; stash list shows entries created on commits you don't recognize; system notes that files were "modified by user or linter" when you didn't run one.
+- Commit early when working long multi-file changes — the cost of a WIP commit is near zero; redoing 10 files from context costs 30+ minutes.
+
+**Cost**: ~40 minutes redoing client edits + verification.
+
 ## 2026-06-03: the single-project `supabase` MCP can be pointed at the wrong project
 
 **Context**: spent ~2 hours debugging "PostgREST returns PGRST205 — table not in schema cache" for `restaurant.instagram_connections`. NOTIFY pgrst, DROP+CREATE, GRANTs, RLS policies — none helped. Eventually restarted the project. STILL got 404.
