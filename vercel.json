@@ -113,7 +113,6 @@
       "source": "/api/pos/table-status",
       "destination": "/api/pos/table-status.js"
     },
-
     {
       "source": "/api/square/auth",
       "destination": "/api/square-auth.js"
@@ -415,13 +414,12 @@
     },
     {
       "path": "/api/cron/sync-conversation-data",
-      "schedule": "*/15 * * * *"
+      "schedule": "0 * * * *"
     },
     {
       "path": "/api/cron/validate-conversations",
-      "schedule": "*/15 * * * *"
+      "schedule": "0 * * * *"
     },
-
     {
       "path": "/api/cron/compile-wiki",
       "schedule": "30 4 * * *"

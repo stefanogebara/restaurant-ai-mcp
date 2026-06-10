@@ -4,7 +4,7 @@ const {
   query: supabase
 } = require('../../_lib/supabase');
 
-const { logCustomerCancelled } = require('../../ml/data-logger');
+const { logCustomerCancelled } = require('../../_ml/data-logger');
 const { sendReservationCancellationEmail } = require('../../_lib/email');
 const { createSecureLogger } = require('../../_lib/secure-logger');
 

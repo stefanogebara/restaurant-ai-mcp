@@ -9,7 +9,7 @@
  */
 
 const { getUpcomingReservations, updateReservation, supabaseAdmin } = require('./_lib/supabase');
-const { predictNoShow } = require('./ml/predict');
+const { predictNoShow } = require('./_ml/predict');
 const { verifyAuth } = require('./_lib/auth');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');

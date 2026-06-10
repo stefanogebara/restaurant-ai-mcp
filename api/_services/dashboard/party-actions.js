@@ -9,7 +9,7 @@ const {
   findBestTableCombination,
 } = require('../../_lib/supabase');
 
-const { logCustomerShowedUp } = require('../../ml/data-logger');
+const { logCustomerShowedUp } = require('../../_ml/data-logger');
 const { validateServiceRecord, sanitizeInput } = require('../../_lib/validation');
 const { DEFAULT_DINING_DURATION_MINUTES } = require('../../_lib/constants');
 const { createSecureLogger } = require('../../_lib/secure-logger');

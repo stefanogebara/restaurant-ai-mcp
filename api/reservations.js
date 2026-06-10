@@ -13,7 +13,7 @@ const { verifyAuth } = require('./_lib/auth');
 
 // Use heuristic model for restaurant-specific predictions (more accurate than hotel-trained Lambda)
 const { calculateRiskScore, getRecommendedIntervention } = require('./_services/mlRiskScoring');
-const { logReservationCreated, logCustomerCancelled } = require('./ml/data-logger');
+const { logReservationCreated, logCustomerCancelled } = require('./_ml/data-logger');
 
 // Twilio for SMS confirmations
 const twilio = require('twilio');

@@ -12,6 +12,7 @@
 const { getAI, AI_MODEL_FAST } = require('../_lib/ai-client');
 const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
+const { safeFetchText } = require('../_lib/safe-fetch');
 
 const logger = createSecureLogger('RestaurantIntelligence');
 
@@ -178,71 +179,29 @@ async function fetchAndExtractWebsite(websiteUrl, restaurantName) {
     return null;
   }
 
-  // SSRF protection
-  if (!isUrlSafe(websiteUrl)) {
-    logger.warn('Website URL blocked by SSRF protection:', { url: websiteUrl });
+  // SSRF protection: safeFetchText resolves DNS for every hop and rejects
+  // any address in the loopback / RFC1918 / link-local / multicast / CGNAT
+  // / IPv6 ULA blocklists. Replaces the previous string-only hostname
+  // check (which a 302 to a hostname resolving to 169.254.169.254 could
+  // have bypassed). Also caps body size + bounds total time.
+  let html;
+  try {
+    const { text } = await safeFetchText(websiteUrl, {
+      timeoutMs: 10_000,
+      maxBytes: MAX_RESPONSE_BYTES,
+      maxHops: 1, // Follow at most one redirect, with per-hop DNS revalidation
+      headers: {
+        'User-Agent': 'SeutableBot/1.0 (restaurant-intelligence)',
+        'Accept': 'text/html,application/xhtml+xml',
+      },
+    });
+    html = text;
+  } catch (err) {
+    logger.warn('Website fetch blocked or failed:', { error: err?.message, url: websiteUrl });
     return null;
   }
 
   try {
-    // Fetch website content with timeout
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000);
-
-    const response = await fetch(websiteUrl, {
-      signal: controller.signal,
-      headers: {
-        'User-Agent': 'SeutableBot/1.0 (restaurant-intelligence)',
-        'Accept': 'text/html,application/xhtml+xml'
-      },
-      redirect: 'manual' // Prevent redirect-chain SSRF bypass
-    });
-    clearTimeout(timeout);
-
-    // Handle redirects manually with SSRF validation
-    if ([301, 302, 303, 307, 308].includes(response.status)) {
-      const redirectUrl = response.headers.get('location');
-      if (!redirectUrl || !isUrlSafe(new URL(redirectUrl, websiteUrl).href)) {
-        logger.warn('Redirect blocked by SSRF protection:', { redirect: redirectUrl });
-        return null;
-      }
-      // Follow one redirect only (no chains)
-      const redirectController = new AbortController();
-      const redirectTimeout = setTimeout(() => redirectController.abort(), 8000);
-      const redirectResponse = await fetch(new URL(redirectUrl, websiteUrl).href, {
-        signal: redirectController.signal,
-        headers: { 'User-Agent': 'SeutableBot/1.0', 'Accept': 'text/html' },
-        redirect: 'manual'
-      });
-      clearTimeout(redirectTimeout);
-      if (!redirectResponse.ok) {
-        logger.warn('Redirect target fetch failed:', { status: redirectResponse.status });
-        return null;
-      }
-      // Check content-length to prevent huge responses
-      const redirectLength = parseInt(redirectResponse.headers.get('content-length') || '0', 10);
-      if (redirectLength > MAX_RESPONSE_BYTES) {
-        logger.warn('Redirect response too large:', { size: redirectLength });
-        return null;
-      }
-      var html = await redirectResponse.text();
-    } else if (!response.ok) {
-      logger.warn('Website fetch failed:', { status: response.status });
-      return null;
-    } else {
-      // Check content-length to prevent huge responses
-      const contentLength = parseInt(response.headers.get('content-length') || '0', 10);
-      if (contentLength > MAX_RESPONSE_BYTES) {
-        logger.warn('Response too large, skipping:', { size: contentLength });
-        return null;
-      }
-      var html = await response.text();
-      // Enforce size limit even without content-length header
-      if (html.length > MAX_RESPONSE_BYTES) {
-        logger.warn('Response body exceeded size limit');
-        html = html.slice(0, MAX_RESPONSE_BYTES);
-      }
-    }
 
     // Strip HTML to plain text (basic cleanup)
     const textContent = html
