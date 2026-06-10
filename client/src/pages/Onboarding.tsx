@@ -32,7 +32,7 @@ import { applyScrapedData, type ScrapedRestaurant } from '../lib/applyScrapedDat
 import { authFetch } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { trackOnboardingStepCompleted, trackOnboardingCompleted } from '../lib/analytics';
-import { LS_CUSTOMER_EMAIL, LS_REFERRAL_CODE, LS_ONBOARDING_DATA, LS_ONBOARDING_STEP, LS_PENDING_DEMO_TOKEN } from '../config/localStorageKeys';
+import { LS_CUSTOMER_EMAIL, LS_REFERRAL_CODE, LS_ONBOARDING_DATA, LS_ONBOARDING_STEP, LS_PENDING_DEMO_TOKEN, lsOnboardingDataKey, lsOnboardingStepKey } from '../config/localStorageKeys';
 import { parseOnboardingError } from '../utils/onboardingErrorMessage';
 
 const STEP_NAME_KEYS = ['onboarding.stepName1', 'onboarding.stepName2', 'onboarding.stepName3', 'onboarding.stepName4', 'onboarding.stepName5', 'onboarding.stepName6'];
@@ -107,6 +107,11 @@ export default function Onboarding() {
     team_members: [],
   });
 
+  // Drafts are keyed by user id (ProtectedRoute guarantees `user` is resolved
+  // before this page mounts) — see localStorageKeys.ts for why.
+  const draftDataKey = lsOnboardingDataKey(user?.id ?? 'anon');
+  const draftStepKey = lsOnboardingStepKey(user?.id ?? 'anon');
+
   // Restore in-progress onboarding from localStorage so "Save & Exit" and a
   // mid-wizard page refresh don't silently discard everything the user typed.
   // Only steps 1–4 are restored: those run *before* the restaurant exists.
@@ -115,9 +120,25 @@ export default function Onboarding() {
   const restoreOnboarding = (): { step: number; data: OnboardingData } => {
     const fresh = { step: 1, data: buildDefaultData() };
     try {
-      const savedStep = parseInt(localStorage.getItem(LS_ONBOARDING_STEP) || '', 10);
+      // Migrate a pre-scoping draft (written under the global keys) into this
+      // user's bucket, then remove the legacy keys so a future account on the
+      // same browser can't pick it up.
+      const legacyStep = localStorage.getItem(LS_ONBOARDING_STEP);
+      const legacyData = localStorage.getItem(LS_ONBOARDING_DATA);
+      if (legacyStep !== null || legacyData !== null) {
+        if (localStorage.getItem(draftStepKey) === null && legacyStep !== null) {
+          localStorage.setItem(draftStepKey, legacyStep);
+        }
+        if (localStorage.getItem(draftDataKey) === null && legacyData !== null) {
+          localStorage.setItem(draftDataKey, legacyData);
+        }
+        localStorage.removeItem(LS_ONBOARDING_STEP);
+        localStorage.removeItem(LS_ONBOARDING_DATA);
+      }
+
+      const savedStep = parseInt(localStorage.getItem(draftStepKey) || '', 10);
       if (!Number.isFinite(savedStep) || savedStep < 1 || savedStep > 4) return fresh;
-      const savedRaw = localStorage.getItem(LS_ONBOARDING_DATA);
+      const savedRaw = localStorage.getItem(draftDataKey);
       if (!savedRaw) return fresh;
       const saved = JSON.parse(savedRaw) as Partial<OnboardingData>;
       // A persisted restaurant_id means the restaurant was already created —
@@ -241,9 +262,9 @@ export default function Onboarding() {
   // (restored on mount by restoreOnboarding). Stops once onboarding completes.
   useEffect(() => {
     if (completedRef.current) return;
-    localStorage.setItem(LS_ONBOARDING_DATA, JSON.stringify(onboardingData));
-    localStorage.setItem(LS_ONBOARDING_STEP, currentStep.toString());
-  }, [onboardingData, currentStep]);
+    localStorage.setItem(draftDataKey, JSON.stringify(onboardingData));
+    localStorage.setItem(draftStepKey, currentStep.toString());
+  }, [onboardingData, currentStep, draftDataKey, draftStepKey]);
 
   // Cross-tab sync — without this, opening /onboarding in two tabs lets the
   // user advance Tab B to Step 4, submit, and create the restaurant, while
@@ -251,16 +272,16 @@ export default function Onboarding() {
   // Tab A, they submit outdated data on top of the just-created restaurant.
   //
   // Listen to `storage` events (only fire in OTHER tabs of the same origin):
-  //   - LS_ONBOARDING_STEP removed (means another tab completed) → banner
+  //   - draft step key removed (means another tab completed) → banner
   //     "You finished onboarding in another tab — reload to continue."
-  //   - LS_ONBOARDING_STEP advanced past this tab's step → banner
+  //   - draft step key advanced past this tab's step → banner
   //     "Onboarding continued in another tab. Reload to sync."
   // Show a single dismissible banner. Do NOT auto-overwrite the user's
   // typed state — they might be intentionally editing in this tab.
   const [staleReason, setStaleReason] = useState<'completed' | 'advanced' | null>(null);
   useEffect(() => {
     function handleStorage(e: StorageEvent) {
-      if (e.key !== LS_ONBOARDING_STEP) return;
+      if (e.key !== draftStepKey) return;
       // Onboarding completed elsewhere — both LS keys get removed.
       if (e.newValue === null) {
         setStaleReason('completed');
@@ -273,7 +294,7 @@ export default function Onboarding() {
     }
     window.addEventListener('storage', handleStorage);
     return () => window.removeEventListener('storage', handleStorage);
-  }, [currentStep]);
+  }, [currentStep, draftStepKey]);
 
   // Countdown redirect after onboarding success.
   // Lands the user IN their dashboard with the LaunchChecklist modal open
@@ -372,6 +393,9 @@ export default function Onboarding() {
       // re-write the keys when the upcoming setCurrentStep(5)/setOnboardingData
       // calls re-trigger it.
       completedRef.current = true;
+      localStorage.removeItem(draftDataKey);
+      localStorage.removeItem(draftStepKey);
+      // Legacy unscoped keys — may still exist for pre-migration drafts.
       localStorage.removeItem(LS_ONBOARDING_DATA);
       localStorage.removeItem(LS_ONBOARDING_STEP);
       // Only remove referral code if it was successfully attached (or never present)

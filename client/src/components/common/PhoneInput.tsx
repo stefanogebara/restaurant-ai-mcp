@@ -54,6 +54,50 @@ export const COUNTRIES = [
 
 export type CountryCode = typeof COUNTRIES[number]['code'];
 
+/**
+ * Plausibility validation for a national-significant number.
+ *
+ * History: the per-country mobile-only `pattern` regexes rejected real
+ * landlines (Mocotó's +55 11 2951-3056), so validation was relaxed to
+ * E.164 length only — which then let `+55 00000000000` launch a live
+ * restaurant (2026-06-10 onboarding audit). This is the middle ground:
+ * - universal: 7–15 digits, not all the same digit
+ * - BR only (home market, structure is unambiguous): 10-digit landline
+ *   (DDD [1-9][1-9] + first digit 2-5) or 11-digit mobile (DDD + leading 9)
+ * - other countries stay length-only to avoid re-blocking landlines
+ */
+export function validatePhoneNumber(countryCode: string, nationalDigits: string): boolean {
+  const digits = nationalDigits.replace(/[^\d]/g, '');
+  if (digits.length < 7 || digits.length > 15) return false;
+  if (/^(\d)\1+$/.test(digits)) return false;
+
+  if (countryCode === 'BR') {
+    if (digits.length !== 10 && digits.length !== 11) return false;
+    if (!/^[1-9][1-9]/.test(digits)) return false; // DDD is 11–99, no zeros
+    if (digits.length === 11) return digits[2] === '9'; // mobile
+    return /^[2-5]$/.test(digits[2]); // landline
+  }
+
+  return true;
+}
+
+/**
+ * Validates a stored full international number ("+55 11 91234-5678").
+ * Resolves the country by longest dial-code prefix; unknown dial codes
+ * fall back to the universal length + junk checks.
+ */
+export function validateFullPhoneNumber(fullNumber: string): boolean {
+  const cleaned = fullNumber.trim().replace(/[\s-()]/g, '');
+  if (!/^\+\d{7,}$/.test(cleaned)) return false;
+
+  const country = [...COUNTRIES]
+    .sort((a, b) => b.dial.length - a.dial.length)
+    .find(c => cleaned.startsWith(c.dial));
+
+  if (!country) return validatePhoneNumber('', cleaned.slice(1));
+  return validatePhoneNumber(country.code, cleaned.slice(country.dial.length));
+}
+
 interface PhoneInputProps {
   value: string;
   onChange: (fullNumber: string, isValid: boolean) => void;
@@ -108,20 +152,11 @@ export default function PhoneInput({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Validate and emit changes.
-  // The per-country `pattern` regex is mobile-only by design (`^[1-9]\d{10}$`
-  // for BR, `^3\d{8,9}$` for IT, etc.) — every restaurant with a landline
-  // could not pass onboarding. Real-world audit: Mocotó's actual Google-Maps
-  // number `+55 11 2951-3056` (São Paulo landline) was rejected.
-  //
-  // Accept any national-significant number with 7–15 digits (E.164 range).
-  // Keep the strict regex only as a "preferred format" signal — the format
-  // hint + placeholder still nudge users toward a mobile, but landlines now
-  // proceed.
+  // Validate and emit changes — see validatePhoneNumber for the rules and
+  // the landline-vs-junk history behind them.
   useEffect(() => {
     const cleanNumber = localNumber.replace(/[^\d]/g, '');
-    const validLength = cleanNumber.length >= 7 && cleanNumber.length <= 15;
-    const valid = validLength;
+    const valid = validatePhoneNumber(selectedCountry.code, cleanNumber);
     setIsValid(valid);
 
     // Emit full international number
@@ -224,7 +259,9 @@ export default function PhoneInput({
         <p className="mt-1 text-sm text-amber-600">
           {localNumber.replace(/[^\d]/g, '').length < 7
             ? 'Phone number too short — add the area code'
-            : 'Phone number too long'}
+            : localNumber.replace(/[^\d]/g, '').length > 15
+              ? 'Phone number too long'
+              : `This doesn't look like a valid number for ${selectedCountry.name} (${selectedCountry.dial} ${selectedCountry.format})`}
         </p>
       )}
     </div>

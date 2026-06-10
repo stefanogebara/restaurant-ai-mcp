@@ -52,11 +52,21 @@ export default function Step5ImportHistory({ onNext }: Step5ImportHistoryProps) 
       });
       setResult(data);
     } catch (err: unknown) {
-      const backendError =
+      const payload =
         err && typeof err === 'object' && 'response' in err
-          ? (err as { response?: { data?: { error?: string } } }).response?.data?.error
+          ? (err as { response?: { data?: { error?: string; error_code?: string; found_columns?: string[] } } }).response?.data
           : undefined;
-      setError(backendError || t('onboarding.importError'));
+      // Structured error codes get a localized message; anything else falls
+      // back to the raw backend text, then the generic i18n error.
+      if (payload?.error_code === 'no_phone_column') {
+        const columns = (payload.found_columns || []).join(', ');
+        setError(t('onboarding.importNoPhoneColumn', {
+          columns: columns || '—',
+          defaultValue: 'We couldn\'t find a phone column. Columns in your file: {{columns}}. Rename your phone column to "phone" or "telefone" and try again.',
+        }));
+      } else {
+        setError(payload?.error || t('onboarding.importError'));
+      }
     } finally {
       setIsUploading(false);
     }

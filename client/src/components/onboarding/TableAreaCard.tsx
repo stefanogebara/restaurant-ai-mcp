@@ -47,6 +47,18 @@ export default function TableAreaCard({
         )}
       </div>
 
+      {/* Single explainer for the "fixed table" checkboxes below. This text
+          used to repeat inside every capacity x shape cell (8x per area),
+          which made the step feel enormous — 2026-06-10 audit. */}
+      <p className="flex items-start gap-1.5 text-[11px] text-muted-stone leading-snug mb-4">
+        <ThiingsIcon name="info" pxSize={13} className="mt-0.5 flex-shrink-0" />
+        <span>
+          <span className="font-medium text-stone-gray">{t('onboarding.fixedSeatingShort', 'Fixed table')}</span>
+          {' — '}
+          {t('onboarding.fixedSeatingHint')}
+        </span>
+      </p>
+
       <div className="space-y-4">
         {TABLE_CAPACITIES.map((capacity) => (
           <div key={capacity} className="glass-card p-4">
@@ -66,18 +78,18 @@ export default function TableAreaCard({
                     onChange={(e) => updateTableConfig(areaIndex, capacity, shape, 'count', parseInt(e.target.value) || 0)}
                     className="w-full px-3 py-2 glass-panel rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy text-sm"
                   />
-                  <label className="flex items-start gap-2 mt-2 cursor-pointer">
+                  <label className="flex items-center gap-2 mt-2 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={getTableConfig(areaIndex, capacity, shape)?.is_fixed_seating || false}
                       onChange={(e) => updateTableConfig(areaIndex, capacity, shape, 'is_fixed_seating', e.target.checked)}
-                      className="mt-0.5 w-4 h-4 rounded border-glass-border-input text-burgundy focus:ring-burgundy"
+                      className="w-4 h-4 rounded border-glass-border-input text-burgundy focus:ring-burgundy"
+                      aria-label={`${t('onboarding.fixedSeating')} — ${t('onboarding.personTables', { count: capacity })}, ${t(SHAPE_KEYS[shape] || shape)}`}
                     />
-                    {/* Explanation is rendered inline (not in a `title=` tooltip)
-                        so it's actually readable on touch devices. */}
-                    <span className="text-xs text-stone-gray leading-snug">
-                      <span className="font-medium">{t('onboarding.fixedSeating')}</span>
-                      <span className="block text-[11px] text-muted-stone">{t('onboarding.fixedSeatingHint')}</span>
+                    {/* Short label only — the full explanation renders once
+                        at the top of the area card, not 8x per area. */}
+                    <span className="text-xs font-medium text-stone-gray">
+                      {t('onboarding.fixedSeatingShort', 'Fixed table')}
                     </span>
                   </label>
                 </div>

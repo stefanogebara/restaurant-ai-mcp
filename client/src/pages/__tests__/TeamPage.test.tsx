@@ -13,6 +13,20 @@ vi.mock('../../hooks/usePermission', () => ({
 vi.mock('../../lib/supabase', () => ({
   supabase: { auth: { getSession: async () => ({ data: { session: { access_token: 'tok' } } }) } },
 }));
+// DashboardLayout → useRestaurantCurrency → useRestaurantSettings fires an
+// axios GET /restaurant-settings on mount; unmocked it leaks a jsdom XHR
+// that fails the file with an unhandled rejection (UND_ERR_INVALID_ARG).
+vi.mock('../../services/api', () => ({
+  api: {
+    get: vi.fn().mockResolvedValue({ data: { success: true, settings: {} } }),
+    post: vi.fn().mockResolvedValue({ data: { success: true } }),
+    put: vi.fn().mockResolvedValue({ data: { success: true } }),
+    patch: vi.fn().mockResolvedValue({ data: { success: true } }),
+    delete: vi.fn().mockResolvedValue({ data: { success: true } }),
+  },
+  // Delegate to global fetch — the stub below provides the members payload.
+  authFetch: vi.fn((...args: Parameters<typeof fetch>) => fetch(...args)),
+}));
 
 vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
   ok: true,

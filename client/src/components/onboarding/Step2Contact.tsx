@@ -14,7 +14,7 @@ import { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import type { OnboardingStepProps } from '../../types/onboarding.types';
-import PhoneInput, { type CountryCode } from '../common/PhoneInput';
+import PhoneInput, { validateFullPhoneNumber, type CountryCode } from '../common/PhoneInput';
 import ThiingsIcon from '../common/ThiingsIcon';
 
 // Service type presets with recommended hours
@@ -159,7 +159,9 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
 
     if (!data.phone_number.trim()) {
       newErrors.phone_number = t('onboarding.phoneRequired');
-    } else if (!/^\+\d{7,14}$/.test(data.phone_number.replace(/\s/g, ''))) {
+    } else if (!validateFullPhoneNumber(data.phone_number)) {
+      // Shared validator with PhoneInput — catches junk like +55 00000000000
+      // that the old length-only regex let through to a live launch.
       newErrors.phone_number = t('onboarding.phoneInvalidFormat', 'Please use international format starting with the country code, e.g. +55 11 98765-4321.');
     } else if (errors.phone_number) {
       newErrors.phone_number = errors.phone_number;

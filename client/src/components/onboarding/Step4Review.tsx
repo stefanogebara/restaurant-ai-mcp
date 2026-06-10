@@ -89,7 +89,21 @@ function formatPhoneForDisplay(raw: string): string {
 }
 
 export default function Step4Review({ data, onBack, onComplete, isSubmitting, goToStep }: Step4ReviewProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+
+  // data.country stores the English data-file name ("Brazil") — fine for the
+  // backend, wrong for display: the PT-BR review screen printed "Sao Paulo,
+  // Brazil". Localize from the country code, display-only.
+  const localizedCountry = (() => {
+    if (!data.country_code) return data.country;
+    try {
+      const display = new Intl.DisplayNames([i18n.language || 'en'], { type: 'region' });
+      return display.of(data.country_code.toUpperCase()) || data.country;
+    } catch {
+      return data.country;
+    }
+  })();
+
   const totalTables = data.areas.reduce((sum, area) => sum + area.tables.reduce((s, tbl) => s + tbl.count, 0), 0);
   const totalCapacity = data.areas.reduce((sum, area) => sum + area.tables.reduce((s, tbl) => s + tbl.capacity * tbl.count, 0), 0);
 
@@ -105,7 +119,7 @@ export default function Step4Review({ data, onBack, onComplete, isSubmitting, go
         // way Step1 renders it — otherwise the review screen shows the raw
         // enum value ("fine-dining") instead of "Fine Dining" / "Alta Gastronomia".
         { label: t('onboarding.labelType'), value: t(`onboarding.restaurantTypes.${data.restaurant_type}`, data.restaurant_type) },
-        { label: t('onboarding.labelLocation'), value: `${data.city}, ${data.country}` },
+        { label: t('onboarding.labelLocation'), value: `${data.city}, ${localizedCountry}` },
       ],
     },
     {

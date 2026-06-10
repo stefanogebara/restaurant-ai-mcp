@@ -11,6 +11,17 @@ import {
   type City,
 } from '../../data/countries';
 
+// Maps LANGUAGE_GROUPS.language ('spanish', 'portuguese', ...) to ISO 639-1
+// codes for Intl.DisplayNames localization and UI-language group pinning.
+const GROUP_LANGUAGE_CODES: Record<string, string> = {
+  spanish: 'es',
+  portuguese: 'pt',
+  french: 'fr',
+  german: 'de',
+  english: 'en',
+  italian: 'it',
+};
+
 interface LocationSelectorProps {
   selectedCountryCode?: string;
   selectedCity?: string;
@@ -55,6 +66,55 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
     }
   }, [i18n.language]);
 
+  // Display name = localized when available, English data-file name otherwise.
+  // 2026-06-10 audit: the PT-BR dropdown showed "Brazil"/"Spain" and the
+  // review screen printed "Sao Paulo, Brazil" (in English).
+  const countryDisplayName = (country: Country) =>
+    localizedCountryName(country.code) || country.name;
+
+  // Group headers are language names ('Portuguese', 'Spanish' -- English in
+  // the data file). Localize via Intl.DisplayNames type:'language'.
+  const localizedGroupName = useMemo(() => {
+    try {
+      const display = new Intl.DisplayNames([i18n.language || 'en'], { type: 'language' });
+      return (group: { language: string; displayName: string }) => {
+        const code = GROUP_LANGUAGE_CODES[group.language];
+        const name = code ? display.of(code) : undefined;
+        if (!name) return group.displayName;
+        return name.charAt(0).toUpperCase() + name.slice(1);
+      };
+    } catch {
+      return (group: { language: string; displayName: string }) => group.displayName;
+    }
+  }, [i18n.language]);
+
+  // Order groups so the one matching the UI language comes first, and within
+  // it the user's own country leads (pt-BR -> Portuguese group first, Brazil
+  // pinned above Portugal). For a Brazil-first product, burying Brazil second
+  // inside the second group was the #1 path-length complaint in the audit.
+  const orderedLanguageGroups = useMemo(() => {
+    const uiLang = (i18n.language || 'en').toLowerCase();
+    const base = uiLang.split('-')[0];
+    const region = uiLang.split('-')[1]?.toUpperCase();
+    const matchesUi = (g: { language: string }) => GROUP_LANGUAGE_CODES[g.language] === base;
+    const groups = [...LANGUAGE_GROUPS].sort(
+      (a, b) => Number(matchesUi(b)) - Number(matchesUi(a))
+    );
+    return groups.map(group => {
+      if (!matchesUi(group) || !region) return group;
+      const idx = group.countries.findIndex(c => c.code === region);
+      if (idx <= 0) return group;
+      return {
+        ...group,
+        countries: [
+          group.countries[idx],
+          ...group.countries.slice(0, idx),
+          ...group.countries.slice(idx + 1),
+        ],
+      };
+    });
+  }, [i18n.language]);
+
   // Get selected country details
   const selectedCountry = useMemo(() => {
     return selectedCountryCode ? getCountryByCode(selectedCountryCode) : null;
@@ -69,18 +129,19 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
   // display name, AND locale-translated name (so pt-BR users typing "Brasil"
   // and es users typing "EspaÃ±a" / "Espana" both hit).
   const filteredLanguageGroups = useMemo(() => {
-    if (!countrySearchQuery.trim()) return LANGUAGE_GROUPS;
+    if (!countrySearchQuery.trim()) return orderedLanguageGroups;
 
     const query = normalize(countrySearchQuery);
-    return LANGUAGE_GROUPS.map(group => ({
+    return orderedLanguageGroups.map(group => ({
       ...group,
       countries: group.countries.filter(country =>
         normalize(country.name).includes(query) ||
         normalize(group.displayName).includes(query) ||
+        normalize(localizedGroupName(group)).includes(query) ||
         normalize(localizedCountryName(country.code)).includes(query)
       ),
     })).filter(group => group.countries.length > 0);
-  }, [countrySearchQuery, localizedCountryName]);
+  }, [countrySearchQuery, localizedCountryName, localizedGroupName, orderedLanguageGroups]);
 
   // Filter cities by search query (diacritic-insensitive).
   const filteredCities = useMemo(() => {
@@ -147,7 +208,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
             {selectedCountry ? (
               <span className="flex items-center gap-2">
                 <span className="text-xl">{selectedCountry.flag}</span>
-                <span>{selectedCountry.name}</span>
+                <span>{countryDisplayName(selectedCountry)}</span>
               </span>
             ) : (
               <span className="text-muted-stone">{t('onboarding.selectCountry')}</span>
@@ -190,7 +251,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
                     <div className="px-4 py-2 bg-soft-gray">
                       <span className="text-xs font-semibold text-stone-gray uppercase tracking-wider flex items-center gap-2">
                         <span className="text-base">{group.flag}</span>
-                        {group.displayName}
+                        {localizedGroupName(group)}
                       </span>
                     </div>
 
@@ -207,7 +268,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
                         }`}
                       >
                         <span className="text-xl">{country.flag}</span>
-                        <span>{country.name}</span>
+                        <span>{countryDisplayName(country)}</span>
                       </button>
                     ))}
                   </div>

@@ -170,7 +170,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // their own auth token if they don't notice.
     //
     // Deliberately NOT cleared: LS_LANGUAGE — that's a per-browser
-    // preference (i18next picks it up), not auth-scoped state.
+    // preference (i18next picks it up), not auth-scoped state. Also NOT
+    // cleared: per-user onboarding drafts (onboarding_data:{userId}) —
+    // those are already isolated per account, and "Save & Exit" promises
+    // the draft survives sign-out. Only the legacy unscoped draft keys
+    // are cleared below.
     const authScopedKeys = [
       LS_CUSTOMER_EMAIL,
       LS_PENDING_DEMO_TOKEN,
