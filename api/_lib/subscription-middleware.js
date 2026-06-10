@@ -11,7 +11,7 @@ const { createSecureLogger } = require('./secure-logger');
 
 const logger = createSecureLogger('SubscriptionMiddleware');
 
-const UPGRADE_URL = `${process.env.CLIENT_URL || 'https://seatable.one'}/#pricing`;
+const UPGRADE_URL = `${process.env.CLIENT_URL || 'https://seatable.one'}/precos`;
 
 /** Grace period (in ms) after subscription expiry before hard-blocking */
 const SOFT_GRACE_PERIOD_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
@@ -87,7 +87,7 @@ async function checkSubscription(req, res, next) {
       return res.status(403).json({
         error: 'No active subscription',
         message: 'Please subscribe to access this feature',
-        upgrade_url: `${process.env.CLIENT_URL || 'https://seatable.one'}/#pricing`
+        upgrade_url: `${process.env.CLIENT_URL || 'https://seatable.one'}/precos`
       });
     }
 
@@ -99,7 +99,7 @@ async function checkSubscription(req, res, next) {
         error: 'Subscription inactive',
         message: `Your subscription is ${subscription.status}. Please update your payment method.`,
         status: subscription.status,
-        upgrade_url: `${process.env.CLIENT_URL || 'https://seatable.one'}/#pricing`
+        upgrade_url: `${process.env.CLIENT_URL || 'https://seatable.one'}/precos`
       });
     }
 
@@ -140,7 +140,7 @@ function requireFeature(featureName) {
         message: getUpgradeMessage(featureName, plan),
         feature: featureName,
         current_plan: plan,
-        upgrade_url: `${process.env.CLIENT_URL || 'https://seatable.one'}/#pricing`
+        upgrade_url: `${process.env.CLIENT_URL || 'https://seatable.one'}/precos`
       });
     }
 
@@ -203,7 +203,7 @@ async function checkReservationLimits(req, res, next) {
           plan,
           limit: limitCheck.limit,
           used: currentMonthReservations,
-          upgrade_url: `${process.env.CLIENT_URL || 'https://seatable.one'}/#pricing`,
+          upgrade_url: `${process.env.CLIENT_URL || 'https://seatable.one'}/precos`,
           metric: 'limit_blocked_post_downgrade',
         });
       }

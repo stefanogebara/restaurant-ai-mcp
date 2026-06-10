@@ -22,7 +22,7 @@ export default function UpgradePrompt({
 }: UpgradePromptProps) {
   const handleUpgrade = () => {
     // Navigate to pricing section
-    window.location.href = '/#pricing';
+    window.location.href = '/precos';
   };
 
   // Size variants

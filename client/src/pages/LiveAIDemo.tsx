@@ -384,7 +384,7 @@ export default function LiveAIDemo() {
             {t('landing.voiceDemo.tryDashboard', 'Try the full dashboard')} &rarr;
           </Link>
           <Link
-            to="/#pricing"
+            to="/precos"
             className="text-xs text-white/30 hover:text-white/50 transition-colors"
           >
             {t('landing.voiceDemo.pricing', 'Pricing')}

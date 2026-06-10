@@ -18,7 +18,7 @@ export default function UpgradePromptInline({
   requiredPlan = 'Professional'
 }: UpgradePromptInlineProps) {
   const handleUpgrade = () => {
-    window.location.href = '/#pricing';
+    window.location.href = '/precos';
   };
 
   return (

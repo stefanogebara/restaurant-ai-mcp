@@ -26,6 +26,7 @@ import { lazyRetry } from './utils/lazyRetry';
 
 // Lazy-loaded pages (with retry for chunk load resilience)
 const LandingPage = lazyRetry(() => import('./landing/pages/LandingPage'));
+const PricingPage = lazyRetry(() => import('./landing/pages/PricingPage'));
 const SeoLandingPage = lazyRetry(() => import('./pages/SeoLandingPage'));
 const NoShowCalculator = lazyRetry(() => import('./pages/NoShowCalculator'));
 const Login = lazyRetry(() => import('./pages/Login'));
@@ -136,6 +137,10 @@ function App() {
             <main id="main-content">
             <Routes>
               <Route path="/" element={<ErrorBoundary fallback={<RouteErrorFallback />}><LandingPage /></ErrorBoundary>} />
+              {/* Dedicated pricing page — the grid moved off the landing
+                  (2026-06). /pricing alias kept for EN ads/links. */}
+              <Route path="/precos" element={<ErrorBoundary fallback={<RouteErrorFallback />}><PricingPage /></ErrorBoundary>} />
+              <Route path="/pricing" element={<ErrorBoundary fallback={<RouteErrorFallback />}><PricingPage /></ErrorBoundary>} />
               <Route path="/login" element={<Login />} />
               <Route path="/live-demo" element={<LiveAIDemo />} />
               {/* /prototype route removed — orphaned, linked from nowhere */}

@@ -8,11 +8,9 @@ import LandingNav from '../components/LandingNav';
 import HeroSection from '../components/HeroSection';
 import PresetDemoSection from '../components/PresetDemoSection';
 import InlineDemoSection from '../components/InlineDemoSection';
-import VoiceWidgetSection from '../components/VoiceWidgetSection';
 import WhatsAppWidgetSection from '../components/WhatsAppWidgetSection';
 import BeforeAfterSection from '../components/BeforeAfterSection';
 import DashboardWalkthroughSection from '../components/DashboardWalkthroughSection';
-import PricingSection from '../components/PricingSection';
 import SharePrompt from '../components/SharePrompt';
 import Footer from '../components/Footer';
 
@@ -88,12 +86,13 @@ export default function LandingPage() {
         </ErrorBoundary>
       </div>
 
-      {/* 3. Pricing — M19: moved up from position 8 to 3. Serious prospects
-          want to know cost early, before scrolling through deep product
-          demos. The trust strip below answers the LGPD / "is my data safe"
-          questions before pricing, which a Brazilian SMB owner ALWAYS asks. */}
-      <div className="pt-12 pb-2">
-        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 px-6 mb-3">
+      {/* 3. Pricing teaser — the full pricing grid moved to its own /precos
+          page (2026-06: the landing was doing too many jobs; a dedicated
+          page also gives ads/SEO a clean destination). The teaser keeps the
+          trust strip + a single price anchor + CTA so prospects still see
+          cost early without the full grid weighing down the scroll. */}
+      <section className="pt-12 pb-16 px-6 text-center">
+        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 mb-6">
           <span className="inline-flex items-center gap-1.5 text-[11px] text-warm-stone">
             <span aria-hidden="true">🔒</span>
             {t('landing.trustLgpd', 'LGPD-compliant · Data stays in Brazil')}
@@ -107,23 +106,21 @@ export default function LandingPage() {
             {t('landing.trustHumanSupport', 'Real humans answer in 24h')}
           </span>
         </div>
-        <div className="text-center">
-          <p className="text-xs uppercase tracking-[2px] text-burgundy font-semibold mb-2">
-            {t('landing.betaBadge', 'Beta partners welcome')}
-          </p>
-          <p className="text-sm text-warm-stone font-light max-w-md mx-auto px-6">
-            {t('landing.betaSubtitle', '14-day free trial · no credit card · cancel anytime')}
-          </p>
-        </div>
-      </div>
-      <PricingSection />
+        <h2 className="font-serif text-3xl sm:text-4xl font-medium tracking-tight mb-3">
+          {t('landing.pricingTeaser.heading', 'Planos a partir de R$ 497/mês')}
+        </h2>
+        <p className="text-[15px] text-warm-stone font-light max-w-md mx-auto mb-7">
+          {t('landing.pricingTeaser.subtitle', '14 dias grátis · sem cartão de crédito · cancele quando quiser')}
+        </p>
+        <a
+          href="/precos"
+          className="inline-block px-8 py-3.5 bg-deep-charcoal hover:bg-burgundy text-white text-[15px] font-semibold rounded-full transition-colors"
+        >
+          {t('landing.pricingTeaser.cta', 'Ver planos e preços')}
+        </a>
+      </section>
 
-      {/* 4. Call our AI — voice widget with ElevenLabs agent */}
-      <ErrorBoundary silent>
-        <VoiceWidgetSection />
-      </ErrorBoundary>
-
-      {/* 5. Text our AI — WhatsApp widget with real number */}
+      {/* 4. Text our AI — WhatsApp widget with real number */}
       <WhatsAppWidgetSection />
 
       {/* 6. Before/After — social proof with animated stats */}

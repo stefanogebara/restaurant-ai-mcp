@@ -67,9 +67,11 @@ export default function LandingNav() {
         <button type="button" onClick={() => scrollToSection('try-demo')} className="text-sm font-medium text-stone-gray hover:text-deep-charcoal transition-colors min-h-[44px] flex items-center">
           {t('landing.nav.demo', 'Demo')}
         </button>
-        <button type="button" onClick={() => scrollToSection('pricing')} className="text-sm font-medium text-stone-gray hover:text-deep-charcoal transition-colors min-h-[44px] flex items-center">
+        {/* Pricing lives on its own page now (/precos) — route link instead
+            of the old scroll-to-section anchor. */}
+        <Link to="/precos" className="text-sm font-medium text-stone-gray hover:text-deep-charcoal transition-colors min-h-[44px] flex items-center">
           {t('landing.nav.pricing')}
-        </button>
+        </Link>
         {/* Removed the burgundy "Try free demo" text-link — it sent to the same
             destination as the primary "Comece grátis" CTA at the right edge,
             and the three competing CTAs (this + Entrar + Começar) read as
@@ -132,9 +134,9 @@ export default function LandingNav() {
         <button type="button" onClick={() => scrollToSection('try-demo')} className="block w-full text-left text-sm font-medium text-stone-gray hover:text-deep-charcoal hover:bg-stone-50 transition-colors py-3 px-2 rounded-lg">
           {t('landing.nav.demo', 'Demo')}
         </button>
-        <button type="button" onClick={() => scrollToSection('pricing')} className="block w-full text-left text-sm font-medium text-stone-gray hover:text-deep-charcoal hover:bg-stone-50 transition-colors py-3 px-2 rounded-lg">
+        <Link to="/precos" onClick={closeMobileMenu} className="block w-full text-left text-sm font-medium text-stone-gray hover:text-deep-charcoal hover:bg-stone-50 transition-colors py-3 px-2 rounded-lg">
           {t('landing.nav.pricing')}
-        </button>
+        </Link>
         {/* Mirror desktop: dropped the redundant "Try free demo" link since it
             shared the destination with the bottom primary CTA. Sign-in moves
             to a plain text link so the primary CTA at the bottom is the only

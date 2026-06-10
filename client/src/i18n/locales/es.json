@@ -2982,7 +2982,8 @@
     "home": "seatable — Gestión de Restaurantes con IA",
     "customerPortal": "Gestionar Reserva | seatable",
     "subscriptionSuccess": "Pago Confirmado | seatable",
-    "tableConfig": "Configuración de Mesas | seatable"
+    "tableConfig": "Configuración de Mesas | seatable",
+    "pricing": "Planes y Precios | seatable"
   },
   "campaigns": {
     "title": "Campañas",

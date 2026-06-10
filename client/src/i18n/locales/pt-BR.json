@@ -2956,8 +2956,8 @@
     },
     "banner": {
       "expired": "Demo expirada",
-      "oneDayLeft": "Modo demo \u00b7 1 dia restante",
-      "daysLeft": "Modo demo \u00b7 {{count}} dias restantes",
+      "oneDayLeft": "Modo demo · 1 dia restante",
+      "daysLeft": "Modo demo · {{count}} dias restantes",
       "upgrade": "Atualize para manter seus dados"
     },
     "conversation": {
@@ -2996,7 +2996,8 @@
     "home": "seatable — Gestão de Restaurantes com IA",
     "customerPortal": "Gerenciar Reserva | seatable",
     "subscriptionSuccess": "Pagamento Confirmado | seatable",
-    "tableConfig": "Configuração de Mesas | seatable"
+    "tableConfig": "Configuração de Mesas | seatable",
+    "pricing": "Planos e Preços | seatable"
   },
   "strategy": {
     "title": "Documento de Estratégia IA",

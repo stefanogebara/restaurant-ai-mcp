@@ -26,7 +26,7 @@ async function handleGet(req, res) {
         error: 'Subscription required',
         message: 'No active subscription found. Please subscribe to access this feature.',
         status: subResult.status,
-        upgrade_url: `${process.env.CLIENT_URL || 'https://seatable.one'}/#pricing`,
+        upgrade_url: `${process.env.CLIENT_URL || 'https://seatable.one'}/precos`,
       });
     }
     if (subResult.warning === 'past_due') res.setHeader('X-Subscription-Warning', 'past_due');
@@ -66,7 +66,7 @@ async function handlePatch(req, res) {
         error: 'Subscription required',
         message: 'No active subscription found. Please subscribe to access this feature.',
         status: subResult.status,
-        upgrade_url: `${process.env.CLIENT_URL || 'https://seatable.one'}/#pricing`,
+        upgrade_url: `${process.env.CLIENT_URL || 'https://seatable.one'}/precos`,
       });
     }
     if (subResult.warning === 'past_due') res.setHeader('X-Subscription-Warning', 'past_due');

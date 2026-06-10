@@ -7,7 +7,7 @@ interface UpgradeBannerProps {
 }
 
 function goToPricing() {
-  window.location.href = '/#pricing';
+  window.location.href = '/precos';
 }
 
 // Plan-name reference: per CLAUDE.md the active plans are Essencial /

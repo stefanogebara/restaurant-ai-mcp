@@ -154,7 +154,7 @@ module.exports = async (req, res) => {
       line_items: lineItems,
       locale: 'auto',
       success_url: `${origin}/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/#pricing`,
+      cancel_url: `${origin}/precos`,
       ...(discounts ? { discounts } : { allow_promotion_codes: true }),
       billing_address_collection: 'required',
       customer_email: req.body.email || undefined,

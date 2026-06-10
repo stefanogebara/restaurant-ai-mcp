@@ -2942,8 +2942,8 @@
     },
     "banner": {
       "expired": "Demo expired",
-      "oneDayLeft": "Demo mode \u00b7 1 day left",
-      "daysLeft": "Demo mode \u00b7 {{count}} days left",
+      "oneDayLeft": "Demo mode · 1 day left",
+      "daysLeft": "Demo mode · {{count}} days left",
       "upgrade": "Upgrade to keep your data"
     },
     "conversation": {
@@ -2982,7 +2982,8 @@
     "home": "seatable — AI Restaurant Management",
     "customerPortal": "Manage Reservation | seatable",
     "subscriptionSuccess": "Payment Confirmed | seatable",
-    "tableConfig": "Table Setup | seatable"
+    "tableConfig": "Table Setup | seatable",
+    "pricing": "Plans & Pricing | seatable"
   },
   "strategy": {
     "title": "AI Strategy Document",

@@ -65,7 +65,7 @@ module.exports = async (req, res) => {
         : 'No active subscription found. Please subscribe to access this feature.',
       feature: 'waitlist_management',
       status: subResult.status,
-      upgrade_url: `${process.env.CLIENT_URL || 'https://seatable.one'}/#pricing`,
+      upgrade_url: `${process.env.CLIENT_URL || 'https://seatable.one'}/precos`,
     });
   }
   if (subResult.warning === 'past_due') {

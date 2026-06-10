@@ -28,7 +28,7 @@ export default function UpgradePrompt({ requiredPlan, feature, description }: Up
   const priceDisplay = price ? formatPriceLocale(price, currency) : '';
 
   const handleUpgrade = () => {
-    window.location.href = '/#pricing';
+    window.location.href = '/precos';
   };
 
   return (

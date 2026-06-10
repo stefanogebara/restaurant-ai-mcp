@@ -52,7 +52,7 @@ describe('UpgradeBanner', () => {
 
     await user.click(screen.getByRole('button', { name: /view plans/i }));
 
-    expect(window.location.href).toBe('/#pricing');
+    expect(window.location.href).toBe('/precos');
   });
 
   it('renders the sparkles icon in default variant', () => {
@@ -89,7 +89,7 @@ describe('UpgradeBanner', () => {
 
     await user.click(screen.getByRole('button', { name: /upgrade/i }));
 
-    expect(window.location.href).toBe('/#pricing');
+    expect(window.location.href).toBe('/precos');
   });
 
   it('does not render "View Plans" button in compact variant', () => {
