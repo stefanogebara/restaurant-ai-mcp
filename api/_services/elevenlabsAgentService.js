@@ -9,6 +9,7 @@
  * All functions return { success, error?, ... } objects — never throw.
  */
 
+const crypto = require('node:crypto');
 const fetch = require('node-fetch');
 const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
@@ -18,6 +19,60 @@ const { validateElevenLabsVoiceId } = require('../_lib/validation');
 const logger = createSecureLogger('ElevenLabsAgentService');
 
 const ELEVENLABS_BASE = 'https://api.elevenlabs.io/v1/convai';
+
+/**
+ * Get (or lazily create) the per-restaurant webhook secret embedded in
+ * this restaurant's ElevenLabs agent tool definitions.
+ *
+ * SECURITY: tool request_headers are stored on ElevenLabs's servers, so
+ * whatever Bearer token we put there is held by a third party. It must
+ * therefore be (a) NOT a shared internal credential like CRON_SECRET,
+ * and (b) tenant-scoped so a leak only exposes one restaurant.
+ * api/elevenlabs-webhook.js validates this secret against the
+ * restaurant_id the tool call claims.
+ *
+ * @param {string} restaurantId - restaurant_config UUID
+ * @returns {Promise<string|null>} the secret, or null on error / missing id
+ */
+async function getOrCreateWebhookSecret(restaurantId) {
+  if (!restaurantId) return null;
+  try {
+    const { data: row, error: readError } = await supabaseAdmin
+      .schema('restaurant')
+      .from('restaurant_config')
+      .select('elevenlabs_webhook_secret')
+      .eq('id', restaurantId)
+      .maybeSingle();
+    if (readError) {
+      logger.error('webhook secret read failed', { restaurantId, error: readError.message });
+      return null;
+    }
+    if (row?.elevenlabs_webhook_secret) return row.elevenlabs_webhook_secret;
+
+    const secret = `el_whsec_${crypto.randomBytes(32).toString('hex')}`;
+    const { error: writeError } = await supabaseAdmin
+      .schema('restaurant')
+      .from('restaurant_config')
+      .update({ elevenlabs_webhook_secret: secret })
+      .eq('id', restaurantId)
+      .is('elevenlabs_webhook_secret', null); // don't clobber a concurrent writer
+    if (writeError) {
+      logger.error('webhook secret write failed', { restaurantId, error: writeError.message });
+      return null;
+    }
+    // Re-read in case a concurrent request won the race above.
+    const { data: confirmed } = await supabaseAdmin
+      .schema('restaurant')
+      .from('restaurant_config')
+      .select('elevenlabs_webhook_secret')
+      .eq('id', restaurantId)
+      .maybeSingle();
+    return confirmed?.elevenlabs_webhook_secret || secret;
+  } catch (err) {
+    logger.error('getOrCreateWebhookSecret error', { restaurantId, error: err.message });
+    return null;
+  }
+}
 
 /**
  * Get the ElevenLabs API key from environment.
@@ -609,14 +664,21 @@ function buildFirstMessage({ restaurant_name, language = 'en', custom_greeting }
 
 /**
  * Build webhook tool definitions for a single-tenant agent.
+ *
+ * SECURITY: `webhookSecret` is the per-restaurant secret from
+ * getOrCreateWebhookSecret — NEVER pass CRON_SECRET here. These headers
+ * are stored on ElevenLabs's servers; a shared internal credential in
+ * them means a third party holds it and any leak is cross-tenant.
+ *
  * @param {string} baseUrl
  * @param {string} restaurantId - restaurant_config UUID
+ * @param {string|null} webhookSecret - per-restaurant Bearer token
  * @returns {Array}
  */
-function buildToolDefinitions(baseUrl, restaurantId) {
+function buildToolDefinitions(baseUrl, restaurantId, webhookSecret) {
   const rp = restaurantId ? `&restaurant_id=${restaurantId}` : '';
-  const authHeaders = process.env.CRON_SECRET
-    ? { Authorization: `Bearer ${process.env.CRON_SECRET}` }
+  const authHeaders = webhookSecret
+    ? { Authorization: `Bearer ${webhookSecret}` }
     : {};
 
   return [
@@ -815,8 +877,13 @@ async function createAgent({
 
     const firstMessage = buildFirstMessage({ restaurant_name, language, custom_greeting });
 
-    // Create webhook tools
-    const toolDefs = buildToolDefinitions(baseUrl, restaurantId);
+    // Create webhook tools — authenticated with a per-restaurant secret,
+    // never CRON_SECRET (these headers live on ElevenLabs's servers).
+    const webhookSecret = await getOrCreateWebhookSecret(restaurantId);
+    if (restaurantId && !webhookSecret) {
+      logger.warn('No webhook secret available — tools will be created without auth headers and the webhook will reject their calls', { restaurantId });
+    }
+    const toolDefs = buildToolDefinitions(baseUrl, restaurantId, webhookSecret);
     const { toolIds, errors: toolErrors } = await createToolsViaAPI(toolDefs, apiKey);
 
     if (toolIds.length === 0) {
@@ -872,6 +939,9 @@ async function createAgent({
 
 module.exports = {
   getAgentIdForRestaurant,
+  getOrCreateWebhookSecret,
+  buildToolDefinitions,
+  createToolsViaAPI,
   syncKnowledgeBase,
   deleteAgent,
   createAgent,

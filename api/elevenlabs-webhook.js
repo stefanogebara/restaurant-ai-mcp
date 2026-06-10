@@ -111,7 +111,40 @@ module.exports = async (req, res) => {
     }
   }
 
-  // Path 2: Bearer token (ElevenLabs agent tool calls)
+  // Path 2: per-restaurant Bearer token (ElevenLabs agent tool calls).
+  // The secret is looked up BY the restaurant_id the call claims, so it's
+  // tenant-bound: a leaked secret can only act as its own restaurant.
+  // Secrets are provisioned by elevenlabsAgentService.getOrCreateWebhookSecret
+  // and embedded in the agent's tool definitions (stored at ElevenLabs).
+  if (!authenticated && authHeader && authHeader.startsWith('el_whsec_')) {
+    const claimedRestaurantId = req.query.restaurant_id;
+    if (claimedRestaurantId) {
+      try {
+        const { data: secretRow } = await supabaseAdmin
+          .schema('restaurant')
+          .from('restaurant_config')
+          .select('elevenlabs_webhook_secret')
+          .eq('id', claimedRestaurantId)
+          .maybeSingle();
+        if (
+          secretRow?.elevenlabs_webhook_secret &&
+          require('./_lib/secure-compare').secureEquals(authHeader, secretRow.elevenlabs_webhook_secret)
+        ) {
+          authenticated = true;
+        }
+      } catch (lookupError) {
+        logger.warn('Per-restaurant secret lookup failed:', lookupError.message);
+      }
+    }
+  }
+
+  // Path 2b (LEGACY — remove after CRON_SECRET rotation): Bearer token
+  // matching CRON_SECRET. Existing agents created before the per-restaurant
+  // secret migration still embed the old CRON_SECRET in their tool
+  // definitions. This path keeps them working until
+  // scripts/rotate-elevenlabs-secrets.mjs re-syncs every agent, after which
+  // CRON_SECRET gets rotated and this comparison can never match the old
+  // leaked value again.
   // EE.1 — timing-safe compare. HMAC path (Path 1) is already constant-time
   // via crypto.timingSafeEqual; the Bearer fallback was a `===` compare
   // that leaked the prefix-match length through response time.
