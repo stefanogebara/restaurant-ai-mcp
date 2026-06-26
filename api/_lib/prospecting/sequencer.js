@@ -70,7 +70,8 @@ async function dispatchIntros({ limit = 20 } = {}) {
     const claimed = await claimIntro(lead.id);
     if (!claimed) { summary.skipped++; continue; }
 
-    const bodyParams = [lead.owner_name || lead.name || ''];
+    // {{1}} in olimpia_intro is the RESTAURANT name ("Vi o restaurante {{1}}").
+    const bodyParams = [lead.name || ''];
     const res = await sendTemplateMessage(
       lead.whatsapp_phone, templateName, templateLang, bodyParams,
       { phoneNumberId: getProspectingPhoneNumberId() },
