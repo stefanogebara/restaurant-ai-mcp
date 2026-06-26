@@ -2,6 +2,29 @@
 
 **Date:** 2026-06-26
 
+## Meta provisioning — captured values & go-live steps (2026-06-26)
+
+**Done via WhatsApp Manager (browser):**
+- Template **`olimpia_intro`** (Marketing, `pt_BR`, `{{1}}`=restaurant name) — submitted, **Em análise**.
+- Dedicated number **`+55 21 2391-4417`** ("Seatable WhatsApp V2", a Twilio number whose
+  voice forwards to the founder's phone) — **added + VOICE-verified**.
+  - **`PROSPECTING_PHONE_NUMBER_ID = 1187152381150052`**
+  - Lives on WABA **`25687973367501862`** (one of FOUR duplicate "Seatable" WABAs under
+    business `1426492265498566`). Display name "Seatable" still **Em análise**.
+
+**⚠️ Open blockers before it can send/receive (need a human with valid Meta creds):**
+1. **Valid access token.** `.env.local`'s `WHATSAPP_ACCESS_TOKEN` is **expired** (Meta err
+   190/460). Production env points to a DIFFERENT WABA (`2125050671639316`). Need a current
+   System-User token with `whatsapp_business_messaging` + `_management` scope that can reach
+   `PROSPECTING_PHONE_NUMBER_ID`. Decide which WABA is canonical (4 dupes is cruft worth cleaning).
+2. **Webhook subscription** for the prospecting number's app → `https://seatable.one/api/whatsapp-webhook`
+   (GET verify uses `WHATSAPP_VERIFY_TOKEN`). If that app ≠ reservations app, set
+   `PROSPECTING_APP_SECRET` (webhook now accepts it — `meta-adapter.js`).
+3. **Vercel env:** set `PROSPECTING_PHONE_NUMBER_ID=1187152381150052` (+ token / `PROSPECTING_APP_SECRET`
+   if separate app). Keep `PROSPECTING_DRY_RUN=true` until a live smoke test passes.
+4. **Deploy** `feat/prospecting-agent` → then `POST /api/prospect-discover` + `/api/prospect-dispatch`
+   once `olimpia_intro` is approved.
+
 ## Progress log
 
 - **Phase 0 ✅** (`8ef0fbb2`) — migration applied + verified on `seatable-eu`

@@ -23,9 +23,17 @@ class MetaAdapter extends ChannelAdapter {
    * Verify Meta webhook signature (HMAC-SHA256).
    */
   async verifySignature(req) {
-    const appSecret = process.env.META_APP_SECRET || process.env.WHATSAPP_APP_SECRET;
-    if (!appSecret) {
-      logger.error('META_APP_SECRET not configured');
+    // Accept any configured app secret. The prospecting number can live on a
+    // SEPARATE Meta app/WABA whose inbound webhooks are signed with that app's
+    // secret; PROSPECTING_APP_SECRET lets those validate without weakening the
+    // reservations webhook. Unset = identical behaviour to before.
+    const secrets = [
+      process.env.META_APP_SECRET,
+      process.env.WHATSAPP_APP_SECRET,
+      process.env.PROSPECTING_APP_SECRET,
+    ].filter(Boolean);
+    if (secrets.length === 0) {
+      logger.error('No app secret configured (META_APP_SECRET)');
       return false;
     }
     const signature = req.headers['x-hub-signature-256'];
@@ -39,12 +47,15 @@ class MetaAdapter extends ChannelAdapter {
       return false;
     }
     const bodyForHmac = rawBody || req.body;
-    const expectedSig = 'sha256=' + crypto.createHmac('sha256', appSecret).update(bodyForHmac).digest('hex');
-    try {
-      return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSig));
-    } catch {
-      return false;
+    const sigBuf = Buffer.from(signature);
+    for (const secret of secrets) {
+      const expected = 'sha256=' + crypto.createHmac('sha256', secret).update(bodyForHmac).digest('hex');
+      const expBuf = Buffer.from(expected);
+      try {
+        if (sigBuf.length === expBuf.length && crypto.timingSafeEqual(sigBuf, expBuf)) return true;
+      } catch { /* try next secret */ }
     }
+    return false;
   }
 
   /**
