@@ -23,7 +23,7 @@ const { formatarMemoria } = require('./prospect-facts');
 const logger = createSecureLogger('ProspectAgent');
 
 // Persona is configurable so the same code can run a differently-branded agent.
-const AGENT_NAME = process.env.PROSPECTING_AGENT_NAME || 'Olívia';
+const AGENT_NAME = process.env.PROSPECTING_AGENT_NAME || 'Olímpia';
 const COMPANY = 'Seatable';
 const SITE = 'seatable.one';
 // Social proof (real customer names ONLY). Empty by default — Seatable is early,

@@ -39,9 +39,11 @@ function isDryRun() {
 }
 
 /** Send a single message from the prospecting number, after a human-like delay. */
-async function sendPaced(to, texto) {
+async function sendPaced(to, texto, { skipPacing = false } = {}) {
   const dryRun = isDryRun();
-  const delay = pacingDelayMs(texto, { dryRun });
+  // Deferred (flush) replies are already hours late — typing-pace adds nothing
+  // but execution time, so the flush cron skips it to fit more per invocation.
+  const delay = pacingDelayMs(texto, { dryRun, disabled: skipPacing });
   if (delay) await sleep(delay);
   if (dryRun) {
     logger.info(`[DRY RUN] would send to ${String(to).slice(0, 4)}**** len=${(texto || '').length}`);
@@ -69,9 +71,11 @@ async function recordOutbound(leadId, texto, sendResult) {
  * @param {string} args.from   - inbound phone (bare digits from Meta)
  * @param {string} args.text   - inbound text
  * @param {number} [args.nowMs]
+ * @param {boolean} [args.skipPacing] - skip typing-pace (used by the flush cron)
  * @returns {Promise<{action: string, sent?: boolean, dryRun?: boolean}>}
  */
-async function respondToProspect({ lead, from, text, nowMs = Date.now() }) {
+async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPacing = false }) {
+  const pace = { skipPacing };
   // 1. State gate — silent in optout/handoff/agendado/pausada.
   if (!deveResponder(lead.prospect_state)) {
     return { action: 'skip', reason: `silent_state:${lead.prospect_state}` };
@@ -153,7 +157,7 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now() }) {
       case 'handoff':
         patch.handoff_motivo = acao.motivo || null;
         if (acao.texto) {
-          const r = await sendPaced(from, acao.texto);
+          const r = await sendPaced(from, acao.texto, pace);
           sent = !r.dryRun && r.success; dryRun = !!r.dryRun;
           await recordOutbound(lead.id, acao.texto, r);
         }
@@ -170,7 +174,7 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now() }) {
           notas: [`Responsável indicado pelo WhatsApp: ${acao.numero}`],
         });
         if (acao.texto) {
-          const r = await sendPaced(from, acao.texto);
+          const r = await sendPaced(from, acao.texto, pace);
           sent = !r.dryRun && r.success; dryRun = !!r.dryRun;
           await recordOutbound(lead.id, acao.texto, r);
         }
@@ -181,7 +185,7 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now() }) {
         // for a preferred time) and move to 'agendando'. Real calendar booking
         // (free/busy, Meet link) is Phase 4 — we NEVER claim a slot is booked.
         const texto = acao.texto || 'Perfeito! Qual dia e horário fica melhor pra você?';
-        const r = await sendPaced(from, texto);
+        const r = await sendPaced(from, texto, pace);
         sent = !r.dryRun && r.success; dryRun = !!r.dryRun;
         await recordOutbound(lead.id, texto, r);
         if (acao.resumo && acao.resumo !== 'sem detalhe') {
@@ -195,7 +199,7 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now() }) {
       case 'responder':
       default:
         if (acao.tipo === 'responder' && acao.texto) {
-          const r = await sendPaced(from, acao.texto);
+          const r = await sendPaced(from, acao.texto, pace);
           sent = !r.dryRun && r.success; dryRun = !!r.dryRun;
           await recordOutbound(lead.id, acao.texto, r);
         }

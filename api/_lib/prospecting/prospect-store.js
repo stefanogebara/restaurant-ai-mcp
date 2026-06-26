@@ -181,6 +181,140 @@ async function recordOptout({ phone, leadId = null, reason = 'lead_request' }) {
   }
 }
 
+/**
+ * Upsert discovered leads. Conflict on google_place_id DOES NOTHING — re-running
+ * discovery must never clobber a lead that's already mid-conversation. Returns
+ * the count of NEWLY inserted rows.
+ * @param {object[]} rows
+ * @returns {Promise<{inserted:number}>}
+ */
+async function upsertDiscoveredLeads(rows) {
+  if (!Array.isArray(rows) || rows.length === 0) return { inserted: 0 };
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('prospect_leads')
+      .upsert(rows, { onConflict: 'google_place_id', ignoreDuplicates: true })
+      .select('id');
+    if (error) {
+      logger.error('upsertDiscoveredLeads failed:', error.message);
+      return { inserted: 0 };
+    }
+    return { inserted: Array.isArray(data) ? data.length : 0 };
+  } catch (err) {
+    logger.error('upsertDiscoveredLeads exception:', err.message);
+    return { inserted: 0 };
+  }
+}
+
+/**
+ * Leads ready for a cold intro: never contacted (whatsapp_sent_at null), in the
+ * initial state, with a sendable WhatsApp number.
+ * @param {number} [limit=20]
+ */
+async function selectIntroCandidates(limit = 20) {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('prospect_leads')
+      .select('id, name, owner_name, whatsapp_phone, whatsapp_status')
+      .eq('prospect_state', 'aguardando')
+      .is('whatsapp_sent_at', null)
+      .not('whatsapp_phone', 'is', null)
+      .in('whatsapp_status', ['pending', 'found'])
+      .order('created_at', { ascending: true })
+      .limit(limit);
+    if (error) {
+      logger.error('selectIntroCandidates failed:', error.message);
+      return [];
+    }
+    return data || [];
+  } catch (err) {
+    logger.error('selectIntroCandidates exception:', err.message);
+    return [];
+  }
+}
+
+/**
+ * Atomically claim a lead for an intro send: set whatsapp_sent_at only if it's
+ * still null. Returns true if THIS caller claimed it (prevents double-send across
+ * concurrent dispatch runs).
+ * @param {string} leadId
+ */
+async function claimIntro(leadId) {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('prospect_leads')
+      .update({ whatsapp_sent_at: new Date().toISOString(), whatsapp_send_status: 'queued' })
+      .eq('id', leadId)
+      .is('whatsapp_sent_at', null)
+      .select('id');
+    if (error) {
+      logger.error('claimIntro failed:', error.message);
+      return false;
+    }
+    return Array.isArray(data) && data.length === 1;
+  } catch (err) {
+    logger.error('claimIntro exception:', err.message);
+    return false;
+  }
+}
+
+/** Record the outcome of an intro send on the lead. */
+async function markIntro(leadId, { status, wamid }) {
+  const fields = { whatsapp_send_status: status };
+  if (wamid) fields.whatsapp_msg_id = wamid;
+  // A failed send releases the claim so a later run can retry.
+  if (status === 'failed') fields.whatsapp_sent_at = null;
+  return patchLead(leadId, fields);
+}
+
+/**
+ * Leads whose business-hours-deferred reply is now due (reply_apos <= now) and
+ * still in an active state — the flush cron resumes these.
+ * @param {string} nowIso
+ * @param {number} [limit=50]
+ */
+async function selectDueFlush(nowIso, limit = 50) {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('prospect_leads')
+      .select('*')
+      .not('reply_apos', 'is', null)
+      .lte('reply_apos', nowIso)
+      .in('prospect_state', ['aguardando', 'conversando', 'agendando'])
+      .order('reply_apos', { ascending: true })
+      .limit(limit);
+    if (error) {
+      logger.error('selectDueFlush failed:', error.message);
+      return [];
+    }
+    return data || [];
+  } catch (err) {
+    logger.error('selectDueFlush exception:', err.message);
+    return [];
+  }
+}
+
+/** Most recent inbound message body for a lead (for the flush cron to re-run). */
+async function loadLastInbound(leadId) {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('prospect_messages')
+      .select('corpo, tipo, enviada_em')
+      .eq('lead_id', leadId)
+      .eq('direcao', 'in')
+      .order('enviada_em', { ascending: false })
+      .limit(1);
+    if (error) {
+      logger.error('loadLastInbound failed:', error.message);
+      return null;
+    }
+    return Array.isArray(data) && data.length ? data[0] : null;
+  } catch (err) {
+    logger.error('loadLastInbound exception:', err.message);
+    return null;
+  }
+}
+
 module.exports = {
   isOptedOut,
   findLeadByPhone,
@@ -189,4 +323,10 @@ module.exports = {
   patchLead,
   recordOptout,
   phoneMatchCandidates,
+  upsertDiscoveredLeads,
+  selectIntroCandidates,
+  claimIntro,
+  markIntro,
+  selectDueFlush,
+  loadLastInbound,
 };
