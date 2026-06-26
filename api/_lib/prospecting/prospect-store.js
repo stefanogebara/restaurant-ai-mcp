@@ -110,4 +110,83 @@ async function storeMessage({ leadId = null, direcao, wamid = null, tipo = 'text
   }
 }
 
-module.exports = { isOptedOut, findLeadByPhone, storeMessage, phoneMatchCandidates };
+/**
+ * Load the last `limit` messages for a lead in chronological order — the history
+ * the brain assembles into the conversation.
+ * @param {string} leadId
+ * @param {number} [limit=40]
+ * @returns {Promise<Array<{direcao:string, corpo:string|null, tipo:string|null}>>}
+ */
+async function loadHistory(leadId, limit = 40) {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('prospect_messages')
+      .select('direcao, corpo, tipo, enviada_em')
+      .eq('lead_id', leadId)
+      .order('enviada_em', { ascending: false })
+      .limit(limit);
+    if (error) {
+      logger.error('loadHistory failed:', error.message);
+      return [];
+    }
+    // fetched newest-first for the LIMIT; return chronological (oldest-first)
+    return Array.isArray(data) ? data.slice().reverse() : [];
+  } catch (err) {
+    logger.error('loadHistory exception:', err.message);
+    return [];
+  }
+}
+
+/**
+ * Patch a lead row. The optout-terminal DB trigger still guards prospect_state,
+ * so a buggy caller cannot resurrect an opted-out lead.
+ * @param {string} leadId
+ * @param {object} fields
+ */
+async function patchLead(leadId, fields) {
+  try {
+    const { error } = await supabaseAdmin.from('prospect_leads').update(fields).eq('id', leadId);
+    if (error) {
+      logger.error('patchLead failed:', error.message);
+      return { ok: false };
+    }
+    return { ok: true };
+  } catch (err) {
+    logger.error('patchLead exception:', err.message);
+    return { ok: false };
+  }
+}
+
+/**
+ * Record an opt-out: add to the suppression list (idempotent) and force the
+ * lead's state to optout (terminal). LGPD.
+ * @param {{phone:string, leadId?:string|null, reason?:string}} args
+ */
+async function recordOptout({ phone, leadId = null, reason = 'lead_request' }) {
+  try {
+    const e164 = toE164(phone) || phone;
+    await supabaseAdmin
+      .from('prospect_optout')
+      .upsert({ phone: e164, lead_id: leadId, reason }, { onConflict: 'phone', ignoreDuplicates: true });
+    if (leadId) {
+      await supabaseAdmin
+        .from('prospect_leads')
+        .update({ prospect_state: 'optout', status: 'descartado' })
+        .eq('id', leadId);
+    }
+    return { ok: true };
+  } catch (err) {
+    logger.error('recordOptout exception:', err.message);
+    return { ok: false };
+  }
+}
+
+module.exports = {
+  isOptedOut,
+  findLeadByPhone,
+  storeMessage,
+  loadHistory,
+  patchLead,
+  recordOptout,
+  phoneMatchCandidates,
+};

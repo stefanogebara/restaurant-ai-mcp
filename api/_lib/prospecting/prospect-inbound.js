@@ -1,22 +1,24 @@
 'use strict';
 
 /**
- * Prospecting inbound handler (Phase 0 — STUB).
+ * Prospecting inbound handler.
  *
  * Cold-outreach replies arrive on the dedicated prospecting number and are
  * routed here by the webhook fork (see whatsapp-webhook.js) BEFORE the
  * restaurant pipeline, because a prospect has no restaurant_id and would
  * otherwise be dropped into a restaurant AI conversation / the restaurant picker.
  *
- * Phase 0 is intentionally HEADLESS: it dedups, honors opt-out, matches the
- * lead, and stores the inbound message — but it does NOT generate a reply. The
- * AI brain (prospect-agent.js + prospect-responder.js) lands in Phase 1, at
- * which point this handler hands off to the responder instead of just logging.
+ * Flow: dedup → store inbound → honor opt-out suppression → (if the phone maps to
+ * a known lead) hand off to the responder, which runs the deterministic
+ * guardrails + LLM and replies. An inbound from an unknown number is stored but
+ * not answered (we have no lead context / persona to converse from). Sends are
+ * DRY-RUN-default-on (see prospect-responder.js).
  */
 
 const { createSecureLogger } = require('../secure-logger');
 const { isMessageDuplicate } = require('../rate-limit');
 const { isOptedOut, findLeadByPhone, storeMessage } = require('./prospect-store');
+const { respondToProspect } = require('./prospect-responder');
 
 const logger = createSecureLogger('ProspectInbound');
 
@@ -67,15 +69,32 @@ async function handleProspectInbound(adapter, req) {
   logger.info(
     `[prospect] inbound stored from=${String(from).slice(0, 4)}**** ` +
     `lead=${lead?.id ? 'matched' : 'unknown'} optout=${optedOut} ` +
-    `type=${messageType} name=${profileName ? 'yes' : 'no'} ` +
-    `(Phase 0 stub — no reply generated)`
+    `type=${messageType} name=${profileName ? 'yes' : 'no'}`
   );
 
-  // Phase 1 hook: when the brain exists, opted-out → stop here; otherwise
-  // hand off to the responder:
-  //   if (optedOut) return { handled: true, reason: 'optout' };
-  //   await respondToProspect({ lead, from, text, messageId });
-  return { handled: true, reason: 'stored_stub' };
+  // Suppressed (LGPD) — stored for the audit trail, but never answered.
+  if (optedOut) {
+    return { handled: true, reason: 'optout' };
+  }
+
+  // Unknown number — no lead context to converse from. Stored; a human can
+  // triage. (Cold conversations always start from a lead we messaged in Phase 2.)
+  if (!lead) {
+    return { handled: true, reason: 'unknown_number' };
+  }
+
+  // Only text-bearing messages get a reply; pure media/status already handled by
+  // parseIncoming (which transcribes audio / returns null for unsupported types).
+  if (!text || !String(text).trim()) {
+    return { handled: true, reason: 'no_text' };
+  }
+
+  const result = await respondToProspect({ lead, from, text })
+    .catch((err) => {
+      logger.error('respondToProspect error:', err.message);
+      return { action: 'error' };
+    });
+  return { handled: true, reason: `responded:${result.action}` };
 }
 
 module.exports = { handleProspectInbound };
