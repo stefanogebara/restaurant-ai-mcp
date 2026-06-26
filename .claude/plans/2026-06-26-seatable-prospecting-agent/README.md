@@ -1,6 +1,32 @@
-# Seatable Prospecting Agent — "Olivia for Seatable"
+# Seatable Prospecting Agent — "Olímpia for Seatable"
 
 **Date:** 2026-06-26
+
+## Progress log
+
+- **Phase 0 ✅** (`8ef0fbb2`) — migration applied + verified on `seatable-eu`
+  (prospect_leads/messages/outcomes/optout, state machine, LGPD opt-out-terminal
+  trigger, service-role RLS); sender `phone_number_id` parametrized; webhook
+  prospecting fork (inert until `PROSPECTING_PHONE_NUMBER_ID` set); stub inbound.
+- **Phase 1 ✅** (`5cf76c73`) — the brain (agent name **Olímpia**): persona +
+  Anthropic-shaped tools via `getAI()`, deterministic LGPD opt-out, BR
+  owner-number extraction, immutable facts, pacing, business-hours gate, the
+  responder pipeline. Proven end-to-end in dry-run against prod (real LLM reply,
+  no send).
+- **Phase 2 ✅** (`d9f07ac5`) — discovery (Google Places, verified live),
+  warm-up-capped cold-intro sequencer (atomic claim, dry-run-safe), flush cron,
+  `prospect-discover`/`prospect-dispatch` endpoints. 2060 backend tests green.
+- **Remaining in Phase 2 (deferred):** followup (48h) + nudge (24h-window)
+  re-engagement crons — need the `olivia_followup.ts`/`olivia_nudge.ts`
+  eligibility ports. Core loop works without them.
+- **External (blocks GOING LIVE, not building):** provision the dedicated
+  WhatsApp number → `PROSPECTING_PHONE_NUMBER_ID`; get a B2B intro template
+  approved by Meta → `PROSPECTING_INTRO_TEMPLATE`. Until then everything is
+  forced dry-run.
+- **Next:** Phase 3 (BR enrichment) · Phase 4 (Google Calendar booking) ·
+  Phase 5 (memory + outcomes + internal cockpit).
+
+
 **Goal:** Replicate the `prospectautomation` (Squad · "Olivia") autonomous WhatsApp sales-prospecting
 agent inside the Seatable codebase, reusing Seatable's existing Meta Cloud WhatsApp integration as
 the sending channel.
