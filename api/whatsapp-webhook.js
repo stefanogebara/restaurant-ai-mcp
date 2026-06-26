@@ -77,6 +77,19 @@ async function handlePost(req, res) {
       }
     }
 
+    // Prospecting fork — cold-outreach traffic arrives on a DEDICATED number and
+    // must NOT enter the restaurant pipeline (message-processor assumes every
+    // sender maps to a restaurant_id; a prospect has none and would be dropped
+    // into a restaurant AI conversation or the restaurant picker). Route it to
+    // the isolated prospecting handler BEFORE restaurant routing.
+    const { isProspectingNumber, phoneNumberIdFromBody } = require('./_lib/prospecting/routing');
+    if (isProspectingNumber(phoneNumberIdFromBody(req.body))) {
+      const { handleProspectInbound } = require('./_lib/prospecting/prospect-inbound');
+      await handleProspectInbound(adapter, req)
+        .catch(err => logger.error('Prospect inbound error:', err.message));
+      return;
+    }
+
     // Check if we should handle this message (TwinMe forwarding, etc.)
     const routing = await adapter.shouldHandle(req);
     if (!routing.handle) {
