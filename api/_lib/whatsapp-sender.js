@@ -51,11 +51,25 @@ async function getWhatsAppProvider(restaurantId) {
 }
 
 /**
+ * Resolve which Meta phone_number_id to send from.
+ *
+ * Defaults to the customer-facing reservation number (WHATSAPP_PHONE_NUMBER_ID).
+ * The prospecting agent passes { phoneNumberId: PROSPECTING_PHONE_NUMBER_ID } so
+ * cold outreach goes out from a SEPARATE number — isolating its Meta quality
+ * rating from the number restaurants depend on. The access token + WABA are
+ * shared, so only the number id changes.
+ * @private
+ */
+function resolvePhoneNumberId(options = {}) {
+  return options.phoneNumberId || process.env.WHATSAPP_PHONE_NUMBER_ID;
+}
+
+/**
  * Send a WhatsApp text message via Meta Cloud API.
  * @private
  */
-async function sendViaMeta(to, message) {
-  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+async function sendViaMeta(to, message, options = {}) {
+  const phoneNumberId = resolvePhoneNumberId(options);
   const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
 
   if (!phoneNumberId || !accessToken) {
@@ -148,6 +162,8 @@ async function sendViaTwilio(to, message) {
  * @param {string} message - Message body text
  * @param {object} [options] - Optional configuration
  * @param {string} [options.provider] - Force a specific provider ('meta' | 'twilio')
+ * @param {string} [options.phoneNumberId] - Override the Meta sender number id
+ *   (e.g. the prospecting number). Defaults to WHATSAPP_PHONE_NUMBER_ID.
  * @returns {{ success: boolean, messageId?: string, error?: string }}
  */
 async function sendWhatsAppMessage(to, message, options = {}) {
@@ -156,7 +172,7 @@ async function sendWhatsAppMessage(to, message, options = {}) {
   if (provider === 'twilio') {
     return sendViaTwilio(to, message);
   }
-  return sendViaMeta(to, message);
+  return sendViaMeta(to, message, options);
 }
 
 /**
@@ -167,10 +183,13 @@ async function sendWhatsAppMessage(to, message, options = {}) {
  * @param {string} templateName - Name of approved template (e.g. 'reservation_confirmed')
  * @param {string} languageCode - Template language ('en', 'es', 'pt')
  * @param {string[]} bodyParameters - Array of strings for {{1}}, {{2}}, etc. placeholders
+ * @param {object} [options] - Optional configuration
+ * @param {string} [options.phoneNumberId] - Override the Meta sender number id
+ *   (e.g. the prospecting number). Defaults to WHATSAPP_PHONE_NUMBER_ID.
  * @returns {{ success: boolean, messageId?: string, error?: string }}
  */
-async function sendTemplateMessage(to, templateName, languageCode = 'en', bodyParameters = []) {
-  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+async function sendTemplateMessage(to, templateName, languageCode = 'en', bodyParameters = [], options = {}) {
+  const phoneNumberId = resolvePhoneNumberId(options);
   const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
 
   if (!phoneNumberId || !accessToken) {

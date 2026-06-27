@@ -1,0 +1,227 @@
+/**
+ * Phase 1 — the prospect agent brain (pure logic).
+ *
+ * These guard the load-bearing behaviors ported from Olivia: deterministic
+ * opt-out (LGPD), anti-invention persona, immutable fact merge, BR owner-number
+ * extraction, the Anthropic-shaped response interpreter, business-hours gating,
+ * and pacing. No network — generateReply is exercised with a mocked getAI().
+ */
+
+jest.mock('../_lib/secure-logger', () => ({
+  createSecureLogger: jest.fn(() => ({ info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() })),
+}));
+
+const { deveResponder, detectarOptout, descreverAgora, estadoAposAcao } = require('../_lib/prospecting/prospect-state');
+const { mergeFatos, formatarMemoria } = require('../_lib/prospecting/prospect-facts');
+const { extrairNumeroDono, normalizarNumeroBr, extrairEmail, extrairDddBr } = require('../_lib/prospecting/prospect-extract');
+const { dentroDoHorario, proximaAbertura } = require('../_lib/prospecting/prospect-hours');
+const { pacingDelayMs } = require('../_lib/prospecting/prospect-pacing');
+const { buildSystemPrompt, interpretResponse, historyToMessages } = require('../_lib/prospecting/prospect-agent');
+
+// ============================================================ state
+describe('deveResponder / detectarOptout', () => {
+  test('silent states do not respond', () => {
+    for (const s of ['optout', 'handoff', 'agendado', 'pausada']) expect(deveResponder(s)).toBe(false);
+    for (const s of [null, undefined, 'aguardando', 'conversando', 'agendando']) expect(deveResponder(s)).toBe(true);
+  });
+
+  test('detects unambiguous opt-out', () => {
+    expect(detectarOptout('pode parar de mandar mensagem')).toBe(true);
+    expect(detectarOptout('não quero')).toBe(true);
+    expect(detectarOptout('me tira da lista por favor')).toBe(true);
+    expect(detectarOptout('STOP')).toBe(true);
+    expect(detectarOptout('sem interesse')).toBe(true);
+  });
+
+  test('ambiguous / negative-but-not-optout stays false (handled by LLM)', () => {
+    expect(detectarOptout('não')).toBe(false);
+    expect(detectarOptout('não sou o dono')).toBe(false);
+    expect(detectarOptout('oi, tudo bem?')).toBe(false);
+    expect(detectarOptout('')).toBe(false);
+    expect(detectarOptout(null)).toBe(false);
+  });
+
+  test('descreverAgora is deterministic and in Brasília time', () => {
+    const ms = Date.parse('2026-06-25T17:00:00Z'); // 14:00 BRT
+    expect(descreverAgora(ms)).toBe(descreverAgora(ms));
+    expect(descreverAgora(ms)).toMatch(/Brasília/);
+    expect(descreverAgora(ms)).toMatch(/14:00/);
+  });
+
+  test('estadoAposAcao maps actions to next state', () => {
+    expect(estadoAposAcao({ tipo: 'optout' })).toBe('optout');
+    expect(estadoAposAcao({ tipo: 'handoff' })).toBe('handoff');
+    expect(estadoAposAcao({ tipo: 'agendar' })).toBe('agendando');
+    expect(estadoAposAcao({ tipo: 'responder' })).toBe('conversando');
+    expect(estadoAposAcao({ tipo: 'ignorar' })).toBeNull();
+    expect(estadoAposAcao({ tipo: 'nada' })).toBeNull();
+  });
+});
+
+// ============================================================ facts
+describe('mergeFatos (immutable)', () => {
+  test('does not mutate prev; overwrites scalars; unions+dedups lists', () => {
+    const prev = { email: 'a@x.com', objecoes: ['caro'] };
+    const next = mergeFatos(prev, { email: 'b@x.com', objecoes: ['caro', 'já uso outro'], is_dono: true });
+    expect(prev).toEqual({ email: 'a@x.com', objecoes: ['caro'] }); // unchanged
+    expect(next.email).toBe('b@x.com');
+    expect(next.objecoes).toEqual(['caro', 'já uso outro']);
+    expect(next.is_dono).toBe(true);
+  });
+
+  test('empty merge returns equivalent copy (new array refs)', () => {
+    const prev = { objecoes: ['x'] };
+    const next = mergeFatos(prev, null);
+    expect(next).toEqual(prev);
+    expect(next.objecoes).not.toBe(prev.objecoes);
+  });
+
+  test('formatarMemoria renders only known facts, [] when empty', () => {
+    expect(formatarMemoria(null, null)).toEqual([]);
+    const lines = formatarMemoria({ is_dono: true, nome_responsavel: 'João' }, 'resumo x');
+    expect(lines.join('\n')).toMatch(/É o dono/);
+    expect(lines.join('\n')).toMatch(/João/);
+    expect(lines.join('\n')).toMatch(/resumo x/);
+  });
+});
+
+// ============================================================ extraction
+describe('BR owner-number / email extraction', () => {
+  test('shared contact card → E.164', () => {
+    expect(extrairNumeroDono('[Contato compartilhado: 5511999998888]')).toBe('+5511999998888');
+  });
+  test('number (almost) alone in text → E.164', () => {
+    expect(extrairNumeroDono('11 99999-8888')).toBe('+5511999998888');
+    expect(extrairNumeroDono('Falar com Edson 11 99947-5069')).toBe('+5511999475069');
+  });
+  test('number mid-sentence → null (anti false-positive)', () => {
+    expect(extrairNumeroDono('liguei pro 11 99999-8888 ontem pra resolver aquele problemão do fornecedor todo')).toBeNull();
+  });
+  test('normalizarNumeroBr rejects implausible numbers', () => {
+    expect(normalizarNumeroBr('123')).toBeNull();
+    expect(normalizarNumeroBr('+1 415 555 2671')).toBeNull(); // non-BR
+    expect(normalizarNumeroBr('48 98005-3386')).toBe('+5548980053386');
+  });
+  test('extrairDddBr / extrairEmail', () => {
+    expect(extrairDddBr('+5511999998888')).toBe('11');
+    expect(extrairEmail('meu email é Joao@Test.COM ok?')).toBe('joao@test.com');
+    expect(extrairEmail('sem email aqui')).toBeNull();
+  });
+});
+
+// ============================================================ persona
+describe('buildSystemPrompt', () => {
+  const lead = { name: 'Cantina Bella', city: 'São Paulo', sector: 'restaurante italiano' };
+
+  test('is deterministic and Seatable-branded', () => {
+    const a = buildSystemPrompt(lead, descreverAgora(Date.parse('2026-06-25T17:00:00Z')));
+    const b = buildSystemPrompt(lead, descreverAgora(Date.parse('2026-06-25T17:00:00Z')));
+    expect(a).toBe(b);
+    expect(a).toMatch(/Seatable/);
+    expect(a).toMatch(/seatable\.one/);
+    expect(a).toMatch(/Cantina Bella/);
+    expect(a).toMatch(/São Paulo/);
+  });
+
+  test('carries the anti-invention rules and no fabricated cases by default', () => {
+    const p = buildSystemPrompt(lead);
+    expect(p).toMatch(/NUNCA invente/);
+    expect(p).not.toMatch(/Já roda em/); // PROSPECTING_CASES unset → never invent customers
+  });
+});
+
+// ============================================================ interpreter
+describe('interpretResponse (Anthropic shape)', () => {
+  const text = (t) => ({ content: [{ type: 'text', text: t }], stop_reason: 'end_turn' });
+  const tool = (name, input) => ({ content: [{ type: 'tool_use', id: 't1', name, input }], stop_reason: 'tool_use' });
+
+  test('plain text → responder', () => {
+    expect(interpretResponse(text('Oi! Tudo bem?'))).toEqual({ tipo: 'responder', texto: 'Oi! Tudo bem?' });
+  });
+  test('tool_use maps to actions', () => {
+    expect(interpretResponse(tool('marcar_optout', {})).tipo).toBe('optout');
+    expect(interpretResponse(tool('ignorar', { motivo: 'figurinha' }))).toEqual({ tipo: 'ignorar', motivo: 'figurinha' });
+    expect(interpretResponse(tool('escalar_humano', { motivo: 'preço' }))).toMatchObject({ tipo: 'handoff', motivo: 'preço' });
+    expect(interpretResponse(tool('agendar_demo', { resumo_disponibilidade: 'amanhã à tarde' }))).toMatchObject({ tipo: 'agendar', resumo: 'amanhã à tarde' });
+    expect(interpretResponse(tool('registrar_responsavel', { numero: '11999998888', nome: 'Ana' }))).toMatchObject({ tipo: 'registrar_responsavel', numero: '11999998888', nome: 'Ana' });
+  });
+  test('registrar_responsavel without number → handoff (anti-invention)', () => {
+    expect(interpretResponse(tool('registrar_responsavel', {})).tipo).toBe('handoff');
+  });
+  test('truncated text-only → nada (never send a half message)', () => {
+    expect(interpretResponse({ content: [{ type: 'text', text: 'meia frase' }], stop_reason: 'max_tokens' }).tipo).toBe('nada');
+  });
+  test('empty content → nada', () => {
+    expect(interpretResponse({ content: [], stop_reason: 'end_turn' }).tipo).toBe('nada');
+  });
+});
+
+describe('historyToMessages', () => {
+  test('maps direcao→role and injects placeholder for unreadable inbound media', () => {
+    const msgs = historyToMessages([
+      { direcao: 'out', corpo: 'Oi!' },
+      { direcao: 'in', corpo: 'tudo bem' },
+      { direcao: 'in', corpo: null, tipo: 'audio' },
+      { direcao: 'out', corpo: null, tipo: 'text' }, // empty outbound skipped
+    ]);
+    expect(msgs).toEqual([
+      { role: 'assistant', content: 'Oi!' },
+      { role: 'user', content: 'tudo bem' },
+      { role: 'user', content: '[a pessoa enviou um áudio que não consegui ouvir]' },
+    ]);
+  });
+});
+
+// ============================================================ hours + pacing
+describe('business hours + pacing', () => {
+  test('dentroDoHorario respects Brasília weekday window', () => {
+    expect(dentroDoHorario(Date.parse('2026-06-25T17:00:00Z'))).toBe(true);  // Thu 14:00 BRT
+    expect(dentroDoHorario(Date.parse('2026-06-25T03:00:00Z'))).toBe(false); // Thu 00:00 BRT
+    expect(dentroDoHorario(Date.parse('2026-06-27T17:00:00Z'))).toBe(false); // Sat
+  });
+  test('proximaAbertura lands inside business hours', () => {
+    const next = proximaAbertura(Date.parse('2026-06-27T17:00:00Z')); // Sat afternoon
+    expect(dentroDoHorario(next)).toBe(true);
+  });
+  test('pacingDelayMs: 0 on dryRun, bounded, deterministic with rand', () => {
+    expect(pacingDelayMs('hello', { dryRun: true })).toBe(0);
+    expect(pacingDelayMs('', { rand: () => 0.5 })).toBe(1800);              // floor
+    expect(pacingDelayMs('x'.repeat(1000), { rand: () => 0.5 })).toBe(9000); // ceiling
+  });
+});
+
+// ============================================================ generateReply (mocked LLM)
+describe('generateReply (mocked getAI)', () => {
+  afterEach(() => jest.resetModules());
+
+  test('returns the interpreted action from the LLM response', async () => {
+    jest.resetModules();
+    jest.doMock('../_lib/secure-logger', () => ({
+      createSecureLogger: () => ({ info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() }),
+    }));
+    jest.doMock('../_lib/ai-client', () => ({
+      AI_MODEL: 'test-model',
+      getAI: () => ({ messages: { create: async () => ({ content: [{ type: 'text', text: 'Oi, tudo bem?' }], stop_reason: 'end_turn' }) } }),
+    }));
+    const { generateReply } = require('../_lib/prospecting/prospect-agent');
+    const acao = await generateReply({
+      lead: { name: 'X' },
+      history: [{ direcao: 'in', corpo: 'oi' }],
+      nowMs: Date.parse('2026-06-25T17:00:00Z'),
+    });
+    expect(acao).toEqual({ tipo: 'responder', texto: 'Oi, tudo bem?' });
+  });
+
+  test('empty history short-circuits without calling the LLM', async () => {
+    jest.resetModules();
+    jest.doMock('../_lib/secure-logger', () => ({
+      createSecureLogger: () => ({ info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() }),
+    }));
+    const create = jest.fn();
+    jest.doMock('../_lib/ai-client', () => ({ AI_MODEL: 'm', getAI: () => ({ messages: { create } }) }));
+    const { generateReply } = require('../_lib/prospecting/prospect-agent');
+    const acao = await generateReply({ lead: { name: 'X' }, history: [], nowMs: 1 });
+    expect(acao.tipo).toBe('nada');
+    expect(create).not.toHaveBeenCalled();
+  });
+});
