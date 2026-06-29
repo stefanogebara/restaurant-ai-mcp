@@ -348,3 +348,38 @@ Files containing PT-BR / accented chars often need this; pure-ASCII files are fi
 **Prevention:** Internal credentials (CRON_SECRET, service-role keys) NEVER leave our infra. Anything handed to a third party (webhook tool defs, embed snippets) gets a dedicated, rotatable, tenant-scoped secret.
 
 **Vercel CLI gotcha:** `vercel env add` via piped stdin silently stored empty/garbage values and created write-only "sensitive" vars. Use the Vercel REST API (`POST /v10/projects/{id}/env`) with `decrypt=true` round-trip verification instead.
+
+## 2026-06-28 — "Redis unreliable on Vercel" was TWO stacked bugs (newline + dead DB)
+
+**Symptom:** rate-limit.js + dedup/lock fallbacks had logged Redis as unreliable for months
+(the April `dbsize=0` note). Prod logs showed, on every request:
+`[Upstash Redis] The redis url/token contains whitespace or newline` +
+`[RateLimit] Failed to initialize Redis, falling back to in-memory: ... invalid URL`.
+
+**Root cause — bug 1 (newline):** both `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`
+in Vercel had a trailing `\n` (URL 40→39 chars, token 64→63). `new Redis()` THREW on the
+malformed URL → `redis=null` → whole app on per-instance in-memory fallback. Vercel's env
+edit field even labels it: "This value starts and ends with whitespace and has return
+characters." Fixed by re-entering the clean URL; for the secret token, trimmed the
+pre-filled field value in-browser (`.trim()` via the native setter + dispatched `input`
+event) so the secret was never typed/read — only its length/whitespace flags.
+
+**Root cause — bug 2 (dead DB), revealed AFTER fixing bug 1:** init then succeeded
+(`Using Upstash Redis store`) but the first `redis.incr()` failed with `error: 'fetch failed'`.
+The DB host `inviting-dingo-55680.upstash.io` returns **NXDOMAIN** from both my machine AND
+Vercel (`console.upstash.com` resolves fine → not a DNS fluke). A *paused* Upstash DB keeps
+its DNS; NXDOMAIN = the database was **deleted**. The newline-throw-on-init had masked this
+for months (init died before any fetch).
+
+**Lessons:**
+- Fixing a config bug can UNMASK a deeper one — always test the actual operation, not just
+  "deploy succeeded." The init log "Using Upstash Redis store" is NOT proof Redis works;
+  `new Redis()` doesn't validate connectivity. The real signal is a successful `incr`/`get`.
+- A whitespace/newline in an env value is invisible in rendered UIs. Verify byte-for-byte:
+  `JSON.stringify(value)` / check `.length`, not the rendered string.
+- Counter-intuitive: fixing the newline made per-request cost slightly WORSE until a live DB
+  exists — before, init threw so requests skipped Redis; after, every request attempts the
+  dead DB → failed fetch → fallback. Either provision a real DB or remove the vars.
+- Dedup + processing locks already use Supabase as PRIMARY (Redis is fallback only), so a
+  dead Redis does NOT risk WhatsApp message-doubling — only weakens global rate-limiting
+  (becomes per-instance) and no-ops the abuse failure-counters.

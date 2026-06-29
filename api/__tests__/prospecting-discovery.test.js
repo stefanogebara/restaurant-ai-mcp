@@ -76,7 +76,11 @@ describe('consumeSendSlot (in-memory, fail-closed)', () => {
   test('allows up to the cap then blocks', async () => {
     jest.resetModules();
     process.env.PROSPECTING_DAILY_CAP = '2';
+    // Force the in-memory cap path: clear BOTH credential schemes the resolver accepts.
     delete process.env.UPSTASH_REDIS_REST_URL;
+    delete process.env.UPSTASH_REDIS_REST_TOKEN;
+    delete process.env.KV_REST_API_URL;
+    delete process.env.KV_REST_API_TOKEN;
     jest.doMock('../_lib/secure-logger', () => ({ createSecureLogger: () => ({ info(){}, warn(){}, error(){}, debug(){} }) }));
     const { consumeSendSlot } = require('../_lib/prospecting/prospect-warmup');
     const day = Date.parse('2099-01-01T00:00:00Z'); // isolated day key

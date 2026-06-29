@@ -14,22 +14,11 @@
  */
 
 const { createSecureLogger } = require('../secure-logger');
+const { createRedisClient } = require('../redis-client');
 
 const logger = createSecureLogger('ProspectWarmup');
 
-let redis = null;
-if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
-  try {
-    const { Redis } = require('@upstash/redis');
-    redis = new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL,
-      token: process.env.UPSTASH_REDIS_REST_TOKEN,
-    });
-  } catch (err) {
-    logger.error('Upstash init failed, using in-memory cap store:', err.message);
-    redis = null;
-  }
-}
+const redis = createRedisClient('ProspectWarmup');
 
 // In-memory fallback: { dayKey -> count }. Reset implicitly as the key rolls over.
 const memCounts = new Map();

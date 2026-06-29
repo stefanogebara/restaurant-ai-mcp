@@ -6,7 +6,7 @@
  * falls back to in-memory store for local development.
  */
 
-const { Redis } = require('@upstash/redis');
+const { createRedisClient } = require('./redis-client');
 const { createSecureLogger } = require('./secure-logger');
 const logger = createSecureLogger('RateLimit');
 
@@ -111,22 +111,7 @@ const RATE_LIMITS = {
 
 // ============ REDIS STORE ============
 
-let redis = null;
-
-if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
-  try {
-    redis = new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL,
-      token: process.env.UPSTASH_REDIS_REST_TOKEN,
-    });
-    logger.info('Using Upstash Redis store');
-  } catch (err) {
-    logger.error('Failed to initialize Redis, falling back to in-memory:', err.message);
-    redis = null;
-  }
-} else {
-  logger.info('No UPSTASH_REDIS_REST_URL configured, using in-memory store');
-}
+const redis = createRedisClient('RateLimit');
 
 // ============ IN-MEMORY FALLBACK ============
 
