@@ -361,6 +361,39 @@ async function getProspectLeadWithMessages(leadId, limit = 200) {
   }
 }
 
+/** Outcomes captured at a terminal state that the daily cron hasn't scored yet. */
+async function selectUnscoredOutcomes(limit = 25) {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('prospect_outcomes')
+      .select('id, lead_id, outcome')
+      .is('quality_score', null)
+      .not('lead_id', 'is', null)
+      .order('created_at', { ascending: true })
+      .limit(Math.min(Math.max(limit, 1), 50));
+    if (error) { logger.error('selectUnscoredOutcomes failed:', error.message); return []; }
+    return data || [];
+  } catch (err) {
+    logger.error('selectUnscoredOutcomes exception:', err.message);
+    return [];
+  }
+}
+
+/** Write the LLM quality_score (1–5) + theme_tags onto an outcome row. */
+async function updateOutcomeScore(id, { quality_score, theme_tags }) {
+  try {
+    const { error } = await supabaseAdmin
+      .from('prospect_outcomes')
+      .update({ quality_score, theme_tags: (theme_tags && theme_tags.length) ? theme_tags : null })
+      .eq('id', id);
+    if (error) { logger.error('updateOutcomeScore failed:', error.message); return { ok: false }; }
+    return { ok: true };
+  } catch (err) {
+    logger.error('updateOutcomeScore exception:', err.message);
+    return { ok: false };
+  }
+}
+
 module.exports = {
   isOptedOut,
   findLeadByPhone,
@@ -377,4 +410,6 @@ module.exports = {
   loadLastInbound,
   listProspectLeads,
   getProspectLeadWithMessages,
+  selectUnscoredOutcomes,
+  updateOutcomeScore,
 };

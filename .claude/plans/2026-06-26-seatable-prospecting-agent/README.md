@@ -123,10 +123,20 @@
   (ProtectedRoute, warm-glass, React Query, 30s refetch): funnel counts, lead list
   with status pills, transcript pane, pause/reactivate/opt-out. 3 new bucket tests;
   108 prospecting tests green / 8 suites; frontend typecheck clean.
-  **Deferred (analytics, agent works without them):** Phase 5 memory (`prospect_memory`
-  pgvector + `match_prospect_memories` RPC + Haiku fact extraction) and outcomes
-  (terminal-state trigger + daily 1–5 scoring cron) — `prospect_outcomes` table already
-  exists from Phase 0.
+- **Phase 5 (memory + outcomes) ✅** — `prospect-reflect.js`: `extrairFatos` (Haiku
+  pulls facts the LEAD declared → `coerceFatos`/`mergeFatos` → `conversa_fatos`, wired
+  into the responder so Olímpia "remembers" and never asks twice) + `scoreOutcome`
+  (rate a finished convo 1–5 + theme tags). Both have PURE tolerant parsers
+  (`parseFatosText`/`parseScoreText`, anti-garbage, never invent). Migration
+  `20260630_prospect_outcomes_trigger.sql`: a trigger captures a `prospect_outcomes`
+  row on EVERY terminal transition (agendado/handoff/optout/pausada) + a
+  `prospect_outcomes_agg` dashboard RPC. Daily cron `prospect-score-outcomes` (05:00 UTC,
+  bounded 25/run, kill-switchable) scores the backlog — dashboard INPUT only, never
+  mutates the prompt. 7 new tests; **115 prospecting tests green / 9 suites.**
+  *Intentionally skipped:* the plan's `prospect_memory` pgvector + `match_prospect_memories`
+  RPC — Olivia shipped without it; per-lead `conversa_fatos` (extracted facts + 40-msg
+  window + rolling resumo) covers "remember this lead", and cross-lead vector recall of
+  others' objections is marginal for cold prospecting. Easy to add later if wanted.
 - **Remaining in Phase 2 (deferred):** followup (48h) + nudge (24h-window)
   re-engagement crons — need the `olivia_followup.ts`/`olivia_nudge.ts`
   eligibility ports. Core loop works without them.

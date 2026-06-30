@@ -25,6 +25,7 @@ const { mergeFatos } = require('./prospect-facts');
 const { generateReply } = require('./prospect-agent');
 const { loadHistory, patchLead, recordOptout, storeMessage } = require('./prospect-store');
 const booking = require('./prospect-booking');
+const { extrairFatos } = require('./prospect-reflect');
 
 const logger = createSecureLogger('ProspectResponder');
 
@@ -228,6 +229,17 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
           await recordOutbound(lead.id, acao.texto, r);
         }
         break;
+    }
+
+    // 9b. Memory: extract facts the LEAD declared this turn and merge into
+    //     conversa_fatos (best-effort, never throws). Next turn formatarMemoria
+    //     injects them so the agent "remembers" and never asks twice. Skip the
+    //     no-reply paths (silence/terminal) — nothing to learn there.
+    if (!['nada', 'ignorar', 'optout'].includes(acao.tipo)) {
+      const fatos = await extrairFatos(history);
+      if (fatos && Object.keys(fatos).length) {
+        patch.conversa_fatos = mergeFatos(patch.conversa_fatos || lead.conversa_fatos, fatos);
+      }
     }
 
     // 10. Persist state.
