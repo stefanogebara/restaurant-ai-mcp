@@ -86,6 +86,17 @@
   `google_calendar.ts` (OAuth refresh-token → free/busy + events.insert+Meet) +
   `briefing.ts` (Gmail) + the `olivia-agendar` orchestrator. Needs net-new
   `GOOGLE_CLIENT_ID/SECRET/REFRESH_TOKEN` + a calendar id (user provisions).**
+- **Phase 4b-i ✅** (Google API client + briefing) — `prospect-gcal.js`
+  (`getGoogleAccessToken` OAuth refresh→access **null without creds**, `freeBusyMulti`
+  omitting unreadable calendars, `insertEvent` with Meet via `conferenceDataVersion=1`,
+  `contarReunioesFuturasPorRep` load count, `deleteEvent`/`patchEventTime` for
+  reschedule/cancel) + `prospect-briefing.js` (`briefingDestinatarioValido` anti-leak
+  guard — internal briefing can NEVER reach the prospect; `montarBriefingReuniao`
+  HTML builder; `sendBriefing` via Resend on the verified seatable.one sender). Fully
+  credential-gated/dry-run-safe. 9 tests (gcal fetch-mocked + the anti-leak guard); 99
+  prospecting tests green. **Phase 4b-ii (next): the booking orchestrator wiring
+  freeBusy→proporSlotsMulti→insertEvent+briefing into the responder's `agendar` flow
+  (propose slots → confirm a chosen slot → create event → confirm + brief the rep).**
 - **Remaining in Phase 2 (deferred):** followup (48h) + nudge (24h-window)
   re-engagement crons — need the `olivia_followup.ts`/`olivia_nudge.ts`
   eligibility ports. Core loop works without them.
