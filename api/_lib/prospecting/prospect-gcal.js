@@ -47,7 +47,7 @@ async function getGoogleAccessToken() {
 
 /** Owner calendar (the OAuth account) — fallback when the rep calendar isn't editable. */
 function ownerCalendarId() {
-  return process.env.GOOGLE_CALENDAR_ID || 'primary';
+  return process.env.PROSPECTING_CALENDAR_ID || process.env.GOOGLE_CALENDAR_ID || 'primary';
 }
 
 /**
