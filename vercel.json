@@ -44,6 +44,10 @@
       "destination": "/api/prospect-enrich.js"
     },
     {
+      "source": "/api/prospect-admin",
+      "destination": "/api/prospect-admin.js"
+    },
+    {
       "source": "/sitemap.xml",
       "destination": "/api/sitemap"
     },

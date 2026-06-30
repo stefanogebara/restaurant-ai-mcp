@@ -112,6 +112,21 @@
   **Setup:** `scripts/google-oauth-setup.mjs` gets the refresh token; then set
   `GOOGLE_CLIENT_ID/SECRET/REFRESH_TOKEN`, `PROSPECTING_CALENDAR_ID=primary`,
   `PROSPECTING_REP_EMAILS=stefanogebara@gmail.com` in Vercel + redeploy → booking live.
+- **Phase 5 (cockpit) ✅** — internal cockpit to WATCH Olímpia's conversations.
+  Backend `api/prospect-admin.js` (gated by the founder's Google-login JWT +
+  `PROSPECTING_ADMIN_EMAILS` allowlist, NOT the tenant flow): `?action=list` (leads +
+  honest funnel `bucketCounts`), `?action=lead` (full transcript), and POST
+  pause/reactivate/optout. `prospect-admin-view.js` derives the HONEST status bucket
+  (conversation state wins over the send ladder — "delivered" is never shown as
+  "replied"); store gains `listProspectLeads` + `getProspectLeadWithMessages`.
+  Frontend `client/src/pages/ProspectingCockpit.tsx` at `/host-dashboard/prospecting`
+  (ProtectedRoute, warm-glass, React Query, 30s refetch): funnel counts, lead list
+  with status pills, transcript pane, pause/reactivate/opt-out. 3 new bucket tests;
+  108 prospecting tests green / 8 suites; frontend typecheck clean.
+  **Deferred (analytics, agent works without them):** Phase 5 memory (`prospect_memory`
+  pgvector + `match_prospect_memories` RPC + Haiku fact extraction) and outcomes
+  (terminal-state trigger + daily 1–5 scoring cron) — `prospect_outcomes` table already
+  exists from Phase 0.
 - **Remaining in Phase 2 (deferred):** followup (48h) + nudge (24h-window)
   re-engagement crons — need the `olivia_followup.ts`/`olivia_nudge.ts`
   eligibility ports. Core loop works without them.

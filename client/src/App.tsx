@@ -46,6 +46,7 @@ const OnboardingChat = lazyRetry(() => import('./pages/OnboardingChat'));
 const LanguageSettings = lazyRetry(() => import('./pages/LanguageSettings'));
 const TableConfigPage = lazyRetry(() => import('./pages/TableConfigPage'));
 const VoiceSettingsPage = lazyRetry(() => import('./pages/VoiceSettingsPage'));
+const ProspectingCockpit = lazyRetry(() => import('./pages/ProspectingCockpit'));
 const WhatsAppSettingsPage = lazyRetry(() => import('./pages/WhatsAppSettingsPage'));
 const BookingPage = lazyRetry(() => import('./pages/BookingPage'));
 const BookingConfirmation = lazyRetry(() => import('./pages/BookingConfirmation'));
@@ -160,6 +161,7 @@ function App() {
               <Route path="/host-dashboard/floor-plan" element={<ProtectedRoute><FloorPlanEditor /></ProtectedRoute>} />
               <Route path="/host-dashboard/voice-settings" element={<ProtectedRoute><VoiceSettingsPage /></ProtectedRoute>} />
               <Route path="/host-dashboard/whatsapp" element={<ProtectedRoute><WhatsAppSettingsPage /></ProtectedRoute>} />
+              <Route path="/host-dashboard/prospecting" element={<ProtectedRoute><ProspectingCockpit /></ProtectedRoute>} />
               <Route path="/host-dashboard/insights" element={<ProtectedRoute><ErrorBoundary fallback={<RouteErrorFallback />}><InsightsPage /></ErrorBoundary></ProtectedRoute>} />
               <Route path="/host-dashboard/ltv" element={<ProtectedRoute><ErrorBoundary fallback={<RouteErrorFallback />}><LTVPage /></ErrorBoundary></ProtectedRoute>} />
               <Route path="/analytics" element={<Navigate to="/host-dashboard/insights?tab=analytics" replace />} />

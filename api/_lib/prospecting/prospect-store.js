@@ -315,6 +315,52 @@ async function loadLastInbound(leadId) {
   }
 }
 
+/**
+ * Cockpit: list leads for the internal admin view (newest activity first).
+ * Optional state filter. Returns the columns the cockpit list + status buckets need.
+ * @param {{limit?: number, state?: string|null}} [opts]
+ */
+async function listProspectLeads({ limit = 100, state = null } = {}) {
+  try {
+    let q = supabaseAdmin
+      .from('prospect_leads')
+      .select('id, name, sector, city, whatsapp_phone, whatsapp_send_status, prospect_state, lead_score, owner_name, reuniao_at, reuniao_link, handoff_motivo, updated_at, created_at')
+      .order('updated_at', { ascending: false })
+      .limit(Math.min(Math.max(limit, 1), 500));
+    if (state) q = q.eq('prospect_state', state);
+    const { data, error } = await q;
+    if (error) { logger.error('listProspectLeads failed:', error.message); return []; }
+    return data || [];
+  } catch (err) {
+    logger.error('listProspectLeads exception:', err.message);
+    return [];
+  }
+}
+
+/**
+ * Cockpit: a lead's full row + chronological transcript (last `limit` messages).
+ * @param {string} leadId
+ * @param {number} [limit=200]
+ * @returns {Promise<{lead: object, messages: Array}|null>}
+ */
+async function getProspectLeadWithMessages(leadId, limit = 200) {
+  try {
+    const { data: lead, error } = await supabaseAdmin
+      .from('prospect_leads').select('*').eq('id', leadId).single();
+    if (error || !lead) { logger.error('getProspectLeadWithMessages: lead not found', error && error.message); return null; }
+    const { data: msgs } = await supabaseAdmin
+      .from('prospect_messages')
+      .select('direcao, corpo, tipo, enviada_em')
+      .eq('lead_id', leadId)
+      .order('enviada_em', { ascending: false })
+      .limit(Math.min(Math.max(limit, 1), 500));
+    return { lead, messages: Array.isArray(msgs) ? msgs.slice().reverse() : [] };
+  } catch (err) {
+    logger.error('getProspectLeadWithMessages exception:', err.message);
+    return null;
+  }
+}
+
 module.exports = {
   isOptedOut,
   findLeadByPhone,
@@ -329,4 +375,6 @@ module.exports = {
   markIntro,
   selectDueFlush,
   loadLastInbound,
+  listProspectLeads,
+  getProspectLeadWithMessages,
 };
