@@ -12,18 +12,34 @@
   - Lives on WABA **`25687973367501862`** (one of FOUR duplicate "Seatable" WABAs under
     business `1426492265498566`). Display name "Seatable" still **Em análise**.
 
-**⚠️ Open blockers before it can send/receive (need a human with valid Meta creds):**
-1. **Valid access token.** `.env.local`'s `WHATSAPP_ACCESS_TOKEN` is **expired** (Meta err
-   190/460). Production env points to a DIFFERENT WABA (`2125050671639316`). Need a current
-   System-User token with `whatsapp_business_messaging` + `_management` scope that can reach
-   `PROSPECTING_PHONE_NUMBER_ID`. Decide which WABA is canonical (4 dupes is cruft worth cleaning).
-2. **Webhook subscription** for the prospecting number's app → `https://seatable.one/api/whatsapp-webhook`
-   (GET verify uses `WHATSAPP_VERIFY_TOKEN`). If that app ≠ reservations app, set
-   `PROSPECTING_APP_SECRET` (webhook now accepts it — `meta-adapter.js`).
-3. **Vercel env:** set `PROSPECTING_PHONE_NUMBER_ID=1187152381150052` (+ token / `PROSPECTING_APP_SECRET`
-   if separate app). Keep `PROSPECTING_DRY_RUN=true` until a live smoke test passes.
-4. **Deploy** `feat/prospecting-agent` → then `POST /api/prospect-discover` + `/api/prospect-dispatch`
-   once `olimpia_intro` is approved.
+**Go-live status (updated 2026-06-27):**
+1. ✅ **Token** — System/User token with messaging+management scope set in Vercel; validated
+   against `PROSPECTING_PHONE_NUMBER_ID`. (Token was pasted in chat → **must be rotated**.)
+2. ✅ **Webhook** — prospecting app subscribed → `https://seatable.one/api/whatsapp-webhook`.
+3. ✅ **Vercel env** — `PROSPECTING_PHONE_NUMBER_ID=1187152381150052` set; deployed to prod
+   (merged `bdcc9c04`). ⚠️ `UPSTASH_REDIS_REST_URL`/`TOKEN` have a stray newline → re-paste clean.
+4. ✅ **Template** `olimpia_intro` **APPROVED** (pt_BR, `{{1}}`=restaurant name).
+5. ✅ **Payment** — WABA payment method added (was err 141006 BLOCKED → AVAILABLE).
+
+**🚧 THE ONE REMAINING BLOCKER — display-name review + new-number warm-up:**
+- Display name **"Seatable" then "Seatable Reservas" both auto-DECLINED** ("não segue as
+  Diretrizes"). Brand-new number + declined name → Meta silently drops every business-initiated
+  send (confirmed: +5511999002121 AND +34637672963 both got nothing). NOT our code — the brain is
+  proven in dry-run.
+- **2026-06-27 fix attempt:** set the number's WhatsApp **business profile via Graph API**
+  (`websites:[seatable.one]`, description, `email:hello@seatable.one`, `vertical:PROF_SERVICES`)
+  to substantiate the brand. A name is now **"Em análise" (manual review)** — "Editar" locked
+  until it resolves. Watcher `scripts/_prospect_namewatch.js` polls `name_status` every 8 min and
+  **auto-sends `olimpia_intro` to both test numbers the instant it flips to APPROVED**.
+- **2026-06-27 outcome:** watcher polled `name_status` 9× over ~64 min — stayed `DECLINED` the
+  whole time (the "Em análise" never approved). The number's **"Editar nome de exibição" button is
+  now DISABLED while status = Rejeitado** → Meta **resubmission cooldown** after 2 rapid declines.
+  Can't request a new name until it lifts (hours–1 day). Number is otherwise healthy:
+  `quality_rating GREEN`, `throughput STANDARD` — **the display name is the sole blocker.**
+- **NEXT SESSION (when "Editar" unlocks):** resubmit display name **`seatable.one`** (exact match to
+  the now-set website → highest auto-approval odds), watcher auto-sends on APPROVED. If it declines
+  again → open a **Meta Business Support** case for the display name (breaks the auto-reject loop).
+  Needs a FRESH access token (the one used today must be rotated — was pasted in chat).
 
 ## Progress log
 
@@ -39,6 +55,23 @@
 - **Phase 2 ✅** (`d9f07ac5`) — discovery (Google Places, verified live),
   warm-up-capped cold-intro sequencer (atomic claim, dry-run-safe), flush cron,
   `prospect-discover`/`prospect-dispatch` endpoints. 2060 backend tests green.
+- **Phase 3 ✅** (BR enrichment) — ported Olivia's enrichment stack to
+  `api/_lib/prospecting/`: `prospect-cnpj-match` (mod-11, stopword Jaccard/coverage,
+  Google×Receita phone cross-match, shell-CNAE gate, accept/reject/judge scoring),
+  `prospect-enrich-signals` (lead_score 0–7, bio sinais, genero, contact pages,
+  endereco parser), `prospect-instagram` (Scrapingdog handle/followers, key-gated),
+  `prospect-cnpj-local` (buscar_cnpj_local RPC wrapper). Waterfall `prospect-enrich`
+  (site-footer CNPJ → SERP → BrasilAPI/cnpj.ws/cnpja official confirm → local index
+  → gates → deterministic score → Haiku judge via `AI_MODEL_FAST` with validSet trap
+  + nameSim floor → owner/QSA → IG), reusing Seatable's Node `safeFetchText` SSRF
+  guard. Endpoint `api/prospect-enrich` (CRON_SECRET; `{lead_id}` or `{limit}` batch).
+  Migration `20260630_prospect_cnpj_index.sql` (cnpj_index + pg_trgm + RPC,
+  service-role-only) + ETL `scripts/load-rf-cnpj.mjs` (Receita open data → index).
+  Degrades gracefully: works without SCRAPINGDOG_API_KEY (footer CNPJ + local index +
+  keyless official sources) and with an empty index (falls back to SERP). 27 new tests
+  (the Lellis/shell-CNAE/out-of-city-homonym production bugs are regression-guarded);
+  75 prospecting tests green. **Apply the migration in Supabase before relying on the
+  local index; run the ETL on a beefy box to populate it (optional — graceful empty).**
 - **Remaining in Phase 2 (deferred):** followup (48h) + nudge (24h-window)
   re-engagement crons — need the `olivia_followup.ts`/`olivia_nudge.ts`
   eligibility ports. Core loop works without them.
@@ -46,8 +79,10 @@
   WhatsApp number → `PROSPECTING_PHONE_NUMBER_ID`; get a B2B intro template
   approved by Meta → `PROSPECTING_INTRO_TEMPLATE`. Until then everything is
   forced dry-run.
-- **Next:** Phase 3 (BR enrichment) · Phase 4 (Google Calendar booking) ·
-  Phase 5 (memory + outcomes + internal cockpit).
+- **Next:** Phase 4 (Google Calendar booking) · Phase 5 (memory + outcomes +
+  internal cockpit). *Optional Phase 3 follow-up:* port `encontrar-whatsapp` (IG-bio
+  WhatsApp discovery) to populate the delivery/whatsapp bio signals that feed
+  `lead_score` (currently read from `enrich_status`, default false).
 
 
 **Goal:** Replicate the `prospectautomation` (Squad · "Olivia") autonomous WhatsApp sales-prospecting

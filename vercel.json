@@ -21,6 +21,9 @@
     "api/cron/prospect-flush.js": {
       "maxDuration": 120
     },
+    "api/prospect-enrich.js": {
+      "maxDuration": 120
+    },
     "api/**/*.js": {
       "excludeFiles": "{lambda/**,api/__tests__/**,**/*.test.js,**/*.spec.js,ml-training-data/**,e2e/**,.claude/**,seatable-ads/**,reels-toolkit/**,remotion/**}",
       "memory": 512,
@@ -35,6 +38,10 @@
     {
       "source": "/api/prospect-dispatch",
       "destination": "/api/prospect-dispatch.js"
+    },
+    {
+      "source": "/api/prospect-enrich",
+      "destination": "/api/prospect-enrich.js"
     },
     {
       "source": "/sitemap.xml",
