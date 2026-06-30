@@ -94,9 +94,24 @@
   guard — internal briefing can NEVER reach the prospect; `montarBriefingReuniao`
   HTML builder; `sendBriefing` via Resend on the verified seatable.one sender). Fully
   credential-gated/dry-run-safe. 9 tests (gcal fetch-mocked + the anti-leak guard); 99
-  prospecting tests green. **Phase 4b-ii (next): the booking orchestrator wiring
-  freeBusy→proporSlotsMulti→insertEvent+briefing into the responder's `agendar` flow
-  (propose slots → confirm a chosen slot → create event → confirm + brief the rep).**
+  prospecting tests green.
+- **Phase 4b-ii ✅** (booking orchestrator) — `prospect-booking.js` wires gcal +
+  agenda + briefing into a calendar-authored flow and is hooked into the responder:
+  the `agendar` action now proposes REAL free slots (`freeBusy → proporSlotsMulti`,
+  honoring deferral phrases), and a deterministic shortcut runs BEFORE the LLM when
+  `state='agendando'` — it reads the lead's reply (`escolherSlot`: numbered pick or a
+  stated time, time-first), books via `insertEvent` (Meet, idempotent requestId,
+  load-balanced rep, owner-calendar fallback), persists `reuniao_at/link/event_id/rep`
+  + `state='agendado'`, sends the confirmation, and fires the rep briefing. The LLM
+  never invents a meeting time; only an uninterpretable reply falls through to it.
+  **Gated on `bookingDisponivel() && !isDryRun()`** → zero real calendar events until
+  Google creds + a real number + `DRY_RUN=false` are all set; otherwise it degrades
+  to the Phase-1 stub. Single-user note: books on the founder's own calendar; the
+  briefing self-send is skipped by the anti-leak guard (gmail ≠ @seatable.one).
+  6 new tests (gate, rep parse, choice parser); **105 prospecting tests green / 7 suites.**
+  **Setup:** `scripts/google-oauth-setup.mjs` gets the refresh token; then set
+  `GOOGLE_CLIENT_ID/SECRET/REFRESH_TOKEN`, `PROSPECTING_CALENDAR_ID=primary`,
+  `PROSPECTING_REP_EMAILS=stefanogebara@gmail.com` in Vercel + redeploy → booking live.
 - **Remaining in Phase 2 (deferred):** followup (48h) + nudge (24h-window)
   re-engagement crons — need the `olivia_followup.ts`/`olivia_nudge.ts`
   eligibility ports. Core loop works without them.
@@ -104,10 +119,11 @@
   WhatsApp number → `PROSPECTING_PHONE_NUMBER_ID`; get a B2B intro template
   approved by Meta → `PROSPECTING_INTRO_TEMPLATE`. Until then everything is
   forced dry-run.
-- **Next:** Phase 4 (Google Calendar booking) · Phase 5 (memory + outcomes +
-  internal cockpit). *Optional Phase 3 follow-up:* port `encontrar-whatsapp` (IG-bio
-  WhatsApp discovery) to populate the delivery/whatsapp bio signals that feed
-  `lead_score` (currently read from `enrich_status`, default false).
+- **Next:** Phase 5 (memory + outcomes + internal cockpit). *Optional Phase 3
+  follow-up:* port `encontrar-whatsapp` (IG-bio WhatsApp discovery) to populate the
+  delivery/whatsapp bio signals that feed `lead_score`. *Optional Phase 4 follow-ups:*
+  the email-collection step before booking (Olivia's `formatarPedidoEmail` dance) and
+  reschedule/no-show crons (`deleteEvent`/`patchEventTime` are already ported).
 
 
 **Goal:** Replicate the `prospectautomation` (Squad · "Olivia") autonomous WhatsApp sales-prospecting

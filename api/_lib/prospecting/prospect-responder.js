@@ -24,6 +24,7 @@ const { extrairEmail } = require('./prospect-extract');
 const { mergeFatos } = require('./prospect-facts');
 const { generateReply } = require('./prospect-agent');
 const { loadHistory, patchLead, recordOptout, storeMessage } = require('./prospect-store');
+const booking = require('./prospect-booking');
 
 const logger = createSecureLogger('ProspectResponder');
 
@@ -113,6 +114,23 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
       return { action: 'skip', reason: 'no_history' };
     }
 
+    // 6b. Calendar-authored booking shortcut (Phase 4). When the lead is
+    //     mid-scheduling with proposed slots and booking is LIVE (Google creds +
+    //     a real number, not dry-run), interpret their reply DETERMINISTICALLY
+    //     (pick a slot or suggest a time) and book the Meet event — the LLM never
+    //     invents a meeting time. Only when the reply can't be read as a choice do
+    //     we fall through to the model to clarify.
+    if (lead.prospect_state === 'agendando' && booking.bookingDisponivel() && !isDryRun()) {
+      const conf = await booking.confirmarReuniao(lead, text, nowMs);
+      if (conf.handled) {
+        const r = await sendPaced(from, conf.mensagem, pace);
+        await recordOutbound(lead.id, conf.mensagem, r);
+        if (conf.patch && Object.keys(conf.patch).length) await patchLead(lead.id, conf.patch);
+        logger.info(`[prospect] lead=${lead.id} action=booking booked=${!!conf.booked}`);
+        return { action: conf.booked ? 'agendado' : 'agendando', sent: !r.dryRun && r.success, dryRun: !!r.dryRun };
+      }
+    }
+
     // 7. Generate the next action.
     const acao = await generateReply({
       lead: {
@@ -181,10 +199,16 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
         break;
 
       case 'agendar': {
-        // Phase 1: the agent captured scheduling intent. Send its text (it asked
-        // for a preferred time) and move to 'agendando'. Real calendar booking
-        // (free/busy, Meet link) is Phase 4 — we NEVER claim a slot is booked.
-        const texto = acao.texto || 'Perfeito! Qual dia e horário fica melhor pra você?';
+        // The agent captured scheduling intent → move to 'agendando'. When booking
+        // is LIVE (Google creds + a real number, not dry-run), propose REAL free
+        // slots from the rep calendar(s); the lead confirms next turn and we book.
+        // Without creds or in dry-run we degrade to the Phase-1 stub — ask for a
+        // time, NEVER claim a slot is booked.
+        let texto = acao.texto || 'Perfeito! Qual dia e horário fica melhor pra você?';
+        if (booking.bookingDisponivel() && !isDryRun()) {
+          const prop = await booking.proporReuniao(lead, nowMs, acao.resumo);
+          if (prop.ok && prop.mensagem) texto = prop.mensagem;
+        }
         const r = await sendPaced(from, texto, pace);
         sent = !r.dryRun && r.success; dryRun = !!r.dryRun;
         await recordOutbound(lead.id, texto, r);
