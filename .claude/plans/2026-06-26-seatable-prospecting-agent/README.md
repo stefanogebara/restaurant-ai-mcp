@@ -72,6 +72,20 @@
   (the Lellis/shell-CNAE/out-of-city-homonym production bugs are regression-guarded);
   75 prospecting tests green. **Apply the migration in Supabase before relying on the
   local index; run the ETL on a beefy box to populate it (optional — graceful empty).**
+- **Phase 4a ✅** (scheduling brain) — ported Olivia's pure scheduling logic to
+  `api/_lib/prospecting/prospect-agenda.js` (no I/O, 15 tests): `proporSlots`/
+  `proporSlotsMulti` (free business-hours slots from per-rep free/busy, distinct-day
+  spread, weekend/lead-time gates), `avaliarHorarioSugerido` (gate a prospect-suggested
+  time: invalid/antecedência/weekend/out-of-hours/no-rep), `parseHorarioSugerido` +
+  `parseJanelaInicio` (deterministic pt-BR free-text date/time → ISO, never LLM-guessed),
+  `slotEhValido`/`slotsExpirados` (only confirm a proposed instant; 24h TTL),
+  `escolherRep`/`escolherRepBalanceado` (deterministic load-balanced rep round-robin),
+  `montarEventoCalendar` (Google Meet event body, injected requestId for idempotency,
+  America/Sao_Paulo tz), pt-BR message formatters. Fixed UTC-3 offset (BR has no DST).
+  Brand adapted to Seatable/Olímpia. **Phase 4b (next): the Google API boundary —
+  `google_calendar.ts` (OAuth refresh-token → free/busy + events.insert+Meet) +
+  `briefing.ts` (Gmail) + the `olivia-agendar` orchestrator. Needs net-new
+  `GOOGLE_CLIENT_ID/SECRET/REFRESH_TOKEN` + a calendar id (user provisions).**
 - **Remaining in Phase 2 (deferred):** followup (48h) + nudge (24h-window)
   re-engagement crons — need the `olivia_followup.ts`/`olivia_nudge.ts`
   eligibility ports. Core loop works without them.
