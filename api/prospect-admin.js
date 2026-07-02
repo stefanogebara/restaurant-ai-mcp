@@ -318,7 +318,7 @@ module.exports = async (req, res) => {
       return res.status(200).json({ success: true });
     }
 
-    // ---- Discovery (Google Places → prospect_leads) ----------------------------
+    // ---- Discovery: quick single search (Google Places → prospect_leads) -------
     if (req.method === 'POST' && action === 'discover') {
       const body = req.body || {};
       const city = body.city ? String(body.city).trim() : '';
@@ -326,7 +326,8 @@ module.exports = async (req, res) => {
       const uf = body.uf ? String(body.uf).trim().toUpperCase() : '';
       const bairro = body.bairro ? String(body.bairro).trim() : '';
       const baseQuery = body.query ? String(body.query).trim() : 'restaurantes';
-      const maxResults = Math.min(Math.max(parseInt(body.maxResults, 10) || 20, 1), 20);
+      const maxResults = Math.min(Math.max(parseInt(body.maxResults, 10) || 60, 1), 60);
+      const onlySendable = body.only_sendable !== false; // default ON — no WhatsApp, no lead
 
       const { searchPlaces } = require('./_lib/prospecting/places-discovery');
       const { upsertDiscoveredLeads } = require('./_lib/prospecting/prospect-store');
@@ -334,12 +335,72 @@ module.exports = async (req, res) => {
       const cityFull = uf ? `${city}, ${uf}` : city;
       const result = await searchPlaces({ query, city: cityFull, sector: 'restaurante', maxResults });
       if (!result.ok) return res.status(502).json({ success: false, error: result.error });
-      const { inserted } = await upsertDiscoveredLeads(result.leads);
-      logger.info(`prospect-admin discover "${query}" ${cityFull} found=${result.leads.length} inserted=${inserted} by=${email}`);
+      const sendable = result.leads.filter((l) => l.whatsapp_status === 'pending');
+      const toInsert = onlySendable ? sendable : result.leads;
+      const { inserted } = await upsertDiscoveredLeads(toInsert);
+      logger.info(`prospect-admin discover "${query}" ${cityFull} found=${result.leads.length} sendable=${sendable.length} inserted=${inserted} by=${email}`);
       return res.status(200).json({
         success: true,
-        data: { found: result.leads.length, inserted, duplicates: result.leads.length - inserted },
+        data: {
+          found: result.leads.length,
+          sendable: sendable.length,
+          discarded: onlySendable ? result.leads.length - sendable.length : 0,
+          inserted,
+          duplicates: toInsert.length - inserted,
+        },
       });
+    }
+
+    // ---- Mass discovery jobs (Phase 9): territory fan-out ----------------------
+    if (req.method === 'POST' && action === 'discovery-job') {
+      const body = req.body || {};
+      const { createDiscoveryJob } = require('./_lib/prospecting/prospect-mass-discovery');
+      const job = await createDiscoveryJob({
+        mode: String(body.mode || ''),
+        uf: body.uf ? String(body.uf) : null,
+        city: body.city ? String(body.city) : null,
+        bairro: body.bairro ? String(body.bairro) : null,
+        query: body.query ? String(body.query) : 'restaurantes',
+        maxQueries: parseInt(body.max_queries, 10) || 300,
+        onlySendable: body.only_sendable !== false,
+        createdBy: email,
+      });
+      if (!job.ok) return res.status(400).json({ success: false, error: job.error });
+
+      // Kick the self-chaining worker (fire-and-forget; server-side secret).
+      const secret = process.env.CRON_SECRET;
+      const base = process.env.CLIENT_URL || 'https://seatable.one';
+      fetch(`${base.replace(/\/$/, '')}/api/prospect-discovery-worker`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${secret}` },
+        body: JSON.stringify({ job_id: job.jobId }),
+      }).catch((err) => logger.error('worker kick failed:', err.message));
+
+      logger.info(`prospect-admin discovery-job ${body.mode} queries=${job.totalQueries} by=${email}`);
+      return res.status(200).json({ success: true, data: job });
+    }
+
+    if (req.method === 'GET' && action === 'discovery-status') {
+      const jobId = req.query.job_id && String(req.query.job_id);
+      if (!jobId) return res.status(400).json({ success: false, error: 'job_id required' });
+      const { data, error } = await supabaseAdmin
+        .from('prospect_discovery_jobs').select('*').eq('id', jobId).single();
+      if (error || !data) return res.status(404).json({ success: false, error: 'Job not found' });
+      const { queries, ...rest } = data;
+      return res.status(200).json({
+        success: true,
+        data: { ...rest, total_queries: Array.isArray(queries) ? queries.length : 0 },
+      });
+    }
+
+    if (req.method === 'POST' && action === 'discovery-cancel') {
+      const jobId = req.body && req.body.job_id ? String(req.body.job_id) : null;
+      if (!jobId) return res.status(400).json({ success: false, error: 'job_id required' });
+      await supabaseAdmin.from('prospect_discovery_jobs')
+        .update({ status: 'cancelled', updated_at: new Date().toISOString() })
+        .eq('id', jobId).eq('status', 'running');
+      logger.info(`prospect-admin discovery-cancel job=${jobId} by=${email}`);
+      return res.status(200).json({ success: true });
     }
 
     // ---- Mass dispatch (cold intros; warm-up cap + suppression apply) ----------

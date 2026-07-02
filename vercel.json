@@ -27,6 +27,9 @@
     "api/prospect-enrich.js": {
       "maxDuration": 120
     },
+    "api/prospect-discovery-worker.js": {
+      "maxDuration": 60
+    },
     "api/cron/prospect-score-outcomes.js": {
       "maxDuration": 120
     },
@@ -52,6 +55,10 @@
     {
       "source": "/api/prospect-admin",
       "destination": "/api/prospect-admin.js"
+    },
+    {
+      "source": "/api/prospect-discovery-worker",
+      "destination": "/api/prospect-discovery-worker.js"
     },
     {
       "source": "/sitemap.xml",

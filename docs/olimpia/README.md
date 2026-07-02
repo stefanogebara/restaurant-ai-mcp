@@ -57,7 +57,7 @@ inbound webhook ─▶ prospect-inbound ─▶ responder (LLM brain + guardrails
 | **Header** | Agent kill switch (confirm → `cron_config prospecting-agent`), number health dot (quality + failed-rate 24h), DRY-RUN badge |
 | **Breaker banner** | Shows when dispatch was auto-paused (quality YELLOW/RED or failed-rate >5%/24h) with event history + manual resume |
 | **Status strip** | Sends today vs warm-up cap, replies today (+benchmark caption), due follow-ups, upcoming meetings (Meet links + copy), 30d outcomes + avg quality |
-| **Descobrir & Disparar** | Region/UF selector + city/bairro → Google Places discovery → mass intro dispatch (confirm + ~R$ cost preview; warm-up cap + suppression enforced server-side) |
+| **Descobrir & Disparar** | Three territory modes — **Bairro** (single 60-result search), **Cidade inteira** (IBGE-district fan-out), **Estado inteiro** (every IBGE municipality, capped) — running as self-chaining background jobs with live progress (found / com WhatsApp / novos / descartados), cost preview (~US$0.032/query) and cancel. **Só-com-WhatsApp filter (default ON)**: leads whose Google phone isn't a BR mobile never enter the pool — no number, no conversation. Then mass intro dispatch (confirm + ~R$ conversation-cost preview; warm-up cap + suppression enforced server-side) |
 | **Abordagens (A/B)** | Registry of Meta-APPROVED templates: intro variants (touch 1) + bump (touch 2, D+3) + breakup (touch 3, D+8). Per-variant funnel: enviado→entregue→lido→respondeu→reunião, opt-out rate, avg quality. URL-in-touch-1 lint |
 | **Insights** | Reply rate w/ benchmark bands, median hours-to-first-reply, median msgs-to-booking, top objection themes (w/ deltas), variant × lead-score segment table |
 | **Triagem** | The work queue: quer_humano → interessado → open questions → 24h-window closing. AI intent labels (8-way enum, correctable) on every inbound |
@@ -114,12 +114,30 @@ touch; otherwise the lead halts visibly (no silent skips). Runs inside the
 | `PROSPECTING_MULTIPART` | `0` disables multi-bubble replies |
 | `PROSPECTING_IGNORE_HOURS` | `true` bypasses business hours (testing) |
 
+## Mass discovery (Phase 9)
+
+```
+territory ──▶ buildQueries (IBGE distritos/municípios) ──▶ prospect_discovery_jobs
+                                                                │
+console polls status ◀── counters ◀── worker batches (40s, self-chaining,
+                                       atomic cursor claim, sendable filter)
+```
+
+- Places Text Search paginates to 60 results/query; estado mode uses 20/query
+  (breadth) — go deep afterwards with a cidade job where the state sweep pays.
+- Per-query failures are skipped (one bad municipality can't kill a 600-query
+  sweep); `places_not_configured` aborts the job with a visible error.
+- Worker: `api/prospect-discovery-worker.js` (CRON_SECRET, event-driven, NOT a
+  cron; kicks itself until done/cancelled).
+- Dedup across overlapping queries via the `google_place_id` UNIQUE upsert.
+
 ## API (all via `/api/prospect-admin`, admin JWT)
 
-`GET  ?action=list | lead | overview | insights | variants | canned`
+`GET  ?action=list | lead | overview | insights | variants | canned |
+      discovery-status`
 `POST ?action=send | note | snooze | intent | pause | reactivate | optout |
-      agent | dispatch-resume | discover | dispatch | template-upsert |
-      canned-upsert | canned-delete`
+      agent | dispatch-resume | discover | discovery-job | discovery-cancel |
+      dispatch | template-upsert | canned-upsert | canned-delete`
 
 ## Crons
 

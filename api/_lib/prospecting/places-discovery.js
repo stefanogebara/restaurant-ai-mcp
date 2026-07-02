@@ -94,39 +94,59 @@ async function searchPlaces({ query, city, country = 'Brasil', sector, maxResult
   }
 
   const textQuery = `${query.trim()} em ${city.trim()} ${country}`.trim();
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 15000);
-  try {
-    const response = await fetch(PLACES_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Goog-Api-Key': apiKey,
-        'X-Goog-FieldMask': FIELD_MASK,
-      },
-      body: JSON.stringify({
-        textQuery,
-        maxResultCount: Math.min(Math.max(maxResults, 1), 20),
-        languageCode: lang,
-      }),
-      signal: controller.signal,
-    });
-    clearTimeout(timeout);
+  const cap = Math.min(Math.max(maxResults, 1), 60); // Places v1 pages 20 at a time, 60 max
+  const all = [];
+  let pageToken = null;
 
-    if (!response.ok) {
-      const body = await response.text().catch(() => '');
-      logger.error('Places API error:', { status: response.status, body: body.slice(0, 300) });
-      return { ok: false, leads: [], error: `places_api_${response.status}` };
+  try {
+    // Up to 3 pages of 20 — each page is a billed request, so stop as soon as
+    // the cap is reached or the API stops returning a nextPageToken.
+    for (let page = 0; page < 3 && all.length < cap; page++) {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 15000);
+      const body = {
+        textQuery,
+        maxResultCount: Math.min(cap - all.length, 20),
+        languageCode: lang,
+        ...(pageToken ? { pageToken } : {}),
+      };
+      const response = await fetch(PLACES_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Goog-Api-Key': apiKey,
+          'X-Goog-FieldMask': `${FIELD_MASK},nextPageToken`,
+        },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+      clearTimeout(timeout);
+
+      if (!response.ok) {
+        const errBody = await response.text().catch(() => '');
+        logger.error('Places API error:', { status: response.status, body: errBody.slice(0, 300) });
+        // Partial results are still results — fail only when the FIRST page fails.
+        if (all.length === 0) return { ok: false, leads: [], error: `places_api_${response.status}` };
+        break;
+      }
+
+      const data = await response.json();
+      all.push(...(data.places || []));
+      pageToken = data.nextPageToken || null;
+      if (!pageToken) break;
     }
 
-    const data = await response.json();
-    const places = data.places || [];
-    const leads = places.map((p) => normalizePlace(p, { city, sector })).filter(Boolean);
-    logger.info(`discovery "${textQuery}" → ${places.length} places, ${leads.length} usable`);
+    const leads = all.map((p) => normalizePlace(p, { city, sector })).filter(Boolean);
+    logger.info(`discovery "${textQuery}" → ${all.length} places, ${leads.length} usable`);
     return { ok: true, leads };
   } catch (err) {
-    clearTimeout(timeout);
-    if (err.name === 'AbortError') return { ok: false, leads: [], error: 'timeout' };
+    if (err.name === 'AbortError') {
+      if (all.length > 0) {
+        const leads = all.map((p) => normalizePlace(p, { city, sector })).filter(Boolean);
+        return { ok: true, leads };
+      }
+      return { ok: false, leads: [], error: 'timeout' };
+    }
     logger.error('searchPlaces exception:', err.message);
     return { ok: false, leads: [], error: err.message };
   }
