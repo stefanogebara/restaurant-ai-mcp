@@ -137,9 +137,39 @@
   RPC — Olivia shipped without it; per-lead `conversa_fatos` (extracted facts + 40-msg
   window + rolling resumo) covers "remember this lead", and cross-lead vector recall of
   others' objections is marginal for cold prospecting. Easy to add later if wanted.
-- **Remaining in Phase 2 (deferred):** followup (48h) + nudge (24h-window)
-  re-engagement crons — need the `olivia_followup.ts`/`olivia_nudge.ts`
-  eligibility ports. Core loop works without them.
+- **GO-LIVE (2026-07-02) ✅** — `PROSPECTING_DRY_RUN=false` + `PHONE_NUMBER_ID` +
+  `INTRO_TEMPLATE=olimpia_intro` (already Meta-APPROVED since Jun 26) set in Vercel,
+  redeployed READY. First live dispatch fired via prod `/api/prospect-dispatch`
+  (self-test lead → founder's own WhatsApp; `{sent:1, dryRun:false}`, wamid recorded).
+  CRON_SECRET drift resolved (dashboard "Copy to Clipboard" copies the whole
+  `KEY=value` line — strip the prefix). Footer now shows the legal entity + CNPJ.
+- **Phase 6 (Olivia fine-tuning port) ✅ (2026-07-02)** — extraction workflow read the
+  ORIGINAL 58KB olivia-responder + webhook/flush/nudge/pacing from `prospectauto-src`
+  (30-mechanic gap analysis). Ported: **(a) ingestion fix** — `prospect-parse.js`
+  prospecting-aware parsing (shared contact cards → verbatim `[Contato compartilhado:
+  … | nome: …]`, audio → `[áudio] <transcript>` rule-6c path, captionless media →
+  placeholder net; NO canned auto-replies from the restaurant number/persona);
+  **(b) burst trio** — lock result honored (losers exit, TTL 90s), last-is-out
+  idempotency guard, atomic per-inbound `last_in_wamid` claim (migration
+  `20260702_prospect_inbound_claim.sql`, applied); **(c) burst debounce** — 7s
+  quiet-window / 24s cap DB-polling coalescing (`inboundFingerprint`) so 3 quick
+  bubbles get ONE reply; **(d) multi-bubble replies** — `splitReplyParts` wired into
+  `sendReply` (default ON, `PROSPECTING_MULTIPART=0` off), 900–3200ms between-part
+  pauses, per-part outbound rows; **(e) deterministic owner guardrail** wired pre-LLM
+  (`extrairNumeroDono` on last inbound → forced `registrar_responsavel` + canned
+  thank-you ack — contact cards now convert); **(f) prompt depth** — rules 6c
+  (transcribed media), 5/5c/7b full nuances, 9b/9c owner-referral (never re-ask /
+  never promise before the tool); **(g) rolling summary** — `gerarResumo` (≥30 msgs,
+  temp 0.2) → `conversa_resumo`; **(h) nudge system** — `prospect-nudge.js` pure
+  eligibility (23h silence, last-is-ours, once per silence, 24h free-text window) +
+  responder `mode:'nudge'` (internal instruction, no tools, stamps `nudge_em`) +
+  hourly cron `prospect-nudge` (Mon-Fri business hours, kill-switchable, live-gated).
+  24 new tests; **139 prospecting tests green / 10 suites.**
+  *Deferred (next):* email-before-invite pending-slot flow, remarcar/no-show modes,
+  global LLM rate limit, pacing urgency tiers, markAsRead with prospecting number id.
+- **Remaining in Phase 2 (deferred):** 48h cold-intro followup template path
+  (distinct from the conversational nudge, which is DONE) — needs an approved
+  follow-up template for beyond-24h re-engagement.
 - **External (blocks GOING LIVE, not building):** provision the dedicated
   WhatsApp number → `PROSPECTING_PHONE_NUMBER_ID`; get a B2B intro template
   approved by Meta → `PROSPECTING_INTRO_TEMPLATE`. Until then everything is

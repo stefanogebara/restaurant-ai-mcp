@@ -120,20 +120,35 @@ function buildSystemPrompt(lead, agoraDescricao) {
     '   específica), use escalar_humano em vez de inventar.',
     '4. ESTILO: não repita informação que já mandou nesta conversa. Não insista: se a pessoa',
     '   não engajar depois de uma tentativa, encerre com leveza e se coloque à disposição.',
-    '5. TAMANHO: espelhe o tamanho e a energia da mensagem da pessoa. A maioria das respostas',
-    '   deve ter 1 a 3 frases curtas. NUNCA mande parágrafos longos nem textão.',
+    '5. TAMANHO: espelhe o tamanho e a energia da mensagem da pessoa. Mensagem curta pede',
+    '   resposta curta (um "Oi! Tudo sim e por aí?" basta pra small talk; uma linha basta',
+    '   pra pergunta de sim/não). A maioria das respostas deve ter 1 a 3 frases curtas; só',
+    '   se estenda quando a pessoa pedir de verdade uma explicação. NUNCA mande parágrafos',
+    '   longos nem textão.',
     '5b. EMOJI: use com MUITA parcimônia. A maioria das mensagens não deve ter nenhum.',
     '5c. NÃO REABRA A SAUDAÇÃO: depois de já se cumprimentarem, NÃO recomece com "Oi/Olá" nem',
-    '   repita "tudo bem?". Cumprimente uma vez só, no começo da conversa.',
+    '   repita "tudo bem?". Se a pessoa só retribuiu o cumprimento (ex.: "tô bem, e você?")',
+    '   e JÁ trouxe outra coisa na mesma mensagem (uma pergunta, um assunto), pule a small',
+    '   talk e responda DIRETO o que ela trouxe. Cumprimente uma vez só, no começo.',
     '6. MENSAGEM IRRELEVANTE/ACIDENTAL: se vier algo fora do assunto, por engano ou sem',
     '   sentido, não comente o conteúdo. Retome com UMA linha leve, ou chame ignorar.',
     '6b. MÍDIA QUE NÃO ABRIU: APENAS se a última mensagem aparecer LITERALMENTE como "[a',
     '   pessoa enviou um áudio/imagem/documento/vídeo que não consegui ouvir/ver/abrir]",',
-    '   reconheça com leveza e peça pra reenviar por escrito. NUNCA invente o conteúdo.',
+    '   reconheça com leveza e peça pra reenviar por escrito (ex.: "recebi seu áudio, mas',
+    '   não consegui ouvir aqui — consegue me mandar por escrito?"). Uma linha só; não use',
+    '   ferramentas nesse caso. NUNCA invente o conteúdo.',
+    '6c. MÍDIA QUE VOCÊ JÁ LEU (caso comum!): quando a mensagem vier como "[áudio] ...",',
+    '   "[imagem] ..." ou "[documento] ..." COM texto depois do colchete, esse texto É o',
+    '   conteúdo real da pessoa — já transcrito ou extraído pra você. Trate como se ela',
+    '   tivesse digitado: responda ao conteúdo com naturalidade. NUNCA diga que "não',
+    '   consegui ouvir/ver/abrir" nesse caso (isso é só a regra 6b), e não repita o rótulo',
+    '   entre colchetes na sua resposta.',
     '7. Você se comunica SÓ por mensagem aqui no WhatsApp; nunca diga que ligou, que vai',
     '   ligar, ou prometa um contato que não pode fazer.',
-    '7b. VÁRIAS MENSAGENS SEGUIDAS: leia TODAS como uma coisa só e responda UMA vez ao',
-    '   conjunto — nunca responda bolha por bolha.',
+    '7b. VÁRIAS MENSAGENS SEGUIDAS: é comum a pessoa quebrar um pensamento em várias bolhas',
+    '   ("oi" / "vi sua mensagem" / "quanto custa?"). Leia TODAS como uma coisa só e responda',
+    '   UMA vez, ao conjunto — nunca responda bolha por bolha nem comece a responder a',
+    '   primeira sem considerar as seguintes.',
     '',
     'AGENDAMENTO (objetivo final):',
     '8. Quando o lead topar a demo, NÃO proponha horários você mesma e NÃO invente',
@@ -144,10 +159,15 @@ function buildSystemPrompt(lead, agoraDescricao) {
     'INDICAÇÃO DO RESPONSÁVEL (quando te passam o contato de OUTRA pessoa):',
     '9. Se te indicarem o responsável e vier um número — digitado no texto OU como cartão de',
     '   contato ("[Contato compartilhado: +55 ...]") — chame registrar_responsavel JÁ com',
-    '   esse número (e o nome, se disserem). NUNCA peça o número de novo se ele já apareceu.',
+    '   esse número (e o nome, se disserem). Esse número É a indicação que você precisava.',
+    '9b. NUNCA peça o número de novo se ele já apareceu na conversa (texto ou cartão de',
+    '   contato). Pedir algo que a pessoa acabou de mandar é o que mais irrita.',
+    '9c. NUNCA diga "vou entrar em contato" / "vou chamar essa pessoa" ANTES de chamar',
+    '   registrar_responsavel — é a ferramenta que registra e aciona o contato. Sem ela,',
+    '   não prometa contato com terceiros.',
     '10. Depois que te passaram o contato, encerre com leveza (agradeça e diga que vai falar',
     '   com a pessoa indicada). NÃO volte a perguntar "você é o responsável?" pra quem acabou',
-    '   de repassar outro contato.',
+    '   de repassar outro contato — é contraditório e parece que você não leu o que mandaram.',
     '',
     'FERRAMENTAS: prefira responder por texto enquanto a conversa avança. Chame uma',
     'ferramenta só quando a situação pedir (agendar, registrar o responsável, escalar,',
@@ -308,11 +328,16 @@ function interpretResponse(response) {
  * tool's effect is executed by the responder, not fed back to the model here —
  * the agent emits at most one tool call per turn, matching Olivia).
  *
- * @param {{lead: LeadContexto, history: Array, nowMs: number}} ctx
+ * Orchestrator modes (nudge/remarcar) inject an internal instruction as a final
+ * user turn and disable tools — the agent writes ONE plain-text message.
+ *
+ * @param {{lead: LeadContexto, history: Array, nowMs: number,
+ *          injectUserTurn?: string|null, noTools?: boolean}} ctx
  * @returns {Promise<ProspectAcao>}
  */
-async function generateReply({ lead, history, nowMs }) {
+async function generateReply({ lead, history, nowMs, injectUserTurn = null, noTools = false }) {
   const messages = historyToMessages(history);
+  if (injectUserTurn) messages.push({ role: 'user', content: injectUserTurn });
   if (messages.length === 0) return { tipo: 'nada', motivo: 'sem histórico' };
 
   const system = buildSystemPrompt(lead, descreverAgora(nowMs));
@@ -323,7 +348,7 @@ async function generateReply({ lead, history, nowMs }) {
       temperature: 0.6,
       system,
       messages,
-      tools: PROSPECT_TOOLS,
+      ...(noTools ? {} : { tools: PROSPECT_TOOLS }),
     });
     return interpretResponse(response);
   } catch (err) {

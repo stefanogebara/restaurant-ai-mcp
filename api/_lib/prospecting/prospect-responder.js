@@ -3,9 +3,13 @@
 /**
  * Prospect responder — the runtime orchestration for one inbound reply.
  *
- * Ported (condensed) from prospectautomation's olivia-responder. Pipeline:
- *   state gate → deterministic opt-out → business-hours defer → per-lead lock →
- *   load history → LLM (generateReply) → execute action → send (paced) → persist.
+ * Ported from prospectautomation's olivia-responder (Phase 6: full burst +
+ * naturalness mechanics). Pipeline:
+ *   state gate → deterministic opt-out → business-hours defer → per-lead lock
+ *   (losers exit) → burst debounce (wait for the lead to stop typing) → load
+ *   history → last-is-out guard → per-inbound wamid claim → deterministic
+ *   owner-number guardrail → booking shortcut → LLM → execute action →
+ *   multi-bubble paced send → memory (facts + rolling summary) → persist.
  *
  * SAFETY: DRY-RUN is default-ON and is FORCED ON whenever PROSPECTING_PHONE_NUMBER_ID
  * is unset — so cold outreach can never accidentally go out from the customer
@@ -19,17 +23,32 @@ const { acquireProcessingLock, releaseProcessingLock } = require('../rate-limit'
 const { getProspectingPhoneNumberId } = require('./routing');
 const { deveResponder, detectarOptout, estadoAposAcao } = require('./prospect-state');
 const { dentroDoHorario, proximaAbertura } = require('./prospect-hours');
-const { pacingDelayMs } = require('./prospect-pacing');
-const { extrairEmail } = require('./prospect-extract');
+const { pacingDelayMs, splitReplyParts, partPauseDelayMs } = require('./prospect-pacing');
+const { extrairEmail, extrairNumeroDono, extrairNomeDono, extrairDddBr } = require('./prospect-extract');
 const { mergeFatos } = require('./prospect-facts');
 const { generateReply } = require('./prospect-agent');
-const { loadHistory, patchLead, recordOptout, storeMessage } = require('./prospect-store');
+const {
+  loadHistory, patchLead, recordOptout, storeMessage,
+  inboundFingerprint, claimInbound,
+} = require('./prospect-store');
 const booking = require('./prospect-booking');
-const { extrairFatos } = require('./prospect-reflect');
+const { extrairFatos, gerarResumo, RESUMO_MIN } = require('./prospect-reflect');
+const { NUDGE_INSTRUCTION } = require('./prospect-nudge');
 
 const logger = createSecureLogger('ProspectResponder');
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// Burst coalescing: wait for QUIET_MS of lead silence (reset on every new
+// inbound) before answering, capped at MAX_WAIT_MS total. Olivia used 7s/45s;
+// the cap here is tighter to fit comfortably inside the serverless budget
+// (debounce + LLM + pacing + multi-bubble sends < maxDuration).
+const COALESCE_QUIET_MS = parseInt(process.env.PROSPECTING_COALESCE_MS, 10) || 7000;
+const COALESCE_MAX_MS = parseInt(process.env.PROSPECTING_COALESCE_MAX_MS, 10) || 24000;
+
+function isTestMode() {
+  return process.env.NODE_ENV === 'test';
+}
 
 /**
  * DRY-RUN is on by default and forced on without a dedicated prospecting number.
@@ -40,59 +59,110 @@ function isDryRun() {
   return process.env.PROSPECTING_DRY_RUN !== 'false';
 }
 
-/** Send a single message from the prospecting number, after a human-like delay. */
-async function sendPaced(to, texto, { skipPacing = false } = {}) {
-  const dryRun = isDryRun();
-  // Deferred (flush) replies are already hours late — typing-pace adds nothing
-  // but execution time, so the flush cron skips it to fit more per invocation.
-  const delay = pacingDelayMs(texto, { dryRun, disabled: skipPacing });
-  if (delay) await sleep(delay);
-  if (dryRun) {
-    logger.info(`[DRY RUN] would send to ${String(to).slice(0, 4)}**** len=${(texto || '').length}`);
-    return { success: true, dryRun: true, messageId: null };
-  }
-  return sendWhatsAppMessage(to, texto, { phoneNumberId: getProspectingPhoneNumberId() });
-}
-
-/** Persist an outbound bubble to the conversation log. */
-async function recordOutbound(leadId, texto, sendResult) {
-  await storeMessage({
-    leadId,
-    direcao: 'out',
-    wamid: sendResult && sendResult.messageId ? sendResult.messageId : null,
-    tipo: 'text',
-    corpo: texto,
-  });
+/** Multi-bubble replies are ON by default; PROSPECTING_MULTIPART=0 disables. */
+function multipartEnabled() {
+  return process.env.PROSPECTING_MULTIPART !== '0';
 }
 
 /**
- * Respond to one inbound prospect message.
+ * Send one logical reply as 1..3 humanized WhatsApp bubbles (split on blank
+ * lines), each persisted as its OWN outbound row so history re-enters the
+ * prompt as separate assistant turns — exactly how a person types. First
+ * bubble pays the read+type pacing delay; subsequent bubbles a shorter pause.
+ * A failed part aborts the rest (no half-conversations out of order).
+ *
+ * @returns {Promise<{success:boolean, dryRun:boolean, sentAny:boolean}>}
+ */
+async function sendReply(leadId, to, texto, { skipPacing = false } = {}) {
+  const dryRun = isDryRun();
+  const flags = { dryRun, disabled: skipPacing, testMode: isTestMode() };
+  const parts = splitReplyParts(texto, { multipart: multipartEnabled() });
+  if (parts.length === 0) return { success: true, dryRun, sentAny: false };
+
+  let sentAny = false;
+  for (let i = 0; i < parts.length; i++) {
+    const delay = i === 0 ? pacingDelayMs(parts[i], flags) : partPauseDelayMs(parts[i], flags);
+    if (delay) await sleep(delay);
+
+    let result;
+    if (dryRun) {
+      logger.info(`[DRY RUN] would send to ${String(to).slice(0, 4)}**** part=${i + 1}/${parts.length} len=${parts[i].length}`);
+      result = { success: true, dryRun: true, messageId: null };
+    } else {
+      result = await sendWhatsAppMessage(to, parts[i], { phoneNumberId: getProspectingPhoneNumberId() });
+    }
+
+    await storeMessage({
+      leadId,
+      direcao: 'out',
+      wamid: result && result.messageId ? result.messageId : null,
+      tipo: 'text',
+      corpo: parts[i],
+    });
+
+    if (!dryRun && !(result && result.success)) {
+      logger.error(`[prospect] send failed on part ${i + 1}/${parts.length} lead=${leadId}`);
+      return { success: false, dryRun, sentAny };
+    }
+    if (!dryRun) sentAny = true;
+  }
+  return { success: true, dryRun, sentAny };
+}
+
+/**
+ * Wait until the lead stops sending ("several quick bubbles" → one reply).
+ * DB-polling on the inbound fingerprint; the winner's eventual history read
+ * then covers the whole burst. Skipped in dry-run/test/flush paths.
+ */
+async function aguardarRajada(leadId) {
+  let fp = await inboundFingerprint(leadId);
+  if (fp === null) return; // degrade open on infra error
+  const started = Date.now();
+  for (;;) {
+    await sleep(COALESCE_QUIET_MS);
+    const fp2 = await inboundFingerprint(leadId);
+    if (fp2 === null || fp2 === fp) return;       // quiet (or infra error) → answer
+    fp = fp2;                                      // new bubble → restart window
+    if (Date.now() - started >= COALESCE_MAX_MS) {
+      logger.info(`[prospect] coalesce cap hit lead=${leadId} — answering mid-burst`);
+      return;
+    }
+  }
+}
+
+/**
+ * Respond to one inbound prospect message (or run an orchestrator mode).
  *
  * @param {object} args
  * @param {object} args.lead   - prospect_leads row (must exist)
  * @param {string} args.from   - inbound phone (bare digits from Meta)
- * @param {string} args.text   - inbound text
+ * @param {string} args.text   - inbound text ('' for placeholder-only media)
  * @param {number} [args.nowMs]
- * @param {boolean} [args.skipPacing] - skip typing-pace (used by the flush cron)
+ * @param {boolean} [args.skipPacing] - skip typing-pace + debounce (flush cron)
+ * @param {'nudge'|null} [args.mode]  - orchestrator mode: 'nudge' writes one
+ *   natural follow-up (no tools) after ~23h of lead silence and stamps nudge_em.
  * @returns {Promise<{action: string, sent?: boolean, dryRun?: boolean}>}
  */
-async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPacing = false }) {
+async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPacing = false, mode = null }) {
   const pace = { skipPacing };
+  const isNudge = mode === 'nudge';
+
   // 1. State gate — silent in optout/handoff/agendado/pausada.
   if (!deveResponder(lead.prospect_state)) {
     return { action: 'skip', reason: `silent_state:${lead.prospect_state}` };
   }
 
   // 2. Deterministic opt-out BEFORE the LLM (LGPD). Terminal.
-  if (detectarOptout(text)) {
+  if (!isNudge && detectarOptout(text)) {
     await recordOptout({ phone: from, leadId: lead.id, reason: 'keyword' });
     logger.info(`[prospect] opt-out detected lead=${lead.id}`);
     return { action: 'optout' };
   }
 
-  // 3. Business-hours gate — defer to next opening (prospect-flush resumes in
-    //    Phase 2). Bypass with PROSPECTING_IGNORE_HOURS=true for testing.
+  // 3. Business-hours gate — defer to next opening (prospect-flush resumes).
+  //    Bypass with PROSPECTING_IGNORE_HOURS=true for testing.
   if (process.env.PROSPECTING_IGNORE_HOURS !== 'true' && !dentroDoHorario(nowMs)) {
+    if (isNudge) return { action: 'skip', reason: 'outside_hours' };
     const replyApos = proximaAbertura(nowMs);
     await patchLead(lead.id, { reply_apos: replyApos });
     logger.info(`[prospect] outside business hours, deferred lead=${lead.id} until ${replyApos}`);
@@ -100,63 +170,128 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
   }
 
   // 4. Email capture (best-effort) — merged into facts/columns when we reply.
-  const email = extrairEmail(text);
+  const email = isNudge ? null : extrairEmail(text);
 
-  // 5. Per-lead lock — serialize concurrent inbounds for the same phone so the
-  //    history we read isn't racing another Lambda's write.
+  // 5. Per-lead lock — a burst of N bubbles fires N invocations; ONE survives
+  //    and answers the whole burst (the debounce below reads them together).
+  //    TTL covers debounce cap + LLM + pacing. Lock errors degrade open.
   const lockKey = `prospect:${from}`;
-  const locked = await acquireProcessingLock(lockKey, 30).catch(() => false);
+  let locked = true;
+  try {
+    locked = await acquireProcessingLock(lockKey, 90);
+  } catch { locked = true; }
+  if (!locked) {
+    logger.info(`[prospect] lock lost lead=${lead.id} — another reply in flight`);
+    return { action: 'skip', reason: 'lock_lost' };
+  }
 
   try {
-    // 6. Load history (includes the inbound just stored by prospect-inbound).
+    // 5b. Burst debounce — wait for the lead to stop typing so one reply covers
+    //     several quick bubbles (the #1 robotic tell). Skipped for flush/nudge
+    //     (nothing to coalesce) and in dry-run/test (determinism).
+    if (!isNudge && !skipPacing && !isDryRun() && !isTestMode()) {
+      await aguardarRajada(lead.id);
+    }
+
+    // 6. Load history (includes the inbound just stored by prospect-inbound —
+    //    and, after the debounce, every bubble of the burst).
     const history = await loadHistory(lead.id, 40);
     if (history.length === 0) {
       logger.warn(`[prospect] no history for lead=${lead.id}; skipping`);
       return { action: 'skip', reason: 'no_history' };
     }
 
-    // 6b. Calendar-authored booking shortcut (Phase 4). When the lead is
-    //     mid-scheduling with proposed slots and booking is LIVE (Google creds +
-    //     a real number, not dry-run), interpret their reply DETERMINISTICALLY
-    //     (pick a slot or suggest a time) and book the Meet event — the LLM never
-    //     invents a meeting time. Only when the reply can't be read as a choice do
-    //     we fall through to the model to clarify.
-    if (lead.prospect_state === 'agendando' && booking.bookingDisponivel() && !isDryRun()) {
-      const conf = await booking.confirmarReuniao(lead, text, nowMs);
-      if (conf.handled) {
-        const r = await sendPaced(from, conf.mensagem, pace);
-        await recordOutbound(lead.id, conf.mensagem, r);
-        if (conf.patch && Object.keys(conf.patch).length) await patchLead(lead.id, conf.patch);
-        logger.info(`[prospect] lead=${lead.id} action=booking booked=${!!conf.booked}`);
-        return { action: conf.booked ? 'agendado' : 'agendando', sent: !r.dryRun && r.success, dryRun: !!r.dryRun };
+    const lastRow = history[history.length - 1];
+
+    if (!isNudge) {
+      // 6a-i. Idempotency: the newest message is OURS → there is no new inbound
+      //       to answer (re-invocation, flush overlap, duplicate trigger).
+      if (lastRow.direcao === 'out') {
+        return { action: 'skip', reason: 'last_message_is_ours' };
+      }
+      // 6a-ii. Atomic per-inbound claim — the same wamid is answered exactly
+      //        once across webhook/flush races. Degrades open; skipped in
+      //        dry-run (testing repeatedly against the same message is useful).
+      if (!isDryRun() && lastRow.wamid) {
+        const claimed = await claimInbound(lead.id, lastRow.wamid);
+        if (!claimed) {
+          return { action: 'skip', reason: 'inbound_already_claimed' };
+        }
       }
     }
 
-    // 7. Generate the next action.
-    const acao = await generateReply({
-      lead: {
-        name: lead.name,
-        owner_name: lead.owner_name,
-        sector: lead.sector,
-        city: lead.city,
-        nome_genero: lead.nome_genero,
-        conversa_fatos: lead.conversa_fatos,
-        conversa_resumo: lead.conversa_resumo,
-      },
-      history,
-      nowMs,
-    });
+    // The text the guardrails inspect: the LAST inbound in history (post-burst,
+    // possibly newer than the `text` argument that triggered this invocation).
+    const lastInText = (lastRow.direcao === 'in' && lastRow.corpo) ? lastRow.corpo : (text || '');
+
+    // 6b. Deterministic owner-number guardrail (pre-LLM). When the last inbound
+    //     contains a shared contact card or a near-bare phone number, force
+    //     registrar_responsavel with THAT number — never let the model re-ask
+    //     for a number that's on screen (the #1 inconsistency Olivia fixed).
+    let acao = null;
+    if (!isNudge) {
+      const ddd = extrairDddBr(lead.whatsapp_phone);
+      const numeroDono = extrairNumeroDono(lastInText, ddd);
+      if (numeroDono) {
+        acao = {
+          tipo: 'registrar_responsavel',
+          texto: null,
+          numero: numeroDono,
+          nome: extrairNomeDono(lastInText),
+          deterministico: true,
+        };
+        logger.info(`[prospect] owner-number guardrail fired lead=${lead.id}`);
+      }
+    }
+
+    // 6c. Calendar-authored booking shortcut (Phase 4). When the lead is
+    //     mid-scheduling with proposed slots and booking is LIVE, interpret
+    //     their reply DETERMINISTICALLY (pick a slot or suggest a time) and
+    //     book the Meet event — the LLM never invents a meeting time. Runs
+    //     AFTER the owner guardrail (a shared card mid-scheduling must not be
+    //     misparsed as a slot choice).
+    if (!acao && !isNudge && lead.prospect_state === 'agendando' && booking.bookingDisponivel() && !isDryRun()) {
+      const conf = await booking.confirmarReuniao(lead, lastInText, nowMs);
+      if (conf.handled) {
+        const r = await sendReply(lead.id, from, conf.mensagem, pace);
+        const patch = { ...(conf.patch || {}) };
+        if (lead.reply_apos) patch.reply_apos = null;
+        if (Object.keys(patch).length) await patchLead(lead.id, patch);
+        logger.info(`[prospect] lead=${lead.id} action=booking booked=${!!conf.booked}`);
+        return { action: conf.booked ? 'agendado' : 'agendando', sent: r.sentAny, dryRun: r.dryRun };
+      }
+    }
+
+    // 7. Generate the next action (unless the guardrail already decided).
+    if (!acao) {
+      acao = await generateReply({
+        lead: {
+          name: lead.name,
+          owner_name: lead.owner_name,
+          sector: lead.sector,
+          city: lead.city,
+          nome_genero: lead.nome_genero,
+          conversa_fatos: lead.conversa_fatos,
+          conversa_resumo: lead.conversa_resumo,
+        },
+        history,
+        nowMs,
+        injectUserTurn: isNudge ? NUDGE_INSTRUCTION : null,
+        noTools: isNudge,
+      });
+    }
 
     // 8. Build the state patch from the action.
     const next = estadoAposAcao(acao);
     const patch = {};
     if (next) patch.prospect_state = next;
+    if (lead.reply_apos) patch.reply_apos = null; // we're answering now
     if (email && email !== lead.prospect_email) {
       patch.prospect_email = email;
       patch.conversa_fatos = mergeFatos(lead.conversa_fatos, { email });
     }
     // First reply from the lead → reflect 'replied' send status.
-    if (['sent', 'delivered', 'read'].includes(lead.whatsapp_send_status)) {
+    if (!isNudge && ['sent', 'delivered', 'read'].includes(lead.whatsapp_send_status)) {
       patch.whatsapp_send_status = 'replied';
     }
 
@@ -176,28 +311,28 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
       case 'handoff':
         patch.handoff_motivo = acao.motivo || null;
         if (acao.texto) {
-          const r = await sendPaced(from, acao.texto, pace);
-          sent = !r.dryRun && r.success; dryRun = !!r.dryRun;
-          await recordOutbound(lead.id, acao.texto, r);
+          const r = await sendReply(lead.id, from, acao.texto, pace);
+          sent = r.sentAny; dryRun = r.dryRun;
         }
         break;
 
-      case 'registrar_responsavel':
-        // Phase 1: capture the referred contact + hand to a human (auto
-        // owner-onboarding — firing the intro template to the new number —
-        // lands in Phase 2 with the outbound sequencer).
+      case 'registrar_responsavel': {
+        // Capture the referred contact + hand to a human for the intro dispatch
+        // (auto intro-to-owner is a deliberate later upgrade). The referrer is
+        // NEVER left hanging: LLM text if present, else the standard ack.
         patch.prospect_state = 'handoff';
         patch.handoff_motivo = `responsável indicado: ${acao.numero}${acao.nome ? ` (${acao.nome})` : ''}`;
         patch.conversa_fatos = mergeFatos(patch.conversa_fatos || lead.conversa_fatos, {
           nome_responsavel: acao.nome || undefined,
           notas: [`Responsável indicado pelo WhatsApp: ${acao.numero}`],
         });
-        if (acao.texto) {
-          const r = await sendPaced(from, acao.texto, pace);
-          sent = !r.dryRun && r.success; dryRun = !!r.dryRun;
-          await recordOutbound(lead.id, acao.texto, r);
-        }
+        const ack = acao.texto || (acao.nome
+          ? `Perfeito, obrigada! Já falo com ${acao.nome} então. 😊`
+          : 'Perfeito, obrigada pela indicação! Já entro em contato com a pessoa então. 😊');
+        const r = await sendReply(lead.id, from, ack, pace);
+        sent = r.sentAny; dryRun = r.dryRun;
         break;
+      }
 
       case 'agendar': {
         // The agent captured scheduling intent → move to 'agendando'. When booking
@@ -210,9 +345,8 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
           const prop = await booking.proporReuniao(lead, nowMs, acao.resumo);
           if (prop.ok && prop.mensagem) texto = prop.mensagem;
         }
-        const r = await sendPaced(from, texto, pace);
-        sent = !r.dryRun && r.success; dryRun = !!r.dryRun;
-        await recordOutbound(lead.id, texto, r);
+        const r = await sendReply(lead.id, from, texto, pace);
+        sent = r.sentAny; dryRun = r.dryRun;
         if (acao.resumo && acao.resumo !== 'sem detalhe') {
           patch.conversa_fatos = mergeFatos(patch.conversa_fatos || lead.conversa_fatos, {
             disponibilidade: acao.resumo,
@@ -224,31 +358,35 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
       case 'responder':
       default:
         if (acao.tipo === 'responder' && acao.texto) {
-          const r = await sendPaced(from, acao.texto, pace);
-          sent = !r.dryRun && r.success; dryRun = !!r.dryRun;
-          await recordOutbound(lead.id, acao.texto, r);
+          const r = await sendReply(lead.id, from, acao.texto, pace);
+          sent = r.sentAny; dryRun = r.dryRun;
+          if (isNudge) patch.nudge_em = new Date(nowMs).toISOString();
         }
         break;
     }
 
     // 9b. Memory: extract facts the LEAD declared this turn and merge into
-    //     conversa_fatos (best-effort, never throws). Next turn formatarMemoria
-    //     injects them so the agent "remembers" and never asks twice. Skip the
+    //     conversa_fatos; refresh the rolling summary once the conversation
+    //     outgrows the prompt window. Best-effort, never throws. Skip the
     //     no-reply paths (silence/terminal) — nothing to learn there.
-    if (!['nada', 'ignorar', 'optout'].includes(acao.tipo)) {
+    if (!isNudge && !['nada', 'ignorar', 'optout'].includes(acao.tipo)) {
       const fatos = await extrairFatos(history);
       if (fatos && Object.keys(fatos).length) {
         patch.conversa_fatos = mergeFatos(patch.conversa_fatos || lead.conversa_fatos, fatos);
+      }
+      if (history.length >= RESUMO_MIN) {
+        const resumo = await gerarResumo(history);
+        if (resumo) patch.conversa_resumo = resumo;
       }
     }
 
     // 10. Persist state.
     if (Object.keys(patch).length) await patchLead(lead.id, patch);
 
-    logger.info(`[prospect] lead=${lead.id} action=${acao.tipo} sent=${sent} dryRun=${dryRun}`);
+    logger.info(`[prospect] lead=${lead.id} mode=${mode || 'inbound'} action=${acao.tipo} sent=${sent} dryRun=${dryRun}`);
     return { action: acao.tipo, sent, dryRun };
   } finally {
-    if (locked) releaseProcessingLock(lockKey).catch(() => {});
+    releaseProcessingLock(lockKey).catch(() => {});
   }
 }
 

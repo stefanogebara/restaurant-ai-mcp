@@ -114,6 +114,42 @@ async function extrairFatos(history) {
   }
 }
 
+// History is hard-capped at 40 messages in the prompt — beyond ~30, older turns
+// start falling out of context. The rolling summary compensates: 1-2 sentences
+// of "where the conversation stopped and what's missing to book", stored in
+// conversa_resumo and injected via formatarMemoria next turn.
+const RESUMO_MIN = parseInt(process.env.PROSPECTING_RESUMO_MIN, 10) || 30;
+
+const RESUMO_SYSTEM =
+  `Resuma em 1-2 frases curtas (pt-BR) o estado desta conversa de WhatsApp ` +
+  `entre a SDR ${AGENT_NAME} e um lead: onde a conversa parou e o que falta ` +
+  `pra agendar. NÃO invente. Responda só o resumo.`;
+
+/**
+ * Rolling summary for long conversations (>= RESUMO_MIN messages; cheaper
+ * turns skip it — the whole history is already in the prompt). Best-effort.
+ * @param {Array<{direcao:string, corpo:string|null, tipo:string|null}>} history
+ * @returns {Promise<string|null>} the summary, or null (too short / failure)
+ */
+async function gerarResumo(history) {
+  if (!Array.isArray(history) || history.length < RESUMO_MIN) return null;
+  try {
+    const resp = await getAI().messages.create({
+      model: AI_MODEL_FAST,
+      max_tokens: 180,
+      temperature: 0.2,
+      system: RESUMO_SYSTEM,
+      messages: [{ role: 'user', content: transcriptFromHistory(history) }],
+    });
+    const blocks = Array.isArray(resp && resp.content) ? resp.content : [];
+    const t = blocks.find((b) => b.type === 'text' && b.text && b.text.trim());
+    return t ? t.text.trim() : null;
+  } catch (e) {
+    logger.warn('gerarResumo failed (non-fatal):', e.message);
+    return null;
+  }
+}
+
 /**
  * Score a finished conversation 1–5 + theme tags (best-effort).
  * @param {string} transcript
@@ -133,9 +169,11 @@ async function scoreOutcome(transcript) {
 module.exports = {
   FATOS_SYSTEM,
   SCORE_SYSTEM,
+  RESUMO_MIN,
   transcriptFromHistory,
   parseFatosText,
   parseScoreText,
   extrairFatos,
+  gerarResumo,
   scoreOutcome,
 };

@@ -40,4 +40,20 @@ function splitReplyParts(texto, opts = {}) {
   return parts;
 }
 
-module.exports = { pacingDelayMs, splitReplyParts };
+const PART_PAUSE = { minMs: 900, maxMs: 3200, msPorChar: 8, jitter: 0.2 };
+
+/**
+ * Pause (ms) between multipart bubbles — shorter than the initial read+type
+ * delay (the "typist" is already warmed up): clamp(900 + len*8, [900, 3200])
+ * with ±20% jitter. Ported from olivia_pacing.buildReplyPacingPlan.
+ */
+function partPauseDelayMs(texto, opts = {}) {
+  if (opts.disabled || opts.dryRun || opts.testMode) return 0;
+  const rand = opts.rand || Math.random;
+  const len = String(texto || '').trim().length;
+  const base = PART_PAUSE.minMs + len * PART_PAUSE.msPorChar;
+  const fator = 1 + (rand() * 2 - 1) * PART_PAUSE.jitter;
+  return Math.round(Math.max(PART_PAUSE.minMs, Math.min(PART_PAUSE.maxMs, base * fator)));
+}
+
+module.exports = { pacingDelayMs, splitReplyParts, partPauseDelayMs };

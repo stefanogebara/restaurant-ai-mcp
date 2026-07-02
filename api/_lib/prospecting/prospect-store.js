@@ -121,7 +121,7 @@ async function loadHistory(leadId, limit = 40) {
   try {
     const { data, error } = await supabaseAdmin
       .from('prospect_messages')
-      .select('direcao, corpo, tipo, enviada_em')
+      .select('direcao, corpo, tipo, enviada_em, wamid')
       .eq('lead_id', leadId)
       .order('enviada_em', { ascending: false })
       .limit(limit);
@@ -316,6 +316,94 @@ async function loadLastInbound(leadId) {
 }
 
 /**
+ * Burst-coalescing fingerprint: changes whenever the lead sends another message.
+ * `${count}|${latest enviada_em}` over direcao='in' rows — the debounce loop in
+ * the responder polls this until it stops changing ("lead went quiet").
+ * @param {string} leadId
+ * @returns {Promise<string|null>} null on error (caller degrades open)
+ */
+async function inboundFingerprint(leadId) {
+  try {
+    const { data, error, count } = await supabaseAdmin
+      .from('prospect_messages')
+      .select('enviada_em', { count: 'exact' })
+      .eq('lead_id', leadId)
+      .eq('direcao', 'in')
+      .order('enviada_em', { ascending: false })
+      .limit(1);
+    if (error) {
+      logger.error('inboundFingerprint failed:', error.message);
+      return null;
+    }
+    const latest = Array.isArray(data) && data.length ? data[0].enviada_em : '';
+    return `${count ?? 0}|${latest}`;
+  } catch (err) {
+    logger.error('inboundFingerprint exception:', err.message);
+    return null;
+  }
+}
+
+/**
+ * Atomic per-inbound claim: "this wamid is being answered". UPDATE ... WHERE
+ * last_in_wamid <> wamid returns a row only for the first claimer — a flush-cron
+ * overlap, webhook redelivery or manual re-run for the SAME inbound loses the
+ * claim and skips. Degrades OPEN (returns true) on infra errors or exotic wamids
+ * so a Redis/DB hiccup never mutes the agent (worst case: a rare double reply).
+ * @param {string} leadId
+ * @param {string} wamid
+ * @returns {Promise<boolean>} true when this caller owns the reply
+ */
+async function claimInbound(leadId, wamid) {
+  if (!leadId || !wamid) return true;
+  // PostgREST .or() interpolation: commas/parens would break the filter syntax.
+  // Meta wamids are base64-ish and never contain them, but guard anyway.
+  if (/[(),]/.test(wamid)) return true;
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('prospect_leads')
+      .update({ last_in_wamid: wamid })
+      .eq('id', leadId)
+      .or(`last_in_wamid.is.null,last_in_wamid.neq.${wamid}`)
+      .select('id');
+    if (error) {
+      logger.error('claimInbound failed:', error.message);
+      return true;
+    }
+    return Array.isArray(data) && data.length === 1;
+  } catch (err) {
+    logger.error('claimInbound exception:', err.message);
+    return true;
+  }
+}
+
+/**
+ * Nudge candidates (coarse pass): active-conversation leads with no pending
+ * deferral. Fine-grained eligibility (23h silence, last message is the agent's,
+ * once per silence period, 24h free-text window) is decided per-lead by the
+ * cron via elegivelParaNudge — message-level facts don't fit one PostgREST query.
+ * @param {number} [limit=50]
+ */
+async function selectNudgeStates(limit = 50) {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('prospect_leads')
+      .select('*')
+      .in('prospect_state', ['conversando', 'agendando'])
+      .is('reply_apos', null)
+      .order('updated_at', { ascending: true })
+      .limit(limit);
+    if (error) {
+      logger.error('selectNudgeStates failed:', error.message);
+      return [];
+    }
+    return data || [];
+  } catch (err) {
+    logger.error('selectNudgeStates exception:', err.message);
+    return [];
+  }
+}
+
+/**
  * Cockpit: list leads for the internal admin view (newest activity first).
  * Optional state filter. Returns the columns the cockpit list + status buckets need.
  * @param {{limit?: number, state?: string|null}} [opts]
@@ -408,6 +496,9 @@ module.exports = {
   markIntro,
   selectDueFlush,
   loadLastInbound,
+  inboundFingerprint,
+  claimInbound,
+  selectNudgeStates,
   listProspectLeads,
   getProspectLeadWithMessages,
   selectUnscoredOutcomes,
