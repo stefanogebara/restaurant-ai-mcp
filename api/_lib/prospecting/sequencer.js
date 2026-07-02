@@ -34,6 +34,13 @@ function isDryRun() {
  * @returns {Promise<{candidates:number, sent:number, blocked:number, skipped:number, failed:number, dryRun:boolean, capHit:boolean}>}
  */
 async function dispatchIntros({ limit = 20 } = {}) {
+  // GLOBAL kill switch (ops platform): disabled agent = no outbound of any kind.
+  const { isCronEnabled } = require('../cron-config');
+  if (!(await isCronEnabled('prospecting-agent'))) {
+    logger.info('dispatchIntros skipped — agent globally disabled');
+    return { candidates: 0, sent: 0, blocked: 0, skipped: 0, failed: 0, dryRun: isDryRun(), capHit: false, agentDisabled: true };
+  }
+
   const dryRun = isDryRun();
   const templateName = process.env.PROSPECTING_INTRO_TEMPLATE;
   const templateLang = process.env.PROSPECTING_INTRO_TEMPLATE_LANG || 'pt_BR';

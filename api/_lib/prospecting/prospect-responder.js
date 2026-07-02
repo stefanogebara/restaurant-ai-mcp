@@ -159,6 +159,19 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
     return { action: 'optout' };
   }
 
+  // 2b. GLOBAL kill switch (ops platform / Supabase Studio): when the
+  //     'prospecting-agent' cron_config row is disabled, the agent goes fully
+  //     silent — inbounds still get stored (audit trail), opt-outs still record
+  //     (LGPD, above), but nothing is generated or sent. Fail-open on infra
+  //     errors (cron-config's posture) so a DB blip never mutes the agent.
+  {
+    const { isCronEnabled } = require('../cron-config');
+    if (!(await isCronEnabled('prospecting-agent'))) {
+      logger.info(`[prospect] agent globally disabled — skipping lead=${lead.id}`);
+      return { action: 'skip', reason: 'agent_disabled' };
+    }
+  }
+
   // 3. Business-hours gate — defer to next opening (prospect-flush resumes).
   //    Bypass with PROSPECTING_IGNORE_HOURS=true for testing.
   if (process.env.PROSPECTING_IGNORE_HOURS !== 'true' && !dentroDoHorario(nowMs)) {

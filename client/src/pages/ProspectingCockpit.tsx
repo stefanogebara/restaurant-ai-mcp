@@ -4,11 +4,13 @@ import { api } from '../services/api';
 import { GlassCard, GlassPanel } from '../components/common/glass';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import { useToast } from '../contexts/ToastContext';
+import DiscoveryPanel from '../components/prospecting/DiscoveryPanel';
 
 /**
- * Internal prospecting cockpit (Phase 5) — watch Olímpia's conversations and
- * intervene (pause / reactivate / opt-out). Reads /api/prospect-admin, which is
- * gated by the founder's login + an admin-email allowlist.
+ * Prospecting ops platform (Phase 7) — discover + mass-dispatch leads by
+ * region, watch the funnel and every WhatsApp conversation, take over a chat
+ * (manual send auto-pauses the agent for that lead), and stop the agent
+ * globally. Reads /api/prospect-admin (founder JWT + admin allowlist).
  */
 
 interface ProspectLead {
@@ -31,8 +33,13 @@ interface ProspectMessage {
   tipo: string | null;
   enviada_em: string;
 }
-interface ListData { leads: ProspectLead[]; counts: Record<string, number>; }
-interface DetailData { lead: ProspectLead; messages: ProspectMessage[]; bucket: string; }
+interface ListData {
+  leads: ProspectLead[];
+  counts: Record<string, number>;
+  agent_enabled: boolean;
+  dry_run: boolean;
+}
+interface DetailData { lead: ProspectLead; messages: ProspectMessage[]; bucket: string; can_free_text: boolean; }
 type ProspectAction = 'pause' | 'reactivate' | 'optout';
 
 const BUCKET_LABEL: Record<string, string> = {
@@ -65,6 +72,10 @@ export default function ProspectingCockpit() {
   const qc = useQueryClient();
   const toast = useToast();
   const [selected, setSelected] = useState<string | null>(null);
+  const [bucketFilter, setBucketFilter] = useState<string | null>(null);
+  const [draft, setDraft] = useState('');
+  const [keepActive, setKeepActive] = useState(false);
+  const [confirmStop, setConfirmStop] = useState(false);
 
   const listQ = useQuery({
     queryKey: ['prospect-admin', 'list'],
@@ -76,6 +87,7 @@ export default function ProspectingCockpit() {
     queryKey: ['prospect-admin', 'lead', selected],
     queryFn: async () => (await api.get<{ data: DetailData }>(`/prospect-admin?action=lead&lead_id=${selected}`)).data.data,
     enabled: !!selected,
+    refetchInterval: 15000,
   });
 
   const act = useMutation({
@@ -89,31 +101,118 @@ export default function ProspectingCockpit() {
     onError: () => toast.error('Não foi possível executar a ação'),
   });
 
+  const agentToggle = useMutation({
+    mutationFn: async (enabled: boolean) =>
+      (await api.post('/prospect-admin?action=agent', { enabled })).data,
+    onSuccess: (_d, enabled) => {
+      setConfirmStop(false);
+      toast.success(enabled ? 'Agente REATIVADO — Olímpia volta a responder' : 'Agente PARADO — nenhuma mensagem sai');
+      qc.invalidateQueries({ queryKey: ['prospect-admin'] });
+    },
+    onError: () => { setConfirmStop(false); toast.error('Não foi possível alterar o agente'); },
+  });
+
+  const send = useMutation({
+    mutationFn: async ({ leadId, texto }: { leadId: string; texto: string }) =>
+      (await api.post('/prospect-admin?action=send', { lead_id: leadId, texto, keep_active: keepActive })).data,
+    onSuccess: () => {
+      setDraft('');
+      toast.success(keepActive ? 'Enviada (agente segue ativo)' : 'Enviada — agente pausado neste lead');
+      qc.invalidateQueries({ queryKey: ['prospect-admin'] });
+    },
+    onError: (err: unknown) => {
+      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;
+      toast.error(msg || 'Envio falhou');
+    },
+  });
+
   const leads = listQ.data?.leads ?? [];
   const counts = listQ.data?.counts ?? {};
+  const agentEnabled = listQ.data?.agent_enabled ?? true;
+  const dryRun = listQ.data?.dry_run ?? true;
   const detail = detailQ.data;
+  const shown = bucketFilter ? leads.filter((l) => l.bucket === bucketFilter) : leads;
 
   return (
     <DashboardLayout>
       <div className="max-w-6xl mx-auto px-4 py-6 space-y-5">
-        <header className="space-y-1">
-          <h1 className="text-2xl font-serif">Prospecção — Olímpia</h1>
-          <p className="text-sm text-stone-500">Conversas do agente de prospecção. Atualiza a cada 30s.</p>
+        <header className="flex flex-wrap items-start justify-between gap-3">
+          <div className="space-y-1">
+            <h1 className="text-2xl font-serif">Prospecção — Olímpia</h1>
+            <p className="text-sm text-stone-500">
+              Plataforma de operação: descoberta, disparos, conversas e controle do agente.
+              {dryRun && <span className="ml-2 px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-xs font-medium">DRY-RUN</span>}
+            </p>
+          </div>
+          {/* Global agent switch — the big red button */}
+          <div className="flex items-center gap-2">
+            <span className={`flex items-center gap-1.5 text-sm font-medium ${agentEnabled ? 'text-emerald-700' : 'text-rose-700'}`}>
+              <span className={`w-2 h-2 rounded-full ${agentEnabled ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
+              {agentEnabled ? 'Agente ativo' : 'Agente PARADO'}
+            </span>
+            {agentEnabled ? (
+              !confirmStop ? (
+                <button
+                  type="button"
+                  onClick={() => setConfirmStop(true)}
+                  className="px-3 py-1.5 rounded-xl bg-rose-600 text-white text-sm font-medium hover:opacity-90"
+                >
+                  Parar agente
+                </button>
+              ) : (
+                <span className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    disabled={agentToggle.isPending}
+                    onClick={() => agentToggle.mutate(false)}
+                    className="px-3 py-1.5 rounded-xl bg-rose-600 text-white text-sm font-medium hover:opacity-90 disabled:opacity-50"
+                  >
+                    Confirmar parada
+                  </button>
+                  <button type="button" onClick={() => setConfirmStop(false)} className="px-2.5 py-1.5 rounded-xl bg-stone-100 text-stone-600 text-sm hover:bg-stone-200">✕</button>
+                </span>
+              )
+            ) : (
+              <button
+                type="button"
+                disabled={agentToggle.isPending}
+                onClick={() => agentToggle.mutate(true)}
+                className="px-3 py-1.5 rounded-xl bg-emerald-600 text-white text-sm font-medium hover:opacity-90 disabled:opacity-50"
+              >
+                Reativar agente
+              </button>
+            )}
+          </div>
         </header>
 
-        <GlassPanel className="p-4 flex flex-wrap gap-3">
+        <DiscoveryPanel />
+
+        {/* Funnel — clickable filters */}
+        <GlassPanel className="p-4 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setBucketFilter(null)}
+            className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${bucketFilter === null ? 'bg-stone-800 text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}
+          >
+            Todos {leads.length}
+          </button>
           {Object.entries(counts).filter(([, n]) => n > 0).map(([b, n]) => (
-            <span key={b} className="flex items-center gap-1.5 text-sm">
-              <Badge bucket={b} /> <span className="text-stone-600">{n}</span>
-            </span>
+            <button
+              key={b}
+              type="button"
+              onClick={() => setBucketFilter(bucketFilter === b ? null : b)}
+              className={`flex items-center gap-1.5 px-1 py-0.5 rounded-full transition-opacity ${bucketFilter && bucketFilter !== b ? 'opacity-40' : ''}`}
+            >
+              <Badge bucket={b} /> <span className="text-sm text-stone-600">{n}</span>
+            </button>
           ))}
-          {Object.values(counts).every((n) => !n) && <span className="text-sm text-stone-500">Nenhum lead ainda.</span>}
+          {Object.values(counts).every((n) => !n) && <span className="text-sm text-stone-500">Nenhum lead ainda — use “Descobrir & Disparar”.</span>}
         </GlassPanel>
 
         <div className="grid md:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] gap-5">
           <GlassCard className="p-3 max-h-[70vh] overflow-y-auto">
             {listQ.isLoading && <p className="p-3 text-sm text-stone-500">Carregando…</p>}
-            {leads.map((l) => (
+            {shown.map((l) => (
               <button
                 key={l.id}
                 type="button"
@@ -129,7 +228,7 @@ export default function ProspectingCockpit() {
                 </div>
               </button>
             ))}
-            {!listQ.isLoading && leads.length === 0 && <p className="p-3 text-sm text-stone-500">Nenhum lead.</p>}
+            {!listQ.isLoading && shown.length === 0 && <p className="p-3 text-sm text-stone-500">Nenhum lead{bucketFilter ? ' neste estágio' : ''}.</p>}
           </GlassCard>
 
           <GlassCard className="p-4 flex flex-col max-h-[70vh]">
@@ -142,6 +241,9 @@ export default function ProspectingCockpit() {
                     <div className="flex items-center gap-2">
                       <h2 className="font-medium">{detail.lead.name}</h2>
                       <Badge bucket={detail.bucket} />
+                      {detail.lead.prospect_state === 'pausada' && (
+                        <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-xs">agente pausado</span>
+                      )}
                     </div>
                     <p className="text-xs text-stone-500">
                       {[detail.lead.owner_name, detail.lead.whatsapp_phone].filter(Boolean).join(' · ')}
@@ -164,6 +266,36 @@ export default function ProspectingCockpit() {
                       </div>
                     </div>
                   ))}
+                </div>
+
+                {/* Operator composer — human takeover */}
+                <div className="pt-3 border-t border-stone-200/60 space-y-1.5">
+                  {!detail.can_free_text && (
+                    <p className="text-xs text-amber-700 bg-amber-50 rounded-lg px-2 py-1">
+                      Fora da janela de 24h do WhatsApp — texto livre será rejeitado pela Meta.
+                    </p>
+                  )}
+                  <div className="flex gap-2">
+                    <textarea
+                      value={draft}
+                      onChange={(e) => setDraft(e.target.value)}
+                      rows={2}
+                      placeholder={`Responder como ${detail.lead.prospect_state === 'pausada' ? 'você' : 'você (pausa a Olímpia neste lead)'}…`}
+                      className="flex-1 rounded-xl border border-stone-200 px-3 py-2 text-sm bg-white/70 resize-none"
+                    />
+                    <button
+                      type="button"
+                      disabled={send.isPending || !draft.trim() || !detail.can_free_text}
+                      onClick={() => send.mutate({ leadId: detail.lead.id, texto: draft.trim() })}
+                      className="px-4 rounded-xl bg-burgundy text-white text-sm font-medium hover:opacity-90 disabled:opacity-50 self-stretch"
+                    >
+                      {send.isPending ? '…' : 'Enviar'}
+                    </button>
+                  </div>
+                  <label className="flex items-center gap-1.5 text-xs text-stone-500">
+                    <input type="checkbox" checked={keepActive} onChange={(e) => setKeepActive(e.target.checked)} />
+                    manter a Olímpia ativa neste lead depois do meu envio
+                  </label>
                 </div>
               </>
             )}
