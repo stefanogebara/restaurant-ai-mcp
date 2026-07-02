@@ -106,9 +106,17 @@ export default function Footer() {
         <div className="font-serif text-xl font-semibold text-deep-charcoal">
           seatable<span className="text-burgundy">.</span>
         </div>
-        <p className="text-[12px] text-muted-stone text-center sm:text-right">
-          &copy; {currentYear} Seatable. {t('landing.footer.tagline', 'AI-powered restaurant management.')}
-        </p>
+        <div className="text-center sm:text-right">
+          <p className="text-[12px] text-muted-stone">
+            &copy; {currentYear} Seatable. {t('landing.footer.tagline', 'AI-powered restaurant management.')}
+          </p>
+          {/* Legal entity — required for BR e-commerce trust + lets reviewers
+              (e.g. WhatsApp display-name review) tie the "Seatable" brand to
+              the registered business. Not translated: legal identifiers. */}
+          <p className="text-[11px] text-muted-stone mt-1">
+            Seatable &mdash; 65.087.663 Stefano Chap Chap Gebara &middot; CNPJ 65.087.663/0001-30 &middot; S&atilde;o Paulo, SP
+          </p>
+        </div>
       </div>
     </footer>
   );
