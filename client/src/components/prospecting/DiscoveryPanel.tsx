@@ -169,7 +169,10 @@ export default function DiscoveryPanel() {
               </button>
             ) : (
               <span className="ml-auto flex items-center gap-2">
-                <span className="text-xs text-stone-600">Enviar mensagens REAIS para até {dispatchLimit} restaurantes?</span>
+                <span className="text-xs text-stone-600">
+                  Enviar mensagens REAIS para até {dispatchLimit} restaurantes?
+                  <span className="text-stone-400"> (~R$ {(dispatchLimit * 0.31).toFixed(2).replace('.', ',')} em conversas de marketing)</span>
+                </span>
                 <button
                   type="button"
                   disabled={dispatch.isPending}

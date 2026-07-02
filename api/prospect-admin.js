@@ -32,8 +32,11 @@ const { sendWhatsAppMessage } = require('./_lib/whatsapp-sender');
 const { getProspectingPhoneNumberId } = require('./_lib/prospecting/routing');
 const {
   listProspectLeads, getProspectLeadWithMessages, patchLead, recordOptout,
-  storeMessage, loadLastInbound,
+  storeMessage, loadLastInbound, recordEvent, recordNote, updateIntent,
+  listTemplates, upsertTemplate, listCanned, upsertCanned, deleteCanned,
 } = require('./_lib/prospecting/prospect-store');
+const { INTENTS } = require('./_lib/prospecting/prospect-reflect');
+const { numberHealth } = require('./_lib/prospecting/prospect-receipts');
 const { statusBucket, bucketCounts } = require('./_lib/prospecting/prospect-admin-view');
 const { podeMensagemLivre } = require('./_lib/prospecting/prospect-nudge');
 const { getCronConfig } = require('./_lib/cron-config');
@@ -98,8 +101,9 @@ module.exports = async (req, res) => {
       const hoje = new Date(); hoje.setUTCHours(0, 0, 0, 0);
       const hojeIso = hoje.toISOString();
       const nowIso = new Date().toISOString();
-      const [agentCfg, outStats, inStats, meetings, outcomes] = await Promise.all([
+      const [agentCfg, dispatchCfg, outStats, inStats, meetings, outcomes, health, dueTouches] = await Promise.all([
         getCronConfig(AGENT_JOB),
+        getCronConfig('prospecting-dispatch'),
         supabaseAdmin.from('prospect_messages').select('id', { count: 'exact', head: true })
           .eq('direcao', 'out').gte('enviada_em', hojeIso),
         supabaseAdmin.from('prospect_messages').select('id', { count: 'exact', head: true })
@@ -107,19 +111,103 @@ module.exports = async (req, res) => {
         supabaseAdmin.from('prospect_leads').select('id, name, city, reuniao_at, reuniao_link')
           .gt('reuniao_at', nowIso).order('reuniao_at', { ascending: true }).limit(10),
         supabaseAdmin.rpc('prospect_outcomes_agg', { p_dias: 30 }),
+        numberHealth(),
+        supabaseAdmin.from('prospect_leads').select('id', { count: 'exact', head: true })
+          .not('next_touch_at', 'is', null).lte('next_touch_at', nowIso)
+          .is('last_in_at', null).lt('touch_count', 3),
       ]);
       return res.status(200).json({
         success: true,
         data: {
           agent_enabled: agentCfg.enabled,
+          dispatch_enabled: dispatchCfg.enabled,
+          dispatch_note: dispatchCfg.enabled ? null : dispatchCfg.notes,
           dry_run: !getProspectingPhoneNumberId() || process.env.PROSPECTING_DRY_RUN !== 'false',
           daily_cap: parseInt(process.env.PROSPECTING_DAILY_CAP, 10) || 40,
           sent_today: outStats.count ?? 0,
           received_today: inStats.count ?? 0,
+          due_followups: dueTouches.count ?? 0,
           meetings: meetings.data || [],
           outcomes: outcomes.data || null,
+          health,
         },
       });
+    }
+
+    // ---- Insights (F7): mined from outcomes/messages already collected --------
+    if (req.method === 'GET' && action === 'insights') {
+      const dias = Math.min(Math.max(parseInt(req.query.dias, 10) || 30, 7), 90);
+      const { data, error } = await supabaseAdmin.rpc('prospect_insights', { p_dias: dias });
+      if (error) return res.status(500).json({ success: false, error: 'Insights failed' });
+      return res.status(200).json({ success: true, data });
+    }
+
+    // ---- Variants (F2): registered templates + per-variant funnel --------------
+    if (req.method === 'GET' && action === 'variants') {
+      const [templates, funnel] = await Promise.all([
+        listTemplates(),
+        supabaseAdmin.rpc('prospect_variant_funnel'),
+      ]);
+      return res.status(200).json({
+        success: true,
+        data: { templates, funnel: funnel.data || [] },
+      });
+    }
+
+    if (req.method === 'POST' && action === 'template-upsert') {
+      const result = await upsertTemplate(req.body || {});
+      if (!result.ok) return res.status(400).json({ success: false, error: result.error });
+      logger.info(`prospect-admin template-upsert by=${email}`);
+      return res.status(200).json({ success: true });
+    }
+
+    // ---- Canned responses (F8) --------------------------------------------------
+    if (req.method === 'GET' && action === 'canned') {
+      return res.status(200).json({ success: true, data: await listCanned() });
+    }
+    if (req.method === 'POST' && action === 'canned-upsert') {
+      const result = await upsertCanned(req.body || {});
+      if (!result.ok) return res.status(400).json({ success: false, error: result.error });
+      return res.status(200).json({ success: true });
+    }
+    if (req.method === 'POST' && action === 'canned-delete') {
+      const id = req.body && req.body.id;
+      if (!id) return res.status(400).json({ success: false, error: 'id required' });
+      const result = await deleteCanned(String(id));
+      if (!result.ok) return res.status(400).json({ success: false, error: result.error });
+      return res.status(200).json({ success: true });
+    }
+
+    // ---- Intent override (F1), snooze + notes (F6) -------------------------------
+    if (req.method === 'POST' && action === 'intent') {
+      const leadId = req.body && req.body.lead_id;
+      const intent = req.body && String(req.body.intent || '').toLowerCase();
+      if (!leadId || !INTENTS.includes(intent)) {
+        return res.status(400).json({ success: false, error: `intent must be one of: ${INTENTS.join(', ')}` });
+      }
+      await updateIntent(String(leadId), null, intent);
+      return res.status(200).json({ success: true });
+    }
+
+    if (req.method === 'POST' && action === 'snooze') {
+      const leadId = req.body && req.body.lead_id;
+      const until = req.body && req.body.until ? new Date(req.body.until) : null;
+      if (!leadId) return res.status(400).json({ success: false, error: 'lead_id required' });
+      if (until && Number.isNaN(until.getTime())) return res.status(400).json({ success: false, error: 'invalid until' });
+      await patchLead(String(leadId), { snoozed_until: until ? until.toISOString() : null });
+      await recordEvent(String(leadId), until
+        ? `⏰ adiado até ${until.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })} por ${email}`
+        : `⏰ adiamento removido por ${email}`);
+      return res.status(200).json({ success: true });
+    }
+
+    if (req.method === 'POST' && action === 'note') {
+      const leadId = req.body && req.body.lead_id;
+      const texto = req.body && String(req.body.texto || '').trim();
+      if (!leadId || !texto) return res.status(400).json({ success: false, error: 'lead_id and texto required' });
+      if (texto.length > 4000) return res.status(400).json({ success: false, error: 'texto too long' });
+      await recordNote(String(leadId), texto, email);
+      return res.status(200).json({ success: true });
     }
 
     if (req.method === 'GET' && action === 'lead') {
@@ -144,10 +232,15 @@ module.exports = async (req, res) => {
       if (action === 'optout') {
         const detail = await getProspectLeadWithMessages(leadId, 1);
         if (!detail) return res.status(404).json({ success: false, error: 'Lead not found' });
-        await recordOptout({ phone: detail.lead.whatsapp_phone, leadId, reason: 'admin' });
+        const reason = (req.body && req.body.reason) ? String(req.body.reason) : 'admin';
+        await recordOptout({ phone: detail.lead.whatsapp_phone, leadId, reason });
+        await recordEvent(leadId, `🚫 opt-out registrado por ${email}${reason !== 'admin' ? ` (${reason})` : ''}`);
       } else {
         // pause → silent kill switch (reversible); reactivate → back to active.
         await patchLead(leadId, { prospect_state: action === 'pause' ? 'pausada' : 'conversando' });
+        await recordEvent(leadId, action === 'pause'
+          ? `⏸ agente pausado por ${email}`
+          : `▶ agente reativado por ${email}`);
       }
       logger.info(`prospect-admin ${action} lead=${leadId} by=${email}`);
       return res.status(200).json({ success: true, data: { action, lead_id: leadId } });
@@ -197,6 +290,7 @@ module.exports = async (req, res) => {
       // two voices in one chat is the fastest way to sound broken.
       if (!keepActive && detail.lead.prospect_state !== 'pausada') {
         await patchLead(leadId, { prospect_state: 'pausada' });
+        await recordEvent(leadId, `🙋 ${email} assumiu a conversa (agente pausado)`);
       }
       logger.info(`prospect-admin manual send lead=${leadId} by=${email} paused=${!keepActive}`);
       return res.status(200).json({ success: true, data: { sent: true, paused: !keepActive } });
@@ -208,6 +302,20 @@ module.exports = async (req, res) => {
       await setAgentEnabled(enabled, email);
       logger.info(`prospect-admin GLOBAL agent ${enabled ? 'ENABLED' : 'DISABLED'} by=${email}`);
       return res.status(200).json({ success: true, data: { agent_enabled: enabled } });
+    }
+
+    // ---- Manual recovery from the dispatch circuit breaker (F5) ----------------
+    if (req.method === 'POST' && action === 'dispatch-resume') {
+      await supabaseAdmin.from('cron_config').upsert({
+        job_name: 'prospecting-dispatch', enabled: true,
+        notes: `reativado manualmente por ${email}`,
+        updated_at: new Date().toISOString(), updated_by: email,
+      }, { onConflict: 'job_name' });
+      await supabaseAdmin.from('prospect_number_events').insert({
+        event_type: 'manual', detail: `disparos reativados por ${email}`,
+      });
+      logger.info(`prospect-admin dispatch RESUMED by=${email}`);
+      return res.status(200).json({ success: true });
     }
 
     // ---- Discovery (Google Places → prospect_leads) ----------------------------

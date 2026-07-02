@@ -23,7 +23,7 @@
 
 const { createSecureLogger } = require('../secure-logger');
 const { isMessageDuplicate } = require('../rate-limit');
-const { isOptedOut, findLeadByPhone, storeMessage } = require('./prospect-store');
+const { isOptedOut, findLeadByPhone, storeMessage, patchLead } = require('./prospect-store');
 const { respondToProspect } = require('./prospect-responder');
 const { extractProspectCorpo } = require('./prospect-parse');
 const { placeholderMidia } = require('./prospect-agent');
@@ -87,6 +87,17 @@ async function handleProspectInbound(adapter, req) {
     `lead=${lead?.id ? 'matched' : 'unknown'} optout=${optedOut} ` +
     `type=${tipo} corpo=${corpo ? 'yes' : 'empty'} name=${profileName ? 'yes' : 'no'}`
   );
+
+  if (lead) {
+    // last_in_at drives the 24h-window countdown, triage ordering and the
+    // multi-touch halt (a lead that ever replied leaves the cold sequence);
+    // an inbound also wakes a snoozed thread and cancels pending touches.
+    await patchLead(lead.id, {
+      last_in_at: new Date().toISOString(),
+      snoozed_until: null,
+      next_touch_at: null,
+    });
+  }
 
   // Suppressed (LGPD) — stored for the audit trail, but never answered.
   if (optedOut) {

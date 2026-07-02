@@ -167,9 +167,42 @@
   24 new tests; **139 prospecting tests green / 10 suites.**
   *Deferred (next):* email-before-invite pending-slot flow, remarcar/no-show modes,
   global LLM rate limit, pacing urgency tiers, markAsRead with prospecting number id.
-- **Remaining in Phase 2 (deferred):** 48h cold-intro followup template path
-  (distinct from the conversational nudge, which is DONE) — needs an approved
-  follow-up template for beyond-24h re-engagement.
+- **Phase 7 (ops platform + standalone console) ✅ (2026-07-02)** — prospect-admin
+  grew discover/dispatch/send/agent actions; global kill switch (cron_config
+  'prospecting-agent') checked by responder+sequencer; standalone console at
+  /olimpia (own shell, allowlist-gated, 403 screen), region/UF discovery panel,
+  mass dispatch with confirm, funnel filters, takeover composer (auto-pause,
+  24h guard). E2E-verified live: discovery inserted 20 real Jardins leads;
+  kill switch round-tripped UI→DB→UI.
+- **Phase 8 (best-in-class platform) ✅ (2026-07-02)** — 6-agent research sweep
+  (Instantly/Smartlead/Apollo/Clay, BR disparo tools, Chatwoot/OSS, operator
+  wisdom, UX patterns, LGPD/Meta policy) → 8-feature spec, ALL built:
+  **F1 Triagem** (8-way intent enum piggybacked on the facts call; priority
+  work queue: quer_humano→interessado→perguntas→janela fechando; manual
+  override); **F2 Abordagens** (Meta-approved template registry w/ A/B intro
+  variants, per-variant funnel via prospect_variant_funnel RPC — COMPLIANCE
+  correction vs spec: variants reference approved template names, never free
+  bodies); **F3 receipts** (per-message sent/delivered/read/failed by wamid,
+  rank-monotonic, transcript ticks + error tooltips); **F4 multi-touch**
+  (bump D+3 / breakup D+8 for never-repliers, shared warm-up cap, inbound
+  cancels, halts visibly without an approved touch template; runs in
+  prospect-flush); **F5 number health** (quality webhook handler +
+  failed-rate>5%/24h breaker → graduated 'prospecting-dispatch' switch,
+  YELLOW pauses dispatch/nudges, RED also pauses agent, manual-only recovery,
+  prospect_number_events audit + console banner); **F6 workbench** (snooze
+  presets, private notes + timeline events as 'sys' rows — LLM never sees
+  them; transcript = audit log); **F7 insights** (prospect_insights RPC:
+  reply-rate w/ benchmark bands, medians, theme deltas, variant×score
+  segments); **F8 canned responses** ('/' popover, client-side {{nome}}
+  interpolation, 8 seeded objection answers). Migration
+  20260702_prospect_platform.sql applied to prod. Console rebuilt as focused
+  components (types/LeadList/ThreadView/VariantsPanel/InsightsPanel/
+  HealthCard). Docs: docs/olimpia/README.md (architecture, safety layers,
+  external setup, API, env vars). Backend 150 tests / 11 suites; frontend
+  helpers 9 tests; tsc clean.
+- **Remaining external steps:** approve extra template variants + touch-2/3
+  templates in WhatsApp Manager, then register in Abordagens; subscribe Meta
+  app to phone_number_quality_update + set PROSPECTING_DISPLAY_NUMBER.
 - **External (blocks GOING LIVE, not building):** provision the dedicated
   WhatsApp number → `PROSPECTING_PHONE_NUMBER_ID`; get a B2B intro template
   approved by Meta → `PROSPECTING_INTRO_TEMPLATE`. Until then everything is

@@ -29,7 +29,7 @@ const { mergeFatos } = require('./prospect-facts');
 const { generateReply } = require('./prospect-agent');
 const {
   loadHistory, patchLead, recordOptout, storeMessage,
-  inboundFingerprint, claimInbound,
+  inboundFingerprint, claimInbound, updateIntent, recordEvent,
 } = require('./prospect-store');
 const booking = require('./prospect-booking');
 const { extrairFatos, gerarResumo, RESUMO_MIN } = require('./prospect-reflect');
@@ -207,8 +207,10 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
     }
 
     // 6. Load history (includes the inbound just stored by prospect-inbound —
-    //    and, after the debounce, every bubble of the burst).
-    const history = await loadHistory(lead.id, 40);
+    //    and, after the debounce, every bubble of the burst). 'sys' rows are
+    //    operator notes / timeline events (F6) — the console renders them, but
+    //    the LLM must NEVER see them as conversation turns.
+    const history = (await loadHistory(lead.id, 40)).filter((m) => m.direcao !== 'sys');
     if (history.length === 0) {
       logger.warn(`[prospect] no history for lead=${lead.id}; skipping`);
       return { action: 'skip', reason: 'no_history' };
@@ -270,6 +272,9 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
         const patch = { ...(conf.patch || {}) };
         if (lead.reply_apos) patch.reply_apos = null;
         if (Object.keys(patch).length) await patchLead(lead.id, patch);
+        if (conf.booked) {
+          await recordEvent(lead.id, `📅 reunião marcada pela agenda${conf.patch && conf.patch.reuniao_at ? ` — ${conf.patch.reuniao_at}` : ''}`);
+        }
         logger.info(`[prospect] lead=${lead.id} action=booking booked=${!!conf.booked}`);
         return { action: conf.booked ? 'agendado' : 'agendando', sent: r.sentAny, dryRun: r.dryRun };
       }
@@ -378,14 +383,18 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
         break;
     }
 
-    // 9b. Memory: extract facts the LEAD declared this turn and merge into
-    //     conversa_fatos; refresh the rolling summary once the conversation
-    //     outgrows the prompt window. Best-effort, never throws. Skip the
-    //     no-reply paths (silence/terminal) — nothing to learn there.
+    // 9b. Memory + triage: extract facts the LEAD declared this turn (merged
+    //     into conversa_fatos) AND the intent of their latest message (F1 —
+    //     same LLM call, near-zero marginal cost); refresh the rolling summary
+    //     once the conversation outgrows the prompt window. Best-effort.
     if (!isNudge && !['nada', 'ignorar', 'optout'].includes(acao.tipo)) {
-      const fatos = await extrairFatos(history);
+      const { fatos, intent } = await extrairFatos(history);
       if (fatos && Object.keys(fatos).length) {
         patch.conversa_fatos = mergeFatos(patch.conversa_fatos || lead.conversa_fatos, fatos);
+      }
+      if (intent) {
+        const lastIn = [...history].reverse().find((m) => m.direcao === 'in');
+        await updateIntent(lead.id, (lastIn && lastIn.wamid) || null, intent);
       }
       if (history.length >= RESUMO_MIN) {
         const resumo = await gerarResumo(history);

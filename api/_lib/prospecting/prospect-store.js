@@ -404,6 +404,142 @@ async function selectNudgeStates(limit = 50) {
 }
 
 /**
+ * Timeline event (F6): a 'sys' row rendered inline in the transcript — pause,
+ * takeover, booking, snooze, auto-pause… The transcript doubles as audit log.
+ * The responder filters sys rows out of the LLM history.
+ */
+async function recordEvent(leadId, texto, meta = null) {
+  if (!leadId || !texto) return { stored: false };
+  return storeMessage({ leadId, direcao: 'sys', tipo: 'evento', corpo: texto, raw: meta });
+}
+
+/** Private operator note (F6) — never sent to WhatsApp, never seen by the LLM. */
+async function recordNote(leadId, texto, operator) {
+  if (!leadId || !texto) return { stored: false };
+  return storeMessage({ leadId, direcao: 'sys', tipo: 'nota', corpo: texto, raw: { operator } });
+}
+
+/** Stamp the AI intent label (F1) on the inbound message + denormalize on the lead. */
+async function updateIntent(leadId, wamid, intent) {
+  try {
+    if (wamid && intent) {
+      await supabaseAdmin.from('prospect_messages').update({ intent }).eq('wamid', wamid);
+    }
+    if (leadId && intent) {
+      await supabaseAdmin.from('prospect_leads')
+        .update({ last_intent: intent, last_intent_at: new Date().toISOString() })
+        .eq('id', leadId);
+    }
+    return { ok: true };
+  } catch (err) {
+    logger.error('updateIntent exception:', err.message);
+    return { ok: false };
+  }
+}
+
+/** Registered Meta-approved template variants (F2), optionally for one touch. */
+async function listTemplates(touchNumber = null) {
+  try {
+    let q = supabaseAdmin.from('prospect_templates').select('*')
+      .order('touch_number', { ascending: true }).order('variant_label', { ascending: true });
+    if (touchNumber != null) q = q.eq('touch_number', touchNumber);
+    const { data, error } = await q;
+    if (error) { logger.error('listTemplates failed:', error.message); return []; }
+    return data || [];
+  } catch (err) {
+    logger.error('listTemplates exception:', err.message);
+    return [];
+  }
+}
+
+async function upsertTemplate(row) {
+  try {
+    const clean = {
+      variant_label: String(row.variant_label || '').trim().toUpperCase(),
+      touch_number: Math.min(Math.max(parseInt(row.touch_number, 10) || 1, 1), 3),
+      meta_template_name: String(row.meta_template_name || '').trim(),
+      template_lang: String(row.template_lang || 'pt_BR').trim(),
+      body_preview: row.body_preview ? String(row.body_preview) : null,
+      active: row.active !== false,
+      updated_at: new Date().toISOString(),
+    };
+    if (!clean.variant_label || !clean.meta_template_name) return { ok: false, error: 'variant_label and meta_template_name required' };
+    if (row.id) {
+      const { error } = await supabaseAdmin.from('prospect_templates').update(clean).eq('id', row.id);
+      if (error) return { ok: false, error: error.message };
+    } else {
+      const { error } = await supabaseAdmin.from('prospect_templates')
+        .upsert({ ...clean }, { onConflict: 'touch_number,variant_label' });
+      if (error) return { ok: false, error: error.message };
+    }
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+}
+
+/** Canned responses (F8). */
+async function listCanned() {
+  try {
+    const { data, error } = await supabaseAdmin.from('prospect_canned')
+      .select('*').order('short_code', { ascending: true });
+    if (error) { logger.error('listCanned failed:', error.message); return []; }
+    return data || [];
+  } catch { return []; }
+}
+
+async function upsertCanned({ id, short_code, body }) {
+  try {
+    const clean = {
+      short_code: String(short_code || '').trim().toLowerCase().replace(/\s+/g, '-'),
+      body: String(body || '').trim(),
+      updated_at: new Date().toISOString(),
+    };
+    if (!clean.short_code || !clean.body) return { ok: false, error: 'short_code and body required' };
+    const q = id
+      ? supabaseAdmin.from('prospect_canned').update(clean).eq('id', id)
+      : supabaseAdmin.from('prospect_canned').upsert(clean, { onConflict: 'short_code' });
+    const { error } = await q;
+    return error ? { ok: false, error: error.message } : { ok: true };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+}
+
+async function deleteCanned(id) {
+  try {
+    const { error } = await supabaseAdmin.from('prospect_canned').delete().eq('id', id);
+    return error ? { ok: false, error: error.message } : { ok: true };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+}
+
+/**
+ * Multi-touch (F4): due follow-up candidates — intro delivered, NEVER replied
+ * (last_in_at null), still in the cold bucket, under 3 touches, not suppressed.
+ */
+async function selectDueTouches(nowIso, limit = 10) {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('prospect_leads')
+      .select('*')
+      .not('next_touch_at', 'is', null)
+      .lte('next_touch_at', nowIso)
+      .is('last_in_at', null)
+      .lt('touch_count', 3)
+      .in('prospect_state', ['aguardando'])
+      .order('next_touch_at', { ascending: true })
+      .limit(limit);
+    if (error) { logger.error('selectDueTouches failed:', error.message); return []; }
+    return data || [];
+  } catch (err) {
+    logger.error('selectDueTouches exception:', err.message);
+    return [];
+  }
+}
+
+/**
  * Cockpit: list leads for the internal admin view (newest activity first).
  * Optional state filter. Returns the columns the cockpit list + status buckets need.
  * @param {{limit?: number, state?: string|null}} [opts]
@@ -438,7 +574,7 @@ async function getProspectLeadWithMessages(leadId, limit = 200) {
     if (error || !lead) { logger.error('getProspectLeadWithMessages: lead not found', error && error.message); return null; }
     const { data: msgs } = await supabaseAdmin
       .from('prospect_messages')
-      .select('direcao, corpo, tipo, enviada_em')
+      .select('direcao, corpo, tipo, enviada_em, status, status_at, error_detail, intent')
       .eq('lead_id', leadId)
       .order('enviada_em', { ascending: false })
       .limit(Math.min(Math.max(limit, 1), 500));
@@ -499,6 +635,15 @@ module.exports = {
   inboundFingerprint,
   claimInbound,
   selectNudgeStates,
+  recordEvent,
+  recordNote,
+  updateIntent,
+  listTemplates,
+  upsertTemplate,
+  listCanned,
+  upsertCanned,
+  deleteCanned,
+  selectDueTouches,
   listProspectLeads,
   getProspectLeadWithMessages,
   selectUnscoredOutcomes,

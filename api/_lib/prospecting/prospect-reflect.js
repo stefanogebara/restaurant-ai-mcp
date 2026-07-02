@@ -20,13 +20,22 @@ const logger = createSecureLogger('ProspectReflect');
 
 const AGENT_NAME = process.env.PROSPECTING_AGENT_NAME || 'Olímpia';
 
+// F1 Triagem: the fixed intent enum for the LEAD's latest message. Classified in
+// the SAME LLM call as fact extraction — near-zero marginal cost.
+const INTENTS = [
+  'interessado', 'pergunta', 'objecao_preco', 'nao_interessado',
+  'pessoa_errada', 'remarcar', 'quer_humano', 'outro',
+];
+
 const FATOS_SYSTEM = [
   `Você extrai FATOS de uma conversa de WhatsApp entre uma SDR (assistant) e um`,
   `lead (user). Devolva SOMENTE um objeto JSON com o que o LEAD DECLAROU sobre si`,
   `ou o negócio dele — NUNCA invente nem infira. Se algo não foi dito, omita o campo.`,
   ``,
-  `Schema (todos os campos opcionais):`,
+  `Schema (todos os campos opcionais, exceto "intent"):`,
   `{`,
+  `  "intent": string,              // intenção da ÚLTIMA mensagem do lead. Um de:`,
+  `                                 // ${INTENTS.join(' | ')}`,
   `  "is_dono": boolean,            // true só se o lead confirmou ser dono/responsável`,
   `  "nome_responsavel": string,    // nome do dono/responsável, se dito`,
   `  "email": string,               // e-mail que o lead passou`,
@@ -36,7 +45,7 @@ const FATOS_SYSTEM = [
   `  "notas": string[]              // outros fatos concretos ditos pelo lead`,
   `}`,
   ``,
-  `Responda APENAS com o JSON, sem texto ao redor, sem markdown. {} se nada relevante.`,
+  `Responda APENAS com o JSON, sem texto ao redor, sem markdown. {"intent":"outro"} se nada relevante.`,
 ].join('\n');
 
 const SCORE_SYSTEM = [
@@ -73,6 +82,13 @@ function parseFatosText(text) {
   return obj ? coerceFatos(obj) : {};
 }
 
+/** PURE: text → intent label (enum-validated) or null. */
+function parseIntentText(text) {
+  const obj = jsonFromText(text);
+  const intent = obj && typeof obj.intent === 'string' ? obj.intent.trim().toLowerCase() : null;
+  return intent && INTENTS.includes(intent) ? intent : null;
+}
+
 /** PURE: text → { quality_score (int 1-5 or null), theme_tags }. Garbage → empty. */
 function parseScoreText(text) {
   const obj = jsonFromText(text);
@@ -104,13 +120,13 @@ async function callFast(system, userContent, maxTokens) {
  * @returns {Promise<object>} ConversaFatos ({} on any failure)
  */
 async function extrairFatos(history) {
-  if (!Array.isArray(history) || history.length === 0) return {};
+  if (!Array.isArray(history) || history.length === 0) return { fatos: {}, intent: null };
   try {
     const text = await callFast(FATOS_SYSTEM, transcriptFromHistory(history), 300);
-    return parseFatosText(text);
+    return { fatos: parseFatosText(text), intent: parseIntentText(text) };
   } catch (e) {
     logger.warn('extrairFatos failed (non-fatal):', e.message);
-    return {};
+    return { fatos: {}, intent: null };
   }
 }
 
@@ -170,8 +186,10 @@ module.exports = {
   FATOS_SYSTEM,
   SCORE_SYSTEM,
   RESUMO_MIN,
+  INTENTS,
   transcriptFromHistory,
   parseFatosText,
+  parseIntentText,
   parseScoreText,
   extrairFatos,
   gerarResumo,

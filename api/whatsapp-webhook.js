@@ -61,9 +61,28 @@ async function handlePost(req, res) {
   }
 
   try {
+    // Number-health events (prospecting circuit breaker): quality-rating
+    // changes arrive as their own change field, before any message routing.
+    const change = req.body.entry?.[0]?.changes?.[0];
+    if (change?.field === 'phone_number_quality_update') {
+      const { applyQualityUpdate } = require('./_lib/prospecting/prospect-receipts');
+      await applyQualityUpdate(change.value)
+        .catch(err => logger.error('Quality update handling failed:', err.message));
+      return;
+    }
+
     // Process delivery status updates
     const value = req.body.entry?.[0]?.changes?.[0]?.value;
     if (value?.statuses) {
+      // Prospecting receipts: statuses for the DEDICATED number update
+      // prospect_messages (tick marks + variant funnel + failed-rate breaker).
+      const { isProspectingNumber: isProspectingStatus } = require('./_lib/prospecting/routing');
+      if (isProspectingStatus(value?.metadata?.phone_number_id)) {
+        const { applyStatusEvents } = require('./_lib/prospecting/prospect-receipts');
+        await applyStatusEvents(value)
+          .catch(err => logger.error('Prospect receipt update failed:', err.message));
+        if (!value.messages) return;
+      }
       for (const statusUpdate of value.statuses) {
         if (statusUpdate.id && ['sent', 'delivered', 'read', 'failed'].includes(statusUpdate.status)) {
           updateDeliveryStatus(statusUpdate.id, statusUpdate.status)

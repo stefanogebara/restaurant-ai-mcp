@@ -107,12 +107,18 @@ describe('dispatchIntros', () => {
     const claimIntro = jest.fn(async () => true);
     const markIntro = jest.fn(async () => ({ ok: true }));
     const storeMessage = jest.fn(async () => ({ stored: true }));
+    const patchLead = jest.fn(async () => ({ ok: true }));
+    jest.doMock('../_lib/cron-config', () => ({ isCronEnabled: async () => true }));
     jest.doMock('../_lib/prospecting/prospect-store', () => ({
       isOptedOut: async () => false,
       selectIntroCandidates: async () => [lead],
-      claimIntro, markIntro, storeMessage,
+      // Phase 8: empty template registry → sequencer falls back to the env
+      // intro template (compat path these tests pin).
+      listTemplates: async () => [],
+      selectDueTouches: async () => [],
+      claimIntro, markIntro, storeMessage, patchLead,
     }));
-    return { sendTemplateMessage, claimIntro, markIntro };
+    return { sendTemplateMessage, claimIntro, markIntro, patchLead };
   }
 
   afterEach(() => { jest.resetModules(); delete process.env.PROSPECTING_DRY_RUN; delete process.env.PROSPECTING_INTRO_TEMPLATE; });

@@ -62,8 +62,20 @@ module.exports = async (req, res) => {
         logger.error(`flush lead=${lead.id} failed:`, err.message);
       }
     }
-    await logCronRun('prospect-flush', { resumed, errors });
-    return res.status(200).json({ success: true, due: due.length, resumed, errors });
+    // Multi-touch follow-ups (F4): bump D+3 / breakup D+8 for never-repliers.
+    // Piggybacks this cron (already scheduled in business hours) — no new
+    // invocations. Gated internally by dry-run + both kill switches + the
+    // warm-up daily cap shared with intros.
+    let followups = null;
+    try {
+      const { dispatchFollowups } = require('../_lib/prospecting/sequencer');
+      followups = await dispatchFollowups({ limit: 10 });
+    } catch (err) {
+      logger.error('followups failed:', err.message);
+    }
+
+    await logCronRun('prospect-flush', { resumed, errors, followups_sent: followups ? followups.sent : 0 });
+    return res.status(200).json({ success: true, due: due.length, resumed, errors, followups });
   } catch (err) {
     logger.error('flush fatal:', err.message);
     await logCronRun('prospect-flush', { resumed, errors: errors + 1 });

@@ -37,6 +37,11 @@ module.exports = async (req, res) => {
   if (!(await isCronEnabled('prospect-nudge'))) {
     return res.status(200).json({ success: true, skipped: 'disabled_by_ops' });
   }
+  // Nudges are agent-initiated sends — the graduated dispatch breaker
+  // (number-health circuit) silences them along with cold dispatch.
+  if (!(await isCronEnabled('prospecting-dispatch'))) {
+    return res.status(200).json({ success: true, skipped: 'dispatch_breaker' });
+  }
   // Zero-cost until prospecting is provisioned and live.
   if (!getProspectingPhoneNumberId() || process.env.PROSPECTING_DRY_RUN !== 'false') {
     return res.status(200).json({ success: true, skipped: 'prospecting_not_live' });
