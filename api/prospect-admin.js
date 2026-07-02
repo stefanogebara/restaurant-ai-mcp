@@ -93,6 +93,35 @@ module.exports = async (req, res) => {
       });
     }
 
+    // ---- Overview ("what's going on") for the standalone ops console ----------
+    if (req.method === 'GET' && action === 'overview') {
+      const hoje = new Date(); hoje.setUTCHours(0, 0, 0, 0);
+      const hojeIso = hoje.toISOString();
+      const nowIso = new Date().toISOString();
+      const [agentCfg, outStats, inStats, meetings, outcomes] = await Promise.all([
+        getCronConfig(AGENT_JOB),
+        supabaseAdmin.from('prospect_messages').select('id', { count: 'exact', head: true })
+          .eq('direcao', 'out').gte('enviada_em', hojeIso),
+        supabaseAdmin.from('prospect_messages').select('id', { count: 'exact', head: true })
+          .eq('direcao', 'in').gte('enviada_em', hojeIso),
+        supabaseAdmin.from('prospect_leads').select('id, name, city, reuniao_at, reuniao_link')
+          .gt('reuniao_at', nowIso).order('reuniao_at', { ascending: true }).limit(10),
+        supabaseAdmin.rpc('prospect_outcomes_agg', { p_dias: 30 }),
+      ]);
+      return res.status(200).json({
+        success: true,
+        data: {
+          agent_enabled: agentCfg.enabled,
+          dry_run: !getProspectingPhoneNumberId() || process.env.PROSPECTING_DRY_RUN !== 'false',
+          daily_cap: parseInt(process.env.PROSPECTING_DAILY_CAP, 10) || 40,
+          sent_today: outStats.count ?? 0,
+          received_today: inStats.count ?? 0,
+          meetings: meetings.data || [],
+          outcomes: outcomes.data || null,
+        },
+      });
+    }
+
     if (req.method === 'GET' && action === 'lead') {
       const leadId = req.query.lead_id && String(req.query.lead_id);
       if (!leadId) return res.status(400).json({ success: false, error: 'lead_id required' });
