@@ -94,8 +94,9 @@ export interface Insights {
 }
 
 export const BUCKET_LABEL: Record<string, string> = {
-  pending: 'Aguardando', sent: 'Enviado', seen: 'Visto', replied: 'Respondeu',
-  scheduling: 'Agendando', booked: 'Agendado', handoff: 'Humano', optout: 'Opt-out', failed: 'Falhou',
+  pending: 'Na fila', sent: 'Recebeu mensagem', seen: 'Visualizou', replied: 'Respondeu',
+  scheduling: 'Marcando reunião', booked: 'Reunião marcada', handoff: 'Precisa de você',
+  optout: 'Pediu pra sair', failed: 'Não entregue',
 };
 
 export const BUCKET_CLASS: Record<string, string> = {

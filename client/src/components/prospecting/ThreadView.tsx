@@ -30,7 +30,8 @@ function Ticks({ m }: { m: ProspectMessage }) {
   }
   const cls = m.status === 'read' ? 'text-amber-500' : 'text-stone-400';
   const glyph = m.status === 'sent' ? '✓' : '✓✓';
-  return <span className={`text-[10px] ${cls}`} title={m.status_at ? fmtTime(m.status_at) : m.status}>{glyph}</span>;
+  const statusLabel = m.status === 'read' ? 'lida' : m.status === 'delivered' ? 'entregue' : 'enviada';
+  return <span className={`text-[10px] ${cls}`} title={`${statusLabel}${m.status_at ? ` · ${fmtTime(m.status_at)}` : ''}`}>{glyph}</span>;
 }
 
 function SysRow({ m }: { m: ProspectMessage }) {
@@ -164,17 +165,20 @@ export default function ThreadView({ leadId, nowMs }: { leadId: string; nowMs: n
               value={lead.last_intent ?? ''}
               onChange={(e) => act.mutate({ action: 'intent', body: { lead_id: lead.id, intent: e.target.value } })}
               className="text-[11px] rounded-full border border-stone-200 bg-white/70 px-1.5 py-0.5 text-stone-600"
-              title="Intenção (IA — corrija se errado)"
+              title="O que o lead quer, na leitura da IA — corrija se estiver errado"
             >
               <option value="" disabled>intenção…</option>
               {INTENTS.map((i) => <option key={i} value={i}>{INTENT_LABEL[i]}</option>)}
             </select>
             {lead.prospect_state === 'pausada' && (
-              <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-xs">agente pausado</span>
+              <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-xs" title="A Olímpia parou de responder este lead — só você responde por aqui">Olímpia pausada</span>
             )}
           </div>
-          <p className="text-xs text-stone-500 truncate">
-            {[lead.owner_name, lead.whatsapp_phone, lead.intro_variant ? `variante ${lead.intro_variant}` : null].filter(Boolean).join(' · ')}
+          <p
+            className="text-xs text-stone-500 truncate"
+            title={lead.intro_variant ? 'Abordagem A/B: duas primeiras mensagens competindo; a que gera mais resposta vence' : undefined}
+          >
+            {[lead.owner_name, lead.whatsapp_phone, lead.intro_variant ? `abordagem ${lead.intro_variant}` : null].filter(Boolean).join(' · ')}
             {lead.reuniao_at ? ` · reunião ${fmtTime(lead.reuniao_at)}` : ''}
           </p>
         </div>
@@ -183,7 +187,7 @@ export default function ThreadView({ leadId, nowMs }: { leadId: string; nowMs: n
             type="button"
             onClick={() => setSnoozeOpen(!snoozeOpen)}
             className="px-2.5 py-1 text-xs rounded-lg bg-stone-100 text-stone-700 hover:bg-stone-200"
-            title="Adiar (snooze)"
+            title="Adiar — esconder este lead da lista até a data escolhida"
           >
             ⏰
           </button>
@@ -213,9 +217,9 @@ export default function ThreadView({ leadId, nowMs }: { leadId: string; nowMs: n
               )}
             </div>
           )}
-          <button type="button" disabled={act.isPending} onClick={() => act.mutate({ action: 'pause', body: { lead_id: lead.id } })} className="px-2.5 py-1 text-xs rounded-lg bg-amber-100 text-amber-800 hover:bg-amber-200 disabled:opacity-50">Pausar</button>
-          <button type="button" disabled={act.isPending} onClick={() => act.mutate({ action: 'reactivate', body: { lead_id: lead.id } })} className="px-2.5 py-1 text-xs rounded-lg bg-stone-100 text-stone-700 hover:bg-stone-200 disabled:opacity-50">Reativar</button>
-          <button type="button" disabled={act.isPending} onClick={() => act.mutate({ action: 'optout', body: { lead_id: lead.id, reason: 'pediu' } })} className="px-2.5 py-1 text-xs rounded-lg bg-rose-100 text-rose-800 hover:bg-rose-200 disabled:opacity-50">Opt-out</button>
+          <button type="button" disabled={act.isPending} onClick={() => act.mutate({ action: 'pause', body: { lead_id: lead.id } })} className="px-2.5 py-1 text-xs rounded-lg bg-amber-100 text-amber-800 hover:bg-amber-200 disabled:opacity-50" title="A Olímpia para de responder este lead até você reativar">Pausar</button>
+          <button type="button" disabled={act.isPending} onClick={() => act.mutate({ action: 'reactivate', body: { lead_id: lead.id } })} className="px-2.5 py-1 text-xs rounded-lg bg-stone-100 text-stone-700 hover:bg-stone-200 disabled:opacity-50" title="A Olímpia volta a responder este lead automaticamente">Reativar</button>
+          <button type="button" disabled={act.isPending} onClick={() => act.mutate({ action: 'optout', body: { lead_id: lead.id, reason: 'pediu' } })} className="px-2.5 py-1 text-xs rounded-lg bg-rose-100 text-rose-800 hover:bg-rose-200 disabled:opacity-50" title="Marca que o lead pediu para não receber mais mensagens (LGPD) — nada mais será enviado a ele">Pediu pra sair</button>
         </div>
       </div>
 
@@ -256,10 +260,14 @@ export default function ThreadView({ leadId, nowMs }: { leadId: string; nowMs: n
             Nota privada
           </button>
           {!notaMode && winOpen && winRem! < 6 * 60 * 60 * 1000 && (
-            <span className="text-amber-700">janela de 24h fecha em {fmtCountdown(winRem!)}</span>
+            <span className="text-amber-700" title="O WhatsApp só permite texto livre até 24h após a última mensagem do lead; depois, só modelo aprovado (Meta) chega">
+              janela de 24h fecha em {fmtCountdown(winRem!)}
+            </span>
           )}
           {!notaMode && !winOpen && (
-            <span className="text-rose-700">fora da janela de 24h — só template aprovado chega</span>
+            <span className="text-rose-700">
+              fora da janela de 24h — o WhatsApp só permite texto livre até 24h após a última mensagem do lead; agora só um modelo aprovado (Meta) chega
+            </span>
           )}
         </div>
 
@@ -294,14 +302,17 @@ export default function ThreadView({ leadId, nowMs }: { leadId: string; nowMs: n
             disabled={send.isPending || !draft.trim() || (!notaMode && !detail.can_free_text)}
             onClick={() => send.mutate()}
             className={`px-4 rounded-xl text-white text-sm font-medium hover:opacity-90 disabled:opacity-50 self-stretch ${notaMode ? 'bg-amber-500' : 'bg-burgundy'}`}
+            title={notaMode
+              ? 'Salva a nota interna — nunca vai pro WhatsApp'
+              : 'Envia como você e assume a conversa — a Olímpia para de responder este lead (a menos que marque a opção abaixo)'}
           >
             {send.isPending ? '…' : notaMode ? 'Salvar' : 'Enviar'}
           </button>
         </div>
         {!notaMode && (
-          <label className="flex items-center gap-1.5 text-xs text-stone-500">
+          <label className="flex items-center gap-1.5 text-xs text-stone-500" title="Desmarcado: ao enviar, a Olímpia para de responder este lead e ele fica com você">
             <input type="checkbox" checked={keepActive} onChange={(e) => setKeepActive(e.target.checked)} />
-            manter a Olímpia ativa neste lead depois do meu envio
+            manter a Olímpia respondendo este lead depois do meu envio (desmarcado: ela para e o lead fica com você)
           </label>
         )}
       </div>

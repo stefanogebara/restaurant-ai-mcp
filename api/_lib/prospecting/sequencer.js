@@ -29,13 +29,15 @@ const { getProspectingPhoneNumberId } = require('./routing');
 const { consumeSendSlot } = require('./prospect-warmup');
 const {
   isOptedOut, selectIntroCandidates, claimIntro, markIntro, storeMessage,
-  listTemplates, patchLead, selectDueTouches,
+  listTemplates, patchLead, selectDueTouches, selectDueReengages, loadLastMessage,
 } = require('./prospect-store');
 
 const logger = createSecureLogger('ProspectSequencer');
 
 const TOUCH2_DELAY_MS = 3 * 24 * 60 * 60 * 1000;  // intro → bump: D+3
 const TOUCH3_DELAY_MS = 5 * 24 * 60 * 60 * 1000;  // bump → breakup: D+8 total
+const REENGAGE_SILENCE_MS = 3 * 24 * 60 * 60 * 1000; // replied lead silent D+3 → template re-engage
+const REENGAGE_TOUCH = 4;                             // prospect_templates slot for 'resgate'
 
 function isDryRun() {
   if (!getProspectingPhoneNumberId()) return true;
@@ -216,4 +218,81 @@ async function dispatchFollowups({ limit = 10, nowMs = Date.now() } = {}) {
   return summary;
 }
 
-module.exports = { dispatchIntros, dispatchFollowups, isDryRun, TOUCH2_DELAY_MS, TOUCH3_DELAY_MS };
+/**
+ * Re-engage leads that replied once but went silent past the 24h window.
+ *
+ * The free-text nudge (23h) is the last thing we can say inside the window;
+ * after it closes, ONLY an approved template is deliverable. This sends the
+ * 'resgate' template (registry slot touch_number=4) at D+3 of silence, ONCE
+ * per silence period: eligibility requires the last logged message to be an
+ * outbound NON-template (we spoke last, and this silence hasn't been touched);
+ * the template we store immediately flips that check off until the lead
+ * speaks again. A short conditional snooze doubles as the anti-race claim.
+ */
+async function dispatchReengages({ limit = 5, nowMs = Date.now() } = {}) {
+  const summary = { candidates: 0, sent: 0, blocked: 0, skipped: 0, failed: 0, capHit: false };
+  if (isDryRun()) return { ...summary, dryRun: true };
+  if (!(await outboundEnabled())) return { ...summary, agentDisabled: true };
+
+  const tpl = await pickTemplate(REENGAGE_TOUCH);
+  if (!tpl) return { ...summary, noTemplate: true };
+
+  const nowIso = new Date(nowMs).toISOString();
+  const candidates = await selectDueReengages(nowIso, REENGAGE_SILENCE_MS, limit);
+  summary.candidates = candidates.length;
+
+  const { supabaseAdmin } = require('../supabase');
+  for (const lead of candidates) {
+    if (summary.sent >= limit) break;
+    try {
+      if (await isOptedOut(lead.whatsapp_phone)) { summary.skipped++; continue; }
+
+      // One re-engage per silence period: if the last message is already a
+      // template (or the lead spoke last — responder owns that case), skip.
+      const last = await loadLastMessage(lead.id);
+      if (!last || last.direcao !== 'out' || last.tipo === 'template') { summary.skipped++; continue; }
+
+      // Anti-race claim: a 10-min conditional snooze. Semantics match ("agent
+      // holds off on this lead"), it self-expires, and a concurrent run loses
+      // the .or() condition. Selector already excludes future-snoozed leads.
+      const claimUntil = new Date(nowMs + 10 * 60 * 1000).toISOString();
+      const { data: claimed } = await supabaseAdmin.from('prospect_leads')
+        .update({ snoozed_until: claimUntil })
+        .eq('id', lead.id)
+        .eq('prospect_state', 'conversando')
+        .or(`snoozed_until.is.null,snoozed_until.lt.${nowIso}`)
+        .select('id');
+      if (!Array.isArray(claimed) || claimed.length === 0) { summary.skipped++; continue; }
+
+      const slot = await consumeSendSlot();
+      if (!slot.allowed) { summary.blocked++; summary.capHit = true; break; }
+
+      const res = await sendTemplateMessage(
+        lead.whatsapp_phone, tpl.meta_template_name, tpl.template_lang, [lead.name || ''],
+        { phoneNumberId: getProspectingPhoneNumberId() },
+      );
+      if (res.success) {
+        await storeMessage({
+          leadId: lead.id, direcao: 'out', wamid: res.messageId || null,
+          tipo: 'template', corpo: `[template:${tpl.meta_template_name}]`,
+        });
+        summary.sent++;
+        logger.info(`re-engage sent lead=${lead.id} variant=${tpl.variant_label}`);
+      } else {
+        summary.failed++;
+        logger.error(`re-engage send failed lead=${lead.id}: ${res.error}`);
+      }
+    } catch (err) {
+      summary.failed++;
+      logger.error(`re-engage exception lead=${lead.id}: ${err.message}`);
+    }
+  }
+
+  logger.info('dispatchReengages done', summary);
+  return summary;
+}
+
+module.exports = {
+  dispatchIntros, dispatchFollowups, dispatchReengages, isDryRun,
+  TOUCH2_DELAY_MS, TOUCH3_DELAY_MS, REENGAGE_SILENCE_MS, REENGAGE_TOUCH,
+};

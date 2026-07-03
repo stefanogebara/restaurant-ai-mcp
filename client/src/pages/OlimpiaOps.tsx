@@ -5,6 +5,7 @@ import { api } from '../services/api';
 import { GlassCard, GlassPanel } from '../components/common/glass';
 import { useToast } from '../contexts/ToastContext';
 import DiscoveryPanel from '../components/prospecting/DiscoveryPanel';
+import WaIdentityPanel from '../components/prospecting/WaIdentityPanel';
 import VariantsPanel from '../components/prospecting/VariantsPanel';
 import InsightsPanel from '../components/prospecting/InsightsPanel';
 import GymPanel from '../components/prospecting/GymPanel';
@@ -111,7 +112,14 @@ export default function OlimpiaOps() {
         <div className="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <h1 className="font-serif text-lg">Olímpia <span className="text-stone-400">·</span> Ops</h1>
-            {dryRun && <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-xs font-medium">DRY-RUN</span>}
+            {dryRun && (
+              <span
+                className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-xs font-medium"
+                title="Modo de teste: a Olímpia simula tudo, mas nenhuma mensagem real é enviada"
+              >
+                MODO TESTE — nada é enviado
+              </span>
+            )}
             {ov && <HealthInline ov={ov} />}
           </div>
           <div className="flex items-center gap-2">
@@ -145,18 +153,23 @@ export default function OlimpiaOps() {
         {ov && <DispatchPausedBanner ov={ov} />}
 
         <GlassPanel className="p-2 flex flex-wrap divide-x divide-stone-200/60">
-          <Stat label="Enviadas hoje" value={ov ? ov.sent_today : '—'} />
-          <Stat label="Limite diário" value={ov ? ov.daily_cap : '—'} tone={ov && ov.sent_today >= ov.daily_cap ? 'warn' : undefined} />
+          <Stat label="Mensagens enviadas hoje" value={ov ? ov.sent_today : '—'} />
           <Stat
-            label="Recebidas hoje"
+            label="Limite de hoje"
+            value={ov ? ov.daily_cap : '—'}
+            tone={ov && ov.sent_today >= ov.daily_cap ? 'warn' : undefined}
+            caption="cresce aos poucos pra proteger o número"
+          />
+          <Stat
+            label="Respostas hoje"
             value={ov ? ov.received_today : '—'}
             tone={ov && ov.received_today > 0 ? 'good' : undefined}
             caption={ov ? replyCaption(ov.sent_today, ov.received_today) : undefined}
           />
-          <Stat label="Follow-ups na fila" value={ov ? ov.due_followups : '—'} />
+          <Stat label="Lembretes na fila" value={ov ? ov.due_followups : '—'} caption="leads que não responderam ainda" />
           <Stat label="Reuniões marcadas" value={ov ? ov.meetings.length : '—'} tone={ov && ov.meetings.length > 0 ? 'good' : undefined} />
-          <Stat label="Conversas 30d" value={ov?.outcomes?.total ?? 0} />
-          <Stat label="Qualidade média" value={ov?.outcomes?.media_qualidade ?? '—'} />
+          <Stat label="Conversas (30 dias)" value={ov?.outcomes?.total ?? 0} />
+          <Stat label="Nota das conversas" value={ov?.outcomes?.media_qualidade ?? '—'} caption="0 a 5, avaliada por IA" />
         </GlassPanel>
 
         {ov && ov.meetings.length > 0 && (
@@ -188,6 +201,7 @@ export default function OlimpiaOps() {
         )}
 
         <DiscoveryPanel />
+        <WaIdentityPanel />
         <VariantsPanel />
         <InsightsPanel />
         <GymPanel />

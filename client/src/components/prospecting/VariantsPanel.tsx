@@ -13,9 +13,9 @@ import type { TemplateRow, VariantFunnelRow } from './types';
  */
 
 const TOUCH_LABEL: Record<number, string> = {
-  1: 'Toque 1 — introdução',
-  2: 'Toque 2 — retomada (D+3)',
-  3: 'Toque 3 — despedida (D+8)',
+  1: 'Toque 1 — primeira mensagem',
+  2: 'Toque 2 — lembrete (3 dias depois)',
+  3: 'Toque 3 — despedida (8 dias depois)',
 };
 
 function pct(n: number, of: number): string {
@@ -61,7 +61,7 @@ export default function VariantsPanel() {
       <button type="button" onClick={() => setOpen(!open)} className="w-full flex items-center justify-between text-left" aria-expanded={open}>
         <div>
           <h2 className="font-medium">Abordagens (A/B)</h2>
-          <p className="text-xs text-stone-500">Variantes de template aprovadas na Meta + funil por variante e toques de follow-up</p>
+          <p className="text-xs text-stone-500">Teste A/B: duas primeiras mensagens competindo — a que gera mais resposta vence. Cada abordagem usa um modelo aprovado (Meta) e pode ter lembretes (toques 2 e 3).</p>
         </div>
         <span className={`text-stone-400 transition-transform ${open ? 'rotate-180' : ''}`}>▾</span>
       </button>
@@ -80,14 +80,14 @@ export default function VariantsPanel() {
                     onClick={() => setEditing({ touch_number: touch, variant_label: '', meta_template_name: '', body_preview: '', active: true })}
                     className="text-xs text-burgundy underline"
                   >
-                    + registrar template
+                    + registrar modelo
                   </button>
                 </div>
                 {rows.length === 0 && (
                   <p className="text-xs text-stone-400">
                     {touch === 1
-                      ? 'Nenhuma registrada — o disparo usa o template do ambiente (olimpia_intro).'
-                      : 'Nenhum template registrado — este toque fica em espera até registrar um aprovado.'}
+                      ? 'Nenhuma abordagem registrada — o disparo (envio em massa da primeira mensagem) usa o modelo padrão do sistema (olimpia_intro).'
+                      : 'Nenhum modelo registrado — este lembrete fica em espera até você registrar um modelo aprovado pela Meta.'}
                   </p>
                 )}
                 <div className="space-y-1.5">
@@ -120,11 +120,11 @@ export default function VariantsPanel() {
           {editing && (
             <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-3 space-y-2">
               <p className="text-xs text-amber-800">
-                O template precisa estar APROVADO no WhatsApp Manager antes de registrar aqui — toques frios saem fora da janela de 24h.
+                O modelo precisa estar APROVADO pela Meta (no WhatsApp Manager) antes de ser registrado aqui. Motivo: o WhatsApp só permite texto livre até 24h após a última mensagem do lead — fora dessa janela de 24h, só sai modelo aprovado.
               </p>
               <div className="grid sm:grid-cols-3 gap-2">
                 <label className="text-xs text-stone-500">
-                  Variante (A, B, C…)
+                  Abordagem (A, B, C…)
                   <input
                     value={editing.variant_label ?? ''}
                     onChange={(e) => setEditing({ ...editing, variant_label: e.target.value.toUpperCase().slice(0, 2) })}
@@ -132,7 +132,7 @@ export default function VariantsPanel() {
                   />
                 </label>
                 <label className="text-xs text-stone-500 sm:col-span-2">
-                  Nome do template na Meta
+                  Nome do modelo na Meta (exatamente como aprovado)
                   <input
                     value={editing.meta_template_name ?? ''}
                     onChange={(e) => setEditing({ ...editing, meta_template_name: e.target.value.trim() })}
@@ -142,7 +142,7 @@ export default function VariantsPanel() {
                 </label>
               </div>
               <label className="text-xs text-stone-500 block">
-                Prévia do corpo (para o console)
+                Prévia da mensagem (só para exibir aqui no painel)
                 <textarea
                   value={editing.body_preview ?? ''}
                   onChange={(e) => setEditing({ ...editing, body_preview: e.target.value })}
@@ -172,33 +172,34 @@ export default function VariantsPanel() {
           {/* Per-variant funnel */}
           {funnel.length > 0 && (
             <div>
-              <h3 className="font-serif text-sm text-stone-700 mb-1.5">Funil por variante</h3>
+              <h3 className="font-serif text-sm text-stone-700 mb-1.5">Funil por abordagem</h3>
+              <p className="text-xs text-stone-500">Compare as abordagens lado a lado — a que gera mais resposta vence (linha destacada em verde). Passe o mouse nos percentuais para ver os números.</p>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="text-[11px] uppercase tracking-wide text-stone-400 text-left">
-                      <th className="py-1 pr-3">Variante</th>
-                      <th className="py-1 pr-3">Enviado</th>
-                      <th className="py-1 pr-3">Entregue</th>
-                      <th className="py-1 pr-3">Lido</th>
-                      <th className="py-1 pr-3">Respondeu</th>
+                      <th className="py-1 pr-3">Abordagem</th>
+                      <th className="py-1 pr-3">Enviadas</th>
+                      <th className="py-1 pr-3">Entregues</th>
+                      <th className="py-1 pr-3">Lidas</th>
+                      <th className="py-1 pr-3">Responderam</th>
                       <th className="py-1 pr-3">Reunião</th>
-                      <th className="py-1 pr-3">Opt-out</th>
-                      <th className="py-1">Qualidade</th>
+                      <th className="py-1 pr-3" title="Leads que pediram pra sair da lista (LGPD)">Pediram pra sair</th>
+                      <th className="py-1" title="Nota média de qualidade das conversas desta abordagem">Qualidade</th>
                     </tr>
                   </thead>
                   <tbody>
                     {funnel.map((f) => {
                       const isBest = f.sent > 0 && f.replied / f.sent === bestReplied && bestReplied > 0;
                       return (
-                        <tr key={f.variant} className={isBest ? 'ring-1 ring-emerald-300 rounded-lg' : ''}>
+                        <tr key={f.variant} className={isBest ? 'ring-1 ring-emerald-300 rounded-lg' : ''} title={isBest ? 'Melhor abordagem até agora — maior taxa de resposta' : undefined}>
                           <td className="py-1.5 pr-3 font-mono font-medium">{f.variant}</td>
-                          <td className="py-1.5 pr-3">{f.sent}</td>
-                          <td className="py-1.5 pr-3" title={String(f.delivered)}>{pct(f.delivered, f.sent)}</td>
-                          <td className="py-1.5 pr-3" title={String(f.read)}>{pct(f.read, f.sent)}</td>
-                          <td className="py-1.5 pr-3 font-medium" title={String(f.replied)}>{pct(f.replied, f.sent)}</td>
-                          <td className="py-1.5 pr-3" title={String(f.booked)}>{pct(f.booked, f.sent)}</td>
-                          <td className="py-1.5 pr-3" title={String(f.optout)}>{pct(f.optout, f.sent)}</td>
+                          <td className="py-1.5 pr-3" title={`${f.sent} mensagens enviadas`}>{f.sent}</td>
+                          <td className="py-1.5 pr-3" title={`${f.delivered} de ${f.sent} entregues`}>{pct(f.delivered, f.sent)}</td>
+                          <td className="py-1.5 pr-3" title={`${f.read} de ${f.sent} lidas`}>{pct(f.read, f.sent)}</td>
+                          <td className="py-1.5 pr-3 font-medium" title={`${f.replied} de ${f.sent} responderam`}>{pct(f.replied, f.sent)}</td>
+                          <td className="py-1.5 pr-3" title={`${f.booked} de ${f.sent} marcaram reunião`}>{pct(f.booked, f.sent)}</td>
+                          <td className="py-1.5 pr-3" title={`${f.optout} de ${f.sent} pediram pra sair`}>{pct(f.optout, f.sent)}</td>
                           <td className="py-1.5">{f.avg_quality ?? '—'}</td>
                         </tr>
                       );

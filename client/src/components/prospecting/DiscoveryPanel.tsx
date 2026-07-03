@@ -75,10 +75,10 @@ export default function DiscoveryPanel() {
       })).data.data,
     onSuccess: (data) => {
       setLastDiscover(data);
-      toast.success(`${data.found} encontrados · ${data.sendable} com WhatsApp · ${data.inserted} novos`);
+      toast.success(`${data.found} restaurantes encontrados · ${data.sendable} com WhatsApp válido · ${data.inserted} novos na lista`);
       qc.invalidateQueries({ queryKey: ['prospect-admin'] });
     },
-    onError: () => toast.error('Busca falhou — confira cidade/UF'),
+    onError: () => toast.error('Busca falhou — confira a cidade e o estado'),
   });
 
   const createJob = useMutation({
@@ -89,7 +89,7 @@ export default function DiscoveryPanel() {
       })).data.data,
     onSuccess: (data) => {
       setActiveJob(data.jobId);
-      toast.success(`Varredura iniciada: ${data.totalQueries} consultas (~US$ ${data.estCostUsd})`);
+      toast.success(`Varredura iniciada: ${data.totalQueries} buscas no Google Maps (~US$ ${data.estCostUsd}) — roda sozinha em segundo plano`);
     },
     onError: () => toast.error('Não foi possível iniciar a varredura'),
   });
@@ -105,11 +105,11 @@ export default function DiscoveryPanel() {
     onSuccess: (data) => {
       setLastDispatch(data);
       setConfirmDispatch(false);
-      if (data.dryRun) toast.info(`Dry-run: ${data.candidates} candidatos (nada enviado)`);
-      else toast.success(`${data.sent} intros enviadas${data.capHit ? ' — limite diário atingido' : ''}`);
+      if (data.dryRun) toast.info(`Modo teste — nada é enviado: ${data.candidates} leads entrariam no disparo`);
+      else toast.success(`${data.sent} primeiras mensagens enviadas${data.capHit ? ' — limite diário de envios atingido' : ''}`);
       qc.invalidateQueries({ queryKey: ['prospect-admin'] });
     },
-    onError: () => { setConfirmDispatch(false); toast.error('Disparo falhou'); },
+    onError: () => { setConfirmDispatch(false); toast.error('Disparo falhou — nenhuma mensagem foi enviada'); },
   });
 
   const estQueries = mode === 'estado' ? maxQueries : mode === 'cidade' ? Math.min(maxQueries, 100) : 1;
@@ -120,7 +120,7 @@ export default function DiscoveryPanel() {
       <button type="button" onClick={() => setOpen(!open)} className="w-full flex items-center justify-between text-left" aria-expanded={open}>
         <div>
           <h2 className="font-medium">Descobrir & Disparar</h2>
-          <p className="text-xs text-stone-500">Varrer bairros, cidades inteiras ou estados no Google Maps — só entra lead com WhatsApp</p>
+          <p className="text-xs text-stone-500">Buscar restaurantes no Google Maps (bairro, cidade ou estado) — só entra na lista quem tem WhatsApp válido; sem WhatsApp o lead é descartado</p>
         </div>
         <span className={`text-stone-400 transition-transform ${open ? 'rotate-180' : ''}`}>▾</span>
       </button>
@@ -130,14 +130,15 @@ export default function DiscoveryPanel() {
           {/* Territory mode */}
           <div className="flex gap-1.5">
             {([
-              { m: 'bairro' as Mode, label: 'Bairro' },
-              { m: 'cidade' as Mode, label: 'Cidade inteira' },
-              { m: 'estado' as Mode, label: 'Estado inteiro' },
-            ]).map(({ m, label }) => (
+              { m: 'bairro' as Mode, label: 'Bairro', hint: 'Busca rápida: até 60 restaurantes de um bairro, resultado na hora' },
+              { m: 'cidade' as Mode, label: 'Cidade inteira', hint: 'Varre bairro por bairro da cidade — roda sozinha em segundo plano' },
+              { m: 'estado' as Mode, label: 'Estado inteiro', hint: 'Varre todas as cidades do estado — roda sozinha em segundo plano' },
+            ]).map(({ m, label, hint }) => (
               <button
                 key={m}
                 type="button"
                 onClick={() => setMode(m)}
+                title={hint}
                 className={`px-3 py-1 rounded-full text-xs font-medium ${mode === m ? 'bg-burgundy text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}
               >
                 {label}
@@ -191,8 +192,8 @@ export default function DiscoveryPanel() {
               </label>
             )}
             {mode !== 'bairro' && (
-              <label className="text-xs text-stone-500">
-                Máx. de consultas
+              <label className="text-xs text-stone-500" title="Cada busca no Google Maps custa ~US$ 0,03. Este número é o teto de gasto da varredura.">
+                Máx. de buscas no Google
                 <input
                   type="number" min={10} max={2000}
                   value={maxQueries}
@@ -208,7 +209,7 @@ export default function DiscoveryPanel() {
                 onClick={() => discover.mutate()}
                 className="px-4 py-2 rounded-xl bg-burgundy text-white text-sm font-medium hover:opacity-90 disabled:opacity-50"
               >
-                {discover.isPending ? 'Buscando…' : 'Buscar (até 60)'}
+                {discover.isPending ? 'Buscando…' : 'Buscar (até 60 restaurantes)'}
               </button>
             ) : (
               <button
@@ -216,7 +217,7 @@ export default function DiscoveryPanel() {
                 disabled={createJob.isPending || (mode === 'cidade' && !city.trim()) || !uf || (job?.status === 'running')}
                 onClick={() => createJob.mutate()}
                 className="px-4 py-2 rounded-xl bg-burgundy text-white text-sm font-medium hover:opacity-90 disabled:opacity-50"
-                title={`~${estQueries} consultas · ~US$ ${estCost}`}
+                title={`Faz ~${estQueries} buscas no Google Maps (~US$ ${estCost}). Roda sozinha em segundo plano — você pode fechar esta tela.`}
               >
                 {createJob.isPending ? 'Preparando…' : `Iniciar varredura (~US$ ${estCost})`}
               </button>
@@ -225,7 +226,7 @@ export default function DiscoveryPanel() {
 
           <label className="flex items-center gap-1.5 text-xs text-stone-600">
             <input type="checkbox" checked={onlySendable} onChange={(e) => setOnlySendable(e.target.checked)} />
-            só guardar leads <span className="font-medium">com WhatsApp (celular)</span> — sem número não tem conversa
+            só guardar leads <span className="font-medium">com WhatsApp válido (celular)</span> — sem WhatsApp o lead é descartado, porque não teria como receber mensagem
           </label>
 
           {/* Job progress */}
@@ -233,8 +234,8 @@ export default function DiscoveryPanel() {
             <div className={`rounded-xl border px-3 py-2 ${job.status === 'running' ? 'border-sky-200 bg-sky-50/60' : job.status === 'done' ? 'border-emerald-200 bg-emerald-50/60' : 'border-stone-200 bg-stone-50'}`}>
               <div className="flex items-center justify-between gap-2">
                 <p className="text-xs font-medium text-stone-700">
-                  {job.status === 'running' ? '🔎 Varredura em andamento' : job.status === 'done' ? '✅ Varredura concluída' : job.status === 'error' ? `⚠ Erro: ${job.error_detail}` : '⏹ Cancelada'}
-                  <span className="text-stone-500 font-normal"> · consulta {job.cursor}/{job.total_queries}</span>
+                  {job.status === 'running' ? '🔎 Varredura em andamento — roda sozinha, pode fechar esta tela' : job.status === 'done' ? '✅ Varredura concluída' : job.status === 'error' ? `⚠ Erro: ${job.error_detail}` : '⏹ Cancelada'}
+                  <span className="text-stone-500 font-normal"> · busca {job.cursor} de {job.total_queries}</span>
                 </p>
                 {job.status === 'running' && (
                   <button type="button" onClick={() => cancelJob.mutate()} className="text-xs text-rose-700 underline">cancelar</button>
@@ -247,14 +248,14 @@ export default function DiscoveryPanel() {
                 />
               </div>
               <p className="text-xs text-stone-600 mt-1">
-                {job.found} encontrados · <span className="font-medium text-emerald-700">{job.sendable} com WhatsApp</span> · {job.inserted} novos no pool · {job.discarded} descartados (sem celular)
+                {job.found} restaurantes encontrados · <span className="font-medium text-emerald-700">{job.sendable} com WhatsApp válido</span> · {job.inserted} novos na lista · {job.discarded} descartados (sem WhatsApp)
               </p>
             </div>
           )}
 
           {lastDiscover && !job && (
             <p className="text-xs text-stone-500">
-              Última busca: {lastDiscover.found} encontrados · <span className="text-emerald-700 font-medium">{lastDiscover.sendable} com WhatsApp</span> · {lastDiscover.inserted} novos · {lastDiscover.discarded} descartados
+              Última busca: {lastDiscover.found} restaurantes encontrados · <span className="text-emerald-700 font-medium">{lastDiscover.sendable} com WhatsApp válido</span> · {lastDiscover.inserted} novos na lista · {lastDiscover.discarded} descartados (sem WhatsApp)
             </p>
           )}
 
@@ -269,20 +270,21 @@ export default function DiscoveryPanel() {
                 className="mt-1 w-20 rounded-xl border border-stone-200 px-3 py-2 text-sm bg-white/70"
               />
             </label>
-            <span className="text-xs text-stone-400 pb-2.5">intros (respeita o limite diário de aquecimento e opt-outs)</span>
+            <span className="text-xs text-stone-400 pb-2.5">primeiras mensagens — o disparo é o envio em massa da primeira mensagem para os leads da lista; respeita o limite diário do número e quem pediu pra sair</span>
             {!confirmDispatch ? (
               <button
                 type="button"
                 onClick={() => setConfirmDispatch(true)}
+                title="Envia a primeira mensagem (modelo aprovado pela Meta) para leads da lista que ainda não foram contatados"
                 className="ml-auto px-4 py-2 rounded-xl bg-emerald-600 text-white text-sm font-medium hover:opacity-90"
               >
-                Disparar intros
+                Disparar primeiras mensagens
               </button>
             ) : (
               <span className="ml-auto flex items-center gap-2">
                 <span className="text-xs text-stone-600">
                   Enviar mensagens REAIS para até {dispatchLimit} restaurantes?
-                  <span className="text-stone-400"> (~R$ {(dispatchLimit * 0.31).toFixed(2).replace('.', ',')} em conversas de marketing)</span>
+                  <span className="text-stone-400"> (custo estimado de WhatsApp: ~R$ {(dispatchLimit * 0.31).toFixed(2).replace('.', ',')})</span>
                 </span>
                 <button
                   type="button"
@@ -305,8 +307,8 @@ export default function DiscoveryPanel() {
 
           {lastDispatch && (
             <p className="text-xs text-stone-500">
-              Último disparo: {lastDispatch.sent} enviadas · {lastDispatch.skipped} puladas · {lastDispatch.failed} falhas
-              {lastDispatch.capHit ? ' · limite diário atingido' : ''}{lastDispatch.dryRun ? ' · DRY-RUN' : ''}
+              Último disparo: {lastDispatch.sent} mensagens enviadas · {lastDispatch.skipped} leads pulados · {lastDispatch.failed} falharam
+              {lastDispatch.capHit ? ' · limite diário de envios atingido' : ''}{lastDispatch.dryRun ? ' · modo teste — nada foi enviado' : ''}
             </p>
           )}
         </div>

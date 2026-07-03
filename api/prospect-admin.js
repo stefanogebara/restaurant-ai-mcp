@@ -154,6 +154,67 @@ module.exports = async (req, res) => {
       });
     }
 
+    // ---- WhatsApp identity & template lifecycle (management plane) ------------
+    if (req.method === 'GET' && action === 'wa-identity') {
+      const phoneNumberId = getProspectingPhoneNumberId();
+      if (!phoneNumberId) return res.status(422).json({ success: false, error: 'Prospecting number not configured' });
+      const { getNumberIdentity, listMetaTemplates } = require('./_lib/prospecting/wa-management');
+      const [identity, metaTemplates, registry] = await Promise.all([
+        getNumberIdentity(phoneNumberId),
+        listMetaTemplates().catch((err) => { logger.error('listMetaTemplates:', err.message); return []; }),
+        listTemplates(),
+      ]);
+      return res.status(200).json({ success: true, data: { identity, meta_templates: metaTemplates, registry } });
+    }
+
+    if (req.method === 'POST' && action === 'template-create') {
+      const body = req.body || {};
+      const { createMetaTemplate } = require('./_lib/prospecting/wa-management');
+      const created = await createMetaTemplate({
+        name: body.name, language: body.language || 'pt_BR',
+        category: body.category || 'MARKETING',
+        bodyText: body.body_text, exampleParam: body.example_param,
+        buttonText: body.button_text, buttonUrl: body.button_url,
+      });
+      if (!created.ok) return res.status(400).json({ success: false, error: created.error });
+      // Register in the touch registry (inactive until Meta approves + operator activates).
+      if (body.touch_number) {
+        await upsertTemplate({
+          touch_number: parseInt(body.touch_number, 10),
+          variant_label: String(body.variant_label || 'A'),
+          meta_template_name: created.name,
+          template_lang: body.language || 'pt_BR',
+          active: false,
+        });
+      }
+      logger.info(`prospect-admin template-create name=${created.name} by=${email}`);
+      return res.status(200).json({ success: true, data: created });
+    }
+
+    if (req.method === 'POST' && action === 'wa-profile') {
+      const body = req.body || {};
+      const phoneNumberId = getProspectingPhoneNumberId();
+      if (!phoneNumberId) return res.status(422).json({ success: false, error: 'Prospecting number not configured' });
+      const { setProfilePicture, updateBusinessProfile } = require('./_lib/prospecting/wa-management');
+      const results = {};
+      if (body.image_url) {
+        const pic = await setProfilePicture(phoneNumberId, String(body.image_url));
+        if (!pic.ok) return res.status(400).json({ success: false, error: `Foto: ${pic.error}` });
+        results.picture = true;
+      }
+      if (body.about != null || body.description != null || body.website || body.email != null) {
+        const upd = await updateBusinessProfile(phoneNumberId, {
+          about: body.about, description: body.description, email: body.email,
+          websites: body.website ? [String(body.website)] : undefined,
+        });
+        if (!upd.ok) return res.status(400).json({ success: false, error: `Perfil: ${upd.error}` });
+        results.profile = true;
+      }
+      if (!Object.keys(results).length) return res.status(400).json({ success: false, error: 'nothing to update' });
+      logger.info(`prospect-admin wa-profile updated ${Object.keys(results).join('+')} by=${email}`);
+      return res.status(200).json({ success: true, data: results });
+    }
+
     if (req.method === 'POST' && action === 'template-upsert') {
       const result = await upsertTemplate(req.body || {});
       if (!result.ok) return res.status(400).json({ success: false, error: result.error });

@@ -539,6 +539,51 @@ async function selectDueTouches(nowIso, limit = 10) {
   }
 }
 
+/**
+ * Re-engagement candidates: leads that DID reply at some point but went silent
+ * long enough for the 24h service window to close (default D+3 of silence),
+ * still in an active conversation (not booked/paused/optout/snoozed).
+ *
+ * "Already re-engaged this silence" is enforced by the caller via the message
+ * log (last outbound being a template = this silence was already touched) —
+ * no schema change needed, and a new inbound naturally re-arms the cycle.
+ */
+async function selectDueReengages(nowIso, silenceMs, limit = 5) {
+  try {
+    const cutoff = new Date(new Date(nowIso).getTime() - silenceMs).toISOString();
+    const { data, error } = await supabaseAdmin
+      .from('prospect_leads')
+      .select('*')
+      .not('last_in_at', 'is', null)
+      .lte('last_in_at', cutoff)
+      .eq('prospect_state', 'conversando')
+      .is('reuniao_at', null)
+      .or(`snoozed_until.is.null,snoozed_until.lt.${nowIso}`)
+      .order('last_in_at', { ascending: false })
+      .limit(limit * 3); // caller filters by last-message shape; over-select to fill the batch
+    if (error) { logger.error('selectDueReengages failed:', error.message); return []; }
+    return data || [];
+  } catch (err) {
+    logger.error('selectDueReengages exception:', err.message);
+    return [];
+  }
+}
+
+/** Last message in either direction (drives re-engage eligibility). */
+async function loadLastMessage(leadId) {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('prospect_messages')
+      .select('direcao, tipo, corpo, enviada_em')
+      .eq('lead_id', leadId)
+      .neq('tipo', 'sys')
+      .order('enviada_em', { ascending: false })
+      .limit(1);
+    if (error) { logger.error('loadLastMessage failed:', error.message); return null; }
+    return (Array.isArray(data) && data[0]) || null;
+  } catch { return null; }
+}
+
 // ---- Style packs (Phase 10 gym) --------------------------------------------
 // The ACTIVE pack is appended to the production system prompt on every LLM
 // call — editing + activating a pack tunes the live brain without a deploy.
@@ -727,6 +772,8 @@ module.exports = {
   upsertCanned,
   deleteCanned,
   selectDueTouches,
+  selectDueReengages,
+  loadLastMessage,
   listProspectLeads,
   getProspectLeadWithMessages,
   selectUnscoredOutcomes,

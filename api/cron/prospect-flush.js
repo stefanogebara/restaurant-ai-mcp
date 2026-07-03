@@ -74,6 +74,17 @@ module.exports = async (req, res) => {
       logger.error('followups failed:', err.message);
     }
 
+    // Re-engage replied-then-silent leads whose 24h window closed (D+3 of
+    // silence, approved 'resgate' template, once per silence period). No-ops
+    // with {noTemplate:true} until a touch-4 template is registered + active.
+    let reengages = null;
+    try {
+      const { dispatchReengages } = require('../_lib/prospecting/sequencer');
+      reengages = await dispatchReengages({ limit: 5 });
+    } catch (err) {
+      logger.error('reengages failed:', err.message);
+    }
+
     // Discovery-chain watchdog: the mass-discovery worker self-chains, but a
     // single dead link (cold-start kill, network blip) strands the job in
     // 'running' forever. Any running job untouched for >5 min gets re-kicked —
@@ -101,8 +112,13 @@ module.exports = async (req, res) => {
       logger.error('discovery watchdog failed:', err.message);
     }
 
-    await logCronRun('prospect-flush', { resumed, errors, followups_sent: followups ? followups.sent : 0, rekicked });
-    return res.status(200).json({ success: true, due: due.length, resumed, errors, followups, rekicked });
+    await logCronRun('prospect-flush', {
+      resumed, errors,
+      followups_sent: followups ? followups.sent : 0,
+      reengages_sent: reengages ? reengages.sent : 0,
+      rekicked,
+    });
+    return res.status(200).json({ success: true, due: due.length, resumed, errors, followups, reengages, rekicked });
   } catch (err) {
     logger.error('flush fatal:', err.message);
     await logCronRun('prospect-flush', { resumed, errors: errors + 1 });

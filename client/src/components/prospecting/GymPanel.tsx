@@ -28,6 +28,17 @@ const RUBRICA_LABEL: Record<string, string> = {
   bolhas: 'Bolhas', repeticao: 'Repetição', avanco: 'Avanço', adaptacao: 'Adaptação',
 };
 
+// Tooltips de 1 linha explicando cada nota da rubrica (escala 1 a 5)
+const RUBRICA_HINT: Record<string, string> = {
+  humanidade: 'Parece uma pessoa de verdade escrevendo? (5 = indistinguível de um humano)',
+  naturalidade: 'As frases soam como português falado no WhatsApp, com ritmo e aberturas variadas?',
+  sobriedade: 'Sem exagero de vendedor: 5 = tom calmo e sóbrio; 1 = "Incrível!!" cheio de exclamação',
+  bolhas: 'Divide o texto em 2-3 mensagens curtas quando natural, em vez de um bloco único?',
+  repeticao: 'Evita repetir a mesma abertura ou informação? (5 = nunca repete)',
+  avanco: 'A conversa avança para o objetivo (qualificar / agendar visita) sem forçar?',
+  adaptacao: 'Espelha o tom e o tamanho das mensagens do lead e lida bem com desvios?',
+};
+
 function scoreTone(v: number | null): string {
   if (v == null) return 'bg-stone-100 text-stone-500';
   if (v >= 4) return 'bg-emerald-100 text-emerald-800';
@@ -78,7 +89,7 @@ export default function GymPanel() {
     onSuccess: (data) => {
       setResult(data);
       setRunning(null);
-      toast.success(`Treino concluído — média ${data.scores?.media ?? '—'}`);
+      toast.success(`Treino concluído — nota média ${data.scores?.media ?? '—'} de 5`);
       qc.invalidateQueries({ queryKey: ['prospect-admin', 'gym'] });
     },
     onError: (err: unknown) => { setRunning(null); toast.error(apiError(err) || 'Treino falhou'); },
@@ -99,7 +110,7 @@ export default function GymPanel() {
     mutationFn: async (version: number) =>
       (await api.post('/prospect-admin?action=style-pack-activate', { version })).data,
     onSuccess: (_d, version) => {
-      toast.success(`v${version} ATIVA — o cérebro em produção já usa este estilo`);
+      toast.success(`v${version} ATIVA — a Olímpia já fala assim com os leads reais`);
       qc.invalidateQueries({ queryKey: ['prospect-admin', 'gym'] });
     },
     onError: (err: unknown) => toast.error(apiError(err) || 'Não foi possível ativar'),
@@ -113,8 +124,8 @@ export default function GymPanel() {
     <GlassPanel className="p-4">
       <button type="button" onClick={() => setOpen(!open)} className="w-full flex items-center justify-between text-left" aria-expanded={open}>
         <div>
-          <h2 className="font-medium">Treino (Gym)</h2>
-          <p className="text-xs text-stone-500">Cenários simulados contra o cérebro real + rubrica de humanidade + pacotes de estilo versionados</p>
+          <h2 className="font-medium">Academia da Olímpia</h2>
+          <p className="text-xs text-stone-500">Conversas simuladas para treinar a Olímpia — nada é enviado a leads reais. Cada treino recebe notas de 1 a 5 pela naturalidade da conversa.</p>
         </div>
         <span className={`text-stone-400 transition-transform ${open ? 'rotate-180' : ''}`}>▾</span>
       </button>
@@ -123,14 +134,14 @@ export default function GymPanel() {
         <div className="mt-4 space-y-5">
           {/* Style selector for runs */}
           {d && d.packs.length > 0 && (
-            <div className="flex flex-wrap items-center gap-2 text-xs text-stone-600">
-              treinar com estilo:
+            <div className="flex flex-wrap items-center gap-2 text-xs text-stone-600" title="Estilo de conversa = versão do treino que define como a Olímpia escreve. Aqui você escolhe qual versão testar.">
+              treinar com qual estilo de conversa:
               <select
                 value={String(styleSel)}
                 onChange={(e) => setStyleSel(e.target.value === 'active' ? 'active' : Number(e.target.value))}
                 className="rounded-lg border border-stone-200 bg-white/70 px-2 py-1"
               >
-                <option value="active">ativo em produção</option>
+                <option value="active">o que está no ar (em uso com leads reais)</option>
                 {d.packs.map((p) => (
                   <option key={p.id} value={p.version}>v{p.version} — {p.label || 'sem rótulo'}{p.active ? ' (ativa)' : ''}</option>
                 ))}
@@ -151,7 +162,7 @@ export default function GymPanel() {
                       <p className="text-[11px] text-stone-500 truncate">{s.descricao}</p>
                     </div>
                     {last && (
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${scoreTone(last.media)}`} title={`v${last.style_version ?? '—'} · ${fmtTime(last.created_at)}`}>
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${scoreTone(last.media)}`} title={`nota média do último treino (de 1 a 5) — estilo v${last.style_version ?? '—'} · ${fmtTime(last.created_at)}`}>
                         {last.media ?? '—'}
                       </span>
                     )}
@@ -159,6 +170,7 @@ export default function GymPanel() {
                       type="button"
                       disabled={!!running}
                       onClick={() => exercise.mutate(s.id)}
+                      title="Simula uma conversa completa com este perfil de lead — nada é enviado a ninguém"
                       className="px-2.5 py-1 rounded-lg bg-burgundy text-white text-xs font-medium hover:opacity-90 disabled:opacity-50 shrink-0"
                     >
                       {running === s.id ? 'Rodando…' : 'Rodar'}
@@ -174,15 +186,15 @@ export default function GymPanel() {
             <GlassCard className="p-3 space-y-3">
               <div className="flex flex-wrap gap-1.5">
                 {Object.entries(RUBRICA_LABEL).map(([k, label]) => (
-                  <span key={k} className={`px-2 py-0.5 rounded-full text-xs font-medium ${scoreTone((result.scores as Record<string, number | null> | null)?.[k] ?? null)}`}>
+                  <span key={k} title={RUBRICA_HINT[k]} className={`px-2 py-0.5 rounded-full text-xs font-medium ${scoreTone((result.scores as Record<string, number | null> | null)?.[k] ?? null)}`}>
                     {label} {(result.scores as Record<string, number | null> | null)?.[k] ?? '—'}
                   </span>
                 ))}
-                <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-stone-800 text-white">
-                  média {result.scores?.media ?? '—'}
+                <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-stone-800 text-white" title="Média das 7 notas acima (escala de 1 a 5)">
+                  média {result.scores?.media ?? '—'} de 5
                 </span>
                 {result.terminal && (
-                  <span className="px-2 py-0.5 rounded-full text-xs bg-sky-100 text-sky-800">→ {result.terminal}</span>
+                  <span className="px-2 py-0.5 rounded-full text-xs bg-sky-100 text-sky-800" title="Como a conversa simulada terminou">→ {result.terminal}</span>
                 )}
               </div>
               {result.scores?.veredicto && (
@@ -203,23 +215,24 @@ export default function GymPanel() {
           {d && (
             <div className="pt-3 border-t border-stone-200/60 space-y-2">
               <div className="flex items-center justify-between">
-                <h3 className="font-serif text-sm text-stone-700">Pacotes de estilo</h3>
+                <h3 className="font-serif text-sm text-stone-700">Estilos de conversa (versões do treino)</h3>
                 <button type="button" onClick={() => setShowEditor(!showEditor)} className="text-xs text-burgundy underline">
                   {showEditor ? 'fechar editor' : '+ novo rascunho'}
                 </button>
               </div>
+              <p className="text-xs text-stone-500">Cada versão define como a Olímpia escreve. A versão marcada como ATIVA é a que fala com os leads reais agora.</p>
               {d.packs.map((p) => (
                 <div key={p.id} className={`rounded-xl border px-3 py-2 ${p.active ? 'border-emerald-300 bg-emerald-50/50' : 'border-stone-200 bg-white/60'}`}>
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-mono font-semibold">v{p.version}</span>
                     <span className="text-xs text-stone-600 truncate">{p.label}</span>
-                    {p.active && <span className="px-1.5 py-0.5 rounded-full bg-emerald-600 text-white text-[10px] font-medium">ATIVA</span>}
+                    {p.active && <span className="px-1.5 py-0.5 rounded-full bg-emerald-600 text-white text-[10px] font-medium" title="Esta é a versão em uso com os leads reais agora">ATIVA</span>}
                     <span className="ml-auto flex gap-2 shrink-0">
-                      <button type="button" className="text-xs text-stone-500 underline" onClick={() => { setDraft(p.body); setDraftLabel(`baseado em v${p.version}`); setShowEditor(true); }}>
+                      <button type="button" title="Abre o texto desta versão para você ajustar e salvar como um novo rascunho" className="text-xs text-stone-500 underline" onClick={() => { setDraft(p.body); setDraftLabel(`baseado em v${p.version}`); setShowEditor(true); }}>
                         editar como novo
                       </button>
                       {!p.active && (
-                        <button type="button" disabled={activate.isPending} className="text-xs text-emerald-700 underline" onClick={() => activate.mutate(p.version)}>
+                        <button type="button" disabled={activate.isPending} title="Coloca este treino no ar — muda como a Olímpia fala com leads reais na hora" className="text-xs text-emerald-700 underline" onClick={() => activate.mutate(p.version)}>
                           ativar
                         </button>
                       )}
@@ -240,7 +253,7 @@ export default function GymPanel() {
                     value={draft}
                     onChange={(e) => setDraft(e.target.value)}
                     rows={10}
-                    placeholder="ESTILO DE ESCRITA…"
+                    placeholder="Instruções de como a Olímpia deve escrever (ex: ESTILO DE ESCRITA: frases curtas, sem exclamação…)"
                     className="w-full rounded-xl border border-stone-200 px-3 py-2 text-xs font-mono bg-white/80 resize-y"
                   />
                   <div className="flex justify-end gap-2">
@@ -257,7 +270,7 @@ export default function GymPanel() {
                 </div>
               )}
               <p className="text-[11px] text-stone-400">
-                Fluxo de treino: rodar cenários com um rascunho → comparar médias com a versão ativa → ativar quando vencer.
+                Como funciona: rode os cenários com um rascunho → compare as notas médias com a versão ativa → quando o rascunho ganhar, clique em “ativar” para colocá-lo no ar.
               </p>
             </div>
           )}
