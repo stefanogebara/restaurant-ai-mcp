@@ -84,6 +84,45 @@ Touches 2/3 only fire if an ACTIVE approved template is registered for that
 touch; otherwise the lead halts visibly (no silent skips). Runs inside the
 `prospect-flush` cron — zero extra invocations.
 
+## Janela de 24h e a sequência de contato
+
+A Meta divide toda conversa de WhatsApp em dois regimes, e a Olímpia respeita
+os dois à risca:
+
+**Dentro da janela** (até 24h após a ÚLTIMA mensagem do lead): texto livre —
+o cérebro responde normalmente. A ~23h de silêncio, o nudge manda UMA
+cutucada natural (uma vez por período de silêncio, horário comercial). É a
+última coisa que dá pra dizer antes da janela fechar.
+
+**Fora da janela**: só template aprovado pela Meta. Dois caminhos:
+
+| Lead | Sequência | Touch |
+|---|---|---|
+| NUNCA respondeu | lembrete D+3 → despedida D+8 → stop | 2 / 3 |
+| Respondeu e sumiu | "resgate" após 3 dias de silêncio — UMA vez por período de silêncio (rearma quando o lead fala de novo) | 4 |
+
+Implementado em `api/_lib/prospecting/sequencer.js` (`dispatchFollowups` +
+`dispatchReengages`), rodando dentro do cron `prospect-flush` — zero
+invocações extras.
+
+**Regra de ouro**: cada touch só acontece se o template daquele touch estiver
+(1) registrado em `prospect_templates`, (2) APROVADO na Meta e (3) ativo.
+Faltando qualquer um dos três, o passo simplesmente não acontece — sem erro,
+sem envio — e o descompasso fica visível no painel **Identidade do WhatsApp**
+do console, que cruza o registro local com os templates reais da Meta e seus
+status de aprovação.
+
+Actions novas do `prospect-admin` (plano de gestão):
+
+- `GET  ?action=wa-identity` — identidade do número (nome verificado, foto,
+  qualidade) + templates existentes na Meta (com status) + registro local
+  `prospect_templates`, lado a lado.
+- `POST ?action=template-create` — cria o template direto na API da Meta
+  (nome, idioma, categoria, corpo, botão de URL) e já o registra no touch
+  informado como INATIVO — ativa-se manualmente depois que a Meta aprovar.
+- `POST ?action=wa-profile` — atualiza foto de perfil e/ou perfil comercial
+  (about, descrição, site, email) do número de prospecção.
+
 ## External setup steps (one-time, manual)
 
 1. **Template variants**: create in WhatsApp Manager → wait for approval →
@@ -166,11 +205,12 @@ tuning loop: run scenarios ─▶ read scores ─▶ edit style-pack DRAFT ─�
 ## API (all via `/api/prospect-admin`, admin JWT)
 
 `GET  ?action=list | lead | overview | insights | variants | canned |
-      discovery-status | gym | gym-run`
+      discovery-status | gym | gym-run | wa-identity`
 `POST ?action=send | note | snooze | intent | pause | reactivate | optout |
       agent | dispatch-resume | discover | discovery-job | discovery-cancel |
-      dispatch | template-upsert | canned-upsert | canned-delete |
-      gym-exercise | style-pack-save | style-pack-activate`
+      dispatch | template-create | template-upsert | wa-profile |
+      canned-upsert | canned-delete | gym-exercise | style-pack-save |
+      style-pack-activate`
 
 ## Crons
 
