@@ -9,7 +9,7 @@ jest.mock('../_lib/secure-logger', () => ({
   createSecureLogger: jest.fn(() => ({ info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() })),
 }));
 
-const { parseJudgeText, simLeadSystem, RUBRICA } = require('../_lib/prospecting/prospect-sim');
+const { parseJudgeText, parsePairedText, simLeadSystem, RUBRICA } = require('../_lib/prospecting/prospect-sim');
 const { buildSystemPrompt } = require('../_lib/prospecting/prospect-agent');
 
 // ============================================================ judge parsing
@@ -45,6 +45,30 @@ describe('parseJudgeText — rubric scores (clamped, garbage-tolerant)', () => {
 
   test('rubric covers exactly the founder asks', () => {
     expect(RUBRICA).toEqual(['humanidade', 'naturalidade', 'sobriedade', 'bolhas', 'repeticao', 'avanco', 'adaptacao']);
+  });
+});
+
+// ============================================================ paired judging
+describe('parsePairedText — head-to-head verdicts (cycle-4 variance fix)', () => {
+  test('parses a clean verdict', () => {
+    const v = parsePairedText('{"vencedor":"B","margem":2,"motivo":"B trata a objeção; A re-pitcha."}');
+    expect(v).toEqual({ vencedor: 'B', margem: 2, motivo: 'B trata a objeção; A re-pitcha.' });
+  });
+
+  test('empate forces margem 0; wins force margem ≥1', () => {
+    expect(parsePairedText('{"vencedor":"empate","margem":3}').margem).toBe(0);
+    expect(parsePairedText('{"vencedor":"A","margem":0}').margem).toBe(1);
+  });
+
+  test('clamps margem into 0..3 and tolerates fences', () => {
+    const v = parsePairedText('claro:\n```json\n{"vencedor":"A","margem":9}\n```');
+    expect(v.margem).toBe(3);
+  });
+
+  test('invalid winner / garbage → null (never invents a verdict)', () => {
+    expect(parsePairedText('{"vencedor":"C","margem":1}')).toBeNull();
+    expect(parsePairedText('os dois foram bem')).toBeNull();
+    expect(parsePairedText('')).toBeNull();
   });
 });
 

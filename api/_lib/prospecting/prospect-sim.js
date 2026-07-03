@@ -197,6 +197,89 @@ async function judgeTranscript(transcript) {
   }
 }
 
+// ---- Paired judging (cycle-4 upgrade) --------------------------------------------
+// Absolute 1-5 scoring proved noisy across rounds (the sim-lead runs at temp 0.9,
+// so the same pack can swing ±1.4 on a scenario). Head-to-head comparison of two
+// transcripts of the SAME scenario is far more stable: the judge sees both and
+// picks a winner. Callers MUST randomize which version is labeled A vs B
+// (position bias) and un-map afterwards.
+
+const PAIRED_JUDGE_SYSTEM = [
+  `Você compara DUAS versões da mesma vendedora (${AGENT_NAME}) conversando no`,
+  `WhatsApp com o MESMO tipo de lead (cenário idêntico, conversas independentes).`,
+  `Julgue SÓ as mensagens da ${AGENT_NAME.toUpperCase()} em cada transcript:`,
+  `quem soa mais HUMANA (natural, sóbria, sem repetição, bolhas quando natural)`,
+  `e conduz melhor a conversa (responde o que o lead disse, avança sem forçar,`,
+  `trata objeção em vez de re-pitch)?`,
+  ``,
+  `Devolva SOMENTE um JSON:`,
+  `{`,
+  `  "vencedor": "A" | "B" | "empate",`,
+  `  "margem": 1-3,        // 1 = por pouco, 3 = diferença gritante (0 se empate)`,
+  `  "motivo": "..."       // 1-2 frases: o que decidiu`,
+  `}`,
+  `Empate SÓ quando genuinamente indistinguíveis. Responda APENAS o JSON.`,
+].join('\n');
+
+/** PURE: paired-judge text → {vencedor, margem, motivo} or null. */
+function parsePairedText(text) {
+  const s = String(text || '').trim();
+  const m = s.replace(/```json|```/gi, '').match(/\{[\s\S]*\}/);
+  if (!m) return null;
+  let obj;
+  try { obj = JSON.parse(m[0]); } catch { return null; }
+  const vencedor = ['A', 'B', 'empate'].includes(obj.vencedor) ? obj.vencedor : null;
+  if (!vencedor) return null;
+  const margem = Number.isFinite(Number(obj.margem))
+    ? Math.min(3, Math.max(0, Math.round(Number(obj.margem))))
+    : (vencedor === 'empate' ? 0 : 1);
+  return {
+    vencedor,
+    margem: vencedor === 'empate' ? 0 : Math.max(1, margem),
+    motivo: typeof obj.motivo === 'string' ? obj.motivo.trim().slice(0, 300) : null,
+  };
+}
+
+function transcriptText(transcript) {
+  return (transcript || [])
+    .filter((t) => t.texto)
+    .map((t) => `${t.who === 'lead' ? 'LEAD' : AGENT_NAME.toUpperCase()}: ${t.texto}`)
+    .join('\n');
+}
+
+/**
+ * Head-to-head judgment of two transcripts of the same scenario.
+ * @param {string} scenarioDesc - short scenario description for context
+ * @param {Array} transcriptA
+ * @param {Array} transcriptB
+ * @returns {Promise<{vencedor:'A'|'B'|'empate', margem:number, motivo:string|null}|null>}
+ */
+async function judgePaired(scenarioDesc, transcriptA, transcriptB) {
+  const content = [
+    `CENÁRIO: ${scenarioDesc}`,
+    ``,
+    `=== TRANSCRIPT A ===`,
+    transcriptText(transcriptA),
+    ``,
+    `=== TRANSCRIPT B ===`,
+    transcriptText(transcriptB),
+  ].join('\n');
+  try {
+    const resp = await getAI().messages.create({
+      model: AI_MODEL,
+      max_tokens: 250,
+      temperature: 0,
+      system: PAIRED_JUDGE_SYSTEM,
+      messages: [{ role: 'user', content }],
+    });
+    const block = (resp.content || []).find((b) => b.type === 'text' && b.text);
+    return parsePairedText(block ? block.text : '');
+  } catch (err) {
+    logger.warn('paired judge failed (non-fatal):', err.message);
+    return null;
+  }
+}
+
 // ---- Orchestration + persistence -----------------------------------------------
 
 async function listScenarios() {
@@ -269,6 +352,8 @@ module.exports = {
   runSimulation,
   parseJudgeText,
   judgeTranscript,
+  parsePairedText,
+  judgePaired,
   runGymExercise,
   listScenarios,
   listRuns,
