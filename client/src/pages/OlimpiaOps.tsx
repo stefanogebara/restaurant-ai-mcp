@@ -7,6 +7,7 @@ import { useToast } from '../contexts/ToastContext';
 import DiscoveryPanel from '../components/prospecting/DiscoveryPanel';
 import VariantsPanel from '../components/prospecting/VariantsPanel';
 import InsightsPanel from '../components/prospecting/InsightsPanel';
+import GymPanel from '../components/prospecting/GymPanel';
 import LeadList, { Badge, orderForTab } from '../components/prospecting/LeadList';
 import ThreadView from '../components/prospecting/ThreadView';
 import { HealthInline, DispatchPausedBanner } from '../components/prospecting/HealthCard';
@@ -189,6 +190,7 @@ export default function OlimpiaOps() {
         <DiscoveryPanel />
         <VariantsPanel />
         <InsightsPanel />
+        <GymPanel />
 
         {/* Work queue: Triagem (default) | Todos with funnel filters */}
         <GlassPanel className="p-3 flex flex-wrap items-center gap-2">

@@ -178,6 +178,53 @@ module.exports = async (req, res) => {
       return res.status(200).json({ success: true });
     }
 
+    // ---- Gym (Phase 10): scenario simulation + style-pack training --------------
+    if (req.method === 'GET' && action === 'gym') {
+      const { listScenarios, listRuns } = require('./_lib/prospecting/prospect-sim');
+      const { listStylePacks } = require('./_lib/prospecting/prospect-store');
+      const [scenarios, runs, packs] = await Promise.all([listScenarios(), listRuns(null, 50), listStylePacks()]);
+      return res.status(200).json({ success: true, data: { scenarios, runs, packs } });
+    }
+
+    if (req.method === 'GET' && action === 'gym-run') {
+      const runId = req.query.run_id && String(req.query.run_id);
+      if (!runId) return res.status(400).json({ success: false, error: 'run_id required' });
+      const { getRun } = require('./_lib/prospecting/prospect-sim');
+      const run = await getRun(runId);
+      if (!run) return res.status(404).json({ success: false, error: 'Run not found' });
+      return res.status(200).json({ success: true, data: run });
+    }
+
+    if (req.method === 'POST' && action === 'gym-exercise') {
+      const scenarioId = req.body && req.body.scenario_id ? String(req.body.scenario_id) : null;
+      if (!scenarioId) return res.status(400).json({ success: false, error: 'scenario_id required' });
+      const styleVersion = req.body && req.body.style_version != null
+        ? parseInt(req.body.style_version, 10) : null;
+      const { runGymExercise } = require('./_lib/prospecting/prospect-sim');
+      const result = await runGymExercise(scenarioId, { styleVersion });
+      if (!result.ok) return res.status(400).json({ success: false, error: result.error });
+      logger.info(`prospect-admin gym-exercise scenario=${scenarioId} style=${styleVersion ?? 'active'} by=${email}`);
+      return res.status(200).json({ success: true, data: result });
+    }
+
+    if (req.method === 'POST' && action === 'style-pack-save') {
+      const { saveStylePack } = require('./_lib/prospecting/prospect-store');
+      const result = await saveStylePack(req.body || {});
+      if (!result.ok) return res.status(400).json({ success: false, error: result.error });
+      logger.info(`prospect-admin style-pack-save v${result.version} by=${email}`);
+      return res.status(200).json({ success: true, data: { version: result.version } });
+    }
+
+    if (req.method === 'POST' && action === 'style-pack-activate') {
+      const version = req.body && parseInt(req.body.version, 10);
+      if (!version) return res.status(400).json({ success: false, error: 'version required' });
+      const { activateStylePack } = require('./_lib/prospecting/prospect-store');
+      const result = await activateStylePack(version);
+      if (!result.ok) return res.status(400).json({ success: false, error: result.error });
+      logger.info(`prospect-admin style-pack ACTIVATE v${version} by=${email} — live brain updated`);
+      return res.status(200).json({ success: true });
+    }
+
     // ---- Intent override (F1), snooze + notes (F6) -------------------------------
     if (req.method === 'POST' && action === 'intent') {
       const leadId = req.body && req.body.lead_id;

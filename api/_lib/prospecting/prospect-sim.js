@@ -1,0 +1,277 @@
+'use strict';
+
+/**
+ * Olímpia Gym (Phase 10) — scenario simulation + judged evaluation.
+ *
+ * Runs the REAL brain (generateReply: same prompt, tools, model, style pack)
+ * against an LLM playing a restaurant person from a persona spec — in memory,
+ * zero side effects: no WhatsApp, no lead rows, no state machine writes. Each
+ * run stores the transcript + a rubric judgment so style-pack drafts can be
+ * A/B-compared before promotion. Architecture:
+ *
+ *   scenario (persona spec) ──▶ sim-lead LLM ──┐
+ *                                              ├─▶ transcript ─▶ judge ─▶ scores
+ *   style pack (active|draft) ─▶ REAL brain ───┘
+ *
+ * The judge rubric targets exactly the founder's asks: humanity, naturalness,
+ * zero exaggeration, multi-bubble usage, no repetition, goal advancement.
+ */
+
+const { getAI, AI_MODEL } = require('../ai-client');
+const { supabaseAdmin } = require('../supabase');
+const { createSecureLogger } = require('../secure-logger');
+const { generateReply, AGENT_NAME } = require('./prospect-agent');
+const { detectarOptout } = require('./prospect-state');
+
+const logger = createSecureLogger('ProspectSim');
+
+const INTRO_PREVIEW =
+  'Oi, tudo bem? Aqui é a Olímpia, da Seatable. Vi o restaurante {{nome}} e queria me apresentar. ' +
+  'A gente ajuda restaurantes a lotar mais mesas e a não perder reserva, com um atendimento por IA ' +
+  'no WhatsApp e no telefone que soa como uma pessoa de verdade. Dá pra te mostrar como funciona ' +
+  'numa conversa rápida de 30 minutos?';
+
+/** System prompt for the LLM playing the LEAD. */
+function simLeadSystem(scenario) {
+  const p = scenario.persona || {};
+  return [
+    `Você está SIMULANDO uma pessoa real de um restaurante brasileiro respondendo`,
+    `mensagens frias no WhatsApp. Interprete o papel com fidelidade total — você`,
+    `NÃO é um assistente; você É esta pessoa:`,
+    ``,
+    `RESTAURANTE: ${(scenario.lead && scenario.lead.name) || 'Restaurante'}`,
+    `PERFIL: ${p.perfil || 'dono de restaurante'}`,
+    `HUMOR: ${p.humor || 'neutro'}`,
+    `ESTILO DE ESCRITA: ${p.estilo || 'informal, curto'}`,
+    `OBJETIVO NA CONVERSA: ${p.objetivo || 'decidir se vale a pena'}`,
+    ...(Array.isArray(p.curveballs) && p.curveballs.length
+      ? [``, `EVENTOS QUE VOCÊ DEVE ENCAIXAR (um por vez, quando fizer sentido):`,
+         ...p.curveballs.map((c, i) => `${i + 1}. ${c}`)]
+      : []),
+    ``,
+    `REGRAS DA SIMULAÇÃO:`,
+    `- Escreva SÓ a(s) mensagem(ns) da pessoa, sem narração nem aspas.`,
+    `- Se o estilo pede bolhas, separe as mensagens com UMA linha em branco.`,
+    `- Reaja ao que a outra parte disse de verdade (não siga script cegamente).`,
+    `- Mantenha o registro do personagem até o fim (erros de digitação leves ok).`,
+  ].join('\n');
+}
+
+/** One sim-lead turn: given the transcript so far, produce the lead's message(s). */
+async function simLeadReply(scenario, transcript) {
+  const messages = transcript.map((t) => ({
+    // From the sim-lead's point of view: Olímpia is the "user" talking TO them.
+    role: t.who === 'olimpia' ? 'user' : 'assistant',
+    content: t.texto,
+  }));
+  const resp = await getAI().messages.create({
+    model: AI_MODEL,
+    max_tokens: 300,
+    temperature: 0.9, // people are noisier than assistants
+    system: simLeadSystem(scenario),
+    messages: messages.length ? messages : [{ role: 'user', content: INTRO_PREVIEW }],
+  });
+  const block = (resp.content || []).find((b) => b.type === 'text' && b.text && b.text.trim());
+  return block ? block.text.trim() : null;
+}
+
+/**
+ * Run one full simulated conversation against the real brain.
+ * @param {object} scenario - prospect_sim_scenarios row
+ * @param {{styleOverride?: string|null, turns?: number, nowMs?: number}} [opts]
+ * @returns {Promise<{transcript: Array, terminal: string|null}>}
+ */
+async function runSimulation(scenario, { styleOverride = undefined, turns = null, nowMs = Date.now() } = {}) {
+  const maxTurns = Math.min(Math.max(turns || scenario.turns || 6, 2), 10);
+  const lead = {
+    name: (scenario.lead && scenario.lead.name) || 'Restaurante Simulado',
+    city: (scenario.lead && scenario.lead.city) || 'São Paulo',
+    sector: (scenario.lead && scenario.lead.sector) || 'restaurante',
+    owner_name: (scenario.lead && scenario.lead.owner_name) || null,
+    nome_genero: null,
+    conversa_fatos: null,
+    conversa_resumo: null,
+  };
+
+  const intro = INTRO_PREVIEW.replace('{{nome}}', lead.name);
+  const transcript = [{ who: 'olimpia', texto: intro, acao: 'template' }];
+  let terminal = null;
+
+  for (let turno = 0; turno < maxTurns; turno++) {
+    // 1. Sim-lead speaks.
+    const leadMsg = await simLeadReply(scenario, transcript);
+    if (!leadMsg) break;
+    transcript.push({ who: 'lead', texto: leadMsg });
+
+    // 2. Deterministic opt-out guardrail — same as production order.
+    if (detectarOptout(leadMsg)) {
+      transcript.push({ who: 'olimpia', texto: null, acao: 'optout' });
+      terminal = 'optout';
+      break;
+    }
+
+    // 3. The REAL brain answers (same prompt/tools/model/style as production).
+    const history = transcript
+      .filter((t) => t.texto)
+      .map((t) => ({ direcao: t.who === 'lead' ? 'in' : 'out', corpo: t.texto, tipo: 'text' }));
+    const acao = await generateReply({ lead, history, nowMs, styleOverride });
+
+    if (acao.tipo === 'responder' && acao.texto) {
+      transcript.push({ who: 'olimpia', texto: acao.texto, acao: 'responder' });
+    } else if (acao.texto) {
+      transcript.push({ who: 'olimpia', texto: acao.texto, acao: acao.tipo });
+    } else {
+      transcript.push({ who: 'olimpia', texto: null, acao: acao.tipo });
+    }
+    if (['optout', 'handoff', 'agendar', 'registrar_responsavel'].includes(acao.tipo)) {
+      terminal = acao.tipo;
+      break;
+    }
+  }
+
+  return { transcript, terminal };
+}
+
+// ---- Judge -------------------------------------------------------------------
+
+const JUDGE_SYSTEM = [
+  `Você avalia se uma vendedora (${AGENT_NAME}) soa HUMANA numa conversa de`,
+  `WhatsApp com um lead. Analise SÓ as mensagens da ${AGENT_NAME.toUpperCase()}.`,
+  `Devolva SOMENTE um JSON:`,
+  `{`,
+  `  "humanidade": 1-5,      // pareceria uma pessoa de verdade? (5 = indistinguível)`,
+  `  "naturalidade": 1-5,    // ritmo, aberturas variadas, registro pt-BR falado`,
+  `  "sobriedade": 1-5,      // 5 = zero entusiasmo vendedor/exagero; 1 = "Incrível!!"`,
+  `  "bolhas": 1-5,          // usa 2-3 bolhas curtas quando natural (5) vs sempre bloco único (1)`,
+  `  "repeticao": 1-5,       // 5 = nunca repete abertura/informação`,
+  `  "avanco": 1-5,          // conduz ao objetivo (qualificar/agendar) sem forçar`,
+  `  "adaptacao": 1-5,       // espelha o tamanho/energia do lead; lida com desvios`,
+  `  "tags": ["..."],        // 2-5 marcas do que houve (ex: "repetiu abertura", "bolhas boas")`,
+  `  "veredicto": "..."      // 1 frase: a maior força e a maior fraqueza`,
+  `}`,
+  `Seja EXIGENTE: 4-5 só para desempenho realmente humano. Responda APENAS o JSON.`,
+].join('\n');
+
+const RUBRICA = ['humanidade', 'naturalidade', 'sobriedade', 'bolhas', 'repeticao', 'avanco', 'adaptacao'];
+
+/** PURE: judge text → clamped scores. Garbage → null. */
+function parseJudgeText(text) {
+  const s = String(text || '').trim();
+  const m = s.replace(/```json|```/gi, '').match(/\{[\s\S]*\}/);
+  if (!m) return null;
+  let obj;
+  try { obj = JSON.parse(m[0]); } catch { return null; }
+  const scores = {};
+  for (const k of RUBRICA) {
+    const v = Number(obj[k]);
+    scores[k] = Number.isFinite(v) ? Math.min(5, Math.max(1, Math.round(v))) : null;
+  }
+  scores.tags = Array.isArray(obj.tags)
+    ? obj.tags.filter((t) => typeof t === 'string' && t.trim()).map((t) => t.trim()).slice(0, 6)
+    : [];
+  scores.veredicto = typeof obj.veredicto === 'string' ? obj.veredicto.trim().slice(0, 300) : null;
+  const vals = RUBRICA.map((k) => scores[k]).filter((v) => v != null);
+  scores.media = vals.length ? Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 100) / 100 : null;
+  return scores;
+}
+
+/** Judge a finished transcript with the rubric. */
+async function judgeTranscript(transcript) {
+  const texto = transcript
+    .filter((t) => t.texto)
+    .map((t) => `${t.who === 'lead' ? 'LEAD' : AGENT_NAME.toUpperCase()}: ${t.texto}`)
+    .join('\n');
+  try {
+    const resp = await getAI().messages.create({
+      model: AI_MODEL,
+      max_tokens: 400,
+      temperature: 0,
+      system: JUDGE_SYSTEM,
+      messages: [{ role: 'user', content: texto }],
+    });
+    const block = (resp.content || []).find((b) => b.type === 'text' && b.text);
+    return parseJudgeText(block ? block.text : '');
+  } catch (err) {
+    logger.warn('judge failed (non-fatal):', err.message);
+    return null;
+  }
+}
+
+// ---- Orchestration + persistence -----------------------------------------------
+
+async function listScenarios() {
+  const { data, error } = await supabaseAdmin
+    .from('prospect_sim_scenarios').select('*').eq('active', true).order('nome');
+  if (error) { logger.error('listScenarios failed:', error.message); return []; }
+  return data || [];
+}
+
+async function listRuns(scenarioId = null, limit = 30) {
+  let q = supabaseAdmin.from('prospect_sim_runs')
+    .select('id, scenario_id, style_version, scores, media, created_at')
+    .order('created_at', { ascending: false }).limit(limit);
+  if (scenarioId) q = q.eq('scenario_id', scenarioId);
+  const { data, error } = await q;
+  if (error) { logger.error('listRuns failed:', error.message); return []; }
+  return data || [];
+}
+
+async function getRun(runId) {
+  const { data, error } = await supabaseAdmin
+    .from('prospect_sim_runs').select('*').eq('id', runId).single();
+  return error ? null : data;
+}
+
+/**
+ * Run + judge + persist one gym exercise.
+ * @param {string} scenarioId
+ * @param {{styleVersion?: number|null}} [opts] - a specific pack version to test
+ *   (loads its body as override); default = whatever is active in production.
+ */
+async function runGymExercise(scenarioId, { styleVersion = null } = {}) {
+  const { data: scenario, error } = await supabaseAdmin
+    .from('prospect_sim_scenarios').select('*').eq('id', scenarioId).single();
+  if (error || !scenario) return { ok: false, error: 'scenario_not_found' };
+
+  let styleOverride;
+  let usedVersion = null;
+  if (styleVersion != null) {
+    const { data: pack } = await supabaseAdmin
+      .from('prospect_style_pack').select('version, body').eq('version', styleVersion).maybeSingle();
+    if (!pack) return { ok: false, error: 'style_version_not_found' };
+    styleOverride = pack.body;
+    usedVersion = pack.version;
+  } else {
+    const { data: active } = await supabaseAdmin
+      .from('prospect_style_pack').select('version').eq('active', true).maybeSingle();
+    usedVersion = active ? active.version : null;
+  }
+
+  const { transcript, terminal } = await runSimulation(scenario, { styleOverride });
+  const scores = await judgeTranscript(transcript);
+
+  const { data: saved, error: insErr } = await supabaseAdmin.from('prospect_sim_runs').insert({
+    scenario_id: scenario.id,
+    style_version: usedVersion,
+    transcript,
+    scores,
+    media: scores ? scores.media : null,
+  }).select('id').single();
+  if (insErr) logger.error('sim run insert failed:', insErr.message);
+
+  logger.info(`gym run scenario=${scenario.nome} style=v${usedVersion ?? '-'} media=${scores ? scores.media : '—'} terminal=${terminal || '—'}`);
+  return { ok: true, runId: saved ? saved.id : null, transcript, scores, terminal, styleVersion: usedVersion };
+}
+
+module.exports = {
+  INTRO_PREVIEW,
+  simLeadSystem,
+  runSimulation,
+  parseJudgeText,
+  judgeTranscript,
+  runGymExercise,
+  listScenarios,
+  listRuns,
+  getRun,
+  RUBRICA,
+};

@@ -44,14 +44,17 @@ const CASES = (process.env.PROSPECTING_CASES || '').trim();
 
 /**
  * Build the agent system prompt: persona + lead context + memory + objective +
- * safety rules (anti-invention, handoff, opt-out) + scheduling + owner-referral.
- * Pure and deterministic (same lead + same "now" → same prompt) for testability.
+ * safety rules (anti-invention, handoff, opt-out) + scheduling + owner-referral
+ * + the ACTIVE STYLE PACK (Phase 10 gym) — the DB-versioned humanization layer
+ * that the gym tunes without deploys.
+ * Pure and deterministic (same lead + same "now" + same style → same prompt).
  *
  * @param {LeadContexto} lead
  * @param {string} [agoraDescricao] - output of descreverAgora()
+ * @param {string|null} [styleBody] - style-pack text to append (null = none)
  * @returns {string}
  */
-function buildSystemPrompt(lead, agoraDescricao) {
+function buildSystemPrompt(lead, agoraDescricao, styleBody = null) {
   const artigo = lead.nome_genero === 'm' ? 'o' : 'a';
   const cidade = lead.city && lead.city.trim() ? lead.city.trim() : null;
   const dono = lead.owner_name && lead.owner_name.trim() ? lead.owner_name.trim() : null;
@@ -172,6 +175,7 @@ function buildSystemPrompt(lead, agoraDescricao) {
     'FERRAMENTAS: prefira responder por texto enquanto a conversa avança. Chame uma',
     'ferramenta só quando a situação pedir (agendar, registrar o responsável, escalar,',
     'opt-out, ignorar).',
+    ...(styleBody && String(styleBody).trim() ? ['', String(styleBody).trim()] : []),
   ].join('\n');
 }
 
@@ -331,16 +335,25 @@ function interpretResponse(response) {
  * Orchestrator modes (nudge/remarcar) inject an internal instruction as a final
  * user turn and disable tools — the agent writes ONE plain-text message.
  *
+ * Style: the ACTIVE style pack is loaded (cached) unless the gym passes an
+ * explicit `styleOverride` (a draft under A/B test; pass null for bare prompt).
+ *
  * @param {{lead: LeadContexto, history: Array, nowMs: number,
- *          injectUserTurn?: string|null, noTools?: boolean}} ctx
+ *          injectUserTurn?: string|null, noTools?: boolean,
+ *          styleOverride?: string|null}} ctx
  * @returns {Promise<ProspectAcao>}
  */
-async function generateReply({ lead, history, nowMs, injectUserTurn = null, noTools = false }) {
+async function generateReply({ lead, history, nowMs, injectUserTurn = null, noTools = false, styleOverride = undefined }) {
   const messages = historyToMessages(history);
   if (injectUserTurn) messages.push({ role: 'user', content: injectUserTurn });
   if (messages.length === 0) return { tipo: 'nada', motivo: 'sem histórico' };
 
-  const system = buildSystemPrompt(lead, descreverAgora(nowMs));
+  let styleBody = styleOverride;
+  if (styleBody === undefined) {
+    const { getActiveStylePack } = require('./prospect-store');
+    styleBody = await getActiveStylePack().catch(() => null);
+  }
+  const system = buildSystemPrompt(lead, descreverAgora(nowMs), styleBody);
   try {
     const response = await getAI().messages.create({
       model: AI_MODEL,

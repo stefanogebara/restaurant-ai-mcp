@@ -131,13 +131,46 @@ console polls status ◀── counters ◀── worker batches (40s, self-chai
   cron; kicks itself until done/cancelled).
 - Dedup across overlapping queries via the `google_place_id` UNIQUE upsert.
 
+## Treino / Gym (Phase 10) — the training architecture
+
+```
+scenario (persona spec) ──▶ sim-lead LLM ──┐
+                                           ├─▶ transcript ─▶ judge rubric ─▶ scores
+style pack (active|draft) ─▶ REAL brain ───┘
+
+tuning loop: run scenarios ─▶ read scores ─▶ edit style-pack DRAFT ─▶ re-run
+             (A/B vs active) ─▶ ACTIVATE winner ─▶ production brain updated
+             instantly (no deploy — the pack is appended to the system prompt)
+```
+
+- **Scenarios** (`prospect_sim_scenarios`, 10 seeded): busy owner answering in
+  bubble bursts, price skeptic, "manda material", wrong-person referral, eager
+  booker, rude opt-out, bot-detector, monosyllabic, off-topic chatterbox,
+  technical negotiator. Personas carry perfil/humor/estilo/objetivo/curveballs.
+- **Sandbox**: the sim runs the REAL `generateReply` (same prompt, tools,
+  model, style pack) — zero side effects (no sends, no lead rows). The
+  deterministic opt-out guardrail runs in the same order as production.
+- **Judge rubric** (`prospect_sim_runs.scores`): humanidade, naturalidade,
+  sobriedade (anti-exaggeration), **bolhas** (multi-bubble usage), repetição,
+  avanço, adaptação — 1-5 each, strict grading, plus tags + veredicto.
+- **Style packs** (`prospect_style_pack`): versioned ESTILO blocks appended to
+  the production system prompt (v1 seeded: bubble mechanics, opener variation,
+  zero sales enthusiasm, spoken pt-BR register, single-question discipline).
+  Drafts never overwrite history; one active at a time; activation busts the
+  cache so the live brain changes immediately.
+- **Web-data grounding**: a research workflow distills published findings on
+  real Brazilian WhatsApp conversation (linguistics, SDR practice, digital
+  pt-BR norms) into style-pack drafts — prompt-level distillation (weights are
+  not fine-tunable here; this is the honest equivalent, and it's auditable).
+
 ## API (all via `/api/prospect-admin`, admin JWT)
 
 `GET  ?action=list | lead | overview | insights | variants | canned |
-      discovery-status`
+      discovery-status | gym | gym-run`
 `POST ?action=send | note | snooze | intent | pause | reactivate | optout |
       agent | dispatch-resume | discover | discovery-job | discovery-cancel |
-      dispatch | template-upsert | canned-upsert | canned-delete`
+      dispatch | template-upsert | canned-upsert | canned-delete |
+      gym-exercise | style-pack-save | style-pack-activate`
 
 ## Crons
 

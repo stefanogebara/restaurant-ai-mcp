@@ -539,6 +539,84 @@ async function selectDueTouches(nowIso, limit = 10) {
   }
 }
 
+// ---- Style packs (Phase 10 gym) --------------------------------------------
+// The ACTIVE pack is appended to the production system prompt on every LLM
+// call — editing + activating a pack tunes the live brain without a deploy.
+// Cached briefly so the per-inbound cost is one DB read every few minutes.
+let _stylePackCache = { body: null, at: 0 };
+const STYLE_PACK_TTL_MS = 3 * 60 * 1000;
+
+async function getActiveStylePack() {
+  if (Date.now() - _stylePackCache.at < STYLE_PACK_TTL_MS) return _stylePackCache.body;
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('prospect_style_pack')
+      .select('body, version')
+      .eq('active', true)
+      .maybeSingle();
+    if (error) {
+      logger.warn('getActiveStylePack failed (cached/none used):', error.message);
+      return _stylePackCache.body;
+    }
+    _stylePackCache = { body: data ? data.body : null, at: Date.now() };
+    return _stylePackCache.body;
+  } catch (err) {
+    logger.warn('getActiveStylePack exception:', err.message);
+    return _stylePackCache.body;
+  }
+}
+
+/** Invalidate the cache (called on activate so tuning applies immediately). */
+function bustStylePackCache() {
+  _stylePackCache = { body: null, at: 0 };
+}
+
+async function listStylePacks() {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('prospect_style_pack').select('*').order('version', { ascending: false });
+    if (error) { logger.error('listStylePacks failed:', error.message); return []; }
+    return data || [];
+  } catch { return []; }
+}
+
+/** Save a NEW draft version (auto-increment; never overwrites history). */
+async function saveStylePack({ body, label, notes }) {
+  try {
+    const texto = String(body || '').trim();
+    if (!texto) return { ok: false, error: 'body required' };
+    const { data: maxRow } = await supabaseAdmin
+      .from('prospect_style_pack').select('version').order('version', { ascending: false }).limit(1);
+    const version = (Array.isArray(maxRow) && maxRow[0] ? maxRow[0].version : 0) + 1;
+    const { error } = await supabaseAdmin.from('prospect_style_pack').insert({
+      version, body: texto,
+      label: label ? String(label) : `v${version}`,
+      notes: notes ? String(notes) : null,
+      active: false,
+    });
+    if (error) return { ok: false, error: error.message };
+    return { ok: true, version };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+}
+
+/** Promote a version to production (single-active enforced by partial index). */
+async function activateStylePack(version) {
+  try {
+    await supabaseAdmin.from('prospect_style_pack').update({ active: false }).eq('active', true);
+    const { data, error } = await supabaseAdmin
+      .from('prospect_style_pack').update({ active: true }).eq('version', version).select('version');
+    if (error || !Array.isArray(data) || data.length === 0) {
+      return { ok: false, error: (error && error.message) || 'version not found' };
+    }
+    bustStylePackCache();
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+}
+
 /**
  * Cockpit: list leads for the internal admin view (newest activity first).
  * Optional state filter. Returns the columns the cockpit list + status buckets need.
@@ -638,6 +716,11 @@ module.exports = {
   recordEvent,
   recordNote,
   updateIntent,
+  getActiveStylePack,
+  bustStylePackCache,
+  listStylePacks,
+  saveStylePack,
+  activateStylePack,
   listTemplates,
   upsertTemplate,
   listCanned,
