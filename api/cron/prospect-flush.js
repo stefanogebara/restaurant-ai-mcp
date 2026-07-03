@@ -74,8 +74,35 @@ module.exports = async (req, res) => {
       logger.error('followups failed:', err.message);
     }
 
-    await logCronRun('prospect-flush', { resumed, errors, followups_sent: followups ? followups.sent : 0 });
-    return res.status(200).json({ success: true, due: due.length, resumed, errors, followups });
+    // Discovery-chain watchdog: the mass-discovery worker self-chains, but a
+    // single dead link (cold-start kill, network blip) strands the job in
+    // 'running' forever. Any running job untouched for >5 min gets re-kicked —
+    // the atomic cursor makes resumes free.
+    let rekicked = 0;
+    try {
+      const staleCutoff = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+      const { data: stale } = await supabaseAdmin
+        .from('prospect_discovery_jobs')
+        .select('id')
+        .eq('status', 'running')
+        .lt('updated_at', staleCutoff)
+        .limit(3);
+      const base = (process.env.CLIENT_URL || 'https://seatable.one').replace(/\/$/, '');
+      for (const job of stale || []) {
+        fetch(`${base}/api/prospect-discovery-worker`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${secret}` },
+          body: JSON.stringify({ job_id: job.id }),
+        }).catch((err) => logger.error('watchdog kick failed:', err.message));
+        rekicked++;
+        logger.info(`discovery watchdog re-kicked stalled job ${job.id}`);
+      }
+    } catch (err) {
+      logger.error('discovery watchdog failed:', err.message);
+    }
+
+    await logCronRun('prospect-flush', { resumed, errors, followups_sent: followups ? followups.sent : 0, rekicked });
+    return res.status(200).json({ success: true, due: due.length, resumed, errors, followups, rekicked });
   } catch (err) {
     logger.error('flush fatal:', err.message);
     await logCronRun('prospect-flush', { resumed, errors: errors + 1 });

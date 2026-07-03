@@ -200,6 +200,25 @@
   HealthCard). Docs: docs/olimpia/README.md (architecture, safety layers,
   external setup, API, env vars). Backend 150 tests / 11 suites; frontend
   helpers 9 tests; tsc clean.
+- **Phase 9 (mass discovery) ✅ (2026-07-03)** — sendable-only filter default ON
+  (BR-mobile = WhatsApp-capable; discards counted, never inserted), Places
+  pagination (60/query), IBGE territory fan-out (bairro/cidade/estado),
+  prospect_discovery_jobs + self-chaining worker + flush-cron WATCHDOG
+  (re-kicks jobs silent >5 min — added after a real mid-sweep stall). First
+  city-wide sweep (São Paulo, 97 queries): 3,3k+ found → **pool went 6 →
+  1,143 leads (1,142 sendable)**. 9 tests.
+- **Phase 10 (Gym + coach loop) ✅ (2026-07-03)** — training architecture:
+  prospect_style_pack (versioned ESTILO appended to the PROD system prompt;
+  activate = live brain change, 3-min cache), prospect-sim (LLM-as-lead
+  personas vs the REAL generateReply, sandboxed; judge rubric humanidade/
+  naturalidade/sobriedade/bolhas/repetição/avanço/adaptação), 10 seeded
+  scenarios, Gym console panel, scripts/_gym-ab.mjs suite runner. Autonomous
+  COACH /loop (dynamic): coleta sinais → workflow de pesquisa (foco rotativo)
+  → rascunho → suite A/B → promoção com guardrails (+0.25 média, sem regressão
+  >0.5, optout íntegro). **Ciclo 1 (objeções) PROMOVEU v3 (26 regras): média
+  3.6 → 4.0, 7/7 dimensões melhoraram, 8/10 cenários.** v2 (18 regras
+  destiladas de pesquisa linguística) permanece como base histórica. 9 tests;
+  168 prospecting green / 13 suites.
 - **Remaining external steps:** approve extra template variants + touch-2/3
   templates in WhatsApp Manager, then register in Abordagens; subscribe Meta
   app to phone_number_quality_update + set PROSPECTING_DISPLAY_NUMBER.
