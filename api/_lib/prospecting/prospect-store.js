@@ -456,7 +456,9 @@ async function upsertTemplate(row) {
   try {
     const clean = {
       variant_label: String(row.variant_label || '').trim().toUpperCase(),
-      touch_number: Math.min(Math.max(parseInt(row.touch_number, 10) || 1, 1), 3),
+      // Touches 1-3 = cold sequence (intro/bump/breakup); 4 = the 'resgate'
+      // re-engage slot used by dispatchReengages after the 24h window closes.
+      touch_number: Math.min(Math.max(parseInt(row.touch_number, 10) || 1, 1), 4),
       meta_template_name: String(row.meta_template_name || '').trim(),
       template_lang: String(row.template_lang || 'pt_BR').trim(),
       body_preview: row.body_preview ? String(row.body_preview) : null,
