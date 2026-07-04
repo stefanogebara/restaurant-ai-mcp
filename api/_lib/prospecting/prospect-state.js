@@ -59,6 +59,10 @@ const AUTO_ATENDIMENTO_PATTERNS = [
   /\breservas?\s+(exclusivamente\s+)?pelo\s+link/i,
   /\bestamos\s+desativando\s+(esse|este)\s+n[\u00fau]mero/i,
   /\bnos\s+chame\s+(aqui|neste|nesse|no)\b/i,
+  /\b(um\s+(minuto|momento|instante)|aguarde)\s+e?\s*j[\u00e1a]\s+te\s+atend/i,
+  /\bj[\u00e1a]\s+te\s+atendemos\b/i,
+  /\baproveitamos\s+para\s+informar/i,
+  /\b(99\s?food|ifood|rappi|uber\s?eats)\b/i,
 ];
 
 /**

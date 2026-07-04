@@ -155,3 +155,7 @@ describe('gatekeeper door — thread qualification (once by construction)', () =
     expect(deveEnviarPorta([])).toBe(false);
   });
 });
+
+test('delivery-menu bots match too (Mica Izakaya real fixture)', () => {
+  expect(pareceAutoAtendimento('Olá! Tudo bem?😊 Um minuto e já te atendemos! Aproveitamos para informar Entregas - 99Food, iFood')).toBe(true);
+});
