@@ -156,6 +156,17 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
   if (!isNudge && detectarOptout(text)) {
     await recordOptout({ phone: from, leadId: lead.id, reason: 'keyword' });
     logger.info(`[prospect] opt-out detected lead=${lead.id}`);
+    // One goodbye line so the request never meets silence (gym cycles 7-10) —
+    // but only when the global kill switch allows the agent to speak at all.
+    try {
+      const { isCronEnabled } = require('../cron-config');
+      if (await isCronEnabled('prospecting-agent')) {
+        const { COMPANION_TEXT } = require('./prospect-agent');
+        await sendReply(lead.id, from, COMPANION_TEXT.optout, { skipPacing: true });
+      }
+    } catch (err) {
+      logger.warn('optout goodbye skipped:', err.message);
+    }
     return { action: 'optout' };
   }
 
@@ -317,9 +328,16 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
     let sent = false;
     let dryRun = false;
     switch (acao.tipo) {
-      case 'optout':
+      case 'optout': {
+        // Goodbye FIRST (suppression starts the moment the optout is recorded);
+        // interpretResponse guarantees texto. One line, then permanent silence.
+        if (acao.texto) {
+          const r = await sendReply(lead.id, from, acao.texto, pace);
+          sent = r.sentAny; dryRun = r.dryRun;
+        }
         await recordOptout({ phone: from, leadId: lead.id, reason: 'llm' });
         break;
+      }
 
       case 'ignorar':
       case 'nada':

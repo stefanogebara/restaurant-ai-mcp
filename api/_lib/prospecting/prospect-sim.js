@@ -105,7 +105,8 @@ async function runSimulation(scenario, { styleOverride = undefined, turns = null
 
     // 2. Deterministic opt-out guardrail — same as production order.
     if (detectarOptout(leadMsg)) {
-      transcript.push({ who: 'olimpia', texto: null, acao: 'optout' });
+      const { COMPANION_TEXT } = require('./prospect-agent');
+      transcript.push({ who: 'olimpia', texto: COMPANION_TEXT.optout, acao: 'optout' });
       terminal = 'optout';
       break;
     }

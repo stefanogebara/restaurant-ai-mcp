@@ -295,6 +295,42 @@ const PROSPECT_TOOLS = [
  * @param {{content?: Array, stop_reason?: string}} response
  * @returns {ProspectAcao}
  */
+// Companion lines for tool actions when the model sent the tool without text.
+// Deterministic (no extra LLM call): the action NEVER goes out silent — the
+// recurring failure class the gym exposed in cycles 7-10.
+const COMPANION_TEXT = {
+  optout: 'entendido, não te mando mais nada — obrigada pelo tempo 🙏',
+  handoff: 'boa pergunta — vou confirmar direitinho com o time e te retorno 🙂',
+};
+
+/**
+ * PURE: phone-like digit runs (10-13 digits) present in `texto` but absent
+ * from the conversation context — i.e., numbers the model may have mangled.
+ */
+function findForeignPhones(texto, contextoTexto) {
+  // Extract phone-shaped tokens (separators allowed), then normalize to digits;
+  // the context collapses to one digit stream so formatting never causes a miss.
+  const matches = String(texto || '').match(/\+?\d[\d\s\-.()/]{8,18}\d/g) || [];
+  const runs = [...new Set(
+    matches.map((m) => m.replace(/\D+/g, '')).filter((d) => d.length >= 10 && d.length <= 13),
+  )];
+  const contexto = String(contextoTexto || '').replace(/\D+/g, '');
+  // Same number ± the 55 country prefix is NOT foreign (the model may add or
+  // drop +55 when echoing a number the lead wrote bare).
+  const conhecido = (r) => contexto.includes(r)
+    || (r.startsWith('55') && contexto.includes(r.slice(2)))
+    || contexto.includes('55' + r);
+  return runs.filter((r) => !conhecido(r));
+}
+
+/** PURE: drop bubbles (blank-line separated) that contain any listed digit run. */
+function stripForeignPhoneBubbles(texto, foreign) {
+  if (!foreign.length) return texto;
+  const bubbles = String(texto).split(/\n{2,}/);
+  const kept = bubbles.filter((b) => !foreign.some((f) => b.replace(/\D+/g, '').includes(f)));
+  return kept.join('\n\n').trim();
+}
+
 function interpretResponse(response) {
   const blocks = Array.isArray(response && response.content) ? response.content : [];
   const textBlock = blocks.find((b) => b.type === 'text' && b.text && b.text.trim());
@@ -308,9 +344,9 @@ function interpretResponse(response) {
   if (toolUse && toolUse.name) {
     const nome = toolUse.name;
     const args = (toolUse.input && typeof toolUse.input === 'object') ? toolUse.input : {};
-    if (nome === 'marcar_optout') return { tipo: 'optout', texto };
+    if (nome === 'marcar_optout') return { tipo: 'optout', texto: texto || COMPANION_TEXT.optout };
     if (nome === 'ignorar') return { tipo: 'ignorar', motivo: String(args.motivo || '').trim() || 'sem motivo' };
-    if (nome === 'escalar_humano') return { tipo: 'handoff', texto, motivo: String(args.motivo || 'não especificado') };
+    if (nome === 'escalar_humano') return { tipo: 'handoff', texto: texto || COMPANION_TEXT.handoff, motivo: String(args.motivo || 'não especificado') };
     if (nome === 'registrar_responsavel') {
       const numero = String(args.numero || '').trim();
       if (!numero) return { tipo: 'handoff', texto, motivo: 'registrar_responsavel sem número' };
@@ -363,7 +399,39 @@ async function generateReply({ lead, history, nowMs, injectUserTurn = null, noTo
       messages,
       ...(noTools ? {} : { tools: PROSPECT_TOOLS }),
     });
-    return interpretResponse(response);
+    const acao = interpretResponse(response);
+
+    // Foreign-phone guard: a phone number in the reply that never appeared in
+    // the conversation is almost certainly mangled digits (seen in the gym:
+    // the model altered a lead-provided number). One corrective retry; if it
+    // persists, the offending bubble is stripped rather than sent wrong.
+    if (acao.texto) {
+      const contexto = [
+        lead && lead.whatsapp_phone,
+        ...history.map((h) => h && h.corpo),
+        injectUserTurn,
+      ].filter(Boolean).join(' ');
+      let foreign = findForeignPhones(acao.texto, contexto);
+      if (foreign.length) {
+        logger.warn(`foreign phone digits in reply (${foreign.join(',')}) — corrective retry`);
+        const retry = await getAI().messages.create({
+          model: AI_MODEL,
+          max_tokens: 400,
+          temperature: 0.3,
+          system,
+          messages: [...messages, { role: 'user', content: '[INSTRUÇÃO INTERNA: sua resposta anterior citou um número de telefone que NÃO existe na conversa. Reescreva a resposta copiando números EXATAMENTE como aparecem no histórico — ou sem citar número nenhum.]' }],
+          ...(noTools ? {} : { tools: PROSPECT_TOOLS }),
+        }).catch(() => null);
+        const acao2 = retry ? interpretResponse(retry) : null;
+        if (acao2 && acao2.texto && findForeignPhones(acao2.texto, contexto).length === 0) {
+          return acao2;
+        }
+        const clean = stripForeignPhoneBubbles(acao.texto, foreign);
+        if (!clean) return { tipo: 'nada', motivo: 'resposta descartada (número estranho à conversa)' };
+        acao.texto = clean;
+      }
+    }
+    return acao;
   } catch (err) {
     logger.error('generateReply LLM call failed:', err.message);
     // Fail safe: a transient LLM error must NOT send a half-baked message.
@@ -374,10 +442,13 @@ async function generateReply({ lead, history, nowMs, injectUserTurn = null, noTo
 module.exports = {
   AGENT_NAME,
   COMPANY,
+  COMPANION_TEXT,
   PROSPECT_TOOLS,
   buildSystemPrompt,
   placeholderMidia,
   historyToMessages,
   interpretResponse,
+  findForeignPhones,
+  stripForeignPhoneBubbles,
   generateReply,
 };
