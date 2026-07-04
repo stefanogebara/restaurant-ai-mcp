@@ -43,6 +43,49 @@ const OPTOUT_PATTERNS = [
   /\bsem\s+interesse\b/i,
 ];
 
+// Institutional auto-reply markers (from the first real dispatch's transcripts:
+// Refúgio, Bar do Parque, BelaTucci, Bosco, Cabruca, TUJU, D.O.M., Dalva e Dito).
+const AUTO_ATENDIMENTO_PATTERNS = [
+  /\bagradec\w+\s+(seu|o|sua|a)\s+(contato|prefer[êe]ncia|mensagem|solicita[çc][ãa]o)/i,
+  /\bhor[áa]rio\s+de\s+(atendimento|funcionamento)/i,
+  /\bfa[çc]a\s+(seu|o)\s+pedido/i,
+  /\bseja\s+bem[- ]?vind/i,
+  /\bbem[- ]?vindo\s*\(?a?\)?\s+(ao|à|a)\b/i,
+  /\bresponderemos\s+(assim\s+que|em\s+breve|o\s+quanto\s+antes)/i,
+  /\bnossa\s+equipe\s+(vai|ir[áa])/i,
+  /\bem\s+(alguns\s+)?instantes/i,
+  /\bdigite\s+\d/i,
+  /\bn[ãa]o\s+estamos\s+dispon[íi]veis/i,
+  /\breservas?\s+(exclusivamente\s+)?pelo\s+link/i,
+  /\bestamos\s+desativando\s+(esse|este)\s+n[\u00fau]mero/i,
+  /\bnos\s+chame\s+(aqui|neste|nesse|no)\b/i,
+];
+
+/**
+ * PURE: does this inbound read as an institutional AUTO-REPLY (greeting bot,
+ * menu, hours, order link) rather than a person? Conservative: one strong
+ * marker is required; plain human text never matches.
+ */
+function pareceAutoAtendimento(texto) {
+  if (!texto) return false;
+  return AUTO_ATENDIMENTO_PATTERNS.some((re) => re.test(String(texto)));
+}
+
+/**
+ * PURE: should the responder send the one-time door-line? True only when the
+ * thread is template(s)-out + bot-noise-in and NOTHING else: any human-looking
+ * inbound or any non-template outbound (a reply, a nudge, a previous door-line)
+ * disqualifies — which also makes the door-line once-per-thread by definition.
+ */
+function deveEnviarPorta(history) {
+  const rows = (history || []).filter((h) => h && h.tipo !== 'sys');
+  const ins = rows.filter((h) => h.direcao === 'in');
+  if (ins.length === 0) return false;
+  if (!ins.every((h) => pareceAutoAtendimento(h.corpo))) return false;
+  const outs = rows.filter((h) => h.direcao === 'out');
+  return outs.every((h) => h.tipo === 'template');
+}
+
 /** Detect unambiguous opt-out. Ambiguous → false (let the LLM handle/escalate). */
 function detectarOptout(texto) {
   if (!texto) return false;
@@ -91,6 +134,8 @@ function estadoAposAcao(acao) {
 }
 
 module.exports = {
+  pareceAutoAtendimento,
+  deveEnviarPorta,
   SILENT_STATES,
   OPTOUT_PATTERNS,
   deveResponder,

@@ -105,3 +105,53 @@ describe('companion-text guard — registrar/agendar also never silent', () => {
     expect(acao.texto).toMatch(/qual dia e horário/);
   });
 });
+
+const { pareceAutoAtendimento, deveEnviarPorta } = require('../_lib/prospecting/prospect-state');
+
+describe('gatekeeper door — auto-attendant detection (real first-dispatch fixtures)', () => {
+  const BOTS = [
+    'Refúgio Restaurante agradece sua preferência! Em alguns instantes nossa equipe vai lhe atender!',
+    'Seja bem vindo ao TUJU! Agradecemos seu contato e vamos te responder o quanto antes.',
+    'Bem vindo a Bela Tucci🍝🍷 Faça seu pedido através do link https://oia.99app.com/x',
+    'Nossos horários de funcionamento: Terça a sexta — 12h às 15h. Reservas exclusivamente pelo link:',
+    'Agradecemos sua mensagem. Não estamos disponíveis no momento, mas responderemos assim que possível.',
+    'Estamos desativando esse número e para mais informações nos chame aqui (11) 91018-9842 💛',
+  ];
+  test.each(BOTS)('flags: %s', (txt) => {
+    expect(pareceAutoAtendimento(txt)).toBe(true);
+  });
+
+  test('human replies never match', () => {
+    for (const txt of [
+      'E aí, pode sim', 'quanto custa isso?', 'vocês insistem hein kkk',
+      'Sou o responsável', 'não tô interessado não, obrigado',
+      'quem decide é o Beto, fala com ele',
+    ]) expect(pareceAutoAtendimento(txt)).toBe(false);
+  });
+});
+
+describe('gatekeeper door — thread qualification (once by construction)', () => {
+  const tpl = { direcao: 'out', tipo: 'template', corpo: '[template:olimpia_apresentacao]' };
+  const bot = { direcao: 'in', tipo: 'text', corpo: 'Agradecemos seu contato. Nosso horário de atendimento: 12h às 23h' };
+  const humano = { direcao: 'in', tipo: 'text', corpo: 'oi, quem fala?' };
+  const porta = { direcao: 'out', tipo: 'text', corpo: 'oi! não é pedido não — é sobre parceria 🙂 quem cuida das reservas ou parcerias por aí?' };
+
+  test('template out + only bot noise in → send the door-line', () => {
+    expect(deveEnviarPorta([tpl, bot])).toBe(true);
+    expect(deveEnviarPorta([tpl, bot, bot])).toBe(true);
+  });
+
+  test('any human voice disqualifies (the LLM owns the conversation)', () => {
+    expect(deveEnviarPorta([tpl, bot, humano])).toBe(false);
+    expect(deveEnviarPorta([tpl, humano])).toBe(false);
+  });
+
+  test('a previous non-template outbound disqualifies (door-line is once)', () => {
+    expect(deveEnviarPorta([tpl, bot, porta, bot])).toBe(false);
+  });
+
+  test('no inbound at all → nothing to answer', () => {
+    expect(deveEnviarPorta([tpl])).toBe(false);
+    expect(deveEnviarPorta([])).toBe(false);
+  });
+});

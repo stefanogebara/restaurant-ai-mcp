@@ -340,9 +340,23 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
       }
 
       case 'ignorar':
-      case 'nada':
-        // Deliberate silence — no send, no forced state change.
+      case 'nada': {
+        // Deliberate silence — EXCEPT the gatekeeper door: when the thread is
+        // template-out + bot-noise-in only (no human voice yet), one short
+        // line addressed to the human who reads the thread later. The pack
+        // can't reach this case (cycles 9/16: only bots reply, no one to talk
+        // to); deveEnviarPorta is once-per-thread by construction.
+        if (acao.tipo === 'ignorar') {
+          const { deveEnviarPorta } = require('./prospect-state');
+          if (deveEnviarPorta(history)) {
+            const { COMPANION_TEXT } = require('./prospect-agent');
+            const r = await sendReply(lead.id, from, COMPANION_TEXT.porta, pace);
+            sent = r.sentAny; dryRun = r.dryRun;
+            await recordEvent(lead.id, '🚪 só auto-atendimento na thread — recado de porta enviado para o humano que ler depois');
+          }
+        }
         break;
+      }
 
       case 'handoff':
         patch.handoff_motivo = acao.motivo || null;

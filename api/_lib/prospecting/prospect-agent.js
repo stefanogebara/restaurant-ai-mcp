@@ -301,6 +301,7 @@ const PROSPECT_TOOLS = [
 const COMPANION_TEXT = {
   optout: 'entendido, não te mando mais nada — obrigada pelo tempo 🙏',
   handoff: 'boa pergunta — vou confirmar direitinho com o time e te retorno 🙂',
+  porta: 'oi! não é pedido não — é sobre parceria 🙂 quem cuida das reservas ou parcerias por aí?',
   registrar: (nome) => (nome
     ? `perfeito, obrigada! já chamo ${nome} então 🙂`
     : 'perfeito, obrigada pela indicação! já entro em contato então 🙂'),
