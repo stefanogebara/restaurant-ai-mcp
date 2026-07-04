@@ -159,3 +159,21 @@ describe('gatekeeper door — thread qualification (once by construction)', () =
 test('delivery-menu bots match too (Mica Izakaya real fixture)', () => {
   expect(pareceAutoAtendimento('Olá! Tudo bem?😊 Um minuto e já te atendemos! Aproveitamos para informar Entregas - 99Food, iFood')).toBe(true);
 });
+
+const { deferralDentroDaJanela, proximaAbertura } = require('../_lib/prospecting/prospect-hours');
+
+describe('deferral clamp — the 24h window beats the business-hours preference', () => {
+  test('Saturday inbound: Monday opening would kill the thread → clamps to Sunday (+22h)', () => {
+    const sabado = '2026-07-04T15:35:00.000Z'; // Sat 12:35 BRT
+    const abertura = new Date(proximaAbertura(sabado));
+    expect(abertura.getUTCDay()).toBe(1); // sanity: unclamped lands Monday
+    const clamped = new Date(deferralDentroDaJanela(sabado));
+    expect(clamped.getUTCDay()).toBe(0); // Sunday
+    expect(clamped.getTime()).toBe(new Date(sabado).getTime() + 22 * 3600 * 1000);
+  });
+
+  test('weeknight inbound: next-morning opening is inside the window → no clamp', () => {
+    const madrugada = '2026-07-08T02:30:00.000Z'; // Tue 23:30 BRT
+    expect(deferralDentroDaJanela(madrugada)).toBe(proximaAbertura(madrugada));
+  });
+});

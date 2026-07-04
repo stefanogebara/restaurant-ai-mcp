@@ -341,7 +341,7 @@
     },
     {
       "path": "/api/cron/prospect-flush",
-      "schedule": "*/15 12-22 * * 1-5"
+      "schedule": "*/15 12-22 * * *"
     },
     {
       "path": "/api/cron/prospect-nudge",

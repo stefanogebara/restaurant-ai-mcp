@@ -22,7 +22,7 @@ const { sendWhatsAppMessage } = require('../whatsapp-sender');
 const { acquireProcessingLock, releaseProcessingLock } = require('../rate-limit');
 const { getProspectingPhoneNumberId } = require('./routing');
 const { deveResponder, detectarOptout, estadoAposAcao } = require('./prospect-state');
-const { dentroDoHorario, proximaAbertura } = require('./prospect-hours');
+const { dentroDoHorario, deferralDentroDaJanela } = require('./prospect-hours');
 const { pacingDelayMs, splitReplyParts, partPauseDelayMs } = require('./prospect-pacing');
 const { extrairEmail, extrairNumeroDono, extrairNomeDono, extrairDddBr } = require('./prospect-extract');
 const { mergeFatos } = require('./prospect-facts');
@@ -187,7 +187,9 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
   //    Bypass with PROSPECTING_IGNORE_HOURS=true for testing.
   if (process.env.PROSPECTING_IGNORE_HOURS !== 'true' && !dentroDoHorario(nowMs)) {
     if (isNudge) return { action: 'skip', reason: 'outside_hours' };
-    const replyApos = proximaAbertura(nowMs);
+    // Clamped so the deferred reply still fits Meta's 24h window (a weekend
+    // inbound deferred to Monday would be undeliverable as free text).
+    const replyApos = deferralDentroDaJanela(nowMs);
     await patchLead(lead.id, { reply_apos: replyApos });
     logger.info(`[prospect] outside business hours, deferred lead=${lead.id} until ${replyApos}`);
     return { action: 'deferred', replyApos };

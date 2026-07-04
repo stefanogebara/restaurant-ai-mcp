@@ -46,4 +46,18 @@ function proximaAbertura(iso, opts = {}) {
   return new Date(base.getTime() + 24 * 60 * 60 * 1000).toISOString();
 }
 
-module.exports = { dentroDoHorario, proximaAbertura };
+/**
+ * Deferral that never crosses Meta's 24h service window: the next business
+ * opening, clamped to now+22h (2h margin before the window closes). When the
+ * clamp bites (weekend inbound), the reply goes out off-hours — a Sunday
+ * message is unusual for a B2B seller; a dead thread is worse.
+ */
+const JANELA_CLAMP_MS = 22 * 60 * 60 * 1000;
+
+function deferralDentroDaJanela(iso, opts = {}) {
+  const base = iso instanceof Date ? iso.getTime() : new Date(iso).getTime();
+  const abertura = new Date(proximaAbertura(base, opts)).getTime();
+  return new Date(Math.min(abertura, base + JANELA_CLAMP_MS)).toISOString();
+}
+
+module.exports = { dentroDoHorario, proximaAbertura, deferralDentroDaJanela, JANELA_CLAMP_MS };
