@@ -9,7 +9,7 @@ jest.mock('../_lib/secure-logger', () => ({
   createSecureLogger: jest.fn(() => ({ info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() })),
 }));
 
-const { parseJudgeText, parsePairedText, simLeadSystem, RUBRICA } = require('../_lib/prospecting/prospect-sim');
+const { parseJudgeText, parsePairedText, simLeadSystem, RUBRICA, PAIRED_LENSES } = require('../_lib/prospecting/prospect-sim');
 const { buildSystemPrompt } = require('../_lib/prospecting/prospect-agent');
 
 // ============================================================ judge parsing
@@ -69,6 +69,17 @@ describe('parsePairedText — head-to-head verdicts (cycle-4 variance fix)', () 
     expect(parsePairedText('{"vencedor":"C","margem":1}')).toBeNull();
     expect(parsePairedText('os dois foram bem')).toBeNull();
     expect(parsePairedText('')).toBeNull();
+  });
+
+  test('lens table covers the 3 voting axes with real instructions', () => {
+    expect(Object.keys(PAIRED_LENSES).sort()).toEqual(['conducao', 'correcao', 'naturalidade']);
+    for (const instrucao of Object.values(PAIRED_LENSES)) {
+      expect(instrucao).toMatch(/LENTE OBRIGATÓRIA/);
+      expect(instrucao.length).toBeGreaterThan(80);
+    }
+    // The discipline lens must watch the two cycle-7 failure modes.
+    expect(PAIRED_LENSES.correcao).toMatch(/mesmo turno/);
+    expect(PAIRED_LENSES.correcao).toMatch(/inventado ou estimado/);
   });
 });
 

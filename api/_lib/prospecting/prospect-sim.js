@@ -221,6 +221,15 @@ const PAIRED_JUDGE_SYSTEM = [
   `Empate SÓ quando genuinamente indistinguíveis. Responda APENAS o JSON.`,
 ].join('\n');
 
+// Judge lenses (cycle-8 infra): near-tie packs saturate a single holistic
+// judgment, so the evaluator votes 3× per pair — one vote per lens — and the
+// majority decides. Diversity of criteria discriminates where redundancy can't.
+const PAIRED_LENSES = {
+  naturalidade: 'LENTE OBRIGATÓRIA — julgue SÓ por esta lente: quem soa mais HUMANA? Registro natural de WhatsApp, sem repetição nem tell de robô, bolhas quando natural, reação genuína ao que o lead acabou de dizer.',
+  conducao: 'LENTE OBRIGATÓRIA — julgue SÓ por esta lente: quem CONDUZ melhor? Responde o que o lead perguntou, trata a objeção em vez de re-pitch, avança sem forçar, e fecha (agenda/próximo passo) quando o lead dá abertura.',
+  correcao: 'LENTE OBRIGATÓRIA — julgue SÓ por esta lente: DISCIPLINA. Toda ação de ferramenta vem acompanhada de mensagem no mesmo turno (despedida, confirmação); nenhum número que o lead não deu é inventado ou estimado; pedido de parar é respeitado na hora; resposta técnica nunca é chutada.',
+};
+
 /** PURE: paired-judge text → {vencedor, margem, motivo} or null. */
 function parsePairedText(text) {
   const s = String(text || '').trim();
@@ -252,9 +261,11 @@ function transcriptText(transcript) {
  * @param {string} scenarioDesc - short scenario description for context
  * @param {Array} transcriptA
  * @param {Array} transcriptB
+ * @param {string|null} [lens] - optional PAIRED_LENSES key; narrows the judgment
+ *   to one axis so a 3-lens majority vote can discriminate near-tie packs.
  * @returns {Promise<{vencedor:'A'|'B'|'empate', margem:number, motivo:string|null}|null>}
  */
-async function judgePaired(scenarioDesc, transcriptA, transcriptB) {
+async function judgePaired(scenarioDesc, transcriptA, transcriptB, lens = null) {
   const content = [
     `CENÁRIO: ${scenarioDesc}`,
     ``,
@@ -264,12 +275,15 @@ async function judgePaired(scenarioDesc, transcriptA, transcriptB) {
     `=== TRANSCRIPT B ===`,
     transcriptText(transcriptB),
   ].join('\n');
+  const system = lens && PAIRED_LENSES[lens]
+    ? `${PAIRED_JUDGE_SYSTEM}\n\n${PAIRED_LENSES[lens]}`
+    : PAIRED_JUDGE_SYSTEM;
   try {
     const resp = await getAI().messages.create({
       model: AI_MODEL,
       max_tokens: 250,
       temperature: 0,
-      system: PAIRED_JUDGE_SYSTEM,
+      system,
       messages: [{ role: 'user', content }],
     });
     const block = (resp.content || []).find((b) => b.type === 'text' && b.text);
@@ -354,6 +368,7 @@ module.exports = {
   judgeTranscript,
   parsePairedText,
   judgePaired,
+  PAIRED_LENSES,
   runGymExercise,
   listScenarios,
   listRuns,
