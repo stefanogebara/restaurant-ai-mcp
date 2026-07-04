@@ -27,6 +27,21 @@ const STATUS_RANK = { failed: 0, sent: 1, delivered: 2, read: 3 };
 const FAILED_RATE_LIMIT = 0.05;
 const FAILED_RATE_MIN_SENDS = 5;
 
+// Failure codes that say NOTHING about our number's reputation — expected
+// attrition on any cold list. Counting them tripped the breaker at 9.1% on a
+// day the quality rating was GREEN (2026-07-04):
+//   131026 recipient not on WhatsApp / can't receive marketing messages
+//   131049 Meta per-user marketing frequency cap ("healthy ecosystem")
+//   130472 recipient is in a Meta marketing holdout experiment
+// Everything else (spam rate 131048, policy blocks, auth) still counts.
+const BENIGN_FAIL_CODES = ['131026', '131049', '130472'];
+
+/** PURE: does this error_detail describe benign (non-reputational) attrition? */
+function isBenignFailure(errorDetail) {
+  const code = String(errorDetail || '').trim().split(/\s+/)[0];
+  return BENIGN_FAIL_CODES.includes(code);
+}
+
 /** Rank-monotonic advancement; failed only lands before delivery proof. */
 function shouldAdvanceStatus(current, next) {
   if (!(next in STATUS_RANK)) return false;
@@ -49,22 +64,33 @@ async function recordNumberEvent(event) {
   await supabaseAdmin.from('prospect_number_events').insert(event);
 }
 
-/** Trailing-24h failed rate over outbound messages with a known status. */
+/**
+ * Trailing-24h failure profile over outbound messages with a known status.
+ * `rate` counts ONLY reputational failures (what the breaker watches);
+ * `rateAll` includes benign attrition (what the console displays).
+ */
 async function failedRate24h() {
   const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-  const base = supabaseAdmin.from('prospect_messages')
-    .select('id', { count: 'exact', head: true })
-    .eq('direcao', 'out')
-    .gte('enviada_em', cutoff);
-  const [total, failed] = await Promise.all([
-    base.not('status', 'is', null),
+  const [total, failedRows] = await Promise.all([
     supabaseAdmin.from('prospect_messages')
       .select('id', { count: 'exact', head: true })
-      .eq('direcao', 'out').eq('status', 'failed').gte('enviada_em', cutoff),
+      .eq('direcao', 'out')
+      .gte('enviada_em', cutoff)
+      .not('status', 'is', null),
+    supabaseAdmin.from('prospect_messages')
+      .select('error_detail')
+      .eq('direcao', 'out').eq('status', 'failed').gte('enviada_em', cutoff)
+      .limit(500),
   ]);
   const t = total.count ?? 0;
-  const f = failed.count ?? 0;
-  return { total: t, failed: f, rate: t > 0 ? f / t : 0 };
+  const rows = failedRows.data || [];
+  const f = rows.length;
+  const fRep = rows.filter((r) => !isBenignFailure(r.error_detail)).length;
+  return {
+    total: t, failed: f, failedReputational: fRep,
+    rate: t > 0 ? fRep / t : 0,
+    rateAll: t > 0 ? f / t : 0,
+  };
 }
 
 /**
@@ -102,7 +128,7 @@ async function applyStatusEvents(value) {
 /** Trip the dispatch breaker when the trailing failed rate crosses the line. */
 async function checkFailedRateBreaker() {
   try {
-    const { total, failed, rate } = await failedRate24h();
+    const { total, failedReputational, rate } = await failedRate24h();
     if (total < FAILED_RATE_MIN_SENDS || rate <= FAILED_RATE_LIMIT) return;
 
     // Idempotent: only trip (and log) when currently enabled.
@@ -110,7 +136,7 @@ async function checkFailedRateBreaker() {
       .select('enabled').eq('job_name', 'prospecting-dispatch').maybeSingle();
     if (data && data.enabled === false) return;
 
-    const detail = `failed-rate breaker: ${failed}/${total} (${(rate * 100).toFixed(1)}%) nas últimas 24h`;
+    const detail = `failed-rate breaker: ${failedReputational}/${total} falhas reputacionais (${(rate * 100).toFixed(1)}%) nas últimas 24h`;
     await setDispatchEnabled(false, detail);
     await recordNumberEvent({ event_type: 'failed_rate_breaker', detail });
     logger.error(`CIRCUIT BREAKER tripped — ${detail}`);
@@ -178,8 +204,10 @@ async function numberHealth() {
   const lastQuality = (events || []).find((e) => e.event_type === 'quality_update' && e.rating);
   return {
     rating: lastQuality ? lastQuality.rating : 'GREEN',
-    failed_rate_24h: Math.round(rates.rate * 1000) / 10,
+    failed_rate_24h: Math.round(rates.rateAll * 1000) / 10,
     failed_24h: rates.failed,
+    failed_reputational_24h: rates.failedReputational,
+    failed_rate_reputacional_24h: Math.round(rates.rate * 1000) / 10,
     sends_24h: rates.total,
     events: events || [],
   };
@@ -188,6 +216,7 @@ async function numberHealth() {
 module.exports = {
   STATUS_RANK,
   shouldAdvanceStatus,
+  isBenignFailure,
   applyStatusEvents,
   applyQualityUpdate,
   checkFailedRateBreaker,
