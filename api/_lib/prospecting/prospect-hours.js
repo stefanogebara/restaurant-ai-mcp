@@ -60,4 +60,19 @@ function deferralDentroDaJanela(iso, opts = {}) {
   return new Date(Math.min(abertura, base + JANELA_CLAMP_MS)).toISOString();
 }
 
-module.exports = { dentroDoHorario, proximaAbertura, deferralDentroDaJanela, JANELA_CLAMP_MS };
+/**
+ * PURE: what to do with an inbound outside business hours, anchored on the
+ * lead's 24h window (lastInMs — Meta's clock, not ours):
+ *  - deadline (lastIn+22h) not reached → { acao:'adiar', replyApos: min(abertura, deadline) }
+ *  - deadline reached/imminent (≤5min) → { acao:'responder' } — off-hours beats a dead thread.
+ * Inside business hours callers never ask; this only arbitrates the conflict.
+ */
+function decisaoForaDeHorario(nowMs, lastInMs, opts = {}) {
+  const anchor = Number.isFinite(lastInMs) ? lastInMs : nowMs;
+  const deadline = anchor + JANELA_CLAMP_MS;
+  if (nowMs >= deadline - 5 * 60 * 1000) return { acao: 'responder' };
+  const abertura = new Date(proximaAbertura(nowMs, opts)).getTime();
+  return { acao: 'adiar', replyApos: new Date(Math.min(abertura, deadline)).toISOString() };
+}
+
+module.exports = { dentroDoHorario, proximaAbertura, deferralDentroDaJanela, decisaoForaDeHorario, JANELA_CLAMP_MS };

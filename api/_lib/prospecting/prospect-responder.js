@@ -22,7 +22,7 @@ const { sendWhatsAppMessage } = require('../whatsapp-sender');
 const { acquireProcessingLock, releaseProcessingLock } = require('../rate-limit');
 const { getProspectingPhoneNumberId } = require('./routing');
 const { deveResponder, detectarOptout, estadoAposAcao } = require('./prospect-state');
-const { dentroDoHorario, deferralDentroDaJanela } = require('./prospect-hours');
+const { dentroDoHorario, decisaoForaDeHorario } = require('./prospect-hours');
 const { pacingDelayMs, splitReplyParts, partPauseDelayMs } = require('./prospect-pacing');
 const { extrairEmail, extrairNumeroDono, extrairNomeDono, extrairDddBr } = require('./prospect-extract');
 const { mergeFatos } = require('./prospect-facts');
@@ -187,12 +187,17 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
   //    Bypass with PROSPECTING_IGNORE_HOURS=true for testing.
   if (process.env.PROSPECTING_IGNORE_HOURS !== 'true' && !dentroDoHorario(nowMs)) {
     if (isNudge) return { action: 'skip', reason: 'outside_hours' };
-    // Clamped so the deferred reply still fits Meta's 24h window (a weekend
-    // inbound deferred to Monday would be undeliverable as free text).
-    const replyApos = deferralDentroDaJanela(nowMs);
-    await patchLead(lead.id, { reply_apos: replyApos });
-    logger.info(`[prospect] outside business hours, deferred lead=${lead.id} until ${replyApos}`);
-    return { action: 'deferred', replyApos };
+    // Anchor on the lead's 24h window: defer to min(next opening, window-22h),
+    // but when that clamped deadline ARRIVES (the weekend-flush retry), reply
+    // off-hours — re-deferring would land past the window and kill the thread.
+    const lastInMs = lead.last_in_at ? new Date(lead.last_in_at).getTime() : nowMs;
+    const decisao = decisaoForaDeHorario(nowMs, lastInMs);
+    if (decisao.acao === 'adiar') {
+      await patchLead(lead.id, { reply_apos: decisao.replyApos });
+      logger.info(`[prospect] outside business hours, deferred lead=${lead.id} until ${decisao.replyApos}`);
+      return { action: 'deferred', replyApos: decisao.replyApos };
+    }
+    logger.info(`[prospect] window deadline reached — replying OFF-HOURS lead=${lead.id}`);
   }
 
   // 4. Email capture (best-effort) — merged into facts/columns when we reply.

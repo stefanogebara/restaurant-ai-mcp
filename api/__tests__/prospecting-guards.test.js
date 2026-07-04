@@ -177,3 +177,28 @@ describe('deferral clamp — the 24h window beats the business-hours preference'
     expect(deferralDentroDaJanela(madrugada)).toBe(proximaAbertura(madrugada));
   });
 });
+
+const { decisaoForaDeHorario } = require('../_lib/prospecting/prospect-hours');
+
+describe('decisaoForaDeHorario — the Sunday-flush re-deferral trap', () => {
+  const sabado = new Date('2026-07-04T15:35:00.000Z').getTime(); // Sat 12:35 BRT inbound
+
+  test('fresh Saturday inbound defers to Sunday (clamped), not Monday', () => {
+    const d = decisaoForaDeHorario(sabado, sabado);
+    expect(d.acao).toBe('adiar');
+    expect(new Date(d.replyApos).getUTCDay()).toBe(0);
+  });
+
+  test('Sunday flush at the clamped deadline replies OFF-HOURS instead of re-deferring', () => {
+    const domingoDeadline = sabado + 22 * 3600 * 1000; // the clamped reply_apos
+    const d = decisaoForaDeHorario(domingoDeadline + 60_000, sabado);
+    expect(d.acao).toBe('responder');
+  });
+
+  test('weeknight inbound still defers to next morning opening', () => {
+    const madrugada = new Date('2026-07-08T02:30:00.000Z').getTime(); // Tue 23:30 BRT
+    const d = decisaoForaDeHorario(madrugada, madrugada);
+    expect(d.acao).toBe('adiar');
+    expect(new Date(d.replyApos).getUTCDay()).toBe(3);
+  });
+});
