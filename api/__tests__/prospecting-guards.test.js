@@ -88,3 +88,20 @@ describe('tool-argument guard — registrar numero must come from the conversati
     expect(findForeignPhones('+55 11 98877-6655', 'lead: anota o zap dele 11 98877-6655')).toEqual([]);
   });
 });
+
+describe('companion-text guard — registrar/agendar also never silent', () => {
+  test('registrar without text acks with the referred name', () => {
+    const acao = interpretResponse({ content: [{ type: 'tool_use', name: 'registrar_responsavel', input: { numero: '11 98877-6655', nome: 'Beto' } }] });
+    expect(acao.texto).toMatch(/já chamo Beto/);
+  });
+
+  test('agendar without text confirms the lead-provided slot', () => {
+    const acao = interpretResponse({ content: [{ type: 'tool_use', name: 'agendar_demo', input: { resumo_disponibilidade: 'segunda 10h' } }] });
+    expect(acao.texto).toMatch(/segunda 10h/);
+  });
+
+  test('agendar without any slot falls back to asking for one', () => {
+    const acao = interpretResponse({ content: [{ type: 'tool_use', name: 'agendar_demo', input: {} }] });
+    expect(acao.texto).toMatch(/qual dia e horário/);
+  });
+});

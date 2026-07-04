@@ -301,6 +301,12 @@ const PROSPECT_TOOLS = [
 const COMPANION_TEXT = {
   optout: 'entendido, não te mando mais nada — obrigada pelo tempo 🙏',
   handoff: 'boa pergunta — vou confirmar direitinho com o time e te retorno 🙂',
+  registrar: (nome) => (nome
+    ? `perfeito, obrigada! já chamo ${nome} então 🙂`
+    : 'perfeito, obrigada pela indicação! já entro em contato então 🙂'),
+  agendar: (resumo) => (resumo && resumo !== 'sem detalhe'
+    ? `fechado! deixa eu confirmar aqui (${resumo}) e já te mando o convite 🙂`
+    : 'perfeito! qual dia e horário fica melhor pra você?'),
 };
 
 /**
@@ -351,10 +357,16 @@ function interpretResponse(response) {
       const numero = String(args.numero || '').trim();
       if (!numero) return { tipo: 'handoff', texto, motivo: 'registrar_responsavel sem número' };
       const nomeDono = String(args.nome || '').trim();
-      return { tipo: 'registrar_responsavel', texto, numero, nome: nomeDono || null };
+      return {
+        tipo: 'registrar_responsavel',
+        texto: texto || COMPANION_TEXT.registrar(nomeDono || null),
+        numero,
+        nome: nomeDono || null,
+      };
     }
     if (nome === 'agendar_demo') {
-      return { tipo: 'agendar', texto, resumo: String(args.resumo_disponibilidade || '').trim() || 'sem detalhe' };
+      const resumo = String(args.resumo_disponibilidade || '').trim() || 'sem detalhe';
+      return { tipo: 'agendar', texto: texto || COMPANION_TEXT.agendar(resumo), resumo };
     }
     return { tipo: 'handoff', texto, motivo: `tool desconhecida: ${nome}` };
   }
