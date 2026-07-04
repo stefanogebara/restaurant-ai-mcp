@@ -76,3 +76,15 @@ describe('stripForeignPhoneBubbles — surgical removal', () => {
     expect(stripForeignPhoneBubbles('oi\n\ntudo bem', [])).toBe('oi\n\ntudo bem');
   });
 });
+
+describe('tool-argument guard — registrar numero must come from the conversation', () => {
+  // The guard lives in generateReply post-processing; its decision logic is
+  // findForeignPhones over the tool arg. These pin the arg-level contract.
+  test('an invented arg number is foreign to the conversation', () => {
+    expect(findForeignPhones('11 96666-5544', 'lead: quem decide é o Beto, sócio')).toEqual(['11966665544']);
+  });
+
+  test('an arg echoing the lead-provided number is accepted', () => {
+    expect(findForeignPhones('+55 11 98877-6655', 'lead: anota o zap dele 11 98877-6655')).toEqual([]);
+  });
+});

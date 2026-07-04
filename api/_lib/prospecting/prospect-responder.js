@@ -376,7 +376,12 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
         // slots from the rep calendar(s); the lead confirms next turn and we book.
         // Without creds or in dry-run we degrade to the Phase-1 stub — ask for a
         // time, NEVER claim a slot is booked.
-        let texto = acao.texto || 'Perfeito! Qual dia e horário fica melhor pra você?';
+        // When the tool carried the lead's availability, confirm it — re-asking
+        // for a time the lead just gave reads as not listening (gym cycle 13).
+        const temResumo = acao.resumo && acao.resumo !== 'sem detalhe';
+        let texto = acao.texto || (temResumo
+          ? `Perfeito! Deixa eu confirmar aqui (${acao.resumo}) e já te mando o convite 🙂`
+          : 'Perfeito! Qual dia e horário fica melhor pra você?');
         if (booking.bookingDisponivel() && !isDryRun()) {
           const prop = await booking.proporReuniao(lead, nowMs, acao.resumo);
           if (prop.ok && prop.mensagem) texto = prop.mensagem;

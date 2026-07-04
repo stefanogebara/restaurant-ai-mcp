@@ -431,6 +431,22 @@ async function generateReply({ lead, history, nowMs, injectUserTurn = null, noTo
         acao.texto = clean;
       }
     }
+    // Tool-argument guard: registrar_responsavel with a number that never
+    // appeared in the conversation = hallucinated contact. Keep the words
+    // (usually the ask for the number), drop the premature tool.
+    if (acao.tipo === 'registrar_responsavel') {
+      const contextoArgs = [
+        lead && lead.whatsapp_phone,
+        ...history.map((h) => h && h.corpo),
+        injectUserTurn,
+      ].filter(Boolean).join(' ');
+      if (findForeignPhones(acao.numero, contextoArgs).length) {
+        logger.warn(`registrar_responsavel with foreign numero (${String(acao.numero).slice(0, 6)}…) — tool dropped, ask kept`);
+        return acao.texto
+          ? { tipo: 'responder', texto: acao.texto }
+          : { tipo: 'nada', motivo: 'registrar com número estranho à conversa' };
+      }
+    }
     return acao;
   } catch (err) {
     logger.error('generateReply LLM call failed:', err.message);
