@@ -234,3 +234,30 @@ Multi-number rotation (single number's cap not saturated), email touch-1
 channel, voice-note escalation, auto-optimizing variants (no statistical
 significance at 40/day), kanban drag view, Cmd+K palette, CSV import,
 per-contact best-send-time. See the Phase 8 research spec in the plan doc.
+
+## Runtime guards (cycles 11–18 of the coach loop)
+
+The gym proved (cycles 8–10) that the style-pack text is a local optimum: v9
+beat +rules (9×2), −30% distillation (8×3) and the previous champion (8×2).
+The residual error classes appear in BOTH sides of every duel — they are
+runtime variance, so they became deterministic code, not prompt lines:
+
+| Guard | Where | What it kills |
+|---|---|---|
+| Companion text | `interpretResponse` fills text for ALL four tools (nome/resumo-aware); keyword-optout gate and sim guardrail send the same goodbye | Tool fired with no message — the lead saw silence (3 layers: LLM, responder `optout` case, deterministic detector) |
+| Foreign-phone (text) | `generateReply` post-processing: phone-shaped digit runs absent from the conversation (± the 55 prefix) → one corrective retry, then the offending bubble is stripped | Mangled digits echoed to the lead |
+| Foreign-phone (tool arg) | Same check over `registrar_responsavel.numero`; foreign → tool dropped, the ask (text) is kept | Dispatching outreach to a hallucinated number |
+| Gym parity | Sim transcripts mirror the responder defaults | Judges scoring production behavior that the sim hid (deflated medias on tool-terminal scenarios) |
+| Gatekeeper door | Responder `ignorar` case: thread = templates-out + bot-noise-in only (no human voice) → ONE line addressed to the human who reads later; once per thread by construction (`deveEnviarPorta`) | Bot-replied threads dying in limbo (10 of 13 replies in the first real dispatch were auto-attendants) |
+
+Auto-attendant detection patterns (`pareceAutoAtendimento`) come from real
+first-dispatch transcripts — institutional greetings, menus, hours, order
+links, delivery-platform listings, and number-redirect messages. When a
+redirect hands over a new number, the flow is `registrar_responsavel` + bubble.
+
+**Style-pack lineage:** v3 (cycle 1, objeções) → v9 (cycle 8, promoted 8×2
+under 3-lens judging: hard rules R1–R5 on top, engagement termostato, tool+
+bubble same turn, no estimated lead numbers). v4–v8 and v10–v12 held back —
+verdicts and briefs live in each version''s `notes` in `prospect_style_pack`.
+Pack mutations are frozen until ≥10 real human conversations accumulate to
+mine; the paired 3-lens evaluator is `scripts/_gym-paired.mjs`.
