@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import { POLICY_KEYS, policyValueForStorage, detectPolicyKey } from '../../utils/cancellationPolicy';
 
-const CANCELLATION_POLICY_I18N_KEYS = POLICY_KEYS.map((k) => `onboarding.${k}` as const);
 
 interface ReservationSettingsPanelProps {
   advanceBookingDays: number;

@@ -15,7 +15,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import ThiingsIcon from '../common/ThiingsIcon';
 
 /**
  * Restaurant hero photo — proxied through /api/places-photo so we can attach

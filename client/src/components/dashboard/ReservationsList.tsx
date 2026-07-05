@@ -72,7 +72,7 @@ export default function ReservationsList({
     dayFilter === 'tomorrow' ? tomorrowReservations :
     dayFilter === 'week' ? weekReservations :
     todayReservations;
-  const tl = (key: string) => t(`dashboard.reservationsList.${key}`);
+  const tl = (key: string, fallback?: string) => t(`dashboard.reservationsList.${key}`, { defaultValue: fallback ?? key });
 
   // Debounce search query (300ms)
   useEffect(() => {
@@ -360,7 +360,7 @@ interface ReservationRowProps {
 
 function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositAction, onRequestDeposit, onEdit, onCancel, onCustomerClick, avgSpendPerCover, byPartySize, language, tableMap }: ReservationRowProps) {
   const { t } = useTranslation();
-  const tl = (key: string) => t(`dashboard.reservationsList.${key}`);
+  const tl = (key: string, fallback?: string) => t(`dashboard.reservationsList.${key}`, { defaultValue: fallback ?? key });
   // Mobile-only bottom sheet for Edit / Cancel / Call. Desktop has its own
   // hover-icon row; on touch devices the 14px icons were unreachable and
   // hidden behind `hidden sm:flex` which left mobile hosts with NO way to
@@ -640,7 +640,7 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
             aria-label={tl('rowActionsAriaLabel', 'Reservation actions')}
             className="p-2 -m-2 rounded-lg text-muted-stone hover:text-deep-charcoal hover:bg-soft-gray transition-colors"
           >
-            <ThiingsIcon name="more-horizontal" pxSize={18} />
+            <ThiingsIcon name="menu" pxSize={18} />
           </button>
           {mobileMenuOpen && (
             <div

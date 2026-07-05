@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../services/api';
-import { GlassCard } from '../common/glass';
 import { useToast } from '../../contexts/ToastContext';
 import type { ProspectLead, ProspectMessage, CannedRow } from './types';
 import {

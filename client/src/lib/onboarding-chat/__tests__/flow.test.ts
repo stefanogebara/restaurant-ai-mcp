@@ -10,9 +10,6 @@ import { describe, it, expect } from 'vitest';
 import { init, advance } from '../engine';
 import { onboardingFlow } from '../flow';
 
-function step(state: ReturnType<typeof init>, fn: (s: ReturnType<typeof init>) => ReturnType<typeof init>) {
-  return fn(state);
-}
 
 describe('onboardingFlow — happy path', () => {
   it('captures every required OnboardingData field walking the linear flow', () => {

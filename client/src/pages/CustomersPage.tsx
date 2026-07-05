@@ -305,7 +305,7 @@ export default function CustomersPage() {
                           {c.total_visits}
                         </td>
                         <td className="px-4 py-3 text-right text-stone-500">
-                          {formatRelativeDate(c.last_visit_date, t)}
+                          {formatRelativeDate(c.last_visit_date, t as unknown as TFunction)}
                         </td>
                         <td className="px-4 py-3 text-right text-stone-700 font-medium">
                           {c.lifetime_value ? formatCurrency(Math.round(c.lifetime_value)) : '--'}

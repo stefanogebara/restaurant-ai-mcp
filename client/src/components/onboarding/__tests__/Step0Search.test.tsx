@@ -1,21 +1,21 @@
 import { describe, it, expect, vi, beforeEach, afterAll } from 'vitest';
-import { screen, fireEvent, waitFor } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders as render } from '../../../test/renderWithProviders';
 import Step0Search from '../Step0Search';
 
 // We intercept `fetch` directly because Step0Search calls it with relative
 // paths to /api/scrape-restaurant and /api/enrich-restaurant.
-const originalFetch = global.fetch;
+const originalFetch = globalThis.fetch;
 let fetchMock: ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
   fetchMock = vi.fn();
-  global.fetch = fetchMock as unknown as typeof global.fetch;
+  globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
 });
 
 afterAll(() => {
-  global.fetch = originalFetch;
+  globalThis.fetch = originalFetch;
 });
 
 function ok(body: unknown) {

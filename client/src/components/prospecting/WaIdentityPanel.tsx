@@ -213,7 +213,6 @@ export default function WaIdentityPanel() {
                 <ul className="space-y-1.5">
                   {SEQUENCE_STEPS.map((step) => {
                     const rows = step.touch ? templatesForTouch(step.touch) : [];
-                    const active = rows.filter((r) => r.active);
                     return (
                       <li key={`${step.touch}-${step.when}`} className="flex flex-wrap items-center gap-2 text-sm text-stone-700">
                         <span className="w-44 shrink-0 text-stone-500 text-xs">{step.when}</span>
