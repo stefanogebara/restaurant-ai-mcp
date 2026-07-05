@@ -47,10 +47,28 @@ export default function DiscoveryPanel() {
   const [onlySendable, setOnlySendable] = useState(true);
   const [maxQueries, setMaxQueries] = useState(300);
   const [dispatchLimit, setDispatchLimit] = useState(10);
+  const [territorio, setTerritorio] = useState('');
   const [confirmDispatch, setConfirmDispatch] = useState(false);
   const [lastDiscover, setLastDiscover] = useState<DiscoverResult | null>(null);
   const [lastDispatch, setLastDispatch] = useState<DispatchResult | null>(null);
   const [activeJob, setActiveJob] = useState<string | null>(null);
+  const [sugestoes, setSugestoes] = useState<string[]>([]);
+  const [sugInput, setSugInput] = useState('');
+
+  // Google Places autocomplete (server-side proxy keeps the key private):
+  // suggests bairros/cidades while typing in either location field.
+  useEffect(() => {
+    const q = sugInput.trim();
+    if (q.length < 3) { setSugestoes([]); return; }
+    const t = setTimeout(async () => {
+      try {
+        const r = await api.get<{ data: Array<{ texto: string }> }>(
+          `/prospect-admin?action=places-suggest&input=${encodeURIComponent(q)}`);
+        setSugestoes((r.data.data || []).map((x) => x.texto));
+      } catch { setSugestoes([]); }
+    }, 300);
+    return () => clearTimeout(t);
+  }, [sugInput]);
 
   const jobQ = useQuery({
     queryKey: ['prospect-admin', 'discovery-status', activeJob],
@@ -75,7 +93,7 @@ export default function DiscoveryPanel() {
       })).data.data,
     onSuccess: (data) => {
       setLastDiscover(data);
-      toast.success(`${data.found} restaurantes encontrados · ${data.sendable} com WhatsApp válido · ${data.inserted} novos na lista`);
+      toast.success(`${data.found} restaurantes encontrados · ${data.sendable} com telefone · ${data.inserted} novos na lista`);
       qc.invalidateQueries({ queryKey: ['prospect-admin'] });
     },
     onError: () => toast.error('Busca falhou — confira a cidade e o estado'),
@@ -101,7 +119,10 @@ export default function DiscoveryPanel() {
 
   const dispatch = useMutation({
     mutationFn: async () =>
-      (await api.post<{ data: DispatchResult }>('/prospect-admin?action=dispatch', { limit: dispatchLimit })).data.data,
+      (await api.post<{ data: DispatchResult }>('/prospect-admin?action=dispatch', {
+        limit: dispatchLimit,
+        territorio: territorio.trim() || undefined,
+      })).data.data,
     onSuccess: (data) => {
       setLastDispatch(data);
       setConfirmDispatch(false);
@@ -120,7 +141,7 @@ export default function DiscoveryPanel() {
       <button type="button" onClick={() => setOpen(!open)} className="w-full flex items-center justify-between text-left" aria-expanded={open}>
         <div>
           <h2 className="font-medium">Descobrir & Disparar</h2>
-          <p className="text-xs text-stone-500">Buscar restaurantes no Google Maps (bairro, cidade ou estado) — só entra na lista quem tem WhatsApp válido; sem WhatsApp o lead é descartado</p>
+          <p className="text-xs text-stone-500">Buscar restaurantes no Google Maps (bairro, cidade ou estado) — todo restaurante com telefone brasileiro entra na lista; o WhatsApp é confirmado no primeiro envio (quem não tem sai sozinho da fila)</p>
         </div>
         <span className={`text-stone-400 transition-transform ${open ? 'rotate-180' : ''}`}>▾</span>
       </button>
@@ -174,8 +195,9 @@ export default function DiscoveryPanel() {
                 Cidade *
                 <input
                   value={city}
-                  onChange={(e) => setCity(e.target.value)}
+                  onChange={(e) => { setCity(e.target.value); setSugInput(e.target.value); }}
                   placeholder="São Paulo"
+                  list="lugares-br"
                   className="mt-1 w-full rounded-xl border border-stone-200 px-3 py-2 text-sm bg-white/70"
                 />
               </label>
@@ -185,8 +207,9 @@ export default function DiscoveryPanel() {
                 Bairro / zona
                 <input
                   value={bairro}
-                  onChange={(e) => setBairro(e.target.value)}
+                  onChange={(e) => { setBairro(e.target.value); setSugInput(e.target.value); }}
                   placeholder="Jardins, Pinheiros…"
+                  list="lugares-br"
                   className="mt-1 w-full rounded-xl border border-stone-200 px-3 py-2 text-sm bg-white/70"
                 />
               </label>
@@ -224,9 +247,13 @@ export default function DiscoveryPanel() {
             )}
           </div>
 
+          <datalist id="lugares-br">
+            {sugestoes.map((sug) => <option key={sug} value={sug} />)}
+          </datalist>
+
           <label className="flex items-center gap-1.5 text-xs text-stone-600">
             <input type="checkbox" checked={onlySendable} onChange={(e) => setOnlySendable(e.target.checked)} />
-            só guardar leads <span className="font-medium">com WhatsApp válido (celular)</span> — sem WhatsApp o lead é descartado, porque não teria como receber mensagem
+            só guardar leads <span className="font-medium">com telefone brasileiro (fixo ou celular)</span> — fixo também costuma ter WhatsApp Business; quem não tiver sai sozinho da fila no primeiro envio
           </label>
 
           {/* Job progress */}
@@ -248,14 +275,14 @@ export default function DiscoveryPanel() {
                 />
               </div>
               <p className="text-xs text-stone-600 mt-1">
-                {job.found} restaurantes encontrados · <span className="font-medium text-emerald-700">{job.sendable} com WhatsApp válido</span> · {job.inserted} novos na lista · {job.discarded} descartados (sem WhatsApp)
+                {job.found} restaurantes encontrados · <span className="font-medium text-emerald-700">{job.sendable} com telefone</span> · {job.inserted} novos na lista · {job.discarded} sem telefone (descartados)
               </p>
             </div>
           )}
 
           {lastDiscover && !job && (
             <p className="text-xs text-stone-500">
-              Última busca: {lastDiscover.found} restaurantes encontrados · <span className="text-emerald-700 font-medium">{lastDiscover.sendable} com WhatsApp válido</span> · {lastDiscover.inserted} novos na lista · {lastDiscover.discarded} descartados (sem WhatsApp)
+              Última busca: {lastDiscover.found} restaurantes encontrados · <span className="text-emerald-700 font-medium">{lastDiscover.sendable} com telefone</span> · {lastDiscover.inserted} novos na lista · {lastDiscover.discarded} sem telefone (descartados)
             </p>
           )}
 
@@ -264,13 +291,24 @@ export default function DiscoveryPanel() {
             <label className="text-xs text-stone-500">
               Enviar até
               <input
-                type="number" min={1} max={100}
+                type="number" min={1} max={250}
                 value={dispatchLimit}
-                onChange={(e) => setDispatchLimit(Math.min(100, Math.max(1, Number(e.target.value) || 10)))}
+                onChange={(e) => setDispatchLimit(Math.min(250, Math.max(1, Number(e.target.value) || 10)))}
                 className="mt-1 w-20 rounded-xl border border-stone-200 px-3 py-2 text-sm bg-white/70"
               />
             </label>
-            <span className="text-xs text-stone-400 pb-2.5">primeiras mensagens — o disparo é o envio em massa da primeira mensagem para os leads da lista; respeita o limite diário do número e quem pediu pra sair</span>
+            <label className="text-xs text-stone-500">
+              Só para a região (opcional)
+              <input
+                value={territorio}
+                onChange={(e) => setTerritorio(e.target.value)}
+                placeholder="Pinheiros, Moema, SP…"
+                list="lugares-br"
+                title="Filtra o disparo por bairro, cidade ou UF — compara com a cidade e o endereço do lead"
+                className="mt-1 w-44 rounded-xl border border-stone-200 px-3 py-2 text-sm bg-white/70"
+              />
+            </label>
+            <span className="text-xs text-stone-400 pb-2.5">o disparo envia a primeira mensagem para leads nunca contatados; respeita o limite diário do número (que cresce sozinho até 250/dia) e quem pediu pra sair</span>
             {!confirmDispatch ? (
               <button
                 type="button"

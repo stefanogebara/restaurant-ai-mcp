@@ -67,10 +67,10 @@ describe('sendable contract — mobile phone = WhatsApp-capable', () => {
     expect(lead.whatsapp_phone).toBe('+5511987654321');
   });
 
-  test('landline → missing (discarded when only_sendable)', () => {
+  test('landline → candidate too (deliberate change: BR fixed lines run WhatsApp Business)', () => {
     const lead = normalizePlace({ ...base, internationalPhoneNumber: '+55 11 3064-1234' }, { city: 'SP' });
-    expect(lead.whatsapp_status).toBe('missing');
-    expect(lead.whatsapp_phone).toBeNull();
+    expect(lead.whatsapp_status).toBe('pending');
+    expect(lead.whatsapp_phone).toBe('+551130641234');
   });
 
   test('no phone at all → missing', () => {

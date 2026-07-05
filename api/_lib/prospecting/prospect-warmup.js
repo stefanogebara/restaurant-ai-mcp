@@ -23,6 +23,61 @@ const redis = createRedisClient('ProspectWarmup');
 // In-memory fallback: { dayKey -> count }. Reset implicitly as the key rolls over.
 const memCounts = new Map();
 
+/**
+ * PURE: warm-up ramp by days since the first outbound. Conservative start,
+ * ceiling at 250 — Meta's business-initiated floor for an unverified number.
+ */
+function rampCap(dias) {
+  const d = Number.isFinite(dias) && dias >= 0 ? dias : 0;
+  if (d < 2) return 40;
+  if (d < 4) return 60;
+  if (d < 6) return 90;
+  if (d < 8) return 120;
+  if (d < 10) return 150;
+  if (d < 12) return 200;
+  return 250;
+}
+
+// First-outbound day, cached (redis key, DB fallback) — drives the ramp.
+let _firstSend = { iso: null, at: 0 };
+async function firstSendIso() {
+  if (_firstSend.iso && Date.now() - _firstSend.at < 10 * 60 * 1000) return _firstSend.iso;
+  let iso = null;
+  if (redis) {
+    try {
+      iso = await redis.get('prospect:firstsend');
+      if (!iso) {
+        iso = new Date().toISOString().slice(0, 10);
+        await redis.set('prospect:firstsend', iso, { nx: true });
+        iso = (await redis.get('prospect:firstsend')) || iso;
+      }
+    } catch { iso = null; }
+  }
+  if (!iso) {
+    try {
+      const { supabaseAdmin } = require('../supabase');
+      const { data } = await supabaseAdmin.from('prospect_messages')
+        .select('enviada_em').eq('direcao', 'out')
+        .order('enviada_em', { ascending: true }).limit(1);
+      iso = (data && data[0] && data[0].enviada_em) ? data[0].enviada_em.slice(0, 10) : new Date().toISOString().slice(0, 10);
+    } catch { iso = new Date().toISOString().slice(0, 10); }
+  }
+  _firstSend = { iso, at: Date.now() };
+  return iso;
+}
+
+/**
+ * Today's cap: PROSPECTING_DAILY_CAP (when set) is a fixed operator override;
+ * without it the warm-up ramp applies (40 → 250 over ~2 weeks of activity).
+ */
+async function currentCap(nowMs = Date.now()) {
+  const env = parseInt(process.env.PROSPECTING_DAILY_CAP || '', 10);
+  if (Number.isFinite(env) && env > 0) return env;
+  const first = await firstSendIso();
+  const dias = Math.floor((nowMs - new Date(first + 'T00:00:00Z').getTime()) / 86400000);
+  return rampCap(dias);
+}
+
 function dailyCap() {
   const n = parseInt(process.env.PROSPECTING_DAILY_CAP || '40', 10);
   return Number.isFinite(n) && n > 0 ? n : 40;
@@ -39,7 +94,7 @@ function dayKey(nowMs = Date.now()) {
  * NOT allowed (the consumed increment just keeps the day blocked).
  */
 async function consumeSendSlot(nowMs = Date.now()) {
-  const cap = dailyCap();
+  const cap = await currentCap(nowMs);
   const key = dayKey(nowMs);
   if (redis) {
     try {
@@ -71,4 +126,4 @@ async function usedToday(nowMs = Date.now()) {
   return memCounts.get(key) || 0;
 }
 
-module.exports = { consumeSendSlot, usedToday, dailyCap };
+module.exports = { consumeSendSlot, usedToday, dailyCap, currentCap, rampCap };
