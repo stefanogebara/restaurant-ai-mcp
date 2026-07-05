@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { flowFromNodes, validateFlow, FlowValidationError } from '../validateFlow';
+import { flowFromNodes, FlowValidationError } from '../validateFlow';
 import { END, type Node } from '../flow.types';
 
 const minimal: Node = {

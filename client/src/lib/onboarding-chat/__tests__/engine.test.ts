@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { init, advance } from '../engine';
 import { flowFromNodes } from '../validateFlow';
-import { END, type Node } from '../flow.types';
+import { END } from '../flow.types';
 
 // ─── fixture flows ──────────────────────────────────────────────────────────
 
