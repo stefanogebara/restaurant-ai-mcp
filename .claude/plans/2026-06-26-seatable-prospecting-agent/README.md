@@ -256,8 +256,8 @@
   auto no-show, bounded 5/run, kill-switch-gated. Booking re-arms
   (`noshow_em:null`). Console: Remarcar / "Não veio" buttons on booked leads
   (confirm-guarded); admin action `remarcar` validates motivo + reuniao_at.
-  **Migration `20260706_prospect_noshow.sql` (noshow_em column) — apply in
-  Supabase; until then the sweep degrades to a no-op (logged select error).**
+  Migration `20260706_prospect_noshow.sql` (noshow_em column) — **applied +
+  verified on seatable-eu 2026-07-06**; sweep active from the next flush tick.
   13 new tests; 276 prospecting green / 19 suites; full backend 2191 green.
 - **Remaining external steps:** approve extra template variants + touch-2/3
   templates in WhatsApp Manager, then register in Abordagens; subscribe Meta
