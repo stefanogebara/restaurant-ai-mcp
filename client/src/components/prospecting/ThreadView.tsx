@@ -219,6 +219,36 @@ export default function ThreadView({ leadId, nowMs }: { leadId: string; nowMs: n
           <button type="button" disabled={act.isPending} onClick={() => act.mutate({ action: 'pause', body: { lead_id: lead.id } })} className="px-2.5 py-1 text-xs rounded-lg bg-amber-100 text-amber-800 hover:bg-amber-200 disabled:opacity-50" title="A Olímpia para de responder este lead até você reativar">Pausar</button>
           <button type="button" disabled={act.isPending} onClick={() => act.mutate({ action: 'reactivate', body: { lead_id: lead.id } })} className="px-2.5 py-1 text-xs rounded-lg bg-stone-100 text-stone-700 hover:bg-stone-200 disabled:opacity-50" title="A Olímpia volta a responder este lead automaticamente">Reativar</button>
           <button type="button" disabled={act.isPending} onClick={() => act.mutate({ action: 'optout', body: { lead_id: lead.id, reason: 'pediu' } })} className="px-2.5 py-1 text-xs rounded-lg bg-rose-100 text-rose-800 hover:bg-rose-200 disabled:opacity-50" title="Marca que o lead pediu para não receber mais mensagens (LGPD) — nada mais será enviado a ele">Pediu pra sair</button>
+          {lead.reuniao_at && (
+            <>
+              <button
+                type="button"
+                disabled={act.isPending}
+                onClick={() => {
+                  if (window.confirm('Cancelar o evento na agenda e pedir um novo horário ao lead?')) {
+                    act.mutate({ action: 'remarcar', body: { lead_id: lead.id, motivo: 'pedir' } });
+                  }
+                }}
+                className="px-2.5 py-1 text-xs rounded-lg bg-sky-100 text-sky-800 hover:bg-sky-200 disabled:opacity-50"
+                title="Cancela o evento no Google Calendar e a Olímpia pede um novo dia/horário ao lead"
+              >
+                Remarcar
+              </button>
+              <button
+                type="button"
+                disabled={act.isPending}
+                onClick={() => {
+                  if (window.confirm('Marcar como não compareceu? O evento é cancelado e a Olímpia pergunta se o lead quer remarcar.')) {
+                    act.mutate({ action: 'remarcar', body: { lead_id: lead.id, motivo: 'noshow' } });
+                  }
+                }}
+                className="px-2.5 py-1 text-xs rounded-lg bg-stone-100 text-stone-700 hover:bg-stone-200 disabled:opacity-50"
+                title="O lead não apareceu na call — cancela o evento e a Olímpia manda o 'não te encontrei, quer remarcar?'"
+              >
+                Não veio
+              </button>
+            </>
+          )}
         </div>
       </div>
 

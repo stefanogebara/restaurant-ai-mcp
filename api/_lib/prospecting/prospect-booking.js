@@ -250,6 +250,7 @@ async function criarReuniao(lead, chosen, nowMs, emailProspect = null) {
       calendar_event_id: result.eventId,
       assigned_rep_email: repEmail,
       pending_slot_iso: null,
+      noshow_em: null, // re-arm the no-show sweep for the new meeting
       ...(email && email !== lead.prospect_email ? { prospect_email: email } : {}),
     },
   };

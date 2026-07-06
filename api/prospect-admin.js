@@ -354,6 +354,39 @@ module.exports = async (req, res) => {
       return res.status(200).json({ success: true, data: { action, lead_id: leadId } });
     }
 
+    // ---- Reschedule / no-show (meeting lifecycle) ------------------------------
+    // motivo 'pedir'  → cancel the event, reopen scheduling, Olímpia asks for a
+    //                   new time; 'noshow' → same, with the "não te encontrei"
+    //                   message; 'definir' → move the event to novo_slot_iso and
+    //                   confirm exactly that time. Calendar stays in full sync.
+    if (req.method === 'POST' && action === 'remarcar') {
+      const leadId = (req.body && req.body.lead_id) ? String(req.body.lead_id) : null;
+      const motivo = (req.body && req.body.motivo) ? String(req.body.motivo) : 'pedir';
+      const novoSlotIso = (req.body && req.body.novo_slot_iso) ? String(req.body.novo_slot_iso) : null;
+      if (!leadId) return res.status(400).json({ success: false, error: 'lead_id required' });
+      if (!['pedir', 'noshow', 'definir'].includes(motivo)) {
+        return res.status(400).json({ success: false, error: 'motivo inválido (pedir|noshow|definir)' });
+      }
+      if (motivo === 'definir' && !novoSlotIso) {
+        return res.status(400).json({ success: false, error: 'definir exige novo_slot_iso' });
+      }
+      const detail = await getProspectLeadWithMessages(leadId, 1);
+      if (!detail) return res.status(404).json({ success: false, error: 'Lead not found' });
+      if (!detail.lead.reuniao_at) {
+        return res.status(409).json({ success: false, error: 'Lead não tem reunião marcada' });
+      }
+      const { remarcarReuniao } = require('./_lib/prospecting/prospect-remarcar');
+      const r = await remarcarReuniao(detail.lead, { motivo, novoSlotIso });
+      if (!r.ok) return res.status(502).json({ success: false, error: r.error });
+      await recordEvent(leadId, motivo === 'definir'
+        ? `📅 reunião movida para ${novoSlotIso} por ${email}`
+        : motivo === 'noshow'
+          ? `👻 no-show marcado por ${email} — agendamento reaberto`
+          : `📅 remarcação pedida por ${email} — agendamento reaberto`);
+      logger.info(`prospect-admin remarcar(${motivo}) lead=${leadId} by=${email}`);
+      return res.status(200).json({ success: true, data: { motivo, mensagem: r.mensagem } });
+    }
+
     // ---- Operator manual send (human takeover) --------------------------------
     if (req.method === 'POST' && action === 'send') {
       const leadId = (req.body && req.body.lead_id) ? String(req.body.lead_id) : null;

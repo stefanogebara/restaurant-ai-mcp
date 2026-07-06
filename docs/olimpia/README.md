@@ -54,6 +54,16 @@ inbound webhook ─▶ prospect-inbound ─▶ responder (LLM brain + guardrails
   a second ask, never a loop.
 - **Nudge**: one natural follow-up ~23h into silence (once per silence period,
   inside the 24h window), business hours only.
+- **Remarcar / no-show** (meeting lifecycle): console buttons on a booked lead
+  — "Remarcar" cancels the Calendar event, reopens the scheduling and Olímpia
+  asks for a new time; "Não veio" does the same with the gentle "não te
+  encontrei na call" message; `motivo=definir` (API) MOVES the event and
+  confirms exactly the new time. An automatic sweep (flush piggyback) treats
+  meetings >2h past their slot and still 'agendado' as no-shows — one-shot per
+  meeting (`noshow_em`), re-armed on rebook. All messages respect the 24h
+  window and the kill switch; a call that DID happen must be moved out of
+  'agendado' in the console or it will sweep as no-show (accepted risk — we
+  can't read Meet attendance).
 - **LGPD**: deterministic opt-out regex BEFORE the LLM; terminal + suppression
   list; runs even when the agent is globally stopped.
 

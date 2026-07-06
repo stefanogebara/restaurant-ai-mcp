@@ -243,6 +243,22 @@
   a param and persists `prospect_email` in the booking patch. 17 new tests
   (booking dance + apenas-email guard); 259 prospecting green / 17 suites;
   full backend 2174 green.
+- **Remarcar + no-show ✅ (2026-07-06)** — meeting lifecycle completion (port
+  of olivia-remarcar + olivia-noshow). `prospect-remarcar.js`: three motivos
+  keeping Calendar in FULL sync — 'pedir' (cancel event → reopen 'agendando' →
+  Olímpia asks a new time), 'noshow' (same + "não te encontrei" + one-shot
+  `noshow_em` stamp), 'definir' (patchEventTime moves the event, state stays
+  'agendado', confirms EXACTLY the new time; Calendar-move failure aborts
+  before the DB patch — no divergence). Responder gains mode 'remarcar'
+  (bypasses the silent-state + hours gates, NEVER the kill switch; 24h window
+  respected → outside it skips and template touches cover). `sweepNoshows`
+  piggybacks prospect-flush (no new cron): 'agendado' + reuniao_at >2h past →
+  auto no-show, bounded 5/run, kill-switch-gated. Booking re-arms
+  (`noshow_em:null`). Console: Remarcar / "Não veio" buttons on booked leads
+  (confirm-guarded); admin action `remarcar` validates motivo + reuniao_at.
+  **Migration `20260706_prospect_noshow.sql` (noshow_em column) — apply in
+  Supabase; until then the sweep degrades to a no-op (logged select error).**
+  13 new tests; 276 prospecting green / 19 suites; full backend 2191 green.
 - **Remaining external steps:** approve extra template variants + touch-2/3
   templates in WhatsApp Manager, then register in Abordagens; subscribe Meta
   app to phone_number_quality_update + set PROSPECTING_DISPLAY_NUMBER.

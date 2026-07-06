@@ -85,6 +85,18 @@ module.exports = async (req, res) => {
       logger.error('reengages failed:', err.message);
     }
 
+    // No-show sweep: meetings >2h past their slot and STILL 'agendado' are
+    // assumed no-shows — cancel the event, reopen the scheduling, send the
+    // gentle "não te encontrei" message. Piggybacks this cron (no new
+    // invocations); one-shot per meeting; kill-switch-gated inside.
+    let noshows = null;
+    try {
+      const { sweepNoshows } = require('../_lib/prospecting/prospect-remarcar');
+      noshows = await sweepNoshows({ limit: 5 });
+    } catch (err) {
+      logger.error('noshow sweep failed:', err.message);
+    }
+
     // Discovery-chain watchdog: the mass-discovery worker self-chains, but a
     // single dead link (cold-start kill, network blip) strands the job in
     // 'running' forever. Any running job untouched for >5 min gets re-kicked —
@@ -116,9 +128,10 @@ module.exports = async (req, res) => {
       resumed, errors,
       followups_sent: followups ? followups.sent : 0,
       reengages_sent: reengages ? reengages.sent : 0,
+      noshows_processed: noshows ? noshows.processed || 0 : 0,
       rekicked,
     });
-    return res.status(200).json({ success: true, due: due.length, resumed, errors, followups, reengages, rekicked });
+    return res.status(200).json({ success: true, due: due.length, resumed, errors, followups, reengages, noshows, rekicked });
   } catch (err) {
     logger.error('flush fatal:', err.message);
     await logCronRun('prospect-flush', { resumed, errors: errors + 1 });

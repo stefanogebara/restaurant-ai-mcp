@@ -131,6 +131,29 @@ async function aguardarRajada(leadId) {
 }
 
 /**
+ * Internal instruction injected as the final user turn in mode 'remarcar'
+ * (ported from Olivia's olivia-responder). One short natural message, no
+ * tools, never inventing a time.
+ */
+function instrucaoRemarcar(motivo, novoHorarioLabel) {
+  const porMotivo = {
+    pedir:
+      'Você precisa REMARCAR a reunião já combinada com o cliente. Mande UMA mensagem curta, ' +
+      'leve e natural avisando que precisa remarcar e perguntando qual novo dia e horário fica ' +
+      'bom pra ele. Não invente horário, não soe robótica, não peça desculpas em excesso.',
+    noshow:
+      'O cliente NÃO apareceu na call que estava agendada. Mande UMA mensagem curta, gentil e SEM ' +
+      'cobrança/culpa, dizendo que não conseguiu encontrá-lo no horário e perguntando se quer ' +
+      'remarcar — e qual horário fica melhor. Tom acolhedor, nada passivo-agressivo.',
+    definir:
+      `A reunião foi REMARCADA para: ${novoHorarioLabel || '(novo horário)'}. Confirme isso ` +
+      'com o cliente em UMA mensagem curta e natural, usando EXATAMENTE esse horário, e diga que ' +
+      'mandou o novo convite. Não invente outro horário.',
+  };
+  return `[INSTRUÇÃO INTERNA, não é mensagem do cliente: ${porMotivo[motivo] || porMotivo.pedir} Não use ferramentas — responda só com o texto.]`;
+}
+
+/**
  * Respond to one inbound prospect message (or run an orchestrator mode).
  *
  * @param {object} args
@@ -139,16 +162,25 @@ async function aguardarRajada(leadId) {
  * @param {string} args.text   - inbound text ('' for placeholder-only media)
  * @param {number} [args.nowMs]
  * @param {boolean} [args.skipPacing] - skip typing-pace + debounce (flush cron)
- * @param {'nudge'|null} [args.mode]  - orchestrator mode: 'nudge' writes one
- *   natural follow-up (no tools) after ~23h of lead silence and stamps nudge_em.
+ * @param {'nudge'|'remarcar'|null} [args.mode] - orchestrator modes: 'nudge'
+ *   writes one natural follow-up (no tools) after ~23h of lead silence and
+ *   stamps nudge_em; 'remarcar' authors the reschedule/no-show/moved message
+ *   (calendar + state already handled by prospect-remarcar).
+ * @param {'pedir'|'noshow'|'definir'} [args.remarcarMotivo] - required with
+ *   mode 'remarcar'.
+ * @param {string|null} [args.novoHorarioLabel] - human label of the new time
+ *   (motivo 'definir' only).
  * @returns {Promise<{action: string, sent?: boolean, dryRun?: boolean}>}
  */
-async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPacing = false, mode = null }) {
+async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPacing = false, mode = null, remarcarMotivo = null, novoHorarioLabel = null }) {
   const pace = { skipPacing };
   const isNudge = mode === 'nudge';
+  const isRemarcar = mode === 'remarcar';
 
-  // 1. State gate — silent in optout/handoff/agendado/pausada.
-  if (!deveResponder(lead.prospect_state)) {
+  // 1. State gate — silent in optout/handoff/agendado/pausada. Remarcar
+  //    bypasses it: a 'definir' confirmation goes out while still 'agendado',
+  //    and pedir/noshow run right after the caller reset state anyway.
+  if (!isRemarcar && !deveResponder(lead.prospect_state)) {
     return { action: 'skip', reason: `silent_state:${lead.prospect_state}` };
   }
 
@@ -181,6 +213,44 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
       logger.info(`[prospect] agent globally disabled — skipping lead=${lead.id}`);
       return { action: 'skip', reason: 'agent_disabled' };
     }
+  }
+
+  // 2c. MODE REMARCAR — reschedule ('pedir'), no-show, or moved ('definir').
+  //     The calendar and the state were already handled by prospect-remarcar;
+  //     here we only author + send ONE natural message. Bypasses the hours
+  //     gate (triggered by a human working the console, or the flush cron
+  //     which already runs business-hours) — but never the kill switch above,
+  //     and the Meta 24h window still applies: outside it, free text is
+  //     undeliverable (131047), so we skip with a clear reason and coverage
+  //     falls to the template touches.
+  if (isRemarcar) {
+    const history = (await loadHistory(lead.id, 40)).filter((m) => m.direcao !== 'sys');
+    const lastIn = [...history].reverse().find((m) => m.direcao === 'in');
+    if (!lastIn || !podeMensagemLivre(new Date(lastIn.enviada_em).getTime(), nowMs)) {
+      logger.info(`[prospect] remarcar(${remarcarMotivo}) skipped lead=${lead.id} — 24h window closed`);
+      return { action: 'skip', reason: 'window_closed', remarcar: remarcarMotivo };
+    }
+    const acaoRm = await generateReply({
+      lead: {
+        name: lead.name,
+        owner_name: lead.owner_name,
+        sector: lead.sector,
+        city: lead.city,
+        nome_genero: lead.nome_genero,
+        conversa_fatos: lead.conversa_fatos,
+        conversa_resumo: lead.conversa_resumo,
+      },
+      history,
+      nowMs,
+      injectUserTurn: instrucaoRemarcar(remarcarMotivo, novoHorarioLabel),
+      noTools: true,
+    });
+    if (!acaoRm || !acaoRm.texto) {
+      return { action: 'skip', reason: 'no_text', remarcar: remarcarMotivo, motivo: (acaoRm && acaoRm.motivo) || null };
+    }
+    const r = await sendReply(lead.id, from, acaoRm.texto, pace);
+    logger.info(`[prospect] lead=${lead.id} mode=remarcar motivo=${remarcarMotivo} sent=${r.sentAny} dryRun=${r.dryRun}`);
+    return { action: 'remarcar', remarcar: remarcarMotivo, sent: r.sentAny, dryRun: r.dryRun };
   }
 
   // 3. Business-hours gate — defer to next opening (prospect-flush resumes).

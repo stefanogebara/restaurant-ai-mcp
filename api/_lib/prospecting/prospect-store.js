@@ -300,6 +300,33 @@ async function selectDueFlush(nowIso, limit = 50) {
   }
 }
 
+/**
+ * Meetings that already happened (plus a grace period) and are STILL
+ * 'agendado' → no-show candidates for the sweep. One-shot by construction:
+ * processing resets state + reuniao_at, so the row leaves this selection.
+ */
+async function selectNoshowDue(cutoffIso, limit = 5) {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('prospect_leads')
+      .select('*')
+      .eq('prospect_state', 'agendado')
+      .not('reuniao_at', 'is', null)
+      .lte('reuniao_at', cutoffIso)
+      .is('noshow_em', null)
+      .order('reuniao_at', { ascending: true })
+      .limit(limit);
+    if (error) {
+      logger.error('selectNoshowDue failed:', error.message);
+      return [];
+    }
+    return data || [];
+  } catch (err) {
+    logger.error('selectNoshowDue exception:', err.message);
+    return [];
+  }
+}
+
 /** Most recent inbound message body for a lead (for the flush cron to re-run). */
 async function loadLastInbound(leadId) {
   try {
@@ -785,6 +812,7 @@ module.exports = {
   claimIntro,
   markIntro,
   selectDueFlush,
+  selectNoshowDue,
   loadLastInbound,
   inboundFingerprint,
   claimInbound,
