@@ -48,8 +48,14 @@ function normalizePlace(place, ctx = {}) {
   if (!name) return null;
 
   const rawPhone = place.internationalPhoneNumber || place.nationalPhoneNumber || null;
-  const mobile = rawPhone ? normalizarNumeroBr(rawPhone) : null;
-  const isMobile = !!mobile && mobile.length === 14; // +55 + DDD + 9 digits
+  // ANY normalized BR number is a WhatsApp candidate — fixed lines routinely
+  // run WhatsApp Business in BR (call verification). A candidate that turns
+  // out not to be on WhatsApp fails benignly on first send (131026) and the
+  // receipts handler marks it 'missing' — the pool self-cleans at zero
+  // reputation cost. Discarding landlines up-front threw away ~2/3 of real
+  // Google results (São Paulo sweep: 2,131 of 3,342 discarded).
+  const numero = rawPhone ? normalizarNumeroBr(rawPhone) : null;
+  const isMobile = !!numero && numero.length === 14; // +55 + DDD + 9 digits
 
   return {
     name,
@@ -64,9 +70,9 @@ function normalizePlace(place, ctx = {}) {
     website: place.websiteUri || null,
     rating: typeof place.rating === 'number' ? place.rating : null,
     reviews_count: place.userRatingCount || 0,
-    whatsapp_phone: isMobile ? mobile : null,
-    whatsapp_status: isMobile ? 'pending' : 'missing',
-    whatsapp_source: isMobile ? 'google_places' : null,
+    whatsapp_phone: numero,
+    whatsapp_status: numero ? 'pending' : 'missing',
+    whatsapp_source: numero ? (isMobile ? 'google_places' : 'google_places_fixo') : null,
     prospect_state: 'aguardando',
     status: 'descoberto',
   };
@@ -152,4 +158,26 @@ async function searchPlaces({ query, city, country = 'Brasil', sector, maxResult
   }
 }
 
-module.exports = { searchPlaces, normalizePlace, FIELD_MASK };
+/** PURE: Places v1 autocomplete request body — BR localities/neighborhoods. */
+function buildAutocompleteBody(input) {
+  return {
+    input: String(input || '').slice(0, 120),
+    includedRegionCodes: ['br'],
+    includedPrimaryTypes: ['locality', 'sublocality', 'neighborhood', 'administrative_area_level_3'],
+    languageCode: 'pt-BR',
+  };
+}
+
+/** PURE: normalize the autocomplete response into [{texto}] (max 8). */
+function parseAutocomplete(json) {
+  const sug = Array.isArray(json && json.suggestions) ? json.suggestions : [];
+  return sug
+    .map((x) => x && x.placePrediction && x.placePrediction.text && x.placePrediction.text.text)
+    .filter(Boolean)
+    .slice(0, 8)
+    .map((texto) => ({ texto }));
+}
+
+module.exports = {
+  buildAutocompleteBody,
+  parseAutocomplete, searchPlaces, normalizePlace, FIELD_MASK };

@@ -76,7 +76,7 @@ async function pickTemplate(touchNumber) {
  * @param {{limit?: number}} [opts]
  * @returns {Promise<{candidates:number, sent:number, blocked:number, skipped:number, failed:number, dryRun:boolean, capHit:boolean}>}
  */
-async function dispatchIntros({ limit = 20 } = {}) {
+async function dispatchIntros({ limit = 20, territorio = null } = {}) {
   if (!(await outboundEnabled())) {
     logger.info('dispatchIntros skipped — outbound disabled (kill switch / breaker)');
     return { candidates: 0, sent: 0, blocked: 0, skipped: 0, failed: 0, dryRun: isDryRun(), capHit: false, agentDisabled: true };
@@ -86,7 +86,7 @@ async function dispatchIntros({ limit = 20 } = {}) {
   const introTemplate = await pickTemplate(1); // availability probe
   const previewOnly = dryRun || !introTemplate;
 
-  const candidates = await selectIntroCandidates(limit);
+  const candidates = await selectIntroCandidates(limit, territorio);
   const summary = { candidates: candidates.length, sent: 0, blocked: 0, skipped: 0, failed: 0, dryRun: previewOnly, capHit: false };
   if (candidates.length === 0) return summary;
 

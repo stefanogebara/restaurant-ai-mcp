@@ -1,8 +1,8 @@
 /**
  * Phase 2 — discovery, warm-up cap, and the cold-intro sequencer.
  *
- * Guards: Places results normalize correctly (mobile → sendable, landline →
- * missing), the daily cap consumes-before-send and blocks past the cap, and the
+ * Guards: Places results normalize correctly (any BR phone → candidate; the
+ * pool self-cleans via 131026 receipts), the daily cap consumes-before-send and blocks past the cap, and the
  * sequencer (a) never sends in dry-run / without a template, and (b) claims +
  * sends + records exactly once on the live path.
  */
@@ -28,10 +28,11 @@ describe('normalizePlace', () => {
     expect(lead.city).toBe('São Paulo');
   });
 
-  test('a landline → no WhatsApp candidate (status missing)', () => {
+  test('a landline IS a WhatsApp candidate (BR fixed lines run WhatsApp Business)', () => {
     const lead = normalizePlace({ ...base, internationalPhoneNumber: '+55 11 3333-4444' }, {});
-    expect(lead.whatsapp_phone).toBeNull();
-    expect(lead.whatsapp_status).toBe('missing');
+    expect(lead.whatsapp_phone).toBe('+551133334444');
+    expect(lead.whatsapp_status).toBe('pending');
+    expect(lead.whatsapp_source).toBe('google_places_fixo');
   });
 
   test('missing id or name → null (unusable)', () => {
@@ -59,7 +60,7 @@ describe('searchPlaces', () => {
     expect(r.ok).toBe(true);
     expect(r.leads).toHaveLength(2);
     expect(r.leads[0].whatsapp_status).toBe('pending');  // mobile
-    expect(r.leads[1].whatsapp_status).toBe('missing');  // landline
+    expect(r.leads[1].whatsapp_status).toBe('pending');  // landline: candidate too (self-cleans on 131026)
   });
 
   test('no API key → configured error', async () => {
@@ -146,5 +147,65 @@ describe('dispatchIntros', () => {
     expect(claimIntro).toHaveBeenCalledWith('L1');
     expect(markIntro).toHaveBeenCalledWith('L1', { status: 'sent', wamid: 'm1' });
     expect(sendTemplateMessage).toHaveBeenCalledWith('+5511999998888', 'olimpia_intro', 'pt_BR', ['Cantina'], { phoneNumberId: 'PNUM' });
+  });
+});
+
+// ---- discovery/dispatch overhaul (operator audit) ---------------------------
+const { rampCap } = require('../_lib/prospecting/prospect-warmup');
+const { buildAutocompleteBody, parseAutocomplete, normalizePlace: npOverhaul } = require('../_lib/prospecting/places-discovery');
+
+describe('normalizePlace — landlines are WhatsApp candidates (self-cleaning pool)', () => {
+  const base = { id: 'p1', displayName: { text: 'Cantina X' }, formattedAddress: 'Rua A, Pinheiros' };
+
+  test('BR landline becomes a pending candidate (fixed lines run WhatsApp Business)', () => {
+    const lead = npOverhaul({ ...base, nationalPhoneNumber: '(11) 3061-2277' }, { city: 'São Paulo, SP' });
+    expect(lead.whatsapp_phone).toBe('+551130612277');
+    expect(lead.whatsapp_status).toBe('pending');
+    expect(lead.whatsapp_source).toBe('google_places_fixo');
+  });
+
+  test('mobile stays a pending candidate with the mobile source', () => {
+    const lead = npOverhaul({ ...base, nationalPhoneNumber: '(11) 98877-6655' }, {});
+    expect(lead.whatsapp_phone).toBe('+5511988776655');
+    expect(lead.whatsapp_status).toBe('pending');
+    expect(lead.whatsapp_source).toBe('google_places');
+  });
+
+  test('no phone at all → missing (nothing to send to)', () => {
+    const lead = npOverhaul(base, {});
+    expect(lead.whatsapp_phone).toBeNull();
+    expect(lead.whatsapp_status).toBe('missing');
+  });
+});
+
+describe('rampCap — warm-up grows to Meta unverified floor (250)', () => {
+  test('conservative start, 250 ceiling', () => {
+    expect(rampCap(0)).toBe(40);
+    expect(rampCap(3)).toBe(60);
+    expect(rampCap(5)).toBe(90);
+    expect(rampCap(8)).toBe(150);
+    expect(rampCap(12)).toBe(250);
+    expect(rampCap(365)).toBe(250);
+  });
+  test('garbage input falls back to day zero', () => {
+    expect(rampCap(NaN)).toBe(40);
+    expect(rampCap(-5)).toBe(40);
+  });
+});
+
+describe('places autocomplete proxy — pure builders', () => {
+  test('request body targets BR localities/neighborhoods', () => {
+    const b = buildAutocompleteBody('Pinheiros');
+    expect(b.includedRegionCodes).toEqual(['br']);
+    expect(b.includedPrimaryTypes).toContain('sublocality');
+    expect(b.input).toBe('Pinheiros');
+  });
+  test('response parsing is defensive and capped at 8', () => {
+    const mk = (t) => ({ placePrediction: { text: { text: t } } });
+    const json = { suggestions: [mk('Pinheiros, São Paulo'), {}, mk('Pinhais, PR'), ...Array.from({ length: 10 }, (_, i) => mk(`X${i}`))] };
+    const out = parseAutocomplete(json);
+    expect(out[0]).toEqual({ texto: 'Pinheiros, São Paulo' });
+    expect(out.length).toBe(8);
+    expect(parseAutocomplete({})).toEqual([]);
   });
 });

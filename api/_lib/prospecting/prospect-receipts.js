@@ -107,7 +107,7 @@ async function applyStatusEvents(value) {
       if (!wamid || !(next in STATUS_RANK)) continue;
 
       const { data } = await supabaseAdmin.from('prospect_messages')
-        .select('id, status').eq('wamid', wamid).limit(1);
+        .select('id, status, lead_id').eq('wamid', wamid).limit(1);
       const row = Array.isArray(data) && data[0];
       if (!row || !shouldAdvanceStatus(row.status, next)) continue;
 
@@ -118,7 +118,17 @@ async function applyStatusEvents(value) {
       }
       await supabaseAdmin.from('prospect_messages').update(patch).eq('id', row.id);
 
-      if (next === 'failed') await checkFailedRateBreaker();
+      if (next === 'failed') {
+        // "Not on WhatsApp" (131026): the number was a candidate (often a
+        // landline) that isn't reachable — mark the lead so it exits the
+        // dispatch pool. Benign for the number; self-cleaning for the funnel.
+        if (row.lead_id && /\b131026\b/.test(String(patch.error_detail || ''))) {
+          await supabaseAdmin.from('prospect_leads')
+            .update({ whatsapp_status: 'missing' }).eq('id', row.lead_id);
+          logger.info(`lead ${row.lead_id} marked whatsapp_status=missing (131026 not on WhatsApp)`);
+        }
+        await checkFailedRateBreaker();
+      }
     } catch (err) {
       logger.warn('receipt apply failed (non-fatal):', err.message);
     }

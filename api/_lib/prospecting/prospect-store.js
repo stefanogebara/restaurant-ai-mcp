@@ -211,15 +211,21 @@ async function upsertDiscoveredLeads(rows) {
  * initial state, with a sendable WhatsApp number.
  * @param {number} [limit=20]
  */
-async function selectIntroCandidates(limit = 20) {
+async function selectIntroCandidates(limit = 20, territorio = null) {
   try {
-    const { data, error } = await supabaseAdmin
+    let q = supabaseAdmin
       .from('prospect_leads')
       .select('id, name, owner_name, whatsapp_phone, whatsapp_status')
       .eq('prospect_state', 'aguardando')
       .is('whatsapp_sent_at', null)
       .not('whatsapp_phone', 'is', null)
-      .in('whatsapp_status', ['pending', 'found'])
+      .in('whatsapp_status', ['pending', 'found']);
+    // Optional territory targeting (bairro/cidade/UF): matches the stored city
+    // OR the full address. Sanitized to letters/digits/spaces/hyphens so the
+    // PostgREST or() syntax can't be broken by user input.
+    const t = territorio ? String(territorio).normalize('NFC').replace(/[^\p{L}\p{N}\s-]/gu, ' ').replace(/\s+/g, ' ').trim() : '';
+    if (t) q = q.or(`city.ilike.%${t}%,address.ilike.%${t}%`);
+    const { data, error } = await q
       .order('created_at', { ascending: true })
       .limit(limit);
     if (error) {

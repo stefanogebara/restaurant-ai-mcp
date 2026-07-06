@@ -123,7 +123,7 @@ module.exports = async (req, res) => {
           dispatch_enabled: dispatchCfg.enabled,
           dispatch_note: dispatchCfg.enabled ? null : dispatchCfg.notes,
           dry_run: !getProspectingPhoneNumberId() || process.env.PROSPECTING_DRY_RUN !== 'false',
-          daily_cap: parseInt(process.env.PROSPECTING_DAILY_CAP, 10) || 40,
+          daily_cap: await require('./_lib/prospecting/prospect-warmup').currentCap(),
           sent_today: outStats.count ?? 0,
           received_today: inStats.count ?? 0,
           due_followups: dueTouches.count ?? 0,
@@ -426,6 +426,25 @@ module.exports = async (req, res) => {
       return res.status(200).json({ success: true });
     }
 
+    // ---- Places Autocomplete proxy (console suggestions; key stays server-side) --
+    if (req.method === 'GET' && action === 'places-suggest') {
+      const input = String(req.query.input || '').trim();
+      if (input.length < 2) return res.status(200).json({ success: true, data: [] });
+      const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+      if (!apiKey) return res.status(422).json({ success: false, error: 'Places not configured' });
+      const { buildAutocompleteBody, parseAutocomplete } = require('./_lib/prospecting/places-discovery');
+      const resp = await fetch('https://places.googleapis.com/v1/places:autocomplete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Goog-Api-Key': apiKey,
+        },
+        body: JSON.stringify(buildAutocompleteBody(input)),
+      });
+      const json = await resp.json().catch(() => ({}));
+      return res.status(200).json({ success: true, data: parseAutocomplete(json) });
+    }
+
     // ---- Discovery: quick single search (Google Places → prospect_leads) -------
     if (req.method === 'POST' && action === 'discover') {
       const body = req.body || {};
@@ -513,10 +532,11 @@ module.exports = async (req, res) => {
 
     // ---- Mass dispatch (cold intros; warm-up cap + suppression apply) ----------
     if (req.method === 'POST' && action === 'dispatch') {
-      const limit = Math.min(Math.max(parseInt((req.body || {}).limit, 10) || 20, 1), 100);
+      const limit = Math.min(Math.max(parseInt((req.body || {}).limit, 10) || 20, 1), 250);
+      const territorio = (req.body && req.body.territorio) ? String(req.body.territorio).slice(0, 80) : null;
       const { dispatchIntros } = require('./_lib/prospecting/sequencer');
-      const summary = await dispatchIntros({ limit });
-      logger.info(`prospect-admin dispatch limit=${limit} sent=${summary.sent} by=${email}`);
+      const summary = await dispatchIntros({ limit, territorio });
+      logger.info(`prospect-admin dispatch limit=${limit} territorio=${territorio || '-'} sent=${summary.sent} by=${email}`);
       return res.status(200).json({ success: true, data: summary });
     }
 
