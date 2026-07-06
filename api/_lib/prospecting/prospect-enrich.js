@@ -34,6 +34,7 @@
 const { supabaseAdmin } = require('../supabase');
 const { createSecureLogger } = require('../secure-logger');
 const { getAI, AI_MODEL_FAST } = require('../ai-client');
+const { exigirOrcamentoLlm } = require('./prospect-llm-budget');
 const { safeFetchText } = require('../safe-fetch');
 const {
   CNPJ_RE, cnpjValido, extrairCnpjsDeHtml, gateCandidato,
@@ -303,6 +304,7 @@ async function escolherCnpj(lead, candidatos, origemSiteDoLead) {
   // "no match" like every other external call here. No CNPJ is just 'missing'.
   let content = '';
   try {
+    await exigirOrcamentoLlm(); // global hourly budget — exhausted reads as judge down
     const resp = await getAI().messages.create({
       model: AI_MODEL_FAST,
       max_tokens: 300,

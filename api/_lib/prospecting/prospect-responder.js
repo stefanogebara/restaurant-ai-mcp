@@ -210,6 +210,24 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
     return { action: 'skip', reason: 'window_closed' };
   }
 
+  // 3c. Global LLM budget (cost circuit-breaker). Checked read-only BEFORE the
+  //     per-lead lock and the per-inbound claim — a deferred turn must stay
+  //     claimable so the flush retry actually answers it (after the claim, a
+  //     skip would burn the message). Defer, don't drop: reply_apos lands on
+  //     the next flush tick (*/15); if the budget is still gone the turn
+  //     re-defers, and gate 3b retires it when the 24h window closes. Nudges
+  //     just skip — the hourly nudge cron retries naturally.
+  {
+    const { budgetDisponivel } = require('./prospect-llm-budget');
+    if (!(await budgetDisponivel(nowMs))) {
+      if (isNudge) return { action: 'skip', reason: 'llm_budget' };
+      const replyApos = new Date(nowMs + 15 * 60 * 1000).toISOString();
+      await patchLead(lead.id, { reply_apos: replyApos });
+      logger.warn(`[prospect] LLM hourly budget exhausted — deferred lead=${lead.id} until ${replyApos}`);
+      return { action: 'deferred', reason: 'llm_budget', replyApos };
+    }
+  }
+
   // 4. Email capture (best-effort) — merged into facts/columns when we reply.
   const email = isNudge ? null : extrairEmail(text);
 

@@ -73,8 +73,15 @@ inbound webhook ─▶ prospect-inbound ─▶ responder (LLM brain + guardrails
    YELLOW, failed-rate >5%/24h; RED also trips the master. Recovery is MANUAL.
 4. **Warm-up daily cap** (`PROSPECTING_DAILY_CAP`, default 40) — shared by
    intros AND follow-up touches; fail-closed.
-5. **Per-lead pause** — human takeover auto-pauses that lead's agent.
-6. **Opt-out suppression** — checked at dispatch, follow-up, and reply time.
+5. **Global LLM budget** (`PROSPECTING_LLM_HOURLY_CAP`, default 250/h) — cost
+   circuit-breaker counting EVERY prospecting LLM call (brain, facts, resumo,
+   enrich judge, gym) in a fixed UTC-hour window. On exhaustion nothing
+   crashes: the responder defers the turn via `reply_apos` (flush retries
+   every 15 min, gated by the 24h window), nudges/facts/resumo/judge degrade
+   to their no-LLM fallbacks, gym runs stop visibly. Fail-open on Redis blips
+   (the kill switch is the hard mute).
+6. **Per-lead pause** — human takeover auto-pauses that lead's agent.
+7. **Opt-out suppression** — checked at dispatch, follow-up, and reply time.
 
 ## Multi-touch cadence (never-repliers only)
 
@@ -144,6 +151,7 @@ Actions novas do `prospect-admin` (plano de gestão):
 | `PROSPECTING_DRY_RUN` | `false` = live sends |
 | `PROSPECTING_INTRO_TEMPLATE(_LANG)` | Fallback intro when no registry rows |
 | `PROSPECTING_DAILY_CAP` | Warm-up cap (default 40/day) |
+| `PROSPECTING_LLM_HOURLY_CAP` | Global LLM-call budget (default 250/h) |
 | `PROSPECTING_ADMIN_EMAILS` | Console allowlist |
 | `PROSPECTING_AGENT_NAME` / `PROSPECTING_CASES` | Persona name / real reference customers |
 | `PROSPECTING_CALENDAR_ID` / `PROSPECTING_REP_EMAILS` | Booking calendar + reps |

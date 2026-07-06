@@ -219,6 +219,17 @@
   3.6 → 4.0, 7/7 dimensões melhoraram, 8/10 cenários.** v2 (18 regras
   destiladas de pesquisa linguística) permanece como base histórica. 9 tests;
   168 prospecting green / 13 suites.
+- **Global LLM budget ✅ (2026-07-06)** — the Phase-6-deferred "global LLM rate
+  limit": `prospect-llm-budget.js` (Upstash INCR+EXPIRE per UTC hour, memory
+  fallback, fail-OPEN — the kill switch stays the hard mute;
+  `PROSPECTING_LLM_HOURLY_CAP`, default 250). Every prospecting
+  `messages.create` consumes: brain (+corrective retry), facts/resumo/score,
+  enrich judge, gym sim+judges. Exhaustion degrades, never crashes: the
+  responder gates READ-ONLY **before** the per-inbound claim and defers via
+  `reply_apos` (+15 min → flush retries; gate 3b retires it when the 24h
+  window closes), facts/resumo/judge fall back to their no-LLM paths, sim-lead
+  turns throw visibly. 14 new tests; 242 prospecting green / 16 suites; full
+  backend 2157 green.
 - **Remaining external steps:** approve extra template variants + touch-2/3
   templates in WhatsApp Manager, then register in Abordagens; subscribe Meta
   app to phone_number_quality_update + set PROSPECTING_DISPLAY_NUMBER.

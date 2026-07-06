@@ -18,6 +18,7 @@
  */
 
 const { getAI, AI_MODEL } = require('../ai-client');
+const { exigirOrcamentoLlm } = require('./prospect-llm-budget');
 const { supabaseAdmin } = require('../supabase');
 const { createSecureLogger } = require('../secure-logger');
 const { generateReply, AGENT_NAME } = require('./prospect-agent');
@@ -68,6 +69,9 @@ async function simLeadReply(scenario, transcript) {
     role: t.who === 'olimpia' ? 'user' : 'assistant',
     content: t.texto,
   }));
+  // Sim calls share the global budget — a gym session must stop, visibly,
+  // when the hourly cap is gone (this throw surfaces in the suite runner).
+  await exigirOrcamentoLlm();
   const resp = await getAI().messages.create({
     model: AI_MODEL,
     max_tokens: 300,
@@ -189,6 +193,7 @@ async function judgeTranscript(transcript) {
     .map((t) => `${t.who === 'lead' ? 'LEAD' : AGENT_NAME.toUpperCase()}: ${t.texto}`)
     .join('\n');
   try {
+    await exigirOrcamentoLlm(); // exhausted budget reads as a judge failure (null)
     const resp = await getAI().messages.create({
       model: AI_MODEL,
       max_tokens: 400,
@@ -286,6 +291,7 @@ async function judgePaired(scenarioDesc, transcriptA, transcriptB, lens = null) 
     ? `${PAIRED_JUDGE_SYSTEM}\n\n${PAIRED_LENSES[lens]}`
     : PAIRED_JUDGE_SYSTEM;
   try {
+    await exigirOrcamentoLlm(); // exhausted budget reads as a judge failure (null)
     const resp = await getAI().messages.create({
       model: AI_MODEL,
       max_tokens: 250,

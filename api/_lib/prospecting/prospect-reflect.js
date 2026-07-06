@@ -13,6 +13,7 @@
  */
 
 const { getAI, AI_MODEL_FAST } = require('../ai-client');
+const { exigirOrcamentoLlm } = require('./prospect-llm-budget');
 const { createSecureLogger } = require('../secure-logger');
 const { coerceFatos } = require('./prospect-facts');
 
@@ -102,6 +103,7 @@ function parseScoreText(text) {
 }
 
 async function callFast(system, userContent, maxTokens) {
+  await exigirOrcamentoLlm(); // throws when exhausted → callers' catch degrades
   const resp = await getAI().messages.create({
     model: AI_MODEL_FAST,
     max_tokens: maxTokens,
@@ -150,6 +152,7 @@ const RESUMO_SYSTEM =
 async function gerarResumo(history) {
   if (!Array.isArray(history) || history.length < RESUMO_MIN) return null;
   try {
+    await exigirOrcamentoLlm(); // throws when exhausted → null (best-effort path)
     const resp = await getAI().messages.create({
       model: AI_MODEL_FAST,
       max_tokens: 180,

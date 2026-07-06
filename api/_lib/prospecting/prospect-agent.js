@@ -19,6 +19,7 @@ const { getAI, AI_MODEL } = require('../ai-client');
 const { createSecureLogger } = require('../secure-logger');
 const { descreverAgora } = require('./prospect-state');
 const { formatarMemoria } = require('./prospect-facts');
+const { consumeLlmCall } = require('./prospect-llm-budget');
 
 const logger = createSecureLogger('ProspectAgent');
 
@@ -413,6 +414,16 @@ async function generateReply({ lead, history, nowMs, injectUserTurn = null, noTo
     const { getActiveStylePack } = require('./prospect-store');
     styleBody = await getActiveStylePack().catch(() => null);
   }
+  // Global hourly budget (cost circuit-breaker). The responder pre-gates and
+  // defers BEFORE the inbound claim; hitting this here means the budget ran
+  // out mid-window (race) or a non-responder caller (gym) — degrade to
+  // silence, same contract as an LLM error.
+  const budget = await consumeLlmCall(nowMs);
+  if (!budget.allowed) {
+    logger.error(`LLM budget exhausted (${budget.count}/${budget.cap} this hour) — no reply generated`);
+    return { tipo: 'nada', motivo: 'orçamento de LLM esgotado nesta hora' };
+  }
+
   const system = buildSystemPrompt(lead, descreverAgora(nowMs), styleBody);
   try {
     const response = await getAI().messages.create({
@@ -438,7 +449,8 @@ async function generateReply({ lead, history, nowMs, injectUserTurn = null, noTo
       let foreign = findForeignPhones(acao.texto, contexto);
       if (foreign.length) {
         logger.warn(`foreign phone digits in reply (${foreign.join(',')}) — corrective retry`);
-        const retry = await getAI().messages.create({
+        const retryBudget = await consumeLlmCall(nowMs);
+        const retry = !retryBudget.allowed ? null : await getAI().messages.create({
           model: AI_MODEL,
           max_tokens: 400,
           temperature: 0.3,
