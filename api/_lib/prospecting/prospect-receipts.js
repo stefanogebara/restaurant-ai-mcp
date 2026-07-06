@@ -34,7 +34,10 @@ const FAILED_RATE_MIN_SENDS = 5;
 //   131049 Meta per-user marketing frequency cap ("healthy ecosystem")
 //   130472 recipient is in a Meta marketing holdout experiment
 // Everything else (spam rate 131048, policy blocks, auth) still counts.
-const BENIGN_FAIL_CODES = ['131026', '131049', '130472'];
+//   131047 re-engagement message: OUR reply hit a closed 24h window — a
+//   timing bug on our side, never a spam signal; backing off dispatch cannot
+//   fix it, so it must not trip the breaker (2026-07-06 incident: 24×).
+const BENIGN_FAIL_CODES = ['131026', '131049', '130472', '131047'];
 
 /** PURE: does this error_detail describe benign (non-reputational) attrition? */
 function isBenignFailure(errorDetail) {

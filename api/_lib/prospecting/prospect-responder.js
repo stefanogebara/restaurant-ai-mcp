@@ -33,7 +33,7 @@ const {
 } = require('./prospect-store');
 const booking = require('./prospect-booking');
 const { extrairFatos, gerarResumo, RESUMO_MIN } = require('./prospect-reflect');
-const { NUDGE_INSTRUCTION } = require('./prospect-nudge');
+const { NUDGE_INSTRUCTION, podeMensagemLivre } = require('./prospect-nudge');
 
 const logger = createSecureLogger('ProspectResponder');
 
@@ -198,6 +198,16 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
       return { action: 'deferred', replyApos: decisao.replyApos };
     }
     logger.info(`[prospect] window deadline reached — replying OFF-HOURS lead=${lead.id}`);
+  }
+
+  // 3b. Meta 24h window gate (automated path). A resume that arrives after the
+  //     window closed (stale reply_apos, delayed flush) must NOT fire free
+  //     text — Meta rejects it (131047) and the failure poisons the number
+  //     stats. The lead stays for template-based touches instead.
+  if (!isNudge && lead.last_in_at && !podeMensagemLivre(new Date(lead.last_in_at).getTime(), nowMs)) {
+    await recordEvent(lead.id, '⏱ janela de 24h fechada — resposta livre cancelada (cobertura fica com os toques de template)');
+    logger.info(`[prospect] window closed — skipping free-text reply lead=${lead.id}`);
+    return { action: 'skip', reason: 'window_closed' };
   }
 
   // 4. Email capture (best-effort) — merged into facts/columns when we reply.

@@ -202,3 +202,24 @@ describe('decisaoForaDeHorario — the Sunday-flush re-deferral trap', () => {
     expect(new Date(d.replyApos).getUTCDay()).toBe(3);
   });
 });
+
+const { isBenignFailure } = require('../_lib/prospecting/prospect-receipts');
+
+describe('131047 (closed window) is benign for the breaker — our timing, not reputation', () => {
+  test('classified benign', () => {
+    expect(isBenignFailure('131047 Re-engagement message')).toBe(true);
+  });
+  test('true reputational codes still count', () => {
+    expect(isBenignFailure('131048 Spam rate limit hit')).toBe(false);
+  });
+});
+
+describe('podeMensagemLivre gates the automated free-text path', () => {
+  const { podeMensagemLivre } = require('../_lib/prospecting/prospect-nudge');
+  test('inside the window → free text OK', () => {
+    expect(podeMensagemLivre(Date.now() - 2 * 3600 * 1000)).toBe(true);
+  });
+  test('stale inbound (the Monday-flush incident shape) → blocked', () => {
+    expect(podeMensagemLivre(Date.now() - 60 * 3600 * 1000)).toBe(false);
+  });
+});
