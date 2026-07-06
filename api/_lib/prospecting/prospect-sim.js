@@ -25,11 +25,15 @@ const { detectarOptout } = require('./prospect-state');
 
 const logger = createSecureLogger('ProspectSim');
 
+// Mirror of the APPROVED intro template (olimpia_apresentacao) — keep in sync
+// so gym conversations open exactly like production ones.
 const INTRO_PREVIEW =
-  'Oi, tudo bem? Aqui é a Olímpia, da Seatable. Vi o restaurante {{nome}} e queria me apresentar. ' +
-  'A gente ajuda restaurantes a lotar mais mesas e a não perder reserva, com um atendimento por IA ' +
-  'no WhatsApp e no telefone que soa como uma pessoa de verdade. Dá pra te mostrar como funciona ' +
-  'numa conversa rápida de 30 minutos?';
+  'Oi, tudo bem? Aqui é a Olímpia, da Seatable 👋\n\n' +
+  'Achei o {{nome}} pelo Google Maps e resolvi chamar.\n\n' +
+  'A gente criou um CRM com IA feito pra restaurante: ele atende o WhatsApp da casa sozinho, ' +
+  'responde na hora, anota a reserva e corre atrás de quem furou — pra mesa não ficar vazia.\n\n' +
+  'Posso te contar em 2 minutos como ficaria aí? Se não for o momento, tranquilo — é só falar 🙂\n\n' +
+  'Mais sobre a gente: seatable.one';
 
 /** System prompt for the LLM playing the LEAD. */
 function simLeadSystem(scenario) {

@@ -20,6 +20,29 @@ const AI_MODEL = process.env.AI_MODEL || 'anthropic/claude-sonnet-4';
 const AI_MODEL_FAST = process.env.AI_MODEL_FAST || 'anthropic/claude-3.5-haiku';
 
 /**
+ * OpenRouter model slugs → Anthropic API model IDs, for the 402 failover path.
+ * The direct Anthropic API rejects OpenRouter's "anthropic/..." slugs.
+ */
+const ANTHROPIC_MODEL_MAP = {
+  'anthropic/claude-sonnet-4': 'claude-sonnet-4-20250514',
+  'anthropic/claude-3.5-haiku': 'claude-3-5-haiku-latest',
+};
+
+function toAnthropicModel(slug) {
+  return ANTHROPIC_MODEL_MAP[slug] || String(slug).replace(/^anthropic\//, '');
+}
+
+let _anthropicFallback = null;
+function getAnthropicFallback() {
+  if (_anthropicFallback) return _anthropicFallback;
+  const key = process.env.ANTHROPIC_API_KEY;
+  if (!key) return null;
+  const Anthropic = require('@anthropic-ai/sdk').default || require('@anthropic-ai/sdk');
+  _anthropicFallback = new Anthropic({ apiKey: key });
+  return _anthropicFallback;
+}
+
+/**
  * OpenRouter client that mimics the Anthropic SDK interface.
  * Uses OpenRouter's /chat/completions endpoint (OpenAI-compatible).
  */
@@ -116,6 +139,15 @@ class OpenRouterClient {
 
     if (!response.ok) {
       const errText = await response.text().catch(() => '');
+      // 402 = OpenRouter credits exhausted. Service continuity beats routing
+      // preference: retry once via direct Anthropic when the key is configured.
+      if (response.status === 402) {
+        const fallback = getAnthropicFallback();
+        if (fallback) {
+          logger.warn('OpenRouter out of credits (402) — failing over to direct Anthropic', { model });
+          return fallback.messages.create({ ...params, model: toAnthropicModel(model) });
+        }
+      }
       throw new Error(`OpenRouter API error ${response.status}: ${errText}`);
     }
 
