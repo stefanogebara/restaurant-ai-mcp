@@ -63,6 +63,7 @@ export default function DiscoveryPanel() {
   const [onlySendable, setOnlySendable] = useState(true);
   const [maxQueries, setMaxQueries] = useState(300);
   const [dispatchLimit, setDispatchLimit] = useState(10);
+  const [limitTouched, setLimitTouched] = useState(false);
   const [territorio, setTerritorio] = useState('');
   const [confirmDispatch, setConfirmDispatch] = useState(false);
   const [lastDiscover, setLastDiscover] = useState<DiscoverResult | null>(null);
@@ -85,6 +86,24 @@ export default function DiscoveryPanel() {
     }, 300);
     return () => clearTimeout(t);
   }, [sugInput]);
+
+  // Day budget (shared cache with the cockpit's overview): prefill "Enviar até"
+  // with today's remaining allowance instead of a token 10 — the ramp/cap in
+  // the backend is the real guard, the field just shouldn't undersell it.
+  const overviewQ = useQuery({
+    queryKey: ['prospect-admin', 'overview'],
+    queryFn: async () =>
+      (await api.get<{ data: { daily_cap: number; sent_today: number } }>('/prospect-admin?action=overview')).data.data,
+    refetchInterval: 30000,
+  });
+  const saldoHoje = overviewQ.data
+    ? Math.max(0, (overviewQ.data.daily_cap ?? 0) - (overviewQ.data.sent_today ?? 0))
+    : null;
+  useEffect(() => {
+    if (!limitTouched && saldoHoje != null) {
+      setDispatchLimit(Math.max(1, Math.min(saldoHoje, 250)));
+    }
+  }, [saldoHoje, limitTouched]);
 
   const jobQ = useQuery({
     queryKey: ['prospect-admin', 'discovery-status', activeJob],
@@ -151,6 +170,16 @@ export default function DiscoveryPanel() {
 
   const estQueries = mode === 'estado' ? maxQueries : mode === 'cidade' ? Math.min(maxQueries, 100) : 1;
   const estCost = (estQueries * 0.032).toFixed(2);
+
+  // One-click bridge from step 1 → step 2: scope the dispatch to what was just
+  // found and open the (single) confirmation. The backend still enforces the
+  // daily ramp and skips anyone already contacted or opted out.
+  const dispararEncontrados = (encontrados: number, regiao: string) => {
+    setTerritorio(regiao);
+    setDispatchLimit(Math.max(1, Math.min(encontrados, saldoHoje ?? 250, 250)));
+    setLimitTouched(true);
+    setConfirmDispatch(true);
+  };
   const inputClass = 'mt-1 w-full rounded-xl border border-stone-200 px-3 py-2 text-sm bg-white/70';
 
   return (
@@ -281,7 +310,29 @@ export default function DiscoveryPanel() {
           </div>
         )}
 
-        {lastDiscover && !job && <FunnelLine label="Última busca" r={lastDiscover} />}
+        {lastDiscover && !job && (
+          <div className="space-y-2">
+            <FunnelLine label="Última busca" r={lastDiscover} />
+            {lastDiscover.sendable > 0 && (
+              <button
+                type="button"
+                onClick={() => dispararEncontrados(lastDiscover.sendable, (bairro.trim() || city.trim()))}
+                className="w-full px-3 py-2 rounded-xl border border-emerald-300 bg-emerald-50/70 text-emerald-800 text-sm font-medium hover:bg-emerald-100 text-left"
+              >
+                ⚡ Disparar agora para os {Math.max(1, Math.min(lastDiscover.sendable, saldoHoje ?? 250))} com telefone de {bairro.trim() || city.trim()} — 1 clique, confirmação abaixo
+              </button>
+            )}
+          </div>
+        )}
+        {jobFinished && job && job.sendable > 0 && (
+          <button
+            type="button"
+            onClick={() => dispararEncontrados(job.sendable, mode === 'estado' ? uf : city.trim())}
+            className="w-full px-3 py-2 rounded-xl border border-emerald-300 bg-emerald-50/70 text-emerald-800 text-sm font-medium hover:bg-emerald-100 text-left"
+          >
+            ⚡ Disparar agora para os encontrados na varredura ({Math.max(1, Math.min(job.sendable, saldoHoje ?? 250))} hoje) — confirmação abaixo
+          </button>
+        )}
       </GlassPanel>
 
       {/* ─── Passo 2: disparar ───────────────────────────────────────── */}
@@ -298,9 +349,14 @@ export default function DiscoveryPanel() {
             <input
               type="number" min={1} max={250}
               value={dispatchLimit}
-              onChange={(e) => setDispatchLimit(Math.min(250, Math.max(1, Number(e.target.value) || 10)))}
+              onChange={(e) => { setLimitTouched(true); setDispatchLimit(Math.min(250, Math.max(1, Number(e.target.value) || 10))); }}
               className="mt-1 w-20 rounded-xl border border-stone-200 px-3 py-2 text-sm bg-white/70"
             />
+            {overviewQ.data && (
+              <span className={`block mt-1 text-[11px] ${saldoHoje === 0 ? 'text-amber-600 font-medium' : 'text-stone-400'}`}>
+                hoje: {overviewQ.data.sent_today}/{overviewQ.data.daily_cap} enviados{saldoHoje === 0 ? ' — limite diário esgotado' : ` · saldo ${saldoHoje}`}
+              </span>
+            )}
           </label>
           <label className="text-xs text-stone-500">
             Só para a região (opcional)

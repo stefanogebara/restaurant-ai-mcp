@@ -383,6 +383,29 @@ async function claimInbound(leadId, wamid) {
 }
 
 /**
+ * Give back a claim taken by claimInbound — used when the reply attempt fails
+ * for a TRANSIENT reason (LLM provider error / budget race) and the turn is
+ * deferred via reply_apos: the flush retry must be able to claim the same
+ * wamid again, or the guard at 6a-ii eats the retry. Guarded by the wamid so
+ * a racing claim for a NEWER inbound is never clobbered. Best-effort.
+ * @param {string} leadId
+ * @param {string} wamid
+ */
+async function releaseInbound(leadId, wamid) {
+  if (!leadId || !wamid) return;
+  try {
+    const { error } = await supabaseAdmin
+      .from('prospect_leads')
+      .update({ last_in_wamid: null })
+      .eq('id', leadId)
+      .eq('last_in_wamid', wamid);
+    if (error) logger.error('releaseInbound failed:', error.message);
+  } catch (err) {
+    logger.error('releaseInbound exception:', err.message);
+  }
+}
+
+/**
  * Nudge candidates (coarse pass): active-conversation leads with no pending
  * deferral. Fine-grained eligibility (23h silence, last message is the agent's,
  * once per silence period, 24h free-text window) is decided per-lead by the
@@ -765,6 +788,7 @@ module.exports = {
   loadLastInbound,
   inboundFingerprint,
   claimInbound,
+  releaseInbound,
   selectNudgeStates,
   recordEvent,
   recordNote,

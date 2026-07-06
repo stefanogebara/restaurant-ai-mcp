@@ -29,7 +29,7 @@ const { mergeFatos } = require('./prospect-facts');
 const { generateReply } = require('./prospect-agent');
 const {
   loadHistory, patchLead, recordOptout, storeMessage,
-  inboundFingerprint, claimInbound, updateIntent, recordEvent,
+  inboundFingerprint, claimInbound, releaseInbound, updateIntent, recordEvent,
 } = require('./prospect-store');
 const booking = require('./prospect-booking');
 const { extrairFatos, gerarResumo, RESUMO_MIN } = require('./prospect-reflect');
@@ -376,6 +376,18 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
 
       case 'ignorar':
       case 'nada': {
+        // Transient failure ≠ deliberate silence. A provider error (or the
+        // rare budget race past gate 3c) must RE-QUEUE the turn: reply_apos
+        // +15 min (flush cron retries; gate 3b retires it at window close)
+        // and the per-inbound claim goes back so the retry can claim the
+        // same wamid. Incident 2026-07-06: without this, provider 402/401
+        // surfaced as bare 'nada' and live threads hung with no retry.
+        if (!isNudge && acao.tipo === 'nada' && /^(erro LLM|orçamento de LLM)/.test(acao.motivo || '')) {
+          patch.reply_apos = new Date(nowMs + 15 * 60 * 1000).toISOString();
+          if (!isDryRun() && lastRow.wamid) await releaseInbound(lead.id, lastRow.wamid);
+          await recordEvent(lead.id, `⚠ IA indisponível — resposta adiada 15 min (retry automático): ${acao.motivo}`);
+          break;
+        }
         // Deliberate silence — EXCEPT the gatekeeper door: when the thread is
         // template-out + bot-noise-in only (no human voice yet), one short
         // line addressed to the human who reads the thread later. The pack
