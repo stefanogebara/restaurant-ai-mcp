@@ -126,7 +126,9 @@ async function runSimulation(scenario, { styleOverride = undefined, turns = null
     } else if (acao.texto) {
       transcript.push({ who: 'olimpia', texto: acao.texto, acao: acao.tipo });
     } else {
-      transcript.push({ who: 'olimpia', texto: null, acao: acao.tipo });
+      // Surface WHY the brain stayed silent (LLM error, truncation, guard) —
+      // a silent 'nada' hid a full provider outage on 2026-07-06.
+      transcript.push({ who: 'olimpia', texto: null, acao: acao.tipo, motivo: acao.motivo || null });
     }
     if (['optout', 'handoff', 'agendar', 'registrar_responsavel'].includes(acao.tipo)) {
       terminal = acao.tipo;
