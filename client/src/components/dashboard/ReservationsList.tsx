@@ -640,7 +640,7 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
             aria-label={tl('rowActionsAriaLabel', 'Reservation actions')}
             className="p-2 -m-2 rounded-lg text-muted-stone hover:text-deep-charcoal hover:bg-soft-gray transition-colors"
           >
-            <ThiingsIcon name="menu" pxSize={18} />
+            <ThiingsIcon name="more-horizontal" pxSize={18} />
           </button>
           {mobileMenuOpen && (
             <div
