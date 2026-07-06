@@ -174,4 +174,17 @@ describe('buildSystemPrompt — restored fine-tuning depth', () => {
   test('rule 5c: skip small talk when the person already brought a topic', () => {
     expect(prompt).toMatch(/pule a small/);
   });
+
+  test('product block: full AI-CRM value map, not reservations-only', () => {
+    expect(prompt).toMatch(/CRM com IA/);
+    expect(prompt).toMatch(/Anti no-show/);
+    expect(prompt).toMatch(/Inteligência de clientes/);
+    expect(prompt).toMatch(/previsão de receita/);
+    expect(prompt).toMatch(/gestor de IA/);
+  });
+
+  test('product block: pitch is routed by pain, never the whole list', () => {
+    expect(prompt).toMatch(/maior dor da pessoa/);
+    expect(prompt).toMatch(/NUNCA despeje a lista inteira/);
+  });
 });

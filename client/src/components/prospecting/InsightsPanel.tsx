@@ -30,13 +30,11 @@ function replyBenchmark(rate: number | null): string | undefined {
 }
 
 export default function InsightsPanel() {
-  const [open, setOpen] = useState(false);
   const [dias, setDias] = useState(30);
 
   const q = useQuery({
     queryKey: ['prospect-admin', 'insights', dias],
     queryFn: async () => (await api.get<{ data: Insights }>(`/prospect-admin?action=insights&dias=${dias}`)).data.data,
-    enabled: open,
     staleTime: 5 * 60 * 1000,
   });
 
@@ -45,16 +43,12 @@ export default function InsightsPanel() {
 
   return (
     <GlassPanel className="p-4">
-      <button type="button" onClick={() => setOpen(!open)} className="w-full flex items-center justify-between text-left" aria-expanded={open}>
-        <div>
-          <h2 className="font-medium">Insights</h2>
-          <p className="text-xs text-stone-500">O que as conversas estão ensinando: objeções, quantos leads respondem e quais merecem mais atenção</p>
-        </div>
-        <span className={`text-stone-400 transition-transform ${open ? 'rotate-180' : ''}`}>▾</span>
-      </button>
+      <div>
+        <h2 className="font-medium">Insights</h2>
+        <p className="text-xs text-stone-500">O que as conversas estão ensinando: objeções, quantos leads respondem e quais merecem mais atenção</p>
+      </div>
 
-      {open && (
-        <div className="mt-4 space-y-4">
+      <div className="mt-4 space-y-4">
           <div className="flex gap-1.5">
             {[30, 60, 90].map((n) => (
               <button
@@ -158,7 +152,6 @@ export default function InsightsPanel() {
             </>
           )}
         </div>
-      )}
     </GlassPanel>
   );
 }

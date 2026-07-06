@@ -64,7 +64,6 @@ function Bubbles({ texto, who }: { texto: string; who: 'lead' | 'olimpia' }) {
 export default function GymPanel() {
   const qc = useQueryClient();
   const toast = useToast();
-  const [open, setOpen] = useState(false);
   const [styleSel, setStyleSel] = useState<number | 'active'>('active');
   const [running, setRunning] = useState<string | null>(null);
   const [result, setResult] = useState<ExerciseResult | null>(null);
@@ -75,7 +74,6 @@ export default function GymPanel() {
   const gymQ = useQuery({
     queryKey: ['prospect-admin', 'gym'],
     queryFn: async () => (await api.get<{ data: GymData }>('/prospect-admin?action=gym')).data.data,
-    enabled: open,
     staleTime: 30000,
   });
 
@@ -122,16 +120,12 @@ export default function GymPanel() {
 
   return (
     <GlassPanel className="p-4">
-      <button type="button" onClick={() => setOpen(!open)} className="w-full flex items-center justify-between text-left" aria-expanded={open}>
-        <div>
-          <h2 className="font-medium">Academia da Olímpia</h2>
-          <p className="text-xs text-stone-500">Conversas simuladas para treinar a Olímpia — nada é enviado a leads reais. Cada treino recebe notas de 1 a 5 pela naturalidade da conversa.</p>
-        </div>
-        <span className={`text-stone-400 transition-transform ${open ? 'rotate-180' : ''}`}>▾</span>
-      </button>
+      <div>
+        <h2 className="font-medium">Academia da Olímpia</h2>
+        <p className="text-xs text-stone-500">Conversas simuladas para treinar a Olímpia — nada é enviado a leads reais. Cada treino recebe notas de 1 a 5 pela naturalidade da conversa.</p>
+      </div>
 
-      {open && (
-        <div className="mt-4 space-y-5">
+      <div className="mt-4 space-y-5">
           {/* Style selector for runs */}
           {d && d.packs.length > 0 && (
             <div className="flex flex-wrap items-center gap-2 text-xs text-stone-600" title="Estilo de conversa = versão do treino que define como a Olímpia escreve. Aqui você escolhe qual versão testar.">
@@ -275,7 +269,6 @@ export default function GymPanel() {
             </div>
           )}
         </div>
-      )}
     </GlassPanel>
   );
 }

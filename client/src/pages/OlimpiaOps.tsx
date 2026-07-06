@@ -21,9 +21,21 @@ import { fmtTime, httpStatus } from '../components/prospecting/types';
  * allowlist enforced server-side (403 → restricted screen).
  *
  * Layout: header (health + kill switch) → breaker banner → status strip →
- * meetings → Descobrir & Disparar → Abordagens (A/B) → Insights → Triagem/Todos
- * work queue with the thread workbench.
+ * meetings → section tabs (Conversas is the default working view; Descobrir &
+ * Disparar, Abordagens, Identidade, Insights and Academia each own a tab —
+ * one section fully visible at a time, no accordions).
  */
+
+type Section = 'conversas' | 'descobrir' | 'abordagens' | 'whatsapp' | 'insights' | 'academia';
+
+const SECTIONS: Array<{ id: Section; label: string }> = [
+  { id: 'conversas', label: 'Conversas' },
+  { id: 'descobrir', label: 'Descobrir & Disparar' },
+  { id: 'abordagens', label: 'Abordagens (A/B)' },
+  { id: 'whatsapp', label: 'Identidade do WhatsApp' },
+  { id: 'insights', label: 'Insights' },
+  { id: 'academia', label: 'Academia da Olímpia' },
+];
 
 interface ListData { leads: ProspectLead[]; counts: Record<string, number>; agent_enabled: boolean; dry_run: boolean; }
 
@@ -50,6 +62,7 @@ export default function OlimpiaOps() {
   const qc = useQueryClient();
   const toast = useToast();
   const [selected, setSelected] = useState<string | null>(null);
+  const [section, setSection] = useState<Section>('conversas');
   const [tab, setTab] = useState<'triagem' | 'todos'>('triagem');
   const [bucketFilter, setBucketFilter] = useState<string | null>(null);
   const [confirmStop, setConfirmStop] = useState(false);
@@ -200,60 +213,88 @@ export default function OlimpiaOps() {
           </GlassPanel>
         )}
 
-        <DiscoveryPanel />
-        <WaIdentityPanel />
-        <VariantsPanel />
-        <InsightsPanel />
-        <GymPanel />
+        {/* Section tabs — one section fully visible at a time */}
+        <nav className="flex flex-wrap gap-1.5" aria-label="Seções do console">
+          {SECTIONS.map(({ id, label }) => (
+            <button
+              key={id}
+              type="button"
+              aria-expanded={section === id}
+              onClick={() => setSection(id)}
+              className={`px-3.5 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                section === id
+                  ? 'bg-stone-800 text-white shadow-sm'
+                  : 'bg-white/60 border border-stone-200/70 text-stone-600 hover:bg-stone-100'
+              }`}
+            >
+              {label}
+              {id === 'conversas' && triagemCount > 0 && (
+                <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-[11px] ${section === id ? 'bg-white/20' : 'bg-burgundy/10 text-burgundy'}`}>
+                  {triagemCount}
+                </span>
+              )}
+            </button>
+          ))}
+        </nav>
 
-        {/* Work queue: Triagem (default) | Todos with funnel filters */}
-        <GlassPanel className="p-3 flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setTab('triagem')}
-            className={`px-3 py-1 rounded-full text-sm font-medium ${tab === 'triagem' ? 'bg-stone-800 text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}
-          >
-            Triagem {triagemCount > 0 && <span className="ml-1">{triagemCount}</span>}
-          </button>
-          <button
-            type="button"
-            onClick={() => setTab('todos')}
-            className={`px-3 py-1 rounded-full text-sm font-medium ${tab === 'todos' ? 'bg-stone-800 text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}
-          >
-            Todos {leads.length}
-          </button>
-          {tab === 'todos' && (
-            <span className="flex flex-wrap gap-1.5 ml-2">
-              {Object.entries(counts).filter(([, n]) => n > 0).map(([b, n]) => (
-                <button
-                  key={b}
-                  type="button"
-                  onClick={() => setBucketFilter(bucketFilter === b ? null : b)}
-                  className={`flex items-center gap-1 px-1 py-0.5 rounded-full transition-opacity ${bucketFilter && bucketFilter !== b ? 'opacity-40' : ''}`}
-                >
-                  <Badge bucket={b} /> <span className="text-xs text-stone-600">{n}</span>
-                </button>
-              ))}
-            </span>
-          )}
-          <span className="ml-auto text-[11px] text-stone-400">j/k navegam · atualiza 20s</span>
-        </GlassPanel>
+        {section === 'descobrir' && <DiscoveryPanel />}
+        {section === 'whatsapp' && <WaIdentityPanel />}
+        {section === 'abordagens' && <VariantsPanel />}
+        {section === 'insights' && <InsightsPanel />}
+        {section === 'academia' && <GymPanel />}
 
-        <div className="grid md:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] gap-5">
-          <LeadList
-            leads={leads}
-            tab={tab}
-            bucketFilter={bucketFilter}
-            selected={selected}
-            onSelect={setSelected}
-            loading={listQ.isLoading}
-            nowMs={nowMs}
-          />
-          <GlassCard className="p-4 flex flex-col max-h-[70vh]">
-            {!selected && <p className="text-sm text-stone-500 m-auto">Selecione um lead para ver a conversa.</p>}
-            {selected && <ThreadView leadId={selected} nowMs={nowMs} />}
-          </GlassCard>
-        </div>
+        {section === 'conversas' && (
+          <>
+            {/* Work queue: Triagem (default) | Todos with funnel filters */}
+            <GlassPanel className="p-3 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setTab('triagem')}
+                className={`px-3 py-1 rounded-full text-sm font-medium ${tab === 'triagem' ? 'bg-stone-800 text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}
+              >
+                Triagem {triagemCount > 0 && <span className="ml-1">{triagemCount}</span>}
+              </button>
+              <button
+                type="button"
+                onClick={() => setTab('todos')}
+                className={`px-3 py-1 rounded-full text-sm font-medium ${tab === 'todos' ? 'bg-stone-800 text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}
+              >
+                Todos {leads.length}
+              </button>
+              {tab === 'todos' && (
+                <span className="flex flex-wrap gap-1.5 ml-2">
+                  {Object.entries(counts).filter(([, n]) => n > 0).map(([b, n]) => (
+                    <button
+                      key={b}
+                      type="button"
+                      onClick={() => setBucketFilter(bucketFilter === b ? null : b)}
+                      className={`flex items-center gap-1 px-1 py-0.5 rounded-full transition-opacity ${bucketFilter && bucketFilter !== b ? 'opacity-40' : ''}`}
+                    >
+                      <Badge bucket={b} /> <span className="text-xs text-stone-600">{n}</span>
+                    </button>
+                  ))}
+                </span>
+              )}
+              <span className="ml-auto text-[11px] text-stone-400">j/k navegam · atualiza 20s</span>
+            </GlassPanel>
+
+            <div className="grid md:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] gap-5">
+              <LeadList
+                leads={leads}
+                tab={tab}
+                bucketFilter={bucketFilter}
+                selected={selected}
+                onSelect={setSelected}
+                loading={listQ.isLoading}
+                nowMs={nowMs}
+              />
+              <GlassCard className="p-4 flex flex-col max-h-[70vh]">
+                {!selected && <p className="text-sm text-stone-500 m-auto">Selecione um lead para ver a conversa.</p>}
+                {selected && <ThreadView leadId={selected} nowMs={nowMs} />}
+              </GlassCard>
+            </div>
+          </>
+        )}
       </main>
     </div>
   );

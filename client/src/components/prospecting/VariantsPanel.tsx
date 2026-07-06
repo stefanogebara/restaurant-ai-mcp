@@ -26,7 +26,6 @@ function pct(n: number, of: number): string {
 export default function VariantsPanel() {
   const qc = useQueryClient();
   const toast = useToast();
-  const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Partial<TemplateRow> | null>(null);
 
   const q = useQuery({
@@ -35,8 +34,7 @@ export default function VariantsPanel() {
       (await api.get<{ data: { templates: TemplateRow[]; funnel: VariantFunnelRow[] } }>(
         '/prospect-admin?action=variants',
       )).data.data,
-    enabled: open,
-    refetchInterval: open ? 60000 : false,
+    refetchInterval: 60000,
   });
 
   const upsert = useMutation({
@@ -58,16 +56,12 @@ export default function VariantsPanel() {
 
   return (
     <GlassPanel className="p-4">
-      <button type="button" onClick={() => setOpen(!open)} className="w-full flex items-center justify-between text-left" aria-expanded={open}>
-        <div>
-          <h2 className="font-medium">Abordagens (A/B)</h2>
-          <p className="text-xs text-stone-500">Teste A/B: duas primeiras mensagens competindo — a que gera mais resposta vence. Cada abordagem usa um modelo aprovado (Meta) e pode ter lembretes (toques 2 e 3).</p>
-        </div>
-        <span className={`text-stone-400 transition-transform ${open ? 'rotate-180' : ''}`}>▾</span>
-      </button>
+      <div>
+        <h2 className="font-medium">Abordagens (A/B)</h2>
+        <p className="text-xs text-stone-500">Teste A/B: duas primeiras mensagens competindo — a que gera mais resposta vence. Cada abordagem usa um modelo aprovado (Meta) e pode ter lembretes (toques 2 e 3).</p>
+      </div>
 
-      {open && (
-        <div className="mt-4 space-y-5">
+      <div className="mt-4 space-y-5">
           {/* Registry grouped by touch */}
           {[1, 2, 3].map((touch) => {
             const rows = templates.filter((t) => t.touch_number === touch);
@@ -210,7 +204,6 @@ export default function VariantsPanel() {
             </div>
           )}
         </div>
-      )}
     </GlassPanel>
   );
 }

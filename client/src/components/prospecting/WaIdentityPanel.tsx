@@ -78,7 +78,6 @@ function StatusChip({ map, value, fallback }: { map: Record<string, { label: str
 export default function WaIdentityPanel() {
   const qc = useQueryClient();
   const toast = useToast();
-  const [open, setOpen] = useState(false);
   const [photoUrl, setPhotoUrl] = useState('');
   const [about, setAbout] = useState('');
   const [website, setWebsite] = useState('');
@@ -129,16 +128,12 @@ export default function WaIdentityPanel() {
 
   return (
     <GlassPanel className="p-4">
-      <button type="button" className="w-full flex items-center justify-between" onClick={() => setOpen(!open)}>
-        <div className="text-left">
-          <h2 className="font-medium">Identidade do WhatsApp</h2>
-          <p className="text-xs text-stone-500">Como a Olímpia aparece para os restaurantes — foto, nome e o que sai automaticamente em cada momento</p>
-        </div>
-        <span className="text-stone-400 text-sm">{open ? '▴' : '▾'}</span>
-      </button>
+      <div>
+        <h2 className="font-medium">Identidade do WhatsApp</h2>
+        <p className="text-xs text-stone-500">Como a Olímpia aparece para os restaurantes — foto, nome e o que sai automaticamente em cada momento</p>
+      </div>
 
-      {open && (
-        <div className="mt-4 space-y-5">
+      <div className="mt-4 space-y-5">
           {q.isLoading && <p className="text-sm text-stone-500">Carregando identidade…</p>}
           {q.isError && <p className="text-sm text-rose-700">Não foi possível ler a identidade do número (token ou permissão da Meta).</p>}
 
@@ -320,7 +315,6 @@ export default function WaIdentityPanel() {
             </>
           )}
         </div>
-      )}
     </GlassPanel>
   );
 }
