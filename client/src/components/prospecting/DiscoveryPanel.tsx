@@ -313,26 +313,34 @@ export default function DiscoveryPanel() {
         {lastDiscover && !job && (
           <div className="space-y-2">
             <FunnelLine label="Última busca" r={lastDiscover} />
-            {lastDiscover.sendable > 0 && (
+            {lastDiscover.sendable > 0 && (saldoHoje === null || saldoHoje > 0 ? (
               <button
                 type="button"
                 onClick={() => dispararEncontrados(lastDiscover.sendable, (bairro.trim() || city.trim()))}
                 className="w-full px-3 py-2 rounded-xl border border-emerald-300 bg-emerald-50/70 text-emerald-800 text-sm font-medium hover:bg-emerald-100 text-left"
               >
-                ⚡ Disparar agora para os {Math.max(1, Math.min(lastDiscover.sendable, saldoHoje ?? 250))} com telefone de {bairro.trim() || city.trim()} — 1 clique, confirmação abaixo
+                ⚡ Disparar agora para os {Math.min(lastDiscover.sendable, saldoHoje ?? 250)} com telefone de {bairro.trim() || city.trim()} — 1 clique, confirmação abaixo
               </button>
-            )}
+            ) : (
+              <div className="w-full px-3 py-2 rounded-xl border border-amber-300 bg-amber-50/70 text-amber-800 text-sm">
+                Limite diário de envios esgotado — os {lastDiscover.sendable} encontrados ficam na fila e o saldo renova sozinho à meia-noite (UTC). Amanhã é 1 clique aqui.
+              </div>
+            ))}
           </div>
         )}
-        {jobFinished && job && job.sendable > 0 && (
+        {jobFinished && job && job.sendable > 0 && (saldoHoje === null || saldoHoje > 0 ? (
           <button
             type="button"
             onClick={() => dispararEncontrados(job.sendable, mode === 'estado' ? uf : city.trim())}
             className="w-full px-3 py-2 rounded-xl border border-emerald-300 bg-emerald-50/70 text-emerald-800 text-sm font-medium hover:bg-emerald-100 text-left"
           >
-            ⚡ Disparar agora para os encontrados na varredura ({Math.max(1, Math.min(job.sendable, saldoHoje ?? 250))} hoje) — confirmação abaixo
+            ⚡ Disparar agora para os encontrados na varredura ({Math.min(job.sendable, saldoHoje ?? 250)} hoje) — confirmação abaixo
           </button>
-        )}
+        ) : (
+          <div className="w-full px-3 py-2 rounded-xl border border-amber-300 bg-amber-50/70 text-amber-800 text-sm">
+            Limite diário de envios esgotado — os {job.sendable} encontrados ficam na fila e o saldo renova sozinho à meia-noite (UTC). Amanhã é 1 clique aqui.
+          </div>
+        ))}
       </GlassPanel>
 
       {/* ─── Passo 2: disparar ───────────────────────────────────────── */}
