@@ -157,6 +157,28 @@ function extrairEmail(texto) {
   return match ? match[0].toLowerCase() : null;
 }
 
+function semAcento(texto) {
+  return String(texto).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+}
+
+/**
+ * Is the message essentially JUST an email address (plus filler like "meu
+ * email é …", "pode mandar pra …")? Guards the deterministic booking path:
+ * an email inside a longer sentence ("fala com meu sócio x@y.com") is a
+ * referral, not an answer to "qual seu e-mail?" — that goes to the LLM.
+ */
+function mensagemApenasEmail(texto, email) {
+  if (!email) return false;
+  const normalizado = semAcento(texto || '');
+  const semEmail = normalizado.replace(semAcento(email), ' ');
+  const resto = semEmail
+    .replace(/[.,;:!?()[\]{}"']/g, ' ')
+    .replace(/\b(meu|minha|email|e-mail|mail|e|eh|é|pode|manda|mandar|envia|enviar|para|pra|por|favor|segue|aqui|convite|o|me|no|na|sim|ok|beleza|claro)\b/g, ' ')
+    .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, ' ') // emojis are filler too
+    .replace(/\s+/g, '');
+  return resto.length === 0;
+}
+
 module.exports = {
   DDDS_BR,
   extrairDddBr,
@@ -165,4 +187,5 @@ module.exports = {
   extrairNumeroDono,
   extrairNomeDono,
   extrairEmail,
+  mensagemApenasEmail,
 };

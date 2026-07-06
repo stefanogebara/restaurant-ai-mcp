@@ -23,6 +23,7 @@ const { patchLead } = require('./prospect-store');
 const gcal = require('./prospect-gcal');
 const agenda = require('./prospect-agenda');
 const { sendBriefing } = require('./prospect-briefing');
+const { extrairEmail, mensagemApenasEmail } = require('./prospect-extract');
 
 const logger = createSecureLogger('ProspectBooking');
 const JANELA_DIAS = 8; // free/busy look-ahead window (days)
@@ -124,6 +125,22 @@ async function proporReuniao(lead, nowMs, janelaTexto) {
  */
 async function confirmarReuniao(lead, text, nowMs) {
   if (!bookingDisponivel()) return { handled: false };
+
+  const emailNaMsg = extrairEmail(text);
+
+  // Email-before-invite round-trip (Olivia's formatarPedidoEmail dance): a
+  // pending slot means the lead already chose a time and we asked ONCE for
+  // their email. A reply that is essentially just an email books with it as
+  // attendee — deterministic, no LLM. Anything else falls through: a new time
+  // re-enters the normal flow below (already-asked → no second ask), and a
+  // question/decline goes to the LLM, whose next `agendar` action books the
+  // pending slot via confirmarPendente.
+  if (lead.pending_slot_iso && Date.parse(lead.pending_slot_iso) > nowMs) {
+    if (emailNaMsg && mensagemApenasEmail(text, emailNaMsg)) {
+      return confirmarPendente(lead, emailNaMsg, nowMs);
+    }
+  }
+
   const slots = Array.isArray(lead.slots) ? lead.slots : [];
   if (slots.length === 0) return { handled: false };
 
@@ -155,16 +172,42 @@ async function confirmarReuniao(lead, text, nowMs) {
     chosen = { iso: aval.iso, reps: aval.reps };
   }
 
-  return criarReuniao(lead, chosen, nowMs);
+  // Ask for the email ONCE before creating the event, so the calendar invite
+  // lands in the prospect's inbox (no invite = more no-shows). The ask is
+  // explicitly optional; a pending_slot_iso on the lead means we already asked
+  // (this or a previous slot) — never ask twice, book with what we have.
+  const emailFinal = emailNaMsg || lead.prospect_email || null;
+  if (!emailFinal && !lead.pending_slot_iso) {
+    await patchLead(lead.id, { pending_slot_iso: chosen.iso });
+    return { handled: true, mensagem: agenda.formatarPedidoEmail(chosen.iso) };
+  }
+
+  return criarReuniao(lead, chosen, nowMs, emailFinal);
+}
+
+/**
+ * Book the PENDING slot (the one we asked the email for). Called determinis-
+ * tically on an email-only reply, and from the responder's `agendar` action
+ * when the LLM re-confirms intent after the ask ("pode mandar por aqui").
+ * @returns {Promise<{handled: boolean, mensagem?: string, patch?: object, booked?: boolean}>}
+ */
+async function confirmarPendente(lead, emailFinal, nowMs) {
+  if (!bookingDisponivel()) return { handled: false };
+  const pendente = lead.pending_slot_iso;
+  if (!pendente || Date.parse(pendente) <= nowMs) return { handled: false };
+  const slots = Array.isArray(lead.slots) ? lead.slots : [];
+  const salvo = slots.find((s) => Date.parse(s.iso) === Date.parse(pendente));
+  return criarReuniao(lead, salvo || { iso: pendente, reps: [] }, nowMs, emailFinal || lead.prospect_email || null);
 }
 
 // Create the Google Meet event + persist the booking. Tries the chosen rep's
 // calendar, falls back to the owner calendar. Briefs the rep (the anti-leak guard
 // inside sendBriefing skips a non-internal/self recipient).
-async function criarReuniao(lead, chosen, nowMs) {
+async function criarReuniao(lead, chosen, nowMs, emailProspect = null) {
   const token = await gcal.getGoogleAccessToken();
   if (!token) return { handled: false };
 
+  const email = emailProspect || lead.prospect_email || null;
   const reps = (chosen.reps && chosen.reps.length) ? chosen.reps : repEmails();
   const cargaReps = await gcal.contarReunioesFuturasPorRep(reps);
   const repEmail = agenda.escolherRepBalanceado(reps, cargaReps, lead.id) || reps[0];
@@ -172,7 +215,7 @@ async function criarReuniao(lead, chosen, nowMs) {
   const requestId = `prospect-${lead.id}-${Date.parse(chosen.iso)}`; // deterministic = idempotent
   const body = agenda.montarEventoCalendar(leadParaEvento(lead), chosen.iso, requestId, {
     attendees: [repEmail],
-    prospectEmail: lead.prospect_email || null,
+    prospectEmail: email,
     repNome: repEmail,
   });
 
@@ -192,14 +235,14 @@ async function criarReuniao(lead, chosen, nowMs) {
   // Internal briefing (fire-and-forget; guard blocks a non-internal/self recipient).
   sendBriefing(
     leadParaEvento(lead),
-    { slotIso: chosen.iso, meetLink: result.meetLink, repNome: repEmail, prospectEmail: lead.prospect_email || null },
+    { slotIso: chosen.iso, meetLink: result.meetLink, repNome: repEmail, prospectEmail: email },
     repEmail,
   ).catch((e) => logger.warn('briefing send failed:', e.message));
 
   return {
     handled: true,
     booked: true,
-    mensagem: agenda.formatarConfirmacao(chosen.iso, result.meetLink, agenda.AGENDA_PADRAO.offsetMin, lead.prospect_email || null),
+    mensagem: agenda.formatarConfirmacao(chosen.iso, result.meetLink, agenda.AGENDA_PADRAO.offsetMin, email),
     patch: {
       prospect_state: 'agendado',
       reuniao_at: chosen.iso,
@@ -207,6 +250,7 @@ async function criarReuniao(lead, chosen, nowMs) {
       calendar_event_id: result.eventId,
       assigned_rep_email: repEmail,
       pending_slot_iso: null,
+      ...(email && email !== lead.prospect_email ? { prospect_email: email } : {}),
     },
   };
 }
@@ -217,4 +261,5 @@ module.exports = {
   escolherSlot,
   proporReuniao,
   confirmarReuniao,
+  confirmarPendente,
 };

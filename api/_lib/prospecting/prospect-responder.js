@@ -444,6 +444,22 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
           ? `Perfeito! Deixa eu confirmar aqui (${acao.resumo}) e já te mando o convite 🙂`
           : 'Perfeito! Qual dia e horário fica melhor pra você?');
         if (booking.bookingDisponivel() && !isDryRun()) {
+          // Email-ask round-trip: a pending slot means the lead already chose a
+          // time and we asked ONCE for their email. The LLM re-confirming intent
+          // ("pode mandar por aqui mesmo") books that slot now — with the email
+          // captured this turn if any — instead of re-proposing slots.
+          const pend = await booking.confirmarPendente(lead, email, nowMs);
+          if (pend.handled) {
+            const r = await sendReply(lead.id, from, pend.mensagem, pace);
+            const patchPend = { ...(pend.patch || {}) };
+            if (lead.reply_apos) patchPend.reply_apos = null;
+            if (Object.keys(patchPend).length) await patchLead(lead.id, patchPend);
+            if (pend.booked) {
+              await recordEvent(lead.id, `📅 reunião marcada pela agenda${pend.patch && pend.patch.reuniao_at ? ` — ${pend.patch.reuniao_at}` : ''}`);
+            }
+            logger.info(`[prospect] lead=${lead.id} action=booking booked=${!!pend.booked} via=agendar_pendente`);
+            return { action: pend.booked ? 'agendado' : 'agendando', sent: r.sentAny, dryRun: r.dryRun };
+          }
           const prop = await booking.proporReuniao(lead, nowMs, acao.resumo);
           if (prop.ok && prop.mensagem) texto = prop.mensagem;
         }

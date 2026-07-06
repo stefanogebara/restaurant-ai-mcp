@@ -230,6 +230,19 @@
   window closes), facts/resumo/judge fall back to their no-LLM paths, sim-lead
   turns throw visibly. 14 new tests; 242 prospecting green / 16 suites; full
   backend 2157 green.
+- **Email-before-invite ✅ (2026-07-06)** — the Phase-4-deferred
+  `formatarPedidoEmail` dance, so the Calendar invite lands in the prospect's
+  INBOX (attendee) instead of only a WhatsApp link. Lead picks a slot with no
+  email known → ask ONCE (explicitly optional), hold `pending_slot_iso`;
+  email-only reply (`mensagemApenasEmail` port guards referrals like "fala com
+  meu sócio x@y.com") books deterministically with the attendee; any other
+  reply falls to the LLM whose next `agendar` books the held slot via
+  `confirmarPendente` (with the turn's captured email, if any) instead of
+  re-proposing. Ask-once semantics: a pending slot means never ask again —
+  slot changes after the ask book directly. `criarReuniao` takes the email as
+  a param and persists `prospect_email` in the booking patch. 17 new tests
+  (booking dance + apenas-email guard); 259 prospecting green / 17 suites;
+  full backend 2174 green.
 - **Remaining external steps:** approve extra template variants + touch-2/3
   templates in WhatsApp Manager, then register in Abordagens; subscribe Meta
   app to phone_number_quality_update + set PROSPECTING_DISPLAY_NUMBER.

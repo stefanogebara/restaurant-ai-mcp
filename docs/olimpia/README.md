@@ -45,6 +45,13 @@ inbound webhook ─▶ prospect-inbound ─▶ responder (LLM brain + guardrails
   owner registration (never re-asks a number that's on screen) + warm ack.
 - **Memory**: declared facts (`conversa_fatos`, immutable merge) + rolling
   summary ≥30 msgs (`conversa_resumo`) injected as MEMÓRIA next turn.
+- **Email-before-invite**: when the lead picks a slot and no email is known,
+  Olímpia asks ONCE ("qual seu melhor e-mail pro convite? se preferir te mando
+  o link por aqui") and holds the slot (`pending_slot_iso`). An email-only
+  reply books deterministically with the prospect as a Calendar attendee (the
+  invite lands in their inbox → fewer no-shows); anything else goes to the
+  LLM, whose next `agendar` books the held slot with whatever we have — never
+  a second ask, never a loop.
 - **Nudge**: one natural follow-up ~23h into silence (once per silence period,
   inside the 24h window), business hours only.
 - **LGPD**: deterministic opt-out regex BEFORE the LLM; terminal + suppression
