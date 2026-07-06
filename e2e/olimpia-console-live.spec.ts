@@ -118,7 +118,10 @@ test('lead workbench: thread opens, 24h-window state is explicit', async ({ page
   const composer = page.getByPlaceholder(/Responder como você/);
   const closedBanner = page.getByText(/fora da janela de 24h/);
   if (await closedBanner.isVisible().catch(() => false)) {
-    await expect(composer).toBeDisabled();
+    // The textarea stays enabled on purpose (internal notes work on closed
+    // windows); what the window gates is the SEND action.
+    await expect(composer).toBeEnabled();
+    await expect(page.getByRole('button', { name: /^Enviar$/ })).toBeDisabled();
   } else {
     await expect(composer).toBeVisible();
     await expect(composer).toBeEnabled();
