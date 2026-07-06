@@ -38,30 +38,20 @@ function rampCap(dias) {
   return 250;
 }
 
-// First-outbound day, cached (redis key, DB fallback) — drives the ramp.
+// First-outbound day, cached 10 min — drives the ramp. The message log is the
+// source of truth (the earlier redis SETNX seeded TODAY on first run, which
+// silently restarted the ramp; a MIN query per cache window is negligible).
 let _firstSend = { iso: null, at: 0 };
 async function firstSendIso() {
   if (_firstSend.iso && Date.now() - _firstSend.at < 10 * 60 * 1000) return _firstSend.iso;
-  let iso = null;
-  if (redis) {
-    try {
-      iso = await redis.get('prospect:firstsend');
-      if (!iso) {
-        iso = new Date().toISOString().slice(0, 10);
-        await redis.set('prospect:firstsend', iso, { nx: true });
-        iso = (await redis.get('prospect:firstsend')) || iso;
-      }
-    } catch { iso = null; }
-  }
-  if (!iso) {
-    try {
-      const { supabaseAdmin } = require('../supabase');
-      const { data } = await supabaseAdmin.from('prospect_messages')
-        .select('enviada_em').eq('direcao', 'out')
-        .order('enviada_em', { ascending: true }).limit(1);
-      iso = (data && data[0] && data[0].enviada_em) ? data[0].enviada_em.slice(0, 10) : new Date().toISOString().slice(0, 10);
-    } catch { iso = new Date().toISOString().slice(0, 10); }
-  }
+  let iso;
+  try {
+    const { supabaseAdmin } = require('../supabase');
+    const { data } = await supabaseAdmin.from('prospect_messages')
+      .select('enviada_em').eq('direcao', 'out')
+      .order('enviada_em', { ascending: true }).limit(1);
+    iso = (data && data[0] && data[0].enviada_em) ? data[0].enviada_em.slice(0, 10) : new Date().toISOString().slice(0, 10);
+  } catch { iso = new Date().toISOString().slice(0, 10); }
   _firstSend = { iso, at: Date.now() };
   return iso;
 }
