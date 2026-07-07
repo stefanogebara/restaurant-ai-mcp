@@ -75,4 +75,24 @@ function decisaoForaDeHorario(nowMs, lastInMs, opts = {}) {
   return { acao: 'adiar', replyApos: new Date(Math.min(abertura, deadline)).toISOString() };
 }
 
-module.exports = { dentroDoHorario, proximaAbertura, deferralDentroDaJanela, decisaoForaDeHorario, JANELA_CLAMP_MS };
+/**
+ * Template DISPATCH window (cold intros + follow-up touches) — TIGHTER than the
+ * reply window (9-19). A cold template fired at 01:24 or in the dinner rush reads
+ * as a bot and burns the number; the conversion study's #1 finding (25x) was
+ * amateur send timing. Defaults to weekdays 10-17, env-tunable via
+ * PROSPECTING_DISPATCH_START / PROSPECTING_DISPATCH_END.
+ */
+function dentroDaJanelaDisparo(iso, opts = {}) {
+  const inicio = parseInt(process.env.PROSPECTING_DISPATCH_START, 10);
+  const fim = parseInt(process.env.PROSPECTING_DISPATCH_END, 10);
+  return dentroDoHorario(iso, {
+    inicio: Number.isFinite(inicio) ? inicio : 10,
+    fim: Number.isFinite(fim) ? fim : 17,
+    ...opts,
+  });
+}
+
+module.exports = {
+  dentroDoHorario, proximaAbertura, deferralDentroDaJanela, decisaoForaDeHorario,
+  dentroDaJanelaDisparo, JANELA_CLAMP_MS,
+};

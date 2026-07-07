@@ -14,7 +14,7 @@ jest.mock('../_lib/secure-logger', () => ({
 const { deveResponder, detectarOptout, descreverAgora, estadoAposAcao } = require('../_lib/prospecting/prospect-state');
 const { mergeFatos, formatarMemoria } = require('../_lib/prospecting/prospect-facts');
 const { extrairNumeroDono, normalizarNumeroBr, extrairEmail, extrairDddBr } = require('../_lib/prospecting/prospect-extract');
-const { dentroDoHorario, proximaAbertura } = require('../_lib/prospecting/prospect-hours');
+const { dentroDoHorario, proximaAbertura, dentroDaJanelaDisparo } = require('../_lib/prospecting/prospect-hours');
 const { pacingDelayMs } = require('../_lib/prospecting/prospect-pacing');
 const { buildSystemPrompt, interpretResponse, historyToMessages } = require('../_lib/prospecting/prospect-agent');
 
@@ -245,6 +245,17 @@ describe('business hours + pacing', () => {
   test('proximaAbertura lands inside business hours', () => {
     const next = proximaAbertura(Date.parse('2026-06-27T17:00:00Z')); // Sat afternoon
     expect(dentroDoHorario(next)).toBe(true);
+  });
+  test('dentroDaJanelaDisparo is TIGHTER than the reply window (10-17 weekday)', () => {
+    // Thu 14:00 BRT — inside both reply (9-19) and dispatch (10-17)
+    expect(dentroDaJanelaDisparo(Date.parse('2026-06-25T17:00:00Z'))).toBe(true);
+    // Thu 01:24 BRT (the study's "intros à 01:24") — outside dispatch
+    expect(dentroDaJanelaDisparo(Date.parse('2026-06-25T04:24:00Z'))).toBe(false);
+    // Thu 18:00 BRT — INSIDE reply window but OUTSIDE dispatch (dinner approaching)
+    expect(dentroDoHorario(Date.parse('2026-06-25T21:00:00Z'))).toBe(true);
+    expect(dentroDaJanelaDisparo(Date.parse('2026-06-25T21:00:00Z'))).toBe(false);
+    // Sat 14:00 BRT — weekend, no cold dispatch
+    expect(dentroDaJanelaDisparo(Date.parse('2026-06-27T17:00:00Z'))).toBe(false);
   });
   test('pacingDelayMs: 0 on dryRun, bounded, deterministic with rand', () => {
     expect(pacingDelayMs('hello', { dryRun: true })).toBe(0);
