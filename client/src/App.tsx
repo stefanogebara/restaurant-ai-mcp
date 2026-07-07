@@ -58,6 +58,7 @@ const LTVPage = lazyRetry(() => import('./pages/LTVPage'));
 const DemoSetupPage = lazyRetry(() => import('./pages/DemoSetupPage'));
 const DemoConversation = lazyRetry(() => import('./pages/DemoConversation'));
 const DemoDashboard = lazyRetry(() => import('./pages/DemoDashboard'));
+const PreviaPage = lazyRetry(() => import('./pages/PreviaPage'));
 const PrivacyPolicy = lazyRetry(() => import('./pages/PrivacyPolicy'));
 const TermsOfService = lazyRetry(() => import('./pages/TermsOfService'));
 // PortfolioPage removed — orphaned route, linked from nowhere
@@ -150,6 +151,9 @@ function App() {
               <Route path="/demo/chat" element={<DemoConversation />} />
               <Route path="/demo" element={<DemoDashboard />} />
               <Route path="/demo/:token" element={<DemoDashboard />} />
+              {/* Prévia de prospecção — a demo de 2 atos que a Olímpia oferece no WhatsApp */}
+              <Route path="/previa" element={<PreviaPage />} />
+              <Route path="/previa/:token" element={<PreviaPage />} />
 {/* Dashboard - New unified dashboard (default) */}
               <Route path="/host-dashboard" element={<Navigate to="/host-dashboard/simple" replace />} />
               <Route path="/host-dashboard/simple" element={<ProtectedRoute><ErrorBoundary fallback={<RouteErrorFallback />}><Dashboard /></ErrorBoundary></ProtectedRoute>} />

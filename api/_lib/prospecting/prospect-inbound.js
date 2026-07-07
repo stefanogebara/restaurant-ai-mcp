@@ -96,6 +96,10 @@ async function handleProspectInbound(adapter, req) {
       last_in_at: new Date().toISOString(),
       snoozed_until: null,
       next_touch_at: null,
+      // The lead messaged first — cancel any pending dated callback (#32); the
+      // live conversation supersedes "me chama amanhã".
+      retorno_em: null,
+      retorno_motivo: null,
     });
   }
 

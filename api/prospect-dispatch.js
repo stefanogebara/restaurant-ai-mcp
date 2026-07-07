@@ -32,8 +32,10 @@ module.exports = async (req, res) => {
   }
 
   const limit = Math.min(Math.max(parseInt((req.body || {}).limit, 10) || 20, 1), 100);
+  // Operator override — deliberately send outside the 10-17 dispatch window.
+  const force = (req.body || {}).force === true;
   try {
-    const summary = await dispatchIntros({ limit });
+    const summary = await dispatchIntros({ limit, force });
     return res.status(200).json({ success: true, data: summary });
   } catch (err) {
     logger.error('dispatch error:', err.message);

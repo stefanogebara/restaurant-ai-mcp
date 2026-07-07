@@ -127,6 +127,20 @@ async function runSimulation(scenario, { styleOverride = undefined, turns = null
 
     if (acao.tipo === 'responder' && acao.texto) {
       transcript.push({ who: 'olimpia', texto: acao.texto, acao: 'responder' });
+    } else if (acao.tipo === 'criar_demo') {
+      // Mirror production faithfully so the gym can score demo-CTA packs: the
+      // responder creates the demo + appends the REAL link on the first call, and
+      // a repeated criar_demo becomes a short nudge (idempotency), never a re-spam.
+      // The sim has no DB, so inject a representative (hex) link the guard matches.
+      const { previaLinkInHistory } = require('./prospect-demo');
+      const intro = String(acao.texto || '').replace(/https?:\/\/\S+/gi, '').trim();
+      const jaEnviada = previaLinkInHistory(transcript.map((t) => ({ corpo: t.texto })));
+      if (jaEnviada) {
+        transcript.push({ who: 'olimpia', texto: 'já te mandei ali em cima 👆 dá uma olhada quando puder 🙂', acao: 'criar_demo' });
+      } else {
+        const linkBubble = 'é essa aqui, abre no celular 👇\nhttps://seatable.one/previa/1a2b3c4d-5678';
+        transcript.push({ who: 'olimpia', texto: intro ? `${intro}\n\n${linkBubble}` : linkBubble, acao: 'criar_demo' });
+      }
     } else if (acao.texto) {
       transcript.push({ who: 'olimpia', texto: acao.texto, acao: acao.tipo });
     } else {

@@ -122,7 +122,10 @@ describe('dispatchIntros', () => {
     return { sendTemplateMessage, claimIntro, markIntro, patchLead };
   }
 
-  afterEach(() => { jest.resetModules(); delete process.env.PROSPECTING_DRY_RUN; delete process.env.PROSPECTING_INTRO_TEMPLATE; });
+  afterEach(() => { jest.resetModules(); delete process.env.PROSPECTING_DRY_RUN; delete process.env.PROSPECTING_INTRO_TEMPLATE; delete process.env.PROSPECTING_IGNORE_HOURS; });
+  // These test the SEND logic, not the dispatch-window gate — bypass hours so
+  // they're deterministic regardless of wall-clock time.
+  beforeEach(() => { process.env.PROSPECTING_IGNORE_HOURS = 'true'; });
 
   test('dry-run (no number) → preview only, never sends', async () => {
     jest.resetModules();
