@@ -14,7 +14,7 @@ jest.mock('../_lib/secure-logger', () => ({
 const { deveResponder, detectarOptout, descreverAgora, estadoAposAcao } = require('../_lib/prospecting/prospect-state');
 const { mergeFatos, formatarMemoria } = require('../_lib/prospecting/prospect-facts');
 const { extrairNumeroDono, normalizarNumeroBr, extrairEmail, extrairDddBr } = require('../_lib/prospecting/prospect-extract');
-const { dentroDoHorario, proximaAbertura, dentroDaJanelaDisparo } = require('../_lib/prospecting/prospect-hours');
+const { dentroDoHorario, proximaAbertura, dentroDaJanelaDisparo, computeRetornoAt } = require('../_lib/prospecting/prospect-hours');
 const { pacingDelayMs } = require('../_lib/prospecting/prospect-pacing');
 const { buildSystemPrompt, interpretResponse, historyToMessages } = require('../_lib/prospecting/prospect-agent');
 
@@ -165,6 +165,11 @@ describe('interpretResponse (Anthropic shape)', () => {
   test('registrar_responsavel without number → handoff (anti-invention)', () => {
     expect(interpretResponse(tool('registrar_responsavel', {})).tipo).toBe('handoff');
   });
+  test('agendar_retorno → dated-callback action (quando + non-empty confirmation)', () => {
+    const r = interpretResponse(tool('agendar_retorno', { quando: 'amanhã de tarde' }));
+    expect(r).toMatchObject({ tipo: 'agendar_retorno', quando: 'amanhã de tarde' });
+    expect(r.texto).toBeTruthy(); // companion so the confirmation is never silent
+  });
   test('criar_demo → criar_demo action; text passes through, else companion (never empty)', () => {
     // No lead-in text → deterministic companion so the turn is never silent.
     const bare = interpretResponse(tool('criar_demo', {}));
@@ -245,6 +250,25 @@ describe('business hours + pacing', () => {
   test('proximaAbertura lands inside business hours', () => {
     const next = proximaAbertura(Date.parse('2026-06-27T17:00:00Z')); // Sat afternoon
     expect(dentroDoHorario(next)).toBe(true);
+  });
+  test('computeRetornoAt parses pt-BR "quando" into a clamped future BRT slot', () => {
+    const thu10 = Date.parse('2026-06-25T13:00:00Z'); // Thu 10:00 BRT
+    // "amanhã" → Fri 11:00 BRT (14:00 UTC), the default mid-morning hour
+    expect(computeRetornoAt('amanhã', thu10)).toBe('2026-06-26T14:00:00.000Z');
+    // "amanhã de tarde" → Fri 14:00 BRT (17:00 UTC)
+    expect(computeRetornoAt('amanhã de tarde', thu10)).toBe('2026-06-26T17:00:00.000Z');
+    // "segunda" → next Monday 11:00 BRT
+    expect(computeRetornoAt('segunda', thu10)).toBe('2026-06-29T14:00:00.000Z');
+    // explicit hour "às 15h" → tomorrow 15:00 BRT (18:00 UTC)
+    expect(computeRetornoAt('me chama às 15h', thu10)).toBe('2026-06-26T18:00:00.000Z');
+    // unparseable → tomorrow default (never null / never past)
+    expect(computeRetornoAt('sei lá quando', thu10)).toBe('2026-06-26T14:00:00.000Z');
+  });
+  test('computeRetornoAt self-corrects weekend/off-hours into the next valid slot', () => {
+    const fri10 = Date.parse('2026-06-26T13:00:00Z'); // Fri 10:00 BRT
+    const iso = computeRetornoAt('amanhã', fri10); // Sat → must roll to Monday
+    expect(dentroDaJanelaDisparo(Date.parse(iso))).toBe(true);
+    expect(Date.parse(iso)).toBeGreaterThan(fri10);
   });
   test('dentroDaJanelaDisparo is TIGHTER than the reply window (10-17 weekday)', () => {
     // Thu 14:00 BRT — inside both reply (9-19) and dispatch (10-17)

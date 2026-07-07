@@ -19,7 +19,7 @@ const { bearerEquals } = require('../_lib/secure-compare');
 const { isCronEnabled } = require('../_lib/cron-config');
 const { logCronRun } = require('../_lib/cron-tracker');
 const { getProspectingPhoneNumberId } = require('../_lib/prospecting/routing');
-const { selectDueFlush, loadLastInbound, patchLead } = require('../_lib/prospecting/prospect-store');
+const { selectDueFlush, selectDueRetornos, loadLastInbound, patchLead } = require('../_lib/prospecting/prospect-store');
 const { respondToProspect } = require('../_lib/prospecting/prospect-responder');
 const { onlyDigits } = require('../_lib/prospecting/phone');
 
@@ -62,6 +62,29 @@ module.exports = async (req, res) => {
         logger.error(`flush lead=${lead.id} failed:`, err.message);
       }
     }
+    // Dated callbacks (#32): leads whose promised retorno_em is now due get a
+    // punctual proactive retomada ("como combinei, tô passando pra retomar").
+    // Piggybacks this cron (business hours only); retorno_em cleared first so an
+    // overlapping tick can't double-fire; the responder gates opt-out + window.
+    let retornos = 0;
+    try {
+      const dueRet = await selectDueRetornos(nowIso, 5);
+      for (const lead of dueRet) {
+        try {
+          await patchLead(lead.id, { retorno_em: null, retorno_motivo: null });
+          const from = onlyDigits(lead.whatsapp_phone);
+          if (!from) continue;
+          const res = await respondToProspect({ lead: { ...lead, retorno_em: null }, from, text: '', mode: 'retorno', skipPacing: true });
+          if (res.action === 'retorno' && res.sent) retornos++;
+        } catch (err) {
+          errors++;
+          logger.error(`retorno lead=${lead.id} failed:`, err.message);
+        }
+      }
+    } catch (err) {
+      logger.error('retornos sweep failed:', err.message);
+    }
+
     // Multi-touch follow-ups (F4): bump D+3 / breakup D+8 for never-repliers.
     // Piggybacks this cron (already scheduled in business hours) — no new
     // invocations. Gated internally by dry-run + both kill switches + the
@@ -125,13 +148,13 @@ module.exports = async (req, res) => {
     }
 
     await logCronRun('prospect-flush', {
-      resumed, errors,
+      resumed, errors, retornos,
       followups_sent: followups ? followups.sent : 0,
       reengages_sent: reengages ? reengages.sent : 0,
       noshows_processed: noshows ? noshows.processed || 0 : 0,
       rekicked,
     });
-    return res.status(200).json({ success: true, due: due.length, resumed, errors, followups, reengages, noshows, rekicked });
+    return res.status(200).json({ success: true, due: due.length, resumed, retornos, errors, followups, reengages, noshows, rekicked });
   } catch (err) {
     logger.error('flush fatal:', err.message);
     await logCronRun('prospect-flush', { resumed, errors: errors + 1 });

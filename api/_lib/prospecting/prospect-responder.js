@@ -143,6 +143,12 @@ const PREVIA_ABERTA_INSTRUCTION =
   'pergunta de leve o que ele achou / se fez sentido. NÃO repita o link, NÃO liste recursos, ' +
   'NÃO force reunião. Só puxa a reação dele com naturalidade.';
 
+// The dated callback the lead asked for (or Olímpia promised) has come due (#32).
+const RETORNO_INSTRUCTION =
+  'Chegou o momento que ficou combinado de você retomar o contato com o lead. ' +
+  'Mande UMA mensagem curta e natural retomando de onde vocês pararam — como quem ' +
+  'cumpre o que prometeu, no horário certo. Não repita tudo, não soe robótica, não peça desculpas.';
+
 function instrucaoRemarcar(motivo, novoHorarioLabel) {
   const porMotivo = {
     pedir:
@@ -170,12 +176,12 @@ function instrucaoRemarcar(motivo, novoHorarioLabel) {
  * @param {string} args.text   - inbound text ('' for placeholder-only media)
  * @param {number} [args.nowMs]
  * @param {boolean} [args.skipPacing] - skip typing-pace + debounce (flush cron)
- * @param {'nudge'|'remarcar'|'previa'|null} [args.mode] - orchestrator modes:
- *   'nudge' writes one natural follow-up (no tools) after ~23h of lead silence
- *   and stamps nudge_em; 'remarcar' authors the reschedule/no-show/moved message
- *   (calendar + state already handled by prospect-remarcar); 'previa' reacts to
- *   the lead opening their prévia (P3 beacon) — one warm line, hours-gated,
- *   deduped once-per-lead upstream.
+ * @param {'nudge'|'remarcar'|'previa'|'retorno'|null} [args.mode] - orchestrator
+ *   modes: 'nudge' writes one natural follow-up (no tools) after ~23h of lead
+ *   silence and stamps nudge_em; 'remarcar' authors the reschedule/no-show/moved
+ *   message (calendar + state already handled by prospect-remarcar); 'previa'
+ *   reacts to the lead opening their prévia (P3 beacon); 'retorno' fires a dated
+ *   callback (#32) when retorno_em comes due (from the flush cron).
  * @param {'pedir'|'noshow'|'definir'} [args.remarcarMotivo] - required with
  *   mode 'remarcar'.
  * @param {string|null} [args.novoHorarioLabel] - human label of the new time
@@ -187,6 +193,7 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
   const isNudge = mode === 'nudge';
   const isRemarcar = mode === 'remarcar';
   const isPreviaAberta = mode === 'previa';
+  const isRetorno = mode === 'retorno';
 
   // 1. State gate — silent in optout/handoff/agendado/pausada. Remarcar
   //    bypasses it: a 'definir' confirmation goes out while still 'agendado',
@@ -302,6 +309,38 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
     const r = await sendReply(lead.id, from, acaoP.texto, pace);
     logger.info(`[prospect] lead=${lead.id} mode=previa sent=${r.sentAny} dryRun=${r.dryRun}`);
     return { action: 'previa_reacao', sent: r.sentAny, dryRun: r.dryRun };
+  }
+
+  // 2e. MODE RETORNO — a dated callback the lead asked for (or Olímpia promised)
+  //     is now due (#32, the flush cron fires it). One natural "retomada" line.
+  //     Same window + opt-out rules; the state gate above already muted terminal
+  //     states, and retorno_em was set to a business-hours slot so no hours gate.
+  if (isRetorno) {
+    if (await isOptedOut(from)) {
+      return { action: 'skip', reason: 'opted_out', retorno: true };
+    }
+    const history = (await loadHistory(lead.id, 40)).filter((m) => m.direcao !== 'sys');
+    const lastIn = [...history].reverse().find((m) => m.direcao === 'in');
+    if (!lastIn || !podeMensagemLivre(new Date(lastIn.enviada_em).getTime(), nowMs)) {
+      // Callback beyond Meta's 24h window can't go as free text — coverage falls
+      // to the re-engage template sweep. Not a failure.
+      logger.info(`[prospect] retorno skipped lead=${lead.id} — 24h window closed`);
+      return { action: 'skip', reason: 'window_closed', retorno: true };
+    }
+    const acaoR = await generateReply({
+      lead: {
+        name: lead.name, owner_name: lead.owner_name, sector: lead.sector, city: lead.city,
+        nome_genero: lead.nome_genero, conversa_fatos: lead.conversa_fatos, conversa_resumo: lead.conversa_resumo,
+      },
+      history,
+      nowMs,
+      injectUserTurn: RETORNO_INSTRUCTION,
+      noTools: true,
+    });
+    if (!acaoR || !acaoR.texto) return { action: 'skip', reason: 'no_text', retorno: true };
+    const r = await sendReply(lead.id, from, acaoR.texto, pace);
+    logger.info(`[prospect] lead=${lead.id} mode=retorno sent=${r.sentAny} dryRun=${r.dryRun}`);
+    return { action: 'retorno', sent: r.sentAny, dryRun: r.dryRun };
   }
 
   // 3. Business-hours gate — defer to next opening (prospect-flush resumes).
@@ -591,6 +630,20 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
             disponibilidade: acao.resumo,
           });
         }
+        break;
+      }
+
+      case 'agendar_retorno': {
+        // Dated callback (#32, R6 "promessa datada é contrato"): confirm now +
+        // schedule a punctual proactive retomada. The flush cron fires mode=
+        // 'retorno' when retorno_em comes due. An inbound before then clears it.
+        const { computeRetornoAt } = require('./prospect-hours');
+        const retornoEm = computeRetornoAt(acao.quando, nowMs);
+        const r = await sendReply(lead.id, from, acao.texto, pace);
+        sent = r.sentAny; dryRun = r.dryRun;
+        patch.retorno_em = retornoEm;
+        patch.retorno_motivo = (acao.quando || '').slice(0, 200) || null;
+        await recordEvent(lead.id, `📞 retorno agendado para ${retornoEm}${acao.quando ? ` ("${acao.quando}")` : ''}`);
         break;
       }
 

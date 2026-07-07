@@ -250,6 +250,18 @@ const PROSPECT_TOOLS = [
     },
   },
   {
+    name: 'agendar_retorno',
+    description:
+      'Chame quando o lead pedir pra você chamar depois ("me chama amanhã", "liga segunda", "me chama depois do almoço") OU quando VOCÊ prometer retomar num momento ("segunda eu te chamo", "te chamo amanhã"). Passe em `quando` exatamente o que foi dito sobre o momento. O sistema agenda e te lembra de cumprir na hora — promessa datada é contrato. NÃO use pra marcar a demonstração (isso é agendar_demo).',
+    input_schema: {
+      type: 'object',
+      properties: {
+        quando: { type: 'string', description: 'O que foi dito sobre quando (ex.: "amanhã de tarde", "segunda", "depois do almoço").' },
+      },
+      required: ['quando'],
+    },
+  },
+  {
     name: 'criar_demo',
     description:
       'Chame quando o lead demonstrar QUALQUER interesse em ver/entender melhor e valer mostrar valor na hora: você monta uma PRÉVIA do restaurante dele (dados públicos do Google — nome, nota, avaliações) e o SISTEMA te devolve o link real pra enviar. Use quando ele topar ("quer?", "manda", "pode ser", "como funciona?") ou pedir material. Custa uma palavra e é a prova anti-golpe. NUNCA escreva link nenhum você mesma — o sistema cola o link real. Uma vez por conversa.',
@@ -297,6 +309,7 @@ const PROSPECT_TOOLS = [
 /**
  * @typedef {{tipo:'responder', texto:string}
  *   | {tipo:'agendar', texto:string|null, resumo:string}
+ *   | {tipo:'agendar_retorno', texto:string, quando:string}
  *   | {tipo:'criar_demo', texto:string}
  *   | {tipo:'registrar_responsavel', texto:string|null, numero:string, nome:string|null}
  *   | {tipo:'handoff', texto:string|null, motivo:string}
@@ -328,6 +341,9 @@ const COMPANION_TEXT = {
   agendar: (resumo) => (resumo && resumo !== 'sem detalhe'
     ? `fechado! deixa eu confirmar aqui (${resumo}) e já te mando o convite 🙂`
     : 'perfeito! qual dia e horário fica melhor pra você?'),
+  retorno: (quando) => (quando && quando.trim()
+    ? `fechado, te chamo ${quando.trim()} então 🙂`
+    : 'fechado, te chamo depois então 🙂'),
 };
 
 /**
@@ -393,6 +409,10 @@ function interpretResponse(response) {
       // The responder creates the demo and appends the REAL link; the model's
       // text is just the lead-in bubble (any URL it wrote is stripped there).
       return { tipo: 'criar_demo', texto: texto || COMPANION_TEXT.previa };
+    }
+    if (nome === 'agendar_retorno') {
+      const quando = String(args.quando || '').trim();
+      return { tipo: 'agendar_retorno', texto: texto || COMPANION_TEXT.retorno(quando), quando };
     }
     return { tipo: 'handoff', texto, motivo: `tool desconhecida: ${nome}` };
   }
