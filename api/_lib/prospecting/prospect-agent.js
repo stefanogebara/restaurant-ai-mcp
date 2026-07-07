@@ -250,6 +250,12 @@ const PROSPECT_TOOLS = [
     },
   },
   {
+    name: 'criar_demo',
+    description:
+      'Chame quando o lead demonstrar QUALQUER interesse em ver/entender melhor e valer mostrar valor na hora: você monta uma PRÉVIA do restaurante dele (dados públicos do Google — nome, nota, avaliações) e o SISTEMA te devolve o link real pra enviar. Use quando ele topar ("quer?", "manda", "pode ser", "como funciona?") ou pedir material. Custa uma palavra e é a prova anti-golpe. NUNCA escreva link nenhum você mesma — o sistema cola o link real. Uma vez por conversa.',
+    input_schema: { type: 'object', properties: {} },
+  },
+  {
     name: 'registrar_responsavel',
     description:
       'Chame quando te passarem o NÚMERO de WhatsApp do dono/responsável — digitado no texto OU como cartão de contato ("[Contato compartilhado: +55 ...]"). Registra o contato. Nunca invente o número.',
@@ -291,6 +297,7 @@ const PROSPECT_TOOLS = [
 /**
  * @typedef {{tipo:'responder', texto:string}
  *   | {tipo:'agendar', texto:string|null, resumo:string}
+ *   | {tipo:'criar_demo', texto:string}
  *   | {tipo:'registrar_responsavel', texto:string|null, numero:string, nome:string|null}
  *   | {tipo:'handoff', texto:string|null, motivo:string}
  *   | {tipo:'optout', texto:string|null}
@@ -314,6 +321,7 @@ const COMPANION_TEXT = {
   optout: 'entendido, não te mando mais nada — obrigada pelo tempo 🙏',
   handoff: 'boa pergunta — vou confirmar direitinho com o time e te retorno 🙂',
   porta: 'oi! não é pedido não — é sobre parceria 🙂 quem cuida das reservas ou parcerias por aí?',
+  previa: 'consigo te mostrar isso na prática — montei uma prévia rápida com os dados de vocês do Google 🙂',
   registrar: (nome) => (nome
     ? `perfeito, obrigada! já chamo ${nome} então 🙂`
     : 'perfeito, obrigada pela indicação! já entro em contato então 🙂'),
@@ -380,6 +388,11 @@ function interpretResponse(response) {
     if (nome === 'agendar_demo') {
       const resumo = String(args.resumo_disponibilidade || '').trim() || 'sem detalhe';
       return { tipo: 'agendar', texto: texto || COMPANION_TEXT.agendar(resumo), resumo };
+    }
+    if (nome === 'criar_demo') {
+      // The responder creates the demo and appends the REAL link; the model's
+      // text is just the lead-in bubble (any URL it wrote is stripped there).
+      return { tipo: 'criar_demo', texto: texto || COMPANION_TEXT.previa };
     }
     return { tipo: 'handoff', texto, motivo: `tool desconhecida: ${nome}` };
   }

@@ -28,7 +28,7 @@ const { extrairEmail, extrairNumeroDono, extrairNomeDono, extrairDddBr } = requi
 const { mergeFatos } = require('./prospect-facts');
 const { generateReply } = require('./prospect-agent');
 const {
-  loadHistory, patchLead, recordOptout, storeMessage,
+  loadHistory, patchLead, recordOptout, storeMessage, isOptedOut,
   inboundFingerprint, claimInbound, releaseInbound, updateIntent, recordEvent,
 } = require('./prospect-store');
 const booking = require('./prospect-booking');
@@ -135,6 +135,14 @@ async function aguardarRajada(leadId) {
  * (ported from Olivia's olivia-responder). One short natural message, no
  * tools, never inventing a time.
  */
+// The lead just OPENED the prévia we sent (P3 beacon). React with ONE short,
+// warm line asking what they thought — no link repeat, no feature list, no push.
+const PREVIA_ABERTA_INSTRUCTION =
+  'O lead ACABOU de abrir a prévia que você enviou (o painel do restaurante dele). ' +
+  'Reaja com UMA mensagem curta e calorosa, como quem percebeu a pessoa dar uma olhada: ' +
+  'pergunta de leve o que ele achou / se fez sentido. NÃO repita o link, NÃO liste recursos, ' +
+  'NÃO force reunião. Só puxa a reação dele com naturalidade.';
+
 function instrucaoRemarcar(motivo, novoHorarioLabel) {
   const porMotivo = {
     pedir:
@@ -162,10 +170,12 @@ function instrucaoRemarcar(motivo, novoHorarioLabel) {
  * @param {string} args.text   - inbound text ('' for placeholder-only media)
  * @param {number} [args.nowMs]
  * @param {boolean} [args.skipPacing] - skip typing-pace + debounce (flush cron)
- * @param {'nudge'|'remarcar'|null} [args.mode] - orchestrator modes: 'nudge'
- *   writes one natural follow-up (no tools) after ~23h of lead silence and
- *   stamps nudge_em; 'remarcar' authors the reschedule/no-show/moved message
- *   (calendar + state already handled by prospect-remarcar).
+ * @param {'nudge'|'remarcar'|'previa'|null} [args.mode] - orchestrator modes:
+ *   'nudge' writes one natural follow-up (no tools) after ~23h of lead silence
+ *   and stamps nudge_em; 'remarcar' authors the reschedule/no-show/moved message
+ *   (calendar + state already handled by prospect-remarcar); 'previa' reacts to
+ *   the lead opening their prévia (P3 beacon) — one warm line, hours-gated,
+ *   deduped once-per-lead upstream.
  * @param {'pedir'|'noshow'|'definir'} [args.remarcarMotivo] - required with
  *   mode 'remarcar'.
  * @param {string|null} [args.novoHorarioLabel] - human label of the new time
@@ -176,6 +186,7 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
   const pace = { skipPacing };
   const isNudge = mode === 'nudge';
   const isRemarcar = mode === 'remarcar';
+  const isPreviaAberta = mode === 'previa';
 
   // 1. State gate — silent in optout/handoff/agendado/pausada. Remarcar
   //    bypasses it: a 'definir' confirmation goes out while still 'agendado',
@@ -251,6 +262,46 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
     const r = await sendReply(lead.id, from, acaoRm.texto, pace);
     logger.info(`[prospect] lead=${lead.id} mode=remarcar motivo=${remarcarMotivo} sent=${r.sentAny} dryRun=${r.dryRun}`);
     return { action: 'remarcar', remarcar: remarcarMotivo, sent: r.sentAny, dryRun: r.dryRun };
+  }
+
+  // 2d. MODE PREVIA — the lead just OPENED the prévia we sent (P3 beacon). React
+  //     with ONE warm line asking what they thought. Same 24h-window + kill-switch
+  //     rules as remarcar, PLUS a business-hours guard: a 2am open shouldn't get a
+  //     2am reply (coverage falls to the normal cadence). The state gate above
+  //     already muted optout/handoff/agendado. Deduped once-per-lead by the beacon
+  //     endpoint before it ever calls us.
+  if (isPreviaAberta) {
+    // Defense-in-depth (review finding): the beacon path skips prospect-inbound's
+    // isOptedOut gate, and state ≠ suppression list can diverge. Never react to a
+    // suppressed number, regardless of prospect_state.
+    if (await isOptedOut(from)) {
+      logger.info(`[prospect] previa-reacao skipped lead=${lead.id} — opted out`);
+      return { action: 'skip', reason: 'opted_out', previa: true };
+    }
+    if (process.env.PROSPECTING_IGNORE_HOURS !== 'true' && !dentroDoHorario(nowMs)) {
+      logger.info(`[prospect] previa-reacao skipped lead=${lead.id} — outside hours`);
+      return { action: 'skip', reason: 'outside_hours', previa: true };
+    }
+    const history = (await loadHistory(lead.id, 40)).filter((m) => m.direcao !== 'sys');
+    const lastIn = [...history].reverse().find((m) => m.direcao === 'in');
+    if (!lastIn || !podeMensagemLivre(new Date(lastIn.enviada_em).getTime(), nowMs)) {
+      logger.info(`[prospect] previa-reacao skipped lead=${lead.id} — 24h window closed`);
+      return { action: 'skip', reason: 'window_closed', previa: true };
+    }
+    const acaoP = await generateReply({
+      lead: {
+        name: lead.name, owner_name: lead.owner_name, sector: lead.sector, city: lead.city,
+        nome_genero: lead.nome_genero, conversa_fatos: lead.conversa_fatos, conversa_resumo: lead.conversa_resumo,
+      },
+      history,
+      nowMs,
+      injectUserTurn: PREVIA_ABERTA_INSTRUCTION,
+      noTools: true,
+    });
+    if (!acaoP || !acaoP.texto) return { action: 'skip', reason: 'no_text', previa: true };
+    const r = await sendReply(lead.id, from, acaoP.texto, pace);
+    logger.info(`[prospect] lead=${lead.id} mode=previa sent=${r.sentAny} dryRun=${r.dryRun}`);
+    return { action: 'previa_reacao', sent: r.sentAny, dryRun: r.dryRun };
   }
 
   // 3. Business-hours gate — defer to next opening (prospect-flush resumes).
@@ -539,6 +590,48 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
           patch.conversa_fatos = mergeFatos(patch.conversa_fatos || lead.conversa_fatos, {
             disponibilidade: acao.resumo,
           });
+        }
+        break;
+      }
+
+      case 'criar_demo': {
+        // The demo-preview CTA the conversion study elected as fix #1. The model
+        // offered it (acao.texto = lead-in bubble); we create the real /previa and
+        // paste the link. The model NEVER writes the URL (R4) — any URL it did
+        // write is stripped here, and the responder appends the real one.
+        const { criarPreviaDemo, previaLinkInHistory } = require('./prospect-demo');
+        const intro = String(acao.texto || '')
+          .replace(/https?:\/\/\S+/gi, '')
+          .replace(/\n{3,}/g, '\n\n')
+          .trim();
+        // Storage-free idempotency: a prévia link already in this thread means we
+        // don't mint a duplicate demo — and we don't re-spam the same link. A
+        // repeated criar_demo (model re-offering) becomes a short nudge upward.
+        const jaEnviada = previaLinkInHistory(history);
+        let url = jaEnviada;
+        if (!url) {
+          const r = await criarPreviaDemo(lead.id);
+          if (r.ok) url = r.url;
+          else logger.warn(`[prospect] lead=${lead.id} criar_demo falhou: ${r.error}`);
+        }
+        if (jaEnviada) {
+          // Already delivered — nudge, don't repeat the link.
+          const r = await sendReply(lead.id, from, 'já te mandei ali em cima 👆 dá uma olhada quando puder que a gente vê junto 🙂', pace);
+          sent = r.sentAny; dryRun = r.dryRun;
+        } else if (url) {
+          const linkBubble = `é essa aqui, abre no celular 👇\n${url}`;
+          const full = intro ? `${intro}\n\n${linkBubble}` : linkBubble;
+          const r = await sendReply(lead.id, from, full, pace);
+          sent = r.sentAny; dryRun = r.dryRun;
+          await recordEvent(lead.id, `🎬 prévia enviada: ${url}`);
+        } else {
+          // Creation failed — do NOT promise a link (R4). Soft continuation; the
+          // failure lands on the cockpit timeline so a human can finish it.
+          const soft = 'deixa eu organizar uma coisa rápida aqui e já te retorno 🙂';
+          const r = await sendReply(lead.id, from, soft, pace);
+          sent = r.sentAny; dryRun = r.dryRun;
+          patch.handoff_motivo = 'criar_demo falhou — montar prévia manualmente';
+          await recordEvent(lead.id, '⚠ criar_demo falhou — fallback sem link, handoff sugerido');
         }
         break;
       }

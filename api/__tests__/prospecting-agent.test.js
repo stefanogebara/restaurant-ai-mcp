@@ -165,11 +165,57 @@ describe('interpretResponse (Anthropic shape)', () => {
   test('registrar_responsavel without number → handoff (anti-invention)', () => {
     expect(interpretResponse(tool('registrar_responsavel', {})).tipo).toBe('handoff');
   });
+  test('criar_demo → criar_demo action; text passes through, else companion (never empty)', () => {
+    // No lead-in text → deterministic companion so the turn is never silent.
+    const bare = interpretResponse(tool('criar_demo', {}));
+    expect(bare.tipo).toBe('criar_demo');
+    expect(bare.texto).toBeTruthy();
+    // Model wrote a lead-in bubble → passed through (responder strips any URL).
+    const withText = {
+      content: [
+        { type: 'text', text: 'consigo montar sim' },
+        { type: 'tool_use', id: 't1', name: 'criar_demo', input: {} },
+      ],
+      stop_reason: 'tool_use',
+    };
+    expect(interpretResponse(withText)).toEqual({ tipo: 'criar_demo', texto: 'consigo montar sim' });
+  });
   test('truncated text-only → nada (never send a half message)', () => {
     expect(interpretResponse({ content: [{ type: 'text', text: 'meia frase' }], stop_reason: 'max_tokens' }).tipo).toBe('nada');
   });
   test('empty content → nada', () => {
     expect(interpretResponse({ content: [], stop_reason: 'end_turn' }).tipo).toBe('nada');
+  });
+});
+
+describe('prospect-demo (prévia helpers)', () => {
+  const { previaLinkInHistory, sectorToType, buildScrapedData } = require('../_lib/prospecting/prospect-demo');
+
+  test('previaLinkInHistory reuses an already-sent prévia link (idempotency, no dup demos)', () => {
+    const found = previaLinkInHistory([
+      { direcao: 'out', corpo: 'oi!' },
+      { direcao: 'in', corpo: 'quero ver' },
+      { direcao: 'out', corpo: 'é essa aqui 👇\nhttps://seatable.one/previa/abc12345-6789?wa=5511' },
+    ]);
+    expect(found).toMatch(/\/previa\/abc12345/);
+    expect(previaLinkInHistory([{ corpo: 'sem link nenhum' }])).toBeNull();
+    expect(previaLinkInHistory(null)).toBeNull();
+  });
+
+  test('sectorToType maps discovery sectors onto the restaurant_type enum', () => {
+    expect(sectorToType('cantina italiana')).toBe('italian');
+    expect(sectorToType('sushi bar')).toBe('japanese'); // japanese wins over bar (checked first)
+    expect(sectorToType('churrascaria premium')).toBe('steakhouse');
+    expect(sectorToType('boteco')).toBe('bar');
+    expect(sectorToType('restaurante')).toBe('casual_dining');
+    expect(sectorToType(null)).toBe('casual_dining');
+  });
+
+  test('buildScrapedData carries the Google fields the prévia hero renders', () => {
+    const sd = buildScrapedData({ name: 'Bar do Zé', rating: 4.6, reviews_count: 142, address: 'R. X', sector: 'bar' });
+    expect(sd).toMatchObject({ name: 'Bar do Zé', rating: 4.6, review_count: 142, address: 'R. X' });
+    // Missing rating collapses to null (hero hides the pill), never NaN/undefined.
+    expect(buildScrapedData({ name: 'X' }).rating).toBeNull();
   });
 });
 
