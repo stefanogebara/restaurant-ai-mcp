@@ -41,6 +41,23 @@ describe('deveResponder / detectarOptout', () => {
     expect(detectarOptout(null)).toBe(false);
   });
 
+  test('"não quero X" onde X não é o contato NÃO é opt-out (gym 2026-07-07: dona engajada foi descadastrada)', () => {
+    expect(detectarOptout('E se der ruim, como que eu paro essa IA? Não quero ela falando besteira pelo meu restaurante')).toBe(false);
+    expect(detectarOptout('não quero perder reservas')).toBe(false);
+    expect(detectarOptout('não quero pagar caro nisso')).toBe(false);
+    expect(detectarOptout('não quero que o cliente espere')).toBe(false);
+  });
+
+  test('"não quero" mirando o próprio contato continua opt-out', () => {
+    expect(detectarOptout('não quero')).toBe(true);
+    expect(detectarOptout('não quero mais')).toBe(true);
+    expect(detectarOptout('não quero receber mensagens')).toBe(true);
+    expect(detectarOptout('não quero nada disso')).toBe(true);
+    expect(detectarOptout('não quero saber')).toBe(true);
+    expect(detectarOptout('não quero conversar')).toBe(true);
+    expect(detectarOptout('não tenho interesse')).toBe(true);
+  });
+
   test('descreverAgora is deterministic and in Brasília time', () => {
     const ms = Date.parse('2026-06-25T17:00:00Z'); // 14:00 BRT
     expect(descreverAgora(ms)).toBe(descreverAgora(ms));

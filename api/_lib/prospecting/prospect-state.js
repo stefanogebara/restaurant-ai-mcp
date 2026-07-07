@@ -34,7 +34,12 @@ function deveResponder(estado) {
 const OPTOUT_PATTERNS = [
   // para / pare / parar de mandar|enviar|mensagear|me chamar
   /\bpar(?:a|e|ar)\b.*\b(de\s+)?(mandar|enviar|mensag|me\s+chamar)/i,
-  /\bn[ãa]o\s+(quero|desejo|tenho\s+interesse)\b/i,
+  // "não quero X" only when X is the OUTREACH itself. A broad /não quero/
+  // opted out an engaged owner asking "não quero ela [a IA] falando besteira"
+  // (gym, 2026-07-07). Objects like "perder reserva" fall through to the LLM.
+  /\bn[ãa]o\s+(?:quero|desejo)\s*[.!…]*$/i, // bare decline ends the message
+  /\bn[ãa]o\s+(?:quero|desejo)\s+(?:mais\b|receber\b|contato\b|conversar\b|papo\b|nada\b|saber\b)/i,
+  /\bn[ãa]o\s+tenho\s+interesse\b/i,
   /\bn[ãa]o\s+me\s+(mande|envie|chame|perturbe|incomode)/i,
   /\b(remov\w*|descadastr|tira?r?\s+da\s+lista|sair\s+da\s+lista)/i,
   /\bn[ãa]o\s+enche/i,
