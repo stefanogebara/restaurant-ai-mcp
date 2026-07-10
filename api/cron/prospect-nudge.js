@@ -20,7 +20,7 @@ const { isCronEnabled } = require('../_lib/cron-config');
 const { logCronRun } = require('../_lib/cron-tracker');
 const { getProspectingPhoneNumberId } = require('../_lib/prospecting/routing');
 const { selectNudgeStates, loadHistory, loadLastInbound } = require('../_lib/prospecting/prospect-store');
-const { elegivelParaNudge } = require('../_lib/prospecting/prospect-nudge');
+const { elegivelParaNudge, contarTersosSeguidos } = require('../_lib/prospecting/prospect-nudge');
 const { respondToProspect } = require('../_lib/prospecting/prospect-responder');
 const { onlyDigits } = require('../_lib/prospecting/phone');
 
@@ -56,14 +56,19 @@ module.exports = async (req, res) => {
       checked++;
       try {
         // Fine-grained eligibility needs message-level facts (2 cheap queries).
-        const [lastMsgArr, lastIn] = await Promise.all([
-          loadHistory(lead.id, 1),
+        // A short window of history feeds BOTH the last-message check and the
+        // engagement taper (trailing terse-reply streak). loadHistory returns
+        // chronological (oldest-first), so the most recent message is the tail.
+        const [hist, lastIn] = await Promise.all([
+          loadHistory(lead.id, 8),
           loadLastInbound(lead.id),
         ]);
         const gate = elegivelParaNudge({
-          lastMsg: lastMsgArr[0] || null,
+          lastMsg: hist.length ? hist[hist.length - 1] : null,
           lastInboundAtMs: lastIn?.enviada_em ? new Date(lastIn.enviada_em).getTime() : null,
           nudgeEmMs: lead.nudge_em ? new Date(lead.nudge_em).getTime() : null,
+          tersosSeguidos: contarTersosSeguidos(hist),
+          nudgeCount: lead.nudge_count || 0,
           nowMs,
         });
         if (!gate.eligible) continue;

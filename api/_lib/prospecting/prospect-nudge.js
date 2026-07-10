@@ -37,15 +37,42 @@ function podeMensagemLivre(lastInboundAtMs, nowMs = Date.now()) {
 }
 
 /**
+ * PURE: how many of the lead's MOST RECENT inbound messages, in a row, are terse
+ * (≤ maxPalavras words) and not a question. The engagement signal the taper
+ * reads: two short, non-advancing replies in a row = the lead is disengaging.
+ * A question ('?') breaks the streak — asking for info IS engagement. Works for
+ * every lead (no dependency on read receipts, which ~half of leads never send).
+ * @param {Array<{direcao?:string, corpo?:string|null}>} history - chronological (oldest-first), any directions
+ */
+function contarTersosSeguidos(history, { maxPalavras = 4 } = {}) {
+  const ins = (history || []).filter(
+    (m) => m && m.direcao === 'in' && typeof m.corpo === 'string' && m.corpo.trim(),
+  );
+  let n = 0;
+  for (let i = ins.length - 1; i >= 0; i--) {
+    const corpo = ins[i].corpo.trim();
+    const palavras = corpo.split(/\s+/).filter(Boolean).length;
+    const perguntou = corpo.includes('?'); // a question = engagement, not terse
+    if (!perguntou && palavras <= maxPalavras) n++;
+    else break;
+  }
+  return n;
+}
+
+/**
  * Full nudge eligibility for one lead.
  * @param {object} args
  * @param {{direcao:string}|null} args.lastMsg       - most recent message row (any direction)
  * @param {number|null} args.lastInboundAtMs         - epoch ms of the lead's last message
  * @param {number|null} args.nudgeEmMs               - epoch ms of the last nudge sent (lead.nudge_em)
+ * @param {number} [args.tersosSeguidos]             - trailing terse inbound count (contarTersosSeguidos)
+ * @param {number} [args.nudgeCount]                 - nudges already sent to this lead (lead.nudge_count)
  * @param {number} [args.nowMs]
  * @returns {{eligible: boolean, reason: string}}
  */
-function elegivelParaNudge({ lastMsg, lastInboundAtMs, nudgeEmMs, nowMs = Date.now() }) {
+function elegivelParaNudge({
+  lastMsg, lastInboundAtMs, nudgeEmMs, tersosSeguidos = 0, nudgeCount = 0, nowMs = Date.now(),
+}) {
   if (!lastMsg) return { eligible: false, reason: 'sem_mensagens' };
   if (!lastInboundAtMs) return { eligible: false, reason: 'sem_inbound' };
   if (lastMsg.direcao !== 'out') return { eligible: false, reason: 'inbound_pendente' };
@@ -55,6 +82,11 @@ function elegivelParaNudge({ lastMsg, lastInboundAtMs, nudgeEmMs, nowMs = Date.n
   // Once per silence period: a nudge AFTER the lead's last message means this
   // silence was already nudged — wait for the lead to speak again.
   if (nudgeEmMs && nudgeEmMs >= lastInboundAtMs) return { eligible: false, reason: 'ja_nudgado' };
+  // Engagement taper (approved default): two consecutive short, non-advancing
+  // replies = the lead is disengaging. Allow ONE last gentle nudge (nudgeCount
+  // 0), then stop — once we've already nudged a clearly-cooling lead, backing
+  // off beats another "invasive" poke.
+  if (tersosSeguidos >= 2 && nudgeCount >= 1) return { eligible: false, reason: 'desengajado' };
   return { eligible: true, reason: 'ok' };
 }
 
@@ -63,5 +95,6 @@ module.exports = {
   WHATSAPP_JANELA_MS,
   NUDGE_INSTRUCTION,
   podeMensagemLivre,
+  contarTersosSeguidos,
   elegivelParaNudge,
 };

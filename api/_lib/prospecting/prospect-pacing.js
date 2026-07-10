@@ -29,12 +29,18 @@ function pacingDelayMs(texto, opts = {}) {
   return Math.round(Math.max(minMs, Math.min(maxMs, base * fator)));
 }
 
-/** Split a reply into 1..maxParts bubbles on blank lines (opt-in via multipart). */
+/**
+ * Split a reply into 1..maxParts bubbles on blank lines (opt-in via multipart).
+ * Default cap is 2 (was 3): the live data showed 55% of our messages were
+ * rapid-fire bubbles — 3-bubble volleys read as a bot spraying, not a person.
+ * A reply that splits into MORE than maxParts collapses to a single bubble
+ * (better one calm message than an over-eager burst).
+ */
 function splitReplyParts(texto, opts = {}) {
   const full = String(texto || '').trim();
   if (!full) return [];
   if (!opts.multipart) return [full];
-  const maxParts = opts.maxParts ?? 3;
+  const maxParts = opts.maxParts ?? 2;
   const parts = full.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
   if (parts.length <= 1 || parts.length > maxParts) return [full];
   return parts;

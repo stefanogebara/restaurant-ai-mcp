@@ -12,7 +12,7 @@
  */
 
 /**
- * @typedef {'aguardando'|'conversando'|'agendando'|'agendado'|'handoff'|'optout'|'pausada'} ProspectState
+ * @typedef {'aguardando'|'conversando'|'agendando'|'agendado'|'handoff'|'optout'|'pausada'|'recusou'} ProspectState
  */
 
 // States in which the agent must STAY SILENT:
@@ -103,6 +103,77 @@ function detectarOptout(texto) {
   return OPTOUT_PATTERNS.some((re) => re.test(t));
 }
 
+// Soft, unambiguous declines that are NOT opt-out (LGPD "stop") but DO mean
+// "stop pursuing me": the lead is polite, just not interested / already sorted.
+// Detected deterministically so we PARK the lead (state 'recusou' → dropped from
+// every proactive selector, which whitelist only active states) and answer with
+// ONE graceful line instead of nudging them the next day — the "invasive"
+// complaint that motivated this (2026-07). Deliberately NARROW (high precision):
+// "agora não" alone is ambiguous with scheduling ("agora não, semana que vem
+// sim") and is handled by the engagement taper + persona recede, NOT here.
+// 'recusou' is REVERSIBLE: a later inbound is still answered (not a SILENT_STATE)
+// and estadoAposAcao('responder') flips the lead back to 'conversando'.
+const RECUSA_SUAVE_PATTERNS = [
+  // "não é o caso" / "não é (o) nosso caso" / "não é pra gente/nós/mim"
+  /\bn[ãa]o\s+(?:é|eh)\s+(?:o\s+)?(?:caso|nosso\s+caso|pra\s+(?:a\s+)?(?:gente|n[óo]s|mim)|para\s+(?:a\s+)?(?:gente|n[óo]s|mim))\b/i,
+  // "não é o momento" / "não é o nosso momento" / "não é um bom momento"
+  /\bn[ãa]o\s+(?:é|eh)\s+(?:o\s+|um\s+|(?:o\s+)?nosso\s+)?(?:bom\s+)?momento\b/i,
+  // "não vejo/temos/tenho/há necessidade" / "sem necessidade"
+  /\b(?:n[ãa]o\s+(?:vejo|temos|tenho|h[áa])|sem)\s+necessidade\b/i,
+  // "não temos/tenho interesse" (plural slips past the singular opt-out pattern)
+  /\bn[ãa]o\s+(?:temos|tenho)\s+interesse\b/i,
+  // polite decline: "obrigado/grato/valeu, mas não…"
+  /\b(?:obrigad\w+|grat[oa]|valeu)\b[\s,]*mas\s+n[ãa]o\b/i,
+  // already solved: "já temos/uso/usamos/trabalho com … sistema/ferramenta/CRM/…"
+  /\bj[áa]\s+(?:temos|tenho|uso|usamos|trabalho\s+com|trabalhamos\s+com)\b[^.!?\n]{0,30}\b(?:sistema|ferramenta|solu[çc][ãa]o|crm|plataforma|software|programa|fornecedor|parceir)/i,
+];
+
+// If ANY of these appear, the message is NOT a clean stop — it carries live
+// intent (a question, a price/switch curiosity, a "yes, later", a handoff to a
+// partner). A decline fragment inside such a message is engagement, not a "no":
+//   "já temos um sistema, quanto custa o de vocês?"  → asking OUR price (hot)
+//   "terça não é o caso, quarta sim"                  → picking a day
+//   "não é pra mim decidir, é pro meu sócio"          → handoff, not a decline
+// Guarding here keeps the dismissive close + park OFF the hottest leads.
+// Precision over recall by design: a missed decline is cheap (the persona
+// recedes and the taper stops the nudge); a false park brushes off a buyer.
+const RECUSA_ENGAJADA = new RegExp(
+  '[?]'                                                                    // any question
+  + '|\\b(quanto|pre[çc]o|valor|custa|custo|mensalidade|plano|planos'      // price curiosity
+  + '|trocar|troc[ao]|mudar|migrar|testar|experimentar|proposta|or[çc]amento' // switch / want-more
+  + '|conhecer|demonstra|apresenta'                                        // wants to see it
+  + '|sim|consigo|pode\\s+ser|bora|vamos|marcar?'                          // scheduling-affirmative
+  + '|amanh[ãa]|semana\\s+que\\s+vem|m[êe]s\\s+que\\s+vem|depois\\s+do\\s+dia|mais\\s+tarde' // defer-but-alive
+  + '|s[óo]cio|respons[áa]vel|dono|gerente|fala\\s+com)\\b',                // handoff to another person
+  'i',
+);
+
+/**
+ * PURE: does this inbound read as a CLEAN soft decline (polite "not for us / not
+ * the moment / already sorted") that isn't a hard opt-out? Fires only when a
+ * decline pattern matches AND the message carries no live-intent signal
+ * (RECUSA_ENGAJADA) — a question, price/switch curiosity, a "yes, later", or a
+ * handoff. Ambiguous "agora não" falls through too, so the taper/persona (not a
+ * close-line) handle it. Opt-out is checked first upstream, so no hard stop here.
+ */
+function detectarRecusaSuave(texto) {
+  if (!texto) return false;
+  const t = String(texto).trim();
+  if (!t) return false;
+  if (RECUSA_ENGAJADA.test(t)) return false; // live intent → not a clean stop
+  return RECUSA_SUAVE_PATTERNS.some((re) => re.test(t));
+}
+
+// Injected as a user-role turn (noTools) when a soft decline is detected: the
+// agent sends ONE warm close instead of pitching back at a "no".
+const RECUSA_INSTRUCTION =
+  '[INSTRUÇÃO INTERNA, não é mensagem do cliente: a pessoa recusou com educação ' +
+  '(não é o caso / não é o momento / já tem solução). Responda com UMA linha ' +
+  'curta e calorosa: agradeça, reconheça sem insistir e diga que fica à disposição ' +
+  'se fizer sentido no futuro. NÃO faça pergunta, NÃO reapresente a oferta, NÃO ' +
+  'tente contornar a recusa. Encerre com leveza. Não use ferramentas — responda ' +
+  'só com o texto da mensagem.]';
+
 /**
  * Describe "now" in pt-BR in São Paulo time, e.g.
  *   "quinta-feira, 18 de junho de 2026, 14:30 (horário de Brasília)".
@@ -149,6 +220,8 @@ module.exports = {
   OPTOUT_PATTERNS,
   deveResponder,
   detectarOptout,
+  detectarRecusaSuave,
+  RECUSA_INSTRUCTION,
   descreverAgora,
   estadoAposAcao,
 };

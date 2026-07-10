@@ -21,7 +21,9 @@ const { createSecureLogger } = require('../secure-logger');
 const { sendWhatsAppMessage } = require('../whatsapp-sender');
 const { acquireProcessingLock, releaseProcessingLock } = require('../rate-limit');
 const { getProspectingPhoneNumberId } = require('./routing');
-const { deveResponder, detectarOptout, estadoAposAcao } = require('./prospect-state');
+const {
+  deveResponder, detectarOptout, detectarRecusaSuave, RECUSA_INSTRUCTION, estadoAposAcao,
+} = require('./prospect-state');
 const { dentroDoHorario, decisaoForaDeHorario } = require('./prospect-hours');
 const { pacingDelayMs, splitReplyParts, partPauseDelayMs } = require('./prospect-pacing');
 const { extrairEmail, extrairNumeroDono, extrairNomeDono, extrairDddBr } = require('./prospect-extract');
@@ -445,6 +447,14 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
     // possibly newer than the `text` argument that triggered this invocation).
     const lastInText = (lastRow.direcao === 'in' && lastRow.corpo) ? lastRow.corpo : (text || '');
 
+    // 6a-bis. Soft-decline detector (pre-LLM, deterministic). A polite "not for
+    //   us / not the moment / already sorted" parks the lead in 'recusou' (which
+    //   every proactive selector drops, since they whitelist only active states)
+    //   and turns THIS turn into one warm close instead of a pitch. Reversible: a
+    //   later inbound is still answered and revives the thread. Opt-out (the
+    //   stronger stop) was already handled above; nudges have no inbound to read.
+    const recusaSuave = !isNudge && detectarRecusaSuave(lastInText);
+
     // 6b. Deterministic owner-number guardrail (pre-LLM). When the last inbound
     //     contains a shared contact card or a near-bare phone number, force
     //     registrar_responsavel with THAT number — never let the model re-ask
@@ -500,8 +510,8 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
         },
         history,
         nowMs,
-        injectUserTurn: isNudge ? NUDGE_INSTRUCTION : null,
-        noTools: isNudge,
+        injectUserTurn: isNudge ? NUDGE_INSTRUCTION : (recusaSuave ? RECUSA_INSTRUCTION : null),
+        noTools: isNudge || recusaSuave,
       });
     }
 
@@ -509,6 +519,10 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
     const next = estadoAposAcao(acao);
     const patch = {};
     if (next) patch.prospect_state = next;
+    // Soft decline → park in 'recusou' (reversible), overriding the default
+    // 'conversando'. Only when the turn resolved to a plain reply — a guardrail
+    // that fired registrar/agendar means the lead engaged, not declined.
+    if (recusaSuave && acao && acao.tipo === 'responder') patch.prospect_state = 'recusou';
     if (lead.reply_apos) patch.reply_apos = null; // we're answering now
     if (email && email !== lead.prospect_email) {
       patch.prospect_email = email;
@@ -694,7 +708,10 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
         if (acao.tipo === 'responder' && acao.texto) {
           const r = await sendReply(lead.id, from, acao.texto, pace);
           sent = r.sentAny; dryRun = r.dryRun;
-          if (isNudge) patch.nudge_em = new Date(nowMs).toISOString();
+          if (isNudge) {
+            patch.nudge_em = new Date(nowMs).toISOString();
+            patch.nudge_count = (lead.nudge_count || 0) + 1; // engagement-taper counter
+          }
         }
         break;
     }
