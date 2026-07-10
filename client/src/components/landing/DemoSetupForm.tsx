@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import { GlassPanel } from '../common/glass/Glass';
 import { trackDemoStarted } from '../../lib/analytics';
 
 interface ScrapedData {
@@ -129,11 +130,11 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
   const showEmailStep = showResults;
 
   return (
-    <form onSubmit={handleSubmit} className="bg-warm-white border border-border-gray rounded-[2rem] p-8 sm:p-10 space-y-6">
+    <GlassPanel as="form" onSubmit={handleSubmit} className="p-7 sm:p-9 space-y-6">
       {/* Step 1: Find your restaurant */}
       <div>
-        <p className="text-[11px] font-semibold uppercase tracking-[1.6px] text-muted-stone mb-4">
-          {t('landing.demoSetup.form.findYourRestaurant', 'Find your restaurant')}
+        <p className="text-[13px] font-medium text-muted-stone mb-3">
+          {t('landing.demoSetup.form.findYourRestaurant', 'Ache o seu restaurante')}
         </p>
         <div className="space-y-3">
           <div>
@@ -142,7 +143,7 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
               value={restaurantName}
               onChange={(e) => { setRestaurantName(e.target.value); setSearchResults(null); setSelectedResult(null); }}
               onKeyDown={handleKeyDown}
-              placeholder={t('landing.demoSetup.form.restaurantNameSearch', 'Restaurant name')}
+              placeholder={t('landing.demoSetup.form.restaurantNameSearch', 'Nome do restaurante')}
               className={inputBase}
               autoFocus
             />
@@ -153,22 +154,22 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
               value={city}
               onChange={(e) => { setCity(e.target.value); setSearchResults(null); setSelectedResult(null); }}
               onKeyDown={handleKeyDown}
-              placeholder={t('landing.demoSetup.form.city', 'City')}
+              placeholder={t('landing.demoSetup.form.city', 'Cidade')}
               className={inputBase}
             />
             <button
               type="button"
               onClick={handleSearch}
               disabled={!canSearch || isSearching}
-              className="px-6 py-3.5 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+              className="px-6 py-3.5 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-xl transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
             >
               {isSearching ? (
                 <span className="inline-flex items-center gap-2">
                   <span className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
-                  {t('landing.demoSetup.form.searching', 'Searching...')}
+                  {t('landing.demoSetup.form.searching', 'Buscando…')}
                 </span>
               ) : (
-                t('landing.demoSetup.form.findIt', 'Find it')
+                t('landing.demoSetup.form.findIt', 'Buscar')
               )}
             </button>
           </div>
@@ -194,19 +195,19 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
             exit={{ opacity: 0, height: 0 }}
             className="space-y-2 overflow-hidden"
           >
-            <p className="text-xs text-muted-stone">{t('landing.demoSetup.form.selectYourRestaurant', 'Select your restaurant:')}</p>
+            <p className="text-xs text-muted-stone">{t('landing.demoSetup.form.selectYourRestaurant', 'Escolha o seu:')}</p>
             {searchResults.map((result, i) => (
               <button
                 key={i}
                 type="button"
                 onClick={() => setSelectedResult(result)}
-                className="w-full text-left p-4 border border-border-gray rounded-xl hover:border-burgundy hover:bg-burgundy/[3%] transition-all"
+                className="w-full text-left p-4 border border-glass-border-dark rounded-xl hover:border-burgundy hover:bg-burgundy/[3%] transition-all"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="font-medium text-deep-charcoal truncate">{result.name}</p>
                     {result.address && <p className="text-xs text-stone-gray mt-0.5 truncate">{result.address}</p>}
-                    {result.cuisine_type && <span className="inline-block mt-1 text-[10px] font-medium uppercase tracking-wider text-burgundy bg-burgundy/[6%] px-2 py-0.5 rounded-full">{result.cuisine_type}</span>}
+                    {result.cuisine_type && <span className="inline-block mt-1 text-[11px] font-medium text-burgundy bg-burgundy/[6%] px-2 py-0.5 rounded-[46px]">{result.cuisine_type}</span>}
                   </div>
                   {result.rating && (
                     <div className="flex-shrink-0 text-right">
@@ -215,7 +216,7 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
                         <span className="text-sm font-semibold text-deep-charcoal">{result.rating}</span>
                       </div>
                       {result.review_count > 0 && (
-                        <p className="text-[10px] text-muted-stone mt-0.5">{result.review_count.toLocaleString()} {t('landing.demoSetup.form.reviews', 'reviews')}</p>
+                        <p className="text-[10px] text-muted-stone mt-0.5 tabular-nums">{result.review_count.toLocaleString('pt-BR')} {t('landing.demoSetup.form.reviews', 'avaliações')}</p>
                       )}
                     </div>
                   )}
@@ -223,7 +224,7 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
               </button>
             ))}
             <button type="button" onClick={handleSkipSearch} className="text-xs text-muted-stone hover:text-stone-gray transition-colors underline">
-              {t('landing.demoSetup.form.notListed', 'Not listed? Continue manually')}
+              {t('landing.demoSetup.form.notListed', 'Não achou? Continuar manualmente')}
             </button>
           </motion.div>
         )}
@@ -236,7 +237,7 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
-            className="border border-rose-200 bg-rose-50/50 rounded-xl p-5"
+            className="glass-card p-5"
           >
             <div className="flex items-start justify-between gap-3 mb-3">
               <div>
@@ -248,25 +249,25 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
                 onClick={() => { setSelectedResult(null); setSearchResults(null); }}
                 className="text-xs text-muted-stone hover:text-stone-gray underline flex-shrink-0"
               >
-                {t('landing.demoSetup.form.change', 'Change')}
+                {t('landing.demoSetup.form.change', 'Trocar')}
               </button>
             </div>
 
             <div className="flex flex-wrap gap-3 text-xs">
               {selectedResult.rating && (
-                <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-lg border border-border-gray">
+                <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-lg border border-glass-border-dark">
                   <StarRating rating={selectedResult.rating} />
                   <span className="font-semibold">{selectedResult.rating}</span>
                   {selectedResult.review_count > 0 && <span className="text-muted-stone">({selectedResult.review_count.toLocaleString()})</span>}
                 </div>
               )}
               {selectedResult.cuisine_type && (
-                <div className="bg-white px-3 py-1.5 rounded-lg border border-border-gray font-medium text-burgundy">
+                <div className="bg-white px-3 py-1.5 rounded-lg border border-glass-border-dark font-medium text-burgundy">
                   {selectedResult.cuisine_type}
                 </div>
               )}
               {selectedResult.phone && (
-                <div className="bg-white px-3 py-1.5 rounded-lg border border-border-gray text-stone-gray">
+                <div className="bg-white px-3 py-1.5 rounded-lg border border-glass-border-dark text-stone-gray">
                   {selectedResult.phone}
                 </div>
               )}
@@ -275,7 +276,7 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
             {selectedResult.hours_text && selectedResult.hours_text.length > 0 && (
               <details className="mt-3">
                 <summary className="text-[11px] font-medium text-stone-gray cursor-pointer hover:text-deep-charcoal transition-colors">
-                  {t('landing.demoSetup.form.businessHours', 'Business hours')}
+                  {t('landing.demoSetup.form.businessHours', 'Horário de funcionamento')}
                 </summary>
                 <ul className="mt-1.5 text-[11px] text-stone-gray space-y-0.5 pl-1">
                   {selectedResult.hours_text.map((line, i) => (
@@ -297,7 +298,7 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
       {/* No results message */}
       {searchResults && searchResults.length === 0 && !selectedResult && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-4">
-          <p className="text-sm text-stone-gray">{t('landing.demoSetup.form.noExactMatch', "No exact match found — we'll set up your demo with the details you provided.")}</p>
+          <p className="text-sm text-stone-gray">{t('landing.demoSetup.form.noExactMatch', 'Não achei exato — montamos seu painel com os dados que você digitou.')}</p>
         </motion.div>
       )}
 
@@ -310,19 +311,19 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
             exit={{ opacity: 0, height: 0 }}
             className="overflow-hidden"
           >
-            <div className="h-px bg-border-gray mb-6" />
-            <p className="text-[11px] font-semibold uppercase tracking-[1.6px] text-muted-stone mb-3">
-              {t('landing.demoSetup.form.almostThere', 'Almost there')}
+            <div className="h-px bg-glass-border-dark mb-6" />
+            <p className="text-[13px] font-medium text-muted-stone mb-3">
+              {t('landing.demoSetup.form.almostThere', 'Quase lá')}
             </p>
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder={t('landing.demoSetup.form.emailPlaceholder', 'Your work email')}
+              placeholder={t('landing.demoSetup.form.emailPlaceholder', 'Seu e-mail')}
               className={inputBase}
             />
-            <p className="text-[10px] text-muted-stone mt-1.5 ml-1">{t('landing.demoSetup.form.emailHint', "We'll send your demo link here")}</p>
+            <p className="text-[11px] text-muted-stone mt-1.5 ml-1">{t('landing.demoSetup.form.emailHint', 'É pra onde mandamos o link do seu painel.')}</p>
           </motion.div>
         )}
       </AnimatePresence>
@@ -340,20 +341,20 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
           <button
             type="submit"
             disabled={isSubmitting || !email.trim()}
-            className={`w-full flex items-center justify-center gap-3 px-8 py-4 bg-burgundy hover:bg-burgundy-dark text-white text-[16px] font-semibold rounded-full transition-all duration-200 ${isSubmitting || !email.trim() ? 'opacity-60 cursor-not-allowed' : ''}`}
+            className={`w-full flex items-center justify-center gap-3 px-8 py-4 bg-burgundy hover:bg-burgundy-dark text-white text-[16px] font-semibold rounded-full transition-colors duration-200 ${isSubmitting || !email.trim() ? 'opacity-60 cursor-not-allowed' : ''}`}
           >
             {isSubmitting ? (
               <>
                 <span className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent" aria-hidden="true" />
-                <span>{t('landing.demoSetup.form.creatingDemo', 'Creating your demo...')}</span>
+                <span>{t('landing.demoSetup.form.creatingDemo', 'Montando seu painel…')}</span>
               </>
             ) : (
-              <span>{t('landing.demoSetup.form.launchDemo', 'Launch my demo')}</span>
+              <span>{t('landing.demoSetup.form.launchDemo', 'Ver meu restaurante na Seatable')}</span>
             )}
           </button>
-          <p className="text-center text-xs text-muted-stone font-light mt-3">{t('landing.demoSetup.form.noCreditCard')}</p>
+          <p className="text-center text-xs text-muted-stone mt-3">{t('landing.demoSetup.form.noCreditCard', 'Sem cartão de crédito.')}</p>
         </motion.div>
       )}
-    </form>
+    </GlassPanel>
   );
 }
