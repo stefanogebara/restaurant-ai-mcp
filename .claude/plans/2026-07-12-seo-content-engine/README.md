@@ -94,11 +94,24 @@ Dois sub-motores, mesma fundação server-rendered:
 
 ## Faseamento
 
-- [ ] **Fase 0 — Fundação** (aditivo, reversível): `seo-html.js` PT-BR +
-      JSON-LD helpers + teste unitário. Corrigir `city-cuisine`/`vs` p/ PT-BR
-      + JSON-LD. Sitemap de fonte única.
-- [ ] **Fase A — Programático buyer-intent** sobre `prospect_leads`: gerador
-      PT-BR, matriz cidade×cozinha, warm cron ampliado, sitemap.
+- [x] **Fase 0 — Fundação** (commit aafc8a67): `seo-schema.js` (builders
+      JSON-LD puros + hardening), `renderPage` com `lang`/`jsonLd`
+      (EN byte-idêntico), 14 testes.
+- [x] **Fase A — Programático buyer-intent** (2026-07-12):
+      **Reality check dos dados** (Supabase prod): 4.634 leads TODOS em São
+      Paulo, `sector`="restaurante" (sem cozinha), `neighborhood` vazio (mas
+      `address` carrega bairro — futuro), ~31 clientes com `restaurant_type`
+      = estilo (casual_dining), não culinária. E o handler antigo **404-eava
+      sem cliente pré-existente** — por isso o motor estava faminto.
+      **Desenho final**: matriz curada `api/_lib/seo-matrix.js` (15 cidades BR
+      × 12 tipos = 180 páginas; fonte única p/ handler+sitemap+cron), handler
+      novo `api/seo/reservas.js` em `/sistema-de-reservas/:cidade/:cozinha`
+      (PT-BR, nunca-404 p/ combo válido, JSON-LD server-side, stats de
+      mercado do prospect_leads como head-counts ≥50, prova social só com
+      clientes reais ≥3, Haiku com "só use estes números" + fallback
+      estático), rewrite no vercel.json, sitemap emite matriz, warm cron
+      aquece a matriz (~40/noite, cheio em ~5 noites). 27 testes verdes.
+      Legado `/restaurants` intacto (self-cache on visit).
 - [ ] **Fase B — Blog editorial**: tabela `content_articles`, `/blog`,
       renderer server-side, pipeline manager→worker→inspector, gate de aprovação.
 - [ ] **Fase C — Medição**: Search Console, o que ranqueia, iterar tópicos.

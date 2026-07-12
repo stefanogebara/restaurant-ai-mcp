@@ -1,17 +1,20 @@
 /**
  * POST /api/cron/warm-seo-cache
  *
- * Nightly cron (2 AM UTC) that pre-warms seo_page_cache for all active (city, cuisine)
- * pairs that don't yet have a cached entry. Prevents first-visitor cold starts.
+ * Nightly cron (2 AM UTC) that pre-warms seo_page_cache for the buyer-intent
+ * matrix (/sistema-de-reservas/:cidade/:cozinha — api/_lib/seo-matrix.js)
+ * entries that don't yet have a cached entry. Prevents first-visitor cold
+ * starts. ~180 pages fill over a few nights within the 45s budget; once full,
+ * runs are no-ops. Legacy /restaurants pages still self-cache on visit.
  */
 
 const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
-const { slugify } = require('../_lib/seo-html');
+const { getMatrixEntries } = require('../_lib/seo-matrix');
 const { logCronRun } = require('../_lib/cron-tracker');
 const { isCronEnabled } = require('../_lib/cron-config');
 const { bearerEquals } = require('../_lib/secure-compare');
-const cityHandler = require('../seo/city-cuisine');
+const reservasHandler = require('../seo/reservas');
 
 const logger = createSecureLogger('warm-seo-cache');
 
@@ -26,41 +29,22 @@ module.exports = async (req, res) => {
     return res.status(200).json({ success: true, skipped: 'disabled_by_ops' });
   }
 
-  // Fetch all unique (city, restaurant_type) pairs from active restaurants
-  const { data: restaurants, error } = await supabaseAdmin
-    .schema('restaurant')
-    .from('restaurant_config')
-    .select('city, restaurant_type')
-    .eq('is_active', true)
-    .eq('onboarding_completed', true)
-    .not('city', 'is', null)
-    .not('restaurant_type', 'is', null);
+  // The warm list is the curated buyer-intent matrix — page existence never
+  // depends on customer rows.
+  const pairs = getMatrixEntries().map((e) => ({
+    city: e.city.slug,
+    cuisine: e.cuisine.slug,
+    cacheKey: e.cacheKey,
+  }));
 
-  if (error) {
-    logger.error('Failed to fetch restaurants', { error: error.message });
-    return res.status(500).json({ error: 'Failed to fetch restaurants' });
-  }
-
-  // Deduplicate pairs
-  const pairMap = new Map();
-  for (const r of restaurants || []) {
-    const citySlug = slugify(r.city);
-    const cuisineSlug = slugify(r.restaurant_type);
-    if (citySlug && cuisineSlug) {
-      pairMap.set(`${citySlug}:${cuisineSlug}`, { city: citySlug, cuisine: cuisineSlug });
-    }
-  }
-  const pairs = [...pairMap.values()];
-
-  // Find which pairs already have a cache entry
-  const cacheKeys = pairs.map((p) => `city:${p.city}:${p.cuisine}`);
+  // Find which entries already have a cache entry
   const { data: existing } = await supabaseAdmin
     .from('seo_page_cache')
     .select('cache_key')
-    .in('cache_key', cacheKeys);
+    .in('cache_key', pairs.map((p) => p.cacheKey));
 
   const existingKeys = new Set((existing || []).map((r) => r.cache_key));
-  const missing = pairs.filter((p) => !existingKeys.has(`city:${p.city}:${p.cuisine}`));
+  const missing = pairs.filter((p) => !existingKeys.has(p.cacheKey));
 
   logger.info('Pre-warming SEO cache', { total: pairs.length, missing: missing.length });
 
@@ -81,7 +65,7 @@ module.exports = async (req, res) => {
         setHeader: () => {},
         send: () => { warmed++; resolve('done'); },
       };
-      cityHandler(fakeReq, fakeRes).catch((err) => {
+      reservasHandler(fakeReq, fakeRes).catch((err) => {
         logger.error('Failed to warm page', { city, cuisine, err: err.message });
         failed++;
         resolve('error');

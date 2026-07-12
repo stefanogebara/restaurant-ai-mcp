@@ -111,6 +111,20 @@ module.exports = async (req, res) => {
     <priority>0.8</priority>
   </url>`;
 
+  // Buyer-intent matrix pages (/sistema-de-reservas/:cidade/:cozinha) —
+  // single source of truth is api/_lib/seo-matrix.js (server-rendered PT-BR)
+  const { getMatrixEntries } = require('./_lib/seo-matrix');
+  const matrixEntries = getMatrixEntries()
+    .map(
+      (e) => `  <url>
+    <loc>${BASE_URL}${e.path}</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>`,
+    )
+    .join('\n');
+
   // Programmatic SEO pages (/para/:slug) — cuisine+city landing pages
   const programmaticSeoSlugs = [
     'pizzaria-sao-paulo', 'japonesa-sao-paulo', 'italiana-sao-paulo',
@@ -141,6 +155,7 @@ ${restaurantEntries}
 ${seoEntries}
 ${vsEntries}
 ${toolEntries}
+${matrixEntries}
 ${programmaticEntries}
 </urlset>`;
 
