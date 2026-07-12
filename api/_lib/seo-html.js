@@ -2,7 +2,18 @@
  * SEO HTML renderer — shared shell for all SEO landing pages.
  */
 
+const { renderJsonLd } = require('./seo-schema');
+
 const BASE_URL = process.env.CLIENT_URL || 'https://seatable.one';
+
+/**
+ * Per-locale chrome strings. 'en' preserves the exact original copy so existing
+ * English pages (/restaurants, /vs) render byte-identically until migrated.
+ */
+const LOCALE = {
+  en: { htmlLang: 'en', cta: 'Try free demo', footer: 'AI-powered restaurant reservations.' },
+  'pt-BR': { htmlLang: 'pt-BR', cta: 'Ver demo grátis', footer: 'Reservas com IA para restaurantes.' },
+};
 
 /**
  * Convert a string to a URL-safe slug.
@@ -49,16 +60,21 @@ function escapeHtml(str) {
 
 /**
  * Render a complete HTML page with nav, main, and footer.
- * @param {{ title: string, meta: string, body: string, canonical?: string }} opts
+ * @param {{ title: string, meta: string, body: string, canonical?: string,
+ *   lang?: 'en'|'pt-BR', jsonLd?: object|object[], ctaLabel?: string,
+ *   ctaHref?: string }} opts
  * @returns {string}
  */
-function renderPage({ title, meta, body, canonical }) {
+function renderPage({ title, meta, body, canonical, lang = 'en', jsonLd, ctaLabel, ctaHref = '/demo/setup' }) {
+  const L = LOCALE[lang] || LOCALE.en;
+  const cta = ctaLabel || L.cta;
   const canonicalTag = canonical
     ? `<link rel="canonical" href="${escapeHtml(BASE_URL + canonical)}" />`
     : '';
+  const jsonLdTags = jsonLd ? renderJsonLd(jsonLd) : '';
 
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="${escapeHtml(L.htmlLang)}">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -68,6 +84,7 @@ function renderPage({ title, meta, body, canonical }) {
   <meta property="og:title" content="${escapeHtml(title)}" />
   <meta property="og:description" content="${escapeHtml(meta)}" />
   <meta property="og:type" content="website" />
+  ${jsonLdTags}
   <style>
     *, *::before, *::after { box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 0; background: #fafaf9; color: #1c1917; }
@@ -98,10 +115,10 @@ function renderPage({ title, meta, body, canonical }) {
 <body>
   <nav>
     <a href="/" class="logo">seatable<span>.</span></a>
-    <a href="/demo/setup" class="cta-btn">Try free demo</a>
+    <a href="${escapeHtml(ctaHref)}" class="cta-btn">${escapeHtml(cta)}</a>
   </nav>
   <main>${body}</main>
-  <footer>&copy; ${new Date().getFullYear()} Seatable. AI-powered restaurant reservations.</footer>
+  <footer>&copy; ${new Date().getFullYear()} Seatable. ${escapeHtml(L.footer)}</footer>
 </body>
 </html>`;
 }

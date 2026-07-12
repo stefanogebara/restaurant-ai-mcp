@@ -75,32 +75,31 @@ export default function DemoSetupPage() {
   };
 
   return (
-    <div className="min-h-screen bg-warm-white text-deep-charcoal">
-      <nav className="sticky top-0 z-50 flex items-center justify-between px-6 sm:px-16 py-5 bg-warm-white/90 backdrop-blur-xl border-b border-border-gray">
-        <Link to="/" className="font-serif text-2xl font-semibold text-deep-charcoal tracking-tight">
+    // No page fill — the body's warm 4-orb gradient (index.css) shows through.
+    // Painting bg-warm-white here would flatten it (DESIGN.md: pages never fill).
+    <div className="min-h-screen text-deep-charcoal">
+      <nav className="sticky top-0 z-50 flex items-center justify-between px-6 sm:px-16 py-4 bg-white/55 backdrop-blur-xl border-b border-glass-border-dark">
+        <Link to="/" className="font-serif text-2xl text-deep-charcoal tracking-tight">
           seatable<span className="text-burgundy">.</span>
         </Link>
         <Link to="/login" className="text-sm font-medium text-stone-gray hover:text-deep-charcoal transition-colors">
-          {t('landing.demoSetup.nav.signIn')}
+          {t('landing.demoSetup.nav.signIn', 'Entrar')}
         </Link>
       </nav>
 
-      <main className="px-6 py-16 sm:py-24">
-        <div className="max-w-[640px] mx-auto">
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45 }} className="text-center mb-12">
-            <div className="inline-block text-xs font-semibold tracking-[1.5px] uppercase text-burgundy bg-burgundy/[6%] border border-burgundy/15 px-4 py-1.5 rounded-full mb-6">
-              {t('landing.demoSetup.badge')}
-            </div>
-            <h1 className="font-serif text-4xl sm:text-[44px] font-medium leading-[1.1] tracking-tight text-deep-charcoal mb-4">
-              {t('landing.demoSetup.title', 'See Seatable running')}<br />
-              <em className="text-burgundy">{t('landing.demoSetup.titleEm', 'in your restaurant')}</em> {t('landing.demoSetup.titleSuffix', 'in seconds.')}
+      <main className="px-6 py-14 sm:py-20">
+        <div className="max-w-[560px] mx-auto">
+          <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45, ease: [0.23, 1, 0.32, 1] }} className="text-center mb-10">
+            <h1 className="font-serif text-[38px] sm:text-[52px] leading-[1.05] tracking-tight text-deep-charcoal text-balance">
+              {t('landing.demoSetup.title', 'Veja a sua IA atendendo o WhatsApp')}{' '}
+              <span className="text-burgundy">{t('landing.demoSetup.titleEm', 'do seu restaurante')}</span>.
             </h1>
-            <p className="text-[17px] text-warm-stone font-light leading-[1.7] max-w-[480px] mx-auto">
-              {t('landing.demoSetup.subtitle', "Just tell us your restaurant name and city. We'll pull in your hours, reviews, and details automatically.")}
+            <p className="text-[17px] text-warm-stone leading-[1.65] max-w-[440px] mx-auto mt-5 text-pretty">
+              {t('landing.demoSetup.subtitle', 'Digite o nome e a cidade. A gente puxa seus horários, avaliações e cardápio do Google — e monta seu painel na hora.')}
             </p>
           </motion.div>
 
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}>
+          <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.08, ease: [0.23, 1, 0.32, 1] }}>
             <DemoSetupForm
               onSubmit={handleSubmit}
               isSubmitting={isSubmitting}
@@ -108,22 +107,12 @@ export default function DemoSetupPage() {
             />
           </motion.div>
 
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35, duration: 0.4 }} className="mt-10 flex justify-center gap-12 text-center">
-            <div className="py-2">
-              <div className="text-xl font-serif font-bold text-deep-charcoal">30s</div>
-              <div className="text-xs text-muted-stone uppercase tracking-wider">{t('landing.demoSetup.trust.setupTime', 'Setup Time')}</div>
-            </div>
-            <div className="w-px bg-border-gray" />
-            <div className="py-2">
-              <div className="text-xl font-serif font-bold text-burgundy">{t('landing.demoSetup.trust.realData', 'Real Data')}</div>
-              <div className="text-xs text-muted-stone uppercase tracking-wider">{t('landing.demoSetup.trust.hoursReviews', 'Your Hours & Reviews')}</div>
-            </div>
-            <div className="w-px bg-border-gray" />
-            <div className="py-2">
-              <div className="text-xl font-serif font-bold text-deep-charcoal">24/7</div>
-              <div className="text-xs text-muted-stone uppercase tracking-wider">{t('landing.demoSetup.trust.aiBooking')}</div>
-            </div>
-          </motion.div>
+          <motion.p
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3, duration: 0.4 }}
+            className="mt-6 text-center text-[13px] text-muted-stone"
+          >
+            {t('landing.demoSetup.trust.line', 'Leva 30 segundos, usa os dados reais do seu restaurante e não pede cartão.')}
+          </motion.p>
         </div>
       </main>
     </div>

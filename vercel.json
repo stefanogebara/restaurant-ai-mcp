@@ -85,6 +85,10 @@
       "destination": "/api/seo/city-cuisine?city=:city&cuisine=:cuisine"
     },
     {
+      "source": "/sistema-de-reservas/:city/:cuisine",
+      "destination": "/api/seo/reservas?city=:city&cuisine=:cuisine"
+    },
+    {
       "source": "/vs/:competitor",
       "destination": "/api/seo/vs?competitor=:competitor"
     },

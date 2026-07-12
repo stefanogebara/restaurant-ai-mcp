@@ -76,25 +76,25 @@ export default function AIKnowsCard({ menu, insights }: AIKnowsCardProps) {
   if (!hasAnything) return null;
 
   return (
-    <section className="bg-warm-white border border-burgundy/15 rounded-2xl p-6 space-y-5">
+    <section className="glass-card p-6 space-y-5">
       <header>
-        <span className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-burgundy bg-burgundy/[0.08] px-2.5 py-1 rounded-full mb-3">
+        <span className="inline-flex items-center gap-1.5 text-[13px] font-medium text-burgundy mb-2">
           <ThiingsIcon name="sparkles" size="xs" />
-          {t('demo.aiKnows.badge', "Your AI is already trained")}
+          {t('demo.aiKnows.badge', 'A sua IA já está treinada')}
         </span>
-        <h2 className="text-base font-semibold text-deep-charcoal">
-          {t('demo.aiKnows.heading', "Here's what your AI receptionist already knows")}
+        <h2 className="font-serif text-[22px] leading-tight text-deep-charcoal text-balance">
+          {t('demo.aiKnows.heading', 'O que a sua atendente de IA já sabe')}
         </h2>
-        <p className="text-xs text-warm-stone mt-1">
-          {t('demo.aiKnows.subtitle', "We read your website and recent reviews so the AI can actually help guests — not just answer with generic scripts.")}
+        <p className="text-sm text-warm-stone mt-1.5 leading-relaxed">
+          {t('demo.aiKnows.subtitle', 'Lemos o seu site e as avaliações recentes pra IA ajudar o cliente de verdade — não responder com script genérico.')}
         </p>
       </header>
 
       {/* Vibe tags — quick scannable identity */}
       {vibeTags.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-warm-stone self-center mr-1">
-            {t('demo.aiKnows.theVibe', 'The vibe:')}
+          <span className="text-[10px] font-semibold text-warm-stone self-center mr-1">
+            {t('demo.aiKnows.theVibe', 'O clima:')}
           </span>
           {vibeTags.map((tag, i) => (
             <span key={i} className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-white/60 backdrop-blur-glass-chip border border-burgundy/20 text-burgundy">
@@ -108,8 +108,8 @@ export default function AIKnowsCard({ menu, insights }: AIKnowsCardProps) {
         {/* Popular dishes */}
         {allPopular.length > 0 && (
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-warm-stone mb-2">
-              {t('demo.aiKnows.signatureDishes', 'Signature dishes')}
+            <p className="text-[11px] font-semibold text-warm-stone mb-2">
+              {t('demo.aiKnows.signatureDishes', 'Pratos que fazem a casa')}
             </p>
             <ul className="space-y-1.5 text-sm text-deep-charcoal">
               {allPopular.map((dish, i) => (
@@ -125,8 +125,8 @@ export default function AIKnowsCard({ menu, insights }: AIKnowsCardProps) {
         {/* Praise themes — what guests love */}
         {praise.length > 0 && (
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-warm-stone mb-2">
-              {t('demo.aiKnows.whatGuestsLove', 'What guests love')}
+            <p className="text-[11px] font-semibold text-warm-stone mb-2">
+              {t('demo.aiKnows.whatGuestsLove', 'O que os clientes amam')}
             </p>
             <ul className="space-y-1.5 text-sm text-deep-charcoal">
               {praise.map((theme, i) => (
@@ -142,8 +142,8 @@ export default function AIKnowsCard({ menu, insights }: AIKnowsCardProps) {
         {/* Complaint themes — what to handle */}
         {complaints.length > 0 && (
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-warm-stone mb-2">
-              {t('demo.aiKnows.handleProactively', 'Handle proactively')}
+            <p className="text-[11px] font-semibold text-warm-stone mb-2">
+              {t('demo.aiKnows.handleProactively', 'Cuidar de antemão')}
             </p>
             <ul className="space-y-1.5 text-sm text-deep-charcoal">
               {complaints.map((theme, i) => (
@@ -159,8 +159,8 @@ export default function AIKnowsCard({ menu, insights }: AIKnowsCardProps) {
         {/* Menu items grid */}
         {menuItems.length > 0 && (
           <div className={praise.length > 0 || complaints.length > 0 ? '' : 'md:col-span-2'}>
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-warm-stone mb-2">
-              {t('demo.aiKnows.menuPreview', 'Menu (from your website)')}
+            <p className="text-[11px] font-semibold text-warm-stone mb-2">
+              {t('demo.aiKnows.menuPreview', 'Cardápio (do seu site)')}
             </p>
             <ul className="space-y-1.5 text-sm">
               {menuItems.map((item, i) => (
@@ -179,8 +179,8 @@ export default function AIKnowsCard({ menu, insights }: AIKnowsCardProps) {
       {/* AI voice notes — show how the AI will use this */}
       {voiceNotes.length > 0 && (
         <div className="pt-3 border-t border-burgundy/10">
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-warm-stone mb-2">
-            {t('demo.aiKnows.aiWillSay', 'Your AI will know to:')}
+          <p className="text-[11px] font-semibold text-warm-stone mb-2">
+            {t('demo.aiKnows.aiWillSay', 'A sua IA vai saber:')}
           </p>
           <ul className="space-y-1 text-xs text-stone-700">
             {voiceNotes.map((note, i) => (
