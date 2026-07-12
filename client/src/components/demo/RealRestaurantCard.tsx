@@ -15,6 +15,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
+import ThiingsIcon from '../common/ThiingsIcon';
 
 /**
  * Restaurant hero photo — proxied through /api/places-photo so we can attach
@@ -162,7 +163,7 @@ export default function RealRestaurantCard({
       <section className="glass-card p-4 sm:p-5">
         <div className="flex items-start gap-4 flex-wrap">
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full">
+            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
               {t('demo.realCard.liveBadge', 'Pulled from Google in real time')}
             </span>
@@ -176,7 +177,7 @@ export default function RealRestaurantCard({
           )}
           {address && (
             <div className="flex items-center gap-1.5 text-xs text-warm-stone min-w-0">
-              <span aria-hidden="true">📍</span>
+              <ThiingsIcon name="map-pin" size="xs" className="shrink-0 text-warm-stone" />
               <span className="truncate">{address}</span>
               {google_maps_url && (
                 <a
@@ -210,7 +211,7 @@ export default function RealRestaurantCard({
     <section className="glass-card p-6 space-y-4">
       <header className="flex items-start justify-between gap-3 flex-wrap">
         <div>
-          <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-widest text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full mb-3">
+          <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full mb-3">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
             {t('demo.realCard.liveBadge', 'Pulled from Google in real time')}
           </span>
@@ -254,7 +255,7 @@ export default function RealRestaurantCard({
       {/* Address + maps */}
       {address && (
         <div className="text-sm text-warm-stone flex items-start gap-2">
-          <span aria-hidden="true" className="text-base flex-shrink-0">📍</span>
+          <ThiingsIcon name="map-pin" size="xs" className="shrink-0 mt-0.5 text-warm-stone" />
           <span className="flex-1">
             {address}
             {google_maps_url && (
@@ -277,7 +278,7 @@ export default function RealRestaurantCard({
       {/* Top reviews — proof we know the restaurant */}
       {top_reviews && top_reviews.length > 0 && (
         <div className="pt-4 border-t border-glass-border-dark space-y-3">
-          <p className="text-xs font-semibold uppercase tracking-widest text-warm-stone">
+          <p className="text-xs font-semibold text-warm-stone">
             {t('demo.realCard.recentReviews', 'Recent reviews on Google')}
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -323,7 +324,7 @@ export default function RealRestaurantCard({
             className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-full transition-colors whitespace-nowrap flex-shrink-0"
           >
             {t('demo.realCard.ctaButton', 'Take it over')}
-            <span aria-hidden="true">→</span>
+            <ThiingsIcon name="arrow-right" size="xs" />
           </Link>
         </div>
       )}
