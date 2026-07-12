@@ -97,7 +97,19 @@ function renderPage({ title, meta, body, canonical, lang = 'en', jsonLd, ctaLabe
     h1 { font-size: 2.5rem; font-weight: 700; line-height: 1.2; margin-bottom: 1rem; }
     .lead { font-size: 1.125rem; color: #57534e; margin-bottom: 3rem; line-height: 1.7; }
     h2 { font-size: 1.5rem; font-weight: 600; margin: 2.5rem 0 1rem; }
+    h3 { font-size: 1.15rem; font-weight: 600; margin: 1.75rem 0 0.5rem; }
     p { line-height: 1.8; color: #44403c; margin-bottom: 1rem; }
+    main a { color: #7c2d2d; }
+    main ul:not(.restaurant-list):not(.article-list) { margin: 0 0 1.5rem; padding-left: 1.25rem; }
+    main ul:not(.restaurant-list):not(.article-list) li { line-height: 1.8; color: #44403c; margin-bottom: 0.5rem; }
+    .article-meta { color: #a8a29e; font-size: 0.875rem; margin-bottom: 2rem; }
+    .article-meta a { color: #a8a29e; text-decoration: none; }
+    .article-list { list-style: none; padding: 0; display: grid; gap: 1rem; margin: 1.5rem 0 3rem; }
+    .article-card { background: #fff; border: 1px solid #e7e5e4; border-radius: 12px; padding: 1.5rem; }
+    .article-card h2 { margin: 0 0 0.5rem; font-size: 1.25rem; }
+    .article-card a { text-decoration: none; color: #1c1917; }
+    .article-card a:hover { color: #7c2d2d; }
+    .article-card p { margin-bottom: 0; font-size: 0.95rem; }
     .restaurant-list { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; margin: 1.5rem 0 3rem; }
     .restaurant-list li a { display: block; padding: 1rem 1.25rem; background: #fff; border: 1px solid #e7e5e4; border-radius: 12px; text-decoration: none; color: #1c1917; font-weight: 500; transition: border-color 0.15s; }
     .restaurant-list li a:hover { border-color: #7c2d2d; }
