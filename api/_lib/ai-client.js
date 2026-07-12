@@ -17,7 +17,7 @@ let _client = null;
 const AI_MODEL = process.env.AI_MODEL || 'anthropic/claude-sonnet-4';
 
 /** Cheap model for extraction/classification */
-const AI_MODEL_FAST = process.env.AI_MODEL_FAST || 'anthropic/claude-3.5-haiku';
+const AI_MODEL_FAST = process.env.AI_MODEL_FAST || 'anthropic/claude-haiku-4.5';
 
 /**
  * OpenRouter model slugs → Anthropic API model IDs, for the 402 failover path.
@@ -25,7 +25,7 @@ const AI_MODEL_FAST = process.env.AI_MODEL_FAST || 'anthropic/claude-3.5-haiku';
  */
 const ANTHROPIC_MODEL_MAP = {
   'anthropic/claude-sonnet-4': 'claude-sonnet-4-20250514',
-  'anthropic/claude-3.5-haiku': 'claude-3-5-haiku-latest',
+  'anthropic/claude-haiku-4.5': 'claude-haiku-4-5-20251001',
 };
 
 function toAnthropicModel(slug) {
