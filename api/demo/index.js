@@ -207,6 +207,12 @@ async function handleCreate(req, res) {
   // Without scraped_data, cuisine_type and contact_name are also required (legacy flow)
   const hasScrape = scraped_data && typeof scraped_data === 'object';
 
+  // SECURITY (review finding): scraped_data is client-supplied on this public
+  // endpoint. prospect_lead_id is a server-only back-reference set exclusively by
+  // prospect-demo.criarPreviaDemo — it drives the /previa beacon's outbound target,
+  // so strip any client-forged value; a self-created demo must never map to a lead.
+  if (hasScrape && 'prospect_lead_id' in scraped_data) delete scraped_data.prospect_lead_id;
+
   const required = hasScrape
     ? { restaurant_name, city, contact_email }
     : { restaurant_name, cuisine_type, city, contact_email, contact_name };

@@ -121,6 +121,52 @@
     }
   }
 
+  /* Prévia (prospecting demo) — honest loss slider + "live scrape" pulse dot.
+     The range track goes amber→red so higher no-show reads as hotter; the
+     thumb is a burgundy-ringed white knob (action color, per DESIGN.md). */
+  .previa-range {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    border-radius: 6px;
+    background: linear-gradient(90deg, #D97706 0%, #EF4444 100%);
+    outline: none;
+  }
+  .previa-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid #9F1239;
+    box-shadow: 0 2px 6px rgba(28, 25, 23, 0.2);
+    cursor: pointer;
+  }
+  .previa-range::-moz-range-thumb {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid #9F1239;
+    box-shadow: 0 2px 6px rgba(28, 25, 23, 0.2);
+    cursor: pointer;
+  }
+  .previa-range:focus-visible {
+    outline: 2px solid #9F1239;
+    outline-offset: 3px;
+  }
+  .previa-pulse {
+    animation: previa-pulse 1.8s ease-in-out infinite;
+  }
+  @keyframes previa-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.7); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .previa-pulse { animation: none; }
+  }
+
   /* Instrument Serif ships ONLY weight 400 (+ italic). font-synthesis: none
      stops the browser faux-bolding it when components set font-bold — the
      pure light face at display sizes IS the look (just-br.com pairing). */

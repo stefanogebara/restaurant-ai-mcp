@@ -84,6 +84,17 @@ function buildSystemPrompt(lead, agoraDescricao, styleBody = null) {
     `${AGENT_NAME}, da ${COMPANY}! Cuido do primeiro contato com vocês por aqui. E aí, ...".`,
     '',
     ...blocoData,
+    'RITMO (a regra mais importante — pessoa de verdade não interroga nem despeja):',
+    '- UMA mensagem por turno, curta. NÃO quebre em várias bolhas. Se precisar de duas frases,',
+    '  mantenha no MESMO parágrafo — nunca separe por linha em branco só pra "parecer humano".',
+    '- NO MÁXIMO UMA pergunta por turno. NUNCA faça duas perguntas seguidas, e NUNCA empilhe',
+    '  pergunta + oferta/pitch na mesma resposta. Uma coisa de cada vez.',
+    '- LEIA A ENERGIA: se a pessoa responde curto, seco, ou desconversa ("não é o caso", "não',
+    '  temos", "sem tempo", poucas palavras) — mande UMA linha calorosa, SEM pergunta e SEM',
+    '  oferta, e RECUE. Vender aqui é conversar no ritmo dela, não cutucar. Empurrar afasta.',
+    '- Depois de UMA tentativa sem engajamento real, encerre com leveza e se ponha à disposição.',
+    '  Não reformule a mesma oferta de outro jeito só pra continuar — isso é o que irrita.',
+    '',
     `O QUE A ${COMPANY.toUpperCase()} FAZ: um CRM com IA feito pra restaurante — bem mais que`,
     'reserva. Os módulos (é o seu repertório de venda, NÃO um roteiro pra recitar):',
     '- Atendimento por IA no WhatsApp e no telefone (voz), 24h: responde na hora e anota a',
@@ -250,6 +261,24 @@ const PROSPECT_TOOLS = [
     },
   },
   {
+    name: 'agendar_retorno',
+    description:
+      'Chame quando o lead pedir pra você chamar depois ("me chama amanhã", "liga segunda", "me chama depois do almoço") OU quando VOCÊ prometer retomar num momento ("segunda eu te chamo", "te chamo amanhã"). Passe em `quando` exatamente o que foi dito sobre o momento. O sistema agenda e te lembra de cumprir na hora — promessa datada é contrato. NÃO use pra marcar a demonstração (isso é agendar_demo).',
+    input_schema: {
+      type: 'object',
+      properties: {
+        quando: { type: 'string', description: 'O que foi dito sobre quando (ex.: "amanhã de tarde", "segunda", "depois do almoço").' },
+      },
+      required: ['quando'],
+    },
+  },
+  {
+    name: 'criar_demo',
+    description:
+      'Chame quando o lead demonstrar QUALQUER interesse em ver/entender melhor e valer mostrar valor na hora: você monta uma PRÉVIA do restaurante dele (dados públicos do Google — nome, nota, avaliações) e o SISTEMA te devolve o link real pra enviar. Use quando ele topar ("quer?", "manda", "pode ser", "como funciona?") ou pedir material. Custa uma palavra e é a prova anti-golpe. NUNCA escreva link nenhum você mesma — o sistema cola o link real. Uma vez por conversa.',
+    input_schema: { type: 'object', properties: {} },
+  },
+  {
     name: 'registrar_responsavel',
     description:
       'Chame quando te passarem o NÚMERO de WhatsApp do dono/responsável — digitado no texto OU como cartão de contato ("[Contato compartilhado: +55 ...]"). Registra o contato. Nunca invente o número.',
@@ -291,6 +320,8 @@ const PROSPECT_TOOLS = [
 /**
  * @typedef {{tipo:'responder', texto:string}
  *   | {tipo:'agendar', texto:string|null, resumo:string}
+ *   | {tipo:'agendar_retorno', texto:string, quando:string}
+ *   | {tipo:'criar_demo', texto:string}
  *   | {tipo:'registrar_responsavel', texto:string|null, numero:string, nome:string|null}
  *   | {tipo:'handoff', texto:string|null, motivo:string}
  *   | {tipo:'optout', texto:string|null}
@@ -314,12 +345,16 @@ const COMPANION_TEXT = {
   optout: 'entendido, não te mando mais nada — obrigada pelo tempo 🙏',
   handoff: 'boa pergunta — vou confirmar direitinho com o time e te retorno 🙂',
   porta: 'oi! não é pedido não — é sobre parceria 🙂 quem cuida das reservas ou parcerias por aí?',
+  previa: 'consigo te mostrar isso na prática — montei uma prévia rápida com os dados de vocês do Google 🙂',
   registrar: (nome) => (nome
     ? `perfeito, obrigada! já chamo ${nome} então 🙂`
     : 'perfeito, obrigada pela indicação! já entro em contato então 🙂'),
   agendar: (resumo) => (resumo && resumo !== 'sem detalhe'
     ? `fechado! deixa eu confirmar aqui (${resumo}) e já te mando o convite 🙂`
     : 'perfeito! qual dia e horário fica melhor pra você?'),
+  retorno: (quando) => (quando && quando.trim()
+    ? `fechado, te chamo ${quando.trim()} então 🙂`
+    : 'fechado, te chamo depois então 🙂'),
 };
 
 /**
@@ -380,6 +415,15 @@ function interpretResponse(response) {
     if (nome === 'agendar_demo') {
       const resumo = String(args.resumo_disponibilidade || '').trim() || 'sem detalhe';
       return { tipo: 'agendar', texto: texto || COMPANION_TEXT.agendar(resumo), resumo };
+    }
+    if (nome === 'criar_demo') {
+      // The responder creates the demo and appends the REAL link; the model's
+      // text is just the lead-in bubble (any URL it wrote is stripped there).
+      return { tipo: 'criar_demo', texto: texto || COMPANION_TEXT.previa };
+    }
+    if (nome === 'agendar_retorno') {
+      const quando = String(args.quando || '').trim();
+      return { tipo: 'agendar_retorno', texto: texto || COMPANION_TEXT.retorno(quando), quando };
     }
     return { tipo: 'handoff', texto, motivo: `tool desconhecida: ${nome}` };
   }

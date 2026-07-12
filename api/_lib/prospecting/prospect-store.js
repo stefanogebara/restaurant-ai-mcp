@@ -301,6 +301,30 @@ async function selectDueFlush(nowIso, limit = 50) {
 }
 
 /**
+ * Leads whose dated callback (#32) is now due (retorno_em <= now) and still in
+ * an active state — the flush cron fires a proactive retomada for these.
+ * @param {string} nowIso
+ * @param {number} [limit=5]
+ */
+async function selectDueRetornos(nowIso, limit = 5) {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('prospect_leads')
+      .select('*')
+      .not('retorno_em', 'is', null)
+      .lte('retorno_em', nowIso)
+      .in('prospect_state', ['aguardando', 'conversando', 'agendando'])
+      .order('retorno_em', { ascending: true })
+      .limit(limit);
+    if (error) { logger.error('selectDueRetornos failed:', error.message); return []; }
+    return data || [];
+  } catch (err) {
+    logger.error('selectDueRetornos exception:', err.message);
+    return [];
+  }
+}
+
+/**
  * Meetings that already happened (plus a grace period) and are STILL
  * 'agendado' → no-show candidates for the sweep. One-shot by construction:
  * processing resets state + reuniao_at, so the row leaves this selection.
@@ -812,6 +836,7 @@ module.exports = {
   claimIntro,
   markIntro,
   selectDueFlush,
+  selectDueRetornos,
   selectNoshowDue,
   loadLastInbound,
   inboundFingerprint,

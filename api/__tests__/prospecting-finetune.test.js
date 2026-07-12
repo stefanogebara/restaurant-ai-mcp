@@ -76,11 +76,15 @@ describe('extractProspectCorpo', () => {
 
 // ============================================================ multipart pacing
 describe('multi-bubble replies', () => {
-  test('splitReplyParts honors blank-line splits up to 3 parts', () => {
-    const texto = 'Oi!\n\nA Seatable atende o WhatsApp do restaurante com IA.\n\nPosso te mostrar em 2 min?';
-    expect(splitReplyParts(texto, { multipart: true })).toHaveLength(3);
-    expect(splitReplyParts(texto, { multipart: false })).toHaveLength(1);
-    // 4+ blocks collapse back into one message (never spam bubbles)
+  test('splitReplyParts honors blank-line splits up to 2 parts', () => {
+    // Cap lowered 3→2 (2026-07): the live data showed 55% of our messages were
+    // rapid-fire bubble volleys — reads as a bot spraying, not a person.
+    const dois = 'Oi! A Seatable atende o WhatsApp do restaurante com IA.\n\nPosso te mostrar em 2 min?';
+    expect(splitReplyParts(dois, { multipart: true })).toHaveLength(2);
+    expect(splitReplyParts(dois, { multipart: false })).toHaveLength(1);
+    // 3+ blocks collapse back into one calm message (never spam bubbles)
+    const tres = 'Oi!\n\nA Seatable atende o WhatsApp com IA.\n\nPosso te mostrar em 2 min?';
+    expect(splitReplyParts(tres, { multipart: true })).toEqual([tres]);
     const four = 'a\n\nb\n\nc\n\nd';
     expect(splitReplyParts(four, { multipart: true })).toEqual([four]);
   });

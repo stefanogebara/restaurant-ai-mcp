@@ -14,7 +14,7 @@ jest.mock('../_lib/secure-logger', () => ({
 const { deveResponder, detectarOptout, descreverAgora, estadoAposAcao } = require('../_lib/prospecting/prospect-state');
 const { mergeFatos, formatarMemoria } = require('../_lib/prospecting/prospect-facts');
 const { extrairNumeroDono, normalizarNumeroBr, extrairEmail, extrairDddBr } = require('../_lib/prospecting/prospect-extract');
-const { dentroDoHorario, proximaAbertura } = require('../_lib/prospecting/prospect-hours');
+const { dentroDoHorario, proximaAbertura, dentroDaJanelaDisparo, computeRetornoAt } = require('../_lib/prospecting/prospect-hours');
 const { pacingDelayMs } = require('../_lib/prospecting/prospect-pacing');
 const { buildSystemPrompt, interpretResponse, historyToMessages } = require('../_lib/prospecting/prospect-agent');
 
@@ -165,11 +165,62 @@ describe('interpretResponse (Anthropic shape)', () => {
   test('registrar_responsavel without number → handoff (anti-invention)', () => {
     expect(interpretResponse(tool('registrar_responsavel', {})).tipo).toBe('handoff');
   });
+  test('agendar_retorno → dated-callback action (quando + non-empty confirmation)', () => {
+    const r = interpretResponse(tool('agendar_retorno', { quando: 'amanhã de tarde' }));
+    expect(r).toMatchObject({ tipo: 'agendar_retorno', quando: 'amanhã de tarde' });
+    expect(r.texto).toBeTruthy(); // companion so the confirmation is never silent
+  });
+  test('criar_demo → criar_demo action; text passes through, else companion (never empty)', () => {
+    // No lead-in text → deterministic companion so the turn is never silent.
+    const bare = interpretResponse(tool('criar_demo', {}));
+    expect(bare.tipo).toBe('criar_demo');
+    expect(bare.texto).toBeTruthy();
+    // Model wrote a lead-in bubble → passed through (responder strips any URL).
+    const withText = {
+      content: [
+        { type: 'text', text: 'consigo montar sim' },
+        { type: 'tool_use', id: 't1', name: 'criar_demo', input: {} },
+      ],
+      stop_reason: 'tool_use',
+    };
+    expect(interpretResponse(withText)).toEqual({ tipo: 'criar_demo', texto: 'consigo montar sim' });
+  });
   test('truncated text-only → nada (never send a half message)', () => {
     expect(interpretResponse({ content: [{ type: 'text', text: 'meia frase' }], stop_reason: 'max_tokens' }).tipo).toBe('nada');
   });
   test('empty content → nada', () => {
     expect(interpretResponse({ content: [], stop_reason: 'end_turn' }).tipo).toBe('nada');
+  });
+});
+
+describe('prospect-demo (prévia helpers)', () => {
+  const { previaLinkInHistory, sectorToType, buildScrapedData } = require('../_lib/prospecting/prospect-demo');
+
+  test('previaLinkInHistory reuses an already-sent prévia link (idempotency, no dup demos)', () => {
+    const found = previaLinkInHistory([
+      { direcao: 'out', corpo: 'oi!' },
+      { direcao: 'in', corpo: 'quero ver' },
+      { direcao: 'out', corpo: 'é essa aqui 👇\nhttps://seatable.one/previa/abc12345-6789?wa=5511' },
+    ]);
+    expect(found).toMatch(/\/previa\/abc12345/);
+    expect(previaLinkInHistory([{ corpo: 'sem link nenhum' }])).toBeNull();
+    expect(previaLinkInHistory(null)).toBeNull();
+  });
+
+  test('sectorToType maps discovery sectors onto the restaurant_type enum', () => {
+    expect(sectorToType('cantina italiana')).toBe('italian');
+    expect(sectorToType('sushi bar')).toBe('japanese'); // japanese wins over bar (checked first)
+    expect(sectorToType('churrascaria premium')).toBe('steakhouse');
+    expect(sectorToType('boteco')).toBe('bar');
+    expect(sectorToType('restaurante')).toBe('casual_dining');
+    expect(sectorToType(null)).toBe('casual_dining');
+  });
+
+  test('buildScrapedData carries the Google fields the prévia hero renders', () => {
+    const sd = buildScrapedData({ name: 'Bar do Zé', rating: 4.6, reviews_count: 142, address: 'R. X', sector: 'bar' });
+    expect(sd).toMatchObject({ name: 'Bar do Zé', rating: 4.6, review_count: 142, address: 'R. X' });
+    // Missing rating collapses to null (hero hides the pill), never NaN/undefined.
+    expect(buildScrapedData({ name: 'X' }).rating).toBeNull();
   });
 });
 
@@ -199,6 +250,36 @@ describe('business hours + pacing', () => {
   test('proximaAbertura lands inside business hours', () => {
     const next = proximaAbertura(Date.parse('2026-06-27T17:00:00Z')); // Sat afternoon
     expect(dentroDoHorario(next)).toBe(true);
+  });
+  test('computeRetornoAt parses pt-BR "quando" into a clamped future BRT slot', () => {
+    const thu10 = Date.parse('2026-06-25T13:00:00Z'); // Thu 10:00 BRT
+    // "amanhã" → Fri 11:00 BRT (14:00 UTC), the default mid-morning hour
+    expect(computeRetornoAt('amanhã', thu10)).toBe('2026-06-26T14:00:00.000Z');
+    // "amanhã de tarde" → Fri 14:00 BRT (17:00 UTC)
+    expect(computeRetornoAt('amanhã de tarde', thu10)).toBe('2026-06-26T17:00:00.000Z');
+    // "segunda" → next Monday 11:00 BRT
+    expect(computeRetornoAt('segunda', thu10)).toBe('2026-06-29T14:00:00.000Z');
+    // explicit hour "às 15h" → tomorrow 15:00 BRT (18:00 UTC)
+    expect(computeRetornoAt('me chama às 15h', thu10)).toBe('2026-06-26T18:00:00.000Z');
+    // unparseable → tomorrow default (never null / never past)
+    expect(computeRetornoAt('sei lá quando', thu10)).toBe('2026-06-26T14:00:00.000Z');
+  });
+  test('computeRetornoAt self-corrects weekend/off-hours into the next valid slot', () => {
+    const fri10 = Date.parse('2026-06-26T13:00:00Z'); // Fri 10:00 BRT
+    const iso = computeRetornoAt('amanhã', fri10); // Sat → must roll to Monday
+    expect(dentroDaJanelaDisparo(Date.parse(iso))).toBe(true);
+    expect(Date.parse(iso)).toBeGreaterThan(fri10);
+  });
+  test('dentroDaJanelaDisparo is TIGHTER than the reply window (10-17 weekday)', () => {
+    // Thu 14:00 BRT — inside both reply (9-19) and dispatch (10-17)
+    expect(dentroDaJanelaDisparo(Date.parse('2026-06-25T17:00:00Z'))).toBe(true);
+    // Thu 01:24 BRT (the study's "intros à 01:24") — outside dispatch
+    expect(dentroDaJanelaDisparo(Date.parse('2026-06-25T04:24:00Z'))).toBe(false);
+    // Thu 18:00 BRT — INSIDE reply window but OUTSIDE dispatch (dinner approaching)
+    expect(dentroDoHorario(Date.parse('2026-06-25T21:00:00Z'))).toBe(true);
+    expect(dentroDaJanelaDisparo(Date.parse('2026-06-25T21:00:00Z'))).toBe(false);
+    // Sat 14:00 BRT — weekend, no cold dispatch
+    expect(dentroDaJanelaDisparo(Date.parse('2026-06-27T17:00:00Z'))).toBe(false);
   });
   test('pacingDelayMs: 0 on dryRun, bounded, deterministic with rand', () => {
     expect(pacingDelayMs('hello', { dryRun: true })).toBe(0);

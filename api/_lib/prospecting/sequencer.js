@@ -31,6 +31,7 @@ const {
   isOptedOut, selectIntroCandidates, claimIntro, markIntro, storeMessage,
   listTemplates, patchLead, selectDueTouches, selectDueReengages, loadLastMessage,
 } = require('./prospect-store');
+const { dentroDaJanelaDisparo } = require('./prospect-hours');
 
 const logger = createSecureLogger('ProspectSequencer');
 
@@ -76,10 +77,18 @@ async function pickTemplate(touchNumber) {
  * @param {{limit?: number}} [opts]
  * @returns {Promise<{candidates:number, sent:number, blocked:number, skipped:number, failed:number, dryRun:boolean, capHit:boolean}>}
  */
-async function dispatchIntros({ limit = 20, territorio = null } = {}) {
+async function dispatchIntros({ limit = 20, territorio = null, force = false } = {}) {
   if (!(await outboundEnabled())) {
     logger.info('dispatchIntros skipped — outbound disabled (kill switch / breaker)');
     return { candidates: 0, sent: 0, blocked: 0, skipped: 0, failed: 0, dryRun: isDryRun(), capHit: false, agentDisabled: true };
+  }
+
+  // Send window (conversion study #1 finding, 25x): a cold intro at 01:24 or in
+  // the dinner rush reads as a bot and burns the number. Refuse outside the
+  // dispatch window unless the operator explicitly forces it.
+  if (!force && process.env.PROSPECTING_IGNORE_HOURS !== 'true' && !dentroDaJanelaDisparo(Date.now())) {
+    logger.info('dispatchIntros skipped — outside dispatch window (default 10-17 BRT, weekdays)');
+    return { candidates: 0, sent: 0, blocked: 0, skipped: 0, failed: 0, dryRun: isDryRun(), capHit: false, outsideWindow: true };
   }
 
   const dryRun = isDryRun();
@@ -157,6 +166,10 @@ async function dispatchFollowups({ limit = 10, nowMs = Date.now() } = {}) {
   const summary = { due: 0, sent: 0, blocked: 0, skipped: 0, failed: 0, capHit: false };
   if (isDryRun()) return { ...summary, dryRun: true };
   if (!(await outboundEnabled())) return { ...summary, agentDisabled: true };
+  // Same dispatch window as intros — template follow-ups are cold sends too.
+  if (process.env.PROSPECTING_IGNORE_HOURS !== 'true' && !dentroDaJanelaDisparo(nowMs)) {
+    return { ...summary, outsideWindow: true };
+  }
 
   const due = await selectDueTouches(new Date(nowMs).toISOString(), limit);
   summary.due = due.length;

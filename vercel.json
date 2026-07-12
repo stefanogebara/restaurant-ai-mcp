@@ -61,6 +61,10 @@
       "destination": "/api/prospect-discovery-worker.js"
     },
     {
+      "source": "/api/previa-event",
+      "destination": "/api/previa-event.js"
+    },
+    {
       "source": "/sitemap.xml",
       "destination": "/api/sitemap"
     },
