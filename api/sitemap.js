@@ -125,6 +125,26 @@ module.exports = async (req, res) => {
     )
     .join('\n');
 
+  // Blog — repo-based articles (api/_content/articles); publishing an
+  // article = merging it, so everything in ARTICLES is public by definition
+  const { ARTICLES } = require('./_content/articles');
+  const blogEntries = [
+    `  <url>
+    <loc>${BASE_URL}/blog</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>`,
+    ...ARTICLES.map(
+      (a) => `  <url>
+    <loc>${BASE_URL}/blog/${a.slug}</loc>
+    <lastmod>${a.updatedAt || a.publishedAt}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>`,
+    ),
+  ].join('\n');
+
   // Programmatic SEO pages (/para/:slug) — cuisine+city landing pages
   const programmaticSeoSlugs = [
     'pizzaria-sao-paulo', 'japonesa-sao-paulo', 'italiana-sao-paulo',
@@ -156,6 +176,7 @@ ${seoEntries}
 ${vsEntries}
 ${toolEntries}
 ${matrixEntries}
+${blogEntries}
 ${programmaticEntries}
 </urlset>`;
 

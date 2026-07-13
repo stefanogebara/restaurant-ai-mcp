@@ -112,8 +112,22 @@ Dois sub-motores, mesma fundação server-rendered:
       estático), rewrite no vercel.json, sitemap emite matriz, warm cron
       aquece a matriz (~40/noite, cheio em ~5 noites). 27 testes verdes.
       Legado `/restaurants` intacto (self-cache on visit).
-- [ ] **Fase B — Blog editorial**: tabela `content_articles`, `/blog`,
-      renderer server-side, pipeline manager→worker→inspector, gate de aprovação.
+- [x] **Fase B fatia 1 — Blog editorial servindo + 5 artigos** (2026-07-12):
+      Conteúdo **no repo** (`api/_content/articles/`, dir underscore = não é
+      função) em vez de tabela DB — o diff do PR é a revisão editorial e o
+      **merge é o ato humano de publicação** (draft = branch não mergeada;
+      nada auto-publica). Handlers `/blog` + `/blog/:slug` server-rendered
+      PT-BR com Article/ItemList/Breadcrumb JSON-LD; sitemap; CSS de artigo
+      no shell. 5 artigos "papo de dono": no-show (com /calculadora), WhatsApp,
+      sistema com IA, comissão vs fixo, e o âncora com dado proprietário
+      (4.678 restaurantes SP — números conferidos na base em 2026-07-12).
+      Teste de integridade = inspector automatizado (campos, slugs, XSS,
+      links internos resolvem, metaDescription ≤170).
+- [ ] **Fase B fatia 2 — Pipeline de geração** (manager→worker→inspector):
+      Fable escreve brief → Sonnet redige → Fable-fresh audita contra rubrica
+      → abre PR draft. BLOQUEADO por credenciais (OpenRouter sem créditos +
+      ANTHROPIC_API_KEY revogada — incidente Olímpia 401). Quando o usuário
+      repor créditos, o pipeline vira script que gera artigo novo por PR.
 - [ ] **Fase C — Medição**: Search Console, o que ranqueia, iterar tópicos.
 
 Depois: passo 2 (Olímpia disparos/calibração) e passo 3 (OS agêntico) do vision.

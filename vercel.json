@@ -89,6 +89,14 @@
       "destination": "/api/seo/reservas?city=:city&cuisine=:cuisine"
     },
     {
+      "source": "/blog",
+      "destination": "/api/seo/blog-index"
+    },
+    {
+      "source": "/blog/:slug",
+      "destination": "/api/seo/artigo?slug=:slug"
+    },
+    {
       "source": "/vs/:competitor",
       "destination": "/api/seo/vs?competitor=:competitor"
     },
