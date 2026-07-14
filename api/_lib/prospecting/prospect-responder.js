@@ -588,9 +588,12 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
         break;
 
       case 'registrar_responsavel': {
-        // Capture the referred contact + hand to a human for the intro dispatch
-        // (auto intro-to-owner is a deliberate later upgrade). The referrer is
-        // NEVER left hanging: LLM text if present, else the standard ack.
+        // Capture the referred contact. The referrer is NEVER left hanging: LLM
+        // text if present, else the standard ack. The lead stays in 'handoff'
+        // for cockpit visibility, but the referral itself now flows: it becomes
+        // its OWN lead (source='indicacao') and gets the intro template
+        // automatically — the first campaign captured 5 owner numbers and every
+        // one of them died inside handoff_motivo waiting for a human.
         patch.prospect_state = 'handoff';
         patch.handoff_motivo = `responsável indicado: ${acao.numero}${acao.nome ? ` (${acao.nome})` : ''}`;
         patch.conversa_fatos = mergeFatos(patch.conversa_fatos || lead.conversa_fatos, {
@@ -602,6 +605,32 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
           : 'Perfeito, obrigada pela indicação! Já entro em contato com a pessoa então. 😊');
         const r = await sendReply(lead.id, from, ack, pace);
         sent = r.sentAny; dryRun = r.dryRun;
+
+        // Referral → lead + auto-intro (best-effort: a failure here never
+        // breaks the ack; the flush-cron referral pass retries the intro, and
+        // the cockpit timeline shows exactly what happened).
+        try {
+          const { createReferralLead } = require('./prospect-store');
+          const ref = await createReferralLead(lead, acao.numero, acao.nome || null);
+          if (ref.ok && ref.created) {
+            await recordEvent(lead.id, `📇 indicação virou lead (${acao.numero})`);
+            const { dispatchReferralIntros } = require('./sequencer');
+            const d = await dispatchReferralIntros({ leadId: ref.leadId, limit: 1 });
+            if (d && d.sent > 0) {
+              await recordEvent(lead.id, '📨 intro enviada ao responsável indicado');
+            } else if (d && (d.outsideWindow || d.capHit || d.dryRun || d.agentDisabled)) {
+              await recordEvent(lead.id, '⏳ intro ao indicado aguarda janela/cap — flush retenta');
+            }
+          } else if (ref.reason === 'exists') {
+            await recordEvent(lead.id, '📇 responsável indicado já é lead — sem duplicata');
+          } else if (ref.reason === 'optedout') {
+            await recordEvent(lead.id, '🚫 responsável indicado está em opt-out — não será contatado');
+          } else if (ref.reason === 'numero_invalido') {
+            await recordEvent(lead.id, '⚠ número indicado não validou como BR móvel — tratar manualmente');
+          }
+        } catch (err) {
+          logger.warn(`referral auto-lead failed lead=${lead.id}: ${err.message}`);
+        }
         break;
       }
 

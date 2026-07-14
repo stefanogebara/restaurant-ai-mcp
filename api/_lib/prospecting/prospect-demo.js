@@ -53,6 +53,56 @@ function sectorToType(sector) {
 // storage-free dedup key (queried via prospect_messages, no migration).
 const PREVIA_REACAO_MARK = '🤖 reagiu à abertura da prévia';
 
+/**
+ * One Place Details (v1) call for the personal "wow" assets the discovery data
+ * doesn't carry: the lead's REAL photo + REAL review quotes. These are what
+ * make the prévia read as "é o MEU restaurante" instead of a template —
+ * without them the page falls back to a generic gradient and no quote.
+ * Best-effort with a hard timeout: the prévia must never fail because Google
+ * hiccuped. Returns {} on any failure. Shapes mirror scrape-restaurant.js
+ * (top_reviews / photo_ref), which is what PreviaPage already renders.
+ */
+async function fetchPlaceAssets(placeId) {
+  const key = process.env.GOOGLE_PLACES_API_KEY;
+  if (!key || !placeId || typeof placeId !== 'string') return {};
+  try {
+    const resp = await fetch(
+      `https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}`,
+      {
+        headers: {
+          'X-Goog-Api-Key': key,
+          'X-Goog-FieldMask': 'photos,reviews',
+        },
+        signal: AbortSignal.timeout(5000),
+      },
+    );
+    if (!resp.ok) {
+      logger.warn(`fetchPlaceAssets: Place Details ${resp.status} — prévia segue sem foto/review`);
+      return {};
+    }
+    const place = await resp.json();
+    const photoRef = place.photos && place.photos[0] && typeof place.photos[0].name === 'string'
+      ? place.photos[0].name
+      : null;
+    const topReviews = (Array.isArray(place.reviews) ? place.reviews : [])
+      .filter((r) => r && r.text && r.text.text && (typeof r.rating !== 'number' || r.rating >= 4))
+      .slice(0, 3)
+      .map((r) => ({
+        text: String(r.text.text).slice(0, 260),
+        rating: typeof r.rating === 'number' ? r.rating : null,
+        author: (r.authorAttribution && r.authorAttribution.displayName) || 'um cliente',
+        time: r.relativePublishTimeDescription || '',
+      }));
+    const out = {};
+    if (photoRef) out.photo_ref = photoRef;
+    if (topReviews.length) out.top_reviews = topReviews;
+    return out;
+  } catch (err) {
+    logger.warn('fetchPlaceAssets failed (prévia segue sem foto/review):', err.message);
+    return {};
+  }
+}
+
 /** Build the /previa scraped_data envelope from a discovered lead row. */
 function buildScrapedData(lead) {
   return {
@@ -176,7 +226,13 @@ async function criarPreviaDemo(leadId) {
       demo_expires_at: expires,
       demo_contact_email: `previa+${String(leadId).slice(0, 8)}@seatable.one`,
       demo_contact_name: 'Prévia de prospecção',
-      scraped_data: buildScrapedData(lead),
+      // Base envelope from discovery data + the Place Details assets (real
+      // photo + real reviews) that make the page personal. Assets are
+      // best-effort: {} on any Google failure, page falls back gracefully.
+      scraped_data: {
+        ...buildScrapedData(lead),
+        ...(await fetchPlaceAssets(lead.google_place_id)),
+      },
     };
     if (lead.website) payload.website = lead.website;
 
@@ -195,5 +251,5 @@ async function criarPreviaDemo(leadId) {
 
 module.exports = {
   criarPreviaDemo, previaLinkInHistory, previaUrl, buildScrapedData, sectorToType,
-  mapTokenToLead, previaJaReagida, PREVIA_REACAO_MARK,
+  fetchPlaceAssets, mapTokenToLead, previaJaReagida, PREVIA_REACAO_MARK,
 };

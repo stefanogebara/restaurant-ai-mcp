@@ -240,6 +240,91 @@ async function selectIntroCandidates(limit = 20, territorio = null) {
 }
 
 /**
+ * Turn a referred owner/decision-maker number into its own prospect lead
+ * (source='indicacao'), inheriting the restaurant's discovery context. A
+ * referral is the warmest lead the funnel produces — before this existed the
+ * captured numbers died inside handoff_motivo (5 of 5 in the first campaign).
+ *
+ * Dedup: an existing lead on the same line (9th-digit aware) short-circuits;
+ * the suppression list is honored BEFORE any row is created. Never throws.
+ *
+ * @param {object} fromLead - the referring restaurant's lead row
+ * @param {string} numeroRaw - the referred number as it appeared (any format)
+ * @param {string|null} nome - referred person's name, when given
+ * @returns {Promise<{ok:boolean, created?:boolean, leadId?:string, reason?:string}>}
+ */
+async function createReferralLead(fromLead, numeroRaw, nome) {
+  try {
+    if (!fromLead || !fromLead.id || !numeroRaw) return { ok: false, reason: 'args' };
+    const { escolherNumeroBr, extrairDddBr } = require('./prospect-extract');
+    const numero = escolherNumeroBr(numeroRaw, extrairDddBr(fromLead.whatsapp_phone));
+    if (!numero) return { ok: false, reason: 'numero_invalido' };
+    if (await isOptedOut(numero)) return { ok: false, reason: 'optedout' };
+    const existing = await findLeadByPhone(numero);
+    if (existing) return { ok: false, reason: 'exists', leadId: existing.id };
+
+    const payload = {
+      name: fromLead.name,
+      sector: fromLead.sector || null,
+      address: fromLead.address || null,
+      neighborhood: fromLead.neighborhood || null,
+      city: fromLead.city || null,
+      uf: fromLead.uf || null,
+      website: fromLead.website || null,
+      rating: fromLead.rating ?? null,
+      reviews_count: fromLead.reviews_count ?? null,
+      lead_score: fromLead.lead_score ?? null,
+      // google_place_id is UNIQUE — the referral must NOT inherit it.
+      source: 'indicacao',
+      owner_name: nome || null,
+      whatsapp_phone: numero,
+      whatsapp_status: 'found',
+      conversa_fatos: {
+        ...(nome ? { nome_responsavel: nome } : {}),
+        notas: [`Contato indicado pela equipe do ${fromLead.name} (lead ${fromLead.id})`],
+      },
+    };
+    const { data, error } = await supabaseAdmin
+      .from('prospect_leads')
+      .insert(payload)
+      .select('id')
+      .single();
+    if (error) {
+      logger.error('createReferralLead insert failed:', error.message);
+      return { ok: false, reason: 'insert' };
+    }
+    logger.info(`referral lead created ${data.id} (from ${fromLead.id})`);
+    return { ok: true, created: true, leadId: data.id };
+  } catch (err) {
+    logger.error('createReferralLead exception:', err.message);
+    return { ok: false, reason: 'exception' };
+  }
+}
+
+/**
+ * Referral leads (source='indicacao') still waiting for their intro. Optional
+ * leadId narrows to one specific referral (the just-registered one).
+ */
+async function selectReferralIntroCandidates(limit = 3, leadId = null) {
+  try {
+    let q = supabaseAdmin
+      .from('prospect_leads')
+      .select('id, name, owner_name, whatsapp_phone, whatsapp_status')
+      .eq('source', 'indicacao')
+      .eq('prospect_state', 'aguardando')
+      .is('whatsapp_sent_at', null)
+      .not('whatsapp_phone', 'is', null);
+    if (leadId) q = q.eq('id', leadId);
+    const { data, error } = await q.order('created_at', { ascending: true }).limit(limit);
+    if (error) { logger.error('selectReferralIntroCandidates failed:', error.message); return []; }
+    return data || [];
+  } catch (err) {
+    logger.error('selectReferralIntroCandidates exception:', err.message);
+    return [];
+  }
+}
+
+/**
  * Atomically claim a lead for an intro send: set whatsapp_sent_at only if it's
  * still null. Returns true if THIS caller claimed it (prevents double-send across
  * concurrent dispatch runs).
@@ -626,10 +711,16 @@ async function selectDueTouches(nowIso, limit = 10) {
  * long enough for the 24h service window to close (default D+3 of silence),
  * still in an active conversation (not booked/paused/optout/snoozed).
  *
+ * 'agendando' is included on purpose: a lead who went silent MID-SCHEDULING is
+ * the hottest re-engage there is — the first live campaign lost its only two
+ * scheduling-stage leads to a 'conversando'-only filter here.
+ *
  * "Already re-engaged this silence" is enforced by the caller via the message
  * log (last outbound being a template = this silence was already touched) —
  * no schema change needed, and a new inbound naturally re-arms the cycle.
  */
+const REENGAGE_STATES = ['conversando', 'agendando'];
+
 async function selectDueReengages(nowIso, silenceMs, limit = 5) {
   try {
     const cutoff = new Date(new Date(nowIso).getTime() - silenceMs).toISOString();
@@ -638,7 +729,7 @@ async function selectDueReengages(nowIso, silenceMs, limit = 5) {
       .select('*')
       .not('last_in_at', 'is', null)
       .lte('last_in_at', cutoff)
-      .eq('prospect_state', 'conversando')
+      .in('prospect_state', REENGAGE_STATES)
       .is('reuniao_at', null)
       .or(`snoozed_until.is.null,snoozed_until.lt.${nowIso}`)
       .order('last_in_at', { ascending: false })
@@ -833,6 +924,8 @@ module.exports = {
   phoneMatchCandidates,
   upsertDiscoveredLeads,
   selectIntroCandidates,
+  createReferralLead,
+  selectReferralIntroCandidates,
   claimIntro,
   markIntro,
   selectDueFlush,
@@ -858,6 +951,7 @@ module.exports = {
   deleteCanned,
   selectDueTouches,
   selectDueReengages,
+  REENGAGE_STATES,
   loadLastMessage,
   listProspectLeads,
   getProspectLeadWithMessages,

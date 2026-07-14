@@ -108,6 +108,16 @@ module.exports = async (req, res) => {
       logger.error('reengages failed:', err.message);
     }
 
+    // Referral intros: referred owners (source='indicacao') whose intro
+    // couldn't fire at registration time (outside window / cap) get it here.
+    let referrals = null;
+    try {
+      const { dispatchReferralIntros } = require('../_lib/prospecting/sequencer');
+      referrals = await dispatchReferralIntros({ limit: 3 });
+    } catch (err) {
+      logger.error('referral intros failed:', err.message);
+    }
+
     // No-show sweep: meetings >2h past their slot and STILL 'agendado' are
     // assumed no-shows — cancel the event, reopen the scheduling, send the
     // gentle "não te encontrei" message. Piggybacks this cron (no new
@@ -151,10 +161,11 @@ module.exports = async (req, res) => {
       resumed, errors, retornos,
       followups_sent: followups ? followups.sent : 0,
       reengages_sent: reengages ? reengages.sent : 0,
+      referrals_sent: referrals ? referrals.sent : 0,
       noshows_processed: noshows ? noshows.processed || 0 : 0,
       rekicked,
     });
-    return res.status(200).json({ success: true, due: due.length, resumed, retornos, errors, followups, reengages, noshows, rekicked });
+    return res.status(200).json({ success: true, due: due.length, resumed, retornos, errors, followups, reengages, referrals, noshows, rekicked });
   } catch (err) {
     logger.error('flush fatal:', err.message);
     await logCronRun('prospect-flush', { resumed, errors: errors + 1 });

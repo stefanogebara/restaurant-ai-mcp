@@ -30,6 +30,7 @@ const { consumeSendSlot } = require('./prospect-warmup');
 const {
   isOptedOut, selectIntroCandidates, claimIntro, markIntro, storeMessage,
   listTemplates, patchLead, selectDueTouches, selectDueReengages, loadLastMessage,
+  REENGAGE_STATES, selectReferralIntroCandidates,
 } = require('./prospect-store');
 const { dentroDaJanelaDisparo } = require('./prospect-hours');
 
@@ -158,6 +159,78 @@ async function dispatchIntros({ limit = 20, territorio = null, force = false } =
 }
 
 /**
+ * Intro a REFERRED owner/decision-maker (source='indicacao' leads created by
+ * registrar_responsavel). Same compliance rails as any cold intro — kill
+ * switches, dispatch window, warm-up cap, suppression, template-only — but its
+ * own selector, so the 4k+ discovery pool never mass-fires from a cron: only
+ * referrals flow here. Called inline right after registration (best case:
+ * intro within the minute) and from the flush cron (catches the ones
+ * registered outside the window).
+ * @param {{limit?: number, leadId?: string|null, nowMs?: number}} [opts]
+ */
+async function dispatchReferralIntros({ limit = 3, leadId = null, nowMs = Date.now() } = {}) {
+  const summary = { candidates: 0, sent: 0, blocked: 0, skipped: 0, failed: 0, capHit: false };
+  if (isDryRun()) return { ...summary, dryRun: true };
+  if (!(await outboundEnabled())) return { ...summary, agentDisabled: true };
+  if (process.env.PROSPECTING_IGNORE_HOURS !== 'true' && !dentroDaJanelaDisparo(nowMs)) {
+    return { ...summary, outsideWindow: true };
+  }
+
+  const candidates = await selectReferralIntroCandidates(limit, leadId);
+  summary.candidates = candidates.length;
+  if (candidates.length === 0) return summary;
+
+  for (const lead of candidates) {
+    try {
+      if (await isOptedOut(lead.whatsapp_phone)) { summary.skipped++; continue; }
+
+      const tpl = await pickTemplate(1);
+      if (!tpl) {
+        summary.skipped++;
+        logger.warn(`no active intro template — referral intro halted lead=${lead.id}`);
+        continue;
+      }
+
+      const slot = await consumeSendSlot();
+      if (!slot.allowed) { summary.blocked++; summary.capHit = true; break; }
+
+      const claimed = await claimIntro(lead.id);
+      if (!claimed) { summary.skipped++; continue; }
+
+      // {{1}} is the restaurant name — for a referral that's still exactly right.
+      const res = await sendTemplateMessage(
+        lead.whatsapp_phone, tpl.meta_template_name, tpl.template_lang, [lead.name || ''],
+        { phoneNumberId: getProspectingPhoneNumberId() },
+      );
+      if (res.success) {
+        await markIntro(lead.id, { status: 'sent', wamid: res.messageId });
+        await patchLead(lead.id, {
+          intro_variant: tpl.variant_label,
+          touch_count: 1,
+          next_touch_at: new Date(nowMs + TOUCH2_DELAY_MS).toISOString(),
+        });
+        await storeMessage({
+          leadId: lead.id, direcao: 'out', wamid: res.messageId || null,
+          tipo: 'template', corpo: `[template:${tpl.meta_template_name}]`,
+        });
+        summary.sent++;
+        logger.info(`referral intro sent lead=${lead.id}`);
+      } else {
+        await markIntro(lead.id, { status: 'failed' });
+        summary.failed++;
+        logger.error(`referral intro failed lead=${lead.id}: ${res.error}`);
+      }
+    } catch (err) {
+      summary.failed++;
+      logger.error(`referral intro exception lead=${lead.id}: ${err.message}`);
+    }
+  }
+
+  logger.info('dispatchReferralIntros done', summary);
+  return summary;
+}
+
+/**
  * Dispatch due follow-up touches (2 = bump, 3 = breakup) to never-repliers.
  * Counts against the SAME warm-up daily cap as intros. Runs from the flush cron.
  * @param {{limit?: number, nowMs?: number}} [opts]
@@ -272,7 +345,7 @@ async function dispatchReengages({ limit = 5, nowMs = Date.now() } = {}) {
       const { data: claimed } = await supabaseAdmin.from('prospect_leads')
         .update({ snoozed_until: claimUntil })
         .eq('id', lead.id)
-        .eq('prospect_state', 'conversando')
+        .in('prospect_state', REENGAGE_STATES)
         .or(`snoozed_until.is.null,snoozed_until.lt.${nowIso}`)
         .select('id');
       if (!Array.isArray(claimed) || claimed.length === 0) { summary.skipped++; continue; }
@@ -306,6 +379,6 @@ async function dispatchReengages({ limit = 5, nowMs = Date.now() } = {}) {
 }
 
 module.exports = {
-  dispatchIntros, dispatchFollowups, dispatchReengages, isDryRun,
+  dispatchIntros, dispatchFollowups, dispatchReengages, dispatchReferralIntros, isDryRun,
   TOUCH2_DELAY_MS, TOUCH3_DELAY_MS, REENGAGE_SILENCE_MS, REENGAGE_TOUCH,
 };

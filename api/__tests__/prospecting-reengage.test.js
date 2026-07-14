@@ -74,10 +74,13 @@ describe('dispatchReengages — replied-then-silent leads past the 24h window', 
         : [])),
       claimIntro: async () => true, markIntro: async () => ({}), patchLead: async () => ({}),
       storeMessage,
+      REENGAGE_STATES: ['conversando', 'agendando'],
+      selectReferralIntroCandidates: async () => [],
     }));
     // The snooze-claim conditional update chain.
     const updateChain = {
       update: jest.fn(() => updateChain), eq: jest.fn(() => updateChain),
+      in: jest.fn(() => updateChain),
       or: jest.fn(() => updateChain),
       select: jest.fn(async () => ({ data: claimRows !== undefined ? claimRows : [{ id: lead.id }] })),
     };
@@ -89,7 +92,7 @@ describe('dispatchReengages — replied-then-silent leads past the 24h window', 
   afterEach(() => { jest.resetModules(); delete process.env.PROSPECTING_DRY_RUN; });
 
   test('sends the resgate template and logs it as a template message', async () => {
-    const { sendTemplateMessage, storeMessage } = mockDeps({});
+    const { sendTemplateMessage, storeMessage, updateChain } = mockDeps({});
     const { dispatchReengages } = require('../_lib/prospecting/sequencer');
     const s = await dispatchReengages({ limit: 5 });
     expect(s.sent).toBe(1);
@@ -98,6 +101,16 @@ describe('dispatchReengages — replied-then-silent leads past the 24h window', 
     expect(storeMessage).toHaveBeenCalledWith(expect.objectContaining({
       leadId: 'L9', tipo: 'template', corpo: '[template:olimpia_resgate]',
     }));
+    // The claim must cover BOTH re-engageable states — a 'conversando'-only
+    // claim silently strands agendando leads (the first campaign lost its only
+    // two scheduling-stage leads to exactly this).
+    expect(updateChain.in).toHaveBeenCalledWith('prospect_state', ['conversando', 'agendando']);
+  });
+
+  test('REENGAGE_STATES (real store) covers conversando AND agendando', () => {
+    jest.doMock('../_lib/supabase', () => ({ supabaseAdmin: { from: jest.fn() } }));
+    const { REENGAGE_STATES } = require('../_lib/prospecting/prospect-store');
+    expect(REENGAGE_STATES).toEqual(['conversando', 'agendando']);
   });
 
   test('no active touch-4 template → clean no-op with noTemplate flag', async () => {
