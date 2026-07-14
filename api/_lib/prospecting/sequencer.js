@@ -30,7 +30,7 @@ const { consumeSendSlot } = require('./prospect-warmup');
 const {
   isOptedOut, selectIntroCandidates, claimIntro, markIntro, storeMessage,
   listTemplates, patchLead, selectDueTouches, selectDueReengages, loadLastMessage,
-  REENGAGE_STATES, selectReferralIntroCandidates,
+  selectReferralIntroCandidates,
 } = require('./prospect-store');
 const { dentroDaJanelaDisparo } = require('./prospect-hours');
 
@@ -349,15 +349,21 @@ async function dispatchReengages({ limit = 5, nowMs = Date.now() } = {}) {
 
       // Anti-race claim: a 10-min conditional snooze. Semantics match ("agent
       // holds off on this lead"), it self-expires, and a concurrent run loses
-      // the .or() condition. Selector already excludes future-snoozed leads.
-      const claimUntil = new Date(nowMs + 10 * 60 * 1000).toISOString();
-      const { data: claimed } = await supabaseAdmin.from('prospect_leads')
-        .update({ snoozed_until: claimUntil })
-        .eq('id', lead.id)
-        .in('prospect_state', REENGAGE_STATES)
-        .or(`snoozed_until.is.null,snoozed_until.lt.${nowIso}`)
-        .select('id');
-      if (!Array.isArray(claimed) || claimed.length === 0) { summary.skipped++; continue; }
+      // the condition. Via RPC because this PostgREST 42703s UPDATE + or=
+      // (same bug that broke claimInbound) — the old UPDATE claim NEVER
+      // succeeded, which is why zero resgates were dispatched before
+      // 2026-07-14. The RPC's state list mirrors REENGAGE_STATES.
+      const { data: claimed, error: claimErr } = await supabaseAdmin.rpc('claim_prospect_reengage', {
+        p_lead_id: lead.id,
+        p_until: new Date(nowMs + 10 * 60 * 1000).toISOString(),
+        p_now: nowIso,
+      });
+      if (claimErr) {
+        summary.failed++;
+        logger.error(`re-engage claim failed lead=${lead.id}: ${claimErr.message}`);
+        continue;
+      }
+      if (claimed !== true) { summary.skipped++; continue; }
 
       const slot = await consumeSendSlot();
       if (!slot.allowed) { summary.blocked++; summary.capHit = true; break; }

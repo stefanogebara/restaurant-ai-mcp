@@ -497,21 +497,22 @@ async function inboundFingerprint(leadId) {
  */
 async function claimInbound(leadId, wamid) {
   if (!leadId || !wamid) return true;
-  // PostgREST .or() interpolation: commas/parens would break the filter syntax.
-  // Meta wamids are base64-ish and never contain them, but guard anyway.
-  if (/[(),]/.test(wamid)) return true;
   try {
-    const { data, error } = await supabaseAdmin
-      .from('prospect_leads')
-      .update({ last_in_wamid: wamid })
-      .eq('id', leadId)
-      .or(`last_in_wamid.is.null,last_in_wamid.neq.${wamid}`)
-      .select('id');
+    // RPC instead of UPDATE + .or(): this project's PostgREST 42703s any
+    // UPDATE carrying an or= filter ("column prospect_leads.last_in_wamid
+    // does not exist" — while the column exists and the same or= works on
+    // GET). The claim failed on EVERY inbound Jul 3-13 and degrade-open
+    // masked it. claim_prospect_inbound does the same conditional update in
+    // SQL; returns true when THIS caller claimed, null otherwise.
+    const { data, error } = await supabaseAdmin.rpc('claim_prospect_inbound', {
+      p_lead_id: leadId,
+      p_wamid: wamid,
+    });
     if (error) {
       logger.error('claimInbound failed:', error.message);
       return true;
     }
-    return Array.isArray(data) && data.length === 1;
+    return data === true;
   } catch (err) {
     logger.error('claimInbound exception:', err.message);
     return true;

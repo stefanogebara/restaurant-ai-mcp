@@ -77,22 +77,21 @@ describe('dispatchReengages — replied-then-silent leads past the 24h window', 
       REENGAGE_STATES: ['conversando', 'agendando'],
       selectReferralIntroCandidates: async () => [],
     }));
-    // The snooze-claim conditional update chain.
-    const updateChain = {
-      update: jest.fn(() => updateChain), eq: jest.fn(() => updateChain),
-      in: jest.fn(() => updateChain),
-      or: jest.fn(() => updateChain),
-      select: jest.fn(async () => ({ data: claimRows !== undefined ? claimRows : [{ id: lead.id }] })),
-    };
-    jest.doMock('../_lib/supabase', () => ({ supabaseAdmin: { from: jest.fn(() => updateChain) } }));
-    return { sendTemplateMessage, storeMessage, updateChain };
+    // The snooze-claim RPC (claim_prospect_reengage): true = claimed,
+    // null = lost the race / state changed.
+    const rpc = jest.fn(async () => ({
+      data: claimRows !== undefined ? (claimRows.length > 0 ? true : null) : true,
+      error: null,
+    }));
+    jest.doMock('../_lib/supabase', () => ({ supabaseAdmin: { from: jest.fn(), rpc } }));
+    return { sendTemplateMessage, storeMessage, rpc };
   }
 
   beforeEach(() => { jest.resetModules(); process.env.PROSPECTING_DRY_RUN = 'false'; });
   afterEach(() => { jest.resetModules(); delete process.env.PROSPECTING_DRY_RUN; });
 
   test('sends the resgate template and logs it as a template message', async () => {
-    const { sendTemplateMessage, storeMessage, updateChain } = mockDeps({});
+    const { sendTemplateMessage, storeMessage, rpc } = mockDeps({});
     const { dispatchReengages } = require('../_lib/prospecting/sequencer');
     const s = await dispatchReengages({ limit: 5 });
     expect(s.sent).toBe(1);
@@ -101,10 +100,11 @@ describe('dispatchReengages — replied-then-silent leads past the 24h window', 
     expect(storeMessage).toHaveBeenCalledWith(expect.objectContaining({
       leadId: 'L9', tipo: 'template', corpo: '[template:olimpia_resgate]',
     }));
-    // The claim must cover BOTH re-engageable states — a 'conversando'-only
-    // claim silently strands agendando leads (the first campaign lost its only
-    // two scheduling-stage leads to exactly this).
-    expect(updateChain.in).toHaveBeenCalledWith('prospect_state', ['conversando', 'agendando']);
+    // The claim goes through the RPC — the old UPDATE + or= claim 42703'd on
+    // this project's PostgREST and NEVER succeeded (zero resgates ever sent).
+    expect(rpc).toHaveBeenCalledWith('claim_prospect_reengage', expect.objectContaining({
+      p_lead_id: 'L9',
+    }));
   });
 
   test('REENGAGE_STATES (real store) covers conversando AND agendando', () => {
@@ -164,5 +164,44 @@ describe('dispatchReengages — replied-then-silent leads past the 24h window', 
     const s = await dispatchReengages({ limit: 5 });
     expect(s.dryRun).toBe(true);
     expect(sendTemplateMessage).not.toHaveBeenCalled();
+  });
+});
+
+// ============================================================ claimInbound RPC
+// Both atomic claims moved to RPCs because this project's PostgREST 42703s any
+// UPDATE carrying an or= filter (claimInbound failed on EVERY inbound Jul 3-13,
+// masked by degrade-open). These pin the RPC contract.
+describe('claimInbound — per-inbound claim via claim_prospect_inbound RPC', () => {
+  function mockRpc(result) {
+    const rpc = jest.fn(async () => result);
+    jest.doMock('../_lib/supabase', () => ({ supabaseAdmin: { from: jest.fn(), rpc } }));
+    return rpc;
+  }
+
+  beforeEach(() => {
+    jest.resetModules();
+    // The dispatchReengages block doMocks the whole store — undo it here so
+    // this block exercises the REAL claimInbound.
+    jest.dontMock('../_lib/prospecting/prospect-store');
+  });
+  afterEach(() => jest.resetModules());
+
+  test('rpc true → this caller owns the reply', async () => {
+    const rpc = mockRpc({ data: true, error: null });
+    const { claimInbound } = require('../_lib/prospecting/prospect-store');
+    await expect(claimInbound('L1', 'wamid.X==')).resolves.toBe(true);
+    expect(rpc).toHaveBeenCalledWith('claim_prospect_inbound', { p_lead_id: 'L1', p_wamid: 'wamid.X==' });
+  });
+
+  test('rpc null (same wamid already claimed) → false, the loser skips', async () => {
+    mockRpc({ data: null, error: null });
+    const { claimInbound } = require('../_lib/prospecting/prospect-store');
+    await expect(claimInbound('L1', 'wamid.X==')).resolves.toBe(false);
+  });
+
+  test('infra error → degrade OPEN (a DB hiccup never mutes the agent)', async () => {
+    mockRpc({ data: null, error: { message: 'boom' } });
+    const { claimInbound } = require('../_lib/prospecting/prospect-store');
+    await expect(claimInbound('L1', 'wamid.X==')).resolves.toBe(true);
   });
 });
