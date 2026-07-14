@@ -333,10 +333,19 @@ async function dispatchReengages({ limit = 5, nowMs = Date.now() } = {}) {
     try {
       if (await isOptedOut(lead.whatsapp_phone)) { summary.skipped++; continue; }
 
-      // One re-engage per silence period: if the last message is already a
-      // template (or the lead spoke last — responder owns that case), skip.
+      // One re-engage per silence period. Eligible last-message shapes:
+      //   out + non-template → we spoke last and this silence is untouched;
+      //   in                 → the LEAD spoke last and nobody answered (outage
+      //                        orphans — 14 leads on 2026-07-14): the selector
+      //                        guarantees ≥3 days of silence, so the Meta 24h
+      //                        window is long closed and a template is the ONLY
+      //                        deliverable channel. The old `direcao !== 'out'`
+      //                        skip assumed the responder would reply — it
+      //                        can't, outside the window.
+      // last = template → this silence was already touched; a new inbound
+      // re-arms the cycle.
       const last = await loadLastMessage(lead.id);
-      if (!last || last.direcao !== 'out' || last.tipo === 'template') { summary.skipped++; continue; }
+      if (!last || last.tipo === 'template') { summary.skipped++; continue; }
 
       // Anti-race claim: a 10-min conditional snooze. Semantics match ("agent
       // holds off on this lead"), it self-expires, and a concurrent run loses

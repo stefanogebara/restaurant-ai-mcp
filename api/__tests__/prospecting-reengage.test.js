@@ -133,14 +133,19 @@ describe('dispatchReengages — replied-then-silent leads past the 24h window', 
     expect(sendTemplateMessage).not.toHaveBeenCalled();
   });
 
-  test('lead spoke last → responder owns it, reengage skips', async () => {
+  test('lead spoke last + ≥3d silence → resgate fires (outage-orphan rescue)', async () => {
+    // The selector only returns leads ≥3 days silent, so the 24h window is
+    // closed and the responder CANNOT free-text — the template is the only
+    // channel. The old skip-on-inbound-last stranded 14 real leads whose
+    // replies fell into the Jul/10-11 outage.
     const { sendTemplateMessage } = mockDeps({
       lastMessage: { direcao: 'in', tipo: 'text', corpo: 'me chama semana que vem' },
     });
     const { dispatchReengages } = require('../_lib/prospecting/sequencer');
     const s = await dispatchReengages({ limit: 5 });
-    expect(s.sent).toBe(0);
-    expect(sendTemplateMessage).not.toHaveBeenCalled();
+    expect(s.sent).toBe(1);
+    expect(sendTemplateMessage).toHaveBeenCalledWith(
+      '+5511988887777', 'olimpia_resgate', 'pt_BR', ['Bistrô Central'], { phoneNumberId: 'PNUM' });
   });
 
   test('lost the snooze claim (concurrent run) → skip without sending', async () => {
