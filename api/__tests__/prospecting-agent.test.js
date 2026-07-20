@@ -11,7 +11,9 @@ jest.mock('../_lib/secure-logger', () => ({
   createSecureLogger: jest.fn(() => ({ info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() })),
 }));
 
-const { deveResponder, detectarOptout, descreverAgora, estadoAposAcao } = require('../_lib/prospecting/prospect-state');
+const {
+  deveResponder, detectarOptout, descreverAgora, estadoAposAcao, elegivelParaResgate,
+} = require('../_lib/prospecting/prospect-state');
 const { mergeFatos, formatarMemoria } = require('../_lib/prospecting/prospect-facts');
 const { extrairNumeroDono, normalizarNumeroBr, extrairEmail, extrairDddBr } = require('../_lib/prospecting/prospect-extract');
 const { dentroDoHorario, proximaAbertura, dentroDaJanelaDisparo, computeRetornoAt } = require('../_lib/prospecting/prospect-hours');
@@ -75,6 +77,57 @@ describe('deveResponder / detectarOptout', () => {
     expect(estadoAposAcao({ tipo: 'responder' })).toBe('conversando');
     expect(estadoAposAcao({ tipo: 'ignorar' })).toBeNull();
     expect(estadoAposAcao({ tipo: 'nada' })).toBeNull();
+  });
+});
+
+// Incidente 2026-07-20: invocações mortas no meio (Meta #131000, timeouts)
+// deixaram 7 threads mudas com inbound claimado e sem retry. A rede de resgate
+// do flush re-enfileira esses turnos — estes são os gates dela.
+describe('elegivelParaResgate (rede de resgate do flush)', () => {
+  const NOW = Date.parse('2026-07-20T18:00:00Z');
+  const H = 60 * 60 * 1000;
+  const base = {
+    state: 'conversando',
+    replyAposMs: null,
+    lastMsgDirecao: 'in',
+    lastInAtMs: NOW - 1 * H,
+    resgateEmMs: null,
+    nowMs: NOW,
+  };
+
+  test('turno pendurado (inbound do lead há 1h, nada enfileirado) → elegível', () => {
+    expect(elegivelParaResgate(base)).toEqual({ eligible: true, reason: 'ok' });
+    expect(elegivelParaResgate({ ...base, state: 'aguardando' }).eligible).toBe(true);
+    expect(elegivelParaResgate({ ...base, state: 'agendando' }).eligible).toBe(true);
+  });
+
+  test('estados fora do flush nunca são resgatados (marcar seria à toa)', () => {
+    for (const s of ['handoff', 'optout', 'pausada', 'agendado', 'recusou', null]) {
+      expect(elegivelParaResgate({ ...base, state: s }).eligible).toBe(false);
+    }
+  });
+
+  test('já enfileirado (reply_apos) ou último turno não é do lead → não resgata', () => {
+    expect(elegivelParaResgate({ ...base, replyAposMs: NOW - 5000 }).reason).toBe('ja_enfileirado');
+    expect(elegivelParaResgate({ ...base, lastMsgDirecao: 'out' }).reason).toBe('sem_inbound_pendente');
+    expect(elegivelParaResgate({ ...base, lastMsgDirecao: null }).reason).toBe('sem_inbound_pendente');
+    expect(elegivelParaResgate({ ...base, lastInAtMs: null }).reason).toBe('sem_inbound');
+  });
+
+  test('nem cedo demais (turno em voo), nem depois da janela de 24h', () => {
+    expect(elegivelParaResgate({ ...base, lastInAtMs: NOW - 5 * 60 * 1000 }).reason).toBe('turno_em_voo');
+    expect(elegivelParaResgate({ ...base, lastInAtMs: NOW - 25 * H }).reason).toBe('fora_janela_24h');
+    // exatamente 10 min → já elegível (limite inclusivo)
+    expect(elegivelParaResgate({ ...base, lastInAtMs: NOW - 10 * 60 * 1000 }).eligible).toBe(true);
+  });
+
+  test('uma vez por inbound, com re-arme após 2h (envio que falhou de novo no re-run)', () => {
+    const resgatadoAgora = { ...base, resgateEmMs: NOW - 30 * 60 * 1000 }; // resgatado há 30 min
+    expect(elegivelParaResgate(resgatadoAgora).reason).toBe('resgatado_recentemente');
+    // re-arme: resgate velho de 2h+ pode tentar de novo (janela ainda aberta)
+    expect(elegivelParaResgate({ ...base, lastInAtMs: NOW - 3 * H, resgateEmMs: NOW - 2 * H }).eligible).toBe(true);
+    // inbound NOVO depois do resgate → resgate antigo não conta
+    expect(elegivelParaResgate({ ...base, resgateEmMs: NOW - 2 * H, lastInAtMs: NOW - 1 * H }).eligible).toBe(true);
   });
 });
 

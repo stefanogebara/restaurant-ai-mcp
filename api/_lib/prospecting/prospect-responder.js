@@ -94,6 +94,14 @@ async function sendReply(leadId, to, texto, { skipPacing = false } = {}) {
       result = await sendWhatsAppMessage(to, parts[i], { phoneNumberId: getProspectingPhoneNumberId() });
     }
 
+    if (!dryRun && !(result && result.success)) {
+      // NÃO armazenar a parte que falhou: o lead nunca a recebeu. Um turno
+      // 'out' fantasma envenena o prompt (o modelo acha que já disse) e
+      // dispara o guard 'last_message_is_ours' — bloqueando pra sempre o
+      // resgate do flush (incidente 2026-07-20, Meta #131000).
+      logger.error(`[prospect] send failed on part ${i + 1}/${parts.length} lead=${leadId}`);
+      return { success: false, dryRun, sentAny };
+    }
     await storeMessage({
       leadId,
       direcao: 'out',
@@ -101,11 +109,6 @@ async function sendReply(leadId, to, texto, { skipPacing = false } = {}) {
       tipo: 'text',
       corpo: parts[i],
     });
-
-    if (!dryRun && !(result && result.success)) {
-      logger.error(`[prospect] send failed on part ${i + 1}/${parts.length} lead=${leadId}`);
-      return { success: false, dryRun, sentAny };
-    }
     if (!dryRun) sentAny = true;
   }
   return { success: true, dryRun, sentAny };

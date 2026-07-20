@@ -19,7 +19,11 @@ const { bearerEquals } = require('../_lib/secure-compare');
 const { isCronEnabled } = require('../_lib/cron-config');
 const { logCronRun } = require('../_lib/cron-tracker');
 const { getProspectingPhoneNumberId } = require('../_lib/prospecting/routing');
-const { selectDueFlush, selectDueRetornos, loadLastInbound, patchLead } = require('../_lib/prospecting/prospect-store');
+const {
+  selectDueFlush, selectDueRetornos, selectResgateCandidates,
+  loadLastInbound, loadHistory, patchLead, recordEvent,
+} = require('../_lib/prospecting/prospect-store');
+const { elegivelParaResgate } = require('../_lib/prospecting/prospect-state');
 const { respondToProspect } = require('../_lib/prospecting/prospect-responder');
 const { onlyDigits } = require('../_lib/prospecting/phone');
 
@@ -44,7 +48,38 @@ module.exports = async (req, res) => {
 
   const nowIso = new Date().toISOString();
   let resumed = 0; let errors = 0;
+  let resgatados = 0;
   try {
+    // 0. Resgate de turnos pendurados: uma invocação que morreu no meio
+    //    (timeout, Meta 5xx no envio, crash pós-claim) deixa o inbound sem
+    //    resposta e NADA retenta — o thread fica mudo até o lead falar de novo
+    //    (incidente 2026-07-20: 7 threads mudas em horário de pico, Meta
+    //    #131000). Aqui: solta o claim e enfileira pro flush DESTE tick.
+    //    Gates finos (último turno não-sys é do lead, uma vez por inbound com
+    //    re-arme de 2h, janela de 24h) em elegivelParaResgate.
+    try {
+      const candidatos = await selectResgateCandidates(nowIso, 12);
+      for (const cand of candidatos) {
+        const rows = (await loadHistory(cand.id, 6)).filter((m) => m.direcao !== 'sys');
+        const lastRow = rows.length ? rows[rows.length - 1] : null;
+        const gate = elegivelParaResgate({
+          state: cand.prospect_state,
+          replyAposMs: cand.reply_apos ? Date.parse(cand.reply_apos) : null,
+          lastMsgDirecao: lastRow ? lastRow.direcao : null,
+          lastInAtMs: cand.last_in_at ? Date.parse(cand.last_in_at) : null,
+          resgateEmMs: cand.resgate_em ? Date.parse(cand.resgate_em) : null,
+          nowMs: Date.parse(nowIso),
+        });
+        if (!gate.eligible) continue;
+        await patchLead(cand.id, { last_in_wamid: null, reply_apos: nowIso, resgate_em: nowIso });
+        await recordEvent(cand.id, '🩹 turno sem resposta resgatado — re-enfileirado pro flush');
+        logger.info(`[flush] resgate lead=${cand.id} (inbound sem resposta havia ${Math.round((Date.parse(nowIso) - Date.parse(cand.last_in_at)) / 60000)} min)`);
+        resgatados++;
+      }
+    } catch (err) {
+      logger.error('resgate sweep failed:', err.message);
+    }
+
     // Bounded batch — each resume runs the LLM; skipPacing keeps each ~5s so the
     // batch fits the 120s budget. Leftovers are caught on the next */15 tick.
     const due = await selectDueFlush(nowIso, 8);
@@ -158,14 +193,14 @@ module.exports = async (req, res) => {
     }
 
     await logCronRun('prospect-flush', {
-      resumed, errors, retornos,
+      resgatados, resumed, errors, retornos,
       followups_sent: followups ? followups.sent : 0,
       reengages_sent: reengages ? reengages.sent : 0,
       referrals_sent: referrals ? referrals.sent : 0,
       noshows_processed: noshows ? noshows.processed || 0 : 0,
       rekicked,
     });
-    return res.status(200).json({ success: true, due: due.length, resumed, retornos, errors, followups, reengages, referrals, noshows, rekicked });
+    return res.status(200).json({ success: true, due: due.length, resgatados, resumed, retornos, errors, followups, reengages, referrals, noshows, rekicked });
   } catch (err) {
     logger.error('flush fatal:', err.message);
     await logCronRun('prospect-flush', { resumed, errors: errors + 1 });

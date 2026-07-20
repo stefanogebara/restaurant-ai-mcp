@@ -213,6 +213,42 @@ function estadoAposAcao(acao) {
   }
 }
 
+// ---- Resgate de turno pendurado (rede de segurança do flush) -----------------
+// Uma invocação que morre no meio (timeout, Meta 5xx no envio, crash pós-claim)
+// deixa o inbound claimado e sem resposta — e nada retenta: o thread fica mudo
+// até o lead falar de novo (incidente 2026-07-20: 7 threads mudas em horário de
+// pico, Meta #131000). O flush cron varre e re-enfileira esses turnos.
+const RESGATE_MIN_MS = 10 * 60 * 1000;        // antes disso o turno pode estar legitimamente em voo
+const RESGATE_REARME_MS = 2 * 60 * 60 * 1000; // re-arma p/ cobrir envio que falhou também no re-run
+const RESGATE_JANELA_MS = 24 * 60 * 60 * 1000; // janela Meta de texto livre
+// Espelha selectDueFlush: resgatar um estado que o flush não seleciona seria marcar à toa.
+const RESGATE_STATES = new Set(['aguardando', 'conversando', 'agendando']);
+
+/**
+ * PURE: is this lead a hung-turn resgate candidate?
+ * Gates: flush-eligible state; nothing already queued (reply_apos); the LEAD
+ * spoke last (um out no fim = turno concluído); idade entre RESGATE_MIN_MS e a
+ * janela de 24h; uma vez por inbound (resgate_em >= last_in_at já resgatou),
+ * com re-arme após RESGATE_REARME_MS — custo limitado (~12 LLM/dia por thread
+ * no pior caso) e morre junto com a janela.
+ * @param {{state:string|null, replyAposMs:number|null, lastMsgDirecao:string|null,
+ *          lastInAtMs:number|null, resgateEmMs:number|null, nowMs?:number}} args
+ * @returns {{eligible: boolean, reason: string}}
+ */
+function elegivelParaResgate({ state, replyAposMs, lastMsgDirecao, lastInAtMs, resgateEmMs, nowMs = Date.now() }) {
+  if (!RESGATE_STATES.has(state)) return { eligible: false, reason: 'estado_fora_do_flush' };
+  if (replyAposMs) return { eligible: false, reason: 'ja_enfileirado' };
+  if (lastMsgDirecao !== 'in') return { eligible: false, reason: 'sem_inbound_pendente' };
+  if (!lastInAtMs) return { eligible: false, reason: 'sem_inbound' };
+  const idade = nowMs - lastInAtMs;
+  if (idade < RESGATE_MIN_MS) return { eligible: false, reason: 'turno_em_voo' };
+  if (idade >= RESGATE_JANELA_MS) return { eligible: false, reason: 'fora_janela_24h' };
+  if (resgateEmMs && resgateEmMs >= lastInAtMs && nowMs - resgateEmMs < RESGATE_REARME_MS) {
+    return { eligible: false, reason: 'resgatado_recentemente' };
+  }
+  return { eligible: true, reason: 'ok' };
+}
+
 module.exports = {
   pareceAutoAtendimento,
   deveEnviarPorta,
@@ -224,4 +260,8 @@ module.exports = {
   RECUSA_INSTRUCTION,
   descreverAgora,
   estadoAposAcao,
+  RESGATE_MIN_MS,
+  RESGATE_REARME_MS,
+  RESGATE_JANELA_MS,
+  elegivelParaResgate,
 };

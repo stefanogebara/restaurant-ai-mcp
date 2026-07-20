@@ -543,6 +543,41 @@ async function releaseInbound(leadId, wamid) {
 }
 
 /**
+ * Resgate candidates (coarse pass): flush-eligible states, nothing queued,
+ * last inbound between 10 min and 24h ago. Fine gates (last non-sys message is
+ * the lead's, once-per-inbound + re-arme) are decided per-lead by the flush
+ * cron via elegivelParaResgate — message-level facts don't fit one PostgREST
+ * query (and column-vs-column comparisons 42703 here; see claimInbound).
+ * @param {string} nowIso
+ * @param {number} [limit=12]
+ */
+async function selectResgateCandidates(nowIso, limit = 12) {
+  try {
+    const { RESGATE_MIN_MS, RESGATE_JANELA_MS } = require('./prospect-state');
+    const nowMs = Date.parse(nowIso);
+    const novoDemais = new Date(nowMs - RESGATE_MIN_MS).toISOString();
+    const velhoDemais = new Date(nowMs - RESGATE_JANELA_MS).toISOString();
+    const { data, error } = await supabaseAdmin
+      .from('prospect_leads')
+      .select('id, name, whatsapp_phone, prospect_state, reply_apos, last_in_at, resgate_em')
+      .in('prospect_state', ['aguardando', 'conversando', 'agendando'])
+      .is('reply_apos', null)
+      .gte('last_in_at', velhoDemais)
+      .lte('last_in_at', novoDemais)
+      .order('last_in_at', { ascending: true })
+      .limit(limit);
+    if (error) {
+      logger.error('selectResgateCandidates failed:', error.message);
+      return [];
+    }
+    return data || [];
+  } catch (err) {
+    logger.error('selectResgateCandidates exception:', err.message);
+    return [];
+  }
+}
+
+/**
  * Nudge candidates (coarse pass): active-conversation leads with no pending
  * deferral. Fine-grained eligibility (23h silence, last message is the agent's,
  * once per silence period, 24h free-text window) is decided per-lead by the
@@ -930,6 +965,7 @@ module.exports = {
   claimIntro,
   markIntro,
   selectDueFlush,
+  selectResgateCandidates,
   selectDueRetornos,
   selectNoshowDue,
   loadLastInbound,

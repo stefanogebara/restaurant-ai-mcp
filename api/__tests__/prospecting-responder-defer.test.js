@@ -128,3 +128,40 @@ describe('respondToProspect — transient LLM failure defers instead of hanging'
     expect(store.releaseInbound).not.toHaveBeenCalled();
   });
 });
+
+// Incidente 2026-07-20 (Meta #131000): a parte cujo ENVIO falhou era armazenada
+// como turno 'out' mesmo assim — o histórico "acha" que respondeu, o guard
+// last_message_is_ours bloqueia qualquer retry e o modelo nunca repete a
+// mensagem que o lead nunca recebeu. Contrato novo: só parte ENTREGUE entra.
+describe('sendReply — parte com envio falhado não vira turno fantasma', () => {
+  const { sendWhatsAppMessage } = require('../_lib/whatsapp-sender');
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    primeHistory();
+    process.env.PROSPECTING_DRY_RUN = 'false';
+  });
+  afterAll(() => {
+    delete process.env.PROSPECTING_DRY_RUN;
+  });
+
+  test('Meta 5xx no envio → NENHUM out armazenado (resgate do flush continua possível)', async () => {
+    generateReply.mockResolvedValue({ tipo: 'responder', texto: 'olá! te mostro uma prévia?' });
+    sendWhatsAppMessage.mockResolvedValueOnce({ success: false });
+
+    await respondToProspect({ lead: makeLead(), from: '5511999990000', text: 'oi', nowMs: NOW, skipPacing: true });
+
+    const outs = store.storeMessage.mock.calls.filter(([arg]) => arg && arg.direcao === 'out');
+    expect(outs).toHaveLength(0);
+  });
+
+  test('envio ok → parte armazenada como out com o wamid (comportamento normal preservado)', async () => {
+    generateReply.mockResolvedValue({ tipo: 'responder', texto: 'olá!' });
+
+    await respondToProspect({ lead: makeLead(), from: '5511999990000', text: 'oi', nowMs: NOW, skipPacing: true });
+
+    const outs = store.storeMessage.mock.calls.filter(([arg]) => arg && arg.direcao === 'out');
+    expect(outs).toHaveLength(1);
+    expect(outs[0][0].wamid).toBe('wamid.out');
+  });
+});
