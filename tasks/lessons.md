@@ -383,3 +383,29 @@ for months (init died before any fetch).
 - Dedup + processing locks already use Supabase as PRIMARY (Redis is fallback only), so a
   dead Redis does NOT risk WhatsApp message-doubling — only weakens global rate-limiting
   (becomes per-instance) and no-ops the abuse failure-counters.
+
+## 2026-07-03 — Workflow `args` payloads
+Large payloads passed via the Workflow tool's `args` parameter arrived empty in
+the agent prompt (cycle 6: coach reconstructed v7 from memory, dropping the
+battle-tested objection rules). Same failure class as the cycle-2 literal
+`${VAR}` bug. Rule: embed payloads (style pack bodies, briefs) INLINE in the
+workflow script as JSON.stringify'd consts; use `args` only for small scalars —
+and have the agent echo back a marker confirming it received the payload.
+
+## 2026-07-14 — PostgREST: UPDATE com filtro or= → 42703 "coluna não existe"
+O PostgREST do seatable-eu rejeita QUALQUER UPDATE que carregue filtro `or=`
+com `42703: column prospect_leads.<coluna-do-or> does not exist` — a coluna
+EXISTE, o mesmo `or=` funciona em GET, e `NOTIFY pgrst, 'reload schema'` não
+muda nada. Custou caro duas vezes antes do diagnóstico: claimInbound (or
+last_in_wamid) falhou em TODO inbound por 12 dias (degrade-open mascarou) e o
+claim do resgate (or snoozed_until) NUNCA venceu → zero resgates na história.
+**Lições:**
+- "column X does not exist" com a coluna existente = suspeite da COMBINAÇÃO
+  operação+filtro do PostgREST, não do schema. Reproduza com PATCH no-op
+  (id=eq.uuid-inexistente) isolando cada parte: body-only, filtro-only, combo.
+- Claim atômico condicional (UPDATE ... WHERE ... OR ...) → RPC SQL
+  (security definer, service-role only). Não use `.update().or()` neste projeto.
+- SEMPRE cheque `error` de um claim antes de tratar data vazio como "perdi a
+  corrida" — erro silencioso vira "skipped" e o sintoma some do log.
+- Degrade-open esconde falha crônica: se um guard "nunca" dispara (0 resgates,
+  0 claims), teste o caminho real na produção em vez de confiar no verde local.
