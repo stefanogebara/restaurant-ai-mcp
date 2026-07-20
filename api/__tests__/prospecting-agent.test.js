@@ -16,7 +16,10 @@ const { mergeFatos, formatarMemoria } = require('../_lib/prospecting/prospect-fa
 const { extrairNumeroDono, normalizarNumeroBr, extrairEmail, extrairDddBr } = require('../_lib/prospecting/prospect-extract');
 const { dentroDoHorario, proximaAbertura, dentroDaJanelaDisparo, computeRetornoAt } = require('../_lib/prospecting/prospect-hours');
 const { pacingDelayMs } = require('../_lib/prospecting/prospect-pacing');
-const { buildSystemPrompt, interpretResponse, historyToMessages } = require('../_lib/prospecting/prospect-agent');
+const {
+  buildSystemPrompt, interpretResponse, historyToMessages,
+  COMPANION_TEXT, comContatoFundador, FOUNDER_WHATSAPP,
+} = require('../_lib/prospecting/prospect-agent');
 
 // ============================================================ state
 describe('deveResponder / detectarOptout', () => {
@@ -190,6 +193,96 @@ describe('interpretResponse (Anthropic shape)', () => {
   });
   test('empty content → nada', () => {
     expect(interpretResponse({ content: [], stop_reason: 'end_turn' }).tipo).toBe('nada');
+  });
+});
+
+// ============================================================ contato do fundador
+// Regra (Stefano, 2026-07-20): pedir humano / indicar responsável / pedir contato
+// NUNCA termina em beco sem saída — a resposta sai com o WhatsApp do fundador.
+describe('contato do fundador em handoff/indicação', () => {
+  const digits = (s) => String(s || '').replace(/\D+/g, '');
+  const FD = digits(FOUNDER_WHATSAPP);
+  const toolWithText = (name, input, texto) => ({
+    content: [
+      { type: 'text', text: texto },
+      { type: 'tool_use', id: 't1', name, input },
+    ],
+    stop_reason: 'tool_use',
+  });
+
+  test('default é o número pessoal do Stefano', () => {
+    expect(FD).toBe('5511999002121');
+  });
+
+  test('COMPANION_TEXT de handoff e indicação carregam o número', () => {
+    expect(digits(COMPANION_TEXT.handoff)).toContain(FD);
+    expect(digits(COMPANION_TEXT.registrar('Ana'))).toContain(FD);
+    expect(digits(COMPANION_TEXT.registrar(null))).toContain(FD);
+    expect(COMPANION_TEXT.registrar('Ana')).toMatch(/Ana/);
+  });
+
+  test('comContatoFundador: anexa quando falta, não duplica quando já tem (qualquer formatação)', () => {
+    expect(comContatoFundador(null, 'linha')).toBeNull();
+    expect(comContatoFundador('  ', 'linha')).toBeNull();
+    const appended = comContatoFundador('vou verificar com o time', 'fale com o fundador: ' + FOUNDER_WHATSAPP);
+    expect(appended).toMatch(/^vou verificar com o time\n/);
+    expect(digits(appended)).toContain(FD);
+    // já presente, escrito sem formatação → intocado (checagem por dígitos)
+    const cru = `pode chamar o fundador no +${FD}`;
+    expect(comContatoFundador(cru, 'linha extra')).toBe(cru);
+  });
+
+  test('escalar_humano com texto do modelo SEM o número → número anexado', () => {
+    const r = interpretResponse(toolWithText('escalar_humano', { motivo: 'preço' }, 'boa pergunta, vou confirmar aqui'));
+    expect(r.tipo).toBe('handoff');
+    expect(digits(r.texto)).toContain(FD);
+    expect(r.texto).toMatch(/^boa pergunta, vou confirmar aqui\n/);
+  });
+
+  test('escalar_humano com texto que JÁ traz o número → texto preservado sem duplicar', () => {
+    const texto = `claro! o fundador atende direto: +${FD}`;
+    const r = interpretResponse(toolWithText('escalar_humano', { motivo: 'quer humano' }, texto));
+    expect(r.texto).toBe(texto);
+  });
+
+  test('registrar_responsavel: texto do modelo ganha o número; sem texto, companion já o carrega', () => {
+    const comTexto = interpretResponse(toolWithText('registrar_responsavel', { numero: '11999998888', nome: 'Ana' }, 'perfeito, já chamo ela'));
+    expect(digits(comTexto.texto)).toContain(FD);
+    expect(comTexto.texto).toMatch(/Ana/);
+    const semTexto = interpretResponse({ content: [{ type: 'tool_use', id: 't1', name: 'registrar_responsavel', input: { numero: '11999998888' } }], stop_reason: 'tool_use' });
+    expect(digits(semTexto.texto)).toContain(FD);
+  });
+
+  test('registrar_responsavel sem número (handoff) mantém o pedido do modelo + número', () => {
+    const r = interpretResponse(toolWithText('registrar_responsavel', {}, 'me passa o contato dela?'));
+    expect(r.tipo).toBe('handoff');
+    expect(digits(r.texto)).toContain(FD);
+  });
+
+  test('buildSystemPrompt carrega a regra 11 com o número', () => {
+    const p = buildSystemPrompt({ name: 'Cantina Bella' });
+    expect(digits(p)).toContain(FD);
+    expect(p).toMatch(/CONTATO DO FUNDADOR/);
+    expect(p).toMatch(/ÚNICO número/);
+  });
+
+  test('guarda de número estranho NÃO arranca o contato do fundador da resposta (whitelist)', async () => {
+    jest.resetModules();
+    jest.doMock('../_lib/secure-logger', () => ({
+      createSecureLogger: () => ({ info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() }),
+    }));
+    const texto = `pode falar direto com o fundador, esse é o número dele: ${FOUNDER_WHATSAPP}`;
+    const create = jest.fn(async () => ({ content: [{ type: 'text', text: texto }], stop_reason: 'end_turn' }));
+    jest.doMock('../_lib/ai-client', () => ({ AI_MODEL: 'm', getAI: () => ({ messages: { create } }) }));
+    const { generateReply } = require('../_lib/prospecting/prospect-agent');
+    const acao = await generateReply({
+      lead: { name: 'X', whatsapp_phone: '+5511987654321' },
+      history: [{ direcao: 'in', corpo: 'como falo com vocês?' }], // número do fundador NÃO está no histórico
+      nowMs: Date.parse('2026-06-25T17:00:00Z'),
+    });
+    expect(acao).toEqual({ tipo: 'responder', texto });
+    expect(create).toHaveBeenCalledTimes(1); // sem retry corretivo — o número é permitido
+    jest.resetModules();
   });
 });
 

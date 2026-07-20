@@ -31,6 +31,12 @@ const SITE = 'seatable.one';
 // and the #1 anti-invention rule is "never invent a customer case". When you have
 // real references, set PROSPECTING_CASES="Restaurante X, Bar Y".
 const CASES = (process.env.PROSPECTING_CASES || '').trim();
+// WhatsApp direto do fundador — o ÚNICO número que a agente pode escrever por
+// conta própria. Regra (Stefano, 2026-07-20): pedir humano, pedir contato, ou
+// indicar o dono/responsável NUNCA termina em beco sem saída — a resposta sai
+// com este número ("caso queira falar com o fundador, esse é o número dele").
+const FOUNDER_WHATSAPP = process.env.PROSPECTING_FOUNDER_WHATSAPP || '+55 11 99900-2121';
+const FOUNDER_DIGITS = FOUNDER_WHATSAPP.replace(/\D+/g, '');
 
 /**
  * @typedef {Object} LeadContexto
@@ -210,6 +216,14 @@ function buildSystemPrompt(lead, agoraDescricao, styleBody = null) {
     '   com a pessoa indicada). NÃO volte a perguntar "você é o responsável?" pra quem acabou',
     '   de repassar outro contato — é contraditório e parece que você não leu o que mandaram.',
     '',
+    `CONTATO DO FUNDADOR: o fundador da ${COMPANY} atende direto no WhatsApp ${FOUNDER_WHATSAPP}.`,
+    '11. SEMPRE que a pessoa pedir pra falar com um humano/alguém da empresa, pedir telefone',
+    '   ou contato, dizer que quer (ou que alguém vai) entrar em contato, OU te indicar o',
+    '   dono/responsável (com ou sem número), inclua esse contato na resposta, com',
+    '   naturalidade — ex.: "ok, obrigada! caso prefira falar direto com o fundador, esse é',
+    `   o número dele: ${FOUNDER_WHATSAPP}". É o ÚNICO número que você pode escrever por`,
+    '   conta própria; qualquer outro número, só copie exatamente como está no histórico.',
+    '',
     'FERRAMENTAS: prefira responder por texto enquanto a conversa avança. Chame uma',
     'ferramenta quando a situação pedir: mostrar valor na hora (criar_demo — seu principal',
     'movimento), agendar a conversa (agendar_demo), retomar num momento combinado',
@@ -359,12 +373,12 @@ const PROSPECT_TOOLS = [
 // recurring failure class the gym exposed in cycles 7-10.
 const COMPANION_TEXT = {
   optout: 'entendido, não te mando mais nada — obrigada pelo tempo 🙏',
-  handoff: 'boa pergunta — vou confirmar direitinho com o time e te retorno 🙂',
+  handoff: `boa pergunta — vou confirmar direitinho com o time e te retorno 🙂 se preferir falar direto com o fundador, esse é o número dele: ${FOUNDER_WHATSAPP}`,
   porta: 'oi! não é pedido não — é sobre parceria 🙂 quem cuida das reservas ou parcerias por aí?',
   previa: 'consigo te mostrar isso na prática — montei uma prévia rápida com os dados de vocês do Google 🙂',
   registrar: (nome) => (nome
-    ? `perfeito, obrigada! já chamo ${nome} então 🙂`
-    : 'perfeito, obrigada pela indicação! já entro em contato então 🙂'),
+    ? `perfeito, obrigada! já chamo ${nome} então 🙂 e caso ${nome} queira falar direto com o fundador, esse é o número dele: ${FOUNDER_WHATSAPP}`
+    : `perfeito, obrigada pela indicação! já entro em contato então 🙂 e caso a pessoa queira falar direto com o fundador, esse é o número dele: ${FOUNDER_WHATSAPP}`),
   agendar: (resumo) => (resumo && resumo !== 'sem detalhe'
     ? `fechado! deixa eu confirmar aqui (${resumo}) e já te mando o convite 🙂`
     : 'perfeito! qual dia e horário fica melhor pra você?'),
@@ -372,6 +386,27 @@ const COMPANION_TEXT = {
     ? `fechado, te chamo ${quando.trim()} então 🙂`
     : 'fechado, te chamo depois então 🙂'),
 };
+
+// Frases prontas pra anexar o contato do fundador quando o texto do modelo
+// esqueceu (a garantia determinística embaixo do prompt).
+const LINHA_FUNDADOR = {
+  handoff: `ah, e se preferir falar direto com o fundador, esse é o número dele: ${FOUNDER_WHATSAPP}`,
+  registrar: (nome) => `ah, e caso ${nome || 'a pessoa'} queira falar direto com o fundador, esse é o número dele: ${FOUNDER_WHATSAPP}`,
+};
+
+/**
+ * PURE: guarantee the founder's number rides along on a handoff/referral reply.
+ * When the model wrote its own text but forgot the number, append `linha`
+ * (same WhatsApp bubble — single newline, never a blank line). Empty text
+ * returns null so callers fall back to COMPANION_TEXT, which already carries
+ * it. Digit-normalized check, so formatting differences never duplicate it.
+ */
+function comContatoFundador(texto, linha) {
+  const t = String(texto || '').trim();
+  if (!t) return null;
+  if (t.replace(/\D+/g, '').includes(FOUNDER_DIGITS)) return t;
+  return `${t}\n${linha}`;
+}
 
 /**
  * PURE: phone-like digit runs (10-13 digits) present in `texto` but absent
@@ -416,14 +451,15 @@ function interpretResponse(response) {
     const args = (toolUse.input && typeof toolUse.input === 'object') ? toolUse.input : {};
     if (nome === 'marcar_optout') return { tipo: 'optout', texto: texto || COMPANION_TEXT.optout };
     if (nome === 'ignorar') return { tipo: 'ignorar', motivo: String(args.motivo || '').trim() || 'sem motivo' };
-    if (nome === 'escalar_humano') return { tipo: 'handoff', texto: texto || COMPANION_TEXT.handoff, motivo: String(args.motivo || 'não especificado') };
+    if (nome === 'escalar_humano') return { tipo: 'handoff', texto: comContatoFundador(texto, LINHA_FUNDADOR.handoff) || COMPANION_TEXT.handoff, motivo: String(args.motivo || 'não especificado') };
     if (nome === 'registrar_responsavel') {
       const numero = String(args.numero || '').trim();
-      if (!numero) return { tipo: 'handoff', texto, motivo: 'registrar_responsavel sem número' };
+      if (!numero) return { tipo: 'handoff', texto: comContatoFundador(texto, LINHA_FUNDADOR.handoff), motivo: 'registrar_responsavel sem número' };
       const nomeDono = String(args.nome || '').trim();
       return {
         tipo: 'registrar_responsavel',
-        texto: texto || COMPANION_TEXT.registrar(nomeDono || null),
+        texto: comContatoFundador(texto, LINHA_FUNDADOR.registrar(nomeDono || null))
+          || COMPANION_TEXT.registrar(nomeDono || null),
         numero,
         nome: nomeDono || null,
       };
@@ -502,6 +538,10 @@ async function generateReply({ lead, history, nowMs, injectUserTurn = null, noTo
     // persists, the offending bubble is stripped rather than sent wrong.
     if (acao.texto) {
       const contexto = [
+        // Whitelisted: o contato do fundador é o único número que a agente pode
+        // escrever sem ele existir no histórico (regra 11 do prompt) — sem isto
+        // o guarda arrancaria exatamente a bolha que a regra manda enviar.
+        FOUNDER_WHATSAPP,
         lead && lead.whatsapp_phone,
         ...history.map((h) => h && h.corpo),
         injectUserTurn,
@@ -529,7 +569,9 @@ async function generateReply({ lead, history, nowMs, injectUserTurn = null, noTo
     }
     // Tool-argument guard: registrar_responsavel with a number that never
     // appeared in the conversation = hallucinated contact. Keep the words
-    // (usually the ask for the number), drop the premature tool.
+    // (usually the ask for the number), drop the premature tool. O número do
+    // fundador NÃO entra na whitelist aqui: registrá-lo como "responsável"
+    // criaria um lead de indicação apontando pro próprio fundador.
     if (acao.tipo === 'registrar_responsavel') {
       const contextoArgs = [
         lead && lead.whatsapp_phone,
@@ -554,12 +596,14 @@ async function generateReply({ lead, history, nowMs, injectUserTurn = null, noTo
 module.exports = {
   AGENT_NAME,
   COMPANY,
+  FOUNDER_WHATSAPP,
   COMPANION_TEXT,
   PROSPECT_TOOLS,
   buildSystemPrompt,
   placeholderMidia,
   historyToMessages,
   interpretResponse,
+  comContatoFundador,
   findForeignPhones,
   stripForeignPhoneBubbles,
   generateReply,

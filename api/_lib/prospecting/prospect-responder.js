@@ -28,7 +28,7 @@ const { dentroDoHorario, decisaoForaDeHorario } = require('./prospect-hours');
 const { pacingDelayMs, splitReplyParts, partPauseDelayMs } = require('./prospect-pacing');
 const { extrairEmail, extrairNumeroDono, extrairNomeDono, extrairDddBr } = require('./prospect-extract');
 const { mergeFatos } = require('./prospect-facts');
-const { generateReply } = require('./prospect-agent');
+const { generateReply, FOUNDER_WHATSAPP } = require('./prospect-agent');
 const {
   loadHistory, patchLead, recordOptout, storeMessage, isOptedOut,
   inboundFingerprint, claimInbound, releaseInbound, updateIntent, recordEvent,
@@ -600,9 +600,11 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
           nome_responsavel: acao.nome || undefined,
           notas: [`Responsável indicado pelo WhatsApp: ${acao.numero}`],
         });
+        // O ack SEMPRE carrega o WhatsApp do fundador (regra 2026-07-20): quem
+        // indicou repassa o número, e a pessoa indicada pode chamar direto.
         const ack = acao.texto || (acao.nome
-          ? `Perfeito, obrigada! Já falo com ${acao.nome} então. 😊`
-          : 'Perfeito, obrigada pela indicação! Já entro em contato com a pessoa então. 😊');
+          ? `Perfeito, obrigada! Já falo com ${acao.nome} então. 😊 E caso ${acao.nome} queira falar direto com o fundador, esse é o número dele: ${FOUNDER_WHATSAPP}`
+          : `Perfeito, obrigada pela indicação! Já entro em contato com a pessoa então. 😊 E caso ela queira falar direto com o fundador, esse é o número dele: ${FOUNDER_WHATSAPP}`);
         const r = await sendReply(lead.id, from, ack, pace);
         sent = r.sentAny; dryRun = r.dryRun;
 
