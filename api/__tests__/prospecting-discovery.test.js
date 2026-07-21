@@ -11,7 +11,7 @@ jest.mock('../_lib/secure-logger', () => ({
   createSecureLogger: jest.fn(() => ({ info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() })),
 }));
 
-const { normalizePlace } = require('../_lib/prospecting/places-discovery');
+const { normalizePlace, isRachaIcp } = require('../_lib/prospecting/places-discovery');
 
 // ============================================================ normalizePlace
 describe('normalizePlace', () => {
@@ -38,6 +38,30 @@ describe('normalizePlace', () => {
   test('missing id or name → null (unusable)', () => {
     expect(normalizePlace({ displayName: { text: 'X' } }, {})).toBeNull();
     expect(normalizePlace({ id: 'p' }, {})).toBeNull();
+  });
+
+  // Filtro de ICP: casa com mesa entra; delivery/marmita/sorvete/doceria não
+  // (o funil ZL vinha entupido de não-ICP queimando envio de template).
+  test('não-ICP por primaryType → descartado na fonte (null)', () => {
+    for (const primaryType of ['meal_delivery', 'meal_takeaway', 'ice_cream_shop', 'bakery', 'dessert_shop']) {
+      expect(normalizePlace({ ...base, primaryType, internationalPhoneNumber: '+5511999998888' }, {})).toBeNull();
+    }
+  });
+
+  test('não-ICP por NOME mesmo sem primaryType (Google tipa errado)', () => {
+    for (const nome of ['Dona Marmita', 'Yasmin Sorvetes', 'Açaí do Zé', 'Doce Pimenta - Bolos e Doces', 'Padaria Estrela']) {
+      expect(normalizePlace({ ...base, displayName: { text: nome }, internationalPhoneNumber: '+5511999998888' }, {})).toBeNull();
+    }
+  });
+
+  test('restaurante/bar/espetinho COM salão passa — inclusive se também entrega', () => {
+    // primaryType dominante = restaurant, mesmo com meal_delivery na lista types → ICP
+    const espeto = normalizePlace({ ...base, displayName: { text: 'Líder Espeto & Drinks' }, primaryType: 'bar', types: ['bar', 'restaurant', 'meal_delivery'], internationalPhoneNumber: '+5511999998888' }, {});
+    expect(espeto).not.toBeNull();
+    expect(espeto.name).toBe('Líder Espeto & Drinks');
+    expect(isRachaIcp({ displayName: { text: 'Restaurante X' }, primaryType: 'restaurant' })).toBe(true);
+    expect(isRachaIcp({ displayName: { text: 'Cantina Bella' } })).toBe(true); // sem primaryType → passa
+    expect(isRachaIcp({ displayName: { text: 'X' }, primaryType: 'meal_delivery' })).toBe(false);
   });
 });
 

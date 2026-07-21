@@ -33,6 +33,36 @@ const FIELD_MASK = [
   'places.types',
 ].join(',');
 
+// ICP do Racha = casa com MESA (tem conta pra dividir). Ficam de fora delivery,
+// marmita, sorveteria, doceria, padaria, lanchonete de balcão, mercado — sem
+// mesa não há conta pra rachar. Filtro pelo primaryType do Google (a
+// classificação DOMINANTE — um restaurante que TAMBÉM entrega continua ICP,
+// por isso não olhamos a lista `types` inteira) + um backstop no nome pra
+// quando o Google tipa errado (São Paulo ZL: o funil vinha entupido de
+// marmita/delivery, queimando envio pago de template em quem nunca teria mesa).
+const NAO_ICP_PRIMARY = new Set([
+  'meal_delivery', 'meal_takeaway', 'ice_cream_shop', 'bakery', 'dessert_shop',
+  'sandwich_shop', 'catering_service', 'food_court', 'candy_store',
+  'chocolate_shop', 'donut_shop', 'juice_shop', 'convenience_store',
+  'supermarket', 'grocery_store', 'liquor_store',
+]);
+const NAO_ICP_NOME = /(marmit|sorvet|a[çc]a[íi]|geladinho|picol[ée]|confeitaria|doceria|panificadora|\bpadaria\b|\bdelivery\b|bolos?\s+e\s+doces)/i;
+
+/**
+ * PURE: a casa tem mesa pra dividir conta? (Racha ICP). Conservador de
+ * propósito — só corta o que claramente não tem serviço de mesa; um bar/
+ * restaurante/espetinho/pizzaria com salão passa.
+ * @param {object} place - Google Places v1 place object
+ * @returns {boolean}
+ */
+function isRachaIcp(place) {
+  const primary = place && place.primaryType;
+  if (primary && NAO_ICP_PRIMARY.has(primary)) return false;
+  const name = (place && place.displayName && place.displayName.text) || '';
+  if (NAO_ICP_NOME.test(name)) return false;
+  return true;
+}
+
 /**
  * Normalize a Places result into a prospect_leads row. A business phone that
  * resolves to a BR MOBILE becomes the WhatsApp candidate (whatsapp_status
@@ -40,12 +70,13 @@ const FIELD_MASK = [
  *
  * @param {object} place - Google Places v1 place object
  * @param {object} ctx - { city, sector }
- * @returns {object|null} lead row, or null if unusable (no place id/name)
+ * @returns {object|null} lead row, or null if unusable (no id/name) OR não-ICP
  */
 function normalizePlace(place, ctx = {}) {
   if (!place || !place.id) return null;
   const name = place.displayName && place.displayName.text;
   if (!name) return null;
+  if (!isRachaIcp(place)) return null; // sem mesa, sem Racha — descarta na fonte
 
   const rawPhone = place.internationalPhoneNumber || place.nationalPhoneNumber || null;
   // ANY normalized BR number is a WhatsApp candidate — fixed lines routinely
@@ -180,4 +211,4 @@ function parseAutocomplete(json) {
 
 module.exports = {
   buildAutocompleteBody,
-  parseAutocomplete, searchPlaces, normalizePlace, FIELD_MASK };
+  parseAutocomplete, searchPlaces, normalizePlace, isRachaIcp, FIELD_MASK };
