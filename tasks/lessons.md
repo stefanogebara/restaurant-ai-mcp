@@ -409,3 +409,37 @@ claim do resgate (or snoozed_until) NUNCA venceu → zero resgates na história.
   corrida" — erro silencioso vira "skipped" e o sintoma some do log.
 - Degrade-open esconde falha crônica: se um guard "nunca" dispara (0 resgates,
   0 claims), teste o caminho real na produção em vez de confiar no verde local.
+
+## 2026-07-20 — Envio falhado armazenado como turno = thread zumbi permanente
+Meta WhatsApp instável (#131000) + timeouts deixaram 7 threads ativas mudas em
+horário de pico. Duas armadilhas compostas:
+- `sendReply` armazenava a parte cujo ENVIO falhou como turno 'out' → o
+  histórico "acha" que respondeu, o guard `last_message_is_ours` bloqueia
+  retry pra sempre, e o modelo nunca repete a mensagem que o lead não recebeu.
+  **Regra: só mensagem ENTREGUE entra no histórico da conversa.** Um registro
+  de tentativa é log/telemetria, nunca turno.
+- Requeue por classe de erro (o fix do incidente 2026-07-06 cobria só "erro
+  LLM") deixa TODA outra morte (timeout pré-claim, crash pós-claim, send 5xx)
+  sem retry. **Regra: além dos requeues pontuais, ter UMA rede de varredura
+  idempotente no cron ("último turno não-sys é do lead + X min sem resposta +
+  dentro da janela → re-enfileira"), uma vez por inbound com re-arme** — cobre
+  os modos de morte que ninguém previu. Idioma do marcador: coluna `*_em`
+  comparada a `last_in_at` (mesmo padrão do nudge_em).
+- Diagnóstico que funcionou: contagem por direção no DB (out parou? não —
+  intermitente), get_runtime_errors do Vercel MCP (clusters agregados acham o
+  #131000 na hora), e query por lead-id nos logs escopada por deploymentId.
+
+## 2026-07-21 — Racha na Vercel NÃO tem integração Git (deploy é via API)
+Push no github.com/stefanogebara/racha nunca cria deployment — todos os
+deploys do racha sempre foram via REST API (meta "actor: claude-code" +
+githubDeployment forjado pelo gitSource). Um push ficou 20 min "deployando"
+até perceber. **Regras:**
+- Racha: `git push && node scripts/deploy.mjs` (driver com gitSource + poll).
+  Fix definitivo é o dono conectar o repo no dashboard (Settings → Git).
+- Token do Vercel CLI local expira em ~8h (`auth.json` tem expiresAt em
+  SEGUNDOS). O CLI instalado NÃO renova sozinho em `whoami` — o
+  refresh_token + client_id público do bundle renovam via
+  `vercel.com/.well-known/openid-configuration` → token_endpoint
+  (grant_type=refresh_token). O deploy.mjs do racha faz isso automático.
+- "Deploy não apareceu" ≠ "build lento": liste deployments por projectId
+  ANTES de esperar — 0 deployments novos = trigger quebrado, não fila.
