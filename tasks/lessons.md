@@ -443,3 +443,31 @@ até perceber. **Regras:**
   (grant_type=refresh_token). O deploy.mjs do racha faz isso automático.
 - "Deploy não apareceu" ≠ "build lento": liste deployments por projectId
   ANTES de esperar — 0 deployments novos = trigger quebrado, não fila.
+
+## 2026-07-21 — IDs de API têm formato REAL; não assuma o prefixo
+Racha/Pagar.me: o adapter assumia que o id do recebedor começava com `rp_`
+(chute do dia que escrevi o adapter, sem nunca ter criado um recebedor real).
+Quando o Pagar.me finalmente liberou a criação no sandbox, a chamada retornava
+2xx com `status:"active"` — recebedor CRIADO — mas o adapter REJEITAVA a
+resposta válida porque o id real é `re_...` (ex.: `re_cmrv0eg8u...`), não `rp_`.
+Custou 3 ciclos de deploy+diagnóstico até dumpar a resposta crua e ver o `re_`.
+**Lições:**
+- Nunca hardcode/regex um formato de id de API sem ter visto a resposta REAL
+  de uma chamada de sucesso. Prefixos (`re_` vs `rp_`, `ch_`, `or_`, `cus_`…)
+  são convenção do provedor, não adivinhável.
+- Quando uma chamada "sem erro HTTP" falha na validação DO SEU código, dumpe a
+  resposta crua ANTES de teorizar (embarquei `JSON.stringify(r)` no erro →
+  achei o `re_` em 1 run). Erro de validação interna ≠ erro do gateway.
+- "action_forbidden: not allowed to create a recipient" → "email is required"
+  → "resposta sem rp_": cada erro DIFERENTE é progresso (o gate caiu, depois a
+  validação, depois o meu bug). Ler a MUDANÇA da mensagem guia o próximo passo.
+- Aceitar ambos os prefixos (`/^r[ep]_/`) cobre o real (`re_`) + mock/legado
+  (`rp_`) sem quebrar nada.
+
+## 2026-07-21 — deploy.mjs do racha: push ANTES do deploy (gitSource)
+`scripts/deploy.mjs` deploya `origin/main` (o gitSource sobe o que está no
+GitHub). `git commit && node scripts/deploy.mjs` SEM push no meio deploya o
+commit ANTERIOR — tropecei 2x na mesma sessão (o dump de diagnóstico não
+aparecia porque o deploy era do commit velho). Fix: o deploy.mjs agora faz
+`git push origin HEAD:main` antes de resolver o sha. Regra geral: se um script
+de deploy usa a ref remota, ele tem que garantir que a ref remota está em dia.
