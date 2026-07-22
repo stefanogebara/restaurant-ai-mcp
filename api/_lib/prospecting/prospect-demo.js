@@ -20,6 +20,7 @@
 const crypto = require('crypto');
 const { supabaseAdmin } = require('../supabase');
 const { createSecureLogger } = require('../secure-logger');
+const { getProfile } = require('./prospect-product');
 
 const logger = createSecureLogger('ProspectDemo');
 
@@ -172,10 +173,16 @@ function previaUrl(token) {
 function previaLinkInHistory(history) {
   if (!Array.isArray(history)) return null;
   const re = /https?:\/\/[^\s]*\/previa\/[a-f0-9-]{8,}[^\s]*/i;
+  // Prévia fixa (Racha) não casa com /previa/<uuid>; detecta pelo próprio link.
+  const profile = getProfile();
+  const fixedMarker = profile.previaFixed && profile.previaUrl
+    ? profile.previaUrl.replace(/^https?:\/\//i, '').toLowerCase()
+    : null;
   for (const h of history) {
-    const txt = h && (h.corpo || h.texto || h.body || '');
-    const m = String(txt).match(re);
+    const txt = String((h && (h.corpo || h.texto || h.body)) || '');
+    const m = txt.match(re);
     if (m) return m[0];
+    if (fixedMarker && txt.toLowerCase().includes(fixedMarker)) return profile.previaUrl;
   }
   return null;
 }
@@ -189,6 +196,14 @@ function previaLinkInHistory(history) {
  * @returns {Promise<{ok:true, token:string, url:string} | {ok:false, error:string}>}
  */
 async function criarPreviaDemo(leadId) {
+  // Prévia FIXA (Racha wedge): o demo interativo é o mesmo link pra todo lead —
+  // a pessoa paga uma conta de mentira pelo QR, do celular, em ~10s. Não gera
+  // página por-restaurante (sem 2ª chamada ao Places, sem insert). Flipar pro
+  // Seatable (PROSPECTING_PRODUCT=seatable) restaura a geração por-restaurante.
+  const profile = getProfile();
+  if (profile.previaFixed) {
+    return { ok: true, token: null, url: profile.previaUrl, fixed: true };
+  }
   try {
     const { data: lead, error: leadErr } = await supabaseAdmin
       .from('prospect_leads')

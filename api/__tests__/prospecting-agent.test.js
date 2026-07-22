@@ -186,12 +186,16 @@ describe('BR owner-number / email extraction', () => {
 describe('buildSystemPrompt', () => {
   const lead = { name: 'Cantina Bella', city: 'São Paulo', sector: 'restaurante italiano' };
 
-  test('is deterministic and Seatable-branded', () => {
+  test('is deterministic and product-branded (default: Racha)', () => {
+    // Persona brand comes from the active product profile (PROSPECTING_PRODUCT,
+    // default 'racha'); assert against it so the test survives either product.
+    const { getProfile } = require('../_lib/prospecting/prospect-product');
+    const profile = getProfile();
     const a = buildSystemPrompt(lead, descreverAgora(Date.parse('2026-06-25T17:00:00Z')));
     const b = buildSystemPrompt(lead, descreverAgora(Date.parse('2026-06-25T17:00:00Z')));
     expect(a).toBe(b);
-    expect(a).toMatch(/Seatable/);
-    expect(a).toMatch(/seatable\.one/);
+    expect(a).toContain(profile.company);
+    expect(a).toContain(profile.site);
     expect(a).toMatch(/Cantina Bella/);
     expect(a).toMatch(/São Paulo/);
   });

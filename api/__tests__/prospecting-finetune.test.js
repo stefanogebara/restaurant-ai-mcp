@@ -179,12 +179,15 @@ describe('buildSystemPrompt — restored fine-tuning depth', () => {
     expect(prompt).toMatch(/pule a small/);
   });
 
-  test('product block: full AI-CRM value map, not reservations-only', () => {
-    expect(prompt).toMatch(/CRM com IA/);
-    expect(prompt).toMatch(/Anti no-show/);
-    expect(prompt).toMatch(/Inteligência de clientes/);
-    expect(prompt).toMatch(/previsão de receita/);
-    expect(prompt).toMatch(/gestor de IA/);
+  test('product block: full pay-at-table value map (Racha default), not one-liner', () => {
+    // Default product is Racha (pagar na mesa por QR); the value map leads with
+    // it. Flip to Seatable (PROSPECTING_PRODUCT=seatable) restores the CRM map —
+    // covered in prospecting-product-profile.test.js.
+    expect(prompt).toMatch(/pagar a conta na mesa/i);
+    expect(prompt).toMatch(/Mesa vira mais rápido/);
+    expect(prompt).toMatch(/split automático/);
+    expect(prompt).toMatch(/gorjeta/i);
+    expect(prompt).toMatch(/Zero fricção/);
   });
 
   test('product block: pitch is routed by pain, never the whole list', () => {

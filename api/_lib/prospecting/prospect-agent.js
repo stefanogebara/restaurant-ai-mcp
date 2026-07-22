@@ -20,13 +20,17 @@ const { createSecureLogger } = require('../secure-logger');
 const { descreverAgora } = require('./prospect-state');
 const { formatarMemoria } = require('./prospect-facts');
 const { consumeLlmCall } = require('./prospect-llm-budget');
+const { getProfile } = require('./prospect-product');
 
 const logger = createSecureLogger('ProspectAgent');
 
 // Persona is configurable so the same code can run a differently-branded agent.
 const AGENT_NAME = process.env.PROSPECTING_AGENT_NAME || 'Olímpia';
-const COMPANY = 'Seatable';
-const SITE = 'seatable.one';
+// Produto vendido (Racha por padrão, wedge; Seatable via PROSPECTING_PRODUCT=seatable).
+// A cópia específica de produto (o-que-faz, objetivo, prévia, porta) vem daqui.
+const PROFILE = getProfile();
+const COMPANY = PROFILE.company;
+const SITE = PROFILE.site;
 // Social proof (real customer names ONLY). Empty by default — Seatable is early,
 // and the #1 anti-invention rule is "never invent a customer case". When you have
 // real references, set PROSPECTING_CASES="Restaurante X, Bar Y".
@@ -82,12 +86,12 @@ function buildSystemPrompt(lead, agoraDescricao, styleBody = null) {
     : [];
 
   return [
-    `Você é a ${AGENT_NAME}, da ${COMPANY} (${SITE}). Você fala português do Brasil, com`,
+    `Você é a ${AGENT_NAME}, ${PROFILE.daCompany} (${SITE}). Você fala português do Brasil, com`,
     'tom caloroso, leve e natural, como uma pessoa de verdade no WhatsApp, não um robô.',
     'Mensagens curtas (1 a 3 frases), sem jargão, sem soar script. Use o primeiro nome',
     'da pessoa quando souber. Você não levanta o assunto de ser IA por conta própria; mas se',
     'perguntarem DIRETO ("é robô?", "é atendimento automático?"), NÃO minta: responda leve,',
-    `em meia linha — "sou a ${AGENT_NAME}, assistente virtual da ${COMPANY} 🙂" — e siga a`,
+    `em meia linha — "sou a ${AGENT_NAME}, assistente virtual ${PROFILE.daCompany} 🙂" — e siga a`,
     'conversa no mesmo fôlego. Ser pega negando vira "golpe" na cabeça de quem pergunta;',
     'a naturalidade vende, o disfarce não. Nunca finja ser humana quando perguntarem.',
     '',
@@ -103,21 +107,7 @@ function buildSystemPrompt(lead, agoraDescricao, styleBody = null) {
     '- Depois de UMA tentativa sem engajamento real, encerre com leveza e se ponha à disposição.',
     '  Não reformule a mesma oferta de outro jeito só pra continuar — isso é o que irrita.',
     '',
-    `O QUE A ${COMPANY.toUpperCase()} FAZ: um CRM com IA feito pra restaurante — bem mais que`,
-    'reserva. Os módulos (é o seu repertório de venda, NÃO um roteiro pra recitar):',
-    '- Atendimento por IA no WhatsApp e no telefone (voz), 24h: responde na hora e anota a',
-    '  reserva sozinho — ninguém mais perde cliente por demora ou telefone ocupado.',
-    '- Anti no-show: confirmação e lembrete automáticos (e sinal/depósito, se o restaurante',
-    '  quiser) — mesa vazia vira mesa vendida.',
-    '- Inteligência de clientes: histórico e preferências de cada cliente, quem é VIP, quem',
-    '  está sumido há tempo — e campanhas automáticas pra trazer essa galera de volta.',
-    '- Visão de dono: previsão de receita, relatórios comparativos e um gestor de IA que manda',
-    '  resumo diário e alertas (no-show alto, cancelamento em cima da hora) no WhatsApp do dono.',
-    '- Painel do salão em tempo real: mesas, fila de espera e reservas num lugar só.',
-    'COMO VENDER: escute qual é a maior dor da pessoa e conecte com O módulo que resolve ELA —',
-    'um por mensagem, em linguagem simples. Se a dor ainda não apareceu, pergunte (ex.: "o que',
-    'mais dá trabalho por aí: telefone tocando na correria, gente que some sem avisar, ou',
-    'trazer cliente de volta?"). NUNCA despeje a lista inteira de uma vez.',
+    ...PROFILE.oQueFaz,
     '',
     ...blocoCases,
     'CONTEXTO DESTE LEAD:',
@@ -129,11 +119,7 @@ function buildSystemPrompt(lead, agoraDescricao, styleBody = null) {
     `- Segmento: ${lead.sector || 'restaurante'}`,
     '',
     ...formatarMemoria(lead.conversa_fatos, lead.conversa_resumo),
-    'SEU OBJETIVO: descobrir se quem responde é o dono/gerente e MOSTRAR VALOR NA HORA com',
-    'a PRÉVIA (ferramenta criar_demo) — uma página do restaurante DELE, montada pelo sistema',
-    'com os dados públicos do Google, que custa um toque pra abrir. A call de 30 min é o',
-    'passo SEGUINTE, depois que a pessoa viu a prévia (ou se ELA pedir direto). Pedir call',
-    'antes de mostrar valor é o que menos converte — mostre primeiro, convide depois.',
+    ...PROFILE.objetivo,
     '',
     'QUALIFICAÇÃO — NUNCA PERGUNTE DUAS VEZES: se a pessoa já disse ou deu a entender que é',
     'dono/gerente ("sou eu", "sou o dono", "pode falar comigo", "é comigo mesmo"), considere',
@@ -187,15 +173,7 @@ function buildSystemPrompt(lead, agoraDescricao, styleBody = null) {
     '   UMA vez, ao conjunto — nunca responda bolha por bolha nem comece a responder a',
     '   primeira sem considerar as seguintes.',
     '',
-    'PRÉVIA (seu principal movimento de venda):',
-    '- Ao PRIMEIRO sinal de interesse ou curiosidade ("como funciona?", "quer?", "manda",',
-    '  "pode ser", "me explica melhor", pedido de material) — chame criar_demo. O SISTEMA',
-    '  monta a página e cola o link real; você NUNCA escreve link nenhum você mesma.',
-    '- Depois de enviar a prévia, NÃO empilhe pergunta em cima: deixe a pessoa olhar. Se ela',
-    '  reagir bem ("gostei", "que legal", "como funciona de verdade?"), AÍ proponha a conversa',
-    '  rápida. Uma prévia por conversa — se o link já foi mandado, não repita.',
-    '- Objeção de tempo/ceticismo ("tô ocupado", "manda material", "não conheço") é EXATAMENTE',
-    '  o caso da prévia: custa um toque, não uma reunião.',
+    ...PROFILE.previaMove,
     '',
     'AGENDAMENTO (o passo seguinte à prévia):',
     '8. Quando o lead topar a demo, NÃO proponha horários você mesma e NÃO invente',
@@ -216,7 +194,7 @@ function buildSystemPrompt(lead, agoraDescricao, styleBody = null) {
     '   com a pessoa indicada). NÃO volte a perguntar "você é o responsável?" pra quem acabou',
     '   de repassar outro contato — é contraditório e parece que você não leu o que mandaram.',
     '',
-    `CONTATO DO FUNDADOR: o fundador da ${COMPANY} atende direto no WhatsApp ${FOUNDER_WHATSAPP}.`,
+    `CONTATO DO FUNDADOR: o fundador ${PROFILE.daCompany} atende direto no WhatsApp ${FOUNDER_WHATSAPP}.`,
     '11. SEMPRE que a pessoa pedir pra falar com um humano/alguém da empresa, pedir telefone',
     '   ou contato, dizer que quer (ou que alguém vai) entrar em contato, OU te indicar o',
     '   dono/responsável (com ou sem número), inclua esse contato na resposta, com',
@@ -374,8 +352,8 @@ const PROSPECT_TOOLS = [
 const COMPANION_TEXT = {
   optout: 'entendido, não te mando mais nada — obrigada pelo tempo 🙏',
   handoff: `boa pergunta — vou confirmar direitinho com o time e te retorno 🙂 se preferir falar direto com o fundador, esse é o número dele: ${FOUNDER_WHATSAPP}`,
-  porta: 'oi! não é pedido não — é sobre parceria 🙂 quem cuida das reservas ou parcerias por aí?',
-  previa: 'consigo te mostrar isso na prática — montei uma prévia rápida com os dados de vocês do Google 🙂',
+  porta: PROFILE.porta,
+  previa: PROFILE.previaCompanion,
   registrar: (nome) => (nome
     ? `perfeito, obrigada! já chamo ${nome} então 🙂 e caso ${nome} queira falar direto com o fundador, esse é o número dele: ${FOUNDER_WHATSAPP}`
     : `perfeito, obrigada pela indicação! já entro em contato então 🙂 e caso a pessoa queira falar direto com o fundador, esse é o número dele: ${FOUNDER_WHATSAPP}`),
