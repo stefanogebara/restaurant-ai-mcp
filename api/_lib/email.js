@@ -711,12 +711,18 @@ async function sendRachaRecipientStatusEmail({ ownerEmail, venueName, status, re
         e reenvie no painel. Qualquer dúvida, é só responder aqui.
       </p>`;
   try {
-    await resend.emails.send({ from: FROM_ADDRESS, to: ownerEmail, subject, html: wrapEmailHtml(body) });
-    logger.info('Racha recipient status email sent', { status });
+    // O SDK do Resend NÃO lança em erro de API — devolve { data, error }. Sem
+    // checar o error, "enviado" viraria mentira (falso positivo). Checa e propaga.
+    const { data, error } = await resend.emails.send({ from: FROM_ADDRESS, to: ownerEmail, subject, html: wrapEmailHtml(body) });
+    if (error) {
+      logger.error('Resend recusou o e-mail do recebedor', { error: error.message || error.name || String(error) });
+      throw new Error(`resend: ${error.message || error.name || 'erro desconhecido'}`);
+    }
+    logger.info('Racha recipient status email sent', { status, id: data && data.id });
     return true;
   } catch (err) {
     logger.error('Failed to send racha recipient email', { error: err.message });
-    return false;
+    throw err; // deixa o endpoint reportar 'failed:<motivo>' — nunca mascara como enviado
   }
 }
 
