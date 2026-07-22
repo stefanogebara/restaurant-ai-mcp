@@ -49,6 +49,10 @@
       "destination": "/api/prospect-dispatch.js"
     },
     {
+      "source": "/api/racha-notify",
+      "destination": "/api/racha-notify.js"
+    },
+    {
       "source": "/api/prospect-enrich",
       "destination": "/api/prospect-enrich.js"
     },

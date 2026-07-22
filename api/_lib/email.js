@@ -683,6 +683,43 @@ async function sendReservationModificationEmail({
   }
 }
 
+/**
+ * Racha: avisa o dono quando o recebedor (Pagar.me) muda de status no KYC —
+ * aprovado (active) ou recusado. Disparado pelo /api/racha-notify (o Racha
+ * detecta a virada; a Olímpia entrega). Fire-and-forget: loga e devolve bool.
+ */
+async function sendRachaRecipientStatusEmail({ ownerEmail, venueName, status, reason }) {
+  const resend = getResendClient();
+  if (!resend) { logger.warn('RESEND_API_KEY not set, skipping racha recipient email'); return false; }
+  if (!ownerEmail) return false;
+  const nome = venueName || 'seu restaurante';
+  const aprovado = status === 'active';
+  const subject = aprovado ? `Recebimento aprovado — ${nome}` : `Recebimento não aprovado — ${nome}`;
+  const body = aprovado
+    ? `
+      <h2 style="color:#1C1917;">Seu recebimento foi aprovado ✅</h2>
+      <p style="color:#44403C; font-size:16px; line-height:1.6;">
+        O cadastro de recebimento do <strong>${he(nome)}</strong> foi aprovado no Racha.
+        A partir de agora, cada conta paga pelas mesas cai <strong>direto na sua conta</strong>,
+        com o repasse automático. É só começar a usar os QRs.
+      </p>`
+    : `
+      <h2 style="color:#1C1917;">Recebimento não aprovado</h2>
+      <p style="color:#44403C; font-size:16px; line-height:1.6;">
+        O cadastro de recebimento do <strong>${he(nome)}</strong> não foi aprovado pelo Pagar.me.${reason ? ` Motivo: ${he(String(reason))}.` : ''}
+        Confira os dados bancários — o titular da conta tem que bater com o CNPJ/CPF informado —
+        e reenvie no painel. Qualquer dúvida, é só responder aqui.
+      </p>`;
+  try {
+    await resend.emails.send({ from: FROM_ADDRESS, to: ownerEmail, subject, html: wrapEmailHtml(body) });
+    logger.info('Racha recipient status email sent', { status });
+    return true;
+  } catch (err) {
+    logger.error('Failed to send racha recipient email', { error: err.message });
+    return false;
+  }
+}
+
 module.exports = {
   sendPaymentReceiptEmail,
   sendPaymentFailedEmail,
@@ -694,5 +731,6 @@ module.exports = {
   sendReservationModificationEmail,
   sendInviteEmail,
   sendReferralRewardEmail,
+  sendRachaRecipientStatusEmail,
   wrapEmailHtml,
 };
