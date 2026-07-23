@@ -13,6 +13,9 @@
  *   POST /api/prospect-admin?action=pause      { lead_id }  → state 'pausada'
  *   POST /api/prospect-admin?action=reactivate { lead_id }  → state 'conversando'
  *   POST /api/prospect-admin?action=optout     { lead_id }  → suppression + 'optout'
+ *   POST /api/prospect-admin?action=won        { lead_id }  → state 'ganho' (closed
+ *        won, terminal + silent — stops the cold-handoff reclaim from re-warming
+ *        a customer; 'reactivate' is the undo).
  *   POST /api/prospect-admin?action=send       { lead_id, texto, keep_active? }
  *        → operator message from the prospecting number; pauses the agent for
  *          that lead by default (human takeover), 24h-window enforced.
@@ -34,6 +37,7 @@ const {
   listProspectLeads, getProspectLeadWithMessages, patchLead, recordOptout,
   storeMessage, loadLastInbound, recordEvent, recordNote, updateIntent,
   listTemplates, upsertTemplate, listCanned, upsertCanned, deleteCanned,
+  markLeadWon,
 } = require('./_lib/prospecting/prospect-store');
 const { INTENTS } = require('./_lib/prospecting/prospect-reflect');
 const { numberHealth } = require('./_lib/prospecting/prospect-receipts');
@@ -330,6 +334,34 @@ module.exports = async (req, res) => {
       return res.status(200).json({
         success: true,
         data: { ...detail, bucket: statusBucket(detail.lead), can_free_text: canFreeText },
+      });
+    }
+
+    // ---- Closed won: the founder marks a lead he closed (usually offline) -----
+    // Without this the lead sits in 'handoff' forever and the cold-handoff
+    // reclaim sweep re-warms a paying customer with a sales template. 'ganho' is
+    // terminal + silent; "Reativar" is the undo.
+    if (req.method === 'POST' && action === 'won') {
+      const leadId = (req.body && req.body.lead_id) ? String(req.body.lead_id) : null;
+      if (!leadId) return res.status(400).json({ success: false, error: 'lead_id required' });
+
+      const result = await markLeadWon(leadId);
+      if (!result.ok) {
+        const status = result.reason === 'nao_encontrado' ? 404 : result.reason === 'erro' ? 500 : 409;
+        const errors = {
+          nao_encontrado: 'Lead not found',
+          optout: 'Lead pediu pra sair (LGPD) — não pode ser marcado como fechado',
+          conflito: 'Estado do lead mudou — recarregue e tente de novo',
+        };
+        return res.status(status).json({ success: false, error: errors[result.reason] || 'Falhou' });
+      }
+      if (result.updated) {
+        await recordEvent(leadId, `🏆 marcado como FECHADO por ${email} — Olímpia encerrada neste lead`);
+        logger.info(`prospect-admin WON lead=${leadId} by=${email}`);
+      }
+      return res.status(200).json({
+        success: true,
+        data: { lead_id: leadId, state: 'ganho', already: result.already },
       });
     }
 

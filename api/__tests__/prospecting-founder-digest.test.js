@@ -99,6 +99,33 @@ describe('founder-digest compose', () => {
     expect(describeAge(lead({ updated_at: new Date(NOW - 6 * DAY).toISOString(), last_in_at: null }), NOW)).toBe('há 6 dias');
   });
 
+  test('one-tap "Já fechei" link per lead when a signer is injected', () => {
+    const out = buildFounderDigestEmail({
+      leads: [lead({ id: 'L1' }), lead({ id: 'L2' })],
+      nowMs: NOW, profile: stubProfile,
+      closeUrlFor: (l) => `https://seatable.one/api/prospect-close?t=tok-${l.id}`,
+    });
+    expect(out.items.map((i) => i.closeUrl)).toEqual([
+      'https://seatable.one/api/prospect-close?t=tok-L1',
+      'https://seatable.one/api/prospect-close?t=tok-L2',
+    ]);
+    expect(out.html).toContain('Já fechei');
+    expect(out.html).toContain('t=tok-L1');
+    expect((out.text.match(/Já fechei: https/g) || []).length).toBe(2);
+  });
+
+  test('no signer (or unsignable lead) → no button, digest still builds', () => {
+    const plain = buildFounderDigestEmail({ leads: [lead()], nowMs: NOW, profile: stubProfile });
+    expect(plain.items[0].closeUrl).toBeNull();
+    expect(plain.html).not.toContain('Já fechei');
+
+    const unsignable = buildFounderDigestEmail({
+      leads: [lead()], nowMs: NOW, profile: stubProfile, closeUrlFor: () => null,
+    });
+    expect(unsignable.items[0].closeUrl).toBeNull();
+    expect(unsignable.html).toContain('Abrir no WhatsApp'); // the wa.me CTA survives
+  });
+
   test('escapes HTML in lead-provided fields (no injection)', () => {
     const out = buildFounderDigestEmail({
       leads: [lead({ name: '<script>x</script>', conversa_resumo: 'a & b' })],
@@ -114,7 +141,7 @@ describe('elegivelParaReclaim', () => {
   const cold = HANDOFF_RECLAIM_MS;
 
   test('non-handoff states are never reclaimed', () => {
-    for (const s of ['conversando', 'agendando', 'agendado', 'optout', 'pausada', 'aguardando']) {
+    for (const s of ['conversando', 'agendando', 'agendado', 'optout', 'pausada', 'aguardando', 'ganho']) {
       expect(elegivelParaReclaim({ state: s, lastMsgDirecao: 'out', nowMs: NOW }).eligible).toBe(false);
     }
   });

@@ -11,6 +11,7 @@
 const { supabaseAdmin } = require('../supabase');
 const { createSecureLogger } = require('../secure-logger');
 const { brCandidates, toE164 } = require('./phone');
+const { WON_STATE } = require('./prospect-state'); // pure module — no cycle
 
 const logger = createSecureLogger('ProspectStore');
 
@@ -1031,12 +1032,68 @@ async function reclaimHandoffToConversando(leadId) {
   }
 }
 
+// ---- Closed won ------------------------------------------------------------
+
+/**
+ * Mark a lead as CLOSED WON ('ganho' — terminal + silent).
+ *
+ * The founder usually closes offline (the digest's wa.me link), so nothing in
+ * the pipeline knows. Left in 'handoff' the lead is both invisible (no selector
+ * takes it) and at risk: the cold-handoff reclaim would flip it back to
+ * 'conversando' and re-warm a paying customer with a sales template. This is the
+ * one-tap that ends the conversation honestly — from the cockpit or the digest's
+ * signed link.
+ *
+ * Pre-reads the current state so the caller can tell "already won" from a real
+ * transition (the DB trigger only records an outcome on a CHANGE, so a repeat tap
+ * must not log a duplicate event either). Refuses opt-out leads: LGPD wins, and
+ * the optout-terminal trigger would revert the write anyway.
+ *
+ * Clears the proactive rails (next_touch_at / nudge_em / reply_apos) — belt and
+ * braces, since every selector already whitelists active states.
+ *
+ * @param {string} leadId
+ * @returns {Promise<{ok:boolean, updated:boolean, already:boolean, reason:string|null, lead:object|null}>}
+ */
+async function markLeadWon(leadId) {
+  const fail = (reason, lead = null) => ({ ok: false, updated: false, already: false, reason, lead });
+  try {
+    const { data: before, error: readErr } = await supabaseAdmin
+      .from('prospect_leads').select('id, name, prospect_state').eq('id', leadId).single();
+    if (readErr || !before) return fail('nao_encontrado');
+    if (before.prospect_state === 'optout') return fail('optout', before);
+    if (before.prospect_state === WON_STATE) {
+      return { ok: true, updated: false, already: true, reason: null, lead: before };
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from('prospect_leads')
+      .update({
+        prospect_state: WON_STATE,
+        status: 'cliente',
+        next_touch_at: null,
+        nudge_em: null,
+        reply_apos: null,
+      })
+      .eq('id', leadId)
+      .neq('prospect_state', 'optout') // concurrent LGPD stop wins the race
+      .select('id, name, prospect_state');
+    if (error) { logger.error('markLeadWon failed:', error.message); return fail('erro', before); }
+    if (!Array.isArray(data) || data.length !== 1) return fail('conflito', before);
+    return { ok: true, updated: true, already: false, reason: null, lead: data[0] };
+  } catch (err) {
+    logger.error('markLeadWon exception:', err.message);
+    return fail('erro');
+  }
+}
+
 module.exports = {
   isOptedOut,
   findLeadByPhone,
   selectFounderHandoffQueue,
   selectHandoffLeads,
   reclaimHandoffToConversando,
+  markLeadWon,
   storeMessage,
   loadHistory,
   patchLead,

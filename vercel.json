@@ -64,6 +64,10 @@
       "destination": "/api/prospect-admin.js"
     },
     {
+      "source": "/api/prospect-close",
+      "destination": "/api/prospect-close.js"
+    },
+    {
       "source": "/api/prospect-discovery-worker",
       "destination": "/api/prospect-discovery-worker.js"
     },

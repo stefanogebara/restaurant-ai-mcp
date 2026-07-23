@@ -95,16 +95,20 @@ export interface Insights {
 
 export const BUCKET_LABEL: Record<string, string> = {
   pending: 'Na fila', sent: 'Recebeu mensagem', seen: 'Visualizou', replied: 'Respondeu',
-  scheduling: 'Marcando reunião', booked: 'Reunião marcada', handoff: 'Precisa de você',
-  optout: 'Pediu pra sair', failed: 'Não entregue',
+  scheduling: 'Marcando reunião', booked: 'Reunião marcada', won: 'Fechado 🏆',
+  handoff: 'Precisa de você', optout: 'Pediu pra sair', failed: 'Não entregue',
 };
 
 export const BUCKET_CLASS: Record<string, string> = {
+  won: 'bg-emerald-600 text-white',
   booked: 'bg-emerald-100 text-emerald-800', replied: 'bg-emerald-100 text-emerald-800',
   scheduling: 'bg-sky-100 text-sky-800', seen: 'bg-sky-100 text-sky-800',
   sent: 'bg-stone-100 text-stone-700', pending: 'bg-stone-100 text-stone-600',
   handoff: 'bg-amber-100 text-amber-800', optout: 'bg-rose-100 text-rose-800', failed: 'bg-rose-100 text-rose-800',
 };
+
+/** Deals/conversations that are over — never in the work queue. */
+export const TERMINAL_BUCKETS = ['won', 'optout'];
 
 export const INTENT_LABEL: Record<string, string> = {
   interessado: 'Interessado', pergunta: 'Pergunta', objecao_preco: 'Objeção preço',
@@ -127,6 +131,7 @@ export const INTENTS = Object.keys(INTENT_LABEL);
 
 /** Triage priority: who the operator should look at first. Lower = higher. */
 export function triagePriority(lead: ProspectLead, nowMs: number): number {
+  if (TERMINAL_BUCKETS.includes(lead.bucket)) return 99; // closed — nothing to do
   if (lead.snoozed_until && new Date(lead.snoozed_until).getTime() > nowMs) return 90; // parked
   if (lead.bucket === 'handoff' || lead.last_intent === 'quer_humano') return 0;
   if (lead.last_intent === 'interessado') return 1;

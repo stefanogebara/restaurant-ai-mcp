@@ -34,6 +34,13 @@ describe('triagePriority — operator queue ordering', () => {
     expect(c).toBeLessThan(d);
   });
 
+  it('closed deals sink below everything, snooze included', () => {
+    const won = lead({ bucket: 'won', last_intent: 'quer_humano' });
+    expect(triagePriority(won, NOW)).toBeGreaterThan(90);
+    const optedOut = lead({ bucket: 'optout', last_intent: 'interessado' });
+    expect(triagePriority(optedOut, NOW)).toBeGreaterThan(90);
+  });
+
   it('snoozed leads sink regardless of intent', () => {
     const snoozed = lead({ last_intent: 'quer_humano', snoozed_until: new Date(NOW + HOUR).toISOString() });
     expect(triagePriority(snoozed, NOW)).toBeGreaterThan(50);

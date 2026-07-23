@@ -98,9 +98,12 @@ function orderLeads(leads, nowMs) {
  * @param {string} [args.founderName]
  * @param {number} [args.reclaimDays] - days until Olímpia auto-reclaims a cold
  *   handoff (shown as urgency); 0/absent hides the note.
+ * @param {(lead: object) => string|null} [args.closeUrlFor] - builds the signed
+ *   one-tap "já fechei" URL for a lead. Injected (not imported) to keep this
+ *   module pure; absent/returning null simply omits the button.
  * @returns {{ subject: string, html: string, text: string, count: number, items: Array }}
  */
-function buildFounderDigestEmail({ leads = [], nowMs = Date.now(), profile = getProfile(), founderName = FOUNDER_NAME, reclaimDays = 0 } = {}) {
+function buildFounderDigestEmail({ leads = [], nowMs = Date.now(), profile = getProfile(), founderName = FOUNDER_NAME, reclaimDays = 0, closeUrlFor = null } = {}) {
   const ordered = orderLeads(leads, nowMs);
   const count = ordered.length;
   const company = profile.company;
@@ -117,6 +120,9 @@ function buildFounderDigestEmail({ leads = [], nowMs = Date.now(), profile = get
       || (lead.handoff_motivo && String(lead.handoff_motivo).trim()) || null,
     phone: lead.whatsapp_phone || null,
     link: waCloseLink(lead, { profile, founderName }),
+    // One-tap "já fechei": the ONLY thing that stops Olímpia from reclaiming this
+    // lead once the founder closes it offline.
+    closeUrl: typeof closeUrlFor === 'function' ? (closeUrlFor(lead) || null) : null,
   }));
 
   const subject = count === 1
@@ -135,6 +141,11 @@ function buildFounderDigestEmail({ leads = [], nowMs = Date.now(), profile = get
     const phoneBit = it.phone
       ? `<span style="color:#A8A29E;font-size:12px;">${esc(it.phone)}</span>`
       : '';
+    // Secondary action, deliberately quieter than the green WhatsApp button: the
+    // founder taps it AFTER closing, and it's what keeps Olímpia off a customer.
+    const closeBit = it.closeUrl
+      ? `<a href="${esc(it.closeUrl)}" style="display:inline-block;margin-top:10px;margin-left:8px;background:#F5F5F4;color:#44403C;text-decoration:none;font-weight:600;font-size:14px;padding:9px 16px;border-radius:8px;border:1px solid #E7E5E4;">🏆 Já fechei</a>`
+      : '';
     return `
       <div style="border:1px solid #E7E5E4;border-radius:12px;padding:16px;margin-bottom:12px;">
         <div style="display:flex;justify-content:space-between;align-items:baseline;">
@@ -142,7 +153,7 @@ function buildFounderDigestEmail({ leads = [], nowMs = Date.now(), profile = get
         </div>
         <p style="margin:4px 0 0;color:#78716C;font-size:13px;">${esc(stateLabel(it.state))} · esperando ${esc(it.age)}</p>
         ${resumoBit}
-        <div style="margin-top:10px;">${button}</div>
+        <div style="margin-top:10px;">${button}${closeBit}</div>
         <div style="margin-top:6px;">${phoneBit}</div>
       </div>`;
   }).join('');
@@ -151,8 +162,8 @@ function buildFounderDigestEmail({ leads = [], nowMs = Date.now(), profile = get
     ? `<p style="color:#A8A29E;font-size:12px;line-height:1.5;margin-top:20px;">
          Leads que a Olímpia passou pra você. Se você não fechar, ela retoma a conversa
          automaticamente depois de ${reclaimDays} dias — então é agora que vale o seu toque.
-         Fechou (ou perdeu) por fora? Marque o lead como <strong>pausado</strong> no painel
-         pra ela não retomar.
+         Fechou por fora? Toque em <strong>Já fechei</strong> — o lead sai da fila e ela não
+         retoma. Perdeu ou não é hora? Marque como <strong>pausado</strong> no painel.
        </p>`
     : '';
 
@@ -179,10 +190,11 @@ function buildFounderDigestEmail({ leads = [], nowMs = Date.now(), profile = get
     if (it.resumo) textLines.push(`   ${it.resumo}`);
     if (it.link) textLines.push(`   ${it.link}`);
     else if (it.phone) textLines.push(`   ${it.phone}`);
+    if (it.closeUrl) textLines.push(`   Já fechei: ${it.closeUrl}`);
     textLines.push('');
   });
   if (reclaimDays > 0) {
-    textLines.push(`(A Olímpia retoma sozinha o que não for fechado em ${reclaimDays} dias.)`);
+    textLines.push(`(A Olímpia retoma sozinha o que não for fechado em ${reclaimDays} dias. Fechou? Use o link "Já fechei".)`);
   }
 
   return { subject, html, text: textLines.join('\n'), count, items };
