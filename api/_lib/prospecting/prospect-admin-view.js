@@ -11,10 +11,13 @@
  * Single honest status bucket for a lead. Conversation state wins over raw send
  * status (a booked/opted-out lead is that, regardless of the last send ladder).
  * @param {{prospect_state?: string, whatsapp_send_status?: string|null}} lead
- * @returns {'booked'|'optout'|'handoff'|'scheduling'|'replied'|'seen'|'sent'|'failed'|'pending'}
+ * @returns {'won'|'booked'|'optout'|'handoff'|'scheduling'|'replied'|'seen'|'sent'|'failed'|'pending'}
  */
 function statusBucket(lead) {
   const state = lead && lead.prospect_state;
+  // 'ganho' outranks everything: a closed customer is not "booked" or "handoff",
+  // and the funnel should never show a win as an open conversation.
+  if (state === 'ganho') return 'won';
   if (state === 'agendado') return 'booked';
   if (state === 'optout') return 'optout';
   if (state === 'handoff') return 'handoff';
@@ -32,7 +35,7 @@ function statusBucket(lead) {
   }
 }
 
-const BUCKETS = ['pending', 'sent', 'seen', 'replied', 'scheduling', 'booked', 'handoff', 'optout', 'failed'];
+const BUCKETS = ['pending', 'sent', 'seen', 'replied', 'scheduling', 'booked', 'won', 'handoff', 'optout', 'failed'];
 
 /**
  * Count leads per bucket (funnel summary for the cockpit header).

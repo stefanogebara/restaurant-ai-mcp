@@ -232,10 +232,21 @@ tuning loop: run scenarios ─▶ read scores ─▶ edit style-pack DRAFT ─�
 `GET  ?action=list | lead | overview | insights | variants | canned |
       discovery-status | gym | gym-run | wa-identity`
 `POST ?action=send | note | snooze | intent | pause | reactivate | optout |
-      agent | dispatch-resume | discover | discovery-job | discovery-cancel |
-      dispatch | template-create | template-upsert | wa-profile |
-      canned-upsert | canned-delete | gym-exercise | style-pack-save |
-      style-pack-activate`
+      won | agent | dispatch-resume | discover | discovery-job |
+      discovery-cancel | dispatch | template-create | template-upsert |
+      wa-profile | canned-upsert | canned-delete | gym-exercise |
+      style-pack-save | style-pack-activate`
+
+`?action=won` closes a lead as **ganho** (terminal + silent). Deals are usually
+closed offline via the digest's wa.me link, so nothing in the pipeline knew —
+the lead stayed in `handoff` and the cold-handoff reclaim would re-warm a paying
+customer with a sales template. `ganho` drops the lead from every proactive
+selector and from the founder digest; `reactivate` is the undo.
+
+The daily digest carries the same one-tap as a signed link
+(`/api/prospect-close?t=…`, HMAC over lead id + expiry — no session exists in an
+inbox). GET only renders a confirmation page; the state change needs the POST,
+so mail-scanner prefetches can't close deals.
 
 ## Crons
 

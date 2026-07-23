@@ -12,7 +12,7 @@
  */
 
 /**
- * @typedef {'aguardando'|'conversando'|'agendando'|'agendado'|'handoff'|'optout'|'pausada'|'recusou'} ProspectState
+ * @typedef {'aguardando'|'conversando'|'agendando'|'agendado'|'handoff'|'optout'|'pausada'|'recusou'|'ganho'} ProspectState
  */
 
 // States in which the agent must STAY SILENT:
@@ -20,7 +20,16 @@
 //   handoff  → a human took over
 //   agendado → demo already booked, conversation closed
 //   pausada  → operator killed the agent on this thread (kill switch). Reversible.
-const SILENT_STATES = new Set(['optout', 'handoff', 'agendado', 'pausada']);
+//   ganho    → CLOSED WON. The founder closed this lead (usually offline, via the
+//              digest's wa.me link) and marked it in the cockpit / one-tap link.
+//              Terminal for the automation: no proactive selector touches it (they
+//              all whitelist active states) and the handoff reclaim only ever
+//              selects 'handoff' — so a won customer can never be re-warmed with a
+//              sales template. Reversible by the operator ("Reativar").
+const SILENT_STATES = new Set(['optout', 'handoff', 'agendado', 'pausada', 'ganho']);
+
+/** Closed-won. The only state the automation never sets — a human declares it. */
+const WON_STATE = 'ganho';
 
 /** The agent only replies in "active" states (null/aguardando/conversando/agendando). */
 function deveResponder(estado) {
@@ -286,6 +295,7 @@ module.exports = {
   pareceAutoAtendimento,
   deveEnviarPorta,
   SILENT_STATES,
+  WON_STATE,
   OPTOUT_PATTERNS,
   deveResponder,
   detectarOptout,

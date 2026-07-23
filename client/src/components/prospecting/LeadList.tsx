@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { GlassCard } from '../common/glass';
 import type { ProspectLead } from './types';
-import { BUCKET_LABEL, BUCKET_CLASS, INTENT_LABEL, INTENT_CLASS, triagePriority, relTime } from './types';
+import { BUCKET_LABEL, BUCKET_CLASS, INTENT_LABEL, INTENT_CLASS, TERMINAL_BUCKETS, triagePriority, relTime } from './types';
 
 /**
  * Lead list (F1): the Triagem tab is the operator's work queue — ordered by
@@ -58,8 +58,11 @@ export function orderForTab(leads: ProspectLead[], tab: 'triagem' | 'todos', buc
   if (tab === 'todos') {
     return bucketFilter ? leads.filter((l) => l.bucket === bucketFilter) : leads;
   }
-  // Triagem: only leads that need eyes — active/attention states, minus snoozed.
+  // Triagem: only leads that need eyes — active/attention states, minus snoozed
+  // and minus closed deals (a lead marked 'ganho' still carries its last intent,
+  // and without this a won customer would sit at the top of the work queue).
   return leads
+    .filter((l) => !TERMINAL_BUCKETS.includes(l.bucket))
     .filter((l) => !isSnoozed(l, nowMs))
     .filter((l) =>
       ['replied', 'scheduling', 'handoff'].includes(l.bucket) ||

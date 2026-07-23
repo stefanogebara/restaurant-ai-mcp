@@ -172,6 +172,9 @@ export default function ThreadView({ leadId, nowMs }: { leadId: string; nowMs: n
             {lead.prospect_state === 'pausada' && (
               <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-xs" title="A Olímpia parou de responder este lead — só você responde por aqui">Olímpia pausada</span>
             )}
+            {lead.prospect_state === 'ganho' && (
+              <span className="px-2 py-0.5 rounded-full bg-emerald-600 text-white text-xs" title="Você fechou este lead — a Olímpia não fala mais com ele e ele sai de todas as filas">Fechado 🏆</span>
+            )}
           </div>
           <p
             className="text-xs text-stone-500 truncate"
@@ -215,6 +218,21 @@ export default function ThreadView({ leadId, nowMs }: { leadId: string; nowMs: n
                 </button>
               )}
             </div>
+          )}
+          {lead.prospect_state !== 'ganho' && lead.prospect_state !== 'optout' && (
+            <button
+              type="button"
+              disabled={act.isPending}
+              onClick={() => {
+                if (window.confirm(`Marcar ${lead.name} como fechado? A Olímpia encerra este lead e ele sai das filas.`)) {
+                  act.mutate({ action: 'won', body: { lead_id: lead.id } });
+                }
+              }}
+              className="px-2.5 py-1 text-xs rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
+              title="Fechei este cliente — a Olímpia para de falar com ele e ele nunca mais entra em disparo, retomada ou lembrete"
+            >
+              Fechei 🏆
+            </button>
           )}
           <button type="button" disabled={act.isPending} onClick={() => act.mutate({ action: 'pause', body: { lead_id: lead.id } })} className="px-2.5 py-1 text-xs rounded-lg bg-amber-100 text-amber-800 hover:bg-amber-200 disabled:opacity-50" title="A Olímpia para de responder este lead até você reativar">Pausar</button>
           <button type="button" disabled={act.isPending} onClick={() => act.mutate({ action: 'reactivate', body: { lead_id: lead.id } })} className="px-2.5 py-1 text-xs rounded-lg bg-stone-100 text-stone-700 hover:bg-stone-200 disabled:opacity-50" title="A Olímpia volta a responder este lead automaticamente">Reativar</button>

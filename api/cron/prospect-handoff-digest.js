@@ -24,6 +24,7 @@ const { logCronRun } = require('../_lib/cron-tracker');
 const { selectFounderHandoffQueue, isOptedOut } = require('../_lib/prospecting/prospect-store');
 const { isFounderNumber } = require('../_lib/prospecting/prospect-agent');
 const { buildFounderDigestEmail } = require('../_lib/prospecting/founder-digest');
+const { closeUrlFor } = require('../_lib/prospecting/prospect-close-token');
 const { HANDOFF_RECLAIM_MS } = require('../_lib/prospecting/prospect-state');
 const { sendProspectDigestEmail } = require('../_lib/email');
 
@@ -65,7 +66,14 @@ module.exports = async (req, res) => {
     }
 
     const reclaimDays = Math.round(HANDOFF_RECLAIM_MS / (24 * 60 * 60 * 1000));
-    const { subject, html, text, count } = buildFounderDigestEmail({ leads, nowMs, reclaimDays });
+    const { subject, html, text, count } = buildFounderDigestEmail({
+      leads,
+      nowMs,
+      reclaimDays,
+      // One-tap "já fechei" per lead: a signed link (no session in an inbox) that
+      // marks the lead 'ganho' so the reclaim sweep never re-warms a closed deal.
+      closeUrlFor: (lead) => closeUrlFor(lead.id, { nowMs }),
+    });
 
     let sent = false;
     try {
