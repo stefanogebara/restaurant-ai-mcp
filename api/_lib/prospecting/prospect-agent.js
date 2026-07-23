@@ -141,8 +141,8 @@ function buildSystemPrompt(lead, agoraDescricao, styleBody = null) {
     'dono/gerente ("sou eu", "sou o dono", "pode falar comigo", "é comigo mesmo"), considere',
     'CONFIRMADO. NÃO volte a perguntar quem é o responsável — irrita e soa robótico. Agradeça',
     'em uma linha e siga DIRETO pra mostrar valor: ofereça a PRÉVIA (criar_demo) se ainda não',
-    'mandou nesta conversa; se a prévia já foi enviada/vista, aí sim combine a conversa rápida',
-    '(pergunte o melhor dia/horário). Só pergunte de novo quem é o responsável se for mesmo',
+    'mandou nesta conversa; se a prévia já foi enviada/vista, siga pro PRÓXIMO PASSO (veja o',
+    'bloco de próximo passo abaixo). Só pergunte de novo quem é o responsável se for mesmo',
     'ambíguo, ou se ela disser que é outra pessoa (aí peça o contato). Olhe o histórico antes.',
     '',
     'REGRAS INEGOCIÁVEIS:',
@@ -191,11 +191,7 @@ function buildSystemPrompt(lead, agoraDescricao, styleBody = null) {
     '',
     ...PROFILE.previaMove,
     '',
-    'AGENDAMENTO (o passo seguinte à prévia):',
-    '8. Quando o lead topar a demo, NÃO proponha horários você mesma e NÃO invente',
-    '   disponibilidade. Pergunte qual dia e horário fica melhor PRA ELE (pergunta aberta)',
-    '   e chame agendar_demo com o que ele disser sobre quando pode. Um humano (ou a agenda)',
-    '   confirma o horário — você nunca diz que a demo está marcada sem essa confirmação.',
+    ...PROFILE.agendamento,
     '',
     'INDICAÇÃO DO RESPONSÁVEL (quando te passam o contato de OUTRA pessoa):',
     '9. Se te indicarem o responsável e vier um número — digitado no texto OU como cartão de',
@@ -220,7 +216,7 @@ function buildSystemPrompt(lead, agoraDescricao, styleBody = null) {
     '',
     'FERRAMENTAS: prefira responder por texto enquanto a conversa avança. Chame uma',
     'ferramenta quando a situação pedir: mostrar valor na hora (criar_demo — seu principal',
-    'movimento), agendar a conversa (agendar_demo), retomar num momento combinado',
+    'movimento), o PRÓXIMO PASSO do fecho (veja o bloco acima), retomar num momento combinado',
     '(agendar_retorno), registrar o responsável, escalar, opt-out, ignorar.',
     ...(styleBody && String(styleBody).trim() ? ['', String(styleBody).trim()] : []),
   ].join('\n');
@@ -298,8 +294,7 @@ const PROSPECT_TOOLS = [
   },
   {
     name: 'criar_demo',
-    description:
-      'Chame quando o lead demonstrar QUALQUER interesse em ver/entender melhor e valer mostrar valor na hora: você monta uma PRÉVIA do restaurante dele (dados públicos do Google — nome, nota, avaliações) e o SISTEMA te devolve o link real pra enviar. Use quando ele topar ("quer?", "manda", "pode ser", "como funciona?") ou pedir material. Custa uma palavra e é a prova anti-golpe. NUNCA escreva link nenhum você mesma — o sistema cola o link real. Uma vez por conversa.',
+    description: PROFILE.previaToolDesc,
     input_schema: { type: 'object', properties: {} },
   },
   {
@@ -340,6 +335,14 @@ const PROSPECT_TOOLS = [
     },
   },
 ];
+
+// Toolset EFETIVO oferecido ao modelo (product-aware). Produtos sem agendamento
+// de call (Racha: PROFILE.agendaDemoTool === false) removem agendar_demo — a
+// agente fica FISICAMENTE incapaz de marcar reunião, além do prompt/style pack
+// já mandarem não marcar. Seatable mantém a ferramenta.
+const EFFECTIVE_TOOLS = PROFILE.agendaDemoTool === false
+  ? PROSPECT_TOOLS.filter((t) => t.name !== 'agendar_demo')
+  : PROSPECT_TOOLS;
 
 /**
  * @typedef {{tipo:'responder', texto:string}
@@ -522,7 +525,7 @@ async function generateReply({ lead, history, nowMs, injectUserTurn = null, noTo
       temperature: 0.6,
       system,
       messages,
-      ...(noTools ? {} : { tools: PROSPECT_TOOLS }),
+      ...(noTools ? {} : { tools: EFFECTIVE_TOOLS }),
     });
     const acao = interpretResponse(response);
 
@@ -550,7 +553,7 @@ async function generateReply({ lead, history, nowMs, injectUserTurn = null, noTo
           temperature: 0.3,
           system,
           messages: [...messages, { role: 'user', content: '[INSTRUÇÃO INTERNA: sua resposta anterior citou um número de telefone que NÃO existe na conversa. Reescreva a resposta copiando números EXATAMENTE como aparecem no histórico — ou sem citar número nenhum.]' }],
-          ...(noTools ? {} : { tools: PROSPECT_TOOLS }),
+          ...(noTools ? {} : { tools: EFFECTIVE_TOOLS }),
         }).catch(() => null);
         const acao2 = retry ? interpretResponse(retry) : null;
         if (acao2 && acao2.texto && findForeignPhones(acao2.texto, contexto).length === 0) {

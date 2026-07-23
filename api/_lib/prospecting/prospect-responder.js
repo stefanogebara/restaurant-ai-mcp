@@ -23,6 +23,7 @@ const { acquireProcessingLock, releaseProcessingLock } = require('../rate-limit'
 const { getProspectingPhoneNumberId } = require('./routing');
 const {
   deveResponder, detectarOptout, detectarRecusaSuave, RECUSA_INSTRUCTION, estadoAposAcao,
+  ecoDeMaquina, PORTEIRO_INSTRUCTION, PORTEIRO_MAX,
 } = require('./prospect-state');
 const { dentroDoHorario, decisaoForaDeHorario } = require('./prospect-hours');
 const { pacingDelayMs, splitReplyParts, partPauseDelayMs } = require('./prospect-pacing');
@@ -458,6 +459,23 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
     //   stronger stop) was already handled above; nudges have no inbound to read.
     const recusaSuave = !isNudge && detectarRecusaSuave(lastInText);
 
+    // 6a-ter. PORTEIRO detector (pre-LLM, deterministic). pareceAutoAtendimento
+    //   existed but was only reachable inside deveEnviarPorta — i.e. the 'ignorar'
+    //   branch. When the model pitched instead (8 of 14 audited threads), the bot
+    //   signal never reached the prompt: she sold to an autoresponder. Now the
+    //   signal gates the turn — stop selling, ask for whoever decides — and after
+    //   PORTEIRO_MAX fruitless asks the lead is parked in 'porteiro', which every
+    //   proactive selector drops (they whitelist active states), so no more
+    //   resgate templates burn against a voicemail.
+    const porteiro = !isNudge && !recusaSuave && ecoDeMaquina(history);
+    const porteiroTentativas = lead.porteiro_tentativas || 0;
+    if (porteiro && porteiroTentativas >= PORTEIRO_MAX) {
+      await patchLead(lead.id, { prospect_state: 'porteiro' });
+      await recordEvent(lead.id, `🚪 só eco de máquina após ${PORTEIRO_MAX} pedidos de decisor — lead parqueado`);
+      logger.info(`[prospect] porteiro park lead=${lead.id}`);
+      return { action: 'skip', reason: 'porteiro_esgotado' };
+    }
+
     // 6b. Deterministic owner-number guardrail (pre-LLM). When the last inbound
     //     contains a shared contact card or a near-bare phone number, force
     //     registrar_responsavel with THAT number — never let the model re-ask
@@ -513,7 +531,11 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
         },
         history,
         nowMs,
-        injectUserTurn: isNudge ? NUDGE_INSTRUCTION : (recusaSuave ? RECUSA_INSTRUCTION : null),
+        // porteiro NÃO entra em noTools de propósito: a instrução manda chamar
+        // registrar_responsavel se um número aparecer na conversa.
+        injectUserTurn: isNudge
+          ? NUDGE_INSTRUCTION
+          : (recusaSuave ? RECUSA_INSTRUCTION : (porteiro ? PORTEIRO_INSTRUCTION : null)),
         noTools: isNudge || recusaSuave,
       });
     }
@@ -526,6 +548,9 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
     // 'conversando'. Only when the turn resolved to a plain reply — a guardrail
     // that fired registrar/agendar means the lead engaged, not declined.
     if (recusaSuave && acao && acao.tipo === 'responder') patch.prospect_state = 'recusou';
+    // Conta o pedido de decisor feito a um porteiro. Ao chegar em PORTEIRO_MAX
+    // sem nenhum humano aparecer, o gate acima parqueia o lead no próximo turno.
+    if (porteiro) patch.porteiro_tentativas = porteiroTentativas + 1;
     if (lead.reply_apos) patch.reply_apos = null; // we're answering now
     if (email && email !== lead.prospect_email) {
       patch.prospect_email = email;
