@@ -53,6 +53,14 @@ const OPTOUT_PATTERNS = [
 const AUTO_ATENDIMENTO_PATTERNS = [
   /\bagradec\w+\s+(seu|o|sua|a)\s+(contato|prefer[êe]ncia|mensagem|solicita[çc][ãa]o)/i,
   /\bhor[áa]rio\s+de\s+(atendimento|funcionamento)/i,
+  // Bloco de horários rotulado ("*HORÁRIOS:* De 2ª a 4ª: 12h-15h") — cabeçalho de
+  // menu automático; gente não escreve "HORÁRIOS:" com dois-pontos. (Komah, 06/07)
+  /\bhor[áa]rios?\s*:/i,
+  // Idioma de auto-resposta fora do expediente. (Komah "Estamos fechados no
+  // momento"; Cantina Mineira "está fechada agora e reabre amanhã às 11:30".)
+  // Falso positivo custa UM turno: ecoDeMaquina só olha o último inbound, então
+  // qualquer texto humano no turno seguinte derruba a flag.
+  /\best(?:amos|[áa])\s+fechad[oa]s?\s+(?:agora|no\s+momento)\b/i,
   /\bfa[çc]a\s+(seu|o)\s+pedido/i,
   /\bseja\s+bem[- ]?vind/i,
   /\bbem[- ]?vindo\s*\(?a?\)?\s+(ao|à|a)\b/i,
@@ -60,6 +68,10 @@ const AUTO_ATENDIMENTO_PATTERNS = [
   /\bnossa\s+equipe\s+(vai|ir[áa])/i,
   /\bem\s+(alguns\s+)?instantes/i,
   /\bdigite\s+\d/i,
+  // Opção de menu de chatbot ("gostaria de *falar com atendente* ou *saber sobre
+  // emprego*?" — Anota.ai, Tia Lourdes 15/07). Ninguém se oferece pra te passar
+  // pra "um atendente" falando de si mesmo; isso é roteiro de robô.
+  /\bfalar\s+com\s+(?:um\s+|o\s+|a\s+)?atendente\b/i,
   /\bn[ãa]o\s+estamos\s+dispon[íi]veis/i,
   /\breservas?\s+(exclusivamente\s+)?pelo\s+link/i,
   /\bestamos\s+desativando\s+(esse|este)\s+n[\u00fau]mero/i,
@@ -124,8 +136,11 @@ const RECUSA_SUAVE_PATTERNS = [
   /\bn[ãa]o\s+(?:temos|tenho)\s+interesse\b/i,
   // polite decline: "obrigado/grato/valeu, mas não…"
   /\b(?:obrigad\w+|grat[oa]|valeu)\b[\s,]*mas\s+n[ãa]o\b/i,
-  // already solved: "já temos/uso/usamos/trabalho com … sistema/ferramenta/CRM/…"
-  /\bj[áa]\s+(?:temos|tenho|uso|usamos|trabalho\s+com|trabalhamos\s+com)\b[^.!?\n]{0,30}\b(?:sistema|ferramenta|solu[çc][ãa]o|crm|plataforma|software|programa|fornecedor|parceir)/i,
+  // already solved: "já temos/possuímos/uso/usamos/trabalho com … sistema/ferramenta/CRM/…"
+  // 'possu*' added 2026-07-23: "Já possuímos um sistema ☺️" (Banzeiro, 07/07) slipped
+  // through and the agent answered with MORE discovery — the most common shape of
+  // institutional brush-off was the one the detector missed.
+  /\bj[áa]\s+(?:temos|tenho|possu\w*|uso|usamos|trabalho\s+com|trabalhamos\s+com)\b[^.!?\n]{0,30}\b(?:sistema|ferramenta|solu[çc][ãa]o|crm|plataforma|software|programa|fornecedor|parceir)/i,
 ];
 
 // If ANY of these appear, the message is NOT a clean stop — it carries live
@@ -249,6 +264,96 @@ function elegivelParaResgate({ state, replyAposMs, lastMsgDirecao, lastInAtMs, r
   return { eligible: true, reason: 'ok' };
 }
 
+// ---- Modo PORTEIRO: parar de vender pra máquina -----------------------------
+// pareceAutoAtendimento() já existia e é bom, mas só era consultado dentro de
+// deveEnviarPorta(), que só roda quando o modelo escolhe a tool 'ignorar'. Se ele
+// faz pitch em vez disso — o que aconteceu em 8 de 14 conversas auditadas em
+// 2026-07-23 — o sinal de robô NUNCA chega ao prompt. A detecção existia e estava
+// desconectada da decisão. Aqui ela vira um gate determinístico.
+
+// Piso pra contar REPETIÇÃO literal como assinatura de máquina. Gente repete
+// "ok", "sim", "bom dia", "obrigada" o tempo todo; sem piso, um lead vivo e
+// telegráfico seria parqueado como robô. Qualifica quem passar em QUALQUER um
+// dos dois (palavras OU caracteres).
+const ECO_MIN_PALAVRAS = 5;
+const ECO_MIN_CHARS = 40;
+
+/** Máximo de pedidos de decisor antes de parquear o lead em 'porteiro'. */
+const PORTEIRO_MAX = 2;
+
+/**
+ * PURE: o último inbound é ECO DE MÁQUINA? Duas assinaturas independentes:
+ *  (a) auto-atendimento institucional (pareceAutoAtendimento); ou
+ *  (b) REPETIÇÃO literal — o mesmo corpo já chegou antes nesta thread. O
+ *      autoresponder do WhatsApp Business devolve texto idêntico a cada toque
+ *      (Julia&Livia 4x, Dog do Júnior 5x, Hikaru 3x); nenhum humano repete a
+ *      própria mensagem caractere por caractere — desde que ela seja longa o
+ *      bastante pra não ser um "ok" (ECO_MIN_*).
+ * Avalia só o ÚLTIMO inbound de propósito: qualquer texto humano derruba a flag,
+ * então uma casa cuja saudação é automática mas cujo dono responde em seguida
+ * volta a ser tratada como gente.
+ * @param {Array<{direcao?:string, tipo?:string, corpo?:string|null}>} history
+ * @returns {boolean}
+ */
+function ecoDeMaquina(history) {
+  const ins = (history || []).filter(
+    (h) => h && h.tipo !== 'sys' && h.direcao === 'in' && h.corpo && String(h.corpo).trim(),
+  );
+  const last = ins[ins.length - 1];
+  if (!last) return false;
+  if (pareceAutoAtendimento(last.corpo)) return true;
+
+  const texto = String(last.corpo).trim();
+  const curtaDemais = texto.length < ECO_MIN_CHARS && texto.split(/\s+/).length < ECO_MIN_PALAVRAS;
+  if (curtaDemais) return false; // "ok"/"sim"/"bom dia" repetido é humano, não robô
+
+  const norm = (s) => String(s).replace(/\s+/g, ' ').trim().toLowerCase();
+  const alvo = norm(texto);
+  return ins.slice(0, -1).some((h) => norm(h.corpo) === alvo);
+}
+
+/**
+ * PURE: esta thread NUNCA teve um humano do outro lado? Todo inbound é
+ *  (a) auto-atendimento institucional,
+ *  (b) repetição literal de um inbound anterior (mesmo piso ECO_MIN_* — "ok"
+ *      repetido continua sendo gente), ou
+ *  (c) mídia sem texto — o padrão de lista de transmissão de marketing que o
+ *      PRÓPRIO lead dispara (Dona Anna, Alibaba).
+ * Diferente de ecoDeMaquina (que julga só o último inbound, pra decidir o turno),
+ * este olha a thread inteira — é o predicado do sweep que limpa o denominador do
+ * funil: 4 das 14 conversas auditadas nunca tiveram uma palavra digitada por gente.
+ * @param {Array<{direcao?:string, tipo?:string, corpo?:string|null}>} history
+ * @returns {boolean}
+ */
+function semHumanoNaThread(history) {
+  const ins = (history || []).filter((h) => h && h.tipo !== 'sys' && h.direcao === 'in');
+  if (!ins.length) return false; // sem inbound nenhum: não é "só robô", é silêncio
+  const norm = (s) => String(s || '').replace(/\s+/g, ' ').trim().toLowerCase();
+  const vistos = new Set();
+  return ins.every((h) => {
+    const corpo = h.corpo && String(h.corpo).trim();
+    if (!corpo) return true;                       // mídia sem texto = broadcast
+    if (pareceAutoAtendimento(corpo)) return true;
+    const curtaDemais = corpo.length < ECO_MIN_CHARS
+      && corpo.split(/\s+/).length < ECO_MIN_PALAVRAS;
+    const k = norm(corpo);
+    if (!curtaDemais && vistos.has(k)) return true; // repetição literal, com piso
+    vistos.add(k);
+    return false;                                   // humano de verdade
+  });
+}
+
+// Injetado como turno de usuário (noTools=false: registrar_responsavel segue
+// disponível) quando o gate acima dispara. Ela para de vender e passa a fazer a
+// ÚNICA coisa que vale contra um porteiro: pedir quem decide.
+const PORTEIRO_INSTRUCTION =
+  '[INSTRUÇÃO INTERNA, não é mensagem do cliente: quem respondeu foi um ATENDIMENTO ' +
+  'AUTOMÁTICO ou a caixa de atendimento da casa — não é quem decide, e pode não ser ' +
+  'nem uma pessoa. PARE de vender: sem pitch, sem prévia, sem pergunta de diagnóstico. ' +
+  'Mande UMA linha curta pedindo o nome e o WhatsApp de quem decide as coisas da casa ' +
+  '(dono ou gerente), deixando claro que não é assunto de cliente. Se um número aparecer ' +
+  'na conversa, chame registrar_responsavel. Não escreva número nenhum por conta própria.]';
+
 // ---- Reclaim de handoff frio (rede de segurança do funil) -------------------
 // Um lead que pede pra falar com o fundador vira 'handoff' e a agente fica MUDA
 // (SILENT_STATE) — a bola passa pro fundador. Mas handoff vaza por dois lados se
@@ -299,4 +404,10 @@ module.exports = {
   elegivelParaResgate,
   HANDOFF_RECLAIM_MS,
   elegivelParaReclaim,
+  ecoDeMaquina,
+  semHumanoNaThread,
+  PORTEIRO_INSTRUCTION,
+  PORTEIRO_MAX,
+  ECO_MIN_PALAVRAS,
+  ECO_MIN_CHARS,
 };

@@ -11,13 +11,17 @@
  * Single honest status bucket for a lead. Conversation state wins over raw send
  * status (a booked/opted-out lead is that, regardless of the last send ladder).
  * @param {{prospect_state?: string, whatsapp_send_status?: string|null}} lead
- * @returns {'booked'|'optout'|'handoff'|'scheduling'|'replied'|'seen'|'sent'|'failed'|'pending'}
+ * @returns {'booked'|'optout'|'handoff'|'porteiro'|'scheduling'|'replied'|'seen'|'sent'|'failed'|'pending'}
  */
 function statusBucket(lead) {
   const state = lead && lead.prospect_state;
   if (state === 'agendado') return 'booked';
   if (state === 'optout') return 'optout';
   if (state === 'handoff') return 'handoff';
+  // 'porteiro' = só respondeu robô/caixa de atendimento. Precisa de bucket
+  // próprio: sem isso o lead sai de todo seletor proativo E some da contagem,
+  // que é exatamente o "denominador contaminado" que ele existe pra revelar.
+  if (state === 'porteiro') return 'porteiro';
   if (state === 'agendando') return 'scheduling';
 
   switch (lead && lead.whatsapp_send_status) {
@@ -32,7 +36,7 @@ function statusBucket(lead) {
   }
 }
 
-const BUCKETS = ['pending', 'sent', 'seen', 'replied', 'scheduling', 'booked', 'handoff', 'optout', 'failed'];
+const BUCKETS = ['pending', 'sent', 'seen', 'replied', 'scheduling', 'booked', 'handoff', 'porteiro', 'optout', 'failed'];
 
 /**
  * Count leads per bucket (funnel summary for the cockpit header).
