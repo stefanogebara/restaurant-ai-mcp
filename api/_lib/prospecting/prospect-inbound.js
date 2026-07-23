@@ -23,7 +23,7 @@
 
 const { createSecureLogger } = require('../secure-logger');
 const { isMessageDuplicate } = require('../rate-limit');
-const { isOptedOut, findLeadByPhone, storeMessage, patchLead } = require('./prospect-store');
+const { isOptedOut, findLeadByPhone, storeMessage, patchLead, recordEvent } = require('./prospect-store');
 const { respondToProspect } = require('./prospect-responder');
 const { extractProspectCorpo } = require('./prospect-parse');
 const { placeholderMidia } = require('./prospect-agent');
@@ -53,6 +53,10 @@ async function handleProspectInbound(adapter, req) {
     return { handled: true, reason: 'duplicate' };
   }
 
+  // Resolved BEFORE transcription so a failed transcript can be recorded on the
+  // lead's timeline (below) instead of dying in a log line.
+  const lead = await findLeadByPhone(from);
+
   // Prospecting-aware parse (pure). Audio is transcribed here (I/O), stored as
   // '[áudio] <texto>' so the agent treats it as typed content (rule 6c); a
   // failed transcription keeps corpo null → placeholder safety net (rule 6b).
@@ -64,10 +68,15 @@ async function handleProspectInbound(adapter, req) {
       if (transcript && transcript.trim()) corpo = `[áudio] ${transcript.trim()}`;
     } catch (err) {
       logger.warn(`[prospect] audio transcription failed (placeholder path): ${err.message}`);
+      // Sem isto a falha só existe no log: ninguém no cockpit descobre que o
+      // Whisper caiu, e o turno mais quente da conversa (dono de bairro responde
+      // por áudio) vira um "me manda por escrito" sem explicação.
+      if (lead) {
+        await recordEvent(lead.id, `🎙 áudio não transcrito (${String(err.message).slice(0, 80)}) — a agente vai pedir por escrito`);
+      }
     }
   }
 
-  const lead = await findLeadByPhone(from);
   const optedOut = await isOptedOut(from);
 
   // Always store the inbound, even from an unknown number / opted-out contact —
@@ -88,11 +97,12 @@ async function handleProspectInbound(adapter, req) {
     `type=${tipo} corpo=${corpo ? 'yes' : 'empty'} name=${profileName ? 'yes' : 'no'}`
   );
 
+  let leadAtual = lead;
   if (lead) {
     // last_in_at drives the 24h-window countdown, triage ordering and the
     // multi-touch halt (a lead that ever replied leaves the cold sequence);
     // an inbound also wakes a snoozed thread and cancels pending touches.
-    await patchLead(lead.id, {
+    const frescos = {
       last_in_at: new Date().toISOString(),
       snoozed_until: null,
       next_touch_at: null,
@@ -100,7 +110,19 @@ async function handleProspectInbound(adapter, req) {
       // live conversation supersedes "me chama amanhã".
       retorno_em: null,
       retorno_motivo: null,
-    });
+    };
+    await patchLead(lead.id, frescos);
+    // MIRROR THE PATCH LOCALLY — do not delete this spread.
+    // patchLead writes to the DB but returns only { ok }, so `lead` still holds
+    // the PREVIOUS last_in_at. The responder gates the Meta 24h free-text window
+    // on lead.last_in_at: passing the stale object makes it judge the inbound
+    // that JUST arrived by the timestamp of the one before it. Since the resgate
+    // template fires at D+3 of silence, that previous inbound is always >24h old
+    // → the reply is cancelled with "⏱ janela de 24h fechada". Net effect: the
+    // lead comes back and we silence them. (Breaks from the 2nd inbound on — on
+    // the 1st, last_in_at is null and the `lead.last_in_at &&` guard passes. The
+    // flush path never had the bug because selectDueFlush re-reads the row.)
+    leadAtual = { ...lead, ...frescos };
   }
 
   // Suppressed (LGPD) — stored for the audit trail, but never answered.
@@ -121,7 +143,7 @@ async function handleProspectInbound(adapter, req) {
     return { handled: true, reason: 'no_text' };
   }
 
-  const result = await respondToProspect({ lead, from, text: corpo || '' })
+  const result = await respondToProspect({ lead: leadAtual, from, text: corpo || '' })
     .catch((err) => {
       logger.error('respondToProspect error:', err.message);
       return { action: 'error' };
