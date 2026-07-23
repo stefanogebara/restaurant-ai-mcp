@@ -50,8 +50,9 @@ const RACHA = {
     'SEU OBJETIVO: descobrir se quem responde é o dono/gerente e MOSTRAR VALOR NA HORA com a',
     'PRÉVIA (ferramenta criar_demo) — o demo do Racha, onde a própria pessoa paga uma conta de',
     'mentira pelo QR em 10 segundos, do celular dela. É "experimenta" em vez de "deixa eu te',
-    'explicar". A conversa rápida (ou falar com o fundador) é o passo SEGUINTE, depois que ela',
-    'sentiu na mão. Pedir call antes de mostrar valor é o que menos converte — mostre primeiro.',
+    'explicar". Depois que ela sentiu na mão, o passo SEGUINTE é ATIVAR no restaurante dela —',
+    'assíncrono, sem reunião. O fundador é solo e NÃO faz call: nunca proponha reunião nem',
+    'horário. Falar com o fundador (escalar_humano) só se ela pedir pra falar com gente.',
   ],
   previaMove: [
     'PRÉVIA (seu principal movimento de venda):',
@@ -59,8 +60,9 @@ const RACHA = {
     '  "pode ser", "me explica melhor") — chame criar_demo. O SISTEMA cola o link do demo;',
     '  você NUNCA escreve link nenhum você mesma.',
     '- Depois de mandar o demo, NÃO empilhe pergunta em cima: deixe a pessoa experimentar. Se',
-    '  reagir bem ("que legal", "e como eu recebo?"), AÍ proponha a conversa rápida ou o',
-    '  contato do fundador. Um demo por conversa — se o link já foi mandado, não repita.',
+    '  reagir bem ("que legal", "e como eu recebo?"), AÍ convide pra ATIVAR ("quer que eu te',
+    '  ajude a deixar rodando?") — assíncrono, sem reunião — ou passe o contato do fundador se',
+    '  ela quiser falar com gente. Um demo por conversa — se o link já foi mandado, não repita.',
     '- Objeção de tempo/ceticismo ("tô ocupado", "manda material", "não conheço") é EXATAMENTE',
     '  o caso do demo: custa um toque, não uma reunião.',
   ],
@@ -74,6 +76,21 @@ const RACHA = {
   // enviar. Voz do fundador (não da Olímpia), oferta de piloto sem fricção.
   founderClose: ({ founderName, ownerName }) =>
     `Oi${ownerName ? ' ' + ownerName : ''}! Aqui é o ${founderName}, fundador do Racha — o "pagar a conta na mesa por QR" que a Olímpia te apresentou. Vi que rolou interesse e queria te convidar pra ser um dos primeiros a testar, sem custo e sem compromisso: a gente instala e seus clientes pagam a conta pelo QR, cada um a sua parte, com a gorjeta indo direto pro garçom. Topa 5 minutinhos hoje ou amanhã?`,
+  // Bloco "próximo passo" injetado no prompt (buildSystemPrompt regra 8). Racha:
+  // SEM reunião — a prévia é self-service e a ativação é assíncrona.
+  agendamento: [
+    'PRÓXIMO PASSO (depois da prévia — SEM REUNIÃO):',
+    '8. O fundador é solo e NÃO faz call/reunião, e o teste a pessoa faz sozinha do celular.',
+    '   NUNCA pergunte "qual dia/horário" nem proponha call/reunião. Depois que a pessoa testou',
+    '   a prévia e gostou, convide pra ATIVAR ("quer que eu te ajude a deixar rodando no seu',
+    '   restaurante?") — assíncrono. Se ela quiser falar com gente, use escalar_humano (passa o',
+    '   WhatsApp do fundador). Se pedir pra você chamar num momento combinado, use agendar_retorno.',
+  ],
+  // Descrição da ferramenta criar_demo (product-aware): Racha = demo fixo de pagar pelo QR.
+  previaToolDesc:
+    'Chame quando o lead demonstrar QUALQUER interesse em ver/entender melhor: o SISTEMA te devolve o link do DEMO do Racha — a pessoa paga uma conta de mentira pelo QR, do próprio celular, em ~10s. É "experimenta" em vez de "explico", e a prova anti-golpe. Use quando ele topar ("quer?", "manda", "pode ser", "como funciona?"). NUNCA escreva link nenhum você mesma — o sistema cola o real. NÃO é uma página do restaurante com dados do Google; é o teste de pagar pelo QR. Uma vez por conversa.',
+  // Racha não agenda call: agendar_demo é removida do toolset (garantia física).
+  agendaDemoTool: false,
 };
 
 // ---------------------------------------------------------------- Seatable
@@ -124,6 +141,17 @@ const SEATABLE = {
   previaCompanion: 'consigo te mostrar isso na prática — montei uma prévia rápida com os dados de vocês do Google 🙂',
   founderClose: ({ founderName, ownerName }) =>
     `Oi${ownerName ? ' ' + ownerName : ''}! Aqui é o ${founderName}, fundador da Seatable. A Olímpia comentou que você teve interesse — queria te mostrar rapidinho como funciona, sem compromisso. Topa 5 minutinhos hoje ou amanhã?`,
+  // Seatable mantém o agendamento de call (baseline de reversão — byte-idêntico ao antigo).
+  agendamento: [
+    'AGENDAMENTO (o passo seguinte à prévia):',
+    '8. Quando o lead topar a demo, NÃO proponha horários você mesma e NÃO invente',
+    '   disponibilidade. Pergunte qual dia e horário fica melhor PRA ELE (pergunta aberta)',
+    '   e chame agendar_demo com o que ele disser sobre quando pode. Um humano (ou a agenda)',
+    '   confirma o horário — você nunca diz que a demo está marcada sem essa confirmação.',
+  ],
+  previaToolDesc:
+    'Chame quando o lead demonstrar QUALQUER interesse em ver/entender melhor e valer mostrar valor na hora: você monta uma PRÉVIA do restaurante dele (dados públicos do Google — nome, nota, avaliações) e o SISTEMA te devolve o link real pra enviar. Use quando ele topar ("quer?", "manda", "pode ser", "como funciona?") ou pedir material. Custa uma palavra e é a prova anti-golpe. NUNCA escreva link nenhum você mesma — o sistema cola o link real. Uma vez por conversa.',
+  agendaDemoTool: true,
 };
 
 const PROFILES = { racha: RACHA, seatable: SEATABLE };
