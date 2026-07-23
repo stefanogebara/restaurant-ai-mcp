@@ -726,6 +726,32 @@ async function sendRachaRecipientStatusEmail({ ownerEmail, venueName, status, re
   }
 }
 
+/**
+ * Prospecting founder digest: the daily "close these leads" e-mail. The compose
+ * layer (prospecting/founder-digest.js) already built subject + full HTML, so
+ * this is a thin sender. Checks Resend's { error } (the SDK does NOT throw) and
+ * throws on failure so the cron reports a real failure instead of a false "sent".
+ */
+async function sendProspectDigestEmail({ to, subject, html, text }) {
+  const resend = getResendClient();
+  if (!resend) { logger.warn('RESEND_API_KEY not set, skipping founder digest email'); return false; }
+  if (!to) { logger.warn('no founder e-mail configured, skipping digest'); return false; }
+  try {
+    const { data, error } = await resend.emails.send({
+      from: FROM_ADDRESS, to, subject, html: wrapEmailHtml(html), ...(text ? { text } : {}),
+    });
+    if (error) {
+      logger.error('Resend rejected the founder digest', { error: error.message || error.name || String(error) });
+      throw new Error(`resend: ${error.message || error.name || 'erro desconhecido'}`);
+    }
+    logger.info('Founder digest email sent', { id: data && data.id });
+    return true;
+  } catch (err) {
+    logger.error('Failed to send founder digest email', { error: err.message });
+    throw err;
+  }
+}
+
 module.exports = {
   sendPaymentReceiptEmail,
   sendPaymentFailedEmail,
@@ -738,5 +764,6 @@ module.exports = {
   sendInviteEmail,
   sendReferralRewardEmail,
   sendRachaRecipientStatusEmail,
+  sendProspectDigestEmail,
   wrapEmailHtml,
 };

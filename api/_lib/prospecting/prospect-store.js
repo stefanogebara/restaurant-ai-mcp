@@ -950,9 +950,93 @@ async function updateOutcomeScore(id, { quality_score, theme_tags }) {
   }
 }
 
+// ---- Founder handoff digest + cold-handoff reclaim -------------------------
+// Handoff drops a lead in the founder's court (SILENT_STATE). These selectors
+// feed (1) the daily founder digest — the "close these" list — and (2) the
+// reclaim sweep that re-warms handoffs the founder never chased.
+
+/**
+ * Leads waiting on the founder: handoff (asked for a human) + agendando (was
+ * mid-scheduling). The founder digest's call-list. Newest activity first.
+ * The founder's own TEST number is filtered by the caller (isFounderNumber),
+ * not here, to keep the store free of persona imports.
+ * @param {{maxAgeDays?: number|null, limit?: number}} [opts]
+ */
+async function selectFounderHandoffQueue({ maxAgeDays = null, limit = 50 } = {}) {
+  try {
+    let q = supabaseAdmin
+      .from('prospect_leads')
+      .select('id, name, city, whatsapp_phone, prospect_state, handoff_motivo, conversa_resumo, owner_name, last_in_at, updated_at, created_at')
+      .in('prospect_state', ['handoff', 'agendando'])
+      .not('whatsapp_phone', 'is', null);
+    if (maxAgeDays && maxAgeDays > 0) {
+      const cutoff = new Date(Date.now() - maxAgeDays * 24 * 60 * 60 * 1000).toISOString();
+      q = q.gte('updated_at', cutoff);
+    }
+    const { data, error } = await q
+      .order('updated_at', { ascending: false })
+      .limit(Math.min(Math.max(limit, 1), 200));
+    if (error) { logger.error('selectFounderHandoffQueue failed:', error.message); return []; }
+    return data || [];
+  } catch (err) {
+    logger.error('selectFounderHandoffQueue exception:', err.message);
+    return [];
+  }
+}
+
+/**
+ * Handoff leads (coarse pass) for the reclaim sweep. No age filter in SQL: a
+ * lead who came BACK and got muted can be recent, so the fine gate
+ * (elegivelParaReclaim, needs the last-message shape) decides per-lead. Handoff
+ * volume is low, so a small ordered batch is enough.
+ * @param {number} [limit=20]
+ */
+async function selectHandoffLeads(limit = 20) {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('prospect_leads')
+      .select('id, name, whatsapp_phone, prospect_state, last_in_at, updated_at')
+      .eq('prospect_state', 'handoff')
+      .not('whatsapp_phone', 'is', null)
+      .order('updated_at', { ascending: true })
+      .limit(Math.min(Math.max(limit, 1), 100));
+    if (error) { logger.error('selectHandoffLeads failed:', error.message); return []; }
+    return data || [];
+  } catch (err) {
+    logger.error('selectHandoffLeads exception:', err.message);
+    return [];
+  }
+}
+
+/**
+ * Reclaim a cold handoff: flip handoff → conversando (un-mutes inbound + re-arms
+ * the reengage/nudge rails). Guarded on the current state still being 'handoff'
+ * so a concurrent transition (the lead opted out, the founder paused it) is
+ * never clobbered. Returns { ok, reclaimed }.
+ * @param {string} leadId
+ */
+async function reclaimHandoffToConversando(leadId) {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('prospect_leads')
+      .update({ prospect_state: 'conversando' })
+      .eq('id', leadId)
+      .eq('prospect_state', 'handoff')
+      .select('id');
+    if (error) { logger.error('reclaimHandoffToConversando failed:', error.message); return { ok: false, reclaimed: false }; }
+    return { ok: true, reclaimed: Array.isArray(data) && data.length === 1 };
+  } catch (err) {
+    logger.error('reclaimHandoffToConversando exception:', err.message);
+    return { ok: false, reclaimed: false };
+  }
+}
+
 module.exports = {
   isOptedOut,
   findLeadByPhone,
+  selectFounderHandoffQueue,
+  selectHandoffLeads,
+  reclaimHandoffToConversando,
   storeMessage,
   loadHistory,
   patchLead,

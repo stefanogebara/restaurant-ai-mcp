@@ -249,6 +249,39 @@ function elegivelParaResgate({ state, replyAposMs, lastMsgDirecao, lastInAtMs, r
   return { eligible: true, reason: 'ok' };
 }
 
+// ---- Reclaim de handoff frio (rede de segurança do funil) -------------------
+// Um lead que pede pra falar com o fundador vira 'handoff' e a agente fica MUDA
+// (SILENT_STATE) — a bola passa pro fundador. Mas handoff vaza por dois lados se
+// o fundador não fecha: (1) é excluída de TODO seletor proativo, então o lead
+// morre calado; (2) até um inbound de volta fica sem resposta (deveResponder=
+// false), então quem pediu humano, reconsiderou e escreveu de novo leva silêncio.
+// A retomada conserta os dois: flip handoff→conversando des-muta o inbound E
+// re-arma os trilhos de reengage/nudge existentes. O digest diário do fundador
+// (canal separado) avisa antes, dando dias pra ele fechar primeiro.
+const HANDOFF_RECLAIM_MS = (Number(process.env.PROSPECTING_HANDOFF_RECLAIM_DAYS) || 4) * 24 * 60 * 60 * 1000;
+
+/**
+ * PURE: is this handoff lead a reclaim candidate?
+ *  - lead falou por último (último não-sys é inbound): voltou e ficou mudo →
+ *    retoma JÁ (des-muta e responde). Vazamento mais gritante.
+ *  - agente falou por último (a linha do fundador) e nada tocou há >= coldMs:
+ *    handoff frio → retoma pra não morrer calado. Idade = a atividade mais
+ *    recente entre o último inbound e o último patch (updated_at ≈ hora do
+ *    handoff quando nada mais mexeu). Qualquer atividade recente adia (fica
+ *    conservador: prefere esperar a atropelar uma conversa viva).
+ * @param {{state:string|null, lastInAtMs:number|null, updatedAtMs:number|null,
+ *          lastMsgDirecao:string|null, coldMs?:number, nowMs?:number}} args
+ * @returns {{eligible: boolean, reason: string}}
+ */
+function elegivelParaReclaim({ state, lastInAtMs, updatedAtMs, lastMsgDirecao, coldMs = HANDOFF_RECLAIM_MS, nowMs = Date.now() }) {
+  if (state !== 'handoff') return { eligible: false, reason: 'nao_handoff' };
+  if (lastMsgDirecao === 'in') return { eligible: true, reason: 'lead_voltou_mudo' };
+  const ultimaAtividade = Math.max(lastInAtMs || 0, updatedAtMs || 0);
+  if (!ultimaAtividade) return { eligible: false, reason: 'sem_timestamp' };
+  if (nowMs - ultimaAtividade < coldMs) return { eligible: false, reason: 'ainda_quente' };
+  return { eligible: true, reason: 'handoff_frio' };
+}
+
 module.exports = {
   pareceAutoAtendimento,
   deveEnviarPorta,
@@ -264,4 +297,6 @@ module.exports = {
   RESGATE_REARME_MS,
   RESGATE_JANELA_MS,
   elegivelParaResgate,
+  HANDOFF_RECLAIM_MS,
+  elegivelParaReclaim,
 };

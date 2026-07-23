@@ -30,8 +30,11 @@ const { consumeSendSlot } = require('./prospect-warmup');
 const {
   isOptedOut, selectIntroCandidates, claimIntro, markIntro, storeMessage,
   listTemplates, patchLead, selectDueTouches, selectDueReengages, loadLastMessage,
-  selectReferralIntroCandidates,
+  selectReferralIntroCandidates, selectHandoffLeads, reclaimHandoffToConversando,
+  recordEvent,
 } = require('./prospect-store');
+const { elegivelParaReclaim, HANDOFF_RECLAIM_MS } = require('./prospect-state');
+const { isFounderNumber } = require('./prospect-agent');
 const { dentroDaJanelaDisparo } = require('./prospect-hours');
 
 const logger = createSecureLogger('ProspectSequencer');
@@ -393,7 +396,94 @@ async function dispatchReengages({ limit = 5, nowMs = Date.now() } = {}) {
   return summary;
 }
 
+/**
+ * Reclaim cold handoffs the founder never chased.
+ *
+ * A lead who asks for a human lands in 'handoff' and the agent goes silent — the
+ * founder is meant to take over. When they don't, the lead dies calado: handoff
+ * is excluded from every proactive selector AND a returning inbound gets no reply
+ * (deveResponder=false). This sweep flips a cold/muted handoff back to
+ * 'conversando', which un-mutes inbound and re-arms the reengage/nudge rails —
+ * no new template needed, the existing machinery re-warms it. The daily founder
+ * digest fires first (days before HANDOFF_RECLAIM_MS elapses), so the founder
+ * always gets first crack at closing.
+ *
+ * Sends nothing itself — it's a guarded state transition. Gated by the master
+ * agent kill switch + a dedicated 'prospecting-handoff-reclaim' toggle, and
+ * skipped in dry-run so test/preview envs never mutate lead state. Runs from the
+ * flush cron (no new invocations). The founder's own TEST lead is excluded.
+ * @param {{limit?: number, nowMs?: number}} [opts]
+ */
+async function reclaimColdHandoffs({ limit = 10, nowMs = Date.now() } = {}) {
+  const summary = { candidates: 0, reclaimed: 0, skipped: 0, errors: 0 };
+  if (isDryRun()) return { ...summary, dryRun: true };
+
+  const { isCronEnabled } = require('../cron-config');
+  const [agentOn, reclaimOn] = await Promise.all([
+    isCronEnabled('prospecting-agent'),
+    isCronEnabled('prospecting-handoff-reclaim'),
+  ]);
+  if (!agentOn || !reclaimOn) return { ...summary, disabled: true };
+
+  const candidates = await selectHandoffLeads(Math.max(limit * 2, 20));
+  summary.candidates = candidates.length;
+
+  for (const lead of candidates) {
+    if (summary.reclaimed >= limit) break;
+    try {
+      // Never reclaim the founder's own test line, and never re-warm an opt-out.
+      if (isFounderNumber(lead.whatsapp_phone)) { summary.skipped++; continue; }
+      if (await isOptedOut(lead.whatsapp_phone)) { summary.skipped++; continue; }
+
+      const last = await loadLastMessage(lead.id); // last non-sys message
+      const gate = elegivelParaReclaim({
+        state: lead.prospect_state,
+        lastInAtMs: lead.last_in_at ? Date.parse(lead.last_in_at) : null,
+        updatedAtMs: lead.updated_at ? Date.parse(lead.updated_at) : null,
+        lastMsgDirecao: last ? last.direcao : null,
+        coldMs: HANDOFF_RECLAIM_MS,
+        nowMs,
+      });
+      if (!gate.eligible) { summary.skipped++; continue; }
+
+      const r = await reclaimHandoffToConversando(lead.id);
+      if (!r.reclaimed) { summary.skipped++; continue; }
+      const dias = Math.floor((nowMs - Math.max(
+        lead.last_in_at ? Date.parse(lead.last_in_at) : 0,
+        lead.updated_at ? Date.parse(lead.updated_at) : 0,
+      )) / (24 * 60 * 60 * 1000));
+
+      if (gate.reason === 'lead_voltou_mudo') {
+        // The lead came BACK and the handoff silent-gate swallowed the inbound —
+        // the responder's opt-out/recusa checks run AFTER that gate, so they never
+        // fired (a swallowed "sai da lista" would otherwise be re-warmed by the
+        // reengage template: an LGPD hole). Hand the pending inbound to the flush
+        // responder instead of just flipping: reply_apos=now makes selectDueFlush
+        // re-run the FULL responder next tick — which runs opt-out/recusa
+        // detection deterministically (no 24h dependency) AND actually answers the
+        // lead. selectDueFlush runs before dispatchReengages each tick, so an
+        // opt-out flips to optout before any template could select it.
+        await patchLead(lead.id, { reply_apos: new Date(nowMs).toISOString(), last_in_wamid: null });
+        await recordEvent(lead.id, '♻️ handoff retomado — o lead voltou a escrever e estava sem resposta; re-enfileirado pro flush', { reason: gate.reason });
+      } else {
+        // handoff_frio: the agent spoke last (no pending inbound to re-process).
+        // The flip alone re-arms the reengage/nudge rails.
+        await recordEvent(lead.id, `♻️ handoff frio retomado pela Olímpia após ${dias} dias sem o fundador fechar`, { reason: gate.reason });
+      }
+      summary.reclaimed++;
+      logger.info(`handoff reclaimed lead=${lead.id} (${gate.reason})`);
+    } catch (err) {
+      summary.errors++;
+      logger.error(`reclaim exception lead=${lead.id}: ${err.message}`);
+    }
+  }
+
+  logger.info('reclaimColdHandoffs done', summary);
+  return summary;
+}
+
 module.exports = {
   dispatchIntros, dispatchFollowups, dispatchReengages, dispatchReferralIntros, isDryRun,
+  reclaimColdHandoffs,
   TOUCH2_DELAY_MS, TOUCH3_DELAY_MS, REENGAGE_SILENCE_MS, REENGAGE_TOUCH,
 };

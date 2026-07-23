@@ -69,6 +69,11 @@ const RACHA = {
   porta: 'oi! não é pedido não — é sobre uma forma da galera pagar a conta na mesa pelo QR 🙂 quem cuida disso ou de parcerias por aí?',
   // COMPANION_TEXT.previa: acompanha a criar_demo quando o modelo mandou a ferramenta sem texto.
   previaCompanion: 'consigo te mostrar na prática — é um demo rapidinho onde você paga uma conta de mentira pelo QR, do celular 🙂',
+  // Mensagem de FECHAMENTO do fundador (pré-preenchida no link wa.me do digest):
+  // o fundador toca no lead da hit-list e o WhatsApp abre com isto pronto pra
+  // enviar. Voz do fundador (não da Olímpia), oferta de piloto sem fricção.
+  founderClose: ({ founderName, ownerName }) =>
+    `Oi${ownerName ? ' ' + ownerName : ''}! Aqui é o ${founderName}, fundador do Racha — o "pagar a conta na mesa por QR" que a Olímpia te apresentou. Vi que rolou interesse e queria te convidar pra ser um dos primeiros a testar, sem custo e sem compromisso: a gente instala e seus clientes pagam a conta pelo QR, cada um a sua parte, com a gorjeta indo direto pro garçom. Topa 5 minutinhos hoje ou amanhã?`,
 };
 
 // ---------------------------------------------------------------- Seatable
@@ -117,6 +122,8 @@ const SEATABLE = {
   ],
   porta: 'oi! não é pedido não — é sobre parceria 🙂 quem cuida das reservas ou parcerias por aí?',
   previaCompanion: 'consigo te mostrar isso na prática — montei uma prévia rápida com os dados de vocês do Google 🙂',
+  founderClose: ({ founderName, ownerName }) =>
+    `Oi${ownerName ? ' ' + ownerName : ''}! Aqui é o ${founderName}, fundador da Seatable. A Olímpia comentou que você teve interesse — queria te mostrar rapidinho como funciona, sem compromisso. Topa 5 minutinhos hoje ou amanhã?`,
 };
 
 const PROFILES = { racha: RACHA, seatable: SEATABLE };

@@ -43,6 +43,22 @@ const FOUNDER_WHATSAPP = process.env.PROSPECTING_FOUNDER_WHATSAPP || '+55 11 999
 const FOUNDER_DIGITS = FOUNDER_WHATSAPP.replace(/\D+/g, '');
 
 /**
+ * PURE: does this phone belong to the founder's own line? Used to keep the
+ * founder's TEST lead ("Restaurante do Stefano", the founder's own number) out
+ * of the handoff digest and the reclaim sweep. Match is ±the 55 country prefix
+ * so a bare vs. E.164 stored number never slips through.
+ * @param {string|null|undefined} phone
+ * @returns {boolean}
+ */
+function isFounderNumber(phone) {
+  const d = String(phone || '').replace(/\D+/g, '');
+  if (!d || !FOUNDER_DIGITS) return false;
+  return d === FOUNDER_DIGITS
+    || (d.startsWith('55') && d.slice(2) === FOUNDER_DIGITS)
+    || (FOUNDER_DIGITS.startsWith('55') && FOUNDER_DIGITS.slice(2) === d);
+}
+
+/**
  * @typedef {Object} LeadContexto
  * @property {string} name
  * @property {string|null} [owner_name]
@@ -575,6 +591,8 @@ module.exports = {
   AGENT_NAME,
   COMPANY,
   FOUNDER_WHATSAPP,
+  FOUNDER_DIGITS,
+  isFounderNumber,
   COMPANION_TEXT,
   PROSPECT_TOOLS,
   buildSystemPrompt,

@@ -143,6 +143,19 @@ module.exports = async (req, res) => {
       logger.error('reengages failed:', err.message);
     }
 
+    // Reclaim cold handoffs: leads that asked for the founder but were never
+    // chased (or came back and got muted) get flipped handoff→conversando, which
+    // un-mutes inbound and re-arms the reengage/nudge rails. The founder digest
+    // fires first (days earlier), so this is the safety net, not the first move.
+    // Sends nothing; piggybacks this cron; dry-run + kill-switch gated inside.
+    let reclaims = null;
+    try {
+      const { reclaimColdHandoffs } = require('../_lib/prospecting/sequencer');
+      reclaims = await reclaimColdHandoffs({ limit: 10 });
+    } catch (err) {
+      logger.error('handoff reclaim failed:', err.message);
+    }
+
     // Referral intros: referred owners (source='indicacao') whose intro
     // couldn't fire at registration time (outside window / cap) get it here.
     let referrals = null;
@@ -197,10 +210,11 @@ module.exports = async (req, res) => {
       followups_sent: followups ? followups.sent : 0,
       reengages_sent: reengages ? reengages.sent : 0,
       referrals_sent: referrals ? referrals.sent : 0,
+      reclaims: reclaims ? reclaims.reclaimed || 0 : 0,
       noshows_processed: noshows ? noshows.processed || 0 : 0,
       rekicked,
     });
-    return res.status(200).json({ success: true, due: due.length, resgatados, resumed, retornos, errors, followups, reengages, referrals, noshows, rekicked });
+    return res.status(200).json({ success: true, due: due.length, resgatados, resumed, retornos, errors, followups, reengages, reclaims, referrals, noshows, rekicked });
   } catch (err) {
     logger.error('flush fatal:', err.message);
     await logCronRun('prospect-flush', { resumed, errors: errors + 1 });

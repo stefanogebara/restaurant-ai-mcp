@@ -33,6 +33,9 @@
     "api/cron/prospect-score-outcomes.js": {
       "maxDuration": 120
     },
+    "api/cron/prospect-handoff-digest.js": {
+      "maxDuration": 60
+    },
     "api/**/*.js": {
       "excludeFiles": "{lambda/**,api/__tests__/**,**/*.test.js,**/*.spec.js,ml-training-data/**,e2e/**,.claude/**,seatable-ads/**,reels-toolkit/**,remotion/**}",
       "memory": 512,
@@ -370,6 +373,10 @@
     {
       "path": "/api/cron/prospect-score-outcomes",
       "schedule": "0 5 * * *"
+    },
+    {
+      "path": "/api/cron/prospect-handoff-digest",
+      "schedule": "30 11 * * *"
     },
     {
       "path": "/api/cron/process-scheduled-ig-posts",
