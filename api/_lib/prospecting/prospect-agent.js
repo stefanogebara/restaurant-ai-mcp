@@ -133,6 +133,17 @@ function buildSystemPrompt(lead, agoraDescricao, styleBody = null) {
       : '- Responsável (no cadastro): ainda não temos o nome — mas quem está respondendo' +
         ' PODE ser o próprio dono/gerente; confirme pela CONVERSA, não por este campo.',
     `- Segmento: ${lead.sector || 'restaurante'}`,
+    // A nota do Google é a abertura mais natural ("vi que vocês têm nota boa").
+    // Sem ela no contexto o modelo INVENTAVA um número plausível — em 25/07/2026
+    // as 10 últimas aberturas citaram nota falsa, e um dono de 4,9 recebeu "4,2"
+    // e respondeu "acho que vou a loja errada". Ou vai o número real, ou vai a
+    // instrução de não citar nota nenhuma.
+    Number.isFinite(Number(lead.rating)) && Number(lead.rating) > 0
+      ? `- Nota no Google: ${String(lead.rating).replace('.', ',')}`
+        + (Number(lead.reviews_count) > 0 ? ` (${lead.reviews_count} avaliações)` : '')
+        + ' — este é o número REAL; use exatamente ele se for elogiar.'
+      : '- Nota no Google: não temos a nota deste lead — NÃO cite nota nem número de'
+        + ' avaliações nesta conversa. Elogie outra coisa, ou não elogie.',
     '',
     ...formatarMemoria(lead.conversa_fatos, lead.conversa_resumo),
     ...PROFILE.objetivo,
@@ -153,6 +164,10 @@ function buildSystemPrompt(lead, agoraDescricao, styleBody = null) {
     '1c. CASOS DE CLIENTE: só cite um restaurante cliente se ele estiver explicitamente no',
     '   texto acima. Se não houver nenhum listado, NÃO invente referências — fale do valor',
     '   da solução sem citar nomes.',
+    '1d. NOTA DO GOOGLE: nunca invente a nota nem o número de avaliações. Use SÓ o número',
+    '   que está no contexto acima, exatamente como está. Se o contexto disser que não',
+    '   temos a nota, não fale de nota — nem "nota boa", nem "bem avaliado", nada. O dono',
+    '   sabe a nota dele de cor: errar isso destrói a credibilidade na primeira frase.',
     '2. Se a pessoa se irritar, pedir pra parar, ou disser que não é o responsável e não pode',
     '   ajudar, seja educada. Pra opt-out claro, use marcar_optout.',
     '3. Se pedirem detalhes que você não pode dar com segurança (preço, contrato, integração',

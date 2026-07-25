@@ -205,6 +205,28 @@ describe('buildSystemPrompt', () => {
     expect(p).toMatch(/NUNCA invente/);
     expect(p).not.toMatch(/Já roda em/); // PROSPECTING_CASES unset → never invent customers
   });
+
+  // Incidente 2026-07-25: a Olímpia abriu 10 de 10 conversas elogiando uma nota
+  // do Google INVENTADA (disse "4,2 estrelas" pra um restaurante 4,9 — o dono
+  // respondeu "4.2? Acho que vou a loja errada"). Causa: o contexto do lead
+  // nunca trazia rating, e elogiar a nota é abertura natural.
+  test('nota do Google real entra no contexto quando existe', () => {
+    const p = buildSystemPrompt({ ...lead, rating: 4.9, reviews_count: 14 });
+    expect(p).toMatch(/4[.,]9/);
+    expect(p).toMatch(/14/);
+  });
+
+  test('sem nota no cadastro, o prompt manda NÃO citar nota', () => {
+    const p = buildSystemPrompt(lead); // sem rating
+    expect(p).toMatch(/não temos a nota|sem a nota/i);
+    expect(p).not.toMatch(/4[.,]2 estrela/);
+  });
+
+  test('regra explícita proíbe inventar nota/avaliações', () => {
+    const p = buildSystemPrompt({ ...lead, rating: 4.9 });
+    expect(p).toMatch(/NOTA DO GOOGLE/i);
+    expect(p).toMatch(/nunca invente|não invente/i);
+  });
 });
 
 // ============================================================ interpreter
