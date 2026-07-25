@@ -18,11 +18,51 @@
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { bearerEquals } = require('./_lib/secure-compare');
 const { sendWhatsAppMessage, sendTemplateMessage, isWhatsAppConfigured } = require('./_lib/whatsapp-sender');
-const { sendRachaRecipientStatusEmail } = require('./_lib/email');
+const { sendRachaRecipientStatusEmail, sendProspectDigestEmail } = require('./_lib/email');
 const { findLeadByPhone } = require('./_lib/prospecting/prospect-store');
 const { podeMensagemLivre } = require('./_lib/prospecting/prospect-nudge');
 
 const logger = createSecureLogger('RachaNotify');
+
+// Destino do radar de ativação: o FUNDADOR. Mesmas envs do digest da Olímpia —
+// o contato dele mora aqui, nunca no Racha.
+const FOUNDER_EMAIL = process.env.PROSPECTING_FOUNDER_EMAIL || 'stefanogebara@gmail.com';
+const FOUNDER_WHATSAPP = process.env.PROSPECTING_FOUNDER_WHATSAPP || '';
+
+/**
+ * Radar de ativação do Racha → fundador (WhatsApp + e-mail, best-effort).
+ *
+ * WhatsApp aqui é texto livre sem checar janela de 24h de propósito: o
+ * destinatário é o próprio fundador no número dele, não um lead — a regra de
+ * janela existe pra proteger quem não pediu contato.
+ */
+async function entregarRadar({ mensagem, alertas, total, ativos }) {
+  const out = { whatsapp: 'skipped', email: 'skipped' };
+  const texto = String(mensagem || '').trim();
+  if (!texto) return { ...out, erro: 'mensagem vazia' };
+
+  if (FOUNDER_WHATSAPP && isWhatsAppConfigured()) {
+    try {
+      const r = await sendWhatsAppMessage(FOUNDER_WHATSAPP, texto);
+      out.whatsapp = r && r.success ? 'sent' : `failed:${(r && r.error) || '?'}`;
+    } catch (e) { out.whatsapp = `failed:${String(e.message).slice(0, 80)}`; }
+  } else if (!FOUNDER_WHATSAPP) {
+    out.whatsapp = 'skipped:sem_numero_do_fundador';
+  }
+
+  try {
+    const ok = await sendProspectDigestEmail({
+      to: FOUNDER_EMAIL,
+      subject: `Racha — ${alertas} restaurante(s) precisando de ação`,
+      html: `<p>${texto.replace(/\n/g, '<br>')}</p>`,
+      text: texto,
+    });
+    out.email = ok ? 'sent' : 'skipped';
+  } catch (e) { out.email = `failed:${String(e.message).slice(0, 80)}`; }
+
+  logger.info('radar de ativação entregue', { alertas, total, ativos, ...out });
+  return out;
+}
 
 function statusLabel(status) {
   if (status === 'active') return 'aprovado';
@@ -49,6 +89,19 @@ module.exports = async (req, res) => {
   if (typeof body === 'string') { try { body = JSON.parse(body); } catch { body = {}; } }
   body = body || {};
   const { venueName, ownerEmail, ownerPhone, status, reason } = body;
+
+  // Radar de ativação: outro evento, outro destinatário (fundador, não dono).
+  // Roteado antes da exigência de `status`, que é do aviso de recebedor.
+  if (body.event === 'activation_radar') {
+    const out = await entregarRadar({
+      mensagem: body.mensagem,
+      alertas: Number(body.alertas) || 0,
+      total: Number(body.total) || 0,
+      ativos: Number(body.ativos) || 0,
+    });
+    return res.status(200).json({ success: true, data: out });
+  }
+
   if (!status) return res.status(400).json({ success: false, error: 'status é obrigatório' });
 
   const message = composeMessage({ venueName, status, reason });
