@@ -10,7 +10,7 @@
 //
 // What it does:
 //   1) Downloads the Receita ZIPs (Estabelecimentos 0-9, Empresas 0-9, Socios
-//      0-9, Simples, Municipios) from arquivos.receitafederal.gov.br/dados/cnpj/...
+//      0-9, Simples, Municipios) from the Nextcloud public share (see RF_BASE).
 //   2) Streams the CSVs (latin1, ';'-delimited, no header).
 //   3) FILTERS estabelecimentos by UF (and, by default, municipality).
 //   4) Joins razão/porte (Empresas), QSA (Socios — name+qualification ONLY, LGPD),
@@ -35,7 +35,21 @@ import { createClient } from '@supabase/supabase-js';
 import { parse } from 'csv-parse';
 import AdmZip from 'adm-zip';
 
-const RF_BASE = 'https://arquivos.receitafederal.gov.br/dados/cnpj/dados_abertos_cnpj';
+// A Receita MUDOU a distribuição (constatado 2026-07-25): o antigo
+// arquivos.receitafederal.gov.br/dados/cnpj/dados_abertos_cnpj/<AAAA-MM>/ agora
+// devolve 404 — no navegador também, então não é bloqueio de user-agent: o
+// caminho deixou de existir. Hoje o host é um Nextcloud ("SERPRO+") e os dados
+// vivem num COMPARTILHAMENTO PÚBLICO, cujo token está catalogado no recurso
+// "Inscrições no CNPJ" do dados.gov.br (API pública do portal).
+//
+// Acesso programável = WebDAV do share: Basic auth com o token como usuário e
+// senha vazia. PROPFIND lista, GET baixa. Estrutura e nomes dos arquivos
+// continuam idênticos (<AAAA-MM>/Estabelecimentos0.zip etc.), então o resto
+// deste script não muda.
+const RF_SHARE_TOKEN = process.env.RF_SHARE_TOKEN || 'YggdBLfdninEJX9';
+const RF_HOST = 'https://arquivos.receitafederal.gov.br';
+const RF_BASE = `${RF_HOST}/public.php/webdav`;
+const RF_AUTH = 'Basic ' + Buffer.from(`${RF_SHARE_TOKEN}:`).toString('base64');
 const TMP = path.join(os.tmpdir(), 'rf-cnpj');
 const BATCH = 1000;
 
@@ -64,7 +78,7 @@ async function baixar(nomeZip, refDir) {
   if (!existsSync(zipPath)) {
     const url = `${RF_BASE}/${refDir}/${nomeZip}`;
     console.log('downloading', url);
-    const resp = await fetch(url);
+    const resp = await fetch(url, { headers: { Authorization: RF_AUTH } });
     if (!resp.ok) throw new Error(`download ${nomeZip}: HTTP ${resp.status}`);
     await pipeline(resp.body, createWriteStream(zipPath));
   }
@@ -190,14 +204,34 @@ function situacaoTxt(cod) {
 function porteTxt(cod) {
   return ({ '00': 'NÃO INFORMADO', '01': 'MICRO EMPRESA', '03': 'EPP', '05': 'DEMAIS' })[cod] ?? cod ?? null;
 }
+/**
+ * Competência mais recente publicada. PROPFIND no share (não mais scraping de
+ * HTML de "Index of", que sumiu junto com o caminho antigo). Depth:1 lista só
+ * os filhos da raiz — as pastas <AAAA-MM>.
+ *
+ * O fallback pro mês corrente ficou de fora de propósito: a Receita publica a
+ * competência com atraso, então chutar o mês de hoje gera 404 no primeiro
+ * download e um erro confuso lá na frente. Melhor falhar aqui, explicando.
+ */
 async function descobrirRefMaisRecente() {
-  try {
-    const html = await (await fetch(`${RF_BASE}/`)).text();
-    const meses = [...html.matchAll(/(\d{4}-\d{2})\//g)].map((m) => m[1]).sort();
-    if (meses.length) return meses[meses.length - 1];
-  } catch { /* ignore */ }
-  const d = new Date();
-  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
+  const resp = await fetch(`${RF_BASE}/`, {
+    method: 'PROPFIND',
+    headers: { Authorization: RF_AUTH, Depth: '1' },
+  });
+  if (!resp.ok && resp.status !== 207) {
+    throw new Error(
+      `não consegui listar o compartilhamento da Receita (HTTP ${resp.status}). `
+      + 'O token do share pode ter mudado — confira o recurso "Inscrições no CNPJ" '
+      + 'em dados.gov.br e passe o novo via RF_SHARE_TOKEN.',
+    );
+  }
+  const xml = await resp.text();
+  const meses = [...xml.matchAll(/<d:href>([^<]+)<\/d:href>/g)]
+    .map((m) => decodeURIComponent(m[1]).split('/').filter(Boolean).pop())
+    .filter((n) => /^\d{4}-\d{2}$/.test(n))
+    .sort();
+  if (!meses.length) throw new Error('o compartilhamento respondeu, mas sem nenhuma pasta AAAA-MM');
+  return meses[meses.length - 1];
 }
 
 carregar().catch((e) => { console.error(e); process.exit(1); });
