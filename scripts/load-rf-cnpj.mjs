@@ -369,11 +369,35 @@ async function carregar() {
   }
 
   // --- 3) Sócios: o QSA — é ISTO que fura porteiro -------------------------
+  //
+  // Tabela de qualificação (código → texto). Arquivo minúsculo e vale muito:
+  // saber que a pessoa é SÓCIO-ADMINISTRADOR e não sócio minoritário é o que
+  // decide POR QUEM pedir no balcão.
+  const qualNome = new Map();
+  {
+    const csv = await baixar('Qualificacoes.zip', refDir);
+    for await (const [cod, texto] of linhasCsv(csv)) qualNome.set(cod, texto);
+    descartarCsv(csv);
+    console.log(`qualificações: ${qualNome.size}`);
+  }
+
   for (const nome of SOCIOS) {
     await processarArquivo(nome, refDir, async (csv, escrever) => {
       for await (const r of linhasCsv(csv)) {
         if (!wantRaiz.has(r[0])) continue;
-        await escrever({ raiz: r[0], nome: r[2] || null, qualificacao: r[3] || null }); // sem CPF — LGPD
+        // LAYOUT (conferido no dado bruto em 2026-07-26 — a versão anterior
+        // errava a coluna): 0=raiz, 1=tipo(1=PJ,2=PF), 2=nome, 3=CPF/CNPJ do
+        // sócio, 4=qualificação, 5=data de entrada.
+        //
+        // A col[3] é DELIBERADAMENTE ignorada: é o documento do sócio (CPF
+        // mascarado pra PF, CNPJ inteiro pra PJ). O código antigo gravava ela
+        // no campo `qualificacao` — dado errado E documento pessoal onde o
+        // comentário jurava que não havia. Só nome + papel entram.
+        await escrever({
+          raiz: r[0],
+          nome: r[2] || null,
+          qualificacao: qualNome.get(r[4]) || r[4] || null,
+        });
       }
     });
   }
