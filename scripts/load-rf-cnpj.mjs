@@ -27,13 +27,17 @@
 // Runs in ~hours. Idempotent: re-running upserts by cnpj.
 // =============================================================================
 
-import { createReadStream, createWriteStream, mkdirSync, existsSync, rmSync, statSync } from 'node:fs';
+import { createReadStream, createWriteStream, mkdirSync, existsSync, rmSync, statSync, renameSync } from 'node:fs';
 import { pipeline } from 'node:stream/promises';
 import path from 'node:path';
 import os from 'node:os';
 import { createClient } from '@supabase/supabase-js';
 import { parse } from 'csv-parse';
-import AdmZip from 'adm-zip';
+// yauzl e NÃO adm-zip: o adm-zip lê o arquivo inteiro com readFileSync, que
+// estoura em 2 GiB (ERR_FS_FILE_TOO_LARGE). Estabelecimentos0.zip sozinho tem
+// 2,016 GiB — o script morria no primeiro arquivo grande. yauzl abre por
+// stream e entende zip64.
+import yauzl from 'yauzl';
 
 // A Receita MUDOU a distribuição (constatado 2026-07-25): o antigo
 // arquivos.receitafederal.gov.br/dados/cnpj/dados_abertos_cnpj/<AAAA-MM>/ agora
@@ -82,11 +86,40 @@ async function baixar(nomeZip, refDir) {
     if (!resp.ok) throw new Error(`download ${nomeZip}: HTTP ${resp.status}`);
     await pipeline(resp.body, createWriteStream(zipPath));
   }
-  const zip = new AdmZip(zipPath);
-  const entry = zip.getEntries()[0];
   const csvPath = path.join(TMP, nomeZip.replace(/\.zip$/i, '.csv'));
-  if (!existsSync(csvPath)) zip.extractEntryTo(entry, TMP, false, true, false, path.basename(csvPath));
+  if (!existsSync(csvPath)) await extrairPrimeiroArquivo(zipPath, csvPath);
   return csvPath;
+}
+
+/**
+ * Extrai a PRIMEIRA entrada de arquivo do zip, por stream, direto pro destino.
+ *
+ * Cada zip da Receita traz um único CSV, então parar na primeira entrada é o
+ * comportamento certo (e evita varrer o índice central inteiro à toa).
+ *
+ * Escreve num .parcial e só renomeia no fim: se o processo morrer no meio da
+ * extração, não fica um CSV truncado que o existsSync() aceitaria como pronto
+ * na próxima execução — o bug clássico de retomada.
+ */
+function extrairPrimeiroArquivo(zipPath, destino) {
+  const parcial = `${destino}.parcial`;
+  return new Promise((resolve, reject) => {
+    yauzl.open(zipPath, { lazyEntries: true, autoClose: false }, (err, zip) => {
+      if (err) return reject(err);
+      zip.on('error', reject);
+      zip.on('end', () => { zip.close(); reject(new Error(`zip sem arquivo dentro: ${zipPath}`)); });
+      zip.on('entry', (entry) => {
+        if (/\/$/.test(entry.fileName)) return zip.readEntry(); // diretório: segue
+        zip.openReadStream(entry, (e2, rs) => {
+          if (e2) { zip.close(); return reject(e2); }
+          pipeline(rs, createWriteStream(parcial))
+            .then(() => { zip.close(); renameSync(parcial, destino); resolve(); })
+            .catch((e3) => { zip.close(); rmSync(parcial, { force: true }); reject(e3); });
+        });
+      });
+      zip.readEntry();
+    });
+  });
 }
 
 /**
