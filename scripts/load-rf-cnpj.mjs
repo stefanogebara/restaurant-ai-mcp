@@ -29,6 +29,7 @@
 
 import { createReadStream, createWriteStream, mkdirSync, existsSync, rmSync, statSync, renameSync } from 'node:fs';
 import { pipeline } from 'node:stream/promises';
+import readline from 'node:readline';
 import path from 'node:path';
 import os from 'node:os';
 import { createClient } from '@supabase/supabase-js';
@@ -193,6 +194,80 @@ async function* linhasCsv(csvPath) {
   for await (const row of parser) yield row;
 }
 
+// ---------------------------------------------------------------- checkpoint
+//
+// Cada arquivo-fonte processado vira um NDJSON em TMP/ckpt. Duas razões:
+//
+// 1) RETOMADA. O script acumulava tudo em memória e só gravava no banco no fim,
+//    então QUALQUER falha (e já houve duas: adm-zip estourando em 2 GiB e o
+//    servidor da Receita derrubando conexão) fazia reprocessar os 31 arquivos do
+//    zero. Com checkpoint, arquivo já processado é pulado inteiro — nem extrai.
+//
+// 2) MEMÓRIA. O array `estabs` guardava todo estabelecimento filtrado até o
+//    final. Só o Estabelecimentos0 rendeu 2,65 milhões de objetos; o lote
+//    inteiro não caberia confortavelmente na heap. Agora a fusão lê os
+//    checkpoints em stream e nada grande fica residente.
+//
+// Escrita atômica (.parcial → rename): um checkpoint truncado por queda no meio
+// nunca é confundido com um arquivo pronto na execução seguinte.
+const CKPT = path.join(TMP, 'ckpt');
+const ckptPath = (nome) => path.join(CKPT, `${nome}.ndjson`);
+const temCheckpoint = (nome) => existsSync(ckptPath(nome));
+
+function abrirCheckpoint(nome) {
+  mkdirSync(CKPT, { recursive: true });
+  const destino = ckptPath(nome);
+  const parcial = `${destino}.parcial`;
+  const ws = createWriteStream(parcial);
+  return {
+    async escrever(obj) {
+      // Respeita backpressure: são milhões de linhas, escrever sem esperar o
+      // dreno estoura a memória do próprio buffer do stream.
+      if (!ws.write(`${JSON.stringify(obj)}\n`)) {
+        await new Promise((r) => ws.once('drain', r));
+      }
+    },
+    concluir() {
+      return new Promise((res, rej) => ws.end((e) => {
+        if (e) return rej(e);
+        renameSync(parcial, destino);
+        res();
+      }));
+    },
+    abortar() { ws.destroy(); rmSync(parcial, { force: true }); },
+  };
+}
+
+async function* lerCheckpoint(nome) {
+  const rl = readline.createInterface({
+    input: createReadStream(ckptPath(nome), 'utf8'),
+    crlfDelay: Infinity,
+  });
+  for await (const linha of rl) if (linha) yield JSON.parse(linha);
+}
+
+/**
+ * Processa um arquivo-fonte pro seu checkpoint, ou pula se já existe.
+ * `aoLinha(r, escrever)` decide o que sai — devolvendo nada, a linha é ignorada.
+ */
+async function processarArquivo(nome, refDir, aoLinha) {
+  if (temCheckpoint(nome)) { console.log(`${nome}: checkpoint ✓ (pulando)`); return; }
+  const csv = await baixar(`${nome}.zip`, refDir);
+  const ck = abrirCheckpoint(nome);
+  try {
+    await aoLinha(csv, ck.escrever.bind(ck));
+    await ck.concluir();
+  } catch (e) {
+    ck.abortar();
+    throw e;
+  }
+  descartarCsv(csv);
+}
+
+const ESTABS = Array.from({ length: 10 }, (_, i) => `Estabelecimentos${i}`);
+const EMPRESAS = Array.from({ length: 10 }, (_, i) => `Empresas${i}`);
+const SOCIOS = Array.from({ length: 10 }, (_, i) => `Socios${i}`);
+
 async function carregar() {
   const refDir = REF || await descobrirRefMaisRecente();
   console.log(`Receita ref=${refDir} | filter UF=${UF} municipio="${MUNICIPIO}"`);
@@ -203,94 +278,118 @@ async function carregar() {
   descartarCsv(munCsv);
   console.log(`municipalities: ${munNome.size}`);
 
+  // --- 1) Estabelecimentos: filtra por UF/município ------------------------
+  for (const nome of ESTABS) {
+    await processarArquivo(nome, refDir, async (csv, escrever) => {
+      // Contadores por etapa do filtro: se o municipio não casar (código que
+      // não existe no Municipios.csv, por exemplo), o número de "em UF" e o de
+      // "no município" ficam iguais e o erro aparece na hora, em vez de virar
+      // um índice inchado que ninguém questiona.
+      let vistos = 0; let naUf = 0; let noMun = 0;
+      for await (const r of linhasCsv(csv)) {
+        vistos++;
+        if (r[19] !== UF) continue;
+        naUf++;
+        const munNm = munNome.get(r[20]) ?? '';
+        if (MUNICIPIO && norm(munNm) !== norm(MUNICIPIO)) continue;
+        noMun++;
+        const ddd = r[21]; const tel = r[22];
+        await escrever({
+          cnpj: r[0] + r[1] + r[2],
+          raiz: r[0],
+          nome_fantasia: r[4] || null,
+          situacao: situacaoTxt(r[5]),
+          cnae: r[11] || null,
+          cep: onlyDigits(r[18]),
+          municipio: munNm || null,
+          uf: r[19],
+          bairro: r[17] || null,
+          logradouro: [r[13], r[14], r[15]].filter(Boolean).join(' ') || null,
+          telefone: ddd && tel ? `${ddd}${tel}` : null,
+        });
+      }
+      console.log(`${nome}: ${vistos} linhas | ${naUf} em ${UF} | ${noMun} em "${MUNICIPIO}"`);
+    });
+  }
+
+  // As raízes de CNPJ que interessam — tudo depois é filtrado por elas.
   const wantRaiz = new Set();
-  const estabs = [];
-  for (let i = 0; i < 10; i++) {
-    const csv = await baixar(`Estabelecimentos${i}.zip`, refDir);
-    for await (const r of linhasCsv(csv)) {
-      const uf = r[19];
-      if (uf !== UF) continue;
-      const munCod = r[20];
-      const munNm = munNome.get(munCod) ?? '';
-      if (MUNICIPIO && norm(munNm) !== norm(MUNICIPIO)) continue;
-      const raiz = r[0];
-      wantRaiz.add(raiz);
-      const cnpj = r[0] + r[1] + r[2];
-      const cep = onlyDigits(r[18]);
-      const ddd = r[21], tel = r[22];
-      estabs.push({
-        cnpj, raiz,
-        nome_fantasia: r[4] || null,
-        situacao: situacaoTxt(r[5]),
-        cnae: r[11] || null,
-        cep,
-        municipio: munNm || null,
-        uf,
-        bairro: r[17] || null,
-        logradouro: [r[13], r[14], r[15]].filter(Boolean).join(' ') || null,
-        telefone: ddd && tel ? `${ddd}${tel}` : null,
-      });
-    }
-    descartarCsv(csv);
-    console.log(`Estabelecimentos${i}: ${estabs.length} accumulated in filter`);
+  for (const nome of ESTABS) for await (const e of lerCheckpoint(nome)) wantRaiz.add(e.raiz);
+  console.log(`raízes de CNPJ no filtro: ${wantRaiz.size}`);
+
+  // --- 2) Empresas: razão social e porte -----------------------------------
+  for (const nome of EMPRESAS) {
+    await processarArquivo(nome, refDir, async (csv, escrever) => {
+      for await (const r of linhasCsv(csv)) {
+        if (!wantRaiz.has(r[0])) continue;
+        await escrever({ raiz: r[0], razao_social: r[1] || null, porte: porteTxt(r[5]) });
+      }
+    });
   }
 
+  // --- 3) Sócios: o QSA — é ISTO que fura porteiro -------------------------
+  for (const nome of SOCIOS) {
+    await processarArquivo(nome, refDir, async (csv, escrever) => {
+      for await (const r of linhasCsv(csv)) {
+        if (!wantRaiz.has(r[0])) continue;
+        await escrever({ raiz: r[0], nome: r[2] || null, qualificacao: r[3] || null }); // sem CPF — LGPD
+      }
+    });
+  }
+
+  // --- 4) Simples/MEI ------------------------------------------------------
+  await processarArquivo('Simples', refDir, async (csv, escrever) => {
+    for await (const r of linhasCsv(csv)) {
+      if (!wantRaiz.has(r[0])) continue;
+      await escrever({ raiz: r[0], mei: r[4] === 'S' });
+    }
+  });
+
+  // --- 5) Fusão: os mapas por raiz cabem na memória (limitados por wantRaiz);
+  //        os estabelecimentos NÃO cabem, então saem em stream do checkpoint.
   const empresa = new Map();
-  for (let i = 0; i < 10; i++) {
-    const csv = await baixar(`Empresas${i}.zip`, refDir);
-    for await (const r of linhasCsv(csv)) {
-      if (!wantRaiz.has(r[0])) continue;
-      empresa.set(r[0], { razao_social: r[1] || null, porte: porteTxt(r[5]) });
-    }
-    descartarCsv(csv);
-  }
-
+  for (const nome of EMPRESAS) for await (const e of lerCheckpoint(nome)) empresa.set(e.raiz, e);
   const socios = new Map();
-  for (let i = 0; i < 10; i++) {
-    const csv = await baixar(`Socios${i}.zip`, refDir);
-    for await (const r of linhasCsv(csv)) {
-      if (!wantRaiz.has(r[0])) continue;
-      const arr = socios.get(r[0]) ?? [];
-      arr.push({ nome: r[2] || null, qualificacao: r[3] || null }); // NO CPF — LGPD
-      socios.set(r[0], arr);
+  for (const nome of SOCIOS) {
+    for await (const s of lerCheckpoint(nome)) {
+      const arr = socios.get(s.raiz) ?? [];
+      arr.push({ nome: s.nome, qualificacao: s.qualificacao });
+      socios.set(s.raiz, arr);
     }
-    descartarCsv(csv);
   }
-
   const mei = new Map();
-  {
-    const csv = await baixar('Simples.zip', refDir);
-    for await (const r of linhasCsv(csv)) {
-      if (!wantRaiz.has(r[0])) continue;
-      mei.set(r[0], r[4] === 'S');
-    }
-    descartarCsv(csv);
-  }
+  for await (const m of lerCheckpoint('Simples')) mei.set(m.raiz, m.mei);
+  console.log(`empresas: ${empresa.size} | com sócios: ${socios.size} | MEI: ${mei.size}`);
 
   let buf = [];
   let total = 0;
-  for (const e of estabs) {
-    const emp = empresa.get(e.raiz) ?? {};
-    const fant = e.nome_fantasia ?? '';
-    const raz = emp.razao_social ?? '';
-    buf.push({
-      cnpj: e.cnpj,
-      razao_social: emp.razao_social ?? null,
-      nome_fantasia: e.nome_fantasia,
-      nome_busca: norm(`${fant} ${raz}`).replace(/\s+/g, ' ').trim(),
-      cep: e.cep || null,
-      municipio: e.municipio ? norm(e.municipio) : null,
-      uf: e.uf,
-      bairro: e.bairro,
-      logradouro: e.logradouro,
-      situacao: e.situacao,
-      cnae: e.cnae,
-      telefone: e.telefone,
-      porte: emp.porte ?? null,
-      mei: mei.get(e.raiz) ?? null,
-      socios: socios.get(e.raiz) ?? [],
-    });
-    if (buf.length >= BATCH) { await flush(buf); total += buf.length; buf = []; if (total % 20000 === 0) console.log(`upsert ${total}`); }
+  for (const nome of ESTABS) {
+    for await (const e of lerCheckpoint(nome)) {
+      const emp = empresa.get(e.raiz) ?? {};
+      const fant = e.nome_fantasia ?? '';
+      const raz = emp.razao_social ?? '';
+      buf.push({
+        cnpj: e.cnpj,
+        razao_social: emp.razao_social ?? null,
+        nome_fantasia: e.nome_fantasia,
+        nome_busca: norm(`${fant} ${raz}`).replace(/\s+/g, ' ').trim(),
+        cep: e.cep || null,
+        municipio: e.municipio ? norm(e.municipio) : null,
+        uf: e.uf,
+        bairro: e.bairro,
+        logradouro: e.logradouro,
+        situacao: e.situacao,
+        cnae: e.cnae,
+        telefone: e.telefone,
+        porte: emp.porte ?? null,
+        mei: mei.get(e.raiz) ?? null,
+        socios: socios.get(e.raiz) ?? [],
+      });
+      if (buf.length >= BATCH) {
+        await flush(buf); total += buf.length; buf = [];
+        if (total % 20000 === 0) console.log(`upsert ${total}`);
+      }
+    }
   }
   if (buf.length) { await flush(buf); total += buf.length; }
   console.log(`DONE: ${total} establishments in the index (UF=${UF}, municipio="${MUNICIPIO}").`);
