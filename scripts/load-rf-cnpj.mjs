@@ -27,7 +27,7 @@
 // Runs in ~hours. Idempotent: re-running upserts by cnpj.
 // =============================================================================
 
-import { createReadStream, createWriteStream, mkdirSync, existsSync } from 'node:fs';
+import { createReadStream, createWriteStream, mkdirSync, existsSync, rmSync, statSync } from 'node:fs';
 import { pipeline } from 'node:stream/promises';
 import path from 'node:path';
 import os from 'node:os';
@@ -89,6 +89,25 @@ async function baixar(nomeZip, refDir) {
   return csvPath;
 }
 
+/**
+ * Apaga o CSV extraído assim que ele foi consumido — o ZIP FICA.
+ *
+ * Sem isto o script acumulava tudo: os ~28GB de zips MAIS todo CSV extraído, e
+ * os CSVs da Receita descompactam em ~4-5x (Estabelecimentos0 sozinho: 2GB
+ * zipado). O pico passava de 150GB e enchia o disco no meio da madrugada.
+ *
+ * Manter o zip é de propósito: é ele que dá a retomada barata (o baixar() pula
+ * o download se o arquivo já está lá). Assim o pico fica em zips + UM csv por
+ * vez (~40GB), e reprocessar não re-baixa nada.
+ */
+function descartarCsv(csvPath) {
+  try {
+    const mb = (statSync(csvPath).size / 1048576).toFixed(0);
+    rmSync(csvPath, { force: true });
+    console.log(`  (csv liberado: ${path.basename(csvPath)}, ${mb} MB)`);
+  } catch { /* já sumiu — tudo bem */ }
+}
+
 async function* linhasCsv(csvPath) {
   const parser = createReadStream(csvPath, { encoding: 'latin1' })
     .pipe(parse({ delimiter: ';', quote: '"', relax_column_count: true }));
@@ -102,6 +121,7 @@ async function carregar() {
   const munCsv = await baixar('Municipios.zip', refDir);
   const munNome = new Map();
   for await (const [cod, nome] of linhasCsv(munCsv)) munNome.set(cod, nome);
+  descartarCsv(munCsv);
   console.log(`municipalities: ${munNome.size}`);
 
   const wantRaiz = new Set();
@@ -132,6 +152,7 @@ async function carregar() {
         telefone: ddd && tel ? `${ddd}${tel}` : null,
       });
     }
+    descartarCsv(csv);
     console.log(`Estabelecimentos${i}: ${estabs.length} accumulated in filter`);
   }
 
@@ -142,6 +163,7 @@ async function carregar() {
       if (!wantRaiz.has(r[0])) continue;
       empresa.set(r[0], { razao_social: r[1] || null, porte: porteTxt(r[5]) });
     }
+    descartarCsv(csv);
   }
 
   const socios = new Map();
@@ -153,6 +175,7 @@ async function carregar() {
       arr.push({ nome: r[2] || null, qualificacao: r[3] || null }); // NO CPF — LGPD
       socios.set(r[0], arr);
     }
+    descartarCsv(csv);
   }
 
   const mei = new Map();
@@ -162,6 +185,7 @@ async function carregar() {
       if (!wantRaiz.has(r[0])) continue;
       mei.set(r[0], r[4] === 'S');
     }
+    descartarCsv(csv);
   }
 
   let buf = [];
