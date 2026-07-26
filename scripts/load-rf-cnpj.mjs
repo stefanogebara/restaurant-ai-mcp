@@ -66,6 +66,33 @@ const UF = arg('uf', 'SP').toUpperCase();
 const MUNICIPIO = arg('municipio', 'SAO PAULO'); // normalized name; '' = whole UF
 const REF = arg('ref', ''); // AAAA-MM; empty = discover the latest in the index
 
+// Recorte de RAMO. Os checkpoints guardam TODO estabelecimento do município (a
+// coleta é indiscriminada de propósito), mas só o ramo que interessa vai pro
+// índice. Sem isto, São Paulo capital sozinha rende ~26 MILHÕES de linhas: 26 mil
+// requisições de upsert e um índice trigram gigante, pra procurar restaurante.
+//
+// '56' é a divisão CNAE de ALIMENTAÇÃO (restaurantes, bares, lanchonetes,
+// bufês, cantinas) — o CNAE vem sem pontuação nos dados abertos ('5611201').
+// Trocar o recorte NÃO exige re-baixar nada: os checkpoints continuam completos,
+// é só rodar de novo com outro --cnae.
+//
+// Limitação aceita (decisão do fundador, 2026-07-26): filtra pelo CNAE
+// PRINCIPAL. Restaurante registrado sob CNAE genérico (holding, comércio
+// varejista) fica de fora e a busca por nome não vai achá-lo. Trocamos
+// cobertura por tamanho de olhos abertos.
+const CNAE_PREFIXOS = arg('cnae', '56').split(',').map((s) => s.trim()).filter(Boolean);
+// Estabelecimento baixado não é lead, e casar o nome com um CNPJ morto trazia
+// sócio desatualizado. '' desliga o filtro de situação.
+const SITUACAO_OK = arg('situacao', 'ATIVA');
+
+/** O estabelecimento entra no índice? (checkpoint guarda tudo; isto seleciona.) */
+function doRamo(e) {
+  const cnae = String(e.cnae || '');
+  if (CNAE_PREFIXOS.length && !CNAE_PREFIXOS.some((p) => cnae.startsWith(p))) return false;
+  if (SITUACAO_OK && e.situacao !== SITUACAO_OK) return false;
+  return true;
+}
+
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 if (!SUPABASE_URL || !SERVICE_KEY) {
@@ -312,10 +339,24 @@ async function carregar() {
     });
   }
 
-  // As raízes de CNPJ que interessam — tudo depois é filtrado por elas.
+  // As raízes que interessam — o recorte de ramo é aplicado AQUI, e não na
+  // coleta, por dois motivos: os checkpoints seguem completos (alargar depois
+  // não re-baixa nada) e tudo a jusante fica pequeno — buscar sócio de ~60 mil
+  // raízes de alimentação em vez das ~2,6 milhões do município inteiro.
   const wantRaiz = new Set();
-  for (const nome of ESTABS) for await (const e of lerCheckpoint(nome)) wantRaiz.add(e.raiz);
-  console.log(`raízes de CNPJ no filtro: ${wantRaiz.size}`);
+  let vistosTotal = 0;
+  for (const nome of ESTABS) {
+    for await (const e of lerCheckpoint(nome)) {
+      vistosTotal++;
+      if (doRamo(e)) wantRaiz.add(e.raiz);
+    }
+  }
+  console.log(
+    `recorte: CNAE [${CNAE_PREFIXOS.join(',') || 'todos'}]`
+    + `${SITUACAO_OK ? ` + situação ${SITUACAO_OK}` : ''}`
+    + ` → ${wantRaiz.size.toLocaleString('pt-BR')} raízes de ${vistosTotal.toLocaleString('pt-BR')} estabelecimentos`,
+  );
+  if (!wantRaiz.size) throw new Error('o recorte de CNAE não deixou nenhuma raiz — confira --cnae');
 
   // --- 2) Empresas: razão social e porte -----------------------------------
   for (const nome of EMPRESAS) {
@@ -365,6 +406,11 @@ async function carregar() {
   let total = 0;
   for (const nome of ESTABS) {
     for await (const e of lerCheckpoint(nome)) {
+      // O recorte é reaplicado aqui de propósito: wantRaiz é por RAIZ, e uma
+      // rede pode ter a matriz num CNAE de alimentação e filiais em outro (um
+      // escritório administrativo, por ex.). Sem esta linha, essas filiais
+      // entrariam de carona no índice.
+      if (!doRamo(e)) continue;
       const emp = empresa.get(e.raiz) ?? {};
       const fant = e.nome_fantasia ?? '';
       const raz = emp.razao_social ?? '';
