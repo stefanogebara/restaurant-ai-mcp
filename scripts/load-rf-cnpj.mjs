@@ -76,16 +76,62 @@ const supabase = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSessio
 const norm = (s) => (s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
 const onlyDigits = (s) => (s ?? '').replace(/\D/g, '');
 
+const TENTATIVAS = 6;
+const espera = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * Baixa um zip da Receita, com retentativa e de forma ATÔMICA.
+ *
+ * Duas lições de produção, ambas custaram uma execução:
+ *
+ * 1) O servidor da Receita é lento e derruba conexão. O default do undici é 10s
+ *    de connect timeout, e num job de horas isso estoura (UND_ERR_CONNECT_TIMEOUT
+ *    no Estabelecimentos1). Um timeout de conexão não é motivo pra jogar fora
+ *    horas de trabalho — retenta com backoff.
+ *
+ * 2) Escrever direto no zipPath deixava um ZIP TRUNCADO quando a conexão caía no
+ *    meio, e o existsSync() da execução seguinte aceitava esse arquivo como
+ *    pronto. Agora vai pro .parcial e só vira zip de verdade depois de conferir
+ *    o content-length — truncado nunca é confundido com completo.
+ */
 async function baixar(nomeZip, refDir) {
   mkdirSync(TMP, { recursive: true });
   const zipPath = path.join(TMP, nomeZip);
+  const parcial = `${zipPath}.parcial`;
+
   if (!existsSync(zipPath)) {
     const url = `${RF_BASE}/${refDir}/${nomeZip}`;
-    console.log('downloading', url);
-    const resp = await fetch(url, { headers: { Authorization: RF_AUTH } });
-    if (!resp.ok) throw new Error(`download ${nomeZip}: HTTP ${resp.status}`);
-    await pipeline(resp.body, createWriteStream(zipPath));
+    let ultimoErro = null;
+    for (let t = 1; t <= TENTATIVAS; t++) {
+      try {
+        console.log(`downloading ${url}${t > 1 ? ` (tentativa ${t}/${TENTATIVAS})` : ''}`);
+        rmSync(parcial, { force: true }); // recomeça limpo: sem Range, sem meio-arquivo
+        const resp = await fetch(url, {
+          headers: { Authorization: RF_AUTH },
+          signal: AbortSignal.timeout(60 * 60 * 1000), // arquivos de GBs em link lento
+        });
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const esperado = Number(resp.headers.get('content-length')) || 0;
+        await pipeline(resp.body, createWriteStream(parcial));
+        const veio = statSync(parcial).size;
+        if (esperado && veio !== esperado) {
+          throw new Error(`tamanho não bate: veio ${veio} de ${esperado} bytes`);
+        }
+        renameSync(parcial, zipPath);
+        ultimoErro = null;
+        break;
+      } catch (e) {
+        ultimoErro = e;
+        rmSync(parcial, { force: true });
+        if (t === TENTATIVAS) break;
+        const pausa = Math.min(60_000, 2 ** t * 1000); // 2s, 4s, 8s… teto de 1min
+        console.log(`  ⚠ ${nomeZip}: ${e.message} — nova tentativa em ${pausa / 1000}s`);
+        await espera(pausa);
+      }
+    }
+    if (ultimoErro) throw new Error(`download ${nomeZip} falhou em ${TENTATIVAS} tentativas: ${ultimoErro.message}`);
   }
+
   const csvPath = path.join(TMP, nomeZip.replace(/\.zip$/i, '.csv'));
   if (!existsSync(csvPath)) await extrairPrimeiroArquivo(zipPath, csvPath);
   return csvPath;
