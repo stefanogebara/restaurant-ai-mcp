@@ -40,6 +40,9 @@
       "excludeFiles": "{lambda/**,api/__tests__/**,**/*.test.js,**/*.spec.js,ml-training-data/**,e2e/**,.claude/**,seatable-ads/**,reels-toolkit/**,remotion/**}",
       "memory": 512,
       "maxDuration": 60
+    },
+    "api/cron/prospect-enrich.js": {
+      "maxDuration": 60
     }
   },
   "rewrites": [
@@ -505,6 +508,10 @@
     {
       "path": "/api/cron/weekly-report",
       "schedule": "30 8 * * *"
+    },
+    {
+      "path": "/api/cron/prospect-enrich",
+      "schedule": "20 * * * *"
     }
   ]
 }
