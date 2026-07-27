@@ -135,6 +135,38 @@ describe('supabase — se cai, nada no produto funciona', () => {
   });
 });
 
+describe('falsos positivos que a primeira versão da sonda produziu em produção', () => {
+  const { sondarResend, sondarAnthropic } = require('../_lib/integration-probes');
+
+  test('Resend com chave restrita a envio é OK, não falha', () => {
+    // A chave de produção é de ENVIO (menor privilégio, correto), então
+    // GET /domains devolve 401 "restricted to only send emails". A v1 da sonda
+    // leu isso como chave morta e pintou "e-mails quebrados" — não estavam.
+    global.fetch = mockFetch({ message: 'This API key is restricted to only send emails' }, 401);
+    return sondarResend({ RESEND_API_KEY: 'k' }).then((r) => {
+      expect(r.nivel).toBe(NIVEIS.OK);
+      expect(r.detalhe).toMatch(/restrita a envio/i);
+    });
+  });
+
+  test('Resend com 401 de verdade continua sendo falha', () => {
+    global.fetch = mockFetch({ message: 'API key is invalid' }, 401);
+    return sondarResend({ RESEND_API_KEY: 'k' }).then((r) => {
+      expect(r.nivel).toBe(NIVEIS.FALHA);
+    });
+  });
+
+  test('Anthropic morta é ATENÇÃO, não falha — ela é reserva, o primário é OpenRouter', async () => {
+    // Na 1ª execução em produção a Anthropic deu 401 e o veredito geral virou
+    // "vermelho", quando o agente estava atendendo cliente normalmente pelo
+    // OpenRouter. Métrica de emergência que grita sem emergência é ruído.
+    global.fetch = mockFetch({ error: { message: 'API key is invalid' } }, 401);
+    const r = await sondarAnthropic({ ANTHROPIC_API_KEY: 'k' });
+    expect(r.nivel).toBe(NIVEIS.ATENCAO);
+    expect(r.detalhe).toMatch(/upsell/i); // diz o que REALMENTE quebra
+  });
+});
+
 describe('resumir — o veredito que o fundador lê primeiro', () => {
   const s = (nome, nivel) => ({ nome, nivel, detalhe: '' });
 

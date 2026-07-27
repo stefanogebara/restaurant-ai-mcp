@@ -205,13 +205,46 @@ function sondaSimples({ nome, chaveVar, url, cabecalhos, sucesso }) {
   };
 }
 
-const sondarAnthropic = sondaSimples({
-  nome: 'anthropic',
-  chaveVar: 'ANTHROPIC_API_KEY',
-  url: () => 'https://api.anthropic.com/v1/models?limit=1',
-  cabecalhos: (k) => ({ 'x-api-key': k, 'anthropic-version': '2023-06-01' }),
-  sucesso: () => 'chave válida (o cérebro do agente responde)',
+/**
+ * OpenRouter é o provedor PRIMÁRIO do agente (ai-client.js:213) — a Anthropic
+ * só entra como reserva. Sondar só a Anthropic dava um diagnóstico invertido:
+ * na primeira execução em produção ela deu 401 e o veredito ficou "vermelho"
+ * quando o agente estava atendendo cliente normalmente pelo OpenRouter.
+ */
+const sondarOpenRouter = sondaSimples({
+  nome: 'ia_primaria_openrouter',
+  chaveVar: 'OPENROUTER_API_KEY',
+  url: () => 'https://openrouter.ai/api/v1/key',
+  cabecalhos: (k) => ({ Authorization: `Bearer ${k}` }),
+  sucesso: (c) => {
+    const d = (c && c.data) || {};
+    const resta = d.limit_remaining;
+    return Number.isFinite(resta)
+      ? `chave válida — crédito restante ${resta}`
+      : 'chave válida (o cérebro do agente responde)';
+  },
 });
+
+/**
+ * Reserva. Falha aqui NÃO derruba o atendimento — mas derruba o
+ * upsell-generator, que chama o SDK da Anthropic direto, sem passar pelo
+ * ai-client e portanto sem o fallback.
+ */
+async function sondarAnthropic(env) {
+  const base = await sondaSimples({
+    nome: 'ia_reserva_anthropic',
+    chaveVar: 'ANTHROPIC_API_KEY',
+    url: () => 'https://api.anthropic.com/v1/models?limit=1',
+    cabecalhos: (k) => ({ 'x-api-key': k, 'anthropic-version': '2023-06-01' }),
+    sucesso: () => 'chave válida (reserva do agente + upsell)',
+  })(env);
+
+  if (base.nivel !== NIVEIS.FALHA) return base;
+  return atencao(
+    base.nome,
+    `${base.detalhe} — o agente segue no OpenRouter, mas o upsell (SDK direto) está quebrado`,
+  );
+}
 
 const sondarOpenAI = sondaSimples({
   nome: 'openai',
@@ -244,13 +277,35 @@ const sondarStripe = sondaSimples({
   sucesso: () => 'chave válida (cobrança de assinatura operante)',
 });
 
-const sondarResend = sondaSimples({
-  nome: 'resend',
-  chaveVar: 'RESEND_API_KEY',
-  url: () => 'https://api.resend.com/domains',
-  cabecalhos: (k) => ({ Authorization: `Bearer ${k}` }),
-  sucesso: () => 'chave válida (e-mails transacionais saem)',
-});
+/**
+ * Resend distingue chave de ENVIO de chave de acesso total. A nossa é de
+ * envio — que é o correto, menor privilégio — então `GET /domains` responde
+ * 401 com "restricted to only send emails". Isso é a chave FUNCIONANDO e sendo
+ * bem restrita, não uma chave morta: o 401 vem da permissão, não da
+ * autenticação. A primeira versão desta sonda gritou "resend quebrado" por
+ * causa disso.
+ */
+async function sondarResend(env) {
+  const nome = 'resend';
+  const chave = env.RESEND_API_KEY;
+  if (!chave) return naoConfigurado(nome, 'RESEND_API_KEY');
+  try {
+    const { status, corpo } = await buscar('https://api.resend.com/domains', {
+      headers: { Authorization: `Bearer ${chave}` },
+    });
+    const msg = String((corpo && (corpo.message || (corpo.error && corpo.error.message))) || '');
+
+    if (status === 401 && /restricted to only send/i.test(msg)) {
+      return ok(nome, 'chave válida, restrita a envio (menor privilégio — correto)');
+    }
+    if (status === 401 || status === 403) return falha(nome, `chave recusada (HTTP ${status})`);
+    if (status >= 500) return atencao(nome, `fornecedor instável (HTTP ${status})`);
+    if (status >= 400) return falha(nome, msg || `HTTP ${status}`);
+    return ok(nome, 'chave válida (e-mails transacionais saem)');
+  } catch (err) {
+    return erroParaFalha(nome, err);
+  }
+}
 
 /**
  * Banco: um SELECT trivial com LIMIT 1. Se isto falha, nada no produto
@@ -306,6 +361,7 @@ async function sondarIntegracoes({ env = process.env, agoraMs = Date.now(), deps
     () => sondarTokenMeta(env, agoraMs),
     () => sondarNumeroWhatsApp(env, 'whatsapp_reservas', 'WHATSAPP_PHONE_NUMBER_ID'),
     () => sondarNumeroWhatsApp(env, 'whatsapp_prospeccao', 'PROSPECTING_PHONE_NUMBER_ID'),
+    () => sondarOpenRouter(env),
     () => sondarAnthropic(env),
     () => sondarOpenAI(env),
     () => sondarElevenLabs(env),
@@ -329,5 +385,8 @@ module.exports = {
   sondarTokenMeta,
   sondarNumeroWhatsApp,
   sondarSupabase,
+  sondarResend,
+  sondarAnthropic,
+  sondarOpenRouter,
   sondarIntegracoes,
 };
