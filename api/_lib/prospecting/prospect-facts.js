@@ -17,9 +17,20 @@
  * @property {string[]} [objecoes]
  * @property {string[]} [interesses]
  * @property {string[]} [notas]
+ *
+ * Descoberta (decisão 2026-07-27: as "10 conversas" do mapa de mercado rodam
+ * também dentro da prospecção — a Olímpia pergunta UMA vez, a resposta vira
+ * fato estruturado e consultável, nunca anedota perdida no chat):
+ * @property {'comanda_individual'|'conta_mesa'|'ambos'|null} [modelo_conta]
+ * @property {string[]} [dor_pagamento]  dores DITAS sobre a hora de pagar
+ * @property {string[]} [sistemas]       sistemas que o lead DISSE usar
+ * @property {boolean|null} [usa_vr]     clientes pagam com vale-refeição
+ * @property {boolean|null} [aceita_reserva]
  */
 
-const FATOS_LISTAS = ['objecoes', 'interesses', 'notas'];
+const FATOS_LISTAS = ['objecoes', 'interesses', 'notas', 'dor_pagamento', 'sistemas'];
+const FATOS_BOOLS = ['is_dono', 'usa_vr', 'aceita_reserva'];
+const MODELOS_CONTA = ['comanda_individual', 'conta_mesa', 'ambos'];
 
 function uniqAppend(prev, novos) {
   const base = Array.isArray(prev) ? [...prev] : [];
@@ -52,11 +63,15 @@ function mergeFatos(prev, novos) {
     else delete base[lista];
   }
   if (novos) {
-    if (typeof novos.is_dono === 'boolean') base.is_dono = novos.is_dono;
+    for (const campo of FATOS_BOOLS) {
+      if (typeof novos[campo] === 'boolean') base[campo] = novos[campo];
+    }
     for (const campo of ['nome_responsavel', 'email', 'disponibilidade']) {
       const v = novos[campo];
       if (typeof v === 'string' && v.trim()) base[campo] = v.trim();
     }
+    // Enum fechado: valor fora da lista é invenção do modelo, não fato.
+    if (MODELOS_CONTA.includes(novos.modelo_conta)) base.modelo_conta = novos.modelo_conta;
   }
   return base;
 }
@@ -78,6 +93,16 @@ function formatarMemoria(fatos, resumo) {
     if (fatos.objecoes && fatos.objecoes.length) linhas.push(`- Objeções/ressalvas já levantadas: ${fatos.objecoes.join('; ')}`);
     if (fatos.interesses && fatos.interesses.length) linhas.push(`- Interesses demonstrados: ${fatos.interesses.join('; ')}`);
     if (fatos.notas && fatos.notas.length) linhas.push(`- Outros fatos ditos: ${fatos.notas.join('; ')}`);
+    // Descoberta — entra na memória pra Olímpia usar (e nunca perguntar de novo).
+    if (fatos.modelo_conta === 'comanda_individual') linhas.push('- Como a casa cobra: comanda INDIVIDUAL por pessoa (cada um paga a sua no caixa).');
+    if (fatos.modelo_conta === 'conta_mesa') linhas.push('- Como a casa cobra: conta única da MESA (o grupo divide na hora de pagar).');
+    if (fatos.modelo_conta === 'ambos') linhas.push('- Como a casa cobra: mistura comanda individual e conta da mesa.');
+    if (fatos.usa_vr === true) linhas.push('- Clientes pagam com vale-refeição (VR/Alelo/Ticket) — relevante no almoço.');
+    if (fatos.usa_vr === false) linhas.push('- A casa NÃO recebe vale-refeição.');
+    if (fatos.aceita_reserva === true) linhas.push('- A casa trabalha com reserva de mesa.');
+    if (fatos.aceita_reserva === false) linhas.push('- A casa NÃO trabalha com reserva (fila/chegada livre).');
+    if (fatos.dor_pagamento && fatos.dor_pagamento.length) linhas.push(`- Dores na hora do pagamento que a pessoa citou: ${fatos.dor_pagamento.join('; ')}`);
+    if (fatos.sistemas && fatos.sistemas.length) linhas.push(`- Sistemas que a casa usa (ditos pelo lead): ${fatos.sistemas.join('; ')}`);
   }
   const resumoTxt = resumo && resumo.trim();
   if (resumoTxt) linhas.push(`- Resumo da conversa até aqui: ${resumoTxt}`);
@@ -93,11 +118,14 @@ function formatarMemoria(fatos, resumo) {
 function coerceFatos(raw) {
   const o = raw || {};
   const out = {};
-  if (typeof o.is_dono === 'boolean') out.is_dono = o.is_dono;
+  for (const campo of FATOS_BOOLS) {
+    if (typeof o[campo] === 'boolean') out[campo] = o[campo];
+  }
   for (const campo of ['nome_responsavel', 'email', 'disponibilidade']) {
     const v = o[campo];
     if (typeof v === 'string' && v.trim()) out[campo] = v.trim();
   }
+  if (MODELOS_CONTA.includes(o.modelo_conta)) out.modelo_conta = o.modelo_conta;
   for (const lista of FATOS_LISTAS) {
     const v = o[lista];
     if (Array.isArray(v)) {

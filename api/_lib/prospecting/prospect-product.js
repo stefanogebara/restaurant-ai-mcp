@@ -45,6 +45,12 @@ const RACHA = {
     'mensagem, em linguagem simples. Se a dor ainda não apareceu, pergunte (ex.: "o que mais',
     'trava aí na hora H: a fila pra fechar a conta, a dividida no fim da noite, ou a maquininha',
     'na correria?"). NUNCA despeje a lista inteira de uma vez.',
+    'QUALIFICAÇÃO-CHAVE (uma vez por conversa, quando a pessoa engajar): descubra COMO a casa',
+    'cobra o consumo — comanda individual por pessoa, ou conta única da mesa que o grupo divide?',
+    'Pergunte com naturalidade (ex.: "aí com vocês é comanda por pessoa ou conta da mesa?").',
+    'Isso muda o pitch: conta da mesa → o Racha resolve a DIVIDIDA; comanda individual → o Racha',
+    'resolve a FILA DO CAIXA (cada um paga a própria comanda pelo QR, sem parar no caixa).',
+    'Se a memória da conversa JÁ tem essa resposta, não pergunte de novo — use.',
   ],
   objetivo: [
     'SEU OBJETIVO: descobrir se quem responde é o dono/gerente e MOSTRAR VALOR NA HORA com a',
