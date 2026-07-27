@@ -36,12 +36,12 @@
     "api/cron/prospect-handoff-digest.js": {
       "maxDuration": 60
     },
+    "api/cron/prospect-enrich.js": {
+      "maxDuration": 60
+    },
     "api/**/*.js": {
       "excludeFiles": "{lambda/**,api/__tests__/**,**/*.test.js,**/*.spec.js,ml-training-data/**,e2e/**,.claude/**,seatable-ads/**,reels-toolkit/**,remotion/**}",
       "memory": 512,
-      "maxDuration": 60
-    },
-    "api/cron/prospect-enrich.js": {
       "maxDuration": 60
     }
   },
