@@ -1,4 +1,40 @@
 
+## 2026-07-27 — Push verde no git não é deploy verde: o curinga do vercel.json come a entrada seguinte
+Descobri por acidente, esperando um deploy que nunca ficava pronto: os QUATRO últimos
+deploys do Seatable falharam e ninguém viu. Produção estava servindo o build de 25/jul
+23:18 enquanto o repositório seguia em frente — o ETL de CNPJ, a cerca geográfica da
+descoberta, a captura de fatos da Olímpia e uma correção de vazamento entre
+restaurantes: nenhum estava no ar.
+Causa: no bloco `functions` do vercel.json, a entrada `"api/cron/prospect-enrich.js"`
+foi acrescentada DEPOIS do curinga `"api/**/*.js"`. A Vercel casa os padrões em ORDEM;
+o curinga já havia reivindicado todas as funções, então a entrada específica ficou sem
+par e o build morreu com `unused_function`. O arquivo existia, estava no git, exportava
+handler válido e tinha sintaxe ok — o erro era a POSIÇÃO da linha no JSON. As outras 11
+entradas específicas já estavam acima do curinga.
+Regra: entrada nova em `functions` vai SEMPRE antes de qualquer curinga. E, mais
+importante que a regra: depois de `git push`, CONFIRME o estado do deploy antes de
+declarar qualquer coisa entregue — a mensagem de sucesso do git não diz nada sobre a
+Vercel. Teste novo em `api/__tests__/vercel-config.test.js` faz a suíte falhar antes do
+push (curinga tem que ser a última entrada; toda entrada específica aponta pra arquivo
+existente; todo cron tem handler).
+
+## 2026-07-27 — Sonda de saúde que grita sem emergência é pior que sonda nenhuma
+Construí um diagnóstico ao vivo das integrações e a primeira execução em produção
+devolveu "vermelho, 2 quebradas". Conferi uma a uma contra o fornecedor: DOIS dos três
+alarmes eram erro meu.
+(1) Resend: a chave de produção é de ENVIO (menor privilégio, que é o correto), então
+`GET /domains` responde 401 "restricted to only send emails". O 401 vinha da PERMISSÃO,
+não da autenticação — a chave estava perfeita e os e-mails saindo.
+(2) Anthropic: sondei o fallback achando que era o primário. O cérebro do agente é o
+OpenRouter (`ai-client.js:213`); a Anthropic só entra se ele cair. Pintei o sistema de
+vermelho enquanto o agente atendia cliente normalmente.
+Regra: antes de sondar uma dependência, leia o código pra saber QUAL é a primária, e
+saiba o que cada 4xx daquele fornecedor significa — 401 de escopo ≠ 401 de auth. E
+classifique por consequência real: falha de reserva é ATENÇÃO com o detalhe do que de
+fato quebra (aqui, o `upsell-generator`, que usa o SDK direto e não tem fallback), não
+FALHA. Mesma família do radar do Racha contando teste como cliente: métrica que exagera
+treina o dono a ignorá-la, e aí ela não serve de nada no dia em que estiver certa.
+
 ## 2026-06-10: git stash dance + concurrent session = silent loss of client-side work
 
 **Context**: To verify a test failure was pre-existing, I ran `git stash push && vitest && git stash pop` while ANOTHER Claude session was actively committing to the same repo (the demo.js bisect / services→_services rename session). Between my push and pop, the other session committed `2a1ef96c`, which swept up my popped backend changes (good luck) — but its cleanup wiped ALL my uncommitted client-side onboarding fixes (~10 files). Had to redo them from context.
@@ -471,3 +507,35 @@ commit ANTERIOR — tropecei 2x na mesma sessão (o dump de diagnóstico não
 aparecia porque o deploy era do commit velho). Fix: o deploy.mjs agora faz
 `git push origin HEAD:main` antes de resolver o sha. Regra geral: se um script
 de deploy usa a ref remota, ele tem que garantir que a ref remota está em dia.
+
+## 2026-07-22 — Marketing visuals must match the shipping product, not invent a look
+Correction: for Racha teaser #1, the marketing pipeline (mkt-creative-director)
+invented an off-brand visual system (dark-ink #16130F, coral #FF5436, receipt-paper,
+geometric grotesk, "Pix teal") because racha-brand-voice said "no approved design
+system yet." The real Racha app ships Seatable's **Warm Glass** system (DESIGN.md is
+canon; apps/web/src/styles.css inherits it): warm-white #FAFAF9 + 4 warm orbs, burgundy
+#9F1239 for action, emerald #10B981 for "paid" status (NO teal anywhere), Instrument
+Serif / DM Sans / JetBrains Mono, glassmorphism.
+Rule: before designing ANY marketing asset, read the product's DESIGN.md + the app's
+actual stylesheet and match it. A brand-voice "no design system yet" note is a prompt to
+GO READ THE CODE, not license to invent. Fixed racha-brand-voice SKILL.md to codify Warm
+Glass. Lesson also: when the user says "look like what the product is," the source of
+truth is the repo (website/github) + the parent design language (Claude), not taste.
+
+## 2026-07-23 — A silent-state lead can SWALLOW an opt-out; resurrecting it must re-run the responder
+Building the Olímpia handoff digest + reclaim, a code-review caught an LGPD hole:
+`prospect-responder.js` gates on `deveResponder(state)` (SILENT_STATES: optout, handoff,
+agendado, pausada) and returns BEFORE the deterministic `detectarOptout` check. So a
+lead already in `handoff` who types "sai da lista" is stored as an inbound but NEVER
+recorded as opt-out — harmless only because handoff was excluded from every proactive
+selector (opt-out honored by accident). Any feature that RESURRECTS a silent-state lead
+(my reclaim flipping handoff→conversando) removes that accidental protection: the
+reengage template can then hit someone who asked to stop.
+Rule: when un-muting/reactivating a lead that sat in a SILENT_STATE, do NOT just flip the
+state — re-run the FULL responder on the pending inbound (set `reply_apos=now` +
+`last_in_wamid=null` so `selectDueFlush` picks it up; selectDueFlush has no 24h window,
+unlike resgate). The responder runs opt-out/recusa detection deterministically AND
+actually answers the lead. Flip-only relies on the resgate 24h window and leaks on the
+aged/weekend path. General: deterministic safety floors (LGPD opt-out) that live DOWNSTREAM
+of a state gate are silently skipped for any state that short-circuits that gate — audit
+every silent-state for what checks it bypasses before you re-open it.
