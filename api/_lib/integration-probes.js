@@ -1,0 +1,333 @@
+'use strict';
+
+/**
+ * Sondas de integração — a resposta pra "o WhatsApp está funcionando AGORA?".
+ *
+ * Por que existe: o Seatable tem 119 variáveis em produção e 19 delas estão
+ * marcadas como "Sensitive" na Vercel, o que significa que NINGUÉM consegue
+ * lê-las de fora — nem `vercel env pull`, que devolve o literal
+ * `[SENSITIVE]` no lugar do valor. O token da Meta é uma delas. Ou seja: a
+ * única forma de saber se ele ainda vale é perguntar de DENTRO da função,
+ * onde o valor real existe.
+ *
+ * Isso já mordeu: o token da Meta expirou em 09/mai/2026 e só foi notado
+ * ~3 semanas depois, num audit. Nesse meio-tempo toda chamada à Meta dava
+ * 401 em silêncio — a página de WhatsApp, o envio de mensagem, tudo. O cron
+ * monitor-meta-token-expiry cobre esse caso específico; aqui a pergunta é
+ * mais ampla e sob demanda: TODAS as dependências externas, agora.
+ *
+ * Três regras que moldam o módulo:
+ *
+ * 1. NUNCA ecoar segredo. Mensagem de erro de fornecedor às vezes devolve a
+ *    chave enviada ("Invalid API key sk-proj-abc..."). Tudo passa por
+ *    `redigir()` antes de virar JSON.
+ * 2. "Não configurado" ≠ "quebrado". Twilio ausente é uma escolha (usamos
+ *    Meta), não uma falha — pintar de vermelho treina o fundador a ignorar
+ *    o vermelho.
+ * 3. Toda sonda tem prazo próprio. Um fornecedor pendurado não pode consumir
+ *    o maxDuration da função inteira e derrubar o diagnóstico junto.
+ *
+ * As sondas são GET baratos e sem efeito colateral — nada aqui envia
+ * mensagem, cobra cartão ou escreve no banco.
+ */
+
+const NIVEIS = {
+  OK: 'ok',
+  ATENCAO: 'atencao',
+  FALHA: 'falha',
+  NAO_CONFIGURADO: 'nao_configurado',
+};
+
+/** Token da Meta com menos que isto pra expirar já é aviso, não surpresa. */
+const DIAS_AVISO_EXPIRACAO = 14;
+/** Prazo por sonda. Curto de propósito: é diagnóstico, não trabalho. */
+const PRAZO_MS = 8000;
+
+/**
+ * Tira do texto qualquer coisa com cara de segredo antes de virar resposta.
+ *
+ * Fornecedor devolve a chave na mensagem de erro com frequência maior do que
+ * se imagina. Como este endpoint existe pra ser colado em chat e ticket, uma
+ * mensagem crua é vazamento. Preferimos redigir demais a de menos: qualquer
+ * sequência longa de caracteres de token vira [redigido].
+ */
+function redigir(texto) {
+  if (texto == null) return '';
+  return String(texto)
+    // prefixos conhecidos (sk-, pk-, rk_, whsec_, EAA… da Meta, xoxb…)
+    .replace(/\b(sk|pk|rk|ak)[-_][A-Za-z0-9_-]{8,}/gi, '[redigido]')
+    .replace(/\bwhsec_[A-Za-z0-9_-]{8,}/gi, '[redigido]')
+    .replace(/\bEAA[A-Za-z0-9]{20,}/g, '[redigido]')
+    .replace(/\bBearer\s+[A-Za-z0-9._-]{12,}/gi, 'Bearer [redigido]')
+    // JWT (eyJ…) — o service_role do Supabase tem esse formato
+    .replace(/\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.?[A-Za-z0-9_-]*/g, '[redigido]')
+    // qualquer bloco alfanumérico muito longo remanescente
+    .replace(/\b[A-Za-z0-9_-]{40,}\b/g, '[redigido]')
+    .slice(0, 300);
+}
+
+const naoConfigurado = (nome, faltando) => ({
+  nome,
+  nivel: NIVEIS.NAO_CONFIGURADO,
+  detalhe: `variável ausente: ${faltando}`,
+});
+
+const falha = (nome, detalhe, extra = {}) => ({
+  nome, nivel: NIVEIS.FALHA, detalhe: redigir(detalhe), ...extra,
+});
+
+const ok = (nome, detalhe, extra = {}) => ({
+  nome, nivel: NIVEIS.OK, detalhe: redigir(detalhe), ...extra,
+});
+
+const atencao = (nome, detalhe, extra = {}) => ({
+  nome, nivel: NIVEIS.ATENCAO, detalhe: redigir(detalhe), ...extra,
+});
+
+/** fetch com prazo — sem isto, um fornecedor lento derruba o diagnóstico todo. */
+async function buscar(url, opcoes = {}, prazoMs = PRAZO_MS) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), prazoMs);
+  try {
+    const r = await fetch(url, { ...opcoes, signal: ctrl.signal });
+    const corpo = await r.json().catch(() => ({}));
+    return { status: r.status, corpo };
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+/**
+ * Erro virado veredito. `AbortError` vira "prazo esgotado" em vez do texto
+ * cru do Node, que não diz nada pra quem lê o diagnóstico.
+ */
+function erroParaFalha(nome, err) {
+  if (err && (err.name === 'AbortError' || err.name === 'TimeoutError')) {
+    return falha(nome, `não respondeu em ${PRAZO_MS / 1000}s`);
+  }
+  return falha(nome, (err && err.message) || 'erro desconhecido');
+}
+
+/**
+ * Token da Meta: vale? expira quando?
+ *
+ * `debug_token` inspecionando o próprio token é permitido quando o app do
+ * token e o app inspecionado são o mesmo — que é sempre o caso aqui.
+ * `expires_at === 0` significa token de System User, que não expira: é o
+ * estado desejado, e vale dizer isso explicitamente no detalhe.
+ */
+async function sondarTokenMeta(env, agoraMs) {
+  const nome = 'meta_token';
+  const token = env.WHATSAPP_ACCESS_TOKEN;
+  if (!token) return naoConfigurado(nome, 'WHATSAPP_ACCESS_TOKEN');
+
+  try {
+    const { corpo } = await buscar(
+      `https://graph.facebook.com/v21.0/debug_token?input_token=${encodeURIComponent(token)}`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    if (corpo.error) return falha(nome, corpo.error.message);
+
+    const d = corpo.data || {};
+    if (d.is_valid !== true) return falha(nome, 'token recusado pela Meta (is_valid=false)');
+
+    if (d.expires_at === 0) return ok(nome, 'válido, não expira (System User)');
+
+    const diasRestantes = Math.floor((d.expires_at * 1000 - agoraMs) / 86400000);
+    const detalhe = `válido, expira em ${diasRestantes} dia(s)`;
+    return diasRestantes <= DIAS_AVISO_EXPIRACAO
+      ? atencao(nome, `${detalhe} — renovar antes que toda chamada à Meta comece a dar 401`, { dias_restantes: diasRestantes })
+      : ok(nome, detalhe, { dias_restantes: diasRestantes });
+  } catch (err) {
+    return erroParaFalha(nome, err);
+  }
+}
+
+/**
+ * Saúde do número: qualidade e tier de envio.
+ *
+ * A Meta rebaixa a qualidade quando cliente bloqueia ou denuncia; qualidade
+ * RED antecede a suspensão do número. Isso não aparece em lugar nenhum do
+ * produto hoje — o restaurante só descobriria quando parasse de entregar.
+ */
+async function sondarNumeroWhatsApp(env, nome, idVar) {
+  const id = env[idVar];
+  const token = env.WHATSAPP_ACCESS_TOKEN;
+  if (!id) return naoConfigurado(nome, idVar);
+  if (!token) return naoConfigurado(nome, 'WHATSAPP_ACCESS_TOKEN');
+
+  try {
+    const campos = 'display_phone_number,verified_name,quality_rating,code_verification_status,messaging_limit_tier';
+    const { corpo } = await buscar(
+      `https://graph.facebook.com/v21.0/${encodeURIComponent(id)}?fields=${campos}`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    if (corpo.error) return falha(nome, corpo.error.message);
+
+    const qualidade = String(corpo.quality_rating || 'UNKNOWN').toUpperCase();
+    const extra = {
+      numero: corpo.display_phone_number,
+      nome_verificado: corpo.verified_name,
+      qualidade,
+      tier: corpo.messaging_limit_tier,
+    };
+    const resumo = `${corpo.display_phone_number || '?'} — qualidade ${qualidade}`;
+
+    if (qualidade === 'RED') {
+      return falha(nome, `${resumo}: a Meta está prestes a limitar/suspender este número`, extra);
+    }
+    if (qualidade === 'YELLOW') {
+      return atencao(nome, `${resumo}: clientes bloquearam/denunciaram — a próxima parada é RED`, extra);
+    }
+    return ok(nome, resumo, extra);
+  } catch (err) {
+    return erroParaFalha(nome, err);
+  }
+}
+
+/** Sonda genérica de "a chave ainda vale?" — um GET barato e sem efeito. */
+function sondaSimples({ nome, chaveVar, url, cabecalhos, sucesso }) {
+  return async (env) => {
+    const chave = env[chaveVar];
+    if (!chave) return naoConfigurado(nome, chaveVar);
+    try {
+      const { status, corpo } = await buscar(url(env), { headers: cabecalhos(chave, env) });
+      if (status === 401 || status === 403) return falha(nome, `chave recusada (HTTP ${status})`);
+      if (status >= 500) return atencao(nome, `fornecedor instável (HTTP ${status})`);
+      if (status >= 400) {
+        const msg = (corpo && corpo.error && (corpo.error.message || corpo.error.type)) || `HTTP ${status}`;
+        return falha(nome, msg);
+      }
+      return ok(nome, sucesso ? sucesso(corpo) : 'chave válida');
+    } catch (err) {
+      return erroParaFalha(nome, err);
+    }
+  };
+}
+
+const sondarAnthropic = sondaSimples({
+  nome: 'anthropic',
+  chaveVar: 'ANTHROPIC_API_KEY',
+  url: () => 'https://api.anthropic.com/v1/models?limit=1',
+  cabecalhos: (k) => ({ 'x-api-key': k, 'anthropic-version': '2023-06-01' }),
+  sucesso: () => 'chave válida (o cérebro do agente responde)',
+});
+
+const sondarOpenAI = sondaSimples({
+  nome: 'openai',
+  chaveVar: 'OPENAI_API_KEY',
+  url: () => 'https://api.openai.com/v1/models',
+  cabecalhos: (k) => ({ Authorization: `Bearer ${k}` }),
+  sucesso: () => 'chave válida (embeddings da memória do Manager AI)',
+});
+
+const sondarElevenLabs = sondaSimples({
+  nome: 'elevenlabs',
+  chaveVar: 'ELEVENLABS_API_KEY',
+  url: () => 'https://api.elevenlabs.io/v1/user/subscription',
+  cabecalhos: (k) => ({ 'xi-api-key': k }),
+  sucesso: (c) => {
+    const usados = c && c.character_count;
+    const limite = c && c.character_limit;
+    if (Number.isFinite(usados) && Number.isFinite(limite) && limite > 0) {
+      return `${Math.round((usados / limite) * 100)}% da cota de voz usada`;
+    }
+    return 'chave válida';
+  },
+});
+
+const sondarStripe = sondaSimples({
+  nome: 'stripe',
+  chaveVar: 'STRIPE_SECRET_KEY',
+  url: () => 'https://api.stripe.com/v1/balance',
+  cabecalhos: (k) => ({ Authorization: `Bearer ${k}` }),
+  sucesso: () => 'chave válida (cobrança de assinatura operante)',
+});
+
+const sondarResend = sondaSimples({
+  nome: 'resend',
+  chaveVar: 'RESEND_API_KEY',
+  url: () => 'https://api.resend.com/domains',
+  cabecalhos: (k) => ({ Authorization: `Bearer ${k}` }),
+  sucesso: () => 'chave válida (e-mails transacionais saem)',
+});
+
+/**
+ * Banco: um SELECT trivial com LIMIT 1. Se isto falha, nada no produto
+ * funciona — é a sonda que importa mais e a que menos costuma falhar.
+ */
+async function sondarSupabase(env, deps = {}) {
+  const nome = 'supabase';
+  const cliente = deps.supabaseAdmin;
+  if (!env.SUPABASE_URL) return naoConfigurado(nome, 'SUPABASE_URL');
+  if (!cliente) return falha(nome, 'cliente admin não inicializado (SERVICE_ROLE_KEY ausente?)');
+  try {
+    const { error } = await cliente.from('reservations').select('id').limit(1);
+    if (error) return falha(nome, error.message);
+    return ok(nome, 'banco responde');
+  } catch (err) {
+    return erroParaFalha(nome, err);
+  }
+}
+
+/**
+ * Veredito do conjunto.
+ *
+ * `nao_configurado` NÃO conta como falha de propósito (regra 2 do topo):
+ * Twilio ausente é escolha de arquitetura, não defeito. Mas ele aparece na
+ * lista, porque "não configurado" quando deveria estar é justamente o que a
+ * pessoa quer enxergar.
+ */
+function resumir(sondas) {
+  const conta = (n) => sondas.filter((s) => s.nivel === n).length;
+  const falhas = conta(NIVEIS.FALHA);
+  const atencoes = conta(NIVEIS.ATENCAO);
+
+  const geral = falhas > 0 ? NIVEIS.FALHA : (atencoes > 0 ? NIVEIS.ATENCAO : NIVEIS.OK);
+  const quebradas = sondas.filter((s) => s.nivel === NIVEIS.FALHA).map((s) => s.nome);
+
+  return {
+    geral,
+    total: sondas.length,
+    ok: conta(NIVEIS.OK),
+    atencao: atencoes,
+    falha: falhas,
+    nao_configurado: conta(NIVEIS.NAO_CONFIGURADO),
+    quebradas,
+  };
+}
+
+/**
+ * Roda tudo em paralelo. Uma sonda que estoura nunca derruba as outras —
+ * um diagnóstico parcial vale muito mais que um 500.
+ */
+async function sondarIntegracoes({ env = process.env, agoraMs = Date.now(), deps = {} } = {}) {
+  const tarefas = [
+    () => sondarTokenMeta(env, agoraMs),
+    () => sondarNumeroWhatsApp(env, 'whatsapp_reservas', 'WHATSAPP_PHONE_NUMBER_ID'),
+    () => sondarNumeroWhatsApp(env, 'whatsapp_prospeccao', 'PROSPECTING_PHONE_NUMBER_ID'),
+    () => sondarAnthropic(env),
+    () => sondarOpenAI(env),
+    () => sondarElevenLabs(env),
+    () => sondarStripe(env),
+    () => sondarResend(env),
+    () => sondarSupabase(env, deps),
+  ];
+
+  const sondas = await Promise.all(tarefas.map((t, i) => t().catch((err) => falha(
+    `sonda_${i}`, `a própria sonda quebrou: ${(err && err.message) || err}`,
+  ))));
+
+  return { verificado_em: new Date(agoraMs).toISOString(), resumo: resumir(sondas), sondas };
+}
+
+module.exports = {
+  NIVEIS,
+  DIAS_AVISO_EXPIRACAO,
+  redigir,
+  resumir,
+  sondarTokenMeta,
+  sondarNumeroWhatsApp,
+  sondarSupabase,
+  sondarIntegracoes,
+};

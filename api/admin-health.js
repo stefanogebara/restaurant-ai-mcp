@@ -61,6 +61,27 @@ module.exports = async (req, res) => {
       integrity,
     };
 
+    // ?integrations=1 — sondagem AO VIVO das dependências externas (Meta,
+    // Anthropic, OpenAI, ElevenLabs, Stripe, Resend, banco).
+    //
+    // Fica atrás de um parâmetro porque custa: são ~9 chamadas de rede a
+    // fornecedores, enquanto o resto do snapshot é só banco. Quem quer o
+    // pulso rápido não paga por isso.
+    //
+    // Por que aqui e não num endpoint próprio: 19 das variáveis de produção
+    // estão marcadas como "Sensitive" na Vercel — incluindo o token da Meta —
+    // e NINGUÉM consegue lê-las de fora (`vercel env pull` devolve o literal
+    // "[SENSITIVE]"). A única forma de saber se o token ainda vale é perguntar
+    // de dentro da função. E cada arquivo novo em api/ vira mais uma função
+    // serverless cobrada, então isto mora no health que já existe.
+    if (req.query.integrations === '1' || req.query.integrations === 'true') {
+      const { sondarIntegracoes } = require('./_lib/integration-probes');
+      snapshot.integrations = await safe(
+        () => sondarIntegracoes({ deps: { supabaseAdmin } }),
+        'integrations',
+      );
+    }
+
     // Overall: red if integrity flags > 0 OR cron is critical/degraded.
     snapshot.overall = computeOverall(snapshot);
 
@@ -197,7 +218,10 @@ async function integrityFallback() {
   };
 }
 
-function computeOverall({ cron, activity, integrity }) {
+function computeOverall({ cron, activity, integrity, integrations }) {
+  // Integração externa quebrada ganha de tudo: se o token da Meta morreu, o
+  // produto está fora do ar para o cliente final mesmo com todo o resto verde.
+  if (integrations?.resumo?.geral === 'falha') return 'red';
   if (cron?.overall === 'critical') return 'red';
   if (cron?.overall === 'degraded') return 'yellow';
   const integrityIssues = [
@@ -206,5 +230,6 @@ function computeOverall({ cron, activity, integrity }) {
   ].filter((n) => typeof n === 'number' && n > 0).length;
   if (integrityIssues > 0) return 'yellow';
   if (activity?.error) return 'yellow';
+  if (integrations?.resumo?.geral === 'atencao') return 'yellow';
   return 'green';
 }
