@@ -104,7 +104,15 @@ async function sendViaMeta(to, message, options = {}) {
 
     if (!response.ok) {
       logger.error('WhatsApp send error:', { status: response.status, data: JSON.stringify(data) });
-      return { success: false, error: data.error?.message || 'Failed to send' };
+      // `code` sobe junto porque é ele que distingue "passou das 24h" (regra
+      // normal da Meta) de "token recusado" (produto fora do ar). Sem o código,
+      // send-result.js teria que adivinhar pelo texto, que muda sem aviso.
+      return {
+        success: false,
+        error: data.error?.message || 'Failed to send',
+        code: data.error?.code,
+        subcode: data.error?.error_subcode,
+      };
     }
 
     logger.info(`WhatsApp message sent to ${to}, msgId=${data.messages?.[0]?.id}`);

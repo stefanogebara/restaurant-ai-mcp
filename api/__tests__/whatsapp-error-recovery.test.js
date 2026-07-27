@@ -46,7 +46,12 @@ jest.mock('../_lib/restaurant-registry', () => ({
   getAllActiveRestaurants: jest.fn().mockResolvedValue([]),
 }));
 
-const mockSendMessage = jest.fn().mockResolvedValue(undefined);
+// Os adapters REAIS devolvem o resultado do sender ({ success, messageId }) —
+// MetaAdapter.sendMessage retorna sendWhatsAppMessage(...), TwilioAdapter
+// retorna sendViaTwilio(...). Um mock que devolvia `undefined` fazia o
+// processador classificar todo envio como FALHA e os testes passavam pelo ramo
+// errado sem ninguém ver. Fixture tem que refletir o contrato real.
+const mockSendMessage = jest.fn().mockResolvedValue({ success: true, messageId: 'wamid.TESTE' });
 jest.mock('../_lib/whatsapp-sender', () => ({
   getWhatsAppProvider: jest.fn().mockReturnValue({
     sendMessage: mockSendMessage,
@@ -126,7 +131,7 @@ function makeAdapter() {
   return {
     providerName:  'meta',
     markAsRead:    jest.fn().mockResolvedValue(undefined),
-    sendMessage:   jest.fn().mockResolvedValue(undefined),
+    sendMessage:   jest.fn().mockResolvedValue({ success: true, messageId: 'wamid.TESTE' }),
     addReaction:   jest.fn().mockResolvedValue(undefined),
     removeReaction: jest.fn().mockResolvedValue(undefined),
   };

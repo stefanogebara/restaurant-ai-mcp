@@ -22,8 +22,40 @@ const { findPendingFeedbackForPhone, processFeedbackReply } = require('../../_se
 const { handleSurveyReply } = require('../../_services/surveyReplyHandler');
 const { extractMemoriesFromWhatsApp } = require('../../_services/memoryExtractor');
 const { simulateTypingDelay } = require('../whatsapp-interactions');
+const { avaliarEnvio } = require('./send-result');
 
 const logger = createSecureLogger('MessageProcessor');
+
+/**
+ * Envia e OLHA o resultado.
+ *
+ * Os adapters não lançam quando o envio falha — devolvem `{ success: false }`.
+ * Até jul/2026 nenhum dos 7 pontos de envio checava isso, então uma falha
+ * (janela de 24h fechada, token recusado, número sem WhatsApp) deixava o
+ * cliente sem resposta e ninguém sabendo. Este invólucro transforma cada falha
+ * numa linha `[SEND_FAIL]` com categoria e ação, e devolve se entregou — quem
+ * chama decide o que fazer com isso.
+ *
+ * Nunca lança: uma falha de envio não pode derrubar o resto do processamento
+ * (o histórico ainda precisa ser gravado, o lock ainda precisa ser solto).
+ */
+async function enviarComGuarda(adapter, to, texto, ondeFoi) {
+  let resultado;
+  try {
+    resultado = await adapter.sendMessage(to, texto);
+  } catch (err) {
+    resultado = { success: false, error: err && err.message };
+  }
+
+  const v = avaliarEnvio(resultado);
+  if (!v.entregue) {
+    const linha = `${v.resumo} origem=${ondeFoi}`;
+    // Alertável vira error (o cron de saúde e o Sentry pescam por nível);
+    // o resto vira info, pra não treinar ninguém a ignorar vermelho.
+    if (v.alertavel) logger.error(linha); else logger.info(linha);
+  }
+  return v;
+}
 
 /**
  * Process an incoming WhatsApp message through the unified pipeline.
@@ -102,7 +134,7 @@ async function processMessage(adapter, msg, options = {}) {
           : feedbackLang === 'es'
             ? '¡Gracias por tu opinion! Apreciamos que te hayas tomado el tiempo.'
             : 'Thank you for your feedback! We appreciate you taking the time to share your thoughts.';
-      await adapter.sendMessage(from, thankYou);
+      await enviarComGuarda(adapter, from, thankYou, 'feedback');
       return { handled: true };
     }
   }
@@ -126,7 +158,7 @@ async function processMessage(adapter, msg, options = {}) {
         : surveyLang === 'es'
           ? `¡Gracias por tu valoracion! ${stars} (${surveyResult.rating}/5)\n¡Esperamos verte pronto!`
           : `Thank you for your rating! ${stars} (${surveyResult.rating}/5)\nWe hope to see you again!`;
-    await adapter.sendMessage(from, thankYou);
+    await enviarComGuarda(adapter, from, thankYou, 'pesquisa');
     return { handled: true };
   }
 
@@ -151,7 +183,7 @@ async function processMessage(adapter, msg, options = {}) {
   }
 
   if (!session) {
-    await adapter.sendMessage(from, 'Desculpe, tive um problema ao iniciar nossa conversa. Por favor, tente novamente.');
+    await enviarComGuarda(adapter, from, 'Desculpe, tive um problema ao iniciar nossa conversa. Por favor, tente novamente.', 'falha-sessao');
     return { handled: true };
   }
 
@@ -189,7 +221,7 @@ async function processMessage(adapter, msg, options = {}) {
       if (activeRestaurants.length === 0) {
         // No restaurants configured or registry down — don't proceed to AI with broken context
         logger.error('[MessageProcessor] No active restaurants in registry — cannot route message');
-        await adapter.sendMessage(from, 'Desculpe, nosso sistema está passando por manutenção. Por favor, tente novamente em alguns minutos. 🙏');
+        await enviarComGuarda(adapter, from, 'Desculpe, nosso sistema está passando por manutenção. Por favor, tente novamente em alguns minutos. 🙏', 'manutencao');
         return { handled: true };
       }
 
@@ -251,7 +283,7 @@ async function processMessage(adapter, msg, options = {}) {
                 .maybeSingle();
               if (rConfig?.agent_greeting) greetingMsg = rConfig.agent_greeting;
             } catch (e) { /* non-fatal */ }
-            await adapter.sendMessage(from, greetingMsg);
+            await enviarComGuarda(adapter, from, greetingMsg, 'saudacao');
             return { handled: true };
           }
         }
@@ -264,7 +296,7 @@ async function processMessage(adapter, msg, options = {}) {
       logger.error('Restaurant routing error:', err.message);
       // If routing fails entirely, bail gracefully rather than proceeding with no context
       if (!session.restaurant) {
-        await adapter.sendMessage(from, 'Desculpe, tive um problema ao identificar o restaurante. Por favor, tente novamente. 🙏');
+        await enviarComGuarda(adapter, from, 'Desculpe, tive um problema ao identificar o restaurante. Por favor, tente novamente. 🙏', 'falha-roteamento');
         return { handled: true };
       }
     }
@@ -358,12 +390,27 @@ async function processMessage(adapter, msg, options = {}) {
   // 12. Remove processing reaction
   adapter.removeReaction(from, messageId).catch(() => {});
 
-  // 13. Save conversation history — atomic append (re-read DB then merge the new
-  // user+assistant pair) so concurrent Lambdas never clobber each other's writes.
-  const newPair = cleanHistoryForStorage([
-    { role: 'user', content: text },
-    { role: 'assistant', content: response },
-  ]);
+  // 13. ENVIAR ANTES DE GRAVAR.
+  //
+  // A ordem era o inverso: gravava o par user+assistant no histórico e só
+  // depois mandava. Quando o envio falhava — janela de 24h fechada, token
+  // recusado, número sem WhatsApp — o cliente não recebia nada e o histórico
+  // ficava com uma resposta do assistente que NUNCA existiu. Nas mensagens
+  // seguintes a IA relia esse turno fantasma como se já tivesse respondido, e
+  // o restaurante via uma conversa aparentemente completa com um cliente que
+  // sumiu sem explicação.
+  //
+  // Agora: envia, e o que se grava depende do resultado. O turno do CLIENTE
+  // entra de qualquer jeito — ele falou de verdade, e perder isso apagaria o
+  // contexto da próxima mensagem.
+  await simulateTypingDelay(response.length);
+  const envio = await enviarComGuarda(adapter, from, response, 'resposta-ia');
+
+  const newPair = cleanHistoryForStorage(
+    envio.entregue
+      ? [{ role: 'user', content: text }, { role: 'assistant', content: response }]
+      : [{ role: 'user', content: text }],
+  );
   const updatedHistory = cleanHistoryForStorage([
     ...conversationHistory,
     ...newPair,
@@ -378,17 +425,11 @@ async function processMessage(adapter, msg, options = {}) {
     releaseProcessingLock(from).catch(() => {});
   }
 
-  // 14. Memory extraction (fire-and-forget)
-  if (session?.restaurant?.id && updatedHistory.length >= 4) {
+  // 14. Memory extraction (fire-and-forget) — só sobre conversa que aconteceu.
+  if (envio.entregue && session?.restaurant?.id && updatedHistory.length >= 4) {
     extractMemoriesFromWhatsApp(session.restaurant.id, from, updatedHistory, session.id)
       .catch(err => logger.warn('Memory extraction failed (non-fatal):', err.message));
   }
-
-  // 15. Typing delay
-  await simulateTypingDelay(response.length);
-
-  // 16. Send response
-  await adapter.sendMessage(from, response);
 
   // 17. Welcome buttons — DISABLED.
   //     Firing on every conversationHistory.length===0 produced a "2 bot replies"
