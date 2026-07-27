@@ -63,20 +63,96 @@ function isRachaIcp(place) {
   return true;
 }
 
+// ---------------------------------------------------------- cerca geográfica
+//
+// BUG 2026-07-27: a base "São Paulo" tinha restaurante do RS, MS e PA —
+// 'Amazônia na Cuia' (Belém) virou lead paulistano. O textQuery ("... em São
+// Paulo, SP") é DICA pro Google, não limite; sem locationRestriction ele
+// devolve o que achar relevante no país inteiro. Resultado: template pago
+// disparado fora da praça e métrica poluída.
+//
+// Retângulos por praça (lat/lng). Praça sem retângulo cadastrado roda sem
+// cerca — degradação consciente, não silenciosa (o log diz qual foi o caso).
+const RETANGULOS = {
+  'sao paulo': { low: { latitude: -23.82, longitude: -46.83 }, high: { latitude: -23.36, longitude: -46.36 } },
+  'rio de janeiro': { low: { latitude: -23.08, longitude: -43.80 }, high: { latitude: -22.75, longitude: -43.10 } },
+};
+
+const semAcento = (s) => String(s == null ? '' : s)
+  .normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+
+/** Retângulo da praça, ou null se não cadastrada. Aceita "São Paulo, SP", "SP/SP" etc. */
+function boundsParaCidade(cidade) {
+  const n = semAcento(cidade).replace(/[/,-]\s*[a-z]{2}$/, '').trim();
+  return RETANGULOS[n] || null;
+}
+
+/** O ponto cai dentro do retângulo? Sem retângulo → true; sem coordenada → false. */
+function dentroDoRetangulo(lat, lng, bounds) {
+  if (!bounds) return true;
+  if (typeof lat !== 'number' || typeof lng !== 'number') return false;
+  return lat >= bounds.low.latitude && lat <= bounds.high.latitude
+    && lng >= bounds.low.longitude && lng <= bounds.high.longitude;
+}
+
+/** Mesma cidade, ignorando acento, caixa e a UF no fim ("São Paulo, SP" = "sao paulo"). */
+function mesmaCidade(a, b) {
+  const limpa = (s) => semAcento(s).replace(/[/,-]\s*[a-z]{2}$/, '').trim();
+  const x = limpa(a); const y = limpa(b);
+  return !!x && !!y && x === y;
+}
+
+/**
+ * O lugar deve entrar na base desta praça?
+ *
+ * Só descarta quando dá pra PROVAR que está fora — coordenada fora do
+ * retângulo, ou endereço de outra cidade. Lugar sem coordenada e sem endereço
+ * legível passa: perder lead bom por metadado faltando é pior que revisar um
+ * duvidoso (e o Google quase sempre manda a coordenada).
+ */
+function naPraca(place, ctx) {
+  if (!ctx || !ctx.bounds) return true;
+  const loc = place.location;
+  if (loc && typeof loc.latitude === 'number' && typeof loc.longitude === 'number') {
+    return dentroDoRetangulo(loc.latitude, loc.longitude, ctx.bounds);
+  }
+  const cidadeReal = cidadeDoEndereco(place.formattedAddress);
+  if (cidadeReal && ctx.city) return mesmaCidade(cidadeReal, ctx.city);
+  return true;
+}
+
+/**
+ * Cidade REAL a partir do formattedAddress do Google
+ * ("... - Consolação, São Paulo - SP, 01305-000, Brasil" → "São Paulo, SP").
+ * Sem padrão reconhecível → null: melhor não saber que carimbar errado.
+ */
+function cidadeDoEndereco(endereco) {
+  const m = String(endereco || '').match(/,\s*([^,]+?)\s*-\s*([A-Z]{2})\s*(?:,|$)/);
+  return m ? `${m[1].trim()}, ${m[2]}` : null;
+}
+
 /**
  * Normalize a Places result into a prospect_leads row. A business phone that
  * resolves to a BR MOBILE becomes the WhatsApp candidate (whatsapp_status
  * 'pending'); a landline/none → 'missing' (proper WhatsApp discovery is Phase 3).
  *
  * @param {object} place - Google Places v1 place object
- * @param {object} ctx - { city, sector }
- * @returns {object|null} lead row, or null if unusable (no id/name) OR não-ICP
+ * @param {object} ctx - { city, sector, bounds }
+ * @returns {object|null} lead row, ou null se inútil (sem id/nome), não-ICP,
+ *   ou FORA da cerca quando ctx.bounds é passado
  */
 function normalizePlace(place, ctx = {}) {
   if (!place || !place.id) return null;
   const name = place.displayName && place.displayName.text;
   if (!name) return null;
   if (!isRachaIcp(place)) return null; // sem mesa, sem Racha — descarta na fonte
+
+  const lat = place.location ? place.location.latitude : null;
+  const lng = place.location ? place.location.longitude : null;
+  // Cinto e suspensório: mesmo com locationRestriction na requisição, o Google
+  // devolve borda de vez em quando. Descartar aqui é o que garante que nenhum
+  // forasteiro entre no banco.
+  if (!naPraca(place, ctx)) return null;
 
   const rawPhone = place.internationalPhoneNumber || place.nationalPhoneNumber || null;
   // ANY normalized BR number is a WhatsApp candidate — fixed lines routinely
@@ -92,9 +168,12 @@ function normalizePlace(place, ctx = {}) {
     name,
     sector: ctx.sector || null,
     address: place.formattedAddress || null,
-    city: ctx.city || null,
-    lat: place.location ? place.location.latitude : null,
-    lng: place.location ? place.location.longitude : null,
+    // A cidade do ENDEREÇO, não a da busca. Antes carimbávamos ctx.city e o
+    // banco passou a afirmar que um restaurante de Belém ficava em São Paulo.
+    // Fallback pro termo buscado só quando o endereço não tem padrão legível.
+    city: cidadeDoEndereco(place.formattedAddress) || ctx.city || null,
+    lat,
+    lng,
     google_place_id: place.id,
     source: 'google_places',
     phone: rawPhone,
@@ -134,6 +213,12 @@ async function searchPlaces({ query, city, country = 'Brasil', sector, maxResult
   const cap = Math.min(Math.max(maxResults, 1), 60); // Places v1 pages 20 at a time, 60 max
   const all = [];
   let pageToken = null;
+  // Cerca na ORIGEM: sem isto o Google usa o texto só como dica e devolve o
+  // país inteiro (achado 2026-07-27). Restringir aqui também economiza — cada
+  // página é uma requisição faturada, e não adianta pagar por resultado que o
+  // normalizePlace vai descartar depois.
+  const bounds = boundsParaCidade(city);
+  if (!bounds) logger.warn(`sem retângulo cadastrado para "${city}" — busca sem cerca geográfica`);
 
   try {
     // Up to 3 pages of 20 — each page is a billed request, so stop as soon as
@@ -145,6 +230,10 @@ async function searchPlaces({ query, city, country = 'Brasil', sector, maxResult
         textQuery,
         maxResultCount: Math.min(cap - all.length, 20),
         languageCode: lang,
+        // Text Search (New) aceita RECTANGLE em locationRestriction (circle é
+        // só pra locationBias) — e restriction é limite de verdade, ao
+        // contrário do bias.
+        ...(bounds ? { locationRestriction: { rectangle: bounds } } : {}),
         ...(pageToken ? { pageToken } : {}),
       };
       const response = await fetch(PLACES_URL, {
@@ -173,8 +262,12 @@ async function searchPlaces({ query, city, country = 'Brasil', sector, maxResult
       if (!pageToken) break;
     }
 
-    const leads = all.map((p) => normalizePlace(p, { city, sector })).filter(Boolean);
-    logger.info(`discovery "${textQuery}" → ${all.length} places, ${leads.length} usable`);
+    const leads = all.map((p) => normalizePlace(p, { city, sector, bounds })).filter(Boolean);
+    const foraDaCerca = bounds
+      ? all.filter((p) => p.location && !dentroDoRetangulo(p.location.latitude, p.location.longitude, bounds)).length
+      : 0;
+    logger.info(`discovery "${textQuery}" → ${all.length} places, ${leads.length} usable`
+      + (foraDaCerca ? `, ${foraDaCerca} fora da cerca (descartados)` : ''));
     return { ok: true, leads };
   } catch (err) {
     if (err.name === 'AbortError') {
@@ -211,4 +304,5 @@ function parseAutocomplete(json) {
 
 module.exports = {
   buildAutocompleteBody,
-  parseAutocomplete, searchPlaces, normalizePlace, isRachaIcp, FIELD_MASK };
+  parseAutocomplete, searchPlaces, normalizePlace, isRachaIcp, FIELD_MASK,
+  boundsParaCidade, dentroDoRetangulo, cidadeDoEndereco, RETANGULOS };
