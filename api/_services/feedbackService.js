@@ -11,8 +11,12 @@
 const { supabaseAdmin } = require('../_lib/supabase');
 const { sendWhatsAppMessage } = require('../_lib/whatsapp-sender');
 const { createSecureLogger } = require('../_lib/secure-logger');
+const { lerNota } = require('../_lib/rating-reply');
 
 const logger = createSecureLogger('FeedbackService');
+
+/** Depois disto, quem escreve não está mais respondendo ao pedido de feedback. */
+const FEEDBACK_REPLY_WINDOW_HOURS = 48;
 
 /**
  * Schedule feedback for a completed service.
@@ -210,14 +214,27 @@ async function processFeedbackReply(restaurantId, customerPhone, messageText) {
   // Parse rating from message
   const parsed = parseRatingFromMessage(messageText);
 
+  // SEM NOTA, NÃO É RESPOSTA DE FEEDBACK. Antes, qualquer texto marcava o
+  // registro como 'answered' e devolvia truthy — e o processador respondia
+  // "Obrigado pelo seu feedback!" e encerrava. Um pedido de feedback enviado na
+  // terça e ignorado engolia a reserva pedida na sexta: o cliente escrevia
+  // "quero mesa pra 4 sábado" e recebia um agradecimento.
+  //
+  // Devolver null aqui faz a mensagem seguir para a IA, que é o certo: quem
+  // quer avaliar manda a nota; quem manda outra coisa quer falar com o
+  // restaurante.
+  if (!parsed.rating) {
+    logger.info('Mensagem sem nota — não é resposta de feedback, segue para a IA', {
+      feedbackId: feedback.id,
+    });
+    return null;
+  }
+
   const updates = {
     status: 'answered',
     answered_at: new Date().toISOString(),
+    rating: parsed.rating,
   };
-
-  if (parsed.rating) {
-    updates.rating = parsed.rating;
-  }
   if (parsed.comment) {
     updates.comment = parsed.comment.slice(0, 1000);
   }
@@ -250,21 +267,14 @@ async function processFeedbackReply(restaurantId, customerPhone, messageText) {
 function parseRatingFromMessage(text) {
   const trimmed = (text || '').trim();
 
-  // Count star emojis
-  const starCount = (trimmed.match(/⭐/g) || []).length;
-  if (starCount >= 1 && starCount <= 5) {
-    const comment = trimmed.replace(/⭐/g, '').trim();
-    return { rating: starCount, comment: comment || null };
-  }
+  // A leitura vive em _lib/rating-reply, compartilhada com a pesquisa
+  // pós-visita. Antes daqui saía `rating: 4` para "4 pessoas amanhã 20h",
+  // porque a regex era /^([1-5])\s*(.*)/ e o resto virava "comentário".
+  const { nota, comentario } = lerNota(trimmed);
+  if (nota !== null) return { rating: nota, comment: comentario };
 
-  // Check for numeric rating at start
-  const numMatch = trimmed.match(/^([1-5])\s*(.*)/s);
-  if (numMatch) {
-    const comment = numMatch[2].replace(/^[-–—:.\s]+/, '').trim();
-    return { rating: parseInt(numMatch[1]), comment: comment || null };
-  }
-
-  // No clear rating — treat entire message as comment
+  // Sem nota: o texto inteiro é comentário. Quem decide se isso basta para
+  // dar a resposta como respondida é processFeedbackReply — e não basta.
   return { rating: null, comment: trimmed || null };
 }
 
@@ -274,11 +284,18 @@ function parseRatingFromMessage(text) {
  * @returns {Object|null} { feedbackId, restaurantId } or null
  */
 async function findPendingFeedbackForPhone(customerPhone) {
+  // JANELA: sem ela, um pedido de feedback ignorado ficava 'sent' para sempre e
+  // seguia disputando toda mensagem futura daquele número — meses depois. 48h é
+  // a mesma janela da pesquisa pós-visita (surveyReplyHandler), pela mesma
+  // razão: passado esse prazo, quem escreve não está mais respondendo àquilo.
+  const corte = new Date(Date.now() - FEEDBACK_REPLY_WINDOW_HOURS * 3600_000).toISOString();
+
   const { data, error } = await supabaseAdmin
     .from('guest_feedback')
     .select('id, restaurant_id')
     .eq('customer_phone', customerPhone)
     .eq('status', 'sent')
+    .gte('sent_at', corte)
     .order('sent_at', { ascending: false })
     .limit(1)
     .maybeSingle();

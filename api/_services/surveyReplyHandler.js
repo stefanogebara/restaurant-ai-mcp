@@ -13,6 +13,7 @@
 
 const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
+const { lerNota } = require('../_lib/rating-reply');
 
 const logger = createSecureLogger('SurveyReplyHandler');
 
@@ -30,10 +31,24 @@ async function handleSurveyReply(phone, messageText) {
   const trimmed = messageText.trim();
   if (!trimmed) return null;
 
-  // Extract rating: first character must be 1-5
-  const firstChar = trimmed.charAt(0);
-  const rating = parseInt(firstChar, 10);
-  if (isNaN(rating) || rating < 1 || rating > 5) return null;
+  // A leitura da nota é do rating-reply, que sabe distinguir "5 - excelente"
+  // de "4 pessoas amanhã 20h". A versão anterior olhava só `charAt(0)`: bastava
+  // a mensagem começar com 1–5 e existir pesquisa nas últimas 48h para uma
+  // RESERVA virar avaliação, e a IA nunca ver a mensagem. O cliente recebia
+  // "Obrigado pela avaliação! ⭐⭐⭐⭐" e ia embora sem mesa.
+  const leitura = lerNota(trimmed);
+  if (leitura.nota === null) {
+    // Só registra quando a mensagem chegou perto de ser nota — senão todo "oi"
+    // vira linha de log. O rastro existe pra que uma avaliação recusada por
+    // engano seja investigável, em vez de sumir.
+    if (leitura.motivo === 'texto tem marcador de reserva') {
+      logger.info('Mensagem começa com dígito mas parece reserva — seguindo para a IA', {
+        motivo: leitura.motivo,
+      });
+    }
+    return null;
+  }
+  const rating = leitura.nota;
 
   // Normalize phone: strip non-digits, remove leading +
   const normalizedPhone = phone.replace(/\D/g, '');
@@ -74,10 +89,8 @@ async function handleSurveyReply(phone, messageText) {
     return null;
   }
 
-  // Extract optional comment (everything after the rating digit)
-  const rest = trimmed.slice(1).trim();
-  // Remove common separators: "5 - Great!", "3. ok", "4, nice"
-  const comment = rest.replace(/^[\s\-.,;:!]+/, '').trim() || null;
+  // Comentário já veio limpo do rating-reply ("5 - Great!" → "Great!").
+  const comment = leitura.comentario;
 
   // Save to survey_responses
   const { error: insertErr } = await supabaseAdmin
