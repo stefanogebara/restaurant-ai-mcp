@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import SettingsTabs, { type SettingsTabDef } from '../components/common/SettingsTabs';
 import ManagerNotificationsPanel from '../components/dashboard/ManagerNotificationsPanel';
+import ConnectWhatsAppNumberPanel from '../components/dashboard/ConnectWhatsAppNumberPanel';
 import FeedbackSettingsPanel from '../components/dashboard/FeedbackSettingsPanel';
 import SurveySettingsPanel from '../components/dashboard/SurveySettingsPanel';
 import AiPersonalityPanel from '../components/dashboard/AiPersonalityPanel';
@@ -696,6 +697,7 @@ export default function WhatsAppSettingsPage() {
 
   const verificationPane = (
     <div className="space-y-0">
+      <ConnectWhatsAppNumberPanel />
       <PhoneVerificationPanel />
       <WhatsAppTemplateStatusPanel />
     </div>

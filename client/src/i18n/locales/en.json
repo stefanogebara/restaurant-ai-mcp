@@ -3520,5 +3520,23 @@
     "statusPast": "Past",
     "statusFull": "Full",
     "statusUpcoming": "Upcoming"
+  },
+  "whatsappProvision": {
+    "title": "Connect your WhatsApp number",
+    "subtitle": "Your AI answers on a number you own. Meta sends a verification code to that number — by SMS or phone call (use the call for a landline).",
+    "activeBadge": "Active",
+    "cc": "Country",
+    "number": "Number (area code + number)",
+    "method": "Where should Meta send the code?",
+    "methodSms": "SMS",
+    "methodVoice": "Phone call (landline)",
+    "start": "Receive verification code",
+    "sending": "Requesting code...",
+    "codeSentTo": "Meta sent a code to",
+    "byCall": "by phone call",
+    "code": "Verification code",
+    "confirm": "Confirm",
+    "restart": "Use a different number",
+    "activeNote": "Your AI now answers this number. New messages route to it within a minute."
   }
 }

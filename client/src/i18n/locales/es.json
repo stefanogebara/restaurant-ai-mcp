@@ -3520,5 +3520,23 @@
     "statusPast": "Finalizado",
     "statusFull": "Lleno",
     "statusUpcoming": "Próximo"
+  },
+  "whatsappProvision": {
+    "title": "Conectar tu número de WhatsApp",
+    "subtitle": "Tu IA responde en un número que es TUYO. Meta envía un código de verificación a ese número — por SMS o llamada (usa la llamada para un fijo).",
+    "activeBadge": "Activo",
+    "cc": "País",
+    "number": "Número (código de área + número)",
+    "method": "¿Dónde debe Meta enviar el código?",
+    "methodSms": "SMS",
+    "methodVoice": "Llamada (fijo)",
+    "start": "Recibir código de verificación",
+    "sending": "Pidiendo código...",
+    "codeSentTo": "Meta envió un código a",
+    "byCall": "por llamada",
+    "code": "Código de verificación",
+    "confirm": "Confirmar",
+    "restart": "Usar otro número",
+    "activeNote": "Tu IA ahora responde este número. Los mensajes nuevos llegan a él en menos de un minuto."
   }
 }
