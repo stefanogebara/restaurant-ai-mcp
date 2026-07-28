@@ -101,6 +101,52 @@ async function removeReaction(to, messageId) {
   }
 }
 
+// ─── Tetos de mídia ─────────────────────────────────────────────
+//
+// Antes não havia teto NENHUM: nem de tamanho, nem de prazo. Um número hostil
+// mandando 200 áudios de 10 minutos gerava, por mensagem, um download de até
+// 16 MB dentro de um Lambda de 512 MB mais uma chamada ao Whisper (≈US$0,06 por
+// áudio de 10 min) — sem limite e sem ninguém olhando. E como a transcrição
+// acontece antes do dedup, cada reentrega da Meta re-transcrevia e pagava de
+// novo.
+//
+// 2 MB de áudio ≈ 4 minutos de voz no codec opus do WhatsApp: muito acima de
+// qualquer pedido de reserva de verdade e muito abaixo do que dói.
+
+/** Teto geral (imagem, documento). */
+const MAX_MEDIA_BYTES = 8 * 1024 * 1024;
+/** Teto de áudio — mais apertado, porque cada byte vira custo de Whisper. */
+const MAX_AUDIO_BYTES = 2 * 1024 * 1024;
+
+const PRAZO_METADADOS_MS = 8000;
+const PRAZO_DOWNLOAD_MS = 20000;
+const PRAZO_WHISPER_MS = 30000;
+
+/** Erro tipado: quem chama precisa distinguir "grande demais" de "deu ruim". */
+class MidiaGrandeDemais extends Error {
+  constructor(bytes, teto) {
+    super(`Mídia de ${Math.round(bytes / 1024)}KB excede o teto de ${Math.round(teto / 1024)}KB`);
+    this.name = 'MidiaGrandeDemais';
+    this.bytes = bytes;
+    this.teto = teto;
+  }
+}
+
+/**
+ * fetch com prazo. Sem isto, um download pendurado consome o maxDuration da
+ * função inteira e a mensagem do cliente morre por timeout — pagando o download
+ * e não entregando nada.
+ */
+async function buscarComPrazo(url, opcoes, prazoMs) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), prazoMs);
+  try {
+    return await fetch(url, { ...opcoes, signal: ctrl.signal });
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 // ─── Media Download ─────────────────────────────────────────────
 
 /**
@@ -108,24 +154,39 @@ async function removeReaction(to, messageId) {
  * @param {string} mediaId - WhatsApp media ID
  * @returns {Promise<{buffer: Buffer, mimeType: string, filename: string|null}>}
  */
-async function downloadMedia(mediaId) {
+async function downloadMedia(mediaId, opcoes = {}) {
   const creds = getCredentials();
   if (!creds) throw new Error('WhatsApp not configured');
 
-  // Step 1: Get the media URL
-  const metaRes = await fetch(`${WHATSAPP_API_URL}/${mediaId}`, {
-    headers: { 'Authorization': `Bearer ${creds.accessToken}` },
-  });
+  const tetoBytes = Number.isFinite(opcoes.maxBytes) ? opcoes.maxBytes : MAX_MEDIA_BYTES;
+
+  // Passo 1: metadados. Vêm com `file_size`, então dá pra RECUSAR antes de
+  // gastar banda e memória — é aqui que o teto realmente economiza.
+  const metaRes = await buscarComPrazo(`${WHATSAPP_API_URL}/${mediaId}`, {
+    headers: { Authorization: `Bearer ${creds.accessToken}` },
+  }, PRAZO_METADADOS_MS);
   if (!metaRes.ok) throw new Error(`Media metadata fetch failed: ${metaRes.status}`);
   const meta = await metaRes.json();
 
-  // Step 2: Download the actual file
-  const fileRes = await fetch(meta.url, {
-    headers: { 'Authorization': `Bearer ${creds.accessToken}` },
-  });
+  const tamanhoDeclarado = Number(meta.file_size);
+  if (Number.isFinite(tamanhoDeclarado) && tamanhoDeclarado > tetoBytes) {
+    throw new MidiaGrandeDemais(tamanhoDeclarado, tetoBytes);
+  }
+
+  // Passo 2: baixa o arquivo.
+  const fileRes = await buscarComPrazo(meta.url, {
+    headers: { Authorization: `Bearer ${creds.accessToken}` },
+  }, PRAZO_DOWNLOAD_MS);
   if (!fileRes.ok) throw new Error(`Media download failed: ${fileRes.status}`);
 
   const buffer = Buffer.from(await fileRes.arrayBuffer());
+
+  // Cinto e suspensório: a Meta pode omitir ou subestimar file_size, e o
+  // Lambda tem 512 MB. Sem esta segunda checagem o teto seria só uma sugestão.
+  if (buffer.length > tetoBytes) {
+    throw new MidiaGrandeDemais(buffer.length, tetoBytes);
+  }
+
   return {
     buffer,
     mimeType: meta.mime_type || 'application/octet-stream',
@@ -145,8 +206,9 @@ async function transcribeVoiceMessage(mediaId) {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) throw new Error('OPENAI_API_KEY not configured for voice transcription');
 
-  // Download the audio
-  const { buffer, mimeType } = await downloadMedia(mediaId);
+  // Teto próprio, mais apertado que o geral: cada byte aqui vira custo de
+  // Whisper, e a Meta recusa o áudio pelo tamanho ANTES do download.
+  const { buffer, mimeType } = await downloadMedia(mediaId, { maxBytes: MAX_AUDIO_BYTES });
   logger.info('Downloaded voice message', { size: buffer.length, mimeType });
 
   // Determine file extension from mime type
@@ -167,14 +229,14 @@ async function transcribeVoiceMessage(mediaId) {
   form.append('model', 'whisper-1');
   form.append('language', 'pt'); // Default to Portuguese for Brazilian market
 
-  const whisperRes = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+  const whisperRes = await buscarComPrazo('https://api.openai.com/v1/audio/transcriptions', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${apiKey}`,
       ...form.getHeaders(),
     },
     body: form,
-  });
+  }, PRAZO_WHISPER_MS);
 
   if (!whisperRes.ok) {
     const err = await whisperRes.text();
@@ -206,4 +268,7 @@ module.exports = {
   downloadMedia,
   transcribeVoiceMessage,
   simulateTypingDelay,
+  MidiaGrandeDemais,
+  MAX_MEDIA_BYTES,
+  MAX_AUDIO_BYTES,
 };

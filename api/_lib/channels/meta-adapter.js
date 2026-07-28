@@ -104,8 +104,16 @@ class MetaAdapter extends ChannelAdapter {
           }
           logger.info(`Voice transcribed from ${from}: ${text.substring(0, 80)}`);
         } catch (err) {
-          logger.error('Voice transcription failed:', err.message);
           removeReactionAPI(from, messageId).catch(() => {});
+          // Áudio acima do teto tem resposta PRÓPRIA: dizer "não consegui
+          // processar" faria o cliente reenviar o mesmo áudio gigante, pagando
+          // o download de novo. Pedir para encurtar resolve de primeira.
+          if (err && err.name === 'MidiaGrandeDemais') {
+            logger.info(`Audio recusado por tamanho: ${err.bytes} bytes (teto ${err.teto})`);
+            await this.sendMessage(from, 'Esse audio ficou muito longo pra mim. Pode mandar um mais curto ou escrever sua mensagem?');
+            return null;
+          }
+          logger.error('Voice transcription failed:', err.message);
           await this.sendMessage(from, 'Desculpe, nao consegui processar o audio. Por favor, envie sua mensagem por texto.');
           return null;
         }

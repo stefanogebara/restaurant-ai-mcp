@@ -42,7 +42,7 @@ module.exports = async (req, res) => {
     return res.status(500).json({ success: false, error: 'Database not configured' });
   }
 
-  const result = { dedup_deleted: 0, locks_deleted: 0 };
+  const result = { dedup_deleted: 0, locks_deleted: 0, rate_buckets_deleted: 0 };
   const errors = [];
 
   try {
@@ -82,7 +82,27 @@ module.exports = async (req, res) => {
     errors.push(`lock: ${err.message}`);
   }
 
-  logger.info(`WhatsApp dedup cleanup: ${result.dedup_deleted} dedup rows, ${result.locks_deleted} stale locks`);
+  // Baldes vencidos do limite por telefone. Mora aqui, e não num cron próprio,
+  // porque cron novo é invocação nova cobrada — e esta varredura é da mesma
+  // família (tabela quente de curta duração do pipeline de WhatsApp).
+  try {
+    const { data: apagadas, error: rateErr } = await supabaseAdmin
+      .rpc('whatsapp_rate_limpar', { p_manter_horas: 2 });
+    if (rateErr) {
+      // 42883 = função ausente (migração não aplicada). Não é erro de operação.
+      if (rateErr.code !== '42883' && rateErr.code !== 'PGRST202') {
+        logger.error('rate limit cleanup failed:', rateErr.message);
+        errors.push(`rate: ${rateErr.message}`);
+      }
+    } else {
+      result.rate_buckets_deleted = Number.isFinite(apagadas) ? apagadas : 0;
+    }
+  } catch (err) {
+    logger.error('rate limit cleanup threw:', err.message);
+    errors.push(`rate: ${err.message}`);
+  }
+
+  logger.info(`WhatsApp dedup cleanup: ${result.dedup_deleted} dedup rows, ${result.locks_deleted} stale locks, ${result.rate_buckets_deleted || 0} rate buckets`);
   await logCronRun('cleanup-whatsapp-dedup', result);
 
   if (errors.length > 0) {

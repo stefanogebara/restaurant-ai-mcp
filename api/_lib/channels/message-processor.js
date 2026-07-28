@@ -88,7 +88,10 @@ async function processMessage(adapter, msg, options = {}) {
   }
 
   // 3. Rate limit
-  if (isRateLimited(from)) {
+  // await obrigatório: a contagem agora vive no Postgres (compartilhada entre
+  // Lambdas). Sem o await isto seria uma Promise — sempre truthy — e TODA
+  // mensagem seria descartada como se tivesse estourado o limite.
+  if (await isRateLimited(from)) {
     logger.info(`[${providerName}] Rate limited ${from}`);
     return { handled: true };
   }
