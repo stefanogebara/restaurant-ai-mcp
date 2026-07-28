@@ -131,7 +131,19 @@ async function sondarTokenMeta(env, agoraMs) {
     const d = corpo.data || {};
     if (d.is_valid !== true) return falha(nome, 'token recusado pela Meta (is_valid=false)');
 
-    if (d.expires_at === 0) return ok(nome, 'válido, não expira (System User)');
+    // WABA ID a que este token dá acesso. Vem do próprio debug_token
+    // (granular_scopes.target_ids) — é a única via barata: no nó do número o
+    // campo não existe, e caçar no painel da Meta exige um humano logado.
+    // Sem este id o provisionamento de números recusa com "não está
+    // habilitado"; `waba_id_configurado` diz se a env já bate.
+    const escopoWaba = (d.granular_scopes || [])
+      .find((g) => g.scope === 'whatsapp_business_management');
+    const wabas = escopoWaba?.target_ids || [];
+    const infoWaba = wabas.length
+      ? { waba_ids: wabas, waba_id_configurado: wabas.includes(env.WHATSAPP_WABA_ID) }
+      : {};
+
+    if (d.expires_at === 0) return ok(nome, 'válido, não expira (System User)', infoWaba);
 
     const diasRestantes = Math.floor((d.expires_at * 1000 - agoraMs) / 86400000);
     const detalhe = `válido, expira em ${diasRestantes} dia(s)`;
@@ -157,11 +169,11 @@ async function sondarNumeroWhatsApp(env, nome, idVar) {
   if (!token) return naoConfigurado(nome, 'WHATSAPP_ACCESS_TOKEN');
 
   try {
-    // `whatsapp_business_account` responde "qual WABA é esta?" sem ninguém
-    // precisar caçar o id no painel da Meta. É o id que o provisionamento de
-    // números precisa (WHATSAPP_WABA_ID) e que, quando falta, faz o
-    // "conectar meu WhatsApp" recusar com "não está habilitado".
-    const campos = 'display_phone_number,verified_name,quality_rating,code_verification_status,messaging_limit_tier,whatsapp_business_account';
+    // NÃO adicionar `whatsapp_business_account` aqui: não é campo do nó de
+    // número na Graph v21 e a chamada inteira falha com (#100), derrubando a
+    // sonda de qualidade junto (verificado em produção, 28/jul). O WABA ID vem
+    // do debug_token, em sondarTokenMeta.
+    const campos = 'display_phone_number,verified_name,quality_rating,code_verification_status,messaging_limit_tier';
     const { corpo } = await buscar(
       `https://graph.facebook.com/v21.0/${encodeURIComponent(id)}?fields=${campos}`,
       { headers: { Authorization: `Bearer ${token}` } },
@@ -169,16 +181,11 @@ async function sondarNumeroWhatsApp(env, nome, idVar) {
     if (corpo.error) return falha(nome, corpo.error.message);
 
     const qualidade = String(corpo.quality_rating || 'UNKNOWN').toUpperCase();
-    const wabaId = corpo.whatsapp_business_account?.id || null;
     const extra = {
       numero: corpo.display_phone_number,
       nome_verificado: corpo.verified_name,
       qualidade,
       tier: corpo.messaging_limit_tier,
-      waba_id: wabaId,
-      // Aponta o dedo quando o provisionamento de números está desligado só
-      // porque a env nunca foi preenchida — o id está bem aqui ao lado.
-      waba_id_configurado: wabaId ? env.WHATSAPP_WABA_ID === wabaId : null,
     };
     const resumo = `${corpo.display_phone_number || '?'} — qualidade ${qualidade}`;
 
