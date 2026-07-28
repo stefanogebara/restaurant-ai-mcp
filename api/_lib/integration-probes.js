@@ -157,7 +157,11 @@ async function sondarNumeroWhatsApp(env, nome, idVar) {
   if (!token) return naoConfigurado(nome, 'WHATSAPP_ACCESS_TOKEN');
 
   try {
-    const campos = 'display_phone_number,verified_name,quality_rating,code_verification_status,messaging_limit_tier';
+    // `whatsapp_business_account` responde "qual WABA é esta?" sem ninguém
+    // precisar caçar o id no painel da Meta. É o id que o provisionamento de
+    // números precisa (WHATSAPP_WABA_ID) e que, quando falta, faz o
+    // "conectar meu WhatsApp" recusar com "não está habilitado".
+    const campos = 'display_phone_number,verified_name,quality_rating,code_verification_status,messaging_limit_tier,whatsapp_business_account';
     const { corpo } = await buscar(
       `https://graph.facebook.com/v21.0/${encodeURIComponent(id)}?fields=${campos}`,
       { headers: { Authorization: `Bearer ${token}` } },
@@ -165,11 +169,16 @@ async function sondarNumeroWhatsApp(env, nome, idVar) {
     if (corpo.error) return falha(nome, corpo.error.message);
 
     const qualidade = String(corpo.quality_rating || 'UNKNOWN').toUpperCase();
+    const wabaId = corpo.whatsapp_business_account?.id || null;
     const extra = {
       numero: corpo.display_phone_number,
       nome_verificado: corpo.verified_name,
       qualidade,
       tier: corpo.messaging_limit_tier,
+      waba_id: wabaId,
+      // Aponta o dedo quando o provisionamento de números está desligado só
+      // porque a env nunca foi preenchida — o id está bem aqui ao lado.
+      waba_id_configurado: wabaId ? env.WHATSAPP_WABA_ID === wabaId : null,
     };
     const resumo = `${corpo.display_phone_number || '?'} — qualidade ${qualidade}`;
 
