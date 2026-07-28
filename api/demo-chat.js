@@ -96,7 +96,7 @@ module.exports = async function handler(req, res) {
 
   if (await checkAndApplyRateLimit(req, res, 'chat')) return;
 
-  const { message, context, lang, restaurant_id, preset_key } = req.body || {};
+  const { message, context, lang, restaurant_id, preset_key, persona, history } = req.body || {};
 
   // Preset demos bypass DB validation (no DB record exists for preset demos)
   const isPresetDemo = preset_key && KNOWN_PRESETS.has(preset_key);
@@ -106,6 +106,9 @@ module.exports = async function handler(req, res) {
   // e a IA respondia "Bem-vindo ao assistente do **your restaurant**" — inglês
   // no meio do português, na feature que existe pra impressionar o dono.
   let nomeDoBanco = null;
+  // Dados reais do restaurante (horários, pratos, resumo) para a persona
+  // recepcionista responder com o restaurante DELE, não com generalidades.
+  let dadosDoBanco = null;
 
   if (!isPresetDemo) {
     // Validate token-based demo restaurant against DB
@@ -116,7 +119,7 @@ module.exports = async function handler(req, res) {
       const { data: restaurant, error } = await supabaseAdmin
         .schema('restaurant')
         .from('restaurant_config')
-        .select('id, restaurant_name')
+        .select('id, restaurant_name, scraped_data')
         .eq('id', restaurant_id)
         .eq('is_demo', true)
         .maybeSingle();
@@ -125,6 +128,7 @@ module.exports = async function handler(req, res) {
         return res.status(400).json({ error: 'Invalid or non-demo restaurant' });
       }
       nomeDoBanco = restaurant.restaurant_name || null;
+      dadosDoBanco = restaurant.scraped_data || null;
     } catch (err) {
       logger.error('Demo restaurant validation error:', err.message);
       return res.status(500).json({ error: 'Validation failed' });
@@ -143,6 +147,19 @@ module.exports = async function handler(req, res) {
   const semNome = lang === 'pt-BR' ? 'seu restaurante' : lang === 'es' ? 'tu restaurante' : 'your restaurant';
   const restaurantName = ctx.restaurantName || nomeDoBanco || (isPresetDemo ? preset_key : semNome);
 
+  // ── Histórico multi-turno ──
+  //
+  // Conversa de reserva não existe em turno único ("quero reservar" → "para
+  // quantas pessoas?" → "4" → ...). O endpoint aceitava só UMA mensagem, então
+  // qualquer persona conversacional era impossível. O histórico vem do
+  // cliente e é público, logo o saneamento é agressivo: papéis fora do enum
+  // caem fora, textos são truncados e só as últimas 10 mensagens contam —
+  // é teto de custo, não de UX (10 turnos cobrem qualquer reserva).
+  const historicoSaneado = (Array.isArray(history) ? history : [])
+    .filter((m) => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string' && m.content.trim())
+    .slice(-10)
+    .map((m) => ({ role: m.role, content: m.content.slice(0, 500) }));
+
   const presetMeta = isPresetDemo ? (PRESET_META[preset_key] || {}) : {};
   const respondIn = presetMeta.respondIn || (lang === 'pt-BR' ? 'Portuguese (Brazil)' : 'English');
   const revenue = ctx.totalRevenue
@@ -153,7 +170,51 @@ module.exports = async function handler(req, res) {
     ? `\n\n[RESTAURANT KNOWLEDGE BASE]\n${presetMeta.wiki}`
     : '';
 
-  const systemPrompt = `You are a concise AI restaurant manager assistant for "${restaurantName}".
+  // ── Dados reais para a recepcionista ──
+  //
+  // O que diferencia este demo de um chatbot genérico é responder com os dados
+  // DELE: os horários que o Google devolveu, os pratos que os clientes citam
+  // nas avaliações, o resumo editorial. Tudo já está em scraped_data (o
+  // enriquecimento grava .menu e .insights lá); aqui só se monta o bloco.
+  const d = dadosDoBanco || {};
+  const horarios = Array.isArray(d.hours_text) && d.hours_text.length
+    ? d.hours_text.join('\n')
+    : null;
+  const pratos = [...new Set([
+    ...(d.menu?.popular_dishes || []),
+    ...(d.insights?.popular_dishes || []),
+  ])].filter((x) => typeof x === 'string' && x.trim()).slice(0, 8);
+  const blocoDados = [
+    horarios ? `Opening hours:\n${horarios}` : null,
+    d.address ? `Address: ${d.address}` : null,
+    d.editorial_summary ? `About: ${d.editorial_summary}` : null,
+    pratos.length ? `Dishes guests praise: ${pratos.join(', ')}` : null,
+    d.cuisine_type ? `Cuisine: ${d.cuisine_type}` : null,
+  ].filter(Boolean).join('\n\n');
+
+  const ehRecepcionista = persona === 'recepcionista';
+
+  // A recepcionista fala com o CLIENTE (o dono se passando por cliente); o
+  // gerente fala com o DONO. Mesmo endpoint, papéis opostos — o que muda é
+  // quem a IA acha que está do outro lado.
+  const systemPrompt = ehRecepcionista
+    ? `You are the AI receptionist of the restaurant "${restaurantName}", chatting with a GUEST on WhatsApp. This is a live product demo — the person typing is the restaurant owner trying out their own AI, playing the role of a guest.
+${presetMeta.context || ''}${wikiBlock}
+${blocoDados ? `\n[REAL DATA OF THIS RESTAURANT — use it to answer]\n${blocoDados}\n` : ''}
+Behavior:
+- Respond in ${respondIn}
+- WhatsApp style: short messages, warm and professional, at most ONE question per message
+- Goal: complete a reservation. Collect, in this order, whatever is missing: party size, date, time, and the guest's full name
+- When you have all four, confirm with this exact format (translated to ${respondIn}):
+📍 ${restaurantName}
+📅 [date]
+🕗 [time]
+👥 [party size]
+then say a reminder will be sent 2 hours before
+- If asked about hours, menu or dishes, answer from the real data above; if something is not in the data, say you will check with the team — NEVER invent prices or menu items
+- If asked whether this is a real booking, be honest: this is a demonstration, no real table is being held
+- Use the EXACT restaurant name "${restaurantName}"; NEVER invent a different one`
+    : `You are a concise AI restaurant manager assistant for "${restaurantName}".
 ${presetMeta.context || ''}${wikiBlock}
 
 Current stats:
@@ -175,9 +236,11 @@ Rules:
   try {
     const response = await getAI().messages.create({
       model: AI_MODEL_FAST,
-      max_tokens: 150,
+      // A confirmação da recepcionista (bloco 📍📅🕗👥 + lembrete) não cabe nos
+      // 150 tokens do gerente.
+      max_tokens: ehRecepcionista ? 300 : 150,
       system: systemPrompt,
-      messages: [{ role: 'user', content: message }],
+      messages: [...historicoSaneado, { role: 'user', content: message }],
     });
 
     const reply = response.content?.[0]?.text || '';

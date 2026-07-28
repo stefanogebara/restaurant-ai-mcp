@@ -293,7 +293,12 @@ export default function DemoDashboard() {
 
         {/* View: WhatsApp Simulator */}
         {activeView === 'whatsapp' && (
-          <DemoWhatsAppSim restaurantName={restaurantName} lang={lang} />
+          <DemoWhatsAppSim
+            restaurantName={restaurantName}
+            lang={lang}
+            restaurantId={tokenSession?.restaurant?.id}
+            presetKey={presetKey}
+          />
         )}
 
         {/* View: Manager AI — full-page chat */}
