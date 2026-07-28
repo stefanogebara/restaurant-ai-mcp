@@ -37,7 +37,75 @@ jest.mock('../_lib/safe-fetch', () => ({
 
 // Helpers were extracted to _lib in c531f237 (demo.js bundling fix); the
 // handler file now only exports the HTTP handler.
-const { enrichRestaurant } = require('../_lib/enrich-restaurant');
+const { enrichRestaurant, enrichFromReviews } = require('../_lib/enrich-restaurant');
+
+describe('idioma dos insights de avaliação — a IA falava inglês com o dono', () => {
+  /**
+   * Verificado em produção (27/jul/2026): o painel do demo do Mocotó, em
+   * português, mostrava no cartão de insights da IA:
+   *   "Emphasize authentic Brazilian flavors and the chef's commitment..."
+   *   "Mention no-wait availability during off-peak times (like Friday 2 PM)"
+   *
+   * O prompt não pedia idioma nenhum e todos os exemplos estavam em inglês,
+   * então o modelo respondia em inglês — e esse texto vai DIRETO pra tela.
+   * Justo o cartão que existe pra provar que a IA entendeu o restaurante.
+   */
+  const avaliacoes = [
+    { text: 'Comida maravilhosa, mas a espera foi longa demais no sábado à noite.', rating: 4 },
+    { text: 'Melhor dadinho de tapioca da cidade. Ambiente animado e equipe atenciosa.', rating: 5 },
+  ];
+
+  const respostaValida = () => ({
+    content: [{ type: 'text', text: JSON.stringify({
+      popular_dishes: ['dadinho de tapioca'],
+      praise_themes: ['equipe atenciosa'],
+      complaint_themes: ['espera longa'],
+      vibe_tags: ['lively'],
+      ai_voice_notes: ['Avise sobre o tempo de espera já no início'],
+    }) }],
+  });
+
+  const promptEnviado = () => {
+    const args = mockAIMessagesCreate.mock.calls[0][0];
+    return JSON.stringify(args);
+  };
+
+  beforeEach(() => {
+    mockAIMessagesCreate.mockReset();
+    mockAIMessagesCreate.mockResolvedValue(respostaValida());
+  });
+
+  it('pede português do Brasil por padrão', async () => {
+    await enrichFromReviews(avaliacoes, 'brazilian', 'Mocotó');
+    expect(promptEnviado()).toContain('português do Brasil');
+  });
+
+  it('respeita espanhol quando pedido', async () => {
+    await enrichFromReviews(avaliacoes, 'brazilian', 'Mocotó', 'es');
+    expect(promptEnviado()).toContain('espanhol');
+  });
+
+  it('vibe_tags continuam sendo enum em INGLÊS — são lidas por código, não por gente', async () => {
+    // Blindagem: traduzir vibe_tags quebraria qualquer consumo desses valores
+    // como chave. O prompt precisa dizer isso explicitamente, porque a
+    // instrução geral de idioma o levaria a traduzir tudo.
+    await enrichFromReviews(avaliacoes, 'brazilian', 'Mocotó');
+    const p = promptEnviado();
+    expect(p).toMatch(/ENGLISH KEYWORDS ONLY/i);
+    expect(p).toContain('family-friendly');
+  });
+
+  it('a saída continua sendo normalizada e limitada', async () => {
+    const r = await enrichFromReviews(avaliacoes, 'brazilian', 'Mocotó');
+    expect(r.praise_themes).toEqual(['equipe atenciosa']);
+    expect(r.vibe_tags).toEqual(['lively']);
+  });
+
+  it('sem avaliações não chama o modelo', async () => {
+    expect(await enrichFromReviews([], 'brazilian', 'Mocotó')).toBeNull();
+    expect(mockAIMessagesCreate).not.toHaveBeenCalled();
+  });
+});
 
 // Helper: stub the safe fetch with a single HTML body. Each test reassigns this.
 function stubFetch(html) {

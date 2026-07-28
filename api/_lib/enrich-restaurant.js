@@ -252,7 +252,7 @@ function normaliseBusinessHours(raw) {
  * Pass 2: review insights. Takes the top reviews (typically 3 from Google
  * Places) and extracts structured signal for the AI to use later.
  */
-async function enrichFromReviews(reviews, cuisineType, restaurantName) {
+async function enrichFromReviews(reviews, cuisineType, restaurantName, idioma = 'pt-BR') {
   if (!Array.isArray(reviews) || reviews.length === 0) return null;
   // Cap each review's text — long ones bloat the prompt with diminishing return.
   const compactReviews = reviews
@@ -264,19 +264,32 @@ async function enrichFromReviews(reviews, cuisineType, restaurantName) {
     }));
   if (compactReviews.length === 0) return null;
 
+  // IDIOMA DA SAÍDA — sem esta instrução o modelo respondia em inglês, porque o
+  // prompt inteiro e todos os exemplos estão em inglês. E este texto vai DIRETO
+  // pra tela do dono: verificado em produção (27/jul/2026), o painel do Mocotó
+  // mostrava, em português, o cartão de insights dizendo
+  //   "Emphasize authentic Brazilian flavors and the chef's commitment..."
+  //   "Mention no-wait availability during off-peak times (like Friday 2 PM)"
+  // — a IA que deveria provar inteligência falando a língua errada com o dono.
+  const NOMES = { 'pt-BR': 'português do Brasil', es: 'espanhol', en: 'inglês' };
+  const nomeDoIdioma = NOMES[idioma] || NOMES['pt-BR'];
+
   const system =
-    'You are extracting structured insights from restaurant reviews. ' +
-    'Respond with ONLY valid JSON matching the schema. No prose, no code fences.';
+    'You are extracting structured insights from restaurant reviews. '
+    + 'Respond with ONLY valid JSON matching the schema. No prose, no code fences. '
+    + `Write every human-readable string in ${nomeDoIdioma}, regardless of the language of the reviews. `
+    + 'EXCEPTION: "vibe_tags" must use the exact English keywords from the allowed list — '
+    + 'they are enum values consumed by code, not text shown to people.';
 
   const user = `Analyze these reviews for ${restaurantName ? `"${restaurantName}"` : 'a restaurant'}${cuisineType ? ` (${cuisineType})` : ''}.
 
 Schema (return EXACTLY this shape, all fields required, use empty arrays when nothing found):
 {
-  "popular_dishes": [string],          // up to 5 dish names guests mention positively
-  "praise_themes": [string],           // up to 4 short phrases ("attentive staff", "great atmosphere")
-  "complaint_themes": [string],        // up to 4 short phrases ("long wait", "noisy")
-  "vibe_tags": [string],               // 3-4 short descriptors: pick from "romantic", "lively", "casual", "upscale", "family-friendly", "quiet", "trendy", "traditional", "intimate", "bustling"
-  "ai_voice_notes": [string]           // up to 3 short suggestions for the AI receptionist (e.g. "Mention wait times proactively — guests complain about them")
+  "popular_dishes": [string],          // up to 5 dish names guests mention positively — keep the dish name as written by guests
+  "praise_themes": [string],           // up to 4 short phrases, in ${nomeDoIdioma} ("equipe atenciosa", "ótimo ambiente")
+  "complaint_themes": [string],        // up to 4 short phrases, in ${nomeDoIdioma} ("espera longa", "barulhento")
+  "vibe_tags": [string],               // 3-4 descriptors — ENGLISH KEYWORDS ONLY, pick from: "romantic", "lively", "casual", "upscale", "family-friendly", "quiet", "trendy", "traditional", "intimate", "bustling"
+  "ai_voice_notes": [string]           // up to 3 short suggestions for the AI receptionist, in ${nomeDoIdioma} (ex.: "Avise sobre o tempo de espera já no início — é a reclamação mais comum")
 }
 
 Reviews:

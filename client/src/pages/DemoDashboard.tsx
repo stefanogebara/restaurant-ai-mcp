@@ -35,10 +35,19 @@ function mapApiTables(apiTables: Array<{ id: string; table_number: number; capac
   }));
 }
 
-// Cuisine type display map
+/**
+ * Rótulo do tipo de restaurante.
+ *
+ * Este mapa estava meio traduzido: 'Italiana', 'Japonesa' e 'Mexicana' em
+ * português, mas 'Fine Dining', 'Casual Dining', 'Fast Casual' e 'Steakhouse'
+ * em inglês. Resultado visto em produção (27/jul/2026): o painel do Mocotó
+ * abria com "Mocotó Bar e Restaurante — Casual Dining · São Paulo", em inglês,
+ * na primeira linha que o dono lê depois de criar o demo.
+ */
 const CUISINE_DISPLAY: Record<string, string> = {
-  fine_dining: 'Fine Dining', casual_dining: 'Casual Dining', fast_casual: 'Fast Casual',
-  cafe: 'Café', bar: 'Bar', steakhouse: 'Steakhouse', italian: 'Italiana',
+  fine_dining: 'Alta gastronomia', casual_dining: 'Restaurante casual',
+  fast_casual: 'Casual rápido', cafe: 'Café', bar: 'Bar',
+  steakhouse: 'Churrascaria', italian: 'Italiana',
   japanese: 'Japonesa', mexican: 'Mexicana', other: 'Restaurante',
 };
 
