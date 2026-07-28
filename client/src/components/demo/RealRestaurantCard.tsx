@@ -97,6 +97,27 @@ interface RealRestaurantCardProps {
   onConversionClick?: () => void;
 }
 
+/**
+ * Faixa de preço em símbolos ($ a $$$$), como o próprio Google Maps mostra.
+ *
+ * Antes o enum cru do Places ia direto pra tela: o dono via "moderate faixa
+ * de preço" — palavra em inglês no meio do cartão em português (walkthrough
+ * de 28/jul em produção). Símbolo é neutro de idioma e universalmente lido.
+ * Aceita o enum v2 (PRICE_LEVEL_MODERATE) e o legado numérico (0–4);
+ * desconhecido/FREE não renderiza — lixo de enum não vai pra tela.
+ */
+function simboloDePreco(nivel: string | number | null | undefined): string | null {
+  if (nivel == null) return null;
+  const porEnum: Record<string, number> = {
+    PRICE_LEVEL_INEXPENSIVE: 1,
+    PRICE_LEVEL_MODERATE: 2,
+    PRICE_LEVEL_EXPENSIVE: 3,
+    PRICE_LEVEL_VERY_EXPENSIVE: 4,
+  };
+  const n = typeof nivel === 'number' ? nivel : porEnum[nivel] ?? 0;
+  return n >= 1 && n <= 4 ? '$'.repeat(n) : null;
+}
+
 function StarRow({ rating }: { rating: number }) {
   const full = Math.floor(rating);
   return (
@@ -238,9 +259,9 @@ export default function RealRestaurantCard({
             <span className="text-xs text-warm-stone">· {formatReviewCount(review_count, t)}</span>
           </div>
         )}
-        {price_level && (
+        {simboloDePreco(price_level) && (
           <div className="text-xs text-warm-stone">
-            <span className="font-medium text-deep-charcoal">{String(price_level).replace('PRICE_LEVEL_', '').toLowerCase()}</span>
+            <span className="font-medium text-deep-charcoal">{simboloDePreco(price_level)}</span>
             {' '}{t('demo.realCard.priceRange', 'price range')}
           </div>
         )}

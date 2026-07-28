@@ -1,5 +1,47 @@
 import { describe, it, expect } from 'vitest';
-import { applyScrapedData, type ScrapedRestaurant } from '../applyScrapedData';
+import { applyScrapedData, estimarPerfilPeloPorte, type ScrapedRestaurant } from '../applyScrapedData';
+
+describe('estimarPerfilPeloPorte — o passo de mesas chega proposto, não em branco', () => {
+  // Plano zero-toque: quem converte do demo nunca respondeu o questionário de
+  // perfil, então o Passo 3 abria um salão em branco. A estimativa infere
+  // porte pelas avaliações e ajusta lugares pela faixa de preço; a semeadura
+  // de mesas do Passo 3 (que já existia) faz o resto.
+
+  it('caso de calibração real: Mocotó (18k avaliações, moderate) → large, 90 lugares', () => {
+    expect(estimarPerfilPeloPorte({ review_count: 18036, price_level: 'PRICE_LEVEL_MODERATE' }))
+      .toEqual({ size: 'large', seat_count: 90 });
+  });
+
+  it('pouca avaliação → small; faixa intermediária → medium', () => {
+    expect(estimarPerfilPeloPorte({ review_count: 120 })?.size).toBe('small');
+    expect(estimarPerfilPeloPorte({ review_count: 2000 })?.size).toBe('medium');
+  });
+
+  it('caro espaça o salão (menos lugares); barato aperta (mais lugares)', () => {
+    const caro = estimarPerfilPeloPorte({ review_count: 2000, price_level: 'PRICE_LEVEL_EXPENSIVE' });
+    const barato = estimarPerfilPeloPorte({ review_count: 2000, price_level: 'PRICE_LEVEL_INEXPENSIVE' });
+    const medio = estimarPerfilPeloPorte({ review_count: 2000 });
+    expect(caro!.seat_count).toBeLessThan(medio!.seat_count);
+    expect(barato!.seat_count).toBeGreaterThan(medio!.seat_count);
+  });
+
+  it('lugares sempre em múltiplo de 5 — "72 lugares" leria como medição falsa', () => {
+    for (const rc of [600, 5001, 499]) {
+      const e = estimarPerfilPeloPorte({ review_count: rc, price_level: 'PRICE_LEVEL_EXPENSIVE' });
+      expect(e!.seat_count % 5).toBe(0);
+    }
+  });
+
+  it('sem avaliações não estima nada — proposta sem base vira chute', () => {
+    expect(estimarPerfilPeloPorte({ review_count: 0 })).toBeNull();
+    expect(estimarPerfilPeloPorte({})).toBeNull();
+    expect(estimarPerfilPeloPorte(null)).toBeNull();
+  });
+
+  it('nível de preço legado numérico (0–4) também funciona', () => {
+    expect(estimarPerfilPeloPorte({ review_count: 2000, price_level: 3 })!.seat_count).toBe(50);
+  });
+});
 
 describe('applyScrapedData', () => {
   it('returns empty object for null/undefined input', () => {

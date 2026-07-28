@@ -28,7 +28,7 @@ import Step6TeachAI from '../components/onboarding/Step6TeachAI';
 import OnboardingSuccessModal from '../components/onboarding/OnboardingSuccessModal';
 import OnboardingStepSidebar from '../components/onboarding/OnboardingStepSidebar';
 import type { OnboardingData } from '../types/onboarding.types';
-import { applyScrapedData, type ScrapedRestaurant } from '../lib/applyScrapedData';
+import { applyScrapedData, estimarPerfilPeloPorte, type ScrapedRestaurant } from '../lib/applyScrapedData';
 import { authFetch } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { trackOnboardingStepCompleted, trackOnboardingCompleted } from '../lib/analytics';
@@ -168,7 +168,16 @@ export default function Onboarding() {
   const [hasPrefillFromScrape, setHasPrefillFromScrape] = useState(false);
 
   function applyAndAdvancePastStep0(scraped: ScrapedRestaurant) {
-    setOnboardingData((prev) => ({ ...prev, ...applyScrapedData(scraped) }));
+    setOnboardingData((prev) => ({
+      ...prev,
+      ...applyScrapedData(scraped),
+      // Porte estimado pelo Google (avaliações + faixa de preço) para o passo
+      // de mesas chegar proposto. Um questionário já respondido pelo dono
+      // (seat_count preenchido) SEMPRE vence a estimativa.
+      profile_data: prev.profile_data?.seat_count
+        ? prev.profile_data
+        : { ...prev.profile_data, ...(estimarPerfilPeloPorte(scraped) ?? {}) },
+    }));
     setHasPrefillFromScrape(true);
     setStep0Done(true);
   }
@@ -219,6 +228,14 @@ export default function Onboarding() {
             if (typeof scraped.cuisine_type === 'string' && scraped.cuisine_type
                 && (!updates.restaurant_type || updates.restaurant_type.toLowerCase() === 'restaurant')) {
               updates.restaurant_type = scraped.cuisine_type;
+            }
+            // Porte estimado (avaliações + preço) → o passo de mesas chega
+            // proposto. Questionário respondido vence a estimativa.
+            if (!prev.profile_data?.seat_count) {
+              const estimativa = estimarPerfilPeloPorte(scraped);
+              if (estimativa) {
+                updates.profile_data = { ...prev.profile_data, ...estimativa };
+              }
             }
           }
           if (r.business_hours && typeof r.business_hours === 'object') {

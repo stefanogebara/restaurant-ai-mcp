@@ -27,6 +27,7 @@
  */
 
 import type { BusinessHours, OnboardingData } from '../types/onboarding.types';
+import type { RestaurantSize } from '../types/profile.types';
 
 /** Subset of /api/scrape-restaurant result we actually consume. */
 export interface ScrapedRestaurant {
@@ -35,7 +36,52 @@ export interface ScrapedRestaurant {
   phone?: string | null;
   website?: string | null;
   address?: string | null;
+  review_count?: number | null;
+  price_level?: string | number | null;
   business_hours?: Record<string, { open_time: string | null; close_time: string | null; is_open: boolean }> | null;
+}
+
+/**
+ * Estima porte e lugares a partir do que o Google já contou — para o passo de
+ * mesas chegar PROPOSTO, não em branco.
+ *
+ * Plano zero-toque (28/jul): quem converte do demo nunca respondeu o
+ * questionário de perfil, então `profile_data` está vazio e o Passo 3 abre
+ * um salão em branco — o dono tem que DESENHAR as mesas. A semeadura
+ * automática do Passo 3 já existe e já sabe distribuir mesas por porte
+ * (calculateTableDistribution); o que falta é o porte. Esta função o infere:
+ *
+ * - nº de avaliações ≈ tráfego acumulado → porte (small/medium/large)
+ * - faixa de preço ajusta os lugares: caro = salão mais espaçado (menos
+ *   lugares), barato = mais rotativo e apertado (mais lugares)
+ *
+ * Calibração pelo caso real: Mocotó (18k avaliações, moderate) → large,
+ * 90 lugares → ~20 mesas na distribuição large. Bate com o "15–25 mesas"
+ * do plano. É uma PROPOSTA de partida — o dono ajusta números, não desenha.
+ */
+export function estimarPerfilPeloPorte(
+  scraped: ScrapedRestaurant | null | undefined,
+): { size: RestaurantSize; seat_count: number } | null {
+  const avaliacoes = scraped?.review_count;
+  if (typeof avaliacoes !== 'number' || avaliacoes <= 0) return null;
+
+  const size: RestaurantSize = avaliacoes < 500 ? 'small' : avaliacoes < 5000 ? 'medium' : 'large';
+  const lugaresBase: Record<RestaurantSize, number> = { small: 30, medium: 60, large: 90 };
+
+  const porEnum: Record<string, number> = {
+    PRICE_LEVEL_INEXPENSIVE: 1,
+    PRICE_LEVEL_MODERATE: 2,
+    PRICE_LEVEL_EXPENSIVE: 3,
+    PRICE_LEVEL_VERY_EXPENSIVE: 4,
+  };
+  const nivel = typeof scraped?.price_level === 'number'
+    ? scraped.price_level
+    : porEnum[String(scraped?.price_level)] ?? 2;
+  const fator = nivel >= 3 ? 0.8 : nivel === 1 ? 1.2 : 1.0;
+
+  // Múltiplo de 5: "72 lugares" parece medição falsa; "70" parece proposta.
+  const seat_count = Math.round((lugaresBase[size] * fator) / 5) * 5;
+  return { size, seat_count };
 }
 
 const DAYS_ORDERED = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] as const;

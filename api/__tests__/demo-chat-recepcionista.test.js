@@ -135,6 +135,27 @@ describe('persona padrão continua sendo o gerente — nada regride', () => {
     expect(chamada().system).toContain('manager assistant');
     expect(chamada().max_tokens).toBe(150);
   });
+
+  test('o gerente TAMBÉM recebe os dados reais — "qual prato elogiam?" tinha resposta vazia', async () => {
+    // Em produção (28/jul) o gerente respondeu honestamente "não tenho acesso
+    // às avaliações" — os insights existiam em scraped_data mas não entravam
+    // no prompt. Agora entram.
+    await handler(req({ message: 'Qual prato as avaliações mais elogiam?', restaurant_id: 'rest-demo-1', lang: 'pt-BR' }), res());
+    expect(chamada().system).toContain('Dadinho de tapioca');
+  });
+});
+
+describe('resolução de datas — "sexta" não pode virar pergunta', () => {
+  test('o prompt da recepcionista carrega a data de hoje e a regra da próxima ocorrência', async () => {
+    // Primeira conversa real em produção: cliente disse "sexta às 20h" e a IA
+    // devolveu "Qual é a data da sexta-feira que você prefere?" — porque o
+    // prompt não dizia que dia era hoje.
+    await handler(req({ message: 'Mesa pra 4 sexta', restaurant_id: 'rest-demo-1', lang: 'pt-BR', persona: 'recepcionista' }), res());
+    const sys = chamada().system;
+    expect(sys).toContain('Today is');
+    expect(sys).toContain('America/Sao_Paulo');
+    expect(sys).toMatch(/NEXT occurrence/);
+  });
 });
 
 describe('histórico multi-turno — funciona e tem teto (endpoint público queima token)', () => {

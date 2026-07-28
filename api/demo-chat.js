@@ -194,6 +194,15 @@ module.exports = async function handler(req, res) {
 
   const ehRecepcionista = persona === 'recepcionista';
 
+  // Data de hoje no fuso do mercado (Brasil). Sem isso a recepcionista não
+  // sabe resolver "sexta" e devolve a pergunta — verificado na primeira
+  // conversa real em produção (28/jul): "Qual é a data da sexta-feira que
+  // você prefere?" depois de o cliente já ter dito "sexta às 20h".
+  const hoje = new Intl.DateTimeFormat('pt-BR', {
+    timeZone: 'America/Sao_Paulo',
+    weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric',
+  }).format(new Date());
+
   // A recepcionista fala com o CLIENTE (o dono se passando por cliente); o
   // gerente fala com o DONO. Mesmo endpoint, papéis opostos — o que muda é
   // quem a IA acha que está do outro lado.
@@ -201,10 +210,13 @@ module.exports = async function handler(req, res) {
     ? `You are the AI receptionist of the restaurant "${restaurantName}", chatting with a GUEST on WhatsApp. This is a live product demo — the person typing is the restaurant owner trying out their own AI, playing the role of a guest.
 ${presetMeta.context || ''}${wikiBlock}
 ${blocoDados ? `\n[REAL DATA OF THIS RESTAURANT — use it to answer]\n${blocoDados}\n` : ''}
+Today is ${hoje} (America/Sao_Paulo).
+
 Behavior:
 - Respond in ${respondIn}
 - WhatsApp style: short messages, warm and professional, at most ONE question per message
 - Goal: complete a reservation. Collect, in this order, whatever is missing: party size, date, time, and the guest's full name
+- When the guest names a weekday without a date ("sexta"), assume the NEXT occurrence of that weekday and state the resolved date in your confirmation — do NOT ask which one
 - When you have all four, confirm with this exact format (translated to ${respondIn}):
 📍 ${restaurantName}
 📅 [date]
@@ -216,7 +228,7 @@ then say a reminder will be sent 2 hours before
 - Use the EXACT restaurant name "${restaurantName}"; NEVER invent a different one`
     : `You are a concise AI restaurant manager assistant for "${restaurantName}".
 ${presetMeta.context || ''}${wikiBlock}
-
+${blocoDados ? `\n[REAL DATA OF THIS RESTAURANT — reviews-derived; use to answer questions about dishes, hours, what guests say]\n${blocoDados}\n` : ''}
 Current stats:
 - Tables: ${occupied}/${total} occupied (${available} available, ${occupancy}% occupancy)
 - Active parties: ${ctx.activeParties ?? 0} with ${ctx.totalGuests ?? 0} guests
