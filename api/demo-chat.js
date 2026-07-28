@@ -101,6 +101,12 @@ module.exports = async function handler(req, res) {
   // Preset demos bypass DB validation (no DB record exists for preset demos)
   const isPresetDemo = preset_key && KNOWN_PRESETS.has(preset_key);
 
+  // Nome vindo do banco na validação. Antes, quando o frontend não mandava
+  // context.restaurantName, o prompt caía no literal inglês 'your restaurant'
+  // e a IA respondia "Bem-vindo ao assistente do **your restaurant**" — inglês
+  // no meio do português, na feature que existe pra impressionar o dono.
+  let nomeDoBanco = null;
+
   if (!isPresetDemo) {
     // Validate token-based demo restaurant against DB
     if (!restaurant_id || typeof restaurant_id !== 'string') {
@@ -110,7 +116,7 @@ module.exports = async function handler(req, res) {
       const { data: restaurant, error } = await supabaseAdmin
         .schema('restaurant')
         .from('restaurant_config')
-        .select('id')
+        .select('id, restaurant_name')
         .eq('id', restaurant_id)
         .eq('is_demo', true)
         .maybeSingle();
@@ -118,6 +124,7 @@ module.exports = async function handler(req, res) {
       if (error || !restaurant) {
         return res.status(400).json({ error: 'Invalid or non-demo restaurant' });
       }
+      nomeDoBanco = restaurant.restaurant_name || null;
     } catch (err) {
       logger.error('Demo restaurant validation error:', err.message);
       return res.status(500).json({ error: 'Validation failed' });
@@ -133,7 +140,8 @@ module.exports = async function handler(req, res) {
   const total = ctx.totalTables ?? 12;
   const available = total - occupied;
   const occupancy = total > 0 ? Math.round((occupied / total) * 100) : 0;
-  const restaurantName = ctx.restaurantName || (isPresetDemo ? preset_key : 'your restaurant');
+  const semNome = lang === 'pt-BR' ? 'seu restaurante' : lang === 'es' ? 'tu restaurante' : 'your restaurant';
+  const restaurantName = ctx.restaurantName || nomeDoBanco || (isPresetDemo ? preset_key : semNome);
 
   const presetMeta = isPresetDemo ? (PRESET_META[preset_key] || {}) : {};
   const respondIn = presetMeta.respondIn || (lang === 'pt-BR' ? 'Portuguese (Brazil)' : 'English');

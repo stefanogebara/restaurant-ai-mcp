@@ -307,6 +307,7 @@ export default function DemoDashboard() {
             </div>
             <DemoAIInsightsBar
               restaurantName={restaurantName}
+              restaurantId={tokenSession?.restaurant?.id}
               occupiedTables={demo.stats.occupiedTables}
               totalTables={demo.stats.totalTables}
               reservationsToday={demo.stats.reservationsToday}
@@ -409,6 +410,7 @@ export default function DemoDashboard() {
         {/* AI Insights Bar */}
         <DemoAIInsightsBar
           restaurantName={restaurantName}
+          restaurantId={tokenSession?.restaurant?.id}
           occupiedTables={demo.stats.occupiedTables}
           totalTables={demo.stats.totalTables}
           reservationsToday={demo.stats.reservationsToday}

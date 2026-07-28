@@ -3,6 +3,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 interface DemoAIInsightsBarProps {
   restaurantName: string;
+  /**
+   * id do restaurante de demo (restaurant_config.id). Obrigatório para demos
+   * por token: sem ele o backend responde 400 e o chat degrada pro enlatado.
+   * Foi exatamente o que aconteceu em produção (28/jul/2026) — a "IA" do demo
+   * respondia a mesma frase pronta pra qualquer pergunta, porque toda chamada
+   * real morria em 400 e o fallback mascarava.
+   */
+  restaurantId?: string;
   occupiedTables: number;
   totalTables: number;
   reservationsToday: number;
@@ -110,6 +118,7 @@ function injectStats(text: string): string {
 
 export default function DemoAIInsightsBar({
   restaurantName,
+  restaurantId,
   occupiedTables,
   totalTables,
   reservationsToday,
@@ -155,14 +164,20 @@ export default function DemoAIInsightsBar({
         context: { occupiedTables, totalTables, reservationsToday, waitlistCount, totalGuests, restaurantName, completedCount, totalRevenue },
         lang: langKey,
         preset_key: presetKey,
+        restaurant_id: restaurantId,
       }),
     })
       .then(res => res.json())
       .then(data => {
+        // O enlatado continua existindo como rede de segurança de UX (melhor
+        // que erro na cara do prospect), mas NUNCA mais em silêncio: foi esse
+        // silêncio que escondeu por semanas que 100% das chamadas davam 400.
+        if (!data.reply) console.warn('[demo-chat] resposta real indisponível, usando fallback:', data.error || 'sem reply');
         const reply = data.reply || injectStats(pickCannedResponse(text, langKey));
         setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', text: reply }]);
       })
-      .catch(() => {
+      .catch((err) => {
+        console.warn('[demo-chat] chamada falhou, usando fallback:', err?.message);
         const reply = injectStats(pickCannedResponse(text, langKey));
         setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', text: reply }]);
       })
