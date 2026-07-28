@@ -34,6 +34,37 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
 const inputBase = 'w-full px-4 py-3.5 border border-glass-border-input rounded-xl text-sm text-deep-charcoal placeholder-muted-stone bg-white focus:outline-none focus:ring-[3px] focus:ring-burgundy/20 focus:border-burgundy transition-all';
 
+/**
+ * Idioma da interface → idioma que o Google Places aceita.
+ * i18next devolve coisas como 'pt', 'pt-BR', 'en-US'; a API quer a etiqueta
+ * exata. Qualquer coisa desconhecida cai em português, que é o mercado.
+ */
+function idiomaDoPlaces(idiomaDaUI: string | undefined): string {
+  const l = String(idiomaDaUI || '').toLowerCase();
+  if (l.startsWith('en')) return 'en';
+  if (l.startsWith('es')) return 'es';
+  return 'pt-BR';
+}
+
+/**
+ * Tipo de cozinha vem do Google como enum em inglês ('Brazilian', 'Italian') e
+ * é gravado assim — o valor guardado é normalizado contra um enum do banco, e
+ * traduzir na origem quebraria isso. Então a tradução é só de exibição.
+ */
+const COZINHA_PT: Record<string, string> = {
+  Brazilian: 'Brasileira', Italian: 'Italiana', Japanese: 'Japonesa',
+  Mexican: 'Mexicana', Steakhouse: 'Churrascaria', Chinese: 'Chinesa',
+  Indian: 'Indiana', Thai: 'Tailandesa', French: 'Francesa',
+  Spanish: 'Espanhola', Korean: 'Coreana', Vietnamese: 'Vietnamita',
+  Greek: 'Grega', Mediterranean: 'Mediterrânea', Seafood: 'Frutos do mar',
+  Pizza: 'Pizzaria', Bakery: 'Padaria', Cafe: 'Cafeteria', Bar: 'Bar',
+};
+
+function rotuloDeCozinha(cozinha: string, idiomaDaUI: string | undefined): string {
+  if (!String(idiomaDaUI || '').toLowerCase().startsWith('pt')) return cozinha;
+  return COZINHA_PT[cozinha] || cozinha;
+}
+
 function StarRating({ rating }: { rating: number }) {
   const full = Math.floor(rating);
   const hasHalf = rating - full >= 0.3;
@@ -50,7 +81,7 @@ function StarRating({ rating }: { rating: number }) {
 }
 
 export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: DemoSetupFormProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const [restaurantName, setRestaurantName] = useState('');
   const [city, setCity] = useState('');
@@ -74,7 +105,15 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
       const res = await fetch(`${API_BASE}/api/scrape-restaurant`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: restaurantName.trim(), city: city.trim() }),
+        // O idioma da interface manda no idioma dos dados do Google. Sem isto o
+        // backend usava inglês fixo e o dono brasileiro via os horários do
+        // próprio restaurante como "Monday: 12:00 – 10:00 PM" numa página que
+        // acabou de prometer os "dados reais" dele.
+        body: JSON.stringify({
+          query: restaurantName.trim(),
+          city: city.trim(),
+          lang: idiomaDoPlaces(i18n.language),
+        }),
       });
       const data = await res.json().catch(() => null);
       // A 200 + { success:false } from the scrape API was previously rendered
@@ -207,7 +246,7 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
                   <div className="min-w-0">
                     <p className="font-medium text-deep-charcoal truncate">{result.name}</p>
                     {result.address && <p className="text-xs text-stone-gray mt-0.5 truncate">{result.address}</p>}
-                    {result.cuisine_type && <span className="inline-block mt-1 text-[11px] font-medium text-burgundy bg-burgundy/[6%] px-2 py-0.5 rounded-[46px]">{result.cuisine_type}</span>}
+                    {result.cuisine_type && <span className="inline-block mt-1 text-[11px] font-medium text-burgundy bg-burgundy/[6%] px-2 py-0.5 rounded-[46px]">{rotuloDeCozinha(result.cuisine_type, i18n.language)}</span>}
                   </div>
                   {result.rating && (
                     <div className="flex-shrink-0 text-right">
@@ -263,7 +302,7 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
               )}
               {selectedResult.cuisine_type && (
                 <div className="bg-white px-3 py-1.5 rounded-lg border border-glass-border-dark font-medium text-burgundy">
-                  {selectedResult.cuisine_type}
+                  {rotuloDeCozinha(selectedResult.cuisine_type, i18n.language)}
                 </div>
               )}
               {selectedResult.phone && (

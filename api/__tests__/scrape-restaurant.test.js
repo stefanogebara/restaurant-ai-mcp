@@ -191,3 +191,60 @@ describe('POST /api/scrape-restaurant', () => {
     }
   });
 });
+
+describe('idioma dos dados do Google — a credibilidade do demo', () => {
+  /**
+   * Verificado ao vivo em produção (27/jul/2026, Mocotó em São Paulo): a
+   * chamada fixava languageCode 'en', então o dono de um restaurante brasileiro
+   * via, na página em português que promete "os dados reais do seu
+   * restaurante":
+   *
+   *   "Monday: 12:00 – 10:00 PM"
+   *   "A contemporary, art-themed Northeastern restaurant..."
+   *
+   * Dia da semana em inglês e relógio de 12h num país que usa 24h — exatamente
+   * no momento em que a página tenta ganhar confiança.
+   */
+  const corpoDoPlaces = {
+    places: [{
+      displayName: { text: 'Mocotó' },
+      formattedAddress: 'Av. Loreto, 1100',
+      types: ['brazilian_restaurant'],
+    }],
+  };
+
+  const idiomaEnviado = () => JSON.parse(global.fetch.mock.calls[0][1].body).languageCode;
+
+  beforeEach(() => {
+    process.env.GOOGLE_PLACES_API_KEY = 'chave';
+    global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => corpoDoPlaces });
+  });
+
+  it('pede pt-BR por padrão — o mercado é o Brasil', async () => {
+    await handler(createReq('POST', { query: 'Mocotó', city: 'São Paulo' }), createRes());
+    expect(idiomaEnviado()).toBe('pt-BR');
+  });
+
+  it('respeita a interface em inglês', async () => {
+    await handler(createReq('POST', { query: 'Mocotó', city: 'São Paulo', lang: 'en' }), createRes());
+    expect(idiomaEnviado()).toBe('en');
+  });
+
+  it('respeita espanhol', async () => {
+    await handler(createReq('POST', { query: 'Mocotó', city: 'São Paulo', lang: 'es' }), createRes());
+    expect(idiomaEnviado()).toBe('es');
+  });
+
+  it('idioma desconhecido cai em pt-BR em vez de repassar lixo pro Google', async () => {
+    await handler(createReq('POST', { query: 'Mocotó', city: 'São Paulo', lang: 'klingon' }), createRes());
+    expect(idiomaEnviado()).toBe('pt-BR');
+  });
+
+  it('o tipo de cozinha NÃO depende do idioma — vem de enum, não de texto', async () => {
+    // Blindagem: se um dia inferCuisineType passar a ler texto localizado, a
+    // troca de idioma quebraria em silêncio a normalização do enum no banco.
+    const res = createRes();
+    await handler(createReq('POST', { query: 'Mocotó', city: 'São Paulo', lang: 'pt-BR' }), res);
+    expect(res.body.results[0].cuisine_type).toBe('Brazilian');
+  });
+});

@@ -17,6 +17,14 @@ const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 
 const logger = createSecureLogger('ScrapeRestaurant');
 
+/**
+ * Idioma dos textos vindos do Google (horários legíveis, resumo editorial,
+ * avaliações). O mercado é o Brasil, então o padrão é pt-BR — inglês só quando
+ * a interface estiver em inglês e pedir explicitamente.
+ */
+const IDIOMA_PADRAO = 'pt-BR';
+const IDIOMAS_ACEITOS = new Set(['pt-BR', 'en', 'es']);
+
 // Google Places Text Search v2 — extended field mask with phone + photos
 const PLACES_FIELD_MASK = [
   'places.displayName',
@@ -137,7 +145,7 @@ module.exports = async function handler(req, res) {
   const rateLimited = await checkAndApplyRateLimit(req, res, 'demo-create');
   if (rateLimited) return;
 
-  const { query, city, country } = req.body || {};
+  const { query, city, country, lang } = req.body || {};
 
   if (!query || typeof query !== 'string' || !query.trim()) {
     return res.status(400).json({ error: 'Missing required field: query' });
@@ -158,6 +166,23 @@ module.exports = async function handler(req, res) {
     return res.status(503).json({ error: 'Restaurant search temporarily unavailable' });
   }
 
+  // IDIOMA DO RESULTADO — este era o momento em que o demo perdia credibilidade.
+  //
+  // A chamada fixava `languageCode: 'en'`, então o dono de um restaurante
+  // brasileiro, numa página em português que promete "usamos os dados reais do
+  // seu restaurante", via o próprio restaurante assim:
+  //
+  //   Monday: 12:00 – 10:00 PM
+  //   "A contemporary, art-themed Northeastern restaurant..."
+  //
+  // Dias da semana em inglês e relógio de 12h com AM/PM, num país que usa 24h.
+  // Verificado ao vivo em 27/jul/2026 com o Mocotó, em produção.
+  //
+  // Seguro trocar: `parseBusinessHours` lê `periods` (dia e hora numéricos) e
+  // `inferCuisineType` lê `types`/`primaryType`, que são enums — nenhum dos dois
+  // depende do idioma. Só muda o que é texto para humano.
+  const idioma = IDIOMAS_ACEITOS.has(String(lang || '')) ? String(lang) : IDIOMA_PADRAO;
+
   try {
     const searchQuery = `${query.trim()} restaurant ${city.trim()} ${(country || '').trim()}`.trim();
     const url = 'https://places.googleapis.com/v1/places:searchText';
@@ -175,7 +200,7 @@ module.exports = async function handler(req, res) {
       body: JSON.stringify({
         textQuery: searchQuery,
         maxResultCount: 3,
-        languageCode: 'en',
+        languageCode: idioma,
       }),
       signal: controller.signal,
     });
