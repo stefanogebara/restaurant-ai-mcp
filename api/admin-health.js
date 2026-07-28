@@ -55,6 +55,19 @@ module.exports = async (req, res) => {
 
     const snapshot = {
       checked_at: new Date().toISOString(),
+      // QUAL BUILD ESTÁ SERVINDO PRODUÇÃO — a pergunta que custou dois dias em
+      // 26–27/jul/2026: quatro deploys seguidos falharam e produção seguiu
+      // servindo build antigo enquanto o repositório avançava. Ninguém viu,
+      // porque `git push` responde sucesso sem dizer nada sobre a Vercel.
+      // Estes valores vêm do próprio ambiente da função, então respondem sem
+      // depender de token da CLI (que expira) nem de acesso ao painel.
+      build: {
+        commit: process.env.VERCEL_GIT_COMMIT_SHA || null,
+        branch: process.env.VERCEL_GIT_COMMIT_REF || null,
+        mensagem: (process.env.VERCEL_GIT_COMMIT_MESSAGE || '').split('\n')[0] || null,
+        ambiente: process.env.VERCEL_ENV || null,
+        regiao: process.env.VERCEL_REGION || null,
+      },
       cron,
       activity,
       tenants,
