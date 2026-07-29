@@ -73,6 +73,12 @@ export interface OnboardingData {
   phone_number: string;
   email: string;
   website?: string;
+  /**
+   * Link do cardápio informado pelo dono. Vale sozinho, sem site: muito
+   * restaurante só tem um PDF no Drive. É o que permite a IA responder
+   * perguntas de preço.
+   */
+  menu_url?: string;
   business_hours: BusinessHours[];
   average_dining_duration: number;
   // Step 2.5: Voice Selection

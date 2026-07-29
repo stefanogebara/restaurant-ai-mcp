@@ -295,6 +295,30 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
         />
       </div>
 
+      {/* Link do cardápio.
+          A extração automática acha o cardápio na maioria dos sites, mas
+          depende do site existir e publicar preços. Perguntar cobre o resto:
+          o dono responde em cinco segundos e sabe onde o cardápio está melhor
+          que qualquer heurística. Vale sozinho, sem site — muito restaurante
+          só tem um PDF no Drive. Sem isso, a IA não responde "quanto custa a
+          moqueca?", que é a pergunta mais comum no WhatsApp. */}
+      <div>
+        <label htmlFor="menu_url" className="block text-sm font-semibold text-deep-charcoal mb-2">
+          {t('onboarding.menuUrlLabel', 'Link do cardápio (opcional)')}
+        </label>
+        <input
+          id="menu_url"
+          type="url"
+          value={data.menu_url || ''}
+          onChange={(e) => updateData({ menu_url: e.target.value })}
+          placeholder={t('onboarding.menuUrlPlaceholder', 'https://... ou um PDF do cardápio')}
+          className="w-full px-4 py-3 bg-white/60 backdrop-blur-glass-chip border border-glass-border-input rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent transition-all"
+        />
+        <p className="mt-1.5 text-xs text-muted-stone">
+          {t('onboarding.menuUrlHint', 'Com o cardápio, a IA responde perguntas de preço dos clientes. Aceita PDF.')}
+        </p>
+      </div>
+
       {/* Confirmação de CNPJ + sócio (item 5 do plano zero-toque).
           Fica aqui, no passo de contato, porque é onde o dono já está
           conferindo dados da empresa — e some sozinho depois de confirmado

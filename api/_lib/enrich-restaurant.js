@@ -196,27 +196,47 @@ async function textoDePdf(url) {
  * Pass 1: website scrape. Returns { menu_items, popular_dishes, social_handles,
  * hours_text } or null on any failure.
  */
-async function enrichFromWebsite(websiteUrl, restaurantName) {
-  const fetched = await fetchHtmlSafely(websiteUrl);
-  if (!fetched.ok) {
+async function enrichFromWebsite(websiteUrl, restaurantName, menuUrl) {
+  // O dono pode ter só o cardápio (um PDF no Drive, um link do Instagram) e
+  // nenhum site — caso comum e que antes ficava de fora, porque a função
+  // inteira dependia da home existir.
+  const temSite = Boolean(websiteUrl && typeof websiteUrl === 'string');
+  const fetched = temSite ? await fetchHtmlSafely(websiteUrl) : { ok: false, error: 'sem site' };
+  if (temSite && !fetched.ok) {
     logger.info('website fetch failed', { website: websiteUrl, error: fetched.error });
-    return null;
   }
 
-  let text = htmlToText(fetched.text);
+  let text = fetched.ok ? htmlToText(fetched.text) : '';
 
-  // Segue o link do cardápio e ANEXA ao texto da home. Anexar em vez de
-  // substituir porque contato, horários e redes seguem morando na home — o
-  // cardápio só acrescenta os pratos.
-  const base = fetched.finalUrl || websiteUrl;
-  for (const link of acharLinksDeCardapio(fetched.text, base)) {
+  // Ordem deliberada: o link que o DONO informou vem primeiro. Ele sabe onde
+  // está o cardápio melhor que qualquer heurística — e informar o link é a
+  // única via para quem não tem site.
+  const base = (fetched.ok && fetched.finalUrl) || websiteUrl || menuUrl;
+  const candidatos = [];
+  if (menuUrl && typeof menuUrl === 'string') {
+    candidatos.push({ url: menuUrl.trim(), ehPdf: /\.pdf(\?|$)/i.test(menuUrl), doDono: true });
+  }
+  if (fetched.ok) candidatos.push(...acharLinksDeCardapio(fetched.text, base));
+
+  // Anexa ao texto da home em vez de substituir: contato, horários e redes
+  // seguem morando na home — o cardápio só acrescenta os pratos.
+  const jaVistos = new Set();
+  for (const link of candidatos) {
     if (text.length > 18_000) break; // orçamento de contexto do LLM
+    if (jaVistos.has(link.url)) continue;
+    jaVistos.add(link.url);
+
     const extra = link.ehPdf
       ? await textoDePdf(link.url)
       : await fetchHtmlSafely(link.url).then((r) => (r.ok ? htmlToText(r.text) : null));
+
     if (extra && extra.length > 80) {
-      logger.info('Cardápio encontrado fora da home', { url: link.url, pdf: link.ehPdf, chars: extra.length });
+      logger.info('Cardápio lido', { url: link.url, pdf: link.ehPdf, doDono: Boolean(link.doDono), chars: extra.length });
       text = `${text}\n\n[CARDÁPIO — ${link.url}]\n${extra}`.slice(0, 24_000);
+    } else if (link.doDono) {
+      // O dono digitou este link à mão. Se não deu para ler, ele precisa
+      // saber — senão fica esperando uma IA que sabe preço e não sabe.
+      logger.warn('Cardápio informado pelo dono não pôde ser lido', { url: link.url, pdf: link.ehPdf });
     }
   }
 
@@ -405,7 +425,7 @@ ${compactReviews.map((r, i) => `[${i + 1}] (${r.rating ?? '?'}/5) ${r.text}`).jo
  *
  * Both fields may be null on failure — caller decides what to merge.
  */
-async function enrichRestaurant({ website, reviews, restaurant_name, cuisine_type }) {
+async function enrichRestaurant({ website, reviews, restaurant_name, cuisine_type, menu_url }) {
   // Falha aqui NÃO bloqueia o demo (o dono cai no painel de qualquer jeito),
   // mas também não pode ser muda: quando o enriquecimento morre, o cartão
   // "o que a IA já sabe" some da tela e o demo vira um painel genérico —
@@ -424,8 +444,10 @@ async function enrichRestaurant({ website, reviews, restaurant_name, cuisine_typ
   };
 
   const [menu, insights] = await Promise.all([
-    website && typeof website === 'string'
-      ? enrichFromWebsite(website, restaurant_name).catch(aoFalhar('site'))
+    // Basta UM dos dois: quem tem só o cardápio (PDF no Drive, sem site)
+    // também é atendido.
+    (website && typeof website === 'string') || (menu_url && typeof menu_url === 'string')
+      ? enrichFromWebsite(website, restaurant_name, menu_url).catch(aoFalhar('site'))
       : Promise.resolve(null),
     reviews
       ? enrichFromReviews(reviews, cuisine_type, restaurant_name).catch(aoFalhar('avaliações'))

@@ -198,6 +198,8 @@ module.exports = async (req, res) => {
       city,
       country,
       website,
+      // Link do cardápio informado pelo dono. Vale sozinho, sem site.
+      menu_url,
       business_hours,
       average_dining_duration,
       areas,
@@ -344,6 +346,7 @@ module.exports = async (req, res) => {
         plan: plan || 'Starter',
         template: (plan === 'growth' || plan === 'Growth' || plan === 'scale' || plan === 'Scale') ? 'advanced' : 'simple',
         website: website || '',
+        menu_url: typeof menu_url === 'string' ? menu_url.trim().slice(0, 500) : '',
         // Só dígitos: o painel formata para exibir, mas comparar/consultar
         // depende do formato canônico.
         cnpj: typeof cnpj === 'string' ? cnpj.replace(/\D/g, '').slice(0, 14) : null,
@@ -607,6 +610,9 @@ module.exports = async (req, res) => {
       email: email || customer_email,
       phone: phone_number,
       website: website || null,
+      // Guardado no config do restaurante porque o cardápio não é dado só do
+      // cadastro: é a fonte que a IA relê quando o dono troca os preços.
+      menu_url: (typeof menu_url === 'string' && menu_url.trim()) || null,
       voice_id: selected_voice_id || 'default',
       business_hours: validatedBusinessHours.reduce((acc, day) => {
         acc[day.day.toLowerCase()] = {
