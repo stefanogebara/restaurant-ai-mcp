@@ -41,7 +41,11 @@ const mockQuery = {
   maybeSingle: async () => ({ data: { restaurant_name: 'Mocotó', agent_language: 'pt-BR' } }),
 };
 
-const handler = require('../demo-whatsapp-test');
+// O handler chama-se `demo-send-whatsapp` e NÃO `demo-whatsapp-test`: a regra
+// `*-test.js` do .gitignore (feita para scripts de teste ad-hoc) engolia o
+// arquivo, e ele saiu de fora do commit sem aviso — o botão chamaria um
+// endpoint que não existe em produção.
+const handler = require('../demo-send-whatsapp');
 
 /** Resposta fake com captura de status/corpo. */
 function fakeRes() {
