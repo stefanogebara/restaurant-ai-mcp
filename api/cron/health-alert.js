@@ -96,21 +96,48 @@ module.exports = async (req, res) => {
 
     const integracoesQuebradas = (integracoes?.sondas || []).filter((s) => s.nivel === NIVEIS.FALHA);
 
+    // O CANAL DE ALERTA PRECISA SER VERIFICADO NO DIA BOM.
+    //
+    // Sem isto, a única prova de que o alerta alcança alguém é o dia em que
+    // algo quebra — e aí, se o telefone não estiver configurado, o silêncio é
+    // idêntico ao de "está tudo bem". Um alerta que só se testa na emergência
+    // não é vigilância, é esperança.
+    //
+    // Então todo dia, mesmo saudável, o cron responde se CONSEGUIRIA falar
+    // com o fundador — e grita no log quando não conseguiria.
+    const alertPhone = process.env.HEALTH_ALERT_PHONE;
+    const podeAlertar = Boolean(alertPhone) && isWhatsAppConfigured();
+    if (!podeAlertar) {
+      logger.error(
+        '[health-alert] CANAL DE ALERTA MUDO: este cron detecta problemas mas NÃO consegue avisar ninguém. '
+        + 'Enquanto isto durar, qualquer incidente passa despercebido.',
+        {
+          falta_telefone: !alertPhone,
+          falta_whatsapp: !isWhatsAppConfigured(),
+          variavel: 'HEALTH_ALERT_PHONE',
+        },
+      );
+    }
+
     const { overall } = healthResult;
     const cronRuim = overall === 'degraded' || overall === 'critical';
     const shouldAlert = cronRuim || integracoesQuebradas.length > 0;
 
     if (!shouldAlert) {
-      logger.info('Cron health OK, no alert needed', { overall });
-      await logCronRun('health-alert', { overall, alerted: false });
-      return res.status(200).json({ overall, alerted: false, integracoes_quebradas: 0 });
+      logger.info('Cron health OK, no alert needed', { overall, pode_alertar: podeAlertar });
+      await logCronRun('health-alert', { overall, alerted: false, pode_alertar: podeAlertar });
+      return res.status(200).json({
+        overall,
+        alerted: false,
+        integracoes_quebradas: 0,
+        // Vem mesmo no dia bom: é a resposta para "o alerta me alcança?"
+        pode_alertar: podeAlertar,
+      });
     }
 
-    // Send WhatsApp alert
-    const alertPhone = process.env.HEALTH_ALERT_PHONE;
     let sent = false;
 
-    if (alertPhone && isWhatsAppConfigured()) {
+    if (podeAlertar) {
       const message = buildAlertMessage(healthResult, integracoes);
       const result = await sendWhatsAppMessage(alertPhone, message);
       sent = result.success;
@@ -135,6 +162,7 @@ module.exports = async (req, res) => {
       overall,
       alerted: true,
       whatsapp_sent: sent,
+      pode_alertar: podeAlertar,
       summary: healthResult.summary,
       integracoes_quebradas: nomesQuebrados,
     });
