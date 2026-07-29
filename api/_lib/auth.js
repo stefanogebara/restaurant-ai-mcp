@@ -137,7 +137,30 @@ async function getRestaurantIdForUser(userId) {
  * @param {string} token - JWT token
  * @returns {object|null} Decoded token payload or null if invalid
  */
+/**
+ * Contrato: NUNCA lança. Devolve o usuário ou null — e toda falha inesperada
+ * no caminho deixa rastro antes de virar null.
+ *
+ * Por que importa: os endpoints chamam isto como
+ * `await verifyJWT(t).catch(() => null)`. Esse catch é rede de segurança
+ * correta contra 500, mas era a última parada de qualquer exceção — um erro
+ * de infra (lookup de restaurante caindo, por exemplo) chegava ao usuário
+ * como um 401 seco, e ao log como nada. Com o rastro na raiz, aqueles catch
+ * viram redundância inofensiva em vez de mordaça.
+ */
 async function verifyJWT(token) {
+  try {
+    return await verificarToken(token);
+  } catch (err) {
+    logger.error(
+      '[Auth] Exceção inesperada ao verificar token — o usuário recebeu 401, mas a causa NÃO é credencial inválida',
+      { erro: err?.message || String(err) },
+    );
+    return null;
+  }
+}
+
+async function verificarToken(token) {
   if (!token) return null;
 
   // Check token cache first to avoid repeated verification calls
@@ -151,15 +174,45 @@ async function verifyJWT(token) {
   // Helper: confirm the session is still live with Supabase.
   // Returns the Supabase user object on success, null on revoked/error.
   // SEC-09: This is the critical liveness gate that prevents post-logout token replay.
+  //
+  // DUAS FALHAS MUITO DIFERENTES moravam no mesmo `return null`:
+  //   (a) o Supabase respondeu e disse que a sessão não vale mais — token
+  //       revogado, rejeitar é o certo;
+  //   (b) NÃO DEU PRA PERGUNTAR (Supabase fora, timeout, rede) — aqui não se
+  //       sabe nada sobre a sessão.
+  //
+  // Como o chamador tratava os dois como (a), uma indisponibilidade do
+  // Supabase deslogava TODOS os usuários e o log dizia "post-logout replay",
+  // sugerindo ataque quando era queda de infra. Quem investigasse leria
+  // "usuários não conseguem entrar" em vez de "o verificador caiu".
+  //
+  // A POSTURA não muda: continua fail-closed (sem confirmação, rejeita) —
+  // trocar isso é decisão de segurança, não de observabilidade. O que muda é
+  // que agora dá pra saber qual dos dois aconteceu.
   async function checkSessionLiveness() {
-    if (!supabase) return null; // Supabase client unavailable — skip (defense in depth)
+    if (!supabase) return { user: null, verificou: false, motivo: 'cliente Supabase indisponível' };
     try {
       const { data: { user }, error } = await supabase.auth.getUser(token);
-      if (error || !user) return null;
-      return user;
-    } catch {
-      return null;
+      if (error || !user) return { user: null, verificou: true, motivo: error?.message || 'sessão sem usuário' };
+      return { user, verificou: true, motivo: null };
+    } catch (err) {
+      return { user: null, verificou: false, motivo: err?.message || String(err) };
     }
+  }
+
+  /** Rejeição com o diagnóstico certo — revogado vs. não-verificável. */
+  function rejeitarSemSessao(via, resultado) {
+    tokenCache.delete(token);
+    if (resultado.verificou) {
+      logger.info(`[Auth] Token ${via} rejeitado: sessão não está mais ativa (replay pós-logout)`);
+    } else {
+      logger.error(
+        `[Auth] Token ${via} rejeitado SEM conseguir verificar a sessão — isto é falha de INFRA, não credencial inválida. `
+        + 'Se estiver acontecendo em massa, o Supabase Auth está inacessível e TODOS os logins estão caindo.',
+        { motivo: resultado.motivo },
+      );
+    }
+    return null;
   }
 
   // 1. Try HS256 verification with JWT_SECRET (for internally generated tokens)
@@ -167,13 +220,8 @@ async function verifyJWT(token) {
     try {
       const hs256Decoded = jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] });
       // SEC-09 fix: signature alone is not enough — confirm the session is still active
-      const liveUser = await checkSessionLiveness();
-      if (!liveUser) {
-        // Session revoked (logged out) — evict any stale cache entry and reject
-        tokenCache.delete(token);
-        logger.info('[Auth] HS256 token rejected: session no longer active (post-logout replay)');
-        return null;
-      }
+      const sessao = await checkSessionLiveness();
+      if (!sessao.user) return rejeitarSemSessao('HS256', sessao);
       decoded = hs256Decoded;
     } catch (jwtError) {
       // Not a custom HS256 token — try JWKS next
@@ -185,13 +233,8 @@ async function verifyJWT(token) {
     try {
       const jwksDecoded = await verifyWithJWKS(token);
       // SEC-09 fix: signature alone is not enough — confirm the session is still active
-      const liveUser = await checkSessionLiveness();
-      if (!liveUser) {
-        // Session revoked (logged out) — evict any stale cache entry and reject
-        tokenCache.delete(token);
-        logger.info('[Auth] JWKS token rejected: session no longer active (post-logout replay)');
-        return null;
-      }
+      const sessao = await checkSessionLiveness();
+      if (!sessao.user) return rejeitarSemSessao('JWKS', sessao);
       decoded = jwksDecoded;
     } catch (jwksError) {
       // JWKS verification failed — try Supabase API as final fallback
@@ -218,7 +261,19 @@ async function verifyJWT(token) {
     }
   }
 
-  if (!decoded) return null;
+  if (!decoded) {
+    // Sem NENHUM verificador configurado, todo token do mundo é "inválido" e
+    // ninguém consegue entrar — falha de config que se disfarça de credencial
+    // errada. Vale um erro alto; token de fato inválido segue silencioso (é
+    // fluxo normal e barulho de log em endpoint público não ajuda ninguém).
+    if (!JWT_SECRET && !jwks && !supabase) {
+      logger.error(
+        '[Auth] NENHUM verificador de token configurado (sem JWT_SECRET, sem JWKS, sem Supabase) — '
+        + 'toda requisição autenticada vai falhar. Isto é configuração, não credencial.',
+      );
+    }
+    return null;
+  }
 
   // Ensure restaurant_id, timezone, and role are present on the user object
   // First check user_metadata (set during auth), then fall back to DB lookup

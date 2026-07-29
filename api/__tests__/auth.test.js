@@ -30,6 +30,15 @@ jest.mock('../_lib/supabase', () => ({
   },
 }));
 
+// Logger espionável: alguns testes verificam QUAL diagnóstico foi registrado,
+// não só que a requisição foi rejeitada — "sessão revogada" e "não deu pra
+// verificar" produzem a mesma rejeição e precisam de rastros diferentes.
+const mockLogger = { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() };
+jest.mock('../_lib/secure-logger', () => ({
+  createSecureLogger: () => mockLogger,
+  maskSensitiveData: (v) => v,
+}));
+
 // ── Set env BEFORE requiring auth (module reads it at top-level) ──
 process.env.JWT_SECRET = TEST_SECRET;
 
@@ -322,6 +331,45 @@ describe('verifyJWT', () => {
 
     const result = await verifyJWT(token);
     expect(result).toBeNull();
+  });
+
+  // Observabilidade: "sessão revogada" e "não deu pra verificar" são a MESMA
+  // rejeição para o usuário, mas causas opostas para quem investiga. Antes as
+  // duas caíam no mesmo log de "replay pós-logout" — uma queda do Supabase se
+  // disfarçava de ataque, e ninguém saberia que TODOS estavam sendo deslogados.
+  it('quando NÃO dá pra verificar a sessão (Supabase fora), rejeita como FALHA DE INFRA — não como replay', async () => {
+    const token = jwt.sign({ sub: 'user-infra', restaurant_id: 'r1' }, TEST_SECRET, { expiresIn: '1h' });
+
+    // Supabase inacessível: a chamada explode em vez de responder "sem sessão".
+    mockGetUser.mockRejectedValueOnce(new Error('fetch failed: ECONNREFUSED'));
+
+    const result = await verifyJWT(token);
+
+    // A POSTURA não muda — continua fail-closed.
+    expect(result).toBeNull();
+    // Mas o rastro precisa apontar pra infra, com o motivo real.
+    const chamadasErro = mockLogger.error.mock.calls.map((c) => JSON.stringify(c)).join('\n');
+    expect(chamadasErro).toMatch(/INFRA/i);
+    expect(chamadasErro).toMatch(/ECONNREFUSED/);
+  });
+
+  it('sessão revogada de verdade NÃO é reportada como falha de infra', async () => {
+    const token = jwt.sign({ sub: 'user-saiu', restaurant_id: 'r1' }, TEST_SECRET, { expiresIn: '1h' });
+
+    mockGetUser.mockResolvedValueOnce({ data: { user: null }, error: { message: 'session not found' } });
+
+    expect(await verifyJWT(token)).toBeNull();
+    const chamadasErro = mockLogger.error.mock.calls.map((c) => JSON.stringify(c)).join('\n');
+    expect(chamadasErro).not.toMatch(/INFRA/i);
+  });
+
+  it('verifyJWT nunca propaga exceção — devolve null e deixa rastro', async () => {
+    // Os endpoints usam `.catch(() => null)`; se a exceção chegasse lá, virava
+    // 401 mudo. O contrato de não-lançar tem que ser do próprio verifyJWT.
+    const token = jwt.sign({ sub: 'user-boom', restaurant_id: 'r1' }, TEST_SECRET, { expiresIn: '1h' });
+    mockGetUser.mockImplementationOnce(() => { throw new Error('estouro inesperado'); });
+
+    await expect(verifyJWT(token)).resolves.toBeNull();
   });
 });
 
