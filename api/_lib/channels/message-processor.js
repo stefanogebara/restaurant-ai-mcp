@@ -281,7 +281,8 @@ async function processMessage(adapter, msg, options = {}) {
     }
   }
 
-  // 8c. Feedback e pesquisa — DEPOIS do roteamento (bug #66).
+  // 8d. Feedback e pesquisa — DEPOIS do roteamento (bug #66).
+  //     (Era "8c" e colidia com o bloco de keywords acima; renumerado.)
   //
   // Rodavam antes de o restaurante ser conhecido, e as duas consultas buscavam
   // só por telefone via supabaseAdmin (que ignora RLS). Um cliente com pesquisa

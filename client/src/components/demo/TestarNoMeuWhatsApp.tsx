@@ -9,9 +9,11 @@ import { trackWhatsAppTapped } from '../../lib/analytics';
  *
  * DUAS HONESTIDADES QUE A UI CARREGA:
  *
- * 1. O texto NÃO convida a responder. O envio funciona; o diálogo de volta
- *    ainda não (a resposta cairia no pipeline normal, que não conhece
- *    restaurantes de demo). Prometer conversa aqui geraria a pior decepção
+ * 1. O convite a responder aparece SÓ quando o backend confirma `can_reply` —
+ *    ou seja, quando o telefone foi de fato vinculado ao demo. O vínculo é
+ *    recusado de propósito quando o número já pertence a um cliente real (não
+ *    se rouba a conversa de quem opera de verdade), e nesse caso a promessa de
+ *    diálogo seria falsa. Prometer conversa que não acontece é a pior decepção
  *    possível: o dono responde animado e ninguém atende.
  *
  * 2. Cada envio custa dinheiro e o backend impõe três limites (por número, por
@@ -32,6 +34,7 @@ export default function TestarNoMeuWhatsApp({ restaurantId, restaurantName, lang
   const [telefone, setTelefone] = useState('');
   const [estado, setEstado] = useState<Estado>('parado');
   const [recado, setRecado] = useState<string | null>(null);
+  const [podeResponder, setPodeResponder] = useState(false);
 
   const pt = !lang || lang.startsWith('pt');
   const digitos = telefone.replace(/\D/g, '');
@@ -58,6 +61,10 @@ export default function TestarNoMeuWhatsApp({ restaurantId, restaurantName, lang
         setEstado('erro');
         return;
       }
+      // Só convida a responder quando o backend confirmou o vínculo. Se o
+      // telefone já pertence a um cliente real, o vínculo é recusado de
+      // propósito — e aí a promessa de conversa seria falsa.
+      setPodeResponder(Boolean(j?.data?.can_reply));
       setEstado('enviado');
     } catch {
       setRecado(pt ? 'Sem conexão. Tente de novo.' : 'No connection. Try again.');
@@ -72,9 +79,13 @@ export default function TestarNoMeuWhatsApp({ restaurantId, restaurantName, lang
           {pt ? 'Enviado! Olhe seu WhatsApp 📲' : 'Sent! Check your WhatsApp 📲'}
         </p>
         <p className="mt-1 text-xs text-emerald-800">
-          {pt
-            ? 'A mensagem saiu do número da plataforma. É assim que seu cliente vai receber.'
-            : 'The message came from the platform number. This is how your guest receives it.'}
+          {podeResponder
+            ? (pt
+              ? 'Responda por lá: "quero mesa pra 4 sexta" — a IA do SEU restaurante atende, com seus horários e suas mesas.'
+              : 'Reply there: "table for 4 on Friday" — YOUR restaurant\'s AI answers, with your hours and your tables.')
+            : (pt
+              ? 'A mensagem saiu do número da plataforma. É assim que seu cliente vai receber.'
+              : 'The message came from the platform number. This is how your guest receives it.')}
         </p>
       </div>
     );
@@ -113,10 +124,12 @@ export default function TestarNoMeuWhatsApp({ restaurantId, restaurantName, lang
 
       {recado && <p className="mt-2 text-xs text-amber-700">{recado}</p>}
 
+      {/* Antes do envio não se promete diálogo: o vínculo pode ser recusado
+          (número de cliente real) e só o backend sabe disso. */}
       <p className="mt-2 text-[11px] text-muted-stone">
         {pt
-          ? 'Uma mensagem só, para você conferir. Ainda não respondemos por aqui.'
-          : 'A single message, just so you can see it. Replies are not handled here yet.'}
+          ? 'Uma mensagem só, do número da plataforma.'
+          : 'A single message, from the platform number.'}
       </p>
     </div>
   );

@@ -46,6 +46,7 @@ const {
   buildMetaTemplateAttempts,
   isTemplateTranslationMissing,
 } = require('./_lib/whatsapp-meta-templates');
+const { vincularTelefoneAoDemo } = require('./_lib/demo-whatsapp-link');
 
 const logger = createSecureLogger('DemoWhatsAppTest');
 
@@ -137,19 +138,27 @@ module.exports = async function handler(req, res) {
     ? restaurant_name.trim().slice(0, 80)
     : null;
   let idioma = 'pt-BR';
+  // Guardado para o vínculo do passo 6: só um demo CONFIRMADO no banco pode
+  // receber a resposta do dono. Confiar no `restaurant_id` do corpo deixaria
+  // qualquer um apontar a própria sessão para um restaurante real.
+  let restaurante_do_demo = null;
 
   if (restaurant_id && typeof restaurant_id === 'string') {
     try {
       const { data } = await supabaseAdmin
         .schema('restaurant')
         .from('restaurant_config')
-        .select('restaurant_name, agent_language')
+        .select('id, restaurant_name, agent_language, demo_expires_at')
         .eq('id', restaurant_id)
         .eq('is_demo', true)
         .maybeSingle();
       if (data) {
         nome = data.restaurant_name || nome;
         idioma = data.agent_language || idioma;
+        // Demo vencido não conversa: responder como um restaurante que já
+        // expirou daria ao dono a impressão de um produto que ele não tem mais.
+        const vencido = data.demo_expires_at && new Date(data.demo_expires_at) < new Date();
+        if (!vencido) restaurante_do_demo = data;
       }
     } catch (err) {
       // Não bloqueia: sem o nome do banco o teste ainda vale, só fica genérico.
@@ -208,6 +217,26 @@ module.exports = async function handler(req, res) {
     restaurante: nome,
   });
 
+  // ── 6. Vincula o telefone ao demo, para que a RESPOSTA dele seja atendida
+  //      pela IA do demo dele. Depois do envio, de propósito: se o vínculo
+  //      falhar, a mensagem já saiu e o teste continua tendo valor — o dono só
+  //      não terá diálogo de volta. Falhar aqui não pode desfazer o envio. ──
+  let dialogo = false;
+  if (restaurante_do_demo) {
+    const r = await vincularTelefoneAoDemo({
+      telefone,
+      demoId: restaurante_do_demo.id,
+      nome,
+      idioma,
+    }).catch((err) => {
+      logger.error('Vínculo com o demo lançou — teste enviado, mas sem diálogo de volta', {
+        erro: err?.message || String(err),
+      });
+      return { vinculado: false, motivo: 'excecao' };
+    });
+    dialogo = r.vinculado;
+  }
+
   return res.status(200).json({
     success: true,
     data: {
@@ -215,6 +244,10 @@ module.exports = async function handler(req, res) {
       // O cliente não recebe o messageId: é identificador interno da Meta e
       // não serve para nada na UI.
       restaurant_name: nome,
+      // A UI usa isto para decidir se CONVIDA o dono a responder. Prometer
+      // conversa quando o vínculo falhou seria a pior decepção possível: ele
+      // responde animado e ninguém atende.
+      can_reply: dialogo,
     },
   });
 };

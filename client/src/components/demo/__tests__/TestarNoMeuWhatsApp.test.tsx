@@ -14,8 +14,8 @@ import TestarNoMeuWhatsApp from '../TestarNoMeuWhatsApp';
 const { mockTapped } = vi.hoisted(() => ({ mockTapped: vi.fn() }));
 vi.mock('../../../lib/analytics', () => ({ trackWhatsAppTapped: mockTapped }));
 
-const ok = () => Promise.resolve({
-  ok: true, json: () => Promise.resolve({ success: true, data: { sent_to: '5511****88' } }),
+const ok = (can_reply = false) => () => Promise.resolve({
+  ok: true, json: () => Promise.resolve({ success: true, data: { sent_to: '5511****88', can_reply } }),
 } as Response);
 
 const falha = (error: string, status = 429) => Promise.resolve({
@@ -32,7 +32,7 @@ const renderizar = () =>
 
 describe('TestarNoMeuWhatsApp', () => {
   it('envia o número só com dígitos e confirma na tela', async () => {
-    const fetchSpy = vi.spyOn(global, 'fetch').mockImplementation(ok);
+    const fetchSpy = vi.spyOn(global, 'fetch').mockImplementation(ok());
     renderizar();
 
     await userEvent.type(screen.getByLabelText(/seu número/i), '+55 (11) 99999-8888');
@@ -45,7 +45,7 @@ describe('TestarNoMeuWhatsApp', () => {
   });
 
   it('número incompleto não dispara requisição — envio custa dinheiro', async () => {
-    const fetchSpy = vi.spyOn(global, 'fetch').mockImplementation(ok);
+    const fetchSpy = vi.spyOn(global, 'fetch').mockImplementation(ok());
     renderizar();
 
     await userEvent.type(screen.getByLabelText(/seu número/i), '1199');
@@ -76,11 +76,32 @@ describe('TestarNoMeuWhatsApp', () => {
     expect(screen.getByRole('button', { name: /enviar/i })).toBeEnabled();
   });
 
-  it('NÃO promete resposta — o diálogo de volta ainda não existe', async () => {
-    // Se o texto convidasse a responder, o dono responderia animado e ninguém
-    // atenderia: a pior decepção possível no momento de maior interesse.
+  it('não promete diálogo ANTES de enviar — só o backend sabe se vinculou', async () => {
     renderizar();
-    expect(screen.getByText(/ainda não respondemos por aqui/i)).toBeInTheDocument();
-    expect(screen.queryByText(/responda|reply to/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/responda por lá/i)).not.toBeInTheDocument();
+  });
+
+  it('can_reply=true CONVIDA a responder — o vínculo com o demo funcionou', async () => {
+    vi.spyOn(global, 'fetch').mockImplementation(ok(true));
+    renderizar();
+
+    await userEvent.type(screen.getByLabelText(/seu número/i), '5511999998888');
+    await userEvent.click(screen.getByRole('button', { name: /enviar/i }));
+
+    await waitFor(() => expect(screen.getByText(/responda por lá/i)).toBeInTheDocument());
+    expect(screen.getByText(/a ia do seu restaurante/i)).toBeInTheDocument();
+  });
+
+  it('can_reply=false NÃO convida — vínculo recusado (ex: número de cliente real)', async () => {
+    // A promessa seria falsa: a resposta cairia no fluxo normal e ninguém
+    // atenderia como o demo. Pior decepção possível no pico de interesse.
+    vi.spyOn(global, 'fetch').mockImplementation(ok(false));
+    renderizar();
+
+    await userEvent.type(screen.getByLabelText(/seu número/i), '5511999998888');
+    await userEvent.click(screen.getByRole('button', { name: /enviar/i }));
+
+    await waitFor(() => expect(screen.getByText(/olhe seu whatsapp/i)).toBeInTheDocument());
+    expect(screen.queryByText(/responda por lá/i)).not.toBeInTheDocument();
   });
 });
