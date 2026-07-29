@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import TestarNoMeuWhatsApp from './TestarNoMeuWhatsApp';
 
 /**
  * A conversa de reserva VIVA do demo — visual de WhatsApp, IA de verdade.
@@ -237,6 +238,16 @@ export default function DemoWhatsAppSim({ restaurantName, lang, restaurantId, pr
           </button>
         </form>
         <div className="text-[10px] text-muted-stone text-center mt-1.5">{t.live}</div>
+      </div>
+
+      {/* Logo abaixo da conversa: o chat prova a IA na TELA; isto põe o produto
+          no telefone do dono, que é o argumento que fecha. */}
+      <div className="mt-4">
+        <TestarNoMeuWhatsApp
+          restaurantId={restaurantId}
+          restaurantName={restaurantName}
+          lang={lang}
+        />
       </div>
     </div>
   );

@@ -107,6 +107,34 @@ const RATE_LIMITS = {
     maxRequests: 100,         // 100 requests per minute (higher for webhooks)
     message: 'Rate limit exceeded for webhooks.',
   },
+
+  // ── "Testar no MEU WhatsApp" (demo) ──────────────────────────────────────
+  //
+  // Este endpoint envia WhatsApp para um número que o VISITANTE digita, e cada
+  // envio custa dinheiro (R$0,04–0,30). São duas superfícies distintas, então
+  // são três limites distintos — um só não cobre:
+  //
+  //  - por NÚMERO DE DESTINO: impede usar o produto como ferramenta de
+  //    incômodo, disparando repetidamente para o telefone de alguém. É o limite
+  //    que protege TERCEIROS, e por isso é o mais rígido.
+  //  - por IP: impede burlar o de cima variando o número de destino.
+  //  - GLOBAL: teto de custo. Sem ele, um script distribuído (vários IPs,
+  //    vários destinos) vira uma fatura, e o primeiro sinal seria o boleto.
+  demo_wa_test_phone: {
+    windowMs: 60 * 60 * 1000,  // 1 hora
+    maxRequests: 1,            // um teste por número por hora
+    message: 'Já enviamos um teste para esse número. Aguarde alguns minutos antes de pedir outro.',
+  },
+  demo_wa_test_ip: {
+    windowMs: 24 * 60 * 60 * 1000, // 1 dia
+    maxRequests: 3,
+    message: 'Limite de testes atingido para esta conexão. Tente novamente amanhã.',
+  },
+  demo_wa_test_global: {
+    windowMs: 24 * 60 * 60 * 1000, // 1 dia
+    maxRequests: 100,          // teto de custo: ~R$30/dia no pior caso
+    message: 'O teste por WhatsApp está temporariamente indisponível. Tente mais tarde.',
+  },
 };
 
 // ============ REDIS STORE ============
