@@ -59,6 +59,16 @@ export interface OnboardingData {
     restaurant_profile?: Record<string, unknown>;
     skipped?: boolean;
   };
+  /**
+   * Dados fiscais vindos do índice da Receita (enricher de CNPJ, item 5 do
+   * plano zero-toque). Preenchidos por confirmação do dono, nunca automático:
+   * casar CNPJ errado poria dado fiscal de outra empresa no cadastro.
+   * `socio_confirmado` é quem o dono disse ser — a prova, sem documento, de
+   * que quem cadastra é dono de verdade.
+   */
+  cnpj?: string;
+  razao_social?: string;
+  socio_confirmado?: string;
   // Step 2: Contact & Business Hours
   phone_number: string;
   email: string;

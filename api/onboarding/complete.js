@@ -207,6 +207,12 @@ module.exports = async (req, res) => {
       special_notes,
       team_members,
       plan, // Subscription plan from Stripe
+      // Dados fiscais confirmados pelo dono no passo de contato (enricher de
+      // CNPJ, item 5). Sempre opcionais: restaurante novo pode não constar no
+      // índice da Receita, e isso jamais deve travar o cadastro.
+      cnpj,
+      razao_social,
+      socio_confirmado,
       selected_voice_id, // Voice selection from Step 2.5
       selected_voice_language, // Language code from selected voice (e.g., 'es', 'fr', 'en')
       restaurant_learning, // AI restaurant learning data (session_id, restaurant_profile)
@@ -338,6 +344,13 @@ module.exports = async (req, res) => {
         plan: plan || 'Starter',
         template: (plan === 'growth' || plan === 'Growth' || plan === 'scale' || plan === 'Scale') ? 'advanced' : 'simple',
         website: website || '',
+        // Só dígitos: o painel formata para exibir, mas comparar/consultar
+        // depende do formato canônico.
+        cnpj: typeof cnpj === 'string' ? cnpj.replace(/\D/g, '').slice(0, 14) : null,
+        razao_social: typeof razao_social === 'string' ? razao_social.slice(0, 200) : null,
+        // Quem o dono disse ser, entre os sócios da Receita. É a prova mais
+        // barata de que quem cadastrou é dono — sem pedir documento.
+        socio_confirmado: typeof socio_confirmado === 'string' ? socio_confirmado.slice(0, 200) : null,
         cancellation_policy: cancellation_policy || 'Cancelamento gratuito até 2 horas antes da reserva',
         special_notes: special_notes || '',
         advance_booking_days: advance_booking_days || 30,

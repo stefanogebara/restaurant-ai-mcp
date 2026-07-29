@@ -16,6 +16,7 @@ import { useTranslation } from 'react-i18next';
 import type { OnboardingStepProps } from '../../types/onboarding.types';
 import PhoneInput, { validateFullPhoneNumber, type CountryCode } from '../common/PhoneInput';
 import ThiingsIcon from '../common/ThiingsIcon';
+import CnpjConfirmPanel from './CnpjConfirmPanel';
 
 // Service type presets with recommended hours
 // Labels/descriptions are i18n keys resolved at render time
@@ -125,6 +126,10 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
   const [useMultiplePeriods, setUseMultiplePeriods] = useState(
     SERVICE_PRESETS[DEFAULT_SERVICE_TYPE].periods.length > 1
   );
+  // CNPJ já confirmado (ou pulado) some da tela. Começa resolvido quando o
+  // dado já veio de outro caminho — reabrir a pergunta a cada volta ao passo
+  // transformaria uma cortesia em obstáculo.
+  const [cnpjResolvido, setCnpjResolvido] = useState(Boolean(data.cnpj));
 
   const handlePhoneChange = useCallback((fullNumber: string, isValid: boolean) => {
     updateData({ phone_number: fullNumber });
@@ -289,6 +294,28 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
           className="w-full px-4 py-3 bg-white/60 backdrop-blur-glass-chip border border-glass-border-input rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent transition-all"
         />
       </div>
+
+      {/* Confirmação de CNPJ + sócio (item 5 do plano zero-toque).
+          Fica aqui, no passo de contato, porque é onde o dono já está
+          conferindo dados da empresa — e some sozinho depois de confirmado
+          ou pulado, para não virar mais uma etapa obrigatória. */}
+      {!cnpjResolvido && (
+        <div className="border-t border-glass-border-input pt-5">
+          <CnpjConfirmPanel
+            nome={data.restaurant_name}
+            cidade={data.city}
+            onConfirm={(dados) => {
+              updateData({
+                cnpj: dados.cnpj,
+                razao_social: dados.razao_social || undefined,
+                socio_confirmado: dados.socio_confirmado,
+              });
+              setCnpjResolvido(true);
+            }}
+            onSkip={() => setCnpjResolvido(true)}
+          />
+        </div>
+      )}
 
       {/* Service Type Selection */}
       <div>
