@@ -126,6 +126,73 @@ async function extractWithLLM({ system, user, schemaDescription }) {
 }
 
 /**
+ * Onde o cardápio realmente está.
+ *
+ * A home quase nunca lista pratos e preços — ela tem foto, telefone e um LINK
+ * escrito "Cardápio". Ler só a home é o motivo de `menu_items` voltar vazio na
+ * maioria dos restaurantes, o que deixa a IA sem saber responder "quanto custa
+ * a moqueca?" — a pergunta mais comum de um cliente no WhatsApp.
+ *
+ * Ordena por probabilidade: o texto do link ("cardápio", "menu") vale mais que
+ * a URL, porque muito site usa /pagina-2 com o texto certo. PDF entra na lista
+ * porque é onde a maioria dos restaurantes brasileiros publica o cardápio.
+ */
+function acharLinksDeCardapio(html, baseUrl) {
+  if (!html || typeof html !== 'string') return [];
+  const encontrados = new Map();
+
+  const RE_LINK = /<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
+  for (const [, href, interno] of html.matchAll(RE_LINK)) {
+    const texto = interno.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
+    const alvo = String(href).trim();
+    if (!alvo || alvo.startsWith('#') || /^(mailto|tel|javascript):/i.test(alvo)) continue;
+
+    let url;
+    try { url = new URL(alvo, baseUrl).href; } catch { continue; }
+    // Só o próprio domínio: link pro iFood/Instagram é outra história, e
+    // seguir domínio de terceiro aqui seria SSRF de graça.
+    try {
+      if (new URL(url).hostname !== new URL(baseUrl).hostname) continue;
+    } catch { continue; }
+
+    const ehPdf = /\.pdf(\?|$)/i.test(url);
+    const textoPromete = /card[áa]pio|menu|pratos|delivery/i.test(texto);
+    const urlPromete = /card[áa]pio|menu/i.test(url);
+    if (!ehPdf && !textoPromete && !urlPromete) continue;
+
+    // Peso: texto do link é o sinal mais confiável; PDF logo atrás.
+    const peso = (textoPromete ? 3 : 0) + (ehPdf ? 2 : 0) + (urlPromete ? 1 : 0);
+    if (!encontrados.has(url) || encontrados.get(url).peso < peso) {
+      encontrados.set(url, { url, peso, ehPdf });
+    }
+  }
+
+  return [...encontrados.values()].sort((a, b) => b.peso - a.peso).slice(0, 3);
+}
+
+/** Texto de um PDF de cardápio. Falha vira null — nunca derruba a extração. */
+async function textoDePdf(url) {
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), WEBSITE_FETCH_TIMEOUT_MS);
+    const resp = await fetch(url, { signal: ctrl.signal });
+    clearTimeout(t);
+    if (!resp.ok) return null;
+
+    const buf = Buffer.from(await resp.arrayBuffer());
+    if (buf.length > MAX_HTML_BYTES) return null;
+
+    // require tardio: pdf-parse é pesado e a maioria dos sites não tem PDF.
+    const pdfParse = require('pdf-parse');
+    const { text } = await pdfParse(buf);
+    return typeof text === 'string' ? text.replace(/\s+/g, ' ').trim().slice(0, 20_000) : null;
+  } catch (err) {
+    logger.info('PDF de cardápio não pôde ser lido', { url, erro: err?.message || String(err) });
+    return null;
+  }
+}
+
+/**
  * Pass 1: website scrape. Returns { menu_items, popular_dishes, social_handles,
  * hours_text } or null on any failure.
  */
@@ -135,7 +202,24 @@ async function enrichFromWebsite(websiteUrl, restaurantName) {
     logger.info('website fetch failed', { website: websiteUrl, error: fetched.error });
     return null;
   }
-  const text = htmlToText(fetched.text);
+
+  let text = htmlToText(fetched.text);
+
+  // Segue o link do cardápio e ANEXA ao texto da home. Anexar em vez de
+  // substituir porque contato, horários e redes seguem morando na home — o
+  // cardápio só acrescenta os pratos.
+  const base = fetched.finalUrl || websiteUrl;
+  for (const link of acharLinksDeCardapio(fetched.text, base)) {
+    if (text.length > 18_000) break; // orçamento de contexto do LLM
+    const extra = link.ehPdf
+      ? await textoDePdf(link.url)
+      : await fetchHtmlSafely(link.url).then((r) => (r.ok ? htmlToText(r.text) : null));
+    if (extra && extra.length > 80) {
+      logger.info('Cardápio encontrado fora da home', { url: link.url, pdf: link.ehPdf, chars: extra.length });
+      text = `${text}\n\n[CARDÁPIO — ${link.url}]\n${extra}`.slice(0, 24_000);
+    }
+  }
+
   if (text.length < 80) return null;
 
   const system =
@@ -146,7 +230,7 @@ async function enrichFromWebsite(websiteUrl, restaurantName) {
 
 Schema (return EXACTLY this shape, all fields required, use null when unknown):
 {
-  "menu_items": [{ "name": string, "price": string | null, "description": string | null, "category": string | null }],  // up to 12 items
+  "menu_items": [{ "name": string, "price": string | null, "description": string | null, "category": string | null }],  // up to 40 items
   "popular_dishes": [string],  // up to 5 names of signature/most-mentioned dishes
   "social_handles": { "instagram": string | null, "facebook": string | null },
   "hours_text": string | null,  // one-line summary if visible, else null
@@ -170,7 +254,7 @@ Rules:
 - price: keep the original currency symbol if visible ("R$ 45", "€ 12.50"), null if not.
 - popular_dishes: only include if the website explicitly highlights them (e.g. "our specialty", "signature dish", "most popular"). Else empty array.
 - social_handles: extract from links/icons, return just the URL.
-- Return at most 12 menu items — prioritize variety across categories.
+- Return at most 40 menu items. When a [CARDÁPIO] section is present it holds the real menu — extract from it, and PRIORITIZE ITEMS THAT SHOW A PRICE: "quanto custa a moqueca?" is the most common guest question on WhatsApp, and an item without a price cannot answer it.
 - contact.phone: prefer the most prominent number (booking/reservations line), strip formatting except spaces and +.
 - contact.address: most prominent street address, single line, no "Address:" prefix.
 - business_hours: ONLY when the site lists actual times. If it just says "open daily" without times, return null.
@@ -188,7 +272,10 @@ ${text}`;
   if (!parsed) return null;
 
   return {
-    menu_items: Array.isArray(parsed.menu_items) ? parsed.menu_items.slice(0, 12) : [],
+    // 40, alinhado ao prompt: o corte antigo em 12 foi calibrado quando só se
+    // lia a home. Agora que o cardápio inteiro entra, cortar em 12 jogaria
+    // fora justamente os pratos com preço que a IA precisa para responder.
+    menu_items: Array.isArray(parsed.menu_items) ? parsed.menu_items.slice(0, 40) : [],
     popular_dishes: Array.isArray(parsed.popular_dishes) ? parsed.popular_dishes.slice(0, 5) : [],
     social_handles: parsed.social_handles && typeof parsed.social_handles === 'object' ? parsed.social_handles : {},
     hours_text: typeof parsed.hours_text === 'string' ? parsed.hours_text : null,
@@ -360,4 +447,7 @@ module.exports = {
   enrichRestaurant,
   enrichFromWebsite,
   enrichFromReviews,
+  // exportado para teste: é a heurística que decide onde o cardápio está,
+  // e errar aqui devolve a IA ao estado de não saber preço nenhum.
+  acharLinksDeCardapio,
 };
