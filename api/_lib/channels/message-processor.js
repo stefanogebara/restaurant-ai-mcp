@@ -99,82 +99,10 @@ async function processMessage(adapter, msg, options = {}) {
   // (Keyword handling moved below session mgmt — keywords like RELATORIO and
   //  STOP need restaurant_id, which isn't available until step 7+8 completes.)
 
-  // 5+6. Feedback and survey reply detection (parallel — independent DB lookups)
-  let pendingFeedback = null;
-  let surveyResult = null;
-  try {
-    [pendingFeedback, surveyResult] = await Promise.all([
-      findPendingFeedbackForPhone(from).catch(err => {
-        logger.error('Feedback reply check failed:', err.message);
-        return null;
-      }),
-      handleSurveyReply(from, text).catch(err => {
-        logger.error('Survey reply check failed:', err.message);
-        return null;
-      }),
-    ]);
-  } catch (err) {
-    logger.error('Feedback/survey parallel check failed:', err.message);
-  }
-
-  if (pendingFeedback) {
-    // Silêncio aqui PERDE a avaliação de um cliente real: ele mandou a nota,
-    // o registro falhou, e a resposta cai no fluxo normal como se fosse uma
-    // mensagem qualquer. O cliente não recebe agradecimento e o restaurante
-    // nunca vê a nota — sem nenhum sinal de que existiu.
-    const result = await processFeedbackReply(pendingFeedback.restaurantId, from, text).catch((err) => {
-      logger.error('Falha ao registrar resposta de feedback — a nota do cliente foi PERDIDA', {
-        restaurantId: pendingFeedback.restaurantId,
-        de: from,
-        erro: err?.message || String(err),
-      });
-      return null;
-    });
-    if (result) {
-      let feedbackLang = 'en';
-      try {
-        const activeRestaurants = await getAllActiveRestaurants();
-        const restaurant = activeRestaurants.find(r => r.id === pendingFeedback.restaurantId);
-        feedbackLang = restaurant?.language || 'en';
-      } catch (_) { /* fall back to English */ }
-      const thankYou = result.rating
-        ? feedbackLang === 'pt' || feedbackLang === 'pt-BR'
-          ? `Obrigado pelo seu feedback! Voce nos avaliou ${result.rating}/5.${result.comment ? ' Agradecemos seu comentario.' : ''} Esperamos te ver novamente!`
-          : feedbackLang === 'es'
-            ? `¡Gracias por tu opinion! Nos diste ${result.rating}/5.${result.comment ? ' Apreciamos tus comentarios.' : ''} ¡Esperamos verte pronto!`
-            : `Thank you for your feedback! You rated us ${result.rating}/5.${result.comment ? ' We appreciate your comments.' : ''} We look forward to welcoming you again!`
-        : feedbackLang === 'pt' || feedbackLang === 'pt-BR'
-          ? 'Obrigado pelo seu feedback! Agradecemos o seu tempo.'
-          : feedbackLang === 'es'
-            ? '¡Gracias por tu opinion! Apreciamos que te hayas tomado el tiempo.'
-            : 'Thank you for your feedback! We appreciate you taking the time to share your thoughts.';
-      await enviarComGuarda(adapter, from, thankYou, 'feedback');
-      return { handled: true };
-    }
-  }
-
-  if (surveyResult) {
-    let surveyLang = 'en';
-    try {
-      const activeRestaurants = await getAllActiveRestaurants();
-      const restaurant = activeRestaurants.find(r => r.id === surveyResult.restaurantId);
-      surveyLang = restaurant?.language || 'en';
-    } catch (_) { /* fall back to English */ }
-    const stars = '\u2B50'.repeat(surveyResult.rating);
-    const thankYou = surveyResult.comment
-      ? surveyLang === 'pt' || surveyLang === 'pt-BR'
-        ? `Obrigado pela avaliacao! ${stars} (${surveyResult.rating}/5)\nSeu comentario foi registrado. Esperamos te ver novamente!`
-        : surveyLang === 'es'
-          ? `¡Gracias por tu valoracion! ${stars} (${surveyResult.rating}/5)\nTu comentario fue registrado. ¡Esperamos verte pronto!`
-          : `Thank you for your rating! ${stars} (${surveyResult.rating}/5)\nYour comment has been recorded. We hope to see you again!`
-      : surveyLang === 'pt' || surveyLang === 'pt-BR'
-        ? `Obrigado pela avaliacao! ${stars} (${surveyResult.rating}/5)\nEsperamos te ver novamente!`
-        : surveyLang === 'es'
-          ? `¡Gracias por tu valoracion! ${stars} (${surveyResult.rating}/5)\n¡Esperamos verte pronto!`
-          : `Thank you for your rating! ${stars} (${surveyResult.rating}/5)\nWe hope to see you again!`;
-    await enviarComGuarda(adapter, from, thankYou, 'pesquisa');
-    return { handled: true };
-  }
+  // (Feedback/pesquisa movidos para DEPOIS do roteamento — passo 8c. Rodavam
+  //  aqui, antes de o restaurante ser conhecido, e as duas consultas buscavam
+  //  só por telefone via supabaseAdmin: um "5" mandado para o restaurante B
+  //  virava avaliação do A. Ver bug #66.)
 
   // 7. Session management (with one retry on transient failure).
   // 35s per attempt: supabase-js has a 28s fetch timeout, +buffer for
@@ -352,6 +280,98 @@ async function processMessage(adapter, msg, options = {}) {
       logger.error(`[${providerName}] Keyword handler error:`, err.message);
     }
   }
+
+  // 8c. Feedback e pesquisa — DEPOIS do roteamento (bug #66).
+  //
+  // Rodavam antes de o restaurante ser conhecido, e as duas consultas buscavam
+  // só por telefone via supabaseAdmin (que ignora RLS). Um cliente com pesquisa
+  // pendente no restaurante A que mandasse "5" para o B tinha a nota gravada em
+  // A — e o B nunca via. Agora o restaurante da conversa é passado às duas, que
+  // filtram por ele.
+  //
+  // TROCA CONSCIENTE: num número COMPARTILHADO por vários restaurantes, uma
+  // mensagem que caia no seletor retorna antes daqui, então a nota não é lida
+  // nesta mensagem. Não é perda definitiva — a pesquisa segue pendente dentro
+  // das 48h e a próxima mensagem, já com restaurante resolvido, a captura.
+  // Preferir isso a gravar na casa errada: nota no lugar errado é dado falso
+  // nos dois restaurantes e ninguém percebe.
+  const restauranteDaConversa = session.restaurant_id || session.restaurant?.id || null;
+  let pendingFeedback = null;
+  let surveyResult = null;
+  try {
+    [pendingFeedback, surveyResult] = await Promise.all([
+      findPendingFeedbackForPhone(from, restauranteDaConversa).catch(err => {
+        logger.error('Feedback reply check failed:', err.message);
+        return null;
+      }),
+      handleSurveyReply(from, text, restauranteDaConversa).catch(err => {
+        logger.error('Survey reply check failed:', err.message);
+        return null;
+      }),
+    ]);
+  } catch (err) {
+    logger.error('Feedback/survey parallel check failed:', err.message);
+  }
+
+  if (pendingFeedback) {
+    // Silêncio aqui PERDE a avaliação de um cliente real: ele mandou a nota,
+    // o registro falhou, e a resposta cai no fluxo normal como se fosse uma
+    // mensagem qualquer. O cliente não recebe agradecimento e o restaurante
+    // nunca vê a nota — sem nenhum sinal de que existiu.
+    const result = await processFeedbackReply(pendingFeedback.restaurantId, from, text).catch((err) => {
+      logger.error('Falha ao registrar resposta de feedback — a nota do cliente foi PERDIDA', {
+        restaurantId: pendingFeedback.restaurantId,
+        de: from,
+        erro: err?.message || String(err),
+      });
+      return null;
+    });
+    if (result) {
+      let feedbackLang = 'en';
+      try {
+        const activeRestaurants = await getAllActiveRestaurants();
+        const restaurant = activeRestaurants.find(r => r.id === pendingFeedback.restaurantId);
+        feedbackLang = restaurant?.language || 'en';
+      } catch (_) { /* fall back to English */ }
+      const thankYou = result.rating
+        ? feedbackLang === 'pt' || feedbackLang === 'pt-BR'
+          ? `Obrigado pelo seu feedback! Voce nos avaliou ${result.rating}/5.${result.comment ? ' Agradecemos seu comentario.' : ''} Esperamos te ver novamente!`
+          : feedbackLang === 'es'
+            ? `¡Gracias por tu opinion! Nos diste ${result.rating}/5.${result.comment ? ' Apreciamos tus comentarios.' : ''} ¡Esperamos verte pronto!`
+            : `Thank you for your feedback! You rated us ${result.rating}/5.${result.comment ? ' We appreciate your comments.' : ''} We look forward to welcoming you again!`
+        : feedbackLang === 'pt' || feedbackLang === 'pt-BR'
+          ? 'Obrigado pelo seu feedback! Agradecemos o seu tempo.'
+          : feedbackLang === 'es'
+            ? '¡Gracias por tu opinion! Apreciamos que te hayas tomado el tiempo.'
+            : 'Thank you for your feedback! We appreciate you taking the time to share your thoughts.';
+      await enviarComGuarda(adapter, from, thankYou, 'feedback');
+      return { handled: true };
+    }
+  }
+
+  if (surveyResult) {
+    let surveyLang = 'en';
+    try {
+      const activeRestaurants = await getAllActiveRestaurants();
+      const restaurant = activeRestaurants.find(r => r.id === surveyResult.restaurantId);
+      surveyLang = restaurant?.language || 'en';
+    } catch (_) { /* fall back to English */ }
+    const stars = '\u2B50'.repeat(surveyResult.rating);
+    const thankYou = surveyResult.comment
+      ? surveyLang === 'pt' || surveyLang === 'pt-BR'
+        ? `Obrigado pela avaliacao! ${stars} (${surveyResult.rating}/5)\nSeu comentario foi registrado. Esperamos te ver novamente!`
+        : surveyLang === 'es'
+          ? `¡Gracias por tu valoracion! ${stars} (${surveyResult.rating}/5)\nTu comentario fue registrado. ¡Esperamos verte pronto!`
+          : `Thank you for your rating! ${stars} (${surveyResult.rating}/5)\nYour comment has been recorded. We hope to see you again!`
+      : surveyLang === 'pt' || surveyLang === 'pt-BR'
+        ? `Obrigado pela avaliacao! ${stars} (${surveyResult.rating}/5)\nEsperamos te ver novamente!`
+        : surveyLang === 'es'
+          ? `¡Gracias por tu valoracion! ${stars} (${surveyResult.rating}/5)\n¡Esperamos verte pronto!`
+          : `Thank you for your rating! ${stars} (${surveyResult.rating}/5)\nWe hope to see you again!`;
+    await enviarComGuarda(adapter, from, thankYou, 'pesquisa');
+    return { handled: true };
+  }
+
 
   // 9. Provider guard — skip if restaurant uses the other provider
   if (options.oppositeProvider && session?.restaurant?.id) {

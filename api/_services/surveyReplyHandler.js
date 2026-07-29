@@ -23,9 +23,14 @@ const SURVEY_WINDOW_HOURS = 48;
  * Check if this message is a survey reply and process it.
  * @param {string} phone - Sender phone (e.g. '5511999002121')
  * @param {string} messageText - Raw message text
+ * @param {string} [restaurantId] Restaurante da conversa, quando já resolvido.
+ *   ESCOPO (bug #66): sem ele a busca do service_record é só por telefone, via
+ *   supabaseAdmin, que ignora RLS — um "5" limpo mandado para o restaurante B
+ *   era gravado como avaliação do A, e o B nunca via. Opcional para não
+ *   quebrar chamadores que não sabem o restaurante; quem sabe DEVE passar.
  * @returns {null | { rating: number, comment: string|null }} - null if not a survey reply
  */
-async function handleSurveyReply(phone, messageText) {
+async function handleSurveyReply(phone, messageText, restaurantId) {
   if (!phone || !messageText) return null;
 
   const trimmed = messageText.trim();
@@ -56,10 +61,14 @@ async function handleSurveyReply(phone, messageText) {
   // Check if this phone has a recent survey_sent_at
   const cutoff = new Date(Date.now() - SURVEY_WINDOW_HOURS * 60 * 60 * 1000).toISOString();
 
-  const { data: serviceRecord, error: svcErr } = await supabaseAdmin
+  let qServico = supabaseAdmin
     .from('service_records')
     .select('id, restaurant_id, customer_name, reservation_id, survey_sent_at')
-    .eq('status', 'completed')
+    .eq('status', 'completed');
+
+  if (restaurantId) qServico = qServico.eq('restaurant_id', restaurantId);
+
+  const { data: serviceRecord, error: svcErr } = await qServico
     .gte('survey_sent_at', cutoff)
     .or(`customer_phone.eq.${normalizedPhone},customer_phone.eq.+${normalizedPhone}`)
     .order('survey_sent_at', { ascending: false })

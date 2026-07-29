@@ -280,21 +280,32 @@ function parseRatingFromMessage(text) {
 
 /**
  * Check if an incoming WhatsApp message is a feedback reply.
- * Looks for a 'sent' feedback matching phone + any restaurant.
+ *
+ * @param {string} customerPhone
+ * @param {string} [restaurantId] Restaurante da conversa, quando já resolvido.
+ *   ESCOPO (bug #66): sem ele a busca é só por telefone, via supabaseAdmin, que
+ *   ignora RLS — e um cliente com feedback pendente no restaurante A que
+ *   escrevesse para o B tinha a nota gravada em A. Continua opcional para não
+ *   quebrar chamadores que legitimamente não sabem o restaurante, mas quem
+ *   sabe DEVE passar.
  * @returns {Object|null} { feedbackId, restaurantId } or null
  */
-async function findPendingFeedbackForPhone(customerPhone) {
+async function findPendingFeedbackForPhone(customerPhone, restaurantId) {
   // JANELA: sem ela, um pedido de feedback ignorado ficava 'sent' para sempre e
   // seguia disputando toda mensagem futura daquele número — meses depois. 48h é
   // a mesma janela da pesquisa pós-visita (surveyReplyHandler), pela mesma
   // razão: passado esse prazo, quem escreve não está mais respondendo àquilo.
   const corte = new Date(Date.now() - FEEDBACK_REPLY_WINDOW_HOURS * 3600_000).toISOString();
 
-  const { data, error } = await supabaseAdmin
+  let q = supabaseAdmin
     .from('guest_feedback')
     .select('id, restaurant_id')
     .eq('customer_phone', customerPhone)
-    .eq('status', 'sent')
+    .eq('status', 'sent');
+
+  if (restaurantId) q = q.eq('restaurant_id', restaurantId);
+
+  const { data, error } = await q
     .gte('sent_at', corte)
     .order('sent_at', { ascending: false })
     .limit(1)
