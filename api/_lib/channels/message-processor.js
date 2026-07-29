@@ -118,7 +118,18 @@ async function processMessage(adapter, msg, options = {}) {
   }
 
   if (pendingFeedback) {
-    const result = await processFeedbackReply(pendingFeedback.restaurantId, from, text).catch(() => null);
+    // Silêncio aqui PERDE a avaliação de um cliente real: ele mandou a nota,
+    // o registro falhou, e a resposta cai no fluxo normal como se fosse uma
+    // mensagem qualquer. O cliente não recebe agradecimento e o restaurante
+    // nunca vê a nota — sem nenhum sinal de que existiu.
+    const result = await processFeedbackReply(pendingFeedback.restaurantId, from, text).catch((err) => {
+      logger.error('Falha ao registrar resposta de feedback — a nota do cliente foi PERDIDA', {
+        restaurantId: pendingFeedback.restaurantId,
+        de: from,
+        erro: err?.message || String(err),
+      });
+      return null;
+    });
     if (result) {
       let feedbackLang = 'en';
       try {

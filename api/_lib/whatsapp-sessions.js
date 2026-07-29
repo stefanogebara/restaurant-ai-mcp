@@ -248,6 +248,8 @@ async function getSessionByPhone(senderPhone) {
 
     return data;
   } catch (error) {
+    // Ver nota acima: exceção muda fazia sessão ativa parecer inexistente.
+    logger.error('[WhatsAppSessions] Exceção inesperada:', error?.message || error);
     return null;
   }
 }
@@ -278,6 +280,8 @@ async function getSessionByConversationId(conversationId) {
 
     return data;
   } catch (error) {
+    // Ver nota acima: exceção muda fazia sessão ativa parecer inexistente.
+    logger.error('[WhatsAppSessions] Exceção inesperada:', error?.message || error);
     return null;
   }
 }
@@ -337,6 +341,10 @@ async function clearSessionsByPhone(senderPhone) {
 
     return data?.length || 0;
   } catch (error) {
+    // Erro de QUERY já é logado acima; este catch pega exceção (rede caiu,
+    // timeout do Supabase). Era mudo — e sessão de voz sumindo por falha de
+    // rede é indistinguível de "não havia sessão", com o cliente no telefone.
+    logger.error('[WhatsAppSessions] Exceção inesperada:', error?.message || error);
     return 0;
   }
 }
@@ -369,6 +377,10 @@ async function cleanupExpiredSessions() {
 
     return count;
   } catch (error) {
+    // Erro de QUERY já é logado acima; este catch pega exceção (rede caiu,
+    // timeout do Supabase). Era mudo — e sessão de voz sumindo por falha de
+    // rede é indistinguível de "não havia sessão", com o cliente no telefone.
+    logger.error('[WhatsAppSessions] Exceção inesperada:', error?.message || error);
     return 0;
   }
 }
@@ -495,6 +507,10 @@ async function getActiveSessionCount() {
 
     return count || 0;
   } catch (error) {
+    // Erro de QUERY já é logado acima; este catch pega exceção (rede caiu,
+    // timeout do Supabase). Era mudo — e sessão de voz sumindo por falha de
+    // rede é indistinguível de "não havia sessão", com o cliente no telefone.
+    logger.error('[WhatsAppSessions] Exceção inesperada:', error?.message || error);
     return 0;
   }
 }

@@ -319,12 +319,29 @@ ${compactReviews.map((r, i) => `[${i + 1}] (${r.rating ?? '?'}/5) ${r.text}`).jo
  * Both fields may be null on failure — caller decides what to merge.
  */
 async function enrichRestaurant({ website, reviews, restaurant_name, cuisine_type }) {
+  // Falha aqui NÃO bloqueia o demo (o dono cai no painel de qualquer jeito),
+  // mas também não pode ser muda: quando o enriquecimento morre, o cartão
+  // "o que a IA já sabe" some da tela e o demo vira um painel genérico —
+  // exatamente o argumento de venda que a página promete.
+  //
+  // Foi assim que um slug de modelo morto passou semanas sem ninguém notar:
+  // o .catch(() => null) engolia o 404 da API e o cartão simplesmente não
+  // renderizava. Silêncio aqui custa caro; log não custa nada.
+  const aoFalhar = (etapa) => (err) => {
+    logger.error(`Enriquecimento falhou (${etapa}) — o demo abre sem esses dados`, {
+      etapa,
+      restaurante: restaurant_name || null,
+      erro: err?.message || String(err),
+    });
+    return null;
+  };
+
   const [menu, insights] = await Promise.all([
     website && typeof website === 'string'
-      ? enrichFromWebsite(website, restaurant_name).catch(() => null)
+      ? enrichFromWebsite(website, restaurant_name).catch(aoFalhar('site'))
       : Promise.resolve(null),
     reviews
-      ? enrichFromReviews(reviews, cuisine_type, restaurant_name).catch(() => null)
+      ? enrichFromReviews(reviews, cuisine_type, restaurant_name).catch(aoFalhar('avaliações'))
       : Promise.resolve(null),
   ]);
   return { menu, insights };

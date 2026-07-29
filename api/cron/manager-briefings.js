@@ -199,7 +199,16 @@ module.exports = async (req, res) => {
         }
 
         if (type === 'morning') {
-          const vips = await getVIPsForToday(config.id).catch(() => []);
+          // Lista vazia por FALHA é indistinguível de "não tem VIP hoje" —
+          // e o dono lê o briefing como verdade e não prepara a casa para um
+          // cliente de 20 visitas. Continua não-bloqueante, mas com rastro.
+          const vips = await getVIPsForToday(config.id).catch((err) => {
+            logger.error('Falha ao buscar VIPs do dia — o briefing sai SEM a seção de VIPs', {
+              restaurantId: config.id,
+              erro: err?.message || String(err),
+            });
+            return [];
+          });
           if (vips.length > 0) {
             const vipLines = vips
               .map(v => `- ${v.customer_name || v.customer_phone} (${v.customer_tier}, ${v.total_visits} visits)`)
