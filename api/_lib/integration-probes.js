@@ -342,6 +342,40 @@ async function sondarSupabase(env, deps = {}) {
 }
 
 /**
+ * Supabase AUTH — separado do banco de propósito.
+ *
+ * `sondarSupabase` acima pergunta ao PostgREST se a tabela responde. O Auth
+ * (GoTrue) é outro serviço, com outra disponibilidade: pode estar fora com o
+ * banco de pé. E é dele que depende o portão de entrada —
+ * `verifyJWT → checkSessionLiveness → supabase.auth.getUser()`.
+ *
+ * Quando o Auth cai, a postura fail-closed rejeita TODA sessão: ninguém entra
+ * no painel, e a sonda do banco continua verde jurando que está tudo bem.
+ * Este é o buraco que esta sonda fecha.
+ */
+async function sondarSupabaseAuth(env) {
+  const nome = 'supabase_auth';
+  const url = env.SUPABASE_URL;
+  const chave = env.SUPABASE_ANON_KEY || env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url) return naoConfigurado(nome, 'SUPABASE_URL');
+  if (!chave) return naoConfigurado(nome, 'SUPABASE_ANON_KEY');
+
+  try {
+    const { status, corpo } = await buscar(`${url.replace(/\/$/, '')}/auth/v1/health`, {
+      headers: { apikey: chave },
+    });
+    if (status >= 400) {
+      return falha(nome, `respondeu ${status} — o portão de login está fora: ninguém consegue entrar no painel`);
+    }
+    const versao = corpo?.version || corpo?.name || 'ok';
+    return ok(nome, `login responde (${versao})`);
+  } catch (err) {
+    const base = erroParaFalha(nome, err);
+    return falha(nome, `${base.detalhe} — com o Auth inacessível, TODA sessão é rejeitada e ninguém entra no painel`);
+  }
+}
+
+/**
  * Veredito do conjunto.
  *
  * `nao_configurado` NÃO conta como falha de propósito (regra 2 do topo):
@@ -384,6 +418,7 @@ async function sondarIntegracoes({ env = process.env, agoraMs = Date.now(), deps
     () => sondarStripe(env),
     () => sondarResend(env),
     () => sondarSupabase(env, deps),
+    () => sondarSupabaseAuth(env),
   ];
 
   const sondas = await Promise.all(tarefas.map((t, i) => t().catch((err) => falha(
@@ -401,6 +436,7 @@ module.exports = {
   sondarTokenMeta,
   sondarNumeroWhatsApp,
   sondarSupabase,
+  sondarSupabaseAuth,
   sondarResend,
   sondarAnthropic,
   sondarOpenRouter,

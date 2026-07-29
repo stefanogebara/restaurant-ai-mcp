@@ -10,7 +10,8 @@
 
 const {
   NIVEIS, DIAS_AVISO_EXPIRACAO,
-  redigir, resumir, sondarTokenMeta, sondarNumeroWhatsApp, sondarSupabase, sondarIntegracoes,
+  redigir, resumir, sondarTokenMeta, sondarNumeroWhatsApp, sondarSupabase, sondarSupabaseAuth,
+  sondarIntegracoes,
 } = require('../_lib/integration-probes');
 
 const AGORA = Date.parse('2026-07-27T12:00:00Z');
@@ -132,6 +133,47 @@ describe('supabase — se cai, nada no produto funciona', () => {
   test('cliente não inicializado é FALHA (não "não configurado") — a URL existe mas a chave não', async () => {
     const r = await sondarSupabase({ SUPABASE_URL: 'u' }, {});
     expect(r.nivel).toBe(NIVEIS.FALHA);
+  });
+});
+
+describe('supabase AUTH — o portão de login, separado do banco', () => {
+  // O banco e o Auth (GoTrue) são serviços distintos: o Auth pode cair com o
+  // banco de pé. E é dele que depende verifyJWT → checkSessionLiveness. Com o
+  // Auth fora, a postura fail-closed rejeita TODA sessão e ninguém entra no
+  // painel — enquanto a sonda do banco continua verde jurando que está tudo
+  // bem. Esta sonda existe exatamente para esse ponto cego.
+  const env = { SUPABASE_URL: 'https://proj.supabase.co', SUPABASE_ANON_KEY: 'anon-123' };
+
+  test('health responde → ok', async () => {
+    global.fetch = mockFetch({ version: 'v2.170.0', name: 'GoTrue' });
+    const r = await sondarSupabaseAuth(env);
+    expect(r.nivel).toBe(NIVEIS.OK);
+    expect(r.detalhe).toMatch(/login responde/);
+  });
+
+  test('bate no endpoint de AUTH, não no de dados', async () => {
+    global.fetch = mockFetch({ version: 'v2' });
+    await sondarSupabaseAuth(env);
+    expect(global.fetch.mock.calls[0][0]).toContain('/auth/v1/health');
+  });
+
+  test('erro HTTP vira FALHA dizendo que ninguém entra no painel', async () => {
+    global.fetch = mockFetch({}, 503);
+    const r = await sondarSupabaseAuth(env);
+    expect(r.nivel).toBe(NIVEIS.FALHA);
+    expect(r.detalhe).toMatch(/ninguém consegue entrar/i);
+  });
+
+  test('rede caída também é FALHA — e explica a consequência, não só o erro', async () => {
+    global.fetch = jest.fn().mockRejectedValue(new Error('ECONNREFUSED'));
+    const r = await sondarSupabaseAuth(env);
+    expect(r.nivel).toBe(NIVEIS.FALHA);
+    expect(r.detalhe).toMatch(/TODA sessão é rejeitada/);
+  });
+
+  test('sem chave é "não configurado", não alarme falso', async () => {
+    const r = await sondarSupabaseAuth({ SUPABASE_URL: 'https://p.supabase.co' });
+    expect(r.nivel).toBe(NIVEIS.NAO_CONFIGURADO);
   });
 });
 
