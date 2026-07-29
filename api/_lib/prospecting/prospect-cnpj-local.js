@@ -1,5 +1,9 @@
 'use strict';
 
+const { createSecureLogger } = require('../secure-logger');
+
+const logger = createSecureLogger('CnpjLocal');
+
 /**
  * CNPJ candidate generation from the LOCAL Receita Federal index (table
  * `cnpj_index`, bulk-loaded via scripts/load-rf-cnpj.mjs). Trigram name search
@@ -45,9 +49,19 @@ async function buscarCnpjLocal(supabase, nome, cidade, limit = 8) {
       p_municipio: cidade == null ? null : cidade,
       p_limit: limit,
     });
-    if (error || !Array.isArray(data)) return [];
+    if (error || !Array.isArray(data)) {
+      // Lista vazia por FALHA era indistinguível de "não achei esse nome" —
+      // e as duas coisas levam o chamador a caminhos opostos (degradar para
+      // SERP vs. investigar o índice). O retorno segue [] de propósito: o
+      // fluxo não deve quebrar por causa disto.
+      if (error) logger.error('RPC buscar_cnpj_local falhou', { nome: q, cidade, erro: error.message || String(error) });
+      return [];
+    }
     return data;
-  } catch {
+  } catch (err) {
+    logger.error('Exceção ao consultar o índice local de CNPJ', {
+      nome: q, cidade, erro: err?.message || String(err),
+    });
     return [];
   }
 }
