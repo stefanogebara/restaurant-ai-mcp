@@ -539,3 +539,43 @@ actually answers the lead. Flip-only relies on the resgate 24h window and leaks 
 aged/weekend path. General: deterministic safety floors (LGPD opt-out) that live DOWNSTREAM
 of a state gate are silently skipped for any state that short-circuits that gate — audit
 every silent-state for what checks it bypasses before you re-open it.
+
+---
+
+## 2026-07-29 — Quatro formas de "verde local, quebrado em produção"
+
+**1. `*-test.js` no .gitignore engole handlers.** Criei `api/demo-whatsapp-test.js` (item
+7). A regra `*-test.js` (linha 21 do .gitignore, feita para scripts ad-hoc) casou com o
+nome. O `git add` avisou, o commit seguiu com os outros 6 arquivos, e o handler ficou de
+fora — em produção o botão chamaria um endpoint 404 enquanto tudo passava verde no local.
+Regra: handler NUNCA termina em `-test.js`. Ao commitar arquivo novo, confirme que entrou:
+`git diff --cached --name-only | grep <arquivo>`. O aviso de "ignored file" se perde no
+meio dos warnings de CRLF.
+
+**2. Campo novo em `restaurant_config` precisa de COLUNA — e o mock não pega.** Adicionei
+`menu_url` ao payload do onboarding sem criar a coluna. O PostgREST REJEITA coluna
+desconhecida (PGRST204, não ignora), então o passo FINAL do onboarding falhava: o dono
+preenchia seis passos e não conseguia concluir. Nenhum dos 2744 testes pegou, porque a
+suíte mocka o Supabase e mock aceita qualquer chave.
+Regra: campo novo em tabela = migração versionada em `supabase/migrations/` ANTES do
+código que grava. Guarda criada em `api/__tests__/onboarding-config-columns.test.js`
+(compara chaves do payload com as colunas reais e exige a migração no repo). A lista de
+colunas foi LIDA do `information_schema` — escrita de memória, acusou 6 falsos positivos.
+Corolário: coluna JSONB (`metric_profile`) aceita chave nova sem migração. Foi por isso
+que `cnpj`/`razao_social`/`socio_confirmado` não quebraram — só o `menu_url`, que foi
+para coluna dedicada.
+
+**3. Pushes em sequência criam fila de build de ~13 min cada.** Fiz 5 pushes seguidos
+(a42a576e → 294f3027). O bundle em produção avançou, mas para um commit intermediário —
+uma hora depois o último ainda não havia deployado, e não consegui verificar o que
+acabara de escrever.
+Regra: o CLAUDE.md já diz "batch commits, push once" por CUSTO. Vale igualmente por
+VERIFICABILIDADE: quem empurra 5 vezes não confirma nada em produção no mesmo turno.
+
+**4. Antes de recomendar trabalho, verifique se ele já existe.** Recomendei o item 6
+(instrumentação PostHog) afirmando que o funil estava cego. Errado duas vezes: o grep
+`track\(` só pegava a definição, não as 14 chamadas; e a chave `phc_` está embutida no
+bundle de produção (o branch "not initialized" não sobrevive à minificação). Sem checar o
+bundle, teria construído instrumentação duplicada.
+Regra: "X não existe" exige a mesma prova que "X está quebrado". Grep de chamada usa o
+NOME da função (`trackDemoFunnel`), não um padrão genérico.
