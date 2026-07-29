@@ -115,6 +115,31 @@ export function trackFirstReservationCreated(): void {
   safeCapture('first_reservation_created');
 }
 
+// ─── Enriquecimento no onboarding ────────────────────────────────────────────
+// O passo de contato passou a fazer duas apostas: achar a empresa no cadastro
+// da Receita e conseguir o cardápio. Sem estes eventos, "o enricher ajuda?" só
+// teria resposta por opinião — o funil por passo mostra QUE o dono desistiu,
+// não se a pergunta que fizemos a ele valeu a pena.
+
+/** Resultado da busca no índice da Receita, antes de qualquer escolha. */
+export function trackCnpjLookup(props: { outcome: 'found' | 'not_found' | 'error'; candidates: number }): void {
+  safeCapture('cnpj_lookup', props);
+}
+
+/**
+ * O que o dono fez com o resultado. `partner_named` é a métrica que importa:
+ * mede se "você é o Jorge ou a Keila?" de fato identifica o dono — a aposta
+ * que nenhum concorrente faz.
+ */
+export function trackCnpjResolved(props: { action: 'confirmed' | 'skipped'; partner_named?: boolean }): void {
+  safeCapture('cnpj_resolved', props);
+}
+
+/** Link de cardápio informado à mão. `is_pdf` separa os dois perfis de dono. */
+export function trackMenuUrlProvided(props: { is_pdf: boolean; has_website: boolean }): void {
+  safeCapture('menu_url_provided', props);
+}
+
 // ─── Phase 13 Landing Events ────────────────────────────────────────────────
 
 export function trackPresetDemoClicked(props: { restaurant: string }): void {

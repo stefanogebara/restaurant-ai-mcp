@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { authFetch } from '../../services/api';
+import { trackCnpjLookup, trackCnpjResolved } from '../../lib/analytics';
 
 /**
  * Confirmação de CNPJ + sócio — item 5 do plano zero-toque.
@@ -52,8 +53,20 @@ function formatarCnpj(cnpj: string): string {
   return `${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5, 8)}/${d.slice(8, 12)}-${d.slice(12)}`;
 }
 
-export default function CnpjConfirmPanel({ nome, cidade, onConfirm, onSkip }: Props) {
+export default function CnpjConfirmPanel({ nome, cidade, onConfirm: aoConfirmar, onSkip: aoPular }: Props) {
   const { t } = useTranslation();
+
+  // Envolve as saídas em vez de instrumentar cada botão: são quatro caminhos
+  // (sócio, "outra pessoa", confirmar sem sócios, pular) e um deles esquecido
+  // vira um buraco silencioso no funil.
+  const onConfirm: Props['onConfirm'] = (dados) => {
+    trackCnpjResolved({ action: 'confirmed', partner_named: Boolean(dados.socio_confirmado) });
+    aoConfirmar(dados);
+  };
+  const onSkip = () => {
+    trackCnpjResolved({ action: 'skipped' });
+    aoPular();
+  };
   const [candidatos, setCandidatos] = useState<Candidato[] | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(true);
@@ -71,7 +84,9 @@ export default function CnpjConfirmPanel({ nome, cidade, onConfirm, onSkip }: Pr
         const j = await r.json().catch(() => null);
         if (!vivo) return;
         if (!r.ok || !j?.success) throw new Error(j?.error || `HTTP ${r.status}`);
-        setCandidatos(j.data.candidatos || []);
+        const achados = j.data.candidatos || [];
+        trackCnpjLookup({ outcome: achados.length ? 'found' : 'not_found', candidates: achados.length });
+        setCandidatos(achados);
         // Sugestão do backend fica PRÉ-SELECIONADA, nunca confirmada — o
         // clique do dono continua sendo obrigatório.
         if (j.data.sugerido) setEscolhido(j.data.sugerido);
@@ -81,6 +96,10 @@ export default function CnpjConfirmPanel({ nome, cidade, onConfirm, onSkip }: Pr
         // Falha visível: uma lista vazia silenciosa faria o dono acreditar
         // que a empresa dele não existe no cadastro da Receita.
         console.warn('[cnpj] busca falhou:', e.message);
+        // Falha entra no funil como falha: se "não achamos" e "quebrou"
+        // virassem o mesmo número, um índice fora do ar pareceria baixa
+        // cobertura do cadastro.
+        trackCnpjLookup({ outcome: 'error', candidates: 0 });
         setErro(e.message);
       })
       .finally(() => { if (vivo) setCarregando(false); });

@@ -17,6 +17,7 @@ import type { OnboardingStepProps } from '../../types/onboarding.types';
 import PhoneInput, { validateFullPhoneNumber, type CountryCode } from '../common/PhoneInput';
 import ThiingsIcon from '../common/ThiingsIcon';
 import CnpjConfirmPanel from './CnpjConfirmPanel';
+import { trackMenuUrlProvided } from '../../lib/analytics';
 
 // Service type presets with recommended hours
 // Labels/descriptions are i18n keys resolved at render time
@@ -201,6 +202,16 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
     const contactOk = validate();
     const hoursOk = validateAllHours();
     if (contactOk && hoursOk && onNext) {
+      // Medido no avanço do passo, não a cada tecla: o que interessa é se o
+      // dono SAIU com o cardápio preenchido. `has_website` separa quem só tem
+      // o PDF de quem tem site — os dois perfis exigem produtos diferentes.
+      const menu = (data.menu_url || '').trim();
+      if (menu) {
+        trackMenuUrlProvided({
+          is_pdf: /\.pdf(\?|$)/i.test(menu),
+          has_website: Boolean((data.website || '').trim()),
+        });
+      }
       onNext();
     }
   };

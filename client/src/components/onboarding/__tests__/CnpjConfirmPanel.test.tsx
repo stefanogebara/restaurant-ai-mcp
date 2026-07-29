@@ -12,8 +12,13 @@ import CnpjConfirmPanel from '../CnpjConfirmPanel';
  *  3. falha nunca vira beco sem saída — o onboarding segue.
  */
 
-const { mockAuthFetch } = vi.hoisted(() => ({ mockAuthFetch: vi.fn() }));
+const { mockAuthFetch, mockLookup, mockResolved } = vi.hoisted(() => ({
+  mockAuthFetch: vi.fn(), mockLookup: vi.fn(), mockResolved: vi.fn(),
+}));
 vi.mock('../../../services/api', () => ({ authFetch: mockAuthFetch }));
+vi.mock('../../../lib/analytics', () => ({
+  trackCnpjLookup: mockLookup, trackCnpjResolved: mockResolved,
+}));
 
 const socios = [
   { nome: 'JORGE FERREIRA BASTOS', qualificacao: 'Sócio-Administrador' },
@@ -38,7 +43,11 @@ function respostaCom(data: unknown, ok = true) {
   return Promise.resolve({ ok, json: () => Promise.resolve({ success: ok, data }) } as Response);
 }
 
-beforeEach(() => mockAuthFetch.mockReset());
+beforeEach(() => {
+  mockAuthFetch.mockReset();
+  mockLookup.mockReset();
+  mockResolved.mockReset();
+});
 
 describe('CnpjConfirmPanel', () => {
   it('mostra a empresa encontrada com o CNPJ formatado', async () => {
@@ -117,5 +126,57 @@ describe('CnpjConfirmPanel', () => {
     render(<CnpjConfirmPanel nome="ab" onConfirm={vi.fn()} onSkip={vi.fn()} />);
     await waitFor(() => expect(screen.getByText(/não encontramos/i)).toBeInTheDocument());
     expect(mockAuthFetch).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * O funil do enricher. Sem estes eventos, "o enricher ajuda?" só teria resposta
+ * por opinião — o funil por passo mostra QUE o dono desistiu, não se a pergunta
+ * que fizemos a ele valeu a pena.
+ */
+describe('eventos de funil', () => {
+  it('separa "não achei" de "quebrou" — senão índice fora do ar vira baixa cobertura', async () => {
+    mockAuthFetch.mockReturnValue(respostaCom({ candidatos: [], sugerido: null }));
+    const { unmount } = render(<CnpjConfirmPanel nome="Restaurante Novo" onConfirm={vi.fn()} onSkip={vi.fn()} />);
+    await waitFor(() => expect(mockLookup).toHaveBeenCalledWith({ outcome: 'not_found', candidates: 0 }));
+    unmount();
+
+    mockLookup.mockReset();
+    mockAuthFetch.mockReturnValue(Promise.resolve({
+      ok: false, json: () => Promise.resolve({ success: false, error: 'timeout' }),
+    } as Response));
+    render(<CnpjConfirmPanel nome="Mocotó" onConfirm={vi.fn()} onSkip={vi.fn()} />);
+    await waitFor(() => expect(mockLookup).toHaveBeenCalledWith({ outcome: 'error', candidates: 0 }));
+  });
+
+  it('registra quantos candidatos vieram — mede a cobertura real do índice', async () => {
+    mockAuthFetch.mockReturnValue(respostaCom({ candidatos: [candidato()], sugerido: null }));
+    render(<CnpjConfirmPanel nome="Mocotó" onConfirm={vi.fn()} onSkip={vi.fn()} />);
+    await waitFor(() => expect(mockLookup).toHaveBeenCalledWith({ outcome: 'found', candidates: 1 }));
+  });
+
+  it('partner_named=true quando o dono se reconhece entre os sócios', async () => {
+    // É a métrica da aposta: "você é o Jorge ou a Keila?" identifica o dono?
+    mockAuthFetch.mockReturnValue(respostaCom({ candidatos: [candidato()], sugerido: candidato() }));
+    render(<CnpjConfirmPanel nome="Mocotó" onConfirm={vi.fn()} onSkip={vi.fn()} />);
+
+    await userEvent.click(await screen.findByText('JORGE FERREIRA BASTOS'));
+    expect(mockResolved).toHaveBeenCalledWith({ action: 'confirmed', partner_named: true });
+  });
+
+  it('"outra pessoa" conta como confirmado, mas sem sócio nomeado', async () => {
+    mockAuthFetch.mockReturnValue(respostaCom({ candidatos: [candidato()], sugerido: candidato() }));
+    render(<CnpjConfirmPanel nome="Mocotó" onConfirm={vi.fn()} onSkip={vi.fn()} />);
+
+    await userEvent.click(await screen.findByText(/outra pessoa/i));
+    expect(mockResolved).toHaveBeenCalledWith({ action: 'confirmed', partner_named: false });
+  });
+
+  it('pular também é medido — desistência silenciosa é a que mais importa', async () => {
+    mockAuthFetch.mockReturnValue(respostaCom({ candidatos: [candidato()], sugerido: null }));
+    render(<CnpjConfirmPanel nome="Mocotó" onConfirm={vi.fn()} onSkip={vi.fn()} />);
+
+    await userEvent.click(await screen.findByText(/nenhuma dessas/i));
+    expect(mockResolved).toHaveBeenCalledWith({ action: 'skipped' });
   });
 });
