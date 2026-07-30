@@ -12,20 +12,30 @@
  * não é preciso ensinar o roteamento sobre demos: basta a SESSÃO do telefone
  * apontar para o demo, e o resto do pipeline funciona sem alteração.
  *
- * ── AS TRÊS RESTRIÇÕES QUE MOLDARAM O DESENHO (verificadas no banco)
+ * ── O QUE MOLDA O DESENHO (medido no projeto de PRODUÇÃO, ckforlwdhewexyqljsaf)
  *
- * 1. `whatsapp_sessions.restaurant_id` tem FK para `restaurant_registry`. Um
- *    demo que não esteja lá não pode ser gravado na sessão. Por isso o demo é
- *    inserido no registry — com `is_active: false`.
- *
- * 2. `is_active: false` é o detalhe que torna isto seguro:
+ * 1. `is_active: false` é o que torna isto seguro:
  *    `getAllActiveRestaurants()` filtra por `is_active`, então o demo NUNCA
  *    aparece no seletor de restaurantes nem no auto-assign de um cliente real.
  *    Ele é alcançável apenas por vínculo explícito de sessão — este.
  *
- * 3. A FK é `ON DELETE SET NULL`. Quando o cron de limpeza apaga o demo
- *    expirado, a sessão volta a `restaurant_id = NULL` e o roteamento normal
- *    reassume sozinho. Não há estado órfão para limpar.
+ * 2. O upsert no registry NÃO é obrigatório, mas é deliberado: o passo 8b do
+ *    message-processor re-hidrata `session.restaurant` a partir do registry, e
+ *    ter a linha lá mantém o log do pipeline legível ("fora do registry ativo,
+ *    mas existe no config — segue (demo)") em vez de um aviso órfão.
+ *
+ * ── CORREÇÃO DE UMA PREMISSA MINHA QUE ERA FALSA
+ *
+ * Eu havia escrito aqui que `whatsapp_sessions.restaurant_id` tem FK para
+ * `restaurant_registry` com `ON DELETE SET NULL`, e que portanto a limpeza de
+ * sessão órfã acontecia de graça quando o cron apagasse o demo expirado.
+ *
+ * Isso veio de uma consulta feita no projeto Supabase ERRADO. Sondei produção
+ * (insert com restaurant_id inexistente → HTTP 201, aceito): **não existe FK**.
+ * Logo não existe SET NULL, e a limpeza NÃO é automática — ela foi implementada
+ * à mão no passo 8b-bis do message-processor. Sem isso, a sessão seguiria
+ * apontando para um id morto e o dono conversaria com um prompt genérico
+ * pensando que era a IA dele.
  */
 
 const { createSecureLogger } = require('./secure-logger');

@@ -257,7 +257,54 @@ async function processMessage(adapter, msg, options = {}) {
         session = { ...session, restaurant: found };
         logger.info(`[${providerName}] Re-hydrated session.restaurant for ${found.restaurant_name}`);
       } else {
-        logger.warn(`[${providerName}] restaurant_id ${session.restaurant_id} not in active registry`);
+        // 8b-bis. SESSÃO ÓRFÃ.
+        //
+        // Não está no registry ativo. Pode ser um demo (inserido inativo de
+        // propósito, ver demo-whatsapp-link.js) ou um restaurante que
+        // DESAPARECEU — caso típico: o cron apagou o demo expirado.
+        //
+        // Eu havia assumido que uma FK `ON DELETE SET NULL` limparia isso
+        // sozinha. ERRADO: sondei produção e NÃO existe FK entre
+        // whatsapp_sessions.restaurant_id e restaurant_registry — um insert com
+        // id inexistente é aceito (HTTP 201). Logo a limpeza tem de ser aqui.
+        //
+        // Sem isto, a sessão segue apontando para um id morto: processWithAI não
+        // acha a config, cai num prompt genérico, e o dono conversa com uma IA
+        // que não é a dele — sem nenhum erro visível.
+        let existe = false;
+        try {
+          const { supabaseAdmin } = require('../supabase');
+          const { data } = await supabaseAdmin
+            .schema('restaurant')
+            .from('restaurant_config')
+            .select('id')
+            .eq('id', session.restaurant_id)
+            .maybeSingle();
+          existe = Boolean(data);
+        } catch (e) {
+          // Não deu para confirmar a ausência → não limpa. Preferir uma sessão
+          // possivelmente órfã a apagar o vínculo de um restaurante real por
+          // causa de uma falha de leitura.
+          logger.warn(`[${providerName}] Não foi possível checar se o restaurante ainda existe:`, e.message);
+          existe = true;
+        }
+
+        if (existe) {
+          // Caso legítimo: demo vinculado (inativo no registry, vivo no config).
+          logger.info(`[${providerName}] restaurant_id fora do registry ativo, mas existe no config — segue (demo)`);
+        } else {
+          logger.warn(`[${providerName}] Restaurante ${session.restaurant_id} não existe mais — limpando sessão órfã`);
+          try {
+            const { clearSession } = require('../whatsapp-sessions');
+            await clearSession(session.id);
+          } catch (e) {
+            logger.error(`[${providerName}] Falha ao limpar sessão órfã — a próxima mensagem repetirá isto`, {
+              erro: e?.message || String(e),
+            });
+          }
+          // Segue sem restaurante: o roteamento normal reassume na próxima.
+          session = { ...session, restaurant_id: null, restaurant: null };
+        }
       }
     } catch (err) {
       logger.warn(`[${providerName}] Failed to re-hydrate session.restaurant (non-fatal):`, err.message);

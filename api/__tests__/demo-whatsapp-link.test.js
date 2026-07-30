@@ -105,6 +105,22 @@ describe('a recusa que protege o cliente que paga', () => {
   });
 });
 
+describe('a premissa que eu errei — documentada para não voltar', () => {
+  test('o vínculo NÃO depende de FK: o upsert no registry é deliberado, não obrigatório', () => {
+    // Sondei produção com um insert de restaurant_id inexistente em
+    // whatsapp_sessions: HTTP 201, aceito. NÃO existe FK para
+    // restaurant_registry, logo não existe ON DELETE SET NULL, logo a limpeza
+    // de sessão órfã NÃO é automática — está no passo 8b-bis do
+    // message-processor. Este teste existe para que a leitura do módulo não
+    // recaia na premissa errada.
+    const src = require('fs').readFileSync(
+      require('path').join(__dirname, '..', '_lib', 'demo-whatsapp-link.js'), 'utf8'
+    );
+    expect(src).toMatch(/não existe FK/i);
+    expect(src).not.toMatch(/ON DELETE SET NULL.*acontecia de graça/i);
+  });
+});
+
 describe('falhas deixam rastro e não fingem sucesso', () => {
   test('registry falhou → vinculado:false com log de erro', async () => {
     mockUpsert.mockResolvedValue({ data: null, error: 'permission denied' });

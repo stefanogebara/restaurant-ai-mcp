@@ -19,29 +19,38 @@
 const fs = require('fs');
 const path = require('path');
 
-// As 59 colunas de restaurant.restaurant_config, LIDAS DO BANCO em 2026-07-29
-// via information_schema (não escritas de memória — a primeira versão desta
-// lista foi adivinhada e acusou 6 falsos positivos).
+// As 64 colunas de restaurant.restaurant_config, lidas do projeto de PRODUÇÃO
+// (ckforlwdhewexyqljsaf) em 2026-07-30, via PostgREST com service role.
+//
+// A versão anterior desta lista tinha 59 nomes e estava ERRADA: veio de um
+// `information_schema` consultado no projeto Supabase errado (o MCP desta
+// sessão aponta para outro projeto). Ela continha 14 colunas que não existem em
+// produção (agent_voice_id, restaurant_aliases, tts_model_id, twilio_phone_number,
+// voice_settings, …) e omitia 18 que existem (staffing_config, deposit_config,
+// survey_config, manager_phone, …). Um teste de contrato alimentado por dados do
+// ambiente errado dá falso verde — pior que não existir.
 //
 // Ao adicionar um campo novo ao payload: 1) escreva a migração em
-// supabase/migrations/, 2) aplique, 3) some o nome aqui.
+// supabase/migrations/, 2) APLIQUE NO PROJETO DE PRODUÇÃO, 3) some o nome aqui.
 const COLUNAS_CONHECIDAS = new Set([
-  'agent_greeting', 'agent_language', 'agent_name', 'agent_updated_at',
-  'agent_voice_id', 'agent_voice_name', 'ai_config',
-  'average_dining_duration_minutes', 'business_hours', 'city', 'country',
-  'created_at', 'demo_contact_email', 'demo_contact_name', 'demo_day3_sent_at',
+  'agent_greeting', 'agent_language', 'agent_name', 'ai_config', 'ai_personality',
+  'ai_strategy_doc', 'ai_strategy_updated_at', 'average_dining_duration_minutes',
+  'business_hours', 'city', 'country', 'cover_image_url', 'created_at',
+  'demo_contact_email', 'demo_contact_name', 'demo_day3_sent_at',
   'demo_day5_sent_at', 'demo_day7_sent_at', 'demo_expires_at', 'demo_token',
-  'elevenlabs_agent_id', 'elevenlabs_phone_number', 'elevenlabs_phone_number_id',
-  'email', 'id', 'is_active', 'is_demo', 'learning_status',
-  'max_concurrent_reservations', 'menu_url', 'onboarding_completed',
-  'openai_voice_id', 'persona_prompt_override', 'phone', 'phone_configured_at',
-  'phone_integration_error', 'phone_integration_status', 'profile_generated_at',
-  'referral_code', 'reservation_settings', 'restaurant_name',
-  'restaurant_profile', 'restaurant_type', 'slug', 'table_configuration',
-  'team_members', 'timezone', 'tts_model_id', 'twilio_phone_number',
-  'updated_at', 'user_id', 'voice_engine', 'voice_engine_status', 'voice_id',
-  'voice_settings', 'voice_ws_endpoint', 'website', 'whatsapp_enabled',
-  'whatsapp_phone_number', 'whatsapp_provisioning',
+  'deposit_config', 'elevenlabs_agent_id', 'elevenlabs_kb_doc_id',
+  'elevenlabs_webhook_secret', 'email', 'feedback_config', 'id',
+  'instagram_tone_profile', 'is_active', 'is_demo', 'learning_status',
+  'manager_phone', 'manager_whatsapp_code', 'manager_whatsapp_code_expires_at',
+  'manager_whatsapp_verified', 'max_concurrent_reservations',
+  'notification_preferences', 'onboarding_completed', 'openai_voice_id',
+  'persona_prompt_override', 'phone', 'referral_code',
+  'reminder_voice_notes_enabled', 'reservation_settings', 'restaurant_name',
+  'restaurant_type', 'scraped_data', 'slug', 'staffing_config', 'survey_config',
+  'table_configuration', 'team_members', 'timezone', 'updated_at', 'user_id',
+  'voice_engine', 'voice_engine_status', 'voice_id', 'voice_ws_endpoint',
+  'website', 'whatsapp_enabled', 'whatsapp_phone_number', 'whatsapp_provider',
+  'whatsapp_provisioning',
 ]);
 
 /** Chaves de primeiro nível do literal `restaurantConfigData` no código. */
