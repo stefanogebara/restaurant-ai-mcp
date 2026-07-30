@@ -87,13 +87,18 @@ describe('payload do onboarding vs. colunas de restaurant_config', () => {
     expect(orfas).toEqual([]);
   });
 
-  test('menu_url está no payload E é coluna conhecida — o caso que quebrou', () => {
-    expect(lerChavesDoPayload().has('menu_url')).toBe(true);
-    expect(COLUNAS_CONHECIDAS.has('menu_url')).toBe(true);
+  test('menu_url NÃO está no payload — a coluna não existe em produção', () => {
+    // Confirmado via PostgREST no projeto de produção: `select menu_url` devolve
+    // 42703 (coluna não existe), enquanto `select website` devolve 42501
+    // (permissão) — ou seja, website existe e menu_url não. Enquanto a migração
+    // não for aplicada LÁ, incluir esta chave quebra o passo final do
+    // onboarding. O valor vive em metric_profile (JSONB).
+    expect(lerChavesDoPayload().has('menu_url')).toBe(false);
   });
 
-  test('a migração de menu_url está versionada no repo, não só aplicada no banco', () => {
-    // Coluna que existe só em produção reaparece como bug em cada ambiente novo.
+  test('a migração de menu_url está versionada no repo, esperando aplicação', () => {
+    // Fica no repo para ser aplicada no projeto certo. Coluna que existe só num
+    // ambiente reaparece como bug em todos os outros.
     const dir = path.join(__dirname, '..', '..', 'supabase', 'migrations');
     const temMigracao = fs.readdirSync(dir).some((f) => {
       if (!f.endsWith('.sql')) return false;
@@ -101,5 +106,13 @@ describe('payload do onboarding vs. colunas de restaurant_config', () => {
       return /restaurant_config/.test(sql) && /menu_url/.test(sql);
     });
     expect(temMigracao).toBe(true);
+  });
+
+  test('o cardápio não é perdido: segue em metric_profile, que é JSONB', () => {
+    // JSONB aceita chave nova sem DDL. É por isso que cnpj/razao_social/
+    // socio_confirmado nunca quebraram — e é o abrigo do menu_url por ora.
+    const src = fs.readFileSync(path.join(__dirname, '..', 'onboarding', 'complete.js'), 'utf8');
+    const bloco = src.slice(src.indexOf('metric_profile:'), src.indexOf('onboarding_completed_at'));
+    expect(bloco).toMatch(/menu_url/);
   });
 });

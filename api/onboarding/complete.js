@@ -610,9 +610,20 @@ module.exports = async (req, res) => {
       email: email || customer_email,
       phone: phone_number,
       website: website || null,
-      // Guardado no config do restaurante porque o cardápio não é dado só do
-      // cadastro: é a fonte que a IA relê quando o dono troca os preços.
-      menu_url: (typeof menu_url === 'string' && menu_url.trim()) || null,
+      // menu_url NÃO vai aqui.
+      //
+      // Eu adicionei em 2460482f e quebrei o passo final do onboarding: a
+      // coluna não existe em `restaurant.restaurant_config` no projeto de
+      // PRODUÇÃO (confirmado via PostgREST: 42703 para `menu_url`, contra 42501
+      // para `website` — o erro de coluna inexistente precede o de permissão).
+      // O PostgREST rejeita coluna desconhecida, então o dono preenchia seis
+      // passos e não conseguia concluir.
+      //
+      // O valor segue guardado em `metric_profile` (JSONB, aceita chave nova
+      // sem migração) — ver acima. Quando a migração
+      // supabase/migrations/20260729_menu_url_restaurant_config.sql for
+      // aplicada em produção, esta linha pode voltar; até então, JSONB é o
+      // lugar que não depende de DDL.
       voice_id: selected_voice_id || 'default',
       business_hours: validatedBusinessHours.reduce((acc, day) => {
         acc[day.day.toLowerCase()] = {
