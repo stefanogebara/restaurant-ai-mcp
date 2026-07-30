@@ -242,23 +242,39 @@ const sondarOpenRouter = sondaSimples({
 });
 
 /**
- * Reserva. Falha aqui NÃO derruba o atendimento — mas derruba o
- * upsell-generator, que chama o SDK da Anthropic direto, sem passar pelo
- * ai-client e portanto sem o fallback.
+ * Reserva do OpenRouter — e OPCIONAL por decisão do fundador (30/jul): rodar
+ * só com um provedor de IA é uma escolha legítima, então a AUSÊNCIA da chave
+ * não é defeito e não pinta nada de amarelo (regra 2 do módulo, a mesma que já
+ * vale para o Twilio: "não usamos" ≠ "quebrado").
+ *
+ * Uma chave PRESENTE e recusada continua sendo aviso: aí alguém quis ter
+ * reserva e ela não está funcionando, que é diferente de não querer ter.
+ *
+ * O upsell não depende mais disto — passou a usar o ai-client compartilhado
+ * (770fb810). Antes chamava o SDK da Anthropic direto e era o único caminho
+ * sem fallback; foi assim que uma chave revogada quebrou só ele, em silêncio.
  */
 async function sondarAnthropic(env) {
+  if (!env.ANTHROPIC_API_KEY) {
+    return {
+      nome: 'ia_reserva_anthropic',
+      nivel: NIVEIS.NAO_CONFIGURADO,
+      detalhe: 'sem reserva por opção — o agente roda no OpenRouter (provedor único)',
+    };
+  }
+
   const base = await sondaSimples({
     nome: 'ia_reserva_anthropic',
     chaveVar: 'ANTHROPIC_API_KEY',
     url: () => 'https://api.anthropic.com/v1/models?limit=1',
     cabecalhos: (k) => ({ 'x-api-key': k, 'anthropic-version': '2023-06-01' }),
-    sucesso: () => 'chave válida (reserva do agente + upsell)',
+    sucesso: () => 'chave válida (reserva do agente se o OpenRouter cair)',
   })(env);
 
   if (base.nivel !== NIVEIS.FALHA) return base;
   return atencao(
     base.nome,
-    `${base.detalhe} — o agente segue no OpenRouter, mas o upsell (SDK direto) está quebrado`,
+    `${base.detalhe} — o agente segue no OpenRouter, mas ficou SEM reserva se ele cair`,
   );
 }
 

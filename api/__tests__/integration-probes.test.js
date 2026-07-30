@@ -205,7 +205,12 @@ describe('falsos positivos que a primeira versão da sonda produziu em produçã
     global.fetch = mockFetch({ error: { message: 'API key is invalid' } }, 401);
     const r = await sondarAnthropic({ ANTHROPIC_API_KEY: 'k' });
     expect(r.nivel).toBe(NIVEIS.ATENCAO);
-    expect(r.detalhe).toMatch(/upsell/i); // diz o que REALMENTE quebra
+    // A asserção dizia /upsell/ e estava certa até 30/jul: o upsell era o único
+    // caminho que ia direto na Anthropic, então uma chave morta quebrava ele.
+    // Desde 770fb810 o upsell usa o ai-client compartilhado e não depende mais
+    // disto — a consequência real de uma chave morta passou a ser ficar sem
+    // reserva. Contrato mudou de propósito; a asserção acompanha.
+    expect(r.detalhe).toMatch(/sem reserva/i); // diz o que REALMENTE quebra
   });
 });
 
