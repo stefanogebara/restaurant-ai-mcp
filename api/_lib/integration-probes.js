@@ -406,11 +406,95 @@ function resumir(sondas) {
  * Roda tudo em paralelo. Uma sonda que estoura nunca derruba as outras —
  * um diagnóstico parcial vale muito mais que um 500.
  */
+/**
+ * Qual template de intro sairia AGORA, e ele está aprovado na Meta?
+ *
+ * Por que existe: `PROSPECTING_INTRO_TEMPLATE` está marcada Sensitive na
+ * Vercel, então o nome não é legível nem por `vercel env pull` nem pelo painel
+ * — só de dentro da função. E o nome sozinho não basta: o que importa é qual
+ * template o `pickTemplate` escolheria e se a Meta o aprovou.
+ *
+ * A escolha tem dois caminhos e é fácil confundi-los (sequencer.js:63-77):
+ *   - registro tem variante ATIVA  → sorteia entre as ativas;
+ *   - registro sem nenhuma ativa   → cai no env, rotulando como 'A'.
+ * Desativar a última variante não desliga o envio: arma o fallback. Foi
+ * exatamente essa confusão que motivou esta sonda (30/jul).
+ *
+ * Nome de template não é segredo (é público na Meta), então pode aparecer no
+ * detalhe — diferente do token, que nunca sai daqui.
+ */
+async function sondarTemplateIntro(env, deps = {}) {
+  const nome = 'prospeccao_template_intro';
+  const token = env.WHATSAPP_ACCESS_TOKEN;
+  const dryRun = String(env.PROSPECTING_DRY_RUN || '') === 'true';
+
+  // Guarda ANTES de qualquer I/O. Sem token não dá pra responder a pergunta que
+  // importa (o template está aprovado?), então ler o banco seria trabalho jogado
+  // fora — e num ambiente sem configuração nenhuma viraria vermelho falso, que é
+  // exatamente o que a regra 2 do módulo proíbe.
+  if (!token) return naoConfigurado(nome, 'WHATSAPP_ACCESS_TOKEN');
+
+  let ativas = [];
+  try {
+    const { listTemplates } = deps.store || require('./prospecting/prospect-store');
+    ativas = (await listTemplates(1)).filter((t) => t.active);
+  } catch (err) {
+    return falha(nome, `não consegui ler o registro de templates: ${(err && err.message) || err}`);
+  }
+
+  const doEnv = env.PROSPECTING_INTRO_TEMPLATE || null;
+  const escolhido = ativas.length > 0 ? ativas[0].meta_template_name : doEnv;
+  const origem = ativas.length > 0 ? 'registro' : 'env (fallback)';
+
+  const extra = {
+    origem,
+    variantes_ativas: ativas.map((t) => `${t.variant_label}:${t.meta_template_name}`),
+    template_do_env: doEnv,
+    escolhido,
+    dry_run: dryRun,
+  };
+
+  if (!escolhido) {
+    return atencao(nome, 'nenhuma variante ativa e PROSPECTING_INTRO_TEMPLATE vazia — intro não sai', extra);
+  }
+
+  // Status real na Meta do template que seria escolhido. Sem isto a sonda
+  // responderia "vai usar o X" sem dizer que o X seria recusado no envio.
+  const waba = env.PROSPECTING_WABA_ID || '25687973367501862';
+  try {
+    const { corpo } = await buscar(
+      `https://graph.facebook.com/v21.0/${encodeURIComponent(waba)}/message_templates`
+        + `?fields=name,status,language&limit=100`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    if (corpo.error) return falha(nome, `Meta recusou a consulta: ${corpo.error.message}`, extra);
+
+    const naMeta = (corpo.data || []).filter((t) => t.name === escolhido);
+    extra.status_na_meta = naMeta.map((t) => `${t.language}:${t.status}`);
+
+    const aprovado = naMeta.some((t) => String(t.status).toUpperCase() === 'APPROVED');
+    if (!aprovado) {
+      const detalhe = naMeta.length === 0
+        ? `"${escolhido}" (via ${origem}) NÃO EXISTE na Meta — todo envio de intro falha`
+        : `"${escolhido}" (via ${origem}) existe mas não está aprovado: ${extra.status_na_meta.join(', ')}`;
+      // Atenção e não falha quando o dry-run está ligado: nada sai, então é
+      // aviso de configuração, não incidente em curso.
+      return dryRun ? atencao(nome, `${detalhe} — hoje inócuo (dry-run ligado)`, extra)
+        : falha(nome, detalhe, extra);
+    }
+    return ok(nome, `"${escolhido}" aprovado na Meta (via ${origem})`
+      + (dryRun ? ' — mas dry-run ligado, nada sai' : ''), extra);
+  } catch (err) {
+    return erroParaFalha(nome, err);
+  }
+}
+
 async function sondarIntegracoes({ env = process.env, agoraMs = Date.now(), deps = {} } = {}) {
   const tarefas = [
     () => sondarTokenMeta(env, agoraMs),
     () => sondarNumeroWhatsApp(env, 'whatsapp_reservas', 'WHATSAPP_PHONE_NUMBER_ID'),
     () => sondarNumeroWhatsApp(env, 'whatsapp_prospeccao', 'PROSPECTING_PHONE_NUMBER_ID'),
+    () => sondarTemplateIntro(env, deps),
     () => sondarOpenRouter(env),
     () => sondarAnthropic(env),
     () => sondarOpenAI(env),
@@ -435,6 +519,7 @@ module.exports = {
   resumir,
   sondarTokenMeta,
   sondarNumeroWhatsApp,
+  sondarTemplateIntro,
   sondarSupabase,
   sondarSupabaseAuth,
   sondarResend,
