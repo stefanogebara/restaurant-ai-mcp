@@ -6,7 +6,13 @@
  * Falls back to template-based messages on failure.
  */
 
-const Anthropic = require('@anthropic-ai/sdk');
+// Usa o MESMO cliente do resto do sistema (OpenRouter, com Anthropic direto de
+// reserva) em vez de instanciar o SDK da Anthropic sozinho. Era o único caminho
+// de IA fora do cliente compartilhado, e isso custou caro: quando a
+// ANTHROPIC_API_KEY foi revogada, o agente seguiu funcionando pelo OpenRouter e
+// só o upsell quebrou — em silêncio, porque o catch cai no template. Ninguém viu
+// até uma sonda de integração perguntar (30/jul).
+const { getAI, AI_MODEL_FAST } = require('./ai-client');
 const { createSecureLogger } = require('./secure-logger');
 
 const logger = createSecureLogger('UpsellGenerator');
@@ -102,27 +108,21 @@ function buildUserPrompt({
  * @returns {Promise<string>} The generated message
  * @throws {Error} If AI generation fails (caller should use fallback)
  */
-let _client = null;
-function getClient() {
-  if (!_client) {
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) throw new Error('ANTHROPIC_API_KEY not configured');
-    _client = new Anthropic({ apiKey });
-  }
-  return _client;
-}
-
 async function generateUpsellMessage(context) {
   const { lang = 'en' } = context;
 
-  const client = getClient();
+  // getAI() já faz o cache do cliente e escolhe o provedor disponível.
+  const client = getAI();
 
   const systemPrompt = buildSystemPrompt(lang);
   const userPrompt = buildUserPrompt(context);
 
   const response = await Promise.race([
     client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
+      // Constante compartilhada em vez de ID datado hardcoded: o slug antigo
+      // ('claude-haiku-4-5-20251001') só existia na API direta da Anthropic e
+      // teria que ser trocado à mão a cada troca de modelo.
+      model: AI_MODEL_FAST,
       max_tokens: 300,
       system: systemPrompt,
       messages: [{ role: 'user', content: userPrompt }],
