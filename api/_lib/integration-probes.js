@@ -406,6 +406,122 @@ function resumir(sondas) {
  * Roda tudo em paralelo. Uma sonda que estoura nunca derruba as outras —
  * um diagnóstico parcial vale muito mais que um 500.
  */
+/** WABA que hospeda os templates de prospecção. */
+function wabaProspeccao(env) {
+  return env.PROSPECTING_WABA_ID || '25687973367501862';
+}
+
+/**
+ * Templates da WABA como a Meta os vê. Cada sonda chama por conta própria em
+ * vez de compartilhar um resultado: o módulo trata prazo por sonda como
+ * invariante (regra 3), e uma consulta pendurada não pode derrubar a outra.
+ */
+async function buscarTemplatesMeta(env, token) {
+  const { corpo } = await buscar(
+    `https://graph.facebook.com/v21.0/${encodeURIComponent(wabaProspeccao(env))}/message_templates`
+      + `?fields=name,status,language&limit=100`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  );
+  if (corpo.error) return { erro: corpo.error.message, lista: [] };
+  return { erro: null, lista: corpo.data || [] };
+}
+
+/**
+ * A escada de follow-up (touches 2, 3 e 4) aguenta rodar?
+ *
+ * Por que é uma sonda separada da intro: a intro é manual e tem fallback de
+ * env; a escada roda SOZINHA no cron prospect-flush a cada 15 min, e falha de
+ * um jeito que não aparece.
+ *
+ * Dois modos de falha, e o primeiro é o pior (sequencer.js:266-275):
+ *
+ *  1. SEM template ativo pro touch → `pickTemplate` devolve null e o código
+ *     zera o `next_touch_at` do lead. A sequência daquele lead para PARA SEMPRE
+ *     — não é envio que falha e volta depois, é o lead saindo da escada em
+ *     silêncio, com um logger.warn que ninguém lê. Só re-registrar um template
+ *     e remarcar o lead traz de volta.
+ *  2. Template ativo mas NÃO aprovado na Meta → `pickTemplate` só olha a flag
+ *     `active` do registro, nunca a Meta. O envio sai e é recusado.
+ *
+ * Enquanto o dry-run esteve ligado nada disso acontecia (o dispatch retorna
+ * antes, sequencer.js:248). Com ele desligado, os dois estão vivos.
+ */
+async function sondarTemplatesSequencia(env, deps = {}) {
+  const nome = 'prospeccao_templates_sequencia';
+  const token = env.WHATSAPP_ACCESS_TOKEN;
+  const dryRun = String(env.PROSPECTING_DRY_RUN || '') === 'true';
+
+  if (!token) return naoConfigurado(nome, 'WHATSAPP_ACCESS_TOKEN');
+
+  // Rótulos batem com as constantes do sequencer (TOUCH2/TOUCH3 + REENGAGE_TOUCH).
+  const ESCADA = [
+    { touch: 2, papel: 'bump (D+3)' },
+    { touch: 3, papel: 'breakup (D+8)' },
+    { touch: 4, papel: 'resgate' },
+  ];
+
+  let registro;
+  try {
+    const { listTemplates } = deps.store || require('./prospecting/prospect-store');
+    registro = await Promise.all(ESCADA.map(async (e) => ({
+      ...e,
+      ativos: (await listTemplates(e.touch)).filter((t) => t.active),
+    })));
+  } catch (err) {
+    return falha(nome, `não consegui ler o registro de templates: ${(err && err.message) || err}`);
+  }
+
+  const { erro, lista } = await buscarTemplatesMeta(env, token);
+  if (erro) return falha(nome, `Meta recusou a consulta: ${erro}`);
+
+  const aprovado = (n) => lista.some(
+    (t) => t.name === n && String(t.status).toUpperCase() === 'APPROVED',
+  );
+
+  const detalhes = [];
+  const semTemplate = [];
+  const naoAprovados = [];
+
+  for (const e of registro) {
+    if (e.ativos.length === 0) {
+      semTemplate.push(`${e.touch} (${e.papel})`);
+      detalhes.push({ touch: e.touch, papel: e.papel, estado: 'sem template ativo' });
+      continue;
+    }
+    // Qualquer ativo não aprovado é problema: pickTemplate sorteia entre TODOS
+    // os ativos, então basta um ruim pra parte dos envios daquele touch falhar.
+    const ruins = e.ativos.map((t) => t.meta_template_name).filter((n) => !aprovado(n));
+    if (ruins.length > 0) naoAprovados.push(`${e.touch}:${ruins.join('/')}`);
+    detalhes.push({
+      touch: e.touch,
+      papel: e.papel,
+      ativos: e.ativos.map((t) => t.meta_template_name),
+      nao_aprovados: ruins,
+      estado: ruins.length === 0 ? 'ok' : 'ativo mas não aprovado',
+    });
+  }
+
+  const extra = { dry_run: dryRun, escada: detalhes };
+  const problema = semTemplate.length > 0 || naoAprovados.length > 0;
+  if (!problema) {
+    return ok(nome, `touches 2/3/4 com template ativo e aprovado${dryRun ? ' — dry-run ligado' : ''}`, extra);
+  }
+
+  const partes = [];
+  if (semTemplate.length) {
+    partes.push(`SEM template ativo no touch ${semTemplate.join(', ')}`
+      + ' — a sequência desses leads é ENCERRADA em silêncio (next_touch_at zerado)');
+  }
+  if (naoAprovados.length) {
+    partes.push(`ativo mas não aprovado na Meta em ${naoAprovados.join(', ')} — envio recusado`);
+  }
+  const detalhe = partes.join('; ');
+  // Mesma regra da sonda de intro: sem dry-run é incidente em curso; com
+  // dry-run o dispatch retorna antes de tocar no lead, então é só aviso.
+  return dryRun ? atencao(nome, `${detalhe} — hoje inócuo (dry-run ligado)`, extra)
+    : falha(nome, detalhe, extra);
+}
+
 /**
  * Qual template de intro sairia AGORA, e ele está aprovado na Meta?
  *
@@ -460,16 +576,11 @@ async function sondarTemplateIntro(env, deps = {}) {
 
   // Status real na Meta do template que seria escolhido. Sem isto a sonda
   // responderia "vai usar o X" sem dizer que o X seria recusado no envio.
-  const waba = env.PROSPECTING_WABA_ID || '25687973367501862';
   try {
-    const { corpo } = await buscar(
-      `https://graph.facebook.com/v21.0/${encodeURIComponent(waba)}/message_templates`
-        + `?fields=name,status,language&limit=100`,
-      { headers: { Authorization: `Bearer ${token}` } },
-    );
-    if (corpo.error) return falha(nome, `Meta recusou a consulta: ${corpo.error.message}`, extra);
+    const { erro, lista } = await buscarTemplatesMeta(env, token);
+    if (erro) return falha(nome, `Meta recusou a consulta: ${erro}`, extra);
 
-    const naMeta = (corpo.data || []).filter((t) => t.name === escolhido);
+    const naMeta = lista.filter((t) => t.name === escolhido);
     extra.status_na_meta = naMeta.map((t) => `${t.language}:${t.status}`);
 
     const aprovado = naMeta.some((t) => String(t.status).toUpperCase() === 'APPROVED');
@@ -495,6 +606,7 @@ async function sondarIntegracoes({ env = process.env, agoraMs = Date.now(), deps
     () => sondarNumeroWhatsApp(env, 'whatsapp_reservas', 'WHATSAPP_PHONE_NUMBER_ID'),
     () => sondarNumeroWhatsApp(env, 'whatsapp_prospeccao', 'PROSPECTING_PHONE_NUMBER_ID'),
     () => sondarTemplateIntro(env, deps),
+    () => sondarTemplatesSequencia(env, deps),
     () => sondarOpenRouter(env),
     () => sondarAnthropic(env),
     () => sondarOpenAI(env),
@@ -520,6 +632,7 @@ module.exports = {
   sondarTokenMeta,
   sondarNumeroWhatsApp,
   sondarTemplateIntro,
+  sondarTemplatesSequencia,
   sondarSupabase,
   sondarSupabaseAuth,
   sondarResend,
