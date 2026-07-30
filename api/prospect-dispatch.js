@@ -31,7 +31,24 @@ module.exports = async (req, res) => {
     return res.status(401).json({ success: false, error: 'Authentication required' });
   }
 
-  const limit = Math.min(Math.max(parseInt((req.body || {}).limit, 10) || 20, 1), 100);
+  // `limit: 0` significa ZERO — e é uma sonda legítima: devolve o estado
+  // (dryRun, janela, cap) sem selecionar nem enviar nada.
+  //
+  // A versão anterior era `parseInt(...) || 20` com piso 1, então `limit: 0`
+  // virava 20 SILENCIOSAMENTE. Foi assim que uma chamada que eu acreditava
+  // inofensiva disparou 20 tentativas reais de envio (30/jul). Não houve dano
+  // — a Meta recusou todas porque o template não estava aprovado, e
+  // `markIntro('failed')` liberou os claims — mas foi acidente, não desenho.
+  // Um endpoint que envia dinheiro/mensagem não pode reinterpretar a
+  // quantidade que o operador pediu.
+  // `null`/`''` precisam cair no DEFAULT, não em zero: `Number(null)` é 0 e
+  // `Number('')` é 0, então uma checagem só com Number.isFinite trataria
+  // "campo vazio" como "não envie nada" — silencioso na direção oposta ao
+  // problema original, mas igualmente enganoso.
+  const bruto = (req.body || {}).limit;
+  const ausente = bruto === null || bruto === undefined || bruto === '';
+  const n = ausente ? NaN : Number(bruto);
+  const limit = Number.isFinite(n) ? Math.min(Math.max(Math.trunc(n), 0), 100) : 20;
   // Operator override — deliberately send outside the 10-17 dispatch window.
   const force = (req.body || {}).force === true;
   try {

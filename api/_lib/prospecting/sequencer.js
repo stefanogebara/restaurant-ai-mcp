@@ -99,7 +99,12 @@ async function dispatchIntros({ limit = 20, territorio = null, force = false } =
   const introTemplate = await pickTemplate(1); // availability probe
   const previewOnly = dryRun || !introTemplate;
 
-  const candidates = await selectIntroCandidates(limit, territorio);
+  // limit 0 = sonda: devolve o estado (dryRun, janela, cap) sem selecionar nem
+  // enviar. Explícito aqui, e não só via `.limit(0)` do PostgREST, porque
+  // "quantas linhas um limit zero devolve" é detalhe de driver — e a diferença
+  // entre zero e vinte, num endpoint que manda mensagem para gente real, não
+  // pode depender disso.
+  const candidates = limit > 0 ? await selectIntroCandidates(limit, territorio) : [];
   const summary = { candidates: candidates.length, sent: 0, blocked: 0, skipped: 0, failed: 0, dryRun: previewOnly, capHit: false };
   if (candidates.length === 0) return summary;
 
