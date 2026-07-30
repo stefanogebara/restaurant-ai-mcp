@@ -208,6 +208,29 @@ async function upsertDiscoveredLeads(rows) {
 }
 
 /**
+ * FAIXA DE QUALIDADE do lead, medida contra a base real de produção (30/jul).
+ *
+ * O `sector` do Google Places diz "restaurante" para TODOS — inclusive
+ * shoppings, por causa da praça de alimentação. Sem um teto, ordenar por
+ * popularidade traz Mercado Municipal (201 mil avaliações) e sete shoppings
+ * antes de qualquer restaurante. Com a faixa, o topo passa a ser Jardim de
+ * Napoli, Sal Gastronomia, La Braciera — restaurante independente, com
+ * movimento, cujo dono decide sozinho.
+ *
+ * MIN 150  — abaixo disso não há volume que gere dor de reserva.
+ * MAX 5000 — acima é ponto turístico ou rede (Outback, Coco Bambu, Casa do
+ *            Porco): decisão corporativa, ciclo longo, e provavelmente já têm
+ *            sistema. Testei 15000 e a lista encheu de mercado e franquia.
+ * NOTA 4.3 — negócio saudável; abaixo disso o problema não é reserva.
+ *
+ * Efeito no pool: 3643 → 1930 elegíveis. Com o cap diário de warm-up, mais de
+ * um ano de disparos — a faixa não estrangula o funil, só ordena a fila.
+ */
+const QUALIDADE_MIN_AVALIACOES = 150;
+const QUALIDADE_MAX_AVALIACOES = 5000;
+const QUALIDADE_MIN_NOTA = 4.3;
+
+/**
  * Leads ready for a cold intro: never contacted (whatsapp_sent_at null), in the
  * initial state, with a sendable WhatsApp number.
  * @param {number} [limit=20]
@@ -216,17 +239,41 @@ async function selectIntroCandidates(limit = 20, territorio = null) {
   try {
     let q = supabaseAdmin
       .from('prospect_leads')
-      .select('id, name, owner_name, whatsapp_phone, whatsapp_status')
+      .select('id, name, owner_name, whatsapp_phone, whatsapp_status, lead_score, reviews_count, rating')
       .eq('prospect_state', 'aguardando')
       .is('whatsapp_sent_at', null)
       .not('whatsapp_phone', 'is', null)
+      .gte('reviews_count', QUALIDADE_MIN_AVALIACOES)
+      .lte('reviews_count', QUALIDADE_MAX_AVALIACOES)
+      .gte('rating', QUALIDADE_MIN_NOTA)
       .in('whatsapp_status', ['pending', 'found']);
     // Optional territory targeting (bairro/cidade/UF): matches the stored city
     // OR the full address. Sanitized to letters/digits/spaces/hyphens so the
     // PostgREST or() syntax can't be broken by user input.
     const t = territorio ? String(territorio).normalize('NFC').replace(/[^\p{L}\p{N}\s-]/gu, ' ').replace(/\s+/g, ' ').trim() : '';
     if (t) q = q.or(`city.ilike.%${t}%,address.ilike.%${t}%`);
+    // ORDEM DE PRIORIDADE — quem recebe os disparos escassos do dia.
+    //
+    // Era `created_at asc`: os leads mais ANTIGOS primeiro, o que não tem
+    // relação com qualidade. Na prática isso misturava o Santana Burger (712
+    // avaliações, movimento real, dor real de reserva) com "Shake Saudável"
+    // (2 avaliações, provavelmente nem trabalha com reserva) — e o cap diário
+    // de warm-up é pequeno, então cada slot gasto num lead fraco é um slot que
+    // o lead forte não recebeu.
+    //
+    // 1º lead_score (0..7, do enrich: ponto físico + delivery próprio +
+    //    WhatsApp de vendas + dono identificado). `nullsFirst: false` é
+    //    ESSENCIAL: hoje os 3643 elegíveis têm score NULL porque nunca passaram
+    //    pelo enrich, e sem isso o Postgres poria justamente os não
+    //    classificados na frente.
+    // 2º reviews_count — o desempate que funciona AGORA. Enquanto o score não
+    //    estiver populado, ele é quem decide, e é um bom proxy de movimento.
+    // 3º created_at — determinismo. Sem um critério final estável, dois leads
+    //    empatados alternariam de ordem entre execuções e o claim atômico
+    //    ficaria disputando linhas diferentes a cada rodada.
     const { data, error } = await q
+      .order('lead_score', { ascending: false, nullsFirst: false })
+      .order('reviews_count', { ascending: false, nullsFirst: false })
       .order('created_at', { ascending: true })
       .limit(limit);
     if (error) {
