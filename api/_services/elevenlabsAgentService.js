@@ -349,11 +349,23 @@ async function deleteAgent(restaurantId) {
 
       if (agentRes.ok) {
         const agentData = await agentRes.json();
-        // Tools can be at conversation_config.agent.tools or similar
-        const tools = agentData?.conversation_config?.agent?.tools || [];
-        toolIds = tools
-          .map(t => t.id)
-          .filter(Boolean);
+        const agentCfg = agentData?.conversation_config?.agent;
+        // createAgent grava os ids em prompt.tool_ids (ver createAgent abaixo:
+        // `prompt: { ..., tool_ids: toolIds }`). Este código lia só
+        // `agent.tools` — caminho DIFERENTE, sempre undefined — então a lista
+        // saía vazia e o loop de DELETE nunca rodava. Como o cron diário de
+        // limpeza de demos chama deleteAgent, cada demo expirado deixava seus
+        // webhook tools órfãos na conta, silenciosamente (a função "funcionava":
+        // apagava o agente e não errava).
+        //
+        // Lê os DOIS: `tool_ids` é o que gravamos hoje; `tools` cobre agentes
+        // criados por versões anteriores, cujo shape não conhecemos.
+        const idsDoPrompt = Array.isArray(agentCfg?.prompt?.tool_ids)
+          ? agentCfg.prompt.tool_ids : [];
+        const idsLegado = Array.isArray(agentCfg?.tools)
+          ? agentCfg.tools.map(t => t?.id) : [];
+        toolIds = [...new Set([...idsDoPrompt, ...idsLegado])]
+          .filter(id => typeof id === 'string' && id);
       } else {
         logger.error('Failed to GET agent config from ElevenLabs', { agentId, status: agentRes.status });
       }
