@@ -34,7 +34,24 @@ Infra que já existe e o loop reaproveita:
 Harness: `scripts/olimpia-eval.js`. Saídas numeradas neste diretório
 (`eval-001-relatorio.md`, `eval-001-sintese.md`; JSON bruto no scratchpad).
 
-## DECISÃO PENDENTE #1 — o desalinhamento produto × template (estrutural)
+## DECISÃO #1 — RESOLVIDA (31/07, delegada pelo fundador): caminho (a), Racha fica
+
+Racional: a decisão do wedge (22/07) foi reafirmada por todo o movimento desde
+então (persona no-call, kit de implantação, ICP, digest); a única conversa
+humana pós-flip (La Braciera Higienópolis) fluiu bem no pitch Racha; flipar
+produto pra combinar com template antigo seria o rabo abanando o cachorro.
+
+Executado: racha_intro_a (touch1/E, id 1091894500166229), racha_intro_b
+(touch1/F, id 1515560346988125), racha_toque2 (touch2/B, id 1531080604707580) —
+todos PENDING na Meta, registrados INATIVOS.
+
+QUANDO APROVAREM: ativar E+F no touch 1 e DESATIVAR A+C (Seatable); ativar B no
+touch 2 e desativar o A antigo (corpo ainda não auditado). Até lá: NENHUMA intro
+nova (disparo é manual; basta não disparar). Toques 2/3 dos 4 leads de 30/07
+continuam na escada Seatable — coerente dentro da própria cadeia de template.
+
+### Contexto original da decisão
+
 
 **Produção vende Racha** (`PROSPECTING_PRODUCT` ausente → default `racha`,
 decisão "Racha como wedge", 22/07). **Mas todos os templates de intro aprovados
@@ -109,5 +126,20 @@ Rascunhos Racha para aprovação (voz da Olímpia, sem call, com porta de saída
 
 - 31/07: C aprovada na Meta; A+C ativadas em A/B (origem: registro, sonda ok).
 - 31/07: La Braciera (Morumbi e Higienópolis) parqueadas em `porteiro`.
-  Higienópolis parqueada por engano de filtro (não auditada) — o eval verifica a
-  thread e reverte se houver humano.
+  Higienópolis parqueada por engano de filtro — auditada por id: TINHA humano
+  respondendo discovery Racha; revertida pra `conversando`. Busger Higienópolis
+  (atingido pelo script de conserto com o MESMO vício de filtro) desfeito.
+  Lição em tasks/lessons.md: mutação de lead só por id.
+- 31/07: eval-001 baseline + 5 mudanças de persona aplicadas (443cd771).
+- 31/07: chave dos US$175 identificada — AgentRouter (agentrouter.org),
+  superfície OpenAI-compatível, catálogo SÓ Opus (sem Fable). Chave AUTENTICA
+  via Node, mas o filtro de conteúdo deles BLOQUEIA os payloads do eval
+  (transcrições reais) — "content-blocked". Créditos inutilizáveis pro juiz;
+  harness ganhou roteamento com fallback automático pro OpenRouter e fica
+  pronto caso o suporte deles libere. Não contornar filtro de conteúdo.
+- 31/07: DECISÃO (a) executada — 3 templates Racha submetidos (PENDING).
+- 31/07: INCIDENTE DE SALDO — conta OpenRouter em US$-0,03 (325,03/325) com
+  painel verde; a agente ao vivo a um fio de emudecer. Sonda ganhou verificação
+  de saldo (falha ≤0, atenção <5). Eval-001 consumiu parte dos últimos dólares.
+  Recarga é do fundador. WhatsApp e2e (#79) ADIADO até a recarga — cada reply
+  aprofunda o negativo e um 402 no meio invalidaria o teste.

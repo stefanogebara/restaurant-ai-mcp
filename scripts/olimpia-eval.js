@@ -40,8 +40,35 @@ function envVal(file, key) {
 const SURL = envVal('.env.production.local', 'SUPABASE_URL') || envVal('.env.local', 'SUPABASE_URL');
 const SRK = envVal('.env.production.local', 'SUPABASE_SERVICE_ROLE_KEY');
 const OR_KEY = envVal('.env.local', 'OPENROUTER_API_KEY') || envVal('.env.production.local', 'OPENROUTER_API_KEY');
+const AR_KEY = envVal('.env.local', 'AGENTROUTER_API_KEY');
 if (!SURL || !SRK) { console.error('faltam SUPABASE_URL / SERVICE_ROLE_KEY'); process.exit(1); }
 if (!OR_KEY) { console.error('falta OPENROUTER_API_KEY'); process.exit(1); }
+
+// Dois provedores, papéis distintos:
+// - agentrouter: créditos do fundador (US$175). Catálogo SÓ tem Opus
+//   (claude-opus-5 / claude-opus-4-8; sem Fable — verificado 31/07). O gate de
+//   borda deles filtra por fingerprint de cliente: Node passa, PowerShell não —
+//   e flakeia (504 observado), então TODA chamada tem fallback pro OpenRouter.
+// - openrouter: conta paga que já roda o agente. Catálogo completo (Fable
+//   incluso). É o fallback universal e o caminho da síntese.
+// Slugs diferem: AgentRouter usa id first-party ("claude-opus-5"), OpenRouter
+// prefixa ("anthropic/claude-opus-5").
+const PROVEDORES = {
+  agentrouter: {
+    url: 'https://agentrouter.org/v1/chat/completions',
+    key: AR_KEY,
+    ua: 'claude-cli/2.1.0 (external, sdk-ts)',
+    slug: (m) => m.replace(/^anthropic\//, ''),
+    tem: (m) => /claude-opus-(5|4-8)$/.test(m.replace(/^anthropic\//, '')),
+  },
+  openrouter: {
+    url: 'https://openrouter.ai/api/v1/chat/completions',
+    key: OR_KEY,
+    ua: undefined,
+    slug: (m) => (m.startsWith('anthropic/') ? m : `anthropic/${m}`),
+    tem: () => true,
+  },
+};
 
 const args = process.argv.slice(2);
 const flag = (n, dflt) => {
@@ -70,20 +97,25 @@ async function sb(pathQ) {
   return r.json();
 }
 
-// ---------------------------------------------------------------- openrouter
+// ---------------------------------------------------------------- llm
 // stream:true sempre: a síntese no Fable pode pensar por minutos antes do
 // primeiro byte, e o undici do Node derruba conexão não-streaming em ~5min de
 // espera por headers (UND_ERR_HEADERS_TIMEOUT).
-async function llm({ model, system, user, maxTokens }) {
-  const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+async function llmVia(prov, { model, system, user, maxTokens }) {
+  const p = PROVEDORES[prov];
+  const res = await fetch(p.url, {
     method: 'POST',
-    headers: { Authorization: `Bearer ${OR_KEY}`, 'Content-Type': 'application/json' },
+    headers: {
+      Authorization: `Bearer ${p.key}`,
+      'Content-Type': 'application/json',
+      ...(p.ua ? { 'User-Agent': p.ua } : {}),
+    },
     body: JSON.stringify({
-      model, stream: true, max_tokens: maxTokens,
+      model: p.slug(model), stream: true, max_tokens: maxTokens,
       messages: [{ role: 'system', content: system }, { role: 'user', content: user }],
     }),
   });
-  if (!res.ok) throw new Error(`openrouter ${res.status}: ${(await res.text()).slice(0, 300)}`);
+  if (!res.ok) throw new Error(`${prov} ${res.status}: ${(await res.text()).slice(0, 300)}`);
   const reader = res.body.getReader();
   const dec = new TextDecoder();
   let buf = '';
@@ -106,6 +138,28 @@ async function llm({ model, system, user, maxTokens }) {
     }
   }
   return out.trim();
+}
+
+let creditosUsados = 0; // chamadas que de fato saíram pelos créditos do fundador
+
+/**
+ * Roteia a chamada: créditos do AgentRouter quando a chave existe e o modelo
+ * está no catálogo deles; senão (ou em QUALQUER falha lá — WAF/504/timeout),
+ * OpenRouter. Resposta vazia também conta como falha: o gate deles às vezes
+ * devolve 200 com corpo bloqueado.
+ */
+async function llm(req) {
+  const p = PROVEDORES.agentrouter;
+  if (p.key && p.tem(req.model)) {
+    try {
+      const out = await llmVia('agentrouter', req);
+      if (out) { creditosUsados++; return out; }
+      console.log('  (agentrouter devolveu vazio — caindo pro openrouter)');
+    } catch (e) {
+      console.log(`  (agentrouter falhou: ${e.message.slice(0, 80)} — caindo pro openrouter)`);
+    }
+  }
+  return llmVia('openrouter', req);
 }
 
 /** Extrai o primeiro objeto JSON de um texto (tolerante a cercas ```json). */
@@ -352,6 +406,7 @@ async function main() {
 
   console.log('\n== médias ==');
   for (const d of dims) console.log(`  ${d.padEnd(20)} ${media(ok, d)}`);
+  console.log(`\ncréditos AgentRouter usados em ${creditosUsados} chamada(s); demais via OpenRouter`);
 }
 
 main().catch((e) => { console.error('FALHA:', e); process.exit(1); });

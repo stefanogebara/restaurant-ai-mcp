@@ -222,24 +222,59 @@ function sondaSimples({ nome, chaveVar, url, cabecalhos, sucesso }) {
 }
 
 /**
- * OpenRouter é o provedor PRIMÁRIO do agente (ai-client.js:213) — a Anthropic
- * só entra como reserva. Sondar só a Anthropic dava um diagnóstico invertido:
- * na primeira execução em produção ela deu 401 e o veredito ficou "vermelho"
- * quando o agente estava atendendo cliente normalmente pelo OpenRouter.
+ * OpenRouter é o provedor PRIMÁRIO do agente (ai-client.js:213) — e, desde
+ * 30/07, o ÚNICO (provedor único por decisão; sem fallback Anthropic).
+ *
+ * Chave válida NÃO basta: em 31/07 a conta chegou a saldo NEGATIVO
+ * (US$325,03 usados de US$325) com esta sonda dizendo "ok" — a chave
+ * autenticava, mas chamadas maiores já tomavam 402 e a agente estava a um fio
+ * de emudecer em produção, sem nenhum alarme. Por isso a sonda pergunta as
+ * DUAS coisas: a chave vale? e a conta TEM SALDO?
+ *
+ * Saldo ≤ 0 é FALHA (vermelho de verdade: o cérebro do agente para — não é
+ * "não configurado", é configurado e caído). Abaixo de US$5 é atenção: com o
+ * agente + evals rodando, isso é horas de vida útil.
  */
-const sondarOpenRouter = sondaSimples({
-  nome: 'ia_primaria_openrouter',
-  chaveVar: 'OPENROUTER_API_KEY',
-  url: () => 'https://openrouter.ai/api/v1/key',
-  cabecalhos: (k) => ({ Authorization: `Bearer ${k}` }),
-  sucesso: (c) => {
-    const d = (c && c.data) || {};
-    const resta = d.limit_remaining;
-    return Number.isFinite(resta)
-      ? `chave válida — crédito restante ${resta}`
-      : 'chave válida (o cérebro do agente responde)';
-  },
-});
+const SALDO_MINIMO_ATENCAO = 5;
+
+async function sondarOpenRouter(env) {
+  const nome = 'ia_primaria_openrouter';
+  const k = env.OPENROUTER_API_KEY;
+  if (!k) return naoConfigurado(nome, 'OPENROUTER_API_KEY');
+
+  try {
+    const auth = { headers: { Authorization: `Bearer ${k}` } };
+    const [chave, creditos] = await Promise.all([
+      buscar('https://openrouter.ai/api/v1/key', auth),
+      buscar('https://openrouter.ai/api/v1/credits', auth),
+    ]);
+
+    if (chave.status === 401 || chave.status === 403) {
+      return falha(nome, `chave recusada (HTTP ${chave.status}) — o agente está SEM cérebro`);
+    }
+    if (chave.status >= 400) return falha(nome, `HTTP ${chave.status} na validação da chave`);
+
+    const d = (creditos.corpo && creditos.corpo.data) || {};
+    const total = Number(d.total_credits);
+    const usado = Number(d.total_usage);
+    if (!Number.isFinite(total) || !Number.isFinite(usado)) {
+      // Chave ok mas saldo ilegível: avisa em vez de fingir saúde — foi
+      // exatamente o buraco que deixou o saldo zerar em silêncio.
+      return atencao(nome, 'chave válida, mas não consegui ler o saldo da conta');
+    }
+    const saldo = total - usado;
+    const fmt = `US$${saldo.toFixed(2)} de US$${total.toFixed(2)}`;
+    if (saldo <= 0) {
+      return falha(nome, `SALDO ESGOTADO (${fmt}) — a agente está muda em produção; recarregar openrouter.ai/credits`);
+    }
+    if (saldo < SALDO_MINIMO_ATENCAO) {
+      return atencao(nome, `saldo quase no fim (${fmt}) — recarregar antes que a agente emudeça`);
+    }
+    return ok(nome, `chave válida, saldo ${fmt}`);
+  } catch (err) {
+    return erroParaFalha(nome, err);
+  }
+}
 
 /**
  * Reserva do OpenRouter — e OPCIONAL por decisão do fundador (30/jul): rodar
