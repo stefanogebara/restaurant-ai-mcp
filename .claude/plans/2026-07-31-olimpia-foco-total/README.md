@@ -109,6 +109,24 @@ Rascunhos Racha para aprovação (voz da Olímpia, sem call, com porta de saída
    aguardando o fundador dizer de qual plataforma veio. Juiz roda via OpenRouter
    até lá.
 
+## Ciclo 2 — o que a síntese pediu vs. o que o sistema já tinha
+
+Duas das 5 propostas do Fable partiam de um modelo ERRADO do sistema. Verificar
+antes de construir evitou duas obras inúteis:
+
+| proposta | veredito | ação |
+|---|---|---|
+| Gate de nudge sem humano | **procede** — 8/25 threads | ✅ implementado (59a4281c) |
+| Trava 30d pós-recusa | **já existe** — `selectNudgeStates` só aceita `conversando`/`agendando`; `recusou` nunca é nudgeado | nada a fazer |
+| Anti-rajada "o código não tem guard" | **falso** — existem DOIS: coalescing de inbound (7s/24s) e split cap 2 | ver abaixo |
+
+**O achado real da rajada:** o prompt manda *"UMA mensagem por turno... NÃO
+quebre em várias bolhas"* e o código splitava em até 2 **por padrão**. Prompt e
+código se contradiziam; o código ganhava. Resolvido com
+`PROSPECTING_MULTIPART=0` (Production) — alinha os dois, é reversível por env
+var, e segue a mesma trajetória de sempre (3 → 2 → 0: bolha extra denuncia
+automação).
+
 ## Fases seguintes
 
 - **#79 WhatsApp e2e**: payload inbound sintético assinado com META_APP_SECRET

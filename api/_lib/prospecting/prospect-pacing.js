@@ -35,6 +35,13 @@ function pacingDelayMs(texto, opts = {}) {
  * rapid-fire bubbles — 3-bubble volleys read as a bot spraying, not a person.
  * A reply that splits into MORE than maxParts collapses to a single bubble
  * (better one calm message than an over-eager burst).
+ *
+ * ESTADO EM PRODUÇÃO (31/07): DESLIGADO via PROSPECTING_MULTIPART=0. O eval-001
+ * achou rajadas em ~16 de 25 threads e o prompt da persona JÁ manda o oposto
+ * ("UMA mensagem por turno... NÃO quebre em várias bolhas") — código e prompt
+ * se contradiziam, e o código ganhava. Desligar alinha os dois sem perder a
+ * capacidade: é uma env var, reversível, e a trajetória (3 → 2 → 0) é a mesma
+ * leitura de sempre — bolha extra denuncia automação.
  */
 function splitReplyParts(texto, opts = {}) {
   const full = String(texto || '').trim();
