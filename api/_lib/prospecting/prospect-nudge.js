@@ -67,11 +67,14 @@ function contarTersosSeguidos(history, { maxPalavras = 4 } = {}) {
  * @param {number|null} args.nudgeEmMs               - epoch ms of the last nudge sent (lead.nudge_em)
  * @param {number} [args.tersosSeguidos]             - trailing terse inbound count (contarTersosSeguidos)
  * @param {number} [args.nudgeCount]                 - nudges already sent to this lead (lead.nudge_count)
+ * @param {boolean|null} [args.somenteMaquina]       - thread comprovadamente 100% robô (semHumanoNaThread
+ *   sobre o histórico COMPLETO). `null` = não deu pra confirmar → NÃO bloqueia.
  * @param {number} [args.nowMs]
  * @returns {{eligible: boolean, reason: string}}
  */
 function elegivelParaNudge({
-  lastMsg, lastInboundAtMs, nudgeEmMs, tersosSeguidos = 0, nudgeCount = 0, nowMs = Date.now(),
+  lastMsg, lastInboundAtMs, nudgeEmMs, tersosSeguidos = 0, nudgeCount = 0,
+  somenteMaquina = null, nowMs = Date.now(),
 }) {
   if (!lastMsg) return { eligible: false, reason: 'sem_mensagens' };
   if (!lastInboundAtMs) return { eligible: false, reason: 'sem_inbound' };
@@ -87,6 +90,20 @@ function elegivelParaNudge({
   // 0), then stop — once we've already nudged a clearly-cooling lead, backing
   // off beats another "invasive" poke.
   if (tersosSeguidos >= 2 && nudgeCount >= 1) return { eligible: false, reason: 'desengajado' };
+  // Eval-001: 8 de 25 threads eram nudge de "retomar a conversa" contra um
+  // autoatendimento — a instrução presume um papo que nunca existiu ("como foi
+  // o movimento de ontem?" pra quem só mandou cardápio). 'recusou'/'porteiro' já
+  // são filtrados pelo selectNudgeStates; o que passava era lead em
+  // 'conversando' cuja thread inteira é máquina.
+  //
+  // POR ÚLTIMO de propósito: assim `sem_humano_na_thread` só aparece para quem
+  // seria nudgeado AGORA, e o contador do cron mede leads de fato poupados — não
+  // os que já morreriam no silêncio curto ou fora da janela.
+  //
+  // SÓ bloqueia com `true` explícito (o chamador confirma vendo a thread
+  // INTEIRA). `null` = não sei = deixa passar: não falar com um dono real custa
+  // muito mais caro que gastar um turno com robô.
+  if (somenteMaquina === true) return { eligible: false, reason: 'sem_humano_na_thread' };
   return { eligible: true, reason: 'ok' };
 }
 

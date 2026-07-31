@@ -21,12 +21,20 @@ const { logCronRun } = require('../_lib/cron-tracker');
 const { getProspectingPhoneNumberId } = require('../_lib/prospecting/routing');
 const { selectNudgeStates, loadHistory, loadLastInbound } = require('../_lib/prospecting/prospect-store');
 const { elegivelParaNudge, contarTersosSeguidos } = require('../_lib/prospecting/prospect-nudge');
+const { semHumanoNaThread } = require('../_lib/prospecting/prospect-state');
 const { respondToProspect } = require('../_lib/prospecting/prospect-responder');
 const { onlyDigits } = require('../_lib/prospecting/phone');
 
 const logger = createSecureLogger('CronProspectNudge');
 
 const MAX_NUDGES_PER_RUN = 10;
+/**
+ * Quantas mensagens carregar por lead. Serve ao gate de "só máquina": abaixo
+ * deste número sabemos que vimos a thread inteira e o veredito de
+ * semHumanoNaThread é confiável. Threads de prospecção raramente passam disso —
+ * a maior auditada tinha 9.
+ */
+const HIST_LIMITE = 60;
 
 module.exports = async (req, res) => {
   const secret = process.env.CRON_SECRET;
@@ -48,7 +56,7 @@ module.exports = async (req, res) => {
   }
 
   const nowMs = Date.now();
-  let nudged = 0; let checked = 0; let errors = 0;
+  let nudged = 0; let checked = 0; let errors = 0; let soMaquina = 0;
   try {
     const candidates = await selectNudgeStates(50);
     for (const lead of candidates) {
@@ -56,22 +64,36 @@ module.exports = async (req, res) => {
       checked++;
       try {
         // Fine-grained eligibility needs message-level facts (2 cheap queries).
-        // A short window of history feeds BOTH the last-message check and the
-        // engagement taper (trailing terse-reply streak). loadHistory returns
-        // chronological (oldest-first), so the most recent message is the tail.
+        // A window of history feeds o check da última mensagem, o taper de
+        // engajamento e o gate de "só máquina". loadHistory devolve
+        // cronológico (mais antigo primeiro), então a última é a cauda.
+        //
+        // HIST_LIMITE existe pra que `semHumanoNaThread` possa ser CONFIÁVEL:
+        // ele só vale se enxergarmos a thread INTEIRA. Truncou (length ===
+        // limite) → não sabemos se um humano falou lá atrás → não bloqueia.
         const [hist, lastIn] = await Promise.all([
-          loadHistory(lead.id, 8),
+          loadHistory(lead.id, HIST_LIMITE),
           loadLastInbound(lead.id),
         ]);
+        const threadCompleta = hist.length < HIST_LIMITE;
         const gate = elegivelParaNudge({
           lastMsg: hist.length ? hist[hist.length - 1] : null,
           lastInboundAtMs: lastIn?.enviada_em ? new Date(lastIn.enviada_em).getTime() : null,
           nudgeEmMs: lead.nudge_em ? new Date(lead.nudge_em).getTime() : null,
           tersosSeguidos: contarTersosSeguidos(hist),
           nudgeCount: lead.nudge_count || 0,
+          somenteMaquina: threadCompleta ? semHumanoNaThread(hist) : null,
           nowMs,
         });
-        if (!gate.eligible) continue;
+        if (!gate.eligible) {
+          if (gate.reason === 'sem_humano_na_thread') {
+            // Vale linha de log próprio: é o motivo novo, e saber quantos leads
+            // "conversando" são na verdade robô mede a sujeira do funil.
+            soMaquina++;
+            logger.info(`[nudge] pulado lead=${lead.id} — thread sem humano`);
+          }
+          continue;
+        }
 
         const from = onlyDigits(lead.whatsapp_phone);
         const result = await respondToProspect({
@@ -83,8 +105,8 @@ module.exports = async (req, res) => {
         logger.error(`nudge lead=${lead.id} failed:`, err.message);
       }
     }
-    await logCronRun('prospect-nudge', { checked, nudged, errors });
-    return res.status(200).json({ success: true, checked, nudged, errors });
+    await logCronRun('prospect-nudge', { checked, nudged, errors, soMaquina });
+    return res.status(200).json({ success: true, checked, nudged, errors, soMaquina });
   } catch (err) {
     logger.error('nudge fatal:', err.message);
     await logCronRun('prospect-nudge', { checked, nudged, errors: errors + 1 });
