@@ -89,6 +89,28 @@ const AUTO_ATENDIMENTO_PATTERNS = [
   /\bj[\u00e1a]\s+te\s+atendemos\b/i,
   /\baproveitamos\s+para\s+informar/i,
   /\b(99\s?food|ifood|rappi|uber\s?eats)\b/i,
+  // --- rajada dupla (La Braciera, 30/07) -----------------------------------
+  // O bot mandou DUAS mensagens: a primeira batia em três padrões acima, a
+  // segunda em nenhum. Como ecoDeMaquina julga só o último inbound, a flag caiu
+  // e a Olímpia respondeu para a máquina. Os quatro padrões abaixo saem do
+  // texto literal dessa segunda mensagem.
+  //
+  // Cada um exige a forma INSTITUCIONAL, nunca a menção solta: falso positivo
+  // aqui significa não responder a um dono real, que custa muito mais caro que
+  // gastar um turno com robô.
+  //
+  // "Agradecemos a compreensão" — ninguém escreve isso numa conversa de venda.
+  /\bagradecemos\s+(a|pela)\s+(compreens[ãa]o|prefer[êe]ncia)/i,
+  // CTA de reserva automatizada ("👉 Clique aqui para reservar" + link).
+  /\bclique\s+aqui\s+para\s+(reservar|agendar|pedir|fazer)/i,
+  // "No momento estamos fechados" — o padrão que já existia exigia a ordem
+  // inversa ("fechados no momento") e por isso não casou. Note que ambos pedem
+  // o qualificador: "estamos fechados hoje, me chama amanhã" é gente falando.
+  /\bno\s+momento,?\s+est(?:amos|[áa])\s+fechad/i,
+  // Bloco de horários rotulado por serviço ("📦 Delivery: 17h00 – 22h45").
+  // Exige o rótulo com dois-pontos seguido de hora — "a gente fecha às 23h"
+  // não casa.
+  /\b(delivery|sal[ãa]o)\s*:\s*\d{1,2}\s*h/i,
 ];
 
 /**
