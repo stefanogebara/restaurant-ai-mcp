@@ -579,3 +579,13 @@ bundle de produção (o branch "not initialized" não sobrevive à minificação
 bundle, teria construído instrumentação duplicada.
 Regra: "X não existe" exige a mesma prova que "X está quebrado". Grep de chamada usa o
 NOME da função (`trackDemoFunnel`), não um padrão genérico.
+
+## 2026-07-31 — PATCH de lead SÓ por id, nunca por name=like
+Duas vezes em 24h o filtro largo por nome corrompeu estado de lead: (1)
+`name=like.La Braciera*` parqueou a unidade Higienópolis junto com a Morumbi —
+e a Higienópolis tinha um HUMANO engajado respondendo discovery do Racha,
+silenciado por ~1 dia; (2) o script de conserto usou `*Higien*` e marcou
+"Busger Higienópolis" (0 mensagens) como 'conversando'. Havia 6 restaurantes
+com "Higien" no nome. Regra: mutação de prospect_leads sempre por id=eq.<uuid>;
+name/like é só para LER e descobrir o id. E script de conserto de dado nunca
+herda o filtro do erro que ele conserta.

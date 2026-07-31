@@ -27,7 +27,13 @@ describe('companion-text guard — tool actions never go out silent', () => {
   test('escalar_humano without text gets the deterministic promise', () => {
     const acao = interpretResponse({ content: [{ type: 'tool_use', name: 'escalar_humano', input: { motivo: 'preço' } }] });
     expect(acao.tipo).toBe('handoff');
-    expect(acao.texto).toMatch(/confirmar direitinho/);
+    // Contrato mudou de propósito no eval-001 (caso Sobreiro): o companion
+    // antigo dizia "boa pergunta — vou confirmar com o time", que saía como
+    // non-sequitur pra quem não perguntou nada e inventava um "time" numa
+    // operação solo. O que este guard protege é: NUNCA sair calada, SEM avaliar
+    // pergunta que não houve e SEM entidade fictícia.
+    expect(acao.texto).toMatch(/confirmar isso direitinho/);
+    expect(acao.texto).not.toMatch(/boa pergunta|\btime\b|equipe/);
   });
 
   test('model-provided text is kept, never overwritten', () => {
