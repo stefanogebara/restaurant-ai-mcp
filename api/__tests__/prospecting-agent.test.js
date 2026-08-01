@@ -414,13 +414,18 @@ describe('historyToMessages', () => {
 
 // ============================================================ hours + pacing
 describe('business hours + pacing', () => {
-  test('dentroDoHorario respects Brasília weekday window', () => {
+  // A janela de RESPOSTA passou a incluir sábado em 01/08/2026 (o ICP é
+  // restaurante: trabalha sábado e muitos fecham segunda). Domingo é agora o
+  // dia não-útil que ancora estas asserções; sábado ganhou caso próprio em
+  // prospecting-horario-sabado.test.js.
+  test('dentroDoHorario respects Brasília window', () => {
     expect(dentroDoHorario(Date.parse('2026-06-25T17:00:00Z'))).toBe(true);  // Thu 14:00 BRT
     expect(dentroDoHorario(Date.parse('2026-06-25T03:00:00Z'))).toBe(false); // Thu 00:00 BRT
-    expect(dentroDoHorario(Date.parse('2026-06-27T17:00:00Z'))).toBe(false); // Sat
+    expect(dentroDoHorario(Date.parse('2026-06-27T17:00:00Z'))).toBe(true);  // Sat 14:00 BRT
+    expect(dentroDoHorario(Date.parse('2026-06-28T17:00:00Z'))).toBe(false); // Sun
   });
   test('proximaAbertura lands inside business hours', () => {
-    const next = proximaAbertura(Date.parse('2026-06-27T17:00:00Z')); // Sat afternoon
+    const next = proximaAbertura(Date.parse('2026-06-28T17:00:00Z')); // Sun afternoon
     expect(dentroDoHorario(next)).toBe(true);
   });
   test('computeRetornoAt parses pt-BR "quando" into a clamped future BRT slot', () => {

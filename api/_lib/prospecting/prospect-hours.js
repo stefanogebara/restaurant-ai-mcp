@@ -10,8 +10,30 @@
  * independent of the (UTC) serverless runtime.
  */
 
-const PADRAO = { tz: 'America/Sao_Paulo', dias: [1, 2, 3, 4, 5], inicio: 9, fim: 19 };
+// Sábado responde; domingo não. O ICP é restaurante — trabalha sábado e muitos
+// fecham segunda. Com seg-sex, quem respondia no sábado só era atendido ~22h
+// depois (o clamp da janela de 24h), o que para venda fria é o lead morto.
+// RESPOSTA (reagir a quem falou) e DISPARO (interromper quem não pediu) são
+// políticas separadas: DIAS_DISPARO abaixo mantém a abordagem fria em dia útil.
+const PADRAO = { tz: 'America/Sao_Paulo', dias: [1, 2, 3, 4, 5, 6], inicio: 9, fim: 19 };
+const DIAS_DISPARO = [1, 2, 3, 4, 5];
 const DOW = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+
+/**
+ * Dias em que a agente pode RESPONDER. PROSPECTING_REPLY_DAYS é o override do
+ * operador ("1,2,3,4,5" para voltar a dia útil). Lido a cada chamada, não no
+ * carregamento do módulo, para não exigir redeploy a mais que o da env var.
+ * Valor inválido cai no padrão: um typo aqui emudeceria a agente em TODOS os
+ * dias, e falhar fechado é o pior modo de falha possível para este parâmetro.
+ */
+function diasDeResposta() {
+  const bruto = String(process.env.PROSPECTING_REPLY_DAYS || '').trim();
+  if (!bruto) return PADRAO.dias;
+  const dias = bruto.split(',')
+    .map((s) => Number(s.trim()))
+    .filter((n) => Number.isInteger(n) && n >= 0 && n <= 6);
+  return dias.length ? dias : PADRAO.dias;
+}
 
 function partesLocais(d, tz) {
   const parts = new Intl.DateTimeFormat('en-US', {
@@ -24,7 +46,7 @@ function partesLocais(d, tz) {
 
 /** true if `iso` falls within business hours (weekday + hour in window). */
 function dentroDoHorario(iso, opts = {}) {
-  const { tz, dias, inicio, fim } = { ...PADRAO, ...opts };
+  const { tz, dias, inicio, fim } = { ...PADRAO, dias: diasDeResposta(), ...opts };
   const d = iso instanceof Date ? iso : new Date(iso);
   if (Number.isNaN(d.getTime())) return false;
   const { dow, hora } = partesLocais(d, tz);
@@ -81,15 +103,13 @@ function decisaoForaDeHorario(nowMs, lastInMs, opts = {}) {
  * as a bot and burns the number; the conversion study's #1 finding (25x) was
  * amateur send timing. Defaults to weekdays 10-17, env-tunable via
  * PROSPECTING_DISPATCH_START / PROSPECTING_DISPATCH_END.
+ *
+ * Os dias vêm fixos de DIAS_DISPARO, NÃO da janela de resposta: afrouxar a
+ * resposta (PROSPECTING_REPLY_DAYS) não pode, sem ninguém perceber, passar a
+ * disparar abordagem fria no fim de semana.
  */
 function dentroDaJanelaDisparo(iso, opts = {}) {
-  const inicio = parseInt(process.env.PROSPECTING_DISPATCH_START, 10);
-  const fim = parseInt(process.env.PROSPECTING_DISPATCH_END, 10);
-  return dentroDoHorario(iso, {
-    inicio: Number.isFinite(inicio) ? inicio : 10,
-    fim: Number.isFinite(fim) ? fim : 17,
-    ...opts,
-  });
+  return dentroDoHorario(iso, { ...janelaDisparoOpts(), ...opts });
 }
 
 // pt-BR weekday name → 1..5 (Mon..Fri) for dated-callback parsing.
@@ -99,6 +119,7 @@ function janelaDisparoOpts() {
   const inicio = parseInt(process.env.PROSPECTING_DISPATCH_START, 10);
   const fim = parseInt(process.env.PROSPECTING_DISPATCH_END, 10);
   return {
+    dias: DIAS_DISPARO,
     inicio: Number.isFinite(inicio) ? inicio : 10,
     fim: Number.isFinite(fim) ? fim : 17,
   };
@@ -119,7 +140,8 @@ function janelaDisparoOpts() {
 function computeRetornoAt(quando, nowMs) {
   const s = String(quando || '').toLowerCase();
   const BRT_OFFSET_MS = 3 * 60 * 60 * 1000; // UTC-3, no DST
-  const { inicio, fim } = janelaDisparoOpts();
+  const opcoesDisparo = janelaDisparoOpts();
+  const { inicio, fim } = opcoesDisparo;
 
   // --- target hour (BRT), clamped into the window ---
   let hora = 11;
@@ -151,8 +173,10 @@ function computeRetornoAt(quando, nowMs) {
     target = Date.UTC(Y, Mo, D + Math.max(diasAdiante, 1) + (diasAdiante === 0 ? 1 : 0), hora + 3, 0, 0);
   }
   // Self-correct into a valid dispatch slot (weekend / off-hours → next opening).
-  if (!dentroDoHorario(target, { inicio, fim })) {
-    return proximaAbertura(target, { inicio, fim });
+  // Opções COMPLETAS (com dias): um retorno é toque de saída, então segue a
+  // janela de disparo — seg-sex —, não a de resposta.
+  if (!dentroDoHorario(target, opcoesDisparo)) {
+    return proximaAbertura(target, opcoesDisparo);
   }
   return new Date(target).toISOString();
 }

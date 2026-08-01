@@ -168,14 +168,18 @@ test('delivery-menu bots match too (Mica Izakaya real fixture)', () => {
 
 const { deferralDentroDaJanela, proximaAbertura } = require('../_lib/prospecting/prospect-hours');
 
+// Fixture movida de sábado 12:35 para sábado 20:00 em 01/08/2026: sábado virou
+// dia de resposta, então um inbound de sábado À TARDE já não pinça o clamp — a
+// próxima abertura é no mesmo dia. O buraco de fim de semana que o clamp existe
+// para cobrir agora começa no sábado à NOITE (próxima abertura: segunda 9h).
 describe('deferral clamp — the 24h window beats the business-hours preference', () => {
-  test('Saturday inbound: Monday opening would kill the thread → clamps to Sunday (+22h)', () => {
-    const sabado = '2026-07-04T15:35:00.000Z'; // Sat 12:35 BRT
-    const abertura = new Date(proximaAbertura(sabado));
+  test('Saturday-night inbound: Monday opening would kill the thread → clamps to Sunday (+22h)', () => {
+    const sabadoNoite = '2026-07-04T23:00:00.000Z'; // Sat 20:00 BRT
+    const abertura = new Date(proximaAbertura(sabadoNoite));
     expect(abertura.getUTCDay()).toBe(1); // sanity: unclamped lands Monday
-    const clamped = new Date(deferralDentroDaJanela(sabado));
+    const clamped = new Date(deferralDentroDaJanela(sabadoNoite));
     expect(clamped.getUTCDay()).toBe(0); // Sunday
-    expect(clamped.getTime()).toBe(new Date(sabado).getTime() + 22 * 3600 * 1000);
+    expect(clamped.getTime()).toBe(new Date(sabadoNoite).getTime() + 22 * 3600 * 1000);
   });
 
   test('weeknight inbound: next-morning opening is inside the window → no clamp', () => {
@@ -187,17 +191,17 @@ describe('deferral clamp — the 24h window beats the business-hours preference'
 const { decisaoForaDeHorario } = require('../_lib/prospecting/prospect-hours');
 
 describe('decisaoForaDeHorario — the Sunday-flush re-deferral trap', () => {
-  const sabado = new Date('2026-07-04T15:35:00.000Z').getTime(); // Sat 12:35 BRT inbound
+  const sabadoNoite = new Date('2026-07-04T23:00:00.000Z').getTime(); // Sat 20:00 BRT inbound
 
-  test('fresh Saturday inbound defers to Sunday (clamped), not Monday', () => {
-    const d = decisaoForaDeHorario(sabado, sabado);
+  test('fresh Saturday-night inbound defers to Sunday (clamped), not Monday', () => {
+    const d = decisaoForaDeHorario(sabadoNoite, sabadoNoite);
     expect(d.acao).toBe('adiar');
     expect(new Date(d.replyApos).getUTCDay()).toBe(0);
   });
 
   test('Sunday flush at the clamped deadline replies OFF-HOURS instead of re-deferring', () => {
-    const domingoDeadline = sabado + 22 * 3600 * 1000; // the clamped reply_apos
-    const d = decisaoForaDeHorario(domingoDeadline + 60_000, sabado);
+    const domingoDeadline = sabadoNoite + 22 * 3600 * 1000; // the clamped reply_apos
+    const d = decisaoForaDeHorario(domingoDeadline + 60_000, sabadoNoite);
     expect(d.acao).toBe('responder');
   });
 
