@@ -36,8 +36,21 @@ aparece na tela.**
 2. **Cron parado.** O motor que responde é `prospect-flush`, mas o console só lê
    os kill switches `prospecting-agent` e `prospecting-dispatch`
    (`prospect-admin.js:108-110`). Desligar `prospect-flush` no Supabase deixa a
-   agente muda com o painel verde. Não há coluna `last_run_at` em `cron_config`,
-   então também não há "última execução há X min".
+   agente muda com o painel verde.
+
+   **Correção ao rascunho desta auditoria** (verificado em produção 01/08): eu
+   havia concluído que faltava `last_run_at` e que seria preciso uma migration.
+   Errado — o heartbeat EXISTE e funciona. `/api/admin-health` devolve
+   `cron.jobs[]` com `last_ran_at`, `age`, `status` e `errors_14d` para **23
+   jobs** (19 healthy, 0 stale), e o cron `health-alert` manda WhatsApp pro
+   fundador quando algum fica velho.
+
+   O problema real é mais estreito e mais fácil: **nenhum cron de prospecção
+   está registrado nesse vigia.** A lista de 23 não tem `prospect-flush`,
+   `prospect-nudge`, `prospect-enrich`, `prospect-score-outcomes` nem
+   `prospect-handoff-digest`. Ou seja, o motor da própria agente é o único
+   conjunto de jobs sem heartbeat e sem alerta — justamente o que precisava.
+   Não é migration, é registrar os 5 jobs no mecanismo que já existe.
 3. **Lead esperando resposta.** `due_followups` conta a escada fria (leads que
    nunca falaram). Não existe em lugar nenhum um contador de *inbound sem
    outbound* — exatamente o sintoma do incidente do Coco Bambu, que ficou 15h
@@ -45,7 +58,10 @@ aparece na tela.**
 
 **Ação:** uma faixa de saúde no topo com saldo do LLM, idade da última execução
 de cada cron de prospecção, e "N leads esperando resposta há mais de Xh". Os
-dados 1 e 3 já existem no backend; o 2 precisa de `last_run_at` em `cron_config`.
+três dados já existem ou são triviais: (1) e (2) saem prontos de
+`/api/admin-health` — que **nenhum arquivo do client consome hoje** —, bastando
+registrar os 5 crons de prospecção no vigia; (3) é uma consulta de inbound sem
+outbound subsequente.
 
 ## Prioridade 2 — dois estados de funil que mentem no número
 
