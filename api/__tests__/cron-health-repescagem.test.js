@@ -109,6 +109,30 @@ describe('repescagem quando a varredura larga enche o teto', () => {
     expect((await checkCronHealth()).jobs.find((j) => j.name === RARO).status).toBe('never_run');
   });
 
+  test('job morto há MAIS de 14 dias vira stale, não never_run silencioso', async () => {
+    // Este é o buraco que sobrou depois da primeira repescagem: com filtro de
+    // data na consulta dirigida, um job morto além dos 14 dias voltava vazio e
+    // era indistinguível de um que nunca existiu. generate-reflections (cron
+    // DIÁRIO) passou 64 dias morto exatamente assim, sem um alerta.
+    varreduraCheia(PRESENTE);
+    mockEstado.porJob['generate-reflections'] = [
+      { ran_at: new Date(Date.now() - 65 * 24 * 3600e3).toISOString(), meta: {} },
+    ];
+    const alvo = (await checkCronHealth()).jobs.find((j) => j.name === 'generate-reflections');
+    expect(alvo.status).toBe('stale');
+    expect(alvo.age).toMatch(/d /); // idade real, não "nunca"
+  });
+
+  test('erro antigo não infla errors_14d do job ressuscitado', async () => {
+    // A busca de freshness perdeu o corte de data de propósito; o de ERRO não.
+    varreduraCheia(PRESENTE);
+    mockEstado.porJob[RARO] = [
+      { ran_at: new Date(Date.now() - 2 * 24 * 3600e3).toISOString(), meta: { status: 'error' } },
+      { ran_at: new Date(Date.now() - 40 * 24 * 3600e3).toISOString(), meta: { status: 'error' } },
+    ];
+    expect((await checkCronHealth()).jobs.find((j) => j.name === RARO).errors_14d).toBe(1);
+  });
+
   test('erros do job raro entram em errors_14d', async () => {
     varreduraCheia(PRESENTE);
     mockEstado.porJob[RARO] = [

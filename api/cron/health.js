@@ -144,18 +144,25 @@ async function checkCronHealth() {
   if ((runs || []).length >= TETO_LINHAS) {
     const faltantes = CRON_JOBS.filter((j) => !lastRunMap[j.name]);
     for (const job of faltantes) {
-      // 20 linhas cobrem 14 dias de qualquer job que caiu fora da janela larga
-      // (se coubesse mais que isso, ele teria aparecido lá).
+      // SEM filtro de data de propósito. Com ele, um job morto há mais de 14
+      // dias volta vazio e fica indistinguível de um que nunca rodou — os dois
+      // viram never_run, que não alerta. Foi assim que generate-reflections
+      // (cron DIÁRIO) passou 64 dias morto sem ninguém ver.
+      // 20 linhas bastam: se o job tivesse mais que isso no período, teria
+      // aparecido na varredura larga.
       const { data: raros } = await supabaseAdmin
         .from('cron_runs')
         .select('ran_at, meta')
         .eq('job_name', job.name)
-        .gte('ran_at', desde)
         .order('ran_at', { ascending: false })
         .limit(20);
       if (raros && raros.length) {
+        // Freshness usa a execução mais recente de qualquer época (é o que
+        // separa "morto" de "inexistente"); errors_14d continua sendo 14 dias.
         lastRunMap[job.name] = raros[0].ran_at;
-        errorCountMap[job.name] = raros.filter((r) => r.meta && r.meta.status === 'error').length;
+        errorCountMap[job.name] = raros.filter(
+          (r) => r.meta && r.meta.status === 'error' && r.ran_at >= desde
+        ).length;
       }
     }
   }
