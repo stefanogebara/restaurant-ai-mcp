@@ -43,6 +43,23 @@ const CRON_JOBS = [
   { name: 'cleanup-waitlist', intervalMinutes: 1440 },           // daily
   { name: 'automated-campaigns', intervalMinutes: 1440 },       // daily
   { name: 'health-alert', intervalMinutes: 1440 },              // daily
+
+  // MOTOR DA OLÍMPIA (adicionados 01/08/2026). Estes já gravavam em cron_runs
+  // — prospect-flush com 114 execuções em 3 dias — mas não estavam aqui, então
+  // o vigia e o alerta de WhatsApp nunca os avaliavam. Era o único conjunto de
+  // jobs sem watchdog, e justamente o que precisava: o incidente do Coco Bambu
+  // foi um lead 15h sem resposta com o painel todo verde.
+  //
+  // TOLERÂNCIA: getStatus marca stale em 2× o intervalo, e estes dois NÃO rodam
+  // 24/7 — declarar o intervalo nominal faria o alarme gritar toda madrugada e
+  // todo fim de semana, e alarme que grita à toa é alarme desligado. O valor é
+  // "maior folga legítima ÷ 2".
+  // Os valores dão folga ACIMA do gap legítimo, não igual a ele: tolerância
+  // exata empata com a madrugada honesta e alerta por milissegundos.
+  { name: 'prospect-flush', intervalMinutes: 480 },             // 15min, só 12-22 UTC → gap de 14h, tolera 16h
+  { name: 'prospect-nudge', intervalMinutes: 2100 },            // horário, 13-21 UTC seg-sex → gap de 64h, tolera 70h
+  { name: 'prospect-handoff-digest', intervalMinutes: 1440 },   // diário
+  { name: 'prospect-score-outcomes', intervalMinutes: 1440 },   // diário
 ];
 
 function getStatus(lastRanAt, intervalMinutes) {
@@ -199,3 +216,7 @@ async function handler(req, res) {
 // Export handler as default + checkCronHealth for internal use
 module.exports = handler;
 module.exports.checkCronHealth = checkCronHealth;
+// Expostos para teste: o registro é a única coisa que decide se um job é
+// vigiado, e a tolerância é onde mora a sutileza (jobs de janela limitada).
+module.exports.CRON_JOBS = CRON_JOBS;
+module.exports.getStatus = getStatus;
