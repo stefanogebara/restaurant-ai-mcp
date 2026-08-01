@@ -60,6 +60,11 @@ module.exports = async (req, res) => {
 
     if (!candidates || candidates.length === 0) {
       logger.info('No candidates for reflection');
+      // Rodar e não ter o que fazer é SUCESSO e precisa bater ponto. Sem isto o
+      // job some do vigia e "ocioso" fica idêntico a "morto" — foi assim que
+      // este cron passou 64 dias parecendo defunto quando estava saudável, só
+      // sem observações novas de hóspede pra refletir.
+      await logCronRun('generate-reflections', { candidatos: 0, reflections: 0, ocioso: true });
       return res.status(200).json({ success: true, reflections: 0 });
     }
 

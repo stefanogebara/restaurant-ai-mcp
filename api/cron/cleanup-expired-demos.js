@@ -82,6 +82,10 @@ module.exports = async (req, res) => {
         deleted_reservations: 0,
       };
       logger.info('No expired demos to clean up.');
+      // Bate ponto mesmo sem excluir nada: dia sem demo expirado é o caso
+      // COMUM aqui, então sem isto o cron só aparece vivo quando deleta algo —
+      // e some do vigia justamente nos períodos saudáveis.
+      await logCronRun('cleanup-expired-demos', { deleted: 0, ocioso: true });
       return res.status(200).json(summary);
     }
 

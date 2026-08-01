@@ -12,7 +12,7 @@ const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { regeneratePersona } = require('../_services/personaGenerator');
 const { initSentry, captureMessage } = require('../_lib/sentry');
-const { logCronRun } = require('../_lib/cron-tracker');
+const { logCronRun, logCronError } = require('../_lib/cron-tracker');
 const { isCronEnabled } = require('../_lib/cron-config');
 const { bearerEquals } = require('../_lib/secure-compare');
 initSentry();
@@ -79,13 +79,27 @@ module.exports = async (req, res) => {
       const errDetails = fetchError.details || '';
       logger.warn('restaurant_intelligence query error', { code: errCode, message: errMsg, hint: errHint, details: errDetails });
 
-      // Any error querying this optional table = migration pending → exit cleanly
-      // (Table not yet created: 42P01, PGRST204, or schema cache miss)
-      return res.status(200).json({ success: true, message: 'Intelligence data unavailable — migration may be pending', refreshed: 0 });
+      // "Tabela ainda não criada" é tolerável; QUALQUER erro não é. Tratar os
+      // dois como migration pendente devolvia success:true para um 42703 e o
+      // cron passou a vida inteira reportando sucesso sem nunca funcionar.
+      // Verificado em produção (01/08/2026): a tabela restaurant_intelligence
+      // EXISTE e responde; o que falha é o join — a coluna
+      // restaurant_config.profile_generated_at não existe (42703). É DDL
+      // faltante, o mesmo pendente na tarefa #73.
+      const tabelaAusente = errCode === '42P01' || errCode === 'PGRST205' || errCode === 'PGRST204';
+      if (tabelaAusente) {
+        await logCronRun('refresh-restaurant-profiles', { refreshed: 0, migracao_pendente: true });
+        return res.status(200).json({ success: true, message: 'Intelligence data unavailable — migration pending', refreshed: 0 });
+      }
+      // Erro de verdade: registra como ERRO pra entrar em errors_14d e acionar
+      // o alerta. Continua devolvendo 200 para a Vercel não repetir em rajada.
+      await logCronError('refresh-restaurant-profiles', `${errCode}: ${errMsg}`);
+      return res.status(200).json({ success: false, error: `Intelligence query failed (${errCode})`, refreshed: 0 });
     }
 
     if (!staleRestaurants || staleRestaurants.length === 0) {
       logger.info('No restaurant intelligence records found');
+      await logCronRun('refresh-restaurant-profiles', { refreshed: 0, ocioso: true });
       return res.status(200).json({
         success: true,
         message: 'No restaurants to refresh',
