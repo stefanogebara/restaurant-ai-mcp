@@ -246,7 +246,15 @@ async function selectIntroCandidates(limit = 20, territorio = null) {
       .gte('reviews_count', QUALIDADE_MIN_AVALIACOES)
       .lte('reviews_count', QUALIDADE_MAX_AVALIACOES)
       .gte('rating', QUALIDADE_MIN_NOTA)
-      .in('whatsapp_status', ['pending', 'found']);
+      .in('whatsapp_status', ['pending', 'found'])
+      // SÓ CELULAR — WhatsApp não existe em fixo. Medido em 01/08/2026: o pool
+      // elegível era 82% fixo e o TOPO da fila, 100% (a ordenação por porte,
+      // logo abaixo, seleciona o restaurante grande, que publica o fixo do
+      // salão no Google). Um lote de 5 falhou 5/5 com 131026 da Meta. Sem isto
+      // a descoberta custava uma mensagem e um ponto de reputação por número.
+      // Máscara: +55 + DDD(2) + 9 + 8 dígitos. As duas formas cobrem o dado
+      // gravado com e sem '+'; a guarda em JS abaixo pega o resto.
+      .or('whatsapp_phone.like.+55__9________,whatsapp_phone.like.55__9________');
     // Optional territory targeting (bairro/cidade/UF): matches the stored city
     // OR the full address. Sanitized to letters/digits/spaces/hyphens so the
     // PostgREST or() syntax can't be broken by user input.
@@ -280,7 +288,16 @@ async function selectIntroCandidates(limit = 20, territorio = null) {
       logger.error('selectIntroCandidates failed:', error.message);
       return [];
     }
-    return data || [];
+    // Guarda em JS: o filtro SQL acima é uma máscara de formato, esta é a regra
+    // (DDD válido, nono dígito). Defesa em profundidade — um formato de gravação
+    // novo passaria pela máscara e voltaria a queimar envio.
+    const { ehCelularBr } = require('./prospect-extract');
+    const candidatos = (data || []).filter((l) => ehCelularBr(l.whatsapp_phone));
+    const descartados = (data || []).length - candidatos.length;
+    if (descartados > 0) {
+      logger.warn(`selectIntroCandidates: ${descartados} candidato(s) descartado(s) por não serem celular (máscara SQL deixou passar)`);
+    }
+    return candidatos;
   } catch (err) {
     logger.error('selectIntroCandidates exception:', err.message);
     return [];

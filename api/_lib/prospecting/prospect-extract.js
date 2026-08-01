@@ -79,6 +79,26 @@ function normalizarNumeroBr(raw, dddPadrao) {
 }
 
 /**
+ * A linha PODE ter WhatsApp? Celular brasileiro tem 9 dígitos após o DDD e
+ * começa com 9; fixo tem 8 e WhatsApp não existe nele.
+ *
+ * Existe porque o disparo descobria isso tarde demais: mandava o template,
+ * levava 131026 da Meta e só então marcava o lead. Cada descoberta custava uma
+ * mensagem e um ponto de reputação do número. Aqui é determinístico e de graça.
+ *
+ * Responde "pode ter", não "tem": um celular sem WhatsApp instalado ainda
+ * falha, e o caminho do recibo continua sendo quem trata esse caso.
+ *
+ * @param {string} raw - número em qualquer formato (E.164, com máscara, sem +)
+ * @returns {boolean}
+ */
+function ehCelularBr(raw) {
+  const e164 = normalizarNumeroBr(raw);
+  if (!e164) return false;
+  return e164.length === 14; // +55 + DDD(2) + 9 dígitos
+}
+
+/**
  * Pick ONE BR number from a text that may carry several — typical of the
  * WhatsApp Business shared-contact card ("[Contato compartilhado: 215..., 5511...]"
  * — Meta internal IDs mixed with real numbers).
@@ -183,6 +203,7 @@ module.exports = {
   DDDS_BR,
   extrairDddBr,
   normalizarNumeroBr,
+  ehCelularBr,
   escolherNumeroBr,
   extrairNumeroDono,
   extrairNomeDono,

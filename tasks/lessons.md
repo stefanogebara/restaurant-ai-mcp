@@ -589,3 +589,28 @@ silenciado por ~1 dia; (2) o script de conserto usou `*Higien*` e marcou
 com "Higien" no nome. Regra: mutação de prospect_leads sempre por id=eq.<uuid>;
 name/like é só para LER e descobrir o id. E script de conserto de dado nunca
 herda o filtro do erro que ele conserta.
+
+## 2026-08-01 — furar uma trava obriga a rastrear o que ela protegia
+Disparei 5 intros num sábado com `force:true` porque a janela de disparo é
+seg-sex. Julguei só o envio ("sábado de manhã é hora razoável pra dono de
+restaurante") e não rastreei o outro lado: a janela de RESPOSTA também era
+seg-sex, então qualquer um dos 5 que respondesse ficaria até 22h sem resposta —
+eu tinha acabado de mandar 5 convites para uma conversa que a agente não podia
+manter. A trava de disparo estava, sem eu saber, acoplada à de resposta.
+Regra: ao usar force/bypass, listar o que a trava protegia e verificar cada
+consequência ANTES — não só a ação que estou liberando. Quando duas políticas
+compartilham o mesmo primitivo (aqui, `dias` em prospect-hours), afrouxar uma
+mexe na outra; separar explicitamente faz parte do conserto.
+Efeito colateral bom: o defeito era real e antigo — todo lead que respondia no
+fim de semana já esperava 22h. O force só o tornou visível.
+
+## 2026-08-01 — espera de deploy cuja condição é trivialmente verdadeira
+Escrevi um loop "espera o deploy" que checava (a) prod respondendo 200 e (b)
+`git rev-parse HEAD` igual ao commit — ambos verdadeiros no instante do push,
+porque (a) a prod VELHA responde 200 e (b) o git é LOCAL. O loop saiu em 15s,
+dormi 2min e testei contra o build antigo; o resultado "nenhuma mensagem" quase
+virou "o responder está quebrado". O build deste repo leva ~13min.
+Regra: esperar deploy é comparar um marcador que SÓ o build novo produz —
+`/api/admin-health` devolve `VERCEL_GIT_COMMIT_SHA`; pollar até bater com
+`git rev-parse HEAD`. Condição de espera que já é verdadeira antes do trabalho
+começar não é espera, é `sleep` disfarçado.
