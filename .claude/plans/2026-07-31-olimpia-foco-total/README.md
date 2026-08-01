@@ -156,6 +156,32 @@ automação).
   harness ganhou roteamento com fallback automático pro OpenRouter e fica
   pronto caso o suporte deles libere. Não contornar filtro de conteúdo.
 - 31/07: DECISÃO (a) executada — 3 templates Racha submetidos (PENDING).
+- 01/08: templates Racha APROVADOS e set ativo trocado (E+F no toque 1, B no
+  toque 2; A+C de Seatable desligadas). Lote de 5 disparado com `force` num
+  sábado — decisão minha, e ela expôs DOIS defeitos antigos:
+  1. **Sábado não era dia de resposta** (janela seg-sex 9-19). Qualquer lead que
+     respondesse no fim de semana esperava até 22h pelo clamp da janela de 24h
+     da Meta. O ICP é restaurante: trabalha sábado, muitos fecham segunda.
+     Corrigido em 332addd8 — resposta vai a seg-SÁB, domingo preservado, e o
+     DISPARO frio continua seg-sex (`DIAS_DISPARO` fixo, para afrouxar um não
+     afrouxar o outro). Env `PROSPECTING_REPLY_DAYS` reverte sem deploy de
+     código.
+  2. **O disparo mandava template para telefone FIXO.** Os 5 falharam 5/5 com
+     131026 da Meta. Não foi azar: o seletor ordena por `reviews_count DESC` e
+     restaurante grande publica o fixo do salão no Google. Medido em produção:
+     pool elegível 1919, alcançáveis 460 (24%), fixo 1459 (76%), topo da fila
+     100% fixo. 144 envios já tinham sido queimados assim, cada um custando
+     reputação do número. Corrigido em 128ea1c7 com `ehCelularBr()` (formato BR
+     distingue os dois de graça) no SQL + guarda em JS.
+  Efeito colateral: o A/B E×F coletou ZERO dado — nada foi entregue. Precisa
+  ser re-disparado contra números celulares.
+- 01/08: caminho de RESPOSTA provado ao vivo (lead Coco Bambu, janela aberta):
+  flush → claim → LLM → decisão persistida → `reply_apos` limpo, `errors:0`.
+  Silêncio deliberado e correto (o último inbound era o bot do setor de eventos).
+- 01/08: auditoria do cockpit entregue (`auditoria-ui/README.md`). Achado
+  central: nenhum painel checa `isError`, então falha de fetch vira "Agente
+  ativo" verde. As 3 causas reais de mudez (saldo do LLM, cron parado, lead
+  esperando) não aparecem na tela. Correções pendentes na task #84.
 - 31/07: INCIDENTE DE SALDO — conta OpenRouter em US$-0,03 (325,03/325) com
   painel verde; a agente ao vivo a um fio de emudecer. Sonda ganhou verificação
   de saldo (falha ≤0, atenção <5). Eval-001 consumiu parte dos últimos dólares.
