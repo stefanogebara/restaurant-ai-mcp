@@ -60,6 +60,7 @@ const CRON_JOBS = [
   { name: 'prospect-nudge', intervalMinutes: 2100 },            // horário, 13-21 UTC seg-sex → gap de 64h, tolera 70h
   { name: 'prospect-handoff-digest', intervalMinutes: 1440 },   // diário
   { name: 'prospect-score-outcomes', intervalMinutes: 1440 },   // diário
+  { name: 'prospect-enrich', intervalMinutes: 60 },             // horário, 24/7 → gap de 1h, tolera 2h
 ];
 
 function getStatus(lastRanAt, intervalMinutes) {
@@ -93,12 +94,31 @@ async function checkCronHealth() {
     return null;
   }
 
+  // O teto NÃO é decorativo: a consulta ordena por ran_at desc, então ele
+  // transforma "14 dias" na janela que couber nas N linhas mais recentes.
+  // Medido em produção (01/08/2026, ~375 execuções/dia):
+  //     500 linhas  -> 32h de histórico
+  //    1000 linhas  -> 64.8h de histórico
+  // 1000 é o TETO DO SERVIDOR: o PostgREST do Supabase corta aí, e pedir 8000
+  // devolve 1000 do mesmo jeito (testado). Ou seja, nenhum número aqui compra
+  // mais de ~2.7 dias — e o volume só cresce, então a janela só encolhe.
+  //
+  // CONSEQUÊNCIA VIVA: job de baixa frequência não cabe na janela, some do
+  // lastRunMap e sai como `never_run` — que NÃO dispara alerta (health-alert.js
+  // só olha `stale` e `errors_14d`). Era o never_run:4 do painel: jobs semanais
+  // vivos, invisíveis. E um job semanal MORTO seria igualmente invisível.
+  //
+  // Solução sem migration: a varredura larga resolve os jobs frequentes numa
+  // consulta só; quem não aparecer nela é perguntado individualmente. Faltantes
+  // são poucos (os raros + os realmente mortos) e cada consulta é minúscula.
+  const TETO_LINHAS = 1000;
+  const desde = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
   const { data: runs, error } = await supabaseAdmin
     .from('cron_runs')
     .select('job_name, ran_at, meta')
-    .gte('ran_at', new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString())
+    .gte('ran_at', desde)
     .order('ran_at', { ascending: false })
-    .limit(500);
+    .limit(TETO_LINHAS);
 
   if (error) {
     logger.warn('Failed to query cron_runs', { error: error.message });
@@ -114,6 +134,29 @@ async function checkCronHealth() {
     }
     if (run.meta && run.meta.status === 'error') {
       errorCountMap[run.job_name] = (errorCountMap[run.job_name] || 0) + 1;
+    }
+  }
+
+  // Repescagem: ausente da janela larga ≠ nunca rodou. Sem isto, "raro" e
+  // "morto" são indistinguíveis — os dois viram never_run silencioso.
+  // Só vale a pena se a varredura ENCHEU o teto; se veio folgada, ela já
+  // cobriu os 14 dias inteiros e quem falta de fato nunca rodou.
+  if ((runs || []).length >= TETO_LINHAS) {
+    const faltantes = CRON_JOBS.filter((j) => !lastRunMap[j.name]);
+    for (const job of faltantes) {
+      // 20 linhas cobrem 14 dias de qualquer job que caiu fora da janela larga
+      // (se coubesse mais que isso, ele teria aparecido lá).
+      const { data: raros } = await supabaseAdmin
+        .from('cron_runs')
+        .select('ran_at, meta')
+        .eq('job_name', job.name)
+        .gte('ran_at', desde)
+        .order('ran_at', { ascending: false })
+        .limit(20);
+      if (raros && raros.length) {
+        lastRunMap[job.name] = raros[0].ran_at;
+        errorCountMap[job.name] = raros.filter((r) => r.meta && r.meta.status === 'error').length;
+      }
     }
   }
 

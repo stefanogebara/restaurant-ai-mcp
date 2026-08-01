@@ -20,19 +20,39 @@
  * Então o intervalo declarado aqui é "maior folga legítima ÷ 2".
  */
 
+const fs = require('fs');
+const path = require('path');
 const { CRON_JOBS, getStatus } = require('../cron/health');
 
 const acha = (nome) => CRON_JOBS.find((j) => j.name === nome);
 const HORA = 60;
 
+const CRONS_PROSPECCAO = [
+  'prospect-flush',
+  'prospect-nudge',
+  'prospect-handoff-digest',
+  'prospect-score-outcomes',
+  'prospect-enrich',
+];
+
 describe('registro do vigia cobre a prospecção', () => {
-  test.each([
-    'prospect-flush',
-    'prospect-nudge',
-    'prospect-handoff-digest',
-    'prospect-score-outcomes',
-  ])('%s está registrado', (nome) => {
+  test.each(CRONS_PROSPECCAO)('%s está registrado', (nome) => {
     expect(acha(nome)).toBeDefined();
+  });
+});
+
+describe('registro sem batimento é decoração', () => {
+  /**
+   * A armadilha que prospect-enrich caiu: estava agendado na vercel.json e
+   * rodava, mas não chamava logCronRun. Registrado assim ele ficaria em
+   * `never_run` para sempre — e `never_run` NÃO dispara alerta (health-alert.js
+   * só olha `stale` e `errors_14d`). Watchdog silencioso é pior que nenhum,
+   * porque parece cobertura.
+   */
+  test.each(CRONS_PROSPECCAO)('%s grava em cron_runs com o nome que registrou', (nome) => {
+    const arquivo = path.join(__dirname, '..', 'cron', `${nome}.js`);
+    const src = fs.readFileSync(arquivo, 'utf8');
+    expect(src).toMatch(new RegExp(`logCron(Run|Error)\\(\\s*['"]${nome}['"]`));
   });
 });
 
@@ -59,6 +79,24 @@ describe('tolerância respeita a folga legítima de cada agendamento', () => {
   test('os diários seguem a convenção de 1440 já usada pelos outros', () => {
     expect(acha('prospect-handoff-digest').intervalMinutes).toBe(24 * HORA);
     expect(acha('prospect-score-outcomes').intervalMinutes).toBe(24 * HORA);
+  });
+
+  test('prospect-enrich roda 24/7, então tolera pouco: 1h ok, 3h stale', () => {
+    const { intervalMinutes } = acha('prospect-enrich');
+    expect(statusApos(1, intervalMinutes)).toBe('healthy');
+    expect(statusApos(3, intervalMinutes)).toBe('stale');
+  });
+
+  test('todo job de prospecção cabe na janela de 14 dias que o vigia consulta', () => {
+    // A varredura larga é capada em 1000 linhas pelo servidor (~64h hoje, e
+    // encolhendo). Um job cujo gap legítimo passe disso sumiria do lastRunMap e
+    // sairia como never_run — que não alerta. Foi o que pegou prospect-nudge:
+    // 70h de tolerância contra uma janela de 64,8h, ou seja, jamais poderia ser
+    // reportado stale. Com a repescagem por job, o limite real voltou a ser os
+    // 14 dias da consulta; este teste guarda essa fronteira.
+    for (const nome of CRONS_PROSPECCAO) {
+      expect(acha(nome).intervalMinutes * 2).toBeLessThan(14 * 24 * HORA);
+    }
   });
 
   test('nenhum job novo tolera mais de 4 dias — vigia frouxo demais não vigia', () => {

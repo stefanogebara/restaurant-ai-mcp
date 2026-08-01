@@ -27,6 +27,7 @@ const { createSecureLogger } = require('../_lib/secure-logger');
 const { bearerEquals } = require('../_lib/secure-compare');
 const { supabaseAdmin } = require('../_lib/supabase');
 const { enrichLead } = require('../_lib/prospecting/prospect-enrich');
+const { logCronRun, logCronError } = require('../_lib/cron-tracker');
 
 const logger = createSecureLogger('CronProspectEnrich');
 
@@ -97,9 +98,16 @@ module.exports = async (req, res) => {
       }
     }
     logger.info('cron de enriquecimento concluído', resumo);
+    // Sem isto o job não aparece em cron_runs e o vigia o dá como never_run
+    // para sempre — registro sem batimento é decoração.
+    await logCronRun('prospect-enrich', resumo);
     return res.status(200).json({ success: true, data: resumo });
   } catch (e) {
     logger.error('cron de enriquecimento falhou', { error: e.message });
+    // logCronError e não logCronRun: grava ran_at (conta como batimento, então
+    // o job não vira stale por estar quebrado) E marca meta.status='error', que
+    // é o que checkCronHealth conta em errors_14d.
+    await logCronError('prospect-enrich', e);
     return res.status(500).json({ success: false, error: e.message });
   }
 };
