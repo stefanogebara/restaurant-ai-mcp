@@ -96,7 +96,8 @@ export interface Insights {
 export const BUCKET_LABEL: Record<string, string> = {
   pending: 'Na fila', sent: 'Recebeu mensagem', seen: 'Visualizou', replied: 'Respondeu',
   scheduling: 'Marcando reunião', booked: 'Reunião marcada', won: 'Fechado 🏆',
-  handoff: 'Precisa de você', optout: 'Pediu pra sair', failed: 'Não entregue',
+  handoff: 'Precisa de você', porteiro: 'Só robô atendeu', refused: 'Disse não',
+  optout: 'Pediu pra sair', failed: 'Não entregue',
 };
 
 export const BUCKET_CLASS: Record<string, string> = {
@@ -104,11 +105,17 @@ export const BUCKET_CLASS: Record<string, string> = {
   booked: 'bg-emerald-100 text-emerald-800', replied: 'bg-emerald-100 text-emerald-800',
   scheduling: 'bg-sky-100 text-sky-800', seen: 'bg-sky-100 text-sky-800',
   sent: 'bg-stone-100 text-stone-700', pending: 'bg-stone-100 text-stone-600',
-  handoff: 'bg-amber-100 text-amber-800', optout: 'bg-rose-100 text-rose-800', failed: 'bg-rose-100 text-rose-800',
+  handoff: 'bg-amber-100 text-amber-800', porteiro: 'bg-stone-200 text-stone-700',
+  refused: 'bg-stone-300 text-stone-800',
+  optout: 'bg-rose-100 text-rose-800', failed: 'bg-rose-100 text-rose-800',
 };
 
-/** Deals/conversations that are over — never in the work queue. */
-export const TERMINAL_BUCKETS = ['won', 'optout'];
+/**
+ * Deals/conversations that are over — never in the work queue.
+ * 'refused' entrou em 01/08: quem disse não estava caindo em 'replied' (verde
+ * "Respondeu") e ficava preso na Triagem para sempre.
+ */
+export const TERMINAL_BUCKETS = ['won', 'optout', 'refused'];
 
 export const INTENT_LABEL: Record<string, string> = {
   interessado: 'Interessado', pergunta: 'Pergunta', objecao_preco: 'Objeção preço',

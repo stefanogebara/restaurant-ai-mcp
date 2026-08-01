@@ -11,7 +11,7 @@
  * Single honest status bucket for a lead. Conversation state wins over raw send
  * status (a booked/opted-out lead is that, regardless of the last send ladder).
  * @param {{prospect_state?: string, whatsapp_send_status?: string|null}} lead
- * @returns {'won'|'booked'|'optout'|'handoff'|'porteiro'|'scheduling'|'replied'|'seen'|'sent'|'failed'|'pending'}
+ * @returns {'won'|'booked'|'optout'|'handoff'|'porteiro'|'refused'|'scheduling'|'replied'|'seen'|'sent'|'failed'|'pending'}
  */
 function statusBucket(lead) {
   const state = lead && lead.prospect_state;
@@ -25,6 +25,12 @@ function statusBucket(lead) {
   // próprio: sem isso o lead sai de todo seletor proativo E some da contagem,
   // que é exatamente o "denominador contaminado" que ele existe pra revelar.
   if (state === 'porteiro') return 'porteiro';
+  // 'recusou' precisa vir ANTES do switch de envio: o responder grava
+  // whatsapp_send_status='replied' em QUALQUER inbound, inclusive no que disse
+  // "não temos interesse". Sem isto a recusa caía em 'replied' — pintada de
+  // verde "Respondeu" no funil e presa na fila de Triagem para sempre, porque
+  // 'replied' não é terminal. Um "não" contado como positivo, duas vezes.
+  if (state === 'recusou') return 'refused';
   if (state === 'agendando') return 'scheduling';
 
   switch (lead && lead.whatsapp_send_status) {
@@ -39,7 +45,7 @@ function statusBucket(lead) {
   }
 }
 
-const BUCKETS = ['pending', 'sent', 'seen', 'replied', 'scheduling', 'booked', 'won', 'handoff', 'porteiro', 'optout', 'failed'];
+const BUCKETS = ['pending', 'sent', 'seen', 'replied', 'scheduling', 'booked', 'won', 'handoff', 'porteiro', 'refused', 'optout', 'failed'];
 
 /**
  * Count leads per bucket (funnel summary for the cockpit header).
