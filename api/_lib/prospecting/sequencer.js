@@ -31,9 +31,9 @@ const {
   isOptedOut, selectIntroCandidates, claimIntro, markIntro, storeMessage,
   listTemplates, patchLead, selectDueTouches, selectDueReengages, loadLastMessage,
   selectReferralIntroCandidates, selectHandoffLeads, reclaimHandoffToConversando,
-  recordEvent,
+  recordEvent, loadHistory,
 } = require('./prospect-store');
-const { elegivelParaReclaim, HANDOFF_RECLAIM_MS } = require('./prospect-state');
+const { elegivelParaReclaim, HANDOFF_RECLAIM_MS, elegivelParaReengage } = require('./prospect-state');
 const { isFounderNumber } = require('./prospect-agent');
 const { dentroDaJanelaDisparo } = require('./prospect-hours');
 
@@ -352,8 +352,26 @@ async function dispatchReengages({ limit = 5, nowMs = Date.now() } = {}) {
       //                        can't, outside the window.
       // last = template → this silence was already touched; a new inbound
       // re-arms the cycle.
+      //
+      // ATENÇÃO ao "a new inbound re-arms the cycle": o inbound que re-armava
+      // era, em muitos casos, o AUTORESPONDER da casa respondendo ao NOSSO
+      // template. Template → bot responde → ciclo re-armado → 3 dias → template.
+      // O Banzeiro levou 7 assim, depois de recusar 3 vezes. Por isso a decisão
+      // saiu daqui e virou elegivelParaReengage, que olha intenção e histórico.
       const last = await loadLastMessage(lead.id);
-      if (!last || last.tipo === 'template') { summary.skipped++; continue; }
+      const historico = await loadHistory(lead.id, 40);
+      const veredito = elegivelParaReengage({
+        lastIntent: lead.last_intent ?? null,
+        ultimaMensagem: last,
+        historico,
+      });
+      if (!veredito.eligible) {
+        summary.skipped++;
+        // O motivo importa: 'so_maquina' e 'ja_recusou' são leads que NUNCA
+        // devem voltar por este trilho, e sem log isso vira número mudo.
+        logger.info('reengage pulado', { lead: lead.id, motivo: veredito.reason });
+        continue;
+      }
 
       // Anti-race claim: a 10-min conditional snooze. Semantics match ("agent
       // holds off on this lead"), it self-expires, and a concurrent run loses

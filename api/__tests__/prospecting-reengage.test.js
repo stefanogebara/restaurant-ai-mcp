@@ -53,7 +53,8 @@ describe('buildTemplatePayload — Graph template creation (pure)', () => {
 describe('dispatchReengages — replied-then-silent leads past the 24h window', () => {
   const lead = { id: 'L9', name: 'Bistrô Central', whatsapp_phone: '+5511988887777', prospect_state: 'conversando' };
 
-  function mockDeps({ lastMessage, templates, sendResult, claimRows } = {}) {
+  function mockDeps({ lastMessage, templates, sendResult, claimRows, historico, leadOverride } = {}) {
+    const alvo = { ...lead, ...(leadOverride || {}) };
     jest.doMock('../_lib/secure-logger', () => ({ createSecureLogger: () => ({ info(){}, warn(){}, error(){}, debug(){} }) }));
     jest.doMock('../_lib/prospecting/routing', () => ({ getProspectingPhoneNumberId: () => 'PNUM' }));
     jest.doMock('../_lib/prospecting/prospect-warmup', () => ({ consumeSendSlot: jest.fn(async () => ({ allowed: true, count: 1, cap: 40 })) }));
@@ -65,13 +66,20 @@ describe('dispatchReengages — replied-then-silent leads past the 24h window', 
       isOptedOut: async () => false,
       selectIntroCandidates: async () => [],
       selectDueTouches: async () => [],
-      selectDueReengages: async () => [lead],
+      selectDueReengages: async () => [alvo],
       loadLastMessage: async () => (lastMessage === undefined
         ? { direcao: 'out', tipo: 'text', corpo: 'oi, ficou de me falar', enviada_em: new Date().toISOString() }
         : lastMessage),
       listTemplates: async (touch) => (templates !== undefined ? templates : (touch === 4
         ? [{ touch_number: 4, variant_label: 'A', meta_template_name: 'olimpia_resgate', template_lang: 'pt_BR', active: true }]
         : [])),
+      // Histórico com UMA fala humana: desde 02/08 o resgate consulta a thread
+      // para não entrar em loop com o autoresponder da casa (incidente
+      // Banzeiro, 7 templates). Cada teste que quiser exercitar o gate
+      // sobrescreve via `historico`.
+      loadHistory: async () => (historico !== undefined ? historico : [
+        { direcao: 'in', tipo: 'texto', corpo: 'opa, sou o Marcos, pode falar' },
+      ]),
       claimIntro: async () => true, markIntro: async () => ({}), patchLead: async () => ({}),
       storeMessage,
       REENGAGE_STATES: ['conversando', 'agendando'],
@@ -146,6 +154,40 @@ describe('dispatchReengages — replied-then-silent leads past the 24h window', 
     expect(s.sent).toBe(1);
     expect(sendTemplateMessage).toHaveBeenCalledWith(
       '+5511988887777', 'olimpia_resgate', 'pt_BR', ['Bistrô Central'], { phoneNumberId: 'PNUM' });
+  });
+
+  // ---- O gate de recusa/robô, exercitado PELO dispatch (não só puro) --------
+  // O predicado elegivelParaReengage tem teste próprio, mas predicado sem
+  // chamador é o defeito que já apareceu neste projeto (semHumanoNaThread ficou
+  // meses sem ninguém invocar). Estes dois provam a FIAÇÃO.
+
+  test('lead que já disse não NÃO recebe resgate (incidente Banzeiro)', async () => {
+    const { sendTemplateMessage } = mockDeps({
+      leadOverride: { last_intent: 'nao_interessado' },
+      lastMessage: { direcao: 'in', tipo: 'text', corpo: 'já temos sistema, obrigada' },
+    });
+    const { dispatchReengages } = require('../_lib/prospecting/sequencer');
+    const s = await dispatchReengages({ limit: 5 });
+    expect(s.sent).toBe(0);
+    expect(s.skipped).toBe(1);
+    expect(sendTemplateMessage).not.toHaveBeenCalled();
+  });
+
+  test('thread só com autoresponder NÃO re-arma o ciclo', async () => {
+    // O loop real: nosso template provoca a saudação do bot, que conta como
+    // "o lead falou", e 3 dias depois sai outro template. Sete vezes.
+    const saudacao = 'Atendente Virtual: Olá! Seja bem-vindo ao Banzeiro São Paulo, para te ajudar da melhor forma escolha uma opção.';
+    const { sendTemplateMessage } = mockDeps({
+      lastMessage: { direcao: 'in', tipo: 'texto', corpo: saudacao },
+      historico: [
+        { direcao: 'out', tipo: 'template', corpo: '[template:olimpia_resgate]' },
+        { direcao: 'in', tipo: 'texto', corpo: saudacao },
+      ],
+    });
+    const { dispatchReengages } = require('../_lib/prospecting/sequencer');
+    const s = await dispatchReengages({ limit: 5 });
+    expect(s.sent).toBe(0);
+    expect(sendTemplateMessage).not.toHaveBeenCalled();
   });
 
   test('lost the snooze claim (concurrent run) → skip without sending', async () => {

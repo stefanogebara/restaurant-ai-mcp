@@ -356,6 +356,41 @@ function ecoDeMaquina(history) {
  * @param {Array<{direcao?:string, tipo?:string, corpo?:string|null}>} history
  * @returns {boolean}
  */
+// ---- Resgate de toque 4: não insistir com quem disse não, nem com robô ------
+//
+// INCIDENTE (Banzeiro, 03/07–02/08/2026): SETE templates de resgate para quem
+// recusou TRÊS vezes, a última com todas as letras. Dois defeitos somados:
+//
+//   1. selectDueReengages filtrava estado, silêncio, reunião e soneca — e nada
+//      sobre INTENÇÃO. `nao_interessado` parado em 'conversando' seguia elegível
+//      para sempre.
+//   2. O guarda "um resgate por silêncio" era `last.tipo === 'template'`, e o
+//      inbound que re-armava o ciclo era o AUTORESPONDER da casa, provocado
+//      pelo nosso próprio template. Template → bot responde → re-arma → 3 dias
+//      → template. Loop alimentado pela máquina do outro lado.
+//
+// Só `nao_interessado` conta como recusa. `pessoa_errada` é PORTEIRO: continua
+// valendo procurar quem decide — tratar as duas igual jogaria fora lead bom.
+const INTENCOES_DE_RECUSA = new Set(['nao_interessado']);
+
+/**
+ * PURE: este lead pode receber o template de resgate?
+ * @param {{lastIntent: string|null,
+ *          ultimaMensagem: {direcao?:string, tipo?:string, corpo?:string}|null,
+ *          historico: Array<object>}} args
+ * @returns {{eligible: boolean, reason: string}}
+ */
+function elegivelParaReengage({ lastIntent, ultimaMensagem, historico }) {
+  if (INTENCOES_DE_RECUSA.has(lastIntent)) return { eligible: false, reason: 'ja_recusou' };
+  // Último envio sendo template = este silêncio já foi tocado (guarda original).
+  if (!ultimaMensagem || ultimaMensagem.tipo === 'template') {
+    return { eligible: false, reason: 'silencio_ja_tocado' };
+  }
+  // O que re-armou o ciclo foi gente, ou foi o robô respondendo ao nosso envio?
+  if (semHumanoNaThread(historico)) return { eligible: false, reason: 'so_maquina' };
+  return { eligible: true, reason: 'ok' };
+}
+
 function semHumanoNaThread(history) {
   const ins = (history || []).filter((h) => h && h.tipo !== 'sys' && h.direcao === 'in');
   if (!ins.length) return false; // sem inbound nenhum: não é "só robô", é silêncio
@@ -438,6 +473,8 @@ module.exports = {
   elegivelParaReclaim,
   ecoDeMaquina,
   semHumanoNaThread,
+  elegivelParaReengage,
+  INTENCOES_DE_RECUSA,
   PORTEIRO_INSTRUCTION,
   PORTEIRO_MAX,
   ECO_MIN_PALAVRAS,
