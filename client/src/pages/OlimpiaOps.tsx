@@ -12,6 +12,7 @@ import GymPanel from '../components/prospecting/GymPanel';
 import LeadList, { Badge, orderForTab } from '../components/prospecting/LeadList';
 import ThreadView from '../components/prospecting/ThreadView';
 import { HealthInline, DispatchPausedBanner } from '../components/prospecting/HealthCard';
+import MotorStrip from '../components/prospecting/MotorStrip';
 import type { ProspectLead, Overview } from '../components/prospecting/types';
 import { fmtTime, httpStatus } from '../components/prospecting/types';
 
@@ -115,6 +116,10 @@ export default function OlimpiaOps() {
   const ov = overviewQ.data;
   const leads = listQ.data?.leads ?? [];
   const counts = listQ.data?.counts ?? {};
+  // Verdadeiro só quando NENHUMA das duas consultas trouxe estado. É o que
+  // separa "o agente está ligado" de "não consegui perguntar".
+  const estadoDesconhecido =
+    ov?.agent_enabled === undefined && listQ.data?.agent_enabled === undefined;
   const agentEnabled = ov?.agent_enabled ?? listQ.data?.agent_enabled ?? true;
   const dryRun = ov?.dry_run ?? listQ.data?.dry_run ?? true;
   const triagemCount = orderForTab(leads, 'triagem', null, nowMs).length;
@@ -136,10 +141,21 @@ export default function OlimpiaOps() {
             {ov && <HealthInline ov={ov} />}
           </div>
           <div className="flex items-center gap-2">
-            <span className={`flex items-center gap-1.5 text-sm font-medium ${agentEnabled ? 'text-emerald-700' : 'text-rose-700'}`}>
-              <span className={`w-2 h-2 rounded-full ${agentEnabled ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
-              {agentEnabled ? 'Agente ativo' : 'Agente PARADO'}
-            </span>
+            {/* Sem dado de nenhuma das duas consultas, o estado do agente é
+                DESCONHECIDO. A versão anterior caía no `?? true` e pintava
+                "Agente ativo" em verde pulsante mesmo com o backend fora — a
+                mentira mais cara desta tela. */}
+            {estadoDesconhecido ? (
+              <span className="flex items-center gap-1.5 text-sm font-medium text-stone-500" title="As duas consultas de estado falharam. Não dá para afirmar se a Olímpia está respondendo.">
+                <span className="w-2 h-2 rounded-full bg-stone-400" />
+                Agente: não sei dizer
+              </span>
+            ) : (
+              <span className={`flex items-center gap-1.5 text-sm font-medium ${agentEnabled ? 'text-emerald-700' : 'text-rose-700'}`}>
+                <span className={`w-2 h-2 rounded-full ${agentEnabled ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
+                {agentEnabled ? 'Agente ativo' : 'Agente PARADO'}
+              </span>
+            )}
             {agentEnabled ? (
               !confirmStop ? (
                 <button type="button" onClick={() => setConfirmStop(true)} className="px-3 py-1.5 rounded-xl bg-rose-600 text-white text-sm font-medium hover:opacity-90">
@@ -163,6 +179,19 @@ export default function OlimpiaOps() {
       </header>
 
       <main className="max-w-6xl mx-auto px-4 py-5 space-y-5">
+        <MotorStrip />
+
+        {/* Overview caiu: os números abaixo viram '—' silenciosos e o banner de
+            disparo pausado some. Dizer isso é mais honesto que a tela em branco. */}
+        {overviewQ.isError && (
+          <div className="rounded-xl border border-rose-200 bg-rose-50/70 px-4 py-2">
+            <p className="text-xs text-rose-800">
+              Não consegui carregar os números do dia — o que aparece abaixo pode estar desatualizado ou vazio.
+              <button type="button" onClick={() => overviewQ.refetch()} className="ml-2 underline">tentar de novo</button>
+            </p>
+          </div>
+        )}
+
         {ov && <DispatchPausedBanner ov={ov} />}
 
         <GlassPanel className="p-2 flex flex-wrap divide-x divide-stone-200/60">
@@ -286,6 +315,8 @@ export default function OlimpiaOps() {
                 selected={selected}
                 onSelect={setSelected}
                 loading={listQ.isLoading}
+                failed={listQ.isError}
+                onRetry={() => listQ.refetch()}
                 nowMs={nowMs}
               />
               <GlassCard className="p-4 flex flex-col max-h-[70vh]">

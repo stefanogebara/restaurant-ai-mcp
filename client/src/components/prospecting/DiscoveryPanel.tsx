@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../services/api';
 import { GlassPanel } from '../common/glass';
 import { useToast } from '../../contexts/ToastContext';
+import PanelError from './PanelError';
 
 /**
  * Descobrir & Disparar — two explicit steps, no accordions:

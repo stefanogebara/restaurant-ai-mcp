@@ -144,6 +144,20 @@ export default function ThreadView({ leadId, nowMs }: { leadId: string; nowMs: n
     return (cannedQ.data ?? []).filter((c) => c.short_code.includes(term)).slice(0, 6);
   }, [draft, cannedQ.data, notaMode]);
 
+  // Erro ANTES de "carregando": a versão anterior checava só isLoading e, num
+  // fetch que falha, `detail` fica undefined para sempre — a conversa exibia
+  // "Carregando conversa…" eternamente, sem nunca dizer que deu erro.
+  if (detailQ.isError) {
+    return (
+      <div className="text-sm">
+        <p className="text-rose-800">Não consegui carregar esta conversa.</p>
+        <p className="text-xs text-rose-700 mt-1">
+          O histórico e o estado do lead não estão visíveis — evite agir sem vê-los.
+          <button type="button" onClick={() => detailQ.refetch()} className="ml-2 underline">tentar de novo</button>
+        </p>
+      </div>
+    );
+  }
   if (detailQ.isLoading || !detail) {
     return <p className="text-sm text-stone-500">Carregando conversa…</p>;
   }
@@ -236,7 +250,23 @@ export default function ThreadView({ leadId, nowMs }: { leadId: string; nowMs: n
           )}
           <button type="button" disabled={act.isPending} onClick={() => act.mutate({ action: 'pause', body: { lead_id: lead.id } })} className="px-2.5 py-1 text-xs rounded-lg bg-amber-100 text-amber-800 hover:bg-amber-200 disabled:opacity-50" title="A Olímpia para de responder este lead até você reativar">Pausar</button>
           <button type="button" disabled={act.isPending} onClick={() => act.mutate({ action: 'reactivate', body: { lead_id: lead.id } })} className="px-2.5 py-1 text-xs rounded-lg bg-stone-100 text-stone-700 hover:bg-stone-200 disabled:opacity-50" title="A Olímpia volta a responder este lead automaticamente">Reativar</button>
-          <button type="button" disabled={act.isPending} onClick={() => act.mutate({ action: 'optout', body: { lead_id: lead.id, reason: 'pediu' } })} className="px-2.5 py-1 text-xs rounded-lg bg-rose-100 text-rose-800 hover:bg-rose-200 disabled:opacity-50" title="Marca que o lead pediu para não receber mais mensagens (LGPD) — nada mais será enviado a ele">Pediu pra sair</button>
+          {/* Opt-out LGPD é irreversível pela tela: o lead sai das filas para
+              sempre e nada mais pode ser enviado a ele. Ia SEM confirmação
+              nenhuma, enquanto "Fechado" — que é reversível — pedia. Um clique
+              errado aqui queima o lead e vira registro legal. */}
+          <button
+            type="button"
+            disabled={act.isPending}
+            onClick={() => {
+              if (window.confirm(`Registrar que ${lead.name} pediu para NÃO receber mais mensagens?\n\nIsto é um registro de LGPD: o lead sai das filas e a Olímpia nunca mais escreve para ele. Não há desfazer pela tela.`)) {
+                act.mutate({ action: 'optout', body: { lead_id: lead.id, reason: 'pediu' } });
+              }
+            }}
+            className="px-2.5 py-1 text-xs rounded-lg bg-rose-100 text-rose-800 hover:bg-rose-200 disabled:opacity-50"
+            title="Marca que o lead pediu para não receber mais mensagens (LGPD) — nada mais será enviado a ele"
+          >
+            Pediu pra sair
+          </button>
           {lead.reuniao_at && (
             <>
               <button

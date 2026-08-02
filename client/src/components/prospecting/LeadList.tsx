@@ -40,6 +40,9 @@ interface Props {
   selected: string | null;
   onSelect: (id: string) => void;
   loading: boolean;
+  /** Consulta falhou: lista vazia é IGNORÂNCIA, não fila limpa. */
+  failed?: boolean;
+  onRetry?: () => void;
   nowMs: number;
 }
 
@@ -77,7 +80,7 @@ export function orderForTab(leads: ProspectLead[], tab: 'triagem' | 'todos', buc
     });
 }
 
-export default function LeadList({ leads, tab, bucketFilter, selected, onSelect, loading, nowMs }: Props) {
+export default function LeadList({ leads, tab, bucketFilter, selected, onSelect, loading, failed, onRetry, nowMs }: Props) {
   const shown = useMemo(
     () => orderForTab(leads, tab, bucketFilter, nowMs),
     [leads, tab, bucketFilter, nowMs],
@@ -144,7 +147,20 @@ export default function LeadList({ leads, tab, bucketFilter, selected, onSelect,
           </button>
         );
       })}
-      {!loading && shown.length === 0 && (
+      {/* Lista vazia por FALHA nunca pode virar "fila limpa 🎉". Era o pior
+          estado do console: a tela comemorava justamente quando estava cega. */}
+      {failed && shown.length === 0 && (
+        <div className="p-3">
+          <p className="text-sm text-rose-800">Não consegui carregar os leads.</p>
+          <p className="text-xs text-rose-700">
+            A fila pode ter gente esperando — isto <strong>não</strong> quer dizer que está vazia.
+            {onRetry && (
+              <button type="button" onClick={onRetry} className="ml-2 underline">tentar de novo</button>
+            )}
+          </p>
+        </div>
+      )}
+      {!loading && !failed && shown.length === 0 && (
         <p className="p-3 text-sm text-stone-500">
           {tab === 'triagem'
             ? 'Fila limpa — nenhum lead precisando de atenção agora. 🎉'

@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '../../services/api';
 import { GlassPanel, GlassCard } from '../common/glass';
 import type { Insights } from './types';
+import PanelError from './PanelError';
 
 /**
  * Insights (F7): mines the data the platform already writes — outcome quality
@@ -63,6 +64,15 @@ export default function InsightsPanel() {
             ))}
           </div>
 
+          {/* Sem isto o painel ficava EM BRANCO no erro — indistinguível de
+              "não há nada no período". */}
+          {q.isError && (
+            <PanelError
+              oQue="os insights"
+              consequencia="O painel fica vazio quando falha — isso não significa que não houve conversas neste período."
+              onRetry={() => q.refetch()}
+            />
+          )}
           {q.isLoading && <p className="text-sm text-stone-500">Calculando…</p>}
           {d && (
             <>

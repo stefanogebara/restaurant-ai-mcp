@@ -4,6 +4,7 @@ import { api } from '../../services/api';
 import { GlassPanel } from '../common/glass';
 import { useToast } from '../../contexts/ToastContext';
 import type { TemplateRow, VariantFunnelRow } from './types';
+import PanelError from './PanelError';
 
 /**
  * "Abordagens" (F2 + F4): the Meta-approved template registry (intro variants +
@@ -16,7 +17,18 @@ const TOUCH_LABEL: Record<number, string> = {
   1: 'Toque 1 — primeira mensagem',
   2: 'Toque 2 — lembrete (3 dias depois)',
   3: 'Toque 3 — despedida (8 dias depois)',
+  4: 'Toque 4 — resgate (para leads antigos)',
 };
+
+/**
+ * Amostra mínima para coroar uma abordagem.
+ *
+ * Sem isso, `sent=1, replied=1` (100%) vencia `sent=500, replied=40` (8%) — a
+ * tela mandava trocar a copy que funciona por uma que teve sorte uma vez.
+ * 30 é o valor onde uma diferença de ~2× começa a não ser ruído puro; não é
+ * teste de significância, é um piso contra coroar acaso.
+ */
+const N_MINIMO = 30;
 
 function pct(n: number, of: number): string {
   if (!of) return '—';
@@ -50,8 +62,11 @@ export default function VariantsPanel() {
 
   const templates = q.data?.templates ?? [];
   const funnel = q.data?.funnel ?? [];
-  const bestReplied = funnel.length
-    ? Math.max(...funnel.map((f) => (f.sent ? f.replied / f.sent : 0)))
+  // Só concorre ao título quem tem amostra. Antes o Math.max varria TODAS as
+  // linhas, então uma variante com 1 envio e 1 resposta era coroada.
+  const elegiveis = funnel.filter((f) => f.sent >= N_MINIMO);
+  const bestReplied = elegiveis.length
+    ? Math.max(...elegiveis.map((f) => (f.sent ? f.replied / f.sent : 0)))
     : 0;
 
   return (
@@ -62,8 +77,20 @@ export default function VariantsPanel() {
       </div>
 
       <div className="mt-4 space-y-5">
-          {/* Registry grouped by touch */}
-          {[1, 2, 3].map((touch) => {
+          {q.isError && (
+            <PanelError
+              oQue="as abordagens"
+              consequencia="A lista abaixo pode aparecer vazia — isso NÃO quer dizer que não há modelo registrado nem que o disparo está usando o padrão."
+              onRetry={() => q.refetch()}
+            />
+          )}
+
+          {/* Registry grouped by touch.
+              O toque 4 (resgate) FALTAVA aqui: o WaIdentityPanel manda registrar
+              o modelo e "ligar no painel de Abordagens", mas este loop ia só até
+              3 — o modelo nascia inativo e não havia onde ativá-lo. Registrável,
+              nunca ativável. */}
+          {[1, 2, 3, 4].map((touch) => {
             const rows = templates.filter((t) => t.touch_number === touch);
             return (
               <div key={touch}>
@@ -167,14 +194,19 @@ export default function VariantsPanel() {
           {funnel.length > 0 && (
             <div>
               <h3 className="font-serif text-sm text-stone-700 mb-1.5">Funil por abordagem</h3>
-              <p className="text-xs text-stone-500">Compare as abordagens lado a lado — a que gera mais resposta vence (linha destacada em verde). Passe o mouse nos percentuais para ver os números.</p>
+              <p className="text-xs text-stone-600">
+                Compare as abordagens lado a lado. Só é coroada (linha verde) a que tem pelo menos{' '}
+                <strong>{N_MINIMO} envios</strong> — abaixo disso a taxa é sorte, não sinal.
+                Passe o mouse nos percentuais para ver os números.
+              </p>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="text-[11px] uppercase tracking-wide text-stone-400 text-left">
+                    <tr className="text-[11px] uppercase tracking-wide text-stone-500 text-left">
                       <th className="py-1 pr-3">Abordagem</th>
-                      <th className="py-1 pr-3">Enviadas</th>
+                      <th className="py-1 pr-3" title="Leads que receberam esta abordagem (não é contagem de mensagens)">Enviadas</th>
                       <th className="py-1 pr-3">Entregues</th>
+                      <th className="py-1 pr-3" title="Enviadas que não chegaram: número errado, telefone fixo, bloqueio. Sem esta coluna, 'aguardando resposta' e 'nada chegou' parecem a mesma coisa.">Não chegaram</th>
                       <th className="py-1 pr-3">Lidas</th>
                       <th className="py-1 pr-3">Responderam</th>
                       <th className="py-1 pr-3">Reunião</th>
@@ -184,12 +216,27 @@ export default function VariantsPanel() {
                   </thead>
                   <tbody>
                     {funnel.map((f) => {
-                      const isBest = f.sent > 0 && f.replied / f.sent === bestReplied && bestReplied > 0;
+                      const isBest = f.sent >= N_MINIMO && f.replied / f.sent === bestReplied && bestReplied > 0;
+                      // Enviadas que não viraram entregues. Foi assim que o lote
+                      // E/F apareceu como sent=5, delivered=0: telefone fixo. A
+                      // tela dizia "aguardando resposta"; a verdade era "nada
+                      // chegou".
+                      const naoChegaram = Math.max(0, f.sent - f.delivered);
                       return (
-                        <tr key={f.variant} className={isBest ? 'ring-1 ring-emerald-300 rounded-lg' : ''} title={isBest ? 'Melhor abordagem até agora — maior taxa de resposta' : undefined}>
-                          <td className="py-1.5 pr-3 font-mono font-medium">{f.variant}</td>
-                          <td className="py-1.5 pr-3" title={`${f.sent} mensagens enviadas`}>{f.sent}</td>
+                        <tr key={f.variant} className={isBest ? 'ring-1 ring-emerald-300 rounded-lg' : ''} title={isBest ? `Melhor abordagem até agora — maior taxa de resposta com amostra suficiente (${f.sent} envios)` : undefined}>
+                          <td className="py-1.5 pr-3 font-mono font-medium">
+                            {f.variant}
+                            {f.sent > 0 && f.sent < N_MINIMO && (
+                              <span className="ml-1.5 text-[10px] font-sans text-stone-500" title={`Só ${f.sent} de ${N_MINIMO} envios — ainda não dá para comparar com as outras`}>
+                                amostra pequena
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-1.5 pr-3" title={`${f.sent} leads receberam esta abordagem`}>{f.sent}</td>
                           <td className="py-1.5 pr-3" title={`${f.delivered} de ${f.sent} entregues`}>{pct(f.delivered, f.sent)}</td>
+                          <td className={`py-1.5 pr-3 ${naoChegaram > 0 ? 'text-rose-700 font-medium' : 'text-stone-500'}`} title={`${naoChegaram} de ${f.sent} não chegaram ao destino`}>
+                            {naoChegaram > 0 ? `${naoChegaram} (${pct(naoChegaram, f.sent)})` : '—'}
+                          </td>
                           <td className="py-1.5 pr-3" title={`${f.read} de ${f.sent} lidas`}>{pct(f.read, f.sent)}</td>
                           <td className="py-1.5 pr-3 font-medium" title={`${f.replied} de ${f.sent} responderam`}>{pct(f.replied, f.sent)}</td>
                           <td className="py-1.5 pr-3" title={`${f.booked} de ${f.sent} marcaram reunião`}>{pct(f.booked, f.sent)}</td>

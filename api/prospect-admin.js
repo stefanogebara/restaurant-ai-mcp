@@ -138,6 +138,94 @@ module.exports = async (req, res) => {
       });
     }
 
+    // ---- Motor: o que faz a Olímpia emudecer ---------------------------------
+    //
+    // Três coisas a silenciaram nas últimas semanas e NENHUMA aparecia na tela:
+    // saldo do LLM zerado (31/07, US$-0,03), cron do motor parado, e lead com
+    // pergunta esperando resposta (Coco Bambu, 15h de silêncio com o painel
+    // verde). Este endpoint junta os três num lugar só.
+    //
+    // Reusa a lib de saúde de cron em _lib/ — dar require em api/cron/health.js
+    // daqui derrubaria ESTA função do manifesto da Vercel, sem erro de build.
+    if (req.method === 'GET' && action === 'motor') {
+      const HORAS_ESPERANDO = 2;
+      // Teto do que dá pra varrer numa requisição. Se a fila de candidatos
+      // encostar nele, o número vira "pelo menos N" — dizer um número exato
+      // que não é exato seria repetir a doença que este painel combate.
+      const TETO_CANDIDATOS = 500;
+      const CRONS_DO_MOTOR = [
+        'prospect-flush', 'prospect-nudge', 'prospect-enrich',
+        'prospect-score-outcomes', 'prospect-handoff-digest',
+      ];
+      const limite = new Date(Date.now() - HORAS_ESPERANDO * 3600 * 1000).toISOString();
+
+      const [llm, saude, candidatos] = await Promise.all([
+        require('./_lib/integration-probes').sondarOpenRouter(process.env).catch((e) => ({
+          nome: 'ia_primaria_openrouter', status: 'falha', detalhe: `sonda falhou: ${e.message}`,
+        })),
+        require('./_lib/cron-health').checkCronHealth().catch(() => null),
+        // Leads que FALARAM e ainda não foram respondidos.
+        //
+        // Ordem DESCENDENTE de propósito. Com `ascending: true` e teto de 50, a
+        // consulta trazia os mais ANTIGOS e cortava fora os recentes — o lead
+        // que escreveu há 9h sumia da conta enquanto um de 600h entrava. Um
+        // alarme que esconde o caso urgente é pior que não ter alarme.
+        supabaseAdmin.from('prospect_leads')
+          .select('id, name, last_in_at', { count: 'exact' })
+          .in('prospect_state', ['conversando', 'agendando'])
+          .not('last_in_at', 'is', null)
+          .lt('last_in_at', limite)
+          .order('last_in_at', { ascending: false })
+          .limit(TETO_CANDIDATOS),
+      ]);
+
+      // Sem resposta = nenhuma saída DEPOIS da última entrada. Uma consulta só
+      // para todos os candidatos, comparando por lead.
+      let esperando = [];
+      const ids = (candidatos.data || []).map((l) => l.id);
+      if (ids.length) {
+        const { data: saidas } = await supabaseAdmin.from('prospect_messages')
+          .select('lead_id, created_at')
+          .eq('direcao', 'out')
+          .in('lead_id', ids);
+        const ultimaSaida = {};
+        for (const m of (saidas || [])) {
+          if (!ultimaSaida[m.lead_id] || m.created_at > ultimaSaida[m.lead_id]) {
+            ultimaSaida[m.lead_id] = m.created_at;
+          }
+        }
+        esperando = (candidatos.data || [])
+          .filter((l) => !ultimaSaida[l.id] || ultimaSaida[l.id] < l.last_in_at)
+          .map((l) => ({
+            id: l.id,
+            name: l.name,
+            horas: Math.floor((Date.now() - new Date(l.last_in_at).getTime()) / 3600000),
+          }));
+      }
+      // Varredura truncada: o total é piso, não valor exato.
+      const parcial = (candidatos.data || []).length >= TETO_CANDIDATOS;
+
+      const crons = (saude?.jobs || [])
+        .filter((j) => CRONS_DO_MOTOR.includes(j.name))
+        .map((j) => ({ name: j.name, status: j.status, age: j.age }));
+
+      return res.status(200).json({
+        success: true,
+        data: {
+          llm: { status: llm.status, detalhe: llm.detalhe },
+          // null quando a checagem de cron falhou — o front mostra "não sei",
+          // que é diferente de "está tudo bem".
+          crons: saude ? crons : null,
+          esperando: {
+            horas_minimas: HORAS_ESPERANDO,
+            total: esperando.length,
+            parcial,
+            leads: esperando.slice(0, 5),
+          },
+        },
+      });
+    }
+
     // ---- Insights (F7): mined from outcomes/messages already collected --------
     if (req.method === 'GET' && action === 'insights') {
       const dias = Math.min(Math.max(parseInt(req.query.dias, 10) || 30, 7), 90);

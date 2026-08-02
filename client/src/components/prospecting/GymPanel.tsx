@@ -4,6 +4,7 @@ import { api } from '../../services/api';
 import { GlassPanel, GlassCard } from '../common/glass';
 import { useToast } from '../../contexts/ToastContext';
 import { apiError, fmtTime } from './types';
+import PanelError from './PanelError';
 
 /**
  * Treino (Gym, Phase 10): run persona scenarios against the REAL brain in a
@@ -144,6 +145,13 @@ export default function GymPanel() {
           )}
 
           {/* Scenarios */}
+          {gymQ.isError && (
+            <PanelError
+              oQue="os exercícios da academia"
+              consequencia="Sem a lista carregada, não dá para saber quais cenários existem nem o resultado dos últimos treinos."
+              onRetry={() => gymQ.refetch()}
+            />
+          )}
           {gymQ.isLoading && <p className="text-sm text-stone-500">Carregando…</p>}
           {d && (
             <div className="grid sm:grid-cols-2 gap-2">
