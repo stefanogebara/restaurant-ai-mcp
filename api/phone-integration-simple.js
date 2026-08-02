@@ -122,38 +122,11 @@ async function handleRegister(req, res) {
     });
   }
 
-  // If agent not in restaurant_config, fall back to restaurant_info (legacy storage path)
-  let agentId = restaurant.elevenlabs_agent_id;
-  if (!agentId) {
-    const { data: infoRow } = await supabaseAdmin
-      .schema('restaurant')
-      .from('restaurant_info')
-      .select('elevenlabs_agent_id')
-      .eq('restaurant_name', restaurant.restaurant_name)
-      .single();
-    agentId = infoRow?.elevenlabs_agent_id || null;
-
-    // Sync back to restaurant_config so future lookups work.
-    // EE.2 — chain .select('id') so a 0-row match (RLS block / restaurant
-    // deleted mid-flight) surfaces in the logs instead of silently
-    // failing — the cached agentId would never make it back to DB and
-    // the next register attempt would re-fetch from restaurant_info.
-    if (agentId) {
-      const { error: syncErr, data: syncedRows } = await supabaseAdmin
-        .schema('restaurant')
-        .from('restaurant_config')
-        .update({ elevenlabs_agent_id: agentId })
-        .eq('id', restaurant_id)
-        .select('id');
-      if (syncErr || !syncedRows || syncedRows.length === 0) {
-        logger.warn('Sync-back of agentId failed (non-fatal — register proceeds)', {
-          restaurant_id, error: syncErr?.message, rows: syncedRows?.length,
-        });
-      } else {
-        logger.info(`Synced agent ${agentId} from restaurant_info to restaurant_config`);
-      }
-    }
-  }
+  // Fonte única: restaurant_config. O fallback que lia restaurant_info casando
+  // por `restaurant_name` foi removido em 02/08/2026 (tabela aposentada) — além
+  // de a tabela estar vazia, casar tenant por nome trocaria o agente de voz
+  // entre dois clientes homônimos.
+  const agentId = restaurant.elevenlabs_agent_id;
 
   if (!agentId) {
     return res.status(400).json({
@@ -610,17 +583,9 @@ async function handleFixTools(req, res) {
     return res.status(404).json({ success: false, error: 'Restaurant not found' });
   }
 
-  let agentId = restaurant.elevenlabs_agent_id;
-  if (!agentId) {
-    const { data: infoRow } = await supabaseAdmin
-      .schema('restaurant').from('restaurant_info')
-      .select('elevenlabs_agent_id').eq('restaurant_name', restaurant.restaurant_name).single();
-    agentId = infoRow?.elevenlabs_agent_id || null;
-    if (agentId) {
-      await supabaseAdmin.schema('restaurant').from('restaurant_config')
-        .update({ elevenlabs_agent_id: agentId }).eq('id', restaurant_id);
-    }
-  }
+  // Fonte única: restaurant_config (fallback por nome em restaurant_info
+  // removido em 02/08/2026 — ver comentário no início do arquivo).
+  const agentId = restaurant.elevenlabs_agent_id;
 
   if (!agentId) {
     return res.status(404).json({ success: false, error: 'Restaurant agent not found. Complete onboarding first.' });
@@ -664,17 +629,9 @@ async function handleDiagnose(req, res) {
     return res.status(404).json({ success: false, error: 'Restaurant not found' });
   }
 
-  let resolvedAgentId = restaurant.elevenlabs_agent_id;
-  if (!resolvedAgentId) {
-    const { data: infoRow } = await supabaseAdmin
-      .schema('restaurant').from('restaurant_info')
-      .select('elevenlabs_agent_id').eq('restaurant_name', restaurant.restaurant_name).single();
-    resolvedAgentId = infoRow?.elevenlabs_agent_id || null;
-    if (resolvedAgentId) {
-      await supabaseAdmin.schema('restaurant').from('restaurant_config')
-        .update({ elevenlabs_agent_id: resolvedAgentId }).eq('id', restaurant_id);
-    }
-  }
+  // Fonte única: restaurant_config (fallback por nome em restaurant_info
+  // removido em 02/08/2026 — ver comentário no início do arquivo).
+  const resolvedAgentId = restaurant.elevenlabs_agent_id;
 
   if (!resolvedAgentId) {
     return res.status(404).json({ success: false, error: 'Restaurant agent not found. Complete onboarding first.' });

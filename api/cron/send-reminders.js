@@ -152,18 +152,13 @@ module.exports = async (req, res) => {
     const restaurantNameMap = {};
     const restaurantVoiceMap = {}; // { id: { voice_id, language } }
     if (uniqueRestaurantIds.length > 0) {
-      const { data: restaurantInfoRows, error: restaurantError } = await supabaseAdmin
-        .schema('restaurant')
-        .from('restaurant_info')
-        .select('id, restaurant_name')
-        .in('id', uniqueRestaurantIds);
-      if (restaurantError) {
-        logger.error(' Error fetching restaurant info:', restaurantError);
-      }
-      for (const row of (restaurantInfoRows || [])) {
-        restaurantNameMap[row.id] = row.restaurant_name;
-      }
-
+      // O nome vem de restaurant_config, junto com a config de voz, numa
+      // consulta só. Antes vinha de restaurant_info — tabela aposentada em
+      // 02/08/2026 — e como ela ficou VAZIA, restaurantNameMap vinha vazio: os
+      // lembretes saíam sem o nome do restaurante. Os ids das reservas sempre
+      // foram de restaurant_config (o onboarding realinha tudo pra lá), então
+      // esta é também a chave correta, não só a que tem dado.
+      //
       // Fetch voice config for voice note reminders. reminder_voice_notes_enabled
       // is now an explicit opt-in flag (Phase U.2) — having a voice_id alone
       // no longer triggers TTS, because that would fire ~$0.03 of ElevenLabs
@@ -173,12 +168,13 @@ module.exports = async (req, res) => {
       const { data: configRows, error: configError } = await supabaseAdmin
         .schema('restaurant')
         .from('restaurant_config')
-        .select('id, voice_id, ai_config, reminder_voice_notes_enabled')
+        .select('id, restaurant_name, voice_id, ai_config, reminder_voice_notes_enabled')
         .in('id', uniqueRestaurantIds);
       if (configError) {
         logger.warn('Error fetching restaurant voice config:', configError);
       }
       for (const row of (configRows || [])) {
+        restaurantNameMap[row.id] = row.restaurant_name;
         restaurantVoiceMap[row.id] = {
           voice_id: row.voice_id,
           language: row.ai_config?.language || 'en',

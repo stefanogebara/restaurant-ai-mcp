@@ -75,14 +75,25 @@ jest.mock('../_lib/supabase', () => {
       }),
       schema: jest.fn(() => ({
         from: jest.fn((table) => {
-          const configData = (mockReservations || []).map(r => ({ id: r.restaurant_id, timezone: 'UTC' }));
+          // O NOME agora sai de restaurant_config, junto com timezone e voz.
+          // Antes vinha de restaurant_info, aposentada em 02/08/2026 — e como
+          // aquela tabela ficou vazia em produção, os lembretes saíam sem o nome
+          // do restaurante. `mockRestaurantInfoRows` continua sendo a fonte dos
+          // nomes NO TESTE, só que agora é servida na linha de config, que é de
+          // onde o código lê.
+          const nomePorId = Object.fromEntries(
+            (mockRestaurantInfoRows || []).map((r) => [r.id, r.restaurant_name])
+          );
+          const configData = (mockReservations || []).map(r => ({
+            id: r.restaurant_id,
+            timezone: 'UTC',
+            restaurant_name: nomePorId[r.restaurant_id],
+          }));
           const selectResult = {
-            // For restaurant_info queries that chain .in()
             in: jest.fn(() => Promise.resolve({
               data: table === 'restaurant_config' ? configData : mockRestaurantInfoRows,
               error: null,
             })),
-            // For restaurant_config queries that await select() directly
             then: (resolve) => resolve({
               data: table === 'restaurant_config' ? configData : mockRestaurantInfoRows,
               error: null,

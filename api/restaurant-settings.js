@@ -159,43 +159,37 @@ module.exports = async function handler(req, res) {
     }
 
     // GET /profile
-    // metric_profile and language live on restaurant_info, not restaurant_config
+    // metric_profile vive em restaurant_config desde 02/08/2026 (aposentadoria
+    // de restaurant_info). Antes lia da tabela legada e caía num fallback —
+    // como ela ficou vazia, o fallback virou o único caminho e NENHUM perfil
+    // salvo era lido de volta.
     if (method === 'GET' && path.includes('/profile')) {
-      const { data: restaurant, error } = await supabase
+      const { data: config, error } = await supabase
         .schema('restaurant')
-        .from('restaurant_info')
-        .select('metric_profile, language')
+        .from('restaurant_config')
+        .select('metric_profile, agent_language')
         .eq('id', restaurantId)
-        .single();
+        .maybeSingle();
 
       if (error) {
-        // Fall back to restaurant_config.agent_language if restaurant_info doesn't exist
-        const { data: configData } = await supabase
-          .schema('restaurant')
-          .from('restaurant_config')
-          .select('agent_language')
-          .eq('id', restaurantId)
-          .single();
-
-        if (!configData) {
-          logger.error('Error fetching profile:', error);
-          return res.status(500).json({ success: false, error: 'Failed to fetch profile' });
-        }
-
-        const profile = getDefaultMetricProfile(configData.agent_language || 'en');
-        return res.status(200).json({ success: true, data: profile });
+        logger.error('Error fetching profile:', error);
+        return res.status(500).json({ success: false, error: 'Failed to fetch profile' });
       }
 
-      if (!restaurant) {
+      if (!config) {
         return res.status(404).json({ success: false, error: 'Restaurant not found' });
       }
 
-      const profile = restaurant.metric_profile || getDefaultMetricProfile(restaurant.language);
+      // Sem perfil salvo, devolve o padrão derivado do idioma — é o
+      // comportamento que o front já esperava.
+      const profile = config.metric_profile || getDefaultMetricProfile(config.agent_language || 'en');
       return res.status(200).json({ success: true, data: profile });
     }
 
     // PUT /profile
-    // metric_profile lives on restaurant_info, not restaurant_config
+    // Gravava em restaurant_info. Como a tabela ficou VAZIA, o update não
+    // achava linha, o .single() virava erro e o endpoint devolvia 500: salvar o
+    // perfil estava quebrado em produção. Agora grava em restaurant_config.
     if (method === 'PUT' && path.includes('/profile')) {
       const { metric_profile } = req.body;
 
@@ -210,15 +204,21 @@ module.exports = async function handler(req, res) {
 
       const { data, error } = await supabase
         .schema('restaurant')
-        .from('restaurant_info')
+        .from('restaurant_config')
         .update({ metric_profile })
         .eq('id', restaurantId)
         .select('metric_profile')
-        .single();
+        .maybeSingle();
 
       if (error) {
         logger.error('Error updating profile:', error);
         return res.status(500).json({ success: false, error: 'Failed to update profile' });
+      }
+
+      // maybeSingle não erra em 0 linhas — restaurante inexistente precisa dar
+      // 404, não um 200 mentindo que salvou.
+      if (!data) {
+        return res.status(404).json({ success: false, error: 'Restaurant not found' });
       }
 
       return res.status(200).json({ success: true, message: 'Profile updated successfully', data: data.metric_profile });

@@ -97,9 +97,14 @@ function elevenLabsHeaders(apiKey) {
 /**
  * Resolve the ElevenLabs agent ID for a restaurant.
  *
- * 1. Check restaurant_config.elevenlabs_agent_id
- * 2. Fallback: check restaurant_info by restaurant_name
- * 3. If found only in restaurant_info, sync back to restaurant_config
+ * Fonte única: restaurant_config.elevenlabs_agent_id.
+ *
+ * Havia um fallback que procurava em restaurant_info POR NOME e sincronizava de
+ * volta. Removido em 02/08/2026 junto com a aposentadoria da tabela. Dois
+ * motivos, e o segundo é o que pesa:
+ *   - restaurant_info está vazia; o fallback só podia devolver null.
+ *   - casar restaurante por `restaurant_name` é frágil num sistema multi-tenant:
+ *     dois clientes com o mesmo nome trocariam de agente de voz entre si.
  *
  * @param {string} restaurantId - UUID of the restaurant
  * @returns {Promise<string|null>} Agent ID or null
@@ -124,46 +129,7 @@ async function getAgentIdForRestaurant(restaurantId) {
       return null;
     }
 
-    if (config.elevenlabs_agent_id) {
-      return config.elevenlabs_agent_id;
-    }
-
-    // 2. Fallback: restaurant_info (legacy)
-    if (!config.restaurant_name) {
-      return null;
-    }
-
-    const { data: infoRow, error: infoError } = await supabaseAdmin
-      .schema('restaurant')
-      .from('restaurant_info')
-      .select('elevenlabs_agent_id')
-      .eq('restaurant_name', config.restaurant_name)
-      .maybeSingle();
-
-    if (infoError) {
-      logger.error('Failed to fetch restaurant_info fallback', { restaurantId, error: infoError.message });
-      return null;
-    }
-
-    if (!infoRow?.elevenlabs_agent_id) {
-      return null;
-    }
-
-    // 3. Sync back to restaurant_config
-    const { error: syncError } = await supabaseAdmin
-      .schema('restaurant')
-      .from('restaurant_config')
-      .update({ elevenlabs_agent_id: infoRow.elevenlabs_agent_id })
-      .eq('id', restaurantId);
-
-    if (syncError) {
-      logger.error('Failed to sync agent ID to restaurant_config', { restaurantId, error: syncError.message });
-      // Still return the agent ID even if sync failed
-    } else {
-      logger.info('Synced agent ID from restaurant_info to restaurant_config', { restaurantId });
-    }
-
-    return infoRow.elevenlabs_agent_id;
+    return config.elevenlabs_agent_id || null;
   } catch (err) {
     logger.error('getAgentIdForRestaurant error', { restaurantId, error: err.message });
     return null;
