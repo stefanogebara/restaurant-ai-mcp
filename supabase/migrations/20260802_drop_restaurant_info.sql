@@ -1,0 +1,75 @@
+-- 2026-08-02 — DROP de restaurant.restaurant_info (aposentadoria concluída)
+--
+-- A tabela era legado: ZERO linhas contra 37 em restaurant.restaurant_config.
+-- Todo leitor dela já recebia null, o que escondeu quatro bugs vivos até a
+-- varredura de 02/08/2026 (o pior: check-late-reservations lia o fuso daqui,
+-- caía no default UTC e marcava cliente como no-show até 3h antes da hora).
+--
+-- O código parou de tocá-la nos commits f7eacc11, e06180d3, 811cb207, 0e33ec01
+-- e 4e91503c. Este arquivo remove a tabela do banco.
+--
+-- PRÉ-CHECAGEM feita em produção (ckforlwdhewexyqljsaf) imediatamente antes:
+--   linhas na tabela ............ 0
+--   FKs apontando para ela ...... 0
+--   views dependentes ........... 0
+--   usos no código .............. 0 (varredura em api/ e client/src/)
+-- Marcadores de identidade conferidos antes de escrever: 4686 prospect_leads,
+-- 37 restaurant_config.
+--
+-- Sem CASCADE de propósito: RESTRICT é o padrão e faz o DROP FALHAR se algo
+-- ainda depender da tabela. Preferir a falha barulhenta a destruir dependente
+-- silenciosamente.
+--
+-- BÔNUS DE SEGURANÇA: a tabela tinha a policy "Allow public read access to
+-- restaurant_info [SELECT] true" convivendo com uma coluna `twilio_auth_token`.
+-- Estando vazia, não houve exposição real — mas era um vazamento de credencial
+-- esperando por uma linha.
+DROP TABLE restaurant.restaurant_info;
+
+-- ---------------------------------------------------------------------------
+-- COMO DESFAZER (a tabela estava vazia; isto recria a ESTRUTURA, não dados)
+-- ---------------------------------------------------------------------------
+-- CREATE TABLE restaurant.restaurant_info (
+--   id uuid NOT NULL DEFAULT gen_random_uuid(),
+--   restaurant_name character varying NOT NULL,
+--   phone character varying,
+--   email character varying,
+--   address text,
+--   business_hours jsonb,
+--   avg_dining_duration_minutes integer DEFAULT 90,
+--   timezone character varying DEFAULT 'UTC',
+--   language character varying DEFAULT 'en',
+--   metric_profile jsonb DEFAULT jsonb_build_object(
+--     'template','simple','restaurant_type','traditional','size','medium',
+--     'location_type','residential',
+--     'primary_concerns', jsonb_build_array('no_shows','regular_customers'),
+--     'visible_metrics', jsonb_build_array('tables_available','todays_reservations',
+--       'priority_actions','current_occupancy','next_arrivals'),
+--     'hidden_metrics', jsonb_build_array('ml_confidence','model_version','roc_auc',
+--       'feature_importance','training_metrics'),
+--     'customizations', jsonb_build_object('risk_display','simple','time_format','24h',
+--       'currency','EUR','show_technical_details',false,'font_size','large',
+--       'language','es','color_scheme','default','notification_level','essential')),
+--   elevenlabs_agent_id text,
+--   elevenlabs_phone_number text,
+--   elevenlabs_phone_number_id text,
+--   agent_created_at timestamp with time zone,
+--   agent_voice_id text,
+--   agent_language text DEFAULT 'en',
+--   agent_updated_at timestamp with time zone,
+--   twilio_account_sid text,
+--   twilio_auth_token text,
+--   twilio_phone_number text,
+--   phone_integration_status text DEFAULT 'not_configured',
+--   phone_integration_error text,
+--   phone_configured_at timestamp with time zone,
+--   voice_settings jsonb DEFAULT '{"speed":1.0,"style":0.0,"stability":0.5,"similarity_boost":0.75}'::jsonb,
+--   tts_model_id text DEFAULT 'eleven_turbo_v2_5',
+--   created_at timestamp with time zone DEFAULT now(),
+--   updated_at timestamp with time zone DEFAULT now(),
+--   PRIMARY KEY (id)
+-- );
+-- CREATE TRIGGER update_restaurant_info_updated_at BEFORE UPDATE
+--   ON restaurant.restaurant_info FOR EACH ROW
+--   EXECUTE FUNCTION update_updated_at_column();
+-- -- NÃO recriar a policy de leitura pública: ela expunha twilio_auth_token.
