@@ -94,11 +94,28 @@ module.exports = async (req, res) => {
     const restaurantIds = [...new Set((candidateReservations || []).map((r) => r.restaurant_id))];
     const timezoneByRestaurant = {};
     if (restaurantIds.length > 0) {
-      const { data: tzRows } = await supabaseAdmin
+      // De restaurant_config, não de restaurant_info.
+      //
+      // BUG VIVO ATÉ 02/08/2026: lia de restaurant_info, tabela legada que
+      // ficou com ZERO linhas. O mapa vinha VAZIO e TODO restaurante caía no
+      // default 'UTC'. Para São Paulo (UTC−3) isso faz localToUtcDate devolver
+      // um instante 3h ANTERIOR ao real, então a reserva cruzava o limiar de
+      // atraso cedo demais: cliente marcado como no-show até 3 horas antes de
+      // sequer estar atrasado. Os ids das reservas sempre foram de
+      // restaurant_config, então esta é a chave certa — e a que tem dado.
+      const { data: tzRows, error: tzError } = await supabaseAdmin
         .schema('restaurant')
-        .from('restaurant_info')
+        .from('restaurant_config')
         .select('id, timezone')
         .in('id', restaurantIds);
+      if (tzError) {
+        // Sem fuso não dá pra decidir atraso: marcar no-show com timezone
+        // errado é pior que não marcar. Aborta o ciclo; o próximo tenta.
+        logger.error('Falha ao buscar timezones — ciclo abortado para não marcar no-show errado', {
+          error: tzError.message,
+        });
+        return res.status(500).json({ success: false, error: 'timezone_lookup_failed' });
+      }
       for (const row of (tzRows || [])) {
         timezoneByRestaurant[row.id] = row.timezone || 'UTC';
       }
