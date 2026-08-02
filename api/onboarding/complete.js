@@ -365,13 +365,44 @@ module.exports = async (req, res) => {
       }
     };
 
-    // Check if restaurant_info record exists (lives in 'restaurant' schema)
+    // Reaproveita a linha DESTE dono, nunca a de outro.
+    //
+    // Antes era `.select('id').limit(1).single()` — SEM FILTRO. Pegava a
+    // primeira linha da tabela, de quem quer que fosse, e o passo seguinte a
+    // sobrescrevia com os dados de quem estava entrando. Foi por isso que
+    // restaurant_info tinha UMA linha para 37 restaurantes: cada onboarding
+    // atropelava o anterior. Combinado com o rollback lá embaixo (que apagava
+    // essa linha e as mesas dela), um cadastro que falhasse destruía registro
+    // alheio. Verificado ao vivo em 02/08/2026 — apagou o trial de fevereiro.
+    //
+    // O e-mail é a chave natural: mesmo dono refazendo o setup atualiza a
+    // própria linha (comportamento que a versão antiga tentava ter), e dono
+    // diferente ganha linha nova.
+    const emailDono = email || customer_email;
     const { data: existingInfo, error: fetchError } = await supabaseAdmin
       .schema('restaurant')
       .from('restaurant_info')
       .select('id')
+      .eq('email', emailDono)
       .limit(1)
-      .single();
+      .maybeSingle();
+
+    if (fetchError) {
+      // Não seguir às cegas: sem saber se a linha existe, o insert pode
+      // duplicar e o update pode não achar. Falhar aqui é barato — o dono
+      // tenta de novo e nada foi escrito ainda.
+      logger.error(' Falha ao procurar restaurant_info do dono', {
+        code: fetchError.code, message: fetchError.message,
+      });
+      return res.status(500).json({
+        success: false,
+        error: 'restaurant_info_lookup_failed',
+        message: 'Não foi possível verificar seu cadastro. Tente novamente.',
+      });
+    }
+
+    // Só o rollback sabe se pode apagar: linha adotada não é nossa pra destruir.
+    const criamosOInfo = !existingInfo;
 
     let restaurantInfoResult;
     if (existingInfo) {
@@ -782,9 +813,21 @@ module.exports = async (req, res) => {
       // returned 200 OK while the user's dashboard / AI agent / WhatsApp
       // router were all invisible to them.
       try {
+        // As mesas são sempre nossas: o passo 2 limpou as antigas e inseriu
+        // estas. Apagar é o certo nos dois casos.
         await supabaseAdmin.from('tables').delete().eq('restaurant_id', restaurantInfoResult.id);
-        await supabaseAdmin.schema('restaurant').from('restaurant_info').delete().eq('id', restaurantInfoResult.id);
-        logger.info(' Rolled back restaurant_info + tables after config failure');
+
+        // A LINHA DE INFO, NÃO. Só apagar se ELE a criou neste request.
+        // Quando é reaproveitada (mesmo dono refazendo o setup), a linha
+        // preexiste ao pedido e apagá-la transforma "falhou o cadastro" em
+        // "perdeu o registro". Foi exatamente o que aconteceu em 02/08/2026,
+        // agravado porque a busca sem filtro adotava linha de terceiro.
+        if (criamosOInfo) {
+          await supabaseAdmin.schema('restaurant').from('restaurant_info').delete().eq('id', restaurantInfoResult.id);
+          logger.info(' Rolled back restaurant_info + tables after config failure');
+        } else {
+          logger.info(' Rolled back tables; restaurant_info preservado (preexistia ao pedido)');
+        }
       } catch (rollbackErr) {
         logger.warn(' Rollback failed (leaving orphaned rows):', rollbackErr.message);
       }
