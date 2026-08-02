@@ -346,7 +346,10 @@ module.exports = async (req, res) => {
         plan: plan || 'Starter',
         template: (plan === 'growth' || plan === 'Growth' || plan === 'scale' || plan === 'Scale') ? 'advanced' : 'simple',
         website: website || '',
-        menu_url: typeof menu_url === 'string' ? menu_url.trim().slice(0, 500) : '',
+        // menu_url saiu daqui em 01/08/2026. Este JSONB era abrigo temporário
+        // enquanto a coluna dedicada não existia; agora ela existe e é a fonte
+        // única (ver restaurantConfigData abaixo). Manter os dois seria duas
+        // verdades para o mesmo campo.
         // Só dígitos: o painel formata para exibir, mas comparar/consultar
         // depende do formato canônico.
         cnpj: typeof cnpj === 'string' ? cnpj.replace(/\D/g, '').slice(0, 14) : null,
@@ -610,20 +613,19 @@ module.exports = async (req, res) => {
       email: email || customer_email,
       phone: phone_number,
       website: website || null,
-      // menu_url NÃO vai aqui.
+      // menu_url voltou (01/08/2026): a coluna FOI criada em produção e o
+      // PostgREST a enxerga. Ela é o design correto — o cardápio é a fonte que
+      // a IA relê quando o dono troca preços, então precisa ser consultável,
+      // igual `website` logo acima.
       //
-      // Eu adicionei em 2460482f e quebrei o passo final do onboarding: a
-      // coluna não existe em `restaurant.restaurant_config` no projeto de
-      // PRODUÇÃO (confirmado via PostgREST: 42703 para `menu_url`, contra 42501
-      // para `website` — o erro de coluna inexistente precede o de permissão).
-      // O PostgREST rejeita coluna desconhecida, então o dono preenchia seis
-      // passos e não conseguia concluir.
-      //
-      // O valor segue guardado em `metric_profile` (JSONB, aceita chave nova
-      // sem migração) — ver acima. Quando a migração
-      // supabase/migrations/20260729_menu_url_restaurant_config.sql for
-      // aplicada em produção, esta linha pode voltar; até então, JSONB é o
-      // lugar que não depende de DDL.
+      // Histórico: adicionei esta linha em 2460482f sem criar a coluna e
+      // quebrei o passo final do onboarding (o PostgREST rejeita coluna
+      // desconhecida, e o dono preenchia seis passos sem conseguir concluir).
+      // O valor ficou abrigado em restaurant_info.metric_profile até o DDL sair.
+      // Agora a coluna é a fonte única: a chave duplicada no JSONB foi removida
+      // para não haver dois lugares dizendo a mesma coisa. Nenhum dado se
+      // perdeu — o abrigo estava vazio em todas as linhas existentes.
+      menu_url: typeof menu_url === 'string' && menu_url.trim() ? menu_url.trim().slice(0, 500) : null,
       voice_id: selected_voice_id || 'default',
       business_hours: validatedBusinessHours.reduce((acc, day) => {
         acc[day.day.toLowerCase()] = {

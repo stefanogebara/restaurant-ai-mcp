@@ -19,8 +19,10 @@
 const fs = require('fs');
 const path = require('path');
 
-// As 64 colunas de restaurant.restaurant_config, lidas do projeto de PRODUÇÃO
-// (ckforlwdhewexyqljsaf) em 2026-07-30, via PostgREST com service role.
+// As 67 colunas de restaurant.restaurant_config, lidas do projeto de PRODUÇÃO
+// (ckforlwdhewexyqljsaf) em 2026-08-01 via information_schema, depois de aplicar
+// as três que faltavam: menu_url, restaurant_profile e profile_generated_at.
+// (Eram 64 na leitura de 2026-07-30.)
 //
 // A versão anterior desta lista tinha 59 nomes e estava ERRADA: veio de um
 // `information_schema` consultado no projeto Supabase errado (o MCP desta
@@ -42,11 +44,12 @@ const COLUNAS_CONHECIDAS = new Set([
   'elevenlabs_webhook_secret', 'email', 'feedback_config', 'id',
   'instagram_tone_profile', 'is_active', 'is_demo', 'learning_status',
   'manager_phone', 'manager_whatsapp_code', 'manager_whatsapp_code_expires_at',
-  'manager_whatsapp_verified', 'max_concurrent_reservations',
+  'manager_whatsapp_verified', 'max_concurrent_reservations', 'menu_url',
   'notification_preferences', 'onboarding_completed', 'openai_voice_id',
-  'persona_prompt_override', 'phone', 'referral_code',
+  'persona_prompt_override', 'phone', 'profile_generated_at', 'referral_code',
   'reminder_voice_notes_enabled', 'reservation_settings', 'restaurant_name',
-  'restaurant_type', 'scraped_data', 'slug', 'staffing_config', 'survey_config',
+  'restaurant_profile', 'restaurant_type', 'scraped_data', 'slug',
+  'staffing_config', 'survey_config',
   'table_configuration', 'team_members', 'timezone', 'updated_at', 'user_id',
   'voice_engine', 'voice_engine_status', 'voice_id', 'voice_ws_endpoint',
   'website', 'whatsapp_enabled', 'whatsapp_phone_number', 'whatsapp_provider',
@@ -96,18 +99,17 @@ describe('payload do onboarding vs. colunas de restaurant_config', () => {
     expect(orfas).toEqual([]);
   });
 
-  test('menu_url NÃO está no payload — a coluna não existe em produção', () => {
-    // Confirmado via PostgREST no projeto de produção: `select menu_url` devolve
-    // 42703 (coluna não existe), enquanto `select website` devolve 42501
-    // (permissão) — ou seja, website existe e menu_url não. Enquanto a migração
-    // não for aplicada LÁ, incluir esta chave quebra o passo final do
-    // onboarding. O valor vive em metric_profile (JSONB).
-    expect(lerChavesDoPayload().has('menu_url')).toBe(false);
+  test('menu_url ESTÁ no payload — a coluna foi criada em produção', () => {
+    // Invertido em 01/08/2026. A coluna foi aplicada em ckforlwdhewexyqljsaf e
+    // verificada por dois caminhos: information_schema lista `menu_url`, e o
+    // PostgREST responde 200 a `select=menu_url` (era 42703). É o cache do
+    // PostgREST que derrubava o passo final do onboarding, então ele é o que
+    // precisa enxergar.
+    expect(lerChavesDoPayload().has('menu_url')).toBe(true);
   });
 
-  test('a migração de menu_url está versionada no repo, esperando aplicação', () => {
-    // Fica no repo para ser aplicada no projeto certo. Coluna que existe só num
-    // ambiente reaparece como bug em todos os outros.
+  test('a migração de menu_url está versionada no repo', () => {
+    // Coluna que existe só num ambiente reaparece como bug em todos os outros.
     const dir = path.join(__dirname, '..', '..', 'supabase', 'migrations');
     const temMigracao = fs.readdirSync(dir).some((f) => {
       if (!f.endsWith('.sql')) return false;
@@ -117,11 +119,14 @@ describe('payload do onboarding vs. colunas de restaurant_config', () => {
     expect(temMigracao).toBe(true);
   });
 
-  test('o cardápio não é perdido: segue em metric_profile, que é JSONB', () => {
-    // JSONB aceita chave nova sem DDL. É por isso que cnpj/razao_social/
-    // socio_confirmado nunca quebraram — e é o abrigo do menu_url por ora.
+  test('uma verdade só: o cardápio saiu do abrigo JSONB', () => {
+    // metric_profile (em restaurant_info) hospedou menu_url enquanto a coluna
+    // não existia. Manter os dois deixaria dois lugares dizendo a mesma coisa e
+    // ninguém sabendo qual manda. Nenhum dado se perdeu na troca: o abrigo
+    // estava vazio em todas as linhas existentes.
     const src = fs.readFileSync(path.join(__dirname, '..', 'onboarding', 'complete.js'), 'utf8');
     const bloco = src.slice(src.indexOf('metric_profile:'), src.indexOf('onboarding_completed_at'));
-    expect(bloco).toMatch(/menu_url/);
+    const chaveViva = bloco.split('\n').filter((l) => !l.trim().startsWith('//')).join('\n');
+    expect(chaveViva).not.toMatch(/menu_url\s*:/);
   });
 });
