@@ -19,10 +19,11 @@
 const fs = require('fs');
 const path = require('path');
 
-// As 67 colunas de restaurant.restaurant_config, lidas do projeto de PRODUÇÃO
-// (ckforlwdhewexyqljsaf) em 2026-08-01 via information_schema, depois de aplicar
-// as três que faltavam: menu_url, restaurant_profile e profile_generated_at.
-// (Eram 64 na leitura de 2026-07-30.)
+// As 69 colunas de restaurant.restaurant_config, lidas do projeto de PRODUÇÃO
+// (ckforlwdhewexyqljsaf) em 2026-08-02 via information_schema.
+// Histórico: 64 em 30/07 → 67 em 01/08 (menu_url, restaurant_profile,
+// profile_generated_at) → 69 em 02/08 (metric_profile e owner_metric_profile,
+// que vieram de restaurant_info quando ela foi aposentada).
 //
 // A versão anterior desta lista tinha 59 nomes e estava ERRADA: veio de um
 // `information_schema` consultado no projeto Supabase errado (o MCP desta
@@ -45,7 +46,9 @@ const COLUNAS_CONHECIDAS = new Set([
   'instagram_tone_profile', 'is_active', 'is_demo', 'learning_status',
   'manager_phone', 'manager_whatsapp_code', 'manager_whatsapp_code_expires_at',
   'manager_whatsapp_verified', 'max_concurrent_reservations', 'menu_url',
+  'metric_profile',
   'notification_preferences', 'onboarding_completed', 'openai_voice_id',
+  'owner_metric_profile',
   'persona_prompt_override', 'phone', 'profile_generated_at', 'referral_code',
   'reminder_voice_notes_enabled', 'reservation_settings', 'restaurant_name',
   'restaurant_profile', 'restaurant_type', 'scraped_data', 'slug',

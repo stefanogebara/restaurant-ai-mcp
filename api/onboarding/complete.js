@@ -2,7 +2,7 @@
  * POST /api/onboarding/complete
  *
  * Completes the entire restaurant onboarding process:
- * 1. Updates restaurant_info table with restaurant configuration
+ * 1. Gera o id do restaurante e monta os metadados do cadastro
  * 2. Creates tables in the tables table
  * 3. Returns success response
  *
@@ -320,24 +320,24 @@ module.exports = async (req, res) => {
     const resolvedLanguage = COUNTRY_LANGUAGE_MAP[resolvedCountryIso] || 'en';
     const resolvedTimezone = suggestTimezone(resolvedCountryIso || country, city);
 
-    // STEP 1: Update restaurant_info table
-    logger.info(' Step 1: Updating restaurant_info...');
-
-    // Map onboarding fields to actual database schema
-    const restaurantInfoData = {
-      restaurant_name,
-      phone: phone_number,  // Schema uses 'phone' not 'phone_number'
-      email: email,
-      address: `${city}, ${country}`,
-      business_hours: validatedBusinessHours,
-      avg_dining_duration_minutes: average_dining_duration || 90,  // Schema uses this name
-      timezone: resolvedTimezone,
-      language: resolvedLanguage,
-      // Store additional metadata in metric_profile JSON field
-      // Template is auto-derived from subscription plan:
-      // - Basic/Free → simple template
-      // - Professional/Pro → advanced template
-      metric_profile: {
+    // Metadados do cadastro, gravados em restaurant_config.metric_profile.
+    //
+    // Antes iam para restaurant_info junto com uma cópia de restaurant_name,
+    // phone, email, address, business_hours, timezone e language — todos campos
+    // que restaurant_config já tem por conta própria. Com a tabela aposentada
+    // (02/08/2026) sobra só este blob, e ele tem casa natural em
+    // `metric_profile`: é exatamente o que os leitores de lá esperam —
+    // subscription-middleware:299 lê `.plan` como fallback do plano e
+    // constants.js:72 lê `.default_dining_duration`.
+    //
+    // NÃO confundir com `owner_metric_profile`, que é o que o dono escolhe
+    // acompanhar na tela de Configurações. São coisas diferentes em colunas
+    // diferentes, de propósito — misturá-las apagaria o plano do cliente.
+    //
+    // Template is auto-derived from subscription plan:
+    // - Basic/Free → simple template
+    // - Professional/Pro → advanced template
+    const onboardingMetricProfile = {
         customer_email,
         restaurant_id: generatedRestaurantId,
         restaurant_type: validatedRestaurantType,  // Use validated value
@@ -362,75 +362,23 @@ module.exports = async (req, res) => {
         advance_booking_days: advance_booking_days || 30,
         buffer_time: buffer_time || 15,
         onboarding_completed_at: new Date().toISOString()
-      }
     };
 
-    // Reaproveita a linha DESTE dono, nunca a de outro.
+    // O id do restaurante nasce aqui, e não de uma linha de restaurant_info.
     //
-    // Antes era `.select('id').limit(1).single()` — SEM FILTRO. Pegava a
-    // primeira linha da tabela, de quem quer que fosse, e o passo seguinte a
-    // sobrescrevia com os dados de quem estava entrando. Foi por isso que
-    // restaurant_info tinha UMA linha para 37 restaurantes: cada onboarding
-    // atropelava o anterior. Combinado com o rollback lá embaixo (que apagava
-    // essa linha e as mesas dela), um cadastro que falhasse destruía registro
-    // alheio. Verificado ao vivo em 02/08/2026 — apagou o trial de fevereiro.
+    // restaurant.restaurant_info foi APOSENTADA em 02/08/2026: era legado com
+    // ZERO linhas contra 37 em restaurant_config, e existia neste fluxo só para
+    // emprestar um id temporário às mesas — que o passo 3b depois realinhava
+    // para o id do config. Gerar o id de uma vez remove a linha, o realinhamento
+    // e a classe inteira de bugs que vinha junto (o passo 1 adotava a linha de
+    // OUTRO dono e o rollback a apagava; em 02/08 isso destruiu um registro
+    // real).
     //
-    // O e-mail é a chave natural: mesmo dono refazendo o setup atualiza a
-    // própria linha (comportamento que a versão antiga tentava ter), e dono
-    // diferente ganha linha nova.
-    const emailDono = email || customer_email;
-    const { data: existingInfo, error: fetchError } = await supabaseAdmin
-      .schema('restaurant')
-      .from('restaurant_info')
-      .select('id')
-      .eq('email', emailDono)
-      .limit(1)
-      .maybeSingle();
-
-    if (fetchError) {
-      // Não seguir às cegas: sem saber se a linha existe, o insert pode
-      // duplicar e o update pode não achar. Falhar aqui é barato — o dono
-      // tenta de novo e nada foi escrito ainda.
-      logger.error(' Falha ao procurar restaurant_info do dono', {
-        code: fetchError.code, message: fetchError.message,
-      });
-      return res.status(500).json({
-        success: false,
-        error: 'restaurant_info_lookup_failed',
-        message: 'Não foi possível verificar seu cadastro. Tente novamente.',
-      });
-    }
-
-    // Só o rollback sabe se pode apagar: linha adotada não é nossa pra destruir.
-    const criamosOInfo = !existingInfo;
-
-    let restaurantInfoResult;
-    if (existingInfo) {
-      // Update existing record
-      const { data, error } = await supabaseAdmin
-        .schema('restaurant')
-        .from('restaurant_info')
-        .update(restaurantInfoData)
-        .eq('id', existingInfo.id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      restaurantInfoResult = data;
-      logger.info(' Restaurant info updated');
-    } else {
-      // Insert new record
-      const { data, error } = await supabaseAdmin
-        .schema('restaurant')
-        .from('restaurant_info')
-        .insert(restaurantInfoData)
-        .select()
-        .single();
-
-      if (error) throw error;
-      restaurantInfoResult = data;
-      logger.info(' Restaurant info created');
-    }
+    // O UUID é gerado aqui e usado como restaurant_config.id no passo 3, então
+    // mesas, registry, assinatura e config compartilham a mesma chave desde o
+    // primeiro insert.
+    const restaurantId = crypto.randomUUID();
+    logger.info(` Id do restaurante gerado: ${restaurantId}`);
 
     // STEP 2: Create Tables
     logger.info(' Step 2: Creating tables...');
@@ -439,12 +387,12 @@ module.exports = async (req, res) => {
     const { error: deleteError } = await supabaseAdmin
       .from('tables')
       .delete()
-      .eq('restaurant_id', restaurantInfoResult.id);
+      .eq('restaurant_id', restaurantId);
 
     if (deleteError) {
       logger.warn(' Warning: Could not delete existing tables:', deleteError);
     } else {
-      logger.info(` Cleared existing tables for restaurant ${restaurantInfoResult.id}`);
+      logger.info(` Cleared existing tables for restaurant ${restaurantId}`);
     }
 
     // Create new tables from areas configuration
@@ -455,7 +403,7 @@ module.exports = async (req, res) => {
       for (const tableConfig of area.tables || []) {
         for (let i = 0; i < tableConfig.count; i++) {
           tablesToInsert.push({
-            restaurant_id: restaurantInfoResult.id,
+            restaurant_id: restaurantId,
             table_number: tableNumber,
             capacity: tableConfig.capacity,
             location: area.name,
@@ -476,7 +424,7 @@ module.exports = async (req, res) => {
       logger.warn(' No tables provided in onboarding — creating 4 default tables');
       for (let i = 1; i <= 4; i++) {
         tablesToInsert.push({
-          restaurant_id: restaurantInfoResult.id,
+          restaurant_id: restaurantId,
           table_number: i,
           capacity: 4,
           location: 'Main',
@@ -631,16 +579,22 @@ module.exports = async (req, res) => {
 
     // Prepare restaurant_config data
     const restaurantConfigData = {
+      // Id FIXADO, não gerado pelo banco: é o mesmo que as mesas já usam, o que
+      // torna o antigo passo 3b (realinhar mesas) desnecessário.
+      id: restaurantId,
       restaurant_name,
       restaurant_type: mappedType,
       slug: restaurantSlug,
       city,
       // Store ISO country code on the config row so downstream consumers
-      // (timezone, weekly-report day filter, etc.) get the same answer here
-      // as from restaurant_info. Fall back to the raw form value if we
-      // couldn't resolve.
+      // (timezone, weekly-report day filter, etc.) get the same answer here.
+      // Fall back to the raw form value if we couldn't resolve.
       country: resolvedCountryIso || country,
       agent_language: resolvedLanguage,
+      // Metadados do cadastro (plano, template, CNPJ confirmado). Ver o bloco
+      // onde é montado, lá em cima, para por que fica em metric_profile.
+      // (timezone já é definido mais abaixo neste mesmo objeto.)
+      metric_profile: onboardingMetricProfile,
       email: email || customer_email,
       phone: phone_number,
       website: website || null,
@@ -746,21 +700,10 @@ module.exports = async (req, res) => {
         // No user_id, skip restaurant_config creation
         logger.info(' Skipping restaurant_config creation (no user_id)');
       }
-      // STEP 3b: Update tables to use restaurant_config.id as restaurant_id
-      // The dashboard resolves restaurant_id from restaurant_config, so tables must match
-      if (configResult && configResult.id !== restaurantInfoResult.id) {
-        logger.info(' Step 3b: Aligning tables restaurant_id with config id...');
-        const { error: alignError } = await supabaseAdmin
-          .from('tables')
-          .update({ restaurant_id: configResult.id })
-          .eq('restaurant_id', restaurantInfoResult.id);
-
-        if (alignError) {
-          logger.warn(' Could not align table restaurant_ids:', alignError);
-        } else {
-          logger.info(` Tables aligned to config id: ${configResult.id}`);
-        }
-      }
+      // O antigo passo 3b — realinhar tables.restaurant_id do id do
+      // restaurant_info para o do config — foi removido em 02/08/2026. Não há
+      // mais o que realinhar: as mesas já nascem com `restaurantId`, que é o
+      // mesmo id usado no insert do restaurant_config.
 
       // STEP 3c: Register in restaurant_registry so the WhatsApp router can
       // see this restaurant. Without this row, inbound WA messages never
@@ -813,21 +756,13 @@ module.exports = async (req, res) => {
       // returned 200 OK while the user's dashboard / AI agent / WhatsApp
       // router were all invisible to them.
       try {
-        // As mesas são sempre nossas: o passo 2 limpou as antigas e inseriu
-        // estas. Apagar é o certo nos dois casos.
-        await supabaseAdmin.from('tables').delete().eq('restaurant_id', restaurantInfoResult.id);
-
-        // A LINHA DE INFO, NÃO. Só apagar se ELE a criou neste request.
-        // Quando é reaproveitada (mesmo dono refazendo o setup), a linha
-        // preexiste ao pedido e apagá-la transforma "falhou o cadastro" em
-        // "perdeu o registro". Foi exatamente o que aconteceu em 02/08/2026,
-        // agravado porque a busca sem filtro adotava linha de terceiro.
-        if (criamosOInfo) {
-          await supabaseAdmin.schema('restaurant').from('restaurant_info').delete().eq('id', restaurantInfoResult.id);
-          logger.info(' Rolled back restaurant_info + tables after config failure');
-        } else {
-          logger.info(' Rolled back tables; restaurant_info preservado (preexistia ao pedido)');
-        }
+        // Só as mesas: são as únicas linhas que este request criou antes de
+        // falhar, e todas nasceram sob `restaurantId`, que é exclusivo deste
+        // cadastro. Não há mais linha de restaurant_info para desfazer — o id é
+        // gerado, não emprestado de um registro alheio (era daí que vinha o
+        // estrago de 02/08/2026).
+        await supabaseAdmin.from('tables').delete().eq('restaurant_id', restaurantId);
+        logger.info(' Rolled back tables after config failure');
       } catch (rollbackErr) {
         logger.warn(' Rollback failed (leaving orphaned rows):', rollbackErr.message);
       }
@@ -902,20 +837,10 @@ module.exports = async (req, res) => {
       if (agentResult.success) {
         agentId = agentResult.agent_id;
 
-        // Update restaurant_info with agent details
-        const voiceIdToSave = selected_voice_id || getDefaultVoiceId(selected_voice_language);
-        await supabaseAdmin
-          .schema('restaurant')
-          .from('restaurant_info')
-          .update({
-            elevenlabs_agent_id: agentId,
-            agent_voice_id: voiceIdToSave,
-            agent_language: selected_voice_language || resolvedLanguage || 'en',
-            agent_created_at: new Date().toISOString()
-          })
-          .eq('id', restaurantInfoResult.id);
-
-        // Also save agent_id to restaurant_config for webhook routing
+        // A gravação espelhada em restaurant_info saiu com a aposentadoria da
+        // tabela (02/08/2026). restaurant_config é a única fonte do agente —
+        // é de lá que o webhook e o phone-integration leem.
+        // Save agent_id to restaurant_config for webhook routing
         if (canonicalRestaurantId) {
           await supabaseAdmin
             .schema('restaurant')
@@ -964,7 +889,7 @@ module.exports = async (req, res) => {
     let trialSubscription = null;
     try {
       const now = new Date();
-      const canonicalRestaurantId = configResult?.id || restaurantInfoResult.id;
+      const canonicalRestaurantId = configResult?.id || restaurantId;
 
       let subscriptionData;
       if (isBrazil) {
@@ -1025,7 +950,7 @@ module.exports = async (req, res) => {
         restaurant_name,
         slug: restaurantSlug,
         booking_url: `/book/${restaurantSlug}`,
-        record_id: restaurantInfoResult.id,
+        record_id: restaurantId,
         tables_created: tablesToInsert.length,
         ai_config_saved: !!userId,
         trial_active: !!trialSubscription,

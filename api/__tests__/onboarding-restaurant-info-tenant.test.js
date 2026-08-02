@@ -120,13 +120,26 @@ beforeEach(() => {
   process.env.CRON_SECRET = 'x';
 });
 
-describe('não adotar linha de outro dono', () => {
-  test('a busca de restaurant_info filtra por e-mail', async () => {
+describe('não encostar em restaurant_info', () => {
+  // A garantia ficou MAIS FORTE que a original. A primeira correção (01/08) fez
+  // a busca filtrar por e-mail, para não adotar linha de terceiro. A
+  // aposentadoria da tabela (02/08) tornou a busca desnecessária: o id do
+  // restaurante é gerado no próprio request. Sem consulta, sem adoção, sem a
+  // classe de bug inteira.
+  test('nenhuma operação em restaurant_info, de nenhum tipo', async () => {
     await handler(pedido(), resposta());
-    const busca = buscasInfo()[0];
-    expect(busca).toBeDefined();
-    // O coração do bug: sem esta chave, a consulta pega a linha de qualquer um.
-    expect(busca.filtros.email).toBe('dono@teste.com');
+    const tocou = mockDb.ops.filter((o) => o.tabela === 'restaurant_info');
+    expect(tocou).toEqual([]);
+  });
+
+  test('mesas, config e registry compartilham o MESMO id', async () => {
+    // O antigo passo 3b existia porque as mesas nasciam com o id do
+    // restaurant_info e precisavam ser realinhadas ao do config. Agora nascem
+    // certas; este teste é o que garante que o realinhamento não faz falta.
+    await handler(pedido(), resposta());
+    const idDasMesas = mockDb.ops.find((o) => o.tabela === 'tables' && o.op === 'delete')?.filtros?.restaurant_id;
+    expect(idDasMesas).toBeTruthy();
+    expect(idDasMesas).toMatch(/^[0-9a-f-]{36}$/i); // uuid gerado, não emprestado
   });
 });
 
@@ -142,8 +155,7 @@ describe('rollback não apaga o que não criou', () => {
     expect(deletesInfo()).toHaveLength(0); // <<< o dano de 02/08 não se repete
   });
 
-  test('linha que ELE criou é apagada na falha (o rollback continua existindo)', async () => {
-    mockDb.infoExistente = null; // não existe → insert
+  test('na falha do config, apaga as MESAS e nada de restaurant_info', async () => {
     mockDb.configInsertFalha = true;
 
     const res = resposta();
@@ -154,10 +166,9 @@ describe('rollback não apaga o que não criou', () => {
     const erros = mockLogger.error.mock.calls.map(
       (c) => `${c[0]} :: ${c[1]?.message || c[1]?.stack || JSON.stringify(c[1])}`.slice(0, 260)
     );
-    const apagou = deletesInfo();
-    expect([res.code, res.corpo?.error, apagou.length, trilha, erros])
-      .toEqual([500, 'restaurant_config_insert_failed', 1, trilha, erros]);
-    expect(apagou[0].filtros.id).toBe('info-1');
+    const mesasApagadas = mockDb.ops.filter((o) => o.tabela === 'tables' && o.op === 'delete');
+    expect([res.code, res.corpo?.error, deletesInfo().length, mesasApagadas.length >= 1, trilha, erros])
+      .toEqual([500, 'restaurant_config_insert_failed', 0, true, trilha, erros]);
   });
 
   test('as mesas são apagadas nos dois casos — essas são sempre nossas', async () => {
