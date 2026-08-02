@@ -631,3 +631,30 @@ conhecido e conferir contra um valor apurado antes — contagem de
 de `cron_runs`. Só depois escrever. E verificar DEPOIS pelo efeito observável
 (o endpoint que estava quebrado voltando a responder), não pelo retorno da
 ferramenta.
+
+## Teste em produção: medir o "antes" e conferir o "depois" (02/08/2026)
+
+Rodei o onboarding de ponta a ponta contra o banco de produção para provar que
+menu_url chegava na coluna. O teste passou — e no caminho eu APAGUEI uma linha
+real de `restaurant.restaurant_info` (o registro de trial de fevereiro do
+fundador). Não foi o teste que apagou: foi o rollback do próprio handler, que
+adota a primeira linha da tabela (`.limit(1).single()` sem filtro) e depois a
+deleta quando o passo seguinte falha.
+
+Dois erros meus, distintos:
+
+1. **Não medi o estado antes.** Eu sabia de uma consulta anterior que
+   restaurant_info tinha 1 linha, mas por acaso, não por checagem deliberada.
+   Se não tivesse sabido, teria reportado "teste passou, limpeza ok" sem
+   perceber a perda. ANTES de qualquer teste que escreve em produção: contar as
+   linhas das tabelas que o fluxo toca e guardar o número.
+
+2. **A limpeza não rodou e eu só percebi porque olhei.** Li os ids em
+   `res.corpo.restaurant_id`, mas a resposta os aninha em
+   `res.corpo.restaurant.restaurant_id` — os ids vieram null e o `finally`
+   deletou nada, em silêncio. Limpeza que não confirma o que apagou é limpeza
+   que não aconteceu. Sempre imprimir a contagem de linhas removidas e conferir
+   contra o esperado.
+
+Regra: teste que escreve em produção precisa de censo antes, censo depois, e
+prova de que a limpeza removeu exatamente o que criou — nem mais, nem menos.
