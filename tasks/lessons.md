@@ -614,3 +614,20 @@ Regra: esperar deploy é comparar um marcador que SÓ o build novo produz —
 `/api/admin-health` devolve `VERCEL_GIT_COMMIT_SHA`; pollar até bater com
 `git rev-parse HEAD`. Condição de espera que já é verdadeira antes do trabalho
 começar não é espera, é `sleep` disfarçado.
+
+## Antes de DDL, provar a identidade do banco (01/08/2026)
+
+Duas vezes o MCP do Supabase apontou para um projeto que NÃO era produção. Em
+29/07 uma migration foi dada como aplicada e não estava — o cabeçalho do arquivo
+afirmava "já aplicada via MCP" e a coluna nunca existiu. Em 01/08 o MCP default
+desta sessão também não era produção (`public.prospect_leads` nem existia nele).
+
+As ferramentas não avisam: `apply_migration` devolve `{"success":true}` no banco
+errado com a mesma cara de sucesso.
+
+REGRA: antes de qualquer DDL, rodar uma consulta de identidade com marcador
+conhecido e conferir contra um valor apurado antes — contagem de
+`prospect_leads`, nº de colunas de `restaurant.restaurant_config` (64), linhas
+de `cron_runs`. Só depois escrever. E verificar DEPOIS pelo efeito observável
+(o endpoint que estava quebrado voltando a responder), não pelo retorno da
+ferramenta.

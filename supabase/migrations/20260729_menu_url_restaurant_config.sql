@@ -10,7 +10,19 @@
 -- Fica ao lado de `website`, que já é coluna pelo mesmo motivo.
 --
 -- Aditiva e nullable: nenhuma linha existente é reescrita, nada a migrar.
--- Já aplicada em produção em 2026-07-29 (via MCP); este arquivo versiona o DDL.
+--
+-- ATENÇÃO — NÃO ESTÁ APLICADA. Este cabeçalho dizia "Já aplicada em produção em
+-- 2026-07-29 (via MCP)". É FALSO, verificado em 01/08/2026: PostgREST responde
+-- 42703 para menu_url no projeto de produção (ckforlwdhewexyqljsaf), e
+-- information_schema não lista a coluna. O MCP daquela sessão apontava para
+-- OUTRO projeto — a mesma armadilha que voltou a aparecer em 01/08, quando o
+-- MCP default desta sessão também não era produção (nem tem prospect_leads).
+-- Regra que fica: antes de qualquer DDL, provar a identidade do banco com um
+-- marcador conhecido (contagem de prospect_leads, nº de colunas de
+-- restaurant_config), nunca confiar no projeto que a ferramenta assume.
+--
+-- Aplicar exige também devolver menu_url ao payload em
+-- api/onboarding/complete.js — só a coluna não restaura o fluxo.
 ALTER TABLE restaurant.restaurant_config
   ADD COLUMN IF NOT EXISTS menu_url TEXT;
 
