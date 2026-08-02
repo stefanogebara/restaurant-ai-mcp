@@ -398,7 +398,9 @@ module.exports = async (req, res) => {
           }
         }
 
-        // Also update restaurant_info.metric_profile.plan as fallback
+        // Grava o plano em restaurant_config.metric_profile (o comentário antigo
+        // dizia restaurant_info — desatualizado; a tabela foi aposentada em
+        // 02/08/2026 e updateRestaurantPlan já apontava pro config).
         const planUpdateResult = await updateRestaurantPlan(createRestaurantId, planName, customer.email);
         if (!planUpdateResult.success) {
           logger.error('Failed to update restaurant plan:', planUpdateResult.message);
@@ -492,7 +494,7 @@ module.exports = async (req, res) => {
           logger.info('Subscription updated in database:', subscriptionUpdated.id);
         }
 
-        // Also update restaurant_info.metric_profile.plan
+        // Grava o plano em restaurant_config.metric_profile (ver acima)
         if (updatedPlanName) {
           await updateRestaurantPlan(updateRestaurantId, updatedPlanName);
         }

@@ -141,37 +141,14 @@ async function getRestaurantById(restaurantId) {
       };
     }
 
-    // Fallback to restaurant_info table
-    logger.info(`[RestaurantLoader] Not found in restaurant_config, trying restaurant_info`);
-    const infoResult = await query
-      .schema('restaurant')
-      .from('restaurant_info')
-      .select('id, restaurant_name, phone, email, language, business_hours, avg_dining_duration_minutes, timezone')
-      .eq('id', restaurantId)
-      .single();
-
-    if (infoResult.error || !infoResult.data) {
-      logger.error('[RestaurantLoader] Not found in either table:', infoResult.error);
-      throw new Error(`Restaurant not found with ID: ${restaurantId}`);
-    }
-
-    const restaurant = infoResult.data;
-    logger.info(`[RestaurantLoader] Found restaurant in info: ${restaurant.restaurant_name}`);
-
-    return {
-      id: restaurant.id,
-      name: restaurant.restaurant_name,
-      restaurant_name: restaurant.restaurant_name,
-      phone: restaurant.phone,
-      email: restaurant.email,
-      language: restaurant.language || 'en',
-      business_hours: restaurant.business_hours || {},
-      average_dining_duration_minutes: restaurant.avg_dining_duration_minutes || 90,
-      timezone: restaurant.timezone || 'Europe/Madrid',
-      table_configuration: [],
-      reservation_settings: {},
-      team_members: []
-    };
+    // O fallback para restaurant_info saiu em 02/08/2026 com a aposentadoria da
+    // tabela (legada, ZERO linhas contra 37 em restaurant_config). Ele já era
+    // inalcançável na prática, e devolvia um restaurante MUTILADO quando
+    // acionado: table_configuration [], reservation_settings {} e timezone
+    // chutado como 'Europe/Madrid' — pior que não achar, porque o chamador
+    // recebia um objeto plausível e seguia com dados errados.
+    logger.error('[RestaurantLoader] Restaurante não existe em restaurant_config', { restaurantId });
+    throw new Error(`Restaurant not found with ID: ${restaurantId}`);
   } catch (error) {
     logger.error('[RestaurantLoader] Error loading restaurant:', error);
     throw error;
