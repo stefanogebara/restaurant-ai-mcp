@@ -159,15 +159,19 @@ module.exports = async function handler(req, res) {
     }
 
     // GET /profile
-    // metric_profile vive em restaurant_config desde 02/08/2026 (aposentadoria
-    // de restaurant_info). Antes lia da tabela legada e caía num fallback —
-    // como ela ficou vazia, o fallback virou o único caminho e NENHUM perfil
-    // salvo era lido de volta.
+    // Vive em restaurant_config.owner_metric_profile desde 02/08/2026
+    // (aposentadoria de restaurant_info). Antes lia da tabela legada e caía num
+    // fallback — como ela ficou vazia, o fallback virou o único caminho e
+    // NENHUM perfil salvo era lido de volta.
+    //
+    // NÃO usar `metric_profile`: aquela coluna carrega plano e duração de
+    // refeição, lidos por subscription-middleware e constants. O PUT abaixo
+    // substitui o objeto inteiro, então gravar ali apagaria o plano do cliente.
     if (method === 'GET' && path.includes('/profile')) {
       const { data: config, error } = await supabase
         .schema('restaurant')
         .from('restaurant_config')
-        .select('metric_profile, agent_language')
+        .select('owner_metric_profile, agent_language')
         .eq('id', restaurantId)
         .maybeSingle();
 
@@ -182,7 +186,7 @@ module.exports = async function handler(req, res) {
 
       // Sem perfil salvo, devolve o padrão derivado do idioma — é o
       // comportamento que o front já esperava.
-      const profile = config.metric_profile || getDefaultMetricProfile(config.agent_language || 'en');
+      const profile = config.owner_metric_profile || getDefaultMetricProfile(config.agent_language || 'en');
       return res.status(200).json({ success: true, data: profile });
     }
 
@@ -205,9 +209,9 @@ module.exports = async function handler(req, res) {
       const { data, error } = await supabase
         .schema('restaurant')
         .from('restaurant_config')
-        .update({ metric_profile })
+        .update({ owner_metric_profile: metric_profile })
         .eq('id', restaurantId)
-        .select('metric_profile')
+        .select('owner_metric_profile')
         .maybeSingle();
 
       if (error) {

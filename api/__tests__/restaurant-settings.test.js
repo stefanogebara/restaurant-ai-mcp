@@ -75,7 +75,7 @@ function createMockReqRes(overrides = {}) {
 beforeEach(() => {
   jest.clearAllMocks();
   useMockSingleImpl = false;
-  mockSupabaseResult = { data: { agent_language: 'en', restaurant_name: 'Test Restaurant', city: 'Madrid', country: 'ES', metric_profile: null, language: 'en' }, error: null };
+  mockSupabaseResult = { data: { agent_language: 'en', restaurant_name: 'Test Restaurant', city: 'Madrid', country: 'ES', owner_metric_profile: null, language: 'en' }, error: null };
 });
 
 // ============================================================
@@ -225,11 +225,11 @@ describe('RestaurantSettings: PUT basic settings', () => {
 // GET profile
 // ============================================================
 describe('RestaurantSettings: GET profile', () => {
-  test('returns default profile when metric_profile is null', async () => {
+  test('returns default profile when owner_metric_profile is null', async () => {
     verifyAuth.mockResolvedValueOnce({
       user: { restaurant_id: 'rest-1', email: 'admin@test.com' },
     });
-    mockSupabaseResult = { data: { metric_profile: null, language: 'en' }, error: null };
+    mockSupabaseResult = { data: { owner_metric_profile: null, language: 'en' }, error: null };
 
     const { req, res } = createMockReqRes({ method: 'GET', url: '/api/restaurant-settings/profile' });
     await handler(req, res);
@@ -240,7 +240,7 @@ describe('RestaurantSettings: GET profile', () => {
     expect(data.data.restaurant_type).toBe('traditional');
   });
 
-  test('returns stored profile when metric_profile exists', async () => {
+  test('returns stored profile when owner_metric_profile exists', async () => {
     verifyAuth.mockResolvedValueOnce({
       user: { restaurant_id: 'rest-1', email: 'admin@test.com' },
     });
@@ -254,12 +254,32 @@ describe('RestaurantSettings: GET profile', () => {
       hidden_metrics: [],
       customizations: {},
     };
-    mockSupabaseResult = { data: { metric_profile: storedProfile, language: 'en' }, error: null };
+    mockSupabaseResult = { data: { owner_metric_profile: storedProfile, language: 'en' }, error: null };
 
     const { req, res } = createMockReqRes({ method: 'GET', url: '/api/restaurant-settings/profile' });
     await handler(req, res);
     const data = res.json.mock.calls[0][0];
     expect(data.data.template).toBe('advanced');
+  });
+
+  test('NÃO lê metric_profile — aquela coluna guarda o plano do cliente', async () => {
+    // `metric_profile` é sobrecarregada: updateRestaurantPlan grava { plan,
+    // plan_updated_at } ali e subscription-middleware:299 lê `.plan` como
+    // fallback do plano da assinatura. Se esta tela lesse/gravasse na mesma
+    // coluna, o PUT (que substitui o objeto inteiro) APAGARIA o plano — perda
+    // de receita silenciosa. Um perfil colocado ali NÃO pode vazar pra cá.
+    verifyAuth.mockResolvedValueOnce({
+      user: { restaurant_id: 'rest-1', email: 'admin@test.com' },
+    });
+    mockSupabaseResult = {
+      data: { metric_profile: { template: 'advanced', plan: 'Growth' }, owner_metric_profile: null, language: 'en' },
+      error: null,
+    };
+
+    const { req, res } = createMockReqRes({ method: 'GET', url: '/api/restaurant-settings/profile' });
+    await handler(req, res);
+    const data = res.json.mock.calls[0][0];
+    expect(data.data.template).toBe('simple'); // o padrão, não o 'advanced' da coluna errada
   });
 });
 
