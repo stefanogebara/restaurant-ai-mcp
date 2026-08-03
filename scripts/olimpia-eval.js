@@ -80,6 +80,14 @@ const FAZER_SINTESE = !args.includes('--no-sintese');
 const SEQ = String(flag('seq', '001')).padStart(3, '0');
 const OUT_JSON_DIR = flag('out', process.env.TEMP || REPO);
 
+/**
+ * Só audita conversa POSTERIOR à última mudança de comportamento. Ver
+ * dataDaUltimaMudancaDePersona(). `--desde 0` desliga (auditar o histórico
+ * inteiro é legítimo para arqueologia, mas não para decidir o próximo ajuste).
+ */
+const DESDE_FLAG = flag('desde', null);
+/** `--desde 0` desliga o corte; sem flag, usa a data do último ajuste de comportamento. */
+const DESDE = DESDE_FLAG === '0' ? null : (DESDE_FLAG || dataDaUltimaMudancaDePersona());
 const JUIZ_MODEL = flag('juiz', 'anthropic/claude-opus-5');
 const SINTESE_MODEL = flag('sintese', 'anthropic/claude-fable-5');
 
@@ -176,11 +184,46 @@ function extrairJson(texto) {
 }
 
 // ---------------------------------------------------------------- corpus
+/**
+ * Data da última mudança de comportamento da agente.
+ *
+ * POR QUE ISTO EXISTE (eval-002, 03/08): o ciclo auditou 5 threads, TODAS de
+ * 05–14/07, e a síntese propôs duas mudanças que já estavam no código —
+ * o gate de nudge sem-humano (commit 59a4281c, 31/07) e a detecção
+ * determinística de eco (prospect-responder.js:470). O juiz não sabe a data do
+ * conserto: ele vê uma conversa de julho, aponta um defeito legítimo DAQUELE
+ * dia, e o relatório apresenta como estado atual.
+ *
+ * Sem este corte, quanto mais bugs você conserta, mais o eval vira máquina de
+ * propor retrabalho — e cada ciclo custa dinheiro para reconfirmar o passado.
+ */
+function dataDaUltimaMudancaDePersona() {
+  const arquivos = [
+    'api/_lib/prospecting/prospect-agent.js',
+    'api/_lib/prospecting/prospect-state.js',
+    'api/_lib/prospecting/prospect-nudge.js',
+    'api/_lib/prospecting/prospect-responder.js',
+  ];
+  try {
+    const { execFileSync } = require('child_process');
+    const saida = execFileSync('git', ['log', '-1', '--format=%cI', '--', ...arquivos],
+      { cwd: REPO, encoding: 'utf8' }).trim();
+    if (saida) return saida.slice(0, 10);
+  } catch { /* sem git: cai no fallback abaixo */ }
+  return null;
+}
+
 async function montarCorpus() {
+  // DESC + filtro por data. Antes era `order=created_at&limit=4000` — ascendente,
+  // ou seja, as 4000 mensagens MAIS ANTIGAS. Hoje a base tem 2881 e o teto não
+  // mordia, mas mordia em silêncio assim que passasse: o corpus viraria só
+  // passado sem ninguém notar. Ordem decrescente torna o teto inofensivo.
+  const filtro = DESDE ? `&created_at=gte.${DESDE}T00:00:00Z` : '';
   const [msgs, templates] = await Promise.all([
-    sb('prospect_messages?select=lead_id,direcao,tipo,corpo,created_at&order=created_at&limit=4000'),
+    sb(`prospect_messages?select=lead_id,direcao,tipo,corpo,created_at&order=created_at.desc&limit=4000${filtro}`),
     sb('prospect_templates?select=meta_template_name,variant_label,touch_number,body_preview'),
   ]);
+  msgs.reverse(); // volta à ordem cronológica para montar a transcrição
   const bodyPorNome = {};
   for (const t of templates) if (t.body_preview) bodyPorNome[t.meta_template_name] = t.body_preview;
 
@@ -212,10 +255,29 @@ async function montarCorpus() {
     .sort((a, b) => (a.ultima < b.ultima ? 1 : -1))
     .slice(0, MAX_THREADS);
 
+  // Diz em voz alta o que o corte deixou de fora. Silêncio aqui é como o
+  // eval-002 acabou auditando julho inteiro achando que media o presente.
+  if (DESDE) {
+    console.log(`corpus: recorte a partir de ${DESDE} (última mudança de comportamento) — ${threads.length} thread(s)`);
+    if (threads.length < 3) {
+      console.log('corpus: AVISO — amostra pequena. A agente conversou pouco desde a última mudança;');
+      console.log('        o resultado vale como sinal, não como medida. `--desde 0` audita o histórico todo.');
+    }
+  } else {
+    console.log('corpus: SEM recorte de data — auditando histórico completo, inclusive threads anteriores');
+    console.log('        aos consertos atuais. Bom para arqueologia, ruim para decidir o próximo ajuste.');
+  }
+
   for (const t of threads) {
+    const diasAtras = Math.floor((Date.now() - Date.parse(t.ultima)) / 86400000);
+    t.idade = { ultima: String(t.ultima).slice(0, 10), dias: diasAtras };
     t.flags = {
       ecoDeMaquina: preds ? preds.ecoDeMaquina(t.conversa) : null,
       semHumanoNaThread: preds ? preds.semHumanoNaThread(t.conversa) : null,
+      // Sem isto o juiz não tem como saber se está olhando comportamento atual
+      // ou fóssil: ele aponta um defeito real de julho e o relatório lê como
+      // "a agente faz isso hoje".
+      anteriorAoConsertoAtual: DESDE ? String(t.ultima).slice(0, 10) < DESDE : null,
     };
     t.transcricao = t.conversa.map((m) => {
       const hora = new Date(m.created_at).toISOString().slice(5, 16).replace('T', ' ');
@@ -272,6 +334,13 @@ async function julgar(t) {
     t.flags.ecoDeMaquina !== null
       ? `FLAGS DETERMINÍSTICAS DO SISTEMA: ecoDeMaquina=${t.flags.ecoDeMaquina}, semHumanoNaThread=${t.flags.semHumanoNaThread} (compare com seu veredito de interlocutor)`
       : null,
+    // A idade é contexto de julgamento, não enfeite: sem ela o juiz aponta um
+    // defeito real de julho e o relatório lê como comportamento de hoje.
+    `IDADE DA CONVERSA: última mensagem em ${t.idade.ultima} (${t.idade.dias} dias atrás)${
+      t.flags.anteriorAoConsertoAtual
+        ? ' — ATENÇÃO: anterior ao último ajuste de comportamento. Aponte o defeito, mas registre que pode já estar corrigido.'
+        : ''
+    }`,
     '',
     'TRANSCRIÇÃO (out=OLÍMPIA, in=LEAD):',
     t.transcricao,

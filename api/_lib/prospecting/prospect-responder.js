@@ -23,7 +23,7 @@ const { acquireProcessingLock, releaseProcessingLock } = require('../rate-limit'
 const { getProspectingPhoneNumberId } = require('./routing');
 const {
   deveResponder, detectarOptout, detectarRecusaSuave, RECUSA_INSTRUCTION, estadoAposAcao,
-  ecoDeMaquina, PORTEIRO_INSTRUCTION, PORTEIRO_MAX,
+  ecoDeMaquina, optoutIndevido, PORTEIRO_INSTRUCTION, PORTEIRO_MAX,
 } = require('./prospect-state');
 const { dentroDoHorario, decisaoForaDeHorario } = require('./prospect-hours');
 const { pacingDelayMs, splitReplyParts, partPauseDelayMs } = require('./prospect-pacing');
@@ -566,6 +566,21 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
     let dryRun = false;
     switch (acao.tipo) {
       case 'optout': {
+        // TRAVA: robô não recusa, e quem entrega contato não está recusando.
+        //
+        // Achado do eval-003: em 3 de 4 threads o interlocutor era 100% máquina
+        // e a conversa terminou em estado errado. No ESPETO DO LELECO a URA
+        // ENTREGOU o WhatsApp do decisor e a Olímpia respondeu marcando optout
+        // — o lead morreu no exato momento em que se abriu.
+        //
+        // O prompt já proibia VENDER pra máquina; não proibia ENCERRAR por
+        // causa dela. Instrução no prompt é intenção — isto é garantia.
+        // Vira 'ignorar': sem despedida, sem supressão, thread segue viva.
+        if (optoutIndevido(history)) {
+          await recordEvent(lead.id, '🛑 optout BLOQUEADO — decisão tomada sobre máquina ou sobre quem entregou contato, não sobre recusa humana');
+          logger.info(`[prospect] optout indevido barrado lead=${lead.id}`);
+          break;
+        }
         // Goodbye FIRST (suppression starts the moment the optout is recorded);
         // interpretResponse guarantees texto. One line, then permanent silence.
         if (acao.texto) {

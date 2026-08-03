@@ -413,6 +413,51 @@ function elegivelParaReengage({ lastIntent, ultimaMensagem, historico, resgatesE
   return { eligible: true, reason: 'ok' };
 }
 
+/**
+ * PURE: este optout foi decidido em cima de uma MÁQUINA?
+ *
+ * ACHADO DO EVAL-003 (03/08): em 3 de 4 threads o interlocutor era 100%
+ * autoatendimento e a conversa terminou em estado errado. No ESPETO DO LELECO a
+ * URA ENTREGOU o WhatsApp do decisor e a Olímpia respondeu marcando optout —
+ * perdemos o lead no exato momento em que ele se abriu. O Banzeiro virou
+ * 'recusou' sem nenhum humano ter dito não.
+ *
+ * O bloco INTERLOCUTOR do prompt já proibia VENDER pra máquina, mas não proibia
+ * ENCERRAR por causa dela. Prompt é instrução; isto aqui é garantia.
+ *
+ * USA semHumanoNaThread, NÃO ecoDeMaquina, de propósito. ecoDeMaquina olha só o
+ * último inbound e pegaria mais casos — inclusive um humano que recusou e
+ * depois teve um autoresponder disparado por cima. Optout é registro de LGPD e
+ * irreversível pela tela: ignorar recusa REAL é pior que deixar lead-robô
+ * aberto. Então só trava quando ninguém humano falou — aí não existe recusa
+ * possível, por definição.
+ */
+function optoutIndevido(history) {
+  // (a) Ninguém humano falou na thread inteira: não existe recusa possível.
+  if (semHumanoNaThread(history)) return true;
+
+  // (b) A última mensagem ENTREGOU um canal do responsável.
+  //
+  // Foi assim que perdemos o ESPETO DO LELECO: a URA respondeu "envie sua
+  // proposta diretamente para o WhatsApp do negócio: +55 11 94991-2248" e a
+  // Olímpia marcou optout. Repare que (a) NÃO pega este caso — a frase é
+  // corrida, não parece menu de robô, então semHumanoNaThread devolve false.
+  // Descobri isso porque o teste do Leleco falhou com a primeira versão desta
+  // função, que só tinha (a).
+  //
+  // Quem entrega o contato do decisor está ABRINDO a porta, não fechando.
+  // Tratar isso como recusa é o erro mais caro que a agente pode cometer.
+  try {
+    const ins = (history || []).filter((h) => h && h.tipo !== 'sys' && h.direcao === 'in' && h.corpo);
+    const ultima = ins[ins.length - 1];
+    if (!ultima) return false;
+    const { extrairNumeroIndicado } = require('./numero-indicado');
+    return Boolean(extrairNumeroIndicado(ultima.corpo, {}));
+  } catch {
+    return false; // na dúvida, respeitar a decisão do modelo
+  }
+}
+
 function semHumanoNaThread(history) {
   const ins = (history || []).filter((h) => h && h.tipo !== 'sys' && h.direcao === 'in');
   if (!ins.length) return false; // sem inbound nenhum: não é "só robô", é silêncio
@@ -495,6 +540,7 @@ module.exports = {
   elegivelParaReclaim,
   ecoDeMaquina,
   semHumanoNaThread,
+  optoutIndevido,
   elegivelParaReengage,
   INTENCOES_DE_RECUSA,
   RESGATE_MAX_POR_LEAD,

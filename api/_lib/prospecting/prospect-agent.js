@@ -185,6 +185,11 @@ function buildSystemPrompt(lead, agoraDescricao, styleBody = null) {
     'que caí no atendimento automático 🙂 quem cuida do salão ou de parcerias por aí?"). Se',
     'vier uma SEGUNDA mensagem automática sem humano no meio, chame ignorar — não insista.',
     'Nada do que uma mensagem automática diz conta como resposta humana.',
+    'MENSAGEM AUTOMÁTICA NUNCA É RECUSA. É PROIBIDO chamar marcar_optout, se',
+    'despedir em definitivo ou dizer "não te mando mais nada" por causa de robô —',
+    'recusa exige um HUMANO dizendo que não quer. Com máquina, o desfecho é ignorar.',
+    'E quem te ENTREGA um contato ("fale no 11 9xxxx", "manda pro e-mail tal") está',
+    'ABRINDO a porta, não fechando: isso é registrar_responsavel, jamais optout.',
     '',
     'REGRAS INEGOCIÁVEIS:',
     '1. NUNCA invente preço, número, caso de cliente, integração ou qualquer dado. Se não',
@@ -381,7 +386,7 @@ const PROSPECT_TOOLS = [
   },
   {
     name: 'marcar_optout',
-    description: 'Chame quando a pessoa pedir claramente para não receber mais mensagens. Definitivo (LGPD).',
+    description: 'Chame APENAS quando um HUMANO pedir explicitamente para não receber mais mensagens ("não quero", "para de mandar", "me tira da lista"). NUNCA em resposta a mensagem automática/URA — aí use ignorar. NUNCA quando te passarem um contato — aí use registrar_responsavel. Definitivo (LGPD).',
     input_schema: { type: 'object', properties: {} },
   },
   {
