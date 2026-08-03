@@ -159,7 +159,7 @@ module.exports = async (req, res) => {
       ];
       const limite = new Date(Date.now() - HORAS_ESPERANDO * 3600 * 1000).toISOString();
 
-      const [llm, saude, candidatos] = await Promise.all([
+      const [llm, saude, candidatos, indicados] = await Promise.all([
         require('./_lib/integration-probes').sondarOpenRouter(process.env).catch((e) => ({
           nome: 'ia_primaria_openrouter', status: 'falha', detalhe: `sonda falhou: ${e.message}`,
         })),
@@ -177,6 +177,15 @@ module.exports = async (req, res) => {
           .lt('last_in_at', limite)
           .order('last_in_at', { ascending: false })
           .limit(TETO_CANDIDATOS),
+        // Casas que publicaram OUTRO número (menu do robô, "fale com a
+        // central"). O Zé Leite mandou o número de reservas na primeira
+        // resposta e ninguém viu — duas semanas no número errado.
+        supabaseAdmin.from('prospect_leads')
+          .select('id, name, numero_indicado, numero_indicado_contexto')
+          .not('numero_indicado', 'is', null)
+          .not('prospect_state', 'in', '("ganho","optout")')
+          .order('numero_indicado_em', { ascending: false })
+          .limit(20),
       ]);
 
       // Sem resposta = nenhuma saída DEPOIS da última entrada. Uma consulta só
@@ -222,6 +231,13 @@ module.exports = async (req, res) => {
             parcial,
             leads: esperando.slice(0, 5),
           },
+          // A agente NÃO escreve para estes números — quem decide é o fundador.
+          indicados: (indicados.data || []).map((l) => ({
+            id: l.id,
+            name: l.name,
+            numero: l.numero_indicado,
+            contexto: l.numero_indicado_contexto,
+          })),
         },
       });
     }

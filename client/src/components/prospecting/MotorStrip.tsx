@@ -25,7 +25,11 @@ interface Motor {
     parcial?: boolean;
     leads: Array<{ id: string; name: string; horas: number }>;
   };
+  indicados?: Array<{ id: string; name: string; numero: string; contexto: string | null }>;
 }
+
+/** Link que abre o WhatsApp do fundador já na conversa certa. */
+const linkWhats = (numero: string) => `https://wa.me/${numero.replace(/\D/g, '')}`;
 
 const TOM: Record<string, string> = {
   ok: 'text-emerald-700',
@@ -78,8 +82,35 @@ export default function MotorStrip() {
   const m = q.data;
   const cronsRuins = (m.crons ?? []).filter((c) => c.status !== 'healthy');
   const esperandoStatus = m.esperando.total > 0 ? 'falha' : 'ok';
+  const indicados = m.indicados ?? [];
 
   return (
+    <div className="space-y-2">
+    {indicados.length > 0 && (
+      <details className="rounded-xl border border-sky-200 bg-sky-50/60 px-4 py-2">
+        <summary className="text-xs text-sky-900 cursor-pointer">
+          📇 <strong>{indicados.length}</strong> {indicados.length === 1 ? 'casa indicou' : 'casas indicaram'} outro número — a Olímpia não escreve para eles
+        </summary>
+        <p className="text-[11px] text-sky-800 mt-1.5 mb-2">
+          Números que a própria casa publicou (menu do robô, “fale com a central”). É contato frio sem modelo aprovado,
+          então quem decide falar é você — pelo seu WhatsApp.
+        </p>
+        <ul className="space-y-1.5">
+          {indicados.map((i) => (
+            <li key={i.id} className="text-xs">
+              <a href={linkWhats(i.numero)} target="_blank" rel="noreferrer" className="font-mono text-sky-900 underline">
+                {i.numero}
+              </a>
+              <span className="text-stone-700"> · {i.name}</span>
+              {i.contexto && (
+                <span className="block text-[10px] text-stone-500 truncate" title={i.contexto}>“{i.contexto}”</span>
+              )}
+            </li>
+          ))}
+        </ul>
+      </details>
+    )}
+
     <div className="rounded-xl border border-stone-200 bg-white/60 px-4 py-2 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-xs">
       <Item status={m.llm.status} title="Sem saldo no OpenRouter a Olímpia não consegue formular resposta — ela para de responder, mesmo com tudo o mais funcionando.">
         cérebro: {m.llm.detalhe}
@@ -114,6 +145,7 @@ export default function MotorStrip() {
           ? `${m.esperando.parcial ? 'pelo menos ' : ''}${m.esperando.total} esperando resposta há +${m.esperando.horas_minimas}h`
           : 'ninguém esperando resposta'}
       </Item>
+    </div>
     </div>
   );
 }

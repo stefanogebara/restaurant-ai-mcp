@@ -27,6 +27,7 @@ const { isOptedOut, findLeadByPhone, storeMessage, patchLead, recordEvent } = re
 const { respondToProspect } = require('./prospect-responder');
 const { extractProspectCorpo } = require('./prospect-parse');
 const { placeholderMidia } = require('./prospect-agent');
+const { extrairNumeroIndicado } = require('./numero-indicado');
 
 const logger = createSecureLogger('ProspectInbound');
 
@@ -111,6 +112,29 @@ async function handleProspectInbound(adapter, req) {
       retorno_em: null,
       retorno_motivo: null,
     };
+
+    // A casa publicou OUTRO número? O menu do autoatendimento costuma dizer
+    // para onde vai cada assunto ("2️⃣ Reservas 📲 / 1197321-0441"). O Zé Leite
+    // mandou isso na PRIMEIRA resposta e a agente seguiu oito mensagens
+    // perguntando quem cuidava de reservas, com o número na tela.
+    //
+    // Só registra — quem decide falar com esse número é o fundador. Escrever
+    // sozinha para um número que a casa publica para clientes, sem template
+    // aprovado, é pedido de denúncia.
+    //
+    // Não sobrescreve indicação anterior: a primeira costuma ser a do menu
+    // oficial, e re-registrar a cada mensagem faria o cockpit piscar sem motivo.
+    if (corpo && !lead.numero_indicado) {
+      const indicado = extrairNumeroIndicado(corpo, { numeroDoLead: lead.whatsapp_phone });
+      if (indicado) {
+        frescos.numero_indicado = indicado.numero;
+        frescos.numero_indicado_contexto = indicado.contexto;
+        frescos.numero_indicado_em = new Date().toISOString();
+        await recordEvent(lead.id, `📇 a casa indicou outro número: ${indicado.numero} — "${indicado.contexto.slice(0, 90)}"`);
+        logger.info(`[prospect] numero indicado lead=${lead.id} ${indicado.numero}`);
+      }
+    }
+
     await patchLead(lead.id, frescos);
     // MIRROR THE PATCH LOCALLY — do not delete this spread.
     // patchLead writes to the DB but returns only { ok }, so `lead` still holds

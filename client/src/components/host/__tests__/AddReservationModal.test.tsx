@@ -114,7 +114,14 @@ describe('AddReservationModal', () => {
 
   it('has date defaulting to today', () => {
     render(<AddReservationModal {...defaultProps} />);
-    const today = new Date().toISOString().split('T')[0];
+    // Data LOCAL, não toISOString().
+    //
+    // toISOString() devolve UTC: das 21h à meia-noite no Brasil (UTC-3) ele já
+    // aponta o dia seguinte, e o teste quebrava toda noite nessa janela — foi o
+    // que aconteceu em 02/08 às 23:27. O componente usa o dia local, que é o
+    // certo: o "hoje" de um restaurante é o do salão, não o de Greenwich.
+    const agora = new Date();
+    const today = `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, '0')}-${String(agora.getDate()).padStart(2, '0')}`;
     const dateInput = document.querySelector('input[type="date"]') as HTMLInputElement;
     expect(dateInput.value).toBe(today);
   });
