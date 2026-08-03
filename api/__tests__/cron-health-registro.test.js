@@ -56,6 +56,94 @@ describe('registro sem batimento é decoração', () => {
   });
 });
 
+describe('o registro não pode divergir do vercel.json', () => {
+  /**
+   * A DIVERGÊNCIA É O DEFEITO DE VERDADE. Quem adiciona um cron mexe no
+   * vercel.json e esquece do registro — foi assim que 5 jobs de prospecção
+   * (01/08) e outros 9 da casa (03/08) rodaram sem vigia. Nada quebra, nada
+   * avisa: o job simplesmente nunca é avaliado, e o painel some com ele.
+   *
+   * Este teste é a trava estrutural: agora esquecer QUEBRA A SUÍTE.
+   */
+  const vercel = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', 'vercel.json'), 'utf8'));
+  const nomeDoPath = (p) => String(p).split('?')[0].replace(/\/$/, '').split('/').pop();
+
+  /**
+   * Jobs que uma entrada do vercel.json decompõe em vários nomes no registro,
+   * via `?type=`. O handler é um só; o vigia acompanha cada tipo separado,
+   * porque um briefing da manhã parado é problema mesmo com o da noite em dia.
+   */
+  const DECOMPOSTOS = {
+    'manager-briefings': ['manager-briefings-morning', 'manager-briefings-eod'],
+    'manager-alerts': [
+      'manager-alerts-low-covers',
+      'manager-alerts-high-noshows',
+      'manager-alerts-late-cancellations',
+    ],
+    // O arquivo se chama monitor-*, mas grava em cron_runs como check-*.
+    // Quem manda é o nome no tracker: é por ele que o vigia procura.
+    'monitor-meta-token-expiry': ['check-meta-token-expiry'],
+  };
+
+  const agendados = [...new Set((vercel.crons || []).map((c) => nomeDoPath(c.path)))];
+
+  test.each(agendados)('%s está no vigia', (nome) => {
+    const esperados = DECOMPOSTOS[nome] || [nome];
+    for (const e of esperados) expect(acha(e)).toBeDefined();
+  });
+
+  test('nenhum nome registrado ficou órfão (cron removido do vercel.json)', () => {
+    const validos = new Set(agendados.flatMap((n) => DECOMPOSTOS[n] || [n]));
+    const orfaos = CRON_JOBS.map((j) => j.name).filter((n) => !validos.has(n));
+    expect(orfaos).toEqual([]);
+  });
+});
+
+describe('todo job registrado bate ponto com o próprio nome', () => {
+  /**
+   * Generaliza a checagem que antes só cobria a prospecção. Registro sem
+   * logCronRun fica em `never_run` para sempre — e `never_run` NÃO dispara
+   * alerta (health-alert só olha `stale` e `errors_14d`). Cobertura de mentira.
+   */
+  /** Onde mora o handler de cada nome registrado (quando não é cron/<nome>.js). */
+  const ARQUIVO_DE = {
+    'manager-briefings-morning': 'cron/manager-briefings',
+    'manager-briefings-eod': 'cron/manager-briefings',
+    'manager-alerts-low-covers': 'cron/manager-alerts',
+    'manager-alerts-high-noshows': 'cron/manager-alerts',
+    'manager-alerts-late-cancellations': 'cron/manager-alerts',
+    'check-meta-token-expiry': 'cron/monitor-meta-token-expiry',
+    'report-usage': 'report-usage', // fora de api/cron/
+  };
+
+  test.each(CRON_JOBS.map((j) => j.name))('%s', (nome) => {
+    const arquivo = path.join(__dirname, '..', `${ARQUIVO_DE[nome] || `cron/${nome}`}.js`);
+    const src = fs.readFileSync(arquivo, 'utf8');
+
+    // Duas exigências independentes, porque vários handlers montam o nome em
+    // variável (`const jobName = type === 'morning' ? ... : ...`) e um regex
+    // preso a `logCronRun('literal')` daria falso negativo neles:
+    //   (a) o arquivo REALMENTE chama o tracker;
+    //   (b) o nome registrado aparece literalmente nele.
+    // Junto, isso pega a divergência que importa — nome no registro que o
+    // handler nunca escreve, como monitor-* vs check-meta-token-expiry.
+    expect(/logCron(Run|Error)\s*\(/.test(src)).toBe(true);
+
+    // manager-alerts monta o nome por interpolação:
+    //   `manager-alerts-${alertType.replace(/_/g, '-')}`
+    // então o literal com hífen nunca aparece no arquivo. A prova aqui segue a
+    // MESMA transformação de volta: o tipo com underscore tem que estar lá.
+    // Sem isso eu teria que abrir exceção, e exceção em teste de cobertura é
+    // por onde a cobertura vaza.
+    const provas = [nome];
+    if (nome.startsWith('manager-alerts-')) {
+      provas.push(nome.replace('manager-alerts-', '').replace(/-/g, '_'));
+    }
+    const achou = provas.some((p) => src.includes(`'${p}'`) || src.includes(`"${p}"`) || src.includes(`\`${p}\``));
+    expect(achou).toBe(true);
+  });
+});
+
 /** Simula "agora - horas" e pergunta o status. */
 function statusApos(horas, intervalMinutes) {
   return getStatus(new Date(Date.now() - horas * 3600 * 1000).toISOString(), intervalMinutes);

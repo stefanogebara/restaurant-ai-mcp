@@ -27,6 +27,10 @@
 const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { runPublish, runPublishReel, MetaError } = require('../instagram/_lib/publish-flow');
+const { logCronRun } = require('../_lib/cron-tracker');
+
+/** Nome no vigia (api/_lib/cron-health.js). Mantenha os dois em sincronia. */
+const JOB_NAME = 'process-scheduled-ig-posts';
 
 const logger = createSecureLogger('cron-process-scheduled-ig-posts');
 
@@ -81,6 +85,11 @@ module.exports = async (req, res) => {
   }
 
   if (!candidates || candidates.length === 0) {
+    // Bate ponto TAMBÉM quando não há nada agendado — este é o caso comum
+    // (a maioria dos ticks de 15 min não tem post na fila). Registrar só a
+    // conclusão com trabalho faria o vigia marcar stale quase sempre, e alarme
+    // que grita à toa é alarme desligado.
+    await logCronRun(JOB_NAME, { processed: 0, motivo: 'nada agendado' });
     return res.status(200).json({ ok: true, processed: 0 });
   }
 
@@ -124,6 +133,7 @@ module.exports = async (req, res) => {
   }
 
   logger.info('cron run done', { candidates: candidates.length, processed, succeeded, failed, alreadyTaken });
+  await logCronRun(JOB_NAME, { candidates: candidates.length, processed, succeeded, failed, alreadyTaken });
   return res.status(200).json({ ok: true, candidates: candidates.length, processed, succeeded, failed, alreadyTaken });
 };
 

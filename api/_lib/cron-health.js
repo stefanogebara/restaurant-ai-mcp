@@ -56,6 +56,34 @@ const CRON_JOBS = [
   { name: 'prospect-handoff-digest', intervalMinutes: 1440 },   // diário
   { name: 'prospect-score-outcomes', intervalMinutes: 1440 },   // diário
   { name: 'prospect-enrich', intervalMinutes: 60 },             // horário, 24/7 → gap de 1h, tolera 2h
+
+  // O RESTO DA CASA (adicionados 03/08/2026). Depois do motor da Olímpia,
+  // estes eram os últimos do vercel.json fora do vigia. Todos JÁ gravavam em
+  // cron_runs — só ninguém os avaliava, então uma parada passaria em silêncio.
+  //
+  // Os dois de conversa são os que mais doem se pararem: sync-conversation-data
+  // puxa transcrição de voz ANTES da janela de expurgo de 48h da ElevenLabs, e
+  // o que não for puxado a tempo some para sempre.
+  { name: 'sync-conversation-data', intervalMinutes: 60 },      // horário, 24/7
+  { name: 'validate-conversations', intervalMinutes: 60 },      // horário, 24/7
+  // NOME DO TRACKER, não do arquivo: api/cron/monitor-meta-token-expiry.js
+  // grava em cron_runs como 'check-meta-token-expiry' (65 execuções lá com esse
+  // nome). Registrar pelo nome do arquivo — que foi o que eu fiz na primeira
+  // versão deste commit — deixaria o job em 'never_run' para sempre, e
+  // 'never_run' NÃO dispara alerta: vigia decorativo.
+  { name: 'check-meta-token-expiry', intervalMinutes: 1440 }, // diário 10:05
+  { name: 'cleanup-whatsapp-dedup', intervalMinutes: 1440 },    // diário 4:15
+  { name: 'sync-stripe-connect-accounts', intervalMinutes: 1440 }, // diário 4:30
+  { name: 'compile-wiki', intervalMinutes: 1440 },              // diário 4:30
+  // Roda TODO DIA às 8:30 e bate ponto todo dia: o filtro de "é o dia deste
+  // restaurante?" é interno ao handler, depois do logCronRun. Tolerância
+  // diária, não semanal — semanal aqui seria um buraco de 6 dias.
+  { name: 'weekly-report', intervalMinutes: 1440 },
+  // Semanal de verdade (sábado 4:30).
+  { name: 'compress-memories', intervalMinutes: 10080 },
+  // Só entrou porque ganhou logCronRun neste commit — sem bater ponto, estaria
+  // eternamente 'never_run', e painel que mente vermelho ensina a ignorar.
+  { name: 'process-scheduled-ig-posts', intervalMinutes: 15 },  // */15
 ];
 
 function getStatus(lastRanAt, intervalMinutes) {
