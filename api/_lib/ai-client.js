@@ -13,6 +13,25 @@ const logger = createSecureLogger('ai-client');
 
 let _client = null;
 
+/**
+ * Anota que o cérebro trocou de bolso. NUNCA lança e NUNCA é aguardado:
+ * este registro serve ao painel, e o caminho que o chama existe justamente
+ * para o agente continuar respondendo quando o crédito acaba.
+ */
+function registrarFallback({ de, para, motivo, model }) {
+  try {
+    const { supabaseAdmin } = require('./supabase');
+    if (!supabaseAdmin) return;
+    supabaseAdmin
+      .from('ai_provider_fallbacks')
+      .insert({ de, para, motivo, model: model || null })
+      .then(({ error }) => {
+        if (error) logger.warn('não consegui registrar o fallback (não afeta a resposta)', { error: error.message });
+      })
+      .catch(() => {});
+  } catch { /* telemetria nunca derruba o caminho de resposta */ }
+}
+
 /** Default model */
 const AI_MODEL = process.env.AI_MODEL || 'anthropic/claude-sonnet-4';
 
@@ -145,6 +164,13 @@ class OpenRouterClient {
         const fallback = getAnthropicFallback();
         if (fallback) {
           logger.warn('OpenRouter out of credits (402) — failing over to direct Anthropic', { model });
+          // O warn sozinho não bastava: o gasto MUDA DE CONTA aqui — sai do
+          // painel do OpenRouter e passa a correr na Anthropic — e ninguém lê
+          // log. Registrar em tabela é o que permite a faixa do cockpit dizer
+          // "o plano B disparou N vezes". Fire-and-forget de propósito: este
+          // caminho existe para o agente NÃO emudecer, então falha de
+          // telemetria jamais pode derrubar a resposta.
+          registrarFallback({ de: 'openrouter', para: 'anthropic', motivo: 'http_402_sem_credito', model });
           return fallback.messages.create({ ...params, model: toAnthropicModel(model) });
         }
       }

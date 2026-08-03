@@ -26,6 +26,8 @@ interface Motor {
     leads: Array<{ id: string; name: string; horas: number }>;
   };
   indicados?: Array<{ id: string; name: string; numero: string; contexto: string | null }>;
+  /** null = não consegui checar. Diferente de "não houve". */
+  fallback?: { total_24h: number; ultimo: string | null; para: string | null } | null;
 }
 
 /** Link que abre o WhatsApp do fundador já na conversa certa. */
@@ -115,6 +117,22 @@ export default function MotorStrip() {
       <Item status={m.llm.status} title="Sem saldo no OpenRouter a Olímpia não consegue formular resposta — ela para de responder, mesmo com tudo o mais funcionando.">
         cérebro: {m.llm.detalhe}
       </Item>
+
+      {/* O gasto mudou de bolso. Quando o OpenRouter zera, o ai-client cai pra
+          Anthropic direta: a agente continua respondendo, mas o custo sai do
+          painel que você olha. Antes isso vivia só num logger.warn. */}
+      {m.fallback === null ? (
+        <Item status="atencao" title="Não consegui consultar o registro de troca de provedor.">
+          plano B: não consegui checar
+        </Item>
+      ) : m.fallback && m.fallback.total_24h > 0 ? (
+        <Item
+          status="falha"
+          title={`O OpenRouter recusou por falta de crédito e as chamadas foram para ${m.fallback.para ?? 'o provedor reserva'}. O agente seguiu respondendo, mas esse gasto NÃO aparece no saldo do OpenRouter. Último: ${m.fallback.ultimo ? new Date(m.fallback.ultimo).toLocaleString('pt-BR') : '—'}`}
+        >
+          plano B disparou {m.fallback.total_24h}× em 24h — gasto foi pra {m.fallback.para ?? 'reserva'}
+        </Item>
+      ) : null}
 
       {m.crons === null ? (
         <Item status="atencao" title="A checagem de saúde dos crons falhou. Não sei se o motor está rodando.">

@@ -159,7 +159,8 @@ module.exports = async (req, res) => {
       ];
       const limite = new Date(Date.now() - HORAS_ESPERANDO * 3600 * 1000).toISOString();
 
-      const [llm, saude, candidatos, indicados] = await Promise.all([
+      const desde24h = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
+      const [llm, saude, candidatos, indicados, fallbacks] = await Promise.all([
         require('./_lib/integration-probes').sondarOpenRouter(process.env).catch((e) => ({
           nome: 'ia_primaria_openrouter', status: 'falha', detalhe: `sonda falhou: ${e.message}`,
         })),
@@ -186,6 +187,13 @@ module.exports = async (req, res) => {
           .not('prospect_state', 'in', '("ganho","optout")')
           .order('numero_indicado_em', { ascending: false })
           .limit(20),
+        // O cérebro trocou de bolso? Quando o OpenRouter zera, o ai-client cai
+        // pra Anthropic direta e o gasto some do painel que o fundador olha.
+        supabaseAdmin.from('ai_provider_fallbacks')
+          .select('ocorrido_em, de, para, model', { count: 'exact' })
+          .gte('ocorrido_em', desde24h)
+          .order('ocorrido_em', { ascending: false })
+          .limit(1),
       ]);
 
       // Sem resposta = nenhuma saída DEPOIS da última entrada. Uma consulta só
@@ -230,6 +238,13 @@ module.exports = async (req, res) => {
             total: esperando.length,
             parcial,
             leads: esperando.slice(0, 5),
+          },
+          // Plano B disparou: o gasto migrou do OpenRouter pra Anthropic.
+          // `null` quando a consulta falhou — o front diz "não sei", não "zero".
+          fallback: fallbacks.error ? null : {
+            total_24h: fallbacks.count ?? 0,
+            ultimo: fallbacks.data?.[0]?.ocorrido_em ?? null,
+            para: fallbacks.data?.[0]?.para ?? null,
           },
           // A agente NÃO escreve para estes números — quem decide é o fundador.
           indicados: (indicados.data || []).map((l) => ({
