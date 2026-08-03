@@ -14,6 +14,52 @@ const logger = createSecureLogger('ai-client');
 let _client = null;
 
 /**
+ * Quem pediu esta chamada — o arquivo, não o modelo.
+ *
+ * Modelo sozinho não responde "onde está o ralo": saber que foi opus não diz se
+ * foi o agente atendendo lead, um cron ou uma bateria de eval. A pilha diz.
+ *
+ * Derivado, e não parâmetro, de propósito: exigir que cada chamador se
+ * identifique garante que o próximo a esquecer vire 'desconhecido' — e o ponto
+ * era justamente enxergar o que ninguém lembrou de instrumentar.
+ */
+function origemDaChamada() {
+  try {
+    const linhas = String(new Error().stack || '').split('\n').slice(2);
+    for (const l of linhas) {
+      const m = l.match(/[\\/]([\w.-]+\.js):\d+:\d+/);
+      if (!m) continue;
+      const arquivo = m[1];
+      if (arquivo === 'ai-client.js' || arquivo.startsWith('node:')) continue;
+      return arquivo;
+    }
+  } catch { /* telemetria nunca atrapalha */ }
+  return 'desconhecido';
+}
+
+/**
+ * Registra o custo REAL da chamada (cost_details do OpenRouter, não estimativa).
+ * Fire-and-forget: contabilidade jamais pode derrubar a resposta do agente.
+ */
+function registrarGasto({ origem, model, usage }) {
+  try {
+    if (!usage) return;
+    const { supabaseAdmin } = require('./supabase');
+    if (!supabaseAdmin) return;
+    const custo = Number(usage.cost ?? usage.cost_details?.upstream_inference_cost ?? 0);
+    supabaseAdmin.from('ai_spend').insert({
+      origem,
+      model: String(model || '?'),
+      prompt_tokens: Number(usage.prompt_tokens || 0),
+      completion_tokens: Number(usage.completion_tokens || 0),
+      custo_usd: Number.isFinite(custo) ? custo : 0,
+    }).then(({ error }) => {
+      if (error) logger.warn('não registrei o gasto (não afeta a resposta)', { error: error.message });
+    }).catch(() => {});
+  } catch { /* idem */ }
+}
+
+/**
  * Anota que o cérebro trocou de bolso. NUNCA lança e NUNCA é aguardado:
  * este registro serve ao painel, e o caminho que o chama existe justamente
  * para o agente continuar respondendo quando o crédito acaba.
@@ -127,7 +173,13 @@ class OpenRouterClient {
       model,
       max_tokens,
       messages: oaiMessages,
+      // Faz o OpenRouter devolver `cost_details` com o custo REAL da chamada —
+      // o que eles cobraram, não estimativa por tabela de preço. É o que
+      // alimenta public.ai_spend e responde "para onde foi o dinheiro".
+      usage: { include: true },
     };
+    // Quem pediu. Capturado ANTES do await porque a pilha se perde depois.
+    const origem = origemDaChamada();
     if (typeof temperature === 'number') body.temperature = temperature;
     if (oaiTools.length > 0) body.tools = oaiTools;
 
@@ -178,6 +230,7 @@ class OpenRouterClient {
     }
 
     const data = await response.json();
+    registrarGasto({ origem, model, usage: data.usage });
     const choice = data.choices?.[0];
 
     // Convert OpenAI response back to Anthropic format

@@ -28,6 +28,7 @@ interface Motor {
   indicados?: Array<{ id: string; name: string; numero: string; contexto: string | null }>;
   /** null = não consegui checar. Diferente de "não houve". */
   fallback?: { total_24h: number; ultimo: string | null; para: string | null } | null;
+  gasto?: { total_24h: number; chamadas: number; top: Array<{ origem: string; usd: number }> } | null;
 }
 
 /** Link que abre o WhatsApp do fundador já na conversa certa. */
@@ -117,6 +118,22 @@ export default function MotorStrip() {
       <Item status={m.llm.status} title="Sem saldo no OpenRouter a Olímpia não consegue formular resposta — ela para de responder, mesmo com tudo o mais funcionando.">
         cérebro: {m.llm.detalhe}
       </Item>
+
+      {/* Para onde o dinheiro está indo. Antes disso, o gasto só existia no
+          painel do OpenRouter — e US$328 de US$350 sumiram sem ninguém saber
+          em quê. */}
+      {m.gasto && m.gasto.chamadas > 0 && (
+        <Item
+          status={m.gasto.total_24h > 5 ? 'atencao' : 'ok'}
+          title={
+            'Custo real (cobrado pelo OpenRouter), por quem chamou:\n' +
+            m.gasto.top.map((t) => `  ${t.origem}: US$${t.usd.toFixed(4)}`).join('\n')
+          }
+        >
+          gasto 24h: US${m.gasto.total_24h.toFixed(2)} em {m.gasto.chamadas} chamadas
+          {m.gasto.top[0] && ` · maior: ${m.gasto.top[0].origem}`}
+        </Item>
+      )}
 
       {/* O gasto mudou de bolso. Quando o OpenRouter zera, o ai-client cai pra
           Anthropic direta: a agente continua respondendo, mas o custo sai do

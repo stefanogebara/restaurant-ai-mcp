@@ -160,7 +160,7 @@ module.exports = async (req, res) => {
       const limite = new Date(Date.now() - HORAS_ESPERANDO * 3600 * 1000).toISOString();
 
       const desde24h = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
-      const [llm, saude, candidatos, indicados, fallbacks] = await Promise.all([
+      const [llm, saude, candidatos, indicados, fallbacks, gastos] = await Promise.all([
         require('./_lib/integration-probes').sondarOpenRouter(process.env).catch((e) => ({
           nome: 'ia_primaria_openrouter', status: 'falha', detalhe: `sonda falhou: ${e.message}`,
         })),
@@ -194,6 +194,12 @@ module.exports = async (req, res) => {
           .gte('ocorrido_em', desde24h)
           .order('ocorrido_em', { ascending: false })
           .limit(1),
+        // Gasto real das últimas 24h, por chamador. Responde "onde está o
+        // ralo" — modelo sozinho não diz se foi agente, cron ou eval.
+        supabaseAdmin.from('ai_spend')
+          .select('origem, custo_usd')
+          .gte('ocorrido_em', desde24h)
+          .limit(2000),
       ]);
 
       // Sem resposta = nenhuma saída DEPOIS da última entrada. Uma consulta só
@@ -239,6 +245,20 @@ module.exports = async (req, res) => {
             parcial,
             leads: esperando.slice(0, 5),
           },
+          // Para onde o dinheiro foi nas últimas 24h. `null` = não consegui ler.
+          gasto: gastos.error ? null : (() => {
+            const linhas = gastos.data || [];
+            const porOrigem = {};
+            let total = 0;
+            for (const g of linhas) {
+              const c = Number(g.custo_usd) || 0;
+              total += c;
+              porOrigem[g.origem] = (porOrigem[g.origem] || 0) + c;
+            }
+            const top = Object.entries(porOrigem).sort((a, b) => b[1] - a[1]).slice(0, 3)
+              .map(([origem, usd]) => ({ origem, usd: Number(usd.toFixed(4)) }));
+            return { total_24h: Number(total.toFixed(4)), chamadas: linhas.length, top };
+          })(),
           // Plano B disparou: o gasto migrou do OpenRouter pra Anthropic.
           // `null` quando a consulta falhou — o front diz "não sei", não "zero".
           fallback: fallbacks.error ? null : {
