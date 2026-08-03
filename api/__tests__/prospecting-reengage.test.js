@@ -62,6 +62,7 @@ describe('dispatchReengages — replied-then-silent leads past the 24h window', 
     const sendTemplateMessage = jest.fn(async () => sendResult || { success: true, messageId: 'wamid-r1' });
     jest.doMock('../_lib/whatsapp-sender', () => ({ sendTemplateMessage }));
     const storeMessage = jest.fn(async () => ({ stored: true }));
+    const patchLead = jest.fn(async () => ({}));
     jest.doMock('../_lib/prospecting/prospect-store', () => ({
       isOptedOut: async () => false,
       selectIntroCandidates: async () => [],
@@ -80,7 +81,7 @@ describe('dispatchReengages — replied-then-silent leads past the 24h window', 
       loadHistory: async () => (historico !== undefined ? historico : [
         { direcao: 'in', tipo: 'texto', corpo: 'opa, sou o Marcos, pode falar' },
       ]),
-      claimIntro: async () => true, markIntro: async () => ({}), patchLead: async () => ({}),
+      claimIntro: async () => true, markIntro: async () => ({}), patchLead,
       storeMessage,
       REENGAGE_STATES: ['conversando', 'agendando'],
       selectReferralIntroCandidates: async () => [],
@@ -92,7 +93,7 @@ describe('dispatchReengages — replied-then-silent leads past the 24h window', 
       error: null,
     }));
     jest.doMock('../_lib/supabase', () => ({ supabaseAdmin: { from: jest.fn(), rpc } }));
-    return { sendTemplateMessage, storeMessage, rpc };
+    return { sendTemplateMessage, storeMessage, rpc, patchLead };
   }
 
   beforeEach(() => { jest.resetModules(); process.env.PROSPECTING_DRY_RUN = 'false'; });
@@ -188,6 +189,45 @@ describe('dispatchReengages — replied-then-silent leads past the 24h window', 
     const s = await dispatchReengages({ limit: 5 });
     expect(s.sent).toBe(0);
     expect(sendTemplateMessage).not.toHaveBeenCalled();
+  });
+
+  test('lead no teto de resgates NÃO recebe mais', async () => {
+    const { sendTemplateMessage } = mockDeps({
+      leadOverride: { resgates_enviados: 3 },
+      lastMessage: { direcao: 'in', tipo: 'text', corpo: 'me chama semana que vem' },
+    });
+    const { dispatchReengages } = require('../_lib/prospecting/sequencer');
+    const s = await dispatchReengages({ limit: 5 });
+    expect(s.sent).toBe(0);
+    expect(sendTemplateMessage).not.toHaveBeenCalled();
+  });
+
+  test('envio bem-sucedido INCREMENTA o contador do lead', async () => {
+    // Gate certo com contador que nunca sobe = teto decorativo: o lead ficaria
+    // preso em 0 e receberia resgate para sempre. Esta é a fiação que garante
+    // que o teto de fato se aproxima a cada envio.
+    const { sendTemplateMessage, patchLead } = mockDeps({
+      leadOverride: { resgates_enviados: 1 },
+      lastMessage: { direcao: 'in', tipo: 'text', corpo: 'me chama semana que vem' },
+    });
+    const { dispatchReengages } = require('../_lib/prospecting/sequencer');
+    const s = await dispatchReengages({ limit: 5 });
+    expect(s.sent).toBe(1);
+    expect(sendTemplateMessage).toHaveBeenCalled();
+    expect(patchLead).toHaveBeenCalledWith('L9', { resgates_enviados: 2 });
+  });
+
+  test('envio que FALHA não gasta cota do lead', async () => {
+    const { patchLead } = mockDeps({
+      leadOverride: { resgates_enviados: 1 },
+      lastMessage: { direcao: 'in', tipo: 'text', corpo: 'me chama semana que vem' },
+      sendResult: { success: false, error: 'Meta 131026' },
+    });
+    const { dispatchReengages } = require('../_lib/prospecting/sequencer');
+    const s = await dispatchReengages({ limit: 5 });
+    expect(s.sent).toBe(0);
+    expect(s.failed).toBe(1);
+    expect(patchLead).not.toHaveBeenCalled();
   });
 
   test('lost the snooze claim (concurrent run) → skip without sending', async () => {

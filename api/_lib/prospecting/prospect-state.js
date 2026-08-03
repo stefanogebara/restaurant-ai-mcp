@@ -374,14 +374,36 @@ function ecoDeMaquina(history) {
 const INTENCOES_DE_RECUSA = new Set(['nao_interessado']);
 
 /**
+ * Teto de resgates por lead, para sempre — não por silêncio, não por mês.
+ *
+ * Os gates de recusa e de robô cobrem os casos identificáveis; este cobre o
+ * resto. Se três tentativas de retomada não produziram conversa, a quarta não
+ * vai produzir — só desgasta a marca e o número. Quando o teto nasceu, a
+ * distribuição real era: 6 (Dog do Júnior), 4, 4, 3, 3, 3, 3 e vários com 2.
+ *
+ * Contado em prospect_leads.resgates_enviados (coluna dedicada, com backfill do
+ * histórico) e não pelas mensagens: contar por nome de template faria a conta
+ * zerar sozinha no dia em que alguém renomear o modelo na Meta.
+ */
+const RESGATE_MAX_POR_LEAD = 3;
+
+/**
  * PURE: este lead pode receber o template de resgate?
  * @param {{lastIntent: string|null,
  *          ultimaMensagem: {direcao?:string, tipo?:string, corpo?:string}|null,
- *          historico: Array<object>}} args
+ *          historico: Array<object>,
+ *          resgatesEnviados?: number|null}} args
  * @returns {{eligible: boolean, reason: string}}
  */
-function elegivelParaReengage({ lastIntent, ultimaMensagem, historico }) {
+function elegivelParaReengage({ lastIntent, ultimaMensagem, historico, resgatesEnviados }) {
+  // Recusa antes do teto: quando os dois valem, o motivo honesto é a recusa —
+  // é ela que explica por que nunca mais se escreve pra este lead.
   if (INTENCOES_DE_RECUSA.has(lastIntent)) return { eligible: false, reason: 'ja_recusou' };
+  // `>=` e não `===`: linhas herdadas do backfill já vêm acima do teto (uma
+  // tinha 6). Com igualdade estrita, justamente quem mais insistiu voltaria.
+  if (Number(resgatesEnviados || 0) >= RESGATE_MAX_POR_LEAD) {
+    return { eligible: false, reason: 'teto_de_resgates' };
+  }
   // Último envio sendo template = este silêncio já foi tocado (guarda original).
   if (!ultimaMensagem || ultimaMensagem.tipo === 'template') {
     return { eligible: false, reason: 'silencio_ja_tocado' };
@@ -475,6 +497,7 @@ module.exports = {
   semHumanoNaThread,
   elegivelParaReengage,
   INTENCOES_DE_RECUSA,
+  RESGATE_MAX_POR_LEAD,
   PORTEIRO_INSTRUCTION,
   PORTEIRO_MAX,
   ECO_MIN_PALAVRAS,

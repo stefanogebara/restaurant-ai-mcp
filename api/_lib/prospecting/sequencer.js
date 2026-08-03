@@ -33,7 +33,9 @@ const {
   selectReferralIntroCandidates, selectHandoffLeads, reclaimHandoffToConversando,
   recordEvent, loadHistory,
 } = require('./prospect-store');
-const { elegivelParaReclaim, HANDOFF_RECLAIM_MS, elegivelParaReengage } = require('./prospect-state');
+const {
+  elegivelParaReclaim, HANDOFF_RECLAIM_MS, elegivelParaReengage, RESGATE_MAX_POR_LEAD,
+} = require('./prospect-state');
 const { isFounderNumber } = require('./prospect-agent');
 const { dentroDaJanelaDisparo } = require('./prospect-hours');
 
@@ -364,6 +366,7 @@ async function dispatchReengages({ limit = 5, nowMs = Date.now() } = {}) {
         lastIntent: lead.last_intent ?? null,
         ultimaMensagem: last,
         historico,
+        resgatesEnviados: lead.resgates_enviados,
       });
       if (!veredito.eligible) {
         summary.skipped++;
@@ -403,8 +406,12 @@ async function dispatchReengages({ limit = 5, nowMs = Date.now() } = {}) {
           leadId: lead.id, direcao: 'out', wamid: res.messageId || null,
           tipo: 'template', corpo: `[template:${tpl.meta_template_name}]`,
         });
+        // Consome uma das RESGATE_MAX_POR_LEAD tentativas. Incrementa depois do
+        // envio confirmado: falha de rede não pode gastar cota do lead. Vem do
+        // valor lido no início do laço, que é o mesmo que o gate avaliou.
+        await patchLead(lead.id, { resgates_enviados: Number(lead.resgates_enviados || 0) + 1 });
         summary.sent++;
-        logger.info(`re-engage sent lead=${lead.id} variant=${tpl.variant_label}`);
+        logger.info(`re-engage sent lead=${lead.id} variant=${tpl.variant_label} resgate=${Number(lead.resgates_enviados || 0) + 1}/${RESGATE_MAX_POR_LEAD}`);
       } else {
         summary.failed++;
         logger.error(`re-engage send failed lead=${lead.id}: ${res.error}`);

@@ -825,7 +825,7 @@ const REENGAGE_STATES = ['conversando', 'agendando'];
 async function selectDueReengages(nowIso, silenceMs, limit = 5) {
   try {
     const cutoff = new Date(new Date(nowIso).getTime() - silenceMs).toISOString();
-    const { INTENCOES_DE_RECUSA } = require('./prospect-state');
+    const { INTENCOES_DE_RECUSA, RESGATE_MAX_POR_LEAD } = require('./prospect-state');
     const recusas = [...INTENCOES_DE_RECUSA];
     const { data, error } = await supabaseAdmin
       .from('prospect_leads')
@@ -838,6 +838,9 @@ async function selectDueReengages(nowIso, silenceMs, limit = 5) {
       // camadas de propósito: esta consulta é a barata, aquela é a que
       // enxerga o histórico. (Banzeiro levou 7 resgates por faltarem as duas.)
       .or(`last_intent.is.null,last_intent.not.in.(${recusas.join(',')})`)
+      // Quem estourou o teto sai já na consulta. O predicado barra de novo no
+      // chamador — 9 leads herdaram contador >= 3 do backfill de 02/08.
+      .lt('resgates_enviados', RESGATE_MAX_POR_LEAD)
       .is('reuniao_at', null)
       .or(`snoozed_until.is.null,snoozed_until.lt.${nowIso}`)
       .order('last_in_at', { ascending: false })
