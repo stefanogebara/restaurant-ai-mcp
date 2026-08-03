@@ -59,4 +59,11 @@ describe('quem decide o envio e quem reporta no painel são a MESMA função', (
     const daSonda = require('../_lib/prospecting/prospect-dry-run').isDryRun;
     expect(daSonda).toBe(isDryRun);
   });
+
+  it('o responder (caminho de resposta a inbound) usa a mesma régua', () => {
+    // Terceira ponta: o disparo frio e a resposta a quem escreveu são caminhos
+    // diferentes, mas a pergunta "isto sai de verdade?" tem que ser uma só.
+    const responder = require('../_lib/prospecting/prospect-responder');
+    expect(responder.isDryRun).toBe(isDryRun);
+  });
 });

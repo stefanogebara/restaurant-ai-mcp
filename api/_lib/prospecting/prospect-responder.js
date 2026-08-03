@@ -21,6 +21,12 @@ const { createSecureLogger } = require('../secure-logger');
 const { sendWhatsAppMessage } = require('../whatsapp-sender');
 const { acquireProcessingLock, releaseProcessingLock } = require('../rate-limit');
 const { getProspectingPhoneNumberId } = require('./routing');
+// DRY-RUN ligado por padrão e forçado sem número dedicado: só
+// `PROSPECTING_DRY_RUN=false` + número configurado manda de verdade.
+// Era a terceira cópia da mesma regra. Concordava com as outras duas — mas
+// concordância não é garantia: o defeito de 03/ago nasceu de duas cópias que
+// também concordavam, até divergirem no caso da variável ausente.
+const { isDryRun } = require('./prospect-dry-run');
 const {
   deveResponder, detectarOptout, detectarRecusaSuave, RECUSA_INSTRUCTION, estadoAposAcao,
   ecoDeMaquina, optoutIndevido, PORTEIRO_INSTRUCTION, PORTEIRO_MAX,
@@ -53,14 +59,6 @@ function isTestMode() {
   return process.env.NODE_ENV === 'test';
 }
 
-/**
- * DRY-RUN is on by default and forced on without a dedicated prospecting number.
- * Only `PROSPECTING_DRY_RUN=false` + a configured number sends for real.
- */
-function isDryRun() {
-  if (!getProspectingPhoneNumberId()) return true;
-  return process.env.PROSPECTING_DRY_RUN !== 'false';
-}
 
 /** Multi-bubble replies are ON by default; PROSPECTING_MULTIPART=0 disables. */
 function multipartEnabled() {
