@@ -38,6 +38,9 @@ const {
 } = require('./prospect-state');
 const { isFounderNumber } = require('./prospect-agent');
 const { dentroDaJanelaDisparo } = require('./prospect-hours');
+// A regra de dry-run mora em prospect-dry-run.js para que as sondas do painel
+// leiam EXATAMENTE o que decide o envio, em vez de uma cópia que já divergiu.
+const { isDryRun } = require('./prospect-dry-run');
 
 const logger = createSecureLogger('ProspectSequencer');
 
@@ -46,10 +49,6 @@ const TOUCH3_DELAY_MS = 5 * 24 * 60 * 60 * 1000;  // bump → breakup: D+8 total
 const REENGAGE_SILENCE_MS = 3 * 24 * 60 * 60 * 1000; // replied lead silent D+3 → template re-engage
 const REENGAGE_TOUCH = 4;                             // prospect_templates slot for 'resgate'
 
-function isDryRun() {
-  if (!getProspectingPhoneNumberId()) return true;
-  return process.env.PROSPECTING_DRY_RUN !== 'false';
-}
 
 /** Master + graduated kill switches. Both must be enabled for cold sends. */
 async function outboundEnabled() {

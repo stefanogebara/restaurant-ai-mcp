@@ -14,10 +14,17 @@
 
 /**
  * The dedicated prospecting number's phone_number_id (env-configured).
+ *
+ * Accepts an optional env so callers that receive one as a parameter (the
+ * painel probes) can ask the same question as the send path without bypassing
+ * this function — it is the seam the tests mock, and reading process.env
+ * directly elsewhere silently defeats those mocks.
+ *
+ * @param {Record<string,string|undefined>} [env] - defaults to process.env.
  * @returns {string|undefined}
  */
-function getProspectingPhoneNumberId() {
-  return process.env.PROSPECTING_PHONE_NUMBER_ID || undefined;
+function getProspectingPhoneNumberId(env) {
+  return (env || process.env).PROSPECTING_PHONE_NUMBER_ID || undefined;
 }
 
 /**

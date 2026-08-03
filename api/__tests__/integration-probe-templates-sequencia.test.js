@@ -18,6 +18,16 @@ const { sondarTemplatesSequencia, NIVEIS } = require('../_lib/integration-probes
 
 const TOKEN = 'EAAtokenfalsoparateste';
 
+// "Ao vivo" exige DUAS coisas: a flag em 'false' E um número de origem
+// provisionado — a mesma régua que o sequencer usa pra decidir se manda de
+// verdade (prospect-dry-run.js). O fixture antigo só tinha a flag, e por isso
+// afirmava envio ao vivo num ambiente sem por onde mandar.
+const AO_VIVO = {
+  WHATSAPP_ACCESS_TOKEN: TOKEN,
+  PROSPECTING_DRY_RUN: 'false',
+  PROSPECTING_PHONE_NUMBER_ID: '999999999',
+};
+
 const metaCom = (templates) => jest.fn(async () => ({
   ok: true, json: async () => ({ data: templates }),
 }));
@@ -42,7 +52,7 @@ describe('escada saudável', () => {
   test('os três touches ativos e aprovados dão ok', async () => {
     global.fetch = metaCom(META_OK);
     const r = await sondarTemplatesSequencia(
-      { WHATSAPP_ACCESS_TOKEN: TOKEN, PROSPECTING_DRY_RUN: 'false' },
+      AO_VIVO,
       { store: store(ESCADA_OK) },
     );
     expect(r.nivel).toBe(NIVEIS.OK);
@@ -62,7 +72,7 @@ describe('modo de falha 1: touch sem template ativo (encerra a sequência)', () 
   test('touch 3 vazio vira falha e o detalhe explica a consequência', async () => {
     global.fetch = metaCom(META_OK);
     const r = await sondarTemplatesSequencia(
-      { WHATSAPP_ACCESS_TOKEN: TOKEN, PROSPECTING_DRY_RUN: 'false' },
+      AO_VIVO,
       { store: store({ ...ESCADA_OK, 3: [] }) },
     );
     expect(r.nivel).toBe(NIVEIS.FALHA);
@@ -76,7 +86,7 @@ describe('modo de falha 1: touch sem template ativo (encerra a sequência)', () 
   test('touch inativo (active=false) conta como sem template', async () => {
     global.fetch = metaCom(META_OK);
     const r = await sondarTemplatesSequencia(
-      { WHATSAPP_ACCESS_TOKEN: TOKEN, PROSPECTING_DRY_RUN: 'false' },
+      AO_VIVO,
       { store: store({ ...ESCADA_OK, 4: [T('olimpia_resgate', false)] }) },
     );
     expect(r.nivel).toBe(NIVEIS.FALHA);
@@ -90,7 +100,7 @@ describe('modo de falha 2: ativo mas não aprovado na Meta', () => {
     // na Meta. pickTemplate escolhe, o envio morre.
     global.fetch = metaCom([aprovado('olimpia_toque2'), aprovado('olimpia_resgate')]);
     const r = await sondarTemplatesSequencia(
-      { WHATSAPP_ACCESS_TOKEN: TOKEN, PROSPECTING_DRY_RUN: 'false' },
+      AO_VIVO,
       { store: store(ESCADA_OK) },
     );
     expect(r.nivel).toBe(NIVEIS.FALHA);
@@ -104,7 +114,7 @@ describe('modo de falha 2: ativo mas não aprovado na Meta', () => {
       aprovado('olimpia_resgate'),
     ]);
     const r = await sondarTemplatesSequencia(
-      { WHATSAPP_ACCESS_TOKEN: TOKEN, PROSPECTING_DRY_RUN: 'false' },
+      AO_VIVO,
       { store: store(ESCADA_OK) },
     );
     expect(r.nivel).toBe(NIVEIS.FALHA);
@@ -115,7 +125,7 @@ describe('modo de falha 2: ativo mas não aprovado na Meta', () => {
     // falha — a sonda não pode dizer "ok" porque o outro está bom.
     global.fetch = metaCom(META_OK);
     const r = await sondarTemplatesSequencia(
-      { WHATSAPP_ACCESS_TOKEN: TOKEN, PROSPECTING_DRY_RUN: 'false' },
+      AO_VIVO,
       { store: store({ ...ESCADA_OK, 2: [T('olimpia_toque2'), T('olimpia_toque2_b')] }) },
     );
     expect(r.nivel).toBe(NIVEIS.FALHA);

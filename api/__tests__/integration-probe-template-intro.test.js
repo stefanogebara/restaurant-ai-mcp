@@ -17,6 +17,16 @@ const { sondarTemplateIntro, NIVEIS } = require('../_lib/integration-probes');
 
 const TOKEN = 'EAAtokenfalsoparateste';
 
+// "Ao vivo" exige DUAS coisas: a flag em 'false' E um número de origem
+// provisionado. Antes a sonda olhava só a flag, e por isso reportava envio
+// ao vivo num ambiente que não tinha por onde mandar. O fixture explicita as
+// duas — é a mesma régua que o sequencer usa pra decidir se manda de verdade.
+const AO_VIVO = {
+  WHATSAPP_ACCESS_TOKEN: TOKEN,
+  PROSPECTING_DRY_RUN: 'false',
+  PROSPECTING_PHONE_NUMBER_ID: '999999999',
+};
+
 function fetchMeta(templates) {
   return jest.fn(async () => ({
     ok: true,
@@ -72,7 +82,7 @@ describe('status na Meta do template que sairia', () => {
   test('template inexistente na Meta com dry-run DESLIGADO é falha', async () => {
     global.fetch = fetchMeta([{ name: 'outro_qualquer', status: 'APPROVED', language: 'pt_BR' }]);
     const r = await sondarTemplateIntro(
-      { WHATSAPP_ACCESS_TOKEN: TOKEN, PROSPECTING_DRY_RUN: 'false' },
+      AO_VIVO,
       { store: store([V('C', 'olimpia_intro_c', true)]) },
     );
     expect(r.nivel).toBe(NIVEIS.FALHA);
@@ -94,11 +104,24 @@ describe('status na Meta do template que sairia', () => {
   test('template existente mas PENDING não conta como aprovado', async () => {
     global.fetch = fetchMeta([{ name: 'olimpia_intro_c', status: 'PENDING', language: 'pt_BR' }]);
     const r = await sondarTemplateIntro(
-      { WHATSAPP_ACCESS_TOKEN: TOKEN, PROSPECTING_DRY_RUN: 'false' },
+      AO_VIVO,
       { store: store([V('C', 'olimpia_intro_c', true)]) },
     );
     expect(r.nivel).toBe(NIVEIS.FALHA);
     expect(r.status_na_meta).toEqual(['pt_BR:PENDING']);
+  });
+
+  test('flag em false SEM número provisionado não é "ao vivo"', async () => {
+    // O defeito original: a sonda olhava só a flag e reportava dry_run=false
+    // — painel dizendo "disparo ao vivo" num ambiente sem por onde mandar, e
+    // pintando de VERMELHO um problema que o dispatch nem alcançaria.
+    global.fetch = fetchMeta([]);
+    const r = await sondarTemplateIntro(
+      { WHATSAPP_ACCESS_TOKEN: TOKEN, PROSPECTING_DRY_RUN: 'false' },
+      { store: store([V('C', 'olimpia_intro_c', true)]) },
+    );
+    expect(r.dry_run).toBe(true);
+    expect(r.nivel).toBe(NIVEIS.ATENCAO);
   });
 
   test('aprovado com dry-run ligado diz as duas coisas', async () => {

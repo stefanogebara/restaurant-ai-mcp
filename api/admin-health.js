@@ -21,7 +21,11 @@
 const { supabaseAdmin } = require('./_lib/supabase');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { bearerEquals } = require('./_lib/secure-compare');
-const { checkCronHealth } = require('./cron/health');
+// De _lib/, NÃO de cron/health.js: aquele arquivo é um handler, e o NFT da
+// Vercel remove do manifesto a função que importa um handler irmão — sem erro
+// de build, só um 404 em produção (foi a causa raiz do /api/demo, jun/2026).
+// A lógica já mora em _lib/cron-health.js desde a extração de 03/ago.
+const { checkCronHealth } = require('./_lib/cron-health');
 
 const logger = createSecureLogger('admin-health');
 

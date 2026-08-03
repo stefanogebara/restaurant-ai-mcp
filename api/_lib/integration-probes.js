@@ -500,7 +500,9 @@ async function buscarTemplatesMeta(env, token) {
 async function sondarTemplatesSequencia(env, deps = {}) {
   const nome = 'prospeccao_templates_sequencia';
   const token = env.WHATSAPP_ACCESS_TOKEN;
-  const dryRun = String(env.PROSPECTING_DRY_RUN || '') === 'true';
+  // Mesma régua do envio (prospect-dry-run.js), nunca uma cópia: a cópia que
+  // vivia aqui usava `=== 'true'` e mentia justamente com a variável ausente.
+  const dryRun = require('./prospecting/prospect-dry-run').isDryRun(env);
 
   if (!token) return naoConfigurado(nome, 'WHATSAPP_ACCESS_TOKEN');
 
@@ -593,7 +595,9 @@ async function sondarTemplatesSequencia(env, deps = {}) {
 async function sondarTemplateIntro(env, deps = {}) {
   const nome = 'prospeccao_template_intro';
   const token = env.WHATSAPP_ACCESS_TOKEN;
-  const dryRun = String(env.PROSPECTING_DRY_RUN || '') === 'true';
+  // Mesma régua do envio (prospect-dry-run.js), nunca uma cópia: a cópia que
+  // vivia aqui usava `=== 'true'` e mentia justamente com a variável ausente.
+  const dryRun = require('./prospecting/prospect-dry-run').isDryRun(env);
 
   // Guarda ANTES de qualquer I/O. Sem token não dá pra responder a pergunta que
   // importa (o template está aprovado?), então ler o banco seria trabalho jogado
