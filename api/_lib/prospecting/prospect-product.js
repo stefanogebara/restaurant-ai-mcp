@@ -80,8 +80,15 @@ const RACHA = {
   // Mensagem de FECHAMENTO do fundador (pré-preenchida no link wa.me do digest):
   // o fundador toca no lead da hit-list e o WhatsApp abre com isto pronto pra
   // enviar. Voz do fundador (não da Olímpia), oferta de piloto sem fricção.
+  // Duas correções (04/08/2026, caso Adriana/Capim Santo):
+  //  1. NÃO afirma "vi que rolou interesse". A hit-list inclui indicação — a casa
+  //     passou o contato, a pessoa nunca falou. Abrir com um interesse que ela
+  //     não demonstrou é a primeira frase sendo falsa.
+  //  2. NÃO pede reunião. A regra 8 logo abaixo proíbe call/horário no Racha
+  //     (fundador solo, prévia self-service) — e esta linha ainda pedia "5
+  //     minutinhos hoje ou amanhã", contradizendo a persona no último passo.
   founderClose: ({ founderName, ownerName }) =>
-    `Oi${ownerName ? ' ' + ownerName : ''}! Aqui é o ${founderName}, fundador do Racha — o "pagar a conta na mesa por QR" que a Olímpia te apresentou. Vi que rolou interesse e queria te convidar pra ser um dos primeiros a testar, sem custo e sem compromisso: a gente instala e seus clientes pagam a conta pelo QR, cada um a sua parte, com a gorjeta indo direto pro garçom. Topa 5 minutinhos hoje ou amanhã?`,
+    `Oi${ownerName ? ' ' + ownerName : ''}! Aqui é o ${founderName}, fundador do Racha — o "pagar a conta na mesa por QR" que a Olímpia te apresentou. Queria te convidar pra ser uma das primeiras casas a testar, sem custo e sem compromisso: seus clientes pagam a conta pelo celular, cada um a sua parte, com a gorjeta indo direto pro garçom. Te mando uma prévia pra você ver do seu celular em 1 minuto — pode ser?`,
   // Bloco "próximo passo" injetado no prompt (buildSystemPrompt regra 8). Racha:
   // SEM reunião — a prévia é self-service e a ativação é assíncrona.
   agendamento: [
