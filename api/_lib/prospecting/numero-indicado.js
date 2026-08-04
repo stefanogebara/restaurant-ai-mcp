@@ -77,6 +77,34 @@ const semSurrogatoSolto = (s) => String(s)
   .trim();
 
 /**
+ * PURA: escolhe UM número de dentro do cartão de contato.
+ *
+ * O cartão pode trazer vários (wa_id + telefone gravado + fixo da casa) e
+ * também IDs internos da Meta. Preferimos CELULAR: é onde a pessoa indicada
+ * realmente atende, e é o único formato em que o WhatsApp existe.
+ */
+function escolherDoCartao(trecho, numeroDoLead) {
+  const doLead = soDigitos(numeroDoLead).slice(-11);
+  const celulares = [];
+  const fixos = [];
+
+  RE_TELEFONE.lastIndex = 0;
+  let m;
+  while ((m = RE_TELEFONE.exec(String(trecho))) !== null) {
+    const [, ddd, meio, fim] = m;
+    if (!DDDS_VALIDOS.has(Number(ddd))) continue;
+    const nacional = `${ddd}${meio}${fim}`;
+    // O número do próprio lead num cartão é a linha onde já estamos.
+    if (doLead && nacional.slice(-11) === doLead.slice(-11)) continue;
+    if (nacional.length === 11 && meio[0] === '9') celulares.push(nacional);
+    else if (nacional.length === 10 && /^[2-5]/.test(meio)) fixos.push(nacional);
+  }
+
+  const escolhido = celulares[0] || fixos[0];
+  return escolhido ? `+55${escolhido}` : null;
+}
+
+/**
  * PURE: acha um número de contato publicado no corpo da mensagem.
  *
  * @param {string|null} corpo texto da mensagem recebida
@@ -87,6 +115,27 @@ const semSurrogatoSolto = (s) => String(s)
 function extrairNumeroIndicado(corpo, { numeroDoLead } = {}) {
   const texto = String(corpo || '').trim();
   if (!texto) return null;
+
+  // CARTÃO DE CONTATO tem precedência absoluta e dispensa palavra de
+  // roteamento: alguém ESCOLHEU compartilhar aquela pessoa. É intenção
+  // explícita, não inferência.
+  //
+  // CASO REAL (Capim Santo, 04/08/2026): o menu do robô trouxe o fixo do salão
+  // com "reservas" ao lado, e o extrator gravou o fixo. Minutos depois um
+  // humano compartilhou o cartão da Adriana (celular) — e o campo já estava
+  // preenchido, então o contato de verdade foi descartado. O lead mais quente
+  // do dia apontava para a portaria.
+  const cartao = texto.match(/\[Contato compartilhado:([^\]]+)\]/i);
+  if (cartao) {
+    const doCartao = escolherDoCartao(cartao[1], numeroDoLead);
+    if (doCartao) {
+      return {
+        numero: doCartao,
+        contexto: semSurrogatoSolto(texto.slice(0, 140).replace(/\s+/g, ' ')),
+        fonte: 'cartao',
+      };
+    }
+  }
 
   // Apaga o ruído ANTES de procurar: um CNPJ tem dígitos suficientes para
   // formar um telefone falso se o casamento cair no meio dele.
@@ -124,10 +173,10 @@ function extrairNumeroIndicado(corpo, { numeroDoLead } = {}) {
         .replace(/\s+/g, ' '),
     );
 
-    return { numero: `+55${nacional}`, contexto };
+    return { numero: `+55${nacional}`, contexto, fonte: 'texto' };
   }
 
   return null;
 }
 
-module.exports = { extrairNumeroIndicado, PALAVRAS_DE_CONTATO };
+module.exports = { extrairNumeroIndicado, escolherDoCartao, PALAVRAS_DE_CONTATO };

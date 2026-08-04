@@ -122,16 +122,29 @@ async function handleProspectInbound(adapter, req) {
     // sozinha para um número que a casa publica para clientes, sem template
     // aprovado, é pedido de denúncia.
     //
-    // Não sobrescreve indicação anterior: a primeira costuma ser a do menu
-    // oficial, e re-registrar a cada mensagem faria o cockpit piscar sem motivo.
-    if (corpo && !lead.numero_indicado) {
+    // Primeiro-a-escrever vence, com UMA exceção: cartão de contato sobrepõe.
+    //
+    // A regra antiga ("a primeira costuma ser a do menu oficial") custou o lead
+    // mais quente de 04/08. No Capim Santo o menu trouxe o FIXO do salão com
+    // "reservas" ao lado e travou o campo; minutos depois um humano compartilhou
+    // o cartão da Adriana — celular, pessoa com nome — e foi descartado.
+    //
+    // Menu é o que a casa publica para clientes. Cartão é alguém escolhendo a
+    // dedo quem você deve procurar. O segundo sempre vale mais.
+    if (corpo) {
       const indicado = extrairNumeroIndicado(corpo, { numeroDoLead: lead.whatsapp_phone });
-      if (indicado) {
+      const novo = indicado && indicado.numero !== lead.numero_indicado;
+      const podeEscrever = indicado
+        && (!lead.numero_indicado || (indicado.fonte === 'cartao' && novo));
+      if (podeEscrever) {
+        const sobrepondo = Boolean(lead.numero_indicado);
         frescos.numero_indicado = indicado.numero;
         frescos.numero_indicado_contexto = indicado.contexto;
         frescos.numero_indicado_em = new Date().toISOString();
-        await recordEvent(lead.id, `📇 a casa indicou outro número: ${indicado.numero} — "${indicado.contexto.slice(0, 90)}"`);
-        logger.info(`[prospect] numero indicado lead=${lead.id} ${indicado.numero}`);
+        await recordEvent(lead.id, sobrepondo
+          ? `📇 cartão de contato SOBREPÔS o número do menu: ${lead.numero_indicado} → ${indicado.numero}`
+          : `📇 a casa indicou outro número: ${indicado.numero} — "${indicado.contexto.slice(0, 90)}"`);
+        logger.info(`[prospect] numero indicado lead=${lead.id} ${indicado.numero} (${indicado.fonte})`);
       }
     }
 
