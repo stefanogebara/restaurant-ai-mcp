@@ -658,3 +658,35 @@ Dois erros meus, distintos:
 
 Regra: teste que escreve em produção precisa de censo antes, censo depois, e
 prova de que a limpeza removeu exatamente o que criou — nem mais, nem menos.
+
+## Dado que veio de terceiro nao e dado verificado (04/08/2026)
+
+O fundador mandou eu escrever, do numero pessoal dele, para a "Adriana" do
+Capim Santo. O numero tinha vindo num cartao de contato compartilhado pelo
+proprio restaurante. Escrevi. Nao era a Adriana: o numero e de uma amiga dele,
+que levou um pitch frio.
+
+O payload da Meta estava integro, o parser leu certo, e eu mandei exatamente
+para o numero do cartao. Nada quebrou. Mesmo assim uma pessoa errada recebeu
+mensagem, porque a premissa embaixo de tudo estava errada.
+
+O erro e meu e e de raciocinio, nao de execucao: tratei "veio num cartao de
+contato" como "numero verificado do decisor". Sao coisas diferentes. Cartao
+compartilhado prova a INTENCAO de quem enviou, nao a CORRECAO do dado. Quem
+escolheu o contato na agenda pode ter escolhido errado, e escolheu.
+
+O agravante: eu tinha uma checagem barata disponivel e nao usei. Antes de
+disparar, dava pra perguntar a casa "esse numero e da Adriana dai?". Um turno
+de conversa contra uma mensagem irreversivel para um estranho.
+
+REGRA: antes de agir sobre dado que veio de terceiro (cartao de contato,
+telefone raspado de site, email de formulario, indicacao), perguntar "o que
+prova que isso esta certo?". Se a resposta for "a pessoa mandou", isso e
+procedencia, nao verificacao. Acao irreversivel sobre outra pessoa exige
+verificacao, ou uma confirmacao a mais, que quase sempre custa menos que o
+estrago.
+
+COROLARIO PRA RELATORIO: quando o dado de origem estava certo e mesmo assim o
+resultado saiu errado, mostrar o dado cru primeiro (foi o vcard decodificado
+que fechou a questao em segundos) e depois assumir a parte que e minha. A
+integridade do payload nao me absolve da decisao de disparar em cima dele.
