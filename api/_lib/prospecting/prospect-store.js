@@ -239,7 +239,7 @@ async function selectIntroCandidates(limit = 20, territorio = null) {
   try {
     let q = supabaseAdmin
       .from('prospect_leads')
-      .select('id, name, owner_name, whatsapp_phone, whatsapp_status, lead_score, reviews_count, rating')
+      .select('id, name, owner_name, whatsapp_phone, whatsapp_status, lead_score, reviews_count, rating, google_place_id')
       .eq('prospect_state', 'aguardando')
       .is('whatsapp_sent_at', null)
       .not('whatsapp_phone', 'is', null)
@@ -283,7 +283,13 @@ async function selectIntroCandidates(limit = 20, territorio = null) {
       .order('lead_score', { ascending: false, nullsFirst: false })
       .order('reviews_count', { ascending: false, nullsFirst: false })
       .order('created_at', { ascending: true })
-      .limit(limit);
+      // Janela maior que o pedido: os filtros de qualificação abaixo descartam
+      // parte do lote, e sem folga o dispatch entregaria menos que o limite —
+      // desperdiçando teto diário justamente por causa do filtro que existe
+      // para não desperdiçar teto. 3x cobre com sobra os ~12% medidos no topo
+      // da fila (fora-do-ICP + duplicata), com teto absoluto para não puxar a
+      // base inteira quando alguém pedir um limite grande.
+      .limit(Math.min(limit * 3, 300));
     if (error) {
       logger.error('selectIntroCandidates failed:', error.message);
       return [];
@@ -292,12 +298,21 @@ async function selectIntroCandidates(limit = 20, territorio = null) {
     // (DDD válido, nono dígito). Defesa em profundidade — um formato de gravação
     // novo passaria pela máscara e voltaria a queimar envio.
     const { ehCelularBr } = require('./prospect-extract');
-    const candidatos = (data || []).filter((l) => ehCelularBr(l.whatsapp_phone));
-    const descartados = (data || []).length - candidatos.length;
-    if (descartados > 0) {
-      logger.warn(`selectIntroCandidates: ${descartados} candidato(s) descartado(s) por não serem celular (máscara SQL deixou passar)`);
+    const comCelular = (data || []).filter((l) => ehCelularBr(l.whatsapp_phone));
+    const semCelular = (data || []).length - comCelular.length;
+    if (semCelular > 0) {
+      logger.warn(`selectIntroCandidates: ${semCelular} candidato(s) descartado(s) por não serem celular (máscara SQL deixou passar)`);
     }
-    return candidatos;
+    // Qualificação: tira quem não faz reserva (supermercado, farmácia...) e
+    // colapsa leads que dividem telefone ou place_id. Ver lead-qualifica.js.
+    const { qualificar } = require('./lead-qualifica');
+    const { candidatos, descartados } = qualificar(comCelular);
+    const perdidos = descartados.fora_icp + descartados.dup_telefone + descartados.dup_place;
+    if (perdidos > 0) {
+      logger.info(`selectIntroCandidates: ${perdidos} descartado(s) — `
+        + `fora do ICP ${descartados.fora_icp}, tel repetido ${descartados.dup_telefone}, place repetido ${descartados.dup_place}`);
+    }
+    return candidatos.slice(0, limit);
   } catch (err) {
     logger.error('selectIntroCandidates exception:', err.message);
     return [];
