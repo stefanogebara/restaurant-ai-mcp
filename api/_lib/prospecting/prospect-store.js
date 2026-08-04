@@ -429,11 +429,21 @@ async function claimIntro(leadId) {
   }
 }
 
-/** Record the outcome of an intro send on the lead. */
+/**
+ * Record the outcome of an intro send on the lead.
+ *
+ * Só 'failed' — recusa EXPLÍCITA da Meta, onde sabemos que nada saiu — devolve
+ * o lead para a fila. 'unknown' (timeout/rede) MANTÉM o claim: a mensagem pode
+ * ter sido entregue, e reenviar template frio para quem já recebeu é o pior
+ * resultado possível — queima o lead e a reputação do número.
+ *
+ * O preço dessa escolha é um lead eventualmente nunca abordado quando o
+ * timeout foi mesmo falha. É o preço certo: um lead a menos custa um lead;
+ * uma mensagem repetida custa um bloqueio e um ponto de qualidade na Meta.
+ */
 async function markIntro(leadId, { status, wamid }) {
   const fields = { whatsapp_send_status: status };
   if (wamid) fields.whatsapp_msg_id = wamid;
-  // A failed send releases the claim so a later run can retry.
   if (status === 'failed') fields.whatsapp_sent_at = null;
   return patchLead(leadId, fields);
 }

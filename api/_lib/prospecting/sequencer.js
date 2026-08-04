@@ -156,6 +156,11 @@ async function dispatchIntros({ limit = 20, territorio = null, force = false } =
         tipo: 'template', corpo: `[template:${tpl.meta_template_name}]`,
       });
       summary.sent++;
+    } else if (res.ambiguo) {
+      // Timeout/rede: pode ter sido entregue. Mantém o claim — nunca reenviar.
+      await markIntro(lead.id, { status: 'unknown' });
+      summary.ambiguos = (summary.ambiguos || 0) + 1;
+      logger.warn(`intro AMBÍGUA lead=${lead.id} — claim mantido, não será reenviada: ${res.error}`);
     } else {
       await markIntro(lead.id, { status: 'failed' });
       summary.failed++;
@@ -224,6 +229,11 @@ async function dispatchReferralIntros({ limit = 3, leadId = null, nowMs = Date.n
         });
         summary.sent++;
         logger.info(`referral intro sent lead=${lead.id}`);
+      } else if (res.ambiguo) {
+        // Mesma regra da intro fria: incerteza mantém o claim, nunca reenvia.
+        await markIntro(lead.id, { status: 'unknown' });
+        summary.ambiguos = (summary.ambiguos || 0) + 1;
+        logger.warn(`referral intro AMBÍGUA lead=${lead.id} — claim mantido: ${res.error}`);
       } else {
         await markIntro(lead.id, { status: 'failed' });
         summary.failed++;

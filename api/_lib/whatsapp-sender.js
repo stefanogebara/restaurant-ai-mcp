@@ -250,8 +250,14 @@ async function sendTemplateMessage(to, templateName, languageCode = 'en', bodyPa
     logger.info(`Template '${templateName}' sent to ${to}, messageId: ${data.messages?.[0]?.id}`);
     return { success: true, messageId: data.messages?.[0]?.id };
   } catch (error) {
-    logger.error('Template send exception:', error);
-    return { success: false, error: error.message };
+    // AMBÍGUO, não "falhou". Aqui a requisição partiu e a resposta não voltou
+    // (timeout, rede, função morrendo). A Meta pode ter entregue a mensagem —
+    // não temos como saber. Quem trata isto como fracasso e devolve o lead
+    // para a fila REENVIA um template que já chegou: em 04/ago, 23 de 67 donos
+    // receberam a abordagem 2x ou 3x por causa disso, sob a pressão de 60
+    // envios numa invocação só. Para venda fria o erro barato é não mandar.
+    logger.error('Template send exception (resultado AMBÍGUO, pode ter sido entregue):', error);
+    return { success: false, ambiguo: true, error: error.message };
   }
 }
 
