@@ -74,9 +74,9 @@ const RACHA = {
   ],
   // Door-line (COMPANION_TEXT.porta): resposta ao primeiro contato quando o thread
   // é só template + ruído de bot.
-  porta: 'oi! não é pedido não — é sobre uma forma da galera pagar a conta na mesa pelo QR 🙂 quem cuida disso ou de parcerias por aí?',
+  porta: 'oi! não é pedido não, é sobre uma forma da galera pagar a conta na mesa pelo QR 🙂 quem cuida disso ou de parcerias por aí?',
   // COMPANION_TEXT.previa: acompanha a criar_demo quando o modelo mandou a ferramenta sem texto.
-  previaCompanion: 'consigo te mostrar na prática — é um demo rapidinho onde você paga uma conta de mentira pelo QR, do celular 🙂',
+  previaCompanion: 'consigo te mostrar na prática, é um demo rapidinho onde você paga uma conta de mentira pelo QR, do celular 🙂',
   // Mensagem de FECHAMENTO do fundador (pré-preenchida no link wa.me do digest):
   // o fundador toca no lead da hit-list e o WhatsApp abre com isto pronto pra
   // enviar. Voz do fundador (não da Olímpia), oferta de piloto sem fricção.
@@ -88,7 +88,7 @@ const RACHA = {
   //     (fundador solo, prévia self-service) — e esta linha ainda pedia "5
   //     minutinhos hoje ou amanhã", contradizendo a persona no último passo.
   founderClose: ({ founderName, ownerName }) =>
-    `Oi${ownerName ? ' ' + ownerName : ''}! Aqui é o ${founderName}, fundador do Racha — o "pagar a conta na mesa por QR" que a Olímpia te apresentou. Queria te convidar pra ser uma das primeiras casas a testar, sem custo e sem compromisso: seus clientes pagam a conta pelo celular, cada um a sua parte, com a gorjeta indo direto pro garçom. Te mando uma prévia pra você ver do seu celular em 1 minuto — pode ser?`,
+    `Oi${ownerName ? ' ' + ownerName : ''}! Aqui é o ${founderName}, fundador do Racha, o "pagar a conta na mesa por QR" que a Olímpia te apresentou. Queria te convidar pra ser uma das primeiras casas a testar, sem custo e sem compromisso: seus clientes pagam a conta pelo celular, cada um a sua parte, com a gorjeta indo direto pro garçom. Te mando uma prévia pra você ver do seu celular em 1 minuto, pode ser?`,
   // Bloco "próximo passo" injetado no prompt (buildSystemPrompt regra 8). Racha:
   // SEM reunião — a prévia é self-service e a ativação é assíncrona.
   agendamento: [
@@ -150,8 +150,8 @@ const SEATABLE = {
     '- Objeção de tempo/ceticismo ("tô ocupado", "manda material", "não conheço") é EXATAMENTE',
     '  o caso da prévia: custa um toque, não uma reunião.',
   ],
-  porta: 'oi! não é pedido não — é sobre parceria 🙂 quem cuida das reservas ou parcerias por aí?',
-  previaCompanion: 'consigo te mostrar isso na prática — montei uma prévia rápida com os dados de vocês do Google 🙂',
+  porta: 'oi! não é pedido não, é sobre parceria 🙂 quem cuida das reservas ou parcerias por aí?',
+  previaCompanion: 'consigo te mostrar isso na prática, montei uma prévia rápida com os dados de vocês do Google 🙂',
   founderClose: ({ founderName, ownerName }) =>
     `Oi${ownerName ? ' ' + ownerName : ''}! Aqui é o ${founderName}, fundador da Seatable. A Olímpia comentou que você teve interesse — queria te mostrar rapidinho como funciona, sem compromisso. Topa 5 minutinhos hoje ou amanhã?`,
   // Seatable mantém o agendamento de call (baseline de reversão — byte-idêntico ao antigo).

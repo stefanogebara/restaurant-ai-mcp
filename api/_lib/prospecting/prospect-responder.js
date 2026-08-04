@@ -19,6 +19,7 @@
 
 const { createSecureLogger } = require('../secure-logger');
 const { sendWhatsAppMessage } = require('../whatsapp-sender');
+const { semTravessao } = require('./sem-travessao');
 const { acquireProcessingLock, releaseProcessingLock } = require('../rate-limit');
 const { getProspectingPhoneNumberId } = require('./routing');
 // DRY-RUN ligado por padrão e forçado sem número dedicado: só
@@ -77,7 +78,10 @@ function multipartEnabled() {
 async function sendReply(leadId, to, texto, { skipPacing = false } = {}) {
   const dryRun = isDryRun();
   const flags = { dryRun, disabled: skipPacing, testMode: isTestMode() };
-  const parts = splitReplyParts(texto, { multipart: multipartEnabled() });
+  // Travessão é assinatura de máquina: o teclado do celular não tem a tecla.
+  // Limpa ANTES do split para que o texto gravado no histórico seja o mesmo
+  // que o lead recebeu — senão o prompt reensina o vício a cada turno.
+  const parts = splitReplyParts(semTravessao(texto), { multipart: multipartEnabled() });
   if (parts.length === 0) return { success: true, dryRun, sentAny: false };
 
   let sentAny = false;

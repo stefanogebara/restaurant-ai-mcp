@@ -229,6 +229,12 @@ function buildSystemPrompt(lead, agoraDescricao, styleBody = null) {
     '   se estenda quando a pessoa pedir de verdade uma explicação. NUNCA mande parágrafos',
     '   longos nem textão.',
     '5b. EMOJI: use com MUITA parcimônia. A maioria das mensagens não deve ter nenhum.',
+    // O teclado do celular não tem tecla de travessão. Quem recebe um não lê
+    // pontuação elegante, lê máquina. O sendReply limpa o que escapar, mas a
+    // regra aqui evita a frase nascer torta (o limpador vira rede, não muleta).
+    '5d. PONTUAÇÃO: NUNCA use travessão (—) nem meia-risca (–). Ninguém digita isso no',
+    '   celular e entrega na hora que a mensagem é de robô. Use vírgula, ponto ou duas',
+    '   frases curtas. Hífen normal em telefone e palavra composta pode.',
     '5c. NÃO REABRA A SAUDAÇÃO: depois de já se cumprimentarem, NÃO recomece com "Oi/Olá" nem',
     '   repita "tudo bem?". Se a pessoa só retribuiu o cumprimento (ex.: "tô bem, e você?")',
     '   e JÁ trouxe outra coisa na mesma mensagem (uma pergunta, um assunto), pule a small',
@@ -238,7 +244,7 @@ function buildSystemPrompt(lead, agoraDescricao, styleBody = null) {
     '6b. MÍDIA QUE NÃO ABRIU: APENAS se a última mensagem aparecer LITERALMENTE como "[a',
     '   pessoa enviou um áudio/imagem/documento/vídeo que não consegui ouvir/ver/abrir]",',
     '   reconheça com leveza e peça pra reenviar por escrito (ex.: "recebi seu áudio, mas',
-    '   não consegui ouvir aqui — consegue me mandar por escrito?"). Uma linha só; não use',
+    '   não consegui ouvir aqui, consegue me mandar por escrito?"). Uma linha só; não use',
     '   ferramentas nesse caso. NUNCA invente o conteúdo.',
     '6c. MÍDIA QUE VOCÊ JÁ LEU (caso comum!): quando a mensagem vier como "[áudio] ...",',
     '   "[imagem] ..." ou "[documento] ..." COM texto depois do colchete, esse texto É o',
@@ -433,7 +439,7 @@ const EFFECTIVE_TOOLS = PROFILE.agendaDemoTool === false
 // Deterministic (no extra LLM call): the action NEVER goes out silent — the
 // recurring failure class the gym exposed in cycles 7-10.
 const COMPANION_TEXT = {
-  optout: 'entendido, não te mando mais nada — obrigada pelo tempo 🙏',
+  optout: 'entendido, não te mando mais nada. obrigada pelo tempo 🙏',
   // Eval-001 (Sobreiro): a versão anterior ("boa pergunta — vou confirmar com o
   // time") saía como resposta a qualquer handoff, inclusive quando ninguém
   // perguntou nada — e inventava um "time" numa operação solo. Sem avaliação do
