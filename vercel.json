@@ -24,6 +24,9 @@
     "api/cron/prospect-nudge.js": {
       "maxDuration": 120
     },
+    "api/cron/prospect-dispatch.js": {
+      "maxDuration": 120
+    },
     "api/prospect-enrich.js": {
       "maxDuration": 120
     },
@@ -376,6 +379,10 @@
     {
       "path": "/api/cron/prospect-nudge",
       "schedule": "40 13-21 * * 1-5"
+    },
+    {
+      "path": "/api/cron/prospect-dispatch",
+      "schedule": "10 13-20 * * 1-5"
     },
     {
       "path": "/api/cron/prospect-score-outcomes",

@@ -53,6 +53,12 @@ const CRON_JOBS = [
   // exata empata com a madrugada honesta e alerta por milissegundos.
   { name: 'prospect-flush', intervalMinutes: 480 },             // 15min, só 12-22 UTC → gap de 14h, tolera 16h
   { name: 'prospect-nudge', intervalMinutes: 2100 },            // horário, 13-21 UTC seg-sex → gap de 64h, tolera 70h
+  // A INTRO FRIA (05/08/2026). Até aqui NENHUM cron disparava intro: o
+  // dispatchIntros só tinha chamador manual, e o histórico mostrava a
+  // assinatura disso (0,1,2,12,1,11,2,25,67,0 por dia). Dente de serra é gente
+  // lembrando. Mesma folga do nudge: horário 13-20 UTC seg-sex, gap de 65h
+  // entre sexta e segunda, tolera 70h.
+  { name: 'prospect-dispatch', intervalMinutes: 2100 },
   { name: 'prospect-handoff-digest', intervalMinutes: 1440 },   // diário
   { name: 'prospect-score-outcomes', intervalMinutes: 1440 },   // diário
   { name: 'prospect-enrich', intervalMinutes: 60 },             // horário, 24/7 → gap de 1h, tolera 2h

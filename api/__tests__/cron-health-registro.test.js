@@ -30,6 +30,7 @@ const HORA = 60;
 const CRONS_PROSPECCAO = [
   'prospect-flush',
   'prospect-nudge',
+  'prospect-dispatch',
   'prospect-handoff-digest',
   'prospect-score-outcomes',
   'prospect-enrich',
