@@ -21,10 +21,15 @@
  * hoje 100), consumido slot a slot antes de cada envio. O sequencer também
  * recusa fora da janela 10-17 BRT e quando o disjuntor de qualidade cai.
  *
- * Agenda (vercel.json): de hora em hora, 13-20 UTC (10-17 BRT), seg-sex. Oito
+ * Agenda (vercel.json): de hora em hora, 13-19 UTC (10-16 BRT), seg-sex. Sete
  * execuções por dia; a janela e o cap fazem o resto. De hora em hora, e não a
  * cada 15 minutos, porque o trabalho aqui é limitado pelo cap diário e não por
  * urgência.
+ *
+ * O ÚLTIMO SLOT PARA EM 19 UTC DE PROPÓSITO: a janela de disparo do sequencer
+ * termina às 17h BRT, então uma execução às 20:10 UTC (17:10 BRT) rodaria todo
+ * dia útil só para descobrir que não pode enviar. Invocação queimada, e pior,
+ * um "rodou, enviou 0" no log que parece problema e não é.
  */
 
 const { createSecureLogger } = require('../_lib/secure-logger');

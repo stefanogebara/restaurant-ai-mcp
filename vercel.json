@@ -382,7 +382,7 @@
     },
     {
       "path": "/api/cron/prospect-dispatch",
-      "schedule": "10 13-20 * * 1-5"
+      "schedule": "10 13-19 * * 1-5"
     },
     {
       "path": "/api/cron/prospect-score-outcomes",
