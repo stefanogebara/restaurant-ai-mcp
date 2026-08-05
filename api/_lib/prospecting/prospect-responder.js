@@ -154,8 +154,27 @@ const PREVIA_ABERTA_INSTRUCTION =
 // The dated callback the lead asked for (or Olímpia promised) has come due (#32).
 const RETORNO_INSTRUCTION =
   'Chegou o momento que ficou combinado de você retomar o contato com o lead. ' +
-  'Mande UMA mensagem curta e natural retomando de onde vocês pararam — como quem ' +
+  'Mande UMA mensagem curta e natural retomando de onde vocês pararam, como quem ' +
   'cumpre o que prometeu, no horário certo. Não repita tudo, não soe robótica, não peça desculpas.';
+
+/**
+ * PURA: instrução do modo retorno, com o ASSUNTO combinado quando existe.
+ *
+ * `retorno_motivo` era gravado pelo agendar_retorno e nunca lido: a retomada
+ * saía pontual mas genérica, e quem prometeu "te chamo segunda sobre o
+ * orçamento" mandava um "tô retomando" que obrigava o lead a relembrar o
+ * assunto. Promessa datada é contrato, e o contrato inclui o assunto.
+ *
+ * @param {string|null|undefined} motivo - conteúdo de lead.retorno_motivo
+ * @returns {string}
+ */
+function instrucaoRetorno(motivo) {
+  const m = typeof motivo === 'string' ? motivo.trim() : '';
+  if (!m) return RETORNO_INSTRUCTION;
+  return `${RETORNO_INSTRUCTION} O ASSUNTO combinado era: ${m}. `
+    + 'É sobre ISSO que você está retomando: trate esse ponto direto na mensagem, '
+    + 'sem rodeio e sem recontar o histórico.';
+}
 
 function instrucaoRemarcar(motivo, novoHorarioLabel) {
   const porMotivo = {
@@ -342,7 +361,7 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
       },
       history,
       nowMs,
-      injectUserTurn: RETORNO_INSTRUCTION,
+      injectUserTurn: instrucaoRetorno(lead.retorno_motivo),
       noTools: true,
     });
     if (!acaoR || !acaoR.texto) return { action: 'skip', reason: 'no_text', retorno: true };
@@ -821,4 +840,4 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
   }
 }
 
-module.exports = { respondToProspect, isDryRun };
+module.exports = { respondToProspect, isDryRun, instrucaoRetorno };
