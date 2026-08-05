@@ -22,8 +22,9 @@
  * recusa fora da janela 10-17 BRT e quando o disjuntor de qualidade cai.
  *
  * Agenda (vercel.json): de hora em hora, 13-20 UTC (10-17 BRT), seg-sex. Oito
- * execuções por dia; a janela e o cap fazem o resto. Hora em hora e não */15
- * porque o trabalho aqui é limitado pelo cap diário, não por urgência.
+ * execuções por dia; a janela e o cap fazem o resto. De hora em hora, e não a
+ * cada 15 minutos, porque o trabalho aqui é limitado pelo cap diário e não por
+ * urgência.
  */
 
 const { createSecureLogger } = require('../_lib/secure-logger');
