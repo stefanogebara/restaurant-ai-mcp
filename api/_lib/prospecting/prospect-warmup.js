@@ -24,6 +24,39 @@ const redis = createRedisClient('ProspectWarmup');
 const memCounts = new Map();
 
 /**
+ * Teto duro do teto: nenhuma fonte de configuração pode passar daqui. Este
+ * número governa quantas mensagens FRIAS saem do WhatsApp da empresa por dia,
+ * e a reputação do número é ativo caro e lento de recuperar. É o mesmo valor
+ * do topo da rampa, por construção.
+ */
+const TETO_ABSOLUTO = 250;
+
+const capValido = (v) => Number.isInteger(v) && v > 0 && v <= TETO_ABSOLUTO;
+
+/**
+ * PURA: decide o teto do dia e de ONDE ele veio.
+ *
+ * Precedência banco > env > rampa. O banco ganha do env de propósito: mudar o
+ * ritmo da prospecção não deveria exigir redeploy, e o cockpit precisa poder
+ * mostrar o valor que está valendo de verdade em vez de uma nota escrita à mão.
+ *
+ * Valor fora da faixa é RECUSADO, não ajustado. Clampe silencioso (1000 virar
+ * 250) esconderia o dedo gordo e deixaria a pessoa achando que configurou o
+ * que não configurou; recusar mantém o teto anterior e devolve o valor
+ * recusado para quem chamou registrar.
+ *
+ * @param {{dbCap:*, envCap:*, rampa:*}} fontes
+ * @returns {{cap:number, origem:'banco'|'env'|'rampa'|'piso', recusado?:number}}
+ */
+function resolverCap({ dbCap, envCap, rampa }) {
+  if (capValido(dbCap)) return { cap: dbCap, origem: 'banco' };
+  const recusado = (typeof dbCap === 'number' && Number.isFinite(dbCap) && dbCap > TETO_ABSOLUTO) ? dbCap : undefined;
+  if (capValido(envCap)) return { cap: envCap, origem: 'env', ...(recusado ? { recusado } : {}) };
+  if (capValido(rampa)) return { cap: rampa, origem: 'rampa', ...(recusado ? { recusado } : {}) };
+  return { cap: 40, origem: 'piso', ...(recusado ? { recusado } : {}) };
+}
+
+/**
  * PURE: warm-up ramp by days since the first outbound. Conservative start,
  * ceiling at 250 — Meta's business-initiated floor for an unverified number.
  */
@@ -60,12 +93,42 @@ async function firstSendIso() {
  * Today's cap: PROSPECTING_DAILY_CAP (when set) is a fixed operator override;
  * without it the warm-up ramp applies (40 → 250 over ~2 weeks of activity).
  */
+// Teto operacional vindo do banco, cacheado 60s. Custa uma linha por minuto e
+// evita uma consulta por envio; 60s é rápido o bastante para uma mudança de
+// ritmo valer "na hora" para quem está olhando o cockpit.
+let _dbCap = { valor: null, at: 0 };
+async function capDoBanco() {
+  if (Date.now() - _dbCap.at < 60 * 1000) return _dbCap.valor;
+  let valor = null;
+  try {
+    const { supabaseAdmin } = require('../supabase');
+    const { data, error } = await supabaseAdmin.from('cron_config')
+      .select('daily_cap').eq('job_name', 'prospecting-dispatch').limit(1);
+    // Erro de leitura NÃO vira "sem teto configurado" em silêncio: registra e
+    // deixa o env/rampa assumirem, que é o comportamento antigo e seguro.
+    if (error) logger.error('leitura do daily_cap falhou (usando env/rampa):', error.message);
+    else valor = data && data[0] ? data[0].daily_cap : null;
+  } catch (err) {
+    logger.error('daily_cap indisponível (usando env/rampa):', err.message);
+  }
+  _dbCap = { valor, at: Date.now() };
+  return valor;
+}
+
 async function currentCap(nowMs = Date.now()) {
-  const env = parseInt(process.env.PROSPECTING_DAILY_CAP || '', 10);
-  if (Number.isFinite(env) && env > 0) return env;
+  const envBruto = parseInt(process.env.PROSPECTING_DAILY_CAP || '', 10);
   const first = await firstSendIso();
   const dias = Math.floor((nowMs - new Date(first + 'T00:00:00Z').getTime()) / 86400000);
-  return rampCap(dias);
+
+  const r = resolverCap({
+    dbCap: await capDoBanco(),
+    envCap: Number.isFinite(envBruto) ? envBruto : null,
+    rampa: rampCap(dias),
+  });
+  if (r.recusado) {
+    logger.error(`daily_cap=${r.recusado} RECUSADO (teto ${TETO_ABSOLUTO}); valendo ${r.cap}/dia via ${r.origem}`);
+  }
+  return r.cap;
 }
 
 function dailyCap() {
@@ -116,4 +179,4 @@ async function usedToday(nowMs = Date.now()) {
   return memCounts.get(key) || 0;
 }
 
-module.exports = { consumeSendSlot, usedToday, dailyCap, currentCap, rampCap };
+module.exports = { consumeSendSlot, usedToday, dailyCap, currentCap, rampCap, resolverCap, TETO_ABSOLUTO };
