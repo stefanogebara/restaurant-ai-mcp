@@ -270,11 +270,19 @@ function buildSystemPrompt(lead, agoraDescricao, styleBody = null) {
     '9b. NUNCA peça o número de novo se ele já apareceu na conversa (texto ou cartão de',
     '   contato). Pedir algo que a pessoa acabou de mandar é o que mais irrita.',
     '9c. NUNCA diga "vou entrar em contato" / "vou chamar essa pessoa" ANTES de chamar',
-    '   registrar_responsavel — é a ferramenta que registra e aciona o contato. Sem ela,',
-    '   não prometa contato com terceiros.',
-    '10. Depois que te passaram o contato, encerre com leveza (agradeça e diga que vai falar',
-    '   com a pessoa indicada). NÃO volte a perguntar "você é o responsável?" pra quem acabou',
-    '   de repassar outro contato — é contraditório e parece que você não leu o que mandaram.',
+    '   registrar_responsavel. Sem ela, não prometa contato com terceiros.',
+    // 04/08/2026: um cartão "Adriana" trazia o número de um terceiro, e a
+    // agente prometeu "já falo com a Adriana" e o sistema disparou no mesmo
+    // turno. Cartão prova quem MANDOU, não que o número está certo.
+    '9d. REGISTRAR NÃO É CONTATAR. Depois de registrar_responsavel, você ainda NÃO vai falar',
+    '   com a pessoa: PERGUNTE à casa se o número é mesmo dela ("esse número é da Fulana aí',
+    '   de vocês mesmo?"). Só quando a casa confirmar você chama confirmar_indicacao com',
+    '   confirmado=true, e é ISSO que aciona o contato. Se a casa disser que está errado ou',
+    '   não souber, chame confirmar_indicacao com confirmado=false.',
+    '10. Depois que te passaram o contato, agradeça e faça a pergunta de confirmação do 9d.',
+    '   NÃO prometa "já vou falar com ela" antes da confirmação, e NÃO volte a perguntar',
+    '   "você é o responsável?" pra quem acabou de repassar outro contato — é contraditório',
+    '   e parece que você não leu o que mandaram.',
     '',
     `CONTATO DO FUNDADOR: o fundador ${PROFILE.daCompany} atende direto no WhatsApp ${FOUNDER_WHATSAPP}.`,
     '11. SEMPRE que a pessoa pedir pra falar com um humano/alguém da empresa, pedir telefone',
@@ -378,6 +386,21 @@ const PROSPECT_TOOLS = [
         nome: { type: 'string', description: 'Nome do responsável, se disseram. Senão "".' },
       },
       required: ['numero'],
+    },
+  },
+  {
+    name: 'confirmar_indicacao',
+    // O par de registrar_responsavel. Sem esta ferramenta o indicado ficaria
+    // registrado para sempre e ninguém falaria com ele: o registro PARA o
+    // contato até a casa confirmar, e isto é o que destrava.
+    description:
+      'Chame quando a casa CONFIRMAR que o número indicado é mesmo da pessoa ("sim, é ela", "isso", "pode chamar", "confirmado"). Só depois disso a pessoa indicada é contatada. Se a casa disser que o número está errado ou não souber, chame com confirmado=false.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        confirmado: { type: 'boolean', description: 'true se a casa confirmou o número; false se negou ou não soube.' },
+      },
+      required: ['confirmado'],
     },
   },
   {

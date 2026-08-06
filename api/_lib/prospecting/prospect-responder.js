@@ -20,6 +20,7 @@
 const { createSecureLogger } = require('../secure-logger');
 const { sendWhatsAppMessage } = require('../whatsapp-sender');
 const { semTravessao } = require('./sem-travessao');
+const { avaliarIndicacao } = require('./indicacao');
 const { acquireProcessingLock, releaseProcessingLock } = require('../rate-limit');
 const { getProspectingPhoneNumberId } = require('./routing');
 // DRY-RUN ligado por padrão e forçado sem número dedicado: só
@@ -664,22 +665,90 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
           nome_responsavel: acao.nome || undefined,
           notas: [`Responsável indicado pelo WhatsApp: ${acao.numero}`],
         });
-        // O ack SEMPRE carrega o WhatsApp do fundador (regra 2026-07-20): quem
-        // indicou repassa o número, e a pessoa indicada pode chamar direto.
-        const ack = acao.texto || (acao.nome
-          ? `Perfeito, obrigada! Já falo com ${acao.nome} então. 😊 E caso ${acao.nome} queira falar direto com o fundador, esse é o número dele: ${FOUNDER_WHATSAPP}`
-          : `Perfeito, obrigada pela indicação! Já entro em contato com a pessoa então. 😊 E caso ela queira falar direto com o fundador, esse é o número dele: ${FOUNDER_WHATSAPP}`);
+        // O ack PERGUNTA em vez de prometer. Dizer "já falo com a Adriana" antes
+        // de saber se o número é dela foi o que transformou um dado errado em
+        // mensagem para um estranho (04/08). Uma pergunta custa um turno; a
+        // mensagem errada não tem volta.
+        //
+        // O WhatsApp do fundador continua no ack (regra 2026-07-20): quem indicou
+        // repassa o número, e a pessoa indicada pode chamar direto.
+        const quem = acao.nome ? `d${acao.nome.endsWith('a') ? 'a' : 'o'} ${acao.nome}` : 'dessa pessoa';
+        const ack = acao.texto || (
+          `Perfeito, obrigada! Só pra eu não errar: esse número é ${quem} aí de vocês mesmo? `
+          + `Assim que você confirmar eu chamo 🙂 E se preferir falar direto com o fundador, esse é o número dele: ${FOUNDER_WHATSAPP}`);
         const r = await sendReply(lead.id, from, ack, pace);
         sent = r.sentAny; dryRun = r.dryRun;
 
         // Referral → lead + auto-intro (best-effort: a failure here never
         // breaks the ack; the flush-cron referral pass retries the intro, and
         // the cockpit timeline shows exactly what happened).
+        // NÃO cria lead nem dispara intro aqui. Cartão de contato prova a
+        // INTENÇÃO de quem enviou, não a CORREÇÃO do número (incidente
+        // 04/08/2026: cartão "Adriana" trazia o número de um terceiro, que
+        // levou pitch frio no mesmo turno). O indicado só é contatado depois
+        // que a própria casa confirmar, via ferramenta confirmar_indicacao.
+        try {
+          const { findLeadByPhone } = require('./prospect-store');
+          const dono = await findLeadByPhone(acao.numero).catch(() => null);
+          const veredito = avaliarIndicacao({
+            numeroIndicado: acao.numero,
+            leadQueIndicou: lead,
+            donoDoNumero: dono,
+            numeroDoFundador: FOUNDER_WHATSAPP,
+          });
+
+          if (veredito.decisao === 'recusar') {
+            await recordEvent(lead.id, `🚧 indicação não virou contato (${veredito.motivo}): ${acao.numero}`);
+            break;
+          }
+          await patchLead(lead.id, {
+            numero_indicado: acao.numero,
+            numero_indicado_contexto: `indicado como "${acao.nome || 'responsável'}"; aguardando a casa confirmar`,
+            numero_indicado_em: new Date().toISOString(),
+          });
+          await recordEvent(lead.id, `📇 indicação registrada, aguardando confirmação da casa: ${acao.numero}`);
+        } catch (err) {
+          logger.warn(`referral gate failed lead=${lead.id}: ${err.message}`);
+        }
+        break;
+      }
+
+      case 'confirmar_indicacao': {
+        // O par de registrar_responsavel: o registro PARA o contato, isto
+        // destrava. Sem este caso o indicado ficaria registrado para sempre e
+        // ninguém falaria com ele.
+        const pendente = lead.numero_indicado;
+        if (!pendente) {
+          // Confirmação sem indicação pendente é o modelo se confundindo.
+          // Responder normal é melhor que agir sobre nada.
+          const r = await sendReply(lead.id, from, acao.texto || 'perfeito, obrigada! 🙂', pace);
+          sent = r.sentAny; dryRun = r.dryRun;
+          await recordEvent(lead.id, '⚠ confirmar_indicacao sem indicação pendente — ignorado');
+          break;
+        }
+
+        if (acao.confirmado === false) {
+          patch.numero_indicado = null;
+          patch.numero_indicado_contexto = null;
+          patch.numero_indicado_em = null;
+          const r = await sendReply(lead.id, from,
+            acao.texto || 'ah, entendi! sem problema. quando puder me passa o número certo que eu chamo 🙂', pace);
+          sent = r.sentAny; dryRun = r.dryRun;
+          await recordEvent(lead.id, `🚧 a casa NEGOU o número indicado (${pendente}) — descartado sem contato`);
+          break;
+        }
+
+        const r = await sendReply(lead.id, from, acao.texto || 'perfeito, obrigada! já chamo então 🙂', pace);
+        sent = r.sentAny; dryRun = r.dryRun;
+
+        // Só AGORA o indicado vira lead e entra na fila. Best-effort: falha
+        // aqui não quebra o ack, e a linha do tempo mostra o que aconteceu.
         try {
           const { createReferralLead } = require('./prospect-store');
-          const ref = await createReferralLead(lead, acao.numero, acao.nome || null);
+          const nome = (lead.conversa_fatos && lead.conversa_fatos.nome_responsavel) || null;
+          const ref = await createReferralLead(lead, pendente, nome);
           if (ref.ok && ref.created) {
-            await recordEvent(lead.id, `📇 indicação virou lead (${acao.numero})`);
+            await recordEvent(lead.id, `📇 indicação CONFIRMADA pela casa virou lead (${pendente})`);
             const { dispatchReferralIntros } = require('./sequencer');
             const d = await dispatchReferralIntros({ leadId: ref.leadId, limit: 1 });
             if (d && d.sent > 0) {
@@ -695,8 +764,9 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
             await recordEvent(lead.id, '⚠ número indicado não validou como BR móvel — tratar manualmente');
           }
         } catch (err) {
-          logger.warn(`referral auto-lead failed lead=${lead.id}: ${err.message}`);
+          logger.warn(`referral confirm failed lead=${lead.id}: ${err.message}`);
         }
+        patch.numero_indicado_contexto = 'confirmado pela casa';
         break;
       }
 
