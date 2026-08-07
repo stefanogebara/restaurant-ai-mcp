@@ -31,16 +31,25 @@ const RACHA = {
   previaUrl: process.env.PROSPECTING_PREVIA_URL || 'https://racha-gray.vercel.app/?t=demoracha',
   oQueFaz: [
     'O QUE O RACHA FAZ: é o jeito mais simples da galera pagar a conta na mesa — o cliente',
-    'escaneia o QR da mesa, vê a conta no celular, paga a parte dele na hora por Pix e a',
-    'gorjeta vai direto pro garçom. Sem baixar app, sem esperar a maquininha passar de mão em',
-    'mão. Os ganhos (é o seu repertório de venda, NÃO um roteiro pra recitar):',
+    'escaneia o QR da mesa, vê a conta no celular e paga a parte dele na hora por Pix. Sem',
+    'baixar app, sem esperar a maquininha passar de mão em mão. Os ganhos (é o seu repertório',
+    'de venda, NÃO um roteiro pra recitar):',
     '- Mesa vira mais rápido: ninguém fica 20 min esperando pra fechar — paga pelo QR e vai.',
     '- Divide sem dor de cabeça: cada um paga a SUA parte no próprio celular, sem aquela',
     '  dividida errada no fim da noite nem uma pessoa bancando o resto.',
-    '- Gorjeta que chega no garçom: cai direto pra equipe, transparente, sem passar pelo caixa.',
-    '- Recebe na conta com split automático: o dinheiro cai já separado, na hora — sem',
-    '  maquininha e sem a taxa de cartão comendo a margem.',
+    '- Serviço organizado: os 10% entram na conta (o cliente pode tirar), liquidam no CNPJ da',
+    '  casa e vêm SEPARADOS no relatório, por dia e por mesa — a distribuição continua sendo',
+    '  do restaurante, do jeito que ele já faz.',
+    '- Recebe com split automático: o dinheiro cai já separado por mesa direto na conta da',
+    '  casa, no mesmo dia quando é Pix — que custa bem menos que o MDR do crédito.',
     '- Zero fricção pro cliente: escaneia e paga em segundos, sem cadastro, sem instalar nada.',
+    'PROIBIDO SOBRE GORJETA (não basta omitir — nunca parafraseie nessa direção): NÃO prometa',
+    'gorjeta "direto pro garçom", "direto pra equipe", "no Pix do garçom" nem "sem passar pelo',
+    'caixa". O serviço liquida no CNPJ e a CASA distribui pela folha (Lei 13.419/2017 + STJ',
+    'Tema 1102) — repasse direto seria exposição trabalhista e tributária DO CLIENTE. Se',
+    'perguntarem de gorjeta, responda exatamente o bullet "Serviço organizado" acima. Se a casa',
+    'disser que rateia entre todos os garçons, isso NÃO é impedimento: é o cenário normal, o',
+    'Racha não encosta na distribuição.',
     'COMO VENDER: escute a maior dor da pessoa e conecte com O ganho que resolve ELA — um por',
     'mensagem, em linguagem simples. Se a dor ainda não apareceu, pergunte (ex.: "o que mais',
     'trava aí na hora H: a fila pra fechar a conta, a dividida no fim da noite, ou a maquininha',
@@ -87,8 +96,14 @@ const RACHA = {
   //  2. NÃO pede reunião. A regra 8 logo abaixo proíbe call/horário no Racha
   //     (fundador solo, prévia self-service) — e esta linha ainda pedia "5
   //     minutinhos hoje ou amanhã", contradizendo a persona no último passo.
+  // Terceira correção (07/08/2026, caso +55 11 98353-3595): a linha prometia
+  // "gorjeta indo direto pro garçom" — claim proibido (não-negociável #2 do
+  // racha/CLAUDE.md). Custou o lead: a casa respondeu que rateia os 10% entre
+  // todos os garçons e concluiu que não daria pra trabalhar com a gente — quando
+  // o rateio dela é exatamente o nosso modelo. A promessa errada não só é
+  // ilegal de cumprir, como AFASTA o ICP que ela pretendia atrair.
   founderClose: ({ founderName, ownerName }) =>
-    `Oi${ownerName ? ' ' + ownerName : ''}! Aqui é o ${founderName}, fundador do Racha, o "pagar a conta na mesa por QR" que a Olímpia te apresentou. Queria te convidar pra ser uma das primeiras casas a testar, sem custo e sem compromisso: seus clientes pagam a conta pelo celular, cada um a sua parte, com a gorjeta indo direto pro garçom. Te mando uma prévia pra você ver do seu celular em 1 minuto, pode ser?`,
+    `Oi${ownerName ? ' ' + ownerName : ''}! Aqui é o ${founderName}, fundador do Racha, o "pagar a conta na mesa por QR" que a Olímpia te apresentou. Queria te convidar pra ser uma das primeiras casas a testar, sem custo e sem compromisso: seus clientes pagam a conta pelo celular, cada um a sua parte, sem fila de maquininha no fim da noite. Te mando uma prévia pra você ver do seu celular em 1 minuto, pode ser?`,
   // Bloco "próximo passo" injetado no prompt (buildSystemPrompt regra 8). Racha:
   // SEM reunião — a prévia é self-service e a ativação é assíncrona.
   agendamento: [

@@ -103,3 +103,52 @@ describe('prospect-demo — fixed Racha prévia', () => {
     });
   });
 });
+
+/**
+ * Regressão de compliance (07/08/2026, caso +55 11 98353-3595).
+ *
+ * O founderClose prometia "gorjeta indo direto pro garçom". Isso viola o
+ * não-negociável #2 do racha/CLAUDE.md (Lei 13.419/2017 + STJ Tema 1102: o
+ * serviço é remuneração e passa pela folha do CNPJ) — e, na prática, custou o
+ * lead: a casa respondeu que rateia os 10% entre todos os garçons e concluiu
+ * que não conseguiria trabalhar com a gente, quando o rateio dela é exatamente
+ * o nosso modelo.
+ *
+ * Este teste trava as duas pontas: a copy estática (founderClose) e o prompt
+ * inteiro que vai pro LLM.
+ */
+describe('gorjeta — claim proibido nunca sai na copy do Racha', () => {
+  const PROIBIDO = [
+    /gorjeta\s+(indo\s+)?direto\s+pro\s+gar[çc]om/i,
+    /gorjeta\s+(vai\s+)?direto\s+pra\s+equipe/i,
+    /gorjeta.{0,40}pix\s+(pessoal\s+)?d[oe]\s+gar[çc]om/i,
+    /sem\s+passar\s+pelo\s+caixa/i,
+  ];
+
+  test('founderClose não promete repasse direto de gorjeta', () => {
+    withProduct('racha', () => {
+      const { getProfile } = require('../_lib/prospecting/prospect-product');
+      const msg = getProfile().founderClose({ founderName: 'Stefano', ownerName: 'Ana' });
+      for (const re of PROIBIDO) expect(msg).not.toMatch(re);
+    });
+  });
+
+  test('o system prompt não autoriza o claim e ensina o enquadramento correto', () => {
+    withProduct('racha', () => {
+      const { buildSystemPrompt } = require('../_lib/prospecting/prospect-agent');
+      const p = buildSystemPrompt(LEAD, AGORA);
+
+      // A promessa proibida não aparece como afirmação vendável...
+      expect(p).not.toMatch(/-\s*Gorjeta que chega no gar[çc]om/i);
+      expect(p).toMatch(/PROIBIDO SOBRE GORJETA/);
+
+      // ...e o enquadramento legal correto está explícito no prompt.
+      expect(p).toMatch(/CNPJ/);
+      expect(p).toMatch(/folha/i);
+      expect(p).toMatch(/13\.419/);
+
+      // O caso que gerou a regressão: rateio entre garçons não é impedimento.
+      expect(p).toMatch(/rateia entre todos os gar[çc]ons/i);
+    });
+  });
+});
