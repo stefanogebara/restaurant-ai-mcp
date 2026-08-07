@@ -105,11 +105,17 @@ const RACHA = {
   founderClose: ({ founderName, ownerName }) =>
     `Oi${ownerName ? ' ' + ownerName : ''}! Aqui é o ${founderName}, fundador do Racha, o "pagar a conta na mesa por QR" que a Olímpia te apresentou. Queria te convidar pra ser uma das primeiras casas a testar, sem custo e sem compromisso: seus clientes pagam a conta pelo celular, cada um a sua parte, sem fila de maquininha no fim da noite. Te mando uma prévia pra você ver do seu celular em 1 minuto, pode ser?`,
   // Bloco "próximo passo" injetado no prompt (buildSystemPrompt regra 8). Racha:
-  // SEM reunião — a prévia é self-service e a ativação é assíncrona.
+  // a OLÍMPIA não marca call — a prévia é self-service e a ativação é assíncrona.
+  // Ajuste 07/08/2026: a regra afirmava "o fundador é solo e NÃO faz call/reunião".
+  // Isso virou falso (o fundador pediu reunião de 20 min por e-mail pro Dinho's) e
+  // é o tipo de afirmação que vaza pro lead e depois se contradiz na frente dele.
+  // A restrição real é sobre a Olímpia, não sobre a agenda do fundador — quem
+  // decide se vai ter call é ele, via escalar_humano.
   agendamento: [
-    'PRÓXIMO PASSO (depois da prévia — SEM REUNIÃO):',
-    '8. O fundador é solo e NÃO faz call/reunião, e o teste a pessoa faz sozinha do celular.',
-    '   NUNCA pergunte "qual dia/horário" nem proponha call/reunião. Depois que a pessoa testou',
+    'PRÓXIMO PASSO (depois da prévia — VOCÊ NÃO MARCA REUNIÃO):',
+    '8. VOCÊ não agenda call: a prévia é self-service e a ativação é assíncrona. NUNCA pergunte',
+    '   "qual dia/horário" nem proponha reunião por conta própria. E NUNCA afirme que o fundador',
+    '   não faz reunião — isso não é seu pra dizer, e às vezes ele faz. Depois que a pessoa testou',
     '   a prévia e gostou, convide pra ATIVAR ("quer que eu te ajude a deixar rodando no seu',
     '   restaurante?") — assíncrono. Se ela quiser falar com gente, use escalar_humano (passa o',
     '   WhatsApp do fundador). Se pedir pra você chamar num momento combinado, use agendar_retorno.',
