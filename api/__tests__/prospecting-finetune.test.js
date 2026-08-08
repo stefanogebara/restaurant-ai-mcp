@@ -195,3 +195,40 @@ describe('buildSystemPrompt — restored fine-tuning depth', () => {
     expect(prompt).toMatch(/NUNCA despeje a lista inteira/);
   });
 });
+
+/**
+ * Regressão do caso Bario Bar (07-08/08/2026).
+ *
+ * O porteiro entregou compras@bario.com.br. O prompt mandava tratar contato
+ * entregue com registrar_responsavel — mas o schema dessa ferramenta só aceita
+ * `numero`, e não existe ferramenta de e-mail. Sem rota válida, a Olímpia
+ * inventou uma: "vou mandar a proposta pro compras@bario.com.br". O e-mail nunca
+ * saiu, o lead ficou em 'conversando' (fora do digest, que só lê 'handoff') e o
+ * endereço foi parar em prospect_email — campo que só prospect-booking lê, e o
+ * Racha nem agenda reunião.
+ *
+ * O prompt agora precisa dizer as duas coisas: que ela NÃO envia e-mail, e para
+ * onde o endereço vai (escalar_humano → handoff → digest do fundador).
+ */
+describe('e-mail entregue pelo porteiro — a Olímpia não promete o que não pode', () => {
+  const lead = { name: 'Bar do Zé', city: 'São Paulo', sector: 'bar', nome_genero: 'm' };
+  const prompt = buildSystemPrompt(lead);
+
+  test('o prompt proíbe prometer envio de e-mail', () => {
+    expect(prompt).toMatch(/VOC[ÊE] N[ÃA]O ENVIA E-MAIL/);
+    expect(prompt).toMatch(/NUNCA prometa "vou mandar por/);
+  });
+
+  test('o prompt roteia e-mail pra escalar_humano, não pra registrar_responsavel', () => {
+    // A rota tem que estar explícita: sem ela o modelo cai no mesmo beco.
+    expect(prompt).toMatch(/E-MAIL[^.]{0,80}escalar_humano/);
+    expect(prompt).toMatch(/registrar_responsavel s[óo] aceita n[úu]mero/);
+  });
+
+  test('número de WhatsApp continua indo pra registrar_responsavel', () => {
+    // O conserto do e-mail não pode quebrar o caminho do número, que funciona.
+    expect(prompt).toMatch(/N[ÚU]MERO de WhatsApp vai em/);
+    expect(prompt).toMatch(/registrar_responsavel/);
+    expect(prompt).toMatch(/jamais optout/);
+  });
+});
