@@ -752,7 +752,46 @@ async function sendProspectDigestEmail({ to, subject, html, text }) {
   }
 }
 
+/**
+ * Prospecting: a proposta do fundador para o e-mail que o porteiro entregou.
+ *
+ * Sender fino — o compositor (prospecting/founder-email.js) já montou assunto,
+ * texto e HTML, e já passou pelo claim-linter. Aqui só sai.
+ *
+ * `replyTo` é o e-mail do fundador, não o FROM_ADDRESS: a resposta do prospect
+ * precisa cair na caixa dele, não num endereço transacional que ninguém lê.
+ * Esse era metade do buraco do caso Bario (a proposta que nunca saiu).
+ *
+ * Como o digest, checa o `{ error }` do Resend (o SDK NÃO estoura) e propaga a
+ * falha, para o cron reportar erro real em vez de um "enviado" falso.
+ */
+async function sendProspectProposalEmail({ to, subject, html, text, replyTo }) {
+  const resend = getResendClient();
+  if (!resend) { logger.warn('RESEND_API_KEY not set, skipping prospect proposal email'); return false; }
+  if (!to) { logger.warn('no prospect e-mail, skipping proposal'); return false; }
+  try {
+    const { data, error } = await resend.emails.send({
+      from: FROM_ADDRESS,
+      to,
+      subject,
+      html: wrapEmailHtml(html),
+      ...(text ? { text } : {}),
+      ...(replyTo ? { replyTo } : {}),
+    });
+    if (error) {
+      logger.error('Resend rejected the prospect proposal', { error: error.message || error.name || String(error) });
+      throw new Error(`resend: ${error.message || error.name || 'erro desconhecido'}`);
+    }
+    logger.info('Prospect proposal email sent', { id: data && data.id });
+    return true;
+  } catch (err) {
+    logger.error('Failed to send prospect proposal email', { error: err.message });
+    throw err;
+  }
+}
+
 module.exports = {
+  sendProspectProposalEmail,
   sendPaymentReceiptEmail,
   sendPaymentFailedEmail,
   sendTrialEndingEmail,

@@ -1085,6 +1085,54 @@ async function selectFounderHandoffQueue({ maxAgeDays = null, limit = 50 } = {})
 }
 
 /**
+ * Fila da proposta por e-mail: leads em handoff COM endereço capturado e que
+ * ainda NÃO receberam a proposta.
+ *
+ * Só 'handoff', deliberadamente. Um lead em 'conversando' está no meio de papo
+ * com a Olímpia; mandar a proposta do fundador por fora atropelaria a conversa
+ * dela e chegaria duplicado. O caminho certo é o e-mail entregue virar handoff
+ * (regra 3c do prompt), e só então esta fila pegar.
+ *
+ * A idempotência é por marcador em prospect_messages, não por coluna nova: sem
+ * migration, e o histórico do lead já é a fonte da verdade de tudo mais.
+ */
+async function selectFounderEmailQueue({ limit = 25 } = {}) {
+  // require tardio: evita mexer no bloco de imports deste arquivo grande e não
+  // há ciclo (founder-email só depende do claim-linter).
+  const { PROPOSAL_MARKER } = require('./founder-email');
+  try {
+    const { data: leads, error } = await supabaseAdmin
+      .from('prospect_leads')
+      .select('id, name, city, owner_name, prospect_email, prospect_state, whatsapp_phone, updated_at')
+      .eq('prospect_state', 'handoff')
+      .not('prospect_email', 'is', null)
+      .order('updated_at', { ascending: false })
+      .limit(Math.min(Math.max(limit, 1), 100));
+    if (error) { logger.error('selectFounderEmailQueue failed:', error.message); return []; }
+    if (!leads || leads.length === 0) return [];
+
+    const ids = leads.map((l) => l.id);
+    const { data: jaEnviados, error: errMsgs } = await supabaseAdmin
+      .from('prospect_messages')
+      .select('lead_id')
+      .in('lead_id', ids)
+      .like('corpo', `${PROPOSAL_MARKER}%`);
+    if (errMsgs) {
+      // Falha FECHADO: sem conseguir provar que ninguém já recebeu, não mande.
+      // Reenviar proposta pro mesmo comprador é pior que atrasar um dia.
+      logger.error('selectFounderEmailQueue: checagem de duplicata falhou:', errMsgs.message);
+      return [];
+    }
+
+    const enviados = new Set((jaEnviados || []).map((m) => m.lead_id));
+    return leads.filter((l) => !enviados.has(l.id));
+  } catch (err) {
+    logger.error('selectFounderEmailQueue exception:', err.message);
+    return [];
+  }
+}
+
+/**
  * Handoff leads (coarse pass) for the reclaim sweep. No age filter in SQL: a
  * lead who came BACK and got muted can be recent, so the fine gate
  * (elegivelParaReclaim, needs the last-message shape) decides per-lead. Handoff
@@ -1190,6 +1238,7 @@ module.exports = {
   isOptedOut,
   findLeadByPhone,
   selectFounderHandoffQueue,
+  selectFounderEmailQueue,
   selectHandoffLeads,
   reclaimHandoffToConversando,
   markLeadWon,

@@ -39,6 +39,9 @@
     "api/cron/prospect-handoff-digest.js": {
       "maxDuration": 60
     },
+    "api/cron/prospect-founder-email.js": {
+      "maxDuration": 60
+    },
     "api/cron/prospect-enrich.js": {
       "maxDuration": 60
     },
@@ -391,6 +394,10 @@
     {
       "path": "/api/cron/prospect-handoff-digest",
       "schedule": "30 11 * * *"
+    },
+    {
+      "path": "/api/cron/prospect-founder-email",
+      "schedule": "0 13,16,19 * * *"
     },
     {
       "path": "/api/cron/process-scheduled-ig-posts",
