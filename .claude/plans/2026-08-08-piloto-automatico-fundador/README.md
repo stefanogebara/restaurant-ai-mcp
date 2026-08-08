@@ -93,3 +93,75 @@ barrado por lint onde não dá:
 - Cron novo entra desarmado (`cron_config.enabled = false`) e sobe com dry-run antes
   de mandar para gente de verdade.
 - `npx jest api/__tests__/prospect` verde antes de qualquer push.
+
+---
+
+# Templates Meta para o WhatsApp do fundador
+
+**Para submeter no WhatsApp Manager.** Categoria **Marketing**, idioma **pt_BR**.
+Dependência externa de dias: é o caminho crítico da Fase 2. Submeter antes do código ficar pronto.
+
+Regras da Meta que estes textos já respeitam:
+- Não começam nem terminam com variável (rejeição automática).
+- Duas variáveis no máximo, ambas com exemplo de preenchimento.
+- Sem promessa de ganho financeiro, sem urgência falsa, sem CAPS.
+- Marketing em pt-BR pede saída fácil: o botão de recusa cobre isso.
+
+Todos passam pelo `claim-linter` (`api/_lib/prospecting/claim-linter.js`).
+
+## 1. `racha_fundador_intro`
+
+Primeiro contato do fundador depois que a Olímpia entrega o lead (estado `handoff`),
+quando a janela de 24h já fechou.
+
+```
+Oi {{1}}! Aqui é o Stefano, fundador do Racha, o pagamento de conta na mesa por QR que a Olímpia apresentou pra vocês do {{2}}.
+
+Queria te convidar pra ser uma das primeiras casas a testar, sem custo e sem contrato: seus clientes escaneiam o QR da mesa, cada um paga a sua parte no Pix ou cartão, e a mesa fecha sem fila de maquininha.
+
+Dá pra ver em 30 segundos, do seu celular, exatamente a tela que o seu cliente vê. Posso te mandar?
+```
+
+| Variável | Significado | Exemplo |
+|---|---|---|
+| `{{1}}` | Nome do responsável | Leo |
+| `{{2}}` | Nome da casa | Bario Bar |
+
+**Botões (Quick Reply):** `Quero ver` · `Agora não`
+
+O `Agora não` é o que evita denúncia de spam: dá saída em um toque e alimenta o
+`marcar_optout` em vez de virar bloqueio do número.
+
+## 2. `racha_fundador_followup`
+
+Silêncio depois do primeiro toque do fundador. **Um só**, nunca em série.
+
+```
+Oi {{1}}, é o Stefano do Racha de novo. Só pra não deixar solto: mandei um convite pra vocês do {{2}} testarem o pagamento na mesa por QR, e sei que essas mensagens somem na correria.
+
+Se não fizer sentido pra casa, me diz que eu paro por aqui, sem problema nenhum. Se quiser ver como fica, é meio minuto no celular.
+```
+
+**Botões (Quick Reply):** `Quero ver` · `Não tenho interesse`
+
+## 3. `racha_fundador_proposta_email`
+
+Para quando o porteiro entrega um e-mail e a proposta sai por lá. Fecha o loop que
+hoje morre em silêncio (caso Bario).
+
+```
+Oi {{1}}, obrigado por passar o contato! Mandei a proposta do Racha pro e-mail que você indicou, com um link pra ver o pagamento na mesa funcionando em 30 segundos.
+
+Qualquer dúvida pode me chamar por aqui mesmo.
+```
+
+**Botão (Quick Reply):** `Tudo certo`
+
+> Só pode ser disparado **depois** de o e-mail ter saído de verdade. É exatamente a
+> promessa que o incidente do Bario quebrou: a mensagem afirma um envio, então o envio
+> precisa ter acontecido antes, não depois.
+
+## Depois de aprovado
+
+Registrar em `prospect_templates` e apontar o env do disparo do fundador para o nome
+aprovado. Nunca disparar texto livre fora da janela de 24h.

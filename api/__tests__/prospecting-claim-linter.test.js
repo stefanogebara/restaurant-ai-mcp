@@ -153,3 +153,25 @@ describe('assertOutbound falha fechado', () => {
     expect(lintOutbound(42).ok).toBe(true);
   });
 });
+
+describe('taxa-consumidor: a negação canônica não pode ser falso positivo', () => {
+  // "o cliente não paga nada a mais" aparece em quase toda copy do Racha. Se o
+  // linter barrasse, todo chamador allow-listaria a família por reflexo e o
+  // guard viraria peso morto. Por isso a negação é tratada no padrão.
+  test.each([
+    'E o seu cliente não paga nada a mais por usar. Nunca.',
+    'O cliente não paga nada a mais para usar.',
+    'O consumidor nunca paga taxa nenhuma aqui.',
+  ])('passa limpo: %s', (texto) => {
+    expect(lintOutbound(texto).ok).toBe(true);
+  });
+
+  test.each([
+    'É rapidinho, e o cliente paga uma taxa de conveniência de 2%.',
+    'O consumidor paga uma tarifa pequena no checkout.',
+  ])('mas a afirmação positiva continua bloqueada: %s', (texto) => {
+    const r = lintOutbound(texto);
+    expect(r.ok).toBe(false);
+    expect(r.violations.map((v) => v.id)).toContain('taxa-consumidor');
+  });
+});

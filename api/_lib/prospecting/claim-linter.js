@@ -51,7 +51,12 @@ const FAMILIES = [
       'class action (Hoke v. Sunday App, jan/2026) por checkout fee. Nunca insinuar ' +
       'que o cliente paga algo a mais.',
     patterns: [
-      /(cliente|consumidor)[^.!?]{0,40}\bpaga\b[^.!?]{0,25}\b(taxa|tarifa|a\s+mais)/i,
+      // Negação tratada no padrão, e não via `allow`, de propósito: "o cliente
+      // não paga nada a mais" é a frase CANÔNICA do Racha, presente em quase
+      // toda copy. Se ela precisasse de allow, todo chamador allow-listaria esta
+      // família por reflexo e o guard viraria peso morto. O token temperado
+      // abaixo recusa casar quando há "não"/"nunca" entre o sujeito e o verbo.
+      /(cliente|consumidor)((?!\bn[ãa]o\b|\bnunca\b)[^.!?]){0,40}\bpaga\b[^.!?]{0,25}\b(taxa|tarifa|a\s+mais)/i,
       /taxa\s+de\s+(conveni[êe]ncia|servi[çc]o\s+do\s+app|checkout)/i,
     ],
   },
