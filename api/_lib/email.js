@@ -765,13 +765,19 @@ async function sendProspectDigestEmail({ to, subject, html, text }) {
  * Como o digest, checa o `{ error }` do Resend (o SDK NÃO estoura) e propaga a
  * falha, para o cron reportar erro real em vez de um "enviado" falso.
  */
-async function sendProspectProposalEmail({ to, subject, html, text, replyTo }) {
+async function sendProspectProposalEmail({ to, subject, html, text, replyTo, from }) {
   const resend = getResendClient();
   if (!resend) { logger.warn('RESEND_API_KEY not set, skipping prospect proposal email'); return false; }
   if (!to) { logger.warn('no prospect e-mail, skipping proposal'); return false; }
+  // NÃO usa FROM_ADDRESS: aquele é 'Seatable <bookings@seatable.one>', e esta
+  // proposta é do RACHA, assinada "Fundador · Racha". Sair com o nome da outra
+  // marca no remetente confunde o destinatário, mistura as marcas (proibido sem
+  // aprovação) e, num contato frio, lê como phishing. Mesmo domínio verificado,
+  // nome certo.
+  const remetente = from || process.env.RACHA_EMAIL_FROM || 'Racha <racha@seatable.one>';
   try {
     const { data, error } = await resend.emails.send({
-      from: FROM_ADDRESS,
+      from: remetente,
       to,
       subject,
       html: wrapEmailHtml(html),
