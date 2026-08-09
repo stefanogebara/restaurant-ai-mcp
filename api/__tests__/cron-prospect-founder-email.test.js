@@ -195,3 +195,28 @@ describe('operação', () => {
     );
   });
 });
+
+describe('dry-run atravessa o kill switch', () => {
+  // O cron sobe desarmado e o dry-run e' o que se inspeciona ANTES de armar.
+  // Se o interruptor barrasse a previa, o rollout que ele protege seria
+  // impossivel de percorrer. Dry-run nao envia e nao grava.
+  test('desarmado + dry=1 ainda monta a previa', async () => {
+    mockCronEnabled.valor = false;
+    mockFila.leads = [lead()];
+    const res = await chamar({ dry: true });
+
+    expect(res.body.skipped).toBeUndefined();
+    expect(res.body.dry).toBe(true);
+    expect(res.body.resultados[0].assunto).toMatch(/Bario Bar/);
+    expect(mockSend).not.toHaveBeenCalled();
+    expect(mockRecordEvent).not.toHaveBeenCalled();
+  });
+
+  test('desarmado sem dry continua bloqueado', async () => {
+    mockCronEnabled.valor = false;
+    mockFila.leads = [lead()];
+    const res = await chamar();
+    expect(res.body.skipped).toBe('disabled_by_ops');
+    expect(mockSend).not.toHaveBeenCalled();
+  });
+});

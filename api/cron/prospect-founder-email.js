@@ -50,13 +50,18 @@ module.exports = async (req, res) => {
   if (!bearerEquals(req.headers.authorization, secret)) {
     return res.status(401).json({ error: 'Authentication required' });
   }
-  if (!(await isCronEnabled('prospect-founder-email'))) {
-    return res.status(200).json({ success: true, skipped: 'disabled_by_ops' });
-  }
-
   // Dry-run: monta tudo e devolve o preview SEM enviar e SEM marcar o lead.
   // É como este cron sobe pela primeira vez.
   const dry = req.query && (req.query.dry === '1' || req.query.dry === 'true');
+
+  // O kill switch é checado DEPOIS do dry-run, de propósito. O cron sobe
+  // desarmado e o dry-run é justamente o que se inspeciona antes de armar; se o
+  // interruptor barrasse a prévia, o caminho de rollout que ele existe para
+  // proteger seria impossível de percorrer. Dry-run não envia nada e não grava
+  // nada, então não há o que o interruptor precise conter.
+  if (!dry && !(await isCronEnabled('prospect-founder-email'))) {
+    return res.status(200).json({ success: true, skipped: 'disabled_by_ops' });
+  }
 
   try {
     const candidatos = await selectFounderEmailQueue({ limit: MAX_POR_RODADA * 3 });

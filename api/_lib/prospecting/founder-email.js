@@ -112,13 +112,11 @@ function buildProposalEmail(lead, opts = {}) {
     ? `Racha — pagamento na mesa por QR para ${casa}`
     : 'Racha — pagamento na mesa por QR';
 
-  const text = [
-    ...paragrafos,
-    ...bullets.map((b) => `• ${b}`),
-    ...fecho,
-    '',
-    ...assinaturaLinhas,
-  ].join('\n\n');
+  // Corpo em parágrafos (\n\n), assinatura em linhas coladas (\n). Juntar tudo
+  // com \n\n espalhava a assinatura em três parágrafos soltos no cliente que lê
+  // text/plain, que é justamente o gateway corporativo de quem recebe isto.
+  const corpo = [...paragrafos, ...bullets.map((b) => `• ${b}`), ...fecho].join('\n\n');
+  const text = `${corpo}\n\n${assinaturaLinhas.join('\n')}`;
 
   const html = [
     ...paragrafos.map((p) => (p === previaUrl

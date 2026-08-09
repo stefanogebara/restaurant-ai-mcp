@@ -121,3 +121,17 @@ describe('idempotência do envio', () => {
     expect(eventoDeEnvio('x@y.com')).toContain('x@y.com');
   });
 });
+
+describe('formatação do text/plain', () => {
+  test('assinatura sai em linhas coladas, não em parágrafos soltos', () => {
+    const { text } = buildProposalEmail(LEAD, OPTS);
+    expect(text).toMatch(/Stefano Gebara\nFundador · Racha\n/);
+    // Nenhuma linha em branco tripla em lugar nenhum.
+    expect(text).not.toMatch(/\n{3,}/);
+  });
+
+  test('o corpo continua separado por parágrafos', () => {
+    const { text } = buildProposalEmail(LEAD, OPTS);
+    expect(text).toMatch(/Olá, bom dia\.\n\n/);
+  });
+});
