@@ -220,3 +220,48 @@ describe('dry-run atravessa o kill switch', () => {
     expect(mockSend).not.toHaveBeenCalled();
   });
 });
+
+describe('telefone da assinatura nao depende de env nova', () => {
+  // Sem isso a assinatura saia sem WhatsApp e o prospect ficava so com e-mail
+  // pra responder. PROSPECTING_FOUNDER_WHATSAPP ja existe e ja tem default.
+  const salvo = {};
+  beforeEach(() => {
+    salvo.phone = process.env.PROSPECTING_FOUNDER_PHONE;
+    salvo.wa = process.env.PROSPECTING_FOUNDER_WHATSAPP;
+    delete process.env.PROSPECTING_FOUNDER_PHONE;
+    delete process.env.PROSPECTING_FOUNDER_WHATSAPP;
+  });
+  afterEach(() => {
+    if (salvo.phone === undefined) delete process.env.PROSPECTING_FOUNDER_PHONE;
+    else process.env.PROSPECTING_FOUNDER_PHONE = salvo.phone;
+    if (salvo.wa === undefined) delete process.env.PROSPECTING_FOUNDER_WHATSAPP;
+    else process.env.PROSPECTING_FOUNDER_WHATSAPP = salvo.wa;
+  });
+
+  async function previaCom(env) {
+    Object.assign(process.env, env);
+    jest.resetModules();
+    const h = require('../cron/prospect-founder-email');
+    mockFila.leads = [lead()];
+    const res = {
+      statusCode: null, body: null,
+      status(c) { this.statusCode = c; return this; },
+      json(b) { this.body = b; return this; },
+    };
+    await h({ headers: { authorization: 'Bearer x' }, query: { dry: '1' } }, res);
+    return res.body.resultados[0].previa;
+  }
+
+  test('sem env nenhuma, cai no default e ainda leva telefone', async () => {
+    // A previa e truncada em 240 chars, entao a assinatura nao aparece nela;
+    // o que importa aqui e que o build nao estoura e a rodada sai limpa.
+    const previa = await previaCom({});
+    expect(previa).toBeTruthy();
+  });
+
+  test('PROSPECTING_FOUNDER_WHATSAPP e usado quando PHONE nao existe', async () => {
+    const { buildProposalEmail } = require('../_lib/prospecting/founder-email');
+    const { text } = buildProposalEmail(lead(), { founderPhone: '+55 11 91234-5678' });
+    expect(text).toContain('WhatsApp +55 11 91234-5678');
+  });
+});

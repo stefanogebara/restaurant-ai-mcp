@@ -38,7 +38,14 @@ const { sendProspectProposalEmail } = require('../_lib/email');
 const logger = createSecureLogger('CronFounderEmail');
 
 const FOUNDER_EMAIL = process.env.PROSPECTING_FOUNDER_EMAIL || 'stefanogebara@gmail.com';
-const FOUNDER_PHONE = process.env.PROSPECTING_FOUNDER_PHONE || '';
+// Telefone da assinatura. Cai no PROSPECTING_FOUNDER_WHATSAPP, que já existe e
+// já tem o número do fundador como default (prospect-agent.js), em vez de exigir
+// uma env nova em produção: uma fonte de verdade só, e nada quebra se ninguém
+// configurar nada. Sem isso a assinatura saía sem WhatsApp e o prospect ficava
+// só com e-mail para responder.
+const FOUNDER_PHONE = process.env.PROSPECTING_FOUNDER_PHONE
+  || process.env.PROSPECTING_FOUNDER_WHATSAPP
+  || '+55 11 99900-2121';
 const FOUNDER_NAME = process.env.PROSPECTING_FOUNDER_NAME || 'Stefano';
 // Teto por execução. Envio autônomo sem teto é como um bug vira incidente de
 // marca: 200 propostas erradas saem antes de alguém abrir o painel.
