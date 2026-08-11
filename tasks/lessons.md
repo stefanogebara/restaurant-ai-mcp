@@ -916,3 +916,9 @@ voltando.
 REGRA: nome de servidor MCP de banco carrega o projeto no nome. Um `supabase`
 generico em config compartilhada por multiplos repos e uma armadilha, nao um
 atalho.
+
+ADENDO: o caminho mais seguro nao e servidor MCP com ref fixada — e o conector
+`claude.ai Supabase`, cujo `execute_sql` recebe `project_id` por chamada. Ref
+fixada no servidor e implicita e silenciosa; `project_id` explicito na chamada
+aparece na propria query e nao tem como apontar pro banco errado sem eu ver.
+Preferir esse quando existir.
