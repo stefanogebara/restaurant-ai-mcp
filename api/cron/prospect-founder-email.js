@@ -157,7 +157,15 @@ async function faseWhatsapp({ dry, nowMs, restante }) {
   // Motivo concreto (11/08/2026): os templates foram criados na WABA errada e o
   // envio falha com (#132001) a cada rodada. Barulho, não dano, mas barulho
   // constante treina qualquer um a ignorar o log.
-  if (!(await isCronEnabled(SWITCH_WHATSAPP))) {
+  //
+  // NÃO barra o dry-run, pela mesma razão que o kill switch do cron inteiro
+  // deixou de barrar em 09/08: esta fase sobe DESLIGADA e a prévia é o que se
+  // inspeciona antes de armar. Se o interruptor escondesse a prévia, o rollout
+  // que ele existe para proteger seria impossível de percorrer — e eu repeti
+  // esse defeito aqui, um nível abaixo, depois de já ter escrito a lição.
+  // Dry-run não envia e não grava, então não há o que este interruptor contenha.
+  const desligado = !(await isCronEnabled(SWITCH_WHATSAPP));
+  if (desligado && !dry) {
     return { enviados: 0, resultados: [], motivo: 'whatsapp_desligado_por_ops' };
   }
 
@@ -256,7 +264,10 @@ async function faseWhatsapp({ dry, nowMs, restante }) {
     }
   }
 
-  return { enviados, resultados, guardDoMotorArmado: guardDoMotor };
+  // `interruptorDesligado` reportado SEMPRE, pelo mesmo motivo de
+  // guardDoMotorArmado: numa prévia com a fase desligada, o operador precisa
+  // ler "isto é o que SAIRIA quando eu armar", e não confundir com "está ativo".
+  return { enviados, resultados, guardDoMotorArmado: guardDoMotor, interruptorDesligado: desligado };
 }
 
 module.exports = async (req, res) => {

@@ -327,6 +327,46 @@ describe('interruptor separado da fase de WhatsApp', () => {
     expect(mockSendTemplate).toHaveBeenCalledTimes(1);
   });
 
+  // A prévia é o que se inspeciona ANTES de armar a fase. Se o interruptor a
+  // escondesse, o rollout que ele existe para proteger seria impossível de
+  // percorrer — e foi exatamente o que aconteceu: rodei o dry-run em produção
+  // com a fase desligada e voltou 'whatsapp_desligado_por_ops', repetindo, um
+  // nível abaixo, o defeito que eu já tinha corrigido no kill switch do cron.
+  test('desligado + ?dry=1: a prévia ATRAVESSA o interruptor', async () => {
+    mockSwitches.valores['prospect-founder-whatsapp'] = false;
+    mockWaQueue.leads = [lead()];
+
+    const res = await chamar({ dry: true });
+
+    expect(res.body.whatsapp.motivo).not.toBe('whatsapp_desligado_por_ops');
+    expect(res.body.whatsapp.resultados).toHaveLength(1);
+    expect(res.body.whatsapp.resultados[0].dry).toBe(true);
+  });
+
+  test('prévia com a fase desligada NÃO envia e NÃO grava', async () => {
+    mockSwitches.valores['prospect-founder-whatsapp'] = false;
+    mockWaQueue.leads = [lead()];
+
+    await chamar({ dry: true });
+
+    expect(mockSendTemplate).not.toHaveBeenCalled();
+    expect(mockSendLivre).not.toHaveBeenCalled();
+    expect(mockRecordEvent).not.toHaveBeenCalled();
+    expect(mockStoreMessage).not.toHaveBeenCalled();
+  });
+
+  test('a prévia diz que o interruptor está desligado', async () => {
+    // Sem isto o operador lê a prévia e acha que a fase já está no ar.
+    mockSwitches.valores['prospect-founder-whatsapp'] = false;
+    mockWaQueue.leads = [lead()];
+    const desligada = await chamar({ dry: true });
+    expect(desligada.body.whatsapp.interruptorDesligado).toBe(true);
+
+    mockSwitches.valores['prospect-founder-whatsapp'] = true;
+    const ligada = await chamar({ dry: true });
+    expect(ligada.body.whatsapp.interruptorDesligado).toBe(false);
+  });
+
   test('o kill switch do cron inteiro continua valendo', async () => {
     mockSwitches.valores['prospect-founder-email'] = false;
     mockWaQueue.leads = [lead()];
