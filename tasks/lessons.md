@@ -904,3 +904,15 @@ certo no schema errado nao e evidencia, e coincidencia.
 
 NOTA: as credenciais do Seatable vivem em `.env.local` (o `.env` tem SUPABASE_URL
 e ANON_KEY, mas NAO tem SERVICE_ROLE_KEY).
+
+RESOLVIDO em 11/08/2026: a raiz era um `~/.mcp.json` no diretorio HOME
+declarando um servidor chamado `supabase` fixado no ref do TwinMe e
+compartilhado por TODOS os projetos. Agora sao dois, com nome honesto:
+`supabase-seatable` (ckforl..., escopo do repo, em restaurant-ai-mcp/.mcp.json)
+e `supabase-twinme` (lurebwa..., escopo home). Nao existe mais um servidor
+chamado so `supabase` — se aparecer de novo, e sinal de config generica
+voltando.
+
+REGRA: nome de servidor MCP de banco carrega o projeto no nome. Um `supabase`
+generico em config compartilhada por multiplos repos e uma armadilha, nao um
+atalho.
