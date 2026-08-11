@@ -25,6 +25,8 @@
  */
 
 /** Marcador do evento de aviso. O cooldown procura por este prefixo. */
+const { ultimoMarcadorMs } = require('./historico-ts');
+
 const ALERT_MARKER = '🔔 fundador avisado da resposta';
 
 /** Janela padrão entre avisos do MESMO lead. */
@@ -51,16 +53,6 @@ function pareceEcoDeMaquina(texto) {
   return ECO_DE_MAQUINA.some((re) => re.test(t));
 }
 
-/** Instante do último aviso, lido do histórico. null se nunca avisou. */
-function ultimoAvisoMs(mensagens) {
-  let ultimo = null;
-  for (const m of mensagens || []) {
-    if (!m || typeof m.corpo !== 'string' || !m.corpo.startsWith(ALERT_MARKER)) continue;
-    const t = m.created_at ? Date.parse(m.created_at) : NaN;
-    if (!Number.isNaN(t) && (ultimo === null || t > ultimo)) ultimo = t;
-  }
-  return ultimo;
-}
 
 /**
  * PURO: este inbound merece acordar o fundador?
@@ -83,7 +75,7 @@ function deveAvisarFundador({ lead, texto, historico = [], nowMs, cooldownMs = C
   if (pareceEcoDeMaquina(texto)) {
     return { alertar: false, motivo: 'eco_de_maquina' };
   }
-  const ultimo = ultimoAvisoMs(historico);
+  const ultimo = ultimoMarcadorMs(historico, ALERT_MARKER);
   if (ultimo !== null && nowMs - ultimo < cooldownMs) {
     return { alertar: false, motivo: 'cooldown' };
   }

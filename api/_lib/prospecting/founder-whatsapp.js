@@ -27,6 +27,7 @@
 const { getProfile } = require('./prospect-product');
 const { assertOutbound } = require('./claim-linter');
 const { nomeDaCasa } = require('./nome-da-casa');
+const { ultimoMarcadorMs, ultimoInboundMs, houveInboundApos } = require('./historico-ts');
 
 /** Marcadores. Mesma estratégia do e-mail: idempotência por histórico. */
 const INTRO_MARKER = '📲 intro do fundador enviada no WhatsApp';
@@ -58,15 +59,6 @@ function canalDoFundador(lead) {
   return null;
 }
 
-function marcadorMs(mensagens, prefixo) {
-  let ultimo = null;
-  for (const m of mensagens || []) {
-    if (!m || typeof m.corpo !== 'string' || !m.corpo.startsWith(prefixo)) continue;
-    const t = m.created_at ? Date.parse(m.created_at) : NaN;
-    if (!Number.isNaN(t) && (ultimo === null || t > ultimo)) ultimo = t;
-  }
-  return ultimo;
-}
 
 /** Primeiro nome utilizável, ou null. Mesma régua do compositor de e-mail. */
 function primeiroNome(valor) {
@@ -75,16 +67,6 @@ function primeiroNome(valor) {
   return limpo && /^[A-Za-zÀ-ÿ]{2,}$/.test(limpo) ? limpo : null;
 }
 
-/** Instante do último inbound do lead, para decidir a janela de 24h. */
-function ultimoInboundMs(mensagens) {
-  let ultimo = null;
-  for (const m of mensagens || []) {
-    if (!m || m.direcao !== 'in') continue;
-    const t = m.created_at ? Date.parse(m.created_at) : NaN;
-    if (!Number.isNaN(t) && (ultimo === null || t > ultimo)) ultimo = t;
-  }
-  return ultimo;
-}
 
 /**
  * PURO: o primeiro toque do fundador por WhatsApp está devido?
@@ -100,7 +82,7 @@ function introDevida({ lead, historico = [], nowMs } = {}) {
   if (!lead.name || !String(lead.name).trim()) {
     return { devido: false, motivo: 'lead_sem_nome' };
   }
-  if (marcadorMs(historico, INTRO_MARKER) !== null) {
+  if (ultimoMarcadorMs(historico, INTRO_MARKER) !== null) {
     return { devido: false, motivo: 'intro_ja_enviada' };
   }
   const janelaAberta = janelaAbertaEm(historico, nowMs);
@@ -121,16 +103,12 @@ function janelaAbertaEm(historico, nowMs) {
  * observado, não uma suposição. É o único canal onde o silêncio é confiável.
  */
 function followupDevido({ historico = [], nowMs, esperaMs = FOLLOWUP_ESPERA_MS } = {}) {
-  const introMs = marcadorMs(historico, INTRO_MARKER);
+  const introMs = ultimoMarcadorMs(historico, INTRO_MARKER);
   if (introMs === null) return { devido: false, motivo: 'intro_nunca_enviada' };
-  if (marcadorMs(historico, FOLLOWUP_MARKER) !== null) {
+  if (ultimoMarcadorMs(historico, FOLLOWUP_MARKER) !== null) {
     return { devido: false, motivo: 'followup_ja_enviado' };
   }
-  const respondeu = (historico || []).some((m) => {
-    if (!m || m.direcao !== 'in') return false;
-    const t = m.created_at ? Date.parse(m.created_at) : NaN;
-    return !Number.isNaN(t) && t > introMs;
-  });
+  const respondeu = houveInboundApos(historico, introMs);
   if (respondeu) return { devido: false, motivo: 'lead_respondeu' };
   if (nowMs - introMs < esperaMs) return { devido: false, motivo: 'cedo_demais' };
   return { devido: true, motivo: 'silencio_apos_intro' };

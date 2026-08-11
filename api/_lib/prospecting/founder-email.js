@@ -28,6 +28,8 @@
 const { assertOutbound } = require('./claim-linter');
 // Nome FALAVEL: o corpo diz 'ai do {casa}' e o assunto 'para {casa}'.
 const { nomeDaCasa } = require('./nome-da-casa');
+// Instante da mensagem: loadHistory devolve enviada_em, NAO created_at.
+const { ultimoMarcadorMs, houveInboundApos } = require('./historico-ts');
 
 /**
  * Marcador do evento de envio. É o que impede envio duplicado: o cron procura
@@ -189,15 +191,6 @@ const FOLLOWUP_MARKER = '📧 follow-up da proposta enviado';
  */
 const FOLLOWUP_ESPERA_MS = 4 * 24 * 60 * 60 * 1000;
 
-function marcadorMs(mensagens, prefixo) {
-  let ultimo = null;
-  for (const m of mensagens || []) {
-    if (!m || typeof m.corpo !== 'string' || !m.corpo.startsWith(prefixo)) continue;
-    const t = m.created_at ? Date.parse(m.created_at) : NaN;
-    if (!Number.isNaN(t) && (ultimo === null || t > ultimo)) ultimo = t;
-  }
-  return ultimo;
-}
 
 /**
  * PURO: este lead merece follow-up agora?
@@ -205,21 +198,17 @@ function marcadorMs(mensagens, prefixo) {
  * @returns {{ devido: boolean, motivo: string }}
  */
 function followupDevido({ historico = [], nowMs, esperaMs = FOLLOWUP_ESPERA_MS } = {}) {
-  const propostaMs = marcadorMs(historico, PROPOSAL_MARKER);
+  const propostaMs = ultimoMarcadorMs(historico, PROPOSAL_MARKER);
   if (propostaMs === null) return { devido: false, motivo: 'proposta_nunca_enviada' };
 
-  if (marcadorMs(historico, FOLLOWUP_MARKER) !== null) {
+  if (ultimoMarcadorMs(historico, FOLLOWUP_MARKER) !== null) {
     // Um follow-up é insistência; dois são perseguição.
     return { devido: false, motivo: 'followup_ja_enviado' };
   }
 
   // Qualquer inbound DEPOIS da proposta significa que a pessoa falou. Não
   // importa o que ela disse: quem responde não recebe cobrança automática.
-  const respondeu = (historico || []).some((m) => {
-    if (!m || m.direcao !== 'in') return false;
-    const t = m.created_at ? Date.parse(m.created_at) : NaN;
-    return !Number.isNaN(t) && t > propostaMs;
-  });
+  const respondeu = houveInboundApos(historico, propostaMs);
   if (respondeu) return { devido: false, motivo: 'lead_respondeu' };
 
   if (nowMs - propostaMs < esperaMs) return { devido: false, motivo: 'cedo_demais' };
