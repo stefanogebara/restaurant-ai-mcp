@@ -16,7 +16,10 @@ jest.mock('../_lib/cron-tracker', () => ({ logCronRun: (...a) => mockLogCronRun(
 const mockLogger = { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() };
 jest.mock('../_lib/secure-logger', () => ({ createSecureLogger: () => mockLogger }));
 jest.mock('../_lib/secure-compare', () => ({ bearerEquals: () => true }));
-jest.mock('../_lib/cron-config', () => ({ isCronEnabled: async () => true }));
+const mockSwitches = { valores: {} };
+jest.mock('../_lib/cron-config', () => ({
+  isCronEnabled: async (job) => (job in mockSwitches.valores ? mockSwitches.valores[job] : true),
+}));
 
 const mockWaQueue = { leads: [], historico: [] };
 const mockRecordEvent = jest.fn().mockResolvedValue({ stored: true });
@@ -87,6 +90,7 @@ beforeEach(() => {
   // ambiente explicitamente; o bloco no fim do arquivo prova o guard em si.
   process.env.PROSPECTING_DRY_RUN = 'false';
   process.env.PROSPECTING_PHONE_NUMBER_ID = '999';
+  mockSwitches.valores = {};
 });
 
 describe('a janela de 24h decide o modo, e nunca o contrário', () => {
@@ -281,5 +285,54 @@ describe('o guard de dry-run do motor vale para o WhatsApp do fundador', () => {
 
     await chamar();
     expect(mockSendTemplate).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('interruptor separado da fase de WhatsApp', () => {
+  // Desligar o cron inteiro derrubaria o e-mail e o follow-up junto, que estao
+  // saudaveis. Motivo real: os templates foram criados na WABA errada e o envio
+  // falha com (#132001) a cada rodada — barulho constante treina qualquer um a
+  // ignorar o log.
+  test('desligado: WhatsApp nao envia e diz o motivo', async () => {
+    mockSwitches.valores['prospect-founder-whatsapp'] = false;
+    mockWaQueue.leads = [lead()];
+
+    const res = await chamar();
+
+    expect(mockSendTemplate).not.toHaveBeenCalled();
+    expect(mockSendLivre).not.toHaveBeenCalled();
+    expect(res.body.whatsapp.motivo).toBe('whatsapp_desligado_por_ops');
+  });
+
+  test('desligar o WhatsApp NAO derruba as outras fases', async () => {
+    mockSwitches.valores['prospect-founder-whatsapp'] = false;
+    mockWaQueue.leads = [lead()];
+
+    const res = await chamar();
+
+    // O cron continua respondendo 200 e batendo ponto: ocioso != morto.
+    expect(res.statusCode).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(mockLogCronRun).toHaveBeenCalledWith(
+      'prospect-founder-email',
+      expect.objectContaining({ whatsapp: 0 })
+    );
+  });
+
+  test('sem linha no cron_config a fase roda (fail-open, como os outros)', async () => {
+    mockSwitches.valores = {};
+    mockWaQueue.leads = [lead()];
+
+    await chamar();
+    expect(mockSendTemplate).toHaveBeenCalledTimes(1);
+  });
+
+  test('o kill switch do cron inteiro continua valendo', async () => {
+    mockSwitches.valores['prospect-founder-email'] = false;
+    mockWaQueue.leads = [lead()];
+
+    const res = await chamar();
+    expect(res.body.skipped).toBe('disabled_by_ops');
+    expect(mockSendTemplate).not.toHaveBeenCalled();
   });
 });

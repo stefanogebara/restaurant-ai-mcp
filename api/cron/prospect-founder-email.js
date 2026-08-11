@@ -58,6 +58,10 @@ const FOUNDER_NAME = process.env.PROSPECTING_FOUNDER_NAME || 'Stefano';
 // Teto por execução. Envio autônomo sem teto é como um bug vira incidente de
 // marca: 200 propostas erradas saem antes de alguém abrir o painel.
 const MAX_POR_RODADA = Number(process.env.PROSPECTING_EMAIL_MAX_POR_RODADA) || 10;
+// Interruptor da 3ª fase, separado do kill switch do cron. NÃO é um cron de
+// verdade: é uma linha em cron_config usada só como chave liga/desliga, e por
+// isso não entra no registro do vigia (CRON_JOBS) nem no vercel.json.
+const SWITCH_WHATSAPP = 'prospect-founder-whatsapp';
 
 /**
  * 2ª fase: cobra o silêncio de quem recebeu a proposta e não respondeu.
@@ -146,6 +150,16 @@ async function faseFollowup({ dry, nowMs, restante }) {
  */
 async function faseWhatsapp({ dry, nowMs, restante }) {
   if (restante <= 0) return { enviados: 0, resultados: [], motivo: 'teto_da_rodada_gasto' };
+
+  // Interruptor SÓ desta fase. O kill switch do cron inteiro derrubaria junto o
+  // e-mail e o follow-up, que estão saudáveis — e desligar o que funciona para
+  // calar o que não funciona é como um incidente pequeno vira grande.
+  // Motivo concreto (11/08/2026): os templates foram criados na WABA errada e o
+  // envio falha com (#132001) a cada rodada. Barulho, não dano, mas barulho
+  // constante treina qualquer um a ignorar o log.
+  if (!(await isCronEnabled(SWITCH_WHATSAPP))) {
+    return { enviados: 0, resultados: [], motivo: 'whatsapp_desligado_por_ops' };
+  }
 
   // O guard de dry-run do motor da Olímpia vale AQUI TAMBÉM. Chamar o sender
   // direto criaria uma terceira cópia da regra "isto manda de verdade?", que é
