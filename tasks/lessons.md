@@ -805,3 +805,30 @@ RISCO EM ABERTO: prospeccao fria do Racha sai do mesmo dominio dos e-mails
 TRANSACIONAIS do Seatable. Denuncia de spam num lead frio dana a reputacao que
 entrega confirmacao de reserva de cliente pagante. Separar dominio antes de
 escalar volume.
+
+## 2026-08-11 — Criei os templates na conta de OUTRA empresa
+
+Fui submeter os templates do fundador pela interface da Meta. O Business
+Manager abriu por padrao a WABA "Hubspot Whatsapp" (1301313551562370), que
+pertence a Inner AI — a empresa onde o fundador TRABALHA, nao a dele. Criei os
+tres la. Todo envio falhava com (#132001) "Template name does not exist",
+porque template nao atravessa conta. Apaguei os tres a pedido dele.
+
+Depois gastei uma hora navegando o Business Manager procurando a WABA certa,
+com as paginas travando. A resposta estava no proprio repositorio: a WABA
+25687973367501862 ja era o default de `wa-management.js`, e o console em
+`/olimpia` a le com o token de PRODUCAO e mostra numero, qualidade e templates.
+
+DUAS REGRAS, e a segunda e a que importa:
+
+1. Antes de CRIAR qualquer coisa numa conta de terceiro (Meta, Stripe, DNS),
+   verificar de quem e a conta — e verificar por um identificador do proprio
+   trabalho, nao pelo nome no cabecalho. Aqui a prova era "esta WABA tem os
+   templates olimpia_*". Verificacao barata, feita ANTES, teria evitado tudo.
+
+2. A causa raiz nao foi desatencao, foi FERRAMENTA QUE NAO EXPRESSAVA O CASO.
+   `buildTemplatePayload` so montava UMA variavel e um botao de link; os
+   templates do fundador tem duas variaveis e respostas rapidas. Sem caminho
+   proprio, fui para a UI da Meta — onde nao ha verificacao nenhuma. Quando me
+   pego saindo da ferramenta da casa para fazer algo em producao, a pergunta
+   nao e "como faco isso na mao", e "por que a ferramenta nao faz isso".
