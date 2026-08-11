@@ -85,6 +85,21 @@ const AI_MODEL = process.env.AI_MODEL || 'anthropic/claude-sonnet-4';
 const AI_MODEL_FAST = process.env.AI_MODEL_FAST || 'anthropic/claude-haiku-4.5';
 
 /**
+ * Cérebro da Olímpia (prospect-agent.js). Env PRÓPRIA de propósito: este
+ * chamador sozinho foi 98,5% do gasto de IA das últimas 24h ($2,5684 de
+ * $2,6075), e o resto do produto — incluindo o Manager AI, que é de
+ * restaurante PAGANTE — não pode ser cobaia de ajuste de custo de prospecção.
+ *
+ * Por que haiku-4.5 e não algo 10x mais barato: medi o cérebro real contra a
+ * resposta "manda um e-mail pro compras@..." (o caso Bario), que precisa virar
+ * handoff para o fundador. Sonnet acertou 5/5, haiku 7/8, gemini-2.5-flash
+ * 0/5 — o Gemini SEMPRE respondia texto sem escalar, ressuscitando o defeito
+ * de promessa-sem-executor. Barato que perde o lead mais quente do funil não é
+ * barato. gpt-5-mini nem produziu resposta (tipo 'nada').
+ */
+const AI_MODEL_AGENT = process.env.PROSPECTING_AGENT_MODEL || 'anthropic/claude-haiku-4.5';
+
+/**
  * OpenRouter model slugs → Anthropic API model IDs, for the 402 failover path.
  * The direct Anthropic API rejects OpenRouter's "anthropic/..." slugs.
  */
@@ -93,8 +108,23 @@ const ANTHROPIC_MODEL_MAP = {
   'anthropic/claude-haiku-4.5': 'claude-haiku-4-5-20251001',
 };
 
+/**
+ * Modelo de emergência quando o slug configurado NÃO é da Anthropic.
+ *
+ * Este caminho só roda com o OpenRouter sem crédito (402). Antes de o modelo
+ * virar configurável isso não existia — todo slug era 'anthropic/...'. Agora
+ * que dá pra apontar o agente para Gemini ou GPT, um slug estrangeiro chegaria
+ * aqui e a API da Anthropic recusaria o id inventado, transformando "acabou o
+ * crédito" em erro duro: a agente emudeceria EXATAMENTE no cenário que este
+ * plano B existe para cobrir. Cai num modelo real em vez de num id impossível.
+ */
+const ANTHROPIC_EMERGENCIA = process.env.ANTHROPIC_FALLBACK_MODEL || 'claude-haiku-4-5-20251001';
+
 function toAnthropicModel(slug) {
-  return ANTHROPIC_MODEL_MAP[slug] || String(slug).replace(/^anthropic\//, '');
+  const s = String(slug || '');
+  if (ANTHROPIC_MODEL_MAP[s]) return ANTHROPIC_MODEL_MAP[s];
+  if (s.startsWith('anthropic/')) return s.replace(/^anthropic\//, '');
+  return ANTHROPIC_EMERGENCIA;
 }
 
 let _anthropicFallback = null;
@@ -306,4 +336,4 @@ function getAI() {
   return _client;
 }
 
-module.exports = { getAI, AI_MODEL, AI_MODEL_FAST };
+module.exports = { getAI, AI_MODEL, AI_MODEL_FAST, AI_MODEL_AGENT, toAnthropicModel };

@@ -15,7 +15,7 @@
  * cases, numbers, or meeting times. Whatever it can't answer safely → handoff.
  */
 
-const { getAI, AI_MODEL } = require('../ai-client');
+const { getAI, AI_MODEL_AGENT } = require('../ai-client');
 const { createSecureLogger } = require('../secure-logger');
 const { descreverAgora } = require('./prospect-state');
 const { formatarMemoria } = require('./prospect-facts');
@@ -630,7 +630,7 @@ async function generateReply({ lead, history, nowMs, injectUserTurn = null, noTo
   const system = buildSystemPrompt(lead, descreverAgora(nowMs), styleBody);
   try {
     const response = await getAI().messages.create({
-      model: AI_MODEL,
+      model: AI_MODEL_AGENT,
       max_tokens: 400,
       temperature: 0.6,
       system,
@@ -658,7 +658,7 @@ async function generateReply({ lead, history, nowMs, injectUserTurn = null, noTo
         logger.warn(`foreign phone digits in reply (${foreign.join(',')}) — corrective retry`);
         const retryBudget = await consumeLlmCall(nowMs);
         const retry = !retryBudget.allowed ? null : await getAI().messages.create({
-          model: AI_MODEL,
+          model: AI_MODEL_AGENT,
           max_tokens: 400,
           temperature: 0.3,
           system,
