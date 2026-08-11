@@ -236,6 +236,7 @@ function buildFollowupEmail(lead, opts = {}) {
     founderName = process.env.PROSPECTING_FOUNDER_NAME || 'Stefano',
     founderEmail = process.env.PROSPECTING_FOUNDER_EMAIL || '',
     founderPhone = process.env.PROSPECTING_FOUNDER_PHONE || '',
+    deckUrl = null,
   } = opts;
 
   const casa = (lead && lead.name ? String(lead.name) : '').trim();
@@ -246,12 +247,27 @@ function buildFollowupEmail(lead, opts = {}) {
     [founderEmail, founderPhone && `WhatsApp ${founderPhone}`].filter(Boolean).join(' · '),
   ].filter(Boolean);
 
+  // UM link só, de propósito. Com a apresentação disponível ela vira o motivo
+  // de escrever de novo, e não um apêndice: "preparei um material pra vocês"
+  // reabre uma conversa que "só passando pra lembrar" não reabre. A página já
+  // leva o demo interativo dentro, então oferecer os dois links aqui só
+  // dividiria o clique.
+  const motivo = deckUrl
+    ? [
+      `Preparei uma apresentação${casa ? ` para ${casa}` : ''} sobre o Racha, o pagamento de conta na ` +
+        'mesa por QR. É curta e dá para encaminhar internamente para quem decide:',
+      deckUrl,
+    ]
+    : [
+      'Se preferir ver antes de qualquer conversa, são trinta segundos no celular:',
+      previaUrl,
+    ];
+
   const paragrafos = [
     'Olá, tudo bem?',
-    `Escrevi semana passada sobre o Racha, o pagamento de conta na mesa por QR${casa ? `, para ${casa}` : ''}. ` +
+    `Escrevi semana passada sobre o Racha${casa ? `, para ${casa}` : ''}. ` +
       'Como não sei se a mensagem chegou até quem cuida do assunto, estou reenviando uma vez só.',
-    'Se preferir ver antes de qualquer conversa, são trinta segundos no celular:',
-    previaUrl,
+    ...motivo,
     'Se já respondeu e a resposta se perdeu no caminho, me desculpe a insistência. ' +
       'E se não for o momento, é só me dizer que eu não escrevo de novo.',
   ];

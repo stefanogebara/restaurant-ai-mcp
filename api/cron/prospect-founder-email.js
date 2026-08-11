@@ -89,6 +89,9 @@ async function faseFollowup({ dry, nowMs, restante }) {
     try {
       email = buildFollowupEmail(lead, {
         founderName: FOUNDER_NAME, founderEmail: FOUNDER_EMAIL, founderPhone: FOUNDER_PHONE,
+        // Com a apresentação disponível ela vira o MOTIVO de escrever de novo.
+        // Sem segredo configurado volta null e o follow-up cai no link do demo.
+        deckUrl: deckUrlFor(lead.id),
       });
     } catch (err) {
       logger.error('follow-up bloqueado pelo linter', { lead: lead.id, error: err.message });

@@ -142,3 +142,40 @@ describe('buildFollowupEmail', () => {
     expect(eventoDeFollowup('x@y.com')).toContain('x@y.com');
   });
 });
+
+describe('a apresentação vira o motivo de reabrir', () => {
+  const DECK = 'https://seatable.one/proposta?t=abc.123.xyz';
+
+  test('com deck, o link da proposta é o único link do e-mail', () => {
+    // Dois links dividem o clique. A página já leva o demo dentro, então
+    // oferecer os dois aqui só enfraqueceria os dois.
+    const { text } = buildFollowupEmail(LEAD, { ...OPTS, deckUrl: DECK });
+    expect(text).toContain(DECK);
+    expect(text).not.toContain(OPTS.previaUrl);
+  });
+
+  test('o texto explica que dá pra encaminhar internamente', () => {
+    // É o que gerência precisa ouvir: ela não decide, ela repassa.
+    const { text } = buildFollowupEmail(LEAD, { ...OPTS, deckUrl: DECK });
+    expect(text).toMatch(/encaminhar internamente/i);
+    expect(text).toMatch(/Preparei uma apresentação para Bario Bar/);
+  });
+
+  test('sem deck, cai no link do demo em vez de ficar sem link', () => {
+    const { text } = buildFollowupEmail(LEAD, OPTS);
+    expect(text).toContain(OPTS.previaUrl);
+    expect(text).not.toMatch(/apresentação/i);
+  });
+
+  test('o deck vira link clicável no HTML', () => {
+    const { html } = buildFollowupEmail(LEAD, { ...OPTS, deckUrl: DECK });
+    expect(html).toContain('<a href="https://seatable.one/proposta?t=abc.123.xyz"');
+  });
+
+  test('com deck continua passando limpo no linter e mantendo a saída', () => {
+    const { text } = buildFollowupEmail(LEAD, { ...OPTS, deckUrl: DECK });
+    expect(lintOutbound(text).violations).toEqual([]);
+    expect(text).toMatch(/não escrevo de novo/i);
+    expect(text).toMatch(/já respondeu/i);
+  });
+});
