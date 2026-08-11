@@ -45,6 +45,59 @@ const {
 const booking = require('./prospect-booking');
 const { extrairFatos, gerarResumo, RESUMO_MIN } = require('./prospect-reflect');
 const { NUDGE_INSTRUCTION, podeMensagemLivre } = require('./prospect-nudge');
+const { deveAvisarFundador, buildFounderAlert, eventoDeAviso } = require('./founder-alert');
+const { sendProspectDigestEmail } = require('../email');
+
+const FOUNDER_EMAIL = process.env.PROSPECTING_FOUNDER_EMAIL || 'stefanogebara@gmail.com';
+
+/**
+ * Avisa o fundador que um lead calado (handoff/agendando/agendado) respondeu.
+ *
+ * Dois canais: WhatsApp acorda, e-mail sobrevive à rolagem. Os dois levam o
+ * texto do lead, porque um aviso que só diz "fulano respondeu" obriga a abrir
+ * o sistema — que é justamente o trabalho que isto elimina.
+ *
+ * O marcador de cooldown só é gravado se ALGUM canal entregou. Se os dois
+ * falharem, o fundador não soube, então o próximo inbound tenta de novo em vez
+ * de cair num silêncio de 6h — e a tentativa falha fica registrada em separado.
+ */
+async function avisarFundadorDaResposta({ lead, texto, nowMs }) {
+  try {
+    const historico = await loadHistory(lead.id, 40);
+    const { alertar, motivo } = deveAvisarFundador({ lead, texto, historico, nowMs });
+    if (!alertar) {
+      logger.info(`[prospect] aviso ao fundador pulado lead=${lead.id} — ${motivo}`);
+      return;
+    }
+
+    const aviso = buildFounderAlert({ lead, texto, nowMs });
+    const canais = [];
+
+    if (FOUNDER_WHATSAPP) {
+      try {
+        await sendWhatsAppMessage(FOUNDER_WHATSAPP, aviso.whatsapp);
+        canais.push('whatsapp');
+      } catch (err) {
+        logger.warn('aviso ao fundador por WhatsApp falhou', { error: err.message });
+      }
+    }
+    try {
+      await sendProspectDigestEmail({
+        to: FOUNDER_EMAIL, subject: aviso.subject, html: aviso.html, text: aviso.text,
+      });
+      canais.push('email');
+    } catch (err) {
+      logger.warn('aviso ao fundador por e-mail falhou', { error: err.message });
+    }
+
+    await recordEvent(
+      lead.id,
+      canais.length ? eventoDeAviso(canais) : '⚠️ aviso ao fundador falhou nos dois canais'
+    );
+  } catch (err) {
+    logger.error('aviso ao fundador falhou', { lead: lead && lead.id, error: err.message });
+  }
+}
 
 const logger = createSecureLogger('ProspectResponder');
 
@@ -227,6 +280,14 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
   //    bypasses it: a 'definir' confirmation goes out while still 'agendado',
   //    and pedir/noshow run right after the caller reset state anyway.
   if (!isRemarcar && !deveResponder(lead.prospect_state)) {
+    // A conversa passou pro fundador, e por isso a agente cala. Mas até
+    // 10/08/2026 a resposta do lead morria exatamente aqui: gravada no banco,
+    // sem ninguém olhando, esperando o fundador abrir o lead por acaso. É o
+    // espelho do caso Bario (promessa que não saía) visto do outro lado do fio.
+    // Best-effort: falha de aviso nunca pode derrubar o inbound.
+    // nowMs do próprio responder, nunca Date.now(): dois relógios no mesmo
+    // fluxo tornam o cooldown não-determinístico e intestável.
+    await avisarFundadorDaResposta({ lead, texto: text, nowMs });
     return { action: 'skip', reason: `silent_state:${lead.prospect_state}` };
   }
 
