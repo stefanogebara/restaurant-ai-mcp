@@ -62,6 +62,13 @@ const CRON_JOBS = [
   { name: 'prospect-handoff-digest', intervalMinutes: 1440 },   // diário
   { name: 'prospect-score-outcomes', intervalMinutes: 1440 },   // diário
   { name: 'prospect-enrich', intervalMinutes: 60 },             // horário, 24/7 → gap de 1h, tolera 2h
+  // PILOTO AUTOMÁTICO DO FUNDADOR (adicionado 11/08/2026). É o cron que manda
+  // proposta e follow-up POR CONTA PRÓPRIA para comprador real. Justamente o
+  // que menos pode morrer calado: parado, o funil inteiro para de responder aos
+  // leads que o porteiro entregou, e o sintoma visível é nenhum.
+  // Roda 13/16/19 UTC → maior folga legítima 18h (19h → 13h do dia seguinte).
+  // 600 × 2 = 20h de tolerância, duas horas acima do gap real.
+  { name: 'prospect-founder-email', intervalMinutes: 600 },
 
   // O RESTO DA CASA (adicionados 03/08/2026). Depois do motor da Olímpia,
   // estes eram os últimos do vercel.json fora do vigia. Todos JÁ gravavam em
