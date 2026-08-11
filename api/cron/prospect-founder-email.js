@@ -29,10 +29,13 @@ const { bearerEquals } = require('../_lib/secure-compare');
 const { isCronEnabled } = require('../_lib/cron-config');
 const { logCronRun } = require('../_lib/cron-tracker');
 const {
-  selectFounderEmailQueue, isOptedOut, recordEvent,
+  selectFounderEmailQueue, selectFounderFollowupCandidates, loadHistory, isOptedOut, recordEvent,
 } = require('../_lib/prospecting/prospect-store');
 const { isFounderNumber } = require('../_lib/prospecting/prospect-agent');
-const { buildProposalEmail, eventoDeEnvio } = require('../_lib/prospecting/founder-email');
+const {
+  buildProposalEmail, eventoDeEnvio,
+  buildFollowupEmail, followupDevido, eventoDeFollowup,
+} = require('../_lib/prospecting/founder-email');
 const { sendProspectProposalEmail } = require('../_lib/email');
 
 const logger = createSecureLogger('CronFounderEmail');
@@ -50,6 +53,77 @@ const FOUNDER_NAME = process.env.PROSPECTING_FOUNDER_NAME || 'Stefano';
 // Teto por execução. Envio autônomo sem teto é como um bug vira incidente de
 // marca: 200 propostas erradas saem antes de alguém abrir o painel.
 const MAX_POR_RODADA = Number(process.env.PROSPECTING_EMAIL_MAX_POR_RODADA) || 10;
+
+/**
+ * 2ª fase: cobra o silêncio de quem recebeu a proposta e não respondeu.
+ *
+ * O risco central aqui não é técnico, é social: a resposta da proposta vai pro
+ * replyTo (caixa do fundador), que o sistema NÃO enxerga. Então "silêncio" no
+ * banco pode significar "já respondeu e o sistema não viu". Três defesas:
+ * espera longa (4 dias, dá tempo do fundador agir), qualquer inbound cancela, e
+ * o texto do e-mail assume explicitamente que pode estar enganado.
+ *
+ * Um follow-up por lead, para sempre. Insistir duas vezes é perseguir.
+ */
+async function faseFollowup({ dry, nowMs, restante }) {
+  if (restante <= 0) return { enviados: 0, resultados: [], motivo: 'teto_da_rodada_gasto' };
+
+  const candidatos = await selectFounderFollowupCandidates({ limit: restante * 3 });
+  const resultados = [];
+  let enviados = 0;
+
+  for (const lead of candidatos) {
+    if (enviados >= restante) break;
+    if (isFounderNumber(lead.whatsapp_phone)) continue;
+    if (lead.whatsapp_phone && (await isOptedOut(lead.whatsapp_phone))) continue;
+
+    const historico = await loadHistory(lead.id, 100);
+    const { devido, motivo } = followupDevido({ historico, nowMs });
+    if (!devido) {
+      resultados.push({ lead: lead.id, nome: lead.name, enviado: false, motivo });
+      continue;
+    }
+
+    let email;
+    try {
+      email = buildFollowupEmail(lead, {
+        founderName: FOUNDER_NAME, founderEmail: FOUNDER_EMAIL, founderPhone: FOUNDER_PHONE,
+      });
+    } catch (err) {
+      logger.error('follow-up bloqueado pelo linter', { lead: lead.id, error: err.message });
+      await recordEvent(lead.id, `🚫 follow-up NÃO enviado: ${err.message.split('\n')[0]}`);
+      resultados.push({ lead: lead.id, enviado: false, motivo: 'claim_blocked' });
+      continue;
+    }
+
+    if (dry) {
+      resultados.push({
+        lead: lead.id, nome: lead.name, para: lead.prospect_email,
+        enviado: false, dry: true, assunto: email.subject,
+      });
+      continue;
+    }
+
+    try {
+      await sendProspectProposalEmail({
+        to: lead.prospect_email,
+        subject: email.subject,
+        html: email.html,
+        text: email.text,
+        replyTo: FOUNDER_EMAIL,
+      });
+      await recordEvent(lead.id, eventoDeFollowup(lead.prospect_email));
+      enviados += 1;
+      resultados.push({ lead: lead.id, nome: lead.name, enviado: true });
+    } catch (err) {
+      logger.error('envio do follow-up falhou', { lead: lead.id, error: err.message });
+      await recordEvent(lead.id, `⚠️ falha ao enviar follow-up: ${err.message}`);
+      resultados.push({ lead: lead.id, enviado: false, motivo: 'send_failed' });
+    }
+  }
+
+  return { enviados, resultados };
+}
 
 module.exports = async (req, res) => {
   const secret = process.env.CRON_SECRET;
@@ -83,11 +157,9 @@ module.exports = async (req, res) => {
     );
     const fila = semFundador.filter((_, i) => !optChecks[i]).slice(0, MAX_POR_RODADA);
 
-    if (fila.length === 0) {
-      await logCronRun('prospect-founder-email', { candidatos: candidatos.length, enviados: 0, empty: true });
-      return res.status(200).json({ success: true, candidatos: candidatos.length, enviados: 0 });
-    }
-
+    // Fila de propostas vazia NÃO encerra a rodada: o estado normal do dia a
+    // dia é justamente "nenhuma proposta nova, mas follow-up vencendo". Um
+    // return aqui fazia a 2ª fase praticamente nunca rodar.
     const resultados = [];
     for (const lead of fila) {
       let email;
@@ -133,12 +205,31 @@ module.exports = async (req, res) => {
     }
 
     const enviados = resultados.filter((r) => r.enviado).length;
+
+    // --- 2ª fase: follow-up de quem recebeu proposta e não respondeu --------
+    // Mesma rodada, mesmo teto e mesmo kill switch de propósito: é a mesma
+    // preocupação, e um cron a mais só aumentaria invocação na Vercel.
+    //
+    // Isolada em try/catch próprio: quando a 1ª fase chega aqui ela JÁ mandou
+    // e-mail de verdade, e deixar a 2ª fase derrubar a resposta apagaria o
+    // relatório desses envios e o logCronRun junto. Follow-up é o trabalho
+    // menos urgente da rodada; ele degrada para zero, não leva o resto embora.
+    let followups = { enviados: 0, resultados: [] };
+    try {
+      followups = await faseFollowup({ dry, nowMs: Date.now(), restante: MAX_POR_RODADA - enviados });
+    } catch (err) {
+      logger.error('fase de follow-up falhou (propostas desta rodada seguem válidas)', { error: err.message });
+      followups = { enviados: 0, resultados: [], erro: err.message };
+    }
+
     await logCronRun('prospect-founder-email', {
-      candidatos: candidatos.length, enviados, dry: dry || undefined,
+      candidatos: candidatos.length, enviados, followups: followups.enviados, dry: dry || undefined,
     });
-    logger.info(`founder email: ${enviados}/${fila.length} enviados${dry ? ' (dry-run)' : ''}`);
+    logger.info(
+      `founder email: ${enviados}/${fila.length} propostas, ${followups.enviados} follow-ups${dry ? ' (dry-run)' : ''}`
+    );
     return res.status(200).json({
-      success: true, dry: !!dry, candidatos: candidatos.length, enviados, resultados,
+      success: true, dry: !!dry, candidatos: candidatos.length, enviados, resultados, followups,
     });
   } catch (err) {
     logger.error('founder email fatal:', err.message);

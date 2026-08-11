@@ -158,9 +158,119 @@ function eventoDeEnvio(destino) {
   return `${PROPOSAL_MARKER}: ${destino}`;
 }
 
+// ---------------------------------------------------------------- follow-up
+
+/** Marcador do follow-up. Um por lead, para sempre. */
+const FOLLOWUP_MARKER = '📧 follow-up da proposta enviado';
+
+/**
+ * Espera padrão antes do follow-up. Quatro dias, não um: a resposta da proposta
+ * cai na caixa do FUNDADOR (replyTo), fora do alcance do sistema, então o único
+ * amortecedor contra "cutucar quem já respondeu" é dar tempo de ele ver e agir.
+ */
+const FOLLOWUP_ESPERA_MS = 4 * 24 * 60 * 60 * 1000;
+
+function marcadorMs(mensagens, prefixo) {
+  let ultimo = null;
+  for (const m of mensagens || []) {
+    if (!m || typeof m.corpo !== 'string' || !m.corpo.startsWith(prefixo)) continue;
+    const t = m.created_at ? Date.parse(m.created_at) : NaN;
+    if (!Number.isNaN(t) && (ultimo === null || t > ultimo)) ultimo = t;
+  }
+  return ultimo;
+}
+
+/**
+ * PURO: este lead merece follow-up agora?
+ *
+ * @returns {{ devido: boolean, motivo: string }}
+ */
+function followupDevido({ historico = [], nowMs, esperaMs = FOLLOWUP_ESPERA_MS } = {}) {
+  const propostaMs = marcadorMs(historico, PROPOSAL_MARKER);
+  if (propostaMs === null) return { devido: false, motivo: 'proposta_nunca_enviada' };
+
+  if (marcadorMs(historico, FOLLOWUP_MARKER) !== null) {
+    // Um follow-up é insistência; dois são perseguição.
+    return { devido: false, motivo: 'followup_ja_enviado' };
+  }
+
+  // Qualquer inbound DEPOIS da proposta significa que a pessoa falou. Não
+  // importa o que ela disse: quem responde não recebe cobrança automática.
+  const respondeu = (historico || []).some((m) => {
+    if (!m || m.direcao !== 'in') return false;
+    const t = m.created_at ? Date.parse(m.created_at) : NaN;
+    return !Number.isNaN(t) && t > propostaMs;
+  });
+  if (respondeu) return { devido: false, motivo: 'lead_respondeu' };
+
+  if (nowMs - propostaMs < esperaMs) return { devido: false, motivo: 'cedo_demais' };
+
+  return { devido: true, motivo: 'silencio_apos_proposta' };
+}
+
+/**
+ * PURO: o follow-up. Curto, com uma saída explícita, e escrito para sobreviver
+ * ao caso em que a pessoa JÁ respondeu por e-mail e o sistema não viu — que é
+ * um cenário real enquanto a caixa do fundador for invisível ao sistema.
+ */
+function buildFollowupEmail(lead, opts = {}) {
+  const {
+    previaUrl = PREVIA_URL,
+    founderName = process.env.PROSPECTING_FOUNDER_NAME || 'Stefano',
+    founderEmail = process.env.PROSPECTING_FOUNDER_EMAIL || '',
+    founderPhone = process.env.PROSPECTING_FOUNDER_PHONE || '',
+  } = opts;
+
+  const casa = (lead && lead.name ? String(lead.name) : '').trim();
+
+  const assinaturaLinhas = [
+    `${founderName} Gebara`,
+    'Fundador · Racha',
+    [founderEmail, founderPhone && `WhatsApp ${founderPhone}`].filter(Boolean).join(' · '),
+  ].filter(Boolean);
+
+  const paragrafos = [
+    'Olá, tudo bem?',
+    `Escrevi semana passada sobre o Racha, o pagamento de conta na mesa por QR${casa ? `, para ${casa}` : ''}. ` +
+      'Como não sei se a mensagem chegou até quem cuida do assunto, estou reenviando uma vez só.',
+    'Se preferir ver antes de qualquer conversa, são trinta segundos no celular:',
+    previaUrl,
+    'Se já respondeu e a resposta se perdeu no caminho, me desculpe a insistência. ' +
+      'E se não for o momento, é só me dizer que eu não escrevo de novo.',
+  ];
+
+  const subject = casa
+    ? `Racha — retomando o contato sobre ${casa}`
+    : 'Racha — retomando o contato';
+
+  const corpo = paragrafos.join('\n\n');
+  const text = `${corpo}\n\n${assinaturaLinhas.join('\n')}`;
+
+  const html = [
+    ...paragrafos.map((p) => (p === previaUrl
+      ? `<p><a href="${esc(previaUrl)}">${esc(previaUrl)}</a></p>`
+      : `<p>${esc(p)}</p>`)),
+    `<p>${assinaturaLinhas.map(esc).join('<br>')}</p>`,
+  ].join('\n');
+
+  assertOutbound(text);
+
+  return { subject, text, html };
+}
+
+/** Texto do evento gravado após o follow-up. */
+function eventoDeFollowup(destino) {
+  return `${FOLLOWUP_MARKER}: ${destino}`;
+}
+
 module.exports = {
   buildProposalEmail,
   propostaJaEnviada,
   eventoDeEnvio,
   PROPOSAL_MARKER,
+  buildFollowupEmail,
+  followupDevido,
+  eventoDeFollowup,
+  FOLLOWUP_MARKER,
+  FOLLOWUP_ESPERA_MS,
 };

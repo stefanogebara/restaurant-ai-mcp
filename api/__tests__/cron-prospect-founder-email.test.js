@@ -25,10 +25,13 @@ const mockCronEnabled = { valor: true };
 jest.mock('../_lib/cron-config', () => ({ isCronEnabled: async () => mockCronEnabled.valor }));
 
 const mockFila = { leads: [] };
+const mockFollowup = { candidatos: [], historico: [] };
 const mockOptOut = { numeros: new Set() };
 const mockRecordEvent = jest.fn().mockResolvedValue({ stored: true });
 jest.mock('../_lib/prospecting/prospect-store', () => ({
   selectFounderEmailQueue: async () => mockFila.leads,
+  selectFounderFollowupCandidates: async () => mockFollowup.candidatos,
+  loadHistory: async () => mockFollowup.historico,
   isOptedOut: async (fone) => mockOptOut.numeros.has(fone),
   recordEvent: (...a) => mockRecordEvent(...a),
 }));
@@ -67,6 +70,8 @@ beforeEach(() => {
   jest.clearAllMocks();
   mockCronEnabled.valor = true;
   mockFila.leads = [];
+  mockFollowup.candidatos = [];
+  mockFollowup.historico = [];
   mockOptOut.numeros = new Set();
   mockSend.mockResolvedValue(true);
   process.env.CRON_SECRET = 'segredo';

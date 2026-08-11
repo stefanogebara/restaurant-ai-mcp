@@ -1133,6 +1133,45 @@ async function selectFounderEmailQueue({ limit = 25 } = {}) {
 }
 
 /**
+ * Candidatos a follow-up: leads que JÁ receberam a proposta e ainda NÃO
+ * receberam follow-up. A decisão final (silêncio, espera cumprida) é pura e
+ * mora em founder-email.followupDevido — aqui só se estreita o universo, porque
+ * ela precisa do histórico completo e isso é uma consulta por lead.
+ */
+async function selectFounderFollowupCandidates({ limit = 25 } = {}) {
+  const { PROPOSAL_MARKER, FOLLOWUP_MARKER } = require('./founder-email');
+  try {
+    const [{ data: comProposta, error: e1 }, { data: comFollowup, error: e2 }] = await Promise.all([
+      supabaseAdmin.from('prospect_messages').select('lead_id').like('corpo', `${PROPOSAL_MARKER}%`),
+      supabaseAdmin.from('prospect_messages').select('lead_id').like('corpo', `${FOLLOWUP_MARKER}%`),
+    ]);
+    if (e1 || e2) {
+      // Falha FECHADO: sem saber quem já recebeu follow-up, não cobre ninguém.
+      logger.error('selectFounderFollowupCandidates: consulta de marcadores falhou:', (e1 || e2).message);
+      return [];
+    }
+
+    const jaFezFollowup = new Set((comFollowup || []).map((m) => m.lead_id));
+    const ids = [...new Set((comProposta || []).map((m) => m.lead_id))].filter((id) => !jaFezFollowup.has(id));
+    if (!ids.length) return [];
+
+    const { data: leads, error } = await supabaseAdmin
+      .from('prospect_leads')
+      .select('id, name, city, owner_name, prospect_email, prospect_state, whatsapp_phone, updated_at')
+      .in('id', ids.slice(0, 200))
+      .eq('prospect_state', 'handoff')
+      .not('prospect_email', 'is', null)
+      .order('updated_at', { ascending: true })
+      .limit(Math.min(Math.max(limit, 1), 100));
+    if (error) { logger.error('selectFounderFollowupCandidates failed:', error.message); return []; }
+    return leads || [];
+  } catch (err) {
+    logger.error('selectFounderFollowupCandidates exception:', err.message);
+    return [];
+  }
+}
+
+/**
  * Handoff leads (coarse pass) for the reclaim sweep. No age filter in SQL: a
  * lead who came BACK and got muted can be recent, so the fine gate
  * (elegivelParaReclaim, needs the last-message shape) decides per-lead. Handoff
@@ -1239,6 +1278,7 @@ module.exports = {
   findLeadByPhone,
   selectFounderHandoffQueue,
   selectFounderEmailQueue,
+  selectFounderFollowupCandidates,
   selectHandoffLeads,
   reclaimHandoffToConversando,
   markLeadWon,
