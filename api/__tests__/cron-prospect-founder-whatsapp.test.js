@@ -82,6 +82,11 @@ beforeEach(() => {
   mockSendLivre.mockResolvedValue({ success: true, messageId: 'wamid.livre' });
   mockSendTemplate.mockResolvedValue({ success: true, messageId: 'wamid.tpl' });
   process.env.CRON_SECRET = 'segredo';
+  // O disparo do fundador passa pelo MESMO guard do motor da Olímpia
+  // (prospect-dry-run). Estes testes provam o caminho de envio, então armam o
+  // ambiente explicitamente; o bloco no fim do arquivo prova o guard em si.
+  process.env.PROSPECTING_DRY_RUN = 'false';
+  process.env.PROSPECTING_PHONE_NUMBER_ID = '999';
 });
 
 describe('a janela de 24h decide o modo, e nunca o contrário', () => {
@@ -222,5 +227,59 @@ describe('filtros e limites', () => {
       'prospect-founder-email',
       expect.objectContaining({ enviados: 0, followups: 0, whatsapp: 1 })
     );
+  });
+});
+
+describe('o guard de dry-run do motor vale para o WhatsApp do fundador', () => {
+  // prospect-dry-run.js e' A UNICA definicao de "isto manda de verdade?", e o
+  // proprio arquivo documenta que o bug anterior nasceu de duas copias da regra.
+  // Chamar o sender direto criaria uma terceira via: quem desarmasse o disparo
+  // da Olimpia continuaria com o WhatsApp do fundador saindo.
+  const salvo = {};
+  beforeEach(() => {
+    salvo.dry = process.env.PROSPECTING_DRY_RUN;
+    salvo.phone = process.env.WHATSAPP_PHONE_NUMBER_ID;
+    salvo.prospPhone = process.env.PROSPECTING_PHONE_NUMBER_ID;
+  });
+  afterEach(() => {
+    for (const [k, v] of [
+      ['PROSPECTING_DRY_RUN', salvo.dry],
+      ['WHATSAPP_PHONE_NUMBER_ID', salvo.phone],
+      ['PROSPECTING_PHONE_NUMBER_ID', salvo.prospPhone],
+    ]) {
+      if (v === undefined) delete process.env[k]; else process.env[k] = v;
+    }
+  });
+
+  test('PROSPECTING_DRY_RUN ausente segura o envio (fail-safe)', async () => {
+    delete process.env.PROSPECTING_DRY_RUN;
+    process.env.PROSPECTING_PHONE_NUMBER_ID = '999';
+    mockWaQueue.leads = [lead()];
+
+    const res = await chamar();
+
+    expect(mockSendTemplate).not.toHaveBeenCalled();
+    expect(mockStoreMessage).not.toHaveBeenCalled();
+    expect(res.body.whatsapp.resultados[0].dry).toBe(true);
+    expect(res.body.whatsapp.resultados[0].motivoDry).toBe('PROSPECTING_DRY_RUN');
+  });
+
+  test('sem numero de origem provisionado tambem segura', async () => {
+    process.env.PROSPECTING_DRY_RUN = 'false';
+    delete process.env.PROSPECTING_PHONE_NUMBER_ID;
+    delete process.env.WHATSAPP_PHONE_NUMBER_ID;
+    mockWaQueue.leads = [lead()];
+
+    await chamar();
+    expect(mockSendTemplate).not.toHaveBeenCalled();
+  });
+
+  test('so manda com a string exata false E numero provisionado', async () => {
+    process.env.PROSPECTING_DRY_RUN = 'false';
+    process.env.PROSPECTING_PHONE_NUMBER_ID = '999';
+    mockWaQueue.leads = [lead()];
+
+    await chamar();
+    expect(mockSendTemplate).toHaveBeenCalledTimes(1);
   });
 });

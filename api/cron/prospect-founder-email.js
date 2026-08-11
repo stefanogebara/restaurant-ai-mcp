@@ -34,6 +34,7 @@ const {
 } = require('../_lib/prospecting/prospect-store');
 const { sendWhatsAppMessage, sendTemplateMessage } = require('../_lib/whatsapp-sender');
 const wa = require('../_lib/prospecting/founder-whatsapp');
+const { isDryRun } = require('../_lib/prospecting/prospect-dry-run');
 const { isFounderNumber } = require('../_lib/prospecting/prospect-agent');
 const {
   buildProposalEmail, eventoDeEnvio,
@@ -146,6 +147,14 @@ async function faseFollowup({ dry, nowMs, restante }) {
 async function faseWhatsapp({ dry, nowMs, restante }) {
   if (restante <= 0) return { enviados: 0, resultados: [], motivo: 'teto_da_rodada_gasto' };
 
+  // O guard de dry-run do motor da Olímpia vale AQUI TAMBÉM. Chamar o sender
+  // direto criaria uma terceira cópia da regra "isto manda de verdade?", que é
+  // a doença que prospect-dry-run.js foi escrito para curar: quem desarmasse o
+  // disparo da agente continuaria com o WhatsApp do fundador saindo. O e-mail
+  // não passa por aqui de propósito — ele não usa o número da Olímpia e não
+  // gasta a reputação que este guard protege.
+  const dryEfetivo = dry || isDryRun();
+
   const candidatos = await selectFounderWhatsappQueue({ limit: restante * 3 });
   const resultados = [];
   let enviados = 0;
@@ -191,9 +200,9 @@ async function faseWhatsapp({ dry, nowMs, restante }) {
       continue;
     }
 
-    if (dry) {
+    if (dryEfetivo) {
       resultados.push({
-        lead: lead.id, nome: lead.name, enviado: false, dry: true,
+        lead: lead.id, nome: lead.name, enviado: false, dry: true, motivoDry: dry ? 'query' : 'PROSPECTING_DRY_RUN',
         tipo: ehIntro ? 'intro' : 'followup', via, previa: corpoRegistrado.slice(0, 160),
       });
       continue;
