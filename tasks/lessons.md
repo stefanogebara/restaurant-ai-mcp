@@ -690,3 +690,118 @@ COROLARIO PRA RELATORIO: quando o dado de origem estava certo e mesmo assim o
 resultado saiu errado, mostrar o dado cru primeiro (foi o vcard decodificado
 que fechou a questao em segundos) e depois assumir a parte que e minha. A
 integridade do payload nao me absolve da decisao de disparar em cima dele.
+
+## 2026-08-10 — Placeholder inventado vazou pra conversa real (Olimpia)
+
+Pra testar o fluxo completo com um colega do Stefano, criei o lead de teste
+com nome de restaurante INVENTADO ("Cantina Bella Vista", Sao Paulo,
+restaurante) porque o template de intro pede {{1}} e o prompt do agente pede
+lead.name. O colega mandou mensagem, e a Olimpia abriu com "vi que voces tem
+uma cantina bem bacana ai em Sao Paulo" — afirmacao fabricada sobre um
+negocio que nao existe, dita a uma pessoa real que pode ser um lead genuino.
+
+O erro: preencher campo obrigatorio com dado plausivel-mas-falso em SISTEMA
+VIVO. Campo desconhecido em fixture de teste local e inofensivo; o mesmo
+campo num pipeline de producao vira "fato" no prompt do agente e sai da boca
+dele como conhecimento. O prompt inclusive ja tinha a licao equivalente
+(nota do Google: "ou vai o numero real, ou vai a instrucao de nao citar") —
+eu li essa linha durante a investigacao e nao generalizei pro campo nome.
+
+REGRA: dado que alimenta prompt/mensagem de producao nunca recebe
+placeholder inventado. Se o valor e desconhecido, o registro deve DIZER que
+e desconhecido (e o prompt instruir a descobrir), ou o campo trava o fluxo
+ate alguem fornecer o valor real. "Parecia plausivel" e exatamente o modo de
+falha — quanto mais plausivel, mais tempo o erro sobrevive.
+
+COROLARIO: teste de fluxo com pessoa real E conversa real de prospeccao.
+Nao assumir nada sobre quem esta do outro lado que o cadastro nao prove.
+
+
+## 2026-08-07/11 — Estado que ninguem observa: a familia inteira de bugs
+
+Tres incidentes na mesma semana, todos a mesma doenca. O sistema guardava
+estado que nenhum humano olhava, e o sintoma visivel era sempre nenhum.
+
+1. A Olimpia prometia "gorjeta indo direto pro garcom". Ilegal de cumprir
+   (Lei 13.419/2017 + STJ Tema 1102) e CUSTOU um lead: a casa rateia os 10%
+   entre todos os garcons, leu a promessa como quebra do rateio dela e
+   encerrou. O rateio dela ERA o nosso modelo. A promessa errada afastou
+   exatamente o ICP que ela pretendia atrair.
+2. Ela prometeu "vou mandar a proposta pro compras@..." sem ter ferramenta de
+   e-mail. O endereco foi gravado em prospect_email, campo que so
+   prospect-booking lia, e o Racha nem agenda reuniao. Promessa feita,
+   contato capturado, ninguem agiu, lead esperou dois dias.
+3. Lead em handoff respondia no WhatsApp, o inbound era gravado, e ninguem
+   era avisado. A resposta morria no banco esperando o fundador abrir o lead
+   por acaso.
+
+REGRA: todo dado escrito precisa de um leitor nomeado. Campo que so e
+escrito, estado que so e gravado, fila que so cresce — se nao existe humano
+ou cron que consome, aquilo e um vazamento silencioso, nao uma feature.
+Ao criar campo/estado novo, escrever no comentario QUEM le e QUANDO.
+
+REGRA: omitir frase proibida do prompt nao basta. O agente e um LLM: apagar
+a linha faz ele parafrasear de volta. Precisa de proibicao explicita
+("PROIBIDO SOBRE GORJETA: nao diga X, nem Y, nem Z") mais a resposta certa
+pra dar no lugar.
+
+REGRA: quando o prompt manda usar uma ferramenta, conferir se o SCHEMA dela
+aceita o caso. O prompt mandava tratar contato entregue com
+registrar_responsavel, que so aceita `numero`. Sem rota valida pro e-mail, o
+modelo inventou uma. Rota prometida e nao suportada = alucinacao garantida.
+
+## 2026-08-08/11 — Testar com a string real, nao com exemplo inventado
+
+Escrevi um claim-linter e usei as mensagens REAIS dos incidentes como caso de
+teste. Pegou de cara que meu padrao de "promessa de envio" procurava a palavra
+"e-mail", mas a mensagem real do Bario dizia "vou mandar a proposta pro
+compras@bario.com.br" — sem a palavra. O linter teria deixado passar
+exatamente o incidente que o motivou.
+
+REGRA: teste de guard usa a string que vazou de verdade, copiada do banco ou
+do log. Exemplo inventado passa verde e da falsa sensacao de cobertura,
+porque foi escrito pela mesma cabeca que escreveu o padrao.
+
+COROLARIO: guard que barra a copy BOA tambem nao serve. O mesmo linter
+bloqueava "o cliente nao paga nada a mais", frase canonica do Racha. Se
+tivesse ficado assim, todo chamador allow-listaria a familia por reflexo e o
+guard viraria peso morto. Negacao tratada no padrao, com teste dos dois lados.
+
+## 2026-08-11 — Rodar subconjunto de teste esconde o teste que importa
+
+Passei a sessao rodando `npx jest api/__tests__/prospect*` e vi verde o tempo
+todo. Ao adicionar um cron novo, esqueci de registra-lo no vigia
+(cron-health). Existe teste cruzando vercel.json com o registro que teria
+pegado na hora — mas ele se chama cron-health-registro.test.js e nunca casou
+com meu padrao.
+
+REGRA: subconjunto serve pro loop rapido durante a edicao. Antes de push que
+adiciona ARQUIVO NOVO (cron, endpoint, entrada de config), rodar a suite
+inteira: o teste que cobre o novato quase nunca esta na pasta do novato.
+
+## 2026-08-09 — Dry-run barrado pelo proprio kill switch
+
+Subi um cron desarmado (cron_config.enabled=false) e prescrevi o rollout
+"rode o dry-run, inspecione, depois arme". Mas eu checava o kill switch ANTES
+do dry-run, entao o cron desarmado respondia disabled_by_ops e nao mostrava
+previa nenhuma. O caminho de rollout que o interruptor existe para proteger
+era impossivel de percorrer.
+
+REGRA: modo de inspecao (dry-run, preview, plan) precisa atravessar o
+interruptor que ele existe para validar. Interruptor contem EFEITO; dry-run
+nao tem efeito, entao nao ha o que conter.
+
+## 2026-08-09 — Remetente errado quase saiu numa proposta
+
+FROM_ADDRESS do projeto e 'Seatable <bookings@seatable.one>'. A proposta era
+do RACHA, assinada "Fundador · Racha". Ia chegar na caixa do prospect com o
+nome da outra marca no remetente: confunde, mistura as marcas e, em contato
+frio, le como phishing. Peguei minutos antes do primeiro envio autonomo.
+
+REGRA: ao reusar rail de envio de outro produto, conferir remetente, assinatura
+e dominio. Rail compartilhado nao significa identidade compartilhada.
+
+RISCO EM ABERTO: prospeccao fria do Racha sai do mesmo dominio dos e-mails
+TRANSACIONAIS do Seatable. Denuncia de spam num lead frio dana a reputacao que
+entrega confirmacao de reserva de cliente pagante. Separar dominio antes de
+escalar volume.

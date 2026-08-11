@@ -54,30 +54,58 @@ barrado por lint onde não dá:
 
 ## 4. Fases
 
-### Fase 1 — rail de e-mail + linter (esta sessão)
-- [ ] `_lib/prospecting/claim-linter.js` puro: recebe texto, devolve violações. Zero I/O.
-- [ ] `_lib/email.js`: `sendProspectProposalEmail({ to, lead, deckUrl })` com Resend.
-- [ ] Template fixo de proposta (o texto já validado nos casos Bario / A Baianeira).
-- [ ] Deck genérico do Racha, sem nome de prospect, hospedado em URL pública.
-      Link, não anexo: 760KB de PDF em cold email derruba entregabilidade.
-- [ ] Cron `prospect-founder-email`: pega leads em handoff COM `prospect_email` e sem
-      proposta enviada, linta, envia, registra em `prospect_messages`, marca o lead.
+### Fase 1 — rail de e-mail + linter ✅ (08-09/08)
+- [x] `claim-linter.js` puro, 7 famílias, cada uma com o motivo junto do padrão.
+- [x] `sendProspectProposalEmail` com Resend, remetente **Racha** (não Seatable).
+- [x] Compositor determinístico, auto-lintado, com link do demo em vez de anexo.
+- [x] Cron `prospect-founder-email`, com dry-run, teto, kill switch e idempotência.
+- [x] **Armado em 09/08.** Primeiro envio autônomo: Bario Bar → compras@bario.com.br.
 
-### Fase 2 — WhatsApp autônomo do fundador
-- [ ] Template Meta novo, voz do fundador, categoria Marketing, pt_BR. **Dependência
-      externa de dias: começar a aprovação AGORA, é o caminho crítico.**
+### Fase 2 — WhatsApp autônomo do fundador ⛔ BLOQUEADA
+- [x] Três templates escritos e validados contra o linter (no fim deste doc).
+- [ ] **Submeter na Meta.** Só o fundador pode; é dependência externa de dias e
+      trava todo o resto da fase. **Nada aqui anda até isso.**
 - [ ] Dentro da janela de 24h: texto livre pelo `MetaAdapter`.
 - [ ] Fora da janela: o template aprovado.
-- [ ] Registrar como `out` no `prospect_messages` para o monitor enxergar.
 
-### Fase 3 — monitor de resposta e follow-up
-- [ ] Estado novo do lado do fundador (`founder_sent_at`, `founder_channel`).
-- [ ] Inbound depois de envio do fundador reabre o lead e notifica.
-- [ ] Silêncio depois de N dias dispara follow-up (template).
+### Fase 3 — monitor de resposta e follow-up ✅ (10-11/08)
+- [x] Inbound de lead calado avisa o fundador em dois canais, com o texto do lead,
+      cooldown de 6h e eco de máquina filtrado.
+- [x] Follow-up por silêncio no canal de e-mail: espera de 4 dias, qualquer inbound
+      cancela, um por lead, e o texto assume que pode estar enganado.
+- [ ] **Resposta por e-mail continua invisível.** Vai pro replyTo (Gmail do
+      fundador). Precisa de inbound próprio (MX + webhook) — decisão de infra, não
+      de código. É o último buraco grande do loop.
+- [ ] Follow-up por WhatsApp: depende da Fase 2.
 
-### Fase 4 — deck por prospect
-- [ ] Portar o `criar_demo` do Seatable: deck gerado com o nome da casa.
-      É o maior ganho de conversão pendente, já anotado em `racha/docs/outreach`.
+### Fase 4 — proposta por prospect ✅ (11/08)
+- [x] Página personalizada em `/proposta?t=TOKEN`, token com rótulo próprio
+      (`racha-deck:v1:`), separado do token de "já fechei".
+- [x] Personalização honesta: nome, cidade e setor. O setor muda a DOR apresentada.
+- [x] Endpoint só lê, em qualquer verbo (scanner corporativo pré-busca a URL).
+      Sem beacon de abertura, pelo mesmo motivo.
+- [x] Link entra na proposta e vira o MOTIVO do follow-up.
+- [x] Verificado em produção com token real: HTTP 200 e a página certa.
+
+---
+
+## 7. Estado em 11/08/2026
+
+**No ar e rodando sozinho:** proposta por e-mail (13/16/19 UTC, teto 20/dia),
+follow-up por silêncio, aviso de resposta ao fundador, proposta personalizada.
+Suíte completa: 3351 testes verdes.
+
+**Só o fundador destrava:**
+1. Submeter os três templates na Meta (trava a Fase 2 inteira).
+2. Decidir o inbound de e-mail (último buraco do loop).
+3. Domínio próprio pro Racha antes de escalar volume — hoje a prospecção fria sai
+   do mesmo domínio dos transacionais do Seatable, e denúncia de spam num lead frio
+   dana a reputação que entrega confirmação de reserva de cliente pagante.
+
+**Armadilha operacional conhecida:** rodar o cron LOCAL assina o link da proposta
+com o `CRON_SECRET` do `.env.local`, que não é o de produção (são três segredos
+diferentes nos .env; o de produção está no `.env.vercel.local`). Link assinado
+local = 404 pro prospect. Rodar local só com `?dry=1`.
 
 ## 5. Fora de escopo, deliberadamente
 
