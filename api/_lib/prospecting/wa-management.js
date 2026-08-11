@@ -92,27 +92,70 @@ async function listMetaTemplates() {
 
 /**
  * Build the Graph payload for a marketing template (pure — unit tested).
- * bodyText may contain {{1}} (restaurant name); example is required by Meta
- * whenever params are present.
+ *
+ * Handles {{1}}..{{n}} (Meta requires one example per variable, in order) and
+ * both quick-reply and URL buttons in a single BUTTONS component.
+ *
+ * The multi-variable / quick-reply support was added on 11/08/2026 for the
+ * founder templates. Until then this only expressed one variable and one link
+ * button, so the only way to submit those was Meta's own UI — which is where
+ * they got created under the wrong WhatsApp Business Account. A tool that can't
+ * express the real case pushes whoever uses it onto the unverified path.
+ *
+ * @param {string|string[]} exampleParam  legacy single example
+ * @param {string[]} exampleParams        one example per {{n}}, in order
+ * @param {string[]} quickReplies         up to 3 quick-reply button labels
  */
-function buildTemplatePayload({ name, language = 'pt_BR', category = 'MARKETING', bodyText, exampleParam, buttonText, buttonUrl }) {
+function buildTemplatePayload({
+  name, language = 'pt_BR', category = 'MARKETING', bodyText,
+  exampleParam, exampleParams, buttonText, buttonUrl, quickReplies,
+}) {
   const cleanName = String(name || '').trim().toLowerCase().replace(/[^a-z0-9_]/g, '_');
   const text = String(bodyText || '').trim();
   if (!cleanName || !text) return { ok: false, error: 'name and bodyText required' };
   if (text.length > 1024) return { ok: false, error: 'bodyText over 1024 chars' };
 
-  const hasParam = /\{\{1\}\}/.test(text);
+  // Highest {{n}} present, and whether the sequence has holes. Meta substitutes
+  // by position, so {{2}} without {{1}} silently shifts every value.
+  const indices = [...text.matchAll(/\{\{(\d+)\}\}/g)].map((m) => Number(m[1]));
+  const maior = indices.length ? Math.max(...indices) : 0;
+  for (let i = 1; i <= maior; i += 1) {
+    if (!indices.includes(i)) {
+      return { ok: false, error: `variáveis fora de sequência: falta {{${i}}} (o corpo usa até {{${maior}}})` };
+    }
+  }
+
   const body = { type: 'BODY', text };
-  if (hasParam) body.example = { body_text: [[String(exampleParam || 'Cantina Bella')]] };
+  if (maior > 0) {
+    const fornecidos = Array.isArray(exampleParams) ? exampleParams
+      : (exampleParam != null ? [exampleParam] : []);
+    // One variable keeps the old forgiving default; more than one must be
+    // spelled out, because there is no honest guess for a second value.
+    const exemplos = (maior === 1 && fornecidos.length === 0)
+      ? ['Cantina Bella'] : fornecidos;
+    if (exemplos.length !== maior) {
+      return { ok: false, error: `o corpo usa ${maior} variáveis, então precisa de ${maior} exemplos (recebi ${exemplos.length})` };
+    }
+    body.example = { body_text: [exemplos.map(String)] };
+  }
 
   const components = [body];
+
+  // A SINGLE BUTTONS component — Meta rejects two blocks.
+  const buttons = [];
+  if (Array.isArray(quickReplies) && quickReplies.length) {
+    if (quickReplies.length > 3) return { ok: false, error: 'no máximo 3 botões de resposta rápida' };
+    for (const label of quickReplies) {
+      const texto = String(label || '').trim().slice(0, 25);
+      if (!texto) return { ok: false, error: 'botão de resposta rápida sem texto' };
+      buttons.push({ type: 'QUICK_REPLY', text: texto });
+    }
+  }
   if (buttonUrl) {
     if (!/^https:\/\//.test(String(buttonUrl))) return { ok: false, error: 'buttonUrl must be https' };
-    components.push({
-      type: 'BUTTONS',
-      buttons: [{ type: 'URL', text: String(buttonText || 'Conhecer a Seatable').slice(0, 25), url: String(buttonUrl) }],
-    });
+    buttons.push({ type: 'URL', text: String(buttonText || 'Conhecer a Seatable').slice(0, 25), url: String(buttonUrl) });
   }
+  if (buttons.length) components.push({ type: 'BUTTONS', buttons });
 
   return {
     ok: true,

@@ -49,6 +49,86 @@ describe('buildTemplatePayload — Graph template creation (pure)', () => {
   });
 });
 
+// ------------------------------------------- duas variáveis e botões de resposta
+/**
+ * POR QUE ISTO EXISTE (11/08/2026). Os templates do fundador
+ * (`racha_fundador_intro` / `_followup`) têm DUAS variáveis e botões de resposta
+ * rápida. Esta função só sabia montar uma variável e um botão de link, então o
+ * único caminho para criá-los era a interface da Meta — que foi exatamente onde
+ * eu os criei na WABA errada. Ferramenta que não expressa o caso real empurra
+ * quem a usa para o caminho sem verificação.
+ */
+describe('buildTemplatePayload — múltiplas variáveis e quick replies', () => {
+  const corpoDoFundador = 'Oi {{1}}! Aqui é o Stefano, fundador do Racha, o pagamento na mesa por QR '
+    + 'que a Olímpia apresentou pra vocês do {{2}}. Posso te mandar?';
+
+  test('{{1}} e {{2}} viram dois exemplos, na ordem', () => {
+    const r = buildTemplatePayload({
+      name: 'racha_fundador_intro',
+      bodyText: corpoDoFundador,
+      exampleParams: ['Leo', 'Bario Bar'],
+    });
+    expect(r.ok).toBe(true);
+    const body = r.payload.components.find((c) => c.type === 'BODY');
+    expect(body.example.body_text).toEqual([['Leo', 'Bario Bar']]);
+  });
+
+  test('faltando exemplo para uma variável, recusa em vez de mandar torto', () => {
+    // A Meta rejeita com erro genérico; melhor falhar aqui, com o motivo legível.
+    const r = buildTemplatePayload({
+      name: 'x', bodyText: corpoDoFundador, exampleParams: ['Leo'],
+    });
+    expect(r.ok).toBe(false);
+    expect(r.error).toMatch(/2 exemplos/i);
+  });
+
+  test('exampleParam no singular continua valendo para um parâmetro só', () => {
+    const r = buildTemplatePayload({
+      name: 'x', bodyText: 'Oi! Vi o {{1}} no Maps.', exampleParam: 'Cantina Bella',
+    });
+    expect(r.payload.components[0].example.body_text).toEqual([['Cantina Bella']]);
+  });
+
+  test('variáveis fora de ordem ({{2}} sem {{1}}) são recusadas', () => {
+    // A Meta numera por posição; um buraco na sequência quebra a substituição.
+    const r = buildTemplatePayload({
+      name: 'x', bodyText: 'Oi, pra vocês do {{2}}.', exampleParams: ['a', 'b'],
+    });
+    expect(r.ok).toBe(false);
+    expect(r.error).toMatch(/sequência|sequencia/i);
+  });
+
+  test('quick replies viram botões QUICK_REPLY', () => {
+    const r = buildTemplatePayload({
+      name: 'x', bodyText: corpoDoFundador, exampleParams: ['Leo', 'Bario Bar'],
+      quickReplies: ['Quero ver', 'Agora não'],
+    });
+    const buttons = r.payload.components.find((c) => c.type === 'BUTTONS');
+    expect(buttons.buttons).toEqual([
+      { type: 'QUICK_REPLY', text: 'Quero ver' },
+      { type: 'QUICK_REPLY', text: 'Agora não' },
+    ]);
+  });
+
+  test('quick reply e botão de link convivem no mesmo bloco BUTTONS', () => {
+    // A Meta aceita um único componente BUTTONS; dois blocos são erro.
+    const r = buildTemplatePayload({
+      name: 'x', bodyText: 'texto', quickReplies: ['Quero ver'],
+      buttonText: 'Ver site', buttonUrl: 'https://racha.app',
+    });
+    const blocos = r.payload.components.filter((c) => c.type === 'BUTTONS');
+    expect(blocos).toHaveLength(1);
+    expect(blocos[0].buttons.map((b) => b.type)).toEqual(['QUICK_REPLY', 'URL']);
+  });
+
+  test('mais de 3 quick replies é recusado (limite da Meta)', () => {
+    const r = buildTemplatePayload({
+      name: 'x', bodyText: 'texto', quickReplies: ['a', 'b', 'c', 'd'],
+    });
+    expect(r.ok).toBe(false);
+  });
+});
+
 // ============================================================ dispatchReengages
 describe('dispatchReengages — replied-then-silent leads past the 24h window', () => {
   const lead = { id: 'L9', name: 'Bistrô Central', whatsapp_phone: '+5511988887777', prospect_state: 'conversando' };

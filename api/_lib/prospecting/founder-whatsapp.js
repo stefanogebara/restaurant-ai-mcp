@@ -3,8 +3,11 @@
 /**
  * Toque do fundador por WhatsApp — camada pura (Fase 2).
  *
- * Templates aprovados na Meta em 11/08/2026: racha_fundador_intro e
- * racha_fundador_followup, ambos Marketing/pt_BR com duas variáveis.
+ * Templates: racha_fundador_intro e racha_fundador_followup, Marketing/pt_BR,
+ * duas variáveis cada, na WABA 25687973367501862 (a que é dona do número
+ * +55 21 2391-4417). Enquanto não estiverem APROVADOS lá, a fase de WhatsApp
+ * fica desligada por `cron_config.prospect-founder-whatsapp` — o envio falharia
+ * com (#132001) a cada rodada.
  *
  * A DECISÃO CENTRAL AQUI É QUAL CANAL, NÃO QUAL TEXTO. Se o WhatsApp fosse um
  * cron paralelo ao de e-mail, um lead em handoff COM endereço receberia

@@ -317,6 +317,11 @@ module.exports = async (req, res) => {
         name: body.name, language: body.language || 'pt_BR',
         category: body.category || 'MARKETING',
         bodyText: body.body_text, exampleParam: body.example_param,
+        // Um exemplo por variável ({{1}}..{{n}}) e respostas rápidas: é o que os
+        // templates do fundador precisam. Sem isto o único caminho era a
+        // interface da Meta, onde eles acabaram criados na WABA errada.
+        exampleParams: Array.isArray(body.example_params) ? body.example_params : undefined,
+        quickReplies: Array.isArray(body.quick_replies) ? body.quick_replies : undefined,
         buttonText: body.button_text, buttonUrl: body.button_url,
       });
       if (!created.ok) return res.status(400).json({ success: false, error: created.error });
