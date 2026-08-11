@@ -38,6 +38,15 @@ const PROPOSAL_MARKER = '📧 proposta enviada por e-mail';
 const PREVIA_URL =
   process.env.PROSPECTING_PREVIA_URL || 'https://racha-gray.vercel.app/?t=demoracha';
 
+/**
+ * Parágrafo que é só uma URL vira link no HTML. Antes só o link do demo era
+ * tratado, e o da proposta personalizada sairia como texto cru — link que não
+ * clica em e-mail é link que ninguém abre.
+ */
+function ehUrl(p) {
+  return typeof p === 'string' && /^https?:\/\/\S+$/.test(p.trim());
+}
+
 /** Primeiro nome, para não escrever "Prezado Bario Bar - Tatuapé". */
 function primeiroNome(valor) {
   if (!valor) return null;
@@ -64,6 +73,7 @@ function buildProposalEmail(lead, opts = {}) {
     founderEmail = process.env.PROSPECTING_FOUNDER_EMAIL || '',
     founderPhone = process.env.PROSPECTING_FOUNDER_PHONE || '',
     indicadoPor = null,
+    deckUrl = null,
   } = opts;
 
   const casa = (lead && lead.name ? String(lead.name) : '').trim();
@@ -89,6 +99,13 @@ function buildProposalEmail(lead, opts = {}) {
     previaUrl,
     'É exatamente a tela que o cliente vê na mesa, com uma conta de demonstração. ' +
       'Podem mexer à vontade, ninguém é cobrado.',
+    // A proposta em página é o material que gerência ENCAMINHA internamente.
+    // Só entra quando o link existe: prometer "a apresentação" e não mandar
+    // nada é o erro que matou o lead do Bario em 07/08.
+    ...(deckUrl ? [
+      `Preparei também uma apresentação${casa ? ` para ${casa}` : ''}, se quiser encaminhar internamente:`,
+      deckUrl,
+    ] : []),
     'Três pontos que costumam ser perguntados logo:',
   ];
 
@@ -119,8 +136,8 @@ function buildProposalEmail(lead, opts = {}) {
   const text = `${corpo}\n\n${assinaturaLinhas.join('\n')}`;
 
   const html = [
-    ...paragrafos.map((p) => (p === previaUrl
-      ? `<p><a href="${esc(previaUrl)}">${esc(previaUrl)}</a></p>`
+    ...paragrafos.map((p) => (ehUrl(p)
+      ? `<p><a href="${esc(p)}">${esc(p)}</a></p>`
       : `<p>${esc(p)}</p>`)),
     `<ul>${bullets.map((b) => `<li>${esc(b)}</li>`).join('')}</ul>`,
     ...fecho.map((p) => `<p>${esc(p)}</p>`),
@@ -247,8 +264,8 @@ function buildFollowupEmail(lead, opts = {}) {
   const text = `${corpo}\n\n${assinaturaLinhas.join('\n')}`;
 
   const html = [
-    ...paragrafos.map((p) => (p === previaUrl
-      ? `<p><a href="${esc(previaUrl)}">${esc(previaUrl)}</a></p>`
+    ...paragrafos.map((p) => (ehUrl(p)
+      ? `<p><a href="${esc(p)}">${esc(p)}</a></p>`
       : `<p>${esc(p)}</p>`)),
     `<p>${assinaturaLinhas.map(esc).join('<br>')}</p>`,
   ].join('\n');

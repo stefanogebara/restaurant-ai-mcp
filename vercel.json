@@ -77,6 +77,14 @@
       "destination": "/api/prospect-close.js"
     },
     {
+      "source": "/proposta",
+      "destination": "/api/racha-proposta.js"
+    },
+    {
+      "source": "/api/racha-proposta",
+      "destination": "/api/racha-proposta.js"
+    },
+    {
       "source": "/api/prospect-discovery-worker",
       "destination": "/api/prospect-discovery-worker.js"
     },

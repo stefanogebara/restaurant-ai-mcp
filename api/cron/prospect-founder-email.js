@@ -37,6 +37,7 @@ const {
   buildFollowupEmail, followupDevido, eventoDeFollowup,
 } = require('../_lib/prospecting/founder-email');
 const { sendProspectProposalEmail } = require('../_lib/email');
+const { deckUrlFor } = require('../_lib/prospecting/deck-token');
 
 const logger = createSecureLogger('CronFounderEmail');
 
@@ -168,6 +169,9 @@ module.exports = async (req, res) => {
           founderName: FOUNDER_NAME,
           founderEmail: FOUNDER_EMAIL,
           founderPhone: FOUNDER_PHONE,
+          // Sem segredo configurado deckUrlFor devolve null, e o e-mail sai sem
+          // a linha da apresentação em vez de sair com um link quebrado.
+          deckUrl: deckUrlFor(lead.id),
         });
       } catch (err) {
         // CLAIM_BLOCKED chega aqui. Não envia, escala para o fundador olhar.
