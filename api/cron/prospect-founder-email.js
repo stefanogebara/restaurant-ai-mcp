@@ -153,7 +153,12 @@ async function faseWhatsapp({ dry, nowMs, restante }) {
   // disparo da agente continuaria com o WhatsApp do fundador saindo. O e-mail
   // não passa por aqui de propósito — ele não usa o número da Olímpia e não
   // gasta a reputação que este guard protege.
-  const dryEfetivo = dry || isDryRun();
+  // Reportado SEMPRE, mesmo com ?dry=1: sem isto nao ha como saber de fora se
+  // o disparo esta armado, a nao ser deixando ele disparar — que e' exatamente
+  // o estado que ninguem observa. O dry-run precisa dizer a verdade sobre o
+  // guard, nao so sobre si mesmo.
+  const guardDoMotor = isDryRun();
+  const dryEfetivo = dry || guardDoMotor;
 
   const candidatos = await selectFounderWhatsappQueue({ limit: restante * 3 });
   const resultados = [];
@@ -237,7 +242,7 @@ async function faseWhatsapp({ dry, nowMs, restante }) {
     }
   }
 
-  return { enviados, resultados };
+  return { enviados, resultados, guardDoMotorArmado: guardDoMotor };
 }
 
 module.exports = async (req, res) => {
