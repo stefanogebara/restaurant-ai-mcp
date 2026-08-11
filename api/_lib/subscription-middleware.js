@@ -32,7 +32,10 @@ async function getMonthlyReservationCount(restaurantId, customerEmail) {
     .select('*', { count: 'exact', head: true })
     .gte('date', firstDayOfMonth)
     .lte('date', lastDayOfMonth)
-    .in('status', ['Confirmed', 'Seated', 'Completed']);
+    // Statuses are stored lowercase (api/_lib/db/reservations.js). Querying
+    // capitalised values matched nothing, so this counter always returned 0
+    // and plan limits were never enforced.
+    .in('status', ['confirmed', 'seated', 'completed']);
 
   if (restaurantId) {
     query = query.eq('restaurant_id', restaurantId);

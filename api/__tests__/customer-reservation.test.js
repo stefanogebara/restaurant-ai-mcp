@@ -257,10 +257,31 @@ describe('customer-reservation: cancel', () => {
     await handler(req, res);
 
     expect(res.status).toHaveBeenCalledWith(200);
-    expect(mockUpdate).toHaveBeenCalledWith({ status: 'Cancelled' });
+    // Statuses are stored lowercase everywhere else (api/_lib/db/reservations.js).
+    // Writing 'Cancelled' here produced rows the host dashboard's lowercase
+    // filters never matched, so the restaurant never saw the cancellation.
+    expect(mockUpdate).toHaveBeenCalledWith({ status: 'cancelled' });
   });
 
   test('returns 400 when already cancelled', async () => {
+    mockSingle.mockResolvedValueOnce({
+      data: { id: 'row-1', status: 'cancelled', customer_phone: '+15550001234' },
+      error: null,
+    });
+
+    const { req, res } = mkReqRes({
+      method: 'POST',
+      query: { action: 'cancel' },
+      body: { reservation_id: 'CEL-2026-0218-A7K3', customer_phone: '+15550001234' },
+    });
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+
+  test('still blocks legacy rows stored with a capitalised status', async () => {
+    // Rows written before the casing fix carry 'Cancelled'. The guard reads
+    // both cases on purpose — dropping that would let a customer cancel an
+    // already-cancelled legacy reservation and double-count the usage metric.
     mockSingle.mockResolvedValueOnce({
       data: { id: 'row-1', status: 'Cancelled', customer_phone: '+15550001234' },
       error: null,
@@ -273,5 +294,6 @@ describe('customer-reservation: cancel', () => {
     });
     await handler(req, res);
     expect(res.status).toHaveBeenCalledWith(400);
+    expect(mockUpdate).not.toHaveBeenCalled();
   });
 });

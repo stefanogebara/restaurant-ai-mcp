@@ -335,7 +335,9 @@ async function handleCancel(req, res) {
   // against a real prior creation in the Stripe metered reporter.
   const { data: cancelled, error } = await supabaseAdmin
     .from('reservations')
-    .update({ status: 'Cancelled' })
+    // Lowercase: every other writer and the host dashboard's filters use it.
+    // 'Cancelled' produced rows the restaurant never saw as cancelled.
+    .update({ status: 'cancelled' })
     .eq('id', existing.id)
     .select('id');
 

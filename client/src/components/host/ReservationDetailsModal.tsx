@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { UpcomingReservation } from '../../types/host.types';
 import ReservationNotesEditor from './ReservationNotesEditor';
 import ThiingsIcon from '../common/ThiingsIcon';
+import { normalizeStatus } from '../../utils/reservationStatus';
 
 interface ReservationDetailsModalProps {
   isOpen: boolean;
@@ -133,11 +134,14 @@ export default function ReservationDetailsModal({ isOpen, reservation, onClose, 
             <div className="bg-soft-gray rounded-xl p-4 border border-border-gray">
               <div className="text-xs text-muted-stone mb-1">{t('reservationDetails.status')}</div>
               <div className="text-deep-charcoal font-semibold capitalize">{
-                reservation.status === 'Confirmed' ? t('reservations.confirmed')
-                : reservation.status === 'Cancelled' ? t('reservations.cancelled')
-                : reservation.status === 'Completed' ? t('reservations.completed')
-                : reservation.status === 'No Show' ? t('reservations.noShow')
-                : t('reservations.pending')
+                // Statuses arrive lowercase ('no-show', not 'No Show'); a few
+                // legacy rows are capitalised. normalizeStatus covers both.
+                {
+                  confirmed: t('reservations.confirmed'),
+                  cancelled: t('reservations.cancelled'),
+                  completed: t('reservations.completed'),
+                  'no-show': t('reservations.noShow'),
+                }[normalizeStatus(reservation.status)] ?? t('reservations.pending')
               }</div>
             </div>
           )}

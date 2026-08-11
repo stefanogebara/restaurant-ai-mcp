@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useMutation } from '@tanstack/react-query';
 import { useToast } from '../contexts/ToastContext';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
+import { isCancelled, isConfirmed } from '../utils/reservationStatus';
 
 interface Reservation {
   reservation_id: string;
@@ -130,7 +131,7 @@ export default function CustomerPortal() {
     },
     onSuccess: () => {
       success(t('reservations.reservationCancelledSuccess'));
-      setReservation(prev => prev ? { ...prev, status: 'Cancelled' } : null);
+      setReservation(prev => prev ? { ...prev, status: 'cancelled' } : null);
       setShowCancelConfirm(false);
     },
     onError: (err) => showError(err instanceof Error ? err.message : t('reservations.cancelFailed2')),
@@ -248,21 +249,21 @@ export default function CustomerPortal() {
                 <div className="flex items-center justify-between px-6 py-5 border-b border-soft-gray">
                   <span className="text-[15px] font-semibold">{t('reservations.yourReservation')}</span>
                   <span className={`text-[11px] font-semibold px-3 py-1 rounded-full ${
-                    reservation.status === 'Confirmed'
+                    isConfirmed(reservation.status)
                       ? 'bg-rose-600/[8%] text-rose-600'
-                      : reservation.status === 'Cancelled'
+                      : isCancelled(reservation.status)
                       ? 'bg-red-600/[8%] text-red-600'
                       : 'bg-amber-600/[8%] text-amber-600'
                   }`}>
-                    {reservation.status === 'Confirmed' ? t('reservations.statusConfirmed')
-                      : reservation.status === 'Cancelled' ? t('reservations.statusCancelled')
+                    {isConfirmed(reservation.status) ? t('reservations.statusConfirmed')
+                      : isCancelled(reservation.status) ? t('reservations.statusCancelled')
                       : t('reservations.statusPending')}
                   </span>
                 </div>
 
                 {/* Body */}
                 <div className="px-6 py-5">
-                  {reservation.status === 'Cancelled' && (
+                  {isCancelled(reservation.status) && (
                     <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 mb-4 text-red-700 text-sm font-medium">
                       {t('reservations.reservationCancelled', 'This reservation has been cancelled')}
                     </div>
@@ -337,7 +338,7 @@ export default function CustomerPortal() {
                 </div>
 
                 {/* Actions */}
-                {!isModifying && reservation.status !== 'Cancelled' && (
+                {!isModifying && !isCancelled(reservation.status) && (
                   <div className="flex gap-2.5 px-6 py-5 border-t border-soft-gray">
                     <button type="button" onClick={() => setIsModifying(true)} className="flex-1 py-3 border border-glass-border-dark bg-white/60 hover:bg-white/85 text-stone-gray font-medium rounded-[10px] text-[13px] hover:border-muted-stone transition-colors">
                       {t('reservations.editReservation')}
