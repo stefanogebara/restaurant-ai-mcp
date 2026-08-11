@@ -26,6 +26,8 @@
  */
 
 const { assertOutbound } = require('./claim-linter');
+// Nome FALAVEL: o corpo diz 'ai do {casa}' e o assunto 'para {casa}'.
+const { nomeDaCasa } = require('./nome-da-casa');
 
 /**
  * Marcador do evento de envio. É o que impede envio duplicado: o cron procura
@@ -76,7 +78,7 @@ function buildProposalEmail(lead, opts = {}) {
     deckUrl = null,
   } = opts;
 
-  const casa = (lead && lead.name ? String(lead.name) : '').trim();
+  const casa = nomeDaCasa(lead && lead.name);
   const quemPassou = primeiroNome(indicadoPor || (lead && lead.owner_name));
 
   const abertura = quemPassou
@@ -239,7 +241,7 @@ function buildFollowupEmail(lead, opts = {}) {
     deckUrl = null,
   } = opts;
 
-  const casa = (lead && lead.name ? String(lead.name) : '').trim();
+  const casa = nomeDaCasa(lead && lead.name);
 
   const assinaturaLinhas = [
     `${founderName} Gebara`,

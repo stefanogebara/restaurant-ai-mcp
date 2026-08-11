@@ -1133,6 +1133,35 @@ async function selectFounderEmailQueue({ limit = 25 } = {}) {
 }
 
 /**
+ * Fila do WhatsApp do fundador: leads em handoff SEM e-mail capturado.
+ *
+ * A ausência de `prospect_email` no filtro é o que garante um canal por lead.
+ * Quem deixou endereço é atendido pelo rail de e-mail, que leva a proposta
+ * personalizada; sem isso os dois rails disputariam o mesmo lead e ele receberia
+ * proposta e intro no mesmo dia.
+ *
+ * Intro ou follow-up é decisão pura (founder-whatsapp), tomada com o histórico
+ * completo — por isso aqui só se estreita o universo.
+ */
+async function selectFounderWhatsappQueue({ limit = 25 } = {}) {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('prospect_leads')
+      .select('id, name, city, owner_name, prospect_email, prospect_state, whatsapp_phone, last_in_at, updated_at')
+      .eq('prospect_state', 'handoff')
+      .is('prospect_email', null)
+      .not('whatsapp_phone', 'is', null)
+      .order('updated_at', { ascending: true })
+      .limit(Math.min(Math.max(limit, 1), 100));
+    if (error) { logger.error('selectFounderWhatsappQueue failed:', error.message); return []; }
+    return data || [];
+  } catch (err) {
+    logger.error('selectFounderWhatsappQueue exception:', err.message);
+    return [];
+  }
+}
+
+/**
  * Candidatos a follow-up: leads que JÁ receberam a proposta e ainda NÃO
  * receberam follow-up. A decisão final (silêncio, espera cumprida) é pura e
  * mora em founder-email.followupDevido — aqui só se estreita o universo, porque
@@ -1279,6 +1308,7 @@ module.exports = {
   selectFounderHandoffQueue,
   selectFounderEmailQueue,
   selectFounderFollowupCandidates,
+  selectFounderWhatsappQueue,
   selectHandoffLeads,
   reclaimHandoffToConversando,
   markLeadWon,

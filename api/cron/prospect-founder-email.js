@@ -29,8 +29,11 @@ const { bearerEquals } = require('../_lib/secure-compare');
 const { isCronEnabled } = require('../_lib/cron-config');
 const { logCronRun } = require('../_lib/cron-tracker');
 const {
-  selectFounderEmailQueue, selectFounderFollowupCandidates, loadHistory, isOptedOut, recordEvent,
+  selectFounderEmailQueue, selectFounderFollowupCandidates, selectFounderWhatsappQueue,
+  loadHistory, isOptedOut, recordEvent, storeMessage,
 } = require('../_lib/prospecting/prospect-store');
+const { sendWhatsAppMessage, sendTemplateMessage } = require('../_lib/whatsapp-sender');
+const wa = require('../_lib/prospecting/founder-whatsapp');
 const { isFounderNumber } = require('../_lib/prospecting/prospect-agent');
 const {
   buildProposalEmail, eventoDeEnvio,
@@ -122,6 +125,105 @@ async function faseFollowup({ dry, nowMs, restante }) {
     } catch (err) {
       logger.error('envio do follow-up falhou', { lead: lead.id, error: err.message });
       await recordEvent(lead.id, `⚠️ falha ao enviar follow-up: ${err.message}`);
+      resultados.push({ lead: lead.id, enviado: false, motivo: 'send_failed' });
+    }
+  }
+
+  return { enviados, resultados };
+}
+
+/**
+ * 3ª fase: o toque do fundador por WhatsApp, para quem NÃO deixou e-mail.
+ *
+ * A fila já exclui quem tem endereço (selectFounderWhatsappQueue), então nenhum
+ * lead recebe proposta por e-mail E intro por WhatsApp — o contato duplicado que
+ * quase pegou o Dinho's em 09/08.
+ *
+ * Dentro da janela de 24h vai texto livre; fora, só template aprovado. Nunca
+ * texto livre fora da janela: é o que a Meta bloqueia e o que derruba a
+ * qualidade do número, que é o ativo que mantém a Olímpia funcionando.
+ */
+async function faseWhatsapp({ dry, nowMs, restante }) {
+  if (restante <= 0) return { enviados: 0, resultados: [], motivo: 'teto_da_rodada_gasto' };
+
+  const candidatos = await selectFounderWhatsappQueue({ limit: restante * 3 });
+  const resultados = [];
+  let enviados = 0;
+
+  for (const lead of candidatos) {
+    if (enviados >= restante) break;
+    if (isFounderNumber(lead.whatsapp_phone)) continue;
+    if (await isOptedOut(lead.whatsapp_phone)) continue;
+
+    const historico = await loadHistory(lead.id, 100);
+    const intro = wa.introDevida({ lead, historico, nowMs });
+    const follow = intro.devido ? { devido: false } : wa.followupDevido({ historico, nowMs });
+
+    if (!intro.devido && !follow.devido) {
+      resultados.push({ lead: lead.id, nome: lead.name, enviado: false, motivo: intro.motivo });
+      continue;
+    }
+
+    const ehIntro = intro.devido;
+    const janelaAberta = wa.janelaAbertaEm(historico, nowMs);
+    const params = wa.parametrosTemplate(lead);
+    if (!params) {
+      resultados.push({ lead: lead.id, enviado: false, motivo: 'lead_sem_nome' });
+      continue;
+    }
+
+    let corpoRegistrado;
+    let via;
+    try {
+      if (janelaAberta && ehIntro) {
+        // Texto livre só existe para a intro: um follow-up dentro da janela
+        // seria uma segunda mensagem livre em conversa que o lead não retomou.
+        corpoRegistrado = wa.textoLivreDoFundador(lead, { founderName: FOUNDER_NAME });
+        via = 'livre';
+      } else {
+        corpoRegistrado = `[template:${ehIntro ? wa.TEMPLATE_INTRO : wa.TEMPLATE_FOLLOWUP}] ${params.join(' | ')}`;
+        via = 'template';
+      }
+    } catch (err) {
+      logger.error('mensagem do fundador bloqueada pelo linter', { lead: lead.id, error: err.message });
+      await recordEvent(lead.id, `🚫 WhatsApp do fundador NÃO enviado: ${err.message.split('\n')[0]}`);
+      resultados.push({ lead: lead.id, enviado: false, motivo: 'claim_blocked' });
+      continue;
+    }
+
+    if (dry) {
+      resultados.push({
+        lead: lead.id, nome: lead.name, enviado: false, dry: true,
+        tipo: ehIntro ? 'intro' : 'followup', via, previa: corpoRegistrado.slice(0, 160),
+      });
+      continue;
+    }
+
+    try {
+      const r = via === 'livre'
+        ? await sendWhatsAppMessage(lead.whatsapp_phone, corpoRegistrado)
+        : await sendTemplateMessage(
+          lead.whatsapp_phone,
+          ehIntro ? wa.TEMPLATE_INTRO : wa.TEMPLATE_FOLLOWUP,
+          wa.TEMPLATE_LANG,
+          params
+        );
+      // O sender devolve { success } em vez de estourar: tratar como sucesso
+      // sem checar seria o "envio silenciosamente falso" de sempre.
+      if (!r || r.success === false) throw new Error((r && r.error) || 'envio recusado');
+
+      // Grava como OUT no histórico, não só como evento: sem isso o monitor de
+      // resposta não enxerga que houve um toque, e o follow-up não teria âncora.
+      await storeMessage({
+        leadId: lead.id, direcao: 'out', tipo: via === 'livre' ? 'texto' : 'template',
+        corpo: corpoRegistrado, raw: { fundador: true, via },
+      });
+      await recordEvent(lead.id, ehIntro ? wa.eventoDeIntro(via) : wa.eventoDeFollowup(via));
+      enviados += 1;
+      resultados.push({ lead: lead.id, nome: lead.name, enviado: true, tipo: ehIntro ? 'intro' : 'followup', via });
+    } catch (err) {
+      logger.error('WhatsApp do fundador falhou', { lead: lead.id, error: err.message });
+      await recordEvent(lead.id, `⚠️ falha no WhatsApp do fundador: ${err.message}`);
       resultados.push({ lead: lead.id, enviado: false, motivo: 'send_failed' });
     }
   }
@@ -229,14 +331,32 @@ module.exports = async (req, res) => {
       followups = { enviados: 0, resultados: [], erro: err.message };
     }
 
+    // --- 3ª fase: WhatsApp, para quem não deixou e-mail -------------------
+    // Isolada pelo mesmo motivo da 2ª: quando ela roda, as fases anteriores já
+    // mandaram coisa de verdade, e uma falha aqui não pode apagar o relatório.
+    let whatsapp = { enviados: 0, resultados: [] };
+    try {
+      whatsapp = await faseWhatsapp({
+        dry, nowMs: Date.now(), restante: MAX_POR_RODADA - enviados - followups.enviados,
+      });
+    } catch (err) {
+      logger.error('fase de WhatsApp falhou (envios anteriores desta rodada seguem válidos)', { error: err.message });
+      whatsapp = { enviados: 0, resultados: [], erro: err.message };
+    }
+
     await logCronRun('prospect-founder-email', {
-      candidatos: candidatos.length, enviados, followups: followups.enviados, dry: dry || undefined,
+      candidatos: candidatos.length,
+      enviados,
+      followups: followups.enviados,
+      whatsapp: whatsapp.enviados,
+      dry: dry || undefined,
     });
     logger.info(
-      `founder email: ${enviados}/${fila.length} propostas, ${followups.enviados} follow-ups${dry ? ' (dry-run)' : ''}`
+      `founder outreach: ${enviados} propostas, ${followups.enviados} follow-ups, `
+      + `${whatsapp.enviados} WhatsApp${dry ? ' (dry-run)' : ''}`
     );
     return res.status(200).json({
-      success: true, dry: !!dry, candidatos: candidatos.length, enviados, resultados, followups,
+      success: true, dry: !!dry, candidatos: candidatos.length, enviados, resultados, followups, whatsapp,
     });
   } catch (err) {
     logger.error('founder email fatal:', err.message);

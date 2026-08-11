@@ -23,6 +23,8 @@
  */
 
 const { assertOutbound } = require('./claim-linter');
+// A manchete DIZ o nome ('no {casa}'), entao usa a versao falavel.
+const { nomeDaCasa } = require('./nome-da-casa');
 
 const PREVIA_URL =
   process.env.PROSPECTING_PREVIA_URL || 'https://racha-gray.vercel.app/?t=demoracha';
@@ -106,7 +108,7 @@ function buildDeckHtml(lead, opts = {}) {
       || process.env.PROSPECTING_FOUNDER_WHATSAPP || '',
   } = opts;
 
-  const casa = (lead && lead.name ? String(lead.name) : '').trim();
+  const casa = nomeDaCasa(lead && lead.name);
   const cidade = (lead && lead.city ? String(lead.city) : '').trim();
   const dor = dorDoFormato(lead && lead.sector);
 
