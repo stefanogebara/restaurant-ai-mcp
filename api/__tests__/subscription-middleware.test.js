@@ -140,3 +140,96 @@ describe('checkReservationLimits: monthly counter', () => {
     expect(req.isOverage).toBeUndefined();
   });
 });
+
+/**
+ * The builder above deliberately only honours `.in('status', …)`. The counter
+ * also scopes by restaurant_id and by the current-month date window, and a
+ * regression in either would leak another tenant's bookings into a plan limit
+ * (or bill the wrong month) without any status test noticing. This builder
+ * applies all three filters so those two guarantees are pinned too.
+ */
+function mockFilteringTable(rows) {
+  const filters = { statuses: null, from: null, to: null, restaurantId: undefined, eqColumn: null };
+  const builder = {
+    select: jest.fn(() => builder),
+    gte: jest.fn((_col, value) => { filters.from = value; return builder; }),
+    lte: jest.fn((_col, value) => { filters.to = value; return builder; }),
+    in: jest.fn((_col, values) => { filters.statuses = values; return builder; }),
+    // Record the column too: filtering the right value on the wrong column
+    // would still isolate nothing, and a fake that ignores `col` would happily
+    // pass while production leaked across tenants.
+    eq: jest.fn((col, value) => { filters.eqColumn = col; filters.restaurantId = value; return builder; }),
+    then: (resolve) => resolve({
+      count: rows.filter(r => (
+        r.date >= filters.from
+        && r.date <= filters.to
+        && filters.statuses.includes(r.status)
+        && (filters.restaurantId === undefined || r.restaurant_id === filters.restaurantId)
+      )).length,
+      error: null,
+    }),
+  };
+  mockSupabaseAdmin.from.mockReturnValue(builder);
+  return builder;
+}
+
+/** Mid-month, so the local-time window the counter builds always contains it. */
+function thisMonth() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-15`;
+}
+
+const row = (overrides = {}) => ({
+  date: thisMonth(),
+  status: 'confirmed',
+  restaurant_id: 'rest-1',
+  ...overrides,
+});
+
+/** A date in a month that is definitely not the current one. */
+function otherMonth(offset) {
+  const now = new Date();
+  const d = new Date(now.getFullYear(), now.getMonth() + offset, 15);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-15`;
+}
+
+describe('checkReservationLimits: scoping of the monthly counter', () => {
+  test("excludes another restaurant's reservations, filtering on restaurant_id", async () => {
+    const builder = mockFilteringTable([row(), row({ restaurant_id: 'rest-2' })]);
+
+    const req = makeReq('starter');
+    await checkReservationLimits(req, makeRes(), jest.fn());
+
+    expect(req.reservationLimit.current).toBe(1);
+    expect(builder.eq).toHaveBeenCalledWith('restaurant_id', 'rest-1');
+  });
+
+  test('excludes reservations from the previous and the next month', async () => {
+    mockFilteringTable([
+      row(),
+      row({ date: otherMonth(-1) }),
+      row({ date: otherMonth(1) }),
+    ]);
+
+    const req = makeReq('starter');
+    await checkReservationLimits(req, makeRes(), jest.fn());
+
+    expect(req.reservationLimit.current).toBe(1);
+  });
+
+  test('counts nothing rather than every tenant when restaurant_id is missing', async () => {
+    // An unscoped count would return all 3 rows — enough to 402 a customer over
+    // other restaurants' bookings once a grace window has lapsed.
+    mockFilteringTable([row(), row({ restaurant_id: 'rest-2' }), row({ restaurant_id: 'rest-3' })]);
+
+    const req = makeReq('starter');
+    req.user = {}; // authenticated, but no tenant resolved
+    const next = jest.fn();
+
+    await checkReservationLimits(req, makeRes(), next);
+
+    expect(req.reservationLimit.current).toBe(0);
+    expect(mockSupabaseAdmin.from).not.toHaveBeenCalled();
+    expect(next).toHaveBeenCalled();
+  });
+});

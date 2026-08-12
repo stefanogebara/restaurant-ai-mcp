@@ -870,6 +870,58 @@ REGRA: ao gravar um envio, guardar o identificador que o provedor devolve. Sem
 ele nao existe pergunta "chegou?", so "eu tentei". Conferir o registro REAL
 depois do primeiro envio -- foi so comparando com a linha do vizinho que isso
 apareceu, nenhum teste meu cobria.
+## 2026-08-11 — Quase reportei numero truncado como total do banco
+
+Rodei `.select('status')` no PostgREST pra contar distribuicao de status e
+recebi total 1000 — exatamente o teto de linhas do PostgREST, nao o total.
+O total real era 1926. Se eu tivesse reportado, o numero estaria errado e a
+conclusao ("nenhum backfill necessario") ficaria sem base: as 926 linhas nao
+lidas poderiam conter justamente os status capitalizados que eu procurava.
+
+Peguei porque 1000 redondo em contagem de banco e suspeito por construcao.
+
+REGRA: para CONTAR, use `count: 'exact', head: true` e filtro por valor —
+nunca `select` + agregacao no cliente. `select` sempre pode estar truncado, e
+truncagem em auditoria e pior que erro: parece resposta completa. Se um total
+sair redondo (1000, 10000), trate como teto ate provar o contrario.
+
+REGRA IRMA: auditoria por ausencia ("nenhuma linha capitalizada") so vale se a
+query cobriu 100% das linhas. Prove a cobertura antes de afirmar ausencia.
+
+## 2026-08-11 — MCP do Supabase aponta para o projeto errado
+
+Rodei `select ... from public.reservations` pelo MCP do Supabase e recebi
+"relation does not exist". O MCP conecta em lurebwaudisfilhuhmnj (projeto do
+TwinMe), nao em ckforl... (Seatable). O schema `public` de la e do TwinMe
+(soul_signatures, twin_*) e ele tem um schema `restaurant` parecido —
+entao havia uma tabela `restaurant.reservations` plausivel de consultar por
+engano e reportar como se fosse producao do Seatable.
+
+REGRA: antes de tirar conclusao de producao via MCP de banco, confirme o
+projeto — `get_project_url` contra o SUPABASE_URL do `.env.local` do repo.
+Repos diferentes na mesma maquina nao compartilham projeto. Tabela com o nome
+certo no schema errado nao e evidencia, e coincidencia.
+
+NOTA: as credenciais do Seatable vivem em `.env.local` (o `.env` tem SUPABASE_URL
+e ANON_KEY, mas NAO tem SERVICE_ROLE_KEY).
+
+RESOLVIDO em 11/08/2026: a raiz era um `~/.mcp.json` no diretorio HOME
+declarando um servidor chamado `supabase` fixado no ref do TwinMe e
+compartilhado por TODOS os projetos. Agora sao dois, com nome honesto:
+`supabase-seatable` (ckforl..., escopo do repo, em restaurant-ai-mcp/.mcp.json)
+e `supabase-twinme` (lurebwa..., escopo home). Nao existe mais um servidor
+chamado so `supabase` — se aparecer de novo, e sinal de config generica
+voltando.
+
+REGRA: nome de servidor MCP de banco carrega o projeto no nome. Um `supabase`
+generico em config compartilhada por multiplos repos e uma armadilha, nao um
+atalho.
+
+ADENDO: o caminho mais seguro nao e servidor MCP com ref fixada — e o conector
+`claude.ai Supabase`, cujo `execute_sql` recebe `project_id` por chamada. Ref
+fixada no servidor e implicita e silenciosa; `project_id` explicito na chamada
+aparece na propria query e nao tem como apontar pro banco errado sem eu ver.
+Preferir esse quando existir.
 
 ## 2026-08-12 — Marcacao do WhatsApp furava TODOS os padroes
 

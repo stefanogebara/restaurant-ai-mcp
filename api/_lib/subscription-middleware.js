@@ -23,11 +23,22 @@ const SOFT_GRACE_PERIOD_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
  * @returns {Promise<number>} Count of reservations this month
  */
 async function getMonthlyReservationCount(restaurantId, customerEmail) {
+  // Without a tenant there is nothing to scope the count to, and an unscoped
+  // query counts EVERY restaurant's bookings — which would blow past any plan
+  // limit on the first request and 402 a paying customer over strangers'
+  // volume. This was harmless while the counter was broken and always
+  // returned 0; fixing the status casing made it reachable. Fail open: a
+  // missed limit check is recoverable, wrongly blocking a customer is not.
+  if (!restaurantId) {
+    logger.warn('[SubscriptionMiddleware] No restaurant_id — skipping reservation count', { customerEmail });
+    return 0;
+  }
+
   const now = new Date();
   const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
   const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
 
-  let query = supabaseAdmin
+  const query = supabaseAdmin
     .from('reservations')
     .select('*', { count: 'exact', head: true })
     .gte('date', firstDayOfMonth)
@@ -35,11 +46,8 @@ async function getMonthlyReservationCount(restaurantId, customerEmail) {
     // Statuses are stored lowercase (api/_lib/db/reservations.js). Querying
     // capitalised values matched nothing, so this counter always returned 0
     // and plan limits were never enforced.
-    .in('status', ['confirmed', 'seated', 'completed']);
-
-  if (restaurantId) {
-    query = query.eq('restaurant_id', restaurantId);
-  }
+    .in('status', ['confirmed', 'seated', 'completed'])
+    .eq('restaurant_id', restaurantId);
 
   const { count, error } = await query;
 
