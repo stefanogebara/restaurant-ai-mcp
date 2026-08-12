@@ -140,3 +140,65 @@ describe('checkReservationLimits: monthly counter', () => {
     expect(req.isOverage).toBeUndefined();
   });
 });
+
+/**
+ * The builder above deliberately only honours `.in('status', …)`. The counter
+ * also scopes by restaurant_id and by the current-month date window, and a
+ * regression in either would leak another tenant's bookings into a plan limit
+ * (or bill the wrong month) without any status test noticing. This builder
+ * applies all three filters so those two guarantees are pinned too.
+ */
+function mockFilteringTable(rows) {
+  const filters = { statuses: null, from: null, to: null, restaurantId: undefined };
+  const builder = {
+    select: jest.fn(() => builder),
+    gte: jest.fn((_col, value) => { filters.from = value; return builder; }),
+    lte: jest.fn((_col, value) => { filters.to = value; return builder; }),
+    in: jest.fn((_col, values) => { filters.statuses = values; return builder; }),
+    eq: jest.fn((_col, value) => { filters.restaurantId = value; return builder; }),
+    then: (resolve) => resolve({
+      count: rows.filter(r => (
+        r.date >= filters.from
+        && r.date <= filters.to
+        && filters.statuses.includes(r.status)
+        && (filters.restaurantId === undefined || r.restaurant_id === filters.restaurantId)
+      )).length,
+      error: null,
+    }),
+  };
+  mockSupabaseAdmin.from.mockReturnValue(builder);
+  return builder;
+}
+
+/** Mid-month, so the local-time window the counter builds always contains it. */
+function thisMonth() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-15`;
+}
+
+const row = (overrides = {}) => ({
+  date: thisMonth(),
+  status: 'confirmed',
+  restaurant_id: 'rest-1',
+  ...overrides,
+});
+
+describe('checkReservationLimits: scoping of the monthly counter', () => {
+  test("excludes another restaurant's reservations", async () => {
+    mockFilteringTable([row(), row({ restaurant_id: 'rest-2' })]);
+
+    const req = makeReq('starter');
+    await checkReservationLimits(req, makeRes(), jest.fn());
+
+    expect(req.reservationLimit.current).toBe(1);
+  });
+
+  test('excludes reservations outside the current month', async () => {
+    mockFilteringTable([row(), row({ date: '2000-01-15' })]);
+
+    const req = makeReq('starter');
+    await checkReservationLimits(req, makeRes(), jest.fn());
+
+    expect(req.reservationLimit.current).toBe(1);
+  });
+});
