@@ -641,6 +641,44 @@ async function releaseInbound(leadId, wamid) {
  * @param {string} nowIso
  * @param {number} [limit=12]
  */
+/**
+ * Conversas candidatas a ARQUIVAMENTO: o lead falou por último e ninguém
+ * respondeu há muito tempo.
+ *
+ * Passo GROSSO — estreita o universo por data e estado. A decisão final é pura
+ * e mora em `elegivelParaArquivar`, porque ela precisa saber quem falou por
+ * último, e isso exige olhar a última mensagem de cada thread (uma consulta por
+ * lead). Mesmo desenho de selectFounderFollowupCandidates.
+ *
+ * @param {string} nowIso
+ * @param {number} dias  idade mínima do último inbound
+ * @param {number} [limit=50]
+ */
+async function selectArquivaveis(nowIso, dias, limit = 50) {
+  try {
+    const corte = new Date(Date.parse(nowIso) - dias * 24 * 60 * 60 * 1000).toISOString();
+    const { data, error } = await supabaseAdmin
+      .from('prospect_leads')
+      .select('id, name, prospect_state, last_in_at, reply_apos, retorno_em, snoozed_until, reuniao_at')
+      .in('prospect_state', ['aguardando', 'conversando', 'agendando'])
+      .not('last_in_at', 'is', null)
+      .lte('last_in_at', corte)
+      .is('reply_apos', null)
+      .order('last_in_at', { ascending: true })
+      .limit(limit);
+    if (error) {
+      // Falha FECHADA: sem lista, não arquiva ninguém. Arquivar por engano é
+      // apagar conversa viva.
+      logger.error('selectArquivaveis failed:', error.message);
+      return [];
+    }
+    return data || [];
+  } catch (err) {
+    logger.error('selectArquivaveis exception:', err.message);
+    return [];
+  }
+}
+
 async function selectResgateCandidates(nowIso, limit = 12) {
   try {
     const { RESGATE_MIN_MS, RESGATE_JANELA_MS } = require('./prospect-state');
@@ -1324,6 +1362,7 @@ module.exports = {
   claimIntro,
   markIntro,
   selectDueFlush,
+  selectArquivaveis,
   selectResgateCandidates,
   selectDueRetornos,
   selectNoshowDue,

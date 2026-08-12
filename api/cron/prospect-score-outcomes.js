@@ -21,14 +21,104 @@ const { transcriptFromHistory, scoreOutcome } = require('../_lib/prospecting/pro
 const logger = createSecureLogger('CronProspectScore');
 const MAX_PER_RUN = 25;
 
+// ---- Varredura de conversas abandonadas -------------------------------------
+//
+// POR QUE MORA AQUI e não num cron próprio: é varredura diária, e a regra de
+// custo do projeto manda não criar cron novo quando um diário já existe. Este
+// já roda 05:00 UTC, já é um sweep, e o trabalho é internamente limitado.
+//
+// O QUE RESOLVE (12/08/2026): 27 conversas com a última palavra do LEAD, entre
+// 28 e 37 dias sem resposta. Fora da janela de 24h da Meta o texto livre não é
+// entregue, então nunca mais seriam respondidas — mas seguiam ativas, mantendo
+// o alerta de "esperando resposta" vermelho para sempre e escondendo a única
+// casa que dava pra responder na hora.
+const SWITCH_ARQUIVO = 'prospect-arquivo-abandonadas';
+const MAX_ARQUIVO_POR_RODADA = 50;
+
+/**
+ * Arquiva o que o lead falou por último e ninguém respondeu há 30+ dias.
+ *
+ * 'pausada', NUNCA 'optout': opt-out é registro LGPD de um pedido DA PESSOA, e
+ * estas casas não recusaram nada — foram esquecidas por falha nossa. Poluir a
+ * supressão com faxina interna corrompe o único registro que precisa ser
+ * confiável quando alguém reclamar. 'pausada' é silencioso e reversível pelo
+ * botão "Reativar" do console.
+ */
+async function varrerAbandonadas(dry) {
+  const {
+    selectArquivaveis, loadHistory, patchLead, recordEvent,
+  } = require('../_lib/prospecting/prospect-store');
+  const { elegivelParaArquivar, ARQUIVO_DIAS_PADRAO } = require('../_lib/prospecting/prospect-state');
+
+  // Interruptor próprio. É a única rotina que MUTA lead sozinha por decurso de
+  // prazo; se ela errar, some conversa da fila e ninguém percebe na hora.
+  // Não barra o dry-run, pela lição de 09/08: o modo de inspeção não pode ser
+  // bloqueado pelo interruptor que ele existe para validar.
+  const desligado = !(await isCronEnabled(SWITCH_ARQUIVO));
+  if (desligado && !dry) return { total: 0, motivo: 'desligado_por_ops' };
+
+  const nowIso = new Date().toISOString();
+  const nowMs = Date.parse(nowIso);
+  const candidatos = await selectArquivaveis(nowIso, ARQUIVO_DIAS_PADRAO, MAX_ARQUIVO_POR_RODADA);
+
+  const feitas = [];
+  for (const lead of candidatos) {
+    // Quem falou por último decide, e isso exige a última mensagem da thread.
+    const historico = await loadHistory(lead.id, 5);
+    const ultima = historico[historico.length - 1];
+    if (!ultima) continue;
+
+    const gate = elegivelParaArquivar({
+      state: lead.prospect_state,
+      ultimaDirecao: ultima.direcao,
+      ultimaMs: Date.parse(ultima.enviada_em),
+      nowMs,
+      replyApos: lead.reply_apos,
+      retornoEm: lead.retorno_em,
+      snoozedUntil: lead.snoozed_until,
+      reuniaoAt: lead.reuniao_at,
+      dias: ARQUIVO_DIAS_PADRAO,
+    });
+    if (!gate.arquivar) continue;
+
+    const dias = Math.round((nowMs - Date.parse(ultima.enviada_em)) / 864e5);
+    if (dry) { feitas.push({ lead: lead.id, nome: lead.name, dias, dry: true }); continue; }
+
+    await patchLead(lead.id, { prospect_state: 'pausada' });
+    await recordEvent(lead.id,
+      `📦 conversa arquivada automaticamente: ${dias} dias sem resposta nossa, fora da janela `
+      + 'de 24h do WhatsApp. Arquivada como pausada, NÃO como opt-out — a casa não recusou nada. '
+      + 'Reversível pelo botão Reativar.');
+    feitas.push({ lead: lead.id, nome: lead.name, dias });
+  }
+
+  if (feitas.length) {
+    logger.info(`arquivadas ${feitas.length} conversas abandonadas${dry ? ' (dry-run)' : ''}`);
+  }
+  return {
+    total: dry ? 0 : feitas.length,
+    candidatos: candidatos.length,
+    interruptorDesligado: desligado,
+    leads: feitas.slice(0, 10),
+  };
+}
+
 module.exports = async (req, res) => {
   const secret = process.env.CRON_SECRET;
   if (!secret) return res.status(500).json({ success: false, error: 'Cron not configured' });
   if (!bearerEquals(req.headers.authorization, secret)) {
     return res.status(401).json({ error: 'Authentication required' });
   }
-  if (!(await isCronEnabled('prospect-score-outcomes'))) {
+  // Prévia sem efeito: monta a lista de arquivamento e devolve sem gravar.
+  const dry = !!(req.query && (req.query.dry === '1' || req.query.dry === 'true'));
+  if (!dry && !(await isCronEnabled('prospect-score-outcomes'))) {
     return res.status(200).json({ success: true, skipped: 'disabled_by_ops' });
+  }
+  if (dry) {
+    // Dry-run só inspeciona a varredura nova; pontuar consome LLM e não é o que
+    // se quer prever aqui.
+    const previa = await varrerAbandonadas(true);
+    return res.status(200).json({ success: true, dry: true, arquivadas: previa });
   }
 
   let scored = 0; let skipped = 0; let errors = 0;
@@ -47,8 +137,18 @@ module.exports = async (req, res) => {
         logger.error(`score outcome=${row.id} failed:`, err.message);
       }
     }
-    await logCronRun('prospect-score-outcomes', { scored, skipped, errors });
-    return res.status(200).json({ success: true, candidates: rows.length, scored, skipped, errors });
+    // Isolado em try/catch próprio: quando chega aqui a pontuação JÁ gravou, e
+    // uma falha na varredura não pode apagar esse resultado nem o logCronRun.
+    let arquivadas = { total: 0 };
+    try {
+      arquivadas = await varrerAbandonadas(dry);
+    } catch (err) {
+      logger.error('varredura de abandonadas falhou (pontuação desta rodada segue válida):', err.message);
+      arquivadas = { total: 0, erro: err.message };
+    }
+
+    await logCronRun('prospect-score-outcomes', { scored, skipped, errors, arquivadas: arquivadas.total });
+    return res.status(200).json({ success: true, candidates: rows.length, scored, skipped, errors, arquivadas });
   } catch (err) {
     logger.error('score-outcomes fatal:', err.message);
     await logCronRun('prospect-score-outcomes', { scored, skipped, errors: errors + 1 });

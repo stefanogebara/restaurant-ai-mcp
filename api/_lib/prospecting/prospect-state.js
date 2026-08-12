@@ -168,6 +168,56 @@ function normalizarMarcacao(texto) {
  * menu, hours, order link) rather than a person? Conservative: one strong
  * marker is required; plain human text never matches.
  */
+// ---- Arquivamento automático de conversa abandonada -------------------------
+//
+// INCIDENTE (12/08/2026): 27 conversas com a última palavra do LEAD, entre 28 e
+// 37 dias sem resposta. Fora da janela de 24h da Meta o texto livre nem é
+// entregue, então nunca mais seriam respondidas por nenhum caminho — mas
+// seguiam em estado ativo, inflando o alerta de "esperando resposta" para
+// sempre e escondendo a única casa que dava pra responder na hora.
+//
+// ARQUIVAR É 'pausada', NUNCA 'optout'. Opt-out é o registro LGPD de um pedido
+// DA PESSOA; estas casas não recusaram nada, foram esquecidas por falha nossa.
+// Poluir a supressão com faxina interna corrompe o único registro que precisa
+// ser confiável quando alguém reclamar.
+const ARQUIVO_DIAS_PADRAO = 30;
+
+/**
+ * PURO: esta conversa pode ser arquivada sozinha?
+ *
+ * Conservador de propósito — o custo de arquivar cedo é perder um lead vivo:
+ *  - só quando o LEAD falou por último (nós é que devemos resposta). Se nós
+ *    falamos por último, o silêncio é dele e quem cuida é o resgate/reengage,
+ *    com os tetos que já existem lá.
+ *  - só em estado ativo. handoff/agendado/ganho/optout são de gente, não de cron.
+ *  - nada agendado pendente: resposta enfileirada, retorno datado, soneca ou
+ *    reunião marcada significam que ALGUÉM já decidiu o próximo passo.
+ *
+ * @returns {{arquivar: boolean, motivo: string}}
+ */
+function elegivelParaArquivar({
+  state, ultimaDirecao, ultimaMs, nowMs,
+  replyApos = null, retornoEm = null, snoozedUntil = null, reuniaoAt = null,
+  dias = ARQUIVO_DIAS_PADRAO,
+} = {}) {
+  if (!RESGATE_STATES.has(state)) return { arquivar: false, motivo: 'estado_nao_ativo' };
+  if (ultimaDirecao !== 'in') return { arquivar: false, motivo: 'nos_falamos_por_ultimo' };
+  if (!Number.isFinite(ultimaMs)) return { arquivar: false, motivo: 'sem_instante' };
+
+  const futuro = (v) => {
+    const t = v ? Date.parse(v) : NaN;
+    return Number.isFinite(t) && t > nowMs;
+  };
+  if (replyApos) return { arquivar: false, motivo: 'resposta_enfileirada' };
+  if (futuro(retornoEm)) return { arquivar: false, motivo: 'retorno_datado' };
+  if (futuro(snoozedUntil)) return { arquivar: false, motivo: 'em_soneca' };
+  if (futuro(reuniaoAt)) return { arquivar: false, motivo: 'reuniao_marcada' };
+
+  const idadeDias = (nowMs - ultimaMs) / (24 * 60 * 60 * 1000);
+  if (idadeDias < dias) return { arquivar: false, motivo: 'recente_demais' };
+  return { arquivar: true, motivo: 'abandonada_fora_da_janela' };
+}
+
 /**
  * Recusa explícita — SEMPRE gente, nunca robô.
  *
@@ -603,6 +653,8 @@ module.exports = {
   RESGATE_MIN_MS,
   RESGATE_REARME_MS,
   RESGATE_JANELA_MS,
+  elegivelParaArquivar,
+  ARQUIVO_DIAS_PADRAO,
   elegivelParaResgate,
   HANDOFF_RECLAIM_MS,
   elegivelParaReclaim,
