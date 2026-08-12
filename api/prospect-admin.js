@@ -416,6 +416,34 @@ module.exports = async (req, res) => {
       return res.status(200).json({ success: true, data: { identity, meta_templates: metaTemplates, registry } });
     }
 
+    // ---- Testar o alerta de saúde do número ---------------------------------
+    //
+    // Um alerta que a gente espera NUNCA ver precisa de um jeito de verificar
+    // se ainda funciona: sem isto, o primeiro sinal de que ele quebrou é o
+    // incidente que ele deveria ter avisado. Mesma razão do botão de teste de
+    // alarme de incêndio.
+    //
+    // NÃO toca no disjuntor nem no estado do disparo — só monta a mensagem com
+    // números forçados e manda pelos canais reais. `nivel=disjuntor` exercita o
+    // texto da parada dura sem parar nada.
+    if (req.method === 'POST' && action === 'testar-alerta-numero') {
+      const body = req.body || {};
+      const disparou = body.nivel === 'disjuntor';
+      const { avisarSobreONumero } = require('./_lib/prospecting/prospect-receipts');
+      await avisarSobreONumero({
+        rate: Number(body.taxa) || 0.042,
+        total: Number(body.total) || 133,
+        failedReputational: Number(body.falhas) || 6,
+        disparou,
+        forcar: true, // teste manual: ignora cooldown
+      });
+      logger.info(`prospect-admin testar-alerta-numero nivel=${disparou ? 'disjuntor' : 'aviso'} by=${email}`);
+      return res.status(200).json({
+        success: true,
+        data: { nivel: disparou ? 'disjuntor' : 'aviso', obs: 'disjuntor NAO foi acionado — so a mensagem' },
+      });
+    }
+
     if (req.method === 'POST' && action === 'template-create') {
       const body = req.body || {};
       const { createMetaTemplate } = require('./_lib/prospecting/wa-management');

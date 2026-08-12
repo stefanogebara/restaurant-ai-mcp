@@ -177,7 +177,7 @@ async function checkFailedRateBreaker() {
  * processamento de recibo da Meta, e falha de telemetria não pode derrubar o
  * webhook nem impedir o disjuntor de desligar o disparo.
  */
-async function avisarSobreONumero({ rate, total, failedReputational, disparou }) {
+async function avisarSobreONumero({ rate, total, failedReputational, disparou, forcar = false }) {
   try {
     const {
       deveAvisarDoNumero, buildAlertaNumero, COOLDOWN_MS, EVENTO_AVISO,
@@ -185,8 +185,10 @@ async function avisarSobreONumero({ rate, total, failedReputational, disparou })
 
     const nowMs = Date.now();
     // Cooldown lido do próprio log de eventos do número — sem tabela nova.
+    // `forcar` é só do gatilho de teste do console: um teste que o cooldown
+    // engole não prova nada, e a pessoa concluiria que o alerta está quebrado.
     let ultimoAvisoMs = null;
-    if (!disparou) {
+    if (!disparou && !forcar) {
       const desde = new Date(nowMs - COOLDOWN_MS).toISOString();
       const { data } = await supabaseAdmin.from('prospect_number_events')
         .select('created_at').eq('event_type', EVENTO_AVISO)
@@ -320,4 +322,8 @@ module.exports = {
   applyQualityUpdate,
   checkFailedRateBreaker,
   numberHealth,
+  // Exportada para o gatilho de teste do console. Um alerta que a gente espera
+  // NUNCA ver precisa de um jeito de verificar se ainda funciona — senão o
+  // primeiro sinal de que ele quebrou é o incidente que ele deveria ter avisado.
+  avisarSobreONumero,
 };
