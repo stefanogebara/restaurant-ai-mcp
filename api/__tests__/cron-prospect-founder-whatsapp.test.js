@@ -367,6 +367,57 @@ describe('interruptor separado da fase de WhatsApp', () => {
     expect(ligada.body.whatsapp.interruptorDesligado).toBe(false);
   });
 
+  // ------------------------------------------------- de QUAL número isto sai
+  /**
+   * ACHADO ARMANDO A FASE EM PRODUÇÃO (11/08/2026). Com os templates já
+   * APROVADOS, o primeiro envio real ainda falhou com (#132001). Não era a
+   * WABA: era o NÚMERO. Nenhuma das duas chamadas passava `phoneNumberId`, e o
+   * resolvePhoneNumberId do sender cai em WHATSAPP_PHONE_NUMBER_ID — o número
+   * de RESERVAS, que os restaurantes clientes usam, e que vive noutra WABA.
+   *
+   * O erro da Meta foi sorte. Se o template existisse nos dois lugares, a
+   * prospecção fria teria saído do número de que restaurante PAGANTE depende,
+   * queimando a reputação que a separação de números existe para proteger.
+   */
+  test('o toque sai do número de PROSPECÇÃO, nunca do de reservas', async () => {
+    process.env.PROSPECTING_PHONE_NUMBER_ID = '999';
+    mockWaQueue.leads = [lead()];
+
+    await chamar();
+
+    expect(mockSendTemplate).toHaveBeenCalledWith(
+      expect.any(String), expect.any(String), expect.any(String), expect.any(Array),
+      expect.objectContaining({ phoneNumberId: '999' })
+    );
+  });
+
+  test('texto livre dentro da janela também sai do número de prospecção', async () => {
+    process.env.PROSPECTING_PHONE_NUMBER_ID = '999';
+    mockWaQueue.leads = [lead()];
+    mockWaQueue.historico = [
+      { direcao: 'in', corpo: 'opa', enviada_em: new Date(Date.now() - 3600e3).toISOString() },
+    ];
+
+    await chamar();
+
+    expect(mockSendLivre).toHaveBeenCalledWith(
+      expect.any(String), expect.any(String),
+      expect.objectContaining({ phoneNumberId: '999' })
+    );
+  });
+
+  test('sem número de prospecção NÃO cai no de reservas: não envia', async () => {
+    // Falhar fechado. O default do sender é o número dos clientes, então
+    // "não configurado" jamais pode virar "manda pelo número deles".
+    delete process.env.PROSPECTING_PHONE_NUMBER_ID;
+    mockWaQueue.leads = [lead()];
+
+    await chamar();
+
+    expect(mockSendTemplate).not.toHaveBeenCalled();
+    expect(mockSendLivre).not.toHaveBeenCalled();
+  });
+
   test('o kill switch do cron inteiro continua valendo', async () => {
     mockSwitches.valores['prospect-founder-email'] = false;
     mockWaQueue.leads = [lead()];

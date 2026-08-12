@@ -35,6 +35,7 @@ const {
 const { sendWhatsAppMessage, sendTemplateMessage } = require('../_lib/whatsapp-sender');
 const wa = require('../_lib/prospecting/founder-whatsapp');
 const { isDryRun } = require('../_lib/prospecting/prospect-dry-run');
+const { getProspectingPhoneNumberId } = require('../_lib/prospecting/routing');
 const { isFounderNumber } = require('../_lib/prospecting/prospect-agent');
 const {
   buildProposalEmail, eventoDeEnvio,
@@ -236,13 +237,26 @@ async function faseWhatsapp({ dry, nowMs, restante }) {
     }
 
     try {
+      // De qual número isto sai. NÃO é detalhe: o default do sender é
+      // WHATSAPP_PHONE_NUMBER_ID, o número de RESERVAS que os restaurantes
+      // clientes usam — e que vive noutra WABA. Sem esta opção, prospecção
+      // fria sairia do número de que restaurante PAGANTE depende, queimando a
+      // reputação que a separação de números existe para proteger.
+      //
+      // Achado armando a fase em produção (11/08): com os templates já
+      // APROVADOS o envio ainda deu (#132001). Não era a WABA, era o número.
+      // O erro da Meta foi sorte: se o template existisse nos dois lugares,
+      // a mensagem teria saído pelo número errado, em silêncio.
+      const opcoesDeEnvio = { phoneNumberId: getProspectingPhoneNumberId() };
+
       const r = via === 'livre'
-        ? await sendWhatsAppMessage(lead.whatsapp_phone, corpoRegistrado)
+        ? await sendWhatsAppMessage(lead.whatsapp_phone, corpoRegistrado, opcoesDeEnvio)
         : await sendTemplateMessage(
           lead.whatsapp_phone,
           ehIntro ? wa.TEMPLATE_INTRO : wa.TEMPLATE_FOLLOWUP,
           wa.TEMPLATE_LANG,
-          params
+          params,
+          opcoesDeEnvio
         );
       // O sender devolve { success } em vez de estourar: tratar como sucesso
       // sem checar seria o "envio silenciosamente falso" de sempre.
