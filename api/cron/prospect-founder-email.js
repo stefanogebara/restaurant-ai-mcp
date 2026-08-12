@@ -267,6 +267,14 @@ async function faseWhatsapp({ dry, nowMs, restante }) {
       await storeMessage({
         leadId: lead.id, direcao: 'out', tipo: via === 'livre' ? 'texto' : 'template',
         corpo: corpoRegistrado, raw: { fundador: true, via },
+        // O wamid é a ÚNICA chave que liga esta mensagem aos webhooks de status
+        // (entregue / lido / falhou) que a Meta manda depois. Sem ele o envio
+        // vira mais um estado que ninguém observa: "success: true" só diz que a
+        // Meta ACEITOU, não que chegou. Achado conferindo o primeiro envio real
+        // (12/08): a linha do fundador saiu com wamid nulo enquanto a da
+        // Olímpia, ao lado, tinha o dela — o sender sempre devolveu messageId,
+        // eu é que não estava lendo.
+        wamid: (r && r.messageId) || null,
       });
       await recordEvent(lead.id, ehIntro ? wa.eventoDeIntro(via) : wa.eventoDeFollowup(via));
       enviados += 1;

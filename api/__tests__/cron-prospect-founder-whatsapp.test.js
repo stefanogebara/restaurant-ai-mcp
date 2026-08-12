@@ -418,6 +418,50 @@ describe('interruptor separado da fase de WhatsApp', () => {
     expect(mockSendLivre).not.toHaveBeenCalled();
   });
 
+  /**
+   * ACHADO CONFERINDO O PRIMEIRO ENVIO REAL (12/08/2026). A linha do fundador
+   * foi gravada com wamid NULO, enquanto a da Olímpia logo ao lado tinha o
+   * dela. O sender sempre devolveu messageId; eu é que não estava lendo.
+   *
+   * O wamid é a única chave que liga esta mensagem aos webhooks de status que
+   * a Meta manda depois (entregue / lido / falhou). Sem ele, `success: true`
+   * só prova que a Meta ACEITOU — não que chegou — e o envio vira mais um
+   * estado que ninguém observa, que é a família de defeito desta semana
+   * inteira.
+   */
+  test('grava o wamid do envio (âncora dos webhooks de status)', async () => {
+    mockWaQueue.leads = [lead()];
+    await chamar();
+
+    expect(mockStoreMessage).toHaveBeenCalledWith(
+      expect.objectContaining({ direcao: 'out', wamid: 'wamid.tpl' })
+    );
+  });
+
+  test('texto livre também guarda o wamid', async () => {
+    mockWaQueue.leads = [lead()];
+    mockWaQueue.historico = [
+      { direcao: 'in', corpo: 'opa', enviada_em: new Date(Date.now() - 3600e3).toISOString() },
+    ];
+    await chamar();
+
+    expect(mockStoreMessage).toHaveBeenCalledWith(
+      expect.objectContaining({ direcao: 'out', wamid: 'wamid.livre' })
+    );
+  });
+
+  test('sender sem messageId grava null, não undefined', async () => {
+    // storeMessage decide entre upsert e insert pelo wamid; undefined ali
+    // viraria uma coluna faltando em vez de um NULL explícito.
+    mockSendTemplate.mockResolvedValueOnce({ success: true });
+    mockWaQueue.leads = [lead()];
+    await chamar();
+
+    expect(mockStoreMessage).toHaveBeenCalledWith(
+      expect.objectContaining({ direcao: 'out', wamid: null })
+    );
+  });
+
   test('o kill switch do cron inteiro continua valendo', async () => {
     mockSwitches.valores['prospect-founder-email'] = false;
     mockWaQueue.leads = [lead()];
