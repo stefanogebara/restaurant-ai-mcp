@@ -311,11 +311,18 @@ module.exports = async (req, res) => {
         }
         esperando = (candidatos.data || [])
           .filter((l) => !ultimaSaida[l.id] || ultimaSaida[l.id] < l.last_in_at)
-          .map((l) => ({
-            id: l.id,
-            name: l.name,
-            horas: Math.floor((Date.now() - new Date(l.last_in_at).getTime()) / 3600000),
-          }));
+          .map((l) => {
+            const horas = Math.floor((Date.now() - new Date(l.last_in_at).getTime()) / 3600000);
+            // FORA DA JANELA de 24h da Meta: texto livre não sai mais, então
+            // isto não é "responder hoje", é triagem (template ou arquivar).
+            //
+            // Achado em 12/08/2026: das 14 casas realmente esperando, TREZE
+            // estavam há ~36 dias — resíduo de um incidente antigo. Somadas às
+            // recentes num número só, elas o mantinham permanentemente alto e
+            // escondiam a única que dava pra responder na hora. Contador que
+            // não desce é contador que ninguém olha.
+            return { id: l.id, name: l.name, horas, foraDaJanela: horas >= 24 };
+          });
       }
       // Varredura truncada: o total é piso, não valor exato.
       const parcial = (candidatos.data || []).length >= TETO_CANDIDATOS;
@@ -334,8 +341,15 @@ module.exports = async (req, res) => {
           esperando: {
             horas_minimas: HORAS_ESPERANDO,
             total: esperando.length,
+            // `acionavel` é o número que pede ação HOJE: dentro da janela de
+            // 24h, dá pra responder com texto livre. `fora_da_janela` já não é
+            // resposta, é triagem — e some do alerta pra ele voltar a poder
+            // chegar em zero.
+            acionavel: esperando.filter((l) => !l.foraDaJanela).length,
+            fora_da_janela: esperando.filter((l) => l.foraDaJanela).length,
             parcial,
-            leads: esperando.slice(0, 5),
+            leads: esperando.filter((l) => !l.foraDaJanela).slice(0, 5),
+            leads_fora_da_janela: esperando.filter((l) => l.foraDaJanela).slice(0, 5),
           },
           // Para onde o dinheiro foi nas últimas 24h. `null` = não consegui ler.
           gasto: gastos.error ? null : (() => {

@@ -21,9 +21,14 @@ interface Motor {
   esperando: {
     horas_minimas: number;
     total: number;
+    /** Dentro da janela de 24h da Meta: dá pra responder com texto livre HOJE. */
+    acionavel?: number;
+    /** Passou de 24h: texto livre não sai mais. É triagem, não resposta. */
+    fora_da_janela?: number;
     /** Varredura truncada: o total é piso, não valor exato. */
     parcial?: boolean;
     leads: Array<{ id: string; name: string; horas: number }>;
+    leads_fora_da_janela?: Array<{ id: string; name: string; horas: number }>;
   };
   indicados?: Array<{ id: string; name: string; numero: string; contexto: string | null }>;
   /** null = não consegui checar. Diferente de "não houve". */
@@ -84,7 +89,13 @@ export default function MotorStrip() {
 
   const m = q.data;
   const cronsRuins = (m.crons ?? []).filter((c) => c.status !== 'healthy');
-  const esperandoStatus = m.esperando.total > 0 ? 'falha' : 'ok';
+  // O alarme é sobre quem AINDA dá pra responder. Casas fora da janela de 24h
+  // não recebem texto livre nem que a gente queira; deixá-las no alerta o
+  // mantinha vermelho para sempre (13 delas estavam há 36 dias), e alarme que
+  // nunca apaga é alarme que ninguém lê.
+  const acionavel = m.esperando.acionavel ?? m.esperando.total;
+  const foraDaJanela = m.esperando.fora_da_janela ?? 0;
+  const esperandoStatus = acionavel > 0 ? 'falha' : 'ok';
   const indicados = m.indicados ?? [];
 
   return (
@@ -172,14 +183,32 @@ export default function MotorStrip() {
         status={esperandoStatus}
         title={
           m.esperando.total > 0
-            ? `Estes leads escreveram e não foram respondidos: ${m.esperando.leads.map((l) => `${l.name} (${l.horas}h)`).join(', ')}`
+            ? `Escreveram e não foram respondidos: ${m.esperando.leads.map((l) => `${l.name} (${l.horas}h)`).join(', ')}`
             : `Nenhum lead com mensagem sem resposta há mais de ${m.esperando.horas_minimas}h.`
         }
       >
-        {m.esperando.total > 0
-          ? `${m.esperando.parcial ? 'pelo menos ' : ''}${m.esperando.total} esperando resposta há +${m.esperando.horas_minimas}h`
+        {acionavel > 0
+          ? `${m.esperando.parcial ? 'pelo menos ' : ''}${acionavel} esperando resposta há +${m.esperando.horas_minimas}h`
           : 'ninguém esperando resposta'}
       </Item>
+
+      {/*
+        Fora da janela de 24h: nem alarme nem invisível. Texto livre não sai
+        mais, então não é "responder", é decidir — template de resgate ou
+        arquivar. Ficava somado ao alerta, mantendo-o vermelho para sempre.
+      */}
+      {foraDaJanela > 0 && (
+        <Item
+          status="ok"
+          title={
+            `Passaram da janela de 24h do WhatsApp — texto livre não é mais entregue. `
+            + `Precisam de template aprovado ou de arquivamento: `
+            + `${(m.esperando.leads_fora_da_janela ?? []).map((l) => `${l.name} (${Math.floor(l.horas / 24)}d)`).join(', ')}`
+          }
+        >
+          {`${foraDaJanela} fora da janela de 24h — triagem, não resposta`}
+        </Item>
+      )}
     </div>
     </div>
   );
