@@ -142,7 +142,13 @@ async function applyStatusEvents(value) {
 async function checkFailedRateBreaker() {
   try {
     const { total, failedReputational, rate } = await failedRate24h();
-    if (total < FAILED_RATE_MIN_SENDS || rate <= FAILED_RATE_LIMIT) return;
+
+    if (total < FAILED_RATE_MIN_SENDS || rate <= FAILED_RATE_LIMIT) {
+      // Ainda não é caso de disjuntor — mas pode ser caso de AVISO. O aviso
+      // existe pra dar tempo de reduzir o cap antes da parada dura.
+      await avisarSobreONumero({ rate, total, failedReputational, disparou: false });
+      return;
+    }
 
     // Idempotent: only trip (and log) when currently enabled.
     const { data } = await supabaseAdmin.from('cron_config')
@@ -153,8 +159,88 @@ async function checkFailedRateBreaker() {
     await setDispatchEnabled(false, detail);
     await recordNumberEvent({ event_type: 'failed_rate_breaker', detail });
     logger.error(`CIRCUIT BREAKER tripped — ${detail}`);
+
+    // O disjuntor DESLIGA a prospecção. Antes de 12/08/2026 ele fazia isso em
+    // silêncio: evento + log, e o fundador só descobria abrindo o cockpit —
+    // com o funil parado no meio-tempo. Desligar sozinho sem avisar é a versão
+    // cara do "estado que ninguém observa".
+    await avisarSobreONumero({ rate, total, failedReputational, disparou: true });
   } catch (err) {
     logger.warn('breaker check failed (non-fatal):', err.message);
+  }
+}
+
+/**
+ * Manda o aviso de saúde do número ao fundador (WhatsApp + e-mail).
+ *
+ * NUNCA lança e NUNCA é aguardado por quem decide: esta função roda dentro do
+ * processamento de recibo da Meta, e falha de telemetria não pode derrubar o
+ * webhook nem impedir o disjuntor de desligar o disparo.
+ */
+async function avisarSobreONumero({ rate, total, failedReputational, disparou }) {
+  try {
+    const {
+      deveAvisarDoNumero, buildAlertaNumero, COOLDOWN_MS, EVENTO_AVISO,
+    } = require('./alerta-numero');
+
+    const nowMs = Date.now();
+    // Cooldown lido do próprio log de eventos do número — sem tabela nova.
+    let ultimoAvisoMs = null;
+    if (!disparou) {
+      const desde = new Date(nowMs - COOLDOWN_MS).toISOString();
+      const { data } = await supabaseAdmin.from('prospect_number_events')
+        .select('created_at').eq('event_type', EVENTO_AVISO)
+        .gte('created_at', desde).order('created_at', { ascending: false }).limit(1);
+      if (data && data[0]) ultimoAvisoMs = Date.parse(data[0].created_at);
+    }
+
+    const gate = deveAvisarDoNumero({
+      taxaReputacional: rate, total, disjuntorDisparou: !!disparou, ultimoAvisoMs, nowMs,
+    });
+    if (!gate.avisar) return;
+
+    const { currentCap } = require('./prospect-warmup');
+    const capAtual = await currentCap().catch(() => null);
+    const aviso = buildAlertaNumero({
+      nivel: gate.nivel, taxaReputacional: rate, total, falhas: failedReputational, capAtual,
+    });
+
+    const canais = [];
+    const fone = process.env.PROSPECTING_FOUNDER_WHATSAPP;
+    if (fone) {
+      try {
+        const { sendWhatsAppMessage } = require('../whatsapp-sender');
+        const { getProspectingPhoneNumberId } = require('./routing');
+        await sendWhatsAppMessage(fone, aviso.whatsapp, { phoneNumberId: getProspectingPhoneNumberId() });
+        canais.push('whatsapp');
+      } catch (err) {
+        logger.warn('aviso de número por WhatsApp falhou:', err.message);
+      }
+    }
+    try {
+      const { sendProspectDigestEmail } = require('../email');
+      await sendProspectDigestEmail({
+        to: process.env.PROSPECTING_FOUNDER_EMAIL || 'stefanogebara@gmail.com',
+        subject: aviso.subject, html: aviso.html, text: aviso.text,
+      });
+      canais.push('email');
+    } catch (err) {
+      logger.warn('aviso de número por e-mail falhou:', err.message);
+    }
+
+    // Só grava o marcador se ALGUM canal entregou. Se os dois falharem, o
+    // fundador não soube — então o próximo recibo tenta de novo em vez de
+    // cair num silêncio de 12h.
+    if (canais.length) {
+      await recordNumberEvent({
+        event_type: EVENTO_AVISO,
+        detail: `${gate.nivel}: ${failedReputational}/${total} (${(rate * 100).toFixed(1)}%) — avisado por ${canais.join('+')}`,
+      });
+    } else {
+      logger.error('aviso de saúde do número NÃO chegou em nenhum canal');
+    }
+  } catch (err) {
+    logger.warn('aviso de número falhou (não afeta o disjuntor):', err.message);
   }
 }
 
