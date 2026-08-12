@@ -832,3 +832,41 @@ DUAS REGRAS, e a segunda e a que importa:
    proprio, fui para a UI da Meta — onde nao ha verificacao nenhuma. Quando me
    pego saindo da ferramenta da casa para fazer algo em producao, a pergunta
    nao e "como faco isso na mao", e "por que a ferramenta nao faz isso".
+
+## 2026-08-12 — Default silencioso mandou pelo numero errado
+
+Armei a fase de WhatsApp do fundador com os templates JA aprovados e o envio
+falhou com (#132001). Nao era a WABA: era o NUMERO. Nenhuma das duas chamadas
+passava `phoneNumberId`, e resolvePhoneNumberId do sender cai em
+WHATSAPP_PHONE_NUMBER_ID -- o numero de RESERVAS, de que restaurante PAGANTE
+depende, noutra WABA.
+
+O erro da Meta foi SORTE. Se o template existisse nos dois lugares, prospeccao
+fria teria saido pelo numero dos clientes, queimando a reputacao que a
+separacao de numeros existe pra proteger, e em silencio: o envio teria dado
+200. Eu so descobri porque a recusa veio por outro motivo.
+
+O vizinho ja fazia certo (prospect-responder.js:151 passa o phoneNumberId).
+
+REGRA: quando o parametro que decide IDENTIDADE (numero de origem, remetente,
+conta, tenant) tem default, nao passar nao da erro -- da OUTRA identidade.
+Antes de escrever chamada nova para um rail compartilhado, ler como o vizinho
+mais proximo chama, e travar o parametro em teste. E fazer o caminho falhar
+FECHADO: sem numero de prospeccao configurado, nao envia, jamais cai no
+default.
+
+## 2026-08-12 — "success: true" nao e' prova de entrega
+
+Conferindo o primeiro envio real, a linha do fundador estava com wamid NULO
+enquanto a da Olimpia, ao lado, tinha o dela. O sender sempre devolveu
+messageId; eu nao estava lendo.
+
+O wamid e' a unica chave que liga a mensagem aos webhooks de status (entregue /
+lido / falhou). Sem ele, `success: true` so diz que a Meta ACEITOU. Mais um
+estado que ninguem observa -- a mesma familia da semana inteira, agora na
+confirmacao do envio.
+
+REGRA: ao gravar um envio, guardar o identificador que o provedor devolve. Sem
+ele nao existe pergunta "chegou?", so "eu tentei". Conferir o registro REAL
+depois do primeiro envio -- foi so comparando com a linha do vizinho que isso
+apareceu, nenhum teste meu cobria.
