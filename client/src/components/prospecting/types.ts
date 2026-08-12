@@ -57,6 +57,13 @@ export interface Overview {
   meetings: Array<{ id: string; name: string; city: string | null; reuniao_at: string; reuniao_link: string | null }>;
   outcomes: { total?: number; por_outcome?: Record<string, number>; media_qualidade?: number | null } | null;
   health: NumberHealth;
+  /**
+   * Métrica de FECHO do produto ativo. O Racha não marca reunião (a agente não
+   * tem a ferramenta), então o passo que move o funil é o demo. `universo` é
+   * quem respondeu nos últimos 30 dias — o denominador honesto.
+   * null quando a consulta falha: o painel segue de pé sem o KPI.
+   */
+  fecho: { tipo: 'demo' | 'reuniao'; valor: number; universo: number | null } | null;
 }
 
 export interface TemplateRow {

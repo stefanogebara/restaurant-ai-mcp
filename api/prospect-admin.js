@@ -55,6 +55,55 @@ function adminEmails() {
     .split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
 }
 
+/**
+ * A métrica de FECHO do produto ativo — o passo que move o funil adiante.
+ *
+ * POR QUE EXISTE (12/08/2026). O painel mostrava "Reuniões marcadas", que para
+ * o Racha só pode ser ZERO: o perfil remove agendar_demo do toolset e a agente
+ * é fisicamente incapaz de marcar reunião (prospect-agent.js). Um número que
+ * nunca muda ensina quem olha a ignorar o painel, e escondia o número que
+ * decide: de 349 leads que responderam, 5 receberam o demo.
+ *
+ * Segue o PERFIL em vez de um rótulo fixo — flipar PROSPECTING_PRODUCT devolve
+ * a métrica de reunião sem tocar em código.
+ *
+ * Degrada para null em erro: o painel inteiro não pode cair por causa de um KPI.
+ */
+async function metricaDeFecho(reunioes) {
+  const { getProfile } = require('./_lib/prospecting/prospect-product');
+  const profile = getProfile();
+
+  if (profile.agendaDemoTool !== false) {
+    return { tipo: 'reuniao', valor: reunioes.length, universo: null };
+  }
+
+  try {
+    const desde = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    const { marcadorDeDemoEnviado } = require('./_lib/prospecting/prospect-demo');
+    const { marcador } = marcadorDeDemoEnviado();
+
+    // Leads DISTINTOS, não mensagens: reenviar o link pro mesmo lead não é
+    // progresso de funil, e contar mensagem inflaria o número justamente onde
+    // ele precisa ser desconfortável.
+    const [enviados, responderam] = await Promise.all([
+      supabaseAdmin.from('prospect_messages').select('lead_id')
+        .eq('direcao', 'out').ilike('corpo', `%${marcador}%`).gte('enviada_em', desde).limit(2000),
+      supabaseAdmin.from('prospect_messages').select('lead_id')
+        .eq('direcao', 'in').gte('enviada_em', desde).limit(5000),
+    ]);
+    const distintos = (rows) => new Set((rows || []).map((r) => r.lead_id).filter(Boolean)).size;
+
+    return {
+      tipo: 'demo',
+      valor: distintos(enviados.data),
+      universo: distintos(responderam.data), // quem respondeu = o denominador honesto
+    };
+  } catch (err) {
+    logger.error('metricaDeFecho falhou (painel segue sem o KPI):', err.message);
+    return null;
+  }
+}
+
 async function setAgentEnabled(enabled, email) {
   const { error } = await supabaseAdmin.from('cron_config').upsert({
     job_name: AGENT_JOB,
@@ -134,6 +183,7 @@ module.exports = async (req, res) => {
           meetings: meetings.data || [],
           outcomes: outcomes.data || null,
           health,
+          fecho: await metricaDeFecho(meetings.data || []),
         },
       });
     }

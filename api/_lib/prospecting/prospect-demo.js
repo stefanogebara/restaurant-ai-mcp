@@ -188,6 +188,25 @@ function previaLinkInHistory(history) {
 }
 
 /**
+ * PURO: o trecho que identifica "o demo foi enviado" no corpo de uma mensagem.
+ *
+ * MESMA regra que previaLinkInHistory usa para idempotência, extraída para que
+ * o painel CONTE exatamente o que o agente considera enviado. Se contagem e
+ * detecção divergissem, o número no painel seria uma terceira opinião sobre o
+ * mesmo fato — e a pessoa que olha não teria como saber qual está certa.
+ *
+ * @returns {{tipo:'fixo'|'token', marcador:string}}
+ */
+function marcadorDeDemoEnviado() {
+  const profile = getProfile();
+  if (profile.previaFixed && profile.previaUrl) {
+    return { tipo: 'fixo', marcador: profile.previaUrl.replace(/^https?:\/\//i, '').toLowerCase() };
+  }
+  // Prévia por-restaurante (Seatable): todo link passa por /previa/<token>.
+  return { tipo: 'token', marcador: '/previa/' };
+}
+
+/**
  * Create a prévia demo for a discovered lead and return its public link.
  * Fetches the lead's full row (guarantees the Google fields are present even
  * if the caller passed a trimmed lead object).
@@ -267,4 +286,5 @@ async function criarPreviaDemo(leadId) {
 module.exports = {
   criarPreviaDemo, previaLinkInHistory, previaUrl, buildScrapedData, sectorToType,
   fetchPlaceAssets, mapTokenToLead, previaJaReagida, PREVIA_REACAO_MARK,
+  marcadorDeDemoEnviado,
 };

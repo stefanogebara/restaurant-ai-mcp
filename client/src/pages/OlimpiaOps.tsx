@@ -59,6 +59,30 @@ function replyCaption(sent: number, replied: number): string | undefined {
   return `${rate}%`;
 }
 
+/**
+ * Legenda do KPI de fecho. Para o Racha o número sozinho não diz nada: 5 demos
+ * é ótimo com 10 respostas e péssimo com 349. Mostra a conversão contra quem
+ * respondeu, que é o denominador de que o número depende.
+ */
+function fechoCaption(fecho: Overview['fecho']): string | undefined {
+  if (!fecho || fecho.tipo !== 'demo') return undefined;
+  if (!fecho.universo) return 'ninguém respondeu nos últimos 30 dias';
+  const taxa = Math.round((1000 * fecho.valor) / fecho.universo) / 10;
+  return `${taxa}% de quem respondeu (${fecho.valor} de ${fecho.universo})`;
+}
+
+/** Verde só quando a conversão é real; zero-de-muitos precisa doer. */
+function fechoTone(fecho: Overview['fecho']): 'good' | 'warn' | undefined {
+  if (!fecho) return undefined;
+  if (fecho.tipo === 'reuniao') return fecho.valor > 0 ? 'good' : undefined;
+  if (!fecho.universo) return undefined;
+  const taxa = (100 * fecho.valor) / fecho.universo;
+  if (taxa >= 20) return 'good';
+  // Gente respondendo e quase ninguém vendo o demo é o gargalo do funil,
+  // não um detalhe neutro.
+  return fecho.universo >= 20 ? 'warn' : undefined;
+}
+
 export default function OlimpiaOps() {
   const qc = useQueryClient();
   const toast = useToast();
@@ -209,7 +233,19 @@ export default function OlimpiaOps() {
             caption={ov ? replyCaption(ov.sent_today, ov.received_today) : undefined}
           />
           <Stat label="Lembretes na fila" value={ov ? ov.due_followups : '—'} caption="leads que não responderam ainda" />
-          <Stat label="Reuniões marcadas" value={ov ? ov.meetings.length : '—'} tone={ov && ov.meetings.length > 0 ? 'good' : undefined} />
+          {/*
+            O passo que move o funil, conforme o produto ativo. "Reuniões
+            marcadas" ficou aqui por meses valendo ZERO: o Racha remove
+            agendar_demo do toolset, então a agente não consegue marcar reunião.
+            Número que nunca muda ensina a ignorar o painel — e escondia o que
+            decide: 349 responderam, 5 receberam o demo.
+          */}
+          <Stat
+            label={ov?.fecho?.tipo === 'demo' ? 'Demos enviados (30d)' : 'Reuniões marcadas'}
+            value={ov ? (ov.fecho ? ov.fecho.valor : ov.meetings.length) : '—'}
+            tone={fechoTone(ov?.fecho)}
+            caption={fechoCaption(ov?.fecho)}
+          />
           <Stat label="Conversas (30 dias)" value={ov?.outcomes?.total ?? 0} />
           <Stat label="Nota das conversas" value={ov?.outcomes?.media_qualidade ?? '—'} caption="0 a 5, avaliada por IA" />
         </GlassPanel>
