@@ -64,6 +64,12 @@ export interface Overview {
    * null quando a consulta falha: o painel segue de pé sem o KPI.
    */
   fecho: { tipo: 'demo' | 'reuniao'; valor: number; universo: number | null } | null;
+  /**
+   * Respostas de hoje que vieram de GENTE. `received_today` conta tudo, e
+   * metade costuma ser autoresponder da casa ("agradecemos seu contato").
+   * null quando a consulta falha.
+   */
+  received_today_humano: number | null;
 }
 
 export interface TemplateRow {

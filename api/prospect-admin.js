@@ -56,6 +56,47 @@ function adminEmails() {
 }
 
 /**
+ * Quantas das respostas de hoje vieram de GENTE, não de autoresponder.
+ *
+ * POR QUE (12/08/2026). O painel dizia "45 respostas · 65,2% — acima do
+ * baseline genérico (2%)", número que se lê como triunfo. Medido na base
+ * inteira: de 350 leads que "responderam", 168 (48%) NUNCA tiveram uma palavra
+ * digitada por gente — é o WhatsApp Business da casa mandando "agradecemos seu
+ * contato". A taxa real é cerca de metade da exibida.
+ *
+ * Isto é pior que o KPI travado em zero: aquele parecia fracasso e era
+ * inofensivo; este parece sucesso e esconde o estado real.
+ *
+ * Reusa semHumanoNaThread — o MESMO predicado que o motor usa para decidir se
+ * fala com robô. O comentário dele já dizia que serve pra "limpar o denominador
+ * do funil"; faltava alguém chamar.
+ *
+ * @returns {Promise<number|null>} null em erro — o painel não cai por um KPI.
+ */
+async function respostasHumanasHoje(desdeIso) {
+  try {
+    const { semHumanoNaThread } = require('./_lib/prospecting/prospect-state');
+    const { data, error } = await supabaseAdmin.from('prospect_messages')
+      .select('lead_id, direcao, tipo, corpo')
+      .eq('direcao', 'in').gte('enviada_em', desdeIso).limit(2000);
+    if (error) throw new Error(error.message);
+
+    const porLead = new Map();
+    for (const m of data || []) {
+      if (!m.lead_id) continue;
+      if (!porLead.has(m.lead_id)) porLead.set(m.lead_id, []);
+      porLead.get(m.lead_id).push(m);
+    }
+    let humanos = 0;
+    for (const thread of porLead.values()) if (!semHumanoNaThread(thread)) humanos += 1;
+    return humanos;
+  } catch (err) {
+    logger.error('respostasHumanasHoje falhou (painel segue sem o recorte):', err.message);
+    return null;
+  }
+}
+
+/**
  * A métrica de FECHO do produto ativo — o passo que move o funil adiante.
  *
  * POR QUE EXISTE (12/08/2026). O painel mostrava "Reuniões marcadas", que para
@@ -184,6 +225,7 @@ module.exports = async (req, res) => {
           outcomes: outcomes.data || null,
           health,
           fecho: await metricaDeFecho(meetings.data || []),
+          received_today_humano: await respostasHumanasHoje(hojeIso),
         },
       });
     }

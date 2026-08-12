@@ -51,12 +51,22 @@ function Stat({ label, value, caption, tone }: { label: string; value: string | 
   );
 }
 
-function replyCaption(sent: number, replied: number): string | undefined {
+/**
+ * Legenda das respostas. A taxa é calculada sobre as respostas HUMANAS quando
+ * dá pra saber: metade dos "respondeu" é o WhatsApp Business da casa mandando
+ * "agradecemos seu contato" (168 de 350 leads, medido em 12/08). Comparar
+ * autoresponder com o baseline de 2% de cold outreach é elogio inventado.
+ */
+export function replyCaption(sent: number, replied: number, humanas: number | null): string | undefined {
   if (!sent) return undefined;
-  const rate = Math.round((1000 * replied) / sent) / 10;
-  if (rate >= 4) return `${rate}% — acima do baseline genérico (2%)`;
-  if (rate >= 2) return `${rate}% — no baseline genérico`;
-  return `${rate}%`;
+  const base = humanas ?? replied;
+  const rate = Math.round((1000 * base) / sent) / 10;
+  const sufixo = humanas === null || humanas === replied
+    ? ''
+    : ` · ${replied - humanas} de robô`;
+  if (rate >= 4) return `${rate}% de gente — acima do baseline genérico (2%)${sufixo}`;
+  if (rate >= 2) return `${rate}% de gente — no baseline genérico${sufixo}`;
+  return `${rate}% de gente${sufixo}`;
 }
 
 /**
@@ -228,9 +238,9 @@ export default function OlimpiaOps() {
           />
           <Stat
             label="Respostas hoje"
-            value={ov ? ov.received_today : '—'}
-            tone={ov && ov.received_today > 0 ? 'good' : undefined}
-            caption={ov ? replyCaption(ov.sent_today, ov.received_today) : undefined}
+            value={ov ? (ov.received_today_humano ?? ov.received_today) : '—'}
+            tone={ov && (ov.received_today_humano ?? ov.received_today) > 0 ? 'good' : undefined}
+            caption={ov ? replyCaption(ov.sent_today, ov.received_today, ov.received_today_humano) : undefined}
           />
           <Stat label="Lembretes na fila" value={ov ? ov.due_followups : '—'} caption="leads que não responderam ainda" />
           {/*
