@@ -15,6 +15,7 @@
 # aparecer como CONFLICTING. Quando aparecer, o conserto deixa de ser cirurgia
 # manual em marcador e vira:
 #
-#     git merge origin/main    # o union resolve sozinho
-#     git push
+#     git fetch origin         # sem isto origin/main pode estar velho e o
+#     git merge origin/main    # merge nem toca no conflito que o GitHub viu
+#     git push                 # (o union resolve sozinho)
 tasks/lessons.md merge=union

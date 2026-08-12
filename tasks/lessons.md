@@ -984,8 +984,10 @@ com, merge limpo e as duas entradas preservadas.
 
 LIMITE, medido e nao suposto: vale para merge, rebase e cherry-pick LOCAIS. O
 GitHub nao aplica merge driver no servidor, entao o PR ainda pode dizer
-CONFLICTING — mas ai o conserto e' `git merge origin/main` (resolve sozinho) e
-push, em vez de cirurgia manual em marcador.
+CONFLICTING — mas ai o conserto e' `git fetch origin && git merge origin/main`
+(resolve sozinho) e push, em vez de cirurgia manual em marcador. O fetch nao e'
+opcional: sem ele o merge usa um origin/main velho e nem encosta no conflito
+que o GitHub esta reportando.
 
 ## 2026-08-12 — Testei o hook errado e quase documentei uma regra falsa
 
