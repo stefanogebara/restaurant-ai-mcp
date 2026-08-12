@@ -208,7 +208,16 @@ async function avisarSobreONumero({ rate, total, failedReputational, disparou, f
     });
 
     const canais = [];
-    const fone = process.env.PROSPECTING_FOUNDER_WHATSAPP;
+    // MESMA constante que o resto do motor usa (prospect-agent.js:42), com o
+    // default embutido — não process.env cru.
+    //
+    // ACHADO NO TESTE FORÇADO (12/08/2026): a primeira versão lia a env direto,
+    // ela não existe em produção, e o canal era pulado INTEIRO. O log não tinha
+    // nem um warning: `if (fone)` simplesmente não entrava. Só o e-mail saía —
+    // e o canal que existe pra ACORDAR o fundador de madrugada era o que
+    // faltava. Mesmo erro do phoneNumberId: ponto de chamada novo sem seguir o
+    // padrão do vizinho, e o default silencioso não dá erro, dá outro caminho.
+    const { FOUNDER_WHATSAPP: fone } = require('./prospect-agent');
     if (fone) {
       try {
         const { sendWhatsAppMessage } = require('../whatsapp-sender');
@@ -218,6 +227,10 @@ async function avisarSobreONumero({ rate, total, failedReputational, disparou, f
       } catch (err) {
         logger.warn('aviso de número por WhatsApp falhou:', err.message);
       }
+    } else {
+      // Canal pulado precisa aparecer. Foi o silêncio deste ramo que escondeu
+      // o defeito: sem número, o log ficava idêntico ao de um envio saudável.
+      logger.error('aviso de número SEM canal de WhatsApp — só o e-mail vai sair');
     }
     try {
       const { sendProspectDigestEmail } = require('../email');
