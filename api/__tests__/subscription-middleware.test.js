@@ -149,13 +149,16 @@ describe('checkReservationLimits: monthly counter', () => {
  * applies all three filters so those two guarantees are pinned too.
  */
 function mockFilteringTable(rows) {
-  const filters = { statuses: null, from: null, to: null, restaurantId: undefined };
+  const filters = { statuses: null, from: null, to: null, restaurantId: undefined, eqColumn: null };
   const builder = {
     select: jest.fn(() => builder),
     gte: jest.fn((_col, value) => { filters.from = value; return builder; }),
     lte: jest.fn((_col, value) => { filters.to = value; return builder; }),
     in: jest.fn((_col, values) => { filters.statuses = values; return builder; }),
-    eq: jest.fn((_col, value) => { filters.restaurantId = value; return builder; }),
+    // Record the column too: filtering the right value on the wrong column
+    // would still isolate nothing, and a fake that ignores `col` would happily
+    // pass while production leaked across tenants.
+    eq: jest.fn((col, value) => { filters.eqColumn = col; filters.restaurantId = value; return builder; }),
     then: (resolve) => resolve({
       count: rows.filter(r => (
         r.date >= filters.from
@@ -183,9 +186,30 @@ const row = (overrides = {}) => ({
   ...overrides,
 });
 
+/** A date in a month that is definitely not the current one. */
+function otherMonth(offset) {
+  const now = new Date();
+  const d = new Date(now.getFullYear(), now.getMonth() + offset, 15);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-15`;
+}
+
 describe('checkReservationLimits: scoping of the monthly counter', () => {
-  test("excludes another restaurant's reservations", async () => {
-    mockFilteringTable([row(), row({ restaurant_id: 'rest-2' })]);
+  test("excludes another restaurant's reservations, filtering on restaurant_id", async () => {
+    const builder = mockFilteringTable([row(), row({ restaurant_id: 'rest-2' })]);
+
+    const req = makeReq('starter');
+    await checkReservationLimits(req, makeRes(), jest.fn());
+
+    expect(req.reservationLimit.current).toBe(1);
+    expect(builder.eq).toHaveBeenCalledWith('restaurant_id', 'rest-1');
+  });
+
+  test('excludes reservations from the previous and the next month', async () => {
+    mockFilteringTable([
+      row(),
+      row({ date: otherMonth(-1) }),
+      row({ date: otherMonth(1) }),
+    ]);
 
     const req = makeReq('starter');
     await checkReservationLimits(req, makeRes(), jest.fn());
@@ -193,12 +217,19 @@ describe('checkReservationLimits: scoping of the monthly counter', () => {
     expect(req.reservationLimit.current).toBe(1);
   });
 
-  test('excludes reservations outside the current month', async () => {
-    mockFilteringTable([row(), row({ date: '2000-01-15' })]);
+  test('counts nothing rather than every tenant when restaurant_id is missing', async () => {
+    // An unscoped count would return all 3 rows — enough to 402 a customer over
+    // other restaurants' bookings once a grace window has lapsed.
+    mockFilteringTable([row(), row({ restaurant_id: 'rest-2' }), row({ restaurant_id: 'rest-3' })]);
 
     const req = makeReq('starter');
-    await checkReservationLimits(req, makeRes(), jest.fn());
+    req.user = {}; // authenticated, but no tenant resolved
+    const next = jest.fn();
 
-    expect(req.reservationLimit.current).toBe(1);
+    await checkReservationLimits(req, makeRes(), next);
+
+    expect(req.reservationLimit.current).toBe(0);
+    expect(mockSupabaseAdmin.from).not.toHaveBeenCalled();
+    expect(next).toHaveBeenCalled();
   });
 });
