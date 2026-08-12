@@ -1010,3 +1010,46 @@ REGRA: teste de hook/config so vale contra o que EXECUTA, nao contra o que o
 arquivo de config diz. Prove disparando de verdade uma vez. E teste que nunca
 reprova nada nao esta testando — inclua sempre um caso que DEVE falhar, e
 desconfie quando ele passar.
+
+## 2026-08-12 — Filtrei o campo errado e subcontei metade do trabalho
+
+Escrevi um script pra achar conversas abandonadas e filtrei as linhas de evento
+com `m.tipo !== 'sys'`. O marcador esta em `direcao`: as linhas de sistema sao
+`direcao='sys'`, `tipo='evento'`. O filtro nao removia nada, o evento virava "a
+ultima mensagem", `direcao` dava 'sys' em vez de 'in', e a thread era pulada.
+
+Qualquer conversa com um evento de sistema no fim -- o caso COMUM, porque o
+motor loga o tempo todo -- escapava. Arquivei 27 e afirmei que era o conjunto
+todo. Eram 45: o cron, que compara `last_in_at` com MAX(enviada_em) das saidas,
+achou 18 que eu tinha perdido. Conferi as 10 listadas uma a uma: 10 de 10
+legitimas, zero falso positivo.
+
+O codigo de PRODUCAO nao tinha esse bug. O script que eu escrevi pra
+INVESTIGAR o codigo tinha.
+
+REGRA: ao filtrar por um valor sentinela, confirmar em QUAL coluna ele mora --
+lendo uma linha real, nao pelo nome que parece obvio. `tipo` e `direcao` sao
+ambos plausiveis para 'sys', e o palpite errado falha em silencio: nao da erro,
+so devolve menos.
+
+## 2026-08-12 — Quatro vezes o meu instrumento mentiu, nenhuma o produto
+
+Num unico dia: (1) travessao "detectado" que era artefato de chamar
+generateReply antes do filtro do responder; (2) respostas pitchando Seatable
+que vinham da fixture que eu mesmo escrevi; (3) "105 conversas paradas" que
+eram threads JA respondidas, porque olhei o ultimo inbound e nao a ultima
+mensagem; (4) o filtro tipo/direcao acima.
+
+Assinatura identica nas quatro: medi uma camada e conclui sobre outra. Em
+nenhuma o defeito estava no sistema — estava no meu jeito de olhar. E a (3)
+virou recomendacao ao fundador antes de virar verificacao, que e' o pior
+desfecho possivel.
+
+REGRA: antes de reportar um numero como achado, responder "de qual camada este
+dado veio, e a conclusao e' sobre a mesma camada?". Se o script roda ANTES de
+um filtro, ou olha uma linha que nao e' a ultima, o numero e' de outra coisa.
+
+O que salvou as duas ultimas foi o DRY-RUN em producao discordar de mim. Modo
+de inspecao serve pra contrariar a expectativa, nao pra confirmar: quando o
+dry-run disse 18 e eu tinha prometido 0, a resposta certa foi investigar a
+diferenca, e o errado estava do meu lado.
