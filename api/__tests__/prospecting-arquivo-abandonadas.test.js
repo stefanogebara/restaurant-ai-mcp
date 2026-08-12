@@ -105,3 +105,49 @@ describe('o limite é configurável por chamada', () => {
     expect(elegivelParaArquivar({ ...base, ultimaMs: emDias(10), dias: 60 }).arquivar).toBe(false);
   });
 });
+
+// ------------------------------------------------ o defeito que o dry-run achou
+/**
+ * FOME DA VARREDURA (achado rodando `?dry=1` em produção, 12/08/2026).
+ *
+ * A primeira versão lia 50 candidatos ordenados por last_in_at ASC e decidia um
+ * a um com um loadHistory por lead. O dry-run devolveu "candidatos: 50,
+ * arquivadas: 0" — e o 50 cravado no teto era o sintoma.
+ *
+ * Leads antigos que JÁ foram respondidos nunca mudam de estado, então ocupariam
+ * as mesmas 50 vagas todo dia, para sempre. Uma conversa de fato abandonada,
+ * com last_in_at um pouco mais novo, jamais chegaria a ser avaliada: a
+ * varredura rodaria diariamente, sem erro e sem log, arquivando nada.
+ *
+ * O teste abaixo é sobre a REGRA que sustenta a correção em lote: quem falou
+ * por último se decide comparando a última saída com o último inbound, sem
+ * consultar a thread lead a lead.
+ */
+describe('quem falou por último, decidido em lote', () => {
+  const decidir = ({ entradaDias, saidaDias }) => elegivelParaArquivar({
+    state: 'conversando',
+    ultimaDirecao: saidaDias !== null && emDias(saidaDias) > emDias(entradaDias) ? 'out' : 'in',
+    ultimaMs: emDias(entradaDias),
+    nowMs: AGORA,
+  });
+
+  test('saída DEPOIS da entrada → respondemos, não arquiva', () => {
+    // lead falou há 40 dias, nós respondemos há 39 → conversa atendida
+    expect(decidir({ entradaDias: 40, saidaDias: 39 }).motivo).toBe('nos_falamos_por_ultimo');
+  });
+
+  test('saída ANTES da entrada → ele falou por último, arquiva', () => {
+    // nós falamos há 41 dias, ele respondeu há 40 e sumimos
+    expect(decidir({ entradaDias: 40, saidaDias: 41 }).arquivar).toBe(true);
+  });
+
+  test('nunca respondemos nada → ele falou por último', () => {
+    expect(decidir({ entradaDias: 40, saidaDias: null }).arquivar).toBe(true);
+  });
+
+  test('respondemos no MESMO instante não conta como depois', () => {
+    // Empate é o caso duvidoso; tratar como "nós falamos depois" arquivaria uma
+    // conversa que talvez tenha sido respondida. Empate NÃO é depois.
+    expect(decidir({ entradaDias: 40, saidaDias: 40 }).arquivar).toBe(true);
+  });
+});

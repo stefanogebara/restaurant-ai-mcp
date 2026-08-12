@@ -679,6 +679,47 @@ async function selectArquivaveis(nowIso, dias, limit = 50) {
   }
 }
 
+/**
+ * Instante da ÚLTIMA saída nossa, por lead, numa consulta só.
+ *
+ * Existe para responder "quem falou por último?" em lote. A primeira versão da
+ * varredura de arquivamento chamava loadHistory por lead — N+1 que obrigava um
+ * teto de leitura baixo, e o teto baixo criava fome: os mesmos leads antigos e
+ * já respondidos ocupavam as vagas todo dia e uma conversa realmente abandonada
+ * nunca era avaliada.
+ *
+ * @param {string[]} leadIds
+ * @returns {Promise<Map<string, number>>} lead_id → epoch ms da última saída
+ */
+async function ultimaSaidaPorLead(leadIds) {
+  const mapa = new Map();
+  const ids = (leadIds || []).filter(Boolean);
+  if (!ids.length) return mapa;
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('prospect_messages')
+      .select('lead_id, enviada_em')
+      .eq('direcao', 'out')
+      .in('lead_id', ids);
+    if (error) {
+      // Falha FECHADA: sem saber quem respondemos, todo lead pareceria
+      // abandonado e a varredura arquivaria conversa viva.
+      logger.error('ultimaSaidaPorLead failed:', error.message);
+      throw new Error(`ultimaSaidaPorLead: ${error.message}`);
+    }
+    for (const m of data || []) {
+      const t = Date.parse(m.enviada_em);
+      if (!Number.isFinite(t)) continue;
+      const atual = mapa.get(m.lead_id);
+      if (atual === undefined || t > atual) mapa.set(m.lead_id, t);
+    }
+    return mapa;
+  } catch (err) {
+    logger.error('ultimaSaidaPorLead exception:', err.message);
+    throw err;
+  }
+}
+
 async function selectResgateCandidates(nowIso, limit = 12) {
   try {
     const { RESGATE_MIN_MS, RESGATE_JANELA_MS } = require('./prospect-state');
@@ -1363,6 +1404,7 @@ module.exports = {
   markIntro,
   selectDueFlush,
   selectArquivaveis,
+  ultimaSaidaPorLead,
   selectResgateCandidates,
   selectDueRetornos,
   selectNoshowDue,

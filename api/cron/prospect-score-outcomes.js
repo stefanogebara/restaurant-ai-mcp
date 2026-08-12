@@ -33,7 +33,18 @@ const MAX_PER_RUN = 25;
 // o alerta de "esperando resposta" vermelho para sempre e escondendo a única
 // casa que dava pra responder na hora.
 const SWITCH_ARQUIVO = 'prospect-arquivo-abandonadas';
+// Teto de ESCRITA (quantas arquiva por rodada), não de leitura. Ver
+// MAX_ARQUIVO_CANDIDATOS: limitar a leitura criava fome.
 const MAX_ARQUIVO_POR_RODADA = 50;
+// Teto de LEITURA, alto de propósito.
+//
+// A primeira versão lia 50 candidatos ordenados por last_in_at ASC e decidia um
+// a um. O dry-run em produção devolveu "candidatos: 50, arquivadas: 0" e foi aí
+// que o defeito apareceu: leads antigos que JÁ foram respondidos nunca mudam de
+// estado, então ocupariam as mesmas 50 vagas todo dia, para sempre, e uma
+// conversa de fato abandonada jamais chegaria a ser avaliada. A varredura
+// nasceria morta — sem erro, sem log, sem sintoma.
+const MAX_ARQUIVO_CANDIDATOS = 400;
 
 /**
  * Arquiva o que o lead falou por último e ninguém respondeu há 30+ dias.
@@ -46,7 +57,7 @@ const MAX_ARQUIVO_POR_RODADA = 50;
  */
 async function varrerAbandonadas(dry) {
   const {
-    selectArquivaveis, loadHistory, patchLead, recordEvent,
+    selectArquivaveis, ultimaSaidaPorLead, patchLead, recordEvent,
   } = require('../_lib/prospecting/prospect-store');
   const { elegivelParaArquivar, ARQUIVO_DIAS_PADRAO } = require('../_lib/prospecting/prospect-state');
 
@@ -59,19 +70,28 @@ async function varrerAbandonadas(dry) {
 
   const nowIso = new Date().toISOString();
   const nowMs = Date.parse(nowIso);
-  const candidatos = await selectArquivaveis(nowIso, ARQUIVO_DIAS_PADRAO, MAX_ARQUIVO_POR_RODADA);
+  const candidatos = await selectArquivaveis(nowIso, ARQUIVO_DIAS_PADRAO, MAX_ARQUIVO_CANDIDATOS);
+
+  // "Quem falou por último" numa consulta só, para TODOS os candidatos. Era um
+  // loadHistory por lead — N+1 que forçava um teto de leitura baixo, e o teto
+  // baixo era o que causava a fome descrita em MAX_ARQUIVO_CANDIDATOS.
+  const ultimaSaida = await ultimaSaidaPorLead(candidatos.map((l) => l.id));
 
   const feitas = [];
+  let avaliados = 0;
   for (const lead of candidatos) {
-    // Quem falou por último decide, e isso exige a última mensagem da thread.
-    const historico = await loadHistory(lead.id, 5);
-    const ultima = historico[historico.length - 1];
-    if (!ultima) continue;
+    if (feitas.length >= MAX_ARQUIVO_POR_RODADA) break;
+    avaliados += 1;
+
+    const entradaMs = Date.parse(lead.last_in_at);
+    const saidaMs = ultimaSaida.get(lead.id) || null;
+    // Respondemos depois da última fala dele? Então nós falamos por último.
+    const nosFalamosDepois = saidaMs !== null && saidaMs > entradaMs;
 
     const gate = elegivelParaArquivar({
       state: lead.prospect_state,
-      ultimaDirecao: ultima.direcao,
-      ultimaMs: Date.parse(ultima.enviada_em),
+      ultimaDirecao: nosFalamosDepois ? 'out' : 'in',
+      ultimaMs: entradaMs,
       nowMs,
       replyApos: lead.reply_apos,
       retornoEm: lead.retorno_em,
@@ -81,7 +101,7 @@ async function varrerAbandonadas(dry) {
     });
     if (!gate.arquivar) continue;
 
-    const dias = Math.round((nowMs - Date.parse(ultima.enviada_em)) / 864e5);
+    const dias = Math.round((nowMs - entradaMs) / 864e5);
     if (dry) { feitas.push({ lead: lead.id, nome: lead.name, dias, dry: true }); continue; }
 
     await patchLead(lead.id, { prospect_state: 'pausada' });
@@ -98,6 +118,13 @@ async function varrerAbandonadas(dry) {
   return {
     total: dry ? 0 : feitas.length,
     candidatos: candidatos.length,
+    // `avaliados` separado de `candidatos` de propósito: se um dia forem
+    // iguais ao teto de leitura, é sinal de que a varredura pode estar
+    // passando fome de novo — foi exatamente o sintoma que o primeiro
+    // dry-run mostrou ("candidatos: 50" batendo no teto).
+    avaliados,
+    teto_leitura: MAX_ARQUIVO_CANDIDATOS,
+    a_arquivar: feitas.length,
     interruptorDesligado: desligado,
     leads: feitas.slice(0, 10),
   };
