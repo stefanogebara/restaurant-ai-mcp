@@ -111,16 +111,84 @@ const AUTO_ATENDIMENTO_PATTERNS = [
   // Exige o rótulo com dois-pontos seguido de hora — "a gente fecha às 23h"
   // não casa.
   /\b(delivery|sal[ãa]o)\s*:\s*\d{1,2}\s*h/i,
+
+  // --- varredura de 12/08/2026 -------------------------------------------
+  // 21 autoresponders passavam batido e a Olímpia respondia para todos eles:
+  // gasto de LLM, turno queimado e fila entupida onde estavam as 2 pessoas de
+  // verdade. Cada padrão abaixo sai do texto LITERAL de uma dessas mensagens,
+  // validado contra os 133 turnos humanos pendentes: zero falso positivo.
+
+  // Domínio de plataforma de pedido. Ninguém DIGITA isso conversando com um
+  // fornecedor — é o robô colando o próprio link de cardápio. (Daddy's,
+  // Açaí Tavares, Marlene, Maioli, Adega do Rafinha, Bodega, Gênio da Esfiha,
+  // Estação, Petí, Casa Duas Torres, Formaggio.)
+  /\b(beefood|saipos|pedemais|wabiz|neemo|deliverydireto|getinapp|mykeeta|pedir\.delivery|goomer|anota\.ai|cardapioweb)\b/i,
+  // "faça / realize / agilize seu pedido" — abertura padrão do bot de delivery.
+  /\b(fazer|realizar|efetuar|agilizar\w*)\s+(o\s+|um\s+)?(seu\s+)?pedido\b/i,
+  /\baguardamos\s+(o\s+)?seu\s+pedido\b/i,
+  // Oferta institucional de cardápio ("nosso cardápio", "CARDÁPIO ATUAL:").
+  // SEM o artigo solto: "o cardápio é enxuto, só 12 pratos" é dono falando da
+  // casa, e a primeira versão deste padrão o marcava como robô. Quem usa "o
+  // cardápio" e É robô cai nos outros padrões (link de plataforma, "peça agora").
+  /\bnosso\s+card[aá]pio\b|\bcard[aá]pio\s*(atual|do\s+dia)?\s*:/i,
+  // "Este canal é exclusivo para delivery" (EAP Empório).
+  /\bcanal\s+(é\s+)?exclusivo\s+para\b/i,
+  // "Atendemos por ordem de chegada", "Atendemos hoje das..." (Danbam, Gênio).
+  /\batendemos\s+(hoje\s+)?(de\b|das\b|por\b|somente\b|apenas\b)/i,
+  // Tabela de preços: DUAS aparições de R$ com centavos é cardápio, não fala.
+  // (Jardan, buffet; Santōsushi, rodízio + horários + endereço.)
+  /R\$\s?\d+[.,]\d{2}[\s\S]*R\$\s?\d+[.,]\d{2}/,
+  // "estamos apenas nos aplicativos de delivery" (Bodega SP).
+  /\b(aplicativos?|plataforma)\s+de\s+delivery\b/i,
+  // Agradecimento institucional COM artigo no meio ("agradece O SEU contato"),
+  // que o padrão colado lá em cima não cobre. Exige continuação institucional
+  // de propósito: sem ela, "Agradecemos o contato mas não temos interesse" —
+  // uma RECUSA humana — seria marcada como robô, e o registro de opt-out
+  // (LGPD) depende deste predicado. Cobertura a menos vale menos que silenciar
+  // um dono de restaurante.
+  /\bagradec\w+[^.!?\n]{0,24}\bcontato\b[\s\S]{0,120}?\b(como\s+podemos\s+ajudar|deixe\s+sua\s+mensagem|estamos\s+[àa]\s+(sua\s+)?disposi[çc][ãa]o|ser[áa]\s+respondida|informamos\s+que|em\s+breve)/i,
 ];
+
+/**
+ * Marcação do WhatsApp (*negrito*, _itálico_, ~riscado~) vira espaço antes de
+ * qualquer teste.
+ *
+ * ACHADO EM 12/08/2026: o Gero Panini mandava "_Agradecemos seu contato..._" e
+ * escapava de um padrão que JÁ existia, porque `\b` não enxerga fronteira entre
+ * `_` e `A` — os dois são caracteres de palavra. O defeito não era do padrão,
+ * era de todos eles: qualquer autoresponder que use negrito ou itálico (e bot
+ * de restaurante usa o tempo todo) furava a peneira inteira.
+ */
+function normalizarMarcacao(texto) {
+  return String(texto || '').replace(/[*_~`]/g, ' ').replace(/\s+/g, ' ');
+}
 
 /**
  * PURE: does this inbound read as an institutional AUTO-REPLY (greeting bot,
  * menu, hours, order link) rather than a person? Conservative: one strong
  * marker is required; plain human text never matches.
  */
+/**
+ * Recusa explícita — SEMPRE gente, nunca robô.
+ *
+ * DEFEITO PRÉ-EXISTENTE, exposto pelo teste de falso positivo em 12/08/2026:
+ * "Agradecemos o contato mas não temos interesse" já casava com o padrão
+ * institucional de agradecimento e era classificada como máquina. Isso é o pior
+ * falso positivo possível aqui: uma pessoa dizendo NÃO, tratada como eco de
+ * robô. O registro de opt-out (LGPD) depende deste predicado, e a agente
+ * seguiria insistindo com quem recusou — que é literalmente o incidente
+ * Banzeiro documentado logo abaixo, por outro caminho.
+ *
+ * Robô de restaurante manda cardápio e horário; ele não diz "não temos
+ * interesse". A frase é humana por construção.
+ */
+const RECUSA_HUMANA = /\bn[ãa]o\s+(temos|tenho|h[áa])\s+interesse|\bsem\s+interesse\b|\bn[ãa]o\s+(vamos|pretendemos|precisamos)\b/i;
+
 function pareceAutoAtendimento(texto) {
   if (!texto) return false;
-  return AUTO_ATENDIMENTO_PATTERNS.some((re) => re.test(String(texto)));
+  const alvo = normalizarMarcacao(texto);
+  if (RECUSA_HUMANA.test(alvo)) return false;
+  return AUTO_ATENDIMENTO_PATTERNS.some((re) => re.test(alvo));
 }
 
 /**
