@@ -1,0 +1,20 @@
+# Log append-only escrito por sessoes paralelas.
+#
+# Varias sessoes rodam ao mesmo tempo neste repo e todas anexam no FIM de
+# tasks/lessons.md. Isso conflita por construcao, nao por azar: git ve duas
+# insercoes na mesma posicao e nao tem como saber que a ordem entre duas
+# licoes independentes e' irrelevante. Em 12/08/2026 o arquivo conflitou tres
+# vezes dentro de um unico PR.
+#
+# merge=union e' o driver embutido do git para exatamente este caso: em vez de
+# marcar conflito, fica com os dois lados na ordem em que aparecem. Correto
+# para um log onde nenhuma entrada substitui outra.
+#
+# ALCANCE, medido e nao suposto: resolve merge, rebase e cherry-pick LOCAIS.
+# O GitHub nao aplica merge driver do lado do servidor, entao o PR ainda pode
+# aparecer como CONFLICTING. Quando aparecer, o conserto deixa de ser cirurgia
+# manual em marcador e vira:
+#
+#     git merge origin/main    # o union resolve sozinho
+#     git push
+tasks/lessons.md merge=union
