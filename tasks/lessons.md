@@ -870,3 +870,45 @@ REGRA: ao gravar um envio, guardar o identificador que o provedor devolve. Sem
 ele nao existe pergunta "chegou?", so "eu tentei". Conferir o registro REAL
 depois do primeiro envio -- foi so comparando com a linha do vizinho que isso
 apareceu, nenhum teste meu cobria.
+
+## 2026-08-12 — Marcacao do WhatsApp furava TODOS os padroes
+
+O Gero Panini mandava "_Agradecemos seu contato..._" e escapava de um padrao de
+autoresponder que JA existia. Motivo: `\b` nao ve fronteira entre `_` e `A` --
+os dois sao caracteres de palavra. Nao era um padrao com bug, eram os 30+ de
+uma vez, para qualquer bot que use negrito ou italico. E bot de restaurante usa
+o tempo todo.
+
+REGRA: quando o texto vem de uma plataforma com marcacao (WhatsApp, Slack,
+Markdown), normalizar ANTES de casar padrao. E ao investigar "o padrao existe
+mas nao pega", testar a string real com a marcacao original, nao a versao limpa
+que eu digitaria no teste.
+
+## 2026-08-12 — O experimento serve pra MATAR a hipotese, nao pra confirmar
+
+Ia otimizar "resposta substantiva -> demo": a pessoa descreve como fecha a
+conta e a agente responde com explicacao em vez de mandar o demo. Montei o A/B,
+e ao coletar os turnos reais descobri que dos 133 humanos pendentes, UM
+descrevia o fechamento da conta. Mesmo convertendo 100%, seriam 4 demos.
+
+Se eu tivesse rodado o A/B sem olhar o tamanho do segmento, teria produzido uma
+taxa bonita sobre n=1 e mexido no prompt de producao por causa dela.
+
+REGRA: antes de medir a taxa de conversao de um segmento, medir o TAMANHO do
+segmento. Taxa sem denominador e' teatro. E quando o experimento contraria a
+hipotese, o resultado E' esse -- reportar, nao procurar outro recorte que
+confirme.
+
+## 2026-08-12 — Meu proprio harness mentiu duas vezes
+
+Ao testar o cerebro chamando generateReply direto, vi travessao em 3 de 3
+respostas e uma violacao do claim-linter. Ia reportar os dois como defeito. Fui
+conferir em producao: a ultima mensagem com travessao e' de 04/08 -- o
+semTravessao roda no RESPONDER, depois do generateReply que eu chamava. Filtro
+funcionando; artefato do meu teste. A "violacao" e as respostas que pitchavam
+Seatable idem (fixture minha, com o pitch errado no historico).
+
+REGRA: harness que chama a camada de baixo nao ve os filtros da de cima. Antes
+de reportar defeito achado em teste local, confirmar no dado de producao. E a
+fixture precisa refletir o produto ATIVO, senao ela cria o bug que ela mesma
+"descobre".
