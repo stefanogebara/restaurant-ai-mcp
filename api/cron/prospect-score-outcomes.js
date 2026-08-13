@@ -19,7 +19,15 @@ const { selectUnscoredOutcomes, updateOutcomeScore, loadHistory } = require('../
 const { transcriptFromHistory, scoreOutcome } = require('../_lib/prospecting/prospect-reflect');
 
 const logger = createSecureLogger('CronProspectScore');
-const MAX_PER_RUN = 25;
+// 50 é o TETO REAL: selectUnscoredOutcomes grampeia o limite em
+// Math.min(Math.max(limit, 1), 50). Pedir 100 aqui não traria 100, traria 50 em
+// silêncio — sem erro e sem log, que é a forma como este arquivo já se machucou
+// antes. Se um dia precisar de mais, subir o grampo do store JUNTO, não só isto.
+//
+// Subiu de 25 em 13/08/2026 para escoar mais rápido a fila que o conserto da
+// fome liberou (101 outcomes pontuáveis represados desde 21/07). O custo total
+// não muda — o trabalho é o mesmo, feito em menos dias.
+const MAX_PER_RUN = 50;
 
 // ---- Varredura de conversas abandonadas -------------------------------------
 //

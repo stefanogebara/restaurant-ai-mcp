@@ -34,7 +34,7 @@
       "maxDuration": 60
     },
     "api/cron/prospect-score-outcomes.js": {
-      "maxDuration": 120
+      "maxDuration": 300
     },
     "api/cron/prospect-handoff-digest.js": {
       "maxDuration": 60
