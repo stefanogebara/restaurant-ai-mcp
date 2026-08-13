@@ -1096,7 +1096,25 @@ async function getProspectLeadWithMessages(leadId, limit = 200) {
   }
 }
 
-/** Outcomes captured at a terminal state that the daily cron hasn't scored yet. */
+/**
+ * Outcomes captured at a terminal state that the daily cron hasn't scored yet.
+ *
+ * `n_messages > 0` NÃO é otimização — é o que impede a fome. Sem ele a
+ * pontuação ficou 100% morta de 21/07 a 13/08/2026: um backfill criou 530
+ * outcomes de leads com ZERO mensagem, a ordenação é created_at ASC, e as 25
+ * mais antigas eram todas desse lote. Transcrição vazia faz scoreOutcome
+ * devolver null no curto-circuito, nada é gravado, e no dia seguinte a
+ * consulta trazia exatamente as mesmas 25. `cron_runs` registrou
+ * "scored: 0, skipped: 25" todo dia, sem erro e sem log — 101 outcomes
+ * pontuáveis de verdade presos atrás de linhas que nunca poderiam ser
+ * pontuadas. Mesmo defeito que MAX_ARQUIVO_CANDIDATOS descreve na varredura
+ * de arquivamento, na metade que não tinha sido corrigida.
+ *
+ * A coluna serve de filtro porque o trigger prospect_capture_outcome grava
+ * `coalesce(count(*), 0)` das mensagens no instante do estado terminal: nunca
+ * é NULL, e conferi que bate com a contagem real em 631 de 631 linhas sem
+ * nota, zero discordância nas duas direções.
+ */
 async function selectUnscoredOutcomes(limit = 25) {
   try {
     const { data, error } = await supabaseAdmin
@@ -1104,6 +1122,7 @@ async function selectUnscoredOutcomes(limit = 25) {
       .select('id, lead_id, outcome')
       .is('quality_score', null)
       .not('lead_id', 'is', null)
+      .gt('n_messages', 0)
       .order('created_at', { ascending: true })
       .limit(Math.min(Math.max(limit, 1), 50));
     if (error) { logger.error('selectUnscoredOutcomes failed:', error.message); return []; }
