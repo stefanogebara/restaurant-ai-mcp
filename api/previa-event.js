@@ -22,7 +22,14 @@ const { mapTokenToLead, previaJaReagida, PREVIA_REACAO_MARK } = require('./_lib/
 const { respondToProspect } = require('./_lib/prospecting/prospect-responder');
 
 const logger = createSecureLogger('PreviaEvent');
-const VALID_EVENTS = new Set(['opened', 'cta_tapped']);
+// 'paid' vem do demo fixo do Racha (a pessoa pagou a conta de mentira pelo QR)
+// — o sinal mais forte que o funil tem; entra na timeline e conta pra reação.
+const VALID_EVENTS = new Set(['opened', 'cta_tapped', 'paid']);
+const EVENT_LABELS = {
+  opened: '👀 abriu a prévia',
+  cta_tapped: '👆 tocou "me chama aqui" na prévia',
+  paid: '💸 pagou a conta de mentira no demo',
+};
 
 module.exports = async (req, res) => {
   setInternalCors(req, res);
@@ -46,15 +53,14 @@ module.exports = async (req, res) => {
     // tokens are valid, and demos not created by prospecting simply have no lead).
     if (!lead) return res.status(200).json({ success: true });
 
-    await recordEvent(lead.id, event === 'cta_tapped'
-      ? '👆 tocou "me chama aqui" na prévia'
-      : '👀 abriu a prévia');
+    await recordEvent(lead.id, EVENT_LABELS[event]);
 
-    // React once, on the first in-hours open. cta_tapped is visibility-only —
-    // the lead is already heading back to the chat, no proactive nudge needed.
-    // A per-lead lock serializes concurrent opens (reload / two devices) so the
-    // check-then-react is atomic: the loser skips instead of double-sending.
-    if (event === 'opened') {
+    // React once, on the first in-hours open OR paid. cta_tapped is
+    // visibility-only — the lead is already heading back to the chat, no
+    // proactive nudge needed. A per-lead lock serializes concurrent opens
+    // (reload / two devices) so the check-then-react is atomic: the loser
+    // skips instead of double-sending.
+    if (event === 'opened' || event === 'paid') {
       const lockKey = `previa-reacao:${lead.id}`;
       let locked = false;
       try { locked = await acquireProcessingLock(lockKey, 60); } catch { locked = false; }
