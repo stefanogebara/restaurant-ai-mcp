@@ -36,6 +36,16 @@ const mockDataset = [
   { id: 4, lead_id: 'l4', outcome: 'handoff', n_messages: 8, quality_score: 4, created_at: '2026-08-02T10:00:00Z' },
   // Sem lead_id — o outro guarda que já existia.
   { id: 5, lead_id: null, outcome: 'pausada', n_messages: 3, quality_score: null, created_at: '2026-08-03T10:00:00Z' },
+  // 60 pontuáveis para poder exercitar o grampo de 50 (ver o describe do teto).
+  // created_at posterior aos de cima, para não desarrumar a ordenação testada.
+  ...Array.from({ length: 60 }, (_, i) => ({
+    id: 100 + i,
+    lead_id: `lote-${i}`,
+    outcome: 'handoff',
+    n_messages: 5,
+    quality_score: null,
+    created_at: `2026-08-04T${String(i % 24).padStart(2, '0')}:00:00Z`,
+  })),
 ];
 
 function mockFakeBuilder(rows) {
@@ -93,5 +103,34 @@ describe('selectUnscoredOutcomes não traz mais o que é impontuável', () => {
     // devolvia [1, 2] e queimava a rodada inteira. Agora sobra trabalho real.
     expect(rows.every((r) => r.n_messages === undefined || r.n_messages > 0)).toBe(true);
     expect(rows.map((r) => r.id)).not.toEqual([1, 2]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Metade 2: o teto de leitura é 50, e ele é SILENCIOSO
+// ---------------------------------------------------------------------------
+//
+// Em 13/08/2026 o MAX_PER_RUN do cron subiu de 25 para 50 para escoar a fila
+// que o conserto liberou. 50 não é número escolhido a esmo: é exatamente o
+// grampo que selectUnscoredOutcomes já aplica. Pedir mais que isso não devolve
+// mais — devolve 50, sem erro e sem log, que é a assinatura do mesmo tipo de
+// default silencioso que já custou caro neste arquivo.
+//
+// Este bloco existe para que a próxima pessoa que subir o MAX_PER_RUN descubra
+// o teto por um teste, e não por uma fila que escoa na metade da velocidade
+// prometida.
+describe('o teto de leitura de 50 é real e precisa ser subido junto', () => {
+  test('pedir 100 devolve 50, não 100', async () => {
+    const rows = await selectUnscoredOutcomes(100);
+    expect(rows).toHaveLength(50);
+  });
+
+  test('50 é atingível — o MAX_PER_RUN atual não é grampeado', async () => {
+    const rows = await selectUnscoredOutcomes(50);
+    expect(rows).toHaveLength(50);
+  });
+
+  test('abaixo do teto o limite pedido é respeitado', async () => {
+    expect(await selectUnscoredOutcomes(25)).toHaveLength(25);
   });
 });
