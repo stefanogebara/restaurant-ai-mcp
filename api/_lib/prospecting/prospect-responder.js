@@ -38,6 +38,7 @@ const { pacingDelayMs, splitReplyParts, partPauseDelayMs } = require('./prospect
 const { extrairEmail, extrairNumeroDono, extrairNomeDono, extrairDddBr } = require('./prospect-extract');
 const { mergeFatos } = require('./prospect-facts');
 const { generateReply, FOUNDER_WHATSAPP } = require('./prospect-agent');
+const { getProfile } = require('./prospect-product');
 const {
   loadHistory, patchLead, recordOptout, storeMessage, isOptedOut,
   inboundFingerprint, claimInbound, releaseInbound, updateIntent, recordEvent,
@@ -205,6 +206,22 @@ const PREVIA_ABERTA_INSTRUCTION =
   'pergunta de leve o que ele achou / se fez sentido. NÃO repita o link, NÃO liste recursos, ' +
   'NÃO force reunião. Só puxa a reação dele com naturalidade.';
 
+/**
+ * PURA: instrução da reação ao beacon da prévia, product-aware e por evento.
+ *
+ * O texto fixo acima é Seatable puro ("o painel do restaurante dele") — no
+ * Racha o lead abriu o demo de pagar pelo QR e a reação falaria de um painel
+ * que não existe. O perfil do produto passa a mandar; 'paid' (só existe no
+ * Racha) ganha texto próprio. O fixo fica de fallback pra perfil sem o campo.
+ *
+ * @param {'opened'|'paid'} evento
+ * @returns {string}
+ */
+function instrucaoPrevia(evento) {
+  const inst = getProfile().previaReacaoInstrucao || {};
+  return inst[evento] || inst.opened || PREVIA_ABERTA_INSTRUCTION;
+}
+
 // The dated callback the lead asked for (or Olímpia promised) has come due (#32).
 const RETORNO_INSTRUCTION =
   'Chegou o momento que ficou combinado de você retomar o contato com o lead. ' +
@@ -269,7 +286,7 @@ function instrucaoRemarcar(motivo, novoHorarioLabel) {
  *   (motivo 'definir' only).
  * @returns {Promise<{action: string, sent?: boolean, dryRun?: boolean}>}
  */
-async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPacing = false, mode = null, remarcarMotivo = null, novoHorarioLabel = null }) {
+async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPacing = false, mode = null, remarcarMotivo = null, novoHorarioLabel = null, previaEvento = 'opened' }) {
   const pace = { skipPacing };
   const isNudge = mode === 'nudge';
   const isRemarcar = mode === 'remarcar';
@@ -391,7 +408,7 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
       },
       history,
       nowMs,
-      injectUserTurn: PREVIA_ABERTA_INSTRUCTION,
+      injectUserTurn: instrucaoPrevia(previaEvento),
       noTools: true,
     });
     if (!acaoP || !acaoP.texto) return { action: 'skip', reason: 'no_text', previa: true };
@@ -971,4 +988,4 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
   }
 }
 
-module.exports = { respondToProspect, isDryRun, instrucaoRetorno };
+module.exports = { respondToProspect, isDryRun, instrucaoRetorno, instrucaoPrevia };
