@@ -1115,6 +1115,15 @@ mergear um PR ja mergeado.
 
 NOTA DE ESCOPO: gatilho e' por conta, nao por sessao. Os que apaguei destes PRs
 pertenciam a OUTRA sessao, e um deles vigiava tambem um PR de outro repo
-(racha#1) que eu nao conseguia ler sem anexar o repo. Antes de apagar check-in
-que nao e' seu, confirme que TODOS os PRs que ele cobre estao fechados -- a
-lista de alvos mora no texto do prompt, nao no nome do gatilho.
+(racha#1) que eu nao conseguia ler sem anexar o repo -- anexei e li, em vez de
+supor que estivesse fechado (estava, por um minuto de diferenca).
+
+Antes de apagar check-in que nao e' seu, LEIA O PROMPT INTEIRO e confirme que
+todo o trabalho dele ja acabou. "Os PRs que ele cita estao fechados" nao basta:
+vigiar PR e' so um dos usos. Na mesma lista havia rotinas que consultam banco e
+escrevem memo semanal, e que nao terminam quando um PR fecha. A lista do que o
+gatilho faz mora no TEXTO do prompt, nao no nome nem no titulo.
+
+E se algum alvo nao der pra verificar, nao apague. Preservar um gatilho a mais
+custa um disparo inutil; apagar o errado tira o acompanhamento de trabalho vivo
+de outra sessao, e ninguem percebe -- porque o sintoma e' silencio.
