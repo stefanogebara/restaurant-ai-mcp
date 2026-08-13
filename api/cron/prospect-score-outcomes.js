@@ -164,6 +164,18 @@ module.exports = async (req, res) => {
         logger.error(`score outcome=${row.id} failed:`, err.message);
       }
     }
+
+    // Lote inteiro pulado é a ASSINATURA da fome: nada foi gravado, então a
+    // consulta de amanhã traz exatamente estas mesmas linhas, para sempre. Foi
+    // assim que a pontuação ficou morta de 21/07 a 13/08/2026 sem ninguém ver —
+    // "scored: 0, skipped: 25" em cron_runs é indistinguível de um dia saudável
+    // se ninguém disser que é anormal. Barato (só dispara quando scored === 0)
+    // e é o único aviso que existe: não há erro, não há exceção, não há sintoma.
+    if (rows.length && scored === 0 && skipped === rows.length) {
+      logger.error(
+        `pontuação travada: ${skipped}/${rows.length} do lote sem nota e nada gravado — `
+        + 'a próxima rodada relerá as MESMAS linhas. Ver selectUnscoredOutcomes.');
+    }
     // Isolado em try/catch próprio: quando chega aqui a pontuação JÁ gravou, e
     // uma falha na varredura não pode apagar esse resultado nem o logCronRun.
     let arquivadas = { total: 0 };

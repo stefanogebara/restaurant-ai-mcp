@@ -1053,3 +1053,39 @@ O que salvou as duas ultimas foi o DRY-RUN em producao discordar de mim. Modo
 de inspecao serve pra contrariar a expectativa, nao pra confirmar: quando o
 dry-run disse 18 e eu tinha prometido 0, a resposta certa foi investigar a
 diferenca, e o errado estava do meu lado.
+
+## 2026-08-13 — A mesma fome, na metade que ninguem tinha olhado
+
+Fui conferir a varredura de arquivamento (saudavel: 62 candidatos contra teto
+de 400, e `arquivadas: 0` na execucao real das 05:00). No MESMO registro de
+`cron_runs` estava "scored: 0, skipped: 25" -- identico em 10, 11, 12 e 13/08.
+
+Um backfill de 21/07 criou 530 outcomes de leads com ZERO mensagem.
+`selectUnscoredOutcomes` ordena por created_at ASC, entao as 25 mais antigas
+eram sempre desse lote. Transcricao vazia faz scoreOutcome devolver null no
+curto-circuito, nada e' gravado, e no dia seguinte a consulta traz as mesmas
+25. A pontuacao estava 100% morta havia tres semanas, com 101 outcomes
+pontuaveis de verdade presos atras. Sem erro, sem excecao, sem log.
+
+E' LITERALMENTE o defeito que o comentario de MAX_ARQUIVO_CANDIDATOS descreve
+("ocupariam as mesmas 50 vagas todo dia, para sempre"). A metade de
+arquivamento foi corrigida em 12/08; a de pontuacao, no mesmo arquivo, nao --
+porque ninguem foi olhar se o padrao se repetia ao lado.
+
+REGRA: ao consertar starvation de fila, varrer o arquivo inteiro atras de
+outra consulta com a mesma forma (ordenacao estavel + selecao que so muda se a
+linha for escrita). Se a linha pode sair da consulta SO por uma escrita que ela
+mesma talvez nunca receba, a fila trava -- e trava em silencio.
+
+REGRA 2: "skipped: 25" com MAX_PER_RUN=25 nao e' um numero saudavel, e' um lote
+inteiro pulado. Metrica que empata com o proprio teto merece alarme, nao
+leitura casual. Agora o cron loga error quando `scored === 0 && skipped ===
+rows.length`, porque era o unico sinal que existia e ninguem o estava emitindo.
+
+NOTA DE CAMADA (a regra de 12/08 funcionando): nesta sessao ela pegou duas.
+(1) Ia reportar "MCP do GitHub autentica" -- autenticava, mas pela integracao
+nativa do container remoto; `~/.mcp.json` nem existe la (HOME=/root, e o
+arquivo esta no .gitignore). A cadeia ${VAR} + gh auth token segue nao testada,
+so uma sessao LOCAL prova. (2) Ia reportar "25 chamadas Haiku desperdicadas por
+dia" -- o curto-circuito da linha 188 e' ANTES da chamada de LLM, entao o custo
+era zero. Verifiquei antes de afirmar; as duas teriam ido como achado.
