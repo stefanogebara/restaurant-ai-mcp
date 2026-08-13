@@ -21,6 +21,7 @@ const crypto = require('crypto');
 const { supabaseAdmin } = require('../supabase');
 const { createSecureLogger } = require('../secure-logger');
 const { getProfile } = require('./prospect-product');
+const { signPreviaToken, verifyPreviaToken } = require('./previa-token');
 
 const logger = createSecureLogger('ProspectDemo');
 
@@ -131,6 +132,14 @@ function buildScrapedData(lead) {
 async function mapTokenToLead(token) {
   if (!token || typeof token !== 'string') return null;
   try {
+    // Prévia FIXA (Racha): o token `pl` é assinado (leadId.exp.hmac) e resolve
+    // o lead direto, sem restaurant_config — o demo fixo não tem demo_token.
+    const assinado = verifyPreviaToken(token);
+    if (assinado.ok) {
+      const { data: lead } = await supabaseAdmin
+        .from('prospect_leads').select('*').eq('id', assinado.leadId).maybeSingle();
+      return lead || null;
+    }
     const { data: cfg } = await supabaseAdmin
       .schema('restaurant').from('restaurant_config')
       .select('scraped_data').eq('demo_token', token).maybeSingle();
@@ -221,7 +230,15 @@ async function criarPreviaDemo(leadId) {
   // Seatable (PROSPECTING_PRODUCT=seatable) restaura a geração por-restaurante.
   const profile = getProfile();
   if (profile.previaFixed) {
-    return { ok: true, token: null, url: profile.previaUrl, fixed: true };
+    // `pl` = token assinado do lead: o app do Racha repassa esse valor pro
+    // /api/previa-event e a abertura/pagamento aparece na timeline do lead
+    // (e dispara a reação da Olímpia). Sem segredo configurado, o link sai
+    // limpo — o demo nunca pode falhar por causa do beacon.
+    const pl = signPreviaToken(leadId);
+    const url = pl
+      ? `${profile.previaUrl}${profile.previaUrl.includes('?') ? '&' : '?'}pl=${encodeURIComponent(pl)}`
+      : profile.previaUrl;
+    return { ok: true, token: null, url, fixed: true };
   }
   try {
     const { data: lead, error: leadErr } = await supabaseAdmin
