@@ -1089,3 +1089,41 @@ arquivo esta no .gitignore). A cadeia ${VAR} + gh auth token segue nao testada,
 so uma sessao LOCAL prova. (2) Ia reportar "25 chamadas Haiku desperdicadas por
 dia" -- o curto-circuito da linha 188 e' ANTES da chamada de LLM, entao o custo
 era zero. Verifiquei antes de afirmar; as duas teriam ido como achado.
+
+## 2026-08-13 — Desativar um gatilho nao cancela o disparo dele
+
+Depois de mergear um PR, desativei (`enabled: false`) o check-in agendado que
+existia so pra ele. Oito minutos depois o check-in disparou assim mesmo, com a
+premissa ja vencida: "falta so o merge" para um PR que ja estava fechado.
+
+Aconteceu duas vezes no mesmo dia, com dois check-ins diferentes. E ao varrer a
+lista achei o padrao: varios gatilhos com `ended_reason: run_once_fired` --
+marcados como JA disparados -- ainda tinham `next_run_at` no futuro. Eles nao
+estavam encerrados; estavam rearmados. Quatro deles iam acordar sessoes no dia
+seguinte para PRs que ja tinham sido mergeados.
+
+REGRA: para parar um check-in de vez, `delete_trigger`. `update_trigger` com
+`enabled: false` nao e' garantia -- um disparo ja agendado sai mesmo assim.
+E ao herdar uma lista de gatilhos, `ended_reason: run_once_fired` NAO significa
+morto: confira o `next_run_at`.
+
+REGRA 2: check-in agendado carrega uma premissa congelada no texto ("falta so
+mergear", "o build ainda esta rodando"). Quando ele acorda, a primeira coisa e'
+VERIFICAR o estado real, nunca agir pelo que o proprio prompt afirma. As duas
+vezes que isso disparou hoje, obedecer ao texto teria significado tentar
+mergear um PR ja mergeado.
+
+NOTA DE ESCOPO: gatilho e' por conta, nao por sessao. Os que apaguei destes PRs
+pertenciam a OUTRA sessao, e um deles vigiava tambem um PR de outro repo
+(racha#1) que eu nao conseguia ler sem anexar o repo -- anexei e li, em vez de
+supor que estivesse fechado (estava, por um minuto de diferenca).
+
+Antes de apagar check-in que nao e' seu, LEIA O PROMPT INTEIRO e confirme que
+todo o trabalho dele ja acabou. "Os PRs que ele cita estao fechados" nao basta:
+vigiar PR e' so um dos usos. Na mesma lista havia rotinas que consultam banco e
+escrevem memo semanal, e que nao terminam quando um PR fecha. A lista do que o
+gatilho faz mora no TEXTO do prompt, nao no nome nem no titulo.
+
+E se algum alvo nao der pra verificar, nao apague. Preservar um gatilho a mais
+custa um disparo inutil; apagar o errado tira o acompanhamento de trabalho vivo
+de outra sessao, e ninguem percebe -- porque o sintoma e' silencio.
