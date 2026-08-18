@@ -36,7 +36,8 @@ jest.mock('../_lib/supabase', () => ({
   },
 }));
 
-const mockAnthropic = { messages: { create: mockMessagesCreate } };
+const mockMessagesStream = jest.fn();
+const mockAnthropic = { messages: { create: mockMessagesCreate, stream: mockMessagesStream } };
 jest.mock('../_lib/ai-client', () => ({
   getAI: () => mockAnthropic,
   AI_MODEL: 'anthropic/claude-3.5-sonnet',
@@ -63,7 +64,7 @@ jest.mock('../_lib/periodCompare', () => ({
   comparePeriods: (...args) => mockComparePeriods(...args),
 }));
 
-const { runManagerAgent, ManagerQuotaError } = require('../_lib/manager-agent');
+const { runManagerAgent, runManagerAgentStream, ManagerQuotaError } = require('../_lib/manager-agent');
 
 // ─── Shared chain builder ────────────────────────────────────────────────────
 // Builds the full chain needed for:
@@ -337,5 +338,99 @@ describe('compare_periods tool use', () => {
     expect(mockComparePeriods).not.toHaveBeenCalled();
     expect(reply).toBe('Tonight looks good.');
     expect(mockMessagesCreate).toHaveBeenCalledTimes(1);
+  });
+});
+
+// ─── Chain-of-thought: fases do raciocínio no streaming ──────────────────────
+//
+// POR QUE (18/08/2026). A UI do Manager AI mostra o raciocínio ao vivo, e o
+// contrato é ser HONESTO: cada fase emitida corresponde a trabalho que de
+// fato aconteceu (leitura de contexto, ferramenta de comparação). Estes
+// testes prendem a ordem, o conteúdo e a garantia de que o callback é
+// opcional e nunca derruba a resposta — os chamadores sem UI (cron,
+// WhatsApp) passam undefined.
+describe('runManagerAgentStream — fases do raciocínio', () => {
+  function makeStream({ tokens = [], final }) {
+    const handlers = {};
+    return {
+      on: (evt, cb) => { handlers[evt] = cb; },
+      finalMessage: async () => {
+        for (const tk of tokens) handlers.text?.(tk);
+        return final;
+      },
+    };
+  }
+
+  function armQuotaOk() {
+    mockGetPlanLimits.mockReturnValue({ managerAICallsMonthly: 100 });
+    const chain = makeChain();
+    chain.maybeSingle.mockResolvedValue({ data: { plan_name: 'starter', status: 'active' } });
+    chain.gte.mockResolvedValue({ data: [], error: null });
+    mockFrom.mockReturnValue(chain);
+  }
+
+  it('emite context → context_ready (com contagem de memórias) antes dos tokens', async () => {
+    armQuotaOk();
+    const eventos = [];
+    mockMessagesStream.mockReturnValue(makeStream({
+      tokens: ['Olá', ' chefe'],
+      final: { stop_reason: 'end_turn', content: [{ type: 'text', text: 'Olá chefe' }] },
+    }));
+
+    const reply = await runManagerAgentStream(
+      'rest-1', 'Como está hoje?', 'app',
+      (tk) => eventos.push({ type: 'token', tk }),
+      (p) => eventos.push({ type: 'phase', ...p }),
+    );
+
+    expect(reply).toBe('Olá chefe');
+    const phases = eventos.filter((e) => e.type === 'phase');
+    expect(phases).toEqual([
+      { type: 'phase', key: 'context' },
+      { type: 'phase', key: 'context_ready', memories: 1 },
+    ]);
+    // Honestidade temporal: as fases de contexto vêm ANTES do primeiro token.
+    const primeiroToken = eventos.findIndex((e) => e.type === 'token');
+    const ultimaFase = eventos.map((e) => e.type).lastIndexOf('phase');
+    expect(ultimaFase).toBeLessThan(primeiroToken);
+  });
+
+  it('emite compare com os períodos quando a ferramenta roda', async () => {
+    armQuotaOk();
+    mockComparePeriods.mockResolvedValue({ a: {}, b: {} });
+    const fases = [];
+    mockMessagesStream
+      .mockReturnValueOnce(makeStream({
+        final: {
+          stop_reason: 'tool_use',
+          content: [{ type: 'tool_use', id: 't1', name: 'compare_periods', input: { period_a: 'julho', period_b: 'agosto' } }],
+        },
+      }))
+      .mockReturnValueOnce(makeStream({
+        tokens: ['Agosto foi melhor.'],
+        final: { stop_reason: 'end_turn', content: [{ type: 'text', text: 'Agosto foi melhor.' }] },
+      }));
+
+    const reply = await runManagerAgentStream('rest-1', 'Compare julho e agosto', 'app', () => {}, (p) => fases.push(p));
+
+    expect(reply).toBe('Agosto foi melhor.');
+    expect(fases).toContainEqual({ key: 'compare', a: 'julho', b: 'agosto' });
+  });
+
+  it('onPhase ausente ou explodindo nunca derruba a resposta', async () => {
+    armQuotaOk();
+    mockMessagesStream.mockReturnValue(makeStream({
+      tokens: ['ok'],
+      final: { stop_reason: 'end_turn', content: [{ type: 'text', text: 'ok' }] },
+    }));
+    await expect(runManagerAgentStream('rest-1', 'oi', 'app', () => {})).resolves.toBe('ok');
+
+    mockMessagesStream.mockReturnValue(makeStream({
+      tokens: ['ok'],
+      final: { stop_reason: 'end_turn', content: [{ type: 'text', text: 'ok' }] },
+    }));
+    await expect(
+      runManagerAgentStream('rest-1', 'oi', 'app', () => {}, () => { throw new Error('boom da UI'); }),
+    ).resolves.toBe('ok');
   });
 });

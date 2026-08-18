@@ -463,6 +463,39 @@ function buildSystemPrompt(memories, snapshot, config, wikiPages = [], dateInfo 
       '- Match response length to question length.\n';
   }
 
+  // Gráficos e diagramas no chat: o app renderiza blocos ```chart (JSON) e
+  // ```mermaid ao vivo. Regra de honestidade acima de tudo: os números do
+  // gráfico têm que ser EXATAMENTE os do contexto — série inventada é pior
+  // que série nenhuma. O formato é neutro; as instruções vão no idioma alvo.
+  if (isPT) {
+    systemPrompt +=
+      '\n## Graficos e diagramas\n' +
+      'O chat renderiza graficos. Quando a resposta contiver uma serie de numeros comparaveis que voce JA TEM no contexto (covers por dia, receita por mesa, reservas por horario), termine a resposta com um bloco:\n' +
+      '```chart\n{"type":"bar","title":"Covers por dia","unit":"covers","data":[{"label":"Seg","value":31},{"label":"Ter","value":42}]}\n```\n' +
+      '- type: "bar" (comparar categorias), "line" (evolucao no tempo), "area" (volume acumulado no tempo).\n' +
+      '- Maximo 12 pontos, labels curtos, no maximo UM grafico por resposta, e so quando ajuda de verdade.\n' +
+      '- Os valores tem que ser EXATAMENTE os dados reais do contexto. NUNCA estime nem invente numeros para completar a serie.\n' +
+      '- Diagrama de fluxo/processo somente se o gerente pedir: bloco ```mermaid com um flowchart simples.\n';
+  } else if (isES) {
+    systemPrompt +=
+      '\n## Graficos y diagramas\n' +
+      'El chat renderiza graficos. Cuando la respuesta contenga una serie de numeros comparables que YA TIENES en el contexto, termina con un bloque:\n' +
+      '```chart\n{"type":"bar","title":"Covers por dia","unit":"covers","data":[{"label":"Lun","value":31}]}\n```\n' +
+      '- type: "bar" (comparar categorias), "line" (evolucion temporal), "area" (volumen en el tiempo).\n' +
+      '- Maximo 12 puntos, labels cortos, maximo UN grafico por respuesta, y solo cuando realmente ayuda.\n' +
+      '- Los valores deben ser EXACTAMENTE los datos reales del contexto. NUNCA inventes numeros.\n' +
+      '- Diagrama de flujo solo si el gerente lo pide: bloque ```mermaid con un flowchart simple.\n';
+  } else {
+    systemPrompt +=
+      '\n## Charts and diagrams\n' +
+      'The chat renders charts. When your answer contains a series of comparable numbers you ALREADY HAVE in context (covers per day, revenue per table, reservations per hour), end the reply with a block:\n' +
+      '```chart\n{"type":"bar","title":"Covers per day","unit":"covers","data":[{"label":"Mon","value":31},{"label":"Tue","value":42}]}\n```\n' +
+      '- type: "bar" (compare categories), "line" (evolution over time), "area" (volume over time).\n' +
+      '- Max 12 points, short labels, at most ONE chart per reply, and only when it genuinely helps.\n' +
+      '- Values must be EXACTLY the real numbers from context. NEVER estimate or invent numbers to fill a series.\n' +
+      '- Flow/process diagram only when the manager asks: a ```mermaid block with a simple flowchart.\n';
+  }
+
   return systemPrompt;
 }
 
@@ -619,8 +652,17 @@ async function runManagerAgent(restaurantId, userMessage, channel, options = {})
 /**
  * Streaming variant of runManagerAgent.
  * Calls onToken(text) for each text delta, returns full assistantText.
+ *
+ * onPhase (opcional) recebe marcos REAIS do raciocínio — {key, ...params} —
+ * para a UI mostrar chain-of-thought honesto: 'context' quando a leitura de
+ * memória/snapshot/histórico começa, 'context_ready' quando termina (com a
+ * contagem de memórias), 'compare' quando a ferramenta compare_periods roda.
+ * Nunca inventa etapas: cada emissão corresponde a trabalho que aconteceu.
+ * Default no-op para os chamadores que não têm UI (cron, WhatsApp).
  */
-async function runManagerAgentStream(restaurantId, userMessage, channel, onToken) {
+async function runManagerAgentStream(restaurantId, userMessage, channel, onToken, onPhase) {
+  // Fase é telemetria de UI: uma falha no callback jamais derruba a resposta.
+  const phase = (p) => { try { (onPhase || (() => {}))(p); } catch { /* noop */ } };
   const plan = await getRestaurantPlan(restaurantId);
   const planLimits = getPlanLimits(plan);
   const monthlyLimit = planLimits?.managerAICallsMonthly ?? 0;
@@ -635,6 +677,7 @@ async function runManagerAgentStream(restaurantId, userMessage, channel, onToken
     }
   }
 
+  phase({ key: 'context' });
   const [memories, snapshot, history, configResult, wikiPages] = await Promise.all([
     retrieveRelevantMemories(restaurantId, userMessage),
     getRestaurantSnapshot(restaurantId),
@@ -647,6 +690,7 @@ async function runManagerAgentStream(restaurantId, userMessage, channel, onToken
       .maybeSingle(),
     getWikiPages(restaurantId),
   ]);
+  phase({ key: 'context_ready', memories: Array.isArray(memories) ? memories.length : 0 });
 
   const config = configResult?.data || {};
   const systemPrompt = buildSystemPrompt(memories, snapshot, config, wikiPages);
@@ -697,6 +741,7 @@ async function runManagerAgentStream(restaurantId, userMessage, channel, onToken
     const toolBlock = response.content.find((b) => b.type === 'tool_use');
     if (toolBlock?.name === 'compare_periods') {
       const { period_a, period_b } = toolBlock.input;
+      phase({ key: 'compare', a: period_a, b: period_b });
       const compResult = await comparePeriods(restaurantId, period_a, period_b);
 
       const followUpMessages = [
