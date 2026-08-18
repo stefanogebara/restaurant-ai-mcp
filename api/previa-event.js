@@ -69,7 +69,7 @@ module.exports = async (req, res) => {
           if (!(await previaJaReagida(lead.id))) {
             const from = onlyDigits(lead.whatsapp_phone);
             if (from) {
-              const result = await respondToProspect({ lead, from, text: '', mode: 'previa', skipPacing: true });
+              const result = await respondToProspect({ lead, from, text: '', mode: 'previa', skipPacing: true, previaEvento: event });
               // Mark ONLY on a real send: an off-hours/window/opt-out skip retries
               // on the next open, and a failed Meta send never burns the reaction.
               if (result && result.action === 'previa_reacao' && result.sent) {

@@ -240,6 +240,36 @@
   animation: fadeIn 0.5s ease-out;
 }
 
+/* Manager AI — chain-of-thought + liquid glass motion.
+   Passos do raciocínio entram em cascata; o passo ativo ganha um brilho
+   líquido que varre o texto. Tudo desligado sob prefers-reduced-motion. */
+@keyframes thoughtIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-thought-in {
+  animation: thoughtIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes liquidSheen {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.thought-active {
+  background: linear-gradient(
+    100deg,
+    rgba(159, 18, 57, 0) 30%,
+    rgba(159, 18, 57, 0.12) 50%,
+    rgba(159, 18, 57, 0) 70%
+  );
+  background-size: 200% 100%;
+  animation: liquidSheen 1.8s linear infinite;
+  border-radius: 6px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-thought-in { animation: none; }
+  .thought-active { animation: none; background: rgba(159, 18, 57, 0.06); }
+}
+
 /* Typography utilities */
 .font-serif {
   font-family: 'Instrument Serif', Georgia, serif;

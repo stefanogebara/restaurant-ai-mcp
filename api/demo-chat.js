@@ -161,7 +161,14 @@ module.exports = async function handler(req, res) {
     .map((m) => ({ role: m.role, content: m.content.slice(0, 500) }));
 
   const presetMeta = isPresetDemo ? (PRESET_META[preset_key] || {}) : {};
-  const respondIn = presetMeta.respondIn || (lang === 'pt-BR' ? 'Portuguese (Brazil)' : 'English');
+  // O idioma da UI do usuário VENCE o default do preset. A precedência antiga
+  // (preset primeiro) fazia o preset italiano (respondIn 'English') responder
+  // em inglês a uma pergunta em português — auditado ao vivo em 18/08: a
+  // primeira resposta do gerente do demo saiu em inglês na frente do prospect.
+  const respondIn =
+    (lang === 'pt-BR' ? 'Portuguese (Brazil)' : lang === 'es' ? 'Spanish' : lang === 'en' ? 'English' : null) ||
+    presetMeta.respondIn ||
+    'English';
   const revenue = ctx.totalRevenue
     ? (lang === 'pt-BR' ? `R$ ${ctx.totalRevenue}` : `€${ctx.totalRevenue}`)
     : 'not available';
@@ -252,7 +259,15 @@ Rules:
       // 150 tokens do gerente.
       max_tokens: ehRecepcionista ? 300 : 150,
       system: systemPrompt,
-      messages: [...historicoSaneado, { role: 'user', content: message }],
+      // Primer de idioma em dois turnos — a mesma cura do manager-agent: os
+      // modelos seguem exemplos multi-turno com mais força que system prompt,
+      // e regra só no system deixava o primeiro turno escapar no idioma errado.
+      messages: [
+        ...historicoSaneado,
+        { role: 'user', content: `From now on, reply ONLY in ${respondIn}.` },
+        { role: 'assistant', content: 'OK.' },
+        { role: 'user', content: message },
+      ],
     });
 
     const reply = response.content?.[0]?.text || '';

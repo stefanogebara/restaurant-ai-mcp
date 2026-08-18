@@ -81,9 +81,19 @@ async function handleChatStream(req, res) {
 
     res.write('data: {"type":"start"}\n\n');
 
-    await runManagerAgentStream(restaurantId, message.trim(), 'app', (token) => {
-      res.write(`data: ${JSON.stringify({ type: 'token', text: token })}\n\n`);
-    });
+    await runManagerAgentStream(
+      restaurantId,
+      message.trim(),
+      'app',
+      (token) => {
+        res.write(`data: ${JSON.stringify({ type: 'token', text: token })}\n\n`);
+      },
+      // Marcos reais do raciocínio (chain-of-thought honesto): a UI mostra
+      // cada etapa enquanto ela de fato acontece — nunca etapas inventadas.
+      (p) => {
+        res.write(`data: ${JSON.stringify({ type: 'phase', ...p })}\n\n`);
+      },
+    );
 
     res.write('data: {"type":"done"}\n\n');
     res.end();

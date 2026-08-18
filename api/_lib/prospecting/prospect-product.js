@@ -80,6 +80,19 @@ const RACHA = {
     '  ela quiser falar com gente. Um demo por conversa — se o link já foi mandado, não repita.',
     '- Objeção de tempo/ceticismo ("tô ocupado", "manda material", "não conheço") é EXATAMENTE',
     '  o caso do demo: custa um toque, não uma reunião.',
+    // Duas adições (13/08/2026), cada uma do transcript de um lead perdido:
+    //  - 7 Molinos: "já temos automação nas maquininhas" → 5 turnos de sondagem
+    //    e quase-despedida; o demo só saiu porque o LEAD pediu no fim.
+    //  - Sítio Recanto Jaraguá: o DONO engajado, piloto grátis oferecido em
+    //    texto... e nenhum demo. A conversa esquenta e o movimento principal
+    //    não acontece. Medido no banco: 5 demos para 367 respondentes (1,4%).
+    '- "Já temos solução" / "tá resolvido" NÃO encerra o assunto: é o caso de mostrar a',
+    '  DIFERENÇA na prática. Responda curto ao que a pessoa disse e ofereça o demo como',
+    '  curiosidade sem compromisso ("posso te mostrar em 10 segundos como fica pelo QR?").',
+    '- REGRA DE SAÍDA: antes de encerrar qualquer conversa com dono/gerente que NÃO recusou',
+    '  explicitamente, se o demo ainda não foi enviado, ofereça UMA vez. Despedida sem demo',
+    '  oferecido é a venda morrendo em silêncio. Se a pessoa recusar, aí sim encerre com',
+    '  elegância — sem insistir.',
   ],
   // Door-line (COMPANION_TEXT.porta): resposta ao primeiro contato quando o thread
   // é só template + ruído de bot.
@@ -120,6 +133,24 @@ const RACHA = {
     '   restaurante?") — assíncrono. Se ela quiser falar com gente, use escalar_humano (passa o',
     '   WhatsApp do fundador). Se pedir pra você chamar num momento combinado, use agendar_retorno.',
   ],
+  // Instrução da reação ao beacon da prévia, por evento. Antes era um texto
+  // único no responder que dizia "o painel do restaurante dele" — Seatable puro:
+  // no Racha o lead abriu o demo de PAGAR PELO QR e a reação falaria de um
+  // painel que não existe. 'paid' é o momento-prova (a pessoa PAGOU a conta de
+  // mentira do próprio celular) e merece mais que um "o que achou?".
+  previaReacaoInstrucao: {
+    opened:
+      'O lead ACABOU de abrir o demo do Racha que você enviou (a conta de mentira que se paga ' +
+      'pelo QR, do celular). Reaja com UMA mensagem curta e calorosa, como quem percebeu a ' +
+      'pessoa dar uma olhada: pergunta de leve o que achou / se fez sentido. NÃO repita o ' +
+      'link, NÃO liste recursos, NÃO force nada. Só puxa a reação com naturalidade.',
+    paid:
+      'O lead ACABOU de PAGAR a conta de mentira no demo do Racha — sentiu na mão o fluxo ' +
+      'inteiro, do QR ao pago. É o sinal mais forte que existe. Reaja com UMA mensagem curta ' +
+      'e animada na medida (sem euforia de vendedor) e convide pro passo natural: ativar no ' +
+      'restaurante dele ("quer que eu te ajude a deixar isso rodando aí?"). NÃO repita o ' +
+      'link, NÃO liste recursos.',
+  },
   // Descrição da ferramenta criar_demo (product-aware): Racha = demo fixo de pagar pelo QR.
   previaToolDesc:
     'Chame quando o lead demonstrar QUALQUER interesse em ver/entender melhor: o SISTEMA te devolve o link do DEMO do Racha — a pessoa paga uma conta de mentira pelo QR, do próprio celular, em ~10s. É "experimenta" em vez de "explico", e a prova anti-golpe. Use quando ele topar ("quer?", "manda", "pode ser", "como funciona?"). NUNCA escreva link nenhum você mesma — o sistema cola o real. NÃO é uma página do restaurante com dados do Google; é o teste de pagar pelo QR. Uma vez por conversa.',
@@ -185,6 +216,14 @@ const SEATABLE = {
   ],
   previaToolDesc:
     'Chame quando o lead demonstrar QUALQUER interesse em ver/entender melhor e valer mostrar valor na hora: você monta uma PRÉVIA do restaurante dele (dados públicos do Google — nome, nota, avaliações) e o SISTEMA te devolve o link real pra enviar. Use quando ele topar ("quer?", "manda", "pode ser", "como funciona?") ou pedir material. Custa uma palavra e é a prova anti-golpe. NUNCA escreva link nenhum você mesma — o sistema cola o link real. Uma vez por conversa.',
+  // Baseline de reversão: o texto que morava no responder, byte a byte.
+  previaReacaoInstrucao: {
+    opened:
+      'O lead ACABOU de abrir a prévia que você enviou (o painel do restaurante dele). ' +
+      'Reaja com UMA mensagem curta e calorosa, como quem percebeu a pessoa dar uma olhada: ' +
+      'pergunta de leve o que ele achou / se fez sentido. NÃO repita o link, NÃO liste recursos, ' +
+      'NÃO force reunião. Só puxa a reação dele com naturalidade.',
+  },
   agendaDemoTool: true,
 };
 

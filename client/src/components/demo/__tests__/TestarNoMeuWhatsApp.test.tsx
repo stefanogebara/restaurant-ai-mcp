@@ -32,7 +32,7 @@ const renderizar = () =>
 
 describe('TestarNoMeuWhatsApp', () => {
   it('envia o número só com dígitos e confirma na tela', async () => {
-    const fetchSpy = vi.spyOn(global, 'fetch').mockImplementation(ok());
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(ok());
     renderizar();
 
     await userEvent.type(screen.getByLabelText(/seu número/i), '+55 (11) 99999-8888');
@@ -45,7 +45,7 @@ describe('TestarNoMeuWhatsApp', () => {
   });
 
   it('número incompleto não dispara requisição — envio custa dinheiro', async () => {
-    const fetchSpy = vi.spyOn(global, 'fetch').mockImplementation(ok());
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(ok());
     renderizar();
 
     await userEvent.type(screen.getByLabelText(/seu número/i), '1199');
@@ -55,7 +55,7 @@ describe('TestarNoMeuWhatsApp', () => {
 
   it('mostra a mensagem EXATA do servidor quando um limite bloqueia', async () => {
     // Texto genérico esconderia do dono que basta esperar alguns minutos.
-    vi.spyOn(global, 'fetch').mockImplementation(() =>
+    vi.spyOn(globalThis, 'fetch').mockImplementation(() =>
       falha('Já enviamos um teste para esse número. Aguarde alguns minutos antes de pedir outro.'));
     renderizar();
 
@@ -66,7 +66,7 @@ describe('TestarNoMeuWhatsApp', () => {
   });
 
   it('falha de rede não deixa o botão travado em "Enviando…"', async () => {
-    vi.spyOn(global, 'fetch').mockImplementation(() => Promise.reject(new Error('offline')));
+    vi.spyOn(globalThis, 'fetch').mockImplementation(() => Promise.reject(new Error('offline')));
     renderizar();
 
     await userEvent.type(screen.getByLabelText(/seu número/i), '5511999998888');
@@ -82,7 +82,7 @@ describe('TestarNoMeuWhatsApp', () => {
   });
 
   it('can_reply=true CONVIDA a responder — o vínculo com o demo funcionou', async () => {
-    vi.spyOn(global, 'fetch').mockImplementation(ok(true));
+    vi.spyOn(globalThis, 'fetch').mockImplementation(ok(true));
     renderizar();
 
     await userEvent.type(screen.getByLabelText(/seu número/i), '5511999998888');
@@ -95,7 +95,7 @@ describe('TestarNoMeuWhatsApp', () => {
   it('can_reply=false NÃO convida — vínculo recusado (ex: número de cliente real)', async () => {
     // A promessa seria falsa: a resposta cairia no fluxo normal e ninguém
     // atenderia como o demo. Pior decepção possível no pico de interesse.
-    vi.spyOn(global, 'fetch').mockImplementation(ok(false));
+    vi.spyOn(globalThis, 'fetch').mockImplementation(ok(false));
     renderizar();
 
     await userEvent.type(screen.getByLabelText(/seu número/i), '5511999998888');

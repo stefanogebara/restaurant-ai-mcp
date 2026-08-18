@@ -88,7 +88,7 @@ export default function WaitlistEntryCard({
       )}
 
       {/* Notified timestamp */}
-      {entry.status === 'Notified' && entry.notified_at && (
+      {entry.status === 'notified' && entry.notified_at && (
         <div className="text-[10px] text-amber-600 ml-10 mt-1">
           {t('waitlist.notifiedAt', 'Notified')} {formatTimeAgo(entry.notified_at)}
         </div>
@@ -97,7 +97,7 @@ export default function WaitlistEntryCard({
       {/* Row 4: Action Buttons (compact) */}
       {showActions && (
         <div className="flex items-center gap-1.5 mt-2 ml-10">
-          {entry.status === 'Waiting' && (
+          {entry.status === 'waiting' && (
             <>
               <button
                 onClick={() => onNotify(entry.id)}
@@ -114,7 +114,7 @@ export default function WaitlistEntryCard({
               </button>
             </>
           )}
-          {entry.status === 'Notified' && (
+          {entry.status === 'notified' && (
             <button
               onClick={() => onSeatNow(entry)}
               className="px-2 py-1 text-[11px] bg-[#9F1239] hover:bg-[#881337] text-white font-medium rounded-lg transition-colors"

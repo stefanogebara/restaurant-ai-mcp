@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 import ManagerAIUsageBar from '../components/dashboard/ManagerAIUsageBar';
 import { api, authFetch } from '../services/api';
-import { renderMarkdown } from '../utils/markdownRenderer';
+import ManagerRichMessage from '../components/dashboard/ManagerRichMessage';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useToast } from '../contexts/ToastContext';
 
@@ -37,6 +37,17 @@ interface Message {
 interface UsageData {
   used: number;
   limit: number | null;
+}
+
+// Um marco REAL do raciocínio do agente, emitido pelo backend enquanto
+// acontece (frame SSE {type:'phase'}): leitura de contexto, contexto pronto,
+// ferramenta de comparação. Nunca é inventado no cliente — a UI só mostra o
+// que o servidor disse que fez.
+interface ThoughtPhase {
+  key: string;
+  memories?: number;
+  a?: string;
+  b?: string;
 }
 
 // ---------- Suggested prompts ----------
@@ -138,10 +149,45 @@ export default function ManagerAIChatPage() {
 
   // Track the assistant's in-flight reply text as it streams in so the UI can
   // render incremental tokens before the full response is persisted to DB.
-  // Kept as a ref-like piece of state (not a ref) so React re-renders on each
-  // token write — the streaming bubble lives in this state, the persisted
-  // turn lives in messages[] once the SSE 'done' event lands.
   const [streamingReply, setStreamingReply] = useState<string>('');
+
+  // Chain-of-thought: os marcos que o backend emitiu para o turno em voo, e o
+  // resumo do último turno respondido (vira o chip "raciocinou por Xs" sobre a
+  // resposta final). Refs espelham o estado para o onSuccess não ler closure
+  // velha.
+  const [thoughtPhases, setThoughtPhases] = useState<ThoughtPhase[]>([]);
+  const thoughtPhasesRef = useRef<ThoughtPhase[]>([]);
+  const thoughtStartRef = useRef<number>(0);
+  const [lastThought, setLastThought] = useState<{ phases: ThoughtPhase[]; ms: number } | null>(null);
+
+  // Rótulo humano de um marco. Interpolação manual (não i18next) porque os
+  // params variam por chave e o fallback precisa funcionar sem catálogo.
+  const phaseLabel = (p: ThoughtPhase): string => {
+    switch (p.key) {
+      case 'context':
+        return t('managerAI.phaseContext', 'Lendo a memória e o dia do restaurante…');
+      case 'context_ready':
+        return p.memories
+          ? t('managerAI.phaseContextReadyN', 'Contexto pronto — {{n}} lembranças relevantes', { n: p.memories })
+          : t('managerAI.phaseContextReady', 'Contexto pronto');
+      case 'compare':
+        return t('managerAI.phaseCompare', 'Comparando períodos: {{a}} × {{b}}', { a: p.a ?? '', b: p.b ?? '' });
+      default:
+        return p.key;
+    }
+  };
+
+  // Versão curta pro chip pós-resposta ("contexto · comparação").
+  const phaseShort = (p: ThoughtPhase): string | null => {
+    switch (p.key) {
+      case 'context_ready':
+        return t('managerAI.phaseShortContext', 'contexto');
+      case 'compare':
+        return t('managerAI.phaseShortCompare', 'comparação de períodos');
+      default:
+        return null;
+    }
+  };
 
   const sendMutation = useMutation({
     // Streaming sender — consumes the SSE endpoint that the backend's
@@ -180,7 +226,7 @@ export default function ManagerAIChatPage() {
       let fullReply = '';
 
       // SSE frame parser. The backend writes one `data: {...}\n\n` frame
-      // per token (and one `start`/`done` frame each side). We accumulate
+      // per token (plus `start`/`phase`/`done` frames). We accumulate
       // bytes across reads, split on the double-newline frame boundary,
       // and parse each frame's JSON payload.
       while (true) {
@@ -201,6 +247,11 @@ export default function ManagerAIChatPage() {
             if (evt.type === 'token' && typeof evt.text === 'string') {
               fullReply += evt.text;
               setStreamingReply(fullReply);
+            } else if (evt.type === 'phase' && typeof evt.key === 'string') {
+              // Marco real do raciocínio — entra na cadeia visível.
+              const next = [...thoughtPhasesRef.current, evt as ThoughtPhase];
+              thoughtPhasesRef.current = next;
+              setThoughtPhases(next);
             } else if (evt.type === 'error') {
               throw new Error(evt.error || 'stream error');
             }
@@ -224,8 +275,12 @@ export default function ManagerAIChatPage() {
       qc.setQueryData<{ history: Message[] }>(['manager-chat-history'], (old) => ({
         history: [...(old?.history || []), { role: 'manager', content: message }],
       }));
-      // Reset the streaming bubble for the new turn.
+      // Reset the streaming bubble + chain-of-thought for the new turn.
       setStreamingReply('');
+      setThoughtPhases([]);
+      thoughtPhasesRef.current = [];
+      thoughtStartRef.current = Date.now();
+      setLastThought(null);
       // Clear any prior failure now that a fresh send is in flight.
       setLastFailedMessage(null);
       return { previous };
@@ -235,6 +290,8 @@ export default function ManagerAIChatPage() {
         qc.setQueryData(['manager-chat-history'], context.previous);
       }
       setStreamingReply('');
+      setThoughtPhases([]);
+      thoughtPhasesRef.current = [];
       // Remember what failed so the Retry button below can resend without
       // the user having to re-type their question. Cleared on successful
       // send (onSuccess) and on every new send attempt (onMutate above).
@@ -244,6 +301,15 @@ export default function ManagerAIChatPage() {
       // Drop the streaming-bubble buffer now that the persisted turn is
       // about to render in messages[].
       setStreamingReply('');
+      // A cadeia colapsa num resumo discreto sobre a resposta final.
+      if (thoughtPhasesRef.current.length > 0) {
+        setLastThought({
+          phases: thoughtPhasesRef.current,
+          ms: Date.now() - thoughtStartRef.current,
+        });
+      }
+      setThoughtPhases([]);
+      thoughtPhasesRef.current = [];
       // Rebuild from the pre-mutation snapshot to avoid duplicates caused by
       // a concurrent query refetch that already contains the DB-persisted turns.
       const base = context?.previous?.history || [];
@@ -270,10 +336,9 @@ export default function ManagerAIChatPage() {
       behavior: isFirstScrollRef.current ? 'auto' : 'smooth',
     });
     isFirstScrollRef.current = false;
-    // Re-trigger on streamingReply.length too so the view tails the
-    // typewriter effect — without this the user has to manually scroll
-    // every time a long reply spills past the viewport.
-  }, [messages.length, sendMutation.isPending, streamingReply]);
+    // Re-trigger on streamingReply/thoughtPhases too so the view tails the
+    // typewriter effect and the chain-of-thought as steps land.
+  }, [messages.length, sendMutation.isPending, streamingReply, thoughtPhases.length]);
 
   const handleSend = () => {
     const trimmed = input.trim();
@@ -342,6 +407,7 @@ export default function ManagerAIChatPage() {
       qc.setQueryData<{ history: Message[] }>(['manager-chat-history'], { history: [] });
       setStreamingReply('');
       setLastFailedMessage(null);
+      setLastThought(null);
       toast.success(t('managerAI.newConversationDone', 'Nova conversa iniciada.'));
     },
     onError: () => {
@@ -357,61 +423,35 @@ export default function ManagerAIChatPage() {
 
   const prompts = SUGGESTED_PROMPTS[lang] || SUGGESTED_PROMPTS.en;
 
-  return (
-    <div className="h-screen flex flex-col">
-      {/* Header */}
-      <div className="bg-glass-panel backdrop-blur-glass-nav border-b border-glass-border-dark px-4 sm:px-6 py-3 flex items-center justify-between flex-shrink-0">
-        <div className="flex items-center gap-3">
-          <Link
-            to="/host-dashboard/simple"
-            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-soft-gray text-muted-stone hover:text-deep-charcoal transition-colors"
-            aria-label={t('managerAI.backToDashboard', 'Back to dashboard')}
-          >
-            <ThiingsIcon name="arrow-left" pxSize={18} />
-          </Link>
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-burgundy/10 flex items-center justify-center overflow-hidden">
-              <img src="/favicon.svg" alt="" aria-hidden="true" className="w-5 h-5" />
-            </div>
-            <div>
-              <h1 className="text-sm font-bold text-deep-charcoal leading-tight">
-                {t('dashboard.managerAssistant', 'Manager AI')}
-              </h1>
-              <p className="text-xs text-muted-stone leading-tight">
-                {t('managerAI.subtitle', 'Your restaurant intelligence assistant')}
-              </p>
-            </div>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          {/* "Nova conversa" — only renders when there's history to clear,
-              so empty-state users don't see an action they can't take. */}
-          {messages.length > 0 && (
-            <button
-              type="button"
-              onClick={handleNewConversation}
-              disabled={newConversationMutation.isPending}
-              className="text-xs font-medium text-muted-stone hover:text-deep-charcoal transition-colors disabled:opacity-40 flex items-center gap-1.5"
-              aria-label={t('managerAI.newConversation', 'Nova conversa')}
-            >
-              <ThiingsIcon name="refresh" pxSize={14} />
-              <span className="hidden sm:inline">{t('managerAI.newConversation', 'Nova conversa')}</span>
-            </button>
-          )}
-          <div className="hidden sm:block w-48">
-            <ManagerAIUsageBar />
-          </div>
-        </div>
-      </div>
+  // Índice da última bolha do assistente — é sobre ela que o resumo do
+  // raciocínio (lastThought) se pendura.
+  const lastAssistantIdx = useMemo(() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].role === 'assistant') return i;
+    }
+    return -1;
+  }, [messages]);
 
-      {/* Messages area
-          role="log" + aria-live="polite" announces NEW assistant messages
-          to screen readers without preempting whatever the user was doing.
-          aria-relevant="additions" so the entire history isn't re-read
-          when prior messages re-render. */}
-      <div className="flex-1 overflow-y-auto">
+  const avatar = (size: string, img: string) => (
+    <div className={`${size} rounded-[14px] bg-glass-modal backdrop-blur-glass-chip border border-glass-border shadow-glass-nav flex items-center justify-center flex-shrink-0 overflow-hidden`}>
+      <img src="/favicon.svg" alt="" aria-hidden="true" className={img} />
+    </div>
+  );
+
+  return (
+    <div className="h-screen relative overflow-hidden">
+      {/* ---------- Camada de rolagem — passa POR BAIXO do header e do
+           composer flutuantes; as máscaras de gradiente fazem o conteúdo
+           surgir e sumir de forma contínua, sem linha de corte. ---------- */}
+      <div
+        className="h-full overflow-y-auto"
+        style={{
+          maskImage: 'linear-gradient(to bottom, transparent 0, black 88px, black calc(100% - 132px), transparent 100%)',
+          WebkitMaskImage: 'linear-gradient(to bottom, transparent 0, black 88px, black calc(100% - 132px), transparent 100%)',
+        }}
+      >
         <div
-          className="max-w-3xl mx-auto px-4 sm:px-6 py-6 space-y-4"
+          className="max-w-3xl mx-auto px-4 sm:px-6 pt-28 pb-48 space-y-6"
           role="log"
           aria-live="polite"
           aria-relevant="additions"
@@ -423,19 +463,19 @@ export default function ManagerAIChatPage() {
 
           {/* Empty state with suggested prompts */}
           {messages.length === 0 && !isLoading && (
-            <div className="flex flex-col items-center justify-center py-16 space-y-8">
-              <div className="text-center space-y-3">
-                <div className="w-16 h-16 rounded-2xl bg-burgundy/10 flex items-center justify-center mx-auto overflow-hidden">
+            <div className="flex flex-col items-center justify-center pt-14 pb-8 space-y-9 animate-fade-in">
+              <div className="text-center space-y-4">
+                <div className="w-[72px] h-[72px] rounded-[22px] bg-glass-modal backdrop-blur-glass-card border border-glass-border shadow-glass-card flex items-center justify-center mx-auto overflow-hidden">
                   <img src="/favicon.svg" alt="" aria-hidden="true" className="w-10 h-10" />
                 </div>
-                <h2 className="text-xl font-bold text-deep-charcoal">
+                <h2 className="font-serif text-3xl sm:text-4xl text-deep-charcoal">
                   {t('dashboard.managerAssistant', 'Manager AI')}
                 </h2>
-                <p className="text-sm text-muted-stone max-w-md">
+                <p className="text-sm text-muted-stone max-w-md leading-relaxed">
                   {t('dashboard.managerAssistantHint', 'Ask me about your restaurant — reservations, revenue, staffing, insights, and more.')}
                 </p>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-lg">
+              <div className="flex flex-wrap justify-center gap-2.5 w-full max-w-xl">
                 {prompts.map((prompt, i) => (
                   <button
                     key={i}
@@ -444,7 +484,8 @@ export default function ManagerAIChatPage() {
                       setInput(prompt);
                       inputRef.current?.focus();
                     }}
-                    className="text-left px-4 py-3 bg-glass-card backdrop-blur-glass-card border border-glass-border rounded-xl text-sm text-deep-charcoal hover:bg-white/80 hover:border-burgundy/30 transition-colors"
+                    style={{ animationDelay: `${i * 90}ms` }}
+                    className="animate-thought-in px-5 py-2.5 bg-glass-subtle backdrop-blur-glass-chip border border-glass-border rounded-[46px] text-sm text-deep-charcoal hover:bg-white/75 hover:border-burgundy/25 hover:-translate-y-0.5 transition-all duration-300 motion-reduce:transition-none"
                   >
                     {prompt}
                   </button>
@@ -461,80 +502,111 @@ export default function ManagerAIChatPage() {
             return (
               <div
                 key={m.created_at ? `${m.role}-${m.created_at}` : `opt-${m.role}-${i}`}
-                className={'flex group ' + (isAssistant ? 'justify-start' : 'justify-end')}
+                className={'flex flex-col ' + (isAssistant ? 'items-start' : 'items-end')}
               >
-                {isAssistant && (
-                  <div className="w-7 h-7 rounded-full bg-burgundy/10 flex items-center justify-center flex-shrink-0 mt-1 mr-2 overflow-hidden">
-                    <img src="/favicon.svg" alt={t('managerAI.assistantAvatarAlt', 'Manager AI avatar')} className="w-4 h-4" />
+                {/* Resumo do raciocínio — pendurado sobre a última resposta:
+                    quantos segundos e quais etapas REAIS aconteceram. */}
+                {isAssistant && i === lastAssistantIdx && lastThought && (
+                  <div className="flex items-center gap-1.5 text-[11px] text-muted-stone/80 mb-1.5 pl-11 animate-fade-in">
+                    <ThiingsIcon name="sparkles" pxSize={10} />
+                    <span>
+                      {t('managerAI.thoughtSummary', 'Raciocinou por {{s}}s', { s: Math.max(1, Math.round(lastThought.ms / 1000)) })}
+                      {lastThought.phases.map(phaseShort).filter(Boolean).length > 0 &&
+                        ` — ${lastThought.phases.map(phaseShort).filter(Boolean).join(' · ')}`}
+                    </span>
                   </div>
                 )}
-                <div className={'flex flex-col gap-1 max-w-[75%] ' + (isAssistant ? 'items-start' : 'items-end')}>
-                  <div
-                    className={
-                      'relative rounded-2xl px-4 py-3 text-sm break-words leading-relaxed ' +
-                      (isAssistant
-                        ? 'bg-glass-card backdrop-blur-glass-card border border-glass-border text-deep-charcoal'
-                        : 'bg-burgundy text-white')
-                    }
-                  >
-                    {isAssistant ? renderMarkdown(m.content) : m.content}
-                    {/* Copy affordance — hover-revealed on desktop, always
-                        visible on touch via group-focus. Assistant bubbles
-                        only; the user's own messages don't need copy. */}
-                    {isAssistant && (
-                      <button
-                        type="button"
-                        onClick={() => handleCopy(m.content, i)}
-                        aria-label={t('managerAI.copyMessage', 'Copiar mensagem')}
-                        className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity w-7 h-7 rounded-full bg-white border border-glass-border-input shadow-sm flex items-center justify-center text-muted-stone hover:text-deep-charcoal hover:border-burgundy/30"
-                      >
-                        <ThiingsIcon name={isCopied ? 'check' : 'copy'} pxSize={12} />
-                      </button>
+                <div className={'flex group w-full ' + (isAssistant ? 'justify-start' : 'justify-end')}>
+                  {isAssistant && (
+                    <div className="mr-2.5 mt-1">{avatar('w-8 h-8', 'w-[18px] h-[18px]')}</div>
+                  )}
+                  <div className={'flex flex-col gap-1 ' + (isAssistant ? 'items-start max-w-[88%] sm:max-w-[82%]' : 'items-end max-w-[78%]')}>
+                    {/* Assistente fala SEM card — texto direto no canvas, como
+                        os chats de IA modernos: o vidro fica pros objetos
+                        (gráficos, raciocínio), a prosa respira no gradiente.
+                        A fala do gerente continua na pílula burgundy. */}
+                    {isAssistant ? (
+                      <div className="text-[15px] break-words leading-relaxed text-deep-charcoal animate-slide-up motion-reduce:animate-none pt-1">
+                        <ManagerRichMessage content={m.content} />
+                        {/* Linha de ações discreta no hover — sem card não há
+                            canto pra pendurar botão; a linha fica abaixo. */}
+                        <div className="flex items-center gap-2 mt-1.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+                          <button
+                            type="button"
+                            onClick={() => handleCopy(m.content, i)}
+                            aria-label={t('managerAI.copyMessage', 'Copiar mensagem')}
+                            className="flex items-center gap-1 text-[11px] text-muted-stone hover:text-deep-charcoal transition-colors"
+                          >
+                            <ThiingsIcon name={isCopied ? 'check' : 'copy'} pxSize={11} />
+                            {isCopied ? t('managerAI.copied', 'Copiado') : t('managerAI.copy', 'Copiar')}
+                          </button>
+                          {ts && <span className="text-[10px] text-muted-stone/70">{ts}</span>}
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="px-5 py-3.5 text-[15px] break-words leading-relaxed animate-slide-up motion-reduce:animate-none bg-gradient-to-br from-burgundy to-burgundy-dark text-white shadow-glass-card rounded-[22px] rounded-br-lg">
+                          {m.content}
+                        </div>
+                        {ts && <span className="text-[10px] text-muted-stone/70 px-1.5">{ts}</span>}
+                      </>
                     )}
                   </div>
-                  {/* Timestamp chip — subtle, only renders when we have a
-                      persisted created_at (optimistic in-flight turns skip). */}
-                  {ts && (
-                    <span className="text-[10px] text-muted-stone/70 px-1">{ts}</span>
-                  )}
                 </div>
               </div>
             );
           })}
 
-          {/* Streaming reply bubble — shows assistant tokens as they arrive
-              from the SSE endpoint. Replaces the "Thinking…" indicator once
-              the first token lands. The persisted bubble takes over via
-              messages[] once onSuccess fires and we set streamingReply=''. */}
-          {sendMutation.isPending && streamingReply && (
-            <div className="flex justify-start">
-              <div className="w-7 h-7 rounded-full bg-burgundy/10 flex items-center justify-center flex-shrink-0 mt-1 mr-2 overflow-hidden">
-                <img src="/favicon.svg" alt={t('managerAI.assistantAvatarAlt', 'Manager AI avatar')} className="w-4 h-4" />
-              </div>
-              <div className="max-w-[75%] rounded-2xl px-4 py-3 text-sm break-words leading-relaxed bg-glass-card backdrop-blur-glass-card border border-glass-border text-deep-charcoal">
-                {renderMarkdown(streamingReply)}
-                {/* Blinking cursor while streaming — tactile signal that
-                    more tokens are coming. Hidden by reduced-motion. */}
-                <span aria-hidden="true" className="inline-block w-[2px] h-[1em] bg-burgundy/60 align-middle ml-0.5 animate-pulse motion-reduce:hidden" />
+          {/* ---------- Chain-of-thought — o raciocínio aparecendo ao vivo.
+               Cada linha é um marco REAL emitido pelo backend enquanto
+               acontece; o passo ativo ganha o brilho líquido. Quando os
+               tokens começam, o cabeçalho troca pra "Escrevendo" e a bolha
+               de resposta assume logo abaixo. ---------- */}
+          {sendMutation.isPending && (
+            <div className="flex justify-start animate-thought-in" role="status" aria-label={t('managerAI.thinkingAriaLabel', 'AI is thinking')}>
+              <div className="mr-2.5 mt-1">{avatar('w-8 h-8', 'w-[18px] h-[18px]')}</div>
+              <div className="min-w-[260px] max-w-[78%] bg-glass-subtle backdrop-blur-glass-chip border border-glass-border rounded-[20px] rounded-bl-lg px-5 py-3.5 space-y-2.5">
+                <div className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.14em] text-muted-stone">
+                  <span className="w-1.5 h-1.5 rounded-full bg-burgundy animate-pulse motion-reduce:animate-none" />
+                  {streamingReply
+                    ? t('managerAI.writing', 'Escrevendo')
+                    : t('managerAI.reasoning', 'Raciocinando')}
+                </div>
+                {thoughtPhases.length === 0 && !streamingReply && (
+                  <div className="thought-active text-[13px] text-deep-charcoal/70 px-1 -mx-1">
+                    {t('managerAI.phaseWaking', 'Acordando o contexto do restaurante…')}
+                  </div>
+                )}
+                {thoughtPhases.map((p, i) => {
+                  const isActive = i === thoughtPhases.length - 1 && !streamingReply;
+                  return (
+                    <div key={`${p.key}-${i}`} className="animate-thought-in flex items-start gap-2 text-[13px] leading-snug text-deep-charcoal/80">
+                      <span className="mt-[5px] flex-shrink-0">
+                        {isActive ? (
+                          <span className="block w-2 h-2 rounded-full border-[1.5px] border-burgundy/60 animate-pulse motion-reduce:animate-none" />
+                        ) : (
+                          <ThiingsIcon name="check" pxSize={10} className="text-emerald-600" />
+                        )}
+                      </span>
+                      <span className={isActive ? 'thought-active px-1 -mx-1' : ''}>{phaseLabel(p)}</span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
 
-          {/* Thinking indicator — only while we're waiting on the first
-              streamed token. Once the streamingReply has any content, the
-              bubble above takes over. */}
-          {sendMutation.isPending && !streamingReply && (
-            <div className="flex justify-start" role="status" aria-label={t('managerAI.thinkingAriaLabel', 'AI is thinking')}>
-              <div className="w-7 h-7 rounded-full bg-burgundy/10 flex items-center justify-center flex-shrink-0 mt-1 mr-2">
-                <ThiingsIcon name="sparkles" pxSize={14} className="text-burgundy animate-spin" />
-              </div>
-              <div className="bg-glass-card backdrop-blur-glass-card border border-glass-border rounded-2xl px-4 py-3 text-sm text-muted-stone flex items-center gap-1.5">
-                <span>{t('dashboard.thinking', 'Thinking')}</span>
-                <span className="flex gap-0.5">
-                  <span className="w-1.5 h-1.5 bg-burgundy/40 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <span className="w-1.5 h-1.5 bg-burgundy/40 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <span className="w-1.5 h-1.5 bg-burgundy/40 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                </span>
+          {/* Streaming reply bubble — shows assistant tokens as they arrive
+              from the SSE endpoint. The persisted bubble takes over via
+              messages[] once onSuccess fires and we set streamingReply=''. */}
+          {sendMutation.isPending && streamingReply && (
+            <div className="flex justify-start">
+              <div className="mr-2.5 mt-1">{avatar('w-8 h-8', 'w-[18px] h-[18px]')}</div>
+              <div className="max-w-[88%] sm:max-w-[82%] pt-1 text-[15px] break-words leading-relaxed text-deep-charcoal">
+                <ManagerRichMessage content={streamingReply} />
+                {/* Blinking cursor while streaming — tactile signal that
+                    more tokens are coming. Hidden by reduced-motion. */}
+                <span aria-hidden="true" className="inline-block w-[2px] h-[1em] bg-burgundy/60 align-middle ml-0.5 animate-pulse motion-reduce:hidden" />
               </div>
             </div>
           )}
@@ -546,7 +618,7 @@ export default function ManagerAIChatPage() {
               re-attempts a fresh send. */}
           {sendMutation.isError && (
             <div className="text-center space-y-2" role="alert">
-              <p className="text-sm text-red-500 bg-red-50 rounded-xl px-4 py-2 inline-block">
+              <p className="text-sm text-red-500 bg-red-50/90 backdrop-blur-glass-chip border border-red-100 rounded-[18px] px-4 py-2 inline-block">
                 {t('managerAI.failedToSend', 'Failed to send. Please try again.')}
               </p>
               {lastFailedMessage && (
@@ -567,27 +639,74 @@ export default function ManagerAIChatPage() {
         </div>
       </div>
 
-      {/* Quota / not-included banner */}
-      {(isFeatureUnavailable || isQuotaExhausted) && (
-        <div className="px-4 py-2 text-sm text-amber-700 bg-amber-50 border-t border-amber-100 flex items-center justify-center gap-2 flex-shrink-0">
-          <span>
-            {isFeatureUnavailable
-              ? t('dashboard.featureNotIncluded', 'Manager AI is not included on your current plan')
-              : t('dashboard.limitReached', 'Message limit reached')}
-          </span>
-          <a href="/subscription/manage" className="underline font-medium">
-            {t('managerAI.upgrade', 'Upgrade')} &rarr;
-          </a>
+      {/* ---------- Header flutuante — cápsula de vidro destacada do topo,
+           sem borda de corte; o conteúdo rola por baixo e some na máscara. */}
+      <div className="absolute top-3 sm:top-4 left-3 right-3 sm:left-6 sm:right-6 z-20 pointer-events-none">
+        <div className="max-w-3xl mx-auto pointer-events-auto bg-glass-modal backdrop-blur-glass-nav border border-glass-border shadow-glass-card rounded-[24px] px-3 sm:px-4 py-2.5 flex items-center justify-between">
+          <div className="flex items-center gap-3 min-w-0">
+            <Link
+              to="/host-dashboard/simple"
+              className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/60 text-muted-stone hover:text-deep-charcoal transition-colors flex-shrink-0"
+              aria-label={t('managerAI.backToDashboard', 'Back to dashboard')}
+            >
+              <ThiingsIcon name="arrow-left" pxSize={18} />
+            </Link>
+            <div className="flex items-center gap-2.5 min-w-0">
+              {avatar('w-8 h-8', 'w-5 h-5')}
+              <div className="min-w-0">
+                <h1 className="text-sm font-bold text-deep-charcoal leading-tight truncate">
+                  {t('dashboard.managerAssistant', 'Manager AI')}
+                </h1>
+                <p className="text-xs text-muted-stone leading-tight truncate">
+                  {t('managerAI.subtitle', 'Your restaurant intelligence assistant')}
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 flex-shrink-0">
+            {/* "Nova conversa" — only renders when there's history to clear,
+                so empty-state users don't see an action they can't take. */}
+            {messages.length > 0 && (
+              <button
+                type="button"
+                onClick={handleNewConversation}
+                disabled={newConversationMutation.isPending}
+                className="text-xs font-medium text-muted-stone hover:text-deep-charcoal transition-colors disabled:opacity-40 flex items-center gap-1.5"
+                aria-label={t('managerAI.newConversation', 'Nova conversa')}
+              >
+                <ThiingsIcon name="refresh" pxSize={14} />
+                <span className="hidden sm:inline">{t('managerAI.newConversation', 'Nova conversa')}</span>
+              </button>
+            )}
+            <div className="hidden sm:block w-44">
+              <ManagerAIUsageBar />
+            </div>
+          </div>
         </div>
-      )}
+      </div>
 
-      {/* Input area */}
-      <div className="bg-glass-panel backdrop-blur-glass-nav border-t border-glass-border-dark px-4 sm:px-6 py-4 flex-shrink-0">
-        <div className="max-w-3xl mx-auto flex gap-3 items-end">
-          <div className="flex-1 min-w-0 flex flex-col gap-1">
+      {/* ---------- Composer flutuante — cápsula líquida destacada do fundo,
+           input sem borda interna; o foco acende o anel burgundy no vidro. */}
+      <div className="absolute bottom-0 left-0 right-0 z-20 px-3 sm:px-6 pb-4 sm:pb-6 pointer-events-none">
+        <div className="max-w-3xl mx-auto pointer-events-auto space-y-2">
+          {/* Quota / not-included banner */}
+          {(isFeatureUnavailable || isQuotaExhausted) && (
+            <div className="text-sm text-amber-800 bg-amber-50/90 backdrop-blur-glass-chip border border-amber-200/70 rounded-[18px] px-4 py-2 flex items-center justify-center gap-2">
+              <span>
+                {isFeatureUnavailable
+                  ? t('dashboard.featureNotIncluded', 'Manager AI is not included on your current plan')
+                  : t('dashboard.limitReached', 'Message limit reached')}
+              </span>
+              <a href="/subscription/manage" className="underline font-medium">
+                {t('managerAI.upgrade', 'Upgrade')} &rarr;
+              </a>
+            </div>
+          )}
+
+          <div className="bg-glass-modal backdrop-blur-glass-modal border border-glass-border shadow-glass-modal rounded-[28px] pl-3 pr-2 py-2 flex items-end gap-2 transition-shadow focus-within:ring-2 focus-within:ring-burgundy/25">
             <textarea
               ref={inputRef}
-              className="w-full rounded-xl border border-glass-border-input bg-white/60 px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy max-h-40"
+              className="flex-1 min-w-0 bg-transparent border-0 px-2.5 py-2 text-[15px] resize-none focus:outline-none focus:ring-0 max-h-40 placeholder:text-muted-stone/80 text-deep-charcoal"
               placeholder={
                 isFeatureUnavailable
                   ? t('dashboard.featureUpgradePlaceholder', 'Upgrade your plan to chat with Manager AI')
@@ -602,26 +721,27 @@ export default function ManagerAIChatPage() {
               maxLength={MAX_INPUT_CHARS}
               rows={1}
             />
-            {input.length >= MAX_INPUT_CHARS * 0.8 && (
-              <p className={`text-xs text-right ${input.length >= MAX_INPUT_CHARS ? 'text-red-500' : 'text-muted-stone'}`}>
-                {t('managerAI.charCount', { used: input.length, max: MAX_INPUT_CHARS, defaultValue: `${input.length}/${MAX_INPUT_CHARS} characters` })}
-              </p>
-            )}
+            <button
+              type="button"
+              onClick={handleSend}
+              disabled={!input.trim() || sendMutation.isPending || isInputBlocked}
+              aria-label={t('managerAI.sendMessage', 'Send message')}
+              className="w-10 h-10 flex-shrink-0 bg-burgundy hover:bg-burgundy-dark disabled:opacity-40 text-white rounded-full flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 motion-reduce:transform-none"
+            >
+              <ThiingsIcon name="arrow-right" pxSize={16} className="text-white" />
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={handleSend}
-            disabled={!input.trim() || sendMutation.isPending || isInputBlocked}
-            aria-label={t('managerAI.sendMessage', 'Send message')}
-            className="bg-burgundy hover:bg-burgundy-dark disabled:opacity-40 text-white rounded-xl px-4 py-3 text-sm font-medium flex-shrink-0 transition-colors flex items-center gap-2"
-          >
-            <ThiingsIcon name="arrow-right" pxSize={16} className="text-white" />
-          </button>
-        </div>
 
-        {/* Mobile usage bar */}
-        <div className="sm:hidden max-w-3xl mx-auto mt-2">
-          <ManagerAIUsageBar />
+          {input.length >= MAX_INPUT_CHARS * 0.8 && (
+            <p className={`text-xs text-right px-3 ${input.length >= MAX_INPUT_CHARS ? 'text-red-500' : 'text-muted-stone'}`}>
+              {t('managerAI.charCount', { used: input.length, max: MAX_INPUT_CHARS, defaultValue: `${input.length}/${MAX_INPUT_CHARS} characters` })}
+            </p>
+          )}
+
+          {/* Mobile usage bar */}
+          <div className="sm:hidden px-2">
+            <ManagerAIUsageBar />
+          </div>
         </div>
       </div>
     </div>
