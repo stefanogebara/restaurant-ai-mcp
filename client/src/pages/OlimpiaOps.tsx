@@ -253,8 +253,8 @@ export default function OlimpiaOps() {
           <Stat
             label={ov?.fecho?.tipo === 'demo' ? 'Demos enviados (30d)' : 'Reuniões marcadas'}
             value={ov ? (ov.fecho ? ov.fecho.valor : ov.meetings.length) : '—'}
-            tone={fechoTone(ov?.fecho)}
-            caption={fechoCaption(ov?.fecho)}
+            tone={fechoTone(ov?.fecho ?? null)}
+            caption={fechoCaption(ov?.fecho ?? null)}
           />
           <Stat label="Conversas (30 dias)" value={ov?.outcomes?.total ?? 0} />
           <Stat label="Nota das conversas" value={ov?.outcomes?.media_qualidade ?? '—'} caption="0 a 5, avaliada por IA" />
