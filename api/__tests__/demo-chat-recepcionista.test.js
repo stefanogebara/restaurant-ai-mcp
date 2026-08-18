@@ -170,15 +170,20 @@ describe('histórico multi-turno — funciona e tem teto (endpoint público quei
       ],
     }), res());
     const msgs = chamada().messages;
-    expect(msgs).toHaveLength(3);
+    // 2 do histórico + 2 do primer de idioma + a atual. O primer entra DEPOIS
+    // do histórico e imediatamente antes da mensagem atual (correção 18/08:
+    // o gerente do demo respondia em inglês a pergunta em português).
+    expect(msgs).toHaveLength(5);
     expect(msgs[0]).toEqual({ role: 'assistant', content: 'Para quantas pessoas?' });
-    expect(msgs[2]).toEqual({ role: 'user', content: '4 pessoas' });
+    expect(msgs[2].content).toMatch(/reply ONLY in Portuguese/);
+    expect(msgs[3]).toEqual({ role: 'assistant', content: 'OK.' });
+    expect(msgs[4]).toEqual({ role: 'user', content: '4 pessoas' });
   });
 
   test('só as últimas 10 mensagens contam', async () => {
     const historia = Array.from({ length: 30 }, (_, i) => ({ role: i % 2 ? 'assistant' : 'user', content: `m${i}` }));
     await handler(req({ ...base, history: historia }), res());
-    expect(chamada().messages).toHaveLength(11); // 10 + a atual
+    expect(chamada().messages).toHaveLength(13); // 10 + primer (2) + a atual
     expect(chamada().messages[0].content).toBe('m20');
   });
 
@@ -196,7 +201,7 @@ describe('histórico multi-turno — funciona e tem teto (endpoint público quei
       ],
     }), res());
     const msgs = chamada().messages;
-    expect(msgs).toHaveLength(2);
+    expect(msgs).toHaveLength(4); // 'oi' + primer (2) + a atual
     expect(msgs.some((m) => m.role === 'system')).toBe(false);
   });
 
@@ -204,6 +209,6 @@ describe('histórico multi-turno — funciona e tem teto (endpoint público quei
     const r = res();
     await handler(req({ ...base, history: 'lixo' }), r);
     expect(r.statusCode).toBe(200);
-    expect(chamada().messages).toHaveLength(1);
+    expect(chamada().messages).toHaveLength(3); // primer (2) + a atual
   });
 });

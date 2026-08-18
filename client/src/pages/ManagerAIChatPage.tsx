@@ -520,34 +520,36 @@ export default function ManagerAIChatPage() {
                   {isAssistant && (
                     <div className="mr-2.5 mt-1">{avatar('w-8 h-8', 'w-[18px] h-[18px]')}</div>
                   )}
-                  <div className={'flex flex-col gap-1 max-w-[78%] ' + (isAssistant ? 'items-start' : 'items-end')}>
-                    <div
-                      className={
-                        'relative px-5 py-3.5 text-[15px] break-words leading-relaxed animate-slide-up motion-reduce:animate-none ' +
-                        (isAssistant
-                          ? 'bg-glass-card backdrop-blur-glass-card border border-glass-border shadow-glass-card text-deep-charcoal rounded-[22px] rounded-bl-lg'
-                          : 'bg-gradient-to-br from-burgundy to-burgundy-dark text-white shadow-glass-card rounded-[22px] rounded-br-lg')
-                      }
-                    >
-                      {isAssistant ? <ManagerRichMessage content={m.content} /> : m.content}
-                      {/* Copy affordance — hover-revealed on desktop, always
-                          visible on touch via group-focus. Assistant bubbles
-                          only; the user's own messages don't need copy. */}
-                      {isAssistant && (
-                        <button
-                          type="button"
-                          onClick={() => handleCopy(m.content, i)}
-                          aria-label={t('managerAI.copyMessage', 'Copiar mensagem')}
-                          className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity w-7 h-7 rounded-full bg-glass-modal backdrop-blur-glass-chip border border-glass-border shadow-glass-nav flex items-center justify-center text-muted-stone hover:text-deep-charcoal hover:border-burgundy/30"
-                        >
-                          <ThiingsIcon name={isCopied ? 'check' : 'copy'} pxSize={12} />
-                        </button>
-                      )}
-                    </div>
-                    {/* Timestamp chip — subtle, only renders when we have a
-                        persisted created_at (optimistic in-flight turns skip). */}
-                    {ts && (
-                      <span className="text-[10px] text-muted-stone/70 px-1.5">{ts}</span>
+                  <div className={'flex flex-col gap-1 ' + (isAssistant ? 'items-start max-w-[88%] sm:max-w-[82%]' : 'items-end max-w-[78%]')}>
+                    {/* Assistente fala SEM card — texto direto no canvas, como
+                        os chats de IA modernos: o vidro fica pros objetos
+                        (gráficos, raciocínio), a prosa respira no gradiente.
+                        A fala do gerente continua na pílula burgundy. */}
+                    {isAssistant ? (
+                      <div className="text-[15px] break-words leading-relaxed text-deep-charcoal animate-slide-up motion-reduce:animate-none pt-1">
+                        <ManagerRichMessage content={m.content} />
+                        {/* Linha de ações discreta no hover — sem card não há
+                            canto pra pendurar botão; a linha fica abaixo. */}
+                        <div className="flex items-center gap-2 mt-1.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+                          <button
+                            type="button"
+                            onClick={() => handleCopy(m.content, i)}
+                            aria-label={t('managerAI.copyMessage', 'Copiar mensagem')}
+                            className="flex items-center gap-1 text-[11px] text-muted-stone hover:text-deep-charcoal transition-colors"
+                          >
+                            <ThiingsIcon name={isCopied ? 'check' : 'copy'} pxSize={11} />
+                            {isCopied ? t('managerAI.copied', 'Copiado') : t('managerAI.copy', 'Copiar')}
+                          </button>
+                          {ts && <span className="text-[10px] text-muted-stone/70">{ts}</span>}
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="px-5 py-3.5 text-[15px] break-words leading-relaxed animate-slide-up motion-reduce:animate-none bg-gradient-to-br from-burgundy to-burgundy-dark text-white shadow-glass-card rounded-[22px] rounded-br-lg">
+                          {m.content}
+                        </div>
+                        {ts && <span className="text-[10px] text-muted-stone/70 px-1.5">{ts}</span>}
+                      </>
                     )}
                   </div>
                 </div>
@@ -600,7 +602,7 @@ export default function ManagerAIChatPage() {
           {sendMutation.isPending && streamingReply && (
             <div className="flex justify-start">
               <div className="mr-2.5 mt-1">{avatar('w-8 h-8', 'w-[18px] h-[18px]')}</div>
-              <div className="max-w-[78%] px-5 py-3.5 text-[15px] break-words leading-relaxed bg-glass-card backdrop-blur-glass-card border border-glass-border shadow-glass-card text-deep-charcoal rounded-[22px] rounded-bl-lg">
+              <div className="max-w-[88%] sm:max-w-[82%] pt-1 text-[15px] break-words leading-relaxed text-deep-charcoal">
                 <ManagerRichMessage content={streamingReply} />
                 {/* Blinking cursor while streaming — tactile signal that
                     more tokens are coming. Hidden by reduced-motion. */}
