@@ -158,6 +158,10 @@ export default function Sidebar() {
       <aside
         className={`
           fixed top-0 left-0 h-full bg-deep-charcoal z-40
+          lg:top-4 lg:bottom-4 lg:left-4 lg:h-auto
+          lg:rounded-[26px] lg:bg-deep-charcoal/90 lg:backdrop-blur-xl
+          lg:border lg:border-white/10 lg:shadow-[0_8px_32px_rgba(28,25,23,0.25)]
+          lg:overflow-hidden
           transition-all duration-300 ease-in-out
           ${isCollapsed ? 'w-20' : 'w-[260px]'}
           ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}

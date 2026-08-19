@@ -335,7 +335,7 @@ export default function Dashboard() {
                   return `${t(greetingKey, fallback)} 👋`;
                 })()}
               </p>
-              <h1 className="font-sans text-xl sm:text-2xl font-semibold tracking-tight text-deep-charcoal">
+              <h1 className="font-serif text-3xl sm:text-4xl tracking-tight text-deep-charcoal">
                 {t('dashboard.overview')}
               </h1>
               <div className="flex items-center gap-2 mt-1 flex-wrap">
@@ -362,34 +362,36 @@ export default function Dashboard() {
           </header>
 
           {/* ---- Metrics Row ---- */}
+          {/* Liquid Glass v2: métricas SEM card — faixa direta no canvas,
+              delimitada por fios de tinta, números em serif. */}
           {isLoading ? (
-            <section className="glass-panel grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-12 p-6 sm:p-8 mb-8 sm:mb-12">
+            <section className="grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-12 border-y hairline py-7 sm:py-9 mb-10 sm:mb-16">
               {Array.from({ length: 4 }).map((_, i) => (
                 <div key={i}>
-                  <div className="h-7 w-16 bg-border-gray rounded animate-pulse mb-3" />
+                  <div className="h-9 w-16 bg-border-gray rounded animate-pulse mb-3" />
                   <div className="h-3 w-20 bg-border-gray rounded animate-pulse" />
                 </div>
               ))}
             </section>
           ) : (
-            <section className="glass-panel grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-12 p-6 sm:p-8 mb-8 sm:mb-12">
+            <section className="grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-12 border-y hairline py-7 sm:py-9 mb-10 sm:mb-16">
               {/* Reservations */}
               <div>
-                <p className="font-mono text-[22px] sm:text-[28px] font-medium leading-none text-deep-charcoal">{todayReservations.length}</p>
+                <p className="font-serif text-[30px] sm:text-[38px] leading-none text-deep-charcoal tabular-nums">{todayReservations.length}</p>
                 <p className="text-[12px] uppercase tracking-[0.05em] text-muted-stone mt-3">
                   {t('dashboard.stats.reservations', 'Reservations')}
                 </p>
               </div>
               {/* Guests Expected */}
               <div>
-                <p className="font-mono text-[22px] sm:text-[28px] font-medium leading-none text-deep-charcoal">{guestsExpected}</p>
+                <p className="font-serif text-[30px] sm:text-[38px] leading-none text-deep-charcoal tabular-nums">{guestsExpected}</p>
                 <p className="text-[12px] uppercase tracking-[0.05em] text-muted-stone mt-3">
                   {t('dashboard.stats.guests', 'Guests')}
                 </p>
               </div>
               {/* Capacity */}
               <div>
-                <p className="font-mono text-[22px] sm:text-[28px] font-medium leading-none text-deep-charcoal">
+                <p className="font-serif text-[30px] sm:text-[38px] leading-none text-deep-charcoal tabular-nums">
                   {occupiedTables}/{totalTables}
                 </p>
                 <p className="text-[12px] uppercase tracking-[0.05em] text-muted-stone mt-3">
@@ -398,7 +400,7 @@ export default function Dashboard() {
               </div>
               {/* Waitlist */}
               <div>
-                <p className="font-mono text-[22px] sm:text-[28px] font-medium leading-none text-deep-charcoal">{waitlistCount}</p>
+                <p className="font-serif text-[30px] sm:text-[38px] leading-none text-deep-charcoal tabular-nums">{waitlistCount}</p>
                 <p className="text-[12px] uppercase tracking-[0.05em] text-muted-stone mt-3">
                   {t('waitlist.title', 'Waitlist')}
                 </p>
@@ -419,7 +421,7 @@ export default function Dashboard() {
           )}
 
           {/* ---- Reservations Section ---- */}
-          <section className="glass-panel mb-8 sm:mb-16">
+          <section className="mb-12 sm:mb-20">
             <ReservationsList
               todayReservations={todayReservations}
               tomorrowReservations={tomorrowReservations}
@@ -452,11 +454,11 @@ export default function Dashboard() {
 
             {/* Right: Waitlist + Active Parties */}
             <div className="lg:col-span-5 space-y-6 sm:space-y-8">
-              <section className="glass-panel">
+              <section className="border-t hairline pt-2">
                 <WaitlistPanel onSeatNow={handleSeatFromWaitlist} />
               </section>
 
-              <section className="glass-panel">
+              <section className="border-t hairline pt-2">
                 <ActivePartiesPanel
                   parties={activeParties}
                   onCompleteService={handleCompleteService}
