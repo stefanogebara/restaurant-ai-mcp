@@ -36,9 +36,9 @@ export default function StatsBar({
 
   if (isLoading) {
     return (
-      <div role="status" aria-label={t('common.loading')} className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+      <div role="status" aria-label={t('common.loading')} className="border-y hairline py-6 sm:py-8 grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-10">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="glass-card p-5">
+          <div key={i}>
             <div className="h-3 w-20 bg-border-gray rounded-full animate-pulse mb-3" />
             <div className="h-9 w-16 bg-border-gray rounded-lg animate-pulse mb-2" />
             <div className="h-3 w-24 bg-soft-gray rounded animate-pulse mb-3" />
@@ -50,7 +50,8 @@ export default function StatsBar({
   }
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">
+    // Liquid Glass v2: métricas SEM card — faixa no canvas entre fios de tinta.
+    <div className="border-y hairline py-6 sm:py-8 grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-10">
       {/* Today's Reservations */}
       <StatCard
         label={t('dashboard.stats.reservations')}
@@ -141,31 +142,33 @@ function StatCard({ label, value, valueSuffix, valueColor, change, changeColor, 
   useEffect(() => { const t = setTimeout(() => setMounted(true), 50); return () => clearTimeout(t); }, []);
 
   return (
-    <div className="glass-card p-5 flex flex-col transition-all duration-300 opacity-0 translate-y-2 animate-[fadeInUp_0.4s_ease-out_forwards]">
+    // Liquid Glass v2: tile sem caixa — rótulo uppercase, número em serif 400,
+    // tokens em vez de stone-* cru. A faixa externa dá a moldura de tinta.
+    <div className="flex flex-col transition-all duration-300 opacity-0 translate-y-2 animate-[fadeInUp_0.4s_ease-out_forwards]">
       {icon && (
-        <div className="mb-3">
+        <div className="mb-2.5">
           {icon}
         </div>
       )}
-      <div className="text-[10px] font-bold text-stone-500 uppercase tracking-widest mb-4">
+      <div className="text-[11px] font-medium text-muted-stone uppercase tracking-[0.14em] mb-3">
         {label}
       </div>
-      <div className={`font-serif text-3xl font-extrabold tracking-tight leading-none mb-2 ${valueColor || 'text-stone-900'}`}>
+      <div className={`font-serif text-[30px] sm:text-[36px] tracking-tight leading-none mb-2 tabular-nums ${valueColor || 'text-deep-charcoal'}`}>
         {value}
         {valueSuffix && (
-          <span className="text-base text-stone-400 font-normal font-sans">{valueSuffix}</span>
+          <span className="text-base text-muted-stone font-sans">{valueSuffix}</span>
         )}
       </div>
       {change && (
-        <div className={`flex items-center gap-1.5 text-[11px] font-medium mb-4 ${changeColor}`}>
+        <div className={`flex items-center gap-1.5 text-[11px] font-medium mb-3 ${changeColor}`}>
           <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60" />
           {change}
         </div>
       )}
-      {/* mt-auto keeps the card content bottom-aligned even when the bar
-          isn't rendered, so the row of cards stays the same height. */}
+      {/* mt-auto keeps the tile content bottom-aligned even when the bar
+          isn't rendered, so the row stays the same height. */}
       {barPercent !== undefined ? (
-        <div className="w-full bg-stone-100 h-1 rounded-full overflow-hidden mt-auto">
+        <div className="w-full bg-[rgba(28,25,23,0.06)] h-1 rounded-full overflow-hidden mt-auto">
           <div
             className="h-full rounded-full transition-all duration-700 ease-out"
             style={{ width: mounted ? `${barPercent}%` : '0%', backgroundColor: barColor }}

@@ -183,7 +183,7 @@ export default function TableConfigPage() {
     <div className="bg-white p-6 lg:p-8">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-bold text-deep-charcoal tracking-tight">
+        <h1 className="font-serif text-3xl sm:text-4xl text-deep-charcoal tracking-tight">
           {t('settings.tableConfig')} <span className="font-light text-warm-stone">/ {tables.length} {t('settings.tablesCount')}</span>
         </h1>
         <button
