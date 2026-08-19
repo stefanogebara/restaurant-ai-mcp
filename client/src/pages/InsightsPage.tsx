@@ -138,7 +138,7 @@ export default function InsightsPage() {
             <div className="w-8 h-8 rounded-xl bg-burgundy/10 flex items-center justify-center">
               <ThiingsIcon name="star" pxSize={16} className="text-burgundy" />
             </div>
-            <h1 className="text-2xl font-bold text-[#111827] tracking-tight">
+            <h1 className="font-serif text-3xl sm:text-4xl text-deep-charcoal tracking-tight">
               {t('insights.pageTitle', 'Insights')}
             </h1>
           </div>

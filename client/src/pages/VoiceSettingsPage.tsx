@@ -350,7 +350,7 @@ export default function VoiceSettingsPage() {
     <DashboardLayout>
       <div className="p-6 lg:p-8 max-w-5xl">
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-2xl font-bold text-deep-charcoal tracking-tight">
+          <h1 className="font-serif text-3xl sm:text-4xl text-deep-charcoal tracking-tight">
             {t('navigation.voiceAgent')} <span className="font-light text-warm-stone">/ {t('common.settings')}</span>
           </h1>
           <div className="flex flex-col items-end gap-1">

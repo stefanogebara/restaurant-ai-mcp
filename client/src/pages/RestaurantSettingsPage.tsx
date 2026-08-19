@@ -273,7 +273,7 @@ export default function RestaurantSettingsPage() {
     <DashboardLayout>
       <div className="p-4 sm:p-6 lg:p-10 max-w-3xl mx-auto mt-14 sm:mt-0 pb-24 sm:pb-10 overflow-x-hidden">
         <div className="pl-10 lg:pl-0 mb-8">
-          <h1 className="text-2xl font-bold text-deep-charcoal tracking-tight">
+          <h1 className="font-serif text-3xl sm:text-4xl text-deep-charcoal tracking-tight">
             {t('settings.title', 'Restaurant Settings')}
           </h1>
           <p className="text-sm text-muted-stone mt-0.5">

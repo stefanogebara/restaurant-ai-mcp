@@ -182,7 +182,7 @@ export default function CallTrackingDashboard() {
 
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pl-12 sm:pl-0">
-            <h1 className="text-2xl font-bold text-deep-charcoal tracking-tight">
+            <h1 className="font-serif text-3xl sm:text-4xl text-deep-charcoal tracking-tight">
               {t('callTracking.title')}
             </h1>
             <div className="flex items-center gap-2.5">
