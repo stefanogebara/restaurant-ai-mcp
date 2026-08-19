@@ -1,5 +1,6 @@
 import { Component, type ReactNode } from 'react';
 import { Sentry } from '../../lib/sentry';
+import { attemptChunkReload } from '../../utils/lazyRetry';
 import ThiingsIcon from './ThiingsIcon';
 
 interface Props {
@@ -7,6 +8,13 @@ interface Props {
   fallback?: ReactNode;
   /** If true, silently hide the component on error instead of showing an error UI */
   silent?: boolean;
+  /**
+   * When this value changes (e.g. route pathname), a boundary showing an
+   * error resets and re-renders its children. Without it, one crashed page
+   * left the boundary stuck on the fallback forever — every subsequent
+   * sidebar click appeared to do nothing ("pages stop opening").
+   */
+  resetKey?: unknown;
 }
 
 interface State {
@@ -46,14 +54,27 @@ export default class ErrorBoundary extends Component<Props, State> {
     Sentry.captureException(error, { extra: { componentStack: info.componentStack } });
 
     // Auto-retry for transient chunk load failures
-    if (isChunkLoadError(error) && this.state.retryCount < MAX_AUTO_RETRIES) {
-      this.retryTimer = setTimeout(() => {
-        this.setState((prev) => ({
-          hasError: false,
-          error: null,
-          retryCount: prev.retryCount + 1,
-        }));
-      }, 1500);
+    if (isChunkLoadError(error)) {
+      if (this.state.retryCount < MAX_AUTO_RETRIES) {
+        this.retryTimer = setTimeout(() => {
+          this.setState((prev) => ({
+            hasError: false,
+            error: null,
+            retryCount: prev.retryCount + 1,
+          }));
+        }, 1500);
+      } else {
+        // React.lazy caches a rejected import permanently — re-rendering
+        // can never fix a poisoned chunk. Only fresh HTML (new chunk
+        // hashes) recovers, so force a reload, throttled against loops.
+        attemptChunkReload();
+      }
+    }
+  }
+
+  componentDidUpdate(prevProps: Props) {
+    if (this.state.hasError && prevProps.resetKey !== this.props.resetKey) {
+      this.setState({ hasError: false, error: null, retryCount: 0 });
     }
   }
 
