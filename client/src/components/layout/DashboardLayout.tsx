@@ -18,7 +18,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <div className="min-h-screen flex">
       <Sidebar />
-      <main className={`flex-1 min-w-0 overflow-x-hidden transition-all duration-300 pb-16 lg:pb-0 ${isCollapsed ? 'lg:ml-20' : 'lg:ml-[260px]'}`}>
+      {/* Liquid Glass v2: a sidebar flutua destacada (top/left 16px), então a
+          margem do conteúdo soma o deslocamento da cápsula. */}
+      <main className={`flex-1 min-w-0 overflow-x-hidden transition-all duration-300 pb-16 lg:pb-0 ${isCollapsed ? 'lg:ml-24' : 'lg:ml-[276px]'}`}>
         {children}
       </main>
     </div>

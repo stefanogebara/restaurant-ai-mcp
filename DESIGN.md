@@ -237,6 +237,39 @@ When this file changes, update:
 
 ---
 
+## Liquid Glass v2 (2026-08-18)
+
+Evolução do Warm Glass, estreada na página do Manager AI e estendida à
+plataforma. Três princípios, nesta ordem:
+
+1. **Vidro é para objetos, não para conteúdo.** Cápsulas de vidro flutuantes
+   (destacadas das bordas, raio 24–28 px, máscara de gradiente onde o conteúdo
+   rola por baixo) servem a: sidebar, headers de página, composer/inputs de
+   ação, gráficos, modais e controles. Prosa, listas e métricas vivem DIRETO
+   no canvas — separadas por fio de tinta (`.hairline`, 6% de tinta) e
+   espaçamento, nunca por caixa. Um card só se justifica quando agrupa um
+   objeto interativo denso (planta de mesas, formulário, gráfico).
+2. **Espaçamento faz o trabalho da borda.** Seções: `mb-12 sm:mb-20`; faixas
+   de métricas: `py-7 sm:py-9` entre fios de tinta; listas: linhas com
+   `py-4` + divisores hairline. Nunca compensar falta de caixa com borda.
+3. **Tipografia padronizada (o "body" do Manager AI):** corpo em DM Sans
+   `text-[15px]` sobre o canvas; rótulos uppercase 11–12 px `tracking-[0.14em]`
+   em muted-stone; números de destaque e títulos de página em Instrument
+   Serif 400 (30–38 px para métricas, `text-3xl sm:text-4xl` para h1) —
+   nunca `font-bold` no serif (a fonte não tem bold; o synthesis está
+   bloqueado). Nada de `stone-*` cru: tokens `deep-charcoal` / `muted-stone`.
+
+Utilities: `.liquid-capsule` (cápsula 0.78/blur 24/raio 24) e `.hairline`
+em `index.css`. A sidebar em desktop é a cápsula escura flutuante
+(`bg-deep-charcoal/90` + blur + raio 26, destacada 16 px das bordas);
+o conteúdo compensa com `lg:ml-[276px]` / colapsada `lg:ml-24`.
+
+Referência viva: `client/src/pages/ManagerAIChatPage.tsx` (cápsulas, máscara
+de rolagem, chain-of-thought, prosa sem card) e a faixa de métricas do
+`Dashboard.tsx`.
+
+---
+
 ## Rebrand changelog
 
 ### 2026-06-05 — Warm Glass v1 fully shipped
