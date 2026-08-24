@@ -5,7 +5,7 @@
  * Route: /host-dashboard/settings
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useRestaurantSettings, useUpdateRestaurantSettings } from '../hooks/useRestaurantSettings';
@@ -527,10 +527,15 @@ function Field({
   type?: string;
   placeholder?: string;
 }) {
+  // O <label> não tinha htmlFor e o input não tinha id: o rótulo era texto
+  // solto ao lado do campo, sem associação. Leitor de tela anunciava "edit
+  // text" sem dizer QUAL campo.
+  const id = useId();
   return (
     <div>
-      <label className="block text-xs font-medium text-muted-stone mb-1">{label}</label>
+      <label htmlFor={id} className="block text-xs font-medium text-muted-stone mb-1">{label}</label>
       <input
+        id={id}
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -581,10 +586,12 @@ function TimezoneSelect({ label, value, onChange, selectPlaceholder = '— Selec
     value && !COMMON_TIMEZONES.includes(value)
       ? [{ tz: value, label: value.replace(/_/g, ' ') }, ...TZ_OPTIONS]
       : TZ_OPTIONS;
+  const id = useId();
   return (
     <div>
-      <label className="block text-xs font-medium text-muted-stone mb-1">{label}</label>
+      <label htmlFor={id} className="block text-xs font-medium text-muted-stone mb-1">{label}</label>
       <select
+        id={id}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="w-full px-3 py-2 bg-soft-gray border border-glass-border-input rounded-xl text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
@@ -623,10 +630,12 @@ function CountrySelect({ label, value, onChange, selectPlaceholder = '— Select
     value && !COUNTRY_CODES.includes(value.toUpperCase())
       ? [{ code: value, label: value }, ...COUNTRY_OPTIONS]
       : COUNTRY_OPTIONS;
+  const id = useId();
   return (
     <div>
-      <label className="block text-xs font-medium text-muted-stone mb-1">{label}</label>
+      <label htmlFor={id} className="block text-xs font-medium text-muted-stone mb-1">{label}</label>
       <select
+        id={id}
         value={value.toUpperCase()}
         onChange={(e) => onChange(e.target.value)}
         className="w-full px-3 py-2 bg-soft-gray border border-glass-border-input rounded-xl text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
