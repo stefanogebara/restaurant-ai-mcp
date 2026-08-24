@@ -430,7 +430,8 @@
       "saveSettings": "Salvar Configurações de Feedback"
     },
     "embedWidgetTitle": "Widget de Reservas",
-    "embedWidgetDescription": "Cole este trecho em qualquer lugar do seu site para adicionar um botão de reserva."
+    "embedWidgetDescription": "Cole este trecho em qualquer lugar do seu site para adicionar um botão de reserva.",
+    "serviceMode": "Modo Serviço"
   },
   "bookingChannels": {
     "title": "Canais de Reserva",
@@ -3552,5 +3553,12 @@
     "confirm": "Confirmar",
     "restart": "Usar outro número",
     "activeNote": "Sua IA agora atende este número. Mensagens novas passam a chegar nele em até um minuto."
+  },
+  "tableTimeline": {
+    "title": "Essa mesa libera a tempo?",
+    "conflictPrefix": "Mesa",
+    "conflictNeeds": "precisa estar pronta às",
+    "conflictBlocked": "ocupada até",
+    "moreTables": "mesas com movimento fora da régua"
   }
 }

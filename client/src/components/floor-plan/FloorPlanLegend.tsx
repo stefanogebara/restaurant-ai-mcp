@@ -1,26 +1,18 @@
 import { useTranslation } from 'react-i18next';
-import { LEGEND_ITEMS } from './floorPlanConstants';
+import TableStatusLegend from '../host/TableStatusLegend';
 
+/**
+ * Editor legend = the dashboard legend (same swatches, same palette) plus the
+ * linked-tables affordance, which only the editor can create.
+ */
 export default function FloorPlanLegend() {
   const { t } = useTranslation();
   return (
     <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2.5">
-      {LEGEND_ITEMS.map(({ key, label, stroke, fill }) => (
-        <div key={key} className="flex items-center gap-2">
-          <span
-            className="w-4 h-4 rounded-lg border flex items-center justify-center"
-            style={{ borderColor: stroke, background: fill }}
-          >
-            <span className="w-1.5 h-1.5 rounded-full" style={{ background: stroke }} />
-          </span>
-          <span className="text-xs text-warm-stone font-medium">
-            {t(`floorPlan.legend${key.charAt(0).toUpperCase() + key.slice(1)}`, label)}
-          </span>
-        </div>
-      ))}
+      <TableStatusLegend />
 
       <div className="flex items-center gap-2 ml-auto">
-        <svg width="22" height="8" className="flex-shrink-0">
+        <svg width="22" height="8" className="flex-shrink-0" aria-hidden="true">
           <line x1="0" y1="4" x2="22" y2="4"
             stroke="#9F1239" strokeWidth="1.5" strokeDasharray="4,3" opacity="0.5" />
         </svg>

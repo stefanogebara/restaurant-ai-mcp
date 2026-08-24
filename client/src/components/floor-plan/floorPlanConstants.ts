@@ -1,4 +1,5 @@
 import type { Table, TableShape } from '../../types/host.types';
+import { getStatusStyle as getMesaStyle, type StatusStyle } from '../host/floorPlanHelpers';
 import { getTableSize as getTableGridSize } from '../../types/host.types';
 
 // ── Grid ─────────────────────────────────────────────────────────────────────
@@ -20,14 +21,16 @@ export const EDITOR_CSS = `
 
 // ── Status palette ────────────────────────────────────────────────────────────
 
-export const STATUS_STYLES: Record<string, {
-  fill: string; stroke: string; text: string; chairFill: string;
-}> = {
-  available: { fill: '#ECFDF5', stroke: '#9F1239', text: '#064E3B', chairFill: '#9F1239' },
-  occupied:  { fill: '#FFF1F2', stroke: '#E11D48', text: '#881337', chairFill: '#E11D48' },
-  reserved:  { fill: '#F5F3FF', stroke: '#7C3AED', text: '#3730A3', chairFill: '#7C3AED' },
-  cleaning:  { fill: '#FFFBEB', stroke: '#D97706', text: '#78350F', chairFill: '#D97706' },
-  default:   { fill: '#FAFAF9', stroke: '#A8A29E', text: '#57534E', chairFill: '#A8A29E' },
+// Derived from the ONE mesa palette in floorPlanHelpers — the editor and the
+// dashboard draw the same restaurant. Before this, the editor kept its own
+// copy (available emerald, reserved violet) so a host saw two different
+// colour languages for the same table depending on which screen they opened.
+export const STATUS_STYLES: Record<string, StatusStyle> = {
+  available: getMesaStyle('available'),
+  occupied:  getMesaStyle('occupied'),
+  reserved:  getMesaStyle('reserved'),
+  cleaning:  getMesaStyle('being cleaned'),
+  default:   getMesaStyle(''),
 };
 
 export const getStatusKey = (status: string): string => {
@@ -37,7 +40,7 @@ export const getStatusKey = (status: string): string => {
   return 'default';
 };
 
-export const getStatusStyle = (status: string) =>
+export const getStatusStyle = (status: string): StatusStyle =>
   STATUS_STYLES[getStatusKey(status)] ?? STATUS_STYLES.default;
 
 // ── Table sizing ──────────────────────────────────────────────────────────────
@@ -89,12 +92,3 @@ export function getShapeLabelKey(shape?: string | null): string {
   const key = SHAPE_I18N_KEY[(shape || 'round').toLowerCase()] ?? 'round';
   return `floorPlan.shape.${key}`;
 }
-
-// ── Legend items ──────────────────────────────────────────────────────────────
-
-export const LEGEND_ITEMS = [
-  { key: 'available', label: 'Available', stroke: '#9F1239', fill: '#ECFDF5' },
-  { key: 'occupied',  label: 'Occupied',  stroke: '#E11D48', fill: '#FFF1F2' },
-  { key: 'reserved',  label: 'Reserved',  stroke: '#7C3AED', fill: '#F5F3FF' },
-  { key: 'cleaning',  label: 'Cleaning',  stroke: '#D97706', fill: '#FFFBEB' },
-];

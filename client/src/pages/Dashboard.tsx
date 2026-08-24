@@ -23,6 +23,8 @@ import { useCompleteService } from '../hooks/useCompleteService';
 import { usePlanInfo } from '../hooks/useSubscription';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import TableLayoutPanel from '../components/dashboard/TableLayoutPanel';
+import TableTimeline from '../components/dashboard/TableTimeline';
+import { useServiceMode } from '../hooks/useServiceMode';
 import ReservationsList from '../components/dashboard/ReservationsList';
 import ActivePartiesPanel from '../components/dashboard/ActivePartiesPanel';
 import WaitlistPanel from '../components/host/WaitlistPanel';
@@ -183,6 +185,9 @@ export default function Dashboard() {
     setShowSeatModal(true);
   };
 
+  // ---- Modo Serviço (Palco à noite) ----
+  const { isNight, toggle: toggleServiceMode } = useServiceMode();
+
   // ---- Subscription / trial ----
   const { isTrial, trialEnd, isActive, status: subStatus } = usePlanInfo();
 
@@ -234,7 +239,7 @@ export default function Dashboard() {
 
   return (
     <DashboardLayout>
-      <div className="dashboard min-h-screen px-4 sm:px-6 lg:px-10 pt-6 sm:pt-10 pb-24 sm:pb-20">
+      <div className={`dashboard min-h-screen px-4 sm:px-6 lg:px-10 pt-6 sm:pt-10 pb-24 sm:pb-20${isNight ? ' service-mode' : ''}`}>
         <div className="max-w-[1240px]">
 
           {/* ---- Stripe Connect Adoption Nudge ---- */}
@@ -346,6 +351,24 @@ export default function Dashboard() {
               </div>
             </div>
             <div className="flex items-center gap-2 sm:gap-3 pl-12 lg:pl-0">
+              {/* Modo Serviço — automático às 18h, toggle manual aqui. O selo
+                  mostra POR QUE a tela escureceu; de dia é só o ícone de lua. */}
+              <button
+                type="button"
+                onClick={toggleServiceMode}
+                aria-pressed={isNight}
+                aria-label={t('dashboard.serviceMode', 'Modo Serviço')}
+                className={`inline-flex items-center gap-2 min-h-[36px] px-3 py-2 rounded-[100px] border text-[11px] font-mono uppercase tracking-[0.12em] transition-colors ${
+                  isNight
+                    ? 'border-white/20 text-white/70 hover:text-white'
+                    : 'border-border-gray text-muted-stone hover:text-deep-charcoal hover:bg-soft-gray'
+                }`}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+                  <path d="M21 13.2A8.5 8.5 0 0 1 10.8 3a8.5 8.5 0 1 0 10.2 10.2z" />
+                </svg>
+                {isNight && <span>{t('dashboard.serviceMode', 'Modo Serviço')}</span>}
+              </button>
               <button
                 onClick={() => navigate('/host-dashboard/reports')}
                 className="px-3 sm:px-4 py-2 border border-border-gray rounded-lg text-[12px] sm:text-[13px] font-medium bg-transparent hover:bg-soft-gray transition-colors text-deep-charcoal"
@@ -420,6 +443,31 @@ export default function Dashboard() {
             </div>
           )}
 
+          {/* ---- O Palco: a planta do salão é a estrela da página ----
+              Redesign 2026-08-24 (candidato "Palco + Modo Serviço" do canvas):
+              o salão sobe para logo abaixo das métricas, em largura total,
+              como único objeto de vidro da página. Mesas ilustradas (pratos =
+              convidados sentados); à noite as ocupadas brilham. */}
+          <section className="glass-panel mb-8 sm:mb-10">
+            <TableLayoutPanel
+              tables={tables}
+              activeParties={activeParties}
+              onRefresh={refetch}
+              isLoading={isLoading}
+              night={isNight}
+            />
+          </section>
+
+          {/* ---- A régua: essa mesa libera a tempo? ---- */}
+          <div className="mb-12 sm:mb-20">
+            <TableTimeline
+              tables={tables}
+              activeParties={activeParties}
+              todayReservations={todayReservations}
+              night={isNight}
+            />
+          </div>
+
           {/* ---- Reservations Section ---- */}
           <section className="mb-12 sm:mb-20">
             <ReservationsList
@@ -440,32 +488,19 @@ export default function Dashboard() {
             />
           </section>
 
-          {/* ---- Two-Column Split: Floor Plan (col-span-7) + Waitlist/Active (col-span-5) ---- */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8">
-            {/* Left: Floor Plan / Table Layout */}
-            <section className="glass-panel lg:col-span-7">
-              <TableLayoutPanel
-                tables={tables}
-                activeParties={activeParties}
-                onRefresh={refetch}
+          {/* ---- Fila + Na casa agora — listas no canvas, sem cards ---- */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+            <section className="border-t hairline pt-2">
+              <WaitlistPanel onSeatNow={handleSeatFromWaitlist} />
+            </section>
+
+            <section className="border-t hairline pt-2">
+              <ActivePartiesPanel
+                parties={activeParties}
+                onCompleteService={handleCompleteService}
                 isLoading={isLoading}
               />
             </section>
-
-            {/* Right: Waitlist + Active Parties */}
-            <div className="lg:col-span-5 space-y-6 sm:space-y-8">
-              <section className="border-t hairline pt-2">
-                <WaitlistPanel onSeatNow={handleSeatFromWaitlist} />
-              </section>
-
-              <section className="border-t hairline pt-2">
-                <ActivePartiesPanel
-                  parties={activeParties}
-                  onCompleteService={handleCompleteService}
-                  isLoading={isLoading}
-                />
-              </section>
-            </div>
           </div>
 
           <div className="mt-10 sm:mt-16 mb-8 sm:mb-12" />

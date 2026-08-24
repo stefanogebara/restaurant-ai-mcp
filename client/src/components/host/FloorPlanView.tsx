@@ -10,6 +10,7 @@ import {
   hasPositionData,
   autoLayoutTables,
   renderChairs,
+  renderPlates,
   type PartyInfo,
 } from './floorPlanHelpers';
 
@@ -18,6 +19,8 @@ interface FloorPlanViewProps {
   activeParties?: ActiveParty[];
   onTableClick?: (table: Table) => void;
   compact?: boolean;
+  /** Modo Serviço — salão escuro, mesas ocupadas brilham. */
+  night?: boolean;
 }
 
 export default function FloorPlanView({
@@ -25,6 +28,7 @@ export default function FloorPlanView({
   activeParties = [],
   onTableClick,
   compact = false,
+  night = false,
 }: FloorPlanViewProps) {
   const { t } = useTranslation();
   const [hoveredId, setHoveredId] = useState<string | null>(null);
@@ -116,10 +120,12 @@ export default function FloorPlanView({
         const svgH = useAuto ? layout!.totalHeight : manualBounds.height;
         const hoveredPos = positions.find(p => p.table.id === hoveredId);
 
+        // Warm Glass: zonas externas em âmbar, internas em stone — nada
+        // fora da paleta (o arco-íris antigo era herança do tema Nordic).
         const locationColors: Record<string, string> = {
-          'Indoor': '#6366f1', 'Patio': '#10b981', 'Bar': '#f59e0b', 'Main': '#8b5cf6',
+          'Indoor': '#706A65', 'Patio': '#D97706', 'Bar': '#9F1239', 'Main': '#706A65',
         };
-        const dotColor = locationColors[location] || '#6b7280';
+        const dotColor = locationColors[location] || '#706A65';
 
         return (
           <div key={location}>
@@ -133,8 +139,8 @@ export default function FloorPlanView({
             </div>
 
             <div
-              className="rounded-2xl overflow-hidden border border-border-gray bg-white"
-              style={{ maxWidth: '100%', overflowX: 'auto' }}
+              className={`rounded-2xl overflow-hidden border ${night ? 'border-white/10' : 'border-border-gray bg-white'}`}
+              style={{ maxWidth: '100%', overflowX: 'auto', ...(night ? { backgroundColor: '#221E1B' } : {}) }}
             >
               <svg
                 width="100%"
@@ -155,6 +161,10 @@ export default function FloorPlanView({
                   <filter id={`fpShadHov-${location}`} x="-12%" y="-12%" width="124%" height="136%">
                     <feDropShadow dx="0" dy="3" stdDeviation="6" floodColor="#7A6E65" floodOpacity="0.15" />
                   </filter>
+                  {/* Modo Serviço: mesas ocupadas brilham no salão escuro */}
+                  <filter id={`fpGlow-${location}`} x="-40%" y="-40%" width="180%" height="180%">
+                    <feDropShadow dx="0" dy="0" stdDeviation="9" floodColor="#9F1239" floodOpacity="0.5" />
+                  </filter>
                   {positions.map(({ table }) => (
                     <radialGradient key={`rg-${table.id}`} id={`rg-${table.id}`} cx="40%" cy="35%" r="65%">
                       <stop offset="0%" stopColor="white" stopOpacity="0.35" />
@@ -172,9 +182,9 @@ export default function FloorPlanView({
                   </style>
                 </defs>
 
-                <rect width="100%" height="100%" fill="#F8F5F0" />
-                <rect width="100%" height="100%" fill={`url(#fpGrid-${location})`} />
-                <rect width="100%" height="100%" fill={`url(#fpDots-${location})`} />
+                <rect width="100%" height="100%" fill={night ? '#221E1B' : '#F8F5F0'} />
+                {!night && <rect width="100%" height="100%" fill={`url(#fpGrid-${location})`} />}
+                <rect width="100%" height="100%" fill={`url(#fpDots-${location})`} opacity={night ? 0.35 : 1} />
 
                 {/* Joinable connector lines */}
                 {(() => {
@@ -204,7 +214,7 @@ export default function FloorPlanView({
 
                 {/* Tables */}
                 {positions.map(({ table, x, y, w, h }) => {
-                  const st = getStatusStyle(table.status);
+                  const st = getStatusStyle(table.status, night);
                   const shape = table.shape?.toLowerCase() || 'round';
                   const isRound = shape === 'round' || shape === 'circle';
                   const cx = x + w / 2;
@@ -213,6 +223,9 @@ export default function FloorPlanView({
                   const isHovered = table.id === hoveredId;
                   const isOccupied = table.status?.toLowerCase() === 'occupied';
                   const ringR = Math.max(w, h) / 2 + 11;
+                  const glassFilter = night
+                    ? (isOccupied ? `url(#fpGlow-${location})` : undefined)
+                    : (isHovered ? `url(#fpShadHov-${location})` : `url(#fpShad-${location})`);
 
                   return (
                     <g
@@ -221,7 +234,7 @@ export default function FloorPlanView({
                       onClick={() => onTableClick?.(table)}
                       onMouseEnter={() => setHoveredId(table.id)}
                       onMouseLeave={() => setHoveredId(null)}
-                      filter={isHovered ? `url(#fpShadHov-${location})` : `url(#fpShad-${location})`}
+                      filter={glassFilter}
                     >
                       {isOccupied && party && (
                         <FloorPlanProgressRing cx={cx} cy={cy} radius={ringR} party={party} />
@@ -231,54 +244,61 @@ export default function FloorPlanView({
 
                       {isRound ? (
                         <>
-                          <circle cx={cx} cy={cy} r={w / 2} fill={st.fill} stroke={st.stroke} strokeWidth={2} />
-                          <circle cx={cx} cy={cy} r={w / 2} fill={`url(#rg-${table.id})`} />
-                          <circle cx={cx + w / 2 * 0.68} cy={cy + w / 2 * 0.68} r={5} fill={st.stroke} />
+                          <circle cx={cx} cy={cy} r={w / 2} fill={st.fill} stroke={st.stroke} strokeWidth={2} strokeDasharray={st.dash} />
+                          {!isOccupied && <circle cx={cx} cy={cy} r={w / 2} fill={`url(#rg-${table.id})`} />}
                         </>
                       ) : shape === 'booth' ? (
                         <>
-                          <rect x={x} y={y} width={w} height={h} rx={13} fill={st.fill} stroke={st.stroke} strokeWidth={2} />
-                          <rect x={x + 3} y={y + 3} width={w - 6} height={h / 3} rx={7} fill="white" opacity={0.25} />
-                          <rect x={x + 4} y={y + h - 8} width={w - 8} height={7} rx={4} fill={st.stroke} opacity={0.08} />
-                          <circle cx={x + w - 6} cy={y + h - 6} r={5} fill={st.stroke} />
+                          <rect x={x} y={y} width={w} height={h} rx={13} fill={st.fill} stroke={st.stroke} strokeWidth={2} strokeDasharray={st.dash} />
+                          {!isOccupied && <rect x={x + 3} y={y + 3} width={w - 6} height={h / 3} rx={7} fill="white" opacity={0.25} />}
                         </>
                       ) : (
                         <>
-                          <rect x={x} y={y} width={w} height={h} rx={10} fill={st.fill} stroke={st.stroke} strokeWidth={2} />
-                          <rect x={x + 3} y={y + 3} width={w - 6} height={h / 3} rx={7} fill="white" opacity={0.25} />
-                          <circle cx={x + w - 6} cy={y + h - 6} r={5} fill={st.stroke} />
+                          <rect x={x} y={y} width={w} height={h} rx={12} fill={st.fill} stroke={st.stroke} strokeWidth={2} strokeDasharray={st.dash} />
+                          {!isOccupied && <rect x={x + 3} y={y + 3} width={w - 6} height={h / 3} rx={7} fill="white" opacity={0.25} />}
                         </>
                       )}
 
-                      <text x={cx} y={isOccupied && party ? cy - 7 : cy - 2}
+                      {/* Pratos = convidados sentados. É a diferença entre um
+                          diagrama e um salão de verdade. */}
+                      {isOccupied && party &&
+                        renderPlates(cx, cy, w, h, Math.min(party.partySize, table.capacity || party.partySize), shape, st.plateFill)}
+
+                      <text x={cx} y={isOccupied && party ? cy - 6 : cy - 2}
                         textAnchor="middle" dominantBaseline="middle"
-                        fill={st.text} fontSize={19} fontWeight={700}
-                        fontFamily="Inter,-apple-system,sans-serif">
+                        fill={st.text} fontSize={20} fontWeight={400}
+                        fontFamily="'Instrument Serif',Georgia,serif">
                         {table.table_number}
                       </text>
 
-                      <text x={cx} y={isOccupied && party ? cy + 11 : cy + 14}
+                      <text x={cx} y={isOccupied && party ? cy + 12 : cy + 14}
                         textAnchor="middle" dominantBaseline="middle"
-                        fill={st.text} fontSize={11} opacity={0.55}
-                        fontFamily="Inter,-apple-system,sans-serif">
+                        fill={st.text} fontSize={11} opacity={isOccupied ? 0.85 : 0.55}
+                        fontFamily="'DM Sans',Inter,-apple-system,sans-serif">
                         {isOccupied && party
                           ? party.guestName.split(' ')[0].substring(0, 9)
                           : `${table.capacity} ${t('floorPlan.seats', 'seats')}`}
                       </text>
 
                       {party?.isVIP && (
-                        <g>
-                          <circle cx={x + w - 1} cy={y + 1} r={9} fill="#CA8A04" />
-                          <text x={x + w - 1} y={y + 2.5} textAnchor="middle" dominantBaseline="middle"
-                            fontSize={9} fontWeight={800} fill="#fff">V</text>
+                        <g transform={`translate(${x + w - 1}, ${y + 1})`}>
+                          <circle r={9} fill="#B45309" />
+                          <path
+                            transform="translate(-5.5, -5.5) scale(0.46)"
+                            d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.3 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8z"
+                            fill="#fff"
+                          />
                         </g>
                       )}
 
                       {table.is_joinable && table.joinable_with?.length > 0 && (
-                        <g>
-                          <circle cx={x + 1} cy={y + 1} r={9} fill="#9F1239" opacity={0.9} />
-                          <text x={x + 1} y={y + 2.5} textAnchor="middle" dominantBaseline="middle"
-                            fontSize={10} fill="#fff">&#x26D3;</text>
+                        <g transform={`translate(${x + 1}, ${y + 1})`}>
+                          <circle r={9} fill="#9F1239" opacity={0.9} />
+                          <path
+                            transform="translate(-5, -5) scale(0.42)"
+                            d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71 M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"
+                            fill="none" stroke="#fff" strokeWidth={2.4} strokeLinecap="round"
+                          />
                         </g>
                       )}
 

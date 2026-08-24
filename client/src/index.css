@@ -123,6 +123,36 @@
   }
   .hairline { border-color: rgba(28, 25, 23, 0.06); }
 
+  /* ------------------------------------------------------------------
+     Modo Serviço (2026-08-24): a partir das 18h o painel escurece —
+     host trabalha em salão de luz baixa e tela branca ofusca. A classe
+     vive no root do Dashboard; os componentes novos recebem `night` por
+     prop, e esta camada re-tema os tokens Warm Glass dos componentes
+     existentes (listas, widgets) sem refatorá-los um a um.
+     ------------------------------------------------------------------ */
+  .service-mode {
+    background-color: #1C1917;
+    background-image:
+      radial-gradient(ellipse 65% 45% at 12% 18%, rgba(217, 119, 6, 0.10) 0%, transparent 60%),
+      radial-gradient(ellipse 55% 40% at 88% 22%, rgba(245, 158, 11, 0.07) 0%, transparent 60%),
+      radial-gradient(ellipse 75% 50% at 50% 95%, rgba(159, 18, 57, 0.16) 0%, transparent 65%);
+  }
+  .service-mode .text-deep-charcoal { color: #fafaf9; }
+  .service-mode .text-muted-stone,
+  .service-mode .text-stone-gray,
+  .service-mode .text-warm-stone { color: rgba(250, 250, 249, 0.60); }
+  .service-mode .hairline { border-color: rgba(250, 250, 249, 0.10); }
+  .service-mode .border-border-gray,
+  .service-mode .border-glass-border-dark { border-color: rgba(250, 250, 249, 0.12); }
+  .service-mode .bg-soft-gray { background-color: rgba(250, 250, 249, 0.07); }
+  .service-mode .bg-border-gray { background-color: rgba(250, 250, 249, 0.14); }
+  .service-mode .glass-panel {
+    background-color: rgba(250, 250, 249, 0.05);
+    border-color: rgba(250, 250, 249, 0.09);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.30);
+  }
+  .service-mode .hover\:bg-soft-gray:hover { background-color: rgba(250, 250, 249, 0.10); }
+
   /* Reduced-motion: the static blur stays (it's structural), only blur
      transitions are killed. The body gradient is naturally still anyway. */
   @media (prefers-reduced-motion: reduce) {
