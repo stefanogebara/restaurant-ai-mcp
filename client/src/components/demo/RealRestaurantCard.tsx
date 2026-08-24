@@ -51,6 +51,10 @@ function RestaurantHeroPhoto({ photoRef, alt }: { photoRef: string; alt: string 
 }
 
 export interface ScrapedRestaurantData {
+  /** Demo manual ("restaurante novo", F4): não há dados do Google — o painel
+   *  troca este card pelo "configurada por você". */
+  manual?: boolean;
+  vibe_tags?: string[];
   name?: string;
   address?: string | null;
   phone?: string | null;

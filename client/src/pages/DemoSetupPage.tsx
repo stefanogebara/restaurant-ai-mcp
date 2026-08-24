@@ -21,6 +21,7 @@ export default function DemoSetupPage() {
     restaurant_name: string;
     city: string;
     scraped_data: unknown;
+    manual?: { cuisine_type: string | null; open_time: string; close_time: string; vibe_tags: string[] };
   }) => {
     setIsSubmitting(true);
     setSubmitError(null);
@@ -38,8 +39,20 @@ export default function DemoSetupPage() {
         body: JSON.stringify({
           restaurant_name: data.restaurant_name,
           city: data.city,
-          cuisine_type: (data.scraped_data as Record<string, string> | null)?.cuisine_type ?? 'Restaurant',
+          cuisine_type:
+            data.manual?.cuisine_type ??
+            (data.scraped_data as Record<string, string> | null)?.cuisine_type ??
+            'Restaurant',
           scraped_data: data.scraped_data,
+          // Caminho "restaurante novo" (F4): horários e vibe configurados
+          // pelo dono viram os dados da recepcionista.
+          ...(data.manual
+            ? {
+                open_time: data.manual.open_time,
+                close_time: data.manual.close_time,
+                vibe_tags: data.manual.vibe_tags,
+              }
+            : {}),
         }),
       });
       const result = await response.json();

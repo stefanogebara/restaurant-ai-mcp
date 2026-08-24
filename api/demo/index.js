@@ -201,6 +201,7 @@ async function handleCreate(req, res) {
     cancellation_policy,
     custom_policy,
     scraped_data, // Optional: Google Places data from /api/scrape-restaurant
+    vibe_tags,    // Optional: manual path (F4) — owner-picked vibe chips
   } = req.body || {};
 
   // With scraped_data, only restaurant_name + city + contact_email are required
@@ -395,6 +396,31 @@ async function handleCreate(req, res) {
     insertPayload.scraped_data = enrichedPayload.scraped_data;
     if (enrichedPayload.ai_personality) {
       insertPayload.ai_personality = enrichedPayload.ai_personality;
+    }
+  } else {
+    // Demo manual — "restaurante novo" (F4). Sem Google, o dado real é o que
+    // o dono acabou de configurar: cozinha, horários e vibe. Vai para
+    // scraped_data com manual:true para (a) a recepcionista do demo-chat
+    // responder com ISSO em vez de generalidades e (b) o painel saber que não
+    // existe espelho do Google para mostrar. Tags são allowlist-por-forma:
+    // minúsculas, letras/hífen/espaço, no máximo 6 — o derive só pontua as
+    // conhecidas, o resto é inerte no prompt.
+    const sanitizedVibes = (Array.isArray(vibe_tags) ? vibe_tags : [])
+      .filter((v) => typeof v === 'string' && /^[a-z][a-z\s-]{0,29}$/.test(v.trim().toLowerCase()))
+      .map((v) => v.trim().toLowerCase())
+      .slice(0, 6);
+    insertPayload.scraped_data = {
+      manual: true,
+      cuisine_type: effectiveCuisine,
+      vibe_tags: sanitizedVibes,
+      business_hours,
+    };
+    if (sanitizedVibes.length) {
+      const { deriveBestPresetFromVibes, PERSONA_PRESETS } = require('../_lib/vibe-to-persona-preset');
+      const preset = deriveBestPresetFromVibes(sanitizedVibes);
+      if (preset) {
+        insertPayload.ai_personality = { ...PERSONA_PRESETS[preset], _derived_from_preset: preset };
+      }
     }
   }
 

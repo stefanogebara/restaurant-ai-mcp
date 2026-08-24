@@ -1,7 +1,7 @@
 # Demo em Conversa — a IA atende na frente do dono
 
 **Data:** 2026-08-24 · **Sucede:** `.claude/plans/2026-07-10-demo-experience/` ("O Espelho")
-**Status:** EM EXECUÇÃO — F0 (#37), F1 (#38) e F2 em PR. D1/D2 seguem abertas (gateiam F3/F5).
+**Status:** EM EXECUÇÃO — F0 (#37), F1 (#38), F2 (#39) e F4 em PR. D1/D2 resolvidas (seção 2).
 
 ---
 
@@ -49,7 +49,19 @@ CAPTURA (depois do aha) → WhatsApp do dono (IA manda mensagem real) ou e-mail
 
 ---
 
-## 2. Decisões que precisam do Stefano ANTES da Fase 3/5
+## 2. Decisões — RESOLVIDAS (delegadas pelo Stefano em 24/ago, "you decide")
+
+**D1 → resolvida:** superfícies self-serve unificam no que o billing entrega HOJE
+("14 dias grátis, sem cartão"), corrigindo os fallbacks "30-day". "2 meses por
+nossa conta" permanece como oferta de fechamento founder-led (plano 07-10, seção
+6) — prometer 2 meses num checkout que dá 14 dias seria mentira, e mudar termos
+de billing no Stripe não se faz sem o Stefano pedir explicitamente.
+
+**D2 → resolvida:** web-chat grátis como default; WhatsApp real como opt-in de
+alta intenção (rate limits demo_wa_* já capam o pior caso, inclusive teto
+global); e-mail como fallback.
+
+### Texto original das decisões (histórico)
 
 **D1 — Copy da oferta.** O plano 07-10 (seção 2) decidiu "2 meses por nossa conta",
 nunca "teste grátis". O funil shipado diz "14 dias grátis"/"Começar Teste Grátis" em
@@ -174,17 +186,17 @@ captura medida por `demo_contact_captured` (canal wa/email como propriedade).
 
 ### Fase 4 — Restaurante novo como primeira classe
 
-- [ ] 4.1 **Caminho "meu restaurante é novo"** (a partir de 1.3): 3 perguntas em um
+- [x] 4.1 **Caminho "meu restaurante é novo"** (a partir de 1.3): 3 perguntas em um
       passo — tipo de cozinha (chips), horário (dois selects), vibe (chips:
       romântico/familiar/descontraído/sofisticado). Copy: *"Restaurante novo? Sua
       recepcionista pode existir antes do seu Google."*
-- [ ] 4.2 Backend: `handleCreate` sem scrape aceita `{restaurant_name, city,
+- [x] 4.2 Backend: `handleCreate` sem scrape aceita `{restaurant_name, city,
       cuisine_type, vibe, business_hours}` sem `contact_name`/`contact_email`;
       `ai_personality` derivada do vibe (reusar `vibe-to-persona-preset.js`).
-- [ ] 4.3 `demo-chat` persona recepcionista com bloco de dados vindo dessas
+- [x] 4.3 `demo-chat` persona recepcionista com bloco de dados vindo dessas
       respostas (sem reviews): mesma conversa, mesmo payoff. A confirmação da IA
       menciona explicitamente o que o dono acabou de configurar.
-- [ ] 4.4 O demo desses restaurantes NÃO mostra wow card de Google (nada de espelho
+- [x] 4.4 O demo desses restaurantes NÃO mostra wow card de Google (nada de espelho
       vazio): no lugar, card *"Configurada por você agora — é assim que ela vai
       atender seu primeiro cliente."*
 

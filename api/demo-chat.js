@@ -184,9 +184,20 @@ module.exports = async function handler(req, res) {
   // nas avaliações, o resumo editorial. Tudo já está em scraped_data (o
   // enriquecimento grava .menu e .insights lá); aqui só se monta o bloco.
   const d = dadosDoBanco || {};
+  // Google entrega hours_text pronto; o demo manual (restaurante novo, F4)
+  // só tem o JSONB business_hours que o dono configurou — formata na hora.
+  const horariosManuais = d.business_hours && typeof d.business_hours === 'object'
+    ? Object.entries(d.business_hours)
+        .map(([dia, h]) =>
+          h && h.is_open !== false && h.open_time && h.close_time
+            ? `${dia}: ${h.open_time} – ${h.close_time}`
+            : null)
+        .filter(Boolean)
+        .join('\n')
+    : '';
   const horarios = Array.isArray(d.hours_text) && d.hours_text.length
     ? d.hours_text.join('\n')
-    : null;
+    : (horariosManuais || null);
   const pratos = [...new Set([
     ...(d.menu?.popular_dishes || []),
     ...(d.insights?.popular_dishes || []),
@@ -197,6 +208,9 @@ module.exports = async function handler(req, res) {
     d.editorial_summary ? `About: ${d.editorial_summary}` : null,
     pratos.length ? `Dishes guests praise: ${pratos.join(', ')}` : null,
     d.cuisine_type ? `Cuisine: ${d.cuisine_type}` : null,
+    Array.isArray(d.vibe_tags) && d.vibe_tags.length
+      ? `Vibe (described by the owner): ${d.vibe_tags.join(', ')}`
+      : null,
   ].filter(Boolean).join('\n\n');
 
   const ehRecepcionista = persona === 'recepcionista';

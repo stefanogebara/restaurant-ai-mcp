@@ -166,6 +166,39 @@ describe('POST ?action=create', () => {
     expect(body.demo_token).toBeDefined();
   });
 
+  test('manual path (restaurante novo, F4) stores owner-configured data + derives persona', async () => {
+    const req = {
+      method: 'POST',
+      query: { action: 'create' },
+      body: {
+        restaurant_name: 'Cantinho da Vó Zilda',
+        city: 'Presidente Prudente',
+        cuisine_type: 'Brazilian',
+        open_time: '18:00',
+        close_time: '23:00',
+        vibe_tags: ['romantic', 'upscale', 'INVÁLIDA!!', 42],
+      },
+      headers: {},
+    };
+    const res = makeRes();
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(201);
+
+    const insertPayload = mockInsert.mock.calls[0][0];
+    // scraped_data vira o "dado real" da recepcionista: manual:true + o que
+    // o dono configurou; tags fora da forma (maiúsculas/símbolos/números)
+    // caem fora no saneamento.
+    expect(insertPayload.scraped_data.manual).toBe(true);
+    expect(insertPayload.scraped_data.vibe_tags).toEqual(['romantic', 'upscale']);
+    expect(insertPayload.scraped_data.business_hours.monday).toEqual(
+      expect.objectContaining({ open_time: '18:00', close_time: '23:00' }),
+    );
+    // romantic+upscale pontuam fine_dining no vibe-to-persona-preset
+    expect(insertPayload.ai_personality).toEqual(
+      expect.objectContaining({ _derived_from_preset: 'fine_dining' }),
+    );
+  });
+
   test('provided contact_email is still validated and stored', async () => {
     const req = {
       method: 'POST',

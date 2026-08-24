@@ -431,7 +431,16 @@ export default function DemoDashboard() {
         {/* Real Google Places data card — only for users who came through
             /demo/setup with a real scrape. Falls back to preset info for
             users hitting hardcoded preset URLs (e.g. /demo?preset=italian). */}
-        {realScrapedData ? (
+        {realScrapedData?.manual ? (
+          /* Demo manual (restaurante novo, F4): nada de espelho vazio do
+             Google — o card celebra o que o dono acabou de configurar. */
+          <div className="glass-card p-5 border-l-4 border-burgundy">
+            <p className="text-[11px] font-semibold tracking-wide uppercase text-burgundy mb-1.5">
+              {t.manualCardTitle}
+            </p>
+            <p className="text-sm text-stone-gray leading-relaxed">{t.manualCardBody}</p>
+          </div>
+        ) : realScrapedData ? (
           <>
             {/* Ordem invertida na F2 (Demo em Conversa): a síntese ("o que a
                 IA já sabe") vem ANTES da foto/dados crus — é a única parte

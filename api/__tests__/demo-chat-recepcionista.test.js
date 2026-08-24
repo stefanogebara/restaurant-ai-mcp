@@ -282,3 +282,50 @@ describe('marcador [[BOOKED]] — reserva estruturada extraída no servidor (F2)
     expect(r.body.reply).toBe('Para quantas pessoas seria?');
   });
 });
+
+describe('demo manual (restaurante novo, F4) — a recepcionista responde com o que o dono configurou', () => {
+  const corpo = {
+    message: 'Que horas vocês abrem?',
+    restaurant_id: 'rest-demo-1',
+    lang: 'pt-BR',
+    persona: 'recepcionista',
+  };
+
+  test('business_hours JSONB vira bloco de horários quando não há hours_text do Google', async () => {
+    global.__linhaDemo = {
+      id: 'rest-demo-1',
+      restaurant_name: 'Cantinho da Vó Zilda',
+      scraped_data: {
+        manual: true,
+        cuisine_type: 'Brazilian',
+        vibe_tags: ['romantic', 'upscale'],
+        business_hours: {
+          monday: { open_time: '18:00', close_time: '23:00', is_open: true },
+          tuesday: { open_time: '18:00', close_time: '23:00', is_open: false },
+        },
+      },
+    };
+    await handler(req(corpo), res());
+    const sys = chamada().system;
+    expect(sys).toContain('monday: 18:00 – 23:00');
+    // dia fechado (is_open false) fica de fora
+    expect(sys).not.toContain('tuesday');
+    expect(sys).toContain('Vibe (described by the owner): romantic, upscale');
+    expect(sys).toContain('Cuisine: Brazilian');
+  });
+
+  test('hours_text do Google continua vencendo quando existe', async () => {
+    global.__linhaDemo = {
+      id: 'rest-demo-1',
+      restaurant_name: 'Mocotó',
+      scraped_data: {
+        hours_text: ['segunda-feira: 12:00 – 22:00'],
+        business_hours: { monday: { open_time: '00:00', close_time: '00:00', is_open: true } },
+      },
+    };
+    await handler(req(corpo), res());
+    const sys = chamada().system;
+    expect(sys).toContain('segunda-feira: 12:00 – 22:00');
+    expect(sys).not.toContain('monday: 00:00');
+  });
+});

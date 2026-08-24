@@ -19,11 +19,21 @@ interface ScrapedData {
   top_reviews: Array<{ text: string; rating: number; author: string }>;
 }
 
+/** Respostas do caminho "restaurante novo" (F4) — sem Google, a recepcionista
+ *  nasce do que o dono configurar aqui. */
+export interface ManualSetupData {
+  cuisine_type: string | null;
+  open_time: string;
+  close_time: string;
+  vibe_tags: string[];
+}
+
 interface DemoSetupFormProps {
   onSubmit: (data: {
     restaurant_name: string;
     city: string;
     scraped_data: ScrapedData | null;
+    manual?: ManualSetupData;
   }) => void;
   isSubmitting: boolean;
   submitError: string | null;
@@ -64,6 +74,21 @@ function rotuloDeCozinha(cozinha: string, idiomaDaUI: string | undefined): strin
   return COZINHA_PT[cozinha] || cozinha;
 }
 
+/** Valores em EN — o backend normaliza contra o enum do banco (mesma regra do
+ *  scraper); a tradução é só de exibição, via rotuloDeCozinha. */
+const CUISINE_CHIPS = ['Brazilian', 'Italian', 'Japanese', 'Pizza', 'Steakhouse', 'Seafood', 'Bar', 'Cafe'];
+
+/** Tags que o vibe-to-persona-preset do servidor sabe pontuar. */
+const VIBE_CHIPS: Array<{ value: string; labelKey: string; fallback: string }> = [
+  { value: 'romantic', labelKey: 'landing.demoSetup.form.vibes.romantic', fallback: 'Romântico' },
+  { value: 'family-friendly', labelKey: 'landing.demoSetup.form.vibes.family', fallback: 'Familiar' },
+  { value: 'casual', labelKey: 'landing.demoSetup.form.vibes.casual', fallback: 'Descontraído' },
+  { value: 'upscale', labelKey: 'landing.demoSetup.form.vibes.upscale', fallback: 'Sofisticado' },
+  { value: 'lively', labelKey: 'landing.demoSetup.form.vibes.lively', fallback: 'Animado' },
+];
+
+const HOUR_OPTIONS = Array.from({ length: 18 }, (_, i) => `${String((i + 7) % 24).padStart(2, '0')}:00`);
+
 function StarRating({ rating }: { rating: number }) {
   const full = Math.floor(rating);
   const hasHalf = rating - full >= 0.3;
@@ -89,6 +114,16 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
   const [searchResults, setSearchResults] = useState<ScrapedData[] | null>(null);
   const [selectedResult, setSelectedResult] = useState<ScrapedData | null>(null);
   const [searchError, setSearchError] = useState<string | null>(null);
+
+  // Caminho "restaurante novo" (F4) — tudo opcional, com defaults sensatos:
+  // o dono pode só apertar o botão e ajustar depois, dentro do demo.
+  const [manualCuisine, setManualCuisine] = useState<string | null>(null);
+  const [manualOpen, setManualOpen] = useState('12:00');
+  const [manualClose, setManualClose] = useState('23:00');
+  const [manualVibes, setManualVibes] = useState<string[]>([]);
+
+  const toggleVibe = (v: string) =>
+    setManualVibes((prev) => (prev.includes(v) ? prev.filter((x) => x !== v) : [...prev, v]));
 
   const canSearch = restaurantName.trim().length >= 2 && city.trim().length >= 2;
 
@@ -158,6 +193,14 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
       restaurant_name: scrape?.name || restaurantName.trim(),
       city: city.trim(),
       scraped_data: scrape,
+      manual: scrape
+        ? undefined
+        : {
+            cuisine_type: manualCuisine,
+            open_time: manualOpen,
+            close_time: manualClose,
+            vibe_tags: manualVibes,
+          },
     });
   }
 
@@ -364,10 +407,76 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
         )}
       </AnimatePresence>
 
-      {/* Manual path: nothing on Google (new restaurant) or no usable match */}
+      {/* Caminho "restaurante novo" (F4): sem Google, sem match — três toques
+          opcionais e a recepcionista nasce configurada pelo dono. */}
       {searchResults && searchResults.length === 0 && !selectedResult && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-2 space-y-4">
-          <p className="text-sm text-stone-gray">{t('landing.demoSetup.form.noExactMatch', 'Não achei exato — montamos seu painel com os dados que você digitou.')}</p>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-2 space-y-5">
+          <div className="text-center">
+            <p className="text-[15px] font-semibold text-deep-charcoal">
+              {t('landing.demoSetup.form.manualHeading', 'Restaurante novo? Melhor ainda.')}
+            </p>
+            <p className="text-sm text-stone-gray mt-1">
+              {t('landing.demoSetup.form.manualSub', 'Sua recepcionista pode existir antes do seu Google. Três toques e ela está pronta — tudo opcional:')}
+            </p>
+          </div>
+
+          <div>
+            <p className="text-[12px] font-medium text-muted-stone mb-2">{t('landing.demoSetup.form.qCuisine', 'Cozinha')}</p>
+            <div className="flex flex-wrap gap-2">
+              {CUISINE_CHIPS.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setManualCuisine(manualCuisine === c ? null : c)}
+                  aria-pressed={manualCuisine === c}
+                  className={`px-3 py-1.5 rounded-full text-[13px] font-medium border transition-colors ${manualCuisine === c ? 'bg-burgundy text-white border-burgundy' : 'bg-white text-stone-gray border-glass-border-dark hover:border-burgundy'}`}
+                >
+                  {rotuloDeCozinha(c, i18n.language)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <p className="text-[12px] font-medium text-muted-stone mb-2">{t('landing.demoSetup.form.qHours', 'Horário')}</p>
+            <div className="flex items-center gap-2">
+              <select
+                value={manualOpen}
+                onChange={(e) => setManualOpen(e.target.value)}
+                aria-label={t('landing.demoSetup.form.qHoursOpen', 'Abre às')}
+                className="px-3 py-2 border border-glass-border-input rounded-xl text-sm bg-white"
+              >
+                {HOUR_OPTIONS.map((h) => <option key={h} value={h}>{h}</option>)}
+              </select>
+              <span className="text-sm text-muted-stone">{t('landing.demoSetup.form.hoursTo', 'às')}</span>
+              <select
+                value={manualClose}
+                onChange={(e) => setManualClose(e.target.value)}
+                aria-label={t('landing.demoSetup.form.qHoursClose', 'Fecha às')}
+                className="px-3 py-2 border border-glass-border-input rounded-xl text-sm bg-white"
+              >
+                {HOUR_OPTIONS.map((h) => <option key={h} value={h}>{h}</option>)}
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <p className="text-[12px] font-medium text-muted-stone mb-2">{t('landing.demoSetup.form.qVibe', 'Clima')}</p>
+            <div className="flex flex-wrap gap-2">
+              {VIBE_CHIPS.map((v) => (
+                <button
+                  key={v.value}
+                  type="button"
+                  onClick={() => toggleVibe(v.value)}
+                  aria-pressed={manualVibes.includes(v.value)}
+                  className={`px-3 py-1.5 rounded-full text-[13px] font-medium border transition-colors ${manualVibes.includes(v.value) ? 'bg-burgundy text-white border-burgundy' : 'bg-white text-stone-gray border-glass-border-dark hover:border-burgundy'}`}
+                >
+                  {t(v.labelKey, v.fallback)}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <button
             type="button"
             onClick={() => submitDemo(null)}
@@ -380,10 +489,10 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
                 <span>{t('landing.demoSetup.form.creatingDemo', 'Montando seu painel…')}</span>
               </>
             ) : (
-              <span>{t('landing.demoSetup.form.launchManual', 'Criar meu demo assim mesmo')}</span>
+              <span>{t('landing.demoSetup.form.launchManual', 'Criar minha recepcionista')}</span>
             )}
           </button>
-          <p className="text-xs text-muted-stone">{t('landing.demoSetup.form.noCreditCard', 'Sem cartão de crédito.')}</p>
+          <p className="text-center text-xs text-muted-stone">{t('landing.demoSetup.form.noCreditCard', 'Sem cartão de crédito.')}</p>
         </motion.div>
       )}
 
