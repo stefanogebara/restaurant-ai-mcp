@@ -128,18 +128,57 @@ describe('POST ?action=create', () => {
     expect(body.error).toMatch(/restaurant_name/i);
   });
 
-  test('missing contact_email returns 400', async () => {
+  test('no contact_email still creates — entry is gate-free (Demo em Conversa F1)', async () => {
     const req = {
       method: 'POST',
       query: { action: 'create' },
-      body: { ...VALID_CREATE_BODY, contact_email: undefined },
+      body: { ...VALID_CREATE_BODY, contact_email: undefined, contact_name: undefined },
       headers: {},
     };
     const res = makeRes();
     await handler(req, res);
-    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.status).toHaveBeenCalledWith(201);
+
+    // The config insert must satisfy restaurant_config's NOT NULL + regex
+    // CHECK on email with a placeholder, while demo_contact_email stays null
+    // so welcome/nurture emails know there is nobody to write to yet.
+    const insertPayload = mockInsert.mock.calls[0][0];
+    expect(insertPayload.demo_contact_email).toBeNull();
+    expect(insertPayload.demo_contact_name).toBeNull();
+    expect(insertPayload.email).toMatch(/^demo-[0-9a-f-]+@demo\.seatable\.one$/);
+  });
+
+  test('scrape path requires only restaurant_name + city', async () => {
+    const req = {
+      method: 'POST',
+      query: { action: 'create' },
+      body: {
+        restaurant_name: 'Empório Quintal da Vovó',
+        city: 'Presidente Prudente',
+        scraped_data: { cuisine_type: 'Brazilian', phone: '+55 18 99744-0280' },
+      },
+      headers: {},
+    };
+    const res = makeRes();
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(201);
     const body = res.json.mock.calls[0][0];
-    expect(body.error).toMatch(/contact_email/i);
+    expect(body.demo_token).toBeDefined();
+  });
+
+  test('provided contact_email is still validated and stored', async () => {
+    const req = {
+      method: 'POST',
+      query: { action: 'create' },
+      body: { ...VALID_CREATE_BODY },
+      headers: {},
+    };
+    const res = makeRes();
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(201);
+    const insertPayload = mockInsert.mock.calls[0][0];
+    expect(insertPayload.demo_contact_email).toBe('owner@bellacucina.nl');
+    expect(insertPayload.email).toBe('owner@bellacucina.nl');
   });
 
   test('valid body returns 201 with demo_token and demo_url', async () => {
@@ -330,5 +369,93 @@ describe('POST ?action=convert', () => {
     expect(res.status).toHaveBeenCalledWith(200);
     const body = res.json.mock.calls[0][0];
     expect(body.success).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// POST ?action=attach-contact (Demo em Conversa F1 — captura tardia)
+// ---------------------------------------------------------------------------
+describe('POST ?action=attach-contact', () => {
+  function mockDemoLookup(result) {
+    const single = jest.fn().mockResolvedValue(result);
+    const gt = jest.fn().mockReturnValue({ single });
+    const eq2 = jest.fn().mockReturnValue({ gt });
+    const eq1 = jest.fn().mockReturnValue({ eq: eq2 });
+    const select = jest.fn().mockReturnValue({ eq: eq1 });
+    const updateEq = jest.fn().mockResolvedValue({ error: null });
+    const update = jest.fn().mockReturnValue({ eq: updateEq });
+    mockFrom.mockReturnValue({ select, update });
+    mockSchema.mockReturnValue({ from: mockFrom });
+    return { update, updateEq };
+  }
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  test('missing demo_token returns 400', async () => {
+    const req = {
+      method: 'POST',
+      query: { action: 'attach-contact' },
+      body: { contact_email: 'owner@place.br' },
+      headers: {},
+    };
+    const res = makeRes();
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json.mock.calls[0][0].error).toMatch(/demo_token/i);
+  });
+
+  test('missing contact_email returns 400', async () => {
+    const req = {
+      method: 'POST',
+      query: { action: 'attach-contact' },
+      body: { demo_token: 'tok-1' },
+      headers: {},
+    };
+    const res = makeRes();
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json.mock.calls[0][0].error).toMatch(/contact_email/i);
+  });
+
+  test('unknown or expired token returns 404', async () => {
+    mockDemoLookup({ data: null, error: { code: 'PGRST116' } });
+    const req = {
+      method: 'POST',
+      query: { action: 'attach-contact' },
+      body: { demo_token: 'expired-tok', contact_email: 'owner@place.br' },
+      headers: {},
+    };
+    const res = makeRes();
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(404);
+  });
+
+  test('happy path stores contact and returns 200', async () => {
+    const { update } = mockDemoLookup({
+      data: {
+        id: 'demo-rest-1',
+        restaurant_name: 'Cantina da Praça',
+        demo_token: 'tok-1',
+        demo_contact_email: null,
+      },
+      error: null,
+    });
+    const req = {
+      method: 'POST',
+      query: { action: 'attach-contact' },
+      body: { demo_token: 'tok-1', contact_email: 'dona@cantina.br', contact_name: 'Dona Zilda' },
+      headers: {},
+    };
+    const res = makeRes();
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json.mock.calls[0][0].success).toBe(true);
+    expect(update).toHaveBeenCalledWith({
+      demo_contact_email: 'dona@cantina.br',
+      demo_contact_name: 'Dona Zilda',
+      email: 'dona@cantina.br',
+    });
   });
 });

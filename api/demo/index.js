@@ -213,9 +213,14 @@ async function handleCreate(req, res) {
   // so strip any client-forged value; a self-created demo must never map to a lead.
   if (hasScrape && 'prospect_lead_id' in scraped_data) delete scraped_data.prospect_lead_id;
 
+  // Email is OPTIONAL at creation since the "Demo em Conversa" funnel: the
+  // aha moment (the AI booking a table in front of the owner) happens BEFORE
+  // any contact ask. Contact lands later via action=attach-contact. The
+  // landing page promises "Sem cadastro, sem e-mail" — the old email gate
+  // here contradicted it two scrolls later.
   const required = hasScrape
-    ? { restaurant_name, city, contact_email }
-    : { restaurant_name, cuisine_type, city, contact_email, contact_name };
+    ? { restaurant_name, city }
+    : { restaurant_name, cuisine_type, city };
 
   for (const [field, value] of Object.entries(required)) {
     if (!value || typeof value !== 'string' || !value.trim()) {
@@ -223,10 +228,13 @@ async function handleCreate(req, res) {
     }
   }
 
-  // Validate email format
-  const emailValidation = validateEmail(contact_email);
-  if (!emailValidation.valid) {
-    return res.status(400).json({ success: false, message: 'Invalid contact_email format' });
+  // Validate email format when one was provided
+  const trimmedEmail = typeof contact_email === 'string' ? contact_email.trim() : '';
+  if (trimmedEmail) {
+    const emailValidation = validateEmail(trimmedEmail);
+    if (!emailValidation.valid) {
+      return res.status(400).json({ success: false, message: 'Invalid contact_email format' });
+    }
   }
 
   // Validate numeric bounds
@@ -243,7 +251,9 @@ async function handleCreate(req, res) {
   // Derive fields from scraped data when available
   const effectiveCuisine = cuisine_type || scraped_data?.cuisine_type || 'Restaurant';
   const effectiveCountry = (country || '').trim() || null;
-  const effectiveName = contact_name || contact_email.split('@')[0];
+  const effectiveName =
+    (typeof contact_name === 'string' && contact_name.trim()) ||
+    (trimmedEmail ? trimmedEmail.split('@')[0] : null);
   const effectivePhone = scraped_data?.phone || 'N/A';
   // SSRF defense-in-depth: even though safe-fetch in _lib/enrich-restaurant
   // re-validates via DNS+per-hop, drop obviously bad inputs at the boundary
@@ -344,7 +354,11 @@ async function handleCreate(req, res) {
     city: city.trim(),
     country: resolvedCountry || effectiveCountry || 'Unknown',
     agent_language: inferredLanguage,
-    email: contact_email.trim(),
+    // restaurant_config.email is NOT NULL + regex CHECK (valid_email). When
+    // the owner hasn't shared contact yet, a routable-looking placeholder on
+    // our own domain satisfies the constraint; demo_contact_email stays null
+    // so nurture/welcome emails know there is nobody to write to.
+    email: trimmedEmail || `${slug}@demo.seatable.one`,
     phone: effectivePhone,
     slug,
     business_hours,
@@ -354,8 +368,8 @@ async function handleCreate(req, res) {
     is_demo: true,
     demo_token,
     demo_expires_at,
-    demo_contact_email: contact_email.trim(),
-    demo_contact_name: effectiveName.trim(),
+    demo_contact_email: trimmedEmail || null,
+    demo_contact_name: effectiveName,
   };
 
   // Add optional fields from scrape (only columns that exist in restaurant_config)
@@ -437,18 +451,21 @@ async function handleCreate(req, res) {
   const demoPath = `/demo/${demo_token}`;
   const demoUrlAbsolute = `${BASE_URL}${demoPath}`;
 
-  // Send welcome email (fire-and-forget — don't fail if email fails)
-  sendDemoWelcomeEmail({
-    contactName: effectiveName.trim(),
-    contactEmail: contact_email.trim(),
-    restaurantName: restaurant_name.trim(),
-    demoUrl: demoUrlAbsolute,
-  }).catch(err => logger.error('sendDemoWelcomeEmail threw:', err.message));
+  // Send welcome email (fire-and-forget — don't fail if email fails).
+  // Contact-less demos get theirs later, when attach-contact fires.
+  if (trimmedEmail) {
+    sendDemoWelcomeEmail({
+      contactName: effectiveName || restaurant_name.trim(),
+      contactEmail: trimmedEmail,
+      restaurantName: restaurant_name.trim(),
+      demoUrl: demoUrlAbsolute,
+    }).catch(err => logger.error('sendDemoWelcomeEmail threw:', err.message));
+  }
 
   // Enrichment already happened inline above before the insert — no second
   // pass needed here.
 
-  logger.info(`Demo created: ${restaurantId} for ${contact_email}`);
+  logger.info(`Demo created: ${restaurantId} for ${trimmedEmail || '(sem contato — captura tardia)'}`);
 
   return res.status(201).json({
     success: true,
@@ -497,6 +514,76 @@ async function handleSession(req, res) {
     reservations,
     daysLeft,
   });
+}
+
+// ---------------------------------------------------------------------------
+// Action: attach-contact
+// ---------------------------------------------------------------------------
+// Late contact capture for the "Demo em Conversa" funnel: demos are created
+// WITHOUT an email, and the ask happens after the aha moment (the AI booking
+// a reservation in front of the owner). Public endpoint — authorization is
+// possession of a live demo_token, same trust model as action=session.
+async function handleAttachContact(req, res) {
+  const { demo_token, contact_email, contact_name } = req.body || {};
+
+  if (!demo_token || typeof demo_token !== 'string') {
+    return res.status(400).json({ error: 'Missing required field: demo_token' });
+  }
+  if (!contact_email || typeof contact_email !== 'string' || !contact_email.trim()) {
+    return res.status(400).json({ error: 'Missing required field: contact_email' });
+  }
+  const trimmedEmail = contact_email.trim();
+  const emailValidation = validateEmail(trimmedEmail);
+  if (!emailValidation.valid) {
+    return res.status(400).json({ success: false, message: 'Invalid contact_email format' });
+  }
+
+  const now = new Date().toISOString();
+  const { data: demo, error: lookupError } = await supabaseAdmin
+    .schema('restaurant')
+    .from('restaurant_config')
+    .select('id, restaurant_name, demo_token, demo_contact_email')
+    .eq('demo_token', demo_token)
+    .eq('is_demo', true)
+    .gt('demo_expires_at', now)
+    .single();
+
+  if (lookupError || !demo) {
+    return res.status(404).json({ error: 'Demo not found or expired' });
+  }
+
+  const effectiveName =
+    (typeof contact_name === 'string' && contact_name.trim()) ||
+    trimmedEmail.split('@')[0];
+
+  const { error: updateError } = await supabaseAdmin
+    .schema('restaurant')
+    .from('restaurant_config')
+    .update({
+      demo_contact_email: trimmedEmail,
+      demo_contact_name: effectiveName,
+      email: trimmedEmail,
+    })
+    .eq('id', demo.id);
+
+  if (updateError) {
+    logger.error('Failed to attach contact to demo:', updateError.message);
+    return res.status(500).json({ error: 'Failed to save contact' });
+  }
+
+  // Welcome email fires now (not at create) — skip the resend when the same
+  // address is submitted twice (double-click, back-and-forth in the UI).
+  if (demo.demo_contact_email !== trimmedEmail) {
+    sendDemoWelcomeEmail({
+      contactName: effectiveName,
+      contactEmail: trimmedEmail,
+      restaurantName: demo.restaurant_name,
+      demoUrl: `${BASE_URL}/demo/${demo_token}`,
+    }).catch(err => logger.error('sendDemoWelcomeEmail threw:', err.message));
+  }
+
+  logger.info(`Contact attached to demo ${demo.id}`);
+  return res.status(200).json({ success: true });
 }
 
 // ---------------------------------------------------------------------------
@@ -612,6 +699,12 @@ module.exports = async (req, res) => {
 
     if (req.method === 'GET' && action === 'session') {
       return await handleSession(req, res);
+    }
+
+    if (req.method === 'POST' && action === 'attach-contact') {
+      const limited = await checkAndApplyRateLimit(req, res, 'demo-create');
+      if (limited) return;
+      return await handleAttachContact(req, res);
     }
 
     if (req.method === 'POST' && action === 'convert') {

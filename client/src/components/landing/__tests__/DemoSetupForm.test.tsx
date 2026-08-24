@@ -1,21 +1,18 @@
 /**
- * DemoSetupForm — restaurant-not-found fallback path
+ * DemoSetupForm — gate-free entry contract (plano Demo em Conversa, F1)
  *
- * Locks the contract that the form must remain submittable when Google
- * Places returns zero matches. Without this safety net, a typo or an
- * obscure restaurant would dead-end the conversion funnel ("Search
- * failed — please try again") even though manual demo creation is
- * fully supported by the backend.
+ * Locks three behaviors of the redesigned funnel entry:
  *
- * The form exposes the fallback via three affordances; this suite covers
- * the first two (the third — empty-results "Not listed? Continue manually"
- * — is observably the same path):
- *
- *   1. Search returns a non-OK / error → amber banner with
- *      "Continue without search" → onSubmit fires with scraped_data: null.
- *   2. Search returns 200 + zero results → "No exact match" message +
- *      Step 2 unlocks → email + submit → onSubmit fires with
- *      scraped_data: null.
+ *   1. NO EMAIL GATE — onSubmit fires with only {restaurant_name, city,
+ *      scraped_data}; there is no email input anywhere in the form.
+ *   2. NO AUTO-SELECT — a single Google result is never assumed to be the
+ *      owner's restaurant (Text Search fuzzy-matched a real, different
+ *      restaurant for a nonexistent query in production). Selection is an
+ *      explicit tap, and creation requires the "É este o seu restaurante?"
+ *      confirmation.
+ *   3. MANUAL ESCAPE — search error and zero-results states both surface a
+ *      working "create anyway" path with scraped_data: null, so a new
+ *      restaurant that isn't on Google can't dead-end the funnel.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach, beforeAll } from 'vitest';
@@ -32,14 +29,39 @@ beforeAll(async () => {
 // Silence the analytics module — it ships its own side effects on import.
 vi.mock('../../../lib/analytics', () => ({
   trackDemoStarted: vi.fn(),
+  trackDemoFunnel: vi.fn(),
 }));
 
-describe('DemoSetupForm — restaurant-not-found fallback', () => {
+const RESULT = {
+  name: 'Empório Quintal da Vovó',
+  address: 'R. Caramuru, 208 - Vila Maristela',
+  phone: '+55 18 99744-0280',
+  rating: 4.7,
+  review_count: 461,
+  cuisine_type: 'Brazilian',
+  website: null,
+  google_maps_url: null,
+  editorial_summary: null,
+  business_hours: null,
+  hours_text: null,
+  top_reviews: [],
+};
+
+function fillSearch(name: string, city: string) {
+  fireEvent.change(screen.getByPlaceholderText(/restaurant name/i), {
+    target: { value: name },
+  });
+  fireEvent.change(screen.getByPlaceholderText(/city/i), {
+    target: { value: city },
+  });
+  fireEvent.click(screen.getByRole('button', { name: /find it/i }));
+}
+
+describe('DemoSetupForm — gate-free entry', () => {
   const onSubmit = vi.fn();
 
   beforeEach(() => {
     onSubmit.mockClear();
-    // Default to a happy fetch so individual tests can override.
     vi.stubGlobal('fetch', vi.fn());
   });
 
@@ -47,80 +69,88 @@ describe('DemoSetupForm — restaurant-not-found fallback', () => {
     vi.unstubAllGlobals();
   });
 
-  it('lets the user submit with scraped_data:null after a search ERROR', async () => {
+  it('renders no email input at any point in the flow', async () => {
+    (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ success: true, results: [RESULT] }),
+    });
+
+    render(<DemoSetupForm onSubmit={onSubmit} isSubmitting={false} submitError={null} />);
+    fillSearch('Quintal', 'Pres. Prudente');
+    await screen.findByText(RESULT.name);
+
+    expect(document.querySelector('input[type="email"]')).toBeNull();
+  });
+
+  it('does NOT auto-select a single result; confirmation requires an explicit tap', async () => {
+    (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ success: true, results: [RESULT] }),
+    });
+
+    render(<DemoSetupForm onSubmit={onSubmit} isSubmitting={false} submitError={null} />);
+    // The production incident: a NONEXISTENT restaurant fuzzy-matched a real
+    // one as the single result. The form must show it as a choice, not as
+    // "your restaurant".
+    fillSearch('Cantinho da Vó Zilda', 'Pres. Prudente');
+
+    await screen.findByText(RESULT.name);
+    expect(screen.queryByText(/is this your restaurant/i)).toBeNull();
+
+    fireEvent.click(screen.getByText(RESULT.name));
+    await screen.findByText(/is this your restaurant/i);
+
+    fireEvent.click(screen.getByRole('button', { name: /yes, that's it/i }));
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+    expect(onSubmit).toHaveBeenCalledWith({
+      restaurant_name: RESULT.name,
+      city: 'Pres. Prudente',
+      scraped_data: RESULT,
+    });
+  });
+
+  it('lets the user create with scraped_data:null after a search ERROR', async () => {
     // Backend returns an error — production sees this when Google Places
-    // is rate-limited or down. Form must NOT trap the user on the search
-    // step; the "Continue without search" affordance has to escape it.
+    // is rate-limited or down. Form must NOT trap the user on the search step.
     (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: false,
       json: async () => ({ success: false, error: 'Search failed' }),
     });
 
-    render(
-      <DemoSetupForm onSubmit={onSubmit} isSubmitting={false} submitError={null} />
-    );
+    render(<DemoSetupForm onSubmit={onSubmit} isSubmitting={false} submitError={null} />);
+    fillSearch('Obscure Diner', 'Nowhere');
 
-    fireEvent.change(screen.getByPlaceholderText(/restaurant name/i), {
-      target: { value: 'Obscure Diner' },
-    });
-    fireEvent.change(screen.getByPlaceholderText(/city/i), {
-      target: { value: 'Nowhere' },
-    });
-    fireEvent.click(screen.getByRole('button', { name: /find it/i }));
-
-    // Banner must surface a CTA out of the dead-end. Without it, the user
-    // is locked on the search step because the email step never reveals.
     const continueBtn = await screen.findByRole('button', { name: /continue without search/i });
     fireEvent.click(continueBtn);
 
-    // After the fallback click, the email step must appear.
-    const emailInput = await screen.findByPlaceholderText(/work email/i);
-    fireEvent.change(emailInput, { target: { value: 'owner@diner.test' } });
-    fireEvent.click(screen.getByRole('button', { name: /launch my demo/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /create my demo anyway/i }));
 
     await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
     expect(onSubmit).toHaveBeenCalledWith({
       restaurant_name: 'Obscure Diner',
       city: 'Nowhere',
-      contact_email: 'owner@diner.test',
       scraped_data: null,
     });
   });
 
-  it('lets the user submit with scraped_data:null after ZERO RESULTS', async () => {
-    // Backend returns success but no matches — common for new places
-    // not yet on Google Maps. Empty results should still unlock the
-    // email step and surface a manual-continue affordance.
+  it('lets the user create with scraped_data:null after ZERO RESULTS', async () => {
+    // Common for new places not yet on Google Maps — the exact audience the
+    // "restaurante novo" path serves.
     (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: true,
       json: async () => ({ success: true, results: [] }),
     });
 
-    render(
-      <DemoSetupForm onSubmit={onSubmit} isSubmitting={false} submitError={null} />
-    );
+    render(<DemoSetupForm onSubmit={onSubmit} isSubmitting={false} submitError={null} />);
+    fillSearch('Brand New Place', 'Anytown');
 
-    fireEvent.change(screen.getByPlaceholderText(/restaurant name/i), {
-      target: { value: 'Brand New Place' },
-    });
-    fireEvent.change(screen.getByPlaceholderText(/city/i), {
-      target: { value: 'Anytown' },
-    });
-    fireEvent.click(screen.getByRole('button', { name: /find it/i }));
-
-    // "No exact match" copy proves we reached the empty-state branch
-    // rather than the error branch.
     await screen.findByText(/no exact match/i);
-
-    const emailInput = await screen.findByPlaceholderText(/work email/i);
-    fireEvent.change(emailInput, { target: { value: 'owner@brand.new' } });
-    fireEvent.click(screen.getByRole('button', { name: /launch my demo/i }));
+    fireEvent.click(screen.getByRole('button', { name: /create my demo anyway/i }));
 
     await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
     expect(onSubmit).toHaveBeenCalledWith({
       restaurant_name: 'Brand New Place',
       city: 'Anytown',
-      contact_email: 'owner@brand.new',
       scraped_data: null,
     });
   });
