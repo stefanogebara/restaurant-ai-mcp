@@ -40,7 +40,7 @@ function montar({ acao, numeroIndicado = null, donoDoNumero = null }) {
     isFounderNumber: () => false,
   }));
   jest.doMock('../_lib/prospecting/prospect-store', () => ({
-    loadHistory: async () => [{ direcao: 'in', corpo: 'oi', enviada_em: new Date().toISOString() }],
+    loadHistory: async () => [{ direcao: 'in', corpo: 'oi', enviada_em: new Date(AGORA_COMERCIAL_MS - 60000).toISOString() }],
     patchLead: async (id, p) => { patches.push({ id, p }); return { ok: true }; },
     recordEvent: async (id, txt) => { eventos.push(txt); },
     storeMessage: async () => ({}),
@@ -64,10 +64,17 @@ function montar({ acao, numeroIndicado = null, donoDoNumero = null }) {
 
 const registrar = { tipo: 'registrar_responsavel', numero: '+5511977117070', nome: 'Adriana', texto: '' };
 
+// Relógio DETERMINÍSTICO, dentro do horário comercial (terça 14:00 em
+// America/Sao_Paulo). Sem isto o responder consulta o relógio REAL via
+// dentroDoHorario(nowMs) e, rodando a suíte à noite/fim de semana, DIFERE o
+// turno inteiro (reply_apos = próxima abertura) — as 4 asserções de ação
+// falhavam por horário, não por regressão. Flake descoberto em 24/ago ~19h30.
+const AGORA_COMERCIAL_MS = Date.UTC(2026, 7, 25, 17, 0, 0);
+
 describe('indicação não vira contato sem a casa confirmar', () => {
   test('registrar_responsavel NÃO cria lead nem dispara intro', async () => {
     const t = montar({ acao: registrar });
-    await t.respondToProspect({ lead: t.lead, from: '5511981890082', text: 'o contato é esse' });
+    await t.respondToProspect({ lead: t.lead, from: '5511981890082', text: 'o contato é esse', nowMs: AGORA_COMERCIAL_MS });
 
     expect(t.criados).toEqual([]);   // era aqui que o lead nascia
     expect(t.disparos).toEqual([]);  // e aqui que a intro saía
@@ -75,7 +82,7 @@ describe('indicação não vira contato sem a casa confirmar', () => {
 
   test('registrar_responsavel guarda a indicação como PENDENTE de confirmação', async () => {
     const t = montar({ acao: registrar });
-    await t.respondToProspect({ lead: t.lead, from: '5511981890082', text: 'o contato é esse' });
+    await t.respondToProspect({ lead: t.lead, from: '5511981890082', text: 'o contato é esse', nowMs: AGORA_COMERCIAL_MS });
 
     const patch = t.patches.find((p) => p.p && p.p.numero_indicado);
     expect(patch).toBeDefined();
@@ -85,7 +92,7 @@ describe('indicação não vira contato sem a casa confirmar', () => {
 
   test('número que já é de outro lead nem chega a virar indicação pendente', async () => {
     const t = montar({ acao: registrar, donoDoNumero: { id: 'OUTRO', name: 'Bráz' } });
-    await t.respondToProspect({ lead: t.lead, from: '5511981890082', text: 'o contato é esse' });
+    await t.respondToProspect({ lead: t.lead, from: '5511981890082', text: 'o contato é esse', nowMs: AGORA_COMERCIAL_MS });
 
     expect(t.criados).toEqual([]);
     expect(t.patches.some((p) => p.p && p.p.numero_indicado)).toBe(false);
@@ -97,7 +104,7 @@ describe('indicação não vira contato sem a casa confirmar', () => {
       acao: { tipo: 'confirmar_indicacao', confirmado: true, texto: 'perfeito!' },
       numeroIndicado: '+5511977117070',
     });
-    await t.respondToProspect({ lead: t.lead, from: '5511981890082', text: 'sim, é ela' });
+    await t.respondToProspect({ lead: t.lead, from: '5511981890082', text: 'sim, é ela', nowMs: AGORA_COMERCIAL_MS });
 
     expect(t.criados).toEqual(['+5511977117070']);
     expect(t.disparos.length).toBe(1);
@@ -108,7 +115,7 @@ describe('indicação não vira contato sem a casa confirmar', () => {
       acao: { tipo: 'confirmar_indicacao', confirmado: false, texto: 'ah, entendi!' },
       numeroIndicado: '+5511977117070',
     });
-    await t.respondToProspect({ lead: t.lead, from: '5511981890082', text: 'nao, esse ta errado' });
+    await t.respondToProspect({ lead: t.lead, from: '5511981890082', text: 'nao, esse ta errado', nowMs: AGORA_COMERCIAL_MS });
 
     expect(t.criados).toEqual([]);
     expect(t.disparos).toEqual([]);
@@ -117,7 +124,7 @@ describe('indicação não vira contato sem a casa confirmar', () => {
 
   test('confirmação sem indicação pendente não inventa contato', async () => {
     const t = montar({ acao: { tipo: 'confirmar_indicacao', confirmado: true, texto: 'ok' } });
-    await t.respondToProspect({ lead: t.lead, from: '5511981890082', text: 'sim' });
+    await t.respondToProspect({ lead: t.lead, from: '5511981890082', text: 'sim', nowMs: AGORA_COMERCIAL_MS });
 
     expect(t.criados).toEqual([]);
     expect(t.disparos).toEqual([]);
