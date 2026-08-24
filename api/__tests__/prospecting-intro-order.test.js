@@ -111,8 +111,12 @@ describe('selectIntroCandidates — ordem de prioridade', () => {
  */
 describe('faixa de qualidade do lead', () => {
   test('exige um PISO de avaliações — sem volume não há dor de reserva', async () => {
+    // 120 desde 23/08/2026 (era 150). O piso não mudou de ideia: o pool acima
+    // de 150 foi consumido — a ordenação prioriza justamente esses — e sobraram
+    // 3 leads alcançáveis, com o dispatch registrando `candidates: 0` em dia
+    // útil. Ver a nota de revisão em prospect-store.js.
     await selectIntroCandidates(10);
-    expect(mockQuery.faixas).toContainEqual({ op: 'gte', col: 'reviews_count', val: 150 });
+    expect(mockQuery.faixas).toContainEqual({ op: 'gte', col: 'reviews_count', val: 120 });
   });
 
   test('exige um TETO — é o que impede shopping e rede no topo da fila', async () => {

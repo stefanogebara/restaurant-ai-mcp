@@ -217,16 +217,40 @@ async function upsertDiscoveredLeads(rows) {
  * Napoli, Sal Gastronomia, La Braciera — restaurante independente, com
  * movimento, cujo dono decide sozinho.
  *
- * MIN 150  — abaixo disso não há volume que gere dor de reserva.
+ * MIN 120  — abaixo disso não há volume que gere dor de reserva. Era 150 até
+ *            23/08/2026; ver a nota de revisão abaixo.
  * MAX 5000 — acima é ponto turístico ou rede (Outback, Coco Bambu, Casa do
  *            Porco): decisão corporativa, ciclo longo, e provavelmente já têm
  *            sistema. Testei 15000 e a lista encheu de mercado e franquia.
  * NOTA 4.3 — negócio saudável; abaixo disso o problema não é reserva.
  *
- * Efeito no pool: 3643 → 1930 elegíveis. Com o cap diário de warm-up, mais de
- * um ano de disparos — a faixa não estrangula o funil, só ordena a fila.
+ * REVISÃO DO PISO (23/08/2026) — 150 → 120.
+ *
+ * O parágrafo original terminava dizendo que "a faixa não estrangula o funil,
+ * só ordena a fila". Isso era verdade sobre um pool NOVO de 3643 leads, e
+ * deixou de ser quando o pool foi consumido: os leads acima de 150 avaliações
+ * são os primeiros a sair, porque a própria ordenação os prioriza. O piso não
+ * se moveu; o que sobrou embaixo dele é que virou o pool inteiro.
+ *
+ * Medido em produção neste dia, entre os leads com CELULAR, nunca contatados,
+ * em `aguardando` e dentro do resto da faixa:
+ *
+ *     piso 150 (o de então) →   3 leads      piso  80 → 109
+ *     piso 120 (o novo)     →  38 leads      piso  50 → 169
+ *     piso 100              →  71 leads      sem piso → 559
+ *
+ * Três leads é fila vazia: o dispatch registrou `candidates: 0` em quinta e
+ * sexta, dias úteis dentro da janela. O penhasco cai exatamente onde o piso
+ * estava, que é a assinatura de um limiar calibrado contra um pool que não
+ * existe mais.
+ *
+ * 120 e não menos: é o menor passo que devolve fila de trabalho (13x), sem
+ * descer à faixa de 50-80 avaliações, onde o argumento original — volume que
+ * gere dor de reserva — deixa de valer. Se 38 secarem, a próxima decisão não
+ * é baixar de novo por reflexo: é medir se os leads de 120-150 converteram
+ * parecido com os de 150+, e a pontuação de outcomes agora existe para isso.
  */
-const QUALIDADE_MIN_AVALIACOES = 150;
+const QUALIDADE_MIN_AVALIACOES = 120;
 const QUALIDADE_MAX_AVALIACOES = 5000;
 const QUALIDADE_MIN_NOTA = 4.3;
 
