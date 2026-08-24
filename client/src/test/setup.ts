@@ -1,3 +1,6 @@
+// Keep this first — see the comment inside. Later imports (i18n/config)
+// touch localStorage at module scope and need the bridge already in place.
+import './polyfill-storage';
 import '@testing-library/jest-dom/vitest';
 import i18n from 'i18next';
 import '../i18n/config';
