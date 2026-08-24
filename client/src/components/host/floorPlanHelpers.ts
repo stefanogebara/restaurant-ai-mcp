@@ -18,6 +18,10 @@ export interface StatusStyle {
   text: string;
   chairFill: string;
   sublabel: string;
+  /** SVG stroke-dasharray — reserved tables draw dashed, everything else solid. */
+  dash?: string;
+  /** Plate color for seated guests (occupied tables only). */
+  plateFill: string;
 }
 
 export const formatTime = (min: number): string => {
@@ -56,18 +60,38 @@ export const statusLabel = (s: string, t?: (key: string, fallback?: string) => s
   return fallback;
 };
 
-export const getStatusStyle = (status: string): StatusStyle => {
+/**
+ * Mesa ilustrada (Warm Glass): a ocupada é burgundy sólido com pratos
+ * brancos, a reservada é tracejada em âmbar, a livre é vidro claro com
+ * fio de tinta. `night` troca para a paleta do Modo Serviço — fundo
+ * escuro, ocupadas brilham, o resto vira vidro escuro.
+ */
+export const getStatusStyle = (status: string, night = false): StatusStyle => {
+  if (night) {
+    switch (status?.toLowerCase()) {
+      case 'available':
+        return { fill: 'rgba(250,250,249,0.05)', stroke: 'rgba(250,250,249,0.18)', text: 'rgba(250,250,249,0.70)', chairFill: 'rgba(250,250,249,0.10)', sublabel: 'rgba(250,250,249,0.45)', plateFill: 'rgba(255,255,255,0.85)' };
+      case 'occupied':
+        return { fill: '#9F1239', stroke: '#9F1239', text: '#FFFFFF', chairFill: 'rgba(250,250,249,0.28)', sublabel: 'rgba(250,250,249,0.55)', plateFill: 'rgba(255,255,255,0.85)' };
+      case 'reserved':
+        return { fill: 'rgba(250,250,249,0.04)', stroke: '#FBBF24', text: '#FBBF24', chairFill: 'rgba(250,250,249,0.14)', sublabel: '#FBBF24', dash: '5 4', plateFill: 'rgba(255,255,255,0.85)' };
+      case 'being cleaned':
+        return { fill: 'rgba(251,191,36,0.08)', stroke: '#FBBF24', text: '#FBBF24', chairFill: 'rgba(251,191,36,0.35)', sublabel: '#FBBF24', plateFill: 'rgba(255,255,255,0.85)' };
+      default:
+        return { fill: 'rgba(250,250,249,0.05)', stroke: 'rgba(250,250,249,0.18)', text: 'rgba(250,250,249,0.55)', chairFill: 'rgba(250,250,249,0.10)', sublabel: 'rgba(250,250,249,0.45)', plateFill: 'rgba(255,255,255,0.85)' };
+    }
+  }
   switch (status?.toLowerCase()) {
     case 'available':
-      return { fill: '#ECFDF5', stroke: '#9F1239', text: '#064E3B', chairFill: '#9F1239', sublabel: '#9F1239' };
+      return { fill: 'rgba(255,255,255,0.85)', stroke: 'rgba(28,25,23,0.15)', text: '#706A65', chairFill: 'rgba(28,25,23,0.12)', sublabel: '#706A65', plateFill: 'rgba(255,255,255,0.85)' };
     case 'occupied':
-      return { fill: '#FFF1F2', stroke: '#E11D48', text: '#881337', chairFill: '#E11D48', sublabel: '#FB7185' };
+      return { fill: '#9F1239', stroke: '#9F1239', text: '#FFFFFF', chairFill: 'rgba(28,25,23,0.30)', sublabel: '#706A65', plateFill: 'rgba(255,255,255,0.85)' };
     case 'reserved':
-      return { fill: '#F5F3FF', stroke: '#7C3AED', text: '#3730A3', chairFill: '#7C3AED', sublabel: '#A78BFA' };
+      return { fill: '#FFFFFF', stroke: '#D97706', text: '#B45309', chairFill: 'rgba(28,25,23,0.16)', sublabel: '#B45309', dash: '5 4', plateFill: 'rgba(255,255,255,0.85)' };
     case 'being cleaned':
-      return { fill: '#FFFBEB', stroke: '#D97706', text: '#78350F', chairFill: '#D97706', sublabel: '#FCD34D' };
+      return { fill: '#FFFBEB', stroke: '#D97706', text: '#78350F', chairFill: 'rgba(217,119,6,0.35)', sublabel: '#B45309', plateFill: 'rgba(255,255,255,0.85)' };
     default:
-      return { fill: '#FAFAF9', stroke: '#A8A29E', text: '#57534E', chairFill: '#A8A29E', sublabel: '#D6D3D1' };
+      return { fill: '#FAFAF9', stroke: 'rgba(28,25,23,0.15)', text: '#706A65', chairFill: 'rgba(28,25,23,0.12)', sublabel: '#706A65', plateFill: 'rgba(255,255,255,0.85)' };
   }
 };
 
@@ -125,6 +149,55 @@ export const autoLayoutTables = (tables: Table[], canvasWidth: number) => {
 
   const totalHeight = curY + rowH + PAD + 20;
   return { positions: out, totalWidth: W, totalHeight: Math.max(totalHeight, 180) };
+};
+
+/**
+ * Pratos brancos DENTRO da mesa ocupada — um por convidado sentado
+ * (limitado à capacidade). É o que faz a mesa "ler" como gente jantando,
+ * não como um retângulo colorido. Espelha a órbita das cadeiras, mas
+ * para dentro da borda.
+ */
+export const renderPlates = (
+  cx: number, cy: number, w: number, h: number,
+  guests: number, shape: string, fill: string,
+): React.ReactElement[] => {
+  const plates: React.ReactElement[] = [];
+  const count = Math.max(0, Math.min(guests, 8));
+  if (count === 0) return plates;
+  const isRound = shape === 'round' || shape === 'circle';
+  const r = Math.min(7, Math.max(5, Math.floor(Math.min(w, h) / 14)));
+
+  if (isRound) {
+    if (count === 1) {
+      plates.push(React.createElement('circle', { key: 'p0', cx, cy: cy - h / 4, r, fill }));
+      return plates;
+    }
+    const orbit = w / 2 - r - 6;
+    for (let i = 0; i < count; i++) {
+      const a = (2 * Math.PI * i) / count - Math.PI / 2;
+      plates.push(
+        React.createElement('circle', {
+          key: `p${i}`,
+          cx: cx + orbit * Math.cos(a),
+          cy: cy + orbit * Math.sin(a),
+          r, fill,
+        }),
+      );
+    }
+  } else {
+    const top = Math.ceil(count / 2);
+    const bot = count - top;
+    const rowY = h / 2 - r - 7;
+    for (let i = 0; i < top; i++) {
+      const xp = cx - w / 2 + (w / (top + 1)) * (i + 1);
+      plates.push(React.createElement('circle', { key: `pt${i}`, cx: xp, cy: cy - rowY, r, fill }));
+    }
+    for (let i = 0; i < bot; i++) {
+      const xp = cx - w / 2 + (w / (bot + 1)) * (i + 1);
+      plates.push(React.createElement('circle', { key: `pb${i}`, cx: xp, cy: cy + rowY, r, fill }));
+    }
+  }
+  return plates;
 };
 
 export const renderChairs = (

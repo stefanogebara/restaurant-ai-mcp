@@ -430,7 +430,8 @@
       "saveSettings": "Save Feedback Settings"
     },
     "embedWidgetTitle": "Booking Widget",
-    "embedWidgetDescription": "Paste this snippet anywhere on your website to add a booking button."
+    "embedWidgetDescription": "Paste this snippet anywhere on your website to add a booking button.",
+    "serviceMode": "Service Mode"
   },
   "bookingChannels": {
     "title": "Booking Channels",
@@ -3538,5 +3539,12 @@
     "confirm": "Confirm",
     "restart": "Use a different number",
     "activeNote": "Your AI now answers this number. New messages route to it within a minute."
+  },
+  "tableTimeline": {
+    "title": "Will that table free up in time?",
+    "conflictPrefix": "Table",
+    "conflictNeeds": "must be ready at",
+    "conflictBlocked": "occupied until",
+    "moreTables": "more tables with activity not shown"
   }
 }

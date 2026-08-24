@@ -430,7 +430,8 @@
       "star3": "Bueno",
       "star4": "Muy Bueno",
       "star5": "Excelente"
-    }
+    },
+    "serviceMode": "Modo Servicio"
   },
   "bookingChannels": {
     "title": "Canales de Reserva",
@@ -3538,5 +3539,12 @@
     "confirm": "Confirmar",
     "restart": "Usar otro número",
     "activeNote": "Tu IA ahora responde este número. Los mensajes nuevos llegan a él en menos de un minuto."
+  },
+  "tableTimeline": {
+    "title": "¿Esa mesa se libera a tiempo?",
+    "conflictPrefix": "Mesa",
+    "conflictNeeds": "debe estar lista a las",
+    "conflictBlocked": "ocupada hasta las",
+    "moreTables": "mesas más con actividad fuera de la regla"
   }
 }
