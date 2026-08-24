@@ -1755,7 +1755,7 @@
       "headlineB": "El anfitrión que nunca falta.",
       "headlineC": "Tu restaurante nunca duerme.",
       "subtitle2": "Seatable gestiona WhatsApp, llamadas y clientes sin reserva — para que tu equipo se enfoque en la hospitalidad.",
-      "ctaNew": "Verlo en vivo ↓"
+      "ctaNew": "Míralo con tu restaurante →"
     },
     "inlineDemo": {
       "label": "Demo en vivo",
@@ -1769,9 +1769,9 @@
       "loadErrorHint": "Intenta abrirla en pantalla completa."
     },
     "tryDemo": {
-      "label": "Pruébalo ahora",
-      "heading": "Elige un restaurante. Explora el panel.",
-      "subtitle": "Sin registro, sin correo. Solo haz clic y mira cómo funciona.",
+      "label": "Explora un ejemplo",
+      "heading": "¿Solo quieres mirar primero?",
+      "subtitle": "Explora un restaurante de ejemplo — sin escribir nada, sin registro.",
       "cta": "¿Quieres ver TU restaurante?",
       "ctaLink": "Configúralo aquí →",
       "cuisineItalian": "Italiana",
@@ -1857,7 +1857,7 @@
       "q8": "¿Son seguros los datos de mi restaurante?",
       "a8": "Absolutamente. Todos los datos están encriptados en tránsito y en reposo. Usamos seguridad de base de datos de nivel empresarial con controles de acceso por filas, y nunca compartimos los datos de tus clientes con terceros. Eres dueño de tus datos completamente.",
       "q9": "¿Puedo probarlo antes de comprometerme?",
-      "a9": "¡Sí! Todos los planes incluyen una prueba gratuita de 14 días, sin tarjeta de crédito requerida. También puedes probar nuestra demostración de IA en vivo en el sitio web para escuchar el asistente de voz en acción antes de registrarte."
+      "a9": "¡Sí! El plan Profesional incluye una prueba gratuita de 14 días, sin tarjeta de crédito requerida. También puedes probar nuestra demostración de IA en vivo en el sitio web para escuchar el asistente de voz en acción antes de registrarte."
     },
     "whatsapp": {
       "label": "IA real, WhatsApp real",

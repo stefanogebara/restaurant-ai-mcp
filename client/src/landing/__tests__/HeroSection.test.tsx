@@ -47,9 +47,10 @@ describe('HeroSection', () => {
     expect(screen.getByText(/Last night at 2 AM/)).toBeInTheDocument();
   });
 
-  it('renders the CTA button', () => {
+  it('renders the CTA as a link straight to /demo/setup (F5: a conversa é o "ao vivo")', () => {
     renderHero();
-    expect(screen.getByRole('button', { name: /see it live/i })).toBeInTheDocument();
+    const cta = screen.getByRole('link', { name: /see it with your restaurant/i });
+    expect(cta).toHaveAttribute('href', '/demo/setup');
   });
 
   it('renders the split screen animation', () => {

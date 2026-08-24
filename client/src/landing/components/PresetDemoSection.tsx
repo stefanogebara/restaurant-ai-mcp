@@ -4,9 +4,9 @@ import { Link } from 'react-router-dom';
 import { trackPresetDemoClicked, trackDemoFunnel } from '../../lib/analytics';
 
 const presets = [
-  { id: 'italian', flag: '\u{1F1EE}\u{1F1F9}', name: 'Trattoria da Marco', cuisineKey: 'landing.tryDemo.cuisineItalian', brief: 'landing.tryDemo.briefItalian', accent: 'bg-amber-50 text-amber-700' },
-  { id: 'japanese', flag: '\u{1F1EF}\u{1F1F5}', name: 'Sakura Izakaya', cuisineKey: 'landing.tryDemo.cuisineJapanese', brief: 'landing.tryDemo.briefJapanese', accent: 'bg-rose-50 text-rose-700' },
-  { id: 'brazilian', flag: '\u{1F1E7}\u{1F1F7}', name: 'Cantina da Praça', cuisineKey: 'landing.tryDemo.cuisineBrazilian', brief: 'landing.tryDemo.briefBrazilian', accent: 'bg-lime-50 text-lime-700' },
+  { id: 'italian', name: 'Trattoria da Marco', cuisineKey: 'landing.tryDemo.cuisineItalian', brief: 'landing.tryDemo.briefItalian', accent: 'bg-amber-50 text-amber-700' },
+  { id: 'japanese', name: 'Sakura Izakaya', cuisineKey: 'landing.tryDemo.cuisineJapanese', brief: 'landing.tryDemo.briefJapanese', accent: 'bg-rose-50 text-rose-700' },
+  { id: 'brazilian', name: 'Cantina da Praça', cuisineKey: 'landing.tryDemo.cuisineBrazilian', brief: 'landing.tryDemo.briefBrazilian', accent: 'bg-lime-50 text-lime-700' },
 ] as const;
 
 export default function PresetDemoSection() {
@@ -53,7 +53,14 @@ export default function PresetDemoSection() {
                     isFeatured ? 'border-burgundy ring-1 ring-burgundy/20' : 'border-glass-border-dark'
                   }`}
               >
-                <span className="text-4xl">{p.flag}</span>
+                {/* Monograma no accent do card em vez de bandeirinha emoji
+                    (regra R9 — flags como ícone não pertencem ao sistema). */}
+                <span
+                  aria-hidden="true"
+                  className={`w-12 h-12 rounded-2xl flex items-center justify-center font-serif text-xl font-semibold ${p.accent}`}
+                >
+                  {p.name.charAt(0)}
+                </span>
                 <h3 className="font-serif text-lg font-semibold text-deep-charcoal">{p.name}</h3>
                 <span className={`text-xs font-medium px-3 py-0.5 rounded-full ${p.accent}`}>{t(p.cuisineKey)}</span>
                 <span className="text-sm text-muted-stone">{t(p.brief)}</span>
