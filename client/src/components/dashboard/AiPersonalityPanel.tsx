@@ -160,7 +160,7 @@ export default function AiPersonalityPanel() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">
+          <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">
             {t('dashboard.aiPersonality.title', 'AI personality')}
           </h2>
           <p className="text-xs text-warm-stone mt-0.5">

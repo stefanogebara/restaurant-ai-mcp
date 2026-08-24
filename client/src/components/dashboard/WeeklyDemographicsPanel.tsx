@@ -16,7 +16,7 @@ export default function WeeklyDemographicsPanel({ demographics }: WeeklyDemograp
   return (
     <div className="overflow-hidden">
       <div className="flex items-center justify-between py-5 border-b border-[#E5E7EB]">
-        <span className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{t('analytics.guestDemographics')}</span>
+        <span className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">{t('analytics.guestDemographics')}</span>
       </div>
       {!hasData ? (
         <div className="text-center py-10 px-6">

@@ -72,16 +72,16 @@ const VoiceCard = forwardRef<HTMLDivElement, VoiceCardProps>(function VoiceCard(
 
         {/* Tags */}
         <div className="flex flex-wrap gap-1.5 mb-2">
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-burgundy/10 text-burgundy">
+          <span className="inline-flex items-center px-2 py-0.5 rounded-[46px] text-xs font-medium bg-burgundy/[0.10] text-burgundy">
             {voice.language?.toUpperCase() || 'EN'}
           </span>
           {voice.accent && (
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-500/10 text-blue-700">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-[46px] text-xs font-medium bg-amber-600/[0.12] text-amber-700">
               {voice.accent}
             </span>
           )}
           {voice.category && (
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-soft-gray text-stone-gray">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-[46px] text-xs font-medium bg-muted-stone/[0.10] text-muted-stone">
               {voice.category}
             </span>
           )}

@@ -95,7 +95,7 @@ export default function WebhooksPanel() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">
+        <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">
           {t('integrations.webhooks', 'Webhooks')}
         </h2>
         <button

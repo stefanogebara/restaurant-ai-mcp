@@ -24,7 +24,7 @@ export default function CallDiagnosticsPanel({
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <ThiingsIcon name="stethoscope" size="sm" />
-          <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{t('callTracking.agentDiagnostics')}</h2>
+          <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">{t('callTracking.agentDiagnostics')}</h2>
         </div>
         <button
           type="button"

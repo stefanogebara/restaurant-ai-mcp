@@ -10,7 +10,7 @@ interface Props {
 export default function OpenAIVoicePicker({ currentOpenAIVoice, savedOpenAIVoice, onSelect }: Props) {
   return (
     <section className="py-5 border-b border-glass-border-dark">
-      <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827] mb-4 flex items-center gap-2">
+      <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone mb-4 flex items-center gap-2">
         <ThiingsIcon name="volume" pxSize={20} />
         OpenAI Voice
       </h2>

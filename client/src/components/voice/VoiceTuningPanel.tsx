@@ -88,7 +88,7 @@ export default function VoiceTuningPanel({
   return (
     <section className="overflow-hidden pb-5 border-b border-glass-border-dark">
       <div className="flex items-center justify-between py-5 border-b border-glass-border-dark">
-        <span className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{t('voiceTuning.title', 'How your AI sounds')}</span>
+        <span className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">{t('voiceTuning.title', 'How your AI sounds')}</span>
         <button type="button" onClick={onReset} className="text-xs text-burgundy hover:underline">
           {t('voiceTuning.resetToDefaults', 'Reset to defaults')}
         </button>

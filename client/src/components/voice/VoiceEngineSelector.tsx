@@ -26,7 +26,7 @@ export default function VoiceEngineSelector({ currentEngine, pendingEngine, engi
   return (
     <section className="overflow-hidden pb-5 border-b border-glass-border-dark">
       <div className="flex items-center justify-between py-5 border-b border-glass-border-dark">
-        <span className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{t('settings.voiceEngine')}</span>
+        <span className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">{t('settings.voiceEngine')}</span>
         {engineStatus && (
           <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${STATUS_STYLES[engineStatus] ?? 'bg-soft-gray text-stone-gray'}`}>
             {t(`voiceEngine.status.${engineStatus}`, engineStatus.charAt(0).toUpperCase() + engineStatus.slice(1))}

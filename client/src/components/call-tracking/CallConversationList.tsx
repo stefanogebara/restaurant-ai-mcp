@@ -39,7 +39,7 @@ export default function CallConversationList({
     <div className="overflow-hidden">
       {/* Header + tabs */}
       <div className="flex items-center justify-between py-5 border-b border-glass-border-dark">
-        <span className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{t('callTracking.recentCalls')}</span>
+        <span className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">{t('callTracking.recentCalls')}</span>
         <div className="flex gap-0">
           {OUTCOME_TABS.map((tab) => (
             <button

@@ -75,7 +75,7 @@ export default function CallPhoneStatusCard({
         <div className="flex items-center gap-3">
           <ThiingsIcon name="phone-call" pxSize={24} />
           <div>
-            <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{t('callTracking.phoneStatus')}</h2>
+            <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">{t('callTracking.phoneStatus')}</h2>
             <p className="text-sm text-stone-gray">{statusDescription}</p>
           </div>
         </div>

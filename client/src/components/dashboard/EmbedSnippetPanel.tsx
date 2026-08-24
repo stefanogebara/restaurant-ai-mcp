@@ -26,7 +26,7 @@ export default function EmbedSnippetPanel({ slug }: Props) {
 
   return (
     <div className="py-5 border-t border-[#E5E7EB] mt-8 space-y-4">
-      <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{t('dashboard.embedWidgetTitle', 'Booking Widget')}</h2>
+      <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">{t('dashboard.embedWidgetTitle', 'Booking Widget')}</h2>
       <p className="text-xs text-warm-stone">
         {t('dashboard.embedWidgetDescription', 'Paste this snippet anywhere on your website to add a booking button.')}
       </p>

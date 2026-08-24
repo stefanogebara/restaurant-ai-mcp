@@ -131,7 +131,7 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
       <div className="p-4 border-b border-glass-border-dark">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
           <div className="flex items-center gap-2.5">
-            <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{t('waitlist.title')}</h2>
+            <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">{t('waitlist.title')}</h2>
             <span className="text-[11px] font-semibold bg-[#9F1239]/[8%] text-[#9F1239] px-2.5 py-0.5 rounded-full">
               {activeCount}
             </span>

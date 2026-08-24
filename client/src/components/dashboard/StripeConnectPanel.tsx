@@ -82,7 +82,7 @@ export default function StripeConnectPanel() {
 
   return (
     <div className="py-5 border-t border-[#E5E7EB] mt-8">
-      <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827] mb-3">
+      <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone mb-3">
         {t('stripeConnect.title', 'Stripe (receive bookings)')}
       </h2>
       <p className="text-sm text-muted-stone mb-4">

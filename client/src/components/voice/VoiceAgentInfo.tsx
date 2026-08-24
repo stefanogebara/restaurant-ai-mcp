@@ -28,7 +28,7 @@ export default function VoiceAgentInfo({ agentId, updatedAt, createdAt }: Props)
   return (
     <section className="py-5 border-b border-glass-border-dark">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827] flex items-center gap-2">
+        <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone flex items-center gap-2">
           <ThiingsIcon name="info" pxSize={20} />
           {t('agentInfo.title')}
         </h2>

@@ -38,7 +38,7 @@ export default function VoiceCurrentCard({
   return (
     <section className="overflow-hidden pb-5 border-b border-glass-border-dark">
       <div className="py-5 border-b border-glass-border-dark">
-        <span className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{t('voiceCurrentCard.chooseAVoice', 'Choose a Voice')}</span>
+        <span className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">{t('voiceCurrentCard.chooseAVoice', 'Choose a Voice')}</span>
       </div>
 
       <div className="p-6">
