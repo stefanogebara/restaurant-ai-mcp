@@ -135,7 +135,7 @@ export default function TableLayoutPanel({
         {/* Table View */}
         <div className={`p-5 sm:p-6 min-h-[420px] ${viewMode === 'grid' ? 'bg-soft-gray' : ''}`}>
           <div className="mb-4">
-            <TableStatusLegend />
+            <TableStatusLegend night={night} />
           </div>
           {viewMode === 'floorplan' ? (
             <FloorPlanView

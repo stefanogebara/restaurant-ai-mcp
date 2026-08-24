@@ -203,76 +203,86 @@ export default function TableTimeline({
         )}
       </div>
 
-      <div className="grid grid-cols-[64px_1fr] relative" role="list">
-        {/* Marcador AGORA — atravessa todas as raias */}
-        {nowVisible && (
-          <div
-            aria-hidden="true"
-            className="absolute top-0 bottom-6 w-px z-10"
-            style={{ left: `calc(64px + (100% - 64px) * ${pct(nowMin) / 100})`, backgroundColor: nowColor, width: '1.5px' }}
-          />
-        )}
+      {/* Mobile: a régua ROLA em vez de comprimir. Abaixo de ~560px as barras
+          viravam lascas de 40px com o nome truncado — informação nenhuma. A
+          coluna das mesas fica grudada à esquerda para você nunca perder de
+          vista de que raia está olhando. */}
+      <div className="overflow-x-auto">
+        <div className="grid grid-cols-[64px_1fr] relative min-w-[560px]" role="list">
+          {/* Marcador AGORA — atravessa todas as raias */}
+          {nowVisible && (
+            <div
+              aria-hidden="true"
+              className="absolute top-0 bottom-6 w-px z-10"
+              style={{ left: `calc(64px + (100% - 64px) * ${pct(nowMin) / 100})`, backgroundColor: nowColor, width: '1.5px' }}
+            />
+          )}
 
-        {rows.map(({ table, bars }, i) => {
-          const isLast = i === rows.length - 1;
-          return (
-            <div key={table.id} role="listitem" className="contents">
-              <div className={`py-3 text-[12px] ${mut} ${isLast ? '' : `border-b ${hair}`}`}>
-                {t('tableLayout.table', 'Mesa')} {table.table_number}
+          {rows.map(({ table, bars }, i) => {
+            const isLast = i === rows.length - 1;
+            return (
+              <div key={table.id} role="listitem" className="contents">
+                <div
+                  className={`sticky left-0 z-20 py-3 pr-2 text-[12px] backdrop-blur-sm ${mut} ${
+                    night ? 'bg-[#1C1917]/85' : 'bg-[#FAFAF9]/85'
+                  } ${isLast ? '' : `border-b ${hair}`}`}
+                >
+                  {t('tableLayout.table', 'Mesa')} {table.table_number}
+                </div>
+                <div className={`relative min-h-[42px] ${isLast ? '' : `border-b ${hair}`}`}>
+                  {bars.map((bar) => {
+                    const left = pct(bar.startMin);
+                    const width = Math.max(6, pct(bar.endMin) - left);
+                    const solid = bar.kind === 'party';
+                    return (
+                      <div
+                        key={bar.key}
+                        title={`${bar.label} · ${fmtHour(bar.startMin)}–${fmtHour(bar.endMin)}`}
+                        className={`absolute top-[9px] h-6 rounded-[46px] flex items-center gap-1 px-2.5 text-[11px] whitespace-nowrap overflow-hidden ${
+                          solid
+                            ? 'bg-burgundy text-white'
+                            : `bg-transparent ${reservedText}`
+                        }`}
+                        style={{
+                          left: `${left}%`,
+                          width: `${width}%`,
+                          ...(solid ? {} : { border: `1.5px dashed ${reservedStroke}` }),
+                        }}
+                      >
+                        {bar.isVIP && (
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className="flex-shrink-0">
+                            <path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.3 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8z" />
+                          </svg>
+                        )}
+                        <span className="truncate">{bar.label}</span>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-              <div className={`relative min-h-[42px] ${isLast ? '' : `border-b ${hair}`}`}>
-                {bars.map((bar) => {
-                  const left = pct(bar.startMin);
-                  const width = Math.max(6, pct(bar.endMin) - left);
-                  const solid = bar.kind === 'party';
-                  return (
-                    <div
-                      key={bar.key}
-                      title={`${bar.label} · ${fmtHour(bar.startMin)}–${fmtHour(bar.endMin)}`}
-                      className={`absolute top-[9px] h-6 rounded-[46px] flex items-center gap-1 px-2.5 text-[11px] whitespace-nowrap overflow-hidden ${
-                        solid
-                          ? 'bg-burgundy text-white'
-                          : `bg-transparent ${reservedText}`
-                      }`}
-                      style={{
-                        left: `${left}%`,
-                        width: `${width}%`,
-                        ...(solid ? {} : { border: `1.5px dashed ${reservedStroke}` }),
-                      }}
-                    >
-                      {bar.isVIP && (
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className="flex-shrink-0">
-                          <path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.3 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8z" />
-                        </svg>
-                      )}
-                      <span className="truncate">{bar.label}</span>
-                    </div>
-                  );
-                })}
-              </div>
+            );
+          })}
+
+          {/* Eixo de horas */}
+          <div className={`sticky left-0 z-20 backdrop-blur-sm ${night ? 'bg-[#1C1917]/85' : 'bg-[#FAFAF9]/85'}`} />
+          <div className="relative h-6">
+            <div className={`absolute inset-x-0 top-2 h-3.5 font-mono text-[10px] ${mut}`}>
+              {hourMarks.map((m, i) => (
+                <span
+                  key={m}
+                  className="absolute"
+                  style={
+                    i === 0
+                      ? { left: 0 }
+                      : i === hourMarks.length - 1
+                        ? { right: 0 }
+                        : { left: `${pct(m)}%`, transform: 'translateX(-50%)' }
+                  }
+                >
+                  {fmtHour(m)}
+                </span>
+              ))}
             </div>
-          );
-        })}
-
-        {/* Eixo de horas */}
-        <div />
-        <div className="relative h-6">
-          <div className={`absolute inset-x-0 top-2 h-3.5 font-mono text-[10px] ${mut}`}>
-            {hourMarks.map((m, i) => (
-              <span
-                key={m}
-                className="absolute"
-                style={
-                  i === 0
-                    ? { left: 0 }
-                    : i === hourMarks.length - 1
-                      ? { right: 0 }
-                      : { left: `${pct(m)}%`, transform: 'translateX(-50%)' }
-                }
-              >
-                {fmtHour(m)}
-              </span>
-            ))}
           </div>
         </div>
       </div>

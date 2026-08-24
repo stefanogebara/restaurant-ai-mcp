@@ -216,42 +216,44 @@ export default function FloorPlanCanvas({
 
                   {/* Table body */}
                   {isRound ? (
-                    <circle cx={cx} cy={cy} r={vw / 2} fill={st.fill} stroke={st.stroke} strokeWidth={1.75} />
+                    <circle cx={cx} cy={cy} r={vw / 2} fill={st.fill} stroke={st.stroke}
+                      strokeWidth={1.75} strokeDasharray={st.dash} />
                   ) : shape === 'booth' ? (
                     <>
                       <rect x={vx} y={vy} width={vw} height={vh} rx={14}
-                        fill={st.fill} stroke={st.stroke} strokeWidth={1.75} />
+                        fill={st.fill} stroke={st.stroke} strokeWidth={1.75} strokeDasharray={st.dash} />
                       <rect x={vx + 5} y={vy + vh - 9} width={vw - 10} height={7}
                         rx={4} fill={st.stroke} opacity={0.09} />
                     </>
                   ) : (
                     <rect x={vx} y={vy} width={vw} height={vh}
                       rx={shape === 'rectangle' || shape === 'oval' ? 10 : 12}
-                      fill={st.fill} stroke={st.stroke} strokeWidth={1.75} />
+                      fill={st.fill} stroke={st.stroke} strokeWidth={1.75} strokeDasharray={st.dash} />
                   )}
 
                   {/* Table number */}
                   <text x={cx} y={cy - 5} textAnchor="middle" dominantBaseline="middle"
-                    fill={st.text} fontSize={15} fontWeight={700}
-                    fontFamily="Inter,-apple-system,sans-serif" style={{ pointerEvents: 'none' }}>
+                    fill={st.text} fontSize={17} fontWeight={400}
+                    fontFamily="'Instrument Serif',Georgia,serif" style={{ pointerEvents: 'none' }}>
                     {table.table_number}
                   </text>
 
                   {/* Capacity label */}
                   <text x={cx} y={cy + 12} textAnchor="middle" dominantBaseline="middle"
-                    fill={st.text} fontSize={9} opacity={0.5}
-                    fontFamily="Inter,-apple-system,sans-serif" style={{ pointerEvents: 'none' }}>
+                    fill={st.text} fontSize={9} opacity={0.6}
+                    fontFamily="'DM Sans',Inter,-apple-system,sans-serif" style={{ pointerEvents: 'none' }}>
                     {table.capacity} {t('floorPlan.seats', 'seats')}
                   </text>
 
                   {/* Joinable badge */}
                   {table.is_joinable && table.joinable_with?.length > 0 && (
-                    <g>
-                      <circle cx={vx + 3} cy={vy + 3} r={9} fill="#9F1239" opacity={0.9} />
-                      <text x={vx + 3} y={vy + 4.5} textAnchor="middle" dominantBaseline="middle"
-                        fontSize={10} fill="#fff" style={{ pointerEvents: 'none' }}>
-                        &#x26D3;
-                      </text>
+                    <g transform={`translate(${vx + 3}, ${vy + 3})`} style={{ pointerEvents: 'none' }}>
+                      <circle r={9} fill="#9F1239" opacity={0.9} />
+                      <path
+                        transform="translate(-5, -5) scale(0.42)"
+                        d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71 M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"
+                        fill="none" stroke="#fff" strokeWidth={2.4} strokeLinecap="round"
+                      />
                     </g>
                   )}
 

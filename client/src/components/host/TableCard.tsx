@@ -37,13 +37,18 @@ export default function TableCard({ table, onClick }: TableCardProps) {
     disabled: table.status !== 'Available'
   });
 
+  // Mirrors the illustrated tables (floorPlanHelpers palette): free is quiet
+  // stone, occupied is burgundy, held/transitioning are amber — reserved
+  // carries the same dashed outline the drawn table does, so the grid view
+  // and the floor plan never disagree. (Available used to be rose-600, which
+  // made an empty table look like an alarm.)
   const getStatusConfig = (): { iconBg: string; iconName: IconName; statusPill: string } => {
     switch (table.status) {
       case 'Available':
         return {
-          iconBg: 'bg-rose-600',
+          iconBg: 'bg-stone-gray',
           iconName: 'check',
-          statusPill: 'text-rose-600 bg-rose-600/10',
+          statusPill: 'text-stone-gray bg-stone-gray/10',
         };
       case 'Occupied':
         return {
@@ -59,9 +64,9 @@ export default function TableCard({ table, onClick }: TableCardProps) {
         };
       case 'Reserved':
         return {
-          iconBg: 'bg-violet-600',
+          iconBg: 'bg-amber-600',
           iconName: 'clock',
-          statusPill: 'text-violet-600 bg-violet-600/10',
+          statusPill: 'text-amber-700 bg-transparent border border-dashed border-amber-600',
         };
       default:
         return {
