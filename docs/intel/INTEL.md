@@ -108,6 +108,42 @@ a resposta certa é não competir nessa superfície?
 
 ---
 
+### [DISCUTIR 10/15] A partir de 01/10 não sobra caminho gratuito no WhatsApp
+**Data:** 2026-08-24 · **Eixos:** P3 A2 D3 E2 L1
+**Fonte primária:** [Meta, "Pricing for non-template messages"](https://developers.facebook.com/documentation/business-messaging/whatsapp/pricing/non-template-messages)
+
+**O que é:** a doc da Meta afirma verbatim que *"Effective October 1, 2026, Meta will
+charge for service messages, which have not been charged since November 2024"* e que
+passará a cobrar *"utility messages sent in response to users within an open 24-hour
+customer service window"*, na mesma tarifa de utility do país. A janela de 72h de free
+entry point (Click-to-WhatsApp) permanece gratuita. As tarifas por país saem até
+**01/09/2026**.
+
+**Correção de registro:** este item foi inicialmente **descartado** nesta mesma passada,
+por um scout que leu a página-mãe `/whatsapp/pricing` e concluiu que a alegação dos
+fornecedores de BSP era falsa. Ela não é. **A doc da Meta se contradiz em duas páginas
+vivas ao mesmo tempo** — a página-mãe não foi atualizada e ainda diz que utility em janela
+aberta é grátis. Quem ler só ela conclui o oposto. O veredito foi corrigido de DESCARTAR
+para DISCUTIR.
+
+**Por que toca este projeto:** o Seatable tem três adapters de WhatsApp
+(`api/_lib/channels/{meta,twilio,waha}-adapter.js`) e o canal é primário no produto. Toda
+resposta dentro da janela de 24h — que é a maior parte do atendimento conversacional —
+passa a ser cobrada por mensagem.
+
+**O que a fonte não prova:** as tarifas de outubro **não existem ainda**. Qualquer cifra
+hoje é extrapolação da tarifa utility corrente. Nenhuma das duas páginas da Meta carrega
+data de "last updated", e o changelog oficial devolveu HTTP 500 — não foi possível carimbar
+quando a Meta publicou a mudança.
+
+**A pergunta:** o custo por conversa de WhatsApp entra na conta unitária do plano a partir
+de outubro. Vale esperar a tarifa BR de 01/09 para reprecificar, ou o desenho de
+atendimento já deveria mudar agora para fechar conversa em menos turnos? E existe
+monitoramento da saúde de billing da WABA — porque a partir de 01/10 uma falha de cobrança
+deixa de silenciar só template e passa a silenciar o atendimento inteiro.
+
+---
+
 ### [DISCUTIR 8/15] Qual é o teto de concorrência do workspace ElevenLabs?
 **Data:** 2026-08-24 · **Eixos:** P2 A2 D1 E2 L1
 **Fonte:** [ElevenLabs changelog, 17/ago](https://elevenlabs.io/docs/changelog/2026/8/17)

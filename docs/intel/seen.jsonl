@@ -57,9 +57,9 @@
 {"url": "https://abrasel.com.br/noticias/noticias/keeta-leva-ao-salao-abrasel-solucoes-que-mostram-o-futuro-do-delivery", "hash": "ca661cfa4a0cd73c", "date": "2026-08-24", "verdict": "DESCARTAR", "score": 3}
 {"url": "https://abrasel.com.br/noticias/noticias/restaurante-do-futuro-leva-automacao-e-ia-para-a-gestao-de-bares-e-restaurantes/", "hash": "876d94b3be32c896", "date": "2026-08-24", "verdict": "DESCARTAR", "score": 3}
 {"url": "https://abrasel.com.br/noticias/noticias/pix-amplia-participacao-nas-vendas-de-bares-e-restaurantes/", "hash": "767629260718dfed", "date": "2026-08-24", "verdict": "DESCARTAR", "score": 3}
-{"url": "https://developers.facebook.com/documentation/business-messaging/whatsapp/pricing", "hash": "87bda69015f9bb3c", "date": "2026-08-24", "verdict": "DESCARTAR", "score": 3}
 {"url": "https://developers.openai.com/api/docs/changelog", "hash": "b31bca288a91fa3a", "date": "2026-08-24", "verdict": "DESCARTAR", "score": 3}
 {"url": "https://vercel.com/changelog/deployment-storage-keeps-your-deployments-rollback-ready", "hash": "254f1e4b9ee0ffa3", "date": "2026-08-24", "verdict": "DESCARTAR", "score": 3}
 {"url": "https://supabase.com/changelog/read-replicas-moved-to-infrastructure", "hash": "cc0248d4fadd9c24", "date": "2026-08-24", "verdict": "DESCARTAR", "score": 3}
 {"url": "https://supabase.com/changelog/bulk-prepare-retry-on-transient-failure", "hash": "09aef123d8610632", "date": "2026-08-24", "verdict": "DESCARTAR", "score": 3}
 {"url": "https://www.twilio.com/en-us/changelog/functions-classic-deprecation", "hash": "bc69779cab43ffe2", "date": "2026-08-24", "verdict": "DESCARTAR", "score": 3}
+{"url": "https://developers.facebook.com/documentation/business-messaging/whatsapp/pricing/non-template-messages", "hash": "0b8b67f0a9327c4f", "date": "2026-08-24", "verdict": "DISCUTIR", "score": 10}
