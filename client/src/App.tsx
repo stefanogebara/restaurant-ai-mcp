@@ -1,10 +1,10 @@
-import { Suspense } from 'react';
+import { Suspense, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { HelmetProvider } from 'react-helmet-async';
 import ThiingsIcon from './components/common/ThiingsIcon';
 import "./i18n/config";
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import * as Sentry from '@sentry/react';
 
 // Use v7 wrapper to match react-router-dom v7.x (v6 wrapper caused auto-redirects)
@@ -113,6 +113,23 @@ function RouteErrorFallback() {
   );
 }
 
+/**
+ * Boundary directly around <Routes> that RESETS on every navigation.
+ * Routes without their own per-route boundary (Campaigns, Events,
+ * Customers, Manager AI, …) used to bubble crashes up to the global
+ * boundary, which never reset — after one stale-chunk failure, every
+ * subsequent click appeared dead ("pages stop opening"). Resetting on
+ * pathname change lets the user simply navigate away and keep working.
+ */
+function RoutesBoundary({ children }: { children: ReactNode }) {
+  const { pathname } = useLocation();
+  return (
+    <ErrorBoundary resetKey={pathname} fallback={<RouteErrorFallback />}>
+      {children}
+    </ErrorBoundary>
+  );
+}
+
 function App() {
   const { t } = useTranslation();
   return (
@@ -138,6 +155,7 @@ function App() {
               </div>
             }>
             <main id="main-content">
+            <RoutesBoundary>
             <Routes>
               <Route path="/" element={<ErrorBoundary fallback={<RouteErrorFallback />}><LandingPage /></ErrorBoundary>} />
               {/* Dedicated pricing page — the grid moved off the landing
@@ -203,6 +221,7 @@ function App() {
               <Route path="/calculadora" element={<ErrorBoundary fallback={<RouteErrorFallback />}><NoShowCalculator /></ErrorBoundary>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
+            </RoutesBoundary>
             </main>
             </Suspense>
             </ErrorBoundary>
