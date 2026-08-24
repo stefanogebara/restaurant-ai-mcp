@@ -71,7 +71,7 @@ export default function CrmCustomerDrawer({ customerId, onClose }: CrmCustomerDr
           >
             {isLoading || !customer ? (
               <div className="flex items-center justify-center h-full">
-                <div className="animate-spin rounded-full h-8 w-8 border-2 border-stone-200 border-t-[#9F1239]" />
+                <div className="animate-spin rounded-full h-8 w-8 border-2 border-border-gray border-t-burgundy" />
               </div>
             ) : (
               <>
@@ -79,7 +79,7 @@ export default function CrmCustomerDrawer({ customerId, onClose }: CrmCustomerDr
                 <div className="sticky top-0 bg-glass-panel backdrop-blur-glass-nav border-b border-glass-border-dark px-6 py-4 flex items-center justify-between z-10">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <h2 className="text-lg font-bold text-stone-900 truncate">
+                      <h2 className="font-serif text-[24px] leading-tight text-deep-charcoal truncate">
                         {customer.customer_name || customer.customer_phone}
                       </h2>
                       <CustomerTierBadge
@@ -88,16 +88,16 @@ export default function CrmCustomerDrawer({ customerId, onClose }: CrmCustomerDr
                       />
                     </div>
                     <div className="flex items-center gap-3 mt-0.5">
-                      <p className="text-xs text-stone-500">{customer.customer_phone}</p>
+                      <p className="font-mono text-xs text-muted-stone">{customer.customer_phone}</p>
                       {customer.customer_email && (
-                        <p className="text-xs text-stone-500">{customer.customer_email}</p>
+                        <p className="text-xs text-muted-stone">{customer.customer_email}</p>
                       )}
                     </div>
                   </div>
                   <button
                     type="button"
                     onClick={onClose}
-                    className="p-2 hover:bg-stone-100 rounded-lg transition-colors flex-shrink-0"
+                    className="p-2 hover:bg-deep-charcoal/[0.05] rounded-[46px] transition-colors flex-shrink-0"
                     aria-label={t('common.close', 'Fechar')}
                   >
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -156,13 +156,13 @@ export default function CrmCustomerDrawer({ customerId, onClose }: CrmCustomerDr
                         onChange={(e) => setNoteText(e.target.value)}
                         placeholder={t('crm.notePlaceholder', 'Adicionar nota...')}
                         rows={2}
-                        className="w-full text-sm border border-stone-200 rounded-lg px-3 py-2 text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-1 focus:ring-[#9F1239]/30 focus:border-[#9F1239]/30 resize-none"
+                        className="w-full text-sm glass-pill rounded-xl px-3.5 py-2.5 text-deep-charcoal placeholder:text-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy/30 resize-none"
                       />
                       <button
                         type="button"
                         onClick={handleAddNote}
                         disabled={!noteText.trim() || addNote.isPending}
-                        className="mt-1.5 px-3 py-1.5 text-xs font-semibold bg-[#9F1239] text-white rounded-lg hover:bg-[#7f0e2e] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                        className="mt-2 px-4 py-1.5 text-xs font-medium bg-burgundy text-white rounded-[100px] hover:bg-burgundy-dark disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                       >
                         {addNote.isPending
                           ? t('crm.saving', 'Salvando...')
@@ -176,18 +176,18 @@ export default function CrmCustomerDrawer({ customerId, onClose }: CrmCustomerDr
                         {customer.notes.map((note) => (
                           <div
                             key={note.id}
-                            className="text-sm text-stone-700 bg-stone-50 px-3 py-2 rounded-lg flex items-start justify-between gap-2"
+                            className="text-[15px] text-deep-charcoal py-3 border-b hairline last:border-0 flex items-start justify-between gap-2"
                           >
                             <div className="min-w-0">
                               <p>{note.content}</p>
-                              <span className="text-[10px] text-stone-400">
+                              <span className="font-mono text-[10px] text-muted-stone">
                                 {new Date(note.created_at).toLocaleDateString('pt-BR')}
                               </span>
                             </div>
                             <button
                               type="button"
                               onClick={() => handleDeleteNote(note.id)}
-                              className="text-stone-400 hover:text-red-500 transition-colors flex-shrink-0 mt-0.5"
+                              className="text-muted-stone hover:text-red-700 transition-colors flex-shrink-0 mt-0.5"
                               aria-label={t('crm.deleteNote', 'Excluir nota')}
                             >
                               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -199,7 +199,7 @@ export default function CrmCustomerDrawer({ customerId, onClose }: CrmCustomerDr
                         ))}
                       </div>
                     ) : (
-                      <p className="text-sm text-stone-400 italic">
+                      <p className="text-sm text-muted-stone italic">
                         {t('crm.noNotes', 'Nenhuma nota adicionada')}
                       </p>
                     )}
@@ -212,14 +212,14 @@ export default function CrmCustomerDrawer({ customerId, onClose }: CrmCustomerDr
                         {customer.recent_reservations.map((res) => (
                           <div
                             key={res.id}
-                            className="flex items-center justify-between text-sm border-b border-stone-100 pb-2 last:border-0 last:pb-0"
+                            className="flex items-center justify-between text-sm border-b hairline py-2.5 last:border-0"
                           >
                             <div>
-                              <span className="text-stone-900 font-medium">{res.date}</span>
-                              <span className="text-stone-400 ml-2">{res.time}</span>
+                              <span className="font-mono text-deep-charcoal font-medium">{res.date}</span>
+                              <span className="font-mono text-muted-stone ml-2">{res.time}</span>
                             </div>
                             <div className="flex items-center gap-3">
-                              <span className="text-stone-500">
+                              <span className="text-muted-stone">
                                 {res.party_size} {t('crm.people', 'pessoas')}
                               </span>
                               <StatusBadge status={res.status} />
@@ -228,7 +228,7 @@ export default function CrmCustomerDrawer({ customerId, onClose }: CrmCustomerDr
                         ))}
                       </div>
                     ) : (
-                      <p className="text-sm text-stone-400 italic">
+                      <p className="text-sm text-muted-stone italic">
                         {t('crm.noVisits', 'Nenhuma visita registrada')}
                       </p>
                     )}
@@ -247,9 +247,9 @@ export default function CrmCustomerDrawer({ customerId, onClose }: CrmCustomerDr
 
 function StatBox({ label, value, valueColor }: { label: string; value: string; valueColor?: string }) {
   return (
-    <div className="bg-stone-50 rounded-lg p-3">
-      <p className="text-[10px] font-bold text-stone-500 uppercase tracking-widest mb-1">{label}</p>
-      <p className={`text-lg font-bold ${valueColor || 'text-stone-900'}`}>{value}</p>
+    <div>
+      <p className={`font-serif text-[24px] leading-none tabular-nums ${valueColor || 'text-deep-charcoal'}`}>{value}</p>
+      <p className="text-[10px] font-semibold text-muted-stone uppercase tracking-[0.12em] mt-2">{label}</p>
     </div>
   );
 }
@@ -257,7 +257,7 @@ function StatBox({ label, value, valueColor }: { label: string; value: string; v
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <h3 className="text-[11px] font-bold text-stone-500 uppercase tracking-widest mb-2">{title}</h3>
+      <h3 className="text-[11px] font-semibold text-muted-stone uppercase tracking-[0.12em] mb-2">{title}</h3>
       {children}
     </div>
   );
@@ -265,15 +265,15 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 function StatusBadge({ status }: { status: string }) {
   const colorMap: Record<string, string> = {
-    confirmed: 'bg-green-50 text-green-700',
-    completed: 'bg-blue-50 text-blue-700',
-    cancelled: 'bg-red-50 text-red-700',
-    'no-show': 'bg-amber-50 text-amber-700',
-    pending: 'bg-stone-100 text-stone-600',
+    confirmed: 'bg-emerald-600/[0.10] text-emerald-700',
+    completed: 'bg-burgundy/[0.08] text-burgundy',
+    cancelled: 'bg-red-700/[0.08] text-red-700',
+    'no-show': 'bg-amber-600/[0.12] text-amber-700',
+    pending: 'bg-muted-stone/[0.10] text-muted-stone',
   };
   const cls = colorMap[status.toLowerCase()] || colorMap.pending;
   return (
-    <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${cls}`}>
+    <span className={`text-[10px] font-semibold uppercase tracking-[0.08em] px-2 py-0.5 rounded-[46px] ${cls}`}>
       {status}
     </span>
   );

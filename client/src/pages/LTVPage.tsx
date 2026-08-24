@@ -39,11 +39,11 @@ export default function LTVPage() {
   return (
     <DashboardLayout>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 overflow-x-hidden pb-24 sm:pb-6 mt-14 sm:mt-0">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-deep-charcoal tracking-tight">
+        <div className="mb-8">
+          <h1 className="font-serif text-3xl sm:text-4xl text-deep-charcoal tracking-tight">
             {t('ltv.pageTitle', 'Customer Lifetime Value')}
           </h1>
-          <p className="mt-1 text-sm text-stone-gray">
+          <p className="mt-1.5 text-[15px] text-muted-stone">
             {t('ltv.pageDescription', 'Track guest lifetime value, VIP tiers, and churn risk from one place.')}
           </p>
         </div>
