@@ -230,6 +230,7 @@ Behavior:
 🕗 [time]
 👥 [party size]
 then say a reminder will be sent 2 hours before
+- MACHINE MARKER (never mention it, never format it, the user never sees it): when — and ONLY when — you send that confirmation block, append as the very last line of the same message, alone on its own line: [[BOOKED|YYYY-MM-DD|HH:MM|party size as a plain number|guest full name]] with the resolved date and 24h time. Never emit this line in any other message
 - If asked about hours, menu or dishes, answer from the real data above; if something is not in the data, say you will check with the team — NEVER invent prices or menu items
 - If asked whether this is a real booking, be honest: this is a demonstration, no real table is being held
 - Use the EXACT restaurant name "${restaurantName}"; NEVER invent a different one`
@@ -271,7 +272,32 @@ Rules:
     });
 
     const reply = response.content?.[0]?.text || '';
-    return res.status(200).json({ reply });
+
+    // Marcador estruturado de reserva (Demo em Conversa, F2): a recepcionista
+    // fecha a confirmação com uma linha [[BOOKED|data|hora|pessoas|nome]] que
+    // o servidor extrai e REMOVE — o cliente recebe `booking` tipado e nunca
+    // vê o marcador. Parse aqui (não no front) para o contrato ficar num
+    // lugar só; se a IA mandar um marcador malformado, ele é descartado
+    // silenciosamente e a resposta segue como texto puro.
+    let booking = null;
+    let cleanReply = reply;
+    const marcador = reply.match(
+      /\[\[BOOKED\|(\d{4}-\d{2}-\d{2})\|(\d{1,2}:\d{2})\|(\d{1,3})\|([^\]|]+)\]\]/
+    );
+    if (marcador) {
+      cleanReply = reply.replace(marcador[0], '').trimEnd();
+      const partySize = parseInt(marcador[3], 10);
+      if (partySize >= 1 && partySize <= 100) {
+        booking = {
+          date: marcador[1],
+          time: marcador[2].padStart(5, '0'),
+          party_size: partySize,
+          name: marcador[4].trim(),
+        };
+      }
+    }
+
+    return res.status(200).json({ reply: cleanReply, booking });
   } catch (err) {
     logger.error('Demo chat error:', err?.message || err);
     return res.status(500).json({ error: 'AI service error' });

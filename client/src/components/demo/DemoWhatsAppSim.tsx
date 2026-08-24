@@ -20,6 +20,14 @@ import TestarNoMeuWhatsApp from './TestarNoMeuWhatsApp';
  * 100% das chamadas do chat do gerente morriam em 400.
  */
 
+/** Reserva estruturada extraída pelo servidor do marcador [[BOOKED]] (F2). */
+export interface DemoChatBooking {
+  date: string;
+  time: string;
+  party_size: number;
+  name: string;
+}
+
 interface DemoWhatsAppSimProps {
   restaurantName: string;
   lang: string;
@@ -27,6 +35,8 @@ interface DemoWhatsAppSimProps {
   restaurantId?: string;
   /** preset ('italian', 'makoto'...) quando não há restaurante no banco. */
   presetKey?: string;
+  /** Dispara quando a IA fecha uma reserva — é o gatilho do payoff no painel. */
+  onBooking?: (booking: DemoChatBooking) => void;
 }
 
 interface ChatMsg {
@@ -65,7 +75,7 @@ const labels = {
 const agora = () =>
   new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
-export default function DemoWhatsAppSim({ restaurantName, lang, restaurantId, presetKey }: DemoWhatsAppSimProps) {
+export default function DemoWhatsAppSim({ restaurantName, lang, restaurantId, presetKey, onBooking }: DemoWhatsAppSimProps) {
   const t = labels[lang as keyof typeof labels] ?? labels.en;
   const [messages, setMessages] = useState<ChatMsg[]>([
     { role: 'ai', text: t.greeting(restaurantName), at: agora() },
@@ -110,6 +120,7 @@ export default function DemoWhatsAppSim({ restaurantName, lang, restaurantId, pr
       const data = await res.json().catch(() => null);
       if (data?.reply) {
         setMessages((prev) => [...prev, { role: 'ai', text: data.reply, at: agora() }]);
+        if (data.booking) onBooking?.(data.booking as DemoChatBooking);
       } else {
         console.warn('[demo-whatsapp] sem resposta da IA:', data?.error || res.status);
         setMessages((prev) => [...prev, { role: 'system', text: t.offline, at: agora() }]);

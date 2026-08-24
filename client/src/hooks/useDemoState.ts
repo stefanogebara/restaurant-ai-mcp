@@ -432,6 +432,31 @@ export function useDemoState(presetKey?: string, overrideData?: DemoOverrideData
     setReservations((prev) => prev.filter((r) => r.reservation_id !== reservationId));
   }, []);
 
+  /**
+   * Reserva fechada pela recepcionista IA na conversa do demo (F2).
+   * source: 'whatsapp' faz a ReservationsList renderizar o badge verde
+   * "WhatsApp" — o payoff do Ato 1 é ver ESTA linha cair no painel.
+   */
+  const addChatReservation = useCallback(
+    (b: { date: string; time: string; party_size: number; name: string }) => {
+      const nova: UpcomingReservation = {
+        reservation_id: genId('chat'),
+        customer_name: b.name,
+        customer_phone: '',
+        party_size: b.party_size,
+        date: b.date,
+        time: b.time,
+        reservation_time: `${b.date}T${b.time}:00`,
+        checked_in: false,
+        status: 'confirmed',
+        source: 'whatsapp',
+      };
+      setReservations((prev) => [nova, ...prev]);
+      return nova;
+    },
+    [],
+  );
+
   /** Add a guest to the waitlist */
   const addToWaitlist = useCallback((data: WalkInFormData & { special_requests?: string }) => {
     const entry: DemoWaitlistEntry = {
@@ -498,6 +523,7 @@ export function useDemoState(presetKey?: string, overrideData?: DemoOverrideData
     stats,
     checkIn,
     cancelReservation,
+    addChatReservation,
     seatParty,
     completeService,
     addWalkIn,

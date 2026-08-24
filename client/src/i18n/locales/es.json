@@ -2931,7 +2931,7 @@
     },
     "realCard": {
       "liveBadge": "Obtenido de Google en tiempo real",
-      "heading": "Aquí está tu restaurante — ya en nuestro sistema",
+      "heading": "Lo que tu IA usó para responderte",
       "subtitle": "Tu recepcionista IA está configurada con toda esta información. Echa un vistazo — cuando estés listo, haz clic en Comenzar Gratis para tomar el control.",
       "reviewsCount": "{{count}} reseñas",
       "reviewsCountK": "{{k}}k reseñas",

@@ -2931,7 +2931,7 @@
     },
     "realCard": {
       "liveBadge": "Pulled from Google in real time",
-      "heading": "Here's your restaurant — already in our system",
+      "heading": "What your AI used to answer you",
       "subtitle": "Your AI receptionist is configured with all of this. Take a look around — when you're ready, click Get Started Free to take over.",
       "reviewsCount": "{{count}} reviews",
       "reviewsCountK": "{{k}}k reviews",

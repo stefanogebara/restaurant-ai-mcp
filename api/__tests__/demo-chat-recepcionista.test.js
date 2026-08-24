@@ -212,3 +212,73 @@ describe('histórico multi-turno — funciona e tem teto (endpoint público quei
     expect(chamada().messages).toHaveLength(3); // primer (2) + a atual
   });
 });
+
+describe('marcador [[BOOKED]] — reserva estruturada extraída no servidor (F2)', () => {
+  const corpo = {
+    message: 'Pode confirmar. Meu nome é João Pedro Nascimento',
+    restaurant_id: 'rest-demo-1',
+    lang: 'pt-BR',
+    persona: 'recepcionista',
+  };
+
+  test('o contrato do marcador está no prompt da recepcionista', async () => {
+    await handler(req(corpo), res());
+    const sys = chamada().system;
+    expect(sys).toContain('[[BOOKED|YYYY-MM-DD|HH:MM|');
+    expect(sys).toContain('ONLY when');
+  });
+
+  test('o gerente NÃO carrega o contrato do marcador', async () => {
+    await handler(req({ ...corpo, persona: undefined }), res());
+    expect(chamada().system).not.toContain('[[BOOKED');
+  });
+
+  test('marcador é extraído como booking e REMOVIDO da resposta', async () => {
+    mockCreate.mockResolvedValue({
+      content: [{
+        type: 'text',
+        text: '📍 Mocotó Bar e Restaurante\n📅 29/08\n🕗 20:00\n👥 4\nVou te mandar um lembrete 2 horas antes!\n[[BOOKED|2026-08-29|20:00|4|João Pedro Nascimento]]',
+      }],
+    });
+    const r = res();
+    await handler(req(corpo), r);
+    expect(r.statusCode).toBe(200);
+    expect(r.body.booking).toEqual({
+      date: '2026-08-29',
+      time: '20:00',
+      party_size: 4,
+      name: 'João Pedro Nascimento',
+    });
+    expect(r.body.reply).not.toContain('[[BOOKED');
+    expect(r.body.reply).toContain('lembrete 2 horas antes');
+  });
+
+  test('hora de um dígito é normalizada para HH:MM', async () => {
+    mockCreate.mockResolvedValue({
+      content: [{ type: 'text', text: 'Confirmado!\n[[BOOKED|2026-08-29|9:30|2|Ana]]' }],
+    });
+    const r = res();
+    await handler(req(corpo), r);
+    expect(r.body.booking.time).toBe('09:30');
+  });
+
+  test('party size fora do intervalo descarta o booking mas ainda limpa o marcador', async () => {
+    mockCreate.mockResolvedValue({
+      content: [{ type: 'text', text: 'Confirmado!\n[[BOOKED|2026-08-29|20:00|0|Ana]]' }],
+    });
+    const r = res();
+    await handler(req(corpo), r);
+    expect(r.body.booking).toBeNull();
+    expect(r.body.reply).not.toContain('[[BOOKED');
+  });
+
+  test('resposta sem marcador devolve booking null e texto intacto', async () => {
+    mockCreate.mockResolvedValue({
+      content: [{ type: 'text', text: 'Para quantas pessoas seria?' }],
+    });
+    const r = res();
+    await handler(req(corpo), r);
+    expect(r.body.booking).toBeNull();
+    expect(r.body.reply).toBe('Para quantas pessoas seria?');
+  });
+});
