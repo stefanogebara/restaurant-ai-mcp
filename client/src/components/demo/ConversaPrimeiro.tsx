@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import DemoWhatsAppSim, { DemoChatBooking } from './DemoWhatsAppSim';
+import DemoWhatsAppSim, { type DemoChatBooking } from './DemoWhatsAppSim';
 import type { DemoStrings } from '../../hooks/useDemoLocale';
 
 /**
