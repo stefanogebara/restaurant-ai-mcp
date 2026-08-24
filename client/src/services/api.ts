@@ -2,6 +2,7 @@ import axios from 'axios';
 import { supabase, authReady, isAuthInitialized } from '../lib/supabase';
 import reservationContract from '../../../shared/reservation-contract.js';
 import type { ReservationCreateInput, ReservationModifyInput } from '../../../shared/reservation-contract.js';
+import type { TableShape } from '../types/host.types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 const { normalizeReservationCreateInput, normalizeReservationModifyInput } = reservationContract;
@@ -190,6 +191,7 @@ export const hostAPI = {
 };
 
 // Table Configuration API
+
 export interface TableConfig {
   id: string;
   table_number: number;
@@ -202,6 +204,18 @@ export interface TableConfig {
   max_capacity: number | null;
   adjacent_tables: string[];
   combination_group: string | null;
+  // Forma e posição no salão. O endpoint (getAllTablesAdmin) SEMPRE devolveu
+  // estes campos — só o tipo aqui não os declarava, então a página de Mesas
+  // não tinha como desenhar a planta com os dados que já recebia.
+  shape?: TableShape;
+  is_fixed_seating?: boolean;
+  is_joinable?: boolean;
+  joinable_with?: string[];
+  position_x?: number;
+  position_y?: number;
+  width?: number | null;
+  height?: number | null;
+  rotation?: number;
 }
 
 export const tableConfigAPI = {

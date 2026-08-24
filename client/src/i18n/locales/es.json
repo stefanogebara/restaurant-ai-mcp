@@ -1576,7 +1576,9 @@
     "analyticsBriefingLabel": "Analíticas diarias por WhatsApp",
     "analyticsBriefingDesc": "Recibe un resumen diario a las 9:00 con visitas, embudo de demo y métricas de conversión",
     "analyticsBriefingPhone": "Número de WhatsApp para el informe",
-    "loadError": "Error al cargar la configuración del restaurante."
+    "loadError": "Error al cargar la configuración del restaurante.",
+    "floorPlanHeading": "Plano del salón",
+    "floorPlanAutoHint": "Disposición automática — arrastra las mesas en el editor para reflejar tu salón real."
   },
   "customers": {
     "title": "Clientes",
