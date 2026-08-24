@@ -43,6 +43,7 @@ const strings = {
     cancel: 'Cancel',
     seatGuest: 'Seat Guest',
     noTablesAvailable: 'No tables available. Consider adding to waitlist instead.',
+    cancelReservation: 'Cancel reservation',
     // Waitlist
     waitlist: 'Waitlist',
     noOneWaiting: 'No one waiting',
@@ -238,7 +239,11 @@ const strings = {
   },
 } as const;
 
-export type DemoStrings = typeof strings['en'];
+// Mapeado para `string` (não os literais do bloco EN): componentes tipam
+// `t: DemoStrings` e recebem QUALQUER um dos três idiomas — com literais, o
+// objeto pt-BR não é atribuível ao shape do EN e o `tsc -b` do build quebra
+// (o `tsc --noEmit` solto não pegava; o build usa verbatimModuleSyntax).
+export type DemoStrings = { [K in keyof typeof strings['en']]: string };
 
 // Presets that should default to Spanish
 const SPANISH_PRESETS = new Set(['makoto']);
