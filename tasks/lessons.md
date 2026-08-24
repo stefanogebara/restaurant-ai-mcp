@@ -1127,3 +1127,14 @@ gatilho faz mora no TEXTO do prompt, nao no nome nem no titulo.
 E se algum alvo nao der pra verificar, nao apague. Preservar um gatilho a mais
 custa um disparo inutil; apagar o errado tira o acompanhamento de trabalho vivo
 de outra sessao, e ninguem percebe -- porque o sintoma e' silencio.
+
+## 2026-08-24 — Pipe engole exit code: "verificado" que não verificava
+- `npx vitest run | tail -4` / `npm run build | tail -3` retornam o exit do
+  TAIL, não do vitest/vite. Resultado real: `tsc -b` quebrado desde uma
+  feature atrás e 4 suítes mortas ("no tests") passaram por "verde" em 3
+  rodadas de verificação consecutivas.
+- Regra: verificação de suíte/build SEMPRE captura exit code explícito
+  (`> log 2>&1; echo $?`) ou roda sem pipe. "N testes passed" no tail não
+  prova que não há suítes falhando na coleta (elas não entram na linha Tests).
+- Corolário: `tsc --noEmit` solto ≠ `tsc -b` do build (verbatimModuleSyntax,
+  project refs). Verificar com o comando do build.
