@@ -582,4 +582,4 @@ async function enrichPending(opts = {}) {
   return summary;
 }
 
-module.exports = { enrichLead, enrichPending };
+module.exports = { enrichLead, enrichPending, ENRICH_COOLDOWN_MS };

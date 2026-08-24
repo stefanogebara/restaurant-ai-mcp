@@ -26,7 +26,7 @@
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { bearerEquals } = require('../_lib/secure-compare');
 const { supabaseAdmin } = require('../_lib/supabase');
-const { enrichLead } = require('../_lib/prospecting/prospect-enrich');
+const { enrichLead, ENRICH_COOLDOWN_MS } = require('../_lib/prospecting/prospect-enrich');
 const { logCronRun, logCronError } = require('../_lib/cron-tracker');
 
 const logger = createSecureLogger('CronProspectEnrich');
@@ -41,25 +41,63 @@ const LIMITE_PADRAO = 15;
  * Fila de enriquecimento: quentes primeiro (mais recentes na frente, que são os
  * que a Olímpia toca em seguida), frios depois pra queimar o backlog devagar.
  */
+/**
+ * Predicado "trabalhável AGORA", aplicado NA CONSULTA e não só no enrichLead.
+ *
+ * POR QUE EXISTE (23/08/2026): sem ele o cron ficou moendo em falso. Todo
+ * `cron_runs` registrava `processados: 15, pulados: 15, enriquecidos: 0` — de
+ * hora em hora, e a base inteira tinha UM lead com CNPJ.
+ *
+ * O laço: a seleção é `cnpj is null`, e o skip por cooldown devolve ANTES de
+ * gravar qualquer coisa. Lead que o enrich não consegue resolver continua com
+ * `cnpj` nulo, continua no topo da ordenação, e volta na hora seguinte. Quando
+ * o cooldown de 7 dias vence ele é tentado, falha de novo, regrava
+ * `attempted_at` e se rebloqueia — ocupando a mesma vaga para sempre.
+ *
+ * É a MESMA forma do defeito da pontuação (12–13/08): ordenação estável +
+ * seleção que só muda se a linha for escrita. A lição daquele dia mandava
+ * varrer o repositório atrás de outra consulta com esta forma; esta é ela.
+ *
+ * Espelha `enrichLead`: lá só pula quando `cnpj === 'missing'` E dentro da
+ * janela. As três cláusulas cobrem os demais casos — status diferente de
+ * missing, nunca tentado (enrich_status nulo faz o ->> virar null), e
+ * tentativa vencida. Comparação de texto porque `attempted_at` é gravado com
+ * `toISOString()`: formato fixo em UTC, onde ordem lexicográfica é ordem
+ * cronológica.
+ */
+function filtroTrabalhavel() {
+  const corte = new Date(Date.now() - ENRICH_COOLDOWN_MS).toISOString();
+  return `enrich_status->>cnpj.not.eq.missing,`
+    + `enrich_status->>attempted_at.is.null,`
+    + `enrich_status->>attempted_at.lt.${corte}`;
+}
+
 async function proximosLeads(limite) {
   const alvo = [];
+  const trabalhavel = filtroTrabalhavel();
 
   const { data: quentes, error: e1 } = await supabaseAdmin
     .from('prospect_leads')
     .select('id')
     .is('cnpj', null)
     .in('prospect_state', QUENTES)
+    .or(trabalhavel)
     .order('last_in_at', { ascending: false, nullsFirst: false })
     .limit(limite);
   if (e1) throw new Error(`fila quente: ${e1.message}`);
   alvo.push(...(quentes || []).map((l) => l.id));
 
+  // A fila fria só era alcançada quando a quente devolvia menos que o limite —
+  // o que NUNCA acontecia: 879 quentes contra um lote de 15. Com os bloqueados
+  // fora da consulta a quente agora esvazia de verdade, e os 3808 frios
+  // deixam de ser inalcançáveis por construção.
   if (alvo.length < limite) {
     const { data: frios, error: e2 } = await supabaseAdmin
       .from('prospect_leads')
       .select('id')
       .is('cnpj', null)
       .not('prospect_state', 'in', `(${QUENTES.join(',')})`)
+      .or(trabalhavel)
       .order('created_at', { ascending: true })
       .limit(limite - alvo.length);
     if (e2) throw new Error(`fila fria: ${e2.message}`);
@@ -97,6 +135,16 @@ module.exports = async (req, res) => {
         logger.warn('enrich falhou num lead', { error: String(e.message).slice(0, 120) });
       }
     }
+    // Lote inteiro pulado é a ASSINATURA da fome: nada foi gravado, logo a
+    // consulta da próxima hora traz as MESMAS linhas. Foi assim que este cron
+    // moeu em falso de hora em hora sem ninguém ver — "processados: 15,
+    // pulados: 15" é indistinguível de uma rodada saudável se ninguém disser
+    // que é anormal. Só dispara quando NADA foi enriquecido, então é barato.
+    if (ids.length && resumo.enriquecidos === 0 && resumo.pulados === ids.length) {
+      logger.error(
+        `enriquecimento travado: ${resumo.pulados}/${ids.length} do lote pulados e nada gravado — `
+        + 'a próxima rodada relerá as MESMAS linhas. Ver filtroTrabalhavel().');
+    }
     logger.info('cron de enriquecimento concluído', resumo);
     // Sem isto o job não aparece em cron_runs e o vigia o dá como never_run
     // para sempre — registro sem batimento é decoração.
@@ -114,3 +162,6 @@ module.exports = async (req, res) => {
 
 module.exports.proximosLeads = proximosLeads;
 module.exports.QUENTES = QUENTES;
+// Exportada para teste: a seleção é onde mora o defeito de fome, e testá-la
+// pelo handler exigiria simular request/response e o laço de enriquecimento.
+module.exports.proximosLeads = proximosLeads;
