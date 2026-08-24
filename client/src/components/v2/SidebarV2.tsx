@@ -1,7 +1,7 @@
 /**
  * SidebarV2 — shared dark sidebar matching the Claude Design v2 mockups.
  *
- * Used by DashboardV2, SettingsV2, SofiaV2 and any future v2 routes. Keeps
+ * Used by SofiaV2 and any future v2 routes. Keeps
  * the design system in one place: same nav order, same active burgundy
  * highlight, same manager footer card.
  */
