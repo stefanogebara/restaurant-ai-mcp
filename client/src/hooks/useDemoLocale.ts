@@ -66,6 +66,14 @@ const strings = {
     exitMessage: 'Set up your own AI receptionist in under 5 minutes. No credit card required.',
     exitTrialCTA: 'Start Free Trial',
     exitContinue: 'Continue Demo',
+    // Conversation-first overlay (Ato 1)
+    convEyebrow: 'Your demo starts with a conversation',
+    convTitle: 'Talk to your AI receptionist — as if you were a guest',
+    convSkip: 'Skip and see the dashboard →',
+    convBooked: 'Reservation confirmed — watch it land on your dashboard',
+    convBookedCta: 'See it on the dashboard',
+    payoffTitle: 'Your AI just booked this',
+    viaWhatsAppNow: 'via WhatsApp · just now',
     // Loading
     loadingDemo: 'Loading demo...',
     // A11y / banners
@@ -121,6 +129,14 @@ const strings = {
     exitMessage: 'Configure sua recepcionista IA em menos de 5 minutos. Sem cartão de crédito.',
     exitTrialCTA: 'Começar Teste Grátis',
     exitContinue: 'Continuar Demo',
+    // Conversation-first overlay (Ato 1)
+    convEyebrow: 'Seu demo começa numa conversa',
+    convTitle: 'Fale com a sua recepcionista IA — como se você fosse um cliente',
+    convSkip: 'Pular e ver o painel →',
+    convBooked: 'Reserva confirmada — veja ela cair no seu painel',
+    convBookedCta: 'Ver no painel',
+    payoffTitle: 'Sua IA acabou de fechar esta reserva',
+    viaWhatsAppNow: 'via WhatsApp · agora',
     // Loading
     loadingDemo: 'Carregando demo...',
     // A11y / banners
@@ -173,6 +189,14 @@ const strings = {
     exitMessage: 'Configura tu recepcionista IA en menos de 5 minutos. Sin tarjeta de crédito.',
     exitTrialCTA: 'Comenzar prueba gratuita',
     exitContinue: 'Continuar demo',
+    // Conversation-first overlay (Ato 1)
+    convEyebrow: 'Tu demo empieza con una conversación',
+    convTitle: 'Habla con tu recepcionista IA — como si fueras un cliente',
+    convSkip: 'Saltar y ver el panel →',
+    convBooked: 'Reserva confirmada — mira cómo cae en tu panel',
+    convBookedCta: 'Ver en el panel',
+    payoffTitle: 'Tu IA acaba de cerrar esta reserva',
+    viaWhatsAppNow: 'vía WhatsApp · ahora',
     // Loading
     loadingDemo: 'Cargando demo...',
     // A11y / banners

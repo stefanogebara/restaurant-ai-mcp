@@ -1,7 +1,7 @@
 # Demo em Conversa — a IA atende na frente do dono
 
 **Data:** 2026-08-24 · **Sucede:** `.claude/plans/2026-07-10-demo-experience/` ("O Espelho")
-**Status:** PROPOSTO — aguardando aprovação do Stefano nas 2 decisões da seção 2.
+**Status:** EM EXECUÇÃO — F0 (#37), F1 (#38) e F2 em PR. D1/D2 seguem abertas (gateiam F3/F5).
 
 ---
 
@@ -97,23 +97,23 @@ Bugs confirmados no walkthrough + varredura de 24/ago. Nenhum depende do redesig
 Objetivo: do submit ao primeiro turno de conversa em <10s, sem pedir nada além de
 nome + cidade.
 
-- [ ] 1.1 **Backend: criar demo sem e-mail.** `api/demo/index.js` `handleCreate`:
+- [x] 1.1 **Backend: criar demo sem e-mail.** `api/demo/index.js` `handleCreate`:
       `contact_email` vira opcional quando `scraped_data` presente (required passa a
       `{restaurant_name, city}`). Sem e-mail: não dispara welcome email; nurture cron
       já ignora demos sem `demo_contact_email` (verificar e cobrir com teste).
       Rate limit `demo-create` continua igual.
-- [ ] 1.2 **Backend: endpoint de captura tardia.** `POST /api/demo/attach-contact`
+- [x] 1.2 **Backend: endpoint de captura tardia.** `POST /api/demo/attach-contact`
       (`?action=attach-contact` no rewrite, padrão path-based por causa de adblock):
       `{demo_token, contact_email? , contact_name?}` → PATCH no registro + dispara o
       welcome email nesse momento. Validação de e-mail igual à atual; rate limit
       `demo-create`.
-- [ ] 1.3 **Frontend: passo de confirmação.** `DemoSetupForm`: resultado(s) sempre
+- [x] 1.3 **Frontend: passo de confirmação.** `DemoSetupForm`: resultado(s) sempre
       renderizam card com foto + endereço + "É este o seu restaurante?" →
       [Sim, é esse] / [Não, o meu é novo →]. Zero resultados ou "não é esse" leva ao
       caminho da Fase 4 (não mais ao demo genérico mudo).
-- [ ] 1.4 **Frontend: remover o passo de e-mail do setup.** Submit da confirmação →
+- [x] 1.4 **Frontend: remover o passo de e-mail do setup.** Submit da confirmação →
       `POST /api/demo/create` (sem email) → `navigate('/demo/:token', {state})`.
-- [ ] 1.5 Eventos de funil: `demo_match_confirmed`, `demo_match_rejected`,
+- [x] 1.5 Eventos de funil: `demo_match_confirmed`, `demo_match_rejected`,
       `demo_new_restaurant_path` (juntar aos `trackDemoFunnel` existentes).
 
 **Aceite:** consigo ir de nome+cidade ao demo sem digitar e-mail; nome inventado
@@ -121,31 +121,34 @@ nunca vira restaurante de outro dono sem confirmação explícita.
 
 ### Fase 2 — Ato 1: a conversa como landing do demo
 
-- [ ] 2.1 **`ConversaPrimeiro` (novo componente, ~tela cheia).** No primeiro load de
+- [x] 2.1 **`ConversaPrimeiro` (novo componente, ~tela cheia).** No primeiro load de
       `/demo/:token` (flag `sessionStorage` por token), o painel abre com um overlay
       de conversa: `DemoWhatsAppSim` promovido, com o painel desfocado ao fundo
       (Warm Glass, regras R1-R14). Header: *"Fale com a recepcionista IA do
       {nome} — como se você fosse um cliente."* Chips existentes já servem.
       Botão discreto "pular e ver o painel" (nunca prender o dono).
-- [ ] 2.2 **Marcador estruturado de reserva.** `api/demo-chat.js` persona
+- [x] 2.2 **Marcador estruturado de reserva.** `api/demo-chat.js` persona
       recepcionista: instruir a IA a terminar a mensagem de confirmação com a linha
       `[[BOOKED|YYYY-MM-DD|HH:MM|party|nome]]`. Backend faz strip da linha antes de
       devolver `reply` e retorna também `booking: {date, time, party_size, name} |
       null`. (Parse no servidor, não no cliente — cliente nunca vê o marcador.)
       Teste Jest do parse + do strip.
-- [ ] 2.3 **Payoff.** Quando `booking` chega: overlay fecha em transição, a reserva
+- [x] 2.3 **Payoff.** Quando `booking` chega: overlay fecha em transição, a reserva
       entra no `useDemoState` no TOPO da lista com badge **"via WhatsApp · agora"**
       (novo campo `source` no tipo local), stats incrementam com micro-animação.
       Scroll âncora até a linha da reserva.
-- [ ] 2.4 **Wow card reposicionado.** `RealRestaurantCard` + `AIKnowsCard` descem e
+- [x] 2.4 **Wow card reposicionado.** `RealRestaurantCard` + `AIKnowsCard` descem e
       são reenquadrados: título vira *"O que a sua IA usou para te responder"* —
       suporte da mágica, não abertura. `AIKnowsCard` sobe acima da foto.
-- [ ] 2.5 **Guarda de custo.** Cap de turnos por sessão de demo no servidor (ex.: 20
-      mensagens por demo_token/preset por hora — novo tier ou contador no tier
-      `chat`); no cliente, após o booking a UI convida para o Ato 2 em vez de
-      conversa infinita. `AI_MODEL_FAST` + 300 max_tokens permanecem.
-- [ ] 2.6 Eventos: `demo_chat_opened`, `demo_chat_first_reply`,
-      `demo_chat_booking_confirmed`, `demo_dashboard_revealed`.
+- [x] 2.5 **Guarda de custo** — já existia e foi verificada, sem código novo:
+      rate limit `chat` (10 req/min/IP) + histórico saneado no teto de 10
+      mensagens × 500 chars + `AI_MODEL_FAST` com 300 max_tokens. No cliente,
+      após o booking o overlay convida para o Ato 2 em vez de conversa
+      infinita.
+- [x] 2.6 Eventos: `demo_chat_opened`, `demo_chat_booking_confirmed`,
+      `demo_dashboard_revealed`. (`demo_chat_first_reply` ficou de fora por
+      ora — exigiria hook no sim; adicionar se a análise do funil sentir
+      falta do degrau.)
 
 **Aceite:** em um demo recém-criado, mandar "mesa pra 4 sexta às 20h" + nome resulta
 em reserva visível no painel com badge, em menos de 3 turnos.

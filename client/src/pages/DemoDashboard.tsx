@@ -1,9 +1,11 @@
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { Link, useSearchParams, useParams, useLocation } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import DemoSlideIn from '../landing/components/DemoSlideIn';
 import DemoSidebar from '../components/demo/DemoSidebar';
 import DemoTablesGrid from '../components/demo/DemoTablesGrid';
-import DemoWhatsAppSim from '../components/demo/DemoWhatsAppSim';
+import DemoWhatsAppSim, { type DemoChatBooking } from '../components/demo/DemoWhatsAppSim';
+import ConversaPrimeiro from '../components/demo/ConversaPrimeiro';
 import DemoAnalyticsPanel from '../components/demo/DemoAnalyticsPanel';
 import DemoRestaurantInfoCard from '../components/demo/DemoRestaurantInfoCard';
 import RealRestaurantCard, { type ScrapedRestaurantData } from '../components/demo/RealRestaurantCard';
@@ -139,6 +141,38 @@ export default function DemoDashboard() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(isEmbed);
   const [selectedCustomer, setSelectedCustomer] = useState<UpcomingReservation | null>(null);
   const { showPopup: showExitPopup, dismiss: dismissExitPopup } = useExitIntent();
+
+  // ---- Ato 1: conversa como primeiro contato (Demo em Conversa, F2) ----
+  // Uma vez por token, por sessão, o painel abre COBERTO pela conversa com a
+  // recepcionista IA. Só demos por token (a IA real precisa do restaurant_id
+  // do banco) e nunca no embed da landing.
+  const conversaKey = demoToken ? `seatable-conversa-vista:${demoToken}` : null;
+  const [showConversa, setShowConversa] = useState(false);
+  const [chatBooking, setChatBooking] = useState<DemoChatBooking | null>(null);
+
+  useEffect(() => {
+    if (!conversaKey || isEmbed || !tokenSession?.restaurant?.id) return;
+    let vista: string | null = null;
+    try { vista = sessionStorage.getItem(conversaKey); } catch { /* private mode */ }
+    if (!vista) {
+      setShowConversa(true);
+      trackDemoFunnel({ step: 'demo_chat_opened', preset: presetKey });
+    }
+  }, [conversaKey, isEmbed, tokenSession?.restaurant?.id, presetKey]);
+
+  const handleConversaDone = (booking: DemoChatBooking | null) => {
+    try { if (conversaKey) sessionStorage.setItem(conversaKey, '1'); } catch { /* private mode */ }
+    setShowConversa(false);
+    if (booking) {
+      // O payoff: a reserva que a IA acabou de fechar entra no estado local
+      // (badge WhatsApp na lista) E ganha um card de destaque acima da lista
+      // — visível mesmo quando a data reservada cai fora das abas Hoje/Amanhã.
+      demo.addChatReservation(booking);
+      setChatBooking(booking);
+      trackDemoFunnel({ step: 'demo_chat_booking_confirmed', preset: presetKey });
+    }
+    trackDemoFunnel({ step: 'demo_dashboard_revealed', preset: presetKey });
+  };
 
   // Walk-in form state
   const [walkInForm, setWalkInForm] = useState({
@@ -399,6 +433,12 @@ export default function DemoDashboard() {
             users hitting hardcoded preset URLs (e.g. /demo?preset=italian). */}
         {realScrapedData ? (
           <>
+            {/* Ordem invertida na F2 (Demo em Conversa): a síntese ("o que a
+                IA já sabe") vem ANTES da foto/dados crus — é a única parte
+                que o dono ainda não conhece do próprio restaurante. O card
+                de dados do Google vira material de apoio, reenquadrado como
+                "o que a sua IA usou para te responder". */}
+            <AIKnowsCard menu={realScrapedData.menu} insights={realScrapedData.insights} />
             <RealRestaurantCard
               data={realScrapedData}
               conversionHref={conversionHref}
@@ -407,9 +447,6 @@ export default function DemoDashboard() {
                 stashDemoToken();
               }}
             />
-            {/* "Your AI already knows" — populated by Phase K enrichment pass.
-                Hides itself if neither menu nor insights came back from the LLM. */}
-            <AIKnowsCard menu={realScrapedData.menu} insights={realScrapedData.insights} />
           </>
         ) : presetInfo && (
           <DemoRestaurantInfoCard info={presetInfo} lang={lang} />
@@ -434,6 +471,30 @@ export default function DemoDashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-8">
           {/* Left Column: Reservations — spans all right-column rows */}
           <div className="space-y-6">
+            {/* Payoff do Ato 1: a reserva que a recepcionista IA acabou de
+                fechar na conversa. Card próprio (não só a linha na lista)
+                porque a data reservada pode cair fora das abas Hoje/Amanhã. */}
+            {chatBooking && (
+              <motion.div
+                initial={{ opacity: 0, y: -12, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.45, ease: [0.23, 1, 0.32, 1] }}
+                className="glass-card p-4 border-l-4 border-emerald-500 flex items-center justify-between gap-3"
+              >
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold tracking-wide uppercase text-emerald-700 mb-1">
+                    {t.payoffTitle}
+                  </p>
+                  <p className="text-sm font-semibold text-deep-charcoal truncate">
+                    {chatBooking.name}
+                    <span className="font-normal text-stone-gray"> · {chatBooking.date.split('-').reverse().slice(0, 2).join('/')} · {chatBooking.time} · {chatBooking.party_size}p</span>
+                  </p>
+                </div>
+                <span className="flex-shrink-0 inline-flex items-center gap-1 px-2 py-1 rounded-full bg-green-50 text-green-700 text-[11px] font-medium">
+                  {t.viaWhatsAppNow}
+                </span>
+              </motion.div>
+            )}
             <ReservationsList
               todayReservations={demo.todayReservations}
               tomorrowReservations={demo.tomorrowReservations}
@@ -501,7 +562,18 @@ export default function DemoDashboard() {
       )}
 
       {/* Exit Intent Popup */}
-      {!isEmbed && showExitPopup && (
+      {/* Ato 1 — conversa em tela cheia sobre o painel (primeiro load por token) */}
+      {showConversa && tokenSession?.restaurant?.id && (
+        <ConversaPrimeiro
+          restaurantName={restaurantName}
+          lang={lang}
+          restaurantId={tokenSession.restaurant.id}
+          t={t}
+          onDone={handleConversaDone}
+        />
+      )}
+
+      {!isEmbed && showExitPopup && !showConversa && (
         <div
           className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[70] p-4"
           onClick={(e) => { if (e.target === e.currentTarget) dismissExitPopup(); }}
