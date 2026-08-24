@@ -94,7 +94,8 @@
     "coupons": "Coupons",
     "events": "Events",
     "campaigns": "Campaigns",
-    "insights": "Insights"
+    "insights": "Insights",
+    "serviceScore": "Service Score"
   },
   "dashboard": {
     "overview": "Overview",
@@ -3571,5 +3572,14 @@
     "conflictNeeds": "must be ready at",
     "conflictBlocked": "occupied until",
     "moreTables": "more tables with activity not shown"
+  },
+  "serviceScore": {
+    "pageTitle": "Service Score",
+    "heading": "The whole night, on one page",
+    "nowMarker": "NOW",
+    "idleTable": "free all night",
+    "emptyTitle": "No movement in today’s service",
+    "emptyHint": "As soon as there are reservations or parties in the house, the night shows up here hour by hour.",
+    "title": "The whole night, on one page"
   }
 }
