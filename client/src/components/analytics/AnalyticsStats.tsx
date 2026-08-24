@@ -34,13 +34,21 @@ function DeltaBadge({ pct, invertColor = false }: { pct: number | null; invertCo
   if (pct === null || pct === undefined) return null;
   const isPositive = pct > 0;
   const isNeutral = Math.abs(pct) < 0.1;
+  // "Bom" depende da métrica: mais reservas é bom, mais no-shows é ruim —
+  // daí o invertColor. Tokens quentes do DESIGN.md, nada de green-600 cru.
   const colorClass = isNeutral
-    ? 'text-[#9CA3AF]'
-    : (isPositive !== invertColor ? 'text-green-600' : 'text-red-600');
-  const arrow = isNeutral ? '' : (isPositive ? '\u2191' : '\u2193');
+    ? 'text-muted-stone'
+    : (isPositive !== invertColor ? 'text-emerald-700' : 'text-red-700');
   return (
-    <span className={`text-xs font-semibold ${colorClass} ml-1`}>
-      {arrow}{formatDelta(pct)}
+    <span className={`inline-flex items-center gap-0.5 text-xs font-medium ${colorClass}`}>
+      {!isNeutral && (
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"
+          className={isPositive ? '' : 'rotate-180'}>
+          <path d="M12 19V5" /><path d="M5 12l7-7 7 7" />
+        </svg>
+      )}
+      {formatDelta(pct)}
     </span>
   );
 }
@@ -122,7 +130,7 @@ export default function AnalyticsStats({ overview, reservationsByStatus }: Analy
     {
       value: noShowRate !== null ? `${noShowRate}%` : '\u2014',
       label: t('analytics.noShowRate'),
-      color: noShowRate !== null && parseFloat(noShowRate) > 5 ? 'text-red-600' : undefined,
+      color: noShowRate !== null && parseFloat(noShowRate) > 5 ? 'text-red-700' : undefined,
       tooltip: noShowTooltip,
       delta: noShowDelta,
       invertColor: true,
@@ -131,7 +139,7 @@ export default function AnalyticsStats({ overview, reservationsByStatus }: Analy
     {
       value: cancellationRate !== null ? `${cancellationRate}%` : '\u2014',
       label: t('analytics.cancellationRate', 'Cancellation Rate'),
-      color: cancellationRate !== null && parseFloat(cancellationRate) > 15 ? 'text-amber-600' : undefined,
+      color: cancellationRate !== null && parseFloat(cancellationRate) > 15 ? 'text-amber-700' : undefined,
       tooltip: cancellationRate === null
         ? t('analytics.noShowNotEnoughData', 'Need at least 5 reservations')
         : undefined,
@@ -169,32 +177,32 @@ export default function AnalyticsStats({ overview, reservationsByStatus }: Analy
   ];
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6 border-b border-glass-border-dark pb-5">
+    <section className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6 sm:gap-8 border-y hairline py-7 sm:py-9">
       {stats.map((stat) => (
-        <div key={stat.label} className="py-5">
-          <div className="text-[11px] font-semibold uppercase tracking-widest text-[#9CA3AF] mb-2">
-            {stat.label}
-          </div>
-          <div
-            className={`text-[26px] font-bold tracking-tight leading-none ${stat.color || 'text-deep-charcoal'}`}
+        <div key={stat.label}>
+          <p
+            className={`font-serif text-[30px] sm:text-[34px] leading-none tabular-nums ${stat.color || 'text-deep-charcoal'}`}
             title={stat.tooltip}
           >
             {stat.value}
-          </div>
+          </p>
+          <p className="text-[12px] uppercase tracking-[0.12em] text-muted-stone mt-3">
+            {stat.label}
+          </p>
           {stat.delta !== null && (
-            <div className="mt-1">
+            <p className="mt-1.5 flex items-center gap-1">
               <DeltaBadge pct={stat.delta} invertColor={stat.invertColor} />
-              <span className="text-[10px] text-[#9CA3AF] ml-1">{t('analytics.vsPrevWeek')}</span>
-            </div>
+              <span className="text-[10px] text-muted-stone">{t('analytics.vsPrevWeek')}</span>
+            </p>
           )}
           {stat.subtitle && (
-            <p className="text-[10px] text-[#9CA3AF] mt-1">{stat.subtitle}</p>
+            <p className="text-[10px] text-muted-stone mt-1">{stat.subtitle}</p>
           )}
           {stat.tooltip && stat.value === '\u2014' && (
-            <p className="text-[10px] text-[#9CA3AF] mt-1">{stat.tooltip}</p>
+            <p className="text-[10px] text-muted-stone mt-1">{stat.tooltip}</p>
           )}
         </div>
       ))}
-    </div>
+    </section>
   );
 }

@@ -114,21 +114,23 @@ export default function RevenueOpportunities() {
   const summary = data?.summary ?? null;
   const [expandedCard, setExpandedCard] = useState<number | null>(null);
 
+  // Escala de prioridade e de dificuldade: 'low' usava rose (a cor de AÇÃO da
+  // marca), então o item menos urgente e o mais fácil competiam com o CTA.
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'high': return 'bg-red-600';
+      case 'high': return 'bg-red-700';
       case 'medium': return 'bg-amber-600';
-      case 'low': return 'bg-rose-500';
-      default: return 'bg-warm-stone';
+      case 'low': return 'bg-emerald-700';
+      default: return 'bg-muted-stone';
     }
   };
 
   const getDifficultyBadge = (difficulty: string) => {
     switch (difficulty) {
-      case 'low': return 'bg-rose-500/15 text-rose-800';
-      case 'medium': return 'bg-amber-600/15 text-amber-800';
-      case 'high': return 'bg-red-600/15 text-red-800';
-      default: return 'bg-soft-gray text-charcoal-dark';
+      case 'low': return 'bg-emerald-600/[0.10] text-emerald-700';
+      case 'medium': return 'bg-amber-600/[0.12] text-amber-700';
+      case 'high': return 'bg-red-700/[0.10] text-red-700';
+      default: return 'bg-muted-stone/[0.10] text-muted-stone';
     }
   };
 
@@ -137,7 +139,7 @@ export default function RevenueOpportunities() {
       <div className="py-8">
         <div role="status" className="flex items-center justify-center">
           <div aria-hidden="true" className="w-8 h-8 border-4 border-burgundy border-t-transparent rounded-full animate-spin"></div>
-          <span className="ml-3 text-warm-stone">{t('analytics.analyzingOpportunities')}</span>
+          <span className="ml-3 text-muted-stone">{t('analytics.analyzingOpportunities')}</span>
         </div>
       </div>
     );
@@ -147,135 +149,127 @@ export default function RevenueOpportunities() {
     return (
       <div className="py-8">
         <div className="text-center py-8">
-          <ThiingsIcon name="lightbulb" pxSize={32} className="mx-auto mb-3 text-warm-stone" />
-          <p className="font-semibold text-deep-charcoal mb-1">{t('analytics.noRevenueData', 'No revenue data yet')}</p>
-          <p className="text-sm text-warm-stone">{t('analytics.noRevenueDataDesc', 'Revenue opportunities will appear once there is enough booking history to analyze.')}</p>
+          <ThiingsIcon name="lightbulb" pxSize={32} className="mx-auto mb-3 text-muted-stone" />
+          <p className="font-serif text-[20px] text-deep-charcoal mb-1">{t('analytics.noRevenueData', 'No revenue data yet')}</p>
+          <p className="text-sm text-muted-stone">{t('analytics.noRevenueDataDesc', 'Revenue opportunities will appear once there is enough booking history to analyze.')}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="overflow-hidden">
-      {/* Header */}
-      <div className="py-5 border-b border-glass-border-dark">
-        <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827] mb-1">{t('analytics.revenueOpportunities')}</h2>
-        <p className="text-sm text-warm-stone">
+    <section>
+      <header className="border-b hairline pb-4">
+        <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">
+          {t('analytics.revenueOpportunities')}
+        </h2>
+        <p className="text-[15px] text-muted-stone mt-1.5">
           {t('analytics.revenueOpportunitiesDesc')}
         </p>
-      </div>
+      </header>
 
-      {/* Summary Stats */}
       {summary && (
-        <div className="grid grid-cols-2 gap-8 py-5 border-b border-glass-border-dark">
-          <div className="text-center">
-            <div className="text-3xl font-bold text-rose-600">{formatCurrency(summary.total_potential_revenue)}</div>
-            <div className="text-xs text-warm-stone mt-1">{t('analytics.totalPotential')}</div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 border-b hairline py-7">
+          <div>
+            <p className="font-serif text-[30px] leading-none text-burgundy tabular-nums">{formatCurrency(summary.total_potential_revenue)}</p>
+            <p className="text-[11px] uppercase tracking-[0.12em] text-muted-stone mt-2.5">{t('analytics.totalPotential')}</p>
           </div>
-          <div className="text-center">
-            <div className="text-3xl font-bold text-burgundy">{formatCurrency(summary.estimated_monthly_impact)}</div>
-            <div className="text-xs text-warm-stone mt-1">{t('analytics.monthlyImpact')}</div>
+          <div>
+            <p className="font-serif text-[30px] leading-none text-deep-charcoal tabular-nums">{formatCurrency(summary.estimated_monthly_impact)}</p>
+            <p className="text-[11px] uppercase tracking-[0.12em] text-muted-stone mt-2.5">{t('analytics.monthlyImpact')}</p>
           </div>
-          <div className="text-center">
-            <div className="text-3xl font-bold text-deep-charcoal">{summary.quick_wins}</div>
-            <div className="text-xs text-warm-stone mt-1">{t('analytics.quickWins')}</div>
+          <div>
+            <p className="font-serif text-[30px] leading-none text-deep-charcoal tabular-nums">{summary.quick_wins}</p>
+            <p className="text-[11px] uppercase tracking-[0.12em] text-muted-stone mt-2.5">{t('analytics.quickWins')}</p>
           </div>
-          <div className="text-center">
-            <div className="text-3xl font-bold text-red-600">{summary.high_priority}</div>
-            <div className="text-xs text-warm-stone mt-1">{t('analytics.highPriority')}</div>
+          <div>
+            <p className="font-serif text-[30px] leading-none text-red-700 tabular-nums">{summary.high_priority}</p>
+            <p className="text-[11px] uppercase tracking-[0.12em] text-muted-stone mt-2.5">{t('analytics.highPriority')}</p>
           </div>
         </div>
       )}
 
-      {/* Opportunities Cards */}
-      <div className="p-6">
-        <div className="grid grid-cols-1 gap-4">
-          {opportunities.map((opp) => (
-            <div
-              key={opp.rank}
-              role="button"
-              tabIndex={0}
-              aria-expanded={expandedCard === opp.rank}
-              className="border border-glass-border-input rounded-lg overflow-hidden hover:bg-[#FAFAFA] transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#9F1239]/20"
-              onClick={() => setExpandedCard(expandedCard === opp.rank ? null : opp.rank)}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setExpandedCard(expandedCard === opp.rank ? null : opp.rank); } }}
-            >
-              {/* Card Header */}
-              <div className="p-5 border-b border-glass-border-dark">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${getPriorityColor(opp.priority)} text-white font-bold`}>
-                      #{opp.rank}
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-lg text-deep-charcoal">{tCat(opp.category)}</h3>
-                      <p className="text-sm text-warm-stone">{tDesc(opp.description)}</p>
-                    </div>
-                  </div>
-                </div>
+      {/* Oportunidades: linhas no canvas. Antes cada uma era um cartão com
+          borda contendo DOIS cartões de métrica aninhados — três níveis de
+          caixa para uma frase e dois números. */}
+      <div>
+        {opportunities.map((opp) => (
+          <div
+            key={opp.rank}
+            role="button"
+            tabIndex={0}
+            aria-expanded={expandedCard === opp.rank}
+            className="py-5 border-b hairline cursor-pointer transition-colors hover:bg-deep-charcoal/[0.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-burgundy/30"
+            onClick={() => setExpandedCard(expandedCard === opp.rank ? null : opp.rank)}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setExpandedCard(expandedCard === opp.rank ? null : opp.rank); } }}
+          >
+            <div className="flex items-start gap-4">
+              <span className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium text-white ${getPriorityColor(opp.priority)}`}>
+                {opp.rank}
+              </span>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-serif text-[20px] leading-tight text-deep-charcoal">{tCat(opp.category)}</h3>
+                <p className="text-sm text-muted-stone mt-1">{tDesc(opp.description)}</p>
 
-                {/* Metrics */}
-                <div className="grid grid-cols-2 gap-4 mt-4">
-                  <div className="bg-rose-500/10 border border-rose-500/20 rounded-xl p-3">
-                    <div className="text-xs text-rose-600 font-medium mb-1">{t('analytics.potentialGain')}</div>
-                    <div className="text-2xl font-bold text-rose-700">{formatCurrency(opp.potential_gain)}</div>
-                    <div className="text-xs text-rose-600 mt-1">{t('analytics.recoveryRate', { rate: opp.recovery_rate })}</div>
-                  </div>
-                  <div className="bg-soft-gray/50 border border-glass-border-dark rounded-xl p-3">
-                    <div className="text-xs text-warm-stone font-medium mb-1">{t('analytics.timeline')}</div>
-                    <div className="text-lg font-bold text-deep-charcoal">{tTimeline(opp.estimated_timeline)}</div>
-                    <div className={`text-xs px-2 py-1 rounded-full inline-block mt-1 ${getDifficultyBadge(opp.implementation_difficulty)}`}>
+                <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2 mt-3">
+                  <span className="flex items-baseline gap-2">
+                    <span className="font-serif text-[24px] leading-none text-burgundy tabular-nums">{formatCurrency(opp.potential_gain)}</span>
+                    <span className="text-[11px] uppercase tracking-[0.12em] text-muted-stone">
+                      {t('analytics.potentialGain')} · {t('analytics.recoveryRate', { rate: opp.recovery_rate })}
+                    </span>
+                  </span>
+                  <span className="flex items-center gap-2">
+                    <span className="text-[13px] text-deep-charcoal">{tTimeline(opp.estimated_timeline)}</span>
+                    <span className={`text-[11px] px-2.5 py-0.5 rounded-[46px] ${getDifficultyBadge(opp.implementation_difficulty)}`}>
                       {t('analytics.difficulty', { level: tDifficulty(opp.implementation_difficulty) })}
-                    </div>
-                  </div>
+                    </span>
+                  </span>
                 </div>
               </div>
-
-              {/* Expanded Actions */}
-              {expandedCard === opp.rank && (
-                <div className="p-5 bg-soft-gray/30">
-                  <div className="flex items-center gap-2 mb-3">
-                    <ThiingsIcon name="check-circle" pxSize={20} className="text-burgundy" />
-                    <h4 className="font-semibold text-deep-charcoal">{t('analytics.actionSteps')}</h4>
-                  </div>
-                  <div className="space-y-2">
-                    {(opp.actions ?? []).map((action, idx) => (
-                      <div key={idx} className="flex items-start gap-3 glass-panel rounded-xl p-3">
-                        <div className="w-6 h-6 rounded-full bg-burgundy text-white flex items-center justify-center text-xs font-bold mt-0.5">
-                          {idx + 1}
-                        </div>
-                        <div className="flex-1 text-sm text-deep-charcoal">{tAction(action)}</div>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="mt-4 pt-4 border-t border-glass-border-dark flex justify-between items-center">
-                    <div className="text-xs text-warm-stone">
-                      <span className="font-semibold">{t('analytics.roiPotential')}</span> {tPriority(opp.priority)}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={(e) => e.stopPropagation()}
-                      className="px-4 py-2 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-medium rounded-xl transition-all"
-                    >
-                      {t('analytics.startImplementation')}
-                    </button>
-                  </div>
-                </div>
-              )}
+              <ThiingsIcon
+                name="chevron-down"
+                pxSize={18}
+                className={`flex-shrink-0 mt-1 transition-transform ${expandedCard === opp.rank ? 'rotate-180' : ''}`}
+              />
             </div>
-          ))}
-        </div>
+
+            {expandedCard === opp.rank && (
+              <div className="mt-4 pt-4 border-t hairline pl-12">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-stone mb-3">
+                  {t('analytics.actionSteps')}
+                </p>
+                <ol className="space-y-2.5">
+                  {(opp.actions ?? []).map((action, idx) => (
+                    <li key={idx} className="flex items-start gap-3">
+                      <span className="flex-shrink-0 w-5 h-5 rounded-full bg-burgundy/[0.10] text-burgundy flex items-center justify-center text-[11px] font-medium mt-0.5">
+                        {idx + 1}
+                      </span>
+                      <span className="flex-1 text-[15px] text-deep-charcoal">{tAction(action)}</span>
+                    </li>
+                  ))}
+                </ol>
+                <div className="mt-5 flex flex-wrap justify-between items-center gap-3">
+                  <p className="text-xs text-muted-stone">
+                    <span className="font-medium">{t('analytics.roiPotential')}</span> {tPriority(opp.priority)}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={(e) => e.stopPropagation()}
+                    className="px-5 py-2 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-medium rounded-[100px] transition-colors"
+                  >
+                    {t('analytics.startImplementation')}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
       </div>
 
-      {/* Footer Info */}
-      <div className="py-4 border-t border-glass-border-dark">
-        <div className="flex items-center gap-2 text-xs text-warm-stone">
-          <ThiingsIcon name="lightbulb" pxSize={16} />
-          <span>
-            {t('analytics.opportunitiesFooter')}
-          </span>
-        </div>
-      </div>
-    </div>
+      <p className="flex items-center gap-2 text-xs text-muted-stone pt-4">
+        <ThiingsIcon name="lightbulb" pxSize={14} />
+        <span>{t('analytics.opportunitiesFooter')}</span>
+      </p>
+    </section>
   );
 }

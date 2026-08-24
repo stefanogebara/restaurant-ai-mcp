@@ -1,6 +1,7 @@
 ﻿import { useTranslation } from 'react-i18next';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { colors } from '../../utils/colors';
+import ChartPanel, { ChartBadge } from './ChartPanel';
 
 interface ReservationTrendChartProps {
   dailyTrend: Array<{
@@ -16,19 +17,19 @@ export default function ReservationTrendChart({ dailyTrend }: ReservationTrendCh
 
   // FIX 2: Calculate real trend from last 7 vs previous 7 days
   const trendInfo = (() => {
-    if (dailyTrend.length < 2) return { key: 'analytics.trendStable', color: 'bg-[#9CA3AF]/[8%] text-[#9CA3AF]' };
+    if (dailyTrend.length < 2) return { key: 'analytics.trendStable', tone: 'muted' as const };
     const len = dailyTrend.length;
     const splitIdx = Math.max(0, len - 7);
     const recent = dailyTrend.slice(splitIdx);
     const previous = dailyTrend.slice(Math.max(0, splitIdx - 7), splitIdx);
     const recentTotal = recent.reduce((s, d) => s + d.reservations, 0);
     const prevTotal = previous.reduce((s, d) => s + d.reservations, 0);
-    if (prevTotal === 0 && recentTotal === 0) return { key: 'analytics.trendStable', color: 'bg-[#9CA3AF]/[8%] text-[#9CA3AF]' };
-    if (prevTotal === 0) return { key: 'analytics.trendingUp', color: 'bg-burgundy/[8%] text-burgundy' };
+    if (prevTotal === 0 && recentTotal === 0) return { key: 'analytics.trendStable', tone: 'muted' as const };
+    if (prevTotal === 0) return { key: 'analytics.trendingUp', tone: 'up' as const };
     const change = ((recentTotal - prevTotal) / prevTotal) * 100;
-    if (change > 10) return { key: 'analytics.trendingUp', color: 'bg-burgundy/[8%] text-burgundy' };
-    if (change < -10) return { key: 'analytics.trendingDown', color: 'bg-red-500/[8%] text-red-600' };
-    return { key: 'analytics.trendStable', color: 'bg-[#9CA3AF]/[8%] text-[#9CA3AF]' };
+    if (change > 10) return { key: 'analytics.trendingUp', tone: 'up' as const };
+    if (change < -10) return { key: 'analytics.trendingDown', tone: 'down' as const };
+    return { key: 'analytics.trendStable', tone: 'muted' as const };
   })();
 
   // Format day labels using browser locale instead of server-hardcoded English
@@ -41,10 +42,10 @@ export default function ReservationTrendChart({ dailyTrend }: ReservationTrendCh
     if (active && payload && payload.length) {
       return (
         <div className="bg-glass-modal backdrop-blur-glass-modal border border-glass-border-dark rounded-2xl p-3 shadow-glass-modal">
-          <p className="text-sm font-semibold text-deep-charcoal mb-2">{label}</p>
+          <p className="text-sm font-medium text-deep-charcoal mb-2">{label}</p>
           {payload.map((entry, index: number) => (
             <p key={index} className="text-sm" style={{ color: entry.color }}>
-              {entry.name}: <span className="font-bold">{entry.value}</span>
+              {entry.name}: <span className="font-medium">{entry.value}</span>
             </p>
           ))}
         </div>
@@ -54,12 +55,11 @@ export default function ReservationTrendChart({ dailyTrend }: ReservationTrendCh
   };
 
   return (
-    <div className="overflow-hidden">
-      <div className="flex items-center justify-between py-5 border-b border-glass-border-dark">
-        <span className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{t('analytics.reservationsOverTime')}</span>
-        <span className={`text-[11px] font-semibold ${trendInfo.color} px-2.5 py-0.5 rounded-full`}>{t(trendInfo.key)}</span>
-      </div>
-      <div role="img" aria-label={t('analytics.charts.reservationTrendAria')} className="p-6">
+    <ChartPanel
+      title={t('analytics.reservationsOverTime')}
+      ariaLabel={t('analytics.charts.reservationTrendAria')}
+      badge={<ChartBadge tone={trendInfo.tone}>{t(trendInfo.key)}</ChartBadge>}
+    >
 
       <ResponsiveContainer width="100%" height={300}>
         <LineChart
@@ -104,7 +104,6 @@ export default function ReservationTrendChart({ dailyTrend }: ReservationTrendCh
           />
         </LineChart>
       </ResponsiveContainer>
-      </div>
-    </div>
+    </ChartPanel>
   );
 }

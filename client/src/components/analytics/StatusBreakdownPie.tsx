@@ -3,6 +3,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recha
 import type { Formatter as LegendFormatter, LegendPayload } from 'recharts/types/component/DefaultLegendContent';
 import type { PieLabelRenderProps } from 'recharts';
 import { colors } from '../../utils/colors';
+import ChartPanel from './ChartPanel';
 
 interface StatusBreakdownPieProps {
   reservationsByStatus: Record<string, number>;
@@ -33,10 +34,10 @@ export default function StatusBreakdownPie({ reservationsByStatus }: StatusBreak
     pending: colors.warmStone,
     confirmed: colors.stoneGray,
     seated: colors.burgundy,
-    completed: '#22c55e',
-    cancelled: '#ef4444',
-    'no-show': '#f97316',
-    no_show: '#f97316',
+    completed: colors.emerald,
+    cancelled: colors.red,
+    'no-show': colors.amber,
+    no_show: colors.amber,
   };
 
   // Custom label to show percentage. Guard the divisor — an empty/all-zero
@@ -56,11 +57,11 @@ export default function StatusBreakdownPie({ reservationsByStatus }: StatusBreak
       const percent = total > 0 ? ((payload[0].value / total) * 100).toFixed(1) : '0';
       return (
         <div className="bg-glass-modal backdrop-blur-glass-modal border border-glass-border-dark rounded-2xl p-3 shadow-glass-modal">
-          <p className="text-sm font-semibold text-deep-charcoal mb-1">{payload[0].name}</p>
+          <p className="text-sm font-medium text-deep-charcoal mb-1">{payload[0].name}</p>
           <p className="text-sm" style={{ color: payload[0].payload.fill }}>
-            {t('analytics.count')}: <span className="font-bold">{payload[0].value}</span>
+            {t('analytics.count')}: <span className="font-medium">{payload[0].value}</span>
           </p>
-          <p className="text-xs text-warm-stone">
+          <p className="text-xs text-muted-stone">
             {percent}% {t('analytics.ofTotalReservations')}
           </p>
         </div>
@@ -70,11 +71,7 @@ export default function StatusBreakdownPie({ reservationsByStatus }: StatusBreak
   };
 
   return (
-    <div className="overflow-hidden">
-      <div className="flex items-center justify-between py-5 border-b border-glass-border-dark">
-        <span className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{t('analytics.statusBreakdown')}</span>
-      </div>
-      <div role="img" aria-label={t('analytics.charts.statusBreakdownAria')} className="p-6">
+    <ChartPanel title={t('analytics.statusBreakdown')} ariaLabel={t('analytics.charts.statusBreakdownAria')}>
 
       <div className="flex items-center justify-center">
         <ResponsiveContainer width="100%" height={300}>
@@ -109,7 +106,6 @@ export default function StatusBreakdownPie({ reservationsByStatus }: StatusBreak
         </ResponsiveContainer>
       </div>
 
-      </div>
-    </div>
+    </ChartPanel>
   );
 }
