@@ -224,6 +224,18 @@ module.exports = async function handler(req, res) {
     weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric',
   }).format(new Date());
 
+  // Tabela determinística dia-da-semana → data (próximos 7 dias). "Assuma a
+  // próxima ocorrência" no prompt deixava o MODELO calcular a data — e no E2E
+  // de 24/ago ele resolveu "sexta" para 31/01/2025 (uma sexta... do ano
+  // errado, no passado). Com a tabela ele só consulta, não calcula.
+  const fmtDia = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', weekday: 'long' });
+  const fmtIso = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit' });
+  const proximosDias = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(Date.now() + i * 86400000);
+    const rotulo = i === 0 ? 'hoje' : i === 1 ? 'amanhã' : fmtDia.format(d);
+    return `${rotulo}=${fmtIso.format(d)}`;
+  }).join(', ');
+
   // A recepcionista fala com o CLIENTE (o dono se passando por cliente); o
   // gerente fala com o DONO. Mesmo endpoint, papéis opostos — o que muda é
   // quem a IA acha que está do outro lado.
@@ -232,12 +244,13 @@ module.exports = async function handler(req, res) {
 ${presetMeta.context || ''}${wikiBlock}
 ${blocoDados ? `\n[REAL DATA OF THIS RESTAURANT — use it to answer]\n${blocoDados}\n` : ''}
 Today is ${hoje} (America/Sao_Paulo).
+Weekday-to-date lookup for the NEXT 7 days (use this table — never compute dates yourself): ${proximosDias}
 
 Behavior:
 - Respond in ${respondIn}
 - WhatsApp style: short messages, warm and professional, at most ONE question per message
 - Goal: complete a reservation. Collect, in this order, whatever is missing: party size, date, time, and the guest's full name
-- When the guest names a weekday without a date ("sexta"), assume the NEXT occurrence of that weekday and state the resolved date in your confirmation — do NOT ask which one
+- When the guest names a weekday without a date ("sexta"), resolve it with the lookup table above (the NEXT occurrence) and state the resolved date in your confirmation — do NOT ask which one, and NEVER use a date that is not in the table for weekday-only requests
 - When you have all four, confirm with this exact format (translated to ${respondIn}):
 📍 ${restaurantName}
 📅 [date]

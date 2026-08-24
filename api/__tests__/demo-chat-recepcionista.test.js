@@ -345,3 +345,32 @@ describe('demo manual (restaurante novo, F4) — a recepcionista responde com o 
     expect(sys).not.toContain('monday: 00:00');
   });
 });
+
+describe('tabela de datas — o modelo consulta, não calcula', () => {
+  test('o prompt carrega o lookup dos próximos 7 dias com as datas certas', async () => {
+    // E2E de 24/ago: sem tabela, o modelo resolveu "sexta" para 31/01/2025
+    // (uma sexta do ano errado, no passado). A tabela é determinística.
+    await handler(req({
+      message: 'Mesa pra 2 sexta às 20h',
+      restaurant_id: 'rest-demo-1',
+      lang: 'pt-BR',
+      persona: 'recepcionista',
+    }), res());
+    const sys = chamada().system;
+    expect(sys).toContain('Weekday-to-date lookup');
+
+    const iso = (offset) => new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit',
+    }).format(new Date(Date.now() + offset * 86400000));
+    expect(sys).toContain(`hoje=${iso(0)}`);
+    expect(sys).toContain(`amanhã=${iso(1)}`);
+    expect(sys).toContain(`=${iso(6)}`);
+    // nada de datas do passado
+    expect(sys).not.toContain('=2025-');
+  });
+
+  test('o gerente não carrega a tabela', async () => {
+    await handler(req({ message: 'como está o movimento?', restaurant_id: 'rest-demo-1', lang: 'pt-BR' }), res());
+    expect(chamada().system).not.toContain('Weekday-to-date lookup');
+  });
+});
