@@ -2515,6 +2515,11 @@
       "confirmed": "confirmado",
       "pending": "pendente"
     },
+    "pricingTeaser": {
+      "heading": "Planos a partir de R$ 497/mês",
+      "subtitle": "14 dias grátis · sem cartão de crédito · cancele quando quiser",
+      "cta": "Ver planos e preços"
+    },
     "demoSetup": {
       "nav": {
         "signIn": "Já tem uma conta? Entrar"
@@ -2530,7 +2535,8 @@
         "aiBooking": "Reserva IA",
         "setupTime": "Tempo de Setup",
         "realData": "Dados Reais",
-        "hoursReviews": "Seus Horários e Avaliações"
+        "hoursReviews": "Seus Horários e Avaliações",
+        "line": "Leva 30 segundos, usa os dados reais do seu restaurante e não pede cartão."
       },
       "form": {
         "sectionRestaurant": "Seu Restaurante",

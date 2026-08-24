@@ -84,7 +84,7 @@ export default function DemoSlideIn() {
               {t('landing.slideIn.later', 'Maybe later')}
             </button>
             <a
-              href={`https://wa.me/?text=${encodeURIComponent(t('landing.share.message', 'Check out Seatable — AI that answers calls, WhatsApp, and manages reservations for restaurants. Try the demo: https://seatable.one'))}`}
+              href={`https://wa.me/?text=${encodeURIComponent(t('landing.share.message', 'Check out Seatable — AI that answers calls, WhatsApp, and manages reservations for restaurants. Try the demo: {{url}}', { url: 'https://seatable.one' }))}`}
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => trackShareClicked({ location: 'post_demo', channel: 'whatsapp' })}

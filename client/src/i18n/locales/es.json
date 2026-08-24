@@ -1751,7 +1751,7 @@
       "earlyAccess": "Prueba gratis de 14 días · Sin tarjeta de crédito",
       "headlineA": "Anoche a las 2 AM, alguien reservó una mesa en tu restaurante.",
       "headlineA2": "Tu IA respondió.",
-      "typingPrefix": "Tu IA respondio",
+      "typingPrefix": "Tu IA respondió",
       "headlineB": "El anfitrión que nunca falta.",
       "headlineC": "Tu restaurante nunca duerme.",
       "subtitle2": "Seatable gestiona WhatsApp, llamadas y clientes sin reserva — para que tu equipo se enfoque en la hospitalidad.",
@@ -2216,6 +2216,11 @@
       "confirmed": "confirmado",
       "pending": "pendiente"
     },
+    "pricingTeaser": {
+      "heading": "Planes desde R$ 497/mes",
+      "subtitle": "14 días gratis · sin tarjeta de crédito · cancela cuando quieras",
+      "cta": "Ver planes y precios"
+    },
     "demoSetup": {
       "nav": {
         "signIn": "¿Ya tienes cuenta? Iniciar sesión"
@@ -2231,7 +2236,8 @@
         "aiBooking": "Reserva IA",
         "setupTime": "Tiempo de Setup",
         "realData": "Datos Reales",
-        "hoursReviews": "Tus Horarios y Reseñas"
+        "hoursReviews": "Tus Horarios y Reseñas",
+        "line": "Tarda 30 segundos, usa los datos reales de tu restaurante y no pide tarjeta."
       },
       "form": {
         "sectionRestaurant": "Tu Restaurante",
