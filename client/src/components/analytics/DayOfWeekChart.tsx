@@ -1,6 +1,7 @@
 ﻿import { useTranslation } from 'react-i18next';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { colors } from '../../utils/colors';
+import ChartPanel from './ChartPanel';
 interface DayOfWeekChartProps {
   reservationsByDay: Record<string, number>;
 }
@@ -35,9 +36,9 @@ export default function DayOfWeekChart({ reservationsByDay }: DayOfWeekChartProp
       const fullDay = daysOrder[chartData.findIndex(d => d.day === payload[0].payload.day)];
       return (
         <div className="glass-panel p-3 shadow-lg">
-          <p className="text-sm font-semibold text-deep-charcoal mb-1">{fullDay}</p>
+          <p className="text-sm font-medium text-deep-charcoal mb-1">{fullDay}</p>
           <p className="text-sm text-burgundy">
-            {t('analytics.reservations')}: <span className="font-bold">{payload[0].value}</span>
+            {t('analytics.reservations')}: <span className="font-medium">{payload[0].value}</span>
           </p>
         </div>
       );
@@ -46,11 +47,7 @@ export default function DayOfWeekChart({ reservationsByDay }: DayOfWeekChartProp
   };
 
   return (
-    <div className="overflow-hidden">
-      <div className="flex items-center justify-between py-5 border-b border-glass-border-dark">
-        <span className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{t('analytics.reservationsByDay')}</span>
-      </div>
-      <div role="img" aria-label={t('analytics.charts.dayOfWeekAria')} className="p-6">
+    <ChartPanel title={t('analytics.reservationsByDay')} ariaLabel={t('analytics.charts.dayOfWeekAria')}>
         <ResponsiveContainer width="100%" height={220}>
           <BarChart
             data={chartData}
@@ -81,7 +78,6 @@ export default function DayOfWeekChart({ reservationsByDay }: DayOfWeekChartProp
             </Bar>
           </BarChart>
         </ResponsiveContainer>
-      </div>
-    </div>
+    </ChartPanel>
   );
 }

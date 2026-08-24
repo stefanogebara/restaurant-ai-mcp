@@ -1,4 +1,5 @@
 ﻿import { useTranslation } from 'react-i18next';
+import ChartPanel, { ChartBadge } from './ChartPanel';
 
 interface TableUtilizationHeatmapProps {
   tableUtilization: Array<{
@@ -47,12 +48,10 @@ export default function TableUtilizationHeatmap({ tableUtilization }: TableUtili
   , sortedTables[0]) : null;
 
   return (
-    <div className="overflow-hidden">
-      <div className="flex items-center justify-between py-5 border-b border-glass-border-dark">
-        <span className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{t('analytics.bookingHeatmap')}</span>
-        <span className="text-[11px] font-semibold bg-burgundy/[8%] text-burgundy px-2.5 py-0.5 rounded-full">{t('analytics.peakHoursLabel')}</span>
-      </div>
-      <div className="p-6">
+    <ChartPanel
+      title={t('analytics.bookingHeatmap')}
+      badge={<ChartBadge tone="accent">{t('analytics.peakHoursLabel')}</ChartBadge>}
+    >
 
       {/* Heatmap Grid */}
       <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 mb-6">
@@ -66,7 +65,7 @@ export default function TableUtilizationHeatmap({ tableUtilization }: TableUtili
               flex flex-col items-center justify-center text-center
             `}
           >
-            <div className="text-2xl font-bold mb-1">
+            <div className="font-serif text-[26px] leading-none mb-1.5">
               {table.table_number}
             </div>
             <div className="text-xs font-semibold mb-1">
@@ -83,19 +82,19 @@ export default function TableUtilizationHeatmap({ tableUtilization }: TableUtili
       <div className="flex items-center justify-center gap-4 mb-4 text-xs flex-wrap">
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 rounded bg-burgundy/80 border-2 border-burgundy"></div>
-          <span className="text-warm-stone">{t('analytics.highUtilization')}</span>
+          <span className="text-muted-stone">{t('analytics.highUtilization')}</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded bg-amber-600/60 border-2 border-amber-600"></div>
-          <span className="text-warm-stone">{t('analytics.mediumHighUtilization')}</span>
+          <div className="w-4 h-4 rounded bg-amber-600/60 border-2 border-amber-700"></div>
+          <span className="text-muted-stone">{t('analytics.mediumHighUtilization')}</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 rounded bg-warm-stone/40 border-2 border-warm-stone"></div>
-          <span className="text-warm-stone">{t('analytics.mediumLowUtilization')}</span>
+          <span className="text-muted-stone">{t('analytics.mediumLowUtilization')}</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 rounded bg-soft-gray border-2 border-muted-stone"></div>
-          <span className="text-warm-stone">{t('analytics.lowUtilization')}</span>
+          <span className="text-muted-stone">{t('analytics.lowUtilization')}</span>
         </div>
       </div>
 
@@ -105,7 +104,7 @@ export default function TableUtilizationHeatmap({ tableUtilization }: TableUtili
         if (allZero) {
           return (
             <div className="p-3 bg-soft-gray/50 border border-glass-border-dark/50 rounded-xl">
-              <p className="text-xs text-warm-stone text-center">
+              <p className="text-xs text-muted-stone text-center">
                 {t('analytics.noTableUtilizationData', 'No table utilization data yet')}
               </p>
             </div>
@@ -114,13 +113,13 @@ export default function TableUtilizationHeatmap({ tableUtilization }: TableUtili
         return (
           <div className="space-y-2">
             <div className="p-3 bg-burgundy/10 border border-burgundy/20 rounded-xl">
-              <p className="text-xs text-warm-stone">
+              <p className="text-xs text-muted-stone">
                 <span className="font-semibold text-deep-charcoal">{t('analytics.mostUsed')}:</span>{' '}
                 {t('floorPlan.tableLabel')} {mostUsed.table_number} ({mostUsed.utilization_rate}%) - {mostUsed.times_used} {t('analytics.services')}
               </p>
             </div>
             <div className="p-3 bg-soft-gray/50 border border-glass-border-dark/50 rounded-xl">
-              <p className="text-xs text-warm-stone">
+              <p className="text-xs text-muted-stone">
                 <span className="font-semibold text-deep-charcoal">{t('analytics.leastUsed')}:</span>{' '}
                 {t('floorPlan.tableLabel')} {leastUsed.table_number} ({leastUsed.utilization_rate}%) - {leastUsed.times_used} {t('analytics.services')}
               </p>
@@ -128,7 +127,6 @@ export default function TableUtilizationHeatmap({ tableUtilization }: TableUtili
           </div>
         );
       })()}
-      </div>
-    </div>
+    </ChartPanel>
   );
 }

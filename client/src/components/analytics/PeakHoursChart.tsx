@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { colors } from '../../utils/colors';
+import ChartPanel from './ChartPanel';
 
 interface PeakHoursChartProps {
   reservationsByTimeSlot: Record<string, number>;
@@ -43,9 +44,9 @@ export default function PeakHoursChart({ reservationsByTimeSlot }: PeakHoursChar
     if (active && payload && payload.length) {
       return (
         <div className="bg-glass-modal backdrop-blur-glass-modal border border-glass-border-dark rounded-2xl p-3 shadow-glass-modal">
-          <p className="text-sm font-semibold text-deep-charcoal mb-1">{payload[0].payload.time}</p>
+          <p className="text-sm font-medium text-deep-charcoal mb-1">{payload[0].payload.time}</p>
           <p className="text-sm text-burgundy">
-            {t('analytics.reservations')}: <span className="font-bold">{payload[0].value}</span>
+            {t('analytics.reservations')}: <span className="font-medium">{payload[0].value}</span>
           </p>
         </div>
       );
@@ -63,13 +64,9 @@ export default function PeakHoursChart({ reservationsByTimeSlot }: PeakHoursChar
   };
 
   return (
-    <div className="overflow-hidden">
-      <div className="flex items-center justify-between py-5 border-b border-glass-border-dark">
-        <span className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{t('analytics.peakHoursLabel')}</span>
-      </div>
-      <div role="img" aria-label={t('analytics.charts.peakHoursAria')} className="p-6">
+    <ChartPanel title={t('analytics.peakHoursLabel')} ariaLabel={t('analytics.charts.peakHoursAria')}>
       {chartData.length === 0 ? (
-        <div className="flex items-center justify-center h-[220px] text-sm text-warm-stone">
+        <div className="flex items-center justify-center h-[220px] text-sm text-muted-stone">
           {t('analytics.noData')}
         </div>
       ) : (
@@ -103,7 +100,6 @@ export default function PeakHoursChart({ reservationsByTimeSlot }: PeakHoursChar
       </ResponsiveContainer>
       )}
 
-      </div>
-    </div>
+    </ChartPanel>
   );
 }

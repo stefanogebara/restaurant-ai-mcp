@@ -66,10 +66,11 @@ export default function DateRangePicker({ value, onChange }: Props) {
           key={key}
           type="button"
           onClick={() => handle(key)}
-          className={`px-3 py-1.5 min-h-[44px] sm:min-h-0 rounded-xl text-[13px] font-medium transition-colors ${
+          aria-pressed={value.preset === key}
+          className={`px-4 py-1.5 min-h-[44px] sm:min-h-0 rounded-[46px] text-[13px] font-medium transition-colors ${
             value.preset === key
-              ? 'bg-deep-charcoal text-white border border-deep-charcoal'
-              : 'bg-white border border-glass-border-dark text-stone-gray hover:border-muted-stone'
+              ? 'bg-deep-charcoal text-white'
+              : 'glass-pill text-muted-stone hover:text-deep-charcoal'
           }`}
         >
           {label}
@@ -82,15 +83,15 @@ export default function DateRangePicker({ value, onChange }: Props) {
             value={value.startDate}
             max={value.endDate}
             onChange={e => onChange({ ...value, startDate: e.target.value })}
-            className="px-3 py-1.5 min-h-[44px] sm:min-h-0 glass-panel rounded-xl text-[13px] text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy"
+            className="px-3 py-1.5 min-h-[44px] sm:min-h-0 glass-pill font-mono text-[13px] text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy"
           />
-          <span className="text-stone-gray text-sm">→</span>
+          <span className="text-muted-stone text-sm" aria-hidden="true">&rarr;</span>
           <input
             type="date"
             value={value.endDate}
             min={value.startDate}
             onChange={e => onChange({ ...value, endDate: e.target.value })}
-            className="px-3 py-1.5 min-h-[44px] sm:min-h-0 glass-panel rounded-xl text-[13px] text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy"
+            className="px-3 py-1.5 min-h-[44px] sm:min-h-0 glass-pill font-mono text-[13px] text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy"
           />
         </div>
       )}

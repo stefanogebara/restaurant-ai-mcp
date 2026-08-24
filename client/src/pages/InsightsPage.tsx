@@ -45,14 +45,12 @@ function LockedTabCTA({ feature }: { feature: string }) {
   const { t } = useTranslation();
   return (
     <div className="flex flex-col items-center justify-center min-h-[40vh] p-6">
-      <div className="border border-[#E5E7EB] rounded-lg p-10 max-w-md text-center">
-        <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-5">
-          <ThiingsIcon name="lock" pxSize={32} className="text-amber-600" />
-        </div>
-        <h3 className="text-xl font-bold text-deep-charcoal mb-2">
+      <div className="max-w-md text-center">
+        <ThiingsIcon name="lock" pxSize={28} className="text-amber-700 mx-auto mb-4" />
+        <h3 className="font-serif text-[28px] text-deep-charcoal mb-2">
           {t('insights.lockedTitle', 'Upgrade to access')}
         </h3>
-        <p className="text-sm text-stone-gray mb-6 leading-relaxed">
+        <p className="text-[15px] text-muted-stone mb-6 leading-relaxed">
           {t(
             `insights.locked_${feature}`,
             'Upgrade your plan to unlock this section.'
@@ -60,7 +58,7 @@ function LockedTabCTA({ feature }: { feature: string }) {
         </p>
         <Link
           to="/subscription/manage"
-          className="inline-flex items-center gap-2 px-6 py-3 bg-burgundy hover:bg-burgundy-dark text-white font-semibold rounded-xl transition-colors text-sm"
+          className="inline-flex items-center gap-2 px-6 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white font-medium rounded-[100px] transition-colors text-sm"
         >
           <ThiingsIcon name="lightning" size="xs" />
           {t('insights.upgradePlan')}
@@ -106,19 +104,17 @@ export default function InsightsPage() {
     return (
       <DashboardLayout>
         <div className="flex flex-col items-center justify-center min-h-[60vh] p-6">
-          <div className="glass-panel rounded-lg p-10 max-w-md text-center">
-            <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-5">
-              <ThiingsIcon name="star" pxSize={32} className="text-amber-600" />
-            </div>
-            <h3 className="text-xl font-bold text-deep-charcoal mb-2">
+          <div className="max-w-md text-center">
+            <ThiingsIcon name="star" pxSize={28} className="text-amber-700 mx-auto mb-4" />
+            <h3 className="font-serif text-[28px] text-deep-charcoal mb-2">
               {t('insights.upgradeTitle')}
             </h3>
-            <p className="text-sm text-stone-gray mb-6 leading-relaxed">
+            <p className="text-[15px] text-muted-stone mb-6 leading-relaxed">
               {t('insights.upgradeDescription')}
             </p>
             <Link
               to="/subscription/manage"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-burgundy hover:bg-burgundy-dark text-white font-semibold rounded-xl transition-colors text-sm"
+              className="inline-flex items-center gap-2 px-6 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white font-medium rounded-[100px] transition-colors text-sm"
             >
               <ThiingsIcon name="lightning" size="xs" />
               {t('insights.upgradePlan')}
@@ -133,22 +129,17 @@ export default function InsightsPage() {
     <DashboardLayout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         {/* Header */}
-        <div className="mb-6 mt-14 sm:mt-0">
-          <div className="flex items-center gap-3 mb-1">
-            <div className="w-8 h-8 rounded-xl bg-burgundy/10 flex items-center justify-center">
-              <ThiingsIcon name="star" pxSize={16} className="text-burgundy" />
-            </div>
-            <h1 className="font-serif text-3xl sm:text-4xl text-deep-charcoal tracking-tight">
-              {t('insights.pageTitle', 'Insights')}
-            </h1>
-          </div>
-          <p className="text-sm text-warm-stone ml-11">
+        <header className="mb-8 mt-14 sm:mt-0">
+          <h1 className="font-serif text-3xl sm:text-4xl text-deep-charcoal tracking-tight">
+            {t('insights.pageTitle', 'Insights')}
+          </h1>
+          <p className="text-[15px] text-muted-stone mt-1.5">
             {t('insights.pageSubtitle', 'Your restaurant intelligence hub.')}
           </p>
-        </div>
+        </header>
 
         {/* Tabs */}
-        <div className="border-b border-glass-border-dark mb-8">
+        <div className="border-b hairline mb-10 sm:mb-12">
           <nav className="flex gap-0 -mb-px" aria-label={t('insights.tabsAriaLabel', 'Insights tabs')}>
             {TABS.map((tab) => {
               const isActive = activeTab === tab.id;
@@ -164,12 +155,12 @@ export default function InsightsPage() {
                   aria-disabled={isLocked}
                   role="tab"
                   className={`
-                    relative px-5 py-3 text-sm font-medium transition-colors whitespace-nowrap
+                    relative px-5 py-3 text-sm font-medium transition-colors whitespace-nowrap border-b-2
                     ${isActive
-                      ? 'text-burgundy border-b-2 border-burgundy'
+                      ? 'text-burgundy border-burgundy'
                       : isLocked
-                        ? 'text-stone-400 cursor-default'
-                        : 'text-stone-500 hover:text-deep-charcoal border-b-2 border-transparent'
+                        ? 'text-muted-stone/50 cursor-default border-transparent'
+                        : 'text-muted-stone hover:text-deep-charcoal border-transparent'
                     }
                   `}
                 >

@@ -60,21 +60,17 @@ export default function AnalyticsTab() {
 
   if ((isError || loadingTimedOut) && !data) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[40vh] p-6">
-        <div className="border border-[#E5E7EB] rounded-lg p-8 max-w-md text-center">
-          <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
-            <ThiingsIcon name="alert-circle" pxSize={32} className="text-red-600" />
-          </div>
-          <h3 className="text-lg font-bold text-deep-charcoal mb-2">{t('analytics.errorTitle')}</h3>
-          <p className="text-sm text-warm-stone mb-6">{t('analytics.errorDescription')}</p>
-          <button
-            type="button"
-            onClick={() => refetch()}
-            className="px-6 py-3 bg-burgundy hover:bg-burgundy-dark text-white font-semibold rounded-xl transition-colors"
-          >
-            {t('common.retry')}
-          </button>
-        </div>
+      <div className="flex flex-col items-center justify-center min-h-[40vh] p-6 text-center">
+        <ThiingsIcon name="alert-circle" pxSize={28} className="text-red-700 mb-3" />
+        <h3 className="font-serif text-[26px] text-deep-charcoal">{t('analytics.errorTitle')}</h3>
+        <p className="text-[15px] text-muted-stone mt-1 mb-6 max-w-sm">{t('analytics.errorDescription')}</p>
+        <button
+          type="button"
+          onClick={() => refetch()}
+          className="px-6 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-medium rounded-[100px] transition-colors"
+        >
+          {t('common.retry')}
+        </button>
       </div>
     );
   }
@@ -82,25 +78,25 @@ export default function AnalyticsTab() {
   if (!data) {
     return (
       <div className="flex items-center justify-center min-h-[40vh]">
-        <p className="text-warm-stone">{t('analytics.noData')}</p>
+        <p className="text-[15px] text-muted-stone">{t('analytics.noData')}</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-12">
+    <div className="space-y-10 sm:space-y-16">
       {/* Upgrade banner for canceled/expired subscriptions */}
       {(data.upgrade_required || data.no_restaurant) && (
         <div className="bg-amber-50 border border-amber-200 rounded-xl px-5 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <ThiingsIcon name="lightning" pxSize={20} className="text-amber-600 flex-shrink-0" />
-            <p className="text-sm text-amber-800">
+            <ThiingsIcon name="lightning" pxSize={20} className="text-amber-700 flex-shrink-0" />
+            <p className="text-sm text-amber-900">
               {t('analytics.upgradeRequired', 'Upgrade your plan to unlock full analytics with real-time data, trends, and AI insights.')}
             </p>
           </div>
           <a
             href="/subscription/manage"
-            className="px-5 py-2 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-lg transition-colors whitespace-nowrap"
+            className="px-5 py-2 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-medium rounded-[100px] transition-colors whitespace-nowrap"
           >
             {t('analytics.upgradePlan', 'Upgrade Plan')}
           </a>
@@ -109,7 +105,7 @@ export default function AnalyticsTab() {
 
       {/* Controls */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-        <h2 className="text-lg font-bold text-deep-charcoal tracking-tight">
+        <h2 className="font-serif text-[26px] sm:text-[30px] leading-none text-deep-charcoal">
           {t('analytics.title')}
         </h2>
         <div className="flex flex-col sm:items-end gap-2">
@@ -129,21 +125,19 @@ export default function AnalyticsTab() {
       <AnalyticsStats overview={data.overview} reservationsByStatus={data.reservations_by_status} />
 
       {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <ReservationTrendChart dailyTrend={data.daily_trend} />
         <DayOfWeekChart reservationsByDay={data.reservations_by_day} />
       </div>
 
       {/* Bottom Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <TableUtilizationHeatmap tableUtilization={data.table_utilization ?? []} />
         <PeakHoursChart reservationsByTimeSlot={data.reservations_by_time_slot} />
       </div>
 
       {/* AI Insights */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <NoShowPredictions />
-      </div>
+      <NoShowPredictions />
 
       {/* Status Breakdown */}
       <StatusBreakdownPie reservationsByStatus={data.reservations_by_status} />

@@ -37,7 +37,7 @@ export default function ExportDropdown({ data, dateLabel, onExportAll, isExporti
         type="button"
         onClick={() => setOpen(o => !o)}
         disabled={isExporting}
-        className="flex items-center gap-1.5 px-4 py-2 bg-white/60 backdrop-blur-glass-chip border border-glass-border-dark text-stone-gray hover:bg-white/85 hover:border-muted-stone rounded-xl text-[13px] font-medium transition-colors"
+        className="flex items-center gap-1.5 px-4 py-2 min-h-[44px] sm:min-h-0 glass-pill text-muted-stone hover:text-deep-charcoal rounded-[46px] text-[13px] font-medium transition-colors"
       >
         {isExporting
           ? <span className="w-4 h-4 border border-stone-gray border-t-transparent rounded-full animate-spin inline-block" />
@@ -48,7 +48,7 @@ export default function ExportDropdown({ data, dateLabel, onExportAll, isExporti
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-1 z-50 glass-panel rounded-xl shadow-lg min-w-[210px] py-1">
+        <div className="absolute right-0 top-full mt-2 z-50 glass-panel min-w-[210px] py-1.5">
           <button
             type="button"
             disabled={!hasReservations}
@@ -56,7 +56,7 @@ export default function ExportDropdown({ data, dateLabel, onExportAll, isExporti
               date: r.date, time: r.time, name: r.customer_name,
               party_size: r.party_size, status: r.status, id: r.reservation_id,
             })), ['date', 'time', 'name', 'party_size', 'status', 'id'])}
-            className={`w-full text-left px-4 py-2.5 text-sm text-stone-gray transition-colors ${hasReservations ? 'hover:bg-soft-gray' : 'opacity-40 cursor-not-allowed'}`}
+            className={`w-full text-left px-4 py-2.5 text-sm text-muted-stone transition-colors ${hasReservations ? 'hover:bg-soft-gray' : 'opacity-40 cursor-not-allowed'}`}
           >
             {t('analytics.export.reservationsCsv', 'Reservations CSV')}
             {!hasReservations && <span className="ml-1 text-xs text-muted-stone">({t('analytics.export.useAllFirst', 'use All first')})</span>}
