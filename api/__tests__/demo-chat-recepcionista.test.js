@@ -170,26 +170,28 @@ describe('histórico multi-turno — funciona e tem teto (endpoint público quei
       ],
     }), res());
     const msgs = chamada().messages;
-    // 2 do histórico + 2 do primer de idioma + a atual. O primer entra DEPOIS
-    // do histórico e imediatamente antes da mensagem atual (correção 18/08:
-    // o gerente do demo respondia em inglês a pergunta em português).
-    expect(msgs).toHaveLength(5);
-    expect(msgs[0]).toEqual({ role: 'assistant', content: 'Para quantas pessoas?' });
-    expect(msgs[2].content).toMatch(/reply ONLY in Portuguese/);
-    expect(msgs[3]).toEqual({ role: 'assistant', content: 'OK.' });
-    expect(msgs[4]).toEqual({ role: 'user', content: '4 pessoas' });
+    // 2 do primer do marcador (recepcionista) + 2 do histórico + 2 do primer
+    // de idioma + a atual. O primer de idioma entra DEPOIS do histórico e
+    // imediatamente antes da mensagem atual (correção 18/08); o do marcador
+    // entra ANTES de tudo (é exemplo de formato, não conversa).
+    expect(msgs).toHaveLength(7);
+    expect(msgs[1].content).toContain('[[BOOKED|2026-09-12|19:30|2|Maria Silva]]');
+    expect(msgs[2]).toEqual({ role: 'assistant', content: 'Para quantas pessoas?' });
+    expect(msgs[4].content).toMatch(/reply ONLY in Portuguese/);
+    expect(msgs[5]).toEqual({ role: 'assistant', content: 'OK.' });
+    expect(msgs[6]).toEqual({ role: 'user', content: '4 pessoas' });
   });
 
   test('só as últimas 10 mensagens contam', async () => {
     const historia = Array.from({ length: 30 }, (_, i) => ({ role: i % 2 ? 'assistant' : 'user', content: `m${i}` }));
     await handler(req({ ...base, history: historia }), res());
-    expect(chamada().messages).toHaveLength(13); // 10 + primer (2) + a atual
-    expect(chamada().messages[0].content).toBe('m20');
+    expect(chamada().messages).toHaveLength(15); // marcador (2) + 10 + idioma (2) + a atual
+    expect(chamada().messages[2].content).toBe('m20');
   });
 
   test('cada mensagem do histórico é truncada em 500 caracteres', async () => {
     await handler(req({ ...base, history: [{ role: 'user', content: 'x'.repeat(5000) }] }), res());
-    expect(chamada().messages[0].content).toHaveLength(500);
+    expect(chamada().messages[2].content).toHaveLength(500);
   });
 
   test('papel inventado ("system", "tool") é descartado — o cliente não escreve system prompt', async () => {
@@ -201,7 +203,7 @@ describe('histórico multi-turno — funciona e tem teto (endpoint público quei
       ],
     }), res());
     const msgs = chamada().messages;
-    expect(msgs).toHaveLength(4); // 'oi' + primer (2) + a atual
+    expect(msgs).toHaveLength(6); // marcador (2) + 'oi' + idioma (2) + a atual
     expect(msgs.some((m) => m.role === 'system')).toBe(false);
   });
 
@@ -209,7 +211,7 @@ describe('histórico multi-turno — funciona e tem teto (endpoint público quei
     const r = res();
     await handler(req({ ...base, history: 'lixo' }), r);
     expect(r.statusCode).toBe(200);
-    expect(chamada().messages).toHaveLength(3); // primer (2) + a atual
+    expect(chamada().messages).toHaveLength(5); // marcador (2) + idioma (2) + a atual
   });
 });
 
@@ -270,6 +272,20 @@ describe('marcador [[BOOKED]] — reserva estruturada extraída no servidor (F2)
     await handler(req(corpo), r);
     expect(r.body.booking).toBeNull();
     expect(r.body.reply).not.toContain('[[BOOKED');
+  });
+
+  test('primer few-shot do marcador entra só para a recepcionista', async () => {
+    // Descoberto no primeiro walkthrough em produção (24/ago): o modelo fast
+    // seguia o bloco humano e OMITIA o marcador — instrução no system não
+    // bastou; exemplo multi-turno é o que ele copia (mesma cura do idioma).
+    await handler(req(corpo), res());
+    const msgs = chamada().messages;
+    expect(msgs[1].role).toBe('assistant');
+    expect(msgs[1].content).toContain('[[BOOKED|2026-09-12|19:30|2|Maria Silva]]');
+
+    await handler(req({ ...corpo, persona: undefined }), res());
+    const msgsGerente = mockCreate.mock.calls[1][0].messages;
+    expect(msgsGerente.some((m) => m.content.includes('[[BOOKED'))).toBe(false);
   });
 
   test('resposta sem marcador devolve booking null e texto intacto', async () => {

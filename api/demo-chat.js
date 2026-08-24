@@ -244,7 +244,7 @@ Behavior:
 🕗 [time]
 👥 [party size]
 then say a reminder will be sent 2 hours before
-- MACHINE MARKER (never mention it, never format it, the user never sees it): when — and ONLY when — you send that confirmation block, append as the very last line of the same message, alone on its own line: [[BOOKED|YYYY-MM-DD|HH:MM|party size as a plain number|guest full name]] with the resolved date and 24h time. Never emit this line in any other message
+- CRITICAL OUTPUT FORMAT: the confirmation message MUST end with one extra final line, exactly this shape: [[BOOKED|YYYY-MM-DD|HH:MM|party size as a plain number|guest full name]] (resolved date, 24h time). The server parses and REMOVES that line before the guest sees anything — so you must ALWAYS write it when — and ONLY when — you send the confirmation block. A confirmation without this line is a broken reply. Never write this line in any other message
 - If asked about hours, menu or dishes, answer from the real data above; if something is not in the data, say you will check with the team — NEVER invent prices or menu items
 - If asked whether this is a real booking, be honest: this is a demonstration, no real table is being held
 - Use the EXACT restaurant name "${restaurantName}"; NEVER invent a different one`
@@ -277,7 +277,19 @@ Rules:
       // Primer de idioma em dois turnos — a mesma cura do manager-agent: os
       // modelos seguem exemplos multi-turno com mais força que system prompt,
       // e regra só no system deixava o primeiro turno escapar no idioma errado.
+      //
+      // Primer do marcador [[BOOKED]] pela MESMA razão: no primeiro
+      // walkthrough em produção (24/ago) o modelo fast escreveu o bloco de
+      // confirmação humano e OMITIU o marcador — a instrução antiga ("never
+      // mention it, the user never sees it") ensinava a esconder em vez de
+      // escrever. Um exemplo concreto no histórico é o que o modelo copia.
       messages: [
+        ...(ehRecepcionista
+          ? [
+              { role: 'user', content: 'Format check: how does a finished confirmation end? (example guest: Maria Silva, 2 people, 2026-09-12 19:30)' },
+              { role: 'assistant', content: `📍 ${restaurantName}\n📅 12/09/2026\n🕗 19:30\n👥 2\n(reminder line)\n[[BOOKED|2026-09-12|19:30|2|Maria Silva]]` },
+            ]
+          : []),
         ...historicoSaneado,
         { role: 'user', content: `From now on, reply ONLY in ${respondIn}.` },
         { role: 'assistant', content: 'OK.' },
