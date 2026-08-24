@@ -1,7 +1,7 @@
 # Demo em Conversa — a IA atende na frente do dono
 
 **Data:** 2026-08-24 · **Sucede:** `.claude/plans/2026-07-10-demo-experience/` ("O Espelho")
-**Status:** EM EXECUÇÃO — F0 (#37), F1 (#38), F2 (#39) e F4 em PR. D1/D2 resolvidas (seção 2).
+**Status:** COMPLETO em PRs — cadeia #37 → #38 → #39 → #41 → #42 → #43, todas verdes (tsc -b + vite build + vitest 749 + jest 3575). Aguardando merge do Stefano.
 
 ---
 
@@ -207,18 +207,18 @@ nenhum dado genérico/fake apresentado como dele.
 
 ### Fase 5 — Hero e landing re-sequenciados (depende de D1)
 
-- [ ] 5.1 Hero CTA: "Veja ao vivo ↓" deixa de rolar para o iframe e vira link para
+- [x] 5.1 Hero CTA: "Veja ao vivo ↓" deixa de rolar para o iframe e vira link para
       `/demo/setup` (a conversa é o "ao vivo" agora). Manter headline A (2 da manhã)
       — é a melhor copy do site; A/B continua funcionando por `?headline=`.
-- [ ] 5.2 Seção `#try-demo` (presets) demovida para depois do BeforeAfter, com copy
+- [x] 5.2 Seção `#try-demo` (presets) demovida para depois do BeforeAfter, com copy
       honesta: *"Só quer olhar? Explore um restaurante de exemplo."* Presets seguem
       sendo o caminho "não quero digitar nada".
-- [ ] 5.3 Passada única de copy da oferta (decisão D1) em: pricing teaser, CTA
+- [x] 5.3 Passada única de copy da oferta (decisão D1) em: pricing teaser, CTA
       final, exit-intent, wow card, `/precos`, e-mails. Fonte única em i18n; matar
       fallbacks divergentes hardcoded.
-- [ ] 5.4 Seção WhatsApp real (+55 11 5028-2009) sobe uma posição — é prova social
+- [x] 5.4 Seção WhatsApp real (+55 11 5028-2009) sobe uma posição — é prova social
       viva; CTA dela alinhado com a captura da Fase 3.
-- [ ] 5.5 Regras R9/R13 do plano 07-10 que seguem violadas: badge-pill sobre o H1
+- [x] 5.5 Regras R9/R13 do plano 07-10 que seguem violadas: badge-pill sobre o H1
       (`HeroSection.tsx:102`) e bandeirinhas emoji nos presets — resolver na passada.
 
 ### Backlog consciente (fora deste plano)
