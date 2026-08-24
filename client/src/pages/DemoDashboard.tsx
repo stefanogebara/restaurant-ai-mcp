@@ -64,6 +64,24 @@ export default function DemoDashboard() {
   const demoToken = searchParams.get('token') || pathToken || undefined;
   const isEmbed = searchParams.get('embed') === 'true';
 
+  // EVERY conversion CTA on this page must use this pair. A bare `/login`
+  // drops the demo token, so Login.tsx never stashes it and Onboarding.tsx
+  // silently loses the prefill (hours / phone / website / cuisine) after the
+  // Google OAuth round-trip. The exit popup and footer CTA shipped with bare
+  // `/login` for weeks while only the wow card carried the token.
+  const conversionHref = demoToken
+    ? `/login?from=demo&token=${encodeURIComponent(demoToken)}`
+    : '/login';
+  // Defense in depth: write the token straight to localStorage so even if a
+  // future routing change strips the query params (open-redirect guard, OAuth
+  // provider rewrite, adblock, someone middle-clicking the link...), the
+  // prefill still fires. Login.tsx overwrites this when it sees a fresh token.
+  const stashDemoToken = () => {
+    if (demoToken) {
+      try { localStorage.setItem(LS_PENDING_DEMO_TOKEN, demoToken); } catch { /* private mode */ }
+    }
+  };
+
   // Fetch personalized demo from API when token is present
   const { data: tokenSession, isLoading: tokenLoading, isError: tokenError } = useDemoSession(demoToken);
 
@@ -383,25 +401,10 @@ export default function DemoDashboard() {
           <>
             <RealRestaurantCard
               data={realScrapedData}
-              // Carry the demo token through to /login so that Login.tsx's
-              // `?from=demo&token=...` handler can stash it in localStorage
-              // for Onboarding.tsx's prefill effect to pick up after the
-              // Google OAuth round-trip. Previously this CTA went to bare
-              // `/login` and the demo prefill silently dropped the user's
-              // hours / phone / website / cuisine on the way in — Maria
-              // would have to re-type everything she just saw on the demo.
-              conversionHref={demoToken ? `/login?from=demo&token=${encodeURIComponent(demoToken)}` : '/login'}
+              conversionHref={conversionHref}
               onConversionClick={() => {
                 trackDemoFunnel({ step: 'signup_started', preset: presetKey });
-                // Defense in depth: write the token straight to localStorage
-                // so even if a future routing change strips the query params
-                // (open-redirect guard, OAuth provider rewrite, adblock,
-                // someone middle-clicking the link...), the prefill still
-                // fires. Login.tsx will overwrite this if it sees a fresh
-                // token in the URL.
-                if (demoToken) {
-                  try { localStorage.setItem(LS_PENDING_DEMO_TOKEN, demoToken); } catch { /* private mode */ }
-                }
+                stashDemoToken();
               }}
             />
             {/* "Your AI already knows" — populated by Phase K enrichment pass.
@@ -471,8 +474,11 @@ export default function DemoDashboard() {
               <p className="text-stone-400 text-sm">{t.setupYourOwn}</p>
             </div>
             <Link
-              to="/login"
-              onClick={() => trackDemoFunnel({ step: 'signup_started', preset: presetKey })}
+              to={conversionHref}
+              onClick={() => {
+                trackDemoFunnel({ step: 'signup_started', preset: presetKey });
+                stashDemoToken();
+              }}
               className="px-8 py-3.5 bg-burgundy text-white rounded-full font-bold text-sm hover:bg-burgundy-dark transition-all"
             >
               {t.getStartedFree}
@@ -517,7 +523,11 @@ export default function DemoDashboard() {
             </p>
             <div className="flex flex-col gap-2.5">
               <Link
-                to="/login"
+                to={conversionHref}
+                onClick={() => {
+                  trackDemoFunnel({ step: 'signup_started', preset: presetKey });
+                  stashDemoToken();
+                }}
                 className="w-full px-4 py-3 bg-burgundy hover:bg-burgundy-dark text-white font-semibold rounded-xl transition-colors text-sm flex items-center justify-center gap-2"
               >
                 <ThiingsIcon name="star" pxSize={16} className="text-white" />

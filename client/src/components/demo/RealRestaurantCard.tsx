@@ -7,9 +7,10 @@
  * lands on a dashboard showing their actual rating, address, editorial
  * summary, top reviews, and map link.
  *
- * Renders ONLY when scraped_data was passed via location.state. On a refresh
- * (no state) the card hides and the dashboard falls back to its existing
- * generic layout — no broken empty card.
+ * Survives refreshes and deep-links: scraped_data is persisted as JSONB at
+ * demo creation and returned by the session API, so DemoDashboard merges
+ * router state with the DB copy and this card renders from either source.
+ * It only hides when neither has scrape data.
  */
 
 import { useState } from 'react';

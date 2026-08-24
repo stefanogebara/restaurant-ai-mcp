@@ -1,10 +1,29 @@
+# Phase 14: Demo em Conversa (ATIVO)
+
+**Plano completo:** `.claude/plans/2026-08-24-demo-conversa/README.md`
+Reframe: o demo deixa de ser um dashboard-espelho e vira uma conversa — o dono fala
+com a recepcionista IA dele como cliente, ela fecha uma reserva com os dados reais
+dele, e a reserva cai no painel ("via WhatsApp · agora"). Re-sequenciação de peças
+existentes (`/api/demo-chat`, `DemoWhatsAppSim`), não reescrita.
+
+- [ ] Decisão D1 (Stefano): copy da oferta — "2 meses por nossa conta" (plano 07-10) vs "14 dias grátis"
+- [ ] Decisão D2 (Stefano): WhatsApp real na captura pós-aha (custo/lead após 01/10)
+- [ ] F0 — PR de higiene (9 bugs confirmados; independe do redesign)
+- [ ] F1 — Entrada sem gate de e-mail + confirmação explícita de match ("É este o seu restaurante?")
+- [ ] F2 — Ato 1: conversa em tela cheia no primeiro load + marcador `[[BOOKED]]` + reserva pop-in no painel
+- [ ] F3 — Captura DEPOIS do aha (WhatsApp opt-in / e-mail fallback) + welcome/nurture pt-BR + DemoBanner religado
+- [ ] F4 — Caminho "restaurante novo" de primeira classe (3 perguntas → persona ao vivo)
+- [ ] F5 — Hero CTA → conversa; presets demovidos; passada única de copy da oferta
+
+---
+
 # Phase 13: Landing Page & Demo Overhaul
 
 ## Current State Analysis
 
 The landing page already has strong foundations:
 - Hero with split-screen WhatsApp + Dashboard sync animation (animated, not static)
-- PresetDemoSection with 3 preset restaurants (Italian/Japanese/Mexican)
+- PresetDemoSection with 3 preset restaurants (Brazilian/Italian/Japanese; a 4th hidden `makoto` preset exists via URL only)
 - WhatsApp widget with real BR number (+55 11 5028-9356)
 - BeforeAfterSection (dark mode before/after comparison)
 - DashboardWalkthroughSection (4-scene animated carousel — revenue/risk/AI/staffing)

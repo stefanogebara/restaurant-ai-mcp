@@ -115,7 +115,7 @@ function buildFakeReservations(restaurantId) {
       date: todayStr,
       time: todayTimes[i],
       status: 'confirmed',
-      special_requests: i === 2 ? 'Aniversario' : null,
+      special_requests: i === 2 ? 'Aniversário' : null,
     });
   }
 

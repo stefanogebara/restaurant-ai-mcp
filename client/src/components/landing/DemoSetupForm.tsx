@@ -124,10 +124,11 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
         return;
       }
       setSearchResults(data?.results || []);
-      // Auto-select first result
-      if (data?.results?.length === 1) {
-        setSelectedResult(data.results[0]);
-      }
+      // NEVER auto-select — not even a single result. Google's Text Search
+      // fuzzy-matches aggressively: "Cantinho da Vó Zilda, Pres. Prudente"
+      // (nonexistent) returned "Empório Quintal da Vovó" (a real, different
+      // restaurant) as its one result, and auto-selecting presented someone
+      // else's business as the owner's. Selection is always an explicit tap.
     } catch (err) {
       // Surface network errors to Sentry — the previous empty catch hid
       // population-wide scrape outages from ops.

@@ -2501,6 +2501,11 @@
       "confirmed": "confirmed",
       "pending": "pending"
     },
+    "pricingTeaser": {
+      "heading": "Plans from R$ 497/month",
+      "subtitle": "14-day free trial · no credit card · cancel anytime",
+      "cta": "See plans and pricing"
+    },
     "demoSetup": {
       "nav": {
         "signIn": "Already have an account? Sign in"
@@ -2516,7 +2521,8 @@
         "aiBooking": "AI Booking",
         "setupTime": "Setup Time",
         "realData": "Real Data",
-        "hoursReviews": "Your Hours & Reviews"
+        "hoursReviews": "Your Hours & Reviews",
+        "line": "Takes 30 seconds, uses your restaurant's real data, and never asks for a card."
       },
       "form": {
         "sectionRestaurant": "Your Restaurant",
