@@ -32,7 +32,6 @@ const NoShowCalculator = lazyRetry(() => import('./pages/NoShowCalculator'));
 const Login = lazyRetry(() => import('./pages/Login'));
 const LiveAIDemo = lazyRetry(() => import('./pages/LiveAIDemo'));
 const Dashboard = lazyRetry(() => import('./pages/Dashboard'));
-const SofiaV2 = lazyRetry(() => import('./pages/SofiaV2'));
 const InsightsPage = lazyRetry(() => import('./pages/InsightsPage'));
 const CallTrackingDashboard = lazyRetry(() => import('./pages/CallTrackingDashboard'));
 const CustomerPortal = lazyRetry(() => import('./pages/CustomerPortal'));
@@ -173,7 +172,6 @@ function App() {
 {/* Dashboard - New unified dashboard (default) */}
               <Route path="/host-dashboard" element={<Navigate to="/host-dashboard/simple" replace />} />
               <Route path="/host-dashboard/simple" element={<ProtectedRoute><ErrorBoundary fallback={<RouteErrorFallback />}><Dashboard /></ErrorBoundary></ProtectedRoute>} />
-              <Route path="/host-dashboard/sofia/v2" element={<ProtectedRoute><ErrorBoundary fallback={<RouteErrorFallback />}><SofiaV2 /></ErrorBoundary></ProtectedRoute>} />
               <Route path="/host-dashboard/reports" element={<Navigate to="/host-dashboard/insights?tab=reports" replace />} />
               <Route path="/host-dashboard/calls" element={<ProtectedRoute><CallTrackingDashboard /></ProtectedRoute>} />
               <Route path="/host-dashboard/tables" element={<ProtectedRoute><TableConfigPage /></ProtectedRoute>} />
