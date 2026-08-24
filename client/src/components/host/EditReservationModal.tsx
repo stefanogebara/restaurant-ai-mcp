@@ -50,7 +50,6 @@ export default function EditReservationModal({ isOpen, reservation, onClose }: E
     onSuccess: () => {
       toast.success(t('reservations.editSuccess', 'Reservation updated'));
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      queryClient.invalidateQueries({ queryKey: ['activity-feed'] });
       onClose();
     },
     onError: (err) => {

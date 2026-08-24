@@ -47,7 +47,6 @@ export default function CancelReservationDialog({ isOpen, reservation, onClose }
         : t('reservations.cancelledNoNotification', 'Reservation cancelled.');
       toast.success(msg);
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      queryClient.invalidateQueries({ queryKey: ['activity-feed'] });
       handleClose();
     },
     onError: (err) => {

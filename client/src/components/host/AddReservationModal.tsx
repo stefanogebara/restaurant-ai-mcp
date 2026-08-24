@@ -54,7 +54,6 @@ export default function AddReservationModal({ isOpen, onClose }: AddReservationM
     onSuccess: () => {
       toast.success(t('reservations.addSuccess', 'Reservation created successfully'));
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      queryClient.invalidateQueries({ queryKey: ['activity-feed'] });
       handleClose();
     },
     onError: (err) => {

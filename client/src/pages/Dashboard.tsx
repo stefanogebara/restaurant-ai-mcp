@@ -35,7 +35,6 @@ import StripeConnectNudgeBanner from '../components/dashboard/StripeConnectNudge
 import RevenueStatsWidget from '../components/dashboard/RevenueStatsWidget';
 import RevenueByPartySizeWidget from '../components/dashboard/RevenueByPartySizeWidget';
 import ProactiveCommsPanel from '../components/dashboard/ProactiveCommsPanel';
-// ActivityFeedWidget removed — dead feature
 // FeedbackWidget removed — dead feature
 import WalkInModal from '../components/host/WalkInModal';
 import SeatPartyModal from '../components/host/SeatPartyModal';
