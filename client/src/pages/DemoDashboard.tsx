@@ -6,6 +6,8 @@ import DemoSidebar from '../components/demo/DemoSidebar';
 import DemoTablesGrid from '../components/demo/DemoTablesGrid';
 import DemoWhatsAppSim, { type DemoChatBooking } from '../components/demo/DemoWhatsAppSim';
 import ConversaPrimeiro from '../components/demo/ConversaPrimeiro';
+import CapturaPosAha from '../components/demo/CapturaPosAha';
+import TestarNoMeuWhatsApp from '../components/demo/TestarNoMeuWhatsApp';
 import DemoAnalyticsPanel from '../components/demo/DemoAnalyticsPanel';
 import DemoRestaurantInfoCard from '../components/demo/DemoRestaurantInfoCard';
 import RealRestaurantCard, { type ScrapedRestaurantData } from '../components/demo/RealRestaurantCard';
@@ -283,7 +285,20 @@ export default function DemoDashboard() {
               <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
                 <ThiingsIcon name="sparkles" pxSize={12} className="text-white" />
               </div>
-              <p className="text-sm font-medium">{t.banner}</p>
+              <p className="text-sm font-medium">
+                {t.banner}
+                {/* Urgência honesta (F3): daysLeft vem da API de sessão e
+                    nunca foi mostrado — o DemoBanner que faria isso era dead
+                    code. O CTA carrega o token (prefill do onboarding). */}
+                {typeof tokenSession?.daysLeft === 'number' && tokenSession.daysLeft > 0 && (
+                  <span className="text-white/80">
+                    {' · '}{tokenSession.daysLeft} {t.daysLeftSuffix}{' · '}
+                    <Link to={conversionHref} onClick={stashDemoToken} className="underline underline-offset-2 hover:text-white">
+                      {t.keepData}
+                    </Link>
+                  </span>
+                )}
+              </p>
             </div>
             <div className="flex items-center gap-3">
               <button
@@ -504,6 +519,17 @@ export default function DemoDashboard() {
                 </span>
               </motion.div>
             )}
+            {/* Captura DEPOIS do aha (F3): só aparece quando a IA acabou de
+                fechar uma reserva na frente do dono. */}
+            {chatBooking && demoToken && (
+              <CapturaPosAha
+                demoToken={demoToken}
+                restaurantId={tokenSession?.restaurant?.id}
+                restaurantName={restaurantName}
+                lang={lang}
+                t={t}
+              />
+            )}
             <ReservationsList
               todayReservations={demo.todayReservations}
               tomorrowReservations={demo.tomorrowReservations}
@@ -600,8 +626,21 @@ export default function DemoDashboard() {
               {t.exitTitle}
             </h3>
             <p className="text-sm text-stone-gray mb-6 leading-relaxed">
-              {t.exitMessage}
+              {demoToken ? t.exitCaptureMessage : t.exitMessage}
             </p>
+            {/* 12A-4 como especificado (F3, decisão D2): em demos por token o
+                exit-intent oferece a captura de WhatsApp — o produto no
+                telefone do dono — com o trial como saída secundária. Presets
+                não têm restaurante no banco, então mantêm só o trial. */}
+            {demoToken && (
+              <div className="mb-4 text-left">
+                <TestarNoMeuWhatsApp
+                  restaurantId={tokenSession?.restaurant?.id}
+                  restaurantName={restaurantName}
+                  lang={lang}
+                />
+              </div>
+            )}
             <div className="flex flex-col gap-2.5">
               <Link
                 to={conversionHref}

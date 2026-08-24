@@ -76,6 +76,14 @@ const strings = {
     viaWhatsAppNow: 'via WhatsApp · just now',
     manualCardTitle: 'Configured by you, just now',
     manualCardBody: "No Google listing, no problem — this is how your receptionist will greet your restaurant's first guest.",
+    captureTitle: 'Like it? Continue on your WhatsApp',
+    captureEmailToggle: "I'd rather get the link by email",
+    captureEmailSend: 'Send link',
+    captureEmailDone: 'Sent! Check your inbox.',
+    captureEmailError: "We couldn't save it right now — try again.",
+    daysLeftSuffix: 'days left',
+    keepData: 'Keep my data',
+    exitCaptureMessage: 'Before you go: see the receptionist on YOUR WhatsApp — from the same number that will talk to your guests.',
     // Loading
     loadingDemo: 'Loading demo...',
     // A11y / banners
@@ -141,6 +149,14 @@ const strings = {
     viaWhatsAppNow: 'via WhatsApp · agora',
     manualCardTitle: 'Configurada por você, agora mesmo',
     manualCardBody: 'Sem Google, sem problema — é assim que a sua recepcionista vai atender o primeiro cliente do seu restaurante.',
+    captureTitle: 'Gostou? Continue no seu WhatsApp',
+    captureEmailToggle: 'Prefiro receber o link por e-mail',
+    captureEmailSend: 'Enviar link',
+    captureEmailDone: 'Enviado! Confira sua caixa de entrada.',
+    captureEmailError: 'Não conseguimos salvar agora — tente de novo.',
+    daysLeftSuffix: 'dias restantes',
+    keepData: 'Manter meus dados',
+    exitCaptureMessage: 'Antes de ir: veja a recepcionista no SEU WhatsApp — do mesmo número que vai falar com seus clientes.',
     // Loading
     loadingDemo: 'Carregando demo...',
     // A11y / banners
@@ -203,6 +219,14 @@ const strings = {
     viaWhatsAppNow: 'vía WhatsApp · ahora',
     manualCardTitle: 'Configurada por ti, ahora mismo',
     manualCardBody: 'Sin Google, sin problema — así atenderá tu recepcionista al primer cliente de tu restaurante.',
+    captureTitle: '¿Te gustó? Continúa en tu WhatsApp',
+    captureEmailToggle: 'Prefiero recibir el enlace por correo',
+    captureEmailSend: 'Enviar enlace',
+    captureEmailDone: '¡Enviado! Revisa tu correo.',
+    captureEmailError: 'No pudimos guardarlo ahora — inténtalo de nuevo.',
+    daysLeftSuffix: 'días restantes',
+    keepData: 'Conservar mis datos',
+    exitCaptureMessage: 'Antes de irte: mira a la recepcionista en TU WhatsApp — desde el mismo número que hablará con tus clientes.',
     // Loading
     loadingDemo: 'Cargando demo...',
     // A11y / banners

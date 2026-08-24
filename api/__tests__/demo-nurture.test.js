@@ -128,10 +128,31 @@ describe('demo-nurture cron', () => {
     expect(mockSend).toHaveBeenCalledTimes(1);
     const call = mockSend.mock.calls[0][0];
     expect(call.to).toBe('owner@test.com');
-    expect(call.subject).toMatch(/getting on|4 days/i);
+    // Sem agent_language o template cai em EN.
+    expect(call.subject).toMatch(/still on duty/i);
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({ success: true, day3: { sent: 1, failed: 0, skipped: 0 } }),
     );
+  });
+
+  it('localiza o e-mail pelo agent_language do demo (pt) e escapa HTML do nome', async () => {
+    const demo = makeDemo({
+      agent_language: 'pt',
+      demo_contact_name: '<img src=x onerror=alert(1)>',
+    });
+    mockSupabase([
+      { data: [demo], error: null },
+      { data: [], error: null },
+      { data: [], error: null },
+    ]);
+
+    const res = makeRes();
+    await handler(makeReq(), res);
+
+    const call = mockSend.mock.calls[0][0];
+    expect(call.subject).toMatch(/ainda está de plantão/);
+    expect(call.html).toContain('&lt;img');
+    expect(call.html).not.toContain('<img src=x');
   });
 
   it('sends day-5 email and marks sent_at', async () => {
