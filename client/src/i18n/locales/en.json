@@ -1576,7 +1576,9 @@
     "analyticsBriefingLabel": "Daily analytics via WhatsApp",
     "analyticsBriefingDesc": "Receive a daily summary at 9 AM with visitors, demo funnel, and conversion metrics",
     "analyticsBriefingPhone": "WhatsApp number for briefing",
-    "loadError": "Failed to load restaurant settings."
+    "loadError": "Failed to load restaurant settings.",
+    "floorPlanHeading": "Floor plan",
+    "floorPlanAutoHint": "Automatic layout — drag the tables in the editor to match your real room."
   },
   "tableLayout": {
     "title": "Table Layout",

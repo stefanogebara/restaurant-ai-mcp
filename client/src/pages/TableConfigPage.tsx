@@ -11,6 +11,10 @@ import DashboardLayout from '../components/layout/DashboardLayout';
 import TableConfigForm from '../components/host/TableConfigForm';
 import type { TableFormData } from '../components/host/TableConfigForm';
 import TableAdjacencyModal from '../components/host/TableAdjacencyModal';
+import FloorPlanView from '../components/host/FloorPlanView';
+import { hasPositionData } from '../components/host/floorPlanHelpers';
+import { Link } from 'react-router-dom';
+import type { Table } from '../types/host.types';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useToast } from '../contexts/ToastContext';
@@ -147,6 +151,9 @@ export default function TableConfigPage() {
 
   const locations = [...new Set(tables.map((t: TableConfig) => t.location))] as string[];
 
+  const activeTables = tables.filter((tb: TableConfig) => tb.is_active);
+  const isPositioned = hasPositionData(activeTables as unknown as Table[]);
+
   if (isLoading) {
     return <DashboardLayout><SkeletonTableConfig /></DashboardLayout>;
   }
@@ -162,7 +169,7 @@ export default function TableConfigPage() {
         <div className="flex flex-col items-center justify-center min-h-[60vh] p-6">
           <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-8 max-w-md text-center">
             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <ThiingsIcon name="alert-circle" pxSize={32} className="text-red-600" />
+              <ThiingsIcon name="alert-circle" pxSize={28} className="text-red-700" />
             </div>
             <h3 className="text-lg font-bold text-red-900 mb-2">{t('dashboard.errorTitle')}</h3>
             <p className="text-sm text-red-700 mb-4">{t('errors.serverError')}</p>
@@ -180,54 +187,90 @@ export default function TableConfigPage() {
 
   return (
     <DashboardLayout>
-    <div className="bg-white p-6 lg:p-8">
+    <div className="dashboard p-6 lg:p-8 max-w-[1240px]">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <h1 className="font-serif text-3xl sm:text-4xl text-deep-charcoal tracking-tight">
-          {t('settings.tableConfig')} <span className="font-light text-warm-stone">/ {tables.length} {t('settings.tablesCount')}</span>
+          {t('settings.tableConfig')} <span className="font-light text-muted-stone">/ {tables.length} {t('settings.tablesCount')}</span>
         </h1>
         <button
           onClick={() => {
             setFormData(defaultFormData);
             setShowAddModal(true);
           }}
-          className="px-5 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white text-[13px] font-semibold rounded-xl transition-colors"
+          className="px-5 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white text-[13px] font-medium rounded-[100px] transition-colors"
         >
           + {t('settings.addNewTable')}
         </button>
       </div>
 
       {/* Summary Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8 py-5 border-b border-[#E5E7EB]">
+      <section className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 mb-10 border-y hairline py-7 sm:py-9">
         <div>
-          <div className="text-[13px] font-semibold uppercase tracking-widest text-[#9CA3AF] mb-2">{t('settings.totalTables')}</div>
-          <div className="text-[32px] font-bold tracking-tight leading-none text-[#111827] font-mono">{tables.length}</div>
+          <p className="font-serif text-[30px] sm:text-[34px] leading-none text-deep-charcoal tabular-nums">{tables.length}</p>
+          <p className="text-[12px] uppercase tracking-[0.12em] text-muted-stone mt-3">{t('settings.totalTables')}</p>
         </div>
         <div>
-          <div className="text-[13px] font-semibold uppercase tracking-widest text-[#9CA3AF] mb-2">{t('settings.totalSeats')}</div>
-          <div className="text-[32px] font-bold tracking-tight leading-none text-[#111827] font-mono">{stats.total_capacity || 0}</div>
+          <p className="font-serif text-[30px] sm:text-[34px] leading-none text-deep-charcoal tabular-nums">{stats.total_capacity || 0}</p>
+          <p className="text-[12px] uppercase tracking-[0.12em] text-muted-stone mt-3">{t('settings.totalSeats')}</p>
         </div>
         <div>
-          <div className="text-[13px] font-semibold uppercase tracking-widest text-[#9CA3AF] mb-2">{t('settings.activeTables')}</div>
-          <div className="text-[32px] font-bold tracking-tight leading-none text-[#9F1239] font-mono">{stats.active || 0}</div>
+          <p className="font-serif text-[30px] sm:text-[34px] leading-none text-burgundy tabular-nums">{stats.active || 0}</p>
+          <p className="text-[12px] uppercase tracking-[0.12em] text-muted-stone mt-3">{t('settings.activeTables')}</p>
         </div>
         <div>
-          <div className="text-[13px] font-semibold uppercase tracking-widest text-[#9CA3AF] mb-2">{t('settings.locations')}</div>
-          <div className="text-[32px] font-bold tracking-tight leading-none text-[#111827] font-mono">{stats.locations?.length || 0}</div>
+          <p className="font-serif text-[30px] sm:text-[34px] leading-none text-deep-charcoal tabular-nums">{stats.locations?.length || 0}</p>
+          <p className="text-[12px] uppercase tracking-[0.12em] text-muted-stone mt-3">{t('settings.locations')}</p>
         </div>
-      </div>
+      </section>
+
+        {/* ---- A planta do salão ----
+            A página listava as mesas só como texto; a posição de cada uma
+            existia no banco (position_x/y, vinda do editor) e nunca era
+            mostrada aqui. Sem planta, "mesa 7" é um número — com ela, é um
+            lugar. Clicar numa mesa abre a mesma edição dos cartões abaixo.
+            Quando ninguém posicionou nada ainda, FloorPlanView cai no
+            auto-layout e a planta continua legível. */}
+        {activeTables.length > 0 && (
+          <section className="glass-panel p-5 sm:p-6 mb-10">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+              <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">
+                {t('settings.floorPlanHeading', 'Planta do salão')}
+              </h2>
+              <div className="flex items-center gap-3">
+                {!isPositioned && (
+                  <span className="text-[11px] text-muted-stone">
+                    {t('settings.floorPlanAutoHint', 'Disposição automática — arraste as mesas no editor para refletir o salão real.')}
+                  </span>
+                )}
+                <Link
+                  to="/host-dashboard/floor-plan"
+                  className="inline-flex items-center gap-2 px-4 py-1.5 min-h-[36px] glass-pill rounded-[46px] text-xs font-medium text-muted-stone hover:text-deep-charcoal transition-colors"
+                >
+                  <ThiingsIcon name="edit" pxSize={14} />
+                  {t('tableLayout.editFloorPlan', 'Edit Floor Plan')}
+                </Link>
+              </div>
+            </div>
+            <FloorPlanView
+              tables={activeTables as unknown as Table[]}
+              onTableClick={(table) => {
+                const match = tables.find((tb: TableConfig) => tb.id === table.id);
+                if (match) openEditModal(match);
+              }}
+            />
+          </section>
+        )}
 
         {/* Empty state */}
         {tables.length === 0 && (
           <div className="flex flex-col items-center justify-center py-16 px-6">
-            <div className="border border-[#E5E7EB] rounded-lg p-10 max-w-md text-center">
-              <div className="w-16 h-16 bg-soft-gray rounded-full flex items-center justify-center mx-auto mb-5">
-                <span className="text-2xl">🪑</span>
-              </div>
-              <h3 className="text-lg font-bold text-deep-charcoal mb-2">
+            <div className="max-w-md text-center">
+              <ThiingsIcon name="layout-grid" pxSize={28} className="text-muted-stone mx-auto mb-4" />
+              <h3 className="font-serif text-[26px] text-deep-charcoal mb-2">
                 {t('settings.noTablesTitle')}
               </h3>
-              <p className="text-sm text-warm-stone mb-6 leading-relaxed">
+              <p className="text-[15px] text-muted-stone mb-6 leading-relaxed">
                 {t('settings.noTablesDescription')}
               </p>
               <button
@@ -236,7 +279,7 @@ export default function TableConfigPage() {
                   setFormData(defaultFormData);
                   setShowAddModal(true);
                 }}
-                className="px-6 py-3 bg-burgundy hover:bg-burgundy-dark text-white font-semibold rounded-xl transition-colors text-sm"
+                className="px-6 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white font-medium rounded-[100px] transition-colors text-sm"
               >
                 + {t('settings.addNewTable')}
               </button>
@@ -249,7 +292,7 @@ export default function TableConfigPage() {
           <div key={location} className="mb-8">
             <div className="flex items-center gap-2.5 mb-4">
               <span className="text-sm font-semibold text-deep-charcoal tracking-tight">{t(`floorPlan.location.${location.toLowerCase()}`, location)}</span>
-              <span className="text-[11px] font-medium text-warm-stone bg-soft-gray px-2.5 py-1 rounded-full">
+              <span className="text-[11px] font-medium text-muted-stone bg-muted-stone/[0.10] px-2.5 py-0.5 rounded-[46px]">
                 {(locationTables as TableConfig[]).filter(t => t.is_active).length} {t('settings.tablesCount')}
               </span>
             </div>
@@ -263,19 +306,19 @@ export default function TableConfigPage() {
                     role="button"
                     tabIndex={0}
                     aria-label={`Edit Table ${table.table_number}`}
-                    className="p-5 border-b border-[#F3F4F6] cursor-pointer hover:bg-[#FAFAFA] transition-colors relative focus:outline-none focus:ring-2 focus:ring-[#9F1239]/20"
+                    className="p-5 border-b hairline cursor-pointer hover:bg-deep-charcoal/[0.02] transition-colors relative focus:outline-none focus-visible:ring-2 focus-visible:ring-burgundy/30"
                     onClick={() => openEditModal(table)}
                     onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openEditModal(table); } }}
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div>
-                        <div className="text-xl font-semibold text-deep-charcoal">{t('settings.tableLabel')} {table.table_number}</div>
-                        <div className="text-sm text-warm-stone">{table.capacity} {t('settings.seats')}</div>
+                        <div className="font-serif text-[20px] text-deep-charcoal">{t('settings.tableLabel')} {table.table_number}</div>
+                        <div className="text-sm text-muted-stone">{table.capacity} {t('settings.seats')}</div>
                       </div>
                       <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        className={`px-2.5 py-0.5 rounded-[46px] text-xs font-medium ${
                           table.is_fixed
-                            ? 'bg-soft-gray text-warm-stone'
+                            ? 'bg-muted-stone/[0.10] text-muted-stone'
                             : 'bg-soft-gray text-deep-charcoal'
                         }`}
                       >
@@ -297,7 +340,7 @@ export default function TableConfigPage() {
                         return (
                           <>
                             <span className={`w-2 h-2 rounded-full ${dotClass}`}></span>
-                            <span className="text-sm text-warm-stone">
+                            <span className="text-sm text-muted-stone">
                               {t(`settings.tableStatus.${statusKey}`, table.status)}
                             </span>
                           </>
@@ -349,7 +392,7 @@ export default function TableConfigPage() {
               {tables
                 .filter((t: TableConfig) => !t.is_active)
                 .map((table: TableConfig) => (
-                  <div key={table.id} className="p-4 border-b border-[#F3F4F6] opacity-60">
+                  <div key={table.id} className="p-4 border-b hairline opacity-60">
                     <div className="text-lg font-bold text-muted-stone">{t('settings.tableLabel')} {table.table_number}</div>
                     <div className="text-sm text-muted-stone">{table.capacity} {t('settings.seats')} - {table.location}</div>
                   </div>
@@ -360,9 +403,14 @@ export default function TableConfigPage() {
 
       {/* Add Table Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
-            <h3 className="text-xl font-bold text-deep-charcoal mb-4">{t('settings.addNewTable')}</h3>
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="add-table-title"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+        >
+          <div className="glass-modal max-w-md w-full p-6">
+            <h3 id="add-table-title" className="font-serif text-[22px] text-deep-charcoal mb-4">{t('settings.addNewTable')}</h3>
             <TableConfigForm
               formData={formData}
               setFormData={setFormData}
@@ -378,9 +426,14 @@ export default function TableConfigPage() {
 
       {/* Edit Table Modal */}
       {showEditModal && selectedTable && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
-            <h3 className="text-xl font-bold text-deep-charcoal mb-4">{t('settings.editTable')} {selectedTable.table_number}</h3>
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="edit-table-title"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+        >
+          <div className="glass-modal max-w-md w-full p-6">
+            <h3 id="edit-table-title" className="font-serif text-[22px] text-deep-charcoal mb-4">{t('settings.editTable')} {selectedTable.table_number}</h3>
             <TableConfigForm
               formData={formData}
               setFormData={setFormData}
