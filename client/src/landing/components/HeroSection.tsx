@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { trackCtaClicked, trackHeadlineVariantViewed } from '../../lib/analytics';
 import HeroSplitScreen from './HeroSplitScreen';
 import { useState, useEffect } from 'react';
@@ -85,12 +85,6 @@ export default function HeroSection() {
     trackHeadlineVariantViewed({ variant });
   }, [variant]);
 
-  const scrollToDemo = () => {
-    trackCtaClicked({ cta: 'primary', location: 'hero' });
-    const el = document.getElementById('try-demo');
-    if (el) el.scrollIntoView({ behavior: 'smooth' });
-  };
-
   const typingWords = getTypingWords(i18n.language);
 
   return (
@@ -98,12 +92,7 @@ export default function HeroSection() {
       className="pt-24 pb-16 px-6 sm:px-16 max-w-[1200px] mx-auto text-center"
       data-headline-variant={variant}
     >
-      {/* Badge */}
-      <div className="inline-block text-xs font-semibold tracking-[1.5px] uppercase text-burgundy bg-burgundy/[6%] border border-burgundy/15 px-4 py-1.5 rounded-full mb-8">
-        {t('landing.badge')}
-      </div>
-
-      {/* Pain-first headline */}
+      {/* Pain-first headline (sem badge-pill acima do H1 — regra R13) */}
       <h1 className="font-serif text-4xl sm:text-5xl lg:text-[64px] font-medium leading-[1.08] tracking-tight text-deep-charcoal mb-3 max-w-[800px] mx-auto">
         {t(headline.key, headline.fallback)}
       </h1>
@@ -123,14 +112,16 @@ export default function HeroSection() {
         {t('landing.hero.subtitle2', 'Seatable handles WhatsApp, phone calls, and walk-ins — so your team focuses on hospitality.')}
       </p>
 
-      {/* Single CTA */}
-      <button
-        type="button"
-        onClick={scrollToDemo}
-        className="px-10 py-4 bg-burgundy hover:bg-burgundy-dark text-white text-base font-semibold rounded-full transition-colors"
+      {/* CTA única — leva direto à conversa (Demo em Conversa, F5): o "ao
+          vivo" agora é falar com a recepcionista do PRÓPRIO restaurante, não
+          rolar até um iframe de restaurante fictício. */}
+      <Link
+        to="/demo/setup"
+        onClick={() => trackCtaClicked({ cta: 'primary', location: 'hero' })}
+        className="inline-block px-10 py-4 bg-burgundy hover:bg-burgundy-dark text-white text-base font-semibold rounded-full transition-colors"
       >
-        {t('landing.hero.ctaNew', 'See it live ↓')}
-      </button>
+        {t('landing.hero.ctaNew', 'Veja com o seu restaurante →')}
+      </Link>
 
       {/* Split-screen animation */}
       <div className="mt-16 px-0 sm:px-4">

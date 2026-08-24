@@ -6,14 +6,14 @@ com a recepcionista IA dele como cliente, ela fecha uma reserva com os dados rea
 dele, e a reserva cai no painel ("via WhatsApp · agora"). Re-sequenciação de peças
 existentes (`/api/demo-chat`, `DemoWhatsAppSim`), não reescrita.
 
-- [ ] Decisão D1 (Stefano): copy da oferta — "2 meses por nossa conta" (plano 07-10) vs "14 dias grátis"
-- [ ] Decisão D2 (Stefano): WhatsApp real na captura pós-aha (custo/lead após 01/10)
-- [ ] F0 — PR de higiene (9 bugs confirmados; independe do redesign)
-- [ ] F1 — Entrada sem gate de e-mail + confirmação explícita de match ("É este o seu restaurante?")
-- [ ] F2 — Ato 1: conversa em tela cheia no primeiro load + marcador `[[BOOKED]]` + reserva pop-in no painel
-- [ ] F3 — Captura DEPOIS do aha (WhatsApp opt-in / e-mail fallback) + welcome/nurture pt-BR + DemoBanner religado
-- [ ] F4 — Caminho "restaurante novo" de primeira classe (3 perguntas → persona ao vivo)
-- [ ] F5 — Hero CTA → conversa; presets demovidos; passada única de copy da oferta
+- [x] Decisão D1 (delegada, 24/ago): self-serve = "14 dias grátis" (o que o billing entrega); "2 meses por nossa conta" segue founder-led
+- [x] Decisão D2 (delegada, 24/ago): web-chat grátis default; WhatsApp real opt-in (rate limits capam); e-mail fallback
+- [x] F0 (#37) — PR de higiene (9 bugs confirmados; independe do redesign)
+- [x] F1 (#38) — Entrada sem gate de e-mail + confirmação explícita de match ("É este o seu restaurante?")
+- [x] F2 (#39) — Ato 1: conversa em tela cheia no primeiro load + marcador `[[BOOKED]]` + reserva pop-in no painel
+- [x] F3 (#42) — Captura DEPOIS do aha (WhatsApp opt-in / e-mail fallback) + welcome/nurture pt-BR + DemoBanner religado
+- [x] F4 (#41) — Caminho "restaurante novo" de primeira classe (3 perguntas → persona ao vivo)
+- [x] F5 (#43) — Hero CTA → conversa; presets demovidos; passada única de copy da oferta
 
 ---
 

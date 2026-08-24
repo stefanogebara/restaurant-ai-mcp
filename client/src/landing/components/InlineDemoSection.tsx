@@ -5,9 +5,9 @@ import { Link } from 'react-router-dom';
 import { trackPresetDemoClicked, trackDemoFunnel } from '../../lib/analytics';
 
 const PRESETS = [
-  { id: 'brazilian', flag: '🇧🇷', label: 'Cantina da Praça' },
-  { id: 'italian',  flag: '🇮🇹', label: 'Trattoria da Marco' },
-  { id: 'japanese', flag: '🇯🇵', label: 'Sakura Izakaya'  },
+  { id: 'brazilian', label: 'Cantina da Praça' },
+  { id: 'italian',  label: 'Trattoria da Marco' },
+  { id: 'japanese', label: 'Sakura Izakaya'  },
 ] as const;
 
 // If the iframe hasn't fired onLoad within this window, assume the embedded
@@ -104,7 +104,7 @@ export default function InlineDemoSection() {
                   : 'bg-white text-warm-stone border-glass-border-dark hover:border-burgundy/40 hover:text-deep-charcoal'
               }`}
             >
-              <span>{p.flag}</span>
+              {/* Sem bandeirinha emoji (regra R9) — o nome basta na aba. */}
               <span>{p.label}</span>
             </button>
           ))}

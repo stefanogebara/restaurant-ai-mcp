@@ -76,7 +76,17 @@ export default function LandingPage() {
       {/* 1. Hero — pain-first headline + split-screen WhatsApp/Dashboard animation */}
       <HeroSection />
 
-      {/* 2. Try it — 3 preset cards on mobile, inline browser demo on desktop */}
+      {/* 2. Text our AI — WhatsApp REAL com número real: a prova viva sobe
+          para logo depois do hero (F5). O demo de presets desceu — o dono
+          não abre o site para ver o painel de um restaurante fictício. */}
+      <WhatsAppWidgetSection />
+
+      {/* 3. Before/After — social proof with animated stats */}
+      <BeforeAfterSection />
+
+      {/* 4. Try it (demovido, F5) — "só quer olhar?" com restaurantes de
+          exemplo: 3 preset cards no mobile, inline browser demo no desktop.
+          O caminho principal é o hero → /demo/setup (conversa). */}
       <div className="lg:hidden">
         <PresetDemoSection />
       </div>
@@ -86,7 +96,7 @@ export default function LandingPage() {
         </ErrorBoundary>
       </div>
 
-      {/* 3. Pricing teaser — the full pricing grid moved to its own /precos
+      {/* 5. Pricing teaser — the full pricing grid moved to its own /precos
           page (2026-06: the landing was doing too many jobs; a dedicated
           page also gives ads/SEO a clean destination). The teaser keeps the
           trust strip + a single price anchor + CTA so prospects still see
@@ -120,13 +130,7 @@ export default function LandingPage() {
         </a>
       </section>
 
-      {/* 4. Text our AI — WhatsApp widget with real number */}
-      <WhatsAppWidgetSection />
-
-      {/* 6. Before/After — social proof with animated stats */}
-      <BeforeAfterSection />
-
-      {/* 7. Dashboard Walkthrough — animated "silent movie" of AI features */}
+      {/* 6. Dashboard Walkthrough — animated "silent movie" of AI features */}
       <ErrorBoundary silent>
         <DashboardWalkthroughSection />
       </ErrorBoundary>
@@ -143,13 +147,16 @@ export default function LandingPage() {
             {t('landing.cta.heading', 'Ready to reimagine')}{' '}<br />{t('landing.cta.headingLine2', 'your restaurant?')}
           </h2>
           <p className="text-[16px] text-stone-300 font-light mb-9">
-            {t('landing.cta.subtitle', 'Join the first restaurants using Seatable. 30-day free trial, no credit card required.')}
+            {/* Fallback alinhado ao i18n e ao billing real (D1): 14 dias, não
+                30 — um fallback divergente vira promessa falsa se a chave
+                sumir. */}
+            {t('landing.cta.subtitle', 'Join the first restaurants using Seatable. 14-day free trial, no credit card required.')}
           </p>
           <a
             href="/demo/setup"
             className="inline-block px-8 py-3.5 bg-burgundy hover:bg-burgundy-dark text-white text-[15px] font-semibold rounded-full transition-colors"
           >
-            {t('landing.cta.button', 'Create Your Restaurant')}
+            {t('landing.cta.button', 'Start Free Trial')}
           </a>
         </div>
       </section>

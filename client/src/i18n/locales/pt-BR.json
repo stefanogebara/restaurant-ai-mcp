@@ -2046,7 +2046,7 @@
       "headlineB": "O anfitrião que nunca falta.",
       "headlineC": "Seu restaurante nunca dorme.",
       "subtitle2": "O Seatable cuida do WhatsApp, ligações e clientes sem reserva — para sua equipe focar na hospitalidade.",
-      "ctaNew": "Veja ao vivo ↓"
+      "ctaNew": "Veja com o seu restaurante →"
     },
     "inlineDemo": {
       "label": "Demo ao vivo",
@@ -2060,9 +2060,9 @@
       "loadErrorHint": "Tente abri-la em tela cheia."
     },
     "tryDemo": {
-      "label": "Experimente agora",
-      "heading": "Escolha um restaurante. Explore o painel.",
-      "subtitle": "Sem cadastro, sem e-mail. Clique e veja como funciona.",
+      "label": "Explore um exemplo",
+      "heading": "Só quer olhar primeiro?",
+      "subtitle": "Explore um restaurante de exemplo — sem digitar nada, sem cadastro.",
       "cta": "Quer ver SEU restaurante?",
       "ctaLink": "Configure aqui →",
       "cuisineItalian": "Italiana",
@@ -2148,7 +2148,7 @@
       "q8": "Meus dados do restaurante estão seguros?",
       "a8": "Com certeza. Todos os dados são criptografados em trânsito e em repouso. Usamos segurança de nível empresarial com controles de acesso por linha, e nunca compartilhamos dados dos seus clientes com terceiros. Você é dono dos seus dados completamente.",
       "q9": "Posso testar antes de contratar?",
-      "a9": "Sim! Todos os planos incluem 14 dias de teste gratuito, sem cartão de crédito. Você também pode experimentar nossa demo ao vivo no site para ouvir o assistente de voz em ação antes de se cadastrar."
+      "a9": "Sim! O plano Profissional inclui 14 dias de teste gratuito, sem cartão de crédito. Você também pode experimentar nossa demo ao vivo no site para ouvir o assistente de voz em ação antes de se cadastrar."
     },
     "whatsapp": {
       "label": "IA real, WhatsApp real",

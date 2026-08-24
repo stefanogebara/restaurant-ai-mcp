@@ -2040,7 +2040,7 @@
       "headlineB": "The host that never calls in sick.",
       "headlineC": "Your restaurant never sleeps.",
       "subtitle2": "Seatable handles WhatsApp, phone calls, and walk-ins — so your team focuses on hospitality.",
-      "ctaNew": "See it live ↓"
+      "ctaNew": "See it with your restaurant →"
     },
     "inlineDemo": {
       "label": "Live demo",
@@ -2054,9 +2054,9 @@
       "loadErrorHint": "Try opening it fullscreen instead."
     },
     "tryDemo": {
-      "label": "Try it right now",
-      "heading": "Pick a restaurant. Explore the dashboard.",
-      "subtitle": "No signup, no email. Just click and see how it works.",
+      "label": "Explore an example",
+      "heading": "Just want to look around first?",
+      "subtitle": "Poke around a sample restaurant — nothing to type, no signup.",
       "cta": "Want YOUR restaurant?",
       "ctaLink": "Set it up here →",
       "cuisineItalian": "Italian",
@@ -2142,7 +2142,7 @@
       "q8": "Is my restaurant data secure?",
       "a8": "Absolutely. All data is encrypted in transit and at rest. We use enterprise-grade database security with row-level access controls, and we never share your customer data with third parties. You own your data completely.",
       "q9": "Can I try it before committing?",
-      "a9": "Yes! All plans come with a 14-day free trial, no credit card required. You can also try our live AI demo on the website to hear the voice assistant in action before signing up."
+      "a9": "Yes! The Professional plan includes a 14-day free trial, no credit card required. You can also try our live AI demo on the website to hear the voice assistant in action before signing up."
     },
     "whatsapp": {
       "label": "Real AI, real WhatsApp",
