@@ -160,22 +160,65 @@ function buildFakeReservations(restaurantId) {
 // ---------------------------------------------------------------------------
 // Email: welcome demo
 // ---------------------------------------------------------------------------
-async function sendDemoWelcomeEmail({ contactName, contactEmail, restaurantName, demoUrl }) {
-  // BISECT: HTML email template stubbed to test if it's the cause of
-  // Vercel silently dropping this function from the deploy manifest.
-  // If /api/demo deploys with this stub but the previous build (with
-  // the full HTML) doesn't, we've found the bug.
+// Localizado (F3, Demo em Conversa). O stub "BISECT" em texto puro/inglês era
+// resto de investigação — a causa real do drop de função no deploy era o
+// require de handler irmão + enrichment inline (já resolvidos em _lib).
+const WELCOME_COPY = {
+  pt: {
+    subject: (r) => `Seu demo do ${r} está pronto — sua recepcionista te espera`,
+    title: (n) => (n ? `${n}, seu painel está no ar` : 'Seu painel está no ar'),
+    body: (r) =>
+      `A recepcionista IA do <strong>${r}</strong> já está de plantão. Volte quando quiser, mande outra mensagem para ela e veja a reserva cair no painel. O link abaixo é seu por 7 dias.`,
+    cta: 'Abrir meu demo',
+  },
+  es: {
+    subject: (r) => `Tu demo de ${r} está listo — tu recepcionista te espera`,
+    title: (n) => (n ? `${n}, tu panel está en línea` : 'Tu panel está en línea'),
+    body: (r) =>
+      `La recepcionista IA de <strong>${r}</strong> ya está de guardia. Vuelve cuando quieras, mándale otro mensaje y mira la reserva caer en tu panel. El enlace de abajo es tuyo por 7 días.`,
+    cta: 'Abrir mi demo',
+  },
+  en: {
+    subject: (r) => `Your ${r} demo is ready — your receptionist is waiting`,
+    title: (n) => (n ? `${n}, your dashboard is live` : 'Your dashboard is live'),
+    body: (r) =>
+      `<strong>${r}</strong>'s AI receptionist is already on duty. Come back anytime, send it another message, and watch the reservation land on your dashboard. The link below is yours for 7 days.`,
+    cta: 'Open my demo',
+  },
+};
+
+async function sendDemoWelcomeEmail({ contactName, contactEmail, restaurantName, demoUrl, language }) {
   const resend = getResendClient();
   if (!resend) {
     logger.warn('RESEND_API_KEY not set, skipping demo welcome email');
     return;
   }
+  const l = String(language || '').toLowerCase();
+  const copy = l.startsWith('pt') ? WELCOME_COPY.pt : l.startsWith('es') ? WELCOME_COPY.es : WELCOME_COPY.en;
+  const nome = he(contactName);
+  const rest = he(restaurantName);
   try {
     await resend.emails.send({
       from: FROM_ADDRESS,
       to: contactEmail,
-      subject: `Your ${restaurantName} demo is ready on Seatable`,
-      text: `Hi ${contactName}, your demo is ready at ${demoUrl}`,
+      subject: copy.subject(restaurantName),
+      html: `
+        <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+          <div style="text-align: center; margin-bottom: 32px;">
+            <h1 style="font-size: 28px; color: #1C1917; margin: 0;">Seatable<span style="color: #9F1239;">.</span></h1>
+          </div>
+          <div style="background: #FAFAF9; border: 1px solid #E7E5E4; border-radius: 16px; padding: 32px;">
+            <h2 style="font-size: 22px; color: #1C1917; margin: 0 0 16px 0;">${copy.title(nome)}</h2>
+            <p style="color: #57534E; margin: 0 0 24px 0; line-height: 1.7;">${copy.body(rest)}</p>
+            <div style="text-align: center;">
+              <a href="${demoUrl}"
+                 style="display:inline-block;padding:14px 28px;background:#9F1239;color:white;border-radius:10px;text-decoration:none;font-weight:600;font-size:15px;">
+                ${copy.cta}
+              </a>
+            </div>
+          </div>
+        </div>
+      `,
     });
     logger.info('Demo welcome email sent to:', contactEmail);
   } catch (err) {
@@ -481,10 +524,11 @@ async function handleCreate(req, res) {
   // Contact-less demos get theirs later, when attach-contact fires.
   if (trimmedEmail) {
     sendDemoWelcomeEmail({
-      contactName: effectiveName || restaurant_name.trim(),
+      contactName: effectiveName,
       contactEmail: trimmedEmail,
       restaurantName: restaurant_name.trim(),
       demoUrl: demoUrlAbsolute,
+      language: inferredLanguage,
     }).catch(err => logger.error('sendDemoWelcomeEmail threw:', err.message));
   }
 
@@ -568,7 +612,7 @@ async function handleAttachContact(req, res) {
   const { data: demo, error: lookupError } = await supabaseAdmin
     .schema('restaurant')
     .from('restaurant_config')
-    .select('id, restaurant_name, demo_token, demo_contact_email')
+    .select('id, restaurant_name, demo_token, demo_contact_email, agent_language')
     .eq('demo_token', demo_token)
     .eq('is_demo', true)
     .gt('demo_expires_at', now)
@@ -605,6 +649,7 @@ async function handleAttachContact(req, res) {
       contactEmail: trimmedEmail,
       restaurantName: demo.restaurant_name,
       demoUrl: `${BASE_URL}/demo/${demo_token}`,
+      language: demo.agent_language,
     }).catch(err => logger.error('sendDemoWelcomeEmail threw:', err.message));
   }
 

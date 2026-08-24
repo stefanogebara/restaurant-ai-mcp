@@ -167,18 +167,20 @@ em reserva visível no painel com badge, em menos de 3 turnos.
 
 ### Fase 3 — Captura DEPOIS do aha (depende de D2)
 
-- [ ] 3.1 **Momento de captura único e pós-payoff.** Card após o booking no painel:
+- [x] 3.1 **Momento de captura único e pós-payoff.** Card após o booking no painel:
       *"Gostou? Recebe essa conversa no seu WhatsApp"* → input de telefone
       (`PhoneInput` existente) → `/api/demo-send-whatsapp` (rate limits `demo_wa_*`
       já existem). Fallback: "prefiro por e-mail" → `/api/demo/attach-contact`.
-- [ ] 3.2 Welcome email: reescrever o stub "BISECT" (`api/demo/index.js:163-184`)
+- [x] 3.2 Welcome email: reescrever o stub "BISECT" (`api/demo/index.js:163-184`)
       em pt-BR/HTML com o link do demo. (EN/ES pelo locale do demo.)
-- [ ] 3.3 Nurture (`api/cron/demo-nurture.js`): traduzir pt-BR e trocar o gancho —
+- [x] 3.3 Nurture (`api/cron/demo-nurture.js`): traduzir pt-BR e trocar o gancho —
       em vez de "seu demo expira", *"sua recepcionista atendeu você em X segundos —
       imagine no seu WhatsApp de verdade"*. Manter janela D3/D5/D7.
-- [ ] 3.4 Religar `DemoBanner` (hoje dead code) com `daysLeft` que a API já retorna
-      — urgência honesta, sem contador fake (regra do plano 07-10).
-- [ ] 3.5 Exit-intent (12A-4): passa a oferecer a MESMA captura de WhatsApp (spec
+- [x] 3.4 `daysLeft` religado direto na faixa de demo existente ("X dias
+      restantes · Manter meus dados" com token); o componente morto
+      `DemoBanner` e seu teste foram DELETADOS em vez de ressuscitados —
+      a faixa já era o banner de verdade.
+- [x] 3.5 Exit-intent (12A-4): passa a oferecer a MESMA captura de WhatsApp (spec
       original), não "Start Free Trial"; mantém o token na URL de conversão.
 
 **Aceite:** nenhuma pedida de contato antes do primeiro booking em chat; taxa de

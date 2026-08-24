@@ -36,206 +36,186 @@ function getResendClient() {
 }
 
 // ---------------------------------------------------------------------------
-// Email: day-3 nurture (4 days left) — feature spotlight + social proof
+// Nurture emails — localizados (pt-BR default do mercado, en/es), curtos e
+// honestos. A reescrita de F3 (Demo em Conversa) trocou o gancho: em vez de
+// "seu demo expira", o lembrete é a CONVERSA — a recepcionista atendeu o dono
+// em segundos; imagine no WhatsApp de verdade. Saiu tambem o depoimento
+// fabricado ("Trattoria da Marco, Milan" e um preset ficticio — apresentar
+// isso como cliente real era mentira) e entrou escape de HTML nos campos
+// controlados pelo usuario (nome/restaurante — mesma classe do SEC-04).
 // ---------------------------------------------------------------------------
-async function sendDay3Email({ contactName, contactEmail, restaurantName, demoToken }) {
-  const resend = getResendClient();
-  if (!resend) {
-    logger.warn('RESEND_API_KEY not set, skipping day-3 nurture email');
-    return { success: false, reason: 'no_resend_key' };
-  }
 
-  const ctaUrl = `${BASE_URL}/demo/${demoToken}`;
-
-  try {
-    await resend.emails.send({
-      from: FROM_ADDRESS,
-      to: contactEmail,
-      subject: `How are you getting on with your ${restaurantName} demo?`,
-      html: `
-        <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
-          <div style="text-align: center; margin-bottom: 32px;">
-            <h1 style="font-size: 28px; color: #1C1917; margin: 0;">
-              Seatable<span style="color: #9F1239;">.</span>
-            </h1>
-          </div>
-
-          <div style="background: #FAFAF9; border: 1px solid #E7E5E4; border-radius: 16px; padding: 32px; margin-bottom: 24px;">
-            <h2 style="font-size: 22px; color: #1C1917; margin: 0 0 16px 0;">
-              Hi ${contactName}, you have 4 days left
-            </h2>
-            <p style="color: #57534E; margin: 0 0 20px 0;">
-              Your <strong>${restaurantName}</strong> demo is halfway through. Most restaurant
-              managers who convert to a paid account try one thing first: the live booking widget.
-            </p>
-            <p style="color: #57534E; margin: 0 0 24px 0;">
-              Paste your booking link anywhere — Instagram bio, Google listing, WhatsApp — and watch
-              reservations come in without a single phone call. Guests book in their own language,
-              at any hour.
-            </p>
-            <div style="text-align: center; margin: 24px 0;">
-              <a href="${ctaUrl}"
-                 style="display:inline-block;padding:14px 28px;background:#9F1239;color:white;border-radius:10px;text-decoration:none;font-weight:600;font-size:15px;">
-                Open My Demo Dashboard
-              </a>
-            </div>
-          </div>
-
-          <div style="background: #FFF7ED; border: 1px solid #FED7AA; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
-            <h3 style="font-size: 15px; color: #92400E; margin: 0 0 12px 0;">What restaurants say after the first week</h3>
-            <p style="color: #78350F; font-style: italic; margin: 0 0 12px 0; line-height: 1.7;">
-              &ldquo;We used to miss bookings every Friday night because the phone was engaged.
-              Now the AI takes them all — even at 2am. Setup took 8 minutes.&rdquo;
-            </p>
-            <p style="color: #A16207; font-size: 13px; margin: 0;">
-              — Restaurant owner, Trattoria da Marco, Milan
-            </p>
-          </div>
-
-          <div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
-            <p style="color: #166534; font-size: 14px; margin: 0; line-height: 1.7;">
-              <strong>No per-cover commission.</strong> No contracts. If you sign up before your demo
-              expires, your tables, reservations, and settings carry over automatically.
-            </p>
-          </div>
-
-          <div style="text-align: center; margin-top: 32px; padding-top: 24px; border-top: 1px solid #E7E5E4;">
-            <p style="color: #A8A29E; font-size: 12px; margin: 0;">
-              Powered by Seatable - AI Restaurant Management
-            </p>
-          </div>
-        </div>
-      `,
-    });
-    logger.info(`Day-3 nurture email sent to: ${contactEmail}`);
-    return { success: true };
-  } catch (err) {
-    logger.error(`Failed to send day-3 nurture email to ${contactEmail}:`, err.message);
-    return { success: false, error: err.message };
-  }
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, (c) => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+  ));
 }
 
-// ---------------------------------------------------------------------------
-// Email: day-5 nurture (2 days left)
-// ---------------------------------------------------------------------------
-async function sendDay5Email({ contactName, contactEmail, restaurantName, demoToken }) {
-  const resend = getResendClient();
-  if (!resend) {
-    logger.warn('RESEND_API_KEY not set, skipping day-5 nurture email');
-    return { success: false, reason: 'no_resend_key' };
-  }
-
-  const ctaUrl = `${BASE_URL}/login?from=demo&token=${demoToken}`;
-
-  try {
-    await resend.emails.send({
-      from: FROM_ADDRESS,
-      to: contactEmail,
-      subject: `Your Seatable demo expires in 2 days`,
-      html: `
-        <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
-          <div style="text-align: center; margin-bottom: 32px;">
-            <h1 style="font-size: 28px; color: #1C1917; margin: 0;">
-              Seatable<span style="color: #9F1239;">.</span>
-            </h1>
-          </div>
-
-          <div style="background: #FAFAF9; border: 1px solid #E7E5E4; border-radius: 16px; padding: 32px; margin-bottom: 24px;">
-            <h2 style="font-size: 22px; color: #1C1917; margin: 0 0 16px 0;">
-              Hi ${contactName}, your demo expires in 2 days
-            </h2>
-            <p style="color: #57534E; margin: 0 0 24px 0;">
-              You have 2 days left on your <strong>${restaurantName}</strong> demo.
-              Sign up free to keep everything you've set up — your tables, reservations,
-              and settings are all ready to go.
-            </p>
-            <div style="text-align: center; margin: 24px 0;">
-              <a href="${ctaUrl}"
-                 style="display:inline-block;padding:14px 28px;background:#9F1239;color:white;border-radius:10px;text-decoration:none;font-weight:600;font-size:15px;">
-                Sign Up Free — Keep My Demo
-              </a>
-            </div>
-            <p style="color: #A8A29E; font-size: 13px; text-align: center; margin: 0;">
-              No credit card required to get started.
-            </p>
-          </div>
-
-          <div style="text-align: center; margin-top: 32px; padding-top: 24px; border-top: 1px solid #E7E5E4;">
-            <p style="color: #A8A29E; font-size: 12px; margin: 0;">
-              Powered by Seatable - AI Restaurant Management
-            </p>
-          </div>
-        </div>
-      `,
-    });
-    logger.info(`Day-5 nurture email sent to: ${contactEmail}`);
-    return { success: true };
-  } catch (err) {
-    logger.error(`Failed to send day-5 nurture email to ${contactEmail}:`, err.message);
-    return { success: false, error: err.message };
-  }
+function pickLang(agentLanguage) {
+  const l = String(agentLanguage || '').toLowerCase();
+  if (l.startsWith('pt')) return 'pt';
+  if (l.startsWith('es')) return 'es';
+  return 'en';
 }
 
-// ---------------------------------------------------------------------------
-// Email: day-7 nurture (last day)
-// ---------------------------------------------------------------------------
-async function sendDay7Email({ contactName, contactEmail, restaurantName, demoToken }) {
-  const resend = getResendClient();
-  if (!resend) {
-    logger.warn('RESEND_API_KEY not set, skipping day-7 nurture email');
-    return { success: false, reason: 'no_resend_key' };
-  }
+const NURTURE_COPY = {
+  pt: {
+    fallbackName: 'tudo bem',
+    day3: {
+      subject: (r) => `Sua recepcionista do ${r} ainda está de plantão`,
+      title: (n) => `${n}, faltam 4 dias de demo`,
+      body: (r) => [
+        `Lembra da conversa em que a IA do <strong>${r}</strong> fechou uma reserva com você em segundos? É exatamente assim que ela atende um cliente de verdade — no WhatsApp, às 2 da manhã, com os seus horários.`,
+        'Abra o painel e mande mais uma mensagem para ela. Cada conversa dessas é uma ligação que sua equipe não precisou atender.',
+      ],
+      cta: 'Abrir meu demo',
+    },
+    day5: {
+      subject: () => 'Seu demo expira em 2 dias',
+      title: (n) => `${n}, faltam 2 dias`,
+      body: (r) => [
+        `Seu demo do <strong>${r}</strong> expira em 2 dias. Crie sua conta para manter tudo que você já configurou — mesas, reservas e a recepcionista prontas para transferir.`,
+        '14 dias grátis, sem cartão de crédito.',
+      ],
+      cta: 'Manter meus dados',
+    },
+    day7: {
+      subject: () => 'Último dia do seu demo na Seatable',
+      title: (n) => `${n}, hoje é o último dia`,
+      body: (r) => [
+        `Hoje o demo do <strong>${r}</strong> expira e os dados são apagados. Se a recepcionista fez sentido para a sua casa, é um clique para ela continuar existindo — tudo que você configurou vai junto.`,
+      ],
+      cta: 'Criar minha conta',
+    },
+  },
+  en: {
+    fallbackName: 'there',
+    day3: {
+      subject: (r) => `Your ${r} receptionist is still on duty`,
+      title: (n) => `${n}, 4 days left on your demo`,
+      body: (r) => [
+        `Remember the conversation where <strong>${r}</strong>'s AI booked a table with you in seconds? That is exactly how it answers a real guest — on WhatsApp, at 2am, with your hours.`,
+        'Open the dashboard and send it another message. Every one of those conversations is a phone call your team did not have to take.',
+      ],
+      cta: 'Open my demo',
+    },
+    day5: {
+      subject: () => 'Your demo expires in 2 days',
+      title: (n) => `${n}, 2 days left`,
+      body: (r) => [
+        `Your <strong>${r}</strong> demo expires in 2 days. Create your account to keep everything you set up — tables, reservations and your receptionist, ready to transfer.`,
+        '14-day free trial, no credit card.',
+      ],
+      cta: 'Keep my data',
+    },
+    day7: {
+      subject: () => 'Last day of your Seatable demo',
+      title: (n) => `${n}, today is the last day`,
+      body: (r) => [
+        `Today your <strong>${r}</strong> demo expires and its data is deleted. If the receptionist made sense for your restaurant, keeping it alive is one click — everything you configured carries over.`,
+      ],
+      cta: 'Create my account',
+    },
+  },
+  es: {
+    fallbackName: 'hola',
+    day3: {
+      subject: (r) => `Tu recepcionista de ${r} sigue de guardia`,
+      title: (n) => `${n}, quedan 4 días de demo`,
+      body: (r) => [
+        `¿Recuerdas la conversación en la que la IA de <strong>${r}</strong> cerró una reserva contigo en segundos? Así atiende a un cliente real — por WhatsApp, a las 2 de la mañana, con tus horarios.`,
+        'Abre el panel y mándale otro mensaje. Cada una de esas conversaciones es una llamada que tu equipo no tuvo que atender.',
+      ],
+      cta: 'Abrir mi demo',
+    },
+    day5: {
+      subject: () => 'Tu demo expira en 2 días',
+      title: (n) => `${n}, quedan 2 días`,
+      body: (r) => [
+        `Tu demo de <strong>${r}</strong> expira en 2 días. Crea tu cuenta para conservar todo lo que configuraste — mesas, reservas y tu recepcionista, listas para transferir.`,
+        '14 días gratis, sin tarjeta de crédito.',
+      ],
+      cta: 'Conservar mis datos',
+    },
+    day7: {
+      subject: () => 'Último día de tu demo en Seatable',
+      title: (n) => `${n}, hoy es el último día`,
+      body: (r) => [
+        `Hoy expira tu demo de <strong>${r}</strong> y sus datos se borran. Si la recepcionista tuvo sentido para tu restaurante, mantenerla viva es un clic — todo lo que configuraste se conserva.`,
+      ],
+      cta: 'Crear mi cuenta',
+    },
+  },
+};
 
-  const ctaUrl = `${BASE_URL}/login?from=demo&token=${demoToken}`;
-
-  try {
-    await resend.emails.send({
-      from: FROM_ADDRESS,
-      to: contactEmail,
-      subject: `Last day — your Seatable demo expires today`,
-      html: `
-        <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
-          <div style="text-align: center; margin-bottom: 32px;">
-            <h1 style="font-size: 28px; color: #1C1917; margin: 0;">
-              Seatable<span style="color: #9F1239;">.</span>
-            </h1>
-          </div>
-
-          <div style="background: #FFF7ED; border: 1px solid #FED7AA; border-radius: 16px; padding: 32px; margin-bottom: 24px;">
-            <h2 style="font-size: 22px; color: #1C1917; margin: 0 0 16px 0;">
-              Hi ${contactName}, today is your last day
-            </h2>
-            <p style="color: #57534E; margin: 0 0 24px 0;">
-              Today is your last day to keep your <strong>${restaurantName}</strong> demo.
-              Sign up now — your data is waiting. Everything you configured is preserved
-              and ready to transfer to your real account.
-            </p>
-            <div style="text-align: center; margin: 24px 0;">
-              <a href="${ctaUrl}"
-                 style="display:inline-block;padding:14px 28px;background:#9F1239;color:white;border-radius:10px;text-decoration:none;font-weight:600;font-size:15px;">
-                Sign Up Now — Save My Data
-              </a>
-            </div>
-            <p style="color: #A8A29E; font-size: 13px; text-align: center; margin: 0;">
-              Your demo expires at midnight today.
-            </p>
-          </div>
-
-          <div style="text-align: center; margin-top: 32px; padding-top: 24px; border-top: 1px solid #E7E5E4;">
-            <p style="color: #A8A29E; font-size: 12px; margin: 0;">
-              Powered by Seatable - AI Restaurant Management
-            </p>
-          </div>
+function renderNurtureHtml({ title, paragraphs, cta, ctaUrl }) {
+  const ps = paragraphs
+    .map((p) => `<p style="color:#57534E;margin:0 0 16px 0;line-height:1.7;">${p}</p>`)
+    .join('\n');
+  return `
+    <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+      <div style="text-align: center; margin-bottom: 32px;">
+        <h1 style="font-size: 28px; color: #1C1917; margin: 0;">
+          Seatable<span style="color: #9F1239;">.</span>
+        </h1>
+      </div>
+      <div style="background: #FAFAF9; border: 1px solid #E7E5E4; border-radius: 16px; padding: 32px; margin-bottom: 24px;">
+        <h2 style="font-size: 22px; color: #1C1917; margin: 0 0 16px 0;">${title}</h2>
+        ${ps}
+        <div style="text-align: center; margin: 24px 0 0 0;">
+          <a href="${ctaUrl}"
+             style="display:inline-block;padding:14px 28px;background:#9F1239;color:white;border-radius:10px;text-decoration:none;font-weight:600;font-size:15px;">
+            ${cta}
+          </a>
         </div>
-      `,
-    });
-    logger.info(`Day-7 nurture email sent to: ${contactEmail}`);
-    return { success: true };
-  } catch (err) {
-    logger.error(`Failed to send day-7 nurture email to ${contactEmail}:`, err.message);
-    return { success: false, error: err.message };
-  }
+      </div>
+      <div style="text-align: center; margin-top: 32px; padding-top: 24px; border-top: 1px solid #E7E5E4;">
+        <p style="color: #A8A29E; font-size: 12px; margin: 0;">
+          Seatable — Gestão de Restaurantes com IA
+        </p>
+      </div>
+    </div>
+  `;
 }
+
+function makeNurtureSender(dayKey, ctaUrlFor) {
+  return async function sendNurtureEmail({ contactName, contactEmail, restaurantName, demoToken, agentLanguage }) {
+    const resend = getResendClient();
+    if (!resend) {
+      logger.warn(`RESEND_API_KEY not set, skipping ${dayKey} nurture email`);
+      return { success: false, reason: 'no_resend_key' };
+    }
+    const copy = NURTURE_COPY[pickLang(agentLanguage)][dayKey];
+    const fallback = NURTURE_COPY[pickLang(agentLanguage)].fallbackName;
+    const nome = esc(contactName || fallback);
+    const rest = esc(restaurantName);
+    try {
+      await resend.emails.send({
+        from: FROM_ADDRESS,
+        to: contactEmail,
+        subject: copy.subject(restaurantName),
+        html: renderNurtureHtml({
+          title: copy.title(nome),
+          paragraphs: copy.body(rest),
+          cta: copy.cta,
+          ctaUrl: ctaUrlFor(demoToken),
+        }),
+      });
+      logger.info(`${dayKey} nurture email sent to: ${contactEmail}`);
+      return { success: true };
+    } catch (err) {
+      logger.error(`Failed to send ${dayKey} nurture email to ${contactEmail}:`, err.message);
+      return { success: false, error: err.message };
+    }
+  };
+}
+
+// day3 leva de volta ao demo (re-engajar); day5/day7 levam direto ao signup
+// com o token preservado (prefill do onboarding).
+const sendDay3Email = makeNurtureSender('day3', (t) => `${BASE_URL}/demo/${t}`);
+const sendDay5Email = makeNurtureSender('day5', (t) => `${BASE_URL}/login?from=demo&token=${t}`);
+const sendDay7Email = makeNurtureSender('day7', (t) => `${BASE_URL}/login?from=demo&token=${t}`);
+
 
 // ---------------------------------------------------------------------------
 // Main handler
@@ -286,7 +266,7 @@ module.exports = async (req, res) => {
     logger.info(`Day-5 window: ${day5Start} — ${day5End}`);
     logger.info(`Day-7 window: ${day7Start} — ${day7End}`);
 
-    const SELECT_FIELDS = 'id, restaurant_name, demo_token, demo_contact_email, demo_contact_name, demo_expires_at';
+    const SELECT_FIELDS = 'id, restaurant_name, demo_token, demo_contact_email, demo_contact_name, demo_expires_at, agent_language';
 
     /**
      * Fetch demo candidates for a given time window and dedup column.
@@ -409,10 +389,13 @@ module.exports = async (req, res) => {
         // retry that lands here AFTER the send will find the column
         // populated and skip via the .is(dedupCol, null) filter above.
         const emailResult = await sendFn({
-          contactName: demo.demo_contact_name || 'there',
+          // Sem nome, o template usa a saudação genérica do idioma — não
+          // "there" hardcoded num e-mail pt-BR.
+          contactName: demo.demo_contact_name || null,
           contactEmail: demo.demo_contact_email,
           restaurantName: demo.restaurant_name,
           demoToken: demo.demo_token,
+          agentLanguage: demo.agent_language,
         });
 
         if (emailResult.success) {
