@@ -28,6 +28,7 @@ const navSections: NavSection[] = [
     items: [
       { path: '/host-dashboard/simple', label: 'Dashboard', requiredFeature: 'overview' },
       { path: '/host-dashboard/floor-plan', label: 'Tables', requiredFeature: 'overview' },
+      { path: '/host-dashboard/service', label: 'Service Score', requiredFeature: 'overview' },
     ]
   },
   {
@@ -94,6 +95,7 @@ export default function Sidebar() {
   const NAV_KEYS: Record<string, string> = {
     Dashboard: 'navigation.dashboard',
     Tables: 'navigation.tables',
+    'Service Score': 'navigation.serviceScore',
     'Manager AI': 'navigation.managerAI',
     'Voice Agent': 'navigation.voiceAgent',
     'Voice & Calls': 'navigation.voiceAndCalls',

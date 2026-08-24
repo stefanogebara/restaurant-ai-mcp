@@ -1,18 +1,18 @@
 /**
  * TableTimeline — "Essa mesa libera a tempo?"
  *
- * A régua do serviço: uma raia por mesa, barras sólidas em burgundy para
- * quem está na casa (seated → estimated_departure) e pílulas tracejadas
- * em âmbar para reservas que ainda chegam. O marcador AGORA atravessa
- * tudo. Vive direto no canvas (fios de tinta, sem card), abaixo do salão.
+ * A régua compacta do serviço, no dashboard: uma raia por mesa com
+ * movimento, barras sólidas em burgundy para quem está na casa e pílulas
+ * tracejadas em âmbar para reservas que ainda chegam. Vive direto no canvas
+ * (fios de tinta, sem card), abaixo do salão.
  *
- * Responde a pergunta que o host faz de relance no rush: a mesa da
- * próxima reserva libera antes do grupo chegar? Quando não libera, o
- * cabeçalho aponta o conflito mais próximo.
+ * A conta — quem ocupa qual mesa até que horas, e onde há conflito — mora em
+ * useServiceTimeline, compartilhada com a página inteira (ServiceScore).
+ * Aqui fica só o desenho compacto.
  */
-import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Table, ActiveParty, UpcomingReservation } from '../../types/host.types';
+import { useServiceTimeline, fmtHour } from '../../hooks/useServiceTimeline';
 
 interface TableTimelineProps {
   tables: Table[];
@@ -23,41 +23,7 @@ interface TableTimelineProps {
   now?: Date;
 }
 
-interface Bar {
-  key: string;
-  startMin: number;
-  endMin: number;
-  label: string;
-  kind: 'party' | 'reservation';
-  isVIP?: boolean;
-}
-
-const RESERVATION_DEFAULT_MIN = 105; // duração presumida de uma reserva sem serviço aberto
 const MAX_ROWS = 10;
-
-const timeToMin = (hhmm: string): number | null => {
-  const m = /^(\d{1,2}):(\d{2})/.exec(hhmm || '');
-  if (!m) return null;
-  return parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
-};
-
-const isoToMin = (iso: string, ref: Date): number | null => {
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return null;
-  // Minutos relativos à meia-noite do dia de referência — uma saída prevista
-  // depois da meia-noite continua crescendo (25h) em vez de voltar a 0.
-  const midnight = new Date(ref);
-  midnight.setHours(0, 0, 0, 0);
-  return Math.round((d.getTime() - midnight.getTime()) / 60_000);
-};
-
-const fmtHour = (min: number) => {
-  const h = Math.floor(min / 60) % 24;
-  const m = min % 60;
-  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-};
-
-const firstName = (name: string) => (name || '').trim().split(' ')[0] || '—';
 
 export default function TableTimeline({
   tables,
@@ -67,111 +33,13 @@ export default function TableTimeline({
   now = new Date(),
 }: TableTimelineProps) {
   const { t } = useTranslation();
-
-  const { rows, windowStart, windowEnd, conflict, hiddenCount } = useMemo(() => {
-    const barsByTable = new Map<string, Bar[]>();
-    const push = (tableId: string, bar: Bar) => {
-      const list = barsByTable.get(tableId) ?? [];
-      list.push(bar);
-      barsByTable.set(tableId, list);
-    };
-
-    activeParties.forEach((p) => {
-      const start = isoToMin(p.seated_at, now);
-      const end = isoToMin(p.estimated_departure, now);
-      if (start === null) return;
-      const safeEnd = end !== null && end > start ? end : start + RESERVATION_DEFAULT_MIN;
-      (p.tables || []).forEach((tid) =>
-        push(tid, {
-          key: `party-${p.service_id}-${tid}`,
-          startMin: start,
-          endMin: safeEnd,
-          label: `${firstName(p.customer_name)} · ${p.party_size}p`,
-          kind: 'party',
-          isVIP: p.is_vip,
-        }),
-      );
-    });
-
-    todayReservations.forEach((r) => {
-      if (r.checked_in) return; // já virou parte ativa — a barra sólida cobre
-      const start = timeToMin(r.time || r.reservation_time);
-      if (start === null) return;
-      (r.table_ids || []).forEach((tid) =>
-        push(tid, {
-          key: `res-${r.reservation_id}-${tid}`,
-          startMin: start,
-          endMin: start + RESERVATION_DEFAULT_MIN,
-          label: `${firstName(r.customer_name)} · ${r.party_size}p`,
-          kind: 'reservation',
-        }),
-      );
-    });
-
-    if (barsByTable.size === 0) {
-      return { rows: [], windowStart: 0, windowEnd: 0, conflict: null, hiddenCount: 0 };
-    }
-
-    let minStart = Infinity;
-    let maxEnd = -Infinity;
-    barsByTable.forEach((bars) =>
-      bars.forEach((b) => {
-        minStart = Math.min(minStart, b.startMin);
-        maxEnd = Math.max(maxEnd, b.endMin);
-      }),
-    );
-    // Janela em horas cheias, mínimo de 4h — a régua respira em vez de colar
-    // as barras nas bordas.
-    let ws = Math.floor(minStart / 60) * 60;
-    let we = Math.ceil(maxEnd / 60) * 60;
-    if (we - ws < 240) {
-      const pad = Math.ceil((240 - (we - ws)) / 120) * 60;
-      ws -= pad;
-      we += pad;
-    }
-
-    const allRows = [...barsByTable.entries()]
-      .map(([tableId, bars]) => ({
-        table: tables.find((tb) => tb.id === tableId),
-        bars: bars.sort((a, b) => a.startMin - b.startMin),
-      }))
-      .filter((r): r is { table: Table; bars: Bar[] } => !!r.table)
-      .sort((a, b) => (Number(a.table.table_number) || 0) - (Number(b.table.table_number) || 0));
-
-    // Conflito mais próximo: reserva cuja mesa ainda estará ocupada na hora
-    // da chegada (saída prevista do grupo atual > início da reserva).
-    let foundConflict: { tableNumber: number; resLabel: string; resStart: number; freeAt: number } | null = null;
-    for (const row of allRows) {
-      const parties = row.bars.filter((b) => b.kind === 'party');
-      const reservations = row.bars.filter((b) => b.kind === 'reservation');
-      for (const res of reservations) {
-        const blocking = parties.find((p) => p.startMin < res.startMin && p.endMin > res.startMin);
-        if (blocking && (!foundConflict || res.startMin < foundConflict.resStart)) {
-          foundConflict = {
-            tableNumber: row.table.table_number,
-            resLabel: res.label,
-            resStart: res.startMin,
-            freeAt: blocking.endMin,
-          };
-        }
-      }
-    }
-
-    return {
-      rows: allRows.slice(0, MAX_ROWS),
-      windowStart: ws,
-      windowEnd: we,
-      conflict: foundConflict,
-      hiddenCount: Math.max(0, allRows.length - MAX_ROWS),
-    };
-  }, [tables, activeParties, todayReservations, now]);
+  const { rows, windowStart, windowEnd, conflict, hiddenCount, nowMin } =
+    useServiceTimeline(tables, activeParties, todayReservations, { maxRows: MAX_ROWS, now });
 
   if (rows.length === 0) return null;
 
   const span = windowEnd - windowStart;
   const pct = (min: number) => Math.max(0, Math.min(100, ((min - windowStart) / span) * 100));
-  const nowMin = now.getHours() * 60 + now.getMinutes();
-  const nowVisible = nowMin > windowStart && nowMin < windowEnd;
 
   // Marcas de hora: passo de 1h até 6h de janela, 2h acima disso.
   const step = span > 360 ? 120 : 60;
@@ -210,7 +78,7 @@ export default function TableTimeline({
       <div className="overflow-x-auto">
         <div className="grid grid-cols-[64px_1fr] relative min-w-[560px]" role="list">
           {/* Marcador AGORA — atravessa todas as raias */}
-          {nowVisible && (
+          {nowMin !== null && (
             <div
               aria-hidden="true"
               className="absolute top-0 bottom-6 w-px z-10"

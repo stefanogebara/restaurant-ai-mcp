@@ -42,6 +42,7 @@ const Onboarding = lazyRetry(() => import('./pages/Onboarding'));
 const OnboardingChat = lazyRetry(() => import('./pages/OnboardingChat'));
 const LanguageSettings = lazyRetry(() => import('./pages/LanguageSettings'));
 const TableConfigPage = lazyRetry(() => import('./pages/TableConfigPage'));
+const ServiceScorePage = lazyRetry(() => import('./pages/ServiceScorePage'));
 const VoiceSettingsPage = lazyRetry(() => import('./pages/VoiceSettingsPage'));
 const ProspectingCockpit = lazyRetry(() => import('./pages/ProspectingCockpit'));
 const OlimpiaOps = lazyRetry(() => import('./pages/OlimpiaOps'));
@@ -175,6 +176,7 @@ function App() {
               <Route path="/host-dashboard/reports" element={<Navigate to="/host-dashboard/insights?tab=reports" replace />} />
               <Route path="/host-dashboard/calls" element={<ProtectedRoute><CallTrackingDashboard /></ProtectedRoute>} />
               <Route path="/host-dashboard/tables" element={<ProtectedRoute><TableConfigPage /></ProtectedRoute>} />
+              <Route path="/host-dashboard/service" element={<ProtectedRoute><ServiceScorePage /></ProtectedRoute>} />
               <Route path="/host-dashboard/floor-plan" element={<ProtectedRoute><FloorPlanEditor /></ProtectedRoute>} />
               <Route path="/host-dashboard/voice-settings" element={<ProtectedRoute><VoiceSettingsPage /></ProtectedRoute>} />
               <Route path="/host-dashboard/whatsapp" element={<ProtectedRoute><WhatsAppSettingsPage /></ProtectedRoute>} />

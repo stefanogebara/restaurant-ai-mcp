@@ -94,7 +94,8 @@
     "coupons": "Cupons",
     "events": "Eventos",
     "campaigns": "Campanhas",
-    "insights": "Insights"
+    "insights": "Insights",
+    "serviceScore": "A Partitura"
   },
   "dashboard": {
     "overview": "Visão Geral",
@@ -3560,5 +3561,14 @@
     "conflictNeeds": "precisa estar pronta às",
     "conflictBlocked": "ocupada até",
     "moreTables": "mesas com movimento fora da régua"
+  },
+  "serviceScore": {
+    "pageTitle": "A Partitura",
+    "heading": "A noite inteira, numa página",
+    "nowMarker": "AGORA",
+    "idleTable": "livre a noite toda",
+    "emptyTitle": "Nenhum movimento no serviço de hoje",
+    "emptyHint": "Assim que houver reservas ou grupos na casa, a noite aparece aqui hora a hora.",
+    "title": "A noite inteira, numa página"
   }
 }
