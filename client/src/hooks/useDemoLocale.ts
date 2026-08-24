@@ -75,6 +75,8 @@ const strings = {
     convBookedCta: 'See it on the dashboard',
     payoffTitle: 'Your AI just booked this',
     viaWhatsAppNow: 'via WhatsApp · just now',
+    manualCardTitle: 'Configured by you, just now',
+    manualCardBody: "No Google listing, no problem — this is how your receptionist will greet your restaurant's first guest.",
     // Loading
     loadingDemo: 'Loading demo...',
     // A11y / banners
@@ -138,6 +140,8 @@ const strings = {
     convBookedCta: 'Ver no painel',
     payoffTitle: 'Sua IA acabou de fechar esta reserva',
     viaWhatsAppNow: 'via WhatsApp · agora',
+    manualCardTitle: 'Configurada por você, agora mesmo',
+    manualCardBody: 'Sem Google, sem problema — é assim que a sua recepcionista vai atender o primeiro cliente do seu restaurante.',
     // Loading
     loadingDemo: 'Carregando demo...',
     // A11y / banners
@@ -198,6 +202,8 @@ const strings = {
     convBookedCta: 'Ver en el panel',
     payoffTitle: 'Tu IA acaba de cerrar esta reserva',
     viaWhatsAppNow: 'vía WhatsApp · ahora',
+    manualCardTitle: 'Configurada por ti, ahora mismo',
+    manualCardBody: 'Sin Google, sin problema — así atenderá tu recepcionista al primer cliente de tu restaurante.',
     // Loading
     loadingDemo: 'Cargando demo...',
     // A11y / banners

@@ -109,7 +109,7 @@ describe('DemoSetupForm — gate-free entry', () => {
     });
   });
 
-  it('lets the user create with scraped_data:null after a search ERROR', async () => {
+  it('search ERROR leads to the new-restaurant path with sane defaults', async () => {
     // Backend returns an error — production sees this when Google Places
     // is rate-limited or down. Form must NOT trap the user on the search step.
     (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
@@ -123,17 +123,20 @@ describe('DemoSetupForm — gate-free entry', () => {
     const continueBtn = await screen.findByRole('button', { name: /continue without search/i });
     fireEvent.click(continueBtn);
 
-    fireEvent.click(await screen.findByRole('button', { name: /create my demo anyway/i }));
+    // Everything in the 3-question step is optional — the submit works
+    // immediately with defaults.
+    fireEvent.click(await screen.findByRole('button', { name: /create my receptionist/i }));
 
     await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
     expect(onSubmit).toHaveBeenCalledWith({
       restaurant_name: 'Obscure Diner',
       city: 'Nowhere',
       scraped_data: null,
+      manual: { cuisine_type: null, open_time: '12:00', close_time: '23:00', vibe_tags: [] },
     });
   });
 
-  it('lets the user create with scraped_data:null after ZERO RESULTS', async () => {
+  it('ZERO RESULTS shows the 3 questions and forwards the owner answers', async () => {
     // Common for new places not yet on Google Maps — the exact audience the
     // "restaurante novo" path serves.
     (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
@@ -144,14 +147,23 @@ describe('DemoSetupForm — gate-free entry', () => {
     render(<DemoSetupForm onSubmit={onSubmit} isSubmitting={false} submitError={null} />);
     fillSearch('Brand New Place', 'Anytown');
 
-    await screen.findByText(/no exact match/i);
-    fireEvent.click(screen.getByRole('button', { name: /create my demo anyway/i }));
+    await screen.findByText(/new restaurant\? even better/i);
+    fireEvent.click(screen.getByRole('button', { name: 'Brazilian' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Romantic' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Upscale' }));
+    fireEvent.click(screen.getByRole('button', { name: /create my receptionist/i }));
 
     await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
     expect(onSubmit).toHaveBeenCalledWith({
       restaurant_name: 'Brand New Place',
       city: 'Anytown',
       scraped_data: null,
+      manual: {
+        cuisine_type: 'Brazilian',
+        open_time: '12:00',
+        close_time: '23:00',
+        vibe_tags: ['romantic', 'upscale'],
+      },
     });
   });
 });
