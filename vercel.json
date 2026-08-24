@@ -109,6 +109,10 @@
       "destination": "/api/demo?action=convert"
     },
     {
+      "source": "/api/demo/attach-contact",
+      "destination": "/api/demo?action=attach-contact"
+    },
+    {
       "source": "/restaurants/:city/:cuisine",
       "destination": "/api/seo/city-cuisine?city=:city&cuisine=:cuisine"
     },

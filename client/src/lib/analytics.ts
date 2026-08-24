@@ -166,7 +166,7 @@ export function trackShareClicked(props: { location: 'demo_dashboard' | 'landing
   safeCapture('share_clicked', props);
 }
 
-export function trackDemoFunnel(props: { step: 'demo_started' | 'demo_interacted' | 'demo_share_clicked' | 'signup_started'; preset?: string }): void {
+export function trackDemoFunnel(props: { step: 'demo_started' | 'demo_interacted' | 'demo_share_clicked' | 'signup_started' | 'match_confirmed' | 'match_rejected' | 'new_restaurant_path'; preset?: string }): void {
   safeCapture('demo_funnel', props);
 }
 

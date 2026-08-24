@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { GlassPanel } from '../common/glass/Glass';
-import { trackDemoStarted } from '../../lib/analytics';
+import { trackDemoStarted, trackDemoFunnel } from '../../lib/analytics';
 
 interface ScrapedData {
   name: string;
@@ -23,7 +23,6 @@ interface DemoSetupFormProps {
   onSubmit: (data: {
     restaurant_name: string;
     city: string;
-    contact_email: string;
     scraped_data: ScrapedData | null;
   }) => void;
   isSubmitting: boolean;
@@ -85,7 +84,6 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
 
   const [restaurantName, setRestaurantName] = useState('');
   const [city, setCity] = useState('');
-  const [email, setEmail] = useState('');
 
   const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<ScrapedData[] | null>(null);
@@ -149,15 +147,25 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
     }
   }
 
+  // Two exits, no email gate: confirming a Google match, or going manual
+  // ("meu restaurante é novo / não está no Google"). Contact capture happens
+  // AFTER the aha, inside the demo, via /api/demo/attach-contact.
+  function submitDemo(scrape: ScrapedData | null) {
+    if (isSubmitting) return;
+    trackDemoStarted({ source: 'setup_form' });
+    trackDemoFunnel({ step: scrape ? 'match_confirmed' : 'new_restaurant_path' });
+    onSubmit({
+      restaurant_name: scrape?.name || restaurantName.trim(),
+      city: city.trim(),
+      scraped_data: scrape,
+    });
+  }
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    trackDemoStarted({ source: 'setup_form' });
-    onSubmit({
-      restaurant_name: selectedResult?.name || restaurantName.trim(),
-      city: city.trim(),
-      contact_email: email.trim(),
-      scraped_data: selectedResult,
-    });
+    // The form's only submit control lives inside the confirmation card, so
+    // Enter/submit without a selected result is a no-op by design.
+    if (selectedResult) submitDemo(selectedResult);
   }
 
   function handleSkipSearch() {
@@ -165,9 +173,6 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
     setSelectedResult(null);
     setSearchError(null);
   }
-
-  const showResults = searchResults !== null;
-  const showEmailStep = showResults;
 
   return (
     <GlassPanel as="form" onSubmit={handleSubmit} className="p-7 sm:p-9 space-y-6">
@@ -279,6 +284,9 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
             exit={{ opacity: 0, y: -8 }}
             className="glass-card p-5"
           >
+            <p className="text-[13px] font-semibold text-burgundy mb-2.5">
+              {t('landing.demoSetup.form.isThisYours', 'É este o seu restaurante?')}
+            </p>
             <div className="flex items-start justify-between gap-3 mb-3">
               <div>
                 <p className="font-semibold text-deep-charcoal">{selectedResult.name}</p>
@@ -286,10 +294,14 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
               </div>
               <button
                 type="button"
-                onClick={() => { setSelectedResult(null); setSearchResults(null); }}
+                onClick={() => {
+                  trackDemoFunnel({ step: 'match_rejected' });
+                  setSelectedResult(null);
+                  setSearchResults(null);
+                }}
                 className="text-xs text-muted-stone hover:text-stone-gray underline flex-shrink-0"
               >
-                {t('landing.demoSetup.form.change', 'Trocar')}
+                {t('landing.demoSetup.form.notMine', 'Não, trocar')}
               </button>
             </div>
 
@@ -331,57 +343,36 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
                 "{selectedResult.editorial_summary}"
               </p>
             )}
+
+            {/* Confirmation — the only way in. No email, no extra step. */}
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className={`mt-4 w-full flex items-center justify-center gap-3 px-8 py-4 bg-burgundy hover:bg-burgundy-dark text-white text-[16px] font-semibold rounded-full transition-colors duration-200 ${isSubmitting ? 'opacity-60 cursor-not-allowed' : ''}`}
+            >
+              {isSubmitting ? (
+                <>
+                  <span className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent" aria-hidden="true" />
+                  <span>{t('landing.demoSetup.form.creatingDemo', 'Montando seu painel…')}</span>
+                </>
+              ) : (
+                <span>{t('landing.demoSetup.form.confirmMine', 'Sim, é esse — criar meu demo')}</span>
+              )}
+            </button>
+            <p className="text-center text-xs text-muted-stone mt-3">{t('landing.demoSetup.form.noCreditCard', 'Sem cartão de crédito.')}</p>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* No results message */}
+      {/* Manual path: nothing on Google (new restaurant) or no usable match */}
       {searchResults && searchResults.length === 0 && !selectedResult && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-4">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-2 space-y-4">
           <p className="text-sm text-stone-gray">{t('landing.demoSetup.form.noExactMatch', 'Não achei exato — montamos seu painel com os dados que você digitou.')}</p>
-        </motion.div>
-      )}
-
-      {/* Step 2: Email (shown after search) */}
-      <AnimatePresence>
-        {showEmailStep && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="overflow-hidden"
-          >
-            <div className="h-px bg-glass-border-dark mb-6" />
-            <p className="text-[13px] font-medium text-muted-stone mb-3">
-              {t('landing.demoSetup.form.almostThere', 'Quase lá')}
-            </p>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder={t('landing.demoSetup.form.emailPlaceholder', 'Seu e-mail')}
-              className={inputBase}
-            />
-            <p className="text-[11px] text-muted-stone mt-1.5 ml-1">{t('landing.demoSetup.form.emailHint', 'É pra onde mandamos o link do seu painel.')}</p>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Submit error */}
-      {submitError && (
-        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="p-4 bg-red-600/10 border border-red-600/20 rounded-xl text-red-600 text-sm">
-          {submitError}
-        </motion.div>
-      )}
-
-      {/* Submit button */}
-      {showEmailStep && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
           <button
-            type="submit"
-            disabled={isSubmitting || !email.trim()}
-            className={`w-full flex items-center justify-center gap-3 px-8 py-4 bg-burgundy hover:bg-burgundy-dark text-white text-[16px] font-semibold rounded-full transition-colors duration-200 ${isSubmitting || !email.trim() ? 'opacity-60 cursor-not-allowed' : ''}`}
+            type="button"
+            onClick={() => submitDemo(null)}
+            disabled={isSubmitting}
+            className={`w-full flex items-center justify-center gap-3 px-8 py-4 bg-burgundy hover:bg-burgundy-dark text-white text-[16px] font-semibold rounded-full transition-colors duration-200 ${isSubmitting ? 'opacity-60 cursor-not-allowed' : ''}`}
           >
             {isSubmitting ? (
               <>
@@ -389,10 +380,17 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
                 <span>{t('landing.demoSetup.form.creatingDemo', 'Montando seu painel…')}</span>
               </>
             ) : (
-              <span>{t('landing.demoSetup.form.launchDemo', 'Ver meu restaurante na Seatable')}</span>
+              <span>{t('landing.demoSetup.form.launchManual', 'Criar meu demo assim mesmo')}</span>
             )}
           </button>
-          <p className="text-center text-xs text-muted-stone mt-3">{t('landing.demoSetup.form.noCreditCard', 'Sem cartão de crédito.')}</p>
+          <p className="text-xs text-muted-stone">{t('landing.demoSetup.form.noCreditCard', 'Sem cartão de crédito.')}</p>
+        </motion.div>
+      )}
+
+      {/* Submit error */}
+      {submitError && (
+        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="p-4 bg-red-600/10 border border-red-600/20 rounded-xl text-red-600 text-sm">
+          {submitError}
         </motion.div>
       )}
     </GlassPanel>

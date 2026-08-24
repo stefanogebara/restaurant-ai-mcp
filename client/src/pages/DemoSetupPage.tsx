@@ -20,7 +20,6 @@ export default function DemoSetupPage() {
   const handleSubmit = async (data: {
     restaurant_name: string;
     city: string;
-    contact_email: string;
     scraped_data: unknown;
   }) => {
     setIsSubmitting(true);
@@ -34,11 +33,11 @@ export default function DemoSetupPage() {
       const response = await fetch(`${API_BASE}/api/demo/create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        // No contact fields: the demo is created gate-free and the contact
+        // ask happens after the aha, via /api/demo/attach-contact.
         body: JSON.stringify({
           restaurant_name: data.restaurant_name,
           city: data.city,
-          contact_email: data.contact_email,
-          contact_name: data.contact_email.split('@')[0],
           cuisine_type: (data.scraped_data as Record<string, string> | null)?.cuisine_type ?? 'Restaurant',
           scraped_data: data.scraped_data,
         }),
