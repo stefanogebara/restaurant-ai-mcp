@@ -95,11 +95,11 @@ export default function CustomersPage() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6 pl-10 sm:pl-0">
           <div>
-            <h1 className="text-xl font-bold text-stone-900">
+            <h1 className="font-serif text-3xl sm:text-4xl text-deep-charcoal tracking-tight">
               {t('crm.pageTitle', 'Customers')}
             </h1>
             {total > 0 && (
-              <p className="text-sm text-stone-500 mt-0.5">
+              <p className="text-[15px] text-muted-stone mt-1.5">
                 {t('crm.totalCustomers', { count: total, defaultValue: '{{count}} customers' })}
               </p>
             )}
@@ -110,7 +110,7 @@ export default function CustomersPage() {
             <button
               type="button"
               onClick={() => setShowDuplicates(true)}
-              className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-stone-700 border border-glass-border-dark rounded-lg bg-white/40 hover:bg-white/70 transition-colors"
+              className="w-full sm:w-auto px-5 py-2 min-h-[44px] sm:min-h-0 text-sm font-medium text-muted-stone hover:text-deep-charcoal glass-pill rounded-[46px] transition-colors"
             >
               {t('crm.findDuplicates', 'Find Duplicates')}
             </button>
@@ -118,11 +118,11 @@ export default function CustomersPage() {
         </div>
 
         {/* Filters */}
-        <div className="space-y-3 mb-6">
+        <div className="space-y-3 mb-8">
           {/* Search */}
           <div className="relative">
             <svg
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400"
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-stone"
               width="16"
               height="16"
               viewBox="0 0 24 24"
@@ -139,7 +139,7 @@ export default function CustomersPage() {
               onChange={(e) => setSearchInput(e.target.value)}
               placeholder={t('crm.searchPlaceholder', 'Search by name, phone or email...')}
               aria-label={t('crm.ariaSearch', 'Search customers')}
-              className="w-full pl-10 pr-4 py-2.5 text-sm border border-glass-border-input rounded-lg bg-white/60 backdrop-blur-glass-chip text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-1 focus:ring-[#9F1239]/30 focus:border-[#9F1239]/30"
+              className="w-full pl-11 pr-4 py-2.5 min-h-[44px] text-sm glass-pill rounded-[46px] text-deep-charcoal placeholder:text-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy/30"
             />
           </div>
 
@@ -149,7 +149,7 @@ export default function CustomersPage() {
               value={tierFilter}
               onChange={(e) => setTierFilter(e.target.value)}
               aria-label={t('crm.ariaTierFilter', 'Filter by tier')}
-              className="flex-1 min-w-[120px] sm:flex-none text-sm border border-glass-border-input rounded-lg px-3 py-2 text-stone-700 bg-white/60 focus:outline-none focus:ring-1 focus:ring-[#9F1239]/30 focus:border-[#9F1239]/30"
+              className="flex-1 min-w-[120px] sm:flex-none text-sm glass-pill rounded-[46px] px-4 py-2 min-h-[44px] sm:min-h-0 text-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy/30"
             >
               <option value="">{t('crm.allTiers', 'All tiers')}</option>
               {TIER_OPTIONS.filter(Boolean).map((tier) => (
@@ -165,14 +165,14 @@ export default function CustomersPage() {
               onChange={(e) => setTagFilter(e.target.value)}
               placeholder={t('crm.filterByTag', 'Filter by tag...')}
               aria-label={t('crm.filterByTag', 'Filter by tag...')}
-              className="flex-1 min-w-[120px] sm:flex-none text-sm border border-glass-border-input rounded-lg px-3 py-2 text-stone-700 placeholder:text-stone-400 bg-white focus:outline-none focus:ring-1 focus:ring-[#9F1239]/30 focus:border-[#9F1239]/30"
+              className="flex-1 min-w-[120px] sm:flex-none text-sm glass-pill rounded-[46px] px-4 py-2 min-h-[44px] sm:min-h-0 text-deep-charcoal placeholder:text-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy/30"
             />
 
             <select
               value={allergyFilter}
               onChange={(e) => setAllergyFilter(e.target.value)}
               aria-label={t('crm.ariaAllergyFilter', 'Filter by allergy')}
-              className="flex-1 min-w-[120px] sm:flex-none text-sm border border-glass-border-input rounded-lg px-3 py-2 text-stone-700 bg-white/60 focus:outline-none focus:ring-1 focus:ring-[#9F1239]/30 focus:border-[#9F1239]/30"
+              className="flex-1 min-w-[120px] sm:flex-none text-sm glass-pill rounded-[46px] px-4 py-2 min-h-[44px] sm:min-h-0 text-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy/30"
             >
               <option value="">{t('crm.allAllergies', 'All allergies')}</option>
               {ALLERGY_FILTER_OPTIONS.map((a) => (
@@ -186,7 +186,7 @@ export default function CustomersPage() {
               value={dietaryFilter}
               onChange={(e) => setDietaryFilter(e.target.value)}
               aria-label={t('crm.ariaDietaryFilter', 'Filter by dietary preference')}
-              className="flex-1 min-w-[120px] sm:flex-none text-sm border border-glass-border-input rounded-lg px-3 py-2 text-stone-700 bg-white/60 focus:outline-none focus:ring-1 focus:ring-[#9F1239]/30 focus:border-[#9F1239]/30"
+              className="flex-1 min-w-[120px] sm:flex-none text-sm glass-pill rounded-[46px] px-4 py-2 min-h-[44px] sm:min-h-0 text-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy/30"
             >
               <option value="">{t('crm.allDietary', 'All dietary')}</option>
               {DIETARY_FILTER_OPTIONS.map((d) => (
@@ -202,21 +202,21 @@ export default function CustomersPage() {
         <div className="glass-panel rounded-xl overflow-hidden">
           {isLoading ? (
             <div className="flex items-center justify-center py-20" role="status" aria-label={t('crm.ariaLoading', 'Loading customers')}>
-              <div className="animate-spin rounded-full h-8 w-8 border-2 border-stone-200 border-t-[#9F1239]" aria-hidden="true" />
+              <div className="animate-spin rounded-full h-8 w-8 border-2 border-border-gray border-t-burgundy" aria-hidden="true" />
             </div>
           ) : isError ? (
             <div className="text-center py-20">
-              <p className="text-sm text-red-600">{t('crm.loadError', 'Failed to load customers')}</p>
+              <p className="text-[15px] text-red-700">{t('crm.loadError', 'Failed to load customers')}</p>
             </div>
           ) : customers.length === 0 ? (
             (debouncedSearch || tierFilter || tagFilter || allergyFilter || dietaryFilter) ? (
               // Filter-result empty state: keep the existing concise "no match + clear" affordance
               <div className="text-center py-20">
-                <p className="text-sm text-stone-500">{t('crm.noCustomers', 'No customers found')}</p>
+                <p className="text-[15px] text-muted-stone">{t('crm.noCustomers', 'No customers found')}</p>
                 <button
                   type="button"
                   onClick={() => { setSearchInput(''); setTierFilter(''); setTagFilter(''); setAllergyFilter(''); setDietaryFilter(''); }}
-                  className="mt-2 text-sm text-[#9F1239] hover:underline"
+                  className="mt-2 text-sm text-burgundy hover:underline"
                 >
                   {t('crm.clearFilters', 'Clear filters')}
                 </button>
@@ -225,15 +225,10 @@ export default function CustomersPage() {
               // True empty state: warm explanation of how customers populate
               // Brazilian owner who just signed up needs to know this isn't broken.
               <div className="text-center py-16 max-w-md mx-auto">
-                <div className="mx-auto mb-4 w-12 h-12 rounded-full bg-burgundy/10 flex items-center justify-center">
-                  <svg className="w-6 h-6 text-burgundy" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
-                </div>
-                <h3 className="text-base font-semibold text-deep-charcoal mb-1">
+                <h3 className="font-serif text-[26px] text-deep-charcoal mb-2">
                   {t('crm.emptyTitle', 'Seu CRM está esperando os primeiros clientes')}
                 </h3>
-                <p className="text-sm text-stone-500 leading-relaxed mb-6">
+                <p className="text-[15px] text-muted-stone leading-relaxed mb-6">
                   {t('crm.emptyHint', 'Cada vez que alguém faz uma reserva — pelo widget, pelo WhatsApp ou pelo telefone — o cliente aparece aqui automaticamente com histórico, alergias e tags.')}
                 </p>
                 {/* Recovery CTA — gives the empty state real momentum instead
@@ -245,7 +240,7 @@ export default function CustomersPage() {
                     in the CRM. */}
                 <a
                   href="/host-dashboard/simple"
-                  className="inline-flex items-center px-4 py-2 rounded-full bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold transition-colors"
+                  className="inline-flex items-center px-6 py-2.5 rounded-[100px] bg-burgundy hover:bg-burgundy-dark text-white text-sm font-medium transition-colors"
                 >
                   {t('crm.emptyAddReservation', 'Adicionar primeira reserva')}
                 </a>
@@ -257,23 +252,23 @@ export default function CustomersPage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-[#E5E7EB] bg-stone-50">
-                      <th className="text-left px-4 py-3 text-[10px] font-bold text-stone-500 uppercase tracking-widest">
+                    <tr className="border-b hairline">
+                      <th className="text-left px-4 py-3.5 text-[11px] font-semibold text-muted-stone uppercase tracking-[0.12em]">
                         {t('crm.colName', 'Customer')}
                       </th>
-                      <th className="text-left px-4 py-3 text-[10px] font-bold text-stone-500 uppercase tracking-widest">
+                      <th className="text-left px-4 py-3.5 text-[11px] font-semibold text-muted-stone uppercase tracking-[0.12em]">
                         {t('crm.colTier', 'Tier')}
                       </th>
-                      <th className="text-right px-4 py-3 text-[10px] font-bold text-stone-500 uppercase tracking-widest">
+                      <th className="text-right px-4 py-3.5 text-[11px] font-semibold text-muted-stone uppercase tracking-[0.12em]">
                         {t('crm.colVisits', 'Visits')}
                       </th>
-                      <th className="text-right px-4 py-3 text-[10px] font-bold text-stone-500 uppercase tracking-widest">
+                      <th className="text-right px-4 py-3.5 text-[11px] font-semibold text-muted-stone uppercase tracking-[0.12em]">
                         {t('crm.colLastVisit', 'Last Visit')}
                       </th>
-                      <th className="text-right px-4 py-3 text-[10px] font-bold text-stone-500 uppercase tracking-widest">
+                      <th className="text-right px-4 py-3.5 text-[11px] font-semibold text-muted-stone uppercase tracking-[0.12em]">
                         {t('crm.colLTV', 'LTV')}
                       </th>
-                      <th className="text-left px-4 py-3 text-[10px] font-bold text-stone-500 uppercase tracking-widest">
+                      <th className="text-left px-4 py-3.5 text-[11px] font-semibold text-muted-stone uppercase tracking-[0.12em]">
                         {t('crm.colTags', 'Tags')}
                       </th>
                     </tr>
@@ -283,15 +278,15 @@ export default function CustomersPage() {
                       <tr
                         key={c.customer_id}
                         onClick={() => setSelectedCustomerId(c.customer_id)}
-                        className="border-b border-[#E5E7EB] last:border-0 hover:bg-stone-50 cursor-pointer transition-colors"
+                        className="border-b hairline last:border-0 hover:bg-deep-charcoal/[0.02] cursor-pointer transition-colors"
                       >
                         <td className="px-4 py-3">
                           <div>
-                            <p className="font-medium text-stone-900">
+                            <p className="font-medium text-deep-charcoal">
                               {c.customer_name || c.customer_phone}
                             </p>
                             {c.customer_name && (
-                              <p className="text-xs text-stone-400">{c.customer_phone}</p>
+                              <p className="font-mono text-xs text-muted-stone mt-0.5">{c.customer_phone}</p>
                             )}
                           </div>
                         </td>
@@ -301,13 +296,13 @@ export default function CustomersPage() {
                             compact
                           />
                         </td>
-                        <td className="px-4 py-3 text-right text-stone-700 font-medium">
+                        <td className="px-4 py-3 text-right text-deep-charcoal font-medium tabular-nums">
                           {c.total_visits}
                         </td>
-                        <td className="px-4 py-3 text-right text-stone-500">
+                        <td className="px-4 py-3 text-right text-muted-stone">
                           {formatRelativeDate(c.last_visit_date, t as unknown as TFunction)}
                         </td>
-                        <td className="px-4 py-3 text-right text-stone-700 font-medium">
+                        <td className="px-4 py-3 text-right text-deep-charcoal font-medium tabular-nums">
                           {c.lifetime_value ? formatCurrency(Math.round(c.lifetime_value)) : '--'}
                         </td>
                         <td className="px-4 py-3">
@@ -315,13 +310,13 @@ export default function CustomersPage() {
                             {(c.tags || []).slice(0, 3).map((tag) => (
                               <span
                                 key={tag}
-                                className="text-[10px] bg-stone-100 text-stone-600 px-1.5 py-0.5 rounded"
+                                className="text-[10px] bg-muted-stone/[0.10] text-muted-stone px-2 py-0.5 rounded-[46px]"
                               >
                                 {tag}
                               </span>
                             ))}
                             {(c.tags || []).length > 3 && (
-                              <span className="text-[10px] text-stone-400">
+                              <span className="text-[10px] text-muted-stone">
                                 +{c.tags.length - 3}
                               </span>
                             )}
@@ -335,8 +330,8 @@ export default function CustomersPage() {
 
               {/* Pagination */}
               {totalPages > 1 && (
-                <div className="flex items-center justify-between px-4 py-3 border-t border-[#E5E7EB]">
-                  <p className="text-xs text-stone-500">
+                <div className="flex items-center justify-between px-4 py-3.5 border-t hairline">
+                  <p className="text-xs text-muted-stone">
                     {t('crm.showing', {
                       from: page * PAGE_SIZE + 1,
                       to: Math.min((page + 1) * PAGE_SIZE, total),
@@ -349,7 +344,7 @@ export default function CustomersPage() {
                       type="button"
                       onClick={() => setPage((p) => Math.max(0, p - 1))}
                       disabled={page === 0}
-                      className="px-3 py-1.5 text-xs font-medium border border-[#E5E7EB] rounded-lg text-stone-600 hover:bg-stone-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                      className="px-4 py-1.5 min-h-[36px] text-xs font-medium glass-pill rounded-[46px] text-muted-stone hover:text-deep-charcoal disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                     >
                       {t('crm.prev', 'Previous')}
                     </button>
@@ -357,7 +352,7 @@ export default function CustomersPage() {
                       type="button"
                       onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
                       disabled={page >= totalPages - 1}
-                      className="px-3 py-1.5 text-xs font-medium border border-[#E5E7EB] rounded-lg text-stone-600 hover:bg-stone-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                      className="px-4 py-1.5 min-h-[36px] text-xs font-medium glass-pill rounded-[46px] text-muted-stone hover:text-deep-charcoal disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                     >
                       {t('crm.next', 'Next')}
                     </button>
