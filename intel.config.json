@@ -1,0 +1,98 @@
+{
+  "project": "Seatable",
+  "url": "https://seatable.one",
+  "one_line": "CRM de IA end-to-end para restaurantes: voz conversacional, reservas, atendimento, CRM de cliente e prospecção. Não é só atendente telefônico.",
+  "audience": "restaurante independente de São Paulo, dono que atende o próprio telefone",
+  "stack": [
+    "Node >=18, Vercel serverless (api/)",
+    "React 19 + Vite 7 + Tailwind 3 + react-router 7 (client/)",
+    "Supabase (Postgres) — banco único",
+    "Vercel",
+    "Twilio — telefonia, SMS e um dos provedores de WhatsApp",
+    "ElevenLabs conversational AI — motor de voz padrão",
+    "OpenAI Realtime — segundo motor de voz, selecionável por restaurante",
+    "Fly.io — servidor WebSocket de voz (app seatable-voice)",
+    "OpenRouter — provedor único de LLM",
+    "WhatsApp por três adapters: Meta Cloud API, Twilio, WAHA",
+    "Stripe Connect e Square — pagamento e POS",
+    "Instagram Graph API"
+  ],
+  "sub_products": [
+    "Racha — PWA de dividir a conta na mesa por QR. VIVE EM OUTRO REPOSITÓRIO. Aqui existem só as duas pontas: api/racha-proposta.js (proposta comercial por prospect) e api/racha-notify.js (webhook de KYC Pagar.me).",
+    "Olímpia — agente de prospecção e follow-up. Vive aqui, é o subsistema mais desenvolvido do repo: 52 módulos em api/_lib/prospecting/, 8 crons, 20 migrations, harness de eval."
+  ],
+  "bets": [
+    "end-to-end vence ponto-a-ponto: quem só atende telefone vira commodity quando o POS embutir voz",
+    "o dado do cliente do restaurante é o ativo, não a chamada atendida",
+    "restaurante independente brasileiro é subatendido pelos players americanos"
+  ],
+  "known_gaps": [
+    "a voz não tem instrumentação de qualidade nem de latência. CORREÇÃO da primeira redação: NÃO é verdade que 'não há VAD' — api/_voice-server/backends/openai-realtime.js já configura turn_detection: { type: 'server_vad', threshold: 0.5, prefix_padding_ms: 300, silence_duration_ms: 500 }, só que hardcoded, igual para todo restaurante e nunca medido. O buraco real é triplo: (a) zero métrica de latência ou de barge-in errado em qualquer lugar do código; (b) o A/B de voz existe (api/voice-experiments.js + supabase/migrations/20260316_voice_experiments.sql) mas VALID_VARIANT_KEYS aceita só agent_name, agent_greeting, speed e voice_id — não aceita chave de VAD — e o result JSONB está vazio de métrica; (c) supressão de ruído de salão no caminho PSTN não existe, e o componente de referência do Twilio publicado em 06/08 é do Voice JS SDK (softphone em navegador), não alcança o caminho Media Streams → Fly.io deste projeto",
+    "os dois motores de voz divergem em turn-taking e isso contamina qualquer comparação: o OpenAI Realtime tem server_vad hardcoded, e a ElevenLabs ganhou em 03/08 um campo vad.background_voice_detection que o repo ainda não envia",
+    "o loop de dado do cliente EXISTE e roda (reserva → atendimento → receita → customer_ltv, em api/_lib/pos/service-completion-core.js; leitura de volta em api/guest-profile.js e api/_services/guestMemory.js). O que falta é a perna do Racha: ele não escreve nada em customer_ltv; o único canal Racha→Seatable é api/racha-notify.js, e ele carrega KYC do dono, não dado de cliente de mesa",
+    "a prospecção ficou autônoma em agosto (cron de intro fria, follow-up por silêncio, proposta personalizada, arquivamento aos 30 dias), mas o FECHAMENTO segue manual: api/prospect-close.js é um 'one-tap já fechei' do fundador; a reunião e o sim final continuam no Stefano",
+    "a camada de POS existe e é americana: pos_provider tem CHECK IN ('manual','square','toast','clover','other') em database/migrations/20260126_pos_and_revenue.sql, e nenhum deles opera em SP. Consumer, Saipos e Goomer têm zero ocorrências em código — só em docs de pesquisa. O caminho genérico de push por API-key já existe (api/pos/service-completion.js + api/_lib/api-key-auth.js), o que barateia plugar um POS brasileiro",
+    "fly.toml aponta o build para api/voice-server/Dockerfile, caminho que não existe — o diretório real é api/_voice-server/. O deploy do servidor de voz está com referência quebrada",
+    "update-vercel-env.sh na raiz é executável, escreve env vars de tabelas Airtable no ambiente production da Vercel e roda 'vercel --prod'. Referencia restaurant_info, tabela dropada em 2026-08-02. É uma arma carregada contra o settled[0]",
+    "três diretórios de migration concorrentes (supabase/migrations/ 61, database/migrations/ 14, migrations/ 15), com pos_connections definida em dois deles com esquemas divergentes (schema restaurant. vs public.)",
+    "o backend de voz PersonaPlex é declarado e não implementado: api/_voice-server/ws-server.js lança 'PersonaPlex backend not yet available'",
+    "CARTESIA_API_KEY e USE_CARTESIA continuam documentados no .env.example, mas USE_CARTESIA não é lido por nenhum código; client/src/pages/PrivacyPolicy.tsx ainda declara Cartesia como subprocessador ao usuário final",
+    "não há snapshot do payload de criação do agente ElevenLabs em nenhum teste (api/__tests__/ tem cinco testes de ElevenLabs, nenhum cobre o body de create) — mudança de default vinda do fornecedor não seria travada por nada",
+    "api/_lib/integration-probes.js afirma ao cockpit 'provedor único por decisão; sem fallback Anthropic', mas api/_lib/ai-client.js TEM failover em 402 para a Anthropic, telemetrado em ai_provider_fallbacks — um dos dois está mentindo para o painel",
+    "api/square.js (handleCatalogSync) busca o catálogo do Square e DESCARTA os itens, gravando só a contagem em pos_connections — não existe tabela de menu no repo, então o cardápio do restaurante não é dado consultável",
+    "api/external-booking-webhook.js aceita source 'yelp' e 'opentable' e grava customer_phone || null, enquanto todo o CRM é chaveado por telefone (api/_services/guestMemory.js: 'customer_id which IS the phone number') — reserva nascida em assistente pode chegar sem telefone e o loop de dado morre em silêncio",
+    "api/_voice-server/tool-handler.js expõe 8 tools, todas de reserva — zero de evento privado e zero de takeout, apesar de api/events.js e api/event-checkout.js existirem com PaymentIntent funcionando"
+  ],
+  "settled": [
+    "arquitetura Airtable + n8n foi abandonada; não reintroduzir",
+    "voz é LiveKit + ElevenLabs",
+    "Supabase é o banco único — restaurant_info dropada em 2026-08-02, fim da herança Airtable",
+    "OpenRouter é o provedor único de LLM; Anthropic virou opcional (94f56856, 2026-07-30)",
+    "o cérebro da Olímpia é Haiku 4.5, não Sonnet (ddda37a1, 2026-08-11)",
+    "o Racha se vende pela máquina da Olímpia, não por canal próprio",
+    "nada sai autonomamente sem passar pelo claim-linter (1702b779, 2026-08-08)"
+  ],
+  "deprecated": [
+    "Airtable como banco — migrado para Supabase em fev/2026 (a17571c7, 3621e79a); resíduos vivos listados em known_gaps",
+    "n8n — sem nenhum vestígio em código, doc ou env",
+    "Cartesia como motor de voz — substituído por ElevenLabs em 2025-11-18 (dd684676)",
+    "Anthropic como provedor primário de LLM — substituído por OpenRouter (94f56856, 2026-07-30)",
+    "restaurant_info — DROP em 2026-08-02 (caa0e4e1)",
+    "disparo de prospecção por telefone fixo — 76% do pool não tem WhatsApp (128ea1c7, 2026-08-01); substituído por recuperar celular do site da casa (9fc7bfe4) e ler número no menu do robô (5c80a47d)",
+    "adm-zip — estourava em 2 GiB, trocado por yauzl em stream (026671a8, 2026-07-26)"
+  ],
+  "focus_areas": [
+    "atendente de voz por IA para restaurantes",
+    "plataformas de reserva com IA",
+    "CRM e marketing para food service",
+    "AI phone answering",
+    "drive-thru AI",
+    "pagamento na mesa e split de conta",
+    "POS com IA",
+    "prospecção outbound automatizada por IA",
+    "telefonia programável e voz em tempo real (Twilio, OpenAI Realtime, ElevenLabs)",
+    "guardrails contra alucinação em mensagem que sai sozinha"
+  ],
+  "scout_modalities": [
+    "concorrentes-diretos",
+    "concorrentes-adjacentes",
+    "funding",
+    "plataforma",
+    "brasil-latam"
+  ],
+  "platform_deps": [
+    "Twilio",
+    "ElevenLabs",
+    "OpenAI Realtime",
+    "OpenRouter",
+    "Supabase",
+    "Vercel",
+    "Fly.io",
+    "WhatsApp (Meta Cloud API / Twilio / WAHA)",
+    "Stripe Connect",
+    "Square",
+    "Instagram Graph API"
+  ],
+  "verdict_note": "LiveKit NÃO faz parte da arquitetura deste projeto — aparece só como dependência transitiva de @elevenlabs/client. Item de mercado sobre LiveKit (funding, preço, SDK, incidente) é DESCARTAR. As dependências que de fato mordem são Twilio, ElevenLabs, OpenAI Realtime, Fly.io e OpenRouter.",
+  "feed_url": "https://claude.ai/code/artifact/53796b2d-d805-48eb-85d9-6f0a7f086be5"
+}
