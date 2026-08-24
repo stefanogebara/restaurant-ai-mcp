@@ -240,7 +240,7 @@ export default function VoiceSettingsPage() {
                 <Skeleton className="h-10 w-32 rounded-lg" />
               </div>
             </div>
-            <div className="border-t border-[#E5E7EB] mt-8 mb-8" />
+            <div className="border-t hairline mt-10 mb-10" />
             <div className="py-5">
               <Skeleton className="h-5 w-28 mb-4" />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -266,12 +266,10 @@ export default function VoiceSettingsPage() {
       <DashboardLayout>
         <div className="p-6 lg:p-8 max-w-5xl">
           <div className="mt-8 text-center py-16">
-            <div className="border border-[#E5E7EB] rounded-lg p-8 max-w-md mx-auto">
-              <div className="w-14 h-14 mx-auto mb-3 bg-red-50 rounded-2xl flex items-center justify-center">
-                <ThiingsIcon name="alert-circle" pxSize={24} />
-              </div>
-              <h2 className="text-lg font-bold text-deep-charcoal mb-2">{t('dashboard.errorTitle')}</h2>
-              <p className="text-sm text-stone-gray mb-6">{t('errors.serverError')}</p>
+            <div className="max-w-md mx-auto">
+              <ThiingsIcon name="alert-circle" pxSize={28} className="text-red-700 mx-auto mb-3" />
+              <h2 className="font-serif text-[26px] text-deep-charcoal mb-2">{t('dashboard.errorTitle')}</h2>
+              <p className="text-[15px] text-muted-stone mb-6">{t('errors.serverError')}</p>
               <button
                 type="button"
                 onClick={() => refetchConfig()}
@@ -293,23 +291,23 @@ export default function VoiceSettingsPage() {
       <DashboardLayout>
         <div className="p-6 lg:p-8 max-w-5xl space-y-6">
           <div className="mt-8 text-center py-16">
-            <div className="border border-[#E5E7EB] rounded-lg p-8 max-w-md mx-auto">
+            <div className="max-w-md mx-auto">
               {hasRestaurantName ? (
                 <>
                   <div className="mx-auto mb-4 flex items-center justify-center">
                     <Spinner size="lg" className="border-burgundy border-t-burgundy/30" />
                   </div>
-                  <h2 className="text-lg font-bold text-deep-charcoal mb-2">
+                  <h2 className="font-serif text-[26px] text-deep-charcoal mb-2">
                     {t('voice.agentCreating', 'Creating your voice agent...')}
                   </h2>
-                  <p className="text-sm text-stone-gray mb-6">
+                  <p className="text-[15px] text-muted-stone mb-6">
                     {t('voice.agentCreatingDesc', 'This may take up to 2 minutes. If the agent does not appear, try again below.')}
                   </p>
                   <button
                     type="button"
                     onClick={() => retryAgentMutation.mutate()}
                     disabled={retryAgentMutation.isPending}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-xl transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="inline-flex items-center gap-2 px-6 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-medium rounded-[100px] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     {retryAgentMutation.isPending ? (
                       <Spinner size="sm" className="border-white border-t-white/30" />
@@ -324,8 +322,8 @@ export default function VoiceSettingsPage() {
               ) : (
                 <>
                   <ThiingsIcon name="volume" pxSize={48} className="mx-auto mb-4" />
-                  <h2 className="text-lg font-bold text-deep-charcoal mb-2">{t('settings.noAgentConfigured')}</h2>
-                  <p className="text-sm text-stone-gray mb-6">
+                  <h2 className="font-serif text-[26px] text-deep-charcoal mb-2">{t('settings.noAgentConfigured')}</h2>
+                  <p className="text-[15px] text-muted-stone mb-6">
                     {t('settings.noAgentDesc')}
                   </p>
                   <a
@@ -406,7 +404,7 @@ export default function VoiceSettingsPage() {
                   />
                   {isBrowserOpen && (
                     <section className="py-5">
-                      <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827] mb-4 flex items-center gap-2">
+                      <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone mb-4 flex items-center gap-2">
                         <ThiingsIcon name="search" pxSize={20} />
                         {t('voiceSettings.voiceLibrary', 'Voice Library')}
                       </h2>
@@ -469,7 +467,7 @@ export default function VoiceSettingsPage() {
 
           const whatsappTab = waStatus ? (
             <div>
-              <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827] mb-3">
+              <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone mb-3">
                 {t('voiceSettings.whatsappStatus', 'WhatsApp Status')}
               </h2>
               {waStatus.meta.approved ? (
@@ -503,7 +501,7 @@ export default function VoiceSettingsPage() {
                       <li>{t('voiceSettings.waPendingStep3', 'When approved, this page flips to "Connected" automatically.')}</li>
                     </ol>
                   </div>
-                  <a href="https://business.facebook.com/" target="_blank" rel="noreferrer" className="text-xs text-blue-600 hover:underline inline-flex items-center gap-1">
+                  <a href="https://business.facebook.com/" target="_blank" rel="noreferrer" className="text-xs text-burgundy hover:underline inline-flex items-center gap-1">
                     {t('voiceSettings.waCheckMeta', 'Open Meta Business Manager')} &rarr;
                   </a>
                 </div>
@@ -528,7 +526,7 @@ export default function VoiceSettingsPage() {
                       </a>
                     </p>
                   </div>
-                  <a href="https://business.facebook.com/" target="_blank" rel="noreferrer" className="text-xs text-blue-600 hover:underline inline-flex items-center gap-1">
+                  <a href="https://business.facebook.com/" target="_blank" rel="noreferrer" className="text-xs text-burgundy hover:underline inline-flex items-center gap-1">
                     {t('voiceSettings.waCheckMeta', 'Open Meta Business Manager')} &rarr;
                   </a>
                 </div>

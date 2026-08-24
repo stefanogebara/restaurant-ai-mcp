@@ -98,7 +98,7 @@ export default function TeamPage() {
 
       {can('manageTeam') && (
         <form onSubmit={handleInvite} className="py-5 space-y-4">
-          <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{t('team.inviteTitle')}</h2>
+          <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">{t('team.inviteTitle')}</h2>
           <div className="flex flex-wrap sm:flex-nowrap gap-3">
             <input
               type="email" required

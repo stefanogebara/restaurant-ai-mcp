@@ -56,7 +56,7 @@ export default function VoicePersonaPanel() {
   return (
     <div className="py-5 border-t border-glass-border-dark mt-8 space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{t('dashboard.voicePersona.title', 'Agent Persona')}</h2>
+        <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">{t('dashboard.voicePersona.title', 'Agent Persona')}</h2>
         <div className="flex items-center gap-2">
           <button
             type="button"

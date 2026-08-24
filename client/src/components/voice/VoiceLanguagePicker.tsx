@@ -12,7 +12,7 @@ export default function VoiceLanguagePicker({ currentLanguage, savedLanguage, on
   return (
     <section className="overflow-hidden pb-5 border-b border-glass-border-dark">
       <div className="py-5 border-b border-glass-border-dark">
-        <span className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{t('voiceSettings.languages')}</span>
+        <span className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">{t('voiceSettings.languages')}</span>
       </div>
 
       <div className="p-6">

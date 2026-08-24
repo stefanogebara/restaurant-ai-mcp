@@ -138,7 +138,7 @@ export default function PhoneIntegrationPanel() {
     <div className="py-5 border-t border-glass-border-dark mt-8 space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">
+        <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">
           {t('phoneIntegration.title', 'AI receptionist phone')}
         </h2>
         <StatusBadge status={restaurant.status} t={t} />

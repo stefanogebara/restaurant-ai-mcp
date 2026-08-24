@@ -283,7 +283,7 @@ export default function RestaurantSettingsPage() {
 
         {/* ── Basic Info ── */}
         <section className="py-5 border-b border-[#E5E7EB] space-y-4">
-          <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827] flex items-center gap-2">
+          <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone flex items-center gap-2">
             <ThiingsIcon name="store" pxSize={16} className="text-muted-stone" />
             {t('settings.restaurantInfo', 'Restaurant Info')}
           </h2>
@@ -311,7 +311,7 @@ export default function RestaurantSettingsPage() {
         {/* ── Business Hours ── */}
         <section className="py-5 border-b border-[#E5E7EB] space-y-4">
           <div className="flex items-center justify-between gap-3 flex-wrap">
-            <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827] flex items-center gap-2">
+            <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone flex items-center gap-2">
               <ThiingsIcon name="clock" pxSize={16} className="text-muted-stone" />
               {t('settings.businessHours', 'Business Hours')}
             </h2>
@@ -378,7 +378,7 @@ export default function RestaurantSettingsPage() {
 
         {/* ── Reservation Policies ── */}
         <section className="py-5 border-b border-[#E5E7EB] space-y-4">
-          <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827] flex items-center gap-2">
+          <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone flex items-center gap-2">
             <ThiingsIcon name="settings" pxSize={16} className="text-muted-stone" />
             {t('settings.reservationPolicies', 'Reservation Policies')}
           </h2>

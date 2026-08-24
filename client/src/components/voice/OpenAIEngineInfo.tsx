@@ -28,7 +28,7 @@ export default function OpenAIEngineInfo({ engineStatus, currentOpenAIVoice }: P
 
   return (
     <section className="py-5 border-b border-glass-border-dark">
-      <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827] mb-4 flex items-center gap-2">
+      <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone mb-4 flex items-center gap-2">
         <ThiingsIcon name="info" pxSize={20} />
         {t('voiceEngine.statusHeader', 'AI receptionist status')}
       </h2>

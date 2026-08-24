@@ -48,7 +48,7 @@ export default function ActivePartiesPanel({
       <div className="flex items-center justify-between px-6 py-5 border-b border-glass-border-dark">
         <div>
           <div className="flex items-center gap-2.5">
-            <h3 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{t('dashboard.activeParties')}</h3>
+            <h3 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">{t('dashboard.activeParties')}</h3>
             <span className="text-[11px] font-semibold bg-[#9F1239]/[8%] text-[#9F1239] px-2.5 py-0.5 rounded-full">
               {parties.length}
             </span>

@@ -142,7 +142,7 @@ export default function ReservationsList({
       <div className="px-3 sm:px-6 py-4 sm:py-5 border-b border-glass-border-dark">
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-2.5">
-            <span className="text-[12px] sm:text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{tl('upcoming')}</span>
+            <span className="text-[12px] sm:text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">{tl('upcoming')}</span>
             <span className="text-[11px] font-semibold bg-[#9F1239]/[8%] text-[#9F1239] px-2.5 py-0.5 rounded-full">
               {displayed.length}
             </span>

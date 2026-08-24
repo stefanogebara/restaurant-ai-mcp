@@ -105,7 +105,7 @@ function WhatsAppTemplateStatusPanel() {
 
   return (
     <div className="py-5">
-      <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827] mb-4">{t('settings.messageTemplates')}</h2>
+      <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone mb-4">{t('settings.messageTemplates')}</h2>
 
       {isLoading && (
         <div role="status" aria-label={t('settings.loadingTemplates', 'Loading templates')} className="animate-pulse space-y-3">
@@ -236,7 +236,7 @@ function PhoneVerificationPanel() {
 
   return (
     <div className="py-5">
-      <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827] mb-4">{t('settings.phoneVerification')}</h2>
+      <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone mb-4">{t('settings.phoneVerification')}</h2>
 
       <div className="flex items-center justify-between mb-4">
         <div>
@@ -414,7 +414,7 @@ export default function WhatsAppSettingsPage() {
       {/* Connection Status */}
         <div className="py-5">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{t('settings.connectionStatus')}</h2>
+            <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">{t('settings.connectionStatus')}</h2>
             <span
               className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
                 status?.api_configured
@@ -434,9 +434,9 @@ export default function WhatsAppSettingsPage() {
         </div>
 
         {/* Enable Toggle + Phone */}
-        <div className="border-t border-[#E5E7EB] mt-8 mb-8" />
+        <div className="border-t hairline mt-10 mb-10" />
         <div className="py-5 space-y-5">
-          <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{t('settings.settings', 'Settings')}</h2>
+          <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">{t('settings.settings', 'Settings')}</h2>
 
           {/* Toggle */}
           <div className="flex items-center justify-between">
@@ -452,7 +452,7 @@ export default function WhatsAppSettingsPage() {
             <button
               onClick={() => setPendingEnabled(!currentEnabled)}
               className={`relative w-11 h-6 rounded-full transition-colors ${
-                currentEnabled ? 'bg-whatsapp' : 'bg-stone-300'
+                currentEnabled ? 'bg-whatsapp' : 'bg-muted-stone/40'
               }`}
               aria-label={currentEnabled ? t('settings.disableWhatsApp', 'Disable WhatsApp') : t('settings.enableWhatsAppLabel', 'Enable WhatsApp')}
               role="switch"
@@ -518,9 +518,9 @@ export default function WhatsAppSettingsPage() {
         {/* wa.me Link */}
         {status?.wa_me_link && (
           <>
-          <div className="border-t border-[#E5E7EB] mt-8 mb-8" />
+          <div className="border-t hairline mt-10 mb-10" />
           <div className="py-5">
-            <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827] mb-3">{t('settings.whatsAppLink')}</h2>
+            <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone mb-3">{t('settings.whatsAppLink')}</h2>
             <div className="flex items-center gap-3">
               <a
                 href={status.wa_me_link}
@@ -562,7 +562,7 @@ export default function WhatsAppSettingsPage() {
     <div className="space-y-0">
       {/* Statistics */}
       <div className="py-5">
-        <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827] mb-4">{t('settings.statistics')}</h2>
+        <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone mb-4">{t('settings.statistics')}</h2>
           {statsLoading ? (
             <div role="status" aria-label={t('settings.loadingStatistics', 'Loading statistics')} className="animate-pulse flex gap-6">
               {[1, 2, 3].map((i) => (
@@ -588,9 +588,9 @@ export default function WhatsAppSettingsPage() {
         </div>
 
         {/* Test Message */}
-        <div className="border-t border-[#E5E7EB] mt-8 mb-8" />
+        <div className="border-t hairline mt-10 mb-10" />
         <div className="py-5">
-          <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827] mb-3">{t('settings.sendTestMessage')}</h2>
+          <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone mb-3">{t('settings.sendTestMessage')}</h2>
           <div className="flex gap-3 items-end">
             <div className="flex-1">
               <PhoneInput
@@ -727,7 +727,7 @@ export default function WhatsAppSettingsPage() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="font-serif text-3xl sm:text-4xl text-deep-charcoal tracking-tight">{t('settings.whatsApp')}</h1>
-          <p className="text-sm text-[#9CA3AF] mt-1">
+          <p className="text-[15px] text-muted-stone mt-1.5">
             {t('settings.whatsAppDesc')}
           </p>
         </div>

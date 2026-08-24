@@ -88,7 +88,7 @@ export default function BookingChannelsPanel({ slug }: Props) {
   return (
     <div className="py-5 border-t border-[#E5E7EB] mt-8 space-y-5">
       <div>
-        <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">
+        <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">
           {t('bookingChannels.title', 'Booking Channels')}
         </h2>
         <p className="text-xs text-warm-stone mt-1">
