@@ -1,8 +1,8 @@
 # Onboarding do Aha — a ponte que cumpre a promessa do demo
 
 **Data:** 2026-08-24 (noite) · **Sucede:** `.claude/plans/2026-08-24-demo-conversa/` (funil do demo, completo)
-**Status:** EM EXECUÇÃO — G0 (#63), G1 (#65), G2 (#68) e G3 (#71) mergeados.
-Falta G4 (arquitetura/limpeza) e o norte G5 (Onboarding em Conversa). D4 aberta.
+**Status:** G0→G4 COMPLETAS e mergeadas (#63, #65, #68, #71, #73). Resta o
+norte G5 (Onboarding em Conversa) e a decisão D4.
 
 **Achados que só apareceram implementando** (nenhum estava na auditoria):
 - O mapper de horários do prefill lia `.open`/`.close`; o demo grava
@@ -17,7 +17,12 @@ Falta G4 (arquitetura/limpeza) e o norte G5 (Onboarding em Conversa). D4 aberta.
 - `syncKnowledgeBase` era fire-and-forget: na Vercel a lambda congela após a
   resposta, então o documento de conhecimento do agente provavelmente nunca
   era gerado. Mais grave depois da G2, que é quem leva persona e cardápio do
-  demo para dentro do agente. (G3) D3 resolvida (norte = G5 Onboarding em Conversa). D4 aberta. Bônus do G0: mapper de horários do prefill lia .open/.close (tudo caía nos defaults) e a suíte do complete.js rodava sem userId (escrita de config nunca exercitada).
+  demo para dentro do agente. (G3)
+- **Duas acusações de "código morto" da auditoria eram falsas**:
+  `/api/demo/convert` (o Welcome chama a cada load) e
+  `api/onboarding/extract.js` (extrator do chat). Ler código e mexer no
+  código descobrem coisas diferentes — apagar por leitura estática é como se
+  perde peça viva. (G2, G4) D3 resolvida (norte = G5 Onboarding em Conversa). D4 aberta. Bônus do G0: mapper de horários do prefill lia .open/.close (tudo caía nos defaults) e a suíte do complete.js rodava sem userId (escrita de config nunca exercitada).
 
 ---
 
@@ -196,14 +201,18 @@ com pedido explícito). Recomendo (a).
 
 ### G4 — Arquitetura e limpeza
 
-- [ ] 4.1 Extrair do `Onboarding.tsx` (695 linhas): `useDemoPrefill()` e
+- [x] 4.1 Extrair do `Onboarding.tsx` (695 linhas): `useDemoPrefill()` e
       `useOnboardingDraft()` testáveis — os dois bugs de corrida (0.7) viram
       testes de hook.
-- [ ] 4.2 D3 executada (matar ou documentar `/onboarding-chat`);
-      `api/onboarding/extract.js`; campos nunca escritos do `OnboardingData`
-      (`selected_voice_id`, `restaurant_learning`, `team_members`, `plan`) —
-      tirar do contrato dos dois lados.
-- [ ] 4.3 Testes: prefill (country_code, e-mail fake, tipo, F4), completion
+- [x] 4.2 **NADA a apagar — a auditoria errou duas vezes.**
+      `api/onboarding/extract.js` NÃO é órfão: é o extrator LLM do
+      onboarding em chat (`lib/onboarding-chat/extractors.ts` faz
+      `authFetch('/api/onboarding/extract')`) — justamente a peça
+      texto-livre → slot que a G5 reusaria. Mantido, como o
+      `/onboarding-chat` (D3). Os campos nunca escritos do `OnboardingData`
+      também ficam: o `complete.js` os lê com fallback e removê-los é
+      cosmético com risco de contrato não-zero.
+- [x] 4.3 Testes: prefill (country_code, e-mail fake, tipo, F4), completion
       (placar de falhas, rejeição de e-mail demo, demo_token), Welcome (erro ≠
       onboarding). Vitest + Jest; sem E2E de login (restrição acima) — pedir
       walkthrough logado ao Stefano no fim.
