@@ -23,8 +23,45 @@ jobs:
   smoke:
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    # Exposto no nivel do job porque o contexto `secrets` NAO existe dentro de
+    # `if:` — usa-lo la e erro de validacao do workflow, que mata a run antes de
+    # criar qualquer job (0s, sem log). Foi o que derrubou 100 de 100 runs deste
+    # arquivo. Em `if:` o que se le e `env.`, nao `secrets.`.
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      CRON_SECRET: ${{ secrets.CRON_SECRET }}
+      SANDBOX_EMAIL: ${{ secrets.SANDBOX_EMAIL }}
     steps:
       - uses: actions/checkout@v5
+
+      # Verde aqui nao pode querer dizer "nao rodou nada". Os passos que exigem
+      # secret sao PULADOS quando ele falta (aparecem como skipped na UI), e este
+      # resumo diz exatamente qual cobertura ficou de fora.
+      - name: Cobertura desta run
+        run: |
+          {
+            echo "### Cobertura do live-smoke"
+            echo ""
+            if [ -z "$SUPABASE_URL" ]; then
+              echo "- :warning: **migrations + WAHA pulados** — falta \`SUPABASE_URL\` / \`SUPABASE_SERVICE_ROLE_KEY\`"
+            else
+              echo "- :white_check_mark: migrations + WAHA ativos"
+            fi
+            if [ -z "$CRON_SECRET" ]; then
+              echo "- :warning: **saude dos crons pulada** — falta \`CRON_SECRET\`"
+            else
+              echo "- :white_check_mark: saude dos crons ativa"
+            fi
+            if [ -z "$SANDBOX_EMAIL" ]; then
+              echo "- :warning: **smoke de paginas admin pulado** — falta \`SANDBOX_EMAIL\` / \`SANDBOX_PASSWORD\`"
+            else
+              echo "- :white_check_mark: smoke de paginas admin ativo"
+            fi
+            echo ""
+            echo "Auditorias estaticas e o smoke contra producao nao precisam de secret e rodam sempre."
+            echo "Cadastrar os secrets em Settings > Secrets and variables > Actions liga o resto."
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - uses: actions/setup-node@v5
         with:
@@ -57,6 +94,7 @@ jobs:
       # protection silently disabled, voice-experiments endpoint silently
       # broken. Fix by applying the migration in Supabase Studio.
       - name: Audit migrations applied
+        if: env.SUPABASE_URL != ''
         run: npm run audit:migrations
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
@@ -68,6 +106,7 @@ jobs:
       # messages dropped. Fix: rotate WAHA_API_KEY on both Vercel + Fly.io
       # to match.
       - name: Audit WAHA pipeline health
+        if: env.SUPABASE_URL != ''
         run: npm run audit:waha
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
@@ -79,6 +118,7 @@ jobs:
       # function timeout). 2026-04-28: caught compile-wiki timing out
       # at 60s default — bumped its maxDuration to 300s.
       - name: Audit cron endpoint health
+        if: env.CRON_SECRET != ''
         run: npm run audit:crons
         env:
           PW_BASE_URL: https://seatable.one
@@ -111,7 +151,7 @@ jobs:
       # Requires sandbox credentials (secrets.SANDBOX_EMAIL/SANDBOX_PASSWORD).
       # 2026-04-29: caught customer detail 500 (churn_risk/ltv_score phantom columns).
       - name: Admin pages smoke
-        if: ${{ secrets.SANDBOX_EMAIL != '' }}
+        if: env.SANDBOX_EMAIL != ''
         run: node scripts/test-admin-pages.js
         env:
           SANDBOX_EMAIL: ${{ secrets.SANDBOX_EMAIL }}
