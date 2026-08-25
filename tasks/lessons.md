@@ -1341,3 +1341,32 @@ data com `toTimeString()` (local do servidor) para a hora. Em produção os dois
 coincidem por acidente — a lambda roda em UTC — então o bug só aparecia com
 fuso não-UTC. Coincidência de ambiente é o pior tipo de teste: passa até
 mudar de máquina.
+
+## Não consegui alcançar o estado ≠ o estado não existe (25/ago)
+
+Auditei `/demo/setup` pelo navegador e reportei três defeitos: um campo só em vez
+de dois, nenhuma saída para quem não está no Google, e nenhum estado de busca.
+Os três eram FALSOS. O formulário tem dois campos, trata os dois ramos de
+resultado (com e sem match) e tem carregando/erro/lista/vazio.
+
+O que aconteceu: minhas submissões sintéticas (`form.requestSubmit()`,
+`dispatchEvent`) nunca acionaram o handler do React — ele escuta eventos
+sintéticos na raiz. `searchResults` ficou `null`, nenhum dos ramos condicionais
+renderizou, e eu li a tela vazia como "isso não existe".
+
+É o espelho da lição de hoje de manhã ("ausência de dado é alerta, nunca
+aprovação"), e caí do outro lado: **ausência de evidência num estado que eu não
+consegui alcançar não é evidência de ausência.**
+
+A linha divisória ficou nítida e vale como regra: tudo que veio de `grep` no
+código-fonte ou de texto estático do DOM se sustentou; tudo que dependeu de eu
+conseguir DIRIGIR a interface estava errado.
+
+Regra prática: antes de afirmar que uma UI não faz algo, **leia o componente**.
+Custa um `grep` e é a única evidência que não depende do meu harness funcionar.
+Se a afirmação é sobre ausência de comportamento condicional, o código é a
+fonte; o navegador só confirma o que eu consegui de fato acionar.
+
+Corolário sobre pluralidade: `querySelector` é singular. Usei um `querySelector('input')`
+para concluir "o formulário tem um campo só". Para afirmar quantidade, use
+`querySelectorAll` — a versão singular responde outra pergunta.
