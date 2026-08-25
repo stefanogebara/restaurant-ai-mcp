@@ -1,0 +1,63 @@
+name: Static checks (PR gate)
+
+# POR QUE ESTE ARQUIVO EXISTE
+#
+# As auditorias estáticas viviam só em live-smoke.yml, que roda apenas em push
+# para main e precisa de secrets de produção (SUPABASE_*, SANDBOX_*, CRON_SECRET).
+# O repositório não tem secrets configurados, e o live-smoke falhou 100 de 100
+# runs sem nunca criar um job — ou seja, as auditorias que "estavam no CI" nunca
+# executaram uma única vez. Um guarda-corpo que parece existir e não protege nada.
+#
+# As checagens abaixo não tocam rede nem banco: só leem o código do próprio
+# checkout. Por isso funcionam como gate de pull request SEM nenhum secret, que
+# é onde elas têm valor — antes do merge, não depois.
+#
+# audit:migrations ficou de fora de propósito: ele compara as migrations com o
+# banco de produção e precisa de SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY. Segue
+# em live-smoke.yml, que volta a funcionar assim que os secrets forem cadastrados.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# Push seguido de push no mesmo ref cancela a run anterior: sem fila de runs
+# obsoletas consumindo minutos.
+concurrency:
+  group: static-checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+
+      - name: Install (raiz)
+        run: npm ci --legacy-peer-deps
+
+      # Pega a corrida com o shutdown da Lambda: Promise não aguardada num
+      # handler que responde morre quando a Vercel congela o container.
+      - name: Audit fire-and-forget promises
+        run: npm run audit:fire-and-forget
+
+      # Colunas fantasma: referências a colunas que não existem mais depois da
+      # migração Title-Case -> snake_case.
+      - name: Audit phantom column references
+        run: npm run audit:phantom-columns
+
+      - name: Testes de backend (Jest)
+        run: npx jest --forceExit
+
+      - name: Install (client)
+        run: npm ci --legacy-peer-deps
+        working-directory: client
+
+      - name: Testes de frontend (Vitest)
+        run: npx vitest run
+        working-directory: client
