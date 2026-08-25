@@ -47,28 +47,11 @@ function getResendClient() {
 
 const FROM_ADDRESS = 'Seatable <bookings@seatable.one>';
 
-// ---------------------------------------------------------------------------
-// Cuisine type → restaurant_type enum normalizer
-// ---------------------------------------------------------------------------
-const VALID_RESTAURANT_TYPES = new Set([
-  'fine_dining', 'casual_dining', 'fast_casual', 'cafe', 'bar',
-  'steakhouse', 'italian', 'japanese', 'mexican', 'other',
-]);
-
-function normalizeRestaurantType(cuisineType) {
-  if (!cuisineType) return 'other';
-  const lower = cuisineType.toLowerCase();
-  if (VALID_RESTAURANT_TYPES.has(lower)) return lower;
-  if (lower.includes('italian')) return 'italian';
-  if (lower.includes('japan') || lower.includes('sushi') || lower.includes('ramen')) return 'japanese';
-  if (lower.includes('mexic') || lower.includes('taco') || lower.includes('burrito')) return 'mexican';
-  if (lower.includes('steak') || lower.includes('grill') || lower.includes('bbq')) return 'steakhouse';
-  if (lower.includes('cafe') || lower.includes('café') || lower.includes('coffee') || lower.includes('bakery')) return 'cafe';
-  if (lower.includes('bar') || lower.includes('pub') || lower.includes('tavern')) return 'bar';
-  if (lower.includes('fine') || lower.includes('gourmet') || lower.includes('upscale')) return 'fine_dining';
-  if (lower.includes('fast') || lower.includes('quick')) return 'fast_casual';
-  return 'casual_dining';
-}
+// Cuisine type → restaurant_type enum. Morava aqui dentro, num arquivo de
+// handler — inalcançável para qualquer outro código. Saiu para _lib porque o
+// enum é do BANCO (restaurant_type, 10 valores) e agora tem um segundo
+// consumidor: o validador de escrita do onboarding em conversa.
+const { normalizeRestaurantType } = require('../_lib/restaurant-type');
 
 // ---------------------------------------------------------------------------
 // Email: welcome demo
