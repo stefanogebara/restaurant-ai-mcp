@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
+import { readSseFrames } from '../lib/sseStream';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -220,53 +221,23 @@ export default function ManagerAIChatPage() {
         throw new Error(errMsg);
       }
 
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = '';
+      // O parser de frames SSE saiu para lib/sseStream — o onboarding em
+      // conversa fala o mesmo protocolo, e a remontagem de frame partido
+      // entre chunks é sutil demais para viver copiada em dois lugares.
       let fullReply = '';
-
-      // SSE frame parser. The backend writes one `data: {...}\n\n` frame
-      // per token (plus `start`/`phase`/`done` frames). We accumulate
-      // bytes across reads, split on the double-newline frame boundary,
-      // and parse each frame's JSON payload.
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        const frames = buffer.split('\n\n');
-        // Keep the last (possibly partial) frame in the buffer for the next
-        // read; emit everything else now.
-        buffer = frames.pop() || '';
-        for (const frame of frames) {
-          const line = frame.trim();
-          if (!line.startsWith('data:')) continue;
-          const payload = line.slice('data:'.length).trim();
-          if (!payload) continue;
-          try {
-            const evt = JSON.parse(payload);
-            if (evt.type === 'token' && typeof evt.text === 'string') {
-              fullReply += evt.text;
-              setStreamingReply(fullReply);
-            } else if (evt.type === 'phase' && typeof evt.key === 'string') {
-              // Marco real do raciocínio — entra na cadeia visível.
-              const next = [...thoughtPhasesRef.current, evt as ThoughtPhase];
-              thoughtPhasesRef.current = next;
-              setThoughtPhases(next);
-            } else if (evt.type === 'error') {
-              throw new Error(evt.error || 'stream error');
-            }
-            // 'start' and 'done' frames are informational — no UI change.
-          } catch (err) {
-            // Tolerate malformed frames; if it was an error frame we
-            // already threw above.
-            if (err instanceof Error && err.message !== 'stream error') {
-              // Other parse errors fall through silently — partial JSON.
-            } else {
-              throw err;
-            }
-          }
+      await readSseFrames(res.body, (evt) => {
+        if (evt.type === 'token' && typeof evt.text === 'string') {
+          fullReply += evt.text;
+          setStreamingReply(fullReply);
+        } else if (evt.type === 'phase' && typeof evt.key === 'string') {
+          // Marco real do raciocínio — entra na cadeia visível.
+          const next = [...thoughtPhasesRef.current, evt as unknown as ThoughtPhase];
+          thoughtPhasesRef.current = next;
+          setThoughtPhases(next);
         }
-      }
+        // 'start' e 'done' são informativos — sem mudança de UI.
+        // 'error' é lançado por readSseFrames.
+      });
 
       return { reply: fullReply };
     },
