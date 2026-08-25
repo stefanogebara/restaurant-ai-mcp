@@ -13,6 +13,16 @@
  * If the un-awaited expression returns a Promise, Vercel terminates the
  * Lambda the moment the response is sent and the work silently dies.
  *
+ * ── Blind spot: a green run does NOT mean the class is absent ────────
+ * The `return res.*` proximity check is a proxy, and it only sees within
+ * one file. A fire-and-forget in a request-path library races the same
+ * freeze even though the response is sent by its caller — in Aug 2026 two
+ * real instances sat in _lib/channels/message-processor.js (the per-phone
+ * lock release, on the normal exit of every WhatsApp message) with this
+ * audit passing. Widening the heuristic to every lib call would drown the
+ * signal in cosmetic reactions, so the gap is left open on purpose: when
+ * you touch a request-path library, read its .catch sites by hand.
+ *
  * ── Allow-list ──────────────────────────────────────────────────────
  * Entries are anchored to CODE, not line numbers. An earlier version
  * keyed them as `path:line`; by Aug 2026 thirteen of sixteen entries had

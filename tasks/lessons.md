@@ -1158,3 +1158,12 @@ de outra sessao, e ninguem percebe -- porque o sintoma e' silencio.
   esse rot — todas continuam plausíveis. Só pega executando uma checagem
   que resolve cada entrada contra o código real. "Revisei e está tudo
   justificado" sobre uma lista de ponteiros não verificados não é revisão.
+- Corolário 2 (mesma investigação): auditoria heurística verde NÃO prova
+  ausência da classe. O audit checa `return res.*` a até 30 linhas, dentro
+  do MESMO arquivo — e por isso passava por cima de dois casos reais em
+  `_lib/channels/message-processor.js`, onde o `res` mora no webhook
+  chamador. Um deles era a saída normal de TODA mensagem de WhatsApp:
+  o release do lock por-telefone sem `await`. Quando o DELETE não landava,
+  o lock ficava preso até o TTL de 30s e a mensagem seguinte do cliente
+  girava no laço de espera esse tempo todo. Achei olhando os sites que a
+  allowlist podre "cobria", não rodando o audit.
