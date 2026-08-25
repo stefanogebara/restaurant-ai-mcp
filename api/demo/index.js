@@ -308,8 +308,31 @@ async function handleCreate(req, res) {
   const inferredLanguage = COUNTRY_LANGUAGE_MAP[resolvedCountry] || 'en';
 
   // Insert demo restaurant config — uses scraped data when available
+  // Fuso do RESTAURANTE, resolvido pelo país/cidade (mesmo helper do
+  // onboarding). Precisa ser decidido ANTES do insert: a coluna `timezone`
+  // tem default 'UTC', e um demo de São Paulo gravado como UTC faz o
+  // validador de reservas (reservation-validator) e o Manager AI operarem
+  // 3h adiantados — às 20h em SP uma reserva para 21:30 "hoje" parece estar
+  // no passado. Os 21 demos vivos em 25/ago estavam todos em UTC porque a
+  // G0.12b calculou este valor só para os seeds e nunca o persistiu.
+  //
+  // Cuidado com o retorno de suggestTimezone: para país desconhecido ela
+  // devolve 'UTC', que é TRUTHY. O guarda `|| 'America/Sao_Paulo'` da G0.12b
+  // era, portanto, código morto — e o caminho que mais cai nele é justamente
+  // o "restaurante novo" (F4), que não tem ficha no Google e chega sem país.
+  // Auditoria 25/ago às 20:01: Mocotó e Bráz (país BR resolvido) nasceram com
+  // 4 reservas hoje; o demo manual criado no mesmo minuto mandou as três para
+  // amanhã 19:30/20:00/20:30 — os fallbackTimes — e abriu vazio.
+  //
+  // Nenhum restaurante opera em UTC: 'UTC' aqui significa "não descobrimos
+  // onde fica", não um fuso. Cair no mercado principal do funil é
+  // estritamente melhor que cair 3h à frente do dono.
+  const fusoSugerido = suggestTimezone(resolvedCountry || effectiveCountry, city);
+  const fusoDoDemo = (!fusoSugerido || fusoSugerido === 'UTC') ? 'America/Sao_Paulo' : fusoSugerido;
+
   const insertPayload = {
     user_id: demoUserId,
+    timezone: fusoDoDemo,
     restaurant_name: restaurant_name.trim(),
     restaurant_type: normalizeRestaurantType(effectiveCuisine.trim()),
     city: city.trim(),
@@ -417,10 +440,9 @@ async function handleCreate(req, res) {
 
   // Seed fake reservations (fire best-effort — don't fail if it errors)
   try {
-    // Fuso pelo país resolvido (mesmo helper do onboarding). Sem isto os
+    // Mesmo fuso que foi gravado no registro — uma fonte só. Sem isto os
     // seeds nascem em UTC e o painel de um restaurante brasileiro criado às
     // 19h abre vazio.
-    const fusoDoDemo = suggestTimezone(resolvedCountry || effectiveCountry, city) || 'America/Sao_Paulo';
     const fakeReservations = buildFakeReservations(restaurantId, fusoDoDemo);
     const { error: seedError } = await supabaseAdmin
       .from('reservations')
@@ -484,7 +506,7 @@ async function handleSession(req, res) {
   const { data: config, error } = await supabaseAdmin
     .schema('restaurant')
     .from('restaurant_config')
-    .select('id, restaurant_name, restaurant_type, city, country, phone, email, slug, business_hours, reservation_settings, is_active, is_demo, demo_token, demo_expires_at, demo_contact_email, demo_contact_name, onboarding_completed, scraped_data')
+    .select('id, restaurant_name, restaurant_type, city, country, timezone, phone, email, slug, business_hours, reservation_settings, is_active, is_demo, demo_token, demo_expires_at, demo_contact_email, demo_contact_name, onboarding_completed, scraped_data')
     .eq('demo_token', token)
     .gt('demo_expires_at', now)
     .single();
