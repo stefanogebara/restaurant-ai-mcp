@@ -9,10 +9,14 @@
  *   1. INSERT into public.service_records   (operational tracking)
  *   2. INSERT into public.revenue_records   (analytics + LTV source)
  *   3. UPSERT customer_ltv                  (running per-customer revenue)
- *   4. Dispatch service.completed webhook   (best-effort, fire-and-forget)
+ *   4. Dispatch service.completed webhook   (best-effort, com teto de 5s)
  *
  * Steps 3 + 4 are non-fatal — if they fail the service record still
  * stands. The caller gets a `service_id` back.
+ *
+ * Os dois são AGUARDADOS, não fire-and-forget: os callers respondem logo após
+ * o return e a lambda congela, matando qualquer promise pendente. Ver
+ * api/__tests__/service-completion-freeze.test.js, que trava a ordenação.
  */
 
 const { supabaseAdmin } = require('../supabase');
@@ -137,24 +141,38 @@ async function recordServiceCompletion({
   }
 
   // -- 3. LTV upsert (non-fatal) -------------------------------------------
-  updateCustomerLTV(restaurantId, customerPhone, customerName, totalBill, partySize)
+  //
+  // AGUARDADO: daqui até o `return` não havia um único await, e os dois callers
+  // (pos/service-completion.js, square-webhook.js) respondem na sequência — a
+  // lambda congelava antes do primeiro roundtrip. Para cliente COM reserva a
+  // perda era temporária (o cron update-churn-scores reconstrói de reservations
+  // em até 24h), mas para walk-in de POS SEM reserva o cron nunca vê o cliente:
+  // este insert é a única coisa que cria a linha em customer_ltv. Perder era
+  // permanente — sem tier, sem churn score, invisível para as briefings.
+  await updateCustomerLTV(restaurantId, customerPhone, customerName, totalBill, partySize)
     .catch((err) => logger.warn('LTV update failed (non-fatal)', { error: err.message }));
 
   // -- 4. Webhook dispatch (non-fatal) -------------------------------------
   try {
     const { dispatchEvent } = require('../../_services/webhookDispatcher');
-    dispatchEvent(restaurantId, 'service.completed', {
-      service_id: serviceId,
-      reservation_id: reservationId || null,
-      customer_phone: customerPhone,
-      customer_name: customerName,
-      party_size: partySize,
-      total_bill: totalBill,
-      payment_method: paymentMethod || null,
-      pos_provider: posProvider || null,
-      pos_transaction_id: posTransactionId || null,
-      completed_at: now,
-    }).catch((err) => logger.warn('Webhook dispatch failed (non-fatal)', { error: err.message }));
+    // Mesma janela sem await que o LTV acima, e aqui o destino é o endpoint do
+    // próprio restaurante: morria sem disparar, sem retry e sem sinal. Com teto
+    // porque é HTTP de saída para servidor de terceiro, que pode pendurar.
+    await Promise.race([
+      dispatchEvent(restaurantId, 'service.completed', {
+        service_id: serviceId,
+        reservation_id: reservationId || null,
+        customer_phone: customerPhone,
+        customer_name: customerName,
+        party_size: partySize,
+        total_bill: totalBill,
+        payment_method: paymentMethod || null,
+        pos_provider: posProvider || null,
+        pos_transaction_id: posTransactionId || null,
+        completed_at: now,
+      }).catch((err) => logger.warn('Webhook dispatch failed (non-fatal)', { error: err.message })),
+      new Promise((resolve) => setTimeout(resolve, 5000)),
+    ]);
   } catch {
     // webhookDispatcher not available — skip silently.
   }

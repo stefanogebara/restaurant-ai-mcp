@@ -357,7 +357,12 @@ async function handleCancel(req, res) {
   if (existing.restaurant_id) {
     try {
       const { trackUsage } = require('./_lib/usage-tracking');
-      trackUsage(existing.restaurant_id, 'reservation_cancelled');
+      // AGUARDADO: o res.status(200) vem 7 linhas abaixo sem nenhum await no
+      // meio, então o incremento morria no freeze. Perder um cancelamento
+      // COBRA o restaurante por uma reserva que não aconteceu — o reporter do
+      // Stripe abate cancelamentos dos criados. O try/catch sem await também
+      // era decorativo: só pegava throw síncrono do require, nunca a rejeição.
+      await trackUsage(existing.restaurant_id, 'reservation_cancelled');
     } catch (e) {
       logger.warn('trackUsage(reservation_cancelled) failed:', e.message);
     }

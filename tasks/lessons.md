@@ -1138,3 +1138,54 @@ de outra sessao, e ninguem percebe -- porque o sintoma e' silencio.
   prova que não há suítes falhando na coleta (elas não entram na linha Tests).
 - Corolário: `tsc --noEmit` solto ≠ `tsc -b` do build (verbatimModuleSyntax,
   project refs). Verificar com o comando do build.
+
+## 2026-08-24 — Allowlist ancorada em número de linha apodrece e se INVERTE
+- `scripts/audit-fire-and-forget.js` guardava exceções como `path:linha`.
+  Em 10/jun `api/services` virou `api/_services`; em agosto, 13 das 16
+  entradas não casavam com nada. A revisão de 24/mai ("all entries still
+  justified") estava correta no dia e virou errada duas semanas depois,
+  sem nada sinalizando.
+- O perigo não é a entrada morrer — é ela continuar VIVA apontada para um
+  número de linha arbitrário. Ela para de proteger o que você julgou seguro
+  e passa a silenciar o que quer que caia naquela linha. Numa auditoria que
+  existe para pegar uma classe de bug que já custou 7 incidentes, isso é
+  pior que não ter auditoria: dá confiança sem cobertura.
+- Regra: supressão (allowlist, baseline, ignore, expect-fail) SEMPRE ancora
+  em conteúdo, nunca em posição. E entrada que não casa com nada tem que
+  FALHAR o run — silêncio é o modo de falha, então a ausência de match
+  precisa virar barulho.
+- Corolário sobre revisar allowlist a olho: ler as justificativas não pega
+  esse rot — todas continuam plausíveis. Só pega executando uma checagem
+  que resolve cada entrada contra o código real. "Revisei e está tudo
+  justificado" sobre uma lista de ponteiros não verificados não é revisão.
+- Corolário 2 (mesma investigação): auditoria heurística verde NÃO prova
+  ausência da classe. O audit checa `return res.*` a até 30 linhas, dentro
+  do MESMO arquivo — e por isso passava por cima de dois casos reais em
+  `_lib/channels/message-processor.js`, onde o `res` mora no webhook
+  chamador. Um deles era a saída normal de TODA mensagem de WhatsApp:
+  o release do lock por-telefone sem `await`. Quando o DELETE não landava,
+  o lock ficava preso até o TTL de 30s e a mensagem seguinte do cliente
+  girava no laço de espera esse tempo todo. Achei olhando os sites que a
+  allowlist podre "cobria", não rodando o audit.
+
+## 2026-08-24 — Fire-and-forget: o que mata é a DISTÂNCIA até a resposta
+- Errei o diagnóstico no meio da varredura de `api/_lib/`: listei 10 call sites
+  de `trackUsage` como cobrança quebrada. Ao MEDIR quantos `await` existem
+  entre a chamada e o `res.json`, 8 tinham folga real (fetch de config, envio
+  de e-mail, `logToolCall`) e só 2 estavam com janela ZERO.
+- A lambda não congela quando a promise é criada — congela quando a resposta
+  sai. Então fire-and-forget seguido de trabalho aguardado quase sempre
+  completa. O perigo é estar colado no `res`.
+- Regra de triagem: não pergunte "tem await?", pergunte "quantos awaits até a
+  resposta?". Zero = morre. Um roundtrip de rede depois = quase sempre chega.
+  Sair aplicando `await` em todo `.catch` solto adiciona latência em caminho
+  quente para consertar o que não estava quebrado.
+- Corolário de escrita: `try { promessa() } catch {}` SEM await é decorativo —
+  pega só throw síncrono, nunca a rejeição. Aparecia em 4 sites, sempre com
+  comentário dizendo "non-fatal", o que dava a impressão de estar tratado.
+- O que a varredura achou de verdade (o audit passava verde em todos):
+  confirmação de reserva por voz no WhatsApp (cliente desligava sem código,
+  porque o agente omite o código de propósito contando com o WhatsApp),
+  upsert de `customer_ltv` (perda PERMANENTE para walk-in de POS sem reserva —
+  o cron reconstrói só a partir de `reservations`) e o webhook de saída
+  `service.completed`.
