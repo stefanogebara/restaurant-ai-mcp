@@ -491,4 +491,28 @@ describe('POST ?action=attach-contact', () => {
       email: 'dona@cantina.br',
     });
   });
+
+  test('sem contact_name o nome fica NULL — nunca o local-part do e-mail', async () => {
+    // A captura pós-aha manda só o endereço; derivar o nome dele gerava
+    // "stefanogebara+demotest, seu painel está no ar" no welcome e vazava
+    // para o prefill do onboarding.
+    const { update } = mockDemoLookup({
+      data: { id: 'demo-rest-1', restaurant_name: 'Cantina da Praça', demo_token: 'tok-1', demo_contact_email: null },
+      error: null,
+    });
+    const req = {
+      method: 'POST',
+      query: { action: 'attach-contact' },
+      body: { demo_token: 'tok-1', contact_email: 'dona@cantina.br' },
+      headers: {},
+    };
+    const res = makeRes();
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(update).toHaveBeenCalledWith({
+      demo_contact_email: 'dona@cantina.br',
+      demo_contact_name: null,
+      email: 'dona@cantina.br',
+    });
+  });
 });

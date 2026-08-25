@@ -295,9 +295,13 @@ async function handleCreate(req, res) {
   // Derive fields from scraped data when available
   const effectiveCuisine = cuisine_type || scraped_data?.cuisine_type || 'Restaurant';
   const effectiveCountry = (country || '').trim() || null;
+  // Nome só quando alguém DIGITOU um nome. Derivar do local-part do e-mail
+  // gerava saudações como "stefanogebara+demotest, seu painel está no ar" no
+  // welcome (visto na caixa de entrada em 24/ago) e vazava o mesmo lixo para
+  // o prefill do onboarding via demo_contact_name. Sem nome, os templates já
+  // têm saudação neutra e o nurture tem fallback por idioma.
   const effectiveName =
-    (typeof contact_name === 'string' && contact_name.trim()) ||
-    (trimmedEmail ? trimmedEmail.split('@')[0] : null);
+    (typeof contact_name === 'string' && contact_name.trim()) || null;
   const effectivePhone = scraped_data?.phone || 'N/A';
   // SSRF defense-in-depth: even though safe-fetch in _lib/enrich-restaurant
   // re-validates via DNS+per-hop, drop obviously bad inputs at the boundary
@@ -622,9 +626,10 @@ async function handleAttachContact(req, res) {
     return res.status(404).json({ error: 'Demo not found or expired' });
   }
 
+  // Mesma regra do handleCreate: nome só quando digitado — nunca derivado do
+  // local-part do e-mail (a captura pós-aha manda só o endereço).
   const effectiveName =
-    (typeof contact_name === 'string' && contact_name.trim()) ||
-    trimmedEmail.split('@')[0];
+    (typeof contact_name === 'string' && contact_name.trim()) || null;
 
   const { error: updateError } = await supabaseAdmin
     .schema('restaurant')
