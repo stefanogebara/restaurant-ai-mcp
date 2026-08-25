@@ -33,6 +33,7 @@ const ALLOWLIST = new Set([
   'services/customerDNA.js:299', 'services/customerDNA.js:303',
   '_lib/channels/message-processor.js:66', '_lib/channels/message-processor.js:70',
   'services/wikiCompiler.js:197',
+  'prospect-admin.js:413',
   // Cleanup; lock TTL covers any miss, no caller waits on it.
   '_lib/channels/message-processor.js:296',
   '_lib/channels/message-processor.js:372',
@@ -40,11 +41,10 @@ const ALLOWLIST = new Set([
   '_lib/channels/meta-adapter.js:87',
   '_lib/channels/meta-adapter.js:89',
   '_lib/channels/meta-adapter.js:97',
-  // Cron loop iterating cities — cityHandler resolves the outer Promise via
-  // fake-response callbacks (lines 79, 81); .catch handles the throw path.
-  // The outer Promise is awaited via Promise.all at line 94. Not fire-and-forget.
-  'cron/warm-seo-cache.js:76',
-  'cron/warm-seo-cache.js:83',
+  // warmOne resolves its Promise via fake-response callbacks (lines 64, 66);
+  // .catch is the throw path (resolve('error')). The Promise IS awaited via
+  // Promise.all at line 79. Not fire-and-forget.
+  'cron/warm-seo-cache.js:68',
   // Telemetry-only logging; no user impact if it drops.
   'waha-webhook.js:44',
   'waha-webhook.js:53',
