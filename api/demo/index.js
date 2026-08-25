@@ -678,94 +678,58 @@ async function handleAttachContact(req, res) {
 // Action: convert
 // ---------------------------------------------------------------------------
 async function handleConvert(req, res) {
+  // F6 (Demo em Conversa): converter = APOSENTAR o demo, nada mais.
+  //
+  // A versão anterior fazia três coisas erradas para o funil atual:
+  //  1. Copiava config do demo por cima do restaurante real — CLOBBERAVA as
+  //     edições que o dono acabou de fazer no onboarding (o prefill já levou
+  //     os dados do demo para o formulário; as edições dele devem vencer).
+  //  2. Migrava as mesas e reservas SEED do demo (Ana Costa, Pedro Santos…)
+  //     para o restaurante real — clientes fictícios num painel de produção.
+  //  3. Zerava is_demo/demo_token, tirando a linha do alcance do cleanup
+  //     cron e matando o link do demo antes da janela acabar.
+  //
+  // Agora: valida a posse (auth + token vivo) e carimba demo_converted_at.
+  // O nurture para de escrever (missão cumprida), o link do demo continua
+  // funcionando até expirar, e o cleanup cron apaga a linha no vencimento.
   const auth = await verifyAuth(req);
   if (auth.error) {
     return res.status(auth.status || 401).json({ error: auth.error });
   }
 
-  const real_restaurant_id = auth.user.restaurant_id;
   const { token } = req.body || {};
-
   if (!token) {
     return res.status(400).json({ error: 'Missing required field: token' });
   }
 
-  // Find demo restaurant — select only fields needed for conversion
   const { data: demoConfig, error: demoError } = await supabaseAdmin
     .schema('restaurant')
     .from('restaurant_config')
-    .select('id, restaurant_name, city, country, business_hours, reservation_settings, is_demo, demo_token')
+    .select('id, demo_converted_at')
     .eq('demo_token', token)
+    .eq('is_demo', true)
     .single();
 
   if (demoError || !demoConfig) {
     return res.status(404).json({ error: 'Demo not found' });
   }
 
-  // Get real restaurant config — just need to confirm it exists
-  const { data: realConfig, error: realError } = await supabaseAdmin
-    .schema('restaurant')
-    .from('restaurant_config')
-    .select('id')
-    .eq('id', real_restaurant_id)
-    .single();
+  // Idempotente: o Welcome re-tenta em cada load enquanto o localStorage
+  // guardar o token — a segunda chamada não deve reescrever o carimbo.
+  if (!demoConfig.demo_converted_at) {
+    const { error: markError } = await supabaseAdmin
+      .schema('restaurant')
+      .from('restaurant_config')
+      .update({ demo_converted_at: new Date().toISOString() })
+      .eq('id', demoConfig.id);
 
-  if (realError || !realConfig) {
-    return res.status(404).json({ error: 'Real restaurant not found' });
+    if (markError) {
+      logger.error('Failed to mark demo as converted:', markError.message);
+      return res.status(500).json({ error: 'Failed to mark demo as converted' });
+    }
   }
 
-  // Copy fields from demo to real
-  const { error: updateError } = await supabaseAdmin
-    .schema('restaurant')
-    .from('restaurant_config')
-    .update({
-      restaurant_name: demoConfig.restaurant_name,
-      city: demoConfig.city,
-      country: demoConfig.country,
-      business_hours: demoConfig.business_hours,
-      reservation_settings: demoConfig.reservation_settings,
-    })
-    .eq('id', real_restaurant_id);
-
-  if (updateError) {
-    logger.error('Failed to update real restaurant config:', updateError);
-    captureException(updateError);
-    return res.status(500).json({ error: 'Failed to update restaurant config' });
-  }
-
-  // Move demo reservations to real restaurant
-  const { error: moveError } = await supabaseAdmin
-    .from('reservations')
-    .update({ restaurant_id: real_restaurant_id })
-    .eq('restaurant_id', demoConfig.id);
-
-  if (moveError) {
-    logger.warn('Failed to move demo reservations (non-fatal):', moveError.message);
-  }
-
-  // Move demo tables to real restaurant
-  const { error: moveTablesError } = await supabaseAdmin
-    .from('tables')
-    .update({ restaurant_id: real_restaurant_id })
-    .eq('restaurant_id', demoConfig.id);
-
-  if (moveTablesError) {
-    logger.warn('Failed to move demo tables (non-fatal):', moveTablesError.message);
-  }
-
-  // Mark demo as converted
-  const { error: markError } = await supabaseAdmin
-    .schema('restaurant')
-    .from('restaurant_config')
-    .update({ is_demo: false, demo_token: null })
-    .eq('id', demoConfig.id);
-
-  if (markError) {
-    logger.warn('Failed to mark demo as converted (non-fatal):', markError.message);
-  }
-
-  logger.info(`Demo ${demoConfig.id} converted to real restaurant ${real_restaurant_id}`);
-
+  logger.info(`Demo ${demoConfig.id} converted (retired) by user ${auth.user?.id || 'unknown'}`);
   return res.status(200).json({ success: true });
 }
 

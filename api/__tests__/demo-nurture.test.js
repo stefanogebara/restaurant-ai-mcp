@@ -191,6 +191,23 @@ describe('demo-nurture cron', () => {
     );
   });
 
+  it('pula demo já convertido — "seu demo expira" depois do signup é ruído', async () => {
+    const demo = makeDemo({ demo_converted_at: '2026-08-24T20:00:00Z' });
+    mockSupabase([
+      { data: [demo], error: null },
+      { data: [], error: null },
+      { data: [], error: null },
+    ]);
+
+    const res = makeRes();
+    await handler(makeReq(), res);
+
+    expect(mockSend).not.toHaveBeenCalled();
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ day3: { sent: 0, failed: 0, skipped: 1 } }),
+    );
+  });
+
   it('skips demo with no contact email', async () => {
     const demo = makeDemo({ demo_contact_email: null });
     mockSupabase([
