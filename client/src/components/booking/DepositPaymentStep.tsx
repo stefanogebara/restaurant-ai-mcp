@@ -4,6 +4,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import type { StripeElementLocale } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { formatCurrency } from '../../utils/currency';
+import ThiingsIcon from '../common/ThiingsIcon';
 
 const STRIPE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '';
 // Only initialise Stripe when a key is actually configured. loadStripe('')
@@ -53,10 +54,10 @@ function DepositForm({ depositAmount, onSuccess, onCancel }: Omit<DepositPayment
 
   return (
     <div className="space-y-5">
-      <div className="bg-violet-600/[6%] border border-violet-600/20 rounded-xl p-4">
+      <div className="bg-amber-500/[7%] border border-amber-500/25 rounded-2xl p-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-violet-600/[10%] flex items-center justify-center text-violet-600 text-lg">
-            💳
+          <div className="w-10 h-10 rounded-xl bg-amber-500/[12%] flex items-center justify-center text-amber-700 flex-shrink-0">
+            <ThiingsIcon name="credit-card" pxSize={18} />
           </div>
           <div>
             <p className="text-sm font-semibold text-deep-charcoal">{t('booking.deposit.heading')}</p>
@@ -88,7 +89,7 @@ function DepositForm({ depositAmount, onSuccess, onCancel }: Omit<DepositPayment
           type="button"
           onClick={onCancel}
           disabled={isProcessing}
-          className="flex-1 py-3.5 border border-glass-border-dark bg-white text-stone-gray font-medium rounded-xl text-sm hover:border-muted-stone transition-colors disabled:opacity-50"
+          className="flex-1 py-3.5 border border-glass-border-dark bg-white/60 backdrop-blur-glass-chip text-stone-gray font-medium rounded-[100px] text-sm hover:bg-white/85 hover:border-muted-stone transition-colors disabled:opacity-50"
         >
           {t('booking.deposit.back')}
         </button>
@@ -96,7 +97,7 @@ function DepositForm({ depositAmount, onSuccess, onCancel }: Omit<DepositPayment
           type="button"
           onClick={handleSubmit}
           disabled={!stripe || !elements || isProcessing}
-          className="flex-1 py-3.5 bg-burgundy hover:bg-burgundy-dark disabled:bg-border-gray disabled:text-muted-stone text-white font-semibold rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
+          className="flex-1 py-3.5 bg-burgundy hover:bg-burgundy-dark disabled:bg-border-gray disabled:text-muted-stone text-white font-semibold rounded-[100px] text-sm transition-colors flex items-center justify-center gap-2"
         >
           {isProcessing ? (
             <>
@@ -138,7 +139,7 @@ export default function DepositPaymentStep({ clientSecret, depositAmount, onSucc
         appearance: {
           theme: 'stripe',
           variables: {
-            colorPrimary: '#8B1A4A',
+            colorPrimary: '#9F1239', // burgundy (token do sistema)
             borderRadius: '10px',
           },
         },

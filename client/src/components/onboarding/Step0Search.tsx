@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import ThiingsIcon from '../common/ThiingsIcon';
 import type { ScrapedRestaurant } from '../../lib/applyScrapedData';
 
 interface Step0SearchProps {
@@ -162,7 +163,7 @@ export default function Step0Search({ onPrefill, onSkip }: Step0SearchProps) {
         <button
           type="submit"
           disabled={!canSearch}
-          className="px-4 py-2 bg-burgundy text-white rounded-lg text-sm font-medium hover:bg-[#831a3a] transition-colors disabled:opacity-50"
+          className="px-4 py-2 bg-burgundy text-white rounded-[100px] text-sm font-semibold hover:bg-burgundy-dark transition-colors disabled:opacity-50"
         >
           {searching
             ? t('onboarding.step0.searching', 'Searching…')
@@ -193,14 +194,19 @@ export default function Step0Search({ onPrefill, onSkip }: Step0SearchProps) {
                 {hit.address && <p className="text-xs text-muted-stone mt-0.5">{hit.address}</p>}
                 <div className="flex items-center gap-3 mt-2 text-xs text-muted-stone">
                   {hit.cuisine_type && <span>{hit.cuisine_type}</span>}
-                  {hit.rating && <span>★ {hit.rating} ({hit.review_count || 0})</span>}
+                  {hit.rating && (
+                  <span className="inline-flex items-center gap-1">
+                    <ThiingsIcon name="star" pxSize={12} className="text-amber-600" />
+                    {hit.rating} ({hit.review_count || 0})
+                  </span>
+                )}
                   {hit.phone && <span>{hit.phone}</span>}
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => onPrefill(hit)}
-                className="px-4 py-2 bg-burgundy text-white rounded-lg text-sm font-medium hover:bg-[#831a3a] transition-colors"
+                className="px-4 py-2 bg-burgundy text-white rounded-[100px] text-sm font-semibold hover:bg-burgundy-dark transition-colors"
                 data-testid={`step0-pick-${i}`}
               >
                 {t('onboarding.step0.pickThisCta', 'Use this one')}
@@ -260,7 +266,7 @@ export default function Step0Search({ onPrefill, onSkip }: Step0SearchProps) {
             <button
               type="submit"
               disabled={enriching || !website.trim()}
-              className="px-4 py-2 bg-burgundy text-white rounded-lg text-sm font-medium hover:bg-[#831a3a] transition-colors disabled:opacity-50"
+              className="px-4 py-2 bg-burgundy text-white rounded-[100px] text-sm font-semibold hover:bg-burgundy-dark transition-colors disabled:opacity-50"
               data-testid="step0-enrich-cta"
             >
               {enriching

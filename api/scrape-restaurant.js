@@ -221,7 +221,13 @@ module.exports = async function handler(req, res) {
 
     // Map results to our format
     const results = places.map(place => {
-      const topReviews = (place.reviews || []).slice(0, 3).map(review => ({
+      // 5 = máximo que o Places v1 devolve. O corte antigo em 3 deixava o
+      // enriquecimento faminto: o Fasano saiu com UM prato no "Sua IA já foi
+      // treinada" (verificado no funil em 24/ago) porque as 3 primeiras
+      // avaliações mal citavam comida. O prompt de insights já aceita até 8
+      // reviews com teto de 800 chars cada; o card do painel continua
+      // exibindo só 3 (RealRestaurantCard corta na renderização).
+      const topReviews = (place.reviews || []).slice(0, 5).map(review => ({
         text: review.text?.text || '',
         rating: review.rating,
         author: review.authorAttribution?.displayName || 'Anonymous',

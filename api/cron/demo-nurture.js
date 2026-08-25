@@ -266,7 +266,7 @@ module.exports = async (req, res) => {
     logger.info(`Day-5 window: ${day5Start} — ${day5End}`);
     logger.info(`Day-7 window: ${day7Start} — ${day7End}`);
 
-    const SELECT_FIELDS = 'id, restaurant_name, demo_token, demo_contact_email, demo_contact_name, demo_expires_at, agent_language';
+    const SELECT_FIELDS = 'id, restaurant_name, demo_token, demo_contact_email, demo_contact_name, demo_expires_at, agent_language, demo_converted_at';
 
     /**
      * Fetch demo candidates for a given time window and dedup column.
@@ -359,6 +359,16 @@ module.exports = async (req, res) => {
       for (const demo of (demos || [])) {
         if (!demo.demo_contact_email) {
           logger.info(`Skipping ${dayKey} for demo ${demo.id} — no contact email`);
+          results[dayKey].skipped++;
+          continue;
+        }
+
+        // Converteu = missão cumprida. Mandar "seu demo expira" para quem já
+        // criou conta era o comportamento antigo (o convert nunca marcava
+        // nada que o nurture lesse) — ruído no pior momento possível: logo
+        // depois do signup.
+        if (demo.demo_converted_at) {
+          logger.info(`Skipping ${dayKey} for demo ${demo.id} — already converted`);
           results[dayKey].skipped++;
           continue;
         }

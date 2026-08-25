@@ -94,7 +94,7 @@ export default function Step1Welcome({ data, updateData, onNext, isDemoLoading }
       className="space-y-6"
     >
       <div>
-        <h2 className="font-serif text-2xl font-bold text-deep-charcoal mb-2">{t('onboarding.step1Heading')}</h2>
+        <h2 className="font-serif text-3xl text-deep-charcoal mb-2">{t('onboarding.step1Heading')}</h2>
         <p className="text-stone-gray text-sm">{t('onboarding.step1Subtitle')}</p>
         {isDemoLoading && (
           <div className="flex items-center gap-2 mt-2 text-sm text-muted-stone">

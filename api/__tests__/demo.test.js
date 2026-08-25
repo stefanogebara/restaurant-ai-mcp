@@ -354,42 +354,23 @@ describe('POST ?action=convert', () => {
     expect(body.error).toMatch(/token/i);
   });
 
-  test('valid auth and valid token returns 200', async () => {
+  test('token válido carimba demo_converted_at e devolve 200 — sem migrar seeds nem clobberar config', async () => {
     verifyAuth.mockResolvedValue({ user: { id: 'user-1', restaurant_id: 'real-rest-1' } });
 
-    const demoConfig = {
-      id: 'demo-rest-1',
-      restaurant_name: 'Bella Cucina',
-      restaurant_type: 'Italian',
-      city: 'Amsterdam',
-      country: 'NL',
-      business_hours: {},
-      max_party_size: 8,
-      advance_booking_days: 30,
-      cancellation_policy: '',
-    };
-    const realConfig = { id: 'real-rest-1', restaurant_name: 'My Real Restaurant' };
-
-    // Sequence of supabase calls:
-    // 1. Find demo by token => demoConfig
-    // 2. Get real restaurant config => realConfig
-    // 3. Update real config => ok
-    // 4. Update reservations restaurant_id => ok
-    // 5. Mark demo as converted => ok
-
-    mockSingle
-      .mockResolvedValueOnce({ data: demoConfig, error: null })  // find demo
-      .mockResolvedValueOnce({ data: realConfig, error: null }); // get real config
-
-    mockEq1.mockReturnValue({ eq: mockEq2, single: mockSingle });
-    mockEq2.mockReturnValue({ eq: mockEq3, single: mockSingle });
-    mockEq3.mockReturnValue({ single: mockSingle });
-    mockSelect.mockReturnValue({ eq: mockEq1, single: mockSingle });
-
-    // update calls return eq chains that resolve ok
-    const mockEqUpdate = jest.fn().mockResolvedValue({ error: null });
-    const mockUpdateChain = { eq: mockEqUpdate };
-    mockUpdate.mockReturnValue(mockUpdateChain);
+    // Fluxo novo (F6): 1 select (demo por token, is_demo) + 1 update
+    // (demo_converted_at). NADA de copiar config para o restaurante real nem
+    // mover reservas/mesas seed — clientes fictícios não entram em painel real.
+    const single = jest.fn().mockResolvedValue({
+      data: { id: 'demo-rest-1', demo_converted_at: null },
+      error: null,
+    });
+    const eq2 = jest.fn().mockReturnValue({ single });
+    const eq1 = jest.fn().mockReturnValue({ eq: eq2 });
+    const select = jest.fn().mockReturnValue({ eq: eq1 });
+    const updateEq = jest.fn().mockResolvedValue({ error: null });
+    const update = jest.fn().mockReturnValue({ eq: updateEq });
+    mockFrom.mockReturnValue({ select, update });
+    mockSchema.mockReturnValue({ from: mockFrom });
 
     const req = {
       method: 'POST',
@@ -400,8 +381,29 @@ describe('POST ?action=convert', () => {
     const res = makeRes();
     await handler(req, res);
     expect(res.status).toHaveBeenCalledWith(200);
-    const body = res.json.mock.calls[0][0];
-    expect(body.success).toBe(true);
+    expect(res.json.mock.calls[0][0].success).toBe(true);
+    expect(update).toHaveBeenCalledTimes(1);
+    expect(update.mock.calls[0][0]).toEqual({ demo_converted_at: expect.any(String) });
+  });
+
+  test('já convertido é idempotente — não reescreve o carimbo', async () => {
+    verifyAuth.mockResolvedValue({ user: { id: 'user-1', restaurant_id: 'real-rest-1' } });
+
+    const single = jest.fn().mockResolvedValue({
+      data: { id: 'demo-rest-1', demo_converted_at: '2026-08-24T20:00:00Z' },
+      error: null,
+    });
+    const eq2 = jest.fn().mockReturnValue({ single });
+    const eq1 = jest.fn().mockReturnValue({ eq: eq2 });
+    const select = jest.fn().mockReturnValue({ eq: eq1 });
+    const update = jest.fn();
+    mockFrom.mockReturnValue({ select, update });
+    mockSchema.mockReturnValue({ from: mockFrom });
+
+    const res = makeRes();
+    await handler({ method: 'POST', query: { action: 'convert' }, body: { token: 'tok' }, headers: {} }, res);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(update).not.toHaveBeenCalled();
   });
 });
 

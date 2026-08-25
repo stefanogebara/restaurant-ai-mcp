@@ -221,13 +221,29 @@ nenhum dado genérico/fake apresentado como dele.
 - [x] 5.5 Regras R9/R13 do plano 07-10 que seguem violadas: badge-pill sobre o H1
       (`HeroSection.tsx:102`) e bandeirinhas emoji nos presets — resolver na passada.
 
-### Backlog consciente (fora deste plano)
+### F6 — Qualidade do funil (24/ago à noite, "whats next, go for it")
 
-- `POST /api/demo/convert` órfão (migração de reservas/mesas no signup) — religar
-  quando o funil novo estabilizar; hoje o prefill do onboarding cobre o essencial.
-- Preset `makoto` inacessível — decidir se vira 4º card ou morre.
-- Enriquecimento fino do menu (Fasano retornou 1 prato) — melhorar prompt de
-  `enrich-restaurant` com extração de pratos por review, tarefa separada.
+- [x] 6.1 Mobile: E2E Playwright iPhone 13 do funil completo — 10/10 verde de
+      primeira (sem overflow, CTA na dobra, overlay usável). Roteiro em
+      scripts/e2e-demo/ (mobile.mjs no scratchpad; promover se precisar).
+- [x] 6.2 Enriquecimento faminto (#55): scraper subiu de 3 → 5 reviews (máx do
+      Places v1); prompt de insights já aceitava 8 e o card já exibia só 3.
+      Era por isso que o Fasano saiu com 1 prato.
+- [x] 6.3 Convert (#57): a varredura da manhã ERROU — Welcome.tsx chama
+      /api/demo/convert a cada load pós-onboarding. O handler clobberava a
+      config editada no onboarding, migrava seeds fictícios para o painel
+      real e zerava is_demo/demo_token. Reescrito como "aposentar o demo":
+      carimba demo_converted_at (coluna nova, migração aplicada em prod via
+      Supabase MCP) e o nurture pula convertidos. Contrato com o Welcome
+      preservado.
+
+### Backlog consciente (segue aberto)
+
+- Preset `makoto` inacessível — decidir se vira 4º card ou morre (decisão de
+  produto do Stefano).
+- Enriquecimento por website: popular_dishes do site só entra se "explicitly
+  highlighted" — conservador de propósito; revisitar se 5 reviews ainda
+  renderem pouco prato em casas com site rico.
 
 ---
 

@@ -249,7 +249,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
                   <div key={group.language} className="border-b border-glass-border-dark last:border-0">
                     {/* Language Group Header */}
                     <div className="px-4 py-2 bg-soft-gray">
-                      <span className="text-xs font-semibold text-stone-gray uppercase tracking-wider flex items-center gap-2">
+                      <span className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone flex items-center gap-2">
                         <span className="text-base">{group.flag}</span>
                         {localizedGroupName(group)}
                       </span>
