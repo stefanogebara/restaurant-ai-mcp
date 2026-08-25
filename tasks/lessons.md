@@ -1138,3 +1138,23 @@ de outra sessao, e ninguem percebe -- porque o sintoma e' silencio.
   prova que não há suítes falhando na coleta (elas não entram na linha Tests).
 - Corolário: `tsc --noEmit` solto ≠ `tsc -b` do build (verbatimModuleSyntax,
   project refs). Verificar com o comando do build.
+
+## 2026-08-24 — Allowlist ancorada em número de linha apodrece e se INVERTE
+- `scripts/audit-fire-and-forget.js` guardava exceções como `path:linha`.
+  Em 10/jun `api/services` virou `api/_services`; em agosto, 13 das 16
+  entradas não casavam com nada. A revisão de 24/mai ("all entries still
+  justified") estava correta no dia e virou errada duas semanas depois,
+  sem nada sinalizando.
+- O perigo não é a entrada morrer — é ela continuar VIVA apontada para um
+  número de linha arbitrário. Ela para de proteger o que você julgou seguro
+  e passa a silenciar o que quer que caia naquela linha. Numa auditoria que
+  existe para pegar uma classe de bug que já custou 7 incidentes, isso é
+  pior que não ter auditoria: dá confiança sem cobertura.
+- Regra: supressão (allowlist, baseline, ignore, expect-fail) SEMPRE ancora
+  em conteúdo, nunca em posição. E entrada que não casa com nada tem que
+  FALHAR o run — silêncio é o modo de falha, então a ausência de match
+  precisa virar barulho.
+- Corolário sobre revisar allowlist a olho: ler as justificativas não pega
+  esse rot — todas continuam plausíveis. Só pega executando uma checagem
+  que resolve cada entrada contra o código real. "Revisei e está tudo
+  justificado" sobre uma lista de ponteiros não verificados não é revisão.
