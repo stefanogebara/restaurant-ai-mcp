@@ -68,6 +68,10 @@ describe('applyScrapedData', () => {
       restaurant_name: 'Pizzeria Roma',
       restaurant_type: 'Italian',
       phone_number: '+34 91 555 1234',
+      // G2.3: o país passa a sair do prefixo do telefone — antes o Passo 1
+      // abria com o seletor vazio e a cidade desabilitada.
+      country_code: 'ES',
+      country: 'Spain',
       website: 'https://roma.example',
     });
   });
@@ -124,5 +128,27 @@ describe('applyScrapedData', () => {
       },
     });
     expect(result.business_hours?.[0]).toMatchObject({ day: 'Monday', is_open: false });
+  });
+});
+
+describe('cidade e país (G2.3) — param de ser re-perguntados', () => {
+  it('carrega a cidade que o dono digitou no Passo 0', () => {
+    expect(applyScrapedData({ name: 'X', city: 'Presidente Prudente' }).city).toBe('Presidente Prudente');
+  });
+
+  it('deriva country_code + nome do país pelo prefixo do telefone', () => {
+    const u = applyScrapedData({ name: 'X', phone: '+55 18 99744-0280' });
+    expect(u.country_code).toBe('BR');
+    expect(u.country).toBe('Brazil');
+  });
+
+  it('prefixos longos vencem os curtos (+351 não vira +3x)', () => {
+    expect(applyScrapedData({ phone: '+351 21 123 4567' }).country_code).toBe('PT');
+    expect(applyScrapedData({ phone: '+34 917 31 43 42' }).country_code).toBe('ES');
+    expect(applyScrapedData({ phone: '+1 415 555 0100' }).country_code).toBe('US');
+  });
+
+  it('telefone local (sem +) não inventa país', () => {
+    expect(applyScrapedData({ phone: '(11) 99999-8888' }).country_code).toBeUndefined();
   });
 });

@@ -32,6 +32,10 @@ import type { RestaurantSize } from '../types/profile.types';
 /** Subset of /api/scrape-restaurant result we actually consume. */
 export interface ScrapedRestaurant {
   name?: string | null;
+  /** Cidade que o dono DIGITOU na busca do Passo 0. O scraper recebia a
+   *  cidade e a jogava fora — o Passo 1 perguntava de novo (auditoria
+   *  24/ago). O Passo 0 injeta o valor aqui antes de repassar. */
+  city?: string | null;
   cuisine_type?: string | null;
   phone?: string | null;
   website?: string | null;
@@ -106,6 +110,19 @@ export function applyScrapedData(scraped: ScrapedRestaurant | null | undefined):
   if (scraped.phone) {
     updates.phone_number = scraped.phone;
   }
+  if (scraped.city) {
+    updates.city = scraped.city;
+  }
+  // País pelo prefixo do telefone internacional que o Google devolve. Sem
+  // isto o Passo 1 abre com o seletor de país vazio (e a cidade acima fica
+  // desabilitada, porque o seletor de cidade é gateado no país).
+  const iso = isoDoTelefone(scraped.phone);
+  if (iso) {
+    updates.country_code = iso;
+    try {
+      updates.country = new Intl.DisplayNames(['en'], { type: 'region' }).of(iso) || iso;
+    } catch { updates.country = iso; }
+  }
   if (scraped.website) {
     updates.website = scraped.website;
   }
@@ -114,6 +131,25 @@ export function applyScrapedData(scraped: ScrapedRestaurant | null | undefined):
   }
 
   return updates;
+}
+
+/**
+ * Prefixo internacional → ISO. Espelha PHONE_PREFIX_TO_ISO do
+ * api/onboarding/complete.js — mesma ordem (prefixos longos primeiro, senão
+ * '+1' engoliria qualquer coisa que comece com 1).
+ */
+const PREFIXO_PARA_ISO: Array<[string, string]> = [
+  ['+351', 'PT'], ['+54', 'AR'], ['+55', 'BR'], ['+56', 'CL'], ['+57', 'CO'],
+  ['+52', 'MX'], ['+51', 'PE'], ['+34', 'ES'], ['+33', 'FR'], ['+39', 'IT'],
+  ['+49', 'DE'], ['+44', 'GB'], ['+81', 'JP'], ['+61', 'AU'], ['+1', 'US'],
+];
+
+function isoDoTelefone(phone?: string | null): string | null {
+  if (!phone) return null;
+  const digitos = phone.replace(/[^\d+]/g, '');
+  if (!digitos.startsWith('+')) return null;
+  for (const [p, iso] of PREFIXO_PARA_ISO) if (digitos.startsWith(p)) return iso;
+  return null;
 }
 
 function convertHours(

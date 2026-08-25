@@ -218,6 +218,9 @@ module.exports = async (req, res) => {
       selected_voice_id, // Voice selection from Step 2.5
       selected_voice_language, // Language code from selected voice (e.g., 'es', 'fr', 'en')
       restaurant_learning, // AI restaurant learning data (session_id, restaurant_profile)
+      // Token do demo que originou este cadastro. Só o TOKEN vem do cliente —
+      // o conhecimento é lido do banco aqui no servidor (ver bloco abaixo).
+      demo_token,
     } = req.body;
 
     // Validate required fields — hardened to reject empty strings and
@@ -332,6 +335,42 @@ module.exports = async (req, res) => {
     const resolvedCountryIso = resolveCountryIso(country, phone_number);
     const resolvedLanguage = COUNTRY_LANGUAGE_MAP[resolvedCountryIso] || 'en';
     const resolvedTimezone = suggestTimezone(resolvedCountryIso || country, city);
+
+    // ── Conhecimento do demo (G2 — Onboarding do Aha) ────────────────────
+    //
+    // O demo e o restaurante real eram dois sistemas disjuntos ligados por um
+    // prefill de 7 campos de formulário. Persona derivada das vibes, cardápio
+    // e insights do enrichment, as reviews do Google e o idioma inferido pelo
+    // prefixo do telefone morriam na travessia — e o card que o dono clicou
+    // prometia "Sua recepcionista IA já está configurada com tudo isso"
+    // (auditoria 24/ago). O syncKnowledgeBase até SELECIONA ai_personality;
+    // recebia vazio.
+    //
+    // Servidor→servidor de propósito: o cliente manda só o token e a leitura
+    // acontece aqui com service role. Mesmo raciocínio do demo/create, que
+    // limpa prospect_lead_id de qualquer scraped_data vindo do browser.
+    //
+    // Sem filtro de expiração: converter no 8º dia (linha ainda viva até o
+    // cron de limpeza) deve carregar o conhecimento do mesmo jeito.
+    let demoKnowledge = null;
+    if (typeof demo_token === 'string' && demo_token.trim()) {
+      try {
+        const { data: demoRow } = await supabaseAdmin
+          .schema('restaurant')
+          .from('restaurant_config')
+          .select('id, ai_personality, scraped_data, agent_language, reservation_settings, menu_url')
+          .eq('demo_token', demo_token.trim())
+          .eq('is_demo', true)
+          .maybeSingle();
+        if (demoRow) {
+          demoKnowledge = demoRow;
+          logger.info(` Demo knowledge carried over from ${demoRow.id}`);
+        }
+      } catch (err) {
+        // Nunca fatal — o cadastro vale mais que o enriquecimento.
+        logger.warn(' Failed to load demo knowledge (non-fatal):', err.message);
+      }
+    }
 
     // Metadados do cadastro, gravados em restaurant_config.metric_profile.
     //
@@ -671,6 +710,44 @@ module.exports = async (req, res) => {
         restaurant_profile: restaurant_learning.restaurant_profile
       } : {}),
     };
+
+    // Conhecimento do demo entra SEM sobrescrever escolha explícita do dono.
+    if (demoKnowledge) {
+      // A persona que a recepcionista do demo usou (derivada das vibes do
+      // caminho "restaurante novo" ou do enrichment do site/reviews).
+      if (demoKnowledge.ai_personality && !restaurantConfigData.ai_personality) {
+        restaurantConfigData.ai_personality = demoKnowledge.ai_personality;
+      }
+      // Google Places + enrichment (menu, insights, top_reviews): é o que
+      // alimenta a base de conhecimento do agente e os cards de "o que sua IA
+      // já sabe". O wizard nunca teve como recolher isso à mão.
+      if (demoKnowledge.scraped_data) {
+        restaurantConfigData.scraped_data = demoKnowledge.scraped_data;
+      }
+      if (!restaurantConfigData.menu_url && demoKnowledge.menu_url) {
+        restaurantConfigData.menu_url = demoKnowledge.menu_url;
+      }
+      // Idioma: só quando a resolução pelo país caiu no default 'en' e o demo
+      // sabe algo mais específico — ele infere pelo prefixo do telefone, que
+      // foi o que consertou o demo de Madri nascendo em inglês.
+      if (restaurantConfigData.agent_language === 'en'
+          && demoKnowledge.agent_language && demoKnowledge.agent_language !== 'en') {
+        restaurantConfigData.agent_language = demoKnowledge.agent_language;
+      }
+      // reservation_settings: o Passo 3 manda advance/buffer/policy (escolha
+      // do dono) e esses vencem. max/min party e waitlist são HARDCODED no
+      // payload — e o 12 fixo discordava do 8 que a recepcionista do demo
+      // usou a conversa inteira. Nesses três o demo vence.
+      const ds = demoKnowledge.reservation_settings;
+      if (ds && typeof ds === 'object') {
+        restaurantConfigData.reservation_settings = {
+          ...restaurantConfigData.reservation_settings,
+          max_party_size: ds.max_party_size ?? restaurantConfigData.reservation_settings.max_party_size,
+          min_party_size: ds.min_party_size ?? restaurantConfigData.reservation_settings.min_party_size,
+          allow_waitlist: ds.allow_waitlist ?? restaurantConfigData.reservation_settings.allow_waitlist,
+        };
+      }
+    }
 
     // If we have a user_id, add it; otherwise use service role to insert
     if (userId) {

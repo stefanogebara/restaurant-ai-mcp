@@ -156,6 +156,9 @@ export default function Onboarding() {
   // Passo em que a sessão ABRIU (não o atual): o prefill do demo consulta
   // isto para não clobberar um rascunho retomado.
   const initialStepRef = useRef(restored.step);
+  // O prefill do demo trouxe substância (mais que só o nome)? Decide a copy
+  // do banner do Passo 1 — ver G2.6.
+  const prefillSubstancialRef = useRef(false);
   const [onboardingData, setOnboardingData] = useState<OnboardingData>(restored.data);
 
   // Step 0 (Google Places discovery) — runs BEFORE step 1 for fresh signups.
@@ -297,6 +300,15 @@ export default function Onboarding() {
             });
             updates.business_hours = hours;
           }
+          // Banner honesto (G2.6): "Preenchemos com os dados do seu demo" só
+          // se realmente veio mais que o nome. Um convert do caminho
+          // "restaurante novo" chegava com um campo e o mesmo banner —
+          // prometer preenchimento que não aconteceu corrói a confiança
+          // exatamente onde ela mais importa.
+          const camposUteis = Object.keys(updates).filter(
+            (k) => k !== 'restaurant_name' && k !== 'profile_data',
+          ).length;
+          prefillSubstancialRef.current = camposUteis >= 2;
           return { ...prev, ...updates };
         });
         setIsPreFilledFromDemo(true);
@@ -395,7 +407,15 @@ export default function Onboarding() {
       const response = await authFetch('/api/onboarding/complete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(onboardingData),
+        // demo_token junto: o backend lê o conhecimento do demo (persona,
+        // cardápio, insights, reviews, idioma) direto do banco e grava no
+        // config novo. Só o TOKEN viaja pelo cliente — o payload em si é lido
+        // servidor→servidor. Sem isto, a recepcionista real nascia sem nada
+        // do que a do demo sabia.
+        body: JSON.stringify({
+          ...onboardingData,
+          demo_token: localStorage.getItem(LS_PENDING_DEMO_TOKEN) || undefined,
+        }),
       });
 
       const data = await response.json();
@@ -633,9 +653,11 @@ export default function Onboarding() {
           {currentStep === 1 && (isPreFilledFromDemo || hasPrefillFromScrape) && (
             <div className="mb-5 flex items-center gap-2.5 px-4 py-3 rounded-xl bg-burgundy/[0.06] border border-burgundy/20 text-[13px] text-burgundy font-medium">
               <ThiingsIcon name="sparkles" pxSize={15} />
-              {isPreFilledFromDemo
+              {isPreFilledFromDemo && prefillSubstancialRef.current
                 ? t('onboarding.prefilledFromDemo')
-                : t('onboarding.prefilledStep1FromGoogle', 'Restaurant info pulled from Google Maps — confirm or edit below.')}
+                : isPreFilledFromDemo
+                  ? t('onboarding.prefilledFromDemoThin')
+                  : t('onboarding.prefilledStep1FromGoogle', 'Restaurant info pulled from Google Maps — confirm or edit below.')}
             </div>
           )}
           {currentStep === 1 && (

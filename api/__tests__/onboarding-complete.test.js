@@ -705,3 +705,119 @@ describe('e-mail placeholder do demo é rejeitado (G0.3)', () => {
     expect(body.error).toMatch(/placeholder/i);
   });
 });
+
+// ============================================================
+// G2: conhecimento do demo atravessa a ponte (servidor→servidor)
+// ============================================================
+describe('demo_token carrega o conhecimento do demo (G2.1)', () => {
+  const authComSub = () => {
+    const { verifyAuth } = require('../_lib/auth');
+    verifyAuth.mockResolvedValueOnce({ user: { sub: 'user-1', id: 'user-1' } });
+  };
+
+  /** Cadeia que serve a busca do demo (maybeSingle) e a escrita do config. */
+  function comDemo(demoRow) {
+    const { supabaseAdmin } = require('../_lib/supabase');
+    supabaseAdmin.schema.mockImplementation(() => ({
+      from: () => {
+        const chain = {};
+        chain.select = () => chain;
+        chain.eq = () => chain;
+        chain.limit = () => Promise.resolve({ data: [], error: null });
+        chain.maybeSingle = () => Promise.resolve({ data: demoRow, error: null });
+        chain.single = () => Promise.resolve({ data: { id: 'config-uuid', slug: 'test' }, error: null });
+        chain.insert = (payload) => { capturedConfigWrite = payload; return chain; };
+        chain.update = (payload) => { capturedConfigWrite = payload; return chain; };
+        return chain;
+      },
+    }));
+  }
+
+  const DEMO = {
+    id: 'demo-1',
+    ai_personality: { humor_type: 'warm', _derived_from_preset: 'neighborhood' },
+    scraped_data: {
+      menu: { popular_dishes: ['baião de dois'] },
+      insights: { vibe_tags: ['casual'] },
+      top_reviews: [{ text: 'ótimo', rating: 5 }],
+    },
+    agent_language: 'pt',
+    reservation_settings: { max_party_size: 8, min_party_size: 1, allow_waitlist: true, advance_booking_days: 30 },
+    menu_url: 'https://exemplo.com/cardapio.pdf',
+  };
+
+  test('persona, scraped_data e menu_url do demo entram no config novo', async () => {
+    authComSub();
+    comDemo(DEMO);
+    const { req, res } = mockReqRes({ ...BASE_BODY, demo_token: 'tok-1' });
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(capturedConfigWrite.ai_personality).toEqual(DEMO.ai_personality);
+    // É isto que o syncKnowledgeBase lia vazio até agora.
+    expect(capturedConfigWrite.scraped_data.menu.popular_dishes).toEqual(['baião de dois']);
+    expect(capturedConfigWrite.scraped_data.top_reviews).toHaveLength(1);
+    expect(capturedConfigWrite.menu_url).toBe('https://exemplo.com/cardapio.pdf');
+  });
+
+  test('max/min party do demo vencem os hardcoded; escolha do Passo 3 continua vencendo', async () => {
+    authComSub();
+    comDemo(DEMO);
+    const { req, res } = mockReqRes({ ...BASE_BODY, demo_token: 'tok-1', advance_booking_days: 60 });
+    await handler(req, res);
+
+    // 12 era hardcoded no payload e discordava do 8 que a recepcionista do
+    // demo usou a conversa inteira.
+    expect(capturedConfigWrite.reservation_settings.max_party_size).toBe(8);
+    // advance_booking_days É escolha do dono no Passo 3 — o demo não sobrepõe.
+    expect(capturedConfigWrite.reservation_settings.advance_booking_days).toBe(60);
+  });
+
+  test('sem demo_token nada é carregado', async () => {
+    authComSub();
+    comDemo(null);
+    const { req, res } = mockReqRes({ ...BASE_BODY });
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(capturedConfigWrite.ai_personality).toBeUndefined();
+    expect(capturedConfigWrite.scraped_data).toBeUndefined();
+  });
+
+  test('idioma do demo só entra quando a resolução pelo país caiu em en', async () => {
+    // País desconhecido → resolvedLanguage 'en'; o demo infere 'pt' pelo
+    // prefixo do telefone (foi o que consertou o demo de Madri em inglês).
+    authComSub();
+    comDemo(DEMO);
+    const { req, res } = mockReqRes({ ...BASE_BODY, country: '', phone_number: '+55 11 98765-4321', demo_token: 'tok-1' });
+    await handler(req, res);
+    expect(capturedConfigWrite.agent_language).toBe('pt');
+
+    // Já quando o país resolve sozinho, quem manda é o país.
+    authComSub();
+    comDemo({ ...DEMO, agent_language: 'pt' });
+    const r2 = mockReqRes({ ...BASE_BODY, country: 'Spain', demo_token: 'tok-1' });
+    await handler(r2.req, r2.res);
+    expect(capturedConfigWrite.agent_language).toBe('es');
+  });
+
+  test('falha ao ler o demo não derruba o cadastro', async () => {
+    authComSub();
+    const { supabaseAdmin } = require('../_lib/supabase');
+    supabaseAdmin.schema.mockImplementation(() => ({
+      from: () => {
+        const chain = {};
+        chain.select = () => chain;
+        chain.eq = () => chain;
+        chain.limit = () => Promise.resolve({ data: [], error: null });
+        chain.maybeSingle = () => Promise.reject(new Error('boom'));
+        chain.single = () => Promise.resolve({ data: { id: 'config-uuid', slug: 'test' }, error: null });
+        chain.insert = (payload) => { capturedConfigWrite = payload; return chain; };
+        chain.update = (payload) => { capturedConfigWrite = payload; return chain; };
+        return chain;
+      },
+    }));
+    const { req, res } = mockReqRes({ ...BASE_BODY, demo_token: 'tok-1' });
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+});
