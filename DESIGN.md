@@ -6,22 +6,24 @@ Single source of truth for visual + brand decisions across the product, marketin
 
 ## Table of contents
 
-1. [Product UI — "Nordic Clean"](#product-ui--nordic-clean)
+1. [Product UI — "Warm Glass"](#product-ui--warm-glass)
    - [Typography](#typography)
    - [Color palette](#color-palette)
-   - [Shadow + border rules](#shadow--border-rules)
+   - [Glass surface tiers](#glass-surface-tiers)
+   - [Shape language](#shape-language)
    - [WCAG contrast rules](#wcag-contrast-rules)
-2. [Brand illustrations](#brand-illustrations)
+2. [Liquid Glass v2](#liquid-glass-v2-2026-08-18) — a camada vigente
+3. [Brand illustrations](#brand-illustrations)
    - [Style anchors](#style-anchors)
    - [Color palette (warm)](#color-palette-warm)
    - [Key visual elements](#key-visual-elements)
    - [Reference images](#reference-images)
    - [AI Studio prompt template](#ai-studio-prompt-template)
-3. [Social posts](#social-posts)
+4. [Social posts](#social-posts)
    - [Layout system](#layout-system)
    - [Content types](#content-types)
    - [Overlay opacity rules](#overlay-opacity-rules)
-4. [Source-of-truth checklist when shipping a new surface](#source-of-truth-checklist)
+5. [Source-of-truth checklist when shipping a new surface](#source-of-truth-checklist)
 
 ---
 
@@ -223,7 +225,11 @@ When shipping a new UI surface, design asset, or social post, check:
 
 - [ ] Uses tokens from this file's tables, not raw hex codes elsewhere
 - [ ] Borders not shadows on flow-level cards
-- [ ] Burgundy reserved for action — semantic colours for status
+- [ ] Burgundy reserved for action — semantic colours for status. **Rose/crimson counts as burgundy**: a "confirmed" badge in `rose-600` is the same violation wearing a different name
+- [ ] Nothing cool in a warm system — no `violet-*`, `blue-*`, `slate-*`, `gray-*`, and none of the Tailwind cool greys as raw hex (`#111827` / `#6B7280` / `#9CA3AF` / `#E5E7EB`)
+- [ ] Icons are inline stroke SVG (`ThiingsIcon`), never emoji or a text glyph — emoji doesn't inherit `currentColor` and renders differently per OS. Emoji is allowed only as *illustration* (a low-opacity watermark), never as an icon
+- [ ] Section labels use the one token: `text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone`
+- [ ] No `font-bold` on `font-serif` — Instrument Serif ships only weight 400 and `font-synthesis` is blocked, so it renders nothing and only misstates the intent
 - [ ] WCAG contrast met (use the WebAIM Contrast Checker for borderline cases)
 - [ ] Page background is `#FAFAF9`, never pure `#FFFFFF`
 - [ ] No mixed font sizes within the same hierarchy level
@@ -268,9 +274,105 @@ Referência viva: `client/src/pages/ManagerAIChatPage.tsx` (cápsulas, máscara
 de rolagem, chain-of-thought, prosa sem card) e a faixa de métricas do
 `Dashboard.tsx`.
 
+### Cobertura (concluída em 2026-08-25)
+
+Toda superfície do produto passou pela reforma:
+
+| Superfície | Onde |
+|---|---|
+| Manager AI | `ManagerAIChatPage.tsx` — a referência viva |
+| Dashboard | "Palco + Modo Serviço": salão ilustrado como herói, régua de raias, tema noturno |
+| A Partitura | `ServiceScorePage.tsx` — as raias por mesa na página inteira |
+| Mesas | `TableConfigPage.tsx` — planta espacial clicável |
+| Análises | gráficos em cápsula, métricas direto no canvas |
+| Clientes / CRM | tokens quentes, chips, serif |
+| Voice / WhatsApp | + o token de título de seção da plataforma |
+| Onboarding | os 6 passos e os painéis auxiliares |
+| Reserva pública | `/book/:slug`, confirmação, depósito |
+
+### Modo Serviço
+
+Tema escuro automático das 18h às 6h, com toggle manual cujo override em
+`localStorage` se auto-limpa quando volta a coincidir com o relógio. A camada
+CSS `.service-mode` re-tematiza componentes existentes; componentes novos
+recebem uma prop `night`.
+
+### Os quatro desvios que reapareceram em toda tela
+
+Não foram achados isolados — cada um apareceu em quatro ou mais superfícies
+independentes, o que os torna o material de revisão de qualquer tela nova:
+
+1. **Cor de ação usada como estado.** Burgundy (e seu disfarce, `rose-600`)
+   pintando "confirmado", "positivo", "neutro". Estado tem cor própria:
+   esmeralda positivo, âmbar pendente, vermelho erro.
+2. **Cor fria num sistema quente.** `violet` no passo de depósito, os cinzas
+   azulados do Tailwind como hex cru, `blue` em ícones.
+3. **`font-bold` no serif.** Instrument Serif não tem bold e o
+   `font-synthesis` está bloqueado — nunca renderizou nada.
+4. **Emoji no lugar de ícone.** Não herda cor, muda de forma a cada sistema
+   operacional.
+
+### O que está travado por teste
+
+A reforma colapsou três fontes de verdade que tinham se duplicado em silêncio.
+Cada uma tem hoje um teste que falha se alguém re-bifurcar:
+
+- `components/floor-plan/__tests__/paletteConsistency.test.ts` — a paleta de
+  mesas existia em três cópias divergentes (editor, grid, dashboard).
+- `components/booking/__tests__/warmPalette.test.ts` — 83 asserções sobre
+  reserva + onboarding, uma por desvio que existiu de verdade.
+- `utils/colors.ts` — `mutedStone` tinha dois valores sob o mesmo nome
+  (`#A8A29E` no util, `#706A65` no Tailwind). Sobrou o do token.
+
+A régua compacta do dashboard e a Partitura de página inteira compartilham
+`hooks/useServiceTimeline.ts`: desenham diferente, mas não podem discordar
+sobre quem ocupa qual mesa até que horas.
+
 ---
 
 ## Rebrand changelog
+
+### 2026-08-25 — Liquid Glass v2 fully shipped
+
+Segunda geração: o Warm Glass v1 tinha envidraçado *tudo*, inclusive prosa e
+listas, e o resultado era uma parede de caixas translúcidas. O v2 devolve o
+vidro aos objetos e põe o conteúdo direto no canvas. Estreou no Manager AI
+(`bca97a8`) e foi estendido superfície por superfície.
+
+**Fundação** (`6520038`, `1611818`): as três regras, `.liquid-capsule` e
+`.hairline` em `index.css`, StatsBar sem cards, títulos serif na plataforma.
+
+**Dashboard — "Palco + Modo Serviço"** (#27, `038786f`): o salão ilustrado
+vira o herói da página, com régua de raias por mesa abaixo. Tema noturno
+automático 18h–6h. Aqui a paleta de mesas foi unificada — existiam três
+cópias divergentes, e a mesma mesa era esmeralda num lugar e burgundy noutro.
+
+**Análises** (#31, `58fcf0a`): gráficos em cápsula, métricas no canvas,
+`ChartPanel` como casca compartilhada. Corrigiu `mutedStone` em
+`utils/colors.ts`, que discordava do token Tailwind de mesmo nome.
+
+**Clientes / CRM** (#32, `c91026a`) e **Voice / WhatsApp** (#33, `61d38d1`),
+este último introduzindo o token único de título de seção — a mesma classe
+estava escrita à mão em ~40 lugares.
+
+**A Partitura** (#48, `9ffe04a`): as raias por mesa ocupando a página inteira,
+em `/host-dashboard/service`. A conta saiu para `hooks/useServiceTimeline.ts`
+antes da tela existir, para que a régua compacta e a página não pudessem
+divergir sobre os fatos.
+
+**Mesas** (#50, `e7d84d3`): planta espacial clicável reaproveitando o
+`FloorPlanView`. Nenhuma mudança de API foi precisa — o endpoint já mandava
+`shape` e `position_x/y`; só a interface TypeScript não os declarava.
+
+**Onboarding + reserva pública** (#54, `d0f110a`): as duas últimas superfícies,
+e as que mais tinham acumulado desvio. Um painel inteiro na paleta cinza-fria
+do Tailwind, o passo de depósito em violeta, "reserva confirmada" em rose,
+três burgundies conviventes, 10 títulos pedindo bold num serif sem bold e 17
+emojis fazendo trabalho de ícone.
+
+**Limpeza no caminho**: `DashboardV2`, `SettingsV2`, `SofiaV2`,
+`ActivityFeedWidget` e `api/activity-feed.js` — código morto que a reforma
+tornou visível.
 
 ### 2026-06-05 — Warm Glass v1 fully shipped
 
@@ -300,4 +402,4 @@ Multi-phase migration from Nordic Clean (hard 1-px borders + flat fills) to the 
 
 ---
 
-_Last sync: 2026-06-05 — Warm Glass v1 rebrand changelog appended._
+_Last sync: 2026-08-25 — Liquid Glass v2 concluído em toda a plataforma; cobertura, anti-padrões recorrentes e guardas de teste registrados._

@@ -11,7 +11,17 @@ Auto-compiled articles live in `docs/wiki/`. Refresh with `node scripts/compile-
 
 ## Design System
 
-**Canonical source: [`DESIGN.md`](./DESIGN.md)** — covers product UI ("Warm Glass" — light-mode glass adapted from TwinMe's dark glass system), brand illustrations, social posts, the AI Studio prompt template, and the per-surface checklist. When in doubt, that file wins over Tailwind config or component code; update them to match. Glass primitives live at `client/src/components/common/glass/` (`<GlassCard>`, `<GlassPanel>`, `<GlassModal>`, `<GlassPill>`); page body has a fixed 4-orb warm radial gradient (`client/src/index.css`).
+**Canonical source: [`DESIGN.md`](./DESIGN.md)** — covers product UI, brand illustrations, social posts, the AI Studio prompt template, and the per-surface checklist. When in doubt, that file wins over Tailwind config or component code; update them to match.
+
+A camada vigente é **Liquid Glass v2**, concluída em toda a plataforma em 2026-08-25. Em uma frase: **vidro é para objetos, conteúdo vive direto no canvas** separado por `.hairline` e espaçamento. Utilities `.liquid-capsule` / `.hairline` e o gradiente de 4 orbes em `client/src/index.css`; primitivos de vidro em `client/src/components/common/glass/`. Referência viva: `client/src/pages/ManagerAIChatPage.tsx`.
+
+**Antes de escrever qualquer tela nova**, leia o checklist do `DESIGN.md`. Quatro desvios reapareceram em *toda* superfície da reforma e são o material de revisão obrigatório:
+1. Cor de ação (burgundy — e seu disfarce, `rose-600`) usada como estado. Estado tem cor própria: esmeralda / âmbar / vermelho.
+2. Cor fria num sistema quente (`violet`, `blue`, `slate`, e os cinzas azulados do Tailwind como hex cru).
+3. `font-bold` em `font-serif` — Instrument Serif não tem bold e `font-synthesis` está bloqueado.
+4. Emoji no lugar de ícone — use `ThiingsIcon`. Emoji só como ilustração.
+
+Três guardas de teste falham se essas decisões forem desfeitas: `paletteConsistency.test.ts` (paleta de mesas), `warmPalette.test.ts` (reserva + onboarding, 83 asserções) e o valor único de `mutedStone` em `utils/colors.ts`.
 
 ---
 
@@ -147,7 +157,7 @@ NFT-trace/bundle time per deploy.
 
 ## Design System
 
-See **[`DESIGN.md`](./DESIGN.md)** for the full design system (typography, palette, shadow/border rules, WCAG, brand illustrations, social posts).
+See **[`DESIGN.md`](./DESIGN.md)** for the full design system (typography, palette, glass tiers, shape language, WCAG, brand illustrations, social posts) and the Liquid Glass v2 layer that is currently in force.
 
 ---
 
@@ -411,7 +421,7 @@ Push to `main` branch triggers automatic Vercel deployment.
 
 ---
 
-**Last Updated**: June 10, 2026
+**Last Updated**: August 25, 2026
 
 ---
 
@@ -587,6 +597,20 @@ Push to `main` branch triggers automatic Vercel deployment.
 - [x] 12E-5: Reservation confirmation/modification/cancellation emails
 - [x] 12E-6: Activity log + feed on dashboard
 - [x] 12E-7: Cron health monitoring
+
+### Phase 13 — Reforma de design Liquid Glass v2 ✅ COMPLETE
+*Registro completo, com anti-padrões e guardas: [`DESIGN.md`](./DESIGN.md) → "Liquid Glass v2" e o changelog de 2026-08-25.*
+
+- [x] Fundação — as três regras, `.liquid-capsule` + `.hairline`, StatsBar sem cards, títulos serif
+- [x] Manager AI — a referência viva (cápsulas, máscara de rolagem, prosa sem card)
+- [x] Dashboard "Palco + Modo Serviço" — salão ilustrado como herói, régua de raias, tema noturno 18h–6h, paleta de mesas unificada (existia em 3 cópias divergentes)
+- [x] Análises — gráficos em cápsula, métricas no canvas, `ChartPanel` compartilhado; `mutedStone` unificado
+- [x] Clientes / CRM — tokens quentes, chips, serif
+- [x] Voice / WhatsApp — + token único de título de seção (estava à mão em ~40 lugares)
+- [x] A Partitura — raias por mesa em página inteira (`/host-dashboard/service`), sobre `useServiceTimeline` compartilhado com a régua compacta
+- [x] Mesas — planta espacial clicável (sem mudança de API: o endpoint já mandava os campos)
+- [x] Onboarding + reserva pública — as duas últimas superfícies, travadas por `warmPalette.test.ts`
+- [x] Limpeza — `DashboardV2`, `SettingsV2`, `SofiaV2`, `ActivityFeedWidget`, `api/activity-feed.js`
 
 
 ## Inteligência de mercado e técnica
