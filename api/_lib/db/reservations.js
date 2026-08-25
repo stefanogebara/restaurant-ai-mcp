@@ -271,9 +271,19 @@ const markReservationAsNoShow = async (restaurantId, recordId) => {
 };
 
 const getUpcomingReservations = async (restaurantId, timezone) => {
-  // Use restaurant-local time to determine "today" and "now"
-  const today = timezone ? getLocalDate(timezone) : new Date().toISOString().split('T')[0];
-  const currentTime = timezone ? getLocalTime(timezone) : new Date().toTimeString().slice(0, 5);
+  // Use restaurant-local time to determine "today" and "now".
+  //
+  // O fallback sem fuso é uma armadilha e já custou um painel vazio em
+  // produção (#76/#79): `toISOString()` é UTC mas `toTimeString()` é a hora
+  // LOCAL DO SERVIDOR. Numa lambda da Vercel (UTC) os dois coincidem por
+  // acidente; numa máquina de dev no Brasil eles discordam em 3h, e a data
+  // de um fuso acaba comparada com a hora de outro.
+  //
+  // Passe o fuso. O fallback existe só para não quebrar chamador antigo, e
+  // agora ao menos é internamente coerente: UTC nos dois.
+  const agora = new Date();
+  const today = timezone ? getLocalDate(timezone) : agora.toISOString().split('T')[0];
+  const currentTime = timezone ? getLocalTime(timezone) : agora.toISOString().slice(11, 16);
 
   const { data, error } = await supabase
     .from('reservations')
