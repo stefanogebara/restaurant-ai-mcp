@@ -1297,3 +1297,47 @@ comparada** (`horaAgora >= 21*60`), nunca assumida na prosa da mensagem.
 E o teste de sanidade que fechou o caso: **a mensagem do ✓ contradizia o relógio.**
 Dizia "criado tarde" às 20h. Quando a explicação de um verde não bate com o mundo,
 o verde é que está errado.
+
+## Consertar a escrita não prova a leitura (25/ago)
+
+O demo abria com o painel vazio no horário de jantar. Achei a causa na
+ESCRITA (seeds calculados em UTC), consertei, verifiquei no banco — `20:00 |
+21:30 | 22:00 | 22:30`, perfeito — e o painel **continuou vazio**.
+
+Eram dois bugs com o mesmo sintoma. O segundo estava na LEITURA:
+`getUpcomingReservations` recebia o `restaurantId` mas não o fuso, e o
+fallback comparava horários de parede contra o relógio do servidor. Às 20:27
+em São Paulo o filtro virava `time >= 23:27` e descartava as quatro.
+
+O erro de método foi **parar de investigar quando encontrei uma causa que
+explicava o sintoma**. Ela explicava. Só não era a única. E o sinal estava na
+mesa desde o começo: a auditoria via zero também nos demos do Mocotó e do
+Bráz, cujos seeds eu já tinha confirmado corretos no banco. Eu vi essa
+contradição, anotei, e segui atrás do bug que já estava perseguindo.
+
+Regra: quando o dado bruto está certo e a tela está errada, o bug está no
+caminho entre os dois — e confirmar o dado bruto NÃO é confirmar a tela.
+Verificação de ponta a ponta é na ponta que o usuário vê, não na camada onde
+eu mexi.
+
+Corolário barato: quando uma evidência contraria a hipótese vigente
+(«esse demo tem os seeds certos e mesmo assim aparece vazio»), ela é o
+próximo passo da investigação, não uma nota de rodapé.
+
+## Parâmetro opcional que muda o resultado é um bug esperando data marcada (25/ago)
+
+`getUpcomingReservations(restaurantId, timezone)` — o fuso é opcional. Três
+chamadores: dois passavam, um não. O que não passava era o demo, e ficou
+silenciosamente 3h errado por meses. A função não tinha teste nenhum.
+
+Quando o parâmetro omitido muda o RESULTADO (e não só a performance ou a
+formatação), «opcional» significa «cada chamador novo tem uma chance de
+errar». As opções, em ordem de preferência: torná-lo obrigatório; ou fazer o
+fallback ser obviamente degradado e logado; ou, no mínimo, um teste que fixe o
+comportamento das duas formas.
+
+O fallback aqui era pior que degradado: misturava `toISOString()` (UTC) para a
+data com `toTimeString()` (local do servidor) para a hora. Em produção os dois
+coincidem por acidente — a lambda roda em UTC — então o bug só aparecia com
+fuso não-UTC. Coincidência de ambiente é o pior tipo de teste: passa até
+mudar de máquina.
