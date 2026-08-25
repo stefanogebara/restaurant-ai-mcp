@@ -1,8 +1,18 @@
 /**
  * Cron Job: Cleanup Expired Demos
  *
- * Hard-deletes demo restaurants that expired more than 30 days ago and have NOT
- * been converted to real accounts (is_demo = true).
+ * Hard-deletes demo restaurants that expired more than 30 days ago.
+ *
+ * Um demo CONVERTIDO também é apagado, e isso é intencional: hoje converter
+ * só carimba `demo_converted_at`, e a conta real é uma LINHA SEPARADA criada
+ * pelo onboarding. A linha do demo é lixo depois do vencimento — filtrar por
+ * `demo_converted_at IS NULL` vazaria demos convertidos para sempre.
+ *
+ * O que NÃO pode ser apagado é linha com DONO REAL (ver `temDonoReal`). Esse
+ * cenário ainda não existe; vai existir quando a conversa de onboarding
+ * PROMOVER a linha do demo em vez de criar outra. O guarda está aqui antes
+ * disso de propósito — a operação é irreversível e a janela entre o bug e o
+ * estrago é de 30 dias.
  *
  * Deletion order (to respect foreign-key constraints):
  *  1. DELETE public.reservations WHERE restaurant_id = <demo_id>
@@ -20,6 +30,33 @@ const { isCronEnabled } = require('../_lib/cron-config');
 const { bearerEquals } = require('../_lib/secure-compare');
 initSentry();
 const logger = createSecureLogger('CronCleanupExpiredDemos');
+
+// Ver o comentário no teto de sanidade, abaixo.
+const MAX_DELECOES_POR_RODADA = 50;
+
+/**
+ * A linha tem um dono de verdade?
+ *
+ * @returns {Promise<boolean|null>} true = conta real (NÃO apagar),
+ *   false = user_id sintético de demo (pode apagar),
+ *   null = indeterminado (NÃO apagar, por segurança).
+ */
+async function temDonoReal(userId) {
+  if (!userId) return false;
+  try {
+    const { data, error } = await supabaseAdmin.auth.admin.getUserById(userId);
+    // "usuário não encontrado" é a resposta ESPERADA para um demo. Qualquer
+    // outro erro é indeterminação, e indeterminação não autoriza delete.
+    if (error) {
+      const naoEncontrado = error.status === 404 || /not found/i.test(error.message || '');
+      return naoEncontrado ? false : null;
+    }
+    return Boolean(data?.user);
+  } catch (err) {
+    logger.warn(`Falha ao verificar dono de ${userId}: ${err.message}`);
+    return null;
+  }
+}
 
 module.exports = async (req, res) => {
   // Verify CRON_SECRET Bearer token
@@ -58,7 +95,7 @@ module.exports = async (req, res) => {
     const { data: expiredDemos, error: fetchError } = await supabaseAdmin
       .schema('restaurant')
       .from('restaurant_config')
-      .select('id, restaurant_name, demo_expires_at, demo_contact_email')
+      .select('id, restaurant_name, demo_expires_at, demo_contact_email, user_id')
       .eq('is_demo', true)
       .lt('demo_expires_at', cutoff);
 
@@ -89,11 +126,60 @@ module.exports = async (req, res) => {
       return res.status(200).json(summary);
     }
 
+    // Teto de sanidade. Este cron faz DELETE duro de config, reservas, mesas,
+    // assinatura, memória do gerente e do agente de voz pago. Um dia normal
+    // apaga um punhado de demos; dezenas significa que o PREDICADO quebrou,
+    // não que apareceu movimento. Diante de operação irreversível, recusar e
+    // gritar custa uma linha viva a mais; seguir custa o banco.
+    if (demoCount > MAX_DELECOES_POR_RODADA) {
+      logger.error(`ABORTANDO: ${demoCount} candidatos, teto é ${MAX_DELECOES_POR_RODADA}`);
+      captureMessage(
+        `CronCleanupExpiredDemos: ABORTADO — ${demoCount} candidatos excede o teto de ${MAX_DELECOES_POR_RODADA}`,
+        'error',
+        { candidates: demoCount, cutoff }
+      );
+      await logCronRun('cleanup-expired-demos', { deleted: 0, abortado: true, candidatos: demoCount });
+      return res.status(200).json({
+        success: false,
+        aborted: 'candidate_count_exceeds_ceiling',
+        candidates_found: demoCount,
+        ceiling: MAX_DELECOES_POR_RODADA,
+        deleted_demos: 0,
+      });
+    }
+
     let deletedDemos = 0;
     let deletedReservations = 0;
     let failedDemos = 0;
+    let puladosPorDono = 0;
 
     for (const demo of expiredDemos) {
+      // Guarda de posse — a defesa contra promoção parcial (G5, risco 2).
+      //
+      // O user_id de um demo é um crypto.randomUUID() sintético: não existe
+      // em auth.users. O de uma conta real existe. Quando a linha do demo
+      // passar a ser PROMOVIDA (attach do user_id + is_demo=false), uma
+      // lambda que congele no meio do flip deixa a linha com dono real e
+      // is_demo ainda true — e este cron a apagaria 30 dias depois, com
+      // assinatura e histórico junto. O precedente de lambda congelada neste
+      // repo é farto (#53, G3).
+      //
+      // Na dúvida NÃO apaga: se a consulta a auth.users falhar, o resultado é
+      // null e a linha é pulada. Uma linha viva a mais é reversível; um
+      // cliente apagado não é.
+      const dono = await temDonoReal(demo.user_id);
+      if (dono !== false) {
+        puladosPorDono++;
+        const motivo = dono === null ? 'não foi possível verificar o dono' : 'user_id pertence a uma conta real';
+        logger.error(`PULANDO demo ${demo.id} (${demo.restaurant_name}): ${motivo}`);
+        captureMessage(
+          `CronCleanupExpiredDemos: linha com is_demo=true e dono real NÃO foi apagada`,
+          'error',
+          { demoId: demo.id, motivo, userId: demo.user_id ? 'presente' : 'ausente' }
+        );
+        continue;
+      }
+
       logger.info(`Processing demo ${demo.id} (${demo.restaurant_name}, expired ${demo.demo_expires_at})`);
 
       // Step 1: Delete all dependent table rows for this demo restaurant
@@ -207,6 +293,7 @@ module.exports = async (req, res) => {
       deleted_demos: deletedDemos,
       deleted_reservations: deletedReservations,
       failed_demos: failedDemos,
+      pulados_por_dono: puladosPorDono,
     };
 
     logger.info('Cleanup job complete:', JSON.stringify(summary, null, 2));

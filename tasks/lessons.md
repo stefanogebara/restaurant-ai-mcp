@@ -1253,3 +1253,47 @@ o formulário pedia — e o cadastro em si já era decisão do Stefano, porque e
 identidade da empresa e aceite de termos. Insistir no navegador depois disso era resolver
 o problema errado com capricho. Duas perguntas cedo (uma sobre quem cadastra, outra sobre
 como seguir com o bloqueio) valeram mais que qualquer flag do Chromium.
+
+---
+
+## Um `||` só protege contra falsy — e "desconhecido" raramente é falsy (25/ago)
+
+Escrevi `suggestTimezone(pais, cidade) || 'America/Sao_Paulo'` achando que o helper
+devolvia `null` quando não sabia o país. Ele devolve `'UTC'`. `'UTC'` é truthy, então o
+guarda inteiro era código morto — e eu segui três semanas achando que o bug do fuso
+estava resolvido, em duas correções seguidas.
+
+O erro não foi de fuso, foi de **presumir o contrato de retorno sem abrir a função**.
+`|| padrão` é seguro para `undefined`/`null`/`''`. Não é seguro contra um *sentinela*:
+`'UTC'`, `'Unknown'`, `'N/A'`, `-1`, `0`, `'default'`. Esses são valores que dizem
+"não sei" **vestidos de resposta**, e passam pelo `||` intactos.
+
+Regra: antes de escrever `x() || padrão`, abra `x()` e leia o `return` do caminho de
+falha. Se for sentinela, o teste tem que ser explícito (`=== 'UTC'`), não posicional.
+
+E o corolário que doeu mais: **o caminho que mais cai no sentinela costuma ser o que
+menos tem dado** — aqui, o restaurante sem ficha no Google, que é exatamente a persona
+que o fluxo existia para atender. O caso degradado não é o caso raro; é o caso-alvo.
+
+## Ausência de dado é alerta, nunca aprovação (25/ago)
+
+A auditoria de produção deu **✓ verde em cima deste bug**. O código era:
+
+```js
+const seeds = (sessao?.reservations || []).filter(r => r.date === hoje);
+if (seeds.length === 0) ok('nenhuma reserva hoje — criado tarde, seeds rolaram');
+```
+
+Duas falhas somadas: `hoje` vinha de `toISOString()` (UTC) num produto que só opera
+fora de UTC, e "zero resultados" virava aprovação com uma explicação plausível
+pendurada. Uma checagem que passa quando o campo some não está checando nada — é a
+mesma família da ALLOWLIST podre do #56 e do live-smoke que falhou 100/100 sem nunca
+criar um job.
+
+Regra: em asserção sobre produção, o caminho vazio é `alerta` por padrão. Se existe
+uma janela legítima em que o vazio é esperado, ela precisa ser **calculada e
+comparada** (`horaAgora >= 21*60`), nunca assumida na prosa da mensagem.
+
+E o teste de sanidade que fechou o caso: **a mensagem do ✓ contradizia o relógio.**
+Dizia "criado tarde" às 20h. Quando a explicação de um verde não bate com o mundo,
+o verde é que está errado.
