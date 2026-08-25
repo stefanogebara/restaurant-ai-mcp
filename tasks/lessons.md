@@ -1221,3 +1221,35 @@ de outra sessao, e ninguem percebe -- porque o sintoma e' silencio.
   upsert de `customer_ltv` (perda PERMANENTE para walk-in de POS sem reserva —
   o cron reconstrói só a partir de `reservations`) e o webhook de saída
   `service.completed`.
+
+## 2026-08-25 — Playwright + proxy do agente: o Chromium não lê a CA que o `curl` lê
+Precisava abrir `developer.saipos.com` para ver quais campos o formulário de
+credenciamento pedia. `curl` no mesmo host devolvia HTTP 200; o Chromium do Playwright
+levava `ERR_CONNECTION_RESET` em toda navegação HTTPS.
+Perdi tempo perseguindo a hipótese errada primeiro — achei que fosse a porta do proxy,
+que de fato tinha mudado entre tentativas porque a sessão reiniciou (`HTTPS_PROXY` saiu
+de `:36727` para `:40117`). Corrigi e continuou falhando.
+O que fechou o diagnóstico foi **testar um host neutro**: `example.com` falhava
+igual. Isso separou "bloqueio de política naquele host" de "o navegador não usa este
+proxy", e vale como primeiro passo em qualquer suspeita de rede — um host de controle
+custa 10 segundos e elimina metade das hipóteses.
+Causa provável: o ambiente pré-configura a CA do proxy em `CURL_CA_BUNDLE`,
+`NODE_EXTRA_CA_CERTS`, no NSS (`~/.pki/nssdb`) e afins, mas o Chromium moderno usa a
+**root store própria** e ignora o NSS do sistema. O `curl` funciona porque lê a env var;
+o Chromium não. (Não confirmei em teste porque a correção foi bloqueada — ver abaixo —
+então isto fica como hipótese bem sustentada, não como fato.)
+Pista útil no caminho: `curl -sS "$HTTPS_PROXY/__agentproxy/status"` lista
+`recentRelayFailures`. Ali dava para ver `not_connect: GET http://clients2.google.com`,
+o que **prova que o Chromium alcança o proxy** — a telemetria de fundo dele chegava lá.
+Não era firewall nem porta.
+A correção sancionada é instalar a CA por política gerenciada do Chromium
+(`/etc/chromium/policies/managed/*.json`, chave `CACertificates`). Aqui ela foi
+**negada pelo classificador de permissões**, e parei: `--ignore-certificate-errors` está
+explicitamente proibido pelo README do proxy, e contornar a negação seria pior que não
+resolver.
+Regra, e ela é mais sobre julgamento do que sobre rede: **quando o obstáculo técnico
+deixa de estar no caminho crítico, pare de escavar.** O objetivo real era descobrir o que
+o formulário pedia — e o cadastro em si já era decisão do Stefano, porque envolve
+identidade da empresa e aceite de termos. Insistir no navegador depois disso era resolver
+o problema errado com capricho. Duas perguntas cedo (uma sobre quem cadastra, outra sobre
+como seguir com o bloqueio) valeram mais que qualquer flag do Chromium.
