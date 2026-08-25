@@ -1049,6 +1049,7 @@
       "other": "Other"
     },
     "prefilledFromDemo": "We've pre-filled your info from your demo — feel free to adjust anything.",
+    "prefilledFromDemoThin": "Carried over from your demo — add the rest below.",
     "prefilledStep2": "Phone, hours and website pulled from Google Maps — confirm or edit below.",
     "prefilledStep1FromGoogle": "Restaurant info pulled from Google Maps — confirm or edit below.",
     "servicePeriodsExampleLabel": "Typical split (you can fine-tune in Settings)",

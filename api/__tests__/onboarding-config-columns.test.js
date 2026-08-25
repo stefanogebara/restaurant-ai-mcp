@@ -59,7 +59,14 @@ const COLUNAS_CONHECIDAS = new Set([
   'whatsapp_provisioning',
 ]);
 
-/** Chaves de primeiro nível do literal `restaurantConfigData` no código. */
+/**
+ * Chaves de primeiro nível do literal `restaurantConfigData` MAIS as
+ * atribuições `restaurantConfigData.x = ...` feitas depois dele (o
+ * conhecimento do demo entra assim, condicionalmente). Sem a segunda parte o
+ * guarda tinha um ponto cego: campo novo fora do literal escapava da
+ * checagem de coluna — exatamente a classe de bug que este teste existe para
+ * pegar.
+ */
 function lerChavesDoPayload() {
   const src = fs.readFileSync(
     path.join(__dirname, '..', 'onboarding', 'complete.js'), 'utf8'
@@ -90,6 +97,10 @@ function lerChavesDoPayload() {
     profundidade += (semComentario.match(/[{[]/g) || []).length;
     profundidade -= (semComentario.match(/[}\]]/g) || []).length;
   }
+  for (const m of src.matchAll(/restaurantConfigData\.([a-z_][a-z0-9_]*)\s*=/gi)) {
+    if (m[1] !== 'reservation_settings') chaves.add(m[1]);
+  }
+
   return chaves;
 }
 
