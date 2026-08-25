@@ -135,10 +135,29 @@ classifica a Get In, também do iFood, como concorrente direto. Registrar-se rev
 de produto ao dono do concorrente, e isso é chamada comercial do Stefano, não passo de
 spike. O sinal técnico já foi colhido: **o portão está aberto até onde se vê de fora.**
 
-**Se o Stefano mandar seguir**, o caminho é curto: cadastro em `developer.saipos.com` →
-credenciais automáticas → sondar o sandbox com o formato que o teardown já descobriu
-(`?table=[5]`, colchetes literais, resposta é array no topo, mesa livre → `[]`) → se
-responder, estender o `CHECK` de `pos_provider` para incluir `saipos`.
+**Decisão do Stefano em 2026-08-25:** ele faz o cadastro (é ato comercial em nome da
+empresa, com aceite de termos); a parte técnica fica comigo.
+
+**A sonda já está escrita e esperando credencial:** `scripts/probe-saipos-sandbox.js`.
+Roda com `SAIPOS_API_KEY=xxx node scripts/probe-saipos-sandbox.js` e responde a pergunta
+binária do spike. Detalhes que ela já embute, para ninguém redescobrir:
+
+- **Endpoint:** `GET https://order-api.saipos.com/sale-status-by-table-or-pad`
+- **Colchetes literais:** `?table=[5]`, um valor por chamada. A query é montada à mão
+  porque `encodeURIComponent` viraria `%5B5%5D` e o endpoint não aceita. Coberto por
+  asserção no próprio script.
+- **Sucesso é array no topo**, e `[]` **é sucesso** — significa mesa livre, não falha.
+  Confundir isso é o jeito mais fácil de ler "rota morta" numa rota viva.
+- **Dois modos de auth:** a doc oferece header `Authorization` *e* query `api_key`, sem
+  dizer qual vale no sandbox. A sonda tenta os dois e relata qual funcionou.
+- **Somente leitura, de propósito:** `solicitar-fechamento-mesa` **não** é chamado —
+  ele muda estado, pintando a mesa de laranja para o garçom. Sondar não pode disparar
+  isso, nem em loja de teste.
+- **HTTP 950** é modo de contingência da Saipos (GET bloqueado), não recusa de
+  credencial — a sonda distingue os dois no veredito.
+
+Se a sonda devolver array: estender o `CHECK` de `pos_provider` para incluir `saipos` e
+escrever o adaptador **do zero** (não existe nenhum — ver o primeiro achado acima).
 
 **Ressalva que sobrevive ao spike, e que muda o valor da rota:** mesmo com o portão aberto,
 o `close-sale` da Saipos **não registra pagamento** — ele pinta a mesa de laranja avisando
