@@ -1,0 +1,11 @@
+name: _probe (descartavel)
+on: pull_request
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: passo trivial
+        run: echo ok
+      - name: passo com secrets em if (a hipotese)
+        if: ${{ secrets.NAO_EXISTE != '' }}
+        run: echo nunca
