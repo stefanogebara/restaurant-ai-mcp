@@ -139,6 +139,32 @@ describe('POST /api/scrape-restaurant', () => {
     expect(result.top_reviews[0].text).toBe('Great pasta!');
   });
 
+  test('mantém até 5 reviews (máximo do Places v1) — 3 deixava o enriquecimento faminto', async () => {
+    // Verificado no funil em 24/ago: com 3 reviews o Fasano saiu com UM prato
+    // no "Sua IA já foi treinada". O prompt de insights aceita até 8.
+    process.env.GOOGLE_PLACES_API_KEY = 'test-key';
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        places: [{
+          displayName: { text: 'Fasano' },
+          types: ['restaurant'],
+          reviews: Array.from({ length: 6 }, (_, i) => ({
+            text: { text: `review ${i + 1}` }, rating: 5,
+            authorAttribution: { displayName: `Autor ${i + 1}` },
+          })),
+        }],
+      }),
+    });
+
+    const res = createRes();
+    await handler(createReq('POST', { query: 'Fasano', city: 'São Paulo' }), res);
+    expect(res.statusCode).toBe(200);
+    const result = res.body.results[0];
+    expect(result.top_reviews).toHaveLength(5);
+    expect(result.top_reviews[4].text).toBe('review 5');
+  });
+
   test('no places found returns 404', async () => {
     process.env.GOOGLE_PLACES_API_KEY = 'test-key';
     global.fetch = jest.fn().mockResolvedValue({
