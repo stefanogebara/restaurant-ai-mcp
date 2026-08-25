@@ -9,13 +9,14 @@
  */
 
 const crypto = require('crypto');
-const { generateSecureReservationId } = require('../_lib/secure-id');
 const { supabaseAdmin, getAllTables, getUpcomingReservations } = require('../_lib/supabase');
 const { verifyAuth } = require('../_lib/auth');
 const { setInternalCors, handlePreflight } = require('../_lib/cors');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { initSentry, captureException } = require('../_lib/sentry');
 const { checkAndApplyRateLimit } = require('../_lib/rate-limit');
+const { suggestTimezone } = require('../_lib/timezone');
+const { buildFakeTables, buildFakeReservations } = require('../_lib/demo-seeds');
 const { validateEmail } = require('../_lib/validation');
 const { Resend } = require('resend');
 
@@ -67,107 +68,6 @@ function normalizeRestaurantType(cuisineType) {
   if (lower.includes('fine') || lower.includes('gourmet') || lower.includes('upscale')) return 'fine_dining';
   if (lower.includes('fast') || lower.includes('quick')) return 'fast_casual';
   return 'casual_dining';
-}
-
-// ---------------------------------------------------------------------------
-// Fake table seed data
-// ---------------------------------------------------------------------------
-function buildFakeTables(restaurantId) {
-  return [
-    { restaurant_id: restaurantId, table_number: 1,  capacity: 2, location: 'window',  status: 'available', is_active: true },
-    { restaurant_id: restaurantId, table_number: 2,  capacity: 2, location: 'window',  status: 'available', is_active: true },
-    { restaurant_id: restaurantId, table_number: 3,  capacity: 4, location: 'indoor',  status: 'available', is_active: true },
-    { restaurant_id: restaurantId, table_number: 4,  capacity: 4, location: 'indoor',  status: 'available', is_active: true },
-    { restaurant_id: restaurantId, table_number: 5,  capacity: 4, location: 'indoor',  status: 'available', is_active: true },
-    { restaurant_id: restaurantId, table_number: 6,  capacity: 6, location: 'indoor',  status: 'available', is_active: true },
-    { restaurant_id: restaurantId, table_number: 7,  capacity: 6, location: 'terrace', status: 'available', is_active: true },
-    { restaurant_id: restaurantId, table_number: 8,  capacity: 8, location: 'terrace', status: 'available', is_active: true },
-  ];
-}
-
-// ---------------------------------------------------------------------------
-// Fake reservation seed data
-// ---------------------------------------------------------------------------
-const FAKE_NAMES = [
-  'Ana Costa', 'Pedro Santos', 'Julia Oliveira', 'Rafael Lima',
-  'Mariana Silva', 'Lucas Ferreira', 'Camila Souza', 'Gabriel Almeida',
-];
-
-const FAKE_TIMES = ['12:00', '12:30', '13:00', '19:00', '19:30', '20:00', '20:30', '21:00'];
-
-function buildFakeReservations(restaurantId) {
-  const reservations = [];
-  const now = new Date();
-  const todayStr = now.toISOString().split('T')[0];
-
-  // 3 reservas "de hoje" para o painel não nascer vazio — em horários
-  // RELATIVOS à criação. Os horários fixos 19:30–20:30 faziam um demo criado
-  // às 22h abrir com "Tudo em Dia — sem reservas futuras" logo depois do aha
-  // (walkthrough 24/ago). Regra: próximos slots de 30min a partir de +60min;
-  // o que passar de 23:30 rola para o jantar de amanhã.
-  const todayNames = ['Ana Costa', 'Pedro Santos', 'Julia Oliveira'];
-  const todayParty = [2, 4, 3];
-  const amanha = new Date(now);
-  amanha.setDate(amanha.getDate() + 1);
-  const amanhaStr = amanha.toISOString().split('T')[0];
-  const fallbackTimes = ['19:30', '20:00', '20:30'];
-  for (let i = 0; i < 3; i++) {
-    const slot = new Date(now.getTime() + (60 + i * 30) * 60000);
-    slot.setMinutes(slot.getMinutes() < 30 ? 30 : 60, 0, 0);
-    const sameDay = slot.toISOString().split('T')[0] === todayStr
-      && (slot.getUTCHours() < 23 || (slot.getUTCHours() === 23 && slot.getUTCMinutes() <= 30));
-    reservations.push({
-      reservation_id: generateSecureReservationId(),
-      restaurant_id: restaurantId,
-      customer_name: todayNames[i],
-      customer_phone: null,
-      customer_email: null,
-      party_size: todayParty[i],
-      date: sameDay ? todayStr : amanhaStr,
-      time: sameDay
-        ? `${String(slot.getUTCHours()).padStart(2, '0')}:${String(slot.getUTCMinutes()).padStart(2, '0')}`
-        : fallbackTimes[i],
-      status: 'confirmed',
-      special_requests: i === 2 ? 'Aniversário' : null,
-    });
-  }
-
-  // 5 future reservations spread over next days
-  for (let i = 0; i < 5; i++) {
-    const resDate = new Date(now);
-    resDate.setDate(resDate.getDate() + i + 1);
-    const dateStr = resDate.toISOString().split('T')[0];
-
-    reservations.push({
-      reservation_id: generateSecureReservationId(),
-      restaurant_id: restaurantId,
-      customer_name: FAKE_NAMES[i + 3],
-      customer_phone: null,
-      customer_email: null,
-      party_size: 2 + (i % 4),
-      date: dateStr,
-      time: FAKE_TIMES[i % FAKE_TIMES.length],
-      status: 'confirmed',
-      special_requests: null,
-    });
-  }
-
-  // One checked-in reservation for today (realistic dinner time)
-  reservations.push({
-    reservation_id: generateSecureReservationId(),
-    restaurant_id: restaurantId,
-    customer_name: 'Isabela Martins',
-    customer_phone: null,
-    customer_email: null,
-    party_size: 3,
-    date: todayStr,
-    time: '20:00',
-    status: 'confirmed',
-    checked_in_at: now.toISOString(),
-    special_requests: null,
-  });
-
-  return reservations;
 }
 
 // ---------------------------------------------------------------------------
@@ -517,7 +417,11 @@ async function handleCreate(req, res) {
 
   // Seed fake reservations (fire best-effort — don't fail if it errors)
   try {
-    const fakeReservations = buildFakeReservations(restaurantId);
+    // Fuso pelo país resolvido (mesmo helper do onboarding). Sem isto os
+    // seeds nascem em UTC e o painel de um restaurante brasileiro criado às
+    // 19h abre vazio.
+    const fusoDoDemo = suggestTimezone(resolvedCountry || effectiveCountry, city) || 'America/Sao_Paulo';
+    const fakeReservations = buildFakeReservations(restaurantId, fusoDoDemo);
     const { error: seedError } = await supabaseAdmin
       .from('reservations')
       .insert(fakeReservations);
