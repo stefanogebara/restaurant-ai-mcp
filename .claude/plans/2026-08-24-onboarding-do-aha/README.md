@@ -1,7 +1,7 @@
 # Onboarding do Aha — a ponte que cumpre a promessa do demo
 
 **Data:** 2026-08-24 (noite) · **Sucede:** `.claude/plans/2026-08-24-demo-conversa/` (funil do demo, completo)
-**Status:** EM EXECUÇÃO — G0 mergeado (#63). D3 resolvida (norte = G5 Onboarding em Conversa). D4 aberta. Bônus do G0: mapper de horários do prefill lia .open/.close (tudo caía nos defaults) e a suíte do complete.js rodava sem userId (escrita de config nunca exercitada).
+**Status:** EM EXECUÇÃO — G0 (#63) e G1 (#65) mergeados. D3 resolvida (norte = G5 Onboarding em Conversa). D4 aberta. Bônus do G0: mapper de horários do prefill lia .open/.close (tudo caía nos defaults) e a suíte do complete.js rodava sem userId (escrita de config nunca exercitada).
 
 ---
 
@@ -128,17 +128,17 @@ com pedido explícito). Recomendo (a).
 
 ### G1 — A ponte honesta (login que continua o aha)
 
-- [ ] 1.1 **Login demo-aware**: com `from=demo&token`, buscar
+- [x] 1.1 **Login demo-aware**: com `from=demo&token`, buscar
       `/api/demo/session` (público) e renderizar variante: headline
       **"Assumir o {restaurant_name}"**, sub "Crie sua conta grátis — seu demo
       e sua recepcionista ficam com você", Google como ação primária, painel
       esquerdo troca os 3 feature-bullets genéricos por um card do demo (nome,
       cozinha·cidade, "sua recepcionista está de plantão"). Sem token → tela
       atual intacta.
-- [ ] 1.2 Corrida `replaceState` × `extraRedirectParams` (`Login.tsx:60-75` vs
+- [x] 1.2 Corrida `replaceState` × `extraRedirectParams` (`Login.tsx:60-75` vs
       `:126`): capturar params numa ref no mount, antes do scrub — o fallback
       de localStorage deixa de ser o único fio.
-- [ ] 1.3 Copy D4 aplicada (após decisão).
+- [ ] 1.3 Copy D4 aplicada — BLOQUEADA na decisão do Stefano (posicionamento).
 
 ### G2 — Onboarding que respeita o demo (compressão de fluxo)
 
