@@ -24,12 +24,12 @@ import Step2Contact from '../components/onboarding/Step2Contact';
 import Step3TablesAndSettings from '../components/onboarding/Step3TablesAndSettings';
 import Step4Review from '../components/onboarding/Step4Review';
 import Step5ImportHistory from '../components/onboarding/Step5ImportHistory';
-import { toTileType } from '../lib/restaurantTypeSlug';
 import Step6TeachAI from '../components/onboarding/Step6TeachAI';
 import OnboardingSuccessModal from '../components/onboarding/OnboardingSuccessModal';
 import OnboardingStepSidebar from '../components/onboarding/OnboardingStepSidebar';
 import type { OnboardingData } from '../types/onboarding.types';
 import { applyScrapedData, estimarPerfilPeloPorte, type ScrapedRestaurant } from '../lib/applyScrapedData';
+import { mapDemoSessionToOnboarding } from '../lib/demoPrefill';
 import { authFetch } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { trackOnboardingStepCompleted, trackOnboardingCompleted } from '../lib/analytics';
@@ -215,103 +215,11 @@ export default function Onboarding() {
         if (!data.success || !data.restaurant) return;
         const r = data.restaurant;
         setOnboardingData((prev) => {
-          const updates: Partial<OnboardingData> = {};
-          // Prefill preenche VAZIOS — nunca vence o que o dono já digitou
-          // (corrida prefill × digitação rápida no Passo 1).
-          if (r.restaurant_name && !prev.restaurant_name) updates.restaurant_name = r.restaurant_name;
-          if (r.restaurant_type && !prev.restaurant_type) updates.restaurant_type = toTileType(r.restaurant_type);
-          if (r.city && !prev.city) updates.city = r.city;
-          // O demo grava código ISO em `country`; o Passo 1 valida
-          // `country_code` e o seletor de cidade é gateado nele. Sem derivar
-          // os dois, o convert batia em "País é obrigatório" com o país
-          // conhecido — e ao corrigir, perdia a cidade prefillada.
-          if (r.country && /^[A-Za-z]{2}$/.test(r.country) && !prev.country_code) {
-            const iso = r.country.toUpperCase();
-            updates.country_code = iso;
-            try {
-              updates.country =
-                new Intl.DisplayNames(['en'], { type: 'region' }).of(iso) || iso;
-            } catch { updates.country = iso; }
-          } else if (r.country && r.country !== 'Unknown' && !prev.country) {
-            updates.country = r.country;
-          }
-          // Step 2: Contact & Hours (from Google Maps scrape)
-          if (r.phone && !prev.phone_number) updates.phone_number = r.phone;
-          // O placeholder <slug>@demo.seatable.one satisfaz o NOT NULL do
-          // banco do demo — jamais pode virar o e-mail transacional do
-          // restaurante real (passava em todas as regex e ia parar no
-          // restaurant_registry).
-          if (r.email && !prev.email && !r.email.endsWith('@demo.seatable.one')) {
-            updates.email = r.email;
-          }
-          // Pull richer fields from the persisted Google Places scrape so the
-          // owner doesn't have to re-type info we already proved we know on
-          // the demo dashboard (address, website, editorial summary, etc).
-          // scraped_data is the same JSONB returned by /api/scrape-restaurant.
-          const scraped = r.scraped_data && typeof r.scraped_data === 'object' ? r.scraped_data : null;
-          if (scraped) {
-            // Website: prefer scrape (canonical from Google) over user-typed.
-            if (!updates.website && typeof scraped.website === 'string' && scraped.website) {
-              updates.website = scraped.website;
-            }
-            // Phone fallback: if column was empty but scrape has it, use scrape.
-            if (!updates.phone_number && typeof scraped.phone === 'string' && scraped.phone) {
-              updates.phone_number = scraped.phone;
-            }
-            // Cuisine: scrape is more accurate than restaurant_type fallback
-            // ('Restaurant' default) because Google Places types are specific.
-            // toTileType traduz o texto livre do Google para o vocabulário do
-            // wizard — sem isso a cozinha real virava 'other' no banco.
-            if (typeof scraped.cuisine_type === 'string' && scraped.cuisine_type
-                && !prev.restaurant_type
-                && (!updates.restaurant_type || updates.restaurant_type === 'casual-dining')) {
-              updates.restaurant_type = toTileType(scraped.cuisine_type);
-            }
-            // Porte estimado (avaliações + preço) → o passo de mesas chega
-            // proposto. Questionário respondido vence a estimativa.
-            if (!prev.profile_data?.seat_count) {
-              const estimativa = estimarPerfilPeloPorte(scraped);
-              if (estimativa) {
-                updates.profile_data = { ...prev.profile_data, ...estimativa };
-              }
-            }
-          }
-          if (r.business_hours && typeof r.business_hours === 'object') {
-            // Convert scraped hours to onboarding format. O demo grava
-            // {open_time, close_time, is_open} — o mapper antigo lia
-            // .open/.close (inexistentes) e TODO horário prefillado caía nos
-            // defaults 12:00–23:00 em silêncio (auditoria 24/ago).
-            const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-            const hours = days.map(day => {
-              const dayHours = r.business_hours[day] || r.business_hours[day.toLowerCase()];
-              if (!dayHours || dayHours === 'Closed' || dayHours === 'closed' || dayHours.is_open === false) {
-                return { day, is_open: false, open_time: '12:00', close_time: '23:00' };
-              }
-              if (typeof dayHours === 'string') {
-                const [open, close] = dayHours.split('-').map((s: string) => s.trim());
-                return { day, is_open: true, open_time: open || '12:00', close_time: close || '23:00' };
-              }
-              if (typeof dayHours === 'object') {
-                return {
-                  day,
-                  is_open: true,
-                  open_time: dayHours.open_time || dayHours.open || '12:00',
-                  close_time: dayHours.close_time || dayHours.close || '23:00',
-                };
-              }
-              return { day, is_open: true, open_time: '12:00', close_time: '23:00' };
-            });
-            updates.business_hours = hours;
-          }
-          // Banner honesto (G2.6): "Preenchemos com os dados do seu demo" só
-          // se realmente veio mais que o nome. Um convert do caminho
-          // "restaurante novo" chegava com um campo e o mesmo banner —
-          // prometer preenchimento que não aconteceu corrói a confiança
-          // exatamente onde ela mais importa.
-          const camposUteis = Object.keys(updates).filter(
-            (k) => k !== 'restaurant_name' && k !== 'profile_data',
-          ).length;
-          prefillSubstancialRef.current = camposUteis >= 2;
+          // Mapeamento extraído para lib/demoPrefill.ts (G4): era aqui que
+          // moravam as duas corridas e quatro bugs de mapeamento, todos sem
+          // teste porque testá-los exigia montar a página inteira.
+          const { updates, substancial } = mapDemoSessionToOnboarding(r, prev);
+          prefillSubstancialRef.current = substancial;
           return { ...prev, ...updates };
         });
         setIsPreFilledFromDemo(true);
