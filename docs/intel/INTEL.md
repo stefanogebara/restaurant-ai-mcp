@@ -11,6 +11,60 @@
 
 ## Em aberto — precisa de decisão do Stefano
 
+### [DISCUTIR 9/15] O loop integrado deixou de ser exclusividade de quem é um produto só
+**Data:** 2026-08-25 · **Eixos:** P2 A1 D2 E1 L3
+**Fontes primárias:** [Resy newsroom, 13/ago](https://blog.resy.com/newsroom/resy-toast-integration-digital-chits/) · [Square/OpenTable, 18/ago](https://www.nasdaq.com/press-release/square-and-opentable-deepen-strategic-partnership-unified-dining-guest-and-payment) · cobertura: [NRN](https://www.nrn.com/restaurant-technology/square-and-toast-deepen-their-ties-to-reservations-partners)
+
+**O que é:** dois movimentos gêmeos em seis dias. Em 13/08 a Resy integrou-se aos Digital
+Chits da Toast: notas de guestbook, preferências, histórico de visitas e ocasião especial
+aparecem **em tempo real na tela do POS e no handheld**, no lugar da comanda impressa e do
+repasse do host para o garçom — a Resy se declara "a única plataforma de reserva terceira
+com integração de duas vias". Em 18/08 a Square ampliou para "preferred partner" com a
+OpenTable, juntando comportamento de reserva (OpenTable) com itens, gasto e meio de
+pagamento (Square) numa visão única de guest, opt-in em EUA, Canadá, Reino Unido,
+Austrália, Irlanda e França. O único número em qualquer das duas fontes é a Resy citando o
+próprio 2026 Regulars Report: até 50% do volume vem de 7% dos clientes, e só 30% dos
+clientes dizem se sentir reconhecidos.
+
+**Por que toca este projeto:** é literalmente o loop que este repo já roda —
+`api/_lib/pos/service-completion-core.js` grava `service_records` → `revenue_records` →
+upsert em `customer_ltv`, e `api/_services/restaurantSnapshot.js` lê de volta
+`is_regular` / `visit_count` / preferências. Só que aqui isso alimenta **o prompt do
+Manager AI**, não a tela do garçom. O equivalente ao Digital Chit — o perfil do cliente
+aparecendo no momento de sentar, via `api/guest-profile.js` — não existe no salão.
+
+**Ameaça a tese, não o mercado — e a distinção importa:** Brasil não está na lista
+geográfica da Square, e a Resy depende do POS da Toast, que não opera em SP. O
+`CHECK IN ('manual','square','toast','clover','other')` em
+`database/migrations/20260126_pos_and_revenue.sql` é inteiro americano. O dono em
+Pinheiros não perde nada este mês. O que se perde é tempo: agora existem **dois
+precedentes de referência** para um POS brasileiro copiar, e quando Saipos ou Consumer
+copiarem, o caminho genérico de push por API-key (`api/pos/service-completion.js` +
+`api/_lib/api-key-auth.js`) decide se o Seatable é o parceiro de dado desse POS ou o
+substituído por ele.
+
+**O que a fonte não prova:** as duas são release, não documentação — nenhum payload,
+latência, esquema de API ou tier. A Square **não** afirma bidirecionalidade; quem afirma
+"duas vias" é a Resy sobre a Toast. Boa parte do que a imprensa descreveu como feito está
+no release como "future enhancements". Zero dado de adoção, zero efeito medido sobre
+ticket, retenção ou no-show. É por isso que o item para em DISCUTIR: não há experimento
+honesto a rodar contra um release sem API.
+
+**Não funde com o [DISCUTIR 11/15] de 22/08** (DoorDash/SevenRooms, Amex/Tock): aquele é
+consolidação de capital do lado da demanda, plataforma de reserva comprando plataforma de
+reserva para acumular guestbook. Este é interoperabilidade do lado da operação, o POS
+puxando o guestbook alheio para o salão e devolvendo o gasto. Mesmo prêmio, mecanismos
+distintos — referência cruzada, não fusão.
+
+**A pergunta:** a `bets[0]` supõe que o loop integrado só existe dentro de um produto
+único, e dois pares de concorrentes acabaram de montá-lo por parceria. (a) O diferencial
+em SP continua sendo "end-to-end", ou vira "o único loop que existe em português, dentro
+do POS que a casa já usa" — o que promove `saipos-portao` de spike a espinha do roadmap?
+(b) E a perna que falta aqui é a de **leitura no salão**: o Digital Chit equivalente entra
+agora, ou fica esperando o POS brasileiro existir?
+
+---
+
 ### [DISCUTIR 10/15] Os dois motores de voz vão divergir em turn-taking
 **Data:** 2026-08-24 · **Eixos:** P3 A2 D2 E1 L2
 **Fontes:** [ElevenLabs, 03/ago](https://elevenlabs.io/docs/changelog/2026/8/3) · [Twilio, 06/ago](https://www.twilio.com/en-us/changelog/twilio-voice-js-sdk-noise-cancellation-reference-components)
@@ -144,6 +198,43 @@ deixa de silenciar só template e passa a silenciar o atendimento inteiro.
 
 ---
 
+**Absorvido em 2026-08-25 — a terceira página viva, e um boato desmentido.** Um item novo
+sobre a política de preço da Meta para "AI Providers" foi analisado e **funde-se aqui**:
+mecanismo distinto, mesmo movimento (a Meta reprecificando tráfego não-template), mesma
+decisão, mesmo arquivo. Score mantido em 10.
+
+*O que se confirmou na [fonte primária](https://developers.facebook.com/documentation/business-messaging/whatsapp/pricing/ai-providers):*
+a Meta cobra "AI Providers" **por mensagem não-template entregue**, não por token. A
+definição vem do ToS de 15/01/2026 e alcança *assistente de propósito geral* — não
+assistente de um negócio específico. Vigência real: 16/02/2026 na Itália, **11/03/2026 no
+Brasil (+55), ainda vigente**, e 11/03 a 12/05/2026 em 29 países europeus, revogado na
+Europa em 13/05. O tráfego aparece como `pricing_category: "AI_BOT"` na Pricing Analytics
+API e `"category": "general_purpose_ai"` no webhook de status.
+
+*O que se desmentiu, para não voltar à fila:* não existe cobrança de US$ 2,00 por milhão
+de tokens, não existe vigência 01/08/2026, e não é cobrança do Business Agent da Meta —
+esse segue de ativação gratuita.
+
+*A contradição cresceu para três páginas.* A página de AI Providers afirma que os demais
+negócios seguem **não** sendo cobrados por não-template em janela aberta — o oposto do que
+a página de non-template messages promete para 01/10. Nenhuma das três carrega data de
+publicação.
+
+**O acionável que serve às duas políticas, verificado no código:**
+`api/_lib/channels/meta-adapter.js` descarta todo webhook de status na linha
+`if (!value?.messages) return null;`, e `grep` por `pricing_category|general_purpose_ai|AI_BOT`
+em `api/` devolve **zero** ocorrências. O repo nunca lê como a Meta está classificando e
+cobrando esta WABA. Ligar essa leitura dá de uma vez o alarme de reclassificação AI_BOT e
+a telemetria de custo por conversa que 01/10 vai exigir.
+
+**Segunda pergunta, então:** o Seatable atende cliente final com LLM próprio numa WABA
+brasileira. A leitura literal do ToS diz que ele **não** é "AI Provider" — é assistente de
+um negócio específico —, mas quem enquadra é a Meta, e o Brasil está na lista vigente
+desde 11/03. Vale escrever essa fronteira e checar com o BSP, ou é preocupação para
+arquivar?
+
+---
+
 ### [DISCUTIR 8/15] Qual é o teto de concorrência do workspace ElevenLabs?
 **Data:** 2026-08-24 · **Eixos:** P2 A2 D1 E2 L1
 **Fonte:** [ElevenLabs changelog, 17/ago](https://elevenlabs.io/docs/changelog/2026/8/17)
@@ -266,6 +357,9 @@ Promovidos em 2026-08-24, os quatro com âncora verificada:
 
 ## Radar
 
+- `2026-08-25` **ANPD notificou 22 plataformas sob os Decretos 12.975/12.976 e o ECA Digital** — 13 de rede social/mensageria e 9 de loja de app / IA generativa (inclui Claude, ChatGPT, Gemini, Meta AI), com 10 dias úteis para responder sobre prevenção a conteúdo criminoso. **Não alcança este projeto:** o critério é difusão ou intermediação *pública* de conteúdo de terceiros, e a notificação restringe o WhatsApp aos "canais públicos" — funcionalidade que nenhum dos três adapters toca. Base legal é Marco Civil/ECA, não LGPD. Interessa como mudança estrutural: a ANPD passou de normatizadora a fiscal operacional, nomeando fornecedores de IA. [ANPD](https://www.gov.br/anpd/pt-br/assuntos/noticias/anpd-avalia-como-plataformas-digitais-atuam-para-prevenir-conteudos-criminosos-e-proteger-criancas-e-mulheres-na-internet) · 7/15
+- `2026-08-25` **"SaaSpocalypse": rede de 8 lojas construiu o próprio pacote de ops com LLM** — a Keva fez onboarding, checklists e previsão de inventário internamente e projeta US$ 30 mil/ano de economia em assinaturas. Três ressalvas que esvaziam a manchete: n=1, economia **projetada e não medida**, e o construído é ops de rede — não reserva, não voz, não CRM de cliente. Starbucks e Mod Pizza estão no título só por serem as outras manchetes do mesmo episódio de podcast. Se morde alguém, morde SaaS de ops multi-unidade, não atendimento por voz para independente que não tem time técnico. [NRN](https://www.nrn.com/quick-service/starbucks-mod-pizza-and-the-potential-for-a-saaspocalypse) · 5/15
+- `2026-08-25` **Vercel troca o toggle "Sensitive" por tipos Config e Secret** — variáveis existentes migram sozinhas, flags `--sensitive`/`--no-sensitive` seguem mapeando, sem prazo e sem impacto em runtime. O único efeito real: a policy de time "Enforce Sensitive Environment Variables" **deixou de ser aplicada** pela CLI, substituída por "Separate Production Secret Values" — relevante só porque o `update-vercel-env.sh` da raiz escreve env vars direto em produção. [Vercel](https://vercel.com/changelog/environment-variables-now-use-config-and-secret-types) · 6/15
 - `2026-08-24` **Brendi capta US$ 6,6 mi para pedido por WhatsApp** — 7.100 casas e 420 mil pedidos/semana autodeclarados, o que dá ~8,5 pedidos por dia por restaurante; 85% da base em cidades pequenas; anjo Patrick Sigrist (iFood). É delivery próprio, não reserva nem voz telefônica. **Não invalida a `bets[2]`** — a aposta fala de players *americanos* subatenderem o Brasil, e uma startup brasileira crescendo confirma a premissa. Ocupa o ativo transacional e o topo do funil da Olímpia. *Teto REGISTRAR pela trava G1: nenhuma fonte primária abriu — o site bloqueou com Cloudflare em duas tentativas e os três veículos repetem o texto da empresa palavra por palavra.* [cobertura](https://www.latamrepublic.com/brendi-lands-us-6-6m-led-by-propel-ventures-to-transform-restaurant-ordering/) · 9/15, travado
 - `2026-08-24` **Salão Abrasel, 15–16/09 na Bienal do Ibirapuera** — 1ª edição, entrada grátis para associado, expectativa *do organizador* de 12 mil visitas de donos de bar e restaurante; apresentado por Ambev, Keeta e Stone. A vitrine de IA é só back-of-house (estoque, CMV, cocção) — nenhum expositor faz voz, reserva ou CRM. Nenhum arquivo do repo muda; é decisão de agenda e expira em 16/09. [Abrasel](https://abrasel.com.br/noticias/noticias/salao-abrasel-5-motivos-para-participar-do-evento/) · 7/15
 
