@@ -23,6 +23,12 @@ jobs:
   smoke:
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    # Exposto no nivel do job porque o contexto `secrets` NAO existe dentro de
+    # `if:` — usa-lo la e erro de validacao do workflow, que mata a run antes de
+    # criar qualquer job (0s, sem log). Foi o que derrubou 100 de 100 runs deste
+    # arquivo. Em `if:` o que se le e `env.`, nao `secrets.`.
+    env:
+      SANDBOX_EMAIL: ${{ secrets.SANDBOX_EMAIL }}
     steps:
       - uses: actions/checkout@v5
 
@@ -111,7 +117,7 @@ jobs:
       # Requires sandbox credentials (secrets.SANDBOX_EMAIL/SANDBOX_PASSWORD).
       # 2026-04-29: caught customer detail 500 (churn_risk/ltv_score phantom columns).
       - name: Admin pages smoke
-        if: ${{ secrets.SANDBOX_EMAIL != '' }}
+        if: env.SANDBOX_EMAIL != ''
         run: node scripts/test-admin-pages.js
         env:
           SANDBOX_EMAIL: ${{ secrets.SANDBOX_EMAIL }}
