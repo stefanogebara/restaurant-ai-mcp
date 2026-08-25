@@ -152,7 +152,7 @@ export default function Step4Review({ data, onBack, onComplete, isSubmitting, go
       className="space-y-6"
     >
       <div>
-        <h2 className="font-serif text-2xl font-bold text-deep-charcoal mb-2">{t('onboarding.step4Heading')}</h2>
+        <h2 className="font-serif text-3xl text-deep-charcoal mb-2">{t('onboarding.step4Heading')}</h2>
         <p className="text-stone-gray text-sm">{t('onboarding.step4Subtitle')}</p>
       </div>
 

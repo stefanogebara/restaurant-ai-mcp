@@ -47,7 +47,7 @@ export default function OnboardingSuccessModal({ countdown, ownReferral, booking
           {/* Booking URL — the most important thing to share */}
           {bookingUrl && (
             <div className="mb-6 border border-glass-border-dark rounded-2xl p-4 text-left">
-              <p className="text-[12px] font-semibold uppercase tracking-wider text-burgundy mb-2">
+              <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-burgundy mb-2">
                 {t('onboarding.yourBookingLink', 'Seu link de reservas')}
               </p>
               <p className="text-[12px] text-stone-gray mb-3">
@@ -116,9 +116,10 @@ export default function OnboardingSuccessModal({ countdown, ownReferral, booking
             ref={primaryButtonRef}
             type="button"
             onClick={() => { window.location.href = '/host-dashboard/simple'; }}
-            className="w-full px-8 py-3 bg-burgundy hover:bg-burgundy-dark text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all duration-300 mb-2"
+            className="w-full px-8 py-3 bg-burgundy hover:bg-burgundy-dark text-white font-semibold rounded-[100px] flex items-center justify-center gap-2 transition-all duration-300 mb-2"
           >
-            {t('onboarding.goToDashboard')} →
+            {t('onboarding.goToDashboard')}
+            <ThiingsIcon name="arrow-right" pxSize={15} />
           </button>
           <p className="text-sm text-stone-gray text-center">
             {t('onboarding.redirectingIn', { count: countdown })}

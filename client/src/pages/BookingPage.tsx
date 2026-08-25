@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import ThiingsIcon from '../components/common/ThiingsIcon';
+import ThiingsIcon, { type IconName } from '../components/common/ThiingsIcon';
 import BookingForm from '../components/booking/BookingForm';
 import { useRestaurantBySlug } from '../hooks/useBooking';
 import { preloadAndSwitchLanguage } from '../i18n/config';
@@ -185,13 +185,13 @@ export default function BookingPage() {
           <div className="w-16 h-16 bg-red-600/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <ThiingsIcon name="close" pxSize={32} className="text-red-600" />
           </div>
-          <h1 className="text-xl font-bold text-deep-charcoal mb-2">{t('reservations.restaurantNotFound')}</h1>
+          <h1 className="font-serif text-2xl text-deep-charcoal mb-2">{t('reservations.restaurantNotFound')}</h1>
           <p className="text-sm text-stone-gray mb-4">
             {t('reservations.restaurantNotFoundDesc')}
           </p>
           <Link
             to="/"
-            className="inline-block px-5 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white font-semibold rounded-xl transition-colors text-sm"
+            className="inline-block px-5 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white font-semibold rounded-[100px] transition-colors text-sm"
           >
             {t('common.goBack', 'Go back')}
           </Link>
@@ -274,7 +274,7 @@ export default function BookingPage() {
               ) : (
                 <span
                   aria-hidden="true"
-                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 font-serif text-[40px] sm:text-[48px] font-bold text-white/[0.06] leading-tight select-none pointer-events-none text-center max-w-[92%] overflow-hidden break-words"
+                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 font-serif text-[40px] sm:text-[48px] text-white/[0.06] leading-tight select-none pointer-events-none text-center max-w-[92%] overflow-hidden break-words"
                 >
                   {restaurant.name}
                 </span>
@@ -284,15 +284,15 @@ export default function BookingPage() {
               <h2 className="font-serif text-[24px] sm:text-[28px] font-medium text-white tracking-tight mb-1 break-words">
                 {restaurant.name}
               </h2>
-              <p className="text-[13px] text-stone-300 font-light">
+              <p className="text-[13px] text-white/75 font-light">
                 {restaurantType} &middot; {t('booking.locationFormat', { city: restaurant.city, country: translatedCountry, defaultValue: '{{city}}, {{country}}' })}
               </p>
             </div>
           </div>
 
           <div className="mb-7">
-            <DetailRow icon="✹" label={t('reservations.cuisine')} value={restaurantType} />
-            <DetailRow icon="⏱" label={t('reservations.hoursToday')} value={getTodayHours()} />
+            <DetailRow icon="utensils" label={t('reservations.cuisine')} value={restaurantType} />
+            <DetailRow icon="clock" label={t('reservations.hoursToday')} value={getTodayHours()} />
           </div>
         </div>
 
@@ -313,7 +313,7 @@ export default function BookingPage() {
           }}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-glass-border-dark bg-white/50 backdrop-blur-glass-chip hover:bg-white/80 transition-colors text-xs text-muted-stone hover:text-warm-stone"
         >
-          <span className="text-burgundy font-semibold">⚡</span>
+          <ThiingsIcon name="zap" pxSize={13} className="text-burgundy" />
           {t('common.poweredBy')} Seatable
         </a>
       </div>
@@ -321,11 +321,11 @@ export default function BookingPage() {
   );
 }
 
-function DetailRow({ icon, label, value }: { icon: string; label: string; value: string }) {
+function DetailRow({ icon, label, value }: { icon: IconName; label: string; value: string }) {
   return (
-    <div className="flex items-center gap-3 py-3 border-b border-soft-gray">
-      <div className="w-8 h-8 rounded-lg bg-soft-gray flex items-center justify-center text-sm text-warm-stone flex-shrink-0">
-        {icon}
+    <div className="flex items-center gap-3 py-3 border-b hairline">
+      <div className="w-8 h-8 rounded-lg bg-glass-subtle backdrop-blur-glass-chip flex items-center justify-center text-muted-stone flex-shrink-0">
+        <ThiingsIcon name={icon} pxSize={15} />
       </div>
       <div>
         <div className="text-xs text-muted-stone">{label}</div>

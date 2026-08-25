@@ -91,7 +91,7 @@ export default function Step5ImportHistory({ onNext }: Step5ImportHistoryProps) 
           <div className="w-20 h-20 bg-burgundy/10 rounded-full flex items-center justify-center mx-auto mb-6">
             <ThiingsIcon name="check-circle" pxSize={40} className="text-burgundy" />
           </div>
-          <h2 className="font-serif text-2xl font-bold text-deep-charcoal mb-2">
+          <h2 className="font-serif text-3xl text-deep-charcoal mb-2">
             {t('onboarding.importDone', { count: result.imported })}
           </h2>
           <div className="space-y-1 mt-3">
@@ -133,7 +133,7 @@ export default function Step5ImportHistory({ onNext }: Step5ImportHistoryProps) 
       className="space-y-6"
     >
       <div>
-        <h2 className="font-serif text-2xl font-bold text-deep-charcoal mb-2">
+        <h2 className="font-serif text-3xl text-deep-charcoal mb-2">
           {t('onboarding.importTitle')}
         </h2>
         <p className="text-stone-gray text-sm">

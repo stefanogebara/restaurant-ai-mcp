@@ -198,7 +198,7 @@ export default function Step6TeachAI({
         className="space-y-6"
       >
         <div>
-          <h2 className="font-serif text-2xl font-bold text-deep-charcoal mb-2">
+          <h2 className="font-serif text-3xl text-deep-charcoal mb-2">
             {t('onboarding.teachAIHeading')}
           </h2>
           <p className="text-stone-gray text-sm">
@@ -292,7 +292,7 @@ export default function Step6TeachAI({
           <div className="w-20 h-20 bg-burgundy/10 rounded-full flex items-center justify-center mx-auto mb-6">
             <ThiingsIcon name="check-circle" pxSize={40} className="text-burgundy" />
           </div>
-          <h2 className="font-serif text-2xl font-bold text-deep-charcoal mb-2">
+          <h2 className="font-serif text-3xl text-deep-charcoal mb-2">
             {t('onboarding.aiKnowsRestaurant')}
           </h2>
           <p className="text-stone-gray text-sm mb-1">
@@ -340,7 +340,7 @@ export default function Step6TeachAI({
       {/* Header with progress */}
       <div className="flex-shrink-0 mb-3">
         <div className="flex items-center justify-between mb-1.5">
-          <h2 className="font-serif text-lg font-bold text-deep-charcoal">{t('onboarding.teachAIHeading')}</h2>
+          <h2 className="font-serif text-xl text-deep-charcoal">{t('onboarding.teachAIHeading')}</h2>
           <span className="text-xs text-stone-gray">{t('onboarding.completePercent', { pct: completionPct })}</span>
         </div>
         <div className="w-full bg-soft-gray rounded-full h-1.5">

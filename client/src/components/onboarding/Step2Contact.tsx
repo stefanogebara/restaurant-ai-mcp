@@ -15,7 +15,7 @@ import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import type { OnboardingStepProps } from '../../types/onboarding.types';
 import PhoneInput, { validateFullPhoneNumber, type CountryCode } from '../common/PhoneInput';
-import ThiingsIcon from '../common/ThiingsIcon';
+import ThiingsIcon, { type IconName } from '../common/ThiingsIcon';
 import CnpjConfirmPanel from './CnpjConfirmPanel';
 import { trackMenuUrlProvided } from '../../lib/analytics';
 
@@ -24,21 +24,21 @@ import { trackMenuUrlProvided } from '../../lib/analytics';
 const SERVICE_PRESETS = {
   breakfast_lunch: {
     labelKey: 'onboarding.serviceBreakfastLunch',
-    icon: '🌅',
+    icon: 'coffee' as IconName,
     descKey: 'onboarding.serviceBreakfastLunchDesc',
     defaultHours: { open: '07:00', close: '15:00' },
     periods: [{ open: '07:00', close: '15:00' }]
   },
   lunch_only: {
     labelKey: 'onboarding.serviceLunchOnly',
-    icon: '☀️',
+    icon: 'sun' as IconName,
     descKey: 'onboarding.serviceLunchOnlyDesc',
     defaultHours: { open: '11:30', close: '15:30' },
     periods: [{ open: '11:30', close: '15:30' }]
   },
   lunch_dinner: {
     labelKey: 'onboarding.serviceLunchDinner',
-    icon: '🍽️',
+    icon: 'utensils' as IconName,
     descKey: 'onboarding.serviceLunchDinnerDesc',
     defaultHours: { open: '12:00', close: '23:00' },
     periods: [
@@ -48,21 +48,21 @@ const SERVICE_PRESETS = {
   },
   dinner_only: {
     labelKey: 'onboarding.serviceDinnerOnly',
-    icon: '🌙',
+    icon: 'moon' as IconName,
     descKey: 'onboarding.serviceDinnerOnlyDesc',
     defaultHours: { open: '18:00', close: '23:00' },
     periods: [{ open: '18:00', close: '23:00' }]
   },
   all_day: {
     labelKey: 'onboarding.serviceAllDay',
-    icon: '🕐',
+    icon: 'clock' as IconName,
     descKey: 'onboarding.serviceAllDayDesc',
     defaultHours: { open: '08:00', close: '23:00' },
     periods: [{ open: '08:00', close: '23:00' }]
   },
   custom: {
     labelKey: 'onboarding.serviceCustom',
-    icon: '⚙️',
+    icon: 'gear' as IconName,
     descKey: 'onboarding.serviceCustomDesc',
     defaultHours: { open: '12:00', close: '22:00' },
     periods: [{ open: '12:00', close: '22:00' }]
@@ -250,7 +250,7 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
       className="space-y-6"
     >
       <div>
-        <h2 className="font-serif text-2xl font-bold text-deep-charcoal mb-2">{t('onboarding.step2Heading')}</h2>
+        <h2 className="font-serif text-3xl text-deep-charcoal mb-2">{t('onboarding.step2Heading')}</h2>
         <p className="text-stone-gray text-sm">{t('onboarding.step2Subtitle')}</p>
       </div>
 
@@ -375,7 +375,11 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
                 `}
               >
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-xl">{preset.icon}</span>
+                  <ThiingsIcon
+                    name={preset.icon}
+                    pxSize={18}
+                    className={isSelected ? 'text-burgundy' : 'text-muted-stone'}
+                  />
                   <span className="text-sm font-semibold text-deep-charcoal">{t(preset.labelKey)}</span>
                 </div>
                 <p className="text-xs text-stone-gray">{t(preset.descKey)}</p>
@@ -388,7 +392,7 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
         {useMultiplePeriods && (
           <div className="mb-4 p-3 bg-burgundy/5 border border-burgundy/20 rounded-xl">
             <div className="flex items-start gap-2">
-              <span className="text-burgundy">ℹ️</span>
+              <ThiingsIcon name="info" pxSize={15} className="text-burgundy flex-shrink-0 mt-0.5" />
               <div>
                 <p className="text-sm text-burgundy font-medium">{t('onboarding.splitServiceTitle')}</p>
                 <p className="text-xs text-stone-gray mt-1">
