@@ -348,6 +348,11 @@ Promovidos em 2026-08-24, os quatro com âncora verificada:
 
 - [PROTOTIPAR 12/15] Descobrir se a rota de POS brasileiro ainda existe → `BACKLOG.md#saipos-portao`
   · âncora: `database/migrations/20260126_pos_and_revenue.sql`, `api/pos/table-status.js`
+  · **spike rodado em 25/08: portão aberto em toda fonte pública** — doc de mesa/comanda
+    viva, critérios de homologação puramente técnicos, credenciamento self-serve, zero
+    menção ao iFood, changelog ativo depois das duas aquisições. Falta o cadastro em si,
+    que é chamada comercial. Achado colateral: **não existe adaptador Saipos** — o doc de
+    julho que diz o contrário está errado.
 - [PROTOTIPAR 11/15] Tornar o restaurante legível por agente (UCP) → `BACKLOG.md#ucp-catalogo-legivel`
   · âncora: `api/square.js`, `api/_lib/seo-schema.js`
 - [PROTOTIPAR 11/15] A reserva que chega sem telefone → `BACKLOG.md#identidade-reserva-externa`
