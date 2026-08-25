@@ -312,6 +312,13 @@ concatenava o texto do usuário dentro do system prompt (#75).
 - [ ] 5.2 UI: EXTRAIR o shell de chat do `ManagerAIChatPage` para componente
       compartilhado e montar em `/onboarding-chat`. Não construir do zero —
       cards de fase, mermaid, charts e o parser de SSE já existem.
+- [x] 5.3a **Loop de agente (#78).** `_lib/agent-loop.js`, 15 testes, sem
+      rede. TODOS os blocos `tool_use` (a API exige um `tool_result` por
+      `tool_use` — mandar só o primeiro é HTTP 400); erro de tool vira
+      `is_error` em vez de exceção; dois tetos (iterações E relógio — 3
+      chamadas de 30s estouram a lambda tanto quanto 8 rápidas); `forceText`
+      na última volta para o turno não terminar mudo. Não ligado em ninguém
+      ainda.
 - [ ] 5.3 Backend: `api/onboarding/agent.js` copiando a estrutura do
       `manager-chat.js` (SSE + onPhase, maxDuration 120) + o LOOP de tools
       novo. Tools: scrape-restaurant, enrich-restaurant, enrich-cnpj,
@@ -319,8 +326,15 @@ concatenava o texto do usuário dentro do system prompt (#75).
       Governador de custo copiado do `prospect-agent` (`consumeLlmCall`).
 - [ ] 5.6 Promoção atômica (RPC) + purga dos seeds + createAgent/registry/
       subscription levantados do `complete.js`, com o `setupScorecard` da G3.
-- [ ] 5.7 Endurecer `cleanup-expired-demos` ANTES da promoção existir
-      (risco 2).
+- [x] 5.7 Endurecer `cleanup-expired-demos` ANTES da promoção existir
+      (risco 2). **FEITO (#77).** Guarda de posse (user_id de demo é UUID
+      sintético; o de conta real existe em auth.users — na dúvida NÃO apaga)
+      + teto de sanidade (>50 candidatos = predicado quebrado, aborta antes
+      de qualquer delete). **Correção do plano:** `demo_converted_at IS NULL`
+      no predicado seria ERRADO hoje — converter só carimba a data e a conta
+      real é linha separada, então filtrar assim vazaria demos convertidos
+      para sempre. O header do arquivo dizia "have NOT been converted" e
+      estava errado desde sempre.
 - [ ] 5.4 Wizard atual vira fallback (link "prefiro formulário"), não morre no
       primeiro dia.
 - [ ] 5.5 Diagramas/imagens na conversa: planta das mesas proposta (o
