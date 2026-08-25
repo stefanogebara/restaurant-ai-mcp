@@ -13,6 +13,10 @@ import ThiingsIcon from '../common/ThiingsIcon';
 interface Step4ReviewProps extends OnboardingStepProps {
   onComplete?: () => void;
   isSubmitting?: boolean;
+  /** Estágio corrente da criação (G3.1). O clique mais comprometido do
+   *  produto esperava 3-10s num "Configurando..." mudo, sem dizer o que
+   *  estava acontecendo nem que podia demorar. */
+  submitStage?: string | null;
   goToStep?: (step: number) => void;
 }
 
@@ -88,7 +92,7 @@ function formatPhoneForDisplay(raw: string): string {
   return `${cc} ${middle}-${last4}`;
 }
 
-export default function Step4Review({ data, onBack, onComplete, isSubmitting, goToStep }: Step4ReviewProps) {
+export default function Step4Review({ data, onBack, onComplete, isSubmitting, submitStage, goToStep }: Step4ReviewProps) {
   const { t, i18n } = useTranslation();
 
   // data.country stores the English data-file name ("Brazil") — fine for the
@@ -217,7 +221,7 @@ export default function Step4Review({ data, onBack, onComplete, isSubmitting, go
           {isSubmitting ? (
             <>
               <div aria-hidden="true" className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              {t('onboarding.settingUp')}
+              <span aria-live="polite">{submitStage || t('onboarding.settingUp')}</span>
             </>
           ) : (
             <>

@@ -821,3 +821,100 @@ describe('demo_token carrega o conhecimento do demo (G2.1)', () => {
     expect(res.status).toHaveBeenCalledWith(200);
   });
 });
+
+// ============================================================
+// G3: conclusão honesta — placar, tetos de tempo e guarda de duplicata
+// ============================================================
+describe('placar da instalação (G3.2)', () => {
+  const authComSub = () => {
+    const { verifyAuth } = require('../_lib/auth');
+    verifyAuth.mockResolvedValueOnce({ user: { sub: 'user-1', id: 'user-1' } });
+  };
+
+  test('resposta traz o estado real de cada peça, não só success:true', async () => {
+    authComSub();
+    const { req, res } = mockReqRes({ ...BASE_BODY });
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    const body = res.json.mock.calls[0][0];
+    expect(body.setup).toBeDefined();
+    expect(Object.keys(body.setup).sort()).toEqual(
+      ['knowledge_base', 'restaurant', 'subscription', 'voice_agent', 'whatsapp_registry'],
+    );
+    // Os mocks do agente falham de propósito — antes disso virava 200 mudo e
+    // o dono só descobria quando o telefone tocava sem resposta.
+    expect(body.setup.voice_agent).toBe('failed');
+    expect(body.setup.restaurant).toBe('ok');
+  });
+
+  test('agente que estoura o teto é reportado como timeout, não como sucesso', async () => {
+    jest.useFakeTimers();
+    const { createAgent } = require('../_services/elevenlabsAgentService');
+    createAgent.mockImplementationOnce(() => new Promise(() => {})); // nunca resolve
+    authComSub();
+    const { req, res } = mockReqRes({ ...BASE_BODY });
+    const p = handler(req, res);
+    await jest.advanceTimersByTimeAsync(16000);
+    await p;
+    jest.useRealTimers();
+
+    const body = res.json.mock.calls[0][0];
+    expect(body.setup.voice_agent).toBe('timeout');
+    // Mesmo assim o restaurante existe: nunca vira erro fatal.
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+});
+
+describe('guarda de restaurante duplicado (G3.3)', () => {
+  const authComSub = () => {
+    const { verifyAuth } = require('../_lib/auth');
+    verifyAuth.mockResolvedValueOnce({ user: { sub: 'user-1', id: 'user-1' } });
+  };
+
+  function comConfigExistente(existente) {
+    const { supabaseAdmin } = require('../_lib/supabase');
+    supabaseAdmin.schema.mockImplementation(() => ({
+      from: () => {
+        const chain = {};
+        chain.select = () => chain;
+        chain.eq = () => chain;
+        chain.limit = () => Promise.resolve({ data: [], error: null });
+        chain.maybeSingle = () => Promise.resolve({ data: null, error: null });
+        chain.single = () => Promise.resolve({ data: existente, error: null });
+        chain.insert = (payload) => { capturedConfigWrite = payload; return chain; };
+        chain.update = (payload) => { capturedConfigWrite = payload; return chain; };
+        return chain;
+      },
+    }));
+  }
+
+  test('restaurante JÁ concluído não é sobrescrito em silêncio — 409', async () => {
+    authComSub();
+    comConfigExistente({ id: 'rest-vivo', slug: 'mocoto', onboarding_completed: true });
+    const { req, res } = mockReqRes({ ...BASE_BODY });
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(409);
+    const body = res.json.mock.calls[0][0];
+    expect(body.error).toBe('restaurant_already_exists');
+    // O cliente recebe para onde mandar o dono.
+    expect(body.restaurant.slug).toBe('mocoto');
+  });
+
+  test('confirm_overwrite explícito destrava (escape hatch de suporte)', async () => {
+    authComSub();
+    comConfigExistente({ id: 'rest-vivo', slug: 'mocoto', onboarding_completed: true });
+    const { req, res } = mockReqRes({ ...BASE_BODY, confirm_overwrite: true });
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  test('config existente mas onboarding NÃO concluído segue atualizando', async () => {
+    authComSub();
+    comConfigExistente({ id: 'rest-parcial', slug: 'x', onboarding_completed: false });
+    const { req, res } = mockReqRes({ ...BASE_BODY });
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+});

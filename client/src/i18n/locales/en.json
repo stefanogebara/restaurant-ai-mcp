@@ -1048,6 +1048,16 @@
       "seafood": "Seafood",
       "other": "Other"
     },
+    "stageCreating": "Creating your restaurant…",
+    "stageTables": "Setting up your tables…",
+    "stageReceptionist": "Configuring your receptionist…",
+    "stageAlmost": "Almost there — this can take a moment…",
+    "setupPendingTitle": "Two things still finishing",
+    "setupVoiceAgent": "Voice agent — not created yet",
+    "setupWhatsapp": "WhatsApp — not connected yet",
+    "setupKnowledge": "Your AI's knowledge — not synced yet",
+    "setupSubscription": "Plan — not activated yet",
+    "setupPendingHelp": "Your dashboard works normally. We retry automatically — if it persists, write to hello@seatable.one.",
     "prefilledFromDemo": "We've pre-filled your info from your demo — feel free to adjust anything.",
     "prefilledFromDemoThin": "Carried over from your demo — add the rest below.",
     "prefilledStep2": "Phone, hours and website pulled from Google Maps — confirm or edit below.",
@@ -1084,11 +1094,11 @@
       "cancellation_policy": "cancellation policy"
     },
     "step0": {
-        "singleResultLabel": "Found one match:",
-        "multiResultLabel": "Which one is yours?",
-        "pickThisCta": "Use this one",
-        "noneOfTheseCta": "None of these — got a website?",
-        "websiteFallbackPrompt": "Drop your website and we can read the basics from there.",
+      "singleResultLabel": "Found one match:",
+      "multiResultLabel": "Which one is yours?",
+      "pickThisCta": "Use this one",
+      "noneOfTheseCta": "None of these — got a website?",
+      "websiteFallbackPrompt": "Drop your website and we can read the basics from there.",
       "title": "Find your restaurant",
       "subtitle": "Type your restaurant name + city — we'll pull the basics from Google Maps so you don't have to retype them.",
       "nameLabel": "Restaurant name",
@@ -3626,5 +3636,9 @@
     "emptyTitle": "No movement in today’s service",
     "emptyHint": "As soon as there are reservations or parties in the house, the night shows up here hour by hour.",
     "title": "The whole night, on one page"
+  },
+  "welcome": {
+    "lookupFailed": "We couldn't load your account right now. Your restaurant is safe — this is just a connection hiccup.",
+    "lookupRetry": "Try again"
   }
 }

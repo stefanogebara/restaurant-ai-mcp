@@ -221,6 +221,10 @@ module.exports = async (req, res) => {
       // Token do demo que originou este cadastro. Só o TOKEN vem do cliente —
       // o conhecimento é lido do banco aqui no servidor (ver bloco abaixo).
       demo_token,
+      // Escape hatch de suporte: reescrever um restaurante JÁ concluído exige
+      // intenção explícita (ver a guarda de duplicata mais abaixo). O wizard
+      // nunca envia isto.
+      confirm_overwrite,
     } = req.body;
 
     // Validate required fields — hardened to reject empty strings and
@@ -754,6 +758,21 @@ module.exports = async (req, res) => {
       restaurantConfigData.user_id = userId;
     }
 
+    // Placar da instalação (G3 — Onboarding do Aha). O endpoint devolvia
+    // `200 success` mesmo quando o agente de voz, o registro de WhatsApp, a
+    // assinatura ou o sync de conhecimento falhavam: o dono via "Bem-vindo a
+    // bordo! Seu restaurante está pronto" sobre uma instalação materialmente
+    // quebrada, e só descobria dias depois que ninguém atendia o telefone.
+    // Nada disso vira erro fatal — o restaurante existe e o painel funciona —
+    // mas o cliente PRECISA saber o que ficou pendente.
+    const setupScorecard = {
+      restaurant: 'ok',
+      whatsapp_registry: 'pending',
+      voice_agent: 'pending',
+      knowledge_base: 'pending',
+      subscription: 'pending',
+    };
+
     let configResult;
     try {
       // Check if config already exists for this user
@@ -761,9 +780,24 @@ module.exports = async (req, res) => {
         const { data: existingConfig } = await supabaseAdmin
           .schema('restaurant')
           .from('restaurant_config')
-          .select('id, user_id')
+          .select('id, user_id, slug, onboarding_completed')
           .eq('user_id', userId)
           .single();
+
+        // Guarda de restaurante duplicado (G3.3). O branch abaixo faz um
+        // UPDATE COMPLETO e silencioso do config existente. Combinado com o
+        // caminho de erro do /welcome — que despejava um dono existente num
+        // segundo onboarding — dava para um cliente sobrescrever o próprio
+        // restaurante vivo com o conteúdo de um wizard novo. Um cadastro já
+        // concluído exige intenção explícita para ser reescrito.
+        if (existingConfig?.onboarding_completed && confirm_overwrite !== true) {
+          logger.warn(` Blocked silent overwrite of completed restaurant ${existingConfig.id}`);
+          return res.status(409).json({
+            error: 'restaurant_already_exists',
+            message: 'Esta conta já tem um restaurante configurado.',
+            restaurant: { restaurant_id: existingConfig.id, slug: existingConfig.slug },
+          });
+        }
 
         if (existingConfig) {
           // Update existing config
@@ -836,8 +870,10 @@ module.exports = async (req, res) => {
           logger.warn(' Could not insert into restaurant_registry:', {
             message: registryError.message, code: registryError.code,
           });
+          setupScorecard.whatsapp_registry = 'failed';
         } else {
           logger.info(` Restaurant registered in registry: ${configResult.id}`);
+          setupScorecard.whatsapp_registry = 'ok';
         }
       }
     } catch (configError) {
@@ -919,18 +955,27 @@ module.exports = async (req, res) => {
     try {
       const { createAgent, syncKnowledgeBase } = require('../_services/elevenlabsAgentService');
 
-      const agentResult = await createAgent({
-        restaurantId: canonicalRestaurantId,
-        restaurant_name,
-        voice_id: selected_voice_id || getDefaultVoiceId(selected_voice_language),
-        language: selected_voice_language || 'en',
-        business_hours: agentBusinessHours,
-        phone: phone_number,
-        address: `${city}, ${country}`
-      });
+      // Teto de 15s: a chamada à ElevenLabs é externa e NÃO tinha limite
+      // nenhum — era ela que dominava a espera de 3-10s no clique mais
+      // comprometido do produto, e um dia ruim do provedor podia segurar o
+      // dono num botão "Configurando..." até a lambda morrer.
+      const agentResult = await Promise.race([
+        createAgent({
+          restaurantId: canonicalRestaurantId,
+          restaurant_name,
+          voice_id: selected_voice_id || getDefaultVoiceId(selected_voice_language),
+          language: selected_voice_language || 'en',
+          business_hours: agentBusinessHours,
+          phone: phone_number,
+          address: `${city}, ${country}`
+        }),
+        new Promise((resolve) => setTimeout(
+          () => resolve({ success: false, error: 'timeout', timedOut: true }), 15000)),
+      ]);
 
       if (agentResult.success) {
         agentId = agentResult.agent_id;
+        setupScorecard.voice_agent = 'ok';
 
         // A gravação espelhada em restaurant_info saiu com a aposentadoria da
         // tabela (02/08/2026). restaurant_config é a única fonte do agente —
@@ -952,17 +997,33 @@ module.exports = async (req, res) => {
         logger.info(' ElevenLabs agent created:', agentId);
         logger.info(' Agent URL: https://elevenlabs.io/app/conversational-ai/' + agentId);
 
-        // Step 4b: Sync knowledge base to ElevenLabs agent (fire-and-forget)
+        // Step 4b: sync da base de conhecimento — AGUARDADO com teto de 8s.
+        //
+        // Era fire-and-forget, que na Vercel é a mesma classe de bug do
+        // welcome email (#53): a lambda congela logo após a resposta e a
+        // promise pendente só completa se o MESMO container descongelar. Ou
+        // seja: o documento de conhecimento do agente provavelmente NUNCA era
+        // gerado. Isso ficou mais grave com a G2 — é este sync que leva a
+        // persona e o cardápio do demo para dentro do agente de voz.
         if (canonicalRestaurantId) {
-          syncKnowledgeBase(canonicalRestaurantId).then(result => {
-            if (result.success) {
-              logger.info('KB synced to ElevenLabs agent', { documentId: result.documentId });
-            } else {
-              logger.warn('KB sync skipped or failed:', result.error);
-            }
-          }).catch(err => logger.error('KB sync error:', err.message));
+          const kb = await Promise.race([
+            syncKnowledgeBase(canonicalRestaurantId).catch((err) => {
+              logger.error('KB sync error:', err.message);
+              return { success: false, error: err.message };
+            }),
+            new Promise((resolve) => setTimeout(
+              () => resolve({ success: false, error: 'timeout' }), 8000)),
+          ]);
+          if (kb?.success) {
+            setupScorecard.knowledge_base = 'ok';
+            logger.info('KB synced to ElevenLabs agent', { documentId: kb.documentId });
+          } else {
+            setupScorecard.knowledge_base = 'failed';
+            logger.warn('KB sync skipped or failed:', kb?.error);
+          }
         }
       } else {
+        setupScorecard.voice_agent = agentResult.timedOut ? 'timeout' : 'failed';
         logger.error(' Failed to create agent:', {
           error: agentResult.error,
           details: agentResult.details
@@ -973,6 +1034,7 @@ module.exports = async (req, res) => {
         message: agentError.message,
         stack: agentError.stack
       });
+      setupScorecard.voice_agent = 'failed';
       logger.warn(' Continuing without agent creation');
     }
 
@@ -1026,12 +1088,15 @@ module.exports = async (req, res) => {
         .single();
 
       if (subError) {
+        setupScorecard.subscription = 'failed';
         logger.warn(' Could not create subscription:', subError.message);
       } else {
         trialSubscription = subData;
+        setupScorecard.subscription = 'ok';
         logger.info(' Subscription created:', subscriptionData.plan_name, isBrazil ? '(free/Brazil)' : '(trial)');
       }
     } catch (trialError) {
+      setupScorecard.subscription = 'failed';
       logger.warn(' Subscription creation error (non-fatal):', trialError.message);
     }
 
@@ -1051,6 +1116,11 @@ module.exports = async (req, res) => {
         trial_active: !!trialSubscription,
         trial_end: trialSubscription?.trial_end || null
       },
+      // Placar honesto: o cliente decide o que dizer ao dono. "Bem-vindo a
+      // bordo!" sobre um agente de voz que não existe é a pior forma de
+      // descobrir o problema — dias depois, com o telefone tocando sem
+      // resposta.
+      setup: setupScorecard,
     });
   } catch (error) {
     logger.error(' Error:', error);
