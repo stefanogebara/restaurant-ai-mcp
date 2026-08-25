@@ -1,7 +1,23 @@
 # Onboarding do Aha — a ponte que cumpre a promessa do demo
 
 **Data:** 2026-08-24 (noite) · **Sucede:** `.claude/plans/2026-08-24-demo-conversa/` (funil do demo, completo)
-**Status:** EM EXECUÇÃO — G0 (#63), G1 (#65) e G2 (#68) mergeados. Falta G3 (conclusão honesta), G4 (arquitetura) e o norte G5. D4 aberta. D3 resolvida (norte = G5 Onboarding em Conversa). D4 aberta. Bônus do G0: mapper de horários do prefill lia .open/.close (tudo caía nos defaults) e a suíte do complete.js rodava sem userId (escrita de config nunca exercitada).
+**Status:** EM EXECUÇÃO — G0 (#63), G1 (#65), G2 (#68) e G3 (#71) mergeados.
+Falta G4 (arquitetura/limpeza) e o norte G5 (Onboarding em Conversa). D4 aberta.
+
+**Achados que só apareceram implementando** (nenhum estava na auditoria):
+- O mapper de horários do prefill lia `.open`/`.close`; o demo grava
+  `.open_time`/`.close_time` → TODO horário prefillado caía nos defaults
+  12:00–23:00 em silêncio. (G0)
+- A suíte inteira do `complete.js` rodava com `userId` null (o mock tinha
+  `id`, o código lê `sub`) — a escrita do config NUNCA era exercitada, e o
+  endpoint devolve 200 mesmo pulando ela. (G0)
+- O guarda de contrato de colunas só lia o literal `restaurantConfigData`;
+  campo atribuído depois escapava — a classe de bug que ele existe para
+  pegar. (G2)
+- `syncKnowledgeBase` era fire-and-forget: na Vercel a lambda congela após a
+  resposta, então o documento de conhecimento do agente provavelmente nunca
+  era gerado. Mais grave depois da G2, que é quem leva persona e cardápio do
+  demo para dentro do agente. (G3) D3 resolvida (norte = G5 Onboarding em Conversa). D4 aberta. Bônus do G0: mapper de horários do prefill lia .open/.close (tudo caía nos defaults) e a suíte do complete.js rodava sem userId (escrita de config nunca exercitada).
 
 ---
 
@@ -165,16 +181,16 @@ com pedido explícito). Recomendo (a).
 
 ### G3 — Conclusão honesta (sistema)
 
-- [ ] 3.1 **Progresso em estágios** no submit do Passo 4: "Criando restaurante →
+- [x] 3.1 **Progresso em estágios** no submit do Passo 4: "Criando restaurante →
       Montando mesas → Configurando sua recepcionista" (SSE é overkill; basta
       etapas otimistas com os tempos reais + spinner, e teto de tempo com
       mensagem honesta).
-- [ ] 3.2 **`complete.js` devolve o placar**: `{voice_agent: ok|failed,
+- [x] 3.2 **`complete.js` devolve o placar**: `{voice_agent: ok|failed,
       whatsapp_registry: ok|failed, subscription: ok|failed}`; modal de sucesso
       mostra pendências reais ("Agente de voz ficou pendente — reativamos
       sozinhos / veja em Configurações") em vez de festa sobre instalação
       quebrada. Timeout no `createAgent` (Promise.race, teto explícito).
-- [ ] 3.3 **Guarda de restaurante duplicado**: `complete.js` só faz o UPDATE
+- [x] 3.3 **Guarda de restaurante duplicado**: `complete.js` só faz o UPDATE
       silencioso do config existente com flag explícita; Welcome ganha estado
       de erro real em vez de despejar dono existente num segundo onboarding.
 
