@@ -22,8 +22,8 @@ interface ScrapeResult extends ScrapedRestaurant {
  * Two paths:
  *   1. Google match → top hit card → user confirms or tries again
  *   2. No match    → "got a website?" URL input → /api/enrich-restaurant
- *      (best-effort menu/dishes extraction; doesn't currently surface
- *      contact/hours from the website but still primes Manager AI memory)
+ *      (best-effort extraction — runWebsiteEnrich abaixo TAMBÉM aplica
+ *      contato/horários quando o site os expõe, além de primar a memória)
  *
  * Always offers a "Skip — I'll fill manually" link so a brand-new restaurant
  * with no Google presence and no website can proceed.

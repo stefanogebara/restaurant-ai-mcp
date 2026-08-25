@@ -17,7 +17,6 @@ import ThiingsIcon from '../common/ThiingsIcon';
 import { api } from '../../services/api';
 
 interface Step6TeachAIProps {
-  restaurantId: string;
   restaurantName?: string;
   city?: string;
   country?: string;
@@ -90,7 +89,6 @@ function extractErrorMessage(err: unknown): string | undefined {
 }
 
 export default function Step6TeachAI({
-  restaurantId: _restaurantId, // eslint-disable-line @typescript-eslint/no-unused-vars
   restaurantName,
   city,
   country,
