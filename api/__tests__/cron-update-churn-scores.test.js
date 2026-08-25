@@ -108,6 +108,61 @@ describe('cron/update-churn-scores', () => {
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
   });
 
+  /**
+   * O CONSERTO DE 24/08/2026. O cron não completava desde 11/08: estourava o
+   * teto de 60s da Vercel porque gravava UM upsert POR CLIENTE, com await
+   * sequencial. Em produção eram 583 clientes distintos — 583 idas ao banco.
+   *
+   * O orçamento de tempo que já existia (TIME_BUDGET_MS) não protegia: ele é
+   * conferido ENTRE restaurantes, então um único restaurante grande atravessa
+   * o limite inteiro sem ninguém olhar.
+   *
+   * Este teste falha na versão antiga: com 250 clientes ela chamaria upsert
+   * 250 vezes, cada uma com um OBJETO.
+   */
+  test('grava em LOTE, não um upsert por cliente', async () => {
+    const CLIENTES = 250;
+    const reservas = Array.from({ length: CLIENTES }, (_, i) => ({
+      customer_phone: `+55119${String(i).padStart(6, '0')}`,
+      customer_name: `Cliente ${i}`,
+      customer_email: `c${i}@x.com`,
+      date: '2026-03-01',
+      party_size: 2,
+    }));
+
+    mockSupabaseAdmin.from.mockReturnValue({
+      select: jest.fn().mockReturnValue({
+        eq: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            order: jest.fn().mockReturnValue({
+              limit: jest.fn().mockResolvedValue({ data: reservas, error: null }),
+            }),
+          }),
+        }),
+      }),
+    });
+
+    const upsertSpy = jest.fn().mockResolvedValue({ error: null });
+    mockSupabaseAdmin.schema.mockReturnValue({
+      from: jest.fn().mockImplementation((table) => {
+        if (table === 'restaurant_config') {
+          return { select: jest.fn().mockResolvedValue({ data: [{ id: 'rest-1' }], error: null }) };
+        }
+        return { upsert: upsertSpy };
+      }),
+    });
+
+    await handler({ headers: { authorization: 'Bearer test-cron-secret' } }, mockRes());
+
+    // 250 clientes em lotes de 100 => 3 chamadas, nunca 250.
+    expect(upsertSpy).toHaveBeenCalledTimes(3);
+    for (const [payload] of upsertSpy.mock.calls) {
+      expect(Array.isArray(payload)).toBe(true);
+    }
+    const enviados = upsertSpy.mock.calls.reduce((s, [p]) => s + p.length, 0);
+    expect(enviados).toBe(CLIENTES); // nenhum cliente se perde no fatiamento
+  });
+
   test('returns 500 on database error', async () => {
     mockSupabaseAdmin.schema.mockReturnValue({
       from: jest.fn().mockReturnValue({
