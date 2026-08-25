@@ -230,8 +230,87 @@ function validarPatch(bruto) {
   return { ok: erros.length === 0, patch, erros, barrados };
 }
 
+// ---------------------------------------------------------------------------
+// O segurança na porta do banco
+// ---------------------------------------------------------------------------
+//
+// A conversa é dirigida pelo modelo, não por uma máquina de estados — foi essa
+// a conclusão do spike. Mas conversa esquece. O papel deste bloco é responder,
+// depois de cada turno, "o que ainda falta?", e essa resposta entra no system
+// prompt. Ele não dirige nada; só garante que telefone e e-mail não sejam
+// esquecidos.
+//
+// A lista sai das colunas NOT NULL sem default de restaurant.restaurant_config
+// (verificadas no banco em 25/ago), mais duas que TÊM default e mesmo assim
+// precisam ser confirmadas — ver abaixo.
+const SLOTS_OBRIGATORIOS = Object.freeze([
+  'restaurant_name',
+  'restaurant_type',
+  'city',
+  'country',
+  'phone',
+  'email',
+  // Têm default no banco, e é exatamente por isso que entram aqui: default
+  // silencioso é pior que campo vazio, porque parece preenchido.
+  'business_hours',
+  'timezone',
+]);
+
+/**
+ * Um slot está VAZIO quando não dá para usá-lo — não apenas quando é null.
+ *
+ * Dois valores satisfazem o NOT NULL e mentem:
+ *
+ *  - `email` no domínio @demo.seatable.one: placeholder que o demo grava só
+ *    para a coluna aceitar. Um dono com esse e-mail não recebe nada.
+ *  - `timezone` igual a 'UTC': o default da coluna. Nenhum restaurante opera
+ *    em UTC — 'UTC' ali significa "não descobrimos onde fica". Foi essa
+ *    exata confusão entre sentinela e resposta que produziu os bugs #76/#79.
+ */
+function slotVazio(campo, valor) {
+  if (valor === null || valor === undefined) return true;
+  if (typeof valor === 'string' && !valor.trim()) return true;
+  if (campo === 'email' && String(valor).toLowerCase().endsWith('@demo.seatable.one')) return true;
+  if (campo === 'timezone' && String(valor) === 'UTC') return true;
+  if (campo === 'country' && String(valor).toLowerCase() === 'unknown') return true;
+  if (campo === 'business_hours') {
+    if (typeof valor !== 'object' || Array.isArray(valor)) return true;
+    // Semana inteira fechada não é horário confirmado, é objeto preenchido.
+    return !Object.values(valor).some((d) => d && d.is_open);
+  }
+  return false;
+}
+
+/** @returns {string[]} slots obrigatórios ainda não resolvidos, na ordem. */
+function slotsFaltando(draft = {}) {
+  return SLOTS_OBRIGATORIOS.filter((c) => slotVazio(c, draft?.[c]));
+}
+
+/**
+ * O bloco que vai para o system prompt. Prosa, não JSON: o modelo lê melhor, e
+ * dizer o que JÁ está resolvido evita que ele pergunte de novo o que o dono
+ * acabou de responder — a queixa número um sobre onboarding conversacional.
+ */
+function resumoParaPrompt(draft = {}) {
+  const faltando = slotsFaltando(draft);
+  const prontos = SLOTS_OBRIGATORIOS.filter((c) => !faltando.includes(c));
+
+  const linhas = ['[ESTADO DA MONTAGEM]'];
+  linhas.push(prontos.length
+    ? `Já resolvido (NÃO pergunte de novo): ${prontos.join(', ')}`
+    : 'Nada resolvido ainda.');
+  linhas.push(faltando.length
+    ? `Ainda falta: ${faltando.join(', ')}`
+    : 'Tudo que é obrigatório está resolvido — confirme com o dono e conclua.');
+  return linhas.join('\n');
+}
+
 module.exports = {
   validarPatch,
+  slotsFaltando,
+  slotVazio,
+  resumoParaPrompt,
+  SLOTS_OBRIGATORIOS,
   CAMPOS_ESCREVIVEIS,
   PROIBIDOS_CONHECIDOS,
   DIAS,
