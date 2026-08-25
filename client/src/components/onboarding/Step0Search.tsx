@@ -100,6 +100,9 @@ export default function Step0Search({ onPrefill, onSkip }: Step0SearchProps) {
       const business_hours = menu?.business_hours && typeof menu.business_hours === 'object' ? menu.business_hours : null;
       onPrefill({
         name: name.trim(),
+        // Cidade digitada na busca — era coletada e descartada, e o Passo 1
+        // perguntava de novo (auditoria 24/ago).
+        city: city.trim(),
         website: url,
         phone: contact?.phone ?? null,
         address: contact?.address ?? null,
@@ -205,7 +208,7 @@ export default function Step0Search({ onPrefill, onSkip }: Step0SearchProps) {
               </div>
               <button
                 type="button"
-                onClick={() => onPrefill(hit)}
+                onClick={() => onPrefill({ ...hit, city: hit.city || city.trim() })}
                 className="px-4 py-2 bg-burgundy text-white rounded-[100px] text-sm font-semibold hover:bg-burgundy-dark transition-colors"
                 data-testid={`step0-pick-${i}`}
               >

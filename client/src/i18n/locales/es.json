@@ -1049,6 +1049,7 @@
       "other": "Otro"
     },
     "prefilledFromDemo": "Hemos rellenado los datos de tu demo — siéntete libre de ajustar.",
+    "prefilledFromDemoThin": "Trajimos lo que tenía tu demo — completa el resto abajo.",
     "prefilledStep2": "Teléfono, horarios y sitio web traídos de Google Maps — confirma o edita abajo.",
     "prefilledStep1FromGoogle": "Información del restaurante traída de Google Maps — confirma o edita abajo.",
     "servicePeriodsExampleLabel": "División típica (puedes ajustarla en Configuración)",

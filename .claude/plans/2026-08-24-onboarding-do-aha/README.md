@@ -1,7 +1,7 @@
 # Onboarding do Aha — a ponte que cumpre a promessa do demo
 
 **Data:** 2026-08-24 (noite) · **Sucede:** `.claude/plans/2026-08-24-demo-conversa/` (funil do demo, completo)
-**Status:** EM EXECUÇÃO — G0 (#63) e G1 (#65) mergeados. D3 resolvida (norte = G5 Onboarding em Conversa). D4 aberta. Bônus do G0: mapper de horários do prefill lia .open/.close (tudo caía nos defaults) e a suíte do complete.js rodava sem userId (escrita de config nunca exercitada).
+**Status:** EM EXECUÇÃO — G0 (#63), G1 (#65) e G2 (#68) mergeados. Falta G3 (conclusão honesta), G4 (arquitetura) e o norte G5. D4 aberta. D3 resolvida (norte = G5 Onboarding em Conversa). D4 aberta. Bônus do G0: mapper de horários do prefill lia .open/.close (tudo caía nos defaults) e a suíte do complete.js rodava sem userId (escrita de config nunca exercitada).
 
 ---
 
@@ -142,23 +142,25 @@ com pedido explícito). Recomendo (a).
 
 ### G2 — Onboarding que respeita o demo (compressão de fluxo)
 
-- [ ] 2.1 **`complete.js` aceita `demo_token`** e lê o demo direto do banco
+- [x] 2.1 **`complete.js` aceita `demo_token`** e lê o demo direto do banco
       (servidor→servidor, não client plumbing): carrega `ai_personality`,
       `scraped_data.menu/insights/top_reviews`, `agent_language` (com o
       fallback por prefixo de telefone), `reservation_settings`, `vibe_tags` →
       grava no config novo. A recepcionista real nasce sabendo o que a do demo
       sabia. (`syncKnowledgeBase` já seleciona `ai_personality` — hoje manda
       vazio.)
-- [ ] 2.2 **Convert F4 ganha prefill**: `scraped_data.manual` (cuisine, hours,
+- [x] 2.2 **Convert F4 ganha prefill**: `scraped_data.manual` (cuisine, hours,
       vibes) entra no mapeamento do prefill — hoje o convert "restaurante novo"
       chega com só o nome.
-- [ ] 2.3 **Cidade/país param de ser re-perguntados**: Step 0 repassa a cidade
+- [x] 2.3 **Cidade/país param de ser re-perguntados**: Step 0 repassa a cidade
       digitada; `applyScrapedData` carrega city/country do resultado do Google.
-- [ ] 2.4 **`menu_url` prefillado** do enrichment quando existir.
-- [ ] 2.5 **Passo 6 primed**: a entrevista abre com o que o demo já sabe
+- [x] 2.4 **`menu_url` prefillado** do enrichment quando existir.
+- [~] 2.5 **ADIADO para a G5** (o Passo 6 É uma entrevista; a G5 reestrutura
+      a conversa inteira — primar uma tela que será absorvida é trabalho
+      jogado fora). Texto original: **Passo 6 primed**: a entrevista abre com o que o demo já sabe
       ("Seu demo me contou: cozinha X, clima Y, pratos Z — confirmo e pergunto
       só o que falta"), pulando tópicos já cobertos.
-- [ ] 2.6 **Banner de prefill honesto**: só afirma "dados do seu demo" quando
+- [x] 2.6 **Banner de prefill honesto**: só afirma "dados do seu demo" quando
       ≥N campos vieram; senão copy neutra.
 
 ### G3 — Conclusão honesta (sistema)
