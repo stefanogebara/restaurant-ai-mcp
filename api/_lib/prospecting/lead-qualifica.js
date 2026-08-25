@@ -52,10 +52,54 @@ const FORA_NO_INICIO = new RegExp(
   'i',
 );
 
+/**
+ * O APERTO DE 25/08/2026 — a categoria errada entrou pelo FIM do nome.
+ *
+ * O piso de avaliações caiu de 150 para 120 em 24/08 e abriu o funil. Na
+ * primeira leva real (35 intros em 25/08) apareceram no alvo: `Panobianco
+ * Academia`, `Espaço ZYM` (academias) e `Buffet Prime Kids` (buffet de festa
+ * infantil). Racha é pagamento de conta NA MESA — academia e festa infantil
+ * não têm conta de mesa para dividir. Não é conversão ruim, é lista errada.
+ *
+ * Por que passaram: `academia` já estava em FORA_NO_INICIO, e rede de varejo
+ * de fato se identifica no começo ("Academia Smart Fit"). Só que a unidade de
+ * bairro faz o contrário — põe a categoria no FIM ("Panobianco Academia"), e
+ * aí a regra de início não vê.
+ *
+ * Daí a simetria: mesma ideia da regra de início, aplicada ao fim. O
+ * restaurante põe a palavra no MEIO, com qualificador depois ("Restaurante
+ * Mercado São Jorge", "Buffet Self Service por kilo" — este último É ICP e
+ * precisa continuar passando). Quem TERMINA em `academia`/`kids` é o negócio
+ * da categoria, não o restaurante.
+ *
+ * O QUE FICOU DE FORA, de propósito: `peixaria` e `açougue`. A peixaria que
+ * respondeu ("não somos um restaurante de mesa") de fato não é ICP, mas
+ * existe restaurante de frutos do mar chamado "Peixaria do Zé" — e a regra
+ * desta casa é que falso positivo é o erro CARO, porque tira restaurante bom
+ * da fila em silêncio. Sem o campo `types` do Google não dá para separar os
+ * dois pelo nome, então não corto.
+ */
+const FORA_NO_FIM = new RegExp(
+  '\\b(academia|gin[áa]stica|gym|zym|fitness|kids)\\s*$',
+  'i',
+);
+
+/**
+ * INEQUÍVOCOS DE FITNESS E FESTA. Nenhum destes aparece em nome de casa com
+ * mesa, em qualquer posição. `buffet` sozinho NÃO entra: buffet self-service
+ * por quilo é restaurante de mesa e é ICP.
+ */
+const FORA_SEMPRE_EXTRA = new RegExp([
+  'crossfit', 'smart\\s?fit', 'panobianco', 'bodytech', 'bio\\s?ritmo',
+  'muscula[çc][ãa]o', 'pilates',
+  'buff?[eê]t?\\s+infantil', 'festas?\\s+infanti', 'sal[ãa]o\\s+de\\s+festas?',
+].join('|'), 'i');
+
 /** PURA. true quando o nome indica um negócio que não recebe reserva. */
 function foraDoIcp(nome) {
   const n = String(nome || '');
-  return FORA_SEMPRE.test(n) || FORA_NO_INICIO.test(n);
+  return FORA_SEMPRE.test(n) || FORA_SEMPRE_EXTRA.test(n)
+    || FORA_NO_INICIO.test(n) || FORA_NO_FIM.test(n);
 }
 
 /**
@@ -97,4 +141,6 @@ function qualificar(leads) {
   return { candidatos, descartados };
 }
 
-module.exports = { qualificar, foraDoIcp, FORA_SEMPRE, FORA_NO_INICIO };
+module.exports = {
+  qualificar, foraDoIcp, FORA_SEMPRE, FORA_SEMPRE_EXTRA, FORA_NO_INICIO, FORA_NO_FIM,
+};
