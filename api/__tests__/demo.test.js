@@ -214,6 +214,69 @@ describe('POST ?action=create', () => {
     expect(insertPayload.email).toBe('owner@bellacucina.nl');
   });
 
+  // Regressão 25/ago: a coluna `timezone` tem default 'UTC' e o insert nunca
+  // a preenchia. Os 21 demos vivos em produção estavam TODOS em UTC —
+  // inclusive Mocotó e Bráz Pizzaria, que são São Paulo. O fuso já era
+  // calculado no handler, mas só alimentava os seeds (G0.12b); o registro
+  // seguia mentindo, e quem lê a coluna (reservation-validator, manager-agent)
+  // opera 3h adiantado num demo brasileiro.
+  test('o fuso resolvido é PERSISTIDO no registro, não só usado nos seeds', async () => {
+    mockFrom.mockImplementation(() => ({ select: mockSelect, update: mockUpdate, insert: mockInsert }));
+
+    const req = {
+      method: 'POST',
+      query: { action: 'create' },
+      body: { ...VALID_CREATE_BODY, city: 'São Paulo', country: 'BR' },
+      headers: {},
+    };
+    const res = makeRes();
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(201);
+    const insertPayload = mockInsert.mock.calls[0][0];
+    expect(insertPayload.timezone).toBe('America/Sao_Paulo');
+    expect(insertPayload.timezone).not.toBe('UTC');
+  });
+
+  test('demo europeu grava o fuso do país, não o do servidor', async () => {
+    mockFrom.mockImplementation(() => ({ select: mockSelect, update: mockUpdate, insert: mockInsert }));
+
+    const req = {
+      method: 'POST',
+      query: { action: 'create' },
+      body: { ...VALID_CREATE_BODY, city: 'Roma', country: 'IT' },
+      headers: {},
+    };
+    const res = makeRes();
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(mockInsert.mock.calls[0][0].timezone).toBe('Europe/Rome');
+  });
+
+  // O caminho "restaurante novo" (F4) chega SEM país — não tem ficha no
+  // Google. suggestTimezone devolve 'UTC' nesse caso, que é truthy, então o
+  // guarda `|| 'America/Sao_Paulo'` nunca disparava. Em produção (25/ago,
+  // 20:01 SP) esse demo mandou as 3 reservas de hoje para amanhã 19:30/20:00/
+  // 20:30 — os fallbackTimes — enquanto dois demos com país resolvido,
+  // criados no mesmo minuto, acertaram. Painel vazio no horário nobre, para
+  // exatamente a persona que o F4 existe para atender.
+  test('demo sem país NÃO cai em UTC — nenhum restaurante opera em UTC', async () => {
+    mockFrom.mockImplementation(() => ({ select: mockSelect, update: mockUpdate, insert: mockInsert }));
+
+    const req = {
+      method: 'POST',
+      query: { action: 'create' },
+      body: { ...VALID_CREATE_BODY, restaurant_name: 'Zebrallina Kftz', city: 'Cidade Inventada' },
+      headers: {},
+    };
+    const res = makeRes();
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(mockInsert.mock.calls[0][0].timezone).not.toBe('UTC');
+  });
+
   test('valid body returns 201 with demo_token and demo_url', async () => {
     // Mock public.reservations insert (seeding fake reservations)
     mockFrom.mockImplementation((table) => {
