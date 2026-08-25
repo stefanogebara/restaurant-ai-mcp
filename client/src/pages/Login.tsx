@@ -9,6 +9,7 @@ import { Navigate, Link, useSearchParams, useLocation } from 'react-router-dom';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useAuth } from '../contexts/AuthContext';
 import { LS_PENDING_DEMO_TOKEN } from '../config/localStorageKeys';
+import { useDemoConversionContext } from '../hooks/useDemoConversionContext';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 import { motion } from 'framer-motion';
 import { trackSignupStarted } from '../lib/analytics';
@@ -52,6 +53,16 @@ export default function Login() {
         : 'signin';
     } catch { return 'signin'; }
   });
+
+  // Identidade do demo + captura síncrona dos params (ver o hook). Vale para
+  // as duas coisas: a variante "Assumir o {restaurante}" e o forwarding do
+  // token no round-trip do OAuth.
+  const demoCtx = useDemoConversionContext();
+  // Só no modo de CRIAR conta: quem clica "Já tem uma conta? Entrar" está
+  // entrando numa conta existente, não assumindo um demo — e um token velho
+  // no localStorage não deve sequestrar a tela de quem só quer logar.
+  // ('forgot'/'reset' têm contrato próprio pelo mesmo motivo.)
+  const showDemoTakeover = Boolean(demoCtx.restaurantName) && mode === 'signup';
 
   // Email/password form state
   const [email, setEmail] = useState('');
@@ -131,12 +142,13 @@ export default function Login() {
     setError(null);
     if (mode === 'signup') trackSignupStarted({ method: 'google' });
 
-    // Preserve demo params through OAuth round-trip so Welcome.tsx can convert
+    // Token do contexto capturado no primeiro render — `searchParams` já foi
+    // limpo pelo efeito de scrub quando este clique acontece.
     const extraRedirectParams: Record<string, string> = {};
-    const fromParam = searchParams.get('from');
-    const tokenParam = searchParams.get('token');
-    if (fromParam) extraRedirectParams['from'] = fromParam;
-    if (tokenParam) extraRedirectParams['token'] = tokenParam;
+    if (demoCtx.token) {
+      extraRedirectParams['from'] = 'demo';
+      extraRedirectParams['token'] = demoCtx.token;
+    }
 
     // H8: preserve the user's intended destination through OAuth. ProtectedRoute
     // saves it as location.state.from, but state is lost on the OAuth round-trip
@@ -163,11 +175,13 @@ export default function Login() {
     setError(null);
     if (mode === 'signup') trackSignupStarted({ method: 'apple' });
 
+    // Token do contexto capturado no primeiro render — `searchParams` já foi
+    // limpo pelo efeito de scrub quando este clique acontece.
     const extraRedirectParams: Record<string, string> = {};
-    const fromParam = searchParams.get('from');
-    const tokenParam = searchParams.get('token');
-    if (fromParam) extraRedirectParams['from'] = fromParam;
-    if (tokenParam) extraRedirectParams['token'] = tokenParam;
+    if (demoCtx.token) {
+      extraRedirectParams['from'] = 'demo';
+      extraRedirectParams['token'] = demoCtx.token;
+    }
     const fromState = (location.state as { from?: { pathname: string; search: string } })?.from;
     if (fromState?.pathname && fromState.pathname !== '/login') {
       extraRedirectParams['next'] = `${fromState.pathname}${fromState.search || ''}`;
@@ -296,7 +310,13 @@ export default function Login() {
   return (
     <div className="min-h-screen flex">
       {/* Left Panel - Brand + Features (hidden on mobile) */}
-      <LoginBrandPanel />
+      <LoginBrandPanel
+        demo={showDemoTakeover ? {
+          restaurantName: demoCtx.restaurantName as string,
+          city: demoCtx.city,
+          daysLeft: demoCtx.daysLeft,
+        } : undefined}
+      />
 
       {/* Right Panel - Login Form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center px-6 py-12 relative">
@@ -330,15 +350,17 @@ export default function Login() {
                   seatable<span className="text-burgundy">.</span>
                 </span>
               </Link>
-              <h1 className="font-serif text-2xl text-deep-charcoal mb-2">
+              <h1 className="font-serif text-2xl text-deep-charcoal mb-2 text-balance">
                 {mode === 'reset' ? t('login.setNewPasswordTitle')
                   : mode === 'forgot' ? t('login.resetPasswordTitle')
+                  : showDemoTakeover ? t('login.demoTakeoverTitle', { name: demoCtx.restaurantName })
                   : mode === 'signin' ? t('login.welcomeBack')
                   : t('login.createAccount')}
               </h1>
               <p className="text-stone-gray font-light">
                 {mode === 'reset' ? t('login.setNewPasswordSubtitle')
                   : mode === 'forgot' ? t('login.resetPasswordSubtitle')
+                  : showDemoTakeover ? t('login.demoTakeoverSubtitle')
                   : mode === 'signin' ? t('login.signInSubtitle')
                   : t('login.signUpSubtitle')}
               </p>
