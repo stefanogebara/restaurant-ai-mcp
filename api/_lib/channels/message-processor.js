@@ -513,10 +513,20 @@ async function processMessage(adapter, msg, options = {}) {
     await releaseProcessingLock(from).catch(() => {});
   }
 
-  // 14. Memory extraction (fire-and-forget) — só sobre conversa que aconteceu.
+  // 14. Memory extraction — só sobre conversa que aconteceu.
+  //
+  // AGUARDADA com teto de 6s, mesmo teto que manager-agent.js usa na operação
+  // idêntica (extractFactsFromConversation). Era fire-and-forget e morria no
+  // freeze: a resposta ao cliente já saiu daqui, quem esperava era só o 200 para
+  // a Meta. Aguardar não arrisca re-entrega — o orçamento de retry de 20s da Meta
+  // é absorvido pelo dedup no Redis (ver comentário em api/whatsapp-webhook.js),
+  // então retry do mesmo messageId vira no-op.
   if (envio.entregue && session?.restaurant?.id && updatedHistory.length >= 4) {
-    extractMemoriesFromWhatsApp(session.restaurant.id, from, updatedHistory, session.id)
-      .catch(err => logger.warn('Memory extraction failed (non-fatal):', err.message));
+    await Promise.race([
+      extractMemoriesFromWhatsApp(session.restaurant.id, from, updatedHistory, session.id)
+        .catch(err => logger.warn('Memory extraction failed (non-fatal):', err.message)),
+      new Promise((resolve) => setTimeout(resolve, 6000)),
+    ]);
   }
 
   // 17. Welcome buttons — DISABLED.
