@@ -517,7 +517,13 @@ async function handleSession(req, res) {
 
   const [tablesResult, reservationsResult] = await Promise.all([
     getAllTables(config.id),
-    getUpcomingReservations(config.id),
+    // O fuso é OBRIGATÓRIO aqui. Sem ele getUpcomingReservations compara os
+    // horários (que estão na parede do restaurante) contra o relógio do
+    // SERVIDOR, e a lambda roda em UTC: às 20:27 em São Paulo o filtro vira
+    // `time >= 23:27` e descarta as reservas de hoje uma a uma. Os seeds
+    // nascem certos e o painel abre vazio mesmo assim — o gêmeo de leitura do
+    // bug de escrita do #76. Todos os outros chamadores já passavam o fuso.
+    getUpcomingReservations(config.id, config.timezone),
   ]);
 
   const tables = tablesResult?.tables || tablesResult || [];

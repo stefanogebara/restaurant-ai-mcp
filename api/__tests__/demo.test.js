@@ -377,6 +377,36 @@ describe('GET ?action=session', () => {
     expect(body.reservations).toBeDefined();
     expect(body.daysLeft).toBeGreaterThan(0);
   });
+
+  // Regressão 25/ago (#79): a sessão chamava getUpcomingReservations SEM o
+  // fuso. O fallback da função compara os horários — que estão na parede do
+  // restaurante — contra o relógio do SERVIDOR, e a lambda roda em UTC. Às
+  // 20:27 em São Paulo o filtro virava `time >= 23:27` e descartava as quatro
+  // reservas da noite. Os seeds nasciam certos no banco (isso o #76 já tinha
+  // consertado) e o painel abria vazio mesmo assim.
+  test('a sessão passa o fuso do restaurante ao buscar as próximas reservas', async () => {
+    const futureDate = new Date(Date.now() + 5 * 86400000).toISOString();
+    const mockConfig = {
+      id: 'demo-rest-1',
+      restaurant_name: 'Mocotó',
+      timezone: 'America/Sao_Paulo',
+      demo_token: 'valid-token-abc',
+      demo_expires_at: futureDate,
+    };
+
+    const gtSingle = jest.fn().mockResolvedValue({ data: mockConfig, error: null });
+    mockFrom.mockReturnValue({ select: jest.fn().mockReturnValue({
+      eq: jest.fn().mockReturnValue({ gt: jest.fn().mockReturnValue({ single: gtSingle }) }) }) });
+    mockSchema.mockReturnValue({ from: mockFrom });
+
+    getAllTables.mockResolvedValue({ success: true, tables: [] });
+    getUpcomingReservations.mockResolvedValue({ success: true, reservations: [] });
+
+    const res = makeRes();
+    await handler({ method: 'GET', query: { action: 'session', token: 'valid-token-abc' }, headers: {} }, res);
+
+    expect(getUpcomingReservations).toHaveBeenCalledWith('demo-rest-1', 'America/Sao_Paulo');
+  });
 });
 
 // ---------------------------------------------------------------------------
