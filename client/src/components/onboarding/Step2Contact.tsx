@@ -71,8 +71,10 @@ const SERVICE_PRESETS = {
 
 type ServiceType = keyof typeof SERVICE_PRESETS;
 
-// Default service type shown when the step first renders.
-const DEFAULT_SERVICE_TYPE: ServiceType = 'lunch_dinner';
+// Nenhum preset "selecionado" por default: o tile marcado mentia sobre o
+// estado (os horários podiam ter vindo do Google) e um clique no tile já
+// "selecionado" sobrescrevia os 7 dias com o horário genérico do preset
+// (auditoria 24/ago). Sem seleção fantasma, um clique é sempre intencional.
 
 const DAY_KEYS: Record<string, string> = {
   Monday: 'onboarding.dayMonday',
@@ -119,14 +121,12 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
   const { t } = useTranslation();
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [hoursErrors, setHoursErrors] = useState<Record<string, string>>({});
-  const [selectedServiceType, setSelectedServiceType] = useState<ServiceType>(DEFAULT_SERVICE_TYPE);
+  const [selectedServiceType, setSelectedServiceType] = useState<ServiceType | null>(null);
   // Seed from the default preset so the multi-period banner + service-periods
   // summary render correctly on first paint. (The old init effect guarded on
   // open_time === '09:00', but the orchestrator default is '12:00' — so it
   // was dead code and this flag was wrongly stuck at false.)
-  const [useMultiplePeriods, setUseMultiplePeriods] = useState(
-    SERVICE_PRESETS[DEFAULT_SERVICE_TYPE].periods.length > 1
-  );
+  const [useMultiplePeriods, setUseMultiplePeriods] = useState(false);
   // CNPJ já confirmado (ou pulado) some da tela. Começa resolvido quando o
   // dado já veio de outro caminho — reabrir a pergunta a cada volta ao passo
   // transformaria uma cortesia em obstáculo.
@@ -334,7 +334,10 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
           Fica aqui, no passo de contato, porque é onde o dono já está
           conferindo dados da empresa — e some sozinho depois de confirmado
           ou pulado, para não virar mais uma etapa obrigatória. */}
-      {!cnpjResolvido && (
+      {/* CNPJ é cadastro da Receita Federal — só faz sentido para o Brasil.
+          Antes, um cadastro de Madri consultava a Receita e recebia "Não
+          encontramos sua empresa" em português. */}
+      {!cnpjResolvido && (data.country_code === 'BR' || /\bbrasil\b|\bbrazil\b/i.test(data.country || '')) && (
         <div className="border-t border-glass-border-input pt-5">
           <CnpjConfirmPanel
             nome={data.restaurant_name}

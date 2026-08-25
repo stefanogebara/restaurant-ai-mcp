@@ -160,8 +160,12 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
     if (languageCode) {
       onCountryChange(country.code, languageCode);
     }
-    // Clear city selection when country changes
-    onCityChange('');
+    // Limpar a cidade só quando o país MUDOU de fato. Re-selecionar o mesmo
+    // país apagava a cidade prefillada do demo — o dono confirmava "Brasil" e
+    // perdia "São Paulo" que já estava preenchido.
+    if (country.code !== selectedCountryCode) {
+      onCityChange('');
+    }
     setIsCountryOpen(false);
     setCountrySearchQuery('');
   };

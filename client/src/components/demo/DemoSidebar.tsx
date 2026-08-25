@@ -84,9 +84,13 @@ interface DemoSidebarProps {
   onNavigate?: (view: string) => void;
   collapsed?: boolean;
   onToggleCollapse?: () => void;
+  /** CTA de conversão COM o demo token — /login puro perde o prefill do
+   *  onboarding (a auditoria de 24/ago pegou 3 CTAs desta sidebar vazando). */
+  conversionHref?: string;
+  onConversionClick?: () => void;
 }
 
-export default function DemoSidebar({ lang, activeView = 'dashboard', onNavigate, collapsed = false, onToggleCollapse }: DemoSidebarProps) {
+export default function DemoSidebar({ lang, activeView = 'dashboard', onNavigate, collapsed = false, onToggleCollapse, conversionHref = '/login', onConversionClick }: DemoSidebarProps) {
   const [toast, setToast] = useState<string | null>(null);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -229,7 +233,8 @@ export default function DemoSidebar({ lang, activeView = 'dashboard', onNavigate
         <div className={`border-t border-charcoal-dark ${collapsed ? 'p-2' : 'p-4'}`}>
           {collapsed ? (
             <Link
-              to="/login"
+              to={conversionHref}
+              onClick={onConversionClick}
               className="flex items-center justify-center w-full p-2.5 bg-burgundy hover:bg-burgundy-dark text-white rounded-xl transition-colors"
               title={signupCTA}
             >
@@ -237,7 +242,8 @@ export default function DemoSidebar({ lang, activeView = 'dashboard', onNavigate
             </Link>
           ) : (
             <Link
-              to="/login"
+              to={conversionHref}
+              onClick={onConversionClick}
               className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-xl transition-colors"
             >
               <ThiingsIcon name="sparkles" pxSize={14} />
@@ -280,7 +286,8 @@ export default function DemoSidebar({ lang, activeView = 'dashboard', onNavigate
               <strong>{toast}</strong> &mdash; {signupText}
             </span>
             <Link
-              to="/login"
+              to={conversionHref}
+              onClick={onConversionClick}
               className="ml-2 text-xs font-semibold text-burgundy hover:text-white underline underline-offset-2 transition-colors"
             >
               {signupCTA}

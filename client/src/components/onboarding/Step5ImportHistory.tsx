@@ -17,7 +17,6 @@ import ThiingsIcon from '../common/ThiingsIcon';
 import { api } from '../../services/api';
 
 interface Step5ImportHistoryProps {
-  restaurantId: string;
   onNext: () => void;
 }
 

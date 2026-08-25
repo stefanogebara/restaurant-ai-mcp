@@ -41,7 +41,17 @@ export default function Login() {
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [mode, setMode] = useState<AuthMode>('signin');
+  // Convert do demo (from=demo) nunca teve conta — abrir em "Bem-vindo de
+  // volta" com signup escondido no rodapé era a tela mais genérica do produto
+  // no momento de maior intenção do funil (auditoria 24/ago). Lazy initializer:
+  // lê a URL uma vez, antes do efeito que a limpa.
+  const [mode, setMode] = useState<AuthMode>(() => {
+    try {
+      return new URLSearchParams(window.location.search).get('from') === 'demo'
+        ? 'signup'
+        : 'signin';
+    } catch { return 'signin'; }
+  });
 
   // Email/password form state
   const [email, setEmail] = useState('');

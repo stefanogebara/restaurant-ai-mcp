@@ -115,7 +115,9 @@ export default function OnboardingSuccessModal({ countdown, ownReferral, booking
           <button
             ref={primaryButtonRef}
             type="button"
-            onClick={() => { window.location.href = '/host-dashboard/simple'; }}
+            // ?launch=1 igual ao countdown: o clique (a ação mais engajada)
+            // pulava o checklist de lançamento que o redirect automático abria.
+            onClick={() => { window.location.href = '/host-dashboard/simple?launch=1'; }}
             className="w-full px-8 py-3 bg-burgundy hover:bg-burgundy-dark text-white font-semibold rounded-[100px] flex items-center justify-center gap-2 transition-all duration-300 mb-2"
           >
             {t('onboarding.goToDashboard')}

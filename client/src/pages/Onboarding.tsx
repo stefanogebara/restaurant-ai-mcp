@@ -24,6 +24,7 @@ import Step2Contact from '../components/onboarding/Step2Contact';
 import Step3TablesAndSettings from '../components/onboarding/Step3TablesAndSettings';
 import Step4Review from '../components/onboarding/Step4Review';
 import Step5ImportHistory from '../components/onboarding/Step5ImportHistory';
+import { toTileType } from '../lib/restaurantTypeSlug';
 import Step6TeachAI from '../components/onboarding/Step6TeachAI';
 import OnboardingSuccessModal from '../components/onboarding/OnboardingSuccessModal';
 import OnboardingStepSidebar from '../components/onboarding/OnboardingStepSidebar';
@@ -152,6 +153,9 @@ export default function Onboarding() {
 
   const [restored] = useState(restoreOnboarding);
   const [currentStep, setCurrentStep] = useState(restored.step);
+  // Passo em que a sessão ABRIU (não o atual): o prefill do demo consulta
+  // isto para não clobberar um rascunho retomado.
+  const initialStepRef = useRef(restored.step);
   const [onboardingData, setOnboardingData] = useState<OnboardingData>(restored.data);
 
   // Step 0 (Google Places discovery) — runs BEFORE step 1 for fresh signups.
@@ -192,6 +196,11 @@ export default function Onboarding() {
     const demoToken = localStorage.getItem(LS_PENDING_DEMO_TOKEN);
     if (!demoToken) return;
 
+    // Rascunho retomado além do Passo 1 = o dono JÁ editou dados. O prefill
+    // rodava em todo mount e o merge {...prev, ...updates} fazia o demo
+    // sobrescrever silenciosamente as correções dele (auditoria 24/ago).
+    if (initialStepRef.current > 1) return;
+
     const apiBase = import.meta.env.VITE_API_BASE_URL || '/api';
     setIsDemoLoading(true);
     fetch(`${apiBase}/demo/session?token=${encodeURIComponent(demoToken)}`)
@@ -201,14 +210,34 @@ export default function Onboarding() {
         const r = data.restaurant;
         setOnboardingData((prev) => {
           const updates: Partial<OnboardingData> = {};
-          // Step 1: Restaurant info
-          if (r.restaurant_name) updates.restaurant_name = r.restaurant_name;
-          if (r.restaurant_type) updates.restaurant_type = r.restaurant_type;
-          if (r.city) updates.city = r.city;
-          if (r.country) updates.country = r.country;
+          // Prefill preenche VAZIOS — nunca vence o que o dono já digitou
+          // (corrida prefill × digitação rápida no Passo 1).
+          if (r.restaurant_name && !prev.restaurant_name) updates.restaurant_name = r.restaurant_name;
+          if (r.restaurant_type && !prev.restaurant_type) updates.restaurant_type = toTileType(r.restaurant_type);
+          if (r.city && !prev.city) updates.city = r.city;
+          // O demo grava código ISO em `country`; o Passo 1 valida
+          // `country_code` e o seletor de cidade é gateado nele. Sem derivar
+          // os dois, o convert batia em "País é obrigatório" com o país
+          // conhecido — e ao corrigir, perdia a cidade prefillada.
+          if (r.country && /^[A-Za-z]{2}$/.test(r.country) && !prev.country_code) {
+            const iso = r.country.toUpperCase();
+            updates.country_code = iso;
+            try {
+              updates.country =
+                new Intl.DisplayNames(['en'], { type: 'region' }).of(iso) || iso;
+            } catch { updates.country = iso; }
+          } else if (r.country && r.country !== 'Unknown' && !prev.country) {
+            updates.country = r.country;
+          }
           // Step 2: Contact & Hours (from Google Maps scrape)
-          if (r.phone) updates.phone_number = r.phone;
-          if (r.email) updates.email = r.email;
+          if (r.phone && !prev.phone_number) updates.phone_number = r.phone;
+          // O placeholder <slug>@demo.seatable.one satisfaz o NOT NULL do
+          // banco do demo — jamais pode virar o e-mail transacional do
+          // restaurante real (passava em todas as regex e ia parar no
+          // restaurant_registry).
+          if (r.email && !prev.email && !r.email.endsWith('@demo.seatable.one')) {
+            updates.email = r.email;
+          }
           // Pull richer fields from the persisted Google Places scrape so the
           // owner doesn't have to re-type info we already proved we know on
           // the demo dashboard (address, website, editorial summary, etc).
@@ -225,9 +254,12 @@ export default function Onboarding() {
             }
             // Cuisine: scrape is more accurate than restaurant_type fallback
             // ('Restaurant' default) because Google Places types are specific.
+            // toTileType traduz o texto livre do Google para o vocabulário do
+            // wizard — sem isso a cozinha real virava 'other' no banco.
             if (typeof scraped.cuisine_type === 'string' && scraped.cuisine_type
-                && (!updates.restaurant_type || updates.restaurant_type.toLowerCase() === 'restaurant')) {
-              updates.restaurant_type = scraped.cuisine_type;
+                && !prev.restaurant_type
+                && (!updates.restaurant_type || updates.restaurant_type === 'casual-dining')) {
+              updates.restaurant_type = toTileType(scraped.cuisine_type);
             }
             // Porte estimado (avaliações + preço) → o passo de mesas chega
             // proposto. Questionário respondido vence a estimativa.
@@ -239,11 +271,14 @@ export default function Onboarding() {
             }
           }
           if (r.business_hours && typeof r.business_hours === 'object') {
-            // Convert scraped hours to onboarding format
+            // Convert scraped hours to onboarding format. O demo grava
+            // {open_time, close_time, is_open} — o mapper antigo lia
+            // .open/.close (inexistentes) e TODO horário prefillado caía nos
+            // defaults 12:00–23:00 em silêncio (auditoria 24/ago).
             const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
             const hours = days.map(day => {
               const dayHours = r.business_hours[day] || r.business_hours[day.toLowerCase()];
-              if (!dayHours || dayHours === 'Closed' || dayHours === 'closed') {
+              if (!dayHours || dayHours === 'Closed' || dayHours === 'closed' || dayHours.is_open === false) {
                 return { day, is_open: false, open_time: '12:00', close_time: '23:00' };
               }
               if (typeof dayHours === 'string') {
@@ -251,7 +286,12 @@ export default function Onboarding() {
                 return { day, is_open: true, open_time: open || '12:00', close_time: close || '23:00' };
               }
               if (typeof dayHours === 'object') {
-                return { day, is_open: true, open_time: dayHours.open || '12:00', close_time: dayHours.close || '23:00' };
+                return {
+                  day,
+                  is_open: true,
+                  open_time: dayHours.open_time || dayHours.open || '12:00',
+                  close_time: dayHours.close_time || dayHours.close || '23:00',
+                };
               }
               return { day, is_open: true, open_time: '12:00', close_time: '23:00' };
             });
@@ -426,6 +466,31 @@ export default function Onboarding() {
         restaurant_type: onboardingData.restaurant_type,
       });
 
+      // Aposenta o demo AGORA — este é o único caminho real de conversão
+      // (Welcome nunca é revisitado após o onboarding; sem isto o
+      // demo_converted_at fica null e o nurture continua mandando "seu demo
+      // expira" para um cliente pagante). Aguardado com teto de 5s (lição do
+      // #53: fire-and-forget morre com o freeze/navegação); o Welcome segue
+      // como backstop de retry se isto falhar.
+      const pendingDemoToken = localStorage.getItem(LS_PENDING_DEMO_TOKEN);
+      if (pendingDemoToken) {
+        try {
+          const convertRes = await Promise.race([
+            authFetch('/api/demo/convert', {
+              method: 'POST',
+              body: JSON.stringify({ token: pendingDemoToken }),
+            }).then(async (r) => ({ ok: r.ok, body: await r.json().catch(() => null) })),
+            new Promise<{ ok: false; body: null }>((resolve) =>
+              setTimeout(() => resolve({ ok: false, body: null }), 5000)),
+          ]);
+          if (convertRes.ok && convertRes.body?.success === true) {
+            localStorage.removeItem(LS_PENDING_DEMO_TOKEN);
+          }
+        } catch (err) {
+          console.error('[Onboarding] demo convert failed (Welcome retries later)', err);
+        }
+      }
+
       // Fetch own referral code for share nudge (non-blocking)
       authFetch('/api/referral?action=code')
         .then((r) => r.json())
@@ -436,7 +501,8 @@ export default function Onboarding() {
         })
         .catch(() => { /* best-effort */ });
 
-      // Advance to Step 5 (Teach Your AI) — the success modal fires after Step 5
+      // Advance to Step 5 (Import History); Step 6 is Teach Your AI and the
+      // success modal fires after it.
       setCurrentStep(5);
     } catch (err: unknown) {
       const message = err instanceof Error
@@ -667,13 +733,11 @@ export default function Onboarding() {
           )}
           {currentStep === 5 && (
             <Step5ImportHistory
-              restaurantId={onboardingData.restaurant_id}
               onNext={nextStep}
             />
           )}
           {currentStep === 6 && (
             <Step6TeachAI
-              restaurantId={onboardingData.restaurant_id}
               restaurantName={onboardingData.restaurant_name}
               city={onboardingData.city}
               country={onboardingData.country}

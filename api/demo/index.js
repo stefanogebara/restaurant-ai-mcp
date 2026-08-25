@@ -100,11 +100,22 @@ function buildFakeReservations(restaurantId) {
   const now = new Date();
   const todayStr = now.toISOString().split('T')[0];
 
-  // 3 today reservations so dashboard isn't empty
+  // 3 reservas "de hoje" para o painel não nascer vazio — em horários
+  // RELATIVOS à criação. Os horários fixos 19:30–20:30 faziam um demo criado
+  // às 22h abrir com "Tudo em Dia — sem reservas futuras" logo depois do aha
+  // (walkthrough 24/ago). Regra: próximos slots de 30min a partir de +60min;
+  // o que passar de 23:30 rola para o jantar de amanhã.
   const todayNames = ['Ana Costa', 'Pedro Santos', 'Julia Oliveira'];
-  const todayTimes = ['19:30', '20:00', '20:30'];
   const todayParty = [2, 4, 3];
+  const amanha = new Date(now);
+  amanha.setDate(amanha.getDate() + 1);
+  const amanhaStr = amanha.toISOString().split('T')[0];
+  const fallbackTimes = ['19:30', '20:00', '20:30'];
   for (let i = 0; i < 3; i++) {
+    const slot = new Date(now.getTime() + (60 + i * 30) * 60000);
+    slot.setMinutes(slot.getMinutes() < 30 ? 30 : 60, 0, 0);
+    const sameDay = slot.toISOString().split('T')[0] === todayStr
+      && (slot.getUTCHours() < 23 || (slot.getUTCHours() === 23 && slot.getUTCMinutes() <= 30));
     reservations.push({
       reservation_id: generateSecureReservationId(),
       restaurant_id: restaurantId,
@@ -112,8 +123,10 @@ function buildFakeReservations(restaurantId) {
       customer_phone: null,
       customer_email: null,
       party_size: todayParty[i],
-      date: todayStr,
-      time: todayTimes[i],
+      date: sameDay ? todayStr : amanhaStr,
+      time: sameDay
+        ? `${String(slot.getUTCHours()).padStart(2, '0')}:${String(slot.getUTCMinutes()).padStart(2, '0')}`
+        : fallbackTimes[i],
       status: 'confirmed',
       special_requests: i === 2 ? 'Aniversário' : null,
     });
