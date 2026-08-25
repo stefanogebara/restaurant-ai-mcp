@@ -209,3 +209,97 @@ describe('validarPatch — o portão de escrita do onboarding em conversa', () =
     });
   });
 });
+
+// ---------------------------------------------------------------------------
+// O segurança na porta do banco
+// ---------------------------------------------------------------------------
+const { slotsFaltando, resumoParaPrompt, SLOTS_OBRIGATORIOS } = require('../_lib/onboarding-draft');
+
+const COMPLETO = {
+  restaurant_name: 'Mocotó',
+  restaurant_type: 'casual_dining',
+  city: 'São Paulo',
+  country: 'BR',
+  phone: '(11) 2951-4121',
+  email: 'contato@mocoto.com.br',
+  timezone: 'America/Sao_Paulo',
+  business_hours: { monday: { is_open: true, open_time: '12:00', close_time: '23:00' } },
+};
+
+describe('slotsFaltando — o que a conversa ainda não resolveu', () => {
+  test('draft vazio: falta tudo', () => {
+    expect(slotsFaltando({})).toEqual([...SLOTS_OBRIGATORIOS]);
+  });
+
+  test('draft completo: não falta nada', () => {
+    expect(slotsFaltando(COMPLETO)).toEqual([]);
+  });
+
+  test.each([[null], [undefined], ['']])('valor %p conta como vazio', (v) => {
+    expect(slotsFaltando({ ...COMPLETO, city: v })).toContain('city');
+  });
+
+  // ── Os sentinelas ────────────────────────────────────────────────────────
+  //
+  // Estes três satisfazem o NOT NULL e MENTEM. Foi a confusão entre sentinela
+  // e resposta que produziu os bugs #76/#79 — 'UTC' é truthy e passou por um
+  // `|| padrão` como se fosse um fuso de verdade.
+
+  test("e-mail @demo.seatable.one é placeholder, não e-mail — o dono não recebe nada nele", () => {
+    expect(slotsFaltando({ ...COMPLETO, email: 'mocoto@demo.seatable.one' })).toEqual(['email']);
+  });
+
+  test("timezone 'UTC' é o default da coluna, não um fuso — nenhum restaurante opera em UTC", () => {
+    expect(slotsFaltando({ ...COMPLETO, timezone: 'UTC' })).toEqual(['timezone']);
+  });
+
+  test("country 'Unknown' é o que o demo grava quando não descobriu o país", () => {
+    expect(slotsFaltando({ ...COMPLETO, country: 'Unknown' })).toEqual(['country']);
+  });
+
+  test('semana inteira fechada não é horário confirmado, é objeto preenchido', () => {
+    const fechado = { monday: { is_open: false, open_time: '00:00', close_time: '00:00' } };
+    expect(slotsFaltando({ ...COMPLETO, business_hours: fechado })).toEqual(['business_hours']);
+  });
+
+  test('um dia aberto basta para o horário contar como resolvido', () => {
+    const misto = {
+      monday: { is_open: false, open_time: '00:00', close_time: '00:00' },
+      friday: { is_open: true, open_time: '19:00', close_time: '23:00' },
+    };
+    expect(slotsFaltando({ ...COMPLETO, business_hours: misto })).toEqual([]);
+  });
+
+  test('array não é objeto de horários', () => {
+    expect(slotsFaltando({ ...COMPLETO, business_hours: [] })).toContain('business_hours');
+  });
+});
+
+describe('resumoParaPrompt', () => {
+  // A queixa número um sobre onboarding conversacional é perguntar de novo o
+  // que a pessoa acabou de responder. Por isso o prompt diz o que JÁ está
+  // resolvido, não só o que falta.
+  test('lista o que já está resolvido, com instrução explícita de não repetir', () => {
+    const texto = resumoParaPrompt({ restaurant_name: 'Mocotó', city: 'São Paulo' });
+    expect(texto).toMatch(/NÃO pergunte de novo/);
+    expect(texto).toContain('restaurant_name');
+    expect(texto).toContain('city');
+  });
+
+  test('lista o que falta', () => {
+    const texto = resumoParaPrompt({ restaurant_name: 'Mocotó' });
+    expect(texto).toMatch(/Ainda falta:.*phone/);
+  });
+
+  test('draft vazio não finge que algo está pronto', () => {
+    expect(resumoParaPrompt({})).toMatch(/Nada resolvido ainda/);
+  });
+
+  test('draft completo manda concluir em vez de continuar perguntando', () => {
+    expect(resumoParaPrompt(COMPLETO)).toMatch(/confirme com o dono e conclua/);
+  });
+
+  test.each([[null], [undefined]])('draft %p não derruba', (v) => {
+    expect(() => resumoParaPrompt(v)).not.toThrow();
+  });
+});
