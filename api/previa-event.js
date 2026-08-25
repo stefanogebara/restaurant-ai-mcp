@@ -80,7 +80,9 @@ module.exports = async (req, res) => {
             }
           }
         } finally {
-          releaseProcessingLock(lockKey).catch(() => {});
+          // Aguardado: sem await a lambda congela após o res e o release morre;
+          // o TTL de 60s cobriria, mas bloquearia retry de reação nesse meio-tempo.
+          await releaseProcessingLock(lockKey).catch(() => {});
         }
       }
     }

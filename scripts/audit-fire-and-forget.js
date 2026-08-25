@@ -13,11 +13,33 @@
  * If the un-awaited expression returns a Promise, Vercel terminates the
  * Lambda the moment the response is sent and the work silently dies.
  *
- * Allow-list: known intentional fire-and-forgets that DON'T race a
- * caller (cleanup, telemetry, cosmetic UX). Add a code path here only
- * after confirming nothing user-visible depends on the result.
+ * ── Blind spot: a green run does NOT mean the class is absent ────────
+ * The `return res.*` proximity check is a proxy, and it only sees within
+ * one file. A fire-and-forget in a request-path library races the same
+ * freeze even though the response is sent by its caller — in Aug 2026 two
+ * real instances sat in _lib/channels/message-processor.js (the per-phone
+ * lock release, on the normal exit of every WhatsApp message) with this
+ * audit passing. Widening the heuristic to every lib call would drown the
+ * signal in cosmetic reactions, so the gap is left open on purpose: when
+ * you touch a request-path library, read its .catch sites by hand.
  *
- * Exit code 1 if violations found — wire into CI.
+ * ── Allow-list ──────────────────────────────────────────────────────
+ * Entries are anchored to CODE, not line numbers. An earlier version
+ * keyed them as `path:line`; by Aug 2026 thirteen of sixteen entries had
+ * rotted (api/services → api/_services was renamed, other files shifted)
+ * and were silently suppressing arbitrary lines — a real fire-and-forget
+ * landing on one of those line numbers would have been swallowed. Line
+ * numbers move; the statement text is what we actually judged safe.
+ *
+ * An entry that matches nothing is reported as STALE and fails the run,
+ * so rot surfaces on the next CI run instead of years later. Fix a stale
+ * entry by re-anchoring `match` to the moved code, or by deleting it if
+ * the code is gone.
+ *
+ * Add an entry only after confirming nothing user-visible depends on the
+ * result, and write the real reason — "it's fine" is not a reason.
+ *
+ * Exit code 1 if violations or stale allow-list entries are found.
  */
 const fs = require('fs');
 const path = require('path');
@@ -25,30 +47,32 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..', 'api');
 const FOLLOW_LINES = 30;
 
-// (relativePath, lineNumber) → reason
-const ALLOWLIST = new Set([
-  // Inside an awaited Promise.all — the .catch is per-promise error handling,
-  // not fire-and-forget.
-  'services/customerDNA.js:291', 'services/customerDNA.js:295',
-  'services/customerDNA.js:299', 'services/customerDNA.js:303',
-  '_lib/channels/message-processor.js:66', '_lib/channels/message-processor.js:70',
-  'services/wikiCompiler.js:197',
-  // Cleanup; lock TTL covers any miss, no caller waits on it.
-  '_lib/channels/message-processor.js:296',
-  '_lib/channels/message-processor.js:372',
-  // Cosmetic WhatsApp emoji reactions.
-  '_lib/channels/meta-adapter.js:87',
-  '_lib/channels/meta-adapter.js:89',
-  '_lib/channels/meta-adapter.js:97',
-  // Cron loop iterating cities — cityHandler resolves the outer Promise via
-  // fake-response callbacks (lines 79, 81); .catch handles the throw path.
-  // The outer Promise is awaited via Promise.all at line 94. Not fire-and-forget.
-  'cron/warm-seo-cache.js:76',
-  'cron/warm-seo-cache.js:83',
-  // Telemetry-only logging; no user impact if it drops.
-  'waha-webhook.js:44',
-  'waha-webhook.js:53',
-]);
+// Each entry suppresses any flagged line in `file` whose text contains
+// `match`. Keep `match` distinctive enough to name one call site.
+const ALLOWLIST = [
+  {
+    file: 'cron/warm-seo-cache.js',
+    match: 'reservasHandler(fakeReq, fakeRes).catch(',
+    reason:
+      'warmOne resolves its own Promise through the fake-response callbacks; ' +
+      'the .catch is the throw path (resolve("error")). That Promise IS awaited ' +
+      'via Promise.all in the batch loop just below.',
+  },
+  {
+    file: 'prospect-admin.js',
+    match: 'listMetaTemplates().catch(',
+    reason:
+      'Per-promise error handling inside an awaited Promise.all — the await sits ' +
+      'two lines above, out of reach of the one-line lookbehind below.',
+  },
+  {
+    file: 'waha-webhook.js',
+    match: "logWahaEvent('sig_invalid').catch(",
+    reason:
+      'Telemetry for a rejected webhook signature. Nothing downstream reads it and ' +
+      'the request is already being refused; losing the row costs a log line.',
+  },
+];
 
 function* walk(dir) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -64,10 +88,16 @@ const RES_RETURN = /return\s+res\.(status|json|send|end|redirect)/;
 const CATCH_AT_LINE_START = /^\s*[\w$.[\]]+\([\s\S]*?\)\.catch\(/;
 
 const violations = [];
+// An entry stays valid while its call site still exists, flagged or not, so
+// unrelated edits nearby don't churn the list. It goes stale only when the
+// code it names actually changes or disappears.
+const matched = new Set();
 
 for (const file of walk(ROOT)) {
   const rel = path.relative(ROOT, file).replace(/\\/g, '/');
+  const entries = ALLOWLIST.filter((e) => e.file === rel);
   const lines = fs.readFileSync(file, 'utf8').split(/\r?\n/);
+
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     // skip if this line OR the line above contains await
@@ -75,31 +105,46 @@ for (const file of walk(ROOT)) {
     if (i > 0 && /\bawait\b/.test(lines[i - 1])) continue;
     if (!CATCH_AT_LINE_START.test(line)) continue;
 
+    const allowed = entries.find((e) => line.includes(e.match));
+    if (allowed) matched.add(allowed);
+
     // Look forward for `return res.*` within FOLLOW_LINES
     let returnLine = null;
     for (let j = i + 1; j < Math.min(i + FOLLOW_LINES, lines.length); j++) {
       if (RES_RETURN.test(lines[j])) { returnLine = j + 1; break; }
     }
     if (returnLine == null) continue;
+    if (allowed) continue;
 
-    const lineNum = i + 1;
-    const key = `${rel}:${lineNum}`;
-    if (ALLOWLIST.has(key)) continue;
-
-    violations.push({ file: rel, line: lineNum, returnLine, snippet: line.trim().slice(0, 120) });
+    violations.push({ file: rel, line: i + 1, returnLine, snippet: line.trim().slice(0, 120) });
   }
 }
 
-if (violations.length === 0) {
+const stale = ALLOWLIST.filter((e) => !matched.has(e));
+
+if (violations.length === 0 && stale.length === 0) {
   console.log('✓ no fire-and-forget violations in api/');
   process.exit(0);
 }
 
-console.log(`✗ ${violations.length} fire-and-forget violation(s) found:\n`);
-for (const v of violations) {
-  console.log(`  api/${v.file}:${v.line}  →  return res.* at line ${v.returnLine}`);
-  console.log(`    ${v.snippet}`);
+if (violations.length > 0) {
+  console.log(`✗ ${violations.length} fire-and-forget violation(s) found:\n`);
+  for (const v of violations) {
+    console.log(`  api/${v.file}:${v.line}  →  return res.* at line ${v.returnLine}`);
+    console.log(`    ${v.snippet}`);
+  }
+  console.log('\nFix: await the call (wrap in Promise.race+timeout if it can hang)');
+  console.log('Or: add an { file, match, reason } entry to ALLOWLIST in this script.');
 }
-console.log('\nFix: await the call (wrap in Promise.race+timeout if it can hang)');
-console.log(`Or: add 'api/${violations[0].file}:${violations[0].line}' to ALLOWLIST in this script with a one-line reason.`);
+
+if (stale.length > 0) {
+  console.log(`\n✗ ${stale.length} stale allow-list entry(ies) — they no longer match any code:\n`);
+  for (const e of stale) {
+    console.log(`  api/${e.file}  match: ${e.match}`);
+  }
+  console.log('\nA stale entry suppresses nothing today, but it means the code it once');
+  console.log('described has moved or gone. Re-anchor `match` to the new text, or');
+  console.log('delete the entry if the call site is gone.');
+}
+
 process.exit(1);

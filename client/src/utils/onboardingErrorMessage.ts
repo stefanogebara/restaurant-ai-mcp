@@ -91,9 +91,11 @@ export function parseOnboardingError(
     return { message: t('onboarding.completeError', 'Failed to complete onboarding. Please try again.') };
   }
 
-  // Structured field error from the hardened backend.
+  // Structured field error from the hardened backend. O rótulo vem do i18n
+  // (onboarding.fieldLabels.*) — o mapa hardcoded em inglês vira só fallback;
+  // antes um brasileiro via 'Your business hours…' no meio do fluxo pt-BR.
   if (typeof data.field === 'string' && FIELD_LABELS[data.field]) {
-    const label = FIELD_LABELS[data.field];
+    const label = t(`onboarding.fieldLabels.${data.field}`, FIELD_LABELS[data.field]);
     const reason = typeof data.reason === 'string' ? data.reason : 'is invalid';
     return {
       message: t('onboarding.fieldError', `Your ${label} ${reason}. Tap "Edit" to fix it.`, { label, reason }),

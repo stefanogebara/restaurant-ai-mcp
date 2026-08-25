@@ -320,7 +320,10 @@ async function processMessage(adapter, msg, options = {}) {
     try {
       const handled = await handleKeyword(normalizedText, from, session);
       if (handled) {
-        releaseProcessingLock(from).catch(() => {});
+        // Aguardado: sem await, a lambda congela ao responder e o DELETE pode não
+        // landar. O lock fica preso até o TTL de 30s e a próxima mensagem do
+        // cliente gasta esse tempo girando no laço de espera antes de ser atendida.
+        await releaseProcessingLock(from).catch(() => {});
         return { handled: true };
       }
     } catch (err) {
@@ -504,7 +507,10 @@ async function processMessage(adapter, msg, options = {}) {
   } catch (err) {
     logger.error('Failed to save history (non-fatal):', err.message);
   } finally {
-    releaseProcessingLock(from).catch(() => {});
+    // Saída normal de TODA mensagem, então soltar o lock sem await deixa o
+    // caminho quente inteiro sujeito ao freeze da lambda: quando o DELETE não
+    // landa, a mensagem seguinte espera o TTL de 30s à toa.
+    await releaseProcessingLock(from).catch(() => {});
   }
 
   // 14. Memory extraction (fire-and-forget) — só sobre conversa que aconteceu.

@@ -73,7 +73,8 @@ aprender→corrigir está ativo.
 
 ## Divergências com o config
 
-Nenhuma destas foi aplicada sozinha. `bets` e `settled` só o Stefano mexe.
+Nenhuma destas foi aplicada sozinha. `bets` e `settled` só o Stefano mexe —
+quando ele reabre um item, a correção fica registrada no próprio item.
 
 1. **`settled[1]` — "voz é LiveKit + ElevenLabs" — é contradito pelo código.**
    Não existe LiveKit na arquitetura. Zero dependência declarada nos três
@@ -86,10 +87,17 @@ Nenhuma destas foi aplicada sozinha. `bets` e `settled` só o Stefano mexe.
    'openai_realtime']`). A pesquisa do próprio repo já sabia disso e marcava
    como pergunta **em aberto**
    (`.claude/plans/2026-07-31-olimpia-foco-total/pesquisa-elevenlabs/README.md`).
-   **Decisão pendente do Stefano:** reescrever o `settled` para "voz é Twilio +
-   ElevenLabs, com OpenAI Realtime como segundo motor"?
-   *Efeito imediato já aplicado:* `verdict_note` passa a mandar descartar item
-   de mercado sobre LiveKit, e `platform_deps` foi corrigido.
+   **RESOLVIDO em 2026-08-25** — o Stefano reabriu e mandou corrigir. O
+   `settled[1]` foi reescrito para o caminho real, nomeando os arquivos onde a
+   escolha de motor vive (`api/voice-engine-settings.js`,
+   `api/_voice-server/ws-server.js`), e guarda a linha antiga junto do motivo
+   para que a correção não se perca. O `verdict_note` mantém a regra de
+   descartar item de mercado sobre LiveKit, agora sem a contradição —
+   com uma exceção nova e estreita: **a menos que quebre o próprio
+   `@elevenlabs/client`**, já que é por ele que o `livekit-client` entra.
+   Reconferido no lockfile antes da edição: `@elevenlabs/client` →
+   `livekit-client` → `@livekit/{mutex,protocol}`, zero dependência direta,
+   zero import, zero env `LIVEKIT_*`.
 
 2. **`settled[0]` — "Airtable + n8n abandonada" — sustentado, com uma arma
    carregada.** n8n está limpo. Airtable não existe em produção, mas

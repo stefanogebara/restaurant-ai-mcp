@@ -93,7 +93,58 @@ genérica, e isso é chamada do Stefano, não spike. Parar também se passar de 
 ativo: o valor aqui é o sinal de portão aberto ou fechado, não a integração.
 
 **Toca:** `database/migrations/20260126_pos_and_revenue.sql`, `api/pos/reservations.js`, `api/pos/table-status.js`, `api/check-availability.js`, `.claude/plans/2026-07-27-teardown-integracoes/README.md`
-**Status:** aberto
+**Status:** **executado em 2026-08-25 — portão aberto em toda fonte pública; falta o passo que só o Stefano dá**
+
+#### Resultado do spike
+
+**Primeiro achado: metade do spike não podia rodar como escrita.** A instrução era
+"reexecutar a sondagem contra o sandbox com as credenciais atuais". **Não existem
+credenciais atuais.** Não há `SAIPOS_*` no `.env.example`, não há adaptador, e
+`git log --all -S"saipos" -- api/*` devolve um único commit — o `137baf3`, que é o regex
+de autoresponder da prospecção detectando link `saipos.com` como resposta de robô.
+Nenhum arquivo Saipos jamais existiu no histórico.
+
+**Correção de registro:** `.claude/plans/2026-07-27-conclusoes-produto/README.md` afirma
+que "o adaptador Saipos que já está escrito serve pra *ler* a mesa". Isso está **errado**
+— ou descreve trabalho feito fora do repo e nunca commitado. O `known_gaps` do
+`intel.config.json` ("Saipos tem zero ocorrências em código") é que está certo. Quem for
+retomar isto começa do zero, não de um adaptador pronto.
+
+**Segundo achado: nenhuma das condições de "parar se" aparece em fonte pública.** A
+condição era parar se o credenciamento exigisse contrato ou aprovação do iFood. Conferido
+em quatro páginas da doc oficial, todas públicas e sem login:
+
+| O que se procurou | O que se achou |
+|---|---|
+| Aprovação do iFood | **Nenhuma menção ao iFood em nenhuma página** |
+| Exigência de contrato comercial | Nenhuma |
+| Exclusão de concorrente / aprovação de modelo de negócio | Nenhuma — os [critérios de homologação](https://saipos-docs-order-api.readme.io/reference/criterios-de-homologacao.md) são **puramente técnicos**: validam os fluxos de Delivery, Ficha, Mesa, Mesa com Comanda e Balcão |
+| Credenciamento self-serve | Sim — formulário em `developer.saipos.com`, e a doc diz que "o sistema fornece automaticamente as credenciais" (chave pública, loja de teste, Store ID, IDPartner) |
+| Endpoints de mesa ainda documentados | Sim, os quatro: consultar por mesa ou comanda, consultar status de comanda, solicitar fechamento de mesa, transferência de pedido de mesa |
+| Mudança de política desde as aquisições | Nenhuma. O [changelog](https://saipos-docs-order-api.readme.io/reference/changelog.md) tem entradas de 30/01/2026 e 02/07/2026, ambas técnicas (campo de e-mail, código de erro 950 de contingência) — API viva e mantida **depois** da compra da Saipos (abr/2025) e da Get In (abr/2026) |
+
+**Leitura:** a hipótese do spike era que o iFood teria fechado o portão a terceiros que
+competem em reserva e salão. **Nada em fonte pública sustenta isso.** A rota parece viva,
+e a doc de mesa/comanda continua sendo exatamente o que serve ao caso de uso (ler mesa e
+comanda para reserva e service completion).
+
+**O que falta, e por que parei aqui:** o teste decisivo é submeter o credenciamento — e
+isso não é leitura, é **cadastrar o Seatable como parceiro de uma empresa do iFood,
+declarando o caso de uso real**. O `.claude/plans/2026-07-27-teardown-integracoes/README.md`
+classifica a Get In, também do iFood, como concorrente direto. Registrar-se revela intenção
+de produto ao dono do concorrente, e isso é chamada comercial do Stefano, não passo de
+spike. O sinal técnico já foi colhido: **o portão está aberto até onde se vê de fora.**
+
+**Se o Stefano mandar seguir**, o caminho é curto: cadastro em `developer.saipos.com` →
+credenciais automáticas → sondar o sandbox com o formato que o teardown já descobriu
+(`?table=[5]`, colchetes literais, resposta é array no topo, mesa livre → `[]`) → se
+responder, estender o `CHECK` de `pos_provider` para incluir `saipos`.
+
+**Ressalva que sobrevive ao spike, e que muda o valor da rota:** mesmo com o portão aberto,
+o `close-sale` da Saipos **não registra pagamento** — ele pinta a mesa de laranja avisando
+o garçom que o cliente pediu a conta. O body aceita só `order_id` e `cod_store`. A rota
+serve para **ler** mesa e comanda, não para fechar a conta. Se o argumento de venda for
+"fechamos o loop pelo POS", isso vira promessa quebrada na implantação.
 
 ---
 

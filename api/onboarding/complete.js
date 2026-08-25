@@ -245,6 +245,13 @@ module.exports = async (req, res) => {
 
     if (!trimmedEmail) fieldErrors.push({ field: 'email', reason: 'required' });
     else if (!EMAIL_RE.test(trimmedEmail)) fieldErrors.push({ field: 'email', reason: 'invalid email format' });
+    // Defesa em profundidade contra o placeholder do demo: <slug>@demo.seatable.one
+    // satisfaz o NOT NULL do demo e passa na regex — mas como e-mail transacional
+    // do restaurante real é um buraco negro (o prefill também filtra; isto pega
+    // qualquer cliente que não filtre).
+    else if (trimmedEmail.toLowerCase().endsWith('@demo.seatable.one')) {
+      fieldErrors.push({ field: 'email', reason: 'placeholder demo email is not a real contact address' });
+    }
 
     if (fieldErrors.length > 0) {
       // Build a user-friendly message that names the first offending field
@@ -304,6 +311,12 @@ module.exports = async (req, res) => {
       'traditional', 'modern', 'fast-casual', 'fine-dining',
       'casual-dining', 'cafe', 'bar', 'bistro',
       'pizzeria', 'steakhouse', 'seafood', 'other',
+      // Cozinha do enum do banco — o prefill do demo envia estes quando o
+      // Google identifica a cozinha; rejeitá-los degradava para 'other'.
+      'italian', 'japanese', 'mexican',
+      // Variantes underscore (enum do demo) — defesa para clientes que não
+      // passem pelo normalizador do wizard (ex.: onboarding-chat).
+      'fine_dining', 'casual_dining', 'fast_casual',
     ];
     const validatedRestaurantType = ALLOWED_RESTAURANT_TYPES.includes(restaurant_type)
       ? restaurant_type
@@ -486,6 +499,11 @@ module.exports = async (req, res) => {
       'fast-casual': 'fast_casual',
       'fine-dining': 'fine_dining',
       'casual-dining': 'casual_dining',
+      // Identidade para as variantes underscore (enum do demo) — sem estas
+      // chaves o lookup errava e a cozinha real virava 'other'.
+      'fine_dining': 'fine_dining',
+      'casual_dining': 'casual_dining',
+      'fast_casual': 'fast_casual',
       'italian': 'italian',
       'japanese': 'japanese',
       'mexican': 'mexican',

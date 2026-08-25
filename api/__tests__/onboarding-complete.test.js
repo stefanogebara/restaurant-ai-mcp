@@ -24,6 +24,9 @@ function createChainableMock(resolvedValue = { data: null, error: null }) {
       if (prop === '__calls') return calls;
       return (...args) => {
         calls.push({ method: prop, args });
+        if ((prop === 'insert' || prop === 'update') && args[0] && typeof args[0] === 'object') {
+          if ('restaurant_type' in args[0]) capturedConfigWrite = args[0];
+        }
         return proxy;
       };
     },
@@ -34,6 +37,9 @@ function createChainableMock(resolvedValue = { data: null, error: null }) {
 
 // Track subscription inserts
 let capturedSubscriptionInsert = null;
+// Track the restaurant_config write (insert/update) so tests can assert what
+// actually lands in the DB — e.g. the restaurant_type vocabulary mapping.
+let capturedConfigWrite = null;
 
 const mockSupabaseAdmin = {
   from: jest.fn((table) => {
@@ -168,6 +174,7 @@ const handler = require('../onboarding/complete');
 // Reset mocks between tests
 // ---------------------------------------------------------------------------
 beforeEach(() => {
+  capturedConfigWrite = null;
   jest.clearAllMocks();
   capturedSubscriptionInsert = null;
 });
@@ -646,5 +653,55 @@ describe('Input validation — required field hardening', () => {
     expect(body.details.length).toBeGreaterThanOrEqual(4);
     const fields = body.details.map(d => d.field);
     expect(fields).toEqual(expect.arrayContaining(['customer_email', 'restaurant_name', 'phone_number', 'email']));
+  });
+});
+
+
+// ============================================================
+// G0 (auditoria 24/ago): vocabulário de tipo + e-mail placeholder do demo
+// ============================================================
+describe('restaurant_type — vocabulário unificado (G0.4)', () => {
+  // complete.js lê auth.user?.sub — o mock global só tem `id`, então TODOS os
+  // testes anteriores rodavam com userId null e a escrita do config era
+  // PULADA em silêncio (o endpoint ainda devolve 200 — achado #13 da
+  // auditoria). Estes testes autenticam com `sub` para exercitar a escrita.
+  const authComSub = () => {
+    const { verifyAuth } = require('../_lib/auth');
+    verifyAuth.mockResolvedValueOnce({ user: { sub: 'user-1', id: 'user-1' } });
+  };
+
+  test("enum do demo com underscore não vira 'other'", async () => {
+    authComSub();
+    const { req, res } = mockReqRes({ ...BASE_BODY, restaurant_type: 'casual_dining' });
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(capturedConfigWrite).toBeDefined();
+    expect(capturedConfigWrite.restaurant_type).toBe('casual_dining');
+  });
+
+  test("cozinha do enum do banco ('italian') é preservada", async () => {
+    authComSub();
+    const { req, res } = mockReqRes({ ...BASE_BODY, restaurant_type: 'italian' });
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(capturedConfigWrite.restaurant_type).toBe('italian');
+  });
+
+  test("tile com hífen segue mapeando ('fine-dining' → fine_dining)", async () => {
+    authComSub();
+    const { req, res } = mockReqRes({ ...BASE_BODY, restaurant_type: 'fine-dining' });
+    await handler(req, res);
+    expect(capturedConfigWrite.restaurant_type).toBe('fine_dining');
+  });
+});
+
+describe('e-mail placeholder do demo é rejeitado (G0.3)', () => {
+  test('<slug>@demo.seatable.one → 400 no campo email', async () => {
+    const { req, res } = mockReqRes({ ...BASE_BODY, email: 'demo-a1b2c3d4@demo.seatable.one' });
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    const body = res.json.mock.calls[0][0];
+    expect(body.field).toBe('email');
+    expect(body.error).toMatch(/placeholder/i);
   });
 });

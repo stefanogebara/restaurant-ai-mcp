@@ -34,13 +34,17 @@ function RestaurantHeroPhoto({ photoRef, alt }: { photoRef: string; alt: string 
   const src = `/api/places-photo?ref=${encodeURIComponent(photoRef)}&maxWidth=1200`;
   return (
     <div className="relative -mx-6 -mt-2 aspect-[21/9] overflow-hidden bg-soft-gray">
+      {/* Skeleton enquanto a foto carrega (proxy → redirect → Google): sem
+          ele, conexões lentas viam um bloco branco gigante de altura
+          reservada no meio do card. */}
+      <div className="absolute inset-0 animate-pulse bg-glass-border-dark/40" aria-hidden="true" />
       <img
         src={src}
         alt={alt}
         loading="eager"
         decoding="async"
         onError={() => setFailed(true)}
-        className="absolute inset-0 w-full h-full object-cover"
+        className="relative w-full h-full object-cover"
       />
       {/* Subtle bottom fade so the rating/editorial text beneath the photo
           stays comfortably readable when a bright photo butts up against
@@ -308,7 +312,14 @@ export default function RealRestaurantCard({
             {t('demo.realCard.recentReviews', 'Recent reviews on Google')}
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {top_reviews.slice(0, 3).map((review, i) => {
+            {/* Melhores primeiro: a ordem crua do Google abria o card de
+                VENDAS com uma review de 1 estrela (Mocotó, 24/ago). As
+                críticas continuam alimentando o AIKnowsCard, que as trata
+                como "tratar com antecedência" — o lugar certo. */}
+            {[...top_reviews]
+              .sort((a, b) => (b?.rating ?? 0) - (a?.rating ?? 0))
+              .slice(0, 3)
+              .map((review, i) => {
               if (!review?.text) return null;
               const snippet = review.text.length > 160 ? `${review.text.slice(0, 160).trim()}…` : review.text;
               return (

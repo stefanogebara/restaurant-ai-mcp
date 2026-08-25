@@ -232,6 +232,11 @@ export default function DemoDashboard() {
     <div className="min-h-screen">
       <DemoSidebar
         lang={lang}
+        conversionHref={conversionHref}
+        onConversionClick={() => {
+          trackDemoFunnel({ step: 'signup_started', preset: presetKey });
+          stashDemoToken();
+        }}
         activeView={activeView}
         onNavigate={(v) => {
           setActiveView(v as typeof activeView);
