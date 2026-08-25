@@ -524,16 +524,23 @@ async function handleCreate(req, res) {
   const demoPath = `/demo/${demo_token}`;
   const demoUrlAbsolute = `${BASE_URL}${demoPath}`;
 
-  // Send welcome email (fire-and-forget — don't fail if email fails).
-  // Contact-less demos get theirs later, when attach-contact fires.
+  // Welcome email AGUARDADO com teto de 5s — fire-and-forget é inseguro na
+  // Vercel (a lambda congela após a resposta; o envio pendente só completa
+  // se o MESMO container descongelar depois). Sintoma real na caixa de
+  // entrada em 24/ago: welcome do Bráz chegou 30 min atrasado (container
+  // reaquecido) e o do Zeca nunca chegou. Mesma lição do enrichment
+  // (_lib/demo-enrichment.js). A função captura os próprios erros.
   if (trimmedEmail) {
-    sendDemoWelcomeEmail({
-      contactName: effectiveName,
-      contactEmail: trimmedEmail,
-      restaurantName: restaurant_name.trim(),
-      demoUrl: demoUrlAbsolute,
-      language: inferredLanguage,
-    }).catch(err => logger.error('sendDemoWelcomeEmail threw:', err.message));
+    await Promise.race([
+      sendDemoWelcomeEmail({
+        contactName: effectiveName,
+        contactEmail: trimmedEmail,
+        restaurantName: restaurant_name.trim(),
+        demoUrl: demoUrlAbsolute,
+        language: inferredLanguage,
+      }),
+      new Promise((resolve) => setTimeout(resolve, 5000)),
+    ]);
   }
 
   // Enrichment already happened inline above before the insert — no second
@@ -648,14 +655,19 @@ async function handleAttachContact(req, res) {
 
   // Welcome email fires now (not at create) — skip the resend when the same
   // address is submitted twice (double-click, back-and-forth in the UI).
+  // AGUARDADO com teto de 5s: fire-and-forget morre com o freeze da lambda
+  // (foi assim que o welcome do Zeca sumiu em 24/ago).
   if (demo.demo_contact_email !== trimmedEmail) {
-    sendDemoWelcomeEmail({
-      contactName: effectiveName,
-      contactEmail: trimmedEmail,
-      restaurantName: demo.restaurant_name,
-      demoUrl: `${BASE_URL}/demo/${demo_token}`,
-      language: demo.agent_language,
-    }).catch(err => logger.error('sendDemoWelcomeEmail threw:', err.message));
+    await Promise.race([
+      sendDemoWelcomeEmail({
+        contactName: effectiveName,
+        contactEmail: trimmedEmail,
+        restaurantName: demo.restaurant_name,
+        demoUrl: `${BASE_URL}/demo/${demo_token}`,
+        language: demo.agent_language,
+      }),
+      new Promise((resolve) => setTimeout(resolve, 5000)),
+    ]);
   }
 
   logger.info(`Contact attached to demo ${demo.id}`);
