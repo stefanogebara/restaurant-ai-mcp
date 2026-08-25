@@ -37,6 +37,41 @@ const MIN_CHURN_RISK = 70;
 const MIN_VISITS_FOR_CHURN = 3;
 const MAX_OPPORTUNITIES_PER_RESTAURANT_PER_RUN = 25;
 
+// O CONSERTO DE 25/08/2026 — por que este cron parou de terminar.
+//
+// Ele NÃO estava parado: rodou nos domingos 16/08 e 23/08 e gravou linhas na
+// proactive_comms_queue às 10:0x. O que sumiu foi o registro em cron_runs, que
+// é a ÚLTIMA linha do handler — ou seja, ele começava, trabalhava e morria no
+// meio. `cron_runs` é o registro de rodada COMPLETA, não de rodada INVOCADA;
+// ler a ausência de linha como "o cron não roda" é concluir sobre uma camada
+// medindo outra.
+//
+// Por que morria: o custo por rodada crescia sozinho.
+//   - 2 consultas POR RESTAURANTE (46 restaurantes = 92 idas ao banco);
+//   - 1 chamada de LLM POR OPORTUNIDADE, feita ANTES do INSERT — inclusive para
+//     as que o índice único ia rejeitar como duplicadas. Com 36 linhas já
+//     pendentes na fila, eram 36 chamadas de Haiku por rodada cujo único
+//     destino era o erro 23505.
+// Em 09/08 eram ~16 oportunidades e a rodada terminou em ~115s do disparo.
+// Depois disso a população em risco subiu para ~56 e a rodada passou do teto
+// de 60s do vercel.json. Não havia recuperação possível: cada semana ficava
+// mais lenta que a anterior.
+//
+// O conserto tem três partes, e a terceira é a que importa mais:
+//   1. as consultas de candidatos viraram 3 no total, não 2 por restaurante;
+//   2. a deduplicação acontece ANTES do LLM, não depois;
+//   3. orçamento de tempo conferido DENTRO do laço de oportunidades. A lição do
+//      update-churn-scores (24/08) foi exatamente esta: orçamento conferido só
+//      ENTRE restaurantes não protege de nada, porque um restaurante grande
+//      atravessa o limite inteiro sem ninguém olhar. Agora a rodada sempre
+//      alcança o logCronRun e diz honestamente o que deixou para a semana
+//      seguinte, em vez de morrer em silêncio.
+const TIME_BUDGET_MS = 45_000;
+// Teto de leitura dos candidatos. Alto de propósito: limitar a LEITURA é o que
+// cria fome de fila (ver MAX_ARQUIVO_CANDIDATOS em prospect-score-outcomes.js).
+// Quem limita o trabalho aqui é o orçamento de tempo, não o tamanho da leitura.
+const MAX_CANDIDATOS_LIDOS = 5000;
+
 module.exports = async (req, res) => {
   // Verify cron auth
   const cronSecret = process.env.CRON_SECRET;
@@ -61,7 +96,12 @@ module.exports = async (req, res) => {
     skipped_duplicate: 0,
     expired: 0,
     errors: 0,
+    // Quantos restaurantes ficaram para a semana que vem por falta de tempo.
+    // Existe para que "acabou o orçamento" seja um número visível em cron_runs
+    // e não um silêncio, que é como este cron se machucou.
+    restaurants_deferred: 0,
   };
+  const prazoFinal = Date.now() + TIME_BUDGET_MS;
 
   try {
     logger.info('Starting weekly proactive comms scan...');
@@ -80,11 +120,27 @@ module.exports = async (req, res) => {
       return res.status(500).json({ success: false, error: 'restaurant_load_failed' });
     }
 
-    // 3. For each restaurant, find opportunities and queue them
+    const ids = (restaurants || []).map(r => r.id);
+
+    // 3. Candidatos e fila pendente: TRÊS consultas no total, não duas por
+    // restaurante. Com 46 restaurantes isso derruba 92 idas ao banco para 3.
+    const [ocasioesPorRest, riscoPorRest, jaPendentes] = await Promise.all([
+      findUpcomingOccasions(ids),
+      findAtRiskCustomers(ids),
+      loadPendingKeys(ids),
+    ]);
+
+    // 4. Para cada restaurante, monta a lista e enfileira
     for (const restaurant of restaurants || []) {
+      // Orçamento conferido ANTES de pegar o próximo restaurante — e de novo
+      // dentro do laço de oportunidades, logo abaixo.
+      if (Date.now() >= prazoFinal) {
+        stats.restaurants_deferred = ids.length - stats.restaurants_processed;
+        break;
+      }
       try {
-        const occasions = await findUpcomingOccasionsForRestaurant(restaurant.id);
-        const atRisk = await findAtRiskCustomersForRestaurant(restaurant.id);
+        const occasions = ocasioesPorRest.get(restaurant.id) || [];
+        const atRisk = riscoPorRest.get(restaurant.id) || [];
 
         const opportunities = [
           ...occasions.map(o => ({ ...o, type: 'occasion' })),
@@ -92,11 +148,26 @@ module.exports = async (req, res) => {
         ].slice(0, MAX_OPPORTUNITIES_PER_RESTAURANT_PER_RUN);
 
         for (const opp of opportunities) {
+          // DEDUPE ANTES DO LLM. Era aqui que a rodada queimava o relógio:
+          // generateDraftMessage roda dentro de queueOpportunity, ou seja,
+          // ANTES do INSERT que descobre a duplicata. Toda linha já pendente
+          // custava uma chamada de Haiku para ser jogada fora no 23505.
+          if (jaPendentes.has(chaveFila(restaurant.id, opp.type, opp.customer_phone))) {
+            stats.skipped_duplicate++;
+            continue;
+          }
+          if (Date.now() >= prazoFinal) {
+            stats.restaurants_deferred = ids.length - stats.restaurants_processed;
+            break;
+          }
+
           const result = await queueOpportunity(restaurant, opp);
           if (result.queued) {
             if (opp.type === 'occasion') stats.occasions_queued++;
             else stats.churn_queued++;
           } else if (result.duplicate) {
+            // Backstop: o índice único continua sendo a verdade. Se cair aqui
+            // é porque o conjunto acima estava velho (corrida com o painel).
             stats.skipped_duplicate++;
           }
         }
@@ -106,6 +177,13 @@ module.exports = async (req, res) => {
         logger.error('Error processing restaurant', { restaurantId: restaurant.id, error: err.message });
         stats.errors++;
       }
+    }
+
+    if (stats.restaurants_deferred > 0) {
+      logger.warn('orçamento de tempo esgotado; restaurantes adiados para a próxima rodada', {
+        deferred: stats.restaurants_deferred,
+        processed: stats.restaurants_processed,
+      });
     }
 
     logger.info('Proactive comms scan complete', stats);
@@ -124,26 +202,61 @@ module.exports = async (req, res) => {
 // OPPORTUNITY DETECTION
 // ────────────────────────────────────────────────────────────────────────────
 
-/** Birthdays / anniversaries stored on customer_ltv.special_occasions JSONB */
-async function findUpcomingOccasionsForRestaurant(restaurantId) {
+/** Chave do índice único parcial `idx_pcq_active_dedup`: uma linha PENDENTE por
+ *  (restaurante, tipo, telefone). Usada para deduplicar ANTES de gastar LLM. */
+function chaveFila(restaurantId, type, phone) {
+  return `${restaurantId}|${type}|${phone}`;
+}
+
+/** Tudo que já está pendente na fila, numa consulta só. */
+async function loadPendingKeys(restaurantIds) {
+  const chaves = new Set();
+  if (!restaurantIds.length) return chaves;
+  try {
+    const { data, error } = await supabaseAdmin
+      .schema('restaurant')
+      .from('proactive_comms_queue')
+      .select('restaurant_id, type, customer_phone')
+      .eq('status', 'pending')
+      .in('restaurant_id', restaurantIds)
+      .limit(MAX_CANDIDATOS_LIDOS);
+
+    // Tabela ausente (migração não aplicada) já é tratada no INSERT; aqui um
+    // conjunto vazio só faz cair no backstop do 23505, que é o comportamento
+    // antigo. Nunca derruba a rodada.
+    if (error || !data) return chaves;
+    for (const r of data) chaves.add(chaveFila(r.restaurant_id, r.type, r.customer_phone));
+  } catch (err) {
+    logger.warn('loadPendingKeys falhou; seguindo sem dedupe prévio', { error: err.message });
+  }
+  return chaves;
+}
+
+/** Birthdays / anniversaries stored on customer_ltv.special_occasions JSONB.
+ *  Uma consulta para TODOS os restaurantes → Map<restaurant_id, oportunidade[]>. */
+async function findUpcomingOccasions(restaurantIds) {
+  const porRestaurante = new Map();
+  if (!restaurantIds.length) return porRestaurante;
   try {
     const { data: customers, error } = await supabaseAdmin
       .schema('restaurant')
       .from('customer_ltv')
-      .select('customer_id, customer_phone, customer_name, customer_tier, special_occasions, total_visits')
-      .eq('restaurant_id', restaurantId)
+      .select('restaurant_id, customer_id, customer_phone, customer_name, customer_tier, special_occasions, total_visits')
+      .in('restaurant_id', restaurantIds)
       .not('special_occasions', 'is', null)
-      .not('customer_phone', 'is', null);
+      .not('customer_phone', 'is', null)
+      .limit(MAX_CANDIDATOS_LIDOS);
 
-    if (error || !customers) return [];
+    if (error || !customers) return porRestaurante;
 
     const now = new Date();
     const minDate = addDays(now, MIN_DAYS_BEFORE_OCCASION);
     const maxDate = addDays(now, MAX_DAYS_BEFORE_OCCASION);
     const thisYear = now.getFullYear();
 
-    const upcoming = [];
     for (const c of customers) {
+      if (!porRestaurante.has(c.restaurant_id)) porRestaurante.set(c.restaurant_id, []);
+      const upcoming = porRestaurante.get(c.restaurant_id);
       const occasions = c.special_occasions || {};
       // special_occasions schema is flexible: { birthday: '06-15', anniversary: '12-20', ... }
       // We accept MM-DD or YYYY-MM-DD strings
@@ -165,43 +278,55 @@ async function findUpcomingOccasionsForRestaurant(restaurantId) {
         }
       }
     }
-    return upcoming;
+    return porRestaurante;
   } catch (error) {
-    logger.error('findUpcomingOccasionsForRestaurant error', { error: error.message });
-    return [];
+    logger.error('findUpcomingOccasions error', { error: error.message });
+    return porRestaurante;
   }
 }
 
-/** High-churn-risk customers from customer_ltv */
-async function findAtRiskCustomersForRestaurant(restaurantId) {
+/** High-churn-risk customers from customer_ltv.
+ *  Uma consulta para TODOS os restaurantes → Map<restaurant_id, oportunidade[]>.
+ *  O teto por restaurante, que antes era um .limit() por consulta, vira um corte
+ *  em memória — mesmo resultado, uma ida ao banco em vez de 46. */
+async function findAtRiskCustomers(restaurantIds) {
+  const porRestaurante = new Map();
+  if (!restaurantIds.length) return porRestaurante;
   try {
     const { data: atRisk, error } = await supabaseAdmin
       .schema('restaurant')
       .from('customer_ltv')
-      .select('customer_id, customer_phone, customer_name, customer_tier, churn_risk_score, last_visit_date, total_visits, avg_revenue_per_visit')
-      .eq('restaurant_id', restaurantId)
+      .select('restaurant_id, customer_id, customer_phone, customer_name, customer_tier, churn_risk_score, last_visit_date, total_visits, avg_revenue_per_visit')
+      .in('restaurant_id', restaurantIds)
       .gte('churn_risk_score', MIN_CHURN_RISK)
       .gte('total_visits', MIN_VISITS_FOR_CHURN)
       .not('customer_phone', 'is', null)
       .order('churn_risk_score', { ascending: false })
-      .limit(MAX_OPPORTUNITIES_PER_RESTAURANT_PER_RUN);
+      .limit(MAX_CANDIDATOS_LIDOS);
 
-    if (error || !atRisk) return [];
+    if (error || !atRisk) return porRestaurante;
 
-    return atRisk.map(c => ({
-      customer_id: c.customer_id,
-      customer_phone: c.customer_phone,
-      customer_name: c.customer_name,
-      customer_tier: c.customer_tier,
-      total_visits: c.total_visits,
-      avg_revenue_per_visit: c.avg_revenue_per_visit,
-      churn_risk: c.churn_risk_score,
-      last_visit: c.last_visit_date,
-      suggested_action: `${c.customer_tier || 'regular'} guest at ${c.churn_risk_score}% churn risk — ${c.total_visits} visits, last seen ${c.last_visit_date || 'unknown'}`,
-    }));
+    for (const c of atRisk) {
+      if (!porRestaurante.has(c.restaurant_id)) porRestaurante.set(c.restaurant_id, []);
+      const lista = porRestaurante.get(c.restaurant_id);
+      // Ordenado por risco desc na consulta, então o corte mantém os piores.
+      if (lista.length >= MAX_OPPORTUNITIES_PER_RESTAURANT_PER_RUN) continue;
+      lista.push({
+        customer_id: c.customer_id,
+        customer_phone: c.customer_phone,
+        customer_name: c.customer_name,
+        customer_tier: c.customer_tier,
+        total_visits: c.total_visits,
+        avg_revenue_per_visit: c.avg_revenue_per_visit,
+        churn_risk: c.churn_risk_score,
+        last_visit: c.last_visit_date,
+        suggested_action: `${c.customer_tier || 'regular'} guest at ${c.churn_risk_score}% churn risk — ${c.total_visits} visits, last seen ${c.last_visit_date || 'unknown'}`,
+      });
+    }
+    return porRestaurante;
   } catch (error) {
-    logger.error('findAtRiskCustomersForRestaurant error', { error: error.message });
-    return [];
+    logger.error('findAtRiskCustomers error', { error: error.message });
+    return porRestaurante;
   }
 }
 
@@ -417,8 +542,10 @@ function formatSuggestedAction(opp, lang) {
 }
 
 // Exported for testing
-module.exports.findUpcomingOccasionsForRestaurant = findUpcomingOccasionsForRestaurant;
-module.exports.findAtRiskCustomersForRestaurant = findAtRiskCustomersForRestaurant;
+module.exports.findUpcomingOccasions = findUpcomingOccasions;
+module.exports.findAtRiskCustomers = findAtRiskCustomers;
+module.exports.chaveFila = chaveFila;
+module.exports.loadPendingKeys = loadPendingKeys;
 module.exports.parseOccasionDate = parseOccasionDate;
 module.exports.normaliseLang = normaliseLang;
 module.exports.formatSuggestedAction = formatSuggestedAction;

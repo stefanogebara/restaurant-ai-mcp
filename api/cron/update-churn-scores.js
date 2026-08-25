@@ -116,9 +116,11 @@ async function getAvgRevenuePerCover(restaurantId) {
  */
 async function refreshLTVForRestaurant(restaurantId) {
   const now = new Date();
-  // V.3 per-restaurant avg revenue (was hardcoded €45 for every tenant).
-  const avgRevenuePerCover = await getAvgRevenuePerCover(restaurantId);
 
+  // As reservas vêm ANTES do cálculo de ticket médio, e a ordem importa:
+  // medido em 24/08/2026, dos 39 restaurantes só 3 têm reserva completada. Com
+  // getAvgRevenuePerCover na frente, os outros 36 pagavam 2 a 3 consultas cada
+  // (revenue_records + service_records) para descobrir que não tinham trabalho.
   const { data: reservations, error } = await supabaseAdmin
     .from('reservations')
     .select('customer_phone, customer_name, customer_email, date, party_size')
@@ -132,6 +134,9 @@ async function refreshLTVForRestaurant(restaurantId) {
     return 0;
   }
   if (!reservations || reservations.length === 0) return 0;
+
+  // V.3 per-restaurant avg revenue (was hardcoded €45 for every tenant).
+  const avgRevenuePerCover = await getAvgRevenuePerCover(restaurantId);
 
   const byPhone = {};
   for (const r of reservations) {
@@ -149,7 +154,16 @@ async function refreshLTVForRestaurant(restaurantId) {
     byPhone[phone].party_sizes.push(r.party_size || 2);
   }
 
-  let upserted = 0;
+  // As linhas são ACUMULADAS e gravadas em lote no fim. Antes era um `await`
+  // de upsert POR CLIENTE, sequencial: 583 clientes distintos em produção
+  // (24/08/2026) viravam 583 idas ao banco, e a soma delas é o que estourava
+  // o teto de 60s da Vercel — o cron não completa desde 11/08.
+  //
+  // O orçamento de tempo lá embaixo não protegia disto: ele é conferido ENTRE
+  // restaurantes, então um único restaurante grande atravessa o limite sem
+  // ninguém olhar. Cortar o número de viagens é o conserto; mexer no orçamento
+  // seria tratar o sintoma.
+  const linhas = [];
   for (const [phone, cust] of Object.entries(byPhone)) {
     const visits = cust.visits.sort((a, b) => a - b);
     const total_visits = visits.length;
@@ -181,31 +195,40 @@ async function refreshLTVForRestaurant(restaurantId) {
     else if (total_visits >= 4) tier = 'regular';
     else if (total_visits >= 2) tier = 'occasional';
 
+    linhas.push({
+      customer_id: phone,
+      customer_phone: phone,
+      customer_name: cust.customer_name,
+      customer_email: cust.customer_email,
+      restaurant_id: restaurantId,
+      total_visits,
+      first_visit_date: visits[0].toISOString().split('T')[0],
+      last_visit_date: visits[visits.length - 1].toISOString().split('T')[0],
+      avg_days_between_visits: avg_days ? Math.round(avg_days) : null,
+      avg_party_size: Math.round(avg_party * 10) / 10,
+      avg_revenue_per_visit: Math.round(avg_revenue),
+      total_revenue: Math.round(total_revenue),
+      highest_single_visit_revenue: Math.round(Math.max(...cust.party_sizes) * avgRevenuePerCover),
+      lifetime_value: Math.round(lifetime_value),
+      churn_risk_score: churn,
+      customer_tier: tier,
+      updated_at: now.toISOString(),
+    });
+  }
+
+  // Lotes de 100: um upsert só com 583 linhas é uma requisição grande e um
+  // ponto único de falha — se ela quebrar, o restaurante inteiro fica sem
+  // atualização. Em lotes, uma falha custa 100 linhas e as outras entram.
+  let upserted = 0;
+  const TAMANHO_DO_LOTE = 100;
+  for (let i = 0; i < linhas.length; i += TAMANHO_DO_LOTE) {
+    const lote = linhas.slice(i, i + TAMANHO_DO_LOTE);
     const { error: upsertErr } = await supabaseAdmin
       .schema('restaurant')
       .from('customer_ltv')
-      .upsert({
-        customer_id: phone,
-        customer_phone: phone,
-        customer_name: cust.customer_name,
-        customer_email: cust.customer_email,
-        restaurant_id: restaurantId,
-        total_visits,
-        first_visit_date: visits[0].toISOString().split('T')[0],
-        last_visit_date: visits[visits.length - 1].toISOString().split('T')[0],
-        avg_days_between_visits: avg_days ? Math.round(avg_days) : null,
-        avg_party_size: Math.round(avg_party * 10) / 10,
-        avg_revenue_per_visit: Math.round(avg_revenue),
-        total_revenue: Math.round(total_revenue),
-        highest_single_visit_revenue: Math.round(Math.max(...cust.party_sizes) * avgRevenuePerCover),
-        lifetime_value: Math.round(lifetime_value),
-        churn_risk_score: churn,
-        customer_tier: tier,
-        updated_at: now.toISOString(),
-      }, { onConflict: 'customer_id,restaurant_id' });
-
-    if (!upsertErr) upserted++;
-    else logger.error(`LTV upsert failed for ${phone} (${restaurantId}):`, upsertErr.message);
+      .upsert(lote, { onConflict: 'customer_id,restaurant_id' });
+    if (!upsertErr) upserted += lote.length;
+    else logger.error(`LTV upsert falhou num lote de ${lote.length} (${restaurantId}):`, upsertErr.message);
   }
 
   return upserted;
