@@ -162,3 +162,82 @@ describe('cron/proactive-comms — pure helpers', () => {
     test("null → 'pt-BR'", () => expect(normaliseLang(null)).toBe('pt-BR'));
   });
 });
+
+/**
+ * O CONSERTO DE 25/08/2026.
+ *
+ * O cron não estava parado — rodava todo domingo e gravava na fila, mas morria
+ * antes da última linha (logCronRun), então `cron_runs` ficou sem registro
+ * desde 09/08 e parecia morto. Morria de lentidão: `queueOpportunity` gera o
+ * rascunho no LLM ANTES do INSERT, e o INSERT é o único lugar onde a duplicata
+ * é descoberta (23505). Com 36 linhas já pendentes, eram 36 chamadas de Haiku
+ * por rodada cujo destino garantido era o lixo — e o relógio de 60s da Vercel
+ * acabava no meio.
+ *
+ * Este teste falha na versão antiga: ela chamaria o LLM duas vezes (uma para o
+ * telefone já pendente) em vez de uma.
+ */
+describe('cron/proactive-comms — dedupe antes do LLM', () => {
+  const RID = 'rest-1';
+  const JA_NA_FILA = '+5511900000001';
+  const NOVO = '+5511900000002';
+
+  /** Construtor encadeável que registra as chamadas e resolve pelo que foi pedido. */
+  function builder(resolver) {
+    const calls = [];
+    const obj = {};
+    for (const m of ['select', 'eq', 'in', 'not', 'gte', 'lt', 'order', 'limit', 'update', 'insert']) {
+      obj[m] = (...args) => { calls.push([m, ...args]); return obj; };
+    }
+    obj.then = (ok, err) => Promise.resolve(resolver(calls)).then(ok, err);
+    return obj;
+  }
+  const usou = (calls, metodo, arg0) => calls.some(([m, a]) => m === metodo && a === arg0);
+
+  test('não gasta LLM em oportunidade que já tem linha pendente na fila', async () => {
+    const inseridos = [];
+
+    mockSupabaseAdmin.schema.mockReturnValue({
+      from: jest.fn().mockImplementation((tabela) => builder((calls) => {
+        if (tabela === 'restaurant_config') {
+          return { data: [{ id: RID, restaurant_name: 'Casa', agent_language: 'pt-BR' }], error: null };
+        }
+        if (tabela === 'customer_ltv') {
+          // A consulta de ocasiões filtra por special_occasions; a de risco, por churn.
+          if (usou(calls, 'not', 'special_occasions')) return { data: [], error: null };
+          return {
+            data: [
+              { restaurant_id: RID, customer_id: 'c1', customer_phone: JA_NA_FILA, customer_name: 'Ana', churn_risk_score: 90, total_visits: 5 },
+              { restaurant_id: RID, customer_id: 'c2', customer_phone: NOVO, customer_name: 'Bia', churn_risk_score: 80, total_visits: 4 },
+            ],
+            error: null,
+          };
+        }
+        // proactive_comms_queue: três usos distintos no mesmo handler.
+        if (usou(calls, 'update')) return { data: [], error: null };          // expira vencidas
+        const ins = calls.find(([m]) => m === 'insert');
+        if (ins) { inseridos.push(ins[1]); return { data: null, error: null }; }
+        return {                                                              // fila pendente
+          data: [{ restaurant_id: RID, type: 'churn_risk', customer_phone: JA_NA_FILA }],
+          error: null,
+        };
+      })),
+    });
+
+    const criar = require('../_lib/ai-client').getAI().messages.create;
+    criar.mockClear();
+
+    const res = mockRes();
+    await handler({ headers: { authorization: 'Bearer test-cron-secret' } }, res);
+
+    // Só o telefone novo custa uma chamada de LLM. O que já estava na fila, zero.
+    expect(criar).toHaveBeenCalledTimes(1);
+    expect(inseridos).toHaveLength(1);
+    expect(inseridos[0].customer_phone).toBe(NOVO);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+      success: true, churn_queued: 1, skipped_duplicate: 1,
+    }));
+  });
+});

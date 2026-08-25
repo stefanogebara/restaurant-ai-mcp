@@ -1138,3 +1138,36 @@ de outra sessao, e ninguem percebe -- porque o sintoma e' silencio.
   prova que não há suítes falhando na coleta (elas não entram na linha Tests).
 - Corolário: `tsc --noEmit` solto ≠ `tsc -b` do build (verbatimModuleSyntax,
   project refs). Verificar com o comando do build.
+
+## 2026-08-25 — `cron_runs` é registro de rodada COMPLETA, não de rodada INVOCADA
+- Reportei "proactive-comms parado desde 09/08" olhando `cron_runs`. Errado.
+  Ele rodou nos domingos 16/08 e 23/08 e gravou linhas na
+  `proactive_comms_queue` às 10:0x — o que faltava era o `logCronRun`, que é a
+  ÚLTIMA linha do handler. Ele começava, trabalhava, e morria no meio.
+- A camada certa para "o cron roda?" é o EFEITO dele no banco (linhas gravadas,
+  com carimbo de hora), não a tabela de telemetria. Ausência em `cron_runs`
+  significa "não terminou", e "não terminou" ⊃ "não começou".
+- Antes de dizer que um cron parou: procure o que ele ESCREVE e olhe o
+  `max(created_at)`. Se houver escrita na data agendada, ele roda — o defeito é
+  outro, e é pior, porque é invisível.
+- Mesma varredura, segundo susto: marquei `compress-memories` como parado há
+  67h. O agendamento é `30 4 * * 6` — sábado. Rodou no sábado, como devia.
+  É a terceira vez que dia-da-semana me engana (antes: `prospect-dispatch` num
+  domingo). SEMPRE traduza o cron para dia da semana ANTES de chamar de atraso.
+  E `restaurants_processed: 0` ali era a resposta CERTA: as 1058 observações já
+  estavam todas comprimidas (`is_active = false`). Zero nem sempre é fome.
+
+## 2026-08-25 — LLM antes da deduplicação: o custo que cresce sozinho
+- `proactive-comms` gerava o rascunho no Haiku ANTES do INSERT, e o INSERT era
+  o único lugar onde a duplicata aparecia (23505). Com 36 linhas já pendentes,
+  eram 36 chamadas de LLM por rodada cujo destino garantido era o lixo.
+- O efeito não é só desperdício: é uma rodada que fica mais lenta a cada semana
+  em que ninguém mexe na fila, até cruzar o teto de 60s da Vercel. Aí morre em
+  silêncio e nunca mais se recupera sozinha.
+- Regra: trabalho CARO (LLM, rede) vem DEPOIS de todo filtro barato que possa
+  descartar o item. Se o filtro só existe no banco (índice único), traga a
+  chave dele para a memória numa consulta e filtre antes.
+- Corolário do conserto do churn (24/08), agora confirmado duas vezes:
+  orçamento de tempo conferido só ENTRE itens grandes não protege de nada.
+  Confira DENTRO do laço interno, e publique quantos ficaram para depois — o
+  número adiado é o que transforma "morreu calado" em "disse o que faltou".

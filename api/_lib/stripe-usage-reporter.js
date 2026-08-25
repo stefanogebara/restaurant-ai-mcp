@@ -106,7 +106,21 @@ async function reportUsageForSubscription(subscription) {
 
   try {
     // Verify the subscription is active in Stripe
-    const stripeSub = await stripe.subscriptions.retrieve(stripeSubId);
+    let stripeSub;
+    try {
+      stripeSub = await stripe.subscriptions.retrieve(stripeSubId);
+    } catch (retrieveErr) {
+      // `resource_missing` não é falha transitória: é o Stripe respondendo, com
+      // certeza, que esta assinatura não existe. Tentar de novo amanhã dá o
+      // mesmo resultado — para sempre. Antes disto caía no catch genérico e
+      // virava um `errors++` por dia, indistinguível de uma pane de rede, e o
+      // log de erro passava a ter duas linhas fixas que ninguém mais lia.
+      // Devolvido com errors: 0 e sinalizado para quem chama decidir.
+      if (retrieveErr && retrieveErr.code === 'resource_missing') {
+        return { reported: 0, errors: 0, missing: true, skipped: 'subscription_missing_in_stripe' };
+      }
+      throw retrieveErr;
+    }
     if (stripeSub.status !== 'active' && stripeSub.status !== 'trialing') {
       return { reported: 0, errors: 0, skipped: `subscription_${stripeSub.status}` };
     }
@@ -283,11 +297,13 @@ async function reportAllUsage() {
 
   let totalReported = 0;
   let totalErrors = 0;
+  const missing = [];
 
   for (const sub of subscriptions) {
     const result = await reportUsageForSubscription(sub);
     totalReported += result.reported;
     totalErrors += result.errors;
+    if (result.missing) missing.push(sub.subscription_id);
 
     if (result.skipped) {
       logger.info('Skipped subscription', {
@@ -297,21 +313,71 @@ async function reportAllUsage() {
     }
   }
 
+  const reconciled = await reconcileMissingSubscriptions(missing, subscriptions.length);
+
   logger.info('Usage reporting complete', {
     subscriptions_processed: subscriptions.length,
     total_reported: totalReported,
     total_errors: totalErrors,
+    missing_in_stripe: missing.length,
+    reconciled,
   });
 
   return {
     total_reported: totalReported,
     total_errors: totalErrors,
     subscriptions_processed: subscriptions.length,
+    missing_in_stripe: missing.length,
+    reconciled,
   };
+}
+
+// Se MAIS DA METADE das assinaturas sumir de uma vez, o problema não são as
+// linhas — é a chave. Uma STRIPE_SECRET_KEY trocada entre test e live faz TODAS
+// as assinaturas responderem `resource_missing`, e um conserto automático sem
+// esta trava cancelaria a base inteira, em silêncio, numa madrugada. Metade é
+// generoso de propósito: hoje são 2 de 7 (29%) e o conserto roda; num acidente
+// de chave seriam 7 de 7 e ele se recusa a tocar em nada.
+const LIMIAR_ACIDENTE = 0.5;
+
+/**
+ * Uma assinatura que o Stripe garante não existir nunca mais vai reportar uso.
+ * Marcar como `canceled` tira a linha da consulta de amanhã — é o que faria o
+ * webhook `customer.subscription.deleted` se tivesse chegado.
+ *
+ * @returns {Promise<number>} quantas linhas foram reconciliadas
+ */
+async function reconcileMissingSubscriptions(missingIds, totalConsiderado) {
+  if (!missingIds.length) return 0;
+
+  if (totalConsiderado > 0 && missingIds.length / totalConsiderado > LIMIAR_ACIDENTE) {
+    logger.error(
+      'ABORTADO: ' + missingIds.length + ' de ' + totalConsiderado + ' assinaturas sumiram do Stripe de uma vez. '
+      + 'Isso é assinatura de chave errada (test vs live) ou conta trocada, não de linhas velhas. '
+      + 'Nenhuma linha foi alterada — confira STRIPE_SECRET_KEY antes de qualquer coisa.',
+      { missing: missingIds });
+    return 0;
+  }
+
+  const { error } = await supabaseAdmin
+    .from('subscriptions')
+    .update({ status: 'canceled', canceled_at: new Date().toISOString() })
+    .in('subscription_id', missingIds);
+
+  if (error) {
+    logger.error('Falha ao reconciliar assinaturas inexistentes', { error: error.message, missing: missingIds });
+    return 0;
+  }
+
+  logger.warn(
+    'Assinaturas inexistentes no Stripe marcadas como canceled (o webhook de cancelamento nunca chegou)',
+    { missing: missingIds });
+  return missingIds.length;
 }
 
 module.exports = {
   reportUsageForSubscription,
   reportAllUsage,
+  reconcileMissingSubscriptions,
   getMeteredPriceMap,
 };
