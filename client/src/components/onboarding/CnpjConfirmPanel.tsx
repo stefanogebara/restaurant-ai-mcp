@@ -109,7 +109,7 @@ export default function CnpjConfirmPanel({ nome, cidade, onConfirm: aoConfirmar,
 
   if (carregando) {
     return (
-      <p className="text-sm text-[#9CA3AF] py-4">
+      <p className="text-sm text-muted-stone py-4">
         {t('onboarding.cnpj.loading', 'Procurando sua empresa no cadastro da Receita...')}
       </p>
     );
@@ -119,12 +119,12 @@ export default function CnpjConfirmPanel({ nome, cidade, onConfirm: aoConfirmar,
   if (erro || !candidatos || candidatos.length === 0) {
     return (
       <div className="py-4">
-        <p className="text-sm text-[#6B7280]">
+        <p className="text-sm text-stone-gray">
           {erro
             ? t('onboarding.cnpj.error', 'Não conseguimos consultar o cadastro da Receita agora.')
             : t('onboarding.cnpj.notFound', 'Não encontramos sua empresa no cadastro da Receita.')}
         </p>
-        <p className="text-xs text-[#9CA3AF] mt-1">
+        <p className="text-xs text-muted-stone mt-1">
           {t('onboarding.cnpj.skipHint', 'Sem problema — você pode informar isso depois.')}
         </p>
         <button type="button" onClick={onSkip} className="mt-3 text-sm text-burgundy underline">
@@ -136,10 +136,10 @@ export default function CnpjConfirmPanel({ nome, cidade, onConfirm: aoConfirmar,
 
   return (
     <div className="py-2">
-      <h3 className="text-sm font-semibold text-[#111827]">
+      <h3 className="text-sm font-semibold text-deep-charcoal">
         {t('onboarding.cnpj.title', 'Confirme sua empresa')}
       </h3>
-      <p className="text-xs text-[#6B7280] mt-1 mb-3">
+      <p className="text-xs text-stone-gray mt-1 mb-3">
         {t('onboarding.cnpj.subtitle', 'Encontramos isto no cadastro da Receita. Confirme qual é a sua.')}
       </p>
 
@@ -152,15 +152,15 @@ export default function CnpjConfirmPanel({ nome, cidade, onConfirm: aoConfirmar,
               type="button"
               onClick={() => setEscolhido(c)}
               className={`w-full text-left border rounded-xl px-3 py-2.5 transition-colors ${
-                ativo ? 'border-burgundy bg-burgundy/[4%]' : 'border-[#E5E7EB] hover:border-[#9CA3AF]'
+                ativo ? 'border-burgundy bg-burgundy/[4%]' : 'border-glass-border-dark hover:border-muted-stone'
               }`}
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-[#111827] truncate">
+                  <p className="text-sm font-medium text-deep-charcoal truncate">
                     {c.razao_social || c.nome_fantasia || formatarCnpj(c.cnpj)}
                   </p>
-                  <p className="text-[11px] text-[#6B7280] mt-0.5">
+                  <p className="text-[11px] text-stone-gray mt-0.5">
                     {formatarCnpj(c.cnpj)}
                     {c.municipio ? ` · ${c.municipio}${c.uf ? `/${c.uf}` : ''}` : ''}
                     {c.porte ? ` · ${c.porte.toLowerCase()}` : ''}
@@ -169,7 +169,7 @@ export default function CnpjConfirmPanel({ nome, cidade, onConfirm: aoConfirmar,
                 {/* Situação cadastral importa: empresa baixada quase nunca é o
                     restaurante em operação, e o dono precisa ver isso. */}
                 {c.situacao && c.situacao.toUpperCase() !== 'ATIVA' && (
-                  <span className="shrink-0 text-[10px] text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded">
+                  <span className="shrink-0 text-[10px] text-amber-700 bg-amber-500/[10%] border border-amber-500/25 px-1.5 py-0.5 rounded-[46px]">
                     {c.situacao.toLowerCase()}
                   </span>
                 )}
@@ -182,7 +182,7 @@ export default function CnpjConfirmPanel({ nome, cidade, onConfirm: aoConfirmar,
       {/* A pergunta que nenhum concorrente faz. */}
       {escolhido && escolhido.socios.length > 0 && (
         <div className="mt-4">
-          <p className="text-sm font-medium text-[#111827]">
+          <p className="text-sm font-medium text-deep-charcoal">
             {t('onboarding.cnpj.whoAreYou', 'E você é qual dos sócios?')}
           </p>
           <div className="flex flex-wrap gap-2 mt-2">
@@ -195,7 +195,7 @@ export default function CnpjConfirmPanel({ nome, cidade, onConfirm: aoConfirmar,
                   razao_social: escolhido.razao_social,
                   socio_confirmado: s.nome,
                 })}
-                className="px-3 py-1.5 rounded-lg text-xs font-medium border border-[#E5E7EB] hover:border-burgundy hover:text-burgundy transition-colors"
+                className="px-3 py-1.5 rounded-[46px] text-xs font-medium border border-glass-border-dark bg-glass-subtle backdrop-blur-glass-chip hover:border-burgundy hover:text-burgundy transition-colors"
               >
                 {s.nome}
               </button>
@@ -206,7 +206,7 @@ export default function CnpjConfirmPanel({ nome, cidade, onConfirm: aoConfirmar,
             <button
               type="button"
               onClick={() => onConfirm({ cnpj: escolhido.cnpj, razao_social: escolhido.razao_social })}
-              className="px-3 py-1.5 rounded-lg text-xs text-[#6B7280] border border-dashed border-[#E5E7EB] hover:border-[#9CA3AF]"
+              className="px-3 py-1.5 rounded-[46px] text-xs text-stone-gray border border-dashed border-glass-border-dark hover:border-muted-stone transition-colors"
             >
               {t('onboarding.cnpj.otherPerson', 'Outra pessoa')}
             </button>
@@ -218,13 +218,13 @@ export default function CnpjConfirmPanel({ nome, cidade, onConfirm: aoConfirmar,
         <button
           type="button"
           onClick={() => onConfirm({ cnpj: escolhido.cnpj, razao_social: escolhido.razao_social })}
-          className="mt-4 w-full bg-[#111827] text-white rounded-lg py-2.5 text-sm font-medium"
+          className="mt-4 w-full bg-burgundy hover:bg-burgundy-dark text-white rounded-[100px] py-2.5 text-sm font-semibold transition-colors"
         >
           {t('onboarding.cnpj.confirm', 'Confirmar')}
         </button>
       )}
 
-      <button type="button" onClick={onSkip} className="mt-3 text-xs text-[#9CA3AF] underline">
+      <button type="button" onClick={onSkip} className="mt-3 text-xs text-muted-stone underline">
         {t('onboarding.cnpj.skip', 'Nenhuma dessas / informar depois')}
       </button>
     </div>

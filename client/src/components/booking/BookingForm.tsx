@@ -359,7 +359,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
       {/* Date Selection — paginated with month nav (M1) */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-3">
-          <div className="text-xs font-semibold tracking-wider uppercase text-warm-stone">
+          <div className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">
             {t('booking.selectDate')} <span className="ml-1.5 text-deep-charcoal normal-case">{currentMonthLabel}</span>
           </div>
           <div className="flex items-center gap-1.5">
@@ -368,7 +368,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
               onClick={() => setDatePageStart(Math.max(0, datePageStart - DATE_PAGE_SIZE))}
               disabled={!canPageBack}
               aria-label={t('booking.previousDates', 'Previous dates')}
-              className="w-8 h-8 flex items-center justify-center rounded-lg border border-glass-border-dark text-stone-gray hover:text-deep-charcoal hover:border-stone-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              className="w-8 h-8 flex items-center justify-center rounded-lg border border-glass-border-dark text-stone-gray hover:text-deep-charcoal hover:border-muted-stone disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             >
               <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.5}>
                 <polyline points="15 18 9 12 15 6" />
@@ -379,7 +379,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
               onClick={() => setDatePageStart(Math.min(availableDates.length - DATE_PAGE_SIZE, datePageStart + DATE_PAGE_SIZE))}
               disabled={!canPageForward}
               aria-label={t('booking.nextDates', 'Next dates')}
-              className="w-8 h-8 flex items-center justify-center rounded-lg border border-glass-border-dark text-stone-gray hover:text-deep-charcoal hover:border-stone-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              className="w-8 h-8 flex items-center justify-center rounded-lg border border-glass-border-dark text-stone-gray hover:text-deep-charcoal hover:border-muted-stone disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             >
               <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.5}>
                 <polyline points="9 18 15 12 9 6" />
@@ -398,8 +398,8 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
                 selectedDate === d.value
                   ? 'bg-deep-charcoal text-white font-semibold'
                   : d.isToday
-                    ? 'text-deep-charcoal font-semibold hover:bg-soft-gray'
-                    : 'text-stone-gray hover:bg-soft-gray'
+                    ? 'text-deep-charcoal font-semibold hover:bg-glass-subtle'
+                    : 'text-stone-gray hover:bg-glass-subtle'
               }`}
             >
               <span className={`text-[10px] leading-tight ${selectedDate === d.value ? 'text-white/70' : 'text-muted-stone'}`}>
@@ -422,7 +422,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
       {selectedDate && (
         <div className="mb-8">
           <div className="flex items-baseline justify-between mb-3 gap-3">
-            <div className="text-xs font-semibold tracking-wider uppercase text-warm-stone">
+            <div className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">
               {t('booking.selectTime')}
             </div>
             {/* Meal-period tabs only render when the day actually has both
@@ -432,7 +432,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
               <div
                 role="tablist"
                 aria-label={t('booking.mealPeriodLabel', 'Filtrar por período')}
-                className="inline-flex items-center gap-1 rounded-full bg-soft-gray p-1"
+                className="inline-flex items-center gap-1 rounded-[46px] bg-glass-subtle backdrop-blur-glass-chip p-1"
               >
                 {(['all', 'lunch', 'dinner'] as const).map((key) => (
                   <button
@@ -443,7 +443,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
                     onClick={() => setMealPeriodFilter(key)}
                     className={`px-3 py-1 text-[11px] font-semibold rounded-full transition-colors ${
                       mealPeriodFilter === key
-                        ? 'bg-white text-deep-charcoal shadow-sm'
+                        ? 'bg-white/80 text-deep-charcoal shadow-sm'
                         : 'text-stone-gray hover:text-deep-charcoal'
                     }`}
                   >
@@ -476,8 +476,8 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
                     selectedTime === slot.time
                       ? 'border-burgundy bg-burgundy/[4%] text-burgundy font-semibold'
                       : slot.available
-                        ? 'border-glass-border-input bg-white text-stone-gray hover:border-stone-300 hover:bg-warm-white'
-                        : 'border-soft-gray bg-warm-white text-stone-300 cursor-not-allowed'
+                        ? 'border-glass-border-input bg-white/60 backdrop-blur-glass-chip text-stone-gray hover:border-muted-stone hover:bg-white/85'
+                        : 'border-glass-border-dark bg-transparent text-muted-stone/50 cursor-not-allowed'
                   }`}
                 >
                   {formatTime(slot.time)}
@@ -486,7 +486,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
             </div>
           )}
           {timeResetHint && (
-            <p className="text-xs text-amber-600 mt-2">
+            <p className="text-xs text-amber-700 mt-2">
               {t('booking.timeResetHint')}
             </p>
           )}
@@ -495,7 +495,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
 
       {/* Party Size */}
       <div className="mb-8">
-        <div className="text-xs font-semibold tracking-wider uppercase text-warm-stone mb-3">
+        <div className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone mb-3">
           {t('booking.partySize')}
         </div>
         <div className="flex gap-2 flex-wrap">
@@ -506,8 +506,8 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
               onClick={() => setPartySize(n)}
               className={`w-12 h-12 rounded-xl border text-[15px] font-medium transition-colors ${
                 partySize === n
-                  ? 'border-burgundy bg-burgundy/[4%] text-burgundy font-bold'
-                  : 'border-glass-border-input bg-white text-stone-gray hover:border-stone-300'
+                  ? 'border-burgundy bg-burgundy/[4%] text-burgundy font-semibold'
+                  : 'border-glass-border-input bg-white/60 backdrop-blur-glass-chip text-stone-gray hover:border-muted-stone'
               }`}
             >
               {n}
@@ -519,8 +519,8 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
               onClick={() => setShowPartySizeInput(true)}
               className={`w-12 h-12 rounded-xl border text-[15px] font-medium transition-colors ${
                 partySize > 7
-                  ? 'border-burgundy bg-burgundy/[4%] text-burgundy font-bold'
-                  : 'border-glass-border-input bg-white text-stone-gray hover:border-stone-300'
+                  ? 'border-burgundy bg-burgundy/[4%] text-burgundy font-semibold'
+                  : 'border-glass-border-input bg-white/60 backdrop-blur-glass-chip text-stone-gray hover:border-muted-stone'
               }`}
             >
               {partySize > 7 ? partySize : '8+'}
@@ -534,7 +534,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
                 max={restaurant.max_party_size}
                 value={customPartySizeValue}
                 onChange={e => setCustomPartySizeValue(e.target.value)}
-                className="w-20 h-12 rounded-xl border border-burgundy bg-burgundy/[4%] text-burgundy text-center text-[15px] font-bold focus:outline-none focus:ring-2 focus:ring-burgundy/30"
+                className="w-20 h-12 rounded-xl border border-burgundy bg-burgundy/[4%] text-burgundy text-center text-[15px] font-semibold focus:outline-none focus:ring-2 focus:ring-burgundy/30"
                 autoFocus
                 onKeyDown={e => {
                   if (e.key === 'Enter') {
@@ -557,14 +557,14 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
                     setShowPartySizeInput(false);
                   }
                 }}
-                className="h-12 px-3 rounded-xl bg-burgundy text-white text-sm font-semibold hover:bg-burgundy-dark transition-colors"
+                className="h-12 px-3 rounded-[100px] bg-burgundy text-white text-sm font-semibold hover:bg-burgundy-dark transition-colors"
               >
                 {t('common.ok', 'OK')}
               </button>
               <button
                 type="button"
                 onClick={() => setShowPartySizeInput(false)}
-                className="h-12 px-3 rounded-xl border border-glass-border-dark text-stone-gray text-sm font-medium hover:bg-soft-gray transition-colors"
+                className="h-12 px-3 rounded-[100px] border border-glass-border-dark text-stone-gray text-sm font-medium hover:bg-glass-subtle transition-colors"
               >
                 {t('common.cancel', 'Cancel')}
               </button>
@@ -657,7 +657,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
           type="button"
           onClick={handleSubmit}
           disabled={!canSubmit || reserve.isPending}
-          className="w-full py-4 rounded-xl text-[15px] font-semibold bg-burgundy hover:bg-burgundy-dark disabled:bg-border-gray disabled:text-muted-stone text-white transition-colors flex items-center justify-center gap-2"
+          className="w-full py-4 rounded-[100px] text-[15px] font-semibold bg-burgundy hover:bg-burgundy-dark disabled:bg-border-gray disabled:text-muted-stone text-white transition-colors flex items-center justify-center gap-2"
         >
           {reserve.isPending ? (
             <>
@@ -674,7 +674,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
       {/* M2: cancellation policy moved out of the buried "tiny gray text"
           state into a proper info card. Same content, but the surrounding
           card + icon makes it actually readable instead of a footnote. */}
-      <div className="mt-4 px-4 py-3 bg-soft-gray/60 border border-glass-border-dark rounded-xl flex items-start gap-2.5">
+      <div className="mt-5 pt-4 border-t hairline flex items-start gap-2.5">
         <svg className="w-4 h-4 text-burgundy flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M12 2L2 7v10l10 5 10-5V7l-10-5z" />
           <path d="M9 12l2 2 4-4" />

@@ -194,7 +194,7 @@ export default function BookingConfirmation() {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Top Bar */}
-      <header className="flex justify-between items-center px-6 sm:px-10 py-4 border-b border-border-gray bg-white">
+      <header className="flex justify-between items-center px-6 sm:px-10 py-4 border-b border-glass-border-dark bg-glass-panel backdrop-blur-glass-nav">
         <div className="font-serif text-lg font-semibold text-deep-charcoal">
           seatable<span className="text-burgundy">.</span>
         </div>
@@ -210,9 +210,9 @@ export default function BookingConfirmation() {
           </div>
 
           {/* Status Badge */}
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-rose-600/[6%] rounded-full mb-5">
-            <div className="w-2 h-2 rounded-full bg-rose-600" />
-            <span className="text-[13px] font-semibold text-rose-600">{t('reservations.confirmed')}</span>
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-emerald-600/[8%] rounded-[100px] mb-5">
+            <div className="w-2 h-2 rounded-full bg-emerald-600" />
+            <span className="text-[13px] font-semibold text-emerald-700">{t('reservations.confirmed')}</span>
           </div>
 
           <h1 className="font-serif text-4xl font-medium text-deep-charcoal tracking-tight mb-2">{t('reservations.reservationConfirmed')}</h1>
@@ -223,7 +223,7 @@ export default function BookingConfirmation() {
           {/* Details Card */}
           <div className="glass-panel p-8 text-left mb-6">
             {/* Restaurant Row */}
-            <div className="flex items-center gap-4 pb-5 mb-5 border-b border-soft-gray">
+            <div className="flex items-center gap-4 pb-5 mb-5 border-b hairline">
               <div className="w-14 h-14 rounded-[14px] bg-gradient-to-br from-burgundy/80 via-burgundy/50 to-stone-700 flex-shrink-0" />
               <div className="min-w-0">
                 <h3 className="text-lg font-semibold text-deep-charcoal tracking-tight truncate">{reservation.restaurant_name}</h3>
@@ -233,7 +233,7 @@ export default function BookingConfirmation() {
 
             {/* Detail Rows */}
             <div className="space-y-0">
-              <div className="flex justify-between items-center py-2.5 border-b border-soft-gray">
+              <div className="flex justify-between items-center py-2.5 border-b hairline">
                 <span className="text-[13px] text-warm-stone">{t('reservations.date')}</span>
                 <span className="text-sm font-medium text-deep-charcoal">
                   {new Date(reservation.date + 'T12:00:00').toLocaleDateString(dateLocale, {
@@ -244,11 +244,11 @@ export default function BookingConfirmation() {
                   })}
                 </span>
               </div>
-              <div className="flex justify-between items-center py-2.5 border-b border-soft-gray">
+              <div className="flex justify-between items-center py-2.5 border-b hairline">
                 <span className="text-[13px] text-warm-stone">{t('reservations.time')}</span>
                 <span className="text-sm font-medium text-deep-charcoal">{formatTime(reservation.time)}</span>
               </div>
-              <div className="flex justify-between items-center py-2.5 border-b border-soft-gray">
+              <div className="flex justify-between items-center py-2.5 border-b hairline">
                 <span className="text-[13px] text-warm-stone">{t('reservations.partySize')}</span>
                 <span className="text-sm font-medium text-deep-charcoal">{t('reservations.guestCount', { count: reservation.party_size })}</span>
               </div>
@@ -258,7 +258,7 @@ export default function BookingConfirmation() {
               </div>
             </div>
 
-            <hr className="border-0 border-t border-dashed border-border-gray my-3" />
+            <hr className="border-0 border-t border-dashed border-glass-border-dark my-3" />
 
             <div className="flex justify-between items-center py-2.5">
               <span className="text-[13px] text-warm-stone">{t('reservations.confirmationId')}</span>
@@ -272,7 +272,7 @@ export default function BookingConfirmation() {
           {pushPromptState === 'idle' && (
             <div className="bg-burgundy/[0.04] border border-burgundy/15 rounded-2xl p-4 text-left mb-6 flex items-center justify-between gap-3 flex-wrap">
               <div className="flex items-start gap-3 min-w-0">
-                <span className="w-9 h-9 rounded-full bg-burgundy/[8%] flex items-center justify-center flex-shrink-0 text-base" aria-hidden="true">🔔</span>
+                <span className="w-9 h-9 rounded-full bg-burgundy/[8%] text-burgundy flex items-center justify-center flex-shrink-0"><ThiingsIcon name="bell" pxSize={16} /></span>
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-deep-charcoal">
                     {t('reservations.confirmation.pushTeaserTitle', 'Get a reminder on the day')}
@@ -285,7 +285,7 @@ export default function BookingConfirmation() {
               <button
                 type="button"
                 onClick={subscribeToPush}
-                className="px-4 py-2 text-[13px] font-semibold bg-burgundy hover:bg-burgundy-dark text-white rounded-lg transition-colors flex-shrink-0"
+                className="px-4 py-2 text-[13px] font-semibold bg-burgundy hover:bg-burgundy-dark text-white rounded-[100px] transition-colors flex-shrink-0"
               >
                 {t('reservations.confirmation.pushTeaserCta', 'Turn on reminders')}
               </button>
@@ -300,9 +300,9 @@ export default function BookingConfirmation() {
             </div>
           )}
           {pushPromptState === 'granted' && (
-            <div className="bg-green-50 border border-green-200 rounded-2xl p-4 text-left mb-6 flex items-center gap-3">
-              <span className="text-base" aria-hidden="true">✅</span>
-              <p className="text-[13px] text-green-800">
+            <div className="bg-emerald-600/[7%] border border-emerald-600/20 rounded-2xl p-4 text-left mb-6 flex items-center gap-3">
+              <ThiingsIcon name="check-circle" pxSize={16} className="text-emerald-700 flex-shrink-0" />
+              <p className="text-[13px] text-emerald-800">
                 {t('reservations.confirmation.pushGranted', "Reminders are on. We'll ping you an hour before.")}
               </p>
             </div>
@@ -322,7 +322,7 @@ export default function BookingConfirmation() {
                   (audit BUG #25). When WhatsApp is off we still show a useful
                   "save this confirmation" prompt instead of nothing. */}
               <li className="flex items-start gap-3">
-                <span className="w-7 h-7 rounded-full bg-green-50 text-green-700 flex items-center justify-center flex-shrink-0 text-base" aria-hidden="true">💬</span>
+                <span className="w-7 h-7 rounded-full bg-emerald-600/[8%] text-emerald-700 flex items-center justify-center flex-shrink-0"><ThiingsIcon name="chat" pxSize={14} /></span>
                 <span className="leading-snug">
                   {restaurantInfo?.whatsapp_enabled
                     ? t('reservations.confirmation.reminder', "We'll send you a WhatsApp reminder 24 hours before your reservation.")
@@ -331,7 +331,7 @@ export default function BookingConfirmation() {
               </li>
               {restaurantInfo?.phone && (
                 <li className="flex items-start gap-3">
-                  <span className="w-7 h-7 rounded-full bg-soft-gray text-deep-charcoal flex items-center justify-center flex-shrink-0 text-base" aria-hidden="true">📞</span>
+                  <span className="w-7 h-7 rounded-full bg-glass-subtle backdrop-blur-glass-chip text-muted-stone flex items-center justify-center flex-shrink-0"><ThiingsIcon name="phone" pxSize={14} /></span>
                   <span className="leading-snug">
                     {t('reservations.confirmation.callRestaurant', 'Need to talk to the restaurant?')}{' '}
                     <a
@@ -345,7 +345,7 @@ export default function BookingConfirmation() {
               )}
               {(restaurantInfo?.city || restaurantInfo?.country) && (
                 <li className="flex items-start gap-3">
-                  <span className="w-7 h-7 rounded-full bg-soft-gray text-deep-charcoal flex items-center justify-center flex-shrink-0 text-base" aria-hidden="true">📍</span>
+                  <span className="w-7 h-7 rounded-full bg-glass-subtle backdrop-blur-glass-chip text-muted-stone flex items-center justify-center flex-shrink-0"><ThiingsIcon name="map-pin" pxSize={14} /></span>
                   <span className="leading-snug">
                     {[restaurantInfo.city, restaurantInfo.country].filter(Boolean).join(', ')}{' '}
                     <a
@@ -360,7 +360,7 @@ export default function BookingConfirmation() {
                 </li>
               )}
               <li className="flex items-start gap-3">
-                <span className="w-7 h-7 rounded-full bg-soft-gray text-deep-charcoal flex items-center justify-center flex-shrink-0 text-base" aria-hidden="true">↩️</span>
+                <span className="w-7 h-7 rounded-full bg-glass-subtle backdrop-blur-glass-chip text-muted-stone flex items-center justify-center flex-shrink-0"><ThiingsIcon name="rotate" pxSize={14} /></span>
                 <span className="leading-snug">
                   {t('reservations.confirmation.howToCancel', 'Need to cancel or change?')}{' '}
                   <button
@@ -411,7 +411,7 @@ export default function BookingConfirmation() {
           href="/?ref=badge"
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-glass-border-dark bg-white/50 backdrop-blur-glass-chip hover:bg-white/80 transition-colors text-xs text-muted-stone hover:text-warm-stone"
         >
-          <span className="text-burgundy font-semibold">{'\u26A1'}</span>
+          <ThiingsIcon name="zap" pxSize={13} className="text-burgundy" />
           {t('common.poweredBy')} Seatable
         </a>
       </div>
