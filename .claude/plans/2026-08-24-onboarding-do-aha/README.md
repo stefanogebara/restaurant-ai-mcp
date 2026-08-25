@@ -235,20 +235,92 @@ que atravessa, o que morre") deixa de existir por construção. Os seeds
 fictícios continuam de fora (lição do #57) — promove-se o CONFIG, não os
 dados de exemplo.
 
-- [ ] 5.1 Spike de fundação: o que reusar — motor de fluxo tipado do
+- [x] 5.1 Spike de fundação — FEITO, e derrubou a premissa (ver abaixo)
+- [ ] ~~5.1 texto original~~: Spike de fundação: o que reusar — motor de fluxo tipado do
       `/onboarding-chat` como espinha determinística de slots obrigatórios
       (nunca esquecer telefone/e-mail) + `demo-chat`/persona como camada de
       voz + `enrich-restaurant`/scrape como ferramentas de pesquisa. Decidir
       reuso vs. reescrita COM código na mesa, não em abstrato.
-- [ ] 5.2 UI da conversa: stream de mensagens com estados de atividade de
-      ferramenta (chain of thought como cards de progresso), cards de opção
-      (evolução dos chips do F4), e a "ficha do restaurante" ao lado
-      preenchendo ao vivo — o "montando no backend" tornado visível.
-- [ ] 5.3 Backend: sessão de montagem = o demo row; endpoints de mutação
-      incremental (confirmar horários, setar cardápio, persona) + promoção
-      atômica no final. Pesquisa web além do Places (Instagram? iFood?) =
-      escopo e custo a decidir com o Stefano (cada onboarding vira N buscas +
-      chamadas LLM — capar como no demo-chat).
+### G5 — ARQUITETURA CORRIGIDA PELO SPIKE (24/ago)
+
+**A premissa do plano estava errada.** Eu escrevi que o motor de
+`lib/onboarding-chat/` seria a espinha determinística da G5. O spike mostrou
+que ele é a peça MENOS reusável do repo para esta visão — e que a peça que
+ninguém mencionou já é ~80% do contrato de UI/transporte:
+
+**A fundação real é a stack do Manager AI**, já em produção:
+`ManagerAIChatPage.tsx` + `ManagerRichMessage` + `ManagerMermaid` +
+`ManagerChart` + `managerRichBlocks.ts`, servidos por `api/manager-chat.js`
+(SSE de verdade, `maxDuration: 120`) sobre `_lib/manager-agent.js`
+(`onPhase` + tradução de tools Anthropic→OpenRouter no `ai-client`).
+
+- **Chain of thought JÁ é ao vivo e honesto.** Os frames `phase` são emitidos
+  pelo handler EM VOLTA das chamadas de LLM, então chegam em tempo real. O
+  contrato está escrito no código: *"Nunca inventa etapas: cada emissão
+  corresponde a trabalho que aconteceu."* Zero transporte novo para
+  "🔍 buscando no Places… ✓ 23 itens no cardápio".
+- **Diagramas e gráficos na conversa JÁ existem** (mermaid + Recharts em
+  fences, com skeleton enquanto a cerca está aberta). A planta das mesas
+  proposta é um prompt novo, não um componente novo.
+- **Mas o streaming de tokens é FAKE**: `OpenRouterClient._stream` faz um
+  `_create` bloqueante e dispara o texto inteiro como um "token" só. As
+  fases mascaram isso. Texto com efeito máquina de escrever exige reescrever
+  `_stream` (~80 linhas, e conserta o Manager AI de quebra).
+- **NÃO existe loop de agente no repo**: `manager-agent` e `prospect-agent`
+  fazem UM round-trip de tool, pegam só o primeiro bloco `tool_use` e
+  ignoram tools na resposta seguinte. O loop com teto de iterações (~60
+  linhas) é o primitivo novo mais importante.
+
+**O que sobra de `lib/onboarding-chat/`:** o `validateFlow.ts` e a lista de
+campos obrigatórios. O motor vira **o segurança na porta do banco** — depois
+de cada turno agêntico, responde "quais slots obrigatórios ainda faltam?" e
+isso entra no system prompt. Não dirige a conversa; garante que telefone e
+e-mail nunca sejam esquecidos. (Achado de bônus: `context` nunca muta depois
+do `init()` — `advance()` devolve `state.context` verbatim — então o branch
+`kind:'context'`, o único que poderia reagir a resultado de tool, é código
+morto por construção. E o `RestaurantCard.tsx` existe e nunca foi ligado.)
+
+**Riscos que o spike levantou (todos com precedente no repo):**
+1. **Lambda de 60s × "montando ao vivo".** O repo JÁ perdeu essa briga:
+   `restaurant-learning/research.js:95-122` desligou o gather de 3 tiers
+   porque encadeava ~96s e o fire-and-forget derrubava a lambda
+   (FUNCTION_INVOCATION_FAILED). Estrutural: a linha do demo é o estado
+   durável, todo resultado de tool é persistido assim que volta, e pesquisa
+   longa é job de fundo que a conversa consulta — nunca dentro do turno.
+2. **`cleanup-expired-demos` apaga cliente real.** `is_demo = true` + 30
+   dias = hard delete de config, reservas, mesas, assinatura, memória do
+   gerente e agente de voz. Promoção parcial numa lambda que pode congelar é
+   bomba-relógio de 30 dias. Flip atômico (RPC), predicado do cron ganha
+   `demo_converted_at IS NULL`, e um teste que garanta que o cron nunca
+   seleciona linha com `user_id` real.
+3. **LLM escrevendo num schema com restrições duras.** `email` NOT NULL com
+   CHECK e rejeição de `@demo.seatable.one`; `restaurant_type` com três
+   vocabulários; `business_hours` em dois formatos; `user_id` UNIQUE. Erro
+   de PGRST no meio da conversa é o pior lugar possível. Toda tool que
+   escreve passa por UM validador tipado.
+
+**Correção de escopo:** "🔍 achei seu Instagram" NÃO é implementável hoje —
+`instagram/_lib/fetch-profile.js` exige OAuth do dono, não é scraping
+público. Pesquisa web de verdade = Google Custom Search
+(`restaurantIntelligence.js`), que está desligado pelo risco de timeout.
+
+**Também já corrigido pelo spike (fora da G5):** o extrator LLM
+concatenava o texto do usuário dentro do system prompt (#75).
+
+### G5 — plano de fatias (revisado)
+
+- [ ] 5.2 UI: EXTRAIR o shell de chat do `ManagerAIChatPage` para componente
+      compartilhado e montar em `/onboarding-chat`. Não construir do zero —
+      cards de fase, mermaid, charts e o parser de SSE já existem.
+- [ ] 5.3 Backend: `api/onboarding/agent.js` copiando a estrutura do
+      `manager-chat.js` (SSE + onPhase, maxDuration 120) + o LOOP de tools
+      novo. Tools: scrape-restaurant, enrich-restaurant, enrich-cnpj,
+      extract (generalizado) e as mutações incrementais na linha do demo.
+      Governador de custo copiado do `prospect-agent` (`consumeLlmCall`).
+- [ ] 5.6 Promoção atômica (RPC) + purga dos seeds + createAgent/registry/
+      subscription levantados do `complete.js`, com o `setupScorecard` da G3.
+- [ ] 5.7 Endurecer `cleanup-expired-demos` ANTES da promoção existir
+      (risco 2).
 - [ ] 5.4 Wizard atual vira fallback (link "prefiro formulário"), não morre no
       primeiro dia.
 - [ ] 5.5 Diagramas/imagens na conversa: planta das mesas proposta (o
