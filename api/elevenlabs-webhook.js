@@ -664,7 +664,11 @@ async function handleCancelReservation(req, res) {
   // a successful cancel so we don't double-count failed attempts.
   if (restaurant.id && result?.success !== false) {
     try {
-      trackUsage(restaurant.id, 'reservation_cancelled');
+      // AGUARDADO: o res.status(200) vem logo abaixo sem await no meio, então o
+      // incremento morria no freeze e o restaurante era cobrado por uma reserva
+      // cancelada. O try/catch sem await não pegava a rejeição, só o throw
+      // síncrono — o "non-fatal" abaixo depende deste await para valer.
+      await trackUsage(restaurant.id, 'reservation_cancelled');
     } catch (e) {
       // Non-fatal: billing accuracy must never block a cancel UX.
     }

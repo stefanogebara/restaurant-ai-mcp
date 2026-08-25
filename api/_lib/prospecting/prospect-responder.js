@@ -984,7 +984,9 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
     logger.info(`[prospect] lead=${lead.id} mode=${mode || 'inbound'} action=${acao.tipo} sent=${sent} dryRun=${dryRun}`);
     return { action: acao.tipo, sent, dryRun };
   } finally {
-    releaseProcessingLock(lockKey).catch(() => {});
+    // Aguardado: sem await o DELETE pode não landar antes do freeze da lambda e
+    // o lock fica preso até o TTL, atrasando a próxima mensagem do lead à toa.
+    await releaseProcessingLock(lockKey).catch(() => {});
   }
 }
 

@@ -1167,3 +1167,25 @@ de outra sessao, e ninguem percebe -- porque o sintoma e' silencio.
   o lock ficava preso até o TTL de 30s e a mensagem seguinte do cliente
   girava no laço de espera esse tempo todo. Achei olhando os sites que a
   allowlist podre "cobria", não rodando o audit.
+
+## 2026-08-24 — Fire-and-forget: o que mata é a DISTÂNCIA até a resposta
+- Errei o diagnóstico no meio da varredura de `api/_lib/`: listei 10 call sites
+  de `trackUsage` como cobrança quebrada. Ao MEDIR quantos `await` existem
+  entre a chamada e o `res.json`, 8 tinham folga real (fetch de config, envio
+  de e-mail, `logToolCall`) e só 2 estavam com janela ZERO.
+- A lambda não congela quando a promise é criada — congela quando a resposta
+  sai. Então fire-and-forget seguido de trabalho aguardado quase sempre
+  completa. O perigo é estar colado no `res`.
+- Regra de triagem: não pergunte "tem await?", pergunte "quantos awaits até a
+  resposta?". Zero = morre. Um roundtrip de rede depois = quase sempre chega.
+  Sair aplicando `await` em todo `.catch` solto adiciona latência em caminho
+  quente para consertar o que não estava quebrado.
+- Corolário de escrita: `try { promessa() } catch {}` SEM await é decorativo —
+  pega só throw síncrono, nunca a rejeição. Aparecia em 4 sites, sempre com
+  comentário dizendo "non-fatal", o que dava a impressão de estar tratado.
+- O que a varredura achou de verdade (o audit passava verde em todos):
+  confirmação de reserva por voz no WhatsApp (cliente desligava sem código,
+  porque o agente omite o código de propósito contando com o WhatsApp),
+  upsert de `customer_ltv` (perda PERMANENTE para walk-in de POS sem reserva —
+  o cron reconstrói só a partir de `reservations`) e o webhook de saída
+  `service.completed`.

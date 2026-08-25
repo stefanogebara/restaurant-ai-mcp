@@ -388,19 +388,29 @@ async function createReservation(restaurantId, restaurant, params) {
       };
     }
 
-    // Fire-and-forget: send WhatsApp confirmation with Confirm/Cancel buttons
+    // AGUARDADO com teto de 3s. Era fire-and-forget, mas o chamador
+    // (elevenlabs-webhook) responde logo depois desta linha e a lambda congela:
+    // a confirmação morria calada e o cliente desligava sem NADA — porque
+    // buildVoiceConfirmation abaixo omite o código de propósito, contando que o
+    // WhatsApp chegue. Sem ele não há código, nem botões Confirmar/Cancelar (que
+    // alimentam a detecção de no-show), e a resposta ainda diz success: true.
+    // Teto menor que os 5s usados no resto do projeto porque aqui é chamada de
+    // voz ao vivo — teto estourado vira silêncio na linha com o cliente.
     const normalizedPhone = customer_phone.startsWith('+') ? customer_phone : `+${customer_phone}`;
-    sendVoiceReservationWhatsApp({
-      phone: normalizedPhone,
-      restaurantName,
-      restaurantId,
-      reservationId,
-      customerName: customer_name,
-      partySize: party_size,
-      date,
-      time,
-      language: restaurant.language || restaurant.agent_language || 'pt-BR'
-    }).catch(err => logger.warn('WhatsApp confirmation failed (non-fatal):', err.message));
+    await Promise.race([
+      sendVoiceReservationWhatsApp({
+        phone: normalizedPhone,
+        restaurantName,
+        restaurantId,
+        reservationId,
+        customerName: customer_name,
+        partySize: party_size,
+        date,
+        time,
+        language: restaurant.language || restaurant.agent_language || 'pt-BR'
+      }).catch(err => logger.warn('WhatsApp confirmation failed (non-fatal):', err.message)),
+      new Promise((resolve) => setTimeout(resolve, 3000)),
+    ]);
 
     // Build voice-friendly confirmation (no confirmation code — sent via WhatsApp)
     const confirmationMessage = buildVoiceConfirmation(
