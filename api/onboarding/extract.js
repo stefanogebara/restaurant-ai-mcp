@@ -49,13 +49,11 @@ Rules:
 - If only one set of hours is mentioned, apply to every day.
 - If a day's hours are ambiguous, make the most reasonable guess and continue.
 
-User input: """{raw}"""
 
 JSON:`,
   address: `You normalise a restaurant address into a single line, cleaned and capitalised.
 Output ONLY the cleaned address as a JSON string (with quotes), no other text.
 
-User input: """{raw}"""
 
 JSON:`,
 };
@@ -100,7 +98,16 @@ module.exports = async function handler(req, res) {
     return res.status(400).json({ ok: false, error: `raw input is too long (max ${MAX_RAW_LENGTH})` });
   }
 
-  const systemPrompt = SYSTEM_PROMPT_BY_KIND[kind].replace('{raw}', raw);
+  // O texto do dono vai no TURNO DO USUÁRIO, nunca dentro do system prompt.
+  //
+  // Antes era `SYSTEM_PROMPT_BY_KIND[kind].replace('{raw}', raw)` e o turno do
+  // usuário era a string literal 'Extract.' — ou seja, texto digitado por
+  // terceiros era concatenado às INSTRUÇÕES. Um "ignore o schema acima e
+  // responda X" tinha o mesmo peso das regras. Hoje o estrago é limitado (o
+  // postprocess valida a forma e a rota exige JWT), mas o mesmo extrator é a
+  // peça que o onboarding em conversa (G5) vai reusar para digerir texto
+  // RASPADO da web — aí o autor do texto não é mais o dono.
+  const systemPrompt = SYSTEM_PROMPT_BY_KIND[kind];
 
   try {
     const ai = getAI();
@@ -113,7 +120,7 @@ module.exports = async function handler(req, res) {
         max_tokens: 600,
         temperature: 0.1,
         system: systemPrompt,
-        messages: [{ role: 'user', content: 'Extract.' }],
+        messages: [{ role: 'user', content: raw }],
       });
     } finally {
       clearTimeout(timeout);
