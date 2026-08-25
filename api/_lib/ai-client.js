@@ -39,15 +39,21 @@ function origemDaChamada() {
 
 /**
  * Registra o custo REAL da chamada (cost_details do OpenRouter, não estimativa).
- * Fire-and-forget: contabilidade jamais pode derrubar a resposta do agente.
+ *
+ * DEVOLVE a promise para o chamador aguardar com teto. Era fire-and-forget, e a
+ * perda não era uniforme: handler curto (demo-chat, seo) congela antes do insert
+ * landar e perde a linha; chamador lento (prospecting, cron) segue trabalhando e
+ * grava. O painel de gasto passava a super-atribuir sistematicamente ao que é
+ * lento — e é dele que sai a conclusão de "quem é o ralo". Contabilidade segue
+ * sem poder derrubar a resposta: o .catch engole tudo e o teto limita o pior caso.
  */
 function registrarGasto({ origem, model, usage }) {
   try {
-    if (!usage) return;
+    if (!usage) return Promise.resolve();
     const { supabaseAdmin } = require('./supabase');
-    if (!supabaseAdmin) return;
+    if (!supabaseAdmin) return Promise.resolve();
     const custo = Number(usage.cost ?? usage.cost_details?.upstream_inference_cost ?? 0);
-    supabaseAdmin.from('ai_spend').insert({
+    return supabaseAdmin.from('ai_spend').insert({
       origem,
       model: String(model || '?'),
       prompt_tokens: Number(usage.prompt_tokens || 0),
@@ -56,7 +62,7 @@ function registrarGasto({ origem, model, usage }) {
     }).then(({ error }) => {
       if (error) logger.warn('não registrei o gasto (não afeta a resposta)', { error: error.message });
     }).catch(() => {});
-  } catch { /* idem */ }
+  } catch { return Promise.resolve(); }
 }
 
 /**
@@ -260,7 +266,12 @@ class OpenRouterClient {
     }
 
     const data = await response.json();
-    registrarGasto({ origem, model, usage: data.usage });
+    // Teto de 1500ms: o insert leva dezenas de ms e a chamada de IA que ele
+    // mede levou segundos, então o custo é ruído; o teto cobre o caso patológico.
+    await Promise.race([
+      registrarGasto({ origem, model, usage: data.usage }),
+      new Promise((resolve) => setTimeout(resolve, 1500)),
+    ]);
     const choice = data.choices?.[0];
 
     // Convert OpenAI response back to Anthropic format
