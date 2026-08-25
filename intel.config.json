@@ -45,7 +45,7 @@
   ],
   "settled": [
     "arquitetura Airtable + n8n foi abandonada; não reintroduzir",
-    "voz é LiveKit + ElevenLabs",
+    "voz é Twilio → api/_voice-server/ws-server.js na Fly.io → ElevenLabs conversational AI (padrão) ou OpenAI Realtime, selecionado por restaurante em api/voice-engine-settings.js (VALID_ENGINES = ['elevenlabs', 'openai_realtime']). CORRIGIDO em 2026-08-25: esta linha dizia 'voz é LiveKit + ElevenLabs' e contradizia o verdict_note. LiveKit não é decisão de arquitetura — é dependência transitiva do SDK (@elevenlabs/client → livekit-client → @livekit/{mutex,protocol} em client/package-lock.json); zero dependência direta, zero import, zero env LIVEKIT_*",
     "Supabase é o banco único — restaurant_info dropada em 2026-08-02, fim da herança Airtable",
     "OpenRouter é o provedor único de LLM; Anthropic virou opcional (94f56856, 2026-07-30)",
     "o cérebro da Olímpia é Haiku 4.5, não Sonnet (ddda37a1, 2026-08-11)",
@@ -93,6 +93,6 @@
     "Square",
     "Instagram Graph API"
   ],
-  "verdict_note": "LiveKit NÃO faz parte da arquitetura deste projeto — aparece só como dependência transitiva de @elevenlabs/client. Item de mercado sobre LiveKit (funding, preço, SDK, incidente) é DESCARTAR. As dependências que de fato mordem são Twilio, ElevenLabs, OpenAI Realtime, Fly.io e OpenRouter.",
+  "verdict_note": "LiveKit NÃO faz parte da arquitetura deste projeto — aparece só como dependência transitiva de @elevenlabs/client (confirmado no lockfile em 2026-08-25). Item de mercado sobre LiveKit (funding, preço, SDK, incidente) é DESCARTAR, a menos que quebre o próprio @elevenlabs/client. As dependências que de fato mordem são Twilio, ElevenLabs, OpenAI Realtime, Fly.io e OpenRouter.",
   "feed_url": "https://claude.ai/code/artifact/53796b2d-d805-48eb-85d9-6f0a7f086be5"
 }
