@@ -64,7 +64,7 @@ describe('CnpjConfirmPanel', () => {
     render(<CnpjConfirmPanel nome="Mocotó" onConfirm={onConfirm} onSkip={vi.fn()} />);
 
     // A pergunta dos sócios aparece (sugestão pré-selecionada)...
-    expect(await screen.findByText(/qual dos sócios/i)).toBeInTheDocument();
+    expect(await screen.findByText(/which of the partners/i)).toBeInTheDocument();
     // ...mas nada foi confirmado sem clique.
     expect(onConfirm).not.toHaveBeenCalled();
   });
@@ -89,7 +89,7 @@ describe('CnpjConfirmPanel', () => {
     mockAuthFetch.mockReturnValue(respostaCom({ candidatos: [candidato()], sugerido: candidato() }));
     render(<CnpjConfirmPanel nome="Mocotó" onConfirm={onConfirm} onSkip={vi.fn()} />);
 
-    await userEvent.click(await screen.findByText(/outra pessoa/i));
+    await userEvent.click(await screen.findByText(/someone else/i));
     expect(onConfirm).toHaveBeenCalledWith({
       cnpj: '38793527000193',
       razao_social: 'REI DO MOCOTO LTDA',
@@ -109,7 +109,7 @@ describe('CnpjConfirmPanel', () => {
     mockAuthFetch.mockReturnValue(respostaCom({ candidatos: [], sugerido: null }));
     render(<CnpjConfirmPanel nome="Restaurante Novo" onConfirm={vi.fn()} onSkip={onSkip} />);
 
-    await userEvent.click(await screen.findByText(/continuar/i));
+    await userEvent.click(await screen.findByText(/continue/i));
     expect(onSkip).toHaveBeenCalled();
   });
 
@@ -119,12 +119,12 @@ describe('CnpjConfirmPanel', () => {
     } as Response));
     render(<CnpjConfirmPanel nome="Mocotó" onConfirm={vi.fn()} onSkip={vi.fn()} />);
 
-    expect(await screen.findByText(/não conseguimos consultar/i)).toBeInTheDocument();
+    expect(await screen.findByText(/couldn't reach the receita/i)).toBeInTheDocument();
   });
 
   it('nome curto demais nem consulta o backend', async () => {
     render(<CnpjConfirmPanel nome="ab" onConfirm={vi.fn()} onSkip={vi.fn()} />);
-    await waitFor(() => expect(screen.getByText(/não encontramos/i)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/couldn't find your company/i)).toBeInTheDocument());
     expect(mockAuthFetch).not.toHaveBeenCalled();
   });
 });
@@ -168,7 +168,7 @@ describe('eventos de funil', () => {
     mockAuthFetch.mockReturnValue(respostaCom({ candidatos: [candidato()], sugerido: candidato() }));
     render(<CnpjConfirmPanel nome="Mocotó" onConfirm={vi.fn()} onSkip={vi.fn()} />);
 
-    await userEvent.click(await screen.findByText(/outra pessoa/i));
+    await userEvent.click(await screen.findByText(/someone else/i));
     expect(mockResolved).toHaveBeenCalledWith({ action: 'confirmed', partner_named: false });
   });
 
@@ -176,7 +176,7 @@ describe('eventos de funil', () => {
     mockAuthFetch.mockReturnValue(respostaCom({ candidatos: [candidato()], sugerido: null }));
     render(<CnpjConfirmPanel nome="Mocotó" onConfirm={vi.fn()} onSkip={vi.fn()} />);
 
-    await userEvent.click(await screen.findByText(/nenhuma dessas/i));
+    await userEvent.click(await screen.findByText(/none of these/i));
     expect(mockResolved).toHaveBeenCalledWith({ action: 'skipped' });
   });
 });
