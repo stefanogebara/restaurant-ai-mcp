@@ -21,6 +21,8 @@ export default function Welcome() {
   const { t } = useTranslation();
   const { user, loading: authLoading } = useAuth();
   const [checking, setChecking] = useState(true);
+  // Falha na consulta do config: erro real em vez de segundo onboarding.
+  const [lookupFailed, setLookupFailed] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -104,11 +106,14 @@ export default function Welcome() {
           navigate('/onboarding', { replace: true });
         }
       } catch (err) {
-        // Log so Sentry catches a population-wide config-lookup outage instead
-        // of silently treating every user as a new signup. Falls back to
-        // onboarding by design.
+        // NÃO despejar em /onboarding (G3.3). Se a consulta falha para um dono
+        // que JÁ tem restaurante, mandá-lo ao wizard fazia o submit cair no
+        // branch de UPDATE silencioso e sobrescrever o restaurante vivo com o
+        // conteúdo de um wizard novo. Um erro de rede não pode custar o
+        // restaurante de ninguém: mostramos o erro e oferecemos tentar de
+        // novo. (O backend também passou a barrar isso com 409.)
         console.error('[Welcome] restaurant_config lookup failed', err);
-        navigate('/onboarding', { replace: true });
+        setLookupFailed(true);
       } finally {
         setChecking(false);
       }
@@ -116,6 +121,26 @@ export default function Welcome() {
 
     checkOnboardingStatus();
   }, [user, authLoading, navigate]);
+
+  if (lookupFailed) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-6 text-center">
+        <div className="font-serif text-2xl text-deep-charcoal">
+          seatable<span className="text-burgundy">.</span>
+        </div>
+        <p role="alert" className="text-[15px] text-deep-charcoal max-w-sm">
+          {t('welcome.lookupFailed')}
+        </p>
+        <button
+          type="button"
+          onClick={() => window.location.reload()}
+          className="px-6 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-[100px] transition-colors"
+        >
+          {t('welcome.lookupRetry')}
+        </button>
+      </div>
+    );
+  }
 
   // Show loading while checking
   if (authLoading || checking) {

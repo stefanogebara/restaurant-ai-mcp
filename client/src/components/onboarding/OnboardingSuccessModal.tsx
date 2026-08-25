@@ -6,9 +6,13 @@ interface OnboardingSuccessModalProps {
   countdown: number;
   ownReferral: { code: string; url: string } | null;
   bookingUrl: string | null;
+  /** Placar da instalação vindo do complete.js (G3.2). "Bem-vindo a bordo!"
+   *  sobre um agente de voz que não existe é a pior forma de descobrir o
+   *  problema — dias depois, com o telefone tocando sem resposta. */
+  setup?: Record<string, string> | null;
 }
 
-export default function OnboardingSuccessModal({ countdown, ownReferral, bookingUrl }: OnboardingSuccessModalProps) {
+export default function OnboardingSuccessModal({ countdown, ownReferral, bookingUrl, setup }: OnboardingSuccessModalProps) {
   const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
   const primaryButtonRef = useRef<HTMLButtonElement>(null);
@@ -43,6 +47,38 @@ export default function OnboardingSuccessModal({ countdown, ownReferral, booking
           <p className="text-[15px] text-stone-gray font-light mb-6">
             {t('onboarding.restaurantReady')}
           </p>
+
+          {/* Pendências reais da instalação (G3.2). Só aparece quando algo
+              não ficou pronto — festa sobre instalação quebrada é como o
+              dono descobria, dias depois, que ninguém atendia o telefone.
+              Âmbar, não burgundy: é ESTADO, não ação (DESIGN.md). */}
+          {(() => {
+            if (!setup) return null;
+            const PENDENTES: Array<[string, string]> = [
+              ['voice_agent', t('onboarding.setupVoiceAgent')],
+              ['whatsapp_registry', t('onboarding.setupWhatsapp')],
+              ['knowledge_base', t('onboarding.setupKnowledge')],
+              ['subscription', t('onboarding.setupSubscription')],
+            ];
+            const falhas = PENDENTES.filter(([k]) => setup[k] && setup[k] !== 'ok');
+            if (falhas.length === 0) return null;
+            return (
+              <div className="mb-6 rounded-2xl border border-amber-300/70 bg-amber-50/70 p-4 text-left">
+                <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-amber-800 mb-2">
+                  {t('onboarding.setupPendingTitle')}
+                </p>
+                <ul className="space-y-1 mb-2">
+                  {falhas.map(([k, rotulo]) => (
+                    <li key={k} className="text-[13px] text-amber-900 flex items-start gap-2">
+                      <span aria-hidden="true" className="mt-1.5 h-1.5 w-1.5 rounded-full bg-amber-500 flex-shrink-0" />
+                      {rotulo}
+                    </li>
+                  ))}
+                </ul>
+                <p className="text-[12px] text-amber-800/90">{t('onboarding.setupPendingHelp')}</p>
+              </div>
+            );
+          })()}
 
           {/* Booking URL — the most important thing to share */}
           {bookingUrl && (

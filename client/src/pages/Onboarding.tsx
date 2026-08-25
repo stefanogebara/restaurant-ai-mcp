@@ -52,6 +52,9 @@ export default function Onboarding() {
   // explanation, no detail, and no way to know what to do. Now we keep the
   // actual server-side message so it can be surfaced inline.
   const [submitError, setSubmitError] = useState<string | null>(null);
+  // Estágio visível da criação (G3.1) e placar da instalação (G3.2).
+  const [submitStage, setSubmitStage] = useState<string | null>(null);
+  const [setupScorecard, setSetupScorecard] = useState<Record<string, string> | null>(null);
   const [isDemoLoading, setIsDemoLoading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [countdown, setCountdown] = useState(5);
@@ -403,6 +406,17 @@ export default function Onboarding() {
 
   const completeOnboarding = async () => {
     setIsSubmitting(true);
+    // Estágios otimistas cronometrados pelos tempos reais do backend (mesas
+    // e config são rápidos; a recepcionista é uma chamada externa com teto de
+    // 15s). Não é telemetria — é dizer ao dono o que está acontecendo em vez
+    // de um spinner mudo por até 10 segundos.
+    setSubmitStage(t('onboarding.stageCreating'));
+    const estagios = [
+      window.setTimeout(() => setSubmitStage(t('onboarding.stageTables')), 1500),
+      window.setTimeout(() => setSubmitStage(t('onboarding.stageReceptionist')), 3500),
+      window.setTimeout(() => setSubmitStage(t('onboarding.stageAlmost')), 12000),
+    ];
+    const limparEstagios = () => estagios.forEach((id) => window.clearTimeout(id));
     try {
       const response = await authFetch('/api/onboarding/complete', {
         method: 'POST',
@@ -457,6 +471,10 @@ export default function Onboarding() {
           referralAttached = false;
         }
       }
+
+      // Placar da instalação: o que ficou pendente é mostrado no modal de
+      // sucesso em vez de "Bem-vindo a bordo!" sobre instalação quebrada.
+      if (data.setup && typeof data.setup === 'object') setSetupScorecard(data.setup);
 
       // Persist the restaurant_id so Step 5 can POST to /api/manager-documents
       if (data.restaurant?.restaurant_id) {
@@ -531,6 +549,8 @@ export default function Onboarding() {
       showError(message);
       setSubmitError(message);
     } finally {
+      limparEstagios();
+      setSubmitStage(null);
       setIsSubmitting(false);
     }
   };
@@ -750,6 +770,7 @@ export default function Onboarding() {
               onBack={prevStep}
               onComplete={completeOnboarding}
               isSubmitting={isSubmitting}
+              submitStage={submitStage}
               goToStep={goToStep}
             />
           )}
@@ -774,7 +795,7 @@ export default function Onboarding() {
 
       {/* Success Modal */}
       {showSuccessModal && (
-        <OnboardingSuccessModal countdown={countdown} ownReferral={ownReferral} bookingUrl={bookingUrl} />
+        <OnboardingSuccessModal countdown={countdown} ownReferral={ownReferral} bookingUrl={bookingUrl} setup={setupScorecard} />
       )}
     </div>
   );

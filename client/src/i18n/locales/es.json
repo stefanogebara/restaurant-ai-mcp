@@ -1048,6 +1048,16 @@
       "seafood": "Marisquería",
       "other": "Otro"
     },
+    "stageCreating": "Creando tu restaurante…",
+    "stageTables": "Montando tus mesas…",
+    "stageReceptionist": "Configurando tu recepcionista…",
+    "stageAlmost": "Casi listo — esto puede tardar un momento…",
+    "setupPendingTitle": "Dos cosas aún terminando",
+    "setupVoiceAgent": "Agente de voz — aún no creado",
+    "setupWhatsapp": "WhatsApp — aún no conectado",
+    "setupKnowledge": "El conocimiento de tu IA — aún no sincronizado",
+    "setupSubscription": "Plan — aún no activado",
+    "setupPendingHelp": "Tu panel funciona normalmente. Reintentamos solos — si persiste, escribe a hello@seatable.one.",
     "prefilledFromDemo": "Hemos rellenado los datos de tu demo — siéntete libre de ajustar.",
     "prefilledFromDemoThin": "Trajimos lo que tenía tu demo — completa el resto abajo.",
     "prefilledStep2": "Teléfono, horarios y sitio web traídos de Google Maps — confirma o edita abajo.",
@@ -1084,11 +1094,11 @@
       "cancellation_policy": "política de cancelación"
     },
     "step0": {
-        "singleResultLabel": "Encontramos una coincidencia:",
-        "multiResultLabel": "¿Cuál es el tuyo?",
-        "pickThisCta": "Usar este",
-        "noneOfTheseCta": "Ninguno de estos — ¿tienes sitio web?",
-        "websiteFallbackPrompt": "Pega tu sitio web y leemos lo básico desde ahí.",
+      "singleResultLabel": "Encontramos una coincidencia:",
+      "multiResultLabel": "¿Cuál es el tuyo?",
+      "pickThisCta": "Usar este",
+      "noneOfTheseCta": "Ninguno de estos — ¿tienes sitio web?",
+      "websiteFallbackPrompt": "Pega tu sitio web y leemos lo básico desde ahí.",
       "title": "Encuentra tu restaurante",
       "subtitle": "Escribe el nombre del restaurante + ciudad — extraemos lo básico de Google Maps para que no tengas que reescribirlo.",
       "nameLabel": "Nombre del restaurante",
@@ -3626,5 +3636,9 @@
     "emptyTitle": "Sin movimiento en el servicio de hoy",
     "emptyHint": "En cuanto haya reservas o grupos en la casa, la noche aparece aquí hora a hora.",
     "title": "La noche entera, en una página"
+  },
+  "welcome": {
+    "lookupFailed": "No pudimos cargar tu cuenta ahora. Tu restaurante está a salvo — esto es solo un tropiezo de conexión.",
+    "lookupRetry": "Intentar de nuevo"
   }
 }
