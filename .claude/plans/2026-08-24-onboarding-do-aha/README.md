@@ -1,7 +1,7 @@
 # Onboarding do Aha — a ponte que cumpre a promessa do demo
 
 **Data:** 2026-08-24 (noite) · **Sucede:** `.claude/plans/2026-08-24-demo-conversa/` (funil do demo, completo)
-**Status:** PROPOSTO — aguardando "go" do Stefano. D3/D4 na seção 2 precisam dele.
+**Status:** EM EXECUÇÃO — G0 mergeado (#63). D3 resolvida (norte = G5 Onboarding em Conversa). D4 aberta. Bônus do G0: mapper de horários do prefill lia .open/.close (tudo caía nos defaults) e a suíte do complete.js rodava sem userId (escrita de config nunca exercitada).
 
 ---
 
@@ -90,40 +90,40 @@ com pedido explícito). Recomendo (a).
 
 ### G0 — Estancar (correções que shipam já, independentes de redesign)
 
-- [ ] 0.1 **Login abre em SIGNUP no `from=demo`** (`Login.tsx:44`): 1 linha +
+- [x] 0.1 **Login abre em SIGNUP no `from=demo`** (`Login.tsx:44`): 1 linha +
       `trackSignupStarted` passa a enxergar converts.
-- [ ] 0.2 **`country_code` derivado no prefill** (demo guarda ISO em `country`):
+- [x] 0.2 **`country_code` derivado no prefill** (demo guarda ISO em `country`):
       setar ambos; e `LocationSelector` **não apaga a cidade** quando o país
       selecionado é o mesmo que já estava no estado.
-- [ ] 0.3 **Nunca prefillar `@demo.seatable.one`** (`Onboarding.tsx:211`) e
+- [x] 0.3 **Nunca prefillar `@demo.seatable.one`** (`Onboarding.tsx:211`) e
       `complete.js` REJEITA e-mails desse domínio (defesa em profundidade).
-- [ ] 0.4 **Um normalizador de tipo só**: prefill converte para o vocabulário
+- [x] 0.4 **Um normalizador de tipo só**: prefill converte para o vocabulário
       dos tiles (hífen), tile acende, `complete.js` aceita — cozinha real deixa
       de virar 'other'. Teste com os 3 vocabulários.
-- [ ] 0.5 **Convert dispara no caminho real**: ao final do `completeOnboarding`
+- [x] 0.5 **Convert dispara no caminho real**: ao final do `completeOnboarding`
       (sucesso), se `LS_PENDING_DEMO_TOKEN` existe → `POST /api/demo/convert`
       aguardado com teto (lição do #53), limpa o LS no success. Welcome mantém
       o retry dele como backstop.
-- [ ] 0.6 **Sidebar do demo usa `conversionHref`+stash** nos 3 CTAs.
-- [ ] 0.7 **Prefill não clobbera rascunho retomado**: efeito pula quando
+- [x] 0.6 **Sidebar do demo usa `conversionHref`+stash** nos 3 CTAs.
+- [x] 0.7 **Prefill não clobbera rascunho retomado**: efeito pula quando
       `restored.step > 1` OU aplica só em campos ainda default; e enquanto
       `isDemoLoading`, campos do Passo 1 ficam disabled (hoje dá corrida).
-- [ ] 0.8 **Preset de serviço não mente nem destrói**: tile só aparece
+- [x] 0.8 **Preset de serviço não mente nem destrói**: tile só aparece
       selecionado se os horários atuais batem com o preset; clicar no preset
       pede confirmação implícita (não sobrescreve horários vindos do Google sem
       o usuário ver o que muda — mínimo: só sobrescrever se horários ainda são
       os defaults).
-- [ ] 0.9 **CNPJ só para Brasil** (`country_code === 'BR'`).
-- [ ] 0.10 **Modal de sucesso**: botão primário leva a `?launch=1` igual ao
+- [x] 0.9 **CNPJ só para Brasil** (`country_code === 'BR'`).
+- [x] 0.10 **Modal de sucesso**: botão primário leva a `?launch=1` igual ao
       countdown.
-- [ ] 0.11 **20 chaves i18n faltantes** (cnpj.*, step0.*, menuUrl*, stale*,
+- [x] 0.11 **20 chaves i18n faltantes** (cnpj.*, step0.*, menuUrl*, stale*,
       saveExit*, fixOnStep, FIELD_LABELS do onboardingErrorMessage) nos 3
       locales.
-- [ ] 0.12 **Demo UI (do walkthrough)**: reviews do card ordenadas por rating
+- [x] 0.12 **Demo UI (do walkthrough)**: reviews do card ordenadas por rating
       desc (a IA já trata reclamações no AIKnows — o card de vendas não abre
       com 1 estrela); seeds de "hoje" em horários relativos à criação (demo
       criado 22h ganha 22:30/23:00 ou amanhã); skeleton na foto.
-- [ ] 0.13 Comentário stale `Onboarding.tsx:439` + contradição
+- [x] 0.13 Comentário stale `Onboarding.tsx:439` + contradição
       `Step0Search.tsx:26-28`; props `restaurantId` mortas nos Passos 5/6.
 
 ### G1 — A ponte honesta (login que continua o aha)
