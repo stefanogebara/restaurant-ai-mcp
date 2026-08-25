@@ -2,7 +2,19 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 
-export default function LoginBrandPanel() {
+interface LoginBrandPanelProps {
+  /** Convert vindo do demo: troca os três bullets genéricos pelo restaurante
+   *  que a pessoa acabou de ver a IA atender. Vender features para quem
+   *  ACABOU de experimentá-las era o desperdício do momento de maior
+   *  intenção do funil (auditoria 24/ago). */
+  demo?: {
+    restaurantName: string;
+    city: string | null;
+    daysLeft: number | null;
+  };
+}
+
+export default function LoginBrandPanel({ demo }: LoginBrandPanelProps = {}) {
   const { t } = useTranslation();
   return (
     <div className="hidden lg:flex lg:flex-[0_0_480px] bg-deep-charcoal relative overflow-hidden">
@@ -39,6 +51,38 @@ export default function LoginBrandPanel() {
           transition={{ delay: 0.4 }}
           className="space-y-8"
         >
+          {demo ? (
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.14em] text-muted-stone mb-4">
+                {t('login.demoPanelEyebrow')}
+              </p>
+              <p className="font-serif text-4xl xl:text-[36px] leading-[1.2] tracking-tight text-white text-balance">
+                {demo.restaurantName}
+              </p>
+              {demo.city && (
+                <p className="text-[15px] text-warm-stone font-light mt-2">{demo.city}</p>
+              )}
+
+              <div className="mt-8 pt-6 border-t border-white/10 space-y-3">
+                <div className="flex items-center gap-2.5">
+                  <span className="relative flex h-2 w-2 flex-shrink-0" aria-hidden="true">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+                  </span>
+                  <p className="text-sm text-soft-gray">{t('login.demoPanelOnDuty')}</p>
+                </div>
+                <p className="text-[13px] text-warm-stone font-light leading-relaxed">
+                  {t('login.demoPanelKeeps')}
+                </p>
+                {typeof demo.daysLeft === 'number' && demo.daysLeft > 0 && (
+                  <p className="text-[13px] text-muted-stone font-light tabular-nums">
+                    {t('login.demoPanelDaysLeft', { count: demo.daysLeft })}
+                  </p>
+                )}
+              </div>
+            </div>
+          ) : (
+          <>
           <p className="font-serif text-4xl xl:text-[36px] font-normal italic leading-[1.35] tracking-tight text-soft-gray mb-10">
             &ldquo;{t('login.brandTagline')}&rdquo;
           </p>
@@ -65,6 +109,8 @@ export default function LoginBrandPanel() {
               </motion.div>
             ))}
           </div>
+          </>
+          )}
         </motion.div>
 
         {/* Bottom stats */}
