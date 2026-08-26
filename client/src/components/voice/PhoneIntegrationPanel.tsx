@@ -115,9 +115,9 @@ export default function PhoneIntegrationPanel() {
         aria-busy="true"
         aria-label={t('phoneIntegration.loadingStatus', 'Loading phone status')}
       >
-        <div className="h-4 bg-gray-100 rounded w-48" />
-        <div className="h-6 bg-gray-100 rounded w-32" />
-        <div className="h-10 bg-gray-100 rounded w-full" />
+        <div className="h-4 bg-stone-100 rounded w-48" />
+        <div className="h-6 bg-stone-100 rounded w-32" />
+        <div className="h-10 bg-stone-100 rounded w-full" />
       </div>
     );
   }

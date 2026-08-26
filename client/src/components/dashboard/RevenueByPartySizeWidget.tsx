@@ -14,8 +14,8 @@ export default function RevenueByPartySizeWidget() {
   if (isLoading) {
     return (
       <div className="glass-card p-6 animate-pulse space-y-3">
-        <div className="h-4 bg-gray-100 rounded w-48" />
-        <div className="h-8 bg-gray-100 rounded" />
+        <div className="h-4 bg-stone-100 rounded w-48" />
+        <div className="h-8 bg-stone-100 rounded" />
       </div>
     );
   }

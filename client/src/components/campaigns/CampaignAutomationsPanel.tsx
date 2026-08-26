@@ -91,7 +91,7 @@ function AutomationRow({ triggerType, automation, onUpdate, isUpdating }: Automa
   const descKey = `campaigns.automations.triggers.${triggerType}Desc`;
 
   return (
-    <div className="border border-gray-200 rounded-lg p-4">
+    <div className="border border-stone-200 rounded-lg p-4">
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
           <h3 className="text-sm font-semibold text-deep-charcoal">
@@ -110,7 +110,7 @@ function AutomationRow({ triggerType, automation, onUpdate, isUpdating }: Automa
           disabled={isUpdating}
           onClick={() => onUpdate({ trigger_type: triggerType, enabled: !enabled })}
           className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-burgundy focus:ring-offset-2 ${
-            enabled ? 'bg-burgundy' : 'bg-gray-200'
+            enabled ? 'bg-burgundy' : 'bg-stone-200'
           } ${isUpdating ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
           <span
@@ -123,7 +123,7 @@ function AutomationRow({ triggerType, automation, onUpdate, isUpdating }: Automa
 
       {/* Expanded settings when enabled */}
       {enabled && (
-        <div className="mt-3 pt-3 border-t border-gray-100 grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="mt-3 pt-3 border-t border-stone-100 grid grid-cols-1 sm:grid-cols-2 gap-3">
           {/* Channel */}
           <div>
             <label className="block text-xs font-medium text-stone-600 mb-1">

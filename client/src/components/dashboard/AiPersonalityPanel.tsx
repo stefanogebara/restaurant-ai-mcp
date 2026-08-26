@@ -140,10 +140,10 @@ export default function AiPersonalityPanel() {
   if (isLoading) {
     return (
       <div className="py-5 border-t border-glass-border-dark mt-8 animate-pulse space-y-3">
-        <div className="h-4 bg-gray-100 rounded w-48" />
-        <div className="h-10 bg-gray-100 rounded" />
-        <div className="h-10 bg-gray-100 rounded" />
-        <div className="h-10 bg-gray-100 rounded" />
+        <div className="h-4 bg-stone-100 rounded w-48" />
+        <div className="h-10 bg-stone-100 rounded" />
+        <div className="h-10 bg-stone-100 rounded" />
+        <div className="h-10 bg-stone-100 rounded" />
       </div>
     );
   }
@@ -230,7 +230,7 @@ export default function AiPersonalityPanel() {
                   className={`inline-flex items-center gap-1.5 px-3 py-1.5 border rounded-full text-xs font-medium cursor-pointer transition-colors ${
                     getValue('humor_type') === option
                       ? 'border-burgundy bg-burgundy/5 text-burgundy'
-                      : 'border-glass-border-dark text-warm-stone hover:border-gray-400'
+                      : 'border-glass-border-dark text-warm-stone hover:border-stone-400'
                   }`}
                 >
                   <input
@@ -259,7 +259,7 @@ export default function AiPersonalityPanel() {
                   className={`inline-flex items-center gap-1.5 px-3 py-1.5 border rounded-full text-xs font-medium cursor-pointer transition-colors ${
                     getValue('communication_style') === option
                       ? 'border-burgundy bg-burgundy/5 text-burgundy'
-                      : 'border-glass-border-dark text-warm-stone hover:border-gray-400'
+                      : 'border-glass-border-dark text-warm-stone hover:border-stone-400'
                   }`}
                 >
                   <input
@@ -288,7 +288,7 @@ export default function AiPersonalityPanel() {
                   className={`inline-flex items-center gap-1.5 px-3 py-1.5 border rounded-full text-xs font-medium cursor-pointer transition-colors ${
                     getValue('language_tone') === option
                       ? 'border-burgundy bg-burgundy/5 text-burgundy'
-                      : 'border-glass-border-dark text-warm-stone hover:border-gray-400'
+                      : 'border-glass-border-dark text-warm-stone hover:border-stone-400'
                   }`}
                 >
                   <input
@@ -309,7 +309,7 @@ export default function AiPersonalityPanel() {
           <div>
             <label className="block text-xs font-medium text-warm-stone mb-2">
               {t('dashboard.aiPersonality.personalityTraits', 'Personality traits')}
-              <span className="text-gray-400 ml-1">({currentTraits.length}/{MAX_TRAITS})</span>
+              <span className="text-stone-400 ml-1">({currentTraits.length}/{MAX_TRAITS})</span>
             </label>
             <div className="flex flex-wrap gap-1.5 mb-2">
               {SUGGESTED_TRAITS.map(trait => {
@@ -376,7 +376,7 @@ export default function AiPersonalityPanel() {
           <div>
             <label htmlFor="verbal-quirks" className="block text-xs font-medium text-warm-stone mb-1">
               {t('dashboard.aiPersonality.verbalQuirks', 'Catchphrases the AI should use')}
-              <span className="text-gray-400 ml-1">{t('dashboard.aiPersonality.max300', '(max 300 chars)')}</span>
+              <span className="text-stone-400 ml-1">{t('dashboard.aiPersonality.max300', '(max 300 chars)')}</span>
             </label>
             <p className="text-[11px] text-muted-stone mb-2">
               {t('dashboard.aiPersonality.verbalQuirksHint', 'The AI will sprinkle these naturally into conversations, not force them every time.')}

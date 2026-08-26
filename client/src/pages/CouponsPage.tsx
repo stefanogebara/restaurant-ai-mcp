@@ -10,7 +10,7 @@ function getStatusBadge(coupon: Coupon, t: any) {
   const now = new Date();
 
   if (!coupon.is_active) {
-    return { label: t('coupons.statusInactive', 'Inativo'), color: 'bg-gray-100 text-gray-600' };
+    return { label: t('coupons.statusInactive', 'Inativo'), color: 'bg-stone-100 text-stone-600' };
   }
   if (coupon.valid_until && new Date(coupon.valid_until) < now) {
     return { label: t('coupons.statusExpired', 'Expirado'), color: 'bg-red-50 text-red-700' };
@@ -240,7 +240,7 @@ function CouponRow({ coupon }: { coupon: Coupon }) {
   };
 
   return (
-    <div className="flex items-center gap-4 px-4 py-3 border-b border-glass-border-dark last:border-b-0 hover:bg-gray-50/50 transition-colors">
+    <div className="flex items-center gap-4 px-4 py-3 border-b border-glass-border-dark last:border-b-0 hover:bg-stone-50/50 transition-colors">
       {/* Code + copy */}
       <div className="flex items-center gap-2 min-w-[120px]">
         <span className="font-mono text-sm font-bold text-deep-charcoal">{coupon.code}</span>
@@ -371,7 +371,7 @@ export default function CouponsPage() {
           {!isLoading && !error && Array.isArray(coupons) && coupons.length > 0 && (
             <div>
               {/* Table header */}
-              <div className="flex items-center gap-4 px-4 py-2 border-b border-glass-border-dark bg-gray-50/50 text-xs font-medium text-stone-gray uppercase tracking-wide">
+              <div className="flex items-center gap-4 px-4 py-2 border-b border-glass-border-dark bg-stone-50/50 text-xs font-medium text-stone-gray uppercase tracking-wide">
                 <div className="min-w-[120px]">{t('coupons.code', 'Código')}</div>
                 <div className="flex-1">{t('coupons.description', 'Descrição')}</div>
                 <div>{t('coupons.discount', 'Desconto')}</div>

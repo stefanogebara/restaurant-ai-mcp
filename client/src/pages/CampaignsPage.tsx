@@ -34,7 +34,7 @@ export default function CampaignsPage() {
         </div>
 
         {/* Tab bar */}
-        <div className="flex gap-1 mb-6 border-b border-gray-200">
+        <div className="flex gap-1 mb-6 border-b border-stone-200">
           <button
             type="button"
             onClick={() => setActiveTab('manual')}

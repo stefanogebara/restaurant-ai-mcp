@@ -12,16 +12,13 @@
   "components/call-tracking/callTrackingTypes.ts": {
     "classeFria": 6
   },
-  "components/campaigns/CampaignAutomationsPanel.tsx": {
-    "classeFria": 3
-  },
   "components/campaigns/CampaignDetail.tsx": {
     "cinzaFrio": 1,
     "classeFria": 2
   },
   "components/campaigns/CampaignList.tsx": {
     "cinzaFrio": 1,
-    "classeFria": 4
+    "classeFria": 2
   },
   "components/common/MetricCard.tsx": {
     "classeFria": 5
@@ -35,9 +32,6 @@
   "components/dashboard/ActivePartiesPanel.tsx": {
     "cinzaFrio": 1
   },
-  "components/dashboard/AiPersonalityPanel.tsx": {
-    "classeFria": 9
-  },
   "components/dashboard/APIKeysPanel.tsx": {
     "cinzaFrio": 1
   },
@@ -45,7 +39,7 @@
     "cinzaFrio": 2
   },
   "components/dashboard/CampaignManager.tsx": {
-    "classeFria": 8
+    "classeFria": 2
   },
   "components/dashboard/ChipSelector.tsx": {
     "cinzaFrio": 1
@@ -59,12 +53,8 @@
   "components/dashboard/EmbedSnippetPanel.tsx": {
     "cinzaFrio": 1
   },
-  "components/dashboard/FeedbackSettingsPanel.tsx": {
-    "classeFria": 3
-  },
   "components/dashboard/FeedbackWidget.tsx": {
-    "cinzaFrio": 2,
-    "classeFria": 4
+    "cinzaFrio": 2
   },
   "components/dashboard/InstagramCaptionDrafter.tsx": {
     "emojiComoIcone": 2
@@ -76,7 +66,7 @@
     "emojiComoIcone": 1
   },
   "components/dashboard/ManagerAIUsageBar.tsx": {
-    "classeFria": 5
+    "classeFria": 1
   },
   "components/dashboard/ManagerNotesPanel.tsx": {
     "cinzaFrio": 4,
@@ -91,31 +81,22 @@
   },
   "components/dashboard/RevenueByPartySizeWidget.tsx": {
     "cinzaFrio": 1,
-    "classeFria": 3
+    "classeFria": 1
   },
   "components/dashboard/RevenueStatsWidget.tsx": {
-    "cinzaFrio": 1,
-    "classeFria": 2
+    "cinzaFrio": 1
   },
   "components/dashboard/StaffingForecastWidget.tsx": {
-    "cinzaFrio": 1,
-    "classeFria": 2
-  },
-  "components/dashboard/StaffingSettingsPanel.tsx": {
-    "classeFria": 2
+    "cinzaFrio": 1
   },
   "components/dashboard/StripeConnectPanel.tsx": {
     "cinzaFrio": 1
   },
   "components/dashboard/SurveySettingsPanel.tsx": {
-    "cinzaFrio": 1,
-    "classeFria": 3
+    "cinzaFrio": 1
   },
   "components/dashboard/TableLayoutPanel.tsx": {
     "classeFria": 6
-  },
-  "components/dashboard/VoicePersonaPanel.tsx": {
-    "classeFria": 5
   },
   "components/dashboard/WebhooksPanel.tsx": {
     "cinzaFrio": 1
@@ -145,9 +126,6 @@
   "components/demo/TestarNoMeuWhatsApp.tsx": {
     "cinzaFrio": 1
   },
-  "components/events/EventBookingsPanel.tsx": {
-    "classeFria": 2
-  },
   "components/host/AddToWaitlistModal.tsx": {
     "classeFria": 4
   },
@@ -167,7 +145,7 @@
     "classeFria": 1
   },
   "components/host/DashboardStats.tsx": {
-    "classeFria": 2
+    "classeFria": 1
   },
   "components/host/DNACustomerList.tsx": {
     "classeFria": 6
@@ -255,20 +233,19 @@
     "emojiComoIcone": 5
   },
   "components/voice/PhoneIntegrationPanel.tsx": {
-    "classeFria": 3,
     "emojiComoIcone": 1
   },
   "components/voice/VoiceEngineSelector.tsx": {
     "emojiComoIcone": 2
   },
   "components/voice/VoiceExperimentPanel.tsx": {
-    "classeFria": 12
+    "classeFria": 4
   },
   "landing/components/InlineDemoSection.tsx": {
     "cinzaFrio": 1
   },
   "landing/components/VideoShowcaseSection.tsx": {
-    "classeFria": 5
+    "classeFria": 4
   },
   "landing/data/demoData.ts": {
     "classeFria": 7
@@ -282,19 +259,14 @@
   "pages/CallTrackingDashboard.tsx": {
     "cinzaFrio": 5
   },
-  "pages/CampaignsPage.tsx": {
-    "classeFria": 1
-  },
   "pages/CouponsPage.tsx": {
-    "cinzaFrio": 1,
-    "classeFria": 4
+    "cinzaFrio": 1
   },
   "pages/EventBookingPage.tsx": {
     "cinzaFrio": 5
   },
   "pages/EventsPage.tsx": {
-    "cinzaFrio": 1,
-    "classeFria": 2
+    "cinzaFrio": 1
   },
   "pages/insights/OverviewTab.tsx": {
     "cinzaFrio": 2
@@ -304,9 +276,6 @@
   },
   "pages/OlimpiaOps.tsx": {
     "emojiComoIcone": 1
-  },
-  "pages/RestaurantSettingsPage.tsx": {
-    "classeFria": 3
   },
   "pages/SubscriptionManage.tsx": {
     "cinzaFrio": 1,
@@ -318,7 +287,6 @@
     "classeFria": 2
   },
   "pages/WhatsAppSettingsPage.tsx": {
-    "cinzaFrio": 1,
-    "classeFria": 8
+    "cinzaFrio": 1
   }
 }

@@ -21,8 +21,8 @@ export default function FeedbackWidget() {
   if (isLoading) {
     return (
       <div className="p-5 animate-pulse">
-        <div className="h-4 bg-gray-100 rounded w-32 mb-4" />
-        <div className="h-16 bg-gray-100 rounded" />
+        <div className="h-4 bg-stone-100 rounded w-32 mb-4" />
+        <div className="h-16 bg-stone-100 rounded" />
       </div>
     );
   }
@@ -77,7 +77,7 @@ export default function FeedbackWidget() {
             const pct = stats.answered_count > 0 ? (count / stats.answered_count) * 100 : 0;
             return (
               <div key={r} className="flex-1">
-                <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden">
+                <div className="h-1.5 rounded-full bg-stone-100 overflow-hidden">
                   <div
                     className={`h-full rounded-full ${r >= 4 ? 'bg-rose-500' : r === 3 ? 'bg-amber-400' : 'bg-red-400'}`}
                     style={{ width: `${pct}%` }}
@@ -94,7 +94,7 @@ export default function FeedbackWidget() {
       {stats.recent.length > 0 && (
         <div className="space-y-2">
           {stats.recent.slice(0, 3).map((fb) => (
-            <div key={fb.id} className="bg-gray-50 rounded-lg p-2.5">
+            <div key={fb.id} className="bg-stone-50 rounded-lg p-2.5">
               <div className="flex items-center justify-between mb-1">
                 <span className="text-xs font-medium text-deep-charcoal">
                   {fb.customer_name || 'Anonymous'}
