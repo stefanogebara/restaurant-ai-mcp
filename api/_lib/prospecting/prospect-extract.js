@@ -199,7 +199,81 @@ function mensagemApenasEmail(texto, email) {
   return resto.length === 0;
 }
 
+
+/**
+ * CELULAR NO SITE DO RESTAURANTE — o destravamento de 26/08/2026.
+ *
+ * O funil parou por alcançabilidade, não por qualidade: 1.392 casas passam o
+ * filtro e 1.389 têm SÓ FIXO. WhatsApp não existe em fixo, então elas nunca
+ * receberiam intro. Delas, 847 têm site — e restaurante põe o WhatsApp no
+ * próprio site, quase sempre como botão flutuante `wa.me`.
+ *
+ * O `prospect-enrich` não resolvia isso: ele procura CNPJ, não telefone
+ * (medido em 26/08: `sem_cnpj: 15` e `enriquecidos: 0` em quase toda rodada).
+ *
+ * ORDEM DE CONFIANÇA, e ela importa:
+ *   1. `wa.me/55...` e `api.whatsapp.com/send?phone=` — o número está ali
+ *      PORQUE é WhatsApp. É a única fonte que prova o canal, não só o formato.
+ *   2. `tel:` — é telefone de verdade, marcado como tal pelo autor da página.
+ *   3. Texto solto — último recurso; é onde mora o CNPJ, o CEP e o preço.
+ *
+ * SÓ DEVOLVE CELULAR. Fixo é exatamente o que já temos e o que não serve;
+ * `normalizarNumeroBr` já reprova DDD inexistente e local que não começa com
+ * 9, então a validação toda é reaproveitada em vez de reescrita.
+ */
+const WA_LINK_RE = /(?:wa\.me|whatsapp\.com\/send\?phone=|api\.whatsapp\.com\/send\?phone=)\/?(\+?\d{10,15})/gi;
+const TEL_HREF_RE = /tel:(\+?[\d\s().-]{8,20})/gi;
+// Celular BR em texto: DDD opcional entre parênteses + 9 + 8 dígitos.
+const TEXTO_CELULAR_RE = /(?:\+?55[\s.-]*)?\(?(\d{2})\)?[\s.-]*(9\d{4})[\s.-]*(\d{4})/g;
+
+/** Todos os casamentos de uma regex global, sem vazar lastIndex entre chamadas. */
+function todos(re, texto) {
+  const out = [];
+  const r = new RegExp(re.source, re.flags);
+  let m;
+  while ((m = r.exec(texto)) !== null) out.push(m);
+  return out;
+}
+
+/**
+ * PURA. Acha o celular de WhatsApp no HTML de um site. Null quando não há —
+ * nunca chuta, pela mesma regra anti-invenção do resto deste arquivo.
+ *
+ * @param {string} html - HTML cru da página
+ * @param {string} [dddPadrao] - DDD da praça, para número escrito sem DDD
+ * @returns {{numero: string, fonte: 'wa_link'|'tel_href'|'texto'}|null}
+ */
+function extrairCelularDoSite(html, dddPadrao) {
+  const texto = String(html || '');
+  if (!texto) return null;
+
+  const primeiroCelular = (brutos, fonte) => {
+    for (const bruto of brutos) {
+      const n = normalizarNumeroBr(bruto, dddPadrao);
+      // 14 = '+55' + DDD(2) + 9 dígitos. Fixo normaliza para 13 e é descartado.
+      if (n && n.length === 14) return { numero: n, fonte };
+    }
+    return null;
+  };
+
+  // 1. Link de WhatsApp — o número já vem com o 55 na frente.
+  const doLink = primeiroCelular(
+    todos(WA_LINK_RE, texto).map((m) => (m[1].startsWith('+') ? m[1] : `+${m[1]}`)),
+    'wa_link');
+  if (doLink) return doLink;
+
+  // 2. href tel:
+  const doTel = primeiroCelular(todos(TEL_HREF_RE, texto).map((m) => m[1]), 'tel_href');
+  if (doTel) return doTel;
+
+  // 3. Texto solto.
+  return primeiroCelular(
+    todos(TEXTO_CELULAR_RE, texto).map((m) => `${m[1]}${m[2]}${m[3]}`),
+    'texto');
+}
+
 module.exports = {
+  extrairCelularDoSite,
   DDDS_BR,
   extrairDddBr,
   normalizarNumeroBr,

@@ -27,6 +27,7 @@ const { createSecureLogger } = require('../_lib/secure-logger');
 const { bearerEquals } = require('../_lib/secure-compare');
 const { supabaseAdmin } = require('../_lib/supabase');
 const { enrichLead, ENRICH_COOLDOWN_MS } = require('../_lib/prospecting/prospect-enrich');
+const { cacarCelularPendentes } = require('../_lib/prospecting/prospect-celular');
 const { logCronRun, logCronError } = require('../_lib/cron-tracker');
 
 const logger = createSecureLogger('CronProspectEnrich');
@@ -106,6 +107,24 @@ async function proximosLeads(limite) {
   return alvo;
 }
 
+/**
+ * Leitor de página para a caça ao celular. Injetado (e não importado dentro do
+ * módulo) para que `prospect-celular.js` continue testável sem rede e sem chave.
+ *
+ * Usa o mesmo Scrapingdog que o enrich de CNPJ já usa: site de restaurante é
+ * cheio de anti-bot e construtor de site (Wix, Linktree), e `dynamic=true`
+ * executa o JS — sem isso o botão flutuante de WhatsApp, que é injetado por
+ * script, simplesmente não está no HTML.
+ */
+async function lerPaginaScrapingdog(alvo) {
+  const key = process.env.SCRAPINGDOG_API_KEY;
+  if (!key) return '';
+  const url = `https://api.scrapingdog.com/scrape?api_key=${key}&dynamic=true&url=${encodeURIComponent(alvo)}`;
+  const resp = await fetch(url);
+  if (!resp.ok) return '';
+  return resp.text();
+}
+
 module.exports = async (req, res) => {
   const secret = process.env.CRON_SECRET;
   if (!secret) {
@@ -145,6 +164,23 @@ module.exports = async (req, res) => {
         `enriquecimento travado: ${resumo.pulados}/${ids.length} do lote pulados e nada gravado — `
         + 'a próxima rodada relerá as MESMAS linhas. Ver filtroTrabalhavel().');
     }
+    // ---- 2ª etapa: caçar celular no site ------------------------------------
+    //
+    // POR QUE MORA AQUI e não num cron próprio: a regra de custo do projeto
+    // manda não criar cron novo quando um horário já existe, e este já é uma
+    // varredura horária de enriquecimento. O trabalho é internamente limitado
+    // (8 leads por rodada) e o orçamento de 60s é compartilhado.
+    //
+    // Isolada em try/catch próprio: quando chega aqui o trabalho de CNPJ JÁ
+    // gravou, e uma falha na caça não pode apagar esse resultado nem o
+    // logCronRun. Mesma forma da varredura de abandonadas no score-outcomes.
+    try {
+      resumo.celular = await cacarCelularPendentes({ lerPagina: lerPaginaScrapingdog });
+    } catch (e) {
+      logger.error('caça ao celular falhou (o enriquecimento desta rodada segue válido):', e.message);
+      resumo.celular = { erro: String(e.message).slice(0, 120) };
+    }
+
     logger.info('cron de enriquecimento concluído', resumo);
     // Sem isto o job não aparece em cron_runs e o vigia o dá como never_run
     // para sempre — registro sem batimento é decoração.
@@ -160,8 +196,8 @@ module.exports = async (req, res) => {
   }
 };
 
-module.exports.proximosLeads = proximosLeads;
-module.exports.QUENTES = QUENTES;
 // Exportada para teste: a seleção é onde mora o defeito de fome, e testá-la
 // pelo handler exigiria simular request/response e o laço de enriquecimento.
 module.exports.proximosLeads = proximosLeads;
+module.exports.QUENTES = QUENTES;
+module.exports.lerPaginaScrapingdog = lerPaginaScrapingdog;
