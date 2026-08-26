@@ -25,6 +25,8 @@ import Step3TablesAndSettings from '../components/onboarding/Step3TablesAndSetti
 import Step4Review from '../components/onboarding/Step4Review';
 import Step5ImportHistory from '../components/onboarding/Step5ImportHistory';
 import Step6TeachAI from '../components/onboarding/Step6TeachAI';
+import { FolhaDeConfirmacao } from '../components/onboarding/folha/FolhaDeConfirmacao';
+import type { Preset } from '../lib/personaProposta';
 import OnboardingSuccessModal from '../components/onboarding/OnboardingSuccessModal';
 import OnboardingStepSidebar from '../components/onboarding/OnboardingStepSidebar';
 import type { OnboardingData } from '../types/onboarding.types';
@@ -156,6 +158,21 @@ export default function Onboarding() {
 
   const [restored] = useState(restoreOnboarding);
   const [currentStep, setCurrentStep] = useState(restored.step);
+
+  // A folha é o caminho PADRÃO. O wizard continua existindo como alternativa
+  // ("prefiro o formulário") em vez de morrer no primeiro dia: ele é o único
+  // caminho para quem quer configurar mesas e áreas em detalhe, e desligá-lo
+  // junto com a troca de fluxo somaria dois riscos num commit só.
+  const [modo, setModo] = useState<'folha' | 'formulario'>(() => {
+    // Escolha explícita do dono vence sempre.
+    if (localStorage.getItem('onboarding_modo') === 'formulario') return 'formulario';
+    // Rascunho em andamento também: quem parou no passo 4 ontem volta ONDE
+    // parou, e não numa folha que não mostra aquele progresso. Trocar o fluxo
+    // padrão não pode custar o trabalho de quem já estava no meio do antigo.
+    if (restored.step > 1) return 'formulario';
+    return 'folha';
+  });
+  const [vozEscolhida, setVozEscolhida] = useState<Preset | null>(null);
   // Passo em que a sessão ABRIU (não o atual): o prefill do demo consulta
   // isto para não clobberar um rascunho retomado.
   const initialStepRef = useRef(restored.step);
@@ -336,6 +353,9 @@ export default function Onboarding() {
         // do que a do demo sabia.
         body: JSON.stringify({
           ...onboardingData,
+          // A única parte do perfil que a pesquisa não descobre — ver
+          // api/_lib/persona-proposta.js.
+          voz_preset: vozEscolhida || undefined,
           demo_token: localStorage.getItem(LS_PENDING_DEMO_TOKEN) || undefined,
         }),
       });
@@ -464,6 +484,42 @@ export default function Onboarding() {
   };
 
   const progressPercent = (currentStep / TOTAL_STEPS) * 100;
+
+  if (modo === 'folha') {
+    return (
+      <div className="min-h-screen flex flex-col">
+        {showSubscribeBanner && (
+          <div className="bg-burgundy text-white text-[13px] text-center py-2.5 px-4">
+            {t('onboarding.subscribeBanner')}
+          </div>
+        )}
+        <FolhaDeConfirmacao
+          data={onboardingData}
+          updateData={updateData}
+          vibeTags={onboardingData.vibe_tags}
+          vozEscolhida={vozEscolhida}
+          onEscolherVoz={setVozEscolhida}
+          onConcluir={completeOnboarding}
+          enviando={isSubmitting}
+          veioDoDemo={Boolean(localStorage.getItem(LS_PENDING_DEMO_TOKEN))}
+        />
+        <div className="text-center pb-28 -mt-24">
+          <button
+            type="button"
+            onClick={() => { localStorage.setItem('onboarding_modo', 'formulario'); setModo('formulario'); }}
+            className="text-[13px] text-muted-stone hover:text-stone-gray underline underline-offset-2 transition-colors"
+          >
+            {t('onboarding.folha.prefiroFormulario', 'Prefiro preencher o formulário completo')}
+          </button>
+        </div>
+        {submitError && (
+          <p className="fixed bottom-20 left-1/2 -translate-x-1/2 text-[14px] text-red-700 bg-red-50 border border-red-200 px-4 py-2 rounded-xl">
+            {submitError}
+          </p>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col">

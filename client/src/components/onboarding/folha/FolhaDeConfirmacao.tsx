@@ -149,6 +149,11 @@ export function FolhaDeConfirmacao({
         <BlocoConfirmavel
           titulo={t('onboarding.folha.contato', 'Contato')}
           pendente={pendente('email') || pendente('phone_number')}
+          textoPendente={
+            pendente('email') && !pendente('phone_number')
+              ? t('onboarding.folha.faltaEmail', 'O telefone veio do Google. O e-mail precisa ser o seu — é por ele que as confirmações saem.')
+              : undefined
+          }
           abertoInicialmente
           resumo={
             <>
@@ -179,6 +184,7 @@ export function FolhaDeConfirmacao({
         <BlocoConfirmavel
           titulo={t('onboarding.folha.voz', 'A voz dela')}
           pendente={pendente('voz')}
+          textoPendente={t('onboarding.folha.escolhaSua', 'Essa é a única que só você pode escolher.')}
           abertoInicialmente
           resumo={t('onboarding.folha.vozResumo', 'Como ela fala com seus clientes.')}
         >

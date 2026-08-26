@@ -109,6 +109,16 @@ export function mapDemoSessionToOnboarding(
     const site = scraped.website;
     if (!updates.website && typeof site === 'string' && site) updates.website = site;
 
+    // As tags de ambiente atravessam para a folha poder sugerir uma voz.
+    // Não viram campo de formulário — só entram no cálculo da sugestão.
+    const insights = scraped.insights;
+    if (insights && typeof insights === 'object') {
+      const tags = (insights as Record<string, unknown>).vibe_tags;
+      if (Array.isArray(tags) && tags.length) {
+        updates.vibe_tags = tags.filter((t): t is string => typeof t === 'string');
+      }
+    }
+
     const tel = scraped.phone;
     if (!updates.phone_number && typeof tel === 'string' && tel) updates.phone_number = tel;
 

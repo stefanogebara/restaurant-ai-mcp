@@ -116,6 +116,9 @@ describe('Onboarding draft persistence (user-scoped keys)', () => {
   });
 
   it("does not let another user inherit someone else's draft", () => {
+    // Este teste exercita o WIZARD: o rascunho é (corretamente) recusado,
+    // o passo volta a 1, e sem esta linha a folha renderizaria no lugar.
+    localStorage.setItem('onboarding_modo', 'formulario');
     localStorage.setItem('onboarding_step:user-a', '3');
     localStorage.setItem(
       'onboarding_data:user-a',
@@ -147,6 +150,9 @@ describe('Onboarding draft persistence (user-scoped keys)', () => {
   });
 
   it('never rehydrates a draft that already has a restaurant_id (duplicate-launch guard)', () => {
+    // Este teste exercita o WIZARD: o rascunho é (corretamente) recusado,
+    // o passo volta a 1, e sem esta linha a folha renderizaria no lugar.
+    localStorage.setItem('onboarding_modo', 'formulario');
     localStorage.setItem('onboarding_step:user-a', '4');
     localStorage.setItem(
       'onboarding_data:user-a',
