@@ -26,6 +26,9 @@ const DADOS = {
   // O placeholder que o demo grava para satisfazer o NOT NULL. A folha tem que
   // contá-lo como vazio — quem tem esse endereço não recebe reserva nenhuma.
   email: 'mocoto@demo.seatable.one',
+  // Porte estimado pelo prefill (avaliações + faixa de preço) — é daqui que a
+  // proposta de salão sai.
+  profile_data: { size: 'medium', seat_count: 70 },
   business_hours: [
     { day: 'Tuesday', is_open: true, open_time: '12:00', close_time: '23:00' },
     { day: 'Wednesday', is_open: true, open_time: '12:00', close_time: '23:00' },

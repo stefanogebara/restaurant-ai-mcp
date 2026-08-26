@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { BlocoConfirmavel } from './BlocoConfirmavel';
 import { VozDaCasa } from './VozDaCasa';
 import type { Preset } from '../../../lib/personaProposta';
+import { proporMesas, resumirMesas } from '../../../lib/proporMesas';
 import type { OnboardingData, BusinessHours } from '../../../types/onboarding.types';
 
 /**
@@ -54,6 +55,16 @@ export function FolhaDeConfirmacao({
   const fonte = veioDoDemo
     ? t('onboarding.folha.fonteDemo', 'você configurou no demo')
     : t('onboarding.folha.fonteGoogle', 'do seu Google');
+
+  // O salão proposto vem do porte estimado (avaliações + faixa de preço), que o
+  // prefill do demo já calcula. Sem estimativa NÃO propomos um salão: o dono
+  // preenche no formulário completo, e é melhor admitir isso do que oferecer
+  // um layout fixo fingindo conhecer a casa dele.
+  const salaoProposto = useMemo(
+    () => proporMesas(data.profile_data?.seat_count),
+    [data.profile_data?.seat_count],
+  );
+  const salaoAtual = useMemo(() => resumirMesas(data.areas), [data.areas]);
 
   const diasAbertos = useMemo(
     () => (data.business_hours ?? []).filter((h: BusinessHours) => h.is_open),
@@ -143,6 +154,26 @@ export function FolhaDeConfirmacao({
         >
           <p className="text-[14px] text-warm-stone">
             {t('onboarding.folha.horariosDica', 'Você ajusta dia a dia depois, no painel — aqui só precisa estar perto do certo.')}
+          </p>
+        </BlocoConfirmavel>
+
+        <BlocoConfirmavel
+          titulo={t('onboarding.folha.salao', 'O salão')}
+          fonte={salaoProposto ? t('onboarding.folha.fonteEstimado', 'estimado pelo porte no seu Google') : undefined}
+          resumo={
+            salaoAtual.mesas
+              ? t('onboarding.folha.resumoSalao', '{{mesas}} mesas · {{lugares}} lugares', salaoAtual)
+              : salaoProposto
+                ? t('onboarding.folha.resumoSalao', '{{mesas}} mesas · {{lugares}} lugares', {
+                    mesas: salaoProposto.totalMesas, lugares: salaoProposto.totalLugares,
+                  })
+                : t('onboarding.folha.salaoDesconhecido', 'A gente não conseguiu estimar seu salão')
+          }
+        >
+          <p className="text-[14px] text-warm-stone leading-[1.6]">
+            {salaoProposto
+              ? t('onboarding.folha.salaoDica', 'É um chute informado, e serve para começar — a recepcionista já sabe dizer o que tem livre. Você arruma mesa por mesa depois, no painel.')
+              : t('onboarding.folha.salaoSemEstimativa', 'Sem avaliações suficientes no Google não dá para estimar. A recepcionista funciona assim mesmo; você monta o salão depois, no painel.')}
           </p>
         </BlocoConfirmavel>
 
