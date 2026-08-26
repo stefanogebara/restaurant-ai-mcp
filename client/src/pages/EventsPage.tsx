@@ -9,7 +9,7 @@ import EventBookingsPanel from '../components/events/EventBookingsPanel';
 
 function getStatusBadge(event: EventItem, t: (key: string, fallback: string) => string) {
   if (!event.is_active) {
-    return { label: t('events.statusInactive', 'Inactive'), color: 'bg-gray-100 text-gray-600' };
+    return { label: t('events.statusInactive', 'Inactive'), color: 'bg-stone-100 text-stone-600' };
   }
 
   const now = new Date();

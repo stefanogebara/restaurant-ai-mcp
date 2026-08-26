@@ -75,8 +75,8 @@ export default function SurveySettingsPanel() {
   if (configLoading) {
     return (
       <div className="py-5 border-t border-glass-border-dark mt-8 animate-pulse">
-        <div className="h-5 bg-gray-200 rounded w-40 mb-4" />
-        <div className="h-10 bg-gray-100 rounded" />
+        <div className="h-5 bg-stone-200 rounded w-40 mb-4" />
+        <div className="h-10 bg-stone-100 rounded" />
       </div>
     );
   }
@@ -111,7 +111,7 @@ export default function SurveySettingsPanel() {
           aria-checked={enabled}
           onClick={() => { setEnabled(!enabled); setDirty(true); }}
           className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-            enabled ? 'bg-rose-500' : 'bg-gray-300'
+            enabled ? 'bg-rose-500' : 'bg-stone-300'
           }`}
         >
           <span

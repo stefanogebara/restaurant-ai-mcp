@@ -24,7 +24,7 @@ export default function ManagerAIUsageBar() {
   // Scale plan: unlimited
   if (limit === null) {
     return (
-      <div className="px-3 py-2 text-xs text-gray-400 flex items-center gap-1">
+      <div className="px-3 py-2 text-xs text-stone-400 flex items-center gap-1">
         <span className="text-rose-500">●</span>
         <span>{t('managerAI.title', 'Manager AI')} — {t('managerAI.unlimited', 'Unlimited')}</span>
       </div>
@@ -43,12 +43,12 @@ export default function ManagerAIUsageBar() {
 
   return (
     <div className="px-3 py-2 space-y-1">
-      <div className="flex items-center justify-between text-xs text-gray-500">
+      <div className="flex items-center justify-between text-xs text-stone-500">
         <span>{t('managerAI.title', 'Manager AI')}</span>
         <span>{used} / {limit} {t('managerAI.messages', 'messages')}</span>
       </div>
       <div
-        className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden"
+        className="h-1.5 w-full bg-stone-100 rounded-full overflow-hidden"
         role="progressbar"
         aria-valuenow={pct}
         aria-valuemin={0}
@@ -68,7 +68,7 @@ export default function ManagerAIUsageBar() {
         </p>
       )}
       {!isWarning && (
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-stone-400">
           {t('managerAI.resets', 'Resets')} {new Date(resets_at).toLocaleDateString(i18n.language === 'pt-BR' ? 'pt-BR' : i18n.language === 'es' ? 'es' : 'en-US', { month: 'short', day: 'numeric' })}
         </p>
       )}

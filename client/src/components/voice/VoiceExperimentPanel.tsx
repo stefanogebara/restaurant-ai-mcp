@@ -10,7 +10,7 @@ export default function VoiceExperimentPanel() {
   const rollbackMutation = useRollbackExperiment();
 
   if (isLoading) {
-    return <div className="animate-pulse h-32 bg-gray-100 rounded-lg" />;
+    return <div className="animate-pulse h-32 bg-stone-100 rounded-lg" />;
   }
 
   // Completed or promoted experiment
@@ -19,10 +19,10 @@ export default function VoiceExperimentPanel() {
     return (
       <div className="glass-card p-6">
         <h3 className="text-lg font-semibold mb-4">A/B Test Result</h3>
-        <p className="text-sm text-gray-600 mb-2">
+        <p className="text-sm text-stone-600 mb-2">
           Experiment <span className="font-medium">{experiment.branch_name}</span> has ended.
         </p>
-        <p className="text-sm text-gray-600 mb-4">
+        <p className="text-sm text-stone-600 mb-4">
           Winner: <span className="font-semibold">{winner}</span>
         </p>
         <button
@@ -40,20 +40,20 @@ export default function VoiceExperimentPanel() {
     return (
       <div className="glass-card p-6">
         <h3 className="text-lg font-semibold mb-4">Running Experiment</h3>
-        <p className="text-sm text-gray-600 mb-1">
+        <p className="text-sm text-stone-600 mb-1">
           <span className="font-medium">{experiment.branch_name}</span>
         </p>
-        <p className="text-sm text-gray-500 mb-3">
+        <p className="text-sm text-stone-500 mb-3">
           Traffic split: {experiment.traffic_split}% variant
         </p>
         <div className="flex gap-4 mb-4">
           <div className="text-center">
             <p className="text-2xl font-bold">{experiment.control_count ?? '-'}</p>
-            <p className="text-xs text-gray-500">Control</p>
+            <p className="text-xs text-stone-500">Control</p>
           </div>
           <div className="text-center">
             <p className="text-2xl font-bold">{experiment.variant_count ?? '-'}</p>
-            <p className="text-xs text-gray-500">Variant</p>
+            <p className="text-xs text-stone-500">Variant</p>
           </div>
         </div>
         <div className="flex gap-2">
@@ -80,7 +80,7 @@ export default function VoiceExperimentPanel() {
   return (
     <div className="glass-card p-6">
       <h3 className="text-lg font-semibold mb-2">A/B Test Your Voice</h3>
-      <p className="text-sm text-gray-600 mb-4">
+      <p className="text-sm text-stone-600 mb-4">
         Test different voice configurations to find the best fit for your restaurant.
       </p>
       <button

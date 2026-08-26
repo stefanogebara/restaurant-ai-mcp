@@ -242,9 +242,9 @@ export default function RestaurantSettingsPage() {
         <div className="p-6 sm:p-10 max-w-3xl mx-auto space-y-6 mt-14 sm:mt-0">
           {[1, 2, 3].map((i) => (
             <div key={i} className="py-5 border-b border-[#E7E5E4] animate-pulse space-y-3">
-              <div className="h-5 bg-gray-100 rounded w-40" />
-              <div className="h-10 bg-gray-100 rounded" />
-              <div className="h-10 bg-gray-100 rounded" />
+              <div className="h-5 bg-stone-100 rounded w-40" />
+              <div className="h-10 bg-stone-100 rounded" />
+              <div className="h-10 bg-stone-100 rounded" />
             </div>
           ))}
         </div>

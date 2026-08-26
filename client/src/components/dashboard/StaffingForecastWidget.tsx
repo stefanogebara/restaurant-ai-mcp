@@ -12,9 +12,9 @@ export default function StaffingForecastWidget() {
   if (isLoading) {
     return (
       <div className="glass-card p-6 animate-pulse space-y-3">
-        <div className="h-4 bg-gray-100 rounded w-40" />
+        <div className="h-4 bg-stone-100 rounded w-40" />
         {[0, 1, 2].map((i) => (
-          <div key={i} className="h-12 bg-gray-100 rounded" />
+          <div key={i} className="h-12 bg-stone-100 rounded" />
         ))}
       </div>
     );

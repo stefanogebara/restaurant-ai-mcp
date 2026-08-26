@@ -46,9 +46,9 @@ export default function VoicePersonaPanel() {
   if (isLoading) {
     return (
       <div className="py-5 border-t border-glass-border-dark mt-8 animate-pulse space-y-3">
-        <div className="h-4 bg-gray-100 rounded w-40" />
-        <div className="h-10 bg-gray-100 rounded" />
-        <div className="h-10 bg-gray-100 rounded" />
+        <div className="h-4 bg-stone-100 rounded w-40" />
+        <div className="h-10 bg-stone-100 rounded" />
+        <div className="h-10 bg-stone-100 rounded" />
       </div>
     );
   }
@@ -80,7 +80,7 @@ export default function VoicePersonaPanel() {
       <div className="space-y-3">
         <div>
           <label htmlFor="agent-name" className="block text-xs font-medium text-warm-stone mb-1">
-            {t('dashboard.voicePersona.agentName', 'Agent name')} <span className="text-gray-400">{t('dashboard.voicePersona.max50', '(max 50 chars)')}</span>
+            {t('dashboard.voicePersona.agentName', 'Agent name')} <span className="text-stone-400">{t('dashboard.voicePersona.max50', '(max 50 chars)')}</span>
           </label>
           <input
             id="agent-name"
@@ -94,7 +94,7 @@ export default function VoicePersonaPanel() {
         </div>
         <div>
           <label htmlFor="agent-greeting" className="block text-xs font-medium text-warm-stone mb-1">
-            {t('dashboard.voicePersona.openingGreeting', 'Opening greeting')} <span className="text-gray-400">{t('dashboard.voicePersona.max200', '(max 200 chars)')}</span>
+            {t('dashboard.voicePersona.openingGreeting', 'Opening greeting')} <span className="text-stone-400">{t('dashboard.voicePersona.max200', '(max 200 chars)')}</span>
           </label>
           <input
             id="agent-greeting"

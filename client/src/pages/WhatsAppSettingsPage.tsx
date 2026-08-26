@@ -39,7 +39,7 @@ const STATUS_STYLES: Record<string, string> = {
   PENDING: 'bg-amber-50 text-amber-700',
   IN_REVIEW: 'bg-amber-50 text-amber-700',
   REJECTED: 'bg-red-50 text-red-700',
-  PAUSED: 'bg-gray-100 text-gray-600',
+  PAUSED: 'bg-stone-100 text-stone-600',
 };
 
 const STATUS_DOT: Record<string, string> = {
@@ -47,7 +47,7 @@ const STATUS_DOT: Record<string, string> = {
   PENDING: 'bg-amber-500',
   IN_REVIEW: 'bg-amber-500',
   REJECTED: 'bg-red-500',
-  PAUSED: 'bg-gray-400',
+  PAUSED: 'bg-stone-400',
 };
 
 const TEST_STATUS_STYLES: Record<string, string> = {
@@ -128,8 +128,8 @@ function WhatsAppTemplateStatusPanel() {
           {ALL_TEMPLATES.map(name => {
             const template = data?.templates?.find(t => t.name === name);
             const status = template?.status || 'NOT_SUBMITTED';
-            const dotClass = STATUS_DOT[status] || 'bg-gray-300';
-            const badgeClass = STATUS_STYLES[status] || 'bg-gray-100 text-gray-600';
+            const dotClass = STATUS_DOT[status] || 'bg-stone-300';
+            const badgeClass = STATUS_STYLES[status] || 'bg-stone-100 text-stone-600';
             return (
               <div key={name} className="flex items-center justify-between py-2 border-b border-border-gray last:border-0">
                 <div>
@@ -654,7 +654,7 @@ export default function WhatsAppSettingsPage() {
                     {t('settings.providerLabel', 'Provider')}: {latestTestMessage.provider}
                   </p>
                 </div>
-                <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${TEST_STATUS_STYLES[latestTestMessage.status] || 'bg-gray-100 text-gray-600'}`}>
+                <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${TEST_STATUS_STYLES[latestTestMessage.status] || 'bg-stone-100 text-stone-600'}`}>
                   {formatStatusLabel(latestTestMessage.status, t)}
                 </span>
               </div>

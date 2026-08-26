@@ -24,7 +24,7 @@ const SEGMENTS = [
 ];
 
 const STATUS_BADGES: Record<string, { i18nKey: string; label: string; classes: string }> = {
-  pending: { i18nKey: 'campaigns.statusDraft', label: 'Draft', classes: 'bg-gray-100 text-gray-600' },
+  pending: { i18nKey: 'campaigns.statusDraft', label: 'Draft', classes: 'bg-stone-100 text-stone-600' },
   scheduled: { i18nKey: 'campaigns.statusScheduled', label: 'Scheduled', classes: 'bg-blue-50 text-blue-700' },
   active: { i18nKey: 'campaigns.statusSending', label: 'Sending', classes: 'bg-amber-50 text-amber-700' },
   sending: { i18nKey: 'campaigns.statusSending', label: 'Sending', classes: 'bg-amber-50 text-amber-700' },
@@ -83,7 +83,7 @@ export default function CampaignManager() {
 
       {/* Create Campaign Form */}
       {showCreate && (
-        <div className="bg-gray-50 rounded-xl p-4 mb-4 space-y-3">
+        <div className="bg-stone-50 rounded-xl p-4 mb-4 space-y-3">
           {/* Segment Picker */}
           <div>
             <label className="block text-xs font-medium text-muted-stone mb-1.5">{t('campaigns.targetAudience', 'Target Audience')}</label>
@@ -144,7 +144,7 @@ export default function CampaignManager() {
       {isLoading ? (
         <div className="space-y-2">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-16 bg-gray-50 rounded-lg animate-pulse" />
+            <div key={i} className="h-16 bg-stone-50 rounded-lg animate-pulse" />
           ))}
         </div>
       ) : !campaigns?.length ? (
@@ -210,7 +210,7 @@ function CampaignRow({
       <button
         type="button"
         onClick={onSelect}
-        className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 transition-colors text-left"
+        className="w-full flex items-center gap-3 p-3 hover:bg-stone-50 transition-colors text-left"
       >
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
@@ -235,7 +235,7 @@ function CampaignRow({
 
       {/* Expanded stats */}
       {isSelected && (
-        <div className="border-t border-glass-border-dark bg-gray-50 p-3">
+        <div className="border-t border-glass-border-dark bg-stone-50 p-3">
           {stats ? (
             <div className="grid grid-cols-4 gap-2 text-center">
               <Stat label={t('campaigns.sent', 'Sent')} value={stats.sent + stats.delivered + stats.read} />

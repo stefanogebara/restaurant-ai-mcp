@@ -26,7 +26,7 @@ function getPaymentBadge(status: string, t: (key: string, fallback: string) => s
       return { label: t('eventBookings.statusFailed', 'Failed'), color: 'bg-red-50 text-red-700' };
     case 'pending':
     default:
-      return { label: t('eventBookings.statusPending', 'Pending'), color: 'bg-gray-100 text-gray-600' };
+      return { label: t('eventBookings.statusPending', 'Pending'), color: 'bg-stone-100 text-stone-600' };
   }
 }
 
