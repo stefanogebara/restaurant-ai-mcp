@@ -1370,3 +1370,34 @@ fonte; o navegador só confirma o que eu consegui de fato acionar.
 Corolário sobre pluralidade: `querySelector` é singular. Usei um `querySelector('input')`
 para concluir "o formulário tem um campo só". Para afirmar quantidade, use
 `querySelectorAll` — a versão singular responde outra pergunta.
+
+## Afirmação sobre o produto se rastreia até o mecanismo, não até um proxy (25/ago)
+
+Quatro achados de uma auditoria de UI estavam errados. O padrão é único:
+inferi uma afirmação sobre o produto a partir de um substituto conveniente, em
+vez de ler o código que a implementa.
+
+  - `querySelector('input')` — SINGULAR — e concluí "o formulário tem um campo".
+    Tinha dois. Para afirmar quantidade existe `querySelectorAll`.
+  - Não consegui acionar a busca; nenhum ramo condicional renderizou; li a tela
+    vazia como "essa funcionalidade não existe". Duas vezes, no mesmo arquivo.
+  - Contei arquivos em `i18n/locales/` (três) e concluí que a promessa de "6+
+    idiomas" era mentira. Mas a frase é sobre o AGENTE DE VOZ falar idiomas —
+    LLM + ElevenLabs — não sobre a UI estar traduzida. O banco mostrava
+    `agent_language` em pt, en, it e es, com italiano em produção.
+
+A linha divisória saiu nítida e vale como regra geral: **o que veio de `grep`
+no código-fonte se sustentou; o que dependeu de eu dirigir a interface, ou de
+um proxy para o mecanismo, estava errado.**
+
+Regra: antes de afirmar que o produto faz ou não faz X, ache a LINHA que decide
+X. Para "quantos idiomas o agente fala", isso não é a pasta de traduções — é a
+config do agente. Para "o formulário tem N campos", é o componente. O proxy é
+tentador porque é rápido de medir; ele responde uma pergunta parecida, não a
+pergunta.
+
+Segundo cuidado, do mesmo dia e da mesma família: ao escrever um guarda
+automático, verifique se ele não acusa o comportamento CERTO. Minha primeira
+regra de "cor fria" incluía `emerald`, que o DESIGN.md sanciona explicitamente
+como cor de estado — 176 dos 428 achados eram falsos. Guarda que acusa a cor
+certa ensina todo mundo a ignorar o guarda, e aí ele não protege mais nada.
