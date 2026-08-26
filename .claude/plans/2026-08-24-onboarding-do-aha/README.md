@@ -309,9 +309,14 @@ concatenava o texto do usuário dentro do system prompt (#75).
 
 ### G5 — plano de fatias (revisado)
 
-- [ ] 5.2 UI: EXTRAIR o shell de chat do `ManagerAIChatPage` para componente
-      compartilhado e montar em `/onboarding-chat`. Não construir do zero —
-      cards de fase, mermaid, charts e o parser de SSE já existem.
+- [x] 5.2a Parser de SSE extraído para `lib/sseStream` com 15 testes (#83).
+      Remontagem de frame partido entre chunks e `stream:true` no decoder eram
+      as duas partes sutis, e nenhuma tinha teste.
+- [~] 5.2 **REORIENTADA pelo Stefano (25/ago): "não acho que esse chat do jeito
+      que está esteja bom — o usuário não vai ter saco de ficar escrevendo tudo
+      sobre o tom de voz".** O onboarding não vira chat: vira FOLHA ÚNICA de
+      confirmação (#89, #92). O dono confere o que a pesquisa achou; digitar é
+      exceção. O chat continua fazendo sentido para o DEMO, não para o cadastro.
 - [x] 5.3a **Loop de agente (#78).** `_lib/agent-loop.js`, 15 testes, sem
       rede. TODOS os blocos `tool_use` (a API exige um `tool_result` por
       `tool_use` — mandar só o primeiro é HTTP 400); erro de tool vira
@@ -335,8 +340,23 @@ concatenava o texto do usuário dentro do system prompt (#75).
       real é linha separada, então filtrar assim vazaria demos convertidos
       para sempre. O header do arquivo dizia "have NOT been converted" e
       estava errado desde sempre.
-- [ ] 5.4 Wizard atual vira fallback (link "prefiro formulário"), não morre no
-      primeiro dia.
+- [x] 5.4 Wizard vira alternativa (#92) — "prefiro preencher o formulário
+      completo". Rascunho em andamento (`step > 1`) reabre o wizard ONDE a
+      pessoa parou: trocar o fluxo padrão não pode custar o trabalho de quem
+      já estava no meio do antigo.
+- [x] 5.8 **A entrevista deixa de ser necessária (#87, #91, #92).** O
+      `restaurant_profile` alimenta Manager AI + agente de voz + memória, e por
+      isso as 12 perguntas não podiam sair sem substituto. O `scraped_data` do
+      demo responde 6 das 8 seções; a 7ª (a voz) virou um toque em 4 cartões
+      que respondem à mesma fala de cliente. Determinístico, sem LLM.
+      Ciclo quebrado: `research.js` tinha desligado o gather de inteligência
+      justificando que "as 12 perguntas não precisam de contexto pré-coletado".
+      A pesquisa foi desligada porque a entrevista a ignorava.
+- [ ] 5.9 Desligar o `Step6TeachAI` do caminho padrão — agora é seguro, a fonte
+      substituta existe. Recolher os 3 tópicos que sobrevivem como confirmações
+      e mover os 4 que não pertencem ao dia 1 (filosofia de operação, cultura
+      de time, metas, expectativas) para o Manager AI aprender no uso.
+- [ ] 5.10 A folha ainda não cobre MESAS — quem precisa de áreas cai no wizard.
 - [ ] 5.5 Diagramas/imagens na conversa: planta das mesas proposta (o
       FloorPlanView do #50 dá a peça pronta para "montei assim suas mesas —
       confirma?"), foto do Places, preview do link de reservas.
