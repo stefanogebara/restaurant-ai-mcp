@@ -87,6 +87,10 @@ function derivePersonalityFromScrape(scrapedData) {
 
 module.exports = {
   PERSONA_PRESETS,
+  // Exportado para o `persona-proposta` poder dizer QUAIS tags pesaram na
+  // sugestão. Sem isto ele explicaria a escolha por dedução própria, e
+  // explicação deduzida é explicação inventada.
+  TAG_WEIGHTS,
   deriveBestPresetFromVibes,
   derivePersonalityFromScrape,
 };
