@@ -1425,6 +1425,9 @@ async function markLeadWon(leadId) {
 }
 
 module.exports = {
+  // Exportadas para que a caça ao celular (prospect-celular.js) mire EXATAMENTE
+  // a mesma faixa que o disparo — fonte única, senão as duas divergem em silêncio.
+  QUALIDADE_MIN_AVALIACOES, QUALIDADE_MAX_AVALIACOES, QUALIDADE_MIN_NOTA,
   isOptedOut,
   findLeadByPhone,
   selectFounderHandoffQueue,

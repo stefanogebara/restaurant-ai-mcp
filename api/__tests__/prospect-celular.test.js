@@ -190,14 +190,19 @@ describe('cacarCelularPendentes — sem_html não é sem_numero', () => {
       not: jest.fn().mockReturnThis(),
       or: jest.fn().mockReturnThis(),
       order: jest.fn().mockReturnThis(),
+      gte: jest.fn().mockReturnThis(),
+      lte: jest.fn().mockReturnThis(),
       limit: jest.fn().mockResolvedValue({ data: leads, error: null }),
       update: jest.fn().mockReturnValue({ eq: jest.fn().mockResolvedValue({ error: null }) }),
     };
     mockSupabaseAdmin.from.mockReturnValue(chain);
   }
 
+  // Dentro da faixa de qualidade e com nome de casa de mesa, senão a mira nova
+  // (correta) derruba o lead antes de chegar ao balde que este teste mede.
   const fixo = (i) => ({
-    id: `l${i}`, name: `Casa ${i}`, website: `https://casa${i}.com.br`,
+    id: `l${i}`, name: `Cantina ${i}`, website: `https://casa${i}.com.br`,
+    reviews_count: 300, rating: 4.6,
     whatsapp_phone: '+551133334444', enrich_status: {},
   });
 
@@ -223,5 +228,93 @@ describe('cacarCelularPendentes — sem_html não é sem_numero', () => {
     const r = await cacarCelularPendentes({ lerPagina });
 
     expect(r).toEqual({ processados: 1, achados: 1, sem_numero: 0, sem_html: 0, falhas: 0 });
+  });
+});
+
+/**
+ * A MIRA — o defeito que a primeira rodada revelou, 26/08/2026.
+ *
+ * A rodada das 15:20 e 16:20 gastou TODAS as raspagens em: Shopping Iguatemi,
+ * Morumbi Shopping, Center Norte, Shopping Metrô Itaquera, Shopping Campo
+ * Limpo, Coco Bambu, Mercado Municipal, CTN.
+ *
+ * Nenhum deles receberia intro: o disparo exige reviews_count entre 120 e 5000
+ * e passa pelo filtro de ICP. Shopping tem dezenas de milhares de avaliações,
+ * então a ordenação `reviews_count DESC` o punha no topo e ele tomava todas as
+ * vagas — para sempre, porque o cooldown é de 7 dias e a fila é grande.
+ *
+ * O zero daquela rodada não mediu a tática: mediu a arma apontada para o lado
+ * errado. Gastar raspagem paga em quem nunca será alvo é pior que não raspar,
+ * porque produz um número que PARECE veredito.
+ *
+ * Este teste falha na versão anterior: sem a faixa de qualidade e sem foraDoIcp,
+ * o shopping entra na fila.
+ */
+describe('selecionarSemCelular — mira igual à do disparo', () => {
+  const { selecionarSemCelular } = require('../_lib/prospecting/prospect-celular');
+
+  /** Fila fake que APLICA os filtros de faixa, como o PostgREST faria. */
+  function bancoCom(leads) {
+    const estado = { min: null, max: null, nota: null };
+    const chain = {
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      is: jest.fn().mockReturnThis(),
+      not: jest.fn().mockReturnThis(),
+      or: jest.fn().mockReturnThis(),
+      order: jest.fn().mockReturnThis(),
+      gte: jest.fn((col, v) => { if (col === 'reviews_count') estado.min = v; else estado.nota = v; return chain; }),
+      lte: jest.fn((col, v) => { estado.max = v; return chain; }),
+      limit: jest.fn().mockImplementation(() => Promise.resolve({
+        data: leads.filter((l) => (estado.min === null || l.reviews_count >= estado.min)
+          && (estado.max === null || l.reviews_count <= estado.max)
+          && (estado.nota === null || l.rating >= estado.nota)),
+        error: null,
+      })),
+    };
+    mockSupabaseAdmin.from.mockReturnValue(chain);
+    return estado;
+  }
+
+  const casa = (name, reviews, rating = 4.6) => ({
+    id: name, name, website: `https://x.com/${name}`, reviews_count: reviews, rating,
+    whatsapp_phone: '+551133334444', enrich_status: {},
+  });
+
+  it('não gasta raspagem em shopping — fora da faixa de avaliações', async () => {
+    bancoCom([
+      casa('Shopping Iguatemi', 87000),
+      casa('Morumbi Shopping', 62000),
+      casa('Cantina do Zé', 340),
+    ]);
+
+    const fila = await selecionarSemCelular(8);
+    const nomes = fila.map((l) => l.name);
+
+    expect(nomes).toEqual(['Cantina do Zé']);
+  });
+
+  it('aplica o filtro de ICP — mercado e hortifruti na faixa também ficam fora', async () => {
+    bancoCom([
+      casa('Ayumi Supermercados', 584),
+      casa('Nordeste Hortifruti', 572),
+      casa('Panobianco Academia', 400),
+      casa('Bar do Juca', 300),
+    ]);
+
+    const fila = await selecionarSemCelular(8);
+
+    expect(fila.map((l) => l.name)).toEqual(['Bar do Juca']);
+  });
+
+  it('a faixa vem do mesmo lugar que o disparo usa', async () => {
+    const estado = bancoCom([]);
+    await selecionarSemCelular(8);
+    const store = require('../_lib/prospecting/prospect-store');
+
+    // Fonte única: se alguém mudar o piso no store, a caça acompanha sozinha.
+    expect(estado.min).toBe(store.QUALIDADE_MIN_AVALIACOES);
+    expect(estado.max).toBe(store.QUALIDADE_MAX_AVALIACOES);
+    expect(estado.nota).toBe(store.QUALIDADE_MIN_NOTA);
   });
 });

@@ -30,6 +30,10 @@
 const { supabaseAdmin } = require('../supabase');
 const { createSecureLogger } = require('../secure-logger');
 const { extrairCelularDoSite, extrairDddBr } = require('./prospect-extract');
+const { foraDoIcp } = require('./lead-qualifica');
+const {
+  QUALIDADE_MIN_AVALIACOES, QUALIDADE_MAX_AVALIACOES, QUALIDADE_MIN_NOTA,
+} = require('./prospect-store');
 
 const logger = createSecureLogger('ProspectCelular');
 
@@ -57,26 +61,46 @@ function jaTemCelular(lead) {
  */
 async function selecionarSemCelular(limit = LIMITE_PADRAO) {
   const corte = new Date(Date.now() - COOLDOWN_MS).toISOString();
+  const pedido = Math.min(Math.max(parseInt(limit, 10) || LIMITE_PADRAO, 1), 25);
   const { data, error } = await supabaseAdmin
     .from('prospect_leads')
-    .select('id, name, website, whatsapp_phone, whatsapp_status, address, city, enrich_status')
+    .select('id, name, website, whatsapp_phone, whatsapp_status, address, city, reviews_count, enrich_status')
     .eq('prospect_state', 'aguardando')
     .is('whatsapp_sent_at', null)
     .not('website', 'is', null)
+    // MESMA FAIXA DE QUALIDADE DO DISPARO. Sem isto a caça mira quem nunca
+    // será alvo — ver o comentário sobre a primeira rodada, logo abaixo.
+    .gte('reviews_count', QUALIDADE_MIN_AVALIACOES)
+    .lte('reviews_count', QUALIDADE_MAX_AVALIACOES)
+    .gte('rating', QUALIDADE_MIN_NOTA)
     // Nunca tentado, ou tentado há mais de 7 dias.
     .or(`enrich_status->>site_wa_at.is.null,enrich_status->>site_wa_at.lt.${corte}`)
-    // Maior primeiro: a vaga escassa vai para a casa com mais movimento.
+    // Maior primeiro DENTRO da faixa: a vaga escassa vai para a casa com mais
+    // movimento entre as elegíveis.
     .order('reviews_count', { ascending: false, nullsFirst: false })
-    .limit(Math.min(Math.max(parseInt(limit, 10) || LIMITE_PADRAO, 1), 25));
+    // Lê com folga porque o filtro de ICP abaixo ainda derruba parte do lote.
+    .limit(pedido * 4);
 
   if (error) {
     logger.error('selecionarSemCelular falhou:', error.message);
     return [];
   }
-  // O filtro de "já tem celular" fica em JS: a máscara PostgREST para isso é
-  // frágil (dois formatos gravados, com e sem '+') e um erro nela silenciosamente
-  // esvazia a fila. Ler 8 linhas a mais é barato; fila vazia em silêncio não é.
-  return (data || []).filter((l) => !jaTemCelular(l));
+  // Os dois filtros que faltavam, em JS porque `foraDoIcp` é regex sobre nome.
+  //
+  // A PRIMEIRA RODADA EM PRODUÇÃO (26/08, 0 de 6) NÃO MEDIU A TÁTICA: mediu
+  // uma fila apontada para o lado errado. Sem a faixa de qualidade acima, a
+  // ordenação `reviews_count DESC` entregou exatamente o topo absoluto da base
+  // — Shopping Iguatemi, Morumbi Shopping, Center Norte, Coco Bambu, Mercado
+  // Municipal. Shopping tem dezenas de milhares de avaliações, então ganha de
+  // todo restaurante e ocupa todas as vagas; e NENHUM deles receberia intro,
+  // porque o disparo exige a faixa 120–5000 e o filtro de ICP.
+  //
+  // Gastar raspagem paga em quem nunca será alvo é pior que não raspar: além
+  // do custo, produz um zero que parece veredito sobre a abordagem.
+  return (data || [])
+    .filter((l) => !jaTemCelular(l))
+    .filter((l) => !foraDoIcp(l.name))
+    .slice(0, pedido);
 }
 
 /**
