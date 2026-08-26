@@ -1,0 +1,432 @@
+{
+  "components/auth/LoginBrandPanel.tsx": {
+    "serifComPeso": 3
+  },
+  "components/call-tracking/CallConversationList.tsx": {
+    "cinzaFrio": 1,
+    "classeFria": 2
+  },
+  "components/call-tracking/CallConversationModal.tsx": {
+    "classeFria": 3
+  },
+  "components/call-tracking/CallPhoneStatusCard.tsx": {
+    "cinzaFrio": 1
+  },
+  "components/call-tracking/callTrackingTypes.ts": {
+    "classeFria": 6
+  },
+  "components/campaigns/CampaignAutomationsPanel.tsx": {
+    "classeFria": 3
+  },
+  "components/campaigns/CampaignDetail.tsx": {
+    "cinzaFrio": 1,
+    "classeFria": 2
+  },
+  "components/campaigns/CampaignList.tsx": {
+    "cinzaFrio": 1,
+    "classeFria": 4
+  },
+  "components/common/MetricCard.tsx": {
+    "classeFria": 5
+  },
+  "components/common/SettingsTabs.tsx": {
+    "cinzaFrio": 1
+  },
+  "components/common/StatusLegend.tsx": {
+    "classeFria": 3
+  },
+  "components/dashboard/ActivePartiesPanel.tsx": {
+    "cinzaFrio": 1
+  },
+  "components/dashboard/AiPersonalityPanel.tsx": {
+    "classeFria": 9
+  },
+  "components/dashboard/APIKeysPanel.tsx": {
+    "cinzaFrio": 1
+  },
+  "components/dashboard/BookingChannelsPanel.tsx": {
+    "cinzaFrio": 2
+  },
+  "components/dashboard/CampaignManager.tsx": {
+    "classeFria": 8
+  },
+  "components/dashboard/ChipSelector.tsx": {
+    "cinzaFrio": 1
+  },
+  "components/dashboard/DepositBadge.tsx": {
+    "classeFria": 2
+  },
+  "components/dashboard/DepositSuggestChip.tsx": {
+    "emojiComoIcone": 2
+  },
+  "components/dashboard/EmbedSnippetPanel.tsx": {
+    "cinzaFrio": 1
+  },
+  "components/dashboard/FeedbackSettingsPanel.tsx": {
+    "classeFria": 3
+  },
+  "components/dashboard/FeedbackWidget.tsx": {
+    "cinzaFrio": 2,
+    "classeFria": 4
+  },
+  "components/dashboard/InstagramCaptionDrafter.tsx": {
+    "emojiComoIcone": 2
+  },
+  "components/dashboard/InstagramGenSpendPill.tsx": {
+    "emojiComoIcone": 1
+  },
+  "components/dashboard/InstagramReelPanel.tsx": {
+    "emojiComoIcone": 1
+  },
+  "components/dashboard/ManagerAIUsageBar.tsx": {
+    "classeFria": 5
+  },
+  "components/dashboard/ManagerNotesPanel.tsx": {
+    "cinzaFrio": 4,
+    "classeFria": 2
+  },
+  "components/dashboard/POSIntegrationPanel.tsx": {
+    "cinzaFrio": 2
+  },
+  "components/dashboard/ReservationsList.tsx": {
+    "classeFria": 6,
+    "emojiComoIcone": 2
+  },
+  "components/dashboard/RevenueByPartySizeWidget.tsx": {
+    "cinzaFrio": 1,
+    "classeFria": 3
+  },
+  "components/dashboard/RevenueStatsWidget.tsx": {
+    "cinzaFrio": 1,
+    "classeFria": 2
+  },
+  "components/dashboard/StaffingForecastWidget.tsx": {
+    "cinzaFrio": 1,
+    "classeFria": 2
+  },
+  "components/dashboard/StaffingSettingsPanel.tsx": {
+    "classeFria": 2
+  },
+  "components/dashboard/StripeConnectPanel.tsx": {
+    "cinzaFrio": 1
+  },
+  "components/dashboard/SurveySettingsPanel.tsx": {
+    "cinzaFrio": 1,
+    "classeFria": 3
+  },
+  "components/dashboard/TableLayoutPanel.tsx": {
+    "classeFria": 6
+  },
+  "components/dashboard/VoicePersonaPanel.tsx": {
+    "classeFria": 5
+  },
+  "components/dashboard/WebhooksPanel.tsx": {
+    "cinzaFrio": 1
+  },
+  "components/dashboard/WeeklyBusiestTimesChart.tsx": {
+    "cinzaFrio": 1
+  },
+  "components/dashboard/WeeklyDemographicsPanel.tsx": {
+    "cinzaFrio": 2
+  },
+  "components/dashboard/WeeklyPreferencesPanel.tsx": {
+    "cinzaFrio": 1
+  },
+  "components/dashboard/WeeklyReportSummaryCards.tsx": {
+    "cinzaFrio": 1,
+    "classeFria": 2
+  },
+  "components/demo/AIKnowsCard.tsx": {
+    "emojiComoIcone": 1
+  },
+  "components/demo/DemoAnalyticsPanel.tsx": {
+    "cinzaFrio": 1,
+    "serifComPeso": 1
+  },
+  "components/demo/DemoSidebar.tsx": {
+    "serifComPeso": 2
+  },
+  "components/demo/DemoVoiceAgent.tsx": {
+    "serifComPeso": 1
+  },
+  "components/demo/DemoWhatsAppSim.tsx": {
+    "cinzaFrio": 1
+  },
+  "components/demo/TestarNoMeuWhatsApp.tsx": {
+    "cinzaFrio": 1
+  },
+  "components/events/EventBookingsPanel.tsx": {
+    "classeFria": 2
+  },
+  "components/host/AddToWaitlistModal.tsx": {
+    "classeFria": 4
+  },
+  "components/host/CustomerAIInsights.tsx": {
+    "classeFria": 2,
+    "serifComPeso": 1
+  },
+  "components/host/CustomerBehavioralProfile.tsx": {
+    "serifComPeso": 1
+  },
+  "components/host/CustomerDNADashboard.tsx": {
+    "classeFria": 4,
+    "serifComPeso": 4
+  },
+  "components/host/CustomerPredictions.tsx": {
+    "serifComPeso": 1
+  },
+  "components/host/CustomerProfileHeader.tsx": {
+    "classeFria": 3,
+    "serifComPeso": 1
+  },
+  "components/host/customerProfileHelpers.ts": {
+    "classeFria": 5
+  },
+  "components/host/CustomerRevenueSummary.tsx": {
+    "classeFria": 1,
+    "serifComPeso": 1
+  },
+  "components/host/CustomerVisitHistory.tsx": {
+    "serifComPeso": 1
+  },
+  "components/host/DashboardStats.tsx": {
+    "classeFria": 2
+  },
+  "components/host/DNACustomerList.tsx": {
+    "classeFria": 6,
+    "serifComPeso": 1
+  },
+  "components/host/dnaHelpers.ts": {
+    "classeFria": 4
+  },
+  "components/host/DNAStatsBreakdown.tsx": {
+    "classeFria": 4,
+    "serifComPeso": 4
+  },
+  "components/host/ltvHelpers.tsx": {
+    "classeFria": 3
+  },
+  "components/host/LTVKeyMetrics.tsx": {
+    "classeFria": 2
+  },
+  "components/host/LTVTierBreakdown.tsx": {
+    "classeFria": 1
+  },
+  "components/host/LTVTopVIPs.tsx": {
+    "classeFria": 5
+  },
+  "components/host/MLROIWidget.tsx": {
+    "classeFria": 3
+  },
+  "components/host/QuickInterventionModal.tsx": {
+    "classeFria": 2
+  },
+  "components/host/QuickStats.tsx": {
+    "classeFria": 1
+  },
+  "components/host/QuickStatsWidget.tsx": {
+    "classeFria": 4
+  },
+  "components/host/ReservationNotesEditor.tsx": {
+    "classeFria": 8
+  },
+  "components/host/ReservationsCalendar.tsx": {
+    "classeFria": 3
+  },
+  "components/host/ReservationsCalendarGrid.tsx": {
+    "classeFria": 3
+  },
+  "components/host/TableActionMenu.tsx": {
+    "classeFria": 1
+  },
+  "components/host/TableGrid.tsx": {
+    "cinzaFrio": 1
+  },
+  "components/host/TableRenderer.tsx": {
+    "emojiComoIcone": 1
+  },
+  "components/host/WaitlistEntryCard.tsx": {
+    "classeFria": 2
+  },
+  "components/insights/WeeklyForecastCard.tsx": {
+    "classeFria": 6
+  },
+  "components/layout/Sidebar.tsx": {
+    "serifComPeso": 2,
+    "emojiComoIcone": 1
+  },
+  "components/prospecting/DiscoveryPanel.tsx": {
+    "classeFria": 4
+  },
+  "components/prospecting/GymPanel.tsx": {
+    "classeFria": 2
+  },
+  "components/prospecting/MotorStrip.tsx": {
+    "classeFria": 5,
+    "emojiComoIcone": 1
+  },
+  "components/prospecting/ThreadView.tsx": {
+    "classeFria": 7
+  },
+  "components/prospecting/types.ts": {
+    "classeFria": 8
+  },
+  "components/seo/RelatedPages.tsx": {
+    "serifComPeso": 1
+  },
+  "components/seo/SeoCta.tsx": {
+    "serifComPeso": 1
+  },
+  "components/seo/SeoFaq.tsx": {
+    "serifComPeso": 1
+  },
+  "components/seo/SeoFooter.tsx": {
+    "serifComPeso": 1
+  },
+  "components/seo/SeoHero.tsx": {
+    "serifComPeso": 1
+  },
+  "components/seo/SeoNav.tsx": {
+    "serifComPeso": 1
+  },
+  "components/seo/SeoPainPoints.tsx": {
+    "serifComPeso": 1
+  },
+  "components/seo/SeoPricing.tsx": {
+    "serifComPeso": 2
+  },
+  "components/seo/SeoSolution.tsx": {
+    "serifComPeso": 1
+  },
+  "components/seo/SeoStats.tsx": {
+    "serifComPeso": 1
+  },
+  "components/settings/DepositSettingsPanel.tsx": {
+    "cinzaFrio": 2
+  },
+  "components/Toast.tsx": {
+    "classeFria": 4
+  },
+  "components/UpgradePrompt.tsx": {
+    "emojiComoIcone": 5
+  },
+  "components/voice/PhoneIntegrationPanel.tsx": {
+    "classeFria": 3,
+    "emojiComoIcone": 1
+  },
+  "components/voice/VoiceEngineSelector.tsx": {
+    "emojiComoIcone": 2
+  },
+  "components/voice/VoiceExperimentPanel.tsx": {
+    "classeFria": 12
+  },
+  "landing/components/DemoSlideIn.tsx": {
+    "serifComPeso": 1
+  },
+  "landing/components/Footer.tsx": {
+    "serifComPeso": 1
+  },
+  "landing/components/InlineDemoSection.tsx": {
+    "cinzaFrio": 1
+  },
+  "landing/components/LandingNav.tsx": {
+    "serifComPeso": 1
+  },
+  "landing/components/PresetDemoSection.tsx": {
+    "serifComPeso": 1
+  },
+  "landing/components/VideoShowcaseSection.tsx": {
+    "classeFria": 5
+  },
+  "landing/components/VoiceWidgetSection.tsx": {
+    "serifComPeso": 1
+  },
+  "landing/data/demoData.ts": {
+    "classeFria": 7
+  },
+  "landing/pages/LandingPage.tsx": {
+    "emojiComoIcone": 3
+  },
+  "landing/pages/PricingPage.tsx": {
+    "emojiComoIcone": 3
+  },
+  "pages/BookingConfirmation.tsx": {
+    "serifComPeso": 2
+  },
+  "pages/BookingPage.tsx": {
+    "serifComPeso": 1
+  },
+  "pages/CallTrackingDashboard.tsx": {
+    "cinzaFrio": 5
+  },
+  "pages/CampaignsPage.tsx": {
+    "classeFria": 1
+  },
+  "pages/CouponsPage.tsx": {
+    "cinzaFrio": 1,
+    "classeFria": 4
+  },
+  "pages/CustomerPortal.tsx": {
+    "serifComPeso": 2
+  },
+  "pages/DemoConversation.tsx": {
+    "serifComPeso": 1
+  },
+  "pages/DemoDashboard.tsx": {
+    "serifComPeso": 3
+  },
+  "pages/EventBookingPage.tsx": {
+    "cinzaFrio": 5
+  },
+  "pages/EventsPage.tsx": {
+    "cinzaFrio": 1,
+    "classeFria": 2
+  },
+  "pages/insights/OverviewTab.tsx": {
+    "cinzaFrio": 2
+  },
+  "pages/IntegrationsPage.tsx": {
+    "cinzaFrio": 3
+  },
+  "pages/LiveAIDemo.tsx": {
+    "serifComPeso": 1
+  },
+  "pages/Login.tsx": {
+    "serifComPeso": 3
+  },
+  "pages/NotFound.tsx": {
+    "serifComPeso": 1
+  },
+  "pages/OlimpiaOps.tsx": {
+    "emojiComoIcone": 1
+  },
+  "pages/Onboarding.tsx": {
+    "serifComPeso": 1
+  },
+  "pages/PrivacyPolicy.tsx": {
+    "serifComPeso": 1
+  },
+  "pages/RestaurantSettingsPage.tsx": {
+    "classeFria": 3
+  },
+  "pages/SubscriptionManage.tsx": {
+    "cinzaFrio": 1,
+    "classeFria": 2,
+    "serifComPeso": 3,
+    "emojiComoIcone": 1
+  },
+  "pages/SubscriptionSuccess.tsx": {
+    "serifComPeso": 2
+  },
+  "pages/TeamPage.tsx": {
+    "cinzaFrio": 4,
+    "classeFria": 2
+  },
+  "pages/TermsOfService.tsx": {
+    "serifComPeso": 1
+  },
+  "pages/WhatsAppSettingsPage.tsx": {
+    "cinzaFrio": 1,
+    "classeFria": 8
+  }
+}

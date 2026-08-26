@@ -241,7 +241,7 @@ export default function RestaurantSettingsPage() {
       <DashboardLayout>
         <div className="p-6 sm:p-10 max-w-3xl mx-auto space-y-6 mt-14 sm:mt-0">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="py-5 border-b border-[#E5E7EB] animate-pulse space-y-3">
+            <div key={i} className="py-5 border-b border-[#E7E5E4] animate-pulse space-y-3">
               <div className="h-5 bg-gray-100 rounded w-40" />
               <div className="h-10 bg-gray-100 rounded" />
               <div className="h-10 bg-gray-100 rounded" />
@@ -282,7 +282,7 @@ export default function RestaurantSettingsPage() {
         </div>
 
         {/* ── Basic Info ── */}
-        <section className="py-5 border-b border-[#E5E7EB] space-y-4">
+        <section className="py-5 border-b border-[#E7E5E4] space-y-4">
           <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone flex items-center gap-2">
             <ThiingsIcon name="store" pxSize={16} className="text-muted-stone" />
             {t('settings.restaurantInfo', 'Restaurant Info')}
@@ -303,13 +303,13 @@ export default function RestaurantSettingsPage() {
 
           {/* Booking-page cover photo — self-contained panel that saves
               immediately on upload/remove (no Save button dependency). */}
-          <div className="pt-4 border-t border-[#F3F4F6]">
+          <div className="pt-4 border-t border-[#F5F5F4]">
             <CoverPhotoPanel coverImageUrl={settings?.cover_image_url} />
           </div>
         </section>
 
         {/* ── Business Hours ── */}
-        <section className="py-5 border-b border-[#E5E7EB] space-y-4">
+        <section className="py-5 border-b border-[#E7E5E4] space-y-4">
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone flex items-center gap-2">
               <ThiingsIcon name="clock" pxSize={16} className="text-muted-stone" />
@@ -331,7 +331,7 @@ export default function RestaurantSettingsPage() {
             {DAYS.map((day) => {
               const dayHours = hours[day] || { is_open: false, open_time: '12:00', close_time: '23:00' };
               return (
-                <div key={day} className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3 py-2 border-b border-[#F3F4F6] sm:border-b-0 last:border-b-0">
+                <div key={day} className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3 py-2 border-b border-[#F5F5F4] sm:border-b-0 last:border-b-0">
                   <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
                     <label className="w-16 sm:w-20 text-sm font-medium text-deep-charcoal flex-shrink-0">
                       {dayLabels[day]}
@@ -377,7 +377,7 @@ export default function RestaurantSettingsPage() {
         </section>
 
         {/* ── Reservation Policies ── */}
-        <section className="py-5 border-b border-[#E5E7EB] space-y-4">
+        <section className="py-5 border-b border-[#E7E5E4] space-y-4">
           <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone flex items-center gap-2">
             <ThiingsIcon name="settings" pxSize={16} className="text-muted-stone" />
             {t('settings.reservationPolicies', 'Reservation Policies')}
@@ -496,12 +496,12 @@ export default function RestaurantSettingsPage() {
         </section>
 
         {/* ── Staffing Ratios ── */}
-        <section className="py-5 border-b border-[#E5E7EB]">
+        <section className="py-5 border-b border-[#E7E5E4]">
           <StaffingSettingsPanel />
         </section>
 
         {/* ── Reservation Deposits ── */}
-        <section className="py-5 border-b border-[#E5E7EB]">
+        <section className="py-5 border-b border-[#E7E5E4]">
           <DepositSettingsPanel />
         </section>
 

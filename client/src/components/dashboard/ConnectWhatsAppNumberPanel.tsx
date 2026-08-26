@@ -67,13 +67,13 @@ export default function ConnectWhatsAppNumberPanel() {
   const confirmar = () => acao.mutate({ action: 'confirmar', codigo });
 
   return (
-    <div className="bg-white rounded-xl border border-[#E5E7EB] p-5 mb-4">
+    <div className="bg-white rounded-xl border border-[#E7E5E4] p-5 mb-4">
       <div className="flex items-start justify-between gap-3 mb-1">
         <div>
-          <h3 className="text-sm font-semibold text-[#111827]">
+          <h3 className="text-sm font-semibold text-[#1C1917]">
             {t('whatsappProvision.title', 'Connect your WhatsApp number')}
           </h3>
-          <p className="text-xs text-[#6B7280] mt-1">
+          <p className="text-xs text-[#78716C] mt-1">
             {t('whatsappProvision.subtitle', 'Your AI answers on a number you own. Meta sends a verification code to that number — by SMS or phone call (use the call for a landline).')}
           </p>
         </div>
@@ -86,7 +86,7 @@ export default function ConnectWhatsAppNumberPanel() {
       </div>
 
       {isLoading && (
-        <p className="text-xs text-[#9CA3AF] mt-3">{t('common.loading', 'Loading...')}</p>
+        <p className="text-xs text-[#A8A29E] mt-3">{t('common.loading', 'Loading...')}</p>
       )}
 
       {/* Falha de leitura é honesta — sem esconder atrás de formulário vazio */}
@@ -103,29 +103,29 @@ export default function ConnectWhatsAppNumberPanel() {
           )}
           <div className="flex gap-2">
             <div className="w-20">
-              <label className="block text-[11px] text-[#6B7280] mb-1">{t('whatsappProvision.cc', 'Country')}</label>
-              <div className="flex items-center gap-1 border border-[#E5E7EB] rounded-lg px-2 py-2 text-sm">
-                <span className="text-[#9CA3AF]">+</span>
+              <label className="block text-[11px] text-[#78716C] mb-1">{t('whatsappProvision.cc', 'Country')}</label>
+              <div className="flex items-center gap-1 border border-[#E7E5E4] rounded-lg px-2 py-2 text-sm">
+                <span className="text-[#A8A29E]">+</span>
                 <input
                   value={cc}
                   onChange={(e) => setCc(e.target.value.replace(/\D/g, '').slice(0, 3))}
-                  className="w-full outline-none text-[#111827]"
+                  className="w-full outline-none text-[#1C1917]"
                   aria-label={t('whatsappProvision.cc', 'Country')}
                 />
               </div>
             </div>
             <div className="flex-1">
-              <label className="block text-[11px] text-[#6B7280] mb-1">{t('whatsappProvision.number', 'Number (area code + number)')}</label>
+              <label className="block text-[11px] text-[#78716C] mb-1">{t('whatsappProvision.number', 'Number (area code + number)')}</label>
               <input
                 value={numero}
                 onChange={(e) => setNumero(e.target.value)}
                 placeholder="11 3456-7890"
-                className="w-full border border-[#E5E7EB] rounded-lg px-3 py-2 text-sm outline-none focus:border-[#111827]/30 text-[#111827]"
+                className="w-full border border-[#E7E5E4] rounded-lg px-3 py-2 text-sm outline-none focus:border-[#1C1917]/30 text-[#1C1917]"
               />
             </div>
           </div>
           <div>
-            <span className="block text-[11px] text-[#6B7280] mb-1.5">{t('whatsappProvision.method', 'Where should Meta send the code?')}</span>
+            <span className="block text-[11px] text-[#78716C] mb-1.5">{t('whatsappProvision.method', 'Where should Meta send the code?')}</span>
             <div className="flex gap-2">
               {(['sms', 'voice'] as const).map((m) => (
                 <button
@@ -134,8 +134,8 @@ export default function ConnectWhatsAppNumberPanel() {
                   onClick={() => setMetodo(m)}
                   className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                     metodo === m
-                      ? 'bg-[#111827] text-white border-[#111827]'
-                      : 'bg-white text-[#374151] border-[#E5E7EB] hover:border-[#9CA3AF]'
+                      ? 'bg-[#1C1917] text-white border-[#1C1917]'
+                      : 'bg-white text-[#44403C] border-[#E7E5E4] hover:border-[#A8A29E]'
                   }`}
                 >
                   {m === 'sms'
@@ -149,7 +149,7 @@ export default function ConnectWhatsAppNumberPanel() {
             type="button"
             onClick={iniciar}
             disabled={acao.isPending || numero.replace(/\D/g, '').length < 8}
-            className="w-full bg-[#111827] text-white rounded-lg py-2.5 text-sm font-medium disabled:opacity-40 transition-opacity"
+            className="w-full bg-[#1C1917] text-white rounded-lg py-2.5 text-sm font-medium disabled:opacity-40 transition-opacity"
           >
             {acao.isPending
               ? t('whatsappProvision.sending', 'Requesting code...')
@@ -160,7 +160,7 @@ export default function ConnectWhatsAppNumberPanel() {
 
       {!isLoading && estado?.estado === 'aguardando_codigo' && (
         <div className="mt-4 space-y-3">
-          <p className="text-xs text-[#374151] bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg px-3 py-2">
+          <p className="text-xs text-[#44403C] bg-[#FAFAF9] border border-[#E7E5E4] rounded-lg px-3 py-2">
             {t('whatsappProvision.codeSentTo', 'Meta sent a code to')}{' '}
             <span className="font-semibold">{estado.numero_e164}</span>
             {estado.metodo === 'VOICE'
@@ -173,14 +173,14 @@ export default function ConnectWhatsAppNumberPanel() {
               onChange={(e) => setCodigo(e.target.value.replace(/\D/g, '').slice(0, 8))}
               placeholder="123456"
               inputMode="numeric"
-              className="flex-1 border border-[#E5E7EB] rounded-lg px-3 py-2 text-sm tracking-[0.3em] font-mono outline-none focus:border-[#111827]/30 text-[#111827]"
+              className="flex-1 border border-[#E7E5E4] rounded-lg px-3 py-2 text-sm tracking-[0.3em] font-mono outline-none focus:border-[#1C1917]/30 text-[#1C1917]"
               aria-label={t('whatsappProvision.code', 'Verification code')}
             />
             <button
               type="button"
               onClick={confirmar}
               disabled={acao.isPending || codigo.length < 4}
-              className="bg-[#111827] text-white rounded-lg px-4 text-sm font-medium disabled:opacity-40"
+              className="bg-[#1C1917] text-white rounded-lg px-4 text-sm font-medium disabled:opacity-40"
             >
               {acao.isPending ? '...' : t('whatsappProvision.confirm', 'Confirm')}
             </button>
@@ -188,7 +188,7 @@ export default function ConnectWhatsAppNumberPanel() {
           <button
             type="button"
             onClick={() => qc.setQueryData(['whatsapp-provision'], { estado: 'nao_iniciado' })}
-            className="text-[11px] text-[#6B7280] underline"
+            className="text-[11px] text-[#78716C] underline"
           >
             {t('whatsappProvision.restart', 'Use a different number')}
           </button>

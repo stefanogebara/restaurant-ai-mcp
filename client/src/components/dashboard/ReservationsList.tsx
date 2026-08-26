@@ -162,7 +162,7 @@ export default function ReservationsList({
                 type="button"
                 onClick={() => setDayFilter('today')}
                 className={`px-4 py-1.5 transition-all border-r border-glass-border-dark ${
-                  dayFilter === 'today' ? 'bg-[#F9FAFB] text-[#111827]' : 'text-[#9CA3AF] hover:text-[#111827]'
+                  dayFilter === 'today' ? 'bg-[#FAFAF9] text-[#1C1917]' : 'text-[#A8A29E] hover:text-[#1C1917]'
                 }`}
               >
                 {tl('today')}
@@ -171,7 +171,7 @@ export default function ReservationsList({
                 type="button"
                 onClick={() => setDayFilter('tomorrow')}
                 className={`px-4 py-1.5 transition-all border-r border-glass-border-dark ${
-                  dayFilter === 'tomorrow' ? 'bg-[#F9FAFB] text-[#111827]' : 'text-[#9CA3AF] hover:text-[#111827]'
+                  dayFilter === 'tomorrow' ? 'bg-[#FAFAF9] text-[#1C1917]' : 'text-[#A8A29E] hover:text-[#1C1917]'
                 }`}
               >
                 {tl('tomorrow')}
@@ -180,7 +180,7 @@ export default function ReservationsList({
                 type="button"
                 onClick={() => setDayFilter('week')}
                 className={`px-4 py-1.5 transition-all ${
-                  dayFilter === 'week' ? 'bg-[#F9FAFB] text-[#111827]' : 'text-[#9CA3AF] hover:text-[#111827]'
+                  dayFilter === 'week' ? 'bg-[#FAFAF9] text-[#1C1917]' : 'text-[#A8A29E] hover:text-[#1C1917]'
                 }`}
                 title={tl('thisWeekHint')}
               >
@@ -207,7 +207,7 @@ export default function ReservationsList({
         {/* Status legend — answers Carla's "what does each color mean?"
             question once at the top of the panel so individual badges below
             don't need labels. Hidden on mobile where header space is tight. */}
-        <div className="hidden sm:flex mt-3 pt-3 border-t border-[#F3F4F6]">
+        <div className="hidden sm:flex mt-3 pt-3 border-t border-[#F5F5F4]">
           <StatusLegend
             items={[
               { label: tl('confirmed'), token: 'good' },
@@ -222,7 +222,7 @@ export default function ReservationsList({
           <ThiingsIcon
             name="search"
             pxSize={14}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9CA3AF] pointer-events-none"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-[#A8A29E] pointer-events-none"
           />
           <input
             ref={searchInputRef}
@@ -230,7 +230,7 @@ export default function ReservationsList({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={tl('searchPlaceholder')}
-            className="w-full pl-9 pr-3 py-2 text-sm font-[Inter] border border-glass-border-input rounded-lg bg-white/60 placeholder-[#9CA3AF] text-[#111827] focus:outline-none focus:ring-1 focus:ring-[#9F1239]/30 focus:border-[#9F1239]/40 transition-colors"
+            className="w-full pl-9 pr-3 py-2 text-sm font-[Inter] border border-glass-border-input rounded-lg bg-white/60 placeholder-[#A8A29E] text-[#1C1917] focus:outline-none focus:ring-1 focus:ring-[#9F1239]/30 focus:border-[#9F1239]/40 transition-colors"
             aria-label={tl('searchPlaceholder')}
           />
         </div>
@@ -248,7 +248,7 @@ export default function ReservationsList({
             const activeClasses = isRisk
               ? 'bg-amber-500 text-white'
               : 'bg-[#9F1239] text-white';
-            const inactiveClasses = 'bg-[#F3F4F6] text-[#6B7280] hover:bg-[#E5E7EB] hover:text-[#111827]';
+            const inactiveClasses = 'bg-[#F5F5F4] text-[#78716C] hover:bg-[#E7E5E4] hover:text-[#1C1917]';
             return (
               <button
                 key={key}
@@ -272,7 +272,7 @@ export default function ReservationsList({
 
         {/* Showing X of Y */}
         {isFiltering && (
-          <p className="text-[11px] text-[#9CA3AF] mt-2" data-testid="filter-result-count">
+          <p className="text-[11px] text-[#A8A29E] mt-2" data-testid="filter-result-count">
             {t('dashboard.reservationsList.showingResults', {
               shown: filtered.length,
               total: displayed.length,
@@ -409,7 +409,7 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
   const avatarStyle = { background: `linear-gradient(135deg, hsl(${hue},50%,75%), hsl(${(hue + 40) % 360},50%,65%))` };
 
   return (
-    <div className={`flex items-center py-3 sm:py-[18px] border-b border-[#F3F4F6] last:border-b-0 gap-2 sm:gap-4 transition-colors ${
+    <div className={`flex items-center py-3 sm:py-[18px] border-b border-[#F5F5F4] last:border-b-0 gap-2 sm:gap-4 transition-colors ${
   reservation.party_size >= 6
     ? 'pl-3 sm:pl-5 pr-3 sm:pr-6 border-l-2 border-l-[#9F1239]/30'
     : 'px-3 sm:px-6'
