@@ -160,7 +160,7 @@ export default function BookingConfirmation() {
     return (
       <div className="min-h-screen flex flex-col">
         <header className="flex justify-between items-center px-6 sm:px-10 py-4 border-b border-glass-border-dark bg-glass-panel backdrop-blur-glass-nav">
-          <div className="font-serif text-lg font-semibold text-deep-charcoal">
+          <div className="font-serif text-lg text-deep-charcoal">
             seatable<span className="text-burgundy">.</span>
           </div>
           <span className="text-[13px] text-warm-stone">{t('reservations.needHelp')}</span>
@@ -195,7 +195,7 @@ export default function BookingConfirmation() {
     <div className="min-h-screen flex flex-col">
       {/* Top Bar */}
       <header className="flex justify-between items-center px-6 sm:px-10 py-4 border-b border-glass-border-dark bg-glass-panel backdrop-blur-glass-nav">
-        <div className="font-serif text-lg font-semibold text-deep-charcoal">
+        <div className="font-serif text-lg text-deep-charcoal">
           seatable<span className="text-burgundy">.</span>
         </div>
         <span className="text-[13px] text-warm-stone">{t('reservations.needHelp')}</span>

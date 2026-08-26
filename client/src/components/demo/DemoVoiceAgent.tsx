@@ -195,7 +195,7 @@ export default function DemoVoiceAgent({ restaurantName, scrapedData, onContinue
         transition={{ duration: 0.6, delay: 0.1 }}
         className="absolute top-8 left-0 right-0 text-center"
       >
-        <p className="font-serif text-2xl font-semibold text-white tracking-tight">
+        <p className="font-serif text-2xl text-white tracking-tight">
           {restaurantName}<span className="text-burgundy">.</span>
         </p>
       </motion.div>

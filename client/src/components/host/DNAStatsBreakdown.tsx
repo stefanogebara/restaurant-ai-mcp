@@ -22,7 +22,7 @@ export default function DNAStatsBreakdown({ stats }: DNAStatsBreakdownProps) {
       <div className="p-4 bg-soft-gray rounded-xl">
         <div className="flex items-center gap-2 mb-3">
           <ThiingsIcon name="users" pxSize={16} />
-          <h3 className="text-sm font-semibold font-serif text-deep-charcoal">Dining Styles</h3>
+          <h3 className="text-sm font-serif text-deep-charcoal">Dining Styles</h3>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
           {Object.entries(stats.dining_styles).map(([style, count]) => {
@@ -43,7 +43,7 @@ export default function DNAStatsBreakdown({ stats }: DNAStatsBreakdownProps) {
       <div className="p-4 bg-soft-gray rounded-xl">
         <div className="flex items-center gap-2 mb-3">
           <ThiingsIcon name="calendar" pxSize={16} />
-          <h3 className="text-sm font-semibold font-serif text-deep-charcoal">Day Preferences</h3>
+          <h3 className="text-sm font-serif text-deep-charcoal">Day Preferences</h3>
         </div>
         <div className="grid grid-cols-2 gap-3">
           {Object.entries(stats.day_type_preferences).map(([dayType, count]) => {
@@ -71,7 +71,7 @@ export default function DNAStatsBreakdown({ stats }: DNAStatsBreakdownProps) {
       <div className="p-4 bg-soft-gray rounded-xl">
         <div className="flex items-center gap-2 mb-3">
           <ThiingsIcon name="clock" pxSize={16} />
-          <h3 className="text-sm font-semibold font-serif text-deep-charcoal">Time Slot Preferences</h3>
+          <h3 className="text-sm font-serif text-deep-charcoal">Time Slot Preferences</h3>
         </div>
         <div className="space-y-2">
           {Object.entries(stats.time_slot_preferences)
@@ -100,7 +100,7 @@ export default function DNAStatsBreakdown({ stats }: DNAStatsBreakdownProps) {
       <div className="p-4 bg-soft-gray rounded-xl">
         <div className="flex items-center gap-2 mb-3">
           <ThiingsIcon name="zap" pxSize={16} />
-          <h3 className="text-sm font-semibold font-serif text-deep-charcoal">Booking Spontaneity</h3>
+          <h3 className="text-sm font-serif text-deep-charcoal">Booking Spontaneity</h3>
         </div>
         <div className="space-y-2">
           {Object.entries(stats.spontaneity_distribution)

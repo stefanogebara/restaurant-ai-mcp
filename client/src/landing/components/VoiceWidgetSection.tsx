@@ -214,7 +214,7 @@ function FallbackWhatsApp({ t }: { t: (key: string, fallback?: string) => string
         </svg>
       </div>
       <div>
-        <h3 className="font-serif text-lg font-semibold text-white mb-1">
+        <h3 className="font-serif text-lg text-white mb-1">
           {t('landing.voice.fallbackTitle', 'Voice demo unavailable')}
         </h3>
         <p className="text-sm text-white/60 mb-5">

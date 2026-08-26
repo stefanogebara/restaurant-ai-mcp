@@ -186,7 +186,7 @@ export default function SubscriptionManage() {
     <div className="min-h-screen flex flex-col">
       {/* Top Bar */}
       <header className="flex justify-between items-center px-6 sm:px-10 py-4 border-b border-glass-border-dark bg-glass-panel backdrop-blur-glass-nav">
-        <div className="font-serif text-lg font-semibold text-deep-charcoal">
+        <div className="font-serif text-lg text-deep-charcoal">
           seatable<span className="text-burgundy">.</span>
         </div>
         <button type="button" onClick={() => navigate('/host-dashboard/simple')} className="text-[13px] text-warm-stone hover:text-stone-gray flex items-center gap-1.5 transition-colors">
@@ -411,7 +411,7 @@ function NoPlanPricing() {
   return (
     <div className="min-h-screen flex flex-col">
       <header className="flex justify-between items-center px-6 sm:px-10 py-4 border-b border-glass-border-dark bg-glass-panel backdrop-blur-glass-nav">
-        <div className="font-serif text-lg font-semibold text-deep-charcoal">
+        <div className="font-serif text-lg text-deep-charcoal">
           seatable<span className="text-burgundy">.</span>
         </div>
         <a href="/host-dashboard/simple" className="text-[13px] text-warm-stone hover:text-stone-gray transition-colors">
@@ -521,7 +521,7 @@ function PendingActivation({ onRefetch }: { onRefetch: () => void }) {
   return (
     <div className="min-h-screen flex flex-col">
       <header className="flex justify-between items-center px-6 sm:px-10 py-4 border-b border-glass-border-dark bg-glass-panel backdrop-blur-glass-nav">
-        <div className="font-serif text-lg font-semibold text-deep-charcoal">
+        <div className="font-serif text-lg text-deep-charcoal">
           seatable<span className="text-burgundy">.</span>
         </div>
       </header>

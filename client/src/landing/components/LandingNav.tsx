@@ -57,7 +57,7 @@ export default function LandingNav() {
       {/* Logo */}
       <Link
         to="/"
-        className="font-serif text-2xl font-semibold text-deep-charcoal tracking-tight hover:opacity-80 transition-opacity min-h-[44px] flex items-center"
+        className="font-serif text-2xl text-deep-charcoal tracking-tight hover:opacity-80 transition-opacity min-h-[44px] flex items-center"
       >
         seatable<span className="text-burgundy">.</span>
       </Link>

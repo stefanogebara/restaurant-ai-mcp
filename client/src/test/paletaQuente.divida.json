@@ -1,7 +1,4 @@
 {
-  "components/auth/LoginBrandPanel.tsx": {
-    "serifComPeso": 3
-  },
   "components/call-tracking/CallConversationList.tsx": {
     "cinzaFrio": 1,
     "classeFria": 2
@@ -140,14 +137,7 @@
     "emojiComoIcone": 1
   },
   "components/demo/DemoAnalyticsPanel.tsx": {
-    "cinzaFrio": 1,
-    "serifComPeso": 1
-  },
-  "components/demo/DemoSidebar.tsx": {
-    "serifComPeso": 2
-  },
-  "components/demo/DemoVoiceAgent.tsx": {
-    "serifComPeso": 1
+    "cinzaFrio": 1
   },
   "components/demo/DemoWhatsAppSim.tsx": {
     "cinzaFrio": 1
@@ -162,46 +152,31 @@
     "classeFria": 4
   },
   "components/host/CustomerAIInsights.tsx": {
-    "classeFria": 2,
-    "serifComPeso": 1
-  },
-  "components/host/CustomerBehavioralProfile.tsx": {
-    "serifComPeso": 1
+    "classeFria": 2
   },
   "components/host/CustomerDNADashboard.tsx": {
-    "classeFria": 4,
-    "serifComPeso": 4
-  },
-  "components/host/CustomerPredictions.tsx": {
-    "serifComPeso": 1
+    "classeFria": 4
   },
   "components/host/CustomerProfileHeader.tsx": {
-    "classeFria": 3,
-    "serifComPeso": 1
+    "classeFria": 3
   },
   "components/host/customerProfileHelpers.ts": {
     "classeFria": 5
   },
   "components/host/CustomerRevenueSummary.tsx": {
-    "classeFria": 1,
-    "serifComPeso": 1
-  },
-  "components/host/CustomerVisitHistory.tsx": {
-    "serifComPeso": 1
+    "classeFria": 1
   },
   "components/host/DashboardStats.tsx": {
     "classeFria": 2
   },
   "components/host/DNACustomerList.tsx": {
-    "classeFria": 6,
-    "serifComPeso": 1
+    "classeFria": 6
   },
   "components/host/dnaHelpers.ts": {
     "classeFria": 4
   },
   "components/host/DNAStatsBreakdown.tsx": {
-    "classeFria": 4,
-    "serifComPeso": 4
+    "classeFria": 4
   },
   "components/host/ltvHelpers.tsx": {
     "classeFria": 3
@@ -252,7 +227,6 @@
     "classeFria": 6
   },
   "components/layout/Sidebar.tsx": {
-    "serifComPeso": 2,
     "emojiComoIcone": 1
   },
   "components/prospecting/DiscoveryPanel.tsx": {
@@ -270,36 +244,6 @@
   },
   "components/prospecting/types.ts": {
     "classeFria": 8
-  },
-  "components/seo/RelatedPages.tsx": {
-    "serifComPeso": 1
-  },
-  "components/seo/SeoCta.tsx": {
-    "serifComPeso": 1
-  },
-  "components/seo/SeoFaq.tsx": {
-    "serifComPeso": 1
-  },
-  "components/seo/SeoFooter.tsx": {
-    "serifComPeso": 1
-  },
-  "components/seo/SeoHero.tsx": {
-    "serifComPeso": 1
-  },
-  "components/seo/SeoNav.tsx": {
-    "serifComPeso": 1
-  },
-  "components/seo/SeoPainPoints.tsx": {
-    "serifComPeso": 1
-  },
-  "components/seo/SeoPricing.tsx": {
-    "serifComPeso": 2
-  },
-  "components/seo/SeoSolution.tsx": {
-    "serifComPeso": 1
-  },
-  "components/seo/SeoStats.tsx": {
-    "serifComPeso": 1
   },
   "components/settings/DepositSettingsPanel.tsx": {
     "cinzaFrio": 2
@@ -320,26 +264,11 @@
   "components/voice/VoiceExperimentPanel.tsx": {
     "classeFria": 12
   },
-  "landing/components/DemoSlideIn.tsx": {
-    "serifComPeso": 1
-  },
-  "landing/components/Footer.tsx": {
-    "serifComPeso": 1
-  },
   "landing/components/InlineDemoSection.tsx": {
     "cinzaFrio": 1
   },
-  "landing/components/LandingNav.tsx": {
-    "serifComPeso": 1
-  },
-  "landing/components/PresetDemoSection.tsx": {
-    "serifComPeso": 1
-  },
   "landing/components/VideoShowcaseSection.tsx": {
     "classeFria": 5
-  },
-  "landing/components/VoiceWidgetSection.tsx": {
-    "serifComPeso": 1
   },
   "landing/data/demoData.ts": {
     "classeFria": 7
@@ -350,12 +279,6 @@
   "landing/pages/PricingPage.tsx": {
     "emojiComoIcone": 3
   },
-  "pages/BookingConfirmation.tsx": {
-    "serifComPeso": 2
-  },
-  "pages/BookingPage.tsx": {
-    "serifComPeso": 1
-  },
   "pages/CallTrackingDashboard.tsx": {
     "cinzaFrio": 5
   },
@@ -365,15 +288,6 @@
   "pages/CouponsPage.tsx": {
     "cinzaFrio": 1,
     "classeFria": 4
-  },
-  "pages/CustomerPortal.tsx": {
-    "serifComPeso": 2
-  },
-  "pages/DemoConversation.tsx": {
-    "serifComPeso": 1
-  },
-  "pages/DemoDashboard.tsx": {
-    "serifComPeso": 3
   },
   "pages/EventBookingPage.tsx": {
     "cinzaFrio": 5
@@ -388,23 +302,8 @@
   "pages/IntegrationsPage.tsx": {
     "cinzaFrio": 3
   },
-  "pages/LiveAIDemo.tsx": {
-    "serifComPeso": 1
-  },
-  "pages/Login.tsx": {
-    "serifComPeso": 3
-  },
-  "pages/NotFound.tsx": {
-    "serifComPeso": 1
-  },
   "pages/OlimpiaOps.tsx": {
     "emojiComoIcone": 1
-  },
-  "pages/Onboarding.tsx": {
-    "serifComPeso": 1
-  },
-  "pages/PrivacyPolicy.tsx": {
-    "serifComPeso": 1
   },
   "pages/RestaurantSettingsPage.tsx": {
     "classeFria": 3
@@ -412,18 +311,11 @@
   "pages/SubscriptionManage.tsx": {
     "cinzaFrio": 1,
     "classeFria": 2,
-    "serifComPeso": 3,
     "emojiComoIcone": 1
-  },
-  "pages/SubscriptionSuccess.tsx": {
-    "serifComPeso": 2
   },
   "pages/TeamPage.tsx": {
     "cinzaFrio": 4,
     "classeFria": 2
-  },
-  "pages/TermsOfService.tsx": {
-    "serifComPeso": 1
   },
   "pages/WhatsAppSettingsPage.tsx": {
     "cinzaFrio": 1,

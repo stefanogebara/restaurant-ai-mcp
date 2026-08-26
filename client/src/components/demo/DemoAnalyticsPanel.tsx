@@ -144,7 +144,7 @@ export default function DemoAnalyticsPanel({ restaurantName, lang, presetKey }: 
       {/* Header + period toggle */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="font-serif text-[22px] font-bold text-deep-charcoal tracking-tight">{restaurantName}</h1>
+          <h1 className="font-serif text-[22px] text-deep-charcoal tracking-tight">{restaurantName}</h1>
           <p className="text-warm-stone text-[13px] mt-0.5">{ui.heading}</p>
         </div>
         <div className="flex items-center gap-1 bg-soft-gray rounded-lg p-1 flex-shrink-0">

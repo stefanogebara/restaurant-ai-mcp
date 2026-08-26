@@ -160,11 +160,11 @@ export default function CustomerPortal() {
         <div className="min-w-0 flex-1">
           {reservation?.restaurant_name ? (
             <>
-              <div className="font-serif text-lg font-semibold text-deep-charcoal truncate">{reservation.restaurant_name}</div>
+              <div className="font-serif text-lg text-deep-charcoal truncate">{reservation.restaurant_name}</div>
               <div className="text-[11px] text-muted-stone">{t('common.poweredBy')} seatable<span className="text-burgundy">.</span></div>
             </>
           ) : (
-            <div className="font-serif text-lg font-semibold text-deep-charcoal">
+            <div className="font-serif text-lg text-deep-charcoal">
               seatable<span className="text-burgundy">.</span>
             </div>
           )}

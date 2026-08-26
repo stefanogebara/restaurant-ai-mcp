@@ -268,7 +268,7 @@ export default function DemoConversation() {
       {/* Top bar */}
       <header className="flex-shrink-0 border-b border-border-gray bg-warm-white px-4 sm:px-6 py-3">
         <div className="max-w-2xl mx-auto flex items-center justify-between">
-          <div className="font-serif text-lg font-semibold text-deep-charcoal">
+          <div className="font-serif text-lg text-deep-charcoal">
             seatable<span className="text-burgundy">.</span>
           </div>
           {context && (

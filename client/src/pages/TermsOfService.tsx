@@ -9,7 +9,7 @@ export default function TermsOfService() {
   return (
     <div className="min-h-screen bg-warm-white">
       <nav className="flex items-center justify-between px-6 sm:px-16 py-6 border-b border-border-gray">
-        <Link to="/" className="font-serif text-2xl font-semibold text-deep-charcoal tracking-tight hover:opacity-80 transition-opacity">
+        <Link to="/" className="font-serif text-2xl text-deep-charcoal tracking-tight hover:opacity-80 transition-opacity">
           seatable<span className="text-burgundy">.</span>
         </Link>
       </nav>

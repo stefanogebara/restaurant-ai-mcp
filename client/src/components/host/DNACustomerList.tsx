@@ -29,7 +29,7 @@ export default function DNACustomerList({
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <ThiingsIcon name="users" pxSize={16} />
-          <h3 className="text-sm font-semibold font-serif text-deep-charcoal">{t('host.dnaCustomerList.title', 'Customer Profiles')}</h3>
+          <h3 className="text-sm font-serif text-deep-charcoal">{t('host.dnaCustomerList.title', 'Customer Profiles')}</h3>
         </div>
       </div>
 

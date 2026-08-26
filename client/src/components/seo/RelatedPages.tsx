@@ -43,7 +43,7 @@ export default function RelatedPages({ currentSlug }: RelatedPagesProps) {
   return (
     <section className="py-16 border-t border-glass-border-dark">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        <h2 className="font-serif text-2xl sm:text-3xl font-bold text-deep-charcoal mb-8">
+        <h2 className="font-serif text-2xl sm:text-3xl text-deep-charcoal mb-8">
           Veja tamb&eacute;m
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

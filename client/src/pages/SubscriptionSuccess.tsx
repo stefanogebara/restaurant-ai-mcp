@@ -92,7 +92,7 @@ export default function SubscriptionSuccess() {
     return (
       <div className="min-h-screen bg-warm-white flex flex-col">
         <header className="flex justify-between items-center px-6 sm:px-10 py-4 border-b border-border-gray bg-white">
-          <div className="font-serif text-lg font-semibold text-deep-charcoal">
+          <div className="font-serif text-lg text-deep-charcoal">
             seatable<span className="text-burgundy">.</span>
           </div>
         </header>
@@ -139,7 +139,7 @@ export default function SubscriptionSuccess() {
     <div className="min-h-screen bg-warm-white flex flex-col">
       {/* Top Bar */}
       <header className="flex justify-between items-center px-6 sm:px-10 py-4 border-b border-border-gray bg-white">
-        <div className="font-serif text-lg font-semibold text-deep-charcoal">
+        <div className="font-serif text-lg text-deep-charcoal">
           seatable<span className="text-burgundy">.</span>
         </div>
       </header>

@@ -16,7 +16,7 @@ export default function SeoPainPoints({ page }: SeoPainPointsProps) {
   return (
     <section className="py-16 bg-white">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        <h2 className="font-serif text-2xl sm:text-3xl font-bold text-deep-charcoal mb-3 text-center">
+        <h2 className="font-serif text-2xl sm:text-3xl text-deep-charcoal mb-3 text-center">
           Os desafios que {page.cuisine.toLowerCase()} em {page.city} enfrentam
         </h2>
         <p className="text-warm-stone text-center mb-12 max-w-2xl mx-auto">

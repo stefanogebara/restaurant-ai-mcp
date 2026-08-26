@@ -121,17 +121,17 @@ export default function LoginBrandPanel({ demo }: LoginBrandPanelProps = {}) {
           className="flex gap-8"
         >
           <div>
-            <div className="text-2xl font-serif font-bold text-white">2.3s</div>
+            <div className="text-2xl font-serif text-white">2.3s</div>
             <div className="text-xs text-muted-stone uppercase tracking-wider">{t('login.statResponse')}</div>
           </div>
           <div className="w-px bg-white/10" />
           <div>
-            <div className="text-2xl font-serif font-bold text-burgundy">6+</div>
+            <div className="text-2xl font-serif text-burgundy">6+</div>
             <div className="text-xs text-muted-stone uppercase tracking-wider">{t('login.statLanguages')}</div>
           </div>
           <div className="w-px bg-white/10" />
           <div>
-            <div className="text-2xl font-serif font-bold text-white">24/7</div>
+            <div className="text-2xl font-serif text-white">24/7</div>
             <div className="text-xs text-muted-stone uppercase tracking-wider">{t('login.statBooking')}</div>
           </div>
         </motion.div>

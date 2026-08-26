@@ -36,7 +36,7 @@ export default function SeoHero({ page }: SeoHeroProps) {
             </ol>
           </nav>
 
-          <h1 className="font-serif text-3xl sm:text-4xl lg:text-[48px] font-bold text-deep-charcoal leading-tight mb-6">
+          <h1 className="font-serif text-3xl sm:text-4xl lg:text-[48px] text-deep-charcoal leading-tight mb-6">
             O melhor sistema de reservas para{' '}
             <span className="text-burgundy">{page.cuisine}</span> em{' '}
             {page.city}

@@ -160,7 +160,7 @@ export default function LiveAIDemo() {
       <nav className="flex items-center justify-between px-6 py-4 border-b border-white/[5%]">
         <Link
           to="/"
-          className="font-serif text-xl font-semibold text-white/90 tracking-tight"
+          className="font-serif text-xl text-white/90 tracking-tight"
         >
           seatable<span className="text-burgundy">.</span>
         </Link>
