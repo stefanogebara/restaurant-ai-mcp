@@ -33,7 +33,7 @@ export default function ProactiveCommsPanel() {
   if (isLoading) {
     return (
       <div className="glass-card p-6">
-        <div className="text-sm text-[#9CA3AF]">{t('proactiveComms.loading', 'Loading opportunities...')}</div>
+        <div className="text-sm text-[#A8A29E]">{t('proactiveComms.loading', 'Loading opportunities...')}</div>
       </div>
     );
   }
@@ -47,11 +47,11 @@ export default function ProactiveCommsPanel() {
       <section className="glass-card p-6">
         <div className="flex items-center gap-2 mb-3">
           <ThiingsIcon name="sparkles" size="xs" className="text-burgundy" />
-          <h3 className="text-sm font-semibold text-[#111827]">
+          <h3 className="text-sm font-semibold text-[#1C1917]">
             {t('proactiveComms.title', 'Guests to reach out to')}
           </h3>
         </div>
-        <p className="text-sm text-[#6B7280]">
+        <p className="text-sm text-[#78716C]">
           {t('proactiveComms.empty', "No win-back ideas right now. Birthdays, anniversaries, and guests who haven't visited in a while will appear here automatically.")}
         </p>
       </section>
@@ -99,11 +99,11 @@ export default function ProactiveCommsPanel() {
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <ThiingsIcon name="sparkles" size="xs" className="text-burgundy" />
-          <h3 className="text-sm font-semibold text-[#111827]">
+          <h3 className="text-sm font-semibold text-[#1C1917]">
             {t('proactiveComms.title', 'Guests to reach out to')}
           </h3>
           {(pendingCount > 0 || approvedCount > 0) && (
-            <span className="text-xs text-[#9CA3AF]">
+            <span className="text-xs text-[#A8A29E]">
               {pendingCount > 0 && `${pendingCount} ${t('proactiveComms.pending', 'pending')}`}
               {pendingCount > 0 && approvedCount > 0 && ' · '}
               {approvedCount > 0 && `${approvedCount} ${t('proactiveComms.readyToSend', 'ready to send')}`}
@@ -175,7 +175,7 @@ function ProactiveCommCard({
   })();
 
   return (
-    <li className="border border-[#E5E7EB] rounded-xl bg-[#FAFAF9]">
+    <li className="border border-[#E7E5E4] rounded-xl bg-[#FAFAF9]">
       <button
         type="button"
         onClick={onToggleExpand}
@@ -187,16 +187,16 @@ function ProactiveCommCard({
             <span className="text-[10px] uppercase tracking-wider text-burgundy font-semibold">{typeLabel}</span>
             {statusBadge}
           </div>
-          <div className="text-sm font-medium text-[#111827] truncate">
+          <div className="text-sm font-medium text-[#1C1917] truncate">
             {item.customer_name || item.customer_phone}
           </div>
-          <div className="text-xs text-[#6B7280] truncate">{item.suggested_action}</div>
+          <div className="text-xs text-[#78716C] truncate">{item.suggested_action}</div>
         </div>
-        <ThiingsIcon name={isExpanded ? 'chevron-up' : 'chevron-down'} size="xs" className="text-[#9CA3AF] flex-shrink-0" />
+        <ThiingsIcon name={isExpanded ? 'chevron-up' : 'chevron-down'} size="xs" className="text-[#A8A29E] flex-shrink-0" />
       </button>
 
       {isExpanded && (
-        <div className="border-t border-[#E5E7EB] p-4 space-y-3">
+        <div className="border-t border-[#E7E5E4] p-4 space-y-3">
           {item.send_error && (
             <div className="text-xs text-[#B91C1C] bg-[#FEE2E2] rounded-lg p-2">
               {t('proactiveComms.lastSendError', 'Last send attempt failed')}: {item.send_error}
@@ -204,7 +204,7 @@ function ProactiveCommCard({
           )}
 
           <div>
-            <label htmlFor={`draft-${item.id}`} className="block text-xs font-semibold text-[#374151] mb-1.5">
+            <label htmlFor={`draft-${item.id}`} className="block text-xs font-semibold text-[#44403C] mb-1.5">
               {t('proactiveComms.draftLabel', 'Draft message (edit as needed)')}
             </label>
             <textarea
@@ -213,7 +213,7 @@ function ProactiveCommCard({
               onChange={(e) => onSetDraft(e.target.value)}
               disabled={item.status === 'sent'}
               rows={4}
-              className="w-full px-3 py-2 border border-glass-border-input rounded-lg text-sm text-[#111827] placeholder-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy disabled:bg-[#F3F4F6] disabled:text-[#6B7280]"
+              className="w-full px-3 py-2 border border-glass-border-input rounded-lg text-sm text-[#1C1917] placeholder-[#A8A29E] focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy disabled:bg-[#F5F5F4] disabled:text-[#78716C]"
               placeholder={t('proactiveComms.draftPlaceholder', 'AI is drafting this — write your own if you prefer.')}
             />
           </div>
@@ -225,7 +225,7 @@ function ProactiveCommCard({
                   type="button"
                   onClick={onDismiss}
                   disabled={isUpdating}
-                  className="px-3 py-1.5 text-sm text-[#6B7280] hover:text-[#111827] transition-colors disabled:opacity-50"
+                  className="px-3 py-1.5 text-sm text-[#78716C] hover:text-[#1C1917] transition-colors disabled:opacity-50"
                 >
                   {t('proactiveComms.dismiss', 'Dismiss')}
                 </button>
@@ -245,7 +245,7 @@ function ProactiveCommCard({
                   type="button"
                   onClick={onDismiss}
                   disabled={isUpdating || isSending}
-                  className="px-3 py-1.5 text-sm text-[#6B7280] hover:text-[#111827] transition-colors disabled:opacity-50"
+                  className="px-3 py-1.5 text-sm text-[#78716C] hover:text-[#1C1917] transition-colors disabled:opacity-50"
                 >
                   {t('proactiveComms.dismiss', 'Dismiss')}
                 </button>
@@ -261,7 +261,7 @@ function ProactiveCommCard({
               </>
             )}
             {item.status === 'sent' && item.sent_at && (
-              <span className="text-xs text-[#6B7280]">
+              <span className="text-xs text-[#78716C]">
                 {t('proactiveComms.sentAt', 'Sent')} {new Date(item.sent_at).toLocaleString()}
               </span>
             )}

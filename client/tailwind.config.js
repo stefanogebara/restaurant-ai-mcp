@@ -16,22 +16,27 @@ export default {
         mono: ['JetBrains Mono', 'monospace'],
       },
       colors: {
-        // Nordic Clean Theme Colors
-        'nordic-surface': '#F9FAFB',
-        'nordic-border': '#E5E7EB',
-        'nordic-muted': '#9CA3AF',
-        'nordic-teal': '#9F1239',
-        'nordic-teal-dark': '#881337',
-        'nordic-text': '#111827',
-        'nordic-success': '#9F1239',
-        'nordic-warning': '#D97706',
-        // Legacy aliases (mapped to Nordic equivalents)
-        'warm-bg': '#FFFFFF',
-        'warm-hover': '#F9FAFB',
-        'warm-divider': '#E5E7EB',
-        'accent-burgundy': '#9F1239',
-        'success-green': '#9F1239',
-        'warning-amber': '#D97706',
+        // Removidos em 25/ago: doze tokens do tema "Nordic" e dos aliases
+        // legados, TODOS com zero uso — e todos armadilhas com nome bonito.
+        //
+        //   nordic-surface #F9FAFB · nordic-border #E5E7EB
+        //   nordic-muted   #9CA3AF · nordic-text   #111827
+        //     → cinzas AZULADOS do Tailwind num sistema quente.
+        //   warm-bg #FFFFFF · warm-hover #F9FAFB · warm-divider #E5E7EB
+        //     → chamados "warm" e frios. Quem alcançasse `warm-divider`
+        //       acreditaria estar cumprindo a regra entregando gray-200.
+        //   nordic-success #9F1239 · success-green #9F1239
+        //     → BORGONHA com nome de sucesso: o desvio nº1 do DESIGN.md
+        //       ("cor de ação usada como estado") codificado no token.
+        //   nordic-teal #9F1239 · nordic-teal-dark #881337
+        //     → borgonha com nome de teal.
+        //   accent-burgundy, nordic-warning, warning-amber
+        //     → duplicatas de burgundy / #D97706.
+        //
+        // Os equivalentes quentes de verdade estão logo abaixo: warm-white,
+        // soft-gray (#F5F5F4), border-gray (#E7E5E4), warm-stone, muted-stone,
+        // deep-charcoal. Para ESTADO use âmbar/esmeralda/vermelho — nunca
+        // burgundy, que é reservado à ação.
         // Modern Elegant Theme Colors
         'warm-white': '#FAFAF9',
         'soft-gray': '#F5F5F4',
