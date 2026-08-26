@@ -91,7 +91,11 @@ export function TableRenderer({
       {isVIP && (
         <g transform={`translate(${width - 14}, 2)`}>
           <circle cx="6" cy="6" r="7" fill="#fbbf24" stroke="#f59e0b" strokeWidth="1" />
-          <text x="6" y="9" textAnchor="middle" fontSize="8" fill={tc.deepCharcoal}>★</text>
+          {/* Estrela como <path>, não como glifo ★: dentro de um <svg> não cabe
+              componente React, e o glifo depende da fonte do sistema —
+              desenha diferente em cada máquina, que é justamente o que o
+              DESIGN.md proíbe em ícone. */}
+          <path d="M6 1.6l1.35 2.9 3.05.4-2.25 2.1.6 3.05L6 8.6 3.25 10.05l.6-3.05L1.6 4.9l3.05-.4z" fill={tc.deepCharcoal} />
         </g>
       )}
 

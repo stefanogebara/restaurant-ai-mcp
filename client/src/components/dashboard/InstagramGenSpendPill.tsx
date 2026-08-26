@@ -7,6 +7,7 @@
  * haven't tried gen yet). Refetches on window focus + 60s stale time.
  */
 import { useQuery } from '@tanstack/react-query';
+import ThiingsIcon from '../../components/common/ThiingsIcon';
 import { useTranslation } from 'react-i18next';
 import { authFetch } from '../../services/api';
 
@@ -57,7 +58,7 @@ export default function InstagramGenSpendPill() {
       title={tooltipLines}
       data-testid="instagram-gen-spend-pill"
     >
-      <span aria-hidden>✨</span>
+      <ThiingsIcon name="sparkles" pxSize={15} className="text-ocre-600" />
       <span>
         {formatUSD(monthTotal)}{' '}
         <span className="text-deep-charcoal/60">this month</span>

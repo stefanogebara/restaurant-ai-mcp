@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import ThiingsIcon from '../components/common/ThiingsIcon';
 import { usePermission } from '../hooks/usePermission';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
@@ -423,7 +424,7 @@ function NoPlanPricing() {
         <div className="max-w-[1100px] mx-auto">
           {betaCode && (
             <div className="mb-10 bg-amber-50 border border-amber-200 rounded-xl px-5 py-4 flex items-center gap-3">
-              <span className="text-lg">🎉</span>
+              <ThiingsIcon name="party" pxSize={15} className="text-emerald-600 text-lg" />
               <div>
                 <p className="text-sm font-semibold text-amber-900">{t('subscription.betaTitle')}</p>
                 <p className="text-xs text-amber-700 mt-0.5">{t('subscription.betaDesc')}</p>

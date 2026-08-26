@@ -12,6 +12,7 @@
  * Refresh button on the parent.
  */
 import { useState } from 'react';
+import ThiingsIcon from '../../components/common/ThiingsIcon';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { authFetch } from '../../services/api';
@@ -673,7 +674,7 @@ function DraftCard({ draft, index, onCopy }: { draft: string; index: number; onC
               className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-glass-border-input rounded-lg text-xs text-deep-charcoal hover:border-burgundy transition-colors disabled:opacity-50"
               data-testid={`instagram-caption-drafter-generator-toggle-${index}`}
             >
-              <span aria-hidden>✨</span>
+              <ThiingsIcon name="sparkles" pxSize={15} className="text-ocre-600" />
               {generatorOpen ? 'Hide AI generator' : 'Generate with AI'}
             </button>
             <span className="text-xs text-muted-stone">or paste URLs</span>
@@ -769,9 +770,7 @@ function DraftCard({ draft, index, onCopy }: { draft: string; index: number; onC
                       >
                         <img src={item.image_url} alt="" className="w-full h-full object-cover" />
                         {alreadyAdded && (
-                          <span className="absolute inset-0 bg-emerald-500/30 flex items-center justify-center text-white text-lg font-semibold">
-                            ✓
-                          </span>
+                          <ThiingsIcon name="green-check" pxSize={15} className="text-emerald-600 absolute inset-0 bg-emerald-500/30 flex items-center justify-center text-white text-lg font-semibold" />
                         )}
                       </button>
                     );

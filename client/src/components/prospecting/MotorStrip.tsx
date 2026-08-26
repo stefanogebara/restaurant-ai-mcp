@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import ThiingsIcon from '../common/ThiingsIcon';
 import { api } from '../../services/api';
 import { httpStatus } from './types';
 
@@ -103,7 +104,7 @@ export default function MotorStrip() {
     {indicados.length > 0 && (
       <details className="rounded-xl border border-stone-200 bg-stone-50/60 px-4 py-2">
         <summary className="text-xs text-stone-900 cursor-pointer">
-          📇 <strong>{indicados.length}</strong> {indicados.length === 1 ? 'casa indicou' : 'casas indicaram'} outro número — a Olímpia não escreve para eles
+          <ThiingsIcon name="clipboard-list" pxSize={13} className="inline text-warm-stone mr-1" /> <strong>{indicados.length}</strong> {indicados.length === 1 ? 'casa indicou' : 'casas indicaram'} outro número — a Olímpia não escreve para eles
         </summary>
         <p className="text-[11px] text-stone-800 mt-1.5 mb-2">
           Números que a própria casa publicou (menu do robô, “fale com a central”). É contato frio sem modelo aprovado,

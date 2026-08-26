@@ -84,7 +84,7 @@ export default function VoiceEngineSelector({ currentEngine, pendingEngine, engi
                 (premium-but-pricier vs fast-and-cheaper) is legible. */}
             <div className="flex flex-wrap items-center gap-2 text-[11px]">
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-soft-gray text-stone-gray">
-                <span aria-hidden="true">⏱</span>
+                <ThiingsIcon name="clock" pxSize={15} className="text-warm-stone" />
                 {t('voiceEngine.elevenlabsLatency', '~1.2 s')}
               </span>
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-soft-gray text-stone-gray">
@@ -119,7 +119,7 @@ export default function VoiceEngineSelector({ currentEngine, pendingEngine, engi
             </p>
             <div className="flex flex-wrap items-center gap-2 text-[11px]">
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-soft-gray text-stone-gray">
-                <span aria-hidden="true">⏱</span>
+                <ThiingsIcon name="clock" pxSize={15} className="text-warm-stone" />
                 {t('voiceEngine.openaiLatency', '~0.6 s')}
               </span>
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-soft-gray text-stone-gray">

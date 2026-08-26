@@ -14,6 +14,12 @@ import divida from '../paletaQuente.divida.json';
  * Aqui a varredura é total e o que já existe está CONGELADO em
  * `paletaQuente.divida.json`. A regra é simples: a dívida só pode cair.
  *
+ * EM 26/AGO/2026 ELA CHEGOU A ZERO — o arquivo de dívida é `{}`. A catraca
+ * deixou de ser catraca e virou guarda simples: qualquer violação nova, em
+ * qualquer arquivo, reprova. Foram 492 correções (252 classes frias, 150 hex,
+ * 62 pesos no serif, 28 emoji) em nove PRs, cada um pequeno o bastante para
+ * ser revisado de verdade. Era isso que a catraca existia para permitir.
+ *
  * Por que catraca e não um mutirão: corrigir 492 lugares num commit só produz
  * um diff que ninguém revisa de verdade, e uma regressão visual no meio dele é
  * invisível. A catraca para o sangramento HOJE, deixa a dívida explícita, e
