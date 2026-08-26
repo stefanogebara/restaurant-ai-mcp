@@ -11,7 +11,11 @@ import { test, expect } from '@playwright/test';
  * demo de R$ 213,10 rápido demais.
  */
 
-const BASE = process.env.RACHA_BASE || 'https://racha-gray.vercel.app';
+// Sem default para producao: com ele, rodar a suite e2e DESTE repo disparava
+// requisicoes contra o ambiente real do racha sem ninguem pedir.
+const BASE = process.env.RACHA_BASE || '';
+
+test.skip(!BASE, 'racha nao configurado — defina RACHA_BASE');
 const MESA = 'demoracha';
 const SHOT = 'e2e-artifacts/racha-house';
 
