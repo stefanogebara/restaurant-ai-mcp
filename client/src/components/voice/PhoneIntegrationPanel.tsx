@@ -6,6 +6,7 @@
  */
 
 import { useTranslation } from 'react-i18next';
+import ThiingsIcon from '../../components/common/ThiingsIcon';
 import { useToast } from '../../contexts/ToastContext';
 import { usePhoneIntegration } from '../../hooks/usePhoneIntegration';
 
@@ -147,7 +148,7 @@ export default function PhoneIntegrationPanel() {
       {/* No-agent warning */}
       {!restaurant.has_agent && (
         <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs font-medium">
-          <span aria-hidden="true">⚠</span>
+          <ThiingsIcon name="alert-triangle" pxSize={15} className="text-amber-600" />
           {t('phoneIntegration.noAgentWarning', 'AI receptionist not set up yet. Finish the AI receptionist setup above before connecting the phone.')}
         </div>
       )}

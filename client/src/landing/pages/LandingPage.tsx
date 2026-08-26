@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import ThiingsIcon from '../../components/common/ThiingsIcon';
 import { ArrowUp } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { trackLandingPageViewed } from '../../lib/analytics';
@@ -104,15 +105,15 @@ export default function LandingPage() {
       <section className="pt-12 pb-16 px-6 text-center">
         <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 mb-6">
           <span className="inline-flex items-center gap-1.5 text-[11px] text-warm-stone">
-            <span aria-hidden="true">🔒</span>
+            <ThiingsIcon name="lock" pxSize={15} className="text-warm-stone" />
             {t('landing.trustLgpd', 'LGPD-compliant · Data stays in Brazil')}
           </span>
           <span className="inline-flex items-center gap-1.5 text-[11px] text-warm-stone">
-            <span aria-hidden="true">🛡️</span>
+            <ThiingsIcon name="shield-check" pxSize={15} className="text-warm-stone" />
             {t('landing.trustEncrypted', 'End-to-end encrypted')}
           </span>
           <span className="inline-flex items-center gap-1.5 text-[11px] text-warm-stone">
-            <span aria-hidden="true">📞</span>
+            <ThiingsIcon name="phone" pxSize={15} className="text-warm-stone" />
             {t('landing.trustHumanSupport', 'Real humans answer in 24h')}
           </span>
         </div>

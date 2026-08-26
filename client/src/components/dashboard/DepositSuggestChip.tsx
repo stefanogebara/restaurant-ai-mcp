@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import ThiingsIcon from '../../components/common/ThiingsIcon';
 
 interface DepositSuggestChipProps {
   /** Backend signal: true when the reservation is risky AND the
@@ -58,7 +59,7 @@ export default function DepositSuggestChip({
         aria-label={label}
         className={className}
       >
-        <span aria-hidden="true">💳</span>
+        <ThiingsIcon name="credit-card" pxSize={15} className="text-warm-stone" />
         {label}
       </button>
     );
@@ -66,7 +67,7 @@ export default function DepositSuggestChip({
 
   return (
     <span className={className.replace('hover:bg-amber-600/[18%] transition-colors', '')} title={tooltip}>
-      <span aria-hidden="true">💳</span>
+      <ThiingsIcon name="credit-card" pxSize={15} className="text-warm-stone" />
       {label}
     </span>
   );

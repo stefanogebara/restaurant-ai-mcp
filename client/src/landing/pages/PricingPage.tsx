@@ -12,6 +12,7 @@
  */
 
 import { useEffect } from 'react';
+import ThiingsIcon from '../../components/common/ThiingsIcon';
 import { useTranslation } from 'react-i18next';
 import LandingNav from '../components/LandingNav';
 import PricingSection from '../components/PricingSection';
@@ -37,15 +38,15 @@ export default function PricingPage() {
       <div className="pt-12 pb-2">
         <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 px-6 mb-3">
           <span className="inline-flex items-center gap-1.5 text-[11px] text-warm-stone">
-            <span aria-hidden="true">🔒</span>
+            <ThiingsIcon name="lock" pxSize={15} className="text-warm-stone" />
             {t('landing.trustLgpd', 'LGPD-compliant · Data stays in Brazil')}
           </span>
           <span className="inline-flex items-center gap-1.5 text-[11px] text-warm-stone">
-            <span aria-hidden="true">🛡️</span>
+            <ThiingsIcon name="shield-check" pxSize={15} className="text-warm-stone" />
             {t('landing.trustEncrypted', 'End-to-end encrypted')}
           </span>
           <span className="inline-flex items-center gap-1.5 text-[11px] text-warm-stone">
-            <span aria-hidden="true">📞</span>
+            <ThiingsIcon name="phone" pxSize={15} className="text-warm-stone" />
             {t('landing.trustHumanSupport', 'Real humans answer in 24h')}
           </span>
         </div>

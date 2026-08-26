@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import ThiingsIcon from '../components/common/ThiingsIcon';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { api } from '../services/api';
@@ -200,7 +201,7 @@ export default function OlimpiaOps() {
                   <button type="button" disabled={agentToggle.isPending} onClick={() => agentToggle.mutate(false)} className="px-3 py-1.5 rounded-xl bg-rose-600 text-white text-sm font-medium hover:opacity-90 disabled:opacity-50">
                     Confirmar parada
                   </button>
-                  <button type="button" onClick={() => setConfirmStop(false)} className="px-2.5 py-1.5 rounded-xl bg-stone-100 text-stone-600 text-sm hover:bg-stone-200">✕</button>
+                  <button type="button" onClick={() => setConfirmStop(false)} className="px-2.5 py-1.5 rounded-xl bg-stone-100 text-stone-600 text-sm hover:bg-stone-200"><ThiingsIcon name="close" pxSize={14} /></button>
                 </span>
               )
             ) : (

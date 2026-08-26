@@ -131,7 +131,7 @@ export default function AIKnowsCard({ menu, insights }: AIKnowsCardProps) {
             <ul className="space-y-1.5 text-sm text-deep-charcoal">
               {praise.map((theme, i) => (
                 <li key={i} className="flex items-start gap-2">
-                  <span aria-hidden="true" className="text-emerald-600 text-base leading-tight">✓</span>
+                  <ThiingsIcon name="green-check" pxSize={15} className="text-emerald-600 text-emerald-600 text-base leading-tight" />
                   <span>{theme}</span>
                 </li>
               ))}

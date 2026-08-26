@@ -14,6 +14,7 @@
  * knows we haven't hung.
  */
 import { useState, useRef, useEffect } from 'react';
+import ThiingsIcon from '../../components/common/ThiingsIcon';
 import { useMutation } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { authFetch } from '../../services/api';
@@ -352,7 +353,7 @@ export default function InstagramReelPanel({ disabled = false }: { disabled?: bo
           className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-glass-border-input rounded-lg text-xs text-deep-charcoal hover:border-burgundy transition-colors disabled:opacity-50"
           data-testid="instagram-reel-gen-toggle"
         >
-          <span aria-hidden>✨</span>
+          <ThiingsIcon name="sparkles" pxSize={15} className="text-ocre-600" />
           {genOpen ? 'Hide AI generator' : 'Generate with AI'}
         </button>
         {videoName && (
