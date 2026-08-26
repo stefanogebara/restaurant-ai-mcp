@@ -146,14 +146,30 @@ async function cacarCelularPendentes(opts = {}) {
   }
 
   const leads = await selecionarSemCelular(opts.limit || LIMITE_PADRAO);
-  const resumo = { processados: 0, achados: 0, sem_numero: 0, falhas: 0 };
+  // `sem_html` SEPARADO de `sem_numero` — a primeira rodada em produção
+  // (26/08, 0 de 6) provou que o balde único não serve para nada: "o site
+  // abriu e não tinha WhatsApp" e "o site não abriu" são causas OPOSTAS. A
+  // primeira diz que a abordagem é fraca e manda mudar de tática; a segunda
+  // diz que o scrape está quebrado e manda consertar. Somadas, não dizem nada,
+  // e um zero ambíguo é pior que nenhum número — convida a concluir a errada.
+  const resumo = { processados: 0, achados: 0, sem_numero: 0, sem_html: 0, falhas: 0 };
 
   for (const lead of leads) {
     const r = await cacarCelular(lead, lerPagina);
     resumo.processados++;
     if (r.ok) resumo.achados++;
     else if (r.motivo === 'update') resumo.falhas++;
+    else if (r.motivo === 'sem_html') resumo.sem_html++;
     else resumo.sem_numero++;
+  }
+
+  // Lote inteiro sem HTML não é "site sem WhatsApp": é scrape morto. A causa
+  // mais provável é SCRAPINGDOG_API_KEY ausente ou sem crédito — e sem este
+  // aviso isso se disfarçaria de "a abordagem não funciona" para sempre.
+  if (resumo.processados > 0 && resumo.sem_html === resumo.processados) {
+    logger.error(
+      `caça ao celular sem HTML em ${resumo.sem_html}/${resumo.processados} do lote — `
+      + 'isso é scrape quebrado, não site sem WhatsApp. Ver SCRAPINGDOG_API_KEY.');
   }
 
   // Lote inteiro sem achado NÃO é alarme: site sem WhatsApp visível é comum, e

@@ -168,3 +168,60 @@ describe('cacarCelularPendentes', () => {
     expect(r.processados).toBe(0);
   });
 });
+
+/**
+ * O CONSERTO DA MÉTRICA — 26/08/2026, depois da primeira rodada em produção.
+ *
+ * Ela voltou `{processados: 6, achados: 0, sem_numero: 6}` e esse número não
+ * responde a pergunta que importa: os 6 sites abriram e não tinham WhatsApp,
+ * ou os 6 não abriram? São causas OPOSTAS — a primeira condena a tática, a
+ * segunda condena o scrape. Somadas no mesmo balde, não dizem nada, e um zero
+ * ambíguo é pior que nenhum número porque convida a concluir a errada.
+ *
+ * É o mesmo erro de camada que este projeto passou dois dias consertando nos
+ * outros crons, repetido dentro do conserto.
+ */
+describe('cacarCelularPendentes — sem_html não é sem_numero', () => {
+  function filaCom(leads) {
+    const chain = {
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      is: jest.fn().mockReturnThis(),
+      not: jest.fn().mockReturnThis(),
+      or: jest.fn().mockReturnThis(),
+      order: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockResolvedValue({ data: leads, error: null }),
+      update: jest.fn().mockReturnValue({ eq: jest.fn().mockResolvedValue({ error: null }) }),
+    };
+    mockSupabaseAdmin.from.mockReturnValue(chain);
+  }
+
+  const fixo = (i) => ({
+    id: `l${i}`, name: `Casa ${i}`, website: `https://casa${i}.com.br`,
+    whatsapp_phone: '+551133334444', enrich_status: {},
+  });
+
+  it('separa scrape morto de site sem WhatsApp', async () => {
+    filaCom([fixo(1), fixo(2)]);
+    // Um site abre e não tem número; o outro não abre.
+    const lerPagina = jest.fn()
+      .mockResolvedValueOnce('<p>Bem-vindo ao nosso site</p>')
+      .mockResolvedValueOnce('');
+
+    const r = await cacarCelularPendentes({ lerPagina });
+
+    expect(r.processados).toBe(2);
+    expect(r.sem_numero).toBe(1);
+    expect(r.sem_html).toBe(1);
+    expect(r.achados).toBe(0);
+  });
+
+  it('conta o achado sem contaminar os outros baldes', async () => {
+    filaCom([fixo(1)]);
+    const lerPagina = jest.fn().mockResolvedValue('<a href="https://wa.me/5511988887777">');
+
+    const r = await cacarCelularPendentes({ lerPagina });
+
+    expect(r).toEqual({ processados: 1, achados: 1, sem_numero: 0, sem_html: 0, falhas: 0 });
+  });
+});
