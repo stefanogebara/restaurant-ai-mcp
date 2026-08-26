@@ -96,3 +96,58 @@ describe('qualificar — dedup e ordem', () => {
     expect(qualificar([null, undefined]).candidatos).toEqual([]);
   });
 });
+
+/**
+ * O APERTO DE 25/08/2026. O piso de avaliações caiu de 150 para 120 em 24/08 e
+ * abriu o funil; na primeira leva real (35 intros em 25/08) entraram no alvo
+ * duas academias e um buffet de festa infantil. Racha é conta NA MESA — nada
+ * disso tem conta de mesa para dividir.
+ *
+ * `academia` já existia na regra, mas só no INÍCIO do nome. A rede se
+ * identifica no começo ("Academia Smart Fit"); a unidade de bairro faz o
+ * contrário e põe no FIM ("Panobianco Academia"). Daí a regra simétrica.
+ *
+ * Estes testes falham na versão anterior: sem FORA_NO_FIM e FORA_SEMPRE_EXTRA,
+ * os três alvos errados passam.
+ */
+describe('foraDoIcp — o aperto de categoria de 25/08', () => {
+  it('corta a categoria quando ela vem no FIM do nome', () => {
+    // Os três que receberam template de verdade em 25/08.
+    expect(foraDoIcp('Panobianco Academia')).toBe(true);
+    expect(foraDoIcp('Espaço ZYM')).toBe(true);
+    expect(foraDoIcp('Buffet Prime Kids')).toBe(true);
+  });
+
+  it('corta fitness e festa infantil em qualquer posição', () => {
+    expect(foraDoIcp('Studio de Pilates da Vila')).toBe(true);
+    expect(foraDoIcp('CrossFit Lapa')).toBe(true);
+    expect(foraDoIcp('Espaço Alegria - Buffet Infantil')).toBe(true);
+    expect(foraDoIcp('Salão de Festas Encanto')).toBe(true);
+  });
+
+  /**
+   * A METADE QUE IMPORTA MAIS. A regra desta casa é que falso positivo é o erro
+   * CARO: fora-do-ICP só gasta um slot, mas barrar restaurante bom o tira da
+   * fila em silêncio. `buffet` sozinho NUNCA pode cortar — buffet self-service
+   * por quilo é restaurante de mesa, é ICP, e estava na leva de 25/08.
+   */
+  it('NÃO corta restaurante de mesa que só compartilha a palavra', () => {
+    expect(foraDoIcp('Restaurante Uai Mineira | Buffet Self Service por kilo em Perdizes, SP')).toBe(false);
+    expect(foraDoIcp('Bebo Dalí Bar')).toBe(false);
+    expect(foraDoIcp('Quintal da Tilápia')).toBe(false);
+    expect(foraDoIcp('Villa Romanna Espetinhos')).toBe(false);
+    expect(foraDoIcp('Restaurante Mercado São Jorge')).toBe(false);
+  });
+
+  /**
+   * Deixado passar DE PROPÓSITO. A peixaria que respondeu em 25/08 ("não somos
+   * um restaurante de mesa") de fato não é ICP — mas existe restaurante de
+   * frutos do mar chamado "Peixaria do Zé", e sem o campo `types` do Google não
+   * dá para separar os dois pelo nome. Entre gastar um slot e sumir com um
+   * restaurante bom, o projeto escolhe gastar o slot.
+   */
+  it('não tenta adivinhar peixaria e açougue pelo nome', () => {
+    expect(foraDoIcp('Peixaria Peixe do Dia - Mutinga')).toBe(false);
+    expect(foraDoIcp('Açougue e Restaurante do Gaúcho')).toBe(false);
+  });
+});
