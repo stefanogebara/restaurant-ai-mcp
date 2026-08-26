@@ -37,8 +37,8 @@ import { chromium } from 'playwright';
 
 const BASE_URL = 'https://seatable.one';
 const CREDENTIALS = {
-  email: 'cantina.bellavista@seatable.io',
-  password: 'Sandbox2026!',
+  email: process.env.SANDBOX_EMAIL,
+  password: process.env.SANDBOX_PASSWORD,
 };
 
 // Pause durations (ms) — adjust for your recording pace

@@ -1401,3 +1401,18 @@ automático, verifique se ele não acusa o comportamento CERTO. Minha primeira
 regra de "cor fria" incluía `emerald`, que o DESIGN.md sanciona explicitamente
 como cor de estado — 176 dos 428 achados eram falsos. Guarda que acusa a cor
 certa ensina todo mundo a ignorar o guarda, e aí ele não protege mais nada.
+
+## 2026-08-25 — Credencial em texto puro: cadastrar o secret não protege nada
+- A senha do sandbox estava hardcoded em 12 arquivos (7 scripts do
+  reels-toolkit, 2 specs e2e, 2 scripts de smoke, tasks/todo.md). Cadastrar
+  `SANDBOX_PASSWORD` como secret do GitHub enquanto as cópias em claro seguem
+  commitadas é teatro: quem clona o repo tem a senha.
+- Ordem certa: tirar do código PRIMEIRO, depois girar a senha, e só então
+  cadastrar o secret. Remover do working tree não apaga do histórico do git —
+  a rotação é o que de fato invalida o que já vazou.
+- Armadilha ao consertar: a primeira versão punha o `throw` no TOPO do módulo.
+  Isso quebra a COLETA do Playwright — `Total: 0 tests in 0 files`, que um CI
+  lê como "nada falhou". Trocar credencial vazada por suíte silenciosamente
+  vazia é piorar. A guarda tem que ficar DENTRO da função de login: coleta
+  funciona, execução sem credencial falha alto.
+- Mesmo padrão da sessão inteira: ausência de sinal lida como sinal positivo.
