@@ -7,7 +7,7 @@ import ThiingsIcon from '../common/ThiingsIcon';
 
 const STATUS_STYLES: Record<string, string> = {
   draft: 'bg-stone-100 text-stone-700',
-  scheduled: 'bg-blue-50 text-blue-700',
+  scheduled: 'bg-stone-50 text-stone-700',
   active: 'bg-amber-50 text-amber-700',
   sending: 'bg-amber-50 text-amber-700',
   completed: 'bg-emerald-50 text-emerald-700',

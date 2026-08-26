@@ -5,7 +5,7 @@ import { type Conversation, type CallFilter, getOutcomeLabelKey, getOutcomePillC
 function callIconStyle(outcome?: string): string {
   switch (outcome) {
     case 'reservation_created': return 'bg-rose-600/[8%] text-rose-600';
-    case 'information_only':    return 'bg-blue-500/[8%] text-blue-500';
+    case 'information_only':    return 'bg-stone-500/[8%] text-stone-500';
     case 'error':               return 'bg-red-600/[8%] text-red-600';
     case 'abandoned':           return 'bg-amber-600/[8%] text-amber-600';
     default:                    return 'bg-soft-gray text-stone-gray';

@@ -48,9 +48,9 @@ export default function CampaignDetail({ campaign }: CampaignDetailProps) {
       {/* Delivery funnel */}
       <div className="space-y-2">
         <span className="text-xs font-medium text-stone-gray">{t('campaigns.deliveryFunnel')}</span>
-        <ProgressBar label={t('campaigns.sent')} value={sent} max={total} color="bg-blue-500" />
+        <ProgressBar label={t('campaigns.sent')} value={sent} max={total} color="bg-stone-500" />
         <ProgressBar label={t('campaigns.delivered')} value={delivered} max={total} color="bg-emerald-500" />
-        <ProgressBar label={t('campaigns.read')} value={read} max={total} color="bg-purple-500" />
+        <ProgressBar label={t('campaigns.read')} value={read} max={total} color="bg-ocre-500" />
         {failed > 0 && (
           <ProgressBar label={t('campaigns.failed')} value={failed} max={total} color="bg-red-500" />
         )}

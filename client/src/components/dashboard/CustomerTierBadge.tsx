@@ -31,7 +31,7 @@ const TIER_STYLES: Record<string, {
     text: 'text-amber-700',
     labels: { en: 'At risk', 'pt-BR': 'Em risco', es: 'En riesgo' },
   },
-  // 'new' era bg-blue-50/text-blue-700 — azul não existe no Warm Glass e
+  // 'new' era bg-stone-50/text-stone-700 — azul não existe no Warm Glass e
   // fazia o cliente novo parecer um estado de sistema, não uma pessoa.
   new: {
     bg: 'bg-emerald-600/[0.10]',

@@ -114,10 +114,10 @@ export default function QuickInterventionModal({
   const t = translations[language as keyof typeof translations] || translations.en;
 
   const actionOptions: Array<{ id: string; label: string; icon: IconName; color: string }> = [
-    { id: 'phone_call', label: t.called, icon: 'phone', color: 'bg-blue-500' },
+    { id: 'phone_call', label: t.called, icon: 'phone', color: 'bg-stone-500' },
     { id: 'sms_reminder', label: t.sentSMS, icon: 'chat', color: 'bg-rose-500' },
     { id: 'whatsapp_reminder', label: t.sentWhatsApp, icon: 'chat', color: 'bg-rose-500' },
-    { id: 'deposit_required', label: t.depositRequired, icon: 'credit-card', color: 'bg-violet-500' },
+    { id: 'deposit_required', label: t.depositRequired, icon: 'credit-card', color: 'bg-ocre-500' },
     { id: 'other', label: t.other, icon: 'check-circle', color: 'bg-warm-stone' }
   ];
 

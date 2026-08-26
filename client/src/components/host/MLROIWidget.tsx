@@ -148,9 +148,9 @@ Example:
           </div>
 
           {/* Total Interventions */}
-          <div className="flex items-center justify-between p-3 bg-violet-600/10 rounded-xl border border-violet-600/20">
+          <div className="flex items-center justify-between p-3 bg-ocre-600/10 rounded-xl border border-ocre-600/20">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-violet-600/20 rounded-xl flex items-center justify-center">
+              <div className="w-10 h-10 bg-ocre-600/20 rounded-xl flex items-center justify-center">
                 <ThiingsIcon name="zap" size="sm" />
               </div>
               <div>

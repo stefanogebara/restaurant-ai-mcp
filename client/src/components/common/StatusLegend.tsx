@@ -34,7 +34,7 @@ interface PaletteTriple {
 
 export const STATUS_PALETTE: Record<SemanticStatusToken, PaletteTriple> = {
   good:    { dot: 'bg-emerald-500', chipBg: 'bg-emerald-50',  chipText: 'text-emerald-700' },
-  active:  { dot: 'bg-blue-500',    chipBg: 'bg-blue-50',     chipText: 'text-blue-700' },
+  active:  { dot: 'bg-stone-500',    chipBg: 'bg-stone-50',     chipText: 'text-stone-700' },
   warn:    { dot: 'bg-amber-500',   chipBg: 'bg-amber-50',    chipText: 'text-amber-700' },
   danger:  { dot: 'bg-red-500',     chipBg: 'bg-red-50',      chipText: 'text-red-700' },
   neutral: { dot: 'bg-stone-400',   chipBg: 'bg-stone-100',   chipText: 'text-stone-700' },

@@ -81,7 +81,7 @@ export default function TeamPage() {
   const roleBadge = (role: TeamMember['role']) => {
     const map: Record<string, string> = {
       owner: 'bg-burgundy/10 text-burgundy',
-      manager: 'bg-blue-50 text-blue-700',
+      manager: 'bg-stone-50 text-stone-700',
       host: 'bg-rose-50 text-rose-700',
       staff: 'bg-soft-gray text-stone-gray',
     };

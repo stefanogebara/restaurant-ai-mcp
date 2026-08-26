@@ -116,7 +116,7 @@ export const BUCKET_LABEL: Record<string, string> = {
 export const BUCKET_CLASS: Record<string, string> = {
   won: 'bg-emerald-600 text-white',
   booked: 'bg-emerald-100 text-emerald-800', replied: 'bg-emerald-100 text-emerald-800',
-  scheduling: 'bg-sky-100 text-sky-800', seen: 'bg-sky-100 text-sky-800',
+  scheduling: 'bg-stone-100 text-stone-800', seen: 'bg-stone-100 text-stone-800',
   sent: 'bg-stone-100 text-stone-700', pending: 'bg-stone-100 text-stone-600',
   handoff: 'bg-amber-100 text-amber-800', porteiro: 'bg-stone-200 text-stone-700',
   refused: 'bg-stone-300 text-stone-800',
@@ -138,9 +138,9 @@ export const INTENT_LABEL: Record<string, string> = {
 
 export const INTENT_CLASS: Record<string, string> = {
   interessado: 'bg-emerald-100 text-emerald-800',
-  pergunta: 'bg-sky-100 text-sky-800',
+  pergunta: 'bg-stone-100 text-stone-800',
   objecao_preco: 'bg-amber-100 text-amber-800',
-  remarcar: 'bg-sky-100 text-sky-800',
+  remarcar: 'bg-stone-100 text-stone-800',
   quer_humano: 'bg-rose-100 text-rose-800',
   nao_interessado: 'bg-stone-100 text-stone-600',
   pessoa_errada: 'bg-stone-100 text-stone-600',

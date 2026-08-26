@@ -148,7 +148,7 @@ export default function ManagerNotesPanel() {
               <span
                 className={`shrink-0 mt-0.5 text-xs px-2 py-0.5 rounded-lg font-medium ${
                   note.is_policy
-                    ? 'bg-blue-100 text-blue-700'
+                    ? 'bg-stone-100 text-stone-700'
                     : 'bg-amber-100 text-amber-700'
                 }`}
               >

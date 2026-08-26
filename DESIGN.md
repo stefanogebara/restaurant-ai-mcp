@@ -219,6 +219,23 @@ Four templates, picked per content goal:
 
 ---
 
+### `ocre` — the prediction colour
+
+| token | value | contrast on `#FAFAF9` |
+|---|---|---|
+| `ocre-600` (DEFAULT) | `#7A6A18` | 5.15:1 — AA, and better than amber itself (4.81) |
+
+Added 26 Aug 2026 for the 63 `violet` usages that marked model output. The
+system had a colour for **action** (burgundy) and for **status** (emerald /
+amber / red), and none for **prediction** — so every screen reached for the
+industry's purple. Nobody disobeyed; the token was missing.
+
+Why olive and not orange: the attention amber is `#B45309`, hue 26°. This ochre
+is 48° — **24° of separation**, enough that a forecast never reads as an alert.
+The choice was measured, not eyeballed.
+
+Full scale (50–900) lives in `client/tailwind.config.js`.
+
 ## Source-of-truth checklist
 
 When shipping a new UI surface, design asset, or social post, check:
@@ -227,6 +244,8 @@ When shipping a new UI surface, design asset, or social post, check:
 - [ ] Borders not shadows on flow-level cards
 - [ ] Burgundy reserved for action — semantic colours for status. **Rose/crimson counts as burgundy**: a "confirmed" badge in `rose-600` is the same violation wearing a different name
 - [ ] Nothing cool in a warm system — no `violet-*`, `blue-*`, `slate-*`, `gray-*`, and none of the Tailwind cool greys as raw hex (`#111827` / `#6B7280` / `#9CA3AF` / `#E5E7EB`)
+- [ ] **Information is not a colour.** Notices, counts and stat tiles live on the canvas — `soft-gray` / `border-gray` / `stone-*`, separated by hairline and spacing. Colouring plain content is decorating data. The ones that *are* status take the semantic colour: see `CustomerTierBadge`, where the "new" badge was blue and became emerald because a new guest is a person, not a system state
+- [ ] **Prediction is `ocre`, never burgundy.** Anything the model produced — weekly forecast, customer DNA, ML ROI, confidence bars — carries `ocre-600`. It used to be `violet` because "AI = purple" is an industry convention this brand never adopted. Burgundy is out of bounds: spending the action colour on a forecast is deviation #1 wearing another name
 - [ ] Icons are inline stroke SVG (`ThiingsIcon`), never emoji or a text glyph — emoji doesn't inherit `currentColor` and renders differently per OS. Emoji is allowed only as *illustration* (a low-opacity watermark), never as an icon
 - [ ] Section labels use the one token: `text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone`
 - [ ] No `font-bold` on `font-serif` — Instrument Serif ships only weight 400 and `font-synthesis` is blocked, so it renders nothing and only misstates the intent

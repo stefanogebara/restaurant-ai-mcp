@@ -37,7 +37,7 @@ export default function LTVKeyMetrics({ stats }: LTVKeyMetricsProps) {
         </div>
       </div>
 
-      <div className="p-4 bg-violet-600/10 rounded-xl border border-violet-600/20">
+      <div className="p-4 bg-ocre-600/10 rounded-xl border border-ocre-600/20">
         <div className="flex items-center justify-between mb-2">
           <ThiingsIcon name="dollar" size="sm" />
           <span className="text-2xl font-bold text-deep-charcoal">{formatCurrency(stats.total_ltv)}</span>

@@ -19,7 +19,7 @@ export default function CustomerProfileHeader({ data }: CustomerProfileHeaderPro
     <div className="glass-card p-6">
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-full bg-violet-600/10 flex items-center justify-center">
+          <div className="w-16 h-16 rounded-full bg-ocre-600/10 flex items-center justify-center">
             <ThiingsIcon name="user" pxSize={32} />
           </div>
           <div>
@@ -67,7 +67,7 @@ export default function CustomerProfileHeader({ data }: CustomerProfileHeaderPro
             <span key={src} className="px-2 py-0.5 bg-soft-gray rounded-full text-xs text-stone-gray">{src.replace('_', ' ')}</span>
           ))}
           {profile.analysis_version && (
-            <span className="px-2 py-0.5 bg-violet-600/10 rounded-full text-xs text-violet-600">{profile.analysis_version}</span>
+            <span className="px-2 py-0.5 bg-ocre-600/10 rounded-full text-xs text-ocre-600">{profile.analysis_version}</span>
           )}
         </div>
       )}

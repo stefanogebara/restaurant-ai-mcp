@@ -46,7 +46,7 @@ export default function TableActionMenu({ table, onClose }: TableActionMenuProps
     {
       label: 'Mark as Reserved',
       iconName: 'clock',
-      color: 'text-violet-600',
+      color: 'text-ocre-600',
       show: table.status !== 'Reserved',
       onClick: () => updateTableMutation.mutate({ status: 'Reserved' }),
     },

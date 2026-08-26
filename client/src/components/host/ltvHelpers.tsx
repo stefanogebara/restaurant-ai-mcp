@@ -3,7 +3,7 @@ import type { IconName } from '../common/ThiingsIcon';
 
 export function getTierColor(tier: string): string {
   switch (tier) {
-    case 'vip': return 'text-violet-600';
+    case 'vip': return 'text-ocre-600';
     case 'regular': return 'text-burgundy';
     case 'occasional': return 'text-rose-600';
     case 'new': return 'text-stone-gray';
@@ -14,7 +14,7 @@ export function getTierColor(tier: string): string {
 
 export function getTierBgColor(tier: string): string {
   switch (tier) {
-    case 'vip': return 'bg-violet-600/10 border-violet-600/30';
+    case 'vip': return 'bg-ocre-600/10 border-ocre-600/30';
     case 'regular': return 'bg-burgundy/10 border-burgundy/30';
     case 'occasional': return 'bg-rose-600/10 border-rose-600/30';
     case 'new': return 'bg-stone-gray/10 border-stone-gray/30';

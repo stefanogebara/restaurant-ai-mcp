@@ -39,7 +39,7 @@ export default function ManagerAIUsageBar() {
     ? 'bg-red-500'
     : isWarning
     ? 'bg-amber-400'
-    : 'bg-blue-500';
+    : 'bg-stone-500';
 
   return (
     <div className="px-3 py-2 space-y-1">

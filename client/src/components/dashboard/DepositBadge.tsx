@@ -17,7 +17,7 @@ export default function DepositBadge({ amount, currency = 'BRL' }: DepositBadgeP
   }).format(amount);
 
   return (
-    <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-violet-600/[8%] text-violet-600">
+    <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-ocre-600/[8%] text-ocre-600">
       {formatted} {t('dashboard.deposit.held', 'held')}
     </span>
   );

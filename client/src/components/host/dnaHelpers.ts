@@ -52,7 +52,7 @@ export function getDiningStyleColor(style: string): string {
   switch (style) {
     case 'solo':     return 'bg-stone-gray/10 border-stone-gray/30 text-stone-gray';
     case 'couple':   return 'bg-burgundy/10 border-burgundy/30 text-burgundy';
-    case 'family':   return 'bg-violet-600/10 border-violet-600/30 text-violet-600';
+    case 'family':   return 'bg-ocre-600/10 border-ocre-600/30 text-ocre-600';
     case 'business': return 'bg-amber-600/10 border-amber-600/30 text-amber-600';
     case 'group':    return 'bg-rose-600/10 border-rose-600/30 text-rose-600';
     default:         return 'bg-stone-gray/10 border-stone-gray/30 text-stone-gray';
@@ -65,7 +65,7 @@ export function getSpontaneityColor(level: string): string {
     case 'spontaneous':      return 'bg-amber-600';
     case 'moderate':         return 'bg-amber-600';
     case 'planner':          return 'bg-rose-600';
-    case 'advance_planner':  return 'bg-violet-600';
+    case 'advance_planner':  return 'bg-ocre-600';
     default:                 return 'bg-stone-gray';
   }
 }

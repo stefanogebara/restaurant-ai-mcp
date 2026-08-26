@@ -29,7 +29,7 @@ const TIME_SLOTS = [
 const STATUS_COLORS: Record<string, { bg: string; border: string; text: string }> = {
   confirmed: { bg: 'bg-rose-100', border: 'border-rose-400', text: 'text-rose-800' },
   pending: { bg: 'bg-amber-100', border: 'border-amber-400', text: 'text-amber-800' },
-  seated: { bg: 'bg-blue-100', border: 'border-blue-400', text: 'text-blue-800' },
+  seated: { bg: 'bg-stone-100', border: 'border-stone-400', text: 'text-stone-800' },
   completed: { bg: 'bg-soft-gray', border: 'border-muted-stone', text: 'text-stone-gray' },
   cancelled: { bg: 'bg-red-100', border: 'border-red-400', text: 'text-red-800' },
   'no-show': { bg: 'bg-red-200', border: 'border-red-500', text: 'text-red-900' },

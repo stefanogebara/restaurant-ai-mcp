@@ -109,12 +109,12 @@ export default function QuickStatsWidget() {
       <div className="p-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {/* Today's Interventions */}
-          <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
+          <div className="bg-stone-50 rounded-xl p-4 border border-stone-100">
             <div className="flex items-center gap-2 mb-2">
-              <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-stone-100 rounded-lg flex items-center justify-center">
                 <ThiingsIcon name="target" size="xs" />
               </div>
-              <span className="text-xs font-medium text-blue-600 uppercase tracking-wide">Today</span>
+              <span className="text-xs font-medium text-stone-600 uppercase tracking-wide">Today</span>
             </div>
             <div className="text-2xl font-bold text-deep-charcoal">
               {stats.today_interventions}

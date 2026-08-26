@@ -25,7 +25,7 @@ const SEGMENTS = [
 
 const STATUS_BADGES: Record<string, { i18nKey: string; label: string; classes: string }> = {
   pending: { i18nKey: 'campaigns.statusDraft', label: 'Draft', classes: 'bg-stone-100 text-stone-600' },
-  scheduled: { i18nKey: 'campaigns.statusScheduled', label: 'Scheduled', classes: 'bg-blue-50 text-blue-700' },
+  scheduled: { i18nKey: 'campaigns.statusScheduled', label: 'Scheduled', classes: 'bg-stone-50 text-stone-700' },
   active: { i18nKey: 'campaigns.statusSending', label: 'Sending', classes: 'bg-amber-50 text-amber-700' },
   sending: { i18nKey: 'campaigns.statusSending', label: 'Sending', classes: 'bg-amber-50 text-amber-700' },
   completed: { i18nKey: 'campaigns.statusCompleted', label: 'Completed', classes: 'bg-rose-50 text-rose-700' },

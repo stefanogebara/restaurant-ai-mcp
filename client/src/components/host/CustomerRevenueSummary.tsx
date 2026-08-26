@@ -59,7 +59,7 @@ export default function CustomerRevenueSummary({ revenueSummary, profile }: Cust
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-stone-gray w-24">Wine</span>
                   <div className="flex-1 bg-soft-gray h-2 rounded-full overflow-hidden">
-                    <div className="h-full bg-violet-600" style={{ width: `${profile.orders_wine_pct}%` }} />
+                    <div className="h-full bg-ocre-600" style={{ width: `${profile.orders_wine_pct}%` }} />
                   </div>
                   <span className="text-xs text-stone-gray w-10 text-right">{profile.orders_wine_pct}%</span>
                 </div>

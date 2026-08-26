@@ -44,8 +44,11 @@ describe('Toast', () => {
     const { container } = render(<Toast message="Please wait" type="info" onClose={vi.fn()} />);
 
     expect(screen.getByText('Please wait')).toBeInTheDocument();
-    // Icon container has blue background
-    expect(container.querySelector('.bg-blue-500\\/30')).toBeTruthy();
+    // Neutro, não azul (26/ago/2026). Os quatro tipos passaram a ler como uma
+    // escada de severidade — neutro (info) / positivo (esmeralda) / atenção
+    // (âmbar) / crítico (vermelho). O azul acrescentava um matiz que não
+    // significa nada neste sistema: "info" é justamente o caso SEM severidade.
+    expect(container.querySelector('.bg-stone-500\\/30')).toBeTruthy();
   });
 
   it('auto-dismisses after default duration (3000ms)', () => {

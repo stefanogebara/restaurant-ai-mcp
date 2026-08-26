@@ -39,8 +39,8 @@ const SHOWCASE_ITEMS: ShowcaseItem[] = [
     titleKey: 'landing.showcase.voiceTitle',
     descKey: 'landing.showcase.voiceDesc',
     videoSrc: '/videos/voice-demo.mp4',
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-50',
+    color: 'text-stone-600',
+    bgColor: 'bg-stone-50',
   },
   {
     id: 'dashboard',
@@ -95,8 +95,8 @@ function PlaceholderIcon({ type }: { type: 'whatsapp' | 'phone' | 'dashboard' })
   }
   if (type === 'phone') {
     return (
-      <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center">
-        <svg viewBox="0 0 24 24" className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" strokeWidth={1.5}>
+      <div className="w-16 h-16 rounded-full bg-stone-100 flex items-center justify-center">
+        <svg viewBox="0 0 24 24" className="w-8 h-8 text-stone-600" fill="none" stroke="currentColor" strokeWidth={1.5}>
           <path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 3.09 5.18 2 2 0 0 1 5.11 3h3a2 2 0 0 1 2 1.72c.13.81.36 1.6.68 2.34a2 2 0 0 1-.45 2.11L8.91 10.6a16 16 0 0 0 6.49 6.49l1.43-1.43a2 2 0 0 1 2.11-.45c.74.32 1.53.55 2.34.68A2 2 0 0 1 22 16.92z" />
         </svg>
       </div>

@@ -94,7 +94,7 @@ export default function CallConversationModal({ conversation, onClose }: Props) 
         <div className="p-6 space-y-6">
           {/* Summary */}
           {conversation.summary && (
-            <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4">
+            <div className="bg-stone-500/10 border border-stone-500/20 rounded-xl p-4">
               <div className="flex items-start gap-3">
                 <ThiingsIcon name="chat" size="sm" className="mt-0.5" />
                 <div>
@@ -178,7 +178,7 @@ export default function CallConversationModal({ conversation, onClose }: Props) 
                     key={idx}
                     className={`p-3 rounded-xl ${
                       message.role === 'user'
-                        ? 'bg-blue-500/10 ml-4 sm:ml-8'
+                        ? 'bg-stone-500/10 ml-4 sm:ml-8'
                         : 'bg-rose-500/10 mr-4 sm:mr-8'
                     }`}
                   >

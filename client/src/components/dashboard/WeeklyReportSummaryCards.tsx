@@ -14,7 +14,7 @@ export default function WeeklyReportSummaryCards({ summary }: WeeklyReportSummar
         <div className="text-[11px] font-medium text-muted-stone mb-1.5 tracking-wide">{t('analytics.totalReservations')}</div>
         <div className="text-2xl font-bold tracking-tight">{summary.total_reservations}</div>
         {summary.previous_covers === 0 && summary.total_covers > 0 ? (
-          <div className="text-[11px] font-medium mt-1 text-blue-600">{t('analytics.new', 'New')}</div>
+          <div className="text-[11px] font-medium mt-1 text-stone-600">{t('analytics.new', 'New')}</div>
         ) : summary.previous_covers >= 3 && (
           <div className={`text-[11px] font-medium mt-1 ${summary.covers_change_percent >= 0 ? 'text-rose-600' : 'text-red-600'}`}>
             {summary.covers_change_percent >= 0 ? '+' : ''}{summary.covers_change_percent}% {t('analytics.vsPrevWeek', 'vs prev week')}
@@ -39,7 +39,7 @@ export default function WeeklyReportSummaryCards({ summary }: WeeklyReportSummar
         <div className="text-[11px] font-medium text-muted-stone mb-1.5 tracking-wide">{t('analytics.totalCovers')}</div>
         <div className="text-2xl font-bold tracking-tight text-burgundy">{summary.total_covers}</div>
         {summary.previous_covers === 0 && summary.total_covers > 0 ? (
-          <div className="text-[11px] font-medium mt-1 text-blue-600">{t('analytics.new', 'New')}</div>
+          <div className="text-[11px] font-medium mt-1 text-stone-600">{t('analytics.new', 'New')}</div>
         ) : summary.previous_covers >= 3 && (
           <div className={`text-[11px] font-medium mt-1 ${summary.covers_change_percent >= 0 ? 'text-rose-600' : 'text-red-600'}`}>
             {summary.covers_change_percent >= 0 ? '+' : ''}{summary.covers_change_percent}%

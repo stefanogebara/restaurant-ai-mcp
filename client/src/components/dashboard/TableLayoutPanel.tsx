@@ -296,11 +296,11 @@ const actionColors = {
     sub: 'text-emerald-700',
   },
   blue: {
-    bg: 'bg-blue-50 hover:bg-blue-100',
-    border: 'border-blue-200',
-    iconBg: 'bg-blue-600',
-    title: 'text-blue-900',
-    sub: 'text-blue-700',
+    bg: 'bg-stone-50 hover:bg-stone-100',
+    border: 'border-stone-200',
+    iconBg: 'bg-stone-600',
+    title: 'text-stone-900',
+    sub: 'text-stone-700',
   },
   amber: {
     bg: 'bg-amber-50 hover:bg-amber-100',

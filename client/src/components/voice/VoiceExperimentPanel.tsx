@@ -27,7 +27,7 @@ export default function VoiceExperimentPanel() {
         </p>
         <button
           onClick={() => {}}
-          className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700"
+          className="px-4 py-2 bg-ocre-600 text-white rounded-lg text-sm hover:bg-ocre-700"
         >
           Start New Experiment
         </button>
@@ -85,7 +85,7 @@ export default function VoiceExperimentPanel() {
       </p>
       <button
         onClick={() => {}}
-        className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700"
+        className="px-4 py-2 bg-ocre-600 text-white rounded-lg text-sm hover:bg-ocre-700"
       >
         Create Experiment
       </button>

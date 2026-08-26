@@ -447,7 +447,7 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
             return (
               <span
                 className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-medium ${
-                  isWhatsApp ? 'bg-green-50 text-green-700' : 'bg-blue-500/10 text-blue-600'
+                  isWhatsApp ? 'bg-green-50 text-green-700' : 'bg-stone-500/10 text-stone-600'
                 }`}
                 title={label}
               >
@@ -713,10 +713,10 @@ function CrmBadges({ reservation }: { reservation: UpcomingReservation }) {
     badges.push({ icon: '⚠️', label: reservation.dietary_restrictions[0], color: 'bg-red-50 text-red-700' });
   }
   if (reservation.special_occasion) {
-    badges.push({ icon: '🎂', label: reservation.special_occasion, color: 'bg-purple-50 text-purple-700' });
+    badges.push({ icon: '🎂', label: reservation.special_occasion, color: 'bg-ocre-50 text-ocre-700' });
   }
   if (reservation.seating_preference) {
-    badges.push({ icon: '💺', label: reservation.seating_preference, color: 'bg-blue-50 text-blue-700' });
+    badges.push({ icon: '💺', label: reservation.seating_preference, color: 'bg-stone-50 text-stone-700' });
   }
 
   if (badges.length === 0) return null;

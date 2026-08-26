@@ -183,8 +183,8 @@ export default function ReservationNotesEditor({
                 onClick={() => setLanguagePreference(lang.code)}
                 className={`p-3 rounded-2xl border-2 transition-all ${
                   languagePreference === lang.code
-                    ? 'bg-violet-600/10 border-violet-600 text-violet-600'
-                    : 'bg-soft-gray border-border-gray text-stone-gray hover:border-violet-600/50'
+                    ? 'bg-ocre-600/10 border-ocre-600 text-ocre-600'
+                    : 'bg-soft-gray border-border-gray text-stone-gray hover:border-ocre-600/50'
                 }`}
               >
                 <div className="text-2xl mb-1">{lang.flag}</div>
@@ -260,8 +260,8 @@ export default function ReservationNotesEditor({
                 onClick={() => setAccessibilityNeeds(need)}
                 className={`p-3 rounded-2xl border-2 transition-all ${
                   accessibilityNeeds === need
-                    ? 'bg-cyan-600/10 border-cyan-600 text-cyan-600'
-                    : 'bg-soft-gray border-border-gray text-stone-gray hover:border-cyan-600/50'
+                    ? 'bg-stone-600/10 border-stone-600 text-stone-600'
+                    : 'bg-soft-gray border-border-gray text-stone-gray hover:border-stone-600/50'
                 }`}
               >
                 <div className="font-medium">{need}</div>

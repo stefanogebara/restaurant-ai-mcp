@@ -196,7 +196,7 @@ export default function GymPanel() {
                   média {result.scores?.media ?? '—'} de 5
                 </span>
                 {result.terminal && (
-                  <span className="px-2 py-0.5 rounded-full text-xs bg-sky-100 text-sky-800" title="Como a conversa simulada terminou">→ {result.terminal}</span>
+                  <span className="px-2 py-0.5 rounded-full text-xs bg-stone-100 text-stone-800" title="Como a conversa simulada terminou">→ {result.terminal}</span>
                 )}
               </div>
               {result.scores?.veredicto && (

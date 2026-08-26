@@ -98,7 +98,7 @@ function StatCard({ label, value, iconName, color }: StatCardProps) {
     },
     violet: {
       bg: 'bg-white border border-border-gray',
-      iconBg: 'bg-violet-600',
+      iconBg: 'bg-ocre-600',
     },
     amber: {
       bg: 'bg-white border border-border-gray',
