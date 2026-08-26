@@ -48,7 +48,7 @@ function StepHeader({ n, title, subtitle }: { n: string; title: string; subtitle
 function FunnelLine({ label, r }: { label: string; r: { found: number; sendable: number; inserted: number; discarded: number } }) {
   return (
     <div className="rounded-xl border border-stone-200/70 bg-white/50 px-3 py-2 text-xs text-stone-600">
-      {label}: {r.found} restaurantes encontrados · <span className="text-emerald-700 font-medium">{r.sendable} com telefone</span> · <span className="text-sky-700 font-medium">{r.inserted} novos na lista</span> · {r.discarded} sem telefone (descartados)
+      {label}: {r.found} restaurantes encontrados · <span className="text-emerald-700 font-medium">{r.sendable} com telefone</span> · <span className="text-stone-700 font-medium">{r.inserted} novos na lista</span> · {r.discarded} sem telefone (descartados)
     </div>
   );
 }
@@ -288,7 +288,7 @@ export default function DiscoveryPanel() {
         </label>
 
         {job && (
-          <div className={`rounded-xl border px-3 py-2 ${job.status === 'running' ? 'border-sky-200 bg-sky-50/60' : job.status === 'done' ? 'border-emerald-200 bg-emerald-50/60' : 'border-stone-200 bg-stone-50'}`}>
+          <div className={`rounded-xl border px-3 py-2 ${job.status === 'running' ? 'border-stone-200 bg-stone-50/60' : job.status === 'done' ? 'border-emerald-200 bg-emerald-50/60' : 'border-stone-200 bg-stone-50'}`}>
             <div className="flex items-center justify-between gap-2">
               <p className="text-xs font-medium text-stone-700">
                 {job.status === 'running' ? '🔎 Varredura em andamento — roda sozinha, pode fechar esta tela' : job.status === 'done' ? '✅ Varredura concluída' : job.status === 'error' ? `⚠ Erro: ${job.error_detail}` : '⏹ Cancelada'}
@@ -300,7 +300,7 @@ export default function DiscoveryPanel() {
             </div>
             <div className="mt-1.5 h-2 rounded-full bg-stone-100 overflow-hidden">
               <div
-                className={`h-full transition-all ${job.status === 'done' ? 'bg-emerald-400' : 'bg-sky-400'}`}
+                className={`h-full transition-all ${job.status === 'done' ? 'bg-emerald-400' : 'bg-stone-400'}`}
                 style={{ width: `${job.total_queries ? Math.round((100 * job.cursor) / job.total_queries) : 0}%` }}
               />
             </div>

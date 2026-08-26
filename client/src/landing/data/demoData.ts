@@ -144,14 +144,14 @@ export const FEATURES = [
     icon: "Bot",
     title: "AI-Powered Reservations",
     description: "Natural conversation interface for customers to book tables via voice or text",
-    gradient: "from-indigo-500 to-purple-500",
+    gradient: "from-ocre-500 to-ocre-500",
     demo: "Call our demo restaurant and experience the AI in action",
   },
   {
     icon: "LayoutDashboard",
     title: "Real-Time Host Dashboard",
     description: "Comprehensive dashboard for managing walk-ins, reservations, and table assignments",
-    gradient: "from-purple-500 to-pink-500",
+    gradient: "from-ocre-500 to-pink-500",
     demo: "View live table status, occupancy, and active parties",
   },
   {
@@ -172,14 +172,14 @@ export const FEATURES = [
     icon: "Bell",
     title: "Automated Notifications",
     description: "Email alerts for reservation confirmations and table ready notifications",
-    gradient: "from-blue-500 to-indigo-500",
+    gradient: "from-stone-500 to-ocre-500",
     demo: "Customers receive instant confirmation and updates",
   },
   {
     icon: "BarChart3",
     title: "Analytics & Insights",
     description: "Track occupancy rates, peak hours, and customer patterns to optimize operations",
-    gradient: "from-violet-500 to-purple-500",
+    gradient: "from-ocre-500 to-ocre-500",
     demo: "Visualize your restaurant's performance metrics",
   },
 ];

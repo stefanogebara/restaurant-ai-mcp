@@ -52,7 +52,7 @@ export default function RevenueByPartySizeWidget() {
               </div>
               <div className="h-2 bg-soft-gray rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-violet-400 rounded-full transition-all"
+                  className="h-full bg-ocre-400 rounded-full transition-all"
                   style={{ width: `${pct}%` }}
                 />
               </div>

@@ -37,6 +37,34 @@ export default {
         // soft-gray (#F5F5F4), border-gray (#E7E5E4), warm-stone, muted-stone,
         // deep-charcoal. Para ESTADO use âmbar/esmeralda/vermelho — nunca
         // burgundy, que é reservado à ação.
+        // ── Ocre: a cor de PREVISÃO ───────────────────────────────────
+        //
+        // Marca o que veio do MODELO, não da planilha do dono: previsão
+        // semanal, DNA do cliente, ROI do ML, barras de confiança. Era violeta
+        // — 63 usos — porque "IA = roxo" é convenção da indústria e o sistema
+        // não tinha token para isso. Ninguém desobedeceu; faltava a cor.
+        //
+        // Por que não burgundy: o DESIGN.md reserva a cor de AÇÃO. Gastá-la em
+        // previsão é o desvio nº1 ("cor de ação usada como estado") com outro
+        // nome — o mesmo dos selos `confirmed` em rose.
+        //
+        // Por que oliva e não laranja: o âmbar de ATENÇÃO é #B45309, matiz 26°.
+        // Este ocre é 48° — 24° de separação, o suficiente para o olho não
+        // confundir previsão com alerta. Contraste do 600 sobre #FAFAF9:
+        // 5.15:1, acima do mínimo AA e melhor que o próprio âmbar (4.81).
+        ocre: {
+          DEFAULT: '#7A6A18',
+          50:  '#FAF7EA',
+          100: '#F2ECCF',
+          200: '#E3D79F',
+          300: '#CFBC66',
+          400: '#B49F3C',
+          500: '#96842A',
+          600: '#7A6A18',
+          700: '#635619',
+          800: '#4C4215',
+          900: '#3A3210',
+        },
         // Modern Elegant Theme Colors
         'warm-white': '#FAFAF9',
         'soft-gray': '#F5F5F4',

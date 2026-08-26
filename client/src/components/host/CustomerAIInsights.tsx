@@ -59,7 +59,7 @@ export default function CustomerAIInsights({ textSignals, onAnalyze }: CustomerA
               <div className="text-xs text-stone-gray mb-1">{t('host.customerProfile.aiInsights.seatingPreferences')}</div>
               <div className="flex flex-wrap gap-1">
                 {textSignals.seating_preferences.map((s) => (
-                  <span key={s} className="px-2 py-0.5 bg-violet-600/10 text-violet-600 text-xs rounded-full">{s}</span>
+                  <span key={s} className="px-2 py-0.5 bg-ocre-600/10 text-ocre-600 text-xs rounded-full">{s}</span>
                 ))}
               </div>
             </div>

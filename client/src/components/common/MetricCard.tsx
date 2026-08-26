@@ -28,14 +28,14 @@ export default function MetricCard({
     emerald: 'bg-rose-500/10 text-rose-600 border-rose-500/20',
     amber: 'bg-amber-500/10 text-amber-600 border-amber-500/20',
     red: 'bg-red-500/10 text-red-600 border-red-500/20',
-    blue: 'bg-blue-500/10 text-blue-600 border-blue-500/20'
+    blue: 'bg-stone-500/10 text-stone-600 border-stone-500/20'
   };
 
   const trendColorClasses = {
     emerald: 'text-rose-600 bg-rose-500/10',
     amber: 'text-amber-600 bg-amber-500/10',
     red: 'text-red-600 bg-red-500/10',
-    blue: 'text-blue-600 bg-blue-500/10'
+    blue: 'text-stone-600 bg-stone-500/10'
   };
 
   if (loading) {

@@ -43,7 +43,7 @@ export default function DNACustomerList({
             placeholder={t('host.dnaCustomerList.searchPlaceholder', 'Search by name or phone...')}
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 text-sm bg-white/60 backdrop-blur-glass-chip border border-glass-border-input rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-600/30 focus:border-violet-600"
+            className="w-full pl-9 pr-3 py-2 text-sm bg-white/60 backdrop-blur-glass-chip border border-glass-border-input rounded-xl focus:outline-none focus:ring-2 focus:ring-ocre-600/30 focus:border-ocre-600"
           />
         </div>
         <div className="relative">
@@ -52,7 +52,7 @@ export default function DNACustomerList({
             value={styleFilter}
             onChange={(e) => onStyleFilterChange(e.target.value)}
             aria-label="Filter by dining style"
-            className="pl-9 pr-8 py-2 text-sm bg-white/60 backdrop-blur-glass-chip border border-glass-border-input rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-600/30 focus:border-violet-600 appearance-none cursor-pointer"
+            className="pl-9 pr-8 py-2 text-sm bg-white/60 backdrop-blur-glass-chip border border-glass-border-input rounded-xl focus:outline-none focus:ring-2 focus:ring-ocre-600/30 focus:border-ocre-600 appearance-none cursor-pointer"
           >
             <option value="">All Styles</option>
             <option value="solo">Solo</option>
@@ -84,7 +84,7 @@ export default function DNACustomerList({
             <button
               key={customer.customer_id}
               onClick={() => navigate(`/host-dashboard/dna/${encodeURIComponent(customer.customer_id)}`)}
-              className="w-full px-3 py-3 glass-card border-transparent hover:border-violet-600/30 transition-all text-left"
+              className="w-full px-3 py-3 glass-card border-transparent hover:border-ocre-600/30 transition-all text-left"
             >
               {/* Mobile */}
               <div className="flex md:hidden items-center justify-between">
@@ -128,7 +128,7 @@ export default function DNACustomerList({
                 </div>
                 <div className="col-span-2 flex items-center justify-center gap-1">
                   <div className="w-16 bg-border-gray h-1.5 rounded-full overflow-hidden">
-                    <div className="h-full bg-violet-600 rounded-full" style={{ width: `${customer.profile_confidence}%` }} />
+                    <div className="h-full bg-ocre-600 rounded-full" style={{ width: `${customer.profile_confidence}%` }} />
                   </div>
                   <span className="text-xs text-stone-gray">{customer.profile_confidence}%</span>
                 </div>

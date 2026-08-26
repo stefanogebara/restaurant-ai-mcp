@@ -37,10 +37,10 @@ export default function Toast({ message, type, onClose, duration = 3000 }: Toast
         };
       case 'info':
         return {
-          bg: 'bg-blue-500/20 border-blue-500/50',
+          bg: 'bg-stone-500/20 border-stone-500/50',
           iconName: 'info' as const,
-          iconBg: 'bg-blue-500/30',
-          text: 'text-blue-400',
+          iconBg: 'bg-stone-500/30',
+          text: 'text-stone-400',
         };
     }
   };

@@ -62,10 +62,10 @@ function ContextCard({ lead }: { lead: ProspectLead }) {
   if (Array.isArray(fatos.interesses) && fatos.interesses.length) linhas.push(`Interesses: ${(fatos.interesses as string[]).join('; ')}`);
   if (!lead.conversa_resumo && linhas.length === 0) return null;
   return (
-    <div className="rounded-xl bg-sky-50/70 border border-sky-100 px-3 py-2 mb-2">
-      {lead.conversa_resumo && <p className="text-xs text-sky-900">{lead.conversa_resumo}</p>}
+    <div className="rounded-xl bg-stone-50/70 border border-stone-100 px-3 py-2 mb-2">
+      {lead.conversa_resumo && <p className="text-xs text-stone-900">{lead.conversa_resumo}</p>}
       {linhas.length > 0 && (
-        <p className="text-[11px] text-sky-700 mt-0.5">{linhas.join(' · ')}</p>
+        <p className="text-[11px] text-stone-700 mt-0.5">{linhas.join(' · ')}</p>
       )}
     </div>
   );
@@ -277,7 +277,7 @@ export default function ThreadView({ leadId, nowMs }: { leadId: string; nowMs: n
                     act.mutate({ action: 'remarcar', body: { lead_id: lead.id, motivo: 'pedir' } });
                   }
                 }}
-                className="px-2.5 py-1 text-xs rounded-lg bg-sky-100 text-sky-800 hover:bg-sky-200 disabled:opacity-50"
+                className="px-2.5 py-1 text-xs rounded-lg bg-stone-100 text-stone-800 hover:bg-stone-200 disabled:opacity-50"
                 title="Cancela o evento no Google Calendar e a Olímpia pede um novo dia/horário ao lead"
               >
                 Remarcar

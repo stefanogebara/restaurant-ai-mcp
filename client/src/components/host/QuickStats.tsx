@@ -90,7 +90,7 @@ export default function QuickStats({ analyticsData, isLoading }: QuickStatsProps
           {/* Avg Party Size */}
           <div className="flex items-center justify-between p-3 bg-soft-gray rounded-xl">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-violet-600 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-ocre-600 rounded-lg flex items-center justify-center">
                 <ThiingsIcon name="users" size="sm" />
               </div>
               <div>

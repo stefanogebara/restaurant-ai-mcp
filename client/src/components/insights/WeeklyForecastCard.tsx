@@ -34,8 +34,8 @@ export default function WeeklyForecastCard() {
   return (
     <div className="border border-glass-border-dark rounded-lg overflow-hidden">
       <div className="p-5 border-b border-glass-border-dark flex items-center gap-3">
-        <div className="w-8 h-8 rounded-xl bg-purple-50 flex items-center justify-center flex-shrink-0">
-          <ThiingsIcon name="calendar" pxSize={16} className="text-purple-600" />
+        <div className="w-8 h-8 rounded-xl bg-ocre-50 flex items-center justify-center flex-shrink-0">
+          <ThiingsIcon name="calendar" pxSize={16} className="text-ocre-600" />
         </div>
         <div>
           <h2 className="text-sm font-semibold text-deep-charcoal">{t('insights.customerHealth')}</h2>
@@ -54,9 +54,9 @@ export default function WeeklyForecastCard() {
                 <div className="text-xl font-bold text-amber-700">{stats.tiers?.vip ?? 0}</div>
                 <div className="text-xs text-amber-600 font-medium">{t('insights.vips')}</div>
               </div>
-              <div className="text-center p-3 bg-blue-50 rounded-xl border border-blue-100">
-                <div className="text-xl font-bold text-blue-700">{stats.tiers?.regular ?? 0}</div>
-                <div className="text-xs text-blue-600 font-medium">{t('insights.regulars')}</div>
+              <div className="text-center p-3 bg-stone-50 rounded-xl border border-stone-100">
+                <div className="text-xl font-bold text-stone-700">{stats.tiers?.regular ?? 0}</div>
+                <div className="text-xs text-stone-600 font-medium">{t('insights.regulars')}</div>
               </div>
               <div className="text-center p-3 bg-red-50 rounded-xl border border-red-100">
                 <div className="text-xl font-bold text-red-600">{stats.high_risk_customers ?? 0}</div>

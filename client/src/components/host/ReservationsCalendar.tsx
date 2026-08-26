@@ -277,7 +277,7 @@ export default function ReservationsCalendar({ reservations, onCheckIn, onRecord
                               e.stopPropagation();
                               onRecordOutcome(reservation);
                             }}
-                            className="px-3 py-2 text-sm bg-violet-600 text-white rounded-xl hover:bg-violet-700 transition-colors font-medium"
+                            className="px-3 py-2 text-sm bg-ocre-600 text-white rounded-xl hover:bg-ocre-700 transition-colors font-medium"
                             title="Record actual outcome for ML training"
                           >
                             📊 {t('reservationsCalendar.outcome')}
@@ -323,7 +323,7 @@ export default function ReservationsCalendar({ reservations, onCheckIn, onRecord
             <div className="text-xs text-muted-stone">{t('reservationsCalendar.daysWithBookings')}</div>
           </div>
           <div>
-            <div className="text-2xl font-bold text-violet-600">
+            <div className="text-2xl font-bold text-ocre-600">
               {reservations.reduce((sum, r) => sum + (r.party_size || 0), 0)}
             </div>
             <div className="text-xs text-muted-stone">{t('reservationsCalendar.totalGuests')}</div>

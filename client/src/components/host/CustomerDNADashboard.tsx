@@ -95,7 +95,7 @@ export default function CustomerDNADashboard() {
         <h2 className="text-xl font-serif text-deep-charcoal flex items-center gap-2">
           <ThiingsIcon name="brain" pxSize={20} />
           Customer DNA Profiling
-          <span className="px-2 py-1 bg-violet-600/20 text-violet-600 text-sm rounded-full font-semibold">
+          <span className="px-2 py-1 bg-ocre-600/20 text-ocre-600 text-sm rounded-full font-semibold">
             {stats.total_profiles} Profiles
           </span>
         </h2>
@@ -108,7 +108,7 @@ export default function CustomerDNADashboard() {
         <div className="px-6 pb-6 space-y-4">
           {/* Key Metrics */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="p-4 bg-violet-600/10 rounded-xl border border-violet-600/20">
+            <div className="p-4 bg-ocre-600/10 rounded-xl border border-ocre-600/20">
               <div className="flex items-center justify-between mb-2">
                 <ThiingsIcon name="brain" pxSize={20} />
                 <span className="text-2xl font-bold text-deep-charcoal">{stats.total_profiles}</span>

@@ -50,7 +50,7 @@ export default function DNAStatsBreakdown({ stats }: DNAStatsBreakdownProps) {
             const percentage = totalDayTypes > 0 ? (count / totalDayTypes) * 100 : 0;
             const isWeekend = dayType === 'weekend';
             return (
-              <div key={dayType} className={`p-3 rounded-xl border ${isWeekend ? 'bg-amber-600/10 border-amber-600/30' : 'bg-violet-600/10 border-violet-600/30'}`}>
+              <div key={dayType} className={`p-3 rounded-xl border ${isWeekend ? 'bg-amber-600/10 border-amber-600/30' : 'bg-ocre-600/10 border-ocre-600/30'}`}>
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     {isWeekend ? <ThiingsIcon name="sun" pxSize={16} /> : <ThiingsIcon name="moon" pxSize={16} />}
@@ -59,7 +59,7 @@ export default function DNAStatsBreakdown({ stats }: DNAStatsBreakdownProps) {
                   <span className="text-xl font-bold text-deep-charcoal">{count}</span>
                 </div>
                 <div className="w-full bg-white h-2 rounded-full overflow-hidden">
-                  <div className={`h-full ${isWeekend ? 'bg-amber-600' : 'bg-violet-600'}`} style={{ width: `${percentage}%` }} />
+                  <div className={`h-full ${isWeekend ? 'bg-amber-600' : 'bg-ocre-600'}`} style={{ width: `${percentage}%` }} />
                 </div>
               </div>
             );
@@ -87,7 +87,7 @@ export default function DNAStatsBreakdown({ stats }: DNAStatsBreakdownProps) {
                       <span className="text-sm text-stone-gray">{count} ({percentage.toFixed(0)}%)</span>
                     </div>
                     <div className="w-full bg-white h-2 rounded-full overflow-hidden">
-                      <div className="h-full bg-violet-600" style={{ width: `${percentage}%` }} />
+                      <div className="h-full bg-ocre-600" style={{ width: `${percentage}%` }} />
                     </div>
                   </div>
                 </div>

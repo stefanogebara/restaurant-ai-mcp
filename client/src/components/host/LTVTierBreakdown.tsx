@@ -43,7 +43,7 @@ At Risk: Haven't visited in 90+ days - Win-back campaigns`}
                 </div>
                 <div className="w-full bg-white h-2 rounded-full overflow-hidden">
                   <div
-                    className={`h-full ${tier === 'vip' ? 'bg-violet-600' : tier === 'regular' ? 'bg-burgundy' : tier === 'occasional' ? 'bg-rose-600' : tier === 'new' ? 'bg-stone-gray' : 'bg-amber-600'}`}
+                    className={`h-full ${tier === 'vip' ? 'bg-ocre-600' : tier === 'regular' ? 'bg-burgundy' : tier === 'occasional' ? 'bg-rose-600' : tier === 'new' ? 'bg-stone-gray' : 'bg-amber-600'}`}
                     style={{ width: `${percentage}%` }}
                   />
                 </div>

@@ -101,18 +101,18 @@ export default function MotorStrip() {
   return (
     <div className="space-y-2">
     {indicados.length > 0 && (
-      <details className="rounded-xl border border-sky-200 bg-sky-50/60 px-4 py-2">
-        <summary className="text-xs text-sky-900 cursor-pointer">
+      <details className="rounded-xl border border-stone-200 bg-stone-50/60 px-4 py-2">
+        <summary className="text-xs text-stone-900 cursor-pointer">
           📇 <strong>{indicados.length}</strong> {indicados.length === 1 ? 'casa indicou' : 'casas indicaram'} outro número — a Olímpia não escreve para eles
         </summary>
-        <p className="text-[11px] text-sky-800 mt-1.5 mb-2">
+        <p className="text-[11px] text-stone-800 mt-1.5 mb-2">
           Números que a própria casa publicou (menu do robô, “fale com a central”). É contato frio sem modelo aprovado,
           então quem decide falar é você — pelo seu WhatsApp.
         </p>
         <ul className="space-y-1.5">
           {indicados.map((i) => (
             <li key={i.id} className="text-xs">
-              <a href={linkWhats(i.numero)} target="_blank" rel="noreferrer" className="font-mono text-sky-900 underline">
+              <a href={linkWhats(i.numero)} target="_blank" rel="noreferrer" className="font-mono text-stone-900 underline">
                 {i.numero}
               </a>
               <span className="text-stone-700"> · {i.name}</span>

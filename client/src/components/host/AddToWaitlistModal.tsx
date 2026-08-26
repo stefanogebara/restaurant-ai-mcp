@@ -150,7 +150,7 @@ export default function AddToWaitlistModal({ onClose, onSuccess }: AddToWaitlist
                     disabled={currentTags.includes(tag)}
                     className={`px-2.5 py-1 text-xs rounded-full transition-colors ${
                       currentTags.includes(tag)
-                        ? 'bg-violet-600/20 text-violet-600 cursor-not-allowed'
+                        ? 'bg-ocre-600/20 text-ocre-600 cursor-not-allowed'
                         : 'bg-soft-gray hover:bg-border-gray text-stone-gray'
                     }`}
                   >
@@ -163,7 +163,7 @@ export default function AddToWaitlistModal({ onClose, onSuccess }: AddToWaitlist
               {currentTags.length > 0 && (
                 <div className="flex flex-wrap gap-1 mb-2">
                   {currentTags.map((tag, i) => (
-                    <span key={i} className="px-2 py-0.5 text-xs bg-violet-600/10 text-violet-600 rounded-full">
+                    <span key={i} className="px-2 py-0.5 text-xs bg-ocre-600/10 text-ocre-600 rounded-full">
                       {tag}
                     </span>
                   ))}

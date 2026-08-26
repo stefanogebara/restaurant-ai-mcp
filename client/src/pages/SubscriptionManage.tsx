@@ -218,7 +218,7 @@ export default function SubscriptionManage() {
               <div>
                 <span className={`text-xs font-semibold px-3 py-1.5 rounded-full ${
                   subscription.status === 'active' ? 'bg-rose-600/[8%] text-rose-600' :
-                  subscription.status === 'trialing' ? 'bg-sky-500/[8%] text-sky-500' :
+                  subscription.status === 'trialing' ? 'bg-stone-500/[8%] text-stone-500' :
                   subscription.status === 'past_due' ? 'bg-red-600/[8%] text-red-600' :
                   'bg-soft-gray text-stone-gray'
                 }`}>
