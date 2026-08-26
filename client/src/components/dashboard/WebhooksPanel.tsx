@@ -206,7 +206,7 @@ export default function WebhooksPanel() {
           {t('integrations.noWebhooks', 'No webhooks configured. Add one to receive event notifications.')}
         </p>
       ) : (
-        <div className="divide-y divide-[#E5E7EB] border border-glass-border-dark rounded-xl overflow-hidden">
+        <div className="divide-y divide-[#E7E5E4] border border-glass-border-dark rounded-xl overflow-hidden">
           {webhooks.map((wh) => (
             <div key={wh.id} className="px-4 py-3 space-y-1">
               <div className="flex items-center justify-between">

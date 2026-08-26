@@ -190,7 +190,7 @@ export default function DemoAnalyticsPanel({ restaurantName, lang, presetKey }: 
                       className="w-full rounded-t-sm transition-all duration-500"
                       style={{
                         height: `${heightPct}%`,
-                        backgroundColor: isHighlight ? '#9F1239' : '#9CA3AF',
+                        backgroundColor: isHighlight ? '#9F1239' : '#A8A29E',
                         minHeight: 4,
                       }}
                     />

@@ -6,7 +6,7 @@ import type { ReactNode } from 'react';
  * "Vidro é para objetos, não para conteúdo" — um gráfico é objeto, então ele
  * mora numa cápsula de vidro; as métricas e listas ao redor vivem direto no
  * canvas. Os cinco gráficos das Análises repetiam o mesmo cabeçalho
- * (`overflow-hidden` + faixa com `border-b` + label uppercase em #111827
+ * (`overflow-hidden` + faixa com `border-b` + label uppercase em #1C1917
  * cru), cada um com sua cópia. Agora o shell é um só.
  */
 interface ChartPanelProps {

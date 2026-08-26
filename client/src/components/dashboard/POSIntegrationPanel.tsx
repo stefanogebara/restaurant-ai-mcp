@@ -130,7 +130,7 @@ export default function POSIntegrationPanel() {
   };
 
   return (
-    <div className="py-5 border-t border-[#E5E7EB] mt-8">
+    <div className="py-5 border-t border-[#E7E5E4] mt-8">
       <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone mb-3">
         {t('pos.title', 'POS Integration')}
       </h2>
@@ -194,7 +194,7 @@ export default function POSIntegrationPanel() {
             type="button"
             onClick={() => syncMutation.mutate()}
             disabled={syncMutation.isPending}
-            className="px-4 py-2 border border-[#E5E7EB] rounded-lg text-xs font-medium text-stone-gray hover:border-deep-charcoal transition-colors disabled:opacity-50"
+            className="px-4 py-2 border border-[#E7E5E4] rounded-lg text-xs font-medium text-stone-gray hover:border-deep-charcoal transition-colors disabled:opacity-50"
           >
             {syncMutation.isPending ? t('pos.syncing', 'Syncing...') : t('pos.syncNow', 'Sync Menu Now')}
           </button>

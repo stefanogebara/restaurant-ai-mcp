@@ -646,7 +646,7 @@ export default function WhatsAppSettingsPage() {
             <div className="mt-4 glass-card p-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-widest text-[#6B7280]">
+                  <p className="text-[11px] font-semibold uppercase tracking-widest text-[#78716C]">
                     {t('settings.latestTestDelivery', 'Latest test delivery')}
                   </p>
                   <p className="mt-1 text-sm font-medium text-deep-charcoal">{latestTestMessage.recipient_phone}</p>

@@ -92,8 +92,8 @@ export default function TeamPage() {
     <DashboardLayout>
     <div className="max-w-2xl mx-auto py-8 px-4">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-[#111827]">{t('team.title')}</h1>
-        <p className="text-sm text-[#9CA3AF] mt-1">{t('team.subtitle')}</p>
+        <h1 className="text-2xl font-bold text-[#1C1917]">{t('team.title')}</h1>
+        <p className="text-sm text-[#A8A29E] mt-1">{t('team.subtitle')}</p>
       </div>
 
       {can('manageTeam') && (
@@ -143,7 +143,7 @@ export default function TeamPage() {
         </form>
       )}
 
-      <div className="border-t border-[#E5E7EB] mt-8 divide-y divide-[#F3F4F6]">
+      <div className="border-t border-[#E7E5E4] mt-8 divide-y divide-[#F5F5F4]">
         {(isLoading && !loadingTimedOut) ? (
           <div className="p-6 text-center text-sm text-stone-gray">{t('common.loading')}</div>
         ) : (isError || loadingTimedOut) ? (

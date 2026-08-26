@@ -84,7 +84,7 @@ export default function CallConversationList({
             return (
               <div
                 key={conv.id}
-                className="flex items-center py-5 border-b border-[#F3F4F6] gap-3 sm:gap-4 cursor-pointer hover:bg-[#FAFAFA] transition-colors"
+                className="flex items-center py-5 border-b border-[#F5F5F4] gap-3 sm:gap-4 cursor-pointer hover:bg-[#FAFAFA] transition-colors"
                 onClick={() => onConversationClick(conv.id)}
               >
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${callIconStyle(conv.outcome)}`}>

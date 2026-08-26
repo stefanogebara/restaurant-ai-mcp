@@ -179,7 +179,7 @@ export default function SurveySettingsPanel() {
       {/* Results summary */}
       {enabled && !resultsLoading && results && results.count > 0 && (
         <div className="mt-4 pt-4 border-t border-glass-border-dark">
-          <h4 className="text-xs font-semibold uppercase tracking-widest text-[#111827] mb-3">
+          <h4 className="text-xs font-semibold uppercase tracking-widest text-[#1C1917] mb-3">
             {t('dashboard.survey.resultsTitle', 'Results (Last 30 Days)')}
           </h4>
 

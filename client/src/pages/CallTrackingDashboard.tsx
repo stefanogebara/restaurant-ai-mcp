@@ -189,7 +189,7 @@ export default function CallTrackingDashboard() {
               <button
                 type="button"
                 onClick={() => refetchConversations()}
-                className="px-4 py-2 border border-glass-border-dark bg-white/50 backdrop-blur-glass-chip text-[#9CA3AF] hover:border-[#111827] hover:bg-white/80 rounded-lg text-[13px] font-medium transition-colors"
+                className="px-4 py-2 border border-glass-border-dark bg-white/50 backdrop-blur-glass-chip text-[#A8A29E] hover:border-[#1C1917] hover:bg-white/80 rounded-lg text-[13px] font-medium transition-colors"
               >
                 {t('callTracking.refresh')}
               </button>
@@ -212,7 +212,7 @@ export default function CallTrackingDashboard() {
                 disabled={!conversations.length}
                 title={!conversations.length ? t('callTracking.noCallsToExport', 'No calls to export') : ''}
                 className={`px-4 py-2 border border-glass-border-dark bg-white/50 backdrop-blur-glass-chip rounded-lg text-[13px] font-medium transition-colors ${
-                  conversations.length ? 'text-[#9CA3AF] hover:bg-white/80 hover:border-[#111827]' : 'text-[#9CA3AF] cursor-not-allowed opacity-40'
+                  conversations.length ? 'text-[#A8A29E] hover:bg-white/80 hover:border-[#1C1917]' : 'text-[#A8A29E] cursor-not-allowed opacity-40'
                 }`}
               >
                 {t('common.export')}

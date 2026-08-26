@@ -12,7 +12,7 @@ function ProgressBar({ label, value, max, color }: { label: string; value: numbe
   return (
     <div className="flex items-center gap-3">
       <span className="text-xs text-stone-gray w-20 shrink-0">{label}</span>
-      <div className="flex-1 h-2 bg-[#F3F4F6] rounded-full overflow-hidden">
+      <div className="flex-1 h-2 bg-[#F5F5F4] rounded-full overflow-hidden">
         <div
           className={`h-full rounded-full transition-all ${color}`}
           style={{ width: `${pct}%` }}

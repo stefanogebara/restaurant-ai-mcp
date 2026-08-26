@@ -138,7 +138,7 @@ function PaymentForm({
           type="button"
           onClick={handleSubmit}
           disabled={!stripe || !elements || isProcessing}
-          className="flex-1 py-3 bg-[#9F1239] hover:bg-[#881337] disabled:bg-[#E5E7EB] disabled:text-[#706A65] text-white font-semibold rounded-full text-sm transition-colors flex items-center justify-center gap-2"
+          className="flex-1 py-3 bg-[#9F1239] hover:bg-[#881337] disabled:bg-[#E7E5E4] disabled:text-[#706A65] text-white font-semibold rounded-full text-sm transition-colors flex items-center justify-center gap-2"
         >
           {isProcessing ? (
             <>
@@ -239,7 +239,7 @@ export default function EventBookingPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#FAFAF9] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#E5E7EB] border-t-[#9F1239]" />
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#E7E5E4] border-t-[#9F1239]" />
       </div>
     );
   }
@@ -275,7 +275,7 @@ export default function EventBookingPage() {
           <p className="text-sm text-[#706A65] mb-4">
             {t('eventBooking.confirmedDesc', 'A confirmation email has been sent to {{email}}.', { email })}
           </p>
-          <div className="bg-[#FAFAF9] border border-[#E5E7EB] rounded-xl p-4 text-left text-sm space-y-1.5 mb-4">
+          <div className="bg-[#FAFAF9] border border-[#E7E5E4] rounded-xl p-4 text-left text-sm space-y-1.5 mb-4">
             <p className="font-semibold text-[#1C1917]">{event.title}</p>
             <p className="text-[#706A65]">{restaurant?.restaurant_name}</p>
             <p className="text-[#706A65]">{formatDate(event.event_date, i18n.language)} - {formatTime(event.event_time)}</p>
@@ -312,7 +312,7 @@ export default function EventBookingPage() {
       <div className="max-w-lg mx-auto px-4 py-6">
         {/* Cover image */}
         {event.cover_image_url && (
-          <div className="rounded-xl overflow-hidden mb-5 border border-[#E5E7EB]">
+          <div className="rounded-xl overflow-hidden mb-5 border border-[#E7E5E4]">
             <img src={event.cover_image_url} alt={event.title} className="w-full h-48 object-cover" />
           </div>
         )}
@@ -349,7 +349,7 @@ export default function EventBookingPage() {
           </div>
 
           {event.menu_description && (
-            <div className="border-t border-[#E5E7EB] pt-4">
+            <div className="border-t border-[#E7E5E4] pt-4">
               <h3 className="text-xs font-semibold text-[#706A65] uppercase tracking-wide mb-2">
                 {t('eventBooking.menu', 'Menu')}
               </h3>

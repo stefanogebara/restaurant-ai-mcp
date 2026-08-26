@@ -73,7 +73,7 @@ export default function OverviewTab() {
       </div>
 
       {/* Strategy Scorecard */}
-      <div className="border-t border-[#E5E7EB] mt-8 mb-8" />
+      <div className="border-t border-[#E7E5E4] mt-8 mb-8" />
       <div className="mt-6">
         <StrategyMetricsWidget />
         <div className="mt-2 flex justify-end">
@@ -87,7 +87,7 @@ export default function OverviewTab() {
       </div>
 
       {/* WhatsApp Campaigns */}
-      <div className="border-t border-[#E5E7EB] mt-8 mb-8" />
+      <div className="border-t border-[#E7E5E4] mt-8 mb-8" />
       <div className="mt-6">
         <CampaignManager />
       </div>

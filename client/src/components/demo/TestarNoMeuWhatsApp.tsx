@@ -116,7 +116,7 @@ export default function TestarNoMeuWhatsApp({ restaurantId, restaurantName, lang
           type="button"
           onClick={enviar}
           disabled={!podeEnviar}
-          className="shrink-0 rounded-lg bg-[#111827] px-4 py-2 text-sm font-medium text-white disabled:opacity-40"
+          className="shrink-0 rounded-lg bg-[#1C1917] px-4 py-2 text-sm font-medium text-white disabled:opacity-40"
         >
           {estado === 'enviando' ? (pt ? 'Enviando…' : 'Sending…') : (pt ? 'Enviar' : 'Send')}
         </button>

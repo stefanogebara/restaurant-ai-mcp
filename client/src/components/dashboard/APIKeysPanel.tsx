@@ -153,7 +153,7 @@ export default function APIKeysPanel() {
           {t('integrations.noApiKeys', 'No API keys yet. Create one to get started.')}
         </p>
       ) : (
-        <div className="divide-y divide-[#E5E7EB] border border-glass-border-dark rounded-xl overflow-hidden">
+        <div className="divide-y divide-[#E7E5E4] border border-glass-border-dark rounded-xl overflow-hidden">
           {keys.map((key) => (
             <div key={key.id} className="px-4 py-3 flex items-center justify-between">
               <div className="space-y-0.5">

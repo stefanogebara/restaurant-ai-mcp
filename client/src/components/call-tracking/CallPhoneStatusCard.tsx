@@ -145,7 +145,7 @@ export default function CallPhoneStatusCard({
       )}
 
       {/* Action buttons */}
-      <div className="flex flex-wrap items-center gap-3 mt-4 pt-4 border-t border-[#F3F4F6]">
+      <div className="flex flex-wrap items-center gap-3 mt-4 pt-4 border-t border-[#F5F5F4]">
         {(!phoneStatus || phoneStatus.status === 'not_configured' || phoneStatus.status === 'error') && (
           <button
             type="button"

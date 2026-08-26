@@ -34,7 +34,7 @@ export default function FeedbackWidget() {
           <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center">
             <ThiingsIcon name="star" pxSize={16} className="text-amber-600" />
           </div>
-          <h3 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#111827]">{t('dashboard.guestFeedback', 'Guest Feedback')}</h3>
+          <h3 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#1C1917]">{t('dashboard.guestFeedback', 'Guest Feedback')}</h3>
         </div>
         <p className="text-sm text-muted-stone">{t('dashboard.noFeedbackYet', 'No feedback collected yet. Ratings will appear here after guests respond.')}</p>
       </div>
@@ -47,7 +47,7 @@ export default function FeedbackWidget() {
         <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center">
           <ThiingsIcon name="star" pxSize={16} className="text-amber-600" />
         </div>
-        <h3 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#111827]">{t('dashboard.guestFeedback', 'Guest Feedback')}</h3>
+        <h3 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#1C1917]">{t('dashboard.guestFeedback', 'Guest Feedback')}</h3>
         <span className="text-xs text-muted-stone ml-auto">{t('dashboard.last7days', 'Last 7 days')}</span>
       </div>
 

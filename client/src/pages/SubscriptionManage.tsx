@@ -207,7 +207,7 @@ export default function SubscriptionManage() {
               "Plano Atual" badge on the matching tier card below repeated
               the same signal twice. Dropped the inline pill; the in-card
               badge already anchors which plan is current spatially. */}
-          <div className="border-b border-[#E5E7EB] px-0 py-7 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-12">
+          <div className="border-b border-[#E7E5E4] px-0 py-7 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-12">
             <div>
               <div className="flex items-center gap-2.5 mb-1">
                 <span className="text-xl font-bold text-deep-charcoal">{t('subscription.plan', { name: displayPlanName })}</span>
