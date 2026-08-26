@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { FolhaDeConfirmacao } from '../components/onboarding/folha/FolhaDeConfirmacao';
+import OnboardingStepSidebar from '../components/onboarding/OnboardingStepSidebar';
 import type { Preset } from '../lib/personaProposta';
 import type { OnboardingData } from '../types/onboarding.types';
 
@@ -56,6 +57,16 @@ export default function FolhaPrevia() {
         onConcluir={() => setEnviado(true)}
         veioDoDemo={false}
       />
+
+      {/* A barra de passos, para conferir que o wizard perdeu o sexto. Ela
+          tinha uma CÓPIA própria do array de passos — sem unificar, mostraria
+          um "Ensine sua IA" que ninguém consegue alcançar. */}
+      <div className="max-w-[620px] mx-auto px-6 pb-32">
+        <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone mb-3">
+          Passos do formulário (alternativa)
+        </p>
+        <OnboardingStepSidebar currentStep={1} goToStep={() => {}} />
+      </div>
 
       {enviado && (
         <p className="fixed bottom-24 left-1/2 -translate-x-1/2 bg-deep-charcoal text-white text-[14px] px-4 py-2 rounded-xl">

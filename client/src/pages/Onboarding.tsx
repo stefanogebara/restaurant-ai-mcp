@@ -24,7 +24,6 @@ import Step2Contact from '../components/onboarding/Step2Contact';
 import Step3TablesAndSettings from '../components/onboarding/Step3TablesAndSettings';
 import Step4Review from '../components/onboarding/Step4Review';
 import Step5ImportHistory from '../components/onboarding/Step5ImportHistory';
-import Step6TeachAI from '../components/onboarding/Step6TeachAI';
 import { FolhaDeConfirmacao } from '../components/onboarding/folha/FolhaDeConfirmacao';
 import type { Preset } from '../lib/personaProposta';
 import OnboardingSuccessModal from '../components/onboarding/OnboardingSuccessModal';
@@ -38,8 +37,7 @@ import { trackOnboardingStepCompleted, trackOnboardingCompleted } from '../lib/a
 import { LS_CUSTOMER_EMAIL, LS_REFERRAL_CODE, LS_ONBOARDING_DATA, LS_ONBOARDING_STEP, LS_PENDING_DEMO_TOKEN, lsOnboardingDataKey, lsOnboardingStepKey } from '../config/localStorageKeys';
 import { parseOnboardingError } from '../utils/onboardingErrorMessage';
 
-const STEP_NAME_KEYS = ['onboarding.stepName1', 'onboarding.stepName2', 'onboarding.stepName3', 'onboarding.stepName4', 'onboarding.stepName5', 'onboarding.stepName6'];
-const TOTAL_STEPS = 6;
+import { STEP_NAME_KEYS, TOTAL_STEPS } from '../components/onboarding/passos';
 
 export default function Onboarding() {
   const { t } = useTranslation();
@@ -740,15 +738,6 @@ export default function Onboarding() {
           )}
           {currentStep === 5 && (
             <Step5ImportHistory
-              onNext={nextStep}
-            />
-          )}
-          {currentStep === 6 && (
-            <Step6TeachAI
-              restaurantName={onboardingData.restaurant_name}
-              city={onboardingData.city}
-              country={onboardingData.country}
-              website={onboardingData.website}
               onNext={() => setShowSuccessModal(true)}
             />
           )}

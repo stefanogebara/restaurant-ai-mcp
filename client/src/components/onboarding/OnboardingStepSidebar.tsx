@@ -1,7 +1,7 @@
 import ThiingsIcon from '../common/ThiingsIcon';
 import { useTranslation } from 'react-i18next';
 
-const STEP_NAME_KEYS = ['onboarding.stepName1', 'onboarding.stepName2', 'onboarding.stepName3', 'onboarding.stepName4', 'onboarding.stepName5', 'onboarding.stepName6'];
+import { STEP_NAME_KEYS } from './passos';
 
 interface OnboardingStepSidebarProps {
   currentStep: number;
