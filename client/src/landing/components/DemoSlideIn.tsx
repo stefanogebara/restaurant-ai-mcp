@@ -60,7 +60,7 @@ export default function DemoSlideIn() {
 
           <Sparkles size={20} className="text-burgundy mb-3" />
 
-          <h3 className="font-serif text-lg font-semibold text-deep-charcoal mb-1">
+          <h3 className="font-serif text-lg text-deep-charcoal mb-1">
             {t('landing.slideIn.title', 'This is sample data')}
           </h3>
           <p className="text-sm text-muted-stone mb-4">

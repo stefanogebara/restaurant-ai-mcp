@@ -41,7 +41,7 @@ export default function SeoStats({ page }: SeoStatsProps) {
   return (
     <section className="py-16 bg-deep-charcoal">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        <h2 className="font-serif text-2xl sm:text-3xl font-bold text-white mb-3 text-center">
+        <h2 className="font-serif text-2xl sm:text-3xl text-white mb-3 text-center">
           N&uacute;meros que importam para {page.cuisine.toLowerCase()}
         </h2>
         <p className="text-stone-400 text-center mb-12 max-w-2xl mx-auto">

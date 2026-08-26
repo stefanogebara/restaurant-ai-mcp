@@ -57,11 +57,11 @@ export default function PresetDemoSection() {
                     (regra R9 — flags como ícone não pertencem ao sistema). */}
                 <span
                   aria-hidden="true"
-                  className={`w-12 h-12 rounded-2xl flex items-center justify-center font-serif text-xl font-semibold ${p.accent}`}
+                  className={`w-12 h-12 rounded-2xl flex items-center justify-center font-serif text-xl ${p.accent}`}
                 >
                   {p.name.charAt(0)}
                 </span>
-                <h3 className="font-serif text-lg font-semibold text-deep-charcoal">{p.name}</h3>
+                <h3 className="font-serif text-lg text-deep-charcoal">{p.name}</h3>
                 <span className={`text-xs font-medium px-3 py-0.5 rounded-full ${p.accent}`}>{t(p.cuisineKey)}</span>
                 <span className="text-sm text-muted-stone">{t(p.brief)}</span>
                 <span className="absolute bottom-4 right-4 text-muted-stone opacity-0 group-hover:opacity-100 transition-opacity" aria-hidden="true">&rarr;</span>

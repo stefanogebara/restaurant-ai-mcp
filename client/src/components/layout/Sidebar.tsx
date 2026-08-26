@@ -174,11 +174,11 @@ export default function Sidebar() {
           {/* Logo */}
           <div className={`py-6 ${isCollapsed ? 'px-6' : 'px-6'} flex items-center justify-between`}>
             {!isCollapsed ? (
-              <h1 className="font-serif text-[22px] font-semibold text-white tracking-tight">
+              <h1 className="font-serif text-[22px] text-white tracking-tight">
                 seatable<span className="text-burgundy">.</span>
               </h1>
             ) : (
-              <h1 className="font-serif text-[22px] font-semibold text-white tracking-tight mx-auto">
+              <h1 className="font-serif text-[22px] text-white tracking-tight mx-auto">
                 S<span className="text-burgundy">.</span>
               </h1>
             )}

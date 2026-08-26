@@ -16,7 +16,7 @@ export default function CustomerVisitHistory({ reservations, showAll, onToggle }
   return (
     <div className="glass-card p-6">
       <button onClick={onToggle} aria-expanded={showAll} className="w-full flex items-center justify-between">
-        <h2 className="text-lg font-semibold font-serif text-deep-charcoal flex items-center gap-2">
+        <h2 className="text-lg font-serif text-deep-charcoal flex items-center gap-2">
           <ThiingsIcon name="utensils" size="sm" />
           {t('customerVisitHistory.title')}
           <span className="px-2 py-0.5 bg-burgundy/10 text-burgundy text-xs rounded-full font-semibold">{reservations.length}</span>

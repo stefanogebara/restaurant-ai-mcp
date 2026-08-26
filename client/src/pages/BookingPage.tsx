@@ -213,7 +213,7 @@ export default function BookingPage() {
       {/* Top Bar */}
       {!isEmbed && (
         <header className="flex justify-between items-center px-6 sm:px-10 py-4 border-b border-glass-border-dark bg-glass-panel backdrop-blur-glass-nav">
-          <div className="font-serif text-lg font-semibold text-deep-charcoal">
+          <div className="font-serif text-lg text-deep-charcoal">
             seatable<span className="text-burgundy">.</span>
           </div>
           {restaurant?.phone && restaurant.phone !== 'N/A' ? (

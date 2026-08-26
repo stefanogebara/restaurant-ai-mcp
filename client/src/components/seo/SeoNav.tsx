@@ -11,7 +11,7 @@ export default function SeoNav() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between h-16">
         <Link
           to="/"
-          className="font-serif text-xl font-bold text-deep-charcoal hover:opacity-80 transition-opacity"
+          className="font-serif text-xl text-deep-charcoal hover:opacity-80 transition-opacity"
         >
           seatable<span className="text-burgundy">.</span>
         </Link>

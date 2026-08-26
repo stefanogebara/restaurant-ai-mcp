@@ -86,7 +86,7 @@ export default function SeoPricing({ page }: SeoPricingProps) {
   return (
     <section className="py-16 bg-white">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        <h2 className="font-serif text-2xl sm:text-3xl font-bold text-deep-charcoal mb-3 text-center">
+        <h2 className="font-serif text-2xl sm:text-3xl text-deep-charcoal mb-3 text-center">
           Seatable vs. o que {page.cuisine.toLowerCase()} usam hoje
         </h2>
         <p className="text-warm-stone text-center mb-12 max-w-2xl mx-auto">
@@ -142,7 +142,7 @@ export default function SeoPricing({ page }: SeoPricingProps) {
         </div>
 
         {/* Pricing cards */}
-        <h3 className="font-serif text-xl sm:text-2xl font-bold text-deep-charcoal mb-8 text-center">
+        <h3 className="font-serif text-xl sm:text-2xl text-deep-charcoal mb-8 text-center">
           Planos para {page.cuisine.toLowerCase()} de todos os tamanhos
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

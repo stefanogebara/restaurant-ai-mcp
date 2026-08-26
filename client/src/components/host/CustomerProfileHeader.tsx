@@ -24,7 +24,7 @@ export default function CustomerProfileHeader({ data }: CustomerProfileHeaderPro
           </div>
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold font-serif text-deep-charcoal">{displayName}</h1>
+              <h1 className="text-2xl font-serif text-deep-charcoal">{displayName}</h1>
               <span className={`px-3 py-1 rounded-full text-xs font-semibold ${tier.color}`}>{tier.label}</span>
               {textSignals?.vip_signals && (
                 <span className="px-3 py-1 rounded-full text-xs font-semibold bg-amber-600/20 text-amber-600">

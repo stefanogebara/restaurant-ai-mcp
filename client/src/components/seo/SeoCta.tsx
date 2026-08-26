@@ -15,7 +15,7 @@ export default function SeoCta({ page }: SeoCtaProps) {
     <section className="py-16 bg-white">
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
         <div className="bg-deep-charcoal rounded-2xl p-8 sm:p-12 text-center">
-          <h2 className="font-serif text-2xl sm:text-3xl font-bold text-white mb-4">
+          <h2 className="font-serif text-2xl sm:text-3xl text-white mb-4">
             Pronto para transformar as reservas{' '}
             <span className="text-burgundy">
               {page.cuisine.includes('Restaurante') ? 'do seu restaurante' : `da sua ${page.cuisine.toLowerCase().replace(/^restaurantes?\s*(de\s*)?/i, '')}`}

@@ -14,7 +14,7 @@ export default function SeoFooter() {
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <Link
             to="/"
-            className="font-serif text-lg font-bold text-deep-charcoal"
+            className="font-serif text-lg text-deep-charcoal"
           >
             seatable<span className="text-burgundy">.</span>
           </Link>

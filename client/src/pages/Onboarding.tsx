@@ -475,7 +475,7 @@ export default function Onboarding() {
       )}
       {/* Top Bar */}
       <header className="flex items-center justify-between px-6 sm:px-12 py-5 border-b border-glass-border-dark bg-glass-panel backdrop-blur-glass-nav">
-        <div className="font-serif text-xl font-semibold text-deep-charcoal">
+        <div className="font-serif text-xl text-deep-charcoal">
           seatable<span className="text-burgundy">.</span>
         </div>
         <div className="flex items-center gap-4">

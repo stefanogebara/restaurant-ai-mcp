@@ -103,7 +103,7 @@ export default function Footer() {
 
       {/* Bottom bar */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-6 sm:px-16 py-8 border-t border-glass-border-dark">
-        <div className="font-serif text-xl font-semibold text-deep-charcoal">
+        <div className="font-serif text-xl text-deep-charcoal">
           seatable<span className="text-burgundy">.</span>
         </div>
         <div className="text-center sm:text-right">

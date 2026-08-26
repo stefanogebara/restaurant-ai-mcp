@@ -377,7 +377,7 @@ export default function DemoDashboard() {
         {activeView === 'manager-ai' && (
           <div className="space-y-4">
             <div>
-              <h1 className="font-serif text-[22px] font-bold text-stone-900 tracking-tight">{restaurantName}</h1>
+              <h1 className="font-serif text-[22px] text-stone-900 tracking-tight">{restaurantName}</h1>
               <p className="text-stone-500 text-[13px] mt-0.5">
                 {lang === 'es' ? 'IA del Gerente' : lang === 'pt-BR' ? 'IA do Gerente' : 'Manager AI'}
               </p>
@@ -413,7 +413,7 @@ export default function DemoDashboard() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-1">
           <div>
             <div className="flex items-baseline gap-2">
-              <h1 className="font-serif text-[22px] font-bold text-deep-charcoal tracking-tight">
+              <h1 className="font-serif text-[22px] text-deep-charcoal tracking-tight">
                 {restaurantName}
               </h1>
               <span className="text-muted-stone text-sm font-light">
@@ -571,7 +571,7 @@ export default function DemoDashboard() {
         {!isEmbed && (
           <div className="bg-deep-charcoal rounded-2xl p-8 flex flex-col md:flex-row items-center justify-between gap-6">
             <div>
-              <h2 className="text-white text-2xl font-serif font-bold mb-2">{t.readyToGoLive}</h2>
+              <h2 className="text-white text-2xl font-serif mb-2">{t.readyToGoLive}</h2>
               <p className="text-stone-400 text-sm">{t.setupYourOwn}</p>
             </div>
             <Link

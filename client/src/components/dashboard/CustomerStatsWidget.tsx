@@ -77,7 +77,7 @@ function MetricBox({ label, value, valueColor }: MetricBoxProps) {
       <div className="text-[10px] font-bold text-stone-500 uppercase tracking-widest mb-2">
         {label}
       </div>
-      <div className={`font-serif text-2xl font-extrabold tracking-tight leading-none ${valueColor ?? 'text-stone-900'}`}>
+      <div className={`font-serif text-2xl tracking-tight leading-none ${valueColor ??'text-stone-900'}`}>
         {value}
       </div>
     </div>

@@ -138,12 +138,12 @@ export default function DemoSidebar({ lang, activeView = 'dashboard', onNavigate
         {/* Logo */}
         <div className={`py-6 flex items-center justify-between ${collapsed ? 'px-3' : 'px-5'}`}>
           {!collapsed && (
-            <h1 className="font-serif text-[22px] font-semibold text-white tracking-tight">
+            <h1 className="font-serif text-[22px] text-white tracking-tight">
               seatable<span className="text-burgundy">.</span>
             </h1>
           )}
           {collapsed && (
-            <h1 className="font-serif text-[18px] font-semibold text-white tracking-tight mx-auto">
+            <h1 className="font-serif text-[18px] text-white tracking-tight mx-auto">
               s<span className="text-burgundy">.</span>
             </h1>
           )}

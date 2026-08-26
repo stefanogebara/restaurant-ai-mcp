@@ -13,7 +13,7 @@ export default function CustomerPredictions({ predictions, occasions }: Customer
 
   return (
     <div className="glass-card p-6">
-      <h2 className="text-lg font-semibold font-serif text-deep-charcoal mb-4 flex items-center gap-2">
+      <h2 className="text-lg font-serif text-deep-charcoal mb-4 flex items-center gap-2">
         <ThiingsIcon name="trending-up" size="sm" />
         {t('customerPredictions.title')}
       </h2>

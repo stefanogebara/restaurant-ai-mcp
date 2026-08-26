@@ -108,7 +108,7 @@ function MetricCard({
       </div>
 
       <div className="flex items-baseline gap-2 mb-1">
-        <span className={`text-2xl font-semibold font-serif ${bad ? 'text-red-600' : good ? 'text-rose-700' : 'text-deep-charcoal'}`}>
+        <span className={`text-2xl font-serif ${bad ?'text-red-600' : good ? 'text-rose-700' : 'text-deep-charcoal'}`}>
           {value !== null ? metric.format(value) : '—'}
         </span>
         <span className="text-xs text-muted-stone">

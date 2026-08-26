@@ -46,7 +46,7 @@ export default function SeoFaq({ page }: SeoFaqProps) {
   return (
     <section className="py-16 bg-warm-white">
       <div className="max-w-3xl mx-auto px-4 sm:px-6">
-        <h2 className="font-serif text-2xl sm:text-3xl font-bold text-deep-charcoal mb-3 text-center">
+        <h2 className="font-serif text-2xl sm:text-3xl text-deep-charcoal mb-3 text-center">
           Perguntas frequentes sobre reservas para {page.cuisine.toLowerCase()}
         </h2>
         <p className="text-warm-stone text-center mb-10">

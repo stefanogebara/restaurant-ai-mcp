@@ -7,7 +7,7 @@ export default function NotFound() {
     <div className="min-h-screen flex flex-col">
       {/* Nav */}
       <nav className="flex items-center justify-between px-8 sm:px-16 py-6 border-b border-glass-border-dark">
-        <Link to="/" className="font-serif text-2xl font-semibold tracking-tight text-deep-charcoal">
+        <Link to="/" className="font-serif text-2xl tracking-tight text-deep-charcoal">
           seatable<span className="text-burgundy">.</span>
         </Link>
       </nav>

@@ -675,17 +675,17 @@ export default function Login() {
           {/* Trust Indicators - Mobile only (desktop has left panel) */}
           <div className="mt-8 flex flex-wrap justify-center gap-4 sm:gap-8 text-center lg:hidden">
             <div>
-              <div className="text-lg sm:text-xl font-serif font-bold text-deep-charcoal">2.3s</div>
+              <div className="text-lg sm:text-xl font-serif text-deep-charcoal">2.3s</div>
               <div className="text-[10px] sm:text-xs text-stone-gray uppercase tracking-wider">{t('login.statResponse')}</div>
             </div>
             <div className="w-px bg-border-gray"></div>
             <div>
-              <div className="text-lg sm:text-xl font-serif font-bold text-burgundy">6+</div>
+              <div className="text-lg sm:text-xl font-serif text-burgundy">6+</div>
               <div className="text-[10px] sm:text-xs text-stone-gray uppercase tracking-wider">{t('login.statLanguages')}</div>
             </div>
             <div className="w-px bg-border-gray"></div>
             <div>
-              <div className="text-lg sm:text-xl font-serif font-bold text-deep-charcoal">24/7</div>
+              <div className="text-lg sm:text-xl font-serif text-deep-charcoal">24/7</div>
               <div className="text-[10px] sm:text-xs text-stone-gray uppercase tracking-wider">{t('login.statBooking')}</div>
             </div>
           </div>

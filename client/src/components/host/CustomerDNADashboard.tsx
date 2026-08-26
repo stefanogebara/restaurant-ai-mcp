@@ -48,7 +48,7 @@ export default function CustomerDNADashboard() {
     return (
       <div className="glass-card p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold font-serif text-deep-charcoal flex items-center gap-2">
+          <h2 className="text-xl font-serif text-deep-charcoal flex items-center gap-2">
             <ThiingsIcon name="brain" pxSize={20} />
             Customer DNA Profiling
           </h2>
@@ -69,7 +69,7 @@ export default function CustomerDNADashboard() {
             <ThiingsIcon name="brain" pxSize={24} />
           </div>
           <div>
-            <h3 className="text-lg font-semibold font-serif text-deep-charcoal">No DNA Profiles Yet</h3>
+            <h3 className="text-lg font-serif text-deep-charcoal">No DNA Profiles Yet</h3>
             <p className="text-sm text-stone-gray">Analyze customer behavior to unlock insights</p>
           </div>
         </div>
@@ -92,7 +92,7 @@ export default function CustomerDNADashboard() {
         aria-expanded={isExpanded}
         className="w-full p-6 flex items-center justify-between hover:bg-soft-gray/50 transition-colors rounded-t-2xl"
       >
-        <h2 className="text-xl font-bold font-serif text-deep-charcoal flex items-center gap-2">
+        <h2 className="text-xl font-serif text-deep-charcoal flex items-center gap-2">
           <ThiingsIcon name="brain" pxSize={20} />
           Customer DNA Profiling
           <span className="px-2 py-1 bg-violet-600/20 text-violet-600 text-sm rounded-full font-semibold">
@@ -143,7 +143,7 @@ export default function CustomerDNADashboard() {
               >
                 <div className="flex items-center gap-2">
                   <ThiingsIcon name="calendar" pxSize={16} />
-                  <h3 className="text-sm font-semibold font-serif text-deep-charcoal">Upcoming Special Occasions</h3>
+                  <h3 className="text-sm font-serif text-deep-charcoal">Upcoming Special Occasions</h3>
                   <span className="px-2 py-0.5 bg-burgundy/20 text-burgundy text-xs rounded-full font-semibold">
                     {occasions.length}
                   </span>
