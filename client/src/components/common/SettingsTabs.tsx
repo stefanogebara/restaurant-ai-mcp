@@ -98,7 +98,7 @@ export default function SettingsTabs({ tabs, defaultTabId, hashKey, className = 
         role="tablist"
         aria-orientation="horizontal"
         onKeyDown={handleTablistKeyDown}
-        className="flex flex-wrap gap-x-1 gap-y-0 border-b border-[#E5E7EB] -mx-1 px-1"
+        className="flex flex-wrap gap-x-1 gap-y-0 border-b border-[#E7E5E4] -mx-1 px-1"
       >
         {tabs.map((tab) => {
           const isActive = tab.id === activeId;

@@ -451,7 +451,7 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
                 }`}
                 title={label}
               >
-                {isWhatsApp && <span aria-hidden="true">💬</span>}
+                {isWhatsApp && <ThiingsIcon name="chat" pxSize={13} className="text-emerald-600" />}
                 {label}
               </span>
             );
@@ -534,7 +534,7 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
             aria-label={tl('takeActionAriaLabel')}
             className="text-xs font-semibold px-3 py-1.5 rounded-full bg-amber-600 hover:bg-amber-700 text-white transition-colors inline-flex items-center gap-1.5 shadow-sm"
           >
-            <span aria-hidden="true">⚡</span>
+            <ThiingsIcon name="lightning" pxSize={13} className="text-ocre-600" />
             {tl('takeActionButton')}
           </button>
         ) : reservation.intervention_taken ? (

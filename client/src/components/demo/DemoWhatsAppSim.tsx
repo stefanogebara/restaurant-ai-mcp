@@ -223,7 +223,7 @@ export default function DemoWhatsAppSim({ restaurantName, lang, restaurantId, pr
       </div>
 
       {/* Input bar */}
-      <div className="bg-[#F0F0F0] rounded-b-xl px-3 py-2.5 border-t border-[#D1D5DB]">
+      <div className="bg-[#F0F0F0] rounded-b-xl px-3 py-2.5 border-t border-[#D6D3D1]">
         <form
           onSubmit={(e) => { e.preventDefault(); send(input); }}
           className="flex items-center gap-2"

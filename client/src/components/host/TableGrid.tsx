@@ -47,7 +47,7 @@ export default function TableGrid({ tables, onTableClick }: TableGridProps) {
           <div className="flex items-center gap-3 mb-4 mt-2">
             <div
               className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-              style={{ backgroundColor: locationColors[location] || '#6b7280' }}
+              style={{ backgroundColor: locationColors[location] || '#78716C' }}
             />
             <span className="text-sm font-semibold text-deep-charcoal">{t(`floorPlan.location.${location.toLowerCase()}`, location)}</span>
             <span className="text-xs bg-soft-gray text-muted-stone px-2 py-0.5 rounded-full font-medium flex-shrink-0">

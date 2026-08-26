@@ -13,7 +13,7 @@ export default function WeeklyPreferencesPanel({ preferences }: WeeklyPreference
 
   return (
     <div className="overflow-hidden">
-      <div className="flex items-center justify-between py-5 border-b border-[#E5E7EB]">
+      <div className="flex items-center justify-between py-5 border-b border-[#E7E5E4]">
         <span className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">{t('analytics.topGuestPreferences')}</span>
       </div>
       <div className="py-6">

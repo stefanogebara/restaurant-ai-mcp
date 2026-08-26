@@ -32,7 +32,7 @@ function ChannelCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="border border-[#E5E7EB] rounded-xl p-5 space-y-3">
+    <div className="border border-[#E7E5E4] rounded-xl p-5 space-y-3">
       <div>
         <h3 className="text-sm font-semibold text-deep-charcoal">{title}</h3>
         <p className="text-xs text-warm-stone mt-0.5">{description}</p>
@@ -86,7 +86,7 @@ export default function BookingChannelsPanel({ slug }: Props) {
   }, []);
 
   return (
-    <div className="py-5 border-t border-[#E5E7EB] mt-8 space-y-5">
+    <div className="py-5 border-t border-[#E7E5E4] mt-8 space-y-5">
       <div>
         <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">
           {t('bookingChannels.title', 'Booking Channels')}

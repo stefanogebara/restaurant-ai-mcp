@@ -1,39 +1,6 @@
 {
-  "components/call-tracking/CallConversationList.tsx": {
-    "cinzaFrio": 1
-  },
-  "components/call-tracking/CallPhoneStatusCard.tsx": {
-    "cinzaFrio": 1
-  },
-  "components/campaigns/CampaignDetail.tsx": {
-    "cinzaFrio": 1
-  },
-  "components/campaigns/CampaignList.tsx": {
-    "cinzaFrio": 1
-  },
-  "components/common/SettingsTabs.tsx": {
-    "cinzaFrio": 1
-  },
-  "components/dashboard/ActivePartiesPanel.tsx": {
-    "cinzaFrio": 1
-  },
-  "components/dashboard/APIKeysPanel.tsx": {
-    "cinzaFrio": 1
-  },
-  "components/dashboard/BookingChannelsPanel.tsx": {
-    "cinzaFrio": 2
-  },
-  "components/dashboard/ChipSelector.tsx": {
-    "cinzaFrio": 1
-  },
   "components/dashboard/DepositSuggestChip.tsx": {
     "emojiComoIcone": 2
-  },
-  "components/dashboard/EmbedSnippetPanel.tsx": {
-    "cinzaFrio": 1
-  },
-  "components/dashboard/FeedbackWidget.tsx": {
-    "cinzaFrio": 2
   },
   "components/dashboard/InstagramCaptionDrafter.tsx": {
     "emojiComoIcone": 2
@@ -44,83 +11,17 @@
   "components/dashboard/InstagramReelPanel.tsx": {
     "emojiComoIcone": 1
   },
-  "components/dashboard/ManagerNotesPanel.tsx": {
-    "cinzaFrio": 4
-  },
-  "components/dashboard/POSIntegrationPanel.tsx": {
-    "cinzaFrio": 2
-  },
-  "components/dashboard/ReservationsList.tsx": {
-    "emojiComoIcone": 2
-  },
-  "components/dashboard/RevenueByPartySizeWidget.tsx": {
-    "cinzaFrio": 1
-  },
-  "components/dashboard/RevenueStatsWidget.tsx": {
-    "cinzaFrio": 1
-  },
-  "components/dashboard/StaffingForecastWidget.tsx": {
-    "cinzaFrio": 1
-  },
-  "components/dashboard/StripeConnectPanel.tsx": {
-    "cinzaFrio": 1
-  },
-  "components/dashboard/SurveySettingsPanel.tsx": {
-    "cinzaFrio": 1
-  },
-  "components/dashboard/WebhooksPanel.tsx": {
-    "cinzaFrio": 1
-  },
-  "components/dashboard/WeeklyBusiestTimesChart.tsx": {
-    "cinzaFrio": 1
-  },
-  "components/dashboard/WeeklyDemographicsPanel.tsx": {
-    "cinzaFrio": 2
-  },
-  "components/dashboard/WeeklyPreferencesPanel.tsx": {
-    "cinzaFrio": 1
-  },
-  "components/dashboard/WeeklyReportSummaryCards.tsx": {
-    "cinzaFrio": 1
-  },
   "components/demo/AIKnowsCard.tsx": {
     "emojiComoIcone": 1
   },
-  "components/demo/DemoAnalyticsPanel.tsx": {
-    "cinzaFrio": 1
-  },
-  "components/demo/DemoWhatsAppSim.tsx": {
-    "cinzaFrio": 1
-  },
-  "components/demo/TestarNoMeuWhatsApp.tsx": {
-    "cinzaFrio": 1
-  },
-  "components/host/TableGrid.tsx": {
-    "cinzaFrio": 1
-  },
   "components/host/TableRenderer.tsx": {
-    "emojiComoIcone": 1
-  },
-  "components/layout/Sidebar.tsx": {
     "emojiComoIcone": 1
   },
   "components/prospecting/MotorStrip.tsx": {
     "emojiComoIcone": 1
   },
-  "components/settings/DepositSettingsPanel.tsx": {
-    "cinzaFrio": 2
-  },
-  "components/UpgradePrompt.tsx": {
-    "emojiComoIcone": 5
-  },
   "components/voice/PhoneIntegrationPanel.tsx": {
     "emojiComoIcone": 1
-  },
-  "components/voice/VoiceEngineSelector.tsx": {
-    "emojiComoIcone": 2
-  },
-  "landing/components/InlineDemoSection.tsx": {
-    "cinzaFrio": 1
   },
   "landing/pages/LandingPage.tsx": {
     "emojiComoIcone": 3
@@ -128,35 +29,10 @@
   "landing/pages/PricingPage.tsx": {
     "emojiComoIcone": 3
   },
-  "pages/CallTrackingDashboard.tsx": {
-    "cinzaFrio": 5
-  },
-  "pages/CouponsPage.tsx": {
-    "cinzaFrio": 1
-  },
-  "pages/EventBookingPage.tsx": {
-    "cinzaFrio": 5
-  },
-  "pages/EventsPage.tsx": {
-    "cinzaFrio": 1
-  },
-  "pages/insights/OverviewTab.tsx": {
-    "cinzaFrio": 2
-  },
-  "pages/IntegrationsPage.tsx": {
-    "cinzaFrio": 3
-  },
   "pages/OlimpiaOps.tsx": {
     "emojiComoIcone": 1
   },
   "pages/SubscriptionManage.tsx": {
-    "cinzaFrio": 1,
     "emojiComoIcone": 1
-  },
-  "pages/TeamPage.tsx": {
-    "cinzaFrio": 4
-  },
-  "pages/WhatsAppSettingsPage.tsx": {
-    "cinzaFrio": 1
   }
 }

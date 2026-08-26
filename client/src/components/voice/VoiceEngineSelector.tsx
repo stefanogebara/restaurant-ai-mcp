@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import ThiingsIcon from '../common/ThiingsIcon';
 import type { VoiceEngineSettings } from '../../hooks/useVoiceEngineSettings';
 
 const STATUS_STYLES: Record<string, string> = {
@@ -87,7 +88,7 @@ export default function VoiceEngineSelector({ currentEngine, pendingEngine, engi
                 {t('voiceEngine.elevenlabsLatency', '~1.2 s')}
               </span>
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-soft-gray text-stone-gray">
-                <span aria-hidden="true">💰</span>
+                <ThiingsIcon name="dollar" pxSize={13} className="text-stone-gray" />
                 {t('voiceEngine.elevenlabsCost', '~R$ 0.40/min')}
               </span>
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">
@@ -122,7 +123,7 @@ export default function VoiceEngineSelector({ currentEngine, pendingEngine, engi
                 {t('voiceEngine.openaiLatency', '~0.6 s')}
               </span>
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-soft-gray text-stone-gray">
-                <span aria-hidden="true">💰</span>
+                <ThiingsIcon name="dollar" pxSize={13} className="text-stone-gray" />
                 {t('voiceEngine.openaiCost', '~R$ 0.18/min')}
               </span>
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">

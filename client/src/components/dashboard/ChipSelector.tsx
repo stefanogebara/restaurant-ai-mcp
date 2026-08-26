@@ -56,7 +56,7 @@ export default function ChipSelector({
         {items.map((item) => (
           <span
             key={item}
-            className="inline-flex items-center gap-1 text-xs bg-stone-100 text-stone-700 px-2 py-1 rounded-md border border-[#E5E7EB]"
+            className="inline-flex items-center gap-1 text-xs bg-stone-100 text-stone-700 px-2 py-1 rounded-md border border-[#E7E5E4]"
           >
             {item}
             <button

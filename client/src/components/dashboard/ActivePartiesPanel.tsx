@@ -151,7 +151,7 @@ function PartyRow({ party, billValue, onBillChange, onComplete }: PartyRowProps)
       {/* Time progress */}
       {party.time_elapsed_minutes !== undefined && (
         <div>
-          <div className="h-[2px] bg-[#F3F4F6] rounded-full overflow-hidden mt-2 mb-3">
+          <div className="h-[2px] bg-[#F5F5F4] rounded-full overflow-hidden mt-2 mb-3">
             <div
               className="h-full rounded-full transition-all duration-500"
               style={{

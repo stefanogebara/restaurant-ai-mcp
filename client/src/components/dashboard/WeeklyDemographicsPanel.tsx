@@ -15,7 +15,7 @@ export default function WeeklyDemographicsPanel({ demographics }: WeeklyDemograp
 
   return (
     <div className="overflow-hidden">
-      <div className="flex items-center justify-between py-5 border-b border-[#E5E7EB]">
+      <div className="flex items-center justify-between py-5 border-b border-[#E7E5E4]">
         <span className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">{t('analytics.guestDemographics')}</span>
       </div>
       {!hasData ? (
@@ -24,7 +24,7 @@ export default function WeeklyDemographicsPanel({ demographics }: WeeklyDemograp
           <p className="text-xs text-stone-gray">{t('analytics.noDemographicsHint', 'Guest profiles will build over time as customers visit and interact.')}</p>
         </div>
       ) : demoRows.map((row) => (
-        <div key={row.rank} className="flex items-center py-3.5 border-b border-[#F3F4F6] last:border-b-0 gap-3.5">
+        <div key={row.rank} className="flex items-center py-3.5 border-b border-[#F5F5F4] last:border-b-0 gap-3.5">
           <div
             className="w-10 h-10 rounded-xl flex items-center justify-center text-[13px] font-bold flex-shrink-0"
             style={{ background: `${row.color}12`, color: row.color }}

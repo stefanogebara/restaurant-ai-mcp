@@ -444,7 +444,7 @@ export default function Sidebar() {
                           <span className="text-lg">{lang.flag}</span>
                           <span>{lang.name}</span>
                           {i18n.language === lang.code && (
-                            <span className="ml-auto text-burgundy">✓</span>
+                            <ThiingsIcon name="green-check" pxSize={14} className="ml-auto text-emerald-600" />
                           )}
                         </button>
                       ))}

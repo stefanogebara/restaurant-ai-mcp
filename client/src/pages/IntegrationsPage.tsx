@@ -61,13 +61,13 @@ export default function IntegrationsPage() {
         <APIKeysPanel />
 
         {/* Divider */}
-        <div className="border-t border-[#E5E7EB]" />
+        <div className="border-t border-[#E7E5E4]" />
 
         {/* Webhooks section */}
         <WebhooksPanel />
 
         {/* Endpoint docs — collapsed by default */}
-        <div className="border-t border-[#E5E7EB] pt-6">
+        <div className="border-t border-[#E7E5E4] pt-6">
           <button
             type="button"
             onClick={() => setShowEndpoints((v) => !v)}
@@ -79,7 +79,7 @@ export default function IntegrationsPage() {
           </button>
           {showEndpoints && (
             <div className="mt-4 glass-card p-4 space-y-2 rounded-xl">
-              <h3 className="text-xs font-semibold uppercase tracking-widest text-[#111827]">
+              <h3 className="text-xs font-semibold uppercase tracking-widest text-[#1C1917]">
                 {t('integrations.endpointsTitle', 'Available Endpoints')}
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-[#706A65]">

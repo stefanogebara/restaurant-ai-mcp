@@ -57,7 +57,7 @@ export default function CampaignList() {
   if (!campaigns || campaigns.length === 0) {
     return (
       <div className="glass-panel p-10 text-center">
-        <div className="w-12 h-12 bg-[#F3F4F6] rounded-full flex items-center justify-center mx-auto mb-3">
+        <div className="w-12 h-12 bg-[#F5F5F4] rounded-full flex items-center justify-center mx-auto mb-3">
           <ThiingsIcon name="send" size="xs" className="text-stone-gray" />
         </div>
         <h3 className="text-sm font-medium text-deep-charcoal mb-1">{t('campaigns.noCampaigns')}</h3>

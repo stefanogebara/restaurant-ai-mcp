@@ -119,7 +119,7 @@ export default function InlineDemoSection() {
           className="glass-panel overflow-hidden"
         >
           {/* Browser top bar */}
-          <div className="flex items-center gap-3 px-4 py-3 bg-[#F3F4F6] border-b border-glass-border-dark">
+          <div className="flex items-center gap-3 px-4 py-3 bg-[#F5F5F4] border-b border-glass-border-dark">
             {/* Traffic lights */}
             <div className="flex items-center gap-1.5">
               <div className="w-3 h-3 rounded-full bg-[#FF5F57]" />

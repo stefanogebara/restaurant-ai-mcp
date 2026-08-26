@@ -36,7 +36,7 @@ export default function RevenueStatsWidget() {
   return (
     <div className="glass-card p-6 space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#111827]">
+        <h2 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#1C1917]">
           {t('dashboard.revenueForecast')}
         </h2>
         <div className="flex items-center gap-2">

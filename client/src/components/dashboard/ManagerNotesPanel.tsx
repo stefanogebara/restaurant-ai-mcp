@@ -47,7 +47,7 @@ export default function ManagerNotesPanel() {
     <div className="glass-card p-5">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#111827]">
+          <h3 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#1C1917]">
             {t('dashboard.managerNotes.title')}
           </h3>
           <p className="text-xs text-muted-stone mt-0.5">{t('dashboard.managerNotes.subtitle')}</p>
@@ -69,7 +69,7 @@ export default function ManagerNotesPanel() {
       )}
 
       {showForm && (
-        <div className="mb-4 p-4 rounded-lg bg-[#F9FAFB] border border-[#E5E7EB] space-y-3">
+        <div className="mb-4 p-4 rounded-lg bg-[#FAFAF9] border border-[#E7E5E4] space-y-3">
           <div>
             <label htmlFor="note-type" className="block text-xs font-medium text-stone-gray mb-1">
               {t('dashboard.managerNotes.typeLabel')}
@@ -143,7 +143,7 @@ export default function ManagerNotesPanel() {
           {notes.map((note) => (
             <div
               key={note.id}
-              className="flex items-start gap-2 border-b border-[#E5E7EB] last:border-b-0 pb-3 group"
+              className="flex items-start gap-2 border-b border-[#E7E5E4] last:border-b-0 pb-3 group"
             >
               <span
                 className={`shrink-0 mt-0.5 text-xs px-2 py-0.5 rounded-lg font-medium ${

@@ -361,7 +361,7 @@ export default function EventsPage() {
         {/* Event list */}
         {isLoading && (
           <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-6 w-6 border-2 border-[#E5E7EB] border-t-[#9F1239]" />
+            <div className="animate-spin rounded-full h-6 w-6 border-2 border-[#E7E5E4] border-t-[#9F1239]" />
           </div>
         )}
 
