@@ -10,13 +10,16 @@
  */
 import { test, expect, type Page } from '@playwright/test';
 
-const CANTINA_EMAIL    = 'cantina.bellavista@seatable.io';
-const CANTINA_PASSWORD = 'Sandbox2026!';
+const CANTINA_EMAIL    = process.env.SANDBOX_EMAIL as string;
+const CANTINA_PASSWORD = process.env.SANDBOX_PASSWORD as string;
 const BASE_URL         = process.env.PW_BASE_URL || 'https://seatable.one';
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
 async function loginAsCantina(page: Page) {
+  if (!CANTINA_EMAIL || !CANTINA_PASSWORD) {
+    throw new Error('Defina SANDBOX_EMAIL e SANDBOX_PASSWORD no ambiente. As credenciais sairam do codigo em ago/2026 — ver tasks/lessons.md.');
+  }
   // If already logged in and on a dashboard page, skip login
   const currentUrl = page.url();
   if (currentUrl.includes('host-dashboard') || currentUrl.includes('/dashboard')) {

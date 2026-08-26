@@ -7,10 +7,13 @@ import { test, expect } from '@playwright/test';
 import path from 'path';
 
 const OUT = 'audit-screenshots';
-const SANDBOX_EMAIL = 'cantina.bellavista@seatable.io';
-const SANDBOX_PASSWORD = 'Sandbox2026!';
+const SANDBOX_EMAIL = process.env.SANDBOX_EMAIL as string;
+const SANDBOX_PASSWORD = process.env.SANDBOX_PASSWORD as string;
 
 async function login(page) {
+  if (!SANDBOX_EMAIL || !SANDBOX_PASSWORD) {
+    throw new Error('Defina SANDBOX_EMAIL e SANDBOX_PASSWORD no ambiente. As credenciais sairam do codigo em ago/2026 — ver tasks/lessons.md.');
+  }
   await page.goto('/login', { waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(1500);
   await page.getByPlaceholder(/you@restaurant.com/i).fill(SANDBOX_EMAIL);

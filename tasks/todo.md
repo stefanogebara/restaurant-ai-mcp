@@ -151,8 +151,9 @@ Tests that **cannot** be automated end-to-end — they need real phones, real Wh
 Pick the surface you touched. Run only the relevant section. Mark `[x]` when done with date + initials. Open a GitHub issue immediately on any FAIL.
 
 Sandbox account:
-- Email: `cantina.bellavista@seatable.io`
-- Password: `Sandbox2026!`
+- Credenciais: exporte `SANDBOX_EMAIL` e `SANDBOX_PASSWORD` no ambiente.
+  Saíram daqui em ago/2026 — estavam em texto puro em 12 arquivos, o que
+  tornava inútil cadastrá-las como secret. Peça a quem tiver acesso ao cofre.
 - Restaurant ID: `c3368ea1-b278-416f-ad24-de28434fe9ce`
 - Twilio number: `+55 11 5028-2009`
 - WhatsApp number: `+55 21 2391-4417` (verify status before testing)

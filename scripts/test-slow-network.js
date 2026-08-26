@@ -8,8 +8,11 @@ const path = require('path');
 const fs = require('fs');
 require('dotenv').config({ path: path.join(__dirname, '..', '.env.local') });
 
-const EMAIL = process.env.SMOKE_EMAIL || 'cantina.bellavista@seatable.io';
-const PASSWORD = process.env.SMOKE_PASSWORD || 'Sandbox2026!';
+const EMAIL = process.env.SMOKE_EMAIL || process.env.SANDBOX_EMAIL;
+const PASSWORD = process.env.SMOKE_PASSWORD || process.env.SANDBOX_PASSWORD;
+if (!EMAIL || !PASSWORD) {
+  throw new Error('Defina SANDBOX_EMAIL e SANDBOX_PASSWORD no ambiente. As credenciais sairam do codigo em ago/2026 — ver tasks/lessons.md.');
+}
 const BASE_URL = process.env.PW_BASE_URL || 'https://seatable.one';
 const HEADLESS = process.env.CI === 'true' || process.env.HEADLESS === 'true';
 

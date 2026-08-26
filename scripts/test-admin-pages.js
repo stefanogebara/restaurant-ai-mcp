@@ -13,7 +13,7 @@
  *   - Booking confirmation page
  *   - Import History API (POST /api/import-history with sample CSV)
  *
- * Uses sandbox account: cantina.bellavista@seatable.io / Sandbox2026!
+ * Conta de sandbox via env: SANDBOX_EMAIL / SANDBOX_PASSWORD
  *
  * Usage: node scripts/test-admin-pages.js
  */
@@ -22,8 +22,11 @@ const path = require('path');
 const fs = require('fs');
 
 const BASE = process.env.PW_BASE_URL || 'https://seatable.one';
-const EMAIL = process.env.SANDBOX_EMAIL || 'cantina.bellavista@seatable.io';
-const PASSWORD = process.env.SANDBOX_PASSWORD || 'Sandbox2026!';
+const EMAIL = process.env.SANDBOX_EMAIL || process.env.SANDBOX_EMAIL;
+const PASSWORD = process.env.SANDBOX_PASSWORD || process.env.SANDBOX_PASSWORD;
+if (!EMAIL || !PASSWORD) {
+  throw new Error('Defina SANDBOX_EMAIL e SANDBOX_PASSWORD no ambiente. As credenciais sairam do codigo em ago/2026 — ver tasks/lessons.md.');
+}
 
 const PROFILE_DIR = path.join(__dirname, '../.tmp/admin-test-profile');
 

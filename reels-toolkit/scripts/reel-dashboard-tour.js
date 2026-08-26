@@ -22,7 +22,10 @@ const VIDEO_DIR = resolve(__dirname, '../videos');
 mkdirSync(VIDEO_DIR, { recursive: true });
 
 const BASE = 'https://seatable.one';
-const CREDS = { email: 'cantina.bellavista@seatable.io', pw: 'Sandbox2026!' };
+const CREDS = { email: process.env.SANDBOX_EMAIL, pw: process.env.SANDBOX_PASSWORD };
+if (!CREDS.email || !CREDS.pw) {
+  throw new Error('Defina SANDBOX_EMAIL e SANDBOX_PASSWORD no ambiente. As credenciais sairam do codigo em ago/2026 — ver tasks/lessons.md.');
+}
 
 const wait = ms => new Promise(r => setTimeout(r, ms));
 
