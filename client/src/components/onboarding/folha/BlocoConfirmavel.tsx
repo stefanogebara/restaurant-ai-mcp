@@ -25,6 +25,13 @@ export interface BlocoConfirmavelProps {
   children?: ReactNode;
   /** Um bloco pendente não pode passar despercebido na rolagem. */
   pendente?: boolean;
+  /**
+   * O que dizer quando está pendente. O padrão ("a gente não descobriu")
+   * mente em dois casos: quando parte do bloco FOI descoberta (o telefone
+   * veio, só o e-mail falta) e quando o campo não é descobrível de jeito
+   * nenhum — a voz é escolha do dono, não achado de pesquisa.
+   */
+  textoPendente?: string;
   /** Abre já editando — para o que ainda não temos resposta. */
   abertoInicialmente?: boolean;
 }
@@ -35,6 +42,7 @@ export function BlocoConfirmavel({
   fonte,
   children,
   pendente = false,
+  textoPendente,
   abertoInicialmente = false,
 }: BlocoConfirmavelProps) {
   const { t } = useTranslation();
@@ -47,9 +55,13 @@ export function BlocoConfirmavel({
     >
       <div className="flex items-baseline justify-between gap-4">
         <div className="min-w-0">
+          {/* `font-sans` explícito: o index.css força Instrument Serif em TODO
+              h1..h6, e sem isto o rótulo de seção sai em serifa versalete em
+              vez do token do DESIGN.md. Só apareceu no screenshot — no texto
+              da página a diferença é invisível. */}
           <h2
             id={`bloco-${titulo}`}
-            className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone"
+            className="font-sans text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone"
           >
             {titulo}
           </h2>
@@ -60,7 +72,7 @@ export function BlocoConfirmavel({
           )}
           {pendente && (
             <p className="mt-1 text-[13px] text-amber-700">
-              {t('onboarding.folha.faltaIsso', 'Só isso a gente não descobriu sozinho.')}
+              {textoPendente || t('onboarding.folha.faltaIsso', 'Só isso a gente não descobriu sozinho.')}
             </p>
           )}
         </div>

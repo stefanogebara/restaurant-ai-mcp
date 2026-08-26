@@ -12,6 +12,7 @@
 
 const crypto = require('crypto');
 const { supabaseAdmin } = require('../_lib/supabase');
+const { PERSONA_PRESETS } = require('../_lib/vibe-to-persona-preset');
 const { setInternalCors, handlePreflight } = require('../_lib/cors');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { verifyAuth } = require('../_lib/auth');
@@ -218,6 +219,10 @@ module.exports = async (req, res) => {
       selected_voice_id, // Voice selection from Step 2.5
       selected_voice_language, // Language code from selected voice (e.g., 'es', 'fr', 'en')
       restaurant_learning, // AI restaurant learning data (session_id, restaurant_profile)
+      // A voz escolhida na folha de confirmação — um dos quatro presets. É a
+      // única parte do perfil que a pesquisa NÃO pode descobrir, e a única que
+      // o dono precisa decidir. Ver api/_lib/persona-proposta.js.
+      voz_preset,
       // Token do demo que originou este cadastro. Só o TOKEN vem do cliente —
       // o conhecimento é lido do banco aqui no servidor (ver bloco abaixo).
       demo_token,
@@ -713,6 +718,14 @@ module.exports = async (req, res) => {
       ...(restaurant_learning?.restaurant_profile ? {
         restaurant_profile: restaurant_learning.restaurant_profile
       } : {}),
+      // A voz escolhida na folha vira ai_personality, que é o que o
+      // elevenlabs-kb-sync lê para a base de conhecimento do agente. Fica
+      // ANTES do bloco do demo de propósito: aquele bloco só preenche quando
+      // o campo está vazio, então a escolha explícita do dono vence a persona
+      // derivada automaticamente das vibes.
+      ...(PERSONA_PRESETS[voz_preset] ? {
+        ai_personality: { ...PERSONA_PRESETS[voz_preset], _derived_from_preset: voz_preset }
+      } : {}),
     };
 
     // Conhecimento do demo entra SEM sobrescrever escolha explícita do dono.
@@ -730,6 +743,41 @@ module.exports = async (req, res) => {
       }
       if (!restaurantConfigData.menu_url && demoKnowledge.menu_url) {
         restaurantConfigData.menu_url = demoKnowledge.menu_url;
+      }
+
+      // O perfil da IA a partir da PESQUISA, quando não veio de entrevista.
+      //
+      // `restaurant_profile` alimenta o system prompt do Manager AI, a persona
+      // do agente de voz e a semente da memória. Até aqui ele só nascia das
+      // doze perguntas dissertativas do "Ensine sua IA" — e por isso a
+      // entrevista não podia simplesmente sair do caminho.
+      //
+      // Mas o scraped_data que acabou de ser copiado acima já responde seis
+      // das oito seções: editorial, cozinha, faixa de preço, vibe, pratos
+      // populares, elogios e queixas recorrentes. A sétima é a voz que o dono
+      // escolheu na folha. Determinístico, sem LLM — somar 30s de síntese a um
+      // handler que já tem tetos de 15s e 8s traria o
+      // FUNCTION_INVOCATION_FAILED de volta.
+      //
+      // NÃO sobrescreve: entrevista feita continua vencendo.
+      if (!restaurantConfigData.restaurant_profile && restaurantConfigData.scraped_data) {
+        try {
+          const { montarPerfil } = require('../_lib/perfil-do-scrape');
+          const { restaurant_profile: perfil, cobertura } = montarPerfil({
+            scraped_data: restaurantConfigData.scraped_data,
+            restaurant_name: restaurantConfigData.restaurant_name,
+            restaurant_type: restaurantConfigData.restaurant_type,
+            preset: voz_preset,
+          });
+          if (cobertura._preenchidas > 0) {
+            restaurantConfigData.restaurant_profile = perfil;
+            logger.info(`Perfil montado da pesquisa: ${cobertura._preenchidas}/${cobertura._total} seções`);
+          }
+        } catch (err) {
+          // Perfil é enriquecimento, não requisito. O restaurante nasce e o
+          // painel funciona sem ele.
+          logger.warn('Falha ao montar perfil da pesquisa (não-fatal):', err.message);
+        }
       }
       // Idioma: só quando a resolução pelo país caiu no default 'en' e o demo
       // sabe algo mais específico — ele infere pelo prefixo do telefone, que

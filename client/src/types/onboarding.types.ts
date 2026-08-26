@@ -53,6 +53,13 @@ export interface OnboardingData {
   language?: string;
   // Step 1.5: Restaurant Profile (Optional)
   profile_data?: ProfileQuestionnaireData;
+  /**
+   * Tags de ambiente vindas do Google (insights.vibe_tags do scrape). Não é
+   * campo do formulário — atravessam o prefill só para a folha poder SUGERIR
+   * uma voz. Sem elas a folha mostra as quatro em pé de igualdade, que é o
+   * comportamento honesto quando não há base para sugerir.
+   */
+  vibe_tags?: string[];
   // Step 1.5b: Restaurant Learning (AI)
   restaurant_learning?: {
     session_id?: string;

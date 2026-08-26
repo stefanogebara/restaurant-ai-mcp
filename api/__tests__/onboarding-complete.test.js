@@ -746,6 +746,85 @@ describe('demo_token carrega o conhecimento do demo (G2.1)', () => {
     menu_url: 'https://exemplo.com/cardapio.pdf',
   };
 
+  // ── A folha de confirmação ───────────────────────────────────────────────
+  //
+  // O perfil da IA passa a nascer da PESQUISA em vez das doze perguntas
+  // dissertativas. Ele alimenta o system prompt do Manager AI, a persona do
+  // agente de voz e a semente da memória — por isso a entrevista não podia
+  // simplesmente sair do caminho sem esta fonte no lugar.
+
+  const DEMO_RICO = {
+    ...{
+      id: 'demo-1',
+      agent_language: 'pt',
+      scraped_data: {
+        cuisine_type: 'Brazilian',
+        price_level: 2,
+        editorial_summary: 'Restaurante nordestino contemporâneo.',
+        insights: {
+          vibe_tags: ['casual', 'lively'],
+          praise_themes: ['comida autêntica'],
+          complaint_themes: ['espera longa'],
+          popular_dishes: ['Dadinho de tapioca'],
+        },
+      },
+    },
+  };
+
+  test('sem entrevista, o perfil da IA é montado da pesquisa', async () => {
+    authComSub();
+    comDemo(DEMO_RICO);
+    const { req, res } = mockReqRes({ ...BASE_BODY, demo_token: 'tok-1', voz_preset: 'neighborhood' });
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    const p = capturedConfigWrite.restaurant_profile;
+    expect(p).toBeDefined();
+    expect(p._fonte).toBe('pesquisa');
+    expect(p.persona_summary).toBe('Restaurante nordestino contemporâneo.');
+    // Os diferenciais são o que os CLIENTES elogiam, não o que o dono diz.
+    expect(p.unique_differentiators).toEqual(['comida autêntica']);
+    // As queixas viram o que a recepcionista precisa saber para não repetir.
+    expect(p.things_to_know).toEqual(['espera longa']);
+    expect(p.signature_dishes[0].name).toBe('Dadinho de tapioca');
+  });
+
+  test('a voz escolhida na folha vira ai_personality e VENCE a derivada do demo', async () => {
+    authComSub();
+    comDemo({ ...DEMO_RICO, ai_personality: { humor_type: 'warm', _derived_from_preset: 'neighborhood' } });
+    const { req, res } = mockReqRes({ ...BASE_BODY, demo_token: 'tok-1', voz_preset: 'fine_dining' });
+    await handler(req, res);
+
+    expect(capturedConfigWrite.ai_personality._derived_from_preset).toBe('fine_dining');
+    expect(capturedConfigWrite.ai_personality.communication_style).toBe('formal');
+  });
+
+  // Quem respondeu as doze perguntas não pode ter o trabalho descartado.
+  test('entrevista feita CONTINUA vencendo o perfil da pesquisa', async () => {
+    authComSub();
+    comDemo(DEMO_RICO);
+    const daEntrevista = { version: 9, persona_summary: 'escrito pelo dono' };
+    const { req, res } = mockReqRes({
+      ...BASE_BODY, demo_token: 'tok-1',
+      restaurant_learning: { restaurant_profile: daEntrevista },
+    });
+    await handler(req, res);
+
+    expect(capturedConfigWrite.restaurant_profile).toEqual(daEntrevista);
+  });
+
+  // Perfil é enriquecimento, não requisito: sem pesquisa o restaurante nasce
+  // igual e o painel funciona.
+  test('sem scraped_data, não inventa perfil — e o cadastro segue', async () => {
+    authComSub();
+    comDemo({ id: 'demo-1', agent_language: 'pt' });
+    const { req, res } = mockReqRes({ ...BASE_BODY, demo_token: 'tok-1', voz_preset: 'neighborhood' });
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(capturedConfigWrite.restaurant_profile).toBeUndefined();
+  });
+
   test('persona, scraped_data e menu_url do demo entram no config novo', async () => {
     authComSub();
     comDemo(DEMO);

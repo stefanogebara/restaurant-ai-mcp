@@ -40,6 +40,10 @@ const SubscriptionManage = lazyRetry(() => import('./pages/SubscriptionManage'))
 const Welcome = lazyRetry(() => import('./pages/Welcome'));
 const Onboarding = lazyRetry(() => import('./pages/Onboarding'));
 const OnboardingChat = lazyRetry(() => import('./pages/OnboardingChat'));
+// Prévia de design da folha de confirmação. A rota só é registrada em DEV
+// (ver abaixo) — /onboarding é ProtectedRoute e não dá para revisar layout
+// sem completar um cadastro real.
+const FolhaPrevia = lazyRetry(() => import('./pages/FolhaPrevia'));
 const LanguageSettings = lazyRetry(() => import('./pages/LanguageSettings'));
 const TableConfigPage = lazyRetry(() => import('./pages/TableConfigPage'));
 const ServiceScorePage = lazyRetry(() => import('./pages/ServiceScorePage'));
@@ -191,6 +195,9 @@ function App() {
               <Route path="/welcome" element={<ProtectedRoute><Welcome /></ProtectedRoute>} />
               <Route path="/onboarding" element={<ProtectedRoute><ErrorBoundary fallback={<RouteErrorFallback />}><Onboarding /></ErrorBoundary></ProtectedRoute>} />
               <Route path="/onboarding-chat" element={<ProtectedRoute><ErrorBoundary fallback={<RouteErrorFallback />}><OnboardingChat /></ErrorBoundary></ProtectedRoute>} />
+              {import.meta.env.DEV && (
+                <Route path="/onboarding/previa" element={<ErrorBoundary fallback={<RouteErrorFallback />}><FolhaPrevia /></ErrorBoundary>} />
+              )}
               <Route path="/settings/language" element={<ProtectedRoute><LanguageSettings /></ProtectedRoute>} />
               <Route path="/settings/restaurant" element={<Navigate to="/host-dashboard/settings" replace />} />
               {/* Public booking portal */}
