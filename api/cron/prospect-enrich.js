@@ -29,6 +29,7 @@ const { supabaseAdmin } = require('../_lib/supabase');
 const { enrichLead, ENRICH_COOLDOWN_MS } = require('../_lib/prospecting/prospect-enrich');
 const { cacarCelularPendentes } = require('../_lib/prospecting/prospect-celular');
 const { logCronRun, logCronError } = require('../_lib/cron-tracker');
+const { isCronEnabled } = require('../_lib/cron-config');
 
 const logger = createSecureLogger('CronProspectEnrich');
 
@@ -133,6 +134,28 @@ module.exports = async (req, res) => {
   }
   if (!bearerEquals(req.headers.authorization, secret)) {
     return res.status(401).json({ success: false, error: 'Authentication required' });
+  }
+
+  // INTERRUPTOR DE OPS — acrescentado em 26/08/2026, e a razão importa.
+  //
+  // A caça ao celular entrou neste cron e, na primeira noite, voltou
+  // `sem_html: 8` de 8 em SEIS rodadas seguidas: o scrape não abria uma página
+  // sequer. O estrago não é só a raspagem paga desperdiçada — cada rodada
+  // CARIMBA os 8 leads como tentados e os joga em 7 dias de cooldown. Em seis
+  // horas foram 48 restaurantes bons marcados como "já tentei" sem que ninguém
+  // tivesse tentado de verdade.
+  //
+  // Aí a descoberta: este era um dos POUCOS crons sem interruptor. Não havia
+  // como parar a sangria sem um deploy — e um deploy leva ~20 min, durante os
+  // quais ele roda de novo. Todo cron que gasta dinheiro ou marca estado
+  // precisa poder ser desligado por linha de banco.
+  //
+  // NÃO barra `?dry=1` de propósito (lição de 09/08): o modo de inspeção não
+  // pode ser bloqueado pelo interruptor que ele existe para validar.
+  const dry = !!(req.query && (req.query.dry === '1' || req.query.dry === 'true'));
+  if (!dry && !(await isCronEnabled('prospect-enrich'))) {
+    logger.warn('prospect-enrich desligado por ops, pulando rodada');
+    return res.status(200).json({ success: true, skipped: 'disabled_by_ops' });
   }
 
   const limite = Math.min(Math.max(parseInt(req.query?.limit, 10) || LIMITE_PADRAO, 1), 30);
