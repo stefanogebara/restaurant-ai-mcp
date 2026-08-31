@@ -41,7 +41,8 @@
     "api/_lib/integration-probes.js afirma ao cockpit 'provedor único por decisão; sem fallback Anthropic', mas api/_lib/ai-client.js TEM failover em 402 para a Anthropic, telemetrado em ai_provider_fallbacks — um dos dois está mentindo para o painel",
     "api/square.js (handleCatalogSync) busca o catálogo do Square e DESCARTA os itens, gravando só a contagem em pos_connections — não existe tabela de menu no repo, então o cardápio do restaurante não é dado consultável",
     "api/external-booking-webhook.js aceita source 'yelp' e 'opentable' e grava customer_phone || null, enquanto todo o CRM é chaveado por telefone (api/_services/guestMemory.js: 'customer_id which IS the phone number') — reserva nascida em assistente pode chegar sem telefone e o loop de dado morre em silêncio",
-    "api/_voice-server/tool-handler.js expõe 8 tools, todas de reserva — zero de evento privado e zero de takeout, apesar de api/events.js e api/event-checkout.js existirem com PaymentIntent funcionando"
+    "api/_voice-server/tool-handler.js expõe 8 tools, todas de reserva — zero de evento privado e zero de takeout, apesar de api/events.js e api/event-checkout.js existirem com PaymentIntent funcionando",
+    "lembrete de reserva e campanha de retenção saem por dois caminhos de WhatsApp hardcoded e divergentes: api/cron/send-reminders.js sempre usa Twilio (loop sequencial, 500ms entre envios); api/_services/campaignService.js sempre usa api/_lib/whatsapp-sender.js, que é Meta-only. Nenhum dos dois lê whatsapp_provider do restaurante antes de escolher o canal — achado do spike de intel de 2026-08-31 (docs/intel/BACKLOG.md#twilio-bulk-lembretes)"
   ],
   "settled": [
     "arquitetura Airtable + n8n foi abandonada; não reintroduzir",

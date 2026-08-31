@@ -5,6 +5,54 @@ têm âncora verificada. Estado do repositório em `STATE.md`.
 
 ---
 
+### twilio-bulk-lembretes — Lembretes e campanhas de WhatsApp em lote
+**Origem:** INTEL 2026-08-31 · **Veredito:** PROTOTIPAR 11/15 (P3 A2 D2 E2 L2)
+**Fonte:** [Twilio Changelog, 14/ago](https://www.twilio.com/en-us/changelog/bulk-messaging-supports-whatsapp-content-templates) · [Twilio Docs](https://www.twilio.com/docs/bulk-messaging)
+
+**O mecanismo:** a Bulk Messaging API do Twilio (Public Beta, sem SLA) agora aceita Content
+Templates de WhatsApp num único request endereçando até 10.000 destinatários (até 1 milhão via
+grupos de destinatário armazenados), com variáveis por destinatário e fallback configurável por
+prioridade de canal (ex.: WhatsApp→SMS). Mesma forma de request da Messaging API padrão, só que o
+lote inteiro sai numa chamada em vez de uma REST call por destinatário.
+
+**Por que dói mesmo assim:** o repo já reimplementa isso na mão, dois caminhos diferentes, nenhum
+checando a preferência real do restaurante:
+- `api/cron/send-reminders.js` — loop sequencial via Twilio, uma chamada Twilio + 500ms de espera
+  por destinatário.
+- `api/_services/campaignService.js` — importa `sendTemplateMessage` de
+  `api/_lib/whatsapp-sender.js`, que é **Meta-only**, sem checar `whatsapp_provider` do
+  restaurante.
+
+**Achado colateral do spike de leitura, fora do mecanismo do Twilio Bulk:** lembretes de reserva
+saem sempre por Twilio (hardcoded) e campanhas de retenção sempre por Meta (hardcoded) — nenhum dos
+dois lê a preferência `whatsapp_provider` configurada pelo restaurante antes de decidir o canal.
+Um restaurante configurado para WAHA ou só-Meta pode estar recebendo lembrete por um provedor que
+nem tem credencial ativa. Isto é bug de roteamento independente do valor do Twilio Bulk — vale
+issue própria, não é parte do spike abaixo.
+
+**Hipótese:** se o loop sequencial de `send-reminders.js` for trocado por uma única chamada à Bulk
+Messaging API com até 10 destinatários personalizados, o tempo total do lote cai de
+N×(request+500ms) para uma chamada, sem perda de entregabilidade.
+
+**Spike (1 dia):** script isolado no scratchpad chamando o endpoint REST/SDK de Bulk Messaging do
+Twilio contra 5-10 números sandbox, replicando o `contentSid` + variáveis (nome, restaurante,
+horário, pax) hoje usados em `sendTemplateMessage` de `send-reminders.js`; comparar latência total,
+taxa de sucesso, e se o fallback WhatsApp→SMS funciona quando o número não tem WhatsApp ativo.
+
+**Medir:** latência do lote cai para menos de 5s (vs. N×~1s do loop atual) e taxa de erro igual ou
+menor que o loop sequencial atual, com IDs de mensagem individuais retornados para manter o
+rastreio por reserva.
+
+**Parar se:** a API exigir Messaging Service SID/configuração de conta que o plano Twilio atual não
+tem, ou o SDK `twilio` `^5.10.3` instalado não expuser o endpoint sem chamada REST manual instável
+— não vale trocar um cron de produção (lembretes de reserva) por uma dependência Public Beta sem
+SLA.
+
+**Toca:** `api/cron/send-reminders.js`, `api/_services/campaignService.js`, `api/_lib/whatsapp-sender.js`, `api/_lib/whatsapp/message-sender.js`, `api/_lib/channels/twilio-adapter.js`
+**Status:** aberto
+
+---
+
 ### ucp-catalogo-legivel — Tornar o restaurante legível por agente
 **Origem:** INTEL 2026-08-24 · **Veredito:** PROTOTIPAR 11/15 (P2 A2 D3 E1 L3)
 **Fonte:** [blog do Google, 06/ago](https://blog.google/products-and-platforms/products/maps/order-food-in-ask-maps/) · [PYMNTS](https://www.pymnts.com/news/artificial-intelligence/2026/square-and-google-let-restaurants-offer-conversational-ai-ordering/) · [PPC Land](https://ppc.land/google-maps-gains-food-ordering-through-square-and-toast/)
