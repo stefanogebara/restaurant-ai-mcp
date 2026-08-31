@@ -93,7 +93,54 @@ genérica, e isso é chamada do Stefano, não spike. Parar também se passar de 
 ativo: o valor aqui é o sinal de portão aberto ou fechado, não a integração.
 
 **Toca:** `database/migrations/20260126_pos_and_revenue.sql`, `api/pos/reservations.js`, `api/pos/table-status.js`, `api/check-availability.js`, `.claude/plans/2026-07-27-teardown-integracoes/README.md`
-**Status:** **executado em 2026-08-25 — portão aberto em toda fonte pública; falta o passo que só o Stefano dá**
+**Status:** **FECHADO em 2026-08-25 — rota VIVA, confirmada contra o sandbox**
+
+#### Veredito: rota viva
+
+O Stefano credenciou; a sonda rodou. Critério binário do spike **atingido**:
+token emitido e `sale-status-by-table-or-pad` devolvendo array com HTTP 200 em 4/4
+chamadas contra a loja de teste (arrays vazios = mesas livres, que é sucesso).
+`CHECK` de `pos_provider` estendido para aceitar `saipos` em
+`database/migrations/20260825_pos_provider_saipos.sql` — até então o enum era
+inteiramente americano, e nenhum dos provedores operava em São Paulo.
+
+#### A rota de autenticação que a Saipos não documenta
+
+O maior custo do spike não foi o portão, foi descobrir como autenticar. **A primeira
+versão da sonda estava errada**: assumia que a chave do painel era um token estático de
+API. Não é. O fluxo real:
+
+```
+POST /auth   { "idPartner": "<Id Partner>", "secret": "<chave do painel>" }
+  → 200 { "token": "<JWT>" }, válido 48h
+depois:  Authorization: <JWT>      (cru, SEM prefixo Bearer)
+```
+
+Três armadilhas, cada uma capaz de fazer alguém concluir "rota morta" numa rota viva:
+
+1. **A doc cita a rota mas nunca diz qual é.** `criar-pedido` manda "informe o token
+   gerado na rota de autenticação"; nenhuma página do portal documenta `/auth`. Achada
+   varrendo caminhos prováveis — só ela responde algo diferente de 404.
+2. **camelCase importa.** `id_partner` em snake_case devolve 400 com a **mesma
+   mensagem** que credencial inválida (`"Id do parceiro ou secret inválidos!"`). É
+   fácil culpar a credencial quando o erro é a grafia.
+3. **O 401 da consulta não distingue nada.** Sem mandar auth alguma, a resposta é
+   idêntica à de token errado — mesmo `errorCode 901`, mesma mensagem. O 401 só diz
+   "não autenticado", nunca por quê.
+
+Também confirmado pelo painel: **não existe host de sandbox separado.** A "URL base p/
+requisições" é `https://order-api.saipos.com` mesmo, produção e teste no mesmo host,
+separados pela loja. Eu tinha suspeitado de host errado — era hipótese falsa.
+
+#### O que fica
+
+`scripts/probe-saipos-sandbox.js` faz o fluxo inteiro e distingue falha de auth de
+falha de consulta. Roda com `SAIPOS_ID_PARTNER` + `SAIPOS_SECRET`. Verificada nos três
+caminhos: sem credencial, credencial errada, credencial real.
+
+**Próximo trabalho, fora deste spike:** escrever o adaptador de leitura de mesa/comanda.
+Não existe nenhum — e a ressalva abaixo sobre o `close-sale` continua valendo, então ele
+serve para LER, não para fechar conta.
 
 #### Resultado do spike
 
