@@ -138,9 +138,12 @@ separados pela loja. Eu tinha suspeitado de host errado — era hipótese falsa.
 falha de consulta. Roda com `SAIPOS_ID_PARTNER` + `SAIPOS_SECRET`. Verificada nos três
 caminhos: sem credencial, credencial errada, credencial real.
 
-**Próximo trabalho, fora deste spike:** escrever o adaptador de leitura de mesa/comanda.
-Não existe nenhum — e a ressalva abaixo sobre o `close-sale` continua valendo, então ele
-serve para LER, não para fechar conta.
+**Atualização de 2026-08-31 — o próximo trabalho já saiu:** `api/_lib/pos/saipos-adapter.js`
+foi escrito e testado (PR #69), cobrindo as três armadilhas documentadas acima (auth em
+camelCase, array vazio como sucesso, 404/946 como estado vazio). `pos_provider` já aceita
+`saipos` desde a migration citada abaixo. A ressalva sobre o `close-sale` continua valendo
+tal como escrita — o adaptador só lê, por decisão registrada no cabeçalho do próprio arquivo,
+não por limitação pendente.
 
 #### Resultado do spike
 
