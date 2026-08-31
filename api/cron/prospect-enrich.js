@@ -119,10 +119,32 @@ async function proximosLeads(limite) {
  */
 async function lerPaginaScrapingdog(alvo) {
   const key = process.env.SCRAPINGDOG_API_KEY;
-  if (!key) return '';
+  // ENGOLIR O MOTIVO AQUI CUSTOU CINCO DIAS (31/08/2026). Esta função devolvia
+  // '' tanto para "não tem chave" quanto para qualquer não-2xx, sem uma linha
+  // de log. Do lado de fora as duas viram `sem_html`, indistinguíveis — e a
+  // caça carimbou 752 leads com zero achados sem que nada dissesse por quê.
+  //
+  // Pior: eu li o `HTTP 429` que aparecia no mesmo log e conclui que era o
+  // Scrapingdog estourando cota. Não era. Aquele 429 vem de outro caminho de
+  // código — a busca de CNPJ, que lê o site do restaurante DIRETO (safeFetchText
+  // em prospect-enrich.js), sem passar por aqui. Diagnostiquei uma camada
+  // olhando o log de outra, que é exatamente o erro que este projeto já pagou
+  // caro cinco vezes. O log abaixo existe para que a próxima pessoa não precise
+  // adivinhar de qual camada veio o silêncio.
+  if (!key) {
+    logger.error('SCRAPINGDOG_API_KEY ausente no ambiente — a caça ao celular '
+      + 'não tem como ler site nenhum. Nenhuma raspagem foi tentada.');
+    return '';
+  }
   const url = `https://api.scrapingdog.com/scrape?api_key=${key}&dynamic=true&url=${encodeURIComponent(alvo)}`;
   const resp = await fetch(url);
-  if (!resp.ok) return '';
+  if (!resp.ok) {
+    // O status é o diagnóstico inteiro: 401 chave inválida, 402 sem crédito,
+    // 429 cota/concorrência estourada, 5xx problema deles. Sem ele, tudo isso
+    // vira o mesmo `sem_html` mudo.
+    logger.error(`Scrapingdog HTTP ${resp.status} lendo ${alvo}`);
+    return '';
+  }
   return resp.text();
 }
 
