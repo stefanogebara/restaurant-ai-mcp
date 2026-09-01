@@ -8,6 +8,7 @@ const {
   getSessionByPhone,
 } = require('../../_lib/whatsapp-sessions');
 const { RESERVATION_TOOLS, executeTool, getCurrentDateTime } = require('./reservation-tools');
+const { HANDOFF_TOOL, isHandoffEnabled } = require('./handoff');
 
 // AI provider: OpenRouter (or direct Anthropic fallback)
 const { getAI, AI_MODEL, AI_MODEL_FAST } = require('../../_lib/ai-client');
@@ -491,9 +492,16 @@ async function processWithAI(userMessage, session, conversationHistory = []) {
   // The message-processor handles routing before reaching here, so asking the
   // customer "which restaurant?" is always wrong at this point.
   const hasRestaurantAssigned = !!(session?.restaurant?.id || session?.restaurant_id);
-  const tools = hasRestaurantAssigned
+  const baseTools = hasRestaurantAssigned
     ? RESERVATION_TOOLS.filter(t => t.function.name !== 'identify_restaurant')
     : RESERVATION_TOOLS;
+
+  // Transbordo humano entra só para quem ligou. O critério de parada do spike
+  // que criou isto é "qualquer falso-positivo, pare": transbordo que dispara
+  // demais vira plantão humano e vale menos que a esquiva atual. Sem calibração
+  // contra conversa real, ninguém recebe. Ver a decisão 2 em
+  // supabase/migrations/20260901_whatsapp_handoff.sql.
+  const tools = isHandoffEnabled(session) ? [...baseTools, HANDOFF_TOOL] : baseTools;
 
   // Freeze the base messages so each retry attempt starts from a clean slate,
   // not accumulating stale tool-call messages from a failed previous attempt.

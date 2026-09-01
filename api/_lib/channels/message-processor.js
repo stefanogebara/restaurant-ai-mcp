@@ -23,6 +23,7 @@ const { handleSurveyReply } = require('../../_services/surveyReplyHandler');
 const { extractMemoriesFromWhatsApp } = require('../../_services/memoryExtractor');
 const { simulateTypingDelay } = require('../whatsapp-interactions');
 const { avaliarEnvio } = require('./send-result');
+const { isPaused } = require('../../_services/whatsapp/handoff');
 
 const logger = createSecureLogger('MessageProcessor');
 
@@ -435,6 +436,23 @@ async function processMessage(adapter, msg, options = {}) {
     } catch (err) {
       logger.warn('Provider check failed (non-fatal):', err.message);
     }
+  }
+
+  // 9c. TRANSBORDO: a conversa está com um humano — a IA não fala.
+  //
+  // O portão fica aqui, DEPOIS do roteamento e das palavras-chave e ANTES de
+  // qualquer trabalho pago (reação, LLM, tools). Palavra-chave continua valendo
+  // de propósito: se o cliente mandar STOP ou pedir relatório, isso é comando de
+  // sistema e não conversa, e não faz sentido segurar.
+  //
+  // A pausa expira sozinha — isPaused compara com o relógio a cada leitura, em
+  // vez de confiar num booleano gravado, então a retomada não depende de nenhum
+  // cron existir. O silêncio é intencional: mandar "ainda estamos vendo" a cada
+  // mensagem enquanto o host não responde é ruído para o cliente e não acelera
+  // nada. A mensagem de que alguém foi chamado já saiu quando a tool rodou.
+  if (isPaused(session)) {
+    logger.info(`[${providerName}] Sessão em transbordo humano até ${session.handoff_paused_until} — IA em silêncio`);
+    return { ok: true, skipped: 'handoff_paused' };
   }
 
   // 10. Add processing reaction

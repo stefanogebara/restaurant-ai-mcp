@@ -12,6 +12,7 @@ const {
 const { sendTemplateMessage, sendInteractiveButtonMessage } = require('./message-sender');
 const { sendReservationConfirmationEmail } = require('../../_lib/email');
 const { addCustomerToQueue, checkQueuePosition } = require('./waitlist-handler');
+const handoff = require('./handoff');
 
 /**
  * Get current date/time in restaurant timezone
@@ -1020,6 +1021,79 @@ async function executeTool(toolName, toolInput, session) {
       } catch (err) {
         logger.error(' list_upcoming_events error:', err);
         return { success: false, error: 'Error retrieving events' };
+      }
+    }
+
+    case 'handoff_to_human': {
+      // Passa a conversa para um humano e cala a IA. A ordem aqui é deliberada
+      // e é a propriedade que mais importa deste recurso: PAUSA, AVISA, e se o
+      // aviso falhar, DESFAZ a pausa. Silenciar a IA sem que ninguém saiba que
+      // precisa responder é o pior estado possível — pior do que a esquiva de
+      // hoje, porque a esquiva ao menos devolve alguma coisa ao cliente.
+      const restaurante = session?.restaurant;
+      if (!handoff.isHandoffEnabled(session)) {
+        // Não deveria chegar aqui: a tool nem é oferecida com o recurso
+        // desligado. Se chegou, responder que não dá é melhor que pausar.
+        return { success: false, error: 'Handoff is not enabled for this restaurant' };
+      }
+
+      const idioma = restaurante?.language || 'en';
+      let pausou = false;
+      try {
+        const patch = await handoff.pausar(supabaseAdmin, session.id, toolInput?.reason);
+        pausou = true;
+        // O cache de sessão vive 60s. Sem invalidar, a próxima mensagem do
+        // cliente num Lambda quente leria a sessão PRÉ-pausa e a IA responderia
+        // por cima do humano — logo depois de ter dito que ia chamar alguém.
+        Object.assign(session, patch);
+        try {
+          const { invalidateCachedSession } = require('../../_lib/whatsapp-sessions');
+          invalidateCachedSession(session.sender_phone);
+        } catch (e) {
+          logger.warn('handoff: não consegui invalidar o cache de sessão', { error: e.message });
+        }
+
+        const { data: cfg } = await supabaseAdmin
+          .schema('restaurant')
+          .from('restaurant_config')
+          .select('manager_phone, manager_whatsapp_verified')
+          .eq('id', restaurante?.id || session.restaurant_id)
+          .maybeSingle();
+
+        // Só um número VERIFICADO serve: mandar aviso para telefone não
+        // confirmado é o mesmo que não mandar, mas com a IA calada.
+        if (!cfg?.manager_phone || cfg.manager_whatsapp_verified !== true) {
+          throw new Error('restaurante sem manager_phone verificado');
+        }
+
+        const { sendWhatsAppMessage } = require('../../_lib/whatsapp-sender');
+        const envio = await sendWhatsAppMessage(
+          cfg.manager_phone,
+          handoff.mensagemAoHost({
+            restaurantName: restaurante?.restaurant_name || 'seu restaurante',
+            customerPhone: session.sender_phone,
+            reason: toolInput?.reason,
+          }),
+        );
+        if (envio?.success === false) throw new Error(envio.error || 'envio ao host falhou');
+
+        logger.info('handoff_to_human: conversa passada ao host', { sessionId: session.id });
+        return { success: true, paused: true, message: handoff.mensagemAoCliente(idioma) };
+      } catch (err) {
+        if (pausou) {
+          try {
+            const undo = await handoff.despausar(supabaseAdmin, session.id);
+            Object.assign(session, undo);
+            const { invalidateCachedSession } = require('../../_lib/whatsapp-sessions');
+            invalidateCachedSession(session.sender_phone);
+          } catch { /* já estamos no caminho de erro; nada a fazer */ }
+        }
+        logger.error('handoff_to_human falhou; pausa desfeita', { error: err.message });
+        return {
+          success: false,
+          paused: false,
+          error: 'Could not reach a human right now — keep helping the customer yourself.',
+        };
       }
     }
 

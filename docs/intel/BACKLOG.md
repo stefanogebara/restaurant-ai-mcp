@@ -45,7 +45,47 @@ humano e vale menos que a esquiva atual.
 **Toca:** `api/_services/whatsapp/reservation-tools.js`, `api/_lib/whatsapp-sessions.js`,
 `api/_lib/channels/message-processor.js`, `api/_services/whatsapp/conversation.js`,
 `api/_lib/whatsapp-sender.js`
-**Status:** aberto
+**Status:** **mecanismo construído e DESLIGADO (2026-09-01); a calibração ficou bloqueada por
+credencial.**
+
+**O que foi feito.** `api/_services/whatsapp/handoff.js` + a fiação em três pontos (tool no
+`executeTool`, exposição condicional em `conversation.js`, portão no `message-processor.js`) +
+migration `20260901_whatsapp_handoff.sql`. 20 testes.
+
+**Três propriedades valem mais que o recurso, e cada uma tem teste:**
+1. **A pausa expira** (30 min). Pausa sem prazo é pior que a esquiva: se o host estiver servindo
+   mesa e não vir o aviso, o cliente fala sozinho para sempre. `isPaused` compara com o relógio a
+   cada leitura, então a retomada não depende de nenhum cron existir.
+2. **Falha ao avisar o host desfaz a pausa.** IA calada + host que não sabe de nada é o pior estado
+   possível. Só `manager_phone` com `manager_whatsapp_verified = true` conta — avisar número não
+   verificado é o mesmo que não avisar, mas com a IA muda.
+3. **Nasce desligado por restaurante.** É o `parar se` deste spike aplicado a si mesmo: sem medir
+   falso-positivo não dá para ligar.
+
+**Buraco achado durante a construção, que nenhum teste anterior pegaria:** o cache de sessão em
+memória vive 60 s. Sem invalidar na pausa, a mensagem seguinte num Lambda quente leria a sessão
+pré-pausa e **a IA responderia por cima do humano, logo depois de dizer que ia chamar alguém**.
+`_invalidateCachedSession` passou a ser exportado só por causa disso.
+
+**Sabotagem:** seis mutações, seis quebras — TTL infinito, flag aceitando truthy, remoção da metade
+negativa da descrição da tool, tool exposta ignorando o flag, remoção do portão, e não desfazer a
+pausa quando o aviso falha. Suíte: 256 arquivos / 3911 testes.
+
+**O que ficou de fora, e por quê.** O experimento do spike — rodar contra 20 transcrições reais e
+contar acertos e falsos-positivos — precisa de `SUPABASE_SERVICE_ROLE_KEY` e `OPENROUTER_API_KEY`,
+que não existem no ambiente onde isto foi construído. **Inventar 20 conversas e medir contra elas
+mediria a minha imaginação, não o produto.** O arnês está pronto, é só leitura, e carrega os
+critérios escritos antes de rodar:
+
+```
+SUPABASE_URL=… SUPABASE_SERVICE_ROLE_KEY=… OPENROUTER_API_KEY=… \
+  node scripts/calibrate-whatsapp-handoff.js
+```
+
+Ele rotula as conversas pela própria frase de esquiva do system prompt (`conversation.js:244`), não
+por julgamento meu, e sai com código 1 em qualquer falso-positivo. **Enquanto ele não rodar verde,
+`whatsapp_handoff_enabled` fica false em todo restaurante** — o que é o estado em que este PR
+entrega.
 
 **Decisão de posicionamento pendente, separada do spike:** ver o bloco em `INTEL.md` — a `bets[0]`
 reescrita em 2026-09-01 precisa de ressalva, e há a pergunta de entrar como substituto ou como
