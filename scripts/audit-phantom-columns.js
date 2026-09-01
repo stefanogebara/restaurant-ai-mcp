@@ -2,35 +2,53 @@
 /**
  * Phantom column drift audit.
  *
- * Greps api/ for select() calls referencing columns that don't exist in the
- * actual schema. The Title-Case → snake_case Airtable→Supabase migration
- * left several callers querying phantom columns (e.g. reservations.guest_name,
- * service_records.table_id, customer_ltv.phone). Postgres returns a 400 but
- * many callers swallow the error and return empty data — Manager AI was
- * receiving an empty restaurant snapshot for weeks because of one such drift.
+ * Em PostgREST, pedir uma coluna que não existe devolve erro e `data: null` —
+ * e o cliente do Supabase NÃO lança: ele põe a falha em `error`. Quem não lê o
+ * `error` recebe silêncio no lugar dos dados. O Manager AI passou semanas com
+ * um snapshot vazio por causa de um drift desses.
  *
- * This audit is heuristic — it flags KNOWN-BAD columns. Add to the
- * KNOWN_PHANTOMS map when a new drift is identified. Cheaper than a full
- * schema introspector; gives 80% of the value.
+ * ── A virada (26/ago/2026) ────────────────────────────────────────────────
  *
- * Exit 1 on any phantom column reference outside __tests__.
+ * Esta auditoria era um ALLOWLIST DE CONHECIDOS-RUINS: três tabelas
+ * (`reservations`, `service_records`, `customer_ltv`) e as colunas que já
+ * tinham doído, com o próprio docstring dizendo "adicione ao mapa quando um
+ * novo drift for identificado".
+ *
+ * Ou seja, ela só pegava o que alguém já tinha encontrado à mão. Passou por
+ * cima de `restaurant_config.language` — coluna inexistente num select do
+ * caminho de transbordo do WhatsApp, que fazia o aviso sair em inglês para
+ * cliente brasileiro — porque `restaurant_config` nem estava no mapa.
+ *
+ * Agora a checagem é POSITIVA: `schema-snapshot.json` traz as colunas REAIS de
+ * 17 tabelas, tiradas do information_schema de produção, e qualquer coluna
+ * pedida fora dessa lista é suspeita. Mesma inversão que fez o guarda de
+ * paleta funcionar — de "o que já sabemos que dói" para "o que sabemos que
+ * existe".
+ *
+ * A dívida existente fica congelada em `phantom-columns.divida.json`: 72
+ * referências vivas no dia da virada, grandes demais para um commit só. Elas
+ * podem cair, nunca subir.
+ *
+ * Para regerar o snapshot quando o schema mudar:
+ *   select table_name, column_name from information_schema.columns
+ *   where table_schema in ('public','restaurant');
+ *
+ * Exit 1 em referência NOVA, ou quando a dívida cai sem a base ser rebaixada.
  */
 const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.join(__dirname, '..', 'api');
+const SNAPSHOT = JSON.parse(fs.readFileSync(path.join(__dirname, 'schema-snapshot.json'), 'utf8'));
+const CAMINHO_DIVIDA = path.join(__dirname, 'phantom-columns.divida.json');
 
-// table → Set of column names that DO NOT exist (drift artifacts)
-const KNOWN_PHANTOMS = {
-  reservations: new Set(['guest_name', 'reservation_time', 'reservation_date']),
-  service_records: new Set(['guest_name', 'table_id', 'guest_phone']),
-  customer_ltv: new Set(['phone', 'total_spend', 'average_spend', 'tier', 'churn_risk', 'ltv_score', 'total_spent', 'visit_count', 'avg_spend_per_visit', 'notes']),
-};
+// Tabelas fora do snapshot ainda usam a lista antiga de conhecidos-ruins.
+const KNOWN_PHANTOMS = {};
 
-// Files allowed to mention these strings (they accept them as inbound API params, not as DB queries)
+// Aceitam esses nomes como parâmetro de entrada da API, não como coluna.
 const ALLOWLIST_FILES = new Set([
-  'external-booking-webhook.js',  // Accepts guest_name/reservation_time as request body, maps to real cols
-  'proactive-comms.js',           // Uses churn_risk as a JS object key/alias, not a DB column
+  'external-booking-webhook.js',
+  'proactive-comms.js',
 ]);
 
 function* walk(dir) {
@@ -42,50 +60,99 @@ function* walk(dir) {
   }
 }
 
-const violations = [];
+/**
+ * Casa `.from('tabela')` com o `.select('a, b')` que vem logo depois.
+ *
+ * A janela de 400 caracteres é deliberadamente curta: encadeamento de query no
+ * Supabase é compacto, e uma janela larga casaria o select de OUTRA query mais
+ * abaixo — falso positivo, que é o defeito que mata um guarda.
+ */
+const RE_FROM_SELECT = /\.from\(\s*['"]([a-z_]+)['"]\s*\)([\s\S]{0,400}?)\.select\(\s*['"`]([^'"`]*)['"`]/g;
 
-for (const file of walk(ROOT)) {
-  const rel = path.relative(ROOT, file).replace(/\\/g, '/');
-  if (ALLOWLIST_FILES.has(path.basename(file))) continue;
-
-  const text = fs.readFileSync(file, 'utf8');
-  const lines = text.split(/\r?\n/);
-
-  for (const [table, phantoms] of Object.entries(KNOWN_PHANTOMS)) {
-    // crude scan: lines containing both `from('<table>')` and the phantom
-    // OR within ~15 lines of a from('<table>') call
-    for (let i = 0; i < lines.length; i++) {
-      if (!lines[i].includes(`from('${table}')`)) continue;
-      // Look at next 25 lines for select/eq/order using phantoms
-      const window = lines.slice(i, Math.min(i + 25, lines.length)).join('\n');
-      // Confine the search to the content of single-quoted JS strings in the
-      // window. This avoids false positives from JS variables/object-property
-      // names that share a name with a phantom column (e.g. the `phone` param
-      // in `.eq('customer_phone', phone)` or `reservation_time` used as a JS
-      // computed property). String extraction uses matchAll, not RegExp.exec.
-      const stringContents = [...window.matchAll(/'([^'\\]|\\.)*'/g)].map(m => m[0]).join('\n');
-
-      for (const phantom of phantoms) {
-        // Match phantom column name but not as a prefix of a longer column name
-        // (e.g. 'churn_risk' must not match 'churn_risk_score').
-        // Preceded by: quote, dot, or comma+optional-space (subsequent select items).
-        const re = new RegExp(`(?:['".,]\\s*)${phantom}(?![\\w])`, 'g');
-        if (re.test(stringContents)) {
-          violations.push({ file: rel, line: i + 1, table, phantom });
-        }
-      }
+function colunasSuspeitas(texto) {
+  const achados = [];
+  let m;
+  RE_FROM_SELECT.lastIndex = 0;
+  while ((m = RE_FROM_SELECT.exec(texto)) !== null) {
+    const [, tabela, , cols] = m;
+    const reais = SNAPSHOT[tabela];
+    if (!reais) continue;
+    // `*` e embeds (`outra_tabela(...)`) têm regras próprias — fora do escopo.
+    if (cols.includes('*') || cols.includes('(')) continue;
+    for (const bruto of cols.split(',')) {
+      // `apelido:coluna` → a coluna real é a da direita.
+      const c = bruto.trim().split(':').pop().trim();
+      if (!c || !/^[a-z][a-z0-9_]*$/.test(c)) continue;
+      if (!reais.includes(c)) achados.push(`${tabela}.${c}`);
     }
   }
+  return achados;
 }
 
-if (violations.length === 0) {
-  console.log('\u2713 no phantom-column references in api/');
+function medir() {
+  const porArquivo = {};
+  for (const file of walk(ROOT)) {
+    if (ALLOWLIST_FILES.has(path.basename(file))) continue;
+    const rel = path.relative(ROOT, file).replace(/\\/g, '/');
+    const texto = fs.readFileSync(file, 'utf8');
+
+    const achados = colunasSuspeitas(texto);
+
+    // As tabelas fora do snapshot seguem no regime antigo.
+    const linhas = texto.split(/\r?\n/);
+    for (const [tabela, fantasmas] of Object.entries(KNOWN_PHANTOMS)) {
+      linhas.forEach((linha) => {
+        if (!linha.includes(`from('${tabela}')`) && !linha.includes(`from("${tabela}")`)) return;
+        for (const f of fantasmas) if (new RegExp(`['".,]\\s*${f}\\b`).test(linha)) achados.push(`${tabela}.${f}`);
+      });
+    }
+
+    if (achados.length) porArquivo[rel] = achados.sort();
+  }
+  return porArquivo;
+}
+
+const atual = medir();
+
+if (process.argv.includes('--atualiza')) {
+  fs.writeFileSync(CAMINHO_DIVIDA, JSON.stringify(atual, null, 2) + '\n');
+  const total = Object.values(atual).flat().length;
+  console.log(`Linha de base regravada: ${total} referências em ${Object.keys(atual).length} arquivos.`);
   process.exit(0);
 }
 
-console.log(`\u2717 ${violations.length} phantom-column reference(s) found:\n`);
-for (const v of violations) {
-  console.log(`  api/${v.file}:${v.line}  table=${v.table}  phantom=${v.phantom}`);
+const congelado = fs.existsSync(CAMINHO_DIVIDA)
+  ? JSON.parse(fs.readFileSync(CAMINHO_DIVIDA, 'utf8'))
+  : {};
+
+const problemas = [];
+for (const [arquivo, achados] of Object.entries(atual)) {
+  const antes = congelado[arquivo] || [];
+  const novos = achados.filter((a) => !antes.includes(a));
+  if (novos.length) problemas.push(`  ${arquivo}: ${novos.join(', ')}`);
 }
-console.log('\nFix: replace each with the real column. See scripts/audit-phantom-columns.js KNOWN_PHANTOMS for mapping.');
-process.exit(1);
+
+// Sem isto a linha de base apodrece para cima: alguém conserta dez e o próximo
+// ganha dez de folga para regredir sem ninguém notar.
+const melhoraram = [];
+for (const [arquivo, antes] of Object.entries(congelado)) {
+  const agora = atual[arquivo] || [];
+  const sumiram = antes.filter((a) => !agora.includes(a));
+  if (sumiram.length) melhoraram.push(`  ${arquivo}: ${sumiram.join(', ')}`);
+}
+
+if (problemas.length) {
+  console.error('✗ Colunas fantasma NOVAS (a query devolve null em silêncio):\n' + problemas.join('\n'));
+  console.error('\nConfira o nome real em scripts/schema-snapshot.json.');
+  process.exit(1);
+}
+if (melhoraram.length) {
+  console.error('A dívida caiu — obrigado. Agora baixe a linha de base para travar o ganho:\n' + melhoraram.join('\n'));
+  console.error('\n  node scripts/audit-phantom-columns.js --atualiza');
+  process.exit(1);
+}
+
+const total = Object.values(atual).flat().length;
+console.log(total
+  ? `✓ nenhuma coluna fantasma nova (${total} conhecidas, congeladas em phantom-columns.divida.json)`
+  : '✓ no phantom-column references in api/');

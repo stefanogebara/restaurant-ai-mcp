@@ -292,22 +292,40 @@ async function resolveSessionRestaurant(session) {
 
   // Fallback: synthesize minimal object from restaurant_config so tools can proceed.
   // The tools only need id/restaurant_name/language/slug for prompts + messaging.
+  //
+  // O select pedia `restaurant_slug` e `language`, e NENHUMA DAS DUAS existe em
+  // restaurant.restaurant_config — as colunas reais são `slug` e
+  // `agent_language`. O Postgres devolve 42703 ("column does not exist"), o
+  // cliente do Supabase põe isso em `error` e deixa `data` em null SEM lançar,
+  // então o `catch` nem chega a rodar: o `if (data)` é falso e a função devolve
+  // null em 100% das vezes.
+  //
+  // Quem depende disso recebe o stub `{ id }`, e aí `restaurante?.language` é
+  // undefined. No handoff_to_human isso vira `|| 'en'` — o aviso de "já chamei
+  // alguém" sai em INGLÊS para o cliente de um restaurante brasileiro.
+  //
+  // O `error` é lido agora, em vez de descartado: fallback que falha calado é
+  // como este bug atravessou a revisão.
   try {
-    const { data } = await supabaseAdmin
+    const { data, error } = await supabaseAdmin
       .schema('restaurant')
       .from('restaurant_config')
-      .select('id, restaurant_name, restaurant_slug, agent_language, language')
+      .select('id, restaurant_name, slug, agent_language')
       .eq('id', session.restaurant_id)
       .single();
-    if (data) {
+    if (error) {
+      logger.warn(`resolveSessionRestaurant: config fallback falhou (${error.message})`);
+    } else if (data) {
       return {
         id: data.id,
         restaurant_name: data.restaurant_name,
-        restaurant_slug: data.restaurant_slug,
-        language: data.agent_language || data.language || 'pt',
+        restaurant_slug: data.slug,
+        language: data.agent_language || 'pt',
       };
     }
-  } catch (_) { /* noop */ }
+  } catch (err) {
+    logger.warn(`resolveSessionRestaurant: config fallback lançou (${err.message})`);
+  }
 
   return null;
 }
@@ -1106,4 +1124,9 @@ module.exports = {
   RESERVATION_TOOLS,
   executeTool,
   getCurrentDateTime,
+  // Exportada para teste: é ela que decide o IDIOMA em que o cliente recebe o
+  // aviso de transbordo, e o caminho de fallback dela estava quebrado por
+  // colunas inexistentes. Testá-la via executeTool exigiria montar a sessão,
+  // as tools e o cliente de LLM inteiros.
+  resolveSessionRestaurant,
 };
