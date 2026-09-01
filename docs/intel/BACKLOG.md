@@ -5,6 +5,97 @@ têm âncora verificada. Estado do repositório em `STATE.md`.
 
 ---
 
+### whatsapp-transbordo-humano — Transbordo humano no canal de hóspede
+**Origem:** INTEL 2026-09-01 · **Veredito:** PROTOTIPAR 11/15 (P3 A2 D2 E1 L3)
+**Fonte:** [Baguete, 26/ago](https://www.baguete.com.br/noticias/fogo-de-chao-automatiza-atendimento-com-foodster) · [Portal Filipe Mello, 27/ago](https://www.portalfilipemello.com/2026/08/fogo-de-chao-registra-mais-de-mil.html)
+
+**O mecanismo:** a Foodster (RJ) + Wiv (ex-Blip) puseram no ar um agente de WhatsApp via Meta
+Cloud API no Fogo de Chão — reserva, fila, cardápio, cancelamento e **transbordo para humano** —
+com integração nativa ao Tagme, que é quem guarda reserva e fila. Eles NÃO são donos da reserva:
+são a primeira camada em cima de um sistema alheio.
+
+**Os números não sustentam o que parecem sustentar, e isso importa:** "12 mil usuários únicos" é a
+soma de únicos *mensais* (2.558 + ~4k + 5.416) — conta o mesmo cliente três vezes; idem as 255 mil
+mensagens. Não há baseline pré-IA nem controle, então nada atribui o +112% de contatos à IA em vez
+de mídia ou sazonalidade. Os 76,7% de comparecimento são medidos pelo **Tagme**, não pela IA. E
+falta justamente a métrica que diria se o agente resolve ou empurra: taxa de transbordo.
+
+**Por que promove mesmo com evidência fraca:** o que ameaça não é o case, é a estrutura — Blip como
+distribuição e Tagme como base instalada ocupando a camada conversacional de restaurante no Brasil.
+E das capacidades que eles anunciam, **uma só o repo não tem**: transbordo humano. `handoff` existe
+no subsistema de prospecção (`api/cron/prospect-handoff-digest.js`) e tem **zero ocorrências** em
+`api/_services/whatsapp/` e `api/_lib/channels/`. Hoje a conversa do hóspede morre num "posso
+verificar isso e te respondo".
+
+**Hipótese:** se o canal de hóspede ganhar transbordo humano explícito (pausa da IA + notificação ao
+host + retomada), então a conversa que hoje morre na frase de esquiva passa a terminar com resposta
+humana.
+
+**Spike:** tool `handoff_to_human` em `api/_services/whatsapp/reservation-tools.js` + estado de pausa
+por sessão em `api/_lib/whatsapp-sessions.js`, com o message-processor pulando a chamada de LLM
+enquanto pausado e avisando o host pelo caminho que já existe (`api/_lib/whatsapp-sender.js`). Rodar
+contra 20 transcrições reais e contar quantas deveriam ter escalado. **Caixa de tempo: 1 dia.**
+
+**Medir:** sucesso = em ≥15 das 20 transcrições o gatilho dispara exatamente onde o prompt hoje emite
+a esquiva, com **zero falso-positivo** em 20.
+
+**Parar se:** qualquer falso-positivo — transbordo mal calibrado transforma automação em plantão
+humano e vale menos que a esquiva atual.
+
+**Toca:** `api/_services/whatsapp/reservation-tools.js`, `api/_lib/whatsapp-sessions.js`,
+`api/_lib/channels/message-processor.js`, `api/_services/whatsapp/conversation.js`,
+`api/_lib/whatsapp-sender.js`
+**Status:** aberto
+
+**Decisão de posicionamento pendente, separada do spike:** ver o bloco em `INTEL.md` — a `bets[0]`
+reescrita em 2026-09-01 precisa de ressalva, e há a pergunta de entrar como substituto ou como
+leitor de Tagme (`VALID_SOURCES` em `api/external-booking-webhook.js` não inclui `tagme`).
+
+---
+
+### elevenlabs-payload-snapshot — Travar o payload de criação do agente
+**Origem:** INTEL 2026-09-01 · **Veredito:** PROTOTIPAR 12/15 (P3 A3 D2 E2 L2)
+**Fonte:** [ElevenLabs Changelog, 24/ago](https://elevenlabs.io/docs/changelog/2026/8/24)
+
+**O mecanismo:** em 24/08 a ElevenLabs virou dois defaults do widget do agente —
+`mic_muting_enabled` e `transcript_enabled` — de `false` para `true`. O
+`platform_settings.widget_config` montado em `api/_services/elevenlabsAgentService.js:891-896`
+escreve apenas `avatar_url` e `title`: os dois campos que mudaram são **herdados**, nunca escritos.
+Todo agente criado a partir de agora nasce diferente sem que uma linha do código tenha mudado.
+
+**O estrago desta vez é pequeno; o modo de falha não é.** A superfície afetada é o widget embarcado,
+usado só em `client/src/components/demo/DemoVoiceAgent.tsx` (a demo pública) — o telefone real não
+passa por widget. Mas isto é a materialização exata de um `known_gap` já escrito: *"não há snapshot
+do payload de criação do agente ElevenLabs em nenhum teste — mudança de default vinda do fornecedor
+não seria travada por nada"*. Confirmado: dos cinco testes de ElevenLabs, só
+`api/__tests__/elevenlabs-tool-cleanup.test.js` chega perto, e ele afirma apenas o formato de
+`tool_ids` para provar que `deleteAgent` acha o que `createAgent` criou.
+
+**Hipótese:** se o payload de `agents/create` for travado por snapshot e passar a setar
+`mic_muting_enabled`/`transcript_enabled` explicitamente, então qualquer mudança futura de default
+do fornecedor quebra o CI em vez de vazar em silêncio para o agente de todo restaurante novo.
+
+**Spike:** `api/__tests__/elevenlabs-agent-create-payload.test.js` — mockar fetch, chamar
+`createAgent` com um restaurante fixo e comparar o body inteiro do POST contra snapshot inline,
+cobrindo `conversation_config.agent.prompt` (llm, `tool_ids`), `tts.model_id` por idioma,
+`conversation.turn_timeout`, `client_events`, `asr` e `platform_settings.widget_config`. Depois
+setar os dois campos explicitamente e verificar via `GET /agents/{id}` se o default novo se aplicou
+**retroativamente** a agente já existente — a doc não diz, e é isso que decide o tamanho do estrago.
+**Caixa de tempo: 4h.**
+
+**Medir:** sucesso = o teste passa e mutar qualquer campo do `widget_config` ou do
+`conversation_config` o faz falhar; mais a resposta binária registrada sobre retroatividade.
+
+**Parar se:** o `GET` mostrar que agentes existentes preservaram os defaults antigos **e** a decisão
+de produto for aceitar mute/transcript ligados na demo — nesse caso entra só o snapshot, sem tocar
+no payload.
+
+**Toca:** `api/_services/elevenlabsAgentService.js`, `api/__tests__/` (arquivo novo),
+`client/src/components/demo/DemoVoiceAgent.tsx`
+**Status:** aberto
+
+---
+
 ### twilio-bulk-lembretes — Lembretes e campanhas de WhatsApp em lote
 **Origem:** INTEL 2026-08-31 · **Veredito:** PROTOTIPAR 11/15 (P3 A2 D2 E2 L2)
 **Fonte:** [Twilio Changelog, 14/ago](https://www.twilio.com/en-us/changelog/bulk-messaging-supports-whatsapp-content-templates) · [Twilio Docs](https://www.twilio.com/docs/bulk-messaging)

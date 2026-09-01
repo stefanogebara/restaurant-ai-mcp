@@ -1416,3 +1416,37 @@ certa ensina todo mundo a ignorar o guarda, e aí ele não protege mais nada.
   vazia é piorar. A guarda tem que ficar DENTRO da função de login: coleta
   funciona, execução sem credencial falha alto.
 - Mesmo padrão da sessão inteira: ausência de sinal lida como sinal positivo.
+
+## 2026-09-01 — Dedup antes de gastar analista, não depois
+
+A passada de intel de hoje despachou analista completo para **quatro itens que
+já estavam em `seen.jsonl`**: Salão Abrasel (triado em 24/08), a deprecação da
+OpenAI (31/08), o preço do Meta Business Agent (25/08) e as duas releases de
+Owner e OpenTable (31/08). Cada um voltou com o mesmo veredito — DESCARTAR por
+duplicidade — depois de gastar entre 40 e 52 mil tokens para redescobrir isso.
+
+A skill manda dedup no Estágio 1, contra `seen.jsonl`, **antes** da leitura. Eu
+li o arquivo no começo (109 linhas), conferi os quatro candidatos do feed, e
+depois **parei de conferir**: quando os scouts voltaram com 40+ candidatos,
+despachei por julgamento de relevância sem passar a lista pelo índice de novo.
+Relevância e novidade são gates diferentes, e o barato vem primeiro.
+
+Regra: **entre receber candidatos do scout e despachar analista, passe TODAS as
+URLs e hashes por `seen.jsonl`.** É um grep. O custo de não fazer é ~45k tokens
+por item redundante.
+
+Dois agravantes que valem registro:
+
+- **O scout avisou e eu não escutei.** O de concorrentes-diretos marcou Owner e
+  OpenTable como "fato NOVO para nome já processado" — o rótulo era sobre o
+  *nome*, não sobre a URL, e as URLs eram exatamente as mesmas já indexadas.
+- **Um dos duplicados era um boato que o próprio repo já tinha derrubado.** O
+  preço do Meta Business Agent (US$2/1M tokens) foi examinado e desmentido por
+  escrito em 25/08; voltou por outro caminho e quase foi rearquivado. O analista
+  pegou. Se não tivesse pegado, o sistema teria sido convencido por repetição —
+  que é o modo de falha mais caro possível num arquivo de intel, porque
+  contamina decisão futura com fato falso que já tinha sido checado.
+
+O lado bom: os analistas fizeram o trabalho certo mesmo com briefing redundante,
+porque cada um foi instruído a conferir a dedup e a discordar. Instrução de
+ceticismo no prompt do subagente salvou uma passada que meu despacho estragou.
