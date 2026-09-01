@@ -30,8 +30,20 @@ clientes dizem se sentir reconhecidos.
 `api/_lib/pos/service-completion-core.js` grava `service_records` → `revenue_records` →
 upsert em `customer_ltv`, e `api/_services/restaurantSnapshot.js` lê de volta
 `is_regular` / `visit_count` / preferências. Só que aqui isso alimenta **o prompt do
-Manager AI**, não a tela do garçom. O equivalente ao Digital Chit — o perfil do cliente
-aparecendo no momento de sentar, via `api/guest-profile.js` — não existe no salão.
+Manager AI**, não a tela do garçom.
+
+**CORREÇÃO de 2026-08-31 — a primeira redação dizia que o equivalente ao Digital Chit
+"não existe no salão". Está errado.** Ele existia inteiro e estava ligado no lugar
+errado: `CustomerProfileDrawer` busca `/api/guest-context` e `/api/ltv`, e a
+`ReservationsList` já aceitava `onCustomerClick` e já pintava o `CustomerTierBadge` com
+`visit_count`. A fiação estava **só na `DemoDashboard.tsx`** — o `Dashboard.tsx` do
+restaurante pagante importava a mesma lista, não passava a prop e não montava o drawer.
+O perfil do cliente na hora de sentar era **mostrado ao prospect na demo e sonegado a
+quem paga**, e o nome do cliente ainda renderizava como `<button>` com hover: afordância
+que parecia clicável e não abria nada. Ligado no pagante em 2026-08-31, com um guarda de
+paridade (`client/src/pages/__tests__/guestProfileParity.test.ts`) que exige que as duas
+telas andem juntas — nem tipo, nem lint, nem teste de unidade pegava a omissão de uma
+prop opcional.
 
 **Ameaça a tese, não o mercado — e a distinção importa:** Brasil não está na lista
 geográfica da Square, e a Resy depende do POS da Toast, que não opera em SP. O
@@ -60,8 +72,10 @@ distintos — referência cruzada, não fusão.
 único, e dois pares de concorrentes acabaram de montá-lo por parceria. (a) O diferencial
 em SP continua sendo "end-to-end", ou vira "o único loop que existe em português, dentro
 do POS que a casa já usa" — o que promove `saipos-portao` de spike a espinha do roadmap?
-(b) E a perna que falta aqui é a de **leitura no salão**: o Digital Chit equivalente entra
-agora, ou fica esperando o POS brasileiro existir?
+(b) ~~E a perna que falta aqui é a de **leitura no salão**: o Digital Chit equivalente
+entra agora, ou fica esperando o POS brasileiro existir?~~ **RESPONDIDA em 2026-08-31:
+entrou agora, e não custou o que o item supunha — era fiação, não construção, e não
+dependia de POS nenhum (ver a correção acima).** Fica de pé só (a).
 
 ---
 
