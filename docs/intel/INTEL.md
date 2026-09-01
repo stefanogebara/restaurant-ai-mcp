@@ -11,6 +11,134 @@
 
 ## Em aberto — precisa de decisão do Stefano
 
+### [DISCUTIR 11/15] "Português + WhatsApp" não é território vago — já tem ocupante brasileiro
+**Data:** 2026-09-01 · **Eixos:** P3 A2 D2 E1 L3
+**Fontes:** [Baguete, 26/ago](https://www.baguete.com.br/noticias/fogo-de-chao-automatiza-atendimento-com-foodster) · [Portal Filipe Mello, 27/ago](https://www.portalfilipemello.com/2026/08/fogo-de-chao-registra-mais-de-mil.html) · [foodster.ai](https://foodster.ai)
+**Ponteiro de trabalho:** o spike de transbordo saiu daqui → `BACKLOG.md#whatsapp-transbordo-humano`
+
+**O que é:** a Foodster (RJ) e a Wiv (ex-Blip, parceira Diamond) rodam no Fogo de Chão um agente de
+WhatsApp via Meta Cloud API — reserva, fila, cardápio, cancelamento e transbordo humano — com
+integração nativa ao **Tagme**. Eles não são donos da reserva: o Tagme é quem guarda reserva e fila.
+O mecanismo comercial não é o modelo de IA, é **canal**: Blip como distribuição e Tagme como base
+instalada de rede.
+
+**Os números não sustentam o que parecem sustentar.** "12 mil usuários únicos" é a soma de únicos
+*mensais* (2.558 + ~4k + 5.416) — o mesmo cliente contado três vezes; idem as 255 mil mensagens. Não
+há baseline pré-IA nem controle, então nada atribui o +112% de contatos à IA em vez de mídia ou
+sazonalidade. Os 76,7% de comparecimento são medidos pelo Tagme, não pela IA. E falta a métrica que
+diria se o agente resolve ou empurra: taxa de transbordo. Baguete e Portal Filipe Mello são
+reescritas do mesmo release; o foodster.ai não publica o case.
+
+**Por que toca este projeto — e por que sobrevive à demolição dos números:** a `bets[0]` foi
+reescrita em 2026-09-01 para dizer que a linha defensável é *"o loop está em português e começa num
+canal que os americanos não têm — o WhatsApp"*. Isso descreve um espaço que **já tem ocupante
+brasileiro com case público em rede nacional**, e o foodster.ai diz atender "restaurantes e redes",
+não só rede. O que continua defensável é outra coisa: eles são a primeira camada em cima da reserva
+alheia, enquanto aqui a reserva, a mesa, a receita (`api/_lib/pos/service-completion-core.js`) e o
+`customer_ltv` são do próprio produto, mais voz PSTN e a Olímpia. O diferencial migra de **canal**
+para **propriedade do dado**.
+
+**Ressalva de escala, que corta nos dois sentidos:** Fogo de Chão é rede grande, e o público
+declarado no config é restaurante independente de São Paulo. Isso enfraquece o item como ameaça
+direta — e o fortalece como prova de que a camada está sendo ocupada de cima para baixo.
+
+**A pergunta:** (a) a `bets[0]` vira *"o loop está em português **e o dado do cliente é nosso, não do
+Tagme**"* — isto é, o diferencial deixa de ser canal e passa a ser propriedade do dado? (b) num
+restaurante de SP que já usa Tagme, o Seatable entra como substituto ou como **leitor** — adicionar
+`tagme` a `VALID_SOURCES` em `api/external-booking-webhook.js` e conviver, como a Saipos ficou de
+conector de leitura no `settled` de 2026-09-01?
+
+---
+
+### [DISCUTIR 8/15] O servidor de voz de restaurantes paulistanos roda em Paris
+**Data:** 2026-09-01 · **Eixos:** P2 A2 D1 E2 L1
+**Fonte:** [Fly.io Status](https://status.flyio.net/) · [feed RSS](https://status.flyio.net/feed.rss)
+
+**O que é:** cinco eventos de rede na Fly.io entre 26 e 31/08 — WireGuard gateway (26/08, só afeta
+`flyctl`), **Anycast Edge Maintenance** (27/08, global, com o texto explícito *"long-running
+connections like WebSocket required reconnection"*), packet loss em **GRU** (28/08), HTTP/2
+disruptions (29–31/08) e 6PN Private Network Maintenance (31/08). Todos resolvidos, nenhum durou
+horas.
+
+**O achado está no repo, não na fonte:** o `fly.toml` tem `primary_region = 'cdg'` — **Paris**. O
+incidente da manchete, o único de São Paulo, não tocou o app. Dos cinco, só o Anycast global de
+27/08 morde de verdade, porque a chamada de voz é exatamente uma conexão longa
+(Twilio Media Streams → `wss://seatable-voice.fly.dev/ws`).
+
+**O que isso expõe é maior que o incidente:** cada turno de fala de um restaurante de SP paga
+~180–200 ms de RTT transatlântico, permanentemente, no workload menos tolerante do produto — pior,
+todo dia, que qualquer um desses cinco eventos. E não há como saber se algum deles derrubou uma
+chamada: `getHealthStatus` (`api/_voice-server/ws-server.js:436`) devolve só
+status/activeSessions/connectedClients/uptime — zero latência, zero contador de reconexão, zero
+barge-in. Nada externo faz poll nele; `api/cron/health-alert` cobre os crons da Vercel e
+`api/_lib/integration-probes.js` não menciona voz nem Fly. A fonte não prova impacto e o repo não
+tem como desmentir.
+
+**A pergunta:** mover para `gru` às cegas assumindo que geografia ganha, **instrumentar latência
+primeiro** e decidir com número, ou aceitar `cdg` porque o gargalo real é o backend de IA
+(OpenAI/ElevenLabs, ambos US/EU) e a perna Brasil→Paris é ruído perto disso? *Nota de bordo,
+independente da resposta: o `fly.toml` aponta o build para `api/voice-server/Dockerfile`, caminho
+que não existe — o deploy do servidor de voz está quebrado hoje.*
+
+---
+
+### [DISCUTIR 8/15] Um concorrente europeu de voz+WhatsApp já está na LATAM, mas não no Brasil
+**Data:** 2026-09-01 · **Eixos:** P2 A1 D2 E1 L2
+**Fontes:** [bookline.ai](https://bookline.ai/en/restaurants) · [ICF Capital, Série A 30/09/2025](https://www.icf.cat/en/actualitat/noticies/2025/bookline-tanca-ronda-serie-a-accelerar-expansio-internacional)
+
+**O que é:** a Bookline (Barcelona, ~7 anos) vende camada conversacional para hotelaria — agente de
+voz que atende o telefone, agente de WhatsApp e campanhas —, com a **voz como carro-chefe**. Não é
+sistema de reservas: é overlay que grava dentro de TheFork, Cover Manager e Restoo. Série A de €3,5M
+em 30/09/2025, 1.700+ clientes, 16 países.
+
+**Duas correções que enfraquecem o item e o tornam mais útil:** o "€450M em reservas geridas" se
+decompõe em **€100M de restaurante + €350M de hotel** — 78% do volume vem de fora do segmento
+disputado. E a contagem de clientes diverge entre as fontes (1.200 no site, 1.500 na cobertura,
+1.700 no release). Item **sem evento datado na janela**: é descoberta de nome, não notícia.
+
+**Por que toca este projeto:** a `bets[2]` diz que o restaurante independente brasileiro é
+subatendido pelos players **americanos**. A Bookline é europeia, e faz o mesmo par de canais que os
+8 tools de `api/_voice-server/tool-handler.js` cobrem. Não refuta a aposta — mas o Brasil **não
+aparece em nenhuma fonte primária**: as prioridades LATAM declaradas são México, Colômbia e Chile.
+Somando ao overlay sobre booking europeu (TheFork/CoverManager não são players no Brasil) e à base
+majoritariamente hoteleira, o restaurante independente de SP com WhatsApp-first segue descoberto.
+
+**A pergunta:** a ausência do Brasil é barreira real — PT-BR, WhatsApp como canal primário, ausência
+de TheFork/CoverManager aqui — ou é só sequenciamento de roadmap? Se for sequenciamento, quantos
+meses de janela a `bets[2]` realmente tem, e a resposta é acelerar contrato âncora em SP ou
+aprofundar o que eles não têm (o loop de dado do cliente, já vivo em
+`api/_lib/pos/service-completion-core.js`)?
+
+---
+
+### [DISCUTIR 8/15] O Pix ganhou 80 dias de contestação, e a Olímpia vende Pix sozinha
+**Data:** 2026-09-01 · **Eixos:** P1 A1 D2 E3 L1
+**Fonte:** [IN BCB nº 766 — Manual do DICT v8.5](https://www.bcb.gov.br/estabilidadefinanceira/exibenormativo?tipo=Instru%C3%A7%C3%A3o%20Normativa%20BCB&numero=766)
+
+**O que é, com a imprensa corrigida em dois pontos:** a IN BCB 766/2026 publica a v8.5 do Manual
+Operacional do DICT, cujo histórico de revisão traz *"Ampliação do prazo para contestação de
+transação de devolução para 80 dias"*, alterando as seções 20.1.1, 20.1.9 e o passo 5 da 20.2. **A
+vigência é 01/09/2026** pela redação da IN 767 — não 31/08, como saiu na imprensa. E o escopo é mais
+estreito que a manchete: não é o prazo geral de contestação de fraude, é o prazo para contestar **por
+fraude uma transação de devolução**. Coerente com a mudança irmã (atributo `TransactionDepth`, que
+só entra em 26/10/2026): o BCB está construindo rastreamento de fraude em camadas.
+
+**Por que toca este projeto — e não é onde parecia:** **não há Pix em nenhum fluxo de pagamento do
+Seatable.** Os três caminhos de cobrança são Stripe-cartão, e `api/create-deposit-intent.js` usa
+`capture_method: 'manual'`, que por construção exclui Pix — rail de push não tem autorização e
+captura. O ponto de contato real é outro e é reputacional: o deck da Olímpia
+(`api/_lib/prospecting/deck-html.js:80`) vende Pix como *"custa menos que crédito e cai no mesmo
+dia"*, e **sai sozinho, sem humano**, sob o claim-linter — que é `settled` deste projeto. A
+afirmação não é falsa (o dinheiro liquida mesmo no dia), mas fica incompleta agora.
+
+**A pergunta:** isso merece regra nova no claim-linter, ou é ruído para um restaurante de SP que já
+convive com chargeback de cartão? *Verificação de 10 minutos, independente da resposta:
+`api/event-checkout.js` é o único endpoint com `currency: 'brl'` + `automatic_payment_methods`
+ligado — o Pix pode estar aparecendo no PaymentElement por configuração de painel da Stripe, sem uma
+linha de código.*
+
+---
+
 ### [DISCUTIR 10/15] O whisper-1 sai do ar em 2027-02-26, e o repo usa em dois lugares
 **Data:** 2026-08-31 · **Fontes:** [OpenAI, deprecations](https://developers.openai.com/api/docs/deprecations)
 **Eixos:** P3 A2 D1 E2 L2
@@ -39,6 +167,21 @@ dois caminhos (Realtime + REST), ou isso empilha atrás dos itens mais urgentes 
 (VAD hardcoded, `fly.toml` apontando para caminho de build inexistente, PersonaPlex não
 implementado)? Seis meses de prazo dão folga, mas nenhum dos dois usos tem teste hoje que pegaria
 uma quebra silenciosa no dia da desativação.
+
+---
+
+**Absorvido em 2026-09-01** (candidato "a família gpt-4o-transcribe também cai" veio de novo e foi
+DESCARTADO por duplicidade — o texto acima já a nomeava). Duas correções vieram do repositório, não
+da fonte: **(1) "dois lugares" subconta.** `transcribeVoiceMessage` (`whatsapp-interactions.js:205`)
+tem três consumidores — `api/_lib/channels/meta-adapter.js:99` (áudio do cliente),
+`api/_lib/prospecting/prospect-inbound.js:68` (áudio de prospect da Olímpia) e a reexportação em
+`:269`. São dois *call sites* da string `'whisper-1'`, mas **três caminhos de produto** quebram no
+mesmo dia. **(2) É o lado Realtime que justifica o spike, não o REST.** O caminho REST monta
+multipart com `file` + `model` + `language` e lê `result.text` — troca de string, superfície mínima.
+No Realtime, `whisper-1` é valor de `input_audio_transcription` dentro do `session.update`
+(`openai-realtime.js:85-105`), no mesmo objeto que carrega o `turn_detection: server_vad` hardcoded,
+e nada documenta que o campo aceite `gpt-live-transcribe`. *Busca por `gpt-4o-transcribe` no código:
+zero ocorrências — registrado para não reabrir este candidato uma terceira vez.*
 
 ---
 
@@ -274,6 +417,27 @@ arquivar?
 
 ---
 
+**Absorvido em 2026-09-01 — o prazo venceu hoje e não saiu número.** Abri a página-mãe de pricing
+nesta data e confirmei: os rates por país da cobrança de service message de 01/10 **não estão
+publicados**; a seção de 01/10 fala só de ajuste de utility/authentication em nove países e repete
+*"Meta will announce to-be rates no later than September 1, 2026"*. A mesma página segue afirmando
+*"Effective November 1, 2024 – Service conversations are now free for all businesses"*. **Correção
+ao relato que trouxe o item: a Meta não furou o prazo — ele vence hoje**, e a ausência de número é
+evidência negativa, não medição. Detalhe que muda o cálculo: o `known_gap` de roteamento hardcoded
+(`send-reminders.js` sempre Twilio, `campaignService.js` sempre Meta) **não afeta esta exposição** —
+lembrete e campanha saem como *template*, já cobrado hoje; o que 01/10 encarece é o free-form dentro
+da janela de 24h, que passa pelos três adapters igualmente. *Nota lateral, do candidato do Meta
+Business Agent (DESCARTADO — o preço de US$2/1M tokens segue sem respaldo, e já tinha sido derrubado
+em 25/08): a "ativação gratuita" acabou — a doc agora diz que mensagens do agente da Meta não são
+entregues sem método de pagamento configurado.*
+
+**A pergunta ganha urgência:** o desenho de atendimento muda **agora** para fechar conversa em menos
+turnos, com a tarifa utility BR corrente como piso conservador, ou o produto entra em 01/10 sem
+número, contando por conversa e reprecificando depois? E: alguém checa com o BSP se a WABA já tem
+tarifa de service no rate card privado — o BSP costuma receber o CSV antes da doc pública.
+
+---
+
 ### [DISCUTIR 8/15] Qual é o teto de concorrência do workspace ElevenLabs?
 **Data:** 2026-08-24 · **Eixos:** P2 A2 D1 E2 L1
 **Fonte:** [ElevenLabs changelog, 17/ago](https://elevenlabs.io/docs/changelog/2026/8/17)
@@ -383,6 +547,15 @@ existir e ter o que valer a pena ler?
 
 ## Fila de trabalho
 
+Promovidos em 2026-09-01:
+
+- [PROTOTIPAR 12/15] Travar o payload de criação do agente ElevenLabs → `BACKLOG.md#elevenlabs-payload-snapshot`
+  · âncora: `api/_services/elevenlabsAgentService.js:891`, `api/__tests__/elevenlabs-tool-cleanup.test.js`
+  · o fornecedor virou dois defaults em 24/08 e nada travou — é o `known_gap` do snapshot ausente acontecendo
+- [PROTOTIPAR 11/15] Transbordo humano no canal de hóspede → `BACKLOG.md#whatsapp-transbordo-humano`
+  · âncora: `api/_services/whatsapp/reservation-tools.js`, `api/_lib/channels/message-processor.js`
+  · única capacidade que a Foodster anuncia e o repo não tem; `handoff` só existe na prospecção
+
 Promovido em 2026-08-31:
 
 - [PROTOTIPAR 11/15] Lembretes e campanhas de WhatsApp em lote (Twilio Bulk Messaging) → `BACKLOG.md#twilio-bulk-lembretes`
@@ -406,6 +579,35 @@ Promovidos em 2026-08-24, os quatro com âncora verificada:
 
 ## Radar
 
+- `2026-09-01` **Takeat (ES) captou R$15M em 02/02/2026** (DGF/Quartzo/FUNSES; 3.000 casas
+  autodeclaradas) para PDV + delivery + KDS + fiscal + CRM com IA de WhatsApp — **sem reserva e sem
+  voz**. Não invalida a `bets[2]`, que fala de players *americanos*; arranha a premissa de que o
+  espaço está vazio. O que interessa é o canal: compraram distribuição por comunidade (Marcelo
+  Marani, Donos de Restaurantes), que compete com o outbound frio da Olímpia pelo mesmo dono — sem
+  nenhum número de conversão publicado. [Startups.com.br](https://startups.com.br/negocios/rodada-de-investimento/capixaba-takeat-capta-r-15m-para-emplacar-saas-para-restaurantes/) · 7/15
+- `2026-09-01` **Stripe remove `payment_method_types` de Payment/SetupIntents — em versão *preview*,
+  não GA.** O repo não fixa `apiVersion` em nenhuma das 15 inicializações, então roda no default
+  estável `2025-09-30.clover` do `stripe@19.1.0`, e seus dois PaymentIntents já usam
+  `automatic_payment_methods`. Nada a migrar até optar pelo preview. O bloqueio irmão de Connect
+  atinge só plataformas **novas** com direct charge sobre contas legacy — `stripe-connect-onboarding.js`
+  cria `type: 'standard'` com destination charge. [Stripe](https://docs.stripe.com/changelog/dahlia/2026-08-26/removes-payment-method-types-parameter-from-payment-intents-setup-intents) · 6/15
+- `2026-09-01` **Twilio rotaciona o certificado end-user de todos os endpoints REST em 09/09/2026**,
+  mantendo raiz e intermediária. O repo não faz pinning nem carrega bundle de CA: zero
+  `.pem`/`.crt`, zero `NODE_EXTRA_CA_CERTS`, SDK `twilio@^5.10.3` sem cliente HTTP custom nos 11
+  call sites. Nada a fazer. *Achado lateral: `scripts/apply-migration.js:53` roda com
+  `ssl: { rejectUnauthorized: false }` numa conexão Postgres do Supabase.*
+  [Twilio](https://www.twilio.com/en-us/changelog/REST-API-endpoints-rotated-September-9,-2026) · 5/15
+- `2026-09-01` **ElevenLabs: Procedures em GA** (instrução por tarefa com gatilho) — o movimento de
+  maior consequência arquitetural do changelog de 24/08, e o único que não foi triado nesta passada.
+  O repo monta system prompt monolítico + 5 tools de webhook + 8 tools de voz; instrução por tarefa
+  é candidata direta ao `known_gap` das tools ausentes de evento privado e takeout. **Pede triagem
+  própria na passada seguinte.** [ElevenLabs](https://elevenlabs.io/docs/changelog/2026/8/24) · a triar
+- `2026-09-01` **`context_usage` da ElevenLabs NÃO fecha o buraco de instrumentação de voz** — reporta
+  modelo, tokens do prompt e limite de contexto (custo e inchaço), não latência nem barge-in. E é
+  evento de *cliente realtime*: o caminho PSTN deste repo entrega a chamada ao pipeline gerenciado
+  (`api/twilio-voice-connect.js:286`), então só chegaria no widget da demo — onde o allowlist
+  `client_events` nem o inclui. [ElevenLabs](https://elevenlabs.io/docs/changelog/2026/8/24) · 4/15
+
 - `2026-08-31` **Ringg (Índia) capta US$10M, expande voz para WhatsApp/chat** — mesma tese do
   `bets[0]` (voz virando plataforma multicanal), mas horizontal (fintech/e-commerce/healthcare:
   Cred, Groww, Flipkart, Practo) e fora do Brasil — sinal mais fraco que o caso Palona (restaurante,
@@ -427,7 +629,11 @@ Promovidos em 2026-08-24, os quatro com âncora verificada:
 - `2026-08-25` **"SaaSpocalypse": rede de 8 lojas construiu o próprio pacote de ops com LLM** — a Keva fez onboarding, checklists e previsão de inventário internamente e projeta US$ 30 mil/ano de economia em assinaturas. Três ressalvas que esvaziam a manchete: n=1, economia **projetada e não medida**, e o construído é ops de rede — não reserva, não voz, não CRM de cliente. Starbucks e Mod Pizza estão no título só por serem as outras manchetes do mesmo episódio de podcast. Se morde alguém, morde SaaS de ops multi-unidade, não atendimento por voz para independente que não tem time técnico. [NRN](https://www.nrn.com/quick-service/starbucks-mod-pizza-and-the-potential-for-a-saaspocalypse) · 5/15
 - `2026-08-25` **Vercel troca o toggle "Sensitive" por tipos Config e Secret** — variáveis existentes migram sozinhas, flags `--sensitive`/`--no-sensitive` seguem mapeando, sem prazo e sem impacto em runtime. O único efeito real: a policy de time "Enforce Sensitive Environment Variables" **deixou de ser aplicada** pela CLI, substituída por "Separate Production Secret Values" — relevante só porque o `update-vercel-env.sh` da raiz escreve env vars direto em produção. [Vercel](https://vercel.com/changelog/environment-variables-now-use-config-and-secret-types) · 6/15
 - `2026-08-24` **Brendi capta US$ 6,6 mi para pedido por WhatsApp** — 7.100 casas e 420 mil pedidos/semana autodeclarados, o que dá ~8,5 pedidos por dia por restaurante; 85% da base em cidades pequenas; anjo Patrick Sigrist (iFood). É delivery próprio, não reserva nem voz telefônica. **Não invalida a `bets[2]`** — a aposta fala de players *americanos* subatenderem o Brasil, e uma startup brasileira crescendo confirma a premissa. Ocupa o ativo transacional e o topo do funil da Olímpia. *Teto REGISTRAR pela trava G1: nenhuma fonte primária abriu — o site bloqueou com Cloudflare em duas tentativas e os três veículos repetem o texto da empresa palavra por palavra.* [cobertura](https://www.latamrepublic.com/brendi-lands-us-6-6m-led-by-propel-ventures-to-transform-restaurant-ordering/) · 9/15, travado
-- `2026-08-24` **Salão Abrasel, 15–16/09 na Bienal do Ibirapuera** — 1ª edição, entrada grátis para associado, expectativa *do organizador* de 12 mil visitas de donos de bar e restaurante; apresentado por Ambev, Keeta e Stone. A vitrine de IA é só back-of-house (estoque, CMV, cocção) — nenhum expositor faz voz, reserva ou CRM. Nenhum arquivo do repo muda; é decisão de agenda e expira em 16/09. [Abrasel](https://abrasel.com.br/noticias/noticias/salao-abrasel-5-motivos-para-participar-do-evento/) · 7/15
+- `2026-08-24` **Salão Abrasel, 15–16/09 na Bienal do Ibirapuera** — 1ª edição, entrada grátis para associado, expectativa *do organizador* de 12 mil visitas de donos de bar e restaurante; apresentado por Ambev, Keeta e Stone. A vitrine de IA é só back-of-house (estoque, CMV, cocção) — nenhum expositor faz voz, reserva ou CRM. Nenhum arquivo do repo muda; é decisão de agenda e expira em 16/09.
+  **Atualizado em 2026-09-01** (o item voltou à triagem e foi descartado por dedup): a **Goomer** está
+  entre os 60+ expositores confirmados — única do mapa de concorrentes, e adjacente, não direta;
+  ingresso de visitante R$349–499 (1 dia) / R$599–899 (2 dias), **grátis para associado Abrasel**;
+  estande sem preço nem prazo público. Decidir ir como visitante expira ~14/09. [Abrasel](https://abrasel.com.br/noticias/noticias/salao-abrasel-5-motivos-para-participar-do-evento/) · 7/15
 
 ## Arquivo
 
