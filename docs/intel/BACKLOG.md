@@ -92,7 +92,35 @@ no payload.
 
 **Toca:** `api/_services/elevenlabsAgentService.js`, `api/__tests__/` (arquivo novo),
 `client/src/components/demo/DemoVoiceAgent.tsx`
-**Status:** aberto
+**Status:** **fechado (2026-09-01) na metade que dependia só de código; a metade da
+retroatividade ficou bloqueada por credencial.**
+
+**O que foi feito.** `api/__tests__/elevenlabs-agent-create-payload.test.js` (5 testes) trava o
+corpo do POST `/agents/create`, e o `widget_config` passou a enviar `mic_muting_enabled` e
+`transcript_enabled` **explicitamente** — com os valores do comportamento em que o produto foi
+construído (`false`/`false`), não com o default novo do fornecedor. Um dos testes usa lista fechada
+de chaves, então acrescentar campo ao `widget_config` obriga a atualizar o teste, que é o ponto em
+que alguém para e decide se o valor é o desejado.
+
+**Critério de sucesso atingido.** Seis mutações, seis quebras, cada uma no guarda correspondente:
+`turn_timeout`, `llm`, remoção de `transcript_enabled`, `asr.quality`, remoção de um `client_event`
+e campo novo no `widget_config`. Suíte completa: 255 arquivos / 3891 testes passando.
+
+**Erro no caminho, que vale registrar:** o primeiro mock respondia a `/tools/create`; o endpoint
+real é `/tools`. `createAgent` abortava em `toolIds.length === 0` e os cinco testes falhavam com
+"POST /agents/create não foi chamado" — sintoma que parecia bug do teste e era do mock.
+
+**O que ficou de fora, e por quê.** A pergunta *"a mudança de 24/08 foi retroativa aos agentes já
+criados?"* precisa de `ELEVENLABS_API_KEY`, que não existe neste ambiente. Ela decide o tamanho do
+estrago: se foi retroativa, todo restaurante com agente teve o widget alterado sem aviso; se não
+foi, só os novos nasciam diferentes — e esse caso já está fechado. A sonda está pronta e é só
+leitura: `ELEVENLABS_API_KEY=xxx node scripts/probe-elevenlabs-widget-defaults.js` (sem argumento
+descobre os agentes pelo Supabase). **Só um agente criado antes de 24/08 responde**, e a sonda diz
+INCONCLUSIVO se a amostra não tiver nenhum.
+
+**Decisão de produto separada, deixada para o Stefano:** ligar `transcript_enabled` na demo pública
+pode ser desejável — ver a transcrição prova que a IA entendeu. Isso é escolha de produto, não
+default de fornecedor, e agora é uma linha para trocar em vez de um campo herdado.
 
 ---
 

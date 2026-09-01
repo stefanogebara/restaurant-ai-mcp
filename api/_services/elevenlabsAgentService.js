@@ -889,9 +889,20 @@ async function createAgent({
           asr: { quality: 'high', provider: 'elevenlabs' },
         },
         platform_settings: {
+          // Todo campo daqui vai EXPLÍCITO, mesmo quando o valor coincide com o
+          // default da ElevenLabs. Em 24/08/2026 ela virou mic_muting_enabled e
+          // transcript_enabled de false para true, e como o repo não os enviava,
+          // todo agente novo passou a nascer diferente sem que uma linha daqui
+          // mudasse — invisível, porque o código continuava "funcionando".
+          // Os valores abaixo são o comportamento com que o produto foi
+          // construído e testado; ligar o transcript na demo é decisão de
+          // produto, não default de fornecedor, e é uma linha para trocar.
+          // Travado por api/__tests__/elevenlabs-agent-create-payload.test.js.
           widget_config: {
             avatar_url: 'https://seatable.one/logo.png',
             title: `${restaurant_name} AI Host`,
+            mic_muting_enabled: false,
+            transcript_enabled: false,
           },
         },
       }),
