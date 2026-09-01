@@ -11,74 +11,6 @@
 
 ## Em aberto — precisa de decisão do Stefano
 
-### [DISCUTIR 9/15] O loop integrado deixou de ser exclusividade de quem é um produto só
-**Data:** 2026-08-25 · **Eixos:** P2 A1 D2 E1 L3
-**Fontes primárias:** [Resy newsroom, 13/ago](https://blog.resy.com/newsroom/resy-toast-integration-digital-chits/) · [Square/OpenTable, 18/ago](https://www.nasdaq.com/press-release/square-and-opentable-deepen-strategic-partnership-unified-dining-guest-and-payment) · cobertura: [NRN](https://www.nrn.com/restaurant-technology/square-and-toast-deepen-their-ties-to-reservations-partners)
-
-**O que é:** dois movimentos gêmeos em seis dias. Em 13/08 a Resy integrou-se aos Digital
-Chits da Toast: notas de guestbook, preferências, histórico de visitas e ocasião especial
-aparecem **em tempo real na tela do POS e no handheld**, no lugar da comanda impressa e do
-repasse do host para o garçom — a Resy se declara "a única plataforma de reserva terceira
-com integração de duas vias". Em 18/08 a Square ampliou para "preferred partner" com a
-OpenTable, juntando comportamento de reserva (OpenTable) com itens, gasto e meio de
-pagamento (Square) numa visão única de guest, opt-in em EUA, Canadá, Reino Unido,
-Austrália, Irlanda e França. O único número em qualquer das duas fontes é a Resy citando o
-próprio 2026 Regulars Report: até 50% do volume vem de 7% dos clientes, e só 30% dos
-clientes dizem se sentir reconhecidos.
-
-**Por que toca este projeto:** é literalmente o loop que este repo já roda —
-`api/_lib/pos/service-completion-core.js` grava `service_records` → `revenue_records` →
-upsert em `customer_ltv`, e `api/_services/restaurantSnapshot.js` lê de volta
-`is_regular` / `visit_count` / preferências. Só que aqui isso alimenta **o prompt do
-Manager AI**, não a tela do garçom.
-
-**CORREÇÃO de 2026-08-31 — a primeira redação dizia que o equivalente ao Digital Chit
-"não existe no salão". Está errado.** Ele existia inteiro e estava ligado no lugar
-errado: `CustomerProfileDrawer` busca `/api/guest-context` e `/api/ltv`, e a
-`ReservationsList` já aceitava `onCustomerClick` e já pintava o `CustomerTierBadge` com
-`visit_count`. A fiação estava **só na `DemoDashboard.tsx`** — o `Dashboard.tsx` do
-restaurante pagante importava a mesma lista, não passava a prop e não montava o drawer.
-O perfil do cliente na hora de sentar era **mostrado ao prospect na demo e sonegado a
-quem paga**, e o nome do cliente ainda renderizava como `<button>` com hover: afordância
-que parecia clicável e não abria nada. Ligado no pagante em 2026-08-31, com um guarda de
-paridade (`client/src/pages/__tests__/guestProfileParity.test.ts`) que exige que as duas
-telas andem juntas — nem tipo, nem lint, nem teste de unidade pegava a omissão de uma
-prop opcional.
-
-**Ameaça a tese, não o mercado — e a distinção importa:** Brasil não está na lista
-geográfica da Square, e a Resy depende do POS da Toast, que não opera em SP. O
-`CHECK IN ('manual','square','toast','clover','other')` em
-`database/migrations/20260126_pos_and_revenue.sql` é inteiro americano. O dono em
-Pinheiros não perde nada este mês. O que se perde é tempo: agora existem **dois
-precedentes de referência** para um POS brasileiro copiar, e quando Saipos ou Consumer
-copiarem, o caminho genérico de push por API-key (`api/pos/service-completion.js` +
-`api/_lib/api-key-auth.js`) decide se o Seatable é o parceiro de dado desse POS ou o
-substituído por ele.
-
-**O que a fonte não prova:** as duas são release, não documentação — nenhum payload,
-latência, esquema de API ou tier. A Square **não** afirma bidirecionalidade; quem afirma
-"duas vias" é a Resy sobre a Toast. Boa parte do que a imprensa descreveu como feito está
-no release como "future enhancements". Zero dado de adoção, zero efeito medido sobre
-ticket, retenção ou no-show. É por isso que o item para em DISCUTIR: não há experimento
-honesto a rodar contra um release sem API.
-
-**Não funde com o [DISCUTIR 11/15] de 22/08** (DoorDash/SevenRooms, Amex/Tock): aquele é
-consolidação de capital do lado da demanda, plataforma de reserva comprando plataforma de
-reserva para acumular guestbook. Este é interoperabilidade do lado da operação, o POS
-puxando o guestbook alheio para o salão e devolvendo o gasto. Mesmo prêmio, mecanismos
-distintos — referência cruzada, não fusão.
-
-**A pergunta:** a `bets[0]` supõe que o loop integrado só existe dentro de um produto
-único, e dois pares de concorrentes acabaram de montá-lo por parceria. (a) O diferencial
-em SP continua sendo "end-to-end", ou vira "o único loop que existe em português, dentro
-do POS que a casa já usa" — o que promove `saipos-portao` de spike a espinha do roadmap?
-(b) ~~E a perna que falta aqui é a de **leitura no salão**: o Digital Chit equivalente
-entra agora, ou fica esperando o POS brasileiro existir?~~ **RESPONDIDA em 2026-08-31:
-entrou agora, e não custou o que o item supunha — era fiação, não construção, e não
-dependia de POS nenhum (ver a correção acima).** Fica de pé só (a).
-
----
-
 ### [DISCUTIR 10/15] Os dois motores de voz vão divergir em turn-taking
 **Data:** 2026-08-24 · **Eixos:** P3 A2 D2 E1 L2
 **Fontes:** [ElevenLabs, 03/ago](https://elevenlabs.io/docs/changelog/2026/8/3) · [Twilio, 06/ago](https://www.twilio.com/en-us/changelog/twilio-voice-js-sdk-noise-cancellation-reference-components)
@@ -384,4 +316,102 @@ Promovidos em 2026-08-24, os quatro com âncora verificada:
 
 ## Arquivo
 
-_vazio_
+### [RESOLVIDO 2026-09-01] O loop integrado deixou de ser exclusividade de quem é um produto só
+
+**Decisão do Stefano em 2026-09-01, respondendo (a):** **o `saipos-portao` NÃO é
+promovido a espinha do roadmap.** Saipos fica como **conector de leitura** —
+ocupação de mesa, para o salão dizer a verdade — e não como espinha.
+
+O motivo é mecânico, não de apetite: o loop que a Resy e a Toast fecharam só
+fecha porque **a Toast é dona do pagamento** e o Digital Chit devolve o gasto.
+A Saipos dá ocupação de mesa e **não dá a conta** — `solicitar-fechamento-mesa`
+não registra pagamento, só pinta a mesa de laranja para o garçom (por isso o
+adaptador do PR #69 é só leitura, e por decisão). "O único loop dentro do POS
+que a casa já usa" sairia com a metade de sentar e sem a metade da receita.
+
+A metade da receita já entra por uma porta mais barata e agnóstica de
+fornecedor: o push por API-key (`api/pos/service-completion.js` +
+`api/_lib/api-key-auth.js`) e o `total_bill` manual no Complete Service.
+Nenhuma delas depende de a Saipos documentar coisa alguma — e ela não documenta
+nem a própria rota de auth.
+
+**O que muda na `bets[0]` é o adjetivo, não a aposta:** end-to-end deixa de ser
+**diferencial** e vira **piso**. A linha defensável em SP não é "end-to-end" nem
+"dentro do POS" — é que o loop está em português e começa num canal que os
+americanos não têm, o WhatsApp.
+
+**(b) foi respondida em 2026-08-31** e o trabalho shipou no PR #106: era fiação,
+não construção, e não dependia de POS nenhum. Ver a correção dentro do item
+arquivado abaixo.
+
+<details>
+<summary>Item original, como foi triado em 2026-08-25</summary>
+
+**Data:** 2026-08-25 · **Eixos:** P2 A1 D2 E1 L3
+**Fontes primárias:** [Resy newsroom, 13/ago](https://blog.resy.com/newsroom/resy-toast-integration-digital-chits/) · [Square/OpenTable, 18/ago](https://www.nasdaq.com/press-release/square-and-opentable-deepen-strategic-partnership-unified-dining-guest-and-payment) · cobertura: [NRN](https://www.nrn.com/restaurant-technology/square-and-toast-deepen-their-ties-to-reservations-partners)
+
+**O que é:** dois movimentos gêmeos em seis dias. Em 13/08 a Resy integrou-se aos Digital
+Chits da Toast: notas de guestbook, preferências, histórico de visitas e ocasião especial
+aparecem **em tempo real na tela do POS e no handheld**, no lugar da comanda impressa e do
+repasse do host para o garçom — a Resy se declara "a única plataforma de reserva terceira
+com integração de duas vias". Em 18/08 a Square ampliou para "preferred partner" com a
+OpenTable, juntando comportamento de reserva (OpenTable) com itens, gasto e meio de
+pagamento (Square) numa visão única de guest, opt-in em EUA, Canadá, Reino Unido,
+Austrália, Irlanda e França. O único número em qualquer das duas fontes é a Resy citando o
+próprio 2026 Regulars Report: até 50% do volume vem de 7% dos clientes, e só 30% dos
+clientes dizem se sentir reconhecidos.
+
+**Por que toca este projeto:** é literalmente o loop que este repo já roda —
+`api/_lib/pos/service-completion-core.js` grava `service_records` → `revenue_records` →
+upsert em `customer_ltv`, e `api/_services/restaurantSnapshot.js` lê de volta
+`is_regular` / `visit_count` / preferências. Só que aqui isso alimenta **o prompt do
+Manager AI**, não a tela do garçom.
+
+**CORREÇÃO de 2026-08-31 — a primeira redação dizia que o equivalente ao Digital Chit
+"não existe no salão". Está errado.** Ele existia inteiro e estava ligado no lugar
+errado: `CustomerProfileDrawer` busca `/api/guest-context` e `/api/ltv`, e a
+`ReservationsList` já aceitava `onCustomerClick` e já pintava o `CustomerTierBadge` com
+`visit_count`. A fiação estava **só na `DemoDashboard.tsx`** — o `Dashboard.tsx` do
+restaurante pagante importava a mesma lista, não passava a prop e não montava o drawer.
+O perfil do cliente na hora de sentar era **mostrado ao prospect na demo e sonegado a
+quem paga**, e o nome do cliente ainda renderizava como `<button>` com hover: afordância
+que parecia clicável e não abria nada. Ligado no pagante em 2026-08-31, com um guarda de
+paridade (`client/src/pages/__tests__/guestProfileParity.test.ts`) que exige que as duas
+telas andem juntas — nem tipo, nem lint, nem teste de unidade pegava a omissão de uma
+prop opcional.
+
+**Ameaça a tese, não o mercado — e a distinção importa:** Brasil não está na lista
+geográfica da Square, e a Resy depende do POS da Toast, que não opera em SP. O
+`CHECK IN ('manual','square','toast','clover','other')` em
+`database/migrations/20260126_pos_and_revenue.sql` é inteiro americano. O dono em
+Pinheiros não perde nada este mês. O que se perde é tempo: agora existem **dois
+precedentes de referência** para um POS brasileiro copiar, e quando Saipos ou Consumer
+copiarem, o caminho genérico de push por API-key (`api/pos/service-completion.js` +
+`api/_lib/api-key-auth.js`) decide se o Seatable é o parceiro de dado desse POS ou o
+substituído por ele.
+
+**O que a fonte não prova:** as duas são release, não documentação — nenhum payload,
+latência, esquema de API ou tier. A Square **não** afirma bidirecionalidade; quem afirma
+"duas vias" é a Resy sobre a Toast. Boa parte do que a imprensa descreveu como feito está
+no release como "future enhancements". Zero dado de adoção, zero efeito medido sobre
+ticket, retenção ou no-show. É por isso que o item para em DISCUTIR: não há experimento
+honesto a rodar contra um release sem API.
+
+**Não funde com o [DISCUTIR 11/15] de 22/08** (DoorDash/SevenRooms, Amex/Tock): aquele é
+consolidação de capital do lado da demanda, plataforma de reserva comprando plataforma de
+reserva para acumular guestbook. Este é interoperabilidade do lado da operação, o POS
+puxando o guestbook alheio para o salão e devolvendo o gasto. Mesmo prêmio, mecanismos
+distintos — referência cruzada, não fusão.
+
+**A pergunta:** a `bets[0]` supõe que o loop integrado só existe dentro de um produto
+único, e dois pares de concorrentes acabaram de montá-lo por parceria. (a) O diferencial
+em SP continua sendo "end-to-end", ou vira "o único loop que existe em português, dentro
+do POS que a casa já usa" — o que promove `saipos-portao` de spike a espinha do roadmap?
+(b) ~~E a perna que falta aqui é a de **leitura no salão**: o Digital Chit equivalente
+entra agora, ou fica esperando o POS brasileiro existir?~~ **RESPONDIDA em 2026-08-31:
+entrou agora, e não custou o que o item supunha — era fiação, não construção, e não
+dependia de POS nenhum (ver a correção acima).** Fica de pé só (a).
+
+</details>
+
+---
