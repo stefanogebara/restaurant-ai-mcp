@@ -22,7 +22,7 @@
     "Olímpia — agente de prospecção e follow-up. Vive aqui, é o subsistema mais desenvolvido do repo: 52 módulos em api/_lib/prospecting/, 8 crons, 20 migrations, harness de eval."
   ],
   "bets": [
-    "end-to-end vence ponto-a-ponto: quem só atende telefone vira commodity quando o POS embutir voz",
+    "end-to-end é PISO, não diferencial (revisado em 2026-09-01): a Resy+Toast e a Square+OpenTable montaram o loop integrado por PARCERIA em agosto/2026, então 'quem só atende telefone vira commodity' segue valendo, mas 'só quem é um produto único fecha o loop' não vale mais. A linha defensável em SP é que o loop está em português e começa num canal que os americanos não têm — o WhatsApp",
     "o dado do cliente do restaurante é o ativo, não a chamada atendida",
     "restaurante independente brasileiro é subatendido pelos players americanos"
   ],
@@ -42,7 +42,8 @@
     "api/square.js (handleCatalogSync) busca o catálogo do Square e DESCARTA os itens, gravando só a contagem em pos_connections — não existe tabela de menu no repo, então o cardápio do restaurante não é dado consultável",
     "api/external-booking-webhook.js aceita source 'yelp' e 'opentable' e grava customer_phone || null, enquanto todo o CRM é chaveado por telefone (api/_services/guestMemory.js: 'customer_id which IS the phone number') — reserva nascida em assistente pode chegar sem telefone e o loop de dado morre em silêncio",
     "api/_voice-server/tool-handler.js expõe 8 tools, todas de reserva — zero de evento privado e zero de takeout, apesar de api/events.js e api/event-checkout.js existirem com PaymentIntent funcionando",
-    "lembrete de reserva e campanha de retenção saem por dois caminhos de WhatsApp hardcoded e divergentes: api/cron/send-reminders.js sempre usa Twilio (loop sequencial, 500ms entre envios); api/_services/campaignService.js sempre usa api/_lib/whatsapp-sender.js, que é Meta-only. Nenhum dos dois lê whatsapp_provider do restaurante antes de escolher o canal — achado do spike de intel de 2026-08-31 (docs/intel/BACKLOG.md#twilio-bulk-lembretes)"
+    "lembrete de reserva e campanha de retenção saem por dois caminhos de WhatsApp hardcoded e divergentes: api/cron/send-reminders.js sempre usa Twilio (loop sequencial, 500ms entre envios); api/_services/campaignService.js sempre usa api/_lib/whatsapp-sender.js, que é Meta-only. Nenhum dos dois lê whatsapp_provider do restaurante antes de escolher o canal — achado do spike de intel de 2026-08-31 (docs/intel/BACKLOG.md#twilio-bulk-lembretes)",
+    "FECHADO em 2026-09-01 (PR #106), mantido como registro do modo de falha: o perfil do cliente na hora de sentar — o equivalente ao Digital Chit — existia inteiro (CustomerProfileDrawer sobre /api/guest-context e /api/ltv) e estava ligado SÓ na DemoDashboard.tsx. O Dashboard.tsx do restaurante pagante importava a MESMA ReservationsList e não passava onCustomerClick: recurso mostrado ao prospect e sonegado a quem paga. Nada pegava — as duas telas compilavam e a que faltava só omitia uma prop opcional. Guarda: client/src/pages/__tests__/guestProfileParity.test.ts"
   ],
   "settled": [
     "arquitetura Airtable + n8n foi abandonada; não reintroduzir",
@@ -51,7 +52,8 @@
     "OpenRouter é o provedor único de LLM; Anthropic virou opcional (94f56856, 2026-07-30)",
     "o cérebro da Olímpia é Haiku 4.5, não Sonnet (ddda37a1, 2026-08-11)",
     "o Racha se vende pela máquina da Olímpia, não por canal próprio",
-    "nada sai autonomamente sem passar pelo claim-linter (1702b779, 2026-08-08)"
+    "nada sai autonomamente sem passar pelo claim-linter (1702b779, 2026-08-08)",
+    "Saipos é CONECTOR DE LEITURA, não espinha do roadmap (decidido em 2026-09-01, respondendo o DISCUTIR 9/15 'o loop integrado deixou de ser exclusividade'). O loop Resy+Toast só fecha porque a Toast é dona do pagamento e o Digital Chit devolve o gasto; a Saipos dá ocupação de mesa e NÃO dá a conta — solicitar-fechamento-mesa não registra pagamento, só pinta a mesa de laranja para o garçom, e por isso o adaptador api/_lib/pos/saipos-adapter.js (PR #69) é só leitura por decisão, não por fase. A metade da receita entra pela porta agnóstica de fornecedor que já existe: push por API-key (api/pos/service-completion.js + api/_lib/api-key-auth.js) e total_bill manual no Complete Service"
   ],
   "deprecated": [
     "Airtable como banco — migrado para Supabase em fev/2026 (a17571c7, 3621e79a); resíduos vivos listados em known_gaps",
