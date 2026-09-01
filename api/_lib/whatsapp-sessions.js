@@ -525,5 +525,10 @@ module.exports = {
   cleanupExpiredSessions,
   normalizePhoneNumber,
   getActiveSessionCount,
-  updateSessionConversationHistory
+  updateSessionConversationHistory,
+  // Exposto para o transbordo humano: quando a IA passa a conversa e pausa a
+  // sessão, um Lambda quente ainda carrega a versão pré-pausa por até 60s
+  // (SESSION_CACHE_TTL_MS) e responderia por cima do humano — logo depois de
+  // ter dito ao cliente que ia chamar alguém. Invalidar na hora fecha isso.
+  invalidateCachedSession: _invalidateCachedSession,
 };
