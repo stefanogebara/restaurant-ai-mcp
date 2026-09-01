@@ -67,11 +67,19 @@ autodeclarados pela própria empresa no release, sem baseline nem auditoria exte
 tem reserva de mesa como núcleo — é pedido/delivery-style — e não há menção a Brasil ou expansão
 com prazo.
 
-**A pergunta:** (a) o Seatable deveria ampliar ambição para possuir mais da pilha (POS/pedido)
-como a Owner fez, ou a aposta continua sendo ficar estreito em reserva+voz+CRM em português,
-apostando que players americanos não localizam pro Brasil tão cedo (`bets[2]`)? (b) vale que a
-automação de campanha (`api/retention-campaigns.js`, `api/cron/automated-campaigns.js`) vire
-ferramenta de escrita do Manager AI agora, replicando o que a Owner já embala como feature única?
+**Nota de 2026-09-01 — `bets[0]` mudou de adjetivo depois deste item ser escrito:** o Stefano
+decidiu, respondendo o item separado do "loop integrado" (agora em Arquivo), que end-to-end é
+**piso, não diferencial**, e que a linha defensável em SP é o loop estar em português e começar
+no WhatsApp — não possuir mais da pilha. Isso já inclina a pergunta (a) abaixo para "não", mas o
+caso Owner.com é evidência nova sobre o MESMO eixo (ambição de posse de pilha), então o item
+fica de pé para reconfirmar ou revisitar essa leitura à luz de um concorrente que já provou o
+inverso em escala.
+
+**A pergunta:** (a) a decisão de 01/09 sobre `bets[0]` (end-to-end é piso, defensável é
+português+WhatsApp) já responde isto, ou o caso Owner.com — que possui a pilha inteira e ainda
+assim mira o mesmo público independente — é motivo para revisitar? (b) vale que a automação de
+campanha (`api/retention-campaigns.js`, `api/cron/automated-campaigns.js`) vire ferramenta de
+escrita do Manager AI agora, replicando o que a Owner já embala como feature única?
 
 ---
 
