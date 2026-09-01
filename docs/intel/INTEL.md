@@ -11,6 +11,99 @@
 
 ## Em aberto — precisa de decisão do Stefano
 
+### [DISCUTIR 10/15] O whisper-1 sai do ar em 2027-02-26, e o repo usa em dois lugares
+**Data:** 2026-08-31 · **Fontes:** [OpenAI, deprecations](https://developers.openai.com/api/docs/deprecations)
+**Eixos:** P3 A2 D1 E2 L2
+
+**O que é:** a OpenAI confirmou na doc oficial de deprecações que `whisper-1`, `gpt-4o-transcribe`,
+`gpt-4o-mini-transcribe` e `gpt-4o-transcribe-diarize` foram notificados de descontinuação em
+26/08/2026 e saem da API em **26/02/2027** (~6 meses de corda). Migração recomendada: `gpt-transcribe`
+para áudio já gravado, `gpt-live-transcribe` para stream ao vivo.
+
+**Por que toca este projeto:** `whisper-1` está hardcoded em dois lugares que batem na API nativa da
+OpenAI (fora do OpenRouter, que só cobre chat/completions): dentro do `session.update` do backend de
+voz OpenAI Realtime (`api/_voice-server/backends/openai-realtime.js:96`,
+`input_audio_transcription: { model: 'whisper-1' }`) e no endpoint REST de transcrição
+(`api/_lib/whatsapp-interactions.js:229`, função `transcribeVoiceMessage`, compartilhada entre o
+webhook de WhatsApp do cliente e o inbound de áudio da Olímpia). Isso toca direto o `known_gaps`
+sobre os dois motores de voz divergirem sem instrumentação — trocar o modelo de transcrição sem
+cuidado no lado Realtime aprofunda essa divergência.
+
+**O que a fonte não prova:** a doc não confirma se o campo `input_audio_transcription` da sessão
+Realtime aceita os novos nomes de modelo como valor de `model`, nem se o endpoint REST
+`/v1/audio/transcriptions` aceita o mesmo payload multipart sem mudar contrato. "Trocar a string em
+duas linhas" é hipótese, não fato verificado.
+
+**A pergunta:** vale um spike de poucas horas AGORA para confirmar compatibilidade de payload nos
+dois caminhos (Realtime + REST), ou isso empilha atrás dos itens mais urgentes de voz já conhecidos
+(VAD hardcoded, `fly.toml` apontando para caminho de build inexistente, PersonaPlex não
+implementado)? Seis meses de prazo dão folga, mas nenhum dos dois usos tem teste hoje que pegaria
+uma quebra silenciosa no dia da desativação.
+
+---
+
+### [DISCUTIR 9/15] A Owner.com prova a bets[0] em escala de US$2,3 bilhões
+**Data:** 2026-08-31 · **Fontes:** [PR Newswire](https://www.prnewswire.com/news-releases/owner-raises-240m-led-by-goldman-sachs-alternatives-to-build-the-ai-native-platform-for-every-local-business-302862420.html) · [SiliconANGLE](https://siliconangle.com/2026/08/28/owner-raises-240m-for-its-restaurant-management-platform/)
+**Eixos:** P2 A1 D2 E1 L3
+
+**O que é:** a Owner.com captou Série D de US$240M (Goldman Sachs Alternatives, avaliação
+US$2,3bi), já em >US$100M de ARR e com "mais localizações nos EUA que Domino's ou Taco Bell". A
+plataforma nasceu como site+pedido online+POS próprio+app com loyalty para restaurante
+**independente** americano, e embutiu atendimento telefônico por IA e geração de campanha como
+mais um módulo de um pacote já maduro — não é um produto de voz que virou plataforma (como a
+Palona), é uma plataforma que já era dona do POS e acrescentou a voz.
+
+**Por que toca este projeto — sem fundir com o item da Palona (22/08):** são dois concorrentes
+distintos executando a mesma `bets[0]` ("end-to-end vence ponto-a-ponto... quando o POS embutir
+voz"), mas em estágios opostos — Palona é Série A começando pela voz e indo para operações em
+redes; Owner é Série D já com POS próprio, mirando o mesmo público (**restaurante independente**)
+que é a audiência do Seatable, mais próxima que a da Palona. Ataca também o mesmo ponto do item
+Delivery Hero (24/08): o Manager AI daqui só tem `compare_periods` (leitura) em
+`api/_lib/manager-agent.js`; a automação de campanha da Owner é exatamente a capacidade de
+**escrita** que falta.
+
+**O que a fonte não prova:** todos os números (ARR, +40% tráfego, +40% receita, 2x reorder) são
+autodeclarados pela própria empresa no release, sem baseline nem auditoria externa. Owner.com não
+tem reserva de mesa como núcleo — é pedido/delivery-style — e não há menção a Brasil ou expansão
+com prazo.
+
+**A pergunta:** (a) o Seatable deveria ampliar ambição para possuir mais da pilha (POS/pedido)
+como a Owner fez, ou a aposta continua sendo ficar estreito em reserva+voz+CRM em português,
+apostando que players americanos não localizam pro Brasil tão cedo (`bets[2]`)? (b) vale que a
+automação de campanha (`api/retention-campaigns.js`, `api/cron/automated-campaigns.js`) vire
+ferramenta de escrita do Manager AI agora, replicando o que a Owner já embala como feature única?
+
+---
+
+### [DISCUTIR 8/15] O OpenTable virou marketplace de 20+ parceiros de voz — e comoditizou o vendor isolado
+**Data:** 2026-08-31 · **Fonte:** [PR Newswire](https://www.prnewswire.com/news-releases/opentable-launches-its-largest-suite-of-new-and-updated-product-features-for-restaurants-302860569.html)
+**Eixos:** P2 A1 D2 E1 L2
+
+**O que é:** o maior pacote de features já lançado pela OpenTable: mais de 20 parceiros de
+voice AI de terceiros plugados na plataforma assentaram 3M comensais (+270% ano a ano) sem tirar
+o host do salão; "Table Automations" ajusta mínimos de mesa por demanda ao vivo (2M+ automações em
+teste); relatório em linguagem natural em teste; e integrações de descoberta com Google, ChatGPT,
+Copilot, Perplexity e Alexa (17x mais comensais assentados via LLM ano a ano).
+
+**Por que toca este projeto:** é o terceiro movimento em duas semanas (depois de Resy+Toast 13/08 e
+Square+OpenTable 18/08, já registrados em 25/08) confirmando que incumbentes de reserva viram
+camada de agregação — só que aqui o ângulo é o inverso: a OpenTable **não construiu voz própria**,
+abriu para vendors de voz virarem módulo plugável. Isso é evidência a favor de `bets[0]` do lado do
+incumbente americano: quem é dono do CRM/reserva sempre tem mais poder de barganha que um vendor
+de voz isolado. `api/_lib/manager-agent.js` já expõe `compare_periods` — o "relatório em linguagem
+natural" que a OpenTable testa é capacidade que o Seatable já tem em escala single-location.
+
+**O que a fonte não prova:** todos os números são "dados internos da OpenTable" num release, sem
+metodologia, amostra nem auditoria externa. "Table Automations" e o relatório em linguagem natural
+seguem em teste, sem data de disponibilidade geral.
+
+**A pergunta:** o padrão "voz vira módulo plugável dentro de quem é dono do CRM" confirma que o
+Seatable deveria continuar sendo dono do motor de voz (não terceirizar), ou vale explorar um
+"Table Automations" próprio (mínimos de mesa dinâmicos por demanda), que hoje não existe em nenhuma
+linha do código?
+
+---
+
 ### [DISCUTIR 10/15] Os dois motores de voz vão divergir em turn-taking
 **Data:** 2026-08-24 · **Eixos:** P3 A2 D2 E1 L2
 **Fontes:** [ElevenLabs, 03/ago](https://elevenlabs.io/docs/changelog/2026/8/3) · [Twilio, 06/ago](https://www.twilio.com/en-us/changelog/twilio-voice-js-sdk-noise-cancellation-reference-components)
@@ -290,6 +383,11 @@ existir e ter o que valer a pena ler?
 
 ## Fila de trabalho
 
+Promovido em 2026-08-31:
+
+- [PROTOTIPAR 11/15] Lembretes e campanhas de WhatsApp em lote (Twilio Bulk Messaging) → `BACKLOG.md#twilio-bulk-lembretes`
+  · âncora: `api/cron/send-reminders.js`, `api/_services/campaignService.js`
+
 Promovidos em 2026-08-24, os quatro com âncora verificada:
 
 - [PROTOTIPAR 12/15] Descobrir se a rota de POS brasileiro ainda existe → `BACKLOG.md#saipos-portao`
@@ -308,6 +406,23 @@ Promovidos em 2026-08-24, os quatro com âncora verificada:
 
 ## Radar
 
+- `2026-08-31` **Ringg (Índia) capta US$10M, expande voz para WhatsApp/chat** — mesma tese do
+  `bets[0]` (voz virando plataforma multicanal), mas horizontal (fintech/e-commerce/healthcare:
+  Cred, Groww, Flipkart, Practo) e fora do Brasil — sinal mais fraco que o caso Palona (restaurante,
+  EUA), já em DISCUTIR. Números de volume e clientes são autodeclarados pelo founder.
+  [TechCrunch](https://techcrunch.com/2026/08/25/indias-ringg-gets-backing-from-peak-xv-as-it-pushes-voice-ai-past-the-phone-call/) · 5/15
+- `2026-08-31` **Banco Central estuda usar recebíveis futuros do Pix como garantia de crédito, Pix
+  internacional e reforço de antifraude por IA** — toca o fluxo de caixa de qualquer restaurante que
+  recebe majoritariamente por Pix; nenhuma âncora de código hoje (Seatable não processa Pix
+  diretamente, só Stripe Connect). [Agência GBC](https://agenciagbc.com/2026/08/29/banco-central-estuda-mudancas-no-pix-que-podem-transformar-pagamentos-no-brasil/) · 6/15
+- `2026-08-31` **Pix já é 20,5% das vendas presenciais de bares e restaurantes no Brasil** (vs. 16,5%
+  em 2024), pesquisa Abrasel — adesão maior em negócios pequenos (30,4% até R$130mil/ano). Dado de
+  mercado que reforça a lacuna: o Seatable não aceita Pix em nenhum fluxo de depósito/pagamento.
+  [Agência Brasil](https://agenciabrasil.ebc.com.br/economia/noticia/2026-08/pix-amplia-participacao-nos-pagamentos-em-bares-e-restaurantes) · 6/15
+- `2026-08-31` **Agente de cobrança por IA da TIM no WhatsApp chegou a 2 milhões de clientes**, com
+  25% dos acordos fechados fora do horário comercial — case de referência de agente conversacional
+  autônomo em produção no Brasil, fora do escopo de restaurante mas prova de escala local para o
+  padrão que o Manager AI/Olímpia já seguem. [Mobile Time](https://www.mobiletime.com.br/noticias/19/08/2026/tim-ia-whatsapp-cobranca/) · 6/15
 - `2026-08-25` **ANPD notificou 22 plataformas sob os Decretos 12.975/12.976 e o ECA Digital** — 13 de rede social/mensageria e 9 de loja de app / IA generativa (inclui Claude, ChatGPT, Gemini, Meta AI), com 10 dias úteis para responder sobre prevenção a conteúdo criminoso. **Não alcança este projeto:** o critério é difusão ou intermediação *pública* de conteúdo de terceiros, e a notificação restringe o WhatsApp aos "canais públicos" — funcionalidade que nenhum dos três adapters toca. Base legal é Marco Civil/ECA, não LGPD. Interessa como mudança estrutural: a ANPD passou de normatizadora a fiscal operacional, nomeando fornecedores de IA. [ANPD](https://www.gov.br/anpd/pt-br/assuntos/noticias/anpd-avalia-como-plataformas-digitais-atuam-para-prevenir-conteudos-criminosos-e-proteger-criancas-e-mulheres-na-internet) · 7/15
 - `2026-08-25` **"SaaSpocalypse": rede de 8 lojas construiu o próprio pacote de ops com LLM** — a Keva fez onboarding, checklists e previsão de inventário internamente e projeta US$ 30 mil/ano de economia em assinaturas. Três ressalvas que esvaziam a manchete: n=1, economia **projetada e não medida**, e o construído é ops de rede — não reserva, não voz, não CRM de cliente. Starbucks e Mod Pizza estão no título só por serem as outras manchetes do mesmo episódio de podcast. Se morde alguém, morde SaaS de ops multi-unidade, não atendimento por voz para independente que não tem time técnico. [NRN](https://www.nrn.com/quick-service/starbucks-mod-pizza-and-the-potential-for-a-saaspocalypse) · 5/15
 - `2026-08-25` **Vercel troca o toggle "Sensitive" por tipos Config e Secret** — variáveis existentes migram sozinhas, flags `--sensitive`/`--no-sensitive` seguem mapeando, sem prazo e sem impacto em runtime. O único efeito real: a policy de time "Enforce Sensitive Environment Variables" **deixou de ser aplicada** pela CLI, substituída por "Separate Production Secret Values" — relevante só porque o `update-vercel-env.sh` da raiz escreve env vars direto em produção. [Vercel](https://vercel.com/changelog/environment-variables-now-use-config-and-secret-types) · 6/15

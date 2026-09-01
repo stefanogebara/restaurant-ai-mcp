@@ -1,130 +1,132 @@
 # Estado do repositório — Seatable
 
-> Escrito pela primeira passada do `/intel` em 2026-08-24. Janela: 30 dias
-> (2026-07-25 → 2026-08-19, 168 commits). HEAD `c79ad6f0`, branch `main`.
+> Reescrito pelo `/intel` de 2026-08-31. Janela: desde o último commit de intel
+> (`50f0e2c`, PR #61, 2026-08-25) até `a5d521b` (2026-08-31), 61 commits não-merge.
+> Branch única: `main` — nenhum PR aberto, nenhuma branch remota além dela.
 > Reescrito a cada `/intel`. Fonte: o git, não o config.
 
 ## O parágrafo
 
-Agosto foi o mês da Olímpia. Cerca de 60% dos commits do período são
-prospecção, e o arco é claro: a máquina passou a mandar intro fria, follow-up
-e proposta personalizada sozinha, e no meio do caminho três claims falsos
-escaparam — um custou um lead — o que fez nascer o `claim-linter` como portão
-de saída obrigatório de tudo que sai sem humano. Em paralelo, os crons
-deixaram de rodar às cegas (watchdog cobrindo os 18), a herança do Airtable
-foi enterrada de vez com o `DROP` de `restaurant_info`, e o custo de LLM foi
-posto sob rédea (OpenRouter como provedor único, cérebro da Olímpia de Sonnet-4
-para Haiku-4.5). Voz não apareceu uma vez na lista de arquivos quentes.
+A semana foi o onboarding. O Stefano fechou o norte em 24/08 ("sou fã de fazer
+num chat") e a G0→G4 da ponte demo→conta (13 correções de auditoria, login
+que continua o aha, dados do demo atravessando pro config real, conclusão que
+para de mentir sobre agente/WhatsApp/assinatura) já estava mergeada antes desta
+janela. O que rodou agora foi a G5 — "Onboarding em Conversa" — e um spike
+próprio **derrubou a premissa do plano**: a peça reusável não era o motor de
+`lib/onboarding-chat/`, era a stack do Manager AI já em produção (SSE, chain
+of thought ao vivo, mermaid/gráficos em fence). Dali saíram três primitivos
+novos e testados — loop de agente com teto, portão de escrita por allowlist,
+segurança de slots obrigatórios — mas o endpoint que os liga (`api/onboarding/
+agent.js`) e a promoção atômica do demo a conta real ainda não existem. Em
+paralelo, a Olímpia teve um incidente de verdade (48 leads queimados em 6h por
+um cron sem kill switch) que expôs a mesma lacuna que os outros 8 crons já
+tinham fechado, o Saipos ganhou o adaptador de leitura que o spike de 25/08
+tinha deixado como próximo passo, e o Liquid Glass v2 terminou de zerar os
+quatro desvios do checklist (cinza frio, serif com peso falso, emoji-ícone).
 
 ## O que shipou
 
-- **Olímpia autônoma de ponta a ponta** — intro fria por cron (`a1db728e`),
-  fila por qualidade com teto em banco (`5d6aacd0`, `0c6e9dc9`), follow-up por
-  silêncio (`ab790849`), WhatsApp autônomo do fundador (`4aca154d`), proposta
-  personalizada por prospect (`1b4912dd`), arquivamento aos 30 dias (`3027e2be`).
-- **`claim-linter` como portão de saída** (`1702b779`) depois de três claims
-  falsos em 07–08/08.
-- **Watchdog nos crons** — 4, depois +5, depois os 9 restantes com divergência
-  virando erro (`f4d63840`, `40f2717b`, `6489bc4b`, `5c843b38`, `7c441d30`).
-- **`restaurant_info` aposentada** — quatro commits em 02/08 até o `DROP`
-  (`caa0e4e1`).
-- **ETL do CNPJ da Receita** — 26M linhas → ~615k por CNAE (`7a98321a`),
-  stream com yauzl (`026671a8`), checkpoint por arquivo (`97ab4f1e`).
-- **Demo deixou de ser teatro** — a "IA" respondia enlatado e toda chamada real
-  morria em 400 (`3ce714b3` → `c2e8924c`, `34f03277`, `62ba3786`).
-- **Custo de LLM sob controle** — OpenRouter único (`94f56856`), telemetria por
-  chamador (`19db30f0`), Haiku-4.5 na Olímpia (`ddda37a1`).
-- **Três vazamentos multi-tenant fechados** — agente enxergava e cancelava
-  reserva de outro restaurante (`ac17be4d`), nota ia pra casa errada
-  (`bb4a57c3`), contador somava o prédio inteiro (`bb7f132e`).
-- **Redesign Liquid Glass v2** (18–19/08, PRs #21/#24/#25).
+- **Onboarding G0→G4 completas e mergeadas** (#63, #65, #68, #71, #73) — ponte
+  demo→conta para de perder dado: `country_code` derivado, e-mail fake
+  bloqueado, tipo de cozinha normalizado, `ai_personality`/cardápio/reviews do
+  demo atravessando para o config real, conclusão devolve placar real
+  (`voice_agent`/`whatsapp_registry`/`subscription: ok|failed`) em vez de
+  `200 success` sobre instalação quebrada.
+- **G5 — fundação do agente de onboarding em conversa**: `_lib/agent-loop.js`
+  (loop com teto de iterações e de relógio, 15 testes, #78), `onboarding-
+  draft.js` (portão de escrita por allowlist — nenhuma instrução plantada em
+  site/cardápio de terceiros grava `user_id` ou `is_demo`), `onboarding-
+  agent.js` (junta as duas peças + segurança de slots obrigatórios). Nenhuma
+  ligada a um endpoint ainda.
+- **Wizard vira alternativa, não é apagado** (#89, #91, #92): a folha única de
+  confirmação passa a ser o caminho padrão; as 12 perguntas da entrevista
+  saem porque o `scraped_data` do demo já responde 6 das 8 seções e a 7ª (tom
+  de voz) virou 4 cartões de toque. Rascunho em andamento reabre o wizard
+  onde a pessoa parou.
+- **Limpeza consequente**: três endpoints da entrevista sem chamador apagados
+  (#97), `_demo-handler-backup.js` removido.
+- **Saipos ganha o adaptador de leitura** (#69) — o spike de 25/08 tinha
+  confirmado a rota viva e deixado isto como próximo passo; `api/_lib/pos/
+  saipos-adapter.js` + teste cobrem as três armadilhas que a doc não avisa
+  (auth não documentada, array vazio é sucesso, 404/946 é estado vazio, não
+  erro). Só leitura — `close-sale` não registra pagamento, decisão registrada
+  no cabeçalho do arquivo.
+- **Incidente real na Olímpia, 26/08**: `prospect-enrich` queimou 48 leads em
+  6h (`sem_html: 8/8` seis rodadas seguidas — o scrape não abriu página) e não
+  tinha `isCronEnabled`, um dos poucos sem o interruptor que os outros 8 crons
+  já tinham. Corrigido com portão depois do `CRON_SECRET` e antes de qualquer
+  raspagem paga; `?dry=1` passa por cima de propósito (#103).
+- **Dois bugs de mira na prospecção**: fila ordenava por `reviews_count` sem
+  aplicar a faixa de elegibilidade e mirava shopping centers e Coco Bambu, que
+  nunca passariam o filtro de ICP (#96); filtro de categoria deixava academia
+  passar pelo fim do nome (#70).
+- **Segurança — senha do sandbox sai de 12 arquivos**: 7 scripts do
+  reels-toolkit, 2 specs e2e e 2 scripts de smoke tinham a senha em texto
+  puro (incluindo um padrão `process.env.X || '<hardcoded>'` que parecia
+  parametrizado); passam a ler `SANDBOX_EMAIL`/`SANDBOX_PASSWORD` do ambiente
+  e falham alto sem eles.
+- **CI**: `secrets` dentro de `if:` derrubava a criação do job silenciosamente
+  (live-smoke falhava 100/100 sem tocar um secret); Playwright ficava 24 min
+  mudo em CI por falta de progresso impresso.
+- **Liquid Glass v2 — os quatro desvios do checklist zerados**: cinza frio
+  (`3bb1081`, `d944837`), peso falso no serif (`9460fd5`), emoji virando
+  ícone (`d944837`), paleta quente com trava de catraca (`04c0a92`).
+- **Manager AI ganha bateria de eval** (20 casos, #99) — escrita a partir de
+  linhas reais do `manager-agent.js`, **não rodada**: falta `OPENROUTER_API_KEY`
+  e login (JWT) neste ambiente. Arnês pronto, espera o Stefano rodar.
 
 ## O que está em voo
 
-- Nenhum PR aberto — #17 a #25 já mergearam.
-- `origin/claude/seatable-restaurant-ai-mcp-yjk8r2` (19/08) está **à frente do
-  `main`**; é a única branch com trabalho não mergeado.
-- Backend de voz **PersonaPlex declarado e não implementado** —
-  `api/_voice-server/ws-server.js` lança `PersonaPlex backend not yet available`.
-- `fly.toml` aponta para `api/voice-server/Dockerfile`, caminho inexistente
-  (o real é `api/_voice-server/`).
+- **G5 segue aberta**: falta o endpoint `api/onboarding/agent.js` (SSE +
+  `onPhase`, copiando `manager-chat.js`) ligando o loop já escrito; falta a
+  promoção atômica (RPC) que muta o config do demo em vez de criar do zero;
+  falta desligar `Step6TeachAI` do caminho padrão (5.9); falta mesas na folha
+  (5.10); falta planta/diagramas na conversa (5.5).
+  Correção de premissa do próprio spike: `lib/onboarding-chat/` — que o plano
+  original previa como espinha — **não é reusado**; só sobra o validador de
+  campos obrigatórios.
+- **D4 — copy do trial no Brasil** (Free permanente vs. "14 dias grátis"
+  prometido) segue bloqueada por decisão do Stefano.
+- **Eval do Manager AI** — arnês existe, ninguém rodou a bateria ainda.
+- Nenhum PR aberto, nenhuma branch em voo — tudo mergeado em `main`.
 
 ## O que morreu
 
-- `restaurant_info` e, com ela, a última herança estrutural do Airtable (02/08).
-- Anthropic como provedor primário de LLM (30/07).
-- Disparo de prospecção por **telefone fixo** — 76% do pool não tem WhatsApp
-  (`128ea1c7`); substituído por ler o celular no site da casa (`9fc7bfe4`) e no
-  menu do robô (`5c80a47d`).
-- Duas cópias redundantes do dry-run (`69100d51`).
-- Branches frias: `stress-test` parada desde fev/2026;
-  `feat/prospecting-agent` desde jun.
+- **A hipótese de que `lib/onboarding-chat/` seria a espinha da G5** — o
+  próprio spike a derrubou; sobra só `validateFlow.ts`.
+- **A entrevista de 12 perguntas no caminho padrão do onboarding** —
+  substituída pela folha + `scraped_data` do demo.
+- Três endpoints da entrevista sem chamador (#97) e `_demo-handler-
+  backup.js`.
+- Senha hardcoded do sandbox em 12 arquivos.
+- O `sem_html`/`sem_numero` somados como um número só na métrica de
+  prospecção — separados porque um zero que parece veredito não é.
 
 ## Áreas quentes
 
-`tasks/lessons.md` (19) · `api/cron/prospect-founder-email.js` (13) ·
-`api/_lib/prospecting/prospect-store.js` (12) · `api/_lib/integration-probes.js`
-(10) · `api/prospect-admin.js` (9) · `vercel.json` (7) ·
-`scripts/load-rf-cnpj.mjs` (7) · `api/_lib/prospecting/{prospect-responder,
-prospect-agent,founder-email}.js` (7 cada).
-
-`tasks/lessons.md` no topo é o diário de post-mortems — o ciclo
-aprender→corrigir está ativo.
+`api/_lib/onboarding-draft.js`, `api/_lib/onboarding-agent.js`,
+`api/_lib/agent-loop.js`, `client/src/pages/Onboarding.tsx` +
+`OnboardingChat.tsx`, `api/onboarding/complete.js`,
+`api/cron/prospect-enrich.js`, `api/_lib/prospecting/*`, `tasks/lessons.md`
+(post-mortems continuam entrando a cada correção).
 
 ## Divergências com o config
 
-Nenhuma destas foi aplicada sozinha. `bets` e `settled` só o Stefano mexe —
-quando ele reabre um item, a correção fica registrada no próprio item.
-
-1. **`settled[1]` — "voz é LiveKit + ElevenLabs" — é contradito pelo código.**
-   Não existe LiveKit na arquitetura. Zero dependência declarada nos três
-   `package.json`, zero env `LIVEKIT_*` no `.env.example`, zero import próprio.
-   A única presença é `livekit-client` como dependência **transitiva** de
-   `@elevenlabs/client@0.15.1` — encanamento interno da ElevenLabs, que ninguém
-   aqui escolheu. A voz real é **Twilio → `api/_voice-server/ws-server.js` no
-   Fly.io → ElevenLabs *ou* OpenAI Realtime**, selecionado por restaurante em
-   `api/voice-engine-settings.js` (`VALID_ENGINES = ['elevenlabs',
-   'openai_realtime']`). A pesquisa do próprio repo já sabia disso e marcava
-   como pergunta **em aberto**
-   (`.claude/plans/2026-07-31-olimpia-foco-total/pesquisa-elevenlabs/README.md`).
-   **RESOLVIDO em 2026-08-25** — o Stefano reabriu e mandou corrigir. O
-   `settled[1]` foi reescrito para o caminho real, nomeando os arquivos onde a
-   escolha de motor vive (`api/voice-engine-settings.js`,
-   `api/_voice-server/ws-server.js`), e guarda a linha antiga junto do motivo
-   para que a correção não se perca. O `verdict_note` mantém a regra de
-   descartar item de mercado sobre LiveKit, agora sem a contradição —
-   com uma exceção nova e estreita: **a menos que quebre o próprio
-   `@elevenlabs/client`**, já que é por ele que o `livekit-client` entra.
-   Reconferido no lockfile antes da edição: `@elevenlabs/client` →
-   `livekit-client` → `@livekit/{mutex,protocol}`, zero dependência direta,
-   zero import, zero env `LIVEKIT_*`.
-
-2. **`settled[0]` — "Airtable + n8n abandonada" — sustentado, com uma arma
-   carregada.** n8n está limpo. Airtable não existe em produção, mas
-   `update-vercel-env.sh` na raiz é executável, escreve `*_TABLE_ID` de Airtable
-   no ambiente **production** da Vercel e roda `vercel --prod` — inclusive
-   referenciando `restaurant_info`, dropada em 02/08. Rodar esse arquivo hoje
-   reintroduz a configuração que o `settled` proíbe. Virou `known_gaps`.
-
-3. **`stack` estava significativamente errado.** Faltavam Twilio (a telefonia
-   inteira), OpenAI Realtime, Fly.io e OpenRouter; sobrava LiveKit. "MCP tools"
-   é fóssil: não há servidor MCP vivo, `dist/` não existe, e os dois
-   `test-*mcp*.js` da raiz estão órfãos desde out/2025. O nome do repositório é
-   fóssil junto. *Corrigido no config, com evidência.*
-
-4. **`known_gaps[1]` estava desatualizado.** O loop de dado do cliente **existe
-   e roda**: `api/_lib/pos/service-completion-core.js` escreve
-   `service_records` → `revenue_records` → upsert em `customer_ltv`, e
-   `api/guest-profile.js` lê os três de volta por telefone, realimentando a
-   ligação via `api/_services/guestMemory.js`. O que falta é só a perna do
-   Racha. *Reformulado.*
-
-5. **`known_gaps[3]` estava impreciso.** Existe camada de POS — só que
-   americana: o `CHECK` de `pos_provider` aceita `square|toast|clover`, nenhum
-   opera em SP. Consumer, Saipos e Goomer têm zero ocorrências em código.
-   *Reformulado.*
-
-6. **`sub_products` — o Racha não vive neste repositório.** Aqui existem só as
-   duas pontas: `api/racha-proposta.js` e `api/racha-notify.js`. *Corrigido.*
-   Consequência para a rubrica: item de intel sobre split de conta **não tem
-   âncora de implementação aqui** e não pode passar de DISCUTIR neste repo.
+1. **`known_gaps` sobre Saipos estava desatualizado — corrigido.** O texto
+   dizia *"Consumer, Saipos e Goomer têm zero ocorrências em código — só em
+   docs de pesquisa"*. Isso deixou de ser verdade em 2026-08-25/26:
+   `api/_lib/pos/saipos-adapter.js` (adaptador de leitura, testado) e
+   `supabase/migrations/20260825_pos_provider_saipos.sql` (estende o `CHECK`
+   de `pos_provider`) existem e passam nos testes. Reformulado no config para
+   registrar o que existe (leitura, não fechamento de conta — `close-sale`
+   não registra pagamento) e o que ainda falta (Consumer, Goomer, e nenhum
+   dos dois é código, só é hipótese do dono). Aplicado sozinho — é o mesmo
+   tipo de correção mecânica que `known_gaps[1]` e `known_gaps[3]` já
+   tinham recebido em 2026-08-25, não uma mudança de `bets`/`settled`.
+2. **`BACKLOG.md#saipos-portao` tinha uma nota órfã** — "escrever o
+   adaptador de leitura, não existe nenhum" ficou como próximo passo depois
+   do spike fechado; o adaptador já existe. Atualizado no lugar, sem reabrir
+   o item (que segue FECHADO).
+3. Nenhuma outra `bet` ou `settled` foi tocada. O `update-vercel-env.sh`
+   (arma carregada contra `settled[0]`) continua sem correção — não houve
+   commit tocando nele nesta janela.
