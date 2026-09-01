@@ -380,6 +380,31 @@ describe('ReservationsList', () => {
     expect(resultCount.textContent).toContain('2');
   });
 
+  // O nome do cliente é o gatilho do perfil na hora de sentar (o equivalente
+  // ao Digital Chit). Ele SEMPRE renderizou como <button> com hover, mas sem
+  // onCustomerClick o clique não fazia nada — afordância morta. Estes dois
+  // testes travam as duas metades: dispara quando há handler, e não finge
+  // ser clicável quando não há.
+  it('fires onCustomerClick with the reservation when the guest name is clicked', async () => {
+    const onCustomerClick = vi.fn();
+    const user = userEvent.setup();
+
+    render(<ReservationsList {...defaultProps} onCustomerClick={onCustomerClick} />);
+    await user.click(screen.getByRole('button', { name: 'Alice Smith' }));
+
+    expect(onCustomerClick).toHaveBeenCalledTimes(1);
+    expect(onCustomerClick).toHaveBeenCalledWith(
+      expect.objectContaining({ reservation_id: 'r1', customer_phone: '+1 555-0001' }),
+    );
+  });
+
+  it('leaves the guest name inert when no onCustomerClick is provided', () => {
+    render(<ReservationsList {...defaultProps} />);
+    // Sem handler o nome não deve se anunciar como botão clicável.
+    expect(screen.queryByRole('button', { name: 'Alice Smith' })).not.toBeInTheDocument();
+    expect(screen.getByText('Alice Smith')).toBeInTheDocument();
+  });
+
   it('shows no-results empty state when search has no matches', () => {
     vi.useFakeTimers();
 

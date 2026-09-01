@@ -26,6 +26,7 @@ import TableLayoutPanel from '../components/dashboard/TableLayoutPanel';
 import TableTimeline from '../components/dashboard/TableTimeline';
 import { useServiceMode } from '../hooks/useServiceMode';
 import ReservationsList from '../components/dashboard/ReservationsList';
+import CustomerProfileDrawer from '../components/dashboard/CustomerProfileDrawer';
 import ActivePartiesPanel from '../components/dashboard/ActivePartiesPanel';
 import WaitlistPanel from '../components/host/WaitlistPanel';
 import ManagerNotesPanel from '../components/dashboard/ManagerNotesPanel';
@@ -96,6 +97,12 @@ export default function Dashboard() {
   const [cancelReservation, setCancelReservation] = useState<UpcomingReservation | null>(null);
   // Phase AA.5: deposit-suggest chip → request modal.
   const [depositRequestReservation, setDepositRequestReservation] = useState<UpcomingReservation | null>(null);
+  // O perfil do cliente na hora de sentar. O drawer, /api/guest-context e
+  // /api/ltv já existiam e estavam ligados SÓ na DemoDashboard — o prospect
+  // via na demo o que o restaurante pagante não tinha. Aqui, diferente da
+  // demo, a sessão é autenticada, então as duas queries do drawer de fato
+  // rodam e trazem memórias, preferências e churn real.
+  const [selectedCustomer, setSelectedCustomer] = useState<UpcomingReservation | null>(null);
   const [showInsightsWidgets, setShowInsightsWidgets] = useState(false);
 
   // ---- Data fetching ----
@@ -479,6 +486,7 @@ export default function Dashboard() {
               onEdit={(r) => setEditReservation(r)}
               onCancel={(r) => setCancelReservation(r)}
               onRequestDeposit={(r) => setDepositRequestReservation(r)}
+              onCustomerClick={(r) => setSelectedCustomer(r)}
               avgSpendPerCover={avgSpendPerCover}
               byPartySize={revenueStats?.by_party_size}
               isLoading={isLoading}
@@ -628,6 +636,11 @@ export default function Dashboard() {
         reservation={depositRequestReservation}
         onClose={() => setDepositRequestReservation(null)}
         onLinkGenerated={() => refetch()}
+      />
+
+      <CustomerProfileDrawer
+        reservation={selectedCustomer}
+        onClose={() => setSelectedCustomer(null)}
       />
 
       {showLaunchChecklist && (

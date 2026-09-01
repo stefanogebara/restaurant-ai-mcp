@@ -422,14 +422,27 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
       {/* Info */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
-          <button
-            type="button"
-            onClick={onCustomerClick}
-            className="text-[13px] sm:text-sm font-semibold text-deep-charcoal tracking-tight truncate hover:text-burgundy transition-colors text-left"
-            title={reservation.customer_name}
-          >
-            {reservation.customer_name}
-          </button>
+          {/* O nome só vira botão quando há para onde clicar. Antes ele era
+              sempre <button> com hover:text-burgundy — no dashboard pagante,
+              que não passava onCustomerClick, isso era afordância morta:
+              parecia clicável e não abria nada. */}
+          {onCustomerClick ? (
+            <button
+              type="button"
+              onClick={onCustomerClick}
+              className="text-[13px] sm:text-sm font-semibold text-deep-charcoal tracking-tight truncate hover:text-burgundy transition-colors text-left"
+              title={reservation.customer_name}
+            >
+              {reservation.customer_name}
+            </button>
+          ) : (
+            <span
+              className="text-[13px] sm:text-sm font-semibold text-deep-charcoal tracking-tight truncate"
+              title={reservation.customer_name}
+            >
+              {reservation.customer_name}
+            </span>
+          )}
           <CustomerTierBadge tier={reservation.customer_tier} visitCount={reservation.visit_count} compact />
           {reservation.source && reservation.source !== 'seatable' && (() => {
             // Previously the source rendered as raw uppercase (e.g. "WA",
