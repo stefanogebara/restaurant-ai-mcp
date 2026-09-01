@@ -655,6 +655,60 @@ async function sondarTemplateIntro(env, deps = {}) {
   }
 }
 
+/**
+ * Scrapingdog — a sonda que faltava, e a ausência dela custou cinco dias.
+ *
+ * De 26 a 31/08/2026 a caça ao celular rodou de hora em hora, carimbou 752
+ * leads e achou ZERO. Ninguém conseguia dizer por quê, por dois motivos que se
+ * somaram: o código engolia o motivo (consertado em `lerPaginaScrapingdog`), e
+ * `SCRAPINGDOG_API_KEY` é uma das variáveis marcadas "Sensitive" na Vercel —
+ * `vercel env pull` devolve "[SENSITIVE]", então NEM SE SABIA se ela existe.
+ * Perguntar de dentro da função é a única resposta possível, que é exatamente
+ * a razão de este arquivo existir.
+ *
+ * O 429 merece explicação, porque é o modo de falha real deste fornecedor e é
+ * traiçoeiro: a documentação do Scrapingdog diz que estourar o limite de
+ * conexões simultâneas devolve 429 — com a chave PERFEITAMENTE válida. É a
+ * mesma lição da sonda do OpenRouter: "chave válida" não é a pergunta toda. No
+ * plano gratuito a concorrência é 1, então basta uma sobreposição pra tudo
+ * virar 429 e o funil emudecer sem um único erro no log.
+ *
+ * A sondagem NÃO usa `dynamic=true` de propósito: o que se testa aqui é
+ * autenticação e cota, e a renderização de JS custa mais caro por requisição.
+ */
+async function sondarScrapingdog(env) {
+  const nome = 'scrapingdog';
+  const chave = env.SCRAPINGDOG_API_KEY;
+  // Este ramo sozinho responde a pergunta que ninguém conseguia responder de
+  // fora: a variável está configurada em produção, sim ou não?
+  if (!chave) return naoConfigurado(nome, 'SCRAPINGDOG_API_KEY');
+
+  try {
+    const alvo = 'https://example.com';
+    const { status } = await buscar(
+      `https://api.scrapingdog.com/scrape?api_key=${encodeURIComponent(chave)}`
+      + `&url=${encodeURIComponent(alvo)}`,
+    );
+
+    if (status === 200) return ok(nome, 'chave válida e com cota (caça ao celular operante)');
+    if (status === 401 || status === 403) {
+      return falha(nome, `chave recusada (HTTP ${status}) — trocar a chave, não recarregar`);
+    }
+    if (status === 402) return falha(nome, 'sem crédito (HTTP 402) — recarregar o plano');
+    if (status === 429) {
+      return falha(nome, 'HTTP 429 — limite de cota ou de conexões simultâneas. '
+        + 'A chave VALE; o que acabou foi o plano. No gratuito a concorrência é 1');
+    }
+    if (status >= 500) return atencao(nome, `fornecedor instável (HTTP ${status})`);
+    // A resposta do scrape é HTML, não JSON, então `corpo` vem vazio: o status
+    // é tudo o que temos, e é tudo o que precisamos. Nunca ecoar a URL aqui —
+    // a chave viaja na query string.
+    return falha(nome, `resposta inesperada (HTTP ${status})`);
+  } catch (err) {
+    return erroParaFalha(nome, err);
+  }
+}
+
 async function sondarIntegracoes({ env = process.env, agoraMs = Date.now(), deps = {} } = {}) {
   const tarefas = [
     () => sondarTokenMeta(env, agoraMs),
@@ -667,6 +721,7 @@ async function sondarIntegracoes({ env = process.env, agoraMs = Date.now(), deps
     () => sondarOpenAI(env),
     () => sondarElevenLabs(env),
     () => sondarStripe(env),
+    () => sondarScrapingdog(env),
     () => sondarResend(env),
     () => sondarSupabase(env, deps),
     () => sondarSupabaseAuth(env),
@@ -693,5 +748,6 @@ module.exports = {
   sondarResend,
   sondarAnthropic,
   sondarOpenRouter,
+  sondarScrapingdog,
   sondarIntegracoes,
 };
