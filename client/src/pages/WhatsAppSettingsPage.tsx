@@ -1,10 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import SettingsTabs, { type SettingsTabDef } from '../components/common/SettingsTabs';
 import ManagerNotificationsPanel from '../components/dashboard/ManagerNotificationsPanel';
 import ConnectWhatsAppNumberPanel from '../components/dashboard/ConnectWhatsAppNumberPanel';
+import WhatsAppDeliveryTest from '../components/dashboard/WhatsAppDeliveryTest';
+import WhatsAppOwnerPreferences from '../components/dashboard/WhatsAppOwnerPreferences';
+import { whatsappCopy } from '../components/dashboard/whatsappCopy';
+import { useWhatsAppProvision } from '../hooks/useWhatsAppProvision';
 import FeedbackSettingsPanel from '../components/dashboard/FeedbackSettingsPanel';
 import SurveySettingsPanel from '../components/dashboard/SurveySettingsPanel';
 import AiPersonalityPanel from '../components/dashboard/AiPersonalityPanel';
@@ -301,6 +305,136 @@ function PhoneVerificationPanel() {
           </a>.
         </p>
       )}
+    </div>
+  );
+}
+
+/**
+ * Seção que só monta o conteúdo quando alguém abre, e depois NUNCA desmonta.
+ *
+ * As duas metades importam. Montar sob demanda evita que a página faça, no
+ * primeiro render, consultas que ninguém pediu — o teste cobra isso: com o
+ * número desconectado, nada de `test_status`. E não desmontar ao fechar
+ * preserva o que o dono digitou: fechar uma seção por engano e perder o texto
+ * é a diferença entre um acordeão e uma armadilha.
+ */
+function OnDemandSection({ title, children }: { title: string; children: ReactNode }) {
+  const [aberta, setAberta] = useState(false);
+  const [jaAbriu, setJaAbriu] = useState(false);
+  return (
+    <section className="border-t hairline py-6">
+      <button
+        type="button"
+        aria-expanded={aberta}
+        onClick={() => { setAberta(v => !v); setJaAbriu(true); }}
+        className="w-full text-left text-[15px] font-medium text-deep-charcoal"
+      >
+        {title}
+      </button>
+      {jaAbriu && <div hidden={!aberta} className="pt-5">{children}</div>}
+    </section>
+  );
+}
+
+/**
+ * O painel de WhatsApp visto pelo dono do restaurante.
+ *
+ * A regra que organiza tudo aqui: **o número que atende cliente vem do
+ * provisionamento, e de mais lugar nenhum.** `useWhatsAppStatus` devolve
+ * `phone_number` (o WhatsApp PESSOAL do dono, para notificações) e
+ * `api_configured` (credencial GLOBAL da plataforma) — nenhum dos dois prova
+ * que ESTE restaurante tem número registrado. Confundir os três fazia o painel
+ * exibir "conectado" e um link de conversa para uma casa que nunca conectou
+ * nada; o dono divulgava o número e o cliente caía no vazio.
+ *
+ * Por isso: identidade e link saem de `useWhatsAppProvision`; `api_configured`
+ * só decide se o teste de ENVIO pela plataforma está disponível, que é outra
+ * pergunta.
+ */
+export function WhatsAppWorkspace() {
+  const { i18n } = useTranslation();
+  const copy = whatsappCopy(i18n.language);
+  const provision = useWhatsAppProvision();
+  const status = useWhatsAppStatus();
+
+  // Falha de leitura NÃO vira formulário de configuração em branco. Um form
+  // vazio se lê como "você ainda não conectou" e convida a reconfigurar por
+  // cima do que já existe — a mentira mais cara que este painel poderia contar.
+  if (provision.isError || status.isError) {
+    return (
+      <div className="max-w-3xl">
+        <p role="alert" className="text-red-700 text-[15px]">{copy.loadError}</p>
+        <button
+          type="button"
+          onClick={() => { void provision.refetch(); void status.refetch(); }}
+          className="mt-4 text-burgundy underline text-sm"
+        >
+          {copy.retry}
+        </button>
+      </div>
+    );
+  }
+
+  const estado = provision.data?.estado;
+  const numero = provision.data?.numero_e164 || '';
+  const digitos = numero.replace(/\D/g, '');
+
+  return (
+    <div className="max-w-3xl">
+      <p className="text-[15px] text-muted-stone mb-8">{copy.intro}</p>
+
+      <section className="pb-6">
+        {estado === 'ativo' ? (
+          <>
+            <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">{copy.number}</p>
+            <p className="mt-2 font-mono text-lg text-deep-charcoal">{numero}</p>
+            <p className="mt-1 text-emerald-700 text-sm">{copy.connected}</p>
+            <p className="mt-4 text-sm text-muted-stone max-w-xl">{copy.registeredHint}</p>
+            {digitos && (
+              <a
+                href={`https://wa.me/${digitos}`}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-4 inline-block rounded-full bg-burgundy px-5 py-3 text-white text-sm"
+              >
+                {copy.open}
+              </a>
+            )}
+          </>
+        ) : estado === 'aguardando_codigo' ? (
+          <>
+            <p className="text-amber-700 text-[15px]">{copy.pending}</p>
+            {numero && <p className="mt-2 font-mono text-lg text-deep-charcoal">{numero}</p>}
+            <label htmlFor="wa-verification-code" className="mt-5 block text-sm">{copy.verificationCode}</label>
+            <input
+              id="wa-verification-code"
+              type="text"
+              inputMode="numeric"
+              className="mt-2 w-48 rounded-lg border border-glass-border-input bg-glass-subtle px-3 py-3"
+            />
+          </>
+        ) : (
+          <>
+            <p className="text-[15px] text-deep-charcoal">{copy.disconnected}</p>
+            <p className="mt-2 text-sm text-muted-stone max-w-xl">{copy.migration}</p>
+            <div className="mt-6"><ConnectWhatsAppNumberPanel /></div>
+          </>
+        )}
+      </section>
+
+      <OnDemandSection title={copy.delivery}>
+        <WhatsAppDeliveryTest configured={Boolean(status.data?.api_configured)} />
+      </OnDemandSection>
+      <OnDemandSection title={copy.personality}><AiPersonalityPanel /></OnDemandSection>
+      <OnDemandSection title={copy.notifications}>
+        <p className="mb-4 text-sm text-muted-stone">{copy.notificationHint}</p>
+        <WhatsAppOwnerPreferences />
+        <ManagerNotificationsPanel />
+      </OnDemandSection>
+      <OnDemandSection title={copy.automated}>
+        <FeedbackSettingsPanel />
+        <SurveySettingsPanel />
+      </OnDemandSection>
     </div>
   );
 }
