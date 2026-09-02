@@ -1,0 +1,74 @@
+# Configuração do CodeRabbit.
+#
+# POR QUE ESTE ARQUIVO EXISTE: durante toda a sessão de 2026-09-02 o check do
+# CodeRabbit apareceu VERDE em sete PRs seguidos com a mensagem "Review skipped:
+# draft pull request". Verde de revisão pulada se lê igual a verde de revisão
+# aprovada, e a diferença é tudo. Nenhum daqueles PRs foi revisado.
+#
+# ATENÇÃO — este arquivo NÃO resolve o problema sozinho. Em 02/09 o bot revelou
+# a trava de verdade: "This repository does not receive automatic reviews
+# because it has fewer than 10 stars". O repo é público e tem 3 estrelas, e
+# esse corte é do plano, não do repositório: nenhuma chave aqui o contorna.
+# Para valer, o repo precisa ser habilitado na assinatura Team pelo painel do
+# CodeRabbit (ou passar de 10 estrelas). Enquanto isso não for feito, o que
+# está abaixo fica dormente.
+
+language: pt-BR
+
+reviews:
+  # CHILL é o default e comenta pouco. ASSERTIVE porque o modo de falha que
+  # este repositório já teve não é excesso de comentário — é o #111, que
+  # commitou 15 testes sem a implementação que eles descreviam e deixou a main
+  # vermelha sem ninguém notar. Trocar para "chill" é uma linha.
+  profile: assertive
+
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  review_status: true
+
+  auto_review:
+    enabled: true
+    # A metade que este arquivo de fato conserta. Todo PR desta esteira nasce
+    # draft de propósito (nada mergeia sem revisão humana), então revisar só
+    # PR pronto significava não revisar nada.
+    drafts: true
+    base_branches:
+      - main
+
+  path_filters:
+    # Ruído sem sinal: gerado, minificado ou grande demais para revisão útil.
+    - '!client/dist/**'
+    - '!**/package-lock.json'
+    - '!scripts/schema-snapshot.json'
+    - '!docs/wiki/**'
+
+  path_instructions:
+    - path: 'api/**/*.js'
+      instructions: >-
+        Multi-tenancy é regra dura: toda consulta precisa ser escopada por
+        restaurant_id. Sinalize supabaseAdmin (service role, ignora RLS) usado
+        em caminho que recebe entrada de usuário. Todo arquivo .js fora de um
+        diretório com prefixo _ vira função serverless na Vercel — biblioteca em
+        caminho elegível é bug de deploy. Nunca require() de um handler irmão:
+        a NFT derruba a função importadora do manifesto sem erro de build.
+    - path: 'api/cron/**/*.js'
+      instructions: >-
+        Cron precisa de checagem de CRON_SECRET E do interruptor isCronEnabled,
+        nessa ordem, antes de qualquer trabalho pago. Frequência acima de */15 é
+        problema de custo — o incidente de US$375 de março/2026 saiu daí.
+    - path: 'client/src/**/*.{ts,tsx}'
+      instructions: >-
+        DESIGN.md manda. Os quatro desvios recorrentes: burgundy (e o disfarce
+        rose-600) usado como ESTADO em vez de AÇÃO; cor fria num sistema quente
+        (violet, blue, slate, cinza azulado do Tailwind como hex cru);
+        font-bold em font-serif (Instrument Serif não tem bold e font-synthesis
+        está bloqueado); emoji no lugar de ThiingsIcon.
+    - path: 'supabase/migrations/**/*.sql'
+      instructions: >-
+        Ligar RLS sem política bloqueia todo acesso não-service-role — confira
+        se é intencional. GRANT para anon ou authenticated em tabela com dado
+        financeiro ou de outro inquilino é achado grave.
+
+chat:
+  auto_reply: true
