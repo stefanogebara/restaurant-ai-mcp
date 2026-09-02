@@ -10,8 +10,13 @@
 # because it has fewer than 10 stars". O repo é público e tem 3 estrelas, e
 # esse corte é do plano, não do repositório: nenhuma chave aqui o contorna.
 # Para valer, o repo precisa ser habilitado na assinatura Team pelo painel do
-# CodeRabbit (ou passar de 10 estrelas). Enquanto isso não for feito, o que
-# está abaixo fica dormente.
+# CodeRabbit (ou atingir 10 estrelas — o corte é "fewer than 10", então 10 já
+# basta). Enquanto isso não for feito, o que está abaixo fica dormente.
+#
+# LIMITE CONHECIDO, apontado pelo próprio bot ao revisar este arquivo: o
+# CodeRabbit lê o .coderabbit.yaml DA BRANCH DA PR, então uma PR pode desligar
+# a própria revisão. Blindar isso exige global override no painel deles, que
+# não mora no repositório. Fica registrado; não é consertável daqui.
 
 language: pt-BR
 
@@ -38,6 +43,14 @@ reviews:
 
   path_filters:
     # Ruído sem sinal: gerado, minificado ou grande demais para revisão útil.
+    #
+    # Sobre os lockfiles, porque a exclusão é uma escolha e não descuido: o
+    # repo tem TRÊS (raiz, api/, client/) e nenhum Dependabot ou SCA — o
+    # próprio CodeRabbit apontou isso ao revisar este arquivo. A conclusão dele
+    # foi "então não exclua"; discordo. LLM lendo diff de lockfile — milhares de
+    # linhas de hash resolvido — gera ruído, não segurança, e ainda consome a
+    # cota de revisão. O buraco é real e a ferramenta certa é Dependabot ou SCA,
+    # não revisão de texto. Fica registrado aqui até alguém decidir.
     - '!client/dist/**'
     - '!**/package-lock.json'
     - '!scripts/schema-snapshot.json'
@@ -55,8 +68,9 @@ reviews:
     - path: 'api/cron/**/*.js'
       instructions: >-
         Cron precisa de checagem de CRON_SECRET E do interruptor isCronEnabled,
-        nessa ordem, antes de qualquer trabalho pago. Frequência acima de */15 é
-        problema de custo — o incidente de US$375 de março/2026 saiu daí.
+        nessa ordem, antes de qualquer trabalho pago. Intervalo MENOR que 15
+        minutos (`*/5`, `*/1`, `* * * * *`) é problema de custo — o incidente de
+        US$375 de março/2026 saiu daí.
     - path: 'client/src/**/*.{ts,tsx}'
       instructions: >-
         DESIGN.md manda. Os quatro desvios recorrentes: burgundy (e o disfarce
