@@ -224,7 +224,49 @@ function mensagemApenasEmail(texto, email) {
 const WA_LINK_RE = /(?:wa\.me|whatsapp\.com\/send\?phone=|api\.whatsapp\.com\/send\?phone=)\/?(\+?\d{10,15})/gi;
 const TEL_HREF_RE = /tel:(\+?[\d\s().-]{8,20})/gi;
 // Celular BR em texto: DDD opcional entre parênteses + 9 + 8 dígitos.
-const TEXTO_CELULAR_RE = /(?:\+?55[\s.-]*)?\(?(\d{2})\)?[\s.-]*(9\d{4})[\s.-]*(\d{4})/g;
+//
+// AS DUAS ÂNCORAS `(?<!\d)` / `(?!\d)` SÃO O CONSERTO DE 02/09/2026, e sem
+// elas esta regex é uma fábrica de falso positivo. Sem a fronteira, ela casa no
+// MEIO de qualquer corrida longa de dígitos. Medido em produção, em 19 sites
+// reais da fila:
+//
+//   vc_custom_1593019542599   →  (15)(93019)(5425)   nome de classe do WPBakery
+//   0.59999999999999997779…   →  (99)(99977)(7955)   float em JSON do Elementor
+//
+// Dez "celulares" em dezenove sites, e os dez eram lixo — dois com DDD 11 por
+// coincidência, o resto espalhado por DDDs que nada tinham a ver com a praça.
+// Um número desses gravado em `whatsapp_phone` vira intro do Olímpia para um
+// desconhecido e um ponto de reputação a menos na Meta.
+const TEXTO_CELULAR_RE = /(?<!\d)(?:\+?55[\s.-]*)?\(?(\d{2})\)?[\s.-]*(9\d{4})[\s.-]*(\d{4})(?!\d)/g;
+
+// Pista de que os dígitos ao lado são telefone. O caminho de texto solto é o
+// último recurso e existe para achar WhatsApp — um celular boiando sem nenhuma
+// dessas palavras por perto é tão provavelmente um número de pedido, um CNPJ
+// partido ou um preço quanto um contato.
+const PISTA_TELEFONE_RE = /(whats|zap|wpp|celular|\bcel\b|telefone|\bfone\b|\btel\b|contato|liga(r|mos)?\b|reserva)/i;
+// Janela de contexto ao redor do casamento. 80 antes cobre "WhatsApp: (11) …"
+// e "Reservas pelo telefone …"; 30 depois cobre "… (11) 9…  (WhatsApp)".
+const JANELA_ANTES = 80;
+const JANELA_DEPOIS = 30;
+
+/**
+ * Só o texto que uma pessoa VÊ. Telefone mora em texto visível; o que enganou
+ * a regex morava em `<style>` e em JSON de configuração dentro de `<script>`.
+ * Remover markup antes de procurar elimina a classe inteira de engano, e é
+ * mais barato que tentar adivinhar depois se um casamento é legítimo.
+ */
+function textoVisivel(html) {
+  return String(html || '')
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<!--[\s\S]*?-->/g, ' ')
+    // Atributos morrem junto com as tags: `class`, `id` e `data-*` são onde
+    // vivem os nomes gerados que imitam telefone.
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;|&#160;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/\s+/g, ' ');
+}
 
 /** Todos os casamentos de uma regex global, sem vazar lastIndex entre chamadas. */
 function todos(re, texto) {
@@ -266,14 +308,19 @@ function extrairCelularDoSite(html, dddPadrao) {
   const doTel = primeiroCelular(todos(TEL_HREF_RE, texto).map((m) => m[1]), 'tel_href');
   if (doTel) return doTel;
 
-  // 3. Texto solto.
-  return primeiroCelular(
-    todos(TEXTO_CELULAR_RE, texto).map((m) => `${m[1]}${m[2]}${m[3]}`),
-    'texto');
+  // 3. Texto solto — só o visível, e só perto de uma pista de telefone.
+  const visivel = textoVisivel(texto);
+  const comPista = todos(TEXTO_CELULAR_RE, visivel).filter((m) => {
+    const ini = Math.max(0, m.index - JANELA_ANTES);
+    const ctx = visivel.slice(ini, m.index + m[0].length + JANELA_DEPOIS);
+    return PISTA_TELEFONE_RE.test(ctx);
+  });
+  return primeiroCelular(comPista.map((m) => `${m[1]}${m[2]}${m[3]}`), 'texto');
 }
 
 module.exports = {
   extrairCelularDoSite,
+  textoVisivel,
   DDDS_BR,
   extrairDddBr,
   normalizarNumeroBr,
