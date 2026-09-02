@@ -82,15 +82,38 @@ module.exports = async function handler(req, res) {
     if (ltvErr) logger.warn('LTV deletion error:', ltvErr.message);
 
     // 3. Delete customer_history records
+    //
+    // DUAS CORREÇÕES, e as duas eram silenciosas:
+    //
+    // 1. Faltava `.schema('restaurant')`. `customer_history` só existe naquele
+    //    schema — diferente de `reservations` e `service_records`, que existem
+    //    nos dois. Sem o qualificador isto batia em `public.customer_history`,
+    //    que não existe: erro 42P01 em toda chamada. O bloco LOGO ACIMA, do
+    //    customer_ltv, tem o `.schema()` certo — alguém corrigiu aquele e passou
+    //    direto por este.
+    //
+    // 2. O filtro por `restaurant_id` — coluna que esta tabela não tem. Ela é
+    //    global por cliente, não por restaurante (ver o schema-snapshot). O
+    //    telefone é a chave certa, e apagar por telefone é o comportamento que
+    //    um pedido de exclusão pede: sai de todo lugar, não de um só.
+    //
+    // Hoje a tabela está VAZIA e nada escreve nela, então nenhum dado real
+    // ficou para trás. Mas o endpoint reportava `history_records_deleted: 0`
+    // com a query estourando — e zero-por-erro é indistinguível de
+    // zero-porque-não-havia. Num endpoint de LGPD essa diferença é a única que
+    // importa, então o erro agora sobe no resultado.
     const { data: histData, error: histErr } = await supabaseAdmin
+      .schema('restaurant')
       .from('customer_history')
       .delete()
-      .eq('restaurant_id', restaurantId)
       .eq('customer_phone', phone)
       .select('id');
 
     deletionResults.history_records_deleted = histData?.length || 0;
-    if (histErr) logger.warn('History deletion error:', histErr.message);
+    if (histErr) {
+      logger.error('History deletion error:', histErr.message);
+      deletionResults.history_deletion_failed = histErr.message;
+    }
 
     // 4. Anonymize service_records
     const { data: svcData, error: svcErr } = await supabaseAdmin
