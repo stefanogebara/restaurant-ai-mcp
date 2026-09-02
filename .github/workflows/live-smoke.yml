@@ -33,7 +33,7 @@ jobs:
       CRON_SECRET: ${{ secrets.CRON_SECRET }}
       SANDBOX_EMAIL: ${{ secrets.SANDBOX_EMAIL }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       # Verde aqui nao pode querer dizer "nao rodou nada". Os passos que exigem
       # secret sao PULADOS quando ele falta (aparecem como skipped na UI), e este
@@ -63,7 +63,7 @@ jobs:
             echo "Cadastrar os secrets em Settings > Secrets and variables > Actions liga o resto."
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
 
@@ -159,7 +159,7 @@ jobs:
 
       - name: Upload screenshots on failure
         if: failure()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: live-smoke-screenshots
           path: audit-screenshots/
@@ -167,7 +167,7 @@ jobs:
 
       - name: Upload Playwright report on failure
         if: failure()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-report
           path: playwright-report/
