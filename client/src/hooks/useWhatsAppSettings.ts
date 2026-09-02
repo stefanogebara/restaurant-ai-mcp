@@ -103,6 +103,12 @@ export function useWhatsAppTestMessageStatus() {
       const response = await authFetch('/api/whatsapp-settings?action=test_status');
       if (!response.ok) throw new Error('Failed to load WhatsApp test status');
       const result = await response.json();
+      // 200 com `success: false` é FALHA, não "nenhum teste anterior". Sem esta
+      // linha a consulta resolve `null` e a tela mostra "nenhum teste enviado"
+      // quando na verdade a busca quebrou — o host lê ausência onde havia erro.
+      if (result && result.success === false) {
+        throw new Error(result.error || 'Failed to load WhatsApp test status');
+      }
       return result.data ?? null;
     },
     staleTime: 5 * 1000,
@@ -119,11 +125,11 @@ export function useSaveWhatsAppSettings() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
-      if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.error || 'Failed to save');
+      const payload = await response.json();
+      if (!response.ok || payload?.success === false) {
+        throw new Error(payload?.error || 'Failed to save');
       }
-      return response.json();
+      return payload;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['whatsappStatus'] }),
   });
@@ -140,7 +146,17 @@ export function useSendTestMessage() {
         body: JSON.stringify({ phone_number }),
       });
       const payload = await response.json();
-      if (!response.ok) {
+      // O servidor devolve o registro do teste — aceito, ou o anterior que ainda
+      // está em cooldown — nos DOIS desfechos. Gravar na hora, em vez de esperar
+      // o `invalidateQueries` do onSettled, é o que faz a tela parar de mostrar
+      // o teste ANTIGO como se fosse o resultado do clique que acabou de sair.
+      if (payload?.data) queryClient.setQueryData(['whatsappTestStatus'], payload.data);
+      // `!response.ok ||` é o conserto: o endpoint devolve 200 com
+      // `success: false` quando o provedor recusa a mensagem, e sem isto a
+      // mutação RESOLVE — a tela diz "teste enviado" para um envio que nunca
+      // saiu. O ramo de erro já existia e carrega cooldown e último teste;
+      // só não era alcançado.
+      if (!response.ok || payload?.success === false) {
         const error = new Error(payload.error || 'Failed to send test message') as Error & {
           cooldownRemainingMs?: number;
           latestTestMessage?: WhatsAppTestMessageStatus | null;
