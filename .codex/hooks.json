@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/compile-project-wiki.js 2>&1 | tail -3"
+          }
+        ]
+      }
+    ]
+  }
+}
