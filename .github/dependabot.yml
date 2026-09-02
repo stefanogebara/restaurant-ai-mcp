@@ -1,0 +1,107 @@
+# Varredura de dependência — o buraco que a revisão do CodeRabbit desenterrou
+# no PR #116: três lockfiles (raiz, api/, client/) e NENHUM scan de dependência,
+# num repositório que move pagamento (Stripe Connect, depósito de reserva) e PII
+# de cliente (telefone, histórico de visita, customer_ltv).
+#
+# DUAS METADES, e este arquivo é só uma delas:
+#
+#   1. ALERTAS DE SEGURANÇA (o que realmente importa) NÃO se configuram aqui.
+#      São Settings → Code security → "Dependabot alerts" e "Dependabot security
+#      updates" no painel do GitHub. Sem esse par ligado, este arquivo dá
+#      atualização de versão de rotina e nenhuma proteção contra CVE.
+#   2. ATUALIZAÇÃO DE VERSÃO — o que está abaixo.
+#
+# POR QUE TUDO É AGRUPADO: o CLAUDE.md registra que o que fatura na Vercel é
+# invocação e deploy, e cada PR aqui dispara um preview de ~14 min. Dependabot
+# sem `groups` abre um PR por dependência: com 76 dependências entre os três
+# manifests, isso viraria dezenas de previews por semana. Agrupado, o teto é um
+# PR por ecossistema por semana.
+#
+# `shared/` foi deixado de fora de propósito: o package.json de lá tem só
+# `{"type": "module"}` — nenhuma dependência e nenhum lockfile. Não é
+# ecossistema, é marcador de formato de módulo.
+
+version: 2
+updates:
+  # ── raiz: servidor Express, Stripe, Supabase, Twilio ─────────────────────
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: America/Sao_Paulo
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "chore(deps)"
+      prefix-development: "chore(deps-dev)"
+    groups:
+      producao:
+        dependency-type: production
+        update-types: [minor, patch]
+      desenvolvimento:
+        dependency-type: development
+        update-types: [minor, patch]
+    ignore:
+      # Major fica de fora do automático de propósito: em Stripe e Supabase,
+      # major costuma trocar contrato de API, e isso pede leitura humana do
+      # changelog — não um merge de bot. Continua aparecendo como alerta de
+      # segurança se houver CVE.
+      - dependency-name: "*"
+        update-types: [version-update:semver-major]
+
+  # ── api/: só 4 dependências, todas de runtime serverless ────────────────
+  - package-ecosystem: npm
+    directory: /api
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: America/Sao_Paulo
+    open-pull-requests-limit: 2
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      api:
+        patterns: ["*"]
+        update-types: [minor, patch]
+    ignore:
+      - dependency-name: "*"
+        update-types: [version-update:semver-major]
+
+  # ── client/: React 19, Vite 7, Tailwind, Stripe.js ──────────────────────
+  - package-ecosystem: npm
+    directory: /client
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: America/Sao_Paulo
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "chore(deps)"
+      prefix-development: "chore(deps-dev)"
+    groups:
+      producao:
+        dependency-type: production
+        update-types: [minor, patch]
+      desenvolvimento:
+        dependency-type: development
+        update-types: [minor, patch]
+    ignore:
+      # React, Vite e Tailwind em major são migração, não atualização.
+      - dependency-name: "*"
+        update-types: [version-update:semver-major]
+
+  # ── GitHub Actions: checkout, setup-node, upload-artifact ───────────────
+  # Action desatualizada é vetor real — ela roda com o GITHUB_TOKEN do repo.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 1
+    commit-message:
+      prefix: "chore(ci)"
+    groups:
+      actions:
+        patterns: ["*"]
