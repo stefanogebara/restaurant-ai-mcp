@@ -130,3 +130,66 @@ describe('textoVisivel', () => {
     expect(t).not.toContain('vc_custom');
   });
 });
+
+/**
+ * TRILHA NOVA, MESMA VIGILÂNCIA — 03/09/2026.
+ *
+ * A config de widget em <script> é a trilha mais exposta ao problema que este
+ * arquivo inteiro documenta: ela lê justamente a região do HTML que
+ * `textoVisivel` remove por ser cheia de lixo numérico. Por isso é ancorada em
+ * CHAVE NOMEADA, e não em "qualquer 55DDD9XXXXXXX dentro do script".
+ *
+ * Veio de achado real: o Magic Chicken tinha o celular no HTML o tempo todo,
+ * em `ht_ctc_chat_var = {"number":"5511945422056"}` (plugin Click to Chat).
+ * É o caso que pagaria `dynamic=true` no Scrapingdog — e sai de graça.
+ */
+describe('JSON em <script> — acha o certo sem reabrir o buraco', () => {
+  it('acha em schema.org JSON-LD (Câmara Fria, HTML real)', () => {
+    // A família MAIS valiosa das duas: não é widget, é o telefone que a casa
+    // declara em dado estruturado para buscador. Apareceu medindo 65 sites.
+    const html = '<script type="application/ld+json">'
+      + '{"@type":"Restaurant","url":"https://camarafriabar.com.br/",'
+      + '"telephone":"+5511943643170"}</script>';
+
+    expect(extrairCelularDoSite(html, '11')).toEqual({
+      numero: '+5511943643170', fonte: 'script_json',
+    });
+  });
+
+  it('acha na config do Click to Chat (Magic Chicken, HTML real)', () => {
+    const html = '<script id="ht_ctc_app_js-js-extra">'
+      + 'var ht_ctc_chat_var = {"number":"5511945422056","pre_filled":"Como podemos ajudar?"};'
+      + '</script>';
+
+    expect(extrairCelularDoSite(html, '11')).toEqual({
+      numero: '+5511945422056', fonte: 'script_json',
+    });
+  });
+
+  it('aceita aspas simples e a chave `whatsapp`', () => {
+    const html = "<script>window.cfg = {'whatsapp': '+5521987654321'}</script>";
+
+    expect(extrairCelularDoSite(html, '11').numero).toBe('+5521987654321');
+  });
+
+  it('RECUSA fixo na config — fixo não tem WhatsApp, é canal que não existe', () => {
+    expect(extrairCelularDoSite('<script>var v={"number":"551133334444"}</script>', '11')).toBeNull();
+  });
+
+  it('RECUSA dígito solto no script — timestamp, id de pixel e seed moram lá', () => {
+    // Têm a forma EXATA de um celular. O que os barra é não haver chave nomeada
+    // da lista — que é a única defesa possível dentro de <script>.
+    const html = '<script>var t={"ts":5511945422056,"id":"5511945422056","seed":"5511945422056"}</script>';
+
+    expect(extrairCelularDoSite(html, '11')).toBeNull();
+  });
+
+  it('não atropela o wa.me — link segue sendo a fonte de maior confiança', () => {
+    const html = '<a href="https://wa.me/5511911112222">zap</a>'
+      + '<script>var ht_ctc_chat_var={"number":"5511933334444"}</script>';
+
+    expect(extrairCelularDoSite(html, '11')).toEqual({
+      numero: '+5511911112222', fonte: 'wa_link',
+    });
+  });
+});

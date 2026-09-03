@@ -246,6 +246,31 @@ const TEXTO_CELULAR_RE = /(?<!\d)(?:\+?55[\s.-]*)?\(?(\d{2})\)?[\s.-]*(9\d{4})[\
 const PISTA_TELEFONE_RE = /(whats|zap|wpp|celular|\bcel\b|telefone|\bfone\b|\btel\b|contato|liga(r|mos)?\b|reserva)/i;
 // Janela de contexto ao redor do casamento. 80 antes cobre "WhatsApp: (11) …"
 // e "Reservas pelo telefone …"; 30 depois cobre "… (11) 9…  (WhatsApp)".
+/**
+ * JSON dentro de <script> — 03/09/2026.
+ *
+ * Descoberto investigando por que o Magic Chicken vinha `sem_numero` com o site
+ * abrindo normal: o número estava no HTML o tempo todo, em
+ * `ht_ctc_chat_var = {"number":"5511945422056"}` — a config do "Click to Chat
+ * for WhatsApp", plugin de WordPress comum em casa brasileira. A trilha de
+ * texto não o via porque `textoVisivel` remove <script> de propósito (foi o que
+ * barrou o lixo de classe CSS em 31/08), e não é wa.me nem tel:.
+ *
+ * Medindo em 65 sites da fila, apareceu uma SEGUNDA família, mais valiosa que a
+ * primeira: schema.org JSON-LD. O Câmara Fria publica
+ * `"telephone":"+5511943643170"` em dado estruturado — não é widget, é o
+ * telefone que a casa declara para buscador. Por isso o rótulo é `script_json`
+ * e não `widget_config`: a trilha pega as duas.
+ *
+ * É exatamente o caso que justificaria pagar `dynamic=true` no Scrapingdog para
+ * renderizar o botão — e aqui sai de graça, porque o dado já veio no HTML.
+ *
+ * ANCORADO EM CHAVE NOMEADA, e não em "qualquer 55DDD9XXXXXXX no script": um
+ * script tem timestamp, id de pixel e coordenada, e casar dígito solto lá dentro
+ * é como reabrir o buraco de falso positivo que a janela de pista fechou.
+ */
+const CONFIG_WIDGET_RE = /(?:"|')?(?:number|phone|telephone|telefone|whatsapp|whatsapp_number|wa_number)(?:"|')?\s*[:=]\s*(?:"|')\+?(55\d{10,11})(?:"|')/gi;
+
 const JANELA_ANTES = 80;
 const JANELA_DEPOIS = 30;
 
@@ -308,7 +333,14 @@ function extrairCelularDoSite(html, dddPadrao) {
   const doTel = primeiroCelular(todos(TEL_HREF_RE, texto).map((m) => m[1]), 'tel_href');
   if (doTel) return doTel;
 
-  // 3. Texto solto — só o visível, e só perto de uma pista de telefone.
+  // 3. Config de widget dentro de <script>. Fica ACIMA do texto solto porque é
+  // chave nomeada com valor explícito — mesma classe de confiança do tel:, e não
+  // um dígito achado por proximidade.
+  const doWidget = primeiroCelular(
+    todos(CONFIG_WIDGET_RE, texto).map((m) => `+${m[1]}`), 'script_json');
+  if (doWidget) return doWidget;
+
+  // 4. Texto solto — só o visível, e só perto de uma pista de telefone.
   const visivel = textoVisivel(texto);
   const comPista = todos(TEXTO_CELULAR_RE, visivel).filter((m) => {
     const ini = Math.max(0, m.index - JANELA_ANTES);
