@@ -23,7 +23,7 @@ jest.mock('../_lib/cron-tracker', () => ({
 }));
 jest.mock('../seo/reservas', () => jest.fn().mockResolvedValue(undefined));
 
-const handler = require('../cron/warm-seo-cache');
+const handler = require('../_crons/warm-seo-cache');
 const reservasHandler = require('../seo/reservas');
 const { getMatrixEntries } = require('../_lib/seo-matrix');
 

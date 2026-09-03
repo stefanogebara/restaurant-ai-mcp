@@ -25,7 +25,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const DIR = path.join(__dirname, '..', 'cron');
+const DIR = path.join(__dirname, '..', '_crons');
 const handlers = fs.readdirSync(DIR).filter((f) => f.endsWith('.js'));
 
 describe('handlers de cron carregam e exportam função', () => {

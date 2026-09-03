@@ -114,7 +114,7 @@ jest.mock('../_lib/prospecting/prospect-enrich', () => ({
   ENRICH_COOLDOWN_MS: 7 * 24 * 60 * 60 * 1000,
 }));
 
-const { proximosLeads } = require('../cron/prospect-enrich');
+const { proximosLeads } = require('../_crons/prospect-enrich');
 
 describe('a fila de enrich não devolve mais lead bloqueado por cooldown', () => {
   beforeAll(() => { jest.spyOn(Date, 'now').mockReturnValue(AGORA); });

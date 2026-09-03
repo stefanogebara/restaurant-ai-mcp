@@ -12,7 +12,7 @@ jest.mock('../_lib/cron-tracker', () => ({
   logCronRun: jest.fn().mockResolvedValue(undefined),
 }));
 
-const handler = require('../cron/cleanup-waitlist');
+const handler = require('../_crons/cleanup-waitlist');
 
 function mockRes() {
   const r = {};
@@ -106,7 +106,7 @@ describe('cron/cleanup-waitlist', () => {
     jest.mock('../_lib/cron-tracker', () => ({
       logCronRun: jest.fn().mockResolvedValue(undefined),
     }));
-    const freshHandler = require('../cron/cleanup-waitlist');
+    const freshHandler = require('../_crons/cleanup-waitlist');
 
     const req = { headers: { authorization: 'Bearer test-cron-secret' } };
     const res = mockRes();

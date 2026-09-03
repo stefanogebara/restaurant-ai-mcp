@@ -26,7 +26,7 @@ jest.mock('../_lib/cron-config', () => ({
   isCronEnabled: jest.fn(async () => true),
 }));
 
-const handler = require('../cron/monitor-meta-token-expiry');
+const handler = require('../_crons/monitor-meta-token-expiry');
 const { inspectToken, buildAlertMessage, ALERT_THRESHOLD_DAYS } = handler;
 
 function makeReq(overrides = {}) {
