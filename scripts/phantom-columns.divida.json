@@ -109,7 +109,6 @@
   ],
   "whatsapp-settings.js": [
     "restaurant_config.language",
-    "restaurant_config.language",
     "usage_tracking.quantity"
   ],
   "widget-config.js": [
