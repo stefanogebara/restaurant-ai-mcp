@@ -32,6 +32,10 @@ jobs:
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
       CRON_SECRET: ${{ secrets.CRON_SECRET }}
       SANDBOX_EMAIL: ${{ secrets.SANDBOX_EMAIL }}
+      # SANDBOX_PASSWORD faltava aqui. Sem ela no env do job, os passos que
+      # fazem login nao a herdavam — so o "Admin pages smoke" a passava a mao.
+      # Efeito: cadastrar os dois secrets NAO teria consertado o vermelho.
+      SANDBOX_PASSWORD: ${{ secrets.SANDBOX_PASSWORD }}
     steps:
       - uses: actions/checkout@v7
 
@@ -59,7 +63,9 @@ jobs:
               echo "- :white_check_mark: smoke de paginas admin ativo"
             fi
             echo ""
-            echo "Auditorias estaticas e o smoke contra producao nao precisam de secret e rodam sempre."
+            echo "Auditorias estaticas nao precisam de secret e rodam sempre."
+            echo "O smoke contra producao PRECISA de \`SANDBOX_EMAIL\` + \`SANDBOX_PASSWORD\`:"
+            echo "os specs fazem login. Sem elas a run para antes do smoke, de proposito."
             echo "Cadastrar os secrets em Settings > Secrets and variables > Actions liga o resto."
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -123,6 +129,31 @@ jobs:
         env:
           PW_BASE_URL: https://seatable.one
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
+
+      # Sem as credenciais do sandbox, todo spec que faz login morre no login —
+      # e morre caro: 4 min parado no head-start delay, download do Chromium,
+      # 7 testes com 2 retries cada, gravando video e trace de cada tentativa.
+      # Cinco minutos de runner para reaprender o que ja se sabia no segundo 0.
+      #
+      # Falha, e nao pula, de proposito: pular pintaria de VERDE uma run que nao
+      # verificou producao nenhuma — o modo de falha que o passo "Cobertura desta
+      # run" existe para evitar. Vermelho honesto e o ponto.
+      - name: Exigir credenciais do sandbox
+        if: env.SANDBOX_EMAIL == '' || env.SANDBOX_PASSWORD == ''
+        run: |
+          {
+            echo ""
+            echo "### :x: O smoke contra producao NAO rodou"
+            echo ""
+            echo "Faltam \`SANDBOX_EMAIL\` e/ou \`SANDBOX_PASSWORD\`. Todo spec deste"
+            echo "job faz login, entao sem elas nada de producao e verificado."
+            echo ""
+            echo "Cadastre em **Settings > Secrets and variables > Actions**."
+            echo ""
+            echo "As auditorias estaticas acima rodaram e valem — o que falta e o smoke."
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "::error title=Credenciais do sandbox ausentes::Cadastre SANDBOX_EMAIL e SANDBOX_PASSWORD em Settings > Secrets and variables > Actions. Sem elas nenhum spec contra producao roda."
+          exit 1
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
