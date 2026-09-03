@@ -44,7 +44,7 @@ beforeEach(() => {
 });
 
 it('returns 401 when CRON_SECRET is wrong', async () => {
-  const managerAlerts = require('../cron/manager-alerts');
+  const managerAlerts = require('../_crons/manager-alerts');
   const req = { method: 'GET', headers: { authorization: 'Bearer wrong' }, query: { type: 'low_covers' } };
   const res = mockRes();
   await managerAlerts(req, res);
@@ -52,7 +52,7 @@ it('returns 401 when CRON_SECRET is wrong', async () => {
 });
 
 it('returns 400 for unknown alert type', async () => {
-  const managerAlerts = require('../cron/manager-alerts');
+  const managerAlerts = require('../_crons/manager-alerts');
   const req = {
     method: 'GET',
     headers: { authorization: `Bearer ${CRON_SECRET}` },
@@ -72,7 +72,7 @@ it('skips restaurant without alert opt-in (alert_low_covers: false)', async () =
   };
   mockSupabaseAdmin.from.mockReturnValue(makeChain({ data: [restaurant], error: null }));
 
-  const managerAlerts = require('../cron/manager-alerts');
+  const managerAlerts = require('../_crons/manager-alerts');
   const req = {
     method: 'GET',
     headers: { authorization: `Bearer ${CRON_SECRET}` },
@@ -88,7 +88,7 @@ it('skips restaurant without alert opt-in (alert_low_covers: false)', async () =
 it('returns 200 with checked/sent counts when no restaurants match', async () => {
   mockSupabaseAdmin.from.mockReturnValue(makeChain({ data: [], error: null }));
 
-  const managerAlerts = require('../cron/manager-alerts');
+  const managerAlerts = require('../_crons/manager-alerts');
   const req = {
     method: 'GET',
     headers: { authorization: `Bearer ${CRON_SECRET}` },
@@ -104,7 +104,7 @@ it('returns 200 with checked/sent counts when no restaurants match', async () =>
 });
 
 it('returns 405 for non-GET methods', async () => {
-  const managerAlerts = require('../cron/manager-alerts');
+  const managerAlerts = require('../_crons/manager-alerts');
   const req = { method: 'POST', headers: {}, query: {} };
   const res = mockRes();
   await managerAlerts(req, res);

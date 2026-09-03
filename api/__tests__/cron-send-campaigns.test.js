@@ -10,7 +10,7 @@ jest.mock('../_lib/cron-tracker', () => ({
   logCronRun: jest.fn().mockResolvedValue(undefined),
 }));
 
-const handler = require('../cron/send-campaigns');
+const handler = require('../_crons/send-campaigns');
 
 function mockRes() {
   const r = {};

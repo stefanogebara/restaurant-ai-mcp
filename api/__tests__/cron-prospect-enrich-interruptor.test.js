@@ -52,7 +52,7 @@ jest.mock('../_lib/prospecting/prospect-celular', () => ({
   cacarCelularPendentes: mockCacar,
 }));
 
-const handler = require('../cron/prospect-enrich');
+const handler = require('../_crons/prospect-enrich');
 
 function mockRes() {
   const r = {};

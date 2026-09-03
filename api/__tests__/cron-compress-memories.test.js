@@ -24,7 +24,7 @@ jest.mock('../_lib/cron-config', () => ({
   isCronEnabled: (...args) => mockIsCronEnabled(...args),
 }));
 
-const handler = require('../cron/compress-memories');
+const handler = require('../_crons/compress-memories');
 
 function mockRes() {
   const r = {};

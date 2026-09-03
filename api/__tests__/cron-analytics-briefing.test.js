@@ -15,7 +15,7 @@ jest.mock('../_lib/cron-tracker', () => ({
 // Mock global fetch
 global.fetch = jest.fn();
 
-const handler = require('../cron/analytics-briefing');
+const handler = require('../_crons/analytics-briefing');
 
 function mockRes() {
   const r = {};

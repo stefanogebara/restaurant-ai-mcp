@@ -65,7 +65,7 @@ beforeEach(() => {
 describe('caminho ocioso bate ponto', () => {
   test('generate-reflections: 0 candidatos ainda registra execução', async () => {
     process.env.CRON_SECRET = 'x';
-    const handler = require('../cron/generate-reflections');
+    const handler = require('../_crons/generate-reflections');
     const res = resposta();
     await handler(req, res);
 
@@ -76,7 +76,7 @@ describe('caminho ocioso bate ponto', () => {
 
   test('cleanup-expired-demos: 0 demos expirados ainda registra execução', async () => {
     process.env.CRON_SECRET = 'x';
-    const handler = require('../cron/cleanup-expired-demos');
+    const handler = require('../_crons/cleanup-expired-demos');
     const res = resposta();
     await handler(req, res);
 
@@ -86,7 +86,7 @@ describe('caminho ocioso bate ponto', () => {
 
   test('refresh-restaurant-profiles: nenhum registro stale ainda bate ponto', async () => {
     process.env.CRON_SECRET = 'x';
-    const handler = require('../cron/refresh-restaurant-profiles');
+    const handler = require('../_crons/refresh-restaurant-profiles');
     const res = resposta();
     await handler(req, res);
 
@@ -99,7 +99,7 @@ describe('refresh-restaurant-profiles separa migration pendente de erro real', (
   test('tabela inexistente (42P01) = migration pendente, registra execução normal', async () => {
     process.env.CRON_SECRET = 'x';
     mockConsulta.resultado = { data: null, error: { code: '42P01', message: 'relation does not exist' } };
-    const handler = require('../cron/refresh-restaurant-profiles');
+    const handler = require('../_crons/refresh-restaurant-profiles');
     const res = resposta();
     await handler(req, res);
 
@@ -116,7 +116,7 @@ describe('refresh-restaurant-profiles separa migration pendente de erro real', (
       data: null,
       error: { code: '42703', message: 'column restaurant_config_1.profile_generated_at does not exist' },
     };
-    const handler = require('../cron/refresh-restaurant-profiles');
+    const handler = require('../_crons/refresh-restaurant-profiles');
     const res = resposta();
     await handler(req, res);
 

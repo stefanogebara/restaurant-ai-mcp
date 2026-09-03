@@ -41,7 +41,7 @@ jest.mock('../_lib/prospecting/prospect-agent', () => ({
 const mockSend = jest.fn().mockResolvedValue(true);
 jest.mock('../_lib/email', () => ({ sendProspectProposalEmail: (...a) => mockSend(...a) }));
 
-const handler = require('../cron/prospect-founder-email');
+const handler = require('../_crons/prospect-founder-email');
 const { eventoDeEnvio, eventoDeFollowup } = require('../_lib/prospecting/founder-email');
 
 const DIA = 24 * 60 * 60 * 1000;
@@ -169,7 +169,7 @@ describe('as duas fases são independentes', () => {
   test('o teto da rodada é compartilhado entre as duas fases', async () => {
     process.env.PROSPECTING_EMAIL_MAX_POR_RODADA = '1';
     jest.resetModules();
-    const h = require('../cron/prospect-founder-email');
+    const h = require('../_crons/prospect-founder-email');
 
     mockPropostas.leads = [lead({ id: 'p1' })];
     mockFollowup.candidatos = [lead({ id: 'f1' })];

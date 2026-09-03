@@ -107,7 +107,7 @@ jest.mock('../_lib/supabase', () => {
   };
 });
 
-const handler = require('../cron/send-reminders');
+const handler = require('../_crons/send-reminders');
 const { supabaseAdmin } = require('../_lib/supabase');
 
 function mockReqRes() {

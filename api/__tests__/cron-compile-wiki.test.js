@@ -26,7 +26,7 @@ jest.mock('../_services/wikiCompiler', () => ({
   compileWikiForRestaurant: (...a) => mockCompileWikiForRestaurant(...a),
 }));
 
-const handler = require('../cron/compile-wiki');
+const handler = require('../_crons/compile-wiki');
 
 function mockRes() {
   const r = {};

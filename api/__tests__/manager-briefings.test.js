@@ -25,7 +25,7 @@ var mockSupabaseAdmin = {
 var mockSendBriefing = jest.fn().mockResolvedValue(undefined);
 var mockGetVIPsForToday = jest.fn().mockResolvedValue([]);
 
-const briefings = require('../cron/manager-briefings');
+const briefings = require('../_crons/manager-briefings');
 
 jest.mock('../_lib/briefing-sender', () => ({
   sendBriefing: (...a) => mockSendBriefing(...a),
