@@ -67,7 +67,11 @@ function* walk(dir) {
  * Supabase é compacto, e uma janela larga casaria o select de OUTRA query mais
  * abaixo — falso positivo, que é o defeito que mata um guarda.
  */
-const RE_FROM_SELECT = /\.from\(\s*['"]([a-z_]+)['"]\s*\)([\s\S]{0,400}?)\.select\(\s*['"`]([^'"`]*)['"`]/g;
+// O trecho entre o from() e o select() nao pode conter OUTRO .from(): sem a
+// guarda, a janela de referral.js casou `.from('restaurant_config')` de uma
+// query com o `.select('status')` da query SEGUINTE (em `referrals`) — falso
+// positivo, o defeito que mata um guarda. O lookahead negativo fecha isso.
+const RE_FROM_SELECT = /\.from\(\s*['"]([a-z_]+)['"]\s*\)((?:(?!\.from\()[\s\S]){0,400}?)\.select\(\s*['"`]([^'"`]*)['"`]/g;
 
 function colunasSuspeitas(texto) {
   const achados = [];

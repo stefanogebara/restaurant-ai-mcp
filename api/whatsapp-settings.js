@@ -292,14 +292,21 @@ async function handleStats(req, res, restaurantId) {
   monthStart.setDate(1);
   monthStart.setHours(0, 0, 0, 0);
 
-  const { data: usageData } = await supabaseAdmin
+  // Tres coisas erradas numa query so, e nenhuma delas dava erro visivel:
+  // a coluna e `count` (nao `quantity`), o periodo e `period` (nao
+  // `usage_date`), e o metric_type gravado e 'whatsapp_reservation' (nao
+  // 'whatsapp'). Verificado contra usage_tracking em producao. O contador de
+  // uso do WhatsApp mostrado ao dono sempre foi zero.
+  const { data: usageData, error: usageErr } = await supabaseAdmin
     .from('usage_tracking')
-    .select('quantity')
+    .select('count')
     .eq('restaurant_id', restaurantId)
-    .eq('metric_type', 'whatsapp')
-    .gte('usage_date', monthStart.toISOString().split('T')[0]);
+    .eq('metric_type', 'whatsapp_reservation')
+    .gte('period', monthStart.toISOString().split('T')[0]);
 
-  const messagesThisMonth = (usageData || []).reduce((sum, row) => sum + (row.quantity || 0), 0);
+  if (usageErr) logger.warn('whatsapp-settings: falha ao ler usage_tracking:', usageErr.message);
+
+  const messagesThisMonth = (usageData || []).reduce((sum, row) => sum + (row.count || 0), 0);
 
   return res.status(200).json({
     success: true,

@@ -64,7 +64,10 @@ async function generatePersona(sessionId, { version, restaurantConfigId: restaur
   const { data: intelligence } = await supabaseAdmin
     .schema('restaurant')
     .from('restaurant_intelligence')
-    .select('id, restaurant_config_id, intelligence_data, source, created_at, updated_at')
+    // `source` nao existe em restaurant_intelligence (e nunca era lido: so
+    // intelligence_data e consumido). Uma coluna fantasma derruba o select
+    // inteiro, entao `intelligence` era SEMPRE null.
+    .select('id, restaurant_config_id, intelligence_data, created_at, updated_at')
     .eq('restaurant_config_id', restaurantConfigId)
     .single();
 

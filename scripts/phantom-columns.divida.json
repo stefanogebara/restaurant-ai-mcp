@@ -10,9 +10,6 @@
     "customer_history.total_no_shows",
     "customer_history.total_visits"
   ],
-  "_services/personaGenerator.js": [
-    "restaurant_intelligence.source"
-  ],
   "batch-predict.js": [
     "customer_history.average_party_size",
     "customer_history.average_party_size",
@@ -38,14 +35,5 @@
     "customer_history.last_visit_date",
     "customer_history.total_no_shows",
     "customer_history.total_visits"
-  ],
-  "referral.js": [
-    "restaurant_config.status"
-  ],
-  "verify-session.js": [
-    "restaurant_config.customer_email"
-  ],
-  "whatsapp-settings.js": [
-    "usage_tracking.quantity"
   ]
 }
