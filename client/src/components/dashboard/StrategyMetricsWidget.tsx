@@ -125,7 +125,7 @@ function MetricCard({
               <YAxis hide domain={['auto', 'auto']} />
               <Tooltip
                 contentStyle={{ fontSize: 11, padding: '4px 8px', border: '1px solid #E7E5E4' }}
-                formatter={(v: number) => [metric.format(v), metric.label]}
+                formatter={(v) => [metric.format(typeof v === 'number' ? v : Number(v ?? 0)), metric.label]}
                 labelFormatter={(l) => l}
               />
               <ReferenceLine

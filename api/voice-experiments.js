@@ -2,7 +2,6 @@ const { verifyJWT } = require('./_lib/auth');
 const { supabaseAdmin } = require('./_lib/supabase');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
-const fetch = require('node-fetch');
 const {
   getAgentIdForRestaurant,
   enableVersioning,

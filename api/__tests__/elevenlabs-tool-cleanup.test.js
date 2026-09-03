@@ -18,11 +18,14 @@
 // e definir isto num beforeEach chegaria tarde demais.
 process.env.ELEVENLABS_API_KEY = 'sk-teste';
 
-// O serviço usa `require('node-fetch')`, NÃO o global.fetch — mockar o global
-// deixava a requisição sair de verdade (vi um 401 real da ElevenLabs no
-// diagnóstico). O mock precisa ser do módulo.
+// O serviço usa o `fetch` global do Node (>=18) e o resolve a cada chamada,
+// então substituir `global.fetch` aqui intercepta tudo o que ele dispara.
+// Antes ele fazia `require('node-fetch')` e capturava a referência no load do
+// módulo — nessa época mockar o global deixava a requisição sair de verdade
+// (chegou a aparecer um 401 real da ElevenLabs no diagnóstico) e só o mock do
+// módulo funcionava.
 const mockFetch = jest.fn();
-jest.mock('node-fetch', () => (...a) => mockFetch(...a));
+global.fetch = mockFetch;
 
 const mockLogger = { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() };
 jest.mock('../_lib/secure-logger', () => ({ createSecureLogger: () => mockLogger }));
