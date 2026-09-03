@@ -106,7 +106,7 @@ async function getRestaurantConfig(restaurantId) {
   const { data } = await supabaseAdmin
     .schema('restaurant')
     .from('restaurant_config')
-    .select('restaurant_name, name, restaurant_type, agent_language')
+    .select('restaurant_name, restaurant_type, agent_language')
     .eq('id', restaurantId)
     .maybeSingle();
   return data || {};

@@ -582,7 +582,7 @@ async function executeTool(toolName, toolInput, session) {
           const { data: rConfig } = await client
             .schema('restaurant')
             .from('restaurant_config')
-            .select('address, city')
+            .select('city')
             .eq('id', session.restaurant.id)
             .maybeSingle();
           const addressParts = [rConfig?.address, rConfig?.city].filter(Boolean);

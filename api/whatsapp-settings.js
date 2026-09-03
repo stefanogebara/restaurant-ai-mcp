@@ -364,7 +364,7 @@ async function handleUpdate(req, res, restaurantId) {
         const { data: config } = await supabaseAdmin
           .schema('restaurant')
           .from('restaurant_config')
-          .select('restaurant_name, language')
+          .select('restaurant_name, agent_language')
           .eq('id', restaurantId)
           .single();
 
@@ -444,7 +444,7 @@ async function handleTest(req, res, restaurantId) {
   const { data: config } = await supabaseAdmin
     .schema('restaurant')
     .from('restaurant_config')
-    .select('restaurant_name, language, agent_language')
+    .select('restaurant_name, agent_language')
     .eq('id', restaurantId)
     .single();
 

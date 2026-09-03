@@ -110,7 +110,7 @@ async function getRestaurantConfig(restaurantId) {
   const { data } = await supabaseAdmin
     .schema('restaurant')
     .from('restaurant_config')
-    .select('restaurant_name, language, booking_slug')
+    .select('restaurant_name, agent_language, slug')
     .eq('id', restaurantId)
     .single();
 
