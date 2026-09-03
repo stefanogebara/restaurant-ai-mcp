@@ -36,7 +36,7 @@ module.exports = async (req, res) => {
     const { data, error } = await supabaseAdmin
       .schema('restaurant')
       .from('restaurant_config')
-      .select('restaurant_name, slug, language')
+      .select('restaurant_name, slug, agent_language')
       .eq('slug', slug)
       .single();
 
