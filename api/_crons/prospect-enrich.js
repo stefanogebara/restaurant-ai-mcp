@@ -30,6 +30,7 @@ const { enrichLead, ENRICH_COOLDOWN_MS } = require('../_lib/prospecting/prospect
 const { cacarCelularPendentes } = require('../_lib/prospecting/prospect-celular');
 const { logCronRun, logCronError } = require('../_lib/cron-tracker');
 const { isCronEnabled } = require('../_lib/cron-config');
+const { safeFetchText } = require('../_lib/safe-fetch');
 
 const logger = createSecureLogger('CronProspectEnrich');
 
@@ -117,6 +118,19 @@ async function proximosLeads(limite) {
  * executa o JS — sem isso o botão flutuante de WhatsApp, que é injetado por
  * script, simplesmente não está no HTML.
  */
+/**
+ * Leitor DIRETO — o caminho grátis, tentado primeiro.
+ *
+ * Reusa `safeFetchText` (o mesmo que a busca de CNPJ já usa neste arquivo):
+ * ele traz proteção de SSRF, prazo, teto de bytes e validação de redirecionamento
+ * de graça. Não executa JS, então perde botão de WhatsApp injetado por script —
+ * é exatamente para esse caso que existe o leitor pago logo abaixo.
+ */
+async function lerPaginaDireto(alvo) {
+  const { text } = await safeFetchText(alvo, { timeoutMs: 8000 });
+  return text || '';
+}
+
 async function lerPaginaScrapingdog(alvo) {
   const key = process.env.SCRAPINGDOG_API_KEY;
   // ENGOLIR O MOTIVO AQUI CUSTOU CINCO DIAS (31/08/2026). Esta função devolvia
@@ -132,8 +146,11 @@ async function lerPaginaScrapingdog(alvo) {
   // caro cinco vezes. O log abaixo existe para que a próxima pessoa não precise
   // adivinhar de qual camada veio o silêncio.
   if (!key) {
-    logger.error('SCRAPINGDOG_API_KEY ausente no ambiente — a caça ao celular '
-      + 'não tem como ler site nenhum. Nenhuma raspagem foi tentada.');
+    // Não é mais fatal: quem chama só injeta este leitor quando a chave existe
+    // (ver `fallbackPago` abaixo), e sem ela a caça roda com o leitor direto.
+    // A guarda fica como rede de segurança para chamada avulsa.
+    logger.warn('SCRAPINGDOG_API_KEY ausente — leitor pago indisponível, '
+      + 'a caça segue só com o leitor direto.');
     return '';
   }
   const url = `https://api.scrapingdog.com/scrape?api_key=${key}&dynamic=true&url=${encodeURIComponent(alvo)}`;
@@ -220,7 +237,14 @@ module.exports = async (req, res) => {
     // gravou, e uma falha na caça não pode apagar esse resultado nem o
     // logCronRun. Mesma forma da varredura de abandonadas no score-outcomes.
     try {
-      resumo.celular = await cacarCelularPendentes({ lerPagina: lerPaginaScrapingdog });
+      // O pago só é INJETADO quando há chave. Passar a função sempre e deixá-la
+      // devolver '' por dentro faria cada lead pagar uma chamada inútil e, pior,
+      // devolveria 'sem_html' como se o site não tivesse aberto.
+      const fallbackPago = process.env.SCRAPINGDOG_API_KEY ? lerPaginaScrapingdog : undefined;
+      resumo.celular = await cacarCelularPendentes({
+        lerPagina: lerPaginaDireto,
+        lerPaginaFallback: fallbackPago,
+      });
     } catch (e) {
       logger.error('caça ao celular falhou (o enriquecimento desta rodada segue válido):', e.message);
       resumo.celular = { erro: String(e.message).slice(0, 120) };
@@ -246,3 +270,4 @@ module.exports = async (req, res) => {
 module.exports.proximosLeads = proximosLeads;
 module.exports.QUENTES = QUENTES;
 module.exports.lerPaginaScrapingdog = lerPaginaScrapingdog;
+module.exports.lerPaginaDireto = lerPaginaDireto;
