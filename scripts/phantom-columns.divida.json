@@ -1,10 +1,4 @@
 {
-  "_services/automatedCampaignService.js": [
-    "service_records.completed_at",
-    "service_records.completed_at",
-    "service_records.customer_email",
-    "service_records.customer_email"
-  ],
   "_services/mlRiskScoring.js": [
     "customer_history.cancellation_streak",
     "customer_history.is_vip",
