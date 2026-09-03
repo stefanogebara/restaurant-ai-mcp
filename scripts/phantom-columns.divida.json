@@ -108,7 +108,6 @@
     "restaurant_config.customer_email"
   ],
   "whatsapp-settings.js": [
-    "restaurant_config.language",
     "usage_tracking.quantity"
   ],
   "widget-config.js": [

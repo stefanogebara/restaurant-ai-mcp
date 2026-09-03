@@ -364,14 +364,21 @@ async function handleUpdate(req, res, restaurantId) {
         const { data: config } = await supabaseAdmin
           .schema('restaurant')
           .from('restaurant_config')
-          .select('restaurant_name, language')
+          // `agent_language`, NÃO `language`: a coluna `language` não existe em
+          // restaurant.restaurant_config (71 colunas, conferidas em
+          // scripts/schema-snapshot.json). Pedir coluna inexistente ao
+          // PostgREST derruba a consulta INTEIRA — `config` vem vazio e o
+          // fallback 'en' assume. É por isso que a casa brasileira recebia
+          // template em inglês: não era escolha de idioma errada, era a
+          // consulta nunca ter respondido.
+          .select('restaurant_name, agent_language')
           .eq('id', restaurantId)
           .single();
 
         if (config) {
           await upsertRestaurant(restaurantId, {
             restaurant_name: config.restaurant_name,
-            language: config.language || 'en',
+            language: config.agent_language || 'en',
             is_active: true,
             // Store the restaurant's dedicated phone_number_id if configured in env
             // (used for per-restaurant WhatsApp routing when each has their own number)
@@ -444,12 +451,15 @@ async function handleTest(req, res, restaurantId) {
   const { data: config } = await supabaseAdmin
     .schema('restaurant')
     .from('restaurant_config')
-    .select('restaurant_name, language, agent_language')
+    // Idem: `language` não existe e envenenava o select inteiro. O `||` com
+    // config?.agent_language dava a impressão de já haver reserva, mas ela
+    // nunca era alcançada — a consulta falhava antes.
+    .select('restaurant_name, agent_language')
     .eq('id', restaurantId)
     .single();
 
   const restaurantName = config?.restaurant_name || 'Your Restaurant';
-  const restaurantLanguage = config?.language || config?.agent_language || 'en';
+  const restaurantLanguage = config?.agent_language || 'en';
   let result;
   let usedTemplateName = null;
   let usedTemplateLanguage = null;
