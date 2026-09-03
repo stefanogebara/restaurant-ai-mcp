@@ -43,7 +43,7 @@ jest.mock('../_lib/prospecting/prospect-agent', () => ({
 const mockSend = jest.fn().mockResolvedValue(true);
 jest.mock('../_lib/email', () => ({ sendProspectProposalEmail: (...a) => mockSend(...a) }));
 
-const handler = require('../cron/prospect-founder-email');
+const handler = require('../_crons/prospect-founder-email');
 
 function lead(over = {}) {
   return {
@@ -170,7 +170,7 @@ describe('filtros de segurança', () => {
   test('teto por rodada é respeitado', async () => {
     process.env.PROSPECTING_EMAIL_MAX_POR_RODADA = '2';
     jest.resetModules();
-    const h = require('../cron/prospect-founder-email');
+    const h = require('../_crons/prospect-founder-email');
     mockFila.leads = [lead({ id: 'a' }), lead({ id: 'b' }), lead({ id: 'c' }), lead({ id: 'd' })];
     const res = {
       statusCode: null, body: null,
@@ -246,7 +246,7 @@ describe('telefone da assinatura nao depende de env nova', () => {
   async function previaCom(env) {
     Object.assign(process.env, env);
     jest.resetModules();
-    const h = require('../cron/prospect-founder-email');
+    const h = require('../_crons/prospect-founder-email');
     mockFila.leads = [lead()];
     const res = {
       statusCode: null, body: null,

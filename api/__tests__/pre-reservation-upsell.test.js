@@ -68,7 +68,7 @@ function createQueryBuilder(resolveData, resolveError = null) {
 }
 
 // Must require AFTER all jest.mock calls
-const handler = require('../cron/pre-reservation-upsell');
+const handler = require('../_crons/pre-reservation-upsell');
 
 // ---- Helpers ----
 function mockReq(authHeader) {

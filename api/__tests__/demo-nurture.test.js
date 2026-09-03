@@ -32,7 +32,7 @@ jest.mock('../_lib/supabase', () => ({
   },
 }));
 
-const handler = require('../cron/demo-nurture');
+const handler = require('../_crons/demo-nurture');
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 

@@ -26,7 +26,7 @@
     "customer_history.vip_status",
     "customer_history.vip_status"
   ],
-  "cron/pre-reservation-upsell.js": [
+  "_crons/pre-reservation-upsell.js": [
     "customer_history.favorite_dishes",
     "customer_history.preferences",
     "customer_history.visit_count"

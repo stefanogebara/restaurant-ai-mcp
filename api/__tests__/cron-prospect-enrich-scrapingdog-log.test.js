@@ -26,7 +26,7 @@ jest.mock('../_lib/prospecting/prospect-celular', () => ({ cacarCelularPendentes
 jest.mock('../_lib/cron-tracker', () => ({ logCronRun: jest.fn(), logCronError: jest.fn() }));
 jest.mock('../_lib/cron-config', () => ({ isCronEnabled: jest.fn().mockResolvedValue(true) }));
 
-const { lerPaginaScrapingdog } = require('../cron/prospect-enrich');
+const { lerPaginaScrapingdog } = require('../_crons/prospect-enrich');
 
 const CHAVE = 'sd_chave_de_teste';
 let chaveOriginal;
