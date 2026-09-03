@@ -12,6 +12,14 @@
 # commits em main eram exatamente isso. Um quarto do gasto de CPU do ciclo
 # saía de builds que não mudavam um byte do que é servido.
 #
+# POR QUE NA RAIZ E NÃO EM scripts/: o .vercelignore exclui `scripts/`, e ele é
+# aplicado ANTES do Ignored Build Step rodar — o arquivo simplesmente não existe
+# na hora da chamada. O primeiro deploy do PR #128 morreu exatamente assim:
+# "bash: scripts/vercel-ignore-build.sh: No such file or directory". Reincluir
+# com `!scripts/...` NÃO resolve: a sintaxe do gitignore não reinclui arquivo
+# cujo diretório-pai foi excluído (verificado com `git check-ignore` nas duas
+# formas, `scripts/` e `scripts/*`). A raiz é o único lugar sem essa armadilha.
+#
 # FALHA PARA O LADO DE CONSTRUIR. Sem base de comparação, com git raso, ou em
 # qualquer erro, o script manda construir. Um build a mais custa minuto; um
 # build a menos indevido custa produção servindo código velho — e este projeto
@@ -24,7 +32,7 @@ pular()     { echo "PULA: $1";  exit 0; }
 
 # Caminhos que produzem bytes servidos. Tudo que não casar aqui é ruído para
 # o deploy: docs, tarefas, lições, config de agente, workflows do GitHub.
-DEPLOYAVEL='^(api/|client/src/|client/public/|client/index\.html|client/vite\.config|client/package(-lock)?\.json|package(-lock)?\.json|vercel\.json|scripts/vercel-ignore-build\.sh)'
+DEPLOYAVEL='^(api/|client/src/|client/public/|client/index\.html|client/vite\.config|client/package(-lock)?\.json|package(-lock)?\.json|vercel\.json|vercel-ignore-build\.sh)'
 # Exceções DENTRO de api/ e client/src: teste não vai para o bundle.
 IRRELEVANTE='(__tests__/|\.test\.(js|ts|tsx)$|\.md$)'
 
