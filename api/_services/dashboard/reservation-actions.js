@@ -151,7 +151,7 @@ async function handleCancelReservation(req, res) {
     const { data: config } = await supabase
       .schema('restaurant')
       .from('restaurant_config')
-      .select('restaurant_name, language')
+      .select('restaurant_name, agent_language')
       .eq('restaurant_id', restaurantId)
       .single();
     if (config?.restaurant_name) restaurantName = config.restaurant_name;

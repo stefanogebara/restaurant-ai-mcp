@@ -1,27 +1,4 @@
 {
-  "_lib/db/restaurant.js": [
-    "restaurant_config.address",
-    "restaurant_config.avg_dining_duration_minutes"
-  ],
-  "_lib/manager-agent.js": [
-    "restaurant_config.name",
-    "restaurant_config.name"
-  ],
-  "_services/automatedCampaignService.js": [
-    "restaurant_config.booking_slug",
-    "restaurant_config.language",
-    "service_records.completed_at",
-    "service_records.completed_at",
-    "service_records.customer_email",
-    "service_records.customer_email"
-  ],
-  "_services/dashboard/reservation-actions.js": [
-    "restaurant_config.language"
-  ],
-  "_services/elevenlabsAgentService.js": [
-    "restaurant_config.address",
-    "restaurant_config.language"
-  ],
   "_services/mlRiskScoring.js": [
     "customer_history.cancellation_streak",
     "customer_history.is_vip",
@@ -32,24 +9,6 @@
     "customer_history.total_cancellations",
     "customer_history.total_no_shows",
     "customer_history.total_visits"
-  ],
-  "_services/personaGenerator.js": [
-    "restaurant_intelligence.source"
-  ],
-  "_services/voiceAgentService.js": [
-    "restaurant_config.address",
-    "restaurant_config.advance_booking_days",
-    "restaurant_config.avg_dining_duration_minutes",
-    "restaurant_config.buffer_time",
-    "restaurant_config.cancellation_policy",
-    "restaurant_config.language",
-    "restaurant_config.special_notes"
-  ],
-  "_services/whatsapp/reservation-tools.js": [
-    "restaurant_config.address"
-  ],
-  "_services/wikiCompiler.js": [
-    "restaurant_config.name"
   ],
   "batch-predict.js": [
     "customer_history.average_party_size",
@@ -72,47 +31,9 @@
     "customer_history.preferences",
     "customer_history.visit_count"
   ],
-  "elevenlabs-agent-create.js": [
-    "restaurant_config.address",
-    "restaurant_config.advance_booking_days",
-    "restaurant_config.avg_dining_duration_minutes",
-    "restaurant_config.buffer_time",
-    "restaurant_config.cancellation_policy",
-    "restaurant_config.language",
-    "restaurant_config.special_notes"
-  ],
-  "event-public.js": [
-    "restaurant_config.booking_slug"
-  ],
-  "google-booking/server.js": [
-    "restaurant_config.avg_dining_duration_minutes"
-  ],
   "ml-outcomes.js": [
     "customer_history.last_visit_date",
     "customer_history.total_no_shows",
     "customer_history.total_visits"
-  ],
-  "referral.js": [
-    "restaurant_config.status"
-  ],
-  "reservations.js": [
-    "restaurant_config.language",
-    "restaurant_config.language",
-    "restaurant_config.language"
-  ],
-  "stripe-webhook.js": [
-    "restaurant_config.name",
-    "restaurant_config.name"
-  ],
-  "verify-session.js": [
-    "restaurant_config.customer_email"
-  ],
-  "whatsapp-settings.js": [
-    "restaurant_config.language",
-    "restaurant_config.language",
-    "usage_tracking.quantity"
-  ],
-  "widget-config.js": [
-    "restaurant_config.language"
   ]
 }

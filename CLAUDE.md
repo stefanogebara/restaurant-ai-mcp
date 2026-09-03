@@ -259,7 +259,7 @@ All cron jobs are secured with `CRON_SECRET` Bearer token and use `createSecureL
 | `waitlist` | Customers waiting | Yes (`restaurant_id`) |
 | `service_records` | Active dining sessions | Yes (`restaurant_id`) |
 | `subscriptions` | Stripe subscription data | Yes (`restaurant_id`) |
-| `customer_history` | Visit history & preferences | Yes |
+| ~~`customer_history`~~ | **Morta.** Vive em `restaurant`, não em `public`; sem `restaurant_id`; zero linhas e nenhum escritor. As 8 consultas a ela erram 42P01 em silêncio. Sucessora viva: `customer_ltv` | — |
 | `customer_ltv` | Lifetime value & churn scores | Yes |
 | `usage_tracking` | Metered billing usage | Yes (`restaurant_id`) |
 

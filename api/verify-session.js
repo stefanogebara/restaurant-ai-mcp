@@ -59,19 +59,33 @@ module.exports = async (req, res) => {
     // Verify the session belongs to the authenticated user by matching customer_email
     const sessionEmail = session.customer_details?.email;
     if (sessionEmail && authUser.sub) {
-      const { data: restaurant } = await supabaseAdmin
+      // A coluna e `email`, nao `customer_email` — esta ultima nao existe em
+      // restaurant_config. Com a coluna errada o select falhava (42703), o
+      // cliente do Supabase devolvia data null SEM lancar, `restaurant` ficava
+      // null, e o bloco de posse abaixo era pulado inteiro: o 403 NUNCA
+      // disparou. Qualquer usuario autenticado lia qualquer sessao de checkout
+      // do Stripe pelo session_id — e-mail, valor, subscription.
+      //
+      // O `error` agora e lido: se a consulta falhar, a resposta e recusar,
+      // nao liberar. Falha de verificacao nao pode virar acesso.
+      const { data: restaurant, error: restaurantErr } = await supabaseAdmin
         .schema('restaurant')
         .from('restaurant_config')
-        .select('customer_email')
+        .select('email')
         .eq('user_id', authUser.sub)
         .limit(1)
         .single();
 
+      if (restaurantErr && restaurantErr.code !== 'PGRST116') {
+        logger.error('verify-session: falha ao carregar o restaurante para checar posse', { error: restaurantErr.message });
+        return res.status(403).json({ success: false, error: 'Forbidden' });
+      }
+
       // If we found a restaurant record, enforce ownership
       if (restaurant) {
-        if (!restaurant.customer_email) {
-          logger.warn('verify-session: restaurant has no customer_email, skipping ownership check', { userId: authUser.sub });
-        } else if (restaurant.customer_email !== sessionEmail) {
+        if (!restaurant.email) {
+          logger.warn('verify-session: restaurant has no email, skipping ownership check', { userId: authUser.sub });
+        } else if (restaurant.email.toLowerCase() !== String(sessionEmail).toLowerCase()) {
           logger.warn('verify-session ownership mismatch', { userId: authUser.sub });
           return res.status(403).json({ success: false, error: 'Forbidden' });
         }

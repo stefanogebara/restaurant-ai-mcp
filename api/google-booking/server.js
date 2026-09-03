@@ -93,7 +93,7 @@ async function handleBatchAvailabilityLookup(req, res) {
     const { data: config } = await supabaseAdmin
       .schema('restaurant')
       .from('restaurant_config')
-      .select('business_hours, avg_dining_duration_minutes')
+      .select('business_hours, average_dining_duration_minutes')
       .eq('id', restaurantId)
       .single();
 

@@ -203,13 +203,13 @@ async function rewardReferralIfEligible(refereeRestaurantId, refereeStripeCustom
       client
         .schema('restaurant')
         .from('restaurant_config')
-        .select('email, name')
+        .select('email, restaurant_name')
         .eq('id', claimed.referrer_id)
         .single(),
       client
         .schema('restaurant')
         .from('restaurant_config')
-        .select('name')
+        .select('restaurant_name')
         .eq('id', refereeRestaurantId)
         .single(),
     ]);

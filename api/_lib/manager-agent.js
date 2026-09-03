@@ -544,7 +544,7 @@ async function runManagerAgent(restaurantId, userMessage, channel, options = {})
     supabaseAdmin
       .schema('restaurant')
       .from('restaurant_config')
-      .select('restaurant_name, name, agent_language, restaurant_profile, timezone, agent_name, agent_greeting, country')
+      .select('restaurant_name, agent_language, restaurant_profile, timezone, agent_name, agent_greeting, country')
       .eq('id', restaurantId)
       .maybeSingle(),
     getWikiPages(restaurantId),
@@ -685,7 +685,7 @@ async function runManagerAgentStream(restaurantId, userMessage, channel, onToken
     supabaseAdmin
       .schema('restaurant')
       .from('restaurant_config')
-      .select('restaurant_name, name, agent_language, restaurant_profile, timezone, agent_name, agent_greeting, country')
+      .select('restaurant_name, agent_language, restaurant_profile, timezone, agent_name, agent_greeting, country')
       .eq('id', restaurantId)
       .maybeSingle(),
     getWikiPages(restaurantId),

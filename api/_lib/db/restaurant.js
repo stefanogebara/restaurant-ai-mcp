@@ -12,7 +12,7 @@ const getRestaurantInfo = async (restaurantId) => {
   const { data, error } = await supabase
     .schema('restaurant')
     .from('restaurant_config')
-    .select('id, restaurant_name, phone, email, address, business_hours, avg_dining_duration_minutes, timezone')
+    .select('id, restaurant_name, phone, email, business_hours, average_dining_duration_minutes, timezone')
     .eq('id', restaurantId)
     .single();
 
