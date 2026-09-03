@@ -1,6 +1,7 @@
 {
   "installCommand": "npm ci --prefer-offline --no-audit && cd client && npm ci --legacy-peer-deps --prefer-offline --no-audit",
   "buildCommand": "cd client && npx vite build && node cache-bust-sw.cjs",
+  "ignoreCommand": "bash scripts/vercel-ignore-build.sh",
   "outputDirectory": "client/dist",
   "functions": {
     "api/manager-chat.js": {
