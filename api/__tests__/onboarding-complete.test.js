@@ -108,15 +108,14 @@ jest.mock('../_lib/timezone', () => ({
   suggestTimezone: jest.fn(() => 'America/Sao_Paulo'),
 }));
 
-// Mock node-fetch (no longer used for agent creation, but may be required by other imports)
-jest.mock('node-fetch', () =>
-  jest.fn(() =>
-    Promise.resolve({
-      ok: false,
-      status: 500,
-      text: () => Promise.resolve('mock error'),
-    })
-  )
+// Rede fora do alcance do teste. Não é usado na criação de agente, mas outros
+// imports podem disparar fetch — o global cobre todos eles.
+global.fetch = jest.fn(() =>
+  Promise.resolve({
+    ok: false,
+    status: 500,
+    text: () => Promise.resolve('mock error'),
+  })
 );
 
 // Mock elevenlabsAgentService to prevent actual ElevenLabs API calls

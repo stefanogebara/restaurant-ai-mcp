@@ -22,14 +22,14 @@
  * fornecedor sejam enviados EXPLICITAMENTE, para que o default deixe de ser
  * consultado.
  *
- * Mesmo padrão de mock do teste irmão: o serviço usa `require('node-fetch')`,
- * não `global.fetch` — mockar o global deixa a requisição sair de verdade.
+ * Mesmo padrão de mock do teste irmão: o serviço usa o `fetch` global do Node
+ * (>=18), resolvido a cada chamada, então o mock é de `global.fetch`.
  */
 
 process.env.ELEVENLABS_API_KEY = 'sk-teste';
 
 const mockFetch = jest.fn();
-jest.mock('node-fetch', () => (...a) => mockFetch(...a));
+global.fetch = mockFetch;
 
 const mockLogger = { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() };
 jest.mock('../_lib/secure-logger', () => ({ createSecureLogger: () => mockLogger }));

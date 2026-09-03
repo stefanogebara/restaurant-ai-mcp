@@ -10,7 +10,6 @@
  */
 
 const crypto = require('node:crypto');
-const fetch = require('node-fetch');
 const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { buildPersonaPrompt } = require('../_lib/persona-prompt-builder');

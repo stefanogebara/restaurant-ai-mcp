@@ -17,7 +17,6 @@ jest.mock('../_services/elevenlabsAgentService', () => ({
   deleteBranch: jest.fn(),
   getBranchConversationCount: jest.fn(),
 }));
-jest.mock('node-fetch', () => jest.fn());
 
 const {
   getAgentIdForRestaurant,
@@ -27,7 +26,8 @@ const {
   deleteBranch,
   getBranchConversationCount,
 } = require('../_services/elevenlabsAgentService');
-const nodeFetch = require('node-fetch');
+const mockFetch = jest.fn();
+global.fetch = mockFetch;
 
 function makeChain(data) {
   const terminal = { data, error: null };
@@ -66,8 +66,8 @@ beforeEach(() => {
   deleteBranch.mockResolvedValue({ success: true });
   getBranchConversationCount.mockResolvedValue({ success: true, count: 5 });
 
-  // node-fetch mock for getAgentMainBranchId
-  nodeFetch.mockResolvedValue({
+  // fetch global mockado para o getAgentMainBranchId
+  mockFetch.mockResolvedValue({
     ok: true,
     json: async () => ({ main_branch_id: 'main-branch-1' }),
     text: async () => '',

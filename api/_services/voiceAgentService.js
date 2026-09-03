@@ -10,7 +10,6 @@
  * - Manual refresh (POST /api/elevenlabs-voice-settings?action=refresh_prompt)
  */
 
-const fetch = require('node-fetch');
 const { supabaseAdmin } = require('../_lib/supabase');
 const { buildPersonaPrompt } = require('../_lib/persona-prompt-builder');
 const { createSecureLogger } = require('../_lib/secure-logger');

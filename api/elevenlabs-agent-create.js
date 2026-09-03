@@ -15,7 +15,6 @@
  * Creates per-restaurant agents during onboarding
  */
 
-const fetch = require('node-fetch');
 const { verifyAuth } = require('./_lib/auth');
 const { supabaseAdmin } = require('./_lib/supabase');
 const { checkSubscription, requireFeature } = require('./_lib/subscription-middleware');
