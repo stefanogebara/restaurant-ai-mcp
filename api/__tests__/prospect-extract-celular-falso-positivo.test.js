@@ -144,6 +144,26 @@ describe('textoVisivel', () => {
  * É o caso que pagaria `dynamic=true` no Scrapingdog — e sai de graça.
  */
 describe('JSON em <script> — acha o certo sem reabrir o buraco', () => {
+  it('acha no link do botão do Elementor: send/?phone= COM barra', () => {
+    // A forma que o widget de WhatsApp do Elementor gera, e a mais comum em
+    // site de restaurante WordPress. A regex antiga só aceitava `send?phone=`
+    // (sem a barra), então o caso MAIS frequente caía fora da trilha de maior
+    // confiança. Descoberto porque o Bráz Pizzaria só foi achado pelo JSON-LD
+    // apesar de ter o link explícito na página.
+    const html = '<a href="https://api.whatsapp.com/send/?phone=5511943643170'
+      + '&#038;text=Ol%C3%A1%21+Vim+atrav%C3%A9s+do+site+da+Br%C3%A1z">zap</a>';
+
+    expect(extrairCelularDoSite(html, '11')).toEqual({
+      numero: '+5511943643170', fonte: 'wa_link',
+    });
+  });
+
+  it('segue aceitando send?phone= sem barra — o conserto não pode ser troca', () => {
+    const html = '<a href="https://api.whatsapp.com/send?phone=5511943643170">zap</a>';
+
+    expect(extrairCelularDoSite(html, '11').fonte).toBe('wa_link');
+  });
+
   it('acha em schema.org JSON-LD (Câmara Fria, HTML real)', () => {
     // A família MAIS valiosa das duas: não é widget, é o telefone que a casa
     // declara em dado estruturado para buscador. Apareceu medindo 65 sites.
