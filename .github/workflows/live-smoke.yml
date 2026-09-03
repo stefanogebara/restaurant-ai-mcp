@@ -31,11 +31,12 @@ jobs:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
       CRON_SECRET: ${{ secrets.CRON_SECRET }}
-      SANDBOX_EMAIL: ${{ secrets.SANDBOX_EMAIL }}
-      # SANDBOX_PASSWORD faltava aqui. Sem ela no env do job, os passos que
-      # fazem login nao a herdavam — so o "Admin pages smoke" a passava a mao.
-      # Efeito: cadastrar os dois secrets NAO teria consertado o vermelho.
-      SANDBOX_PASSWORD: ${{ secrets.SANDBOX_PASSWORD }}
+      # As credenciais do sandbox NAO ficam aqui. Env de job vaza para TODO
+      # passo — inclusive `npm ci`, que executa scripts de ~400 dependencias
+      # transitivas, e para toda action de terceiro. So o que precisa fazer
+      # login recebe o valor; o resto do job ve apenas esta flag de presenca.
+      # (Revisao do #137.)
+      TEM_SANDBOX: ${{ secrets.SANDBOX_EMAIL != '' && secrets.SANDBOX_PASSWORD != '' }}
     steps:
       - uses: actions/checkout@v7
 
@@ -57,10 +58,12 @@ jobs:
             else
               echo "- :white_check_mark: saude dos crons ativa"
             fi
-            if [ -z "$SANDBOX_EMAIL" ]; then
-              echo "- :warning: **smoke de paginas admin pulado** — falta \`SANDBOX_EMAIL\` / \`SANDBOX_PASSWORD\`"
+            # As DUAS, nao so o email: com uma so, o gate abaixo encerra a run
+            # e este resumo estaria anunciando cobertura que nao aconteceu.
+            if [ "$TEM_SANDBOX" != "true" ]; then
+              echo "- :warning: **smoke contra producao pulado** — falta \`SANDBOX_EMAIL\` e/ou \`SANDBOX_PASSWORD\`"
             else
-              echo "- :white_check_mark: smoke de paginas admin ativo"
+              echo "- :white_check_mark: smoke contra producao ativo"
             fi
             echo ""
             echo "Auditorias estaticas nao precisam de secret e rodam sempre."
@@ -139,7 +142,7 @@ jobs:
       # verificou producao nenhuma — o modo de falha que o passo "Cobertura desta
       # run" existe para evitar. Vermelho honesto e o ponto.
       - name: Exigir credenciais do sandbox
-        if: env.SANDBOX_EMAIL == '' || env.SANDBOX_PASSWORD == ''
+        if: env.TEM_SANDBOX != 'true'
         run: |
           {
             echo ""
@@ -170,6 +173,8 @@ jobs:
         run: npm run test:e2e:live
         env:
           PW_BASE_URL: https://seatable.one
+          SANDBOX_EMAIL: ${{ secrets.SANDBOX_EMAIL }}
+          SANDBOX_PASSWORD: ${{ secrets.SANDBOX_PASSWORD }}
 
       # Slow 3G dashboard smoke — confirms skeleton loaders fire and content
       # renders without white-screen / infinite spinner under throttling.
@@ -177,12 +182,14 @@ jobs:
         run: node scripts/test-slow-network.js
         env:
           PW_BASE_URL: https://seatable.one
+          SANDBOX_EMAIL: ${{ secrets.SANDBOX_EMAIL }}
+          SANDBOX_PASSWORD: ${{ secrets.SANDBOX_PASSWORD }}
 
       # Admin pages + LTV + AddReservationModal + EditReservationModal smoke
       # Requires sandbox credentials (secrets.SANDBOX_EMAIL/SANDBOX_PASSWORD).
       # 2026-04-29: caught customer detail 500 (churn_risk/ltv_score phantom columns).
       - name: Admin pages smoke
-        if: env.SANDBOX_EMAIL != ''
+        if: env.TEM_SANDBOX == 'true'
         run: node scripts/test-admin-pages.js
         env:
           SANDBOX_EMAIL: ${{ secrets.SANDBOX_EMAIL }}
