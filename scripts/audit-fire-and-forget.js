@@ -51,7 +51,7 @@ const FOLLOW_LINES = 30;
 // `match`. Keep `match` distinctive enough to name one call site.
 const ALLOWLIST = [
   {
-    file: 'cron/warm-seo-cache.js',
+    file: '_crons/warm-seo-cache.js',
     match: 'reservasHandler(fakeReq, fakeRes).catch(',
     reason:
       'warmOne resolves its own Promise through the fake-response callbacks; ' +
