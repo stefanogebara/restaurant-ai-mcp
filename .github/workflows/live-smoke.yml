@@ -31,7 +31,12 @@ jobs:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
       CRON_SECRET: ${{ secrets.CRON_SECRET }}
-      SANDBOX_EMAIL: ${{ secrets.SANDBOX_EMAIL }}
+      # As credenciais do sandbox NAO ficam aqui. Env de job vaza para TODO
+      # passo — inclusive `npm ci`, que executa scripts de ~400 dependencias
+      # transitivas, e para toda action de terceiro. So o que precisa fazer
+      # login recebe o valor; o resto do job ve apenas esta flag de presenca.
+      # (Revisao do #137.)
+      TEM_SANDBOX: ${{ secrets.SANDBOX_EMAIL != '' && secrets.SANDBOX_PASSWORD != '' }}
     steps:
       - uses: actions/checkout@v7
 
@@ -53,13 +58,17 @@ jobs:
             else
               echo "- :white_check_mark: saude dos crons ativa"
             fi
-            if [ -z "$SANDBOX_EMAIL" ]; then
-              echo "- :warning: **smoke de paginas admin pulado** — falta \`SANDBOX_EMAIL\` / \`SANDBOX_PASSWORD\`"
+            # As DUAS, nao so o email: com uma so, o gate abaixo encerra a run
+            # e este resumo estaria anunciando cobertura que nao aconteceu.
+            if [ "$TEM_SANDBOX" != "true" ]; then
+              echo "- :warning: **smoke contra producao pulado** — falta \`SANDBOX_EMAIL\` e/ou \`SANDBOX_PASSWORD\`"
             else
-              echo "- :white_check_mark: smoke de paginas admin ativo"
+              echo "- :white_check_mark: smoke contra producao ativo"
             fi
             echo ""
-            echo "Auditorias estaticas e o smoke contra producao nao precisam de secret e rodam sempre."
+            echo "Auditorias estaticas nao precisam de secret e rodam sempre."
+            echo "O smoke contra producao PRECISA de \`SANDBOX_EMAIL\` + \`SANDBOX_PASSWORD\`:"
+            echo "os specs fazem login. Sem elas a run para antes do smoke, de proposito."
             echo "Cadastrar os secrets em Settings > Secrets and variables > Actions liga o resto."
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -124,6 +133,31 @@ jobs:
           PW_BASE_URL: https://seatable.one
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
 
+      # Sem as credenciais do sandbox, todo spec que faz login morre no login —
+      # e morre caro: 4 min parado no head-start delay, download do Chromium,
+      # 7 testes com 2 retries cada, gravando video e trace de cada tentativa.
+      # Cinco minutos de runner para reaprender o que ja se sabia no segundo 0.
+      #
+      # Falha, e nao pula, de proposito: pular pintaria de VERDE uma run que nao
+      # verificou producao nenhuma — o modo de falha que o passo "Cobertura desta
+      # run" existe para evitar. Vermelho honesto e o ponto.
+      - name: Exigir credenciais do sandbox
+        if: env.TEM_SANDBOX != 'true'
+        run: |
+          {
+            echo ""
+            echo "### :x: O smoke contra producao NAO rodou"
+            echo ""
+            echo "Faltam \`SANDBOX_EMAIL\` e/ou \`SANDBOX_PASSWORD\`. Todo spec deste"
+            echo "job faz login, entao sem elas nada de producao e verificado."
+            echo ""
+            echo "Cadastre em **Settings > Secrets and variables > Actions**."
+            echo ""
+            echo "As auditorias estaticas acima rodaram e valem — o que falta e o smoke."
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "::error title=Credenciais do sandbox ausentes::Cadastre SANDBOX_EMAIL e SANDBOX_PASSWORD em Settings > Secrets and variables > Actions. Sem elas nenhum spec contra producao roda."
+          exit 1
+
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
@@ -139,6 +173,8 @@ jobs:
         run: npm run test:e2e:live
         env:
           PW_BASE_URL: https://seatable.one
+          SANDBOX_EMAIL: ${{ secrets.SANDBOX_EMAIL }}
+          SANDBOX_PASSWORD: ${{ secrets.SANDBOX_PASSWORD }}
 
       # Slow 3G dashboard smoke — confirms skeleton loaders fire and content
       # renders without white-screen / infinite spinner under throttling.
@@ -146,12 +182,14 @@ jobs:
         run: node scripts/test-slow-network.js
         env:
           PW_BASE_URL: https://seatable.one
+          SANDBOX_EMAIL: ${{ secrets.SANDBOX_EMAIL }}
+          SANDBOX_PASSWORD: ${{ secrets.SANDBOX_PASSWORD }}
 
       # Admin pages + LTV + AddReservationModal + EditReservationModal smoke
       # Requires sandbox credentials (secrets.SANDBOX_EMAIL/SANDBOX_PASSWORD).
       # 2026-04-29: caught customer detail 500 (churn_risk/ltv_score phantom columns).
       - name: Admin pages smoke
-        if: env.SANDBOX_EMAIL != ''
+        if: env.TEM_SANDBOX == 'true'
         run: node scripts/test-admin-pages.js
         env:
           SANDBOX_EMAIL: ${{ secrets.SANDBOX_EMAIL }}
