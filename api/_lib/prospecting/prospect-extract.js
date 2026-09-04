@@ -221,7 +221,18 @@ function mensagemApenasEmail(texto, email) {
  * `normalizarNumeroBr` já reprova DDD inexistente e local que não começa com
  * 9, então a validação toda é reaproveitada em vez de reescrita.
  */
-const WA_LINK_RE = /(?:wa\.me|whatsapp\.com\/send\?phone=|api\.whatsapp\.com\/send\?phone=)\/?(\+?\d{10,15})/gi;
+// A BARRA ANTES DO `?` — conserto de 03/09/2026.
+//
+// `api.whatsapp.com/send/?phone=` (com barra) é a forma que o botão de WhatsApp
+// do Elementor gera, e é o widget mais comum em site de restaurante WordPress.
+// A regex antiga só aceitava `send?phone=`, então o caso MAIS frequente caía
+// fora da trilha de MAIOR confiança e ia parar nas trilhas de baixo — ou em
+// nada. Descoberto quando o Bráz Pizzaria só foi achado pelo JSON-LD, apesar de
+// ter o link de WhatsApp explícito na página.
+//
+// A alternativa `api.whatsapp.com` era redundante: `whatsapp.com` já casa
+// dentro dela.
+const WA_LINK_RE = /(?:wa\.me\/?|whatsapp\.com\/send\/?\?phone=)(\+?\d{10,15})/gi;
 const TEL_HREF_RE = /tel:(\+?[\d\s().-]{8,20})/gi;
 // Celular BR em texto: DDD opcional entre parênteses + 9 + 8 dígitos.
 //
