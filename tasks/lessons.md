@@ -1555,3 +1555,59 @@ Corolário barato: quando uma consulta filtra por uma coluna que a tabela não
 tem (`restaurant_id` aqui), pergunte se o MODELO está certo antes de consertar
 o nome. Esta tabela é global por cliente; o filtro estava errado em conceito,
 não em digitação.
+
+## Adendo — rodadas 10 a 13: de 6 para 8, e o que cobrou cada meio ponto
+
+O registro acima parou em 7. As três rodadas seguintes mostraram que, depois da
+estrutura, o que move a nota é **honestidade de dado e legibilidade de número** —
+nunca mais espaçamento.
+
+**6 → 7, estrutura.** Régua única no lugar de três cartões; transcrito uma vez
+só; CTA fora do mock; três vozes tipográficas.
+
+**7 → 7,5, o tempo passando de verdade.** Dois dos três estados marcavam 14:33.
+O relógio não andava, o risco do "agora" não andava, só a opacidade mudava — e
+uma cronologia em que o relógio não anda não é cronologia. Virou 14:33 → 14:58
+→ 23:40, com a barra âmbar crescendo junto ("2h09" → "2h34"). No mesmo passo, o
+estado de fechamento parou de repintar as reservas nos horários planejados e
+passou a mostrar chegada e saída reais, com uma reserva que não veio ficando oca
+e sem valor.
+
+**7,5 → 8, o número legível.** O dinheiro estava por cima das barras — à direita
+de umas, à esquerda de outras. Uma coluna que pede para ser somada não pode
+obrigar o olho a caçar cada parcela. Virou coluna própria, alinhada à direita,
+tabular, com a soma no pé (`Fechado · 11 contas · 1 não veio · R$ 3.305`), e as
+barras viraram geometria pura. O parágrafo abaixo perdeu o número e ficou só com
+a interpretação.
+
+### Três regras que saíram daqui
+
+1. **Lado de rótulo não se decide por regra fixa, se mede.** A primeira tentativa
+   foi "rótulo à esquerda quando o bloco termina depois das 21h30". Colidiu na
+   hora: um bloco que termina 21h36 ganhava rótulo à esquerda em cima do rótulo
+   à direita do bloco anterior. A versão que funciona mede depois do layout —
+   cabe à direita, fica; não cabe, vai à esquerda se houver folga real; não
+   havendo, encurta o nome; só então desiste. Qualquer limiar em unidade de
+   *dado* (hora, contagem) para resolver problema de *pixel* vai errar assim que
+   a fonte ou a largura mudarem.
+2. **Encurtar rótulo tira adjetivo, nunca dado.** A forma curta cortava o "· 8"
+   de "Festa · 8". Uma raia sem número, no meio de cinco com número, lê como
+   dado faltando, não como contenção.
+3. **Nada que precisa ser lido nasce em `opacity: 0` esperando observador.** O
+   painel do herói só aparecia quando o IntersectionObserver disparava; em
+   captura de página inteira e em qualquer contexto sem rolagem, o produto era
+   um buraco. Agora nasce visível, e a entrada só é armada para quem começa
+   abaixo da dobra — com temporizador de segurança.
+
+### O que quase custou meio ponto de novo
+
+Trocar a régua inteira do herói por uma raia só resolveu a duplicação (o mesmo
+quadro aparecia no herói e no primeiro estado, a 400px de distância), mas criou
+um slab branco com uma barra e muito ar — lia como estado vazio. A correção não
+foi voltar atrás: as cinco raias vizinhas continuam desenhadas a 17%, com máscara
+descendo no pé. Uma raia viva sobre um quadro fantasma lê como recorte de algo
+real; uma raia sozinha lê como demo sem dados.
+
+E a máscara nasceu errada, apagando o topo junto: comia a escala de horas, que é
+a única coisa do painel que o leitor precisa ler inteira. Máscara de recorte
+desce no pé; no topo ela come cabeçalho.
