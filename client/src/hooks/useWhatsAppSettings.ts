@@ -77,6 +77,7 @@ export function useWhatsAppStatus() {
       const response = await authFetch('/api/whatsapp-settings?action=status');
       if (!response.ok) throw new Error('Failed to load WhatsApp status');
       const result = await response.json();
+      if (!result.success || !result.data) throw new Error('Failed to load WhatsApp status');
       return result.data;
     },
     staleTime: SETTINGS_STALE_TIME,
@@ -103,10 +104,18 @@ export function useWhatsAppTestMessageStatus() {
       const response = await authFetch('/api/whatsapp-settings?action=test_status');
       if (!response.ok) throw new Error('Failed to load WhatsApp test status');
       const result = await response.json();
+      if (!result.success) throw new Error(result.error || 'Failed to load WhatsApp test status');
       return result.data ?? null;
     },
     staleTime: 5 * 1000,
-    refetchInterval: 15 * 1000,
+    // Poll only while a real delivery is pending, bounded to ten minutes.
+    // An idle settings page must not invoke a serverless function forever.
+    refetchInterval: (query) => {
+      const message = query.state.data;
+      if (!message || !['accepted', 'sent', 'queued'].includes(message.status)) return false;
+      const requested = Date.parse(message.requested_at);
+      return Number.isFinite(requested) && Date.now() - requested < 10 * 60 * 1000 ? 15 * 1000 : false;
+    },
   });
 }
 
@@ -119,11 +128,11 @@ export function useSaveWhatsAppSettings() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
-      if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.error || 'Failed to save');
+      const payload = await response.json();
+      if (!response.ok || !payload.success) {
+        throw new Error(payload.error || 'Failed to save');
       }
-      return response.json();
+      return payload;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['whatsappStatus'] }),
   });
@@ -140,7 +149,7 @@ export function useSendTestMessage() {
         body: JSON.stringify({ phone_number }),
       });
       const payload = await response.json();
-      if (!response.ok) {
+      if (!response.ok || !payload.success) {
         const error = new Error(payload.error || 'Failed to send test message') as Error & {
           cooldownRemainingMs?: number;
           latestTestMessage?: WhatsAppTestMessageStatus | null;
@@ -150,6 +159,15 @@ export function useSendTestMessage() {
         throw error;
       }
       return payload;
+    },
+    onSuccess: (payload) => {
+      // Replace the previous test immediately, even when the follow-up GET
+      // fails. An older delivered test must not look like this send succeeded.
+      if (payload.data?.id) queryClient.setQueryData(['whatsappTestStatus'], payload.data);
+    },
+    onError: (error) => {
+      const latest = (error as Error & { latestTestMessage?: WhatsAppTestMessageStatus | null }).latestTestMessage;
+      if (latest?.id) queryClient.setQueryData(['whatsappTestStatus'], latest);
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey: ['whatsappTestStatus'] }),
   });
