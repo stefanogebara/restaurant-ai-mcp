@@ -1450,3 +1450,20 @@ Dois agravantes que valem registro:
 O lado bom: os analistas fizeram o trabalho certo mesmo com briefing redundante,
 porque cada um foi instruído a conferir a dedup e a discordar. Instrução de
 ceticismo no prompt do subagente salvou uma passada que meu despacho estragou.
+# 2026-09-05 — Premium landing pages need authored scenes, not assembled effects
+
+The rejected landing used the familiar shortcut stack: a generic colour
+gradient, large copy on the left, a faux product panel on the right, repeated
+rounded containers, and a mobile layout made by stacking desktop blocks. Even
+when each piece is clean, the combination reads as generated template work.
+
+For an image-led premium reference, photography must carry the narrative and
+the interface should appear only where it proves a concrete product outcome.
+Gradients may support legibility or natural light falloff, but cannot be the
+visual concept. Mobile needs its own crops, pacing, and type scale; it is not a
+collapsed desktop artboard.
+
+Rule: before calling a marketing page polished, inspect at least
+1440x900, 1024x768, 768x1024, 390x844, and 320x568, plus mid-transition states.
+Reject any composition that can be described as “headline + gradient + floating
+dashboard card” before implementation.
