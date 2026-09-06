@@ -35,8 +35,8 @@ jest.mock('../_lib/ai-client', () => ({
   AI_MODEL_FAST: 'anthropic/claude-3.5-haiku',
 }));
 
-const handler = require('../cron/proactive-comms');
-const { parseOccasionDate, normaliseLang } = require('../cron/proactive-comms');
+const handler = require('../_crons/proactive-comms');
+const { parseOccasionDate, normaliseLang } = require('../_crons/proactive-comms');
 
 function mockRes() {
   const r = {};

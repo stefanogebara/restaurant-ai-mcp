@@ -112,23 +112,58 @@ async function selecionarSemCelular(limit = LIMITE_PADRAO) {
  * O fixo NÃO se perde — ele mora na coluna `phone`, que este código não toca.
  * `whatsapp_phone` é o canal de envio, e um fixo ali é um canal que não existe.
  *
+ * DOIS LEITORES, O GRÁTIS PRIMEIRO (03/09/2026). Antes havia um só, o pago
+ * (Scrapingdog), e ele era dependência DURA: sem a chave no ambiente a caça
+ * não tentava absolutamente nada e carimbava o lead como 'missing'. Foi
+ * exatamente esse o defeito que gastou 752 leads com zero achados — a chave
+ * nunca chegou à função em produção, e "não tentei" ficou indistinguível de
+ * "tentei e o site não tinha".
+ *
+ * Agora o leitor direto roda primeiro e o pago só entra quando o direto não
+ * rendeu número. Isso domina o desenho antigo nas três pontas:
+ *   - sem chave, a caça funciona (degrada para só-direto, não para nada);
+ *   - com chave, só se paga pelo site que o fetch grátis não resolveu;
+ *   - quem decide escalar é o EXTRATOR, não um palpite sobre "tem JS?" —
+ *     "não achei número" é o único sinal que de fato importa.
+ *
  * @param {object} lead
- * @param {(alvo: string) => Promise<string>} lerPagina - injetado para teste
+ * @param {(alvo: string) => Promise<string>} lerPagina - leitor direto (grátis)
+ * @param {(alvo: string) => Promise<string>} [lerPaginaFallback] - leitor pago,
+ *   omitido quando não há chave; a caça segue valendo sem ele
  * @returns {Promise<{ok: boolean, numero?: string, fonte?: string, motivo?: string}>}
  */
-async function cacarCelular(lead, lerPagina) {
+async function cacarCelular(lead, lerPagina, lerPaginaFallback) {
   const carimbo = new Date().toISOString();
   const statusBase = { ...(lead.enrich_status || {}), site_wa_at: carimbo };
 
-  let html = '';
-  try {
-    html = await lerPagina(lead.website);
-  } catch (e) {
-    logger.info(`scrape falhou lead=${lead.id}: ${e.message}`);
-  }
-
   const ddd = extrairDddBr(lead.whatsapp_phone || lead.address || lead.city || '');
-  const achado = html ? extrairCelularDoSite(html, ddd) : null;
+
+  const tenta = async (ler, rotulo) => {
+    if (typeof ler !== 'function') return '';
+    try {
+      return (await ler(lead.website)) || '';
+    } catch (e) {
+      logger.info(`scrape ${rotulo} falhou lead=${lead.id}: ${e.message}`);
+      return '';
+    }
+  };
+
+  let html = await tenta(lerPagina, 'direto');
+  let achado = html ? extrairCelularDoSite(html, ddd) : null;
+
+  // Escala só quando o grátis não resolveu. `htmlAlgum` guarda se ALGUM leitor
+  // conseguiu abrir a página: sem isso, um direto que abriu e não tinha número
+  // seguido de um pago que nem rodou viraria 'sem_html', trocando "site sem
+  // WhatsApp" por "scrape quebrado" — as duas causas que este arquivo existe
+  // para manter separadas.
+  let htmlAlgum = !!html;
+  if (!achado && typeof lerPaginaFallback === 'function') {
+    const html2 = await tenta(lerPaginaFallback, 'fallback');
+    if (html2) {
+      htmlAlgum = true;
+      achado = extrairCelularDoSite(html2, ddd);
+    }
+  }
 
   const patch = achado
     ? {
@@ -154,17 +189,18 @@ async function cacarCelular(lead, lerPagina) {
   if (achado) logger.info(`celular achado no site lead=${lead.id} (${achado.fonte})`);
   return achado
     ? { ok: true, numero: achado.numero, fonte: achado.fonte }
-    : { ok: false, motivo: html ? 'sem_numero' : 'sem_html' };
+    : { ok: false, motivo: htmlAlgum ? 'sem_numero' : 'sem_html' };
 }
 
 /**
  * Um lote. Sequencial de propósito: são chamadas externas pagas e o orçamento
  * de 60s da função é compartilhado com a caça ao CNPJ no mesmo cron.
  *
- * @param {{limit?: number, lerPagina?: Function}} [opts]
+ * @param {{limit?: number, lerPagina?: Function, lerPaginaFallback?: Function}} [opts]
  */
 async function cacarCelularPendentes(opts = {}) {
   const lerPagina = opts.lerPagina;
+  const lerPaginaFallback = opts.lerPaginaFallback;
   if (typeof lerPagina !== 'function') {
     return { erro: 'lerPagina obrigatório', processados: 0, achados: 0 };
   }
@@ -179,7 +215,7 @@ async function cacarCelularPendentes(opts = {}) {
   const resumo = { processados: 0, achados: 0, sem_numero: 0, sem_html: 0, falhas: 0 };
 
   for (const lead of leads) {
-    const r = await cacarCelular(lead, lerPagina);
+    const r = await cacarCelular(lead, lerPagina, lerPaginaFallback);
     resumo.processados++;
     if (r.ok) resumo.achados++;
     else if (r.motivo === 'update') resumo.falhas++;
@@ -187,13 +223,16 @@ async function cacarCelularPendentes(opts = {}) {
     else resumo.sem_numero++;
   }
 
-  // Lote inteiro sem HTML não é "site sem WhatsApp": é scrape morto. A causa
-  // mais provável é SCRAPINGDOG_API_KEY ausente ou sem crédito — e sem este
-  // aviso isso se disfarçaria de "a abordagem não funciona" para sempre.
+  // Lote inteiro sem HTML não é "site sem WhatsApp": é scrape morto. Agora que
+  // são dois leitores, o alarme diz QUAIS rodaram — culpar o Scrapingdog quando
+  // ele nem estava no caminho foi o erro de camada que custou os cinco dias de
+  // 31/08. Zero HTML com os dois ativos é rede/bloqueio; com só o direto ativo,
+  // é o esperado para sites com anti-bot e o remédio é a chave.
   if (resumo.processados > 0 && resumo.sem_html === resumo.processados) {
     logger.error(
-      `caça ao celular sem HTML em ${resumo.sem_html}/${resumo.processados} do lote — `
-      + 'isso é scrape quebrado, não site sem WhatsApp. Ver SCRAPINGDOG_API_KEY.');
+      `caça ao celular sem HTML em ${resumo.sem_html}/${resumo.processados} do lote `
+      + `(leitores ativos: ${lerPaginaFallback ? 'direto+fallback' : 'só direto'}) — `
+      + 'isso é scrape quebrado, não site sem WhatsApp.');
   }
 
   // Lote inteiro sem achado NÃO é alarme: site sem WhatsApp visível é comum, e

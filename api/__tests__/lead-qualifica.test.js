@@ -151,3 +151,49 @@ describe('foraDoIcp — o aperto de categoria de 25/08', () => {
     expect(foraDoIcp('Açougue e Restaurante do Gaúcho')).toBe(false);
   });
 });
+
+/**
+ * CASAS DE CULTO — 04/09/2026.
+ *
+ * `igreja` já estava em FORA_NO_INICIO, mas sozinha não cobre como uma igreja
+ * de fato se chama. Achado na fila de produção, todas em `aguardando` e dentro
+ * da faixa de 120–5000 avaliações que o disparo alcança:
+ *
+ *     Basílica de Nossa Senhora da Penha ...... 2926 avaliações, 4.8
+ *     Paróquia Santo Antônio do Pari .......... 1845, 4.7
+ *     Paróquia Nossa Senhora do Ó ............. 1014, 4.8
+ *
+ * Ficou urgente porque a caça ao celular voltou a funcionar (#138) e achou o
+ * celular da Basílica — ela saiu de "sem número, não despacha" para candidata
+ * viva a receber abordagem comercial fria. Paróquia não tem conta de mesa para
+ * dividir; a mensagem é constrangedora e queima reputação do número na Meta.
+ */
+describe('foraDoIcp — casa de culto não recebe abordagem comercial', () => {
+  it.each([
+    'Basílica de Nossa Senhora da Penha',
+    'Paróquia Santo Antônio do Pari',
+    'Paróquia Nossa Senhora do Ó',
+    'Catedral Metropolitana Nossa Senhora da Assunção',
+    'Santuário Basílica Senhor Bom Jesus de Tremembé',
+    'Mosteiro São Bento',
+  ])('barra %s', (nome) => {
+    expect(foraDoIcp(nome)).toBe(true);
+  });
+
+  /**
+   * O outro lado, que é o erro CARO segundo a regra desta casa: falso positivo
+   * tira restaurante bom da fila em silêncio. Por isso a regra é de INÍCIO do
+   * nome — restaurante põe a categoria no meio.
+   */
+  it.each([
+    // Restaurante DENTRO de uma catedral. Real, está na fila com 55 avaliações.
+    'Brunch da Catedral da Sé',
+    // O \b impede que `basílica` case dentro de `Basilicata`. Real, 5828 avaliações.
+    'Basilicata - Pão, Empório e Restaurante',
+    'Bar da Igrejinha',
+    'Restaurante Capela do Sol',
+    'Pizzaria Santuário do Queijo',
+  ])('deixa passar %s', (nome) => {
+    expect(foraDoIcp(nome)).toBe(false);
+  });
+});

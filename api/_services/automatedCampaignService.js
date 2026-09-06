@@ -110,7 +110,7 @@ async function getRestaurantConfig(restaurantId) {
   const { data } = await supabaseAdmin
     .schema('restaurant')
     .from('restaurant_config')
-    .select('restaurant_name, language, booking_slug')
+    .select('restaurant_name, agent_language, slug')
     .eq('id', restaurantId)
     .single();
 
@@ -161,20 +161,69 @@ async function sendAutomatedMessage({
 }
 
 /**
+ * O e-mail do cliente que acabou de jantar.
+ *
+ * `service_records` NAO tem `customer_email` — os dois selects deste arquivo
+ * pediam essa coluna, e em PostgREST uma coluna inexistente derruba o select
+ * inteiro. Com o `error` descartado (`const { data } = await ...`), `records`
+ * vinha null, o laco rodava zero vezes e a funcao devolvia 0 enviados. Nem o
+ * agradecimento pos-visita nem o pedido de avaliacao jamais sairam.
+ *
+ * O e-mail vive em `customer_ltv`, chaveado por restaurante + telefone. Uma
+ * consulta em lote para todos os telefones da leva, em vez de uma por cliente.
+ * Cobertura hoje: 453 de 648 visitas completas (70%) — quem nao tem e-mail
+ * simplesmente nao recebe, como ja era a intencao.
+ *
+ * Nao da para usar embed do PostgREST aqui: `service_records` nao tem FK
+ * nenhuma, entao a relacao nao existe para o PostgREST resolver.
+ */
+async function buscarEmailsPorTelefone(restaurantId, telefones) {
+  const unicos = [...new Set((telefones || []).filter(Boolean))];
+  if (!unicos.length) return new Map();
+
+  const { data, error } = await supabaseAdmin
+    .schema('restaurant')
+    .from('customer_ltv')
+    .select('customer_phone, customer_email')
+    .eq('restaurant_id', restaurantId)
+    .in('customer_phone', unicos);
+
+  if (error) {
+    logger.warn('Falha ao buscar e-mails no customer_ltv:', error.message);
+    return new Map();
+  }
+  return new Map((data || [])
+    .filter((c) => c.customer_email)
+    .map((c) => [c.customer_phone, c.customer_email]));
+}
+
+/**
  * Process post-visit thank you.
  * Fires for service_records completed in the last 24h.
  */
 async function processPostVisitThankYou(restaurantId, optedOutPhones, config) {
   const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
-  const { data: records } = await supabaseAdmin
+  const { data: records, error } = await supabaseAdmin
     .from('service_records')
-    .select('id, customer_phone, customer_name, customer_email, completed_at')
+    .select('id, customer_phone, customer_name, actual_departure')
     .eq('restaurant_id', restaurantId)
     .eq('status', 'completed')
-    .gte('completed_at', yesterday)
+    .gte('actual_departure', yesterday)
     .not('customer_phone', 'is', null)
     .limit(100);
+
+  // Ler o error: era descarta-lo que deixava esta campanha morta
+  // em silencio.
+  if (error) {
+    logger.error('post_visit_thank_you: falha ao ler service_records:', error.message);
+    return 0;
+  }
+
+  const emails = await buscarEmailsPorTelefone(
+    restaurantId,
+    (records || []).map((r) => r.customer_phone),
+  );
 
   let sentCount = 0;
   for (const record of records || []) {
@@ -183,7 +232,7 @@ async function processPostVisitThankYou(restaurantId, optedOutPhones, config) {
     const sent = await sendAutomatedMessage({
       restaurantId,
       customerId: record.customer_phone,
-      customerEmail: record.customer_email,
+      customerEmail: emails.get(record.customer_phone),
       customerName: record.customer_name,
       triggerType: 'post_visit_thank_you',
       period: getCurrentDay(),
@@ -305,15 +354,27 @@ async function processReviewRequest(restaurantId, optedOutPhones, config, automa
   const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString();
   const fiveHoursAgo = new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString();
 
-  const { data: records } = await supabaseAdmin
+  const { data: records, error } = await supabaseAdmin
     .from('service_records')
-    .select('id, customer_phone, customer_name, customer_email, completed_at')
+    .select('id, customer_phone, customer_name, actual_departure')
     .eq('restaurant_id', restaurantId)
     .eq('status', 'completed')
-    .lte('completed_at', fourHoursAgo)
-    .gte('completed_at', fiveHoursAgo)
+    .lte('actual_departure', fourHoursAgo)
+    .gte('actual_departure', fiveHoursAgo)
     .not('customer_phone', 'is', null)
     .limit(100);
+
+  // Ler o error: era descarta-lo que deixava esta campanha morta
+  // em silencio.
+  if (error) {
+    logger.error('review_request: falha ao ler service_records:', error.message);
+    return 0;
+  }
+
+  const emails = await buscarEmailsPorTelefone(
+    restaurantId,
+    (records || []).map((r) => r.customer_phone),
+  );
 
   let sentCount = 0;
   for (const record of records || []) {
@@ -322,7 +383,7 @@ async function processReviewRequest(restaurantId, optedOutPhones, config, automa
     const sent = await sendAutomatedMessage({
       restaurantId,
       customerId: record.customer_phone,
-      customerEmail: record.customer_email,
+      customerEmail: emails.get(record.customer_phone),
       customerName: record.customer_name,
       triggerType: 'review_request',
       period: getCurrentDay(),
@@ -419,4 +480,8 @@ async function processAllTriggers(restaurantId) {
 module.exports = {
   processAllTriggers,
   buildUnsubscribeUrl,
+  // Exportado para teste: e a peca que religa o e-mail das campanhas
+  // pos-visita, e ela consulta OUTRA tabela que a do laco. Testa-la via
+  // processAllTriggers exigiria montar restaurante, config e automacoes.
+  buscarEmailsPorTelefone,
 };

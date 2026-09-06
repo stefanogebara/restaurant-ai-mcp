@@ -10,7 +10,6 @@
  */
 
 const crypto = require('node:crypto');
-const fetch = require('node-fetch');
 const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { buildPersonaPrompt } = require('../_lib/persona-prompt-builder');
@@ -838,7 +837,7 @@ async function createAgent({
       const { data: restaurantConfig } = await supabaseAdmin
         .schema('restaurant')
         .from('restaurant_config')
-        .select('id, restaurant_name, phone, city, country, address, business_hours, language, ai_config, agent_name, agent_greeting, voice_id, voice_engine, persona_prompt_override')
+        .select('id, restaurant_name, phone, city, country, business_hours, agent_language, ai_config, agent_name, agent_greeting, voice_id, voice_engine, persona_prompt_override')
         .eq('id', restaurantId)
         .maybeSingle();
 

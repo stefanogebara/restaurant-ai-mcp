@@ -95,11 +95,16 @@ export default function StatusBreakdownPie({ reservationsByStatus }: StatusBreak
             <Legend
               verticalAlign="bottom"
               height={36}
-              formatter={((value: string, entry: LegendPayload) => (
-                <span className="text-sm text-deep-charcoal">
-                  {String(value)} ({entry.payload?.value})
-                </span>
-              )) as LegendFormatter}
+              formatter={((value: string, entry: LegendPayload) => {
+                // `LegendPayload.payload` é tipado como `object` — a fatia que
+                // alimenta a legenda é a nossa própria linha de chartData.
+                const fatia = entry.payload as { value?: number } | undefined;
+                return (
+                  <span className="text-sm text-deep-charcoal">
+                    {String(value)} ({fatia?.value})
+                  </span>
+                );
+              }) as LegendFormatter}
               iconType="circle"
             />
           </PieChart>

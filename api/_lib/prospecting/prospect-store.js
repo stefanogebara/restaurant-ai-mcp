@@ -327,10 +327,58 @@ async function selectIntroCandidates(limit = 20, territorio = null) {
     if (semCelular > 0) {
       logger.warn(`selectIntroCandidates: ${semCelular} candidato(s) descartado(s) por não serem celular (máscara SQL deixou passar)`);
     }
+    // REDE JÁ ABORDADA — conserto de 03/09/2026.
+    //
+    // `qualificar()` colapsa telefone repetido, mas só DENTRO deste lote. Entre
+    // rodadas, as outras unidades da mesma rede seguem com whatsapp_sent_at
+    // null e voltam a ser elegíveis. Medido: +5511946310342 (Mania de
+    // Churrasco) recebeu SETE intros entre 06/07 e 06/08, e outros oito números
+    // levaram duas ou mais. É spam para uma pessoa real e ponto de reputação
+    // queimado na Meta, por um número que já tinha respondido — ou já tinha
+    // decidido não responder.
+    //
+    // Ficou mais urgente agora: a caça ao celular voltou a achar número
+    // (PR #138), e rede com site único e WhatsApp central é comum — o Bráz
+    // Pizzaria e o Câmara Fria publicam o MESMO celular, cada um com o texto
+    // do link personalizado para a sua casa.
+    const telefones = [...new Set(comCelular.map((l) => l.whatsapp_phone).filter(Boolean))];
+    let jaAbordados = new Set();
+    let falhaNaGuarda = false;
+    if (telefones.length) {
+      // As duas formas: o mesmo número aparece gravado com e sem '+' conforme
+      // a origem, e um `in` exato não cruza as duas sozinho.
+      const variantes = [...new Set(telefones.flatMap((t) => {
+        const d = String(t).replace(/\D/g, '');
+        return [`+${d}`, d];
+      }))];
+      const { data: usados, error: erroGuarda } = await supabaseAdmin
+        .from('prospect_leads')
+        .select('whatsapp_phone')
+        .in('whatsapp_phone', variantes)
+        .not('whatsapp_sent_at', 'is', null);
+      if (erroGuarda) {
+        // FALHA FECHADA, ao contrário do resto do arquivo. `isOptedOut` falha
+        // aberto porque o pior caso é uma mensagem a mais para quem pediu para
+        // parar. Aqui o pior caso é repetir a intro numa rede inteira, e o
+        // custo de fechar é só atrasar um lote — nada se perde, a fila espera.
+        logger.error(`guarda de rede já abordada falhou (${erroGuarda.message}) — `
+          + 'lote descartado de propósito em vez de arriscar intro repetida');
+        falhaNaGuarda = true;
+      } else {
+        jaAbordados = new Set((usados || []).map((r) => String(r.whatsapp_phone || '').replace(/\D/g, '')));
+      }
+    }
+    if (falhaNaGuarda) return [];
+    const inéditos = comCelular.filter((l) => !jaAbordados.has(String(l.whatsapp_phone || '').replace(/\D/g, '')));
+    const daRede = comCelular.length - inéditos.length;
+    if (daRede > 0) {
+      logger.info(`selectIntroCandidates: ${daRede} descartado(s) — número já abordado por outra unidade da rede`);
+    }
+
     // Qualificação: tira quem não faz reserva (supermercado, farmácia...) e
     // colapsa leads que dividem telefone ou place_id. Ver lead-qualifica.js.
     const { qualificar } = require('./lead-qualifica');
-    const { candidatos, descartados } = qualificar(comCelular);
+    const { candidatos, descartados } = qualificar(inéditos);
     const perdidos = descartados.fora_icp + descartados.dup_telefone + descartados.dup_place;
     if (perdidos > 0) {
       logger.info(`selectIntroCandidates: ${perdidos} descartado(s) — `

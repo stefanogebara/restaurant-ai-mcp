@@ -49,7 +49,7 @@ jest.mock('../_lib/cron-tracker', () => ({
   logCronRun: jest.fn().mockResolvedValue(undefined),
 }));
 
-const handler = require('../cron/check-late-reservations');
+const handler = require('../_crons/check-late-reservations');
 
 function mockRes() {
   const r = {};

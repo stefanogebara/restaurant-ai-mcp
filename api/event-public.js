@@ -43,7 +43,7 @@ module.exports = async (req, res) => {
     // Fetch restaurant by slug
     const { data: restaurant, error: restError } = await eventsDb()
       .from('restaurant_config')
-      .select('id, restaurant_name, booking_slug')
+      .select('id, restaurant_name, slug')
       .eq('booking_slug', slug)
       .single();
 

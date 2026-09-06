@@ -47,7 +47,7 @@ jest.mock('../_lib/secure-logger', () => ({
   createSecureLogger: () => ({ info: jest.fn(), warn: jest.fn(), error: jest.fn() }),
 }));
 
-const handler = require('../cron/sync-stripe-connect-accounts');
+const handler = require('../_crons/sync-stripe-connect-accounts');
 
 function makeRes() {
   return {

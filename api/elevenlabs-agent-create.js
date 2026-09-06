@@ -15,7 +15,6 @@
  * Creates per-restaurant agents during onboarding
  */
 
-const fetch = require('node-fetch');
 const { verifyAuth } = require('./_lib/auth');
 const { supabaseAdmin } = require('./_lib/supabase');
 const { checkSubscription, requireFeature } = require('./_lib/subscription-middleware');
@@ -188,7 +187,7 @@ module.exports = async (req, res) => {
     const { data: restaurantConfig } = await supabaseAdmin
       .schema('restaurant')
       .from('restaurant_config')
-      .select('id, restaurant_name, restaurant_type, phone, email, address, city, country, business_hours, avg_dining_duration_minutes, timezone, language, cancellation_policy, special_notes, advance_booking_days, buffer_time, agent_name, agent_greeting, ai_config, metric_profile')
+      .select('id, restaurant_name, restaurant_type, phone, email, city, country, business_hours, average_dining_duration_minutes, timezone, agent_language, reservation_settings, agent_name, agent_greeting, ai_config, metric_profile')
       .eq('id', restaurant_id)
       .maybeSingle();
 

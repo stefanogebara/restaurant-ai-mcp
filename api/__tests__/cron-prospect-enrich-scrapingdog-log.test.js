@@ -26,7 +26,7 @@ jest.mock('../_lib/prospecting/prospect-celular', () => ({ cacarCelularPendentes
 jest.mock('../_lib/cron-tracker', () => ({ logCronRun: jest.fn(), logCronError: jest.fn() }));
 jest.mock('../_lib/cron-config', () => ({ isCronEnabled: jest.fn().mockResolvedValue(true) }));
 
-const { lerPaginaScrapingdog } = require('../cron/prospect-enrich');
+const { lerPaginaScrapingdog } = require('../_crons/prospect-enrich');
 
 const CHAVE = 'sd_chave_de_teste';
 let chaveOriginal;
@@ -44,15 +44,21 @@ beforeEach(() => {
 });
 
 describe('lerPaginaScrapingdog: o motivo do vazio nunca é silencioso', () => {
-  test('sem chave no ambiente: grita, e não tenta raspar nada', async () => {
+  test('sem chave no ambiente: avisa, e não tenta raspar nada', async () => {
     delete process.env.SCRAPINGDOG_API_KEY;
 
     const html = await lerPaginaScrapingdog('https://exemplo.com.br');
 
     expect(html).toBe('');
-    // O ponto do teste: gastar zero requisição E dizer por quê.
+    // O ponto do teste continua o mesmo: gastar zero requisição E dizer por quê.
     expect(global.fetch).not.toHaveBeenCalled();
-    expect(mockLogger.error).toHaveBeenCalledWith(
+    // NÍVEL REBAIXADO PARA warn EM 03/09/2026, e isso é a correção, não uma
+    // concessão: chave ausente deixou de ser fatal quando a caça ganhou o
+    // leitor direto como caminho primário. `error` aqui viraria alarme diário
+    // para um estado que agora é degradação prevista — e alarme que grita à toa
+    // é alarme desligado. O que NÃO pode voltar é o silêncio: some a linha e o
+    // 'sem_html' fica mudo de novo, que foi o defeito dos 752 leads.
+    expect(mockLogger.warn).toHaveBeenCalledWith(
       expect.stringContaining('SCRAPINGDOG_API_KEY ausente'));
   });
 

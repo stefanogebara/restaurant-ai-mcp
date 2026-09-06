@@ -7,7 +7,12 @@
  * Requires: CRON_SECRET, HEALTH_ALERT_PHONE env vars
  */
 
-const { checkCronHealth } = require('./health');
+// De _lib/, NÃO de cron/health.js. Aquele é handler publicado, e dar require
+// nele faria a NFT da Vercel remover do manifesto a função que puxa este
+// arquivo (o despachante api/cron/run.js) — em silêncio, sem erro de build,
+// com todos os crons de 60s virando 404 em produção. A lógica mora em _lib
+// desde a extração de 03/ago exatamente para isto.
+const { checkCronHealth } = require('../_lib/cron-health');
 const { sondarIntegracoes, NIVEIS } = require('../_lib/integration-probes');
 const { supabaseAdmin } = require('../_lib/supabase');
 const { sendWhatsAppMessage, isWhatsAppConfigured } = require('../_lib/whatsapp-sender');

@@ -23,6 +23,7 @@ const en = {
   automated: 'Feedback and surveys', saved: 'Saved', save: 'Save notifications',
   enabled: 'Enable WhatsApp notifications', owner: 'Your personal WhatsApp number (with country code)',
   loadError: 'We could not load WhatsApp settings. Nothing has been changed.', refreshing: 'Checking…',
+  verificationCode: 'Verification code',
 };
 type Copy = typeof en;
 const pt: Copy = {
@@ -50,6 +51,7 @@ const pt: Copy = {
   automated: 'Avaliações e pesquisas', saved: 'Salvo', save: 'Salvar notificações',
   enabled: 'Ativar notificações por WhatsApp', owner: 'Seu WhatsApp pessoal (com código do país)',
   loadError: 'Não foi possível carregar os ajustes do WhatsApp. Nada foi alterado.', refreshing: 'Verificando…',
+  verificationCode: 'Código de verificação',
 };
 const es: Copy = {
   intro: 'De conectar tu número a la primera conversación. Paso a paso.',
@@ -76,6 +78,7 @@ const es: Copy = {
   automated: 'Opiniones y encuestas', saved: 'Guardado', save: 'Guardar notificaciones',
   enabled: 'Activar notificaciones por WhatsApp', owner: 'Tu WhatsApp personal (con código de país)',
   loadError: 'No se pudieron cargar los ajustes. No se cambió nada.', refreshing: 'Comprobando…',
+  verificationCode: 'Código de verificación',
 };
 export function whatsappCopy(language: string): Copy {
   return language.startsWith('pt') ? pt : language.startsWith('es') ? es : en;

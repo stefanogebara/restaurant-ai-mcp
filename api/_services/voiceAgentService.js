@@ -10,7 +10,6 @@
  * - Manual refresh (POST /api/elevenlabs-voice-settings?action=refresh_prompt)
  */
 
-const fetch = require('node-fetch');
 const { supabaseAdmin } = require('../_lib/supabase');
 const { buildPersonaPrompt } = require('../_lib/persona-prompt-builder');
 const { createSecureLogger } = require('../_lib/secure-logger');
@@ -37,7 +36,7 @@ async function refreshVoiceAgentPrompt(restaurantId) {
   const { data: config, error: dbError } = await supabaseAdmin
     .schema('restaurant')
     .from('restaurant_config')
-    .select('id, restaurant_name, restaurant_type, phone, email, address, city, country, business_hours, avg_dining_duration_minutes, timezone, language, cancellation_policy, special_notes, advance_booking_days, buffer_time, elevenlabs_agent_id, agent_name, agent_greeting, ai_config, metric_profile')
+    .select('id, restaurant_name, restaurant_type, phone, email, city, country, business_hours, average_dining_duration_minutes, timezone, agent_language, reservation_settings, elevenlabs_agent_id, agent_name, agent_greeting, ai_config, metric_profile')
     .eq('id', restaurantId)
     .single();
 

@@ -22,7 +22,7 @@ const path = require('path');
 const { dentroDaJanelaDisparo } = require('../_lib/prospecting/prospect-hours');
 
 const vercel = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', 'vercel.json'), 'utf8'));
-const entrada = (vercel.crons || []).find((c) => c.path === '/api/cron/prospect-dispatch');
+const entrada = (vercel.crons || []).find((c) => c.path.startsWith('/api/cron/') && c.path.includes('job=prospect-dispatch'));
 
 /** "10 13-19 * * 1-5" → [13,14,...,19] */
 function horasDe(schedule) {

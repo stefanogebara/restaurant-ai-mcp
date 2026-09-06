@@ -1,90 +1,873 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import DashboardLayout from '../components/layout/DashboardLayout';
-import ConnectWhatsAppNumberPanel from '../components/dashboard/ConnectWhatsAppNumberPanel';
-import AiPersonalityPanel from '../components/dashboard/AiPersonalityPanel';
+import SettingsTabs, { type SettingsTabDef } from '../components/common/SettingsTabs';
 import ManagerNotificationsPanel from '../components/dashboard/ManagerNotificationsPanel';
-import FeedbackSettingsPanel from '../components/dashboard/FeedbackSettingsPanel';
-import SurveySettingsPanel from '../components/dashboard/SurveySettingsPanel';
+import ConnectWhatsAppNumberPanel from '../components/dashboard/ConnectWhatsAppNumberPanel';
 import WhatsAppDeliveryTest from '../components/dashboard/WhatsAppDeliveryTest';
 import WhatsAppOwnerPreferences from '../components/dashboard/WhatsAppOwnerPreferences';
 import { whatsappCopy } from '../components/dashboard/whatsappCopy';
 import { useWhatsAppProvision } from '../hooks/useWhatsAppProvision';
-import { useWhatsAppStatus } from '../hooks/useWhatsAppSettings';
+import FeedbackSettingsPanel from '../components/dashboard/FeedbackSettingsPanel';
+import SurveySettingsPanel from '../components/dashboard/SurveySettingsPanel';
+import AiPersonalityPanel from '../components/dashboard/AiPersonalityPanel';
+import PhoneInput, { type CountryCode } from '../components/common/PhoneInput';
+import { authFetch } from '../services/api';
+import { useToast } from '../contexts/ToastContext';
+import {
+  useWhatsAppStatus,
+  useWhatsAppStats,
+  useWhatsAppTestMessageStatus,
+  useSaveWhatsAppSettings,
+  useSendTestMessage,
+} from '../hooks/useWhatsAppSettings';
+import { useRestaurantSettings } from '../hooks/useRestaurantSettings';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
-// Mount optional settings on first opening; preserve edits when collapsed.
-export function WhatsAppDisclosure({ title, children }: { title: string; children: ReactNode }) {
-  const [visited, setVisited] = useState(false);
-  return <details className="border-t hairline py-5" onToggle={event => {
-    if (event.currentTarget.open) setVisited(true);
-  }}>
-    <summary className="cursor-pointer text-[15px] font-medium text-deep-charcoal focus-visible:outline-burgundy">{title}</summary>
-    {visited && <div className="pt-5">{children}</div>}
-  </details>;
+interface TemplateStatus {
+  name: string;
+  status: string;
+  category: string;
 }
 
+const TEMPLATE_LABEL_KEYS: Record<string, string> = {
+  seatable_feedback_request: 'settings.templateFeedback',
+  seatable_reengagement: 'settings.templateReengagement',
+  seatable_birthday: 'settings.templateBirthday',
+  seatable_promotion: 'settings.templatePromotion',
+};
+
+const STATUS_STYLES: Record<string, string> = {
+  APPROVED: 'bg-rose-50 text-rose-700',
+  PENDING: 'bg-amber-50 text-amber-700',
+  IN_REVIEW: 'bg-amber-50 text-amber-700',
+  REJECTED: 'bg-red-50 text-red-700',
+  PAUSED: 'bg-stone-100 text-stone-600',
+};
+
+const STATUS_DOT: Record<string, string> = {
+  APPROVED: 'bg-rose-500',
+  PENDING: 'bg-amber-500',
+  IN_REVIEW: 'bg-amber-500',
+  REJECTED: 'bg-red-500',
+  PAUSED: 'bg-stone-400',
+};
+
+const TEST_STATUS_STYLES: Record<string, string> = {
+  accepted: 'bg-amber-50 text-amber-700',
+  sent: 'bg-amber-50 text-amber-700',
+  delivered: 'bg-rose-50 text-rose-700',
+  read: 'bg-emerald-50 text-emerald-700',
+  failed: 'bg-red-50 text-red-700',
+};
+
+function normalizePhone(value: string) {
+  return value.replace(/\D/g, '');
+}
+
+function formatCooldown(ms: number) {
+  const totalSeconds = Math.max(1, Math.ceil(ms / 1000));
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+
+  if (minutes > 0 && seconds > 0) return `${minutes}m ${seconds}s`;
+  if (minutes > 0) return `${minutes}m`;
+  return `${seconds}s`;
+}
+
+function formatStatusLabel(status: string | null | undefined, t: (key: string, fallback: string) => string) {
+  const normalized = String(status || 'accepted').toLowerCase();
+  const fallback = normalized.charAt(0).toUpperCase() + normalized.slice(1).replace(/_/g, ' ');
+  return t(`settings.testStatus.${normalized}`, fallback);
+}
+
+function formatStatusTime(iso: string | null | undefined, notYetLabel: string) {
+  if (!iso) return notYetLabel;
+
+  const parsed = new Date(iso);
+  if (Number.isNaN(parsed.getTime())) return notYetLabel;
+
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(parsed);
+}
+
+function WhatsAppTemplateStatusPanel() {
+  const { t } = useTranslation();
+  const { data, isLoading } = useQuery({
+    queryKey: ['whatsapp-template-status'],
+    queryFn: async (): Promise<{ success: boolean; templates: TemplateStatus[]; missing_env?: boolean; message?: string }> => {
+      const res = await authFetch('/api/whatsapp-settings?action=template_status');
+      return res.json();
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const ALL_TEMPLATES = Object.keys(TEMPLATE_LABEL_KEYS);
+
+  return (
+    <div className="py-5">
+      <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone mb-4">{t('settings.messageTemplates')}</h2>
+
+      {isLoading && (
+        <div role="status" aria-label={t('settings.loadingTemplates', 'Loading templates')} className="animate-pulse space-y-3">
+          {[1, 2, 3, 4].map(i => <div key={i} className="h-8 bg-soft-gray rounded-lg" />)}
+        </div>
+      )}
+
+      {!isLoading && data?.missing_env && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-800">
+          <p className="font-medium mb-1">{t('settings.envMissing')}</p>
+          <p>{data.message}</p>
+          <p className="mt-2 text-xs text-amber-700">
+            {t('whatsapp.contactSupport', 'Please contact support to complete your WhatsApp setup.')}
+          </p>
+        </div>
+      )}
+
+      {!isLoading && !data?.missing_env && (
+        <div className="space-y-2">
+          {ALL_TEMPLATES.map(name => {
+            const template = data?.templates?.find(t => t.name === name);
+            const status = template?.status || 'NOT_SUBMITTED';
+            const dotClass = STATUS_DOT[status] || 'bg-stone-300';
+            const badgeClass = STATUS_STYLES[status] || 'bg-stone-100 text-stone-600';
+            return (
+              <div key={name} className="flex items-center justify-between py-2 border-b border-border-gray last:border-0">
+                <div>
+                  <p className="text-sm font-medium text-deep-charcoal">{t(TEMPLATE_LABEL_KEYS[name])}</p>
+                  <p className="text-xs text-warm-stone font-mono">{name}</p>
+                </div>
+                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${badgeClass}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${dotClass}`} />
+                  {t(`whatsapp.status.${status}`, status.replace(/_/g, ' ').toLowerCase())}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PhoneVerificationPanel() {
+  const { t, i18n } = useTranslation();
+  const qc = useQueryClient();
+  const [code, setCode] = useState('');
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  // Auto-dismiss success/error feedback after 5s so it doesn't linger across
+  // the next interaction.
+  useEffect(() => {
+    if (!message) return undefined;
+    const id = window.setTimeout(() => setMessage(null), 5000);
+    return () => window.clearTimeout(id);
+  }, [message]);
+
+  const { data: phoneData, isLoading } = useQuery({
+    queryKey: ['whatsapp-phone-status'],
+    queryFn: async () => {
+      const res = await authFetch('/api/whatsapp-settings?action=phone_status');
+      return res.json();
+    },
+    staleTime: 2 * 60 * 1000,
+  });
+
+  // Meta accepts a 2-char language hint for the verification SMS. Derive from
+  // the active UI locale so a Brazilian owner gets a PT-BR SMS, not English.
+  const verificationLanguage = i18n.language?.startsWith('pt')
+    ? 'pt_BR'
+    : i18n.language?.startsWith('es')
+      ? 'es'
+      : 'en';
+
+  const requestMutation = useMutation({
+    mutationFn: async () => {
+      const res = await authFetch('/api/whatsapp-settings?action=request_verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code_method: 'SMS', language: verificationLanguage }),
+      });
+      return res.json();
+    },
+    onSuccess: (data) => {
+      setMessage({
+        type: data.success ? 'success' : 'error',
+        text: data.message || data.error || t('settings.requestCodeFailed'),
+      });
+      // Meta's phone status flips to PENDING after a successful request — refresh.
+      if (data.success) qc.invalidateQueries({ queryKey: ['whatsapp-phone-status'] });
+    },
+    // Without this, a network error or non-JSON response (res.json() throws)
+    // left the button silently re-enabled with zero feedback.
+    onError: () => {
+      setMessage({ type: 'error', text: t('settings.requestCodeFailed') });
+    },
+  });
+
+  const verifyMutation = useMutation({
+    mutationFn: async (verifyCode: string) => {
+      const res = await authFetch('/api/whatsapp-settings?action=submit_verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: verifyCode }),
+      });
+      return res.json();
+    },
+    onSuccess: (data) => {
+      if (data.success) {
+        setMessage({ type: 'success', text: t('settings.phoneVerified') });
+        setCode('');
+        qc.invalidateQueries({ queryKey: ['whatsapp-phone-status'] });
+      } else {
+        setMessage({ type: 'error', text: data.error || t('settings.verifyFailed') });
+      }
+    },
+    // Network error / non-JSON response — surface it instead of failing silently.
+    onError: () => {
+      setMessage({ type: 'error', text: t('settings.verifyFailed') });
+    },
+  });
+
+  const phone = phoneData?.phone;
+  const isExpired = phone?.code_verification_status === 'EXPIRED';
+  const isVerified = phone?.code_verification_status === 'VERIFIED';
+
+  if (!phoneData?.configured || isLoading) return null;
+
+  return (
+    <div className="py-5">
+      <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone mb-4">{t('settings.phoneVerification')}</h2>
+
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <p className="text-sm font-medium text-deep-charcoal">{phone?.display_phone_number}</p>
+          <p className="text-xs text-warm-stone">{phone?.verified_name}</p>
+        </div>
+        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
+          isVerified ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
+        }`}>
+          <span className={`w-1.5 h-1.5 rounded-full ${isVerified ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+          {isVerified ? t('settings.verified') : String(t(`settings.phoneStatus.${phone?.code_verification_status}`, (phone?.code_verification_status || 'Unknown').replace(/_/g, ' ')))}
+        </span>
+      </div>
+
+      {!isVerified && (
+        <div className="space-y-3">
+          <p className="text-xs text-warm-stone">
+            {isExpired
+              ? t('settings.phoneVerExpired')
+              : t('settings.phoneVerPending', 'Your phone number is not yet verified. Request a verification code below.')}
+          </p>
+          <button
+            type="button"
+            onClick={() => requestMutation.mutate()}
+            disabled={requestMutation.isPending}
+            className="text-xs bg-soft-gray hover:bg-border-gray text-deep-charcoal px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
+          >
+            {requestMutation.isPending ? t('settings.sendingSms') : t('settings.reverifyPhone', 'Verify Again')}
+          </button>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={code}
+              onChange={e => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              placeholder={t('settings.sixDigitCode')}
+              className="flex-1 text-sm border border-glass-border-input rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-burgundy"
+              maxLength={6}
+            />
+            <button
+              type="button"
+              onClick={() => verifyMutation.mutate(code)}
+              disabled={code.length < 6 || verifyMutation.isPending}
+              className="text-xs bg-burgundy text-white px-3 py-1.5 rounded-lg hover:bg-burgundy/90 transition-colors disabled:opacity-50"
+            >
+              {verifyMutation.isPending ? t('settings.verifying') : t('settings.verify')}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {message && (
+        <p className={`text-xs mt-2 ${message.type === 'success' ? 'text-rose-600' : 'text-red-600'}`}>
+          {message.text}
+        </p>
+      )}
+
+      {!phone?.is_official_business_account && (
+        <p className="text-xs text-warm-stone mt-3 pt-3 border-t border-border-gray">
+          {t('settings.metaVerificationHint')}{' '}
+          <a href="https://business.facebook.com" target="_blank" rel="noopener noreferrer" className="text-burgundy underline">
+            {t('settings.metaBusinessVerification')}
+          </a>.
+        </p>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Seção que só monta o conteúdo quando alguém abre, e depois NUNCA desmonta.
+ *
+ * As duas metades importam. Montar sob demanda evita que a página faça, no
+ * primeiro render, consultas que ninguém pediu — o teste cobra isso: com o
+ * número desconectado, nada de `test_status`. E não desmontar ao fechar
+ * preserva o que o dono digitou: fechar uma seção por engano e perder o texto
+ * é a diferença entre um acordeão e uma armadilha.
+ */
+function OnDemandSection({ title, children }: { title: string; children: ReactNode }) {
+  const [aberta, setAberta] = useState(false);
+  const [jaAbriu, setJaAbriu] = useState(false);
+  return (
+    <section className="border-t hairline py-6">
+      <button
+        type="button"
+        aria-expanded={aberta}
+        onClick={() => { setAberta(v => !v); setJaAbriu(true); }}
+        className="w-full text-left text-[15px] font-medium text-deep-charcoal"
+      >
+        {title}
+      </button>
+      {jaAbriu && <div hidden={!aberta} className="pt-5">{children}</div>}
+    </section>
+  );
+}
+
+/**
+ * O painel de WhatsApp visto pelo dono do restaurante.
+ *
+ * A regra que organiza tudo aqui: **o número que atende cliente vem do
+ * provisionamento, e de mais lugar nenhum.** `useWhatsAppStatus` devolve
+ * `phone_number` (o WhatsApp PESSOAL do dono, para notificações) e
+ * `api_configured` (credencial GLOBAL da plataforma) — nenhum dos dois prova
+ * que ESTE restaurante tem número registrado. Confundir os três fazia o painel
+ * exibir "conectado" e um link de conversa para uma casa que nunca conectou
+ * nada; o dono divulgava o número e o cliente caía no vazio.
+ *
+ * Por isso: identidade e link saem de `useWhatsAppProvision`; `api_configured`
+ * só decide se o teste de ENVIO pela plataforma está disponível, que é outra
+ * pergunta.
+ */
 export function WhatsAppWorkspace() {
   const { i18n } = useTranslation();
   const copy = whatsappCopy(i18n.language);
-  const status = useWhatsAppStatus();
   const provision = useWhatsAppProvision();
-  const [copied, setCopied] = useState(false);
-  const [copyError, setCopyError] = useState(false);
-  const hasError = status.isError || provision.isError;
-  const loading = status.isLoading || provision.isLoading;
-  // Global credentials and the owner's phone are NOT a restaurant connection.
-  const number = provision.data?.numero_e164 || '';
-  const registered = !hasError && provision.data?.estado === 'ativo' && /^\+?[1-9]\d{7,14}$/.test(number);
-  const label = hasError ? copy.unknown : registered ? copy.connected
-    : provision.data?.estado === 'aguardando_codigo' ? copy.pending : copy.disconnected;
-  const refresh = () => { void status.refetch(); void provision.refetch(); };
-  return <div className="mx-auto max-w-4xl px-4 py-8 sm:px-8 sm:py-12 text-[15px] text-deep-charcoal">
-    <header className="mb-10 sm:mb-12">
-      <p className="text-[12px] uppercase tracking-[0.14em] text-muted-stone mb-3">WhatsApp</p>
-      <h1 className="font-serif text-3xl sm:text-4xl">{registered ? copy.test : copy.connect}</h1>
-      <p className="mt-3 text-muted-stone max-w-xl">{copy.intro}</p>
-    </header>
-    {loading ? <p role="status">{copy.refreshing}</p> : <>
-      <section aria-label={copy.number} className="mb-10">
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
-          <span className={`rounded-full px-3 py-1 text-sm ${hasError ? 'bg-red-50 text-red-700' : registered ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>{label}</span>
-          <button type="button" onClick={refresh} disabled={status.isFetching || provision.isFetching} className="text-sm text-burgundy underline underline-offset-4 disabled:opacity-50">{copy.retry}</button>
-        </div>
-        {hasError ? <div role="alert"><p className="text-red-700">{copy.loadError}</p><a className="inline-block mt-3 text-burgundy underline" href="mailto:hello@seatable.one">{copy.support}</a></div> : registered ? <>
-          <p className="font-serif text-3xl sm:text-4xl break-words">{number}</p>
-          <p className="text-muted-stone mt-3 max-w-xl">{copy.registeredHint}</p>
-          <button type="button" className="mt-3 text-burgundy underline" onClick={async () => {
-            try { await navigator.clipboard.writeText(number); setCopied(true); setCopyError(false); }
-            catch { setCopyError(true); }
-          }}>{copied ? copy.copied : copy.copy}</button>
-          {copyError && <p role="alert" className="text-red-700">{copy.copyFailed}</p>}
-        </> : <>
-          <ConnectWhatsAppNumberPanel />
-          <p className="mt-4 text-sm text-muted-stone">{copy.migration} <a href="mailto:hello@seatable.one" className="text-burgundy underline">{copy.support}</a></p>
-        </>}
+  const status = useWhatsAppStatus();
+
+  // Falha de leitura NÃO vira formulário de configuração em branco. Um form
+  // vazio se lê como "você ainda não conectou" e convida a reconfigurar por
+  // cima do que já existe — a mentira mais cara que este painel poderia contar.
+  if (provision.isError || status.isError) {
+    return (
+      <div className="max-w-3xl">
+        <p role="alert" className="text-red-700 text-[15px]">{copy.loadError}</p>
+        <button
+          type="button"
+          onClick={() => { void provision.refetch(); void status.refetch(); }}
+          className="mt-4 text-burgundy underline text-sm"
+        >
+          {copy.retry}
+        </button>
+      </div>
+    );
+  }
+
+  const estado = provision.data?.estado;
+  const numero = provision.data?.numero_e164 || '';
+  const digitos = numero.replace(/\D/g, '');
+
+  return (
+    <div className="max-w-3xl">
+      <p className="text-[15px] text-muted-stone mb-8">{copy.intro}</p>
+
+      <section className="pb-6">
+        {estado === 'ativo' ? (
+          <>
+            <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">{copy.number}</p>
+            <p className="mt-2 font-mono text-lg text-deep-charcoal">{numero}</p>
+            <p className="mt-1 text-emerald-700 text-sm">{copy.connected}</p>
+            <p className="mt-4 text-sm text-muted-stone max-w-xl">{copy.registeredHint}</p>
+            {digitos && (
+              <a
+                href={`https://wa.me/${digitos}`}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-4 inline-block rounded-full bg-burgundy px-5 py-3 text-white text-sm"
+              >
+                {copy.open}
+              </a>
+            )}
+          </>
+        ) : estado === 'aguardando_codigo' ? (
+          <>
+            <p className="text-amber-700 text-[15px]">{copy.pending}</p>
+            {numero && <p className="mt-2 font-mono text-lg text-deep-charcoal">{numero}</p>}
+            <label htmlFor="wa-verification-code" className="mt-5 block text-sm">{copy.verificationCode}</label>
+            <input
+              id="wa-verification-code"
+              type="text"
+              inputMode="numeric"
+              className="mt-2 w-48 rounded-lg border border-glass-border-input bg-glass-subtle px-3 py-3"
+            />
+          </>
+        ) : (
+          <>
+            <p className="text-[15px] text-deep-charcoal">{copy.disconnected}</p>
+            <p className="mt-2 text-sm text-muted-stone max-w-xl">{copy.migration}</p>
+            <div className="mt-6"><ConnectWhatsAppNumberPanel /></div>
+          </>
+        )}
       </section>
-      <section aria-labelledby="wa-test-heading" className="border-t hairline py-8 sm:py-10">
-        <h2 id="wa-test-heading" className="font-serif text-2xl">{copy.test}</h2>
-        <p className="mt-3 max-w-xl text-muted-stone">{registered ? copy.testHint : copy.locked}</p>
-        {registered && <div className="flex flex-wrap gap-4 items-center mt-6 mb-5">
-          <a href={`https://wa.me/${number.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="bg-burgundy text-white rounded-full px-6 py-3 text-sm font-medium">{copy.open}</a>
-          <Link to="/host-dashboard/simple" className="text-burgundy text-sm underline underline-offset-4">{copy.reservations}</Link>
-        </div>}
-        {!hasError && <WhatsAppDisclosure title={copy.delivery}><WhatsAppDeliveryTest configured={Boolean(status.data?.api_configured)} /></WhatsAppDisclosure>}
-      </section>
-      {!hasError && <section aria-label={copy.preferences}>
-        <h2 className="text-[12px] uppercase tracking-[0.14em] text-muted-stone mb-4">{copy.preferences}</h2>
-        <WhatsAppDisclosure title={copy.personality}><AiPersonalityPanel /></WhatsAppDisclosure>
-        <WhatsAppDisclosure title={copy.notifications}><p className="text-muted-stone mb-5">{copy.notificationHint}</p><WhatsAppOwnerPreferences /><ManagerNotificationsPanel /></WhatsAppDisclosure>
-        <WhatsAppDisclosure title={copy.automated}><FeedbackSettingsPanel /><SurveySettingsPanel /></WhatsAppDisclosure>
-      </section>}
-    </>}
-  </div>;
+
+      <OnDemandSection title={copy.delivery}>
+        <WhatsAppDeliveryTest configured={Boolean(status.data?.api_configured)} />
+      </OnDemandSection>
+      <OnDemandSection title={copy.personality}><AiPersonalityPanel /></OnDemandSection>
+      <OnDemandSection title={copy.notifications}>
+        <p className="mb-4 text-sm text-muted-stone">{copy.notificationHint}</p>
+        <WhatsAppOwnerPreferences />
+        <ManagerNotificationsPanel />
+      </OnDemandSection>
+      <OnDemandSection title={copy.automated}>
+        <FeedbackSettingsPanel />
+        <SurveySettingsPanel />
+      </OnDemandSection>
+    </div>
+  );
 }
 
 export default function WhatsAppSettingsPage() {
-  useDocumentTitle('WhatsApp | seatable');
-  return <DashboardLayout><WhatsAppWorkspace /></DashboardLayout>;
+  const { t, i18n } = useTranslation();
+  useDocumentTitle(t('pageTitles.whatsapp', 'WhatsApp | seatable'));
+  const toast = useToast();
+  // Default the test-phone country to the RESTAURANT's country, not the
+  // manager's UI language. A Brazilian restaurant managed in English used
+  // to default the test phone to 🇺🇸+1, which is the wrong country for
+  // every realistic test message they'd send (audit BUG #20).
+  const { data: restaurantSettings } = useRestaurantSettings();
+  const restaurantCountry = (restaurantSettings?.country || '').toUpperCase();
+  const testPhoneDefaultCountry: CountryCode =
+    (restaurantCountry as CountryCode) ||
+    (i18n.language?.startsWith('es')
+      ? 'ES'
+      : i18n.language?.startsWith('en')
+        ? 'US'
+        : 'BR');
+  const { data: status, isLoading: statusLoading } = useWhatsAppStatus();
+  const { data: stats, isLoading: statsLoading } = useWhatsAppStats();
+  const { data: latestTestMessage, isLoading: testStatusLoading } = useWhatsAppTestMessageStatus();
+  const saveMutation = useSaveWhatsAppSettings();
+  const testMutation = useSendTestMessage();
+
+  const [pendingEnabled, setPendingEnabled] = useState<boolean | null>(null);
+  const [pendingPhone, setPendingPhone] = useState<string | null>(null);
+  const [testPhone, setTestPhone] = useState('');
+  const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [cooldownNowMs, setCooldownNowMs] = useState(() => Date.now());
+
+  const currentEnabled = pendingEnabled ?? status?.enabled ?? false;
+  const currentPhone = pendingPhone ?? status?.phone_number ?? '';
+  const isDirty = pendingEnabled !== null || pendingPhone !== null;
+  const notYetLabel = t('settings.notYet', 'Not yet');
+  const latestTestPhoneDigits = normalizePhone(latestTestMessage?.recipient_phone || '');
+  const currentTestPhoneDigits = normalizePhone(testPhone);
+  const samePhoneCooldownExpiresAt = latestTestMessage?.cooldown_expires_at
+    ? Date.parse(latestTestMessage.cooldown_expires_at)
+    : Number.NaN;
+  const samePhoneCooldownActive = Boolean(
+    latestTestPhoneDigits
+    && latestTestPhoneDigits === currentTestPhoneDigits
+    && Number.isFinite(samePhoneCooldownExpiresAt)
+    && samePhoneCooldownExpiresAt > cooldownNowMs
+  );
+  const samePhoneCooldownRemainingMs = samePhoneCooldownActive
+    ? Math.max(0, samePhoneCooldownExpiresAt - cooldownNowMs)
+    : 0;
+
+  useEffect(() => {
+    if (!samePhoneCooldownActive) return undefined;
+
+    setCooldownNowMs(Date.now());
+    const timer = window.setInterval(() => setCooldownNowMs(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, [samePhoneCooldownActive, samePhoneCooldownExpiresAt]);
+
+  // Auto-dismiss test-send result banner after 5s — otherwise the green
+  // "Sent" message hangs around through the next interaction.
+  useEffect(() => {
+    if (!testResult) return undefined;
+    const id = window.setTimeout(() => setTestResult(null), 5000);
+    return () => window.clearTimeout(id);
+  }, [testResult]);
+
+  const handleSave = () => {
+    const updates: { enabled?: boolean; phone_number?: string } = {};
+    if (pendingEnabled !== null) updates.enabled = pendingEnabled;
+    if (pendingPhone !== null) updates.phone_number = pendingPhone;
+
+    saveMutation.mutate(updates, {
+      onSuccess: () => {
+        setPendingEnabled(null);
+        setPendingPhone(null);
+        toast.success(t('common.saved', 'Settings saved'));
+      },
+      onError: (err) => {
+        toast.error(err instanceof Error ? err.message : t('common.saveFailed', 'Failed to save settings'));
+      },
+    });
+  };
+
+  const handleTest = () => {
+    if (!testPhone) return;
+    setTestResult(null);
+    testMutation.mutate(testPhone, {
+      onSuccess: (data) => setTestResult({ success: true, message: data.message || t('settings.testMessageSent') }),
+      onError: (err) => setTestResult({ success: false, message: (err as Error).message }),
+    });
+  };
+
+  if (statusLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div role="status" aria-label={t('common.loading', 'Loading')} className="animate-spin rounded-full h-8 w-8 border-2 border-border-gray border-t-burgundy" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // Tabs split the previous 11-section scroll wall into focused panes.
+  // Every pane stays mounted (hidden via Tailwind) so dirty pending edits
+  // and the shared save flow survive tab switches.
+  const setupPane = (
+    <div className="space-y-0">
+      {/* Connection Status */}
+        <div className="py-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">{t('settings.connectionStatus')}</h2>
+            <span
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
+                status?.api_configured
+                  ? 'bg-emerald-50 text-emerald-700'
+                  : 'bg-amber-50 text-amber-700'
+              }`}
+            >
+              <span className={`w-1.5 h-1.5 rounded-full ${status?.api_configured ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+              {status?.api_configured ? t('settings.apiConnected') : t('settings.apiNotConfigured')}
+            </span>
+          </div>
+          {!status?.api_configured && (
+            <p className="text-sm text-warm-stone">
+              {t('settings.whatsappSetupHint', 'Contact Seatable support to configure your WhatsApp connection.')}
+            </p>
+          )}
+        </div>
+
+        {/* Enable Toggle + Phone */}
+        <div className="border-t hairline mt-10 mb-10" />
+        <div className="py-5 space-y-5">
+          <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">{t('settings.settings', 'Settings')}</h2>
+
+          {/* Toggle */}
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-deep-charcoal">{t('settings.enableWhatsApp')}</p>
+              <p className="text-xs text-warm-stone">{t('settings.enableWhatsAppDesc')}</p>
+              {status?.api_configured && !currentEnabled && (
+                <p className="text-xs text-amber-600 mt-1">
+                  {t('settings.connectedButPaused', 'WhatsApp is connected but notifications are paused. Enable to start sending messages.')}
+                </p>
+              )}
+            </div>
+            <button
+              onClick={() => setPendingEnabled(!currentEnabled)}
+              className={`relative w-11 h-6 rounded-full transition-colors ${
+                currentEnabled ? 'bg-whatsapp' : 'bg-muted-stone/40'
+              }`}
+              aria-label={currentEnabled ? t('settings.disableWhatsApp', 'Disable WhatsApp') : t('settings.enableWhatsAppLabel', 'Enable WhatsApp')}
+              role="switch"
+              aria-checked={currentEnabled}
+            >
+              <span
+                className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${
+                  currentEnabled ? 'translate-x-5' : 'translate-x-0'
+                }`}
+              />
+            </button>
+          </div>
+
+          {/* Phone Number */}
+          <div>
+            <label htmlFor="wa-phone" className="block text-sm font-medium text-deep-charcoal mb-1">
+              {t('settings.ownerWhatsAppNumber')}
+            </label>
+            <input
+              id="wa-phone"
+              type="tel"
+              inputMode="tel"
+              pattern="^\+?[0-9 ]*$"
+              placeholder="+5511999999999"
+              value={currentPhone}
+              onChange={(e) => setPendingPhone(e.target.value.replace(/[^\d+ ]/g, ''))}
+              className="w-full px-3 py-2 border border-glass-border-input rounded-xl text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-whatsapp/40 focus:border-whatsapp"
+            />
+            <p className="text-xs text-warm-stone mt-1">{t('settings.ownerWhatsAppHint')}</p>
+          </div>
+
+          {/* Save Button + jump-to-test affordance. The Test pane already
+              has the actual send flow; this just makes it discoverable from
+              the Setup pane so the owner doesn't have to hunt for it after
+              finishing the connection. Only render when WhatsApp is fully
+              configured — otherwise there's nothing meaningful to test. */}
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              onClick={handleSave}
+              disabled={!isDirty || saveMutation.isPending}
+              className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
+                isDirty
+                  ? 'bg-burgundy hover:bg-burgundy-dark text-white'
+                  : 'bg-border-gray text-muted-stone cursor-not-allowed'
+              }`}
+            >
+              {saveMutation.isPending ? t('common.loading') : t('common.save')}
+            </button>
+            {status?.api_configured && (
+              <a
+                href="#whatsapp-settings:test"
+                className="text-sm text-burgundy hover:text-burgundy-dark underline underline-offset-2"
+              >
+                {t('settings.sendTestNudge', 'Enviar mensagem de teste →')}
+              </a>
+            )}
+          </div>
+          {saveMutation.isError && (
+            <p className="text-sm text-red-600 mt-2">{(saveMutation.error as Error).message}</p>
+          )}
+        </div>
+
+        {/* wa.me Link */}
+        {status?.wa_me_link && (
+          <>
+          <div className="border-t hairline mt-10 mb-10" />
+          <div className="py-5">
+            <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone mb-3">{t('settings.whatsAppLink')}</h2>
+            <div className="flex items-center gap-3">
+              <a
+                href={status.wa_me_link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-whatsapp hover:underline font-mono break-all"
+              >
+                {status.wa_me_link}
+              </a>
+              <button
+                onClick={() => {
+                  // writeText can reject (insecure context, permissions, no
+                  // browser support) — don't show "Copied!" unless it resolved.
+                  navigator.clipboard.writeText(status.wa_me_link || '')
+                    .then(() => {
+                      setCopied(true);
+                      setTimeout(() => setCopied(false), 2000);
+                    })
+                    .catch(() => {
+                      toast.error(t('settings.copyFailed'));
+                    });
+                }}
+                className="flex-shrink-0 px-3 py-1.5 text-xs font-medium bg-soft-gray hover:bg-border-gray rounded-xl transition-colors text-stone-gray"
+              >
+                {copied ? t('common.copied', 'Copied!') : t('settings.copyLink')}
+              </button>
+            </div>
+            <p className="text-xs text-warm-stone mt-2">
+              {t('settings.shareLinkHint')}
+            </p>
+          </div>
+          </>
+        )}
+
+    </div>
+  );
+
+  const testPane = (
+    <div className="space-y-0">
+      {/* Statistics */}
+      <div className="py-5">
+        <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone mb-4">{t('settings.statistics')}</h2>
+          {statsLoading ? (
+            <div role="status" aria-label={t('settings.loadingStatistics', 'Loading statistics')} className="animate-pulse flex gap-6">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-16 w-28 bg-soft-gray rounded-xl" />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="bg-soft-gray rounded-xl p-4 text-center">
+                <p className="text-2xl font-bold text-deep-charcoal">{stats?.active_sessions ?? 0}</p>
+                <p className="text-xs text-warm-stone mt-1">{t('settings.activeSessions')}</p>
+              </div>
+              <div className="bg-soft-gray rounded-xl p-4 text-center">
+                <p className="text-2xl font-bold text-deep-charcoal">{stats?.total_sessions ?? 0}</p>
+                <p className="text-xs text-warm-stone mt-1">{t('settings.totalSessions')}</p>
+              </div>
+              <div className="bg-soft-gray rounded-xl p-4 text-center">
+                <p className="text-2xl font-bold text-deep-charcoal">{stats?.messages_this_month ?? 0}</p>
+                <p className="text-xs text-warm-stone mt-1">{t('settings.messagesMonth')}</p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Test Message */}
+        <div className="border-t hairline mt-10 mb-10" />
+        <div className="py-5">
+          <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone mb-3">{t('settings.sendTestMessage')}</h2>
+          <div className="flex gap-3 items-end">
+            <div className="flex-1">
+              <PhoneInput
+                value={testPhone}
+                onChange={(fullNumber) => setTestPhone(fullNumber)}
+                defaultCountry={testPhoneDefaultCountry}
+                label={t('settings.testPhoneNumber', 'Test phone number')}
+              />
+            </div>
+            <button
+              onClick={handleTest}
+              disabled={!testPhone || testMutation.isPending || !status?.api_configured || samePhoneCooldownActive}
+              className={`px-5 py-2 rounded-xl text-sm font-semibold transition-colors ${
+                testPhone && status?.api_configured && !samePhoneCooldownActive
+                  ? 'bg-whatsapp hover:bg-whatsapp/80 text-white'
+                  : 'bg-border-gray text-muted-stone cursor-not-allowed'
+              }`}
+            >
+              {testMutation.isPending
+                ? t('settings.sendingTest')
+                : samePhoneCooldownActive
+                  ? t('settings.retryIn', { time: formatCooldown(samePhoneCooldownRemainingMs), defaultValue: `Retry in ${formatCooldown(samePhoneCooldownRemainingMs)}` })
+                  : t('settings.sendTest')}
+            </button>
+          </div>
+          {!status?.api_configured && (
+            <p className="text-xs text-amber-600 mt-2">
+              {t('settings.testRequiresApi', 'WhatsApp API must be configured before sending test messages. Contact support to complete setup.')}
+            </p>
+          )}
+          {status?.api_configured && !testPhone && (
+            <p className="text-xs text-warm-stone mt-2">
+              {t('settings.enterTestPhone', 'Enter a phone number above to send a test message.')}
+            </p>
+          )}
+          {samePhoneCooldownActive && (
+            <p className="text-xs text-amber-700 mt-2">
+              {t('settings.testCooldownActive', {
+                time: formatCooldown(samePhoneCooldownRemainingMs),
+                defaultValue: `A recent test was already sent to this number. Wait ${formatCooldown(samePhoneCooldownRemainingMs)} before sending it again.`,
+              })}
+            </p>
+          )}
+          {testResult && (
+            <p className={`text-sm mt-2 ${testResult.success ? 'text-rose-600' : 'text-red-600'}`}>
+              {testResult.message}
+            </p>
+          )}
+          {testStatusLoading && (
+            <div className="mt-4 h-24 rounded-2xl bg-soft-gray animate-pulse" aria-label={t('settings.loadingTestDelivery', 'Loading test delivery status')} />
+          )}
+          {!testStatusLoading && latestTestMessage && (
+            <div className="mt-4 glass-card p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-widest text-[#78716C]">
+                    {t('settings.latestTestDelivery', 'Latest test delivery')}
+                  </p>
+                  <p className="mt-1 text-sm font-medium text-deep-charcoal">{latestTestMessage.recipient_phone}</p>
+                  <p className="text-xs text-warm-stone">
+                    {t('settings.providerLabel', 'Provider')}: {latestTestMessage.provider}
+                  </p>
+                </div>
+                <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${TEST_STATUS_STYLES[latestTestMessage.status] || 'bg-stone-100 text-stone-600'}`}>
+                  {formatStatusLabel(latestTestMessage.status, t)}
+                </span>
+              </div>
+
+              <div className="mt-4 grid grid-cols-1 gap-3 text-xs text-warm-stone sm:grid-cols-2">
+                <div>
+                  <p className="font-medium text-deep-charcoal">{t('settings.requestedAt', 'Requested')}</p>
+                  <p>{formatStatusTime(latestTestMessage.requested_at, notYetLabel)}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-deep-charcoal">{t('settings.lastStatusAt', 'Last status update')}</p>
+                  <p>{formatStatusTime(latestTestMessage.status_updated_at, notYetLabel)}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-deep-charcoal">{t('settings.deliveredAt', 'Delivered')}</p>
+                  <p>{formatStatusTime(latestTestMessage.delivered_at, notYetLabel)}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-deep-charcoal">{t('settings.readAt', 'Read')}</p>
+                  <p>{formatStatusTime(latestTestMessage.read_at, notYetLabel)}</p>
+                </div>
+              </div>
+
+              {(latestTestMessage.template_name || latestTestMessage.template_language) && (
+                <p className="mt-3 text-xs text-warm-stone">
+                  {t('settings.templateLabel', 'Template')}: {latestTestMessage.template_name || 'n/a'}
+                  {latestTestMessage.template_language ? ` (${latestTestMessage.template_language})` : ''}
+                </p>
+              )}
+
+              {latestTestMessage.error_message && (
+                <p className="mt-3 text-xs text-red-600">{latestTestMessage.error_message}</p>
+              )}
+            </div>
+          )}
+        </div>
+
+    </div>
+  );
+
+  const verificationPane = (
+    <div className="space-y-0">
+      <ConnectWhatsAppNumberPanel />
+      <PhoneVerificationPanel />
+      <WhatsAppTemplateStatusPanel />
+    </div>
+  );
+
+  const personalityPane = <AiPersonalityPanel />;
+
+  const notificationsPane = (
+    <div className="space-y-0">
+      <ManagerNotificationsPanel />
+      <FeedbackSettingsPanel />
+      <SurveySettingsPanel />
+    </div>
+  );
+
+  const tabs: SettingsTabDef[] = [
+    { id: 'setup',         label: t('settings.tab.setup', 'Setup & status'),     content: setupPane },
+    { id: 'test',          label: t('settings.tab.test', 'Test & stats'),        content: testPane },
+    { id: 'verification',  label: t('settings.tab.verification', 'Verification'),content: verificationPane },
+    { id: 'personality',   label: t('settings.tab.personality', 'AI personality'), content: personalityPane },
+    { id: 'notifications', label: t('settings.tab.notifications', 'Notifications'), content: notificationsPane },
+  ];
+
+  return (
+    <DashboardLayout>
+      <div className="max-w-3xl mx-auto p-6">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="font-serif text-3xl sm:text-4xl text-deep-charcoal tracking-tight">{t('settings.whatsApp')}</h1>
+          <p className="text-[15px] text-muted-stone mt-1.5">
+            {t('settings.whatsAppDesc')}
+          </p>
+        </div>
+
+        <SettingsTabs tabs={tabs} hashKey="whatsapp-settings" />
+      </div>
+    </DashboardLayout>
+  );
 }

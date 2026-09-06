@@ -301,6 +301,28 @@ async function getCustomerHistory(customerPhone) {
         // No rows returned - new customer
         return null;
       }
+      // 42P01 = a relação não existe. É o que esta query recebe HOJE, em toda
+      // chamada: falta `.schema('restaurant')` e `customer_history` só existe
+      // lá. O `return null` abaixo faz o chamador tratar TODO cliente como
+      // novo, e "novo" é indistinguível de "a consulta explodiu".
+      //
+      // A tabela também está vazia e ninguém escreve nela: o recurso de
+      // histórico do cliente no modelo de no-show nunca chegou a funcionar. A
+      // sucessora viva é `restaurant.customer_ltv` (600 linhas, 173
+      // recorrentes) — apontar para lá é uma mudança de COMPORTAMENTO do
+      // modelo, não um conserto, então fica como decisão e não como remendo.
+      //
+      // O que muda aqui é só parar de silenciar: erro de schema vira log
+      // explícito, para a próxima pessoa não perder o mesmo dia que eu perdi
+      // achando isto.
+      if (error.code === '42P01' || /does not exist/i.test(error.message || '')) {
+        logger.error(
+          'customer_history inacessível (falta .schema(\'restaurant\')) — ' +
+          'o modelo está tratando TODO cliente como novo. Ver tasks/lessons.md.',
+          { code: error.code },
+        );
+        return null;
+      }
       logger.error('Error fetching customer history:', error);
       return null;
     }

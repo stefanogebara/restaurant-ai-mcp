@@ -221,10 +221,88 @@ function mensagemApenasEmail(texto, email) {
  * `normalizarNumeroBr` já reprova DDD inexistente e local que não começa com
  * 9, então a validação toda é reaproveitada em vez de reescrita.
  */
-const WA_LINK_RE = /(?:wa\.me|whatsapp\.com\/send\?phone=|api\.whatsapp\.com\/send\?phone=)\/?(\+?\d{10,15})/gi;
+// A BARRA ANTES DO `?` — conserto de 03/09/2026.
+//
+// `api.whatsapp.com/send/?phone=` (com barra) é a forma que o botão de WhatsApp
+// do Elementor gera, e é o widget mais comum em site de restaurante WordPress.
+// A regex antiga só aceitava `send?phone=`, então o caso MAIS frequente caía
+// fora da trilha de MAIOR confiança e ia parar nas trilhas de baixo — ou em
+// nada. Descoberto quando o Bráz Pizzaria só foi achado pelo JSON-LD, apesar de
+// ter o link de WhatsApp explícito na página.
+//
+// A alternativa `api.whatsapp.com` era redundante: `whatsapp.com` já casa
+// dentro dela.
+const WA_LINK_RE = /(?:wa\.me\/?|whatsapp\.com\/send\/?\?phone=)(\+?\d{10,15})/gi;
 const TEL_HREF_RE = /tel:(\+?[\d\s().-]{8,20})/gi;
 // Celular BR em texto: DDD opcional entre parênteses + 9 + 8 dígitos.
-const TEXTO_CELULAR_RE = /(?:\+?55[\s.-]*)?\(?(\d{2})\)?[\s.-]*(9\d{4})[\s.-]*(\d{4})/g;
+//
+// AS DUAS ÂNCORAS `(?<!\d)` / `(?!\d)` SÃO O CONSERTO DE 02/09/2026, e sem
+// elas esta regex é uma fábrica de falso positivo. Sem a fronteira, ela casa no
+// MEIO de qualquer corrida longa de dígitos. Medido em produção, em 19 sites
+// reais da fila:
+//
+//   vc_custom_1593019542599   →  (15)(93019)(5425)   nome de classe do WPBakery
+//   0.59999999999999997779…   →  (99)(99977)(7955)   float em JSON do Elementor
+//
+// Dez "celulares" em dezenove sites, e os dez eram lixo — dois com DDD 11 por
+// coincidência, o resto espalhado por DDDs que nada tinham a ver com a praça.
+// Um número desses gravado em `whatsapp_phone` vira intro do Olímpia para um
+// desconhecido e um ponto de reputação a menos na Meta.
+const TEXTO_CELULAR_RE = /(?<!\d)(?:\+?55[\s.-]*)?\(?(\d{2})\)?[\s.-]*(9\d{4})[\s.-]*(\d{4})(?!\d)/g;
+
+// Pista de que os dígitos ao lado são telefone. O caminho de texto solto é o
+// último recurso e existe para achar WhatsApp — um celular boiando sem nenhuma
+// dessas palavras por perto é tão provavelmente um número de pedido, um CNPJ
+// partido ou um preço quanto um contato.
+const PISTA_TELEFONE_RE = /(whats|zap|wpp|celular|\bcel\b|telefone|\bfone\b|\btel\b|contato|liga(r|mos)?\b|reserva)/i;
+// Janela de contexto ao redor do casamento. 80 antes cobre "WhatsApp: (11) …"
+// e "Reservas pelo telefone …"; 30 depois cobre "… (11) 9…  (WhatsApp)".
+/**
+ * JSON dentro de <script> — 03/09/2026.
+ *
+ * Descoberto investigando por que o Magic Chicken vinha `sem_numero` com o site
+ * abrindo normal: o número estava no HTML o tempo todo, em
+ * `ht_ctc_chat_var = {"number":"5511945422056"}` — a config do "Click to Chat
+ * for WhatsApp", plugin de WordPress comum em casa brasileira. A trilha de
+ * texto não o via porque `textoVisivel` remove <script> de propósito (foi o que
+ * barrou o lixo de classe CSS em 31/08), e não é wa.me nem tel:.
+ *
+ * Medindo em 65 sites da fila, apareceu uma SEGUNDA família, mais valiosa que a
+ * primeira: schema.org JSON-LD. O Câmara Fria publica
+ * `"telephone":"+5511943643170"` em dado estruturado — não é widget, é o
+ * telefone que a casa declara para buscador. Por isso o rótulo é `script_json`
+ * e não `widget_config`: a trilha pega as duas.
+ *
+ * É exatamente o caso que justificaria pagar `dynamic=true` no Scrapingdog para
+ * renderizar o botão — e aqui sai de graça, porque o dado já veio no HTML.
+ *
+ * ANCORADO EM CHAVE NOMEADA, e não em "qualquer 55DDD9XXXXXXX no script": um
+ * script tem timestamp, id de pixel e coordenada, e casar dígito solto lá dentro
+ * é como reabrir o buraco de falso positivo que a janela de pista fechou.
+ */
+const CONFIG_WIDGET_RE = /(?:"|')?(?:number|phone|telephone|telefone|whatsapp|whatsapp_number|wa_number)(?:"|')?\s*[:=]\s*(?:"|')\+?(55\d{10,11})(?:"|')/gi;
+
+const JANELA_ANTES = 80;
+const JANELA_DEPOIS = 30;
+
+/**
+ * Só o texto que uma pessoa VÊ. Telefone mora em texto visível; o que enganou
+ * a regex morava em `<style>` e em JSON de configuração dentro de `<script>`.
+ * Remover markup antes de procurar elimina a classe inteira de engano, e é
+ * mais barato que tentar adivinhar depois se um casamento é legítimo.
+ */
+function textoVisivel(html) {
+  return String(html || '')
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<!--[\s\S]*?-->/g, ' ')
+    // Atributos morrem junto com as tags: `class`, `id` e `data-*` são onde
+    // vivem os nomes gerados que imitam telefone.
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;|&#160;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/\s+/g, ' ');
+}
 
 /** Todos os casamentos de uma regex global, sem vazar lastIndex entre chamadas. */
 function todos(re, texto) {
@@ -266,14 +344,26 @@ function extrairCelularDoSite(html, dddPadrao) {
   const doTel = primeiroCelular(todos(TEL_HREF_RE, texto).map((m) => m[1]), 'tel_href');
   if (doTel) return doTel;
 
-  // 3. Texto solto.
-  return primeiroCelular(
-    todos(TEXTO_CELULAR_RE, texto).map((m) => `${m[1]}${m[2]}${m[3]}`),
-    'texto');
+  // 3. Config de widget dentro de <script>. Fica ACIMA do texto solto porque é
+  // chave nomeada com valor explícito — mesma classe de confiança do tel:, e não
+  // um dígito achado por proximidade.
+  const doWidget = primeiroCelular(
+    todos(CONFIG_WIDGET_RE, texto).map((m) => `+${m[1]}`), 'script_json');
+  if (doWidget) return doWidget;
+
+  // 4. Texto solto — só o visível, e só perto de uma pista de telefone.
+  const visivel = textoVisivel(texto);
+  const comPista = todos(TEXTO_CELULAR_RE, visivel).filter((m) => {
+    const ini = Math.max(0, m.index - JANELA_ANTES);
+    const ctx = visivel.slice(ini, m.index + m[0].length + JANELA_DEPOIS);
+    return PISTA_TELEFONE_RE.test(ctx);
+  });
+  return primeiroCelular(comPista.map((m) => `${m[1]}${m[2]}${m[3]}`), 'texto');
 }
 
 module.exports = {
   extrairCelularDoSite,
+  textoVisivel,
   DDDS_BR,
   extrairDddBr,
   normalizarNumeroBr,

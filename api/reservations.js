@@ -444,7 +444,7 @@ async function handleCreate(req, res, restaurantId, timezone) {
     const { data: config } = await supabaseAdmin
       .schema('restaurant')
       .from('restaurant_config')
-      .select('whatsapp_enabled, restaurant_name, agent_language, language')
+      .select('whatsapp_enabled, restaurant_name, agent_language')
       .eq('id', restaurantId)
       .single();
     restaurantConfig = config;
@@ -704,7 +704,7 @@ async function handleModify(req, res, restaurantId) {
       const { data: config } = await supabaseAdmin
         .schema('restaurant')
         .from('restaurant_config')
-        .select('restaurant_name, language')
+        .select('restaurant_name, agent_language')
         .eq('id', restaurantId)
         .single();
       if (config?.restaurant_name) restaurantName = config.restaurant_name;
@@ -773,7 +773,7 @@ async function handleCancel(req, res, restaurantId) {
       const { data: config } = await supabaseAdmin
         .schema('restaurant')
         .from('restaurant_config')
-        .select('restaurant_name, language')
+        .select('restaurant_name, agent_language')
         .eq('id', restaurantId)
         .single();
       if (config?.restaurant_name) restaurantName = config.restaurant_name;

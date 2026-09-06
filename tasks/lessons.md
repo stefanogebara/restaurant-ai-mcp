@@ -1,3 +1,6 @@
+## 2026-08-27 — Teste de WhatsApp não pode se disfarçar de pesquisa
+
+Um teste reutilizou uma pesquisa de satisfação sem criar contexto de pesquisa: a resposta “5” virou quantidade de pessoas. Nunca reutilizar campanha/pesquisa para diagnóstico. Usar mensagem explícita, nome real e idioma configurado; não trocar idioma silenciosamente para conseguir um envio. Falha na consulta de contexto deve bloquear envio, não virar “Your Restaurant”. Recibos precisam ser aguardados antes do 200 do webhook. Entrega física não prova contexto conversacional correto.
 
 ## 2026-07-27 — Push verde no git não é deploy verde: o curinga do vercel.json come a entrada seguinte
 Descobri por acidente, esperando um deploy que nunca ficava pronto: os QUATRO últimos
@@ -1371,6 +1374,14 @@ Corolário sobre pluralidade: `querySelector` é singular. Usei um `querySelecto
 para concluir "o formulário tem um campo só". Para afirmar quantidade, use
 `querySelectorAll` — a versão singular responde outra pergunta.
 
+## WhatsApp: organizar por tarefa, não por endpoints (27/ago)
+
+- Depois de OAuth, nunca imprimir a URL completa do callback: fragmentos podem conter credenciais. Para verificar navegação, registrar somente origem e pathname, sem query/hash.
+
+- Cinco abas não resolvem a confusão entre número do cliente, número do dono e remetente da plataforma. A jornada principal precisa mostrar conexão e teste; preferências ficam secundárias.
+- Credenciais globais configuradas não comprovam conexão do restaurante. Entrega de teste também não comprova resposta recebida ou reserva criada.
+- Nunca gravar estado ativo antes do vínculo de roteamento. Testar explicitamente a falha intermediária, não só o caminho feliz.
+
 ## Afirmação sobre o produto se rastreia até o mecanismo, não até um proxy (25/ago)
 
 Quatro achados de uma auditoria de UI estavam errados. O padrão é único:
@@ -1503,3 +1514,44 @@ laço estrutural errado, não de espaçamento errado.
 Regra 2: num mock de produto, todo dado que "fecha certinho" é suspeito. Plano
 repintado como fato é a mentira mais fácil de cometer e a mais fácil de um
 comprador do ramo detectar.
+
+## Comparar presença não é comparar quantidade (2 set)
+
+Escrevi uma catraca que congela a dívida e falha quando ela sobe. Ela usava
+`includes()` — presença. Um arquivo indo de TRÊS ocorrências da mesma violação
+para uma passava calado, e de uma para três também.
+
+Vi porque o total caiu de 72 para 71 e a catraca não reclamou. O número
+discordava do comportamento, e discordância entre número e comportamento é
+sempre o guarda que está errado, nunca o número.
+
+Trocada por contagem, ela achou na hora o que a versão anterior perdia. E o
+achado veio do trabalho em andamento de outra sessão — ou seja, o furo já
+estava escondendo movimento real.
+
+Regra: guarda que mede DÍVIDA precisa comparar quantidade. Presença só serve
+para lista de "existe ou não existe", e dívida não é isso — dívida tem tamanho.
+
+## A tabela morta que fazia o modelo achar que todo cliente era novo (2 set)
+
+`customer_history` tem 8 consultas na API e todas erram. A cadeia:
+
+  1. as consultas não qualificam schema, e a tabela só existe em `restaurant`
+     (diferente de `reservations` e `service_records`, que existem nos dois) —
+     então batem em `public.customer_history`, erro 42P01;
+  2. `getCustomerHistory` trata o erro devolvendo `null`;
+  3. o chamador lê `null` como "cliente novo".
+
+Resultado: o modelo de no-show tratava TODO cliente como novo, e o log parecia
+saudável. A tabela também está vazia e ninguém escreve nela — o recurso nunca
+funcionou, e a sucessora viva é `customer_ltv` (600 linhas, 173 recorrentes).
+
+A lição não é sobre schema. É sobre o `return null` que serve a dois donos:
+quando "não achei" e "quebrou" saem pelo mesmo caminho, o segundo vira
+invisível para sempre. Erro e ausência precisam de saídas diferentes — e o
+chamador precisa poder distinguir.
+
+Corolário barato: quando uma consulta filtra por uma coluna que a tabela não
+tem (`restaurant_id` aqui), pergunte se o MODELO está certo antes de consertar
+o nome. Esta tabela é global por cliente; o filtro estava errado em conceito,
+não em digitação.

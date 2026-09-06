@@ -51,7 +51,7 @@ describe('registro sem batimento é decoração', () => {
    * porque parece cobertura.
    */
   test.each(CRONS_PROSPECCAO)('%s grava em cron_runs com o nome que registrou', (nome) => {
-    const arquivo = path.join(__dirname, '..', 'cron', `${nome}.js`);
+    const arquivo = path.join(__dirname, '..', '_crons', `${nome}.js`);
     const src = fs.readFileSync(arquivo, 'utf8');
     expect(src).toMatch(new RegExp(`logCron(Run|Error)\\(\\s*['"]${nome}['"]`));
   });
@@ -67,7 +67,15 @@ describe('o registro não pode divergir do vercel.json', () => {
    * Este teste é a trava estrutural: agora esquecer QUEBRA A SUÍTE.
    */
   const vercel = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', 'vercel.json'), 'utf8'));
-  const nomeDoPath = (p) => String(p).split('?')[0].replace(/\/$/, '').split('/').pop();
+  // Desde a consolidação de 03/09/2026 o nome do job vive na QUERY, não no
+  // caminho: /api/cron/run?job=send-reminders. O último segmento do caminho é
+  // o despachante ('run'), que não é nome de cron nenhum. Ainda cai no segmento
+  // final para as rotas que não passam por despachante (/api/report-usage).
+  const nomeDoPath = (p) => {
+    const [caminho, query] = String(p).split('?');
+    const job = query && new URLSearchParams(query).get('job');
+    return job || caminho.replace(/\/$/, '').split('/').pop();
+  };
 
   /**
    * Jobs que uma entrada do vercel.json decompõe em vários nomes no registro,
@@ -108,17 +116,17 @@ describe('todo job registrado bate ponto com o próprio nome', () => {
    */
   /** Onde mora o handler de cada nome registrado (quando não é cron/<nome>.js). */
   const ARQUIVO_DE = {
-    'manager-briefings-morning': 'cron/manager-briefings',
-    'manager-briefings-eod': 'cron/manager-briefings',
-    'manager-alerts-low-covers': 'cron/manager-alerts',
-    'manager-alerts-high-noshows': 'cron/manager-alerts',
-    'manager-alerts-late-cancellations': 'cron/manager-alerts',
-    'check-meta-token-expiry': 'cron/monitor-meta-token-expiry',
+    'manager-briefings-morning': '_crons/manager-briefings',
+    'manager-briefings-eod': '_crons/manager-briefings',
+    'manager-alerts-low-covers': '_crons/manager-alerts',
+    'manager-alerts-high-noshows': '_crons/manager-alerts',
+    'manager-alerts-late-cancellations': '_crons/manager-alerts',
+    'check-meta-token-expiry': '_crons/monitor-meta-token-expiry',
     'report-usage': 'report-usage', // fora de api/cron/
   };
 
   test.each(CRON_JOBS.map((j) => j.name))('%s', (nome) => {
-    const arquivo = path.join(__dirname, '..', `${ARQUIVO_DE[nome] || `cron/${nome}`}.js`);
+    const arquivo = path.join(__dirname, '..', `${ARQUIVO_DE[nome] || `_crons/${nome}`}.js`);
     const src = fs.readFileSync(arquivo, 'utf8');
 
     // Duas exigências independentes, porque vários handlers montam o nome em

@@ -318,3 +318,134 @@ describe('selecionarSemCelular — mira igual à do disparo', () => {
     expect(estado.nota).toBe(store.QUALIDADE_MIN_NOTA);
   });
 });
+
+/**
+ * DOIS LEITORES, O GRÁTIS PRIMEIRO — 03/09/2026.
+ *
+ * O defeito que estes testes travam custou 752 leads carimbados com zero
+ * achados: o leitor pago (Scrapingdog) era dependência DURA, e como a chave
+ * nunca chegou ao ambiente de produção, a caça não tentava NADA. "Não tentei"
+ * ficava indistinguível de "tentei e o site não tinha".
+ *
+ * O que cada teste prova, em ordem de importância:
+ *   1. sem chave a caça FUNCIONA (degrada para só-direto, não para nada);
+ *   2. o pago não é chamado quando o grátis já achou — é dinheiro;
+ *   3. `sem_html` continua significando "nenhum leitor abriu a página", que é
+ *      a distinção que este arquivo inteiro existe para preservar.
+ */
+describe('caça ao celular — leitor direto primeiro, pago como fallback', () => {
+  // wa.me é a fonte de maior confiança; serve de "achou" inequívoco.
+  const HTML_COM_WA = '<a href="https://wa.me/5511998887777">WhatsApp</a>';
+  const HTML_SEM_NUMERO = '<html><body>Bem-vindo ao restaurante</body></html>';
+
+  test('SEM leitor pago, o direto sozinho acha e grava — o caso dos 752 leads', async () => {
+    const cap = capturarUpdate();
+    const direto = jest.fn().mockResolvedValue(HTML_COM_WA);
+
+    const r = await cacarCelular(leadBase(), direto, undefined);
+
+    expect(r.ok).toBe(true);
+    expect(cap.patch.whatsapp_phone).toBe('+5511998887777');
+    expect(direto).toHaveBeenCalledTimes(1);
+  });
+
+  test('o pago NÃO é chamado quando o direto já achou — cada chamada é crédito', async () => {
+    capturarUpdate();
+    const direto = jest.fn().mockResolvedValue(HTML_COM_WA);
+    const pago = jest.fn().mockResolvedValue(HTML_COM_WA);
+
+    await cacarCelular(leadBase(), direto, pago);
+
+    expect(pago).not.toHaveBeenCalled();
+  });
+
+  test('o pago é chamado quando o direto abriu mas não tinha número', async () => {
+    capturarUpdate();
+    const direto = jest.fn().mockResolvedValue(HTML_SEM_NUMERO);
+    const pago = jest.fn().mockResolvedValue(HTML_COM_WA);
+
+    const r = await cacarCelular(leadBase(), direto, pago);
+
+    expect(pago).toHaveBeenCalledTimes(1);
+    expect(r.ok).toBe(true);
+    expect(r.numero).toBe('+5511998887777');
+  });
+
+  test('o pago é chamado quando o direto ESTOUROU — anti-bot é o caso de uso dele', async () => {
+    capturarUpdate();
+    const direto = jest.fn().mockRejectedValue(new Error('HTTP 403'));
+    const pago = jest.fn().mockResolvedValue(HTML_COM_WA);
+
+    const r = await cacarCelular(leadBase(), direto, pago);
+
+    expect(pago).toHaveBeenCalledTimes(1);
+    expect(r.ok).toBe(true);
+  });
+
+  test('direto abriu sem número e SEM pago → sem_numero, nunca sem_html', async () => {
+    capturarUpdate();
+    const direto = jest.fn().mockResolvedValue(HTML_SEM_NUMERO);
+
+    const r = await cacarCelular(leadBase(), direto, undefined);
+
+    // A distinção é o ponto: 'sem_numero' diz "a tática é fraca aqui",
+    // 'sem_html' diz "o scrape está quebrado". Trocar uma pela outra manda
+    // consertar a coisa errada.
+    expect(r.motivo).toBe('sem_numero');
+  });
+
+  test('direto estourou mas o pago abriu sem número → sem_numero, não sem_html', async () => {
+    capturarUpdate();
+    const direto = jest.fn().mockRejectedValue(new Error('ECONNRESET'));
+    const pago = jest.fn().mockResolvedValue(HTML_SEM_NUMERO);
+
+    const r = await cacarCelular(leadBase(), direto, pago);
+
+    // ALGUM leitor abriu a página. Reportar 'sem_html' aqui culparia o scrape
+    // por um site que de fato abriu e de fato não tinha WhatsApp.
+    expect(r.motivo).toBe('sem_numero');
+  });
+
+  test('os dois estouraram → sem_html, que é o alarme de scrape morto', async () => {
+    capturarUpdate();
+    const direto = jest.fn().mockRejectedValue(new Error('ECONNRESET'));
+    const pago = jest.fn().mockRejectedValue(new Error('HTTP 402'));
+
+    const r = await cacarCelular(leadBase(), direto, pago);
+
+    expect(r.motivo).toBe('sem_html');
+  });
+
+  test('o lote repassa o leitor pago aos leads e conta o achado dele', async () => {
+    // Mesma fila fake do describe de cima: dentro da faixa de qualidade e com
+    // nome de casa de mesa, senão a mira derruba o lead antes do balde.
+    const chain = {
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      is: jest.fn().mockReturnThis(),
+      not: jest.fn().mockReturnThis(),
+      or: jest.fn().mockReturnThis(),
+      order: jest.fn().mockReturnThis(),
+      gte: jest.fn().mockReturnThis(),
+      lte: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockResolvedValue({
+        data: [{
+          id: 'l1', name: 'Cantina 1', website: 'https://casa1.com.br',
+          reviews_count: 300, rating: 4.6,
+          whatsapp_phone: '+551133334444', enrich_status: {},
+        }],
+        error: null,
+      }),
+      update: jest.fn().mockReturnValue({ eq: jest.fn().mockResolvedValue({ error: null }) }),
+    };
+    mockSupabaseAdmin.from.mockReturnValue(chain);
+
+    const direto = jest.fn().mockResolvedValue(HTML_SEM_NUMERO);
+    const pago = jest.fn().mockResolvedValue(HTML_COM_WA);
+
+    const r = await cacarCelularPendentes({ lerPagina: direto, lerPaginaFallback: pago, limit: 1 });
+
+    expect(pago).toHaveBeenCalledTimes(1);
+    expect(r.achados).toBe(1);
+  });
+});

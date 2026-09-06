@@ -1,6 +1,7 @@
 {
   "installCommand": "npm ci --prefer-offline --no-audit && cd client && npm ci --legacy-peer-deps --prefer-offline --no-audit",
   "buildCommand": "cd client && npx vite build && node cache-bust-sw.cjs",
+  "ignoreCommand": "bash vercel-ignore-build.sh",
   "outputDirectory": "client/dist",
   "functions": {
     "api/manager-chat.js": {
@@ -15,35 +16,17 @@
     "api/whatsapp-webhook.js": {
       "maxDuration": 120
     },
-    "api/cron/compile-wiki.js": {
-      "maxDuration": 300
-    },
-    "api/cron/prospect-flush.js": {
-      "maxDuration": 120
-    },
-    "api/cron/prospect-nudge.js": {
-      "maxDuration": 120
-    },
-    "api/cron/prospect-dispatch.js": {
-      "maxDuration": 120
-    },
     "api/prospect-enrich.js": {
       "maxDuration": 120
     },
     "api/prospect-discovery-worker.js": {
       "maxDuration": 60
     },
-    "api/cron/prospect-score-outcomes.js": {
+    "api/cron/run-2min.js": {
+      "maxDuration": 120
+    },
+    "api/cron/run-5min.js": {
       "maxDuration": 300
-    },
-    "api/cron/prospect-handoff-digest.js": {
-      "maxDuration": 60
-    },
-    "api/cron/prospect-founder-email.js": {
-      "maxDuration": 60
-    },
-    "api/cron/prospect-enrich.js": {
-      "maxDuration": 60
     },
     "api/**/*.js": {
       "excludeFiles": "{lambda/**,api/__tests__/**,**/*.test.js,**/*.spec.js,ml-training-data/**,e2e/**,.claude/**,seatable-ads/**,reels-toolkit/**,remotion/**}",
@@ -384,43 +367,43 @@
   ],
   "crons": [
     {
-      "path": "/api/cron/check-late-reservations",
+      "path": "/api/cron/run?job=check-late-reservations",
       "schedule": "*/15 * * * *"
     },
     {
-      "path": "/api/cron/prospect-flush",
+      "path": "/api/cron/run-2min?job=prospect-flush",
       "schedule": "*/15 12-22 * * *"
     },
     {
-      "path": "/api/cron/prospect-nudge",
+      "path": "/api/cron/run-2min?job=prospect-nudge",
       "schedule": "40 13-21 * * 1-5"
     },
     {
-      "path": "/api/cron/prospect-dispatch",
+      "path": "/api/cron/run-2min?job=prospect-dispatch",
       "schedule": "10 13-19 * * 1-5"
     },
     {
-      "path": "/api/cron/prospect-score-outcomes",
+      "path": "/api/cron/run-5min?job=prospect-score-outcomes",
       "schedule": "0 5 * * *"
     },
     {
-      "path": "/api/cron/prospect-handoff-digest",
+      "path": "/api/cron/run?job=prospect-handoff-digest",
       "schedule": "30 11 * * *"
     },
     {
-      "path": "/api/cron/prospect-founder-email",
+      "path": "/api/cron/run?job=prospect-founder-email",
       "schedule": "0 13,16,19 * * *"
     },
     {
-      "path": "/api/cron/process-scheduled-ig-posts",
+      "path": "/api/cron/run?job=process-scheduled-ig-posts",
       "schedule": "*/15 * * * *"
     },
     {
-      "path": "/api/cron/send-reminders",
+      "path": "/api/cron/run?job=send-reminders",
       "schedule": "0 9 * * *"
     },
     {
-      "path": "/api/cron/update-churn-scores",
+      "path": "/api/cron/run?job=update-churn-scores",
       "schedule": "0 6 * * *"
     },
     {
@@ -428,115 +411,115 @@
       "schedule": "0 4 * * *"
     },
     {
-      "path": "/api/cron/generate-reflections",
+      "path": "/api/cron/run?job=generate-reflections",
       "schedule": "0 5 * * *"
     },
     {
-      "path": "/api/cron/proactive-comms",
+      "path": "/api/cron/run?job=proactive-comms",
       "schedule": "0 10 * * 0"
     },
     {
-      "path": "/api/cron/refresh-restaurant-profiles",
+      "path": "/api/cron/run?job=refresh-restaurant-profiles",
       "schedule": "0 3 * * 1"
     },
     {
-      "path": "/api/cron/demo-nurture",
+      "path": "/api/cron/run?job=demo-nurture",
       "schedule": "0 10 * * *"
     },
     {
-      "path": "/api/cron/cleanup-expired-demos",
+      "path": "/api/cron/run?job=cleanup-expired-demos",
       "schedule": "0 3 * * *"
     },
     {
-      "path": "/api/cron/warm-seo-cache",
+      "path": "/api/cron/run?job=warm-seo-cache",
       "schedule": "0 2 * * *"
     },
     {
-      "path": "/api/cron/manager-briefings?type=end_of_day",
+      "path": "/api/cron/run?job=manager-briefings&type=end_of_day",
       "schedule": "0 23 * * *"
     },
     {
-      "path": "/api/cron/manager-briefings?type=morning",
+      "path": "/api/cron/run?job=manager-briefings&type=morning",
       "schedule": "0 8 * * *"
     },
     {
-      "path": "/api/cron/manager-alerts?type=low_covers",
+      "path": "/api/cron/run?job=manager-alerts&type=low_covers",
       "schedule": "0 18 * * *"
     },
     {
-      "path": "/api/cron/manager-alerts?type=high_noshows",
+      "path": "/api/cron/run?job=manager-alerts&type=high_noshows",
       "schedule": "0 15 * * *"
     },
     {
-      "path": "/api/cron/manager-alerts?type=late_cancellations",
+      "path": "/api/cron/run?job=manager-alerts&type=late_cancellations",
       "schedule": "0 12,14,16,18,20 * * *"
     },
     {
-      "path": "/api/cron/send-feedback",
+      "path": "/api/cron/run?job=send-feedback",
       "schedule": "0 * * * *"
     },
     {
-      "path": "/api/cron/send-surveys",
+      "path": "/api/cron/run?job=send-surveys",
       "schedule": "30 * * * *"
     },
     {
-      "path": "/api/cron/send-campaigns",
+      "path": "/api/cron/run?job=send-campaigns",
       "schedule": "*/15 * * * *"
     },
     {
-      "path": "/api/cron/pre-reservation-upsell",
+      "path": "/api/cron/run?job=pre-reservation-upsell",
       "schedule": "0 11 * * *"
     },
     {
-      "path": "/api/cron/analytics-briefing",
+      "path": "/api/cron/run?job=analytics-briefing",
       "schedule": "5 9 * * *"
     },
     {
-      "path": "/api/cron/cleanup-waitlist",
+      "path": "/api/cron/run?job=cleanup-waitlist",
       "schedule": "0 4 * * *"
     },
     {
-      "path": "/api/cron/cleanup-whatsapp-dedup",
+      "path": "/api/cron/run?job=cleanup-whatsapp-dedup",
       "schedule": "15 4 * * *"
     },
     {
-      "path": "/api/cron/compress-memories",
+      "path": "/api/cron/run?job=compress-memories",
       "schedule": "30 4 * * 6"
     },
     {
-      "path": "/api/cron/automated-campaigns",
+      "path": "/api/cron/run?job=automated-campaigns",
       "schedule": "0 10 * * *"
     },
     {
-      "path": "/api/cron/health-alert",
+      "path": "/api/cron/run?job=health-alert",
       "schedule": "0 10 * * *"
     },
     {
-      "path": "/api/cron/monitor-meta-token-expiry",
+      "path": "/api/cron/run?job=monitor-meta-token-expiry",
       "schedule": "5 10 * * *"
     },
     {
-      "path": "/api/cron/sync-stripe-connect-accounts",
+      "path": "/api/cron/run?job=sync-stripe-connect-accounts",
       "schedule": "30 4 * * *"
     },
     {
-      "path": "/api/cron/sync-conversation-data",
+      "path": "/api/cron/run?job=sync-conversation-data",
       "schedule": "0 * * * *"
     },
     {
-      "path": "/api/cron/validate-conversations",
+      "path": "/api/cron/run?job=validate-conversations",
       "schedule": "0 * * * *"
     },
     {
-      "path": "/api/cron/compile-wiki",
+      "path": "/api/cron/run-5min?job=compile-wiki",
       "schedule": "30 4 * * *"
     },
     {
-      "path": "/api/cron/weekly-report",
+      "path": "/api/cron/run?job=weekly-report",
       "schedule": "30 8 * * *"
     },
     {
-      "path": "/api/cron/prospect-enrich",
+      "path": "/api/cron/run?job=prospect-enrich",
       "schedule": "20 * * * *"
     }
   ]

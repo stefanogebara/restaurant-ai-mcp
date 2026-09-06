@@ -46,9 +46,28 @@ const FORA_SEMPRE = new RegExp([
  * A primeira versão tratava estes como inequívocos e barrava os dois
  * restaurantes acima. Falso positivo aqui é o erro caro: fora-do-ICP só gasta
  * um slot, mas barrar restaurante bom o remove da fila em silêncio.
+ *
+ * AS CASAS DE CULTO — 04/09/2026. `igreja` já estava aqui, mas sozinha não
+ * cobre como uma igreja de fato se chama. Achado na fila, todas em
+ * `aguardando` e dentro da faixa de 120–5000 avaliações:
+ *
+ *     Basílica de Nossa Senhora da Penha ...... 2926 avaliações, 4.8
+ *     Paróquia Santo Antônio do Pari .......... 1845, 4.7
+ *     Paróquia Nossa Senhora do Ó ............. 1014, 4.8
+ *
+ * Ficou urgente porque a caça ao celular voltou a funcionar (#138) e ACHOU o
+ * celular da Basílica: ela saiu de "sem número, não despacha" para candidata
+ * viva a receber abordagem comercial fria. Uma paróquia não tem conta de mesa
+ * para dividir, e a mensagem é constrangedora além de queimar reputação.
+ *
+ * A regra de INÍCIO, e não de qualquer posição, é o que preserva o caso
+ * difícil: `Brunch da Catedral da Sé` É restaurante e continua passando, assim
+ * como `Basilicata - Pão, Empório e Restaurante` (o \\b impede que `basílica`
+ * case dentro de `Basilicata`).
  */
 const FORA_NO_INICIO = new RegExp(
-  '^\\s*(mercado|escola|igreja|banco|posto|academia|[óo]tica)\\b',
+  '^\\s*(mercado|escola|igreja|par[óo]quia|bas[íi]lica|catedral|santu[áa]rio'
+  + '|capela|mosteiro|convento|banco|posto|academia|[óo]tica)\\b',
   'i',
 );
 

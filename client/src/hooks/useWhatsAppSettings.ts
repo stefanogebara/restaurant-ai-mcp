@@ -102,9 +102,14 @@ export function useWhatsAppTestMessageStatus() {
     queryKey: ['whatsappTestStatus'],
     queryFn: async (): Promise<WhatsAppTestMessageStatus | null> => {
       const response = await authFetch('/api/whatsapp-settings?action=test_status');
-      if (!response.ok) throw new Error('Failed to load WhatsApp test status');
       const result = await response.json();
-      if (!result.success) throw new Error(result.error || 'Failed to load WhatsApp test status');
+      // 200 com success:false NÃO é "nunca houve teste" — é falha de leitura.
+      // Antes os dois viravam null, e o painel dizia "nenhum teste ainda" para
+      // um dono cuja consulta tinha quebrado. Silêncio indistinguível de
+      // resposta é a pior forma de erro num painel.
+      if (!response.ok || result?.success === false) {
+        throw new Error(result?.error || 'Failed to load WhatsApp test status');
+      }
       return result.data ?? null;
     },
     staleTime: 5 * 1000,
@@ -128,9 +133,11 @@ export function useSaveWhatsAppSettings() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
+      // Ler o corpo ANTES de decidir: o endpoint devolve falha dentro de um 200,
+      // e checar só response.ok fazia o painel dizer "salvo" sem ter salvo.
       const payload = await response.json();
-      if (!response.ok || !payload.success) {
-        throw new Error(payload.error || 'Failed to save');
+      if (!response.ok || payload?.success === false) {
+        throw new Error(payload?.error || 'Failed to save');
       }
       return payload;
     },
@@ -149,7 +156,7 @@ export function useSendTestMessage() {
         body: JSON.stringify({ phone_number }),
       });
       const payload = await response.json();
-      if (!response.ok || !payload.success) {
+      if (!response.ok || payload?.success === false) {
         const error = new Error(payload.error || 'Failed to send test message') as Error & {
           cooldownRemainingMs?: number;
           latestTestMessage?: WhatsAppTestMessageStatus | null;
@@ -160,14 +167,21 @@ export function useSendTestMessage() {
       }
       return payload;
     },
+    // O servidor já devolve o registro do teste — no sucesso E na recusa por
+    // cooldown. Gravar direto em vez de só invalidar: a invalidação depende de
+    // um refetch chegar, e até ele chegar o painel mostra o teste ANTERIOR como
+    // se fosse o atual. Aqui isso significaria dizer "entregue" sobre uma
+    // mensagem que acabou de ser aceita, ou esconder o cooldown que o próprio
+    // servidor acabou de informar.
+    // A guarda é o id, não só a presença de `data`: um registro sem id não dá
+    // para reconciliar com o refetch seguinte.
     onSuccess: (payload) => {
-      // Replace the previous test immediately, even when the follow-up GET
-      // fails. An older delivered test must not look like this send succeeded.
-      if (payload.data?.id) queryClient.setQueryData(['whatsappTestStatus'], payload.data);
+      if (payload?.data?.id) queryClient.setQueryData(['whatsappTestStatus'], payload.data);
     },
-    onError: (error) => {
-      const latest = (error as Error & { latestTestMessage?: WhatsAppTestMessageStatus | null }).latestTestMessage;
-      if (latest?.id) queryClient.setQueryData(['whatsappTestStatus'], latest);
+    onError: (error: Error & { latestTestMessage?: WhatsAppTestMessageStatus | null }) => {
+      if (error?.latestTestMessage?.id) {
+        queryClient.setQueryData(['whatsappTestStatus'], error.latestTestMessage);
+      }
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey: ['whatsappTestStatus'] }),
   });

@@ -47,7 +47,7 @@ jest.mock('../_lib/whatsapp-sender', () => ({
 
 jest.mock('../_lib/email', () => ({ sendProspectProposalEmail: jest.fn().mockResolvedValue(true) }));
 
-const handler = require('../cron/prospect-founder-email');
+const handler = require('../_crons/prospect-founder-email');
 const wa = require('../_lib/prospecting/founder-whatsapp');
 
 const HORA = 60 * 60 * 1000;

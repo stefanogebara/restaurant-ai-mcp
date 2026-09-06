@@ -74,7 +74,7 @@ jest.mock('../_lib/supabase', () => {
   };
 });
 
-const handler = require('../cron/check-late-reservations');
+const handler = require('../_crons/check-late-reservations');
 
 function mockReqRes() {
   return {
