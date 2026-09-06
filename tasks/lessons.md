@@ -1467,3 +1467,39 @@ Rule: before calling a marketing page polished, inspect at least
 1440x900, 1024x768, 768x1024, 390x844, and 320x568, plus mid-transition states.
 Reject any composition that can be described as “headline + gradient + floating
 dashboard card” before implementation.
+
+# 2026-09-06 — Oito rodadas de crítica não movem uma nota; a estrutura move
+
+A landing "Seatable ao Vivo" ficou 6/10 por oito rodadas seguidas de crítica e
+correção. Cada rodada resolvia o que o crítico apontou — espaçamento, fio de
+seção, contraste do mono, tipografia dos números — e a nota não mexia. Trocar a
+voz de display (grotesk caixa alta → Instrument Serif) rendeu 6,5: sinal de que
+o sistema tipográfico nunca foi o teto.
+
+O que destravou (6 → 7) foi jogar fora a estrutura, não polir:
+- **Três cartões viraram uma régua só.** O miolo era três passos, cada um com
+  seu artefato (transcrição, mini-régua, lista de contas) e ~190px de ar morto
+  por passo. Virou UM painel fixo que muda de estado conforme o scroll. Mesmo
+  objeto, três momentos — que é exatamente o que o produto faz.
+- **O transcrito parou de aparecer duas vezes.** Herói e passo 1 mostravam a
+  mesma conversa. Repetir a prova a enfraquece.
+- **O fecho saiu de dentro de um mock.** CTA enterrado numa interface falsa de
+  WhatsApp virou título + botão de verdade.
+- **Sumiu a quarta voz tipográfica.** Números de 112px em DM Sans eram um
+  sistema à parte. Três vozes e ponto: serifa (display), sans (corpo), mono
+  (dado).
+
+E o que levou de 7 para perto de 8 foi honestidade de dados, não estética: o
+estado de fechamento repintava as reservas da noite nos horários *planejados*
+— seis mesas chegando e saindo no minuto exato — e não havia um único no-show
+numa página que vende um anfitrião. Passou a mostrar horário real de chegada e
+saída, e uma reserva que não veio fica oca, sem R$.
+
+Regra: quando duas rodadas seguidas de crítica não movem a nota, pare de
+corrigir o que o crítico listou e pergunte qual estrutura está gerando aqueles
+sintomas. Ar morto repetido, artefato repetido e CTA escondido são sintoma de
+laço estrutural errado, não de espaçamento errado.
+
+Regra 2: num mock de produto, todo dado que "fecha certinho" é suspeito. Plano
+repintado como fato é a mentira mais fácil de cometer e a mais fácil de um
+comprador do ramo detectar.
