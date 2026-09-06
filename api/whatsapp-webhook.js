@@ -85,10 +85,12 @@ async function handlePost(req, res) {
       }
       for (const statusUpdate of value.statuses) {
         if (statusUpdate.id && ['sent', 'delivered', 'read', 'failed'].includes(statusUpdate.status)) {
-          updateDeliveryStatus(statusUpdate.id, statusUpdate.status)
-            .catch(err => logger.error('Campaign delivery status update failed:', err.message));
-          updateWhatsAppTestMessageStatus(statusUpdate.id, statusUpdate)
-            .catch(err => logger.error('WhatsApp test status update failed:', err.message));
+          await Promise.all([
+            updateDeliveryStatus(statusUpdate.id, statusUpdate.status)
+              .catch(err => logger.error('Campaign delivery status update failed:', err.message)),
+            updateWhatsAppTestMessageStatus(statusUpdate.id, statusUpdate)
+              .catch(err => logger.error('WhatsApp test status update failed:', err.message)),
+          ]);
         }
       }
       if (!value.messages) {

@@ -477,7 +477,18 @@ describe('whatsapp-webhook (Meta Cloud API)', () => {
     });
     const res = mockRes();
 
-    await handler(req, res);
+    let releaseReceipt;
+    let receiptStarted;
+    const started = new Promise(resolve => { receiptStarted = resolve; });
+    updateWhatsAppTestMessageStatus.mockImplementationOnce(() => {
+      receiptStarted();
+      return new Promise(resolve => { releaseReceipt = resolve; });
+    });
+    const handling = handler(req, res);
+    await started;
+    expect(res.status).not.toHaveBeenCalled();
+    releaseReceipt(true);
+    await handling;
 
     expect(updateWhatsAppTestMessageStatus).toHaveBeenCalledWith('wamid.TEST-STATUS-1', expect.objectContaining({
       id: 'wamid.TEST-STATUS-1',

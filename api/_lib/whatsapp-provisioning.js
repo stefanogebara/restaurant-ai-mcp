@@ -275,8 +275,10 @@ async function confirmarCodigo({ restaurantId, codigo }) {
   }
 
   const ativo = { ...atual, estado: 'ativo', erro: null, erro_detalhe: null };
-  await gravarEstado(restaurantId, ativo);
+  // Never report an active number before tenant routing was persisted.
+  // On failure keep the pending state, allowing the owner to retry.
   await apontarRoteamento(restaurantId, atual.phone_number_id);
+  await gravarEstado(restaurantId, ativo);
   logger.info('Número ativo e roteamento apontado', { restaurantId, phoneNumberId: atual.phone_number_id });
 
   const { pin: _pin, ...publico } = ativo;
