@@ -40,6 +40,12 @@ Inspired by TwinMe's dark glass system, adapted for light mode to preserve Seata
   ships no bold; `font-synthesis: none` in index.css blocks faux-bold, so
   `font-bold` on serif headings intentionally renders the light 400 face.
   Reference pairing: just-br.com (DM Sans body + Instrument Serif display).
+- **Photographic launch-page exception**: `/` uses the native system sans stack
+  at every level, sentence case, and tight-but-readable display tracking. Real
+  hospitality photography carries the narrative; content lives on solid warm
+  or near-black canvases. Glass is limited to the sticky navigation. Burgundy
+  appears only on decisive actions. This exception stays scoped under
+  `.landing-launch` and never changes the product UI or global heading face.
 - **Code / mono**: JetBrains Mono
 - **Section headings**: `text-4xl sm:text-[48px]` (36 px mobile, 48 px desktop)
 - **Subtitles**: `text-lg` (18 px)

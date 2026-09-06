@@ -31,7 +31,7 @@ initSentry();
 const logger = createSecureLogger('WhatsAppSettings');
 
 function getTemplateLanguageCandidates(language) {
-  const normalized = String(language || '').trim().toLowerCase();
+  const normalized = String(language || '').trim().toLowerCase().replace(/_/g, '-');
   const candidates = [];
   const seen = new Set();
 
@@ -60,44 +60,12 @@ function getTemplateLanguageCandidates(language) {
     add(language);
   }
 
-  add('pt_BR');
-  add('pt');
-  add('en');
-  add('en_US');
-  add('es');
-
   return candidates;
 }
 
 function isTemplateTranslationMissing(result) {
   const errorText = String(result?.error || '').toLowerCase();
   return errorText.includes('132001') || errorText.includes('does not exist in the translation');
-}
-
-function getMetaTestTemplatePriority(preferredTemplateName) {
-  const priority = [];
-  const seen = new Set();
-
-  function add(name) {
-    if (!name || seen.has(name)) return;
-    seen.add(name);
-    priority.push(name);
-  }
-
-  add(preferredTemplateName);
-  add('seatable_feedback_request');
-  add('seatable_promotion');
-  add('seatable_birthday');
-  add('seatable_reengagement');
-
-  return priority;
-}
-
-function getMetaTemplateBodyParameters(templateName, restaurantName) {
-  if (templateName === 'seatable_promotion') {
-    return ['there', restaurantName, `This is a WhatsApp delivery test from ${restaurantName}.`];
-  }
-  return ['there', restaurantName];
 }
 
 function formatCooldownDuration(ms) {
@@ -139,11 +107,11 @@ function buildMetaTemplateAttempts({ templates, preferredTemplateName, restauran
   const languageCandidates = getTemplateLanguageCandidates(restaurantLanguage);
   const attempts = [];
   const seen = new Set();
-  const priorityNames = getMetaTestTemplatePriority(preferredTemplateName);
+  const priorityNames = [preferredTemplateName];
 
   for (const templateName of priorityNames) {
     const approvedMatches = templates
-      .filter(template => template.name === templateName)
+      .filter(template => template.name === templateName && languageCandidates.includes(template.language))
       .sort((a, b) => {
         const aIdx = languageCandidates.indexOf(a.language);
         const bIdx = languageCandidates.indexOf(b.language);
@@ -159,7 +127,7 @@ function buildMetaTemplateAttempts({ templates, preferredTemplateName, restauran
       attempts.push({
         templateName: template.name,
         language: template.language,
-        bodyParameters: getMetaTemplateBodyParameters(template.name, restaurantName),
+        bodyParameters: [restaurantName],
       });
     }
   }
@@ -168,12 +136,7 @@ function buildMetaTemplateAttempts({ templates, preferredTemplateName, restauran
     return attempts;
   }
 
-  const fallbackTemplateName = preferredTemplateName || 'seatable_feedback_request';
-  return languageCandidates.map(language => ({
-    templateName: fallbackTemplateName,
-    language,
-    bodyParameters: getMetaTemplateBodyParameters(fallbackTemplateName, restaurantName),
-  }));
+  return [];
 }
 
 module.exports = async (req, res) => {
@@ -448,21 +411,25 @@ async function handleTest(req, res, restaurantId) {
   }
 
   // Get restaurant name for the test message
-  const { data: config } = await supabaseAdmin
+  const { data: config, error: configError } = await supabaseAdmin
     .schema('restaurant')
     .from('restaurant_config')
     .select('restaurant_name, agent_language')
     .eq('id', restaurantId)
     .single();
 
-  const restaurantName = config?.restaurant_name || 'Your Restaurant';
-  const restaurantLanguage = config?.language || config?.agent_language || 'en';
+  if (configError || !config?.restaurant_name?.trim() || !config?.agent_language) {
+    return res.status(409).json({ success: false, code: 'TEST_CONFIG_INCOMPLETE', error: 'TEST_CONFIG_INCOMPLETE' });
+  }
+  const restaurantName = config.restaurant_name.trim();
+  const restaurantLanguage = config.agent_language;
   let result;
   let usedTemplateName = null;
   let usedTemplateLanguage = null;
 
   if (provider === 'meta') {
-    const preferredTemplateName = process.env.WHATSAPP_TEST_TEMPLATE_NAME || 'seatable_feedback_request';
+    // Never substitute a survey or campaign: a diagnostic must not ask for a rating.
+    const preferredTemplateName = 'seatable_connection_test';
     const approvedTemplates = await fetchApprovedMetaTestTemplates();
     const templateAttempts = buildMetaTemplateAttempts({
       templates: approvedTemplates,
@@ -470,6 +437,10 @@ async function handleTest(req, res, restaurantId) {
       restaurantLanguage,
       restaurantName,
     });
+
+    if (!templateAttempts.length) {
+      return res.status(409).json({ success: false, code: 'TEST_TEMPLATE_UNAVAILABLE', error: 'TEST_TEMPLATE_UNAVAILABLE' });
+    }
 
     for (const attempt of templateAttempts) {
       usedTemplateName = attempt.templateName;
@@ -486,9 +457,18 @@ async function handleTest(req, res, restaurantId) {
       }
     }
   } else {
+    const language = restaurantLanguage.toLowerCase().split(/[-_]/)[0];
+    const messages = {
+      pt: `Teste de envio do ${restaurantName} pelo Seatable. Não é uma pesquisa nem uma reserva. Não é necessário responder.`,
+      es: `Prueba de envío de ${restaurantName} a través de Seatable. No es una encuesta ni una reserva. No hace falta responder.`,
+      en: `Delivery test from ${restaurantName} via Seatable. This is not a survey or a reservation. No reply is needed.`,
+    };
+    if (!messages[language]) {
+      return res.status(409).json({ success: false, code: 'TEST_TEMPLATE_UNAVAILABLE', error: 'TEST_TEMPLATE_UNAVAILABLE' });
+    }
     result = await sendWhatsAppMessage(
       normalizedPhone,
-      `This is a test message from ${restaurantName} via Seatable. WhatsApp integration is working correctly!`,
+      messages[language],
       { provider }
     );
   }

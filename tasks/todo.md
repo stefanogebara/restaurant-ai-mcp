@@ -1,3 +1,112 @@
+# Landing page — Apple-calibre photographic rebuild (2026-09-05)
+
+- [x] Record the rejected-version lesson and establish anti-slop constraints.
+- [x] Lock references against current Apple product-launch patterns and hospitality photography.
+- [x] Audit the current landing page for composition, responsive, motion, and rendering failures.
+- [x] Generate, inspect, optimise, and integrate original restaurant imagery.
+- [x] Replace the gradient/card composition with an image-led, section-by-section narrative.
+- [x] Art-direct desktop, tablet, and mobile layouts independently.
+- [x] Add purposeful motion with complete reduced-motion fallbacks.
+- [x] Update landing copy and translations without weakening existing referral/analytics flows.
+- [x] Audit every viewport and scroll state for clipping, overflow, contrast, and transition seams.
+- [x] Run the full Seatable verification suite and document the result below.
+
+## Review
+
+- Astra gateway authentication succeeded, but generation was refused with
+  free_tier_requires_payment; no repository source or internal data was sent.
+- Rebuilt the active `/` narrative around four original, art-directed restaurant
+  images, a custom live-service canvas, and one three-beat cinematic chapter.
+  Removed the active fake-browser/demo stack and generic gradient fields.
+- Preserved `/demo/setup`, `/precos`, `/login`, referral attribution, analytics,
+  FAQ/legal routes, and complete EN/PT-BR/ES copy. Product proof is explicitly
+  labelled illustrative in both visible copy and accessibility metadata.
+- Browser QA passed at 320×568, 390×844, 768×1024, 1024×768, and 1440×900:
+  no horizontal overflow, no console errors or warnings, clean mobile menu,
+  warm focus treatment, and stable scroll-linked story frames.
+- Optimised WebP photography totals 416 KB. Production build passed. API syntax
+  passed. Backend: 3,922 passing / 6 skipped. Frontend: 977 passing across 103
+  suites. `git diff --check` passed. Existing bundle-size and test-runner
+  teardown warnings are unchanged outside this landing scope.
+
+# WhatsApp dashboard rebuild (2026-08-27)
+
+## Diagnostic context and language correction — August 27
+
+- [x] Trace screenshot: diagnostic reused feedback template without a pending feedback record; reply `5` reached receptionist.
+- [x] Select only restaurant_name and agent_language; fail closed on missing context.
+- [x] Require approved seatable_connection_test in restaurant language; never substitute a campaign or another language.
+- [x] Localize diagnostic content (PT/EN/ES) and new dashboard error states.
+- [x] Await receipt persistence before acknowledging webhook, with deferred-promise regression test.
+- [ ] Approve dedicated Meta template and deploy, then obtain permission for another real send.
+- [ ] Audit real survey reply context end-to-end separately; do not count diagnostic replies as customer ratings.
+
+Template contract: `seatable_connection_test`, body parameter 1 = restaurant name. PT: “Teste de envio do {{1}} pelo Seatable. Não é uma pesquisa nem uma reserva. Não é necessário responder.” EN: “Delivery test from {{1}} via Seatable. This is not a survey or a reservation. No reply is needed.” ES: “Prueba de envío de {{1}} a través de Seatable. No es una encuesta ni una reserva. No hace falta responder.” Meta approval/category remains an external prerequisite; no template registered or message sent in this correction.
+
+Verification: backend 3851 passed / 6 skipped (250 suites passed, 1 skipped); frontend 968 passed (101 suites); production build passed; 199 API files passed syntax checks; diff whitespace check passed. Browser inspected the local simulated error state (API intentionally blocked), not a production E2E of the new backend. Logged-in production tab preserved. No deploy or additional WhatsApp send. Full verification used the seatable-verify checklist. Logs: `/tmp/wa-context-{jest,vitest,build}.log`.
+
+- [x] Inspect current UI and distinguish platform transport, restaurant number and owner notifications.
+- [x] Replace the five-tab settings wall with connect, test and optional preferences.
+- [x] Preserve delivery tracking, expose failures and refresh connection state after verification.
+- [x] Verify focused tests, build, API syntax and browser rendering; record live-integration limitations.
+
+## Review
+
+### Follow-up corrections
+
+### Authenticated production audit
+
+### Authorized outbound test — 27 August, 13:09 browser time
+
+User explicitly supplied their recipient number. Sent ONE test using the production UI, no retries. Meta accepted it; the delivery panel updated to today's date and a two-minute cooldown. After approximately 40 seconds it still reported accepted, with no delivered/read timestamps. Template used: `seatable_feedback_request (en_US)` — wrong experience for a clear Portuguese diagnostic test. Acceptance is not delivery proof. No number registration or configuration change was made. Earlier no-send notes below describe the pre-test state.
+
+Google sign-in initially returned `bad_oauth_state` / expired; restarting OAuth with the signed-in account succeeded. Read-only audit of Cantina Bella Vista: old production UI says API connected, owner phone empty, shared platform phone verification expired, all four templates approved, no own-number provisioning shown, last Meta test accepted on 9 June with no delivery/read receipt. No send or configuration mutation performed.
+
+New local correction: pending delivery without receipt after ten minutes is explicitly unconfirmed, not failed or endlessly waiting; manual refresh remains available. Regression test uses a fixed old date.
+
+Latest verification: WhatsApp workspace/hooks 15 passed; full frontend 962 passed / 7 failed, all failures in concurrently edited HeroSection/LandingPage tests. Build blocked by `LandingPage.tsx:65` unsupported `arrow-up` icon. API syntax 199 passed. These unrelated landing edits were preserved. Real outbound test still awaits an explicitly authorized recipient.
+
+- [x] Refresh delivery feedback from the new send result, not an older test.
+- [x] Show API failures even when the transport responds HTTP 200.
+- [x] Add regression coverage and retry authenticated access through Google.
+
+Follow-up: 14 focused tests passed, including 5 new response/cooldown regressions. Full frontend run: 963 passed, 5 failed in `HeroSection.test.tsx` (concurrent landing rewrite; left untouched). Backend: 3,846 passed, 6 skipped. API syntax: 199 passed. Google OAuth reached the Google sign-in screen with no existing account; user asked to finish login in-browser. No credentials entered, no real messages sent. Local error rendering rechecked in browser.
+
+Implemented locally. The page uses the restaurant provisioning state, never the owner's phone or global platform sender, for the customer conversation link. Global phone-verification/template controls were removed from the customer setup path. Optional panels mount on first opening and preserve edits when collapsed. Delivery polling ends after a terminal result or ten minutes.
+
+Fixed activation ordering: persist tenant routing before reporting an active number; a regression assertion covers routing failure. This is not an atomic transaction or proof of live Meta delivery.
+
+Verification: 963 frontend tests passed; 3,846 backend tests passed (6 skipped); production build passed with existing chunk-size warnings; 199 API files passed syntax checks. Browser: local fixture renders disconnected and registered states, optional delivery errors, desktop and 390px mobile without horizontal overflow. Preview: `/whatsapp-preview.html` (dev only, simulated state, API sends blocked).
+
+Production redirected to login; no authenticated session was available in the connected browser. No real SMS, WhatsApp message, number migration, deployment or database change was performed. Live number registration, inbound AI reply and reservation creation still require an authorized account/number. Existing legacy WhatsApp E2E suite is not evidence for this new flow and was not run.
+
+---
+
+# Landing rebuild — Furma-inspired editorial hero (2026-08-27)
+
+## Plan
+
+- [x] Reverse-engineer the reference page: layout, typography, motion, image rhythm, responsive behavior
+- [x] Audit Seatable's current landing contracts: routes, analytics, i18n, demo paths, accessibility, tests
+- [x] Define a Seatable-native art direction that preserves Liquid Glass v2 tokens while replacing the current hero/demo presentation
+- [x] Rebuild the landing hero and first narrative sections with custom responsive product scenes
+- [x] Remove or demote the existing preset/iframe/phone mockup presentation that conflicts with the new story
+- [x] Add or update focused tests for navigation, CTAs, responsive-safe markup, and reduced motion
+- [x] Verify typecheck/build, relevant frontend tests, palette/design guards, and the rendered page in a browser
+
+## Review
+
+Replaced the previous demo stack with a Furma-inspired editorial composition:
+one atmospheric hero, one integrated reservation proof object, a continuous
+guest journey, a connected-system chapter, and a focused conversion close.
+Preserved `/demo/setup`, `/precos`, `/login`, referral tracking, analytics, and
+EN/PT-BR/ES support. Desktop (1440px) and mobile (390px) render without
+horizontal overflow or console errors. Production build passed; API syntax
+passed; Jest 3,846 passed / 6 skipped; Vitest 968 passed; warm-palette guard
+passed.
+
+---
+
 # Phase 14: Demo em Conversa (ATIVO)
 
 **Plano completo:** `.claude/plans/2026-08-24-demo-conversa/README.md`
