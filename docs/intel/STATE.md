@@ -161,18 +161,19 @@ Nenhuma linha de `bets`, `known_gaps` ou `settled` foi tocada nesta janela por
 decisão de julgamento — o que segue é o que dá para aplicar sozinho, por ser
 o que o próprio texto do `known_gaps[6]` (customer_history) já previa:
 
-1. **`known_gaps[6]` (customer_history) — atualizado no config, mecânico.**
-   O texto dizia que as 8 consultas erram 42P01 "em silêncio". Isso deixou de
-   ser verdade em 2026-09-02 (PR #115): o erro agora sobe para quem chama, em
-   vez de virar `null`/"cliente novo" sem rastro, e a exclusão LGPD
-   (`data-deletion.js`) foi corrigida para usar `.schema('restaurant')` e
-   parar de filtrar por uma coluna (`restaurant_id`) que a tabela não tem. O
-   que **não** mudou, e por isso o gap continua registrado: o modelo de
-   no-show ainda trata todo cliente como novo — o mapeamento para
-   `customer_ltv` está pronto (`total_visits`, `last_visit_date`,
-   `avg_party_size` existem lá) mas não foi aplicado, por ser decisão de
-   produto e não bug. Aplicado no `intel.config.json` nesta passada, mesmo
-   tipo de correção mecânica que a entrada de Saipos recebeu em 2026-08-25/31.
+1. **`customer_history` — buraco documentado só em `CLAUDE.md`, faltava em
+   `known_gaps`; acrescentado agora, mecânico.** O `CLAUDE.md` já registrava
+   a tabela como morta ("erra 42P01 em silêncio"), mas o `intel.config.json`
+   não tinha essa entrada. PR #115 (2026-09-02) corrigiu metade do problema:
+   o erro agora sobe para quem chama, em vez de virar `null`/"cliente novo"
+   sem rastro, e a exclusão LGPD (`data-deletion.js`) passou a usar
+   `.schema('restaurant')` e parar de filtrar por uma coluna (`restaurant_id`)
+   que a tabela não tem. O que **não** mudou: o modelo de no-show ainda trata
+   todo cliente como novo — o mapeamento para `customer_ltv` está pronto
+   (`total_visits`, `last_visit_date`, `avg_party_size` existem lá) mas não
+   foi aplicado, por ser decisão de produto e não bug. Acrescentado ao
+   `known_gaps` do `intel.config.json` nesta passada — é adição de fato
+   verificável no git, não remoção nem alteração de entrada existente.
 2. **`CLAUDE.md` (fora do `intel.config.json`, registrado aqui por não ter
    outro lugar):** a tabela de cron jobs ficou desatualizada pelo próprio
    #135 desta janela — rotas mudaram de endpoint direto para `/api/cron/
