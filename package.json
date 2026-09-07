@@ -20,9 +20,9 @@
     "audit:phantom-columns": "node scripts/audit-phantom-columns.js"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.122.0",
+    "@anthropic-ai/sdk": "^0.123.0",
     "@sentry/node": "^10.22.0",
-    "@supabase/supabase-js": "^2.112.4",
+    "@supabase/supabase-js": "^2.115.0",
     "@upstash/redis": "^1.38.3",
     "axios": "^1.12.2",
     "busboy": "^1.6.0",
@@ -33,7 +33,7 @@
     "openai": "^6.49.0",
     "pdf-parse": "^2.4.5",
     "qrcode": "^1.5.4",
-    "resend": "^6.3.0",
+    "resend": "^6.26.0",
     "stripe": "^19.3.0",
     "twilio": "^5.13.1",
     "web-push": "^3.6.7",
