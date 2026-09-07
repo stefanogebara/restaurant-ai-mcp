@@ -197,3 +197,41 @@ describe('foraDoIcp — casa de culto não recebe abordagem comercial', () => {
     expect(foraDoIcp(nome)).toBe(false);
   });
 });
+
+
+/**
+ * O PLURAL — 07/09/2026.
+ *
+ * `Ótica Diniz` era barrado, mas `Óticas Diniz Jaçanã` PASSOU e recebeu a intro
+ * comercial em 07/09 às 14:10. O `\b` exigia fim de palavra logo depois de
+ * `otica`, e o `s` quebrava isso — valia para a lista inteira: `Mercados`,
+ * `Escolas`, `Igrejas` escapavam do mesmo jeito.
+ *
+ * O conserto é um `s?` antes do `\b`. O que ele NÃO pode fazer é afrouxar o
+ * lado caro, que é barrar restaurante bom em silêncio — daí a segunda lista.
+ */
+describe('foraDoIcp — plural não é rota de fuga', () => {
+  it.each([
+    'Óticas Diniz Jaçanã',   // real, recebeu intro em 07/09
+    'Oticas Carol',          // sem acento, como parte da base está gravada
+    'Mercados Municipais',
+    'Escolas Reunidas',
+    'Igrejas Unidas',
+    'Paróquias do Centro',
+  ])('barra %s', (nome) => {
+    expect(foraDoIcp(nome)).toBe(true);
+  });
+
+  it.each([
+    // O `s?` não pode alcançar estes: depois de `basilica` vem `t`, e nem o
+    // `s?` nem o `\b` casam ali.
+    'Basilicata - Pão, Empório e Restaurante',
+    'Brunch da Catedral da Sé',
+    // Categoria no MEIO do nome segue sendo ICP — é a regra de início.
+    'Restaurante Mercado São Jorge',
+    'Bar da Escola',
+    'Buffet Self Service por kilo',
+  ])('deixa passar %s', (nome) => {
+    expect(foraDoIcp(nome)).toBe(false);
+  });
+});
