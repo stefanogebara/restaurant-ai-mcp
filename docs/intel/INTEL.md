@@ -11,6 +11,21 @@
 
 ## Em aberto — precisa de decisão do Stefano
 
+### [DISCUTIR 10/15] Procedures GA na ElevenLabs — a peça que faltava não é tool, é orquestração
+**Data:** 2026-09-07 · **Eixos:** P3 A2 D2 E2 L1
+**Fonte:** [ElevenLabs changelog, 24/ago](https://elevenlabs.io/docs/changelog/2026/8/24)
+**Ponteiro de trabalho:** o spike já aberto no BACKLOG para o known_gap relacionado → `BACKLOG.md#tool-evento-privado`
+
+**O que é:** este item estava pendente desde 01/09 (nota no Radar: "pede triagem própria na passada seguinte") — a entrada de 24/08 do changelog da ElevenLabs, aberta agora por completo. "Procedures" saiu de beta para GA: um bloco de instrução específico de tarefa, amarrado a um gatilho que decide quando entra na conversa, em dois formatos (livre ou estruturado com passos tipados em ordem fixa). É referenciado no agente por `procedure_id`/`version_id`; a procedure em si é criada e versionada em endpoint separado, cujo contrato completo o changelog não publica.
+
+**O que a fonte não prova, e é decisivo:** Procedures muda QUANDO e COMO o agente fala — não dá acesso a nenhum dado ou ação nova. `grep` por `procedure` no repo inteiro devolve zero ocorrências. O known_gap que este item mirava (`api/_voice-server/tool-handler.js` expõe 8 tools, todas de reserva, zero de evento privado/takeout apesar de `api/events.js`/`api/event-checkout.js` existirem) **não é resolvido por Procedures** — o spike já registrado para esse gap (`tool-evento-privado`, BACKLOG.md, mesma data de 24/08) resolve com function-calling simples, sem citar Procedures em lugar nenhum.
+
+**Achado lateral, fora do escopo do candidato original:** os outros itens do changelog de 24/08 pedidos para checagem (MCP local descontinuado, LLM selecionável, WhatsApp typing indicator, Scribe v2) **não estão nesta entrada** — pertencem a datas distintas (MCP ~20/08, WhatsApp typing indicator 20/07, Scribe v2 sem data confirmada). A entrada de 24/08 contém, além de Procedures: CLI 1.0 GA (ver Radar), conversation triage tickets, e conversation observability — este último é o mesmo mecanismo já registrado no Radar de 01/09 como "não fecha o buraco de instrumentação de voz" (4/15).
+
+**A pergunta:** quando o spike `tool-evento-privado` (já PROTOTIPAR 11/15) for implementado, vale desenhar o gatilho como Procedure estruturada da ElevenLabs desde o início — aposta em consistência de roteiro para uma tarefa sensível a erro (evento com pagamento) — ou construir com tool description simples primeiro, como as 8 tools atuais já fazem sem Procedures, e só adicionar essa camada se a confiabilidade em produção exigir?
+
+---
+
 ### [DISCUTIR 11/15] "Português + WhatsApp" não é território vago — já tem ocupante brasileiro
 **Data:** 2026-09-01 · **Eixos:** P3 A2 D2 E1 L3
 **Fontes:** [Baguete, 26/ago](https://www.baguete.com.br/noticias/fogo-de-chao-automatiza-atendimento-com-foodster) · [Portal Filipe Mello, 27/ago](https://www.portalfilipemello.com/2026/08/fogo-de-chao-registra-mais-de-mil.html) · [foodster.ai](https://foodster.ai)
@@ -438,6 +453,22 @@ tarifa de service no rate card privado — o BSP costuma receber o CSV antes da 
 
 ---
 
+**Absorvido em 2026-09-07 — segunda semana sem número, e o R$0,035 que circulou é a mesma conta de
+sempre com roupa nova.** Reabri a doc-mãe de non-template messages hoje: texto idêntico ao de 01/09
+— *"Meta will announce and publish the rates that take effect October 1, 2026, including rates for
+service messages, by September 1, 2026"* — sem rate card por país e sem data de "last updated". **O
+prazo que a própria Meta se deu já venceu há 6 dias, e a doc oficial não notou.** O candidato desta
+passada (R$0,035/mensagem + franquia de 1.000 mensagens grátis/mês, atribuído à imprensa brasileira)
+não é fato novo: rastreadas as quatro fontes que o citam (HelenaCRM/Canaltech, Claryflow, NGP,
+Centralize Pro), todas fazem a mesma conta que este item já registrou em 01/09 — pegar a tarifa de
+utility BR corrente (US$0,0068 ≈ R$0,035) e projetá-la para service message, com a ressalva
+explícita de "estimativa até a Meta publicar". Nenhuma linka rate card oficial. A franquia de 1.000
+mensagens grátis/mês não aparece em nenhuma das quatro fontes checadas — sem origem encontrada,
+tratar como não confirmada. Score mantido em 10 — o fato central (ausência de número oficial) não
+mudou, só ganhou mais uma semana de atraso sobre o prazo que a própria Meta prometeu.
+
+---
+
 ### [DISCUTIR 8/15] Qual é o teto de concorrência do workspace ElevenLabs?
 **Data:** 2026-08-24 · **Eixos:** P2 A2 D1 E2 L1
 **Fonte:** [ElevenLabs changelog, 17/ago](https://elevenlabs.io/docs/changelog/2026/8/17)
@@ -579,6 +610,41 @@ Promovidos em 2026-08-24, os quatro com âncora verificada:
 
 ## Radar
 
+- `2026-09-07` **SoundHound fecha aquisição da LivePerson por ~US$43M** (EV ~US$250M), unindo a voz
+  agêntica da SoundHound (já vende para drive-thru de QSR americano) com a mensageria enterprise da
+  LivePerson (25 do Fortune 100) numa plataforma "omnichannel" via OASYS. Zero menção a reserva de
+  mesa, atendimento de salão, WhatsApp ou Brasil no 8-K. [SEC 8-K](https://www.sec.gov/Archives/edgar/data/1840856/000121390026097712/ea030469101ex99-1.htm) · 7/15
+- `2026-09-07` **Fly.io (host do WebSocket de voz, app seatable-voice) levanta US$25M Série D** e
+  troca CEO — o fundador Kurt Mackey vira conselheiro, entra Scott Johnston (ex-Docker), com pivô
+  declarado para infra "agent-native" (Sprites). Release oficial não toca região nem preço; o
+  known_gap de `primary_region='cdg'` (Paris) para restaurante de SP segue sem sinal, positivo ou
+  negativo. [Fly.io](https://fly.io/news/fly-io-launches-computers-for-agents/) · 7/15
+- `2026-09-07` **OpenAI lança gpt-realtime**, modelo de produção que substitui o
+  `gpt-4o-realtime-preview` hardcoded em `api/_voice-server/backends/openai-realtime.js:14` — promete
+  melhor adesão a instruções/tool-calling, -20% de preço, duas vozes novas (Cedar, Marin). Um issue
+  aberto no GitHub da OpenAI (sem resposta) relata que Cedar/Marin ignoram instrução do agente — o
+  oposto do claim central. Fonte primária devolveu 403 duas vezes; teto travado em REGISTRAR por G1
+  apesar do score bruto (10) apontar para DISCUTIR — vale reabrir quando a página responder.
+  [openai.com](https://openai.com/index/introducing-gpt-realtime/) · 10/15, travado
+- `2026-09-07` **ElevenLabs lança CLI 1.0 GA** (agents-as-code, branches, testes locais, push/pull de
+  config de agente) — o repo integra por `fetch()` cru em `elevenlabsAgentService.js` e já versiona
+  agente via API própria (`createBranch`/`deployTrafficSplit`, usada por `voice-experiments.js`); a
+  CLI seria um segundo caminho paralelo, não upgrade do atual. [ElevenLabs](https://elevenlabs.io/docs/changelog/2026/8/24) · 7/15
+- `2026-09-07` **Medicall (Coreia) capta seed para agente de voz 24h em clínica odontológica** —
+  booking, remarcação, recall automatizado; métricas de 100% de resposta e +16% de receita são
+  autodeclaradas pelo próprio site. Categoria saturada (Arini, CallHero, Peerlogic, Viva AI,
+  GetHelpdesk.AI no mesmo nicho) — mais um data point de que "atender telefone com IA" virou feature
+  genérica, ecoando o `bets[0]` já revisado. [dentalcall.kr](https://dentalcall.kr/en/) · 5/15
+- `2026-09-07` **Fresha lança gestor de reputação cross-platform com IA** (centraliza Google+Fresha
+  reviews, rascunha resposta, fila com auto-postagem por regra) — 140 mil parceiros de beleza/
+  wellness, integração Google sem custo. Ecoa o padrão já visto no item Delivery Hero (rascunho de
+  resposta a review dentro do copiloto do dono). Fonte primária bloqueada em três espelhos — teto
+  REGISTRAR por G1. [Businesswire](https://www.businesswire.com/news/home/20260820599425/en/Fresha-Centralizes-Cross-Platform-Reviews-with-New-AI-Powered-Online-Reputation-Manager) · 5/15, travado
+- `2026-09-07` **Cielo lança "Assistente de Compras" com Gemini Enterprise Agent Platform e o
+  protocolo aberto AP2 do Google** — compra e pagamento tokenizado dentro do chat, métricas só
+  projetadas ("até" 60% menos tempo de checkout), sem piloto nomeado. Sinal de adquirente brasileiro
+  adotando pilha americana para pagamento agentic — o inverso do padrão em `bets[2]`, mas vertical
+  de e-commerce geral, zero overlap de cliente com o Seatable. [blog.cielo.com.br](https://blog.cielo.com.br/produtos-e-servicos/assistente-de-compras-cielo/) · 5/15
 - `2026-09-01` **Takeat (ES) captou R$15M em 02/02/2026** (DGF/Quartzo/FUNSES; 3.000 casas
   autodeclaradas) para PDV + delivery + KDS + fiscal + CRM com IA de WhatsApp — **sem reserva e sem
   voz**. Não invalida a `bets[2]`, que fala de players *americanos*; arranha a premissa de que o
@@ -597,11 +663,8 @@ Promovidos em 2026-08-24, os quatro com âncora verificada:
   call sites. Nada a fazer. *Achado lateral: `scripts/apply-migration.js:53` roda com
   `ssl: { rejectUnauthorized: false }` numa conexão Postgres do Supabase.*
   [Twilio](https://www.twilio.com/en-us/changelog/REST-API-endpoints-rotated-September-9,-2026) · 5/15
-- `2026-09-01` **ElevenLabs: Procedures em GA** (instrução por tarefa com gatilho) — o movimento de
-  maior consequência arquitetural do changelog de 24/08, e o único que não foi triado nesta passada.
-  O repo monta system prompt monolítico + 5 tools de webhook + 8 tools de voz; instrução por tarefa
-  é candidata direta ao `known_gap` das tools ausentes de evento privado e takeout. **Pede triagem
-  própria na passada seguinte.** [ElevenLabs](https://elevenlabs.io/docs/changelog/2026/8/24) · a triar
+- `2026-09-01` **ElevenLabs: Procedures em GA** — triado em 2026-09-07, virou
+  `[DISCUTIR 10/15]` na seção "Em aberto" (não resolve o known_gap de tools ausentes sozinho).
 - `2026-09-01` **`context_usage` da ElevenLabs NÃO fecha o buraco de instrumentação de voz** — reporta
   modelo, tokens do prompt e limite de contexto (custo e inchaço), não latência nem barge-in. E é
   evento de *cliente realtime*: o caminho PSTN deste repo entrega a chamada ao pipeline gerenciado
