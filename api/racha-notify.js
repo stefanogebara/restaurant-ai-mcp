@@ -12,7 +12,27 @@
  *    template aprovado (RACHA_KYC_TEMPLATE), se configurado; senão pula.
  *  - E-mail: Resend (sem janela — canal confiável).
  *
- * Body: { venueName, ownerEmail, ownerPhone, status, previousStatus?, reason? }
+ * Body do aviso de recebedor: { venueName, ownerEmail, ownerPhone, status,
+ * previousStatus?, reason? }
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * ALÉM DO AVISO DE RECEBEDOR, esta rota é o ÚNICO canal de alerta do Racha.
+ *
+ * Ela roteava `activation_radar` e depois exigia `status` — um campo que só o
+ * aviso de recebedor manda. Todo o resto voltava **400**: `reconcile_drift` (a
+ * conciliação diária achando desvio de dinheiro), `reconcile_heartbeat` (a
+ * batida cujo contrato declarado é "a ausência dela é o alarme"), e todos os
+ * eventos de dinheiro do Racha — disputa, estorno que falhou, retenção
+ * bloqueada, `CRON_SECRET` ausente.
+ *
+ * Consequência: nenhum alerta do Racha jamais chegou a um humano. Eles viraram
+ * linha de stderr num log da Vercel. O não-negociável 8 do Racha diz "um
+ * canário vermelho PAGINA; ele nunca só loga" — ele só logava. E a batida, por
+ * nunca ter chegado uma vez, satisfazia "a ausência é o alarme" de forma vazia.
+ *
+ * Três revisões de segurança do lado do Racha endureceram o TRANSPORTE (timeout,
+ * fallback pra stderr) e nenhuma leu o RECEPTOR. Achado em 2026-09-12.
+ * ─────────────────────────────────────────────────────────────────────────────
  */
 
 const { createSecureLogger } = require('./_lib/secure-logger');
@@ -28,6 +48,64 @@ const logger = createSecureLogger('RachaNotify');
 // o contato dele mora aqui, nunca no Racha.
 const FOUNDER_EMAIL = process.env.PROSPECTING_FOUNDER_EMAIL || 'stefanogebara@gmail.com';
 const FOUNDER_WHATSAPP = process.env.PROSPECTING_FOUNDER_WHATSAPP || '';
+
+/**
+ * Os eventos que o Racha manda e que NÃO são o aviso de recebedor.
+ *
+ * Lista explícita, e é de propósito: um evento novo do lado do Racha tem que
+ * passar por aqui pra alguém decidir como ele é entregue. O Racha tem um censo
+ * (`api/__tests__/notify-bridge-contract.test.js`) que falha quando emite um
+ * evento que esta lista não contém — foi assim que o buraco apareceu.
+ */
+const EVENTOS_DE_FUNDADOR = new Set([
+  'reconcile_drift',       // conciliação diária achou desvio
+  'reconcile_heartbeat',   // batida verde: a ausência dela é o alarme
+  'retention_ok',          // expurgo de retenção rodou
+  'retention_blocked',     // retenção parada por falta de CRON_SECRET
+  'retention_late',        // o expurgo não roda há mais de 48h
+  'overpaid_pending_restitution',
+  'money_event_unrecorded',
+  'dispute_close_unrecorded',
+  'dispute_evidence_due',
+  'dispute_evidence_overdue',
+]);
+
+/**
+ * Entrega um alerta de fundador. Mesma forma do radar: WhatsApp em texto livre
+ * (o destinatário é o próprio fundador, não um lead) e e-mail pelo Resend.
+ *
+ * Nunca 500 por falha de entrega — o Racha já trata não-2xx como falha dura e
+ * grita no stderr dele; o que não pode é esta rota RECUSAR o corpo.
+ */
+async function entregarAlertaDeFundador({ event, mensagem, silencioso }) {
+  const out = { whatsapp: 'skipped', email: 'skipped', event };
+  const texto = String(mensagem || '').trim();
+  if (!texto) return { ...out, erro: 'mensagem vazia' };
+
+  if (!silencioso && FOUNDER_WHATSAPP && isWhatsAppConfigured()) {
+    try {
+      const r = await sendWhatsAppMessage(FOUNDER_WHATSAPP, texto);
+      out.whatsapp = r && r.success ? 'sent' : `failed:${(r && r.error) || '?'}`;
+    } catch (e) { out.whatsapp = `failed:${String(e.message).slice(0, 80)}`; }
+  } else if (silencioso) {
+    out.whatsapp = 'skipped:rotina';
+  } else if (!FOUNDER_WHATSAPP) {
+    out.whatsapp = 'skipped:sem_numero_do_fundador';
+  }
+
+  try {
+    const ok = await sendProspectDigestEmail({
+      to: FOUNDER_EMAIL,
+      subject: `Racha — ${event}`,
+      html: `<p>${texto.replace(/\n/g, '<br>')}</p>`,
+      text: texto,
+    });
+    out.email = ok ? 'sent' : 'skipped';
+  } catch (e) { out.email = `failed:${String(e.message).slice(0, 80)}`; }
+
+  logger.info('alerta do Racha entregue', { event, ...out });
+  return out;
+}
 
 /**
  * Radar de ativação do Racha → fundador (WhatsApp + e-mail, best-effort).
@@ -98,6 +176,20 @@ module.exports = async (req, res) => {
       alertas: Number(body.alertas) || 0,
       total: Number(body.total) || 0,
       ativos: Number(body.ativos) || 0,
+    });
+    return res.status(200).json({ success: true, data: out });
+  }
+
+  // Alertas de FUNDADOR: conciliação, batida noturna e eventos de dinheiro.
+  // Roteados antes da exigência de `status`, que é do aviso de recebedor — foi
+  // exatamente essa exigência que engolia todos eles com 400.
+  if (EVENTOS_DE_FUNDADOR.has(body.event)) {
+    const out = await entregarAlertaDeFundador({
+      event: body.event,
+      mensagem: body.mensagem,
+      // O batimento é rotina: entrega por e-mail e não acorda ninguém no
+      // WhatsApp. O resto é exceção e vai pelos dois.
+      silencioso: body.event === 'reconcile_heartbeat' || body.heartbeat === true,
     });
     return res.status(200).json({ success: true, data: out });
   }

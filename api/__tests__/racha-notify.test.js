@@ -107,3 +107,51 @@ describe('racha-notify — auth + compose', () => {
     expect(statusLabel('refused')).toBe('não aprovado');
   });
 });
+
+/**
+ * O CONTRATO COM O RACHA — o censo que faltava nos dois repositórios.
+ *
+ * Esta rota roteava `activation_radar` e depois exigia `status`, um campo que
+ * só o aviso de recebedor manda. Todo o resto voltava 400: a conciliação
+ * diária achando desvio de dinheiro, a batida noturna cujo contrato é "a
+ * ausência dela é o alarme", e todos os eventos de dinheiro do Racha. Nenhum
+ * alerta jamais chegou a um humano — viraram stderr num log da Vercel.
+ *
+ * O Racha tem o espelho disto (`api/__tests__/notify-bridge-contract.test.js`).
+ * Os dois lados deployam separado, então o par só se mantém honesto se cada
+ * lado testar a própria metade.
+ */
+describe('contrato de eventos com o Racha', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const fonte = fs.readFileSync(path.join(__dirname, '..', 'racha-notify.js'), 'utf8');
+
+  test('os eventos de fundador são roteados ANTES da exigência de `status`', () => {
+    const iEventos = fonte.indexOf('EVENTOS_DE_FUNDADOR.has(body.event)');
+    const iStatus = fonte.indexOf("if (!status) return res.status(400)");
+    expect(iEventos).toBeGreaterThan(0);
+    expect(iStatus).toBeGreaterThan(0);
+    // Depois da exigência, o 400 come tudo — que era exatamente o defeito.
+    expect(iEventos).toBeLessThan(iStatus);
+  });
+
+  test('a lista cobre os eventos que o Racha emite hoje', () => {
+    const bloco = fonte.slice(fonte.indexOf('const EVENTOS_DE_FUNDADOR'));
+    const lista = bloco.slice(0, bloco.indexOf(']}') + 1 || bloco.indexOf('])'));
+    for (const evento of [
+      'reconcile_drift', 'reconcile_heartbeat',
+      'retention_ok', 'retention_blocked', 'retention_late',
+    ]) {
+      expect(lista).toContain(`'${evento}'`);
+    }
+  });
+
+  test('a batida noturna não acorda ninguém no WhatsApp; o alerta acorda', () => {
+    // Rotina entregue como rotina. Se a batida virasse WhatsApp diário, ela
+    // seria silenciada por quem recebe em uma semana — e aí a ausência dela
+    // deixaria de ser lida como alarme, que é o valor inteiro dela.
+    expect(fonte).toMatch(/silencioso: body\.event === 'reconcile_heartbeat'/);
+    expect(fonte).toMatch(/out\.whatsapp = 'skipped:rotina'/);
+  });
+});
+
