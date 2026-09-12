@@ -163,6 +163,16 @@ describe('contrato de eventos com o Racha', () => {
     expect(fonte).toMatch(/const ehRotina = body\.event === 'reconcile_heartbeat' \|\| body\.event === 'retention_ok'/);
   });
 
+  test('TODO ramo diz se entregou — inclusive o do recebedor', () => {
+    // O ramo do recebedor é o mais pesado: o Racha grava a transição de status
+    // SE o aviso "deu certo", então 200 com os dois canais pulados persiste a
+    // transição, a aresta some, e o dono nunca sabe que o recebedor foi
+    // recusado. O radar ficou pra trás na primeira passada e é o único lugar
+    // onde 200 poderia não querer dizer entregue.
+    expect((fonte.match(/out\.entregue = out\.email === 'sent' \|\| out\.whatsapp === 'sent'/g) || []).length)
+      .toBe(3);
+  });
+
   test('`retention_ok` é rotina: e-mail sim, WhatsApp não', () => {
     // Ele sai todo dia e em regime diz zero. No WhatsApp, na mesma conversa dos
     // alertas de dinheiro, ele treina quem recebe a ignorar a conversa inteira.

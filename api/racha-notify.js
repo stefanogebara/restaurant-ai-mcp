@@ -163,6 +163,7 @@ async function entregarRadar({ mensagem, alertas, total, ativos }) {
     out.email = ok ? 'sent' : 'skipped';
   } catch (e) { out.email = `failed:${String(e.message).slice(0, 80)}`; }
 
+  out.entregue = out.email === 'sent' || out.whatsapp === 'sent';
   logger.info('radar de ativação entregue', { alertas, total, ativos, ...out });
   return out;
 }
@@ -237,6 +238,11 @@ module.exports = async (req, res) => {
 
   const message = composeMessage({ venueName, status, reason });
   const out = { whatsapp: 'skipped', email: 'skipped' };
+  // `out.entregue` sai também deste ramo, e aqui ele é o mais pesado: o Racha
+  // grava `setVenueRecipientStatus` SE o aviso "deu certo", então um 200 com os
+  // dois canais pulados faz a transição ser persistida, a aresta `de → para`
+  // some, e o dono nunca fica sabendo que o recebedor foi recusado — sem
+  // segunda chance, porque o próximo tick não retenta.
 
   // WhatsApp (best-effort). Decide texto-livre vs template pela janela de 24h do
   // lead (a Olímpia já falou com esse dono). Sem número → pula.
@@ -271,7 +277,8 @@ module.exports = async (req, res) => {
     } catch (e) { out.email = `failed:${String(e.message).slice(0, 80)}`; }
   }
 
-  logger.info('racha-notify processado', { venueName, status, whatsapp: out.whatsapp, email: out.email });
+  out.entregue = out.email === 'sent' || out.whatsapp === 'sent';
+  logger.info('racha-notify processado', { venueName, status, ...out });
   return res.status(200).json({ success: true, data: out });
 };
 
