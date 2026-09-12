@@ -60,15 +60,30 @@ const FOUNDER_WHATSAPP = process.env.PROSPECTING_FOUNDER_WHATSAPP || '';
 const EVENTOS_DE_FUNDADOR = new Set([
   'reconcile_drift',       // conciliação diária achou desvio
   'reconcile_heartbeat',   // batida verde: a ausência dela é o alarme
-  'retention_ok',          // expurgo de retenção rodou
+  // DISPUTA E ESTORNO — os que mais importam, e os que faltavam.
+  //
+  // A primeira versão desta lista tinha cinco nomes que NÃO são eventos
+  // (`dispute_evidence_due`, `money_event_unrecorded` e irmãos são códigos de
+  // achado da conciliação e de erro HTTP, que só PARECEM nome de evento) e não
+  // tinha nenhum destes sete. Eles chegam como `parsed.kind`, normalizados pelo
+  // adaptador do PSP, e por isso o censo do outro lado — que procurava literal
+  // — não os via. Um `charge.dispute.created` continuou voltando 400 com o
+  // relógio de 40 dias de prova correndo em silêncio.
+  'dispute_opened', 'dispute_updated', 'dispute_funds', 'dispute_lost',
+  'account_alert', 'unusable_money_event', 'refund_failed',
+  // Retenção.
+  'retention_ok',          // expurgo rodou (rotina: e-mail, nunca WhatsApp)
   'retention_blocked',     // retenção parada por falta de CRON_SECRET
   'retention_late',        // o expurgo não roda há mais de 48h
-  'overpaid_pending_restitution',
-  'money_event_unrecorded',
-  'dispute_close_unrecorded',
-  'dispute_evidence_due',
-  'dispute_evidence_overdue',
 ]);
+
+/** Escapa texto que vai pro HTML do e-mail: nome de casa e mensagem de driver
+ *  chegam aqui e são de terceiro. */
+function escaparHtml(t) {
+  return String(t)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
 
 /**
  * Entrega um alerta de fundador. Mesma forma do radar: WhatsApp em texto livre
@@ -97,12 +112,20 @@ async function entregarAlertaDeFundador({ event, mensagem, silencioso }) {
     const ok = await sendProspectDigestEmail({
       to: FOUNDER_EMAIL,
       subject: `Racha — ${event}`,
-      html: `<p>${texto.replace(/\n/g, '<br>')}</p>`,
+      html: `<p>${escaparHtml(texto).replace(/\n/g, '<br>')}</p>`,
       text: texto,
     });
     out.email = ok ? 'sent' : 'skipped';
   } catch (e) { out.email = `failed:${String(e.message).slice(0, 80)}`; }
 
+  // ENTREGUE quer dizer que ALGUM canal entregou.
+  //
+  // Sem isto a função capturava toda falha num campo de string e o chamador
+  // recebia 200: sem `RESEND_API_KEY`, com o Resend recusando, sem número do
+  // fundador — tudo virava sucesso. Do lado do Racha isso trocava "400 toda
+  // noite, alto no log" por "200 toda noite, calado", que é estritamente o pior
+  // dos dois: sucesso silencioso é o inimigo. Achado da revisão de segurança.
+  out.entregue = out.email === 'sent' || out.whatsapp === 'sent';
   logger.info('alerta do Racha entregue', { event, ...out });
   return out;
 }
@@ -132,7 +155,9 @@ async function entregarRadar({ mensagem, alertas, total, ativos }) {
     const ok = await sendProspectDigestEmail({
       to: FOUNDER_EMAIL,
       subject: `Racha — ${alertas} restaurante(s) precisando de ação`,
-      html: `<p>${texto.replace(/\n/g, '<br>')}</p>`,
+      // Escapado pelo mesmo motivo do alerta de fundador: o texto vem do Racha
+      // e carrega nome de casa. Pré-existente, mesmo defeito, consertado junto.
+      html: `<p>${escaparHtml(texto).replace(/\n/g, '<br>')}</p>`,
       text: texto,
     });
     out.email = ok ? 'sent' : 'skipped';
@@ -189,8 +214,22 @@ module.exports = async (req, res) => {
       mensagem: body.mensagem,
       // O batimento é rotina: entrega por e-mail e não acorda ninguém no
       // WhatsApp. O resto é exceção e vai pelos dois.
-      silencioso: body.event === 'reconcile_heartbeat' || body.heartbeat === true,
+      // ROTINA vai só por e-mail. `retention_ok` sai todo dia, e em regime diz
+      // zero — pôr isso no WhatsApp, na mesma conversa de `reconcile_drift` e
+      // `dispute_evidence_overdue`, treina quem recebe a arrastar alerta do
+      // Racha pra fora da tela. Degradar o alarme de dinheiro como efeito
+      // colateral de consertar a ponte seria trocar um problema por outro pior.
+      silencioso: body.event === 'reconcile_heartbeat'
+        || body.event === 'retention_ok'
+        || body.heartbeat === true,
     });
+    // A BATIDA pode não entregar sem ser falha (ela é rotina e pode ser
+    // silenciada); um ALERTA que não entregou é falha, e o Racha precisa saber
+    // pra gritar no log dele.
+    const ehRotina = body.event === 'reconcile_heartbeat' || body.event === 'retention_ok';
+    if (!out.entregue && !ehRotina) {
+      return res.status(502).json({ success: false, error: 'nenhum canal entregou', data: out });
+    }
     return res.status(200).json({ success: true, data: out });
   }
 
