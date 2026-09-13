@@ -107,3 +107,101 @@ describe('racha-notify — auth + compose', () => {
     expect(statusLabel('refused')).toBe('não aprovado');
   });
 });
+
+/**
+ * O CONTRATO COM O RACHA — o censo que faltava nos dois repositórios.
+ *
+ * Esta rota roteava `activation_radar` e depois exigia `status`, um campo que
+ * só o aviso de recebedor manda. Todo o resto voltava 400: a conciliação
+ * diária achando desvio de dinheiro, a batida noturna cujo contrato é "a
+ * ausência dela é o alarme", e todos os eventos de dinheiro do Racha. Nenhum
+ * alerta jamais chegou a um humano — viraram stderr num log da Vercel.
+ *
+ * O Racha tem o espelho disto (`api/__tests__/notify-bridge-contract.test.js`).
+ * Os dois lados deployam separado, então o par só se mantém honesto se cada
+ * lado testar a própria metade.
+ */
+describe('contrato de eventos com o Racha', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const fonte = fs.readFileSync(path.join(__dirname, '..', 'racha-notify.js'), 'utf8');
+
+  test('os eventos de fundador são roteados ANTES da exigência de `status`', () => {
+    const iEventos = fonte.indexOf('EVENTOS_DE_FUNDADOR.has(body.event)');
+    const iStatus = fonte.indexOf("if (!status) return res.status(400)");
+    expect(iEventos).toBeGreaterThan(0);
+    expect(iStatus).toBeGreaterThan(0);
+    // Depois da exigência, o 400 come tudo — que era exatamente o defeito.
+    expect(iEventos).toBeLessThan(iStatus);
+  });
+
+  test('a lista cobre DISPUTA e ESTORNO, não só retenção', () => {
+    // A primeira versão desta lista tinha cinco nomes que não são eventos —
+    // códigos de achado da conciliação e de erro HTTP — e nenhum dos sete que a
+    // produção realmente emite por webhook. Um `charge.dispute.created`
+    // continuava voltando 400 com o relógio de 40 dias de prova correndo calado.
+    const bloco = fonte.slice(fonte.indexOf('const EVENTOS_DE_FUNDADOR'));
+    const lista = bloco.slice(0, bloco.indexOf(']);'));
+    for (const evento of ['dispute_opened', 'dispute_updated', 'dispute_funds',
+      'dispute_lost', 'account_alert', 'unusable_money_event', 'refund_failed']) {
+      expect(lista).toContain(`'${evento}'`);
+    }
+    // E os que só PARECEM evento não podem voltar: deixá-los aqui faz o
+    // próximo leitor acreditar que disputa está coberta.
+    for (const naoEvento of ['dispute_evidence_due', 'money_event_unrecorded',
+      'overpaid_pending_restitution', 'dispute_close_unrecorded', 'dispute_evidence_overdue']) {
+      expect(lista).not.toContain(`'${naoEvento}'`);
+    }
+  });
+
+  test('alerta que não entregou em canal nenhum devolve 502, não 200', () => {
+    // Capturar toda falha de canal numa string e devolver 200 trocava, do lado
+    // do Racha, "400 toda noite, alto no log" por "200 toda noite, calado".
+    expect(fonte).toMatch(/out\.entregue = out\.email === 'sent' \|\| out\.whatsapp === 'sent'/);
+    expect(fonte).toMatch(/if \(!out\.entregue && !ehRotina\)[\s\S]{0,120}status\(502\)/);
+    // Rotina (batida e `retention_ok`) pode não entregar sem ser falha.
+    expect(fonte).toMatch(/const ehRotina = body\.event === 'reconcile_heartbeat' \|\| body\.event === 'retention_ok'/);
+  });
+
+  test('TODO ramo diz se entregou — inclusive o do recebedor', () => {
+    // O ramo do recebedor é o mais pesado: o Racha grava a transição de status
+    // SE o aviso "deu certo", então 200 com os dois canais pulados persiste a
+    // transição, a aresta some, e o dono nunca sabe que o recebedor foi
+    // recusado. O radar ficou pra trás na primeira passada e é o único lugar
+    // onde 200 poderia não querer dizer entregue.
+    expect((fonte.match(/out\.entregue = out\.email === 'sent' \|\| out\.whatsapp === 'sent'/g) || []).length)
+      .toBe(3);
+  });
+
+  test('`retention_ok` é rotina: e-mail sim, WhatsApp não', () => {
+    // Ele sai todo dia e em regime diz zero. No WhatsApp, na mesma conversa dos
+    // alertas de dinheiro, ele treina quem recebe a ignorar a conversa inteira.
+    expect(fonte).toMatch(/body\.event === 'retention_ok'/);
+  });
+
+  test('o texto do alerta é escapado antes de virar HTML', () => {
+    // Nome de casa e mensagem de driver chegam aqui e são de terceiro.
+    expect(fonte).toMatch(/escaparHtml\(texto\)/);
+    expect(fonte).not.toMatch(/html: `<p>\$\{texto\./);
+  });
+
+  test('a lista cobre os eventos que o Racha emite hoje', () => {
+    const bloco = fonte.slice(fonte.indexOf('const EVENTOS_DE_FUNDADOR'));
+    const lista = bloco.slice(0, bloco.indexOf(']}') + 1 || bloco.indexOf('])'));
+    for (const evento of [
+      'reconcile_drift', 'reconcile_heartbeat',
+      'retention_ok', 'retention_blocked', 'retention_late',
+    ]) {
+      expect(lista).toContain(`'${evento}'`);
+    }
+  });
+
+  test('a batida noturna não acorda ninguém no WhatsApp; o alerta acorda', () => {
+    // Rotina entregue como rotina. Se a batida virasse WhatsApp diário, ela
+    // seria silenciada por quem recebe em uma semana — e aí a ausência dela
+    // deixaria de ser lida como alarme, que é o valor inteiro dela.
+    expect(fonte).toMatch(/silencioso: body\.event === 'reconcile_heartbeat'/);
+    expect(fonte).toMatch(/out\.whatsapp = 'skipped:rotina'/);
+  });
+});
+
