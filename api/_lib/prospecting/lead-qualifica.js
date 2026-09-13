@@ -47,6 +47,13 @@ const FORA_SEMPRE = new RegExp([
  * restaurantes acima. Falso positivo aqui é o erro caro: fora-do-ICP só gasta
  * um slot, mas barrar restaurante bom o remove da fila em silêncio.
  *
+ * O PLURAL — 07/09/2026. `Ótica Diniz` era barrado, mas `Óticas Diniz Jaçanã`
+ * PASSOU e recebeu a intro comercial às 14:10. O `\\b` exige fim de palavra
+ * logo depois de `otica`, e o `s` quebrava isso. Valia para a lista inteira:
+ * `Mercados`, `Escolas`, `Igrejas` também escapavam. Um `s?` antes do `\\b`
+ * fecha os três casos sem afrouxar nada — `Basilicata` continua passando,
+ * porque depois de `basilica` vem `t`, e nem `s?` nem `\\b` casam ali.
+ *
  * AS CASAS DE CULTO — 04/09/2026. `igreja` já estava aqui, mas sozinha não
  * cobre como uma igreja de fato se chama. Achado na fila, todas em
  * `aguardando` e dentro da faixa de 120–5000 avaliações:
@@ -67,7 +74,7 @@ const FORA_SEMPRE = new RegExp([
  */
 const FORA_NO_INICIO = new RegExp(
   '^\\s*(mercado|escola|igreja|par[óo]quia|bas[íi]lica|catedral|santu[áa]rio'
-  + '|capela|mosteiro|convento|banco|posto|academia|[óo]tica)\\b',
+  + '|capela|mosteiro|convento|banco|posto|academia|[óo]tica)s?\\b',
   'i',
 );
 
