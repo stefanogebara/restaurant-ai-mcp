@@ -19,10 +19,13 @@ const { sendWhatsAppMessage, isWhatsAppConfigured } = require('../_lib/whatsapp-
 const { logCronRun } = require('../_lib/cron-tracker');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { isCronEnabled } = require('../_lib/cron-config');
+const { selectIntroCandidates } = require('../_lib/prospecting/prospect-store');
+const { currentCap } = require('../_lib/prospecting/prospect-warmup');
+const { avaliarSuprimento, linhasDoAlerta, PISO_DA_FILA } = require('../_lib/prospecting/fila-seca');
 
 const logger = createSecureLogger('CronHealthAlert');
 
-function buildAlertMessage(healthResult, integracoes) {
+function buildAlertMessage(healthResult, integracoes, fila) {
   const { overall, summary, jobs } = healthResult;
 
   const staleJobs = jobs.filter(j => j.status === 'stale');
@@ -59,6 +62,12 @@ function buildAlertMessage(healthResult, integracoes) {
       lines.push(`  - ${job.name}: ${job.errors_14d} errors`);
     }
   }
+
+  // Fila de prospecção seca. Entra DEPOIS dos crons porque cron parado é
+  // urgência técnica; fila vazia é urgência comercial e não tem pressa de
+  // minuto — mas precisa estar na mesma mensagem, porque é a mesma pergunta
+  // ("a operação está de pé?") e uma segunda mensagem diária seria ignorada.
+  lines.push(...linhasDoAlerta(fila));
 
   return lines.join('\n');
 }
@@ -101,6 +110,27 @@ module.exports = async (req, res) => {
 
     const integracoesQuebradas = (integracoes?.sondas || []).filter((s) => s.nivel === NIVEIS.FALHA);
 
+    // FILA DE PROSPECÇÃO. Medida pelo MESMO `selectIntroCandidates` que o
+    // dispatch usa — nunca por um SQL próprio. No dia em que isto foi escrito
+    // o SQL cru dizia 18 candidatos e o caminho de verdade entregava 2; a
+    // diferença é ICP, telefone repetido e rede já abordada, regras que vivem
+    // dentro do seletor. Uma segunda cópia aqui envelheceria em silêncio e o
+    // alerta passaria a mentir para mais.
+    //
+    // Nunca derruba o resto do alerta: se isto explodir, o health-alert sai só
+    // com crons e integrações, como saía antes de existir.
+    let fila = null;
+    try {
+      const [candidatos, cap] = await Promise.all([
+        selectIntroCandidates(PISO_DA_FILA),
+        currentCap().catch(() => null),
+      ]);
+      fila = avaliarSuprimento({ disponiveis: candidatos.length, capDiario: cap });
+    } catch (err) {
+      logger.error('Contagem da fila de prospecção falhou — alerta segue sem ela', { erro: err?.message });
+      fila = avaliarSuprimento({ disponiveis: 0, erroNaContagem: true });
+    }
+
     // O CANAL DE ALERTA PRECISA SER VERIFICADO NO DIA BOM.
     //
     // Sem isto, a única prova de que o alerta alcança alguém é o dia em que
@@ -126,24 +156,29 @@ module.exports = async (req, res) => {
 
     const { overall } = healthResult;
     const cronRuim = overall === 'degraded' || overall === 'critical';
-    const shouldAlert = cronRuim || integracoesQuebradas.length > 0;
+    const shouldAlert = cronRuim || integracoesQuebradas.length > 0 || Boolean(fila && fila.seco);
 
     if (!shouldAlert) {
       logger.info('Cron health OK, no alert needed', { overall, pode_alertar: podeAlertar });
-      await logCronRun('health-alert', { overall, alerted: false, pode_alertar: podeAlertar });
+      await logCronRun('health-alert', {
+        overall, alerted: false, pode_alertar: podeAlertar, fila_de_intro: fila?.disponiveis ?? null,
+      });
       return res.status(200).json({
         overall,
         alerted: false,
         integracoes_quebradas: 0,
         // Vem mesmo no dia bom: é a resposta para "o alerta me alcança?"
         pode_alertar: podeAlertar,
+        // E no dia bom também: quantos leads ainda há para despachar. É o
+        // número cuja queda a zero passou sete semanas sem ninguém notar.
+        fila_de_intro: fila?.disponiveis ?? null,
       });
     }
 
     let sent = false;
 
     if (podeAlertar) {
-      const message = buildAlertMessage(healthResult, integracoes);
+      const message = buildAlertMessage(healthResult, integracoes, fila);
       const result = await sendWhatsAppMessage(alertPhone, message);
       sent = result.success;
 
@@ -161,6 +196,8 @@ module.exports = async (req, res) => {
       alerted: true,
       whatsapp_sent: sent,
       integracoes_quebradas: nomesQuebrados,
+      fila_de_intro: fila?.disponiveis ?? null,
+      fila_seca: Boolean(fila && fila.seco) || undefined,
     });
 
     return res.status(200).json({
@@ -170,6 +207,8 @@ module.exports = async (req, res) => {
       pode_alertar: podeAlertar,
       summary: healthResult.summary,
       integracoes_quebradas: nomesQuebrados,
+      fila_de_intro: fila?.disponiveis ?? null,
+      fila_seca: Boolean(fila && fila.seco),
     });
   } catch (err) {
     logger.error('Health alert failed', { error: err.message });
