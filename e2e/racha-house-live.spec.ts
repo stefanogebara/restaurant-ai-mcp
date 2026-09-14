@@ -17,6 +17,11 @@ const BASE = process.env.RACHA_BASE || '';
 const WALLET = process.env.RACHA_WALLET_TOKEN || '';
 const MESA = process.env.RACHA_MESA_TOKEN || '';
 
+// Pular, nao falhar: sem config este e um teste de OUTRO projeto que nao
+// tem por que derrubar a suite deste repositorio.
+test.skip(!BASE || !WALLET || !MESA,
+  'racha nao configurado — defina RACHA_BASE / RACHA_WALLET_TOKEN / RACHA_MESA_TOKEN');
+
 const SHOT_DIR = 'e2e-artifacts/racha-house';
 
 test.describe.configure({ mode: 'serial' });
