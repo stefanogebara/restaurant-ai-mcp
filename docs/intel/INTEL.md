@@ -498,84 +498,6 @@ antes de instrumentar qualidade seria contraindicado, dado o `known_gaps` de ru�
 salão.)*
 
 
-### [DISCUTIR 11/15] Alguém está fazendo o seu movimento, com US$ 20 milhões
-**Data:** 2026-08-22 · **Eixos:** P3 A1 D2 E2 L3
-**Fonte:** [Restaurant Technology News, 18/ago](https://restauranttechnologynews.com/2026/08/palona-ai-expands-beyond-voice-ordering-with-new-restaurant-operations-platform-and-20-million-in-funding/)
-
-**O que é:** a Palona AI levantou US$ 20 milhões em Série A e saiu de pedido
-por voz para uma plataforma de operações completa, com um Catering Agent que
-atende telefone, texto, web e e-mail no mesmo cérebro. Já roda em Din Tai Fung,
-Giordano's e Mountain Mike's Pizza.
-
-**Por que toca este projeto:** é literalmente a aposta nº 1 do
-`intel.config.json` — *"end-to-end vence ponto-a-ponto"* — sendo executada por
-outra pessoa, com capital e logos. A tese está certa; o que muda é que ela
-deixou de ser insight e virou corrida. E eles subiram por cima de pedido, que
-é um volume que o Seatable não tem.
-
-**O que a fonte não prova:** são redes americanas de médio porte. Nada sobre
-português, nada sobre restaurante independente, nada sobre pagamento na mesa.
-O Racha continua sendo uma peça que eles não têm.
-
-**A pergunta:** você corre a mesma corrida (empilhar canais até virar
-plataforma) ou vira pra onde eles não vão — o independente brasileiro, com o
-fechamento da conta como porta de entrada em vez do telefone? As duas são
-defensáveis; fazer as duas ao mesmo tempo, não.
-
----
-
-### [DISCUTIR 11/15] Os incumbentes já entenderam que o prêmio é o dado
-**Data:** 2026-08-22 · **Eixos:** P1 A1 D3 E2 L3
-**Fontes:** [Boston Globe, 17/ago](https://www.bostonglobe.com/2026/08/17/lifestyle/reservation-platforms-sevenrooms-opentable-resy/) · [Restaurant Technology News, 13/ago](https://restauranttechnologynews.com/2026/08/mcdonalds-unifies-data-from-nearly-220-million-loyalty-users-as-global-ai-strategy-takes-shape/)
-*(dois itens fundidos — mesmo movimento)*
-
-**O que é:** as plataformas de reserva estão disputando restaurantes com bônus
-de assinatura de seis dígitos, depois de o DoorDash comprar a SevenRooms por
-US$ 1,2 bilhão e a Amex pagar US$ 400 milhões pela Tock. Um restaurateur
-resume no Globe: *"é menos sobre reservas e tudo sobre os dados"*. Em paralelo,
-o McDonald's está consolidando quase 220 milhões de usuários de fidelidade em
-70 mercados — mais de US$ 40 bilhões em vendas atribuídas em 12 meses — num
-data lake global, com a estratégia de IA prometida pro Investor Day de 23/09.
-
-**Por que toca este projeto:** confirma a aposta nº 2 — *"o dado do cliente do
-restaurante é o ativo, não a chamada atendida"* — e mostra que quem tem
-bilhões chegou lá antes. A implicação prática é sobre `known_gaps[1]`: hoje o
-Seatable não fecha o loop de dado entre reserva, atendimento e Racha. Enquanto
-não fechar, o produto é três features, não um CRM.
-
-**O que a fonte não prova:** é tudo mercado americano e rede grande. O
-independente de São Paulo não tem ninguém consolidando o dado dele — que é
-justamente a brecha.
-
-**A pergunta:** o loop de dado (reserva → atendimento → Racha → volta pro
-perfil do cliente) entra agora como a espinha do produto, ou continua sendo
-consequência de features que você vai costurando? Se entra agora, ele
-reordena o roadmap inteiro.
-
----
-
-### [DISCUTIR 10/15] Conector MCP como forma de entregar o dado do restaurante
-**Data:** 2026-08-22 · **Eixos:** P2 A3 D2 E1 L2
-**Fonte:** [GlobeNewswire, 11/ago](https://www.globenewswire.com/news-release/2026/08/11/3342785/0/en/marginedge-secures-80-million-in-series-d-funding-to-power-the-next-generation-of-restaurant-operations.html)
-
-**O que é:** a MarginEdge anunciou US$ 80 milhões em Série D liderada por
-Schooner e Ten Coves, chegando a US$ 162 milhões captados e mais de 13 mil
-restaurantes. O detalhe que interessa não é a rodada: eles embarcaram um
-conector MCP que expõe os dados do restaurante ao ChatGPT e ao Claude.
-
-**Por que toca este projeto:** o Seatable já usa MCP tools na stack, então isto
-não é técnica nova — é um padrão de distribuição. O dono do restaurante
-pergunta "como foi meu sábado?" no assistente que ele já usa, e a resposta vem
-do seu banco. Custo de implementação baixo, e transforma o Seatable de
-aplicativo que ele precisa abrir em fonte que ele consulta de onde já está.
-
-**O que a fonte não prova:** é press release de rodada. Nada sobre adoção do
-conector, nada sobre o que ele realmente expõe.
-
-**A pergunta:** vale expor um servidor MCP do Seatable pro dono do restaurante
-agora, como canal de leitura — ou isso é distração antes de o loop de dado
-existir e ter o que valer a pena ler?
-
 ## Fila de trabalho
 
 Promovidos em 2026-09-01:
@@ -699,6 +621,100 @@ Promovidos em 2026-08-24, os quatro com âncora verificada:
   estande sem preço nem prazo público. Decidir ir como visitante expira ~14/09. [Abrasel](https://abrasel.com.br/noticias/noticias/salao-abrasel-5-motivos-para-participar-do-evento/) · 7/15
 
 ## Arquivo
+
+### [ARQUIVADO 2026-09-14] Três itens de 22/08 — envelheceram sem decisão (23 dias em aberto)
+
+Nenhum dos três recebeu resposta do Stefano em três passadas seguidas (25/08, 01/09, 07/09).
+Conteúdo original preservado abaixo, sem reavaliação de score — arquivado por idade, não por
+descarte de mérito.
+
+<details>
+<summary>[DISCUTIR 11/15] Alguém está fazendo o seu movimento, com US$ 20 milhões — 2026-08-22</summary>
+
+**Eixos:** P3 A1 D2 E2 L3
+**Fonte:** [Restaurant Technology News, 18/ago](https://restauranttechnologynews.com/2026/08/palona-ai-expands-beyond-voice-ordering-with-new-restaurant-operations-platform-and-20-million-in-funding/)
+
+**O que é:** a Palona AI levantou US$ 20 milhões em Série A e saiu de pedido
+por voz para uma plataforma de operações completa, com um Catering Agent que
+atende telefone, texto, web e e-mail no mesmo cérebro. Já roda em Din Tai Fung,
+Giordano's e Mountain Mike's Pizza.
+
+**Por que tocava este projeto:** é literalmente a aposta nº 1 do
+`intel.config.json` — *"end-to-end vence ponto-a-ponto"* — sendo executada por
+outra pessoa, com capital e logos. A tese está certa; o que muda é que ela
+deixou de ser insight e virou corrida. E eles subiram por cima de pedido, que
+é um volume que o Seatable não tem.
+
+**O que a fonte não prova:** são redes americanas de médio porte. Nada sobre
+português, nada sobre restaurante independente, nada sobre pagamento na mesa.
+O Racha continua sendo uma peça que eles não têm.
+
+**A pergunta que ficou sem resposta:** você corre a mesma corrida (empilhar canais até virar
+plataforma) ou vira pra onde eles não vão — o independente brasileiro, com o
+fechamento da conta como porta de entrada em vez do telefone? As duas são
+defensáveis; fazer as duas ao mesmo tempo, não.
+
+</details>
+
+<details>
+<summary>[DISCUTIR 11/15] Os incumbentes já entenderam que o prêmio é o dado — 2026-08-22</summary>
+
+**Eixos:** P1 A1 D3 E2 L3
+**Fontes:** [Boston Globe, 17/ago](https://www.bostonglobe.com/2026/08/17/lifestyle/reservation-platforms-sevenrooms-opentable-resy/) · [Restaurant Technology News, 13/ago](https://restauranttechnologynews.com/2026/08/mcdonalds-unifies-data-from-nearly-220-million-loyalty-users-as-global-ai-strategy-takes-shape/)
+*(dois itens fundidos — mesmo movimento)*
+
+**O que é:** as plataformas de reserva estão disputando restaurantes com bônus
+de assinatura de seis dígitos, depois de o DoorDash comprar a SevenRooms por
+US$ 1,2 bilhão e a Amex pagar US$ 400 milhões pela Tock. Um restaurateur
+resume no Globe: *"é menos sobre reservas e tudo sobre os dados"*. Em paralelo,
+o McDonald's está consolidando quase 220 milhões de usuários de fidelidade em
+70 mercados — mais de US$ 40 bilhões em vendas atribuídas em 12 meses — num
+data lake global, com a estratégia de IA prometida pro Investor Day de 23/09.
+
+**Por que tocava este projeto:** confirma a aposta nº 2 — *"o dado do cliente do
+restaurante é o ativo, não a chamada atendida"* — e mostra que quem tem
+bilhões chegou lá antes. A implicação prática é sobre `known_gaps[1]`: hoje o
+Seatable não fecha o loop de dado entre reserva, atendimento e Racha. Enquanto
+não fechar, o produto é três features, não um CRM.
+
+**O que a fonte não prova:** é tudo mercado americano e rede grande. O
+independente de São Paulo não tem ninguém consolidando o dado dele — que é
+justamente a brecha.
+
+**A pergunta que ficou sem resposta:** o loop de dado (reserva → atendimento → Racha → volta pro
+perfil do cliente) entra agora como a espinha do produto, ou continua sendo
+consequência de features que você vai costurando? Se entra agora, ele
+reordena o roadmap inteiro.
+
+</details>
+
+<details>
+<summary>[DISCUTIR 10/15] Conector MCP como forma de entregar o dado do restaurante — 2026-08-22</summary>
+
+**Eixos:** P2 A3 D2 E1 L2
+**Fonte:** [GlobeNewswire, 11/ago](https://www.globenewswire.com/news-release/2026/08/11/3342785/0/en/marginedge-secures-80-million-in-series-d-funding-to-power-the-next-generation-of-restaurant-operations.html)
+
+**O que é:** a MarginEdge anunciou US$ 80 milhões em Série D liderada por
+Schooner e Ten Coves, chegando a US$ 162 milhões captados e mais de 13 mil
+restaurantes. O detalhe que interessa não é a rodada: eles embarcaram um
+conector MCP que expõe os dados do restaurante ao ChatGPT e ao Claude.
+
+**Por que tocava este projeto:** o Seatable já usa MCP tools na stack, então isto
+não é técnica nova — é um padrão de distribuição. O dono do restaurante
+pergunta "como foi meu sábado?" no assistente que ele já usa, e a resposta vem
+do seu banco. Custo de implementação baixo, e transforma o Seatable de
+aplicativo que ele precisa abrir em fonte que ele consulta de onde já está.
+
+**O que a fonte não prova:** é press release de rodada. Nada sobre adoção do
+conector, nada sobre o que ele realmente expõe.
+
+**A pergunta que ficou sem resposta:** vale expor um servidor MCP do Seatable pro dono do restaurante
+agora, como canal de leitura — ou isso é distração antes de o loop de dado
+existir e ter o que valer a pena ler?
+
+</details>
+
+---
 
 ### [RESOLVIDO 2026-09-01] O loop integrado deixou de ser exclusividade de quem é um produto só
 
