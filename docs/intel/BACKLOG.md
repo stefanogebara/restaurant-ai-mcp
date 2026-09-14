@@ -176,8 +176,8 @@ lote inteiro sai numa chamada em vez de uma REST call por destinatário.
 
 **Por que dói mesmo assim:** o repo já reimplementa isso na mão, dois caminhos diferentes, nenhum
 checando a preferência real do restaurante:
-- `api/cron/send-reminders.js` — loop sequencial via Twilio, uma chamada Twilio + 500ms de espera
-  por destinatário.
+- `api/_crons/send-reminders.js` (moveu de `api/cron/` no #135, 09/09) — loop sequencial via
+  Twilio, uma chamada Twilio + 500ms de espera por destinatário.
 - `api/_services/campaignService.js` — importa `sendTemplateMessage` de
   `api/_lib/whatsapp-sender.js`, que é **Meta-only**, sem checar `whatsapp_provider` do
   restaurante.
@@ -195,7 +195,7 @@ N×(request+500ms) para uma chamada, sem perda de entregabilidade.
 
 **Spike (1 dia):** script isolado no scratchpad chamando o endpoint REST/SDK de Bulk Messaging do
 Twilio contra 5-10 números sandbox, replicando o `contentSid` + variáveis (nome, restaurante,
-horário, pax) hoje usados em `sendTemplateMessage` de `send-reminders.js`; comparar latência total,
+horário, pax) hoje usados em `sendTemplateMessage` de `api/_crons/send-reminders.js`; comparar latência total,
 taxa de sucesso, e se o fallback WhatsApp→SMS funciona quando o número não tem WhatsApp ativo.
 
 **Medir:** latência do lote cai para menos de 5s (vs. N×~1s do loop atual) e taxa de erro igual ou
@@ -207,7 +207,7 @@ tem, ou o SDK `twilio` `^5.10.3` instalado não expuser o endpoint sem chamada R
 — não vale trocar um cron de produção (lembretes de reserva) por uma dependência Public Beta sem
 SLA.
 
-**Toca:** `api/cron/send-reminders.js`, `api/_services/campaignService.js`, `api/_lib/whatsapp-sender.js`, `api/_lib/whatsapp/message-sender.js`, `api/_lib/channels/twilio-adapter.js`
+**Toca:** `api/_crons/send-reminders.js`, `api/_services/campaignService.js`, `api/_lib/whatsapp-sender.js`, `api/_lib/whatsapp/message-sender.js`, `api/_lib/channels/twilio-adapter.js`
 **Status:** aberto
 
 ---
