@@ -11,6 +11,125 @@
 
 ## Em aberto — precisa de decisão do Stefano
 
+### [DISCUTIR 10/15] OpenAI lança GPT-Live-1, voz full-duplex com backend delegado
+**Data:** 2026-09-10 · **Fonte:** [OpenAI, changelog](https://developers.openai.com/api/docs/changelog) · [testingcatalog.com](https://www.testingcatalog.com/openai-launches-gpt-live-1-for-full-duplex-voice-agents/) · **Eixos:** P3 A2 D2 E1 L2
+
+**O que é:** GPT-Live-1 (GA desde 10/09) é uma camada de áudio full-duplex separada do
+raciocínio — delega tools/reasoning via "Responses delegation" (modelo OpenAI) ou "client
+delegation" (backend próprio). US$0,05/min pela voz, backend cobrado à parte, 12 vozes
+novas. **Não é `gpt-realtime` com nome trocado**: a doc de guias da OpenAI trata as duas
+como categorias distintas — a Realtime API roda em `gpt-realtime-2.1` (modelo único
+voz-para-voz, já uma revisão do `gpt-realtime` registrado no Radar de 07/09), enquanto
+GPT-Live é a camada delegada. Benchmarks (+30pp Full Duplex Bench sobre gpt-realtime-2.1,
+#1 Tau3 com GPT-6 Astra) são autodeclarados, vistos só via agregador.
+
+**Por que toca este projeto:** `api/_voice-server/backends/openai-realtime.js:14` hardcoda
+`gpt-4o-realtime-preview` como motor único de voz-e-raciocínio; `base-backend.js` já define
+a interface plugável e `ws-server.js:255` já tem um stub `PersonaPlexBackend` — o encaixe
+para um terceiro backend existe. O modo client delegation abriria a possibilidade de rodar
+o raciocínio de voz via OpenRouter, hoje ignorado pelos dois motores de voz apesar do
+`settled` "OpenRouter é o provedor único de LLM".
+
+**O que a fonte não prova:** se "client delegation" suporta o padrão de bridging deste
+repo (WebSocket cru via Fly.io recebendo Twilio Media Streams) ou só apps WebRTC/Realtime
+tradicionais — a compatibilidade com o pipeline PSTN atual é hipótese, não fato verificado.
+
+**A pergunta:** vale um spike plugando GPT-Live-1 em client delegation como terceiro
+backend, testando latência/barge-in contra o `server_vad` hardcoded atual — ou isso fica
+atrás do known_gap maior (zero instrumentação de voz em qualquer motor hoje), que troca de
+fornecedor não resolve sozinha?
+
+---
+
+### [DISCUTIR 10/15] Presets da OpenRouter — trocar redeploy por dashboard custa o freio do code-review
+**Data:** 2026-09-10 · **Fonte:** [OpenRouter, guia de Presets](https://openrouter.ai/docs/guides/features/presets) · [blog, 10/09](https://openrouter.ai/blog/tutorials/presets/) · **Eixos:** P3 A2 D2 E2 L1
+
+**O que é:** Presets é config-as-code para chamada de LLM — um conjunto nomeado e versionado de
+modelo, system prompt, roteamento de provedor e parâmetros, referenciável como `@preset/slug` e
+editável pelo dashboard sem redeploy. O post de 10/09 é reforço de um recurso lançado em
+junho/2025, não lançamento novo — a OpenRouter não datou o que mudou de fato nesta semana.
+
+**Por que toca este projeto:** `api/_lib/ai-client.js` é o único cliente de LLM do repo (51
+arquivos não-teste importam `getAI()`/`AI_MODEL`), com `AI_MODEL`, `AI_MODEL_FAST` e
+`AI_MODEL_AGENT` hardcoded via env — trocar o cérebro da Olímpia hoje exige editar código e fazer
+deploy. Mas o padrão dominante do repo (`api/_lib/manager-agent.js`) monta o `systemPrompt` por
+chamada com dado ao vivo (snapshot, staffing, depósitos, KB) — um preset não cobre isso, só o
+campo `model`/parâmetros. Achado lateral: a OpenRouter também expõe `/api/v1/messages` no formato
+Anthropic Messages nativo, potencialmente simplificando a tradução manual em `ai-client.js`
+(linhas 160-299) — fora do escopo deste candidato, registrado para referência futura.
+
+**O que a fonte não prova:** que o ganho (sem redeploy) supera o custo — hoje trocar
+`AI_MODEL_AGENT` passa por PR e review; um preset editável no dashboard da OpenRouter tira esse
+freio de um modelo que já foi escolhido por avaliação cuidadosa contra o caso Bario
+(`ai-client.js:94-105`: Sonnet 5/5, Haiku 7/8, Gemini 0/5).
+
+**A pergunta:** vale um spike de meio dia migrando só `AI_MODEL_AGENT` para preset, mantendo o
+harness de eval como gate antes de qualquer troca de versão — ou o ganho operacional não paga o
+risco de alguém trocar o modelo da Olímpia fora do fluxo de review?
+
+---
+
+### [DISCUTIR 8/15] Meta Muse (alpha fechado) reserva restaurante via OpenTable
+**Data:** 2026-09-09 · **Fonte:** [Skift](https://skift.com/2026/09/09/meta-says-its-muse-agent-books-travel-heres-what-that-actually-means/) · [Dataconomy](https://dataconomy.com/2026/09/09/meta-launches-muse-personal-ai-agent/) · **Eixos:** P2 A1 D2 E1 L2
+
+**O que é:** o Muse, agente pessoal da Meta, entrou em closed alpha (convite, EUA) em 8/set com
+conectores para OpenTable, Gmail e Google Calendar. Para viagem o mecanismo é comprovadamente
+assimétrico — voo via API real da Duffel com pagamento Stripe, hotel via automação de navegador
+sobre sites de consumidor — mas para restaurante nenhuma fonte mostra qual caminho o Muse usa; a
+única "confirmação" da OpenTable é a mesma frase-padrão já usada para os outros 20+ parceiros de
+descoberta por LLM (ChatGPT, Copilot, Perplexity, Alexa — DISCUTIR 8/15, 31/08, ver abaixo).
+Sem volume de reservas, sem contagem de usuários do alpha, sem taxa de sucesso. *(Absorve o
+candidato descartado desta mesma passada sobre "ChatGPT reserva via OpenTable/Resy/Yelp" — mesmo
+tema, ver `seen.jsonl`.)*
+
+**Por que toca este projeto:** é a terceira confirmação em três semanas de que a OpenTable virou
+camada de agregação para qualquer front-end de IA (`bets[0]`) — mas o mecanismo relatado só afeta
+restaurantes já cadastrados na OpenTable, que não é a base do Seatable (restaurante independente
+brasileiro). Nenhum arquivo do repo muda hoje: `api/external-booking-webhook.js` já aceita
+`source: 'opentable'`, mas o Muse não é uma origem de webhook nova, é um front-end que reserva
+*dentro* da OpenTable.
+
+**O que a fonte não prova:** fontes primárias (Skift, Dataconomy) devolveram 403 no fetch direto
+— mecanismo reconstruído via busca com domínio restrito e cruzamento com testingcatalog.com, não
+leitura direta da página.
+
+**A pergunta:** a Meta ser dona do WhatsApp e estar construindo um agente pessoal que já conecta a
+OpenTable levanta o cenário de o Muse rotear reserva de restaurante independente brasileiro direto
+pelo WhatsApp Business, competindo com o próprio canal de voz/WhatsApp do Seatable. Isso já muda
+prioridade em `bets[0]` hoje, ou é cedo — Muse é alpha fechado só-EUA, sem tração declarada em
+restaurante e sem sinal de que toca WhatsApp Business API?
+
+---
+
+### [DISCUTIR 8/15] Vercel GA o Flat Rate CDN pro plano Pro
+**Data:** 2026-09-08 · **Fonte:** [Vercel](https://vercel.com/changelog/flat-rate-cdn-is-now-ga-for-pro-teams) · **Eixos:** P2 A2 D1 E2 L1
+
+**O que é:** CDN do Pro sai de cobrança por uso (Fast/Blob Data Transfer, CDN Requests, eventos de
+Observability gerados por essas requisições) pra mensalidade fixa — 1M de requisições + 1TB de
+transferência/mês inclusos sem custo extra, times novos já nascem com a opção ligada, times
+existentes migram opcionalmente em Billing. "Spike protection" fica ligado por padrão: tráfego
+acima da capacidade contratada é servido normal, sem degradação e sem cobrança extra (sujeito a
+uso justo).
+
+**Por que toca este projeto:** o `CLAUDE.md` tem uma seção inteira de "Vercel Cost Rules" por
+causa do incidente de US$375 de março/2026 — mas aquele incidente foi de invocação/duração de
+função (cron + serverless), não de CDN/bandwidth. Ligar o Flat Rate CDN é grátis dentro do tier
+atual e é um segundo amortecedor de fatura (tráfego), relevante à medida que a Fase 12D (landing
+com vídeo, widget de reserva embedado em sites de terceiros) aumenta a superfície de tráfego
+público.
+
+**O que a fonte não prova:** o teto real da política de "uso justo" do spike protection, nem um
+caso real de time que migrou e comparou fatura antes/depois — é anúncio de produto, não estudo de
+caso. Nenhum arquivo do repo muda — é toggle de Billing na conta Vercel, fora do código
+(`vercel.json` não controla tarifação de CDN); por isso o veredito fica preso em DISCUTIR mesmo
+sem trava de arquivo real se aplicar por completo.
+
+**A pergunta:** liga o Flat Rate CDN agora — de graça dentro do tier atual, sem downside
+aparente — só por precaução dado o histórico de fatura, ou espera ter tráfego real de
+marketing/demo (Fase 12D) pra justificar mexer na config de billing do time?
+
+---
+
 ### [DISCUTIR 10/15] Procedures GA na ElevenLabs — a peça que faltava não é tool, é orquestração
 **Data:** 2026-09-07 · **Eixos:** P3 A2 D2 E2 L1
 **Fonte:** [ElevenLabs changelog, 24/ago](https://elevenlabs.io/docs/changelog/2026/8/24)
@@ -101,6 +220,18 @@ que não existe — o deploy do servidor de voz está quebrado hoje.*
 **Data:** 2026-09-01 · **Eixos:** P2 A1 D2 E1 L2
 **Fontes:** [bookline.ai](https://bookline.ai/en/restaurants) · [ICF Capital, Série A 30/09/2025](https://www.icf.cat/en/actualitat/noticies/2025/bookline-tanca-ronda-serie-a-accelerar-expansio-internacional)
 
+**Atualização 2026-09-10 — segundo data point do mesmo movimento (fundido, não item novo):** a
+HeyDiga (Madri, €5,5M seed, K Fund/Italian Founders Fund/Decelera) roda o mesmo overlay de
+voz+WhatsApp sobre software de reserva já instalado, mas como 1 de 5 verticais white-label
+(DigaFood — as outras são beleza, automotivo, clínica, imobiliário). 200+ clientes em Espanha/
+França/Itália, 78% de resolução sem humano — autodeclarado, sem metodologia publicada. O capital
+novo mira justamente aprofundar a integração com reserva de restaurante, apontada pela própria
+empresa como a vertical de maior volume de ligação não atendida entre as cinco. **Igual à
+Bookline, Brasil e LatAm não aparecem em nenhuma fonte primária** — a única ressalva geográfica
+declarada é generalizar idioma/norma dentro da própria Europa. Fontes:
+[Dealroom](https://dealroom.co/news/149956-heydiga-raises-5-5m-seed-to-automate-business-customer-chats-with-ai/) ·
+[Pomegra](https://pomegra.io/startups/heydiga-lands-5-5m-to-automate-business-calls-2026-09-11).
+
 **O que é:** a Bookline (Barcelona, ~7 anos) vende camada conversacional para hotelaria — agente de
 voz que atende o telefone, agente de WhatsApp e campanhas —, com a **voz como carro-chefe**. Não é
 sistema de reservas: é overlay que grava dentro de TheFork, Cover Manager e Restoo. Série A de €3,5M
@@ -118,10 +249,13 @@ aparece em nenhuma fonte primária**: as prioridades LATAM declaradas são Méxi
 Somando ao overlay sobre booking europeu (TheFork/CoverManager não são players no Brasil) e à base
 majoritariamente hoteleira, o restaurante independente de SP com WhatsApp-first segue descoberto.
 
-**A pergunta:** a ausência do Brasil é barreira real — PT-BR, WhatsApp como canal primário, ausência
-de TheFork/CoverManager aqui — ou é só sequenciamento de roadmap? Se for sequenciamento, quantos
-meses de janela a `bets[2]` realmente tem, e a resposta é acelerar contrato âncora em SP ou
-aprofundar o que eles não têm (o loop de dado do cliente, já vivo em
+**A pergunta, revisada com dois data points:** dois players europeus financiados (Bookline em
+01/09, HeyDiga agora) estão dobrando aposta especificamente em restaurante como vertical de maior
+chamada não atendida, e nenhum dos dois cita Brasil/LatAm — isso é evidência de que a janela
+geográfica da `bets[2]` é mais curta do que se pensava, ou a ausência repetida em ambas as fontes
+primárias é, na verdade, o sinal mais forte de que a tese segue de pé? Se for sequenciamento,
+quantos meses de janela a `bets[2]` realmente tem, e a resposta é acelerar contrato âncora em SP
+ou aprofundar o que nenhum dos dois tem (o loop de dado do cliente, já vivo em
 `api/_lib/pos/service-completion-core.js`)?
 
 ---
@@ -469,6 +603,21 @@ mudou, só ganhou mais uma semana de atraso sobre o prazo que a própria Meta pr
 
 ---
 
+**Absorvido em 2026-09-14 — terceira semana sem número, agora vindo de um BSP em vez de imprensa,
+mesma conta de sempre.** A Fortics (BSP brasileiro) publicou US$0,0068/mensagem de service para o
+Brasil a partir de 01/10, atribuído a um "webinar" sem link. Checagem cruzada: US$0,0625, que a
+Fortics lista como a tarifa nova de marketing, **já é a tarifa vigente hoje** — não é mudança de
+outubro. E o número de service repete a mesma extrapolação (tarifa de utility BR corrente
+projetada para service) já feita por quatro fontes de imprensa em 01/09 e por este BSP agora, sem
+rate card, CSV ou comunicação verificável da Meta citada no artigo. Reaberta hoje, a doc-mãe da
+Meta mantém o texto idêntico sobre o prazo vencido — **agora 13 dias de atraso** — e acrescenta
+só a regra estrutural de que service seguirá o mesmo valor de utility/authentication por mercado,
+o que explica a lógica por trás de toda extrapolação (Fortics incluída) mas não confirma o número.
+A hipótese aberta desde 01/09 de que BSPs recebem o rate card antes da doc pública segue sem
+confirmação — nada na fonte sugere que a Fortics tenha acesso privilegiado. [Fortics](https://www.fortics.com.br/mudancas-precos-whatsapp-business-api-outubro-2026/)
+
+---
+
 ### [DISCUTIR 8/15] Qual é o teto de concorrência do workspace ElevenLabs?
 **Data:** 2026-08-24 · **Eixos:** P2 A2 D1 E2 L1
 **Fonte:** [ElevenLabs changelog, 17/ago](https://elevenlabs.io/docs/changelog/2026/8/17)
@@ -532,6 +681,37 @@ Promovidos em 2026-08-24, os quatro com âncora verificada:
 
 ## Radar
 
+- `2026-09-09` **ElevenLabs negocia tender offer a ~US$22bi**, dobrando o valuation do Series D
+  fechado em 04/02/2026 (US$11bi, US$500M, liderado por Sequoia) — é venda secundária, não injeta
+  capital novo, e nenhuma fonte confirma mudança de preço/SLA. Fornecedor único de voz padrão do
+  Seatable (`VALID_ENGINES` em `api/voice-engine-settings.js`); trajetória US$3,3bi→6,6bi→11bi→22bi
+  em ~18 meses é sinal de poder de precificação crescente. [TheNextWeb](https://thenextweb.com/news/elevenlabs-tender-offer-22-billion-valuation) · 7/15
+- `2026-09-09` **OpenRouter lança US In-Region Routing** — roteamento restrito a EUA ou UE, só nos
+  planos Business/Enterprise; sem região Brasil, não resolve LGPD nem muda nada para o Seatable
+  hoje. [OpenRouter](https://openrouter.ai/blog/announcements/us-in-region-routing/) · 7/15
+- `2026-09-09` **Resy desativa (e reativa) conta cujo agente Instinct disparou 200–375 req/hora**
+  tentando reserva disputada; ToS já proíbe bots autônomos — movimento inverso ao Meta Muse+
+  OpenTable da mesma semana (plataforma fechando vs. abrindo a agentes de terceiros, ver "Em
+  aberto"). Sem âncora no repo: Seatable não opera como agente de terceiro contra APIs de reserva
+  alheias. [Restaurant Business](https://www.restaurantbusinessonline.com/technology/ai-agents-can-help-diners-book-table-it-can-also-get-them-banned) · 5/15
+- `2026-09-09` **Vercel Password Protection passa de US$150/mês por time pra US$20/mês por
+  projeto (Pro)** — o repo não usa a feature hoje (grep vazio por `password.protect`/
+  `VERCEL_PASSWORD`); produção é pública por design. Relevante só se algum dia quisermos proteger
+  um preview/staging isolado. [Vercel](https://vercel.com/changelog/password-protection-now-costs-20-per-project-per-month-on-pro) · 5/15
+- `2026-09-10` **IN BCB 746 tira do Pix por aproximação seu limite próprio** (vig. 01/10/2026),
+  funde ao teto geral de R$200/R$1.000 por dispositivo não cadastrado (regra em si de 2024) — zero
+  âncora: Pix não passa por nenhum fluxo de pagamento do Seatable, e o único canal Racha→Seatable
+  (`api/racha-notify.js`) é KYC/dinheiro do recebedor, não limite do pagador.
+  [BCB](https://www.bcb.gov.br/estabilidadefinanceira/exibenormativo?tipo=Instru%C3%A7%C3%A3o%20Normativa%20BCB&numero=746) · 5/15
+- `2026-08-28` **iFood/Zoop leva pagamento no chat ao Ailo** — protocolo próprio "a partir de
+  open-source" da Zoop (não é o AP2 do Google, já registrado via Cielo em 07/09), Pix/cartão com
+  um botão dentro do WhatsApp, sem número de adoção; expansão a Decolar/Sympla/OLX é roadmap, não
+  fato. Mesma família da "Cris" (concorrente direto já registrado).
+  [mobiletime.com.br](https://www.mobiletime.com.br/noticias/28/08/2026/ifood-pagamento-agentico/) · 6/15
+- `2026-09-09` **Twilio `<Say>` ganha vozes ElevenLabs** (Public Beta) — TTS unidirecional só para
+  prompts estáticos; não é alternativa ao pipeline Media Streams→Fly.io, só cosmética possível na
+  ligação de briefing (`api/_lib/briefing-sender.js:91`).
+  [Twilio changelog](https://www.twilio.com/en-us/changelog/elevenlabs-voices-for-say-is-now-public-beta) · 5/15
 - `2026-09-07` **SoundHound fecha aquisição da LivePerson por ~US$43M** (EV ~US$250M), unindo a voz
   agêntica da SoundHound (já vende para drive-thru de QSR americano) com a mensageria enterprise da
   LivePerson (25 do Fortune 100) numa plataforma "omnichannel" via OASYS. Zero menção a reserva de
