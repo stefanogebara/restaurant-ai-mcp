@@ -1,85 +1,66 @@
-import { describe, it, expect, vi, beforeAll } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 
-// Stub IntersectionObserver for jsdom (framer-motion viewport animations need it)
 beforeAll(() => {
   globalThis.IntersectionObserver = class IntersectionObserver {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    constructor(_cb: IntersectionObserverCallback) {}
+    constructor(_callback: IntersectionObserverCallback) {}
     observe() {}
     unobserve() {}
     disconnect() {}
   } as unknown as typeof globalThis.IntersectionObserver;
 });
 
-// Mock heavy components to keep smoke test fast
-vi.mock('../components/HeroSection', () => ({
-  default: () => <div data-testid="hero-section">Hero</div>,
+vi.mock('../components/LaunchNav', () => ({ default: () => <div data-testid="launch-nav">Nav</div> }));
+vi.mock('../components/PhotographicHero', () => ({ default: () => <div data-testid="photographic-hero">Hero</div> }));
+vi.mock('../components/LaunchProductSection', () => ({ default: () => <div data-testid="product-section">Product</div> }));
+vi.mock('../components/CinematicServiceStory', () => ({ default: () => <div data-testid="service-story">Story</div> }));
+vi.mock('../components/LaunchClosingSection', () => ({
+  default: () => (
+    <div data-testid="closing-section">
+      <a href="/precos">Pricing</a>
+      <a href="/demo/setup">Create my restaurant preview</a>
+    </div>
+  ),
 }));
-vi.mock('../components/PresetDemoSection', () => ({
-  default: () => <div data-testid="preset-demo-section">PresetDemo</div>,
-}));
-vi.mock('../components/WhatsAppWidgetSection', () => ({
-  default: () => <div data-testid="whatsapp-widget-section">WhatsApp</div>,
-}));
-vi.mock('../components/BeforeAfterSection', () => ({
-  default: () => <div data-testid="before-after-section">BeforeAfter</div>,
-}));
-vi.mock('../components/Footer', () => ({
-  default: () => <div data-testid="footer">Footer</div>,
-}));
-vi.mock('../components/LandingNav', () => ({
-  default: () => <div data-testid="landing-nav">Nav</div>,
-}));
-vi.mock('../components/DashboardWalkthroughSection', () => ({
-  default: () => <div data-testid="walkthrough-section">Walkthrough</div>,
-}));
-vi.mock('../../lib/analytics', () => ({
-  trackLandingPageViewed: vi.fn(),
-}));
+vi.mock('../components/LaunchFooter', () => ({ default: () => <div data-testid="launch-footer">Footer</div> }));
+vi.mock('../../lib/analytics', () => ({ trackLandingPageViewed: vi.fn() }));
 
 import LandingPage from '../pages/LandingPage';
 
 function renderPage() {
-  return render(
-    <MemoryRouter>
-      <LandingPage />
-    </MemoryRouter>,
-  );
+  return render(<MemoryRouter><LandingPage /></MemoryRouter>);
 }
 
-describe('LandingPage', () => {
-  it('renders all main sections without crashing', () => {
+describe('LandingPage — photographic launch rebuild', () => {
+  it('renders the launch narrative in order', () => {
     renderPage();
-    expect(screen.getByTestId('landing-nav')).toBeInTheDocument();
-    expect(screen.getByTestId('hero-section')).toBeInTheDocument();
-    expect(screen.getByTestId('preset-demo-section')).toBeInTheDocument();
-    expect(screen.getByTestId('whatsapp-widget-section')).toBeInTheDocument();
-    expect(screen.getByTestId('walkthrough-section')).toBeInTheDocument();
-    expect(screen.getByTestId('before-after-section')).toBeInTheDocument();
-    expect(screen.getByTestId('footer')).toBeInTheDocument();
+    const ids = ['launch-nav', 'photographic-hero', 'product-section', 'service-story', 'closing-section', 'launch-footer'];
+    ids.forEach((id) => expect(screen.getByTestId(id)).toBeInTheDocument());
+
+    const renderedOrder = ids.map((id) => screen.getByTestId(id));
+    renderedOrder.slice(1).forEach((element, index) => {
+      expect(renderedOrder[index].compareDocumentPosition(element) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
   });
 
-  // 7d3ea560: voice-agent test removed from the landing page; the full
-  // pricing grid moved to /precos — the landing now shows a teaser linking
-  // there instead of rendering PricingSection inline.
-  it('links to the dedicated pricing page instead of an inline pricing grid', () => {
+  it('does not restore the old demo-widget stack', () => {
     renderPage();
-    expect(screen.queryByTestId('voice-widget-section')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('pricing-section')).not.toBeInTheDocument();
-    const pricingLinks = document.querySelectorAll('a[href="/precos"]');
-    expect(pricingLinks.length).toBeGreaterThanOrEqual(1);
+    expect(screen.queryByTestId('preset-demo-section')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('whatsapp-widget-section')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('before-after-section')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('walkthrough-section')).not.toBeInTheDocument();
   });
 
-  it('renders the final CTA section', () => {
+  it('preserves pricing and personalized preview conversion routes', () => {
     renderPage();
-    expect(screen.getByText(/Ready to reimagine/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /pricing/i })).toHaveAttribute('href', '/precos');
+    expect(screen.getByRole('link', { name: /create my restaurant preview/i })).toHaveAttribute('href', '/demo/setup');
   });
 
-  it('renders the scroll-to-top button conditionally', () => {
-    renderPage();
-    // Button is hidden by default (scrollY < 600)
+  it('does not add a floating scroll-to-top control', () => {
+    const { container } = renderPage();
+    expect(container.querySelector('main#main-content')).toBeInTheDocument();
     expect(screen.queryByLabelText(/scroll to top/i)).not.toBeInTheDocument();
   });
 });

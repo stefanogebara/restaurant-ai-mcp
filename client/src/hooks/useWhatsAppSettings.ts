@@ -77,6 +77,7 @@ export function useWhatsAppStatus() {
       const response = await authFetch('/api/whatsapp-settings?action=status');
       if (!response.ok) throw new Error('Failed to load WhatsApp status');
       const result = await response.json();
+      if (!result.success || !result.data) throw new Error('Failed to load WhatsApp status');
       return result.data;
     },
     staleTime: SETTINGS_STALE_TIME,
@@ -112,7 +113,14 @@ export function useWhatsAppTestMessageStatus() {
       return result.data ?? null;
     },
     staleTime: 5 * 1000,
-    refetchInterval: 15 * 1000,
+    // Poll only while a real delivery is pending, bounded to ten minutes.
+    // An idle settings page must not invoke a serverless function forever.
+    refetchInterval: (query) => {
+      const message = query.state.data;
+      if (!message || !['accepted', 'sent', 'queued'].includes(message.status)) return false;
+      const requested = Date.parse(message.requested_at);
+      return Number.isFinite(requested) && Date.now() - requested < 10 * 60 * 1000 ? 15 * 1000 : false;
+    },
   });
 }
 
@@ -165,11 +173,13 @@ export function useSendTestMessage() {
     // se fosse o atual. Aqui isso significaria dizer "entregue" sobre uma
     // mensagem que acabou de ser aceita, ou esconder o cooldown que o próprio
     // servidor acabou de informar.
+    // A guarda é o id, não só a presença de `data`: um registro sem id não dá
+    // para reconciliar com o refetch seguinte.
     onSuccess: (payload) => {
-      if (payload?.data) queryClient.setQueryData(['whatsappTestStatus'], payload.data);
+      if (payload?.data?.id) queryClient.setQueryData(['whatsappTestStatus'], payload.data);
     },
     onError: (error: Error & { latestTestMessage?: WhatsAppTestMessageStatus | null }) => {
-      if (error?.latestTestMessage) {
+      if (error?.latestTestMessage?.id) {
         queryClient.setQueryData(['whatsappTestStatus'], error.latestTestMessage);
       }
     },

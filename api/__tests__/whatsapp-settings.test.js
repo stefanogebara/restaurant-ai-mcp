@@ -364,7 +364,7 @@ describe('WhatsApp Settings: test message', () => {
       process.env.TWILIO_AUTH_TOKEN = 'test-token';
       process.env.TWILIO_WHATSAPP_NUMBER = '+15551234567';
       mockSingle.mockResolvedValueOnce({
-        data: { restaurant_name: 'Boteco do Samba' },
+        data: { restaurant_name: 'Boteco do Samba', agent_language: 'pt-BR' },
         error: null,
       });
       getWhatsAppProvider.mockResolvedValueOnce('twilio');
@@ -410,7 +410,9 @@ describe('WhatsApp Settings: test message', () => {
     }
   });
 
-  test('Meta provider uses approved template language from WABA metadata', async () => {
+  test.each([
+    ['pt-BR', 'pt_BR'], ['pt_BR', 'pt_BR'], ['en', 'en_US'], ['es', 'es'],
+  ])('Meta uses a diagnostic in the configured language %s', async (configuredLanguage, templateLanguage) => {
     const originalEnv = {
       wabaId: process.env.WHATSAPP_WABA_ID,
       token: process.env.WHATSAPP_ACCESS_TOKEN,
@@ -424,14 +426,14 @@ describe('WhatsApp Settings: test message', () => {
         ok: true,
         json: async () => ({
           data: [
-            { name: 'seatable_feedback_request', status: 'APPROVED', category: 'UTILITY', language: 'pt_BR' },
+            { name: 'seatable_connection_test', status: 'APPROVED', category: 'UTILITY', language: templateLanguage },
             { name: 'seatable_promotion', status: 'APPROVED', category: 'MARKETING', language: 'en' },
           ]
         }),
       });
 
       mockSingle.mockResolvedValueOnce({
-        data: { restaurant_name: 'Boteco do Samba', language: 'en' },
+        data: { restaurant_name: 'Boteco do Samba', agent_language: configuredLanguage },
         error: null,
       });
       getWhatsAppProvider.mockResolvedValueOnce('meta');
@@ -455,15 +457,15 @@ describe('WhatsApp Settings: test message', () => {
       expect(res.status).toHaveBeenCalledWith(200);
       expect(sendTemplateMessage).toHaveBeenCalledWith(
         '+5511999999999',
-        'seatable_feedback_request',
-        'pt_BR',
-        ['there', 'Boteco do Samba']
+        'seatable_connection_test',
+        templateLanguage,
+        ['Boteco do Samba']
       );
       expect(sendWhatsAppMessage).not.toHaveBeenCalled();
       expect(createWhatsAppTestMessage).toHaveBeenCalledWith(expect.objectContaining({
         provider: 'meta',
-        templateName: 'seatable_feedback_request',
-        templateLanguage: 'pt_BR',
+        templateName: 'seatable_connection_test',
+        templateLanguage,
       }));
     } finally {
       if (originalEnv.wabaId) process.env.WHATSAPP_WABA_ID = originalEnv.wabaId;
@@ -474,9 +476,9 @@ describe('WhatsApp Settings: test message', () => {
     }
   });
 
-  test('Meta provider falls back across template languages when metadata is unavailable', async () => {
+  test('Meta provider refuses to guess a template when metadata is unavailable', async () => {
     mockSingle.mockResolvedValueOnce({
-      data: { restaurant_name: 'Boteco do Samba', language: 'en' },
+      data: { restaurant_name: 'Boteco do Samba', agent_language: 'en' },
       error: null,
     });
     getWhatsAppProvider.mockResolvedValueOnce('meta');
@@ -493,34 +495,37 @@ describe('WhatsApp Settings: test message', () => {
 
     await handler(req, res);
 
-    expect(res.status).toHaveBeenCalledWith(200);
-    expect(sendTemplateMessage).toHaveBeenNthCalledWith(
-      1,
-      '+5511999999999',
-      'seatable_feedback_request',
-      'en',
-      ['there', 'Boteco do Samba']
-    );
-    expect(sendTemplateMessage).toHaveBeenNthCalledWith(
-      2,
-      '+5511999999999',
-      'seatable_feedback_request',
-      'en_US',
-      ['there', 'Boteco do Samba']
-    );
-    expect(sendTemplateMessage).toHaveBeenNthCalledWith(
-      3,
-      '+5511999999999',
-      'seatable_feedback_request',
-      'pt_BR',
-      ['there', 'Boteco do Samba']
-    );
+    expect(res.status).toHaveBeenCalledWith(409);
+    expect(sendTemplateMessage).not.toHaveBeenCalled();
     expect(sendWhatsAppMessage).not.toHaveBeenCalled();
   });
 
-  test('returns 400 when message send fails', async () => {
-    mockSingle.mockResolvedValueOnce({ data: { restaurant_name: 'Test', language: 'en' }, error: null });
-    sendTemplateMessage.mockResolvedValueOnce({ success: false, error: 'Invalid number' });
+  test.each(['seatable_feedback_request', 'seatable_connection_test'])('never substitutes a survey or foreign-language template: %s', async name => {
+    const oldFetch = global.fetch;
+    const oldWaba = process.env.WHATSAPP_WABA_ID;
+    const oldToken = process.env.WHATSAPP_ACCESS_TOKEN;
+    try {
+      process.env.WHATSAPP_WABA_ID = 'test-waba';
+      process.env.WHATSAPP_ACCESS_TOKEN = 'test-token';
+      global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ data: [
+        { name, status: 'APPROVED', language: name === 'seatable_feedback_request' ? 'pt_BR' : 'en_US' },
+      ] }) });
+      mockSingle.mockResolvedValueOnce({ data: { restaurant_name: 'Cantina', agent_language: 'pt-BR' }, error: null });
+      const { req, res } = mkReqRes({ method: 'POST', query: { action: 'test' }, body: { phone_number: '+5511999999999' } });
+      await handler(req, res);
+      expect(res.status).toHaveBeenCalledWith(409);
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ code: 'TEST_TEMPLATE_UNAVAILABLE' }));
+      expect(sendTemplateMessage).not.toHaveBeenCalled();
+      expect(createWhatsAppTestMessage).not.toHaveBeenCalled();
+    } finally {
+      global.fetch = oldFetch;
+      if (oldWaba === undefined) delete process.env.WHATSAPP_WABA_ID; else process.env.WHATSAPP_WABA_ID = oldWaba;
+      if (oldToken === undefined) delete process.env.WHATSAPP_ACCESS_TOKEN; else process.env.WHATSAPP_ACCESS_TOKEN = oldToken;
+    }
+  });
+
+  test('refuses to send with missing restaurant context instead of using placeholders', async () => {
+    mockSingle.mockResolvedValueOnce({ data: null, error: { message: 'column missing' } });
 
     const { req, res } = mkReqRes({
       method: 'POST',
@@ -529,8 +534,10 @@ describe('WhatsApp Settings: test message', () => {
     });
     await handler(req, res);
 
-    expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: 'Invalid number' }));
+    expect(res.status).toHaveBeenCalledWith(409);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ code: 'TEST_CONFIG_INCOMPLETE' }));
+    expect(mockSelect).toHaveBeenCalledWith('restaurant_name, agent_language');
+    expect(sendTemplateMessage).not.toHaveBeenCalled();
   });
 
   test('returns 429 when the same test number is still in cooldown', async () => {

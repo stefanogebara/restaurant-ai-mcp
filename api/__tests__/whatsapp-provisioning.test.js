@@ -152,6 +152,7 @@ describe('confirmarCodigo', () => {
     mockRegistryUpdate.mockResolvedValue({ data: [], error: null });
 
     await expect(confirmarCodigo({ restaurantId: RID, codigo: '123456' })).rejects.toThrow(/suporte/i);
+    expect(mockConfigUpdate.mock.calls.some(([payload]) => payload.whatsapp_provisioning?.estado === 'ativo')).toBe(false);
   });
 
   test('sem verificação pendente, orienta a iniciar primeiro', async () => {
