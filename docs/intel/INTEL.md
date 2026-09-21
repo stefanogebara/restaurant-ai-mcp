@@ -11,6 +11,32 @@
 
 ## Em aberto — precisa de decisão do Stefano
 
+### [DISCUTIR 8/15] Flipdish: dez mil pedidos por telefone confirmam o gap de takeout que o repo já tem nomeado
+**Data:** 2026-09-16 · **Fonte:** [Retail Technology Innovation Hub](https://retailtechinnovationhub.com/home/2026/9/16/flipdish-ai-phone-agent-reaches-10000-orders-bringing-in-over-230000-to-uk-and-irish-restaurants) · **Eixos:** P2 A1 D2 E1 L2
+
+**O que é:** marco de adoção (não feature nova) do AI Phone Agent da Flipdish, lançado em
+nov/2025 para restaurantes do Reino Unido e Irlanda: 10.000+ pedidos processados, £230mil+
+gerados. Atende ligação, tira pedido com upsell de acompanhamento, envia direto pro POS/KDS
+próprio da Flipdish. Números só do CEO, sem contagem de restaurantes ativos nem baseline.
+Próximos passos anunciados: alteração de pedido, horário de funcionamento, CRM/workflow.
+
+**Por que toca este projeto:** `api/_voice-server/tool-handler.js` tem 8 tools, todas de
+reserva — zero de pedido/takeout, o mesmo buraco que `api/square.js` aprofunda ao descartar
+o catálogo do Square em vez de gravar como tabela consultável (`known_gaps`). O BACKLOG já
+tem um spike vizinho (`tool-evento-privado`, PROTOTIPAR 11/15) para "zero de evento", mas
+nenhum cobre "zero de pedido" — são gaps distintos.
+
+**O que a fonte não prova:** os números são autodeclarados e sem amostra — não dá pra saber
+se é tração ampla ou duas contas grandes puxando a média. Não há detalhe técnico do motor de
+voz por trás.
+
+**A pergunta:** o gap de takeout vira frente própria de spike — exigindo primeiro uma tabela
+de menu, que hoje não existe em lugar nenhum do banco — ou fica atrás do
+`tool-evento-privado` já enfileirado, até essa decidir se o agente aguenta duas tools novas
+sem confundir reserva com evento/pedido?
+
+---
+
 ### [DISCUTIR 10/15] OpenAI lança GPT-Live-1, voz full-duplex com backend delegado
 **Data:** 2026-09-10 · **Fonte:** [OpenAI, changelog](https://developers.openai.com/api/docs/changelog) · [testingcatalog.com](https://www.testingcatalog.com/openai-launches-gpt-live-1-for-full-duplex-voice-agents/) · **Eixos:** P3 A2 D2 E1 L2
 
@@ -130,6 +156,66 @@ marketing/demo (Fase 12D) pra justificar mexer na config de billing do time?
 
 ---
 
+### [DISCUTIR 10/15] Maple fecha a 4ª parceria de POS em 5 meses — e o cardápio inexistente do Seatable trava até o básico
+**Data:** 2026-09-08 · **Fontes:** [docs.maple.inc](https://docs.maple.inc/orders/pos/spoton) · [01net.it](https://www.01net.it/maple-and-spoton-partner-to-modernize-the-restaurant-phone/) · **Eixos:** P2 A2 D2 E2 L2
+
+**O que é:** Maple (voz de IA para telefone de restaurante americano, 2500+ merchants desde
+dez/2023) integra com o POS SpotOn via OAuth: pedido por telefone/SMS aparece no SpotOn como
+origem "Maple - Phone/SMS", roteado a KDS e impressora junto com pedidos de balcão e online.
+Cardápio sincroniza em mão única — do SpotOn PARA o Maple, edição sempre no POS. Pagamento é
+antecipado por cartão tokenizado (CyberSource), sem "pay-in-store". **É o quarto integrador de
+POS documentado desde abril/2026** (Quantic 24/04, TRAY 04/05, Shift4/SkyTab, agora SpotOn
+08/09) — não é parceria isolada, é motor de distribuição repetível.
+
+**Por que toca este projeto:** é o mesmo padrão estrutural já revisado na `bets[0]`
+(voz de terceiro pluga em POS que fecha o loop), mas com o alvo declarado sendo justamente
+**operador independente** — a mesma audiência do Seatable, só que nos EUA. E expõe o
+gargalo real: o que o Maple faz de mais básico (espelhar cardápio ao vivo) o Seatable não
+consegue replicar hoje — `api/square.js` descarta o catálogo do Square e grava só a
+contagem, então não existe tabela de menu consultável em lugar nenhum do banco. A porta
+agnóstica de fornecedor já existe (`api/pos/service-completion.js` + `api/_lib/api-key-auth.js`)
+para receber o próximo conector, mas sem dado de cardápio ela não sustenta nem o pedaço mais
+simples do que o Maple faz.
+
+**O que a fonte não prova:** os números de negócio (2500 merchants, 1M ligações, 96% de
+resolução, 1 em cada 3 ligações não atendida) são autodeclarados em release, sem amostra nem
+auditoria — mesmo padrão dos itens Resy+Toast e Square+OpenTable já registrados.
+
+**A pergunta:** vale abrir um spike agora para transformar o catálogo do Square/Saipos em
+dado consultável — antes que apareça um "Maple brasileiro" montando essa mesma parceria
+contra Consumer ou Goomer — ou isso fica bloqueado até haver sinal concreto de um concorrente
+local fazendo o mesmo movimento?
+
+---
+
+### [DISCUTIR 9/15] Twilio lança Webhook Configuration API — OAuth2 e retry por URL de webhook
+**Data:** 2026-09-08 · **Fonte:** [Twilio Changelog](https://www.twilio.com/en-us/changelog/webhook-configuration-api-public-beta) · **Eixos:** P3 A2 D2 E1 L1
+
+**O que é:** Public Beta de dois recursos de conta: Webhook Settings (autenticação por
+OAuth2 client-credentials com Bearer token, Basic, Digest ou assinatura por Shared Key, mais
+timeout/retry/edge zone) e Webhook Rules (associa um Setting a um padrão de URL por
+domínio/caminho) — permite trocar, por URL, como a Twilio autentica e entrega os webhooks
+que ela chama nos endpoints do cliente. Cobre Voice e Messaging; não fica claro se
+WhatsApp-via-Twilio está no escopo do beta. Só API por enquanto, sem UI no Console.
+
+**Por que toca este projeto:** é o mesmo problema (autenticação/entrega de webhook que a
+Twilio chama) que `api/twilio-whatsapp-webhook.js`, `api/twilio-sms-webhook.js` e
+`api/twilio-voice-connect.js` resolvem hoje. Mas os três já validam `X-Twilio-Signature` via
+`twilio.validateRequest` — `twilio-sms-webhook.js` chega a rejeitar com 403 se a validação
+não estiver configurada, e `twilio-voice-connect.js` tem um comentário `SEC-CRIT-03`
+explícito sobre isso — então a autenticação já é forte hoje.
+
+**O que a fonte não prova:** a página de docs referenciada pelo próprio changelog devolveu
+404 nas duas tentativas de leitura; não há confirmação de que WhatsApp-via-Twilio está no
+escopo, nem exemplo de payload verificável.
+
+**A pergunta:** vale abrir um spike (Public Beta, sem Console ainda) para configurar OAuth2
+ou timeout/retry customizado nos três webhooks Twilio — cuja validação por assinatura já é
+robusta — ou espera a GA e o Console antes de investir tempo de engenharia nisso, já que
+nenhum `known_gap` registra timeout/retry de webhook inbound como problema real hoje?
+
+---
+
 ### [DISCUTIR 10/15] Procedures GA na ElevenLabs — a peça que faltava não é tool, é orquestração
 **Data:** 2026-09-07 · **Eixos:** P3 A2 D2 E2 L1
 **Fonte:** [ElevenLabs changelog, 24/ago](https://elevenlabs.io/docs/changelog/2026/8/24)
@@ -181,6 +267,42 @@ Tagme**"* — isto é, o diferencial deixa de ser canal e passa a ser propriedad
 restaurante de SP que já usa Tagme, o Seatable entra como substituto ou como **leitor** — adicionar
 `tagme` a `VALID_SOURCES` em `api/external-booking-webhook.js` e conviver, como a Saipos ficou de
 conector de leitura no `settled` de 2026-09-01?
+
+**Atualização 2026-09-21 — dois data points novos, um em cada extremo do território:**
+
+**(1) O iFood comprou uma fatia da Tagme.** No iFood Move 2026 (16-17/09), o iFood confirmou
+investimento na própria Tagme (valor não divulgado) e expandiu o "Pra Comer Fora" — reserva
+sem ligar, fila pelo celular, dentro do app de delivery — de 3 para 50+ cidades. Isso é a
+**segunda** aquisição/investimento em reserva do iFood em três semanas: depois de adquirir
+100% da Get In em 24/08 (já `seen.jsonl`, PROTOTIPAR 12/15), agora um pedaço da Tagme —
+somado a Saipos, Anota AI, OPDV e 3S Checkout, são seis empresas do mesmo nicho operacional
+de restaurante independente compradas ou capitalizadas sob o guarda-chuva de R$24bi/ano
+anunciado no mesmo evento. Não é aposta pontual, é padrão de compra sistemática da camada
+operacional inteira. Fontes: [Central do Varejo](https://centraldovarejo.com.br/ifood-investe-na-tagme-e-expande-o-comer-fora-para-mais-de-50-cidades/) ·
+[NeoFeed](https://neofeed.com.br/negocios/ifood-serve-r-24-bilhoes-em-investimentos-e-avanca-para-tres-novos-segmentos/).
+Nenhuma fonte é o release primário do iFood — todas reescrevem o mesmo press kit do evento —
+e nenhuma confirma tecnicamente se o "Pra Comer Fora" já roda sobre o motor da Tagme.
+
+**(2) Existe um Chef.Ai — e ele mira o segmento exato da `bets[2]`, sem passar por rede.**
+"Maitre virtual" de WhatsApp/Instagram fundado por dono de restaurante em Campinas
+(Restaurante Benedito), citado com 50+ clientes majoritariamente independentes do interior
+de SP. Reserva, fila, combinação de mesa para grupos, "memória" de preferência dentro da
+janela do WhatsApp. **Diferença que importa:** a Foodster mira rede grande via parceria com
+Tagme; o Chef.Ai mira o restaurante único, sem intermediário — mais perto do público
+declarado no config do que qualquer item já registrado aqui. Mas os números (771 clientes
+respondidos e 243 reservas no Dia dos Namorados/2025, 200 msgs/dia) são autodeclarados pelo
+fundador e reciclados por pelo menos três veículos ao longo de 13 meses sem atualização —
+esta cobertura de 17/09 não traz fato novo, é reaquecimento de imprensa. Fonte:
+[Movimento Econômico, 17/09](https://movimentoeconomico.com.br/tecnologia/2026/09/17/restaurantes-recorrem-a-ia-para-melhorar-gestao-e-relacionamento-com-clientes/).
+Nenhuma cobertura mostra se o Chef.Ai grava dado de cliente em CRM próprio ou fecha loop de
+receita — descreve só a camada de atendimento.
+
+**A pergunta revisada:** o Chef.Ai mostra que o nicho exato do Seatable (independente, sem
+parceria de rede) já tem ocupante brasileiro sustentado há 13+ meses, não é hipótese. Vale um
+spike de diligência direta (virar cliente teste, ou entrevistar um dos 50+ citados) para
+confirmar se ele tem ou não uma perna de CRM/receita — antes de decidir se a pergunta (a)/(b)
+acima precisa ser reescrita para citar concorrência no nível de restaurante único, não só de
+rede via Tagme?
 
 ---
 
@@ -396,102 +518,6 @@ linha do código?
 
 ---
 
-### [DISCUTIR 10/15] Os dois motores de voz vão divergir em turn-taking
-**Data:** 2026-08-24 · **Eixos:** P3 A2 D2 E1 L2
-**Fontes:** [ElevenLabs, 03/ago](https://elevenlabs.io/docs/changelog/2026/8/3) · [Twilio, 06/ago](https://www.twilio.com/en-us/changelog/twilio-voice-js-sdk-noise-cancellation-reference-components)
-
-**O que é:** os dois fornecedores da stack de voz publicaram, com três dias de diferença,
-tratamento para o mesmo buraco. A ElevenLabs adicionou um objeto `vad` ao schema do agente
-com `background_voice_detection` (booleano, default `false`), que faz o agente distinguir
-voz de fundo da voz do interlocutor para não tomar turno com conversa alheia. O Twilio
-publicou componentes de referência de cancelamento de ruído com RNNoise (open source) ou
-Krisp (proprietário).
-
-**Por que toca este projeto — com uma correção:** o `known_gaps` dizia "sem VAD". **Está
-errado e foi corrigido no config.** `api/_voice-server/backends/openai-realtime.js` já
-configura `turn_detection: { type: 'server_vad', threshold: 0.5, prefix_padding_ms: 300,
-silence_duration_ms: 500 }` — só que hardcoded, igual para todo restaurante, nunca medido.
-
-**O que a fonte não prova, e é decisivo:** a metade do Twilio **não se aplica**. Ela opera
-sobre `MediaStream` de navegador (Voice JS SDK, softphone), e aqui o ruído chega já
-codificado em mu-law 8 kHz no `audio-converter.js`, via Media Streams → Fly.io. Não há
-`@twilio/voice-sdk` em nenhum `package.json`. Portar RNNoise — projetado para quadros de
-48 kHz — para dentro do pipeline seria trabalho nosso, não componente de prateleira. E
-nenhuma das duas fontes traz um único número: nada sobre português, nada sobre 8 kHz,
-nenhuma taxa de falsa ativação.
-
-**A pergunta:** se a flag da ElevenLabs entrar, os dois motores divergem em turn-taking e
-qualquer comparação entre eles fica contaminada. O próximo ciclo de voz gasta em
-**instrumentar primeiro** — latência e barge-in errado entrando no `result` de
-`voice_experiments`, e uma chave de VAD em `VALID_VARIANT_KEYS`, que hoje aceita só
-`agent_name`, `agent_greeting`, `speed` e `voice_id` — ou em ligar a flag às cegas num
-restaurante barulhento e julgar de ouvido? E o ruído no caminho PSTN: aceita ficar com o
-que o motor fizer, ou vale investigar RNNoise dentro do `audio-converter.js` no Fly.io?
-
----
-
-### [DISCUTIR 9/15] O gateway de LLM e o trilho de pagamento viraram a mesma empresa
-**Data:** 2026-08-24 · **Eixos:** P2 A2 D2 E1 L2
-**Fontes:** [Stripe Newsroom](https://stripe.com/newsroom/news/stripe-agrees-to-acquire-openrouter) · [blog da OpenRouter](https://openrouter.ai/blog/announcements/openrouter-is-joining-stripe/)
-
-**O que é:** a Stripe adquire a OpenRouter, declarando que quer os dois lados da economia
-unitária de IA — o custo do token comprado e a receita cobrada por token, fundindo o
-roteamento ao produto Token Billing.
-
-**Por que toca este projeto:** o Seatable já opera esse loop à mão. `api/_lib/ai-client.js`
-grava custo real de token em `public.ai_spend` via `usage:{include:true}` da OpenRouter, e
-`api/_lib/stripe-usage-reporter.js` fatura `seatable_ai_call` e `seatable_manager_ai` por
-Stripe Meter Events. Custo e receita de token — exatamente os dois lados que a Stripe diz
-que vai fundir. Some a isso o trilho de repasse em BRL do restaurante (Stripe Connect
-Standard, `country=BR`) e são três dependências antes independentes num fornecedor só.
-
-**O que a fonte não prova:** o release da Stripe não tem **uma linha** sobre neutralidade,
-estabilidade de API ou preço — as promessas existem só no blog da OpenRouter, sem prazo,
-sem métrica, sem cláusula. Nenhuma das três fontes discute take rate.
-
-**O que a aterrissagem mostrou:** o acoplamento de inferência é **raso** — uma `baseURL`
-hardcoded em `api/_lib/ai-client.js`, endpoint OpenAI-compatible, e o caminho de saída já
-existe e é telemetrado (402 → fallback Anthropic → `ai_provider_fallbacks`). O lock-in real
-não é inferência, é **observabilidade de custo**: `cost_details` alimentando `ai_spend` e as
-sondas proprietárias `/api/v1/key` e `/api/v1/credits` de que o `MotorStrip.tsx` depende.
-
-**A pergunta:** o `settled` "OpenRouter é o provedor único" foi decidido por custo, quando
-a OpenRouter era um fornecedor sem relação com o resto da pilha. A concentração vira
-ressalva — manter a reserva Anthropic financiada e tornar a `baseURL` configurável por env
-— ou vira vantagem deliberada: um fornecedor, uma fatura, reconciliação custo↔receita de
-graça pelo Token Billing?
-
----
-
-### [DISCUTIR 9/15] O agregador virou copiloto de operação do dono
-**Data:** 2026-08-24 · **Eixos:** P2 A2 D2 E1 L2
-**Fonte:** [release da Delivery Hero (EQS), 13/ago](https://www.eqs-news.com/news/corporate/delivery-hero-launches-agentic-ai-assistant-to-help-local-shops-and-restaurants-grow-faster/7fec4e44-4d65-4f45-9ed7-ec935776b0f7_en)
-
-**O que é:** um agente que vive no WhatsApp do dono, aceita texto, áudio e imagem, lê o
-desempenho do parceiro (venda por prato, demanda do bairro, atividade de concorrente,
-avaliações) e devolve recomendação de campanha, promoção, correção de foto e rascunho de
-resposta a review. A diferença de postura é a execução: **aprovada a sugestão, o próprio
-agente aplica a mudança na plataforma.** 40 mil parceiros hoje, alvo de ~1,5 milhão.
-
-**Por que toca este projeto:** o Manager AI daqui hoje **só aconselha**. `MANAGER_TOOLS` em
-`api/_lib/manager-agent.js` tem **uma** ferramenta, `compare_periods`, de leitura, e as
-"recommendations" de `api/predictive-analytics.js` são strings que ninguém executa. O
-branch `stop_reason === 'tool_use'` já está escrito, esperando ferramenta de escrita.
-
-**O que a fonte não prova:** os +15% de pedidos citados no Glovo não têm baseline, janela,
-amostra nem controle. E a Delivery Hero **não opera no Brasil** sob marca própria — o
-PedidosJá foi vendido ao iFood em 2018. A ameaça é indireta, via o acionista comum Prosus e
-o iFood. O próprio `.claude/plans/2026-07-27-teardown-integracoes/README.md` já lista a
-"Cris" do iFood e a Anota AI como concorrentes diretos de IA no WhatsApp.
-
-**A pergunta:** duas decisões. (1) O copiloto de operação vira feature de retenção embutida
-no plano, ou continua SKU cobrável atrás de quota mensal, como está hoje em
-`api/manager-chat.js`? (2) Vale abrir agora ferramentas de **escrita** com passo de
-aprovação no `manager-agent` — e nesse caso o `claim-linter` passa a ser portão de **ação**
-e não só de texto — ou salão, reserva e CRM são território que o agregador não alcança, e
-a resposta certa é não competir nessa superfície?
-
----
 
 ### [DISCUTIR 10/15] A partir de 01/10 não sobra caminho gratuito no WhatsApp
 **Data:** 2026-08-24 · **Eixos:** P3 A2 D3 E2 L1
@@ -621,6 +647,7 @@ confirmação — nada na fonte sugere que a Fortics tenha acesso privilegiado. 
 ### [DISCUTIR 8/15] Qual é o teto de concorrência do workspace ElevenLabs?
 **Data:** 2026-08-24 · **Eixos:** P2 A2 D1 E2 L1
 **Fonte:** [ElevenLabs changelog, 17/ago](https://elevenlabs.io/docs/changelog/2026/8/17)
+**Ponteiro de trabalho:** o `queueing_config` saiu de campo anunciado para GA — spike aberto → `BACKLOG.md#elevenlabs-queueing`
 
 **O que é:** a plataforma ganhou `queueing` (`AgentQueueingConfig`) com `enabled` e
 `wait_timeout_seconds` até 1.800s — com fila ligada, o chamador espera quando o agente bate
@@ -646,8 +673,27 @@ ocupado.
 antes de instrumentar qualidade seria contraindicado, dado o `known_gaps` de ruído de
 salão.)*
 
+**Atualização 2026-09-21 — a pergunta original ganhou uma resposta parcial.** O changelog de
+14/09 GA o exato `queueing_config` que este item só via como campo isolado: `enabled`
+(default `false`) + `wait_timeout_seconds` (1-1800), áudio de espera customizável via
+`hold-audio`, e eventos `queue_status` (`waiting`/`admitted`/`timed_out`) em tempo real —
+tudo dentro de `platform_settings`, o mesmo objeto que `elevenlabsAgentService.js` já
+popula em `POST /agents/create`. Aterramento novo, direto do código: quando o
+`register-call` inicial falha (`api/twilio-voice-connect.js:299-303`), a ligação recebe
+`<Say>` + `<Hangup/>` imediato — nenhuma fila, nenhum retry, hoje. Para um produto cuja
+aposta central é não perder ligação de reserva, isso é o modo de falha exato que o
+`queueing_config` resolveria, **se** ele se aplicar ao fluxo Twilio nativo inbound (não
+confirmado na fonte — só documentado para `platform_settings` em geral). Vira spike →
+`BACKLOG.md#elevenlabs-queueing`.
 
 ## Fila de trabalho
+
+Promovidos em 2026-09-21:
+
+- [PROTOTIPAR 12/15] Fila de chamadas ElevenLabs — parar de dar Hangup quando o agente
+  satura concorrência → `BACKLOG.md#elevenlabs-queueing`
+  · âncora: `api/_services/elevenlabsAgentService.js`, `api/twilio-voice-connect.js:299-303`
+  · resolve a pergunta em aberto desde 24/08 sobre teto de concorrência do workspace
 
 Promovidos em 2026-09-01:
 
@@ -681,6 +727,30 @@ Promovidos em 2026-08-24, os quatro com âncora verificada:
 
 ## Radar
 
+- `2026-09-21` **Presto (parceira ElevenLabs) entra no Toast Partner Ecosystem** para
+  pedido de voz virar KDS direto no drive-thru — mais um data point do padrão "voz de
+  terceiro pluga em POS dono do pagamento", já decidido na `bets[0]`; QSR americano, fora
+  do segmento e geografia do Seatable. [BusinessWire](https://www.financialcontent.com/article/bizwire-2026-9-21-presto-announces-integration-with-toast-to-expand-voice-ai-for-drive-thru-automation) · 5/15
+- `2026-09-21` **OpenRouter lança shell/sandbox nativo para tool-calling** — container
+  Linux hospedado, $0,0001/s, beta. Sem uso concreto na Olímpia hoje: scraping/parsing
+  resolvido deliberadamente com `fetch()`+regex determinístico, não raciocínio livre de
+  LLM. [OpenRouter](https://openrouter.ai/blog/announcements/shell-tool/) · 5/15
+- `2026-09-18` **Supabase Advisors ganha aba Health** — taxa de erro por serviço
+  (Auth/Storage/Edge Functions/Data API) com severidade e link de investigação. Auth e
+  Data API já são probados ativamente em `api/_lib/integration-probes.js`; o repo não usa
+  Edge Functions. [Supabase Changelog](https://supabase.com/changelog/50577-health-check-advisors) · 7/15
+- `2026-09-17` **iFood lança Toqan** — BI conversacional grátis via WhatsApp para os 500 mil
+  restaurantes parceiros do iFood (vendas, cancelamento, reputação). Cobre o mesmo espaço
+  que o Manager AI do Seatable já cobre pago, mas com dado de delivery do iFood, não de
+  reserva/CRM de salão. [Canaltech](https://canaltech.com.br/apps/ifood-lanca-ia-que-ajuda-restaurantes-a-vender-mais-e-envia-relatorios-pelo-whatsapp/) · 7/15
+- `2026-09-15` **Crédito Resy da Amex passa a valer em restaurantes ex-Tock** — selo "Resy
+  Credit eligible", rollout gradual. É benefício de cartão sobre inventário Tock unificado,
+  sem menção a Toast/Digital Chits nesta peça específica; sem API, sem paralelo BR.
+  [The Points Guy](https://thepointsguy.com/news/amex-resy-credit-tock-restaurants/) · 5/15
+- `2026-09-07` **ElevenLabs: detecção de secretária eletrônica (AMD) + API de tickets por
+  workspace** — escopado para outbound/batch calling; a telefonia ElevenLabs do Seatable é
+  100% inbound (`register-call`), então nenhum dos dois toca o repo hoje.
+  [ElevenLabs Changelog](https://elevenlabs.io/docs/changelog/2026/9/7) · 5/15
 - `2026-09-09` **ElevenLabs negocia tender offer a ~US$22bi**, dobrando o valuation do Series D
   fechado em 04/02/2026 (US$11bi, US$500M, liderado por Sequoia) — é venda secundária, não injeta
   capital novo, e nenhuma fonte confirma mudança de preço/SLA. Fornecedor único de voz padrão do
@@ -801,6 +871,90 @@ Promovidos em 2026-08-24, os quatro com âncora verificada:
   estande sem preço nem prazo público. Decidir ir como visitante expira ~14/09. [Abrasel](https://abrasel.com.br/noticias/noticias/salao-abrasel-5-motivos-para-participar-do-evento/) · 7/15
 
 ## Arquivo
+
+### [ARQUIVADO 2026-09-21] Três itens de 24/08 — envelheceram sem decisão (28 dias em aberto)
+
+Nenhum dos três recebeu resposta do Stefano em quatro passadas seguidas (01/09, 07/09, 14/09,
+21/09). Conteúdo original preservado abaixo, sem reavaliação de score — arquivado por idade,
+não por descarte de mérito.
+
+<details>
+<summary>[DISCUTIR 10/15] Os dois motores de voz vão divergir em turn-taking — 2026-08-24</summary>
+
+**Eixos:** P3 A2 D2 E1 L2
+**Fontes:** [ElevenLabs, 03/ago](https://elevenlabs.io/docs/changelog/2026/8/3) · [Twilio, 06/ago](https://www.twilio.com/en-us/changelog/twilio-voice-js-sdk-noise-cancellation-reference-components)
+
+**O que é:** os dois fornecedores da stack de voz publicaram, com três dias de diferença,
+tratamento para o mesmo buraco. A ElevenLabs adicionou um objeto `vad` ao schema do agente
+com `background_voice_detection` (booleano, default `false`), que faz o agente distinguir
+voz de fundo da voz do interlocutor para não tomar turno com conversa alheia. O Twilio
+publicou componentes de referência de cancelamento de ruído com RNNoise (open source) ou
+Krisp (proprietário).
+
+**Por que tocava este projeto — com uma correção:** o `known_gaps` dizia "sem VAD". **Está
+errado e foi corrigido no config.** `api/_voice-server/backends/openai-realtime.js` já
+configura `turn_detection: { type: 'server_vad', threshold: 0.5, prefix_padding_ms: 300,
+silence_duration_ms: 500 }` — só que hardcoded, igual para todo restaurante, nunca medido.
+
+**O que a fonte não prova, e era decisivo:** a metade do Twilio **não se aplica**. Ela opera
+sobre `MediaStream` de navegador (Voice JS SDK, softphone), e aqui o ruído chega já
+codificado em mu-law 8 kHz no `audio-converter.js`, via Media Streams → Fly.io. Não há
+`@twilio/voice-sdk` em nenhum `package.json`.
+
+**A pergunta que ficou sem resposta:** se a flag da ElevenLabs entrar, os dois motores
+divergem em turn-taking e qualquer comparação entre eles fica contaminada. Instrumentar
+primeiro (latência e barge-in no `result` de `voice_experiments`) ou ligar a flag às cegas?
+
+</details>
+
+<details>
+<summary>[DISCUTIR 9/15] O gateway de LLM e o trilho de pagamento viraram a mesma empresa — 2026-08-24</summary>
+
+**Eixos:** P2 A2 D2 E1 L2
+**Fontes:** [Stripe Newsroom](https://stripe.com/newsroom/news/stripe-agrees-to-acquire-openrouter) · [blog da OpenRouter](https://openrouter.ai/blog/announcements/openrouter-is-joining-stripe/)
+
+**O que é:** a Stripe adquire a OpenRouter, declarando que quer os dois lados da economia
+unitária de IA — custo do token comprado e receita cobrada por token, fundindo o roteamento
+ao produto Token Billing.
+
+**Por que tocava este projeto:** o Seatable já opera esse loop à mão (`api/_lib/ai-client.js`
+grava custo em `ai_spend`; `stripe-usage-reporter.js` fatura por Stripe Meter Events) — custo
+e receita de token são exatamente os dois lados que a Stripe funde. Mais o repasse BRL via
+Stripe Connect: três dependências antes independentes num fornecedor só.
+
+**O que a aterrissagem mostrou:** o acoplamento de inferência é raso (`baseURL` hardcoded,
+endpoint OpenAI-compatible, fallback Anthropic já telemetrado). O lock-in real é
+observabilidade de custo, não inferência.
+
+**A pergunta que ficou sem resposta:** a concentração vira ressalva (manter reserva
+Anthropic financiada, `baseURL` configurável por env) ou vantagem deliberada (uma fatura,
+reconciliação custo↔receita de graça)?
+
+</details>
+
+<details>
+<summary>[DISCUTIR 9/15] O agregador virou copiloto de operação do dono — 2026-08-24</summary>
+
+**Eixos:** P2 A2 D2 E1 L2
+**Fonte:** [release da Delivery Hero (EQS), 13/ago](https://www.eqs-news.com/news/corporate/delivery-hero-launches-agentic-ai-assistant-to-help-local-shops-and-restaurants-grow-faster/7fec4e44-4d65-4f45-9ed7-ec935776b0f7_en)
+
+**O que é:** agente no WhatsApp do dono que lê desempenho e devolve recomendação — e, se
+aprovado, **o próprio agente aplica a mudança na plataforma**. 40 mil parceiros hoje, alvo
+de ~1,5 milhão.
+
+**Por que tocava este projeto:** o Manager AI daqui hoje só aconselha — `MANAGER_TOOLS` tem
+uma ferramenta de leitura (`compare_periods`); o branch de `tool_use` já está escrito,
+esperando ferramenta de escrita.
+
+**O que a fonte não prova:** os +15% de pedidos citados não têm baseline nem controle; a
+Delivery Hero não opera no Brasil sob marca própria — a ameaça é indireta, via o acionista
+comum Prosus/iFood.
+
+**A pergunta que ficou sem resposta:** o copiloto vira feature de retenção embutida ou
+continua SKU cobrável? Vale abrir ferramentas de escrita no `manager-agent` com passo de
+aprovação, virando o `claim-linter` em portão de ação?
+
+</details>
 
 ### [ARQUIVADO 2026-09-14] Três itens de 22/08 — envelheceram sem decisão (23 dias em aberto)
 
