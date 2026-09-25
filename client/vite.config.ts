@@ -4,6 +4,8 @@ import { sentryVitePlugin } from '@sentry/vite-plugin'
 
 // https://vite.dev/config/
 export default defineConfig({
+  resolve: { dedupe: ['react', 'react-dom'] },
+  optimizeDeps: { include: ['react', 'react-dom/client', 'remotion', '@remotion/player'] },
   plugins: [
     react(),
     // Only run Sentry's source-map upload when the auth token is set
@@ -23,6 +25,7 @@ export default defineConfig({
     // maps from showing up in the network panel of every visitor.
     sourcemap: 'hidden',
     rollupOptions: {
+      input: { main: 'index.html', prototype: 'seatable-prototype.html' },
       output: {
         manualChunks: {
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],

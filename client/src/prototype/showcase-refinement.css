@@ -1,0 +1,680 @@
+/* An editorial spread around the supplied instrument-like demo references.
+   The original artifact retains its identity; the demo is the dominant image. */
+@container (max-width: 499px) {
+  body .rm-examples-section .rm-gallery-reservation {
+    aspect-ratio: 400 / 510 !important;
+  }
+}
+body .rm-examples-section {
+  padding-top: 48px;
+  padding-bottom: 76px;
+  color: #272d24;
+  background: #f3f0e9;
+}
+
+body .rm-examples-section .env {
+  display: block;
+  max-width: 1168px;
+}
+
+body .rm-examples-section .t-secao {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+body .rm-examples-section .t-secao h2 {
+  font: 400 17px/1.3 var(--titulo);
+  letter-spacing: -0.025em;
+  color: #50564c;
+}
+
+body .rm-examples-section .galeria.rm-gallery {
+  display: block;
+  margin: 0;
+}
+
+body .rm-examples-section .rm-showcase {
+  display: flex;
+  flex-direction: column;
+  max-width: none;
+}
+
+body .rm-examples-section .rm-gallery-panel {
+  order: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 0.72fr) minmax(0, 1.74fr);
+  gap: 30px;
+  align-items: start;
+  min-height: 0;
+}
+
+body .rm-examples-section .rm-gallery-art {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+}
+
+body .rm-examples-section .rm-gallery-story {
+  grid-column: 1;
+  grid-row: 1;
+  display: flex;
+  flex-direction: column;
+  align-self: start;
+  padding: 0;
+}
+
+body .rm-examples-section .rm-gallery-story h3 {
+  margin: 0;
+  max-width: 330px;
+  font: 400 clamp(45px, 4.3vw, 59px) / 1.01 var(--serif);
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+  color: #293222;
+}
+
+body .rm-examples-section .rm-gallery-story p {
+  max-width: 320px;
+  margin: 25px 0 0;
+  font: 400 15px/1.55 var(--ui);
+  color: #5c6256;
+  text-wrap: pretty;
+}
+
+body .rm-examples-section .rm-gallery-screen {
+  border: 1px solid #deded5;
+  border-radius: 8px;
+  box-shadow: 0 18px 46px rgba(31, 37, 28, .075);
+  margin-bottom: 62px;
+}
+
+body .rm-examples-section .rm-gallery-screen .rm-canvas,
+body .rm-examples-section .rm-gallery-screen .rm-film {
+  border-radius: 8px;
+}
+
+body .rm-examples-section .rm-gallery-arrival {
+  justify-content: flex-start;
+  padding-left: 18%;
+}
+
+body .rm-examples-section .rm-gallery-arrival .rm-gallery-screen {
+  width: 340px;
+  max-width: 100%;
+}
+
+body .rm-examples-section .rm-gallery-tabs {
+  order: 1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-self: stretch;
+  gap: 32px;
+  width: 100%;
+  margin: 12px 0 0;
+  border: 0;
+}
+
+body .rm-examples-section .rm-gallery-tabs button {
+  position: relative;
+  min-width: 0;
+  min-height: 91px;
+  padding: 18px 38px 0 0;
+  border: 0;
+  border-top: 1px solid #cdd0c7;
+  text-align: left;
+  color: #606659;
+  transition: color 180ms ease, border-color 180ms ease;
+}
+
+body .rm-examples-section .rm-gallery-tabs button[aria-selected="true"] {
+  color: #293222;
+  border-top: 2px solid #3f4e32;
+  padding-top: 17px;
+}
+
+body .rm-examples-section .rm-gallery-tabs button > span {
+  display: block;
+  font: 400 29px/1.15 var(--serif);
+  letter-spacing: -0.015em;
+}
+
+body .rm-examples-section .rm-gallery-tabs small {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin: 0 0 8px;
+  font: 400 12px/1.2 var(--ui);
+  letter-spacing: 0.02em;
+  color: inherit;
+}
+
+body .rm-examples-section .rm-house-arrow {
+  position: absolute;
+  right: 0;
+  bottom: 8px;
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+
+body
+  .rm-examples-section
+  .rm-gallery-tabs
+  button[aria-selected="true"]
+  .rm-house-arrow,
+body .rm-examples-section .rm-gallery-tabs button:hover .rm-house-arrow {
+  opacity: 1;
+}
+
+@media (max-width: 900px) {
+  body .rm-examples-section .rm-gallery-panel {
+    grid-template-columns: minmax(0, 0.72fr) minmax(0, 1.4fr);
+    gap: 25px;
+  }
+
+  body .rm-examples-section .rm-gallery-story h3 {
+    font-size: 45px;
+  }
+
+  body .rm-examples-section .rm-gallery-story p {
+    font-size: 14px;
+  }
+
+  body .rm-examples-section .rm-gallery-arrival {
+    padding-left: 0;
+  }
+}
+
+@media (max-width: 650px) {
+  body .rm-examples-section {
+    padding-top: 34px;
+    padding-bottom: 50px;
+  }
+
+  body .rm-examples-section .t-secao {
+    margin-bottom: 25px;
+  }
+
+  body .rm-examples-section .t-secao h2 {
+    font-size: 15px;
+  }
+
+  body .rm-examples-section .rm-gallery-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 29px;
+  }
+
+  body .rm-examples-section .rm-gallery-story {
+    order: -1;
+    padding: 0;
+  }
+
+  body .rm-examples-section .rm-gallery-story h3 {
+    font-size: 39px;
+    max-width: 340px;
+    line-height: 1.02;
+  }
+
+  body .rm-examples-section .rm-gallery-story p {
+    max-width: 350px;
+    margin-top: 13px;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  body .rm-examples-section .rm-gallery-art {
+    width: 100%;
+  }
+
+  body .rm-examples-section .rm-gallery-screen {
+    margin-bottom: 85px;
+  }
+
+  body .rm-examples-section .rm-gallery-arrival {
+    justify-content: center;
+  }
+
+  body .rm-examples-section .rm-gallery-tabs {
+    margin-top: 22px;
+    gap: 15px;
+  }
+
+  body .rm-examples-section .rm-gallery-tabs button {
+    padding-right: 0;
+    min-height: 79px;
+  }
+
+  body .rm-examples-section .rm-gallery-tabs button > span {
+    font-size: 23px;
+  }
+
+  body .rm-examples-section .rm-gallery-tabs small {
+    gap: 6px;
+    font-size: 10px;
+  }
+
+  body .rm-examples-section .rm-house-arrow {
+    display: none;
+  }
+}
+
+/* Keep the case index below the editorial description at wide sizes. */
+@media (min-width: 1101px) {
+  body .rm-examples-section .rm-showcase .rm-gallery-tabs {
+    top: 226px;
+  }
+}
+
+@media (max-width: 350px) {
+  body .rm-examples-section .rm-gallery-story h3 {
+    font-size: 39px;
+  }
+
+  body .rm-examples-section .rm-gallery-tabs {
+    gap: 10px;
+  }
+
+  body .rm-examples-section .rm-gallery-tabs button > span {
+    font-size: 20px;
+  }
+
+  body .rm-examples-section .rm-gallery-tabs small > span {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body .rm-examples-section .rm-gallery-tabs button,
+  body .rm-examples-section .rm-house-arrow {
+    transition: none;
+  }
+}
+
+/* A guest request gives the illustration a human starting point. */
+body .rm-examples-section .rm-guest-note {
+  margin: 48px 0 0;
+  max-width: 272px;
+  padding-top: 22px;
+  border-top: 1px solid #cdd0c7;
+}
+@media (max-width: 650px) {
+  body .rm-examples-section .rm-guest-note {
+    margin-top: 24px;
+  }
+  body .rm-examples-section .rm-gallery-tabs {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin-top: 20px;
+  }
+  body .rm-examples-section .rm-gallery-tabs button,
+  body .rm-examples-section .rm-gallery-tabs button[aria-selected="true"] {
+    display: grid;
+    grid-template-columns: 96px minmax(0, 1fr) 20px;
+    align-items: center;
+    column-gap: 14px;
+    min-height: 64px;
+    padding: 8px 2px;
+    border-top: 1px solid #cdd0c7;
+    border-left: 0;
+  }
+  body .rm-examples-section .rm-gallery-tabs button:last-child {
+    border-bottom: 1px solid #cdd0c7;
+  }
+  body .rm-examples-section .rm-gallery-tabs button[aria-selected="true"] {
+    border-top-color: #3f4e32;
+  }
+  body .rm-examples-section .rm-gallery-tabs small {
+    grid-column: 1;
+    margin: 0;
+    font-size: 11px;
+  }
+  body .rm-examples-section .rm-gallery-tabs button > span {
+    grid-column: 2;
+    font-size: 25px;
+  }
+  body .rm-examples-section .rm-house-arrow {
+    position: static;
+    display: block;
+    grid-column: 3;
+    opacity: .6;
+  }
+}
+body .rm-examples-section .rm-guest-note blockquote {
+  margin: 0;
+  font: 400 19px/1.4 var(--ui);
+  color: #424d38;
+}
+body .rm-examples-section .rm-guest-note figcaption {
+  margin-top: 14px;
+  font: 400 12px/1.4 var(--ui);
+  color: #616759;
+}
+body .rm-examples-section .rm-film-disclaimer {
+  color: #606759;
+  font-size: 12px;
+}
+@media (max-width: 650px) {
+  body .rm-examples-section .rm-guest-note {
+    margin-top: 25px;
+    padding-top: 17px;
+    max-width: 350px;
+  }
+  body .rm-examples-section .rm-guest-note blockquote {
+    font-size: 19px;
+  }
+}
+
+body .rm-examples-section .rm-gallery-static {
+  margin-bottom: 0;
+}
+
+
+body
+  .rm-examples-section
+  .rm-gallery-screen
+  .rm-controls-below
+  .rm-film-controls {
+  left: 4%;
+  right: 4%;
+}
+body .rm-examples-section .rm-house-arrow {
+  opacity: 0.5;
+}
+
+/* Playback belongs to the example header, not a second navigation row. */
+body
+  .rm-examples-section
+  .rm-gallery-screen
+  .rm-controls-below
+  .rm-film-controls {
+  top: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+body .rm-examples-section .rm-gallery-screen .rm-film-controls .rm-play-action {
+  position: absolute;
+  top: 18px;
+  right: 0;
+  pointer-events: auto;
+  border: 0;
+  background: transparent;
+}
+body .rm-examples-section .rm-gallery-screen .rm-film-disclaimer {
+  position: absolute;
+  bottom: -31px;
+  left: 0;
+}
+body .rm-examples-section .rm-gallery-screen {
+  margin-bottom: 40px;
+}
+body .rm-examples-section .rm-gallery-static {
+  margin-bottom: 0;
+}
+@media (max-width: 650px) {
+  body
+    .rm-examples-section
+    .rm-gallery-screen
+    .rm-film-controls
+    .rm-play-action {
+    top: 1px;
+    font-size: 11px;
+  }
+
+}
+
+/* Product evidence gets the visual weight; the case index stays typographic. */
+body .rm-examples-section .rm-showcase .rm-gallery-tabs button > span {
+  font: 400 20px/1.2 var(--ui);
+  letter-spacing: -0.025em;
+}
+@media (min-width: 651px) {
+  body .rm-examples-section .rm-showcase-reservation .rm-gallery-tabs {
+    top: 170px;
+  }
+}
+@media (max-width: 650px) {
+  body .rm-examples-section .rm-showcase .rm-gallery-tabs button,
+  body .rm-examples-section .rm-showcase .rm-gallery-tabs button[aria-selected="true"] {
+    min-height: 66px;
+  }
+  body .rm-examples-section .rm-showcase .rm-gallery-tabs button > span {
+    display: block;
+    margin-top: 5px;
+    font: 400 clamp(12px, 3.65vw, 15px)/1.15 var(--ui);
+    letter-spacing: -0.015em;
+  }
+  body .rm-examples-section .rm-showcase .rm-gallery-tabs small {
+    font-size: 12px;
+  }
+}
+
+/* The first story is one typographic film, not another split dashboard. */
+body .rm-examples-section .rm-showcase-reservation .rm-gallery-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 26px;
+}
+body .rm-examples-section .rm-showcase-reservation .rm-gallery-story {
+  order: -1;
+  align-self: stretch;
+  width: 100%;
+  padding: 0;
+}
+body .rm-examples-section .rm-showcase-reservation .rm-gallery-story h3 {
+  max-width: none;
+  margin: 0;
+  font-size: clamp(43px, 4.4vw, 58px);
+  line-height: 1.03;
+}
+body .rm-examples-section .rm-showcase-reservation .rm-gallery-art {
+  width: 100%;
+}
+body .rm-examples-section .rm-showcase-reservation .rm-gallery-screen {
+  margin-bottom: 0;
+}
+@media (min-width: 651px) {
+  body .rm-examples-section .rm-showcase-reservation .rm-gallery-tabs {
+    position: static;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+    margin: 30px 0 0;
+    gap: 28px;
+  }
+}
+@media (max-width: 650px) {
+  body .rm-examples-section .rm-showcase-reservation .rm-gallery-panel {
+    gap: 18px;
+  }
+  body .rm-examples-section .rm-showcase-reservation .rm-gallery-story h3 {
+    font-size: 39px;
+    max-width: 310px;
+  }
+  body .rm-examples-section .rm-showcase-reservation .rm-gallery-tabs {
+    margin-bottom: 19px;
+  }
+}
+
+/* The replay control is a distinct action below the host surface, never on top
+   of reservation data. This also gives the mobile premise room before the
+   case index. */
+body .rm-examples-section .rm-showcase-reservation .rm-gallery-screen {
+  margin-bottom: 54px;
+}
+body .rm-examples-section .rm-showcase-reservation .rm-controls-below .rm-film-controls {
+  top: 100%;
+  bottom: auto;
+  left: 0;
+  right: 0;
+  min-height: 46px;
+}
+body .rm-examples-section .rm-showcase-reservation .rm-film-controls .rm-play-action {
+  top: 5px;
+  right: 0;
+  min-height: 38px;
+  border-bottom: 1px solid #365944;
+  border-radius: 0;
+  padding: 0 2px;
+  font-size: 13px;
+}
+body .rm-examples-section .rm-showcase-reservation .rm-film-disclaimer {
+  bottom: 13px;
+}
+
+/* The playback action belongs to the editorial headline at wider sizes. */
+@media (min-width: 651px) {
+  body .rm-examples-section .rm-showcase-reservation .rm-controls-below .rm-film-controls {
+    top: -87px;
+  }
+  body .rm-examples-section .rm-showcase-reservation .rm-film-controls .rm-play-action {
+    top: 9px;
+    font-size: 14px;
+  }
+}
+
+/* On a narrow screen the cases read as an index, not a squeezed three-column footer. */
+@media (max-width: 650px) {
+  body .rm-examples-section .rm-showcase .rm-gallery-tabs {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin-top: 14px;
+    margin-bottom: 0;
+  }
+  body .rm-examples-section .rm-showcase .rm-gallery-tabs button,
+  body .rm-examples-section .rm-showcase .rm-gallery-tabs button[aria-selected="true"] {
+    display: grid;
+    grid-template-columns: 100px minmax(0, 1fr) 20px;
+    align-items: center;
+    min-height: 58px;
+    padding: 0 3px;
+    border: 0;
+    border-top: 1px solid #d7d6ce;
+    text-align: left;
+  }
+  body .rm-examples-section .rm-showcase .rm-gallery-tabs button:last-child {
+    border-bottom: 1px solid #d7d6ce;
+  }
+  body .rm-examples-section .rm-showcase .rm-gallery-tabs button[aria-selected="true"] {
+    color: #263c2b;
+    border-top-color: #263c2b;
+  }
+  body .rm-examples-section .rm-showcase .rm-gallery-tabs small {
+    grid-column: 1;
+    font-size: 11px;
+  }
+  body .rm-examples-section .rm-showcase .rm-gallery-tabs button > span {
+    grid-column: 2;
+    margin: 0;
+    font: 400 17px/1.2 var(--ui);
+  }
+  body .rm-examples-section .rm-showcase .rm-gallery-tabs button[aria-selected="true"] > span {
+    font-style: normal;
+  }
+  body .rm-examples-section .rm-showcase .rm-house-arrow {
+    grid-column: 3;
+    display: block;
+    opacity: .5;
+  }
+}
+
+/* The first case reads from a guest's words into the host's working surface. */
+body .rm-examples-section .rm-showcase-reservation .rm-gallery-headline {
+  margin: 0 0 34px;
+}
+body .rm-examples-section .rm-showcase-reservation .rm-gallery-headline > span {
+  display: block;
+  margin-bottom: 16px;
+  font: 500 13px/1.2 var(--ui);
+  color: #626a5d;
+}
+body .rm-examples-section .rm-showcase-reservation .rm-gallery-headline h3 {
+  margin: 0;
+  font: 400 clamp(45px, 4.4vw, 58px)/1.03 var(--serif);
+  letter-spacing: -.035em;
+  color: #293222;
+}
+body .rm-examples-section .rm-showcase-reservation .rm-gallery-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 330px) minmax(0, 1fr);
+  gap: 48px;
+  align-items: start;
+}
+body .rm-examples-section .rm-showcase-reservation .rm-gallery-story {
+  grid-column: 1;
+  grid-row: 1;
+  order: 0;
+  width: 100%;
+  align-self: stretch;
+}
+body .rm-examples-section .rm-showcase-reservation .rm-gallery-art {
+  grid-column: 2;
+  grid-row: 1;
+  width: 100%;
+}
+body .rm-examples-section .rm-request-origin {
+  margin: 0;
+  padding-top: 13px;
+}
+body .rm-examples-section .rm-request-origin figcaption {
+  font: 500 13px/1.4 var(--ui);
+  color: #596454;
+}
+body .rm-examples-section .rm-request-origin blockquote {
+  margin: 16px 0 0;
+  font: 400 27px/1.25 var(--ui);
+  letter-spacing: -.04em;
+  color: #303b2d;
+}
+@media (max-width: 900px) {
+  body .rm-examples-section .rm-showcase-reservation .rm-gallery-panel {
+    grid-template-columns: minmax(0, 240px) minmax(0, 1fr);
+    gap: 24px;
+  }
+  body .rm-examples-section .rm-request-origin blockquote {
+    font-size: 25px;
+  }
+}
+@media (max-width: 650px) {
+  body .rm-examples-section .rm-showcase-reservation .rm-gallery-headline {
+    margin-bottom: 23px;
+  }
+  body .rm-examples-section .rm-showcase-reservation .rm-gallery-headline h3 {
+    font-size: 39px;
+  }
+  body .rm-examples-section .rm-showcase-reservation .rm-gallery-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+  body .rm-examples-section .rm-showcase-reservation .rm-gallery-story {
+    order: 0;
+  }
+  body .rm-examples-section .rm-showcase-reservation .rm-gallery-art {
+    order: 1;
+  }
+  body .rm-examples-section .rm-request-origin {
+    padding-top: 0;
+  }
+  body .rm-examples-section .rm-request-origin blockquote {
+    max-width: 340px;
+    margin-top: 9px;
+    font-size: 22px;
+    line-height: 1.25;
+  }
+}
+
+@media (max-width: 650px) {
+  body .rm-examples-section .rm-showcase-reservation .rm-gallery-screen.rm-gallery-reservation .rm-film-controls .rm-play-action {
+    left: 0;
+    right: auto;
+    min-height: 44px;
+    font-size: 14px;
+  }
+}
