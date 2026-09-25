@@ -16,22 +16,45 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import * as fs from 'fs';
 import * as path from 'path';
 
-const BASE = process.env.RACHA_BASE || 'https://racha-gray.vercel.app';
+const BASE = process.env.RACHA_BASE || '';  // sem default para producao de outro projeto
 
+// Lia `C:\\Users\\stefa\\racha\\.env` no carregamento do modulo. Em qualquer
+// maquina que nao fosse aquele Windows o readFileSync lancava ENOENT e derrubava
+// a COLETA do Playwright no repositorio inteiro (`Total: 0 tests in 0 files`) —
+// nao so este arquivo.
+//
+// Os nomes sao RACHA_* de proposito: cair em process.env.SUPABASE_URL apontaria
+// estes testes — que criam usuario e venue com service key — para o banco do
+// Seatable. Projeto errado, dados reais.
 function loadRachaEnv(): Record<string, string> {
-  const file = path.join('C:', 'Users', 'stefa', 'racha', '.env');
-  const out: Record<string, string> = {};
-  for (const line of fs.readFileSync(file, 'utf8').split(/\r?\n/)) {
-    const m = line.match(/^([A-Z_]+)=(.*)$/);
-    if (m) out[m[1]] = m[2].trim();
+  const direto = {
+    SUPABASE_URL: process.env.RACHA_SUPABASE_URL || '',
+    SUPABASE_SERVICE_ROLE_KEY: process.env.RACHA_SUPABASE_SERVICE_ROLE_KEY || '',
+    SUPABASE_PUBLISHABLE_KEY: process.env.RACHA_SUPABASE_PUBLISHABLE_KEY || '',
+  };
+  if (direto.SUPABASE_URL) return direto;
+
+  const file = process.env.RACHA_ENV_FILE;
+  if (!file) return {};
+  try {
+    const out: Record<string, string> = {};
+    for (const line of fs.readFileSync(file, 'utf8').split(/\r?\n/)) {
+      const m = line.match(/^([A-Z_]+)=(.*)$/);
+      if (m) out[m[1]] = m[2].trim();
+    }
+    return out;
+  } catch {
+    return {};  // ausente e um estado valido: os testes abaixo se pulam
   }
-  return out;
 }
 
 const env = loadRachaEnv();
 const SUPABASE_URL = env.SUPABASE_URL;
 const SERVICE_KEY = env.SUPABASE_SERVICE_ROLE_KEY;
 const PUBLISHABLE = env.SUPABASE_PUBLISHABLE_KEY;
+
+test.skip(!SUPABASE_URL || !SERVICE_KEY,
+  'racha nao configurado — defina RACHA_SUPABASE_URL/RACHA_SUPABASE_SERVICE_ROLE_KEY ou RACHA_ENV_FILE');
 
 test.describe('racha admin — checklist de implantação (prod)', () => {
   let admin: SupabaseClient;

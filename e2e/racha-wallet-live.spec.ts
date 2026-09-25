@@ -12,6 +12,8 @@ import { test, expect } from '@playwright/test';
 const BASE = process.env.RACHA_BASE || '';
 const MESA2 = process.env.RACHA_MESA2_TOKEN || '';
 
+test.skip(!BASE || !MESA2, 'racha nao configurado — defina RACHA_BASE / RACHA_MESA2_TOKEN');
+
 test.use({ viewport: { width: 390, height: 844 } });
 
 test('carteira: Google Pay paga a parte com serviço, conta registra', async ({ page }) => {
