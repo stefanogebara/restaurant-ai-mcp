@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Da mensagem à mesa. O Seatable organiza reservas pelo WhatsApp, telefone e salão em um só lugar para a sua equipe.">
+<meta name="robots" content="index, follow">
+<meta name="theme-color" content="#1d281d">
+<link rel="canonical" href="https://seatable.one/">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://seatable.one/">
+<meta property="og:title" content="Seatable — Da mensagem à mesa">
+<meta property="og:description" content="Reservas pelo WhatsApp, organizadas para quem recebe cada mesa.">
+<meta property="og:image" content="https://seatable.one/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<title>Seatable — Da mensagem à mesa</title>
+<style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found]){display:none!important}</style>
+
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Instrument+Sans:wght@400;500;600&amp;family=Instrument+Serif:ital@0;1&amp;display=swap">
+<style>
+  :root {
+    --ink: #18191B; --cinza: #6A6A6C; --claro: #ACADAE; --papel: #F9F9F9; --branco: #FFFFFF; --linha: #C4C4C4; --linha2: #DBDBDB; --fundo2: #F2F2F2;
+    --verde-bg: #DBEDDF; --verde: #448F52; --azul: #3B7BF6; --azul2: #2F6FE8;
+    --ui: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --titulo: "Instrument Sans", "Inter", sans-serif;
+    --serif: "Instrument Serif", Georgia, serif;
+    --mola: cubic-bezier(.23, 1, .32, 1);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: auto; }
+  body { margin: 0; background: var(--branco); color: var(--ink); font: 400 16px/24px var(--ui); -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+  h1, h2, h3, h4, p, ul, ol, li, figure { margin: 0; }
+  ul, ol { list-style: none; padding: 0; }
+  a { color: inherit; text-decoration: none; }
+  button, textarea, input { font: inherit; color: inherit; }
+  button { background: none; border: 0; cursor: pointer; padding: 0; }
+  :focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+  canvas { display: block; }
+  .env { width: 100%; max-width: 1354px; margin: 0 auto; padding: 0 24px; }
+  .estreito { width: 100%; max-width: 826px; margin: 0 auto; }
+
+  /* ── faixa do topo ─────────────────────────────────────────────── */
+  .faixa { height: 38px; background: var(--ink); color: #fff; display: flex; align-items: center; justify-content: center; gap: 8px; font: 400 16px/1 var(--titulo); }
+  .faixa svg { width: 14px; height: 14px; }
+  .faixa:focus-visible { outline-color: #fff; outline-offset: -3px; }
+
+  /* ── nav em pílula de vidro ─────────────────────────────────────── */
+  .nav { position: fixed; top: 40px; left: 50%; translate: -50% 0; width: 826px; max-width: calc(100% - 32px); height: 66px; z-index: 50;
+    border-radius: 9999px; background: rgba(249,249,249,.75); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    display: flex; align-items: center; padding: 0 12px 0 28px; transition: background-color .3s var(--mola); }
+  .nav.fora { background: rgba(249,249,249,.75); }
+  .nav .logo { font: 400 26px/1 var(--titulo); letter-spacing: -.02em; color: var(--ink); display: inline-flex; align-items: baseline; }
+  .nav .logo i { font: italic 400 30px/1 var(--serif); letter-spacing: -.01em; }
+  .nav nav { display: flex; gap: 24px; margin-left: 140px; font: 400 16px/1 var(--titulo); }
+  .nav nav a { padding: 6px 0; }
+  .nav .cta { margin-left: auto; }
+  .btn-preto { display: inline-flex; align-items: center; justify-content: center; height: 41px; padding: 0 16px; border-radius: 9999px;
+    background: var(--ink); color: #fff; font: 400 16px/1 var(--titulo); border: 1px solid transparent; transition: transform .15s var(--mola), background-color .3s var(--mola); }
+  .btn-preto:hover { background: #2A2B2E; }
+  .btn-preto:active { transform: scale(.98); }
+  .heroi .nav .logo, .heroi .nav nav { color: #fff; }
+
+  /* ── herói: o campo pintado, o CRT, o prompt ───────────────────── */
+  .heroi { position: relative; height: 1080px; overflow: hidden; color: #fff; }
+  .heroi #campo, .heroi #vento { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 62%; }
+  .heroi #vento { opacity: 0; transition: opacity 1.2s ease; }
+  .heroi #vento.pronto { opacity: 1; }
+  .heroi .veu { position: absolute; inset: 0; pointer-events: none; background:
+    radial-gradient(64% 48% at 50% 40%, rgba(6,20,60,.56), rgba(6,20,60,.28) 58%, rgba(6,20,60,0) 78%),
+    linear-gradient(rgba(0,0,0,.28), rgba(0,0,0,.16) 40%, rgba(0,0,0,0) 72%); }
+  .heroi .miolo { position: relative; z-index: 2; padding-top: 240px; text-align: center; }
+  .marca { font: 400 96px/1 var(--titulo); letter-spacing: -.035em; display: inline-flex; align-items: baseline; color: #fff; text-shadow: 0 2px 28px rgba(10,40,110,.22); }
+  .marca i { font: italic 400 108px/1 var(--serif); letter-spacing: -.01em; margin-right: .02em; }
+  .heroi .sub { margin: 34px auto 0; max-width: 820px; font: 400 25px/36px var(--titulo); color: #fff; text-wrap: balance; text-shadow: 0 1px 18px rgba(10,40,110,.25); }
+  .prompt { position: relative; margin: 44px auto 0; width: 826px; max-width: calc(100% - 48px); height: 120px; border-radius: 20px;
+    background: rgba(255,255,255,.96); border: 1px solid rgba(196,196,196,.6); box-shadow: 0 1px 0 rgba(255,255,255,.6) inset; text-align: left; color: var(--ink); }
+  .prompt .ph { position: absolute; left: 20px; top: 20px; font: 400 15px/22px var(--ui); color: #6A6A6C; }
+  .prompt .ph .cursor { display: inline-block; width: 1px; height: 1em; vertical-align: -.15em; background: #6A6A6C; margin-left: 1px; animation: pisca 1s steps(1) infinite; }
+  @keyframes pisca { 50% { opacity: 0; } }
+  .prompt textarea { position: absolute; inset: 0; width: 100%; height: 100%; background: transparent; border: 0; resize: none; padding: 20px 64px 20px 20px; font: 400 15px/22px var(--ui); color: var(--ink); border-radius: 20px; }
+  .prompt textarea:focus { outline: none; }
+  .prompt .enviar { position: absolute; right: 12px; bottom: 12px; width: 40px; height: 40px; border-radius: 50%; border: 1.5px solid #8A8A8C; display: grid; place-items: center; color: #6A6A6C; transition: background-color .3s var(--mola), color .3s var(--mola), border-color .3s var(--mola); }
+  .prompt .enviar:hover { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .prompt .enviar svg { width: 16px; height: 16px; }
+
+  /* ── ritmo e títulos das seções ────────────────────────────────── */
+  .secao { padding: 120px 0; }
+  .t-secao { text-align: center; }
+  .t-secao h2 { font: 600 42px/59px var(--titulo); color: var(--claro); letter-spacing: -.01em; }
+  .t-secao p { margin-top: 8px; font: 400 18px/28px var(--ui); color: var(--cinza); }
+  .t-secao.escuro h2 { color: #808184; }
+  .t-secao.escuro h2 .grad { background: linear-gradient(90deg, #5B8DEF, #3AC08A); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .t-secao.escuro p { color: #9A9B9E; }
+
+  /* ── galeria "feito com" ──────────────────────────────────────── */
+  .galeria { display: grid; grid-template-columns: 1.7fr 1fr 1.7fr; gap: 24px; margin-top: 60px; align-items: start; }
+  .gal { display: flex; flex-direction: column; gap: 24px; }
+  .gal .tela { border-radius: 20px; overflow: hidden; border: 1px solid var(--linha2); background: var(--papel); height: 280px; position: relative; }
+  .gal .tela.fone { height: 420px; width: 275px; margin: 0 auto; border-radius: 36px; border: 6px solid #1C1C1E; background: #0F0F10; box-shadow: 0 0 0 1px #3A3A3C; }
+  .gal .legenda { display: flex; align-items: center; gap: 20px; }
+  .gal .avatar { width: 64px; height: 64px; border-radius: 12px; overflow: hidden; }
+  .gal .avatar img, .depo .d .av img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .gal .nome { font: italic 400 26px/1 var(--serif); }
+  .pill-verde { display: inline-block; margin-top: 8px; padding: 3px 9px; border-radius: 6px; background: var(--verde-bg); color: var(--verde); font: 400 15px/22px var(--ui); }
+
+  /* ── as telas do produto (mocks em DOM) ───────────────────────── */
+  .ui { font: 400 12px/1.4 var(--ui); color: var(--ink); }
+  .ui .cab { display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-bottom: 1px solid rgba(0,0,0,.06); font-size: 12px; color: var(--cinza); background: #fff; }
+  .ui .cab b { color: var(--ink); font-weight: 600; }
+  .ui .cab .hora { margin-left: auto; font-variant-numeric: tabular-nums; }
+  .reserva { padding: 18px 20px; background: #fff; height: 100%; }
+  .reserva h4 { font: italic 400 24px/1.1 var(--serif); }
+  .reserva .linhaR { display: flex; gap: 8px; margin-top: 12px; }
+  .reserva .chip { padding: 8px 12px; border-radius: 10px; border: 1px solid var(--linha2); font-size: 12px; background: var(--papel); }
+  .reserva .chip.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .reserva .cta { margin-top: 14px; height: 40px; border-radius: 10px; background: var(--ink); color: #fff; display: grid; place-items: center; font-size: 13px; width: 160px; }
+  .whats { background: #EFE7DD; height: 100%; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+  .whats .b { max-width: 82%; padding: 8px 11px; border-radius: 12px; font-size: 12.5px; line-height: 1.4; background: #fff; color: var(--ink); box-shadow: 0 1px 0 rgba(0,0,0,.05); }
+  .whats .b.eu { align-self: flex-end; background: #D9FDD3; }
+  .whats .b small { display: block; text-align: right; font-size: 10px; color: #8A8A8C; margin-top: 3px; }
+  .regua { background: #fff; padding: 12px 14px 8px; --rot: 62px; position: relative; }
+  .regua .escala { position: relative; height: 16px; margin-left: var(--rot); }
+  .regua .escala span { position: absolute; translate: -50% 0; font-size: 10px; color: #8A8A8C; }
+  .regua .linha { display: grid; grid-template-columns: var(--rot) 1fr; align-items: center; height: 30px; border-top: 1px solid rgba(0,0,0,.05); }
+  .regua .rot { font-size: 11px; color: #4A4A4C; }
+  .regua .bar { position: relative; height: 30px; }
+  .regua .bl { position: absolute; top: 50%; translate: 0 -50%; height: 9px; border-radius: 99px; z-index: 1; }
+  .regua .bl em { position: absolute; left: 100%; top: 50%; translate: 0 -50%; padding: 1px 3px 1px 7px; font: 400 10px/1 var(--ui); color: #6A6A6C; background: #fff; white-space: nowrap; font-style: normal; }
+  .regua .t-fim { background: rgba(24,25,27,.14); }
+  .regua .t-atraso { background: #E8A317; }
+  .regua .t-atraso em { color: #B8780A; }
+  .regua .t-res { background: rgba(24,25,27,.3); }
+  .regua .t-novo { background: #1DB954; height: 11px; }
+  .regua .t-novo em { color: var(--ink); font-weight: 600; }
+  .regua .bl.oculto { opacity: 0; scale: 0 1; transform-origin: left center; }
+  .regua .bl.chega { animation: chega 1s var(--mola) both; }
+  @keyframes chega { from { opacity: 0; scale: 0 1; } to { opacity: 1; scale: 1 1; } }
+  .regua .agora { position: absolute; width: 1px; background: rgba(24,25,27,.3); }
+  .regua .agora::after { content: ""; position: absolute; top: -3px; left: -3px; width: 7px; height: 7px; border-radius: 50%; background: #1DB954; }
+
+  /* ── seção escura: bento ───────────────────────────────────────── */
+  .escuro-s { background: var(--ink); color: #fff; }
+  .bento { display: grid; grid-template-columns: 536px 1fr 1fr; grid-template-rows: auto auto; gap: 24px; margin-top: 60px; }
+  .bento .c { background: var(--papel); color: var(--ink); border-radius: 20px; overflow: hidden; display: flex; flex-direction: column; }
+  .bento .c .cima { flex: 1; min-height: 240px; position: relative; background: #fff; }
+  .bento .c .baixo { padding: 28px 30px 30px; }
+  .bento .c h3 { font: 600 20px/28px var(--titulo); }
+  .bento .c p { margin-top: 10px; font: 400 18px/28px var(--ui); color: var(--cinza); }
+  .bento .grande { grid-row: 1 / span 2; }
+  .bento .largo { grid-column: 2 / span 2; }
+  .pensando { position: absolute; inset: 0; display: flex; align-items: center; gap: 22px; padding-left: 96px; font: 400 56px/1 var(--titulo); color: var(--ink); letter-spacing: -.01em; }
+  .pensando .bola { width: 36px; height: 36px; border-radius: 50%; background: #58595B; }
+  .pensando .pts i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #C4C4C4; margin-left: 6px; animation: pontos 1.4s infinite; }
+  .pensando .pts i:nth-child(2) { animation-delay: .2s; } .pensando .pts i:nth-child(3) { animation-delay: .4s; }
+  @keyframes pontos { 0%, 60%, 100% { background: #C4C4C4; } 30% { background: #58595B; } }
+  .bento .largo .cima { display: flex; align-items: flex-end; justify-content: center; overflow: hidden; }
+  .bento .largo .cima .whats { width: 380px; height: 200px; border-radius: 16px 16px 0 0; box-shadow: 0 -4px 24px rgba(0,0,0,.08); }
+
+  /* ── carrossel "tudo em um" ───────────────────────────────────── */
+  .carrossel { position: relative; margin-top: 60px; }
+  .carrossel .trilho { position: relative; width: 857px; max-width: 100%; height: 468px; margin: 0 auto; }
+  .pontos { position: absolute; right: -64px; top: 50%; translate: 0 -50%; display: flex; flex-direction: column; gap: 22px; }
+  .cartao-f { position: absolute; inset: 0; border-radius: 20px; overflow: hidden; border: 1px solid var(--linha); background: var(--papel); opacity: 0; translate: 0 18px; transition: opacity .25s ease, translate .25s ease; pointer-events: none; }
+  .cartao-f.on { opacity: 1; translate: 0 0; pointer-events: auto; transition: opacity .8s var(--mola) .2s, translate .8s var(--mola) .2s; }
+  .cartao-f .arte { height: 328px; position: relative; overflow: hidden; }
+  .cartao-f .texto { padding: 26px 30px; }
+  .cartao-f h3 { font: 600 20px/28px var(--titulo); }
+  .cartao-f p { margin-top: 10px; font: 400 18px/28px var(--ui); color: var(--cinza); }
+  .wall { position: absolute; inset: 0; }
+  .wall.laranja { background: url(/images/artifact/asset-0.jpg) center / cover; }
+  .wall.azul { background: url(/images/artifact/asset-1.jpg) center / cover; }
+  .wall.vermelho { background: url(/images/artifact/asset-2.jpg) center / cover; }
+  .wall.gelo { background: url(/images/artifact/asset-3.jpg) center / cover; }
+  .wall.verde { background: url(/images/artifact/asset-4.jpg) center / cover; }
+  .wall::after { content: ""; position: absolute; inset: 0; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .07 0'/></filter><rect width='120' height='120' filter='url(%23n)'/></svg>"); opacity: .8; mix-blend-mode: overlay; }
+  .arte .janela { position: absolute; left: 44px; right: -40px; top: 80px; bottom: -20px; background: #fff; border-radius: 12px 0 0 0; box-shadow: 0 8px 40px rgba(0,0,0,.25); overflow: hidden; }
+  .arte .notif { position: absolute; left: 70px; right: 70px; border-radius: 22px; background: rgba(255,255,255,.72); backdrop-filter: blur(14px); padding: 18px 24px; display: grid; grid-template-columns: 96px 1fr auto; gap: 0 24px; align-items: center; box-shadow: 0 10px 30px rgba(0,0,0,.12); }
+  .arte .notif .ic { width: 96px; height: 96px; border-radius: 22px; display: grid; place-items: center; font: 700 44px/1 var(--titulo); color: #fff; }
+  .arte .notif b { display: block; font: 600 24px/1.2 var(--ui); }
+  .arte .notif span { display: block; font: 400 24px/1.3 var(--ui); color: #2A2B2E; margin-top: 4px; white-space: nowrap; }
+  .arte .notif small { font: 400 22px/1 var(--ui); color: #7A7B7E; align-self: start; }
+  .arte .icones { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 70px; }
+  .arte .icones .ic { width: 160px; height: 160px; border-radius: 36px; background: #fff; display: grid; place-items: center; box-shadow: 0 10px 30px rgba(0,0,0,.25); }
+  .arte .icones .ic svg { width: 88px; height: 88px; }
+  .pontos button { width: 12px; height: 12px; border-radius: 50%; background: #DBDBDB; transition: background-color .3s var(--mola); }
+  .pontos button[aria-current="true"] { background: #6A6A6C; }
+
+  /* ── faixa "soa humano" ───────────────────────────────────────── */
+  .humano { background: var(--ink); color: #fff; padding: 140px 0 60px; text-align: center; }
+  .humano .frase { max-width: 900px; margin: 0 auto; font: italic 400 44px/1.25 var(--serif); }
+  .humano .quem { margin-top: 28px; font: 400 16px/24px var(--ui); color: #9A9B9E; }
+  .humano .pill { display: inline-block; margin-top: 120px; padding: 4px 12px; border-radius: 6px; background: #3A3B3E; color: #fff; font: 400 16px/24px var(--ui); }
+
+  /* ── balcão & celular ─────────────────────────────────────────── */
+  .balcao .par { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; margin-top: 120px; }
+  .balcao .par + .par { margin-top: 160px; }
+  .balao { display: inline-block; padding: 26px 40px; border-radius: 40px; background: var(--fundo2); font: 400 36px/1.2 var(--titulo); color: var(--ink); }
+  .balcao h2 { font: 600 42px/59px var(--titulo); color: var(--claro); letter-spacing: -.01em; }
+  .balcao .par p { margin-top: 8px; font: 400 18px/28px var(--ui); color: var(--claro); }
+  .balcao .par.dir { text-align: right; }
+  .balcao .par.dir .balao { justify-self: end; }
+  .toggle { display: inline-flex; margin: 40px auto 0; border: 1px solid var(--linha2); border-radius: 12px; padding: 0; background: var(--papel); }
+  .toggle button { padding: 10px 22px; font: 400 20px/1.2 var(--titulo); color: #B0B1B3; border-radius: 11px; }
+  .toggle button[aria-selected="true"] { background: #fff; color: var(--ink); box-shadow: 0 0 0 1px var(--linha2); }
+  .fone-g { width: 420px; max-width: 100%; margin: 60px auto 0; border-radius: 52px; border: 8px solid #1C1C1E; background: #0F0F10; box-shadow: 0 0 0 2px #3A3A3C, 0 30px 60px rgba(0,0,0,.15); overflow: hidden; height: 560px; position: relative; }
+  .fone-g .ilha { position: absolute; left: 50%; top: 14px; translate: -50% 0; width: 120px; height: 34px; border-radius: 18px; background: #000; z-index: 2; }
+  .fone-g .tela { position: absolute; inset: 0; background: #fff; padding: 66px 18px 18px; }
+  .fone-g .tela h4 { font: 600 30px/1.1 var(--titulo); }
+  .fone-g .tela .sub { font-size: 13px; color: var(--cinza); margin-top: 6px; }
+  .fone-g .msg { display: grid; grid-template-columns: 48px 1fr auto; gap: 12px; align-items: center; padding: 14px 12px; margin-top: 12px; border-radius: 14px; background: var(--papel); }
+  .fone-g .msg .av { width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; color: #fff; font: italic 400 20px/1 var(--serif); }
+  .fone-g .msg b { font: 500 14px/1.3 var(--ui); display: block; }
+  .fone-g .msg span { font: 400 12px/1.3 var(--ui); color: var(--cinza); }
+  .fone-g .msg small { font-size: 11px; color: #9A9B9E; }
+  .fone-g .tela.balcao-t { padding-top: 66px; }
+  .cena-b { display: none; } .cena-b.on { display: block; }
+
+  /* ── fecho editorial: a mesma paleta, tipografia e ritmo do hero ── */
+  .fecho { position: relative; overflow: hidden; padding: 118px 0 0; background: #203428; color: #F3F0E9; text-align: left; }
+  .fecho-miolo { max-width: 1168px; }
+  .fecho-kicker { font: 500 12px/1.4 var(--ui); letter-spacing: .12em; text-transform: uppercase; color: #C0CCBD; }
+  .fecho h2 { max-width: 1020px; margin-top: 25px; font: 400 clamp(49px, 5.8vw, 82px)/.96 var(--titulo); letter-spacing: -.055em; color: #F3F0E9; }
+  .fecho h2 em { font: italic 400 1.02em/.96 var(--serif); letter-spacing: -.035em; }
+  .fecho .sub2 { max-width: 560px; margin-top: 27px; font: 400 18px/1.55 var(--ui); color: #D2DACD; }
+  .fecho-acoes { display: flex; align-items: center; flex-wrap: wrap; gap: 28px; margin-top: 34px; }
+  .fecho-acoes a { display: inline-flex; align-items: center; justify-content: center; min-height: 50px; font: 500 15px/1.3 var(--ui); transition: transform .18s var(--mola), background-color .18s ease, color .18s ease; }
+  .fecho-acoes a:hover { transform: translateY(-2px); }
+  .fecho-acoes a:active { transform: translateY(0); }
+  .fecho-primaria { gap: 18px; padding: 0 22px; border-radius: 999px; background: #F3F0E9; color: #203428; }
+  .fecho-primaria:hover { background: #FFFFFF; }
+  .fecho-secundaria { border-bottom: 1px solid #B8C9B9; color: #E3E8DE; }
+  .gigante { position: relative; margin-top: 112px; font: 400 clamp(150px, 25vw, 350px)/.78 var(--titulo); letter-spacing: -.07em; white-space: nowrap; display: flex; justify-content: center; align-items: baseline; color: #E6ECE1; }
+  .gigante i { font: italic 400 1.13em/.78 var(--serif); letter-spacing: -.035em; color: inherit; }
+  .gigante span { color: inherit; }
+  .rodape { position: relative; margin-top: 76px; padding: 62px 0 34px; border-top: 1px solid rgba(243,240,233,.22); }
+  .rodape .env { max-width: 1168px; }
+  .rodape .cols { display: grid; grid-template-columns: minmax(0,1.75fr) repeat(3,minmax(0,1fr)); gap: 34px; }
+  .rodape-brand p { font: 400 22px/1.15 var(--titulo); letter-spacing: -.035em; }
+  .rodape-brand span { display: block; max-width: 230px; margin-top: 12px; font: 400 14px/1.55 var(--ui); color: #B8C7B7; }
+  .rodape h3 { margin-bottom: 17px; font: 500 12px/1.4 var(--ui); letter-spacing: .10em; text-transform: uppercase; color: #B8C7B7; }
+  .rodape li { font: 400 15px/1.35 var(--ui); }
+  .rodape li + li { margin-top: 9px; }
+  .rodape li a { display: inline-flex; align-items: center; min-height: 30px; color: #F3F0E9; transition: color .18s ease; }
+  .rodape li a:hover { color: #D3DFC8; text-decoration: underline; text-underline-offset: 4px; }
+  .rodape .base { display: flex; justify-content: space-between; gap: 20px; align-items: center; margin-top: 64px; padding-top: 22px; border-top: 1px solid rgba(243,240,233,.16); font: 400 13px/1.4 var(--ui); color: #B8C7B7; }
+
+  @media (max-width: 1100px) {
+    .galeria { grid-template-columns: 1fr; }
+    .bento { grid-template-columns: 1fr; }
+    .bento .grande { grid-row: auto; } .bento .largo { grid-column: auto; }
+    .balcao .par { grid-template-columns: 1fr; gap: 24px; }
+    .balcao .par.dir { text-align: left; } .balcao .par.dir .balao { justify-self: start; }
+    .pontos { right: 12px; }
+    .rodape .cols { grid-template-columns: 1fr 1fr; }
+    .rodape-brand { grid-column: 1 / -1; }
+    .heroi { height: 900px; }
+  }
+  @media (max-width: 700px) {
+    .nav nav { display: none; } .nav { padding-left: 20px; }
+    .marca { font-size: 64px; } .marca i { font-size: 72px; }
+    .heroi .sub { font-size: 20px; line-height: 30px; }
+    .t-secao h2, .balcao h2 { font-size: 32px; line-height: 40px; }
+    .balao { font-size: 24px; padding: 18px 26px; }
+    .fecho { padding-top: 76px; }
+    .fecho h2 { margin-top: 17px; font-size: clamp(38px, 10.2vw, 64px); line-height: .99; }
+    .fecho h2 .linha-mobile { display: block; }
+    .fecho h2 br { display: none; }
+    .fecho h2 em { display: block; margin-top: 8px; font-size: 1.15em; }
+    .fecho h2 .italico-mobile { display: block; }
+    .fecho .sub2 { margin-top: 21px; font-size: 16px; }
+    .fecho-acoes { gap: 10px; margin-top: 26px; }
+    .fecho-primaria { width: 100%; justify-content: space-between; }
+    .gigante { margin-top: 70px; font-size: 26vw; }
+    .rodape { margin-top: 48px; padding-top: 42px; }
+    .rodape .cols { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 32px 18px; }
+    .rodape-brand { grid-column: 1 / -1; }
+    .rodape .base { align-items: center; flex-direction: row; margin-top: 38px; font-size: 12px; }
+  }
+  @media (prefers-reduced-motion: reduce) { .cursor, .pensando .pts i, .regua .bl.chega { animation: none; } }
+</style>
+
+</head>
+<body>
+<a class="faixa" href="/live-demo">Seatable agora atende no telefone <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"></path></svg></a>
+
+<header class="nav" id="nav" style="background: rgba(14, 24, 48, 0.34);">
+  <a class="logo" href="#" style="color: rgb(255, 255, 255);"><i>Seat</i>able</a>
+  <nav style="color: rgb(255, 255, 255);"><a href="/precos">Preços</a><a href="#casas">Casas</a><a href="/login">Entrar</a></nav>
+  <a class="btn-preto cta" href="/demo/setup">Começar</a>
+</header>
+
+<main>
+  <section class="heroi" id="heroi">
+    <picture id="restaurant-hero" class="foto"><source media="(max-width: 700px)" srcset="/images/artifact/hero-evening-mobile-v3.webp"><img src="/images/artifact/hero-evening-v3.webp" alt="" fetchpriority="high" width="1672" height="941"></picture>
+    <div class="hero-photo-stage">
+      <div class="veu" aria-hidden="true"></div>
+      <div class="miolo">
+        <h1 class="hero-heading">Da mensagem<br><em>à mesa.</em></h1>
+        <p class="sub">Reservas pelo WhatsApp, organizadas para quem recebe cada mesa.</p>
+      </div>
+    </div>
+    <div class="hero-handoff">
+      <div class="hero-handoff-inner">
+        <a class="hero-story-link" href="#casas" aria-label="Veja a conversa virar reserva"><span>Veja na prática</span><svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M3 10h14m-6-6 6 6-6 6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+      </div>
+    </div>
+  </section>
+
+  <section class="secao" id="casas">
+    <div class="env">
+      <div class="t-secao"><h2>Demonstrações com Seatable</h2></div>
+      <div class="galeria">
+        <div class="gal">
+          <div class="tela"><div class="ui"><div class="cab"><b>Casa Tuim</b> · reserva pública <span class="hora">casatuim.seatable.one</span></div>
+            <div class="reserva"><h4>Uma mesa na Casa Tuim</h4><div class="linhaR"><span class="chip">Hoje</span><span class="chip on">Sáb, 6</span><span class="chip">Dom, 7</span></div><div class="linhaR"><span class="chip">19h</span><span class="chip on">20h</span><span class="chip">21h</span><span class="chip">4 pessoas</span></div><div class="cta">Reservar 20h</div></div></div></div>
+          <div class="legenda"><div class="avatar"><img alt="" src="/images/artifact/asset-9.jpg"></div><div><div class="nome">Casa Tuim</div><span class="pill-verde">Reserva pública</span></div></div>
+        </div>
+        <div class="gal">
+          <div class="tela fone"><div class="ui whats" style="height:100%;border-radius:30px">
+            <div class="b">Oi! Tem mesa pra 4 hoje às 20h?<small>14:32</small></div>
+            <div class="b eu">Há disponibilidade às 20h para quatro. Confirmo no nome de quem?<small>14:32</small></div>
+            <div class="b">Marina. Somos 4, com um bebê. Se possível, cadeira infantil e mesa perto da janela.<small>14:33</small></div>
+            <div class="b eu">Reserva confirmada, Marina: hoje, 20h, quatro pessoas. Anotei os pedidos; a equipe confirma se pode atendê-los.<small>14:33</small></div>
+          </div></div>
+          <div class="legenda"><div class="avatar"><img alt="" src="/images/artifact/asset-10.jpg"></div><div><div class="nome">Bar do Zé</div><span class="pill-verde">WhatsApp</span></div></div>
+        </div>
+        <div class="gal">
+          <div class="tela"><div class="ui"><div class="cab"><b>Cantina Orla</b> · salão · quinta <span class="hora">14:33</span></div><div class="regua" data-regua=""></div></div></div>
+          <div class="legenda"><div class="avatar"><img alt="" src="/images/artifact/asset-11.jpg"></div><div><div class="nome">Cantina Orla</div><span class="pill-verde">Salão ao vivo</span></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="secao escuro-s">
+    <div class="env">
+      <div class="t-secao escuro"><h2>Seatable <span class="grad">atende</span> por você</h2><p>Para você cozinhar sem olhar o telefone uma vez.</p></div>
+      <div class="bento">
+        <div class="c grande"><div class="cima"><div class="pensando"><span class="bola"></span><span>Sentando<span class="pts"><i></i><i></i><i></i></span></span></div></div><div class="baixo"><h3>Inteligência de salão</h3><p>O Seatable lê a sua casa — mesas, turnos, o que dá e o que não dá — e decide como quem trabalha ali.</p></div></div>
+        <div class="c largo"><div class="cima"><div class="ui whats"><div class="b">Tem cadeirão?<small>14:33</small></div><div class="b eu">Anotei o pedido; a equipe confirma a disponibilidade. Vai precisar de prato infantil?<small>14:33</small></div></div></div><div class="baixo"><h3>Responde no WhatsApp</h3><p>Confirma, remarca, pergunta do cadeirão. Como uma pessoa, em oito segundos.</p></div></div>
+        <div class="c"><div class="baixo" style="padding-top:36px"><h3>Que atraso?</h3><p>A Mesa 4 passou de duas horas? O Seatable avisa o salão antes de virar reclamação.</p></div></div>
+        <div class="c"><div class="baixo" style="padding-top:36px"><h3>Casas grandes</h3><p>Funciona de 12 a 300 mesas, com fila, turnos e varanda, sem planilha.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="secao recursos">
+    <div class="env">
+      <div class="t-secao"><h2>Tudo em um</h2><p>Reserva, fila, sinal, telefone e fechamento. Ligados de fábrica.</p></div>
+      <div class="pontos" role="tablist" aria-label="Recursos da Seatable"></div>
+      <div class="mobile-feature-nav" aria-label="Navegar pelos recursos"><button type="button" data-feature-nav="prev" aria-label="Recurso anterior">←</button><span class="feature-current" aria-live="polite">01 / 05 · Régua do salão</span><button type="button" data-feature-nav="next" aria-label="Próximo recurso">→</button></div>
+      <div class="carrossel" id="carrossel">
+        <div class="trilho">
+          <article class="cartao-f on" data-i="0" data-nav="Régua do salão"><div class="arte"><div class="wall laranja"></div><div class="janela"><div class="ui"><div class="cab"><b>Casa Tuim</b> · salão · quinta <span class="hora">14:33</span></div><div class="regua grande" data-regua="grande"></div></div></div></div><div class="texto"><h3>Da conversa à mesa</h3><p>Horários e ocupação da casa, em uma única régua.</p></div></article>
+          <article class="cartao-f" data-i="1"><div class="arte"><div class="wall azul"></div><div class="notif" style="top:36px"><div class="ic" style="background:#32BCAD">P</div><div><b>Pix</b><span>Sinal da mesa 6 recebido · R$ 80</span></div><small>há 5 min</small></div><div class="notif" style="top:186px"><div class="ic" style="background:#32BCAD">P</div><div><b>Pix</b><span>Sinal da mesa 10 recebido · R$ 160</span></div><small>há 12 min</small></div></div><div class="texto"><h3>Sinal</h3><p>Cobre sinal por Pix na própria conversa e devolve sozinho se a mesa for cancelada a tempo.</p></div></article>
+          <article class="cartao-f" data-i="2"><div class="arte"><div class="wall vermelho"></div><div class="icones"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#18191B" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"></path></svg></div><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#18191B" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l1.5-4A8 8 0 1 1 8.5 19L4 20z"></path><path d="M9 11h6M9 14h4"></path></svg></div></div></div><div class="texto"><h3>Voz</h3><p>A mesma anfitriã atende a ligação. Confirma, remarca e lança na régua, com a voz da sua casa.</p></div></article>
+          <article class="cartao-f" data-i="3"><div class="arte"><div class="wall gelo"></div><div class="icones"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#18191B" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6 7-11a7 7 0 0 0-14 0c0 5 7 11 7 11z"></path><circle cx="12" cy="10" r="2.5"></circle></svg></div><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#18191B" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"></rect><circle cx="12" cy="12" r="4"></circle><circle cx="17.5" cy="6.5" r=".8" fill="#18191B"></circle></svg></div><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#18191B" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16v11H4z"></path><path d="M8 7V5h8v2M4 12h16"></path></svg></div></div></div><div class="texto"><h3>Integrações</h3><p>Google Maps, Instagram, iFood e o seu cardápio: a anfitriã responde com o que a casa já publica.</p></div></article>
+          <article class="cartao-f" data-i="4"><div class="arte"><div class="wall verde"></div><div class="janela" style="left:110px;right:110px;top:60px;bottom:-30px;border-radius:12px 12px 0 0"><div class="ui"><div class="cab"><b>Casa Tuim</b> · fechamento · quinta <span class="hora">23:04</span></div><div style="padding:14px 18px;font-size:13px"><div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(0,0,0,.06)"><span>Couverts</span><b>92</b></div><div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(0,0,0,.06)"><span>Tempo médio de mesa</span><b>1h38</b></div><div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(0,0,0,.06)"><span>No-show</span><b>1 de 31</b></div><div style="display:flex;justify-content:space-between;padding:8px 0"><span>Receita por raia</span><b>R$ 4.212</b></div></div></div></div></div><div class="texto"><h3>Fechamento</h3><p>Todo dia às 23h, no seu WhatsApp: couverts, tempo de mesa, no-show e receita por raia.</p></div></article>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="humano">
+    <div class="env">
+      <p class="frase">"Reservado, Marina: hoje, 20h, quatro pessoas. Anotei o pedido do cadeirão; a equipe confirma a disponibilidade."</p>
+      <p class="quem">A anfitriã da Casa Tuim, às 14h33 de uma quinta. Ninguém do salão digitou.</p>
+      <span class="pill">Soa humano</span>
+    </div>
+  </section>
+
+  <section class="secao balcao">
+    <div class="env">
+      <div class="t-secao"><h2>Celular &amp; balcão</h2><p>O cliente escreve como quiser. A casa vê tudo numa tela só.</p></div>
+      <div class="par"><div><span class="balao">Tem mesa pra 6 no sábado?</span></div><div><h2>Seatable no celular do cliente</h2><p>Reserva, fila e sinal pelo WhatsApp que ele já usa.<br>Sem app, sem cadastro.</p></div></div>
+      <div class="par dir"><div><h2>Seatable no balcão</h2><p>A régua, a fila e a conta na tela do salão.<br>Quem chega, quem atrasa, quem pediu a conta.</p></div><div><span class="balao">Mesa 4 pediu a conta.</span></div></div>
+      <div class="t-secao" style="margin-top:160px"><h2>Seatable em qualquer lugar</h2><p>A mesma anfitriã no celular do cliente e na tela do salão.<br>Na mesma casa, no mesmo minuto.</p>
+        <div class="toggle" role="tablist"><button role="tab" aria-selected="true" data-cena="cel">Celular</button><button role="tab" aria-selected="false" data-cena="bal">Balcão</button></div>
+      </div>
+      <div class="fone-g"><div class="ilha"></div>
+        <div class="tela cena-b on" data-cena-b="cel"><h4>Conversas</h4><div class="sub">Quem falou com a casa hoje</div>
+          <div class="msg"><div class="av" style="background:#C96A4A">M</div><div><b>Marina</b><span>Reservado: hoje, 20h, mesa 2…</span></div><small>14:33</small></div>
+          <div class="msg"><div class="av" style="background:#3E7C5A">A</div><div><b>Aldo</b><span>Dá pra passar pra 19h30?</span></div><small>11:58</small></div>
+          <div class="msg"><div class="av" style="background:#3B6FB6">C</div><div><b>Célia</b><span>Somos 3, tem varanda?</span></div><small>10:41</small></div>
+        </div>
+        <div class="tela cena-b balcao-t" data-cena-b="bal"><h4>Salão</h4><div class="sub">quinta · 14:33 · 6 mesas em curso</div><div class="ui" style="margin-top:14px"><div class="regua" data-regua="fone"></div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="fecho">
+    <div class="env fecho-miolo">
+      <p class="fecho-kicker">Seu próximo serviço</p>
+      <h2><span class="linha-mobile">Mais tempo </span><span class="linha-mobile">para o salão.</span><br><em><span class="italico-mobile">Menos tempo</span> <span class="italico-mobile">no telefone.</span></em></h2>
+      <p class="sub2">Reservas, telefonemas e pedidos especiais num só fluxo para a equipe.</p>
+      <div class="fecho-acoes">
+        <a class="fecho-primaria" href="/demo/setup">Experimentar a demonstração <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M3 10h14m-6-6 6 6-6 6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+        <a class="fecho-secundaria" href="/precos">Ver preços</a>
+      </div>
+    </div>
+    <div class="env"><div class="gigante" aria-hidden="true"><i>Seat</i><span>able</span></div></div>
+    <footer class="rodape">
+      <div class="env">
+        <div class="cols">
+          <div class="rodape-brand"><p>Da mensagem à mesa.</p></div>
+          <div><h3>Produto</h3><ul><li><a href="#casas">Demonstrações</a></li><li><a href="/precos">Preços</a></li><li><a href="/demo/setup">Começar</a></li></ul></div>
+          <div><h3>Sua conta</h3><ul><li><a href="/login">Entrar</a></li><li><a href="/privacy">Privacidade</a></li><li><a href="/terms">Termos</a></li></ul></div>
+          <div><h3>Contato</h3><ul><li><a href="mailto:hello@seatable.one">hello@seatable.one</a></li></ul></div>
+        </div>
+        <div class="base"><span>© 2026 Seatable</span></div>
+      </div>
+    </footer>
+  </section>
+</main>
+
+<script defer src="/artifact-behavior.js"></script>
+
+
+<script type="module" src="/src/prototype/main.tsx?v=20260915-nav"></script>
+</body></html>

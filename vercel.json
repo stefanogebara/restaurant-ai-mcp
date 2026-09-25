@@ -36,6 +36,10 @@
   },
   "rewrites": [
     {
+      "source": "/",
+      "destination": "/seatable-prototype.html"
+    },
+    {
       "source": "/api/prospect-discover",
       "destination": "/api/prospect-discover.js"
     },
