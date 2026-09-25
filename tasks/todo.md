@@ -8,11 +8,14 @@
 - [ ] Confirmar enquadramento da licença Remotion para uso do Player em produção.
 - [x] Conferir a prévia Vercel do commit final em `/`, `/login` e `/demo/setup`.
 - [ ] Fazer merge, conferir `https://seatable.one/` e rotas existentes, e registrar o resultado.
-- [ ] Conferir o retorno **via Link do React** de `/login` para `/`: não pode mostrar a landing antiga em memória.
+- [x] Conferir na prévia o retorno **via Link do React** de `/login` e `/precos` para `/`: ambos mostram a nova landing.
+- [x] Alinhar o dia exibido nas três cenas animadas à história de quinta-feira e conferir desktop/celular.
 
 **Revisão:** a primeira prévia compilou, mas `/` continuou na página antiga porque a Vercel priorizou o arquivo físico `index.html` sobre o rewrite. A landing em `/seatable-prototype.html` carregou sem erros de aplicação; a correção acima troca o documento físico da raiz e preserva o SPA como fallback. A crítica visual independente avaliou a composição em 7,5/10, sem bloqueio funcional nas capturas. Dívida estética: demos mais pálidos que o herói, metadados pequenos e página longa em celular.
 
 **Regressão descoberta após o merge:** acesso direto a `/` já mostra a landing nova, mas um `<Link to="/">` dentro do SPA mantém o roteador em memória e revela a landing antiga. A rota `/` do SPA agora força reload do documento em produção; validar na prévia e no domínio antes de encerrar.
+
+**Revisão de conteúdo no celular:** o painel animado dizia “Sábado” enquanto a história de Marina e as demais telas diziam quinta-feira. Os cabeçalhos das cenas de reserva (desktop/celular) e salão agora dizem quinta-feira. Build, 10 testes focados e capturas em 390/1280 px passaram sem overflow.
 
 ---
 

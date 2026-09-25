@@ -38,7 +38,7 @@ export function ReservationScene() {
       <div style={{ position: "absolute", inset: 0, background: "#fbfbf8" }} />
       <div style={{ position: "absolute", left: 26, right: 26, top: 23, display: "flex", justifyContent: "space-between", alignItems: "center", color: ink }}>
         <span style={{ fontSize: 18, letterSpacing: "-.35px" }}>Casa Tuim</span>
-        <span style={{ color: muted, fontSize: 12 }}>Sábado · {arrival > 0.82 ? "5" : "4"} próximas</span>
+        <span style={{ color: muted, fontSize: 12 }}>Quinta-feira · {arrival > 0.82 ? "5" : "4"} próximas</span>
       </div>
       <div style={{ position: "absolute", left: 26, right: 26, top: 60, height: 1, background: rule }} />
       <div style={{ position: "absolute", left: 26, top: 82, color: ink, fontSize: 17, letterSpacing: "-.35px" }}>Reservas de hoje</div>

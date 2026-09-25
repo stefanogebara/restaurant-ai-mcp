@@ -27,7 +27,7 @@ export function CompactReservation({ arrival, selection, placeholder, informatio
       <div style={{ position: "absolute", inset: 0, background: "#fbfbf8" }} />
       <div style={{ position: "absolute", left: 22, right: 22, top: 18, display: "flex", justifyContent: "space-between", alignItems: "center", color: ink }}>
         <span style={{ fontSize: 20, letterSpacing: "-.4px" }}>Casa Tuim</span>
-        <span style={{ color: muted, fontSize: 13 }}>Sábado · {arrival > 0.82 ? "3" : "2"} próximas</span>
+        <span style={{ color: muted, fontSize: 13 }}>Quinta-feira · {arrival > 0.82 ? "3" : "2"} próximas</span>
       </div>
       <div style={{ position: "absolute", left: 22, right: 22, top: 53, height: 1, background: rule }} />
       <div style={{ position: "absolute", left: 22, top: 73, color: ink, fontSize: 24, letterSpacing: "-.55px" }}>Reservas de hoje</div>
