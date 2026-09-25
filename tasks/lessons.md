@@ -1502,3 +1502,6 @@ Corolário barato: quando uma consulta filtra por uma coluna que a tabela não
 tem (`restaurant_id` aqui), pergunte se o MODELO está certo antes de consertar
 o nome. Esta tabela é global por cliente; o filtro estava errado em conceito,
 não em digitação.
+## 2026-09-25 — O herói precisa herdar a linguagem das demonstrações
+
+O herói fotográfico foi aprovado isoladamente, mas ficou cromaticamente separado das demonstrações em papel quente e verde-oliva. A correção do usuário mostrou que avaliar a primeira dobra sozinha não basta. Antes de publicar uma landing, comparar herói, demonstração e cartão social no mesmo fluxo; compartilhar tokens de papel, tinta, ação e linha; e verificar a passagem entre seções em desktop e celular. A foto deve mostrar um detalhe da reserva que a interface realmente carrega, sem repetir a mesma fala na seção seguinte.

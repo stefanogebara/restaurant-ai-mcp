@@ -6,10 +6,10 @@
   }
 }
 body .rm-examples-section {
-  padding-top: 48px;
+  padding-top: 20px;
   padding-bottom: 76px;
   color: #272d24;
-  background: #f3f0e9;
+  background: var(--demo-paper);
 }
 
 body .rm-examples-section .env {
@@ -74,7 +74,7 @@ body .rm-examples-section .rm-gallery-story h3 {
   font: 400 clamp(45px, 4.3vw, 59px) / 1.01 var(--serif);
   letter-spacing: -0.035em;
   text-wrap: balance;
-  color: #293222;
+  color: var(--demo-ink);
 }
 
 body .rm-examples-section .rm-gallery-story p {
@@ -124,15 +124,15 @@ body .rm-examples-section .rm-gallery-tabs button {
   min-height: 91px;
   padding: 18px 38px 0 0;
   border: 0;
-  border-top: 1px solid #cdd0c7;
+  border-top: 1px solid var(--demo-line);
   text-align: left;
   color: #606659;
   transition: color 180ms ease, border-color 180ms ease;
 }
 
 body .rm-examples-section .rm-gallery-tabs button[aria-selected="true"] {
-  color: #293222;
-  border-top: 2px solid #3f4e32;
+  color: var(--demo-ink);
+  border-top: 2px solid var(--demo-action);
   padding-top: 17px;
 }
 
@@ -299,7 +299,7 @@ body .rm-examples-section .rm-guest-note {
   margin: 48px 0 0;
   max-width: 272px;
   padding-top: 22px;
-  border-top: 1px solid #cdd0c7;
+  border-top: 1px solid var(--demo-line);
 }
 @media (max-width: 650px) {
   body .rm-examples-section .rm-guest-note {
@@ -319,14 +319,14 @@ body .rm-examples-section .rm-guest-note {
     column-gap: 14px;
     min-height: 64px;
     padding: 8px 2px;
-    border-top: 1px solid #cdd0c7;
+    border-top: 1px solid var(--demo-line);
     border-left: 0;
   }
   body .rm-examples-section .rm-gallery-tabs button:last-child {
-    border-bottom: 1px solid #cdd0c7;
+    border-bottom: 1px solid var(--demo-line);
   }
   body .rm-examples-section .rm-gallery-tabs button[aria-selected="true"] {
-    border-top-color: #3f4e32;
+    border-top-color: var(--demo-action);
   }
   body .rm-examples-section .rm-gallery-tabs small {
     grid-column: 1;
@@ -596,9 +596,9 @@ body .rm-examples-section .rm-showcase-reservation .rm-gallery-headline > span {
 }
 body .rm-examples-section .rm-showcase-reservation .rm-gallery-headline h3 {
   margin: 0;
-  font: 400 clamp(45px, 4.4vw, 58px)/1.03 var(--serif);
-  letter-spacing: -.035em;
-  color: #293222;
+  font: 400 clamp(36px, 3vw, 42px)/1.1 var(--titulo);
+  letter-spacing: -.052em;
+  color: var(--demo-ink);
 }
 body .rm-examples-section .rm-showcase-reservation .rm-gallery-panel {
   display: grid;
@@ -632,6 +632,12 @@ body .rm-examples-section .rm-request-origin blockquote {
   letter-spacing: -.04em;
   color: #303b2d;
 }
+body .rm-examples-section .rm-request-origin p {
+  margin: 14px 0 0;
+  font: 400 20px/1.35 var(--titulo);
+  letter-spacing: -.02em;
+  color: var(--demo-ink);
+}
 @media (max-width: 900px) {
   body .rm-examples-section .rm-showcase-reservation .rm-gallery-panel {
     grid-template-columns: minmax(0, 240px) minmax(0, 1fr);
@@ -643,21 +649,22 @@ body .rm-examples-section .rm-request-origin blockquote {
 }
 @media (max-width: 650px) {
   body .rm-examples-section .rm-showcase-reservation .rm-gallery-headline {
-    margin-bottom: 23px;
+    margin-bottom: 12px;
   }
   body .rm-examples-section .rm-showcase-reservation .rm-gallery-headline h3 {
-    font-size: 39px;
+    font-size: 28px;
+    max-width: none;
   }
   body .rm-examples-section .rm-showcase-reservation .rm-gallery-panel {
     display: flex;
     flex-direction: column;
-    gap: 22px;
+    gap: 16px;
   }
   body .rm-examples-section .rm-showcase-reservation .rm-gallery-story {
-    order: 0;
+    order: 1;
   }
   body .rm-examples-section .rm-showcase-reservation .rm-gallery-art {
-    order: 1;
+    order: 0;
   }
   body .rm-examples-section .rm-request-origin {
     padding-top: 0;
@@ -671,10 +678,44 @@ body .rm-examples-section .rm-request-origin blockquote {
 }
 
 @media (max-width: 650px) {
+  body .rm-examples-section .rm-showcase-reservation .rm-gallery-art {
+    width: calc(100% + 48px);
+    margin-left: -24px;
+  }
+  body .rm-examples-section .rm-showcase-reservation .rm-gallery-screen {
+    border: 0;
+    border-top: 1px solid var(--demo-line);
+    border-bottom: 1px solid var(--demo-line);
+    box-shadow: none;
+  }
+  body .rm-examples-section .rm-showcase-reservation .rm-film-controls .rm-play-action {
+    margin-left: 24px;
+  }
   body .rm-examples-section .rm-showcase-reservation .rm-gallery-screen.rm-gallery-reservation .rm-film-controls .rm-play-action {
     left: 0;
     right: auto;
     min-height: 44px;
     font-size: 14px;
   }
+}
+
+/* The first proof is a full-width working surface, not a thumbnail next to
+   a second transcription of the same reservation. */
+@media (min-width: 651px) {
+  body .rm-examples-section .rm-showcase-reservation .rm-gallery-panel { display: block; }
+  body .rm-examples-section .rm-showcase-reservation .rm-gallery-art { width: 100%; }
+  body .rm-examples-section .rm-showcase-reservation .rm-gallery-screen {
+    border: 0;
+    border-top: 1px solid var(--demo-line);
+    border-bottom: 1px solid var(--demo-line);
+    box-shadow: none;
+  }
+}
+body .rm-examples-section .rm-showcase-reservation .rm-gallery-story {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }

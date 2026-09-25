@@ -1,3 +1,18 @@
+# Hero na paleta das demonstrações (25/set/2026)
+
+- [x] Fixar a direção: papel quente `#f3f0e9`, tinta oliva `#293222`, verde de ação `#3f4e32`; manter logo e tipografia.
+- [x] Reorganizar o hero para usar essas cores e aproximar a fotografia da história da reserva.
+- [x] Revisar desktop e celular, navegação ao rolar, movimento reduzido e testes.
+- [x] Repetir a crítica visual independente em captura limpa; registrar ressalvas reais.
+- [ ] Chegar a 9/10 em crítica visual independente; a direção estética continua aberta.
+- [ ] Publicar esta melhoria incremental e validar o domínio de produção.
+
+**Referência de decisão:** a própria seção de demonstrações publicada (papel/tinta/linha), a fotografia de restaurante já aprovada e o checklist do `DESIGN.md`. Verde-oliva fica como tinta e ação editorial neste artefato; confirmação continua com estado próprio nas telas do produto.
+
+**Revisão desta rodada:** hero, primeira demo e imagem social compartilham a paleta. A nova foto mostra a cadeira infantil solicitada; a confirmação no desktop explicita que o pedido foi anotado. No celular, o filme da reserva apresenta Marina e o pedido antes da lista e ocupa a largura da tela. Quadros 0/36/46/52/58/90 foram inspecionados para evitar sobreposição. Build, sintaxe API, 4.091 testes de backend, 985 de frontend, `git diff --check` e navegação em 320–1440 px passaram. A crítica independente ainda ficou abaixo do alvo de 9/10 (última rodada: 7,4 em desktop e celular; melhor avaliação da rodada: 7,8/8,1). Pontos abertos: composição do hero convencional e fotografia mais forte que a prova do produto.
+
+---
+
 # Landing "Da mensagem à mesa" — revisão de produção (25/set/2026)
 
 - [x] Isolar a landing da árvore local com alterações não relacionadas.

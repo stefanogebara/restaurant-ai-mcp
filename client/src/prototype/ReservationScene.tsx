@@ -1,18 +1,16 @@
 import { interpolate, useCurrentFrame, useVideoConfig } from "remotion";
 import { CompactReservation } from "./CompactReservation";
 import { Canvas } from "./ScenePrimitives";
+import { reservationPalette } from "./reservationPalette";
 
-const ink = "#27312a";
-const muted = "#697168";
-const rule = "#d9ddd4";
-const green = "#365944";
+const { ink, muted, rule, action: green, canvas, detail: detailSurface, selection: selectionRgb } = reservationPalette;
 const clamp = { extrapolateLeft: "clamp", extrapolateRight: "clamp" } as const;
 
 function ReservationRow({ top, time, name, party, emphasis = 0 }: {
   top: number; time: string; name: string; party: string; emphasis?: number;
 }) {
   return (
-    <div style={{ position: "absolute", left: 26, width: 250, top, height: 44, display: "flex", alignItems: "center", borderTop: "1px solid " + rule, background: emphasis ? "rgba(232,239,226," + (emphasis * 0.8) + ")" : "transparent", color: ink }}>
+    <div style={{ position: "absolute", left: 26, width: 250, top, height: 44, display: "flex", alignItems: "center", borderTop: "1px solid " + rule, background: emphasis ? `rgba(${selectionRgb},${emphasis * 0.8})` : "transparent", color: ink }}>
       {emphasis > 0 && <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 2, background: green, opacity: emphasis }} />}
       <span style={{ width: 58, paddingLeft: emphasis ? 9 : 7, fontSize: 13, fontVariantNumeric: "tabular-nums" }}>{time}</span>
       <span style={{ flex: 1, fontSize: 14, letterSpacing: "-.2px" }}>{name}</span>
@@ -35,7 +33,7 @@ export function ReservationScene() {
 
   return (
     <Canvas padding={0}>
-      <div style={{ position: "absolute", inset: 0, background: "#fbfbf8" }} />
+      <div style={{ position: "absolute", inset: 0, background: canvas }} />
       <div style={{ position: "absolute", left: 26, right: 26, top: 23, display: "flex", justifyContent: "space-between", alignItems: "center", color: ink }}>
         <span style={{ fontSize: 18, letterSpacing: "-.35px" }}>Casa Tuim</span>
         <span style={{ color: muted, fontSize: 12 }}>Quinta-feira · {arrival > 0.82 ? "5" : "4"} próximas</span>
@@ -54,7 +52,7 @@ export function ReservationScene() {
       <ReservationRow top={278 + 44 * arrival} time="21:30" name="Pedro" party="2" />
       <div style={{ position: "absolute", left: 26, width: 250, top: 322 + 44 * arrival, height: 1, background: rule }} />
 
-      <div style={{ position: "absolute", left: 299, right: 20, top: 82, bottom: 20, background: "#edf2e9", opacity: selection }} />
+      <div style={{ position: "absolute", left: 299, right: 20, top: 82, bottom: 20, background: detailSurface, opacity: selection }} />
       <div style={{ position: "absolute", left: 299, top: 82, bottom: 20, width: 2, background: green, opacity: selection }} />
       <div style={{ position: "absolute", left: 331, right: 42, top: 142, color: muted, fontSize: 15, lineHeight: 1.4, opacity: placeholder }}>
         Selecione uma reserva para ver os detalhes.
