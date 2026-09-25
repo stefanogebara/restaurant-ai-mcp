@@ -7,7 +7,7 @@ const examples = [
   {
     name: "Casa Tuim",
     category: "Reservas",
-    title: "O pedido chega ao salão.",
+    title: "A reserva chega completa.",
     body: "",
     quote: "Vamos com uma criança. Pode ser perto da janela?",
     attribution: "Marina, ao reservar",
@@ -148,8 +148,8 @@ export function DemoGallery() {
           {example.body && <p>{example.body}</p>}
           {selected === 0 ? (
             <figure className="rm-request-origin">
-              <figcaption>Marina · WhatsApp · 14:33</figcaption>
-              <blockquote>“Somos quatro. Tem cadeira infantil e mesa perto da janela?”</blockquote>
+              <figcaption>No painel do salão</figcaption>
+              <p>Marina · 4 pessoas · 20:00<br />Cadeira infantil · Mesa 02</p>
             </figure>
           ) : (
             <figure className="rm-guest-note">

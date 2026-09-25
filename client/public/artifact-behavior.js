@@ -1,5 +1,6 @@
 (function () {
   if (new URLSearchParams(location.search).get('hero') === 'meadow') {
+    document.body.classList.remove('hero-restaurant');
     var hero = document.getElementById('heroi'), picture = document.getElementById('restaurant-hero');
     var field = document.createElement('img'); field.id = 'campo'; field.className = 'foto'; field.alt = ''; field.src = '/images/artifact/asset-6.jpg';
     var film = document.createElement('video'); film.id = 'vento'; film.className = 'foto pronto'; film.autoplay = true; film.muted = true; film.loop = true; film.playsInline = true; film.preload = 'auto'; film.poster = '/images/artifact/asset-7.jpg'; film.setAttribute('aria-hidden', 'true');
@@ -10,9 +11,9 @@
 
   (function () { var v = document.getElementById('vento'); if (!v || document.body.classList.contains('hero-restaurant') || matchMedia('(prefers-reduced-motion: reduce)').matches) { if (v) v.remove(); return; } var liga = function () { v.classList.add('pronto'); }; v.addEventListener('playing', liga, { once: true }); v.play && v.play().catch(function () {}); })();
 
-  /* ── nav: sobre o herói, texto branco; depois, escuro ─────────── */
+  /* ── nav: tinta oliva no hero editorial; branco apenas sobre o filme alternativo ── */
   var nav = document.getElementById('nav'), heroi = document.getElementById('heroi');
-  function navCor() { var dentro = heroi.getBoundingClientRect().bottom > (innerWidth <= 700 ? 64 : 72); nav.classList.toggle('docked', !dentro); nav.querySelector('.logo').style.color = dentro ? '#fff' : ''; nav.querySelector('nav').style.color = dentro ? '#fff' : ''; nav.style.background = dentro ? 'rgba(24,31,21,.38)' : ''; }
+  function navCor() { var dentro = heroi.getBoundingClientRect().bottom > (innerWidth <= 700 ? 64 : 72); var sobreFilme = dentro && !document.body.classList.contains('hero-restaurant'); nav.classList.toggle('docked', !dentro); nav.querySelector('.logo').style.color = sobreFilme ? '#fff' : ''; nav.querySelector('nav').style.color = sobreFilme ? '#fff' : ''; nav.style.background = sobreFilme ? 'rgba(24,31,21,.38)' : ''; }
   navCor(); addEventListener('scroll', navCor, { passive: true }); addEventListener('resize', navCor, { passive: true });
 
   /* ── placeholder digitado nos dois prompts ────────────────────── */
