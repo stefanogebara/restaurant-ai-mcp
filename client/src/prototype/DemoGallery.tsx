@@ -148,7 +148,7 @@ export function DemoGallery() {
           {example.body && <p>{example.body}</p>}
           {selected === 0 ? (
             <figure className="rm-request-origin">
-              <figcaption>Marina · WhatsApp · 18:42</figcaption>
+              <figcaption>Marina · WhatsApp · 14:33</figcaption>
               <blockquote>“Somos quatro. Tem cadeira infantil e mesa perto da janela?”</blockquote>
             </figure>
           ) : (

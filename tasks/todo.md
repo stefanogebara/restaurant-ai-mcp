@@ -1,3 +1,18 @@
+# Landing "Da mensagem à mesa" — revisão de produção (25/set/2026)
+
+- [x] Isolar a landing da árvore local com alterações não relacionadas.
+- [x] Testar build, suíte de frontend e backend, navegação, demos e tamanhos 320/390/1440.
+- [x] Corrigir a raiz da Vercel: `index.html` físico recebe a landing; `app.html` preserva as rotas React.
+- [x] Mostrar a reserva concluída no primeiro demo; corrigir teclado e coerência da história de Marina.
+- [x] Remover promessas não comprovadas de Pix/devolução automática, iFood e tempo de resposta fixo.
+- [ ] Confirmar enquadramento da licença Remotion para uso do Player em produção.
+- [ ] Conferir a prévia Vercel do commit final em `/`, `/login` e `/demo/setup`.
+- [ ] Fazer merge, conferir `https://seatable.one/` e rotas existentes, e registrar o resultado.
+
+**Revisão:** a primeira prévia compilou, mas `/` continuou na página antiga porque a Vercel priorizou o arquivo físico `index.html` sobre o rewrite. A landing em `/seatable-prototype.html` carregou sem erros de aplicação; a correção acima troca o documento físico da raiz e preserva o SPA como fallback. A crítica visual independente avaliou a composição em 7,5/10, sem bloqueio funcional nas capturas. Dívida estética: demos mais pálidos que o herói, metadados pequenos e página longa em celular.
+
+---
+
 # Phase 14: Demo em Conversa (ATIVO)
 
 **Plano completo:** `.claude/plans/2026-08-24-demo-conversa/README.md`

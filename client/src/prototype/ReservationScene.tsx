@@ -48,7 +48,7 @@ export function ReservationScene() {
       <ReservationRow top={146} time="19:15" name="Rafael" party="2" />
       <ReservationRow top={190} time="19:45" name="Ana" party="2" />
       <div style={{ opacity: arrival, transform: "translateY(" + ((1 - arrival) * 8) + "px)" }}>
-        <ReservationRow top={234} time="20:30" name="Marina" party="4" emphasis={selection} />
+        <ReservationRow top={234} time="20:00" name="Marina" party="4" emphasis={selection} />
       </div>
       <ReservationRow top={234 + 44 * arrival} time="21:00" name="Luiza" party="3" />
       <ReservationRow top={278 + 44 * arrival} time="21:30" name="Pedro" party="2" />
@@ -61,7 +61,7 @@ export function ReservationScene() {
       </div>
       <div style={{ position: "absolute", left: 331, right: 38, top: 102, opacity: information, transform: "translateY(" + ((1 - information) * 10) + "px)" }}>
         <div style={{ color: green, fontSize: 11, letterSpacing: ".8px" }}>RESERVA CONFIRMADA · WHATSAPP</div>
-        <div style={{ display: "flex", alignItems: "baseline", gap: 15, marginTop: 14, color: ink }}><span style={{ fontSize: 41, lineHeight: 1, letterSpacing: "-1.7px" }}>Marina</span><span style={{ fontSize: 21, color: muted }}>20:30</span></div>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 15, marginTop: 14, color: ink }}><span style={{ fontSize: 41, lineHeight: 1, letterSpacing: "-1.7px" }}>Marina</span><span style={{ fontSize: 21, color: muted }}>20:00</span></div>
         <div style={{ color: muted, fontSize: 14, marginTop: 7 }}>4 pessoas</div>
         <div style={{ width: "100%", height: 1, background: rule, marginTop: 17 }} />
       </div>

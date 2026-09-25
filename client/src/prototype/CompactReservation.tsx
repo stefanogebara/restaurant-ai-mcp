@@ -36,7 +36,7 @@ export function CompactReservation({ arrival, selection, placeholder, informatio
       </div>
       <ReservationRow top={134} time="19:15" name="Rafael" party="2" />
       <div style={{ opacity: arrival, transform: "translateY(" + ((1 - arrival) * 7) + "px)" }}>
-        <ReservationRow top={193} time="20:30" name="Marina" party="4" emphasis={selection} />
+        <ReservationRow top={193} time="20:00" name="Marina" party="4" emphasis={selection} />
       </div>
       <ReservationRow top={193 + 59 * arrival} time="21:00" name="Luiza" party="3" />
       <div style={{ position: "absolute", left: 22, right: 22, top: 252 + 59 * arrival, height: 1, background: rule }} />
@@ -47,7 +47,7 @@ export function CompactReservation({ arrival, selection, placeholder, informatio
       <div style={{ position: "absolute", left: 0, right: 0, top: 335, bottom: 0, background: "#f1f4ed", opacity: selection }} />
       <div style={{ position: "absolute", left: 22, right: 22, top: 352, opacity: information, transform: "translateY(" + ((1 - information) * 7) + "px)" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", color: ink }}>
-          <span style={{ fontSize: 20 }}>Marina · 20:30</span><span style={{ color: green, fontSize: 12 }}>WhatsApp</span>
+          <span style={{ fontSize: 20 }}>Marina · 20:00</span><span style={{ color: green, fontSize: 12 }}>WhatsApp</span>
         </div>
       </div>
       <div style={{ position: "absolute", left: 22, right: 22, top: 392, opacity: detail, transform: "translateY(" + ((1 - detail) * 7) + "px)" }}>

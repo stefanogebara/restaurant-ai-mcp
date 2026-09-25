@@ -51,17 +51,17 @@ export function SchedulePanel() {
   );
 }
 export function DepositPanel() {
-  const [refunded, setRefunded] = useState(false);
+  const [released, setReleased] = useState(false);
   return (
     <div className="rm-panel rm-deposit">
       <div className="rm-deposit-instrument">
-        <div>Sinal da reserva</div>
+        <div>Garantia da reserva</div>
         <div className="rm-money">
           <small>R$</small>
           <Dots value="80" />
         </div>
         <span className="rm-deposit-state">
-          {refunded ? "Devolução simulada" : "Recebido via Pix"}
+          {released ? "Garantia liberada" : "Autorizada no cartão"}
         </span>
         <svg viewBox="0 0 280 50" aria-hidden="true">
           {Array.from({ length: 33 }, (_, i) => (
@@ -78,25 +78,25 @@ export function DepositPanel() {
         </svg>
       </div>
       <div className="rm-deposit-detail">
-        <span className="rm-small-label">CASA TUIM · MESA 06</span>
+        <span className="rm-small-label">CASA TUIM · MESA 02</span>
         <h4>
           O combinado,
           <br />
           bem guardado.
         </h4>
         <p>
-          Um sinal para confirmar.
+          Uma garantia para confirmar.
           <br />
-          Uma devolução quando for preciso.
+          A equipe decide quando liberar.
         </p>
-        <button type="button" onClick={() => setRefunded(!refunded)}>
-          {refunded ? "Recomeçar exemplo" : "Simular devolução"}
+        <button type="button" onClick={() => setReleased(!released)}>
+          {released ? "Recomeçar exemplo" : "Simular liberação"}
           <span>↗</span>
         </button>
         <span className="rm-sr-only" role="status">
-          {refunded
-            ? "Devolução de 80 reais simulada."
-            : "Sinal ilustrativo recebido."}
+          {released
+            ? "Liberação da garantia de 80 reais simulada."
+            : "Garantia ilustrativa autorizada no cartão."}
         </span>
       </div>
     </div>

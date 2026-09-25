@@ -92,8 +92,8 @@ function init() {
       <h4>Seu lugar está guardado.</h4>
       <div className="rm-phone-light">
         <span>Hoje, no jantar</span>
-        <strong>20:30</strong>
-        <p>Marina · 4 pessoas · Mesa 06</p>
+        <strong>20:00</strong>
+        <p>Marina · 4 pessoas · Mesa 02</p>
         <div className="rm-phone-orbits" aria-hidden="true">
           {Array.from({ length: 5 }, (_, i) => (
             <i key={i} style={{ transform: `rotate(${i * 27}deg)` }} />
