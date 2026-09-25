@@ -1,4 +1,4 @@
-import { Suspense, type ReactNode } from 'react';
+import { Suspense, useEffect, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { HelmetProvider } from 'react-helmet-async';
@@ -132,6 +132,13 @@ function RoutesBoundary({ children }: { children: ReactNode }) {
   );
 }
 
+function HomeDocumentNavigation() {
+  // A client-side Link to / would otherwise render the retired React landing.
+  // Reload so the host serves the new physical index.html document instead.
+  useEffect(() => { window.location.reload(); }, []);
+  return null;
+}
+
 function App() {
   const { t } = useTranslation();
   return (
@@ -159,7 +166,9 @@ function App() {
             <main id="main-content">
             <RoutesBoundary>
             <Routes>
-              <Route path="/" element={<ErrorBoundary fallback={<RouteErrorFallback />}><LandingPage /></ErrorBoundary>} />
+              <Route path="/" element={import.meta.env.DEV
+                ? <ErrorBoundary fallback={<RouteErrorFallback />}><LandingPage /></ErrorBoundary>
+                : <HomeDocumentNavigation />} />
               {/* Dedicated pricing page — the grid moved off the landing
                   (2026-06). /pricing alias kept for EN ads/links. */}
               <Route path="/precos" element={<ErrorBoundary fallback={<RouteErrorFallback />}><PricingPage /></ErrorBoundary>} />

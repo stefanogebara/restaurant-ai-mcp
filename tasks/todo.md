@@ -6,10 +6,13 @@
 - [x] Mostrar a reserva concluída no primeiro demo; corrigir teclado e coerência da história de Marina.
 - [x] Remover promessas não comprovadas de Pix/devolução automática, iFood e tempo de resposta fixo.
 - [ ] Confirmar enquadramento da licença Remotion para uso do Player em produção.
-- [ ] Conferir a prévia Vercel do commit final em `/`, `/login` e `/demo/setup`.
+- [x] Conferir a prévia Vercel do commit final em `/`, `/login` e `/demo/setup`.
 - [ ] Fazer merge, conferir `https://seatable.one/` e rotas existentes, e registrar o resultado.
+- [ ] Conferir o retorno **via Link do React** de `/login` para `/`: não pode mostrar a landing antiga em memória.
 
 **Revisão:** a primeira prévia compilou, mas `/` continuou na página antiga porque a Vercel priorizou o arquivo físico `index.html` sobre o rewrite. A landing em `/seatable-prototype.html` carregou sem erros de aplicação; a correção acima troca o documento físico da raiz e preserva o SPA como fallback. A crítica visual independente avaliou a composição em 7,5/10, sem bloqueio funcional nas capturas. Dívida estética: demos mais pálidos que o herói, metadados pequenos e página longa em celular.
+
+**Regressão descoberta após o merge:** acesso direto a `/` já mostra a landing nova, mas um `<Link to="/">` dentro do SPA mantém o roteador em memória e revela a landing antiga. A rota `/` do SPA agora força reload do documento em produção; validar na prévia e no domínio antes de encerrar.
 
 ---
 
