@@ -129,7 +129,7 @@ export function FloorScene() {
         <div style={{ fontSize: 12, color: muted, lineHeight: 1.4 }}>
           <span style={{ color: ink, fontSize: 20 }}>20:30</span>
           <br />
-          sábado, 12 set
+          quinta-feira
         </div>
       </div>
       <RestaurantPlan />
