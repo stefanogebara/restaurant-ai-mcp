@@ -98,8 +98,8 @@ body .rm-examples-section .rm-gallery-screen .rm-film {
 }
 
 body .rm-examples-section .rm-gallery-arrival {
-  justify-content: flex-start;
-  padding-left: 18%;
+  justify-content: center;
+  padding-left: 0;
 }
 
 body .rm-examples-section .rm-gallery-arrival .rm-gallery-screen {
@@ -718,4 +718,17 @@ body .rm-examples-section .rm-showcase-reservation .rm-gallery-story {
   overflow: hidden;
   clip-path: inset(50%);
   white-space: nowrap;
+}
+
+/* Keep the case index in the document flow for every story. Its former fixed
+   offset crossed the editorial copy when a shorter demo was selected. */
+@media (min-width: 651px) {
+  body .rm-examples-section .rm-showcase .rm-gallery-tabs {
+    position: static;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+    margin: 30px 0 0;
+    gap: 28px;
+  }
 }

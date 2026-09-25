@@ -11,6 +11,8 @@
 
 **Revisão desta rodada:** hero, primeira demo e imagem social compartilham a paleta. A nova foto mostra a cadeira infantil solicitada; a confirmação no desktop explicita que o pedido foi anotado. No celular, o filme da reserva apresenta Marina e o pedido antes da lista e ocupa a largura da tela. Quadros 0/36/46/52/58/90 foram inspecionados para evitar sobreposição. Build, sintaxe API, 4.091 testes de backend, 985 de frontend, `git diff --check` e navegação em 320–1440 px passaram. A crítica independente ainda ficou abaixo do alvo de 9/10 (última rodada: 7,4 em desktop e celular; melhor avaliação da rodada: 7,8/8,1). Pontos abertos: composição do hero convencional e fotografia mais forte que a prova do produto.
 
+**Revisão pré-publicação:** ao selecionar Bar do Zé e Cantina Orla no desktop, o índice de casos sobrepunha a história. O índice agora permanece no fluxo abaixo de cada painel; as três escolhas foram conferidas em 390, 768 e 1440 px, sem sobreposição ou largura excedente. O cartão estreito de chegadas foi centralizado na coluna de demonstração.
+
 ---
 
 # Landing "Da mensagem à mesa" — revisão de produção (25/set/2026)
