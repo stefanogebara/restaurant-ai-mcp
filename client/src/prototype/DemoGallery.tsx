@@ -72,9 +72,9 @@ export function DemoGallery() {
             onKeyDown={(event) => {
               let next = selected;
               if (event.key === "ArrowRight")
-                next = (selected + 1) % examples.length;
+                next = (index + 1) % examples.length;
               else if (event.key === "ArrowLeft")
-                next = (selected + examples.length - 1) % examples.length;
+                next = (index + examples.length - 1) % examples.length;
               else if (event.key === "Home") next = 0;
               else if (event.key === "End") next = examples.length - 1;
               else return;
@@ -139,6 +139,7 @@ export function DemoGallery() {
               actionLabel={selected === 0 ? "Ver a reserva aparecer" : "Ver acontecer"}
               still={selected === 2}
               loop={selected !== 0}
+              previewFrame={selected === 0 ? 90 : undefined}
             />
           </div>
         </div>

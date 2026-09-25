@@ -81,6 +81,25 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllGlobals());
 describe("MotionDemo playback lifecycle", () => {
+  it("shows a complete reservation first and replays its arrival on request", async () => {
+    render(
+      <MotionDemo
+        component={Scene}
+        width={760}
+        height={370}
+        label="reserva"
+        previewFrame={90}
+        showStepControl={false}
+        actionLabel="Ver a reserva aparecer"
+      />
+    );
+    expect(screen.getByTestId("player")).toHaveAttribute("data-initial-frame", "90");
+    act(() => intersect(true));
+    expect(screen.getByRole("group")).toHaveAttribute("data-playing", "false");
+    fireEvent.click(screen.getByRole("button", { name: "Reproduzir reserva" }));
+    expect(runtime.seekTo).toHaveBeenCalledWith(0);
+    await waitFor(() => expect(runtime.play).toHaveBeenCalled());
+  });
   it("advances through meaningful stages and returns to the first stage", () => {
     runtime.getCurrentFrame
       .mockReturnValueOnce(0)

@@ -40,5 +40,12 @@ describe("restaurant demonstration gallery", () => {
     expect(
       screen.getByRole("heading", { name: "O salão inteiro. Num olhar." })
     ).toBeVisible();
+    const arrivals = screen.getByRole("tab", { name: /Bar do Zé/ });
+    arrivals.focus();
+    fireEvent.keyDown(arrivals, { key: "ArrowLeft" });
+    expect(screen.getByRole("tab", { name: /Casa Tuim/ })).toHaveAttribute(
+      "aria-selected",
+      "true"
+    );
   });
 });

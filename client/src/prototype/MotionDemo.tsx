@@ -16,6 +16,7 @@ type Props = {
   actionLabel?: string;
   controlsPlacement?: "overlay" | "below";
   loop?: boolean;
+  previewFrame?: number;
 };
 /** Frame-based illustrations: pause offscreen, honour reduced motion, allow deliberate playback. */
 export function MotionDemo({
@@ -31,6 +32,7 @@ export function MotionDemo({
   actionLabel = "Ver cena",
   controlsPlacement = "overlay",
   loop = true,
+  previewFrame,
 }: Props) {
   const requestedFrame = new URLSearchParams(window.location.search).get(
     "frame"
@@ -43,13 +45,18 @@ export function MotionDemo({
       : null;
   const initialFrame =
     auditFrame ??
+    previewFrame ??
     (window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 90 : 0);
   const root = useRef<HTMLDivElement>(null);
   const player = useRef<PlayerRef>(null);
   const [paused, setPaused] = useState(
     () =>
       auditFrame !== null ||
+      previewFrame !== undefined ||
       window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
+  const [previewPending, setPreviewPending] = useState(
+    previewFrame !== undefined && auditFrame === null
   );
   const [compositionWidth, setCompositionWidth] = useState(width);
   const [compositionHeight, setCompositionHeight] = useState(height);
@@ -166,7 +173,11 @@ export function MotionDemo({
             title={`${paused ? "Reproduzir" : "Pausar"} ${label}`}
             aria-label={`${paused ? "Reproduzir" : "Pausar"} ${label}`}
             onClick={() => {
-              if (ended) {
+              if (previewPending) {
+                player.current?.seekTo(0);
+                setPreviewPending(false);
+                setPaused(false);
+              } else if (ended) {
                 player.current?.seekTo(0);
                 setEnded(false);
                 setPaused(false);
