@@ -466,6 +466,8 @@ module.exports = async (req, res) => {
           variant_label: String(body.variant_label || 'A'),
           meta_template_name: created.name,
           template_lang: body.language || 'pt_BR',
+          // O template de uma campanha (ex.: 'racha-piloto') só vale pros leads dela.
+          campanha: body.campanha || null,
           active: false,
         });
       }
@@ -877,9 +879,10 @@ module.exports = async (req, res) => {
     if (req.method === 'POST' && action === 'dispatch') {
       const limit = Math.min(Math.max(parseInt((req.body || {}).limit, 10) || 20, 1), 250);
       const territorio = (req.body && req.body.territorio) ? String(req.body.territorio).slice(0, 80) : null;
+      const campanha = (req.body && typeof req.body.campanha === 'string') ? req.body.campanha : null;
       const { dispatchIntros } = require('./_lib/prospecting/sequencer');
-      const summary = await dispatchIntros({ limit, territorio });
-      logger.info(`prospect-admin dispatch limit=${limit} territorio=${territorio || '-'} sent=${summary.sent} by=${email}`);
+      const summary = await dispatchIntros({ limit, territorio, campanha });
+      logger.info(`prospect-admin dispatch limit=${limit} territorio=${territorio || '-'} campanha=${campanha || '-'} sent=${summary.sent} by=${email}`);
       return res.status(200).json({ success: true, data: summary });
     }
 

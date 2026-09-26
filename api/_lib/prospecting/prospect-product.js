@@ -23,12 +23,14 @@ function getProduct() {
 const RACHA = {
   company: 'Racha',
   daCompany: 'do Racha',          // "assistente virtual do Racha", "o fundador do Racha"
-  site: process.env.PROSPECTING_SITE || 'racha.app',
+  // useracha.app — o domínio do Racha. `racha.app` NÃO é nosso: mandar alguém
+  // pra lá é mandar o lead pro site de um desconhecido.
+  site: process.env.PROSPECTING_SITE || 'useracha.app',
   // Prévia = demo interativo FIXO: a pessoa paga uma conta de mentira pelo QR em
   // ~10s, do próprio celular. criarPreviaDemo devolve este link direto (não gera
   // página por-restaurante). O link precisa ABRIR — usa o domínio que funciona.
   previaFixed: true,
-  previaUrl: process.env.PROSPECTING_PREVIA_URL || 'https://racha-gray.vercel.app/?t=demoracha',
+  previaUrl: process.env.PROSPECTING_PREVIA_URL || 'https://useracha.app/?t=demoracha',
   oQueFaz: [
     'O QUE O RACHA FAZ: é o jeito mais simples da galera pagar a conta na mesa — o cliente',
     'escaneia o QR da mesa, vê a conta no celular e paga a parte dele na hora por Pix. Sem',
@@ -60,6 +62,10 @@ const RACHA = {
     'Isso muda o pitch: conta da mesa → o Racha resolve a DIVIDIDA; comanda individual → o Racha',
     'resolve a FILA DO CAIXA (cada um paga a própria comanda pelo QR, sem parar no caixa).',
     'Se a memória da conversa JÁ tem essa resposta, não pergunte de novo — use.',
+    'PREÇO (decisão do fundador, 26/09/2026 — responda só se perguntarem): no PILOTO é grátis —',
+    'sem mensalidade e sem taxa do Racha; a casa paga só o custo do provedor de pagamento. O',
+    'cliente da mesa NUNCA paga taxa nenhuma. Depois do piloto, preço se conversa com o',
+    'fundador (escalar_humano) — você não diz número nenhum além desses.',
   ],
   objetivo: [
     'SEU OBJETIVO: descobrir se quem responde é o dono/gerente e MOSTRAR VALOR NA HORA com a',

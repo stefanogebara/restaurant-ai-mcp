@@ -40,7 +40,7 @@ const { ultimoMarcadorMs, houveInboundApos } = require('./historico-ts');
 const PROPOSAL_MARKER = '📧 proposta enviada por e-mail';
 
 const PREVIA_URL =
-  process.env.PROSPECTING_PREVIA_URL || 'https://racha-gray.vercel.app/?t=demoracha';
+  process.env.PROSPECTING_PREVIA_URL || 'https://useracha.app/?t=demoracha';
 
 /**
  * Parágrafo que é só uma URL vira link no HTML. Antes só o link do demo era
