@@ -69,6 +69,7 @@ async function criarTemplate(req, res) {
       meta_template_name: criado.name,
       template_lang: b.language || 'pt_BR',
       body_preview: b.body_text,
+      campanha: b.campanha || null,
       active: false,
     });
     registrado = true;
@@ -145,8 +146,11 @@ module.exports = async (req, res) => {
   const limit = Number.isFinite(n) ? Math.min(Math.max(Math.trunc(n), 0), 100) : 20;
   // Operator override — deliberately send outside the 10-17 dispatch window.
   const force = (req.body || {}).force === true;
+  // Uma campanha escolhida à mão (ex.: 'racha-piloto'). O sequencer normaliza e
+  // ignora rótulo inválido — que então vira o fluxo normal, nunca "todos".
+  const campanha = typeof (req.body || {}).campanha === 'string' ? req.body.campanha : null;
   try {
-    const summary = await dispatchIntros({ limit, force });
+    const summary = await dispatchIntros({ limit, force, campanha });
     return res.status(200).json({ success: true, data: summary });
   } catch (err) {
     logger.error('dispatch error:', err.message);

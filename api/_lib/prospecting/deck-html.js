@@ -27,7 +27,7 @@ const { assertOutbound } = require('./claim-linter');
 const { nomeDaCasa } = require('./nome-da-casa');
 
 const PREVIA_URL =
-  process.env.PROSPECTING_PREVIA_URL || 'https://racha-gray.vercel.app/?t=demoracha';
+  process.env.PROSPECTING_PREVIA_URL || 'https://useracha.app/?t=demoracha';
 
 function esc(str) {
   return String(str == null ? '' : str)

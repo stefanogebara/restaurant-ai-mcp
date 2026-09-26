@@ -254,12 +254,21 @@ const QUALIDADE_MIN_AVALIACOES = 120;
 const QUALIDADE_MAX_AVALIACOES = 5000;
 const QUALIDADE_MIN_NOTA = 4.3;
 
+const { normalizarCampanha } = require('./campanha');
+
 /**
  * Leads ready for a cold intro: never contacted (whatsapp_sent_at null), in the
  * initial state, with a sendable WhatsApp number.
+ *
+ * Com `campanha`: SÓ os leads daquela campanha, e SEM o piso de avaliações e
+ * nota — a lista foi escolhida à mão, e um bar pequeno com 80 avaliações é
+ * exatamente o que o piso descartaria. Todo o resto vale igual (estado, nunca
+ * enviado, só celular, supressão de opt-out no dispatch).
+ * Sem `campanha`: o fluxo de sempre, e os leads DE campanha ficam fora — o
+ * cron nunca manda a intro genérica pra quem está numa lista à parte.
  * @param {number} [limit=20]
  */
-async function selectIntroCandidates(limit = 20, territorio = null) {
+async function selectIntroCandidates(limit = 20, territorio = null, campanha = null) {
   try {
     let q = supabaseAdmin
       .from('prospect_leads')
@@ -267,9 +276,6 @@ async function selectIntroCandidates(limit = 20, territorio = null) {
       .eq('prospect_state', 'aguardando')
       .is('whatsapp_sent_at', null)
       .not('whatsapp_phone', 'is', null)
-      .gte('reviews_count', QUALIDADE_MIN_AVALIACOES)
-      .lte('reviews_count', QUALIDADE_MAX_AVALIACOES)
-      .gte('rating', QUALIDADE_MIN_NOTA)
       .in('whatsapp_status', ['pending', 'found'])
       // SÓ CELULAR — WhatsApp não existe em fixo. Medido em 01/08/2026: o pool
       // elegível era 82% fixo e o TOPO da fila, 100% (a ordenação por porte,
@@ -279,6 +285,15 @@ async function selectIntroCandidates(limit = 20, territorio = null) {
       // Máscara: +55 + DDD(2) + 9 + 8 dígitos. As duas formas cobrem o dado
       // gravado com e sem '+'; a guarda em JS abaixo pega o resto.
       .or('whatsapp_phone.like.+55__9________,whatsapp_phone.like.55__9________');
+    const rotulo = normalizarCampanha(campanha);
+    if (rotulo) {
+      q = q.eq('campanha', rotulo);
+    } else {
+      q = q.is('campanha', null)
+        .gte('reviews_count', QUALIDADE_MIN_AVALIACOES)
+        .lte('reviews_count', QUALIDADE_MAX_AVALIACOES)
+        .gte('rating', QUALIDADE_MIN_NOTA);
+    }
     // Optional territory targeting (bairro/cidade/UF): matches the stored city
     // OR the full address. Sanitized to letters/digits/spaces/hyphens so the
     // PostgREST or() syntax can't be broken by user input.
@@ -904,6 +919,8 @@ async function upsertTemplate(row) {
       meta_template_name: String(row.meta_template_name || '').trim(),
       template_lang: String(row.template_lang || 'pt_BR').trim(),
       body_preview: row.body_preview ? String(row.body_preview) : null,
+      // null = o fluxo normal; um rótulo = só os leads daquela campanha.
+      campanha: normalizarCampanha(row.campanha),
       active: row.active !== false,
       updated_at: new Date().toISOString(),
     };
@@ -1473,6 +1490,7 @@ async function markLeadWon(leadId) {
 }
 
 module.exports = {
+  normalizarCampanha,
   // Exportadas para que a caça ao celular (prospect-celular.js) mire EXATAMENTE
   // a mesma faixa que o disparo — fonte única, senão as duas divergem em silêncio.
   QUALIDADE_MIN_AVALIACOES, QUALIDADE_MAX_AVALIACOES, QUALIDADE_MIN_NOTA,

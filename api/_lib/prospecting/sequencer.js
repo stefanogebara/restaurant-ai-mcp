@@ -60,9 +60,25 @@ async function outboundEnabled() {
   return agent && dispatch;
 }
 
-/** Uniform-random pick among the ACTIVE registered templates for a touch. */
-async function pickTemplate(touchNumber) {
-  const all = (await listTemplates(touchNumber)).filter((t) => t.active);
+const { normalizarCampanha } = require('./campanha');
+
+/**
+ * Uniform-random pick among the ACTIVE registered templates for a touch.
+ *
+ * `campanha`: a campanha tem os templates DELA. Na intro (toque 1) não há
+ * reserva — sem o template da campanha aprovado e ativo, a campanha não manda
+ * NADA (a intro genérica não diz que é um piloto). Nos toques seguintes, sem
+ * template próprio, cai no do fluxo normal: o lembrete e o "resgate" servem.
+ */
+async function pickTemplate(touchNumber, campanha = null) {
+  const ativos = (await listTemplates(touchNumber)).filter((t) => t.active);
+  const rotulo = normalizarCampanha(campanha);
+  if (rotulo) {
+    const daCampanha = ativos.filter((t) => (t.campanha || null) === rotulo);
+    if (daCampanha.length > 0) return daCampanha[Math.floor(Math.random() * daCampanha.length)];
+    if (touchNumber === 1) return null;
+  }
+  const all = ativos.filter((t) => !t.campanha);
   if (all.length === 0) {
     // Compat fallback for touch 1: the env-configured intro template.
     if (touchNumber === 1 && process.env.PROSPECTING_INTRO_TEMPLATE) {
@@ -82,7 +98,7 @@ async function pickTemplate(touchNumber) {
  * @param {{limit?: number}} [opts]
  * @returns {Promise<{candidates:number, sent:number, blocked:number, skipped:number, failed:number, dryRun:boolean, capHit:boolean}>}
  */
-async function dispatchIntros({ limit = 20, territorio = null, force = false } = {}) {
+async function dispatchIntros({ limit = 20, territorio = null, force = false, campanha = null } = {}) {
   if (!(await outboundEnabled())) {
     logger.info('dispatchIntros skipped — outbound disabled (kill switch / breaker)');
     return { candidates: 0, sent: 0, blocked: 0, skipped: 0, failed: 0, dryRun: isDryRun(), capHit: false, agentDisabled: true };
@@ -97,7 +113,7 @@ async function dispatchIntros({ limit = 20, territorio = null, force = false } =
   }
 
   const dryRun = isDryRun();
-  const introTemplate = await pickTemplate(1); // availability probe
+  const introTemplate = await pickTemplate(1, campanha); // availability probe
   const previewOnly = dryRun || !introTemplate;
 
   // limit 0 = sonda: devolve o estado (dryRun, janela, cap) sem selecionar nem
@@ -105,7 +121,7 @@ async function dispatchIntros({ limit = 20, territorio = null, force = false } =
   // "quantas linhas um limit zero devolve" é detalhe de driver — e a diferença
   // entre zero e vinte, num endpoint que manda mensagem para gente real, não
   // pode depender disso.
-  const candidates = limit > 0 ? await selectIntroCandidates(limit, territorio) : [];
+  const candidates = limit > 0 ? await selectIntroCandidates(limit, territorio, campanha) : [];
   const summary = { candidates: candidates.length, sent: 0, blocked: 0, skipped: 0, failed: 0, dryRun: previewOnly, capHit: false };
   if (candidates.length === 0) return summary;
 
@@ -137,7 +153,7 @@ async function dispatchIntros({ limit = 20, territorio = null, force = false } =
     if (!claimed) { summary.skipped++; continue; }
 
     // Per-lead variant assignment at send time (coherent A/B experience).
-    const tpl = await pickTemplate(1);
+    const tpl = await pickTemplate(1, campanha);
     // {{1}} in the intro templates is the RESTAURANT name ("Vi o restaurante {{1}}").
     const res = await sendTemplateMessage(
       lead.whatsapp_phone, tpl.meta_template_name, tpl.template_lang, [lead.name || ''],
@@ -275,7 +291,7 @@ async function dispatchFollowups({ limit = 10, nowMs = Date.now() } = {}) {
       }
 
       const touch = (lead.touch_count || 1) + 1;
-      const tpl = await pickTemplate(touch);
+      const tpl = await pickTemplate(touch, lead.campanha || null);
       if (!tpl) {
         // No approved template registered for this touch — halt the sequence
         // for this lead (visible in the console; re-armed by registering one).
@@ -525,4 +541,5 @@ module.exports = {
   dispatchIntros, dispatchFollowups, dispatchReengages, dispatchReferralIntros, isDryRun,
   reclaimColdHandoffs,
   TOUCH2_DELAY_MS, TOUCH3_DELAY_MS, REENGAGE_SILENCE_MS, REENGAGE_TOUCH,
+  pickTemplate, // exportado pros testes da campanha
 };
