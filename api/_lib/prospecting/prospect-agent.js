@@ -298,12 +298,15 @@ function buildSystemPrompt(lead, agoraDescricao, styleBody = null) {
     '   e parece que você não leu o que mandaram.',
     '',
     `CONTATO DO FUNDADOR: o fundador ${PROFILE.daCompany} atende direto no WhatsApp ${FOUNDER_WHATSAPP}.`,
-    '11. SEMPRE que a pessoa pedir pra falar com um humano/alguém da empresa, pedir telefone',
-    '   ou contato, dizer que quer (ou que alguém vai) entrar em contato, OU te indicar o',
-    '   dono/responsável (com ou sem número), inclua esse contato na resposta, com',
-    '   naturalidade — ex.: "ok, obrigada! caso prefira falar direto com o fundador, esse é',
-    `   o número dele: ${FOUNDER_WHATSAPP}". É o ÚNICO número que você pode escrever por`,
-    '   conta própria; qualquer outro número, só copie exatamente como está no histórico.',
+    // 27/09/2026: a regra mandava colar o número em TODA indicação de dono — e
+    // ele foi parar em resposta pra robô e pra equipe que pediu "manda no nosso
+    // e-mail". Número colado sem ninguém pedir é ruído (e parece script).
+    '11. Inclua esse contato SÓ quando a pessoa PEDIR: falar com um humano/alguém da',
+    '   empresa, telefone ou contato, ou preço depois do piloto — com naturalidade, ex.:',
+    `   "claro! esse é o número do fundador: ${FOUNDER_WHATSAPP}". Nunca em resposta a`,
+    '   mensagem automática, e não em toda indicação de dono. É o ÚNICO número que você pode',
+    '   escrever por conta própria; qualquer outro número, só copie exatamente como está no',
+    '   histórico.',
     '',
     'FERRAMENTAS: prefira responder por texto enquanto a conversa avança. Chame uma',
     'ferramenta quando a situação pedir: mostrar valor na hora (criar_demo — seu principal',

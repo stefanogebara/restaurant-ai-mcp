@@ -16,7 +16,11 @@ const { bearerEquals } = require('../_lib/secure-compare');
 const { isCronEnabled } = require('../_lib/cron-config');
 const { logCronRun } = require('../_lib/cron-tracker');
 const { selectUnscoredOutcomes, updateOutcomeScore, loadHistory } = require('../_lib/prospecting/prospect-store');
-const { transcriptFromHistory, scoreOutcome } = require('../_lib/prospecting/prospect-reflect');
+const { transcriptFromHistory, agenteEscreveu, scoreOutcome } = require('../_lib/prospecting/prospect-reflect');
+
+// Marca da linha de outcome sem nenhuma fala da Olímpia: fora da fila de nota
+// (selectUnscoredOutcomes ignora quem já tem tag) e fora da média.
+const SEM_FALA = 'sem_fala_da_olimpia';
 
 const logger = createSecureLogger('CronProspectScore');
 // 50 é o TETO REAL: selectUnscoredOutcomes grampeia o limite em
@@ -156,12 +160,27 @@ module.exports = async (req, res) => {
     return res.status(200).json({ success: true, dry: true, arquivadas: previa });
   }
 
-  let scored = 0; let skipped = 0; let errors = 0;
+  let scored = 0; let skipped = 0; let errors = 0; let semFala = 0;
   try {
     const rows = await selectUnscoredOutcomes(MAX_PER_RUN);
     for (const row of rows) {
       try {
         const history = await loadHistory(row.lead_id, 200);
+        // Sem nenhuma fala dela (só template + robô, arquivada pela varredura),
+        // não há conversa pra avaliar. Até 27/09/2026 essas linhas levavam nota
+        // 1 e puxavam a média pra 1,55. A tag tira a linha da fila (ver
+        // selectUnscoredOutcomes) sem inventar uma nota.
+        // Histórico VAZIO não prova nada: loadHistory devolve [] em erro de
+        // leitura, e marcar aqui tiraria da fila, pra sempre, uma conversa real
+        // (revisão da PR #162). Vazio conta como pulado e volta amanhã.
+        if (history.length === 0) { skipped++; continue; }
+        if (!agenteEscreveu(history)) {
+          const r = await updateOutcomeScore(row.id, { quality_score: null, theme_tags: [SEM_FALA] });
+          // Contado À PARTE de `skipped`: o alarme de fome abaixo lê "lote
+          // inteiro pulado" — e uma linha marcada aqui SAI da fila, não trava.
+          if (r && r.ok) semFala++; else skipped++;
+          continue;
+        }
         const transcript = transcriptFromHistory(history);
         const { quality_score, theme_tags } = await scoreOutcome(transcript);
         if (quality_score == null) { skipped++; continue; } // transient/un-scorable → retry next run
@@ -179,7 +198,7 @@ module.exports = async (req, res) => {
     // "scored: 0, skipped: 25" em cron_runs é indistinguível de um dia saudável
     // se ninguém disser que é anormal. Barato (só dispara quando scored === 0)
     // e é o único aviso que existe: não há erro, não há exceção, não há sintoma.
-    if (rows.length && scored === 0 && skipped === rows.length) {
+    if (rows.length && scored === 0 && semFala === 0 && skipped === rows.length) {
       logger.error(
         `pontuação travada: ${skipped}/${rows.length} do lote sem nota e nada gravado — `
         + 'a próxima rodada relerá as MESMAS linhas. Ver selectUnscoredOutcomes.');
@@ -194,8 +213,8 @@ module.exports = async (req, res) => {
       arquivadas = { total: 0, erro: err.message };
     }
 
-    await logCronRun('prospect-score-outcomes', { scored, skipped, errors, arquivadas: arquivadas.total });
-    return res.status(200).json({ success: true, candidates: rows.length, scored, skipped, errors, arquivadas });
+    await logCronRun('prospect-score-outcomes', { scored, skipped, semFala, errors, arquivadas: arquivadas.total });
+    return res.status(200).json({ success: true, candidates: rows.length, scored, skipped, semFala, errors, arquivadas });
   } catch (err) {
     logger.error('score-outcomes fatal:', err.message);
     await logCronRun('prospect-score-outcomes', { scored, skipped, errors: errors + 1 });

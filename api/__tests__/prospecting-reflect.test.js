@@ -56,3 +56,22 @@ describe('parseScoreText — 1–5 quality + theme tags', () => {
     expect(parseScoreText('meh')).toEqual({ quality_score: null, theme_tags: [] });
   });
 });
+
+describe('transcriptFromHistory — só conversa entra na nota (27/09/2026)', () => {
+  const { transcriptFromHistory, agenteEscreveu } = require('../_lib/prospecting/prospect-reflect');
+  const hist = [
+    { direcao: 'out', tipo: 'template', corpo: '[template:racha_intro_b]' },
+    { direcao: 'in', tipo: 'text', corpo: 'Olá! Nosso horário é de 12h às 23h.' },
+    { direcao: 'sys', tipo: 'evento', corpo: '📦 arquivada automaticamente' },
+  ];
+  test('evento de sistema não vira fala da agente', () => {
+    const t = transcriptFromHistory(hist);
+    expect(t).not.toMatch(/arquivada/);
+    expect(t).not.toMatch(/\[template:/);
+    expect(t).toMatch(/\[mensagem padrão\]/);
+  });
+  test('só template + robô: a agente não escreveu nada', () => {
+    expect(agenteEscreveu(hist)).toBe(false);
+    expect(agenteEscreveu([...hist, { direcao: 'out', tipo: 'text', corpo: 'oi!' }])).toBe(true);
+  });
+});

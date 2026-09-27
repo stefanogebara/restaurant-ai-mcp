@@ -55,6 +55,11 @@ const OPTOUT_PATTERNS = [
   /\bperdeu\s+meu\s+n[úu]mero/i,
   /\b(stop|unsubscribe|cancelar?\s+inscri)/i,
   /\bsem\s+interesse\b/i,
+  // Revisão da PR #162 (27/09/2026): "pode tirar meu número", "apaga meu
+  // contato", "não me manda mais nada" passavam pro modelo, que podia
+  // responder com venda. Pedido de remoção é direito do titular (LGPD art. 18).
+  /\b(?:tir[ae]\w*|apag\w*|exclu\w*|delet\w*)\b[^.!?\n]{0,15}\bmeu\s+(?:n[úu]mero|contato|telefone|cadastro|dados)\b/i,
+  /\bn[ãa]o\s+(?:me\s+)?(?:mand\w*|envi\w*)\s+mais\s+(?:nada|mensage\w*)\b/i,
 ];
 
 // Institutional auto-reply markers (from the first real dispatch's transcripts:

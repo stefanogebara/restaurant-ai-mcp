@@ -106,7 +106,7 @@ const FORA_NO_INICIO = new RegExp(
  * dois pelo nome, então não corto.
  */
 const FORA_NO_FIM = new RegExp(
-  '\\b(academia|gin[áa]stica|gym|zym|fitness|kids)\\s*$',
+  '\\b(academia|gin[áa]stica|gym|zym|fitness|kids|doces)\\s*$',
   'i',
 );
 
@@ -119,6 +119,11 @@ const FORA_SEMPRE_EXTRA = new RegExp([
   'crossfit', 'smart\\s?fit', 'panobianco', 'bodytech', 'bio\\s?ritmo',
   'muscula[çc][ãa]o', 'pilates',
   'buff?[eê]t?\\s+infantil', 'festas?\\s+infanti', 'sal[ãa]o\\s+de\\s+festas?',
+  // 27/09/2026: sorvete e doce de balcão. Ninguém racha conta de sorvete na
+  // mesa; "Da Pá Virada Gelateria" e "R3 Doces" receberam a intro em setembro.
+  // `doceria`/`confeitaria` sim; "Doces" solto só no FIM do nome (FORA_NO_FIM),
+  // porque "Bar e Doces da Vila" existe.
+  'gelateria', 'sorveteria', 'doceria', 'confeitaria', 'a[çc]a[íi]teria',
 ].join('|'), 'i');
 
 /** PURA. true quando o nome indica um negócio que não recebe reserva. */

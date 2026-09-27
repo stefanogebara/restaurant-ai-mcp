@@ -301,6 +301,17 @@ async function dispatchFollowups({ limit = 10, nowMs = Date.now() } = {}) {
         continue;
       }
 
+      // A intro (ou um toque anterior) NÃO chegou: não existe conversa pra
+      // retomar. Encerra a sequência antes de gastar slot (ver falha-de-entrega).
+      const { templateFalhou } = require('./falha-de-entrega');
+      const falha = await templateFalhou(lead.id);
+      if (falha) {
+        await patchLead(lead.id, { next_touch_at: null });
+        await recordEvent(lead.id, `✋ sequência encerrada: mensagem anterior não foi entregue (${falha})`);
+        summary.skipped++;
+        continue;
+      }
+
       const slot = await consumeSendSlot();
       if (!slot.allowed) { summary.blocked++; summary.capHit = true; break; }
 

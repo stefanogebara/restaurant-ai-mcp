@@ -28,14 +28,17 @@
 const mockDataset = [
   // As do backfill: mais ANTIGAS, logo são as primeiras na ordenação — foram
   // exatamente estas que ocuparam as 25 vagas todo dia.
-  { id: 1, lead_id: 'l1', outcome: 'pausada', n_messages: 0, quality_score: null, created_at: '2026-07-21T20:28:48Z' },
-  { id: 2, lead_id: 'l2', outcome: 'pausada', n_messages: 0, quality_score: null, created_at: '2026-07-21T20:28:48Z' },
+  { id: 1, lead_id: 'l1', outcome: 'pausada', n_messages: 0, quality_score: null, theme_tags: null, created_at: '2026-07-21T20:28:48Z' },
+  { id: 2, lead_id: 'l2', outcome: 'pausada', n_messages: 0, quality_score: null, theme_tags: null, created_at: '2026-07-21T20:28:48Z' },
+  // Sem nenhuma fala da Olímpia, já marcada pelo cron (27/09/2026): tag e sem
+  // nota. Mais antiga que a pontuável — se voltasse, travaria a fila de novo.
+  { id: 6, lead_id: 'l6', outcome: 'pausada', n_messages: 2, quality_score: null, theme_tags: ['sem_fala_da_olimpia'], created_at: '2026-07-30T10:00:00Z' },
   // Pontuável de verdade, e mais nova: só é alcançada se as de cima saírem.
-  { id: 3, lead_id: 'l3', outcome: 'agendado', n_messages: 12, quality_score: null, created_at: '2026-08-01T10:00:00Z' },
+  { id: 3, lead_id: 'l3', outcome: 'agendado', n_messages: 12, quality_score: null, theme_tags: null, created_at: '2026-08-01T10:00:00Z' },
   // Já pontuada — nunca deve voltar.
-  { id: 4, lead_id: 'l4', outcome: 'handoff', n_messages: 8, quality_score: 4, created_at: '2026-08-02T10:00:00Z' },
+  { id: 4, lead_id: 'l4', outcome: 'handoff', n_messages: 8, quality_score: 4, theme_tags: ['preço'], created_at: '2026-08-02T10:00:00Z' },
   // Sem lead_id — o outro guarda que já existia.
-  { id: 5, lead_id: null, outcome: 'pausada', n_messages: 3, quality_score: null, created_at: '2026-08-03T10:00:00Z' },
+  { id: 5, lead_id: null, outcome: 'pausada', n_messages: 3, quality_score: null, theme_tags: null, created_at: '2026-08-03T10:00:00Z' },
   // 60 pontuáveis para poder exercitar o grampo de 50 (ver o describe do teto).
   // created_at posterior aos de cima, para não desarrumar a ordenação testada.
   ...Array.from({ length: 60 }, (_, i) => ({
@@ -44,6 +47,7 @@ const mockDataset = [
     outcome: 'handoff',
     n_messages: 5,
     quality_score: null,
+    theme_tags: null,
     created_at: `2026-08-04T${String(i % 24).padStart(2, '0')}:00:00Z`,
   })),
 ];
@@ -95,6 +99,7 @@ describe('selectUnscoredOutcomes não traz mais o que é impontuável', () => {
     const ids = rows.map((r) => r.id);
     expect(ids).not.toContain(4); // já tem nota
     expect(ids).not.toContain(5); // sem lead_id
+    expect(ids).not.toContain(6); // marcada "sem fala da Olímpia": fora da fila
   });
 
   test('um lote de 25 só de linhas vazias devolve VAZIO, não 25 inúteis', async () => {

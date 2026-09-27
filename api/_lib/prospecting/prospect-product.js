@@ -105,6 +105,14 @@ const RACHA = {
   porta: 'oi! não é pedido não, é sobre uma forma da galera pagar a conta na mesa pelo QR 🙂 quem cuida disso ou de parcerias por aí?',
   // COMPANION_TEXT.previa: acompanha a criar_demo quando o modelo mandou a ferramenta sem texto.
   previaCompanion: 'consigo te mostrar na prática, é um demo rapidinho onde você paga uma conta de mentira pelo QR, do celular 🙂',
+  // Abertura do gym (prospect-sim): o texto do template aprovado racha_intro_b.
+  // O gym abria com a intro do Seatable; o lead simulado respondia sobre
+  // reserva e a Olímpia vendia o CRM — o A/B de 27/09/2026 saiu contaminado.
+  introPreview:
+    'Oi! Aqui é a Olímpia, do Racha 🙂 Vi o {{nome}} no Google e queria te fazer uma pergunta rápida '
+    + 'de quem vive salão: quando a mesa pede pra dividir a conta, como vocês fazem hoje? A gente deixa '
+    + 'cada um pagar a própria parte pelo QR, sem app e sem maquininha rodando a mesa. Se quiser, te '
+    + 'mostro em 10 segundos, direto do seu celular.',
   // Mensagem de FECHAMENTO do fundador (pré-preenchida no link wa.me do digest):
   // o fundador toca no lead da hit-list e o WhatsApp abre com isto pronto pra
   // enviar. Voz do fundador (não da Olímpia), oferta de piloto sem fricção.
