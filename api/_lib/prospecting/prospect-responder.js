@@ -20,6 +20,11 @@
 const { createSecureLogger } = require('../secure-logger');
 const { sendWhatsAppMessage } = require('../whatsapp-sender');
 const { semTravessao } = require('./sem-travessao');
+const { lintOutbound } = require('./claim-linter');
+const {
+  perguntaSobreProduto, objecaoJaResolvido, introDaPrevia,
+  DEMO_INSTRUCTION, DEMO_JA_RESOLVIDO_INSTRUCTION,
+} = require('./pergunta-produto');
 const { avaliarIndicacao } = require('./indicacao');
 const { acquireProcessingLock, releaseProcessingLock } = require('../rate-limit');
 const { getProspectingPhoneNumberId } = require('./routing');
@@ -136,7 +141,21 @@ async function sendReply(leadId, to, texto, { skipPacing = false } = {}) {
   // Travessão é assinatura de máquina: o teclado do celular não tem a tecla.
   // Limpa ANTES do split para que o texto gravado no histórico seja o mesmo
   // que o lead recebeu — senão o prompt reensina o vício a cada turno.
-  const parts = splitReplyParts(semTravessao(texto), { multipart: multipartEnabled() });
+  const limpo = semTravessao(texto);
+  // O portão de claims (claim-linter) dizia que "toda mensagem autônoma" passa
+  // por ele, mas só o e-mail, o WhatsApp do fundador e o deck o chamavam. As
+  // respostas da Olímpia, o volume real, saíam sem conferência: "a gorjeta vai
+  // direto pro garçom" saiu ao menos 4 vezes entre 30/07 e 07/08/2026, vindo do
+  // style pack. Aqui o envio falha FECHADO: nada sai, e a linha do tempo do
+  // lead mostra o que foi barrado e por quê.
+  const lint = lintOutbound(limpo);
+  if (!lint.ok) {
+    const ids = lint.violations.map((v) => v.id).join(', ');
+    logger.error(`[prospect] claim bloqueado lead=${leadId} [${ids}]`);
+    await recordEvent(leadId, `🛑 resposta BLOQUEADA pelo portão de claims [${ids}]: "${lint.violations[0].trecho}"`);
+    return { success: false, dryRun, sentAny: false, blocked: lint.violations };
+  }
+  const parts = splitReplyParts(limpo, { multipart: multipartEnabled() });
   if (parts.length === 0) return { success: true, dryRun, sentAny: false };
 
   let sentAny = false;
@@ -617,7 +636,45 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
       }
     }
 
+    // 6d. PRÉVIA POR GARANTIA (diagnóstico 27/09/2026: 36 respostas em 30 dias,
+    //   ZERO prévias). Pergunta sobre o produto, venha de quem vier, ou objeção
+    //   de "já resolvido" com a prévia ainda não enviada: o turno É a prévia. O
+    //   modelo escreve a frase; se ele responder sem chamar criar_demo, o turno
+    //   vira criar_demo aqui (a frase dele fica como texto do link). Máquina e
+    //   recusa SECA não entram: porteiro e opt-out já foram decididos acima.
+    let previaForcada = null;
+    if (!acao && !isNudge && !porteiro) {
+      const { previaLinkInHistory } = require('./prospect-demo');
+      if (!previaLinkInHistory(history)) {
+        if (perguntaSobreProduto(lastInText)) previaForcada = 'pergunta';
+        else if (objecaoJaResolvido(lastInText)) previaForcada = 'ja_resolvido';
+      }
+    }
+
     // 7. Generate the next action (unless the guardrail already decided).
+    if (!acao && previaForcada) {
+      acao = await generateReply({
+        lead: {
+          name: lead.name,
+          owner_name: lead.owner_name,
+          sector: lead.sector,
+          city: lead.city,
+          nome_genero: lead.nome_genero,
+          conversa_fatos: lead.conversa_fatos,
+          conversa_resumo: lead.conversa_resumo,
+        },
+        history,
+        nowMs,
+        injectUserTurn: previaForcada === 'pergunta' ? DEMO_INSTRUCTION : DEMO_JA_RESOLVIDO_INSTRUCTION,
+        noTools: false,
+      });
+      // Só uma resposta de texto vira prévia. Optout, indicação, escalar:
+      // o modelo leu algo que a regex não leu, e a decisão dele vale.
+      if (acao && acao.tipo === 'responder') {
+        acao = { ...acao, tipo: 'criar_demo', texto: introDaPrevia(acao.texto), deterministico: true };
+        logger.info(`[prospect] prévia forçada (${previaForcada}) lead=${lead.id}`);
+      }
+    }
     if (!acao) {
       acao = await generateReply({
         lead: {
@@ -648,6 +705,11 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
     // 'conversando'. Only when the turn resolved to a plain reply — a guardrail
     // that fired registrar/agendar means the lead engaged, not declined.
     if (recusaSuave && acao && acao.tipo === 'responder') patch.prospect_state = 'recusou';
+    // A prévia da objeção "já resolvido" é a ÚNICA tentativa: o lead continua
+    // parqueado, sem nudge nem resgate depois dela.
+    if (recusaSuave && acao && acao.tipo === 'criar_demo' && previaForcada === 'ja_resolvido') {
+      patch.prospect_state = 'recusou';
+    }
     // Conta o pedido de decisor feito a um porteiro. Ao chegar em PORTEIRO_MAX
     // sem nenhum humano aparecer, o gate acima parqueia o lead no próximo turno.
     if (porteiro) patch.porteiro_tentativas = porteiroTentativas + 1;

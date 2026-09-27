@@ -64,17 +64,37 @@ const SCORE_SYSTEM = [
   `${AGENT_NAME} (assistant) e um lead (user), do ponto de vista de vendas/atendimento.`,
   `Devolva SOMENTE um JSON: {"quality_score": <1-5>, "theme_tags": [<string>...]}.`,
   `quality_score: 1 = ruim (robótica, repetitiva, perdeu o lead); 3 = ok;`,
-  `5 = excelente (natural, avançou pra reunião, lidou bem com objeções).`,
+  `5 = excelente (natural, avançou pro próximo passo: prévia/demo enviada, contato`,
+  `do dono ou reunião; lidou bem com objeções). Mensagens marcadas como [mensagem`,
+  `padrão] são templates fixos, não escritos pela ${AGENT_NAME}: não as avalie.`,
   `theme_tags: 2 a 5 tags curtas em pt-BR do que marcou a conversa`,
   `(ex.: "preço", "agendou", "sem interesse", "pediu detalhes", "indicou outro").`,
   `Responda APENAS o JSON, sem markdown nem texto ao redor.`,
 ].join('\n');
 
-/** Build a LEAD/agent transcript from stored history (in=LEAD, out=agent). */
+/**
+ * Build a LEAD/agent transcript from stored history (in=LEAD, out=agent).
+ *
+ * 'sys' rows (timeline events: "📦 arquivada automaticamente…") are NOT
+ * conversation. The nightly scorer loads raw history, and until 27/09/2026 the
+ * judge read those notes as things the agent SAID — 32 threads with no agent
+ * reply at all scored 1/5 on text she never wrote. Templates are labelled as
+ * such so the judge does not grade a fixed Meta template as her writing.
+ */
 function transcriptFromHistory(history) {
   return (history || [])
-    .map((m) => `${m.direcao === 'in' ? 'LEAD' : AGENT_NAME.toUpperCase()}: ${m.corpo || `[${m.tipo || 'mídia'}]`}`)
+    .filter((m) => m.direcao === 'in' || m.direcao === 'out')
+    .map((m) => {
+      if (m.direcao === 'in') return `LEAD: ${m.corpo || `[${m.tipo || 'mídia'}]`}`;
+      if (m.tipo === 'template') return `${AGENT_NAME.toUpperCase()}: [mensagem padrão]`;
+      return `${AGENT_NAME.toUpperCase()}: ${m.corpo || `[${m.tipo || 'mídia'}]`}`;
+    })
     .join('\n');
+}
+
+/** Did the agent write anything herself (not a template)? No → nothing to grade. */
+function agenteEscreveu(history) {
+  return (history || []).some((m) => m.direcao === 'out' && m.tipo !== 'template' && String(m.corpo || '').trim());
 }
 
 // Tolerant JSON-from-text extraction (the model may wrap it in prose/fences).
@@ -201,6 +221,7 @@ module.exports = {
   RESUMO_MIN,
   INTENTS,
   transcriptFromHistory,
+  agenteEscreveu,
   parseFatosText,
   parseIntentText,
   parseScoreText,

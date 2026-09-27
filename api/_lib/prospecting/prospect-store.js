@@ -1210,6 +1210,10 @@ async function selectUnscoredOutcomes(limit = 25) {
       .from('prospect_outcomes')
       .select('id, lead_id, outcome')
       .is('quality_score', null)
+      // Linha com tag e sem nota = "não há conversa pra avaliar" (o cron marca
+      // as que só têm template + robô). Sem este filtro elas voltariam todo
+      // dia e a fila passaria fome de novo.
+      .is('theme_tags', null)
       .not('lead_id', 'is', null)
       .gt('n_messages', 0)
       .order('created_at', { ascending: true })

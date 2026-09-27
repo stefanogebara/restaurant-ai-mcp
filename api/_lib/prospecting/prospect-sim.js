@@ -36,6 +36,13 @@ const INTRO_PREVIEW =
   'Posso te contar em 2 minutos como ficaria aí? Se não for o momento, tranquilo — é só falar 🙂\n\n' +
   'Mais sobre a gente: seatable.one';
 
+// The intro of the product being sold (Racha: racha_intro_b). INTRO_PREVIEW is
+// the Seatable text, kept as the fallback for PROSPECTING_PRODUCT=seatable.
+function introDoProduto() {
+  const { getProfile } = require('./prospect-product');
+  return getProfile().introPreview || INTRO_PREVIEW;
+}
+
 /** System prompt for the LLM playing the LEAD. */
 function simLeadSystem(scenario) {
   const p = scenario.persona || {};
@@ -77,7 +84,7 @@ async function simLeadReply(scenario, transcript) {
     max_tokens: 300,
     temperature: 0.9, // people are noisier than assistants
     system: simLeadSystem(scenario),
-    messages: messages.length ? messages : [{ role: 'user', content: INTRO_PREVIEW }],
+    messages: messages.length ? messages : [{ role: 'user', content: introDoProduto() }],
   });
   const block = (resp.content || []).find((b) => b.type === 'text' && b.text && b.text.trim());
   return block ? block.text.trim() : null;
@@ -101,7 +108,7 @@ async function runSimulation(scenario, { styleOverride = undefined, turns = null
     conversa_resumo: null,
   };
 
-  const intro = INTRO_PREVIEW.replace('{{nome}}', lead.name);
+  const intro = introDoProduto().replace('{{nome}}', lead.name);
   const transcript = [{ who: 'olimpia', texto: intro, acao: 'template' }];
   let terminal = null;
 
