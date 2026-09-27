@@ -170,6 +170,10 @@ module.exports = async (req, res) => {
         // não há conversa pra avaliar. Até 27/09/2026 essas linhas levavam nota
         // 1 e puxavam a média pra 1,55. A tag tira a linha da fila (ver
         // selectUnscoredOutcomes) sem inventar uma nota.
+        // Histórico VAZIO não prova nada: loadHistory devolve [] em erro de
+        // leitura, e marcar aqui tiraria da fila, pra sempre, uma conversa real
+        // (revisão da PR #162). Vazio conta como pulado e volta amanhã.
+        if (history.length === 0) { skipped++; continue; }
         if (!agenteEscreveu(history)) {
           const r = await updateOutcomeScore(row.id, { quality_score: null, theme_tags: [SEM_FALA] });
           // Contado À PARTE de `skipped`: o alarme de fome abaixo lê "lote

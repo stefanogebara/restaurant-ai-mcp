@@ -30,6 +30,9 @@ async function templateFalhou(leadId) {
       .eq('direcao', 'out')
       .eq('tipo', 'template')
       .eq('status', 'failed')
+      // Qualquer falha, em qualquer toque, encerra: é de propósito. Um 131049
+      // num toque é a Meta dizendo que esta pessoa já recebe marketing demais;
+      // insistir é o que agrava. O texto do evento diz qual erro foi.
       .limit(1);
     if (error) {
       logger.error(`templateFalhou: leitura falhou lead=${leadId}: ${error.message}`);

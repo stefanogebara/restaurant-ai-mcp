@@ -34,9 +34,28 @@ const PERGUNTA_PRODUTO = [
  * A pessoa perguntou o que é / como funciona / pediu pra ver. Vale venha de
  * quem vier: um funcionário que encaminha o link pro dono custa zero.
  */
+/**
+ * VETO DE PRIVACIDADE (revisão da PR #162). Quem fala em tirar o número ou
+ * pergunta de onde veio o contato está exercendo um direito (LGPD art. 18),
+ * não pedindo demo: "o que é isso? como conseguiu meu número?" merece a
+ * resposta honesta da regra B28, e "já tenho parceiro, pode tirar meu número"
+ * merece a despedida. Nenhum dos dois leva link de venda.
+ */
+const VETO_PRIVACIDADE = [
+  /\b(?:tir[ae]\w*|remov\w*|apag\w*|exclu\w*|delet\w*|descadastr\w*)\b[^.!?\n]{0,30}\b(?:n[úu]mero|contato|lista|cadastro|dados)\b/i,
+  /\bmeu\s+(?:n[úu]mero|contato|telefone|whats\w*|zap)\b/i,
+  /\bcomo\s+(?:voc[êe]s?\s+|vc\s+)?(?:conseguiu|conseguiram|pegou|pegaram|achou|acharam|tem|t[êe]m)\b/i,
+  /\bquem\s+(?:te\s+|lhe\s+)?(?:passou|deu)\b/i,
+  /\bn[ãa]o\s+(?:me\s+)?(?:mand\w+|envi\w+)\s+mais\b/i,
+];
+
+function vetoPrivacidade(t) {
+  return VETO_PRIVACIDADE.some((re) => re.test(t));
+}
+
 function perguntaSobreProduto(texto) {
   const t = String(texto || '').trim();
-  if (!t) return false;
+  if (!t || vetoPrivacidade(t)) return false;
   return PERGUNTA_PRODUTO.some((re) => re.test(t));
 }
 
@@ -51,7 +70,7 @@ const JA_RESOLVIDO = [
 
 function objecaoJaResolvido(texto) {
   const t = String(texto || '').trim();
-  if (!t) return false;
+  if (!t || vetoPrivacidade(t)) return false;
   return JA_RESOLVIDO.some((re) => re.test(t));
 }
 
@@ -75,7 +94,9 @@ const DEMO_JA_RESOLVIDO_INSTRUCTION =
  */
 function introDaPrevia(texto) {
   const t = String(texto || '').replace(/https?:\/\/\S+/gi, '').trim();
-  const sem = t.replace(/[^.!?\n]*\?\s*$/, '').trim();
+  // A pergunta pode terminar com emoji ("quer ver? 🙂"): o que vem depois do
+  // "?" até o fim, se não tiver letra nem número, também sai.
+  const sem = t.replace(/[^.!?\n]*\?[^\p{L}\p{N}]*$/u, '').trim();
   return sem || null;
 }
 

@@ -76,6 +76,8 @@ describe('prévia por garantia', () => {
     });
     await t.rodar();
     expect(t.enviados.join('\n')).toContain('https://useracha.app/previa/abc');
+    // Tentativa única: parqueado mesmo sem o detector de recusa disparar.
+    expect(t.patches.some((p) => p.prospect_state === 'recusou')).toBe(true);
   });
 
   test('prévia já enviada → nada é forçado (não repete o link)', async () => {
@@ -105,5 +107,20 @@ describe('portão de claims no envio', () => {
     await t.rodar();
     expect(t.enviados).toEqual([]);
     expect(t.eventos.join(' ')).toMatch(/BLOQUEADA.*gorjeta-direta/);
+    // Nada saiu: o lead vai pro fundador em vez de seguir como se tivesse saído.
+    const p = t.patches.find((x) => x.prospect_state);
+    expect(p.prospect_state).toBe('handoff');
+    expect(p.handoff_motivo).toMatch(/portão de claims/);
+  });
+
+  test('prévia barrada NÃO registra "prévia enviada"', async () => {
+    const t = montar({
+      inbound: 'o q é esse racha?',
+      acao: { tipo: 'responder', texto: 'cada um paga a sua parte e a gorjeta vai direto pro garçom.' },
+    });
+    await t.rodar();
+    expect(t.enviados).toEqual([]);
+    expect(t.eventos.join(' ')).not.toMatch(/prévia enviada/);
+    expect(t.patches.find((x) => x.prospect_state).prospect_state).toBe('handoff');
   });
 });

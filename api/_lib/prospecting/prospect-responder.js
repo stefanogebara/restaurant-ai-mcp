@@ -308,6 +308,16 @@ function instrucaoRemarcar(motivo, novoHorarioLabel) {
  */
 async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPacing = false, mode = null, remarcarMotivo = null, novoHorarioLabel = null, previaEvento = 'opened' }) {
   const pace = { skipPacing };
+  // Todo envio deste turno passa por aqui: se o portão de claims barrar a
+  // resposta, o turno NÃO pode seguir como se ela tivesse saído (revisão da
+  // PR #162: evento "prévia enviada" sem prévia, lead parado em 'recusou' em
+  // silêncio). O passo 9b lê `bloqueio` e entrega o lead ao fundador.
+  let bloqueio = null;
+  const enviar = async (...args) => {
+    const r = await sendReply(...args);
+    if (r && r.blocked) bloqueio = r.blocked;
+    return r;
+  };
   const isNudge = mode === 'nudge';
   const isRemarcar = mode === 'remarcar';
   const isPreviaAberta = mode === 'previa';
@@ -338,7 +348,7 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
       const { isCronEnabled } = require('../cron-config');
       if (await isCronEnabled('prospecting-agent')) {
         const { COMPANION_TEXT } = require('./prospect-agent');
-        await sendReply(lead.id, from, COMPANION_TEXT.optout, { skipPacing: true });
+        await enviar(lead.id, from, COMPANION_TEXT.optout, { skipPacing: true });
       }
     } catch (err) {
       logger.warn('optout goodbye skipped:', err.message);
@@ -392,7 +402,7 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
     if (!acaoRm || !acaoRm.texto) {
       return { action: 'skip', reason: 'no_text', remarcar: remarcarMotivo, motivo: (acaoRm && acaoRm.motivo) || null };
     }
-    const r = await sendReply(lead.id, from, acaoRm.texto, pace);
+    const r = await enviar(lead.id, from, acaoRm.texto, pace);
     logger.info(`[prospect] lead=${lead.id} mode=remarcar motivo=${remarcarMotivo} sent=${r.sentAny} dryRun=${r.dryRun}`);
     return { action: 'remarcar', remarcar: remarcarMotivo, sent: r.sentAny, dryRun: r.dryRun };
   }
@@ -432,7 +442,7 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
       noTools: true,
     });
     if (!acaoP || !acaoP.texto) return { action: 'skip', reason: 'no_text', previa: true };
-    const r = await sendReply(lead.id, from, acaoP.texto, pace);
+    const r = await enviar(lead.id, from, acaoP.texto, pace);
     logger.info(`[prospect] lead=${lead.id} mode=previa sent=${r.sentAny} dryRun=${r.dryRun}`);
     return { action: 'previa_reacao', sent: r.sentAny, dryRun: r.dryRun };
   }
@@ -464,7 +474,7 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
       noTools: true,
     });
     if (!acaoR || !acaoR.texto) return { action: 'skip', reason: 'no_text', retorno: true };
-    const r = await sendReply(lead.id, from, acaoR.texto, pace);
+    const r = await enviar(lead.id, from, acaoR.texto, pace);
     logger.info(`[prospect] lead=${lead.id} mode=retorno sent=${r.sentAny} dryRun=${r.dryRun}`);
     return { action: 'retorno', sent: r.sentAny, dryRun: r.dryRun };
   }
@@ -625,7 +635,7 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
     if (!acao && !isNudge && lead.prospect_state === 'agendando' && booking.bookingDisponivel() && !isDryRun()) {
       const conf = await booking.confirmarReuniao(lead, lastInText, nowMs);
       if (conf.handled) {
-        const r = await sendReply(lead.id, from, conf.mensagem, pace);
+        const r = await enviar(lead.id, from, conf.mensagem, pace);
         const patch = { ...(conf.patch || {}) };
         if (lead.reply_apos) patch.reply_apos = null;
         if (Object.keys(patch).length) await patchLead(lead.id, patch);
@@ -708,7 +718,10 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
     if (recusaSuave && acao && acao.tipo === 'responder') patch.prospect_state = 'recusou';
     // A prévia da objeção "já resolvido" é a ÚNICA tentativa: o lead continua
     // parqueado, sem nudge nem resgate depois dela.
-    if (recusaSuave && acao && acao.tipo === 'criar_demo' && previaForcada === 'ja_resolvido') {
+    // Vale mesmo sem recusaSuave: "a gente já divide na maquininha" não é
+    // recusa pro detector, mas é a mesma objeção — sem este park, o lead
+    // levava a prévia e depois o nudge e o resgate (revisão da PR #162).
+    if (acao && acao.tipo === 'criar_demo' && previaForcada === 'ja_resolvido') {
       patch.prospect_state = 'recusou';
     }
     // Conta o pedido de decisor feito a um porteiro. Ao chegar em PORTEIRO_MAX
@@ -747,7 +760,7 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
         // Goodbye FIRST (suppression starts the moment the optout is recorded);
         // interpretResponse guarantees texto. One line, then permanent silence.
         if (acao.texto) {
-          const r = await sendReply(lead.id, from, acao.texto, pace);
+          const r = await enviar(lead.id, from, acao.texto, pace);
           sent = r.sentAny; dryRun = r.dryRun;
         }
         await recordOptout({ phone: from, leadId: lead.id, reason: 'llm' });
@@ -777,7 +790,7 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
           const { deveEnviarPorta } = require('./prospect-state');
           if (deveEnviarPorta(history)) {
             const { COMPANION_TEXT } = require('./prospect-agent');
-            const r = await sendReply(lead.id, from, COMPANION_TEXT.porta, pace);
+            const r = await enviar(lead.id, from, COMPANION_TEXT.porta, pace);
             sent = r.sentAny; dryRun = r.dryRun;
             await recordEvent(lead.id, '🚪 só auto-atendimento na thread — recado de porta enviado para o humano que ler depois');
           }
@@ -788,7 +801,7 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
       case 'handoff':
         patch.handoff_motivo = acao.motivo || null;
         if (acao.texto) {
-          const r = await sendReply(lead.id, from, acao.texto, pace);
+          const r = await enviar(lead.id, from, acao.texto, pace);
           sent = r.sentAny; dryRun = r.dryRun;
         }
         break;
@@ -824,7 +837,7 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
           const ack = acao.texto || (
             `Perfeito, obrigada! Só pra eu não errar: esse número é ${quem} aí de vocês mesmo? `
             + 'Assim que você confirmar eu chamo 🙂');
-          const r = await sendReply(lead.id, from, ack, pace);
+          const r = await enviar(lead.id, from, ack, pace);
           sent = r.sentAny; dryRun = r.dryRun;
         }
 
@@ -874,7 +887,7 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
         if (!pendente) {
           // Confirmação sem indicação pendente é o modelo se confundindo.
           // Responder normal é melhor que agir sobre nada.
-          const r = await sendReply(lead.id, from, acao.texto || 'perfeito, obrigada! 🙂', pace);
+          const r = await enviar(lead.id, from, acao.texto || 'perfeito, obrigada! 🙂', pace);
           sent = r.sentAny; dryRun = r.dryRun;
           await recordEvent(lead.id, '⚠ confirmar_indicacao sem indicação pendente — ignorado');
           break;
@@ -884,14 +897,14 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
           patch.numero_indicado = null;
           patch.numero_indicado_contexto = null;
           patch.numero_indicado_em = null;
-          const r = await sendReply(lead.id, from,
+          const r = await enviar(lead.id, from,
             acao.texto || 'ah, entendi! sem problema. quando puder me passa o número certo que eu chamo 🙂', pace);
           sent = r.sentAny; dryRun = r.dryRun;
           await recordEvent(lead.id, `🚧 a casa NEGOU o número indicado (${pendente}) — descartado sem contato`);
           break;
         }
 
-        const r = await sendReply(lead.id, from, acao.texto || 'perfeito, obrigada! já chamo então 🙂', pace);
+        const r = await enviar(lead.id, from, acao.texto || 'perfeito, obrigada! já chamo então 🙂', pace);
         sent = r.sentAny; dryRun = r.dryRun;
 
         // Só AGORA o indicado vira lead e entra na fila. Best-effort: falha
@@ -942,7 +955,7 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
           // captured this turn if any — instead of re-proposing slots.
           const pend = await booking.confirmarPendente(lead, email, nowMs);
           if (pend.handled) {
-            const r = await sendReply(lead.id, from, pend.mensagem, pace);
+            const r = await enviar(lead.id, from, pend.mensagem, pace);
             const patchPend = { ...(pend.patch || {}) };
             if (lead.reply_apos) patchPend.reply_apos = null;
             if (Object.keys(patchPend).length) await patchLead(lead.id, patchPend);
@@ -955,7 +968,7 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
           const prop = await booking.proporReuniao(lead, nowMs, acao.resumo);
           if (prop.ok && prop.mensagem) texto = prop.mensagem;
         }
-        const r = await sendReply(lead.id, from, texto, pace);
+        const r = await enviar(lead.id, from, texto, pace);
         sent = r.sentAny; dryRun = r.dryRun;
         if (acao.resumo && acao.resumo !== 'sem detalhe') {
           patch.conversa_fatos = mergeFatos(patch.conversa_fatos || lead.conversa_fatos, {
@@ -971,7 +984,7 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
         // 'retorno' when retorno_em comes due. An inbound before then clears it.
         const { computeRetornoAt } = require('./prospect-hours');
         const retornoEm = computeRetornoAt(acao.quando, nowMs);
-        const r = await sendReply(lead.id, from, acao.texto, pace);
+        const r = await enviar(lead.id, from, acao.texto, pace);
         sent = r.sentAny; dryRun = r.dryRun;
         patch.retorno_em = retornoEm;
         patch.retorno_motivo = (acao.quando || '').slice(0, 200) || null;
@@ -1001,19 +1014,19 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
         }
         if (jaEnviada) {
           // Already delivered — nudge, don't repeat the link.
-          const r = await sendReply(lead.id, from, 'já te mandei ali em cima 👆 dá uma olhada quando puder que a gente vê junto 🙂', pace);
+          const r = await enviar(lead.id, from, 'já te mandei ali em cima 👆 dá uma olhada quando puder que a gente vê junto 🙂', pace);
           sent = r.sentAny; dryRun = r.dryRun;
         } else if (url) {
           const linkBubble = `é essa aqui, abre no celular 👇\n${url}`;
           const full = intro ? `${intro}\n\n${linkBubble}` : linkBubble;
-          const r = await sendReply(lead.id, from, full, pace);
+          const r = await enviar(lead.id, from, full, pace);
           sent = r.sentAny; dryRun = r.dryRun;
-          await recordEvent(lead.id, `🎬 prévia enviada: ${url}`);
+          if (!r.blocked) await recordEvent(lead.id, `🎬 prévia enviada: ${url}`);
         } else {
           // Creation failed — do NOT promise a link (R4). Soft continuation; the
           // failure lands on the cockpit timeline so a human can finish it.
           const soft = 'deixa eu organizar uma coisa rápida aqui e já te retorno 🙂';
-          const r = await sendReply(lead.id, from, soft, pace);
+          const r = await enviar(lead.id, from, soft, pace);
           sent = r.sentAny; dryRun = r.dryRun;
           patch.handoff_motivo = 'criar_demo falhou — montar prévia manualmente';
           await recordEvent(lead.id, '⚠ criar_demo falhou — fallback sem link, handoff sugerido');
@@ -1024,7 +1037,7 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
       case 'responder':
       default:
         if (acao.tipo === 'responder' && acao.texto) {
-          const r = await sendReply(lead.id, from, acao.texto, pace);
+          const r = await enviar(lead.id, from, acao.texto, pace);
           sent = r.sentAny; dryRun = r.dryRun;
           if (isNudge) {
             patch.nudge_em = new Date(nowMs).toISOString();
@@ -1051,6 +1064,17 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
         const resumo = await gerarResumo(history);
         if (resumo) patch.conversa_resumo = resumo;
       }
+    }
+
+    // 9b. Resposta barrada pelo portão de claims: nada saiu. O lead vai pro
+    //     fundador (handoff entra no digest) em vez de seguir no estado que a
+    //     ação teria produzido. Em 'conversando' o resgate regeneraria a mesma
+    //     frase a cada 2h; em 'recusou', silêncio sem ninguém saber.
+    if (bloqueio) {
+      const ids = bloqueio.map((v) => v.id).join(', ');
+      patch.prospect_state = 'handoff';
+      patch.handoff_motivo = `resposta barrada pelo portão de claims [${ids}]: responder à mão`;
+      sent = false;
     }
 
     // 10. Persist state.

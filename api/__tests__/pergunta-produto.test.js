@@ -60,3 +60,27 @@ describe('introDaPrevia — o texto que acompanha o link', () => {
     expect(introDaPrevia('quer ver?')).toBeNull();
   });
 });
+
+describe('veto de privacidade (revisão da PR #162)', () => {
+  test.each([
+    'o que é isso? como conseguiu meu número?',
+    'quem te passou meu contato? do que se trata?',
+    'já tenho parceiro, pode tirar meu número',
+    'a gente já divide, não me manda mais nada',
+  ])('não força prévia: %s', (t) => {
+    expect(perguntaSobreProduto(t)).toBe(false);
+    expect(objecaoJaResolvido(t)).toBe(false);
+  });
+});
+
+test('introDaPrevia tira pergunta com emoji no fim', () => {
+  expect(introDaPrevia('é pelo QR da mesa. quer ver? 🙂')).toBe('é pelo QR da mesa.');
+});
+
+describe('opt-out cobre pedido de remoção do número', () => {
+  const { detectarOptout } = require('../_lib/prospecting/prospect-state');
+  test.each(['já tenho parceiro, pode tirar meu número', 'apaga meu contato por favor', 'não me manda mais nada'])(
+    'opt-out: %s', (t) => expect(detectarOptout(t)).toBe(true));
+  test.each(['o dono tirou folga hoje', 'manda mais detalhes', 'como funciona?'])(
+    'não é opt-out: %s', (t) => expect(detectarOptout(t)).toBe(false));
+});
