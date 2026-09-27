@@ -222,19 +222,21 @@ async function transcribeVoiceMessage(mediaId) {
   };
   const ext = extMap[mimeType.split(';')[0].trim()] || 'ogg';
 
-  // Call OpenAI Whisper API
-  const FormData = (await import('form-data')).default;
+  // Call OpenAI Whisper API.
+  // FormData e Blob NATIVOS, de propósito. Com o pacote `form-data`, o fetch
+  // nativo (undici) não sabe ler o stream e serializa o objeto: o corpo que
+  // chegava na OpenAI era a string "[object FormData]", e TODO áudio voltava
+  // 400 "Could not parse multipart form" (8 áudios de leads entre 06/08 e
+  // 07/09/2026, entre eles o de um dono que queria saber o que era o Racha).
+  // Sem header de content-type manual: o fetch gera o boundary certo.
   const form = new FormData();
-  form.append('file', buffer, { filename: `voice.${ext}`, contentType: mimeType });
+  form.append('file', new Blob([buffer], { type: mimeType.split(';')[0].trim() }), `voice.${ext}`);
   form.append('model', 'whisper-1');
   form.append('language', 'pt'); // Default to Portuguese for Brazilian market
 
   const whisperRes = await buscarComPrazo('https://api.openai.com/v1/audio/transcriptions', {
     method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      ...form.getHeaders(),
-    },
+    headers: { 'Authorization': `Bearer ${apiKey}` },
     body: form,
   }, PRAZO_WHISPER_MS);
 

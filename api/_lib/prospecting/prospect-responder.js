@@ -21,6 +21,7 @@ const { createSecureLogger } = require('../secure-logger');
 const { sendWhatsAppMessage } = require('../whatsapp-sender');
 const { semTravessao } = require('./sem-travessao');
 const { lintOutbound } = require('./claim-linter');
+const { cartaoDeRobo } = require('./cartao-de-robo');
 const {
   perguntaSobreProduto, objecaoJaResolvido, introDaPrevia,
   DEMO_INSTRUCTION, DEMO_JA_RESOLVIDO_INSTRUCTION,
@@ -812,12 +813,20 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
         //
         // O WhatsApp do fundador continua no ack (regra 2026-07-20): quem indicou
         // repassa o número, e a pessoa indicada pode chamar direto.
-        const quem = acao.nome ? `d${acao.nome.endsWith('a') ? 'a' : 'o'} ${acao.nome}` : 'dessa pessoa';
-        const ack = acao.texto || (
-          `Perfeito, obrigada! Só pra eu não errar: esse número é ${quem} aí de vocês mesmo? `
-          + `Assim que você confirmar eu chamo 🙂 E se preferir falar direto com o fundador, esse é o número dele: ${FOUNDER_WHATSAPP}`);
-        const r = await sendReply(lead.id, from, ack, pace);
-        sent = r.sentAny; dryRun = r.dryRun;
+        //
+        // Cartão vindo de ROBÔ (27/09/2026): a pergunta de confirmação é pra
+        // gente responder; robô devolve o link de reserva e a conversa gira em
+        // falso. Nada é enviado; a indicação fica pendente pro fundador.
+        // O número do fundador saiu do ack: só vai quando a pessoa pede (regra 11).
+        const deRobo = cartaoDeRobo(history);
+        if (!deRobo) {
+          const quem = acao.nome ? `d${acao.nome.endsWith('a') ? 'a' : 'o'} ${acao.nome}` : 'dessa pessoa';
+          const ack = acao.texto || (
+            `Perfeito, obrigada! Só pra eu não errar: esse número é ${quem} aí de vocês mesmo? `
+            + 'Assim que você confirmar eu chamo 🙂');
+          const r = await sendReply(lead.id, from, ack, pace);
+          sent = r.sentAny; dryRun = r.dryRun;
+        }
 
         // Referral → lead + auto-intro (best-effort: a failure here never
         // breaks the ack; the flush-cron referral pass retries the intro, and
@@ -843,10 +852,14 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
           }
           await patchLead(lead.id, {
             numero_indicado: acao.numero,
-            numero_indicado_contexto: `indicado como "${acao.nome || 'responsável'}"; aguardando a casa confirmar`,
+            numero_indicado_contexto: deRobo
+              ? `cartão enviado pelo atendimento AUTOMÁTICO como "${acao.nome || 'responsável'}"; o fundador confirma à mão`
+              : `indicado como "${acao.nome || 'responsável'}"; aguardando a casa confirmar`,
             numero_indicado_em: new Date().toISOString(),
           });
-          await recordEvent(lead.id, `📇 indicação registrada, aguardando confirmação da casa: ${acao.numero}`);
+          await recordEvent(lead.id, deRobo
+            ? `📇 cartão de contato vindo de robô registrado (${acao.numero}); sem pergunta ao robô, fundador confirma`
+            : `📇 indicação registrada, aguardando confirmação da casa: ${acao.numero}`);
         } catch (err) {
           logger.warn(`referral gate failed lead=${lead.id}: ${err.message}`);
         }

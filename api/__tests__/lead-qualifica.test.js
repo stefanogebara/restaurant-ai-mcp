@@ -235,3 +235,11 @@ describe('foraDoIcp — plural não é rota de fuga', () => {
     expect(foraDoIcp(nome)).toBe(false);
   });
 });
+
+describe('sorvete e doce de balcão (27/09/2026)', () => {
+  const { foraDoIcp } = require('../_lib/prospecting/lead-qualifica');
+  test.each(['Da Pá Virada Gelateria Butantã', 'R3 Doces', 'Sorveteria Rochinha', 'Açaíteria do Zé', 'Confeitaria Dama'])(
+    'barra: %s', (n) => expect(foraDoIcp(n)).toBe(true));
+  test.each(['Bar e Doces da Vila', 'Restaurante Salinas', 'Pastelaria Alvorada'])(
+    'passa: %s', (n) => expect(foraDoIcp(n)).toBe(false));
+});
