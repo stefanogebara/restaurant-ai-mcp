@@ -11,6 +11,75 @@
 
 ## Em aberto — precisa de decisão do Stefano
 
+### [DISCUTIR 9/15] Supabase cobra Logs Ingest por uso a partir de 2027 — vale uma checagem agora?
+**Data:** 2026-09-28 · **Fonte:** [Supabase Changelog](https://supabase.com/changelog/logs-usage-based-pricing) · [docs — logs-ingest](https://supabase.com/docs/guides/platform/manage-your-usage/logs-ingest) · [docs — logs-query](https://supabase.com/docs/guides/platform/manage-your-usage/logs-query) · **Eixos:** P3 A1 D2 E2 L1
+
+**O que é:** a Supabase está movendo Logs (Postgres, PostgREST/API gateway, Auth, Storage,
+Realtime, Edge Functions) de "incluído sem medição" para cobrança por uso. Planos
+Pro/Team/Enterprise ganham 20GB/mês de ingest incluídos, US$0,50/GB de excedente (Free: 1GB);
+a cota de consulta de log escala 100:1 com o ingest pago, e estourá-la degrada acesso (rate
+limit, depois retenção encolhida, depois corte). **Billing e enforcement só começam no início
+de 2027** — o medidor já roda hoje no dashboard, mas nada é cobrado ou bloqueado ainda.
+Supabase afirma que mais de 90% dos projetos ficam dentro do limite grátis. Números batidos
+em três fontes independentes (changelog + duas páginas de doc).
+
+**Correção de mecanismo, decisiva:** a hipótese inicial deste candidato era que os ~191
+`console.log`/`createSecureLogger` das funções serverless da Vercel alimentariam esse
+medidor. **Não alimentam** — Logs Ingest mede tráfego dos serviços da própria Supabase, não
+stdout de função Vercel, a menos que exista um Log Drain explícito ligando as duas coisas
+(`grep` vazio no repo por "log drain"/"logflare"). O vetor de risco real, se houver, é volume
+de query Postgres/PostgREST/Realtime — que sim escala com o produto
+(`supabaseAdmin`/`supabaseClient` chamado em ~480 arquivos) — mas não há como quantificar sem
+abrir o dashboard ao vivo da Supabase, fora do alcance de uma leitura de repositório.
+
+**Por que toca este projeto:** Supabase é o banco único e `settled` do projeto
+(`intel.config.json`), e o `CLAUDE.md` já tem uma seção inteira de "Vercel Cost Rules"
+nascida de um incidente real de fatura (US$375, março/2026) — o mesmo tipo de risco
+operacional, em fornecedor diferente.
+
+**O que a fonte não prova:** nenhum dado sobre o volume atual de ingest do projeto Seatable
+existe fora do dashboard ao vivo — a estimativa de estouro é especulação de ordem de
+grandeza, não fato verificado.
+
+**A pergunta:** vale abrir agora uma seção "Supabase Cost Rules" no `CLAUDE.md` (espelhando
+as regras da Vercel) e checar uma vez o GB de log ingest atual no dashboard — ou é cedo demais
+dado que o enforcement só começa em 2027 e mais de 90% dos projetos nunca estouram o limite
+grátis?
+
+---
+
+### [DISCUTIR 8/15] Burger King recua de IA de voz obrigatória no drive-thru — o Seatable não tem fallback humano na ligação
+**Data:** 2026-09-28 · **Fonte:** [Nation's Restaurant News](https://www.nrn.com/quick-service/burger-king-rethinks-its-drive-thru-ai-strategy) · **Eixos:** P2 A2 D1 E2 L2
+
+**O que é:** o Burger King testou IA de voz como único caminho de pedido em 50–70 lojas de
+drive-thru e recuou depois que dado da Technomic mostrou só 23% dos consumidores achando
+atrativo pedir a um bot de IA, contra 46% que acham desagradável e 46% que preferem
+atendente humano — o VP de tecnologia da marca citou clientes indo embora sem pedir por não
+quererem falar com o bot. "Patty" continua existindo, mas virou copiloto interno via headset
+para o atendente humano, não substituto do atendimento direto ao cliente.
+
+**O que a fonte não prova:** a escala do teste (50–70 lojas) é autodeclarada, e os
+percentuais da Technomic aparecem sem amostra nem metodologia publicada — não são
+auditáveis, só citados de segunda mão. E generalizar de "rejeição a pedido de fast-food por
+voz forçada" para "rejeição a reserva de mesa por telefone com IA" é inferência, não dado:
+Burger King testou pedido complexo em drive-thru americano, não reserva simples em
+restaurante independente brasileiro.
+
+**Por que toca este projeto mesmo assim:** o Seatable atende telefone de reserva **100% por
+IA de voz**, sem opção declarada de cair para um humano durante a ligação, e sem telemetria
+de insatisfação ou abandono — o mesmo buraco que o `known_gaps` já registra como "zero
+instrumentação de qualidade/latência na voz". O canal de WhatsApp tem transbordo humano
+(`api/_services/whatsapp/handoff.js`, ainda desligado por calibração pendente — ver
+`BACKLOG.md#whatsapp-transbordo-humano`); a ligação de voz não tem equivalente nenhum.
+
+**A pergunta:** vale abrir um spike medindo taxa de "pedido de atendente" ou desligamento no
+meio da ligação a partir dos transcritos que `api/cron/sync-conversation-data.js` já puxa
+— antes que apareça o mesmo padrão de rejeição em reserva de restaurante independente — ou é
+caso específico demais de fast-food americano (pedido complexo, não reserva) para importar
+pro produto?
+
+---
+
 ### [DISCUTIR 8/15] Flipdish: dez mil pedidos por telefone confirmam o gap de takeout que o repo já tem nomeado
 **Data:** 2026-09-16 · **Fonte:** [Retail Technology Innovation Hub](https://retailtechinnovationhub.com/home/2026/9/16/flipdish-ai-phone-agent-reaches-10000-orders-bringing-in-over-230000-to-uk-and-irish-restaurants) · **Eixos:** P2 A1 D2 E1 L2
 
@@ -688,6 +757,19 @@ confirmado na fonte — só documentado para `platform_settings` em geral). Vira
 
 ## Fila de trabalho
 
+Promovidos em 2026-09-28:
+
+- [PROTOTIPAR 11/15] IAs de terceiros (Instinct, Gemini Call for Me) ligando direto pro
+  pipeline de voz do Seatable → `BACKLOG.md#ia-liga-pro-restaurante`
+  · âncora: `api/twilio-voice-connect.js`, `api/_voice-server/backends/openai-realtime.js`
+  · funde e substitui o Radar de 2026-09-09 (Resy bane Instinct, 5/15) — a história inverteu
+    de direção e ganhou âncora real
+- [PROTOTIPAR 11/15] `enable_parallel_tool_calls` da ElevenLabs nasce `true` por default,
+  sem uma linha nossa mudar → `BACKLOG.md#elevenlabs-parallel-tool-calls`
+  · âncora: `api/_services/elevenlabsAgentService.js`, `api/elevenlabs-agent-create.js`,
+    `api/__tests__/elevenlabs-agent-create-payload.test.js`
+  · mesmo padrão do incidente de 24/08 (mic_muting_enabled/transcript_enabled)
+
 Promovidos em 2026-09-21:
 
 - [PROTOTIPAR 12/15] Fila de chamadas ElevenLabs — parar de dar Hangup quando o agente
@@ -759,11 +841,13 @@ Promovidos em 2026-08-24, os quatro com âncora verificada:
 - `2026-09-09` **OpenRouter lança US In-Region Routing** — roteamento restrito a EUA ou UE, só nos
   planos Business/Enterprise; sem região Brasil, não resolve LGPD nem muda nada para o Seatable
   hoje. [OpenRouter](https://openrouter.ai/blog/announcements/us-in-region-routing/) · 7/15
-- `2026-09-09` **Resy desativa (e reativa) conta cujo agente Instinct disparou 200–375 req/hora**
-  tentando reserva disputada; ToS já proíbe bots autônomos — movimento inverso ao Meta Muse+
-  OpenTable da mesma semana (plataforma fechando vs. abrindo a agentes de terceiros, ver "Em
-  aberto"). Sem âncora no repo: Seatable não opera como agente de terceiro contra APIs de reserva
-  alheias. [Restaurant Business](https://www.restaurantbusinessonline.com/technology/ai-agents-can-help-diners-book-table-it-can-also-get-them-banned) · 5/15
+- `2026-09-09` ~~Resy desativa conta cujo agente Instinct disparou 200–375 req/hora~~ —
+  **superado em 28/09 por PROTOTIPAR 11/15, ver `BACKLOG.md#ia-liga-pro-restaurante`.** A
+  história virou maior e a âncora inverteu: não é mais sobre o Seatable agindo como bot
+  contra a Resy (isso continua sem âncora), é sobre IAs de terceiros — Instinct, agora com
+  Série C de US$1bi/US$10bi, e o Gemini "Call for Me" do Google — **ligando pra dentro** do
+  próprio pipeline de voz do Seatable (`api/twilio-voice-connect.js`,
+  `api/_voice-server/`).
 - `2026-09-09` **Vercel Password Protection passa de US$150/mês por time pra US$20/mês por
   projeto (Pro)** — o repo não usa a feature hoje (grep vazio por `password.protect`/
   `VERCEL_PASSWORD`); produção é pública por design. Relevante só se algum dia quisermos proteger

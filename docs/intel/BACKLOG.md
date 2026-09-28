@@ -5,6 +5,113 @@ têm âncora verificada. Estado do repositório em `STATE.md`.
 
 ---
 
+### ia-liga-pro-restaurante — Quando quem liga pro Seatable também é uma IA
+**Origem:** INTEL 2026-09-28 · **Veredito:** PROTOTIPAR 11/15 (P2 A2 D3 E2 L2)
+**Fontes:** [TechCrunch, 17/09](https://techcrunch.com/2026/09/17/rival-ai-agents-instinct-and-metas-muse-both-add-the-ability-to-make-calls/) · [TechCrunch (Gemini), 24/09](https://techcrunch.com/2026/09/24/google-tests-letting-gemini-make-phone-calls-initially-for-us-pixel-owners/) · [CNN/ABC17, 23/09](https://abc17news.com/money/cnn-business-consumer/2026/09/23/now-ai-is-trying-to-gobble-up-dinner-reservations/) · [NBC News, 28/09](https://www.nbcnews.com/tech/tech-news/trying-get-restaurant-reservation-get-ready-compete-ai-agents-rcna599738) · [PYMNTS (Série C), 28/09](https://www.pymnts.com/startups/2026/instinct-ai-assistant-targets-10-billion-dollar-valuation/)
+
+**O mecanismo:** Instinct (feature "Concierge") e Meta Muse ganharam a capacidade de LIGAR
+para negócios em nome do usuário — o caso de uso citado explicitamente é "restaurante que
+não aceita reserva online", o público exato do Seatable. O Google testa "Call for Me" no
+Gemini: a IA disca do próprio número do usuário via app Telefone do Android (beta, só Pixel
+11, só EUA, só assinante pago), com transcrição ao vivo e opção de retomada humana, para
+checar estoque, remarcar hora ou reservar mesa. A Resy confirma que bane contas cujo agente
+Instinct martela a API "centenas de vezes por hora" — ToS "não permite atualmente bots ou
+agentes de terceiros não aprovados". Cinco semanas depois de captar US$250M a US$2,5bi, o
+Instinct captou **US$1 bilhão em Série C a US$10 bilhões de valuation** (28/09, confirmado
+por múltiplas fontes financeiras independentes com o mesmo número — 100mil+ usuários,
+limite de capacidade computacional como causa da rodada).
+
+**Correção ao candidato original:** a alegação de que a Resy tem integrações *aprovadas* com
+ChatGPT/Claude **não se confirma** na fonte CNN/ABC17 — refeito o fetch duas vezes, a única
+menção a esses nomes é uma comparação estilística de tom, não uma parceria. Tratar como não
+verificado até achar fonte primária. O corpo do artigo da NBC (28/09) também não carregou
+via WebFetch — só manchete e legenda do case study do Izakaya Seki foram recuperáveis.
+
+**Por que promove — e por que substitui o item de 2026-09-09 (5/15) em vez de só somar:** a
+entrada anterior do Radar cobria só o incidente pontual do banimento, com veredito "sem
+âncora — Seatable não opera como agente de terceiro contra APIs de reserva alheias". Isso
+continua verdadeiro e não muda. O que inverteu a direção: não é mais sobre o Seatable agindo
+como bot contra a Resy, é sobre IAs de terceiros **ligando pra dentro** do próprio pipeline
+de voz do Seatable (`api/twilio-voice-connect.js`, `api/_voice-server/`) — isso tem âncora
+real, e escala junto com a Série C de US$1bi e o rollout do Gemini.
+
+**Hipótese:** se um chamador com cadência de fala de IA (sem hesitação, sem pausas de
+preenchimento, ritmo constante) ligar para o pipeline de voz do Seatable, então o
+`server_vad` hardcoded (`threshold: 0.5`, `silence_duration_ms: 500`) em
+`api/_voice-server/backends/openai-realtime.js` erra detecção de fim-de-turno com
+frequência maior do que para um chamador humano.
+
+**Spike:** gerar 10 áudios TTS com cadência "de IA" (sem hesitação) e 10 com cadência humana
+(pausas, "eh"); discar o número de teste Twilio do Seatable com cada um; contar interrupções
+indevidas e falhas de resposta em até 2s após o fim real do turno. **Caixa de tempo: 4h.**
+
+**Medir:** taxa de falha de turno (% de trocas com corte indevido ou sem resposta em 2s) —
+sucesso do spike é confirmar se a cadência-IA falha ≥2x mais que a cadência-humana.
+
+**Parar se:** a taxa de falha para cadência-IA for igual ou menor que a cadência-humana — o
+VAD hardcoded já absorve o caso, e a urgência cai de volta pro known_gap geral de
+instrumentação de voz, sem item novo.
+
+**Toca:** `api/twilio-voice-connect.js`, `api/_voice-server/ws-server.js`,
+`api/_voice-server/backends/openai-realtime.js`, `api/_voice-server/session-manager.js`
+**Status:** aberto
+
+---
+
+### elevenlabs-parallel-tool-calls — `enable_parallel_tool_calls` nasce `true` sem nossa escolha
+**Origem:** INTEL 2026-09-28 · **Veredito:** PROTOTIPAR 11/15 (P3 A3 D1 E2 L2)
+**Fonte:** [ElevenLabs Changelog, 21/09](https://elevenlabs.io/docs/changelog/2026/9/21)
+
+**O mecanismo:** o changelog de 21/09 (confirmado no HTML bruto, não só no resumo
+renderizado) traz três mudanças na Conversational AI API: (1) `gpt-6-astra` vira opção de
+LLM para agentes; (2) o payload de criação de agente ganha `enable_parallel_tool_calls`
+(boolean, **default `true`**) — "quando ligado, modelos suportados podem executar múltiplas
+tools num único turno"; (3) `is_final_audio_for_turn` passa a ser emitido de forma
+confiável para todo formato de áudio bufferizado (MP3/Opus incluídos, antes só PCM tinha
+essa garantia).
+
+**Por que promove:** `enable_parallel_tool_calls` reincide exatamente no padrão de risco já
+documentado no próprio código como comentário (`elevenlabs-agent-create.js:890-899`) do
+incidente de 24/08, quando `mic_muting_enabled`/`transcript_enabled` mudaram de default em
+silêncio. Hoje **zero ocorrência** do campo no repo — todo agente criado a partir de agora
+nasce com paralelismo de tools ligado, sem que uma linha nossa tenha mudado. As 8 tools em
+`api/_voice-server/tool-handler.js` são todas de reserva **sequencial**
+(`check_availability` → `create_reservation`), então paralelismo aqui é risco, não ganho.
+
+**`is_final_audio_for_turn` não tem âncora hoje, e a razão é arquitetural:** para chamada
+por telefone (motor ElevenLabs, o default), `api/twilio-voice-connect.js` chama
+`POST /v1/convai/twilio/register-call` e devolve a TwiML da própria ElevenLabs — o Twilio
+conecta direto ao WebSocket deles; `api/_voice-server/ws-server.js` (Fly.io) nunca vê esse
+tráfego, e seu `createBackend()` só sabe instanciar `OpenAIRealtimeBackend`. O widget de
+navegador usa `@elevenlabs/react` + WebRTC, que abstrai áudio e não expõe marcadores de
+streaming raw. Endereçar o known_gap de turn-taking com esse campo exigiria trocar
+`register-call` por uma ponte WebSocket própria — decisão arquitetural maior, fora deste
+spike.
+
+**Hipótese:** se `enable_parallel_tool_calls` não for setado explicitamente, o agente herda
+`true` do fornecedor — e como as tools do produto são sequenciais por natureza, isso é
+superfície de risco sem benefício, não capacidade nova aproveitável.
+
+**Spike:** rodar 5 diálogos de reserva via `/api/elevenlabs-signed-url` forçando cenários
+onde o LLM poderia paralelizar ("verifica se tem mesa pra 4 às 20h e já reserva"); inspecionar
+logs do `VoiceToolHandler` por tool calls concorrentes na mesma sessão. Em paralelo, setar
+`enable_parallel_tool_calls: false` explícito nos dois arquivos de criação de agente e
+estender `elevenlabs-agent-create-payload.test.js` para travar o campo. **Caixa de tempo:
+4h.**
+
+**Medir:** zero tool calls concorrentes indevidas em 5 diálogos de teste; teste de snapshot
+novo passa e trava o valor escolhido.
+
+**Parar se:** em 5 tentativas de forçar o cenário o modelo (`gpt-4o-mini`, hardcoded em três
+lugares) nunca disparar tools em paralelo — o risco é teórico com o LLM atual; documentar a
+decisão e não investir mais tempo até trocar de modelo.
+
+**Toca:** `api/_services/elevenlabsAgentService.js`, `api/elevenlabs-agent-create.js`,
+`api/__tests__/elevenlabs-agent-create-payload.test.js`, `api/_voice-server/tool-handler.js`
+**Status:** aberto
+
+---
+
 ### elevenlabs-queueing — Fila de chamadas ElevenLabs em vez de Hangup imediato
 **Origem:** INTEL 2026-09-21 · **Veredito:** PROTOTIPAR 12/15 (P3 A2 D2 E2 L3)
 **Fonte:** [ElevenLabs Changelog, 14/set](https://elevenlabs.io/docs/changelog/2026/9/14)
