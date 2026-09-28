@@ -5,6 +5,57 @@ têm âncora verificada. Estado do repositório em `STATE.md`.
 
 ---
 
+### elevenlabs-queueing — Fila de chamadas ElevenLabs em vez de Hangup imediato
+**Origem:** INTEL 2026-09-21 · **Veredito:** PROTOTIPAR 12/15 (P3 A2 D2 E2 L3)
+**Fonte:** [ElevenLabs Changelog, 14/set](https://elevenlabs.io/docs/changelog/2026/9/14)
+
+**O mecanismo:** desde 14/09 os agentes ElevenLabs aceitam `platform_settings.queueing_config`
+(`enabled` boolean, default `false`; `wait_timeout_seconds` 1-1800, default 180) — quando o
+agente satura o teto de concorrência do workspace, o chamador ouve áudio de espera
+customizável (`POST/DELETE /v1/convai/agents/{agent_id}/hold-audio`) em vez de ser recusado,
+com eventos de servidor `queue_status` (`waiting`/`admitted`/`timed_out`) e `queue_wait_secs`
+separando tempo de fila de duração faturável. `platform_settings` é o mesmo objeto que
+`api/_services/elevenlabsAgentService.js:871-908` já popula em `POST /agents/create`.
+
+**Por que promove — pergunta de 24/08 ganha resposta parcial.** O item já aberto desde 24/08
+("Qual é o teto de concorrência do workspace ElevenLabs?") apontava que `ELEVENLABS_API_KEY`
+é única para todos os inquilinos — o teto é compartilhado — e que **nada no código trata
+recusa**. Confirmado agora com leitura direta: `api/twilio-voice-connect.js:299-303` — se o
+POST inicial a `register-call` falhar, a ligação recebe `<Say>` + `<Hangup/>` imediato, sem
+fila nem retry. Para um produto cuja aposta central é não perder ligação de reserva, é o modo
+de falha exato que `queueing_config` resolveria — **se** ele cobrir o fluxo Twilio nativo
+inbound, o que o changelog não confirma explicitamente (só que vive em `platform_settings`
+geral, o mesmo objeto usado por telefonia).
+
+**Hipótese:** se `platform_settings.queueing_config.enabled = true` for ligado no agente de um
+restaurante de teste, então uma segunda chamada simultânea (enquanto a primeira está em
+conversa ativa) recebe áudio de espera e é admitida depois, em vez de cair em Hangup
+imediato.
+
+**Spike:** (1) confirmar que `queueing_config` se aplica ao fluxo Twilio nativo
+(`register-call`), não só a outbound/batch/SIP — ligar duas vezes seguidas para o mesmo
+número de um restaurante de staging enquanto a primeira ligação segue ativa. (2) Se
+aplicável, adicionar o campo ao payload de `POST /agents/create` em
+`elevenlabsAgentService.js` seguindo o padrão já estabelecido no arquivo ("todo campo
+sensível a default de fornecedor vai explícito no payload" — a mesma lição do incidente de
+24/08 com `mic_muting_enabled`/`transcript_enabled`), estender
+`elevenlabs-agent-create-payload.test.js`, e repetir o teste de duas chamadas observando
+`queue_status`/`queue_wait_secs`. **Caixa de tempo: 4h.**
+
+**Medir:** a segunda chamada recebe áudio de espera (não Hangup) e é admitida dentro de
+`wait_timeout_seconds`; `queue_wait_secs` aparece no payload de metadata da conversa
+sincronizada por `sync-conversation-data`.
+
+**Parar se:** `queueing_config` não afeta o fluxo Twilio nativo (só outbound/batch/SIP) ou
+exige um tier de plano ElevenLabs que o Seatable não tem — nesse caso o item cai para
+REGISTRAR e a mitigação de perda de chamada vira problema de produto separado.
+
+**Toca:** `api/_services/elevenlabsAgentService.js`, `api/twilio-voice-connect.js:299-303`,
+`api/__tests__/elevenlabs-agent-create-payload.test.js`
+**Status:** aberto
+
+---
+
 ### whatsapp-transbordo-humano — Transbordo humano no canal de hóspede
 **Origem:** INTEL 2026-09-01 · **Veredito:** PROTOTIPAR 11/15 (P3 A2 D2 E1 L3)
 **Fonte:** [Baguete, 26/ago](https://www.baguete.com.br/noticias/fogo-de-chao-automatiza-atendimento-com-foodster) · [Portal Filipe Mello, 27/ago](https://www.portalfilipemello.com/2026/08/fogo-de-chao-registra-mais-de-mil.html)
@@ -176,8 +227,8 @@ lote inteiro sai numa chamada em vez de uma REST call por destinatário.
 
 **Por que dói mesmo assim:** o repo já reimplementa isso na mão, dois caminhos diferentes, nenhum
 checando a preferência real do restaurante:
-- `api/cron/send-reminders.js` — loop sequencial via Twilio, uma chamada Twilio + 500ms de espera
-  por destinatário.
+- `api/_crons/send-reminders.js` (moveu de `api/cron/` no #135, 09/09) — loop sequencial via
+  Twilio, uma chamada Twilio + 500ms de espera por destinatário.
 - `api/_services/campaignService.js` — importa `sendTemplateMessage` de
   `api/_lib/whatsapp-sender.js`, que é **Meta-only**, sem checar `whatsapp_provider` do
   restaurante.
@@ -195,7 +246,7 @@ N×(request+500ms) para uma chamada, sem perda de entregabilidade.
 
 **Spike (1 dia):** script isolado no scratchpad chamando o endpoint REST/SDK de Bulk Messaging do
 Twilio contra 5-10 números sandbox, replicando o `contentSid` + variáveis (nome, restaurante,
-horário, pax) hoje usados em `sendTemplateMessage` de `send-reminders.js`; comparar latência total,
+horário, pax) hoje usados em `sendTemplateMessage` de `api/_crons/send-reminders.js`; comparar latência total,
 taxa de sucesso, e se o fallback WhatsApp→SMS funciona quando o número não tem WhatsApp ativo.
 
 **Medir:** latência do lote cai para menos de 5s (vs. N×~1s do loop atual) e taxa de erro igual ou
@@ -207,7 +258,7 @@ tem, ou o SDK `twilio` `^5.10.3` instalado não expuser o endpoint sem chamada R
 — não vale trocar um cron de produção (lembretes de reserva) por uma dependência Public Beta sem
 SLA.
 
-**Toca:** `api/cron/send-reminders.js`, `api/_services/campaignService.js`, `api/_lib/whatsapp-sender.js`, `api/_lib/whatsapp/message-sender.js`, `api/_lib/channels/twilio-adapter.js`
+**Toca:** `api/_crons/send-reminders.js`, `api/_services/campaignService.js`, `api/_lib/whatsapp-sender.js`, `api/_lib/whatsapp/message-sender.js`, `api/_lib/channels/twilio-adapter.js`
 **Status:** aberto
 
 ---

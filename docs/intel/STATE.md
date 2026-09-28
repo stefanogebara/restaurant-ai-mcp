@@ -1,183 +1,128 @@
 # Estado do repositório — Seatable
 
-> Reescrito pelo `/intel` de 2026-09-07. Janela: desde o último commit de intel
-> (`0914f9e`/`e12595c`, PR #108, 2026-09-01) até `edda6b0` (2026-09-04), 29
-> commits não-merge em `main`. Fora de `main`: dois PRs abertos (`#140` draft,
-> `#90` parado há 12 dias) e quatro PRs de dependabot abertos hoje de manhã.
-> Reescrito a cada `/intel`. Fonte: o git e o GitHub, não o config.
+> Reescrito pelo `/intel` de 2026-09-28. Janela: desde o último commit de
+> intel de verdade em `main` (`55404a8`, 21/09 — base do PR #155) até hoje
+> (`868d2c8`). **Esta rodada recuperou três semanas de trabalho represado**
+> — ver "O parágrafo". Reescrito a cada `/intel`. Fonte: o git e o GitHub,
+> não o config.
 
 ## O parágrafo
 
-A semana não teve feature nova — teve uma auditoria que virou caçada, e a
-caçada achou uma falha de segurança de verdade. O gatilho foi mecânico: o
-PR #111 (31/08) construiu um verificador que compara todo `.select()`/`.from()`
-do repo contra o `information_schema` real do Supabase, em vez de uma lista
-escrita à mão de "problemas já conhecidos". Rodado, ele achou **72 referências
-a colunas fantasma em 22 arquivos** — nomes de coluna que o código lê e que
-não existem na tabela. Quatro rodadas de correção (PRs #114, #129, #131, #132)
-fecharam a lista até zero, e no meio da terceira apareceu o achado sério:
-`verify-session.js` pedia `customer_email` de uma coluna que não existe em
-`restaurant_config` (a real é `email`); o `SELECT` falhava inteiro, o bloco de
-posse era pulado e **qualquer usuário autenticado lia a sessão de checkout do
-Stripe de qualquer outro dono** — e-mail, valor, plano — só por ter o
-`session_id`. Corrigido e testado (7 testes, 3 provados vermelhos contra a
-versão antiga). No mesmo lote: o agente de voz nunca lia a config do
-restaurante (7 colunas erradas, `configForPrompt` sempre caía no fallback
-genérico), as campanhas pós-visita nunca enviaram nada desde sempre
-(`service_records` não tem `customer_email` nem `completed_at`), `whatsapp-
-settings.js` sempre mostrava zero de uso, e `customer_history` — já registrada
-como morta no `CLAUDE.md` — teve o mapeamento confirmado contra produção e o
-erro parou de ser engolido em silêncio (o modelo de no-show continua tratando
-todo cliente como novo; repontar para `customer_ltv` foi deixado como decisão
-de produto, não bug). Em paralelo, a Olímpia teve sua própria rodada de
-correção de mira: a regex de celular inventava número a partir de classe CSS
-e float de JSON (10 de 19 sites testados davam falso positivo), a caça ficava
-travada sem `SCRAPINGDOG_API_KEY` mesmo tendo um leitor grátis, e uma casa de
-culto (2926 avaliações) quase recebeu intro comercial por entrar no ICP pelo
-início do nome. Por baixo disso, duas frentes de custo do `CLAUDE.md` foram
-atacadas de vez: 36 funções de cron viraram 3 despachantes (191→159 funções,
-15min→11min de build) e o build passa a pular quando o commit não toca nada
-servido (medido: 80,8% do CPU do ciclo). E a segurança de dependência foi
-zerada — 50 vulnerabilidades (`npm audit fix`, sem `--force` exceto `sharp`) —
-com scan automático configurado pela primeira vez.
+O achado do dia não é de mercado, é operacional: **o próprio pipeline do
+`/intel` estava quebrado havia duas semanas, e ninguém tinha notado.** O
+PR #153 (14/09, 36 itens, verde, `mergeable_state: clean`) nasceu `draft` e
+morreu `draft` — zero commit, zero review, zero clique em "Ready for
+review". O PR #155 (21/09) reconheceu isso, absorveu os 4 commits do #153
+como base e produziu mais 17 itens — e **repetiu exatamente o mesmo
+destino**: também `draft`, também parado, também sem ninguém olhar, 7 dias
+até esta rodada. Resultado prático: `docs/intel/` em `main` estava
+congelado na foto de 07/09 (194 linhas de `seen.jsonl`) enquanto duas
+rodadas inteiras de trabalho — 53 itens julgados, `STATE.md` reescrito duas
+vezes, um spike promovido a `BACKLOG.md` (`elevenlabs-queueing`) — viviam
+em branches que ninguém mergeava. Esta rodada recuperou o conteúdo dos dois
+PRs (a branch `intel/2026-09-21` já continha o `intel/2026-09-14` como
+ancestral, então não há nada para duplicar) e **fecha os dois PRs sem
+merge**, exatamente como cada um recomendava para o anterior — este PR já
+carrega tudo. Fora do `/intel`, a semana de código foi a mais movimentada
+desde o pacote de auditoria de 01/09: depois de 7 dias sem nenhum commit em
+`main` (registrado no `STATE.md` da rodada de 21/09), a esteira Olímpia
+recebeu uma rodada de correção de mira (diagnóstico formal de 30 dias: 36
+respostas, 0 prévias, nota 1,55 — a taxa de conversão do funil de
+prospecção estava, na prática, zerada) mais uma revisão de segurança em
+cima dela (PR #162, 4 commits: falha de portão que deixava resposta
+barrada seguir como "enviada", parqueamento incorreto em "recusou", veto de
+privacidade), e a landing fotográfica represada desde 06/09 (PR #140, ainda
+aberto) foi **superada por um esforço paralelo e diferente**: um "hero" de
+produção construído sobre um conjunto de componentes de protótipo distinto
+(`client/src/prototype/*`), publicado direto em `/` via PR #157 (squash,
+sem draft) e três PRs de acabamento (#158–#160). O teste de conexão do
+WhatsApp que nunca devia virar pesquisa — item central do #140 — **também**
+saiu, mas pela PR #156, com o mesmo texto de commit. Ou seja: o conteúdo do
+#140 chegou a `main` por um caminho totalmente diferente do PR que o
+carrega, e o #140 provavelmente já é redundante — ver "O que está em voo".
 
 ## O que shipou
 
-- **A auditoria de colunas fantasma, do gatilho ao zero** (#111→#114→#129→
-  #131→#132): `schema-snapshot.json` (colunas reais de 17 tabelas, tiradas do
-  `information_schema` de produção) substitui o allowlist manual de
-  `audit:phantom-columns`. 72 referências corrigidas em 22 arquivos. A mais
-  séria: `verify-session.js` deixava qualquer usuário logado ler a sessão de
-  checkout do Stripe de outro dono (e-mail, valor, plano) — o `error` do
-  Supabase nunca era lido, o `SELECT` falhava calado, o gate de posse nunca
-  rodava. Também corrigido: o agente de voz nunca lia a config real do
-  restaurante (7 colunas erradas em `elevenlabs-agent-create.js`); campanhas
-  pós-visita e pedido de review no Google nunca saíram (`service_records` sem
-  `customer_email`/`completed_at` — `completed_at` na verdade é
-  `actual_departure`); contador de uso do WhatsApp sempre zero; `handoff_to_
-  human` (do #109) respondia em inglês para cliente brasileiro porque o
-  fallback de restaurante também lia coluna errada (`language`/`restaurant_
-  slug` em vez de `agent_language`/`slug`). `customer_history` confirmada
-  morta (schema `restaurant`, zero linhas, `restaurant_id` não existe) — LGPD
-  deletion corrigido, erro passa a subir em vez de virar "cliente novo" em
-  silêncio; repontar o no-show model para `customer_ltv` fica em aberto, por
-  decisão.
-- **Cron: 36 funções → 3 despachantes** (#135) — `api/_crons/` (não vira
-  função própria) + `run.js`(60s)/`run-2min.js`/`run-5min.js`, agrupados por
-  teto de `maxDuration`. 191→159 funções, build 15min→11min. `health.js`
-  ficou standalone de propósito (não tem cron, mover quebraria `GET /api/
-  cron/health`). **`vercel.json` mudou de rota **e** de cadência** — o
-  `CLAUDE.md` ainda documenta caminhos diretos (`/api/cron/check-late-
-  reservations` etc.) e frequências antigas; hoje `sync-conversation-data` e
-  `validate-conversations` rodam de hora em hora (eram `*/15`), `send-
-  feedback` também (era 30 min), e a tabela do `CLAUDE.md` nem lista boa parte
-  dos 39 crons reais (a maioria da Olímpia). Não é `intel.config.json`, é
-  `CLAUDE.md` — fica registrado aqui, não é deste pipeline corrigir.
-- **Build pulado quando nada servido muda** (#128) — Ignored Build Step mede
-  `vite build` (38s) contra o empacotamento de função (~13min de 191 funções);
-  9 dos últimos 38 commits antes desta mudança eram só doc/lição/intel.
-  Falha para o lado de construir (git raso, sem base, qualquer erro → builda).
-- **Segurança de dependência zerada** (#117, #124, #133, #136 em sequência) —
-  50 vulnerabilidades (20 raiz, 30 client) a zero via `npm audit fix` sem
-  `--force` (exceto `sharp`, dev-only, bump maior testado à mão). Duas
-  dependências fantasma achadas no caminho: `node-fetch` (só transitiva do
-  SDK Anthropic, virou `fetch` nativo — o bump do SDK para 0.122 já tinha
-  quebrado 4 rotas do ElevenLabs por isso) e `jsonwebtoken` (só transitiva do
-  Twilio, autentica todo JWT do repo — um bump de SMS derrubaria login). Scan
-  de dependência (`dependabot.yml`, agrupado por ecossistema) configurado pela
-  primeira vez — o repo tinha três lockfiles e zero scan.
-- **CodeRabbit revisando de verdade** (#116) — `auto_review.drafts` estava
-  `false`; como todo PR desta esteira nasce draft, nada era revisado, sete PRs
-  seguidos saíram verdes por "review skipped" — inclusive PRs mexendo em RLS
-  e WhatsApp. Corrigido. Registrado no cabeçalho: o repo também está abaixo do
-  corte de 10 estrelas que libera revisão automática por padrão do plano —
-  isso não tem correção por YAML.
-- **9 tabelas expostas via RLS fechadas** (#112) — 4 de fato tinham grant para
-  `anon`/`authenticated` (das 9 que o advisor apontou). A mais séria:
-  `restaurant.stripe_connect_accounts` era `SELECT` para qualquer usuário
-  **logado**, vazando `stripe_account_id`/`payouts_enabled` dos 65
-  restaurantes entre inquilinos.
-- **CI: live-smoke falha rápido e sem vazar credencial** (#137) — estava
-  vermelho em 100% das runs desde 02/09 por dois secrets faltando
-  (`SANDBOX_EMAIL`/`SANDBOX_PASSWORD`), e a revisão pegou que a correção
-  original vazava a senha para todo passo do job (`npm ci` incluído). Trocado
-  por flag de presença; valor só chega aos passos de login.
-- **e2e: 536 testes e 0 rodavam** (#90, ainda aberto — ver "em voo") — um spec
-  do Racha lia um `.env` do Windows local no carregamento do módulo; `ENOENT`
-  derrubava a coleta do Playwright inteira antes de qualquer teste existir.
-- **Prospecção — três acertos de mira**: regex de celular parava de inventar
-  número a partir de CSS/JSON (#113, 0%→100% de precisão em 19 sites reais);
-  caça ao celular deixou de depender de `SCRAPINGDOG_API_KEY` como trava dura
-  — leitor grátis primeiro, pago só quando o grátis não achou (#138, 82% dos
-  sites abrem com o grátis); link de WhatsApp do Elementor reconhecido, dedup
-  de intro cruza o lote inteiro (não só dentro da rodada — `+5511946310342`
-  tinha recebido 7 intros em um mês), e ICP para de aceitar casa de culto pelo
-  início do nome (#139).
+- **Olímpia — diagnóstico formal e correção de funil** (4 commits,
+  27/09): áudio de lead nunca chegava ao Whisper porque o pacote `form-data`
+  com `fetch` nativo mandava a string literal `"[object FormData]"` em vez
+  do multipart real — **8 áudios de leads entre 06/08 e 07/09 voltaram 400
+  em silêncio**, corrigido para `FormData`/`Blob` nativos.
+  `dispatchFollowups` parava de mandar o próximo toque quando um anterior
+  já tinha falhado (12 de 15 toques nível-3 iam para uma intro que nunca
+  chegara). Pergunta sobre o produto ou objeção "já resolvido" passou a
+  virar `criar_demo` sempre, `sendReply` passou a falhar fechado no
+  claim-linter (frase fora do style pack saiu 4x), e a nota diária parou de
+  penalizar conversa sem fala da Olímpia. Entrou o piloto de campanha do
+  Racha: lista escolhida à mão, sem o piso de avaliações/nota do fluxo
+  normal, sem template de reserva embutido.
+- **Revisão de segurança da própria correção acima** (PR #162, mesmo dia):
+  resposta barrada pelo portão de claims não seguia mais como "enviada" —
+  agora vira `handoff` com motivo, entra no digest do fundador. Pedido de
+  remoção de dado ou pergunta "de onde veio meu número" nunca mais vira
+  prévia (veto de privacidade); "já resolvido" passa a parquear como
+  recusa mesmo sem o detector de recusa disparar.
+- **Landing fotográfica superada por um hero paralelo**: `d38c5b5`/PR #157
+  publica um "restaurant hero" em produção usando componentes de
+  `client/src/prototype/` (não os `PhotographicHero`/`LiveServiceCanvas` do
+  PR #140), com três PRs de acabamento (#158 SPA→documento físico, #159
+  alinhamento de dias do cenário de demo, #160 paleta do hero alinhada à
+  demo de reserva). PR #156 corrige o mesmo bug do teste de conexão do
+  WhatsApp que o #140 já corrigia (template fixo, idioma do agente, polling
+  só com entrega pendente) — commit quase idêntico, PR diferente.
 
 ## O que está em voo
 
-- **PR #140** (draft, aberto 06/09, mergeable): landing fotográfica em três
-  tempos (`PhotographicHero`/`LiveServiceCanvas`/`CinematicServiceStory`),
-  teste de envio de WhatsApp que não vira pesquisa, e uma lição registrada —
-  oito rodadas de crítica sem a nota mexer até resolver o laço estrutural
-  (artefato repetido, CTA preso num mock) em vez da lista item a item. Achado
-  lateral que vale registrar: o mock anterior repintava reservas planejadas
-  como se fossem o estado real da noite — sem nenhum no-show numa página que
-  vende exatamente a detecção disso.
-- **PR #90** (aberto desde 26/08, 12 dias, não-draft, `mergeable_state:
-  unknown` — base desatualizada, roda sobre `b33944b`, bem antes desta
-  janela): remove dois specs do Racha que faziam a suíte e2e inteira falhar
-  coleta (0 testes coletados) e que, sem configuração, disparavam contra o
-  ambiente de produção de **outro produto**. Correção pequena (42+/8-, 4
-  arquivos) e isolada; parece só esperando merge.
-- **4 PRs de dependabot** abertos nesta manhã (09-07): #141–#144, bumps de
-  rotina em `producao`/`desenvolvimento`, raiz e client.
-- **Eval do Manager AI** (20 casos, PR #99 de duas semanas atrás) — arnês
-  pronto, ainda não rodado; segue faltando `OPENROUTER_API_KEY` e login neste
-  ambiente.
-- **G5 — onboarding em conversa** segue como estava no `STATE.md` anterior:
-  fundação escrita, endpoint que liga (`api/onboarding/agent.js`) e promoção
-  atômica do demo ainda não existem. Nenhum commit desta janela tocou
+- **PR #90** (aberto 26/08, agora **33 dias**, `mergeable_state: clean`,
+  zero commit/comentário desde a criação): ainda o item mais velho parado
+  sem explicação — remove dois specs do Racha que zeravam a coleta e2e
+  inteira (0 testes coletados) e que, sem configuração, disparavam contra
+  produção de **outro produto**. Pequeno (42+/8-), isolado, parece só
+  esperando um clique.
+- **PR #140** (draft, aberto 06/09, agora **22 dias**): landing fotográfica
+  + teste de WhatsApp + lição das oito rodadas. **Ficou redundante nesta
+  janela** — o teste de WhatsApp já saiu por outro PR (#156, texto de
+  commit quase idêntico) e a landing em produção hoje usa um conjunto de
+  componentes diferente do que o #140 propõe (`PhotographicHero`/
+  `LiveServiceCanvas`/`CinematicServiceStory` vs. o que foi ao ar via
+  `client/src/prototype/*`). Não dá para saber sem o Stefano se isso é
+  intencional (a landing do protótipo venceu por decisão) ou acidental (os
+  dois esforços não sabiam um do outro) — **não arquivado por decisão
+  própria, só registrado**.
+- **PRs de dependabot em rotação sem revisão**: `#149`/`#151`/`#152`
+  (recriados 14/09, agora **14 dias**) mais `#154` (21/09, **7 dias**) — os
+  quatro originais de 07/09 já fecharam substituídos por esses; nenhum foi
+  revisado em nenhuma das três últimas passadas.
+- **7 issues `[design-drift]`** — abertas e paradas desde 2026-05-25, agora
+  **126 dias**, nenhuma tocada em nenhuma janela registrada por este
+  pipeline.
+- **Eval do Manager AI** (PR #99, 20 casos) — segue bloqueado por
+  `OPENROUTER_API_KEY` ausente neste ambiente, mesma barreira há semanas.
+- **G5 — onboarding em conversa** — nenhum commit nesta janela tocou
   `onboarding-agent.js`/`onboarding-draft.js`/`agent-loop.js`.
+- **BACKLOG.md#elevenlabs-queueing** (PROTOTIPAR 12/15, promovido em
+  21/09) — segue aberto, sem spike rodado.
 
 ## O que morreu
 
-- Nada foi removido de propósito nesta janela — foi tudo correção de dado
-  errado, não descarte de feature. A exceção é a lista de conhecidos-ruins do
-  `audit:phantom-columns` (3 tabelas escritas à mão), substituída pelo
-  `schema-snapshot.json` gerado do banco real.
+Nada removido de propósito nesta janela — só correção de bug (Olímpia) e
+substituição não-anunciada (landing: protótipo em vez de fotográfica).
 
 ## Áreas quentes
 
-`api/_lib/audit/phantom-columns` (e o `schema-snapshot.json` que o alimenta),
-`api/_lib/prospecting/*` (regex de celular, caça ao JSON, dedup entre
-rodadas), `api/_crons/*` + `api/cron/run*.js` (a nova forma de todo cron), `.
-github/workflows/live-smoke.yml`, `.github/dependabot.yml`, `api/verify-
-session.js` (segurança — vale revisão extra no próximo toque).
+`api/_lib/prospecting/*` (Whisper multipart, follow-up, claim-linter,
+piloto de campanha do Racha — cinco commits em dois dias, vale revisão
+extra no próximo toque), `client/src/prototype/*` (a landing que
+efetivamente foi ao ar), `docs/intel/*` (área quente de **processo**: dois
+PRs seguidos do próprio pipeline morreram em draft — ver "O parágrafo").
 
 ## Divergências com o config
 
-Nenhuma linha de `bets`, `known_gaps` ou `settled` foi tocada nesta janela por
-decisão de julgamento — o que segue é o que dá para aplicar sozinho, por ser
-o que o próprio texto do `known_gaps[6]` (customer_history) já previa:
-
-1. **`customer_history` — buraco documentado só em `CLAUDE.md`, faltava em
-   `known_gaps`; acrescentado agora, mecânico.** O `CLAUDE.md` já registrava
-   a tabela como morta ("erra 42P01 em silêncio"), mas o `intel.config.json`
-   não tinha essa entrada. PR #115 (2026-09-02) corrigiu metade do problema:
-   o erro agora sobe para quem chama, em vez de virar `null`/"cliente novo"
-   sem rastro, e a exclusão LGPD (`data-deletion.js`) passou a usar
-   `.schema('restaurant')` e parar de filtrar por uma coluna (`restaurant_id`)
-   que a tabela não tem. O que **não** mudou: o modelo de no-show ainda trata
-   todo cliente como novo — o mapeamento para `customer_ltv` está pronto
-   (`total_visits`, `last_visit_date`, `avg_party_size` existem lá) mas não
-   foi aplicado, por ser decisão de produto e não bug. Acrescentado ao
-   `known_gaps` do `intel.config.json` nesta passada — é adição de fato
-   verificável no git, não remoção nem alteração de entrada existente.
-2. **`CLAUDE.md` (fora do `intel.config.json`, registrado aqui por não ter
-   outro lugar):** a tabela de cron jobs ficou desatualizada pelo próprio
-   #135 desta janela — rotas mudaram de endpoint direto para `/api/cron/
-   run?job=`, e pelo menos três cadências mudaram (`sync-conversation-data`,
-   `validate-conversations`: `*/15`→hora em hora; `send-feedback`: 30min→hora
-   em hora) sem que a doc acompanhasse. Fora do escopo deste pipeline
-   (`docs/intel/` + `intel.config.json`) corrigir — só registrar que existe.
+Nenhuma linha de `bets`/`known_gaps`/`settled` tocada por julgamento nesta
+janela — sem candidato de mercado que exigisse decisão sobre elas antes da
+leitura desta semana (ver `INTEL.md`). Um ponto **fora** do
+`intel.config.json`, registrado aqui por não ter outro lugar: o
+`sub_products[1]` ("Olímpia") ganhou nesta janela um mecanismo de campanha
+por lista curada (piloto do Racha) que ainda não está descrito no config —
+mecânico o bastante para registrar, não para o `/intel` editar sozinho
+`bets`/`settled` sobre isso.
