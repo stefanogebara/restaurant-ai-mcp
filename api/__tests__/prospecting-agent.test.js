@@ -293,11 +293,15 @@ describe('contato do fundador em handoff/indicação', () => {
     expect(FD).toBe('5511999002121');
   });
 
-  test('COMPANION_TEXT de handoff e indicação carregam o número', () => {
+  test('COMPANION_TEXT: handoff carrega o número; indicação PERGUNTA, sem número nem promessa', () => {
     expect(digits(COMPANION_TEXT.handoff)).toContain(FD);
-    expect(digits(COMPANION_TEXT.registrar('Ana'))).toContain(FD);
-    expect(digits(COMPANION_TEXT.registrar(null))).toContain(FD);
+    // Desde 30/09/2026 (piloto do Racha): a indicação pergunta se o número é da
+    // pessoa e não promete contato; o número do fundador só vai quando pedem.
+    expect(digits(COMPANION_TEXT.registrar('Ana'))).not.toContain(FD);
     expect(COMPANION_TEXT.registrar('Ana')).toMatch(/Ana/);
+    expect(COMPANION_TEXT.registrar('Ana')).toMatch(/\?/);
+    expect(COMPANION_TEXT.registrar('Ana')).not.toMatch(/já chamo Ana então/);
+    expect(COMPANION_TEXT.registrar(null)).toMatch(/\?/);
   });
 
   test('comContatoFundador: anexa quando falta, não duplica quando já tem (qualquer formatação)', () => {
@@ -324,12 +328,16 @@ describe('contato do fundador em handoff/indicação', () => {
     expect(r.texto).toBe(texto);
   });
 
-  test('registrar_responsavel: texto do modelo ganha o número; sem texto, companion já o carrega', () => {
-    const comTexto = interpretResponse(toolWithText('registrar_responsavel', { numero: '11999998888', nome: 'Ana' }, 'perfeito, já chamo ela'));
-    expect(digits(comTexto.texto)).toContain(FD);
-    expect(comTexto.texto).toMatch(/Ana/);
+  test('registrar_responsavel: texto que PROMETE contato vira a pergunta; texto que pergunta fica', () => {
+    const promete = interpretResponse(toolWithText('registrar_responsavel', { numero: '11999998888', nome: 'Ana' }, 'perfeito, já chamo ela'));
+    expect(promete.texto).not.toMatch(/já chamo/);
+    expect(promete.texto).toMatch(/Ana/);
+    expect(promete.texto).toMatch(/\?/);
+    const pergunta = interpretResponse(toolWithText('registrar_responsavel', { numero: '11999998888', nome: 'Ana' }, 'obrigada! esse número é mesmo da Ana?'));
+    expect(pergunta.texto).toBe('obrigada! esse número é mesmo da Ana?');
     const semTexto = interpretResponse({ content: [{ type: 'tool_use', id: 't1', name: 'registrar_responsavel', input: { numero: '11999998888' } }], stop_reason: 'tool_use' });
-    expect(digits(semTexto.texto)).toContain(FD);
+    expect(semTexto.texto).toMatch(/\?/);
+    expect(digits(semTexto.texto)).not.toContain(FD);
   });
 
   test('registrar_responsavel sem número (handoff) mantém o pedido do modelo + número', () => {

@@ -486,9 +486,13 @@ const COMPANION_TEXT = {
   handoff: `deixa eu confirmar isso direitinho e te retorno 🙂 se preferir falar direto com o fundador, esse é o número dele: ${FOUNDER_WHATSAPP}`,
   porta: PROFILE.porta,
   previa: PROFILE.previaCompanion,
+  // A indicação PERGUNTA, não promete (regra 9d): o contato só sai depois que a
+  // casa confirma o número. "já chamo o Rafael então" — piloto do Racha, 29/09 —
+  // foi uma promessa que ninguém cumpriu. E sem o número do fundador: ele vai
+  // só quando pedem (regra 11, desde 27/09).
   registrar: (nome) => (nome
-    ? `perfeito, obrigada! já chamo ${nome} então 🙂 e caso ${nome} queira falar direto com o fundador, esse é o número dele: ${FOUNDER_WHATSAPP}`
-    : `perfeito, obrigada pela indicação! já entro em contato então 🙂 e caso a pessoa queira falar direto com o fundador, esse é o número dele: ${FOUNDER_WHATSAPP}`),
+    ? `perfeito, obrigada! só pra eu não errar: esse número é de ${nome} aí de vocês mesmo? assim que você confirmar eu chamo 🙂`
+    : 'perfeito, obrigada pela indicação! só pra eu não errar: esse número é da pessoa certa aí de vocês mesmo? assim que você confirmar eu chamo 🙂'),
   agendar: (resumo) => (resumo && resumo !== 'sem detalhe'
     ? `fechado! deixa eu confirmar aqui (${resumo}) e já te mando o convite 🙂`
     : 'perfeito! qual dia e horário fica melhor pra você?'),
@@ -501,7 +505,6 @@ const COMPANION_TEXT = {
 // esqueceu (a garantia determinística embaixo do prompt).
 const LINHA_FUNDADOR = {
   handoff: `ah, e se preferir falar direto com o fundador, esse é o número dele: ${FOUNDER_WHATSAPP}`,
-  registrar: (nome) => `ah, e caso ${nome || 'a pessoa'} queira falar direto com o fundador, esse é o número dele: ${FOUNDER_WHATSAPP}`,
 };
 
 /**
@@ -566,10 +569,13 @@ function interpretResponse(response) {
       const numero = String(args.numero || '').trim();
       if (!numero) return { tipo: 'handoff', texto: comContatoFundador(texto, LINHA_FUNDADOR.handoff), motivo: 'registrar_responsavel sem número' };
       const nomeDono = String(args.nome || '').trim();
+      // Texto do modelo que PROMETE contato ("já chamo", "vou falar com ela")
+      // é trocado pela pergunta: prometer antes da confirmação é o que a regra
+      // 9c proíbe, e o modelo esquece.
+      const promete = /\b(j[áa]\s+(chamo|falo|entro|mando|ligo)|vou\s+(chamar|falar|entrar|mandar|ligar)|entro\s+em\s+contato)\b/i;
       return {
         tipo: 'registrar_responsavel',
-        texto: comContatoFundador(texto, LINHA_FUNDADOR.registrar(nomeDono || null))
-          || COMPANION_TEXT.registrar(nomeDono || null),
+        texto: (texto && !promete.test(texto)) ? texto : COMPANION_TEXT.registrar(nomeDono || null),
         numero,
         nome: nomeDono || null,
       };

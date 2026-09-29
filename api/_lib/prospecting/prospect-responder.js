@@ -22,6 +22,7 @@ const { sendWhatsAppMessage } = require('../whatsapp-sender');
 const { semTravessao } = require('./sem-travessao');
 const { lintOutbound } = require('./claim-linter');
 const { cartaoDeRobo } = require('./cartao-de-robo');
+const { respostaDaConfirmacao } = require('./confirmacao-indicacao');
 const {
   perguntaSobreProduto, objecaoJaResolvido, introDaPrevia,
   DEMO_INSTRUCTION, DEMO_JA_RESOLVIDO_INSTRUCTION,
@@ -323,10 +324,21 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
   const isPreviaAberta = mode === 'previa';
   const isRetorno = mode === 'retorno';
 
+  // 0. A CASA RESPONDENDO A PERGUNTA DA INDICAÇÃO. `registrar_responsavel` põe o
+  //    lead em 'handoff' (mudo) e pergunta "esse número é mesmo dele?". A
+  //    resposta morria no portão abaixo — piloto do Racha, 29/09: Notizia e
+  //    Salve Jorge confirmaram e ninguém foi contatado. Sim ou não CLAROS, com
+  //    indicação pendente, passam pelo portão e viram `confirmar_indicacao`
+  //    determinístico (passo 6b). Ambíguo segue mudo, com o fundador, como antes.
+  const respostaIndicacao = (!isNudge && !isRemarcar && !isPreviaAberta && !isRetorno
+    && lead.prospect_state === 'handoff' && lead.numero_indicado)
+    ? respostaDaConfirmacao(text)
+    : null;
+
   // 1. State gate — silent in optout/handoff/agendado/pausada. Remarcar
   //    bypasses it: a 'definir' confirmation goes out while still 'agendado',
   //    and pedir/noshow run right after the caller reset state anyway.
-  if (!isRemarcar && !deveResponder(lead.prospect_state)) {
+  if (!isRemarcar && !respostaIndicacao && !deveResponder(lead.prospect_state)) {
     // A conversa passou pro fundador, e por isso a agente cala. Mas até
     // 10/08/2026 a resposta do lead morria exatamente aqui: gravada no banco,
     // sem ninguém olhando, esperando o fundador abrir o lead por acaso. É o
@@ -611,7 +623,11 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
     //     registrar_responsavel with THAT number — never let the model re-ask
     //     for a number that's on screen (the #1 inconsistency Olivia fixed).
     let acao = null;
-    if (!isNudge) {
+    if (respostaIndicacao) {
+      acao = { tipo: 'confirmar_indicacao', confirmado: respostaIndicacao === 'sim', texto: null, deterministico: true };
+      logger.info(`[prospect] resposta da indicação (${respostaIndicacao}) lead=${lead.id}`);
+    }
+    if (!acao && !isNudge) {
       const ddd = extrairDddBr(lead.whatsapp_phone);
       const numeroDono = extrairNumeroDono(lastInText, ddd);
       if (numeroDono) {

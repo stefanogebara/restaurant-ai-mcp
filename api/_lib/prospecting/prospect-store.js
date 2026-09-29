@@ -393,7 +393,7 @@ async function selectIntroCandidates(limit = 20, territorio = null, campanha = n
     // Qualificação: tira quem não faz reserva (supermercado, farmácia...) e
     // colapsa leads que dividem telefone ou place_id. Ver lead-qualifica.js.
     const { qualificar } = require('./lead-qualifica');
-    const { candidatos, descartados } = qualificar(inéditos);
+    const { candidatos, descartados } = qualificar(inéditos, { escolhidosAMao: !!rotulo });
     const perdidos = descartados.fora_icp + descartados.dup_telefone + descartados.dup_place;
     if (perdidos > 0) {
       logger.info(`selectIntroCandidates: ${perdidos} descartado(s) — `
