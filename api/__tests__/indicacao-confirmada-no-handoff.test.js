@@ -131,4 +131,18 @@ describe('a confirmação da indicação passa pelo estado mudo', () => {
     expect(t.criados).toEqual([]);
     expect(t.enviados).toEqual([]);
   });
+
+  test('"sim" que responde OUTRA pergunta (a última nossa não é a do número) não confirma', async () => {
+    const t = montar({
+      inbound: 'sim',
+      historico: [
+        { direcao: 'out', tipo: 'text', corpo: 'esse número é mesmo dele?', enviada_em: new Date(AGORA_COMERCIAL_MS - 600000).toISOString() },
+        { direcao: 'out', tipo: 'texto', corpo: 'Oi! Aqui é o Stefano. Posso te ligar amanhã?', enviada_em: new Date(AGORA_COMERCIAL_MS - 120000).toISOString() },
+        { direcao: 'in', tipo: 'text', corpo: 'sim', wamid: 'w1', enviada_em: new Date(AGORA_COMERCIAL_MS - 60000).toISOString() },
+      ],
+    });
+    const r = await t.rodar();
+    expect(r.reason).toBe('silent_state:handoff');
+    expect(t.criados).toEqual([]);
+  });
 });

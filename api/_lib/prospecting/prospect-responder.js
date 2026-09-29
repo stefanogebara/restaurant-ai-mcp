@@ -639,7 +639,12 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
       // O veredito de novo, sobre a ÚLTIMA mensagem da rajada: "sim" e logo
       // depois "ah não, é o do meu irmão" não pode virar template pro irmão.
       // Divergiu → volta ao silêncio do handoff, com o fundador.
-      if (respostaDaConfirmacao(lastInText) !== respostaIndicacao) {
+      // E só vale como resposta À PERGUNTA: a última mensagem nossa tem que ser
+      // a pergunta do número. Um "sim" a outra pergunta (do fundador, por
+      // exemplo) nas mesmas 48 h não confirma nada (revisão final, LOW).
+      const ultimaNossa = [...history].reverse().find((m) => m.direcao === 'out');
+      const foiAPergunta = !!ultimaNossa && /n[úu]mero[^?]*\?/i.test(String(ultimaNossa.corpo || ''));
+      if (!foiAPergunta || respostaDaConfirmacao(lastInText) !== respostaIndicacao) {
         await avisarFundadorDaResposta({ lead, texto: lastInText, nowMs });
         return { action: 'skip', reason: 'silent_state:handoff' };
       }

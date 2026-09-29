@@ -38,5 +38,7 @@ describe('respostaDaConfirmacao — lista fechada: só confirmação inequívoca
     'manda esse link aí', 'ele saiu, é ela agora',
     // A frase real truncada do piloto: sem sentido claro, vai pro fundador.
     'Entra em contato com você número',
+    // Revisão final: "certo" é "ok" e "e ele" sem acento é pergunta.
+    'certo', 'e ele', 'é ela',
   ])('fica com o fundador: %s', (t) => expect(respostaDaConfirmacao(t)).toBeNull());
 });

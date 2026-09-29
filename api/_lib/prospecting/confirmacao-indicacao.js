@@ -35,9 +35,11 @@ function normalizar(texto) {
 const SAUDACAO = /^(?:bom dia|boa tarde|boa noite|oi|ola|opa)\s+/;
 
 const SIM = new Set([
-  'sim', 'sim sim', 'isso', 'isso mesmo', 'isso ai', 'exato', 'exatamente', 'correto', 'certo',
+  // Sem "certo" (muitas vezes é só "ok, entendi") e sem "e ele"/"e ela" soltos
+  // (sem acento é "e ele?", pergunta) — revisão final, LOW.
+  'sim', 'sim sim', 'isso', 'isso mesmo', 'isso ai', 'exato', 'exatamente', 'correto',
   'confirmo', 'confirmado', 'positivo', 'pode sim', 'pode chamar', 'pode chamar sim',
-  'e ele', 'e ela', 'e ele sim', 'e ela sim', 'sim e ele', 'sim e ela', 'e ele mesmo', 'e ela mesma',
+  'e ele sim', 'e ela sim', 'sim e ele', 'sim e ela', 'e ele mesmo', 'e ela mesma',
   'e o responsavel', 'e a responsavel', 'e o dono', 'e a dona', 'e o gerente', 'e a gerente',
   'e o socio', 'e a socia', 'e dele', 'e dela',
   'chamar esse numero', 'chama esse numero', 'pode chamar esse numero', 'chamar nesse numero',
