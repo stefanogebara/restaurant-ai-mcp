@@ -141,7 +141,10 @@ describe('dispatchReferralIntros — auto-intro to referred owners', () => {
       selectDueReengages: async () => [],
       loadLastMessage: async () => null,
       listTemplates: async (touch) => (templates !== undefined ? templates : (touch === 1
-        ? [{ touch_number: 1, variant_label: 'A', meta_template_name: 'olimpia_apresentacao', template_lang: 'pt_BR', active: true }]
+        // Desde 30/09/2026 o indicado só recebe o modelo da campanha 'indicacao'
+        // (diz quem passou o número); a intro genérica fala em "achei no Google".
+        ? [{ touch_number: 1, variant_label: 'A', meta_template_name: 'olimpia_apresentacao', template_lang: 'pt_BR', active: true },
+           { touch_number: 1, variant_label: 'I', meta_template_name: 'racha_indicacao', template_lang: 'pt_BR', active: true, campanha: 'indicacao' }]
         : [])),
       claimIntro: async () => true,
       markIntro, patchLead, storeMessage,
@@ -165,12 +168,23 @@ describe('dispatchReferralIntros — auto-intro to referred owners', () => {
     const s = await dispatchReferralIntros({ limit: 1, nowMs: IN_WINDOW });
     expect(s.sent).toBe(1);
     expect(sendTemplateMessage).toHaveBeenCalledWith(
-      '+5511959136656', 'olimpia_apresentacao', 'pt_BR', ['Cantina Mineira'], { phoneNumberId: 'PNUM' });
+      '+5511959136656', 'racha_indicacao', 'pt_BR', ['Cantina Mineira'], { phoneNumberId: 'PNUM' });
     expect(markIntro).toHaveBeenCalledWith('R1', { status: 'sent', wamid: 'wamid-ref1' });
     expect(patchLead).toHaveBeenCalledWith('R1', expect.objectContaining({ touch_count: 1 }));
     expect(storeMessage).toHaveBeenCalledWith(expect.objectContaining({
-      leadId: 'R1', tipo: 'template', corpo: '[template:olimpia_apresentacao]',
+      leadId: 'R1', tipo: 'template', corpo: '[template:racha_indicacao]',
     }));
+  });
+
+  test('só a intro GENÉRICA ativa → o indicado não recebe nada (fica com o fundador)', async () => {
+    const { sendTemplateMessage } = mockDeps({
+      templates: [{ touch_number: 1, variant_label: 'A', meta_template_name: 'olimpia_apresentacao', template_lang: 'pt_BR', active: true }],
+    });
+    const { dispatchReferralIntros } = require('../_lib/prospecting/sequencer');
+    const s = await dispatchReferralIntros({ limit: 1, nowMs: IN_WINDOW });
+    expect(s.sent).toBe(0);
+    expect(s.skipped).toBe(1);
+    expect(sendTemplateMessage).not.toHaveBeenCalled();
   });
 
   test('outside the dispatch window → clean no-op, flush retries later', async () => {

@@ -393,7 +393,7 @@ async function selectIntroCandidates(limit = 20, territorio = null, campanha = n
     // Qualificação: tira quem não faz reserva (supermercado, farmácia...) e
     // colapsa leads que dividem telefone ou place_id. Ver lead-qualifica.js.
     const { qualificar } = require('./lead-qualifica');
-    const { candidatos, descartados } = qualificar(inéditos);
+    const { candidatos, descartados } = qualificar(inéditos, { escolhidosAMao: !!rotulo });
     const perdidos = descartados.fora_icp + descartados.dup_telefone + descartados.dup_place;
     if (perdidos > 0) {
       logger.info(`selectIntroCandidates: ${perdidos} descartado(s) — `
@@ -443,6 +443,11 @@ async function createReferralLead(fromLead, numeroRaw, nome) {
       lead_score: fromLead.lead_score ?? null,
       // google_place_id is UNIQUE — the referral must NOT inherit it.
       source: 'indicacao',
+      // CAMPANHA própria: o indicado herda nota e avaliações da casa que indicou,
+      // e sem isto passava no filtro da intro GERAL ("achei vocês pelo Google"),
+      // falso pra quem foi indicado. Só a intro de indicação fala com ele
+      // (dispatchReferralIntros → pickTemplate(1, 'indicacao')).
+      campanha: 'indicacao',
       owner_name: nome || null,
       whatsapp_phone: numero,
       whatsapp_status: 'found',
