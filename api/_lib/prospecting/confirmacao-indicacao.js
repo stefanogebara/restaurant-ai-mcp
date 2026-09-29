@@ -4,65 +4,68 @@
  * A RESPOSTA DA CASA à pergunta "esse número é mesmo dele?".
  *
  * Piloto do Racha, 29/09/2026: a Notizia passou o contato do responsável e,
- * perguntada, respondeu duas vezes que sim ("é o responsável", "chamar esse
- * número"). Nada aconteceu. `registrar_responsavel` põe o lead em 'handoff'
- * (estado mudo), e a resposta morria no portão de estado — a confirmação que o
- * sistema esperava nunca chegava ao `confirmar_indicacao`. O Salve Jorge, mesma
- * coisa. E a Olímpia ainda disse "já chamo o Rafael então": promessa de contato
- * que ninguém ia cumprir.
+ * perguntada, respondeu que sim ("é o responsável", "chamar esse número"). Nada
+ * aconteceu: `registrar_responsavel` põe o lead em 'handoff' (estado mudo) e a
+ * resposta morria no portão de estado.
  *
- * Isto lê a resposta de forma DETERMINÍSTICA, só enquanto há indicação pendente.
- * Afirmação clara → confirma; negação clara → descarta; o resto (ambíguo,
- * misturado, outra conversa) → null, e o lead segue com o fundador, como antes.
- * Precisão acima de cobertura: um "sim" que não era sim manda mensagem pra um
- * estranho (o incidente de 04/08 que criou a pergunta).
+ * LISTA FECHADA, não detector de negação. A primeira versão procurava o "não"
+ * e a revisão de segurança achou dezenas de recusas que ela lia como sim: "n
+ * pode chamar", "ñ pode", "num liga", "jamais", "chama ela n", o "não" com
+ * acento combinado, "acho que é ele", "pode chamar mas ele saiu". Negação em
+ * português de WhatsApp não se enumera. Então o SIM é uma lista curta de
+ * mensagens INTEIRAS (normalizadas); o que não está nela — dúvida, condição,
+ * pergunta, outra pessoa — fica com o fundador. Um "sim" que não era sim manda
+ * mensagem pra um estranho (o incidente de 04/08 que criou a pergunta).
  *
  * PURO: sem I/O.
  */
 
-// `\b` não enxerga o "é" (o JS só conhece ASCII como letra de palavra): antes
-// e depois de palavra acentuada, o limite é espaço, pontuação ou fim.
-const FIM = '(?=\\s|[.,!?]|$)';
-// ...e "é ele" só conta sem "não" logo antes ("não é ele" é negação, não sim).
-const INI = '(?:^|(?<!n[ãa]o)\\s)';
+/** minúsculo, sem acento (inclusive o combinado), sem pontuação de borda, espaços simples. */
+function normalizar(texto) {
+  return String(texto || '')
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, ' ') // emoji
+    .replace(/[!.,;:]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
 
-const NAO = [
-  new RegExp(`\\bn[ãa]o\\s+(?:[ée]|eh|seria)${FIM}`, 'i'), // "não é", "não é ele"
-  /\b(?:errad[oa]|engano|trocad[oa])\b/i,    // "número errado", "foi engano"
-  /\bn[ãa]o\s+(?:conhe[çc]o|sei\s+quem)\b/i,
-  /^\s*n[ãa]o\s*[.!]*\s*$/i,                 // só "não"
-];
+// Saudação no começo não muda a resposta ("bom dia, fala com esse contato").
+const SAUDACAO = /^(?:bom dia|boa tarde|boa noite|oi|ola|opa)\s+/;
 
-const SIM = [
-  // A palavra sozinha é a mensagem INTEIRA: "certo, vou perguntar pra ele"
-  // começa com "certo" e não confirma nada (segurança, revisão do fix, CRITICAL).
-  /^\s*(?:sim|isso|exato|exatamente|correto|certo|confirmo|confirmado|positivo|isso\s+mesmo|[ée]\s+sim|sim\s+[ée])\s*[.!]*\s*$/i,
-  new RegExp(`${INI}[ée]\\s+(?:ele|ela|o\\s+respons[áa]vel|a\\s+respons[áa]vel|o\\s+dono|a\\s+dona|o\\s+gerente|a\\s+gerente|o\\s+s[óo]cio|a\\s+s[óo]cia|dele|dela)${FIM}`, 'i'),
-  /\b(?:pode\s+)?(?:chama[r]?|fala[r]?|liga[r]?|manda[r]?)\s+(?:com\s+|pra\s+|para\s+|no\s+|nesse\s+|neste\s+)?(?:esse|este|ele|ela)\b/i,
-  /\bentr[ae]\s+em\s+contato\b/i,
-  /\bpode\s+chamar\b/i,
-];
+const SIM = new Set([
+  'sim', 'sim sim', 'isso', 'isso mesmo', 'isso ai', 'exato', 'exatamente', 'correto', 'certo',
+  'confirmo', 'confirmado', 'positivo', 'pode sim', 'pode chamar', 'pode chamar sim',
+  'e ele', 'e ela', 'e ele sim', 'e ela sim', 'sim e ele', 'sim e ela', 'e ele mesmo', 'e ela mesma',
+  'e o responsavel', 'e a responsavel', 'e o dono', 'e a dona', 'e o gerente', 'e a gerente',
+  'e o socio', 'e a socia', 'e dele', 'e dela',
+  'chamar esse numero', 'chama esse numero', 'pode chamar esse numero', 'chamar nesse numero',
+  'fala com esse contato', 'fala com ele', 'fala com ela', 'pode falar com ele', 'pode falar com ela',
+  'entra em contato com ele', 'entra em contato com ela', 'pode entrar em contato com ele',
+  'pode entrar em contato com ela',
+]);
+
+const NAO = new Set([
+  'nao', 'n', 'nao nao', 'nao e', 'nao e ele', 'nao e ela', 'nao e esse', 'nao e esse numero',
+  'errado', 'ta errado', 'esta errado', 'numero errado', 'e engano', 'foi engano', 'engano',
+  'nao conheco', 'nao sei quem e',
+]);
 
 /**
  * @param {string} texto a mensagem da casa
  * @returns {'sim'|'nao'|null}
  */
 function respostaDaConfirmacao(texto) {
-  const t = String(texto || '').trim();
-  if (!t) return null;
-  // Veio um NÚMERO (ou cartão) junto: é uma indicação nova, não um sim/não —
-  // o guarda do número do dono (6b) cuida dela. Decidir aqui perderia o número.
-  if ((t.match(/\d/g) || []).length >= 8) return null;
-  const nao = NAO.some((re) => re.test(t));
-  const sim = SIM.some((re) => re.test(t));
-  // QUALQUER "não" na mensagem desarma o sim: "não pode chamar", "chama ele
-  // não", "sim, mas ele não quer" liam como sim e mandavam template pra quem a
-  // casa acabou de recusar (segurança, revisão do fix, CRITICAL). Sim só sai de
-  // mensagem SEM negação nenhuma; com negação e sem padrão de sim, é não.
-  const temNegacao = /(?:^|[^\p{L}])n[ãa]o(?:[^\p{L}]|$)|\bnunca\b|\bnem\b/iu.test(t);
-  if (sim && !temNegacao) return 'sim';
-  if (nao && !sim) return 'nao';
+  const bruto = String(texto || '');
+  if (!bruto.trim()) return null;
+  // Número ou pergunta junto: indicação nova ou dúvida — não é sim nem não.
+  if ((bruto.match(/\d/g) || []).length >= 8) return null;
+  if (bruto.includes('?')) return null;
+  const t = normalizar(bruto).replace(SAUDACAO, '');
+  if (SIM.has(t)) return 'sim';
+  if (NAO.has(t)) return 'nao';
   return null;
 }
 
-module.exports = { respostaDaConfirmacao };
+module.exports = { respostaDaConfirmacao, normalizar };

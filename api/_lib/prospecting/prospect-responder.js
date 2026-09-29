@@ -939,7 +939,10 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
           break;
         }
 
-        const r = await enviar(lead.id, from, acao.texto || 'perfeito, obrigada! já chamo então 🙂', pace);
+        // Sem promessa de quem vai chamar nem quando: sem o modelo da campanha
+        // 'indicacao' aprovado, a intro ao indicado não sai e quem fala com ele
+        // é o fundador. "já chamo então" seria a promessa que ninguém cumpre.
+        const r = await enviar(lead.id, from, acao.texto || 'perfeito, obrigada! vamos falar com essa pessoa 🙂', pace);
         sent = r.sentAny; dryRun = r.dryRun;
 
         // Só AGORA o indicado vira lead e entra na fila. Best-effort: falha
@@ -956,6 +959,11 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
               await recordEvent(lead.id, '📨 intro enviada ao responsável indicado');
             } else if (d && (d.outsideWindow || d.capHit || d.dryRun || d.agentDisabled)) {
               await recordEvent(lead.id, '⏳ intro ao indicado aguarda janela/cap — flush retenta');
+            } else {
+              // Sem modelo de indicação ativo: o contato é do fundador, e o
+              // motivo do handoff diz isso no digest dele.
+              patch.handoff_motivo = `indicação CONFIRMADA pela casa — falar com ${pendente}${nome ? ` (${nome})` : ''}`;
+              await recordEvent(lead.id, '👤 indicação confirmada; sem modelo de indicação ativo — o fundador contata');
             }
           } else if (ref.reason === 'exists') {
             await recordEvent(lead.id, '📇 responsável indicado já é lead — sem duplicata');
