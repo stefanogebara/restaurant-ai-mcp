@@ -10,7 +10,10 @@
 
 const AGORA_COMERCIAL_MS = Date.UTC(2026, 7, 25, 17, 0, 0); // terça 14:00 SP
 
-function montar({ inbound, numeroIndicado = '+5511981443082', estado = 'handoff' }) {
+function montar({ inbound, numeroIndicado = '+5511981443082', estado = 'handoff',
+  contexto = 'indicado como "Rafael"; aguardando a casa confirmar',
+  indicadoEm = new Date(AGORA_COMERCIAL_MS - 10 * 60000).toISOString(),
+  historico = null }) {
   jest.resetModules();
   const criados = [];
   const disparos = [];
@@ -32,7 +35,7 @@ function montar({ inbound, numeroIndicado = '+5511981443082', estado = 'handoff'
     deveAvisarFundador: () => true, buildFounderAlert: () => ({}), eventoDeAviso: () => '',
   }));
   jest.doMock('../_lib/prospecting/prospect-store', () => ({
-    loadHistory: async () => [
+    loadHistory: async () => historico || [
       { direcao: 'out', tipo: 'text', corpo: 'esse número é mesmo dele?', enviada_em: new Date(AGORA_COMERCIAL_MS - 120000).toISOString() },
       { direcao: 'in', tipo: 'text', corpo: inbound, wamid: 'w1', enviada_em: new Date(AGORA_COMERCIAL_MS - 60000).toISOString() },
     ],
@@ -55,7 +58,8 @@ function montar({ inbound, numeroIndicado = '+5511981443082', estado = 'handoff'
   const { respondToProspect } = require('../_lib/prospecting/prospect-responder');
   const lead = {
     id: 'L1', name: 'Notizia', whatsapp_phone: '+5511900000000', prospect_state: estado,
-    numero_indicado: numeroIndicado, conversa_fatos: { nome_responsavel: 'Rafael' },
+    numero_indicado: numeroIndicado, numero_indicado_contexto: contexto, numero_indicado_em: indicadoEm,
+    conversa_fatos: { nome_responsavel: 'Rafael' },
     last_in_at: new Date(AGORA_COMERCIAL_MS - 60000).toISOString(),
   };
   const rodar = () => respondToProspect({ lead, from: '5511900000000', text: inbound, nowMs: AGORA_COMERCIAL_MS });
@@ -90,5 +94,41 @@ describe('a confirmação da indicação passa pelo estado mudo', () => {
     const t = montar({ inbound: 'sim', numeroIndicado: null });
     const r = await t.rodar();
     expect(r.reason).toBe('silent_state:handoff');
+  });
+
+  test('indicação JÁ confirmada não reabre a porta: outro "sim" fica mudo', async () => {
+    const t = montar({ inbound: 'sim', contexto: 'confirmado pela casa' });
+    const r = await t.rodar();
+    expect(r.reason).toBe('silent_state:handoff');
+    expect(t.criados).toEqual([]);
+  });
+
+  test('cartão de robô (o fundador confirma à mão) não é confirmado por "sim"', async () => {
+    const t = montar({ inbound: 'Sim', contexto: 'cartão enviado pelo atendimento AUTOMÁTICO como "Comercial"; o fundador confirma à mão' });
+    const r = await t.rodar();
+    expect(r.reason).toBe('silent_state:handoff');
+    expect(t.criados).toEqual([]);
+  });
+
+  test('"sim" 3 dias depois da pergunta é resposta a outra coisa', async () => {
+    const t = montar({ inbound: 'sim', indicadoEm: new Date(AGORA_COMERCIAL_MS - 72 * 3600000).toISOString() });
+    const r = await t.rodar();
+    expect(r.reason).toBe('silent_state:handoff');
+    expect(t.criados).toEqual([]);
+  });
+
+  test('rajada: "sim" e logo depois "não é ele" — vale a ÚLTIMA, e nada é enviado', async () => {
+    const t = montar({
+      inbound: 'sim',
+      historico: [
+        { direcao: 'out', tipo: 'text', corpo: 'esse número é mesmo dele?', enviada_em: new Date(AGORA_COMERCIAL_MS - 120000).toISOString() },
+        { direcao: 'in', tipo: 'text', corpo: 'sim', wamid: 'w1', enviada_em: new Date(AGORA_COMERCIAL_MS - 60000).toISOString() },
+        { direcao: 'in', tipo: 'text', corpo: 'ah não, é o do meu irmão', wamid: 'w2', enviada_em: new Date(AGORA_COMERCIAL_MS - 50000).toISOString() },
+      ],
+    });
+    const r = await t.rodar();
+    expect(r.reason).toBe('silent_state:handoff');
+    expect(t.criados).toEqual([]);
+    expect(t.enviados).toEqual([]);
   });
 });

@@ -214,10 +214,16 @@ async function dispatchReferralIntros({ limit = 3, leadId = null, nowMs = Date.n
     try {
       if (await isOptedOut(lead.whatsapp_phone)) { summary.skipped++; continue; }
 
-      const tpl = await pickTemplate(1);
+      // A PRIMEIRA MENSAGEM PRO INDICADO tem que dizer QUEM passou o número e
+      // oferecer saída (LGPD art. 9º; revisão de segurança, 30/09/2026). A intro
+      // genérica diz "achei vocês pelo Google" — falso pra quem foi indicado.
+      // Então: só o modelo da campanha 'indicacao' serve. Sem ele aprovado e
+      // ativo, nada sai e o contato fica com o fundador (o evento aparece no
+      // painel), exatamente como antes de a confirmação funcionar.
+      const tpl = await pickTemplate(1, 'indicacao');
       if (!tpl) {
         summary.skipped++;
-        logger.warn(`no active intro template — referral intro halted lead=${lead.id}`);
+        logger.warn(`sem modelo de indicação ativo — indicado fica com o fundador lead=${lead.id}`);
         continue;
       }
 

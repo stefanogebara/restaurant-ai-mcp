@@ -23,6 +23,9 @@ const { semTravessao } = require('./sem-travessao');
 const { lintOutbound } = require('./claim-linter');
 const { cartaoDeRobo } = require('./cartao-de-robo');
 const { respostaDaConfirmacao } = require('./confirmacao-indicacao');
+
+/** Até quando um sim/não ainda é resposta à pergunta da indicação. */
+const JANELA_DA_CONFIRMACAO_MS = 48 * 60 * 60 * 1000;
 const {
   perguntaSobreProduto, objecaoJaResolvido, introDaPrevia,
   DEMO_INSTRUCTION, DEMO_JA_RESOLVIDO_INSTRUCTION,
@@ -330,8 +333,17 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
   //    Salve Jorge confirmaram e ninguém foi contatado. Sim ou não CLAROS, com
   //    indicação pendente, passam pelo portão e viram `confirmar_indicacao`
   //    determinístico (passo 6b). Ambíguo segue mudo, com o fundador, como antes.
-  const respostaIndicacao = (!isNudge && !isRemarcar && !isPreviaAberta && !isRetorno
-    && lead.prospect_state === 'handoff' && lead.numero_indicado)
+  //    Três travas de escopo (revisão de segurança do fix): (a) só a indicação
+  //    que AINDA espera a casa — confirmada vira "confirmado pela casa", e o
+  //    cartão de robô diz "o fundador confirma à mão": nenhum dos dois reabre a
+  //    porta; (b) só nas 48 h depois da pergunta — um "sim" de semana que vem é
+  //    resposta a outra coisa; (c) o veredito é refeito sobre a ÚLTIMA mensagem
+  //    da rajada no passo 6b.
+  const indicacaoEsperandoACasa = lead.prospect_state === 'handoff' && !!lead.numero_indicado
+    && /aguardando a casa confirmar/.test(String(lead.numero_indicado_contexto || ''))
+    && (Number.isFinite(Date.parse(lead.numero_indicado_em))
+      && nowMs - Date.parse(lead.numero_indicado_em) <= JANELA_DA_CONFIRMACAO_MS);
+  const respostaIndicacao = (!isNudge && !isRemarcar && !isPreviaAberta && !isRetorno && indicacaoEsperandoACasa)
     ? respostaDaConfirmacao(text)
     : null;
 
@@ -624,6 +636,13 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
     //     for a number that's on screen (the #1 inconsistency Olivia fixed).
     let acao = null;
     if (respostaIndicacao) {
+      // O veredito de novo, sobre a ÚLTIMA mensagem da rajada: "sim" e logo
+      // depois "ah não, é o do meu irmão" não pode virar template pro irmão.
+      // Divergiu → volta ao silêncio do handoff, com o fundador.
+      if (respostaDaConfirmacao(lastInText) !== respostaIndicacao) {
+        await avisarFundadorDaResposta({ lead, texto: lastInText, nowMs });
+        return { action: 'skip', reason: 'silent_state:handoff' };
+      }
       acao = { tipo: 'confirmar_indicacao', confirmado: respostaIndicacao === 'sim', texto: null, deterministico: true };
       logger.info(`[prospect] resposta da indicação (${respostaIndicacao}) lead=${lead.id}`);
     }

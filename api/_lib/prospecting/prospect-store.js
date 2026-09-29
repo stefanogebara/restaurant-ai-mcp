@@ -443,6 +443,11 @@ async function createReferralLead(fromLead, numeroRaw, nome) {
       lead_score: fromLead.lead_score ?? null,
       // google_place_id is UNIQUE — the referral must NOT inherit it.
       source: 'indicacao',
+      // CAMPANHA própria: o indicado herda nota e avaliações da casa que indicou,
+      // e sem isto passava no filtro da intro GERAL ("achei vocês pelo Google"),
+      // falso pra quem foi indicado. Só a intro de indicação fala com ele
+      // (dispatchReferralIntros → pickTemplate(1, 'indicacao')).
+      campanha: 'indicacao',
       owner_name: nome || null,
       whatsapp_phone: numero,
       whatsapp_status: 'found',

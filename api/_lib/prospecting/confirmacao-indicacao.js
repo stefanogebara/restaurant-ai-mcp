@@ -34,7 +34,9 @@ const NAO = [
 ];
 
 const SIM = [
-  /^\s*(?:sim|isso|exato|exatamente|correto|certo|confirmo|confirmado|positivo|isso\s+mesmo|[ée]\s+sim)\b/i,
+  // A palavra sozinha é a mensagem INTEIRA: "certo, vou perguntar pra ele"
+  // começa com "certo" e não confirma nada (segurança, revisão do fix, CRITICAL).
+  /^\s*(?:sim|isso|exato|exatamente|correto|certo|confirmo|confirmado|positivo|isso\s+mesmo|[ée]\s+sim|sim\s+[ée])\s*[.!]*\s*$/i,
   new RegExp(`${INI}[ée]\\s+(?:ele|ela|o\\s+respons[áa]vel|a\\s+respons[áa]vel|o\\s+dono|a\\s+dona|o\\s+gerente|a\\s+gerente|o\\s+s[óo]cio|a\\s+s[óo]cia|dele|dela)${FIM}`, 'i'),
   /\b(?:pode\s+)?(?:chama[r]?|fala[r]?|liga[r]?|manda[r]?)\s+(?:com\s+|pra\s+|para\s+|no\s+|nesse\s+|neste\s+)?(?:esse|este|ele|ela)\b/i,
   /\bentr[ae]\s+em\s+contato\b/i,
@@ -53,9 +55,13 @@ function respostaDaConfirmacao(texto) {
   if ((t.match(/\d/g) || []).length >= 8) return null;
   const nao = NAO.some((re) => re.test(t));
   const sim = SIM.some((re) => re.test(t));
-  if (nao && sim) return null; // "não é ele, é ela" e afins: pro modelo/fundador
-  if (nao) return 'nao';
-  if (sim) return 'sim';
+  // QUALQUER "não" na mensagem desarma o sim: "não pode chamar", "chama ele
+  // não", "sim, mas ele não quer" liam como sim e mandavam template pra quem a
+  // casa acabou de recusar (segurança, revisão do fix, CRITICAL). Sim só sai de
+  // mensagem SEM negação nenhuma; com negação e sem padrão de sim, é não.
+  const temNegacao = /(?:^|[^\p{L}])n[ãa]o(?:[^\p{L}]|$)|\bnunca\b|\bnem\b/iu.test(t);
+  if (sim && !temNegacao) return 'sim';
+  if (nao && !sim) return 'nao';
   return null;
 }
 

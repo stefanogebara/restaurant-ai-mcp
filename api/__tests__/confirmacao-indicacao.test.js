@@ -29,5 +29,9 @@ describe('respostaDaConfirmacao — a casa respondeu se o número é mesmo da pe
     'qual o horário de vocês?',
     'não é ele, é a Marina: 11 98888-7777',   // negação + afirmação: pro fundador
     'depois eu vejo',
+    // A revisão de segurança do fix: negação em qualquer lugar desarma o sim.
+    'não pode chamar', 'não liga pra ele', 'não fala com ele, fala comigo', 'chama ele não',
+    'Pode chamar não', 'não entra em contato com ele', 'isso eu não sei',
+    'certo, vou perguntar pra ele', 'sim, mas ele não quer',
   ])('ambíguo, fica com o fundador: %s', (t) => expect(respostaDaConfirmacao(t)).toBeNull());
 });
