@@ -18,7 +18,7 @@ const STATUS_KEYS: Record<string, string> = {
 const STATUS_COLORS: Record<string, string> = {
   pending: colors.warmStone,
   confirmed: colors.stoneGray,
-  seated: colors.burgundy,
+  seated: colors.emerald,
   completed: colors.emerald,
   cancelled: colors.amber,
   'no-show': colors.red,
@@ -39,8 +39,8 @@ export default function StatusBreakdownPie({ reservationsByStatus }: StatusBreak
   const total = rows.reduce((sum, row) => sum + row.count, 0);
 
   return (
-    <section aria-label={t('analytics.charts.statusBreakdownAria')} className="min-w-0 border-t hairline pt-4">
-      <h3 className="font-sans text-[13px] font-semibold text-deep-charcoal">{t('analytics.statusBreakdown')}</h3>
+    <section aria-label={t('analytics.charts.statusBreakdownAria')} className="min-w-0">
+      <h3 className="font-serif text-[23px] leading-tight text-deep-charcoal">{t('analytics.statusBreakdown')}</h3>
       {total === 0 ? (
         <p className="py-8 text-[14px] text-muted-stone">{t('analytics.noData')}</p>
       ) : (
@@ -54,9 +54,9 @@ export default function StatusBreakdownPie({ reservationsByStatus }: StatusBreak
               <span key={row.status} style={{ width: `${(row.count / total) * 100}%`, backgroundColor: row.color }} />
             ))}
           </div>
-          <dl className="mt-3 divide-y hairline">
+          <dl className="mt-3 grid grid-cols-1 gap-x-6 md:grid-cols-4">
             {rows.map(row => (
-              <div key={row.status} className="flex items-baseline justify-between gap-3 py-2.5">
+              <div key={row.status} className="flex items-baseline justify-between gap-3 border-b hairline py-2.5">
                 <dt className="flex min-w-0 items-center gap-2 text-[13px] text-deep-charcoal">
                   <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: row.color }} aria-hidden="true" />
                   <span className="truncate">{row.name}</span>

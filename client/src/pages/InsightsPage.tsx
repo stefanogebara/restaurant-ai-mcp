@@ -130,14 +130,14 @@ export default function InsightsPage() {
       <div className="min-h-screen bg-warm-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
         {/* Header */}
-        <header className="mb-5 mt-14 sm:mt-0">
+        <header className="mb-3 mt-14 sm:mt-0">
           <h1 className="font-serif text-4xl sm:text-5xl text-deep-charcoal tracking-tight">
             {t('insights.pageTitle', 'Insights')}
           </h1>
         </header>
 
         {/* Tabs */}
-        <div className="border-b hairline mb-7 sm:mb-9 overflow-x-auto">
+        <div className="border-b hairline mb-6 overflow-x-auto">
           <nav className="flex min-w-max gap-0 -mb-px" role="tablist" aria-label={t('insights.tabsAriaLabel', 'Insights tabs')}>
             {TABS.map((tab) => {
               const isActive = activeTab === tab.id;

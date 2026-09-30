@@ -11,6 +11,7 @@ import type { ReactNode } from 'react';
  */
 interface ChartPanelProps {
   title: string;
+  description?: ReactNode;
   /** Pílula opcional à direita do título (tendência, destaque). */
   badge?: ReactNode;
   /** Descrição para leitores de tela — vira role="img" no corpo do gráfico. */
@@ -20,17 +21,20 @@ interface ChartPanelProps {
   children: ReactNode;
 }
 
-export default function ChartPanel({ title, badge, ariaLabel, emphasis = false, children }: ChartPanelProps) {
+export default function ChartPanel({ title, description, badge, ariaLabel, emphasis = false, children }: ChartPanelProps) {
   return (
-    <section className="glass-panel overflow-hidden" style={{ borderRadius: 16, boxShadow: emphasis ? '0 10px 28px rgba(35, 28, 20, 0.06)' : 'none' }}>
-      <div className="flex items-center justify-between gap-3 px-5 py-3.5 border-b hairline">
-        <h3 className="font-sans text-[14px] font-medium leading-snug text-deep-charcoal">
-          {title}
-        </h3>
+    <section className="glass-panel overflow-hidden" style={{ borderRadius: 16, boxShadow: emphasis ? '0 4px 14px rgba(35, 28, 20, 0.035)' : 'none' }}>
+      <div className={`flex flex-wrap items-center justify-between gap-x-5 gap-y-2 px-4 sm:px-5 ${emphasis ? 'pb-0 pt-4 sm:pt-5' : 'border-b hairline py-3.5'}`}>
+        <div>
+          <h3 className={`leading-snug text-deep-charcoal ${emphasis ? 'font-serif text-[22px]' : 'font-sans text-[14px] font-medium'}`}>
+            {title}
+          </h3>
+          {description && <p className="mt-0.5 text-[13px] text-muted-stone">{description}</p>}
+        </div>
         {badge}
       </div>
       <div
-        className="p-4 sm:p-5"
+        className={emphasis ? 'px-2 pb-3 pt-2 sm:px-5 sm:pb-5' : 'p-4 sm:p-5'}
         {...(ariaLabel ? { role: 'img', 'aria-label': ariaLabel } : {})}
       >
         {children}

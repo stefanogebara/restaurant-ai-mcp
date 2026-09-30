@@ -47,6 +47,14 @@ export default function NoShowPredictions() {
       default: return 'bg-muted-stone/[0.10] text-muted-stone';
     }
   };
+  const riskBand = (level: string) => {
+    switch (level) {
+      case 'high': return t('analytics.riskBandHigh', 'High');
+      case 'medium': return t('analytics.riskBandMedium', 'Medium');
+      case 'low': return t('analytics.riskBandLow', 'Low');
+      default: return null;
+    }
+  };
 
   if (isLoading) {
     return (
@@ -89,7 +97,7 @@ export default function NoShowPredictions() {
           {t('analytics.noShowPredictions')}
         </h2>
         <p className="text-[15px] text-muted-stone mt-1.5">
-          {t('analytics.predictionScopeNote', 'Next 7 days · independent of the date filter · ranked risk signals, not calibrated probabilities.')}
+          {t('analytics.predictionScopeNote', 'Next 7 days · scores, not probabilities.')}
         </p>
       </header>
 
@@ -97,18 +105,18 @@ export default function NoShowPredictions() {
           and can be a default 15% with no history. Do not present it as an
           observed no-show rate. */}
       {summary && (
-        <div className="grid grid-cols-3 gap-6 border-b hairline py-7">
-          <div>
-            <p className="text-[30px] tracking-[-0.035em] leading-none text-deep-charcoal tabular-nums">{summary.total_upcoming}</p>
-            <p className="text-[11px] uppercase tracking-[0.12em] text-muted-stone mt-2.5">{t('analytics.upcomingSevenDays')}</p>
+        <div className="grid grid-cols-3 gap-3 border-b hairline py-5 sm:flex sm:gap-x-10">
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:gap-2">
+            <span className="font-serif text-[27px] leading-none tabular-nums text-deep-charcoal">{summary.total_upcoming}</span>
+            <span className="text-[12px] text-muted-stone">{t('analytics.upcomingSevenDays')}</span>
           </div>
-          <div>
-            <p className="text-[30px] tracking-[-0.035em] leading-none text-red-700 tabular-nums">{summary.high_risk}</p>
-            <p className="text-[11px] uppercase tracking-[0.12em] text-muted-stone mt-2.5">{t('analytics.highRisk')}</p>
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:gap-2">
+            <span className="font-serif text-[27px] leading-none tabular-nums text-red-700">{summary.high_risk}</span>
+            <span className="text-[12px] text-muted-stone">{t('analytics.highRisk')}</span>
           </div>
-          <div>
-            <p className="text-[30px] tracking-[-0.035em] leading-none text-amber-700 tabular-nums">{summary.medium_risk}</p>
-            <p className="text-[11px] uppercase tracking-[0.12em] text-muted-stone mt-2.5">{t('analytics.mediumRisk')}</p>
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:gap-2">
+            <span className="font-serif text-[27px] leading-none tabular-nums text-amber-700">{summary.medium_risk}</span>
+            <span className="text-[12px] text-muted-stone">{t('analytics.mediumRisk')}</span>
           </div>
         </div>
       )}
@@ -138,17 +146,12 @@ export default function NoShowPredictions() {
                   <div className="flex items-center justify-between gap-x-3 gap-y-1">
                     <span className="min-w-0 truncate text-[15px] font-medium text-deep-charcoal">{prediction.customer_name}</span>
                     <span aria-label={t('analytics.riskScore', 'Risk score {{score}}', { score: prediction.risk_score })} className={`shrink-0 rounded-[46px] px-2.5 py-1 text-[12px] font-medium tabular-nums ${getRiskChip(prediction.risk_level)}`}>
-                      {prediction.risk_score}/100
+                      {riskBand(prediction.risk_level) && <span className="mr-1">{riskBand(prediction.risk_level)} ·</span>}{prediction.risk_score}/100
                     </span>
                   </div>
-                  <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-muted-stone">
-                    <span>
-                      {readableDate(prediction.date)} · {prediction.time?.slice(0, 5) || '—'}
-                    </span>
-                    <span>{t('analytics.partyOf', { size: prediction.party_size })}</span>
-                    <span>
-                      {prediction.days_until === 0 ? t('analytics.todayLabel') : prediction.days_until === 1 ? t('analytics.tomorrowLabel') : t('analytics.inDays', { days: prediction.days_until })}
-                    </span>
+                  <div className="mt-1 grid gap-x-6 gap-y-0.5 text-[13px] text-muted-stone sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+                    <span>{readableDate(prediction.date)} · {prediction.time?.slice(0, 5) || '—'}</span>
+                    <span>{t('analytics.partyOf', { size: prediction.party_size })} · {prediction.days_until === 0 ? t('analytics.todayLabel') : prediction.days_until === 1 ? t('analytics.tomorrowLabel') : t('analytics.inDays', { days: prediction.days_until })}</span>
                   </div>
                 </div>
                 <ThiingsIcon name="chevron-down" pxSize={18} className={`flex-shrink-0 mt-1 transition-transform ${selectedPrediction === prediction ? 'rotate-180' : ''}`} />
@@ -177,7 +180,7 @@ export default function NoShowPredictions() {
 
       <p className="flex items-center gap-2 text-xs text-muted-stone pt-4">
         <ThiingsIcon name="info" pxSize={14} />
-        <span>{t('analytics.predictionsLimits', 'The list shows up to 10 highest-scoring reservations. Scores are decision support and do not confirm a future no-show.')}</span>
+        <span>{t('analytics.predictionsLimits', 'Up to 10 bookings. Scores are not probabilities and do not confirm a no-show.')}</span>
       </p>
     </section>
   );

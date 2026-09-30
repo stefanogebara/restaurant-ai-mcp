@@ -1,7 +1,7 @@
 ﻿import { useTranslation } from 'react-i18next';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceDot } from 'recharts';
 import { colors } from '../../utils/colors';
-import ChartPanel, { ChartBadge } from './ChartPanel';
+import ChartPanel from './ChartPanel';
 
 interface ReservationTrendChartProps {
   dailyTrend: Array<{
@@ -15,29 +15,22 @@ interface ReservationTrendChartProps {
 export default function ReservationTrendChart({ dailyTrend }: ReservationTrendChartProps) {
   const { t, i18n } = useTranslation();
 
-  // FIX 2: Calculate real trend from last 7 vs previous 7 days
-  const trendInfo = (() => {
-    if (dailyTrend.length < 2) return { key: 'analytics.trendStable', tone: 'muted' as const };
-    const len = dailyTrend.length;
-    const splitIdx = Math.max(0, len - 7);
-    const recent = dailyTrend.slice(splitIdx);
-    const previous = dailyTrend.slice(Math.max(0, splitIdx - 7), splitIdx);
-    const recentTotal = recent.reduce((s, d) => s + d.reservations, 0);
-    const prevTotal = previous.reduce((s, d) => s + d.reservations, 0);
-    if (prevTotal === 0 && recentTotal === 0) return { key: 'analytics.trendStable', tone: 'muted' as const };
-    if (prevTotal === 0) return { key: 'analytics.trendingUp', tone: 'up' as const };
-    const change = ((recentTotal - prevTotal) / prevTotal) * 100;
-    if (change > 10) return { key: 'analytics.trendingUp', tone: 'up' as const };
-    if (change < -10) return { key: 'analytics.trendingDown', tone: 'down' as const };
-    return { key: 'analytics.trendStable', tone: 'muted' as const };
-  })();
+  const reservationTotal = dailyTrend.reduce((sum, day) => sum + day.reservations, 0);
+  const serviceTotal = dailyTrend.reduce((sum, day) => sum + day.completed_services, 0);
+  const hasActivity = reservationTotal > 0 || serviceTotal > 0;
+  const peakDay = dailyTrend.reduce<(typeof dailyTrend)[number] | null>(
+    (peak, day) => day.reservations > 0 && (!peak || day.reservations > peak.reservations) ? day : peak,
+    null,
+  );
+  const peakDate = peakDay && new Intl.DateTimeFormat(i18n.language, { day: 'numeric', month: 'short', timeZone: 'UTC' })
+    .format(new Date(`${peakDay.date}T12:00:00Z`));
 
   // A rolling month needs dates, not repeated weekday abbreviations.
   const localizedTrend = dailyTrend.map(d => ({
     ...d,
     dayLabel: new Date(d.date + 'T12:00:00Z').toLocaleDateString(i18n.language, { day: '2-digit', month: '2-digit', timeZone: 'UTC' }),
   }));
-  // Custom tooltip with shadcn/ui styling
+  const peakDayLabel = localizedTrend.find(day => day.date === peakDay?.date)?.dayLabel;
   const CustomTooltip = ({ active, payload, label }: { active?: boolean; label?: string; payload?: Array<{ name: string; value: number; color: string }> }) => {
     if (active && payload && payload.length) {
       return (
@@ -56,61 +49,81 @@ export default function ReservationTrendChart({ dailyTrend }: ReservationTrendCh
 
   return (
     <ChartPanel
-      title={t('analytics.reservationsOverTime')}
-      ariaLabel={t('analytics.charts.reservationTrendAria')}
-      badge={<ChartBadge tone={trendInfo.tone}>{t(trendInfo.key)}</ChartBadge>}
+      title={t('analytics.dailyReservationsAndServices')}
+      description={peakDay && peakDate
+        ? t('analytics.dailyPeakTitle', { count: peakDay.reservations, date: peakDate })
+        : undefined}
+      ariaLabel={hasActivity ? t('analytics.charts.reservationTrendAria', { reservations: reservationTotal, services: serviceTotal }) : undefined}
+      badge={hasActivity ? (
+        <div className="flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-deep-charcoal" role="group" aria-label={t('analytics.charts.reservationTrendLegend', 'Chart series')}>
+          <span className="inline-flex items-center gap-1.5"><span className="h-[2px] w-4 bg-burgundy" aria-hidden="true" />{t('analytics.reservations')}</span>
+          <span className="inline-flex items-center gap-1.5"><span className="w-4 border-t-2 border-dashed border-stone-gray" aria-hidden="true" />{t('analytics.completedServices')}</span>
+        </div>
+      ) : undefined}
       emphasis
     >
-
-      <ResponsiveContainer width="100%" height={300}>
-        <LineChart
-          data={localizedTrend}
-          margin={{ top: 8, right: 8, left: -20, bottom: 5 }}
-        >
-          <CartesianGrid vertical={false} stroke={colors.borderGray} opacity={0.3} />
-          <XAxis
-            dataKey="dayLabel"
-            tick={{ fill: colors.mutedStone, fontSize: 11 }}
-            tickLine={false}
-            axisLine={false}
-            interval="preserveStartEnd"
-            minTickGap={35}
-          />
-          <YAxis
-            tick={{ fill: colors.mutedStone, fontSize: 11 }}
-            tickLine={false}
-            axisLine={false}
-          />
-          <Tooltip content={<CustomTooltip />} />
-          <Legend
-            wrapperStyle={{
-              paddingTop: '20px',
-              fontSize: '14px',
-            }}
-            iconType="line"
-          />
-          <Line
-            type="monotone"
-            dataKey="reservations"
-            name={t('analytics.reservations')}
-            stroke={colors.burgundy}
-            strokeWidth={2}
-            dot={false}
-            activeDot={{ r: 4 }}
-            isAnimationActive={false}
-          />
-          <Line
-            type="monotone"
-            dataKey="completed_services"
-            name={t('analytics.completedServices')}
-            stroke={colors.stoneGray}
-            strokeWidth={2}
-            dot={false}
-            activeDot={{ r: 4 }}
-            isAnimationActive={false}
-          />
-        </LineChart>
-      </ResponsiveContainer>
+      {!hasActivity ? (
+        <p className="py-12 text-center text-[14px] text-muted-stone">{t('analytics.noDailyActivity')}</p>
+      ) : (
+        <div className="h-[214px] sm:h-[260px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart
+            data={localizedTrend}
+            margin={{ top: 8, right: 8, left: -20, bottom: 5 }}
+          >
+            <CartesianGrid vertical={false} stroke={colors.borderGray} opacity={0.3} />
+            <XAxis
+              dataKey="dayLabel"
+              tick={{ fill: colors.mutedStone, fontSize: 12 }}
+              tickLine={false}
+              axisLine={false}
+              interval="preserveStartEnd"
+              minTickGap={35}
+            />
+            <YAxis
+              tick={{ fill: colors.mutedStone, fontSize: 12 }}
+              tickLine={false}
+              axisLine={false}
+              domain={[0, 'auto']}
+              allowDecimals={false}
+            />
+            <Tooltip content={<CustomTooltip />} />
+            <Line
+              type="linear"
+              dataKey="reservations"
+              name={t('analytics.reservations')}
+              stroke={colors.burgundy}
+              strokeWidth={2.5}
+              dot={false}
+              activeDot={{ r: 4 }}
+              isAnimationActive={false}
+            />
+            <Line
+              type="linear"
+              dataKey="completed_services"
+              name={t('analytics.completedServices')}
+              stroke={colors.stoneGray}
+              strokeWidth={1.5}
+              strokeOpacity={0.58}
+              strokeDasharray="5 4"
+              dot={false}
+              activeDot={{ r: 4 }}
+              isAnimationActive={false}
+            />
+            {peakDay && peakDayLabel && (
+              <ReferenceDot
+                x={peakDayLabel}
+                y={peakDay.reservations}
+                r={4.5}
+                fill={colors.burgundy}
+                stroke="white"
+                strokeWidth={2}
+              />
+            )}
+          </LineChart>
+        </ResponsiveContainer>
+        </div>
+      )}
     </ChartPanel>
   );
 }

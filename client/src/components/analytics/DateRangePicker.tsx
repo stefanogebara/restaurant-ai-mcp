@@ -9,6 +9,27 @@ export interface DateRangeValue {
   endDate: string;
 }
 
+// Keep the reporting period readable on narrow screens without repeating the
+// month and year when both endpoints belong to the same calendar month.
+// eslint-disable-next-line react-refresh/only-export-components
+export function formatPeriodLabel(startDate: string, endDate: string, language: string): string {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate) || !/^\d{4}-\d{2}-\d{2}$/.test(endDate)) return '—';
+  const start = new Date(`${startDate}T12:00:00Z`);
+  const end = new Date(`${endDate}T12:00:00Z`);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return '—';
+  const format = (date: Date, options: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat(language, { ...options, timeZone: 'UTC' }).format(date);
+  const fullDate = (date: Date) => format(date, { day: 'numeric', month: 'short', year: 'numeric' });
+
+  if (startDate === endDate) return fullDate(start);
+  if (startDate.slice(0, 7) === endDate.slice(0, 7)) {
+    return `${format(start, { day: 'numeric' })}–${fullDate(end)}`;
+  }
+  if (startDate.slice(0, 4) === endDate.slice(0, 4)) {
+    return `${format(start, { day: 'numeric', month: 'short' })} – ${fullDate(end)}`;
+  }
+  return `${fullDate(start)} – ${fullDate(end)}`;
+}
+
 // eslint-disable-next-line react-refresh/only-export-components
 export function presetToRange(preset: DatePreset): { startDate: string; endDate: string } {
   const now = new Date();
@@ -65,7 +86,7 @@ export default function DateRangePicker({ value, onChange }: Props) {
         aria-label={t('analytics.selectedPeriod')}
         value={value.preset}
         onChange={event => handle(event.target.value as DatePreset)}
-        className="min-h-[44px] w-full rounded-[100px] border hairline bg-white/70 px-4 text-[13px] font-medium text-deep-charcoal sm:hidden"
+        className="min-h-[44px] w-full rounded-[100px] border border-deep-charcoal/10 bg-white/75 px-4 text-[13px] font-medium text-deep-charcoal sm:hidden"
       >
         {presets.map(({ key, label }) => <option key={key} value={key}>{label}</option>)}
       </select>
@@ -80,7 +101,7 @@ export default function DateRangePicker({ value, onChange }: Props) {
               className={`shrink-0 px-3.5 py-1.5 min-h-[44px] sm:min-h-[36px] rounded-[100px] text-[13px] font-medium transition-colors ${
                 value.preset === key
                   ? 'bg-deep-charcoal text-white'
-                  : 'glass-pill text-muted-stone hover:text-deep-charcoal'
+                  : 'glass-pill border-deep-charcoal/10 bg-white/70 text-deep-charcoal hover:bg-white'
               }`}
             >
               {label}
@@ -95,7 +116,7 @@ export default function DateRangePicker({ value, onChange }: Props) {
             aria-label={t('analytics.customStartDate')}
             value={value.startDate}
             max={value.endDate}
-            onChange={e => onChange({ ...value, startDate: e.target.value })}
+            onChange={e => { if (e.target.value) onChange({ ...value, startDate: e.target.value }); }}
             className="min-w-0 w-full sm:w-auto px-3 py-1.5 min-h-[44px] glass-pill font-mono text-[13px] text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy"
           />
           <span className="hidden sm:inline text-muted-stone text-sm" aria-hidden="true">&rarr;</span>
@@ -104,7 +125,7 @@ export default function DateRangePicker({ value, onChange }: Props) {
             aria-label={t('analytics.customEndDate')}
             value={value.endDate}
             min={value.startDate}
-            onChange={e => onChange({ ...value, endDate: e.target.value })}
+            onChange={e => { if (e.target.value) onChange({ ...value, endDate: e.target.value }); }}
             className="min-w-0 w-full sm:w-auto px-3 py-1.5 min-h-[44px] glass-pill font-mono text-[13px] text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy"
           />
         </div>
