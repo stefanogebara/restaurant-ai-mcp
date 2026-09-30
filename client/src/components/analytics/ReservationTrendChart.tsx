@@ -69,9 +69,9 @@ export default function ReservationTrendChart({ dailyTrend }: ReservationTrendCh
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
             data={localizedTrend}
-            margin={{ top: 8, right: 8, left: -20, bottom: 5 }}
+            margin={{ top: 8, right: 8, left: -8, bottom: 8 }}
           >
-            <CartesianGrid vertical={false} stroke={colors.borderGray} opacity={0.3} />
+            <CartesianGrid vertical={false} stroke={colors.borderGray} opacity={0.55} />
             <XAxis
               dataKey="dayLabel"
               tick={{ fill: colors.mutedStone, fontSize: 12 }}

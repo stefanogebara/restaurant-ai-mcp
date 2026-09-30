@@ -1,5 +1,15 @@
 # Reforma da plataforma interna — primeira entrega (30/set/2026)
 
+## Próxima passada: Análises no contexto real
+
+- [x] Renderizar a aba atual dentro do shell autenticado com dados sintéticos, sem usar credenciais ou alterar a conta real.
+- [x] Resolver a sobreposição do menu móvel sobre o título de Insights.
+- [x] Desenhar e testar o estado de período sem reservas observado na conta real, sem esconder ocupação e risco futuro quando forem úteis.
+- [x] Capturar desktop/celular do estado vazio e do estado preenchido; repetir a crítica independente somente com cada captura.
+- [ ] Verificar testes, build, acessibilidade e preview da PR; manter produção bloqueada até o alvo visual e o teste autenticado.
+
+**Revisão desta passada:** a conta real foi observada em modo leitura e mostrou um período com zero reservas; o estado vazio agora não inventa gráficos nem percentuais, sugere 90 dias e preserva sinais ao vivo/futuros. A página inteira foi capturada com fontes reais em 390/736/1440 px, sem erro ou overflow; em 320 px também não houve overflow. O menu abriu e marcou Insights corretamente. A revisão estática passou a carregar no servidor local e no build de prévia, com estados preenchido/vazio. Build, lint, sintaxe API, 4.256 testes de backend e 1.031 de frontend passaram. A crítica visual independente ficou em 7,4/10 para desktop e celular na rodada mais recente; não há aprovação estética nem teste da nova versão na conta autenticada da prévia, portanto a PR segue draft e produção permanece intocada.
+
 **Referência travada:** casos oficiais da RON Design Lab (Spacetihq: mapa operacional; GeoTab: exceções na linha do tempo; Sisense: IA ligada à evidência), adaptados às fontes, cores semânticas e regra de conteúdo no canvas do `DESIGN.md`. Não copiar azul, 3D decorativo ou cards em todas as métricas.
 
 - [x] Auditar ao vivo Painel, Insights e Voz em uma conta autenticada, sem alterar dados do restaurante.

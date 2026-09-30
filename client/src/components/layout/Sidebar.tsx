@@ -141,13 +141,14 @@ export default function Sidebar() {
     { path: '/host-dashboard/manager-ai', label: 'AI', icon: 'chat' },
     { path: '/host-dashboard/settings', label: t('common.settings', 'Settings'), icon: 'settings' },
   ];
+  const isMoreActive = !mobileNavItems.some(item => isActive(item.path));
 
   return (
     <>
-      {/* Mobile Menu Button (top-left hamburger, visible when bottom nav is hidden or as fallback) */}
       <button
+        type="button"
         onClick={() => setIsMobileOpen(!isMobileOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2.5 bg-white/85 backdrop-blur-xl rounded-xl shadow-sm border border-border-gray text-deep-charcoal focus:outline-none focus-visible:ring-2 focus-visible:ring-burgundy"
+        className="lg:hidden fixed top-6 left-4 z-50 p-2 rounded-[100px] text-deep-charcoal hover:bg-deep-charcoal/[0.05] focus:outline-none focus-visible:ring-2 focus-visible:ring-burgundy"
         aria-label={isMobileOpen ? "Close navigation menu" : "Open navigation menu"}
         aria-expanded={isMobileOpen}
       >
@@ -201,7 +202,7 @@ export default function Sidebar() {
           </div>
 
           {/* Navigation */}
-          <nav aria-label="Main navigation" className="flex-1 overflow-y-auto">
+          <nav aria-label="Main navigation" className="flex-1 overflow-y-auto [mask-image:linear-gradient(to_bottom,black_0%,black_94%,transparent_100%)]">
             {navSections.map((section) => (
               <div key={section.label} className="mb-5">
                 {/* Section Label */}
@@ -266,8 +267,8 @@ export default function Sidebar() {
                         flex items-center gap-3 transition-all duration-150
                         ${isCollapsed ? 'justify-center px-5 py-3' : 'px-5 py-3'}
                         ${active
-                          ? 'text-white bg-white/10 border-l-2 border-l-burgundy font-medium'
-                          : 'text-stone-400 hover:text-stone-300 hover:bg-white/[0.03] border-l-2 border-l-transparent'
+                          ? 'text-white bg-white/[0.04] border-l-2 border-l-burgundy font-medium'
+                          : 'text-stone-300 hover:text-white hover:bg-white/[0.03] border-l-2 border-l-transparent'
                         }
                       `}
                       title={isCollapsed ? item.label : undefined}
@@ -515,7 +516,7 @@ export default function Sidebar() {
 
       {/* Mobile Bottom Navigation Bar */}
       <nav
-        className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-charcoal-dark border-t border-white/10 safe-area-bottom"
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-warm-white/95 backdrop-blur-xl border-t hairline safe-area-bottom"
         aria-label="Mobile navigation"
       >
         <div className="flex items-center justify-around px-2 py-1 pb-[max(0.25rem,env(safe-area-inset-bottom))]">
@@ -525,14 +526,15 @@ export default function Sidebar() {
               <Link
                 key={item.path}
                 to={item.path}
+                aria-current={active ? 'page' : undefined}
                 className={`flex flex-col items-center gap-0.5 px-3 py-2 rounded-lg transition-colors min-w-[60px] ${
                   active
-                    ? 'text-white bg-white/10'
-                    : 'text-stone-300 active:text-white'
+                    ? 'text-deep-charcoal bg-deep-charcoal/[0.06]'
+                    : 'text-muted-stone active:text-deep-charcoal'
                 }`}
               >
                 <ThiingsIcon name={item.icon} pxSize={20} />
-                <span className="text-[10px] font-medium leading-tight whitespace-nowrap">{item.label}</span>
+                <span className="text-[11px] font-medium leading-tight whitespace-nowrap">{item.label}</span>
                 {active && <span className="w-1 h-1 rounded-full bg-burgundy" />}
               </Link>
             );
@@ -540,10 +542,13 @@ export default function Sidebar() {
           <button
             type="button"
             onClick={() => setIsMobileOpen(true)}
-            className="flex flex-col items-center gap-0.5 px-3 py-2 rounded-lg transition-colors min-w-[60px] text-stone-300 active:text-white"
+            aria-label={t('common.more', 'More')}
+            aria-expanded={isMobileOpen}
+            className={`flex flex-col items-center gap-0.5 px-3 py-2 rounded-lg transition-colors min-w-[60px] ${isMoreActive || isMobileOpen ? 'text-deep-charcoal bg-deep-charcoal/[0.06]' : 'text-muted-stone active:text-deep-charcoal'}`}
           >
             <ThiingsIcon name="menu" pxSize={20} />
-            <span className="text-[10px] font-medium leading-tight">{t('common.more', 'More')}</span>
+            <span className="text-[11px] font-medium leading-tight">{t('common.more', 'More')}</span>
+            {isMoreActive && <span className="w-1 h-1 rounded-full bg-burgundy" />}
           </button>
         </div>
       </nav>

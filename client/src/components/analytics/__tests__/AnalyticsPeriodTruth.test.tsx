@@ -7,6 +7,10 @@ import TableUtilizationHeatmap from '../TableUtilizationHeatmap';
 import StatusBreakdownPie from '../StatusBreakdownPie';
 import { useNoShowPredictions, useRevenueOpportunities } from '../../../hooks/usePredictiveAnalytics';
 import { colors } from '../../../utils/colors';
+import AnalyticsTab from '../../../pages/insights/AnalyticsTab';
+import { useAnalytics } from '../../../hooks/useAnalytics';
+
+vi.mock('../../../hooks/useAnalytics', () => ({ useAnalytics: vi.fn() }));
 
 vi.mock('../../../hooks/usePredictiveAnalytics', () => ({
   useNoShowPredictions: vi.fn(),
@@ -191,5 +195,47 @@ describe('Analytics period truth', () => {
     render(<StatusBreakdownPie reservationsByStatus={{ seated: 2 }} />);
     const segment = screen.getByRole('img', { name: /reservations.seated: 2/ }).firstElementChild;
     expect(segment).toHaveStyle({ backgroundColor: colors.emerald });
+  });
+});
+
+describe('Analytics empty period', () => {
+  it('shows a period-specific empty state while preserving live and future signals', () => {
+    vi.mocked(useAnalytics).mockReturnValue({
+      data: {
+        overview: {
+          total_reservations: 0,
+          total_completed_services: 0,
+          total_revenue: 0,
+          avg_party_size: 0,
+          avg_service_time_minutes: 0,
+          total_capacity: 12,
+          current_occupancy: 3,
+          current_occupancy_percentage: '25.0',
+        },
+        reservations_by_status: {},
+        reservations_by_day: {},
+        reservations_by_time_slot: {},
+        table_utilization: [],
+        daily_trend: [],
+      },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as unknown as ReturnType<typeof useAnalytics>);
+    vi.mocked(useNoShowPredictions).mockReturnValue({
+      data: { predictions: [], summary: { total_upcoming: 0, high_risk: 0, medium_risk: 0, low_risk: 0 } },
+      isLoading: false,
+      isError: false,
+    } as unknown as ReturnType<typeof useNoShowPredictions>);
+
+    render(<AnalyticsTab />);
+    expect(screen.getByRole('heading', { name: 'No activity recorded.' })).toBeInTheDocument();
+    expect(screen.queryByText('Daily activity')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Export' })).not.toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Occupancy now' })).toHaveTextContent('25,0%');
+    expect(screen.getByText('No upcoming reservations to assess')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'View last 90 days' }));
+    expect(screen.queryByRole('button', { name: 'View last 90 days' })).not.toBeInTheDocument();
   });
 });

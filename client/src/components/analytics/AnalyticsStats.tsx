@@ -67,23 +67,23 @@ export default function AnalyticsStats({ overview, reservationsByStatus, reserva
   ];
 
   return (
-    <section className="grid gap-6 border-y hairline py-7 sm:py-9 lg:grid-cols-[minmax(160px,1fr)_minmax(0,4fr)] lg:gap-8" aria-label={t('analytics.periodOverview', 'Period overview')}>
+    <section className="grid gap-4 border-y hairline py-5 sm:gap-6 sm:py-8 lg:grid-cols-[minmax(160px,1fr)_minmax(0,4fr)] lg:gap-8" aria-label={t('analytics.periodOverview', 'Period overview')}>
       <div>
         <p className="font-serif text-[48px] leading-none tabular-nums text-deep-charcoal sm:text-[56px]">{total}</p>
-        <p className="mt-2 text-[12px] font-semibold uppercase tracking-[0.1em] text-muted-stone">{t('analytics.totalReservations')}</p>
+        <p className="mt-1.5 text-[12px] font-semibold uppercase tracking-[0.1em] text-muted-stone">{t('analytics.totalReservations')}</p>
         {busiestSummary && (
-          <p className="mt-3 max-w-[16rem] text-[13px] leading-snug text-muted-stone">
+          <p className="mt-2 max-w-[16rem] text-[13px] leading-snug text-muted-stone">
             {busiestSummary}
           </p>
         )}
       </div>
-      <div className="grid grid-cols-2 gap-x-5 gap-y-6 border-t hairline pt-6 sm:gap-x-7 lg:grid-cols-4 lg:border-l lg:border-t-0 lg:py-1 lg:pl-8">
+      <div className="grid grid-cols-2 gap-x-5 gap-y-4 border-t hairline pt-4 sm:gap-x-7 sm:gap-y-6 lg:grid-cols-4 lg:border-l lg:border-t-0 lg:py-1 lg:pl-8">
         {supportingStats.map((stat) => (
           <div key={stat.label} className="min-w-0">
-            <p className={`font-serif text-[31px] leading-none tabular-nums sm:text-[33px] ${stat.tone}`}>
+            <p className={`font-sans text-[27px] font-normal leading-none tracking-tight tabular-nums sm:text-[29px] ${stat.tone}`}>
               {stat.value}
             </p>
-            <p className="mt-2.5 text-[12px] font-semibold uppercase leading-snug tracking-[0.08em] text-muted-stone">
+            <p className="mt-2 text-[12px] font-semibold uppercase leading-snug tracking-[0.08em] text-muted-stone">
               {stat.label}
             </p>
             {stat.detail && <p className="mt-1 text-[12px] leading-snug text-muted-stone">{stat.detail}</p>}

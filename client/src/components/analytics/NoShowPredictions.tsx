@@ -104,7 +104,7 @@ export default function NoShowPredictions() {
       {/* The historical rate in the API combines cancellations and no-shows,
           and can be a default 15% with no history. Do not present it as an
           observed no-show rate. */}
-      {summary && (
+      {summary && summary.total_upcoming > 0 && (
         <div className="grid grid-cols-3 gap-3 border-b hairline py-5 sm:flex sm:gap-x-10">
           <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:gap-2">
             <span className="font-serif text-[27px] leading-none tabular-nums text-deep-charcoal">{summary.total_upcoming}</span>
@@ -123,7 +123,7 @@ export default function NoShowPredictions() {
 
       {/* Lista: linhas com fio de tinta, não cartões empilhados */}
       {predictions.length === 0 ? (
-        <div className="text-center py-12">
+        <div className="py-7">
           <p className="font-serif text-[22px] text-deep-charcoal">
             {summary ? t('analytics.noUpcomingPredictions', 'No upcoming reservations to assess') : t('analytics.predictionsUnavailable', 'Risk predictions unavailable')}
           </p>
@@ -178,10 +178,12 @@ export default function NoShowPredictions() {
         </div>
       )}
 
-      <p className="flex items-center gap-2 text-xs text-muted-stone pt-4">
-        <ThiingsIcon name="info" pxSize={14} />
-        <span>{t('analytics.predictionsLimits', 'Up to 10 bookings. Scores are not probabilities and do not confirm a no-show.')}</span>
-      </p>
+      {predictions.length > 0 && (
+        <p className="flex items-center gap-2 text-xs text-muted-stone pt-4">
+          <ThiingsIcon name="info" pxSize={14} />
+          <span>{t('analytics.predictionsLimits', 'Up to 10 bookings. Scores are not probabilities and do not confirm a no-show.')}</span>
+        </p>
+      )}
     </section>
   );
 }
