@@ -7,6 +7,15 @@ const {
 } = require('../../_lib/supabase');
 const { decorateWithDepositSuggestion } = require('../../_lib/deposit-suggest');
 
+async function getWaitlistCountOrUnknown(restaurantId) {
+  try {
+    return await getWaitlistCount(restaurantId);
+  } catch {
+    // Keep the rest of the dashboard available without inventing a zero.
+    return { success: false, count: null };
+  }
+}
+
 async function handleDashboard(req, res) {
   const restaurantId = req.user.restaurant_id;
   const timezone = req.user.timezone || 'UTC';
@@ -26,7 +35,7 @@ async function handleDashboard(req, res) {
     // The count query is tenant-scoped and exact; the paginated waitlist
     // entries endpoint can omit active guests after 100 older records.
     // A waitlist outage must not take down the rest of the dashboard.
-    getWaitlistCount(restaurantId).catch(() => ({ success: false }))
+    getWaitlistCountOrUnknown(restaurantId)
   ]);
 
   if (!tablesResult.success || !activePartiesResult.success || !upcomingReservationsResult.success) {
