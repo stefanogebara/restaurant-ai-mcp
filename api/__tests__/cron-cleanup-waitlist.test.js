@@ -36,7 +36,7 @@ describe('cron/cleanup-waitlist', () => {
   test('returns 200 with cancelled=0 when no stale entries', async () => {
     mockFrom.mockReturnValue({
       update: jest.fn().mockReturnValue({
-        eq: jest.fn().mockReturnValue({
+        in: jest.fn().mockReturnValue({
           lt: jest.fn().mockReturnValue({
             select: jest.fn().mockResolvedValue({ data: [], error: null, count: 0 }),
           }),
@@ -51,24 +51,31 @@ describe('cron/cleanup-waitlist', () => {
     expect(res.json).toHaveBeenCalledWith({ success: true, cancelled: 0 });
   });
 
-  test('cancels stale waitlist entries and returns count', async () => {
-    mockFrom.mockReturnValue({
-      update: jest.fn().mockReturnValue({
-        eq: jest.fn().mockReturnValue({
-          lt: jest.fn().mockReturnValue({
-            select: jest.fn().mockResolvedValue({
-              data: [{ id: 'w1' }, { id: 'w2' }],
-              error: null,
-              count: 2,
-            }),
-          }),
-        }),
+  test('cancels stale waiting and notified entries and returns count', async () => {
+    const ltFilter = jest.fn().mockReturnValue({
+      select: jest.fn().mockResolvedValue({
+        data: [{ id: 'w1' }, { id: 'w2' }],
+        error: null,
+        count: 2,
       }),
+    });
+    const inFilter = jest.fn().mockReturnValue({
+      lt: ltFilter,
+    });
+    const update = jest.fn().mockReturnValue({ in: inFilter });
+    mockFrom.mockReturnValue({
+      update,
     });
 
     const req = { headers: { authorization: 'Bearer test-cron-secret' } };
     const res = mockRes();
     await handler(req, res);
+    expect(inFilter).toHaveBeenCalledWith('status', ['waiting', 'notified']);
+    expect(update).toHaveBeenCalledWith(expect.objectContaining({ status: 'cancelled' }));
+    expect(update.mock.calls[0][0]).not.toHaveProperty('notes');
+    const [column, cutoff] = ltFilter.mock.calls[0];
+    expect(column).toBe('added_at');
+    expect(Math.abs(Date.parse(cutoff) - (Date.now() - 12 * 60 * 60 * 1000))).toBeLessThan(1000);
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith({ success: true, cancelled: 2 });
   });
@@ -76,7 +83,7 @@ describe('cron/cleanup-waitlist', () => {
   test('returns 500 on database error', async () => {
     mockFrom.mockReturnValue({
       update: jest.fn().mockReturnValue({
-        eq: jest.fn().mockReturnValue({
+        in: jest.fn().mockReturnValue({
           lt: jest.fn().mockReturnValue({
             select: jest.fn().mockResolvedValue({ data: null, error: { message: 'DB error' }, count: null }),
           }),

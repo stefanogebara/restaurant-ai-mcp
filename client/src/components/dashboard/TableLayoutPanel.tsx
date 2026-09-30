@@ -81,29 +81,26 @@ export default function TableLayoutPanel({
     <>
       <div className="overflow-hidden">
         {/* Header */}
-        <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-5 border-b border-glass-border-dark">
+        <div className="flex items-center justify-between gap-2 px-3 sm:px-5 py-2.5 sm:py-3.5 border-b border-glass-border-dark">
           <div className="flex items-center gap-2.5">
-            <span className="text-[13px] font-semibold uppercase tracking-widest text-deep-charcoal whitespace-nowrap">{t('tableLayout.title')}</span>
-            <span className="relative flex items-center gap-1.5 text-xs font-semibold text-rose-700 bg-rose-50 px-2.5 py-1 rounded-full">
-              <span className="relative flex h-2 w-2 flex-shrink-0">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500" />
-              </span>
-              {t('dashboard.live')}
+            <span className="text-[12px] sm:text-[13px] font-semibold uppercase tracking-[0.12em] text-deep-charcoal whitespace-nowrap">{t('tableLayout.title')}</span>
+            <span className="hidden sm:inline-flex items-center gap-1.5 text-[11px] font-medium text-emerald-800">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-700" aria-hidden="true" />{t('dashboard.live')}
             </span>
           </div>
 
-          <div className="flex flex-wrap items-center justify-end gap-2">
+          <div className="flex items-center justify-end gap-1.5 sm:gap-2">
             <Link
               to="/host-dashboard/floor-plan"
-              className="inline-flex min-h-[36px] items-center gap-2 rounded-lg border border-glass-border-dark px-3 py-2 text-xs font-semibold text-deep-charcoal transition-colors hover:bg-soft-gray"
+              aria-label={t('tableLayout.editFloorPlan', 'Edit Floor Plan')}
+              className="inline-flex min-h-[36px] min-w-[36px] items-center justify-center gap-2 rounded-lg px-2 sm:px-3 py-2 text-xs font-semibold text-deep-charcoal transition-colors hover:bg-soft-gray"
             >
               <ThiingsIcon name="edit" pxSize={14} />
-              <span>{t('tableLayout.editFloorPlan', 'Edit Floor Plan')}</span>
+              <span className="hidden sm:inline">{t('tableLayout.editFloorPlan', 'Edit Floor Plan')}</span>
             </Link>
 
             {/* View Mode Toggle */}
-            <div className="flex items-center bg-soft-gray rounded-lg p-0.5">
+            <div className="flex items-center border-l border-border-gray pl-1.5 sm:pl-2">
               <button
                 onClick={() => { setViewMode('floorplan'); localStorage.setItem('seatable_table_view_mode', 'floorplan'); }}
                 aria-label={t('tableLayout.floorPlanView', 'Floor Plan View')}
@@ -133,10 +130,7 @@ export default function TableLayoutPanel({
         </div>
 
         {/* Table View */}
-        <div className={`p-5 sm:p-6 min-h-[420px] ${viewMode === 'grid' ? 'bg-soft-gray' : ''}`}>
-          <div className="mb-4">
-            <TableStatusLegend night={night} />
-          </div>
+        <div className={`p-2 sm:p-4 ${viewMode === 'grid' ? 'bg-soft-gray' : ''}`}>
           {viewMode === 'floorplan' ? (
             <FloorPlanView
               tables={tables}
@@ -150,6 +144,9 @@ export default function TableLayoutPanel({
               onTableClick={handleTableClick}
             />
           )}
+          <div className="px-1 pt-3 pb-1">
+            <TableStatusLegend night={night} />
+          </div>
         </div>
 
       </div>

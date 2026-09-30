@@ -1508,3 +1508,11 @@ O herói fotográfico foi aprovado isoladamente, mas ficou cromaticamente separa
 ## 2026-09-30 — Redesign não pode aumentar a confiança em números errados
 
 A revisão de Insights mostrou pontuações heurísticas 0–100 com `%`, uma taxa de faltas cujo denominador incluía reservas futuras e uma aba Análises que misturava período selecionado, histórico total e previsões. Melhorar a tipografia antes de conferir origem, janela temporal e significado desses números teria feito a informação falsa parecer mais confiável. Regra: para cada métrica redesenhada, registrar numerador, denominador, fuso, horizonte e natureza (observação, estimativa ou score); só então escolher visualização e rótulo. Se a fonte não sustenta uma probabilidade ou projeção financeira, mostrar score ou hipótese com limite explícito.
+
+## 2026-09-30 — O resumo do Painel não substitui a fonte da lista
+
+O contador de espera do Painel lia `waitlist_count` de um resumo que nunca entregou esse campo, convertia `undefined` em zero e acionava um guia de estado vazio apesar de existir uma pessoa na lista. A correção do usuário para continuar a auditoria expôs a divergência apenas ao comparar topo e lista autenticados na mesma sessão. Regra: KPIs e listas do mesmo conceito devem compartilhar a mesma consulta ou um contrato de API verificado; `undefined` durante carga/erro não pode ser transformado em zero operacional. Conferir sempre o estado real da lista contra o resumo antes de desenhar a primeira tela.
+
+## 2026-09-30 — Não prometer sincronização futura sem fila de replay
+
+A API de Voz respondia sucesso quando a ElevenLabs rejeitava uma alteração e dizia que o ajuste estava salvo localmente para aplicação posterior. O banco só guardava `voice_id` e idioma; modelo e afinação não eram persistidos, e não havia processo de replay. Regra: sucesso de configuração externa exige confirmação do destino ou um mecanismo real de entrega posterior com estado visível. Em falha parcial, expor a parcialidade e conservar a edição do usuário para nova tentativa; nunca mascarar rejeição como “salvo”.

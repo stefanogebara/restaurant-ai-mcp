@@ -1,4 +1,9 @@
 {
+  "stripeConnectNudge": {
+    "title": "Connect your Stripe account",
+    "subtitle": "Booking deposits currently pass through Seatable. Connect your account to receive them directly.",
+    "cta": "Connect Stripe"
+  },
   "common": {
     "save": "Save",
     "saving": "Saving...",
@@ -99,6 +104,7 @@
   },
   "dashboard": {
     "overview": "Overview",
+    "serviceTitle": "Today on the floor",
     "welcome": "Welcome",
     "goodMorning": "Good morning",
     "goodAfternoon": "Good afternoon",
@@ -213,8 +219,12 @@
     },
     "stats": {
       "reservations": "Today's Reservations",
+      "reservationsShort": "Bookings",
       "tables": "Tables Available",
+      "tablesShort": "Free",
       "guests": "Guests Expected",
+      "guestsShort": "Guests",
+      "waitlistShort": "Queue",
       "aiCalls": "Active Parties",
       "seated": "seated",
       "capacity": "capacity",

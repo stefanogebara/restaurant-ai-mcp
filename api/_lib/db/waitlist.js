@@ -144,9 +144,16 @@ const getWaitlistCount = async (restaurantId) => {
 
   if (error) return handleSupabaseResponse(null, error, 'COUNT waitlist entries');
 
+  // A missing count is not an empty queue. Keep the dashboard's unknown state
+  // instead of manufacturing a reassuring zero from a malformed response.
+  if (!Number.isFinite(count)) {
+    logger.error('COUNT waitlist entries returned no count');
+    return { success: false, count: null };
+  }
+
   return {
     success: true,
-    count: count || 0
+    count
   };
 };
 

@@ -66,6 +66,7 @@ function mockSingleChain(data) {
 
 it('returns snapshot with upcoming reservations and active parties', async () => {
   let reservationCallCount = 0;
+  let waitlistCountChain;
   mockFrom.mockImplementation((table) => {
     if (table === 'reservations') {
       reservationCallCount += 1;
@@ -73,10 +74,12 @@ it('returns snapshot with upcoming reservations and active parties', async () =>
       return mockDepositChain([]);
     }
     if (table === 'waitlist') {
-      const countChain = { select: jest.fn(), eq: jest.fn(), limit: jest.fn() };
+      const countChain = { select: jest.fn(), eq: jest.fn(), in: jest.fn(), limit: jest.fn() };
       countChain.select.mockReturnValue(countChain);
       countChain.eq.mockReturnValue(countChain);
+      countChain.in.mockReturnValue(countChain);
       countChain.limit.mockResolvedValue({ data: null, count: 3, error: null });
+      waitlistCountChain = countChain;
       return countChain;
     }
     if (table === 'service_records') return mockChain([{ id: 's1', guest_name: 'Bob', party_size: 3, table_id: 't1' }]);
@@ -90,6 +93,7 @@ it('returns snapshot with upcoming reservations and active parties', async () =>
   expect(snap).toHaveProperty('waitlist_count');
   expect(snap.active_parties).toHaveLength(1);
   expect(snap.waitlist_count).toBe(3);
+  expect(waitlistCountChain.in).toHaveBeenCalledWith('status', ['waiting', 'notified']);
 });
 
 it('includes staffing_forecast with role headcounts', async () => {
@@ -101,9 +105,10 @@ it('includes staffing_forecast with role headcounts', async () => {
       return mockDepositChain([]);
     }
     if (table === 'waitlist') {
-      const countChain = { select: jest.fn(), eq: jest.fn(), limit: jest.fn() };
+      const countChain = { select: jest.fn(), eq: jest.fn(), in: jest.fn(), limit: jest.fn() };
       countChain.select.mockReturnValue(countChain);
       countChain.eq.mockReturnValue(countChain);
+      countChain.in.mockReturnValue(countChain);
       countChain.limit.mockResolvedValue({ data: null, count: 0, error: null });
       return countChain;
     }
@@ -129,9 +134,10 @@ it('enriches upcoming reservations with is_regular and customer_tier when phone 
       return mockDepositChain([]);
     }
     if (table === 'waitlist') {
-      const countChain = { select: jest.fn(), eq: jest.fn(), limit: jest.fn() };
+      const countChain = { select: jest.fn(), eq: jest.fn(), in: jest.fn(), limit: jest.fn() };
       countChain.select.mockReturnValue(countChain);
       countChain.eq.mockReturnValue(countChain);
+      countChain.in.mockReturnValue(countChain);
       countChain.limit.mockResolvedValue({ data: null, count: 0, error: null });
       return countChain;
     }
@@ -174,9 +180,10 @@ it('marks is_regular false when reservation has no customer_phone', async () => 
       return mockDepositChain([]);
     }
     if (table === 'waitlist') {
-      const countChain = { select: jest.fn(), eq: jest.fn(), limit: jest.fn() };
+      const countChain = { select: jest.fn(), eq: jest.fn(), in: jest.fn(), limit: jest.fn() };
       countChain.select.mockReturnValue(countChain);
       countChain.eq.mockReturnValue(countChain);
+      countChain.in.mockReturnValue(countChain);
       countChain.limit.mockResolvedValue({ data: null, count: 0, error: null });
       return countChain;
     }

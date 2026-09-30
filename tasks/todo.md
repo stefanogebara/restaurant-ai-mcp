@@ -12,8 +12,28 @@
 - [ ] Obter 9/10 ou mais em crítica independente baseada apenas nas capturas; não tratar a direção atual como aprovação final.
 - [ ] Testar Eleven v4 Turbo num restaurante de teste, com PT-BR/ES, interrupções, reserva completa, custo e rollback antes de qualquer migração.
 - [ ] Aplicar a linguagem aprovada ao shell, Painel, Voz e demais páginas em entregas separadas.
+- [x] Corrigir no Painel o contador de espera, o falso estado vazio, a legenda de mesas e o idioma PT; a hierarquia visual segue em revisão.
+- [x] Conferir a nova primeira tela em 390/736/1440 px e repetir a crítica Astra com captura limpa, sem mostrar código ou notas anteriores.
+- [x] Investigar, sem modificar a conta real, a entrada ativa de espera com mais de um mês e definir política de expiração/arquivo: `notified` torna-se elegível após 12h desde a entrada no cron diário existente; monitorar cancelamentos no rollout.
+- [x] Alinhar o contador de espera do Manager AI com os estados `waiting` + `notified`.
+- [x] Corrigir a checagem de saúde que marcava históricos encerrados como obsoletos e tratava erro de consulta como zero saudável.
+- [ ] A API padrão da fila ainda trunca históricos aos 100 mais antigos; paginar a lista sem quebrar os filtros.
+- [x] Impedir que Voz reporte “salvo localmente, sincronizará depois” sem persistência/replay dos ajustes; só confirmar após aceitação da ElevenLabs.
+- [ ] Tornar os erros da API de Voz localizados na interface e testar falha parcial de sincronização na experiência completa.
 
 **Achados da auditoria:** Insights mostra uma área vazia enorme quando não há reservas de risco e mistura o resumo de hoje com previsões futuras; a lista de clientes mostra cinco destaques, mas outra métrica da mesma página pode contar mais clientes no total, sem explicar o recorte. O botão “Enviar” não indica que abre uma revisão de e-mail; o texto inicial do e-mail está em inglês mesmo na interface PT-BR. Em Voz, controles de velocidade/estilo existentes não devem ser assumidos compatíveis com `eleven_v4_turbo`. O Google OAuth exibe links de privacidade/termos de outro domínio na escolha de conta — requer auditoria de configuração antes de mudar.
+
+**Achados adicionais no Painel real:** o topo exibe zero pessoas na espera e “Seu painel está pronto”, embora a lista abaixo mostre uma entrada ativa. O campo de contador esperado pelo frontend não existe no resumo da API. Uma entrada permanece com estado “mesa pronta” depois de cerca de 34 dias; não foi alterada durante a auditoria. O primeiro fold em celular foi avaliado em 5,5/10 por um crítico independente: o mapa fica abaixo do banner, das métricas e de uma caixa de boas-vindas, com excesso de espaço e inglês no aviso Stripe.
+
+**Crítica da primeira passada do Painel:** a nova captura sintética em 390/736/1440 px recebeu 5,8/10. O mapa começa antes da metade da primeira tela e o aviso Stripe foi deslocado para depois dele, mas a planta escala demais no desktop, os rótulos encolhem no celular e há molduras demais. Continua em iteração; não é aprovação visual.
+
+**Críticas seguintes do Painel:** v2 recebeu 6,0/10. v3 pôs briefing e planta lado a lado no desktop, começou o mapa perto de 277 px no celular e deu verde semântico às mesas ocupadas; recebeu 6,2/10. A crítica ainda aponta topologia móvel perdida, cadeiras imprecisas e shell pesado. O harness sintético da primeira dobra ocultou widgets inferiores; o branco na captura desktop inteira não representa a página real. Fazer novo recorte do bloco de trabalho sem fingir que é auditoria de página completa.
+
+**Revisões v4–v5 do Painel:** o mapa preserva a topologia em 390 px, a capacidade é legível em cada mesa, e os pontos decorativos foram removidos. O crítico independente atribuiu 6,5/10 a ambas as capturas: falta direção na composição geral, a barra lateral domina o desktop e o cabeçalho móvel tem alinhamentos conflitantes. As linhas vazias sob a primeira dobra são do harness sintético, não da página real. A v6 atua na estrutura do shell; nenhuma dessas notas representa aprovação do Painel completo. Nesta rodada, o backend passou 281 suítes/4.256 testes e o frontend 113 arquivos/1.019 testes.
+
+**Crítica v6 do Painel:** depois da lateral mais estreita e do cabeçalho móvel alinhado, o score permaneceu em 6,5/10. A barra inferior, o peso visual do shell e a planta muito regular são agora as principais lacunas. O smoke de Idioma em 390 px revelou o menu sobreposto ao botão Voltar; corrigir antes de publicar. Manter o PR como rascunho, sem confundir uma captura de primeira dobra sintética com a página inteira.
+
+**Revisão estrutural final desta entrega:** o menu e Voltar não se sobrepõem em Idioma 390 px; a barra inferior usa rótulos curtos e contraste legível. Nova crítica independente da primeira dobra do Painel: 7,1/10. Permanecem como trabalho de design a proporção das três colunas, a autenticidade espacial da planta e o excesso de tratamentos tipográficos. O alvo de 9/10 segue aberto.
 
 **Decisões:** briefing ocupa uma faixa de conteúdo no canvas; agrupamentos interativos (lista e formulário) podem usar superfície discreta. Cor ocre identifica previsão, verde confirma estado bom, vinho fica em ações. Não executar envio de campanhas nem mudanças de voz na conta real durante a auditoria.
 

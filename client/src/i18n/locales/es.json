@@ -1,4 +1,9 @@
 {
+  "stripeConnectNudge": {
+    "title": "Conecta tu cuenta de Stripe",
+    "subtitle": "Los depósitos de las reservas pasan por Seatable. Conecta tu cuenta para recibirlos directamente.",
+    "cta": "Conectar Stripe"
+  },
   "common": {
     "save": "Guardar",
     "saving": "Guardando...",
@@ -99,6 +104,7 @@
   },
   "dashboard": {
     "overview": "Vista General",
+    "serviceTitle": "Hoy en el salón",
     "welcome": "Bienvenido",
     "goodMorning": "Buenos días",
     "goodAfternoon": "Buenas tardes",
@@ -159,8 +165,12 @@
     "complete": "Completar",
     "stats": {
       "reservations": "Reservas de Hoy",
+      "reservationsShort": "Reservas",
       "tables": "Mesas Disponibles",
+      "tablesShort": "Libres",
       "guests": "Comensales Esperados",
+      "guestsShort": "Clientes",
+      "waitlistShort": "Fila",
       "aiCalls": "Grupos Activos",
       "seated": "sentados",
       "capacity": "capacidad",

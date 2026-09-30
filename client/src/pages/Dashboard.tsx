@@ -1,15 +1,12 @@
 /**
- * Unified Dashboard - Nordic Clean Design
+ * Unified host dashboard — operational summary beside the live floor.
  *
  * Layout:
- *   Header (title, date, controls)
- *   Metrics Row (4 metrics with border-bottom, gap-12)
- *   Reservations Table (upcoming)
- *   Grid 12 cols: Floor Plan (7) + Waitlist/Active (5)
- *   Additional widgets below
+ *   Header and metrics on the canvas; floor plan in one glass object.
+ *   Reservations, waitlist and service tools follow below the first fold.
  *
  * All panels are extracted into standalone components.
- * Sidebar (DashboardLayout) is completely unchanged.
+ * DashboardLayout supplies the shared navigation shell.
  */
 
 import { useState, useMemo, useEffect } from 'react';
@@ -148,7 +145,6 @@ export default function Dashboard() {
   const { data: revenueStats } = useRevenueStats();
   const avgSpendPerCover = revenueStats?.avg_spend_per_cover;
 
-  const occupiedTables = tables.filter((t: { status: string }) => t.status === 'Occupied').length;
   const totalTables = tables.length;
   const availableTables = tables.filter((t: { status: string }) => t.status === 'Available');
 
@@ -212,13 +208,14 @@ export default function Dashboard() {
   // ---- Short date for header ----
 
   // ---- Computed metrics ----
-  const waitlistCount = rawStats.waitlist_count || 0;
+  const waitlistReady = Number.isFinite(rawStats.waitlist_count);
+  const waitlistCount: number = waitlistReady ? rawStats.waitlist_count : 0;
   const guestsExpected = todayReservations.reduce((sum, r) => sum + (r.party_size || 0), 0);
 
   // ---- Progressive disclosure: detect if dashboard is mostly empty (new user) ----
-  const hasReservations = todayReservations.length > 0 || tomorrowReservations.length > 0;
+  const hasReservations = todayReservations.length > 0 || tomorrowReservations.length > 0 || weekReservations.length > 0;
   const hasActiveParties = activeParties.length > 0;
-  const isDashboardEmpty = !hasReservations && !hasActiveParties && waitlistCount === 0;
+  const isDashboardEmpty = waitlistReady && !hasReservations && !hasActiveParties && waitlistCount === 0;
 
   // ---- Error state ----
   if (isError && !isLoading) {
@@ -244,12 +241,9 @@ export default function Dashboard() {
   }
 
   return (
-    <DashboardLayout>
-      <div className={`dashboard min-h-screen px-4 sm:px-6 lg:px-10 pt-6 sm:pt-10 pb-24 sm:pb-20${isNight ? ' service-mode' : ''}`}>
+    <DashboardLayout mobileHeaderIntegrated>
+      <div className={`dashboard min-h-screen px-4 sm:px-6 lg:px-10 pt-4 lg:pt-10 pb-24 sm:pb-20${isNight ? ' service-mode' : ''}`}>
         <div className="max-w-[1240px]">
-
-          {/* ---- Stripe Connect Adoption Nudge ---- */}
-          <StripeConnectNudgeBanner />
 
           {/* ---- Payment Failure Banner ---- */}
           {subStatus === 'past_due' && (
@@ -325,16 +319,19 @@ export default function Dashboard() {
             );
           })()}
 
+          {/* Operational summary and floor share the first fold on wide screens. */}
+          <div className="lg:grid lg:grid-cols-[minmax(270px,0.37fr)_minmax(0,1fr)] lg:items-start lg:gap-8 mb-5 sm:mb-10">
+            <div className="min-w-0">
           {/* ---- Header Section ---- */}
-          <header className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-8 sm:mb-14 mt-14 sm:mt-0 gap-3 sm:gap-4">
-            <div className="pl-12 lg:pl-0">
+          <header className="grid grid-cols-[40px_minmax(0,1fr)] sm:grid-cols-[40px_minmax(0,1fr)_auto] lg:flex lg:flex-col items-start gap-x-2 gap-y-2 sm:gap-x-4 lg:gap-4 mb-3 sm:mb-5 lg:mb-8">
+            <div className="col-start-2 lg:col-auto min-w-0">
               {/* Greeting line — Bom dia / boa tarde / boa noite. Audit found
                   the dashboard read as "task-oriented, no warmth" — a
                   hospitality product should at least say hello. Time-of-day
                   bucketed in 4-hour windows; matches typical Brazilian usage
                   (early morning still gets "Bom dia"). Drops the optional
                   first-name slot when the auth display name isn't set. */}
-              <p className="text-sm text-muted-stone mb-0.5">
+              <p className="hidden sm:block text-sm text-muted-stone mb-0.5">
                 {(() => {
                   const hour = new Date().getHours();
                   const greetingKey = hour < 12
@@ -343,11 +340,11 @@ export default function Dashboard() {
                       ? 'dashboard.greetingAfternoon'
                       : 'dashboard.greetingEvening';
                   const fallback = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite';
-                  return `${t(greetingKey, fallback)} 👋`;
+                  return t(greetingKey, fallback);
                 })()}
               </p>
-              <h1 className="font-serif text-3xl sm:text-4xl tracking-tight text-deep-charcoal">
-                {t('dashboard.overview')}
+              <h1 className="font-serif text-[30px] sm:text-4xl tracking-tight text-deep-charcoal leading-none">
+                {t('dashboard.serviceTitle', 'Today on the floor')}
               </h1>
               <div className="flex items-center gap-2 mt-1 flex-wrap">
                 <p className="text-[12px] sm:text-[13px] text-muted-stone font-mono uppercase tracking-widest">
@@ -356,7 +353,7 @@ export default function Dashboard() {
                 <StripeConnectStatusBadge />
               </div>
             </div>
-            <div className="flex items-center gap-2 sm:gap-3 pl-12 lg:pl-0">
+            <div className="col-start-2 sm:col-start-3 sm:row-start-1 lg:col-auto flex items-center gap-2 sm:gap-3">
               {/* Modo Serviço — automático às 18h, toggle manual aqui. O selo
                   mostra POR QUE a tela escureceu; de dia é só o ícone de lua. */}
               <button
@@ -383,7 +380,7 @@ export default function Dashboard() {
               </button>
               <button
                 onClick={() => setShowWalkInModal(true)}
-                className="hidden sm:inline-flex px-4 py-2 bg-burgundy hover:bg-burgundy-dark text-white border border-burgundy rounded-lg text-[13px] font-medium transition-colors"
+                className="inline-flex px-2.5 sm:px-4 py-2 bg-burgundy hover:bg-burgundy-dark text-white border border-burgundy rounded-lg text-[11px] sm:text-[13px] font-medium transition-colors whitespace-nowrap"
               >
                 {t('dashboard.addWalkIn')}
               </button>
@@ -394,7 +391,7 @@ export default function Dashboard() {
           {/* Liquid Glass v2: métricas SEM card — faixa direta no canvas,
               delimitada por fios de tinta, números em serif. */}
           {isLoading ? (
-            <section className="grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-12 border-y hairline py-7 sm:py-9 mb-10 sm:mb-16">
+            <section className="grid grid-cols-4 gap-2 sm:gap-6 lg:grid-cols-2 lg:gap-x-5 lg:gap-y-7 border-y hairline py-3 sm:py-5 lg:py-6 mb-4 lg:mb-0">
               {Array.from({ length: 4 }).map((_, i) => (
                 <div key={i}>
                   <div className="h-9 w-16 bg-border-gray rounded animate-pulse mb-3" />
@@ -403,58 +400,43 @@ export default function Dashboard() {
               ))}
             </section>
           ) : (
-            <section className="grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-12 border-y hairline py-7 sm:py-9 mb-10 sm:mb-16">
+            <section className="grid grid-cols-4 gap-2 sm:gap-6 lg:grid-cols-2 lg:gap-x-5 lg:gap-y-7 border-y hairline py-3 sm:py-5 lg:py-6 mb-4 lg:mb-0">
               {/* Reservations */}
               <div>
-                <p className="font-serif text-[30px] sm:text-[38px] leading-none text-deep-charcoal tabular-nums">{todayReservations.length}</p>
-                <p className="text-[12px] uppercase tracking-[0.05em] text-muted-stone mt-3">
-                  {t('dashboard.stats.reservations', 'Reservations')}
+                <p className="font-serif text-[27px] sm:text-[38px] leading-none text-deep-charcoal tabular-nums">{todayReservations.length}</p>
+                <p className="text-[11px] sm:text-[12px] uppercase tracking-[0.04em] text-muted-stone mt-1.5 sm:mt-3" aria-label={t('dashboard.stats.reservations', 'Reservations')}>
+                  {t('dashboard.stats.reservationsShort', 'Bookings')}
                 </p>
               </div>
               {/* Guests Expected */}
               <div>
-                <p className="font-serif text-[30px] sm:text-[38px] leading-none text-deep-charcoal tabular-nums">{guestsExpected}</p>
-                <p className="text-[12px] uppercase tracking-[0.05em] text-muted-stone mt-3">
-                  {t('dashboard.stats.guests', 'Guests')}
+                <p className="font-serif text-[27px] sm:text-[38px] leading-none text-deep-charcoal tabular-nums">{guestsExpected}</p>
+                <p className="text-[11px] sm:text-[12px] uppercase tracking-[0.04em] text-muted-stone mt-1.5 sm:mt-3" aria-label={t('dashboard.stats.guests', 'Guests')}>
+                  {t('dashboard.stats.guestsShort', 'Guests')}
                 </p>
               </div>
               {/* Capacity */}
               <div>
-                <p className="font-serif text-[30px] sm:text-[38px] leading-none text-deep-charcoal tabular-nums">
-                  {occupiedTables}/{totalTables}
+                <p className="font-serif text-[27px] sm:text-[38px] leading-none text-deep-charcoal tabular-nums">
+                  {availableTables.length}/{totalTables}
                 </p>
-                <p className="text-[12px] uppercase tracking-[0.05em] text-muted-stone mt-3">
-                  {t('dashboard.stats.capacity', 'Tables Available')}
+                <p className="text-[11px] sm:text-[12px] uppercase tracking-[0.04em] text-muted-stone mt-1.5 sm:mt-3" aria-label={t('dashboard.stats.tables', 'Tables Available')}>
+                  {t('dashboard.stats.tablesShort', 'Free')}
                 </p>
               </div>
               {/* Waitlist */}
               <div>
-                <p className="font-serif text-[30px] sm:text-[38px] leading-none text-deep-charcoal tabular-nums">{waitlistCount}</p>
-                <p className="text-[12px] uppercase tracking-[0.05em] text-muted-stone mt-3">
-                  {t('waitlist.title', 'Waitlist')}
+                <p className="font-serif text-[27px] sm:text-[38px] leading-none text-deep-charcoal tabular-nums">{waitlistReady ? waitlistCount : '—'}</p>
+                <p className="text-[11px] sm:text-[12px] uppercase tracking-[0.04em] text-muted-stone mt-1.5 sm:mt-3" aria-label={t('waitlist.title', 'Waitlist')}>
+                  {t('dashboard.stats.waitlistShort', 'Queue')}
                 </p>
               </div>
             </section>
           )}
 
-          {/* ---- Welcome Guide for New Users ---- */}
-          {isDashboardEmpty && !isLoading && (
-            <div className="bg-[#FFF7ED] border border-amber-200 rounded-xl px-4 sm:px-6 py-4 sm:py-5 mb-8 sm:mb-12">
-              <h3 className="text-sm font-semibold text-amber-900 mb-1">
-                {t('dashboard.welcomeGuide.title', 'Your dashboard is ready!')}
-              </h3>
-              <p className="text-sm text-amber-800">
-                {t('dashboard.welcomeGuide.description', 'Reservations, waitlist, and activity will appear here as your restaurant starts receiving guests. Add a walk-in or create a reservation to get started.')}
-              </p>
             </div>
-          )}
-
-          {/* ---- O Palco: a planta do salão é a estrela da página ----
-              Redesign 2026-08-24 (candidato "Palco + Modo Serviço" do canvas):
-              o salão sobe para logo abaixo das métricas, em largura total,
-              como único objeto de vidro da página. Mesas ilustradas (pratos =
-              convidados sentados); à noite as ocupadas brilham. */}
-          <section className="glass-panel mb-8 sm:mb-10">
+          {/* The map starts at the top of the right column, beside the summary. */}
+          <section className="glass-panel min-w-0">
             <TableLayoutPanel
               tables={tables}
               activeParties={activeParties}
@@ -463,6 +445,20 @@ export default function Dashboard() {
               night={isNight}
             />
           </section>
+          </div>
+
+          {/* Setup guidance follows the floor, where a new host can see what
+              is configured before reading how live activity will appear. */}
+          {isDashboardEmpty && !isLoading && (
+            <div className="border-t hairline pt-3 pb-1 mb-6 sm:mb-10 text-sm text-stone-gray">
+              <span className="font-semibold text-deep-charcoal">{t('dashboard.welcomeGuide.title', 'Your dashboard is ready!')}</span>
+              {' '}{t('dashboard.welcomeGuide.description', 'Reservations, waitlist, and activity will appear here as your restaurant starts receiving guests. Add a walk-in or create a reservation to get started.')}
+            </div>
+          )}
+
+          {/* Deposit payout setup stays visible, without displacing the
+              operational floor from the first viewport. */}
+          <StripeConnectNudgeBanner />
 
           {/* ---- A régua: essa mesa libera a tempo? ---- */}
           <div className="mb-12 sm:mb-20">
@@ -490,7 +486,7 @@ export default function Dashboard() {
               avgSpendPerCover={avgSpendPerCover}
               byPartySize={revenueStats?.by_party_size}
               isLoading={isLoading}
-              language={i18n.language === 'es' ? 'es' : 'en'}
+              language={i18n.language === 'pt-BR' ? 'pt-BR' : i18n.language === 'es' ? 'es' : 'en'}
               tables={tables}
             />
           </section>
@@ -542,15 +538,6 @@ export default function Dashboard() {
 
         </div>
 
-        {/* ---- FAB: Add Walk-in ---- */}
-        <button
-          onClick={() => setShowWalkInModal(true)}
-          aria-label={t('dashboard.addWalkIn', 'Add walk-in')}
-          className="fixed bottom-24 sm:bottom-6 right-4 sm:right-6 z-50 w-14 h-14 bg-burgundy hover:bg-burgundy-dark active:scale-95 text-white rounded-full shadow-xl shadow-black/20 transition-all duration-200 flex items-center justify-center"
-        >
-          <ThiingsIcon name="plus" pxSize={24} />
-        </button>
-
       </div>
 
       {/* ---- Modals ---- */}
@@ -598,7 +585,7 @@ export default function Dashboard() {
             setInterventionReservation(null);
             refetch();
           }}
-          language={i18n.language === 'es' ? 'es' : 'en'}
+          language={i18n.language === 'pt-BR' ? 'pt-BR' : i18n.language === 'es' ? 'es' : 'en'}
         />
       )}
 

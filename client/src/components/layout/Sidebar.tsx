@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import ThiingsIcon from '../common/ThiingsIcon';
+import ThiingsIcon, { type IconName } from '../common/ThiingsIcon';
 import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSidebar } from '../../contexts/SidebarContext';
@@ -135,13 +135,19 @@ export default function Sidebar() {
   const restaurantName = restaurantSettings?.restaurant_name?.trim();
   const userName = restaurantName || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
   const userEmail = user?.email || 'Not signed in';
+  const mobileNavItems: { path: string; label: string; icon: IconName }[] = [
+    { path: '/host-dashboard/simple', label: t('navigation.dashboard', 'Dashboard'), icon: 'dashboard' },
+    { path: '/host-dashboard/floor-plan', label: t('navigation.tables', 'Tables'), icon: 'layout-grid' },
+    { path: '/host-dashboard/manager-ai', label: 'AI', icon: 'chat' },
+    { path: '/host-dashboard/settings', label: t('common.settings', 'Settings'), icon: 'settings' },
+  ];
 
   return (
     <>
       {/* Mobile Menu Button (top-left hamburger, visible when bottom nav is hidden or as fallback) */}
       <button
         onClick={() => setIsMobileOpen(!isMobileOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2.5 bg-deep-charcoal/90 backdrop-blur-sm rounded-xl shadow-lg border border-charcoal-dark text-white focus:outline-none focus:ring-2 focus:ring-burgundy"
+        className="lg:hidden fixed top-4 left-4 z-50 p-2.5 bg-white/85 backdrop-blur-xl rounded-xl shadow-sm border border-border-gray text-deep-charcoal focus:outline-none focus-visible:ring-2 focus-visible:ring-burgundy"
         aria-label={isMobileOpen ? "Close navigation menu" : "Open navigation menu"}
         aria-expanded={isMobileOpen}
       >
@@ -159,20 +165,20 @@ export default function Sidebar() {
       {/* Sidebar */}
       <aside
         className={`
-          fixed top-0 left-0 h-full bg-deep-charcoal z-40
+          fixed top-0 left-0 h-full bg-charcoal-dark z-40
           lg:top-4 lg:bottom-4 lg:left-4 lg:h-auto
-          lg:rounded-[26px] lg:bg-deep-charcoal/90 lg:backdrop-blur-xl
-          lg:border lg:border-white/10 lg:shadow-[0_8px_32px_rgba(28,25,23,0.25)]
+          lg:rounded-[26px] lg:bg-charcoal-dark/90 lg:backdrop-blur-xl
+          lg:border lg:border-white/10 lg:shadow-[0_8px_28px_rgba(28,25,23,0.16)]
           lg:overflow-hidden
           transition-all duration-300 ease-in-out
-          ${isCollapsed ? 'w-20' : 'w-[260px]'}
+          ${isCollapsed ? 'w-[260px] lg:w-16' : 'w-[260px] lg:w-[228px]'}
           ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}
           lg:translate-x-0
         `}
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className={`py-6 ${isCollapsed ? 'px-6' : 'px-6'} flex items-center justify-between`}>
+          <div className={`py-6 ${isCollapsed ? 'px-3' : 'px-5'} flex items-center justify-between`}>
             {!isCollapsed ? (
               <h1 className="font-serif text-[22px] text-white tracking-tight">
                 seatable<span className="text-burgundy">.</span>
@@ -200,7 +206,7 @@ export default function Sidebar() {
               <div key={section.label} className="mb-5">
                 {/* Section Label */}
                 {!isCollapsed && (
-                  <div className="px-6 mb-2 text-[11px] font-semibold tracking-widest uppercase text-stone-500">
+                  <div className="px-5 mb-2 text-[11px] font-semibold tracking-widest uppercase text-stone-400">
                     {t(NAV_KEYS[section.label] ?? section.label, section.label)}
                   </div>
                 )}
@@ -231,7 +237,7 @@ export default function Sidebar() {
                         className={`
                           w-full flex items-center gap-3 text-left transition-all duration-150
                           opacity-60 hover:opacity-100 hover:bg-white/[0.03] text-stone-400 hover:text-stone-200
-                          ${isCollapsed ? 'justify-center px-6 py-3' : 'px-6 py-3'}
+                          ${isCollapsed ? 'justify-center px-5 py-3' : 'px-5 py-3'}
                         `}
                         title={isCollapsed
                           ? `${t(NAV_KEYS[item.label] ?? item.label, item.label)} - ${t('navigation.upgradeToUnlock', 'Upgrade to unlock')}`
@@ -258,9 +264,9 @@ export default function Sidebar() {
                       aria-label={isCollapsed ? item.label : undefined}
                       className={`
                         flex items-center gap-3 transition-all duration-150
-                        ${isCollapsed ? 'justify-center px-6 py-3' : 'px-6 py-3'}
+                        ${isCollapsed ? 'justify-center px-5 py-3' : 'px-5 py-3'}
                         ${active
-                          ? 'text-white bg-burgundy/10 border-l-2 border-l-burgundy font-medium'
+                          ? 'text-white bg-white/10 border-l-2 border-l-burgundy font-medium'
                           : 'text-stone-400 hover:text-stone-300 hover:bg-white/[0.03] border-l-2 border-l-transparent'
                         }
                       `}
@@ -285,7 +291,7 @@ export default function Sidebar() {
             {/* Settings */}
             <div className="mb-5">
               {!isCollapsed && (
-                <div className="px-6 mb-2 text-[11px] font-semibold tracking-widest uppercase text-stone-500">
+                <div className="px-5 mb-2 text-[11px] font-semibold tracking-widest uppercase text-stone-400">
                   {t('navigation.sectionSettings', 'Settings')}
                 </div>
               )}
@@ -299,9 +305,9 @@ export default function Sidebar() {
                 onClick={() => setIsMobileOpen(false)}
                 className={`
                   flex items-center gap-3 transition-all duration-150
-                  ${isCollapsed ? 'justify-center px-6 py-3' : 'px-6 py-3'}
+                  ${isCollapsed ? 'justify-center px-5 py-3' : 'px-5 py-3'}
                   ${isActive('/host-dashboard/settings')
-                    ? 'text-white bg-burgundy/10 border-l-2 border-l-burgundy font-medium'
+                    ? 'text-white bg-white/10 border-l-2 border-l-burgundy font-medium'
                     : 'text-stone-400 hover:text-stone-300 hover:bg-white/[0.03] border-l-2 border-l-transparent'
                   }
                 `}
@@ -315,9 +321,9 @@ export default function Sidebar() {
                 onClick={() => setIsMobileOpen(false)}
                 className={`
                   flex items-center gap-3 transition-all duration-150
-                  ${isCollapsed ? 'justify-center px-6 py-3' : 'px-6 py-3'}
+                  ${isCollapsed ? 'justify-center px-5 py-3' : 'px-5 py-3'}
                   ${isActive('/settings/language')
-                    ? 'text-white bg-burgundy/10 border-l-2 border-l-burgundy font-medium'
+                    ? 'text-white bg-white/10 border-l-2 border-l-burgundy font-medium'
                     : 'text-stone-400 hover:text-stone-300 hover:bg-white/[0.03] border-l-2 border-l-transparent'
                   }
                 `}
@@ -331,9 +337,9 @@ export default function Sidebar() {
                 onClick={() => setIsMobileOpen(false)}
                 className={`
                   flex items-center gap-3 transition-all duration-150
-                  ${isCollapsed ? 'justify-center px-6 py-3' : 'px-6 py-3'}
+                  ${isCollapsed ? 'justify-center px-5 py-3' : 'px-5 py-3'}
                   ${isActive('/host-dashboard/integrations')
-                    ? 'text-white bg-burgundy/10 border-l-2 border-l-burgundy font-medium'
+                    ? 'text-white bg-white/10 border-l-2 border-l-burgundy font-medium'
                     : 'text-stone-400 hover:text-stone-300 hover:bg-white/[0.03] border-l-2 border-l-transparent'
                   }
                 `}
@@ -348,7 +354,7 @@ export default function Sidebar() {
             {can('manageTeam') && (
               <div className="mb-5">
                 {!isCollapsed && (
-                  <div className="px-6 mb-2 text-[11px] font-semibold tracking-widest uppercase text-stone-500">
+                    <div className="px-5 mb-2 text-[11px] font-semibold tracking-widest uppercase text-stone-400">
                     {t('navigation.sectionManage', 'Manage')}
                   </div>
                 )}
@@ -362,9 +368,9 @@ export default function Sidebar() {
                   onClick={() => setIsMobileOpen(false)}
                   className={`
                     flex items-center gap-3 transition-all duration-150
-                    ${isCollapsed ? 'justify-center px-6 py-3' : 'px-6 py-3'}
+                    ${isCollapsed ? 'justify-center px-5 py-3' : 'px-5 py-3'}
                     ${isActive('/host-dashboard/team')
-                      ? 'text-white bg-burgundy/10 border-l-2 border-l-burgundy font-medium'
+                      ? 'text-white bg-white/10 border-l-2 border-l-burgundy font-medium'
                       : 'text-stone-400 hover:text-stone-300 hover:bg-white/[0.03] border-l-2 border-l-transparent'
                     }
                   `}
@@ -382,7 +388,7 @@ export default function Sidebar() {
             <button
               onClick={() => setIsSettingsOpen(!isSettingsOpen)}
               className={`
-                w-full p-5 flex items-center gap-2.5 hover:bg-white/[0.03] transition-all duration-200
+                w-full ${isCollapsed ? 'p-3' : 'p-5'} flex items-center gap-2.5 hover:bg-white/[0.03] transition-all duration-200
                 ${isCollapsed ? 'justify-center' : ''}
               `}
               title={isCollapsed ? userName : undefined}
@@ -394,7 +400,9 @@ export default function Sidebar() {
                   className="w-8 h-8 rounded-full flex-shrink-0"
                 />
               ) : (
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-burgundy to-rose-700 flex-shrink-0" />
+                <div className="w-8 h-8 rounded-full bg-white/15 text-white flex items-center justify-center text-xs font-medium flex-shrink-0" aria-hidden="true">
+                  {userName.charAt(0).toUpperCase()}
+                </div>
               )}
               {!isCollapsed && (
                 <>
@@ -507,16 +515,11 @@ export default function Sidebar() {
 
       {/* Mobile Bottom Navigation Bar */}
       <nav
-        className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-deep-charcoal border-t border-charcoal-dark safe-area-bottom"
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-charcoal-dark border-t border-white/10 safe-area-bottom"
         aria-label="Mobile navigation"
       >
         <div className="flex items-center justify-around px-2 py-1 pb-[max(0.25rem,env(safe-area-inset-bottom))]">
-          {[
-            { path: '/host-dashboard/simple', label: t('navigation.dashboard', 'Dashboard'), icon: 'layout-dashboard' },
-            { path: '/host-dashboard/floor-plan', label: t('navigation.tables', 'Tables'), icon: 'table' },
-            { path: '/host-dashboard/manager-ai', label: 'AI', icon: 'message-circle' },
-            { path: '/host-dashboard/settings', label: t('navigation.restaurantSettings', 'Settings'), icon: 'settings' },
-          ].map((item) => {
+          {mobileNavItems.map((item) => {
             const active = isActive(item.path);
             return (
               <Link
@@ -524,12 +527,12 @@ export default function Sidebar() {
                 to={item.path}
                 className={`flex flex-col items-center gap-0.5 px-3 py-2 rounded-lg transition-colors min-w-[60px] ${
                   active
-                    ? 'text-white'
-                    : 'text-stone-500 active:text-stone-300'
+                    ? 'text-white bg-white/10'
+                    : 'text-stone-300 active:text-white'
                 }`}
               >
-                <ThiingsIcon name={item.icon as any} pxSize={20} />
-                <span className="text-[10px] font-medium leading-tight">{item.label}</span>
+                <ThiingsIcon name={item.icon} pxSize={20} />
+                <span className="text-[10px] font-medium leading-tight whitespace-nowrap">{item.label}</span>
                 {active && <span className="w-1 h-1 rounded-full bg-burgundy" />}
               </Link>
             );
@@ -537,7 +540,7 @@ export default function Sidebar() {
           <button
             type="button"
             onClick={() => setIsMobileOpen(true)}
-            className="flex flex-col items-center gap-0.5 px-3 py-2 rounded-lg transition-colors min-w-[60px] text-stone-500 active:text-stone-300"
+            className="flex flex-col items-center gap-0.5 px-3 py-2 rounded-lg transition-colors min-w-[60px] text-stone-300 active:text-white"
           >
             <ThiingsIcon name="menu" pxSize={20} />
             <span className="text-[10px] font-medium leading-tight">{t('common.more', 'More')}</span>
