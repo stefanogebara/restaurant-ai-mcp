@@ -1,177 +1,7 @@
-/**
- * CampaignManager — Email campaign creation, listing, and delivery stats.
- * Added as a section in the AI Insights page.
- * WhatsApp and SMS channels removed — email is the only channel that actually sends.
- */
+/** Read-only history of legacy bulk email campaigns. Bulk delivery is unavailable. */
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  useCampaignList,
-  useSegmentCounts,
-  useCreateEmailCampaign,
-  useSendCampaignNow,
-  useCampaignDeliveryStats,
-} from '../../hooks/useCampaigns';
-import ThiingsIcon from '../common/ThiingsIcon';
-
-const SEGMENTS = [
-  { value: 'vip', i18nLabel: 'campaigns.segmentVip', label: 'VIP Guests', i18nDesc: 'campaigns.segmentVipDesc', description: '10+ visits' },
-  { value: 'at_risk', i18nLabel: 'campaigns.segmentAtRisk', label: 'At Risk', i18nDesc: 'campaigns.segmentAtRiskDesc', description: 'High churn score' },
-  { value: 'inactive_30d', i18nLabel: 'campaigns.segmentInactive', label: 'Inactive 30d', i18nDesc: 'campaigns.segmentInactiveDesc', description: 'No visit in 30 days' },
-  { value: 'new_customers', i18nLabel: 'campaigns.segmentNew', label: 'New Guests', i18nDesc: 'campaigns.segmentNewDesc', description: 'First-time or occasional' },
-  { value: 'birthday_this_month', i18nLabel: 'campaigns.segmentBirthday', label: 'Birthday', i18nDesc: 'campaigns.segmentBirthdayDesc', description: 'Birthday this month' },
-  { value: 'all', i18nLabel: 'campaigns.segmentAll', label: 'All Customers', i18nDesc: 'campaigns.segmentAllDesc', description: 'Everyone' },
-];
-
-const STATUS_BADGES: Record<string, { i18nKey: string; label: string; classes: string }> = {
-  pending: { i18nKey: 'campaigns.statusDraft', label: 'Draft', classes: 'bg-stone-100 text-stone-600' },
-  scheduled: { i18nKey: 'campaigns.statusScheduled', label: 'Scheduled', classes: 'bg-stone-50 text-stone-700' },
-  active: { i18nKey: 'campaigns.statusSending', label: 'Sending', classes: 'bg-amber-50 text-amber-700' },
-  sending: { i18nKey: 'campaigns.statusSending', label: 'Sending', classes: 'bg-amber-50 text-amber-700' },
-  completed: { i18nKey: 'campaigns.statusCompleted', label: 'Completed', classes: 'bg-rose-50 text-rose-700' },
-  sent: { i18nKey: 'campaigns.statusCompleted', label: 'Sent', classes: 'bg-rose-50 text-rose-700' },
-  failed: { i18nKey: 'campaigns.statusFailed', label: 'Failed', classes: 'bg-red-50 text-red-700' },
-};
-
-export default function CampaignManager() {
-  const { data: campaigns, isLoading } = useCampaignList();
-  const { data: segments } = useSegmentCounts();
-  const createCampaign = useCreateEmailCampaign();
-  const sendNow = useSendCampaignNow();
-
-  const [showCreate, setShowCreate] = useState(false);
-  const [selectedCampaign, setSelectedCampaign] = useState<string | null>(null);
-  const [formSegment, setFormSegment] = useState('vip');
-  const [formMessage, setFormMessage] = useState('');
-  const { t } = useTranslation();
-  const [formError, setFormError] = useState('');
-
-  const handleCreate = () => {
-    if (!formMessage.trim()) {
-      setFormError(t('campaigns.messageRequired', 'Message is required'));
-      return;
-    }
-    setFormError('');
-    createCampaign.mutate(
-      { name: formSegment, segment: formSegment, message: formMessage },
-      {
-        onSuccess: () => {
-          setShowCreate(false);
-          setFormMessage('');
-        },
-        onError: (err: Error) => setFormError(err.message),
-      }
-    );
-  };
-
-  return (
-    <div className="glass-card p-5">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-rose-50 flex items-center justify-center">
-            <ThiingsIcon name="send" pxSize={16} className="text-rose-600" />
-          </div>
-          <h3 className="text-sm font-semibold text-deep-charcoal">{t('insights.campaigns', 'Campaigns')}</h3>
-        </div>
-        <button
-          onClick={() => setShowCreate(!showCreate)}
-          className="text-xs font-semibold px-3 py-1.5 rounded-full bg-burgundy/10 text-burgundy hover:bg-burgundy/20 transition-colors"
-        >
-          {showCreate ? t('common.cancel') : t('campaigns.newCampaign', '+ New Campaign')}
-        </button>
-      </div>
-
-      {/* Create Campaign Form */}
-      {showCreate && (
-        <div className="bg-stone-50 rounded-xl p-4 mb-4 space-y-3">
-          {/* Segment Picker */}
-          <div>
-            <label className="block text-xs font-medium text-muted-stone mb-1.5">{t('campaigns.targetAudience', 'Target Audience')}</label>
-            <div className="grid grid-cols-2 gap-2">
-              {SEGMENTS.map((s) => (
-                <button
-                  key={s.value}
-                  type="button"
-                  onClick={() => setFormSegment(s.value)}
-                  className={`text-left px-3 py-2 rounded-lg border text-xs transition-colors ${
-                    formSegment === s.value
-                      ? 'border-burgundy bg-burgundy/5 text-burgundy'
-                      : 'border-glass-border-dark hover:border-muted-stone text-deep-charcoal'
-                  }`}
-                >
-                  <span className="font-medium">{t(s.i18nLabel, s.label)}</span>
-                  {segments && (
-                    <span className="text-muted-stone ml-1">
-                      ({segments[s.value as keyof typeof segments] ?? 0})
-                    </span>
-                  )}
-                  <br />
-                  <span className="text-[10px] text-muted-stone">{t(s.i18nDesc, s.description)}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Message */}
-          <div>
-            <label className="block text-xs font-medium text-muted-stone mb-1">{t('campaigns.message', 'Message')}</label>
-            <textarea
-              value={formMessage}
-              onChange={(e) => setFormMessage(e.target.value)}
-              placeholder={t('campaigns.messagePlaceholder', 'Hi {name}, we miss you at our restaurant! Book your next visit...')}
-              rows={3}
-              className="w-full border border-glass-border-input rounded-xl px-3 py-2 text-sm text-deep-charcoal resize-none"
-              maxLength={500}
-            />
-            <p className="text-[10px] text-muted-stone mt-0.5">
-              Use {'{name}'} to personalize. {formMessage.length}/500
-            </p>
-          </div>
-
-          {formError && <p className="text-xs text-red-600">{formError}</p>}
-
-          <button
-            onClick={handleCreate}
-            disabled={createCampaign.isPending}
-            className="w-full py-2 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-medium rounded-xl transition-colors disabled:opacity-50"
-          >
-            {createCampaign.isPending ? t('campaigns.creating', 'Creating...') : t('campaigns.createAndSend', 'Create & Send Campaign')}
-          </button>
-        </div>
-      )}
-
-      {/* Campaign List */}
-      {isLoading ? (
-        <div className="space-y-2">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-16 bg-stone-50 rounded-lg animate-pulse" />
-          ))}
-        </div>
-      ) : !campaigns?.length ? (
-        <div className="text-center py-8">
-          <p className="text-sm text-muted-stone">{t('campaigns.noCampaigns', 'No campaigns yet')}</p>
-          <p className="text-xs text-muted-stone mt-1">{t('campaigns.noCampaignsHint')}</p>
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {campaigns
-            .filter(c => c.channel === 'email')
-            .slice(0, 10)
-            .map((campaign) => (
-              <CampaignRow
-                key={campaign.id}
-                campaign={campaign}
-                isSelected={selectedCampaign === campaign.id}
-                onSelect={() => setSelectedCampaign(selectedCampaign === campaign.id ? null : campaign.id)}
-                onSend={() => sendNow.mutate(campaign.id)}
-                isSending={sendNow.isPending}
-              />
-            ))}
-        </div>
-      )}
-    </div>
-  );
-}
+import { useCampaignList, useCampaignDeliveryStats } from '../../hooks/useCampaigns';
 
 const SEGMENT_LABEL_MAP: Record<string, string> = {
   vip: 'campaigns.segmentVip',
@@ -182,79 +12,119 @@ const SEGMENT_LABEL_MAP: Record<string, string> = {
   all: 'campaigns.segmentAll',
 };
 
+const STATUS_BADGES: Record<string, { key: string; classes: string }> = {
+  completed: { key: 'campaigns.statusCompleted', classes: 'bg-emerald-500/10 text-emerald-700' },
+  sent: { key: 'campaigns.statusCompleted', classes: 'bg-emerald-500/10 text-emerald-700' },
+  failed: { key: 'campaigns.statusFailed', classes: 'bg-red-500/10 text-red-700' },
+};
+
+export default function CampaignManager() {
+  const { data: campaigns, isLoading, isError } = useCampaignList();
+  const { t } = useTranslation();
+  const [selectedCampaign, setSelectedCampaign] = useState<string | null>(null);
+  const emailCampaigns = campaigns?.filter((campaign) => campaign.channel === 'email').slice(0, 10) ?? [];
+  // This is legacy history, not a call to action. A restaurant with no email
+  // history should not end its Insights page with an unavailable feature.
+  if (!isLoading && !isError && emailCampaigns.length === 0) return null;
+
+  return (
+    <section aria-labelledby="campaigns-heading" className="border-t hairline pt-9">
+      <div className="mb-8">
+        <h2 id="campaigns-heading" className="font-serif text-3xl text-deep-charcoal sm:text-4xl">
+          {t('campaigns.title')}
+        </h2>
+        <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-muted-stone">
+          {t('campaigns.emailUnavailable')}
+        </p>
+      </div>
+
+      {isLoading ? (
+        <div aria-label={t('campaigns.loading')} aria-busy="true">
+          {[1, 2, 3].map((row) => <div key={row} className="h-20 animate-pulse border-b border-deep-charcoal/10" />)}
+        </div>
+      ) : isError ? (
+        <p role="alert" className="border-t border-deep-charcoal/10 py-8 text-[15px] text-red-700">
+          {t('common.error')}
+        </p>
+      ) : emailCampaigns.length === 0 ? (
+        <div className="border-t border-deep-charcoal/10 py-10">
+          <p className="text-[15px] text-muted-stone">{t('campaigns.noCampaigns')}</p>
+        </div>
+      ) : (
+        <div className="border-t border-deep-charcoal/10">
+          {emailCampaigns.map((campaign) => (
+            <CampaignRow
+              key={campaign.id}
+              campaign={campaign}
+              isSelected={selectedCampaign === campaign.id}
+              onSelect={() => setSelectedCampaign(selectedCampaign === campaign.id ? null : campaign.id)}
+            />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
 function CampaignRow({
   campaign,
   isSelected,
   onSelect,
-  onSend,
-  isSending,
 }: {
   campaign: { id: string; segment_name?: string; campaign_type?: string; message: string; status: string; created_at: string; sent_count?: number };
   isSelected: boolean;
   onSelect: () => void;
-  onSend: () => void;
-  isSending: boolean;
 }) {
-  const { t } = useTranslation();
-  const { data: stats } = useCampaignDeliveryStats(isSelected ? campaign.id : null);
-  const badge = STATUS_BADGES[campaign.status] || STATUS_BADGES.pending;
-
+  const { t, i18n } = useTranslation();
+  const { data: stats, isError: statsFailed } = useCampaignDeliveryStats(isSelected ? campaign.id : null);
+  const badge = STATUS_BADGES[campaign.status] ?? {
+    key: 'campaigns.deliveryDisabled',
+    classes: 'bg-deep-charcoal/5 text-muted-stone',
+  };
   const segmentKey = campaign.segment_name || campaign.campaign_type || '';
-  const segmentI18nKey = SEGMENT_LABEL_MAP[segmentKey];
-  const campaignLabel = segmentI18nKey
-    ? t(segmentI18nKey)
-    : segmentKey || t('campaigns.title', 'Campaign');
+  const campaignLabel = SEGMENT_LABEL_MAP[segmentKey]
+    ? t(SEGMENT_LABEL_MAP[segmentKey])
+    : segmentKey || t('campaigns.unnamedCampaign');
+  const date = new Intl.DateTimeFormat(i18n.language, { day: 'numeric', month: 'short', year: 'numeric' })
+    .format(new Date(campaign.created_at));
 
   return (
-    <div className="border border-glass-border-dark rounded-lg overflow-hidden">
+    <div className="border-b border-deep-charcoal/10">
       <button
         type="button"
         onClick={onSelect}
-        className="w-full flex items-center gap-3 p-3 hover:bg-stone-50 transition-colors text-left"
+        aria-expanded={isSelected}
+        aria-controls={`campaign-details-${campaign.id}`}
+        className="flex min-h-[86px] w-full items-start justify-between gap-5 py-4 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-burgundy sm:items-center"
       >
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-deep-charcoal truncate">
-              {campaignLabel}
+        <span className="min-w-0 flex-1">
+          <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <span className="text-[15px] font-semibold text-deep-charcoal">{campaignLabel}</span>
+            <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${badge.classes}`}>
+              {t(badge.key)}
             </span>
-            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${badge.classes}`}>
-              {t(badge.i18nKey, badge.label)}
-            </span>
-          </div>
-          <p className="text-[11px] text-muted-stone mt-0.5 truncate">{campaign.message}</p>
-        </div>
-        <div className="text-right flex-shrink-0">
-          <span className="text-xs text-muted-stone">
-            {new Date(campaign.created_at).toLocaleDateString()}
           </span>
+          <span className="mt-1 block truncate text-sm text-muted-stone">{campaign.message}</span>
+        </span>
+        <span className="shrink-0 text-right text-xs text-muted-stone">
+          <span className="block">{date}</span>
           {(campaign.sent_count ?? 0) > 0 && (
-            <p className="text-[10px] text-muted-stone">{campaign.sent_count} {t('campaigns.sent', 'sent')}</p>
+            <span className="mt-1 block tabular-nums">{campaign.sent_count} {t('campaigns.sent')}</span>
           )}
-        </div>
+        </span>
       </button>
 
-      {/* Expanded stats */}
       {isSelected && (
-        <div className="border-t border-glass-border-dark bg-stone-50 p-3">
+        <div id={`campaign-details-${campaign.id}`} className="pb-6 pt-1">
           {stats ? (
-            <div className="grid grid-cols-4 gap-2 text-center">
-              <Stat label={t('campaigns.sent', 'Sent')} value={stats.sent + stats.delivered + stats.read} />
-              <Stat label={t('campaigns.delivered', 'Delivered')} value={stats.delivered + stats.read} />
-              <Stat label={t('campaigns.read', 'Read')} value={stats.read} />
-              <Stat label={t('campaigns.failed', 'Failed')} value={stats.failed} />
-            </div>
+            <dl className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-4">
+              <Stat label={t('campaigns.sent')} value={stats.sent + stats.delivered + stats.read} />
+              <Stat label={t('campaigns.delivered')} value={stats.delivered + stats.read} />
+              <Stat label={t('campaigns.read')} value={stats.read} />
+              <Stat label={t('campaigns.failed')} value={stats.failed} />
+            </dl>
           ) : (
-            <p className="text-xs text-muted-stone text-center">{t('common.loadingStats')}</p>
-          )}
-
-          {(campaign.status === 'pending' || campaign.status === 'scheduled') && (
-            <button
-              onClick={onSend}
-              disabled={isSending}
-              className="mt-2 w-full py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-medium rounded-lg transition-colors disabled:opacity-50"
-            >
-              {isSending ? t('campaigns.statusSending', 'Sending...') : t('campaigns.sendNow', 'Send Now')}
-            </button>
+            <p className="text-sm text-muted-stone">{statsFailed ? t('common.error') : t('common.loadingStats')}</p>
           )}
         </div>
       )}
@@ -265,8 +135,8 @@ function CampaignRow({
 function Stat({ label, value }: { label: string; value: number }) {
   return (
     <div>
-      <p className="text-lg font-bold text-deep-charcoal">{value}</p>
-      <p className="text-[10px] text-muted-stone">{label}</p>
+      <dt className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">{label}</dt>
+      <dd className="mt-1 font-serif text-3xl tabular-nums text-deep-charcoal">{value}</dd>
     </div>
   );
 }

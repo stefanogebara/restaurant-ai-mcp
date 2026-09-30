@@ -6,8 +6,9 @@ import { useToast } from '../../contexts/ToastContext';
 import { parseLocalDate } from '../../utils/timeFormatting';
 import type { Customer } from '../host/ltvDashboard.types';
 
-const RE_ENGAGEMENT_MESSAGE =
-  "We miss you! It's been a while and we'd love to welcome you back. Enjoy a complimentary welcome drink on your next visit.";
+function customerInitials(name: string) {
+  return name.trim().split(/\s+/).slice(0, 2).map((part) => part[0]?.toUpperCase() ?? '').join('');
+}
 
 interface SendModalProps {
   customer: Customer;
@@ -15,14 +16,14 @@ interface SendModalProps {
 }
 
 function SendModal({ customer, onClose }: SendModalProps) {
-  const { t } = useTranslation();
-  const [message, setMessage] = useState(RE_ENGAGEMENT_MESSAGE);
+  const { t, i18n } = useTranslation();
+  const [message, setMessage] = useState(() => t('insights.reEngagementDraft'));
   const { mutate: sendCampaign, isPending } = useSendCampaign();
   const toast = useToast();
 
   const handleSend = () => {
     sendCampaign(
-      { customerId: customer.customer_id, campaignType: 'win_back', message },
+      { customerId: customer.customer_id, campaignType: 'win_back', message, language: i18n.language },
       {
         onSuccess: () => {
           toast.success(t('insights.reEngagementSent', 'Re-engagement message sent'));
@@ -37,12 +38,13 @@ function SendModal({ customer, onClose }: SendModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-      <div className="glass-modal w-full max-w-md">
+      <div className="glass-modal w-full max-w-md" role="dialog" aria-modal="true" aria-labelledby="re-engagement-title">
         <div className="p-5 border-b border-glass-border-dark flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-deep-charcoal">{t('insights.sendReEngagement')}</h3>
+          <h3 id="re-engagement-title" className="font-serif text-2xl text-deep-charcoal">{t('insights.sendReEngagement')}</h3>
           <button
             type="button"
             onClick={onClose}
+            aria-label={t('common.close')}
             className="text-warm-stone hover:text-deep-charcoal transition-colors"
           >
             <ThiingsIcon name="close" pxSize={18} />
@@ -50,11 +52,13 @@ function SendModal({ customer, onClose }: SendModalProps) {
         </div>
 
         <div className="p-5 space-y-4">
-          <div className="flex items-center gap-3 p-3 bg-soft-gray rounded-xl">
-            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-burgundy to-rose-700 flex-shrink-0" />
+          <div className="flex items-center gap-3 py-3 border-b hairline">
+            <div className="w-9 h-9 rounded-full bg-soft-gray text-deep-charcoal flex items-center justify-center flex-shrink-0 text-xs font-medium" aria-hidden="true">
+              {customerInitials(customer.customer_name || customer.customer_id)}
+            </div>
             <div>
               <div className="text-sm font-semibold text-deep-charcoal">{customer.customer_name || customer.customer_id}</div>
-              <div className="text-xs text-warm-stone">{t('insights.churnRisk', { score: customer.churn_risk_score })} · {t('insights.visits', { count: customer.total_visits })}</div>
+              <div className="text-xs text-muted-stone">{t('insights.estimatedChurnRisk', { score: customer.churn_risk_score })} · {t('insights.visits', { count: customer.total_visits })}</div>
             </div>
           </div>
 
@@ -98,45 +102,45 @@ interface CustomerRowProps {
   customer: Customer;
   showChurn?: boolean;
   onSend?: (c: Customer) => void;
+  className?: string;
 }
 
-function CustomerRow({ customer, showChurn, onSend }: CustomerRowProps) {
+function CustomerRow({ customer, showChurn, onSend, className = '' }: CustomerRowProps) {
   const { t, i18n } = useTranslation();
-  const churnColor =
-    customer.churn_risk_score >= 80
-      ? 'text-red-600'
-      : customer.churn_risk_score >= 60
-      ? 'text-amber-600'
-      : 'text-warm-stone';
-
   const localeMap: Record<string, string> = { 'pt-BR': 'pt-BR', es: 'es', en: 'en-US' };
   const dateLocale = localeMap[i18n.language] ?? 'en-US';
   const lastVisit = customer.last_visit_date
-    ? parseLocalDate(customer.last_visit_date).toLocaleDateString(dateLocale, { month: 'short', day: 'numeric' })
+    ? parseLocalDate(customer.last_visit_date).toLocaleDateString(dateLocale, { day: '2-digit', month: '2-digit', year: 'numeric' })
     : '—';
 
-  return (
-    <div className="flex items-center gap-3 py-2.5 border-b border-glass-border-dark last:border-0">
-      <div className="w-7 h-7 rounded-full bg-gradient-to-br from-stone-200 to-stone-300 flex-shrink-0" />
-      <div className="flex-1 min-w-0">
-        <div className="text-sm font-medium text-deep-charcoal truncate">{customer.customer_name || customer.customer_id}</div>
-        <div className="text-xs text-warm-stone">{t('insights.visits', { count: customer.total_visits })} · {t('insights.lastVisit', 'Last')}: {lastVisit}</div>
-      </div>
+  const content = (
+    <>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-[15px] font-medium text-deep-charcoal">{customer.customer_name || customer.customer_id}</span>
+        <span className="mt-0.5 block text-[13px] text-muted-stone">
+          {t('insights.visits', { count: customer.total_visits })} · {t('insights.lastVisit', 'Last')}: {lastVisit}
+        </span>
+      </span>
       {showChurn && (
-        <span className={`text-xs font-semibold flex-shrink-0 ${churnColor}`}>
-          {customer.churn_risk_score}%
+        <span className="shrink-0 text-right" aria-hidden="true">
+          <span className="block text-[17px] font-medium tabular-nums text-ocre-700">{customer.churn_risk_score}</span>
         </span>
       )}
-      {onSend && (
-        <button
-          type="button"
-          onClick={() => onSend(customer)}
-          className="flex-shrink-0 px-2.5 py-1 text-xs font-semibold text-burgundy border border-burgundy/30 rounded-lg hover:bg-burgundy hover:text-white transition-colors"
-        >
-          {t('insights.send')}
-        </button>
-      )}
-    </div>
+      {onSend && <ThiingsIcon name="chevron-right" pxSize={16} className="shrink-0 text-muted-stone" />}
+    </>
+  );
+
+  return onSend ? (
+    <button
+      type="button"
+      onClick={() => onSend(customer)}
+      aria-label={`${t('insights.reviewEmailFor', { name: customer.customer_name || customer.customer_id })} · ${t('insights.estimatedChurnRisk', { score: customer.churn_risk_score })}`}
+      className={`hairline flex w-full items-center gap-3 border-b py-3.5 text-left transition-colors hover:bg-white/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-burgundy last:border-0 ${className}`}
+    >
+      {content}
+    </button>
+  ) : (
+    <div className={`hairline flex items-center gap-3 border-b py-3.5 last:border-0 ${className}`}>{content}</div>
   );
 }
 
@@ -146,6 +150,7 @@ export default function CustomerIntelligenceCard() {
   const { data: vips = [], isLoading: loadingVIPs } = useLTVTopVIPs();
   const [sendTarget, setSendTarget] = useState<Customer | null>(null);
   const [tab, setTab] = useState<'at-risk' | 'vips'>('at-risk');
+  const [showAllRisk, setShowAllRisk] = useState(false);
 
   const isLoading = loadingAtRisk || loadingVIPs;
 
@@ -160,61 +165,57 @@ export default function CustomerIntelligenceCard() {
 
   return (
     <>
-      <div className="border border-glass-border-dark rounded-lg overflow-hidden">
-        <div className="p-5 border-b border-glass-border-dark flex items-center gap-3">
-          <div className="w-8 h-8 rounded-xl bg-rose-50 flex items-center justify-center flex-shrink-0">
-            <ThiingsIcon name="user" pxSize={16} className="text-rose-600" />
-          </div>
-          <div>
-            <h2 className="text-sm font-semibold text-deep-charcoal">{t('insights.customerIntelligence')}</h2>
-            <p className="text-xs text-warm-stone">{t('insights.atRiskAndVip')}</p>
-          </div>
-        </div>
-
+      <section className="min-w-0" aria-label={t('insights.customerIntelligence')}>
         {/* Tab switcher */}
-        <div className="flex border-b border-glass-border-dark">
+        <div className="flex gap-6 border-b hairline" role="tablist" aria-label={t('insights.customerIntelligence')}>
           {(['at-risk', 'vips'] as const).map((tabKey) => (
             <button
               key={tabKey}
               type="button"
               onClick={() => setTab(tabKey)}
-              className={`flex-1 py-2.5 text-xs font-semibold transition-colors ${
+              role="tab"
+              aria-selected={tab === tabKey}
+              className={`py-3 text-sm font-medium transition-colors ${
                 tab === tabKey
-                  ? 'text-burgundy border-b-2 border-burgundy bg-burgundy/5'
-                  : 'text-warm-stone hover:text-deep-charcoal'
+                  ? 'text-deep-charcoal border-b-2 border-deep-charcoal'
+                  : 'text-muted-stone hover:text-deep-charcoal border-b-2 border-transparent'
               }`}
             >
-              {tabKey === 'at-risk' ? `${t('insights.atRisk')} (${atRisk.length})` : `${t('insights.vips')} (${vips.length})`}
+              {tabKey === 'at-risk' ? `${t('insights.priorityCustomers')} · ${atRisk.length}` : `${t('insights.vips')} · ${vips.length}`}
             </button>
           ))}
         </div>
 
-        <div className="p-5">
+        <div>
           {tab === 'at-risk' && (
             atRisk.length === 0 ? (
-              /* "Nenhum cliente em risco" is GOOD news — emerald reads as
-                 "all clear" rather than the prior rose palette which copied
-                 the at-risk warning color even when there was nothing wrong. */
-              <div className="flex items-center gap-2 py-3 px-4 bg-emerald-50 rounded-xl border border-emerald-200">
+              <div className="flex items-center gap-2 py-6">
                 <ThiingsIcon name="check-circle" pxSize={16} className="text-emerald-600 flex-shrink-0" />
                 <span className="text-sm text-emerald-700 font-medium">{t('insights.noHighRiskCustomers')}</span>
               </div>
             ) : (
               <div>
-                <p className="text-xs text-warm-stone mb-3">{t('insights.churnRiskHint')}</p>
-                {atRisk.map((c) => (
-                  <CustomerRow key={c.customer_id} customer={c} showChurn onSend={setSendTarget} />
+                <p className="flex items-center justify-end pt-3 pb-1 text-xs text-muted-stone">
+                  <span>{t('insights.churnRiskColumn')}</span>
+                </p>
+                {(showAllRisk ? atRisk : atRisk.slice(0, 3)).map((c, index) => (
+                  <CustomerRow key={c.customer_id} customer={c} showChurn onSend={setSendTarget} className={!showAllRisk && index === 2 ? 'hidden sm:flex' : ''} />
                 ))}
+                {atRisk.length > 3 && !showAllRisk && (
+                  <button type="button" onClick={() => setShowAllRisk(true)} className="mt-3 text-[13px] font-medium text-burgundy hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-burgundy">
+                    {t('insights.showAllRisk')} →
+                  </button>
+                )}
               </div>
             )
           )}
 
           {tab === 'vips' && (
             vips.length === 0 ? (
-              <p className="text-sm text-warm-stone text-center py-4">{t('insights.noVipCustomers')}</p>
+              <p className="text-sm text-muted-stone py-6">{t('insights.noVipCustomers')}</p>
             ) : (
               <div>
-                <p className="text-xs text-warm-stone mb-3">{t('insights.mostLoyalGuests')}</p>
+                <p className="text-xs text-muted-stone pt-4 pb-1">{t('insights.mostLoyalGuests')}</p>
                 {vips.map((c) => (
                   <CustomerRow key={c.customer_id} customer={c} />
                 ))}
@@ -222,7 +223,7 @@ export default function CustomerIntelligenceCard() {
             )
           )}
         </div>
-      </div>
+      </section>
 
       {sendTarget && (
         <SendModal customer={sendTarget} onClose={() => setSendTarget(null)} />

@@ -1,5 +1,5 @@
-﻿import { useTranslation } from 'react-i18next';
-import ChartPanel, { ChartBadge } from './ChartPanel';
+import { useTranslation } from 'react-i18next';
+import ChartPanel from './ChartPanel';
 
 interface TableUtilizationHeatmapProps {
   tableUtilization: Array<{
@@ -13,120 +13,41 @@ interface TableUtilizationHeatmapProps {
 
 export default function TableUtilizationHeatmap({ tableUtilization }: TableUtilizationHeatmapProps) {
   const { t } = useTranslation();
-  // Get utilization as number for color calculations
-  const getUtilizationValue = (percentage: string | number): number => {
-    if (typeof percentage === 'number') return percentage;
-    return parseFloat(String(percentage).replace('%', '')) || 0;
-  };
+  const tables = [...tableUtilization].filter(Boolean).sort((a, b) => a.table_number - b.table_number);
+  const maxUses = Math.max(0, ...tables.map(table => table.times_used));
 
-  // Determine color based on utilization percentage
-  const getUtilizationColor = (percentage: string | number): string => {
-    const value = getUtilizationValue(percentage);
-
-    if (value >= 75) return 'bg-burgundy/80 border-burgundy'; // High utilization
-    if (value >= 50) return 'bg-amber-600/60 border-amber-600'; // Medium-high
-    if (value >= 25) return 'bg-warm-stone/40 border-warm-stone'; // Medium-low
-    return 'bg-soft-gray border-muted-stone'; // Low utilization
-  };
-
-  // Get text color for contrast
-  const getTextColor = (percentage: string | number): string => {
-    const value = getUtilizationValue(percentage);
-    return value >= 50 ? 'text-white' : 'text-deep-charcoal';
-  };
-
-  // Sort tables by number (filter out any undefined/null entries)
-  const sortedTables = [...tableUtilization].filter(Boolean).sort((a, b) => a.table_number - b.table_number);
-
-  // Find most and least used tables
-  const mostUsed = sortedTables.length > 0 ? sortedTables.reduce((max, table) =>
-    getUtilizationValue(table.utilization_rate) > getUtilizationValue(max.utilization_rate) ? table : max
-  , sortedTables[0]) : null;
-
-  const leastUsed = sortedTables.length > 0 ? sortedTables.reduce((min, table) =>
-    getUtilizationValue(table.utilization_rate) < getUtilizationValue(min.utilization_rate) ? table : min
-  , sortedTables[0]) : null;
-
+  // The API's "utilization_rate" is a share of all completed service records,
+  // not occupied minutes or available seating time. Show the underlying count
+  // so this chart cannot be mistaken for actual table occupancy.
   return (
-    <ChartPanel
-      title={t('analytics.bookingHeatmap')}
-      badge={<ChartBadge tone="accent">{t('analytics.peakHoursLabel')}</ChartBadge>}
-    >
-
-      {/* Heatmap Grid */}
-      <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 mb-6">
-        {sortedTables.map((table) => (
-          <div
-            key={table.table_number}
-            className={`
-              ${getUtilizationColor(table.utilization_rate)}
-              ${getTextColor(table.utilization_rate)}
-              border rounded-xl p-4 transition-colors duration-200
-              flex flex-col items-center justify-center text-center
-            `}
-          >
-            <div className="font-serif text-[26px] leading-none mb-1.5">
-              {table.table_number}
+    <ChartPanel title={t('analytics.tableServiceFrequency', 'Recorded services by table')}>
+      <p className="text-[13px] text-muted-stone mb-5">
+        {t('analytics.tableServiceFrequencyNote', 'All completed services on record, regardless of the selected period. This is visit frequency, not occupancy time.')}
+      </p>
+      {maxUses === 0 ? (
+        <p className="text-sm text-muted-stone py-8 text-center">
+          {t('analytics.noTableUtilizationData', 'No table usage data yet')}
+        </p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-7 gap-y-4">
+          {tables.map(table => (
+            <div key={table.table_number} className="grid grid-cols-[5rem_1fr_auto] items-center gap-3 min-w-0">
+              <span className="text-[13px] text-deep-charcoal truncate">
+                {t('floorPlan.tableLabel')} {table.table_number}
+              </span>
+              <div className="h-1.5 rounded-full bg-deep-charcoal/[0.07] overflow-hidden" aria-hidden="true">
+                <div
+                  className="h-full rounded-full bg-warm-stone"
+                  style={{ width: `${(table.times_used / maxUses) * 100}%` }}
+                />
+              </div>
+              <span className="font-mono text-[12px] tabular-nums text-deep-charcoal text-right min-w-[3rem]">
+                {table.times_used}
+              </span>
             </div>
-            <div className="text-xs font-semibold mb-1">
-              {table.utilization_rate}%
-            </div>
-            <div className="text-[10px] opacity-80">
-              {table.times_used} {t('analytics.services')}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Legend */}
-      <div className="flex items-center justify-center gap-4 mb-4 text-xs flex-wrap">
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded bg-burgundy/80 border-2 border-burgundy"></div>
-          <span className="text-muted-stone">{t('analytics.highUtilization')}</span>
+          ))}
         </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded bg-amber-600/60 border-2 border-amber-700"></div>
-          <span className="text-muted-stone">{t('analytics.mediumHighUtilization')}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded bg-warm-stone/40 border-2 border-warm-stone"></div>
-          <span className="text-muted-stone">{t('analytics.mediumLowUtilization')}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded bg-soft-gray border-2 border-muted-stone"></div>
-          <span className="text-muted-stone">{t('analytics.lowUtilization')}</span>
-        </div>
-      </div>
-
-      {/* Insights */}
-      {sortedTables.length > 0 && mostUsed && leastUsed && (() => {
-        const allZero = sortedTables.every(table => table.times_used === 0);
-        if (allZero) {
-          return (
-            <div className="p-3 bg-soft-gray/50 border border-glass-border-dark/50 rounded-xl">
-              <p className="text-xs text-muted-stone text-center">
-                {t('analytics.noTableUtilizationData', 'No table utilization data yet')}
-              </p>
-            </div>
-          );
-        }
-        return (
-          <div className="space-y-2">
-            <div className="p-3 bg-burgundy/10 border border-burgundy/20 rounded-xl">
-              <p className="text-xs text-muted-stone">
-                <span className="font-semibold text-deep-charcoal">{t('analytics.mostUsed')}:</span>{' '}
-                {t('floorPlan.tableLabel')} {mostUsed.table_number} ({mostUsed.utilization_rate}%) - {mostUsed.times_used} {t('analytics.services')}
-              </p>
-            </div>
-            <div className="p-3 bg-soft-gray/50 border border-glass-border-dark/50 rounded-xl">
-              <p className="text-xs text-muted-stone">
-                <span className="font-semibold text-deep-charcoal">{t('analytics.leastUsed')}:</span>{' '}
-                {t('floorPlan.tableLabel')} {leastUsed.table_number} ({leastUsed.utilization_rate}%) - {leastUsed.times_used} {t('analytics.services')}
-              </p>
-            </div>
-          </div>
-        );
-      })()}
+      )}
     </ChartPanel>
   );
 }

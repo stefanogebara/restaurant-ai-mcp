@@ -32,10 +32,10 @@ export default function ReservationTrendChart({ dailyTrend }: ReservationTrendCh
     return { key: 'analytics.trendStable', tone: 'muted' as const };
   })();
 
-  // Format day labels using browser locale instead of server-hardcoded English
+  // A rolling month needs dates, not repeated weekday abbreviations.
   const localizedTrend = dailyTrend.map(d => ({
     ...d,
-    dayLabel: new Date(d.date + 'T12:00:00Z').toLocaleDateString(i18n.language, { weekday: 'short', timeZone: 'UTC' }),
+    dayLabel: new Date(d.date + 'T12:00:00Z').toLocaleDateString(i18n.language, { day: '2-digit', month: '2-digit', timeZone: 'UTC' }),
   }));
   // Custom tooltip with shadcn/ui styling
   const CustomTooltip = ({ active, payload, label }: { active?: boolean; label?: string; payload?: Array<{ name: string; value: number; color: string }> }) => {
@@ -59,22 +59,27 @@ export default function ReservationTrendChart({ dailyTrend }: ReservationTrendCh
       title={t('analytics.reservationsOverTime')}
       ariaLabel={t('analytics.charts.reservationTrendAria')}
       badge={<ChartBadge tone={trendInfo.tone}>{t(trendInfo.key)}</ChartBadge>}
+      emphasis
     >
 
       <ResponsiveContainer width="100%" height={300}>
         <LineChart
           data={localizedTrend}
-          margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+          margin={{ top: 8, right: 8, left: -20, bottom: 5 }}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke={colors.borderGray} opacity={0.3} />
+          <CartesianGrid vertical={false} stroke={colors.borderGray} opacity={0.3} />
           <XAxis
             dataKey="dayLabel"
-            stroke={colors.warmStone}
-            style={{ fontSize: '12px' }}
+            tick={{ fill: colors.mutedStone, fontSize: 11 }}
+            tickLine={false}
+            axisLine={false}
+            interval="preserveStartEnd"
+            minTickGap={35}
           />
           <YAxis
-            stroke={colors.warmStone}
-            style={{ fontSize: '12px' }}
+            tick={{ fill: colors.mutedStone, fontSize: 11 }}
+            tickLine={false}
+            axisLine={false}
           />
           <Tooltip content={<CustomTooltip />} />
           <Legend
@@ -89,18 +94,20 @@ export default function ReservationTrendChart({ dailyTrend }: ReservationTrendCh
             dataKey="reservations"
             name={t('analytics.reservations')}
             stroke={colors.burgundy}
-            strokeWidth={3}
-            dot={{ fill: colors.burgundy, r: 5 }}
-            activeDot={{ r: 7 }}
+            strokeWidth={2}
+            dot={false}
+            activeDot={{ r: 4 }}
+            isAnimationActive={false}
           />
           <Line
             type="monotone"
             dataKey="completed_services"
             name={t('analytics.completedServices')}
             stroke={colors.stoneGray}
-            strokeWidth={3}
-            dot={{ fill: colors.stoneGray, r: 5 }}
-            activeDot={{ r: 7 }}
+            strokeWidth={2}
+            dot={false}
+            activeDot={{ r: 4 }}
+            isAnimationActive={false}
           />
         </LineChart>
       </ResponsiveContainer>

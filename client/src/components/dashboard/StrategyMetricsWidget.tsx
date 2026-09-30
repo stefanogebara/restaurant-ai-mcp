@@ -1,255 +1,256 @@
-/**
- * StrategyMetricsWidget
- *
- * The "val_bpb" scoreboard for the autoresearch loop — shows whether
- * the AI strategy is actually moving the 3 key business metrics:
- *   1. No-show rate (target < 5%)
- *   2. Avg revenue per cover (target R$90+)
- *   3. Reservation conversion rate (target > 90%)
- */
-
+/** Evidence-first strategy metrics: one chosen time series, three honest summaries. */
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { TrendingDown, TrendingUp, Minus, BarChart3, RefreshCw } from 'lucide-react';
-import {
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ReferenceLine,
-} from 'recharts';
+import { RefreshCw } from 'lucide-react';
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, ReferenceLine, ReferenceDot } from 'recharts';
 import { useStrategyMetrics } from '../../hooks/useStrategyMetrics';
 import { formatCurrency } from '../../utils/currency';
+import { colors } from '../../utils/colors';
 import Spinner from '../common/Spinner';
 
 const METRICS = [
   {
     key: 'no_show' as const,
-    label: 'No-show Rate',
     i18nKey: 'strategy.noShowRate',
+    shortI18nKey: 'strategy.noShowShort',
     summaryKey: 'no_show_rate' as const,
     targetKey: 'no_show_rate' as const,
-    unit: '%',
-    format: (v: number) => `${v}%`,
-    lowerIsBetter: true,
-    color: '#9F1239',
-    dateKey: 'date' as const,
     valueKey: 'rate' as const,
-    targetLabel: '< 5%',
+    format: (value: number) => `${value}%`,
+    lowerIsBetter: true,
   },
   {
     key: 'revenue' as const,
-    label: 'Avg Revenue / Cover',
     i18nKey: 'strategy.avgRevenue',
+    shortI18nKey: 'strategy.avgRevenueShort',
     summaryKey: 'avg_revenue_per_cover' as const,
     targetKey: 'avg_revenue_per_cover' as const,
-    unit: '',
-    format: (v: number) => formatCurrency(v),
-    lowerIsBetter: false,
-    color: '#57534E',
-    dateKey: 'week' as const,
     valueKey: 'avg_per_cover' as const,
-    targetLabel: '',
+    format: (value: number) => formatCurrency(value),
+    lowerIsBetter: false,
   },
   {
     key: 'conversion' as const,
-    label: 'Conversion Rate',
-    i18nKey: 'strategy.conversionRate',
+    i18nKey: 'strategy.confirmedShare',
+    shortI18nKey: 'strategy.confirmedShort',
     summaryKey: 'conversion_rate' as const,
     targetKey: 'conversion_rate' as const,
-    unit: '%',
-    format: (v: number) => `${v}%`,
-    lowerIsBetter: false,
-    color: '#292524',
-    dateKey: 'date' as const,
     valueKey: 'rate' as const,
-    targetLabel: '> 90%',
+    format: (value: number) => `${value}%`,
+    lowerIsBetter: false,
   },
 ] as const;
 
-function TrendIcon({ value, target, lowerIsBetter }: { value: number | null; target: number; lowerIsBetter: boolean }) {
-  if (value === null) return <Minus className="w-4 h-4 text-muted-stone" />;
-  const good = lowerIsBetter ? value <= target : value >= target;
-  if (good) return <TrendingUp className="w-4 h-4 text-rose-600" />;
-  return <TrendingDown className="w-4 h-4 text-red-500" />;
-}
+type MetricKey = typeof METRICS[number]['key'];
+type TimelinePoint = { date?: string; week?: string; rate?: number; avg_per_cover?: number | null };
 
-function MetricCard({
-  metric,
-  value,
-  target,
-  timeline,
-}: {
-  metric: typeof METRICS[number];
-  value: number | null;
-  target: number;
-  timeline: { date?: string; week?: string; rate?: number; avg_per_cover?: number | null }[];
-}) {
-  const { t } = useTranslation();
-  const good = value !== null && (metric.lowerIsBetter ? value <= target : value >= target);
-  const bad = value !== null && !good;
-
-  const chartData = timeline
-    .map(p => ({
-      label: (p.date || p.week || '').slice(5), // MM-DD or MM-DD
-      value: (p as Record<string, unknown>)[metric.valueKey] as number | null,
-    }))
-    .filter(p => p.value !== null);
-
-  return (
-    <div className="glass-card p-4">
-      <div className="flex items-center justify-between mb-1">
-        <span className="text-xs font-medium text-stone-gray uppercase tracking-wide">
-          {t(metric.i18nKey, metric.label)}
-        </span>
-        <TrendIcon value={value} target={target} lowerIsBetter={metric.lowerIsBetter} />
-      </div>
-
-      <div className="flex items-baseline gap-2 mb-1">
-        <span className={`text-2xl font-serif ${bad ?'text-red-600' : good ? 'text-rose-700' : 'text-deep-charcoal'}`}>
-          {value !== null ? metric.format(value) : '—'}
-        </span>
-        <span className="text-xs text-muted-stone">
-          {t('strategy.target', 'target')} {metric.key === 'revenue' ? `${formatCurrency(target)}+` : metric.targetLabel}
-        </span>
-      </div>
-
-      {/* Sparkline */}
-      {chartData.length >= 2 ? (
-        <div className="h-14 mt-2">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData} margin={{ top: 2, right: 2, bottom: 0, left: 0 }}>
-              <XAxis dataKey="label" hide />
-              <YAxis hide domain={['auto', 'auto']} />
-              <Tooltip
-                contentStyle={{ fontSize: 11, padding: '4px 8px', border: '1px solid #E7E5E4' }}
-                formatter={(v) => [metric.format(typeof v === 'number' ? v : Number(v ?? 0)), metric.label]}
-                labelFormatter={(l) => l}
-              />
-              <ReferenceLine
-                y={target}
-                stroke={metric.lowerIsBetter ? '#ef4444' : '#22c55e'}
-                strokeDasharray="3 3"
-                strokeWidth={1}
-              />
-              <Line
-                type="monotone"
-                dataKey="value"
-                stroke={metric.color}
-                strokeWidth={1.5}
-                dot={false}
-                activeDot={{ r: 3 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      ) : (
-        <div className="h-14 mt-2 flex items-center justify-center">
-          <span className="text-xs text-muted-stone">{t('strategy.notEnoughData', 'Not enough data yet')}</span>
-        </div>
-      )}
-    </div>
-  );
+function readableDate(date: string, locale: string) {
+  const parsed = new Date(`${date}T12:00:00Z`);
+  if (Number.isNaN(parsed.getTime())) return date;
+  return new Intl.DateTimeFormat(locale, { day: '2-digit', month: '2-digit', timeZone: 'UTC' }).format(parsed);
 }
 
 export default function StrategyMetricsWidget() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [range, setRange] = useState(30);
+  const [activeKey, setActiveKey] = useState<MetricKey>('no_show');
   const { data, isLoading, isError, refetch, isFetching } = useStrategyMetrics(range);
-
-  // Hide widget entirely when insufficient data (< 5 data points)
-  const totalDataPoints =
-    (data?.timelines?.no_show?.length ?? 0) +
-    (data?.timelines?.revenue?.length ?? 0) +
-    (data?.timelines?.conversion?.length ?? 0);
-  if (!isLoading && totalDataPoints < 5) return null;
+  const activeMetric = METRICS.find(metric => metric.key === activeKey) ?? METRICS[0];
+  const activeValue = data?.summary[activeMetric.summaryKey] ?? null;
+  const activeTarget = data?.targets[activeMetric.targetKey] ?? 0;
+  const meetsTarget = activeValue !== null && (
+    activeMetric.lowerIsBetter ? activeValue <= activeTarget : activeValue >= activeTarget
+  );
+  const chartData = ((data?.timelines[activeMetric.key] ?? []) as TimelinePoint[])
+    .map(point => ({ date: point.date || point.week || '', value: point[activeMetric.valueKey] ?? null }))
+    .filter((point): point is { date: string; value: number } => typeof point.value === 'number' && Number.isFinite(point.value));
+  const observed = chartData.map(point => point.value);
+  const rawMin = Math.min(activeTarget, ...observed);
+  const rawMax = Math.max(activeTarget, ...observed);
+  const idealStep = (rawMax - rawMin) / 3 || (activeMetric.key === 'revenue' ? 10 : 1);
+  const magnitude = 10 ** Math.floor(Math.log10(idealStep));
+  const axisStep = ([1, 2, 5, 10].find(factor => factor * magnitude >= idealStep) ?? 10) * magnitude;
+  const axisMin = Math.max(0, Math.floor(rawMin / axisStep) * axisStep - (rawMin === rawMax ? axisStep : 0));
+  const axisMax = Math.ceil(rawMax / axisStep) * axisStep + (rawMin === rawMax ? axisStep : 0);
+  const axisTicks = Array.from(
+    { length: Math.round((axisMax - axisMin) / axisStep) + 1 },
+    (_, index) => Number((axisMin + index * axisStep).toFixed(6)),
+  );
+  const sampleCount = activeMetric.key === 'no_show'
+    ? (data?.summary.no_show_sample_size ?? 0)
+    : activeMetric.key === 'revenue'
+      ? (data?.summary.data_points ?? 0)
+      : (data?.summary.total_reservations ?? 0);
+  const sampleKind = activeMetric.key === 'revenue' ? 'strategy.sampleServices' : 'strategy.sampleReservations';
+  const metricNote = activeMetric.key === 'no_show'
+    ? 'strategy.metricNoteNoShow'
+    : activeMetric.key === 'revenue'
+      ? 'strategy.metricNoteRevenue'
+      : 'strategy.metricNoteConfirmed';
 
   return (
-    <div className="py-5">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-5">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-deep-charcoal/8 flex items-center justify-center flex-shrink-0">
-            <BarChart3 className="w-4.5 h-4.5 text-deep-charcoal" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-deep-charcoal text-sm">{t('strategy.scorecard', 'Strategy Scorecard')}</h3>
-            <p className="text-xs text-muted-stone mt-0.5">{t('strategy.scorecardSub', 'Is the strategy loop working?')}</p>
-          </div>
+    <section aria-labelledby="strategy-scorecard-heading" className="py-3 sm:py-5">
+      <div className="flex items-end justify-between gap-2">
+        <div>
+          <h2 id="strategy-scorecard-heading" className="font-serif text-[26px] font-normal text-deep-charcoal sm:text-[29px]">
+            {t('strategy.scorecard')}
+          </h2>
         </div>
-
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 rounded-full border hairline bg-white/65 p-1">
           <select
+            aria-label={t('strategy.period')}
             value={range}
-            onChange={e => setRange(Number(e.target.value))}
-            className="text-xs text-deep-charcoal bg-warm-white border border-glass-border-dark rounded-lg px-2 py-1.5 cursor-pointer focus:outline-none"
+            onChange={event => setRange(Number(event.target.value))}
+            className="cursor-pointer rounded-full border-0 bg-transparent px-3 py-1.5 text-[13px] text-deep-charcoal focus-visible:outline focus-visible:outline-2 focus-visible:outline-burgundy"
           >
-            <option value={7}>{t('common.nDays', '{{count}} days', { count: 7 })}</option>
-            <option value={30}>{t('common.nDays', '{{count}} days', { count: 30 })}</option>
-            <option value={60}>{t('common.nDays', '{{count}} days', { count: 60 })}</option>
-            <option value={90}>{t('common.nDays', '{{count}} days', { count: 90 })}</option>
+            {[7, 30, 60, 90].map(days => (
+              <option key={days} value={days}>{t('common.nDays', { count: days })}</option>
+            ))}
           </select>
           <button
+            type="button"
+            aria-label={t('common.refresh')}
             onClick={() => refetch()}
             disabled={isFetching}
-            className="p-1.5 rounded-lg border border-glass-border-dark hover:bg-warm-white cursor-pointer disabled:opacity-40 transition-colors"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full text-muted-stone hover:bg-soft-gray focus-visible:outline focus-visible:outline-2 focus-visible:outline-burgundy disabled:cursor-not-allowed disabled:opacity-40"
           >
-            <RefreshCw className={`w-3.5 h-3.5 text-muted-stone ${isFetching ? 'animate-spin' : ''}`} />
+            <RefreshCw aria-hidden="true" className={`h-3.5 w-3.5 ${isFetching ? 'animate-spin' : ''}`} />
           </button>
         </div>
       </div>
 
       {isLoading ? (
-        <div className="flex items-center justify-center h-32">
+        <div role="status" aria-label={t('common.loading')} className="flex h-36 items-center justify-center">
           <Spinner />
         </div>
       ) : isError || !data ? (
-        <div className="text-center py-8">
-          <p className="text-sm text-muted-stone mb-3">{t('strategy.loadFailed', 'Failed to load metrics')}</p>
-          <button
-            onClick={() => refetch()}
-            className="text-xs font-medium text-burgundy hover:text-burgundy-dark cursor-pointer underline underline-offset-2"
-          >
-            {t('common.retry', 'Retry')}
+        <div className="mt-8 border-y hairline py-8">
+          <p className="text-[15px] text-muted-stone">{t('strategy.loadFailed')}</p>
+          <button type="button" onClick={() => refetch()} className="mt-3 text-sm font-semibold text-burgundy underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-burgundy">
+            {t('common.retry')}
           </button>
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {METRICS.map(metric => (
-              <MetricCard
-                key={metric.key}
-                metric={metric}
-                value={data.summary[metric.summaryKey]}
-                target={data.targets[metric.targetKey]}
-                timeline={data.timelines[metric.key] as Parameters<typeof MetricCard>[0]['timeline']}
-              />
-            ))}
+          <div className="mt-6 grid border-y hairline sm:grid-cols-3" role="group" aria-label={t('strategy.scorecard')}>
+            {METRICS.map((metric, index) => {
+              const value = data.summary[metric.summaryKey];
+              const target = data.targets[metric.targetKey];
+              return (
+                <button
+                  key={metric.key}
+                  type="button"
+                  aria-pressed={activeKey === metric.key}
+                  aria-label={`${t(metric.i18nKey)}: ${value === null ? '—' : metric.format(value)}; ${t('strategy.target')} ${metric.format(target)}`}
+                  onClick={() => setActiveKey(metric.key)}
+                  className={`relative flex min-w-0 items-center justify-between gap-4 border-b hairline px-3 py-3 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-burgundy last:border-b-0 sm:block sm:border-b-0 sm:px-0 sm:py-6 ${activeKey === metric.key ? 'bg-[#F0ECE4] sm:bg-transparent' : 'hover:bg-white/65 sm:hover:bg-transparent'} ${index > 0 ? 'sm:border-l sm:pl-6' : 'sm:pr-2'}`}
+                >
+                  <span className="block text-[14px] font-medium leading-tight text-deep-charcoal sm:text-[12px] sm:font-semibold sm:uppercase sm:tracking-[0.06em] sm:text-muted-stone">
+                    <span className="sm:hidden">{t(metric.shortI18nKey)}</span>
+                    <span className="hidden sm:inline">{t(metric.i18nKey)}</span>
+                  </span>
+                  <span className="flex shrink-0 flex-col items-end gap-1 sm:mt-2 sm:items-start">
+                    <span className="font-sans text-[24px] font-medium leading-none tabular-nums tracking-tight text-deep-charcoal sm:text-[31px]">
+                      {value === null ? '—' : metric.format(value)}
+                    </span>
+                  </span>
+                  <span className="hidden text-[12px] text-muted-stone sm:mt-2 sm:block">
+                    {t('strategy.target')} {metric.format(target)}
+                  </span>
+                  {activeKey === metric.key && <span className="absolute inset-x-0 bottom-0 h-px bg-deep-charcoal" aria-hidden="true" />}
+                </button>
+              );
+            })}
           </div>
 
-          {data.summary.total_reservations === 0 ? (
-            <p className="text-xs text-muted-stone text-center mt-4">
-              {t('strategy.noReservations', 'No reservations in this period yet — metrics will appear as data comes in')}
+          <div className="mt-6 grid gap-5 pt-1 lg:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)] lg:gap-8">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="text-[12px] text-muted-stone">{t(activeMetric.i18nKey)}</p>
+                  <p className="mt-1 text-[17px] font-medium text-deep-charcoal">
+                    {activeValue === null ? t('strategy.notEnoughData') : t(meetsTarget ? 'strategy.onTarget' : 'strategy.offTarget')}
+                  </p>
+                </div>
+              </div>
+              {chartData.length >= 2 ? (
+                <div className="mt-4 h-[165px] sm:h-[205px]" role="img" aria-label={t('strategy.chartAria', { metric: t(activeMetric.i18nKey), target: activeMetric.format(activeTarget) })}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={chartData} margin={{ top: 7, right: 58, bottom: 2, left: 2 }}>
+                      <XAxis
+                        dataKey="date"
+                        tickFormatter={date => readableDate(String(date), i18n.language)}
+                        tickLine={false}
+                        axisLine={false}
+                        tick={{ fill: colors.stoneGray, fontSize: 11 }}
+                        tickMargin={9}
+                        height={28}
+                        interval={chartData.length <= 6 ? 0 : 'preserveStartEnd'}
+                        minTickGap={14}
+                      />
+                      <YAxis
+                        width={48}
+                        ticks={axisTicks}
+                        tickLine={false}
+                        axisLine={false}
+                        tick={{ fill: colors.stoneGray, fontSize: 11 }}
+                        tickFormatter={value => activeMetric.key === 'revenue' ? String(Math.round(Number(value))) : `${Number(value).toFixed(1).replace(/\.0$/, '')}%`}
+                        domain={[axisMin, axisMax]}
+                      />
+                      <Tooltip
+                        contentStyle={{ backgroundColor: colors.warmWhite, border: `1px solid ${colors.borderGray}`, borderRadius: 10, color: colors.deepCharcoal, fontSize: 12, boxShadow: 'none' }}
+                        formatter={raw => [activeMetric.format(Number(raw ?? 0)), t(activeMetric.i18nKey)]}
+                        labelFormatter={label => readableDate(String(label), i18n.language)}
+                      />
+                      <ReferenceLine
+                        y={activeTarget}
+                        stroke={colors.warmStone}
+                        strokeDasharray="4 5"
+                        strokeWidth={1}
+                        label={{ value: `${t('strategy.target')} ${activeMetric.format(activeTarget)}`, position: 'insideTopRight', fill: colors.mutedStone, fontSize: 11 }}
+                      />
+                      <Line type="linear" dataKey="value" stroke={colors.burgundy} strokeWidth={1.75} dot={{ r: 2, fill: colors.burgundy, strokeWidth: 0 }} activeDot={{ r: 4, fill: colors.burgundy }} isAnimationActive={false} />
+                      <ReferenceDot
+                        x={chartData[chartData.length - 1].date}
+                        y={chartData[chartData.length - 1].value}
+                        r={4.5}
+                        fill={colors.burgundy}
+                        stroke={colors.warmWhite}
+                        strokeWidth={2}
+                        label={{ value: activeMetric.format(chartData[chartData.length - 1].value), position: 'right', fill: colors.deepCharcoal, fontSize: 12, fontWeight: 600 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <p className="flex min-h-[130px] items-center justify-center text-[13px] text-muted-stone">{t('strategy.notEnoughData')}</p>
+              )}
+            </div>
+            <aside className="hairline border-t pt-4 lg:border-l lg:border-t-0 lg:pl-7 lg:pt-1">
+              <p className="text-[12px] text-muted-stone">
+                <strong className="mr-1 font-sans text-[20px] font-medium tabular-nums text-deep-charcoal">{sampleCount}</strong>
+                {t(sampleKind)}
+              </p>
+              <p className="mt-3 max-w-[26ch] text-[14px] leading-relaxed text-deep-charcoal/70">{t(metricNote)}</p>
+            </aside>
+          </div>
+
+          <details className="mt-4 text-[12px] leading-relaxed text-muted-stone">
+            <summary className="cursor-pointer font-medium">{t('strategy.methodology')}</summary>
+            <p className="mt-2">
+              {data.summary.total_reservations === 0
+                ? t('strategy.noReservations')
+                : <>
+                  {t('strategy.basedOn', { count: data.summary.total_reservations })}
+                  {data.summary.no_show_sample_size !== undefined && <> · {t('strategy.noShowBasedOn', { count: data.summary.no_show_sample_size })}</>}
+                  {data.summary.data_points > 0 && <> · {t('strategy.completedServices', { count: data.summary.data_points })}</>}
+                  {' · '}{t('strategy.sinceRange', { count: range })}
+                  {' · '}{t('strategy.dashedLine')}
+                </>}
             </p>
-          ) : (
-            <p className="text-xs text-muted-stone mt-4">
-              {t('strategy.basedOn', 'Based on {{count}} reservations', { count: data.summary.total_reservations })}
-              {data.summary.data_points > 0 ? ` · ${t('strategy.completedServices', '{{count}} completed services', { count: data.summary.data_points })}` : ''}
-              {' '}{(() => {
-                const sinceDate = new Date(data.since);
-                const isFuture = sinceDate.getTime() > Date.now();
-                if (isFuture) {
-                  return t('strategy.sinceRange', 'since {{count}} days ago', { count: range });
-                }
-                return t('strategy.since', 'since {{date}}', { date: data.since });
-              })()}
-              {' · '}{t('strategy.dashedLine', 'Dashed line = target')}
-            </p>
-          )}
+          </details>
         </>
       )}
-    </div>
+    </section>
   );
 }

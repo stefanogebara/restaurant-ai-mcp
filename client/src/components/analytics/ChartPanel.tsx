@@ -15,20 +15,22 @@ interface ChartPanelProps {
   badge?: ReactNode;
   /** Descrição para leitores de tela — vira role="img" no corpo do gráfico. */
   ariaLabel?: string;
+  /** Only the lead chart carries a soft depth cue. */
+  emphasis?: boolean;
   children: ReactNode;
 }
 
-export default function ChartPanel({ title, badge, ariaLabel, children }: ChartPanelProps) {
+export default function ChartPanel({ title, badge, ariaLabel, emphasis = false, children }: ChartPanelProps) {
   return (
-    <section className="glass-panel overflow-hidden">
-      <div className="flex items-center justify-between gap-3 px-6 py-4 border-b hairline">
-        <h3 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">
+    <section className="glass-panel overflow-hidden" style={{ borderRadius: 16, boxShadow: emphasis ? '0 10px 28px rgba(35, 28, 20, 0.06)' : 'none' }}>
+      <div className="flex items-center justify-between gap-3 px-5 py-3.5 border-b hairline">
+        <h3 className="font-sans text-[14px] font-medium leading-snug text-deep-charcoal">
           {title}
         </h3>
         {badge}
       </div>
       <div
-        className="p-5 sm:p-6"
+        className="p-4 sm:p-5"
         {...(ariaLabel ? { role: 'img', 'aria-label': ariaLabel } : {})}
       >
         {children}

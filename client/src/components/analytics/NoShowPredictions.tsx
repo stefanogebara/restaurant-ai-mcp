@@ -4,16 +4,37 @@ import ThiingsIcon from '../common/ThiingsIcon';
 import { parseLocalDate } from '../../utils/timeFormatting';
 import { useNoShowPredictions, type NoShowPrediction } from '../../hooks/usePredictiveAnalytics';
 
+const RECOMMENDATION_I18N: Record<string, Record<string, string>> = {
+  'pt-BR': {
+    'Send confirmation reminder 24 hours before': 'Revisar envio de lembrete de confirmação 24 horas antes',
+    'Require credit card deposit': 'Avaliar a política de sinal para esta reserva',
+    'Call to confirm 2 hours before reservation': 'Considerar uma ligação de confirmação 2 horas antes',
+    'Send automated SMS reminder': 'Revisar envio de lembrete por SMS',
+    'Confirm via email 48 hours before': 'Considerar confirmação por email 48 horas antes',
+  },
+  es: {
+    'Send confirmation reminder 24 hours before': 'Revisar el envío de un recordatorio de confirmación 24 horas antes',
+    'Require credit card deposit': 'Evaluar la política de depósito para esta reserva',
+    'Call to confirm 2 hours before reservation': 'Considerar una llamada de confirmación 2 horas antes',
+    'Send automated SMS reminder': 'Revisar el envío de un recordatorio por SMS',
+    'Confirm via email 48 hours before': 'Considerar una confirmación por correo 48 horas antes',
+  },
+};
+
 export default function NoShowPredictions() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const language = i18n.language.startsWith('pt') ? 'pt-BR' : i18n.language.startsWith('es') ? 'es' : 'en';
   const { data, isLoading, isError, refetch } = useNoShowPredictions();
   const rawPredictions = data?.predictions ?? [];
   // Dedup by reservation_id to prevent duplicate cards
-  const predictions = rawPredictions.filter(
-    (p, i, arr) => arr.findIndex(q => q.reservation_id === p.reservation_id) === i
-  );
+  const predictions = rawPredictions
+    .filter((p, i, arr) => arr.findIndex(q => q.reservation_id === p.reservation_id) === i)
+    .sort((a, b) => b.risk_score - a.risk_score || a.days_until - b.days_until);
   const summary = data?.summary ?? null;
   const [selectedPrediction, setSelectedPrediction] = useState<NoShowPrediction | null>(null);
+  const readableDate = (date: string) => /^\d{4}-\d{2}-\d{2}$/.test(date)
+    ? new Intl.DateTimeFormat(i18n.language, { day: '2-digit', month: 'short', year: 'numeric' }).format(parseLocalDate(date))
+    : date || '—';
 
   // Liquid Glass v2: a linha inteira não é mais uma caixa colorida — só o
   // chip carrega o risco. 'low' era rose-600 (a cor de AÇÃO da marca), então
@@ -64,32 +85,30 @@ export default function NoShowPredictions() {
     <section>
       {/* Cabeçalho: rótulo + prosa direto no canvas, sem caixa */}
       <header className="border-b hairline pb-4">
-        <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">
+        <h2 className="font-sans text-[16px] font-medium text-deep-charcoal">
           {t('analytics.noShowPredictions')}
         </h2>
         <p className="text-[15px] text-muted-stone mt-1.5">
-          {t('analytics.noShowPredictionsDesc')}
+          {t('analytics.predictionScopeNote', 'Next 7 days · independent of the date filter · ranked risk signals, not calibrated probabilities.')}
         </p>
       </header>
 
-      {/* Resumo: números em serif entre fios de tinta */}
+      {/* The historical rate in the API combines cancellations and no-shows,
+          and can be a default 15% with no history. Do not present it as an
+          observed no-show rate. */}
       {summary && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 border-b hairline py-7">
+        <div className="grid grid-cols-3 gap-6 border-b hairline py-7">
           <div>
-            <p className="font-serif text-[30px] leading-none text-deep-charcoal tabular-nums">{summary.total_upcoming}</p>
+            <p className="text-[30px] tracking-[-0.035em] leading-none text-deep-charcoal tabular-nums">{summary.total_upcoming}</p>
             <p className="text-[11px] uppercase tracking-[0.12em] text-muted-stone mt-2.5">{t('analytics.upcomingSevenDays')}</p>
           </div>
           <div>
-            <p className="font-serif text-[30px] leading-none text-red-700 tabular-nums">{summary.high_risk}</p>
+            <p className="text-[30px] tracking-[-0.035em] leading-none text-red-700 tabular-nums">{summary.high_risk}</p>
             <p className="text-[11px] uppercase tracking-[0.12em] text-muted-stone mt-2.5">{t('analytics.highRisk')}</p>
           </div>
           <div>
-            <p className="font-serif text-[30px] leading-none text-amber-700 tabular-nums">{summary.medium_risk}</p>
+            <p className="text-[30px] tracking-[-0.035em] leading-none text-amber-700 tabular-nums">{summary.medium_risk}</p>
             <p className="text-[11px] uppercase tracking-[0.12em] text-muted-stone mt-2.5">{t('analytics.mediumRisk')}</p>
-          </div>
-          <div>
-            <p className="font-serif text-[30px] leading-none text-burgundy tabular-nums">{summary.historical_no_show_rate}%</p>
-            <p className="text-[11px] uppercase tracking-[0.12em] text-muted-stone mt-2.5">{t('analytics.historicalRate')}</p>
           </div>
         </div>
       )}
@@ -97,8 +116,12 @@ export default function NoShowPredictions() {
       {/* Lista: linhas com fio de tinta, não cartões empilhados */}
       {predictions.length === 0 ? (
         <div className="text-center py-12">
-          <p className="font-serif text-[22px] text-deep-charcoal">{t('analytics.noHighRiskReservations')}</p>
-          <p className="text-sm text-muted-stone mt-1">{t('analytics.allUpcomingLookGood')}</p>
+          <p className="font-serif text-[22px] text-deep-charcoal">
+            {summary ? t('analytics.noUpcomingPredictions', 'No upcoming reservations to assess') : t('analytics.predictionsUnavailable', 'Risk predictions unavailable')}
+          </p>
+          <p className="text-sm text-muted-stone mt-1">
+            {summary ? t('analytics.noUpcomingPredictionsNote', 'No reservations were returned for the next seven days.') : t('analytics.predictionsUnavailableNote', 'No risk conclusion can be drawn from this view.')}
+          </p>
         </div>
       ) : (
         <div>
@@ -112,17 +135,17 @@ export default function NoShowPredictions() {
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <span className={`px-3 py-1 rounded-[46px] text-[11px] font-medium ${getRiskChip(prediction.risk_level)}`}>
-                      {t('analytics.risk', { score: prediction.risk_score })}
+                  <div className="flex items-center justify-between gap-x-3 gap-y-1">
+                    <span className="min-w-0 truncate text-[15px] font-medium text-deep-charcoal">{prediction.customer_name}</span>
+                    <span aria-label={t('analytics.riskScore', 'Risk score {{score}}', { score: prediction.risk_score })} className={`shrink-0 rounded-[46px] px-2.5 py-1 text-[12px] font-medium tabular-nums ${getRiskChip(prediction.risk_level)}`}>
+                      {prediction.risk_score}/100
                     </span>
-                    <span className="text-[15px] font-medium text-deep-charcoal">{prediction.customer_name}</span>
-                    <span className="text-sm text-muted-stone">{t('analytics.partyOf', { size: prediction.party_size })}</span>
                   </div>
-                  <div className="flex items-center gap-4 mt-2 text-sm text-muted-stone">
-                    <span className="font-mono text-[13px]">
-                      {parseLocalDate(prediction.date).toLocaleDateString()} {prediction.time}
+                  <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-muted-stone">
+                    <span>
+                      {readableDate(prediction.date)} · {prediction.time?.slice(0, 5) || '—'}
                     </span>
+                    <span>{t('analytics.partyOf', { size: prediction.party_size })}</span>
                     <span>
                       {prediction.days_until === 0 ? t('analytics.todayLabel') : prediction.days_until === 1 ? t('analytics.tomorrowLabel') : t('analytics.inDays', { days: prediction.days_until })}
                     </span>
@@ -141,7 +164,7 @@ export default function NoShowPredictions() {
                     {(prediction.recommendations ?? []).map((rec, idx) => (
                       <li key={idx} className="flex items-start gap-2 text-[15px] text-deep-charcoal">
                         <span className="text-burgundy mt-0.5" aria-hidden="true">&bull;</span>
-                        <span>{rec}</span>
+                        <span>{RECOMMENDATION_I18N[language]?.[rec] ?? rec}</span>
                       </li>
                     ))}
                   </ul>
@@ -154,7 +177,7 @@ export default function NoShowPredictions() {
 
       <p className="flex items-center gap-2 text-xs text-muted-stone pt-4">
         <ThiingsIcon name="info" pxSize={14} />
-        <span>{t('analytics.predictionsFooter')}</span>
+        <span>{t('analytics.predictionsLimits', 'The list shows up to 10 highest-scoring reservations. Scores are decision support and do not confirm a future no-show.')}</span>
       </p>
     </section>
   );

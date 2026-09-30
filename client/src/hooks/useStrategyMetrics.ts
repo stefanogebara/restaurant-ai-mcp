@@ -6,6 +6,7 @@ export interface MetricSummary {
   avg_revenue_per_cover: number | null;
   conversion_rate: number | null;
   total_reservations: number;
+  no_show_sample_size?: number;
   data_points: number;
 }
 

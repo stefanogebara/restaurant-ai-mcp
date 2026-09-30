@@ -84,11 +84,12 @@ interface CampaignInput {
   customerId: string;
   campaignType: string;
   message: string;
+  language: string;
 }
 
 export function useSendCampaign() {
   return useMutation<void, Error, CampaignInput>({
-    mutationFn: async ({ customerId, campaignType, message }) => {
+    mutationFn: async ({ customerId, campaignType, message, language }) => {
       const response = await authFetch('/api/retention-campaigns?action=create', {
         method: 'POST',
         body: JSON.stringify({
@@ -96,6 +97,7 @@ export function useSendCampaign() {
           campaign_type: campaignType,
           message,
           channel: 'email',
+          language,
         }),
       });
       if (!response.ok) throw new Error('Failed to create campaign');

@@ -1,3 +1,26 @@
+# Reforma da plataforma interna — primeira entrega (30/set/2026)
+
+**Referência travada:** casos oficiais da RON Design Lab (Spacetihq: mapa operacional; GeoTab: exceções na linha do tempo; Sisense: IA ligada à evidência), adaptados às fontes, cores semânticas e regra de conteúdo no canvas do `DESIGN.md`. Não copiar azul, 3D decorativo ou cards em todas as métricas.
+
+- [x] Auditar ao vivo Painel, Insights e Voz em uma conta autenticada, sem alterar dados do restaurante.
+- [x] Isolar o trabalho da árvore principal com alterações concorrentes.
+- [x] Redesenhar a visão geral de Insights como briefing e decisões, sem a grade de cards vazios.
+- [x] Corrigir os números rotulados como “hoje”, distinguir a lista de cinco clientes do total, e revisar a entrega do e-mail individual.
+- [x] Verificar os estados vazio/carregando/erro, navegação e responsividade por screenshot e interação em 320–1440 px.
+- [x] Corrigir a apresentação enganosa da aba Análises: períodos misturados, taxa de no-show inválida, receita estimada fora do período e prognósticos sem base.
+- [x] Executar build, testes focados e testes de regressão aplicáveis.
+- [ ] Obter 9/10 ou mais em crítica independente baseada apenas nas capturas; não tratar a direção atual como aprovação final.
+- [ ] Testar Eleven v4 Turbo num restaurante de teste, com PT-BR/ES, interrupções, reserva completa, custo e rollback antes de qualquer migração.
+- [ ] Aplicar a linguagem aprovada ao shell, Painel, Voz e demais páginas em entregas separadas.
+
+**Achados da auditoria:** Insights mostra uma área vazia enorme quando não há reservas de risco e mistura o resumo de hoje com previsões futuras; a lista de clientes mostra cinco destaques, mas outra métrica da mesma página pode contar mais clientes no total, sem explicar o recorte. O botão “Enviar” não indica que abre uma revisão de e-mail; o texto inicial do e-mail está em inglês mesmo na interface PT-BR. Em Voz, controles de velocidade/estilo existentes não devem ser assumidos compatíveis com `eleven_v4_turbo`. O Google OAuth exibe links de privacidade/termos de outro domínio na escolha de conta — requer auditoria de configuração antes de mudar.
+
+**Decisões:** briefing ocupa uma faixa de conteúdo no canvas; agrupamentos interativos (lista e formulário) podem usar superfície discreta. Cor ocre identifica previsão, verde confirma estado bom, vinho fica em ações. Não executar envio de campanhas nem mudanças de voz na conta real durante a auditoria.
+
+**Revisão da primeira entrega:** a visão geral e a aba Análises foram reestruturadas em uma árvore isolada. Scores heurísticos de risco agora aparecem como pontos de 0 a 100, não como probabilidades; e-mails de recuperação incluem idioma e descadastro e só reportam sucesso depois da aceitação pelo provedor. A aba Análises separa período selecionado, ocupação ao vivo, histórico de mesas, risco dos próximos sete dias e hipóteses de receita; o gráfico de status minúsculo foi substituído por uma distribuição legível. A suíte completa passou: 4.248 testes backend e 1.011 frontend, build, sintaxe de APIs, lint focado e `git diff --check`. Capturas sintéticas em desktop/celular e interações em 320, 390, 768 e 1440 px não tiveram erros de página ou overflow. A melhor crítica da visão geral foi 8,2/10, a última 8,0/10; a aba Análises melhorou de 6,6 para 7,2/10. Uma PR de rascunho pode facilitar a revisão, mas produção e migração da voz seguem bloqueadas pela revisão visual e por testes de integração específicos.
+
+---
+
 # Hero na paleta das demonstrações (25/set/2026)
 
 - [x] Fixar a direção: papel quente `#f3f0e9`, tinta oliva `#293222`, verde de ação `#3f4e32`; manter logo e tipografia.

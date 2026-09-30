@@ -1505,3 +1505,6 @@ não em digitação.
 ## 2026-09-25 — O herói precisa herdar a linguagem das demonstrações
 
 O herói fotográfico foi aprovado isoladamente, mas ficou cromaticamente separado das demonstrações em papel quente e verde-oliva. A correção do usuário mostrou que avaliar a primeira dobra sozinha não basta. Antes de publicar uma landing, comparar herói, demonstração e cartão social no mesmo fluxo; compartilhar tokens de papel, tinta, ação e linha; e verificar a passagem entre seções em desktop e celular. A foto deve mostrar um detalhe da reserva que a interface realmente carrega, sem repetir a mesma fala na seção seguinte.
+## 2026-09-30 — Redesign não pode aumentar a confiança em números errados
+
+A revisão de Insights mostrou pontuações heurísticas 0–100 com `%`, uma taxa de faltas cujo denominador incluía reservas futuras e uma aba Análises que misturava período selecionado, histórico total e previsões. Melhorar a tipografia antes de conferir origem, janela temporal e significado desses números teria feito a informação falsa parecer mais confiável. Regra: para cada métrica redesenhada, registrar numerador, denominador, fuso, horizonte e natureza (observação, estimativa ou score); só então escolher visualização e rótulo. Se a fonte não sustenta uma probabilidade ou projeção financeira, mostrar score ou hipótese com limite explícito.

@@ -18,7 +18,7 @@ const LOADING_TIMEOUT_MS = 10_000;
 const init30d = presetToRange('30d');
 
 export default function AnalyticsTab() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [dateRange, setDateRange] = useState<DateRangeValue>({ preset: '30d', ...init30d });
   const [includeExport, setIncludeExport] = useState(false);
   const [loadingTimedOut, setLoadingTimedOut] = useState(false);
@@ -29,6 +29,11 @@ export default function AnalyticsTab() {
     endDate: dateRange.endDate,
     includeExport,
   });
+  const dateLabel = (date: string) => new Intl.DateTimeFormat(i18n.language, {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).format(new Date(`${date}T12:00:00`));
 
   // Once the export-enriched payload (raw_reservations) has arrived, capture
   // it into separate state and drop the includeExport flag — otherwise it
@@ -84,7 +89,7 @@ export default function AnalyticsTab() {
   }
 
   return (
-    <div className="space-y-10 sm:space-y-16">
+    <div className="space-y-8 sm:space-y-10">
       {/* Upgrade banner for canceled/expired subscriptions */}
       {(data.upgrade_required || data.no_restaurant) && (
         <div className="bg-amber-50 border border-amber-200 rounded-xl px-5 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
@@ -103,14 +108,13 @@ export default function AnalyticsTab() {
         </div>
       )}
 
-      {/* Controls */}
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-        <h2 className="font-serif text-[26px] sm:text-[30px] leading-none text-deep-charcoal">
-          {t('analytics.title')}
-        </h2>
-        <div className="flex flex-col sm:items-end gap-2">
-          <DateRangePicker value={dateRange} onChange={setDateRange} />
-          <div className="self-end">
+      {/* One period summary, with filters immediately alongside it. */}
+      <div className="space-y-4 border-b hairline pb-5">
+        <div className="flex items-start justify-between gap-4">
+          <h2 className="font-serif text-[26px] sm:text-[30px] leading-none text-deep-charcoal">
+            {t('analytics.title')}
+          </h2>
+          <div className="shrink-0">
             <ExportDropdown
               data={{ ...data, raw_reservations: data.raw_reservations ?? exportReservations }}
               dateLabel={`${dateRange.startDate}_${dateRange.endDate}`}
@@ -119,30 +123,46 @@ export default function AnalyticsTab() {
             />
           </div>
         </div>
+        <p className="text-[14px] leading-snug text-muted-stone">
+          <span className="font-medium text-deep-charcoal">{dateLabel(dateRange.startDate)} — {dateLabel(dateRange.endDate)}</span>
+          <span className="hidden md:inline"> · {t('analytics.selectedPeriodDesc', 'Reservation dates and recorded bills in this range.')}</span>
+        </p>
+        <DateRangePicker value={dateRange} onChange={range => {
+          setDateRange(range);
+          setExportReservations(undefined);
+          setIncludeExport(false);
+        }} />
       </div>
 
       {/* Stats */}
       <AnalyticsStats overview={data.overview} reservationsByStatus={data.reservations_by_status} />
 
-      {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Trend establishes the period; comparisons follow it. */}
+      <div>
         <ReservationTrendChart dailyTrend={data.daily_trend} />
-        <DayOfWeekChart reservationsByDay={data.reservations_by_day} />
       </div>
 
-      {/* Bottom Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <TableUtilizationHeatmap tableUtilization={data.table_utilization ?? []} />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <DayOfWeekChart reservationsByDay={data.reservations_by_day} />
         <PeakHoursChart reservationsByTimeSlot={data.reservations_by_time_slot} />
       </div>
 
-      {/* AI Insights */}
-      <NoShowPredictions />
-
-      {/* Status Breakdown */}
       <StatusBreakdownPie reservationsByStatus={data.reservations_by_status} />
 
-      {/* Revenue Opportunities */}
+      <div className="border-b hairline pb-4 pt-3">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-stone">
+          {t('analytics.outsidePeriodSection', 'Other timeframes')}
+        </p>
+        <h3 className="font-serif text-[26px] sm:text-[30px] leading-tight text-deep-charcoal mt-1">
+          {t('analytics.additionalSignals', 'Signals beyond the date filter')}
+        </h3>
+        <p className="text-[13px] text-muted-stone mt-1 max-w-2xl">
+          {t('analytics.additionalSignalsDesc', 'Table-use history, upcoming risk and revenue hypotheses use their own timeframes. Changing the period above does not update them.')}
+        </p>
+      </div>
+
+      <TableUtilizationHeatmap tableUtilization={data.table_utilization ?? []} />
+      <NoShowPredictions />
       <RevenueOpportunities />
     </div>
   );

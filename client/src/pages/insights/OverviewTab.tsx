@@ -33,19 +33,15 @@ export default function OverviewTab() {
 
   if (isBrandNew) {
     return (
-      <div className="text-center py-16 max-w-lg mx-auto">
-        <div className="mx-auto mb-4 w-12 h-12 rounded-full bg-burgundy/10 flex items-center justify-center">
-          <svg className="w-6 h-6 text-burgundy" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-          </svg>
-        </div>
-        <h2 className="text-base font-semibold text-deep-charcoal mb-1">
+      <section className="mx-auto max-w-2xl border-t hairline py-12 sm:py-20">
+        <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">{t('insights.pageTitle')}</p>
+        <h2 className="mt-3 font-serif text-3xl sm:text-4xl text-deep-charcoal">
           {t('insights.emptyTitle', 'Seus insights aparecem após as primeiras reservas')}
         </h2>
-        <p className="text-sm text-stone-500 leading-relaxed mb-6">
+        <p className="mt-4 text-[15px] text-muted-stone leading-relaxed max-w-lg">
           {t('insights.emptyHint', 'Briefing da noite, inteligência de clientes, previsão semanal — tudo isso é calculado a partir do histórico do seu restaurante. Compartilhe seu link de reservas ou adicione um walk-in para começar a ver dados aqui.')}
         </p>
-        <div className="flex flex-wrap items-center justify-center gap-3">
+        <div className="mt-7 flex flex-wrap items-center gap-3">
           <Link
             to="/host-dashboard/simple"
             className="inline-flex items-center px-5 py-2.5 rounded-full bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold transition-colors"
@@ -59,38 +55,31 @@ export default function OverviewTab() {
             {t('insights.emptyConfigure', 'Configurar restaurante')}
           </Link>
         </div>
-      </div>
+      </section>
     );
   }
 
   return (
-    <>
-      {/* 2x2 grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <div className="space-y-3 sm:space-y-5">
+      <div>
         <TonightBriefingCard />
-        <CustomerIntelligenceCard />
-        <WeeklyForecastCard />
       </div>
 
-      {/* Strategy Scorecard */}
-      <div className="border-t border-[#E7E5E4] mt-8 mb-8" />
-      <div className="mt-6">
-        <StrategyMetricsWidget />
-        <div className="mt-2 flex justify-end">
-          <Link
-            to="/host-dashboard/voice-settings"
-            className="text-xs text-muted-stone hover:text-burgundy transition-colors"
-          >
-            {t('insights.editStrategy', 'Edit AI strategy document')} →
-          </Link>
+      <section aria-labelledby="customers-overview-title" className="pt-1 sm:pt-3">
+        <h2 id="customers-overview-title" className="font-serif text-[27px] leading-none text-deep-charcoal sm:text-[31px]">
+          {t('insights.customerSection')}
+        </h2>
+        <div className="mt-3 grid grid-cols-1 gap-3 sm:mt-5 sm:gap-9 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
+          <CustomerIntelligenceCard />
+          <WeeklyForecastCard />
         </div>
-      </div>
+      </section>
 
-      {/* WhatsApp Campaigns */}
-      <div className="border-t border-[#E7E5E4] mt-8 mb-8" />
-      <div className="mt-6">
-        <CampaignManager />
-      </div>
-    </>
+      <section className="pt-1 sm:pt-3">
+        <StrategyMetricsWidget />
+      </section>
+
+      <CampaignManager />
+    </div>
   );
 }

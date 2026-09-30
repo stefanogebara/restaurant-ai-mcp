@@ -1,206 +1,77 @@
-import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { authFetch } from '../../services/api';
-import { useRevenueStats } from '../../hooks/useRevenueStats';
 import { formatCurrency } from '../../utils/currency';
 
 interface AnalyticsStatsProps {
   overview: {
     total_reservations: number;
-    total_completed_services: number;
     total_revenue?: number;
     avg_party_size: number;
-    avg_service_time_minutes: number;
-    total_capacity: number;
-    current_occupancy: number;
     current_occupancy_percentage: string;
   };
   reservationsByStatus: Record<string, number>;
 }
 
-interface CompareData {
-  period_a: { reservations: number; covers: number; no_shows: number; cancelled: number; avg_party_size: number };
-  period_b: { reservations: number; covers: number; no_shows: number; cancelled: number; avg_party_size: number };
-  delta: { covers: number; reservations: number; covers_pct: number | null; reservations_pct: number | null };
-}
-
-function formatDelta(pct: number | null): string {
-  if (pct === null || pct === undefined) return '';
-  const sign = pct > 0 ? '+' : '';
-  return `${sign}${pct.toFixed(1)}%`;
-}
-
-function DeltaBadge({ pct, invertColor = false }: { pct: number | null; invertColor?: boolean }) {
-  if (pct === null || pct === undefined) return null;
-  const isPositive = pct > 0;
-  const isNeutral = Math.abs(pct) < 0.1;
-  // "Bom" depende da métrica: mais reservas é bom, mais no-shows é ruim —
-  // daí o invertColor. Tokens quentes do DESIGN.md, nada de green-600 cru.
-  const colorClass = isNeutral
-    ? 'text-muted-stone'
-    : (isPositive !== invertColor ? 'text-emerald-700' : 'text-red-700');
-  return (
-    <span className={`inline-flex items-center gap-0.5 text-xs font-medium ${colorClass}`}>
-      {!isNeutral && (
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-          strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"
-          className={isPositive ? '' : 'rotate-180'}>
-          <path d="M12 19V5" /><path d="M5 12l7-7 7 7" />
-        </svg>
-      )}
-      {formatDelta(pct)}
-    </span>
-  );
-}
-
 export default function AnalyticsStats({ overview, reservationsByStatus }: AnalyticsStatsProps) {
   const { t } = useTranslation();
-  const { data: revenueStats } = useRevenueStats();
+  const total = overview.total_reservations;
+  const noShows = (reservationsByStatus['no-show'] ?? 0) + (reservationsByStatus.no_show ?? 0);
+  const cancelled = reservationsByStatus.cancelled ?? 0;
+  const share = (count: number) => total > 0 ? `${((count / total) * 100).toFixed(1)}%` : '—';
 
-  const { data: compare } = useQuery<CompareData>({
-    queryKey: ['analytics-compare'],
-    queryFn: async () => {
-      const res = await authFetch('/api/analytics/compare?period_a=last_week&period_b=this_week');
-      // Throw, don't `return null` — a queryFn returning null is treated by
-      // React Query as a successful result, so it never retries and isError
-      // never fires. The week-over-week delta badges would silently vanish
-      // forever after one transient failure.
-      if (!res.ok) throw new Error('Failed to fetch comparison data');
-      const json = await res.json();
-      if (!json.success) throw new Error(json.error || 'Failed to fetch comparison data');
-      return json as CompareData;
-    },
-    staleTime: 5 * 60 * 1000,
-  });
-
-  // No-show rate
-  const MIN_SAMPLE_SIZE = 5;
-  const hasEnoughData = overview.total_reservations >= MIN_SAMPLE_SIZE;
-  const hasCompletedServices = overview.total_completed_services > 0;
-  const noShowRate = (hasEnoughData && hasCompletedServices)
-    ? ((1 - overview.total_completed_services / overview.total_reservations) * 100).toFixed(1)
-    : null;
-  const noShowTooltip = !hasCompletedServices
-    ? t('analytics.noShowNoData', 'Complete a service to track no-show rate')
-    : (!hasEnoughData ? t('analytics.noShowNotEnoughData', 'Need at least 5 reservations') : undefined);
-
-  const noShowDelta = (() => {
-    if (!compare?.period_a || !compare?.period_b) return null;
-    const rateA = compare.period_a.reservations > 0
-      ? (compare.period_a.no_shows / compare.period_a.reservations) * 100 : null;
-    const rateB = compare.period_b.reservations > 0
-      ? (compare.period_b.no_shows / compare.period_b.reservations) * 100 : null;
-    if (rateA === null || rateB === null) return null;
-    return Math.round((rateB - rateA) * 10) / 10;
-  })();
-
-  // Cancellation rate from status breakdown
-  const cancelled = reservationsByStatus['cancelled'] ?? 0;
-  const cancellationRate = overview.total_reservations >= MIN_SAMPLE_SIZE
-    ? ((cancelled / overview.total_reservations) * 100).toFixed(1)
-    : null;
-
-  const cancellationDelta = (() => {
-    if (!compare?.period_a || !compare?.period_b) return null;
-    const rateA = compare.period_a.reservations > 0
-      ? (compare.period_a.cancelled / compare.period_a.reservations) * 100 : null;
-    const rateB = compare.period_b.reservations > 0
-      ? (compare.period_b.cancelled / compare.period_b.reservations) * 100 : null;
-    if (rateA === null || rateB === null) return null;
-    return Math.round((rateB - rateA) * 10) / 10;
-  })();
-
-  // Prefer server-reported actual revenue from service_records total_bill;
-  // fall back to estimated revenue from avg_spend_per_cover when no bills recorded.
-  const actualRevenue = overview.total_revenue;
-  const estimatedRevenue = (actualRevenue && actualRevenue > 0)
-    ? actualRevenue
-    : (revenueStats && overview.total_completed_services > 0
-        ? revenueStats.avg_spend_per_cover * overview.total_completed_services * overview.avg_party_size
-        : null);
-
+  // The endpoint returns revenue from recorded bills in the selected period.
+  // Its service count, by contrast, is all-time, so it cannot estimate missing
+  // period revenue. Show the recorded amount only; zero means no bills recorded.
+  const recordedRevenue = overview.total_revenue;
   const stats = [
     {
-      value: overview.total_reservations,
+      value: total,
       label: t('analytics.totalReservations'),
-      delta: compare?.delta?.reservations_pct ?? null,
-      invertColor: false,
-      subtitle: undefined as string | undefined,
+      detail: undefined as string | undefined,
+      tone: 'text-deep-charcoal',
     },
     {
-      value: noShowRate !== null ? `${noShowRate}%` : '\u2014',
-      label: t('analytics.noShowRate'),
-      color: noShowRate !== null && parseFloat(noShowRate) > 5 ? 'text-red-700' : undefined,
-      tooltip: noShowTooltip,
-      delta: noShowDelta,
-      invertColor: true,
-      subtitle: undefined,
+      value: share(noShows),
+      label: t('analytics.recordedNoShowShare', 'Marked no-show'),
+      detail: t('analytics.statusShareNote', 'Share of reservations in this period'),
+      tone: noShows > 0 ? 'text-red-700' : 'text-deep-charcoal',
     },
     {
-      value: cancellationRate !== null ? `${cancellationRate}%` : '\u2014',
-      label: t('analytics.cancellationRate', 'Cancellation Rate'),
-      color: cancellationRate !== null && parseFloat(cancellationRate) > 15 ? 'text-amber-700' : undefined,
-      tooltip: cancellationRate === null
-        ? t('analytics.noShowNotEnoughData', 'Need at least 5 reservations')
-        : undefined,
-      delta: cancellationDelta,
-      invertColor: true,
-      subtitle: cancelled > 0 ? t('analytics.cancellationCount', '{{n}} cancelled', { n: cancelled }) : undefined,
+      value: share(cancelled),
+      label: t('analytics.recordedCancellationShare', 'Cancelled'),
+      detail: t('analytics.statusShareNote', 'Share of reservations in this period'),
+      tone: cancelled > 0 ? 'text-amber-700' : 'text-deep-charcoal',
     },
     {
-      value: estimatedRevenue !== null
-        ? formatCurrency(estimatedRevenue)
-        : '\u2014',
-      label: t('analytics.estimatedRevenue', 'Est. Revenue'),
-      color: 'text-burgundy',
-      delta: null,
-      invertColor: false,
-      subtitle: revenueStats?.using_default
-        ? t('analytics.revenueEstimate', 'Based on avg spend')
-        : undefined,
+      value: recordedRevenue === undefined ? '—' : formatCurrency(recordedRevenue),
+      label: t('analytics.recordedRevenue', 'Recorded revenue'),
+      detail: t('analytics.recordedRevenueNote', 'Bills recorded in this period'),
+      tone: 'text-deep-charcoal',
     },
     {
-      value: overview.avg_party_size.toFixed(1),
+      value: total > 0 ? overview.avg_party_size.toFixed(1) : '—',
       label: t('analytics.averagePartySize'),
-      delta: null,
-      invertColor: false,
-      subtitle: undefined,
+      detail: undefined,
+      tone: 'text-deep-charcoal',
     },
     {
       value: `${overview.current_occupancy_percentage}%`,
-      label: t('analytics.occupancyRate'),
-      color: 'text-burgundy',
-      delta: null,
-      invertColor: false,
-      subtitle: undefined,
+      label: t('analytics.currentOccupancy', 'Occupancy now'),
+      detail: t('analytics.outsideSelectedPeriod', 'Live · outside the date filter'),
+      tone: 'text-deep-charcoal',
     },
   ];
 
   return (
-    <section className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6 sm:gap-8 border-y hairline py-7 sm:py-9">
+    <section className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-x-6 gap-y-7 sm:gap-x-8 border-y hairline py-7 sm:py-9" aria-label={t('analytics.periodOverview', 'Period overview')}>
       {stats.map((stat) => (
         <div key={stat.label}>
-          <p
-            className={`font-serif text-[30px] sm:text-[34px] leading-none tabular-nums ${stat.color || 'text-deep-charcoal'}`}
-            title={stat.tooltip}
-          >
+          <p className={`text-[29px] sm:text-[32px] leading-none tracking-[-0.035em] tabular-nums ${stat.tone}`}>
             {stat.value}
           </p>
-          <p className="text-[12px] uppercase tracking-[0.12em] text-muted-stone mt-3">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-stone mt-3">
             {stat.label}
           </p>
-          {stat.delta !== null && (
-            <p className="mt-1.5 flex items-center gap-1">
-              <DeltaBadge pct={stat.delta} invertColor={stat.invertColor} />
-              <span className="text-[10px] text-muted-stone">{t('analytics.vsPrevWeek')}</span>
-            </p>
-          )}
-          {stat.subtitle && (
-            <p className="text-[10px] text-muted-stone mt-1">{stat.subtitle}</p>
-          )}
-          {stat.tooltip && stat.value === '\u2014' && (
-            <p className="text-[10px] text-muted-stone mt-1">{stat.tooltip}</p>
-          )}
+          {stat.detail && <p className="text-[11px] leading-snug text-muted-stone mt-1.5">{stat.detail}</p>}
         </div>
       ))}
     </section>

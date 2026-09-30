@@ -429,6 +429,24 @@ function buildSystemPrompt(memories, snapshot, config, wikiPages = [], dateInfo 
     }
   }
 
+  // The only executable tool in this agent is compare_periods. The snapshot
+  // and memories are read context, not evidence that a requested write ran.
+  // Keep this boundary explicit after retrieved knowledge so stale memories or
+  // past conversation cannot make the assistant promise operational changes.
+  if (isPT) {
+    systemPrompt +=
+      '\n\n## Limite de capacidade operacional\n' +
+      'Voce pode consultar os dados fornecidos, comparar periodos e orientar o gerente. Nesta conversa, voce NAO tem ferramenta para criar, alterar, confirmar ou cancelar reservas, agendar tarefas nem avisar a equipe ou clientes. Nunca diga ou sugira que fez, registrou, agendou, anotou para a equipe ou enviou algo sem um resultado de ferramenta que confirme essa acao especifica. O resultado de compare_periods confirma apenas a comparacao, nunca uma alteracao. Se o gerente pedir uma dessas acoes, diga claramente que nao pode executa-la aqui, indique a tela apropriada de reservas no painel quando for o caso e ofereca ajuda para preparar os detalhes; nao prometa executar depois.\n';
+  } else if (isES) {
+    systemPrompt +=
+      '\n\n## Limite de capacidad operativa\n' +
+      'Puedes consultar los datos proporcionados, comparar periodos y asesorar al gerente. En esta conversacion NO tienes una herramienta para crear, modificar, confirmar o cancelar reservas, programar tareas ni avisar al personal o a los clientes. Nunca afirmes ni insinues que hiciste, registraste, programaste, anotaste para el equipo o enviaste algo sin un resultado de herramienta que confirme esa accion concreta. El resultado de compare_periods solo confirma la comparacion, no un cambio. Si el gerente pide una de estas acciones, explica claramente que no puedes ejecutarla aqui, indicale la pantalla de reservas del panel cuando corresponda y ofrece ayuda para preparar los datos; no prometas hacerlo despues.\n';
+  } else {
+    systemPrompt +=
+      '\n\n## Operational capability boundary\n' +
+      'You may read the supplied context, compare periods, and advise the manager. In this conversation you have NO tool to create, change, confirm, or cancel reservations, schedule tasks, or notify staff or guests. Never claim or imply you completed, recorded, scheduled, noted for staff, or sent anything unless a tool result confirms that specific action. A compare_periods result confirms only the comparison, never a write. If asked to take one of these actions, clearly say you cannot execute it here, direct the manager to the relevant reservations screen when appropriate, and offer to help prepare the details; do not promise to do it later.\n';
+  }
+
   // Response style rules — written in the target language for maximum compliance
   if (isPT) {
     systemPrompt +=

@@ -7,16 +7,16 @@ describe('presetToRange', () => {
     expect(startDate).toBe(endDate);
   });
 
-  it('7d: 7-day gap', () => {
+  it('7d: seven calendar dates including today', () => {
     const { startDate, endDate } = presetToRange('7d');
     const diff = (new Date(endDate).getTime() - new Date(startDate).getTime()) / 86400000;
-    expect(diff).toBe(7);
+    expect(diff).toBe(6);
   });
 
-  it('30d: 30-day gap', () => {
+  it('30d: thirty calendar dates including today', () => {
     const { startDate, endDate } = presetToRange('30d');
     const diff = (new Date(endDate).getTime() - new Date(startDate).getTime()) / 86400000;
-    expect(diff).toBe(30);
+    expect(diff).toBe(29);
   });
 
   it('this_month: starts on day 1', () => {
