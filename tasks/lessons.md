@@ -1516,3 +1516,6 @@ O contador de espera do Painel lia `waitlist_count` de um resumo que nunca entre
 ## 2026-09-30 — Não prometer sincronização futura sem fila de replay
 
 A API de Voz respondia sucesso quando a ElevenLabs rejeitava uma alteração e dizia que o ajuste estava salvo localmente para aplicação posterior. O banco só guardava `voice_id` e idioma; modelo e afinação não eram persistidos, e não havia processo de replay. Regra: sucesso de configuração externa exige confirmação do destino ou um mecanismo real de entrega posterior com estado visível. Em falha parcial, expor a parcialidade e conservar a edição do usuário para nova tentativa; nunca mascarar rejeição como “salvo”.
+## 2026-09-30 — Preview entregue precisa sobreviver à limpeza
+
+Enviei um link para `client/insights-audit.html` depois de apagar o harness temporário, e o usuário recebeu `ERR_FILE_NOT_FOUND`. Antes de compartilhar uma prévia, confirmar que o arquivo ainda existe e abrir o endereço exato no navegador. Se a revisão precisa continuar disponível, manter um artefato autônomo versionado ou usar o endereço da prévia do PR; não apontar para `/tmp` nem prometer que um `file://` abrirá no navegador embutido. Distinguir claramente capturas sintéticas de uma experiência funcional.

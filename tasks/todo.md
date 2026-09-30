@@ -20,6 +20,7 @@
 - [ ] A API padrão da fila ainda trunca históricos aos 100 mais antigos; paginar a lista sem quebrar os filtros.
 - [x] Impedir que Voz reporte “salvo localmente, sincronizará depois” sem persistência/replay dos ajustes; só confirmar após aceitação da ElevenLabs.
 - [ ] Tornar os erros da API de Voz localizados na interface e testar falha parcial de sincronização na experiência completa.
+- [x] Restaurar e versionar `client/insights-audit.html` como revisão estática autônoma; conferir o endereço local, abas e formatos antes de compartilhá-lo.
 
 **Achados da auditoria:** Insights mostra uma área vazia enorme quando não há reservas de risco e mistura o resumo de hoje com previsões futuras; a lista de clientes mostra cinco destaques, mas outra métrica da mesma página pode contar mais clientes no total, sem explicar o recorte. O botão “Enviar” não indica que abre uma revisão de e-mail; o texto inicial do e-mail está em inglês mesmo na interface PT-BR. Em Voz, controles de velocidade/estilo existentes não devem ser assumidos compatíveis com `eleven_v4_turbo`. O Google OAuth exibe links de privacidade/termos de outro domínio na escolha de conta — requer auditoria de configuração antes de mudar.
 
@@ -40,6 +41,8 @@
 **Decisões:** briefing ocupa uma faixa de conteúdo no canvas; agrupamentos interativos (lista e formulário) podem usar superfície discreta. Cor ocre identifica previsão, verde confirma estado bom, vinho fica em ações. Não executar envio de campanhas nem mudanças de voz na conta real durante a auditoria.
 
 **Revisão da primeira entrega:** a visão geral e a aba Análises foram reestruturadas em uma árvore isolada. Scores heurísticos de risco agora aparecem como pontos de 0 a 100, não como probabilidades; e-mails de recuperação incluem idioma e descadastro e só reportam sucesso depois da aceitação pelo provedor. A aba Análises separa período selecionado, ocupação ao vivo, histórico de mesas, risco dos próximos sete dias e hipóteses de receita; o gráfico de status minúsculo foi substituído por uma distribuição legível. A suíte completa passou: 4.248 testes backend e 1.011 frontend, build, sintaxe de APIs, lint focado e `git diff --check`. Capturas sintéticas em desktop/celular e interações em 320, 390, 768 e 1440 px não tiveram erros de página ou overflow. A melhor crítica da visão geral foi 8,2/10, a última 8,0/10; a aba Análises melhorou de 6,6 para 7,2/10. Uma PR de rascunho pode facilitar a revisão, mas produção e migração da voz seguem bloqueadas pela revisão visual e por testes de integração específicos.
+
+**Correção do link de revisão:** `client/insights-audit.html` havia sido apagado como harness temporário. Foi recriado como um único HTML com quatro capturas sintéticas incorporadas, rótulos claros e abas Visão Geral/Análises e Desktop/Celular. O endereço HTTP local respondeu 200 e as trocas foram verificadas visualmente; a página não executa ações do produto. O PR continua rascunho, sem aprovação visual de 9/10.
 
 ---
 
