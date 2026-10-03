@@ -140,7 +140,7 @@ export default function OverviewTab() {
         )}
       </section>
 
-      <CampaignManager appearance="hero" />
+      {hasCustomerAccess && <CampaignManager appearance="hero" />}
     </div>
   );
 }

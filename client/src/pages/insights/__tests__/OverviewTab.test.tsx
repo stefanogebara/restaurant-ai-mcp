@@ -74,6 +74,7 @@ describe('OverviewTab data states', () => {
     expect(screen.queryByText('forecast')).not.toBeInTheDocument();
     expect(screen.getAllByText('insights.locked_advancedAnalytics')).toHaveLength(1);
     expect(screen.queryByText('strategy')).not.toBeInTheDocument();
+    expect(screen.queryByText('campaigns')).not.toBeInTheDocument();
   });
 
   it('shows an error instead of a false new-restaurant claim when CRM fails', () => {
