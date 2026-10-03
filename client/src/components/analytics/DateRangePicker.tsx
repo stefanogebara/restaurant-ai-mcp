@@ -79,6 +79,9 @@ export default function DateRangePicker({ value, onChange }: Props) {
     { key: 'last_month', label: t('analytics.presets.lastMonth', 'Last month') },
     { key: 'custom',     label: t('analytics.presets.custom', 'Custom') },
   ];
+  const quickPresets = presets.filter(({ key }) => key === '7d' || key === '30d' || key === '90d');
+  const otherPresets = presets.filter(({ key }) => key !== '7d' && key !== '30d' && key !== '90d');
+  const otherSelected = otherPresets.some(({ key }) => key === value.preset);
 
   return (
     <div className="min-w-0 w-full">
@@ -86,27 +89,36 @@ export default function DateRangePicker({ value, onChange }: Props) {
         aria-label={t('analytics.selectedPeriod')}
         value={value.preset}
         onChange={event => handle(event.target.value as DatePreset)}
-        className="min-h-[44px] w-full rounded-[100px] border border-deep-charcoal/10 bg-white/75 px-4 text-[13px] font-medium text-deep-charcoal sm:hidden"
+        className="min-h-[44px] w-full rounded-[100px] border border-brand-line bg-transparent px-4 font-brand text-[13px] font-medium text-brand-ink sm:hidden"
       >
         {presets.map(({ key, label }) => <option key={key} value={key}>{label}</option>)}
       </select>
       <div className="hidden overflow-x-auto pb-1 sm:block" role="group" aria-label={t('analytics.selectedPeriod')}>
-        <div className="flex w-max min-w-full items-center gap-1.5">
-          {presets.map(({ key, label }) => (
+        <div className="flex w-max min-w-full items-center gap-1">
+          {quickPresets.map(({ key, label }) => (
             <button
               key={key}
               type="button"
               onClick={() => handle(key)}
               aria-pressed={value.preset === key}
-              className={`shrink-0 px-3.5 py-1.5 min-h-[44px] sm:min-h-[36px] rounded-[100px] text-[13px] font-medium transition-colors ${
+              className={`shrink-0 px-3.5 py-1.5 min-h-[44px] sm:min-h-[36px] rounded-[100px] font-brand text-[13px] font-medium transition-colors ${
                 value.preset === key
-                  ? 'bg-deep-charcoal text-white'
-                  : 'glass-pill border-deep-charcoal/10 bg-white/70 text-deep-charcoal hover:bg-white'
+                  ? 'bg-brand-action text-brand-paper'
+                  : 'text-brand-muted hover:bg-brand-ink/[0.06] hover:text-brand-ink'
               }`}
             >
               {label}
             </button>
           ))}
+          <select
+            aria-label={t('analytics.otherPeriods', 'Other periods')}
+            value={otherSelected ? value.preset : ''}
+            onChange={event => handle(event.target.value as DatePreset)}
+            className="min-h-[36px] rounded-[100px] border border-brand-line bg-transparent px-3 font-brand text-[13px] text-brand-ink focus-visible:outline-2 focus-visible:outline-brand-action"
+          >
+            <option value="" disabled>{t('analytics.otherPeriods', 'Other periods')}</option>
+            {otherPresets.map(({ key, label }) => <option key={key} value={key}>{label}</option>)}
+          </select>
         </div>
       </div>
       {value.preset === 'custom' && (
@@ -117,7 +129,7 @@ export default function DateRangePicker({ value, onChange }: Props) {
             value={value.startDate}
             max={value.endDate}
             onChange={e => { if (e.target.value) onChange({ ...value, startDate: e.target.value }); }}
-            className="min-w-0 w-full sm:w-auto px-3 py-1.5 min-h-[44px] glass-pill font-mono text-[13px] text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy"
+            className="min-w-0 w-full sm:w-auto rounded-lg border border-brand-line bg-transparent px-3 py-1.5 min-h-[44px] font-mono text-[13px] text-brand-ink focus:outline-none focus:ring-2 focus:ring-brand-action"
           />
           <span className="hidden sm:inline text-muted-stone text-sm" aria-hidden="true">&rarr;</span>
           <input
@@ -126,7 +138,7 @@ export default function DateRangePicker({ value, onChange }: Props) {
             value={value.endDate}
             min={value.startDate}
             onChange={e => { if (e.target.value) onChange({ ...value, endDate: e.target.value }); }}
-            className="min-w-0 w-full sm:w-auto px-3 py-1.5 min-h-[44px] glass-pill font-mono text-[13px] text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy"
+            className="min-w-0 w-full sm:w-auto rounded-lg border border-brand-line bg-transparent px-3 py-1.5 min-h-[44px] font-mono text-[13px] text-brand-ink focus:outline-none focus:ring-2 focus:ring-brand-action"
           />
         </div>
       )}

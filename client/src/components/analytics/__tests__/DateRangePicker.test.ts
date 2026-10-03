@@ -52,6 +52,17 @@ describe('formatPeriodLabel', () => {
 });
 
 describe('custom date inputs', () => {
+  it('keeps less-used periods available in the compact desktop control', () => {
+    const onChange = vi.fn();
+    render(createElement(DateRangePicker, {
+      value: { preset: '30d', startDate: '2026-09-01', endDate: '2026-09-30' },
+      onChange,
+    }));
+
+    fireEvent.change(screen.getByRole('combobox', { name: 'Other periods' }), { target: { value: 'this_month' } });
+    expect(onChange).toHaveBeenCalledWith({ preset: 'this_month', ...presetToRange('this_month') });
+  });
+
   it('keeps the applied range valid when a browser emits an empty date during editing', () => {
     const onChange = vi.fn();
     render(createElement(DateRangePicker, {

@@ -1519,3 +1519,8 @@ A API de Voz respondia sucesso quando a ElevenLabs rejeitava uma alteração e d
 ## 2026-09-30 — Preview entregue precisa sobreviver à limpeza
 
 Enviei um link para `client/insights-audit.html` depois de apagar o harness temporário, e o usuário recebeu `ERR_FILE_NOT_FOUND`. Antes de compartilhar uma prévia, confirmar que o arquivo ainda existe e abrir o endereço exato no navegador. Se a revisão precisa continuar disponível, manter um artefato autônomo versionado ou usar o endereço da prévia do PR; não apontar para `/tmp` nem prometer que um `file://` abrirá no navegador embutido. Distinguir claramente capturas sintéticas de uma experiência funcional.
+## 2026-10-03 — O produto não pode seguir uma marca visual diferente do hero aprovado
+
+O redesign de Insights melhorou precisão e estados vazios, mas continuou usando a antiga linguagem de DM Sans, burgundy, serif em todos os títulos, cards de gráfico e sidebar escura. O hero aprovado usa Instrument Sans como voz principal, Instrument Serif itálico de forma pontual, papel quente, verde-pinho e uma narrativa visual ligada ao restaurante. Uma tela pode passar testes e ainda parecer de outra empresa.
+
+Regra: antes de redesenhar outra página interna, capturar lado a lado o hero aprovado e a página real. Registrar no `DESIGN.md` quais tokens, papéis e padrões migram; atualizar a tela e o shell juntos em uma prévia isolada. Não aceitar uma nota visual crescente se ela mede apenas polimento interno e ignora a identidade da marca.

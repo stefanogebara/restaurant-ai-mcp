@@ -1,14 +1,6 @@
 import type { ReactNode } from 'react';
 
-/**
- * Cápsula de gráfico (Liquid Glass v2).
- *
- * "Vidro é para objetos, não para conteúdo" — um gráfico é objeto, então ele
- * mora numa cápsula de vidro; as métricas e listas ao redor vivem direto no
- * canvas. Os cinco gráficos das Análises repetiam o mesmo cabeçalho
- * (`overflow-hidden` + faixa com `border-b` + label uppercase em #1C1917
- * cru), cada um com sua cópia. Agora o shell é um só.
- */
+/** A quiet paper surface for the analytics plots; the metrics stay on the canvas. */
 interface ChartPanelProps {
   title: string;
   description?: ReactNode;
@@ -16,7 +8,7 @@ interface ChartPanelProps {
   badge?: ReactNode;
   /** Descrição para leitores de tela — vira role="img" no corpo do gráfico. */
   ariaLabel?: string;
-  /** Only the lead chart carries a soft depth cue. */
+  /** The lead plot gets a larger heading and more breathing room. */
   emphasis?: boolean;
   children: ReactNode;
 }
@@ -24,22 +16,19 @@ interface ChartPanelProps {
 export default function ChartPanel({ title, description, badge, ariaLabel, emphasis = false, children }: ChartPanelProps) {
   return (
     <section
-      className="glass-panel overflow-hidden"
-      style={emphasis
-        ? { borderRadius: 12, boxShadow: 'none', backgroundColor: 'rgba(255, 255, 255, 0.24)', borderColor: 'rgba(49, 42, 38, 0.08)' }
-        : { borderRadius: 16, boxShadow: 'none' }}
+      className={emphasis ? 'overflow-hidden bg-transparent' : 'overflow-hidden rounded-[14px] border border-brand-line bg-[#F8F6F0]'}
     >
-      <div className={`flex flex-wrap items-center justify-between gap-x-5 gap-y-2 px-4 sm:px-5 ${emphasis ? 'pb-0 pt-4 sm:pt-5' : 'border-b hairline py-3.5'}`}>
+      <div className={`flex flex-wrap gap-x-5 gap-y-2 ${emphasis ? 'flex-col items-start pb-0 pt-2 xl:pt-0' : 'items-center justify-between border-b border-brand-line px-4 py-3.5 sm:px-5'}`}>
         <div>
-          <h3 className={`leading-snug text-deep-charcoal ${emphasis ? 'font-serif text-[24px] sm:text-[27px]' : 'font-sans text-[14px] font-medium'}`}>
+          <h3 className={`font-brand leading-snug text-brand-ink ${emphasis ? 'text-[24px] tracking-tight sm:text-[27px]' : 'text-[14px] font-medium'}`}>
             {title}
           </h3>
-          {description && <p className="mt-0.5 text-[13px] text-muted-stone">{description}</p>}
+          {description && <p className="mt-0.5 text-[13px] text-brand-muted">{description}</p>}
         </div>
         {badge}
       </div>
       <div
-        className={emphasis ? 'px-2 pb-3 pt-2 sm:px-5 sm:pb-5' : 'p-4 sm:p-5'}
+        className={emphasis ? 'pb-2 pt-2' : 'p-4 sm:p-5'}
         {...(ariaLabel ? { role: 'img', 'aria-label': ariaLabel } : {})}
       >
         {children}

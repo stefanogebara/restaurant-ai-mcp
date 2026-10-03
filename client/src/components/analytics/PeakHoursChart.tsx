@@ -52,12 +52,12 @@ export default function PeakHoursChart({ reservationsByTimeSlot }: PeakHoursChar
           {chartData.map(({ time, count }) => (
             <div key={time} className="min-w-0">
               <div className="mb-1.5 flex items-baseline justify-between gap-3 text-[13px] leading-snug">
-                <span className="min-w-0 text-deep-charcoal">{time}</span>
-                <span className="shrink-0 font-medium tabular-nums text-deep-charcoal">{count}</span>
+                <span className="min-w-0 text-brand-ink">{time}</span>
+                <span className="shrink-0 font-medium tabular-nums text-brand-ink">{count}</span>
               </div>
-              <div className="h-2 overflow-hidden rounded-[100px] bg-deep-charcoal/[0.07]">
+              <div className="h-2 overflow-hidden rounded-[100px] bg-brand-ink/[0.08]">
                 <div
-                  className={`h-full rounded-[100px] ${count > 0 && count === maxCount ? 'bg-burgundy' : 'bg-stone-gray'}`}
+                  className={`h-full rounded-[100px] ${count > 0 && count === maxCount ? 'bg-brand-action' : 'bg-brand-line'}`}
                   style={{ width: `${maxCount > 0 ? (count / maxCount) * 100 : 0}%` }}
                 />
               </div>

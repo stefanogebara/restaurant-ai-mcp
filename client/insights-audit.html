@@ -5,33 +5,36 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
   <title>Seatable · revisão de Insights</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
   <style>
-    :root { color-scheme: light; font-family: Arial, Helvetica, sans-serif; color: #25211f; background: #f5f2ed; }
+    :root { color-scheme: light; font-family: 'Instrument Sans', Arial, sans-serif; color: #293222; background: #f3f0e9; }
     * { box-sizing: border-box; }
     body { margin: 0; }
-    header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem clamp(1rem, 3vw, 2.5rem); border-bottom: 1px solid #ded8d1; background: #faf8f5; }
-    .brand { font-family: Georgia, serif; font-size: 1.35rem; letter-spacing: -.04em; white-space: nowrap; }
-    .brand b { color: #9f1239; font-weight: normal; }
-    .eyebrow { color: #716a64; font-size: .76rem; text-transform: uppercase; letter-spacing: .09em; }
+    header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem clamp(1rem, 3vw, 2.5rem); border-bottom: 1px solid #cdd0c7; background: #f3f0e9; }
+    .brand { font-size: 1.35rem; letter-spacing: -.04em; white-space: nowrap; }
+    .brand em { font-family: 'Instrument Serif', Georgia, serif; font-size: 1.55rem; }
+    .eyebrow { color: #586254; font-size: .76rem; text-transform: uppercase; letter-spacing: .09em; }
     main { max-width: 1520px; margin: auto; padding: clamp(1rem, 3vw, 2.5rem); }
-    h1 { font-family: Georgia, serif; font-size: clamp(1.8rem, 3vw, 2.7rem); font-weight: normal; margin: .25rem 0 .4rem; }
-    p { color: #69615b; line-height: 1.5; max-width: 70ch; margin: 0 0 1.25rem; }
+    h1 { font-size: clamp(1.8rem, 3vw, 2.7rem); font-weight: normal; letter-spacing: -.05em; margin: .25rem 0 .4rem; }
+    p { color: #586254; line-height: 1.5; max-width: 70ch; margin: 0 0 1.25rem; }
     .controls { display: flex; flex-wrap: wrap; gap: .75rem; justify-content: space-between; margin: 1.5rem 0; }
-    .group { display: inline-flex; padding: .25rem; gap: .25rem; border: 1px solid #dcd6cf; border-radius: .75rem; background: #fff; }
-    button { border: 0; background: transparent; color: #6c625b; border-radius: .5rem; padding: .65rem .95rem; cursor: pointer; font: inherit; font-size: .9rem; }
-    button[aria-pressed="true"] { background: #292522; color: white; }
-    button:focus-visible, a:focus-visible { outline: 2px solid #9f1239; outline-offset: 2px; }
-    .frame { padding: 1rem; border: 1px solid #ded8d1; border-radius: 1.1rem; background: #fff; box-shadow: 0 14px 42px rgba(40, 31, 25, .07); overflow: auto; }
+    .group { display: inline-flex; padding: .25rem; gap: .25rem; border: 1px solid #cdd0c7; border-radius: 999px; background: transparent; }
+    button { border: 0; background: transparent; color: #586254; border-radius: 999px; padding: .65rem .95rem; cursor: pointer; font: inherit; font-size: .9rem; }
+    button[aria-pressed="true"] { background: #3f4e32; color: #f3f0e9; }
+    button:focus-visible, a:focus-visible { outline: 2px solid #3f4e32; outline-offset: 2px; }
+    .frame { padding: 1rem; border: 1px solid #cdd0c7; border-radius: .5rem; background: #f8f6f0; overflow: auto; }
     .frame img { display: block; width: 100%; height: auto; margin: 0 auto; }
     .frame.mobile img { max-width: 390px; }
     .note { margin-top: 1.2rem; font-size: .86rem; }
-    a { color: #9f1239; text-underline-offset: 3px; }
+    a { color: #3f4e32; text-underline-offset: 3px; }
     [hidden] { display: none !important; }
     @media (max-width: 620px) { header { align-items: flex-start; flex-direction: column; } .group { width: 100%; } button { flex: 1; } .frame { padding: .35rem; } }
   </style>
 </head>
 <body>
-  <header><span class="brand">seatable<b>.</b></span><span class="eyebrow">Revisão estática · 30 set 2026</span></header>
+  <header><span class="brand"><em>Seat</em>able</span><span class="eyebrow">Revisão estática · 3 out 2026</span></header>
   <main>
     <h1>Insights, em revisão</h1>
     <p>Capturas da proposta no PR #165. Os dados são sintéticos e esta página não executa ações do produto. A avaliação visual ainda está em andamento.</p>

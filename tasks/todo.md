@@ -1,5 +1,20 @@
 # Reforma da plataforma interna — primeira entrega (30/set/2026)
 
+## Alinhar Análises ao hero aprovado (03/out/2026)
+
+**Alvo travado:** o hero `client/seatable-prototype.html` renderizado em 1440 px. Preservar o papel quente, verde-pinho, Instrument Sans como voz principal, itálico Instrument Serif só em momentos narrativos, fotografia como contexto de restaurante e controles simples. O painel continua operacional e denso; não copiar a escala de marketing nem a fotografia para cada gráfico.
+
+- [x] Registrar em `DESIGN.md` os tokens e papéis da linguagem aprovada, mantendo estados semânticos.
+- [x] Refazer a primeira dobra de Análises e o shell nesta rota com a mesma marca visual do hero.
+- [ ] Conferir dados preenchidos, período vazio, celular, tablet e desktop no app real da PR.
+- [x] Capturar cada iteração e pedir crítica Astra em contexto novo, só com a captura.
+- [ ] Rodar build, testes e prévia; manter a PR em rascunho e fora de produção até validação.
+
+**Decisões de design:** o hero é a fonte principal de identidade. As telas de salão da própria landing são fonte secundária para a densidade de dados. A crítica anterior de Análises serve para detectar falhas de hierarquia, não para definir uma nova identidade editorial independente.
+
+**Revisão de 03/out:** shell, tipografia e paleta da aba Análises foram alinhados ao hero em uma variante isolada; os estados preenchido e vazio foram capturados no componente React com dados sintéticos em 390/736/1440 px. O gráfico ficou dedicado às reservas por dia: a contagem de atendimentos concluídos vinha de registros de serviço e parecia contradizer as reservas com status concluído. O estado de serviço sem reserva tem mensagem específica. Build, 114 arquivos/1.033 testes de frontend, lint dos arquivos alterados e smoke de largura/erros em 320–1440 px passaram. A última crítica independente deu 7,6/10 desktop e 7,5/10 celular, abaixo do alvo de 9/10. Falta validar a nova versão no aplicativo autenticado da prévia, manter a PR em rascunho e continuar o refinamento de gráfico, navegação e hierarquia mobile.
+
+
 ## Próxima passada: Análises no contexto real
 
 - [x] Renderizar a aba atual dentro do shell autenticado com dados sintéticos, sem usar credenciais ou alterar a conta real.

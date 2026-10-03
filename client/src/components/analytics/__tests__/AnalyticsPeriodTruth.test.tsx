@@ -6,7 +6,6 @@ import RevenueOpportunities from '../RevenueOpportunities';
 import TableUtilizationHeatmap from '../TableUtilizationHeatmap';
 import StatusBreakdownPie from '../StatusBreakdownPie';
 import { useNoShowPredictions, useRevenueOpportunities } from '../../../hooks/usePredictiveAnalytics';
-import { colors } from '../../../utils/colors';
 import AnalyticsTab from '../../../pages/insights/AnalyticsTab';
 import { useAnalytics } from '../../../hooks/useAnalytics';
 
@@ -194,7 +193,8 @@ describe('Analytics period truth', () => {
   it('uses a semantic state color for seated bookings, not the action color', () => {
     render(<StatusBreakdownPie reservationsByStatus={{ seated: 2 }} />);
     const segment = screen.getByRole('img', { name: /reservations.seated: 2/ }).firstElementChild;
-    expect(segment).toHaveStyle({ backgroundColor: colors.emerald });
+    expect(segment).toHaveStyle({ backgroundColor: '#819C82' });
+    expect(segment).not.toHaveStyle({ backgroundColor: '#3F4E32' });
   });
 });
 

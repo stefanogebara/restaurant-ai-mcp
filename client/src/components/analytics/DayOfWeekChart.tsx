@@ -1,6 +1,5 @@
 ﻿import { useTranslation } from 'react-i18next';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { colors } from '../../utils/colors';
 import ChartPanel from './ChartPanel';
 interface DayOfWeekChartProps {
   reservationsByDay: Record<string, number>;
@@ -28,16 +27,16 @@ export default function DayOfWeekChart({ reservationsByDay }: DayOfWeekChartProp
   }));
 
   const maxCount = Math.max(...chartData.map(c => c.count));
-  // Burgundy marks days reaching at least 80% of this period's busiest day.
+  // Forest marks days reaching at least 80% of this period's busiest day.
   // With no data, zero is not a peak.
   const hasData = maxCount > 0;
 
   const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Array<{ value: number; payload: { fullDay: string } }> }) => {
     if (active && payload && payload.length) {
       return (
-        <div className="glass-panel p-3 shadow-lg">
-          <p className="text-sm font-medium text-deep-charcoal mb-1">{payload[0].payload.fullDay}</p>
-          <p className="text-sm text-burgundy">
+        <div className="rounded-xl border border-brand-line bg-brand-paper p-3 shadow-sm">
+          <p className="mb-1 text-sm font-medium text-brand-ink">{payload[0].payload.fullDay}</p>
+          <p className="text-sm text-brand-action">
             {t('analytics.reservations')}: <span className="font-medium">{payload[0].value}</span>
           </p>
         </div>
@@ -53,16 +52,16 @@ export default function DayOfWeekChart({ reservationsByDay }: DayOfWeekChartProp
             data={chartData}
             margin={{ top: 5, right: 10, left: -10, bottom: 5 }}
           >
-            <CartesianGrid strokeDasharray="3 3" stroke={colors.borderGray} opacity={0.3} />
+            <CartesianGrid strokeDasharray="3 3" stroke="#CDD0C7" opacity={0.55} />
             <XAxis
               dataKey="day"
-              stroke={colors.mutedStone}
+              stroke="#586254"
               style={{ fontSize: '12px' }}
               tickLine={false}
               axisLine={false}
             />
             <YAxis
-              stroke={colors.mutedStone}
+              stroke="#586254"
               style={{ fontSize: '12px' }}
               tickLine={false}
               axisLine={false}
@@ -72,7 +71,7 @@ export default function DayOfWeekChart({ reservationsByDay }: DayOfWeekChartProp
               {chartData.map((entry) => (
                 <Cell
                   key={entry.day}
-                  fill={hasData && entry.count >= maxCount * 0.8 ? colors.burgundy : colors.borderGray}
+                  fill={hasData && entry.count >= maxCount * 0.8 ? '#3F4E32' : '#CDD0C7'}
                 />
               ))}
             </Bar>

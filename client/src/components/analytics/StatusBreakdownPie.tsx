@@ -16,13 +16,13 @@ const STATUS_KEYS: Record<string, string> = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  pending: colors.warmStone,
-  confirmed: colors.stoneGray,
-  seated: colors.emerald,
-  completed: colors.emerald,
-  cancelled: colors.amber,
-  'no-show': colors.red,
-  no_show: colors.red,
+  pending: '#A58A6A',
+  confirmed: '#526B58',
+  seated: '#819C82',
+  completed: '#819C82',
+  cancelled: '#A77A37',
+  'no-show': '#A6554C',
+  no_show: '#A6554C',
 };
 
 export default function StatusBreakdownPie({ reservationsByStatus }: StatusBreakdownPieProps) {
@@ -39,8 +39,8 @@ export default function StatusBreakdownPie({ reservationsByStatus }: StatusBreak
   const total = rows.reduce((sum, row) => sum + row.count, 0);
 
   return (
-    <section aria-label={t('analytics.charts.statusBreakdownAria')} className="min-w-0">
-      <h3 className="font-serif text-[23px] leading-tight text-deep-charcoal">{t('analytics.statusBreakdown')}</h3>
+    <section aria-label={t('analytics.charts.statusBreakdownAria')} className="min-w-0 border-b border-brand-line pb-4">
+      <h3 className="font-brand text-[23px] leading-tight tracking-tight text-brand-ink">{t('analytics.statusBreakdown')}</h3>
       {total === 0 ? (
         <p className="py-8 text-[14px] text-muted-stone">{t('analytics.noData')}</p>
       ) : (
@@ -48,7 +48,7 @@ export default function StatusBreakdownPie({ reservationsByStatus }: StatusBreak
           <div
             role="img"
             aria-label={rows.map(row => `${row.name}: ${row.count}`).join(', ')}
-            className="mt-5 flex h-3 w-full overflow-hidden rounded-full bg-deep-charcoal/5"
+            className="mt-5 flex h-3 w-full overflow-hidden rounded-full bg-brand-ink/5"
           >
             {rows.map(row => (
               <span key={row.status} style={{ width: `${(row.count / total) * 100}%`, backgroundColor: row.color }} />
@@ -56,13 +56,13 @@ export default function StatusBreakdownPie({ reservationsByStatus }: StatusBreak
           </div>
           <dl className="mt-3 grid grid-cols-1 gap-x-6 md:grid-cols-4">
             {rows.map(row => (
-              <div key={row.status} className="flex items-baseline justify-between gap-3 border-b hairline py-2.5">
-                <dt className="flex min-w-0 items-center gap-2 text-[13px] text-deep-charcoal">
+              <div key={row.status} className="flex items-baseline gap-3 py-2.5">
+                <dt className="flex min-w-0 items-center gap-2 text-[13px] text-brand-ink">
                   <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: row.color }} aria-hidden="true" />
                   <span className="truncate">{row.name}</span>
                 </dt>
-                <dd className="shrink-0 text-[13px] font-medium tabular-nums text-deep-charcoal">
-                  {row.count}<span className="ml-2 font-normal text-muted-stone">{Math.round((row.count / total) * 100)}%</span>
+                <dd className="shrink-0 text-[13px] font-medium tabular-nums text-brand-ink">
+                  {row.count}<span className="ml-2 font-normal text-brand-muted">{Math.round((row.count / total) * 100)}%</span>
                 </dd>
               </div>
             ))}

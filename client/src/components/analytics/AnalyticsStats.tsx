@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { formatCurrency } from '../../utils/currency';
 
 interface AnalyticsStatsProps {
+  compact?: boolean;
   overview: {
     total_reservations: number;
     total_revenue?: number;
@@ -16,7 +17,7 @@ interface AnalyticsStatsProps {
 
 const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] as const;
 
-export default function AnalyticsStats({ overview, reservationsByStatus, reservationsByDay }: AnalyticsStatsProps) {
+export default function AnalyticsStats({ overview, reservationsByStatus, reservationsByDay, compact = false }: AnalyticsStatsProps) {
   const { t, i18n } = useTranslation();
   const total = overview.total_reservations;
   const noShows = (reservationsByStatus['no-show'] ?? 0) + (reservationsByStatus.no_show ?? 0);
@@ -46,44 +47,70 @@ export default function AnalyticsStats({ overview, reservationsByStatus, reserva
     {
       value: share(noShows),
       label: t('analytics.recordedNoShowShare', 'Marked no-show'),
-      tone: noShows > 0 ? 'text-red-700' : 'text-deep-charcoal',
+      tone: noShows > 0 ? 'text-red-800' : 'text-brand-ink',
     },
     {
       value: share(cancelled),
       label: t('analytics.recordedCancellationShare', 'Cancelled'),
-      tone: cancelled > 0 ? 'text-amber-700' : 'text-deep-charcoal',
-    },
-    {
-      value: recordedRevenue === undefined ? '—' : formatCurrency(recordedRevenue),
-      label: t('analytics.recordedRevenue', 'Recorded revenue'),
-      tone: 'text-deep-charcoal',
+      tone: cancelled > 0 ? 'text-amber-800' : 'text-brand-ink',
     },
     {
       value: total > 0 ? decimal(overview.avg_party_size) : '—',
       label: t('analytics.averagePartySize'),
       detail: undefined,
-      tone: 'text-deep-charcoal',
+      tone: 'text-brand-ink',
     },
   ];
 
+  if (compact) {
+    return (
+      <section aria-label={t('analytics.periodOverview', 'Period overview')} className="xl:hidden">
+        <div className="grid grid-cols-2 gap-4">
+          <div className="min-w-0">
+            <p className="font-brand text-[42px] leading-none tracking-[-0.06em] tabular-nums text-brand-ink">{total}</p>
+            <p className="mt-1 text-[12px] font-medium text-brand-muted">{t('analytics.totalReservations')}</p>
+          </div>
+          <div className="min-w-0 border-l border-brand-line pl-4">
+            <p className="pt-1.5 font-brand text-[30px] leading-none tracking-[-0.05em] tabular-nums text-brand-ink">{recordedRevenue === undefined ? '—' : formatCurrency(recordedRevenue)}</p>
+            <p className="mt-1 text-[12px] font-medium text-brand-muted">{t('analytics.recordedRevenue', 'Recorded revenue')}</p>
+          </div>
+        </div>
+        {busiestSummary && <p className="mt-2 text-[13px] text-brand-action">{busiestSummary}</p>}
+        <div className="mt-3 grid grid-cols-3 gap-3 border-t border-brand-line pt-3">
+          {supportingStats.map(stat => (
+            <div key={stat.label} className="min-w-0">
+              <p className={`font-brand text-[21px] leading-none tabular-nums ${stat.tone}`}>{stat.value}</p>
+              <p className="mt-1 text-[12px] leading-tight text-brand-muted">{stat.label}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+    );
+  }
+
   return (
-    <section className="grid gap-4 border-y hairline py-5 sm:gap-6 sm:py-8 lg:grid-cols-[minmax(160px,1fr)_minmax(0,4fr)] lg:gap-8" aria-label={t('analytics.periodOverview', 'Period overview')}>
-      <div>
-        <p className="font-serif text-[48px] leading-none tabular-nums text-deep-charcoal sm:text-[56px]">{total}</p>
-        <p className="mt-1.5 text-[12px] font-semibold uppercase tracking-[0.1em] text-muted-stone">{t('analytics.totalReservations')}</p>
+    <section className="grid grid-cols-2 gap-x-4 gap-y-4 border-b border-brand-line pb-5 sm:gap-x-8 sm:pb-6 xl:grid-cols-1 xl:gap-y-5 xl:border-0 xl:pb-0" aria-label={t('analytics.periodOverview', 'Period overview')}>
+      <div className="min-w-0">
+        <p className="font-brand text-[58px] leading-[0.92] tracking-[-0.07em] tabular-nums text-brand-ink sm:text-[72px]">{total}</p>
+        <p className="mt-2 text-[12px] font-medium uppercase tracking-[0.1em] text-brand-muted">{t('analytics.totalReservations')}</p>
         {busiestSummary && (
-          <p className="mt-2 max-w-[16rem] text-[13px] leading-snug text-muted-stone">
+          <p className="mt-2 max-w-[26rem] font-brand text-[15px] leading-snug tracking-tight text-brand-action sm:text-[17px]">
             {busiestSummary}
           </p>
         )}
       </div>
-      <div className="grid grid-cols-2 gap-x-5 gap-y-4 border-t hairline pt-4 sm:gap-x-7 sm:gap-y-6 lg:grid-cols-4 lg:border-l lg:border-t-0 lg:py-1 lg:pl-8">
+      <div className="min-w-0 border-l border-brand-line pl-4 pt-5 sm:pl-8 sm:pt-0 xl:border-l-0 xl:border-t xl:pl-0 xl:pt-5">
+        <p className="font-brand text-[31px] leading-[1.02] tracking-[-0.055em] tabular-nums text-brand-ink sm:text-[56px] xl:text-[48px]">{recordedRevenue === undefined ? '—' : formatCurrency(recordedRevenue)}</p>
+        <p className="mt-2 text-[12px] font-medium uppercase tracking-[0.1em] text-brand-muted">{t('analytics.recordedRevenue', 'Recorded revenue')}</p>
+        <p className="mt-2 text-[13px] leading-snug text-brand-muted">{t('analytics.recordedRevenueNote', 'Bills recorded in this period')}</p>
+      </div>
+      <div className="col-span-2 grid grid-cols-3 gap-x-4 gap-y-4 border-t border-brand-line pt-4 sm:gap-x-8 sm:pt-5 xl:col-span-1 xl:gap-x-3">
         {supportingStats.map((stat) => (
           <div key={stat.label} className="min-w-0">
-            <p className={`font-sans text-[27px] font-normal leading-none tracking-tight tabular-nums sm:text-[29px] ${stat.tone}`}>
+            <p className={`font-brand text-[24px] font-normal leading-none tracking-tight tabular-nums sm:text-[28px] xl:text-[25px] ${stat.tone}`}>
               {stat.value}
             </p>
-            <p className="mt-2 text-[12px] font-semibold uppercase leading-snug tracking-[0.08em] text-muted-stone">
+            <p className="mt-1.5 text-[12px] font-medium leading-snug text-brand-muted">
               {stat.label}
             </p>
             {stat.detail && <p className="mt-1 text-[12px] leading-snug text-muted-stone">{stat.detail}</p>}
@@ -108,9 +135,9 @@ export function LiveOccupancySignal({ occupiedSeats, totalSeats }: { occupiedSea
   const meterPercentage = occupancyPercent === null ? 0 : Math.round(Math.min(100, Math.max(0, occupancyPercent)) * 10) / 10;
   return (
     <section aria-label={t('analytics.currentOccupancy', 'Occupancy now')}>
-      <p className="text-[12px] font-semibold uppercase tracking-[0.1em] text-muted-stone">{t('analytics.currentOccupancy', 'Occupancy now')}</p>
+      <p className="text-[12px] font-medium uppercase tracking-[0.1em] text-brand-muted">{t('analytics.currentOccupancy', 'Occupancy now')}</p>
       <p className="mt-1 text-[13px] text-muted-stone">{t('analytics.outsideSelectedPeriod', 'Live · outside the date filter')}</p>
-      <p className="mt-4 font-serif text-[48px] leading-none tabular-nums text-deep-charcoal sm:text-[54px]">{displayPercentage}</p>
+      <p className="mt-4 font-brand text-[48px] leading-none tracking-tight tabular-nums text-brand-ink sm:text-[54px]">{displayPercentage}</p>
       {seatCount && (
         <>
           <div
@@ -120,9 +147,9 @@ export function LiveOccupancySignal({ occupiedSeats, totalSeats }: { occupiedSea
             aria-valuemax={100}
             aria-valuenow={meterPercentage}
             aria-valuetext={seatCount}
-            className="mt-5 h-1.5 overflow-hidden rounded-full bg-deep-charcoal/10"
+            className="mt-5 h-1.5 overflow-hidden rounded-full bg-brand-ink/10"
           >
-            <div className="h-full rounded-full bg-deep-charcoal" style={{ width: `${meterPercentage}%` }} />
+            <div className="h-full rounded-full bg-brand-action" style={{ width: `${meterPercentage}%` }} />
           </div>
           <p className="mt-2 text-[13px] text-muted-stone">{seatCount}</p>
         </>

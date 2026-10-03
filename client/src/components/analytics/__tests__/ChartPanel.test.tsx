@@ -3,15 +3,14 @@ import { render, screen } from '@testing-library/react';
 import ChartPanel, { ChartBadge } from '../ChartPanel';
 
 describe('ChartPanel', () => {
-  it('renders the title as a heading and wraps content in the glass capsule', () => {
+  it('renders the title as a heading and wraps content in a paper chart surface', () => {
     const { container } = render(
       <ChartPanel title="Reservas ao longo do tempo">
         <p>conteúdo</p>
       </ChartPanel>,
     );
     expect(screen.getByRole('heading', { name: 'Reservas ao longo do tempo' })).toBeInTheDocument();
-    // "Vidro é para objetos": o gráfico é objeto, então mora numa cápsula.
-    expect(container.querySelector('.glass-panel')).toBeInTheDocument();
+    expect(container.querySelector('section')).toHaveClass('border-brand-line', 'bg-[#F8F6F0]');
     expect(screen.getByText('conteúdo')).toBeInTheDocument();
   });
 
