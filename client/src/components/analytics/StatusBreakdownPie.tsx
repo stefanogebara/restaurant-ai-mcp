@@ -1,116 +1,74 @@
 import { useTranslation } from 'react-i18next';
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
-import type { Formatter as LegendFormatter, LegendPayload } from 'recharts/types/component/DefaultLegendContent';
-import type { PieLabelRenderProps } from 'recharts';
 import { colors } from '../../utils/colors';
-import ChartPanel from './ChartPanel';
 
 interface StatusBreakdownPieProps {
   reservationsByStatus: Record<string, number>;
 }
 
+const STATUS_KEYS: Record<string, string> = {
+  confirmed: 'reservations.confirmed',
+  pending: 'reservations.pending',
+  cancelled: 'reservations.cancelled',
+  completed: 'reservations.completed',
+  'no-show': 'reservations.noShow',
+  no_show: 'reservations.noShow',
+  seated: 'reservations.seated',
+};
+
+const STATUS_COLORS: Record<string, string> = {
+  pending: '#A58A6A',
+  confirmed: '#526B58',
+  seated: '#819C82',
+  completed: '#819C82',
+  cancelled: '#A77A37',
+  'no-show': '#A6554C',
+  no_show: '#A6554C',
+};
+
 export default function StatusBreakdownPie({ reservationsByStatus }: StatusBreakdownPieProps) {
   const { t } = useTranslation();
-  // FIX 4: Translate status labels using existing i18n keys
-  const statusKeyMap: Record<string, string> = {
-    confirmed: 'reservations.confirmed',
-    pending: 'reservations.pending',
-    cancelled: 'reservations.cancelled',
-    completed: 'reservations.completed',
-    'no-show': 'reservations.noShow',
-    no_show: 'reservations.noShow',
-    seated: 'reservations.seated',
-  };
-
-  // Transform object data into array for Recharts
-  const chartData = Object.entries(reservationsByStatus).map(([status, count]) => {
-    const i18nKey = statusKeyMap[status.toLowerCase()];
-    const translatedName = i18nKey ? t(i18nKey) : (status.charAt(0).toUpperCase() + status.slice(1));
-    return { name: translatedName, value: count, rawStatus: status };
-  });
-
-  // Color mapping for each status (by raw lowercase status key)
-  const COLORS: Record<string, string> = {
-    pending: colors.warmStone,
-    confirmed: colors.stoneGray,
-    seated: colors.burgundy,
-    completed: colors.emerald,
-    cancelled: colors.red,
-    'no-show': colors.amber,
-    no_show: colors.amber,
-  };
-
-  // Custom label to show percentage. Guard the divisor — an empty/all-zero
-  // status object would otherwise render literal "NaN%" slice labels.
-  const renderLabel = (entry: PieLabelRenderProps) => {
-    const entryValue = typeof entry.value === 'number' ? entry.value : 0;
-    const total = chartData.reduce((sum, e) => sum + e.value, 0);
-    if (total <= 0) return '';
-    const percent = ((entryValue / total) * 100).toFixed(0);
-    return `${percent}%`;
-  };
-
-  // Custom tooltip
-  const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Array<{ name: string; value: number; payload: { fill: string } }> }) => {
-    if (active && payload && payload.length) {
-      const total = chartData.reduce((sum, e) => sum + e.value, 0);
-      const percent = total > 0 ? ((payload[0].value / total) * 100).toFixed(1) : '0';
-      return (
-        <div className="bg-glass-modal backdrop-blur-glass-modal border border-glass-border-dark rounded-2xl p-3 shadow-glass-modal">
-          <p className="text-sm font-medium text-deep-charcoal mb-1">{payload[0].name}</p>
-          <p className="text-sm" style={{ color: payload[0].payload.fill }}>
-            {t('analytics.count')}: <span className="font-medium">{payload[0].value}</span>
-          </p>
-          <p className="text-xs text-muted-stone">
-            {percent}% {t('analytics.ofTotalReservations')}
-          </p>
-        </div>
-      );
-    }
-    return null;
-  };
+  const rows = Object.entries(reservationsByStatus)
+    .filter(([, count]) => Number.isFinite(count) && count > 0)
+    .map(([status, count]) => ({
+      status,
+      count,
+      name: STATUS_KEYS[status.toLowerCase()] ? t(STATUS_KEYS[status.toLowerCase()]) : status,
+      color: STATUS_COLORS[status.toLowerCase()] ?? colors.mutedStone,
+    }))
+    .sort((a, b) => b.count - a.count);
+  const total = rows.reduce((sum, row) => sum + row.count, 0);
 
   return (
-    <ChartPanel title={t('analytics.statusBreakdown')} ariaLabel={t('analytics.charts.statusBreakdownAria')}>
-
-      <div className="flex items-center justify-center">
-        <ResponsiveContainer width="100%" height={300}>
-          <PieChart>
-            <Pie
-              data={chartData}
-              cx="50%"
-              cy="50%"
-              labelLine={false}
-              label={renderLabel}
-              outerRadius={100}
-              innerRadius={60} // Makes it a donut chart
-              fill="#8884d8"
-              dataKey="value"
-            >
-              {chartData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[entry.rawStatus.toLowerCase()] || colors.mutedStone} />
-              ))}
-            </Pie>
-            <Tooltip content={<CustomTooltip />} />
-            <Legend
-              verticalAlign="bottom"
-              height={36}
-              formatter={((value: string, entry: LegendPayload) => {
-                // `LegendPayload.payload` é tipado como `object` — a fatia que
-                // alimenta a legenda é a nossa própria linha de chartData.
-                const fatia = entry.payload as { value?: number } | undefined;
-                return (
-                  <span className="text-sm text-deep-charcoal">
-                    {String(value)} ({fatia?.value})
-                  </span>
-                );
-              }) as LegendFormatter}
-              iconType="circle"
-            />
-          </PieChart>
-        </ResponsiveContainer>
-      </div>
-
-    </ChartPanel>
+    <section aria-label={t('analytics.charts.statusBreakdownAria')} className="min-w-0 border-b border-brand-line pb-4">
+      <h3 className="font-brand text-[23px] leading-tight tracking-tight text-brand-ink">{t('analytics.statusBreakdown')}</h3>
+      {total === 0 ? (
+        <p className="py-8 text-[14px] text-muted-stone">{t('analytics.noData')}</p>
+      ) : (
+        <>
+          <div
+            role="img"
+            aria-label={rows.map(row => `${row.name}: ${row.count}`).join(', ')}
+            className="mt-5 flex h-3 w-full overflow-hidden rounded-full bg-brand-ink/5"
+          >
+            {rows.map(row => (
+              <span key={row.status} style={{ width: `${(row.count / total) * 100}%`, backgroundColor: row.color }} />
+            ))}
+          </div>
+          <dl className="mt-3 grid grid-cols-1 gap-x-6 md:grid-cols-4">
+            {rows.map(row => (
+              <div key={row.status} className="flex items-baseline gap-3 py-2.5">
+                <dt className="flex min-w-0 items-center gap-2 text-[13px] text-brand-ink">
+                  <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: row.color }} aria-hidden="true" />
+                  <span className="truncate">{row.name}</span>
+                </dt>
+                <dd className="shrink-0 text-[13px] font-medium tabular-nums text-brand-ink">
+                  {row.count}<span className="ml-2 font-normal text-brand-muted">{Math.round((row.count / total) * 100)}%</span>
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </>
+      )}
+    </section>
   );
 }

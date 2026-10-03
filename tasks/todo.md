@@ -1,3 +1,96 @@
+# Reforma da plataforma interna — primeira entrega (30/set/2026)
+
+## Alinhar Visão Geral de Insights ao hero (03/out/2026)
+
+**Plano:** manter Análises como está e migrar a aba Visão Geral no mesmo shell de papel, verde-pinho e Instrument Sans. O briefing deve ser a decisão principal; clientes, previsão, métricas e e-mails são camadas secundárias, sem inventar dados nem apresentar bloqueio de plano como ausência de atividade.
+
+- [x] Migrar o shell e a composição de Visão Geral sem alterar Relatórios ou outros usos dos componentes compartilhados.
+- [x] Impedir que falha no CRM ou painel ative o diagnóstico falso de restaurante novo.
+- [x] Conferir estados preenchido, vazio, falha e bloqueio em desktop e celular com componentes React reais e dados sintéticos.
+- [ ] Pedir crítica Astra em contexto novo usando apenas cada captura; iterar até o alvo visual.
+- [ ] Rodar testes/build/lint, revisar a prévia e atualizar a PR em rascunho; não publicar em produção antes de aprovação estética e teste autenticado.
+
+**Aviso:** a conta de produção não será modificada; o laboratório de capturas usa somente dados sintéticos.
+
+**Revisão de 04/out:** a Visão Geral usa a linguagem do hero em seu shell, briefing, clientes, tendências e campanhas, sem trocar o visual de Relatórios. O estado de plano bloqueado não revela contagens do CRM em cache, não repete avisos, não expõe tendências de Análises nem histórico de e-mails em cache. A linha de serviço mantém o foco também quando uma reserva de baixo risco é escolhida. Capturas sintéticas preenchida/vazia/falha/bloqueada em 390/1440 px não tiveram erro ou overflow; interações em 320/390/736/1440 px passaram. Frontend: 116 arquivos/1.052 testes, build e lint dos arquivos alterados passaram antes do ajuste final do histórico; o teste focal e a nova captura bloqueada passaram depois dele. A revisão estática HTTP carrega as imagens atualizadas. Crítica Astra independente da captura preenchida final: 7,6/10 desktop e 7,6/10 celular. Falta o alvo visual de 9/10 e teste autenticado na prévia da PR; produção segue intocada.
+
+## Alinhar Análises ao hero aprovado (03/out/2026)
+
+**Alvo travado:** o hero `client/seatable-prototype.html` renderizado em 1440 px. Preservar o papel quente, verde-pinho, Instrument Sans como voz principal, itálico Instrument Serif só em momentos narrativos, fotografia como contexto de restaurante e controles simples. O painel continua operacional e denso; não copiar a escala de marketing nem a fotografia para cada gráfico.
+
+- [x] Registrar em `DESIGN.md` os tokens e papéis da linguagem aprovada, mantendo estados semânticos.
+- [x] Refazer a primeira dobra de Análises e o shell nesta rota com a mesma marca visual do hero.
+- [ ] Conferir dados preenchidos, período vazio, celular, tablet e desktop no app real da PR.
+- [x] Capturar cada iteração e pedir crítica Astra em contexto novo, só com a captura.
+- [ ] Rodar build, testes e prévia; manter a PR em rascunho e fora de produção até validação.
+
+**Decisões de design:** o hero é a fonte principal de identidade. As telas de salão da própria landing são fonte secundária para a densidade de dados. A crítica anterior de Análises serve para detectar falhas de hierarquia, não para definir uma nova identidade editorial independente.
+
+**Revisão de 03/out:** shell, tipografia e paleta da aba Análises foram alinhados ao hero em uma variante isolada; os estados preenchido e vazio foram capturados no componente React com dados sintéticos em 390/736/1440 px. O gráfico ficou dedicado às reservas por dia: a contagem de atendimentos concluídos vinha de registros de serviço e parecia contradizer as reservas com status concluído. O estado de serviço sem reserva tem mensagem específica. Build, 114 arquivos/1.033 testes de frontend, lint dos arquivos alterados e smoke de largura/erros em 320–1440 px passaram. A última crítica independente deu 7,6/10 desktop e 7,5/10 celular, abaixo do alvo de 9/10. Falta validar a nova versão no aplicativo autenticado da prévia, manter a PR em rascunho e continuar o refinamento de gráfico, navegação e hierarquia mobile.
+
+
+## Próxima passada: Análises no contexto real
+
+- [x] Renderizar a aba atual dentro do shell autenticado com dados sintéticos, sem usar credenciais ou alterar a conta real.
+- [x] Resolver a sobreposição do menu móvel sobre o título de Insights.
+- [x] Desenhar e testar o estado de período sem reservas observado na conta real, sem esconder ocupação e risco futuro quando forem úteis.
+- [x] Capturar desktop/celular do estado vazio e do estado preenchido; repetir a crítica independente somente com cada captura.
+- [ ] Verificar testes, build, acessibilidade e preview da PR; manter produção bloqueada até o alvo visual e o teste autenticado.
+
+**Revisão desta passada:** a conta real foi observada em modo leitura e mostrou um período com zero reservas; o estado vazio agora não inventa gráficos nem percentuais, sugere 90 dias e preserva sinais ao vivo/futuros. A página inteira foi capturada com fontes reais em 390/736/1440 px, sem erro ou overflow; em 320 px também não houve overflow. O menu abriu e marcou Insights corretamente. A revisão estática passou a carregar no servidor local e no build de prévia, com estados preenchido/vazio. Build, lint, sintaxe API, 4.256 testes de backend e 1.031 de frontend passaram. A crítica visual independente ficou em 7,4/10 para desktop e celular na rodada mais recente; não há aprovação estética nem teste da nova versão na conta autenticada da prévia, portanto a PR segue draft e produção permanece intocada.
+
+**Referência travada:** casos oficiais da RON Design Lab (Spacetihq: mapa operacional; GeoTab: exceções na linha do tempo; Sisense: IA ligada à evidência), adaptados às fontes, cores semânticas e regra de conteúdo no canvas do `DESIGN.md`. Não copiar azul, 3D decorativo ou cards em todas as métricas.
+
+- [x] Auditar ao vivo Painel, Insights e Voz em uma conta autenticada, sem alterar dados do restaurante.
+- [x] Isolar o trabalho da árvore principal com alterações concorrentes.
+- [x] Redesenhar a visão geral de Insights como briefing e decisões, sem a grade de cards vazios.
+- [x] Corrigir os números rotulados como “hoje”, distinguir a lista de cinco clientes do total, e revisar a entrega do e-mail individual.
+- [x] Verificar os estados vazio/carregando/erro, navegação e responsividade por screenshot e interação em 320–1440 px.
+- [x] Corrigir a apresentação enganosa da aba Análises: períodos misturados, taxa de no-show inválida, receita estimada fora do período e prognósticos sem base.
+- [x] Executar build, testes focados e testes de regressão aplicáveis.
+- [ ] Obter 9/10 ou mais em crítica independente baseada apenas nas capturas; não tratar a direção atual como aprovação final.
+- [ ] Testar Eleven v4 Turbo num restaurante de teste, com PT-BR/ES, interrupções, reserva completa, custo e rollback antes de qualquer migração.
+- [ ] Aplicar a linguagem aprovada ao shell, Painel, Voz e demais páginas em entregas separadas.
+- [x] Corrigir no Painel o contador de espera, o falso estado vazio, a legenda de mesas e o idioma PT; a hierarquia visual segue em revisão.
+- [x] Conferir a nova primeira tela em 390/736/1440 px e repetir a crítica Astra com captura limpa, sem mostrar código ou notas anteriores.
+- [x] Investigar, sem modificar a conta real, a entrada ativa de espera com mais de um mês e definir política de expiração/arquivo: `notified` torna-se elegível após 12h desde a entrada no cron diário existente; monitorar cancelamentos no rollout.
+- [x] Alinhar o contador de espera do Manager AI com os estados `waiting` + `notified`.
+- [x] Corrigir a checagem de saúde que marcava históricos encerrados como obsoletos e tratava erro de consulta como zero saudável.
+- [ ] A API padrão da fila ainda trunca históricos aos 100 mais antigos; paginar a lista sem quebrar os filtros.
+- [x] Impedir que Voz reporte “salvo localmente, sincronizará depois” sem persistência/replay dos ajustes; só confirmar após aceitação da ElevenLabs.
+- [ ] Tornar os erros da API de Voz localizados na interface e testar falha parcial de sincronização na experiência completa.
+- [x] Restaurar e versionar `client/insights-audit.html` como revisão estática autônoma; conferir o endereço local, abas e formatos antes de compartilhá-lo.
+- [x] Reorganizar a aba Análises: abrir com o recorte de datas, dar hierarquia às reservas, reduzir cópia repetida e deixar os padrões secundários sob expansão.
+- [x] Trocar a tendência vaga por série diária com base zero, legenda explícita e pico derivado dos dados; manter os estados sem atividade e os rótulos acessíveis.
+- [x] Conferir a captura React com dados sintéticos em desktop/celular, abrir os padrões em 320/390/768/1440 px e atualizar a revisão HTTP com as imagens mais recentes.
+- [ ] Refinar a composição inferior e o gráfico móvel até a crítica independente alcançar 9/10; testar também na conta autenticada antes de publicar.
+
+**Achados da auditoria:** Insights mostra uma área vazia enorme quando não há reservas de risco e mistura o resumo de hoje com previsões futuras; a lista de clientes mostra cinco destaques, mas outra métrica da mesma página pode contar mais clientes no total, sem explicar o recorte. O botão “Enviar” não indica que abre uma revisão de e-mail; o texto inicial do e-mail está em inglês mesmo na interface PT-BR. Em Voz, controles de velocidade/estilo existentes não devem ser assumidos compatíveis com `eleven_v4_turbo`. O Google OAuth exibe links de privacidade/termos de outro domínio na escolha de conta — requer auditoria de configuração antes de mudar.
+
+**Achados adicionais no Painel real:** o topo exibe zero pessoas na espera e “Seu painel está pronto”, embora a lista abaixo mostre uma entrada ativa. O campo de contador esperado pelo frontend não existe no resumo da API. Uma entrada permanece com estado “mesa pronta” depois de cerca de 34 dias; não foi alterada durante a auditoria. O primeiro fold em celular foi avaliado em 5,5/10 por um crítico independente: o mapa fica abaixo do banner, das métricas e de uma caixa de boas-vindas, com excesso de espaço e inglês no aviso Stripe.
+
+**Crítica da primeira passada do Painel:** a nova captura sintética em 390/736/1440 px recebeu 5,8/10. O mapa começa antes da metade da primeira tela e o aviso Stripe foi deslocado para depois dele, mas a planta escala demais no desktop, os rótulos encolhem no celular e há molduras demais. Continua em iteração; não é aprovação visual.
+
+**Críticas seguintes do Painel:** v2 recebeu 6,0/10. v3 pôs briefing e planta lado a lado no desktop, começou o mapa perto de 277 px no celular e deu verde semântico às mesas ocupadas; recebeu 6,2/10. A crítica ainda aponta topologia móvel perdida, cadeiras imprecisas e shell pesado. O harness sintético da primeira dobra ocultou widgets inferiores; o branco na captura desktop inteira não representa a página real. Fazer novo recorte do bloco de trabalho sem fingir que é auditoria de página completa.
+
+**Revisões v4–v5 do Painel:** o mapa preserva a topologia em 390 px, a capacidade é legível em cada mesa, e os pontos decorativos foram removidos. O crítico independente atribuiu 6,5/10 a ambas as capturas: falta direção na composição geral, a barra lateral domina o desktop e o cabeçalho móvel tem alinhamentos conflitantes. As linhas vazias sob a primeira dobra são do harness sintético, não da página real. A v6 atua na estrutura do shell; nenhuma dessas notas representa aprovação do Painel completo. Nesta rodada, o backend passou 281 suítes/4.256 testes e o frontend 113 arquivos/1.019 testes.
+
+**Crítica v6 do Painel:** depois da lateral mais estreita e do cabeçalho móvel alinhado, o score permaneceu em 6,5/10. A barra inferior, o peso visual do shell e a planta muito regular são agora as principais lacunas. O smoke de Idioma em 390 px revelou o menu sobreposto ao botão Voltar; corrigir antes de publicar. Manter o PR como rascunho, sem confundir uma captura de primeira dobra sintética com a página inteira.
+
+**Revisão estrutural final desta entrega:** o menu e Voltar não se sobrepõem em Idioma 390 px; a barra inferior usa rótulos curtos e contraste legível. Nova crítica independente da primeira dobra do Painel: 7,1/10. Permanecem como trabalho de design a proporção das três colunas, a autenticidade espacial da planta e o excesso de tratamentos tipográficos. O alvo de 9/10 segue aberto.
+
+**Gate do GitHub:** o primeiro push falhou no detector de operações não aguardadas porque um `.catch` dentro de `Promise.all` foi identificado como fire-and-forget. A chamada já era aguardada pelo `Promise.all`, mas foi reescrita como helper assíncrono explícito; `audit:fire-and-forget`, 66 testes focais, sintaxe e diff passaram. Revalidar a PR após o push corretivo.
+
+**Decisões:** briefing ocupa uma faixa de conteúdo no canvas; agrupamentos interativos (lista e formulário) podem usar superfície discreta. Cor ocre identifica previsão, verde confirma estado bom, vinho fica em ações. Não executar envio de campanhas nem mudanças de voz na conta real durante a auditoria.
+
+**Revisão da primeira entrega:** a visão geral e a aba Análises foram reestruturadas em uma árvore isolada. Scores heurísticos de risco agora aparecem como pontos de 0 a 100, não como probabilidades; e-mails de recuperação incluem idioma e descadastro e só reportam sucesso depois da aceitação pelo provedor. A aba Análises separa período selecionado, ocupação ao vivo, histórico de mesas, risco dos próximos sete dias e hipóteses de receita; o gráfico de status minúsculo foi substituído por uma distribuição legível. A suíte completa passou: 4.248 testes backend e 1.011 frontend, build, sintaxe de APIs, lint focado e `git diff --check`. Capturas sintéticas em desktop/celular e interações em 320, 390, 768 e 1440 px não tiveram erros de página ou overflow. A melhor crítica da visão geral foi 8,2/10, a última 8,0/10; a aba Análises melhorou de 6,6 para 7,2/10. Uma PR de rascunho pode facilitar a revisão, mas produção e migração da voz seguem bloqueadas pela revisão visual e por testes de integração específicos.
+
+**Correção do link de revisão:** `client/insights-audit.html` havia sido apagado como harness temporário. Foi recriado como um único HTML com quatro capturas sintéticas incorporadas, rótulos claros e abas Visão Geral/Análises e Desktop/Celular. O endereço HTTP local respondeu 200 e as trocas foram verificadas visualmente; a página não executa ações do produto. O PR continua rascunho, sem aprovação visual de 9/10.
+
+**Revisão da aba Análises, 30/set:** a última captura sintética renderiza o componente React real dentro de um shell mínimo de Insights; não representa a página autenticada inteira. O recorte de datas agora comanda os números históricos, enquanto ocupação ao vivo e risco futuro ficam explicitamente separados. Foram removidas da aba a frequência de mesas de todos os tempos e hipóteses financeiras ainda não validadas, sem apagar seus componentes ou endpoints. O gráfico marca o pico real, a distribuição de status segue a mesma ordem da barra e os textos de apoio foram reduzidos. A ocupação é derivada de lugares ocupados/capacidade (43/74 no exemplo), não de um percentual sem contexto. O rótulo acessível da distribuição foi corrigido de “gráfico de pizza” para barra empilhada; datas personalizadas vazias não derrubam a formatação. Os críticos independentes deram **8,0/10 desktop e 7,7/10 celular** na última versão (melhor desktop: 8,1): o gráfico ainda parece convencional e a composição inferior precisa de uma grade mais decisiva. Build, lint focado, 281 suítes/4.256 testes backend, 114 arquivos/1.030 testes frontend, expansão dos padrões sem overflow em 320–1440 px e o HTML estático servido por HTTP passaram. O alvo de 9/10 e a validação autenticada continuam abertos; manter a PR em rascunho e fora de produção.
+
+---
+
 # Hero na paleta das demonstrações (25/set/2026)
 
 - [x] Fixar a direção: papel quente `#f3f0e9`, tinta oliva `#293222`, verde de ação `#3f4e32`; manter logo e tipografia.

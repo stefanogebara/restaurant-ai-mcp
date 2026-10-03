@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { screen, waitFor } from '@testing-library/react';
+import { act, screen, waitFor } from '@testing-library/react';
 import { renderWithProviders as render } from '../../../test/renderWithProviders';
 import StripeConnectNudgeBanner from '../StripeConnectNudgeBanner';
+import i18n from '../../../i18n/config';
 
 // authFetch backs useStripeConnectStatus
 const mockAuthFetch = vi.fn();
@@ -79,7 +80,7 @@ describe('StripeConnectNudgeBanner', () => {
     const banner = await screen.findByTestId('stripe-connect-nudge-banner');
     expect(banner).toBeInTheDocument();
     expect(banner.textContent).toMatch(/Connect your Stripe account/i);
-    expect(banner.textContent).toMatch(/currently routed through Seatable/i);
+    expect(banner.textContent).toMatch(/currently pass through Seatable/i);
     const cta = screen.getByRole('link', { name: /Connect Stripe/i });
     expect(cta.getAttribute('href')).toBe('/host-dashboard/voice-settings#tab=pos');
   });
@@ -102,5 +103,20 @@ describe('StripeConnectNudgeBanner', () => {
     // Give React Query a turn to apply the result.
     await new Promise((r) => setTimeout(r, 50));
     expect(container.querySelector('[data-testid="stripe-connect-nudge-banner"]')).toBeNull();
+  });
+
+  it('uses Portuguese copy when the dashboard is in pt-BR', async () => {
+    setDepositConfig({ enabled: true, type: 'flat', amount: 50 });
+    stubConnectStatus({ success: true, connected: false });
+    await act(async () => { await i18n.changeLanguage('pt-BR'); });
+    try {
+      render(<StripeConnectNudgeBanner />);
+      const banner = await screen.findByTestId('stripe-connect-nudge-banner');
+      expect(banner).toHaveTextContent('Conecte sua conta Stripe');
+      expect(banner).toHaveTextContent('Os depósitos das reservas passam pela Seatable');
+      expect(screen.getByRole('link', { name: 'Conectar Stripe' })).toBeInTheDocument();
+    } finally {
+      await act(async () => { await i18n.changeLanguage('en'); });
+    }
   });
 });

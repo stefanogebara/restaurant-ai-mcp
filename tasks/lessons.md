@@ -1505,3 +1505,22 @@ não em digitação.
 ## 2026-09-25 — O herói precisa herdar a linguagem das demonstrações
 
 O herói fotográfico foi aprovado isoladamente, mas ficou cromaticamente separado das demonstrações em papel quente e verde-oliva. A correção do usuário mostrou que avaliar a primeira dobra sozinha não basta. Antes de publicar uma landing, comparar herói, demonstração e cartão social no mesmo fluxo; compartilhar tokens de papel, tinta, ação e linha; e verificar a passagem entre seções em desktop e celular. A foto deve mostrar um detalhe da reserva que a interface realmente carrega, sem repetir a mesma fala na seção seguinte.
+## 2026-09-30 — Redesign não pode aumentar a confiança em números errados
+
+A revisão de Insights mostrou pontuações heurísticas 0–100 com `%`, uma taxa de faltas cujo denominador incluía reservas futuras e uma aba Análises que misturava período selecionado, histórico total e previsões. Melhorar a tipografia antes de conferir origem, janela temporal e significado desses números teria feito a informação falsa parecer mais confiável. Regra: para cada métrica redesenhada, registrar numerador, denominador, fuso, horizonte e natureza (observação, estimativa ou score); só então escolher visualização e rótulo. Se a fonte não sustenta uma probabilidade ou projeção financeira, mostrar score ou hipótese com limite explícito.
+
+## 2026-09-30 — O resumo do Painel não substitui a fonte da lista
+
+O contador de espera do Painel lia `waitlist_count` de um resumo que nunca entregou esse campo, convertia `undefined` em zero e acionava um guia de estado vazio apesar de existir uma pessoa na lista. A correção do usuário para continuar a auditoria expôs a divergência apenas ao comparar topo e lista autenticados na mesma sessão. Regra: KPIs e listas do mesmo conceito devem compartilhar a mesma consulta ou um contrato de API verificado; `undefined` durante carga/erro não pode ser transformado em zero operacional. Conferir sempre o estado real da lista contra o resumo antes de desenhar a primeira tela.
+
+## 2026-09-30 — Não prometer sincronização futura sem fila de replay
+
+A API de Voz respondia sucesso quando a ElevenLabs rejeitava uma alteração e dizia que o ajuste estava salvo localmente para aplicação posterior. O banco só guardava `voice_id` e idioma; modelo e afinação não eram persistidos, e não havia processo de replay. Regra: sucesso de configuração externa exige confirmação do destino ou um mecanismo real de entrega posterior com estado visível. Em falha parcial, expor a parcialidade e conservar a edição do usuário para nova tentativa; nunca mascarar rejeição como “salvo”.
+## 2026-09-30 — Preview entregue precisa sobreviver à limpeza
+
+Enviei um link para `client/insights-audit.html` depois de apagar o harness temporário, e o usuário recebeu `ERR_FILE_NOT_FOUND`. Antes de compartilhar uma prévia, confirmar que o arquivo ainda existe e abrir o endereço exato no navegador. Se a revisão precisa continuar disponível, manter um artefato autônomo versionado ou usar o endereço da prévia do PR; não apontar para `/tmp` nem prometer que um `file://` abrirá no navegador embutido. Distinguir claramente capturas sintéticas de uma experiência funcional.
+## 2026-10-03 — O produto não pode seguir uma marca visual diferente do hero aprovado
+
+O redesign de Insights melhorou precisão e estados vazios, mas continuou usando a antiga linguagem de DM Sans, burgundy, serif em todos os títulos, cards de gráfico e sidebar escura. O hero aprovado usa Instrument Sans como voz principal, Instrument Serif itálico de forma pontual, papel quente, verde-pinho e uma narrativa visual ligada ao restaurante. Uma tela pode passar testes e ainda parecer de outra empresa.
+
+Regra: antes de redesenhar outra página interna, capturar lado a lado o hero aprovado e a página real. Registrar no `DESIGN.md` quais tokens, papéis e padrões migram; atualizar a tela e o shell juntos em uma prévia isolada. Não aceitar uma nota visual crescente se ela mede apenas polimento interno e ignora a identidade da marca.

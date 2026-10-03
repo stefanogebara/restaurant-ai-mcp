@@ -1,208 +1,159 @@
-import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { authFetch } from '../../services/api';
-import { useRevenueStats } from '../../hooks/useRevenueStats';
 import { formatCurrency } from '../../utils/currency';
 
 interface AnalyticsStatsProps {
+  compact?: boolean;
   overview: {
     total_reservations: number;
-    total_completed_services: number;
     total_revenue?: number;
     avg_party_size: number;
-    avg_service_time_minutes: number;
     total_capacity: number;
     current_occupancy: number;
     current_occupancy_percentage: string;
   };
   reservationsByStatus: Record<string, number>;
+  reservationsByDay: Record<string, number>;
 }
 
-interface CompareData {
-  period_a: { reservations: number; covers: number; no_shows: number; cancelled: number; avg_party_size: number };
-  period_b: { reservations: number; covers: number; no_shows: number; cancelled: number; avg_party_size: number };
-  delta: { covers: number; reservations: number; covers_pct: number | null; reservations_pct: number | null };
-}
+const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] as const;
 
-function formatDelta(pct: number | null): string {
-  if (pct === null || pct === undefined) return '';
-  const sign = pct > 0 ? '+' : '';
-  return `${sign}${pct.toFixed(1)}%`;
-}
+export default function AnalyticsStats({ overview, reservationsByStatus, reservationsByDay, compact = false }: AnalyticsStatsProps) {
+  const { t, i18n } = useTranslation();
+  const total = overview.total_reservations;
+  const noShows = (reservationsByStatus['no-show'] ?? 0) + (reservationsByStatus.no_show ?? 0);
+  const cancelled = reservationsByStatus.cancelled ?? 0;
+  const decimal = (value: number) => new Intl.NumberFormat(i18n.language, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(value);
+  const share = (count: number) => total > 0 ? `${decimal((count / total) * 100)}%` : '—';
 
-function DeltaBadge({ pct, invertColor = false }: { pct: number | null; invertColor?: boolean }) {
-  if (pct === null || pct === undefined) return null;
-  const isPositive = pct > 0;
-  const isNeutral = Math.abs(pct) < 0.1;
-  // "Bom" depende da métrica: mais reservas é bom, mais no-shows é ruim —
-  // daí o invertColor. Tokens quentes do DESIGN.md, nada de green-600 cru.
-  const colorClass = isNeutral
-    ? 'text-muted-stone'
-    : (isPositive !== invertColor ? 'text-emerald-700' : 'text-red-700');
-  return (
-    <span className={`inline-flex items-center gap-0.5 text-xs font-medium ${colorClass}`}>
-      {!isNeutral && (
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-          strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"
-          className={isPositive ? '' : 'rotate-180'}>
-          <path d="M12 19V5" /><path d="M5 12l7-7 7 7" />
-        </svg>
-      )}
-      {formatDelta(pct)}
-    </span>
-  );
-}
-
-export default function AnalyticsStats({ overview, reservationsByStatus }: AnalyticsStatsProps) {
-  const { t } = useTranslation();
-  const { data: revenueStats } = useRevenueStats();
-
-  const { data: compare } = useQuery<CompareData>({
-    queryKey: ['analytics-compare'],
-    queryFn: async () => {
-      const res = await authFetch('/api/analytics/compare?period_a=last_week&period_b=this_week');
-      // Throw, don't `return null` — a queryFn returning null is treated by
-      // React Query as a successful result, so it never retries and isError
-      // never fires. The week-over-week delta badges would silently vanish
-      // forever after one transient failure.
-      if (!res.ok) throw new Error('Failed to fetch comparison data');
-      const json = await res.json();
-      if (!json.success) throw new Error(json.error || 'Failed to fetch comparison data');
-      return json as CompareData;
-    },
-    staleTime: 5 * 60 * 1000,
-  });
-
-  // No-show rate
-  const MIN_SAMPLE_SIZE = 5;
-  const hasEnoughData = overview.total_reservations >= MIN_SAMPLE_SIZE;
-  const hasCompletedServices = overview.total_completed_services > 0;
-  const noShowRate = (hasEnoughData && hasCompletedServices)
-    ? ((1 - overview.total_completed_services / overview.total_reservations) * 100).toFixed(1)
+  // The endpoint returns revenue from recorded bills in the selected period.
+  // Its service count, by contrast, is all-time, so it cannot estimate missing
+  // period revenue. Show the recorded amount only; zero means no bills recorded.
+  const recordedRevenue = overview.total_revenue;
+  const dayCounts = WEEKDAYS.map((day, index) => ({ day, index, count: reservationsByDay[day] ?? 0 }))
+    .filter(item => Number.isFinite(item.count) && item.count > 0);
+  const recordedDayTotal = dayCounts.reduce((sum, item) => sum + item.count, 0);
+  const busiest = [...dayCounts].sort((a, b) => b.count - a.count)[0];
+  const uniqueBusiestDay = busiest && dayCounts.filter(item => item.count === busiest.count).length === 1 ? busiest : null;
+  const busiestDayName = uniqueBusiestDay && new Intl.DateTimeFormat(i18n.language, { weekday: 'long', timeZone: 'UTC' })
+    .format(new Date(Date.UTC(2024, 0, 1 + uniqueBusiestDay.index)));
+  const busiestSummary = uniqueBusiestDay && busiestDayName && recordedDayTotal > 0
+    ? t('analytics.busiestDaySummary', {
+      day: busiestDayName,
+      count: uniqueBusiestDay.count,
+      share: Math.round((uniqueBusiestDay.count / recordedDayTotal) * 100),
+    })
     : null;
-  const noShowTooltip = !hasCompletedServices
-    ? t('analytics.noShowNoData', 'Complete a service to track no-show rate')
-    : (!hasEnoughData ? t('analytics.noShowNotEnoughData', 'Need at least 5 reservations') : undefined);
-
-  const noShowDelta = (() => {
-    if (!compare?.period_a || !compare?.period_b) return null;
-    const rateA = compare.period_a.reservations > 0
-      ? (compare.period_a.no_shows / compare.period_a.reservations) * 100 : null;
-    const rateB = compare.period_b.reservations > 0
-      ? (compare.period_b.no_shows / compare.period_b.reservations) * 100 : null;
-    if (rateA === null || rateB === null) return null;
-    return Math.round((rateB - rateA) * 10) / 10;
-  })();
-
-  // Cancellation rate from status breakdown
-  const cancelled = reservationsByStatus['cancelled'] ?? 0;
-  const cancellationRate = overview.total_reservations >= MIN_SAMPLE_SIZE
-    ? ((cancelled / overview.total_reservations) * 100).toFixed(1)
-    : null;
-
-  const cancellationDelta = (() => {
-    if (!compare?.period_a || !compare?.period_b) return null;
-    const rateA = compare.period_a.reservations > 0
-      ? (compare.period_a.cancelled / compare.period_a.reservations) * 100 : null;
-    const rateB = compare.period_b.reservations > 0
-      ? (compare.period_b.cancelled / compare.period_b.reservations) * 100 : null;
-    if (rateA === null || rateB === null) return null;
-    return Math.round((rateB - rateA) * 10) / 10;
-  })();
-
-  // Prefer server-reported actual revenue from service_records total_bill;
-  // fall back to estimated revenue from avg_spend_per_cover when no bills recorded.
-  const actualRevenue = overview.total_revenue;
-  const estimatedRevenue = (actualRevenue && actualRevenue > 0)
-    ? actualRevenue
-    : (revenueStats && overview.total_completed_services > 0
-        ? revenueStats.avg_spend_per_cover * overview.total_completed_services * overview.avg_party_size
-        : null);
-
-  const stats = [
+  const supportingStats = [
     {
-      value: overview.total_reservations,
-      label: t('analytics.totalReservations'),
-      delta: compare?.delta?.reservations_pct ?? null,
-      invertColor: false,
-      subtitle: undefined as string | undefined,
+      value: share(noShows),
+      label: t('analytics.recordedNoShowShare', 'Marked no-show'),
+      tone: noShows > 0 ? 'text-red-800' : 'text-brand-ink',
     },
     {
-      value: noShowRate !== null ? `${noShowRate}%` : '\u2014',
-      label: t('analytics.noShowRate'),
-      color: noShowRate !== null && parseFloat(noShowRate) > 5 ? 'text-red-700' : undefined,
-      tooltip: noShowTooltip,
-      delta: noShowDelta,
-      invertColor: true,
-      subtitle: undefined,
+      value: share(cancelled),
+      label: t('analytics.recordedCancellationShare', 'Cancelled'),
+      tone: cancelled > 0 ? 'text-amber-800' : 'text-brand-ink',
     },
     {
-      value: cancellationRate !== null ? `${cancellationRate}%` : '\u2014',
-      label: t('analytics.cancellationRate', 'Cancellation Rate'),
-      color: cancellationRate !== null && parseFloat(cancellationRate) > 15 ? 'text-amber-700' : undefined,
-      tooltip: cancellationRate === null
-        ? t('analytics.noShowNotEnoughData', 'Need at least 5 reservations')
-        : undefined,
-      delta: cancellationDelta,
-      invertColor: true,
-      subtitle: cancelled > 0 ? t('analytics.cancellationCount', '{{n}} cancelled', { n: cancelled }) : undefined,
-    },
-    {
-      value: estimatedRevenue !== null
-        ? formatCurrency(estimatedRevenue)
-        : '\u2014',
-      label: t('analytics.estimatedRevenue', 'Est. Revenue'),
-      color: 'text-burgundy',
-      delta: null,
-      invertColor: false,
-      subtitle: revenueStats?.using_default
-        ? t('analytics.revenueEstimate', 'Based on avg spend')
-        : undefined,
-    },
-    {
-      value: overview.avg_party_size.toFixed(1),
+      value: total > 0 ? decimal(overview.avg_party_size) : '—',
       label: t('analytics.averagePartySize'),
-      delta: null,
-      invertColor: false,
-      subtitle: undefined,
-    },
-    {
-      value: `${overview.current_occupancy_percentage}%`,
-      label: t('analytics.occupancyRate'),
-      color: 'text-burgundy',
-      delta: null,
-      invertColor: false,
-      subtitle: undefined,
+      detail: undefined,
+      tone: 'text-brand-ink',
     },
   ];
 
-  return (
-    <section className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6 sm:gap-8 border-y hairline py-7 sm:py-9">
-      {stats.map((stat) => (
-        <div key={stat.label}>
-          <p
-            className={`font-serif text-[30px] sm:text-[34px] leading-none tabular-nums ${stat.color || 'text-deep-charcoal'}`}
-            title={stat.tooltip}
-          >
-            {stat.value}
-          </p>
-          <p className="text-[12px] uppercase tracking-[0.12em] text-muted-stone mt-3">
-            {stat.label}
-          </p>
-          {stat.delta !== null && (
-            <p className="mt-1.5 flex items-center gap-1">
-              <DeltaBadge pct={stat.delta} invertColor={stat.invertColor} />
-              <span className="text-[10px] text-muted-stone">{t('analytics.vsPrevWeek')}</span>
-            </p>
-          )}
-          {stat.subtitle && (
-            <p className="text-[10px] text-muted-stone mt-1">{stat.subtitle}</p>
-          )}
-          {stat.tooltip && stat.value === '\u2014' && (
-            <p className="text-[10px] text-muted-stone mt-1">{stat.tooltip}</p>
-          )}
+  if (compact) {
+    return (
+      <section aria-label={t('analytics.periodOverview', 'Period overview')} className="xl:hidden">
+        <div className="grid grid-cols-2 gap-4">
+          <div className="min-w-0">
+            <p className="font-brand text-[42px] leading-none tracking-[-0.06em] tabular-nums text-brand-ink">{total}</p>
+            <p className="mt-1 text-[12px] font-medium text-brand-muted">{t('analytics.totalReservations')}</p>
+          </div>
+          <div className="min-w-0 border-l border-brand-line pl-4">
+            <p className="pt-1.5 font-brand text-[30px] leading-none tracking-[-0.05em] tabular-nums text-brand-ink">{recordedRevenue === undefined ? '—' : formatCurrency(recordedRevenue)}</p>
+            <p className="mt-1 text-[12px] font-medium text-brand-muted">{t('analytics.recordedRevenue', 'Recorded revenue')}</p>
+          </div>
         </div>
-      ))}
+        {busiestSummary && <p className="mt-2 text-[13px] text-brand-action">{busiestSummary}</p>}
+        <div className="mt-3 grid grid-cols-3 gap-3 border-t border-brand-line pt-3">
+          {supportingStats.map(stat => (
+            <div key={stat.label} className="min-w-0">
+              <p className={`font-brand text-[21px] leading-none tabular-nums ${stat.tone}`}>{stat.value}</p>
+              <p className="mt-1 text-[12px] leading-tight text-brand-muted">{stat.label}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="grid grid-cols-2 gap-x-4 gap-y-4 border-b border-brand-line pb-5 sm:gap-x-8 sm:pb-6 xl:grid-cols-1 xl:gap-y-5 xl:border-0 xl:pb-0" aria-label={t('analytics.periodOverview', 'Period overview')}>
+      <div className="min-w-0">
+        <p className="font-brand text-[58px] leading-[0.92] tracking-[-0.07em] tabular-nums text-brand-ink sm:text-[72px]">{total}</p>
+        <p className="mt-2 text-[12px] font-medium uppercase tracking-[0.1em] text-brand-muted">{t('analytics.totalReservations')}</p>
+        {busiestSummary && (
+          <p className="mt-2 max-w-[26rem] font-brand text-[15px] leading-snug tracking-tight text-brand-action sm:text-[17px]">
+            {busiestSummary}
+          </p>
+        )}
+      </div>
+      <div className="min-w-0 border-l border-brand-line pl-4 pt-5 sm:pl-8 sm:pt-0 xl:border-l-0 xl:border-t xl:pl-0 xl:pt-5">
+        <p className="font-brand text-[31px] leading-[1.02] tracking-[-0.055em] tabular-nums text-brand-ink sm:text-[56px] xl:text-[48px]">{recordedRevenue === undefined ? '—' : formatCurrency(recordedRevenue)}</p>
+        <p className="mt-2 text-[12px] font-medium uppercase tracking-[0.1em] text-brand-muted">{t('analytics.recordedRevenue', 'Recorded revenue')}</p>
+        <p className="mt-2 text-[13px] leading-snug text-brand-muted">{t('analytics.recordedRevenueNote', 'Bills recorded in this period')}</p>
+      </div>
+      <div className="col-span-2 grid grid-cols-3 gap-x-4 gap-y-4 border-t border-brand-line pt-4 sm:gap-x-8 sm:pt-5 xl:col-span-1 xl:gap-x-3">
+        {supportingStats.map((stat) => (
+          <div key={stat.label} className="min-w-0">
+            <p className={`font-brand text-[24px] font-normal leading-none tracking-tight tabular-nums sm:text-[28px] xl:text-[25px] ${stat.tone}`}>
+              {stat.value}
+            </p>
+            <p className="mt-1.5 text-[12px] font-medium leading-snug text-brand-muted">
+              {stat.label}
+            </p>
+            {stat.detail && <p className="mt-1 text-[12px] leading-snug text-muted-stone">{stat.detail}</p>}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+export function LiveOccupancySignal({ occupiedSeats, totalSeats }: { occupiedSeats: number; totalSeats: number }) {
+  const { t, i18n } = useTranslation();
+  const hasCapacity = Number.isFinite(totalSeats) && totalSeats > 0;
+  const hasSeatCount = Number.isFinite(occupiedSeats) && occupiedSeats >= 0;
+  const occupancyPercent = hasCapacity && hasSeatCount ? (occupiedSeats / totalSeats) * 100 : null;
+  const displayPercentage = occupancyPercent !== null
+    ? `${new Intl.NumberFormat(i18n.language, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(occupancyPercent)}%`
+    : '—';
+  const seatCount = hasCapacity && hasSeatCount
+    ? t('analytics.occupancySeatCount', { occupied: occupiedSeats, capacity: totalSeats })
+    : null;
+  const meterPercentage = occupancyPercent === null ? 0 : Math.round(Math.min(100, Math.max(0, occupancyPercent)) * 10) / 10;
+  return (
+    <section aria-label={t('analytics.currentOccupancy', 'Occupancy now')}>
+      <p className="text-[12px] font-medium uppercase tracking-[0.1em] text-brand-muted">{t('analytics.currentOccupancy', 'Occupancy now')}</p>
+      <p className="mt-1 text-[13px] text-muted-stone">{t('analytics.outsideSelectedPeriod', 'Live · outside the date filter')}</p>
+      <p className="mt-4 font-brand text-[48px] leading-none tracking-tight tabular-nums text-brand-ink sm:text-[54px]">{displayPercentage}</p>
+      {seatCount && (
+        <>
+          <div
+            role="progressbar"
+            aria-label={t('analytics.currentOccupancy', 'Occupancy now')}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={meterPercentage}
+            aria-valuetext={seatCount}
+            className="mt-5 h-1.5 overflow-hidden rounded-full bg-brand-ink/10"
+          >
+            <div className="h-full rounded-full bg-brand-action" style={{ width: `${meterPercentage}%` }} />
+          </div>
+          <p className="mt-2 text-[13px] text-muted-stone">{seatCount}</p>
+        </>
+      )}
     </section>
   );
 }

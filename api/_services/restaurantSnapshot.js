@@ -29,7 +29,7 @@ async function getRestaurantSnapshot(restaurantId) {
       .from('waitlist')
       .select('id', { count: 'exact', head: true })
       .eq('restaurant_id', restaurantId)
-      .eq('status', 'waiting')
+      .in('status', ['waiting', 'notified'])
       .limit(1),
     supabaseAdmin
       .from('service_records')

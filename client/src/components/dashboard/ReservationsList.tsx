@@ -36,6 +36,8 @@ interface ReservationsListProps {
   language?: 'en' | 'es' | 'pt-BR';
   isLoading?: boolean;
   tables?: Table[];
+  /** Optional reservation ID from an Insights deep link. */
+  initialSearchQuery?: string;
 }
 
 export default function ReservationsList({
@@ -55,6 +57,7 @@ export default function ReservationsList({
   language = 'en',
   isLoading,
   tables = [],
+  initialSearchQuery = '',
 }: ReservationsListProps) {
   // Build id→table_number lookup once for all rows
   const tableMap = useMemo(() => {
@@ -64,8 +67,8 @@ export default function ReservationsList({
   }, [tables]);
   const { t } = useTranslation();
   const [dayFilter, setDayFilter] = useState<DayFilter>('today');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [debouncedQuery, setDebouncedQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
+  const [debouncedQuery, setDebouncedQuery] = useState(initialSearchQuery);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const searchInputRef = useRef<HTMLInputElement>(null);
   const displayed =
@@ -79,6 +82,12 @@ export default function ReservationsList({
     const timer = setTimeout(() => setDebouncedQuery(searchQuery), 300);
     return () => clearTimeout(timer);
   }, [searchQuery]);
+
+  useEffect(() => {
+    setSearchQuery(initialSearchQuery);
+    setDebouncedQuery(initialSearchQuery);
+    if (initialSearchQuery) setDayFilter('today');
+  }, [initialSearchQuery]);
 
   // Filter by search query + status
   const filtered = useMemo(() => {

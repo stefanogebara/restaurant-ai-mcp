@@ -82,13 +82,11 @@ export default function InsightsPage() {
 
   useDocumentTitle(t('insights.pageTitle', 'Insights'));
 
-  // Sync tab state with URL query param
   useEffect(() => {
     const urlTab = searchParams.get('tab') as TabId | null;
-    if (urlTab && TABS.some((tab) => tab.id === urlTab) && urlTab !== activeTab) {
-      setActiveTab(urlTab);
-    }
-  }, [searchParams, activeTab]);
+    const nextTab = urlTab && TABS.some((tab) => tab.id === urlTab) ? urlTab : 'overview';
+    setActiveTab((current) => current === nextTab ? current : nextTab);
+  }, [searchParams]);
 
   const handleTabChange = (tabId: TabId) => {
     setActiveTab(tabId);
@@ -98,6 +96,7 @@ export default function InsightsPage() {
       setSearchParams({ tab: tabId }, { replace: true });
     }
   };
+  const heroInsights = activeTab === 'analytics' || activeTab === 'overview';
 
   // Role-based permission check (not plan-based)
   if (!can('viewAnalytics')) {
@@ -126,21 +125,19 @@ export default function InsightsPage() {
   }
 
   return (
-    <DashboardLayout>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+    <DashboardLayout appearance={heroInsights ? 'hero' : 'default'}>
+      <div className={heroInsights ? 'min-h-screen bg-brand-paper font-brand text-brand-ink' : 'min-h-screen bg-warm-white'}>
+      <div className={`mx-auto px-4 sm:px-6 ${heroInsights ? 'max-w-[1240px] py-4 sm:py-5 lg:px-10' : 'max-w-7xl py-6'}`}>
         {/* Header */}
-        <header className="mb-8 mt-14 sm:mt-0">
-          <h1 className="font-serif text-3xl sm:text-4xl text-deep-charcoal tracking-tight">
-            {t('insights.pageTitle', 'Insights')}
+        <header className={`pl-12 lg:pl-0 ${heroInsights ? 'mb-2 sm:mb-3' : 'mb-1'}`}>
+          <h1 className={heroInsights ? 'font-brand text-[29px] font-normal leading-[1.05] tracking-[-0.055em] text-brand-ink sm:text-[40px]' : 'font-serif text-4xl sm:text-5xl text-deep-charcoal tracking-tight'}>
+            {heroInsights ? <>{activeTab === 'analytics' ? t('insights.tabs.analytics', 'Analytics') : t('insights.pageTitle', 'Insights')}{' '}<em className="ml-1.5 font-serif font-normal italic tracking-[-0.04em] sm:ml-3">{t('insights.houseSuffix', 'of the house.')}</em></> : t('insights.pageTitle', 'Insights')}
           </h1>
-          <p className="text-[15px] text-muted-stone mt-1.5">
-            {t('insights.pageSubtitle', 'Your restaurant intelligence hub.')}
-          </p>
         </header>
 
         {/* Tabs */}
-        <div className="border-b hairline mb-10 sm:mb-12">
-          <nav className="flex gap-0 -mb-px" aria-label={t('insights.tabsAriaLabel', 'Insights tabs')}>
+        <div className={heroInsights ? 'mb-4 overflow-x-auto border-b border-brand-line sm:mb-5' : 'border-b hairline mb-4 overflow-x-auto'}>
+          <nav className="flex min-w-max gap-0 -mb-px" role="tablist" aria-label={t('insights.tabsAriaLabel', 'Insights tabs')}>
             {TABS.map((tab) => {
               const isActive = activeTab === tab.id;
               const hasAccess = hasFeatureAccess(planType, tab.requiredFeature);
@@ -155,12 +152,14 @@ export default function InsightsPage() {
                   aria-disabled={isLocked}
                   role="tab"
                   className={`
-                    relative px-5 py-3 text-sm font-medium transition-colors whitespace-nowrap border-b-2
-                    ${isActive
-                      ? 'text-burgundy border-burgundy'
-                      : isLocked
-                        ? 'text-muted-stone/50 cursor-default border-transparent'
-                        : 'text-muted-stone hover:text-deep-charcoal border-transparent'
+                    relative px-5 py-2.5 text-sm font-medium transition-colors whitespace-nowrap border-b-2
+                    ${heroInsights
+                      ? isActive ? 'text-brand-ink border-brand-action' : isLocked ? 'text-brand-muted/50 cursor-default border-transparent' : 'text-brand-muted hover:text-brand-ink border-transparent'
+                      : isActive
+                        ? 'text-deep-charcoal border-deep-charcoal'
+                        : isLocked
+                          ? 'text-muted-stone/50 cursor-default border-transparent'
+                          : 'text-muted-stone hover:text-deep-charcoal border-transparent'
                     }
                   `}
                 >
@@ -194,6 +193,7 @@ export default function InsightsPage() {
             </Suspense>
           );
         })()}
+      </div>
       </div>
     </DashboardLayout>
   );

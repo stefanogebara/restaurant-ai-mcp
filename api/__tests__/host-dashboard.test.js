@@ -75,6 +75,8 @@ const mockGetUpcomingReservations = jest.fn(() =>
   })
 );
 
+const mockGetWaitlistCount = jest.fn(() => Promise.resolve({ success: true, count: 1 }));
+
 const mockFindReservation = jest.fn(() =>
   Promise.resolve({
     success: true,
@@ -118,6 +120,7 @@ jest.mock('../_lib/supabase', () => ({
   getAllTables: mockGetAllTables,
   getActiveServiceRecords: mockGetActiveServiceRecords,
   getUpcomingReservations: mockGetUpcomingReservations,
+  getWaitlistCount: mockGetWaitlistCount,
   findReservation: mockFindReservation,
   updateReservation: mockUpdateReservation,
   createServiceRecord: mockCreateServiceRecord,
@@ -237,6 +240,8 @@ beforeEach(() => {
   mockUpdateTableConfig.mockResolvedValue({ success: true, table: {} });
   mockDeleteTable.mockReset();
   mockDeleteTable.mockResolvedValue({ success: true });
+  mockGetWaitlistCount.mockReset();
+  mockGetWaitlistCount.mockResolvedValue({ success: true, count: 1 });
 });
 
 // ---------------------------------------------------------------------------
@@ -253,6 +258,7 @@ describe('GET dashboard action', () => {
     expect(mockGetAllTables).toHaveBeenCalledWith(RESTAURANT_ID);
     expect(mockGetActiveServiceRecords).toHaveBeenCalledWith(RESTAURANT_ID);
     expect(mockGetUpcomingReservations).toHaveBeenCalledWith(RESTAURANT_ID, 'UTC');
+    expect(mockGetWaitlistCount).toHaveBeenCalledWith(RESTAURANT_ID);
 
     const responseData = res.json.mock.calls[0][0];
     expect(responseData.tables).toBeDefined();
@@ -260,6 +266,7 @@ describe('GET dashboard action', () => {
     expect(responseData.upcoming_reservations).toBeDefined();
     expect(responseData.summary).toBeDefined();
     expect(responseData.summary.total_capacity).toBe(6);
+    expect(responseData.summary.waitlist_count).toBe(1);
   });
 
   test('dashboard summary calculates occupancy correctly', async () => {
@@ -271,6 +278,16 @@ describe('GET dashboard action', () => {
     expect(summary.total_capacity).toBe(6);
     expect(summary.active_parties).toBe(1);
     expect(summary.upcoming_reservations).toBe(1);
+  });
+
+  test('keeps the dashboard available when the exact waitlist count fails', async () => {
+    mockGetWaitlistCount.mockRejectedValueOnce(new Error('waitlist unavailable'));
+    const { req, res } = mockReqRes({ action: 'dashboard', method: 'GET' });
+
+    await dashboardHandler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json.mock.calls[0][0].summary.waitlist_count).toBeNull();
   });
 });
 

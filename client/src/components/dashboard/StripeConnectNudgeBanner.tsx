@@ -39,11 +39,11 @@ export default function StripeConnectNudgeBanner() {
 
   return (
     <div
-      className="bg-amber-50 border border-amber-200 rounded-xl px-4 sm:px-5 py-3 sm:py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 mb-6 sm:mb-8"
+      className="border-t border-amber-200 pt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 mb-6 sm:mb-8"
       data-testid="stripe-connect-nudge-banner"
     >
-      <p className="text-sm text-amber-800 flex-1 min-w-0">
-        <span className="font-semibold">
+      <p className="text-[13px] text-stone-gray flex-1 min-w-0">
+        <span className="font-semibold text-amber-800">
           {t('stripeConnectNudge.title', 'Connect your Stripe account')}
         </span>
         {' — '}
@@ -54,7 +54,7 @@ export default function StripeConnectNudgeBanner() {
       </p>
       <a
         href="/host-dashboard/voice-settings#tab=pos"
-        className="text-sm font-semibold text-amber-700 hover:text-amber-900 bg-amber-100 hover:bg-amber-200 px-4 py-1.5 rounded-xl whitespace-nowrap transition-colors"
+        className="text-[13px] font-semibold text-burgundy hover:text-burgundy-dark whitespace-nowrap transition-colors"
       >
         {t('stripeConnectNudge.cta', 'Connect Stripe')}
       </a>

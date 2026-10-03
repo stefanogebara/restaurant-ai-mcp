@@ -1,6 +1,5 @@
 ﻿import { useTranslation } from 'react-i18next';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { colors } from '../../utils/colors';
 import ChartPanel from './ChartPanel';
 interface DayOfWeekChartProps {
   reservationsByDay: Record<string, number>;
@@ -23,21 +22,21 @@ export default function DayOfWeekChart({ reservationsByDay }: DayOfWeekChartProp
 
   const chartData = daysOrder.map(day => ({
     day: dayDates[day].toLocaleDateString(i18n.language, { weekday: 'short', timeZone: 'UTC' }),
+    fullDay: dayDates[day].toLocaleDateString(i18n.language, { weekday: 'long', timeZone: 'UTC' }),
     count: reservationsByDay[day] || 0,
   }));
 
   const maxCount = Math.max(...chartData.map(c => c.count));
-  // When there's no data every count is 0 and `count >= maxCount * 0.8` is
-  // `0 >= 0` â†’ true, painting every bar burgundy as if all days were peak.
+  // Forest marks days reaching at least 80% of this period's busiest day.
+  // With no data, zero is not a peak.
   const hasData = maxCount > 0;
 
-  const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Array<{ value: number; payload: { day: string } }> }) => {
+  const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Array<{ value: number; payload: { fullDay: string } }> }) => {
     if (active && payload && payload.length) {
-      const fullDay = daysOrder[chartData.findIndex(d => d.day === payload[0].payload.day)];
       return (
-        <div className="glass-panel p-3 shadow-lg">
-          <p className="text-sm font-medium text-deep-charcoal mb-1">{fullDay}</p>
-          <p className="text-sm text-burgundy">
+        <div className="rounded-xl border border-brand-line bg-brand-paper p-3 shadow-sm">
+          <p className="mb-1 text-sm font-medium text-brand-ink">{payload[0].payload.fullDay}</p>
+          <p className="text-sm text-brand-action">
             {t('analytics.reservations')}: <span className="font-medium">{payload[0].value}</span>
           </p>
         </div>
@@ -48,22 +47,22 @@ export default function DayOfWeekChart({ reservationsByDay }: DayOfWeekChartProp
 
   return (
     <ChartPanel title={t('analytics.reservationsByDay')} ariaLabel={t('analytics.charts.dayOfWeekAria')}>
-        <ResponsiveContainer width="100%" height={220}>
+        <ResponsiveContainer width="100%" height={190}>
           <BarChart
             data={chartData}
             margin={{ top: 5, right: 10, left: -10, bottom: 5 }}
           >
-            <CartesianGrid strokeDasharray="3 3" stroke={colors.borderGray} opacity={0.3} />
+            <CartesianGrid strokeDasharray="3 3" stroke="#CDD0C7" opacity={0.55} />
             <XAxis
               dataKey="day"
-              stroke={colors.mutedStone}
-              style={{ fontSize: '11px' }}
+              stroke="#586254"
+              style={{ fontSize: '12px' }}
               tickLine={false}
               axisLine={false}
             />
             <YAxis
-              stroke={colors.mutedStone}
-              style={{ fontSize: '11px' }}
+              stroke="#586254"
+              style={{ fontSize: '12px' }}
               tickLine={false}
               axisLine={false}
             />
@@ -72,12 +71,17 @@ export default function DayOfWeekChart({ reservationsByDay }: DayOfWeekChartProp
               {chartData.map((entry) => (
                 <Cell
                   key={entry.day}
-                  fill={hasData && entry.count >= maxCount * 0.8 ? colors.burgundy : colors.borderGray}
+                  fill={hasData && entry.count >= maxCount * 0.8 ? '#3F4E32' : '#CDD0C7'}
                 />
               ))}
             </Bar>
           </BarChart>
         </ResponsiveContainer>
+        {hasData && (
+          <p className="mt-2 text-[12px] leading-snug text-muted-stone">
+            {t('analytics.charts.highlightedDayRule')}
+          </p>
+        )}
     </ChartPanel>
   );
 }

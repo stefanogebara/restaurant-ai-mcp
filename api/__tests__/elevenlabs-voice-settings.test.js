@@ -136,7 +136,7 @@ describe('ElevenLabs Voice Settings degradation', () => {
     expect(global.fetch).not.toHaveBeenCalled();
   });
 
-  test('PATCH saves locally and returns sync warning when ElevenLabs is not configured', async () => {
+  test('PATCH refuses a false local-only success when ElevenLabs is not configured', async () => {
     mockMaybeSingle.mockResolvedValueOnce({
       data: {
         id: 'rest-1',
@@ -145,7 +145,6 @@ describe('ElevenLabs Voice Settings degradation', () => {
       },
       error: null,
     });
-    mockAwaitQueue.push({ data: null, error: null });
 
     const { req, res } = createMockReqRes({
       method: 'PATCH',
@@ -164,19 +163,65 @@ describe('ElevenLabs Voice Settings degradation', () => {
 
     await handler(req, res);
 
-    expect(res.status).toHaveBeenCalledWith(200);
-    expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({
-      // Column renamed: agent_voice_id → voice_id. voice_name no longer
-      // persisted on the no-API-key PATCH path.
-      voice_id: 'voice-456',
-      agent_language: 'en',
-    }));
+    expect(res.status).toHaveBeenCalledWith(503);
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
-      success: true,
-      message: 'Voice settings saved locally. Live agent sync will apply on next refresh.',
-      sync_warning: expect.stringContaining('API key not configured'),
+      success: false,
+      error: expect.stringContaining('No settings were saved'),
     }));
+    expect(mockUpdate).not.toHaveBeenCalled();
     expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  test('PATCH persists only after ElevenLabs accepts the update', async () => {
+    process.env.ELEVENLABS_API_KEY = 'test-key';
+    mockMaybeSingle.mockResolvedValueOnce({
+      data: { id: 'rest-1', restaurant_name: 'Seatable Bistro', elevenlabs_agent_id: 'agent-123' },
+      error: null,
+    });
+    global.fetch.mockResolvedValueOnce({ ok: true });
+    mockAwaitQueue.push({ data: null, error: null });
+
+    const { req, res } = createMockReqRes({ method: 'PATCH', body: { voice_id: 'voice-456', language: 'pt' } });
+    await handler(req, res);
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      'https://api.elevenlabs.io/v1/convai/agents/agent-123',
+      expect.objectContaining({ method: 'PATCH' })
+    );
+    expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({ voice_id: 'voice-456', agent_language: 'pt' }));
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  test('PATCH leaves local settings untouched if ElevenLabs rejects the update', async () => {
+    process.env.ELEVENLABS_API_KEY = 'test-key';
+    mockMaybeSingle.mockResolvedValueOnce({
+      data: { id: 'rest-1', restaurant_name: 'Seatable Bistro', elevenlabs_agent_id: 'agent-123' },
+      error: null,
+    });
+    global.fetch.mockResolvedValueOnce({ ok: false, status: 400, text: async () => 'unsupported model' });
+
+    const { req, res } = createMockReqRes({ method: 'PATCH', body: { tts_model_id: 'unsupported-model' } });
+    await handler(req, res);
+
+    expect(mockUpdate).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(502);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: false, error: expect.stringContaining('No settings were saved') }));
+  });
+
+  test('PATCH reports partial sync when the agent updates but the database fails', async () => {
+    process.env.ELEVENLABS_API_KEY = 'test-key';
+    mockMaybeSingle.mockResolvedValueOnce({
+      data: { id: 'rest-1', restaurant_name: 'Seatable Bistro', elevenlabs_agent_id: 'agent-123' },
+      error: null,
+    });
+    global.fetch.mockResolvedValueOnce({ ok: true });
+    mockAwaitQueue.push({ data: null, error: { message: 'database unavailable' } });
+
+    const { req, res } = createMockReqRes({ method: 'PATCH', body: { voice_id: 'voice-456' } });
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(502);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: false, partial: true }));
   });
 
   test('refresh prompt returns skipped when ElevenLabs is not configured', async () => {

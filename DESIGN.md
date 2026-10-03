@@ -2,6 +2,25 @@
 
 Single source of truth for visual + brand decisions across the product, marketing, and AI-generated assets. When CLAUDE.md, Tailwind config, and this file disagree, **this file wins** — update the others to match.
 
+## Hero-aligned product migration (2026-10-03, preview only)
+
+The approved landing hero in `client/seatable-prototype.html` is now the brand reference for future product screens. The existing Liquid Glass v2 system remains in force on untouched routes. Insights Overview and Analytics are the first scoped migrations; Reports and other routes retain the existing system until migrated deliberately.
+
+| Role | Source | Product translation |
+|---|---|---|
+| Canvas | Hero `--demo-paper` `#F3F0E9` | Warm paper behind operational content, not four decorative orbs. |
+| Ink | Hero `--demo-ink` `#293222` | Primary text and chart baseline. |
+| Action | Hero `--demo-action` `#3F4E32` | Active controls and links; do not use it as an error, warning, or success state. |
+| Line | Hero `--demo-line` `#CDD0C7` | Fine separators and chart rules. |
+| Muted text | Hero reservation note `#586254` | Secondary information; verify contrast on paper. |
+| Typography | Hero `--titulo` and `--serif` | Instrument Sans leads page titles, numbers, and controls; Instrument Serif italic is reserved for one narrative emphasis or brand mark, never every metric. |
+| Media | Hero restaurant photograph | Photo can establish restaurant context at a page entry, never replace live data or decorate every chart. |
+| Data status | Existing semantic palette | Emerald, amber, and red remain states; do not infer status from the brand green. |
+
+**Reference lock for Analytics:** primary source is the rendered approved hero; the landing's dining-room demo is secondary for compact operational data. A product screen must keep dates, metrics, charts, empty states, and keyboard access useful. It must not copy the hero's marketing scale. Avoid the previous failure of making Analytics a generic cream editorial dashboard: preserve the hero's exact sans/green/photographic identity and product story.
+
+This scoped migration overrides the older typography, burgundy-action, and warm-orb guidance below only on the migrated route. Update Tailwind and shared primitives when later routes migrate, and retain each color's semantic role.
+
 ---
 
 ## Table of contents
