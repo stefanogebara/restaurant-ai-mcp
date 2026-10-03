@@ -287,6 +287,13 @@ describe('ReservationsList', () => {
     expect(screen.getByPlaceholderText('Search by name or phone...')).toBeInTheDocument();
   });
 
+  it('opens an Insights deep link with only the requested reservation visible', () => {
+    render(<ReservationsList {...defaultProps} initialSearchQuery="r2" />);
+    expect(screen.getByPlaceholderText('Search by name or phone...')).toHaveValue('r2');
+    expect(screen.queryByText('Alice Smith')).not.toBeInTheDocument();
+    expect(screen.getByText('Bob Johnson')).toBeInTheDocument();
+  });
+
   it('renders status filter chips', () => {
     render(<ReservationsList {...defaultProps} />);
     expect(screen.getByRole('button', { name: 'All' })).toBeInTheDocument();

@@ -10,7 +10,7 @@
  */
 
 import { useState, useMemo, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
@@ -63,6 +63,8 @@ export default function Dashboard() {
   useDocumentTitle(t('pageTitles.dashboard'));
   const { success } = useToast();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const reservationFocusId = searchParams.get('reservation') ?? '';
 
   // Launch checklist: show after first subscription
   const [showLaunchChecklist, setShowLaunchChecklist] = useState(() => {
@@ -114,6 +116,12 @@ export default function Dashboard() {
     queryFn: hostAPI.getDashboard,
     refetchInterval: 5 * 60 * 1000,
   });
+
+  useEffect(() => {
+    if (reservationFocusId && !isLoading) {
+      document.getElementById('reservations')?.scrollIntoView({ behavior: 'auto', block: 'start' });
+    }
+  }, [reservationFocusId, isLoading]);
 
   // ---- Data extraction ----
   const rawStats = dashboardData?.data?.summary || {};
@@ -471,8 +479,9 @@ export default function Dashboard() {
           </div>
 
           {/* ---- Reservations Section ---- */}
-          <section className="mb-12 sm:mb-20">
+          <section id="reservations" className="mb-12 scroll-mt-6 sm:mb-20">
             <ReservationsList
+              initialSearchQuery={reservationFocusId}
               todayReservations={todayReservations}
               tomorrowReservations={tomorrowReservations}
               weekReservations={weekReservations}

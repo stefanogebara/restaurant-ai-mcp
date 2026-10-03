@@ -4,7 +4,7 @@ Single source of truth for visual + brand decisions across the product, marketin
 
 ## Hero-aligned product migration (2026-10-03, preview only)
 
-The approved landing hero in `client/seatable-prototype.html` is now the brand reference for future product screens. The existing Liquid Glass v2 system remains in force on untouched routes. The Insights Analytics route is the first scoped migration; do not silently recolor every route in one release.
+The approved landing hero in `client/seatable-prototype.html` is now the brand reference for future product screens. The existing Liquid Glass v2 system remains in force on untouched routes. Insights Overview and Analytics are the first scoped migrations; Reports and other routes retain the existing system until migrated deliberately.
 
 | Role | Source | Product translation |
 |---|---|---|

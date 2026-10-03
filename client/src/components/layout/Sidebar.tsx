@@ -141,7 +141,7 @@ export default function Sidebar({ appearance = 'default' }: { appearance?: 'defa
     { path: '/host-dashboard/floor-plan', label: t('navigation.tables', 'Tables'), icon: 'layout-grid' },
     { path: '/host-dashboard/manager-ai', label: 'AI', icon: 'chat' },
     hero
-      ? { path: '/host-dashboard/insights', label: t('insights.tabs.analytics', 'Analytics'), icon: 'bar-chart' }
+      ? { path: '/host-dashboard/insights', label: t('navigation.insights', 'Insights'), icon: 'bar-chart' }
       : { path: '/host-dashboard/settings', label: t('common.settings', 'Settings'), icon: 'settings' },
   ];
   const isMoreActive = !mobileNavItems.some(item => isActive(item.path));
@@ -550,7 +550,7 @@ export default function Sidebar({ appearance = 'default' }: { appearance?: 'defa
 
       {/* Mobile Bottom Navigation Bar */}
       <nav
-        className={`lg:hidden fixed bottom-0 left-0 right-0 z-40 backdrop-blur-xl border-t safe-area-bottom ${hero ? 'bg-brand-paper/95 border-brand-line/80 font-brand' : 'bg-warm-white/95 hairline'}`}
+        className={`lg:hidden fixed bottom-0 left-0 right-0 z-40 border-t safe-area-bottom ${hero ? 'bg-brand-paper border-brand-line font-brand' : 'backdrop-blur-xl bg-warm-white/95 hairline'}`}
         aria-label="Mobile navigation"
       >
         <div className="flex items-center justify-around px-2 py-1 pb-[max(0.25rem,env(safe-area-inset-bottom))]">
@@ -559,13 +559,13 @@ export default function Sidebar({ appearance = 'default' }: { appearance?: 'defa
             return (
               <Link
                 key={item.path}
-                to={hero && item.path === '/host-dashboard/insights' ? '/host-dashboard/insights?tab=analytics' : item.path}
+                to={hero && item.path === '/host-dashboard/insights' ? '/host-dashboard/insights?tab=overview' : item.path}
                 aria-current={active ? 'page' : undefined}
-                className={`flex flex-col items-center gap-0.5 px-3 py-2 rounded-lg transition-colors min-w-[60px] ${
+                className={`flex flex-col items-center gap-0.5 px-3 py-2 transition-colors min-w-[60px] ${hero ? 'border-t-2' : 'rounded-lg'} ${
                   hero
                     ? active
-                      ? 'text-brand-ink'
-                      : 'text-brand-muted active:text-brand-ink'
+                      ? 'border-brand-action text-brand-ink font-semibold'
+                      : 'border-transparent text-brand-muted active:text-brand-ink'
                     : active
                       ? 'text-deep-charcoal bg-deep-charcoal/[0.06]'
                       : 'text-muted-stone active:text-deep-charcoal'
@@ -573,7 +573,7 @@ export default function Sidebar({ appearance = 'default' }: { appearance?: 'defa
               >
                 <ThiingsIcon name={item.icon} pxSize={20} />
                 <span className="text-[11px] font-medium leading-tight whitespace-nowrap">{item.label}</span>
-                {active && <span className={`w-1 h-1 rounded-full ${hero ? 'bg-brand-action' : 'bg-burgundy'}`} />}
+                {active && !hero && <span className="h-1 w-1 rounded-full bg-burgundy" />}
               </Link>
             );
           })}

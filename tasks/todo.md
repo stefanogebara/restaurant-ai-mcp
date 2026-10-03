@@ -1,5 +1,19 @@
 # Reforma da plataforma interna — primeira entrega (30/set/2026)
 
+## Alinhar Visão Geral de Insights ao hero (03/out/2026)
+
+**Plano:** manter Análises como está e migrar a aba Visão Geral no mesmo shell de papel, verde-pinho e Instrument Sans. O briefing deve ser a decisão principal; clientes, previsão, métricas e e-mails são camadas secundárias, sem inventar dados nem apresentar bloqueio de plano como ausência de atividade.
+
+- [x] Migrar o shell e a composição de Visão Geral sem alterar Relatórios ou outros usos dos componentes compartilhados.
+- [x] Impedir que falha no CRM ou painel ative o diagnóstico falso de restaurante novo.
+- [x] Conferir estados preenchido, vazio, falha e bloqueio em desktop e celular com componentes React reais e dados sintéticos.
+- [ ] Pedir crítica Astra em contexto novo usando apenas cada captura; iterar até o alvo visual.
+- [ ] Rodar testes/build/lint, revisar a prévia e atualizar a PR em rascunho; não publicar em produção antes de aprovação estética e teste autenticado.
+
+**Aviso:** a conta de produção não será modificada; o laboratório de capturas usa somente dados sintéticos.
+
+**Revisão de 04/out:** a Visão Geral usa a linguagem do hero em seu shell, briefing, clientes, tendências e campanhas, sem trocar o visual de Relatórios. O estado de plano bloqueado não revela contagens do CRM em cache, não repete avisos e não expõe tendências de Análises. A linha de serviço mantém o foco também quando uma reserva de baixo risco é escolhida. Capturas sintéticas preenchida/vazia/falha/bloqueada em 390/1440 px não tiveram erro ou overflow; interações em 320/390/736/1440 px passaram. Frontend: 116 arquivos/1.052 testes, build e lint dos arquivos alterados passaram. A revisão estática HTTP carrega as imagens atualizadas. Crítica Astra independente da captura final: 7,6/10 desktop e 7,6/10 celular. Falta o alvo visual de 9/10 e teste autenticado na prévia da PR; produção segue intocada.
+
 ## Alinhar Análises ao hero aprovado (03/out/2026)
 
 **Alvo travado:** o hero `client/seatable-prototype.html` renderizado em 1440 px. Preservar o papel quente, verde-pinho, Instrument Sans como voz principal, itálico Instrument Serif só em momentos narrativos, fotografia como contexto de restaurante e controles simples. O painel continua operacional e denso; não copiar a escala de marketing nem a fotografia para cada gráfico.

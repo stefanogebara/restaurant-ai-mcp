@@ -2,10 +2,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import TonightBriefingCard from '../TonightBriefingCard';
 import { useNoShowPredictions, type NoShowPrediction } from '../../../hooks/usePredictiveAnalytics';
+import { usePlanFeature } from '../../../hooks/usePlanFeature';
 
 vi.mock('../../../hooks/usePredictiveAnalytics', () => ({
   useNoShowPredictions: vi.fn(),
 }));
+vi.mock('../../../hooks/usePlanFeature', () => ({ usePlanFeature: vi.fn() }));
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -54,6 +56,7 @@ function showPredictions(predictions: NoShowPrediction[]) {
 describe('TonightBriefingCard', () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    vi.mocked(usePlanFeature).mockReturnValue({ hasAccess: true, isLoading: false, plan: 'growth' } as ReturnType<typeof usePlanFeature>);
   });
 
   it('counts only today in every metric, regardless of the all-upcoming summary', () => {
@@ -93,6 +96,27 @@ describe('TonightBriefingCard', () => {
     expect(screen.getByText('Bia', { selector: 'p' })).toBeInTheDocument();
   });
 
+  it('keeps a low-risk timeline selection focused instead of reverting to the highest-risk booking', () => {
+    showPredictions([prediction('Ana', 0, 'high'), prediction('Caio', 0, 'low')]);
+    render(<TonightBriefingCard appearance="hero" />);
+
+    fireEvent.click(within(screen.getByRole('region', { name: 'insights.serviceTimeline' })).getByRole('button', { name: /20:00 · Caio/ }));
+    expect(screen.getByRole('link', { name: /insights.openSpecificReservation/ }))
+      .toHaveAttribute('href', '/host-dashboard/simple?reservation=Caio#reservations');
+    expect(screen.getByText('Caio', { selector: 'p' })).toBeInTheDocument();
+  });
+
+  it('links the hero decision to the focused reservation in the dashboard', () => {
+    showPredictions([prediction('Ana', 0, 'high'), prediction('Bia', 0, 'medium')]);
+    render(<TonightBriefingCard appearance="hero" />);
+
+    expect(screen.getByRole('link', { name: /insights.openSpecificReservation/ }))
+      .toHaveAttribute('href', '/host-dashboard/simple?reservation=Ana#reservations');
+    fireEvent.click(within(screen.getByRole('region', { name: 'insights.serviceTimeline' })).getByRole('button', { name: /20:00 · Bia/ }));
+    expect(screen.getByRole('link', { name: /insights.openSpecificReservation/ }))
+      .toHaveAttribute('href', '/host-dashboard/simple?reservation=Bia#reservations');
+  });
+
   it('reserves emerald for a day with no predicted risk', () => {
     showPredictions([]);
 
@@ -109,7 +133,18 @@ describe('TonightBriefingCard', () => {
 
     render(<TonightBriefingCard />);
 
-    expect(screen.getByText('common.noData')).toBeInTheDocument();
+    expect(screen.getByText('insights.riskDataUnavailable')).toBeInTheDocument();
     expect(screen.queryByText('insights.noReservationsToday')).not.toBeInTheDocument();
+  });
+
+  it('does not call a plan-locked prediction feed an empty service', () => {
+    vi.mocked(usePlanFeature).mockReturnValue({ hasAccess: false, isLoading: false, plan: 'free' } as ReturnType<typeof usePlanFeature>);
+    vi.mocked(useNoShowPredictions).mockReturnValue({ data: undefined, isLoading: false } as ReturnType<typeof useNoShowPredictions>);
+
+    render(<TonightBriefingCard appearance="hero" />);
+
+    expect(screen.getByText('insights.riskPlanUnavailable')).toBeInTheDocument();
+    expect(screen.queryByText('insights.noReservationsToday')).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'insights.tonightBriefing' })).toHaveClass('font-brand');
   });
 });

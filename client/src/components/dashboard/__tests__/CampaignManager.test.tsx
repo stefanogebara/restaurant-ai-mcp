@@ -76,4 +76,16 @@ describe('CampaignManager', () => {
     expect(screen.queryByRole('heading', { name: 'campaigns.title' })).not.toBeInTheDocument();
     expect(screen.queryByText('campaigns.segmentAtRisk')).not.toBeInTheDocument();
   });
+
+  it('keeps the hero variant read-only and limits history to email', () => {
+    render(<CampaignManager appearance="hero" />);
+
+    expect(screen.getByRole('heading', { name: 'campaigns.emailHistory' })).toHaveClass('font-brand', 'text-brand-ink');
+    expect(screen.getAllByRole('button')).toHaveLength(1);
+    expect(screen.queryByText('whatsapp-1')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /campaigns.segmentAtRisk/ }));
+    expect(screen.getByText('campaigns.delivered')).toBeInTheDocument();
+    expect(screen.queryByText('campaigns.sendNow')).not.toBeInTheDocument();
+  });
 });

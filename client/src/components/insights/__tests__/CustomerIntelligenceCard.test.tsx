@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import CustomerIntelligenceCard from '../CustomerIntelligenceCard';
 import { useLTVAtRisk, useLTVTopVIPs, useSendCampaign } from '../../../hooks/useLTVData';
+import { usePlanFeature } from '../../../hooks/usePlanFeature';
 
 const sendCampaign = vi.fn();
 
@@ -10,6 +12,7 @@ vi.mock('../../../hooks/useLTVData', () => ({
   useLTVTopVIPs: vi.fn(),
   useSendCampaign: vi.fn(),
 }));
+vi.mock('../../../hooks/usePlanFeature', () => ({ usePlanFeature: vi.fn() }));
 
 vi.mock('../../../contexts/ToastContext', () => ({
   useToast: () => ({ success: vi.fn(), error: vi.fn() }),
@@ -35,6 +38,7 @@ vi.mock('../../common/ThiingsIcon', () => ({
 describe('CustomerIntelligenceCard', () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    vi.mocked(usePlanFeature).mockReturnValue({ hasAccess: true, isLoading: false, plan: 'growth' } as ReturnType<typeof usePlanFeature>);
     vi.mocked(useLTVAtRisk).mockReturnValue({
       data: [{
         customer_id: 'guest-1',
@@ -57,7 +61,9 @@ describe('CustomerIntelligenceCard', () => {
   });
 
   it('opens a localized draft for review and sends only after explicit confirmation', () => {
-    render(<CustomerIntelligenceCard />);
+    render(<MemoryRouter><CustomerIntelligenceCard appearance="hero" /></MemoryRouter>);
+
+    expect(screen.getByRole('button', { name: /Revisar e-mail para Ana Costa/ })).toHaveTextContent('82/100');
 
     fireEvent.click(screen.getByRole('button', { name: /Revisar e-mail para Ana Costa · Pontuação de risco de perda: 82\/100/ }));
     expect(screen.getByRole('dialog')).toBeInTheDocument();
@@ -69,5 +75,26 @@ describe('CustomerIntelligenceCard', () => {
       expect.objectContaining({ customerId: 'guest-1', campaignType: 'win_back', message: 'Olá! Faz tempo que não vemos você por aqui.' }),
       expect.any(Object),
     );
+    expect(screen.getByRole('dialog')).toHaveClass('bg-brand-paper');
+  });
+
+  it('does not describe a locked customer feed as having no priority guests', () => {
+    vi.mocked(usePlanFeature).mockReturnValue({ hasAccess: false, isLoading: false, plan: 'free' } as ReturnType<typeof usePlanFeature>);
+    vi.mocked(useLTVAtRisk).mockReturnValue({ data: undefined, isLoading: false } as ReturnType<typeof useLTVAtRisk>);
+    vi.mocked(useLTVTopVIPs).mockReturnValue({ data: undefined, isLoading: false } as ReturnType<typeof useLTVTopVIPs>);
+
+    render(<MemoryRouter><CustomerIntelligenceCard appearance="hero" /></MemoryRouter>);
+
+    expect(screen.getByText('insights.customerPlanUnavailable')).toBeInTheDocument();
+    expect(screen.queryByText('insights.noHighRiskCustomers')).not.toBeInTheDocument();
+  });
+
+  it('keeps failed customer queries distinct from an empty guest list', () => {
+    vi.mocked(useLTVAtRisk).mockReturnValue({ data: undefined, isLoading: false, isError: true } as ReturnType<typeof useLTVAtRisk>);
+
+    render(<CustomerIntelligenceCard />);
+
+    expect(screen.getByText('insights.customerDataUnavailable')).toBeInTheDocument();
+    expect(screen.queryByText('insights.noHighRiskCustomers')).not.toBeInTheDocument();
   });
 });

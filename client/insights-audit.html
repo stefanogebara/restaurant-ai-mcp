@@ -34,7 +34,7 @@
   </style>
 </head>
 <body>
-  <header><span class="brand"><em>Seat</em>able</span><span class="eyebrow">Revisão estática · 3 out 2026</span></header>
+  <header><span class="brand"><em>Seat</em>able</span><span class="eyebrow">Revisão estática · 4 out 2026</span></header>
   <main>
     <h1>Insights, em revisão</h1>
     <p>Capturas da proposta no PR #165. Os dados são sintéticos e esta página não executa ações do produto. A avaliação visual ainda está em andamento.</p>
@@ -43,7 +43,7 @@
         <button type="button" data-section="overview" aria-pressed="true">Visão Geral</button>
         <button type="button" data-section="analytics" aria-pressed="false">Análises</button>
       </div>
-      <div class="group" role="group" aria-label="Estado" id="state-controls" hidden>
+      <div class="group" role="group" aria-label="Estado" id="state-controls">
         <button type="button" data-state="filled" aria-pressed="true">Com dados</button>
         <button type="button" data-state="empty" aria-pressed="false">Sem dados</button>
       </div>
@@ -70,15 +70,16 @@
       const frame = document.getElementById('frame');
       image.src = section === 'analytics'
         ? `${assets}analytics-${state}-${device}.png`
-        : `${assets}overview${device === 'mobile' ? 'Mobile' : 'Desktop'}.png`;
-      image.alt = `Captura de ${names[section]} ${section === 'analytics' ? (state === 'empty' ? 'sem dados ' : 'com dados ') : ''}em ${device === 'mobile' ? 'celular' : 'desktop'}`;
+        : state === 'empty'
+          ? `${assets}overview-empty-${device}.png`
+          : `${assets}overview${device === 'mobile' ? 'Mobile' : 'Desktop'}.png`;
+      image.alt = `Captura de ${names[section]} ${state === 'empty' ? 'sem dados ' : 'com dados '}em ${device === 'mobile' ? 'celular' : 'desktop'}`;
       frame.classList.toggle('mobile', device === 'mobile');
-      document.getElementById('state-controls').hidden = section !== 'analytics';
       for (const attribute of ['section', 'device', 'state']) {
         document.querySelectorAll(`[data-${attribute}]`).forEach(button => button.setAttribute('aria-pressed', String(button.dataset[attribute] === ({ section, device, state })[attribute])));
       }
       const query = new URLSearchParams({ section, device });
-      if (section === 'analytics') query.set('state', state);
+      query.set('state', state);
       history.replaceState(null, '', '?' + query);
     }
     for (const attribute of ['section', 'device', 'state']) {

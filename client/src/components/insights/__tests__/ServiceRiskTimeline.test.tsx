@@ -95,4 +95,12 @@ describe('ServiceRiskTimeline', () => {
     expect(screen.getByText('common.noData')).toBeInTheDocument();
     expect(screen.queryByTestId('risk-timeline-list')).not.toBeInTheDocument();
   });
+
+  it('uses the hero canvas colors only when requested', () => {
+    render(<ServiceRiskTimeline predictions={[prediction('Ana', '19:15'), prediction('Bia', '20:00')]} selectedId="Ana" onSelect={vi.fn()} appearance="hero" />);
+    const list = screen.getByTestId('risk-timeline-list');
+    expect(within(list).getByRole('button', { name: /Ana/ })).toHaveClass('hover:bg-brand-action/5');
+    expect(within(list).getByRole('button', { name: /Ana/ })).not.toHaveClass('bg-brand-action/5');
+    expect(list.querySelectorAll(':scope > span[aria-hidden="true"]')).toHaveLength(1);
+  });
 });

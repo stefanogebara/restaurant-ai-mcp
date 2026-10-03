@@ -1,17 +1,22 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { useLTVStats } from '../../../hooks/useLTVData';
+import { usePlanFeature } from '../../../hooks/usePlanFeature';
 import type { LTVStats } from '../../host/ltvDashboard.types';
 import WeeklyForecastCard from '../WeeklyForecastCard';
 
 vi.mock('../../../hooks/useLTVData', () => ({ useLTVStats: vi.fn() }));
+vi.mock('../../../hooks/usePlanFeature', () => ({ usePlanFeature: vi.fn() }));
 
 function setStats(data: LTVStats | null, isLoading = false) {
   vi.mocked(useLTVStats).mockReturnValue({ data, isLoading } as ReturnType<typeof useLTVStats>);
 }
 
 describe('WeeklyForecastCard customer health', () => {
-  beforeEach(() => setStats(null));
+  beforeEach(() => {
+    setStats(null);
+    vi.mocked(usePlanFeature).mockReturnValue({ hasAccess: true, isLoading: false, plan: 'growth' } as ReturnType<typeof usePlanFeature>);
+  });
 
   it('keeps the heading visible while customer data loads', () => {
     setStats(null, true);
@@ -42,5 +47,13 @@ describe('WeeklyForecastCard customer health', () => {
     expect(screen.getByText(/4 VIPs/)).toBeInTheDocument();
     expect(screen.getByText(/9 regulars/)).toBeInTheDocument();
     expect(screen.queryByText(/NaN/)).not.toBeInTheDocument();
+  });
+
+  it('labels a plan-gated overview instead of implying the restaurant has no customers', () => {
+    vi.mocked(usePlanFeature).mockReturnValue({ hasAccess: false, isLoading: false, plan: 'free' } as ReturnType<typeof usePlanFeature>);
+    render(<WeeklyForecastCard appearance="hero" />);
+
+    expect(screen.getByText('Customer intelligence is not included in your plan.')).toBeInTheDocument();
+    expect(screen.queryByText('No customer data yet.')).not.toBeInTheDocument();
   });
 });

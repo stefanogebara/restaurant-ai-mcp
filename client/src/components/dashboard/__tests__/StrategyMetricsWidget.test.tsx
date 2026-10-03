@@ -64,4 +64,14 @@ describe('StrategyMetricsWidget', () => {
     fireEvent.change(screen.getByRole('combobox', { name: 'Metrics period' }), { target: { value: '7' } });
     expect(mockUseStrategyMetrics).toHaveBeenLastCalledWith(7);
   });
+
+  it('uses the hero palette without changing the scorecard meaning', () => {
+    render(<StrategyMetricsWidget appearance="hero" />);
+    expect(screen.getByRole('heading', { name: 'Trends' })).toHaveClass('font-brand', 'text-brand-ink');
+    const noShow = screen.getByRole('button', { name: /No-show Rate/i });
+    expect(noShow).toHaveAttribute('aria-pressed', 'true');
+    expect(noShow).toHaveAccessibleName(/Target 5%/i);
+    expect(screen.getByText('On target for this period')).toBeInTheDocument();
+    expect(noShow).toHaveTextContent('4%');
+  });
 });
