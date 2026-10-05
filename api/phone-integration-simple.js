@@ -33,11 +33,59 @@ module.exports = async (req, res) => {
   const auth = await verifyAuth(req);
   if (auth.error) return res.status(auth.status).json({ error: auth.error });
 
-  // Make JWT-derived identity available as a fallback for handlers
-  req._authRestaurantId = auth.user?.restaurant_id || null;
-  req._authUserId = auth.user?.id || auth.user?.sub || null;
-
   const action = req.query.action || req.body?.action;
+
+  // Provider inventory belongs to the platform, not to an individual tenant.
+  if (action === 'list-phones') {
+    return res.status(403).json({ success: false, error: 'Forbidden' });
+  }
+
+  if (['register', 'unregister', 'status', 'test-call', 'diagnose', 'fix-tools'].includes(action)) {
+    const requestedId = req.query?.restaurant_id || req.body?.restaurant_id;
+    if (req.query?.restaurant_id && req.body?.restaurant_id && req.query.restaurant_id !== req.body.restaurant_id) {
+      return res.status(403).json({ success: false, error: 'Forbidden' });
+    }
+    const restaurantId = requestedId && requestedId !== 'undefined' && requestedId !== 'null'
+      ? requestedId : auth.user?.restaurant_id;
+    const userId = auth.user?.id || auth.user?.sub;
+    if (!userId) return res.status(403).json({ success: false, error: 'Forbidden' });
+
+    // The JWT restaurant hint may come from mutable user metadata. Prove ownership
+    // or active membership in the database before any service-role read/write.
+    try {
+      let authorizedId = restaurantId;
+      if (!authorizedId) {
+        const { data: owned, error } = await supabaseAdmin.schema('restaurant')
+          .from('restaurant_config').select('id').eq('user_id', userId).limit(1).maybeSingle();
+        if (error) throw error;
+        authorizedId = owned?.id;
+        if (!authorizedId) {
+          const { data: member, error: memberError } = await supabaseAdmin.schema('restaurant')
+            .from('restaurant_members').select('restaurant_id')
+            .eq('user_id', userId).eq('status', 'active').limit(1).maybeSingle();
+          if (memberError) throw memberError;
+          authorizedId = member?.restaurant_id;
+        }
+      }
+      if (!authorizedId) return res.status(403).json({ success: false, error: 'Forbidden' });
+      const { data: owned, error: ownerError } = await supabaseAdmin.schema('restaurant')
+        .from('restaurant_config').select('id').eq('id', authorizedId).eq('user_id', userId).maybeSingle();
+      if (ownerError) throw ownerError;
+      if (!owned) {
+        const { data: member, error: memberError } = await supabaseAdmin.schema('restaurant')
+          .from('restaurant_members').select('restaurant_id')
+          .eq('restaurant_id', authorizedId).eq('user_id', userId).eq('status', 'active').maybeSingle();
+        if (memberError || !member) {
+          if (memberError) throw memberError;
+          return res.status(403).json({ success: false, error: 'Forbidden' });
+        }
+      }
+      req._authRestaurantId = authorizedId;
+    } catch (error) {
+      logger.error('Phone authorization lookup failed');
+      return res.status(503).json({ success: false, error: 'Authorization unavailable' });
+    }
+  }
 
   try {
     switch (action) {
@@ -49,8 +97,6 @@ module.exports = async (req, res) => {
         return await handleStatus(req, res);
       case 'test-call':
         return await handleTestCall(req, res);
-      case 'list-phones':
-        return await handleListPhones(req, res);
       case 'diagnose':
         return await handleDiagnose(req, res);
       case 'fix-tools':
@@ -58,16 +104,15 @@ module.exports = async (req, res) => {
       default:
         return res.status(400).json({
           success: false,
-          error: 'Invalid action. Use: register, unregister, status, test-call, list-phones, diagnose, fix-tools',
-          platform_phone: PLATFORM_TWILIO_NUMBER,
+          error: 'Invalid action. Use: register, unregister, status, test-call, diagnose, fix-tools',
           elevenlabs_configured: !!ELEVENLABS_API_KEY && ELEVENLABS_API_KEY !== 'your-elevenlabs-key-here'
         });
     }
   } catch (error) {
-    logger.error('Error:', error);
+    logger.error('Phone integration request failed');
     return res.status(500).json({
       success: false,
-      error: error.message || 'Internal server error'
+      error: 'Internal server error'
     });
   }
 };
@@ -81,7 +126,7 @@ async function handleRegister(req, res) {
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
 
-  const restaurant_id = req.body?.restaurant_id || req._authRestaurantId;
+  const restaurant_id = req._authRestaurantId;
 
   if (!restaurant_id) {
     return res.status(400).json({
@@ -105,7 +150,7 @@ async function handleRegister(req, res) {
     });
   }
 
-  logger.info(`Registering platform phone ${PLATFORM_TWILIO_NUMBER} for restaurant ${restaurant_id}`);
+  logger.info('Registering platform phone for authorized restaurant');
 
   // Get restaurant config (restaurant_id = restaurant_config.id)
   const { data: restaurant, error: fetchError } = await supabaseAdmin
@@ -139,24 +184,17 @@ async function handleRegister(req, res) {
   // Use the resolved agent ID going forward
   restaurant.elevenlabs_agent_id = agentId;
 
-  // Update status to pending (stored in ai_config.phone to avoid schema migration dependency).
-  // EE.2 — chain .select('id') so we abort the register flow if the row
-  // vanished. Without this, ElevenLabs would still be called with a
-  // restaurant whose local row no longer exists.
-  const { data: pendingRows, error: pendingErr } = await supabaseAdmin
-    .schema('restaurant')
-    .from('restaurant_config')
-    .update({
-      ai_config: { ...(restaurant.ai_config || {}), phone: { status: 'pending' } },
-      updated_at: new Date().toISOString()
-    })
-    .eq('id', restaurant_id)
-    .select('id');
-  if (pendingErr || !pendingRows || pendingRows.length === 0) {
-    logger.error('Failed to mark phone as pending — restaurant row missing or RLS-blocked', {
-      restaurant_id, error: pendingErr?.message,
+  // This RPC serializes claims for the shared number and checks legacy active
+  // assignments in one DB transaction. A missing migration fails closed.
+  const { data: claimToken, error: claimError } = await supabaseAdmin.rpc('claim_platform_phone', {
+    p_restaurant_id: restaurant_id,
+    p_phone_number: PLATFORM_TWILIO_NUMBER
+  });
+  if (claimError || !claimToken) {
+    return res.status(claimError?.code === 'P0001' ? 409 : 503).json({
+      success: false,
+      error: claimError?.code === 'P0001' ? 'Platform phone is already claimed' : 'Could not claim platform phone'
     });
-    return res.status(500).json({ success: false, error: 'Could not initialize phone registration' });
   }
 
   try {
@@ -205,7 +243,7 @@ async function handleRegister(req, res) {
 
       if (!importResponse.ok) {
         const errorText = await importResponse.text();
-        logger.error('ElevenLabs import error:', errorText);
+        logger.error('ElevenLabs phone import failed');
 
         // Check if error is "phone already exists"
         if (errorText.includes('already') || errorText.includes('exists')) {
@@ -225,11 +263,10 @@ async function handleRegister(req, res) {
         }
 
         if (!phoneNumberId) {
-          await updateError(restaurant_id, `Failed to import phone: ${errorText}`);
+          await updateError(restaurant_id, claimToken);
           return res.status(500).json({
             success: false,
             error: 'Failed to import phone number to ElevenLabs',
-            details: errorText
           });
         }
       } else {
@@ -254,14 +291,12 @@ async function handleRegister(req, res) {
     });
 
     if (!assignResponse.ok) {
-      const errorText = await assignResponse.text();
-      logger.error('Agent assignment error:', errorText);
+      logger.error('ElevenLabs agent assignment failed');
 
-      await updateError(restaurant_id, `Agent assignment failed: ${errorText}`);
+      await updateError(restaurant_id, claimToken);
       return res.status(500).json({
         success: false,
         error: 'Failed to assign agent to phone number',
-        details: errorText
       });
     }
 
@@ -284,8 +319,8 @@ async function handleRegister(req, res) {
           const toolResult = await createAndAssignTools(restaurant_id, restaurant.elevenlabs_agent_id);
           toolsConfigured = toolResult.success;
           if (!toolResult.success) {
-            toolsError = toolResult.error;
-            logger.warn(`Auto tool creation warning: ${toolResult.error}. Phone registration will continue.`);
+            toolsError = 'Could not configure agent tools';
+            logger.warn('Auto tool creation failed; phone registration will continue');
           } else {
             logger.info(`Auto-configured ${toolResult.toolCount} tools for agent`);
           }
@@ -295,27 +330,20 @@ async function handleRegister(req, res) {
         }
       }
     } catch (toolErr) {
-      toolsError = toolErr.message;
-      logger.warn(`Auto tool creation failed: ${toolErr.message}. Phone registration will continue.`);
+      toolsError = 'Could not configure agent tools';
+      logger.warn('Auto tool creation failed; phone registration will continue');
     }
 
     // Step 4: Save successful configuration (stored in ai_config.phone)
-    await supabaseAdmin
-      .schema('restaurant')
-      .from('restaurant_config')
-      .update({
-        ai_config: {
-          ...(restaurant.ai_config || {}),
-          phone: {
-            status: 'active',
-            number: PLATFORM_TWILIO_NUMBER,
-            number_id: phoneNumberId,
-            configured_at: new Date().toISOString()
-          }
-        },
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', restaurant_id);
+    const { data: activated, error: activationError } = await supabaseAdmin.rpc('activate_platform_phone', {
+      p_restaurant_id: restaurant_id,
+      p_phone_number: PLATFORM_TWILIO_NUMBER,
+      p_claim_token: claimToken,
+      p_number_id: phoneNumberId
+    });
+    if (activationError || !activated) {
+      return res.status(503).json({ success: false, error: 'Phone assignment could not be saved' });
+    }
 
     logger.info(`SUCCESS: Phone ${PLATFORM_TWILIO_NUMBER} configured for ${restaurant.restaurant_name}`);
 
@@ -335,8 +363,8 @@ async function handleRegister(req, res) {
     });
 
   } catch (error) {
-    logger.error('Registration error:', error);
-    await updateError(restaurant_id, error.message);
+    logger.error('Phone registration failed');
+    await updateError(restaurant_id, claimToken);
     throw error;
   }
 }
@@ -349,7 +377,7 @@ async function handleUnregister(req, res) {
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
 
-  const restaurant_id = req.body?.restaurant_id || req._authRestaurantId;
+  const restaurant_id = req._authRestaurantId;
 
   if (!restaurant_id) {
     return res.status(400).json({
@@ -358,32 +386,14 @@ async function handleUnregister(req, res) {
     });
   }
 
-  // Clear phone status from ai_config (but don't delete from ElevenLabs - reusable).
-  // EE.2 — chain .select('id'). Without this, a 0-row match (restaurant
-  // deleted mid-flight, RLS block) would silently return success while
-  // the ElevenLabs side keeps thinking the phone is still registered.
-  const { data: currentConfig } = await supabaseAdmin
-    .schema('restaurant').from('restaurant_config')
-    .select('ai_config').eq('id', restaurant_id).single();
-  const currentAiConfig = currentConfig?.ai_config || {};
-  const { phone: _removedPhone, ...aiConfigWithoutPhone } = currentAiConfig;
-  const { data: unregRows, error: unregErr } = await supabaseAdmin
-    .schema('restaurant')
-    .from('restaurant_config')
-    .update({
-      ai_config: aiConfigWithoutPhone,
-      updated_at: new Date().toISOString()
-    })
-    .eq('id', restaurant_id)
-    .select('id');
-
-  if (unregErr || !unregRows || unregRows.length === 0) {
-    logger.error('Phone unregister DB write matched 0 rows', {
-      restaurant_id, error: unregErr?.message,
-    });
-    return res.status(500).json({
+  const { data: released, error: releaseError } = await supabaseAdmin.rpc('release_platform_phone', {
+    p_restaurant_id: restaurant_id,
+    p_phone_number: PLATFORM_TWILIO_NUMBER
+  });
+  if (releaseError || !released) {
+    return res.status(releaseError?.code === 'P0001' ? 409 : 503).json({
       success: false,
-      error: 'Could not unregister phone — restaurant row not updated',
+      error: releaseError?.code === 'P0001' ? 'Phone registration is in progress' : 'Could not unregister phone',
     });
   }
 
@@ -402,34 +412,7 @@ async function handleStatus(req, res) {
   // The raw string 'undefined' sometimes arrives when the frontend hook can't
   // resolve restaurant_id from the JWT metadata (older users created before
   // the metadata.restaurant_id backfill). Normalize it out.
-  let restaurant_id = req.query.restaurant_id || req.body?.restaurant_id || req._authRestaurantId;
-  if (restaurant_id === 'undefined' || restaurant_id === 'null') restaurant_id = null;
-
-  // Fallback: resolve restaurant by the authenticated user's id via the
-  // restaurant_config.user_id FK. This catches the case where the JWT has
-  // no restaurant_id claim but the user owns exactly one restaurant.
-  if (!restaurant_id && req._authUserId) {
-    const { data: owned } = await supabaseAdmin
-      .schema('restaurant')
-      .from('restaurant_config')
-      .select('id')
-      .eq('user_id', req._authUserId)
-      .limit(1)
-      .maybeSingle();
-    if (owned?.id) restaurant_id = owned.id;
-  }
-
-  // Platform status (no restaurant_id needed)
-  if (!restaurant_id) {
-    return res.status(200).json({
-      success: true,
-      platform: {
-        twilio_configured: !!PLATFORM_TWILIO_SID && !!PLATFORM_TWILIO_TOKEN,
-        twilio_phone: PLATFORM_TWILIO_NUMBER,
-        elevenlabs_configured: !!ELEVENLABS_API_KEY && ELEVENLABS_API_KEY !== 'your-elevenlabs-key-here'
-      }
-    });
-  }
+  const restaurant_id = req._authRestaurantId;
 
   const { data: restaurant, error: fetchError } = await supabaseAdmin
     .schema('restaurant')
@@ -485,7 +468,7 @@ async function handleStatus(req, res) {
  * Test the voice agent by initiating a call
  */
 async function handleTestCall(req, res) {
-  const restaurant_id = req.body?.restaurant_id || req.query?.restaurant_id || req._authRestaurantId;
+  const restaurant_id = req._authRestaurantId;
   const to_number = req.body?.to_number || req.query?.to_number;
 
   if (!restaurant_id || !to_number) {
@@ -525,39 +508,6 @@ async function handleTestCall(req, res) {
 }
 
 /**
- * List all phone numbers in ElevenLabs
- */
-async function handleListPhones(req, res) {
-  if (!ELEVENLABS_API_KEY || ELEVENLABS_API_KEY === 'your-elevenlabs-key-here') {
-    return res.status(500).json({
-      success: false,
-      error: 'ElevenLabs API key not configured'
-    });
-  }
-
-  const response = await fetch('https://api.elevenlabs.io/v1/convai/phone-numbers', {
-    headers: { 'xi-api-key': ELEVENLABS_API_KEY }
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    return res.status(500).json({
-      success: false,
-      error: 'Failed to list phone numbers',
-      details: errorText
-    });
-  }
-
-  const data = await response.json();
-
-  return res.status(200).json({
-    success: true,
-    phone_numbers: data.phone_numbers || [],
-    count: data.phone_numbers?.length || 0
-  });
-}
-
-/**
  * Fix agent tools - create webhook tools and attach to agent via tool_ids
  * Uses the new ElevenLabs API (post July 2025): create tools separately, then reference by ID
  */
@@ -566,7 +516,7 @@ async function handleFixTools(req, res) {
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
 
-  const { restaurant_id } = req.body;
+  const restaurant_id = req._authRestaurantId;
 
   if (!restaurant_id) {
     return res.status(400).json({ success: false, error: 'Missing restaurant_id' });
@@ -612,7 +562,7 @@ async function handleFixTools(req, res) {
  * Diagnose agent configuration - check if tools/webhooks are set up
  */
 async function handleDiagnose(req, res) {
-  const restaurant_id = req.query.restaurant_id || req.body?.restaurant_id;
+  const restaurant_id = req._authRestaurantId;
 
   if (!restaurant_id) {
     return res.status(400).json({ success: false, error: 'Missing restaurant_id' });
@@ -832,19 +782,10 @@ async function createAndAssignTools(restaurant_id, agent_id) {
 /**
  * Helper to update error status (stored in ai_config.phone)
  */
-async function updateError(restaurant_id, errorMessage) {
-  const { data: current } = await supabaseAdmin
-    .schema('restaurant').from('restaurant_config')
-    .select('ai_config').eq('id', restaurant_id).single();
-  await supabaseAdmin
-    .schema('restaurant')
-    .from('restaurant_config')
-    .update({
-      ai_config: {
-        ...(current?.ai_config || {}),
-        phone: { status: 'error', error: errorMessage }
-      },
-      updated_at: new Date().toISOString()
-    })
-    .eq('id', restaurant_id);
+async function updateError(restaurant_id, claimToken) {
+  await supabaseAdmin.rpc('fail_platform_phone_claim', {
+    p_restaurant_id: restaurant_id,
+    p_phone_number: PLATFORM_TWILIO_NUMBER,
+    p_claim_token: claimToken
+  });
 }
