@@ -135,13 +135,13 @@ export default function AnalyticsStats({ overview, reservationsByStatus, reserva
   );
 }
 
-export function LiveOccupancySignal({ occupiedSeats, totalSeats }: { occupiedSeats: number; totalSeats: number }) {
+export function LiveOccupancySignal({ occupiedSeats, totalSeats, compact = false }: { occupiedSeats: number; totalSeats: number; compact?: boolean }) {
   const { t, i18n } = useTranslation();
   const hasCapacity = Number.isFinite(totalSeats) && totalSeats > 0;
   const hasSeatCount = Number.isFinite(occupiedSeats) && occupiedSeats >= 0;
   const occupancyPercent = hasCapacity && hasSeatCount ? (occupiedSeats / totalSeats) * 100 : null;
   const displayPercentage = occupancyPercent !== null
-    ? `${new Intl.NumberFormat(i18n.language, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(occupancyPercent)}%`
+    ? `${new Intl.NumberFormat(i18n.language, { minimumFractionDigits: 0, maximumFractionDigits: 1 }).format(occupancyPercent)}%`
     : '—';
   const seatCount = hasCapacity && hasSeatCount
     ? t('analytics.occupancySeatCount', { occupied: occupiedSeats, capacity: totalSeats })
@@ -151,7 +151,7 @@ export function LiveOccupancySignal({ occupiedSeats, totalSeats }: { occupiedSea
     <section aria-label={t('analytics.currentOccupancy', 'Occupancy now')}>
       <p className="text-[14px] font-medium text-brand-muted">{t('analytics.currentOccupancy', 'Occupancy now')}</p>
       <p className="mt-1 text-[13px] text-muted-stone">{t('analytics.outsideSelectedPeriod', 'Live · outside the date filter')}</p>
-      <p className="mt-4 font-brand text-[48px] leading-none tracking-tight tabular-nums text-brand-ink sm:text-[54px]">{displayPercentage}</p>
+      <p className={`font-brand leading-none tracking-tight tabular-nums text-brand-ink sm:text-[54px] ${compact ? 'mt-2 text-[42px]' : 'mt-4 text-[48px]'}`}>{displayPercentage}</p>
       {seatCount && (
         <>
           <div
@@ -161,11 +161,11 @@ export function LiveOccupancySignal({ occupiedSeats, totalSeats }: { occupiedSea
             aria-valuemax={100}
             aria-valuenow={meterPercentage}
             aria-valuetext={seatCount}
-            className="mt-5 h-1.5 overflow-hidden rounded-full bg-brand-ink/10"
+            className={occupancyPercent === 0 ? 'sr-only' : 'mt-5 h-1.5 overflow-hidden rounded-full bg-brand-ink/10'}
           >
             <div className="h-full rounded-full bg-brand-action" style={{ width: `${meterPercentage}%` }} />
           </div>
-          <p className="mt-2 text-[13px] text-muted-stone">{seatCount}</p>
+          <p className={`text-[13px] text-muted-stone ${compact ? 'mt-1' : 'mt-2'}`}>{seatCount}</p>
         </>
       )}
     </section>

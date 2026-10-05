@@ -82,6 +82,13 @@ describe('Analytics period truth', () => {
     expect(within(liveSignal).getByRole('progressbar')).toHaveAttribute('aria-valuenow', '33.3');
   });
 
+  it('shows exact zero occupancy without a meaningless decimal', () => {
+    render(<LiveOccupancySignal occupiedSeats={0} totalSeats={74} />);
+    const liveSignal = screen.getByRole('region', { name: 'Occupancy now' });
+    expect(within(liveSignal).getByText('0%')).toBeInTheDocument();
+    expect(within(liveSignal).getByRole('progressbar')).toHaveAttribute('aria-valuenow', '0');
+  });
+
   it('does not surface the backend historical rate, which also counts cancellations', () => {
     vi.mocked(useNoShowPredictions).mockReturnValue({
       data: {
@@ -259,10 +266,10 @@ describe('Analytics empty period', () => {
     } as unknown as ReturnType<typeof useNoShowPredictions>);
 
     render(<AnalyticsTab />);
-    expect(screen.getByRole('heading', { name: 'No activity recorded.' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'No activity in this period.' })).toBeInTheDocument();
     expect(screen.queryByText('Daily activity')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Export' })).not.toBeInTheDocument();
-    expect(screen.getByRole('region', { name: 'Occupancy now' })).toHaveTextContent('25,0%');
+    expect(screen.getByRole('region', { name: 'Occupancy now' })).toHaveTextContent('25%');
     expect(screen.getByText('No upcoming reservations to assess')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'View last 90 days' }));

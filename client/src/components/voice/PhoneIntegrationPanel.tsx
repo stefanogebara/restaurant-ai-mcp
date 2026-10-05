@@ -98,8 +98,8 @@ export default function PhoneIntegrationPanel() {
   return (
     <section className="mt-4 space-y-5 border-t border-brand-line py-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-brand-muted">
+      <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="font-sans text-[12px] font-semibold uppercase tracking-[0.14em] text-brand-muted">
           {t('phoneIntegration.title', 'AI receptionist phone')}
         </h2>
         <StatusBadge status={displayStatus} t={t} />
@@ -120,7 +120,7 @@ export default function PhoneIntegrationPanel() {
           <p className="mt-2 font-brand text-[26px] leading-none tracking-[-0.04em] text-brand-ink tabular-nums">{displayPhone || '—'}</p>
         </div>
         <div className="min-w-0">
-          <p className="text-sm leading-6 text-brand-muted">
+          <p className="text-[15px] leading-6 text-brand-muted">
             {isRegistered
               ? t('phoneIntegration.connectedExplanation', 'The registration is recorded, but inbound routing is not verified. Complete a test call and reservation before you forward your restaurant number.')
               : platform.line_availability === 'unavailable'
@@ -147,7 +147,7 @@ export default function PhoneIntegrationPanel() {
         <div className="space-y-3 border-t border-brand-line pt-5">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-brand-muted">{t('phoneIntegration.manualTestTitle', 'Manual call test')}</p>
-            <p className="mt-1 text-sm text-brand-muted">{t('phoneIntegration.manualTestHint', 'Call this line from a phone you control. This page does not place a call; carrier charges may apply.')}</p>
+            <p className="mt-1 text-[15px] leading-6 text-brand-muted">{t('phoneIntegration.manualTestHint', 'Call this line from a phone you control. This page does not place a call; carrier charges may apply.')}</p>
           </div>
           <a href={`tel:${restaurant.phone_number}`} className="inline-flex items-center justify-center rounded-full bg-brand-action px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-ink">{t('phoneIntegration.callToTest', 'Call this line')}</a>
         </div>

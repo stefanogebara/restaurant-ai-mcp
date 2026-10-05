@@ -160,21 +160,21 @@ export default function AnalyticsTab() {
           </div>
         </details>
       </> : (
-        <section className="py-5 sm:py-8" aria-live="polite">
+        <section className="py-2 sm:py-7" aria-live="polite">
           <div>
             <p className="text-[14px] font-medium text-brand-muted">{t('analytics.periodOverview', 'Period overview')}</p>
-            <h3 className="mt-2 font-brand text-[31px] leading-tight tracking-tight text-brand-ink sm:text-[38px]">
-              {t('analytics.emptyPeriodTitle', 'No activity recorded.')}
+            <h3 className="mt-1 font-brand text-[24px] leading-[1.15] tracking-tight text-brand-ink sm:text-[34px]">
+              {t('analytics.emptyPeriodTitle', 'No activity in this period.')}
             </h3>
-            <p className="mt-2 max-w-xl text-[14px] leading-relaxed text-brand-muted">
-              {t('analytics.emptyPeriodDescription', 'There are no bookings or completed services in this range. Try a wider period to find the history.')}
+            <p className="mt-1 max-w-xl text-[14px] leading-relaxed text-brand-muted">
+              {t('analytics.emptyPeriodDescription', 'No bookings or completed services on the selected dates.')}
             </p>
           </div>
           {dateRange.preset !== '90d' && (
             <button
               type="button"
               onClick={() => setDateRange({ preset: '90d', ...presetToRange('90d') })}
-              className="mt-3 inline-flex min-h-[44px] items-center gap-2 border-b border-brand-action/50 px-0.5 py-1 text-[15px] font-medium text-brand-action hover:border-brand-action"
+              className="mt-1 inline-flex min-h-[40px] items-center gap-2 px-0.5 py-1 text-[15px] font-medium text-brand-action underline-offset-4 hover:underline"
             >
               {t('analytics.viewNinetyDays', 'View last 90 days')}
               <span aria-hidden="true">→</span>
@@ -183,15 +183,16 @@ export default function AnalyticsTab() {
         </section>
       )}
 
-      <section className="border-t border-brand-ink/70 pt-6 sm:pt-8">
-        <h3 className="font-brand text-[26px] sm:text-[30px] leading-tight tracking-tight text-brand-ink">
+      <section className={`border-t border-brand-line ${hasPeriodActivity ? 'pt-4 sm:pt-8' : 'pt-3 sm:pt-6'}`}>
+        <h3 className={`font-brand leading-tight text-brand-ink ${hasPeriodActivity ? 'text-[26px] tracking-tight sm:text-[30px]' : 'text-[16px] font-medium sm:text-[24px]'}`}>
           {t('analytics.additionalSignals', 'Now and coming days')}
         </h3>
-        <div className="mt-4 grid gap-7 lg:grid-cols-[minmax(260px,0.8fr)_minmax(0,1.7fr)] lg:gap-12">
-          <div className="border-b hairline pb-6 lg:border-b-0 lg:border-r lg:pr-9">
+        <div className={`grid lg:grid-cols-[minmax(260px,0.8fr)_minmax(0,1.7fr)] lg:gap-12 ${hasPeriodActivity ? 'mt-4 gap-7' : 'mt-2 gap-3 sm:mt-4 sm:gap-7'}`}>
+          <div className={`border-b hairline lg:border-b-0 lg:border-r lg:pr-9 ${hasPeriodActivity ? 'pb-6' : 'pb-3 sm:pb-6'}`}>
             <LiveOccupancySignal
               occupiedSeats={data.overview.current_occupancy}
               totalSeats={data.overview.total_capacity}
+              compact={!hasPeriodActivity}
             />
           </div>
           <NoShowPredictions />

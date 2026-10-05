@@ -85,20 +85,22 @@ export default function TonightBriefingCard({ appearance = 'default' }: TonightB
               <div className={hero ? 'flex min-w-0 flex-col items-start justify-start' : 'flex min-w-0 flex-col justify-center xl:justify-between xl:py-2'}>
                 {selected ? (
                   <>
+                    {hero && (
+                      <p className="mb-2 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 font-brand text-[13px] leading-snug text-brand-muted">
+                        <strong className="font-semibold text-brand-ink">{selected.customer_name}</strong>
+                        <span>{selected.time || t('insights.timeUnavailable')} · {t('analytics.partyOf', { size: selected.party_size })}</span>
+                      </p>
+                    )}
                     <h3 className={hero ? 'max-w-[27ch] text-balance font-brand text-[29px] font-normal leading-[1.15] tracking-[-0.045em] text-brand-ink sm:text-[41px]' : 'max-w-[24ch] text-balance font-serif text-[32px] leading-[1.07] text-deep-charcoal sm:text-[46px]'}>
                       {selected.recommendations?.[0] || t('insights.reviewReservationHint')}
                     </h3>
                     {hero
                       ? <>
-                        <div className="mt-5 flex w-full items-end justify-between gap-4 font-brand sm:max-w-[580px]">
-                          <div className="min-w-0">
-                            <strong className="block truncate text-[16px] font-semibold leading-tight text-brand-ink">{selected.customer_name}</strong>
-                            <span className="mt-1 block text-[13px] text-brand-muted">{selected.time || t('insights.timeUnavailable')} · {t('analytics.partyOf', { size: selected.party_size })}</span>
-                            <span className="mt-2 flex items-baseline gap-2">
-                              <span className="text-[12px] text-brand-muted">{t('insights.noShowRiskLabel')}</span>
-                              <strong className={`text-[15px] font-semibold tabular-nums ${selected.risk_level === 'high' ? 'text-red-800' : selected.risk_level === 'medium' ? 'text-amber-800' : 'text-emerald-800'}`}>{selected.risk_score}<span className="text-[11px] font-normal">/100</span></strong>
-                            </span>
-                          </div>
+                        <div className="mt-4 flex w-full items-center justify-between gap-4 font-brand sm:max-w-[580px]">
+                          <p className="flex min-w-0 flex-wrap items-baseline gap-x-2 text-[12px] leading-snug text-brand-muted">
+                            <span>{t('insights.noShowRiskLabel')}</span>
+                            <strong className={`text-[15px] font-semibold tabular-nums ${selected.risk_level === 'high' ? 'text-red-800' : selected.risk_level === 'medium' ? 'text-amber-800' : 'text-emerald-800'}`}>{selected.risk_score}<span className="text-[11px] font-normal">/100</span></strong>
+                          </p>
                           {reservationAction}
                         </div>
                       </>

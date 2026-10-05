@@ -20,7 +20,8 @@ import { useVoiceBrowser } from '../hooks/useVoiceBrowser';
 import { useAudioPlayback } from '../hooks/useAudioPlayback';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 
-import SettingsTabs, { type SettingsTabDef } from '../components/common/SettingsTabs';
+import type { SettingsTabDef } from '../components/common/SettingsTabs';
+import VoiceSettingsTabs from '../components/voice/VoiceSettingsTabs';
 import VoiceEngineSelector from '../components/voice/VoiceEngineSelector';
 import VoiceCurrentCard from '../components/voice/VoiceCurrentCard';
 import VoiceTuningPanel from '../components/voice/VoiceTuningPanel';
@@ -39,6 +40,7 @@ import POSIntegrationPanel from '../components/dashboard/POSIntegrationPanel';
 import StripeConnectPanel from '../components/dashboard/StripeConnectPanel';
 import InstagramPanel from '../components/dashboard/InstagramPanel';
 import PhoneIntegrationPanel from '../components/voice/PhoneIntegrationPanel';
+import VoiceSetupNextStep from '../components/voice/VoiceSetupNextStep';
 // AIStrategyPanel removed — dead feature
 // StrategyMetricsWidget moved to insights-only (removed from voice settings)
 import { authFetch, hostAPI } from '../services/api';
@@ -348,14 +350,14 @@ export default function VoiceSettingsPage() {
   return (
     <DashboardLayout appearance="hero">
       <div className="mx-auto max-w-[1120px] px-4 pb-20 pt-5 sm:px-8 lg:px-10">
-        <header className="mb-6 border-b border-brand-line pb-7 pl-12 lg:pl-0">
+        <header className="mb-5 border-b border-brand-line pb-5 pl-12 sm:mb-6 sm:pb-7 lg:pl-0">
           <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-brand-muted">{t('voiceSettings.setupEyebrow', 'Reception')}</p>
           <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <h1 className="font-brand text-[37px] font-normal leading-[1.02] tracking-[-0.055em] text-brand-ink sm:text-[52px]">
-                {t('navigation.voiceAgent')} <em className="font-serif font-normal italic tracking-[-0.04em]">{t('voiceSettings.headingSuffix', 'at your service.')}</em>
+                {t('navigation.voiceAgent')} <em className="block font-serif font-normal italic tracking-[-0.04em] sm:inline">{t('voiceSettings.headingSuffix', 'at your service.')}</em>
               </h1>
-              <p className="mt-3 max-w-[52ch] text-[15px] leading-6 text-brand-muted">{t('voiceSettings.intro', 'Shape the voice, connect the phone, then test a call and a reservation before sharing the number.')}</p>
+              <p className="mt-3 hidden max-w-[52ch] text-[15px] leading-6 text-brand-muted sm:block">{t('voiceSettings.intro', 'Shape your AI receptionist’s voice and track the phone setup here.')}</p>
             </div>
           <div className="flex flex-col items-start gap-1 sm:items-end">
             <button
@@ -376,13 +378,7 @@ export default function VoiceSettingsPage() {
         </div>
         </header>
 
-        <div className="mb-5 flex flex-col gap-3 border-b border-brand-line pb-5 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-amber-800">{t('voiceSettings.agentRegistered', 'Agent registered')}</p>
-            <p className="mt-1 max-w-[64ch] text-[13px] leading-5 text-brand-muted">{t('voiceSettings.phoneNeedsTest', 'A registered agent does not verify the phone service. Test a real call and a completed reservation before sharing the number.')}</p>
-          </div>
-          <a href="#voice-settings:phone" className="w-fit shrink-0 text-[13px] font-semibold text-brand-action underline decoration-brand-line underline-offset-4 hover:text-brand-ink">{t('voiceSettings.checkPhone', 'Check phone connection')} →</a>
-        </div>
+        <VoiceSetupNextStep />
 
         {(() => {
           // Tabs split the previous wall-of-10-sections page into focused
@@ -391,8 +387,6 @@ export default function VoiceSettingsPage() {
           // still saves everything in one shot.
           const voiceTab = (
             <div className="space-y-6">
-              <VoiceEngineSelector currentEngine={currentEngine} pendingEngine={pendingEngine} engineStatus={engineConfig?.voice_engine_status} onEngineSwitch={handleEngineSwitch} />
-
               {currentEngine === 'elevenlabs' && (
                 <>
                   <VoiceCurrentCard
@@ -409,6 +403,7 @@ export default function VoiceSettingsPage() {
                     onPlay={handlePlayVoice}
                     onToggleBrowser={() => setIsBrowserOpen(!isBrowserOpen)}
                   />
+                  <VoiceEngineSelector currentEngine={currentEngine} pendingEngine={pendingEngine} engineStatus={engineConfig?.voice_engine_status} onEngineSwitch={handleEngineSwitch} />
                   <VoiceTuningPanel
                     settings={currentSettings}
                     currentVoiceId={currentVoiceId}
@@ -471,6 +466,7 @@ export default function VoiceSettingsPage() {
               {currentEngine === 'openai_realtime' && (
                 <>
                   <OpenAIVoicePicker currentOpenAIVoice={currentOpenAIVoice} savedOpenAIVoice={engineConfig?.openai_voice_id} onSelect={setPendingOpenAIVoice} />
+                  <VoiceEngineSelector currentEngine={currentEngine} pendingEngine={pendingEngine} engineStatus={engineConfig?.voice_engine_status} onEngineSwitch={handleEngineSwitch} />
                   <VoicePersonaPanel />
                   <OpenAIEngineInfo engineStatus={engineConfig?.voice_engine_status} currentOpenAIVoice={currentOpenAIVoice} />
                 </>
@@ -570,7 +566,7 @@ export default function VoiceSettingsPage() {
             { id: 'widget',    label: t('voiceSettings.tab.widget', 'Booking widget'),  content: widgetTab },
           ];
 
-          return <SettingsTabs tabs={tabs} hashKey="voice-settings" />;
+          return <VoiceSettingsTabs tabs={tabs} />;
         })()}
 
         <VoiceEngineSwitchModal isOpen={showEngineSwitchConfirm} engineSwitchTarget={engineSwitchTarget} onConfirm={confirmEngineSwitch} onClose={() => setShowEngineSwitchConfirm(false)} />

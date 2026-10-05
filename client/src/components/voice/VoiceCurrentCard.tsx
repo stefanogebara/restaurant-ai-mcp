@@ -33,7 +33,9 @@ export default function VoiceCurrentCard({
   onPlay,
   onToggleBrowser,
 }: Props) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const languageName = new Intl.DisplayNames([i18n.language || 'en'], { type: 'language' }).of(currentLanguage)
+    || currentLanguage.toUpperCase();
 
   return (
     <section className="overflow-hidden border-b border-brand-line pb-6">
@@ -63,7 +65,7 @@ export default function VoiceCurrentCard({
                   <span aria-hidden="true">·</span>
                 </>
               )}
-              <span>{currentLanguage.toUpperCase()}</span>
+              <span>{languageName}</span>
               {selectedBrowserVoice?.accent && (
                 <>
                   <span aria-hidden="true">·</span>
@@ -79,7 +81,7 @@ export default function VoiceCurrentCard({
                 type="button"
                 onClick={() => onPlay(currentVoiceId, getPreviewText(currentLanguage, restaurantName))}
                 disabled={loadingAudio === currentVoiceId}
-                className="flex items-center gap-2 rounded-full border border-brand-line px-4 py-2 text-sm font-medium text-brand-ink hover:border-brand-action disabled:opacity-50"
+                className="flex items-center gap-2 rounded-full bg-brand-action px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-ink disabled:opacity-50"
               >
                 {loadingAudio === currentVoiceId ? (
                   <Spinner size="sm" />
@@ -95,7 +97,7 @@ export default function VoiceCurrentCard({
               type="button"
               onClick={onToggleBrowser}
               aria-expanded={isBrowserOpen}
-              className="rounded-full bg-brand-action px-4 py-2 text-sm font-medium text-white hover:bg-brand-ink"
+              className="rounded-full border border-brand-line px-4 py-2 text-sm font-medium text-brand-ink hover:border-brand-action"
             >
               {isBrowserOpen ? t('voiceCurrentCard.hideVoiceBrowser', 'Hide Voice Browser') : t('voiceCurrentCard.changeVoice', 'Change Voice')}
             </button>

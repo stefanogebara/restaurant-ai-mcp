@@ -44,6 +44,7 @@
         <button type="button" data-section="dashboard" aria-pressed="false">Painel</button>
         <button type="button" data-section="overview" aria-pressed="true">Visão Geral</button>
         <button type="button" data-section="analytics" aria-pressed="false">Análises</button>
+        <button type="button" data-section="voice" aria-pressed="false">Voz</button>
       </div>
       <div class="group" role="group" aria-label="Estado" id="state-controls">
         <button type="button" data-state="filled" aria-pressed="true">Com dados</button>
@@ -62,9 +63,9 @@
     const assets = location.port === '5177' || location.protocol === 'file:'
       ? './public/insights-review/'
       : '/insights-review/';
-    const names = { dashboard: 'Painel', overview: 'Visão Geral', analytics: 'Análises' };
+    const names = { dashboard: 'Painel', overview: 'Visão Geral', analytics: 'Análises', voice: 'Voz' };
     const params = new URLSearchParams(location.search);
-    let section = ['dashboard', 'analytics'].includes(params.get('section')) ? params.get('section') : 'overview';
+    let section = ['dashboard', 'analytics', 'voice'].includes(params.get('section')) ? params.get('section') : 'overview';
     let device = params.get('device') === 'mobile' ? 'mobile' : 'desktop';
     let state = params.get('state') === 'empty' ? 'empty' : 'filled';
     function render() {
@@ -73,14 +74,21 @@
       if (section === 'dashboard') state = 'filled';
       image.src = section === 'dashboard'
         ? `${assets}dashboard-${device}.png`
+        : section === 'voice'
+        ? `${assets}voice-${state}-${device}.png`
         : section === 'analytics'
         ? `${assets}analytics-${state}-${device}.png`
         : state === 'empty'
           ? `${assets}overview-empty-${device}.png`
           : `${assets}overview${device === 'mobile' ? 'Mobile' : 'Desktop'}.png`;
-      image.alt = `Captura de ${names[section]} ${state === 'empty' ? 'sem dados ' : 'com dados '}em ${device === 'mobile' ? 'celular' : 'desktop'}`;
+      const stateName = section === 'voice'
+        ? (state === 'empty' ? 'com linha ainda não atribuída' : 'com linha atribuída')
+        : (state === 'empty' ? 'sem dados' : 'com dados');
+      image.alt = `Captura de ${names[section]} ${stateName} em ${device === 'mobile' ? 'celular' : 'desktop'}`;
       frame.classList.toggle('mobile', device === 'mobile');
       document.getElementById('state-controls').hidden = section === 'dashboard';
+      document.querySelector('[data-state="filled"]').textContent = section === 'voice' ? 'Linha atribuída' : 'Com dados';
+      document.querySelector('[data-state="empty"]').textContent = section === 'voice' ? 'Sem linha' : 'Sem dados';
       for (const attribute of ['section', 'device', 'state']) {
         document.querySelectorAll(`[data-${attribute}]`).forEach(button => button.setAttribute('aria-pressed', String(button.dataset[attribute] === ({ section, device, state })[attribute])));
       }
