@@ -22,6 +22,10 @@ const { sendWhatsAppMessage } = require('../whatsapp-sender');
 const { semTravessao } = require('./sem-travessao');
 const { lintOutbound } = require('./claim-linter');
 const { cartaoDeRobo } = require('./cartao-de-robo');
+const { respostaDaConfirmacao } = require('./confirmacao-indicacao');
+
+/** Até quando um sim/não ainda é resposta à pergunta da indicação. */
+const JANELA_DA_CONFIRMACAO_MS = 48 * 60 * 60 * 1000;
 const {
   perguntaSobreProduto, objecaoJaResolvido, introDaPrevia,
   DEMO_INSTRUCTION, DEMO_JA_RESOLVIDO_INSTRUCTION,
@@ -323,10 +327,30 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
   const isPreviaAberta = mode === 'previa';
   const isRetorno = mode === 'retorno';
 
+  // 0. A CASA RESPONDENDO A PERGUNTA DA INDICAÇÃO. `registrar_responsavel` põe o
+  //    lead em 'handoff' (mudo) e pergunta "esse número é mesmo dele?". A
+  //    resposta morria no portão abaixo — piloto do Racha, 29/09: Notizia e
+  //    Salve Jorge confirmaram e ninguém foi contatado. Sim ou não CLAROS, com
+  //    indicação pendente, passam pelo portão e viram `confirmar_indicacao`
+  //    determinístico (passo 6b). Ambíguo segue mudo, com o fundador, como antes.
+  //    Três travas de escopo (revisão de segurança do fix): (a) só a indicação
+  //    que AINDA espera a casa — confirmada vira "confirmado pela casa", e o
+  //    cartão de robô diz "o fundador confirma à mão": nenhum dos dois reabre a
+  //    porta; (b) só nas 48 h depois da pergunta — um "sim" de semana que vem é
+  //    resposta a outra coisa; (c) o veredito é refeito sobre a ÚLTIMA mensagem
+  //    da rajada no passo 6b.
+  const indicacaoEsperandoACasa = lead.prospect_state === 'handoff' && !!lead.numero_indicado
+    && /aguardando a casa confirmar/.test(String(lead.numero_indicado_contexto || ''))
+    && (Number.isFinite(Date.parse(lead.numero_indicado_em))
+      && nowMs - Date.parse(lead.numero_indicado_em) <= JANELA_DA_CONFIRMACAO_MS);
+  const respostaIndicacao = (!isNudge && !isRemarcar && !isPreviaAberta && !isRetorno && indicacaoEsperandoACasa)
+    ? respostaDaConfirmacao(text)
+    : null;
+
   // 1. State gate — silent in optout/handoff/agendado/pausada. Remarcar
   //    bypasses it: a 'definir' confirmation goes out while still 'agendado',
   //    and pedir/noshow run right after the caller reset state anyway.
-  if (!isRemarcar && !deveResponder(lead.prospect_state)) {
+  if (!isRemarcar && !respostaIndicacao && !deveResponder(lead.prospect_state)) {
     // A conversa passou pro fundador, e por isso a agente cala. Mas até
     // 10/08/2026 a resposta do lead morria exatamente aqui: gravada no banco,
     // sem ninguém olhando, esperando o fundador abrir o lead por acaso. É o
@@ -611,7 +635,23 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
     //     registrar_responsavel with THAT number — never let the model re-ask
     //     for a number that's on screen (the #1 inconsistency Olivia fixed).
     let acao = null;
-    if (!isNudge) {
+    if (respostaIndicacao) {
+      // O veredito de novo, sobre a ÚLTIMA mensagem da rajada: "sim" e logo
+      // depois "ah não, é o do meu irmão" não pode virar template pro irmão.
+      // Divergiu → volta ao silêncio do handoff, com o fundador.
+      // E só vale como resposta À PERGUNTA: a última mensagem nossa tem que ser
+      // a pergunta do número. Um "sim" a outra pergunta (do fundador, por
+      // exemplo) nas mesmas 48 h não confirma nada (revisão final, LOW).
+      const ultimaNossa = [...history].reverse().find((m) => m.direcao === 'out');
+      const foiAPergunta = !!ultimaNossa && /n[úu]mero[^?]*\?/i.test(String(ultimaNossa.corpo || ''));
+      if (!foiAPergunta || respostaDaConfirmacao(lastInText) !== respostaIndicacao) {
+        await avisarFundadorDaResposta({ lead, texto: lastInText, nowMs });
+        return { action: 'skip', reason: 'silent_state:handoff' };
+      }
+      acao = { tipo: 'confirmar_indicacao', confirmado: respostaIndicacao === 'sim', texto: null, deterministico: true };
+      logger.info(`[prospect] resposta da indicação (${respostaIndicacao}) lead=${lead.id}`);
+    }
+    if (!acao && !isNudge) {
       const ddd = extrairDddBr(lead.whatsapp_phone);
       const numeroDono = extrairNumeroDono(lastInText, ddd);
       if (numeroDono) {
@@ -904,7 +944,10 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
           break;
         }
 
-        const r = await enviar(lead.id, from, acao.texto || 'perfeito, obrigada! já chamo então 🙂', pace);
+        // Sem promessa de quem vai chamar nem quando: sem o modelo da campanha
+        // 'indicacao' aprovado, a intro ao indicado não sai e quem fala com ele
+        // é o fundador. "já chamo então" seria a promessa que ninguém cumpre.
+        const r = await enviar(lead.id, from, acao.texto || 'perfeito, obrigada! vamos falar com essa pessoa 🙂', pace);
         sent = r.sentAny; dryRun = r.dryRun;
 
         // Só AGORA o indicado vira lead e entra na fila. Best-effort: falha
@@ -921,6 +964,11 @@ async function respondToProspect({ lead, from, text, nowMs = Date.now(), skipPac
               await recordEvent(lead.id, '📨 intro enviada ao responsável indicado');
             } else if (d && (d.outsideWindow || d.capHit || d.dryRun || d.agentDisabled)) {
               await recordEvent(lead.id, '⏳ intro ao indicado aguarda janela/cap — flush retenta');
+            } else {
+              // Sem modelo de indicação ativo: o contato é do fundador, e o
+              // motivo do handoff diz isso no digest dele.
+              patch.handoff_motivo = `indicação CONFIRMADA pela casa — falar com ${pendente}${nome ? ` (${nome})` : ''}`;
+              await recordEvent(lead.id, '👤 indicação confirmada; sem modelo de indicação ativo — o fundador contata');
             }
           } else if (ref.reason === 'exists') {
             await recordEvent(lead.id, '📇 responsável indicado já é lead — sem duplicata');

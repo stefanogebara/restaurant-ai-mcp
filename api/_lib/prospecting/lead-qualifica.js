@@ -146,7 +146,7 @@ function foraDoIcp(nome) {
  * @param {Array<{name?:string, whatsapp_phone?:string, google_place_id?:string}>} leads
  * @returns {{ candidatos: Array, descartados: { fora_icp: number, dup_telefone: number, dup_place: number } }}
  */
-function qualificar(leads) {
+function qualificar(leads, { escolhidosAMao = false } = {}) {
   const vistosTelefone = new Set();
   const vistosPlace = new Set();
   const candidatos = [];
@@ -154,7 +154,11 @@ function qualificar(leads) {
 
   for (const lead of leads || []) {
     if (!lead) continue;
-    if (foraDoIcp(lead.name)) { descartados.fora_icp++; continue; }
+    // Lead de CAMPANHA foi escolhido um a um, por gente, olhando a casa: o
+    // filtro de nome existe pra lista automática. "Paróquia Bar" é bar, e o
+    // filtro o barrava como igreja (piloto do Racha, 29/09/2026). A deduplicação
+    // de telefone e de lugar continua valendo pra todos.
+    if (!escolhidosAMao && foraDoIcp(lead.name)) { descartados.fora_icp++; continue; }
 
     // Normaliza para comparar: só os dígitos. '+55 11 9...' e '5511 9...' são
     // o mesmo número e precisam colidir aqui, senão a dedup não pega nada.

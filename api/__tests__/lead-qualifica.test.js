@@ -243,3 +243,17 @@ describe('sorvete e doce de balcão (27/09/2026)', () => {
   test.each(['Bar e Doces da Vila', 'Restaurante Salinas', 'Pastelaria Alvorada'])(
     'passa: %s', (n) => expect(foraDoIcp(n)).toBe(false));
 });
+
+describe('lead escolhido a mão (campanha) não passa pelo filtro de nome', () => {
+  const { qualificar } = require('../_lib/prospecting/lead-qualifica');
+  test('"Paróquia Bar" numa campanha é candidato; na lista automática, não', () => {
+    const lead = { name: 'Paróquia Bar', whatsapp_phone: '+5511999990001', google_place_id: 'p1' };
+    expect(qualificar([lead], { escolhidosAMao: true }).candidatos.length).toBe(1);
+    expect(qualificar([lead]).candidatos.length).toBe(0);
+  });
+  test('a deduplicação de telefone vale mesmo na campanha', () => {
+    const a = { name: 'Bar A', whatsapp_phone: '+5511999990001', google_place_id: 'p1' };
+    const b = { name: 'Bar B', whatsapp_phone: '+55 11 99999-0001', google_place_id: 'p2' };
+    expect(qualificar([a, b], { escolhidosAMao: true }).candidatos.length).toBe(1);
+  });
+});

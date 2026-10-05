@@ -96,9 +96,11 @@ describe('tool-argument guard — registrar numero must come from the conversati
 });
 
 describe('companion-text guard — registrar/agendar also never silent', () => {
-  test('registrar without text acks with the referred name', () => {
+  test('registrar without text acks with the referred name — and ASKS, never promises', () => {
     const acao = interpretResponse({ content: [{ type: 'tool_use', name: 'registrar_responsavel', input: { numero: '11 98877-6655', nome: 'Beto' } }] });
-    expect(acao.texto).toMatch(/já chamo Beto/);
+    expect(acao.texto).toMatch(/Beto/);
+    expect(acao.texto).toMatch(/\?/);
+    expect(acao.texto).not.toMatch(/já chamo Beto então/);
   });
 
   test('agendar without text confirms the lead-provided slot', () => {
