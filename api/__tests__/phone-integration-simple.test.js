@@ -118,53 +118,15 @@ test('list-phones rejects an unauthenticated caller', async () => {
   expect(mockFetch).not.toHaveBeenCalled();
 });
 
-test('register stops on a shared number claim conflict before any provider mutation', async () => {
-  mockRpc.mockImplementation(async (name) => name === 'platform_phone_availability'
-    ? { data: mockAvailability, error: null } : { data: null, error: { code: 'P0001' } });
+test('register requires support and never touches the provider or claim table', async () => {
   const res = response();
   await handler({ method: 'POST', headers: {}, query: { action: 'register' }, body: {} }, res);
-
-  expect(mockRpc).toHaveBeenCalledWith('claim_platform_phone', {
-    p_restaurant_id: 'restaurant-a', p_phone_number: '+15550000001'
-  });
   expect(res.status).toHaveBeenCalledWith(409);
-  expect(mockUpdate).not.toHaveBeenCalled();
-  expect(mockFetch).toHaveBeenCalledTimes(1);
-  expect(mockFetch.mock.calls[0][1].method).toBe('GET');
-});
-
-test('register fails closed if the claim migration is missing', async () => {
-  mockRpc.mockImplementation(async (name) => name === 'platform_phone_availability'
-    ? { data: null, error: { code: '42883' } } : { data: null, error: null });
-  const res = response();
-  await handler({ method: 'POST', headers: {}, query: { action: 'register' }, body: {} }, res);
-  expect(res.status).toHaveBeenCalledWith(503);
-  expect(mockUpdate).not.toHaveBeenCalled();
+  expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+    error: 'This shared phone requires support-assisted setup.'
+  }));
+  expect(mockRpc).not.toHaveBeenCalled();
   expect(mockFetch).not.toHaveBeenCalled();
-});
-
-test('register cannot take an unclaimed shared number', async () => {
-  mockAvailability = 'available';
-  const res = response();
-  await handler({ method: 'POST', headers: {}, query: { action: 'register' }, body: {} }, res);
-  expect(res.status).toHaveBeenCalledWith(409);
-  expect(mockFetch).not.toHaveBeenCalled();
-  expect(mockRpc).not.toHaveBeenCalledWith('claim_platform_phone', expect.anything());
-});
-
-test('register cannot reassign a provider number bound to another agent', async () => {
-  mockFetch.mockResolvedValue({
-    ok: true,
-    json: async () => [{
-      phone_number: '+15550000001', phone_number_id: 'phone-a',
-      assigned_agent: { agent_id: 'agent-b' }
-    }]
-  });
-  const res = response();
-  await handler({ method: 'POST', headers: {}, query: { action: 'register' }, body: {} }, res);
-  expect(res.status).toHaveBeenCalledWith(409);
-  expect(mockRpc).not.toHaveBeenCalledWith('claim_platform_phone', expect.anything());
-  expect(mockFetch).toHaveBeenCalledTimes(1);
 });
 
 test('unregister does not release a shared number to another tenant', async () => {
@@ -194,27 +156,12 @@ test('manager members can reach the support-only disconnect response', async () 
   }));
 });
 
-test('existing owner can refresh the same provider assignment without a phone PATCH', async () => {
-  mockRpc.mockImplementation(async (name) => {
-    if (name === 'platform_phone_availability') return { data: 'owned_by_this_restaurant', error: null };
-    if (name === 'claim_platform_phone') return { data: 'claim-token', error: null };
-    if (name === 'activate_platform_phone') return { data: true, error: null };
-    return { data: null, error: null };
-  });
-  mockFetch.mockImplementation(async (url) => ({
-    ok: true,
-    json: async () => url.endsWith('/phone-numbers')
-      ? [{ phone_number: '+15550000001', phone_number_id: 'phone-a', assigned_agent: { agent_id: 'agent-a' } }]
-      : { conversation_config: { agent: { prompt: { tool_ids: ['tool-a'] } } } }
-  }));
+test('fix-tools requires support and cannot replace working provider tools', async () => {
   const res = response();
-  await handler({ method: 'POST', headers: {}, query: { action: 'register' }, body: {} }, res);
-  expect(res.status).toHaveBeenCalledWith(200);
-  expect(mockRpc).toHaveBeenCalledWith('activate_platform_phone', expect.objectContaining({
-    p_restaurant_id: 'restaurant-a', p_number_id: 'phone-a'
-  }));
-  expect(mockFetch.mock.calls.every(([url, options]) =>
-    !url.includes('/phone-numbers') || options?.method === 'GET')).toBe(true);
+  await handler({ method: 'POST', headers: {}, query: { action: 'fix-tools' }, body: {} }, res);
+  expect(res.status).toHaveBeenCalledWith(409);
+  expect(mockRpc).not.toHaveBeenCalled();
+  expect(mockFetch).not.toHaveBeenCalled();
 });
 
 test('status hides the shared number when another restaurant owns it', async () => {
@@ -227,4 +174,36 @@ test('status hides the shared number when another restaurant owns it', async () 
     restaurant: expect.objectContaining({ status: 'unavailable', phone_number: null, phone_number_id: null }),
     platform: { line_availability: 'unavailable', twilio_phone: null }
   }));
+});
+
+
+test('status does not report an unrelated active number as the platform line', async () => {
+  mockAvailability = 'available';
+  mockRestaurantConfig.ai_config.phone = { status: 'active', number: '+15550000999', number_id: 'other' };
+  const res = response();
+  await handler({ method: 'GET', headers: {}, query: { action: 'status' }, body: {} }, res);
+  expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+    restaurant: expect.objectContaining({ status: 'not_configured', phone_number: null }),
+    platform: { line_availability: 'available', twilio_phone: null }
+  }));
+});
+
+test('test-call returns manual instructions only for the matching owned line', async () => {
+  mockRestaurantConfig.ai_config.phone = { status: 'active', number: '+15550000001' };
+  const res = response();
+  await handler({ method: 'POST', headers: {}, query: { action: 'test-call' }, body: { to_number: '+15550000999' } }, res);
+  expect(res.status).toHaveBeenCalledWith(200);
+  expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+    manual_test_only: true,
+    message: 'Manual test instructions; no call was placed'
+  }));
+  expect(mockFetch).not.toHaveBeenCalled();
+});
+
+test('test-call rejects a stale active assignment for another number', async () => {
+  mockRestaurantConfig.ai_config.phone = { status: 'active', number: '+15550000999' };
+  const res = response();
+  await handler({ method: 'POST', headers: {}, query: { action: 'test-call' }, body: {} }, res);
+  expect(res.status).toHaveBeenCalledWith(400);
+  expect(mockFetch).not.toHaveBeenCalled();
 });
