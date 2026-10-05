@@ -130,7 +130,7 @@ export default function InsightsPage() {
       <div className={`mx-auto px-4 sm:px-6 ${heroInsights ? 'max-w-[1240px] py-4 sm:py-5 lg:px-10' : 'max-w-7xl py-6'}`}>
         {/* Header */}
         <header className={`pl-12 lg:pl-0 ${heroInsights ? 'mb-2 sm:mb-3' : 'mb-1'}`}>
-          <h1 className={heroInsights ? 'font-brand text-[29px] font-normal leading-[1.05] tracking-[-0.055em] text-brand-ink sm:text-[40px]' : 'font-serif text-4xl sm:text-5xl text-deep-charcoal tracking-tight'}>
+          <h1 className={heroInsights ? 'font-brand text-[25px] font-normal leading-[1.05] tracking-[-0.055em] text-brand-ink sm:text-[34px]' : 'font-serif text-4xl sm:text-5xl text-deep-charcoal tracking-tight'}>
             {heroInsights ? <>{activeTab === 'analytics' ? t('insights.tabs.analytics', 'Analytics') : t('insights.pageTitle', 'Insights')}{' '}<em className="ml-1.5 font-serif font-normal italic tracking-[-0.04em] sm:ml-3">{t('insights.houseSuffix', 'of the house.')}</em></> : t('insights.pageTitle', 'Insights')}
           </h1>
         </header>

@@ -27,7 +27,15 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function StatusBreakdownPie({ reservationsByStatus }: StatusBreakdownPieProps) {
   const { t } = useTranslation();
-  const rows = Object.entries(reservationsByStatus)
+  // The API can emit both spellings for the same status. Merge them before
+  // computing shares, otherwise the report prints two "No-show" rows.
+  const normalizedCounts = Object.entries(reservationsByStatus).reduce<Record<string, number>>((counts, [rawStatus, count]) => {
+    if (!Number.isFinite(count) || count <= 0) return counts;
+    const status = rawStatus.toLowerCase() === 'no_show' ? 'no-show' : rawStatus.toLowerCase();
+    counts[status] = (counts[status] ?? 0) + count;
+    return counts;
+  }, {});
+  const rows = Object.entries(normalizedCounts)
     .filter(([, count]) => Number.isFinite(count) && count > 0)
     .map(([status, count]) => ({
       status,
@@ -39,8 +47,8 @@ export default function StatusBreakdownPie({ reservationsByStatus }: StatusBreak
   const total = rows.reduce((sum, row) => sum + row.count, 0);
 
   return (
-    <section aria-label={t('analytics.charts.statusBreakdownAria')} className="min-w-0 border-b border-brand-line pb-4">
-      <h3 className="font-brand text-[23px] leading-tight tracking-tight text-brand-ink">{t('analytics.statusBreakdown')}</h3>
+    <section aria-label={t('analytics.charts.statusBreakdownAria')} className="min-w-0 pb-4">
+      <h3 className="font-brand text-[20px] leading-tight tracking-tight text-brand-ink sm:text-[23px]">{t('analytics.statusBreakdown')}</h3>
       {total === 0 ? (
         <p className="py-8 text-[14px] text-muted-stone">{t('analytics.noData')}</p>
       ) : (
@@ -48,21 +56,21 @@ export default function StatusBreakdownPie({ reservationsByStatus }: StatusBreak
           <div
             role="img"
             aria-label={rows.map(row => `${row.name}: ${row.count}`).join(', ')}
-            className="mt-5 flex h-3 w-full overflow-hidden rounded-full bg-brand-ink/5"
+            className="mt-2.5 flex h-2 w-full overflow-hidden rounded-full bg-brand-ink/5 sm:mt-5 sm:h-3"
           >
             {rows.map(row => (
               <span key={row.status} style={{ width: `${(row.count / total) * 100}%`, backgroundColor: row.color }} />
             ))}
           </div>
-          <dl className="mt-3 grid grid-cols-1 gap-x-6 md:grid-cols-4">
+          <dl className="mt-2 grid grid-cols-1 gap-y-1 max-[359px]:gap-y-0 sm:mt-4 sm:grid-cols-4 sm:gap-x-4 md:gap-x-7">
             {rows.map(row => (
-              <div key={row.status} className="flex items-baseline gap-3 py-2.5">
-                <dt className="flex min-w-0 items-center gap-2 text-[13px] text-brand-ink">
+              <div key={row.status} className="flex min-w-0 items-baseline justify-between gap-3 py-0.5 max-[359px]:py-0 sm:block sm:border-t sm:border-brand-line sm:pt-2.5">
+                <dt className="flex min-w-0 items-center gap-2 text-[13px] text-brand-ink/75 max-[359px]:text-[12px] sm:text-[12px]">
                   <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: row.color }} aria-hidden="true" />
-                  <span className="truncate">{row.name}</span>
+                  <span>{row.name}</span>
                 </dt>
-                <dd className="shrink-0 text-[13px] font-medium tabular-nums text-brand-ink">
-                  {row.count}<span className="ml-2 font-normal text-brand-muted">{Math.round((row.count / total) * 100)}%</span>
+                <dd className="shrink-0 font-brand text-[19px] leading-none tabular-nums text-brand-ink max-[359px]:text-[18px] sm:mt-1 sm:text-[20px]">
+                  {row.count}<span className="ml-1 text-[12px] font-normal text-brand-ink/65 max-[359px]:text-[11px] sm:ml-2">{Math.round((row.count / total) * 100)}%</span>
                 </dd>
               </div>
             ))}

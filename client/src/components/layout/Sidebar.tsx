@@ -49,7 +49,7 @@ const navSections: NavSection[] = [
   }
 ];
 
-export default function Sidebar({ appearance = 'default' }: { appearance?: 'default' | 'hero' }) {
+export default function Sidebar({ appearance = 'default', darkMobileMenu = false }: { appearance?: 'default' | 'hero'; darkMobileMenu?: boolean }) {
   const hero = appearance === 'hero';
   const location = useLocation();
   const navigate = useNavigate();
@@ -138,10 +138,10 @@ export default function Sidebar({ appearance = 'default' }: { appearance?: 'defa
   const userEmail = user?.email || 'Not signed in';
   const mobileNavItems: { path: string; label: string; icon: IconName }[] = [
     { path: '/host-dashboard/simple', label: t('navigation.dashboard', 'Dashboard'), icon: 'dashboard' },
-    { path: '/host-dashboard/floor-plan', label: t('navigation.tables', 'Tables'), icon: 'layout-grid' },
-    { path: '/host-dashboard/manager-ai', label: 'AI', icon: 'chat' },
+    { path: '/host-dashboard/floor-plan', label: t('navigation.tables', 'Tables'), icon: 'map' },
+    { path: '/host-dashboard/manager-ai', label: t('navigation.mobileAI', 'AI'), icon: 'chat' },
     hero
-      ? { path: '/host-dashboard/insights', label: t('navigation.insights', 'Insights'), icon: 'bar-chart' }
+      ? { path: '/host-dashboard/insights', label: t('navigation.sectionInsightsHero', 'Data'), icon: 'bar-chart' }
       : { path: '/host-dashboard/settings', label: t('common.settings', 'Settings'), icon: 'settings' },
   ];
   const isMoreActive = !mobileNavItems.some(item => isActive(item.path));
@@ -151,7 +151,7 @@ export default function Sidebar({ appearance = 'default' }: { appearance?: 'defa
       <button
         type="button"
         onClick={() => setIsMobileOpen(!isMobileOpen)}
-        className={`lg:hidden fixed top-6 left-4 z-50 p-2 rounded-[100px] focus:outline-none focus-visible:ring-2 ${hero ? 'bg-brand-paper/90 text-brand-ink hover:bg-brand-line/30 focus-visible:ring-brand-action' : 'text-deep-charcoal hover:bg-deep-charcoal/[0.05] focus-visible:ring-burgundy'}`}
+        className={`lg:hidden fixed top-6 left-4 z-50 p-2 rounded-[100px] focus:outline-none focus-visible:ring-2 ${hero ? 'bg-brand-paper/90 text-brand-ink hover:bg-brand-line/30 focus-visible:ring-brand-action' : darkMobileMenu ? 'bg-stone-800 text-white hover:bg-stone-700 focus-visible:ring-white' : 'text-deep-charcoal hover:bg-deep-charcoal/[0.05] focus-visible:ring-burgundy'}`}
         aria-label={isMobileOpen ? "Close navigation menu" : "Open navigation menu"}
         aria-expanded={isMobileOpen}
       >
@@ -561,18 +561,23 @@ export default function Sidebar({ appearance = 'default' }: { appearance?: 'defa
                 key={item.path}
                 to={hero && item.path === '/host-dashboard/insights' ? '/host-dashboard/insights?tab=overview' : item.path}
                 aria-current={active ? 'page' : undefined}
-                className={`flex flex-col items-center gap-0.5 px-3 py-2 transition-colors min-w-[60px] ${hero ? 'border-t-2' : 'rounded-lg'} ${
+                className={`flex flex-col items-center gap-0.5 px-3 transition-colors min-w-[60px] ${hero ? 'py-1' : 'rounded-lg py-2'} ${
                   hero
                     ? active
-                      ? 'border-brand-action text-brand-ink font-semibold'
-                      : 'border-transparent text-brand-muted active:text-brand-ink'
+                      ? 'text-brand-ink font-semibold'
+                      : 'text-brand-muted active:text-brand-ink'
                     : active
                       ? 'text-deep-charcoal bg-deep-charcoal/[0.06]'
                       : 'text-muted-stone active:text-deep-charcoal'
                 }`}
               >
-                <ThiingsIcon name={item.icon} pxSize={20} />
-                <span className="text-[11px] font-medium leading-tight whitespace-nowrap">{item.label}</span>
+                {hero ? (
+                  <span className={`flex h-8 w-9 items-center justify-center ${active ? 'text-brand-action' : ''}`}>
+                    <ThiingsIcon name={item.icon} pxSize={20} />
+                  </span>
+                ) : <ThiingsIcon name={item.icon} pxSize={20} />}
+                <span className={`${hero ? 'text-[12px]' : 'text-[11px]'} font-medium leading-tight whitespace-nowrap`}>{item.label}</span>
+                {active && hero && <span className="mt-0.5 h-[2px] w-6 bg-brand-action" aria-hidden="true" />}
                 {active && !hero && <span className="h-1 w-1 rounded-full bg-burgundy" />}
               </Link>
             );

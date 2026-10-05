@@ -32,8 +32,10 @@ export default function NoShowPredictions() {
     .sort((a, b) => b.risk_score - a.risk_score || a.days_until - b.days_until);
   const summary = data?.summary ?? null;
   const [selectedPrediction, setSelectedPrediction] = useState<NoShowPrediction | null>(null);
+  // This list is scoped to the next seven days, so the year adds a whole line
+  // on mobile without disambiguating any booking.
   const readableDate = (date: string) => /^\d{4}-\d{2}-\d{2}$/.test(date)
-    ? new Intl.DateTimeFormat(i18n.language, { day: '2-digit', month: 'short', year: 'numeric' }).format(parseLocalDate(date))
+    ? new Intl.DateTimeFormat(i18n.language, { day: '2-digit', month: 'short' }).format(parseLocalDate(date))
     : date || '—';
 
   // Liquid Glass v2: a linha inteira não é mais uma caixa colorida — só o
@@ -80,7 +82,7 @@ export default function NoShowPredictions() {
         <button
           type="button"
           onClick={() => refetch()}
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-action hover:bg-brand-ink text-brand-paper text-sm font-semibold rounded-xl transition-colors"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-action hover:bg-brand-ink text-brand-paper text-sm font-semibold rounded-[100px] transition-colors"
         >
           <ThiingsIcon name="refresh" size="xs" />
           {t('common.retry')}
@@ -97,7 +99,7 @@ export default function NoShowPredictions() {
           {t('analytics.noShowPredictions')}
         </h2>
         <p className="text-[15px] text-brand-muted mt-1.5">
-          {t('analytics.predictionScopeNote', 'Next 7 days · scores, not probabilities.')}
+          {t('analytics.upcomingSevenDays', 'Next 7 days')}
         </p>
       </header>
 
@@ -108,7 +110,7 @@ export default function NoShowPredictions() {
         <div className="grid grid-cols-3 gap-3 border-b border-brand-line py-5 sm:flex sm:gap-x-10">
           <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:gap-2">
             <span className="font-brand text-[27px] leading-none tabular-nums text-brand-ink">{summary.total_upcoming}</span>
-            <span className="text-[12px] text-brand-muted">{t('analytics.upcomingSevenDays')}</span>
+            <span className="text-[12px] text-brand-muted">{t('analytics.reservations')}</span>
           </div>
           <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:gap-2">
             <span className="font-brand text-[27px] leading-none tabular-nums text-red-700">{summary.high_risk}</span>
@@ -138,7 +140,7 @@ export default function NoShowPredictions() {
               key={prediction.reservation_id}
               type="button"
               aria-expanded={selectedPrediction === prediction}
-              className="w-full text-left py-4 border-b border-brand-line transition-colors hover:bg-deep-charcoal/[0.02]"
+              className="w-full text-left py-4 border-b border-brand-line transition-colors hover:bg-brand-ink/[0.02]"
               onClick={() => setSelectedPrediction(selectedPrediction === prediction ? null : prediction)}
             >
               <div className="flex items-start justify-between gap-3">
@@ -151,7 +153,7 @@ export default function NoShowPredictions() {
                   </div>
                   <div className="mt-1 grid gap-x-6 gap-y-0.5 text-[13px] text-brand-muted sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
                     <span>{readableDate(prediction.date)} · {prediction.time?.slice(0, 5) || '—'}</span>
-                    <span>{t('analytics.partyOf', { size: prediction.party_size })} · {prediction.days_until === 0 ? t('analytics.todayLabel') : prediction.days_until === 1 ? t('analytics.tomorrowLabel') : t('analytics.inDays', { days: prediction.days_until })}</span>
+                    <span>{t('analytics.partyOf', { size: prediction.party_size })}</span>
                   </div>
                 </div>
                 <ThiingsIcon name="chevron-down" pxSize={18} className={`flex-shrink-0 mt-1 transition-transform ${selectedPrediction === prediction ? 'rotate-180' : ''}`} />

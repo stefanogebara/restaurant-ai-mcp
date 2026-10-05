@@ -101,6 +101,9 @@ describe('ServiceRiskTimeline', () => {
     const list = screen.getByTestId('risk-timeline-list');
     expect(within(list).getByRole('button', { name: /Ana/ })).toHaveClass('hover:bg-brand-action/5');
     expect(within(list).getByRole('button', { name: /Ana/ })).not.toHaveClass('bg-brand-action/5');
-    expect(list.querySelectorAll(':scope > span[aria-hidden="true"]')).toHaveLength(1);
+    expect(within(list).getByRole('button', { name: /Ana/ }).closest('li')).toHaveClass('hidden', 'sm:block');
+    expect(screen.getByText('insights.otherReservationsToday')).toHaveClass('sm:hidden');
+    expect(list.querySelectorAll(':scope > span[aria-hidden="true"]')).toHaveLength(0);
+    expect(within(list).getByRole('button', { name: /Ana/ })).toHaveClass('border-brand-line');
   });
 });

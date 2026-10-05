@@ -19,7 +19,7 @@ vi.mock('../../../hooks/usePredictiveAnalytics', () => ({
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string, fallback?: string | Record<string, unknown>) => key === 'analytics.busiestDaySummary' && fallback && typeof fallback === 'object'
-      ? `Peak on ${fallback.day}: ${fallback.count} bookings (${fallback.share}%).`
+      ? `${fallback.day} accounts for ${fallback.count} bookings (${fallback.share}% of the period).`
       : typeof fallback === 'string' ? fallback : key,
     i18n: { language: 'pt-BR' },
   }),
@@ -31,6 +31,28 @@ vi.mock('../../common/ThiingsIcon', () => ({
 
 describe('Analytics period truth', () => {
   beforeEach(() => vi.resetAllMocks());
+
+  it('keeps supporting rates below the mobile lead metrics when the report is split around the chart', () => {
+    const overview = {
+      total_reservations: 10,
+      total_revenue: 100,
+      avg_party_size: 2.5,
+      total_capacity: 12,
+      current_occupancy: 3,
+      current_occupancy_percentage: '25.0',
+    };
+    const props = { overview, reservationsByStatus: { confirmed: 9, 'no-show': 1 }, reservationsByDay: { Monday: 10 } };
+    const { rerender } = render(<AnalyticsStats compact compactPart="lead" {...props} />);
+    expect(screen.getByText('10')).toBeInTheDocument();
+    expect(screen.queryByText('10,0%')).not.toBeInTheDocument();
+
+    rerender(<AnalyticsStats compact compactPart="detail" {...props} />);
+    expect(screen.queryByText('10')).not.toBeInTheDocument();
+    expect(screen.getByText('10,0%')).toBeInTheDocument();
+    expect(screen.getByText('No-shows')).toBeInTheDocument();
+    expect(screen.getByText('Per booking')).toBeInTheDocument();
+    expect(screen.getByText('people')).toBeInTheDocument();
+  });
 
   it('derives status shares from the selected-period reservation statuses, not service totals', () => {
     const overview = {
@@ -51,7 +73,7 @@ describe('Analytics period truth', () => {
     expect(screen.getByText('10,0%')).toBeInTheDocument();
     expect(screen.getByText('20,0%')).toBeInTheDocument();
     expect(screen.getByText('Recorded revenue')).toBeInTheDocument();
-    expect(screen.getByText('Peak on sábado: 7 bookings (70%).')).toBeInTheDocument();
+    expect(screen.getByText('sábado accounts for 7 bookings (70% of the period).')).toBeInTheDocument();
     expect(screen.queryByText('Live · outside the date filter')).not.toBeInTheDocument();
     render(<LiveOccupancySignal occupiedSeats={overview.current_occupancy} totalSeats={overview.total_capacity} />);
     const liveSignal = screen.getByRole('region', { name: 'Occupancy now' });
@@ -78,7 +100,8 @@ describe('Analytics period truth', () => {
 
     render(<NoShowPredictions />);
     expect(screen.queryByText('66.8%')).not.toBeInTheDocument();
-    expect(screen.getByText('Next 7 days · scores, not probabilities.')).toBeInTheDocument();
+    expect(screen.getByText('Next 7 days')).toBeInTheDocument();
+    expect(screen.queryByText('Next 7 days · scores, not probabilities.')).not.toBeInTheDocument();
     expect(screen.getByText('No upcoming reservations to assess')).toBeInTheDocument();
   });
 
@@ -195,6 +218,13 @@ describe('Analytics period truth', () => {
     const segment = screen.getByRole('img', { name: /reservations.seated: 2/ }).firstElementChild;
     expect(segment).toHaveStyle({ backgroundColor: '#819C82' });
     expect(segment).not.toHaveStyle({ backgroundColor: '#3F4E32' });
+  });
+
+  it('merges both no-show spellings before showing a status share', () => {
+    render(<StatusBreakdownPie reservationsByStatus={{ confirmed: 6, no_show: 1, 'no-show': 1 }} />);
+    expect(screen.getByRole('img')).toHaveAttribute('aria-label', 'reservations.confirmed: 6, reservations.noShow: 2');
+    expect(screen.getAllByText('reservations.noShow')).toHaveLength(1);
+    expect(screen.getByText('25%')).toBeInTheDocument();
   });
 });
 

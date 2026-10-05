@@ -1,8 +1,5 @@
-﻿import { useTranslation } from 'react-i18next';
-import { ComposedChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceDot } from 'recharts';
+import { useTranslation } from 'react-i18next';
 import ChartPanel from './ChartPanel';
-
-const plotColors = { reservations: '#3F4E32', rules: '#CDD0C7', labels: '#586254' } as const;
 
 interface ReservationTrendChartProps {
   dailyTrend: Array<{
@@ -13,96 +10,96 @@ interface ReservationTrendChartProps {
   }>;
 }
 
+/** One point per calendar day. No interpolation, aggregation, or fabricated values. */
 export default function ReservationTrendChart({ dailyTrend }: ReservationTrendChartProps) {
   const { t, i18n } = useTranslation();
-
-  const reservationTotal = dailyTrend.reduce((sum, day) => sum + day.reservations, 0);
-  const hasActivity = reservationTotal > 0;
-  const peakDay = dailyTrend.reduce<(typeof dailyTrend)[number] | null>(
-    (peak, day) => day.reservations > 0 && (!peak || day.reservations > peak.reservations) ? day : peak,
+  const days = dailyTrend.map(day => {
+    const date = new Date(`${day.date}T12:00:00Z`);
+    return {
+      ...day,
+      count: Number.isFinite(day.reservations) && day.reservations > 0 ? day.reservations : 0,
+      shortDate: date.toLocaleDateString(i18n.language, { day: '2-digit', month: '2-digit', timeZone: 'UTC' }),
+      fullDate: date.toLocaleDateString(i18n.language, { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }),
+    };
+  });
+  const total = days.reduce((sum, day) => sum + day.count, 0);
+  const peak = days.reduce<(typeof days)[number] | null>(
+    (current, day) => day.count > 0 && (!current || day.count > current.count) ? day : current,
     null,
   );
-  // A rolling month needs dates, not repeated weekday abbreviations.
-  const localizedTrend = dailyTrend.map(d => ({
-    ...d,
-    dayLabel: new Date(d.date + 'T12:00:00Z').toLocaleDateString(i18n.language, { day: '2-digit', month: '2-digit', timeZone: 'UTC' }),
-  }));
-  const peakDayLabel = localizedTrend.find(day => day.date === peakDay?.date)?.dayLabel;
-  const CustomTooltip = ({ active, payload, label }: { active?: boolean; label?: string; payload?: Array<{ name: string; value: number; color: string }> }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="rounded-xl border border-brand-line bg-brand-paper p-3 shadow-sm">
-          <p className="mb-2 font-brand text-sm font-medium text-brand-ink">{label}</p>
-          {payload.map((entry, index: number) => (
-            <p key={index} className="text-sm" style={{ color: entry.color }}>
-              {entry.name}: <span className="font-medium">{entry.value}</span>
-            </p>
-          ))}
-        </div>
-      );
-    }
-    return null;
-  };
+  const axisMax = Math.max(2, Math.ceil((peak?.count ?? 0) / 2) * 2);
+  const tickStep = days.length <= 14
+    ? Math.max(1, Math.ceil((days.length - 1) / 4))
+    : Math.max(7, Math.ceil((days.length - 1) / 35) * 7);
+  const labels = days.filter((_, index) => index % tickStep === 0);
+  const peakSummary = peak ? t('analytics.dailyPeakSummary', { count: peak.count, date: peak.shortDate }) : '';
 
   return (
-    <ChartPanel
-      title={t('analytics.reservationsByDay')}
-      ariaLabel={hasActivity ? t('analytics.charts.reservationTrendSingleAria', { reservations: reservationTotal }) : undefined}
-      emphasis
-    >
-      {!hasActivity ? (
-        <p className="py-12 text-center text-[14px] text-brand-muted">{t('analytics.noDailyReservations')}</p>
-      ) : (
-        <div className="h-[180px] sm:h-[260px] xl:h-[310px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart
-            data={localizedTrend}
-            margin={{ top: 18, right: 24, left: -8, bottom: 4 }}
-          >
-            <CartesianGrid vertical={false} stroke={plotColors.rules} opacity={0.4} />
-            <XAxis
-              dataKey="dayLabel"
-              tick={{ fill: plotColors.labels, fontSize: 13 }}
-              tickLine={false}
-              axisLine={false}
-              interval="preserveStartEnd"
-              minTickGap={35}
-            />
-            <YAxis
-              tick={{ fill: plotColors.labels, fontSize: 13 }}
-              tickLine={false}
-              axisLine={false}
-              domain={[0, 'auto']}
-              allowDecimals={false}
-            />
-            <Tooltip content={<CustomTooltip />} />
-            <Area
-              type="linear"
-              dataKey="reservations"
-              name={t('analytics.reservations')}
-              stroke={plotColors.reservations}
-              strokeWidth={2.5}
-              fill={plotColors.reservations}
-              fillOpacity={0.055}
-              dot={false}
-              activeDot={{ r: 4 }}
-              isAnimationActive={false}
-            />
-            {peakDay && peakDayLabel && (
-              <ReferenceDot
-                x={peakDayLabel}
-                y={peakDay.reservations}
-                r={4.5}
-                fill={plotColors.reservations}
-                stroke="white"
-                strokeWidth={2}
-                label={{ value: `${peakDay.reservations} · ${peakDayLabel}`, position: 'top', offset: 9, fill: plotColors.reservations, fontSize: 12, fontWeight: 600 }}
-              />
-            )}
-          </ComposedChart>
-        </ResponsiveContainer>
-        </div>
+    <>
+      <ChartPanel
+        title={t('analytics.reservationsByDay')}
+        badge={peak ? (
+          <span aria-label={peakSummary} className="hidden items-baseline gap-1.5 whitespace-nowrap text-brand-ink sm:inline-flex">
+            <span className="font-brand text-[22px] leading-none tabular-nums">{peak.count}</span>
+            <span className="text-[11px] text-brand-muted">{t('analytics.dailyPeakDate', { date: peak.shortDate })}</span>
+          </span>
+        ) : undefined}
+        ariaLabel={total > 0 ? `${t('analytics.charts.reservationTrendSingleAria', { reservations: total })} ${peakSummary}` : undefined}
+        emphasis
+      >
+        {total === 0 ? (
+          <p className="py-12 text-center text-[14px] text-brand-muted">{t('analytics.noDailyReservations')}</p>
+        ) : (
+          <div className="h-[164px] overflow-x-auto min-[360px]:h-[214px] sm:h-[260px] xl:h-[280px]" data-chart-scrollable={days.length > 45}>
+            <div className="h-full" style={{ minWidth: days.length > 45 ? `${days.length * 9 + 36}px` : undefined }}>
+            <div className="grid h-[calc(100%-24px)] grid-cols-[28px_minmax(0,1fr)] gap-2">
+              <div aria-hidden="true" className="relative h-full text-right text-[11px] tabular-nums text-brand-muted">
+                <span className="absolute right-0 top-8 -translate-y-1/2">{axisMax}</span>
+                <span className="absolute right-0 top-[calc(50%+16px)] -translate-y-1/2">{axisMax / 2}</span>
+                <span className="absolute bottom-0 right-0 translate-y-1/2">0</span>
+              </div>
+              <div className="relative h-full min-w-0">
+                <div aria-hidden="true" className="absolute inset-x-0 bottom-0 top-8 border-y border-brand-line/70">
+                  <span className="absolute inset-x-0 top-1/2 border-t border-brand-line/55" />
+                </div>
+                <div
+                  aria-hidden="true"
+                  className="absolute inset-x-0 bottom-0 top-8 grid"
+                  style={{ gridTemplateColumns: `repeat(${days.length}, minmax(0, 1fr))` }}
+                >
+                  {days.map(day => {
+                    const position = `${(day.count / axisMax) * 100}%`;
+                    const isPeak = day.date === peak?.date;
+                    const radius = isPeak ? 5 : 3.5;
+                    return (
+                      <span key={day.date} className="relative block h-full min-w-0" data-date={day.date} data-count={day.count} title={`${day.fullDate}: ${day.count} ${t('analytics.reservations')}`}>
+                        <span
+                          data-day-point="true"
+                          data-peak-point={isPeak ? 'true' : undefined}
+                          className={`absolute left-1/2 block -translate-x-1/2 rounded-[100px] ${isPeak ? 'h-2.5 w-2.5 bg-brand-action' : 'h-[7px] w-[7px] bg-brand-action/65'}`}
+                          style={{ bottom: `calc(${position} - ${radius}px)` }}
+                        />
+                        {isPeak && <span aria-hidden="true" className="absolute left-1/2 -translate-x-full whitespace-nowrap font-brand text-[12px] font-semibold tabular-nums text-brand-ink sm:hidden" style={{ bottom: `calc(${position} + 9px)` }}>{day.count} · {day.shortDate}</span>}
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+            <div aria-hidden="true" className="ml-[36px] flex justify-between pt-2 text-[11px] tabular-nums text-brand-muted sm:text-[12px]">
+              {labels.map(day => <span key={day.date}>{day.shortDate}</span>)}
+            </div>
+            </div>
+          </div>
+        )}
+      </ChartPanel>
+      {total > 0 && (
+        <table className="sr-only">
+          <caption>{t('analytics.reservationsByDay')}</caption>
+          <thead><tr><th>{t('common.date')}</th><th>{t('analytics.reservations')}</th></tr></thead>
+          <tbody>{days.map(day => <tr key={day.date}><td>{day.fullDate}</td><td>{day.count}</td></tr>)}</tbody>
+        </table>
       )}
-    </ChartPanel>
+    </>
   );
 }

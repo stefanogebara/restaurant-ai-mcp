@@ -6,6 +6,7 @@ import type { Table, ActiveParty } from '../../types/host.types';
 import TableGrid from '../host/TableGrid';
 import FloorPlanView from '../host/FloorPlanView';
 import TableStatusLegend from '../host/TableStatusLegend';
+import { hasPositionData } from '../host/floorPlanHelpers';
 import { authFetch } from '../../services/api';
 import ThiingsIcon from '../common/ThiingsIcon';
 
@@ -33,6 +34,8 @@ export default function TableLayoutPanel({
     return saved === 'grid' ? 'grid' : 'floorplan';
   });
   const [selectedTable, setSelectedTable] = useState<Table | null>(null);
+  const hasSavedPlan = hasPositionData(tables);
+  const shownViewMode = hasSavedPlan ? viewMode : 'floorplan';
 
   const freeTable = useMutation({
     mutationFn: async (tableId: string) => {
@@ -67,10 +70,10 @@ export default function TableLayoutPanel({
   if (isLoading) {
     return (
       <div role="status" aria-label={t('common.loading')} className="p-6">
-        <div className="h-6 w-40 bg-border-gray rounded-lg animate-pulse mb-4" />
+        <div className="h-6 w-40 bg-brand-line/60 rounded-lg animate-pulse mb-4" />
         <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
           {Array.from({ length: 10 }).map((_, i) => (
-            <div key={i} className="aspect-square bg-soft-gray rounded-xl animate-pulse" />
+            <div key={i} className="aspect-square bg-brand-line/35 rounded-xl animate-pulse" />
           ))}
         </div>
       </div>
@@ -81,44 +84,38 @@ export default function TableLayoutPanel({
     <>
       <div className="overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between gap-2 px-3 sm:px-5 py-2.5 sm:py-3.5 border-b border-glass-border-dark">
-          <div className="flex items-center gap-2.5">
-            <span className="text-[12px] sm:text-[13px] font-semibold uppercase tracking-[0.12em] text-deep-charcoal whitespace-nowrap">{t('tableLayout.title')}</span>
-            <span className="hidden sm:inline-flex items-center gap-1.5 text-[11px] font-medium text-emerald-800">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-700" aria-hidden="true" />{t('dashboard.live')}
-            </span>
+        <div className={`flex items-center justify-between gap-3 px-1 pb-2 pt-4 sm:px-0 sm:py-5 ${hasSavedPlan ? night ? 'sm:border-b sm:border-white/15' : 'sm:border-b sm:border-brand-line' : ''}`}>
+          <div className="min-w-0">
+            <h2 className={`font-brand text-[21px] font-normal leading-none tracking-[-0.035em] sm:text-[24px] ${night ? 'text-white' : 'text-brand-ink'}`}>
+              {hasSavedPlan ? t('tableLayout.title') : t('navigation.tables', 'Tables')}
+            </h2>
           </div>
 
-          <div className="flex items-center justify-end gap-1.5 sm:gap-2">
-            <Link
-              to="/host-dashboard/floor-plan"
-              aria-label={t('tableLayout.editFloorPlan', 'Edit Floor Plan')}
-              className="inline-flex min-h-[36px] min-w-[36px] items-center justify-center gap-2 rounded-lg px-2 sm:px-3 py-2 text-xs font-semibold text-deep-charcoal transition-colors hover:bg-soft-gray"
-            >
-              <ThiingsIcon name="edit" pxSize={14} />
-              <span className="hidden sm:inline">{t('tableLayout.editFloorPlan', 'Edit Floor Plan')}</span>
-            </Link>
-
+          {hasSavedPlan && <div className="flex shrink-0 items-center gap-2">
             {/* View Mode Toggle */}
-            <div className="flex items-center border-l border-border-gray pl-1.5 sm:pl-2">
+            <div role="group" aria-label={t('tableLayout.title')} className={`flex items-center rounded-full border p-1 ${night ? 'border-white/25' : 'border-brand-line'}`}>
               <button
+                type="button"
                 onClick={() => { setViewMode('floorplan'); localStorage.setItem('seatable_table_view_mode', 'floorplan'); }}
                 aria-label={t('tableLayout.floorPlanView', 'Floor Plan View')}
-                className={`min-h-[36px] min-w-[36px] flex items-center justify-center px-2 py-1 text-xs font-medium rounded-lg transition-colors ${
+                aria-pressed={viewMode === 'floorplan'}
+                className={`min-h-[32px] min-w-[32px] flex items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-action ${
                   viewMode === 'floorplan'
-                    ? 'bg-deep-charcoal text-white'
-                    : 'text-warm-stone hover:text-deep-charcoal'
+                    ? night ? 'bg-white text-brand-ink' : 'bg-brand-action text-white'
+                    : night ? 'text-white/65 hover:text-white' : 'text-brand-muted hover:text-brand-ink'
                 }`}
               >
                 <ThiingsIcon name="map" pxSize={16} />
               </button>
               <button
+                type="button"
                 onClick={() => { setViewMode('grid'); localStorage.setItem('seatable_table_view_mode', 'grid'); }}
                 aria-label={t('tableLayout.gridView', 'Grid View')}
-                className={`min-h-[36px] min-w-[36px] flex items-center justify-center px-2 py-1 text-xs font-medium rounded-lg transition-colors ${
+                aria-pressed={viewMode === 'grid'}
+                className={`min-h-[32px] min-w-[32px] flex items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-action ${
                   viewMode === 'grid'
-                    ? 'bg-deep-charcoal text-white'
-                    : 'text-warm-stone hover:text-deep-charcoal'
+                    ? night ? 'bg-white text-brand-ink' : 'bg-brand-action text-white'
+                    : night ? 'text-white/65 hover:text-white' : 'text-brand-muted hover:text-brand-ink'
                 }`}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -126,16 +123,17 @@ export default function TableLayoutPanel({
                 </svg>
               </button>
             </div>
-          </div>
+          </div>}
         </div>
 
         {/* Table View */}
-        <div className={`p-2 sm:p-4 ${viewMode === 'grid' ? 'bg-soft-gray' : ''}`}>
-          {viewMode === 'floorplan' ? (
+        <div className={`px-1 pb-2 pt-1 sm:px-0 sm:pb-5 sm:pt-2 ${shownViewMode === 'grid' && !night ? 'bg-brand-paper/55' : ''}`}>
+          {shownViewMode === 'floorplan' ? (
             <FloorPlanView
               tables={tables}
               activeParties={activeParties}
               onTableClick={handleTableClick}
+              autoPresentation="availability"
               night={night}
             />
           ) : (
@@ -144,8 +142,17 @@ export default function TableLayoutPanel({
               onTableClick={handleTableClick}
             />
           )}
-          <div className="px-1 pt-3 pb-1">
+          {hasSavedPlan && <div className={`mt-4 border-t px-1 pb-1 pt-3 ${night ? 'border-white/15' : 'border-brand-line'}`}>
             <TableStatusLegend night={night} />
+          </div>}
+          <div className="mt-1 flex justify-end">
+            <Link
+              to="/host-dashboard/floor-plan"
+              className={`inline-flex min-h-[32px] items-center gap-1.5 whitespace-nowrap text-[12px] font-medium underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-action ${night ? 'text-white/65' : 'text-brand-muted'}`}
+            >
+              <ThiingsIcon name="edit" pxSize={12} />
+              {t('tableLayout.editFloorPlan', 'Edit Floor Plan')}
+            </Link>
           </div>
         </div>
 

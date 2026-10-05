@@ -3,14 +3,15 @@ import { render, screen } from '@testing-library/react';
 import ChartPanel, { ChartBadge } from '../ChartPanel';
 
 describe('ChartPanel', () => {
-  it('renders the title as a heading and wraps content in a paper chart surface', () => {
+  it('renders the title as a heading with chart content directly on the report canvas', () => {
     const { container } = render(
       <ChartPanel title="Reservas ao longo do tempo">
         <p>conteúdo</p>
       </ChartPanel>,
     );
     expect(screen.getByRole('heading', { name: 'Reservas ao longo do tempo' })).toBeInTheDocument();
-    expect(container.querySelector('section')).toHaveClass('border-brand-line', 'bg-[#F8F6F0]');
+    expect(container.querySelector('section')).toHaveClass('bg-transparent');
+    expect(container.querySelector('section')).not.toHaveClass('rounded-[14px]');
     expect(screen.getByText('conteúdo')).toBeInTheDocument();
   });
 

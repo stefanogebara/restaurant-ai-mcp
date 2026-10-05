@@ -36,15 +36,15 @@ export default function VoiceCurrentCard({
   const { t } = useTranslation();
 
   return (
-    <section className="overflow-hidden pb-5 border-b border-glass-border-dark">
-      <div className="py-5 border-b border-glass-border-dark">
-        <span className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">{t('voiceCurrentCard.chooseAVoice', 'Choose a Voice')}</span>
+    <section className="overflow-hidden border-b border-brand-line pb-6">
+      <div className="py-4">
+        <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-brand-muted">{t('voiceCurrentCard.chooseAVoice', 'Choose a Voice')}</span>
       </div>
 
-      <div className="p-6">
+      <div className="pt-1">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <p className="text-base font-semibold text-deep-charcoal">
+            <p className="font-brand text-[22px] font-medium tracking-[-0.035em] text-brand-ink">
               {pendingVoiceId ? (
                 <span>
                   {selectedBrowserVoice?.name || pendingVoiceId}
@@ -56,17 +56,17 @@ export default function VoiceCurrentCard({
                 savedVoiceName || (savedVoiceId ? t('voiceCurrentCard.customVoice', 'Custom Voice') : t('voiceCurrentCard.noVoiceSet', 'No voice set'))
               )}
             </p>
-            <div className="flex items-center gap-3 mt-1 text-sm text-stone-gray">
+            <div className="mt-1 flex items-center gap-3 text-sm text-brand-muted">
               {selectedBrowserVoice?.gender && (
                 <>
                   <span className="capitalize">{selectedBrowserVoice.gender}</span>
-                  <span>Â·</span>
+                  <span aria-hidden="true">·</span>
                 </>
               )}
               <span>{currentLanguage.toUpperCase()}</span>
               {selectedBrowserVoice?.accent && (
                 <>
-                  <span>Â·</span>
+                  <span aria-hidden="true">·</span>
                   <span>{selectedBrowserVoice.accent}</span>
                 </>
               )}
@@ -79,7 +79,7 @@ export default function VoiceCurrentCard({
                 type="button"
                 onClick={() => onPlay(currentVoiceId, getPreviewText(currentLanguage, restaurantName))}
                 disabled={loadingAudio === currentVoiceId}
-                className="px-4 py-2 text-sm font-medium bg-soft-gray hover:bg-border-gray rounded-xl transition-colors flex items-center gap-2 disabled:opacity-50"
+                className="flex items-center gap-2 rounded-full border border-brand-line px-4 py-2 text-sm font-medium text-brand-ink hover:border-brand-action disabled:opacity-50"
               >
                 {loadingAudio === currentVoiceId ? (
                   <Spinner size="sm" />
@@ -95,7 +95,7 @@ export default function VoiceCurrentCard({
               type="button"
               onClick={onToggleBrowser}
               aria-expanded={isBrowserOpen}
-              className="px-4 py-2 text-sm font-medium text-burgundy bg-burgundy/5 hover:bg-burgundy/10 rounded-xl transition-colors"
+              className="rounded-full bg-brand-action px-4 py-2 text-sm font-medium text-white hover:bg-brand-ink"
             >
               {isBrowserOpen ? t('voiceCurrentCard.hideVoiceBrowser', 'Hide Voice Browser') : t('voiceCurrentCard.changeVoice', 'Change Voice')}
             </button>

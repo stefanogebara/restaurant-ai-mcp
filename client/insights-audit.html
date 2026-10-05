@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
-  <title>Seatable · revisão de Insights</title>
+  <title>Seatable · revisão da plataforma</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
@@ -21,6 +21,7 @@
     p { color: #586254; line-height: 1.5; max-width: 70ch; margin: 0 0 1.25rem; }
     .controls { display: flex; flex-wrap: wrap; gap: .75rem; justify-content: space-between; margin: 1.5rem 0; }
     .group { display: inline-flex; padding: .25rem; gap: .25rem; border: 1px solid #cdd0c7; border-radius: 999px; background: transparent; }
+    .group[hidden] { display: none; }
     button { border: 0; background: transparent; color: #586254; border-radius: 999px; padding: .65rem .95rem; cursor: pointer; font: inherit; font-size: .9rem; }
     button[aria-pressed="true"] { background: #3f4e32; color: #f3f0e9; }
     button:focus-visible, a:focus-visible { outline: 2px solid #3f4e32; outline-offset: 2px; }
@@ -34,12 +35,13 @@
   </style>
 </head>
 <body>
-  <header><span class="brand"><em>Seat</em>able</span><span class="eyebrow">Revisão estática · 4 out 2026</span></header>
+  <header><span class="brand"><em>Seat</em>able</span><span class="eyebrow">Revisão estática · 5 out 2026</span></header>
   <main>
-    <h1>Insights, em revisão</h1>
-    <p>Capturas da proposta no PR #165. Os dados são sintéticos e esta página não executa ações do produto. A avaliação visual ainda está em andamento.</p>
+    <h1>Plataforma, em revisão</h1>
+    <p>Capturas da proposta no PR #165. Os dados são sintéticos e esta página não executa ações do produto. No celular, a captura mostra a primeira dobra. A avaliação visual ainda está em andamento.</p>
     <div class="controls">
       <div class="group" role="group" aria-label="Seção">
+        <button type="button" data-section="dashboard" aria-pressed="false">Painel</button>
         <button type="button" data-section="overview" aria-pressed="true">Visão Geral</button>
         <button type="button" data-section="analytics" aria-pressed="false">Análises</button>
       </div>
@@ -60,21 +62,25 @@
     const assets = location.port === '5177' || location.protocol === 'file:'
       ? './public/insights-review/'
       : '/insights-review/';
-    const names = { overview: 'Visão Geral', analytics: 'Análises' };
+    const names = { dashboard: 'Painel', overview: 'Visão Geral', analytics: 'Análises' };
     const params = new URLSearchParams(location.search);
-    let section = params.get('section') === 'analytics' ? 'analytics' : 'overview';
+    let section = ['dashboard', 'analytics'].includes(params.get('section')) ? params.get('section') : 'overview';
     let device = params.get('device') === 'mobile' ? 'mobile' : 'desktop';
     let state = params.get('state') === 'empty' ? 'empty' : 'filled';
     function render() {
       const image = document.getElementById('capture');
       const frame = document.getElementById('frame');
-      image.src = section === 'analytics'
+      if (section === 'dashboard') state = 'filled';
+      image.src = section === 'dashboard'
+        ? `${assets}dashboard-${device}.png`
+        : section === 'analytics'
         ? `${assets}analytics-${state}-${device}.png`
         : state === 'empty'
           ? `${assets}overview-empty-${device}.png`
           : `${assets}overview${device === 'mobile' ? 'Mobile' : 'Desktop'}.png`;
       image.alt = `Captura de ${names[section]} ${state === 'empty' ? 'sem dados ' : 'com dados '}em ${device === 'mobile' ? 'celular' : 'desktop'}`;
       frame.classList.toggle('mobile', device === 'mobile');
+      document.getElementById('state-controls').hidden = section === 'dashboard';
       for (const attribute of ['section', 'device', 'state']) {
         document.querySelectorAll(`[data-${attribute}]`).forEach(button => button.setAttribute('aria-pressed', String(button.dataset[attribute] === ({ section, device, state })[attribute])));
       }

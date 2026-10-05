@@ -15,21 +15,21 @@ export default function VoiceEngineSwitchModal({ isOpen, engineSwitchTarget, onC
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={t('voiceEngine.switchTitle', 'Switch Voice Engine?')} size="sm">
-      <p className="text-sm text-stone-gray mb-6">
+      <p className="mb-6 text-sm leading-6 text-brand-muted">
         {t('voiceEngine.switchConfirmation', 'Are you sure you want to switch to {{engine}}? This will change how incoming calls are handled.', { engine: targetLabel })}
       </p>
       <div className="flex items-center justify-end gap-3">
         <button
           type="button"
           onClick={onClose}
-          className="px-4 py-2 text-sm font-medium text-stone-gray hover:text-deep-charcoal transition-colors"
+          className="rounded-full border border-brand-line px-4 py-2 text-sm font-medium text-brand-ink transition-colors hover:border-brand-action"
         >
           {t('common.cancel', 'Cancel')}
         </button>
         <button
           type="button"
           onClick={onConfirm}
-          className="px-5 py-2 text-sm font-semibold bg-burgundy hover:bg-burgundy-dark text-white rounded-xl transition-colors"
+          className="rounded-full bg-brand-action px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-ink"
         >
           {t('voiceEngine.switchButton', 'Switch Engine')}
         </button>

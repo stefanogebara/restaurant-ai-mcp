@@ -1,5 +1,20 @@
 # Reforma da plataforma interna — primeira entrega (30/set/2026)
 
+## Passada paralela de telas (05/out/2026)
+
+**Referência travada:** o hero aprovado fornece papel `#F3F0E9`, tinta `#293222`, ação `#3F4E32`, Instrument Sans e uso raro de Instrument Serif. A RON GeoTab fornece apenas o padrão de risco ligado à decisão na linha do tempo; Sisense fornece apenas o vínculo entre sugestão e evidência; Spacetihq fornece organização espacial para o salão. Não importar paletas, cards ou gráficos decorativos dessas referências. Fonte funcional: dados e estados reais do Seatable. Refero MCP indisponível; aplicamos a metodologia de referência e os guias locais de tipografia/anti-padrões.
+
+- [ ] Visão Geral: decisão do dia dominar o primeiro quadro; deixar explícita a relação entre risco, cliente e ação.
+- [ ] Análises: melhorar composição do período, gráfico e estado sem dados sem perder precisão das métricas.
+- [ ] Painel: dar prioridade ao salão e aos próximos atos operacionais no primeiro quadro.
+- [x] Voz: distinguir agente configurado, número conectado e teste concluído; corrigir estados enganosos na interface. A rota segura do número segue em PR separada e bloqueada.
+- [ ] Capturar e testar preenchido/vazio/falha/bloqueio onde aplicável, em celular e desktop; criticar capturas em contexto novo, uma por iteração.
+- [ ] Rodar testes/build/lint, atualizar a PR em rascunho e validar prévia autenticada antes de cogitar produção.
+
+**Risco:** estas são superfícies operacionais. A revisão não deve criar reservas, enviar campanhas, ligar, conectar canais nem modificar configurações reais.
+
+**Revisão de 05/out:** Visão Geral agrupa o nome, horário e risco da reserva priorizada e mostra a última visita de cada cliente sem afirmar uma causa não comprovada para o risco. Análises mostra cada dia do período sem interpolação, separa os estados em linhas legíveis e indica o pico junto ao ponto; o período vazio permanece distinto dos sinais ao vivo. O Painel conserva a ordem numérica das mesas no modo sem planta salva, sem mudar coordenadas do salão, e nomeia convidados por extenso. Voz não promete uma chamada disparada pelo teste manual. Capturas sintéticas desktop/celular, navegação e ações foram verificadas sem erro ou largura excedente. Build de produção, 120 arquivos/1.072 testes de frontend, lint de 44 arquivos alterados e `git diff --check` passaram. Críticas independentes recentes ficaram entre 7,2 e 7,7/10, abaixo do alvo de 9/10. Não houve validação autenticada da nova versão nem publicação em produção; manter esta PR em rascunho. A telefonia tem PR separada em rascunho e bloqueio por titularidade duplicada de um número ativo no banco de produção.
+
 ## Alinhar Visão Geral de Insights ao hero (03/out/2026)
 
 **Plano:** manter Análises como está e migrar a aba Visão Geral no mesmo shell de papel, verde-pinho e Instrument Sans. O briefing deve ser a decisão principal; clientes, previsão, métricas e e-mails são camadas secundárias, sem inventar dados nem apresentar bloqueio de plano como ausência de atividade.

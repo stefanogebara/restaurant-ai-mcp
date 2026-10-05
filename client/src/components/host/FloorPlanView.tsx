@@ -18,6 +18,8 @@ interface FloorPlanViewProps {
   activeParties?: ActiveParty[];
   onTableClick?: (table: Table) => void;
   compact?: boolean;
+  /** Dashboard fallback: show truthful availability when no room positions exist. */
+  autoPresentation?: 'map' | 'availability';
   /** Modo Serviço — salão escuro com estados de mesa de alto contraste. */
   night?: boolean;
 }
@@ -27,6 +29,7 @@ export default function FloorPlanView({
   activeParties = [],
   onTableClick,
   compact = false,
+  autoPresentation = 'map',
   night = false,
 }: FloorPlanViewProps) {
   const { t } = useTranslation();
@@ -101,6 +104,50 @@ export default function FloorPlanView({
         // made the preview look like unrelated table cards.
         const narrowPreview = containerWidth < 540;
         const useAuto = !hasPositionData(locTables);
+        if (useAuto && autoPresentation === 'availability') {
+          const states: Record<string, { key: string; fallback: string; dot: string; nightDot: string; label: string; nightLabel: string }> = {
+            available: { key: 'settings.tableStatus.available', fallback: 'Available', dot: 'border border-brand-muted', nightDot: 'border border-white/60', label: 'text-brand-ink', nightLabel: 'text-white/85' },
+            occupied: { key: 'settings.tableStatus.occupied', fallback: 'Occupied', dot: 'bg-emerald-800', nightDot: 'bg-emerald-400', label: 'text-emerald-900', nightLabel: 'text-emerald-300' },
+            reserved: { key: 'settings.tableStatus.reserved', fallback: 'Reserved', dot: 'bg-amber-700', nightDot: 'bg-amber-400', label: 'text-amber-950', nightLabel: 'text-amber-200' },
+            'being cleaned': { key: 'settings.tableStatus.cleaning', fallback: 'Cleaning', dot: 'border-2 border-amber-700', nightDot: 'border-2 border-amber-400', label: 'text-amber-950', nightLabel: 'text-amber-200' },
+          };
+          // Without saved positions, table number is the only real spatial
+          // reference a host has. Keep that order stable as statuses change.
+          const orderedTables = [...locTables].sort((a, b) =>
+            String(a.table_number).localeCompare(String(b.table_number), undefined, { numeric: true }));
+
+          return (
+            <div key={location}>
+              {Object.keys(tablesByLocation).length > 1 && <div className="mb-2 flex items-baseline gap-2 px-1">
+                <span className={`text-[13px] font-medium ${night ? 'text-white' : 'text-brand-ink'}`}>{t(`floorPlan.location.${location.toLowerCase()}`, location)}</span>
+                <span className={`text-[11px] ${night ? 'text-white/55' : 'text-brand-muted'}`}>{locTables.length} {locTables.length === 1 ? t('floorPlan.table', 'table') : t('floorPlan.tables', 'tables')}</span>
+              </div>}
+              <div className="grid grid-cols-2 gap-x-3 sm:grid-cols-4 sm:gap-x-5">
+                {orderedTables.map(table => {
+                  const state = states[table.status?.toLowerCase() || ''] || { key: 'common.other', fallback: 'Other', dot: 'border border-brand-muted', nightDot: 'border border-white/60', label: 'text-brand-ink', nightLabel: 'text-white/85' };
+                  return <button
+                    key={table.id}
+                    type="button"
+                    onClick={() => onTableClick?.(table)}
+                    aria-label={`${t('tableLayout.table', 'Table')} ${table.table_number}, ${statusLabel(table.status, (key, fallback) => t(key, fallback ?? key))}, ${table.capacity} ${t('floorPlan.seats', 'seats')}`}
+                    className={`group grid min-h-[64px] min-w-0 grid-cols-[34px_minmax(0,1fr)] items-center gap-2 border-b px-1 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-action sm:grid-cols-[40px_minmax(0,1fr)] ${night ? 'border-white/15 hover:bg-white/5' : 'border-brand-line hover:bg-brand-line/20'}`}
+                  >
+                    <span className={`font-brand text-[27px] font-normal leading-none tabular-nums ${night ? 'text-white' : 'text-brand-ink'}`}>{table.table_number}</span>
+                    <span className="min-w-0">
+                      <span className={`flex items-center gap-1.5 whitespace-nowrap text-[13px] font-medium leading-tight ${night ? state.nightLabel : state.label}`}>
+                        <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${night ? state.nightDot : state.dot}`} aria-hidden="true" />
+                        {t(state.key, state.fallback)}
+                      </span>
+                      <span className={`mt-0.5 block whitespace-nowrap text-[12px] leading-tight ${night ? 'text-white/70' : 'text-brand-muted'}`}>
+                        {table.capacity} {t('floorPlan.seats', 'seats')}
+                      </span>
+                    </span>
+                  </button>;
+                })}
+              </div>
+            </div>
+          );
+        }
         const canvasWidth = narrowPreview
           ? 580
           : Math.max(380, Math.min(760, containerWidth - 32));

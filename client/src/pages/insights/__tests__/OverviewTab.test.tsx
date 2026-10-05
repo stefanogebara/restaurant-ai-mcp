@@ -55,11 +55,12 @@ describe('OverviewTab data states', () => {
     expect(screen.getByText('briefing')).toBeInTheDocument();
   });
 
-  it('leads the customer section with the count needing attention when known', () => {
+  it('surfaces the customer risk signal in the section heading when known', () => {
     showData(96);
     vi.mocked(useLTVStats).mockReturnValue({ data: { high_risk_customers: 10 } } as ReturnType<typeof useLTVStats>);
     renderOverview();
-    expect(screen.getByRole('heading', { name: 'insights.customersNeedAttention' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'insights.customerAttentionTitle' })).toBeInTheDocument();
+    expect(screen.getByText('insights.customerAttentionSignal')).toBeInTheDocument();
   });
 
   it('does not reveal cached customer counts or repeat the plan message when access is blocked', () => {
@@ -68,7 +69,7 @@ describe('OverviewTab data states', () => {
     vi.mocked(usePlanFeature).mockReturnValue({ hasAccess: false, isLoading: false, plan: 'free' });
     renderOverview();
     expect(screen.getByRole('heading', { name: 'insights.customerSection' })).toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: 'insights.customersNeedAttention' })).not.toBeInTheDocument();
+    expect(screen.queryByText('insights.customerAttentionSignal')).not.toBeInTheDocument();
     expect(screen.getAllByText('insights.customerPlanUnavailable')).toHaveLength(1);
     expect(screen.queryByText('customers')).not.toBeInTheDocument();
     expect(screen.queryByText('forecast')).not.toBeInTheDocument();

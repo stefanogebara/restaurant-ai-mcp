@@ -10,11 +10,8 @@ interface Props {
 }
 
 /**
- * Lead with the host-facing fact: "Ready to take calls — last updated 3 days
- * ago." The previous version showed "Voice Engine: turbo_v2.5" and a copyable
- * UUID Agent ID as primary surface area — neither means anything to a
- * restaurant owner. Keep the technical details available behind a disclosure
- * for support.
+ * Provider registration is not proof of a successful customer call.
+ * Keep technical details behind a disclosure for support.
  */
 export default function VoiceAgentInfo({ agentId, updatedAt, createdAt }: Props) {
   const { t } = useTranslation();
@@ -26,20 +23,20 @@ export default function VoiceAgentInfo({ agentId, updatedAt, createdAt }: Props)
     : null;
 
   return (
-    <section className="py-5 border-b border-glass-border-dark">
+    <section className="border-b border-brand-line py-6">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone flex items-center gap-2">
+        <h2 className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-brand-muted">
           <ThiingsIcon name="info" pxSize={20} />
           {t('agentInfo.title')}
         </h2>
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-          {t('voice.agentActive', 'Ready to take calls')}
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-800/10 px-2.5 py-1 text-xs font-medium text-amber-900">
+          <span className="h-1.5 w-1.5 rounded-full bg-amber-700" />
+          {t('agentInfo.registrationOnly', 'Registered, not call-verified')}
         </span>
       </div>
 
-      <p className="text-sm text-deep-charcoal">
-        {t('agentInfo.summary', 'Your AI receptionist is set up and ready to answer your phone.')}
+      <p className="max-w-[65ch] text-sm leading-6 text-brand-ink">
+        {t('agentInfo.verificationNeeded', 'Your agent is registered. Connect a phone line, then confirm a test call and a completed reservation before relying on it.')}
       </p>
       {lastUpdated && (
         <p className="text-xs text-warm-stone mt-1">
@@ -61,7 +58,7 @@ export default function VoiceAgentInfo({ agentId, updatedAt, createdAt }: Props)
         <dl className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-soft-gray rounded-xl p-3">
           <div>
             <dt className="text-muted-stone text-[10px] uppercase tracking-wider mb-1">{t('agentInfo.voiceEngine')}</dt>
-            <dd className="text-deep-charcoal font-mono">turbo_v2.5</dd>
+            <dd className="text-brand-muted">{t('agentInfo.modelUnverified', 'Model not verified from the live agent')}</dd>
           </div>
           <div>
             <dt className="text-muted-stone text-[10px] uppercase tracking-wider mb-1">{t('agentInfo.agentId')}</dt>

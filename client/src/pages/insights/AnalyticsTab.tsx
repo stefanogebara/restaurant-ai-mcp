@@ -87,7 +87,7 @@ export default function AnalyticsTab() {
     || data.daily_trend.some(day => day.reservations > 0 || day.completed_services > 0);
 
   return (
-    <div className="space-y-4 text-brand-ink sm:space-y-5">
+    <div className="space-y-4 text-brand-ink max-[359px]:space-y-3 sm:space-y-6">
       {/* Upgrade banner for canceled/expired subscriptions */}
       {(data.upgrade_required || data.no_restaurant) && (
         <div className="bg-amber-50 border border-amber-200 rounded-xl px-5 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
@@ -106,16 +106,16 @@ export default function AnalyticsTab() {
         </div>
       )}
 
-      {/* The active tab already names the page; lead with the report's actual scope. */}
-      <div className="grid gap-3 border-b border-brand-line pb-3 xl:grid-cols-[minmax(180px,1fr)_auto] xl:items-end xl:gap-8">
-        <div className="min-w-0">
-          <p className="sr-only">{t('analytics.selectedPeriod')}</p>
-          <h2 className="font-brand text-[20px] leading-tight tracking-[-0.025em] text-brand-ink sm:text-[24px]">
+      {/* The active tab names the page; the actual reporting scope leads. */}
+      <div className="grid gap-0 sm:gap-3 sm:border-b sm:border-brand-line sm:pb-3 xl:grid-cols-[minmax(180px,1fr)_auto] xl:items-end xl:gap-8">
+        <div className="sr-only min-w-0 sm:not-sr-only">
+          <p className="sr-only sm:not-sr-only sm:mb-1.5 sm:text-[11px] sm:font-medium sm:uppercase sm:tracking-[0.14em] sm:text-brand-muted">{t('analytics.selectedPeriod')}</p>
+          <h2 className="font-brand text-[18px] leading-tight tracking-[-0.025em] text-brand-ink sm:text-[24px]">
             {periodLabel}
           </h2>
         </div>
-        <div className="flex min-w-0 items-center gap-3 xl:justify-end">
-          <div className="min-w-0 flex-1 xl:flex-none">
+        <div className="flex min-w-0 items-center gap-2 sm:gap-3 xl:justify-end">
+          <div className={`min-w-0 ${hasPeriodActivity ? 'flex-1 xl:flex-none' : 'w-36 flex-none sm:w-auto'}`}>
             <DateRangePicker value={dateRange} onChange={range => {
               setDateRange(range);
               setExportReservations(undefined);
@@ -135,7 +135,7 @@ export default function AnalyticsTab() {
 
       {hasPeriodActivity ? <>
         {/* Historical measures are meaningful only when the period has activity. */}
-        <AnalyticsStats compact overview={data.overview} reservationsByStatus={data.reservations_by_status} reservationsByDay={data.reservations_by_day} />
+        <AnalyticsStats compact compactPart="lead" overview={data.overview} reservationsByStatus={data.reservations_by_status} reservationsByDay={data.reservations_by_day} />
         <div className="grid gap-5 xl:grid-cols-[minmax(0,0.65fr)_minmax(0,1.35fr)] xl:gap-9">
           <div className="hidden xl:block">
             <AnalyticsStats overview={data.overview} reservationsByStatus={data.reservations_by_status} reservationsByDay={data.reservations_by_day} />
@@ -145,26 +145,28 @@ export default function AnalyticsTab() {
           </div>
         </div>
 
+        <AnalyticsStats compact compactPart="detail" overview={data.overview} reservationsByStatus={data.reservations_by_status} reservationsByDay={data.reservations_by_day} />
+
+        <StatusBreakdownPie reservationsByStatus={data.reservations_by_status} />
+
         <details className="group border-y border-brand-line py-1.5">
           <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-action">
             <span className="font-brand text-[16px] leading-tight text-brand-ink">{t('analytics.demandPatterns', 'By day and time')}</span>
             <ThiingsIcon name="chevron-down" pxSize={20} className="shrink-0 text-deep-charcoal transition-transform group-open:rotate-180" />
           </summary>
-          <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2">
+          <div className="mt-5 grid grid-cols-1 gap-7 pb-4 lg:grid-cols-2 lg:gap-9 lg:divide-x lg:divide-brand-line">
             <DayOfWeekChart reservationsByDay={data.reservations_by_day} />
-            <PeakHoursChart reservationsByTimeSlot={data.reservations_by_time_slot} />
+            <div className="lg:pl-9"><PeakHoursChart reservationsByTimeSlot={data.reservations_by_time_slot} /></div>
           </div>
         </details>
-
-        <StatusBreakdownPie reservationsByStatus={data.reservations_by_status} />
       </> : (
-        <section className="grid items-end gap-4 border-y border-brand-line py-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:py-8" aria-live="polite">
+        <section className="py-5 sm:py-8" aria-live="polite">
           <div>
-            <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">{t('analytics.periodOverview', 'Period overview')}</p>
+            <p className="text-[14px] font-medium text-brand-muted">{t('analytics.periodOverview', 'Period overview')}</p>
             <h3 className="mt-2 font-brand text-[31px] leading-tight tracking-tight text-brand-ink sm:text-[38px]">
               {t('analytics.emptyPeriodTitle', 'No activity recorded.')}
             </h3>
-            <p className="mt-2 max-w-xl text-[14px] leading-relaxed text-muted-stone">
+            <p className="mt-2 max-w-xl text-[14px] leading-relaxed text-brand-muted">
               {t('analytics.emptyPeriodDescription', 'There are no bookings or completed services in this range. Try a wider period to find the history.')}
             </p>
           </div>
@@ -172,15 +174,16 @@ export default function AnalyticsTab() {
             <button
               type="button"
               onClick={() => setDateRange({ preset: '90d', ...presetToRange('90d') })}
-              className="min-h-[44px] justify-self-start rounded-[100px] border border-deep-charcoal/20 px-5 py-2.5 text-[13px] font-medium text-deep-charcoal hover:bg-deep-charcoal/[0.04] sm:justify-self-end"
+              className="mt-3 inline-flex min-h-[44px] items-center gap-2 border-b border-brand-action/50 px-0.5 py-1 text-[15px] font-medium text-brand-action hover:border-brand-action"
             >
               {t('analytics.viewNinetyDays', 'View last 90 days')}
+              <span aria-hidden="true">→</span>
             </button>
           )}
         </section>
       )}
 
-      <section className="pt-0 sm:pt-2">
+      <section className="border-t border-brand-ink/70 pt-6 sm:pt-8">
         <h3 className="font-brand text-[26px] sm:text-[30px] leading-tight tracking-tight text-brand-ink">
           {t('analytics.additionalSignals', 'Now and coming days')}
         </h3>

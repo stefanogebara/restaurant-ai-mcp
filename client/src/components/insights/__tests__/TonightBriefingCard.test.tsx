@@ -103,7 +103,7 @@ describe('TonightBriefingCard', () => {
     fireEvent.click(within(screen.getByRole('region', { name: 'insights.serviceTimeline' })).getByRole('button', { name: /20:00 · Caio/ }));
     expect(screen.getByRole('link', { name: /insights.openSpecificReservation/ }))
       .toHaveAttribute('href', '/host-dashboard/simple?reservation=Caio#reservations');
-    expect(screen.getByText('Caio', { selector: 'p' })).toBeInTheDocument();
+    expect(screen.getByText('Caio', { selector: 'strong' })).toBeInTheDocument();
   });
 
   it('links the hero decision to the focused reservation in the dashboard', () => {

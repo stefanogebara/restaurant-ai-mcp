@@ -6,6 +6,7 @@ import { formatLocalDate } from '../../utils/timeFormatting';
 
 const state = vi.hoisted(() => ({
   query: { data: undefined as unknown, isLoading: false, isError: false, refetch: vi.fn() },
+  serviceNight: false,
 }));
 
 vi.mock('@tanstack/react-query', () => ({ useQuery: () => state.query }));
@@ -15,6 +16,8 @@ vi.mock('react-i18next', () => ({
     t: (key: string, fallback?: string) => ({
       'dashboard.stats.tables': 'Mesas Disponíveis',
       'dashboard.stats.tablesShort': 'Livres',
+      'dashboard.serviceTitle': 'Hoje no salão',
+      'dashboard.walkIn.actionShort': 'Receber sem reserva',
       'dashboard.welcomeGuide.title': 'Seu painel está pronto!',
     }[key] || fallback || key),
   }),
@@ -23,13 +26,13 @@ vi.mock('../../hooks/useDocumentTitle', () => ({ useDocumentTitle: vi.fn() }));
 vi.mock('../../hooks/useRealtimeSubscription', () => ({ useRealtimeDashboard: vi.fn() }));
 vi.mock('../../hooks/useCompleteService', () => ({ useCompleteService: () => ({ mutate: vi.fn() }) }));
 vi.mock('../../hooks/useSubscription', () => ({ usePlanInfo: () => ({ isTrial: false, isActive: true, status: 'active' }) }));
-vi.mock('../../hooks/useServiceMode', () => ({ useServiceMode: () => ({ isNight: false, toggle: vi.fn() }) }));
+vi.mock('../../hooks/useServiceMode', () => ({ useServiceMode: () => ({ isNight: state.serviceNight, toggle: vi.fn() }) }));
 vi.mock('../../hooks/useRevenueStats', () => ({ useRevenueStats: () => ({ data: undefined }) }));
 vi.mock('../../contexts/ToastContext', () => ({ useToast: () => ({ success: vi.fn() }) }));
 vi.mock('../../lib/analytics', () => ({ trackFirstReservationCreated: vi.fn() }));
 
 vi.mock('../../components/layout/DashboardLayout', () => ({
-  default: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  default: ({ children, appearance }: { children: React.ReactNode; appearance?: string }) => <div data-testid="dashboard-shell" data-appearance={appearance}>{children}</div>,
 }));
 vi.mock('../../components/dashboard/ReservationsList', () => ({
   default: ({ language }: { language: string }) => <div data-testid="reservations-list" data-language={language} />,
@@ -78,6 +81,24 @@ function renderDashboard() {
 describe('Dashboard first-fold data contract', () => {
   beforeEach(() => {
     state.query = { data: dashboardData(1), isLoading: false, isError: false, refetch: vi.fn() };
+    state.serviceNight = false;
+  });
+
+  it('uses the hero shell in daylight and keeps the floor map present', () => {
+    renderDashboard();
+
+    expect(screen.getByTestId('dashboard-shell')).toHaveAttribute('data-appearance', 'hero');
+    expect(screen.getByRole('heading', { name: 'Hoje no salão' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Receber sem reserva' })).toBeInTheDocument();
+    expect(screen.getByTestId('floor-plan')).toBeInTheDocument();
+  });
+
+  it('preserves the dark service shell at night', () => {
+    state.serviceNight = true;
+    renderDashboard();
+
+    expect(screen.getByTestId('dashboard-shell')).toHaveAttribute('data-appearance', 'default');
+    expect(screen.getByTestId('floor-plan')).toBeInTheDocument();
   });
 
   it('shows available tables and exact active waitlist count in Portuguese', () => {

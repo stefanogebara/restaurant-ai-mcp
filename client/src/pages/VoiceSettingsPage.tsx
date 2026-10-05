@@ -227,8 +227,8 @@ export default function VoiceSettingsPage() {
 
   if (isLoadingConfig || isLoadingAccess) {
     return (
-      <DashboardLayout>
-        <div className="p-6 lg:p-8 max-w-5xl" role="status" aria-label={t('voiceSettings.loadingAriaLabel', 'Loading voice settings')}>
+      <DashboardLayout appearance="hero">
+        <div className="mx-auto max-w-[1120px] px-4 py-8 sm:px-8 lg:px-10" role="status" aria-label={t('voiceSettings.loadingAriaLabel', 'Loading voice settings')}>
           <Skeleton className="h-4 w-48 mb-2" />
           <Skeleton className="h-8 w-64 mb-1" />
           <Skeleton className="h-4 w-80 mb-6" />
@@ -263,17 +263,17 @@ export default function VoiceSettingsPage() {
   // the fetch failure explicitly with a retry instead.
   if (isConfigError) {
     return (
-      <DashboardLayout>
-        <div className="p-6 lg:p-8 max-w-5xl">
-          <div className="mt-8 text-center py-16">
-            <div className="max-w-md mx-auto">
-              <ThiingsIcon name="alert-circle" pxSize={28} className="text-red-700 mx-auto mb-3" />
-              <h2 className="font-serif text-[26px] text-deep-charcoal mb-2">{t('dashboard.errorTitle')}</h2>
-              <p className="text-[15px] text-muted-stone mb-6">{t('errors.serverError')}</p>
+      <DashboardLayout appearance="hero">
+        <div className="mx-auto max-w-[1120px] px-4 py-8 sm:px-8 lg:px-10">
+          <div className="border-t border-brand-line py-12 sm:py-20">
+            <div className="max-w-xl">
+              <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-red-800">{t('voiceSettings.statusUnavailable', 'Status unavailable')}</p>
+              <h2 className="font-brand text-[34px] leading-[1.04] tracking-[-0.05em] text-brand-ink sm:text-[46px]">{t('dashboard.errorTitle')}</h2>
+              <p className="mb-6 mt-4 text-[15px] leading-6 text-brand-muted">{t('errors.serverError')}</p>
               <button
                 type="button"
                 onClick={() => refetchConfig()}
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-xl transition-colors"
+                className="inline-flex items-center gap-2 rounded-full bg-brand-action px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-action"
               >
                 <ThiingsIcon name="refresh" size="xs" />
                 {t('common.retry')}
@@ -288,26 +288,27 @@ export default function VoiceSettingsPage() {
   if (!config?.agent_id) {
     const hasRestaurantName = !!config?.restaurant_name;
     return (
-      <DashboardLayout>
-        <div className="p-6 lg:p-8 max-w-5xl space-y-6">
-          <div className="mt-8 text-center py-16">
-            <div className="max-w-md mx-auto">
+      <DashboardLayout appearance="hero">
+        <div className="mx-auto max-w-[1120px] px-4 py-8 sm:px-8 lg:px-10">
+          <div className="border-t border-brand-line py-12 sm:py-20">
+            <div className="max-w-xl">
               {hasRestaurantName ? (
                 <>
-                  <div className="mx-auto mb-4 flex items-center justify-center">
-                    <Spinner size="lg" className="border-burgundy border-t-burgundy/30" />
+                  <div className="mb-5 flex items-center gap-3 text-amber-800">
+                    <Spinner size="sm" className="border-amber-800 border-t-amber-800/30" />
+                    <span className="text-[11px] font-semibold uppercase tracking-[0.16em]">{t('voiceSettings.setupInProgress', 'Setup in progress')}</span>
                   </div>
-                  <h2 className="font-serif text-[26px] text-deep-charcoal mb-2">
+                  <h2 className="font-brand text-[34px] leading-[1.04] tracking-[-0.05em] text-brand-ink sm:text-[46px]">
                     {t('voice.agentCreating', 'Creating your voice agent...')}
                   </h2>
-                  <p className="text-[15px] text-muted-stone mb-6">
+                  <p className="mb-6 mt-4 text-[15px] leading-6 text-brand-muted">
                     {t('voice.agentCreatingDesc', 'This may take up to 2 minutes. If the agent does not appear, try again below.')}
                   </p>
                   <button
                     type="button"
                     onClick={() => retryAgentMutation.mutate()}
                     disabled={retryAgentMutation.isPending}
-                    className="inline-flex items-center gap-2 px-6 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-medium rounded-[100px] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="inline-flex items-center gap-2 rounded-full bg-brand-action px-6 py-2.5 text-sm font-medium text-white hover:bg-brand-ink disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     {retryAgentMutation.isPending ? (
                       <Spinner size="sm" className="border-white border-t-white/30" />
@@ -321,14 +322,14 @@ export default function VoiceSettingsPage() {
                 </>
               ) : (
                 <>
-                  <ThiingsIcon name="volume" pxSize={48} className="mx-auto mb-4" />
-                  <h2 className="font-serif text-[26px] text-deep-charcoal mb-2">{t('settings.noAgentConfigured')}</h2>
-                  <p className="text-[15px] text-muted-stone mb-6">
+                  <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-brand-muted">{t('voiceSettings.setupRequired', 'Setup required')}</p>
+                  <h2 className="font-brand text-[34px] leading-[1.04] tracking-[-0.05em] text-brand-ink sm:text-[46px]">{t('settings.noAgentConfigured')}</h2>
+                  <p className="mb-6 mt-4 text-[15px] leading-6 text-brand-muted">
                     {t('settings.noAgentDesc')}
                   </p>
                   <a
                     href="/onboarding"
-                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-xl transition-colors"
+                    className="inline-flex items-center gap-2 rounded-full bg-brand-action px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-ink"
                   >
                     <ThiingsIcon name="lightning" size="xs" />
                     {t('settings.completeSetup')}
@@ -345,28 +346,42 @@ export default function VoiceSettingsPage() {
   // ─── Render ───────────────────────────────────────────────────────────────────
 
   return (
-    <DashboardLayout>
-      <div className="p-6 lg:p-8 max-w-5xl">
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="font-serif text-3xl sm:text-4xl text-deep-charcoal tracking-tight">
-            {t('navigation.voiceAgent')} <span className="font-light text-warm-stone">/ {t('common.settings')}</span>
-          </h1>
-          <div className="flex flex-col items-end gap-1">
+    <DashboardLayout appearance="hero">
+      <div className="mx-auto max-w-[1120px] px-4 pb-20 pt-5 sm:px-8 lg:px-10">
+        <header className="mb-6 border-b border-brand-line pb-7 pl-12 lg:pl-0">
+          <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-brand-muted">{t('voiceSettings.setupEyebrow', 'Reception')}</p>
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h1 className="font-brand text-[37px] font-normal leading-[1.02] tracking-[-0.055em] text-brand-ink sm:text-[52px]">
+                {t('navigation.voiceAgent')} <em className="font-serif font-normal italic tracking-[-0.04em]">{t('voiceSettings.headingSuffix', 'at your service.')}</em>
+              </h1>
+              <p className="mt-3 max-w-[52ch] text-[15px] leading-6 text-brand-muted">{t('voiceSettings.intro', 'Shape the voice, connect the phone, then test a call and a reservation before sharing the number.')}</p>
+            </div>
+          <div className="flex flex-col items-start gap-1 sm:items-end">
             <button
               type="button"
               onClick={handleSave}
               disabled={!isDirty || isSaving}
-              className="px-6 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white text-[13px] font-semibold rounded-full transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
+              className="flex items-center gap-2 rounded-full bg-brand-action px-6 py-2.5 text-[13px] font-semibold text-white hover:bg-brand-ink disabled:cursor-not-allowed disabled:bg-brand-line disabled:text-brand-muted"
             >
               {isSaving && <Spinner size="sm" className="border-white border-t-white/30" />}
               {isSaving ? t('voiceSettings.saving', 'Saving...') : t('voiceSettings.saveChanges', 'Save Changes')}
             </button>
             {!isDirty && !isSaving && (
-              <p className="text-xs text-warm-stone">
+              <p className="text-xs text-brand-muted">
                 {t('voiceSettings.changeSettingsHint', 'Change a setting above to enable saving')}
               </p>
             )}
           </div>
+        </div>
+        </header>
+
+        <div className="mb-5 flex flex-col gap-3 border-b border-brand-line pb-5 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-amber-800">{t('voiceSettings.agentRegistered', 'Agent registered')}</p>
+            <p className="mt-1 max-w-[64ch] text-[13px] leading-5 text-brand-muted">{t('voiceSettings.phoneNeedsTest', 'A registered agent does not verify the phone service. Test a real call and a completed reservation before sharing the number.')}</p>
+          </div>
+          <a href="#voice-settings:phone" className="w-fit shrink-0 text-[13px] font-semibold text-brand-action underline decoration-brand-line underline-offset-4 hover:text-brand-ink">{t('voiceSettings.checkPhone', 'Check phone connection')} →</a>
         </div>
 
         {(() => {

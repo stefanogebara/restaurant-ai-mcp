@@ -21,11 +21,12 @@ vi.mock('../../../contexts/ToastContext', () => ({
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     i18n: { language: 'pt-BR' },
-    t: (key: string, values?: { name?: string; score?: number; count?: number }) => {
+    t: (key: string, values?: { name?: string; score?: number; count?: number; date?: string }) => {
       if (key === 'insights.reEngagementDraft') return 'Olá! Faz tempo que não vemos você por aqui.';
       if (key === 'insights.reviewEmailFor') return `Revisar e-mail para ${values?.name}`;
       if (key === 'insights.estimatedChurnRisk') return `Pontuação de risco de perda: ${values?.score}/100`;
       if (key === 'insights.visits') return `${values?.count} visitas`;
+      if (key === 'insights.noVisitSince') return `Sem visita desde ${values?.date}`;
       return key;
     },
   }),
@@ -63,9 +64,12 @@ describe('CustomerIntelligenceCard', () => {
   it('opens a localized draft for review and sends only after explicit confirmation', () => {
     render(<MemoryRouter><CustomerIntelligenceCard appearance="hero" /></MemoryRouter>);
 
-    expect(screen.getByRole('button', { name: /Revisar e-mail para Ana Costa/ })).toHaveTextContent('82/100');
+    const [mobilePreview] = screen.getAllByRole('button', { name: /Revisar e-mail para Ana Costa/ });
+    expect(mobilePreview).toHaveTextContent('82');
+    expect(mobilePreview).toHaveTextContent('Sem visita desde 10/08');
+    expect(mobilePreview).toHaveAttribute('aria-label', expect.stringContaining('82/100'));
 
-    fireEvent.click(screen.getByRole('button', { name: /Revisar e-mail para Ana Costa · Pontuação de risco de perda: 82\/100/ }));
+    fireEvent.click(mobilePreview);
     expect(screen.getByRole('dialog')).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: 'insights.message' })).toHaveValue('Olá! Faz tempo que não vemos você por aqui.');
     expect(sendCampaign).not.toHaveBeenCalled();

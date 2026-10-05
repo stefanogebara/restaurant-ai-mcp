@@ -2,7 +2,7 @@
  * Unified host dashboard — operational summary beside the live floor.
  *
  * Layout:
- *   Header and metrics on the canvas; floor plan in one glass object.
+ *   Header and metrics on the canvas; saved floor plan as one object.
  *   Reservations, waitlist and service tools follow below the first fold.
  *
  * All panels are extracted into standalone components.
@@ -21,6 +21,7 @@ import { usePlanInfo } from '../hooks/useSubscription';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import TableLayoutPanel from '../components/dashboard/TableLayoutPanel';
 import TableTimeline from '../components/dashboard/TableTimeline';
+import { hasPositionData } from '../components/host/floorPlanHelpers';
 import { useServiceMode } from '../hooks/useServiceMode';
 import ReservationsList from '../components/dashboard/ReservationsList';
 import CustomerProfileDrawer from '../components/dashboard/CustomerProfileDrawer';
@@ -212,6 +213,7 @@ export default function Dashboard() {
   // ---- Date display ----
   const dateLocale = i18n.language === 'pt-BR' ? 'pt-BR' : i18n.language === 'es' ? 'es-ES' : 'en-US';
   const fullDateStr = new Date().toLocaleDateString(dateLocale, { weekday: 'long', month: 'long', day: 'numeric' });
+  const compactDateStr = new Date().toLocaleDateString(dateLocale, { weekday: 'short', month: 'short', day: 'numeric' });
 
   // ---- Short date for header ----
 
@@ -249,9 +251,9 @@ export default function Dashboard() {
   }
 
   return (
-    <DashboardLayout mobileHeaderIntegrated>
-      <div className={`dashboard min-h-screen px-4 sm:px-6 lg:px-10 pt-4 lg:pt-10 pb-24 sm:pb-20${isNight ? ' service-mode' : ''}`}>
-        <div className="max-w-[1240px]">
+    <DashboardLayout mobileHeaderIntegrated appearance={isNight ? 'default' : 'hero'} darkMobileMenu={isNight}>
+      <div className={`dashboard min-h-screen px-4 sm:px-6 lg:px-10 pt-5 lg:pt-9 pb-24 sm:pb-20 ${isNight ? 'service-mode' : 'bg-brand-paper font-brand text-brand-ink'}`}>
+        <div className="mx-auto max-w-[1240px]">
 
           {/* ---- Payment Failure Banner ---- */}
           {subStatus === 'past_due' && (
@@ -327,132 +329,91 @@ export default function Dashboard() {
             );
           })()}
 
-          {/* Operational summary and floor share the first fold on wide screens. */}
-          <div className="lg:grid lg:grid-cols-[minmax(270px,0.37fr)_minmax(0,1fr)] lg:items-start lg:gap-8 mb-5 sm:mb-10">
-            <div className="min-w-0">
-          {/* ---- Header Section ---- */}
-          <header className="grid grid-cols-[40px_minmax(0,1fr)] sm:grid-cols-[40px_minmax(0,1fr)_auto] lg:flex lg:flex-col items-start gap-x-2 gap-y-2 sm:gap-x-4 lg:gap-4 mb-3 sm:mb-5 lg:mb-8">
-            <div className="col-start-2 lg:col-auto min-w-0">
-              {/* Greeting line — Bom dia / boa tarde / boa noite. Audit found
-                  the dashboard read as "task-oriented, no warmth" — a
-                  hospitality product should at least say hello. Time-of-day
-                  bucketed in 4-hour windows; matches typical Brazilian usage
-                  (early morning still gets "Bom dia"). Drops the optional
-                  first-name slot when the auth display name isn't set. */}
-              <p className="hidden sm:block text-sm text-muted-stone mb-0.5">
-                {(() => {
-                  const hour = new Date().getHours();
-                  const greetingKey = hour < 12
-                    ? 'dashboard.greetingMorning'
-                    : hour < 18
-                      ? 'dashboard.greetingAfternoon'
-                      : 'dashboard.greetingEvening';
-                  const fallback = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite';
-                  return t(greetingKey, fallback);
-                })()}
-              </p>
-              <h1 className="font-serif text-[30px] sm:text-4xl tracking-tight text-deep-charcoal leading-none">
-                {t('dashboard.serviceTitle', 'Today on the floor')}
-              </h1>
-              <div className="flex items-center gap-2 mt-1 flex-wrap">
-                <p className="text-[12px] sm:text-[13px] text-muted-stone font-mono uppercase tracking-widest">
-                  {fullDateStr}
+          {/* The floor is the main operational object; the facts above it
+              describe the same service without shrinking the live map. */}
+          <div className="mb-2 sm:mb-10">
+            <header className="mb-4 flex flex-col gap-3 pb-4 sm:mb-5 sm:gap-4 sm:border-b sm:border-brand-line sm:pb-5 lg:mb-6 lg:flex-row lg:items-end lg:justify-between lg:gap-8">
+              <div className="min-w-0 pl-12 lg:pl-0">
+                <p className={`mb-2 flex items-center gap-2 text-[12px] font-medium uppercase tracking-[0.13em] ${isNight ? 'text-white/65' : 'text-brand-muted'}`}>
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-600" aria-hidden="true" />
+                  {t('dashboard.live', 'Ao vivo')}
+                  <span className="mx-1 h-3 w-px bg-brand-line" aria-hidden="true" />
+                  <span className="normal-case tracking-normal min-[380px]:hidden">{compactDateStr}</span>
+                  <span className="hidden normal-case tracking-normal min-[380px]:inline">{fullDateStr}</span>
                 </p>
-                <StripeConnectStatusBadge />
+                <h1 className={`font-brand text-[36px] font-normal leading-[1.03] tracking-[-0.055em] sm:text-[48px] ${isNight ? 'text-white' : 'text-brand-ink'}`}>
+                  {t('dashboard.serviceTitle', 'Today on the floor')}
+                </h1>
+                <div className="mt-2"><StripeConnectStatusBadge /></div>
               </div>
-            </div>
-            <div className="col-start-2 sm:col-start-3 sm:row-start-1 lg:col-auto flex items-center gap-2 sm:gap-3">
-              {/* Modo Serviço — automático às 18h, toggle manual aqui. O selo
-                  mostra POR QUE a tela escureceu; de dia é só o ícone de lua. */}
-              <button
-                type="button"
-                onClick={toggleServiceMode}
-                aria-pressed={isNight}
-                aria-label={t('dashboard.serviceMode', 'Modo Serviço')}
-                className={`inline-flex items-center gap-2 min-h-[36px] px-3 py-2 rounded-[100px] border text-[11px] font-mono uppercase tracking-[0.12em] transition-colors ${
-                  isNight
-                    ? 'border-white/20 text-white/70 hover:text-white'
-                    : 'border-border-gray text-muted-stone hover:text-deep-charcoal hover:bg-soft-gray'
-                }`}
-              >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
-                  <path d="M21 13.2A8.5 8.5 0 0 1 10.8 3a8.5 8.5 0 1 0 10.2 10.2z" />
-                </svg>
-                {isNight && <span>{t('dashboard.serviceMode', 'Modo Serviço')}</span>}
-              </button>
-              <button
-                onClick={() => navigate('/host-dashboard/reports')}
-                className="px-3 sm:px-4 py-2 border border-border-gray rounded-lg text-[12px] sm:text-[13px] font-medium bg-transparent hover:bg-soft-gray transition-colors text-deep-charcoal"
-              >
-                {t('dashboard.reports', 'Reports')}
-              </button>
-              <button
-                onClick={() => setShowWalkInModal(true)}
-                className="inline-flex px-2.5 sm:px-4 py-2 bg-burgundy hover:bg-burgundy-dark text-white border border-burgundy rounded-lg text-[11px] sm:text-[13px] font-medium transition-colors whitespace-nowrap"
-              >
-                {t('dashboard.addWalkIn')}
-              </button>
-            </div>
-          </header>
+              <div className="flex w-full flex-nowrap items-center justify-start gap-2 lg:w-auto lg:justify-end">
+                <button
+                  type="button"
+                  onClick={toggleServiceMode}
+                  aria-pressed={isNight}
+                  aria-label={t('dashboard.serviceMode', 'Modo Serviço')}
+                  className={`order-2 inline-flex min-h-[40px] items-center gap-2 rounded-full border px-3 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-action lg:order-1 ${isNight ? 'border-white/25 text-white/80 hover:bg-white/10' : 'border-brand-line text-brand-ink hover:bg-brand-line/35'}`}
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+                    <path d="M21 13.2A8.5 8.5 0 0 1 10.8 3a8.5 8.5 0 1 0 10.2 10.2z" />
+                  </svg>
+                  {isNight && <span className="hidden sm:inline">{t('dashboard.serviceMode', 'Modo Serviço')}</span>}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigate('/host-dashboard/reports')}
+                  aria-label={t('dashboard.reports', 'Reports')}
+                  className={`order-2 hidden min-h-[40px] min-w-[40px] items-center justify-center gap-2 rounded-full border px-3 text-[13px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-action sm:inline-flex ${isNight ? 'border-white/25 text-white hover:bg-white/10' : 'border-brand-line text-brand-ink hover:bg-brand-line/35'}`}
+                >
+                  <ThiingsIcon name="bar-chart" pxSize={16} />
+                  <span className="hidden sm:inline">{t('dashboard.reports', 'Reports')}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowWalkInModal(true)}
+                  className={`order-1 min-h-[40px] rounded-full px-3 text-[12px] font-medium leading-tight transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-action sm:px-4 sm:text-[13px] lg:order-3 ${isNight ? 'bg-white text-brand-ink hover:bg-white/85' : 'bg-brand-action text-white hover:bg-brand-ink'}`}
+                >
+                  {t('dashboard.walkIn.actionShort', 'Add walk-in')}
+                </button>
+              </div>
+            </header>
 
-          {/* ---- Metrics Row ---- */}
-          {/* Liquid Glass v2: métricas SEM card — faixa direta no canvas,
-              delimitada por fios de tinta, números em serif. */}
-          {isLoading ? (
-            <section className="grid grid-cols-4 gap-2 sm:gap-6 lg:grid-cols-2 lg:gap-x-5 lg:gap-y-7 border-y hairline py-3 sm:py-5 lg:py-6 mb-4 lg:mb-0">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i}>
-                  <div className="h-9 w-16 bg-border-gray rounded animate-pulse mb-3" />
-                  <div className="h-3 w-20 bg-border-gray rounded animate-pulse" />
+            <section aria-label={t('dashboard.quickStats', 'Quick stats')} className={`mb-3 grid grid-cols-4 border-y py-4 sm:mb-6 sm:py-5 ${isNight ? 'border-white/15' : 'border-brand-line'}`}>
+              {[
+                { value: todayReservations.length, label: t('dashboard.stats.reservationsShort', 'Bookings'), aria: t('dashboard.stats.reservations', 'Reservations') },
+                { value: guestsExpected, label: t('dashboard.stats.guestsShort', 'Guests'), aria: t('dashboard.stats.guests', 'Guests') },
+                { value: `${availableTables.length}/${totalTables}`, label: t('dashboard.stats.tablesShort', 'Free'), aria: t('dashboard.stats.tables', 'Tables Available') },
+                { value: waitlistReady ? waitlistCount : '—', label: t('dashboard.stats.waitlistShort', 'Queue'), aria: t('waitlist.title', 'Waitlist') },
+              ].map(({ value, label, aria }, index) => (
+                <div key={aria} className={`min-w-0 px-2 sm:px-5 ${index === 0 ? 'pl-0' : 'border-l border-brand-line'} ${index === 3 ? 'pr-0' : ''}`}>
+                  {isLoading
+                    ? <div className="mb-2 h-9 w-14 animate-pulse rounded bg-brand-line/60" />
+                    : <p className={`font-brand text-[27px] font-normal leading-none tracking-[-0.055em] tabular-nums sm:text-[39px] ${isNight ? 'text-white' : 'text-brand-ink'}`}>{value}</p>}
+                  <p className={`mt-2 text-[11px] font-medium uppercase tracking-[0.07em] sm:text-[12px] ${isNight ? 'text-white/65' : 'text-brand-muted'}`} aria-label={aria}>{label}</p>
                 </div>
               ))}
             </section>
-          ) : (
-            <section className="grid grid-cols-4 gap-2 sm:gap-6 lg:grid-cols-2 lg:gap-x-5 lg:gap-y-7 border-y hairline py-3 sm:py-5 lg:py-6 mb-4 lg:mb-0">
-              {/* Reservations */}
-              <div>
-                <p className="font-serif text-[27px] sm:text-[38px] leading-none text-deep-charcoal tabular-nums">{todayReservations.length}</p>
-                <p className="text-[11px] sm:text-[12px] uppercase tracking-[0.04em] text-muted-stone mt-1.5 sm:mt-3" aria-label={t('dashboard.stats.reservations', 'Reservations')}>
-                  {t('dashboard.stats.reservationsShort', 'Bookings')}
-                </p>
-              </div>
-              {/* Guests Expected */}
-              <div>
-                <p className="font-serif text-[27px] sm:text-[38px] leading-none text-deep-charcoal tabular-nums">{guestsExpected}</p>
-                <p className="text-[11px] sm:text-[12px] uppercase tracking-[0.04em] text-muted-stone mt-1.5 sm:mt-3" aria-label={t('dashboard.stats.guests', 'Guests')}>
-                  {t('dashboard.stats.guestsShort', 'Guests')}
-                </p>
-              </div>
-              {/* Capacity */}
-              <div>
-                <p className="font-serif text-[27px] sm:text-[38px] leading-none text-deep-charcoal tabular-nums">
-                  {availableTables.length}/{totalTables}
-                </p>
-                <p className="text-[11px] sm:text-[12px] uppercase tracking-[0.04em] text-muted-stone mt-1.5 sm:mt-3" aria-label={t('dashboard.stats.tables', 'Tables Available')}>
-                  {t('dashboard.stats.tablesShort', 'Free')}
-                </p>
-              </div>
-              {/* Waitlist */}
-              <div>
-                <p className="font-serif text-[27px] sm:text-[38px] leading-none text-deep-charcoal tabular-nums">{waitlistReady ? waitlistCount : '—'}</p>
-                <p className="text-[11px] sm:text-[12px] uppercase tracking-[0.04em] text-muted-stone mt-1.5 sm:mt-3" aria-label={t('waitlist.title', 'Waitlist')}>
-                  {t('dashboard.stats.waitlistShort', 'Queue')}
-                </p>
-              </div>
-            </section>
-          )}
 
+            <div className="mb-5 px-1 sm:hidden">
+              <TableTimeline
+                tables={tables}
+                activeParties={activeParties}
+                todayReservations={todayReservations}
+                night={isNight}
+              />
             </div>
-          {/* The map starts at the top of the right column, beside the summary. */}
-          <section className="glass-panel min-w-0">
-            <TableLayoutPanel
-              tables={tables}
-              activeParties={activeParties}
-              onRefresh={refetch}
-              isLoading={isLoading}
-              night={isNight}
-            />
-          </section>
+
+            <section className={`min-w-0 border ${hasPositionData(tables)
+              ? isNight ? 'glass-panel rounded-[14px] border-white/15' : 'rounded-[14px] border-brand-line bg-brand-paper/55'
+              : isNight ? 'border-x-0 border-white/15' : 'border-x-0 border-brand-line'}`}>
+              <TableLayoutPanel
+                tables={tables}
+                activeParties={activeParties}
+                onRefresh={refetch}
+                isLoading={isLoading}
+                night={isNight}
+              />
+            </section>
           </div>
 
           {/* Setup guidance follows the floor, where a new host can see what
@@ -469,7 +430,7 @@ export default function Dashboard() {
           <StripeConnectNudgeBanner />
 
           {/* ---- A régua: essa mesa libera a tempo? ---- */}
-          <div className="mb-12 sm:mb-20">
+          <div className="mb-12 hidden sm:mb-20 sm:block">
             <TableTimeline
               tables={tables}
               activeParties={activeParties}
@@ -502,11 +463,11 @@ export default function Dashboard() {
 
           {/* ---- Fila + Na casa agora — listas no canvas, sem cards ---- */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
-            <section className="border-t hairline pt-2">
+            <section>
               <WaitlistPanel onSeatNow={handleSeatFromWaitlist} />
             </section>
 
-            <section className="border-t hairline pt-2">
+            <section>
               <ActivePartiesPanel
                 parties={activeParties}
                 onCompleteService={handleCompleteService}

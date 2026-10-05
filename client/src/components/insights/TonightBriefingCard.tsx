@@ -50,7 +50,7 @@ export default function TonightBriefingCard({ appearance = 'default' }: TonightB
           {t('insights.tonightBriefing')}
         </h2>
         {hasAccess && data && (
-          <div className={`flex flex-wrap gap-x-5 gap-y-1 text-[12px] ${hero ? 'text-brand-muted' : 'text-muted-stone'}`}>
+          <div className={`flex flex-wrap gap-x-5 gap-y-1 text-[12px] ${hero ? 'hidden text-brand-muted sm:flex' : 'text-muted-stone'}`}>
             <span role="group" aria-label={t('insights.tonight')}>
               <strong className={`mr-1 font-semibold tabular-nums ${hero ? 'text-brand-ink' : 'text-deep-charcoal'}`}>{today.length}</strong>
               {t(hero ? 'insights.reservationsTodayShort' : 'insights.tonight')}
@@ -65,6 +65,11 @@ export default function TonightBriefingCard({ appearance = 'default' }: TonightB
             </span>
           </div>
         )}
+        {hero && hasAccess && data && (
+          <span className="font-brand text-[12px] text-brand-muted sm:hidden">
+            {t('insights.todayCount', { count: today.length })}
+          </span>
+        )}
       </header>
 
       {!hasAccess ? (
@@ -75,29 +80,37 @@ export default function TonightBriefingCard({ appearance = 'default' }: TonightB
         <>
           {today.length > 0 ? (
             <div className={hero
-              ? 'grid gap-3 pt-3 pb-0 xl:grid-cols-[minmax(0,1fr)_minmax(360px,420px)] xl:items-start xl:gap-10 xl:pt-5'
+              ? 'grid gap-3 pt-3 pb-0 xl:grid-cols-[minmax(0,1fr)_minmax(360px,420px)] xl:items-start xl:gap-10 xl:pt-3'
               : 'grid gap-4 pt-4 pb-1 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] xl:items-stretch xl:gap-10 xl:pt-6 xl:pb-3'}>
-              <div className={hero ? 'flex min-w-0 flex-col items-start justify-start xl:self-stretch xl:justify-between' : 'flex min-w-0 flex-col justify-center xl:justify-between xl:py-2'}>
+              <div className={hero ? 'flex min-w-0 flex-col items-start justify-start' : 'flex min-w-0 flex-col justify-center xl:justify-between xl:py-2'}>
                 {selected ? (
                   <>
-                    <h3 className={hero ? 'max-w-[27ch] text-balance font-brand text-[30px] font-normal leading-[1.12] tracking-[-0.045em] text-brand-ink sm:text-[41px]' : 'max-w-[24ch] text-balance font-serif text-[32px] leading-[1.07] text-deep-charcoal sm:text-[46px]'}>
+                    <h3 className={hero ? 'max-w-[27ch] text-balance font-brand text-[29px] font-normal leading-[1.15] tracking-[-0.045em] text-brand-ink sm:text-[41px]' : 'max-w-[24ch] text-balance font-serif text-[32px] leading-[1.07] text-deep-charcoal sm:text-[46px]'}>
                       {selected.recommendations?.[0] || t('insights.reviewReservationHint')}
                     </h3>
-                    {hero && (
-                      <p className="mt-3 hidden max-w-[41ch] font-brand text-[14px] leading-relaxed text-brand-muted xl:block">
-                        {t('insights.reservationRiskContext', { score: selected.risk_score })}
-                      </p>
-                    )}
-                    <div className={hero ? 'mt-5 flex w-full flex-col items-start gap-3 sm:mt-5 sm:flex-row sm:items-end sm:gap-5' : 'mt-3 sm:mt-4'}>
-                      <div className="min-w-0">
-                        <p className={`text-[15px] font-semibold ${hero ? 'text-brand-ink' : 'text-deep-charcoal'}`}>{selected.customer_name}</p>
-                        <p className={`mt-0.5 text-[14px] ${hero ? 'text-brand-muted' : 'text-muted-stone'}`}>
-                          {t('analytics.partyOf', { size: selected.party_size })} · {selected.time || t('insights.timeUnavailable')}
-                        </p>
-                      </div>
-                      {hero && reservationAction}
-                    </div>
-                    {!hero && <div className="mt-4 sm:mt-5">{reservationAction}</div>}
+                    {hero
+                      ? <>
+                        <div className="mt-5 flex w-full items-end justify-between gap-4 font-brand sm:max-w-[580px]">
+                          <div className="min-w-0">
+                            <strong className="block truncate text-[16px] font-semibold leading-tight text-brand-ink">{selected.customer_name}</strong>
+                            <span className="mt-1 block text-[13px] text-brand-muted">{selected.time || t('insights.timeUnavailable')} · {t('analytics.partyOf', { size: selected.party_size })}</span>
+                            <span className="mt-2 flex items-baseline gap-2">
+                              <span className="text-[12px] text-brand-muted">{t('insights.noShowRiskLabel')}</span>
+                              <strong className={`text-[15px] font-semibold tabular-nums ${selected.risk_level === 'high' ? 'text-red-800' : selected.risk_level === 'medium' ? 'text-amber-800' : 'text-emerald-800'}`}>{selected.risk_score}<span className="text-[11px] font-normal">/100</span></strong>
+                            </span>
+                          </div>
+                          {reservationAction}
+                        </div>
+                      </>
+                      : <>
+                        <div className="mt-3 sm:mt-4">
+                          <p className="text-[15px] font-semibold text-deep-charcoal">{selected.customer_name}</p>
+                          <p className="mt-0.5 text-[14px] text-muted-stone">
+                            {t('analytics.partyOf', { size: selected.party_size })} · {selected.time || t('insights.timeUnavailable')}
+                          </p>
+                        </div>
+                        <div className="mt-4 sm:mt-5">{reservationAction}</div>
+                      </>}
                   </>
                 ) : (
                   <>

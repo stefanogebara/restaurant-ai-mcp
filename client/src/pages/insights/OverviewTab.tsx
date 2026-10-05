@@ -104,30 +104,45 @@ export default function OverviewTab() {
 
       <section aria-labelledby="customers-overview-title" className="border-t border-brand-line pt-3 sm:pt-5">
         <div className="flex flex-wrap items-baseline justify-between gap-x-5 gap-y-2">
-          <h2 id="customers-overview-title" className="font-brand text-[22px] leading-tight tracking-[-0.04em] text-brand-ink sm:text-[29px]">
-            {hasCustomerAccess && ltvStats && ltvStats.high_risk_customers > 0
-              ? t('insights.customersNeedAttention', { count: ltvStats.high_risk_customers })
-              : t('insights.customerSection')}
-          </h2>
+          <div className="flex flex-col items-start gap-y-1 sm:flex-row sm:flex-wrap sm:items-baseline sm:gap-x-3">
+            <h2 id="customers-overview-title" aria-label={hasCustomerAccess && ltvStats && ltvStats.high_risk_customers > 0 ? t('insights.customerAttentionTitle', { count: ltvStats.high_risk_customers }) : undefined} className="font-brand text-[18px] font-medium leading-tight tracking-[-0.025em] text-brand-ink sm:text-[27px] sm:font-normal sm:tracking-[-0.04em]">
+              {hasCustomerAccess && ltvStats && ltvStats.high_risk_customers > 0 ? (
+                <><span className="sm:hidden">{t('insights.customerAttentionTitle', { count: ltvStats.high_risk_customers })}</span><span className="hidden sm:inline">{t('insights.customerSection')}</span></>
+              ) : t('insights.customerSection')}
+            </h2>
+            {hasCustomerAccess && ltvStats && ltvStats.high_risk_customers > 0 && (
+              <p className="hidden text-[14px] text-brand-muted sm:block">
+                {t('insights.customerAttentionSignal', { count: ltvStats.high_risk_customers })}
+              </p>
+            )}
+          </div>
           {hasCustomerAccess && ltvStats && ltvStats.high_risk_customers > 0 && (
             <Link to="/host-dashboard/customers" className="hidden text-[13px] font-medium text-brand-action underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-brand-action sm:inline-flex">
               {t('insights.viewAllCustomers')} <span aria-hidden="true" className="ml-1">→</span>
             </Link>
           )}
+          {hasCustomerAccess && ltvStats && ltvStats.high_risk_customers > 0 && (
+            <span className="text-[12px] text-brand-muted sm:hidden">{t('insights.customerCountShort', { count: ltvStats.high_risk_customers })}</span>
+          )}
         </div>
+        {hasCustomerAccess && ltvStats && ltvStats.high_risk_customers > 0 && (
+          <p className="mt-1 text-[12px] text-brand-muted sm:hidden">{t('insights.customerRiskMeaning')}</p>
+        )}
         {!customerPlanLoading && !hasCustomerAccess ? (
           <p className="mt-4 border-y border-brand-line py-7 text-[15px] text-brand-muted">
             {t('insights.customerPlanUnavailable')}
           </p>
         ) : (
-          <div className="mt-2 grid grid-cols-1 gap-6 sm:mt-5 sm:gap-9 xl:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)]">
+          <div className="grid grid-cols-1 gap-6 sm:mt-3 sm:gap-9 xl:grid-cols-[minmax(0,1fr)_minmax(360px,420px)]">
             <CustomerIntelligenceCard appearance="hero" />
-            <WeeklyForecastCard appearance="hero" />
+            <div className="hidden sm:block">
+              <WeeklyForecastCard appearance="hero" />
+            </div>
           </div>
         )}
       </section>
 
-      <section className="border-t border-brand-line pt-4 sm:pt-5">
+      <section className="hidden border-t border-brand-line pt-5 sm:block">
         {analyticsPlanLoading ? (
           <div role="status" aria-label={t('common.loading')} className="h-20 animate-pulse bg-brand-line/50" />
         ) : hasAnalyticsAccess ? (
@@ -140,7 +155,7 @@ export default function OverviewTab() {
         )}
       </section>
 
-      {hasCustomerAccess && <CampaignManager appearance="hero" />}
+      {hasCustomerAccess && <div className="hidden sm:block"><CampaignManager appearance="hero" /></div>}
     </div>
   );
 }

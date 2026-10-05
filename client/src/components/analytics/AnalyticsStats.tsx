@@ -3,6 +3,7 @@ import { formatCurrency } from '../../utils/currency';
 
 interface AnalyticsStatsProps {
   compact?: boolean;
+  compactPart?: 'all' | 'lead' | 'detail';
   overview: {
     total_reservations: number;
     total_revenue?: number;
@@ -17,7 +18,7 @@ interface AnalyticsStatsProps {
 
 const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] as const;
 
-export default function AnalyticsStats({ overview, reservationsByStatus, reservationsByDay, compact = false }: AnalyticsStatsProps) {
+export default function AnalyticsStats({ overview, reservationsByStatus, reservationsByDay, compact = false, compactPart = 'all' }: AnalyticsStatsProps) {
   const { t, i18n } = useTranslation();
   const total = overview.total_reservations;
   const noShows = (reservationsByStatus['no-show'] ?? 0) + (reservationsByStatus.no_show ?? 0);
@@ -47,43 +48,56 @@ export default function AnalyticsStats({ overview, reservationsByStatus, reserva
     {
       value: share(noShows),
       label: t('analytics.recordedNoShowShare', 'Marked no-show'),
+      shortLabel: t('analytics.recordedNoShowShareShort', 'No-shows'),
       tone: noShows > 0 ? 'text-red-800' : 'text-brand-ink',
     },
     {
       value: share(cancelled),
       label: t('analytics.recordedCancellationShare', 'Cancelled'),
+      shortLabel: t('analytics.recordedCancellationShareShort', 'Cancelled'),
       tone: cancelled > 0 ? 'text-amber-800' : 'text-brand-ink',
     },
     {
       value: total > 0 ? decimal(overview.avg_party_size) : '—',
       label: t('analytics.averagePartySize'),
+      shortLabel: t('analytics.averagePartySizeShort', 'Per booking'),
+      unit: total > 0 ? t('analytics.peopleUnit', 'people') : undefined,
       detail: undefined,
       tone: 'text-brand-ink',
     },
   ];
 
+  const compactDetail = <>
+    <div className="grid grid-cols-3 gap-3 pt-1">
+      {supportingStats.map(stat => (
+        <div key={stat.label} className="min-w-0">
+          <p className={`font-brand text-[21px] leading-none tabular-nums ${stat.tone}`}>
+            {stat.value}{stat.unit && <span className="ml-1 text-[10px] font-medium tracking-normal">{stat.unit}</span>}
+          </p>
+          <p className="mt-1 text-[12px] leading-tight text-brand-muted sm:hidden">{stat.shortLabel}</p>
+          <p className="mt-1 hidden text-[12px] leading-tight text-brand-muted sm:block">{stat.label}</p>
+        </div>
+      ))}
+    </div>
+  </>;
+
   if (compact) {
+    if (compactPart === 'detail') {
+      return <div className="space-y-3 xl:hidden">{compactDetail}</div>;
+    }
     return (
       <section aria-label={t('analytics.periodOverview', 'Period overview')} className="xl:hidden">
         <div className="grid grid-cols-2 gap-4">
           <div className="min-w-0">
-            <p className="font-brand text-[42px] leading-none tracking-[-0.06em] tabular-nums text-brand-ink">{total}</p>
-            <p className="mt-1 text-[12px] font-medium text-brand-muted">{t('analytics.totalReservations')}</p>
+            <p className="font-brand text-[clamp(34px,9vw,36px)] leading-none tracking-[-0.06em] tabular-nums text-brand-ink">{total}</p>
+            <p className="mt-1 text-[13px] font-medium text-brand-muted">{t('analytics.totalReservations')}</p>
           </div>
           <div className="min-w-0 border-l border-brand-line pl-4">
-            <p className="pt-1.5 font-brand text-[30px] leading-none tracking-[-0.05em] tabular-nums text-brand-ink">{recordedRevenue === undefined ? '—' : formatCurrency(recordedRevenue)}</p>
-            <p className="mt-1 text-[12px] font-medium text-brand-muted">{t('analytics.recordedRevenue', 'Recorded revenue')}</p>
+            <p className="pt-0.5 font-brand text-[clamp(27px,8vw,34px)] leading-none tracking-[-0.05em] tabular-nums text-brand-ink">{recordedRevenue === undefined ? '—' : formatCurrency(recordedRevenue)}</p>
+            <p className="mt-1 text-[13px] font-medium text-brand-muted">{t('analytics.recordedRevenue', 'Recorded revenue')}</p>
           </div>
         </div>
-        {busiestSummary && <p className="mt-2 text-[13px] text-brand-action">{busiestSummary}</p>}
-        <div className="mt-3 grid grid-cols-3 gap-3 border-t border-brand-line pt-3">
-          {supportingStats.map(stat => (
-            <div key={stat.label} className="min-w-0">
-              <p className={`font-brand text-[21px] leading-none tabular-nums ${stat.tone}`}>{stat.value}</p>
-              <p className="mt-1 text-[12px] leading-tight text-brand-muted">{stat.label}</p>
-            </div>
-          ))}
-        </div>
+        {compactPart === 'all' && <div className="mt-3 space-y-3">{compactDetail}</div>}
       </section>
     );
   }
@@ -135,7 +149,7 @@ export function LiveOccupancySignal({ occupiedSeats, totalSeats }: { occupiedSea
   const meterPercentage = occupancyPercent === null ? 0 : Math.round(Math.min(100, Math.max(0, occupancyPercent)) * 10) / 10;
   return (
     <section aria-label={t('analytics.currentOccupancy', 'Occupancy now')}>
-      <p className="text-[12px] font-medium uppercase tracking-[0.1em] text-brand-muted">{t('analytics.currentOccupancy', 'Occupancy now')}</p>
+      <p className="text-[14px] font-medium text-brand-muted">{t('analytics.currentOccupancy', 'Occupancy now')}</p>
       <p className="mt-1 text-[13px] text-muted-stone">{t('analytics.outsideSelectedPeriod', 'Live · outside the date filter')}</p>
       <p className="mt-4 font-brand text-[48px] leading-none tracking-tight tabular-nums text-brand-ink sm:text-[54px]">{displayPercentage}</p>
       {seatCount && (

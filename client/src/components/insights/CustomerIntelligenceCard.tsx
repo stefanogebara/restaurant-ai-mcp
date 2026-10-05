@@ -115,21 +115,24 @@ function CustomerRow({ customer, showChurn, onSend, className = '', appearance =
   const hero = appearance === 'hero';
   const localeMap: Record<string, string> = { 'pt-BR': 'pt-BR', es: 'es', en: 'en-US' };
   const dateLocale = localeMap[i18n.language] ?? 'en-US';
-  const lastVisit = customer.last_visit_date
-    ? parseLocalDate(customer.last_visit_date).toLocaleDateString(dateLocale, { day: '2-digit', month: '2-digit', year: 'numeric' })
+  const visitDate = customer.last_visit_date ? parseLocalDate(customer.last_visit_date) : null;
+  const lastVisit = visitDate
+    ? visitDate.toLocaleDateString(dateLocale, { day: '2-digit', month: '2-digit', ...(visitDate.getFullYear() === new Date().getFullYear() ? {} : { year: 'numeric' as const }) })
     : '—';
 
   const content = (
     <>
       <span className="min-w-0 flex-1">
         <span className={`block truncate text-[15px] font-medium ${hero ? 'text-brand-ink' : 'text-deep-charcoal'}`}>{customer.customer_name || customer.customer_id}</span>
-        <span className={`mt-0.5 block text-[13px] ${hero ? 'text-brand-muted' : 'text-muted-stone'}`}>
-          {t('insights.visits', { count: customer.total_visits })} · {t('insights.lastVisit', 'Last')}: {lastVisit}
+        <span className={`mt-0.5 block ${hero ? 'text-[14px] text-brand-muted' : 'text-[13px] text-muted-stone'}`}>
+          {hero && customer.last_visit_date
+            ? <>{t('insights.noVisitSince', { date: lastVisit })}<span className="mx-1.5">·</span>{t('insights.visits', { count: customer.total_visits })}</>
+            : <>{t('insights.visits', { count: customer.total_visits })}<span className="mx-1.5">·</span>{t('insights.lastVisit', 'Last')}: {lastVisit}</>}
         </span>
       </span>
       {showChurn && (
         <span className="shrink-0 text-right" aria-hidden="true">
-          <span className="block text-[17px] font-medium tabular-nums text-ocre-700">{customer.churn_risk_score}{hero && <span className="ml-0.5 text-[12px]">/100</span>}</span>
+          <span className={`block text-[15px] font-medium tabular-nums ${hero ? 'text-red-800' : 'text-ocre-700'}`}>{customer.churn_risk_score}</span>
         </span>
       )}
       {onSend && <ThiingsIcon name="chevron-right" pxSize={16} className={`shrink-0 ${hero ? 'text-brand-muted' : 'text-muted-stone'}`} />}
@@ -141,7 +144,7 @@ function CustomerRow({ customer, showChurn, onSend, className = '', appearance =
       type="button"
       onClick={() => onSend(customer)}
       aria-label={`${t('insights.reviewEmailFor', { name: customer.customer_name || customer.customer_id })} · ${t('insights.estimatedChurnRisk', { score: customer.churn_risk_score })}`}
-      className={`flex w-full items-center gap-3 border-b py-3.5 text-left transition-colors focus-visible:outline focus-visible:outline-2 last:border-0 ${hero ? 'border-brand-line hover:bg-brand-action/5 focus-visible:outline-brand-action' : 'hairline hover:bg-white/50 focus-visible:outline-burgundy'} ${className}`}
+      className={`flex w-full items-center gap-3 border-b py-3.5 text-left transition-colors focus-visible:outline focus-visible:outline-2 last:border-0 ${hero ? 'border-brand-line hover:bg-brand-action/5 focus-visible:outline-brand-action py-2.5' : 'hairline hover:bg-white/50 focus-visible:outline-burgundy'} ${className}`}
     >
       {content}
     </button>
@@ -188,6 +191,23 @@ export default function CustomerIntelligenceCard({ appearance = 'default' }: Cus
   return (
     <>
       <section className="min-w-0" aria-label={t('insights.customerIntelligence')}>
+        {hero && (
+          <div className="sm:hidden">
+            {atRisk.length > 0 ? (
+              <>
+                {atRisk.slice(0, 2).map((customer) => (
+                  <CustomerRow key={customer.customer_id} customer={customer} showChurn onSend={setSendTarget} appearance="hero" />
+                ))}
+                <Link to="/host-dashboard/customers" className="mt-3 inline-flex text-[13px] font-medium text-brand-action underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-brand-action">
+                  {t('insights.viewAllCustomers')} <span aria-hidden="true" className="ml-1">→</span>
+                </Link>
+              </>
+            ) : (
+              <p className="py-3 text-[14px] text-brand-muted">{t('insights.noHighRiskCustomers')}</p>
+            )}
+          </div>
+        )}
+        <div className={hero ? 'hidden sm:block' : ''}>
         {/* Tab switcher */}
         <div className={`flex items-end justify-between gap-4 border-b ${hero ? 'border-brand-line' : 'hairline'}`}>
           <div className="flex gap-6" role="tablist" aria-label={t('insights.customerIntelligence')}>
@@ -205,10 +225,13 @@ export default function CustomerIntelligenceCard({ appearance = 'default' }: Cus
               }`}
             >
                 <span>{tabKey === 'at-risk' ? t(hero ? 'insights.featuredPriorities' : 'insights.priorityCustomers') : t('insights.vips')}</span>
-                <span className="ml-1.5 tabular-nums">{tabKey === 'at-risk' ? atRisk.length : vips.length}</span>
+                {!hero && <span className="ml-1.5 tabular-nums">{tabKey === 'at-risk' ? atRisk.length : vips.length}</span>}
               </button>
             ))}
           </div>
+          {hero && tab === 'at-risk' && atRisk.length > 0 && (
+            <span className="pb-2 text-[12px] text-brand-muted sm:pb-3">{t('insights.riskLabel')}</span>
+          )}
         </div>
 
         <div>
@@ -224,16 +247,6 @@ export default function CustomerIntelligenceCard({ appearance = 'default' }: Cus
                 {(showAllRisk ? atRisk : atRisk.slice(0, 3)).map((c, index) => (
                   <CustomerRow key={c.customer_id} customer={c} showChurn onSend={setSendTarget} appearance={appearance} className={!showAllRisk && (hero ? index > 0 : index === 2) ? 'hidden sm:flex' : ''} />
                 ))}
-                {hero && atRisk.length > 1 && !showAllRisk && (
-                  <button type="button" onClick={() => setShowAllRisk(true)} className="mt-6 text-[13px] font-medium text-brand-action hover:underline focus-visible:outline-2 focus-visible:outline-brand-action sm:hidden">
-                    {t('insights.showMorePriorities', { count: atRisk.length - 1 })} <span aria-hidden="true">→</span>
-                  </button>
-                )}
-                {hero && (showAllRisk || atRisk.length <= 1) && (
-                  <Link to="/host-dashboard/customers" className="mt-3 inline-flex text-[13px] font-medium text-brand-action underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-brand-action sm:hidden">
-                    {t('insights.viewAllCustomers')} <span aria-hidden="true" className="ml-1">↗</span>
-                  </Link>
-                )}
                 {atRisk.length > 3 && !showAllRisk && (
                   <button type="button" onClick={() => setShowAllRisk(true)} className={`mt-3 text-[13px] font-medium hover:underline focus-visible:outline focus-visible:outline-2 ${hero ? 'hidden text-brand-action focus-visible:outline-brand-action sm:inline-flex' : 'text-burgundy focus-visible:outline-burgundy'}`}>
                     {t('insights.showAllRisk')} →
@@ -255,6 +268,7 @@ export default function CustomerIntelligenceCard({ appearance = 'default' }: Cus
               </div>
             )
           )}
+        </div>
         </div>
       </section>
 

@@ -52,6 +52,29 @@ describe('formatPeriodLabel', () => {
 });
 
 describe('custom date inputs', () => {
+  it('puts the truthful compact range on the mobile period control while keeping preset selection', () => {
+    const onChange = vi.fn();
+    render(createElement(DateRangePicker, {
+      value: { preset: '30d', startDate: '2026-09-01', endDate: '2026-09-30' },
+      onChange,
+    }));
+
+    expect(screen.getByText('1–30 Sep')).toBeInTheDocument();
+    const period = screen.getByRole('combobox', { name: 'Selected period' });
+    expect(period.getAttribute('title')).toContain('2026');
+    fireEvent.change(period, { target: { value: '90d' } });
+    expect(onChange).toHaveBeenCalledWith({ preset: '90d', ...presetToRange('90d') });
+  });
+
+  it('keeps both months visible in the compact control when a range crosses a month', () => {
+    render(createElement(DateRangePicker, {
+      value: { preset: '30d', startDate: '2026-09-06', endDate: '2026-10-05' },
+      onChange: vi.fn(),
+    }));
+
+    expect(screen.getByText('6 Sep – 5 Oct')).toBeInTheDocument();
+  });
+
   it('keeps less-used periods available in the compact desktop control', () => {
     const onChange = vi.fn();
     render(createElement(DateRangePicker, {

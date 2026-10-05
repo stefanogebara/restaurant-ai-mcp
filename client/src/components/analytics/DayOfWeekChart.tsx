@@ -46,7 +46,7 @@ export default function DayOfWeekChart({ reservationsByDay }: DayOfWeekChartProp
   };
 
   return (
-    <ChartPanel title={t('analytics.reservationsByDay')} ariaLabel={t('analytics.charts.dayOfWeekAria')}>
+    <ChartPanel title={t('analytics.reservationsByWeekday', 'By weekday')} ariaLabel={t('analytics.charts.dayOfWeekAria')}>
         <ResponsiveContainer width="100%" height={190}>
           <BarChart
             data={chartData}

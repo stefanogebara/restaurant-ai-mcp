@@ -1,13 +1,13 @@
 /**
  * PhoneIntegrationPanel
  *
- * Shows the platform Twilio phone integration status and lets the restaurant
- * connect or disconnect the shared AI phone number to their ElevenLabs agent.
+ * Shows tenant-scoped phone status. The shared platform line is not offered
+ * for self-service assignment because callers could be routed across tenants.
  */
 
 import { useTranslation } from 'react-i18next';
+import { useQueryClient } from '@tanstack/react-query';
 import ThiingsIcon from '../../components/common/ThiingsIcon';
-import { useToast } from '../../contexts/ToastContext';
 import { usePhoneIntegration } from '../../hooks/usePhoneIntegration';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -23,12 +23,12 @@ function formatBrazilianPhone(raw: string): string {
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function StatusBadge({ status, t }: { status: 'active' | 'not_configured' | 'error'; t: any }) {
+function StatusBadge({ status, t }: { status: 'active' | 'not_configured' | 'error' | 'unavailable' | 'unknown'; t: any }) {
   if (status === 'active') {
     return (
-      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-100 text-rose-800">
-        <span className="w-1.5 h-1.5 rounded-full bg-rose-500" aria-hidden="true" />
-        {t('phoneIntegration.statusActive', 'Active')}
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-800/10 px-2.5 py-1 text-xs font-medium text-amber-900">
+        <span className="h-1.5 w-1.5 rounded-full bg-amber-700" aria-hidden="true" />
+        {t('phoneIntegration.registrationRecorded', 'Registered · test pending')}
       </span>
     );
   }
@@ -40,6 +40,9 @@ function StatusBadge({ status, t }: { status: 'active' | 'not_configured' | 'err
       </span>
     );
   }
+  if (status === 'unavailable' || status === 'unknown') {
+    return <span className="rounded-full bg-amber-800/10 px-2.5 py-1 text-xs font-medium text-amber-900">{t(status === 'unavailable' ? 'phoneIntegration.lineUnavailable' : 'phoneIntegration.lineUnknown')}</span>;
+  }
   return (
     <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
       <span className="w-1.5 h-1.5 rounded-full bg-amber-500" aria-hidden="true" />
@@ -48,71 +51,19 @@ function StatusBadge({ status, t }: { status: 'active' | 'not_configured' | 'err
   );
 }
 
-function Spinner() {
-  return (
-    <span
-      className="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"
-      aria-hidden="true"
-    />
-  );
-}
-
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function PhoneIntegrationPanel() {
   const { t } = useTranslation();
-  const toast = useToast();
-  const {
-    status,
-    isLoading,
-    register,
-    unregister,
-    sendTestCall,
-    isRegistering,
-    isUnregistering,
-    isTestingCall,
-    isMutating,
-    testNumber,
-    setTestNumber,
-  } = usePhoneIntegration();
-
-  const handleRegister = () => {
-    register(undefined, {
-      onSuccess: () => toast.success(t('phoneIntegration.connected', 'Phone connected successfully')),
-      onError: (err) => toast.error(err instanceof Error ? err.message : t('phoneIntegration.connectFailed', 'Failed to connect')),
-    });
-  };
-
-  const handleUnregister = () => {
-    unregister(undefined, {
-      onSuccess: () => toast.success(t('phoneIntegration.disconnected', 'Phone disconnected')),
-      onError: (err) => toast.error(err instanceof Error ? err.message : t('phoneIntegration.disconnectFailed', 'Failed to disconnect')),
-    });
-  };
-
-  const handleTestCall = () => {
-    const trimmed = testNumber.trim();
-    if (!trimmed) {
-      toast.error(t('phoneIntegration.enterNumber', 'Enter a number to test'));
-      return;
-    }
-    toast.info(t('phoneIntegration.startingTestCall', 'Starting test call...'));
-    sendTestCall(trimmed, {
-      onSuccess: (data) => {
-        const phone = data?.instructions?.manual_test?.replace(/\n/g, ' ') ||
-          t('phoneIntegration.testCallSent', 'Test call initiated successfully');
-        toast.success(phone);
-      },
-      onError: (err) => toast.error(err instanceof Error ? err.message : t('phoneIntegration.testCallFailed', 'Test call failed')),
-    });
-  };
+  const queryClient = useQueryClient();
+  const { status, isLoading, isError } = usePhoneIntegration();
 
   // ── Loading skeleton ────────────────────────────────────────────────────────
 
   if (isLoading) {
     return (
       <div
-        className="glass-card p-6 animate-pulse space-y-3"
+        className="space-y-3 border-t border-brand-line py-7 animate-pulse"
         aria-busy="true"
         aria-label={t('phoneIntegration.loadingStatus', 'Loading phone status')}
       >
@@ -123,26 +74,35 @@ export default function PhoneIntegrationPanel() {
     );
   }
 
-  // ── No data fallback — hide entirely instead of showing raw error ────────
+  // A missing response is not the same as a disconnected phone. Keep the
+  // error visible so operators do not attempt to connect an unknown state.
 
   if (!status?.restaurant || !status?.platform) {
-    return null;
+    return (
+      <section className="border-t border-brand-line py-8" role="alert">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-red-800">{t('phoneIntegration.statusError', 'Error')}</p>
+        <h2 className="mt-2 font-brand text-[24px] leading-tight tracking-[-0.04em] text-brand-ink">{t('phoneIntegration.statusUnavailable', 'Phone status is unavailable')}</h2>
+        <p className="mt-2 max-w-[60ch] text-sm leading-6 text-brand-muted">{isError ? t('phoneIntegration.loadFailed', 'Could not load phone status.') : t('phoneIntegration.incompleteStatus', 'The phone service returned incomplete status. Connection has not been verified.')}</p>
+        <button type="button" onClick={() => queryClient.invalidateQueries({ queryKey: ['phone-integration-status'] })} className="mt-5 rounded-full bg-brand-action px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-ink">{t('common.retry', 'Retry')}</button>
+      </section>
+    );
   }
 
   const { restaurant, platform } = status;
-  const isActive = restaurant.status === 'active';
-  const displayPhone = formatBrazilianPhone(platform.twilio_phone);
+  const isRegistered = restaurant.status === 'active' && platform.line_availability === 'owned_by_this_restaurant';
+  const displayPhone = isRegistered && restaurant.phone_number ? formatBrazilianPhone(restaurant.phone_number) : null;
+  const displayStatus = restaurant.status === 'active' && !isRegistered ? 'unknown' : restaurant.status;
 
   // ── Render ──────────────────────────────────────────────────────────────────
 
   return (
-    <div className="py-5 border-t border-glass-border-dark mt-8 space-y-4">
+    <section className="mt-4 space-y-5 border-t border-brand-line py-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">
+        <h2 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-brand-muted">
           {t('phoneIntegration.title', 'AI receptionist phone')}
         </h2>
-        <StatusBadge status={restaurant.status} t={t} />
+        <StatusBadge status={displayStatus} t={t} />
       </div>
 
       {/* No-agent warning */}
@@ -153,29 +113,23 @@ export default function PhoneIntegrationPanel() {
         </div>
       )}
 
-      {/* Platform phone info — previously rendered "Platform number: +55…"
-          with zero context. João couldn't tell if it was HIS number, a
-          shared line, or whether his existing restaurant number still
-          worked. Now we explain it and show what to do next. */}
-      <div className="flex items-start gap-3">
-        <div className="w-9 h-9 rounded-full bg-soft-gray flex items-center justify-center flex-shrink-0">
-          <svg
-            className="w-4 h-4 text-warm-stone"
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            aria-hidden="true"
-          >
-            <path d="M6.62 10.79a15.05 15.05 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 1.01-.24c1.12.37 2.33.57 3.58.57a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1C9.61 21 3 14.39 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.46.57 3.58a1 1 0 0 1-.25 1.01l-2.2 2.2z" />
-          </svg>
+      {/* The platform line may be shared; registration is not a verified call. */}
+      <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] sm:gap-8">
+        <div className="min-w-0">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-muted">{t('phoneIntegration.yourAssignedLine', 'Line assigned to your restaurant')}</p>
+          <p className="mt-2 font-brand text-[26px] leading-none tracking-[-0.04em] text-brand-ink tabular-nums">{displayPhone || '—'}</p>
         </div>
         <div className="min-w-0">
-          <p className="text-xs text-warm-stone">{t('phoneIntegration.platformNumber', 'Your AI receptionist number')}</p>
-          <p className="text-sm font-semibold text-deep-charcoal">{displayPhone}</p>
-          <p className="text-xs text-warm-stone mt-1 leading-snug">
-            {t('phoneIntegration.platformNumberHelp', 'This is the phone number where your AI receptionist takes calls. Forward your restaurant\'s main line to this number so every call (including the ones you miss) gets answered.')}{' '}
-            <a href="mailto:hello@seatable.one?subject=Forwarding%20my%20restaurant%20number" className="font-medium text-burgundy hover:text-burgundy-dark underline underline-offset-2">
-              {t('phoneIntegration.helpWithForwarding', 'Help me forward my number')}
+          <p className="text-sm leading-6 text-brand-muted">
+            {isRegistered
+              ? t('phoneIntegration.connectedExplanation', 'The registration is recorded, but inbound routing is not verified. Complete a test call and reservation before you forward your restaurant number.')
+              : platform.line_availability === 'unavailable'
+                ? t('phoneIntegration.lineTakenExplanation', 'No line is assigned to your restaurant. The platform line is already in use; do not forward calls to it.')
+                : platform.line_availability === 'available'
+                  ? t('phoneIntegration.assistedSetupExplanation', 'No line is assigned to your restaurant. Setup requires support so calls from different restaurants cannot be mixed.')
+                  : t('phoneIntegration.ownershipUnknownExplanation', 'We could not verify line ownership. Do not forward calls until support confirms your setup.')}{' '}
+            <a href="mailto:hello@seatable.one?subject=Forwarding%20my%20restaurant%20number" className="font-medium text-brand-action underline underline-offset-2 hover:text-brand-ink">
+              {t('phoneIntegration.askAboutForwarding', 'Ask support about forwarding')}
             </a>
           </p>
         </div>
@@ -188,56 +142,16 @@ export default function PhoneIntegrationPanel() {
         </p>
       )}
 
-      {/* Connect / Disconnect */}
-      <div className="flex items-center gap-3 pt-1">
-        {!isActive ? (
-          <button
-            type="button"
-            onClick={handleRegister}
-            disabled={isMutating || !restaurant.has_agent}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-full transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            {isRegistering && <Spinner />}
-            {isRegistering ? t('phoneIntegration.connecting', 'Connecting...') : t('phoneIntegration.connect', 'Connect')}
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={handleUnregister}
-            disabled={isMutating}
-            className="inline-flex items-center gap-2 px-5 py-2.5 border border-glass-border-dark hover:bg-soft-gray text-deep-charcoal text-sm font-semibold rounded-full transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            {isUnregistering && <Spinner />}
-            {isUnregistering ? t('phoneIntegration.disconnecting', 'Disconnecting...') : t('phoneIntegration.disconnect', 'Disconnect')}
-          </button>
-        )}
-      </div>
-
-      {/* Test call — shown only when active */}
-      {isActive && (
-        <div className="border-t border-glass-border-dark pt-4 space-y-2">
-          <p className="text-xs font-medium text-warm-stone">{t('phoneIntegration.testCall', 'Test call')}</p>
-          <div className="flex items-center gap-2">
-            <input
-              type="tel"
-              placeholder="+1 (555) 000-0000"
-              value={testNumber}
-              onChange={(e) => setTestNumber(e.target.value)}
-              className="flex-1 border border-glass-border-input rounded-lg px-3 py-2 text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
-              aria-label={t('phoneIntegration.testCallNumber', 'Number for test call')}
-            />
-            <button
-              type="button"
-              onClick={handleTestCall}
-              disabled={isMutating}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
-            >
-              {isTestingCall && <Spinner />}
-              {isTestingCall ? t('phoneIntegration.calling', 'Calling...') : t('phoneIntegration.testCall', 'Test call')}
-            </button>
+      {/* The API only returns manual instructions; it does not initiate a call. */}
+      {isRegistered && restaurant.phone_number && (
+        <div className="space-y-3 border-t border-brand-line pt-5">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-brand-muted">{t('phoneIntegration.manualTestTitle', 'Manual call test')}</p>
+            <p className="mt-1 text-sm text-brand-muted">{t('phoneIntegration.manualTestHint', 'Call this line from a phone you control. This page does not place a call; carrier charges may apply.')}</p>
           </div>
+          <a href={`tel:${restaurant.phone_number}`} className="inline-flex items-center justify-center rounded-full bg-brand-action px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-ink">{t('phoneIntegration.callToTest', 'Call this line')}</a>
         </div>
       )}
-    </div>
+    </section>
   );
 }
