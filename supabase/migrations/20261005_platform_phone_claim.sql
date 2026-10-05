@@ -9,6 +9,9 @@ create table if not exists public.platform_phone_claims (
 
 alter table public.platform_phone_claims enable row level security;
 revoke all on public.platform_phone_claims from public, anon, authenticated;
+-- The inbound webhook reads the owner directly with the service-role client.
+-- Claim mutations stay behind the SECURITY DEFINER functions below.
+grant select on public.platform_phone_claims to service_role;
 
 -- Preserve only unambiguous active assignments. Ambiguous legacy rows get no
 -- claim and cannot receive calls or use self-service registration.
