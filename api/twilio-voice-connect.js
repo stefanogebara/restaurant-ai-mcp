@@ -20,6 +20,7 @@ const logger = createSecureLogger('TwilioVoiceConnect');
 
 // WebSocket server URL for the voice pipeline
 const VOICE_WS_URL = process.env.VOICE_WS_URL || 'wss://seatable-voice.fly.dev/ws';
+const PLATFORM_TWILIO_NUMBER = process.env.TWILIO_PHONE_NUMBER;
 
 module.exports = async (req, res) => {
   setWebhookCors(req, res);
@@ -131,49 +132,47 @@ module.exports = async (req, res) => {
  */
 async function lookupRestaurantByPhone(phoneNumber) {
   const normalizedPhone = phoneNumber.replace(/[\s\-\(\)]/g, '');
+  const variants = normalizedPhone === phoneNumber ? [normalizedPhone] : [normalizedPhone, phoneNumber];
+  const candidates = new Map();
+  const columns = 'id, restaurant_name, phone, voice_engine, voice_engine_status, voice_ws_endpoint, elevenlabs_agent_id, ai_config';
 
-  // Try exact match first
-  let { data, error } = await supabaseAdmin
-    .schema('restaurant')
-    .from('restaurant_config')
-    .select('id, restaurant_name, phone, voice_engine, voice_engine_status, voice_ws_endpoint, elevenlabs_agent_id, ai_config')
-    .eq('phone', normalizedPhone)
-    .eq('is_active', true)
-    .eq('onboarding_completed', true)
-    .limit(1)
-    .maybeSingle();
+  // Check both direct and AI phone fields. A direct match must not conceal a
+  // second tenant's AI-number match, nor may row order choose the recipient.
+  for (const variant of variants) {
+    const { data: direct, error: directError } = await supabaseAdmin
+      .schema('restaurant').from('restaurant_config').select(columns)
+      .eq('phone', variant).eq('is_active', true).eq('onboarding_completed', true).limit(2);
+    if (directError) throw directError;
+    for (const row of direct || []) candidates.set(row.id, row);
 
-  // If not found and original differs, try original format
-  if (!data && !error && normalizedPhone !== phoneNumber) {
-    ({ data, error } = await supabaseAdmin
-      .schema('restaurant')
-      .from('restaurant_config')
-      .select('id, restaurant_name, phone, voice_engine, voice_engine_status, voice_ws_endpoint, elevenlabs_agent_id, ai_config')
-      .eq('phone', phoneNumber)
-      .eq('is_active', true)
-      .eq('onboarding_completed', true)
-      .limit(1)
-      .maybeSingle());
+    const { data: aiPhones, error: aiError } = await supabaseAdmin
+      .schema('restaurant').from('restaurant_config').select(columns)
+      .filter('ai_config->phone->>number', 'eq', variant)
+      .filter('ai_config->phone->>status', 'eq', 'active')
+      .eq('is_active', true).eq('onboarding_completed', true).limit(2);
+    if (aiError) throw aiError;
+    for (const row of aiPhones || []) candidates.set(row.id, row);
   }
 
-  // If still not found, try matching against ai_config.phone.number (Twilio AI number)
-  if (!data && !error) {
-    ({ data, error } = await supabaseAdmin
-      .schema('restaurant')
-      .from('restaurant_config')
-      .select('id, restaurant_name, phone, voice_engine, voice_engine_status, voice_ws_endpoint, elevenlabs_agent_id, ai_config')
-      .filter('ai_config->phone->>number', 'eq', normalizedPhone)
-      .eq('is_active', true)
-      .limit(1)
-      .maybeSingle());
-  }
-
-  if (error) {
-    logger.error('Restaurant lookup error:', { message: error.message });
+  if (candidates.size !== 1) {
+    if (candidates.size > 1) logger.error('Ambiguous voice number; call rejected');
     return null;
   }
+  const restaurant = [...candidates.values()][0];
 
-  return data;
+  // The shared line must also have a unique recorded owner. Legacy duplicate
+  // assignments are deliberately left unclaimed by the migration.
+  if (PLATFORM_TWILIO_NUMBER && normalizedPhone === PLATFORM_TWILIO_NUMBER) {
+    const { data: claim, error: claimError } = await supabaseAdmin
+      .from('platform_phone_claims').select('restaurant_id')
+      .eq('phone_number', PLATFORM_TWILIO_NUMBER).maybeSingle();
+    if (claimError || claim?.restaurant_id !== restaurant.id) {
+      logger.error('Shared voice number has no matching owner; call rejected');
+      return null;
+    }
+  }
+
+  return restaurant;
 }
 
 /**
@@ -297,8 +296,7 @@ async function buildElevenLabsTwiml(restaurant, callerNumber, calledNumber) {
     });
 
     if (!resp.ok) {
-      const errText = await resp.text().catch(() => '');
-      logger.error('ElevenLabs register-call failed', { status: resp.status, body: errText.slice(0, 200) });
+      logger.error('ElevenLabs register-call failed', { status: resp.status });
       return buildErrorTwiml('Voice assistant is temporarily unavailable.');
     }
 
@@ -307,7 +305,7 @@ async function buildElevenLabsTwiml(restaurant, callerNumber, calledNumber) {
     logger.info('ElevenLabs call registered', { agentId, restaurantId: restaurant.id });
     return twiml;
   } catch (err) {
-    logger.error('ElevenLabs register-call error', { error: err.message });
+    logger.error('ElevenLabs register-call error');
     return buildErrorTwiml('Voice assistant is temporarily unavailable.');
   }
 }

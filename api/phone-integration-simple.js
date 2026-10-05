@@ -5,10 +5,10 @@
  * each restaurant to have their own Twilio account.
  *
  * Endpoints:
- * - POST /api/phone-integration-simple?action=register - Assign platform phone to restaurant
- * - POST /api/phone-integration-simple?action=unregister - Remove phone assignment
+ * - POST /api/phone-integration-simple?action=register - Support-assisted setup only
+ * - POST /api/phone-integration-simple?action=unregister - Request support-assisted disconnection
  * - GET /api/phone-integration-simple?action=status - Get phone integration status
- * - GET /api/phone-integration-simple?action=test-call - Test the voice agent
+ * - POST /api/phone-integration-simple?action=test-call - Manual test instructions only
  */
 
 const { supabaseAdmin } = require('./_lib/supabase');
@@ -18,8 +18,6 @@ const logger = createSecureLogger('PhoneIntegrationSimple');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
 
 // Platform Twilio credentials from environment
-const PLATFORM_TWILIO_SID = process.env.TWILIO_ACCOUNT_SID;
-const PLATFORM_TWILIO_TOKEN = process.env.TWILIO_AUTH_TOKEN;
 const PLATFORM_TWILIO_NUMBER = process.env.TWILIO_PHONE_NUMBER;
 const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
 
@@ -33,11 +31,65 @@ module.exports = async (req, res) => {
   const auth = await verifyAuth(req);
   if (auth.error) return res.status(auth.status).json({ error: auth.error });
 
-  // Make JWT-derived identity available as a fallback for handlers
-  req._authRestaurantId = auth.user?.restaurant_id || null;
-  req._authUserId = auth.user?.id || auth.user?.sub || null;
-
   const action = req.query.action || req.body?.action;
+
+  // Provider inventory belongs to the platform, not to an individual tenant.
+  if (action === 'list-phones') {
+    return res.status(403).json({ success: false, error: 'Forbidden' });
+  }
+
+  if (['register', 'unregister', 'status', 'test-call', 'diagnose', 'fix-tools'].includes(action)) {
+    const requestedId = req.query?.restaurant_id || req.body?.restaurant_id;
+    if (req.query?.restaurant_id && req.body?.restaurant_id && req.query.restaurant_id !== req.body.restaurant_id) {
+      return res.status(403).json({ success: false, error: 'Forbidden' });
+    }
+    const restaurantId = requestedId && requestedId !== 'undefined' && requestedId !== 'null'
+      ? requestedId : auth.user?.restaurant_id;
+    const userId = auth.user?.id || auth.user?.sub;
+    if (!userId) return res.status(403).json({ success: false, error: 'Forbidden' });
+
+    // The JWT restaurant hint may come from mutable user metadata. Prove ownership
+    // or active membership in the database before any service-role read/write.
+    try {
+      let authorizedId = restaurantId;
+      if (!authorizedId) {
+        const { data: owned, error } = await supabaseAdmin.schema('restaurant')
+          .from('restaurant_config').select('id').eq('user_id', userId).limit(1).maybeSingle();
+        if (error) throw error;
+        authorizedId = owned?.id;
+        if (!authorizedId) {
+          const { data: member, error: memberError } = await supabaseAdmin.schema('restaurant')
+            .from('restaurant_members').select('restaurant_id')
+            .eq('user_id', userId).eq('status', 'active').limit(1).maybeSingle();
+          if (memberError) throw memberError;
+          authorizedId = member?.restaurant_id;
+        }
+      }
+      if (!authorizedId) return res.status(403).json({ success: false, error: 'Forbidden' });
+      const { data: owned, error: ownerError } = await supabaseAdmin.schema('restaurant')
+        .from('restaurant_config').select('id').eq('id', authorizedId).eq('user_id', userId).maybeSingle();
+      if (ownerError) throw ownerError;
+      let memberRole = null;
+      if (!owned) {
+        const { data: member, error: memberError } = await supabaseAdmin.schema('restaurant')
+          .from('restaurant_members').select('restaurant_id, role')
+          .eq('restaurant_id', authorizedId).eq('user_id', userId).eq('status', 'active').maybeSingle();
+        if (memberError || !member) {
+          if (memberError) throw memberError;
+          return res.status(403).json({ success: false, error: 'Forbidden' });
+        }
+        memberRole = member.role;
+      }
+      if (['register', 'unregister', 'test-call', 'fix-tools', 'diagnose'].includes(action)
+        && !owned && memberRole !== 'manager') {
+        return res.status(403).json({ success: false, error: 'Forbidden' });
+      }
+      req._authRestaurantId = authorizedId;
+    } catch (error) {
+      logger.error('Phone authorization lookup failed');
+      return res.status(503).json({ success: false, error: 'Authorization unavailable' });
+    }
+  }
 
   try {
     switch (action) {
@@ -49,8 +101,6 @@ module.exports = async (req, res) => {
         return await handleStatus(req, res);
       case 'test-call':
         return await handleTestCall(req, res);
-      case 'list-phones':
-        return await handleListPhones(req, res);
       case 'diagnose':
         return await handleDiagnose(req, res);
       case 'fix-tools':
@@ -58,340 +108,39 @@ module.exports = async (req, res) => {
       default:
         return res.status(400).json({
           success: false,
-          error: 'Invalid action. Use: register, unregister, status, test-call, list-phones, diagnose, fix-tools',
-          platform_phone: PLATFORM_TWILIO_NUMBER,
+          error: 'Invalid action. Use: register, unregister, status, test-call, diagnose, fix-tools',
           elevenlabs_configured: !!ELEVENLABS_API_KEY && ELEVENLABS_API_KEY !== 'your-elevenlabs-key-here'
         });
     }
   } catch (error) {
-    logger.error('Error:', error);
+    logger.error('Phone integration request failed');
     return res.status(500).json({
       success: false,
-      error: error.message || 'Internal server error'
+      error: 'Internal server error'
     });
   }
 };
 
-/**
- * Register platform phone number with ElevenLabs for a restaurant
- * Restaurant only needs to provide restaurant_id - we use platform Twilio creds
- */
+/** Shared platform-number assignment and transfer require support review. */
 async function handleRegister(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
-
-  const restaurant_id = req.body?.restaurant_id || req._authRestaurantId;
-
-  if (!restaurant_id) {
-    return res.status(400).json({
-      success: false,
-      error: 'Missing required field: restaurant_id'
-    });
-  }
-
-  // Check platform configuration
-  if (!PLATFORM_TWILIO_SID || !PLATFORM_TWILIO_TOKEN || !PLATFORM_TWILIO_NUMBER) {
-    return res.status(500).json({
-      success: false,
-      error: 'Platform Twilio not configured. Set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER in environment.'
-    });
-  }
-
-  if (!ELEVENLABS_API_KEY || ELEVENLABS_API_KEY === 'your-elevenlabs-key-here') {
-    return res.status(500).json({
-      success: false,
-      error: 'ElevenLabs API key not configured. Set ELEVENLABS_API_KEY in environment.'
-    });
-  }
-
-  logger.info(`Registering platform phone ${PLATFORM_TWILIO_NUMBER} for restaurant ${restaurant_id}`);
-
-  // Get restaurant config (restaurant_id = restaurant_config.id)
-  const { data: restaurant, error: fetchError } = await supabaseAdmin
-    .schema('restaurant')
-    .from('restaurant_config')
-    .select('id, restaurant_name, elevenlabs_agent_id, ai_config, phone')
-    .eq('id', restaurant_id)
-    .single();
-
-  if (fetchError || !restaurant) {
-    return res.status(404).json({
-      success: false,
-      error: 'Restaurant not found'
-    });
-  }
-
-  // Fonte única: restaurant_config. O fallback que lia restaurant_info casando
-  // por `restaurant_name` foi removido em 02/08/2026 (tabela aposentada) — além
-  // de a tabela estar vazia, casar tenant por nome trocaria o agente de voz
-  // entre dois clientes homônimos.
-  const agentId = restaurant.elevenlabs_agent_id;
-
-  if (!agentId) {
-    return res.status(400).json({
-      success: false,
-      error: 'Restaurant does not have an AI agent configured. Complete onboarding first.',
-      restaurant_name: restaurant.restaurant_name
-    });
-  }
-
-  // Use the resolved agent ID going forward
-  restaurant.elevenlabs_agent_id = agentId;
-
-  // Update status to pending (stored in ai_config.phone to avoid schema migration dependency).
-  // EE.2 — chain .select('id') so we abort the register flow if the row
-  // vanished. Without this, ElevenLabs would still be called with a
-  // restaurant whose local row no longer exists.
-  const { data: pendingRows, error: pendingErr } = await supabaseAdmin
-    .schema('restaurant')
-    .from('restaurant_config')
-    .update({
-      ai_config: { ...(restaurant.ai_config || {}), phone: { status: 'pending' } },
-      updated_at: new Date().toISOString()
-    })
-    .eq('id', restaurant_id)
-    .select('id');
-  if (pendingErr || !pendingRows || pendingRows.length === 0) {
-    logger.error('Failed to mark phone as pending — restaurant row missing or RLS-blocked', {
-      restaurant_id, error: pendingErr?.message,
-    });
-    return res.status(500).json({ success: false, error: 'Could not initialize phone registration' });
-  }
-
-  try {
-    // Step 1: Check if phone number already exists in ElevenLabs
-    logger.info('Checking existing phone numbers in ElevenLabs...');
-
-    const listResponse = await fetch('https://api.elevenlabs.io/v1/convai/phone-numbers', {
-      method: 'GET',
-      headers: {
-        'xi-api-key': ELEVENLABS_API_KEY
-      }
-    });
-
-    let phoneNumberId = null;
-
-    if (listResponse.ok) {
-      const listData = await listResponse.json();
-      const existingPhone = listData.phone_numbers?.find(
-        p => p.phone_number === PLATFORM_TWILIO_NUMBER
-      );
-
-      if (existingPhone) {
-        phoneNumberId = existingPhone.phone_number_id;
-        logger.info(`Phone already registered in ElevenLabs with ID: ${phoneNumberId}`);
-      }
-    }
-
-    // Step 2: If not exists, import the phone number
-    if (!phoneNumberId) {
-      logger.info('Importing phone number to ElevenLabs...');
-
-      const importResponse = await fetch('https://api.elevenlabs.io/v1/convai/phone-numbers/create', {
-        method: 'POST',
-        headers: {
-          'xi-api-key': ELEVENLABS_API_KEY,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          phone_number: PLATFORM_TWILIO_NUMBER,
-          label: `Seatable - ${restaurant.restaurant_name}`,
-          provider: 'twilio',
-          sid: PLATFORM_TWILIO_SID,
-          token: PLATFORM_TWILIO_TOKEN
-        })
-      });
-
-      if (!importResponse.ok) {
-        const errorText = await importResponse.text();
-        logger.error('ElevenLabs import error:', errorText);
-
-        // Check if error is "phone already exists"
-        if (errorText.includes('already') || errorText.includes('exists')) {
-          // Try to get the existing phone number ID
-          const retryList = await fetch('https://api.elevenlabs.io/v1/convai/phone-numbers', {
-            headers: { 'xi-api-key': ELEVENLABS_API_KEY }
-          });
-
-          if (retryList.ok) {
-            const retryData = await retryList.json();
-            const found = retryData.phone_numbers?.find(p => p.phone_number === PLATFORM_TWILIO_NUMBER);
-            if (found) {
-              phoneNumberId = found.phone_number_id;
-              logger.info(`Found existing phone ID on retry: ${phoneNumberId}`);
-            }
-          }
-        }
-
-        if (!phoneNumberId) {
-          await updateError(restaurant_id, `Failed to import phone: ${errorText}`);
-          return res.status(500).json({
-            success: false,
-            error: 'Failed to import phone number to ElevenLabs',
-            details: errorText
-          });
-        }
-      } else {
-        const importData = await importResponse.json();
-        phoneNumberId = importData.phone_number_id;
-        logger.info(`Phone imported with ID: ${phoneNumberId}`);
-      }
-    }
-
-    // Step 3: Assign the agent to this phone number
-    logger.info(`Assigning agent ${restaurant.elevenlabs_agent_id} to phone ${phoneNumberId}...`);
-
-    const assignResponse = await fetch(`https://api.elevenlabs.io/v1/convai/phone-numbers/${phoneNumberId}`, {
-      method: 'PATCH',
-      headers: {
-        'xi-api-key': ELEVENLABS_API_KEY,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        agent_id: restaurant.elevenlabs_agent_id
-      })
-    });
-
-    if (!assignResponse.ok) {
-      const errorText = await assignResponse.text();
-      logger.error('Agent assignment error:', errorText);
-
-      await updateError(restaurant_id, `Agent assignment failed: ${errorText}`);
-      return res.status(500).json({
-        success: false,
-        error: 'Failed to assign agent to phone number',
-        details: errorText
-      });
-    }
-
-    // Step 3.5: Auto-configure tools if agent doesn't have them
-    let toolsConfigured = false;
-    let toolsError = null;
-    try {
-      // Check if agent already has tools configured
-      const agentCheckResponse = await fetch(
-        `https://api.elevenlabs.io/v1/convai/agents/${restaurant.elevenlabs_agent_id}`,
-        { headers: { 'xi-api-key': ELEVENLABS_API_KEY } }
-      );
-
-      if (agentCheckResponse.ok) {
-        const agentData = await agentCheckResponse.json();
-        const existingToolIds = agentData.conversation_config?.agent?.prompt?.tool_ids || [];
-
-        if (existingToolIds.length === 0) {
-          logger.info(`Agent ${restaurant.elevenlabs_agent_id} has no tools configured, auto-creating...`);
-          const toolResult = await createAndAssignTools(restaurant_id, restaurant.elevenlabs_agent_id);
-          toolsConfigured = toolResult.success;
-          if (!toolResult.success) {
-            toolsError = toolResult.error;
-            logger.warn(`Auto tool creation warning: ${toolResult.error}. Phone registration will continue.`);
-          } else {
-            logger.info(`Auto-configured ${toolResult.toolCount} tools for agent`);
-          }
-        } else {
-          toolsConfigured = true;
-          logger.info(`Agent already has ${existingToolIds.length} tools configured`);
-        }
-      }
-    } catch (toolErr) {
-      toolsError = toolErr.message;
-      logger.warn(`Auto tool creation failed: ${toolErr.message}. Phone registration will continue.`);
-    }
-
-    // Step 4: Save successful configuration (stored in ai_config.phone)
-    await supabaseAdmin
-      .schema('restaurant')
-      .from('restaurant_config')
-      .update({
-        ai_config: {
-          ...(restaurant.ai_config || {}),
-          phone: {
-            status: 'active',
-            number: PLATFORM_TWILIO_NUMBER,
-            number_id: phoneNumberId,
-            configured_at: new Date().toISOString()
-          }
-        },
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', restaurant_id);
-
-    logger.info(`SUCCESS: Phone ${PLATFORM_TWILIO_NUMBER} configured for ${restaurant.restaurant_name}`);
-
-    return res.status(200).json({
-      success: true,
-      message: 'Phone number successfully registered and connected to AI agent',
-      data: {
-        restaurant_name: restaurant.restaurant_name,
-        phone_number: PLATFORM_TWILIO_NUMBER,
-        phone_number_id: phoneNumberId,
-        agent_id: restaurant.elevenlabs_agent_id,
-        status: 'active',
-        tools_configured: toolsConfigured,
-        tools_warning: toolsError || undefined,
-        test_instructions: `Call ${PLATFORM_TWILIO_NUMBER} to test the AI agent for ${restaurant.restaurant_name}`
-      }
-    });
-
-  } catch (error) {
-    logger.error('Registration error:', error);
-    await updateError(restaurant_id, error.message);
-    throw error;
-  }
+  return res.status(409).json({
+    success: false,
+    error: 'This shared phone requires support-assisted setup.'
+  });
 }
 
-/**
- * Unregister phone from restaurant (but keep in ElevenLabs for reuse)
- */
+/** Shared forwarding must be reviewed before disconnecting or transferring. */
 async function handleUnregister(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
 
-  const restaurant_id = req.body?.restaurant_id || req._authRestaurantId;
-
-  if (!restaurant_id) {
-    return res.status(400).json({
-      success: false,
-      error: 'Missing required field: restaurant_id'
-    });
-  }
-
-  // Clear phone status from ai_config (but don't delete from ElevenLabs - reusable).
-  // EE.2 — chain .select('id'). Without this, a 0-row match (restaurant
-  // deleted mid-flight, RLS block) would silently return success while
-  // the ElevenLabs side keeps thinking the phone is still registered.
-  const { data: currentConfig } = await supabaseAdmin
-    .schema('restaurant').from('restaurant_config')
-    .select('ai_config').eq('id', restaurant_id).single();
-  const currentAiConfig = currentConfig?.ai_config || {};
-  const { phone: _removedPhone, ...aiConfigWithoutPhone } = currentAiConfig;
-  const { data: unregRows, error: unregErr } = await supabaseAdmin
-    .schema('restaurant')
-    .from('restaurant_config')
-    .update({
-      ai_config: aiConfigWithoutPhone,
-      updated_at: new Date().toISOString()
-    })
-    .eq('id', restaurant_id)
-    .select('id');
-
-  if (unregErr || !unregRows || unregRows.length === 0) {
-    logger.error('Phone unregister DB write matched 0 rows', {
-      restaurant_id, error: unregErr?.message,
-    });
-    return res.status(500).json({
-      success: false,
-      error: 'Could not unregister phone — restaurant row not updated',
-    });
-  }
-
-  logger.info(`Unregistered phone for restaurant ${restaurant_id}`);
-
-  return res.status(200).json({
-    success: true,
-    message: 'Phone number unregistered from restaurant'
+  return res.status(409).json({
+    success: false,
+    error: 'This shared phone requires support-assisted disconnection.'
   });
 }
 
@@ -402,34 +151,7 @@ async function handleStatus(req, res) {
   // The raw string 'undefined' sometimes arrives when the frontend hook can't
   // resolve restaurant_id from the JWT metadata (older users created before
   // the metadata.restaurant_id backfill). Normalize it out.
-  let restaurant_id = req.query.restaurant_id || req.body?.restaurant_id || req._authRestaurantId;
-  if (restaurant_id === 'undefined' || restaurant_id === 'null') restaurant_id = null;
-
-  // Fallback: resolve restaurant by the authenticated user's id via the
-  // restaurant_config.user_id FK. This catches the case where the JWT has
-  // no restaurant_id claim but the user owns exactly one restaurant.
-  if (!restaurant_id && req._authUserId) {
-    const { data: owned } = await supabaseAdmin
-      .schema('restaurant')
-      .from('restaurant_config')
-      .select('id')
-      .eq('user_id', req._authUserId)
-      .limit(1)
-      .maybeSingle();
-    if (owned?.id) restaurant_id = owned.id;
-  }
-
-  // Platform status (no restaurant_id needed)
-  if (!restaurant_id) {
-    return res.status(200).json({
-      success: true,
-      platform: {
-        twilio_configured: !!PLATFORM_TWILIO_SID && !!PLATFORM_TWILIO_TOKEN,
-        twilio_phone: PLATFORM_TWILIO_NUMBER,
-        elevenlabs_configured: !!ELEVENLABS_API_KEY && ELEVENLABS_API_KEY !== 'your-elevenlabs-key-here'
-      }
-    });
-  }
+  const restaurant_id = req._authRestaurantId;
 
   const { data: restaurant, error: fetchError } = await supabaseAdmin
     .schema('restaurant')
@@ -452,47 +174,74 @@ async function handleStatus(req, res) {
         agent_id: null,
         phone_number: null,
         phone_number_id: null,
-        status: 'not_configured',
+        status: 'unknown',
         error: null,
         configured_at: null
       },
       platform: {
-        twilio_phone: PLATFORM_TWILIO_NUMBER
+        line_availability: 'unknown',
+        twilio_phone: null
       }
     });
   }
 
   const phoneInfo = restaurant.ai_config?.phone || {};
+  const { data: availability, error: availabilityError } = await supabaseAdmin.rpc('platform_phone_availability', {
+    p_restaurant_id: restaurant_id,
+    p_phone_number: PLATFORM_TWILIO_NUMBER
+  });
+  const lineAvailability = !availabilityError && [
+    'available', 'owned_by_this_restaurant', 'unavailable', 'unknown'
+  ].includes(availability) ? availability : 'unknown';
+  const ownsActiveLine = lineAvailability === 'owned_by_this_restaurant'
+    && phoneInfo.status === 'active' && phoneInfo.number === PLATFORM_TWILIO_NUMBER;
+  const status = lineAvailability === 'unavailable' || lineAvailability === 'unknown'
+    ? lineAvailability
+    : ownsActiveLine
+      ? 'active'
+      : lineAvailability === 'owned_by_this_restaurant' && phoneInfo.status === 'active'
+        ? 'unknown'
+        : lineAvailability === 'owned_by_this_restaurant' && ['pending', 'error'].includes(phoneInfo.status)
+          ? phoneInfo.status
+          : 'not_configured';
   return res.status(200).json({
     success: true,
     restaurant: {
       name: restaurant.restaurant_name,
       has_agent: !!restaurant.elevenlabs_agent_id,
       agent_id: restaurant.elevenlabs_agent_id,
-      phone_number: phoneInfo.number || null,
-      phone_number_id: phoneInfo.number_id || null,
-      status: phoneInfo.status || 'not_configured',
-      error: phoneInfo.error || null,
-      configured_at: phoneInfo.configured_at || null
+      phone_number: ownsActiveLine ? phoneInfo.number : null,
+      phone_number_id: ownsActiveLine ? phoneInfo.number_id || null : null,
+      status,
+      error: status === 'unavailable' || status === 'unknown'
+        ? 'Shared phone availability requires support review' : status === 'error' ? phoneInfo.error || null : null,
+      configured_at: ownsActiveLine ? phoneInfo.configured_at || null : null
     },
     platform: {
-      twilio_phone: PLATFORM_TWILIO_NUMBER
+      line_availability: lineAvailability,
+      twilio_phone: ownsActiveLine ? PLATFORM_TWILIO_NUMBER : null
     }
   });
 }
 
 /**
- * Test the voice agent by initiating a call
+ * Return instructions for a manual call to the configured voice number.
  */
 async function handleTestCall(req, res) {
-  const restaurant_id = req.body?.restaurant_id || req.query?.restaurant_id || req._authRestaurantId;
-  const to_number = req.body?.to_number || req.query?.to_number;
-
-  if (!restaurant_id || !to_number) {
+  const restaurant_id = req._authRestaurantId;
+  if (!restaurant_id) {
     return res.status(400).json({
       success: false,
-      error: 'Missing required fields: restaurant_id, to_number'
+      error: 'Missing restaurant_id'
     });
+  }
+
+  const { data: availability, error: availabilityError } = await supabaseAdmin.rpc('platform_phone_availability', {
+    p_restaurant_id: restaurant_id,
+    p_phone_number: PLATFORM_TWILIO_NUMBER
+  });
+  if (availabilityError || availability !== 'owned_by_this_restaurant') {
+    return res.status(409).json({ success: false, error: 'Shared phone ownership requires support review' });
   }
 
   // Get restaurant to verify it's configured
@@ -504,18 +253,19 @@ async function handleTestCall(req, res) {
     .single();
 
   const phoneStatus = restaurant?.ai_config?.phone?.status;
-  if (!restaurant || phoneStatus !== 'active') {
+  if (!restaurant || phoneStatus !== 'active' || restaurant.ai_config.phone.number !== PLATFORM_TWILIO_NUMBER) {
     return res.status(400).json({
       success: false,
-      error: 'Restaurant phone integration not active. Register first.',
+      error: 'Restaurant phone assignment is not verified. Contact support.',
       status: phoneStatus || 'not_configured'
     });
   }
 
-  // For now, just return instructions (actual outbound call requires more setup)
+  // This endpoint does not place an outbound call. It only explains a manual test.
   return res.status(200).json({
     success: true,
-    message: 'Test call instructions',
+    manual_test_only: true,
+    message: 'Manual test instructions; no call was placed',
     instructions: {
       manual_test: `Call ${PLATFORM_TWILIO_NUMBER} from any phone to test the AI agent`,
       restaurant: restaurant.restaurant_name,
@@ -525,86 +275,17 @@ async function handleTestCall(req, res) {
 }
 
 /**
- * List all phone numbers in ElevenLabs
- */
-async function handleListPhones(req, res) {
-  if (!ELEVENLABS_API_KEY || ELEVENLABS_API_KEY === 'your-elevenlabs-key-here') {
-    return res.status(500).json({
-      success: false,
-      error: 'ElevenLabs API key not configured'
-    });
-  }
-
-  const response = await fetch('https://api.elevenlabs.io/v1/convai/phone-numbers', {
-    headers: { 'xi-api-key': ELEVENLABS_API_KEY }
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    return res.status(500).json({
-      success: false,
-      error: 'Failed to list phone numbers',
-      details: errorText
-    });
-  }
-
-  const data = await response.json();
-
-  return res.status(200).json({
-    success: true,
-    phone_numbers: data.phone_numbers || [],
-    count: data.phone_numbers?.length || 0
-  });
-}
-
-/**
- * Fix agent tools - create webhook tools and attach to agent via tool_ids
- * Uses the new ElevenLabs API (post July 2025): create tools separately, then reference by ID
+ * Tool repair requires support review. This endpoint must not mutate provider tools.
  */
 async function handleFixTools(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
-
-  const { restaurant_id } = req.body;
-
-  if (!restaurant_id) {
-    return res.status(400).json({ success: false, error: 'Missing restaurant_id' });
-  }
-
-  const { data: restaurant } = await supabaseAdmin
-    .schema('restaurant')
-    .from('restaurant_config')
-    .select('id, restaurant_name, elevenlabs_agent_id')
-    .eq('id', restaurant_id)
-    .single();
-
-  if (!restaurant) {
-    return res.status(404).json({ success: false, error: 'Restaurant not found' });
-  }
-
-  // Fonte única: restaurant_config (fallback por nome em restaurant_info
-  // removido em 02/08/2026 — ver comentário no início do arquivo).
-  const agentId = restaurant.elevenlabs_agent_id;
-
-  if (!agentId) {
-    return res.status(404).json({ success: false, error: 'Restaurant agent not found. Complete onboarding first.' });
-  }
-
-  const result = await createAndAssignTools(restaurant_id, agentId);
-
-  if (!result.success) {
-    return res.status(500).json({
-      success: false,
-      error: result.error
-    });
-  }
-
-  return res.status(200).json({
-    success: true,
-    message: `Created ${result.toolCount} tools and assigned to agent`,
-    agent_id: restaurant.elevenlabs_agent_id,
-    tool_count: result.toolCount
+  // The old helper created unauthenticated webhook tools and could replace a
+  // working agent's tools. The canonical agent service owns tool provisioning.
+  return res.status(409).json({
+    success: false,
+    error: 'Agent tool repair requires support review.'
   });
 }
 
@@ -612,7 +293,7 @@ async function handleFixTools(req, res) {
  * Diagnose agent configuration - check if tools/webhooks are set up
  */
 async function handleDiagnose(req, res) {
-  const restaurant_id = req.query.restaurant_id || req.body?.restaurant_id;
+  const restaurant_id = req._authRestaurantId;
 
   if (!restaurant_id) {
     return res.status(400).json({ success: false, error: 'Missing restaurant_id' });
@@ -669,182 +350,4 @@ async function handleDiagnose(req, res) {
     tool_ids: agentData.conversation_config?.agent?.prompt?.tool_ids || [],
     tool_ids_count: (agentData.conversation_config?.agent?.prompt?.tool_ids || []).length
   });
-}
-
-/**
- * Helper to create webhook tools and assign them to an agent.
- * Used by both handleFixTools() and the auto-configure step in handleRegister().
- * Returns { success, toolCount, error }
- */
-async function createAndAssignTools(restaurant_id, agent_id) {
-  const baseUrl = 'https://seatable.one';
-  const rid = restaurant_id;
-
-  const toolDefinitions = [
-    {
-      type: 'webhook',
-      name: 'get_current_datetime',
-      description: 'Get the current date and time. Use this at the start of conversations to know what "today" and "tomorrow" mean.',
-      api_schema: {
-        url: `${baseUrl}/api/elevenlabs-webhook?action=get_current_datetime`,
-        method: 'GET'
-      }
-    },
-    {
-      type: 'webhook',
-      name: 'check_availability',
-      description: 'Check table availability for a specific date, time, and party size. Use this before creating a reservation.',
-      api_schema: {
-        url: `${baseUrl}/api/elevenlabs-webhook?action=check_availability&restaurant_id=${rid}`,
-        method: 'POST',
-        content_type: 'application/json',
-        request_body_schema: {
-          type: 'object',
-          properties: {
-            date: { type: 'string', description: 'Date in YYYY-MM-DD format' },
-            time: { type: 'string', description: 'Time in HH:MM format' },
-            party_size: { type: 'number', description: 'Number of guests' }
-          },
-          required: ['date', 'time', 'party_size']
-        }
-      }
-    },
-    {
-      type: 'webhook',
-      name: 'create_reservation',
-      description: 'Create a new reservation after confirming all details with the customer. Only use after checking availability and getting customer name, phone.',
-      api_schema: {
-        url: `${baseUrl}/api/elevenlabs-webhook?action=create_reservation&restaurant_id=${rid}`,
-        method: 'POST',
-        content_type: 'application/json',
-        request_body_schema: {
-          type: 'object',
-          properties: {
-            customer_name: { type: 'string', description: 'Full name of customer' },
-            customer_phone: { type: 'string', description: 'Phone number' },
-            customer_email: { type: 'string', description: 'Email address (optional)' },
-            date: { type: 'string', description: 'Date in YYYY-MM-DD format' },
-            time: { type: 'string', description: 'Time in HH:MM format' },
-            party_size: { type: 'number', description: 'Number of guests' },
-            special_requests: { type: 'string', description: 'Special requests (optional)' }
-          },
-          required: ['customer_name', 'customer_phone', 'date', 'time', 'party_size']
-        }
-      }
-    },
-    {
-      type: 'webhook',
-      name: 'lookup_reservation',
-      description: 'Find an existing reservation by customer phone number or name.',
-      api_schema: {
-        url: `${baseUrl}/api/reservations?action=lookup&restaurant_id=${rid}`,
-        method: 'POST',
-        content_type: 'application/json',
-        request_body_schema: {
-          type: 'object',
-          properties: {
-            customer_phone: { type: 'string', description: 'Phone number' },
-            customer_name: { type: 'string', description: 'Name (optional if phone provided)' }
-          }
-        }
-      }
-    },
-    {
-      type: 'webhook',
-      name: 'cancel_reservation',
-      description: 'Cancel an existing reservation by its reservation ID.',
-      api_schema: {
-        url: `${baseUrl}/api/reservations?action=cancel&restaurant_id=${rid}`,
-        method: 'POST',
-        content_type: 'application/json',
-        request_body_schema: {
-          type: 'object',
-          properties: {
-            reservation_id: { type: 'string', description: 'Reservation ID to cancel' }
-          },
-          required: ['reservation_id']
-        }
-      }
-    }
-  ];
-
-  const createdToolIds = [];
-  const errors = [];
-
-  for (const toolDef of toolDefinitions) {
-    try {
-      const createResponse = await fetch('https://api.elevenlabs.io/v1/convai/tools', {
-        method: 'POST',
-        headers: {
-          'xi-api-key': ELEVENLABS_API_KEY,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ tool_config: toolDef })
-      });
-
-      if (!createResponse.ok) {
-        const errorText = await createResponse.text();
-        errors.push({ tool: toolDef.name, error: errorText });
-        continue;
-      }
-
-      const toolData = await createResponse.json();
-      const toolId = toolData.tool_id || toolData.id || toolData.tool_config?.id;
-      createdToolIds.push(toolId);
-    } catch (err) {
-      errors.push({ tool: toolDef.name, error: err.message });
-    }
-  }
-
-  if (createdToolIds.length === 0) {
-    return { success: false, toolCount: 0, error: `Failed to create any tools: ${JSON.stringify(errors)}` };
-  }
-
-  // Assign tool IDs to the agent
-  const patchResponse = await fetch(
-    `https://api.elevenlabs.io/v1/convai/agents/${agent_id}`,
-    {
-      method: 'PATCH',
-      headers: {
-        'xi-api-key': ELEVENLABS_API_KEY,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        conversation_config: {
-          agent: {
-            prompt: {
-              tool_ids: createdToolIds
-            }
-          }
-        }
-      })
-    }
-  );
-
-  if (!patchResponse.ok) {
-    const errorText = await patchResponse.text();
-    return { success: false, toolCount: createdToolIds.length, error: `Tools created but failed to assign: ${errorText}` };
-  }
-
-  return { success: true, toolCount: createdToolIds.length, error: null };
-}
-
-/**
- * Helper to update error status (stored in ai_config.phone)
- */
-async function updateError(restaurant_id, errorMessage) {
-  const { data: current } = await supabaseAdmin
-    .schema('restaurant').from('restaurant_config')
-    .select('ai_config').eq('id', restaurant_id).single();
-  await supabaseAdmin
-    .schema('restaurant')
-    .from('restaurant_config')
-    .update({
-      ai_config: {
-        ...(current?.ai_config || {}),
-        phone: { status: 'error', error: errorMessage }
-      },
-      updated_at: new Date().toISOString()
-    })
-    .eq('id', restaurant_id);
 }
