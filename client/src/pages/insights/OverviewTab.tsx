@@ -122,12 +122,9 @@ export default function OverviewTab() {
             </Link>
           )}
           {hasCustomerAccess && ltvStats && ltvStats.high_risk_customers > 0 && (
-            <span className="text-[12px] text-brand-muted sm:hidden">{t('insights.customerCountShort', { count: ltvStats.high_risk_customers })}</span>
+            <span className="text-[12px] text-brand-muted sm:hidden">{t('insights.customerRiskShort')}</span>
           )}
         </div>
-        {hasCustomerAccess && ltvStats && ltvStats.high_risk_customers > 0 && (
-          <p className="mt-1 text-[12px] text-brand-muted sm:hidden">{t('insights.customerRiskMeaning')}</p>
-        )}
         {!customerPlanLoading && !hasCustomerAccess ? (
           <p className="mt-4 border-y border-brand-line py-7 text-[15px] text-brand-muted">
             {t('insights.customerPlanUnavailable')}

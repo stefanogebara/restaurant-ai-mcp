@@ -7,10 +7,9 @@ import { useWhatsAppProvision, type WhatsAppProvision as EstadoProvisionamento }
 /**
  * Conectar um número WhatsApp ao restaurante — item 4 do plano zero-toque.
  *
- * O dono informa um número que ELE controla (fixo ou celular). A Meta manda o
- * código de verificação NESSE número (SMS ou ligação — ligação é o caminho
- * para o fixo do restaurante), ele digita aqui, e o roteamento multi-tenant
- * passa a apontar pra ele em até 1 minuto. Nenhum passo envolve o fundador.
+ * O dono informa um número que controla. A confirmação do código da Meta
+ * registra o número; o recebimento de mensagens e a criação de reservas
+ * ainda precisam de teste real separado antes de divulgar o canal.
  *
  * O estado vem do backend (/api/whatsapp-provision) — a máquina real mora lá;
  * este painel é só a janela: nao_iniciado → aguardando_codigo → ativo | erro.
@@ -55,33 +54,33 @@ export default function ConnectWhatsAppNumberPanel() {
   const confirmar = () => acao.mutate({ action: 'confirmar', codigo });
 
   return (
-    <div className="liquid-capsule p-5 sm:p-7">
+    <div className="min-w-0 rounded-[22px] border border-brand-line bg-brand-paper/60 p-5 sm:p-7">
       <div className="flex items-start justify-between gap-3 mb-1">
         <div>
-          <h2 className="font-sans text-base font-medium text-deep-charcoal">
+          <h2 className="font-brand text-[17px] font-medium text-brand-ink">
             {t('whatsappProvision.title', 'Connect your WhatsApp number')}
           </h2>
-          <p className="text-xs text-muted-stone mt-1">
-            {t('whatsappProvision.subtitle', 'Your AI answers on a number you own. Meta sends a verification code to that number — by SMS or phone call (use the call for a landline).')}
+          <p className="mt-1 text-[13px] leading-relaxed text-brand-muted">
+            {t('whatsappProvision.subtitle', 'Register a number you control. Meta sends a verification code by SMS or phone call; test incoming bookings separately.')}
           </p>
         </div>
         {estado?.estado === 'ativo' && (
           <span className="shrink-0 inline-flex items-center gap-1.5 text-[11px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded-full">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            {t('whatsappProvision.activeBadge', 'Active')}
+            {t('whatsappProvision.activeBadge', 'Registered')}
           </span>
         )}
       </div>
 
       {isLoading && (
-        <p className="text-xs text-muted-stone mt-3">{t('common.loading', 'Loading...')}</p>
+        <p className="mt-3 text-[13px] text-brand-muted">{t('common.loading', 'Loading...')}</p>
       )}
 
       {/* Falha de leitura é honesta — sem esconder atrás de formulário vazio */}
       {!isLoading && erroLeitura && (
         <div role="alert" className="text-sm text-red-700 mt-3">
           {(erroLeitura as Error).message}
-          <button type="button" onClick={() => void refetch()} className="block mt-2 text-burgundy underline">{t('common.retry', 'Try again')}</button>
+          <button type="button" onClick={() => void refetch()} className="mt-2 block text-brand-action underline">{t('common.retry', 'Try again')}</button>
         </div>
       )}
 
@@ -90,35 +89,35 @@ export default function ConnectWhatsAppNumberPanel() {
           {estado?.estado === 'erro' && estado.erro && (
             <p className="text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{estado.erro}</p>
           )}
-          <div className="flex gap-2">
-            <div className="w-20">
-              <label htmlFor="whatsapp-country-code" className="block text-xs text-muted-stone mb-1">{t('whatsappProvision.cc', 'Country')}</label>
-              <div className="flex items-center gap-1 border border-glass-border-input rounded-lg px-2 py-2 text-sm">
-                <span className="text-muted-stone">+</span>
+          <div className="flex min-w-0 gap-2">
+            <div className="w-[76px] shrink-0">
+              <label htmlFor="whatsapp-country-code" className="mb-1 block text-[12px] text-brand-muted">{t('whatsappProvision.cc', 'Country')}</label>
+              <div className="flex items-center gap-1 rounded-lg border border-brand-line bg-brand-paper px-2 py-2.5 text-sm">
+                <span className="text-brand-muted">+</span>
                 <input
                   id="whatsapp-country-code"
                   inputMode="numeric"
                   value={cc}
                   onChange={(e) => setCc(e.target.value.replace(/\D/g, '').slice(0, 3))}
-                  className="w-full outline-none text-deep-charcoal"
+                  className="w-full bg-transparent text-brand-ink outline-none"
                   aria-label={t('whatsappProvision.cc', 'Country')}
                 />
               </div>
             </div>
-            <div className="flex-1">
-              <label htmlFor="whatsapp-connect-number" className="block text-[11px] text-muted-stone mb-1">{t('whatsappProvision.number', 'Number (area code + number)')}</label>
+            <div className="min-w-0 flex-1">
+              <label htmlFor="whatsapp-connect-number" className="mb-1 block text-[12px] text-brand-muted">{t('whatsappProvision.number', 'Number (area code + number)')}</label>
               <input
                 id="whatsapp-connect-number"
                 type="tel"
                 value={numero}
                 onChange={(e) => setNumero(e.target.value)}
                 placeholder="11 3456-7890"
-                className="w-full border border-glass-border-input rounded-lg px-3 py-2 text-sm outline-none focus:border-deep-charcoal/30 text-deep-charcoal"
+                className="w-full rounded-lg border border-brand-line bg-brand-paper px-3 py-2.5 text-sm text-brand-ink outline-none focus:border-brand-action"
               />
             </div>
           </div>
           <div>
-            <span className="block text-[11px] text-muted-stone mb-1.5">{t('whatsappProvision.method', 'Where should Meta send the code?')}</span>
+            <span className="mb-2 block text-[12px] text-brand-muted">{t('whatsappProvision.method', 'Where should Meta send the code?')}</span>
             <div className="flex gap-2">
               {(['sms', 'voice'] as const).map((m) => (
                 <button
@@ -126,10 +125,10 @@ export default function ConnectWhatsAppNumberPanel() {
                   type="button"
                   aria-pressed={metodo === m}
                   onClick={() => setMetodo(m)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                  className={`rounded-full border px-3 py-1.5 text-[12px] font-medium transition-colors ${
                     metodo === m
-                      ? 'bg-deep-charcoal text-white border-deep-charcoal'
-                      : 'bg-white text-stone-gray border-glass-border-input hover:border-muted-stone'
+                      ? 'border-brand-action bg-brand-action text-brand-paper'
+                      : 'border-brand-line bg-brand-paper text-brand-ink hover:border-brand-action'
                   }`}
                 >
                   {m === 'sms'
@@ -143,7 +142,7 @@ export default function ConnectWhatsAppNumberPanel() {
             type="button"
             onClick={iniciar}
             disabled={acao.isPending || !cc || numero.replace(/\D/g, '').length < 8 || cc.length + numero.replace(/\D/g, '').length > 15}
-            className="w-full bg-burgundy text-white rounded-full py-3 text-sm font-medium disabled:opacity-40 transition-opacity"
+            className="w-full rounded-full bg-brand-action py-3 text-sm font-medium text-brand-paper transition-opacity disabled:opacity-40"
           >
             {acao.isPending
               ? t('whatsappProvision.sending', 'Requesting code...')
@@ -154,28 +153,28 @@ export default function ConnectWhatsAppNumberPanel() {
 
       {!isLoading && !changingNumber && estado?.estado === 'aguardando_codigo' && (
         <div className="mt-4 space-y-3">
-          <p className="text-xs text-stone-gray bg-soft-gray border border-glass-border-input rounded-lg px-3 py-2">
+          <p className="break-words border-y border-brand-line py-3 text-[13px] leading-relaxed text-brand-muted">
             {t('whatsappProvision.codeSentTo', 'Meta sent a code to')}{' '}
-            <span className="font-semibold">{estado.numero_e164}</span>
+            <span className="break-all font-semibold text-brand-ink">{estado.numero_e164}</span>
             {estado.metodo === 'VOICE'
               ? ` ${t('whatsappProvision.byCall', 'by phone call')}`
               : ' SMS'}
           </p>
-          <div className="flex gap-2">
+          <div className="flex min-w-0 gap-2">
             <input
               value={codigo}
               onChange={(e) => setCodigo(e.target.value.replace(/\D/g, '').slice(0, 8))}
               placeholder="123456"
               inputMode="numeric"
               autoComplete="one-time-code"
-              className="flex-1 border border-glass-border-input rounded-lg px-3 py-2 text-sm tracking-[0.3em] font-mono outline-none focus:border-deep-charcoal/30 text-deep-charcoal"
+              className="min-w-0 flex-1 rounded-lg border border-brand-line bg-brand-paper px-3 py-2 text-sm font-mono tracking-[0.22em] text-brand-ink outline-none focus:border-brand-action"
               aria-label={t('whatsappProvision.code', 'Verification code')}
             />
             <button
               type="button"
               onClick={confirmar}
               disabled={acao.isPending || codigo.length < 4}
-              className="bg-burgundy text-white rounded-full px-4 text-sm font-medium disabled:opacity-40"
+              className="shrink-0 rounded-full bg-brand-action px-4 text-sm font-medium text-brand-paper disabled:opacity-40"
             >
               {acao.isPending ? '...' : t('whatsappProvision.confirm', 'Confirm')}
             </button>
@@ -183,7 +182,7 @@ export default function ConnectWhatsAppNumberPanel() {
           <button
             type="button"
             onClick={() => { setChangingNumber(true); setErroAcao(null); }}
-            className="text-[11px] text-muted-stone underline"
+            className="text-[13px] text-brand-action underline underline-offset-4"
           >
             {t('whatsappProvision.restart', 'Use a different number')}
           </button>
@@ -191,12 +190,12 @@ export default function ConnectWhatsAppNumberPanel() {
       )}
 
       {!isLoading && estado?.estado === 'ativo' && (
-        <div className="mt-4 bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-3">
+        <div className="mt-4 border-t border-brand-line pt-4">
           <p className="text-sm font-medium text-emerald-800">
             {estado.numero_e164 || t('whatsappProvision.activeBadge', 'Active')}
           </p>
           <p className="text-xs text-emerald-700 mt-1">
-            {t('whatsappProvision.activeNote', 'Your AI now answers this number. New messages route to it within a minute.')}
+            {t('whatsappProvision.activeNote', 'Registration is complete. Test an incoming conversation and booking before sharing the number.')}
           </p>
         </div>
       )}

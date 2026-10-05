@@ -69,13 +69,14 @@ describe('ConnectWhatsAppNumberPanel', () => {
     expect(await screen.findByText(/limitou tentativas/i)).toBeInTheDocument();
   });
 
-  it('ativo: mostra o número conectado e a nota de propagação', async () => {
+  it('ativo: mostra o número registrado sem prometer roteamento', async () => {
     mockAuthFetch.mockReturnValue(resposta({
       success: true,
       data: { estado: 'ativo', numero_e164: '+5511999998888' },
     }));
     montar();
     expect(await screen.findByText('+5511999998888')).toBeInTheDocument();
-    expect(screen.getByText(/within a minute/i)).toBeInTheDocument();
+    expect(screen.getByText(/Test an incoming conversation and booking before sharing the number/i)).toBeInTheDocument();
+    expect(screen.queryByText(/within a minute/i)).not.toBeInTheDocument();
   });
 });

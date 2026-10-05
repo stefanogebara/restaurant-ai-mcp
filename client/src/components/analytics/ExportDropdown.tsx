@@ -37,7 +37,7 @@ export default function ExportDropdown({ data, dateLabel, onExportAll, isExporti
         type="button"
         onClick={() => setOpen(o => !o)}
         disabled={isExporting}
-        className="flex min-h-[44px] items-center gap-1.5 border-b border-brand-action/40 bg-transparent px-0.5 py-2 text-[13px] font-medium text-brand-ink transition-colors hover:border-brand-action sm:min-h-0 sm:rounded-[46px] sm:border sm:border-brand-line sm:px-4 sm:hover:bg-brand-line/30"
+        className="flex min-h-[44px] items-center gap-1.5 rounded-full border border-brand-line bg-transparent px-3 py-2 text-[13px] font-medium text-brand-ink transition-colors hover:border-brand-action hover:bg-brand-line/30 sm:min-h-0 sm:px-4"
       >
         {isExporting
           ? <span className="w-4 h-4 border border-stone-gray border-t-transparent rounded-full animate-spin inline-block" />

@@ -780,7 +780,7 @@
     "customEndDate": "Fecha final",
     "periodOverview": "Resumen del período",
     "emptyPeriodTitle": "Sin actividad en este período.",
-    "emptyPeriodDescription": "No hay reservas ni servicios completados en las fechas elegidas.",
+    "emptyPeriodDescription": "Sin reservas ni servicios completados en estas fechas. Datos en vivo abajo.",
     "viewNinetyDays": "Ver últimos 90 días",
     "busiestDaySummary": "{{day}} reúne {{count}} reservas ({{share}}% del período).",
     "dailyPeakSummary": "Máximo diario: {{count}} reservas el {{date}}.",
@@ -840,7 +840,7 @@
       "dayOfWeekAria": "Gráfico de barras de reservas por día de la semana",
       "peakHoursAria": "Gráfico de barras de las horas pico de reservas",
       "reservationTrendAria": "Gráfico de líneas diario: {{reservations}} reservas y {{services}} servicios completados en el período seleccionado",
-      "reservationTrendSingleAria": "Gráfico de puntos diario de {{reservations}} reservas en el período seleccionado.",
+      "reservationTrendSingleAria": "Gráfico de líneas de reservas por día: {{reservations}} reservas en el período seleccionado.",
       "reservationTrendLegend": "Series del gráfico"
     },
     "thirtyDays": "30 días",
@@ -2940,8 +2940,9 @@
     "customerIntelligence": "Inteligencia de Clientes",
     "customerSection": "Clientes",
     "customerAttentionSignal": "{{count}} con señales de alejamiento",
-    "customerAttentionTitle": "Clientes para revisar",
-    "customerRiskMeaning": "Riesgo estimado de no volver, de 0 a 100.",
+    "customerAttentionTitle": "{{count}} clientes para revisar",
+    "customerRiskMeaning": "Riesgo estimado de no volver · 0 a 100.",
+    "customerRiskShort": "Riesgo de pérdida",
     "customerCountShort": "{{count}} clientes",
     "customerFocus": "En foco",
     "customerOverview": "Panorama",
@@ -3017,7 +3018,7 @@
     "pageTitle": "Insights",
     "openSpecificReservation": "Abrir reserva de {{name}}",
     "reservationRiskContext": "Puntuación de riesgo: {{score}}/100. Revisa la reserva antes de contactar al cliente.",
-    "viewReservation": "Abrir reserva",
+    "viewReservation": "Revisar reserva",
     "noShowRiskLabel": "Riesgo de ausencia",
     "riskLevel_high": "Alto",
     "riskLevel_medium": "Medio",
@@ -3817,8 +3818,8 @@
   },
   "whatsappProvision": {
     "title": "Conectar tu número de WhatsApp",
-    "subtitle": "Tu IA responde en un número que es TUYO. Meta envía un código de verificación a ese número — por SMS o llamada (usa la llamada para un fijo).",
-    "activeBadge": "Activo",
+    "subtitle": "Registra un número bajo tu control. Meta envía un código por SMS o llamada; prueba las reservas entrantes por separado.",
+    "activeBadge": "Registrado",
     "cc": "País",
     "number": "Número (código de área + número)",
     "method": "¿Dónde debe Meta enviar el código?",
@@ -3831,7 +3832,7 @@
     "code": "Código de verificación",
     "confirm": "Confirmar",
     "restart": "Usar otro número",
-    "activeNote": "Tu IA ahora responde este número. Los mensajes nuevos llegan a él en menos de un minuto."
+    "activeNote": "El registro ha terminado. Prueba una conversación entrante y una reserva antes de compartir el número."
   },
   "tableTimeline": {
     "title": "¿Esa mesa se libera a tiempo?",

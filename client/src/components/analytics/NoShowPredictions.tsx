@@ -43,10 +43,10 @@ export default function NoShowPredictions() {
   // a reserva mais segura gritava mais alto que a de risco médio.
   const getRiskChip = (level: string) => {
     switch (level) {
-      case 'high': return 'bg-red-700/[0.10] text-red-700';
-      case 'medium': return 'bg-amber-600/[0.12] text-amber-700';
-      case 'low': return 'bg-emerald-600/[0.10] text-emerald-700';
-      default: return 'bg-muted-stone/[0.10] text-brand-muted';
+      case 'high': return 'border border-red-700/25 text-red-700';
+      case 'medium': return 'border border-amber-700/25 text-amber-700';
+      case 'low': return 'border border-emerald-700/25 text-emerald-700';
+      default: return 'border border-brand-line text-brand-muted';
     }
   };
   const riskBand = (level: string) => {
@@ -94,11 +94,11 @@ export default function NoShowPredictions() {
   return (
     <section>
       {/* Cabeçalho: rótulo + prosa direto no canvas, sem caixa */}
-      <header className="border-b border-brand-line pb-4">
+      <header className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 pb-1 sm:border-b sm:border-brand-line sm:pb-4">
         <h2 className="font-brand text-[16px] font-medium text-brand-ink">
           {t('analytics.noShowPredictions')}
         </h2>
-        <p className="text-[15px] text-brand-muted mt-1.5">
+        <p className="text-[12px] text-brand-muted sm:text-[15px]">
           {t('analytics.upcomingSevenDays', 'Next 7 days')}
         </p>
       </header>
@@ -107,17 +107,17 @@ export default function NoShowPredictions() {
           and can be a default 15% with no history. Do not present it as an
           observed no-show rate. */}
       {summary && summary.total_upcoming > 0 && (
-        <div className="grid grid-cols-3 gap-3 border-b border-brand-line py-5 sm:flex sm:gap-x-10">
-          <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:gap-2">
-            <span className="font-brand text-[27px] leading-none tabular-nums text-brand-ink">{summary.total_upcoming}</span>
+        <div className="grid grid-cols-3 gap-3 border-b border-brand-line pt-2 pb-3 sm:flex sm:gap-x-10 sm:py-5">
+          <div className="flex flex-col gap-1 border-r border-brand-line pr-3 sm:flex-row sm:items-baseline sm:gap-2 sm:border-r-0 sm:pr-0">
+            <span className="font-brand text-[31px] leading-none tabular-nums text-brand-ink sm:text-[27px]">{summary.total_upcoming}</span>
             <span className="text-[12px] text-brand-muted">{t('analytics.reservations')}</span>
           </div>
           <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:gap-2">
-            <span className="font-brand text-[27px] leading-none tabular-nums text-red-700">{summary.high_risk}</span>
+            <span className="font-brand text-[24px] leading-none tabular-nums text-red-700 sm:text-[27px]">{summary.high_risk}</span>
             <span className="text-[12px] text-brand-muted">{t('analytics.highRisk')}</span>
           </div>
           <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:gap-2">
-            <span className="font-brand text-[27px] leading-none tabular-nums text-amber-700">{summary.medium_risk}</span>
+            <span className="font-brand text-[24px] leading-none tabular-nums text-amber-700 sm:text-[27px]">{summary.medium_risk}</span>
             <span className="text-[12px] text-brand-muted">{t('analytics.mediumRisk')}</span>
           </div>
         </div>

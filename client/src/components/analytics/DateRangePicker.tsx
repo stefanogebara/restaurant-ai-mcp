@@ -100,12 +100,14 @@ export default function DateRangePicker({ value, onChange }: Props) {
   const otherSelected = otherPresets.some(({ key }) => key === value.preset);
   const fullPeriodLabel = formatPeriodLabel(value.startDate, value.endDate, i18n.language);
   const compactPeriodLabel = formatCompactPeriodLabel(value.startDate, value.endDate, i18n.language);
+  const selectedPreset = presets.find(({ key }) => key === value.preset)?.label;
 
   return (
     <div className="min-w-0 w-full">
-      <div className="relative w-full max-w-[156px] min-w-0 rounded-full focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-brand-action sm:hidden">
-        <div aria-hidden="true" className="flex min-h-[44px] min-w-0 items-center justify-between gap-2 rounded-full border border-brand-line px-3.5 text-brand-ink">
-          <span className="truncate font-brand text-[13px] font-medium">{compactPeriodLabel}</span>
+      <div className="relative w-fit max-w-full min-w-0 rounded-full focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-brand-action sm:hidden">
+        <div aria-hidden="true" className="flex min-h-[44px] min-w-0 items-center gap-2 rounded-full border border-brand-line px-3 text-brand-ink">
+          <span className="shrink-0 font-brand text-[13px] font-medium text-brand-action">{selectedPreset}</span>
+          <span className="min-w-0 truncate border-l border-brand-line pl-2 font-brand text-[12px] text-brand-muted">{compactPeriodLabel}</span>
           <svg className="shrink-0" width="12" height="12" viewBox="0 0 14 14" fill="none">
             <path d="m3 5 4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>

@@ -35,7 +35,7 @@ export default function ServiceRiskTimeline({ predictions, selectedId, onSelect,
   });
 
   return (
-    <section className={`min-w-0 border-t py-2 ${hero ? 'border-brand-line' : 'hairline'}`} aria-label={t('insights.serviceTimeline')}>
+    <section className={`min-w-0 py-2 ${hero ? '' : 'border-t hairline'}`} aria-label={t('insights.serviceTimeline')}>
       <div className="flex items-baseline justify-between gap-3 pb-2">
         <h3 className={`${hero ? 'text-[15px] font-medium' : 'text-[12px] font-semibold'} ${hero ? 'font-brand text-brand-ink' : 'font-sans text-deep-charcoal'}`}>
           {hero && selectedId && sorted.length > 1 ? (
@@ -46,7 +46,7 @@ export default function ServiceRiskTimeline({ predictions, selectedId, onSelect,
           ) : t('insights.serviceTimeline')}
         </h3>
         <span className={`${hero ? 'text-[12px] text-brand-muted' : 'text-[11px] text-muted-stone'}`}>
-          {t('insights.noShowRiskShort')}
+          {hero ? t('insights.noShowRiskLabel') : t('insights.noShowRiskShort')}
         </span>
       </div>
 
@@ -78,7 +78,9 @@ export default function ServiceRiskTimeline({ predictions, selectedId, onSelect,
                     <span className={`block text-[13px] ${hero ? 'text-brand-muted' : 'text-muted-stone'}`}>{t('analytics.partyOf', { size: prediction.party_size })}</span>
                   </span>
                   <span className={`text-right text-[13px] font-semibold tabular-nums ${palette.number}`} aria-hidden="true" title={hero ? t('insights.estimatedNoShowRisk', { score: prediction.risk_score }) : undefined}>
-                    {prediction.risk_score}
+                    {hero
+                      ? t(`analytics.riskBand${prediction.risk_level.charAt(0).toUpperCase()}${prediction.risk_level.slice(1)}`)
+                      : prediction.risk_score}
                   </span>
                 </button>
               </li>

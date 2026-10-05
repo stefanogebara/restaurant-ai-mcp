@@ -96,7 +96,7 @@ export default function TonightBriefingCard({ appearance = 'default' }: TonightB
                     </h3>
                     {hero
                       ? <>
-                        <div className="mt-4 flex w-full items-center justify-between gap-4 font-brand sm:max-w-[580px]">
+                        <div className="mt-4 flex w-full items-center justify-between gap-4 border-t border-brand-line pt-3 font-brand sm:max-w-[580px]">
                           <p className="flex min-w-0 flex-wrap items-baseline gap-x-2 text-[12px] leading-snug text-brand-muted">
                             <span>{t('insights.noShowRiskLabel')}</span>
                             <strong className={`text-[15px] font-semibold tabular-nums ${selected.risk_level === 'high' ? 'text-red-800' : selected.risk_level === 'medium' ? 'text-amber-800' : 'text-emerald-800'}`}>{selected.risk_score}<span className="text-[11px] font-normal">/100</span></strong>

@@ -62,15 +62,15 @@ export default function StatusBreakdownPie({ reservationsByStatus }: StatusBreak
               <span key={row.status} style={{ width: `${(row.count / total) * 100}%`, backgroundColor: row.color }} />
             ))}
           </div>
-          <dl className="mt-2 grid grid-cols-1 gap-y-1 max-[359px]:gap-y-0 sm:mt-4 sm:grid-cols-4 sm:gap-x-4 md:gap-x-7">
+          <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 sm:mt-4 sm:grid-cols-4 sm:gap-x-4 md:gap-x-7">
             {rows.map(row => (
-              <div key={row.status} className="flex min-w-0 items-baseline justify-between gap-3 py-0.5 max-[359px]:py-0 sm:block sm:border-t sm:border-brand-line sm:pt-2.5">
-                <dt className="flex min-w-0 items-center gap-2 text-[13px] text-brand-ink/75 max-[359px]:text-[12px] sm:text-[12px]">
+              <div key={row.status} className="min-w-0 border-t border-brand-line pt-2 sm:pt-2.5">
+                <dt className="flex min-w-0 items-center gap-1.5 text-[12px] text-brand-ink/75">
                   <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: row.color }} aria-hidden="true" />
-                  <span>{row.name}</span>
+                  <span className="truncate">{row.name}</span>
                 </dt>
-                <dd className="shrink-0 font-brand text-[19px] leading-none tabular-nums text-brand-ink max-[359px]:text-[18px] sm:mt-1 sm:text-[20px]">
-                  {row.count}<span className="ml-1 text-[12px] font-normal text-brand-ink/65 max-[359px]:text-[11px] sm:ml-2">{Math.round((row.count / total) * 100)}%</span>
+                <dd className="mt-1 font-brand text-[19px] leading-none tabular-nums text-brand-ink sm:text-[20px]">
+                  {row.count}<span className="ml-1.5 text-[13px] font-normal text-brand-ink/65 max-[359px]:text-[11px] sm:ml-2">{Math.round((row.count / total) * 100)}%</span>
                 </dd>
               </div>
             ))}

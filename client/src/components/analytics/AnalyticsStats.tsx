@@ -68,11 +68,11 @@ export default function AnalyticsStats({ overview, reservationsByStatus, reserva
   ];
 
   const compactDetail = <>
-    <div className="grid grid-cols-3 gap-3 pt-1">
+    <div className="grid grid-cols-3 gap-3 border-b border-brand-line pt-2 pb-3">
       {supportingStats.map(stat => (
         <div key={stat.label} className="min-w-0">
           <p className={`font-brand text-[21px] leading-none tabular-nums ${stat.tone}`}>
-            {stat.value}{stat.unit && <span className="ml-1 text-[10px] font-medium tracking-normal">{stat.unit}</span>}
+            {stat.value}{stat.unit && <span className="ml-1.5 text-[13px] font-medium tracking-normal max-[359px]:text-[11px]">{stat.unit}</span>}
           </p>
           <p className="mt-1 text-[12px] leading-tight text-brand-muted sm:hidden">{stat.shortLabel}</p>
           <p className="mt-1 hidden text-[12px] leading-tight text-brand-muted sm:block">{stat.label}</p>
@@ -87,13 +87,13 @@ export default function AnalyticsStats({ overview, reservationsByStatus, reserva
     }
     return (
       <section aria-label={t('analytics.periodOverview', 'Period overview')} className="xl:hidden">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] gap-4 border-b border-brand-line pb-3">
           <div className="min-w-0">
-            <p className="font-brand text-[clamp(34px,9vw,36px)] leading-none tracking-[-0.06em] tabular-nums text-brand-ink">{total}</p>
+            <p className="font-brand text-[clamp(33px,8.5vw,36px)] leading-none tracking-[-0.06em] tabular-nums text-brand-ink">{total}</p>
             <p className="mt-1 text-[13px] font-medium text-brand-muted">{t('analytics.totalReservations')}</p>
           </div>
           <div className="min-w-0 border-l border-brand-line pl-4">
-            <p className="pt-0.5 font-brand text-[clamp(27px,8vw,34px)] leading-none tracking-[-0.05em] tabular-nums text-brand-ink">{recordedRevenue === undefined ? '—' : formatCurrency(recordedRevenue)}</p>
+            <p className="pt-0.5 font-brand text-[clamp(27px,7.8vw,34px)] leading-none tracking-[-0.05em] tabular-nums text-brand-ink">{recordedRevenue === undefined ? '—' : formatCurrency(recordedRevenue)}</p>
             <p className="mt-1 text-[13px] font-medium text-brand-muted">{t('analytics.recordedRevenue', 'Recorded revenue')}</p>
           </div>
         </div>

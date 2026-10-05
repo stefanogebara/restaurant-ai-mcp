@@ -780,7 +780,7 @@
     "customEndDate": "End date",
     "periodOverview": "Period overview",
     "emptyPeriodTitle": "No activity in this period.",
-    "emptyPeriodDescription": "No bookings or completed services on the selected dates.",
+    "emptyPeriodDescription": "No bookings or completed services on these dates. Live data below.",
     "viewNinetyDays": "View last 90 days",
     "busiestDaySummary": "{{day}} accounts for {{count}} bookings ({{share}}% of the period).",
     "dailyPeakSummary": "Daily peak: {{count}} bookings on {{date}}.",
@@ -840,7 +840,7 @@
       "dayOfWeekAria": "Bar chart showing number of reservations by day of the week",
       "peakHoursAria": "Bar chart showing peak reservation hours",
       "reservationTrendAria": "Daily line chart: {{reservations}} reservations and {{services}} completed services in the selected period",
-      "reservationTrendSingleAria": "Daily dot plot of {{reservations}} reservations in the selected period.",
+      "reservationTrendSingleAria": "Line chart of daily reservations: {{reservations}} reservations in the selected period.",
       "reservationTrendLegend": "Chart series"
     },
     "thirtyDays": "30 days",
@@ -1991,8 +1991,9 @@
     "customerIntelligence": "Customer Intelligence",
     "customerSection": "Guests",
     "customerAttentionSignal": "{{count}} showing signs of not returning",
-    "customerAttentionTitle": "Guests to review",
-    "customerRiskMeaning": "Estimated risk of not returning, from 0 to 100.",
+    "customerAttentionTitle": "{{count}} guests to review",
+    "customerRiskMeaning": "Estimated risk of not returning · 0 to 100.",
+    "customerRiskShort": "Return risk",
     "customerCountShort": "{{count}} guests",
     "customerFocus": "In focus",
     "customerOverview": "Overview",
@@ -2068,7 +2069,7 @@
     "pageTitle": "Insights",
     "openSpecificReservation": "Open {{name}}'s reservation",
     "reservationRiskContext": "Risk score: {{score}}/100. Review the booking before contacting the guest.",
-    "viewReservation": "Open reservation",
+    "viewReservation": "Review reservation",
     "noShowRiskLabel": "No-show risk",
     "riskLevel_high": "High",
     "riskLevel_medium": "Medium",
@@ -3817,8 +3818,8 @@
   },
   "whatsappProvision": {
     "title": "Connect your WhatsApp number",
-    "subtitle": "Your AI answers on a number you own. Meta sends a verification code to that number — by SMS or phone call (use the call for a landline).",
-    "activeBadge": "Active",
+    "subtitle": "Register a number you control. Meta sends a verification code by SMS or phone call; test incoming bookings separately.",
+    "activeBadge": "Registered",
     "cc": "Country",
     "number": "Number (area code + number)",
     "method": "Where should Meta send the code?",
@@ -3831,7 +3832,7 @@
     "code": "Verification code",
     "confirm": "Confirm",
     "restart": "Use a different number",
-    "activeNote": "Your AI now answers this number. New messages route to it within a minute."
+    "activeNote": "Registration is complete. Test an incoming conversation and booking before sharing the number."
   },
   "tableTimeline": {
     "title": "Will that table free up in time?",

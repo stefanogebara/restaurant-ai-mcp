@@ -132,7 +132,7 @@ function CustomerRow({ customer, showChurn, onSend, className = '', appearance =
       </span>
       {showChurn && (
         <span className="shrink-0 text-right" aria-hidden="true">
-          <span className={`block text-[15px] font-medium tabular-nums ${hero ? 'text-red-800' : 'text-ocre-700'}`}>{customer.churn_risk_score}</span>
+          <span className="block text-[15px] font-medium tabular-nums text-ocre-700">{customer.churn_risk_score}{hero && <span className="text-[11px] font-normal text-brand-muted">/100</span>}</span>
         </span>
       )}
       {onSend && <ThiingsIcon name="chevron-right" pxSize={16} className={`shrink-0 ${hero ? 'text-brand-muted' : 'text-muted-stone'}`} />}

@@ -89,6 +89,13 @@ describe('Analytics period truth', () => {
     expect(within(liveSignal).getByRole('progressbar')).toHaveAttribute('aria-valuenow', '0');
   });
 
+  it('keeps the live scope label attached to compact empty-period occupancy', () => {
+    render(<LiveOccupancySignal occupiedSeats={0} totalSeats={74} compact />);
+    const liveSignal = screen.getByRole('region', { name: 'Occupancy now' });
+    expect(within(liveSignal).getByText('0%')).toBeInTheDocument();
+    expect(within(liveSignal).getByText('Live · outside the date filter')).toBeInTheDocument();
+  });
+
   it('does not surface the backend historical rate, which also counts cancellations', () => {
     vi.mocked(useNoShowPredictions).mockReturnValue({
       data: {

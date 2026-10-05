@@ -38,17 +38,20 @@
   <header><span class="brand"><em>Seat</em>able</span><span class="eyebrow">Revisão estática · 5 out 2026</span></header>
   <main>
     <h1>Plataforma, em revisão</h1>
-    <p>Capturas da proposta no PR #165. Os dados são sintéticos e esta página não executa ações do produto. No celular, a captura mostra a primeira dobra. A avaliação visual ainda está em andamento.</p>
+    <p>Capturas da proposta no PR #165. Os dados são sintéticos e esta página não executa ações do produto. Painel, Visão Geral e Análises mostram a primeira dobra no celular; Voz e WhatsApp mostram suas telas de configuração. A avaliação visual ainda está em andamento.</p>
     <div class="controls">
       <div class="group" role="group" aria-label="Seção">
         <button type="button" data-section="dashboard" aria-pressed="false">Painel</button>
         <button type="button" data-section="overview" aria-pressed="true">Visão Geral</button>
         <button type="button" data-section="analytics" aria-pressed="false">Análises</button>
         <button type="button" data-section="voice" aria-pressed="false">Voz</button>
+        <button type="button" data-section="whatsapp" aria-pressed="false">WhatsApp</button>
       </div>
       <div class="group" role="group" aria-label="Estado" id="state-controls">
         <button type="button" data-state="filled" aria-pressed="true">Com dados</button>
         <button type="button" data-state="empty" aria-pressed="false">Sem dados</button>
+        <button type="button" data-state="pending" aria-pressed="false" hidden>Aguardando</button>
+        <button type="button" data-state="error" aria-pressed="false" hidden>Erro</button>
       </div>
       <div class="group" role="group" aria-label="Formato">
         <button type="button" data-device="desktop" aria-pressed="true">Desktop</button>
@@ -63,17 +66,19 @@
     const assets = location.port === '5177' || location.protocol === 'file:'
       ? './public/insights-review/'
       : '/insights-review/';
-    const names = { dashboard: 'Painel', overview: 'Visão Geral', analytics: 'Análises', voice: 'Voz' };
+    const names = { dashboard: 'Painel', overview: 'Visão Geral', analytics: 'Análises', voice: 'Voz', whatsapp: 'WhatsApp' };
     const params = new URLSearchParams(location.search);
-    let section = ['dashboard', 'analytics', 'voice'].includes(params.get('section')) ? params.get('section') : 'overview';
+    let section = ['dashboard', 'analytics', 'voice', 'whatsapp'].includes(params.get('section')) ? params.get('section') : 'overview';
     let device = params.get('device') === 'mobile' ? 'mobile' : 'desktop';
-    let state = params.get('state') === 'empty' ? 'empty' : 'filled';
+    let state = ['empty', 'pending', 'error'].includes(params.get('state')) ? params.get('state') : 'filled';
     function render() {
       const image = document.getElementById('capture');
       const frame = document.getElementById('frame');
-      if (section === 'dashboard') state = 'filled';
+      if (section === 'dashboard' || (section !== 'whatsapp' && !['filled', 'empty'].includes(state))) state = 'filled';
       image.src = section === 'dashboard'
         ? `${assets}dashboard-${device}.png`
+        : section === 'whatsapp'
+        ? `${assets}whatsapp-${({ filled: 'active', empty: 'disconnected', pending: 'pending', error: 'error' })[state]}-${device}.png`
         : section === 'voice'
         ? `${assets}voice-${state}-${device}.png`
         : section === 'analytics'
@@ -81,7 +86,9 @@
         : state === 'empty'
           ? `${assets}overview-empty-${device}.png`
           : `${assets}overview${device === 'mobile' ? 'Mobile' : 'Desktop'}.png`;
-      const stateName = section === 'voice'
+      const stateName = section === 'whatsapp'
+        ? ({ filled: 'com número cadastrado', empty: 'sem conexão', pending: 'aguardando confirmação', error: 'com erro' })[state]
+        : section === 'voice'
         ? (state === 'empty' ? 'com linha ainda não atribuída' : 'com linha atribuída')
         : (state === 'empty' ? 'sem dados' : 'com dados');
       image.alt = `Captura de ${names[section]} ${stateName} em ${device === 'mobile' ? 'celular' : 'desktop'}`;
@@ -89,6 +96,12 @@
       document.getElementById('state-controls').hidden = section === 'dashboard';
       document.querySelector('[data-state="filled"]').textContent = section === 'voice' ? 'Linha atribuída' : 'Com dados';
       document.querySelector('[data-state="empty"]').textContent = section === 'voice' ? 'Sem linha' : 'Sem dados';
+      if (section === 'whatsapp') {
+        document.querySelector('[data-state="filled"]').textContent = 'Número cadastrado';
+        document.querySelector('[data-state="empty"]').textContent = 'Sem conexão';
+      }
+      document.querySelector('[data-state="pending"]').hidden = section !== 'whatsapp';
+      document.querySelector('[data-state="error"]').hidden = section !== 'whatsapp';
       for (const attribute of ['section', 'device', 'state']) {
         document.querySelectorAll(`[data-${attribute}]`).forEach(button => button.setAttribute('aria-pressed', String(button.dataset[attribute] === ({ section, device, state })[attribute])));
       }
