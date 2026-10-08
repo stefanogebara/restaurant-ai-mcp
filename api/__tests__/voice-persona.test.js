@@ -23,6 +23,9 @@ jest.mock('../_lib/subscription-middleware', () => ({
 jest.mock('../_lib/kb-sync-trigger', () => ({
   triggerKbSync: jest.fn().mockResolvedValue({ success: true, durationMs: 0 }),
 }));
+jest.mock('../_services/voiceAgentService', () => ({
+  refreshVoiceAgentPrompt: jest.fn().mockResolvedValue({ success: true }),
+}));
 
 function makeChain(data) {
   const chain = {
@@ -45,6 +48,8 @@ function mockRes() {
 }
 
 const handler = require('../voice-persona');
+const { triggerKbSync } = require('../_lib/kb-sync-trigger');
+const { refreshVoiceAgentPrompt } = require('../_services/voiceAgentService');
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -70,7 +75,41 @@ it('PATCH updates agent_name and agent_greeting (and reports kb_synced)', async 
     agent_name: 'Sofia',
     agent_greeting: 'Welcome!',
     kb_synced: true,
+    prompt_synced: true,
   });
+  expect(triggerKbSync).toHaveBeenCalledWith('rest-1', { reason: 'voice_persona' });
+  expect(refreshVoiceAgentPrompt).toHaveBeenCalledWith('rest-1');
+});
+
+it('PATCH reports a saved persona without claiming remote success when either sync fails', async () => {
+  triggerKbSync.mockResolvedValueOnce({ success: false, error: 'timeout' });
+  refreshVoiceAgentPrompt.mockResolvedValueOnce({ success: true });
+  const res = mockRes();
+  await handler({
+    method: 'PATCH',
+    headers: { authorization: 'Bearer tok' },
+    body: { agent_name: 'Marco' },
+  }, res);
+  expect(res.status).not.toHaveBeenCalledWith(500);
+  expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+    kb_synced: false,
+    prompt_synced: true,
+  }));
+});
+
+it('PATCH still returns saved values when prompt refresh throws', async () => {
+  refreshVoiceAgentPrompt.mockRejectedValueOnce(new Error('ElevenLabs unavailable'));
+  const res = mockRes();
+  await handler({
+    method: 'PATCH',
+    headers: { authorization: 'Bearer tok' },
+    body: { agent_greeting: 'Buongiorno!' },
+  }, res);
+  expect(res.status).not.toHaveBeenCalledWith(500);
+  expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+    kb_synced: true,
+    prompt_synced: false,
+  }));
 });
 
 it('PATCH returns 400 when agent_name exceeds 50 chars', async () => {

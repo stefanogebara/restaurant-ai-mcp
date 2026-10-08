@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useVoicePersona, useSaveVoicePersona } from '../../hooks/useVoicePersona';
-import type { VoicePersona } from '../../hooks/useVoicePersona';
+import type { VoicePersona, VoicePersonaSaveResult } from '../../hooks/useVoicePersona';
 import { useToast } from '../../contexts/ToastContext';
 import { useMutation } from '@tanstack/react-query';
 import { authFetch } from '../../services/api';
@@ -12,6 +12,8 @@ export default function VoicePersonaPanel() {
   const { data: persona, isLoading } = useVoicePersona();
   const saveMutation = useSaveVoicePersona();
   const [pending, setPending] = useState<Partial<VoicePersona>>({});
+  const [syncStatus, setSyncStatus] = useState<'synced' | 'partial' | null>(null);
+  const [lastSaved, setLastSaved] = useState<VoicePersona | null>(null);
 
   const refreshMutation = useMutation({
     mutationFn: async () => {
@@ -35,12 +37,29 @@ export default function VoicePersonaPanel() {
 
   const isDirty = Object.keys(pending).length > 0;
 
-  const handleSave = () => {
-    if (!isDirty) return;
-    saveMutation.mutate(pending, {
-      onSuccess: () => { toast.success(t('dashboard.voicePersona.saved', 'Agent persona saved')); setPending({}); },
+  const savePersona = (updates: Partial<VoicePersona>) => {
+    saveMutation.mutate(updates, {
+      onSuccess: (result: VoicePersonaSaveResult) => {
+        setLastSaved({ agent_name: result.agent_name, agent_greeting: result.agent_greeting });
+        setPending({});
+        if (result.kb_synced === true && result.prompt_synced === true) {
+          setSyncStatus('synced');
+          toast.success(t('dashboard.voicePersona.savedAndSynced', 'Saved in Seatable and synced with the voice agent'));
+        } else {
+          setSyncStatus('partial');
+          toast.info(t('dashboard.voicePersona.savedNotSynced', 'Saved in Seatable, but the voice agent is not fully updated. Retry the sync.'));
+        }
+      },
       onError: () => toast.error(t('dashboard.voicePersona.saveFailed', 'Failed to save persona')),
     });
+  };
+
+  const handleSave = () => {
+    if (isDirty) savePersona(pending);
+  };
+
+  const handleRetry = () => {
+    if (lastSaved && !isDirty) savePersona(lastSaved);
   };
 
   if (isLoading) {
@@ -62,7 +81,7 @@ export default function VoicePersonaPanel() {
             type="button"
             onClick={() => refreshMutation.mutate()}
             disabled={refreshMutation.isPending}
-            title="Re-sync ElevenLabs agent prompt with current restaurant persona"
+            title={t('dashboard.voicePersona.refreshPromptHint', 'Refresh the agent prompt with the current restaurant persona')}
             className="px-3 py-1.5 border border-glass-border-dark hover:bg-soft-gray text-warm-stone text-xs font-medium rounded-full transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {refreshMutation.isPending ? t('dashboard.voicePersona.refreshing', 'Refreshing...') : t('dashboard.voicePersona.refreshPrompt', 'Refresh Agent Prompt')}
@@ -77,6 +96,24 @@ export default function VoicePersonaPanel() {
           </button>
         </div>
       </div>
+      {syncStatus === 'partial' && (
+        <div role="status" className="flex flex-wrap items-center justify-between gap-3 border-t border-amber-700/20 pt-3 text-xs text-amber-800">
+          <p>{t('dashboard.voicePersona.savedNotSynced', 'Saved in Seatable, but the voice agent is not fully updated. Retry the sync.')}</p>
+          <button
+            type="button"
+            onClick={handleRetry}
+            disabled={saveMutation.isPending || isDirty || !lastSaved}
+            className="rounded-full border border-amber-700/40 px-3 py-1.5 font-medium text-amber-900 hover:bg-amber-700/10 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {t('dashboard.voicePersona.retrySync', 'Retry sync')}
+          </button>
+        </div>
+      )}
+      {syncStatus === 'synced' && (
+        <p role="status" className="border-t border-emerald-700/20 pt-3 text-xs text-emerald-800">
+          {t('dashboard.voicePersona.savedAndSynced', 'Saved in Seatable and synced with the voice agent')}
+        </p>
+      )}
       <div className="space-y-3">
         <div>
           <label htmlFor="agent-name" className="block text-xs font-medium text-warm-stone mb-1">
@@ -85,6 +122,7 @@ export default function VoicePersonaPanel() {
           <input
             id="agent-name"
             type="text"
+            disabled={saveMutation.isPending}
             maxLength={50}
             placeholder={t('placeholders.agentName', 'e.g. Sofia')}
             value={getValue('agent_name')}
@@ -99,6 +137,7 @@ export default function VoicePersonaPanel() {
           <input
             id="agent-greeting"
             type="text"
+            disabled={saveMutation.isPending}
             maxLength={200}
             placeholder={t('placeholders.agentGreeting', 'e.g. Welcome to our restaurant!')}
             value={getValue('agent_greeting')}

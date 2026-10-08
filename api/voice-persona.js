@@ -4,6 +4,7 @@ const { createSecureLogger } = require('./_lib/secure-logger');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { inlineRequireFeature, checkSubscriptionByRestaurantId } = require('./_lib/subscription-middleware');
 const { triggerKbSync } = require('./_lib/kb-sync-trigger');
+const { refreshVoiceAgentPrompt } = require('./_services/voiceAgentService');
 
 const logger = createSecureLogger('voice-persona');
 
@@ -96,15 +97,23 @@ async function handlePatch(req, res) {
 
     logger.info('voice persona updated', { restaurantId });
 
-    // Push the change to the live ElevenLabs voice agent so callers hear the
-    // new persona on the next call. Awaited (bounded) so stale-KB drift is
-    // impossible by design — see api/_lib/kb-sync-trigger.js for rationale.
+    // The greeting is also in the knowledge base, while the agent name lives
+    // in the system prompt. Both remote writes must succeed before the UI can
+    // claim the persona is live. A failure does not undo the saved DB values.
     const kbSync = await triggerKbSync(restaurantId, { reason: 'voice_persona' });
+    let promptSynced = false;
+    try {
+      const promptSync = await refreshVoiceAgentPrompt(restaurantId);
+      promptSynced = promptSync?.success === true;
+    } catch (syncError) {
+      logger.error('voice persona prompt sync failed', { restaurantId, error: syncError.message });
+    }
 
     return res.json({
       agent_name: data.agent_name,
       agent_greeting: data.agent_greeting,
       kb_synced: kbSync.success,
+      prompt_synced: promptSynced,
     });
   } catch (err) {
     if (err.message === 'UNAUTHORIZED') return res.status(401).json({ error: 'Authentication required' });

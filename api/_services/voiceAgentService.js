@@ -55,6 +55,7 @@ async function refreshVoiceAgentPrompt(restaurantId) {
     `https://api.elevenlabs.io/v1/convai/agents/${config.elevenlabs_agent_id}`,
     {
       method: 'PATCH',
+      signal: AbortSignal.timeout(12_000),
       headers: {
         'xi-api-key': process.env.ELEVENLABS_API_KEY,
         'Content-Type': 'application/json'

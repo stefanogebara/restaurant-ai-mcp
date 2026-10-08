@@ -135,11 +135,15 @@
 - [x] A API padrão da fila truncava históricos aos 100 mais antigos; a lista visual agora pagina por estado sem quebrar os filtros e o GET legado permanece compatível.
 - [x] Impedir que Voz reporte “salvo localmente, sincronizará depois” sem persistência/replay dos ajustes; só confirmar após aceitação da ElevenLabs.
 - [ ] Tornar os erros da API de Voz localizados na interface e testar falha parcial de sincronização na experiência completa.
+- [x] Voz: separar persona salva no Seatable de base de conhecimento e prompt confirmados na ElevenLabs; dar nova tentativa explícita sem repetir a edição.
+- [x] Cobrir sucesso, falha parcial e nova tentativa com testes de API e interface; executar build e regressões antes de atualizar a PR em rascunho.
 - [x] Restaurar e versionar `client/insights-audit.html` como revisão estática autônoma; conferir o endereço local, abas e formatos antes de compartilhá-lo.
 - [x] Reorganizar a aba Análises: abrir com o recorte de datas, dar hierarquia às reservas, reduzir cópia repetida e deixar os padrões secundários sob expansão.
 - [x] Trocar a tendência vaga por série diária com base zero, legenda explícita e pico derivado dos dados; manter os estados sem atividade e os rótulos acessíveis.
 - [x] Conferir a captura React com dados sintéticos em desktop/celular, abrir os padrões em 320/390/768/1440 px e atualizar a revisão HTTP com as imagens mais recentes.
 - [ ] Refinar a composição inferior e o gráfico móvel até a crítica independente alcançar 9/10; testar também na conta autenticada antes de publicar.
+
+**Revisão de Voz, 09/out:** Salvar a persona agora confirma separadamente base de conhecimento e prompt na ElevenLabs. A interface avisa quando os dados foram gravados no Seatable mas uma sincronização falhou, e oferece nova tentativa com os valores salvos. A confirmação requer resposta positiva das duas atualizações remotas; não equivale a uma chamada real verificada. Build, 200 arquivos de API, 281 suítes/4.287 testes backend, 122 arquivos/1.107 testes frontend, lint focado, JSON e diff passaram. A PR continua em rascunho; a falha parcial dos ajustes principais de Voz, a conta autenticada na prévia e a crítica visual de 9/10 seguem abertas.
 
 **Achados da auditoria:** Insights mostra uma área vazia enorme quando não há reservas de risco e mistura o resumo de hoje com previsões futuras; a lista de clientes mostra cinco destaques, mas outra métrica da mesma página pode contar mais clientes no total, sem explicar o recorte. O botão “Enviar” não indica que abre uma revisão de e-mail; o texto inicial do e-mail está em inglês mesmo na interface PT-BR. Em Voz, controles de velocidade/estilo existentes não devem ser assumidos compatíveis com `eleven_v4_turbo`. O Google OAuth exibe links de privacidade/termos de outro domínio na escolha de conta — requer auditoria de configuração antes de mudar.
 

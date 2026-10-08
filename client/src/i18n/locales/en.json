@@ -352,6 +352,7 @@
     "voicePersona": {
       "title": "Agent Persona",
       "refreshPrompt": "Refresh Agent Prompt",
+      "refreshPromptHint": "Refresh the agent prompt with the current restaurant persona",
       "refreshing": "Refreshing...",
       "saving": "Saving...",
       "agentName": "Agent name",
@@ -363,6 +364,9 @@
       "skipped": "Skipped: {{reason}}",
       "noAgentConfigured": "no agent configured",
       "saved": "Agent persona saved",
+      "savedAndSynced": "Saved in Seatable and synced with the voice agent",
+      "savedNotSynced": "Saved in Seatable, but the voice agent is not fully updated. Retry the sync.",
+      "retrySync": "Retry sync",
       "saveFailed": "Failed to save persona"
     },
     "aiPersonality": {

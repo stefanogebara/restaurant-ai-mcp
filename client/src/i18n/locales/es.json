@@ -317,6 +317,7 @@
     "voicePersona": {
       "title": "Persona del Agente",
       "refreshPrompt": "Actualizar Prompt del Agente",
+      "refreshPromptHint": "Actualizar el prompt del agente con la persona actual del restaurante",
       "refreshing": "Actualizando...",
       "saving": "Guardando...",
       "agentName": "Nombre del agente",
@@ -328,6 +329,9 @@
       "skipped": "Omitido: {{reason}}",
       "noAgentConfigured": "ningún agente configurado",
       "saved": "Persona del agente guardada",
+      "savedAndSynced": "Guardado en Seatable y sincronizado con el agente de voz",
+      "savedNotSynced": "Guardado en Seatable, pero el agente de voz no se actualizó por completo. Vuelve a sincronizar.",
+      "retrySync": "Reintentar sincronización",
       "saveFailed": "Error al guardar persona"
     },
     "aiPersonality": {
