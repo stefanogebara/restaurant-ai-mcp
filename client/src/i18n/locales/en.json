@@ -3611,6 +3611,8 @@
     "visitHistory": "Visit History",
     "people": "guests",
     "noVisits": "No visits recorded",
+    "noVisitDetails": "Visits are recorded, but visit details are not available.",
+    "detailLoadError": "Could not load this customer profile.",
     "tier_vip": "VIP",
     "tier_regular": "Regular",
     "tier_occasional": "Occasional",

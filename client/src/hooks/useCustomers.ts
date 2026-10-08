@@ -27,7 +27,8 @@ export interface CustomerNote {
   created_at: string;
 }
 
-export interface CustomerDetail extends CrmCustomer {
+export interface CustomerDetail extends Omit<CrmCustomer, 'avg_party_size' | 'churn_risk_score'> {
+  churn_risk_score: number | null;
   recent_reservations: Array<{
     id: string;
     date: string;
@@ -78,6 +79,43 @@ interface CustomerListResponse {
   total: number;
 }
 
+interface CustomerDetailEnvelope {
+  customer: Omit<CustomerDetail, 'recent_reservations' | 'notes'>;
+  reservations: CustomerDetail['recent_reservations'];
+  notes: CustomerNote[];
+}
+
+function normalizeCustomerDetail(data: unknown): CustomerDetail {
+  if (!data || typeof data !== 'object') throw new Error('Invalid customer detail');
+  const envelope = data as Partial<CustomerDetailEnvelope>;
+  const customer = envelope.customer;
+  if (!customer || typeof customer !== 'object'
+    || typeof customer.customer_id !== 'string' || !customer.customer_id
+    || typeof customer.customer_phone !== 'string' || !customer.customer_phone
+    || (customer.customer_name !== null && typeof customer.customer_name !== 'string')
+    || typeof customer.customer_tier !== 'string'
+    || !Number.isFinite(customer.total_visits)
+    || !Number.isFinite(customer.total_revenue)
+    || !Number.isFinite(customer.avg_revenue_per_visit)
+    || (customer.churn_risk_score !== null && !Number.isFinite(customer.churn_risk_score))
+    || !Array.isArray(envelope.reservations)
+    || !Array.isArray(envelope.notes)) {
+    throw new Error('Invalid customer detail');
+  }
+
+  return {
+    ...customer,
+    tags: Array.isArray(customer.tags) ? customer.tags : [],
+    allergies: Array.isArray(customer.allergies) ? customer.allergies : [],
+    dietary_restrictions: Array.isArray(customer.dietary_restrictions) ? customer.dietary_restrictions : [],
+    seating_preferences: Array.isArray(customer.seating_preferences) ? customer.seating_preferences : [],
+    special_occasions: customer.special_occasions && typeof customer.special_occasions === 'object'
+      ? customer.special_occasions : {},
+    recent_reservations: envelope.reservations,
+    notes: envelope.notes,
+  };
+}
+
 // ─── Stale time ─────────────────────────────────────────────
 
 const CRM_STALE_TIME = 5 * 60 * 1000; // 5 minutes
@@ -125,7 +163,7 @@ export function useCustomerDetail(customerId: string | null) {
       if (!response.ok) throw new Error('Failed to fetch customer detail');
       const result = await response.json();
       if (!result.success) throw new Error(result.error || 'Failed to fetch customer detail');
-      return result.data;
+      return normalizeCustomerDetail(result.data);
     },
     enabled: !!customerId,
     staleTime: CRM_STALE_TIME,

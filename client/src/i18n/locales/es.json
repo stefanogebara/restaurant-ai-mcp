@@ -3611,6 +3611,8 @@
     "visitHistory": "Historial de Visitas",
     "people": "personas",
     "noVisits": "No hay visitas registradas",
+    "noVisitDetails": "Hay visitas registradas, pero los detalles no están disponibles.",
+    "detailLoadError": "No se pudo cargar la ficha de este cliente.",
     "tier_vip": "VIP",
     "tier_regular": "Frecuente",
     "tier_occasional": "Ocasional",

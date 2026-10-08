@@ -357,6 +357,105 @@ describe('customerMergeService', () => {
 // 2. update_profile action
 // ---------------------------------------------------------------------------
 
+describe('customers API — detail', () => {
+  let handler;
+  let customerQuery;
+  let reservationsQuery;
+  let notesQuery;
+
+  beforeEach(() => {
+    jest.resetModules();
+
+    customerQuery = {
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      single: jest.fn().mockResolvedValue({
+        data: {
+          customer_id: 'legacy-key', customer_phone: '+5511999000000', customer_name: 'Guest',
+          total_visits: 3, total_revenue: '420.00', avg_revenue_per_visit: '140.00',
+          lifetime_value: '504.00', churn_risk_score: '18', tags: null,
+        },
+        error: null,
+      }),
+    };
+    reservationsQuery = {
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      order: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockResolvedValue({ data: [{ id: 'reservation-1' }], error: null }),
+    };
+    notesQuery = {
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      order: jest.fn().mockResolvedValue({ data: [{ id: 'note-1' }], error: null }),
+    };
+    const crmFrom = jest.fn(table => table === 'customer_ltv' ? customerQuery : notesQuery);
+    jest.doMock('../../api/_lib/supabase', () => ({
+      supabaseAdmin: {
+        schema: jest.fn().mockReturnValue({ from: crmFrom }),
+        from: jest.fn().mockReturnValue(reservationsQuery),
+      },
+    }));
+    jest.doMock('../../api/_lib/auth', () => ({
+      verifyAuth: jest.fn().mockResolvedValue({ user: { restaurant_id: 'rest-1' } }),
+    }));
+    jest.doMock('../../api/_lib/secure-logger', () => ({
+      createSecureLogger: () => ({ info: jest.fn(), error: jest.fn(), warn: jest.fn() }),
+    }));
+    jest.doMock('../../api/_lib/subscription-middleware', () => ({
+      checkSubscription: jest.fn((_req, _res, next) => next()),
+      requireFeature: jest.fn(() => (_req, _res, next) => next()),
+    }));
+    jest.doMock('../../api/_lib/rate-limit', () => ({
+      checkAndApplyRateLimit: jest.fn().mockResolvedValue(false),
+    }));
+    jest.doMock('../../api/_lib/cors', () => ({ setInternalCors: jest.fn() }));
+    jest.doMock('../../api/_services/customerMergeService', () => ({
+      findDuplicates: jest.fn(), mergeCustomers: jest.fn(),
+    }));
+    handler = require('../customers');
+  });
+
+  const request = () => ({ method: 'GET', query: { action: 'detail', customer_id: 'legacy-key' }, headers: {} });
+
+  it('uses the stored phone for history and returns the detail envelope', async () => {
+    const res = mockRes();
+    await handler(request(), res);
+
+    expect(reservationsQuery.eq).toHaveBeenCalledWith('customer_phone', '+5511999000000');
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({
+      success: true,
+      data: {
+        customer: expect.objectContaining({
+          customer_name: 'Guest', total_visits: 3, total_revenue: 420,
+          avg_revenue_per_visit: 140, lifetime_value: 504, churn_risk_score: 18, tags: [],
+        }),
+        reservations: [{ id: 'reservation-1' }],
+        notes: [{ id: 'note-1' }],
+      },
+    });
+  });
+
+  it('does not report no visit details when the reservation lookup fails', async () => {
+    reservationsQuery.limit.mockResolvedValue({ data: null, error: { message: 'unavailable' } });
+    const res = mockRes();
+    await handler(request(), res);
+
+    expect(res.status).toHaveBeenCalledWith(503);
+    expect(res.json).toHaveBeenCalledWith({ success: false, error: 'Customer detail temporarily unavailable' });
+  });
+
+  it('does not report no notes when the notes lookup is malformed', async () => {
+    notesQuery.order.mockResolvedValue({ data: null, error: null });
+    const res = mockRes();
+    await handler(request(), res);
+
+    expect(res.status).toHaveBeenCalledWith(503);
+    expect(res.json).toHaveBeenCalledWith({ success: false, error: 'Customer detail temporarily unavailable' });
+  });
+});
+
 describe('customers API — update_profile', () => {
   let handler;
   let mockVerifyAuth;

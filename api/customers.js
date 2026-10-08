@@ -137,20 +137,29 @@ async function handleDetail(req, res) {
       return res.status(400).json({ success: false, error: 'Missing required parameter: customer_id' });
     }
 
-    // Fetch customer, reservations, and notes in parallel
-    const [customerResult, reservationsResult, notesResult] = await Promise.all([
-      crmDb()
-        .from('customer_ltv')
-        .select('customer_id, restaurant_id, customer_name, customer_email, customer_phone, total_visits, total_revenue, avg_revenue_per_visit, lifetime_value, churn_risk_score, customer_tier, first_visit_date, last_visit_date, tags, allergies, dietary_restrictions, seating_preferences, special_occasions, merged_into, created_at, updated_at')
-        .eq('customer_id', customer_id)
-        .eq('restaurant_id', restaurantId)
-        .single(),
+    const customerResult = await crmDb()
+      .from('customer_ltv')
+      .select('customer_id, restaurant_id, customer_name, customer_email, customer_phone, total_visits, total_revenue, avg_revenue_per_visit, lifetime_value, churn_risk_score, customer_tier, first_visit_date, last_visit_date, tags, allergies, dietary_restrictions, seating_preferences, special_occasions, merged_into, created_at, updated_at')
+      .eq('customer_id', customer_id)
+      .eq('restaurant_id', restaurantId)
+      .single();
 
+    if (customerResult.error) {
+      if (customerResult.error.code === 'PGRST116') {
+        return res.status(404).json({ success: false, error: 'Customer not found' });
+      }
+      throw customerResult.error;
+    }
+    if (!customerResult.data) throw new Error('Customer detail returned no customer');
+
+    // The CRM identifier is usually a phone number, but may differ for older
+    // imports. Look up reservation history with the stored phone when present.
+    const [reservationsResult, notesResult] = await Promise.all([
       supabaseAdmin
         .from('reservations')
         .select('id, date, time, party_size, status, customer_name, special_requests, created_at')
         .eq('restaurant_id', restaurantId)
-        .eq('customer_phone', customer_id)
+        .eq('customer_phone', customerResult.data.customer_phone || customer_id)
         .order('date', { ascending: false })
         .limit(10),
 
@@ -162,19 +171,13 @@ async function handleDetail(req, res) {
         .order('created_at', { ascending: false }),
     ]);
 
-    if (customerResult.error) {
-      if (customerResult.error.code === 'PGRST116') {
-        return res.status(404).json({ success: false, error: 'Customer not found' });
-      }
-      throw customerResult.error;
-    }
-
-    if (reservationsResult.error) {
-      logger.error('Error fetching reservations for customer detail:', reservationsResult.error);
-    }
-
-    if (notesResult.error) {
-      logger.error('Error fetching notes for customer detail:', notesResult.error);
+    if (reservationsResult.error || notesResult.error ||
+        !Array.isArray(reservationsResult.data) || !Array.isArray(notesResult.data)) {
+      logger.error('Customer detail is incomplete', {
+        reservationsError: reservationsResult.error,
+        notesError: notesResult.error,
+      });
+      return res.status(503).json({ success: false, error: 'Customer detail temporarily unavailable' });
     }
 
     return res.status(200).json({
@@ -182,10 +185,16 @@ async function handleDetail(req, res) {
       data: {
         customer: {
           ...customerResult.data,
+          total_visits: Number(customerResult.data.total_visits || 0),
+          total_revenue: Number(customerResult.data.total_revenue || 0),
+          avg_revenue_per_visit: Number(customerResult.data.avg_revenue_per_visit || 0),
+          lifetime_value: Number(customerResult.data.lifetime_value || 0),
+          churn_risk_score: customerResult.data.churn_risk_score == null
+            ? null : Number(customerResult.data.churn_risk_score),
           tags: customerResult.data.tags || [],
         },
-        reservations: reservationsResult.data || [],
-        notes: notesResult.data || [],
+        reservations: reservationsResult.data,
+        notes: notesResult.data,
       },
     });
 

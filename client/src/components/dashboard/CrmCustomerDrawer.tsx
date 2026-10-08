@@ -17,7 +17,7 @@ export default function CrmCustomerDrawer({ customerId, onClose }: CrmCustomerDr
   const { t } = useTranslation();
   const isOpen = !!customerId;
 
-  const { data: customer, isLoading } = useCustomerDetail(customerId);
+  const { data: customer, isLoading, isError, refetch } = useCustomerDetail(customerId);
   const updateTags = useUpdateTags();
   const addNote = useAddNote();
   const deleteNote = useDeleteNote();
@@ -69,9 +69,23 @@ export default function CrmCustomerDrawer({ customerId, onClose }: CrmCustomerDr
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
             className="fixed right-0 top-0 h-full w-[420px] max-w-[90vw] bg-glass-modal backdrop-blur-glass-modal shadow-glass-modal z-50 overflow-y-auto border-l border-glass-border-dark"
           >
-            {isLoading || !customer ? (
+            {isLoading ? (
               <div className="flex items-center justify-center h-full">
                 <div className="animate-spin rounded-full h-8 w-8 border-2 border-border-gray border-t-burgundy" />
+              </div>
+            ) : isError || !customer ? (
+              <div role="alert" className="flex h-full flex-col items-center justify-center gap-4 px-8 text-center">
+                <p className="text-sm text-deep-charcoal">
+                  {t('crm.detailLoadError', 'Não foi possível carregar a ficha deste cliente.')}
+                </p>
+                <div className="flex items-center gap-3">
+                  <button type="button" onClick={() => void refetch()} className="rounded-full bg-burgundy px-4 py-2 text-xs font-medium text-white">
+                    {t('common.retry', 'Tentar novamente')}
+                  </button>
+                  <button type="button" onClick={onClose} className="rounded-full px-4 py-2 text-xs font-medium text-deep-charcoal">
+                    {t('common.close', 'Fechar')}
+                  </button>
+                </div>
               </div>
             ) : (
               <>
@@ -116,16 +130,16 @@ export default function CrmCustomerDrawer({ customerId, onClose }: CrmCustomerDr
                     />
                     <StatBox
                       label={t('crm.avgSpend', 'Ticket Medio')}
-                      value={customer.avg_revenue_per_visit ? formatCurrency(Math.round(customer.avg_revenue_per_visit)) : '--'}
+                      value={customer.avg_revenue_per_visit != null ? formatCurrency(Math.round(customer.avg_revenue_per_visit)) : '--'}
                     />
                     <StatBox
                       label={t('crm.totalRevenue', 'Receita Total')}
-                      value={customer.total_revenue ? formatCurrency(Math.round(customer.total_revenue)) : '--'}
+                      value={customer.total_revenue != null ? formatCurrency(Math.round(customer.total_revenue)) : '--'}
                     />
                     <StatBox
                       label={t('crm.churnRisk', 'Risco de Churn')}
                       value={customer.churn_risk_score != null ? `${customer.churn_risk_score}%` : '--'}
-                      valueColor={customer.churn_risk_score > 50 ? 'text-red-600' : undefined}
+                      valueColor={customer.churn_risk_score != null && customer.churn_risk_score > 50 ? 'text-red-600' : undefined}
                     />
                   </div>
 
@@ -229,7 +243,9 @@ export default function CrmCustomerDrawer({ customerId, onClose }: CrmCustomerDr
                       </div>
                     ) : (
                       <p className="text-sm text-muted-stone italic">
-                        {t('crm.noVisits', 'Nenhuma visita registrada')}
+                        {customer.total_visits > 0
+                          ? t('crm.noVisitDetails', 'Há visitas registradas, mas os detalhes não estão disponíveis.')
+                          : t('crm.noVisits', 'Nenhuma visita registrada')}
                       </p>
                     )}
                   </Section>
@@ -266,7 +282,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function StatusBadge({ status }: { status: string }) {
   const colorMap: Record<string, string> = {
     confirmed: 'bg-emerald-600/[0.10] text-emerald-700',
-    completed: 'bg-burgundy/[0.08] text-burgundy',
+    completed: 'bg-emerald-600/[0.10] text-emerald-700',
     cancelled: 'bg-red-700/[0.08] text-red-700',
     'no-show': 'bg-amber-600/[0.12] text-amber-700',
     pending: 'bg-muted-stone/[0.10] text-muted-stone',
