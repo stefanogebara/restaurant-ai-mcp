@@ -12,6 +12,7 @@ const guests = [
   { customer_id: 'guest-4', customer_phone: '+55 11 98877-2277', customer_name: 'Pedro Nunes', total_visits: 2, last_visit_date: '2026-09-29', customer_tier: 'occasional', lifetime_value: 620, churn_risk_score: 19, tags: [] },
   { customer_id: 'guest-5', customer_phone: '+55 11 98877-2288', customer_name: 'Alice Prado', total_visits: 1, last_visit_date: '2026-10-07', customer_tier: 'new', lifetime_value: 310, churn_risk_score: 4, tags: [] },
 ];
+const nextReservationDate = new Date(Date.now() + 2 * 86_400_000).toISOString().slice(0, 10);
 
 if (import.meta.env.DEV) {
   void i18n.changeLanguage('pt-BR');
@@ -27,6 +28,7 @@ if (import.meta.env.DEV) {
         return new Response(JSON.stringify({ success: true, data: {
           customer: { ...guest, customer_email: null, first_visit_date: '2025-11-09', avg_revenue_per_visit: 130, total_revenue: 1430, churn_risk_score: guest.churn_risk_score, allergies: [], dietary_restrictions: [], seating_preferences: ['terraço'], special_occasions: {} },
           reservations: [
+            { id: 'reservation-synthetic-next', date: nextReservationDate, time: '20:00', party_size: 2, status: 'confirmed' },
             { id: 'reservation-synthetic-1', date: '2026-08-18', time: '20:00', party_size: 2, status: 'completed' },
             { id: 'reservation-synthetic-2', date: '2026-07-29', time: '12:30', party_size: 3, status: 'completed' },
             { id: 'reservation-synthetic-3', date: '2026-06-12', time: '19:30', party_size: 2, status: 'completed' },

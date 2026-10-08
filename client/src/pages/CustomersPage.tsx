@@ -66,7 +66,7 @@ export function CustomersWorkspace() {
   const activeFilterCount = [!reviewOnly && !!tierFilter, !!tagFilter, !!allergyFilter, !!dietaryFilter].filter(Boolean).length;
   return (
     <>
-      <main className={`min-h-screen bg-brand-paper font-brand text-brand-ink transition-[margin] duration-300 ${selectedCustomerId ? 'lg:mr-[560px]' : ''}`}>
+      <main className={`min-h-screen bg-brand-paper font-brand text-brand-ink transition-[margin] duration-300 ${selectedCustomerId ? 'lg:mr-[520px]' : ''}`}>
       <div className="mx-auto max-w-[1240px] overflow-x-hidden px-4 pb-24 pt-6 sm:px-6 sm:pb-8 lg:px-10 mt-14 sm:mt-0">
         {/* The page title and view selection share one desktop line. */}
         <div className="mb-5 md:flex md:items-end md:justify-between md:gap-8">
@@ -98,7 +98,7 @@ export function CustomersWorkspace() {
         {/* Filters */}
         <div className="mb-4 flex flex-col gap-2.5 md:flex-row md:flex-wrap md:items-center">
           {/* Search */}
-          <div className="relative min-w-0 flex-1">
+          <div className="relative min-w-0 flex-1 md:max-w-[30rem]">
             <svg
               className="absolute left-3.5 top-1/2 -translate-y-1/2 text-brand-muted"
               width="16"
@@ -121,7 +121,7 @@ export function CustomersWorkspace() {
             />
           </div>
 
-          <details className="group shrink-0 open:basis-full">
+          <details className="group shrink-0 open:basis-full md:ml-auto">
             <summary className="inline-flex min-h-[38px] cursor-pointer list-none items-center gap-2 text-xs font-medium text-brand-action marker:hidden focus-visible:outline-2 focus-visible:outline-brand-action">
               {t('crm.moreFilters', 'More filters')}{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
               <svg className="transition-transform group-open:rotate-180" width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="m3 6 5 5 5-5" /></svg>
@@ -181,6 +181,11 @@ export function CustomersWorkspace() {
             </select>
           </div>
           </details>
+          {total > 0 && !isLoading && !isError && (
+            <button type="button" onClick={() => setShowDuplicates(true)} className="min-h-[38px] text-left text-xs text-brand-muted underline-offset-4 hover:text-brand-ink hover:underline focus-visible:outline-2 focus-visible:outline-brand-action">
+              {t('crm.findDuplicates', 'Find duplicates')}
+            </button>
+          )}
         </div>
         <p className="mb-3 text-xs text-brand-muted">{t('crm.scoreExplanation', 'The return-risk signal is a 0–100 heuristic for review, not a probability.')}</p>
 
@@ -225,11 +230,6 @@ export function CustomersWorkspace() {
             <CustomerDirectory customers={customers} total={total} page={page} pageSize={PAGE_SIZE} onPageChange={setPage} onOpen={setSelectedCustomerId} selectedCustomerId={selectedCustomerId} />
           )}
         </div>
-        {total > 0 && !isLoading && !isError && (
-          <button type="button" onClick={() => setShowDuplicates(true)} className="mt-5 min-h-[40px] text-xs text-brand-muted underline-offset-4 hover:text-brand-ink hover:underline focus-visible:outline-2 focus-visible:outline-brand-action">
-            {t('crm.findDuplicates', 'Find duplicates')}
-          </button>
-        )}
       </div>
       </main>
 

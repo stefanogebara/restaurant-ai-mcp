@@ -48,17 +48,36 @@ describe('CrmCustomerDrawer customer detail contract', () => {
     expect(screen.getByText('Prefers the terrace')).toBeInTheDocument();
     expect(screen.getByText('Sep 5, 2026')).toBeInTheDocument();
     expect(screen.getByText('19:30')).toBeInTheDocument();
-    expect(screen.getByLabelText('Risk signal: 18/100')).toBeInTheDocument();
+    expect(screen.getByLabelText('Risk of not returning: 18/100')).toBeInTheDocument();
     expect(screen.queryByText('18%')).not.toBeInTheDocument();
     expect(screen.queryByText('undefined')).not.toBeInTheDocument();
+  });
+
+  it('promotes a confirmed future reservation without counting it as a past visit', async () => {
+    const future = new Date(Date.now() + 7 * 86_400_000).toISOString().slice(0, 10);
+    respondWithDetail({
+      customer,
+      reservations: [
+        { id: 'next', date: future, time: '20:00', party_size: 3, status: 'confirmed' },
+        { id: 'past', date: '2026-09-05', time: '19:30', party_size: 2, status: 'completed' },
+      ],
+      notes: [],
+    });
+    renderWithProviders(<CrmCustomerDrawer customerId={customer.customer_id} onClose={vi.fn()} />);
+
+    const next = await screen.findByRole('heading', { name: 'Next reservation' });
+    expect(next.parentElement).toHaveTextContent('20:00');
+    expect(screen.getByRole('heading', { name: 'Other reservations' })).toBeInTheDocument();
+    expect(screen.getByText('Sep 5, 2026')).toBeInTheDocument();
+    expect(screen.getAllByText('20:00')).toHaveLength(1);
   });
 
   it('distinguishes imported aggregate visits from absent visit details', async () => {
     respondWithDetail({ customer, reservations: [], notes: [] });
     renderWithProviders(<CrmCustomerDrawer customerId={customer.customer_id} onClose={vi.fn()} />);
 
-    expect(await screen.findByText('Visits are recorded, but visit details are not available.')).toBeInTheDocument();
-    expect(screen.queryByText('No visits recorded')).not.toBeInTheDocument();
+    expect(await screen.findByText('Visits are recorded, but dated reservation details are not available.')).toBeInTheDocument();
+    expect(screen.queryByText('No reservations recorded')).not.toBeInTheDocument();
   });
 
   it('shows a valid zero revenue as zero rather than missing data', async () => {
@@ -71,8 +90,9 @@ describe('CrmCustomerDrawer customer detail contract', () => {
 
     expect(await screen.findByRole('heading', { name: 'Beatriz Costa' })).toBeInTheDocument();
     expect(screen.getAllByText('$0')).toHaveLength(1);
-    expect(screen.getByText('Estimated value: $840')).toBeInTheDocument();
-    expect(screen.getByLabelText('Risk signal: 0/100')).toBeInTheDocument();
+    expect(screen.getByText('Estimated value')).toBeInTheDocument();
+    expect(screen.getByText('$840')).toBeInTheDocument();
+    expect(screen.getByLabelText('Risk of not returning: 0/100')).toBeInTheDocument();
     expect(screen.queryByText('--')).not.toBeInTheDocument();
   });
 

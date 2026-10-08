@@ -1,5 +1,4 @@
 import { useTranslation } from 'react-i18next';
-import CustomerTierBadge from './CustomerTierBadge';
 import { formatCurrency } from '../../utils/currency';
 import type { CrmCustomer } from '../../hooks/useCustomers';
 
@@ -52,14 +51,15 @@ export default function CustomerDirectory({
                 onClick={() => onOpen(customer.customer_id)}
                 aria-label={t('crm.openCustomer', { name, defaultValue: `Open ${name}` })}
                 aria-current={selectedCustomerId === customer.customer_id ? 'true' : undefined}
-                className={`group grid w-full grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-1.5 border-l-[3px] px-3 py-3.5 text-left transition-colors hover:bg-brand-ink/[0.035] focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-brand-action md:items-center md:gap-3 md:px-4 md:py-4 ${compact ? 'md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_120px_75px]' : 'md:grid-cols-[minmax(0,1.7fr)_minmax(0,1.25fr)_140px_120px]'} ${selectedCustomerId === customer.customer_id ? 'border-brand-action bg-brand-action/[0.07]' : 'border-transparent'}`}
+                className={`group grid min-h-[76px] w-full grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-1.5 border-l-[3px] px-3 py-3.5 text-left transition-colors hover:bg-brand-ink/[0.035] focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-brand-action md:items-center md:gap-3 md:px-4 md:py-3 ${compact ? 'md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_120px_75px]' : 'md:grid-cols-[minmax(0,1.7fr)_minmax(0,1.25fr)_140px_120px]'} ${selectedCustomerId === customer.customer_id ? 'border-brand-action bg-brand-action/[0.07]' : 'border-transparent'}`}
               >
                 <span className="min-w-0">
                   <span className="block truncate text-[15px] font-medium leading-5 text-brand-ink">{name}</span>
-                  <span className="mt-1 flex items-center gap-2 overflow-hidden text-[11px] text-brand-muted">
-                    <CustomerTierBadge tier={customer.customer_tier as 'vip' | 'regular' | 'occasional' | 'new' | 'at_risk'} compact />
-                    <span className="hidden truncate md:inline">{(customer.tags || []).slice(0, 3).join(' · ')}</span>
-                    {(customer.tags || []).length > 3 && <span className="hidden md:inline">+{customer.tags.length - 3}</span>}
+                  <span className="mt-1 block min-h-[16px] truncate text-[11px] leading-4 text-brand-muted">
+                    {customer.customer_tier !== 'at_risk' && <span className="text-brand-ink/75">{t(`crm.tier_${customer.customer_tier}`, customer.customer_tier)}</span>}
+                    {customer.customer_tier !== 'at_risk' && (customer.tags || []).length > 0 && ' · '}
+                    {(customer.tags || []).slice(0, 3).join(' · ')}
+                    {(customer.tags || []).length > 3 && ` · +${customer.tags.length - 3}`}
                   </span>
                 </span>
                 <span className="col-start-1 row-start-2 text-xs leading-5 text-brand-muted md:col-start-2 md:row-start-1">

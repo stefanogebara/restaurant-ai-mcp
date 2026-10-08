@@ -85,7 +85,7 @@ describe('CustomersPage', () => {
     expect(screen.getByText(/aniversário/)).toBeInTheDocument();
     // A quarta tag não é impressa — vira "+1".
     expect(screen.queryByText('extra')).not.toBeInTheDocument();
-    expect(screen.getByText('+1')).toBeInTheDocument();
+    expect(screen.getByText(/\+1/)).toBeInTheDocument();
   });
 
   it('busca é debounced: só consulta o backend depois da pausa de digitação', async () => {
