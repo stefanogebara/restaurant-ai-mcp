@@ -63,13 +63,13 @@ export default function TagEditor({ tags, onTagsChange, maxTags = 20 }: TagEdito
           {tags.map((tag) => (
             <span
               key={tag}
-              className="inline-flex items-center gap-1 text-xs bg-stone-100 text-stone-700 px-2 py-1 rounded-md"
+              className="inline-flex items-center gap-1 rounded-md border border-brand-line bg-white/70 px-2 py-1 text-xs text-brand-ink"
             >
               {tag}
               <button
                 type="button"
                 onClick={() => removeTag(tag)}
-                className="text-[#9F1239] hover:text-[#7f0e2e] transition-colors"
+                className="text-brand-muted hover:text-red-700 transition-colors"
                 aria-label={t('crm.removeTag', { tag })}
               >
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -97,13 +97,13 @@ export default function TagEditor({ tags, onTagsChange, maxTags = 20 }: TagEdito
             }}
             placeholder={t('crm.addTagPlaceholder', 'Adicionar tag...')}
             maxLength={MAX_TAG_LENGTH}
-            className="w-full text-sm border border-stone-200 rounded-lg px-3 py-1.5 text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-1 focus:ring-[#9F1239]/30 focus:border-[#9F1239]/30"
+            className="w-full rounded-lg border border-brand-line bg-white/70 px-3 py-2 text-sm text-brand-ink placeholder:text-brand-muted focus-visible:outline-2 focus-visible:outline-brand-action"
           />
 
           {/* Suggestions dropdown */}
           {showSuggestions && availableSuggestions.length > 0 && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-glass-modal backdrop-blur-glass-modal border border-glass-border-dark rounded-lg shadow-glass-modal z-10 py-1">
-              <p className="px-3 py-1 text-[10px] font-bold text-stone-400 uppercase tracking-widest">
+            <div className="absolute top-full left-0 right-0 z-10 mt-1 rounded-lg border border-brand-line bg-brand-paper py-1 shadow-lg">
+              <p className="px-3 py-1 text-[10px] font-medium uppercase tracking-[0.14em] text-brand-muted">
                 {t('crm.suggestions', 'Sugestoes')}
               </p>
               {availableSuggestions.map((suggestion) => (
@@ -112,7 +112,7 @@ export default function TagEditor({ tags, onTagsChange, maxTags = 20 }: TagEdito
                   type="button"
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => addTag(suggestion)}
-                  className="w-full text-left px-3 py-1.5 text-sm text-stone-700 hover:bg-stone-50 transition-colors"
+                  className="w-full px-3 py-1.5 text-left text-sm text-brand-ink transition-colors hover:bg-brand-ink/5"
                 >
                   {suggestion}
                 </button>
@@ -124,7 +124,7 @@ export default function TagEditor({ tags, onTagsChange, maxTags = 20 }: TagEdito
 
       {/* Max tags hint */}
       {tags.length >= maxTags && (
-        <p className="text-xs text-stone-400">
+          <p className="text-xs text-brand-muted">
           {t('crm.maxTagsReached', 'Limite de tags atingido')}
         </p>
       )}

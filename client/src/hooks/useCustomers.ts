@@ -97,6 +97,7 @@ function normalizeCustomerDetail(data: unknown): CustomerDetail {
     || !Number.isFinite(customer.total_visits)
     || !Number.isFinite(customer.total_revenue)
     || !Number.isFinite(customer.avg_revenue_per_visit)
+    || !Number.isFinite(customer.lifetime_value)
     || (customer.churn_risk_score !== null && !Number.isFinite(customer.churn_risk_score))
     || !Array.isArray(envelope.reservations)
     || !Array.isArray(envelope.notes)) {

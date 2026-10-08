@@ -71,8 +71,8 @@ describe('CustomersPage', () => {
     renderWithProviders(<CustomersPage />);
 
     expect(await screen.findByText('Beatriz Costa')).toBeInTheDocument();
-    expect(screen.getByText('+5511999990001')).toBeInTheDocument();
-    expect(screen.getByText('6')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Open Beatriz Costa' })).toBeInTheDocument();
+    expect(screen.getByText('6 visits')).toBeInTheDocument();
   });
 
   it('mostra no máximo 3 tags e resume o resto', async () => {
@@ -80,9 +80,9 @@ describe('CustomersPage', () => {
     renderWithProviders(<CustomersPage />);
 
     await screen.findByText('Beatriz Costa');
-    expect(screen.getByText('terraço')).toBeInTheDocument();
-    expect(screen.getByText('vinho')).toBeInTheDocument();
-    expect(screen.getByText('aniversário')).toBeInTheDocument();
+    expect(screen.getByText(/terraço/)).toBeInTheDocument();
+    expect(screen.getByText(/vinho/)).toBeInTheDocument();
+    expect(screen.getByText(/aniversário/)).toBeInTheDocument();
     // A quarta tag não é impressa — vira "+1".
     expect(screen.queryByText('extra')).not.toBeInTheDocument();
     expect(screen.getByText('+1')).toBeInTheDocument();
@@ -115,6 +115,7 @@ describe('CustomersPage', () => {
 
     // Filtrar por tier tem de zerar o offset — senão o host filtra e cai
     // numa página vazia do resultado novo.
+    await user.click(screen.getByText('More filters'));
     await user.selectOptions(screen.getByRole('combobox', { name: /filter by tier/i }), 'vip');
     await waitFor(() => expect(lastUrl()).toContain('tier=vip'));
     expect(lastUrl()).toContain('offset=0');
@@ -138,12 +139,28 @@ describe('CustomersPage', () => {
     expect(within(screen.getByTestId('drawer')).getByText('abc-123')).toBeInTheDocument();
   });
 
+  it('filtra a vista de revisão no servidor e abre a ficha pelo teclado', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    respondWith([mkCustomer({ customer_id: 'risk-1', customer_tier: 'at_risk', churn_risk_score: 82 })]);
+    renderWithProviders(<CustomersPage />);
+
+    await user.click(await screen.findByRole('button', { name: 'For review' }));
+    await waitFor(() => expect(lastUrl()).toContain('tier=at_risk'));
+    expect(lastUrl()).toContain('sort=churn_risk_score');
+    const open = await screen.findByRole('button', { name: 'Open Beatriz Costa' });
+    open.focus();
+    await user.keyboard('{Enter}');
+    expect(within(screen.getByTestId('drawer')).getByText('risk-1')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'All customers' }));
+    expect(screen.queryByTestId('drawer')).not.toBeInTheDocument();
+  });
+
   it('CRM vazio explica como os clientes chegam, em vez de só dizer "nada aqui"', async () => {
     respondWith([]);
     renderWithProviders(<CustomersPage />);
 
-    expect(await screen.findByText(/CRM está esperando/i)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /primeira reserva/i })).toBeInTheDocument();
+    expect(await screen.findByText(/CRM is waiting/i)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /first reservation/i })).toBeInTheDocument();
     // Sem clientes, procurar duplicados não faz sentido e não deve aparecer.
     expect(screen.queryByRole('button', { name: /duplicate/i })).not.toBeInTheDocument();
   });

@@ -56,13 +56,13 @@ export default function ChipSelector({
         {items.map((item) => (
           <span
             key={item}
-            className="inline-flex items-center gap-1 text-xs bg-stone-100 text-stone-700 px-2 py-1 rounded-md border border-[#E7E5E4]"
+            className="inline-flex items-center gap-1 rounded-md border border-brand-line bg-white/70 px-2 py-1 text-xs text-brand-ink"
           >
             {item}
             <button
               type="button"
               onClick={() => removeItem(item)}
-              className="text-stone-400 hover:text-[#9F1239] transition-colors"
+              className="text-brand-muted hover:text-red-700 transition-colors"
               aria-label={t('crm.removeChip', { item })}
             >
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -79,7 +79,7 @@ export default function ChipSelector({
             key={preset}
             type="button"
             onClick={() => addItem(preset)}
-            className="text-xs text-stone-400 px-2 py-1 rounded-md border border-dashed border-stone-300 hover:border-[#9F1239] hover:text-[#9F1239] transition-colors"
+            className="rounded-md border border-brand-line px-2 py-1 text-xs text-brand-muted transition-colors hover:border-brand-action hover:text-brand-action"
           >
             + {preset}
           </button>
@@ -94,7 +94,7 @@ export default function ChipSelector({
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={placeholder || t('crm.addCustom', 'Add custom...')}
-          className="w-full text-sm border border-stone-200 rounded-lg px-3 py-1.5 text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-1 focus:ring-[#9F1239]/30 focus:border-[#9F1239]/30"
+          className="w-full rounded-lg border border-brand-line bg-white/70 px-3 py-2 text-sm text-brand-ink placeholder:text-brand-muted focus-visible:outline-2 focus-visible:outline-brand-action"
         />
       )}
     </div>

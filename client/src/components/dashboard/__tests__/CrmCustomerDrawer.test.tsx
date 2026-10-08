@@ -46,9 +46,10 @@ describe('CrmCustomerDrawer customer detail contract', () => {
     expect(await screen.findByRole('heading', { name: 'Beatriz Costa' })).toBeInTheDocument();
     expect(authFetch).toHaveBeenCalledWith(expect.stringContaining('action=detail'));
     expect(screen.getByText('Prefers the terrace')).toBeInTheDocument();
-    expect(screen.getByText('2026-09-05')).toBeInTheDocument();
+    expect(screen.getByText('Sep 5, 2026')).toBeInTheDocument();
     expect(screen.getByText('19:30')).toBeInTheDocument();
-    expect(screen.getByText('18%')).toBeInTheDocument();
+    expect(screen.getByLabelText('Risk signal: 18/100')).toBeInTheDocument();
+    expect(screen.queryByText('18%')).not.toBeInTheDocument();
     expect(screen.queryByText('undefined')).not.toBeInTheDocument();
   });
 
@@ -69,8 +70,9 @@ describe('CrmCustomerDrawer customer detail contract', () => {
     renderWithProviders(<CrmCustomerDrawer customerId={customer.customer_id} onClose={vi.fn()} />);
 
     expect(await screen.findByRole('heading', { name: 'Beatriz Costa' })).toBeInTheDocument();
-    expect(screen.getAllByText('$0')).toHaveLength(2);
-    expect(screen.getByText('0%')).toBeInTheDocument();
+    expect(screen.getAllByText('$0')).toHaveLength(1);
+    expect(screen.getByText('Estimated value: $840')).toBeInTheDocument();
+    expect(screen.getByLabelText('Risk signal: 0/100')).toBeInTheDocument();
     expect(screen.queryByText('--')).not.toBeInTheDocument();
   });
 
@@ -94,5 +96,19 @@ describe('CrmCustomerDrawer customer detail contract', () => {
     await userEvent.click(within(await screen.findByRole('alert')).getByRole('button', { name: /retry/i }));
     expect(await screen.findByRole('heading', { name: 'Beatriz Costa' })).toBeInTheDocument();
     expect(authFetch).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps editing controls collapsed, exposes note entry beside notes, and closes with Escape', async () => {
+    respondWithDetail({ customer, reservations: [], notes: [] });
+    const onClose = vi.fn();
+    renderWithProviders(<CrmCustomerDrawer customerId={customer.customer_id} onClose={onClose} />);
+
+    expect(await screen.findByRole('dialog', { name: 'Beatriz Costa' })).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('Add a note...')).not.toBeVisible();
+    await userEvent.click(screen.getByText('Add note', { selector: 'summary' }));
+    expect(screen.getByPlaceholderText('Add a note...')).toBeVisible();
+    expect(screen.getByText('Edit profile')).toBeInTheDocument();
+    await userEvent.keyboard('{Escape}');
+    expect(onClose).toHaveBeenCalledOnce();
   });
 });
