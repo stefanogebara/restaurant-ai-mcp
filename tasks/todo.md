@@ -134,7 +134,12 @@
 - [x] Corrigir a checagem de saúde que marcava históricos encerrados como obsoletos e tratava erro de consulta como zero saudável.
 - [x] A API padrão da fila truncava históricos aos 100 mais antigos; a lista visual agora pagina por estado sem quebrar os filtros e o GET legado permanece compatível.
 - [x] Impedir que Voz reporte “salvo localmente, sincronizará depois” sem persistência/replay dos ajustes; só confirmar após aceitação da ElevenLabs.
-- [ ] Tornar os erros da API de Voz localizados na interface e testar falha parcial de sincronização na experiência completa.
+- [x] Tornar os erros da API de Voz localizados na interface e testar falha parcial de sincronização na experiência completa.
+- [x] Preservar o sinal `partial` no hook de Voz, manter o ajuste pendente e explicar a falha local sem expor a mensagem em inglês da API.
+- [x] Quando a leitura vier só do banco, ocultar controles e números de ajuste não verificados; oferecer nova leitura sem bloquear Telefone/WhatsApp.
+- [x] Cobrir os dois estados na interface e no hook, rodar regressão completa e atualizar a PR em rascunho uma vez.
+
+Revisão — Voz, falha parcial e leitura indisponível (2026-10-09): build passou; Jest 281 suites/4.287 testes, Vitest 124 arquivos/1.115 testes, sintaxe de 702 APIs, lint das alterações, JSON e diff passaram. Playwright com sessão e respostas sintéticas verificou fallback/retry/aba Telefone e falha parcial em desktop e celular, sem erro de página; não houve chamada real à ElevenLabs. A crítica independente deu 5/10 à composição móvel da falha parcial: a correção funcional permanece em PR rascunho; a revisão visual de Voz, teste autenticado em Preview e teste de chamada real continuam pendentes antes de produção.
 - [x] Voz: separar persona salva no Seatable de base de conhecimento e prompt confirmados na ElevenLabs; dar nova tentativa explícita sem repetir a edição.
 - [x] Cobrir sucesso, falha parcial e nova tentativa com testes de API e interface; executar build e regressões antes de atualizar a PR em rascunho.
 - [x] Restaurar e versionar `client/insights-audit.html` como revisão estática autônoma; conferir o endereço local, abas e formatos antes de compartilhá-lo.

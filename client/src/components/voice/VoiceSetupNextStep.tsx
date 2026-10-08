@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { usePhoneIntegration } from '../../hooks/usePhoneIntegration';
 
 /** The next step is based on line ownership, never on agent registration alone. */
-export default function VoiceSetupNextStep() {
+export default function VoiceSetupNextStep({ compact = false }: { compact?: boolean }) {
   const { t } = useTranslation();
   const { status, isLoading, isError } = usePhoneIntegration();
   const assigned = status?.restaurant?.has_agent === true
@@ -31,18 +31,18 @@ export default function VoiceSetupNextStep() {
         : t('voiceSettings.nextStep.setupDesc', 'Seatable support assigns the line safely. Do not forward customer calls until setup is confirmed.');
 
   return (
-    <section aria-labelledby="voice-next-step" className="mb-5 border-b border-brand-line pb-5 sm:mb-10 sm:pb-10">
+    <section aria-labelledby="voice-next-step" className={compact ? 'mb-5 border-b border-brand-line pb-5' : 'mb-5 border-b border-brand-line pb-5 sm:mb-10 sm:pb-10'}>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-8">
         <div className="max-w-[680px]">
           <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-amber-800">
             {t('voiceSettings.nextStep.eyebrow', 'Next step')}
           </p>
-          <h2 id="voice-next-step" className="mt-1.5 font-serif text-[28px] font-normal leading-[1.08] tracking-[-0.045em] text-brand-ink sm:mt-2 sm:text-[38px]">
+          <h2 id="voice-next-step" className={compact ? 'mt-1.5 font-brand text-[18px] font-medium leading-snug text-brand-ink' : 'mt-1.5 font-serif text-[28px] font-normal leading-[1.08] tracking-[-0.045em] text-brand-ink sm:mt-2 sm:text-[38px]'}>
             {headline}
           </h2>
-          <p className="mt-2 max-w-[62ch] text-[15px] leading-6 text-brand-muted sm:mt-3">{description}</p>
+          <p className={compact ? 'mt-1 max-w-[62ch] text-sm leading-6 text-brand-muted' : 'mt-2 max-w-[62ch] text-[15px] leading-6 text-brand-muted sm:mt-3'}>{description}</p>
         </div>
-        <a href="#voice-settings:phone" className="inline-flex w-fit shrink-0 items-center justify-center rounded-full bg-brand-action px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-action">
+        <a href="#voice-settings:phone" className={compact ? 'inline-flex w-fit shrink-0 items-center justify-center rounded-full border border-brand-line px-4 py-2 text-sm font-semibold text-brand-action hover:bg-brand-action/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-action' : 'inline-flex w-fit shrink-0 items-center justify-center rounded-full bg-brand-action px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-action'}>
           {assigned
             ? t('voiceSettings.nextStep.viewTest', 'See number and test steps')
             : t('voiceSettings.nextStep.viewSetup', 'See setup steps')}

@@ -36,4 +36,11 @@ describe('VoiceSetupNextStep', () => {
     expect(screen.getByRole('heading', { name: 'Check the line before forwarding calls.' })).toBeInTheDocument();
     expect(screen.queryByText('Test the first real call.')).not.toBeInTheDocument();
   });
+
+  it('keeps the phone action secondary in the compact fallback layout', () => {
+    phone.mockReturnValue({ status: { restaurant: { status: 'active' } }, isLoading: false, isError: false });
+    render(<VoiceSetupNextStep compact />);
+    expect(screen.getByRole('heading', { name: 'Check the line before forwarding calls.' })).toHaveClass('font-brand');
+    expect(screen.getByRole('link', { name: /See setup steps/i })).toHaveClass('border-brand-line');
+  });
 });

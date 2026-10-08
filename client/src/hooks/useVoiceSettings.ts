@@ -6,6 +6,13 @@ interface VoiceSettingsQueryOptions {
   enabled?: boolean;
 }
 
+export class VoiceSettingsPartialSaveError extends Error {
+  constructor() {
+    super('Voice agent updated, but Seatable could not save its local settings');
+    this.name = 'VoiceSettingsPartialSaveError';
+  }
+}
+
 export function useVoiceSettings(options: VoiceSettingsQueryOptions = {}) {
   const { enabled = true } = options;
 
@@ -32,11 +39,19 @@ export function useSaveVoiceSettings() {
         body: JSON.stringify(body),
       });
       if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.error || 'Failed to save');
+        const errorBody = await response.json().catch(() => ({}));
+        if (errorBody?.partial === true) throw new VoiceSettingsPartialSaveError();
+        throw new Error('Failed to save voice settings');
       }
       return response.json();
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['voiceSettings'] }),
+    onError: (error) => {
+      // The remote agent changed even though the local write failed. Refresh
+      // readback without discarding the user's pending edits in the page.
+      if (error instanceof VoiceSettingsPartialSaveError) {
+        queryClient.invalidateQueries({ queryKey: ['voiceSettings'] });
+      }
+    },
   });
 }

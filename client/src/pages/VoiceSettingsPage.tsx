@@ -10,7 +10,7 @@ import { useTranslation } from 'react-i18next';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import { Skeleton } from '../components/common/Skeleton';
 import { useToast } from '../contexts/ToastContext';
-import { useVoiceSettings, useSaveVoiceSettings } from '../hooks/useVoiceSettings';
+import { useVoiceSettings, useSaveVoiceSettings, VoiceSettingsPartialSaveError } from '../hooks/useVoiceSettings';
 import { useVoiceEngineSettings, useSaveVoiceEngine } from '../hooks/useVoiceEngineSettings';
 import type { VoiceEngineSettings } from '../hooks/useVoiceEngineSettings';
 import { useFeatureAccess } from '../hooks/useSubscription';
@@ -111,11 +111,16 @@ export default function VoiceSettingsPage() {
   const [showEngineSwitchConfirm, setShowEngineSwitchConfirm] = useState(false);
   const [engineSwitchTarget, setEngineSwitchTarget] = useState<VoiceEngineSettings['voice_engine'] | null>(null);
   const [isBrowserOpen, setIsBrowserOpen] = useState(false);
+  const [voiceSavePartial, setVoiceSavePartial] = useState(false);
 
   // ─── Derived state ────────────────────────────────────────────────────────────
 
   const isSaving = saveMutation.isPending || saveEngineMutation.isPending;
   const isDirty = pendingVoiceId !== null || pendingSettings !== null || pendingLanguage !== null || pendingEngine !== null || pendingOpenAIVoice !== null;
+  const hasPendingElevenLabsChanges = pendingVoiceId !== null || pendingSettings !== null || pendingLanguage !== null;
+  const hasPendingEngineChanges = pendingEngine !== null || pendingOpenAIVoice !== null;
+  const voiceReadbackUnavailable = config?.source === 'database_only';
+  const voiceSavePaused = voiceReadbackUnavailable && hasPendingElevenLabsChanges;
 
   const currentEngine = pendingEngine || engineConfig?.voice_engine || 'elevenlabs';
   const currentOpenAIVoice = pendingOpenAIVoice || engineConfig?.openai_voice_id || 'alloy';
@@ -146,7 +151,9 @@ export default function VoiceSettingsPage() {
   // ─── Handlers ─────────────────────────────────────────────────────────────────
 
   const handleSettingChange = (key: keyof VoiceSettings, value: number) => {
-    setPendingSettings({ ...currentSettings, [key]: value });
+    // Presets call this three times in one React event. Compose each change
+    // from the previous pending value so batching cannot discard two fields.
+    setPendingSettings(previous => ({ ...(previous ?? currentSettings), [key]: value }));
   };
 
   const handleEngineSwitch = (target: VoiceEngineSettings['voice_engine']) => {
@@ -162,8 +169,8 @@ export default function VoiceSettingsPage() {
   };
 
   const handleSave = () => {
-    const hasElevenLabsChanges = pendingVoiceId !== null || pendingSettings !== null || pendingLanguage !== null;
-    const hasEngineChanges = pendingEngine !== null || pendingOpenAIVoice !== null;
+    const hasElevenLabsChanges = hasPendingElevenLabsChanges && !voiceReadbackUnavailable;
+    const hasEngineChanges = hasPendingEngineChanges;
     const expectedCalls = (hasElevenLabsChanges ? 1 : 0) + (hasEngineChanges ? 1 : 0);
     if (expectedCalls === 0) return;
 
@@ -186,17 +193,21 @@ export default function VoiceSettingsPage() {
       if (pendingSettings) body.voice_settings = pendingSettings;
       if (pendingLanguage) body.language = pendingLanguage;
       saveMutation.mutate(body, {
-        onSuccess: (result) => {
+        onSuccess: () => {
+          setVoiceSavePartial(false);
           // Clear this half's pending state regardless of the other half.
           setPendingVoiceId(null);
           setPendingSettings(null);
           setPendingLanguage(null);
-          if (result?.sync_warning) {
-            toast.info(t('voice.savedWithSyncWarning', 'Settings saved locally. Agent sync will apply on next refresh.'));
-          }
           onAllComplete();
         },
-        onError: (error) => toast.error(error instanceof Error ? error.message : t('voice.saveSettingsFailed', 'Failed to save voice settings')),
+        onError: (error) => {
+          if (error instanceof VoiceSettingsPartialSaveError) {
+            setVoiceSavePartial(true);
+          } else {
+            toast.error(t('voice.saveSettingsFailed', 'Failed to save voice settings'));
+          }
+        },
       });
     }
 
@@ -350,12 +361,12 @@ export default function VoiceSettingsPage() {
   return (
     <DashboardLayout appearance="hero">
       <div className="mx-auto max-w-[1120px] px-4 pb-20 pt-5 sm:px-8 lg:px-10">
-        <header className="mb-5 border-b border-brand-line pb-5 pl-12 sm:mb-6 sm:pb-7 lg:pl-0">
-          <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-brand-muted">{t('voiceSettings.setupEyebrow', 'Reception')}</p>
+        <header className="mb-5 border-b border-brand-line pb-5 sm:mb-6 sm:pb-7">
+          <p className="mb-3 pl-12 text-[11px] font-semibold uppercase tracking-[0.16em] text-brand-muted lg:pl-0">{t('voiceSettings.setupEyebrow', 'Reception')}</p>
           <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <h1 className="font-brand text-[37px] font-normal leading-[1.02] tracking-[-0.055em] text-brand-ink sm:text-[52px]">
-                {t('navigation.voiceAgent')} <em className="block font-serif font-normal italic tracking-[-0.04em] sm:inline">{t('voiceSettings.headingSuffix', 'at your service.')}</em>
+                {t('navigation.voiceAgent')}
               </h1>
               <p className="mt-3 hidden max-w-[52ch] text-[15px] leading-6 text-brand-muted sm:block">{t('voiceSettings.intro', 'Shape your AI receptionist’s voice and track the phone setup here.')}</p>
             </div>
@@ -363,22 +374,30 @@ export default function VoiceSettingsPage() {
             <button
               type="button"
               onClick={handleSave}
-              disabled={!isDirty || isSaving}
+              disabled={!isDirty || isSaving || (voiceSavePaused && !hasPendingEngineChanges)}
               className="flex items-center gap-2 rounded-full bg-brand-action px-6 py-2.5 text-[13px] font-semibold text-white hover:bg-brand-ink disabled:cursor-not-allowed disabled:bg-brand-line disabled:text-brand-muted"
             >
               {isSaving && <Spinner size="sm" className="border-white border-t-white/30" />}
               {isSaving ? t('voiceSettings.saving', 'Saving...') : t('voiceSettings.saveChanges', 'Save Changes')}
             </button>
-            {!isDirty && !isSaving && (
+            {!isSaving && (!isDirty || voiceSavePaused) && (
               <p className="text-xs text-brand-muted">
-                {t('voiceSettings.changeSettingsHint', 'Change a setting above to enable saving')}
+                {voiceSavePaused || voiceReadbackUnavailable
+                  ? t('voiceSettings.editingPausedHint', 'Voice edits resume when live settings load')
+                  : t('voiceSettings.changeSettingsHint', 'Change a setting above to enable saving')}
               </p>
             )}
           </div>
         </div>
         </header>
 
-        <VoiceSetupNextStep />
+        {voiceSavePartial && (
+          <p role="alert" className="mb-6 border-t border-amber-700/25 pt-4 text-sm leading-6 text-amber-900">
+            {t('voiceSettings.partialSave', 'The voice agent accepted the change, but Seatable could not save it. Your edits remain here. Check the live settings before retrying.')}
+          </p>
+        )}
+
+        {!voiceReadbackUnavailable && <VoiceSetupNextStep />}
 
         {(() => {
           // Tabs split the previous wall-of-10-sections page into focused
@@ -387,7 +406,30 @@ export default function VoiceSettingsPage() {
           // still saves everything in one shot.
           const voiceTab = (
             <div className="space-y-6">
-              {currentEngine === 'elevenlabs' && (
+              {currentEngine === 'elevenlabs' && voiceReadbackUnavailable && (
+                <>
+                  <section role="status" className="border-b border-brand-line py-4 sm:py-5">
+                    <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-amber-800">
+                      {t('voiceSettings.storedOnlyLabel', 'Stored settings only')}
+                    </p>
+                    <div className="mt-2 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-8">
+                      <div>
+                        <h2 className="font-brand text-[21px] leading-tight text-brand-ink sm:text-[23px]">
+                          {t('voiceSettings.storedOnlyTitle', 'Live voice settings are unavailable')}
+                        </h2>
+                        <p className="mt-1 max-w-[58ch] text-sm leading-6 text-brand-muted">
+                          {t('voiceSettings.storedOnlyDesc', 'We cannot verify the agent’s tuning. ElevenLabs voice controls are paused until the live settings load.')}
+                        </p>
+                      </div>
+                      <button type="button" onClick={() => refetchConfig()} className="w-fit shrink-0 rounded-full bg-brand-action px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-action">
+                        {t('voiceSettings.retryLiveRead', 'Retry live settings')}
+                      </button>
+                    </div>
+                  </section>
+                  <VoiceEngineSelector currentEngine={currentEngine} pendingEngine={pendingEngine} engineStatus={engineConfig?.voice_engine_status} onEngineSwitch={handleEngineSwitch} />
+                </>
+              )}
+              {currentEngine === 'elevenlabs' && !voiceReadbackUnavailable && (
                 <>
                   <VoiceCurrentCard
                     currentVoiceId={currentVoiceId}
@@ -568,6 +610,8 @@ export default function VoiceSettingsPage() {
 
           return <VoiceSettingsTabs tabs={tabs} />;
         })()}
+
+        {voiceReadbackUnavailable && <div className="mt-6"><VoiceSetupNextStep compact /></div>}
 
         <VoiceEngineSwitchModal isOpen={showEngineSwitchConfirm} engineSwitchTarget={engineSwitchTarget} onConfirm={confirmEngineSwitch} onClose={() => setShowEngineSwitchConfirm(false)} />
       </div>
