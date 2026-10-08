@@ -1524,3 +1524,7 @@ Enviei um link para `client/insights-audit.html` depois de apagar o harness temp
 O redesign de Insights melhorou precisão e estados vazios, mas continuou usando a antiga linguagem de DM Sans, burgundy, serif em todos os títulos, cards de gráfico e sidebar escura. O hero aprovado usa Instrument Sans como voz principal, Instrument Serif itálico de forma pontual, papel quente, verde-pinho e uma narrativa visual ligada ao restaurante. Uma tela pode passar testes e ainda parecer de outra empresa.
 
 Regra: antes de redesenhar outra página interna, capturar lado a lado o hero aprovado e a página real. Registrar no `DESIGN.md` quais tokens, papéis e padrões migram; atualizar a tela e o shell juntos em uma prévia isolada. Não aceitar uma nota visual crescente se ela mede apenas polimento interno e ignora a identidade da marca.
+
+## 2026-10-08 — Estado transitório não é evidência de zero
+
+Insights exibiu inicialmente zero clientes enquanto as consultas carregavam; segundos depois apresentou cinco destaques e o resumo correto. Uma alteração de consulta foi proposta cedo demais e precisou ser retirada antes de commit. Regra: ao comparar duas telas autenticadas, aguardar o fim de todas as cargas, observar o estado estável e conferir as definições dos indicadores no código. Categorias históricas e scores heurísticos podem representar coortes diferentes; não unificá-los apenas porque os rótulos se parecem.
