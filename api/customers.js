@@ -31,6 +31,7 @@ async function handleList(req, res) {
     const {
       search,
       tier,
+      min_risk_score,
       tag,
       allergy,
       dietary,
@@ -47,6 +48,16 @@ async function handleList(req, res) {
         success: false,
         error: `Invalid tier. Must be one of: ${validTiers.join(', ')}`,
       });
+    }
+
+    // The relationship review queue uses the same strict >70 threshold as
+    // Insights. Apply it before pagination so its total and pages stay true.
+    const riskThreshold = min_risk_score == null ? null : Number(min_risk_score);
+    if (riskThreshold !== null && (
+      typeof min_risk_score !== 'string' || min_risk_score.trim() === ''
+      || !Number.isFinite(riskThreshold) || riskThreshold < 0 || riskThreshold > 100
+    )) {
+      return res.status(400).json({ success: false, error: 'Invalid min_risk_score. Must be a number from 0 to 100' });
     }
 
     const validSortFields = [
@@ -80,6 +91,10 @@ async function handleList(req, res) {
     // Tier filter
     if (tier) {
       query = query.eq('customer_tier', tier);
+    }
+
+    if (riskThreshold !== null) {
+      query = query.gt('churn_risk_score', riskThreshold);
     }
 
     // Tag filter (JSONB contains)
@@ -130,12 +145,16 @@ async function handleList(req, res) {
  */
 async function handleDetail(req, res) {
   try {
-    const { customer_id } = req.query;
+    const { customer_id, from_date } = req.query;
     const restaurantId = req.user.restaurant_id;
 
     if (!customer_id) {
       return res.status(400).json({ success: false, error: 'Missing required parameter: customer_id' });
     }
+    if (from_date != null && (typeof from_date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(from_date))) {
+      return res.status(400).json({ success: false, error: 'Invalid from_date. Use YYYY-MM-DD' });
+    }
+    const fromDate = from_date || new Date().toISOString().slice(0, 10);
 
     const customerResult = await crmDb()
       .from('customer_ltv')
@@ -154,14 +173,30 @@ async function handleDetail(req, res) {
 
     // The CRM identifier is usually a phone number, but may differ for older
     // imports. Look up reservation history with the stored phone when present.
-    const [reservationsResult, notesResult] = await Promise.all([
+    const phone = customerResult.data.customer_phone || customer_id;
+    const reservationFields = 'id, date, time, party_size, status, customer_name, special_requests, created_at';
+    const [reservationsResult, nextReservationResult, notesResult] = await Promise.all([
       supabaseAdmin
         .from('reservations')
-        .select('id, date, time, party_size, status, customer_name, special_requests, created_at')
+        .select(reservationFields)
         .eq('restaurant_id', restaurantId)
-        .eq('customer_phone', customerResult.data.customer_phone || customer_id)
+        .eq('customer_phone', phone)
         .order('date', { ascending: false })
         .limit(10),
+
+      // Latest-first history can omit the earliest upcoming booking when a
+      // guest has more than ten future reservations. Fetch that booking
+      // independently, then merge it into the existing response contract.
+      supabaseAdmin
+        .from('reservations')
+        .select(reservationFields)
+        .eq('restaurant_id', restaurantId)
+        .eq('customer_phone', phone)
+        .gte('date', fromDate)
+        .in('status', ['confirmed', 'pending'])
+        .order('date', { ascending: true })
+        .order('time', { ascending: true })
+        .limit(1),
 
       crmDb()
         .from('customer_notes')
@@ -171,13 +206,20 @@ async function handleDetail(req, res) {
         .order('created_at', { ascending: false }),
     ]);
 
-    if (reservationsResult.error || notesResult.error ||
-        !Array.isArray(reservationsResult.data) || !Array.isArray(notesResult.data)) {
+    if (reservationsResult.error || nextReservationResult.error || notesResult.error ||
+        !Array.isArray(reservationsResult.data) || !Array.isArray(nextReservationResult.data) || !Array.isArray(notesResult.data)) {
       logger.error('Customer detail is incomplete', {
         reservationsError: reservationsResult.error,
+        nextReservationError: nextReservationResult.error,
         notesError: notesResult.error,
       });
       return res.status(503).json({ success: false, error: 'Customer detail temporarily unavailable' });
+    }
+
+    const reservations = [...reservationsResult.data];
+    const earliestUpcoming = nextReservationResult.data[0];
+    if (earliestUpcoming && !reservations.some(reservation => reservation.id === earliestUpcoming.id)) {
+      reservations.push(earliestUpcoming);
     }
 
     return res.status(200).json({
@@ -193,7 +235,7 @@ async function handleDetail(req, res) {
             ? null : Number(customerResult.data.churn_risk_score),
           tags: customerResult.data.tags || [],
         },
-        reservations: reservationsResult.data,
+        reservations,
         notes: notesResult.data,
       },
     });

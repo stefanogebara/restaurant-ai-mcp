@@ -49,6 +49,8 @@ describe('CrmCustomerDrawer customer detail contract', () => {
     expect(screen.getByRole('button', { name: 'Delete note' })).not.toBeVisible();
     await userEvent.click(screen.getByLabelText('Note actions'));
     expect(screen.getByRole('button', { name: 'Delete note' })).toBeVisible();
+    expect(screen.queryByLabelText('Risk of not returning: 18/100')).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Relationship' }));
     expect(screen.getByText('Sep 5, 2026')).toBeInTheDocument();
     expect(screen.getByText('19:30')).toBeInTheDocument();
     expect(screen.getByLabelText('Risk of not returning: 18/100')).toBeInTheDocument();
@@ -70,9 +72,12 @@ describe('CrmCustomerDrawer customer detail contract', () => {
 
     const next = await screen.findByRole('heading', { name: 'Next reservation' });
     expect(next.closest('section')).toHaveTextContent('20:00');
-    expect(screen.getByText('A future reservation already exists.')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Other reservations' })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Relationship' }));
+    expect(screen.getByRole('heading', { name: 'Next reservation' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Recent reservations' })).toBeInTheDocument();
     expect(screen.getByText('Sep 5, 2026')).toBeInTheDocument();
+    expect(screen.getAllByText(/20:00/)).toHaveLength(1);
+    await userEvent.click(screen.getByRole('button', { name: 'View service details' }));
     expect(screen.getAllByText('20:00')).toHaveLength(1);
   });
 
@@ -80,11 +85,13 @@ describe('CrmCustomerDrawer customer detail contract', () => {
     respondWithDetail({ customer, reservations: [], notes: [] });
     renderWithProviders(<CrmCustomerDrawer customerId={customer.customer_id} onClose={vi.fn()} />);
 
+    await screen.findByRole('heading', { name: 'Beatriz Costa' });
+    await userEvent.click(screen.getByRole('button', { name: 'Relationship' }));
     expect(await screen.findByText('Visits are recorded, but dated reservation details are not available.')).toBeInTheDocument();
     expect(screen.queryByText('No reservations recorded')).not.toBeInTheDocument();
   });
 
-  it('shows a valid zero revenue as zero rather than missing data', async () => {
+  it('does not present modeled historical revenue as a recorded payment', async () => {
     respondWithDetail({
       customer: { ...customer, avg_revenue_per_visit: 0, total_revenue: 0, churn_risk_score: 0 },
       reservations: [],
@@ -93,11 +100,26 @@ describe('CrmCustomerDrawer customer detail contract', () => {
     renderWithProviders(<CrmCustomerDrawer customerId={customer.customer_id} onClose={vi.fn()} />);
 
     expect(await screen.findByRole('heading', { name: 'Beatriz Costa' })).toBeInTheDocument();
-    expect(screen.getAllByText('$0')).toHaveLength(1);
-    expect(screen.getByText('Estimated value')).toBeInTheDocument();
-    expect(screen.getByText('$840')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Relationship' }));
+    expect(screen.queryByText('Recorded revenue')).not.toBeInTheDocument();
+    expect(screen.getByText('6')).toBeInTheDocument();
+    expect(screen.queryByText('$840')).not.toBeVisible();
+    await userEvent.click(screen.getByText('View value projection'));
+    expect(screen.getByText('$840')).toBeVisible();
+    expect(screen.getByText('Estimated from visit frequency and average spend. This is not recorded revenue.')).toBeVisible();
     expect(screen.getByLabelText('Risk of not returning: 0/100')).toBeInTheDocument();
     expect(screen.queryByText('--')).not.toBeInTheDocument();
+  });
+
+  it('opens directly in the relationship view for the review queue and can return to service notes', async () => {
+    respondWithDetail({ customer: { ...customer, churn_risk_score: 82 }, reservations: [], notes: [{ id: 'n1', content: 'Prefers the terrace', created_by: null, created_at: '2026-09-01T12:00:00Z' }] });
+    renderWithProviders(<CrmCustomerDrawer customerId={customer.customer_id} onClose={vi.fn()} initialView="relationship" />);
+
+    expect(await screen.findByText('Elevated historical signal')).toBeInTheDocument();
+    expect(screen.queryByText('Prefers the terrace')).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'For service' }));
+    expect(screen.getByText('Prefers the terrace')).toBeInTheDocument();
+    expect(screen.queryByText('Elevated historical signal')).not.toBeInTheDocument();
   });
 
   it('shows a recoverable error for a malformed customer instead of an endless spinner', async () => {

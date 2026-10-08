@@ -11,9 +11,10 @@ import type { ProfileUpdatePayload } from '../../hooks/useCustomers';
 interface CrmCustomerDrawerProps {
   customerId: string | null;
   onClose: () => void;
+  initialView?: 'service' | 'relationship';
 }
 
-export default function CrmCustomerDrawer({ customerId, onClose }: CrmCustomerDrawerProps) {
+export default function CrmCustomerDrawer({ customerId, onClose, initialView = 'service' }: CrmCustomerDrawerProps) {
   const { t, i18n } = useTranslation();
   const isOpen = !!customerId;
 
@@ -22,6 +23,7 @@ export default function CrmCustomerDrawer({ customerId, onClose }: CrmCustomerDr
   const nextReservation = customer?.recent_reservations
     ?.filter((reservation) => ['confirmed', 'pending'].includes(reservation.status.toLowerCase()) && reservation.date >= today)
     .sort((a, b) => `${a.date}T${a.time}`.localeCompare(`${b.date}T${b.time}`))[0];
+  const nextReservationDate = nextReservation ? reservationDateParts(nextReservation.date, i18n.language) : null;
   const otherReservations = customer?.recent_reservations?.filter((reservation) => reservation.id !== nextReservation?.id) ?? [];
   const updateTags = useUpdateTags();
   const addNote = useAddNote();
@@ -29,7 +31,12 @@ export default function CrmCustomerDrawer({ customerId, onClose }: CrmCustomerDr
   const updateProfile = useUpdateProfile();
 
   const [noteText, setNoteText] = useState('');
+  const [activeView, setActiveView] = useState<'service' | 'relationship'>(initialView);
   const [isDesktop, setIsDesktop] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 1024);
+
+  useEffect(() => {
+    if (customerId) setActiveView(initialView);
+  }, [customerId, initialView]);
 
   useEffect(() => {
     const update = () => setIsDesktop(window.innerWidth >= 1024);
@@ -71,7 +78,7 @@ export default function CrmCustomerDrawer({ customerId, onClose }: CrmCustomerDr
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Backdrop */}
+          {/* Backdrop on smaller screens */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -80,7 +87,7 @@ export default function CrmCustomerDrawer({ customerId, onClose }: CrmCustomerDr
             onClick={onClose}
           />
 
-          {/* Drawer */}
+          {/* Customer profile */}
           <motion.div
             role="dialog"
             aria-modal={!isDesktop}
@@ -89,7 +96,7 @@ export default function CrmCustomerDrawer({ customerId, onClose }: CrmCustomerDr
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 32, stiffness: 340 }}
-            className="fixed inset-y-0 right-0 z-50 w-full overflow-x-hidden overflow-y-auto border-l border-brand-line bg-brand-paper font-brand text-brand-ink shadow-xl sm:w-[520px] lg:shadow-none"
+            className="fixed inset-y-0 right-0 z-50 w-full overflow-x-hidden overflow-y-auto border-l border-brand-line bg-brand-paper font-brand text-brand-ink sm:w-[520px]"
           >
             {isLoading ? (
               <div className="flex items-center justify-center h-full">
@@ -112,13 +119,14 @@ export default function CrmCustomerDrawer({ customerId, onClose }: CrmCustomerDr
             ) : (
               <>
                 {/* Header */}
-                <div className="bg-brand-ink px-5 pb-5 pt-5 text-brand-paper sm:px-8 lg:bg-brand-paper lg:pb-3 lg:text-brand-ink">
+                <div className="px-5 pb-4 pt-5 text-brand-ink sm:px-8 lg:pt-14">
+                  <p className="mb-2 hidden text-[11px] font-medium uppercase tracking-[0.12em] text-brand-muted lg:block">{t('crm.customerProfile', 'Customer profile')}</p>
                   <div className="flex items-start justify-between gap-3">
-                    <h2 className="min-w-0 break-words font-brand text-[32px] font-normal leading-[1.04] tracking-[-0.055em] sm:text-[38px]">{customer.customer_name || customer.customer_phone}</h2>
+                    <h2 className="min-w-0 break-words font-brand text-[32px] font-normal leading-[1.04] tracking-[-0.055em]">{customer.customer_name || customer.customer_phone}</h2>
                     <button
                       type="button"
                       onClick={onClose}
-                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-brand-paper/35 text-brand-paper hover:bg-brand-paper/10 focus-visible:outline-2 focus-visible:outline-brand-paper lg:border-brand-line lg:text-brand-action lg:hover:bg-brand-ink/5 lg:focus-visible:outline-brand-action"
+                      className="flex h-10 w-10 shrink-0 items-center justify-center text-brand-action hover:text-brand-ink focus-visible:outline-2 focus-visible:outline-brand-action"
                       aria-label={t('common.close', 'Fechar')}
                     >
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -127,14 +135,28 @@ export default function CrmCustomerDrawer({ customerId, onClose }: CrmCustomerDr
                       </svg>
                     </button>
                   </div>
-                  <p className="mt-2 text-xs tabular-nums text-brand-paper/70 lg:text-brand-muted">{customer.customer_phone}{customer.customer_email && <span className="ml-3 break-all">{customer.customer_email}</span>}</p>
+                  <p className="mt-2 text-xs tabular-nums text-brand-muted">{customer.customer_phone}{customer.customer_email && <span className="ml-3 break-all">{customer.customer_email}</span>}</p>
                 </div>
+
+                <nav aria-label={t('crm.profileViews', 'Profile views')} className="mx-5 flex gap-7 border-b border-brand-line sm:mx-8">
+                  <button type="button" aria-current={activeView === 'service' ? 'page' : undefined} onClick={() => setActiveView('service')} className={`min-h-11 border-b-2 pb-1 text-sm focus-visible:outline-2 focus-visible:outline-brand-action ${activeView === 'service' ? 'border-brand-action text-brand-ink' : 'border-transparent text-brand-muted hover:text-brand-ink'}`}>{t('crm.serviceKnowledge', 'For service')}</button>
+                  <button type="button" aria-current={activeView === 'relationship' ? 'page' : undefined} onClick={() => setActiveView('relationship')} className={`min-h-11 border-b-2 pb-1 text-sm focus-visible:outline-2 focus-visible:outline-brand-action ${activeView === 'relationship' ? 'border-brand-action text-brand-ink' : 'border-transparent text-brand-muted hover:text-brand-ink'}`}>{t('crm.relationshipView', 'Relationship')}</button>
+                </nav>
 
                 <div className="px-5 pb-12 sm:px-8">
                   {customer.customer_tier !== 'at_risk' && <div className="mt-4"><CustomerTierBadge tier={customer.customer_tier as 'vip' | 'regular' | 'occasional' | 'new'} compact /></div>}
-                  <section aria-label={t('crm.serviceKnowledge', 'For service')} className="my-5 border-l-2 border-brand-action pb-1 pl-4">
+                  {activeView === 'service' && <section aria-label={t('crm.serviceKnowledge', 'For service')} className="pb-3 pt-7">
+                    {nextReservation && <div className="border-b border-brand-line pb-7">
+                      <h3 className="text-[11px] font-medium uppercase tracking-[0.12em] text-brand-muted">{t('crm.nextReservation', 'Next reservation')}</h3>
+                      <div className="mt-4 flex items-end justify-between gap-4 text-brand-ink">
+                        <p className="flex min-w-0 items-baseline gap-2"><span className="font-serif text-[48px] italic leading-none">{nextReservationDate?.day}</span><span className="min-w-0 truncate text-lg tracking-[-0.03em]">{nextReservationDate?.month}</span></p>
+                        <span className="shrink-0 text-[30px] leading-none tabular-nums tracking-[-0.05em]">{nextReservation.time}</span>
+                      </div>
+                      <p className="mt-3 text-xs tabular-nums text-brand-muted">{nextReservationDate?.year} <span aria-hidden="true">·</span> {nextReservation.party_size} {t('crm.people', 'guests')}</p>
+                      {customer.seating_preferences?.length > 0 && <p className="mt-4 text-xs text-brand-muted">{t('crm.seatingPreference', 'Seating preference')}: <span className="text-brand-ink">{customer.seating_preferences.join(', ')}</span></p>}
+                    </div>}
                     <div className="flex items-center justify-between gap-3">
-                      <h3 className="font-brand text-xs font-medium text-brand-muted">{t('crm.serviceKnowledge', 'For service')}</h3>
+                      <h3 className="pt-5 text-[11px] font-medium uppercase tracking-[0.12em] text-brand-muted">{t('crm.serviceNotes', 'Service notes')}</h3>
                       {customer.notes?.length > 0 && <details className="relative">
                         <summary aria-label={t('crm.noteActions', 'Note actions')} className="flex h-8 w-8 cursor-pointer list-none items-center justify-center rounded-full text-brand-muted marker:hidden hover:bg-brand-ink/5 focus-visible:outline-2 focus-visible:outline-brand-action">
                           <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><circle cx="3" cy="8" r="1.1" /><circle cx="8" cy="8" r="1.1" /><circle cx="13" cy="8" r="1.1" /></svg>
@@ -144,15 +166,10 @@ export default function CrmCustomerDrawer({ customerId, onClose }: CrmCustomerDr
                         </div>
                       </details>}
                     </div>
-                    {nextReservation && <div className="mt-2">
-                      <div className="flex flex-wrap items-baseline gap-x-2 text-xs tabular-nums text-brand-muted"><h4 className="font-brand font-medium">{t('crm.nextReservation', 'Next reservation')}</h4><span aria-hidden="true">·</span><span>{formatVisitDate(nextReservation.date, i18n.language)}</span></div>
-                      <p className="mt-2 flex flex-wrap items-baseline gap-x-3 text-brand-ink"><span className="font-brand text-[29px] leading-none tabular-nums tracking-[-0.05em]">{nextReservation.time}</span><span className="text-[16px] tabular-nums">{nextReservation.party_size} {t('crm.people', 'guests')}</span></p>
-                      {customer.seating_preferences?.length > 0 && <p className="mt-2 text-xs text-brand-muted">{t('crm.seatingPreference', 'Seating preference')}: {customer.seating_preferences.join(', ')}</p>}
-                    </div>}
                     {/* Note list */}
                     {customer.notes && customer.notes.length > 0 ? (
-                      <div className={nextReservation ? 'mt-4 border-t border-brand-line pt-3' : 'mt-3'}>
-                        <p className="max-w-[48ch] break-words text-[16px] font-medium leading-[1.4] text-brand-ink">{customer.notes[0].content}</p>
+                      <div className="mt-2">
+                        <p className="max-w-[48ch] break-words text-[19px] leading-[1.4] tracking-[-0.025em] text-brand-ink">{customer.notes[0].content}</p>
                         <div className="mt-1 flex items-center gap-4 text-xs text-brand-muted">
                           <span>{new Date(customer.notes[0].created_at).toLocaleDateString(i18n.language, { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                         </div>
@@ -175,8 +192,8 @@ export default function CrmCustomerDrawer({ customerId, onClose }: CrmCustomerDr
                         </div>
                       ) : !customer.notes?.length && <p className="text-sm text-brand-muted">{t('crm.noServicePreferences', 'No service preferences recorded yet.')}</p>}
                     </div>
-                    <details className="group mt-2">
-                      <summary className="inline-flex min-h-8 cursor-pointer list-none items-center rounded-full border border-brand-line px-3 text-xs font-medium text-brand-action marker:hidden hover:bg-brand-ink/5 focus-visible:outline-2 focus-visible:outline-brand-action">
+                    <details className="group mt-4">
+                      <summary className="inline-flex min-h-8 cursor-pointer list-none items-center text-xs font-medium text-brand-action underline decoration-brand-line underline-offset-4 marker:hidden hover:text-brand-ink focus-visible:outline-2 focus-visible:outline-brand-action">
                         {t('crm.addNote', 'Add note')}
                       </summary>
                       <div className="pt-2">
@@ -203,28 +220,30 @@ export default function CrmCustomerDrawer({ customerId, onClose }: CrmCustomerDr
 
                       </div>
                     </details>
-                  </section>
+                  </section>}
 
-                  <section aria-label={t('crm.relationshipSnapshot', 'Relationship at a glance')} className="border-t border-brand-line py-4">
-                    <div className="grid grid-cols-2 gap-5 sm:gap-6">
-                      <div aria-label={customer.churn_risk_score != null ? `${t('crm.returnRisk', 'Risk of not returning')}: ${Math.round(customer.churn_risk_score)}/100` : undefined}>
-                        <p className="text-xs text-brand-muted">{nextReservation ? t('crm.historicalRisk', 'Historical return signal') : t('crm.returnRisk', 'Risk of not returning')}</p>
-                        <p className={`mt-2 leading-none tabular-nums tracking-[-0.04em] text-ocre-700 ${nextReservation ? 'text-[19px]' : 'text-[23px]'}`}>{customer.churn_risk_score != null ? <>{Math.round(customer.churn_risk_score)}<span className="ml-1 text-sm tracking-normal text-brand-muted">/100</span></> : '—'}</p>
-                        {nextReservation && <p className="mt-2 max-w-[19ch] text-xs leading-4 text-brand-muted">{t('crm.futureBookingRiskContext', 'Historical signal; a future reservation already exists.')}</p>}
-                        <details className="mt-1 text-xs text-brand-muted"><summary className="inline-flex min-h-8 cursor-pointer list-none items-center underline decoration-brand-line underline-offset-2 focus-visible:outline-2 focus-visible:outline-brand-action">{t('crm.howReadRisk', 'What does this mean?')}</summary><p className="max-w-[36ch] pb-2 leading-5">{t('crm.scoreBasis', 'Based on visit history; not a probability.')}</p></details>
-                      </div>
-                      <StatBox label={t('crm.estimatedValue', 'Estimated value')} value={customer.lifetime_value != null ? formatCurrency(Math.round(customer.lifetime_value)) : '—'} />
+                  {activeView === 'relationship' && <section aria-label={t('crm.relationshipSnapshot', 'Relationship at a glance')} className="py-6">
+                    <div>
+                      <p className="flex items-baseline gap-3 text-brand-ink"><span className="text-[48px] leading-none tabular-nums tracking-[-0.06em]">{customer.total_visits}</span><span className="text-lg tracking-[-0.03em]">{t('crm.visitsRecorded', 'recorded visits')}</span></p>
+                      {customer.last_visit_date && <p className="mt-3 text-xs text-brand-muted">{t('crm.lastVisitInProfile', { date: formatVisitDate(customer.last_visit_date, i18n.language), defaultValue: `Last visit: ${formatVisitDate(customer.last_visit_date, i18n.language)}` })}</p>}
                     </div>
-                    <div className="grid grid-cols-2 gap-5 pt-4 sm:gap-6">
-                      <div><p className="text-xs text-brand-muted">{t('crm.totalVisits', 'Visitas')}</p><p className="mt-1 text-sm tabular-nums text-brand-ink">{customer.total_visits}</p></div>
-                      <div><p className="text-xs text-brand-muted">{t('crm.recordedRevenue', 'Recorded revenue')}</p><p className="mt-1 text-sm tabular-nums text-brand-ink">{customer.total_revenue != null ? formatCurrency(Math.round(customer.total_revenue)) : '—'}</p></div>
+                    {nextReservation && <div className="mt-6 border-t border-brand-line pt-5">
+                      <h3 className="text-xs text-brand-muted">{t('crm.nextReservation', 'Next reservation')}</h3>
+                      <p className="mt-2 text-[21px] leading-tight tabular-nums tracking-[-0.03em] text-brand-ink">{formatVisitDate(nextReservation.date, i18n.language)} <span className="text-brand-muted">·</span> {nextReservation.time}</p>
+                      <p className="mt-1 flex items-center gap-3 text-xs text-brand-muted"><span>{nextReservation.party_size} {t('crm.people', 'guests')}</span><StatusBadge status={nextReservation.status} /></p>
+                      <button type="button" onClick={() => setActiveView('service')} className="mt-2 min-h-8 text-xs font-medium text-brand-action underline decoration-brand-line underline-offset-4 focus-visible:outline-2 focus-visible:outline-brand-action">{t('crm.viewServiceBooking', 'View service details')}</button>
+                    </div>}
+                    <div className="mt-5 border-t border-brand-line pt-5" aria-label={customer.churn_risk_score != null ? `${t('crm.returnRisk', 'Risk of not returning')}: ${Math.round(customer.churn_risk_score)}/100` : undefined}>
+                      <div className="flex items-baseline justify-between gap-3"><p className="text-xs text-brand-muted">{t('crm.historicalRisk', 'Historical return signal')}</p><p className="text-[22px] leading-none tabular-nums text-ocre-700">{customer.churn_risk_score != null ? <>{Math.round(customer.churn_risk_score)}<span className="ml-0.5 text-xs text-brand-muted">/100</span></> : '—'}</p></div>
+                      {customer.churn_risk_score != null && customer.churn_risk_score > 70 && <p className="mt-1 text-xs text-ocre-700">{t('crm.elevatedHistoricalSignal', 'Elevated historical signal')}</p>}
+                      <details className="text-xs text-brand-muted"><summary className="inline-flex min-h-8 cursor-pointer list-none items-center underline decoration-brand-line underline-offset-2 focus-visible:outline-2 focus-visible:outline-brand-action">{t('crm.howReadRisk', 'What does this mean?')}</summary><p className="max-w-[48ch] pb-2 leading-5">{t('crm.scoreBasis', 'Based on visit history; not a probability.')}</p></details>
+                      {customer.lifetime_value != null && <details className="text-xs text-brand-muted"><summary className="inline-flex min-h-8 cursor-pointer list-none items-center underline decoration-brand-line underline-offset-2 focus-visible:outline-2 focus-visible:outline-brand-action">{t('crm.viewValueProjection', 'View value projection')}</summary><p className="pb-1 text-lg tabular-nums text-brand-ink">{formatCurrency(Math.round(customer.lifetime_value))}</p><p className="max-w-[48ch] pb-2 leading-5">{t('crm.valueProjectionBasis', 'Estimated from visit frequency and average spend. This is not recorded revenue.')}</p></details>}
                     </div>
-                    {customer.last_visit_date && !customer.recent_reservations?.length && <p className="mt-3 text-xs text-brand-muted">{t('crm.lastVisitInProfile', { date: formatVisitDate(customer.last_visit_date, i18n.language), defaultValue: `Last visit: ${formatVisitDate(customer.last_visit_date, i18n.language)}` })}</p>}
-                  </section>
+                  </section>}
 
                   {/* Reservations may include future or cancelled entries; they are not all visits. */}
-                  <section aria-label={t('crm.recentReservations', 'Recent reservations')} className="py-4">
-                    <h3 className="font-brand text-sm font-medium text-brand-ink">{nextReservation ? t('crm.otherReservations', 'Other reservations') : t('crm.recentReservations', 'Recent reservations')}</h3>
+                  {activeView === 'relationship' && <section aria-label={t('crm.recentReservations', 'Recent reservations')} className="border-t border-brand-line py-5">
+                    <h3 className="font-brand text-sm font-medium text-brand-ink">{t('crm.recentReservations', 'Recent reservations')}</h3>
                     {otherReservations.length > 0 ? (
                       <div className="mt-3 divide-y divide-brand-line">
                         {otherReservations.map((res) => (
@@ -235,7 +254,7 @@ export default function CrmCustomerDrawer({ customerId, onClose }: CrmCustomerDr
                             </div>
                             <div className="flex flex-col items-end gap-0.5 text-right">
                               <span className="text-xs text-brand-muted">{res.party_size} {t('crm.people', 'pessoas')}</span>
-                              {res.status.toLowerCase() !== 'completed' && <StatusBadge status={res.status} />}
+                              <StatusBadge status={res.status} />
                             </div>
                           </div>
                         ))}
@@ -249,8 +268,8 @@ export default function CrmCustomerDrawer({ customerId, onClose }: CrmCustomerDr
                             : t('crm.noVisits', 'No reservations recorded')}
                       </p>
                     )}
-                  </section>
-                  <details className="group border-t border-brand-line pt-4">
+                  </section>}
+                  {activeView === 'service' && <details className="group border-t border-brand-line pt-4">
                     <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between text-sm font-medium text-brand-action marker:hidden focus-visible:outline-2 focus-visible:outline-brand-action">
                       {t('crm.editProfile', 'Edit profile')}
                       <svg className="transition-transform group-open:rotate-180" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><path d="m3 6 5 5 5-5" /></svg>
@@ -277,7 +296,7 @@ export default function CrmCustomerDrawer({ customerId, onClose }: CrmCustomerDr
                   />
 
                     </div>
-                  </details>
+                  </details>}
                 </div>
               </>
             )}
@@ -289,15 +308,6 @@ export default function CrmCustomerDrawer({ customerId, onClose }: CrmCustomerDr
 }
 
 // ─── Sub-components ─────────────────────────────────────────
-
-function StatBox({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="min-w-0">
-      <p className="text-xs leading-4 text-brand-muted">{label}</p>
-      <p className="mt-2 truncate font-brand text-[22px] leading-none tabular-nums tracking-[-0.04em] text-brand-ink">{value}</p>
-    </div>
-  );
-}
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -315,6 +325,16 @@ function Fact({ label, values }: { label: string; values: string[] }) {
 function formatVisitDate(value: string, locale: string): string {
   const date = new Date(`${value}T00:00:00`);
   return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function reservationDateParts(value: string, locale: string): { day: string; month: string; year: string } {
+  const date = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return { day: value, month: '', year: '' };
+  return {
+    day: String(date.getDate()),
+    month: date.toLocaleDateString(locale, { month: 'long' }),
+    year: String(date.getFullYear()),
+  };
 }
 
 function localDateKey(date: Date): string {

@@ -13,6 +13,7 @@ const guests = [
   { customer_id: 'guest-5', customer_phone: '+55 11 98877-2288', customer_name: 'Alice Prado', total_visits: 1, last_visit_date: '2026-10-07', customer_tier: 'new', lifetime_value: 310, churn_risk_score: 4, tags: [] },
 ];
 const nextReservationDate = new Date(Date.now() + 2 * 86_400_000).toISOString().slice(0, 10);
+const previewState = new URLSearchParams(location.search).get('state');
 
 if (import.meta.env.DEV) {
   void i18n.changeLanguage('pt-BR');
@@ -36,7 +37,9 @@ if (import.meta.env.DEV) {
           notes: [{ id: 'note-synthetic-1', content: 'Prefere sombra no horário do almoço.', created_by: null, created_at: '2026-08-18T12:00:00Z' }],
         } }), { status: 200, headers: { 'Content-Type': 'application/json' } });
       }
-      const list = params.get('tier') === 'at_risk' ? guests.filter(g => g.customer_tier === 'at_risk') : guests;
+      if (previewState === 'error') return new Response(JSON.stringify({ success: false, error: 'Falha simulada.' }), { status: 503 });
+      const threshold = params.get('min_risk_score');
+      const list = previewState === 'empty' ? [] : threshold !== null ? guests.filter(g => g.churn_risk_score > Number(threshold)) : guests;
       return new Response(JSON.stringify({ success: true, data: { customers: list, total: list.length } }), { status: 200, headers: { 'Content-Type': 'application/json' } });
     }
     return new Response(JSON.stringify({ success: false, error: 'Prévia local: alterações desativadas.' }), { status: 503, headers: { 'Content-Type': 'application/json' } });

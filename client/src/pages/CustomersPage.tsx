@@ -49,7 +49,8 @@ export function CustomersWorkspace() {
 
   const filters: CustomerListFilters = {
     search: debouncedSearch || undefined,
-    tier: reviewOnly ? 'at_risk' : tierFilter || undefined,
+    tier: reviewOnly ? undefined : tierFilter || undefined,
+    minRiskScore: reviewOnly ? 70 : undefined,
     tag: tagFilter || undefined,
     allergy: allergyFilter || undefined,
     dietary: dietaryFilter || undefined,
@@ -59,7 +60,7 @@ export function CustomersWorkspace() {
     offset: page * PAGE_SIZE,
   };
 
-  const { data, isLoading, isError } = useCustomerList(filters);
+  const { data, isLoading, isError, refetch } = useCustomerList(filters);
 
   const customers = data?.customers ?? [];
   const total = data?.total ?? 0;
@@ -86,7 +87,7 @@ export function CustomersWorkspace() {
             {t('crm.reviewView', 'For review')}
           </button>
         </nav>
-        {reviewOnly && <p className="mb-4 max-w-2xl text-xs leading-relaxed text-brand-muted">{t('crm.reviewExplanation', 'These guests have an elevated return-risk score. Review their history before deciding whether to contact them.')}</p>}
+        {reviewOnly && <p className="mb-4 max-w-2xl text-xs leading-relaxed text-brand-muted">{t('crm.reviewExplanation', 'Guests with a historical return-risk score above 70/100. Check reservations and visit history before deciding what to do.')}</p>}
 
         {/* Filters */}
         <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-1 md:gap-y-2.5">
@@ -108,7 +109,7 @@ export function CustomersWorkspace() {
               type="text"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              placeholder={t('crm.searchPlaceholder', 'Search by name, phone or email...')}
+              placeholder={t('crm.searchPlaceholder', 'Search by name or phone...')}
               aria-label={t('crm.ariaSearch', 'Search customers')}
               className="min-h-[46px] w-full rounded-full border border-brand-line bg-white/55 py-2.5 pl-11 pr-4 text-sm text-brand-ink placeholder:text-brand-muted focus-visible:outline-2 focus-visible:outline-brand-action"
             />
@@ -189,15 +190,16 @@ export function CustomersWorkspace() {
               <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand-line border-t-brand-action" aria-hidden="true" />
             </div>
           ) : isError ? (
-            <div role="alert" className="py-16 text-center">
+            <div role="alert" className="mx-auto max-w-sm py-16 text-center">
               <p className="text-sm text-red-700">{t('crm.loadError', 'Failed to load customers')}</p>
+              <button type="button" onClick={() => void refetch()} className="mt-5 min-h-10 rounded-full border border-brand-line px-5 text-sm text-brand-action hover:bg-brand-ink/[0.04] focus-visible:outline-2 focus-visible:outline-brand-action">{t('common.retry', 'Try again')}</button>
             </div>
           ) : customers.length === 0 ? (
             <div className="mx-auto max-w-md py-16 text-center">
               {reviewOnly ? (
                 <>
                   <h2 className="text-xl tracking-[-0.03em] text-brand-ink">{t('crm.noReviewTitle', 'No customers to review here')}</h2>
-                  <p className="mt-2 text-sm leading-relaxed text-brand-muted">{t('crm.noReviewHint', 'There are no customers classified as at risk in this selection.')}</p>
+                  <p className="mt-2 text-sm leading-relaxed text-brand-muted">{t('crm.noReviewHint', 'No customers have a historical return-risk score above 70/100 in this selection.')}</p>
                   <button type="button" onClick={() => setReviewOnly(false)} className="mt-5 rounded-full border border-brand-line px-5 py-2.5 text-sm text-brand-ink hover:bg-brand-ink/[0.04]">
                     {t('crm.allCustomersView', 'All customers')}
                   </button>
@@ -220,7 +222,7 @@ export function CustomersWorkspace() {
               )}
             </div>
           ) : (
-            <CustomerDirectory customers={customers} total={total} page={page} pageSize={PAGE_SIZE} onPageChange={setPage} onOpen={setSelectedCustomerId} selectedCustomerId={selectedCustomerId} />
+            <CustomerDirectory customers={customers} total={total} page={page} pageSize={PAGE_SIZE} onPageChange={setPage} onOpen={setSelectedCustomerId} selectedCustomerId={selectedCustomerId} mode={reviewOnly ? 'relationship' : 'service'} />
           )}
         </div>
       </div>
@@ -229,6 +231,7 @@ export function CustomersWorkspace() {
       {/* Customer Drawer */}
       <CrmCustomerDrawer
         customerId={selectedCustomerId}
+        initialView={reviewOnly ? 'relationship' : 'service'}
         onClose={() => setSelectedCustomerId(null)}
       />
 

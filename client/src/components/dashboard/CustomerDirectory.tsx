@@ -1,5 +1,4 @@
 import { useTranslation } from 'react-i18next';
-import { formatCurrency } from '../../utils/currency';
 import type { CrmCustomer } from '../../hooks/useCustomers';
 
 interface CustomerDirectoryProps {
@@ -10,39 +9,34 @@ interface CustomerDirectoryProps {
   onPageChange: (page: number) => void;
   onOpen: (customerId: string) => void;
   selectedCustomerId?: string | null;
+  mode: 'service' | 'relationship';
 }
 
-function relativeVisit(date: string | null, locale: string, unknownLabel: string): string {
+function visitDate(date: string | null, locale: string, unknownLabel: string): string {
   if (!date) return unknownLabel;
-  const timestamp = new Date(date).getTime();
-  if (!Number.isFinite(timestamp)) return unknownLabel;
-  const elapsedDays = Math.max(0, Math.floor((Date.now() - timestamp) / 86_400_000));
-  const formatter = new Intl.RelativeTimeFormat(locale, { numeric: 'auto', style: 'long' });
-  if (elapsedDays < 7) return formatter.format(-elapsedDays, 'day');
-  if (elapsedDays < 30) return formatter.format(-Math.floor(elapsedDays / 7), 'week');
-  if (elapsedDays < 365) return formatter.format(-Math.floor(elapsedDays / 30), 'month');
-  return formatter.format(-Math.floor(elapsedDays / 365), 'year');
+  const parsed = new Date(`${date.slice(0, 10)}T00:00:00`);
+  if (!Number.isFinite(parsed.getTime())) return unknownLabel;
+  return parsed.toLocaleDateString(locale, { day: 'numeric', month: 'short', year: parsed.getFullYear() < new Date().getFullYear() ? 'numeric' : undefined });
 }
 
 export default function CustomerDirectory({
-  customers, total, page, pageSize, onPageChange, onOpen, selectedCustomerId,
+  customers, total, page, pageSize, onPageChange, onOpen, selectedCustomerId, mode,
 }: CustomerDirectoryProps) {
   const { t, i18n } = useTranslation();
   const totalPages = Math.ceil(total / pageSize);
-  const compact = !!selectedCustomerId;
+  const relationship = mode === 'relationship';
 
   return (
     <section aria-label={t('crm.directoryLabel', 'Customer directory')}>
-      <div className={`flex justify-between border-b border-brand-line px-3 pb-3 text-[11px] font-medium text-brand-muted md:grid md:gap-4 md:px-4 ${compact ? 'md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_120px_90px]' : 'md:grid-cols-[minmax(0,1.7fr)_minmax(0,1.25fr)_140px_110px]'}`}>
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 border-b border-brand-line px-3 pb-3 text-[11px] font-medium text-brand-muted md:grid-cols-[minmax(0,1.55fr)_120px_116px] md:gap-4 md:px-4">
         <span>{t('crm.colName', 'Customer')}</span>
-        <span className="hidden md:block">{t('crm.historyLabel', 'History')}</span>
-        <span className="hidden text-right md:block">{t('crm.estimatedValue', 'Estimated value')}</span>
-        <span className="text-right">{t('crm.riskShort', 'Risk')}</span>
+        <span className="hidden md:block">{t('crm.totalVisits', 'Visits')}</span>
+        <span className="text-right">{relationship ? t('crm.riskSignal', 'Risk signal') : t('crm.lastVisit', 'Last visit')}</span>
       </div>
       <ol className="divide-y divide-brand-line">
         {customers.map((customer) => {
           const name = customer.customer_name || customer.customer_phone;
-          const visit = relativeVisit(customer.last_visit_date, i18n.language, t('crm.visitUnknown', 'Date unavailable'));
+          const visit = visitDate(customer.last_visit_date, i18n.language, t('crm.visitUnknown', 'Date unavailable'));
           const score = Math.round(customer.churn_risk_score || 0);
           return (
             <li key={customer.customer_id}>
@@ -51,7 +45,7 @@ export default function CustomerDirectory({
                 onClick={() => onOpen(customer.customer_id)}
                 aria-label={t('crm.openCustomer', { name, defaultValue: `Open ${name}` })}
                 aria-current={selectedCustomerId === customer.customer_id ? 'true' : undefined}
-                className={`group grid min-h-[80px] w-full grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-1 border-l-[3px] px-3 py-3 text-left transition-colors hover:bg-brand-ink/[0.035] focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-brand-action md:items-center md:gap-4 md:px-4 ${compact ? 'md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_120px_90px]' : 'md:grid-cols-[minmax(0,1.7fr)_minmax(0,1.25fr)_140px_110px]'} ${selectedCustomerId === customer.customer_id ? 'border-brand-action bg-brand-action/[0.07]' : 'border-transparent'}`}
+                className={`group grid min-h-[76px] w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 border-l-[3px] px-3 py-3 text-left transition-colors hover:bg-brand-ink/[0.035] focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-brand-action md:grid-cols-[minmax(0,1.55fr)_120px_116px] md:gap-4 md:px-4 ${selectedCustomerId === customer.customer_id ? 'border-brand-action bg-brand-action/[0.07]' : 'border-transparent'}`}
               >
                 <span className="min-w-0">
                   <span className="block truncate text-[18px] font-medium leading-6 tracking-[-0.025em] text-brand-ink">{name}</span>
@@ -64,15 +58,10 @@ export default function CustomerDirectory({
                 </span>
                 <span className="col-start-1 row-start-2 text-xs leading-5 text-brand-muted md:col-start-2 md:row-start-1">
                   <span className="font-medium text-brand-ink tabular-nums md:block md:text-sm">{t('crm.visitCount', { count: customer.total_visits, defaultValue: `${customer.total_visits} visits` })}</span>
-                  <span aria-hidden="true" className="px-1 md:hidden">·</span>
-                  <span className="md:block">{visit}</span>
+                  {relationship && <><span aria-hidden="true" className="px-1 md:hidden">·</span><span className="md:block">{visit}</span></>}
                 </span>
-                <span className="col-start-1 row-start-3 text-xs tabular-nums text-brand-muted md:col-start-3 md:row-start-1 md:text-right md:text-[16px] md:font-medium md:text-brand-ink">
-                  <span className="md:hidden">{t('crm.estimatedValue', 'Estimated value')}: </span>
-                  <span className="text-brand-ink">{formatCurrency(Math.round(customer.lifetime_value || 0))}</span>
-                </span>
-                <span className="col-start-2 row-start-1 self-start text-right md:col-start-4 md:self-center">
-                  <span aria-describedby="customer-score-explanation" className={`block text-[22px] leading-none tabular-nums tracking-[-0.04em] ${score >= 60 ? 'text-ocre-700' : score >= 40 ? 'text-brand-ink' : 'text-brand-muted'}`}>{score}<span className="ml-0.5 text-[11px] tracking-normal text-brand-muted">/100</span></span>
+                <span className="col-start-2 row-span-2 self-center text-right md:col-start-3 md:row-span-1">
+                  {relationship ? <span aria-describedby="customer-score-explanation" className="block text-[22px] leading-none tabular-nums tracking-[-0.04em] text-ocre-700">{score}<span className="ml-0.5 text-[11px] tracking-normal text-brand-muted">/100</span></span> : <span className="block whitespace-nowrap text-xs tabular-nums leading-5 text-brand-ink md:text-sm">{visit}</span>}
                 </span>
               </button>
             </li>

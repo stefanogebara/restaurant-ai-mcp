@@ -31,6 +31,17 @@
 
 **Próxima hipótese de produto, a validar com estados reais e sintéticos:** manter `Todos` como diretório para atendimento (nome, frequência, última visita; o risco não lidera cada linha) e `Para revisar` como fila de relacionamento (índice, histórico que o explica, nenhuma mensagem automática). Dentro da ficha, separar o resumo da próxima visita e preferências registradas do contexto analítico. A reserva futura deve contextualizar, não apagar, o índice histórico. Não inventar atribuição de mesa, comparecimento, gasto ou próximo contato que as APIs não fornecem. Criar capturas das duas vistas, inclusive estados vazio/erro, antes de implementar a divisão.
 
+**Execução em 08/out — separação de serviço e relacionamento:**
+- [x] Alinhar o filtro de revisão ao critério numérico de Insights (score >70) no servidor, com teste de isolamento e copy honesta.
+- [x] Fazer Todos priorizar histórico de atendimento e Para revisar priorizar o sinal; manter cada linha operável por teclado.
+- [x] Dividir a ficha em vistas de Atendimento e Relacionamento, com próxima reserva/notas/preferências separadas de risco/estimativas/histórico.
+- [x] Capturar lista/ficha, celular/desktop e estados vazios; repetir crítica Astra independente usando apenas a imagem.
+- [ ] Testar contratos, interações, responsividade, build e suites; registrar score e limites antes de publicar.
+
+**Mudança de composição após crítica v6 (6,8/10 em ambos):** o painel lateral de 520 px deixa a lista vazia e rebaixa o registro. A ficha em tela inteira recebeu 6,4/10 no atendimento e 6,5/10 no relacionamento; uma ficha central em duas colunas recebeu 6,5/10. Ambas foram revertidas. A composição lateral atual ainda não é aprovada; não fazer outra troca de contêiner sem uma decisão operacional e um conteúdo que justifiquem a área.
+
+**Correção de dados desta passada:** a API da ficha passou a buscar a reserva futura mais próxima em consulta separada, com filtro por restaurante e telefone. Ela é acrescentada à lista recente sem duplicação quando dez reservas mais novas a ocultavam. A data de corte é enviada pelo cliente na data local da interface. O erro dessa consulta torna a ficha indisponível em vez de declarar falsamente que não há próxima reserva. Quatro testes de API foram acrescentados; testes focados passaram. A verificação completa da versão congelada ainda está em andamento. Produção segue inalterada.
+
 **Revisão visual desta passada:** capturas Playwright do Painel e Análises foram avaliadas por críticos Astra novos, cada um com uma única imagem e sem código ou críticas anteriores. O estado de Análises v9 recebeu 7,2/10 no celular; o Painel com mesas diagramadas recebeu 6,5/10 em celular/desktop, mas a fixture dessa última captura não marcou a navegação ativa, então essa nota não serve como aprovação nem como comparação perfeita com o estado anterior. Os comentários convergem: a próxima melhora precisa reorganizar a informação e a proporção das seções, não só ajustar espaçamentos. Meta 9/10 segue aberta. O mapa salvo não foi alterado; apenas a apresentação de inventário sem posições recebeu diagramas de mesa e assentos exatos até 12. Nenhum dado real foi modificado.
 
 **Decisões de design:** o período vazio precisa orientar a próxima ação sem inventar números. A fila prioriza pessoas ativas antes do histórico; encerrados continuam acessíveis por filtro. O Google OAuth não será alterado por código local: branding e links são configurados no projeto Google correto, após conferir titularidade.

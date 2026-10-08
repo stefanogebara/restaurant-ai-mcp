@@ -65,6 +65,8 @@ export interface DuplicatesResponse {
 export interface CustomerListFilters {
   search?: string;
   tier?: string;
+  /** Exclusive lower bound; 70 selects scores above 70/100. */
+  minRiskScore?: number;
   tag?: string;
   allergy?: string;
   dietary?: string;
@@ -127,6 +129,7 @@ function buildQueryString(filters: CustomerListFilters): string {
   const params = new URLSearchParams({ action: 'list' });
   if (filters.search) params.set('search', filters.search);
   if (filters.tier) params.set('tier', filters.tier);
+  if (filters.minRiskScore != null) params.set('min_risk_score', String(filters.minRiskScore));
   if (filters.tag) params.set('tag', filters.tag);
   if (filters.allergy) params.set('allergy', filters.allergy);
   if (filters.dietary) params.set('dietary', filters.dietary);
@@ -155,11 +158,13 @@ export function useCustomerList(filters: CustomerListFilters) {
 }
 
 export function useCustomerDetail(customerId: string | null) {
+  const now = new Date();
+  const fromDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   return useQuery<CustomerDetail>({
-    queryKey: ['crm', 'customer', customerId],
+    queryKey: ['crm', 'customer', customerId, fromDate],
     queryFn: async () => {
       const response = await authFetch(
-        `/api/customers?action=detail&customer_id=${encodeURIComponent(customerId!)}`
+        `/api/customers?action=detail&customer_id=${encodeURIComponent(customerId!)}&from_date=${fromDate}`
       );
       if (!response.ok) throw new Error('Failed to fetch customer detail');
       const result = await response.json();

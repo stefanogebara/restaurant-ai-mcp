@@ -357,10 +357,80 @@ describe('customerMergeService', () => {
 // 2. update_profile action
 // ---------------------------------------------------------------------------
 
+describe('customers API — list risk threshold', () => {
+  let handler;
+  let query;
+
+  beforeEach(() => {
+    jest.resetModules();
+    query = {
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      gt: jest.fn().mockReturnThis(),
+      order: jest.fn().mockReturnThis(),
+      range: jest.fn().mockResolvedValue({
+        data: [{ customer_id: 'risk-1', churn_risk_score: '82', lifetime_value: '400', tags: null }],
+        count: 1,
+        error: null,
+      }),
+    };
+    jest.doMock('../../api/_lib/supabase', () => ({
+      supabaseAdmin: {
+        schema: jest.fn().mockReturnValue({ from: jest.fn().mockReturnValue(query) }),
+      },
+    }));
+    jest.doMock('../../api/_lib/auth', () => ({
+      verifyAuth: jest.fn().mockResolvedValue({ user: { restaurant_id: 'rest-1' } }),
+    }));
+    jest.doMock('../../api/_lib/secure-logger', () => ({
+      createSecureLogger: () => ({ info: jest.fn(), error: jest.fn(), warn: jest.fn() }),
+    }));
+    jest.doMock('../../api/_lib/subscription-middleware', () => ({
+      checkSubscription: jest.fn((_req, _res, next) => next()),
+      requireFeature: jest.fn(() => (_req, _res, next) => next()),
+    }));
+    jest.doMock('../../api/_lib/rate-limit', () => ({
+      checkAndApplyRateLimit: jest.fn().mockResolvedValue(false),
+    }));
+    jest.doMock('../../api/_lib/cors', () => ({ setInternalCors: jest.fn() }));
+    jest.doMock('../../api/_services/customerMergeService', () => ({
+      findDuplicates: jest.fn(), mergeCustomers: jest.fn(),
+    }));
+    handler = require('../customers');
+  });
+
+  const request = (minRiskScore) => ({
+    method: 'GET', query: { action: 'list', min_risk_score: minRiskScore }, headers: {},
+  });
+
+  it('filters above 70 inside the tenant query before sorting and pagination', async () => {
+    const res = mockRes();
+    await handler(request('70'), res);
+
+    expect(query.eq).toHaveBeenCalledWith('restaurant_id', 'rest-1');
+    expect(query.gt).toHaveBeenCalledWith('churn_risk_score', 70);
+    expect(query.gt.mock.invocationCallOrder[0]).toBeLessThan(query.range.mock.invocationCallOrder[0]);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({
+      success: true,
+      data: { customers: [expect.objectContaining({ customer_id: 'risk-1', churn_risk_score: 82 })], total: 1 },
+    });
+  });
+
+  it.each(['', 'NaN', 'Infinity', '-1', '101'])('rejects invalid threshold %j', async (value) => {
+    const res = mockRes();
+    await handler(request(value), res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(query.select).not.toHaveBeenCalled();
+  });
+});
+
 describe('customers API — detail', () => {
   let handler;
   let customerQuery;
   let reservationsQuery;
+  let upcomingQuery;
   let notesQuery;
 
   beforeEach(() => {
@@ -384,6 +454,14 @@ describe('customers API — detail', () => {
       order: jest.fn().mockReturnThis(),
       limit: jest.fn().mockResolvedValue({ data: [{ id: 'reservation-1' }], error: null }),
     };
+    upcomingQuery = {
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      gte: jest.fn().mockReturnThis(),
+      in: jest.fn().mockReturnThis(),
+      order: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockResolvedValue({ data: [], error: null }),
+    };
     notesQuery = {
       select: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
@@ -393,7 +471,7 @@ describe('customers API — detail', () => {
     jest.doMock('../../api/_lib/supabase', () => ({
       supabaseAdmin: {
         schema: jest.fn().mockReturnValue({ from: crmFrom }),
-        from: jest.fn().mockReturnValue(reservationsQuery),
+        from: jest.fn().mockReturnValueOnce(reservationsQuery).mockReturnValueOnce(upcomingQuery),
       },
     }));
     jest.doMock('../../api/_lib/auth', () => ({
@@ -416,13 +494,17 @@ describe('customers API — detail', () => {
     handler = require('../customers');
   });
 
-  const request = () => ({ method: 'GET', query: { action: 'detail', customer_id: 'legacy-key' }, headers: {} });
+  const request = () => ({ method: 'GET', query: { action: 'detail', customer_id: 'legacy-key', from_date: '2026-10-08' }, headers: {} });
 
   it('uses the stored phone for history and returns the detail envelope', async () => {
     const res = mockRes();
     await handler(request(), res);
 
     expect(reservationsQuery.eq).toHaveBeenCalledWith('customer_phone', '+5511999000000');
+    expect(upcomingQuery.eq).toHaveBeenCalledWith('restaurant_id', 'rest-1');
+    expect(upcomingQuery.eq).toHaveBeenCalledWith('customer_phone', '+5511999000000');
+    expect(upcomingQuery.gte).toHaveBeenCalledWith('date', '2026-10-08');
+    expect(upcomingQuery.in).toHaveBeenCalledWith('status', ['confirmed', 'pending']);
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith({
       success: true,
@@ -437,6 +519,34 @@ describe('customers API — detail', () => {
     });
   });
 
+  it('includes the earliest upcoming booking even when it is outside the ten latest reservations', async () => {
+    const latest = Array.from({ length: 10 }, (_, index) => ({ id: `future-${index}`, date: '2026-12-01' }));
+    reservationsQuery.limit.mockResolvedValue({ data: latest, error: null });
+    upcomingQuery.limit.mockResolvedValue({ data: [{ id: 'earliest', date: '2026-10-09' }], error: null });
+    const res = mockRes();
+    await handler(request(), res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json.mock.calls[0][0].data.reservations).toHaveLength(11);
+    expect(res.json.mock.calls[0][0].data.reservations).toContainEqual({ id: 'earliest', date: '2026-10-09' });
+    expect(upcomingQuery.order).toHaveBeenNthCalledWith(1, 'date', { ascending: true });
+    expect(upcomingQuery.order).toHaveBeenNthCalledWith(2, 'time', { ascending: true });
+  });
+
+  it('does not duplicate an upcoming booking already present in history', async () => {
+    upcomingQuery.limit.mockResolvedValue({ data: [{ id: 'reservation-1' }], error: null });
+    const res = mockRes();
+    await handler(request(), res);
+    expect(res.json.mock.calls[0][0].data.reservations).toEqual([{ id: 'reservation-1' }]);
+  });
+
+  it('rejects a malformed from_date before querying customer data', async () => {
+    const res = mockRes();
+    await handler({ ...request(), query: { ...request().query, from_date: 'tomorrow' } }, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(customerQuery.select).not.toHaveBeenCalled();
+  });
+
   it('does not report no visit details when the reservation lookup fails', async () => {
     reservationsQuery.limit.mockResolvedValue({ data: null, error: { message: 'unavailable' } });
     const res = mockRes();
@@ -444,6 +554,13 @@ describe('customers API — detail', () => {
 
     expect(res.status).toHaveBeenCalledWith(503);
     expect(res.json).toHaveBeenCalledWith({ success: false, error: 'Customer detail temporarily unavailable' });
+  });
+
+  it('does not silently hide the next reservation when its lookup fails', async () => {
+    upcomingQuery.limit.mockResolvedValue({ data: null, error: { message: 'unavailable' } });
+    const res = mockRes();
+    await handler(request(), res);
+    expect(res.status).toHaveBeenCalledWith(503);
   });
 
   it('does not report no notes when the notes lookup is malformed', async () => {
