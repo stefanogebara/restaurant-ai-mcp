@@ -112,42 +112,49 @@ export default function CrmCustomerDrawer({ customerId, onClose }: CrmCustomerDr
             ) : (
               <>
                 {/* Header */}
-                <div className="bg-brand-paper px-5 pb-3 pt-5 sm:px-8">
-                  <div className="mb-3 flex items-center justify-between">
-                    <span className="text-[11px] font-medium uppercase tracking-[0.14em] text-brand-muted">{t('crm.customerProfile', 'Customer profile')}</span>
-                  <button
-                    type="button"
-                    onClick={onClose}
-                    className="-mr-2 flex h-10 w-10 items-center justify-center rounded-full text-brand-action hover:bg-brand-ink/5 focus-visible:outline-2 focus-visible:outline-brand-action"
-                    aria-label={t('common.close', 'Fechar')}
-                  >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <line x1="18" y1="6" x2="6" y2="18" />
-                      <line x1="6" y1="6" x2="18" y2="18" />
-                    </svg>
-                  </button>
+                <div className="bg-brand-ink px-5 pb-5 pt-5 text-brand-paper sm:px-8 lg:bg-brand-paper lg:pb-3 lg:text-brand-ink">
+                  <div className="flex items-start justify-between gap-3">
+                    <h2 className="min-w-0 break-words font-brand text-[32px] font-normal leading-[1.04] tracking-[-0.055em] sm:text-[38px]">{customer.customer_name || customer.customer_phone}</h2>
+                    <button
+                      type="button"
+                      onClick={onClose}
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-brand-paper/35 text-brand-paper hover:bg-brand-paper/10 focus-visible:outline-2 focus-visible:outline-brand-paper lg:border-brand-line lg:text-brand-action lg:hover:bg-brand-ink/5 lg:focus-visible:outline-brand-action"
+                      aria-label={t('common.close', 'Fechar')}
+                    >
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                      </svg>
+                    </button>
                   </div>
-                  <h2 className="break-words font-brand text-[32px] font-normal leading-[1.04] tracking-[-0.055em] sm:text-[38px]">{customer.customer_name || customer.customer_phone}</h2>
-                  <p className="mt-2 text-xs tabular-nums text-brand-muted">{customer.customer_phone}{customer.customer_email && <span className="ml-3 break-all">{customer.customer_email}</span>}</p>
-                  {customer.customer_tier !== 'at_risk' && <div className="mt-2"><CustomerTierBadge tier={customer.customer_tier as 'vip' | 'regular' | 'occasional' | 'new'} compact /></div>}
+                  <p className="mt-2 text-xs tabular-nums text-brand-paper/70 lg:text-brand-muted">{customer.customer_phone}{customer.customer_email && <span className="ml-3 break-all">{customer.customer_email}</span>}</p>
                 </div>
 
                 <div className="px-5 pb-12 sm:px-8">
-                  <section aria-label={t('crm.serviceKnowledge', 'For service')} className="pb-6 pt-5">
-                    {nextReservation && <div className="border-l-2 border-brand-action pl-4">
-                      <h3 className="font-brand text-xs font-medium text-brand-muted">{t('crm.nextReservation', 'Next reservation')}</h3>
-                      <p className="mt-1 font-brand text-[24px] leading-tight tabular-nums tracking-[-0.04em] text-brand-ink">{formatVisitDate(nextReservation.date, i18n.language)}</p>
-                      <p className="mt-1 text-sm tabular-nums text-brand-ink"><span>{nextReservation.time}</span><span className="mx-2 text-brand-muted">·</span>{nextReservation.party_size} {t('crm.people', 'guests')}</p>
-                      {customer.seating_preferences?.length > 0 && <p className="mt-1 text-xs text-brand-muted">{t('crm.seatingPreference', 'Seating preference')}: {customer.seating_preferences.join(', ')}</p>}
+                  {customer.customer_tier !== 'at_risk' && <div className="mt-4"><CustomerTierBadge tier={customer.customer_tier as 'vip' | 'regular' | 'occasional' | 'new'} compact /></div>}
+                  <section aria-label={t('crm.serviceKnowledge', 'For service')} className="my-5 border-l-2 border-brand-action pb-1 pl-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <h3 className="font-brand text-xs font-medium text-brand-muted">{t('crm.serviceKnowledge', 'For service')}</h3>
+                      {customer.notes?.length > 0 && <details className="relative">
+                        <summary aria-label={t('crm.noteActions', 'Note actions')} className="flex h-8 w-8 cursor-pointer list-none items-center justify-center rounded-full text-brand-muted marker:hidden hover:bg-brand-ink/5 focus-visible:outline-2 focus-visible:outline-brand-action">
+                          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><circle cx="3" cy="8" r="1.1" /><circle cx="8" cy="8" r="1.1" /><circle cx="13" cy="8" r="1.1" /></svg>
+                        </summary>
+                        <div className="absolute right-0 top-9 z-10 min-w-[9rem] rounded-xl border border-brand-line bg-brand-paper p-1 shadow-lg">
+                          <button type="button" onClick={() => handleDeleteNote(customer.notes[0].id)} className="w-full rounded-lg px-3 py-2 text-left text-xs text-red-700 hover:bg-red-700/5 focus-visible:outline-2 focus-visible:outline-brand-action" aria-label={t('crm.deleteNote', 'Excluir nota')}>{t('crm.deleteNote', 'Delete note')}</button>
+                        </div>
+                      </details>}
+                    </div>
+                    {nextReservation && <div className="mt-2">
+                      <div className="flex flex-wrap items-baseline gap-x-2 text-xs tabular-nums text-brand-muted"><h4 className="font-brand font-medium">{t('crm.nextReservation', 'Next reservation')}</h4><span aria-hidden="true">·</span><span>{formatVisitDate(nextReservation.date, i18n.language)}</span></div>
+                      <p className="mt-2 flex flex-wrap items-baseline gap-x-3 text-brand-ink"><span className="font-brand text-[29px] leading-none tabular-nums tracking-[-0.05em]">{nextReservation.time}</span><span className="text-[16px] tabular-nums">{nextReservation.party_size} {t('crm.people', 'guests')}</span></p>
+                      {customer.seating_preferences?.length > 0 && <p className="mt-2 text-xs text-brand-muted">{t('crm.seatingPreference', 'Seating preference')}: {customer.seating_preferences.join(', ')}</p>}
                     </div>}
-                    <h3 className={`font-brand text-xs font-medium text-brand-muted ${nextReservation ? 'mt-6' : ''}`}>{t('crm.serviceKnowledge', 'For service')}</h3>
                     {/* Note list */}
                     {customer.notes && customer.notes.length > 0 ? (
-                      <div className="mt-2">
-                        <p className="max-w-[42ch] break-words font-serif text-[21px] italic leading-[1.25] tracking-[-0.01em] text-brand-ink sm:text-[22px]">{customer.notes[0].content}</p>
-                        <div className="mt-3 flex items-center gap-4 text-xs text-brand-muted">
+                      <div className={nextReservation ? 'mt-4 border-t border-brand-line pt-3' : 'mt-3'}>
+                        <p className="max-w-[48ch] break-words text-[16px] font-medium leading-[1.4] text-brand-ink">{customer.notes[0].content}</p>
+                        <div className="mt-1 flex items-center gap-4 text-xs text-brand-muted">
                           <span>{new Date(customer.notes[0].created_at).toLocaleDateString(i18n.language, { day: 'numeric', month: 'short', year: 'numeric' })}</span>
-                          <button type="button" onClick={() => handleDeleteNote(customer.notes[0].id)} className="min-h-8 text-brand-muted underline-offset-4 hover:text-red-700 hover:underline focus-visible:outline-2 focus-visible:outline-brand-action" aria-label={t('crm.deleteNote', 'Excluir nota')}>{t('crm.deleteNote', 'Delete note')}</button>
                         </div>
                         {customer.notes.length > 1 && <details className="mt-3 border-t border-brand-line pt-2 text-xs text-brand-muted">
                           <summary className="min-h-8 cursor-pointer list-none text-brand-action underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-brand-action">{t('crm.otherNotes', { count: customer.notes.length - 1, defaultValue: '{{count}} older notes' })}</summary>
@@ -159,7 +166,7 @@ export default function CrmCustomerDrawer({ customerId, onClose }: CrmCustomerDr
                         {t('crm.noNotes', 'Nenhuma nota adicionada')}
                       </p>
                     )}
-                    <div className="mt-3">
+                    <div className="mt-2">
                       {customer.allergies?.length || customer.dietary_restrictions?.length || (!nextReservation && customer.seating_preferences?.length) ? (
                         <div>
                           {customer.allergies?.length > 0 && <Fact label={t('crm.allergies', 'Allergies')} values={customer.allergies} />}
@@ -168,8 +175,8 @@ export default function CrmCustomerDrawer({ customerId, onClose }: CrmCustomerDr
                         </div>
                       ) : !customer.notes?.length && <p className="text-sm text-brand-muted">{t('crm.noServicePreferences', 'No service preferences recorded yet.')}</p>}
                     </div>
-                    <details className="group mt-1">
-                      <summary className="inline-flex min-h-9 cursor-pointer list-none items-center text-xs font-medium text-brand-action underline decoration-brand-line underline-offset-4 marker:hidden hover:decoration-brand-action focus-visible:outline-2 focus-visible:outline-brand-action">
+                    <details className="group mt-2">
+                      <summary className="inline-flex min-h-8 cursor-pointer list-none items-center rounded-full border border-brand-line px-3 text-xs font-medium text-brand-action marker:hidden hover:bg-brand-ink/5 focus-visible:outline-2 focus-visible:outline-brand-action">
                         {t('crm.addNote', 'Add note')}
                       </summary>
                       <div className="pt-2">
@@ -198,34 +205,35 @@ export default function CrmCustomerDrawer({ customerId, onClose }: CrmCustomerDr
                     </details>
                   </section>
 
-                  <section aria-label={t('crm.relationshipSnapshot', 'Relationship at a glance')} className="border-y border-brand-line py-5">
-                    <div className="grid grid-cols-2 gap-6">
-                      <StatBox label={t('crm.totalVisits', 'Visitas')} value={String(customer.total_visits)} />
-                      <StatBox label={t('crm.recordedRevenue', 'Recorded revenue')} value={customer.total_revenue != null ? formatCurrency(Math.round(customer.total_revenue)) : '—'} />
+                  <section aria-label={t('crm.relationshipSnapshot', 'Relationship at a glance')} className="border-t border-brand-line py-4">
+                    <div className="grid grid-cols-2 gap-5 sm:gap-6">
+                      <div aria-label={customer.churn_risk_score != null ? `${t('crm.returnRisk', 'Risk of not returning')}: ${Math.round(customer.churn_risk_score)}/100` : undefined}>
+                        <p className="text-xs text-brand-muted">{nextReservation ? t('crm.historicalRisk', 'Historical return signal') : t('crm.returnRisk', 'Risk of not returning')}</p>
+                        <p className={`mt-2 leading-none tabular-nums tracking-[-0.04em] text-ocre-700 ${nextReservation ? 'text-[19px]' : 'text-[23px]'}`}>{customer.churn_risk_score != null ? <>{Math.round(customer.churn_risk_score)}<span className="ml-1 text-sm tracking-normal text-brand-muted">/100</span></> : '—'}</p>
+                        {nextReservation && <p className="mt-2 max-w-[19ch] text-xs leading-4 text-brand-muted">{t('crm.futureBookingRiskContext', 'Historical signal; a future reservation already exists.')}</p>}
+                        <details className="mt-1 text-xs text-brand-muted"><summary className="inline-flex min-h-8 cursor-pointer list-none items-center underline decoration-brand-line underline-offset-2 focus-visible:outline-2 focus-visible:outline-brand-action">{t('crm.howReadRisk', 'What does this mean?')}</summary><p className="max-w-[36ch] pb-2 leading-5">{t('crm.scoreBasis', 'Based on visit history; not a probability.')}</p></details>
+                      </div>
+                      <StatBox label={t('crm.estimatedValue', 'Estimated value')} value={customer.lifetime_value != null ? formatCurrency(Math.round(customer.lifetime_value)) : '—'} />
                     </div>
-                    <div className="mt-5 grid grid-cols-2 gap-6 border-t border-brand-line pt-4 text-sm">
-                      <div><p className="text-xs text-brand-muted">{t('crm.estimatedValue', 'Estimated value')}</p><p className="mt-1 tabular-nums text-brand-ink">{customer.lifetime_value != null ? formatCurrency(Math.round(customer.lifetime_value)) : '—'}</p></div>
-                      <div aria-label={customer.churn_risk_score != null ? `${t('crm.returnRisk', 'Risk of not returning')}: ${Math.round(customer.churn_risk_score)}/100` : undefined}><p className="text-xs text-brand-muted">{t('crm.returnRisk', 'Risk of not returning')}</p><p className="mt-1 tabular-nums text-ocre-700">{customer.churn_risk_score != null ? `${Math.round(customer.churn_risk_score)}/100` : '—'}</p></div>
+                    <div className="grid grid-cols-2 gap-5 pt-4 sm:gap-6">
+                      <div><p className="text-xs text-brand-muted">{t('crm.totalVisits', 'Visitas')}</p><p className="mt-1 text-sm tabular-nums text-brand-ink">{customer.total_visits}</p></div>
+                      <div><p className="text-xs text-brand-muted">{t('crm.recordedRevenue', 'Recorded revenue')}</p><p className="mt-1 text-sm tabular-nums text-brand-ink">{customer.total_revenue != null ? formatCurrency(Math.round(customer.total_revenue)) : '—'}</p></div>
                     </div>
-                    <details className="mt-1 text-xs text-brand-muted"><summary className="inline-flex min-h-9 cursor-pointer list-none items-center underline decoration-brand-line underline-offset-2 focus-visible:outline-2 focus-visible:outline-brand-action">{t('crm.howReadRisk', 'What does this mean?')}</summary><p className="max-w-[36ch] pb-2 leading-5">{t('crm.scoreBasis', 'Based on visit history; not a probability.')}</p></details>
                     {customer.last_visit_date && !customer.recent_reservations?.length && <p className="mt-3 text-xs text-brand-muted">{t('crm.lastVisitInProfile', { date: formatVisitDate(customer.last_visit_date, i18n.language), defaultValue: `Last visit: ${formatVisitDate(customer.last_visit_date, i18n.language)}` })}</p>}
                   </section>
 
                   {/* Reservations may include future or cancelled entries; they are not all visits. */}
-                  <section aria-label={t('crm.recentReservations', 'Recent reservations')} className="py-6">
-                    <h3 className="font-brand text-xs font-medium text-brand-muted">{nextReservation ? t('crm.otherReservations', 'Other reservations') : t('crm.recentReservations', 'Recent reservations')}</h3>
+                  <section aria-label={t('crm.recentReservations', 'Recent reservations')} className="py-4">
+                    <h3 className="font-brand text-sm font-medium text-brand-ink">{nextReservation ? t('crm.otherReservations', 'Other reservations') : t('crm.recentReservations', 'Recent reservations')}</h3>
                     {otherReservations.length > 0 ? (
                       <div className="mt-3 divide-y divide-brand-line">
                         {otherReservations.map((res) => (
-                          <div
-                            key={res.id}
-                            className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 py-3 text-sm"
-                          >
-                            <div className="flex min-w-0 flex-wrap items-baseline gap-x-4">
-                              <span className="tabular-nums font-medium text-brand-ink">{formatVisitDate(res.date, i18n.language)}</span>
-                              <span className="tabular-nums text-xs text-brand-muted">{res.time}</span>
+                          <div key={res.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 py-3 text-sm">
+                            <div className="min-w-0">
+                              <span className="block tabular-nums font-medium text-brand-ink">{formatVisitDate(res.date, i18n.language)}</span>
+                              <span className="mt-0.5 block tabular-nums text-xs text-brand-muted">{res.time}</span>
                             </div>
-                            <div className="flex items-baseline gap-2 text-right">
+                            <div className="flex flex-col items-end gap-0.5 text-right">
                               <span className="text-xs text-brand-muted">{res.party_size} {t('crm.people', 'pessoas')}</span>
                               {res.status.toLowerCase() !== 'completed' && <StatusBadge status={res.status} />}
                             </div>
@@ -285,8 +293,8 @@ export default function CrmCustomerDrawer({ customerId, onClose }: CrmCustomerDr
 function StatBox({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0">
-      <p className="truncate font-brand text-[25px] leading-none tabular-nums tracking-[-0.04em] text-brand-ink sm:text-[28px]">{value}</p>
-      <p className="mt-2 text-xs leading-4 text-brand-muted">{label}</p>
+      <p className="text-xs leading-4 text-brand-muted">{label}</p>
+      <p className="mt-2 truncate font-brand text-[22px] leading-none tabular-nums tracking-[-0.04em] text-brand-ink">{value}</p>
     </div>
   );
 }

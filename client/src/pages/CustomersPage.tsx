@@ -68,37 +68,30 @@ export function CustomersWorkspace() {
     <>
       <main className={`min-h-screen bg-brand-paper font-brand text-brand-ink transition-[margin] duration-300 ${selectedCustomerId ? 'lg:mr-[520px]' : ''}`}>
       <div className="mx-auto max-w-[1240px] overflow-x-hidden px-4 pb-24 pt-6 sm:px-6 sm:pb-8 lg:px-10 mt-14 sm:mt-0">
-        {/* The page title and view selection share one desktop line. */}
-        <div className="mb-5 md:flex md:items-end md:justify-between md:gap-8">
-        <header>
-          <div>
-            <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.14em] text-brand-muted">{t('crm.sectionLabel', 'Guest relationships')}</p>
-            <h1 className={`font-brand text-[32px] font-normal leading-none tracking-[-0.055em] text-brand-ink sm:text-[42px] ${selectedCustomerId ? 'lg:text-[34px]' : ''}`}>
+        <header className="mb-7">
+          <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.14em] text-brand-muted">{t('crm.sectionLabel', 'Guest relationships')}</p>
+          <div className="flex flex-wrap items-end gap-x-5 gap-y-1">
+            <h1 className={`font-brand text-[38px] font-normal leading-none tracking-[-0.055em] text-brand-ink sm:text-[48px] ${selectedCustomerId ? 'lg:text-[40px]' : ''}`}>
               {t('crm.pageTitle', 'Customers')}
             </h1>
-            {total > 0 && (
-              <p className="mt-2 text-[13px] text-brand-muted">
-                {t('crm.totalCustomers', { count: total, defaultValue: '{{count}} customers' })}
-              </p>
-            )}
+            {total > 0 && <p className="pb-1 text-[13px] tabular-nums text-brand-muted">{t('crm.totalCustomers', { count: total, defaultValue: '{{count}} customers' })}</p>}
           </div>
         </header>
 
-        <nav aria-label={t('crm.directoryViews', 'Customer views')} className="mt-5 flex gap-6 border-b border-brand-line md:mt-0 md:min-w-max">
-          <button type="button" aria-current={!reviewOnly ? 'page' : undefined} onClick={() => { setReviewOnly(false); setSelectedCustomerId(null); }} className={`border-b-2 pb-3 text-sm transition-colors ${!reviewOnly ? 'border-brand-action text-brand-ink' : 'border-transparent text-brand-muted hover:text-brand-ink'}`}>
+        <nav aria-label={t('crm.directoryViews', 'Customer views')} className="mb-5 flex gap-8 border-b border-brand-line">
+          <button type="button" aria-current={!reviewOnly ? 'page' : undefined} onClick={() => { setReviewOnly(false); setSelectedCustomerId(null); }} className={`min-h-11 border-b-2 pb-2 text-sm transition-colors ${!reviewOnly ? 'border-brand-action text-brand-ink' : 'border-transparent text-brand-muted hover:text-brand-ink'}`}>
             {t('crm.allCustomersView', 'All customers')}
           </button>
-          <button type="button" aria-current={reviewOnly ? 'page' : undefined} onClick={() => { setReviewOnly(true); setSelectedCustomerId(null); }} className={`border-b-2 pb-3 text-sm transition-colors ${reviewOnly ? 'border-brand-action text-brand-ink' : 'border-transparent text-brand-muted hover:text-brand-ink'}`}>
+          <button type="button" aria-current={reviewOnly ? 'page' : undefined} onClick={() => { setReviewOnly(true); setSelectedCustomerId(null); }} className={`min-h-11 border-b-2 pb-2 text-sm transition-colors ${reviewOnly ? 'border-brand-action text-brand-ink' : 'border-transparent text-brand-muted hover:text-brand-ink'}`}>
             {t('crm.reviewView', 'For review')}
           </button>
         </nav>
-        </div>
         {reviewOnly && <p className="mb-4 max-w-2xl text-xs leading-relaxed text-brand-muted">{t('crm.reviewExplanation', 'These guests have an elevated return-risk score. Review their history before deciding whether to contact them.')}</p>}
 
         {/* Filters */}
-        <div className="mb-4 flex flex-col gap-2.5 md:flex-row md:flex-wrap md:items-center">
+        <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-1 md:gap-y-2.5">
           {/* Search */}
-          <div className="relative min-w-0 flex-1 md:max-w-[30rem]">
+          <div className="relative w-full min-w-0 md:max-w-[30rem] md:flex-1">
             <svg
               className="absolute left-3.5 top-1/2 -translate-y-1/2 text-brand-muted"
               width="16"
@@ -182,12 +175,12 @@ export function CustomersWorkspace() {
           </div>
           </details>
           {total > 0 && !isLoading && !isError && (
-            <button type="button" onClick={() => setShowDuplicates(true)} className="min-h-[38px] text-left text-xs text-brand-muted underline-offset-4 hover:text-brand-ink hover:underline focus-visible:outline-2 focus-visible:outline-brand-action">
+            <button type="button" onClick={() => setShowDuplicates(true)} className="ml-auto min-h-[38px] text-left text-xs text-brand-muted underline-offset-4 hover:text-brand-ink hover:underline focus-visible:outline-2 focus-visible:outline-brand-action md:ml-0">
               {t('crm.findDuplicates', 'Find duplicates')}
             </button>
           )}
         </div>
-        <p className="mb-3 text-xs text-brand-muted">{t('crm.scoreExplanation', 'The return-risk signal is a 0–100 heuristic for review, not a probability.')}</p>
+        <p id="customer-score-explanation" className="sr-only">{t('crm.scoreExplanation', 'The return-risk signal is a 0–100 heuristic for review, not a probability.')}</p>
 
         {/* The directory lives on the canvas; the row itself is the interaction. */}
         <div className="border-t border-brand-line">

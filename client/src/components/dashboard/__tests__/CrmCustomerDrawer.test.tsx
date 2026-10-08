@@ -46,6 +46,9 @@ describe('CrmCustomerDrawer customer detail contract', () => {
     expect(await screen.findByRole('heading', { name: 'Beatriz Costa' })).toBeInTheDocument();
     expect(authFetch).toHaveBeenCalledWith(expect.stringContaining('action=detail'));
     expect(screen.getByText('Prefers the terrace')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Delete note' })).not.toBeVisible();
+    await userEvent.click(screen.getByLabelText('Note actions'));
+    expect(screen.getByRole('button', { name: 'Delete note' })).toBeVisible();
     expect(screen.getByText('Sep 5, 2026')).toBeInTheDocument();
     expect(screen.getByText('19:30')).toBeInTheDocument();
     expect(screen.getByLabelText('Risk of not returning: 18/100')).toBeInTheDocument();
@@ -66,7 +69,8 @@ describe('CrmCustomerDrawer customer detail contract', () => {
     renderWithProviders(<CrmCustomerDrawer customerId={customer.customer_id} onClose={vi.fn()} />);
 
     const next = await screen.findByRole('heading', { name: 'Next reservation' });
-    expect(next.parentElement).toHaveTextContent('20:00');
+    expect(next.closest('section')).toHaveTextContent('20:00');
+    expect(screen.getByText('A future reservation already exists.')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Other reservations' })).toBeInTheDocument();
     expect(screen.getByText('Sep 5, 2026')).toBeInTheDocument();
     expect(screen.getAllByText('20:00')).toHaveLength(1);
