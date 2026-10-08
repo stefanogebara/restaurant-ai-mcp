@@ -18,7 +18,13 @@ vi.mock('../../../hooks/usePredictiveAnalytics', () => ({
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string, fallback?: string | Record<string, unknown>) => key === 'analytics.busiestDaySummary' && fallback && typeof fallback === 'object'
+    t: (key: string, fallback?: string | Record<string, unknown>) => key === 'analytics.occupancySeatCount' && fallback && typeof fallback === 'object'
+      ? `${fallback.occupied} of ${fallback.capacity} seats occupied`
+      : key === 'analytics.occupancyFooterCount' && fallback && typeof fallback === 'object'
+      ? `${fallback.occupied}/${fallback.capacity} seats occupied`
+      : key === 'analytics.reviewShortlistCount' && fallback && typeof fallback === 'object'
+      ? `Showing ${fallback.shown} of ${fallback.total} bookings to review.`
+      : key === 'analytics.busiestDaySummary' && fallback && typeof fallback === 'object'
       ? `${fallback.day} accounts for ${fallback.count} bookings (${fallback.share}% of the period).`
       : typeof fallback === 'string' ? fallback : key,
     i18n: { language: 'pt-BR' },
@@ -114,8 +120,7 @@ describe('Analytics period truth', () => {
 
     render(<NoShowPredictions />);
     expect(screen.queryByText('66.8%')).not.toBeInTheDocument();
-    expect(screen.getByText('Next 7 days')).toBeInTheDocument();
-    expect(screen.queryByText('Next 7 days · scores, not probabilities.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Next 7 days')).not.toBeInTheDocument();
     expect(screen.getByText('No upcoming reservations to assess')).toBeInTheDocument();
   });
 
@@ -129,6 +134,22 @@ describe('Analytics period truth', () => {
     render(<NoShowPredictions />);
     expect(screen.getByText('Risk predictions unavailable')).toBeInTheDocument();
     expect(screen.getByText('No risk conclusion can be drawn from this view.')).toBeInTheDocument();
+  });
+
+  it('does not claim there are no future bookings when the summary has bookings but the shortlist is missing', () => {
+    vi.mocked(useNoShowPredictions).mockReturnValue({
+      data: {
+        predictions: [],
+        summary: { total_upcoming: 17, high_risk: 1, medium_risk: 1, low_risk: 15 },
+      },
+      isLoading: false,
+      isError: false,
+    } as unknown as ReturnType<typeof useNoShowPredictions>);
+
+    render(<NoShowPredictions featured />);
+    expect(screen.getByRole('heading', { name: '2 to review' })).toBeInTheDocument();
+    expect(screen.getByText('Risk predictions unavailable')).toBeInTheDocument();
+    expect(screen.queryByText('No upcoming reservations to assess')).not.toBeInTheDocument();
   });
 
   it('orders the risk shortlist by score even when a later booking has greater risk', () => {
@@ -146,10 +167,74 @@ describe('Analytics period truth', () => {
 
     render(<NoShowPredictions />);
     const rows = screen.getAllByRole('button');
+    expect(screen.getByText('upcoming bookings')).toBeInTheDocument();
+    expect(screen.getByText('Up to 10 in this list')).toBeInTheDocument();
+    expect(screen.getByText('Scores are not probabilities and do not confirm a no-show.')).toBeInTheDocument();
     expect(rows[0]).toHaveTextContent('Guest High');
     expect(rows[0]).toHaveTextContent('High ·76/100');
     expect(rows[1]).toHaveTextContent('Guest Low');
     expect(rows[1]).toHaveTextContent('Low ·12/100');
+  });
+
+  it('makes the future summary lead when historical activity is empty', () => {
+    vi.mocked(useNoShowPredictions).mockReturnValue({
+      data: {
+        predictions: [
+          { reservation_id: 'low', customer_name: 'Guest Low', party_size: 2, date: '2026-10-11', time: '18:00', days_until: 3, risk_score: 90, risk_level: 'low', recommendations: [] },
+          { reservation_id: 'high', customer_name: 'Guest High', party_size: 2, date: '2026-10-09', time: '19:00', days_until: 1, risk_score: 82, risk_level: 'high', recommendations: [] },
+          { reservation_id: 'medium', customer_name: 'Guest Medium', party_size: 2, date: '2026-10-10', time: '20:00', days_until: 2, risk_score: 63, risk_level: 'medium', recommendations: [] },
+        ],
+        summary: { total_upcoming: 17, high_risk: 1, medium_risk: 1, low_risk: 15 },
+      },
+      isLoading: false,
+      isError: false,
+    } as unknown as ReturnType<typeof useNoShowPredictions>);
+
+    render(<NoShowPredictions featured />);
+    expect(screen.getByText('Next 7 days')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '2 to review' })).toBeInTheDocument();
+    expect(screen.getByText((_, element) => element?.tagName === 'P' && element.textContent?.trim() === 'Among 17 upcoming bookings')).toBeInTheDocument();
+    expect(screen.getByText('Estimated risk, not a no-show probability.')).toBeInTheDocument();
+    const rows = screen.getAllByRole('button');
+    expect(rows[0]).toHaveTextContent('Guest High');
+    expect(rows[0]).toHaveTextContent('High risk');
+    expect(rows[0]).not.toHaveTextContent('82/100');
+    expect(rows[1]).toHaveTextContent('Guest Medium');
+    const otherDetails = screen.getByText('Other assessed bookings · up to 10 shown').closest('details');
+    expect(otherDetails).not.toHaveAttribute('open');
+    expect(within(otherDetails!).getByRole('button', { name: /Guest Low/ })).toBeInTheDocument();
+    expect(screen.queryByText('Up to 10 in this list')).not.toBeInTheDocument();
+    fireEvent.click(rows[0]);
+    expect(rows[0]).toHaveAttribute('aria-expanded', 'true');
+    expect(rows[0]).toHaveTextContent('Risk score {{score}}');
+    fireEvent.click(screen.getByText('Other assessed bookings · up to 10 shown'));
+    expect(otherDetails).toHaveAttribute('open');
+  });
+
+  it('discloses when the top-ten response shows fewer review rows than the total risk count', () => {
+    vi.mocked(useNoShowPredictions).mockReturnValue({
+      data: {
+        predictions: Array.from({ length: 10 }, (_, index) => ({
+          reservation_id: `high-${index}`,
+          customer_name: `Guest ${index + 1}`,
+          party_size: 2,
+          date: '2026-10-10',
+          time: '19:00',
+          days_until: 2,
+          risk_score: 90 - index,
+          risk_level: 'high',
+          recommendations: [],
+        })),
+        summary: { total_upcoming: 17, high_risk: 12, medium_risk: 0, low_risk: 5 },
+      },
+      isLoading: false,
+      isError: false,
+    } as unknown as ReturnType<typeof useNoShowPredictions>);
+
+    render(<NoShowPredictions featured />);
+    expect(screen.getByRole('heading', { name: '12 to review' })).toBeInTheDocument();
+    expect(screen.getByText('Showing 10 of 12 bookings to review.')).toBeInTheDocument();
+    expect(screen.getAllByRole('button')).toHaveLength(10);
   });
 
   it('hides unvalidated revenue projections and the inert implementation button', () => {
@@ -243,6 +328,59 @@ describe('Analytics period truth', () => {
 });
 
 describe('Analytics empty period', () => {
+  it('shows an error instead of a false zero when the analytics request fails', () => {
+    const refetch = vi.fn();
+    vi.mocked(useAnalytics).mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      refetch,
+    } as unknown as ReturnType<typeof useAnalytics>);
+
+    render(<AnalyticsTab />);
+    expect(screen.getByText('analytics.errorTitle')).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'No bookings in this period.' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Period overview' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
+    expect(refetch).toHaveBeenCalledOnce();
+  });
+
+  it('does not show cached metrics as current when a refetch fails', () => {
+    vi.mocked(useAnalytics).mockReturnValue({
+      data: {
+        overview: { total_reservations: 0, total_revenue: 0, total_capacity: 74, current_occupancy: 0 },
+        reservations_by_status: {}, reservations_by_day: {}, reservations_by_time_slot: {}, table_utilization: [], daily_trend: [],
+      },
+      isLoading: false,
+      isError: true,
+      refetch: vi.fn(),
+    } as unknown as ReturnType<typeof useAnalytics>);
+
+    render(<AnalyticsTab />);
+    expect(screen.getByText('analytics.errorTitle')).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Period overview' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Occupancy now' })).not.toBeInTheDocument();
+  });
+
+  it.each(['upgrade_required', 'no_restaurant'] as const)('keeps the %s access state separate from a true zero report', gate => {
+    vi.mocked(useAnalytics).mockReturnValue({
+      data: {
+        [gate]: true,
+        overview: { total_reservations: 0, total_revenue: 0, total_capacity: 0, current_occupancy: 0 },
+        reservations_by_status: {}, reservations_by_day: {}, reservations_by_time_slot: {}, table_utilization: [], daily_trend: [],
+      },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as unknown as ReturnType<typeof useAnalytics>);
+
+    render(<AnalyticsTab />);
+    expect(screen.queryByRole('region', { name: 'Period overview' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Occupancy now' })).not.toBeInTheDocument();
+    expect(screen.queryByText('No upcoming reservations to assess')).not.toBeInTheDocument();
+    expect(screen.getByRole('link')).toHaveAttribute('href', gate === 'no_restaurant' ? '/onboarding' : '/subscription/manage');
+  });
+
   it('shows a period-specific empty state while preserving live and future signals', () => {
     vi.mocked(useAnalytics).mockReturnValue({
       data: {
@@ -273,13 +411,18 @@ describe('Analytics empty period', () => {
     } as unknown as ReturnType<typeof useNoShowPredictions>);
 
     render(<AnalyticsTab />);
-    expect(screen.getByRole('heading', { name: 'No activity in this period.' })).toBeInTheDocument();
+    const periodOverview = screen.getByRole('region', { name: 'Period overview' });
+    expect(within(periodOverview).getByRole('heading', { name: 'No bookings in this period.' })).toBeInTheDocument();
+    expect(within(periodOverview).getByText('No recorded revenue on the selected dates either.')).toBeInTheDocument();
     expect(screen.queryByText('Daily activity')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Export' })).not.toBeInTheDocument();
-    expect(screen.getByRole('region', { name: 'Occupancy now' })).toHaveTextContent('25%');
+    const occupancy = screen.getByRole('region', { name: 'Occupancy now' });
+    expect(occupancy).toHaveTextContent('3/12 seats occupied');
+    expect(occupancy).toHaveTextContent('Live · outside the date filter');
+    expect(occupancy).not.toHaveTextContent('25%');
     expect(screen.getByText('No upcoming reservations to assess')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'View last 90 days' }));
-    expect(screen.queryByRole('button', { name: 'View last 90 days' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'View 90 days' }));
+    expect(screen.queryByRole('button', { name: 'View 90 days' })).not.toBeInTheDocument();
   });
 });

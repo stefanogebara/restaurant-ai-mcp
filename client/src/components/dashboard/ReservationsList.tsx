@@ -15,6 +15,8 @@ type StatusFilter = 'all' | 'confirmed' | 'at_risk' | 'checked_in';
 type DayFilter = 'today' | 'tomorrow' | 'week';
 
 interface ReservationsListProps {
+  /** The dashboard's approved hero palette; other callers retain the existing UI. */
+  appearance?: 'default' | 'hero';
   todayReservations: UpcomingReservation[];
   tomorrowReservations: UpcomingReservation[];
   /** Reservations from day+2 through day+7. Optional for backwards compat. */
@@ -41,6 +43,7 @@ interface ReservationsListProps {
 }
 
 export default function ReservationsList({
+  appearance = 'default',
   todayReservations,
   tomorrowReservations,
   weekReservations = [],
@@ -59,6 +62,7 @@ export default function ReservationsList({
   tables = [],
   initialSearchQuery = '',
 }: ReservationsListProps) {
+  const hero = appearance === 'hero';
   // Build id→table_number lookup once for all rows
   const tableMap = useMemo(() => {
     const m = new Map<string, number>();
@@ -117,6 +121,7 @@ export default function ReservationsList({
   }, [displayed, debouncedQuery, statusFilter]);
 
   const isFiltering = debouncedQuery.trim() !== '' || statusFilter !== 'all';
+  const compactHeroEmpty = hero && displayed.length === 0 && !searchQuery.trim() && !isFiltering;
 
   const statusFilters: Array<{ key: StatusFilter; label: string }> = [
     { key: 'all', label: tl('filterAll') },
@@ -127,7 +132,7 @@ export default function ReservationsList({
 
   if (isLoading) {
     return (
-      <div role="status" aria-label={t('common.loading')} className="p-5">
+      <div role="status" aria-label={t('common.loading')} className={hero ? 'py-5 font-brand' : 'p-5'}>
         <div className="h-6 w-52 bg-border-gray rounded-lg animate-pulse mb-4" />
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
@@ -146,66 +151,69 @@ export default function ReservationsList({
   }
 
   return (
-    <div className="overflow-hidden">
+    <div className={`overflow-hidden ${hero ? 'font-brand text-brand-ink' : ''}`}>
       {/* Panel Header */}
-      <div className="px-3 sm:px-6 py-4 sm:py-5 border-b border-glass-border-dark">
+      <div className={compactHeroEmpty ? 'pb-2' : hero ? 'border-b border-brand-line/70 pb-5' : 'px-3 sm:px-6 py-4 sm:py-5 border-b border-glass-border-dark'}>
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-2.5">
-            <span className="text-[12px] sm:text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">{tl('upcoming')}</span>
-            <span className="text-[11px] font-semibold bg-[#9F1239]/[8%] text-[#9F1239] px-2.5 py-0.5 rounded-full">
+            <span className={hero ? 'text-[20px] font-medium leading-tight tracking-[-0.025em] text-brand-ink' : 'text-[12px] sm:text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone'}>{tl('upcoming')}</span>
+            <span className={hero ? 'text-[12px] tabular-nums text-brand-muted' : 'text-[11px] font-semibold bg-[#9F1239]/[8%] text-[#9F1239] px-2.5 py-0.5 rounded-full'}>
               {displayed.length}
             </span>
             {displayed.length > 0 && dayFilter === 'today' && (
-              <span className="flex items-center gap-1 text-[10px] font-medium text-rose-600">
+              <span className={`flex items-center gap-1 font-medium ${hero ? 'text-[11px] text-emerald-800' : 'text-[10px] text-rose-600'}`}>
                 <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500" />
+                  {!hero && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />}
+                  <span className={`relative inline-flex rounded-full h-2 w-2 ${hero ? 'bg-emerald-700' : 'bg-rose-500'}`} />
                 </span>
                 {t('common.live', 'Live')}
               </span>
             )}
           </div>
           <div className="flex items-center gap-2">
-            <div className="flex border border-glass-border-dark rounded-lg text-[11px] font-medium overflow-hidden flex-shrink-0">
+            <div className={`flex overflow-hidden flex-shrink-0 ${hero ? 'rounded-full border border-brand-line text-[12px] font-medium' : 'border border-glass-border-dark rounded-lg text-[11px] font-medium'}`}>
               <button
                 type="button"
                 onClick={() => setDayFilter('today')}
-                className={`px-4 py-1.5 transition-all border-r border-glass-border-dark ${
-                  dayFilter === 'today' ? 'bg-[#FAFAF9] text-[#1C1917]' : 'text-[#A8A29E] hover:text-[#1C1917]'
-                }`}
+                aria-pressed={dayFilter === 'today'}
+                className={hero
+                  ? `min-h-9 px-3.5 transition-colors ${dayFilter === 'today' ? 'bg-brand-action text-white' : 'text-brand-muted hover:text-brand-ink hover:bg-brand-line/30'}`
+                  : `px-4 py-1.5 transition-all border-r border-glass-border-dark ${dayFilter === 'today' ? 'bg-[#FAFAF9] text-[#1C1917]' : 'text-[#A8A29E] hover:text-[#1C1917]'}`}
               >
                 {tl('today')}
               </button>
               <button
                 type="button"
                 onClick={() => setDayFilter('tomorrow')}
-                className={`px-4 py-1.5 transition-all border-r border-glass-border-dark ${
-                  dayFilter === 'tomorrow' ? 'bg-[#FAFAF9] text-[#1C1917]' : 'text-[#A8A29E] hover:text-[#1C1917]'
-                }`}
+                aria-pressed={dayFilter === 'tomorrow'}
+                className={hero
+                  ? `min-h-9 px-3.5 transition-colors ${dayFilter === 'tomorrow' ? 'bg-brand-action text-white' : 'text-brand-muted hover:text-brand-ink hover:bg-brand-line/30'}`
+                  : `px-4 py-1.5 transition-all border-r border-glass-border-dark ${dayFilter === 'tomorrow' ? 'bg-[#FAFAF9] text-[#1C1917]' : 'text-[#A8A29E] hover:text-[#1C1917]'}`}
               >
                 {tl('tomorrow')}
               </button>
               <button
                 type="button"
                 onClick={() => setDayFilter('week')}
-                className={`px-4 py-1.5 transition-all ${
-                  dayFilter === 'week' ? 'bg-[#FAFAF9] text-[#1C1917]' : 'text-[#A8A29E] hover:text-[#1C1917]'
-                }`}
+                aria-pressed={dayFilter === 'week'}
+                className={hero
+                  ? `min-h-9 px-3.5 transition-colors ${dayFilter === 'week' ? 'bg-brand-action text-white' : 'text-brand-muted hover:text-brand-ink hover:bg-brand-line/30'}`
+                  : `px-4 py-1.5 transition-all ${dayFilter === 'week' ? 'bg-[#FAFAF9] text-[#1C1917]' : 'text-[#A8A29E] hover:text-[#1C1917]'}`}
                 title={tl('thisWeekHint')}
               >
                 {tl('thisWeek')}
                 {weekReservations.length > 0 && (
-                  <span className="ml-1.5 inline-flex items-center justify-center min-w-[16px] h-4 px-1 rounded-full bg-[#9F1239]/[10%] text-[10px] font-semibold text-[#9F1239]">
+                  <span className={hero ? 'ml-1.5 text-[11px] tabular-nums opacity-75' : 'ml-1.5 inline-flex items-center justify-center min-w-[16px] h-4 px-1 rounded-full bg-[#9F1239]/[10%] text-[10px] font-semibold text-[#9F1239]'}>
                     {weekReservations.length}
                   </span>
                 )}
               </button>
             </div>
-            {onAdd && (
+            {onAdd && !compactHeroEmpty && (
               <button
                 type="button"
                 onClick={onAdd}
-                className="text-xs font-semibold px-3 py-1 rounded-lg bg-[#9F1239]/[8%] text-[#9F1239] hover:bg-[#9F1239]/[14%] transition-colors"
+                className={hero ? 'min-h-9 rounded-full border border-brand-line px-3.5 text-[12px] font-medium text-brand-action hover:bg-brand-line/30 transition-colors' : 'text-xs font-semibold px-3 py-1 rounded-lg bg-[#9F1239]/[8%] text-[#9F1239] hover:bg-[#9F1239]/[14%] transition-colors'}
               >
                 {tl('addReservation')}
               </button>
@@ -213,10 +221,11 @@ export default function ReservationsList({
           </div>
         </div>
 
+        {!compactHeroEmpty && <>
         {/* Status legend — answers Carla's "what does each color mean?"
             question once at the top of the panel so individual badges below
             don't need labels. Hidden on mobile where header space is tight. */}
-        <div className="hidden sm:flex mt-3 pt-3 border-t border-[#F5F5F4]">
+        <div className={hero ? 'hidden sm:flex mt-4 pt-3 border-t border-brand-line/70' : 'hidden sm:flex mt-3 pt-3 border-t border-[#F5F5F4]'}>
           <StatusLegend
             items={[
               { label: tl('confirmed'), token: 'good' },
@@ -227,11 +236,11 @@ export default function ReservationsList({
         </div>
 
         {/* Search input */}
-        <div className="relative mt-3">
+        <div className={hero ? 'relative mt-4' : 'relative mt-3'}>
           <ThiingsIcon
             name="search"
             pxSize={14}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-[#A8A29E] pointer-events-none"
+            className={`absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none ${hero ? 'text-brand-muted' : 'text-[#A8A29E]'}`}
           />
           <input
             ref={searchInputRef}
@@ -239,7 +248,7 @@ export default function ReservationsList({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={tl('searchPlaceholder')}
-            className="w-full pl-9 pr-3 py-2 text-sm font-[Inter] border border-glass-border-input rounded-lg bg-white/60 placeholder-[#A8A29E] text-[#1C1917] focus:outline-none focus:ring-1 focus:ring-[#9F1239]/30 focus:border-[#9F1239]/40 transition-colors"
+            className={hero ? 'w-full min-h-10 rounded-xl border border-brand-line bg-transparent py-2 pl-9 pr-3 font-brand text-[13px] text-brand-ink placeholder:text-brand-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-action/40' : 'w-full pl-9 pr-3 py-2 text-sm font-[Inter] border border-glass-border-input rounded-lg bg-white/60 placeholder-[#A8A29E] text-[#1C1917] focus:outline-none focus:ring-1 focus:ring-[#9F1239]/30 focus:border-[#9F1239]/40 transition-colors'}
             aria-label={tl('searchPlaceholder')}
           />
         </div>
@@ -250,27 +259,30 @@ export default function ReservationsList({
             label — amber for the active state (matches the at-risk
             reservation badge below) and a tiny amber dot before the label
             when inactive. Other filters keep the burgundy/neutral pair. */}
-        <div className="flex items-center gap-1.5 mt-2.5 overflow-x-auto sm:overflow-x-visible sm:flex-wrap pb-1 sm:pb-0 -mx-3 px-3 sm:mx-0 sm:px-0 scrollbar-hide">
+        <div className={`flex items-center overflow-x-auto sm:overflow-x-visible sm:flex-wrap pb-1 sm:pb-0 scrollbar-hide ${hero ? 'gap-2 mt-3' : 'gap-1.5 mt-2.5 -mx-3 px-3 sm:mx-0 sm:px-0'}`}>
           {statusFilters.map(({ key, label }) => {
             const isActive = statusFilter === key;
             const isRisk = key === 'at_risk';
-            const activeClasses = isRisk
-              ? 'bg-amber-500 text-white'
-              : 'bg-[#9F1239] text-white';
-            const inactiveClasses = 'bg-[#F5F5F4] text-[#78716C] hover:bg-[#E7E5E4] hover:text-[#1C1917]';
+            const activeClasses = hero
+              ? isRisk ? 'border-amber-700 bg-amber-50 text-amber-950' : 'border-brand-action bg-brand-action text-white'
+              : isRisk ? 'bg-amber-500 text-white' : 'bg-[#9F1239] text-white';
+            const inactiveClasses = hero
+              ? 'border-brand-line text-brand-muted hover:bg-brand-line/30 hover:text-brand-ink'
+              : 'bg-[#F5F5F4] text-[#78716C] hover:bg-[#E7E5E4] hover:text-[#1C1917]';
             return (
               <button
                 key={key}
                 type="button"
                 onClick={() => setStatusFilter(key)}
-                className={`text-[11px] font-medium px-3 py-1 rounded-full transition-colors whitespace-nowrap flex-shrink-0 inline-flex items-center gap-1.5 ${
+                aria-pressed={isActive}
+                className={`${hero ? 'min-h-8 border px-3 text-[12px]' : 'text-[11px] px-3 py-1'} font-medium rounded-full transition-colors whitespace-nowrap flex-shrink-0 inline-flex items-center gap-1.5 ${
                   isActive ? activeClasses : inactiveClasses
                 }`}
               >
                 {isRisk && (
                   <span
                     aria-hidden="true"
-                    className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-white/80' : 'bg-amber-500'}`}
+                    className={`w-1.5 h-1.5 rounded-full ${isActive && !hero ? 'bg-white/80' : 'bg-amber-600'}`}
                   />
                 )}
                 {label}
@@ -281,7 +293,7 @@ export default function ReservationsList({
 
         {/* Showing X of Y */}
         {isFiltering && (
-          <p className="text-[11px] text-[#A8A29E] mt-2" data-testid="filter-result-count">
+          <p className={`mt-2 ${hero ? 'text-[12px] text-brand-muted' : 'text-[11px] text-[#A8A29E]'}`} data-testid="filter-result-count">
             {t('dashboard.reservationsList.showingResults', {
               shown: filtered.length,
               total: displayed.length,
@@ -289,38 +301,39 @@ export default function ReservationsList({
             })}
           </p>
         )}
+        </>}
       </div>
 
       {/* List */}
       {displayed.length === 0 ? (
-        <div className="text-center py-10 px-6">
-          <div className="w-12 h-12 rounded-2xl bg-soft-gray flex items-center justify-center mb-3 mx-auto">
+        <div className={hero ? compactHeroEmpty ? 'py-4' : 'py-8' : 'text-center py-10 px-6'}>
+          <div className={`${hero ? 'mb-3 h-9 w-9 rounded-xl border border-brand-line text-brand-muted' : 'w-12 h-12 rounded-2xl bg-soft-gray mb-3 mx-auto'} flex items-center justify-center`}>
             <ThiingsIcon name="calendar-x" pxSize={20} className="text-muted-stone" />
           </div>
-          <p className="text-sm font-semibold text-deep-charcoal mb-1">{tl('allClear')}</p>
-          <p className="text-xs text-stone-gray">
+          <p className={hero ? 'mb-1 font-brand text-[17px] font-medium text-brand-ink' : 'text-sm font-semibold text-deep-charcoal mb-1'}>{tl('allClear')}</p>
+          <p className={hero ? 'text-[13px] text-brand-muted' : 'text-xs text-stone-gray'}>
             {dayFilter === 'tomorrow' ? tl('noTomorrow')
               : dayFilter === 'week' ? tl('noThisWeek')
               : tl('noUpcoming')}
           </p>
-          {dayFilter === 'today' && <p className="text-xs text-muted-stone mt-1">{tl('aiHint')}</p>}
+          {dayFilter === 'today' && <p className={hero ? 'mt-1 text-[12px] text-brand-muted' : 'text-xs text-muted-stone mt-1'}>{tl('aiHint')}</p>}
           {onAdd && (
             <button
               type="button"
               onClick={onAdd}
-              className="mt-3 text-xs font-semibold px-4 py-2 rounded-lg bg-[#9F1239]/[8%] text-[#9F1239] hover:bg-[#9F1239]/[14%] transition-colors"
+              className={hero ? 'mt-4 min-h-9 rounded-full border border-brand-line px-4 text-[12px] font-medium text-brand-action hover:bg-brand-line/30 transition-colors' : 'mt-3 text-xs font-semibold px-4 py-2 rounded-lg bg-[#9F1239]/[8%] text-[#9F1239] hover:bg-[#9F1239]/[14%] transition-colors'}
             >
               {tl('addReservation')}
             </button>
           )}
         </div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-10 px-6">
-          <div className="w-12 h-12 rounded-2xl bg-soft-gray flex items-center justify-center mb-3 mx-auto">
+        <div className={hero ? 'py-8' : 'text-center py-10 px-6'}>
+          <div className={`${hero ? 'mb-3 h-9 w-9 rounded-xl border border-brand-line text-brand-muted' : 'w-12 h-12 rounded-2xl bg-soft-gray mb-3 mx-auto'} flex items-center justify-center`}>
             <ThiingsIcon name="search" pxSize={20} className="text-muted-stone" />
           </div>
-          <p className="text-sm font-semibold text-deep-charcoal mb-1">{tl('noResults')}</p>
-          <p className="text-xs text-stone-gray">{tl('noResultsHint')}</p>
+          <p className={hero ? 'mb-1 font-brand text-[17px] font-medium text-brand-ink' : 'text-sm font-semibold text-deep-charcoal mb-1'}>{tl('noResults')}</p>
+          <p className={hero ? 'text-[13px] text-brand-muted' : 'text-xs text-stone-gray'}>{tl('noResultsHint')}</p>
         </div>
       ) : (
         <div>
@@ -341,6 +354,7 @@ export default function ReservationsList({
               byPartySize={byPartySize}
               language={language}
               tableMap={tableMap}
+              appearance={appearance}
             />
           ))}
         </div>
@@ -352,6 +366,7 @@ export default function ReservationsList({
 // ---- Internal row component ----
 
 interface ReservationRowProps {
+  appearance: 'default' | 'hero';
   reservation: UpcomingReservation;
   onCheckIn: () => void;
   onIntervention: () => void;
@@ -367,7 +382,8 @@ interface ReservationRowProps {
   tableMap?: Map<string, number>;
 }
 
-function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositAction, onRequestDeposit, onEdit, onCancel, onCustomerClick, avgSpendPerCover, byPartySize, language, tableMap }: ReservationRowProps) {
+function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositAction, onRequestDeposit, onEdit, onCancel, onCustomerClick, avgSpendPerCover, byPartySize, language, tableMap, appearance }: ReservationRowProps) {
+  const hero = appearance === 'hero';
   const { t } = useTranslation();
   const tl = (key: string, fallback?: string) => t(`dashboard.reservationsList.${key}`, { defaultValue: fallback ?? key });
   // Mobile-only bottom sheet for Edit / Cancel / Call. Desktop has its own
@@ -415,16 +431,18 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
     : { label: tl('confirmed'), classes: `${chipClassesForStatus('good')}` };
 
   const hue = (reservation.customer_name?.charCodeAt(0) ?? 65) * 137 % 360;
-  const avatarStyle = { background: `linear-gradient(135deg, hsl(${hue},50%,75%), hsl(${(hue + 40) % 360},50%,65%))` };
+  const avatarStyle = hero ? undefined : { background: `linear-gradient(135deg, hsl(${hue},50%,75%), hsl(${(hue + 40) % 360},50%,65%))` };
 
   return (
-    <div className={`flex items-center py-3 sm:py-[18px] border-b border-[#F5F5F4] last:border-b-0 gap-2 sm:gap-4 transition-colors ${
-  reservation.party_size >= 6
+    <div className={`flex items-center gap-2 sm:gap-4 transition-colors ${hero
+      ? 'border-b border-brand-line/70 py-4 last:border-b-0'
+      : 'py-3 sm:py-[18px] border-b border-[#F5F5F4] last:border-b-0'} ${
+  !hero && reservation.party_size >= 6
     ? 'pl-3 sm:pl-5 pr-3 sm:pr-6 border-l-2 border-l-[#9F1239]/30'
-    : 'px-3 sm:px-6'
+    : hero ? '' : 'px-3 sm:px-6'
 }`}>
       {/* Avatar */}
-      <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center text-[11px] sm:text-[13px] font-semibold text-warm-stone flex-shrink-0" style={avatarStyle}>
+      <div className={`w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center text-[11px] sm:text-[13px] flex-shrink-0 ${hero ? 'rounded-full border border-brand-line bg-brand-line/25 font-medium text-brand-ink' : 'rounded-xl font-semibold text-warm-stone'}`} style={avatarStyle}>
         {initials}
       </div>
 
@@ -439,14 +457,14 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
             <button
               type="button"
               onClick={onCustomerClick}
-              className="text-[13px] sm:text-sm font-semibold text-deep-charcoal tracking-tight truncate hover:text-burgundy transition-colors text-left"
+              className={hero ? 'truncate text-left font-brand text-[14px] font-medium tracking-[-0.01em] text-brand-ink transition-colors hover:text-brand-action' : 'text-[13px] sm:text-sm font-semibold text-deep-charcoal tracking-tight truncate hover:text-burgundy transition-colors text-left'}
               title={reservation.customer_name}
             >
               {reservation.customer_name}
             </button>
           ) : (
             <span
-              className="text-[13px] sm:text-sm font-semibold text-deep-charcoal tracking-tight truncate"
+              className={hero ? 'truncate font-brand text-[14px] font-medium tracking-[-0.01em] text-brand-ink' : 'text-[13px] sm:text-sm font-semibold text-deep-charcoal tracking-tight truncate'}
               title={reservation.customer_name}
             >
               {reservation.customer_name}
@@ -468,8 +486,8 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
                   : reservation.source;
             return (
               <span
-                className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-medium ${
-                  isWhatsApp ? 'bg-green-50 text-green-700' : 'bg-stone-500/10 text-stone-600'
+                className={`inline-flex items-center gap-1 font-medium ${hero ? 'rounded-full border border-brand-line px-2 py-0.5 text-[11px]' : 'px-1.5 py-0.5 rounded text-[9px]'} ${
+                  hero ? isWhatsApp ? 'text-emerald-800' : 'text-brand-muted' : isWhatsApp ? 'bg-green-50 text-green-700' : 'bg-stone-500/10 text-stone-600'
                 }`}
                 title={label}
               >
@@ -479,10 +497,10 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
             );
           })()}
         </div>
-        <div className="text-[11px] sm:text-xs text-muted-stone mt-0.5 truncate">
+        <div className={hero ? 'mt-0.5 truncate text-[12px] text-brand-muted' : 'text-[11px] sm:text-xs text-muted-stone mt-0.5 truncate'}>
           {reservation.party_size} {tl('people')}
           {tableMap && reservation.table_ids && reservation.table_ids.length > 0 && (
-            <span className="text-burgundy font-medium">
+            <span className={hero ? 'font-medium text-brand-ink' : 'text-burgundy font-medium'}>
               {' · '}T{reservation.table_ids.map(id => tableMap.get(id)).filter(Boolean).join(', T')}
             </span>
           )}
@@ -491,7 +509,7 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
             // which read as if the guest cost the restaurant money. Now
             // explicitly labelled "Expected spend".
             <span
-              className="text-rose-600 font-medium"
+              className={hero ? 'font-medium text-ocre-700' : 'text-rose-600 font-medium'}
               title={tl('expectedSpendHint')}
             >
               {' · '}{tl('expectedSpendShort')} ~{formatCurrency(predictReservationRevenue(reservation.party_size, avgSpendPerCover, byPartySize))}
@@ -528,8 +546,8 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
 
       {/* Time */}
       <div className="text-right flex-shrink-0">
-        <div className="text-[12px] sm:text-[13px] font-medium text-stone-gray">{formatTime(reservation.time)}</div>
-        <div className="text-[10px] sm:text-[11px] text-muted-stone">{getMealPeriod(reservation.time)}</div>
+        <div className={hero ? 'font-brand text-[13px] font-medium tabular-nums text-brand-ink' : 'text-[12px] sm:text-[13px] font-medium text-stone-gray'}>{formatTime(reservation.time)}</div>
+        <div className={hero ? 'text-[11px] text-brand-muted' : 'text-[10px] sm:text-[11px] text-muted-stone'}>{getMealPeriod(reservation.time)}</div>
       </div>
 
       {/* Status / Action */}
@@ -539,7 +557,7 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
             type="button"
             onClick={onCheckIn}
             aria-label={tl('checkIn')}
-            className={`text-xs font-semibold px-3 py-1 rounded-full ${statusBadge.classes}`}
+            className={`${hero ? 'border border-emerald-700/30 bg-transparent px-3 py-1.5 font-brand text-[12px] font-medium text-emerald-800 hover:bg-emerald-50' : `text-xs font-semibold px-3 py-1 ${statusBadge.classes}`} rounded-full`}
           >
             <span className="inline-flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60 flex-shrink-0" />
@@ -554,13 +572,13 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
             type="button"
             onClick={onIntervention}
             aria-label={tl('takeActionAriaLabel')}
-            className="text-xs font-semibold px-3 py-1.5 rounded-full bg-amber-600 hover:bg-amber-700 text-white transition-colors inline-flex items-center gap-1.5 shadow-sm"
+            className={hero ? 'inline-flex items-center gap-1.5 rounded-full bg-amber-700 px-3 py-1.5 font-brand text-[12px] font-medium text-white transition-colors hover:bg-amber-800' : 'text-xs font-semibold px-3 py-1.5 rounded-full bg-amber-600 hover:bg-amber-700 text-white transition-colors inline-flex items-center gap-1.5 shadow-sm'}
           >
-            <ThiingsIcon name="lightning" pxSize={13} className="text-ocre-600" />
+            <ThiingsIcon name="lightning" pxSize={13} className={hero ? 'text-amber-50' : 'text-ocre-600'} />
             {tl('takeActionButton')}
           </button>
         ) : reservation.intervention_taken ? (
-          <span className="text-xs font-semibold px-3 py-1 rounded-full bg-rose-600/[8%] text-rose-600">
+          <span className={hero ? 'rounded-full border border-brand-line px-3 py-1 font-brand text-[12px] text-brand-muted' : 'text-xs font-semibold px-3 py-1 rounded-full bg-rose-600/[8%] text-rose-600'}>
             <span className="inline-flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60 flex-shrink-0" />
               {tl('actionTaken')}
@@ -583,7 +601,7 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
             type="button"
             onClick={onCheckIn}
             aria-label={tl('checkIn')}
-            className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusBadge.classes}`}
+            className={`${hero ? 'border border-emerald-700/30 bg-transparent px-2 py-1 font-brand text-[11px] font-medium text-emerald-800' : `text-[10px] font-semibold px-2 py-0.5 ${statusBadge.classes}`} rounded-full`}
           >
             <span className="inline-flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60 flex-shrink-0" />
@@ -594,7 +612,7 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
           <button
             type="button"
             onClick={onIntervention}
-            className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-600/[8%] text-amber-600"
+            className={hero ? 'rounded-full border border-amber-700/30 px-2 py-1 font-brand text-[11px] font-medium text-amber-900' : 'text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-600/[8%] text-amber-600'}
           >
             <span className="inline-flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60 flex-shrink-0" />
@@ -605,7 +623,7 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
           // Previously this rendered just a colored dot with no label —
           // hosts on iPad / phone couldn't tell what the colored circle
           // meant. Now we also surface the short status label.
-          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusBadge.classes}`}>
+          <span className={`${hero ? 'px-2 py-1 font-brand text-[11px] font-medium' : 'text-[10px] font-semibold px-2 py-0.5'} rounded-full ${statusBadge.classes}`}>
             <span className="inline-flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60 flex-shrink-0" />
               {statusBadge.label}
@@ -633,7 +651,7 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
               type="button"
               onClick={onEdit}
               aria-label={tl('edit')}
-              className="p-1.5 rounded-lg text-muted-stone hover:text-deep-charcoal hover:bg-soft-gray transition-colors"
+              className={hero ? 'rounded-lg p-1.5 text-brand-muted transition-colors hover:bg-brand-line/30 hover:text-brand-ink' : 'p-1.5 rounded-lg text-muted-stone hover:text-deep-charcoal hover:bg-soft-gray transition-colors'}
             >
               <ThiingsIcon name="pencil" pxSize={14} />
             </button>
@@ -643,7 +661,7 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
               type="button"
               onClick={onCancel}
               aria-label={tl('cancel')}
-              className="p-1.5 rounded-lg text-muted-stone hover:text-red-600 hover:bg-red-50 transition-colors"
+              className={hero ? 'rounded-lg p-1.5 text-brand-muted transition-colors hover:bg-red-50 hover:text-red-700' : 'p-1.5 rounded-lg text-muted-stone hover:text-red-600 hover:bg-red-50 transition-colors'}
             >
               <ThiingsIcon name="close" pxSize={14} />
             </button>

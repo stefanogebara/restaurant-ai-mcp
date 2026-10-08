@@ -31,7 +31,7 @@ export default function AnalyticsTab() {
 
   // Once the export-enriched payload (raw_reservations) has arrived, capture
   // it into separate state and drop the includeExport flag — otherwise it
-  // stays in the query key forever and every 30s poll keeps re-fetching the
+  // stays in the query key forever and every scheduled poll keeps re-fetching the
   // heavy raw_reservations array for the rest of the session.
   const [exportReservations, setExportReservations] = useState<AnalyticsData['raw_reservations']>(undefined);
   useEffect(() => {
@@ -57,7 +57,7 @@ export default function AnalyticsTab() {
     return <SkeletonAnalytics />;
   }
 
-  if ((isError || loadingTimedOut) && !data) {
+  if (isError || loadingTimedOut) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[40vh] p-6 text-center">
         <ThiingsIcon name="alert-circle" pxSize={28} className="text-red-700 mb-3" />
@@ -82,30 +82,37 @@ export default function AnalyticsTab() {
     );
   }
 
+  // The API uses a zero-filled payload for access gates. Those zeros are not
+  // observed activity and must never flow into the empty-period report.
+  if (data.upgrade_required || data.no_restaurant) {
+    return (
+      <section className="max-w-xl border-t border-brand-line pt-7 text-brand-ink sm:pt-10">
+        <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-brand-muted">{t('analytics.title')}</p>
+        <h2 className="mt-3 font-brand text-[28px] leading-[1.1] tracking-[-0.035em] sm:text-[36px]">
+          {data.no_restaurant ? t('analytics.noRestaurantTitle', 'Set up your restaurant first') : t('analytics.upgradeTitle', 'Analytics are not available on this plan')}
+        </h2>
+        <p className="mt-3 text-[14px] leading-relaxed text-brand-muted">
+          {data.no_restaurant
+            ? t('analytics.noRestaurantDescription', 'Finish setup to see your restaurant’s real activity here.')
+            : t('analytics.upgradeRequired', 'Upgrade your plan to unlock full analytics with real-time data, trends, and AI insights.')}
+        </p>
+        <a
+          href={data.no_restaurant ? '/onboarding' : '/subscription/manage'}
+          className="mt-6 inline-flex min-h-[44px] items-center gap-2 rounded-full bg-brand-action px-5 text-[13px] font-medium text-brand-paper transition-colors hover:bg-brand-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-action"
+        >
+          {data.no_restaurant ? t('analytics.finishSetup', 'Finish setup') : t('analytics.upgradePlan', 'Upgrade Plan')}
+          <ThiingsIcon name="arrow-right" pxSize={15} />
+        </a>
+      </section>
+    );
+  }
+
   const hasPeriodActivity = data.overview.total_reservations > 0
     || (data.overview.total_revenue ?? 0) > 0
     || data.daily_trend.some(day => day.reservations > 0 || day.completed_services > 0);
 
   return (
     <div className="space-y-4 text-brand-ink max-[359px]:space-y-3 sm:space-y-6">
-      {/* Upgrade banner for canceled/expired subscriptions */}
-      {(data.upgrade_required || data.no_restaurant) && (
-        <div className="bg-amber-50 border border-amber-200 rounded-xl px-5 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <ThiingsIcon name="lightning" pxSize={20} className="text-amber-700 flex-shrink-0" />
-            <p className="text-sm text-amber-900">
-              {t('analytics.upgradeRequired', 'Upgrade your plan to unlock full analytics with real-time data, trends, and AI insights.')}
-            </p>
-          </div>
-          <a
-            href="/subscription/manage"
-            className="rounded-[100px] bg-brand-action px-5 py-2 text-sm font-medium text-brand-paper transition-colors hover:bg-brand-ink whitespace-nowrap"
-          >
-            {t('analytics.upgradePlan', 'Upgrade Plan')}
-          </a>
-        </div>
-      )}
-
       {/* The active tab names the page; the actual reporting scope leads. */}
       <div className="grid gap-0 sm:gap-3 sm:border-b sm:border-brand-line sm:pb-3 xl:grid-cols-[minmax(180px,1fr)_auto] xl:items-end xl:gap-8">
         <div className="sr-only min-w-0 sm:not-sr-only">
@@ -160,43 +167,60 @@ export default function AnalyticsTab() {
           </div>
         </details>
       </> : (
-        <section className="pt-0 pb-1 sm:pt-3 sm:pb-4" aria-live="polite">
-          <div>
-            <h3 className="font-brand text-[24px] leading-[1.15] tracking-tight text-brand-ink sm:text-[34px]">
-              {t('analytics.emptyPeriodTitle', 'No activity in this period.')}
-            </h3>
-            <p className="mt-1 max-w-xl text-[14px] leading-relaxed text-brand-muted">
-              {t('analytics.emptyPeriodDescription', 'No bookings or completed services on the selected dates.')}
-            </p>
-          </div>
+        <section className="flex min-h-[48px] flex-wrap items-center justify-between gap-x-4 gap-y-1 border-b border-brand-line pb-2 pt-1 sm:min-h-[56px] sm:pb-3 sm:pt-2" aria-live="polite" aria-label={t('analytics.periodOverview', 'Period overview')}>
+          <h3 className="font-brand text-[14px] leading-snug text-brand-muted sm:text-[16px]">
+            {t('analytics.emptyPeriodTitle', 'No bookings in this period.')}
+          </h3>
+          <p className="sr-only">{t('analytics.emptyPeriodDescription', 'No recorded revenue on the selected dates either.')}</p>
           {dateRange.preset !== '90d' && (
             <button
               type="button"
               onClick={() => setDateRange({ preset: '90d', ...presetToRange('90d') })}
-              className="mt-2 inline-flex min-h-[40px] items-center gap-2 px-0.5 py-1 text-[15px] font-medium text-brand-action underline-offset-4 hover:underline"
+              className="inline-flex min-h-[36px] items-center gap-1.5 text-[12px] font-medium text-brand-action underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-action"
             >
-              {t('analytics.viewNinetyDays', 'View last 90 days')}
-              <span aria-hidden="true">→</span>
+              {t('analytics.viewNinetyDaysAction', 'View 90 days')}
+              <ThiingsIcon name="arrow-right" pxSize={14} />
             </button>
           )}
         </section>
       )}
 
-      <section className={`border-t border-brand-line ${hasPeriodActivity ? 'pt-4 sm:pt-8' : 'pt-3 sm:pt-6'}`}>
-        <h3 className={`font-brand leading-tight text-brand-ink ${hasPeriodActivity ? 'text-[26px] tracking-tight sm:text-[30px]' : 'text-[21px] tracking-tight sm:text-[24px]'}`}>
-          {t('analytics.additionalSignals', 'Now and coming days')}
-        </h3>
-        <div className={`grid lg:grid-cols-[minmax(260px,0.8fr)_minmax(0,1.7fr)] lg:gap-12 ${hasPeriodActivity ? 'mt-4 gap-7' : 'mt-2 gap-3 sm:mt-4 sm:gap-7'}`}>
-          <div className={`border-b hairline lg:border-b-0 lg:border-r lg:pr-9 ${hasPeriodActivity ? 'pb-6' : 'pb-3 sm:pb-6'}`}>
-            <LiveOccupancySignal
-              occupiedSeats={data.overview.current_occupancy}
-              totalSeats={data.overview.total_capacity}
-              compact={!hasPeriodActivity}
-            />
+      {hasPeriodActivity ? (
+        <section className="border-t border-brand-line pt-4 sm:pt-8">
+          <h3 className="font-brand text-[26px] leading-tight tracking-tight text-brand-ink sm:text-[30px]">
+            {t('analytics.additionalSignals', 'Now and next 7 days')}
+          </h3>
+          <div className="mt-4 grid gap-7 lg:grid-cols-[minmax(260px,0.8fr)_minmax(0,1.7fr)] lg:gap-12">
+            <div className="border-b hairline pb-6 lg:border-b-0 lg:border-r lg:pr-9">
+              <LiveOccupancySignal occupiedSeats={data.overview.current_occupancy} totalSeats={data.overview.total_capacity} />
+            </div>
+            <NoShowPredictions />
           </div>
-          <NoShowPredictions />
-        </div>
-      </section>
+        </section>
+      ) : (
+        <section className="!mt-6 sm:!mt-9">
+          <NoShowPredictions featured />
+          <CompactLiveOccupancy occupiedSeats={data.overview.current_occupancy} totalSeats={data.overview.total_capacity} />
+        </section>
+      )}
     </div>
+  );
+}
+
+function CompactLiveOccupancy({ occupiedSeats, totalSeats }: { occupiedSeats: number; totalSeats: number }) {
+  const { t } = useTranslation();
+  const hasSeatCount = Number.isFinite(occupiedSeats) && occupiedSeats >= 0
+    && Number.isFinite(totalSeats) && totalSeats > 0;
+
+  return (
+    <section className="mt-5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-[12px] leading-[1.5] text-brand-muted max-[359px]:mt-2 sm:mt-7 sm:text-[13px]" aria-label={t('analytics.currentOccupancy', 'Occupancy now')}>
+      <span>{t('analytics.currentOccupancy', 'Occupancy now')} ·</span>
+      <span className="tabular-nums text-brand-ink">
+        {hasSeatCount
+          ? t('analytics.occupancyFooterCount', { occupied: occupiedSeats, capacity: totalSeats })
+          : t('analytics.capacityUnavailable', 'Capacity not configured')}
+      </span>
+      <span className="sr-only">{t('analytics.outsideSelectedPeriod', 'Live · outside the date filter')}</span>
+    </section>
   );
 }

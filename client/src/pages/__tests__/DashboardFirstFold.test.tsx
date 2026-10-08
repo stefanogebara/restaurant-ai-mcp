@@ -7,6 +7,7 @@ import { formatLocalDate } from '../../utils/timeFormatting';
 const state = vi.hoisted(() => ({
   query: { data: undefined as unknown, isLoading: false, isError: false, refetch: vi.fn() },
   serviceNight: false,
+  plan: { isTrial: false, isActive: true, status: 'active', trialEnd: null as string | null },
 }));
 
 vi.mock('@tanstack/react-query', () => ({ useQuery: () => state.query }));
@@ -18,14 +19,14 @@ vi.mock('react-i18next', () => ({
       'dashboard.stats.tablesShort': 'Livres',
       'dashboard.serviceTitle': 'Hoje no salão',
       'dashboard.walkIn.actionShort': 'Receber sem reserva',
-      'dashboard.welcomeGuide.title': 'Seu painel está pronto!',
+      'dashboard.showInsights': 'Mostrar análises e insights',
     }[key] || fallback || key),
   }),
 }));
 vi.mock('../../hooks/useDocumentTitle', () => ({ useDocumentTitle: vi.fn() }));
 vi.mock('../../hooks/useRealtimeSubscription', () => ({ useRealtimeDashboard: vi.fn() }));
 vi.mock('../../hooks/useCompleteService', () => ({ useCompleteService: () => ({ mutate: vi.fn() }) }));
-vi.mock('../../hooks/useSubscription', () => ({ usePlanInfo: () => ({ isTrial: false, isActive: true, status: 'active' }) }));
+vi.mock('../../hooks/useSubscription', () => ({ usePlanInfo: () => state.plan }));
 vi.mock('../../hooks/useServiceMode', () => ({ useServiceMode: () => ({ isNight: state.serviceNight, toggle: vi.fn() }) }));
 vi.mock('../../hooks/useRevenueStats', () => ({ useRevenueStats: () => ({ data: undefined }) }));
 vi.mock('../../contexts/ToastContext', () => ({ useToast: () => ({ success: vi.fn() }) }));
@@ -35,7 +36,7 @@ vi.mock('../../components/layout/DashboardLayout', () => ({
   default: ({ children, appearance }: { children: React.ReactNode; appearance?: string }) => <div data-testid="dashboard-shell" data-appearance={appearance}>{children}</div>,
 }));
 vi.mock('../../components/dashboard/ReservationsList', () => ({
-  default: ({ language }: { language: string }) => <div data-testid="reservations-list" data-language={language} />,
+  default: ({ language, appearance }: { language: string; appearance?: string }) => <div data-testid="reservations-list" data-language={language} data-appearance={appearance} />,
 }));
 vi.mock('../../components/dashboard/TableLayoutPanel', () => ({ default: () => <div data-testid="floor-plan" /> }));
 vi.mock('../../components/dashboard/TableTimeline', () => ({ default: () => null }));
@@ -82,6 +83,7 @@ describe('Dashboard first-fold data contract', () => {
   beforeEach(() => {
     state.query = { data: dashboardData(1), isLoading: false, isError: false, refetch: vi.fn() };
     state.serviceNight = false;
+    state.plan = { isTrial: false, isActive: true, status: 'active', trialEnd: null };
   });
 
   it('uses the hero shell in daylight and keeps the floor map present', () => {
@@ -99,6 +101,7 @@ describe('Dashboard first-fold data contract', () => {
 
     expect(screen.getByTestId('dashboard-shell')).toHaveAttribute('data-appearance', 'default');
     expect(screen.getByTestId('floor-plan')).toBeInTheDocument();
+    expect(screen.getByTestId('reservations-list')).toHaveAttribute('data-appearance', 'default');
   });
 
   it('shows available tables and exact active waitlist count in Portuguese', () => {
@@ -108,7 +111,8 @@ describe('Dashboard first-fold data contract', () => {
     expect(screen.getByText('Livres')).toHaveAttribute('aria-label', 'Mesas Disponíveis');
     expect(screen.getByText('1')).toBeInTheDocument();
     expect(screen.getByTestId('reservations-list')).toHaveAttribute('data-language', 'pt-BR');
-    expect(screen.queryByText('Seu painel está pronto!')).not.toBeInTheDocument();
+    expect(screen.getByTestId('reservations-list')).toHaveAttribute('data-appearance', 'hero');
+    expect(screen.queryByRole('button', { name: 'Mostrar análises e insights' })).not.toBeInTheDocument();
   });
 
   it('does not call a restaurant empty when it has bookings later this week', () => {
@@ -117,7 +121,7 @@ describe('Dashboard first-fold data contract', () => {
 
     renderDashboard();
 
-    expect(screen.queryByText('Seu painel está pronto!')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Mostrar análises e insights' })).not.toBeInTheDocument();
   });
 
   it('does not claim the queue is empty when its count is unavailable', () => {
@@ -125,13 +129,35 @@ describe('Dashboard first-fold data contract', () => {
     renderDashboard();
 
     expect(screen.getByText('—')).toBeInTheDocument();
-    expect(screen.queryByText('Seu painel está pronto!')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Mostrar análises e insights' })).not.toBeInTheDocument();
   });
 
-  it('shows onboarding guidance only when bookings, parties and queue are all empty', () => {
+  it('keeps the room visible and defers secondary insights when operations are empty', () => {
     state.query.data = dashboardData(0);
     renderDashboard();
 
-    expect(screen.getByText('Seu painel está pronto!')).toBeInTheDocument();
+    expect(screen.getByTestId('floor-plan')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Mostrar análises e insights' })).toBeInTheDocument();
+    expect(screen.queryByText('Seu painel está pronto!')).not.toBeInTheDocument();
+  });
+
+  it('keeps failed payment action visible without moving the room behind onboarding copy', () => {
+    state.plan = { isTrial: false, isActive: false, status: 'past_due', trialEnd: null };
+    renderDashboard();
+
+    const warning = screen.getByRole('alert');
+    expect(warning).toHaveTextContent('Payment failed');
+    expect(warning.querySelector('a[href="/subscription/manage"]')).toBeInTheDocument();
+    expect(screen.getByTestId('floor-plan')).toBeInTheDocument();
+  });
+
+  it('shows trial time and upgrade path as an inline status', () => {
+    state.plan = { isTrial: true, isActive: true, status: 'trialing', trialEnd: new Date(Date.now() + 36 * 60 * 60 * 1000).toISOString() };
+    renderDashboard();
+
+    const status = screen.getByRole('status');
+    expect(status).toHaveTextContent('Teste Gratuito termina em breve');
+    expect(status).toHaveTextContent(/\d+ dias?/);
+    expect(status.querySelector('a[href="/subscription/manage"]')).toBeInTheDocument();
   });
 });

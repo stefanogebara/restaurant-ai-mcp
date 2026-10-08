@@ -21,7 +21,7 @@ const RECOMMENDATION_I18N: Record<string, Record<string, string>> = {
   },
 };
 
-export default function NoShowPredictions() {
+export default function NoShowPredictions({ featured = false }: { featured?: boolean }) {
   const { t, i18n } = useTranslation();
   const language = i18n.language.startsWith('pt') ? 'pt-BR' : i18n.language.startsWith('es') ? 'es' : 'en';
   const { data, isLoading, isError, refetch } = useNoShowPredictions();
@@ -30,7 +30,12 @@ export default function NoShowPredictions() {
   const predictions = rawPredictions
     .filter((p, i, arr) => arr.findIndex(q => q.reservation_id === p.reservation_id) === i)
     .sort((a, b) => b.risk_score - a.risk_score || a.days_until - b.days_until);
+  const isForReview = (prediction: NoShowPrediction) => prediction.risk_level === 'high' || prediction.risk_level === 'medium';
+  const reviewPredictions = predictions.filter(isForReview);
+  const otherPredictions = predictions.filter(prediction => !isForReview(prediction));
   const summary = data?.summary ?? null;
+  const reviewCount = (summary?.high_risk ?? 0) + (summary?.medium_risk ?? 0);
+  const reviewRows = reviewPredictions.length;
   const [selectedPrediction, setSelectedPrediction] = useState<NoShowPrediction | null>(null);
   // This list is scoped to the next seven days, so the year adds a whole line
   // on mobile without disambiguating any booking.
@@ -38,15 +43,14 @@ export default function NoShowPredictions() {
     ? new Intl.DateTimeFormat(i18n.language, { day: '2-digit', month: 'short' }).format(parseLocalDate(date))
     : date || '—';
 
-  // Liquid Glass v2: a linha inteira não é mais uma caixa colorida — só o
-  // chip carrega o risco. 'low' era rose-600 (a cor de AÇÃO da marca), então
-  // a reserva mais segura gritava mais alto que a de risco médio.
+  // Risk is a semantic text signal. A bordered pill made each score compete
+  // with the actual review task, especially in the narrow mobile rows.
   const getRiskChip = (level: string) => {
     switch (level) {
-      case 'high': return 'border border-red-700/25 text-red-700';
-      case 'medium': return 'border border-amber-700/25 text-amber-700';
-      case 'low': return 'border border-emerald-700/25 text-emerald-700';
-      default: return 'border border-brand-line text-brand-muted';
+      case 'high': return 'text-red-800';
+      case 'medium': return 'text-amber-800';
+      case 'low': return 'text-emerald-800';
+      default: return 'text-brand-muted';
     }
   };
   const riskBand = (level: string) => {
@@ -57,6 +61,60 @@ export default function NoShowPredictions() {
       default: return null;
     }
   };
+  const riskRowLabel = (level: string) => {
+    switch (level) {
+      case 'high': return t('analytics.riskRowHigh', 'High risk');
+      case 'medium': return t('analytics.riskRowMedium', 'Medium risk');
+      case 'low': return t('analytics.riskRowLow', 'Low risk');
+      default: return t('analytics.riskScore', 'Risk score');
+    }
+  };
+
+  const renderPredictionRow = (prediction: NoShowPrediction) => (
+    <button
+      key={prediction.reservation_id}
+      type="button"
+      aria-expanded={selectedPrediction === prediction}
+      className={`w-full border-b border-brand-line text-left transition-colors hover:bg-brand-ink/[0.02] focus-visible:outline-2 focus-visible:outline-brand-action ${featured ? 'min-h-[70px] py-3.5 max-[359px]:min-h-[64px] max-[359px]:py-3' : 'min-h-[56px] py-2.5'}`}
+      onClick={() => setSelectedPrediction(selectedPrediction === prediction ? null : prediction)}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center justify-between gap-x-3 gap-y-1">
+            <span className={`min-w-0 truncate text-brand-ink ${featured ? 'text-[16px] font-semibold' : 'text-[15px] font-medium'}`}>{prediction.customer_name}</span>
+            <span
+              aria-label={featured ? riskRowLabel(prediction.risk_level) : t('analytics.riskScore', 'Risk score {{score}}', { score: prediction.risk_score })}
+              className={`inline-flex min-w-[91px] shrink-0 justify-end py-1 tabular-nums ${featured ? 'text-[13px] font-semibold' : 'text-[12px] font-medium'} ${getRiskChip(prediction.risk_level)}`}
+            >
+              {featured ? riskRowLabel(prediction.risk_level) : <>{riskBand(prediction.risk_level) && <span className="mr-1">{riskBand(prediction.risk_level)} ·</span>}{prediction.risk_score}/100</>}
+            </span>
+          </div>
+          <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[12px] text-brand-muted sm:text-[13px]">
+            <span>{readableDate(prediction.date)} · {prediction.time?.slice(0, 5) || '—'}</span>
+            <span aria-hidden="true">·</span>
+            <span>{t('analytics.partyOf', { size: prediction.party_size })}</span>
+          </div>
+        </div>
+        <ThiingsIcon name="chevron-down" pxSize={18} className={`mt-1 flex-shrink-0 transition-transform ${selectedPrediction === prediction ? 'rotate-180' : ''}`} />
+      </div>
+      {selectedPrediction === prediction && (featured || (prediction.recommendations?.length ?? 0) > 0) && (
+        <div className="mt-4 border-t border-brand-line pt-4">
+          {featured && <p className="mb-3 text-[12px] tabular-nums text-brand-muted">{t('analytics.riskScore', 'Risk score {{score}}', { score: prediction.risk_score })}</p>}
+          {(prediction.recommendations?.length ?? 0) > 0 && <>
+            <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-brand-muted">{t('analytics.recommendedActions')}</p>
+            <ul className="space-y-2">
+              {(prediction.recommendations ?? []).map((rec, idx) => (
+                <li key={idx} className="flex items-start gap-2 text-[15px] text-brand-ink">
+                  <span className="mt-0.5 text-brand-action" aria-hidden="true">&bull;</span>
+                  <span>{RECOMMENDATION_I18N[language]?.[rec] ?? rec}</span>
+                </li>
+              ))}
+            </ul>
+          </>}
+        </div>
+      )}
+    </button>
+  );
 
   if (isLoading) {
     return (
@@ -94,98 +152,72 @@ export default function NoShowPredictions() {
   return (
     <section>
       {/* Cabeçalho: rótulo + prosa direto no canvas, sem caixa */}
-      <header className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 pb-1 sm:border-b sm:border-brand-line sm:pb-4">
-        <h2 className="font-brand text-[16px] font-medium text-brand-ink">
-          {t('analytics.noShowPredictions')}
-        </h2>
-        <p className="text-[12px] text-brand-muted sm:text-[15px]">
-          {t('analytics.upcomingSevenDays', 'Next 7 days')}
-        </p>
-      </header>
+      {featured && summary && summary.total_upcoming > 0 ? (
+        <header className="pb-3 sm:pb-5">
+          <p className="text-[13px] font-medium text-brand-muted">{t('analytics.nextSevenDays', 'Next 7 days')}</p>
+          <h2 aria-label={`${reviewCount > 0 ? reviewCount : summary.total_upcoming} ${reviewCount > 0 ? t('analytics.toReview', 'to review') : t('analytics.upcomingReservations', 'upcoming bookings')}`} className="mt-1 flex items-baseline gap-2 font-brand text-brand-ink">
+            <span className="text-[46px] leading-none tracking-[-0.06em] tabular-nums sm:text-[54px]">{reviewCount > 0 ? reviewCount : summary.total_upcoming}</span>
+            <span className="text-[27px] leading-tight tracking-[-0.04em] sm:text-[30px]">{reviewCount > 0 ? t('analytics.toReview', 'to review') : t('analytics.upcomingReservations', 'upcoming bookings')}</span>
+          </h2>
+          {reviewCount > 0 && <p className="mt-1 text-[14px] leading-[1.45] text-brand-muted">
+            {t('analytics.among', 'Among')}{' '}
+            <span className="tabular-nums text-brand-ink">{summary.total_upcoming}</span>{' '}
+            {t('analytics.upcomingReservations', 'upcoming bookings')}
+          </p>}
+          <p className="mt-2 text-[12px] leading-[1.45] text-brand-muted">{t('analytics.riskScoreNote', 'Estimated risk, not a no-show probability.')}</p>
+        </header>
+      ) : (
+        <header className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 pb-1 sm:border-b sm:border-brand-line sm:pb-4">
+          <h2 className="font-brand text-[16px] font-medium text-brand-ink">{t('analytics.noShowPredictions')}</h2>
+          {predictions.length > 0 && <p className="text-[12px] text-brand-muted">{t('analytics.predictionsListLimit', 'Up to 10 in this list')}</p>}
+        </header>
+      )}
 
       {/* The historical rate in the API combines cancellations and no-shows,
           and can be a default 15% with no history. Do not present it as an
           observed no-show rate. */}
-      {summary && summary.total_upcoming > 0 && (
-        <div className="grid grid-cols-3 gap-3 border-b border-brand-line pt-2 pb-3 sm:flex sm:gap-x-10 sm:py-5">
-          <div className="flex flex-col gap-1 border-r border-brand-line pr-3 sm:flex-row sm:items-baseline sm:gap-2 sm:border-r-0 sm:pr-0">
-            <span className="font-brand text-[31px] leading-none tabular-nums text-brand-ink sm:text-[27px]">{summary.total_upcoming}</span>
-            <span className="text-[12px] text-brand-muted">{t('analytics.reservations')}</span>
-          </div>
-          <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:gap-2">
-            <span className="font-brand text-[24px] leading-none tabular-nums text-red-700 sm:text-[27px]">{summary.high_risk}</span>
-            <span className="text-[12px] text-brand-muted">{t('analytics.highRisk')}</span>
-          </div>
-          <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:gap-2">
-            <span className="font-brand text-[24px] leading-none tabular-nums text-amber-700 sm:text-[27px]">{summary.medium_risk}</span>
-            <span className="text-[12px] text-brand-muted">{t('analytics.mediumRisk')}</span>
-          </div>
+      {summary && summary.total_upcoming > 0 && !featured && (
+        <div className="border-b border-brand-line pb-4 pt-3 sm:py-5">
+          <p className="flex items-baseline gap-2">
+            <span className="font-brand text-[32px] leading-none tabular-nums text-brand-ink sm:text-[36px]">{summary.total_upcoming}</span>
+            <span className="text-[13px] text-brand-muted">{t('analytics.upcomingReservations', 'upcoming bookings')}</span>
+          </p>
+          <p className="mt-2 flex flex-wrap items-baseline gap-x-5 gap-y-1 text-[13px]">
+            <span className="text-red-700"><span className="font-brand text-[17px] tabular-nums">{summary.high_risk}</span> {t('analytics.highRisk')}</span>
+            <span className="text-amber-700"><span className="font-brand text-[17px] tabular-nums">{summary.medium_risk}</span> {t('analytics.mediumRisk')}</span>
+          </p>
         </div>
       )}
 
-      {/* Lista: linhas com fio de tinta, não cartões empilhados */}
+      {/* The actionable shortlist stays visible; lower-risk rows are available
+          without competing with the review task on the first fold. */}
       {predictions.length === 0 ? (
         <div className="py-7">
           <p className="font-brand text-[22px] text-brand-ink">
-            {summary ? t('analytics.noUpcomingPredictions', 'No upcoming reservations to assess') : t('analytics.predictionsUnavailable', 'Risk predictions unavailable')}
+            {summary && summary.total_upcoming === 0 ? t('analytics.noUpcomingPredictions', 'No upcoming reservations to assess') : t('analytics.predictionsUnavailable', 'Risk predictions unavailable')}
           </p>
           <p className="text-sm text-brand-muted mt-1">
-            {summary ? t('analytics.noUpcomingPredictionsNote', 'No reservations were returned for the next seven days.') : t('analytics.predictionsUnavailableNote', 'No risk conclusion can be drawn from this view.')}
+            {summary && summary.total_upcoming === 0 ? t('analytics.noUpcomingPredictionsNote', 'No reservations were returned for the next seven days.') : t('analytics.predictionsUnavailableNote', 'No risk conclusion can be drawn from this view.')}
           </p>
         </div>
       ) : (
         <div>
-          {predictions.map((prediction) => (
-            <button
-              key={prediction.reservation_id}
-              type="button"
-              aria-expanded={selectedPrediction === prediction}
-              className="w-full text-left py-4 border-b border-brand-line transition-colors hover:bg-brand-ink/[0.02]"
-              onClick={() => setSelectedPrediction(selectedPrediction === prediction ? null : prediction)}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-x-3 gap-y-1">
-                    <span className="min-w-0 truncate text-[15px] font-medium text-brand-ink">{prediction.customer_name}</span>
-                    <span aria-label={t('analytics.riskScore', 'Risk score {{score}}', { score: prediction.risk_score })} className={`shrink-0 rounded-[46px] px-2.5 py-1 text-[12px] font-medium tabular-nums ${getRiskChip(prediction.risk_level)}`}>
-                      {riskBand(prediction.risk_level) && <span className="mr-1">{riskBand(prediction.risk_level)} ·</span>}{prediction.risk_score}/100
-                    </span>
-                  </div>
-                  <div className="mt-1 grid gap-x-6 gap-y-0.5 text-[13px] text-brand-muted sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-                    <span>{readableDate(prediction.date)} · {prediction.time?.slice(0, 5) || '—'}</span>
-                    <span>{t('analytics.partyOf', { size: prediction.party_size })}</span>
-                  </div>
-                </div>
-                <ThiingsIcon name="chevron-down" pxSize={18} className={`flex-shrink-0 mt-1 transition-transform ${selectedPrediction === prediction ? 'rotate-180' : ''}`} />
-              </div>
-
-              {/* Recomendações expandidas */}
-              {selectedPrediction === prediction && (prediction.recommendations?.length ?? 0) > 0 && (
-                <div className="mt-4 pt-4 border-t border-brand-line">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-brand-muted mb-2">
-                    {t('analytics.recommendedActions')}
-                  </p>
-                  <ul className="space-y-2">
-                    {(prediction.recommendations ?? []).map((rec, idx) => (
-                      <li key={idx} className="flex items-start gap-2 text-[15px] text-brand-ink">
-                        <span className="text-brand-action mt-0.5" aria-hidden="true">&bull;</span>
-                        <span>{RECOMMENDATION_I18N[language]?.[rec] ?? rec}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </button>
-          ))}
+          {featured && reviewRows > 0 ? <>
+            {reviewPredictions.map(renderPredictionRow)}
+            {reviewCount > reviewRows && <p className="pt-2 text-[12px] text-brand-muted">{t('analytics.reviewShortlistCount', { shown: reviewRows, total: reviewCount })}</p>}
+            {otherPredictions.length > 0 && <details className="group">
+              <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-3 py-2 text-[12px] text-brand-muted focus-visible:outline-2 focus-visible:outline-brand-action">
+                <span>{t('analytics.otherRiskRowsWithLimit', 'Other assessed bookings · up to 10 shown')}</span>
+                <ThiingsIcon name="chevron-down" pxSize={16} className="shrink-0 transition-transform group-open:rotate-180" />
+              </summary>
+              <div className="pl-3">{otherPredictions.map(renderPredictionRow)}</div>
+            </details>}
+          </> : predictions.map(renderPredictionRow)}
         </div>
       )}
 
-      {predictions.length > 0 && (
-        <p className="flex items-center gap-2 text-xs text-brand-muted pt-4">
-          <ThiingsIcon name="info" pxSize={14} />
-          <span>{t('analytics.predictionsLimits', 'Up to 10 bookings. Scores are not probabilities and do not confirm a no-show.')}</span>
-        </p>
-      )}
+      {featured && predictions.length > 0 && reviewRows === 0 && <p className="pt-2 text-[12px] text-brand-muted">{t('analytics.predictionsListLimit', 'Up to 10 in this list')}</p>}
+      {!featured && predictions.length > 0 && <p className="pb-2 pt-5 text-[12px] leading-[1.5] text-brand-muted sm:pt-6">{t('analytics.predictionsLimits', 'Scores are not probabilities and do not confirm a no-show.')}</p>}
     </section>
   );
 }

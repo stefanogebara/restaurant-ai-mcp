@@ -66,6 +66,15 @@ export default function TableLayoutPanel({
   const handleTableClick = (table: Table) => setSelectedTable(table);
   const handleFreeTable = (tableId: string) => freeTable.mutate(tableId);
   const handleUpdateStatus = (tableId: string, status: string) => updateStatus.mutate({ tableId, status });
+  const editFloorPlanLink = (
+    <Link
+      to="/host-dashboard/floor-plan"
+      className={`inline-flex min-h-[32px] shrink-0 items-center gap-1.5 whitespace-nowrap text-[12px] font-medium underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-action ${night ? 'text-white/65' : 'text-brand-muted'}`}
+    >
+      <ThiingsIcon name="edit" pxSize={12} />
+      {t('tableLayout.editFloorPlan', 'Edit Floor Plan')}
+    </Link>
+  );
 
   if (isLoading) {
     return (
@@ -90,6 +99,8 @@ export default function TableLayoutPanel({
               {hasSavedPlan ? t('tableLayout.title') : t('navigation.tables', 'Tables')}
             </h2>
           </div>
+
+          {!hasSavedPlan && editFloorPlanLink}
 
           {hasSavedPlan && <div className="flex shrink-0 items-center gap-2">
             {/* View Mode Toggle */}
@@ -145,15 +156,7 @@ export default function TableLayoutPanel({
           {hasSavedPlan && <div className={`mt-4 border-t px-1 pb-1 pt-3 ${night ? 'border-white/15' : 'border-brand-line'}`}>
             <TableStatusLegend night={night} />
           </div>}
-          <div className="mt-1 flex justify-end">
-            <Link
-              to="/host-dashboard/floor-plan"
-              className={`inline-flex min-h-[32px] items-center gap-1.5 whitespace-nowrap text-[12px] font-medium underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-action ${night ? 'text-white/65' : 'text-brand-muted'}`}
-            >
-              <ThiingsIcon name="edit" pxSize={12} />
-              {t('tableLayout.editFloorPlan', 'Edit Floor Plan')}
-            </Link>
-          </div>
+          {hasSavedPlan && <div className="mt-1 flex justify-end">{editFloorPlanLink}</div>}
         </div>
 
       </div>

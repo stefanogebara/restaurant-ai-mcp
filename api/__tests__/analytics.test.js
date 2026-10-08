@@ -7,6 +7,7 @@
 const mockSelect = jest.fn();
 const mockEq = jest.fn();
 const mockFrom = jest.fn();
+const mockRange = jest.fn();
 
 // Per-table mock data (starts with 'mock' prefix so Jest hoisting can access it)
 const mockTableData = {};
@@ -16,6 +17,13 @@ function mockCreateChainableMock(returnData = { data: [], error: null }) {
     get(target, prop) {
       if (prop === 'select') return (...args) => { mockSelect(...args); return chain; };
       if (prop === 'eq') return (...args) => { mockEq(...args); return chain; };
+      if (prop === 'range') return (from, to) => {
+        mockRange(from, to);
+        return Promise.resolve({
+          ...returnData,
+          data: Array.isArray(returnData.data) ? returnData.data.slice(from, to + 1) : returnData.data,
+        });
+      };
       if (prop === 'then') return (resolve) => resolve(returnData);
       return () => chain;
     },
@@ -197,6 +205,54 @@ describe('Analytics: Data response', () => {
     await handler(req, res);
 
     expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  test('fetches a second page instead of truncating reservation totals at 1000', async () => {
+    verifyAuth.mockResolvedValueOnce({ user: { restaurant_id: 'rest-1' } });
+    const date = new Date().toISOString().split('T')[0];
+    mockTableData.reservations = {
+      data: Array.from({ length: 1001 }, (_, i) => ({
+        id: `r-${i}`, reservation_id: `r-${i}`, date, time: '19:00', status: 'confirmed', party_size: 2,
+      })),
+      error: null,
+    };
+
+    const { req, res } = createMockReqRes({ query: { period: 'today' } });
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json.mock.calls[0][0].analytics.overview.total_reservations).toBe(1001);
+    expect(mockRange).toHaveBeenCalledWith(1000, 1999);
+  });
+
+  test('fetches a second service page instead of understating revenue', async () => {
+    verifyAuth.mockResolvedValueOnce({ user: { restaurant_id: 'rest-1' } });
+    const today = new Date().toISOString().split('T')[0];
+    mockTableData.service_records = {
+      data: Array.from({ length: 1001 }, (_, i) => ({
+        id: `service-${i}`, status: 'completed', seated_at: `${today}T12:00:00Z`,
+        actual_departure: `${today}T13:00:00Z`, table_ids: ['1'], total_bill: 1, party_size: 2,
+      })),
+      error: null,
+    };
+
+    const { req, res } = createMockReqRes({ query: { period: 'today' } });
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json.mock.calls[0][0].analytics.overview.total_revenue).toBe(1001);
+    expect(mockRange).toHaveBeenCalledWith(1000, 1999);
+  });
+
+  test('fails closed instead of returning partial totals beyond the bounded history', async () => {
+    verifyAuth.mockResolvedValueOnce({ user: { restaurant_id: 'rest-1' } });
+    mockTableData.reservations = {
+      data: Array.from({ length: 20001 }, (_, i) => ({ id: `r-${i}` })),
+      error: null,
+    };
+
+    const { req, res } = createMockReqRes();
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(503);
+    expect(res.json).toHaveBeenCalledWith({ success: false, error: 'Analytics data temporarily unavailable' });
   });
 });
 
@@ -451,7 +507,7 @@ describe('Analytics: Table utilization', () => {
 // Error paths
 // ============================================================
 describe('Analytics: Error paths', () => {
-  test('returns 200 with empty tables on getAllTables failure (graceful degradation)', async () => {
+  test('does not present missing tables as zero capacity', async () => {
     verifyAuth.mockResolvedValueOnce({
       user: { restaurant_id: 'rest-1', email: 'test@test.com' },
     });
@@ -459,16 +515,12 @@ describe('Analytics: Error paths', () => {
 
     const { req, res } = createMockReqRes();
     await handler(req, res);
-    // calculateAnalytics sees partial failure (only tables failed, not all three)
-    // → gracefully degrades: uses empty array for tables, returns { success: true }
-    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.status).toHaveBeenCalledWith(503);
     const data = res.json.mock.calls[0][0];
-    expect(data.success).toBe(true);
-    expect(data.analytics.overview.total_capacity).toBe(0);
-    expect(data.analytics.table_utilization).toEqual([]);
+    expect(data).toEqual({ success: false, error: 'Analytics data temporarily unavailable' });
   });
 
-  test('returns 200 with empty data on reservation DB error (graceful degradation)', async () => {
+  test('does not present a reservation query error as an empty period', async () => {
     verifyAuth.mockResolvedValueOnce({
       user: { restaurant_id: 'rest-1', email: 'test@test.com' },
     });
@@ -477,16 +529,12 @@ describe('Analytics: Error paths', () => {
 
     const { req, res } = createMockReqRes();
     await handler(req, res);
-    // getAllReservations catches the error and returns { success: false }
-    // calculateAnalytics sees partial failure (only reservations failed, not all three)
-    // → gracefully degrades: uses empty array for reservations, returns { success: true }
-    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.status).toHaveBeenCalledWith(503);
     const data = res.json.mock.calls[0][0];
-    expect(data.success).toBe(true);
-    expect(data.analytics.overview.total_reservations).toBe(0);
+    expect(data).toEqual({ success: false, error: 'Analytics data temporarily unavailable' });
   });
 
-  test('returns 200 with empty service data on service_records error (graceful degradation)', async () => {
+  test('does not present a service records error as zero revenue', async () => {
     verifyAuth.mockResolvedValueOnce({
       user: { restaurant_id: 'rest-1', email: 'test@test.com' },
     });
@@ -495,12 +543,39 @@ describe('Analytics: Error paths', () => {
 
     const { req, res } = createMockReqRes();
     await handler(req, res);
-    // calculateAnalytics sees partial failure (only service_records failed, not all three)
-    // → gracefully degrades: uses empty array for service records, returns { success: true }
-    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.status).toHaveBeenCalledWith(503);
     const data = res.json.mock.calls[0][0];
-    expect(data.success).toBe(true);
-    expect(data.analytics.overview.avg_service_time_minutes).toBe(90); // default when no service records
+    expect(data).toEqual({ success: false, error: 'Analytics data temporarily unavailable' });
+  });
+
+  test('does not present missing live occupancy as zero', async () => {
+    verifyAuth.mockResolvedValueOnce({ user: { restaurant_id: 'rest-1' } });
+    getActiveServiceRecords.mockResolvedValueOnce({ success: false, error: 'Unavailable' });
+
+    const { req, res } = createMockReqRes();
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(503);
+    expect(res.json).toHaveBeenCalledWith({ success: false, error: 'Analytics data temporarily unavailable' });
+  });
+
+  test('does not present malformed live occupancy as zero', async () => {
+    verifyAuth.mockResolvedValueOnce({ user: { restaurant_id: 'rest-1' } });
+    getActiveServiceRecords.mockResolvedValueOnce({ success: true, service_records: null });
+
+    const { req, res } = createMockReqRes();
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(503);
+    expect(res.json).toHaveBeenCalledWith({ success: false, error: 'Analytics data temporarily unavailable' });
+  });
+
+  test('does not treat null reservation data without an error as an empty period', async () => {
+    verifyAuth.mockResolvedValueOnce({ user: { restaurant_id: 'rest-1' } });
+    mockTableData.reservations = { data: null, error: null };
+
+    const { req, res } = createMockReqRes();
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(503);
+    expect(res.json).toHaveBeenCalledWith({ success: false, error: 'Analytics data temporarily unavailable' });
   });
 
   test('handler top-level catch (lines 235-236): calculateAnalytics throws', async () => {

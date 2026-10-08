@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation, Trans } from 'react-i18next';
 import { authFetch } from '../../services/api';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -22,18 +22,28 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
   const [showAddModal, setShowAddModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'active' | 'seated' | 'removed'>('active');
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
   const [sourceFilter, setSourceFilter] = useState<'all' | 'walk_in' | 'whatsapp'>('all');
+  const [page, setPage] = useState(0);
   const [confirmRemove, setConfirmRemove] = useState<{ id: string; name: string } | null>(null);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setSearchTerm(searchQuery.trim()), 250);
+    return () => window.clearTimeout(timer);
+  }, [searchQuery]);
 
   useRealtimeSubscription('waitlist', restaurantId);
 
-  const { data, isLoading, error } = useQuery<WaitlistResponse>({
-    queryKey: ['waitlist', 'all'],
+  const { data, isLoading, isPlaceholderData, error } = useQuery<WaitlistResponse>({
+    queryKey: ['waitlist', 'panel', activeTab, sourceFilter, searchTerm, page],
     queryFn: async () => {
-      const response = await authFetch('/api/waitlist');
+      const params = new URLSearchParams({ view: activeTab, source: sourceFilter, limit: '50', offset: String(page * 50) });
+      if (searchTerm) params.set('search', searchTerm);
+      const response = await authFetch(`/api/waitlist?${params}`);
       if (!response.ok) throw new Error('Failed to fetch waitlist');
       return response.json();
     },
+    placeholderData: previousData => previousData,
     refetchInterval: WAITLIST_POLL_INTERVAL,
   });
 
@@ -63,34 +73,13 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
     onError: () => toast.error(t('waitlist.removeFailed')),
   });
 
-  const rawWaitlist = data?.waitlist;
-  const waitlist = useMemo(() => rawWaitlist || [], [rawWaitlist]);
+  const waitlist = data?.waitlist || [];
   const s = (v: string) => v.toLowerCase();
-  const activeCount = waitlist.filter(e => ['waiting', 'notified'].includes(s(e.status))).length;
-  const seatedCount = waitlist.filter(e => s(e.status) === 'seated').length;
-  const removedCount = waitlist.filter(e => ['cancelled', 'no_show'].includes(s(e.status))).length;
-
-  const filteredWaitlist = useMemo(() => {
-    let filtered = waitlist;
-    switch (activeTab) {
-      case 'active': filtered = filtered.filter(e => ['waiting', 'notified'].includes(s(e.status))); break;
-      case 'seated': filtered = filtered.filter(e => s(e.status) === 'seated'); break;
-      case 'removed': filtered = filtered.filter(e => ['cancelled', 'no_show'].includes(s(e.status))); break;
-    }
-    if (sourceFilter === 'whatsapp') {
-      filtered = filtered.filter(e => e.source === 'whatsapp' || e.source === 'whatsapp_ai');
-    } else if (sourceFilter === 'walk_in') {
-      filtered = filtered.filter(e => !e.source || e.source === 'walk_in');
-    }
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(e =>
-        e.customer_name?.toLowerCase().includes(query) ||
-        e.customer_phone?.includes(query)
-      );
-    }
-    return filtered;
-  }, [waitlist, activeTab, sourceFilter, searchQuery]);
+  const activeCount = data?.counts?.active ?? waitlist.filter(e => ['waiting', 'notified'].includes(s(e.status))).length;
+  const seatedCount = data?.counts?.seated ?? waitlist.filter(e => s(e.status) === 'seated').length;
+  const removedCount = data?.counts?.removed ?? waitlist.filter(e => ['cancelled', 'no_show'].includes(s(e.status))).length;
+  const total = data?.total ?? waitlist.length;
+  const filteredWaitlist = waitlist;
 
   const tableReadyEntries = filteredWaitlist.filter(e => s(e.status) === 'notified');
   const waitingEntries = filteredWaitlist.filter(e => s(e.status) === 'waiting');
@@ -125,6 +114,18 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
     );
   }
 
+  if (data?.plan_gated) {
+    return (
+      <div className="px-6 py-10 text-center">
+        <h2 className="text-lg font-serif text-deep-charcoal">{t('waitlist.planRequiredTitle')}</h2>
+        <p className="mx-auto mt-2 max-w-sm text-sm text-muted-stone">{t('waitlist.planRequiredDescription')}</p>
+        <a href="/precos" className="mt-5 inline-flex rounded-full bg-[#9F1239] px-4 py-2 text-sm font-medium text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#9F1239]">
+          {t('waitlist.viewPlans')}
+        </a>
+      </div>
+    );
+  }
+
   return (
     <>
       {/* Header */}
@@ -155,7 +156,7 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
                 key={tab.key}
                 role="tab"
                 aria-selected={activeTab === tab.key}
-                onClick={() => setActiveTab(tab.key as typeof activeTab)}
+                onClick={() => { setActiveTab(tab.key as typeof activeTab); setPage(0); }}
                 className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-all ${
                   activeTab === tab.key
                     ? 'bg-white text-deep-charcoal shadow-sm'
@@ -181,7 +182,7 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
               <button
                 key={pill.key}
                 type="button"
-                onClick={() => setSourceFilter(pill.key)}
+                onClick={() => { setSourceFilter(pill.key); setPage(0); }}
                 className={`px-2 py-1 text-xs font-medium rounded-full border transition-all ${
                   sourceFilter === pill.key
                     ? 'border-[#9F1239] bg-[#9F1239]/[8%] text-[#9F1239]'
@@ -200,7 +201,7 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
               placeholder={t('common.searchPlaceholder', 'Search...')}
               aria-label={t('waitlist.searchLabel')}
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => { setSearchQuery(e.target.value); setPage(0); }}
               className="w-full pl-8 pr-3 py-1.5 bg-soft-gray border border-glass-border-input rounded-xl text-xs focus:ring-2 focus:ring-[#9F1239] focus:border-transparent outline-none"
             />
           </div>
@@ -209,7 +210,9 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
 
       {/* Waitlist Entries */}
       <div className="overflow-y-auto flex-1">
-        {filteredWaitlist.length === 0 ? (
+        {isPlaceholderData ? (
+          <div className="p-6 text-sm text-muted-stone" role="status">{t('waitlist.loading')}</div>
+        ) : filteredWaitlist.length === 0 ? (
           <div className="py-10 px-6 text-center text-stone-gray">
             <div className="w-12 h-12 rounded-2xl bg-soft-gray flex items-center justify-center mb-3 mx-auto">
               <ThiingsIcon name="clipboard-list" pxSize={20} className="text-muted-stone" />
@@ -283,6 +286,16 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
           ))
         )}
       </div>
+
+      {!isPlaceholderData && total > 50 && (
+        <div className="flex items-center justify-between gap-3 px-4 py-3 text-xs text-muted-stone" aria-label={t('waitlist.paginationLabel')}>
+          <span>{t('waitlist.pageRange', { start: page * 50 + 1, end: Math.min((page + 1) * 50, total), total })}</span>
+          <div className="flex items-center gap-2">
+            <button type="button" disabled={page === 0} onClick={() => setPage(p => p - 1)} className="rounded-lg px-2 py-1 disabled:opacity-40">{t('waitlist.previousPage')}</button>
+            <button type="button" disabled={!data?.has_more} onClick={() => setPage(p => p + 1)} className="rounded-lg px-2 py-1 disabled:opacity-40">{t('waitlist.nextPage')}</button>
+          </div>
+        </div>
+      )}
 
       {showAddModal && (
         <AddToWaitlistModal

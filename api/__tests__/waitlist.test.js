@@ -19,12 +19,17 @@ const RESTAURANT_ID = 'rest-waitlist-001';
 const mockGetWaitlistEntries = jest.fn(() =>
   Promise.resolve({
     success: true,
+    total: 2,
     entries: [
       { id: 'w1', customer_name: 'Alice', party_size: 2, status: 'waiting' },
       { id: 'w2', customer_name: 'Bob', party_size: 4, status: 'waiting' },
     ],
   })
 );
+const mockGetWaitlistStatusCounts = jest.fn(() => Promise.resolve({
+  success: true,
+  counts: { active: 2, seated: 0, removed: 0 },
+}));
 
 const mockAddToWaitlist = jest.fn(() =>
   Promise.resolve({
@@ -46,6 +51,7 @@ const mockRemoveFromWaitlist = jest.fn(() =>
 
 jest.mock('../_lib/supabase', () => ({
   getWaitlistEntries: mockGetWaitlistEntries,
+  getWaitlistStatusCounts: mockGetWaitlistStatusCounts,
   addToWaitlist: mockAddToWaitlist,
   updateWaitlistEntry: mockUpdateWaitlistEntry,
   removeFromWaitlist: mockRemoveFromWaitlist,
@@ -151,23 +157,35 @@ beforeEach(() => {
 // ---------------------------------------------------------------------------
 
 describe('GET /api/waitlist', () => {
-  test('returns waitlist entries scoped to restaurant_id', async () => {
-    const { req, res } = mockReqRes({ method: 'GET' });
+  test('returns the selected active view with exact counts', async () => {
+    const { req, res } = mockReqRes({ method: 'GET', query: { view: 'active' } });
 
     await handler(req, res);
 
     expect(res.status).toHaveBeenCalledWith(200);
     expect(mockGetWaitlistEntries).toHaveBeenCalledWith(
       RESTAURANT_ID,
-      expect.any(Object)
+      expect.objectContaining({ status: 'waiting,notified', limit: 50, offset: 0, newestFirst: false })
     );
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({
         success: true,
         count: 2,
+        total: 2,
+        counts: { active: 2, seated: 0, removed: 0 },
         waitlist: expect.any(Array),
       })
     );
+  });
+
+  test('keeps legacy GET without view unfiltered, oldest first, and limited to 100', async () => {
+    const { req, res } = mockReqRes();
+    await handler(req, res);
+    expect(mockGetWaitlistEntries).toHaveBeenCalledWith(RESTAURANT_ID, expect.objectContaining({
+      status: undefined, active: false, limit: 100, offset: 0, newestFirst: false,
+    }));
+    expect(mockGetWaitlistStatusCounts).not.toHaveBeenCalled();
+    expect(res.json).toHaveBeenCalledWith({ success: true, count: 2, waitlist: expect.any(Array) });
   });
 
   test('passes status filter', async () => {
@@ -182,6 +200,23 @@ describe('GET /api/waitlist', () => {
       RESTAURANT_ID,
       expect.objectContaining({ status: 'waiting' })
     );
+  });
+
+  test('pages seated history newest first and filters before pagination', async () => {
+    const { req, res } = mockReqRes({
+      query: { view: 'seated', source: 'whatsapp', search: 'Alice', offset: '50', limit: '50' },
+    });
+    await handler(req, res);
+    expect(mockGetWaitlistEntries).toHaveBeenCalledWith(RESTAURANT_ID, expect.objectContaining({
+      status: 'seated', source: 'whatsapp', search: 'Alice', offset: 50, limit: 50, newestFirst: true,
+    }));
+  });
+
+  test.each([{ limit: '101' }, { offset: '-1' }, { view: 'all' }, { source: 'other' }, { status: 'hacked' }])('rejects invalid list query %p', async (query) => {
+    const { req, res } = mockReqRes({ query });
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(mockGetWaitlistEntries).not.toHaveBeenCalled();
   });
 });
 

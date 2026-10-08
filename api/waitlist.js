@@ -1,5 +1,6 @@
 const {
   getWaitlistEntries,
+  getWaitlistStatusCounts,
   addToWaitlist,
   updateWaitlistEntry,
   removeFromWaitlist,
@@ -56,7 +57,10 @@ module.exports = async (req, res) => {
   const gated = !subResult.active || !hasFeature(plan, 'waitlist_management');
   if (gated) {
     if (req.method === 'GET') {
-      return res.status(200).json({ success: true, items: [], plan_gated: true, feature: 'waitlist_management' });
+      const legacy = { success: true, items: [], plan_gated: true, feature: 'waitlist_management' };
+      return res.status(200).json(req.query.view
+        ? { ...legacy, count: 0, total: 0, waitlist: [], counts: { active: 0, seated: 0, removed: 0 } }
+        : legacy);
     }
     return res.status(403).json({
       success: false,
@@ -97,23 +101,57 @@ module.exports = async (req, res) => {
 };
 
 async function handleGetWaitlist(req, res, restaurantId) {
-  const { status, active, limit } = req.query;
+  const { status, active, view, source, search, limit, offset } = req.query;
+  const groups = {
+    active: ['waiting', 'notified'],
+    seated: ['seated'],
+    removed: ['cancelled', 'no_show'],
+  };
+  const allowedStatuses = Object.values(groups).flat();
+  const selectedView = view || null;
+  if (selectedView && !Object.hasOwn(groups, selectedView)) {
+    return res.status(400).json({ success: false, error: 'Invalid waitlist view' });
+  }
+  if (source && !['all', 'walk_in', 'whatsapp'].includes(source)) {
+    return res.status(400).json({ success: false, error: 'Invalid waitlist source' });
+  }
+  if (status && (typeof status !== 'string' || status.split(',').some(s => !allowedStatuses.includes(s.trim())))) {
+    return res.status(400).json({ success: false, error: 'Invalid waitlist status' });
+  }
+  const pageSize = limit === undefined ? (selectedView ? 50 : 100) : Number(limit);
+  const pageOffset = offset === undefined ? 0 : Number(offset);
+  if (!Number.isSafeInteger(pageSize) || pageSize < 1 || pageSize > 100 || !Number.isSafeInteger(pageOffset) || pageOffset < 0 || typeof search === 'object' || String(search || '').length > 100) {
+    return res.status(400).json({ success: false, error: 'Invalid waitlist pagination or search' });
+  }
 
-  const result = await getWaitlistEntries(restaurantId, {
-    status,
-    active: active === 'true',
-    limit: parseInt(limit) || 100,
-  });
+  const [result, statusCounts] = await Promise.all([
+    getWaitlistEntries(restaurantId, {
+      status: status || (selectedView ? groups[selectedView].join(',') : undefined),
+      active: active === 'true',
+      source: source === 'all' ? undefined : source,
+      search: typeof search === 'string' ? search : undefined,
+      limit: pageSize,
+      offset: pageOffset,
+      newestFirst: !!selectedView && selectedView !== 'active' && active !== 'true',
+    }),
+    selectedView ? getWaitlistStatusCounts(restaurantId) : Promise.resolve(null),
+  ]);
 
-  if (!result.success) {
+  if (!result.success || (statusCounts && !statusCounts.success)) {
     return res.status(500).json({ success: false, error: 'Failed to fetch waitlist' });
   }
 
-  return res.status(200).json({
+  const response = {
     success: true,
     count: result.entries.length,
     waitlist: result.entries,
-  });
+  };
+  if (selectedView) {
+    response.total = result.total;
+    response.has_more = pageOffset + result.entries.length < result.total;
+    response.counts = statusCounts.counts;
+  }
+  return res.status(200).json(response);
 }
 
 async function handleAddToWaitlist(req, res, restaurantId) {

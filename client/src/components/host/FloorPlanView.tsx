@@ -105,11 +105,11 @@ export default function FloorPlanView({
         const narrowPreview = containerWidth < 540;
         const useAuto = !hasPositionData(locTables);
         if (useAuto && autoPresentation === 'availability') {
-          const states: Record<string, { key: string; fallback: string; dot: string; nightDot: string; label: string; nightLabel: string }> = {
-            available: { key: 'settings.tableStatus.available', fallback: 'Available', dot: 'border border-brand-muted', nightDot: 'border border-white/60', label: 'text-brand-ink', nightLabel: 'text-white/85' },
-            occupied: { key: 'settings.tableStatus.occupied', fallback: 'Occupied', dot: 'bg-emerald-800', nightDot: 'bg-emerald-400', label: 'text-emerald-900', nightLabel: 'text-emerald-300' },
-            reserved: { key: 'settings.tableStatus.reserved', fallback: 'Reserved', dot: 'bg-amber-700', nightDot: 'bg-amber-400', label: 'text-amber-950', nightLabel: 'text-amber-200' },
-            'being cleaned': { key: 'settings.tableStatus.cleaning', fallback: 'Cleaning', dot: 'border-2 border-amber-700', nightDot: 'border-2 border-amber-400', label: 'text-amber-950', nightLabel: 'text-amber-200' },
+          const states: Record<string, { label: string; nightLabel: string }> = {
+            available: { label: 'text-brand-muted', nightLabel: 'text-white/70' },
+            occupied: { label: 'text-emerald-900', nightLabel: 'text-emerald-300' },
+            reserved: { label: 'text-amber-950', nightLabel: 'text-amber-200' },
+            'being cleaned': { label: 'text-amber-950', nightLabel: 'text-amber-200' },
           };
           // Without saved positions, table number is the only real spatial
           // reference a host has. Keep that order stable as statuses change.
@@ -122,23 +122,47 @@ export default function FloorPlanView({
                 <span className={`text-[13px] font-medium ${night ? 'text-white' : 'text-brand-ink'}`}>{t(`floorPlan.location.${location.toLowerCase()}`, location)}</span>
                 <span className={`text-[11px] ${night ? 'text-white/55' : 'text-brand-muted'}`}>{locTables.length} {locTables.length === 1 ? t('floorPlan.table', 'table') : t('floorPlan.tables', 'tables')}</span>
               </div>}
-              <div className="grid grid-cols-2 gap-x-3 sm:grid-cols-4 sm:gap-x-5">
+              <div className="grid grid-cols-2 gap-x-2 gap-y-1 sm:grid-cols-4 sm:gap-x-3">
                 {orderedTables.map(table => {
-                  const state = states[table.status?.toLowerCase() || ''] || { key: 'common.other', fallback: 'Other', dot: 'border border-brand-muted', nightDot: 'border border-white/60', label: 'text-brand-ink', nightLabel: 'text-white/85' };
+                  const state = states[table.status?.toLowerCase() || ''] || { label: 'text-brand-muted', nightLabel: 'text-white/70' };
+                  const glyph = getStatusStyle(table.status, night);
+                  const shape = table.shape?.toLowerCase() || 'round';
+                  const isRound = ['round', 'circle'].includes(shape);
+                  const isLong = ['rectangle', 'long', 'oval', 'booth'].includes(shape);
+                  // Markers reflect the recorded capacity. Larger banquet
+                  // tables use the exact written count rather than a false
+                  // partial set of chairs crammed around this small glyph.
+                  const seatMarkers = Number.isInteger(table.capacity) && table.capacity > 0 && table.capacity <= 12
+                    ? table.capacity : 0;
+                  const status = statusLabel(table.status, (key, fallback) => t(key, fallback ?? key));
                   return <button
                     key={table.id}
                     type="button"
                     onClick={() => onTableClick?.(table)}
-                    aria-label={`${t('tableLayout.table', 'Table')} ${table.table_number}, ${statusLabel(table.status, (key, fallback) => t(key, fallback ?? key))}, ${table.capacity} ${t('floorPlan.seats', 'seats')}`}
-                    className={`group grid min-h-[64px] min-w-0 grid-cols-[34px_minmax(0,1fr)] items-center gap-2 border-b px-1 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-action sm:grid-cols-[40px_minmax(0,1fr)] ${night ? 'border-white/15 hover:bg-white/5' : 'border-brand-line hover:bg-brand-line/20'}`}
+                    aria-label={`${t('tableLayout.table', 'Table')} ${table.table_number}, ${status}, ${table.capacity} ${t('floorPlan.seats', 'seats')}`}
+                    className={`group flex min-h-[84px] min-w-0 items-center gap-2 rounded-xl px-1.5 py-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-action ${night ? 'hover:bg-white/5' : 'hover:bg-brand-line/25'}`}
                   >
-                    <span className={`font-brand text-[27px] font-normal leading-none tabular-nums ${night ? 'text-white' : 'text-brand-ink'}`}>{table.table_number}</span>
-                    <span className="min-w-0">
-                      <span className={`flex items-center gap-1.5 whitespace-nowrap text-[13px] font-medium leading-tight ${night ? state.nightLabel : state.label}`}>
-                        <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${night ? state.nightDot : state.dot}`} aria-hidden="true" />
-                        {t(state.key, state.fallback)}
+                    <svg data-table-inventory-glyph aria-hidden="true" viewBox="0 0 64 64" className="h-[60px] w-[60px] shrink-0 overflow-visible">
+                      {Array.from({ length: seatMarkers }, (_, index) => (
+                        <rect key={index} data-seat-marker x="28" y="2" width="8" height="7" rx="3"
+                          transform={`rotate(${index * 360 / seatMarkers} 32 32)`}
+                          fill={glyph.chairFill} stroke={glyph.stroke} strokeWidth="1.2" />
+                      ))}
+                      {isRound
+                        ? <circle cx="32" cy="32" r="22" fill={glyph.fill} stroke={glyph.stroke} strokeWidth="1.6" strokeDasharray={glyph.dash} />
+                        : <rect x={isLong ? 8 : 10} y={isLong ? 16 : 10} width={isLong ? 48 : 44} height={isLong ? 32 : 44}
+                            rx={shape === 'oval' ? 16 : 10} fill={glyph.fill} stroke={glyph.stroke} strokeWidth="1.6" strokeDasharray={glyph.dash} />}
+                      <text x="32" y="33" textAnchor="middle" dominantBaseline="middle"
+                        fill={night ? glyph.text : table.status?.toLowerCase() === 'available' ? '#293222' : glyph.text}
+                        fontFamily="'Instrument Sans',Inter,sans-serif" fontSize="22" fontWeight="500">
+                        {table.table_number}
+                      </text>
+                    </svg>
+                    <span className="min-w-0 font-brand">
+                      <span className={`block whitespace-nowrap text-[12px] font-medium leading-tight ${night ? state.nightLabel : state.label}`}>
+                        {status}
                       </span>
-                      <span className={`mt-0.5 block whitespace-nowrap text-[12px] leading-tight ${night ? 'text-white/70' : 'text-brand-muted'}`}>
+                      <span className={`mt-1 block whitespace-nowrap text-[12px] leading-tight ${night ? 'text-white/70' : 'text-brand-muted'}`}>
                         {table.capacity} {t('floorPlan.seats', 'seats')}
                       </span>
                     </span>

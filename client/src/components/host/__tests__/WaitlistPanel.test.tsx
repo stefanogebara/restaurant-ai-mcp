@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from '../../../test/renderWithProviders';
 import WaitlistPanel from '../WaitlistPanel';
@@ -92,6 +92,18 @@ describe('WaitlistPanel', () => {
     ).toBeInTheDocument();
   });
 
+  it('shows a plan gate rather than an empty queue when waitlist is unavailable', async () => {
+    mockAuthFetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({ success: true, plan_gated: true, items: [] }),
+    });
+    renderWithProviders(<WaitlistPanel onSeatNow={onSeatNow} />);
+    expect(await screen.findByText('Waitlist is not in your plan')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'View plans' })).toHaveAttribute('href', '/precos');
+    expect(screen.queryByText('No one on the waitlist')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Add Guest/ })).not.toBeInTheDocument();
+  });
+
   it('renders waitlist entries with name, party size, status, and tags', async () => {
     const entries = [
       makeEntry(),
@@ -145,10 +157,10 @@ describe('WaitlistPanel', () => {
       }),
     ];
 
-    mockAuthFetch.mockResolvedValue({
+    mockAuthFetch.mockImplementation(async (url: string) => ({
       ok: true,
-      json: async () => ({ success: true, count: 2, waitlist: entries }),
-    });
+      json: async () => ({ success: true, count: 2, waitlist: url.includes('search=charlie') ? [entries[1]] : entries }),
+    }));
 
     renderWithProviders(<WaitlistPanel onSeatNow={onSeatNow} />);
 
@@ -161,8 +173,27 @@ describe('WaitlistPanel', () => {
     await user.type(searchInput, 'charlie');
 
     // Only Charlie should remain
-    expect(screen.queryByText('Alice Johnson')).not.toBeInTheDocument();
+    await waitFor(() => expect(mockAuthFetch).toHaveBeenCalledWith(expect.stringContaining('search=charlie')));
+    await waitFor(() => expect(screen.queryByText('Alice Johnson')).not.toBeInTheDocument());
     expect(screen.getByText('Charlie Brown')).toBeInTheDocument();
+    expect(mockAuthFetch).toHaveBeenCalledWith(expect.stringContaining('search=charlie'));
+  });
+
+  it('requests seated history separately and can page past the first 50 entries', async () => {
+    const user = userEvent.setup();
+    mockAuthFetch.mockImplementation(async (url: string) => ({
+      ok: true,
+      json: async () => url.includes('view=seated')
+        ? { success: true, count: 1, total: 101, has_more: !url.includes('offset=50'), counts: { active: 1, seated: 101, removed: 0 }, waitlist: [makeEntry({ id: url.includes('offset=50') ? 'page-two' : 'page-one', customer_name: url.includes('offset=50') ? 'Later Guest' : 'Recent Guest', status: 'seated' })] }
+        : { success: true, count: 1, total: 1, has_more: false, counts: { active: 1, seated: 101, removed: 0 }, waitlist: [makeEntry()] },
+    }));
+    renderWithProviders(<WaitlistPanel onSeatNow={onSeatNow} />);
+    expect(await screen.findByText('Alice Johnson')).toBeInTheDocument();
+    await user.click(screen.getByRole('tab', { name: /Seated101/i }));
+    expect(await screen.findByText('Recent Guest')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    expect(await screen.findByText('Later Guest')).toBeInTheDocument();
+    expect(mockAuthFetch).toHaveBeenCalledWith(expect.stringContaining('view=seated&source=all&limit=50&offset=50'));
   });
 
   it('opens the remove confirmation dialog and triggers removal', async () => {

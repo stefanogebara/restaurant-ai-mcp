@@ -12,13 +12,13 @@ const logger = createSecureLogger('Waitlist');
 /**
  * Get waitlist entries for a restaurant
  * @param {string} restaurantId - Restaurant UUID
- * @param {object} options - { status, active, limit }
+ * @param {object} options - { status, active, source, search, limit, offset, newestFirst }
  */
 const getWaitlistEntries = async (restaurantId, options = {}) => {
   // select all columns — entries are returned directly to the client and all fields are needed
   let query = supabase
     .from('waitlist')
-    .select('id, waitlist_id, restaurant_id, customer_name, customer_phone, customer_whatsapp, party_size, notes, estimated_wait_minutes, status, source, added_at, notified_at, updated_at')
+    .select('id, waitlist_id, restaurant_id, customer_name, customer_phone, customer_whatsapp, party_size, notes, estimated_wait_minutes, status, source, added_at, notified_at, updated_at', { count: 'exact' })
     .eq('restaurant_id', restaurantId);
 
   if (options.active === true) {
@@ -28,17 +28,60 @@ const getWaitlistEntries = async (restaurantId, options = {}) => {
     query = query.in('status', statuses);
   }
 
-  query = query.order('added_at', { ascending: true });
-  query = query.limit(options.limit || 100);
+  if (options.source === 'whatsapp') {
+    query = query.in('source', ['whatsapp', 'whatsapp_ai']);
+  } else if (options.source === 'walk_in') {
+    query = query.or('source.is.null,source.eq.walk_in');
+  }
 
-  const { data, error } = await query;
+  if (options.search) {
+    // PostgREST's raw `or` grammar must not receive punctuation from input.
+    // Keep phone digits, + and - and Unicode letters for guest names.
+    const term = options.search.replace(/[^\p{L}\p{N}\s+\-]/gu, '').trim();
+    if (term) query = query.or(`customer_name.ilike.%${term}%,customer_phone.ilike.%${term}%`);
+  }
 
-  if (error) return handleSupabaseResponse(null, error, 'GET waitlist entries');
+  // A notified party needs action even when a restaurant has many older
+  // waiting rows. The active page keeps each status group FIFO.
+  if (options.active || options.status === 'waiting,notified') {
+    query = query.order('status', { ascending: true });
+  }
+  query = query.order('added_at', { ascending: !options.newestFirst }).order('id', { ascending: !options.newestFirst });
+  const limit = options.limit || 50;
+  const offset = options.offset || 0;
+  query = query.range(offset, offset + limit - 1);
+
+  const { data, count, error } = await query;
+
+  if (error || !Array.isArray(data) || !Number.isFinite(count)) {
+    return handleSupabaseResponse(null, error || new Error('Missing waitlist page or count'), 'GET waitlist entries');
+  }
 
   return {
     success: true,
-    entries: data
+    entries: data,
+    total: count
   };
+};
+
+/** Exact counts for the three status tabs, independent of page and filters. */
+const getWaitlistStatusCounts = async (restaurantId) => {
+  const groups = {
+    active: ['waiting', 'notified'],
+    seated: ['seated'],
+    removed: ['cancelled', 'no_show'],
+  };
+  const results = await Promise.all(Object.entries(groups).map(async ([group, statuses]) => {
+    const { count, error } = await supabase
+      .from('waitlist')
+      .select('id', { count: 'exact', head: true })
+      .eq('restaurant_id', restaurantId)
+      .in('status', statuses);
+    return { group, count, error };
+  }));
+  const failure = results.find(result => result.error || !Number.isFinite(result.count));
+  if (failure) return handleSupabaseResponse(null, failure.error || new Error('Missing waitlist count'), 'COUNT waitlist statuses');
+  return { success: true, counts: Object.fromEntries(results.map(({ group, count }) => [group, count])) };
 };
 
 /**
@@ -261,6 +304,7 @@ const getAverageWaitTime = async (restaurantId) => {
 
 module.exports = {
   getWaitlistEntries,
+  getWaitlistStatusCounts,
   addToWaitlist,
   updateWaitlistEntry,
   removeFromWaitlist,

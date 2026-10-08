@@ -1,5 +1,24 @@
 # Reforma da plataforma interna — primeira entrega (30/set/2026)
 
+## Auditoria autenticada e correções de confiança (08/out/2026)
+
+**Estado:** PR #165 em rascunho; produção não recebe esta reforma. Referência visual travada no hero aprovado, com dados operacionais reais como fonte de verdade. A conta real só será lida; não enviar mensagens, ligar, reservar, trocar canais ou limpar filas.
+
+- [x] Corrigir a listagem da fila que mostra no máximo os 100 registros históricos mais antigos; alinhar filtros, paginação e contador.
+- [x] Refinar Análises no período sem reservas, com ocupação ao vivo e risco futuro explicitamente fora do recorte; a aprovação estética ainda falta.
+- [x] Registrar o erro de marca e links jurídicos do Google OAuth para correção na configuração externa: issue #171.
+- [ ] Capturar os estados alterados, pedir crítica Astra em contexto novo usando só a captura e iterar; alvo visual 9/10.
+- [x] Rodar testes focados, build, suítes completas, lint, TypeScript e auditoria de tarefas assíncronas.
+- [ ] Revisar a nova prévia autenticada e as checagens remotas da PR; manter a PR em rascunho até a revisão.
+
+**Revisão visual desta passada:** capturas Playwright do Painel e Análises foram avaliadas por críticos Astra novos, cada um com uma única imagem e sem código ou críticas anteriores. O estado de Análises v9 recebeu 7,2/10 no celular; o Painel com mesas diagramadas recebeu 6,5/10 em celular/desktop, mas a fixture dessa última captura não marcou a navegação ativa, então essa nota não serve como aprovação nem como comparação perfeita com o estado anterior. Os comentários convergem: a próxima melhora precisa reorganizar a informação e a proporção das seções, não só ajustar espaçamentos. Meta 9/10 segue aberta. O mapa salvo não foi alterado; apenas a apresentação de inventário sem posições recebeu diagramas de mesa e assentos exatos até 12. Nenhum dado real foi modificado.
+
+**Decisões de design:** o período vazio precisa orientar a próxima ação sem inventar números. A fila prioriza pessoas ativas antes do histórico; encerrados continuam acessíveis por filtro. O Google OAuth não será alterado por código local: branding e links são configurados no projeto Google correto, após conferir titularidade.
+
+**Leitura da conta real, sem mutações:** em 08/out, a Cantina Bella Vista ainda tinha uma entrada `notified` de 26/ago. O cron de produção registrou execução diária com `cancelled: 0`; `origin/main` filtra só `waiting`, enquanto a correção já presente nesta PR inclui `notified`. Não é prova de falha no agendador. Em Clientes, a tabela lista risco e LTV, mas não explica o próximo ato para os clientes em risco; programar essa tela como próxima passada, com cuidado para não expor contatos em capturas públicas.
+
+**Confiança dos dados nesta passada:** a API de Análises agora responde 503 quando uma fonte falha ou vem malformada; ela também busca reservas e serviços em páginas estáveis, pois uma consulta Supabase padrão limita a resposta a 1.000 linhas. Acima de 20.000 linhas por fonte, falha explicitamente em vez de exibir métricas parciais. O próximo trabalho de escala é agregar os números por período no banco, evitando varrer todo o histórico a cada atualização. Verificação final: 281 suítes/4.272 testes backend e 121 arquivos/1.095 testes frontend passaram; build, sintaxe API, TypeScript, ESLint dos arquivos alterados, `git diff --check` e auditoria de tarefas assíncronas passaram. Jest avisou sobre um worker aberto, mas terminou com código 0.
+
 ## Passada paralela de telas (05/out/2026)
 
 **Referência travada:** o hero aprovado fornece papel `#F3F0E9`, tinta `#293222`, ação `#3F4E32`, Instrument Sans e uso raro de Instrument Serif. A RON GeoTab fornece apenas o padrão de risco ligado à decisão na linha do tempo; Sisense fornece apenas o vínculo entre sugestão e evidência; Spacetihq fornece organização espacial para o salão. Não importar paletas, cards ou gráficos decorativos dessas referências. Fonte funcional: dados e estados reais do Seatable. Refero MCP indisponível; aplicamos a metodologia de referência e os guias locais de tipografia/anti-padrões.
@@ -76,7 +95,7 @@
 - [x] Investigar, sem modificar a conta real, a entrada ativa de espera com mais de um mês e definir política de expiração/arquivo: `notified` torna-se elegível após 12h desde a entrada no cron diário existente; monitorar cancelamentos no rollout.
 - [x] Alinhar o contador de espera do Manager AI com os estados `waiting` + `notified`.
 - [x] Corrigir a checagem de saúde que marcava históricos encerrados como obsoletos e tratava erro de consulta como zero saudável.
-- [ ] A API padrão da fila ainda trunca históricos aos 100 mais antigos; paginar a lista sem quebrar os filtros.
+- [x] A API padrão da fila truncava históricos aos 100 mais antigos; a lista visual agora pagina por estado sem quebrar os filtros e o GET legado permanece compatível.
 - [x] Impedir que Voz reporte “salvo localmente, sincronizará depois” sem persistência/replay dos ajustes; só confirmar após aceitação da ElevenLabs.
 - [ ] Tornar os erros da API de Voz localizados na interface e testar falha parcial de sincronização na experiência completa.
 - [x] Restaurar e versionar `client/insights-audit.html` como revisão estática autônoma; conferir o endereço local, abas e formatos antes de compartilhá-lo.

@@ -183,7 +183,7 @@ export default function Sidebar({ appearance = 'default', darkMobileMenu = false
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className={`${hero ? 'py-4' : 'py-6'} ${isCollapsed ? 'px-3' : 'px-5'} flex items-center justify-between ${hero ? 'border-b border-brand-line/75' : ''}`}>
+          <div className={`${hero ? 'py-4' : 'py-6'} ${isCollapsed ? 'px-3' : 'px-5'} ${isMobileOpen ? 'max-lg:pl-16' : ''} flex items-center justify-between ${hero ? 'border-b border-brand-line/75' : ''}`}>
             {!isCollapsed ? (
               hero ? (
                 <h1 className="font-brand text-[22px] text-brand-ink tracking-[-0.025em] leading-none">
@@ -550,7 +550,7 @@ export default function Sidebar({ appearance = 'default', darkMobileMenu = false
 
       {/* Mobile Bottom Navigation Bar */}
       <nav
-        className={`lg:hidden fixed bottom-0 left-0 right-0 z-40 border-t safe-area-bottom ${hero ? 'bg-brand-paper border-brand-line font-brand' : 'backdrop-blur-xl bg-warm-white/95 hairline'}`}
+        className={`lg:hidden fixed bottom-0 left-0 right-0 z-40 border-t safe-area-bottom ${hero ? 'bg-brand-paper border-brand-line font-brand' : darkMobileMenu ? 'bg-charcoal-dark border-white/15 text-white' : 'backdrop-blur-xl bg-warm-white/95 hairline'}`}
         aria-label="Mobile navigation"
       >
         <div className="flex items-center justify-around px-2 py-1 pb-[max(0.25rem,env(safe-area-inset-bottom))]">
@@ -564,11 +564,13 @@ export default function Sidebar({ appearance = 'default', darkMobileMenu = false
                 className={`flex flex-col items-center gap-0.5 px-3 transition-colors min-w-[60px] ${hero ? 'py-1' : 'rounded-lg py-2'} ${
                   hero
                     ? active
-                      ? 'text-brand-ink font-semibold'
+                      ? 'text-brand-action'
                       : 'text-brand-muted active:text-brand-ink'
-                    : active
-                      ? 'text-deep-charcoal bg-deep-charcoal/[0.06]'
-                      : 'text-muted-stone active:text-deep-charcoal'
+                    : darkMobileMenu
+                      ? active ? 'text-white bg-white/10' : 'text-white/60 active:text-white'
+                      : active
+                        ? 'text-deep-charcoal bg-deep-charcoal/[0.06]'
+                        : 'text-muted-stone active:text-deep-charcoal'
                 }`}
               >
                 {hero ? (
@@ -576,9 +578,9 @@ export default function Sidebar({ appearance = 'default', darkMobileMenu = false
                     <ThiingsIcon name={item.icon} pxSize={20} />
                   </span>
                 ) : <ThiingsIcon name={item.icon} pxSize={20} />}
-                <span className={`${hero ? 'text-[12px]' : 'text-[11px]'} font-medium leading-tight whitespace-nowrap`}>{item.label}</span>
-                {active && hero && <span className="mt-0.5 h-[2px] w-6 bg-brand-action" aria-hidden="true" />}
-                {active && !hero && <span className="h-1 w-1 rounded-full bg-burgundy" />}
+                <span className={`${hero ? 'text-[12px]' : 'text-[11px]'} ${hero && active ? 'font-semibold' : 'font-medium'} leading-tight whitespace-nowrap`}>{item.label}</span>
+                {active && hero && <span className="mt-0.5 h-[2px] w-7 bg-brand-action" aria-hidden="true" />}
+                {active && !hero && <span className={`h-1 w-1 rounded-full ${darkMobileMenu ? 'bg-white' : 'bg-burgundy'}`} />}
               </Link>
             );
           })}
@@ -587,7 +589,7 @@ export default function Sidebar({ appearance = 'default', darkMobileMenu = false
             onClick={() => setIsMobileOpen(true)}
             aria-label={t('common.more', 'More')}
             aria-expanded={isMobileOpen}
-            className={`flex flex-col items-center gap-0.5 px-3 py-2 rounded-lg transition-colors min-w-[60px] ${hero ? (isMoreActive || isMobileOpen ? 'text-brand-ink' : 'text-brand-muted active:text-brand-ink') : (isMoreActive || isMobileOpen ? 'text-deep-charcoal bg-deep-charcoal/[0.06]' : 'text-muted-stone active:text-deep-charcoal')}`}
+            className={`flex flex-col items-center gap-0.5 px-3 py-2 rounded-lg transition-colors min-w-[60px] ${hero ? (isMoreActive || isMobileOpen ? 'text-brand-ink' : 'text-brand-muted active:text-brand-ink') : darkMobileMenu ? (isMoreActive || isMobileOpen ? 'text-white bg-white/10' : 'text-white/60 active:text-white') : (isMoreActive || isMobileOpen ? 'text-deep-charcoal bg-deep-charcoal/[0.06]' : 'text-muted-stone active:text-deep-charcoal')}`}
           >
             <ThiingsIcon name="menu" pxSize={20} />
             <span className="text-[11px] font-medium leading-tight">{t('common.more', 'More')}</span>
