@@ -24,6 +24,7 @@ vi.mock('../../hooks/useVoiceEngineSettings', () => ({
 }));
 vi.mock('../../hooks/useSubscription', () => ({ useFeatureAccess: () => ({ hasAccess: true, isLoading: false }) }));
 vi.mock('../../hooks/useWhatsAppSettings', () => ({ useWhatsAppIntegrationStatus: () => ({ data: undefined }) }));
+vi.mock('../../hooks/useVoicePersona', () => ({ useVoicePersona: () => ({ data: { agent_name: 'Sofia', agent_greeting: 'Bem-vindo à Cantina.' } }) }));
 vi.mock('../../hooks/useVoiceBrowser', () => ({ useVoiceBrowser: () => ({
   voices: [], isLoadingVoices: false, isLoadingMore: false, hasMore: false,
   voicesSource: 'all', error: null, refetch: vi.fn(), filters: {}, setFilters: vi.fn(), handleLoadMore: vi.fn(),
@@ -50,7 +51,6 @@ vi.mock('../../components/voice/VoiceTuningPanel', () => ({ default: ({ onSettin
 ) }));
 vi.mock('../../components/voice/PhoneIntegrationPanel', () => ({ default: () => <p>Phone remains available</p> }));
 
-vi.mock('../../components/voice/VoiceCurrentCard', () => ({ default: () => null }));
 vi.mock('../../components/voice/VoiceEngineSelector', () => ({ default: ({ onEngineSwitch }: { onEngineSwitch: (engine: string) => void }) => (
   <button type="button" onClick={() => onEngineSwitch('openai_realtime')}>Switch engine</button>
 ) }));
@@ -64,7 +64,9 @@ vi.mock('../../components/voice/VoiceEngineSwitchModal', () => ({ default: ({ is
 vi.mock('../../components/voice/VoiceFilters', () => ({ default: () => null }));
 vi.mock('../../components/voice/VoiceGrid', () => ({ default: () => null }));
 vi.mock('../../components/voice/VoiceSetupNextStep', () => ({ default: () => null }));
-vi.mock('../../components/dashboard/VoicePersonaPanel', () => ({ default: () => null }));
+vi.mock('../../components/dashboard/VoicePersonaPanel', () => ({ default: ({ onGreetingDraftChange }: { onGreetingDraftChange?: (value: string) => void }) => (
+  <input aria-label="Greeting draft test" onChange={event => onGreetingDraftChange?.(event.target.value)} />
+) }));
 vi.mock('../../components/dashboard/BookingChannelsPanel', () => ({ default: () => null }));
 vi.mock('../../components/dashboard/POSIntegrationPanel', () => ({ default: () => null }));
 vi.mock('../../components/dashboard/StripeConnectPanel', () => ({ default: () => null }));
@@ -158,5 +160,18 @@ describe('VoiceSettingsPage remote readback and partial save', () => {
     expect(mocks.save.mock.calls[0][0].voice_settings).toEqual({
       stability: 0.75, similarity_boost: 0.85, style: 0.1, speed: 1,
     });
+  });
+
+  it('shows the saved greeting but disables audition when an unsaved draft is empty', async () => {
+    const user = userEvent.setup();
+    renderPage();
+    expect(screen.getByText(/Bem-vindo à Cantina/)).toBeInTheDocument();
+    const draft = screen.getByRole('textbox', { name: 'Greeting draft test' });
+    await user.type(draft, 'Olá');
+    expect(screen.getByText(/“Olá”/)).toBeInTheDocument();
+    await user.clear(draft);
+    expect(screen.getByText('Write a line to hear it.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Play sample' })).toBeDisabled();
+    expect(screen.queryByText(/Bem-vindo à Cantina/)).not.toBeInTheDocument();
   });
 });

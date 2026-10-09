@@ -60,6 +60,12 @@ module.exports = async (req, res) => {
       });
     }
 
+    // The listening room can audition an unsaved greeting. Bound the text
+    // before any billable TTS request and reject malformed payloads.
+    if (text !== undefined && (typeof text !== 'string' || !text.trim() || text.trim().length > 240)) {
+      return res.status(400).json({ success: false, error: 'Preview text must be 1 to 240 characters.' });
+    }
+
     // Validate API key
     if (!process.env.ELEVENLABS_API_KEY) {
       logger.error('[ElevenLabs] ELEVENLABS_API_KEY not configured');
@@ -69,7 +75,7 @@ module.exports = async (req, res) => {
       });
     }
 
-    const previewText = text || "Welcome to our restaurant! I'd be happy to help you make a reservation.";
+    const previewText = text?.trim() || "Welcome to our restaurant! I'd be happy to help you make a reservation.";
 
     // Merge custom voice_settings with defaults (backward compatible)
     const defaultSettings = {

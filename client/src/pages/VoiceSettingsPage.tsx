@@ -48,6 +48,8 @@ import { authFetch, hostAPI } from '../services/api';
 import { DEFAULT_VOICE_SETTINGS } from '../components/voice/voiceTypes';
 import type { VoiceSettings } from '../components/voice/voiceTypes';
 import { useWhatsAppIntegrationStatus } from '../hooks/useWhatsAppSettings';
+import { useVoicePersona } from '../hooks/useVoicePersona';
+import { getPreviewText } from '../components/voice/voiceConstants';
 
 const voiceScrollBehavior = (): ScrollBehavior =>
   window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
@@ -63,6 +65,7 @@ export default function VoiceSettingsPage() {
   const { data: engineConfig } = useVoiceEngineSettings({ enabled: canLoadVoiceData });
   const saveEngineMutation = useSaveVoiceEngine();
   const { data: waStatus } = useWhatsAppIntegrationStatus({ enabled: canLoadVoiceData });
+  const { data: persona, isError: isPersonaError } = useVoicePersona({ enabled: canLoadVoiceData });
   const queryClient = useQueryClient();
   const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const voiceBrowserRef = useRef<HTMLElement | null>(null);
@@ -116,6 +119,7 @@ export default function VoiceSettingsPage() {
   const [engineSwitchTarget, setEngineSwitchTarget] = useState<VoiceEngineSettings['voice_engine'] | null>(null);
   const [isBrowserOpen, setIsBrowserOpen] = useState(false);
   const [voiceSavePartial, setVoiceSavePartial] = useState(false);
+  const [draftGreeting, setDraftGreeting] = useState<string | null>(null);
 
   useEffect(() => {
     if (isBrowserOpen) voiceBrowserRef.current?.scrollIntoView?.({ behavior: voiceScrollBehavior(), block: 'start' });
@@ -135,6 +139,11 @@ export default function VoiceSettingsPage() {
   const currentSettings: VoiceSettings = pendingSettings || config?.voice_settings || DEFAULT_VOICE_SETTINGS;
   const currentLanguage = pendingLanguage || config?.language || 'en';
   const currentVoiceId = pendingVoiceId || config?.voice_id || '';
+  const savedGreeting = isPersonaError ? '' : persona?.agent_greeting?.trim() || '';
+  const sampleText = draftGreeting !== null
+    ? draftGreeting.trim()
+    : savedGreeting || getPreviewText(currentLanguage, config?.restaurant_name || undefined);
+  const sampleKind = draftGreeting !== null ? 'draft' : savedGreeting ? 'saved' : 'example';
 
   // ─── Voice browser ────────────────────────────────────────────────────────────
 
@@ -148,12 +157,13 @@ export default function VoiceSettingsPage() {
 
   // ─── Audio playback ───────────────────────────────────────────────────────────
 
-  const { playingVoiceId, isSamplePlaying, loadingAudio, handlePlayVoice, handlePreviewWithSettings } = useAudioPlayback({
+  const { playingVoiceId, isSamplePlaying, loadingAudio, sampleDuration, sampleCurrentTime, seekSample, handlePlayVoice, handlePreviewWithSettings } = useAudioPlayback({
     voices,
     currentVoiceId,
     currentLanguage,
     restaurantName: config?.restaurant_name || undefined,
     currentSettings,
+    sampleText,
   });
 
   // ─── Handlers ─────────────────────────────────────────────────────────────────
@@ -375,9 +385,9 @@ export default function VoiceSettingsPage() {
   return (
     <DashboardLayout appearance="hero">
       <div className="mx-auto max-w-[1120px] px-4 pb-24 pt-5 sm:px-8 lg:px-10">
-        <header className="mb-4 pb-3 sm:mb-6 sm:pb-5">
+        <header className="mb-0 pb-0 sm:mb-3 sm:pb-2">
           <div className="flex items-end justify-between gap-3">
-            <h1 className="pl-12 font-brand text-[31px] font-normal leading-[1.02] tracking-[-0.055em] text-brand-ink sm:pl-0 sm:text-[52px]">
+            <h1 className="sr-only font-brand font-normal leading-[1.05] tracking-[-0.045em] text-brand-ink sm:not-sr-only sm:text-[34px]">
               {t('voiceSettings.setupEyebrow', 'Reception')}
             </h1>
             {isDirty && !(voiceSavePaused && !hasPendingEngineChanges) && (
@@ -385,7 +395,7 @@ export default function VoiceSettingsPage() {
                 type="button"
                 onClick={handleSave}
                 disabled={isSaving}
-                className="mb-0.5 flex shrink-0 items-center gap-2 rounded-full bg-brand-action px-4 py-2.5 text-[12px] font-semibold text-white hover:bg-brand-ink disabled:cursor-not-allowed disabled:opacity-60 sm:px-5 sm:text-[13px]"
+                className="mb-0.5 ml-auto flex shrink-0 items-center gap-2 rounded-full bg-brand-action px-4 py-2.5 text-[12px] font-semibold text-white hover:bg-brand-ink disabled:cursor-not-allowed disabled:opacity-60 sm:ml-0 sm:px-5 sm:text-[13px]"
               >
                 {isSaving && <Spinner size="sm" className="border-white border-t-white/30" />}
                 {isSaving ? t('voiceSettings.saving', 'Saving...') : t('voiceSettings.saveChanges', 'Save Changes')}
@@ -410,7 +420,7 @@ export default function VoiceSettingsPage() {
           // pending edits survive tab switches and the shared Save button
           // still saves everything in one shot.
           const voiceTab = (
-            <div className="space-y-6">
+            <div className="space-y-3 sm:space-y-5">
               {currentEngine === 'elevenlabs' && voiceReadbackUnavailable && (
                 <>
                   <section role="status" className="border-b border-brand-line py-3 sm:py-5">
@@ -438,28 +448,29 @@ export default function VoiceSettingsPage() {
               )}
               {currentEngine === 'elevenlabs' && !voiceReadbackUnavailable && (
                 <>
-                  <div className="grid border-y border-brand-line lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+                  <div className="grid gap-4 border-b border-brand-line pb-5 lg:grid-cols-[minmax(0,1fr)_272px] lg:items-start lg:gap-8 lg:pb-7">
+                  <VoicePersonaPanel
+                    variant="studio"
+                    onGreetingDraftChange={setDraftGreeting}
+                    exampleGreeting={getPreviewText(currentLanguage, config?.restaurant_name || undefined)}
+                  />
                   <VoiceCurrentCard
                     currentVoiceId={currentVoiceId}
                     pendingVoiceId={pendingVoiceId}
                     selectedBrowserVoice={selectedBrowserVoice}
                     savedVoiceName={config.voice_name || voices.find(voice => voice.id === config.voice_id)?.name}
-                    savedVoiceId={config.voice_id}
                     currentLanguage={currentLanguage}
-                    restaurantName={config.restaurant_name || undefined}
+                    sampleText={sampleText}
+                    sampleKind={sampleKind}
                     isBrowserOpen={isBrowserOpen}
                     loadingAudio={loadingAudio}
                     isSamplePlaying={isSamplePlaying}
-                    onPlay={() => handlePreviewWithSettings(toast)}
+                    sampleDuration={sampleDuration}
+                    sampleCurrentTime={sampleCurrentTime}
+                    onSeek={seekSample}
+                    onPlay={() => { if (sampleText) handlePreviewWithSettings(toast, sampleText); }}
                     onToggleBrowser={() => setIsBrowserOpen(!isBrowserOpen)}
                   />
-                  <div className="border-b border-brand-line px-5 py-5 sm:px-8 sm:py-7 lg:border-b-0">
-                    <VoiceTuningPanel
-                      settings={currentSettings}
-                      onSettingChange={handleSettingChange}
-                      onReset={() => setPendingSettings({ ...DEFAULT_VOICE_SETTINGS })}
-                    />
-                  </div>
                   </div>
                   {isBrowserOpen && (
                     <section ref={voiceBrowserRef} className="scroll-mt-[88px] border-b border-brand-line py-5">
@@ -503,16 +514,20 @@ export default function VoiceSettingsPage() {
                       )}
                     </section>
                   )}
-                  <div className="grid gap-x-12 lg:grid-cols-2">
-                    <div>
+                  <div className="grid lg:grid-cols-[minmax(0,1.23fr)_minmax(0,0.77fr)]">
+                    <div className="pb-1 pt-6 sm:py-8 lg:pr-10">
+                      <VoiceTuningPanel
+                        settings={currentSettings}
+                        onSettingChange={handleSettingChange}
+                        onReset={() => setPendingSettings({ ...DEFAULT_VOICE_SETTINGS })}
+                      />
+                    </div>
+                    <div className="pb-6 pt-5 lg:py-8 lg:pl-10">
                       <VoiceLanguagePicker currentLanguage={currentLanguage} savedLanguage={config?.language} onChange={setPendingLanguage} />
                       <VoiceEngineSelector currentEngine={currentEngine} pendingEngine={pendingEngine} engineStatus={engineConfig?.voice_engine_status} onEngineSwitch={handleEngineSwitch} />
                     </div>
-                    <div>
-                      <VoicePersonaPanel />
-                      <VoiceAgentInfo agentId={config.agent_id} updatedAt={config.agent_updated_at} createdAt={config.created_at} />
-                    </div>
                   </div>
+                  <VoiceAgentInfo agentId={config.agent_id} updatedAt={config.agent_updated_at} createdAt={config.created_at} />
                 </>
               )}
 
@@ -520,7 +535,7 @@ export default function VoiceSettingsPage() {
                 <>
                   <OpenAIVoicePicker currentOpenAIVoice={currentOpenAIVoice} savedOpenAIVoice={engineConfig?.openai_voice_id} onSelect={setPendingOpenAIVoice} />
                   <VoiceEngineSelector currentEngine={currentEngine} pendingEngine={pendingEngine} engineStatus={engineConfig?.voice_engine_status} onEngineSwitch={handleEngineSwitch} />
-                  <VoicePersonaPanel />
+                  <VoicePersonaPanel engine="openai_realtime" />
                   <OpenAIEngineInfo engineStatus={engineConfig?.voice_engine_status} currentOpenAIVoice={currentOpenAIVoice} />
                 </>
               )}
@@ -536,8 +551,8 @@ export default function VoiceSettingsPage() {
               </h2>
               {waStatus.meta.approved ? (
                 <div className="space-y-1">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-100 text-rose-800">
-                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-100 text-xs font-medium text-emerald-800">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-600" />
                     {t('voiceSettings.waConnected', 'Connected')}
                   </span>
                   {waStatus.meta.phone_number && (

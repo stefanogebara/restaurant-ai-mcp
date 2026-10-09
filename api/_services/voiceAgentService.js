@@ -21,9 +21,10 @@ const logger = createSecureLogger('VoiceAgentService');
  * and PATCH it to the ElevenLabs agent.
  *
  * @param {string} restaurantId - UUID from restaurant.restaurant_config
- * @returns {Promise<{success: boolean, skipped?: boolean, error?: string}>}
+ * @param {{syncGreeting?: boolean}} options - Include the opening message when the greeting was edited
+ * @returns {Promise<{success: boolean, prompt_synced?: boolean, greeting_synced?: boolean, skipped?: boolean, error?: string}>}
  */
-async function refreshVoiceAgentPrompt(restaurantId) {
+async function refreshVoiceAgentPrompt(restaurantId, { syncGreeting = false } = {}) {
   if (!restaurantId) {
     return { skipped: true, reason: 'no_restaurant_id' };
   }
@@ -50,6 +51,19 @@ async function refreshVoiceAgentPrompt(restaurantId) {
   }
 
   const systemPrompt = buildPersonaPrompt(config, { channel: 'voice' });
+  // An empty saved greeting clears the customization and restores the same
+  // default opening used when a per-restaurant agent is created.
+  const defaultGreetings = {
+    en: `Thank you for calling ${config.restaurant_name}. How may I help you today?`,
+    es: `Gracias por llamar a ${config.restaurant_name}. ¿En qué puedo ayudarle hoy?`,
+    fr: `Merci d'avoir appelé ${config.restaurant_name}. Comment puis-je vous aider aujourd'hui?`,
+    it: `Grazie per aver chiamato ${config.restaurant_name}. Come posso aiutarla oggi?`,
+    pt: `Obrigado por ligar para ${config.restaurant_name}. Como posso ajudá-lo hoje?`,
+  };
+  const language = (config.agent_language || 'en').split('-')[0];
+  const firstMessage = config.agent_greeting || defaultGreetings[language] || defaultGreetings.en;
+  const agentUpdate = { prompt: { prompt: systemPrompt } };
+  if (syncGreeting) agentUpdate.first_message = firstMessage;
 
   const response = await fetch(
     `https://api.elevenlabs.io/v1/convai/agents/${config.elevenlabs_agent_id}`,
@@ -62,9 +76,7 @@ async function refreshVoiceAgentPrompt(restaurantId) {
       },
       body: JSON.stringify({
         conversation_config: {
-          agent: {
-            prompt: { prompt: systemPrompt }
-          }
+          agent: agentUpdate
         }
       })
     }
@@ -73,7 +85,42 @@ async function refreshVoiceAgentPrompt(restaurantId) {
   if (!response.ok) {
     const errorText = await response.text();
     logger.error('[VoiceAgentService] ElevenLabs PATCH failed:', response.status, errorText);
-    return { success: false, error: errorText };
+    return { success: false, prompt_synced: false, greeting_synced: syncGreeting ? false : undefined, error: errorText };
+  }
+
+  // A successful PATCH only confirms acceptance. Read the agent back so each
+  // status reflects the value that will actually start the next conversation.
+  let promptSynced = false;
+  let greetingSynced = !syncGreeting;
+  try {
+    const readback = await fetch(
+      `https://api.elevenlabs.io/v1/convai/agents/${config.elevenlabs_agent_id}`,
+      {
+        method: 'GET',
+        signal: AbortSignal.timeout(12_000),
+        headers: { 'xi-api-key': process.env.ELEVENLABS_API_KEY },
+      }
+    );
+    if (readback.ok) {
+      const agent = await readback.json();
+      promptSynced = agent.conversation_config?.agent?.prompt?.prompt === systemPrompt;
+      if (syncGreeting) greetingSynced = agent.conversation_config?.agent?.first_message === firstMessage;
+    } else {
+      logger.error('[VoiceAgentService] ElevenLabs readback failed:', readback.status);
+      greetingSynced = false;
+    }
+  } catch (readbackError) {
+    logger.error('[VoiceAgentService] ElevenLabs readback failed:', readbackError.message);
+    greetingSynced = false;
+  }
+
+  if (!promptSynced || !greetingSynced) {
+    return {
+      success: false,
+      prompt_synced: promptSynced,
+      greeting_synced: syncGreeting ? greetingSynced : undefined,
+      error: 'agent_readback_mismatch',
+    };
   }
 
   // Track when prompt was last synced
@@ -84,7 +131,7 @@ async function refreshVoiceAgentPrompt(restaurantId) {
     .eq('id', restaurantId);
 
   logger.info('[VoiceAgentService] Prompt refreshed for restaurant:', restaurantId);
-  return { success: true };
+  return { success: true, prompt_synced: true, greeting_synced: syncGreeting ? true : undefined };
 }
 
 module.exports = { refreshVoiceAgentPrompt };

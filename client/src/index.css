@@ -350,6 +350,27 @@
   box-shadow: 0 0 0 1px #3F4E32;
 }
 
+.voice-sample-range { appearance: none; height: 20px; background: transparent; }
+.voice-sample-range::-webkit-slider-runnable-track { height: 1px; background: transparent; }
+.voice-sample-range::-webkit-slider-thumb {
+  appearance: none;
+  width: 9px;
+  height: 9px;
+  margin-top: -4px;
+  border-radius: 50%;
+  background: #3F4E32;
+}
+.voice-sample-range::-moz-range-track { height: 1px; background: transparent; }
+.voice-sample-range::-moz-range-thumb {
+  width: 9px;
+  height: 9px;
+  border: 0;
+  border-radius: 50%;
+  background: #3F4E32;
+}
+.voice-sample-range:disabled::-webkit-slider-thumb { opacity: 0; }
+.voice-sample-range:disabled::-moz-range-thumb { opacity: 0; }
+
 /* ElevenLabs widget: prevent floating bubble from overlapping page headings */
 elevenlabs-convai {
   --elevenlabs-convai-widget-z-index: 30;

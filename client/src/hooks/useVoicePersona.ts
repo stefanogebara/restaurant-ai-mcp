@@ -9,6 +9,7 @@ export interface VoicePersona {
 export interface VoicePersonaSaveResult extends VoicePersona {
   kb_synced: boolean;
   prompt_synced: boolean;
+  greeting_synced: boolean | null;
 }
 
 /** Thrown when the endpoint returns 403 — typically means the account lacks
@@ -47,8 +48,8 @@ async function patchPersona(updates: Partial<VoicePersona>): Promise<VoicePerson
   return res.json() as Promise<VoicePersonaSaveResult>;
 }
 
-export function useVoicePersona() {
-  return useQuery({ queryKey: ['voice-persona'], queryFn: fetchPersona, staleTime: 10 * 60 * 1000 });
+export function useVoicePersona({ enabled = true }: { enabled?: boolean } = {}) {
+  return useQuery({ queryKey: ['voice-persona'], queryFn: fetchPersona, enabled, staleTime: 10 * 60 * 1000 });
 }
 
 export function useSaveVoicePersona() {

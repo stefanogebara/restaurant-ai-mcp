@@ -27,28 +27,25 @@ export default function VoiceAgentInfo({ agentId, updatedAt, createdAt }: Props)
     : null;
 
   return (
-    <section className="border-b border-brand-line py-6">
-      <div className="mb-4 flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="flex items-center gap-2 font-sans text-[12px] font-semibold uppercase tracking-[0.14em] text-brand-muted">
-          <ThiingsIcon name="info" pxSize={20} />
-          {t('agentInfo.title')}
-        </h2>
+    <section className="border-b border-brand-line py-4">
+      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
+        <button
+          type="button"
+          onClick={() => setShowTech((v) => !v)}
+          aria-expanded={showTech}
+          className="inline-flex min-h-10 items-center gap-2 font-brand text-[13px] font-medium text-brand-muted underline underline-offset-4 hover:text-brand-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-action"
+        >
+          <ThiingsIcon name="info" pxSize={18} />
+          {showTech
+            ? t('agentInfo.hideTech', 'Hide technical details')
+            : t('agentInfo.showTech', 'Show technical details')}
+        </button>
+        {lastUpdated && (
+          <p className="text-[12px] text-brand-muted">
+            {t('agentInfo.lastUpdatedShort', 'Last updated {{when}}', { when: lastUpdated })}
+          </p>
+        )}
       </div>
-      {lastUpdated && (
-        <p className="mt-1 text-[13px] text-brand-muted">
-          {t('agentInfo.lastUpdatedShort', 'Last updated {{when}}', { when: lastUpdated })}
-        </p>
-      )}
-
-      <button
-        type="button"
-        onClick={() => setShowTech((v) => !v)}
-        className="mt-3 text-[13px] text-brand-muted hover:text-brand-ink underline underline-offset-2"
-      >
-        {showTech
-          ? t('agentInfo.hideTech', 'Hide technical details')
-          : t('agentInfo.showTech', 'Show technical details')}
-      </button>
 
       {showTech && (
         <dl className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-soft-gray rounded-xl p-3">

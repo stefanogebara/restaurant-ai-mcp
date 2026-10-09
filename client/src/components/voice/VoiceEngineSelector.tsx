@@ -19,12 +19,12 @@ export default function VoiceEngineSelector({ currentEngine, pendingEngine, engi
   const selected = engines.find(engine => engine.id === currentEngine) ?? engines[0];
 
   return (
-    <section className="border-b border-brand-line py-6">
+    <section className="border-b border-brand-line py-5">
       <div className="flex items-start justify-between gap-5">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-muted">{t('settings.voiceEngine')}</p>
+          <p className="text-[15px] font-medium text-brand-ink">{t('settings.voiceEngine')}</p>
           <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-            <h2 className="font-brand text-[20px] font-medium leading-tight text-brand-ink">{selected.name}</h2>
+            <h2 className="font-brand text-[17px] font-medium leading-tight text-brand-ink">{selected.name}</h2>
             {pendingEngine && <span className="text-xs font-semibold text-amber-800">{t('voiceCurrentCard.pending', 'pending')}</span>}
             {!pendingEngine && engineStatus && engineStatus !== 'active' && (
               <span className="text-xs font-semibold text-amber-800">{t(`voiceEngine.status.${engineStatus}`, engineStatus)}</span>

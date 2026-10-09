@@ -24,7 +24,7 @@ jest.mock('../_lib/kb-sync-trigger', () => ({
   triggerKbSync: jest.fn().mockResolvedValue({ success: true, durationMs: 0 }),
 }));
 jest.mock('../_services/voiceAgentService', () => ({
-  refreshVoiceAgentPrompt: jest.fn().mockResolvedValue({ success: true }),
+  refreshVoiceAgentPrompt: jest.fn().mockResolvedValue({ success: true, prompt_synced: true, greeting_synced: true }),
 }));
 
 function makeChain(data) {
@@ -64,6 +64,16 @@ it('GET returns agent_name and agent_greeting', async () => {
   expect(res.json).toHaveBeenCalledWith({ agent_name: 'Sofia', agent_greeting: 'Welcome!' });
 });
 
+it('GET exposes a failed database read instead of pretending the saved greeting is empty', async () => {
+  const chain = makeChain(null);
+  chain.single.mockResolvedValue({ data: null, error: { message: 'database unavailable' } });
+  mockSupabaseAdmin.from.mockReturnValue(chain);
+  const res = mockRes();
+  await handler({ method: 'GET', headers: { authorization: 'Bearer tok' } }, res);
+  expect(res.status).toHaveBeenCalledWith(503);
+  expect(res.json).toHaveBeenCalledWith({ error: 'Voice persona temporarily unavailable' });
+});
+
 it('PATCH updates agent_name and agent_greeting (and reports kb_synced)', async () => {
   const res = mockRes();
   await handler({
@@ -76,14 +86,15 @@ it('PATCH updates agent_name and agent_greeting (and reports kb_synced)', async 
     agent_greeting: 'Welcome!',
     kb_synced: true,
     prompt_synced: true,
+    greeting_synced: true,
   });
   expect(triggerKbSync).toHaveBeenCalledWith('rest-1', { reason: 'voice_persona' });
-  expect(refreshVoiceAgentPrompt).toHaveBeenCalledWith('rest-1');
+  expect(refreshVoiceAgentPrompt).toHaveBeenCalledWith('rest-1', { syncGreeting: true });
 });
 
 it('PATCH reports a saved persona without claiming remote success when either sync fails', async () => {
   triggerKbSync.mockResolvedValueOnce({ success: false, error: 'timeout' });
-  refreshVoiceAgentPrompt.mockResolvedValueOnce({ success: true });
+  refreshVoiceAgentPrompt.mockResolvedValueOnce({ success: true, prompt_synced: true });
   const res = mockRes();
   await handler({
     method: 'PATCH',
@@ -94,6 +105,52 @@ it('PATCH reports a saved persona without claiming remote success when either sy
   expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
     kb_synced: false,
     prompt_synced: true,
+    greeting_synced: null,
+  }));
+  expect(refreshVoiceAgentPrompt).toHaveBeenCalledWith('rest-1', { syncGreeting: false });
+});
+
+it('PATCH reports an unverified greeting separately from a verified prompt', async () => {
+  refreshVoiceAgentPrompt.mockResolvedValueOnce({ success: false, prompt_synced: true, greeting_synced: false });
+  const res = mockRes();
+  await handler({
+    method: 'PATCH',
+    headers: { authorization: 'Bearer tok' },
+    body: { agent_greeting: 'Buongiorno!' },
+  }, res);
+  expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+    kb_synced: true,
+    prompt_synced: true,
+    greeting_synced: false,
+  }));
+});
+
+it('PATCH can retry a saved greeting after remote sync fails', async () => {
+  refreshVoiceAgentPrompt
+    .mockResolvedValueOnce({ success: false, prompt_synced: true, greeting_synced: false })
+    .mockResolvedValueOnce({ success: true, prompt_synced: true, greeting_synced: true });
+  const request = {
+    method: 'PATCH', headers: { authorization: 'Bearer tok' },
+    body: { agent_name: 'Sofia', agent_greeting: 'Welcome!' },
+  };
+  const first = mockRes();
+  const retry = mockRes();
+  await handler(request, first);
+  await handler(request, retry);
+
+  expect(first.json).toHaveBeenCalledWith(expect.objectContaining({ greeting_synced: false }));
+  expect(retry.json).toHaveBeenCalledWith(expect.objectContaining({ greeting_synced: true }));
+  expect(refreshVoiceAgentPrompt).toHaveBeenCalledTimes(2);
+  expect(refreshVoiceAgentPrompt).toHaveBeenNthCalledWith(2, 'rest-1', { syncGreeting: true });
+});
+
+it('PATCH reports partial success if KB sync throws after the database save', async () => {
+  triggerKbSync.mockRejectedValueOnce(new Error('KB unavailable'));
+  const res = mockRes();
+  await handler({ method: 'PATCH', headers: { authorization: 'Bearer tok' }, body: { agent_greeting: 'Welcome!' } }, res);
+  expect(res.status).not.toHaveBeenCalledWith(500);
+  expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+    kb_synced: false, prompt_synced: true, greeting_synced: true,
   }));
 });
 
@@ -109,6 +166,7 @@ it('PATCH still returns saved values when prompt refresh throws', async () => {
   expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
     kb_synced: true,
     prompt_synced: false,
+    greeting_synced: false,
   }));
 });
 

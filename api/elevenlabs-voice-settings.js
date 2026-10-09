@@ -216,7 +216,7 @@ async function handlePatch(req, res) {
     const { data: restaurant, error: dbError } = await supabaseAdmin
       .schema('restaurant')
       .from('restaurant_config')
-      .select('id, restaurant_name, elevenlabs_agent_id, agent_language')
+      .select('id, restaurant_name, elevenlabs_agent_id, agent_language, agent_greeting')
       .eq('id', restaurantId)
       .maybeSingle();
 
@@ -293,7 +293,7 @@ async function handlePatch(req, res) {
       const baseLang = language.split('-')[0];
       const newFirstMessage = firstMessages[baseLang] || firstMessages['en'];
       patchPayload.conversation_config.agent = {
-        first_message: newFirstMessage
+        first_message: restaurant.agent_greeting || newFirstMessage
       };
     }
 

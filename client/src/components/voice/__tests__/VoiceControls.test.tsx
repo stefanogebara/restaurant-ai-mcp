@@ -8,9 +8,9 @@ import VoiceFilters from '../VoiceFilters';
 import type { VoiceSettings } from '../voiceTypes';
 
 const warmSettings: VoiceSettings = {
-  stability: 0.55,
-  similarity_boost: 0.8,
-  style: 0.25,
+  stability: 0.5,
+  similarity_boost: 0.75,
+  style: 0,
   speed: 1,
 };
 
@@ -41,19 +41,22 @@ describe('voice controls', () => {
     expect(screen.getByRole('button', { name: 'Hide advanced controls' })).toHaveAttribute('aria-expanded', 'true');
 
     fireEvent.click(screen.getByRole('button', { name: 'Hide advanced controls' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Reset to defaults' }));
-    expect(onReset).toHaveBeenCalledOnce();
+    expect(screen.queryByRole('button', { name: 'Reset to defaults' })).not.toBeInTheDocument();
+    expect(onReset).not.toHaveBeenCalled();
     expect(screen.queryByRole('slider', { name: 'Stability' })).not.toBeInTheDocument();
   });
 
   it('names a custom mix when no preset matches', () => {
+    const onReset = vi.fn();
     render(<VoiceTuningPanel
-      settings={{ stability: 0.5, similarity_boost: 0.75, style: 0, speed: 1 }}
+      settings={{ stability: 0.62, similarity_boost: 0.71, style: 0.18, speed: 1 }}
       onSettingChange={vi.fn()}
-      onReset={vi.fn()}
+      onReset={onReset}
     />);
     expect(screen.getByText('Custom')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Calm' })).toHaveAttribute('aria-pressed', 'false');
+    fireEvent.click(screen.getByRole('button', { name: 'Reset to defaults' }));
+    expect(onReset).toHaveBeenCalledOnce();
   });
 
   it('keeps sliders labelled and sends their numeric value', () => {

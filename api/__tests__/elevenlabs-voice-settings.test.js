@@ -188,7 +188,34 @@ describe('ElevenLabs Voice Settings degradation', () => {
       'https://api.elevenlabs.io/v1/convai/agents/agent-123',
       expect.objectContaining({ method: 'PATCH' })
     );
+    expect(JSON.parse(global.fetch.mock.calls[0][1].body).conversation_config.agent.first_message)
+      .toBe('Olá! Bem-vindo ao Seatable Bistro. Como posso ajudá-lo hoje?');
     expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({ voice_id: 'voice-456', agent_language: 'pt' }));
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  test('language change keeps a saved custom opening message', async () => {
+    process.env.ELEVENLABS_API_KEY = 'test-key';
+    mockMaybeSingle.mockResolvedValueOnce({
+      data: {
+        id: 'rest-1', restaurant_name: 'Seatable Bistro', elevenlabs_agent_id: 'agent-123',
+        agent_language: 'en', agent_greeting: 'Welcome to our table!',
+      },
+      error: null,
+    });
+    global.fetch.mockResolvedValueOnce({ ok: true });
+    mockAwaitQueue.push({ data: null, error: null });
+
+    const { req, res } = createMockReqRes({ method: 'PATCH', body: { language: 'pt' } });
+    await handler(req, res);
+
+    expect(mockSelect).toHaveBeenCalledWith(expect.stringContaining('agent_greeting'));
+    expect(JSON.parse(global.fetch.mock.calls[0][1].body)).toEqual({
+      conversation_config: {
+        language: 'pt',
+        agent: { first_message: 'Welcome to our table!' },
+      },
+    });
     expect(res.status).toHaveBeenCalledWith(200);
   });
 

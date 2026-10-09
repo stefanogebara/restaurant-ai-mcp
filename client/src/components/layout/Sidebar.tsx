@@ -144,7 +144,20 @@ export default function Sidebar({ appearance = 'default', darkMobileMenu = false
       ? { path: '/host-dashboard/insights', label: t('navigation.sectionInsightsHero', 'Data'), icon: 'bar-chart' }
       : { path: '/host-dashboard/settings', label: t('common.settings', 'Settings'), icon: 'settings' },
   ];
-  const isMoreActive = !mobileNavItems.some(item => isActive(item.path));
+  // Mobile destinations are broad sections. Keep the section selected on a
+  // child screen such as Voice; otherwise all four items appear inactive.
+  const isMobileNavActive = (path: string) => {
+    if (path === '/host-dashboard/manager-ai') {
+      return ['/host-dashboard/manager-ai', '/host-dashboard/voice-settings', '/host-dashboard/calls', '/host-dashboard/whatsapp', '/host-dashboard/campaigns', '/host-dashboard/coupons', '/host-dashboard/events']
+        .some(prefix => location.pathname.startsWith(prefix));
+    }
+    if (path === '/host-dashboard/insights') {
+      return ['/host-dashboard/insights', '/host-dashboard/customers', '/analytics']
+        .some(prefix => location.pathname.startsWith(prefix));
+    }
+    return isActive(path);
+  };
+  const isMoreActive = !mobileNavItems.some(item => isMobileNavActive(item.path));
 
   return (
     <>
@@ -217,7 +230,7 @@ export default function Sidebar({ appearance = 'default', darkMobileMenu = false
               <div key={section.label} className={hero ? 'mb-4' : 'mb-5'}>
                 {/* Section Label */}
                 {!isCollapsed && (
-                  <div className={`px-5 mb-2 text-[11px] font-semibold uppercase ${hero ? 'tracking-[0.14em] text-brand-muted' : 'tracking-widest text-stone-400'}`}>
+                  <div className={`px-5 mb-2 text-[11px] font-semibold uppercase ${hero ? 'tracking-[0.1em] text-brand-muted/80' : 'tracking-widest text-stone-400'}`}>
                     {hero && section.label === 'Insights' ? t('navigation.sectionInsightsHero', 'Data') : t(NAV_KEYS[section.label] ?? section.label, section.label)}
                   </div>
                 )}
@@ -278,7 +291,7 @@ export default function Sidebar({ appearance = 'default', darkMobileMenu = false
                         ${isCollapsed ? `justify-center px-5 ${hero ? 'py-2.5 lg:py-2' : 'py-3'}` : `px-5 ${hero ? 'py-2.5 lg:py-2' : 'py-3'}`}
                         ${hero
                           ? active
-                            ? 'text-brand-ink bg-brand-action/15 border-l-2 border-l-brand-action font-semibold'
+                            ? 'text-brand-ink bg-brand-action/[0.07] border-l-2 border-l-brand-action font-semibold'
                             : 'text-brand-muted hover:text-brand-ink hover:bg-brand-line/25 border-l-2 border-l-transparent'
                           : active
                             ? 'text-white bg-white/[0.04] border-l-2 border-l-burgundy font-medium'
@@ -555,7 +568,7 @@ export default function Sidebar({ appearance = 'default', darkMobileMenu = false
       >
         <div className="flex items-center justify-around px-2 py-1 pb-[max(0.25rem,env(safe-area-inset-bottom))]">
           {mobileNavItems.map((item) => {
-            const active = isActive(item.path);
+            const active = isMobileNavActive(item.path);
             return (
               <Link
                 key={item.path}

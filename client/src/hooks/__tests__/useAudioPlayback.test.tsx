@@ -19,6 +19,8 @@ describe('useAudioPlayback', () => {
       pause = pause;
       onended: (() => void) | null = null;
       currentTime = 0;
+      duration = 4;
+      ended = false;
       constructor(src: string) { void src; }
     });
     mockFetch.mockResolvedValue({
@@ -35,7 +37,7 @@ describe('useAudioPlayback', () => {
       restaurantName: 'Cantina Preview', currentSettings: settings,
     }));
 
-    act(() => result.current.handlePreviewWithSettings({ info: vi.fn() }));
+    await act(async () => result.current.handlePreviewWithSettings({ info: vi.fn() }));
     await waitFor(() => expect(result.current.playingVoiceId).toBe('voice-1'));
     expect(mockFetch).toHaveBeenCalledWith('/api/elevenlabs-preview', {
       method: 'POST',
@@ -49,7 +51,7 @@ describe('useAudioPlayback', () => {
     expect(play).toHaveBeenCalledOnce();
     expect(result.current.isSamplePlaying).toBe(true);
 
-    act(() => result.current.handlePreviewWithSettings({ info: vi.fn() }));
+    await act(async () => result.current.handlePreviewWithSettings({ info: vi.fn() }));
     expect(pause).toHaveBeenCalledOnce();
     expect(result.current.playingVoiceId).toBeNull();
     expect(result.current.isSamplePlaying).toBe(false);
@@ -64,10 +66,83 @@ describe('useAudioPlayback', () => {
     await act(async () => result.current.handlePlayVoice('voice-1', 'Library sample'));
     expect(result.current.isSamplePlaying).toBe(false);
 
-    act(() => result.current.handlePreviewWithSettings({ info: vi.fn() }));
+    await act(async () => result.current.handlePreviewWithSettings({ info: vi.fn() }));
     await waitFor(() => expect(result.current.isSamplePlaying).toBe(true));
     expect(pause).toHaveBeenCalledOnce();
     expect(mockFetch).toHaveBeenCalledOnce();
     expect(play).toHaveBeenCalledTimes(2);
+  });
+
+  it('speaks the exact unsaved line passed by the listening room', async () => {
+    const { result } = renderHook(() => useAudioPlayback({
+      voices: [], currentVoiceId: 'voice-1', currentLanguage: 'pt',
+      restaurantName: 'Cantina Preview', currentSettings: settings,
+    }));
+    await act(async () => result.current.handlePreviewWithSettings({ info: vi.fn() }, '  Olá, posso ajudar?  '));
+    await waitFor(() => expect(mockFetch).toHaveBeenCalledOnce());
+    expect(JSON.parse(mockFetch.mock.calls[0][1].body).text).toBe('Olá, posso ajudar?');
+  });
+
+  it('reuses a paused generated sample and seeks within its real duration', async () => {
+    const { result } = renderHook(() => useAudioPlayback({
+      voices: [], currentVoiceId: 'voice-1', currentLanguage: 'pt',
+      restaurantName: 'Cantina Preview', currentSettings: settings,
+    }));
+    await act(async () => result.current.handlePreviewWithSettings({ info: vi.fn() }, 'Boa noite.'));
+    expect(result.current.sampleDuration).toBe(4);
+    act(() => result.current.seekSample(0.5));
+    expect(result.current.sampleCurrentTime).toBe(2);
+    await act(async () => result.current.handlePreviewWithSettings({ info: vi.fn() }, 'Boa noite.'));
+    await act(async () => result.current.handlePreviewWithSettings({ info: vi.fn() }, 'Boa noite.'));
+    expect(mockFetch).toHaveBeenCalledOnce();
+    expect(play).toHaveBeenCalledTimes(2);
+  });
+
+  it('stops the old line when the editor changes during playback', async () => {
+    const { result, rerender } = renderHook(({ line }) => useAudioPlayback({
+      voices: [], currentVoiceId: 'voice-1', currentLanguage: 'pt',
+      restaurantName: 'Cantina Preview', currentSettings: settings, sampleText: line,
+    }), { initialProps: { line: 'Boa noite.' } });
+    await act(async () => result.current.handlePreviewWithSettings({ info: vi.fn() }, 'Boa noite.'));
+    expect(result.current.isSamplePlaying).toBe(true);
+    rerender({ line: 'Olá, outra linha.' });
+    expect(pause).toHaveBeenCalledOnce();
+    expect(result.current.isSamplePlaying).toBe(false);
+    expect(result.current.sampleDuration).toBe(0);
+  });
+
+  it('invalidates a saved line preview when the language changes', async () => {
+    const { result, rerender } = renderHook(({ language }) => useAudioPlayback({
+      voices: [], currentVoiceId: 'voice-1', currentLanguage: language,
+      restaurantName: 'Cantina Preview', currentSettings: settings, sampleText: 'Welcome.',
+    }), { initialProps: { language: 'en' } });
+    await act(async () => result.current.handlePreviewWithSettings({ info: vi.fn() }, 'Welcome.'));
+    rerender({ language: 'pt' });
+    expect(pause).toHaveBeenCalledOnce();
+    await act(async () => result.current.handlePreviewWithSettings({ info: vi.fn() }, 'Welcome.'));
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+  });
+
+  it('reports an empty preview response without claiming playback', async () => {
+    mockFetch.mockResolvedValue({ ok: true, json: async () => ({ success: false, data: {} }) });
+    const error = vi.fn();
+    const { result } = renderHook(() => useAudioPlayback({
+      voices: [], currentVoiceId: 'voice-1', currentLanguage: 'pt',
+      restaurantName: 'Cantina Preview', currentSettings: settings,
+    }));
+    await act(async () => result.current.handlePreviewWithSettings({ info: vi.fn(), error }, 'Boa noite.'));
+    expect(error).toHaveBeenCalledOnce();
+    expect(result.current.isSamplePlaying).toBe(false);
+  });
+
+  it('does not audition a different default line when the editor is blank', async () => {
+    const info = vi.fn();
+    const { result } = renderHook(() => useAudioPlayback({
+      voices: [], currentVoiceId: 'voice-1', currentLanguage: 'pt',
+      restaurantName: 'Cantina Preview', currentSettings: settings, sampleText: '',
+    }));
+    await act(async () => result.current.handlePreviewWithSettings({ info }, '  '));
+    expect(info).toHaveBeenCalledOnce();
+    expect(mockFetch).not.toHaveBeenCalled();
   });
 });

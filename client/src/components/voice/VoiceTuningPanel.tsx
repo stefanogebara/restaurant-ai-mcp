@@ -26,7 +26,7 @@ const TUNING_PRESETS: Record<PresetKey, { stability: number; similarity_boost: n
   // Reliable, low-variance reading — best for confirmations + numbers.
   calm:      { stability: 0.75, similarity_boost: 0.85, style: 0.10 },
   // Friendly, mid-variance — the default for most restaurants.
-  warm:      { stability: 0.55, similarity_boost: 0.80, style: 0.25 },
+  warm:      { ...DEFAULT_VOICE_SETTINGS },
   // Higher variance + style — punchier, more expressive replies.
   energetic: { stability: 0.35, similarity_boost: 0.75, style: 0.55 },
 };
@@ -79,12 +79,15 @@ export default function VoiceTuningPanel({
   ];
 
   return (
-    <section className="pb-4 font-brand text-brand-ink">
-      <h2 className="pb-3 pt-1 font-brand text-[11px] font-semibold uppercase tracking-[0.16em] text-brand-muted">{t('voiceTuning.title', 'How your AI sounds')}</h2>
+    <section className="pb-3 font-brand text-brand-ink">
+      <div className="flex flex-wrap items-baseline justify-between gap-3 pb-3 pt-1">
+        <h2 className="font-brand text-[16px] font-medium tracking-[-0.02em] text-brand-ink">{t('voiceTuning.title', 'How your AI sounds')}</h2>
+        {!detectedPreset && <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-brand-action"><span className="size-1.5 rounded-full bg-brand-action" aria-hidden="true" />{t('voiceTuning.customLabel', 'Custom')}</span>}
+      </div>
 
-      <div className="space-y-4">
+      <div className="space-y-3">
         <div>
-          <div className="grid grid-cols-4 border-b border-brand-line" role="group" aria-label={t('voiceTuning.title', 'How your AI sounds')}>
+          <div className="grid max-w-[640px] grid-cols-3 overflow-hidden rounded-[9px] border border-brand-line" role="group" aria-label={t('voiceTuning.title', 'How your AI sounds')}>
             {presets.map(({ key, title }) => {
               const isSelected = detectedPreset === key;
               return (
@@ -93,29 +96,26 @@ export default function VoiceTuningPanel({
                   type="button"
                   onClick={() => applyPreset(key)}
                   aria-pressed={isSelected}
-                  className={`-mb-px min-h-10 border-b-2 px-0.5 text-[12px] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-action sm:text-sm ${
+                  className={`min-h-10 border-r border-brand-line px-2 text-[13px] font-medium transition-colors last:border-r-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-action sm:text-sm ${
                     isSelected
-                      ? 'border-brand-action text-brand-ink'
-                      : 'border-transparent text-brand-muted hover:text-brand-ink'
+                      ? 'bg-brand-action text-brand-paper'
+                      : 'text-brand-muted hover:bg-brand-line/30 hover:text-brand-ink'
                   }`}
                 >
                   {title}
                 </button>
               );
             })}
-            <span aria-current={!detectedPreset ? 'true' : undefined} className={`-mb-px flex min-h-10 items-center justify-center border-b-2 px-0.5 text-center text-[12px] sm:text-sm ${!detectedPreset ? 'border-brand-action font-semibold text-brand-ink' : 'border-transparent text-brand-muted'}`}>
-              {t('voiceTuning.customLabel', 'Custom')}
-            </span>
           </div>
           {detectedPreset && (
-            <p className="mt-3 max-w-[52ch] text-[13px] leading-5 text-brand-muted">
+            <p className="mt-2 max-w-[52ch] text-[12px] leading-5 text-brand-muted">
               {presets.find(({ key }) => key === detectedPreset)?.desc}
             </p>
           )}
-          {!detectedPreset && <p className="mt-3 text-[13px] leading-5 text-brand-muted">{t('voiceTuning.customDesc', 'Fine-tuned for your restaurant.')}</p>}
+          {!detectedPreset && <p className="mt-2 text-[12px] leading-5 text-brand-muted">{t('voiceTuning.customDesc', 'Fine-tuned for your restaurant.')}</p>}
         </div>
 
-        <div className="pt-1">
+        <div className="pt-0">
           <VoiceSlider
             label={t('voiceTuning.speed', 'Speaking speed')}
             value={settings.speed}

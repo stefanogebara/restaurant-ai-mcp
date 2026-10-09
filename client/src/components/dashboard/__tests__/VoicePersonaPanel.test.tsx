@@ -99,6 +99,53 @@ describe('VoicePersonaPanel', () => {
     expect(mockToast.success).not.toHaveBeenCalled();
   });
 
+  it('auditions an unsaved line and does not claim sync when the opening message differs', async () => {
+    const onGreetingDraftChange = vi.fn();
+    const mutate = vi.fn((_updates, options) => options.onSuccess({
+      agent_name: 'Sofia', agent_greeting: 'Olá da Casa.', kb_synced: true,
+      prompt_synced: true, greeting_synced: false,
+    }));
+    mockSave.mockReturnValue({ mutate, isPending: false });
+    const user = userEvent.setup();
+    renderWithClient(<VoicePersonaPanel variant="studio" onGreetingDraftChange={onGreetingDraftChange} />);
+    const input = screen.getByLabelText(/opening greeting/i);
+    await user.clear(input);
+    await user.type(input, 'Olá da Casa.');
+    expect(onGreetingDraftChange).toHaveBeenLastCalledWith('Olá da Casa.');
+    await user.click(screen.getByRole('button', { name: /save greeting/i }));
+    expect(mutate.mock.calls[0][0]).toEqual({ agent_greeting: 'Olá da Casa.' });
+    expect(onGreetingDraftChange).toHaveBeenLastCalledWith(null);
+    expect(await screen.findByRole('status')).toHaveTextContent('not fully updated');
+    expect(mockToast.success).not.toHaveBeenCalled();
+  });
+
+  it('restores the saved greeting in the always-open editor when cancelled', async () => {
+    const onGreetingDraftChange = vi.fn();
+    const mutate = vi.fn();
+    mockSave.mockReturnValue({ mutate, isPending: false });
+    const user = userEvent.setup();
+    renderWithClient(<VoicePersonaPanel variant="studio" onGreetingDraftChange={onGreetingDraftChange} />);
+    const input = screen.getByLabelText(/opening greeting/i);
+    await user.clear(input);
+    await user.type(input, 'New opening');
+    await user.click(screen.getByRole('button', { name: /cancel/i }));
+    expect(screen.getByLabelText(/opening greeting/i)).toHaveValue('Welcome!');
+    expect(onGreetingDraftChange).toHaveBeenLastCalledWith(null);
+    expect(mutate).not.toHaveBeenCalled();
+  });
+
+  it('marks a failed persona read as example-only and offers retry', async () => {
+    const refetch = vi.fn();
+    mockUse.mockReturnValue({ data: undefined, isLoading: false, isError: true, refetch });
+    const user = userEvent.setup();
+    renderWithClient(<VoicePersonaPanel variant="studio" exampleGreeting="Welcome to our restaurant." />);
+    expect(screen.getByRole('alert')).toHaveTextContent('nothing here is confirmed as saved');
+    expect(screen.getByText(/Welcome to our restaurant/)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/opening greeting/i)).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /retry/i }));
+    expect(refetch).toHaveBeenCalledOnce();
+  });
+
   it('refreshes the agent prompt without saving the persona', async () => {
     const user = userEvent.setup();
     const fetchMock = authFetch as ReturnType<typeof vi.fn>;
