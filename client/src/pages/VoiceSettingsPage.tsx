@@ -49,6 +49,9 @@ import { DEFAULT_VOICE_SETTINGS } from '../components/voice/voiceTypes';
 import type { VoiceSettings } from '../components/voice/voiceTypes';
 import { useWhatsAppIntegrationStatus } from '../hooks/useWhatsAppSettings';
 
+const voiceScrollBehavior = (): ScrollBehavior =>
+  window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+
 export default function VoiceSettingsPage() {
   const { t } = useTranslation();
   const toast = useToast();
@@ -62,6 +65,7 @@ export default function VoiceSettingsPage() {
   const { data: waStatus } = useWhatsAppIntegrationStatus({ enabled: canLoadVoiceData });
   const queryClient = useQueryClient();
   const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const voiceBrowserRef = useRef<HTMLElement | null>(null);
 
   // Clean up the post-retry 5s invalidate-queries timeout if the user navigates
   // away before it fires — prevents setState-on-unmounted-component warnings.
@@ -113,6 +117,10 @@ export default function VoiceSettingsPage() {
   const [isBrowserOpen, setIsBrowserOpen] = useState(false);
   const [voiceSavePartial, setVoiceSavePartial] = useState(false);
 
+  useEffect(() => {
+    if (isBrowserOpen) voiceBrowserRef.current?.scrollIntoView?.({ behavior: voiceScrollBehavior(), block: 'start' });
+  }, [isBrowserOpen]);
+
   // ─── Derived state ────────────────────────────────────────────────────────────
 
   const isSaving = saveMutation.isPending || saveEngineMutation.isPending;
@@ -154,6 +162,12 @@ export default function VoiceSettingsPage() {
     // Presets call this three times in one React event. Compose each change
     // from the previous pending value so batching cannot discard two fields.
     setPendingSettings(previous => ({ ...(previous ?? currentSettings), [key]: value }));
+  };
+
+  const handleVoiceSelection = (voiceId: string) => {
+    setPendingVoiceId(voiceId);
+    setIsBrowserOpen(false);
+    window.scrollTo({ top: 0, behavior: 'auto' });
   };
 
   const handleEngineSwitch = (target: VoiceEngineSettings['voice_engine']) => {
@@ -448,7 +462,7 @@ export default function VoiceSettingsPage() {
                   </div>
                   </div>
                   {isBrowserOpen && (
-                    <section className="border-b border-brand-line py-5">
+                    <section ref={voiceBrowserRef} className="scroll-mt-[88px] border-b border-brand-line py-5">
                       <h2 className="mb-4 flex items-center gap-2 font-brand text-[12px] font-semibold uppercase tracking-[0.14em] text-brand-muted">
                         <ThiingsIcon name="search" pxSize={20} />
                         {t('voiceSettings.voiceLibrary', 'Voice Library')}
@@ -479,7 +493,7 @@ export default function VoiceSettingsPage() {
                             loadingAudioId={loadingAudio}
                             hasMore={hasMore}
                             isLoadingMore={isLoadingMore}
-                            onSelectVoice={setPendingVoiceId}
+                            onSelectVoice={handleVoiceSelection}
                             onPlayVoice={handlePlayVoice}
                             onLoadMore={handleLoadMore}
                             isLoading={isLoadingVoices}

@@ -78,7 +78,6 @@ export default function VoiceCurrentCard({
           {isBrowserOpen ? t('voiceCurrentCard.hideVoiceBrowser', 'Hide Voice Browser') : t('voiceCurrentCard.changeVoice', 'Change Voice')}
         </button>
         {pendingVoiceId && <span className="text-[12px] font-semibold text-amber-200">{t('voiceCurrentCard.pending', 'pending')}</span>}
-        {selectedBrowserVoice?.accent && <span className="text-[12px] text-brand-paper/70">{selectedBrowserVoice.accent}</span>}
       </div>
     </section>
   );
