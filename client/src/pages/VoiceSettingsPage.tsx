@@ -120,6 +120,7 @@ export default function VoiceSettingsPage() {
   const [isBrowserOpen, setIsBrowserOpen] = useState(false);
   const [voiceSavePartial, setVoiceSavePartial] = useState(false);
   const [draftGreeting, setDraftGreeting] = useState<string | null>(null);
+  const [draftAgentName, setDraftAgentName] = useState<string | null>(null);
 
   useEffect(() => {
     if (isBrowserOpen) voiceBrowserRef.current?.scrollIntoView?.({ behavior: voiceScrollBehavior(), block: 'start' });
@@ -390,17 +391,6 @@ export default function VoiceSettingsPage() {
             <h1 className="sr-only font-brand font-normal leading-[1.05] tracking-[-0.045em] text-brand-ink sm:not-sr-only sm:text-[34px]">
               {t('voiceSettings.setupEyebrow', 'Reception')}
             </h1>
-            {isDirty && !(voiceSavePaused && !hasPendingEngineChanges) && (
-              <button
-                type="button"
-                onClick={handleSave}
-                disabled={isSaving}
-                className="mb-0.5 ml-auto flex shrink-0 items-center gap-2 rounded-full bg-brand-action px-4 py-2.5 text-[12px] font-semibold text-white hover:bg-brand-ink disabled:cursor-not-allowed disabled:opacity-60 sm:ml-0 sm:px-5 sm:text-[13px]"
-              >
-                {isSaving && <Spinner size="sm" className="border-white border-t-white/30" />}
-                {isSaving ? t('voiceSettings.saving', 'Saving...') : t('voiceSettings.saveChanges', 'Save Changes')}
-              </button>
-            )}
           </div>
         </header>
 
@@ -419,8 +409,42 @@ export default function VoiceSettingsPage() {
           // panes. All panes stay mounted (hidden via Tailwind) so dirty
           // pending edits survive tab switches and the shared Save button
           // still saves everything in one shot.
+          const renderCurrentVoice = (variant: 'identity' | 'control' | 'status') => (
+            <VoiceCurrentCard
+              variant={variant}
+              agentName={isPersonaError ? undefined : (draftAgentName ?? persona?.agent_name)?.trim() || undefined}
+              currentVoiceId={currentVoiceId}
+              pendingVoiceId={pendingVoiceId}
+              selectedBrowserVoice={selectedBrowserVoice}
+              savedVoiceName={config.voice_name || voices.find(voice => voice.id === config.voice_id)?.name}
+              currentLanguage={currentLanguage}
+              sampleText={sampleText}
+              sampleKind={sampleKind}
+              isBrowserOpen={isBrowserOpen}
+              loadingAudio={loadingAudio}
+              isSamplePlaying={isSamplePlaying}
+              sampleDuration={sampleDuration}
+              sampleCurrentTime={sampleCurrentTime}
+              onSeek={seekSample}
+              onPlay={() => { if (sampleText) handlePreviewWithSettings(toast, sampleText); }}
+              onToggleBrowser={() => setIsBrowserOpen(!isBrowserOpen)}
+            />
+          );
           const voiceTab = (
             <div className="space-y-3 sm:space-y-5">
+              {isDirty && (voiceReadbackUnavailable || currentEngine !== 'elevenlabs') && !(voiceSavePaused && !hasPendingEngineChanges) && (
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={handleSave}
+                    disabled={isSaving}
+                    className="inline-flex min-h-10 items-center gap-2 rounded-full bg-brand-action px-5 py-2 text-[12px] font-semibold text-white hover:bg-brand-ink disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {isSaving && <Spinner size="sm" className="border-white border-t-white/30" />}
+                    {isSaving ? t('voiceSettings.saving', 'Saving...') : t('voiceSettings.saveChanges', 'Save Changes')}
+                  </button>
+                </div>
+              )}
               {currentEngine === 'elevenlabs' && voiceReadbackUnavailable && (
                 <>
                   <section role="status" className="border-b border-brand-line py-3 sm:py-5">
@@ -448,30 +472,36 @@ export default function VoiceSettingsPage() {
               )}
               {currentEngine === 'elevenlabs' && !voiceReadbackUnavailable && (
                 <>
-                  <div className="grid gap-4 border-b border-brand-line pb-5 lg:grid-cols-[minmax(0,1fr)_272px] lg:items-start lg:gap-8 lg:pb-7">
                   <VoicePersonaPanel
                     variant="studio"
                     onGreetingDraftChange={setDraftGreeting}
+                    onAgentNameDraftChange={setDraftAgentName}
                     exampleGreeting={getPreviewText(currentLanguage, config?.restaurant_name || undefined)}
+                    voiceIdentity={renderCurrentVoice('identity')}
+                    playControl={renderCurrentVoice('control')}
+                    sampleStatus={renderCurrentVoice('status')}
                   />
-                  <VoiceCurrentCard
-                    currentVoiceId={currentVoiceId}
-                    pendingVoiceId={pendingVoiceId}
-                    selectedBrowserVoice={selectedBrowserVoice}
-                    savedVoiceName={config.voice_name || voices.find(voice => voice.id === config.voice_id)?.name}
-                    currentLanguage={currentLanguage}
-                    sampleText={sampleText}
-                    sampleKind={sampleKind}
-                    isBrowserOpen={isBrowserOpen}
-                    loadingAudio={loadingAudio}
-                    isSamplePlaying={isSamplePlaying}
-                    sampleDuration={sampleDuration}
-                    sampleCurrentTime={sampleCurrentTime}
-                    onSeek={seekSample}
-                    onPlay={() => { if (sampleText) handlePreviewWithSettings(toast, sampleText); }}
-                    onToggleBrowser={() => setIsBrowserOpen(!isBrowserOpen)}
-                  />
+                  <div className="mx-auto grid max-w-[900px] grid-cols-1 gap-y-1 border-t border-brand-line pt-3 sm:grid-cols-3 sm:gap-x-8 sm:pt-5">
+                    <VoiceTuningPanel
+                      settings={currentSettings}
+                      onSettingChange={handleSettingChange}
+                      onReset={() => setPendingSettings({ ...DEFAULT_VOICE_SETTINGS })}
+                    />
+                    <VoiceLanguagePicker currentLanguage={currentLanguage} savedLanguage={config?.language} onChange={setPendingLanguage} />
+                    <VoiceEngineSelector currentEngine={currentEngine} pendingEngine={pendingEngine} engineStatus={engineConfig?.voice_engine_status} onEngineSwitch={handleEngineSwitch} compact />
                   </div>
+                  {isDirty && <div role="status" className="flex flex-wrap items-center justify-between gap-3 border-t border-brand-line py-3 font-brand">
+                    <span className="text-[12px] text-amber-800">{t('voiceSettings.pendingVoiceChanges', 'Voice changes not saved')}</span>
+                    <button
+                      type="button"
+                      onClick={handleSave}
+                      disabled={isSaving}
+                      className="inline-flex min-h-10 items-center gap-2 rounded-full bg-brand-action px-5 py-2 text-[12px] font-semibold text-white hover:bg-brand-ink disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {isSaving && <Spinner size="sm" className="border-white border-t-white/30" />}
+                      {isSaving ? t('voiceSettings.saving', 'Saving...') : t('voiceSettings.saveChanges', 'Save Changes')}
+                    </button>
+                  </div>}
                   {isBrowserOpen && (
                     <section ref={voiceBrowserRef} className="scroll-mt-[88px] border-b border-brand-line py-5">
                       <h2 className="mb-4 flex items-center gap-2 font-brand text-[12px] font-semibold uppercase tracking-[0.14em] text-brand-muted">
@@ -514,19 +544,6 @@ export default function VoiceSettingsPage() {
                       )}
                     </section>
                   )}
-                  <div className="grid lg:grid-cols-[minmax(0,1.23fr)_minmax(0,0.77fr)]">
-                    <div className="pb-1 pt-6 sm:py-8 lg:pr-10">
-                      <VoiceTuningPanel
-                        settings={currentSettings}
-                        onSettingChange={handleSettingChange}
-                        onReset={() => setPendingSettings({ ...DEFAULT_VOICE_SETTINGS })}
-                      />
-                    </div>
-                    <div className="pb-6 pt-5 lg:py-8 lg:pl-10">
-                      <VoiceLanguagePicker currentLanguage={currentLanguage} savedLanguage={config?.language} onChange={setPendingLanguage} />
-                      <VoiceEngineSelector currentEngine={currentEngine} pendingEngine={pendingEngine} engineStatus={engineConfig?.voice_engine_status} onEngineSwitch={handleEngineSwitch} />
-                    </div>
-                  </div>
                   <VoiceAgentInfo agentId={config.agent_id} updatedAt={config.agent_updated_at} createdAt={config.created_at} />
                 </>
               )}

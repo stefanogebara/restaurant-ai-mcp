@@ -5,6 +5,7 @@ import VoiceLanguagePicker from '../VoiceLanguagePicker';
 import VoiceSlider from '../VoiceSlider';
 import VoiceCard from '../VoiceCard';
 import VoiceFilters from '../VoiceFilters';
+import VoiceCurrentCard from '../VoiceCurrentCard';
 import type { VoiceSettings } from '../voiceTypes';
 
 const warmSettings: VoiceSettings = {
@@ -26,10 +27,14 @@ describe('voice controls', () => {
       />,
     );
 
-    expect(screen.getByRole('button', { name: 'Warm' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('heading', { name: 'Tone & pace' }).parentElement).toHaveTextContent('Warm · Natural');
+    const adjust = screen.getByRole('button', { name: /Adjust tone & pace/ });
+    expect(adjust).toHaveAttribute('aria-expanded', 'false');
+    fireEvent.click(adjust);
+    expect(screen.getByRole('button', { name: /^Warm/ })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.queryByRole('slider', { name: 'Stability' })).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Calm' }));
+    fireEvent.click(screen.getByRole('button', { name: /^Calm/ }));
     expect(onSettingChange.mock.calls).toEqual([
       ['stability', 0.75],
       ['similarity_boost', 0.85],
@@ -54,7 +59,8 @@ describe('voice controls', () => {
       onReset={onReset}
     />);
     expect(screen.getByText('Custom')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Calm' })).toHaveAttribute('aria-pressed', 'false');
+    fireEvent.click(screen.getByRole('button', { name: /Adjust tone & pace/ }));
+    expect(screen.getByRole('button', { name: /^Calm/ })).toHaveAttribute('aria-pressed', 'false');
     fireEvent.click(screen.getByRole('button', { name: 'Reset to defaults' }));
     expect(onReset).toHaveBeenCalledOnce();
   });
@@ -65,6 +71,24 @@ describe('voice controls', () => {
 
     fireEvent.change(screen.getByRole('slider', { name: 'Speaking speed' }), { target: { value: '1.1' } });
     expect(onChange).toHaveBeenCalledWith(1.1);
+  });
+
+  it('shows seek only for real audio progress and seeks through the shared sample', () => {
+    const onSeek = vi.fn();
+    const props = {
+      agentName: 'Lia', currentVoiceId: 'voice-1', pendingVoiceId: null,
+      selectedBrowserVoice: undefined, savedVoiceName: 'Marina', currentLanguage: 'pt',
+      sampleText: 'Boa noite.', sampleKind: 'saved' as const, isBrowserOpen: false,
+      loadingAudio: null, isSamplePlaying: false, sampleCurrentTime: 0,
+      onSeek, onPlay: vi.fn(), onToggleBrowser: vi.fn(),
+    };
+    const view = render(<VoiceCurrentCard {...props} variant="status" sampleDuration={0} />);
+    expect(screen.queryByRole('slider', { name: 'Seek sample' })).not.toBeInTheDocument();
+    view.rerender(<VoiceCurrentCard {...props} variant="status" sampleDuration={12} sampleCurrentTime={3} />);
+    const seek = screen.getByRole('slider', { name: 'Seek sample' });
+    expect(seek).toHaveValue('25');
+    fireEvent.change(seek, { target: { value: '50' } });
+    expect(onSeek).toHaveBeenCalledWith(0.5);
   });
 
   it('selects a language without flag buttons and links a pending change to its warning', () => {

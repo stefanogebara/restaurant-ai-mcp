@@ -108,6 +108,7 @@ describe('VoicePersonaPanel', () => {
     mockSave.mockReturnValue({ mutate, isPending: false });
     const user = userEvent.setup();
     renderWithClient(<VoicePersonaPanel variant="studio" onGreetingDraftChange={onGreetingDraftChange} />);
+    expect(screen.getByRole('link', { name: /how to test a real call in phone/i })).toHaveAttribute('href', '#voice-settings:phone');
     const input = screen.getByLabelText(/opening greeting/i);
     await user.clear(input);
     await user.type(input, 'Olá da Casa.');

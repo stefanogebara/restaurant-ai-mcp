@@ -49,6 +49,24 @@ const navSections: NavSection[] = [
   }
 ];
 
+// The hero sidebar keeps its destinations legible when collapsed. The default
+// sidebar retains its existing dot-only treatment until that surface migrates.
+const heroNavIcons: Record<string, IconName> = {
+  '/host-dashboard/simple': 'dashboard',
+  '/host-dashboard/floor-plan': 'map',
+  '/host-dashboard/service': 'calendar-days',
+  '/host-dashboard/manager-ai': 'chat',
+  '/host-dashboard/voice-settings': 'voice',
+  '/host-dashboard/whatsapp': 'phone',
+  '/host-dashboard/campaigns': 'send',
+  '/host-dashboard/insights': 'bar-chart',
+  '/host-dashboard/customers': 'users',
+  '/host-dashboard/settings': 'settings',
+  '/settings/language': 'globe',
+  '/host-dashboard/integrations': 'link',
+  '/host-dashboard/team': 'users',
+};
+
 export default function Sidebar({ appearance = 'default', darkMobileMenu = false }: { appearance?: 'default' | 'hero'; darkMobileMenu?: boolean }) {
   const hero = appearance === 'hero';
   const location = useLocation();
@@ -168,7 +186,7 @@ export default function Sidebar({ appearance = 'default', darkMobileMenu = false
         aria-label={isMobileOpen ? "Close navigation menu" : "Open navigation menu"}
         aria-expanded={isMobileOpen}
       >
-        <ThiingsIcon name="menu" pxSize={20} />
+        <ThiingsIcon name={hero && isMobileOpen ? 'close' : 'menu'} pxSize={20} />
       </button>
 
       {/* Mobile Overlay */}
@@ -208,7 +226,7 @@ export default function Sidebar({ appearance = 'default', darkMobileMenu = false
                 </h1>
               )
             ) : (
-              <h1 className={`font-serif text-[22px] tracking-tight mx-auto ${hero ? 'italic text-brand-ink' : 'text-white'}`}>
+              <h1 className={`font-serif text-[22px] tracking-tight ${hero ? 'ml-1 italic text-brand-ink' : 'mx-auto text-white'}`}>
                 S{!hero && <span className="text-burgundy">.</span>}
               </h1>
             )}
@@ -227,10 +245,10 @@ export default function Sidebar({ appearance = 'default', darkMobileMenu = false
           {/* Navigation */}
           <nav aria-label="Main navigation" className="flex-1 overflow-y-auto [mask-image:linear-gradient(to_bottom,black_0%,black_94%,transparent_100%)]">
             {navSections.map((section) => (
-              <div key={section.label} className={hero ? 'mb-4' : 'mb-5'}>
+              <div key={section.label} className="mb-5">
                 {/* Section Label */}
                 {!isCollapsed && (
-                  <div className={`px-5 mb-2 text-[11px] font-semibold uppercase ${hero ? 'tracking-[0.1em] text-brand-muted/80' : 'tracking-widest text-stone-400'}`}>
+                  <div className={`px-5 mb-2 font-semibold uppercase ${hero ? 'text-[12px] tracking-[0.14em] text-brand-muted' : 'text-[11px] tracking-widest text-stone-400'}`}>
                     {hero && section.label === 'Insights' ? t('navigation.sectionInsightsHero', 'Data') : t(NAV_KEYS[section.label] ?? section.label, section.label)}
                   </div>
                 )}
@@ -242,7 +260,7 @@ export default function Sidebar({ appearance = 'default', darkMobileMenu = false
 
 
                 {/* Nav Items */}
-                <div className="space-y-1">
+                <div className={hero ? 'space-y-0.5' : 'space-y-1'}>
                 {section.items.map((item) => {
                   const active = isActive(item.path);
                   const hasAccess = hasFeatureAccess(planType, item.requiredFeature);
@@ -260,14 +278,15 @@ export default function Sidebar({ appearance = 'default', darkMobileMenu = false
                         onClick={() => setIsMobileOpen(false)}
                         className={`
                           w-full flex items-center gap-3 text-left transition-all duration-150
-                          ${hero ? 'text-brand-muted hover:text-brand-ink hover:bg-brand-line/25' : 'opacity-60 hover:opacity-100 hover:bg-white/[0.03] text-stone-400 hover:text-stone-200'}
-                          ${isCollapsed ? `justify-center px-5 ${hero ? 'py-2.5 lg:py-2' : 'py-3'}` : `px-5 ${hero ? 'py-2.5 lg:py-2' : 'py-3'}`}
+                          ${hero ? 'relative ml-4 mr-3 rounded-md text-brand-muted hover:text-brand-ink hover:bg-brand-line/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-action/60' : 'opacity-60 hover:opacity-100 hover:bg-white/[0.03] text-stone-400 hover:text-stone-200'}
+                          ${isCollapsed ? `justify-center ${hero ? 'px-3 py-2' : 'px-5 py-3'}` : `${hero ? 'px-5 py-2' : 'px-5 py-3'}`}
                         `}
                         title={isCollapsed
                           ? `${t(NAV_KEYS[item.label] ?? item.label, item.label)} - ${t('navigation.upgradeToUnlock', 'Upgrade to unlock')}`
                           : t('navigation.upgradePlanToUnlock', 'Upgrade to Professional plan to unlock')}
                         aria-label={`${t(NAV_KEYS[item.label] ?? item.label, item.label)} - ${t('navigation.lockedFeature', 'Locked feature')}`}
                       >
+                        {hero && isCollapsed && <ThiingsIcon name={heroNavIcons[item.path]} pxSize={18} />}
                         <span className={`w-1.5 h-1.5 rounded-full bg-current opacity-40 flex-shrink-0 ${hero ? 'hidden' : ''}`} />
                         {!isCollapsed && (
                           <span className="text-sm flex items-center gap-2">
@@ -288,11 +307,12 @@ export default function Sidebar({ appearance = 'default', darkMobileMenu = false
                       aria-label={isCollapsed ? hero && item.label === 'Insights' ? t('insights.tabs.analytics', 'Analytics') : item.label : undefined}
                       className={`
                         flex items-center gap-3 transition-all duration-150
-                        ${isCollapsed ? `justify-center px-5 ${hero ? 'py-2.5 lg:py-2' : 'py-3'}` : `px-5 ${hero ? 'py-2.5 lg:py-2' : 'py-3'}`}
+                        ${hero ? 'relative ml-4 mr-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-action/60' : ''}
+                        ${isCollapsed ? `justify-center ${hero ? 'px-3 py-2' : 'px-5 py-3'}` : `${hero ? 'px-5 py-2' : 'px-5 py-3'}`}
                         ${hero
                           ? active
-                            ? 'text-brand-ink bg-brand-action/[0.07] border-l-2 border-l-brand-action font-semibold'
-                            : 'text-brand-muted hover:text-brand-ink hover:bg-brand-line/25 border-l-2 border-l-transparent'
+                            ? 'text-brand-ink font-semibold before:absolute before:left-0 before:top-1/2 before:h-[20px] before:w-[2px] before:-translate-y-1/2 before:rounded-full before:bg-brand-action'
+                            : 'text-brand-muted hover:text-brand-ink hover:bg-brand-line/20'
                           : active
                             ? 'text-white bg-white/[0.04] border-l-2 border-l-burgundy font-medium'
                             : 'text-stone-300 hover:text-white hover:bg-white/[0.03] border-l-2 border-l-transparent'
@@ -300,6 +320,7 @@ export default function Sidebar({ appearance = 'default', darkMobileMenu = false
                       `}
                       title={isCollapsed ? hero && item.label === 'Insights' ? t('insights.tabs.analytics', 'Analytics') : item.label : undefined}
                     >
+                      {hero && isCollapsed && <ThiingsIcon name={heroNavIcons[item.path]} pxSize={18} />}
                       <span
                         className={`
                           w-1.5 h-1.5 rounded-full flex-shrink-0 transition-colors
@@ -308,7 +329,7 @@ export default function Sidebar({ appearance = 'default', darkMobileMenu = false
                         `}
                       />
                       {!isCollapsed && (
-                        <span className="text-sm">{hero && item.label === 'Insights' ? t('insights.tabs.analytics', 'Analytics') : t(NAV_KEYS[item.label] ?? item.label, item.label)}</span>
+                        <span className={hero ? 'text-[14px] leading-5' : 'text-sm'}>{hero && item.label === 'Insights' ? t('insights.tabs.analytics', 'Analytics') : t(NAV_KEYS[item.label] ?? item.label, item.label)}</span>
                       )}
                     </Link>
                   );
@@ -320,7 +341,7 @@ export default function Sidebar({ appearance = 'default', darkMobileMenu = false
             {/* Settings */}
             <div className={hero ? 'mb-3' : 'mb-5'}>
               {!isCollapsed && (
-                <div className={`px-5 mb-2 text-[11px] font-semibold uppercase ${hero ? 'tracking-[0.14em] text-brand-muted' : 'tracking-widest text-stone-400'}`}>
+                <div className={`px-5 mb-2 font-semibold uppercase ${hero ? 'text-[12px] tracking-[0.14em] text-brand-muted' : 'text-[11px] tracking-widest text-stone-400'}`}>
                   {t('navigation.sectionSettings', 'Settings')}
                 </div>
               )}
@@ -332,13 +353,16 @@ export default function Sidebar({ appearance = 'default', darkMobileMenu = false
               <Link
                 to="/host-dashboard/settings"
                 onClick={() => setIsMobileOpen(false)}
+                aria-current={isActive('/host-dashboard/settings') ? 'page' : undefined}
+                aria-label={isCollapsed ? t('navigation.restaurantSettings', 'Restaurant Settings') : undefined}
                 className={`
                   flex items-center gap-3 transition-all duration-150
-                  ${isCollapsed ? `justify-center px-5 ${hero ? 'py-2.5 lg:py-2' : 'py-3'}` : `px-5 ${hero ? 'py-2.5 lg:py-2' : 'py-3'}`}
+                  ${hero ? 'relative ml-4 mr-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-action/60' : ''}
+                  ${isCollapsed ? `justify-center ${hero ? 'px-3 py-2' : 'px-5 py-3'}` : `${hero ? 'px-5 py-2' : 'px-5 py-3'}`}
                   ${hero
                     ? isActive('/host-dashboard/settings')
-                      ? 'text-brand-ink bg-brand-action/10 border-l-2 border-l-brand-action font-medium'
-                      : 'text-brand-muted hover:text-brand-ink hover:bg-brand-line/25 border-l-2 border-l-transparent'
+                      ? 'text-brand-ink font-semibold before:absolute before:left-0 before:top-1/2 before:h-[20px] before:w-[2px] before:-translate-y-1/2 before:rounded-full before:bg-brand-action'
+                      : 'text-brand-muted hover:text-brand-ink hover:bg-brand-line/20'
                     : isActive('/host-dashboard/settings')
                       ? 'text-white bg-white/10 border-l-2 border-l-burgundy font-medium'
                       : 'text-stone-400 hover:text-stone-300 hover:bg-white/[0.03] border-l-2 border-l-transparent'
@@ -346,19 +370,23 @@ export default function Sidebar({ appearance = 'default', darkMobileMenu = false
                 `}
                 title={isCollapsed ? t('navigation.restaurantSettings', 'Restaurant Settings') : undefined}
               >
+                {hero && isCollapsed && <ThiingsIcon name={heroNavIcons['/host-dashboard/settings']} pxSize={18} />}
                 <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 transition-colors ${isActive('/host-dashboard/settings') ? (hero ? 'bg-brand-action' : 'bg-burgundy') : 'bg-current opacity-40'} ${hero ? 'hidden' : ''}`} />
-                {!isCollapsed && <span className="text-sm">{t('navigation.restaurantSettings', 'Restaurant Settings')}</span>}
+                {!isCollapsed && <span className={hero ? 'text-[14px] leading-5' : 'text-sm'}>{t('navigation.restaurantSettings', 'Restaurant Settings')}</span>}
               </Link>
               <Link
                 to="/settings/language"
                 onClick={() => setIsMobileOpen(false)}
+                aria-current={isActive('/settings/language') ? 'page' : undefined}
+                aria-label={isCollapsed ? t('navigation.languageSettings', 'Language') : undefined}
                 className={`
                   flex items-center gap-3 transition-all duration-150
-                  ${isCollapsed ? `justify-center px-5 ${hero ? 'py-2.5 lg:py-2' : 'py-3'}` : `px-5 ${hero ? 'py-2.5 lg:py-2' : 'py-3'}`}
+                  ${hero ? 'relative ml-4 mr-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-action/60' : ''}
+                  ${isCollapsed ? `justify-center ${hero ? 'px-3 py-2' : 'px-5 py-3'}` : `${hero ? 'px-5 py-2' : 'px-5 py-3'}`}
                   ${hero
                     ? isActive('/settings/language')
-                      ? 'text-brand-ink bg-brand-action/10 border-l-2 border-l-brand-action font-medium'
-                      : 'text-brand-muted hover:text-brand-ink hover:bg-brand-line/25 border-l-2 border-l-transparent'
+                      ? 'text-brand-ink font-semibold before:absolute before:left-0 before:top-1/2 before:h-[20px] before:w-[2px] before:-translate-y-1/2 before:rounded-full before:bg-brand-action'
+                      : 'text-brand-muted hover:text-brand-ink hover:bg-brand-line/20'
                     : isActive('/settings/language')
                       ? 'text-white bg-white/10 border-l-2 border-l-burgundy font-medium'
                       : 'text-stone-400 hover:text-stone-300 hover:bg-white/[0.03] border-l-2 border-l-transparent'
@@ -366,19 +394,23 @@ export default function Sidebar({ appearance = 'default', darkMobileMenu = false
                 `}
                 title={isCollapsed ? t('navigation.languageSettings', 'Language') : undefined}
               >
+                {hero && isCollapsed && <ThiingsIcon name={heroNavIcons['/settings/language']} pxSize={18} />}
                 <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 transition-colors ${isActive('/settings/language') ? (hero ? 'bg-brand-action' : 'bg-burgundy') : 'bg-current opacity-40'} ${hero ? 'hidden' : ''}`} />
-                {!isCollapsed && <span className="text-sm">{t('navigation.languageSettings', 'Language')}</span>}
+                {!isCollapsed && <span className={hero ? 'text-[14px] leading-5' : 'text-sm'}>{t('navigation.languageSettings', 'Language')}</span>}
               </Link>
               <Link
                 to="/host-dashboard/integrations"
                 onClick={() => setIsMobileOpen(false)}
+                aria-current={isActive('/host-dashboard/integrations') ? 'page' : undefined}
+                aria-label={isCollapsed ? t('navigation.integrations', 'Integrations') : undefined}
                 className={`
                   flex items-center gap-3 transition-all duration-150
-                  ${isCollapsed ? `justify-center px-5 ${hero ? 'py-2.5 lg:py-2' : 'py-3'}` : `px-5 ${hero ? 'py-2.5 lg:py-2' : 'py-3'}`}
+                  ${hero ? 'relative ml-4 mr-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-action/60' : ''}
+                  ${isCollapsed ? `justify-center ${hero ? 'px-3 py-2' : 'px-5 py-3'}` : `${hero ? 'px-5 py-2' : 'px-5 py-3'}`}
                   ${hero
                     ? isActive('/host-dashboard/integrations')
-                      ? 'text-brand-ink bg-brand-action/10 border-l-2 border-l-brand-action font-medium'
-                      : 'text-brand-muted hover:text-brand-ink hover:bg-brand-line/25 border-l-2 border-l-transparent'
+                      ? 'text-brand-ink font-semibold before:absolute before:left-0 before:top-1/2 before:h-[20px] before:w-[2px] before:-translate-y-1/2 before:rounded-full before:bg-brand-action'
+                      : 'text-brand-muted hover:text-brand-ink hover:bg-brand-line/20'
                     : isActive('/host-dashboard/integrations')
                       ? 'text-white bg-white/10 border-l-2 border-l-burgundy font-medium'
                       : 'text-stone-400 hover:text-stone-300 hover:bg-white/[0.03] border-l-2 border-l-transparent'
@@ -386,8 +418,9 @@ export default function Sidebar({ appearance = 'default', darkMobileMenu = false
                 `}
                 title={isCollapsed ? t('navigation.integrations', 'Integrations') : undefined}
               >
+                {hero && isCollapsed && <ThiingsIcon name={heroNavIcons['/host-dashboard/integrations']} pxSize={18} />}
                 <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 transition-colors ${isActive('/host-dashboard/integrations') ? (hero ? 'bg-brand-action' : 'bg-burgundy') : 'bg-current opacity-40'} ${hero ? 'hidden' : ''}`} />
-                {!isCollapsed && <span className="text-sm">{t('navigation.integrations', 'Integrations')}</span>}
+                {!isCollapsed && <span className={hero ? 'text-[14px] leading-5' : 'text-sm'}>{t('navigation.integrations', 'Integrations')}</span>}
               </Link>
             </div>
 
@@ -395,7 +428,7 @@ export default function Sidebar({ appearance = 'default', darkMobileMenu = false
             {can('manageTeam') && (
               <div className={hero ? 'mb-3' : 'mb-5'}>
                 {!isCollapsed && (
-                    <div className={`px-5 mb-2 text-[11px] font-semibold uppercase ${hero ? 'tracking-[0.14em] text-brand-muted' : 'tracking-widest text-stone-400'}`}>
+                    <div className={`px-5 mb-2 font-semibold uppercase ${hero ? 'text-[12px] tracking-[0.14em] text-brand-muted' : 'text-[11px] tracking-widest text-stone-400'}`}>
                     {t('navigation.sectionManage', 'Manage')}
                   </div>
                 )}
@@ -407,13 +440,16 @@ export default function Sidebar({ appearance = 'default', darkMobileMenu = false
                 <Link
                   to="/host-dashboard/team"
                   onClick={() => setIsMobileOpen(false)}
+                  aria-current={isActive('/host-dashboard/team') ? 'page' : undefined}
+                  aria-label={isCollapsed ? t('navigation.team', 'Team') : undefined}
                   className={`
                     flex items-center gap-3 transition-all duration-150
-                    ${isCollapsed ? `justify-center px-5 ${hero ? 'py-2.5 lg:py-2' : 'py-3'}` : `px-5 ${hero ? 'py-2.5 lg:py-2' : 'py-3'}`}
+                    ${hero ? 'relative ml-4 mr-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-action/60' : ''}
+                    ${isCollapsed ? `justify-center ${hero ? 'px-3 py-2' : 'px-5 py-3'}` : `${hero ? 'px-5 py-2' : 'px-5 py-3'}`}
                     ${hero
                       ? isActive('/host-dashboard/team')
-                        ? 'text-brand-ink bg-brand-action/10 border-l-2 border-l-brand-action font-medium'
-                        : 'text-brand-muted hover:text-brand-ink hover:bg-brand-line/25 border-l-2 border-l-transparent'
+                        ? 'text-brand-ink font-semibold before:absolute before:left-0 before:top-1/2 before:h-[20px] before:w-[2px] before:-translate-y-1/2 before:rounded-full before:bg-brand-action'
+                        : 'text-brand-muted hover:text-brand-ink hover:bg-brand-line/20'
                       : isActive('/host-dashboard/team')
                         ? 'text-white bg-white/10 border-l-2 border-l-burgundy font-medium'
                         : 'text-stone-400 hover:text-stone-300 hover:bg-white/[0.03] border-l-2 border-l-transparent'
@@ -421,8 +457,9 @@ export default function Sidebar({ appearance = 'default', darkMobileMenu = false
                   `}
                   title={isCollapsed ? t('navigation.team', 'Team') : undefined}
                 >
+                  {hero && isCollapsed && <ThiingsIcon name={heroNavIcons['/host-dashboard/team']} pxSize={18} />}
                   <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 transition-colors ${isActive('/host-dashboard/team') ? (hero ? 'bg-brand-action' : 'bg-burgundy') : 'bg-current opacity-40'} ${hero ? 'hidden' : ''}`} />
-                  {!isCollapsed && <span className="text-sm">{t('navigation.team', 'Team')}</span>}
+                  {!isCollapsed && <span className={hero ? 'text-[14px] leading-5' : 'text-sm'}>{t('navigation.team', 'Team')}</span>}
                 </Link>
               </div>
             )}
@@ -563,10 +600,10 @@ export default function Sidebar({ appearance = 'default', darkMobileMenu = false
 
       {/* Mobile Bottom Navigation Bar */}
       <nav
-        className={`lg:hidden fixed bottom-0 left-0 right-0 z-40 border-t safe-area-bottom ${hero ? 'bg-brand-paper border-brand-line font-brand' : darkMobileMenu ? 'bg-charcoal-dark border-white/15 text-white' : 'backdrop-blur-xl bg-warm-white/95 hairline'}`}
+        className={`lg:hidden fixed bottom-0 left-0 right-0 z-40 border-t safe-area-bottom ${hero && isMobileOpen ? 'max-lg:hidden' : ''} ${hero ? 'h-[60px] bg-brand-paper/95 border-brand-line/75 font-brand backdrop-blur-md' : darkMobileMenu ? 'bg-charcoal-dark border-white/15 text-white' : 'backdrop-blur-xl bg-warm-white/95 hairline'}`}
         aria-label="Mobile navigation"
       >
-        <div className="flex items-center justify-around px-2 py-1 pb-[max(0.25rem,env(safe-area-inset-bottom))]">
+        <div className={hero ? 'grid h-full grid-cols-4 items-center px-3' : 'flex items-center justify-around px-2 py-1 pb-[max(0.25rem,env(safe-area-inset-bottom))]'}>
           {mobileNavItems.map((item) => {
             const active = isMobileNavActive(item.path);
             return (
@@ -574,10 +611,10 @@ export default function Sidebar({ appearance = 'default', darkMobileMenu = false
                 key={item.path}
                 to={hero && item.path === '/host-dashboard/insights' ? '/host-dashboard/insights?tab=overview' : item.path}
                 aria-current={active ? 'page' : undefined}
-                className={`flex flex-col items-center gap-0.5 px-3 transition-colors min-w-[60px] ${hero ? 'py-1' : 'rounded-lg py-2'} ${
+                className={`flex flex-col items-center gap-1 px-3 transition-colors min-w-0 ${hero ? 'py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-action/70' : 'rounded-lg py-2 min-w-[60px]'} ${
                   hero
                     ? active
-                      ? 'text-brand-action'
+                      ? 'text-brand-ink'
                       : 'text-brand-muted active:text-brand-ink'
                     : darkMobileMenu
                       ? active ? 'text-white bg-white/10' : 'text-white/60 active:text-white'
@@ -587,12 +624,11 @@ export default function Sidebar({ appearance = 'default', darkMobileMenu = false
                 }`}
               >
                 {hero ? (
-                  <span className={`flex h-8 w-9 items-center justify-center ${active ? 'text-brand-action' : ''}`}>
-                    <ThiingsIcon name={item.icon} pxSize={20} />
+                  <span className={`flex h-7 w-8 items-center justify-center rounded-[9px] ${active ? 'bg-brand-action text-brand-paper' : ''}`}>
+                    <ThiingsIcon name={item.icon} pxSize={18} />
                   </span>
                 ) : <ThiingsIcon name={item.icon} pxSize={20} />}
-                <span className={`${hero ? 'text-[12px]' : 'text-[11px]'} ${hero && active ? 'font-semibold' : 'font-medium'} leading-tight whitespace-nowrap`}>{item.label}</span>
-                {active && hero && <span className="mt-0.5 h-[2px] w-7 bg-brand-action" aria-hidden="true" />}
+                <span className={`${hero ? 'text-[11px]' : 'text-[11px]'} ${hero && active ? 'font-semibold' : 'font-medium'} leading-tight whitespace-nowrap`}>{item.label}</span>
                 {active && !hero && <span className={`h-1 w-1 rounded-full ${darkMobileMenu ? 'bg-white' : 'bg-burgundy'}`} />}
               </Link>
             );

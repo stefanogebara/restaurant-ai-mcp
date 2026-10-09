@@ -64,8 +64,8 @@ vi.mock('../../components/voice/VoiceEngineSwitchModal', () => ({ default: ({ is
 vi.mock('../../components/voice/VoiceFilters', () => ({ default: () => null }));
 vi.mock('../../components/voice/VoiceGrid', () => ({ default: () => null }));
 vi.mock('../../components/voice/VoiceSetupNextStep', () => ({ default: () => null }));
-vi.mock('../../components/dashboard/VoicePersonaPanel', () => ({ default: ({ onGreetingDraftChange }: { onGreetingDraftChange?: (value: string) => void }) => (
-  <input aria-label="Greeting draft test" onChange={event => onGreetingDraftChange?.(event.target.value)} />
+vi.mock('../../components/dashboard/VoicePersonaPanel', () => ({ default: ({ onGreetingDraftChange, voiceIdentity, playControl, sampleStatus }: { onGreetingDraftChange?: (value: string) => void; voiceIdentity?: React.ReactNode; playControl?: React.ReactNode; sampleStatus?: React.ReactNode }) => (
+  <div>{voiceIdentity}{playControl}{sampleStatus}<input aria-label="Greeting draft test" onChange={event => onGreetingDraftChange?.(event.target.value)} /></div>
 ) }));
 vi.mock('../../components/dashboard/BookingChannelsPanel', () => ({ default: () => null }));
 vi.mock('../../components/dashboard/POSIntegrationPanel', () => ({ default: () => null }));
@@ -86,7 +86,7 @@ describe('VoiceSettingsPage remote readback and partial save', () => {
     mocks.save.mockReset();
     mocks.saveEngine.mockReset();
     mocks.config = {
-      source: 'agent_api', agent_id: 'agent-123', voice_id: 'voice-123', voice_name: 'Sofia',
+      source: 'agent_api', agent_id: 'agent-123', voice_id: 'voice-123', voice_name: 'Marina',
       language: 'pt', voice_settings: { stability: 0.5, similarity_boost: 0.75, style: 0, speed: 1 },
       restaurant_name: 'Cantina',
     };
@@ -101,6 +101,16 @@ describe('VoiceSettingsPage remote readback and partial save', () => {
     expect(screen.getByText('Phone remains available')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Retry live settings' }));
     expect(mocks.refetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('identifies the selected voice by provider metadata and falls back honestly', () => {
+    const view = renderPage();
+    expect(screen.getByRole('heading', { name: 'Marina' })).toBeInTheDocument();
+
+    mocks.config = { ...mocks.config, voice_name: null };
+    view.rerender(<QueryClientProvider client={view.client}><VoiceSettingsPage /></QueryClientProvider>);
+    expect(screen.getByRole('heading', { name: 'Configured voice' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Marina' })).not.toBeInTheDocument();
   });
 
   it('keeps edits and warns when the agent changes but Seatable fails to save', async () => {

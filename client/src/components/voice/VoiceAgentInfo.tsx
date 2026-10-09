@@ -27,13 +27,13 @@ export default function VoiceAgentInfo({ agentId, updatedAt, createdAt }: Props)
     : null;
 
   return (
-    <section className="border-b border-brand-line py-4">
+    <section className="mx-auto max-w-[900px] py-4">
       <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
         <button
           type="button"
           onClick={() => setShowTech((v) => !v)}
           aria-expanded={showTech}
-          className="inline-flex min-h-10 items-center gap-2 font-brand text-[13px] font-medium text-brand-muted underline underline-offset-4 hover:text-brand-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-action"
+          className="inline-flex min-h-10 items-center gap-2 font-brand text-[13px] font-medium text-brand-muted hover:text-brand-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-action"
         >
           <ThiingsIcon name="info" pxSize={18} />
           {showTech

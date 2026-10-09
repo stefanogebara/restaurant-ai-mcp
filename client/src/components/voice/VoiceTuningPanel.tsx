@@ -49,6 +49,7 @@ export default function VoiceTuningPanel({
 }: Props) {
   const { t } = useTranslation();
   const detectedPreset = useMemo(() => detectPreset(settings), [settings]);
+  const [showTuning, setShowTuning] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const canReset = (Object.keys(DEFAULT_VOICE_SETTINGS) as Array<keyof VoiceSettings>)
     .some((key) => Math.abs(settings[key] - DEFAULT_VOICE_SETTINGS[key]) > 0.001);
@@ -77,18 +78,36 @@ export default function VoiceTuningPanel({
       desc: t('voiceTuning.preset.energeticDesc', 'Lively and expressive. Best for busy spots and bars.'),
     },
   ];
+  const selectedTitle = presets.find(preset => preset.key === detectedPreset)?.title || t('voiceTuning.customLabel', 'Custom');
+  const paceLabel = settings.speed < 0.95
+    ? t('voiceTuning.paceSlow', 'Unhurried')
+    : settings.speed > 1.05
+      ? t('voiceTuning.paceFast', 'Brisk')
+      : t('voiceTuning.paceNatural', 'Natural');
 
   return (
-    <section className="pb-3 font-brand text-brand-ink">
-      <div className="flex flex-wrap items-baseline justify-between gap-3 pb-3 pt-1">
-        <h2 className="font-brand text-[16px] font-medium tracking-[-0.02em] text-brand-ink">{t('voiceTuning.title', 'How your AI sounds')}</h2>
-        {!detectedPreset && <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-brand-action"><span className="size-1.5 rounded-full bg-brand-action" aria-hidden="true" />{t('voiceTuning.customLabel', 'Custom')}</span>}
+    <section className={`min-w-0 py-3 font-brand text-brand-ink sm:py-0 ${showTuning ? 'sm:col-span-3' : ''}`}>
+      <div className="flex min-w-0 items-center justify-between gap-3">
+        <div>
+          <p role="heading" aria-level={2} className="font-brand text-[13px] font-medium text-brand-muted">{t('voiceTuning.toneAndPace', 'Tone & pace')}</p>
+          <p className="mt-0.5 text-[16px] font-medium leading-6">{selectedTitle} <span className="font-normal text-brand-muted">· {paceLabel}</span></p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowTuning(value => !value)}
+          aria-expanded={showTuning}
+          aria-controls="voice-tuning-controls"
+          className="inline-flex min-h-11 shrink-0 items-center text-[13px] font-medium text-brand-action underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-action"
+        >
+          <span className="sm:hidden">{showTuning ? t('voiceTuning.closeShort', 'Close') : t('voiceTuning.adjustShort', 'Adjust')}</span>
+          <span className="hidden sm:inline">{showTuning ? t('voiceTuning.closeTuning', 'Close controls') : t('voiceTuning.editTuning', 'Adjust tone & pace')}</span>
+        </button>
       </div>
 
-      <div className="space-y-3">
+      <div id="voice-tuning-controls" hidden={!showTuning} className={showTuning ? 'mt-3 max-w-[760px] space-y-4 border-t border-brand-line pt-3' : 'hidden'}>
         <div>
-          <div className="grid max-w-[640px] grid-cols-3 overflow-hidden rounded-[9px] border border-brand-line" role="group" aria-label={t('voiceTuning.title', 'How your AI sounds')}>
-            {presets.map(({ key, title }) => {
+          <div className="space-y-1" role="group" aria-label={t('voiceTuning.title', 'How your AI sounds')}>
+            {presets.map(({ key, title, desc }) => {
               const isSelected = detectedPreset === key;
               return (
                 <button
@@ -96,23 +115,19 @@ export default function VoiceTuningPanel({
                   type="button"
                   onClick={() => applyPreset(key)}
                   aria-pressed={isSelected}
-                  className={`min-h-10 border-r border-brand-line px-2 text-[13px] font-medium transition-colors last:border-r-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-action sm:text-sm ${
-                    isSelected
-                      ? 'bg-brand-action text-brand-paper'
-                      : 'text-brand-muted hover:bg-brand-line/30 hover:text-brand-ink'
-                  }`}
+                  className={`flex min-h-[64px] w-full items-center gap-3 border-l-2 py-2 pl-3 pr-1 text-left hover:text-brand-action focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-action ${isSelected ? 'border-brand-action' : 'border-transparent'}`}
                 >
-                  {title}
+                  <span aria-hidden="true" className={`grid size-[18px] shrink-0 place-items-center rounded-full border ${isSelected ? 'border-brand-action' : 'border-brand-line'}`}>
+                    {isSelected && <span className="size-[8px] rounded-full bg-brand-action" />}
+                  </span>
+                  <span className="min-w-0">
+                    <span className={`block text-[15px] leading-5 ${isSelected ? 'font-semibold text-brand-ink' : 'font-medium text-brand-ink'}`}>{title}</span>
+                    <span className="block text-[12px] leading-4 text-brand-muted">{desc}</span>
+                  </span>
                 </button>
               );
             })}
           </div>
-          {detectedPreset && (
-            <p className="mt-2 max-w-[52ch] text-[12px] leading-5 text-brand-muted">
-              {presets.find(({ key }) => key === detectedPreset)?.desc}
-            </p>
-          )}
-          {!detectedPreset && <p className="mt-2 text-[12px] leading-5 text-brand-muted">{t('voiceTuning.customDesc', 'Fine-tuned for your restaurant.')}</p>}
         </div>
 
         <div className="pt-0">

@@ -24,6 +24,7 @@ function buildStoredVoiceResponse(restaurant, overrides = {}) {
   return {
     voice_id: restaurant?.voice_id || null,
     voice_name: null,
+    voice_description: null,
     language: restaurant?.agent_language || 'en',
     tts_model_id: 'eleven_flash_v2_5',
     voice_settings: DEFAULT_VOICE_SETTINGS,
@@ -32,6 +33,32 @@ function buildStoredVoiceResponse(restaurant, overrides = {}) {
     agent_updated_at: restaurant?.updated_at || null,
     ...overrides
   };
+}
+
+// The agent API exposes the selected voice ID, not its human-readable name.
+// Resolve metadata from that exact ID; a failed lookup must never fabricate a
+// name or turn a valid agent configuration into an error page.
+async function getSelectedVoiceMetadata(voiceId) {
+  if (!voiceId) return { voice_name: null, voice_description: null };
+  try {
+    const response = await fetch(`https://api.elevenlabs.io/v1/voices/${encodeURIComponent(voiceId)}`, {
+      method: 'GET',
+      signal: AbortSignal.timeout(3500),
+      headers: { 'xi-api-key': process.env.ELEVENLABS_API_KEY },
+    });
+    if (!response.ok) {
+      logger.warn('[VoiceSettings] Voice metadata unavailable:', response.status);
+      return { voice_name: null, voice_description: null };
+    }
+    const voice = await response.json();
+    return {
+      voice_name: typeof voice.name === 'string' && voice.name.trim() ? voice.name.trim() : null,
+      voice_description: typeof voice.description === 'string' && voice.description.trim() ? voice.description.trim() : null,
+    };
+  } catch (error) {
+    logger.warn('[VoiceSettings] Voice metadata lookup failed:', error.message);
+    return { voice_name: null, voice_description: null };
+  }
 }
 
 module.exports = async (req, res) => {
@@ -123,6 +150,7 @@ async function handleGet(req, res) {
         data: {
           voice_id: null,
           voice_name: null,
+          voice_description: null,
           language: 'en',
           tts_model_id: 'eleven_turbo_v2_5',
           voice_settings: DEFAULT_VOICE_SETTINGS,
@@ -166,20 +194,21 @@ async function handleGet(req, res) {
 
     const agent = await agentResponse.json();
     const ttsConfig = agent.conversation_config?.tts || {};
-    const agentConfig = agent.conversation_config?.agent || {};
+    const selectedVoiceId = ttsConfig.voice_id || restaurant.voice_id || null;
+    const selectedVoice = await getSelectedVoiceMetadata(selectedVoiceId);
 
     return res.status(200).json({
       success: true,
       data: {
-        voice_id: ttsConfig.voice_id || restaurant.agent_voice_id || null,
-        voice_name: restaurant.agent_voice_name || null, // stored on save, not available from ElevenLabs agent API
+        voice_id: selectedVoiceId,
+        ...selectedVoice,
         language: agent.conversation_config?.language || restaurant.agent_language || 'en',
-        tts_model_id: ttsConfig.model_id || restaurant.tts_model_id || 'eleven_turbo_v2_5',
+        tts_model_id: ttsConfig.model_id || 'eleven_turbo_v2_5',
         voice_settings: {
-          stability: ttsConfig.stability ?? restaurant.voice_settings?.stability ?? 0.5,
-          similarity_boost: ttsConfig.similarity_boost ?? restaurant.voice_settings?.similarity_boost ?? 0.75,
-          style: ttsConfig.style ?? restaurant.voice_settings?.style ?? 0.0,
-          speed: ttsConfig.speed ?? restaurant.voice_settings?.speed ?? 1.0,
+          stability: ttsConfig.stability ?? 0.5,
+          similarity_boost: ttsConfig.similarity_boost ?? 0.75,
+          style: ttsConfig.style ?? 0.0,
+          speed: ttsConfig.speed ?? 1.0,
         },
         agent_id: restaurant.elevenlabs_agent_id,
         agent_name: agent.name || null,

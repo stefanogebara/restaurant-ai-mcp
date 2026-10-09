@@ -370,6 +370,8 @@
 }
 .voice-sample-range:disabled::-webkit-slider-thumb { opacity: 0; }
 .voice-sample-range:disabled::-moz-range-thumb { opacity: 0; }
+.voice-sample-range-light::-webkit-slider-thumb { background: #F3F0E9; }
+.voice-sample-range-light::-moz-range-thumb { background: #F3F0E9; }
 
 /* ElevenLabs widget: prevent floating bubble from overlapping page headings */
 elevenlabs-convai {
