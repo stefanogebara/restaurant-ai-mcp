@@ -4,7 +4,7 @@ Single source of truth for visual + brand decisions across the product, marketin
 
 ## Hero-aligned product migration (2026-10-03, preview only)
 
-The approved landing hero in `client/seatable-prototype.html` is now the brand reference for future product screens. The existing Liquid Glass v2 system remains in force on untouched routes. Insights Overview, Analytics, and the Customers directory/profile are scoped migrations in the draft platform redesign; Reports and other routes retain the existing system until migrated deliberately.
+The approved landing hero in `client/seatable-prototype.html` is now the brand reference for future product screens. The existing Liquid Glass v2 system remains in force on untouched routes. Insights Overview, Analytics, the Customers directory/profile, and Voice settings are scoped migrations in the draft platform redesign; Reports and other routes retain the existing system until migrated deliberately.
 
 | Role | Source | Product translation |
 |---|---|---|
@@ -20,6 +20,8 @@ The approved landing hero in `client/seatable-prototype.html` is now the brand r
 **Reference lock for Analytics:** primary source is the rendered approved hero; the landing's dining-room demo is secondary for compact operational data. A product screen must keep dates, metrics, charts, empty states, and keyboard access useful. It must not copy the hero's marketing scale. Avoid the previous failure of making Analytics a generic cream editorial dashboard: preserve the hero's exact sans/green/photographic identity and product story.
 
 **Customers:** the directory is a compact, keyboard-operable ledger. The profile separates service facts (next reservation, staff notes, recorded preferences) from relationship history (visits, risk signal, estimated value). Editing controls stay secondary. Empty attributes do not masquerade as verified absence. `churn_risk_score` is a heuristic index from 0 to 100, not a calibrated percent probability. Keep the score in ocre, explain its basis, and never imply opening a profile sends a message. `customer_ltv.total_revenue` may be modeled from covers and average spend, so do not call it recorded revenue unless source provenance is established. Do not show the long preset chip catalogue until the host chooses to edit.
+
+**Voice settings:** lead with the selected voice and a playable sample that uses the current language and tuning; keep the spoken sample text visible. Speaking style, speed, language, persona, and provider are editing controls on the paper canvas, without a stack of glass cards. The main save action appears only for pending voice changes; persona has its own save because it persists through a separate endpoint. A remote acceptance with failed local persistence is an amber partial failure, not success. A database-only read is not verified live tuning: hide those controls until the live read succeeds. Phone and other channels remain reachable during either failure.
 
 This scoped migration overrides the older typography, burgundy-action, and warm-orb guidance below only on the migrated route. Update Tailwind and shared primitives when later routes migrate, and retain each color's semantic role.
 

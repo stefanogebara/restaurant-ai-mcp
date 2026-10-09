@@ -115,7 +115,7 @@ describe('VoiceSettingsPage remote readback and partial save', () => {
     expect(mocks.toast.success).not.toHaveBeenCalled();
     await user.click(save);
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
-    expect(save).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Save Changes' })).not.toBeInTheDocument();
     expect(mocks.toast.success).toHaveBeenCalledTimes(1);
   });
 
@@ -127,7 +127,7 @@ describe('VoiceSettingsPage remote readback and partial save', () => {
 
     mocks.config = { ...mocks.config, source: 'database_only' };
     view.rerender(<QueryClientProvider client={view.client}><VoiceSettingsPage /></QueryClientProvider>);
-    expect(screen.getByRole('button', { name: 'Save Changes' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Save Changes' })).not.toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent('Live voice settings are unavailable');
     expect(mocks.save).not.toHaveBeenCalled();
   });
@@ -146,8 +146,8 @@ describe('VoiceSettingsPage remote readback and partial save', () => {
 
     expect(mocks.saveEngine.mock.calls[0][0]).toEqual({ voice_engine: 'openai_realtime' });
     expect(mocks.save).not.toHaveBeenCalled();
-    expect(screen.getByRole('button', { name: 'Save Changes' })).toBeDisabled();
-    expect(screen.getByText('Voice edits resume when live settings load')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Save Changes' })).not.toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('Live voice settings are unavailable');
   });
 
   it('keeps all three preset values when React batches the changes', async () => {

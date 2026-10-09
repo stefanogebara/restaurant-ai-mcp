@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useId, useState, type ReactNode } from 'react';
 
 /**
  * Reusable horizontal tab bar for split-pane settings pages. Designed to break
@@ -12,7 +12,7 @@ import { useEffect, useState, type ReactNode } from 'react';
  *     etc.) survive tab switches — switching tabs never loses changes.
  *   - The active tab persists in the URL hash (e.g. `#voice`) so a
  *     deep-link or page refresh lands the user on the same tab.
- *   - Mobile uses horizontal-scroll instead of overflowing/wrapping the row.
+ *   - Callers may opt into a mobile select when the tab list is too wide.
  */
 
 export interface SettingsTabDef {
@@ -29,10 +29,12 @@ interface SettingsTabsProps {
   /** Optional storage key for the URL hash — useful when multiple SettingsTabs render on the same page (very rare). */
   hashKey?: string;
   className?: string;
+  mobileSelectLabel?: string;
 }
 
-export default function SettingsTabs({ tabs, defaultTabId, hashKey, className = '' }: SettingsTabsProps) {
+export default function SettingsTabs({ tabs, defaultTabId, hashKey, className = '', mobileSelectLabel }: SettingsTabsProps) {
   const resolvedDefault = defaultTabId ?? tabs[0]?.id;
+  const mobileSelectId = useId();
 
   // Initialize from URL hash if it matches a known tab; otherwise fall back
   // to the explicit default. Guarded for SSR / non-browser environments.
@@ -89,6 +91,19 @@ export default function SettingsTabs({ tabs, defaultTabId, hashKey, className = 
 
   return (
     <div className={className}>
+      {mobileSelectLabel && (
+        <div className="border-y border-brand-line py-1 sm:hidden">
+          <label htmlFor={mobileSelectId} className="sr-only">{mobileSelectLabel}</label>
+          <select
+            id={mobileSelectId}
+            value={activeId}
+            onChange={(event) => setActiveId(event.target.value)}
+            className="min-h-11 w-full bg-transparent font-brand text-[16px] font-medium text-brand-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-action"
+          >
+            {tabs.map(tab => <option key={tab.id} value={tab.id}>{tab.label}</option>)}
+          </select>
+        </div>
+      )}
       {/* Tab bar — wraps into multiple rows instead of horizontal scroll.
           The audit found 6-tab pages (Voice settings) overflowed with no
           visible scroll affordance: desktop users never realised more tabs
@@ -98,7 +113,7 @@ export default function SettingsTabs({ tabs, defaultTabId, hashKey, className = 
         role="tablist"
         aria-orientation="horizontal"
         onKeyDown={handleTablistKeyDown}
-        className="flex flex-wrap gap-x-1 gap-y-0 border-b border-[#E7E5E4] -mx-1 px-1"
+        className={`flex flex-wrap gap-x-1 gap-y-0 border-b border-[#E7E5E4] -mx-1 px-1 ${mobileSelectLabel ? 'hidden sm:flex' : ''}`}
       >
         {tabs.map((tab) => {
           const isActive = tab.id === activeId;

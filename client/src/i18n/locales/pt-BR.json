@@ -587,7 +587,9 @@
     "lookUpAnother": "Buscar outra reserva",
     "saving": "Salvando...",
     "saveChanges": "Salvar Alterações",
-    "partialSave": "O agente de voz aceitou a mudança, mas o Seatable não conseguiu salvá-la. Suas edições continuam aqui. Confira os ajustes ao vivo antes de tentar novamente.",
+    "section": "Seção",
+    "partialSaveTitle": "Não foi salvo por completo",
+    "partialSave": "O agente aceitou a mudança, mas o Seatable não a salvou. Suas edições continuam aqui.",
     "storedOnlyLabel": "Apenas dados salvos",
     "storedOnlyTitle": "Os ajustes ao vivo da voz estão indisponíveis",
     "storedOnlyDesc": "Não conseguimos confirmar os ajustes do agente. Os controles de voz da ElevenLabs ficam suspensos até a leitura ao vivo funcionar.",
@@ -2986,6 +2988,8 @@
     "created": "Criado"
   },
   "voiceTuning": {
+    "customLabel": "Personalizado",
+    "customDesc": "Ajustado para o seu restaurante.",
     "title": "Como sua IA soa",
     "resetToDefaults": "Restaurar padrões",
     "stability": "Estabilidade",
@@ -3014,6 +3018,12 @@
     }
   },
   "voiceCurrentCard": {
+    "hearGreeting": "Ouvir saudação",
+    "playSample": "Ouvir amostra",
+    "pauseSample": "Pausar amostra",
+    "voiceSample": "Amostra da voz",
+    "restaurantVoice": "Voz para {{restaurant}}",
+    "yourRestaurant": "seu restaurante",
     "chooseAVoice": "Voz selecionada",
     "pending": "pendente",
     "customVoice": "Voz Personalizada",
@@ -3023,6 +3033,8 @@
     "changeVoice": "Alterar Voz"
   },
   "voiceEngine": {
+    "changeService": "Mudar serviço",
+    "hideChoices": "Fechar",
     "selectionIntro": "Escolha o serviço de voz. Salve a mudança e teste novamente uma ligação real.",
     "current": "Atual",
     "intro": "Escolha o serviço de voz e teste o atendimento antes de encaminhar chamadas.",

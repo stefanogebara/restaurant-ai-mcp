@@ -14,8 +14,8 @@ interface Props {
   restaurantName: string | undefined;
   isBrowserOpen: boolean;
   loadingAudio: string | null;
-  playingVoiceId: string | null;
-  onPlay: (voiceId: string, previewText: string) => void;
+  isSamplePlaying: boolean;
+  onPlay: () => void;
   onToggleBrowser: () => void;
 }
 
@@ -29,80 +29,56 @@ export default function VoiceCurrentCard({
   restaurantName,
   isBrowserOpen,
   loadingAudio,
-  playingVoiceId,
+  isSamplePlaying,
   onPlay,
   onToggleBrowser,
 }: Props) {
   const { t, i18n } = useTranslation();
   const languageName = new Intl.DisplayNames([i18n.language || 'en'], { type: 'language' }).of(currentLanguage)
     || currentLanguage.toUpperCase();
+  const voiceName = pendingVoiceId
+    ? selectedBrowserVoice?.name || pendingVoiceId
+    : savedVoiceName || (savedVoiceId
+      ? t('voiceCurrentCard.restaurantVoice', 'Voice for {{restaurant}}', { restaurant: restaurantName || t('voiceCurrentCard.yourRestaurant', 'your restaurant') })
+      : t('voiceCurrentCard.noVoiceSet', 'No voice set'));
+  const previewText = getPreviewText(currentLanguage, restaurantName);
+  const firstComma = previewText.search(/[,，]/u);
+  const salutation = firstComma >= 0 ? previewText.slice(0, firstComma + 1) : '';
+  const spokenMessage = firstComma >= 0 ? previewText.slice(firstComma + 1).trim() : previewText;
 
   return (
-    <section className="overflow-hidden border-b border-brand-line pb-6">
-      <div className="py-4">
-        <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-brand-muted">{t('voiceCurrentCard.chooseAVoice', 'Choose a Voice')}</span>
+    <section className="flex h-full min-w-0 flex-col justify-between bg-brand-action px-5 py-6 text-brand-paper sm:px-8 sm:py-8" aria-label={t('voiceCurrentCard.voiceSample', 'Voice sample')}>
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 text-sm">
+        <h2 className="min-w-0 font-brand font-medium">{voiceName}</h2>
+        <span className="text-[12px] text-brand-paper/75">{languageName}</span>
       </div>
-
-      <div className="pt-1">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div>
-            <p className="font-brand text-[22px] font-medium tracking-[-0.035em] text-brand-ink">
-              {pendingVoiceId ? (
-                <span>
-                  {selectedBrowserVoice?.name || pendingVoiceId}
-                  <span className="ml-2 text-xs font-normal text-amber-600 bg-amber-600/10 px-2 py-0.5 rounded-full">
-                    {t('voiceCurrentCard.pending', 'pending')}
-                  </span>
-                </span>
-              ) : (
-                savedVoiceName || (savedVoiceId ? t('voiceCurrentCard.customVoice', 'Custom Voice') : t('voiceCurrentCard.noVoiceSet', 'No voice set'))
-              )}
-            </p>
-            <div className="mt-1 flex items-center gap-3 text-sm text-brand-muted">
-              {selectedBrowserVoice?.gender && (
-                <>
-                  <span className="capitalize">{selectedBrowserVoice.gender}</span>
-                  <span aria-hidden="true">·</span>
-                </>
-              )}
-              <span>{languageName}</span>
-              {selectedBrowserVoice?.accent && (
-                <>
-                  <span aria-hidden="true">·</span>
-                  <span>{selectedBrowserVoice.accent}</span>
-                </>
-              )}
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            {currentVoiceId && (
-              <button
-                type="button"
-                onClick={() => onPlay(currentVoiceId, getPreviewText(currentLanguage, restaurantName))}
-                disabled={loadingAudio === currentVoiceId}
-                className="flex items-center gap-2 rounded-full bg-brand-action px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-ink disabled:opacity-50"
-              >
-                {loadingAudio === currentVoiceId ? (
-                  <Spinner size="sm" />
-                ) : playingVoiceId === currentVoiceId ? (
-                  <ThiingsIcon name="pause" pxSize={16} />
-                ) : (
-                  <ThiingsIcon name="play" pxSize={16} />
-                )}
-                {t('voiceCurrentCard.preview', 'Preview')}
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={onToggleBrowser}
-              aria-expanded={isBrowserOpen}
-              className="rounded-full border border-brand-line px-4 py-2 text-sm font-medium text-brand-ink hover:border-brand-action"
-            >
-              {isBrowserOpen ? t('voiceCurrentCard.hideVoiceBrowser', 'Hide Voice Browser') : t('voiceCurrentCard.changeVoice', 'Change Voice')}
-            </button>
-          </div>
-        </div>
+      <p className="my-6 max-w-[32ch] font-brand text-[24px] leading-[1.12] tracking-[-0.035em] min-[360px]:text-[27px] sm:my-8 sm:text-[38px] lg:text-[41px]">
+        {salutation && <><em className="font-serif font-normal italic">{salutation}</em>{' '}</>}{spokenMessage}
+      </p>
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+        {currentVoiceId && (
+          <button
+            type="button"
+            onClick={onPlay}
+            disabled={loadingAudio === currentVoiceId}
+            className="inline-flex min-h-11 items-center gap-2 rounded-full bg-brand-paper px-5 text-[13px] font-semibold text-brand-ink hover:bg-white disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-paper"
+          >
+            {loadingAudio === currentVoiceId ? <Spinner size="sm" /> : <ThiingsIcon name={isSamplePlaying ? 'pause' : 'play'} pxSize={18} />}
+            {isSamplePlaying
+              ? t('voiceCurrentCard.pauseSample', 'Pause sample')
+              : t('voiceCurrentCard.playSample', 'Play sample')}
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={onToggleBrowser}
+          aria-expanded={isBrowserOpen}
+          className="min-h-10 text-[13px] font-medium text-brand-paper underline underline-offset-4 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-paper"
+        >
+          {isBrowserOpen ? t('voiceCurrentCard.hideVoiceBrowser', 'Hide Voice Browser') : t('voiceCurrentCard.changeVoice', 'Change Voice')}
+        </button>
+        {pendingVoiceId && <span className="text-[12px] font-semibold text-amber-200">{t('voiceCurrentCard.pending', 'pending')}</span>}
+        {selectedBrowserVoice?.accent && <span className="text-[12px] text-brand-paper/70">{selectedBrowserVoice.accent}</span>}
       </div>
     </section>
   );

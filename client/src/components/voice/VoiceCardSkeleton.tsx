@@ -7,7 +7,7 @@ import { Skeleton } from '../common/Skeleton';
 export default function VoiceCardSkeleton() {
   return (
     <div
-      className="relative glass-card border-2 p-5"
+      className="border-b border-brand-line px-3 py-4"
       aria-hidden="true"
     >
       {/* Name row */}
@@ -17,19 +17,13 @@ export default function VoiceCardSkeleton() {
           <Skeleton className="h-3 w-4" />
         </div>
 
-        {/* Tag badges */}
-        <div className="flex flex-wrap gap-1.5 mb-2">
-          <Skeleton className="h-5 w-10 rounded-full" />
-          <Skeleton className="h-5 w-16 rounded-full" />
-        </div>
-
         {/* Description lines */}
         <Skeleton className="h-3 w-full mb-1" />
         <Skeleton className="h-3 w-3/4" />
       </div>
 
       {/* Play button */}
-      <Skeleton className="h-10 w-full rounded-lg" />
+      <Skeleton className="h-9 w-24 rounded-full" />
     </div>
   );
 }

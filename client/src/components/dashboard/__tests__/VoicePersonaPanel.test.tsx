@@ -14,6 +14,7 @@ vi.mock('../../../services/api', () => ({
 }));
 
 import { useVoicePersona, useSaveVoicePersona } from '../../../hooks/useVoicePersona';
+import { authFetch } from '../../../services/api';
 import VoicePersonaPanel from '../VoicePersonaPanel';
 
 function renderWithClient(ui: React.ReactElement) {
@@ -43,9 +44,9 @@ describe('VoicePersonaPanel', () => {
     expect(screen.getByDisplayValue('Sofia')).toBeInTheDocument();
   });
 
-  it('save button disabled when no changes', () => {
+  it('hides the save button when no changes exist', () => {
     renderWithClient(<VoicePersonaPanel />);
-    expect(screen.getByRole('button', { name: /save/i })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: /save agent persona/i })).not.toBeInTheDocument();
   });
 
   it('save button enabled after editing', async () => {
@@ -54,7 +55,7 @@ describe('VoicePersonaPanel', () => {
     const input = screen.getByDisplayValue('Sofia');
     await user.clear(input);
     await user.type(input, 'Marco');
-    expect(screen.getByRole('button', { name: /save/i })).not.toBeDisabled();
+    expect(screen.getByRole('button', { name: /save agent persona/i })).not.toBeDisabled();
   });
 
   it('distinguishes a saved persona from a failed agent sync and retries it', async () => {
@@ -70,12 +71,12 @@ describe('VoicePersonaPanel', () => {
     renderWithClient(<VoicePersonaPanel />);
     await user.clear(screen.getByLabelText(/agent name/i));
     await user.type(screen.getByLabelText(/agent name/i), 'Marco');
-    await user.click(screen.getByRole('button', { name: /^save$/i }));
+    await user.click(screen.getByRole('button', { name: /save agent persona/i }));
 
     expect(await screen.findByRole('status')).toHaveTextContent('Saved in Seatable, but the voice agent is not fully updated');
     expect(mockToast.success).not.toHaveBeenCalled();
     expect(mockToast.info).toHaveBeenCalledTimes(1);
-    expect(screen.getByRole('button', { name: /^save$/i })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: /save agent persona/i })).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: /retry sync/i }));
     await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('synced with the voice agent'));
@@ -93,8 +94,23 @@ describe('VoicePersonaPanel', () => {
     renderWithClient(<VoicePersonaPanel />);
     await user.clear(screen.getByLabelText(/agent name/i));
     await user.type(screen.getByLabelText(/agent name/i), 'Marco');
-    await user.click(screen.getByRole('button', { name: /^save$/i }));
+    await user.click(screen.getByRole('button', { name: /save agent persona/i }));
     expect(await screen.findByRole('status')).toHaveTextContent('not fully updated');
     expect(mockToast.success).not.toHaveBeenCalled();
+  });
+
+  it('refreshes the agent prompt without saving the persona', async () => {
+    const user = userEvent.setup();
+    const fetchMock = authFetch as ReturnType<typeof vi.fn>;
+    fetchMock.mockResolvedValue({ json: async () => ({ success: true }) });
+    const mutate = vi.fn();
+    mockSave.mockReturnValue({ mutate, isPending: false });
+    renderWithClient(<VoicePersonaPanel />);
+
+    await user.click(screen.getByRole('button', { name: /refresh agent prompt/i }));
+
+    await waitFor(() => expect(mockToast.success).toHaveBeenCalledWith('Agent prompt refreshed successfully'));
+    expect(fetchMock).toHaveBeenCalledWith('/api/elevenlabs-voice-settings?action=refresh_prompt', { method: 'POST' });
+    expect(mutate).not.toHaveBeenCalled();
   });
 });

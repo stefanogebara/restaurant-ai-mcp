@@ -587,7 +587,9 @@
     "lookUpAnother": "Look up another reservation",
     "saving": "Saving...",
     "saveChanges": "Save Changes",
-    "partialSave": "The voice agent accepted the change, but Seatable could not save it. Your edits remain here. Check the live settings before retrying.",
+    "section": "Section",
+    "partialSaveTitle": "Not fully saved",
+    "partialSave": "The agent accepted the change, but Seatable did not save it. Your edits remain here.",
     "storedOnlyLabel": "Stored settings only",
     "storedOnlyTitle": "Live voice settings are unavailable",
     "storedOnlyDesc": "We cannot verify the agent’s tuning. ElevenLabs voice controls are paused until the live settings load.",
@@ -2972,6 +2974,8 @@
     "created": "Created"
   },
   "voiceTuning": {
+    "customLabel": "Custom",
+    "customDesc": "Fine-tuned for your restaurant.",
     "title": "How your AI sounds",
     "resetToDefaults": "Reset to defaults",
     "stability": "Stability",
@@ -2994,12 +2998,18 @@
       "calmDesc": "Steady and reassuring. Best for confirming reservations.",
       "warm": "Warm",
       "warmDesc": "Friendly neighbourhood feel. The default for most restaurants.",
-      "energetic": "Energetic",
+      "energetic": "Lively",
       "energeticDesc": "Lively and expressive. Best for busy spots and bars.",
       "selected": "Current"
     }
   },
   "voiceCurrentCard": {
+    "hearGreeting": "Hear greeting",
+    "playSample": "Play sample",
+    "pauseSample": "Pause sample",
+    "voiceSample": "Voice sample",
+    "restaurantVoice": "Voice for {{restaurant}}",
+    "yourRestaurant": "your restaurant",
     "chooseAVoice": "Selected voice",
     "pending": "pending",
     "customVoice": "Custom Voice",
@@ -3009,6 +3019,8 @@
     "changeVoice": "Change Voice"
   },
   "voiceEngine": {
+    "changeService": "Change service",
+    "hideChoices": "Close",
     "selectionIntro": "Choose the voice service. Save your change, then test a real call again.",
     "current": "Current",
     "intro": "Choose a voice service and test the experience before forwarding calls.",

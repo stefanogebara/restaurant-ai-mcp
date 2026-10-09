@@ -64,60 +64,41 @@ export default function VoicePersonaPanel() {
 
   if (isLoading) {
     return (
-      <div className="py-5 border-t border-glass-border-dark mt-8 animate-pulse space-y-3">
-        <div className="h-4 bg-stone-100 rounded w-40" />
-        <div className="h-10 bg-stone-100 rounded" />
-        <div className="h-10 bg-stone-100 rounded" />
-      </div>
+      <section className="animate-pulse space-y-4 border-b border-brand-line pb-6 font-brand" aria-label={t('dashboard.voicePersona.title', 'Agent Persona')}>
+        <div className="h-3 w-32 bg-brand-line/60" />
+        <div className="h-11 max-w-3xl bg-brand-line/40" />
+        <div className="h-11 max-w-3xl bg-brand-line/40" />
+      </section>
     );
   }
 
   return (
-    <div className="py-5 border-t border-glass-border-dark mt-8 space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">{t('dashboard.voicePersona.title', 'Agent Persona')}</h2>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => refreshMutation.mutate()}
-            disabled={refreshMutation.isPending}
-            title={t('dashboard.voicePersona.refreshPromptHint', 'Refresh the agent prompt with the current restaurant persona')}
-            className="px-3 py-1.5 border border-glass-border-dark hover:bg-soft-gray text-warm-stone text-xs font-medium rounded-full transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            {refreshMutation.isPending ? t('dashboard.voicePersona.refreshing', 'Refreshing...') : t('dashboard.voicePersona.refreshPrompt', 'Refresh Agent Prompt')}
-          </button>
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={!isDirty || saveMutation.isPending}
-            className="px-4 py-1.5 bg-burgundy hover:bg-burgundy-dark text-white text-xs font-semibold rounded-full transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            {saveMutation.isPending ? t('dashboard.voicePersona.saving', 'Saving...') : t('common.save', 'Save')}
-          </button>
-        </div>
-      </div>
+    <section className="border-b border-brand-line pb-6 font-brand text-brand-ink" aria-labelledby="voice-persona-heading">
+      <h2 id="voice-persona-heading" className="mb-5 font-brand text-[11px] font-semibold uppercase tracking-[0.16em] text-brand-muted">
+        {t('dashboard.voicePersona.title', 'Agent Persona')}
+      </h2>
       {syncStatus === 'partial' && (
-        <div role="status" className="flex flex-wrap items-center justify-between gap-3 border-t border-amber-700/20 pt-3 text-xs text-amber-800">
+        <div role="status" className="mb-5 flex flex-wrap items-center justify-between gap-3 text-[13px] leading-5 text-amber-800">
           <p>{t('dashboard.voicePersona.savedNotSynced', 'Saved in Seatable, but the voice agent is not fully updated. Retry the sync.')}</p>
           <button
             type="button"
             onClick={handleRetry}
             disabled={saveMutation.isPending || isDirty || !lastSaved}
-            className="rounded-full border border-amber-700/40 px-3 py-1.5 font-medium text-amber-900 hover:bg-amber-700/10 disabled:cursor-not-allowed disabled:opacity-40"
+            className="min-h-10 rounded-full border border-amber-700/40 px-4 py-2 font-medium text-amber-900 hover:bg-amber-700/10 disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-800"
           >
             {t('dashboard.voicePersona.retrySync', 'Retry sync')}
           </button>
         </div>
       )}
       {syncStatus === 'synced' && (
-        <p role="status" className="border-t border-emerald-700/20 pt-3 text-xs text-emerald-800">
+        <p role="status" className="mb-5 text-[13px] leading-5 text-emerald-800">
           {t('dashboard.voicePersona.savedAndSynced', 'Saved in Seatable and synced with the voice agent')}
         </p>
       )}
-      <div className="space-y-3">
+      <div className="max-w-3xl space-y-5">
         <div>
-          <label htmlFor="agent-name" className="block text-xs font-medium text-warm-stone mb-1">
-            {t('dashboard.voicePersona.agentName', 'Agent name')} <span className="text-stone-400">{t('dashboard.voicePersona.max50', '(max 50 chars)')}</span>
+          <label htmlFor="agent-name" className="mb-2 block text-[13px] font-medium text-brand-ink">
+            {t('dashboard.voicePersona.agentName', 'Agent name')} <span className="ml-1 font-normal text-brand-muted">{t('dashboard.voicePersona.max50', '(max 50 chars)')}</span>
           </label>
           <input
             id="agent-name"
@@ -127,12 +108,12 @@ export default function VoicePersonaPanel() {
             placeholder={t('placeholders.agentName', 'e.g. Sofia')}
             value={getValue('agent_name')}
             onChange={e => set('agent_name', e.target.value)}
-            className="w-full border border-glass-border-input rounded-lg px-3 py-2 text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
+            className="min-h-11 w-full rounded-lg border border-brand-line bg-brand-paper px-3 py-2 text-sm text-brand-ink placeholder:text-brand-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-action disabled:opacity-60"
           />
         </div>
         <div>
-          <label htmlFor="agent-greeting" className="block text-xs font-medium text-warm-stone mb-1">
-            {t('dashboard.voicePersona.openingGreeting', 'Opening greeting')} <span className="text-stone-400">{t('dashboard.voicePersona.max200', '(max 200 chars)')}</span>
+          <label htmlFor="agent-greeting" className="mb-2 block text-[13px] font-medium text-brand-ink">
+            {t('dashboard.voicePersona.openingGreeting', 'Opening greeting')} <span className="ml-1 font-normal text-brand-muted">{t('dashboard.voicePersona.max200', '(max 200 chars)')}</span>
           </label>
           <input
             id="agent-greeting"
@@ -142,10 +123,31 @@ export default function VoicePersonaPanel() {
             placeholder={t('placeholders.agentGreeting', 'e.g. Welcome to our restaurant!')}
             value={getValue('agent_greeting')}
             onChange={e => set('agent_greeting', e.target.value)}
-            className="w-full border border-glass-border-input rounded-lg px-3 py-2 text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
+            className="min-h-11 w-full rounded-lg border border-brand-line bg-brand-paper px-3 py-2 text-sm text-brand-ink placeholder:text-brand-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-action disabled:opacity-60"
           />
         </div>
       </div>
-    </div>
+      <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2">
+        {isDirty && <button
+          type="button"
+          onClick={handleSave}
+          disabled={saveMutation.isPending}
+          className="min-h-10 rounded-full border border-brand-action px-5 py-2 text-[13px] font-semibold text-brand-action transition-colors hover:bg-brand-action hover:text-brand-paper disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-action"
+        >
+          {saveMutation.isPending
+            ? t('dashboard.voicePersona.saving', 'Saving...')
+            : `${t('common.save', 'Save')} ${t('dashboard.voicePersona.title', 'Agent Persona')}`}
+        </button>}
+        <button
+          type="button"
+          onClick={() => refreshMutation.mutate()}
+          disabled={refreshMutation.isPending}
+          title={t('dashboard.voicePersona.refreshPromptHint', 'Refresh the agent prompt with the current restaurant persona')}
+          className="min-h-10 text-[13px] font-medium text-brand-muted underline underline-offset-4 hover:text-brand-ink disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-action"
+        >
+          {refreshMutation.isPending ? t('dashboard.voicePersona.refreshing', 'Refreshing...') : t('dashboard.voicePersona.refreshPrompt', 'Refresh Agent Prompt')}
+        </button>
+      </div>
+    </section>
   );
 }

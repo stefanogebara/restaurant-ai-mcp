@@ -140,7 +140,7 @@ export default function VoiceSettingsPage() {
 
   // ─── Audio playback ───────────────────────────────────────────────────────────
 
-  const { playingVoiceId, loadingAudio, handlePlayVoice, handlePreviewWithSettings } = useAudioPlayback({
+  const { playingVoiceId, isSamplePlaying, loadingAudio, handlePlayVoice, handlePreviewWithSettings } = useAudioPlayback({
     voices,
     currentVoiceId,
     currentLanguage,
@@ -360,44 +360,35 @@ export default function VoiceSettingsPage() {
 
   return (
     <DashboardLayout appearance="hero">
-      <div className="mx-auto max-w-[1120px] px-4 pb-20 pt-5 sm:px-8 lg:px-10">
-        <header className="mb-5 border-b border-brand-line pb-5 sm:mb-6 sm:pb-7">
-          <p className="mb-3 pl-12 text-[11px] font-semibold uppercase tracking-[0.16em] text-brand-muted lg:pl-0">{t('voiceSettings.setupEyebrow', 'Reception')}</p>
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <h1 className="font-brand text-[37px] font-normal leading-[1.02] tracking-[-0.055em] text-brand-ink sm:text-[52px]">
-                {t('navigation.voiceAgent')}
-              </h1>
-              <p className="mt-3 hidden max-w-[52ch] text-[15px] leading-6 text-brand-muted sm:block">{t('voiceSettings.intro', 'Shape your AI receptionist’s voice and track the phone setup here.')}</p>
-            </div>
-          <div className="flex flex-col items-start gap-1 sm:items-end">
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={!isDirty || isSaving || (voiceSavePaused && !hasPendingEngineChanges)}
-              className="flex items-center gap-2 rounded-full bg-brand-action px-6 py-2.5 text-[13px] font-semibold text-white hover:bg-brand-ink disabled:cursor-not-allowed disabled:bg-brand-line disabled:text-brand-muted"
-            >
-              {isSaving && <Spinner size="sm" className="border-white border-t-white/30" />}
-              {isSaving ? t('voiceSettings.saving', 'Saving...') : t('voiceSettings.saveChanges', 'Save Changes')}
-            </button>
-            {!isSaving && (!isDirty || voiceSavePaused) && (
-              <p className="text-xs text-brand-muted">
-                {voiceSavePaused || voiceReadbackUnavailable
-                  ? t('voiceSettings.editingPausedHint', 'Voice edits resume when live settings load')
-                  : t('voiceSettings.changeSettingsHint', 'Change a setting above to enable saving')}
-              </p>
+      <div className="mx-auto max-w-[1120px] px-4 pb-24 pt-5 sm:px-8 lg:px-10">
+        <header className="mb-4 pb-3 sm:mb-6 sm:pb-5">
+          <div className="flex items-end justify-between gap-3">
+            <h1 className="pl-12 font-brand text-[31px] font-normal leading-[1.02] tracking-[-0.055em] text-brand-ink sm:pl-0 sm:text-[52px]">
+              {t('voiceSettings.setupEyebrow', 'Reception')}
+            </h1>
+            {isDirty && !(voiceSavePaused && !hasPendingEngineChanges) && (
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={isSaving}
+                className="mb-0.5 flex shrink-0 items-center gap-2 rounded-full bg-brand-action px-4 py-2.5 text-[12px] font-semibold text-white hover:bg-brand-ink disabled:cursor-not-allowed disabled:opacity-60 sm:px-5 sm:text-[13px]"
+              >
+                {isSaving && <Spinner size="sm" className="border-white border-t-white/30" />}
+                {isSaving ? t('voiceSettings.saving', 'Saving...') : t('voiceSettings.saveChanges', 'Save Changes')}
+              </button>
             )}
           </div>
-        </div>
         </header>
 
-        {voiceSavePartial && (
-          <p role="alert" className="mb-6 border-t border-amber-700/25 pt-4 text-sm leading-6 text-amber-900">
-            {t('voiceSettings.partialSave', 'The voice agent accepted the change, but Seatable could not save it. Your edits remain here. Check the live settings before retrying.')}
-          </p>
+        {voiceSavePartial && !voiceReadbackUnavailable && (
+          <div role="alert" className="mb-4 border-l-2 border-amber-700/70 py-1 pl-4 text-sm leading-5 text-amber-900 sm:flex sm:flex-wrap sm:items-center sm:gap-x-4">
+            <strong className="shrink-0 font-semibold">{t('voiceSettings.partialSaveTitle', 'Not fully saved')}</strong>
+            <p className="mt-1 max-w-[72ch] text-[13px] leading-5 sm:mt-0">{t('voiceSettings.partialSave', 'The agent accepted the change, but Seatable did not save it. Your edits remain here.')}</p>
+            <button type="button" onClick={() => refetchConfig()} className="mt-2 w-fit shrink-0 font-semibold underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-900 sm:mt-0">
+              {t('voiceSettings.retryLiveRead', 'Retry live settings')}
+            </button>
+          </div>
         )}
-
-        {!voiceReadbackUnavailable && <VoiceSetupNextStep />}
 
         {(() => {
           // Tabs split the previous wall-of-10-sections page into focused
@@ -408,7 +399,7 @@ export default function VoiceSettingsPage() {
             <div className="space-y-6">
               {currentEngine === 'elevenlabs' && voiceReadbackUnavailable && (
                 <>
-                  <section role="status" className="border-b border-brand-line py-4 sm:py-5">
+                  <section role="status" className="border-b border-brand-line py-3 sm:py-5">
                     <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-amber-800">
                       {t('voiceSettings.storedOnlyLabel', 'Stored settings only')}
                     </p>
@@ -418,7 +409,9 @@ export default function VoiceSettingsPage() {
                           {t('voiceSettings.storedOnlyTitle', 'Live voice settings are unavailable')}
                         </h2>
                         <p className="mt-1 max-w-[58ch] text-sm leading-6 text-brand-muted">
-                          {t('voiceSettings.storedOnlyDesc', 'We cannot verify the agent’s tuning. ElevenLabs voice controls are paused until the live settings load.')}
+                          {voiceSavePartial
+                            ? t('voiceSettings.partialSave', 'The agent accepted the change, but Seatable did not save it. Your edits remain here.')
+                            : t('voiceSettings.storedOnlyDesc', 'We cannot verify the agent’s tuning. ElevenLabs voice controls are paused until the live settings load.')}
                         </p>
                       </div>
                       <button type="button" onClick={() => refetchConfig()} className="w-fit shrink-0 rounded-full bg-brand-action px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-action">
@@ -431,50 +424,47 @@ export default function VoiceSettingsPage() {
               )}
               {currentEngine === 'elevenlabs' && !voiceReadbackUnavailable && (
                 <>
+                  <div className="grid border-y border-brand-line lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
                   <VoiceCurrentCard
                     currentVoiceId={currentVoiceId}
                     pendingVoiceId={pendingVoiceId}
                     selectedBrowserVoice={selectedBrowserVoice}
-                    savedVoiceName={config.voice_name}
+                    savedVoiceName={config.voice_name || voices.find(voice => voice.id === config.voice_id)?.name}
                     savedVoiceId={config.voice_id}
                     currentLanguage={currentLanguage}
                     restaurantName={config.restaurant_name || undefined}
                     isBrowserOpen={isBrowserOpen}
                     loadingAudio={loadingAudio}
-                    playingVoiceId={playingVoiceId}
-                    onPlay={handlePlayVoice}
+                    isSamplePlaying={isSamplePlaying}
+                    onPlay={() => handlePreviewWithSettings(toast)}
                     onToggleBrowser={() => setIsBrowserOpen(!isBrowserOpen)}
                   />
-                  <VoiceEngineSelector currentEngine={currentEngine} pendingEngine={pendingEngine} engineStatus={engineConfig?.voice_engine_status} onEngineSwitch={handleEngineSwitch} />
-                  <VoiceTuningPanel
-                    settings={currentSettings}
-                    currentVoiceId={currentVoiceId}
-                    loadingAudio={loadingAudio}
-                    onSettingChange={handleSettingChange}
-                    onReset={() => setPendingSettings({ ...DEFAULT_VOICE_SETTINGS })}
-                    onPreview={() => handlePreviewWithSettings(toast)}
-                  />
+                  <div className="border-b border-brand-line px-5 py-5 sm:px-8 sm:py-7 lg:border-b-0">
+                    <VoiceTuningPanel
+                      settings={currentSettings}
+                      onSettingChange={handleSettingChange}
+                      onReset={() => setPendingSettings({ ...DEFAULT_VOICE_SETTINGS })}
+                    />
+                  </div>
+                  </div>
                   {isBrowserOpen && (
-                    <section className="py-5">
-                      <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone mb-4 flex items-center gap-2">
+                    <section className="border-b border-brand-line py-5">
+                      <h2 className="mb-4 flex items-center gap-2 font-brand text-[12px] font-semibold uppercase tracking-[0.14em] text-brand-muted">
                         <ThiingsIcon name="search" pxSize={20} />
                         {t('voiceSettings.voiceLibrary', 'Voice Library')}
                       </h2>
                       {voiceBrowserError ? (
-                        <div className="text-center py-10">
-                          <div className="w-14 h-14 mx-auto mb-3 bg-red-50 rounded-2xl flex items-center justify-center">
-                            <ThiingsIcon name="alert-circle" pxSize={24} />
-                          </div>
-                          <p className="text-sm font-semibold text-deep-charcoal">
+                        <div className="border-l-2 border-red-700 py-2 pl-4 font-brand">
+                          <p className="text-sm font-semibold text-brand-ink">
                             {t('voiceSettings.voiceLoadError', 'Could not load voices')}
                           </p>
-                          <p className="text-xs text-stone-gray mt-1 mb-4">
+                          <p className="mb-4 mt-1 text-xs text-brand-muted">
                             {t('voiceSettings.voiceLoadErrorHint', 'The voice service may be temporarily unavailable. Please try again.')}
                           </p>
                           <button
                             type="button"
                             onClick={() => refetchVoices()}
-                            className="px-5 py-2 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-medium rounded-xl transition-colors"
+                            className="min-h-10 text-sm font-medium text-brand-action underline underline-offset-4 hover:text-brand-ink"
                           >
                             {t('common.retry', 'Retry')}
                           </button>
@@ -499,9 +489,16 @@ export default function VoiceSettingsPage() {
                       )}
                     </section>
                   )}
-                  <VoiceLanguagePicker currentLanguage={currentLanguage} savedLanguage={config?.language} onChange={setPendingLanguage} />
-                  <VoicePersonaPanel />
-                  <VoiceAgentInfo agentId={config.agent_id} updatedAt={config.agent_updated_at} createdAt={config.created_at} />
+                  <div className="grid gap-x-12 lg:grid-cols-2">
+                    <div>
+                      <VoiceLanguagePicker currentLanguage={currentLanguage} savedLanguage={config?.language} onChange={setPendingLanguage} />
+                      <VoiceEngineSelector currentEngine={currentEngine} pendingEngine={pendingEngine} engineStatus={engineConfig?.voice_engine_status} onEngineSwitch={handleEngineSwitch} />
+                    </div>
+                    <div>
+                      <VoicePersonaPanel />
+                      <VoiceAgentInfo agentId={config.agent_id} updatedAt={config.agent_updated_at} createdAt={config.created_at} />
+                    </div>
+                  </div>
                 </>
               )}
 
@@ -516,7 +513,7 @@ export default function VoiceSettingsPage() {
             </div>
           );
 
-          const phoneTab = <PhoneIntegrationPanel />;
+          const phoneTab = <><VoiceSetupNextStep /><PhoneIntegrationPanel /></>;
 
           const whatsappTab = waStatus ? (
             <div>
@@ -610,8 +607,6 @@ export default function VoiceSettingsPage() {
 
           return <VoiceSettingsTabs tabs={tabs} />;
         })()}
-
-        {voiceReadbackUnavailable && <div className="mt-6"><VoiceSetupNextStep compact /></div>}
 
         <VoiceEngineSwitchModal isOpen={showEngineSwitchConfirm} engineSwitchTarget={engineSwitchTarget} onConfirm={confirmEngineSwitch} onClose={() => setShowEngineSwitchConfirm(false)} />
       </div>

@@ -15,12 +15,6 @@ interface VoiceFiltersProps {
   hideSearch?: boolean;
 }
 
-const GENDER_OPTIONS = [
-  { value: 'all' as const, label: 'All' },
-  { value: 'male' as const, label: 'Male' },
-  { value: 'female' as const, label: 'Female' },
-];
-
 export default function VoiceFilters({ filters, onChange, defaultLanguage = 'en', hideSearch = false }: VoiceFiltersProps) {
   const { t } = useTranslation();
   const [searchInput, setSearchInput] = useState(filters.search);
@@ -40,45 +34,34 @@ export default function VoiceFilters({ filters, onChange, defaultLanguage = 'en'
   }, [searchInput]);
 
   return (
-    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-4">
-      {/* Gender Toggle Pills */}
-      <div className="flex rounded-lg border border-glass-border-dark overflow-hidden">
-        {GENDER_OPTIONS.map((opt) => (
-          <button
-            key={opt.value}
-            type="button"
-            onClick={() => onChange({ ...filters, gender: opt.value })}
-            className={`
-              px-4 py-2 text-sm font-medium transition-colors
-              ${filters.gender === opt.value
-                ? 'bg-burgundy text-white'
-                : 'bg-white/60 text-stone-gray hover:bg-white/85'
-              }
-            `}
-          >
-            {opt.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Language Dropdown */}
+    <div className="mb-4 grid grid-cols-2 gap-3 font-brand sm:flex sm:flex-row sm:items-center">
+      <select
+        value={filters.gender}
+        onChange={(e) => onChange({ ...filters, gender: e.target.value as VoiceFiltersState['gender'] })}
+        aria-label={t('voice.filters.gender', 'Filter by gender')}
+        className="min-h-11 min-w-0 w-full rounded-lg border border-brand-line bg-transparent px-3 text-sm text-brand-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-action"
+      >
+        <option value="all">{t('voice.filters.all', 'All voices')}</option>
+        <option value="male">{t('voice.filters.male', 'Male')}</option>
+        <option value="female">{t('voice.filters.female', 'Female')}</option>
+      </select>
       <select
         value={filters.language || defaultLanguage}
         onChange={(e) => onChange({ ...filters, language: e.target.value })}
-        aria-label="Filter by language"
-        className="px-3 py-2 text-sm border border-glass-border-input rounded-xl bg-white/60 backdrop-blur-glass-chip text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/50"
+        aria-label={t('voice.filters.language', 'Filter by language')}
+        className="min-h-11 min-w-0 w-full rounded-lg border border-brand-line bg-transparent px-3 text-sm text-brand-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-action"
       >
         {SUPPORTED_LANGUAGES.map((lang) => (
           <option key={lang.code} value={lang.code}>
-            {lang.flag} {lang.label}
+            {lang.label}
           </option>
         ))}
       </select>
 
       {/* Search Input (hidden when using own_voices fallback since search doesn't work with that API) */}
       {!hideSearch && (
-        <div className="relative flex-1 min-w-[180px]">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-stone">
+        <div className="relative col-span-2 min-w-0 flex-1 sm:col-auto">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-brand-muted">
             <ThiingsIcon name="search" pxSize={16} />
           </span>
           <input
@@ -86,7 +69,7 @@ export default function VoiceFilters({ filters, onChange, defaultLanguage = 'en'
             placeholder={t('voice.searchVoices', 'Search voices...')}
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 text-sm border border-glass-border-input rounded-xl bg-white/60 backdrop-blur-glass-chip text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy/50"
+            className="min-h-11 w-full rounded-lg border border-brand-line bg-transparent py-2 pl-9 pr-3 text-sm text-brand-ink placeholder:text-brand-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-action"
           />
         </div>
       )}

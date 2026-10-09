@@ -324,6 +324,32 @@
   font-family: 'DM Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
+.voice-range {
+  appearance: none;
+  height: 24px;
+  background: transparent;
+}
+.voice-range::-webkit-slider-runnable-track { height: 2px; background: transparent; }
+.voice-range::-webkit-slider-thumb {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  margin-top: -7px;
+  border: 3px solid #F3F0E9;
+  border-radius: 50%;
+  background: #3F4E32;
+  box-shadow: 0 0 0 1px #3F4E32;
+}
+.voice-range::-moz-range-track { height: 2px; background: transparent; }
+.voice-range::-moz-range-thumb {
+  width: 10px;
+  height: 10px;
+  border: 3px solid #F3F0E9;
+  border-radius: 50%;
+  background: #3F4E32;
+  box-shadow: 0 0 0 1px #3F4E32;
+}
+
 /* ElevenLabs widget: prevent floating bubble from overlapping page headings */
 elevenlabs-convai {
   --elevenlabs-convai-widget-z-index: 30;
