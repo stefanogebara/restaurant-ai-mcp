@@ -108,7 +108,7 @@ describe('VoicePersonaPanel', () => {
     mockSave.mockReturnValue({ mutate, isPending: false });
     const user = userEvent.setup();
     renderWithClient(<VoicePersonaPanel variant="studio" onGreetingDraftChange={onGreetingDraftChange} />);
-    expect(screen.getByRole('link', { name: /how to test a real call in phone/i })).toHaveAttribute('href', '#voice-settings:phone');
+    expect(screen.getByRole('link', { name: /how to test a call/i })).toHaveAttribute('href', '#voice-settings:phone');
     const input = screen.getByLabelText(/opening greeting/i);
     await user.clear(input);
     await user.type(input, 'Olá da Casa.');
@@ -145,6 +145,24 @@ describe('VoicePersonaPanel', () => {
     expect(screen.queryByLabelText(/opening greeting/i)).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /retry/i }));
     expect(refetch).toHaveBeenCalledOnce();
+  });
+
+  it('shows persisted persona read-only after a live-settings failure without exposing a draft as saved', async () => {
+    const user = userEvent.setup();
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const { rerender } = render(<QueryClientProvider client={queryClient}><VoicePersonaPanel variant="studio" playControl={<button type="button">Play sample</button>} /></QueryClientProvider>);
+    await user.clear(screen.getByLabelText(/agent name/i));
+    await user.type(screen.getByLabelText(/agent name/i), 'Unsaved name');
+
+    rerender(<QueryClientProvider client={queryClient}><VoicePersonaPanel variant="studio" readOnly /></QueryClientProvider>);
+
+    expect(screen.getByText('Sofia')).toBeInTheDocument();
+    expect(screen.getByText('Welcome!')).toBeInTheDocument();
+    expect(screen.getByText(/not verified on the voice agent/i)).toBeInTheDocument();
+    expect(screen.queryByText('Unsaved name')).not.toBeInTheDocument();
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /play sample|save greeting|edit script/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /how to test a call/i })).toHaveAttribute('href', '#voice-settings:phone');
   });
 
   it('refreshes the agent prompt without saving the persona', async () => {

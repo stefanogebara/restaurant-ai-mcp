@@ -86,25 +86,23 @@ export default function VoiceTuningPanel({
       : t('voiceTuning.paceNatural', 'Natural');
 
   return (
-    <section className={`min-w-0 py-3 font-brand text-brand-ink sm:py-0 ${showTuning ? 'sm:col-span-3' : ''}`}>
-      <div className="flex min-w-0 items-center justify-between gap-3">
-        <div>
-          <p role="heading" aria-level={2} className="font-brand text-[13px] font-medium text-brand-muted">{t('voiceTuning.toneAndPace', 'Tone & pace')}</p>
-          <p className="mt-0.5 text-[16px] font-medium leading-6">{selectedTitle} <span className="font-normal text-brand-muted">· {paceLabel}</span></p>
-        </div>
+    <section className="min-w-0 py-4 font-brand text-brand-ink">
+      <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 md:grid-cols-[150px_minmax(0,1fr)_auto]">
+        <p role="heading" aria-level={2} className="col-start-1 row-start-1 font-brand text-[13px] font-medium text-brand-muted">{t('voiceTuning.toneAndPace', 'Tone & pace')}</p>
+        <p className="col-start-1 row-start-2 min-w-0 text-[16px] font-medium leading-6 md:col-start-2 md:row-start-1">{selectedTitle} <span className="font-normal text-brand-muted">· {paceLabel}</span></p>
         <button
           type="button"
           onClick={() => setShowTuning(value => !value)}
           aria-expanded={showTuning}
           aria-controls="voice-tuning-controls"
-          className="inline-flex min-h-11 shrink-0 items-center text-[13px] font-medium text-brand-action underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-action"
+          className="col-start-2 row-span-2 inline-flex min-h-11 shrink-0 items-center rounded-md px-2 text-[13px] font-medium text-brand-action hover:bg-brand-action/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-action md:col-start-3 md:row-span-1 md:row-start-1"
         >
           <span className="sm:hidden">{showTuning ? t('voiceTuning.closeShort', 'Close') : t('voiceTuning.adjustShort', 'Adjust')}</span>
           <span className="hidden sm:inline">{showTuning ? t('voiceTuning.closeTuning', 'Close controls') : t('voiceTuning.editTuning', 'Adjust tone & pace')}</span>
         </button>
       </div>
 
-      <div id="voice-tuning-controls" hidden={!showTuning} className={showTuning ? 'mt-3 max-w-[760px] space-y-4 border-t border-brand-line pt-3' : 'hidden'}>
+      <div id="voice-tuning-controls" hidden={!showTuning} className={showTuning ? 'mt-3 space-y-4 pt-2' : 'hidden'}>
         <div>
           <div className="space-y-1" role="group" aria-label={t('voiceTuning.title', 'How your AI sounds')}>
             {presets.map(({ key, title, desc }) => {

@@ -266,6 +266,28 @@ describe('ElevenLabs Voice Settings degradation', () => {
     expect(res.status).toHaveBeenCalledWith(200);
   });
 
+  test.each([
+    ['de', 'Hallo! Willkommen bei Seatable Bistro. Wie kann ich Ihnen helfen?'],
+    ['ja', 'こんにちは！Seatable Bistroへようこそ。ご用件をお伺いします。'],
+  ])('language change to %s uses the same default as a cleared custom greeting', async (language, fallback) => {
+    process.env.ELEVENLABS_API_KEY = 'test-key';
+    mockMaybeSingle.mockResolvedValueOnce({
+      data: {
+        id: 'rest-1', restaurant_name: 'Seatable Bistro', elevenlabs_agent_id: 'agent-123',
+        agent_language: 'en', agent_greeting: '',
+      },
+      error: null,
+    });
+    global.fetch.mockResolvedValueOnce({ ok: true });
+    mockAwaitQueue.push({ data: null, error: null });
+
+    const { req, res } = createMockReqRes({ method: 'PATCH', body: { language } });
+    await handler(req, res);
+
+    expect(JSON.parse(global.fetch.mock.calls[0][1].body).conversation_config.agent.first_message).toBe(fallback);
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
   test('PATCH leaves local settings untouched if ElevenLabs rejects the update', async () => {
     process.env.ELEVENLABS_API_KEY = 'test-key';
     mockMaybeSingle.mockResolvedValueOnce({

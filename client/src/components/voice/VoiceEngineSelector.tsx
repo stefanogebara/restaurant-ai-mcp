@@ -20,11 +20,11 @@ export default function VoiceEngineSelector({ currentEngine, pendingEngine, engi
   const selected = engines.find(engine => engine.id === currentEngine) ?? engines[0];
 
   return (
-    <section className={compact ? `min-w-0 py-3 sm:py-0 ${showChoices ? 'sm:col-span-3' : ''}` : 'border-b border-brand-line py-5'}>
-      <div className={compact ? 'flex min-w-0 items-center justify-between gap-3 sm:items-start' : 'flex items-start justify-between gap-5'}>
-        <div>
-          <p className={compact ? 'font-brand text-[13px] font-medium text-brand-muted' : 'text-[15px] font-medium text-brand-ink'}>{t('settings.voiceEngine')}</p>
-          <div className={compact ? 'mt-0.5 min-w-0' : 'mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1'}>
+    <section className={compact ? 'min-w-0 py-4' : 'border-b border-brand-line py-5'}>
+      <div className={compact ? 'grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 md:grid-cols-[150px_minmax(0,1fr)_auto]' : 'flex items-start justify-between gap-5'}>
+        <div className={compact ? 'min-w-0 md:contents' : ''}>
+          <p className={compact ? 'font-brand text-[13px] font-medium text-brand-muted md:col-start-1 md:row-start-1' : 'text-[15px] font-medium text-brand-ink'}>{t('settings.voiceEngine')}</p>
+          <div className={compact ? 'mt-0.5 min-w-0 md:col-start-2 md:row-start-1 md:mt-0' : 'mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1'}>
             <h2 className={compact ? 'font-brand text-[16px] font-medium leading-6 text-brand-ink' : 'font-brand text-[17px] font-medium leading-tight text-brand-ink'}>{selected.name}</h2>
             {pendingEngine && <span className="text-xs font-semibold text-amber-800">{t('voiceCurrentCard.pending', 'pending')}</span>}
             {!pendingEngine && engineStatus && engineStatus !== 'active' && (
@@ -38,7 +38,7 @@ export default function VoiceEngineSelector({ currentEngine, pendingEngine, engi
           aria-expanded={showChoices}
           aria-controls="voice-engine-choices"
           onClick={() => setShowChoices(value => !value)}
-          className={compact ? 'inline-flex min-h-11 shrink-0 items-center text-[13px] font-medium text-brand-action underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-action' : 'shrink-0 pt-1 text-sm font-semibold text-brand-action underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-action'}
+          className={compact ? 'col-start-2 row-start-1 inline-flex min-h-11 shrink-0 items-center rounded-md px-2 text-[13px] font-medium text-brand-action hover:bg-brand-action/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-action md:col-start-3' : 'shrink-0 pt-1 text-sm font-semibold text-brand-action underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-action'}
         >
           {showChoices ? t('voiceEngine.hideChoices', 'Close') : t('voiceEngine.changeService', 'Change service')}
         </button>

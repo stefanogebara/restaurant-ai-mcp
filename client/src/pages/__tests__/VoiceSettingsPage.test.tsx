@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
@@ -74,6 +74,7 @@ vi.mock('../../components/dashboard/InstagramPanel', () => ({ default: () => nul
 
 import VoiceSettingsPage from '../VoiceSettingsPage';
 import { VoiceSettingsPartialSaveError } from '../../hooks/useVoiceSettings';
+import i18n from '../../i18n/config';
 
 function renderPage() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
@@ -101,6 +102,18 @@ describe('VoiceSettingsPage remote readback and partial save', () => {
     expect(screen.getByText('Phone remains available')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Retry live settings' }));
     expect(mocks.refetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows the unavailable live read and retry in Portuguese', async () => {
+    mocks.config = { ...mocks.config, source: 'database_only' };
+    await act(async () => { await i18n.changeLanguage('pt-BR'); });
+    try {
+      renderPage();
+      expect(screen.getByRole('status')).toHaveTextContent('Os ajustes ao vivo da voz estão indisponíveis');
+      expect(screen.getByRole('button', { name: 'Tentar leitura ao vivo' })).toBeInTheDocument();
+    } finally {
+      await act(async () => { await i18n.changeLanguage('en'); });
+    }
   });
 
   it('identifies the selected voice by provider metadata and falls back honestly', () => {

@@ -12,6 +12,7 @@
 
 const { supabaseAdmin } = require('../_lib/supabase');
 const { buildPersonaPrompt } = require('../_lib/persona-prompt-builder');
+const { buildDefaultVoiceGreeting } = require('../_lib/voice-greetings');
 const { createSecureLogger } = require('../_lib/secure-logger');
 
 const logger = createSecureLogger('VoiceAgentService');
@@ -51,17 +52,8 @@ async function refreshVoiceAgentPrompt(restaurantId, { syncGreeting = false } = 
   }
 
   const systemPrompt = buildPersonaPrompt(config, { channel: 'voice' });
-  // An empty saved greeting clears the customization and restores the same
-  // default opening used when a per-restaurant agent is created.
-  const defaultGreetings = {
-    en: `Thank you for calling ${config.restaurant_name}. How may I help you today?`,
-    es: `Gracias por llamar a ${config.restaurant_name}. ¿En qué puedo ayudarle hoy?`,
-    fr: `Merci d'avoir appelé ${config.restaurant_name}. Comment puis-je vous aider aujourd'hui?`,
-    it: `Grazie per aver chiamato ${config.restaurant_name}. Come posso aiutarla oggi?`,
-    pt: `Obrigado por ligar para ${config.restaurant_name}. Como posso ajudá-lo hoje?`,
-  };
-  const language = (config.agent_language || 'en').split('-')[0];
-  const firstMessage = config.agent_greeting || defaultGreetings[language] || defaultGreetings.en;
+  // Clearing a custom greeting restores the same default used by language changes.
+  const firstMessage = config.agent_greeting || buildDefaultVoiceGreeting(config.restaurant_name, config.agent_language || 'en');
   const agentUpdate = { prompt: { prompt: systemPrompt } };
   if (syncGreeting) agentUpdate.first_message = firstMessage;
 

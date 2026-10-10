@@ -9,6 +9,7 @@ const { verifyAuth } = require('./_lib/auth');
 const { checkSubscription, requireFeature } = require('./_lib/subscription-middleware');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { validateElevenLabsVoiceId } = require('./_lib/validation');
+const { buildDefaultVoiceGreeting } = require('./_lib/voice-greetings');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const logger = createSecureLogger('VoiceSettings');
@@ -300,29 +301,10 @@ async function handlePatch(req, res) {
       patchPayload.conversation_config.language = language;
     }
 
-    // If language changed, regenerate first_message
+    // If language changed, use the saved custom greeting or its language's default.
     if (language && language !== restaurant.agent_language) {
-      const firstMessages = {
-        en: `Hello! Welcome to ${restaurant.restaurant_name}. How can I help you today?`,
-        es: `¡Hola! Bienvenido a ${restaurant.restaurant_name}. ¿En qué puedo ayudarle hoy?`,
-        fr: `Bonjour ! Bienvenue chez ${restaurant.restaurant_name}. Comment puis-je vous aider ?`,
-        de: `Hallo! Willkommen bei ${restaurant.restaurant_name}. Wie kann ich Ihnen helfen?`,
-        it: `Ciao! Benvenuto da ${restaurant.restaurant_name}. Come posso aiutarti oggi?`,
-        pt: `Olá! Bem-vindo ao ${restaurant.restaurant_name}. Como posso ajudá-lo hoje?`,
-        nl: `Hallo! Welkom bij ${restaurant.restaurant_name}. Hoe kan ik u helpen?`,
-        pl: `Cześć! Witamy w ${restaurant.restaurant_name}. Jak mogę Ci pomóc?`,
-        sv: `Hej! Välkommen till ${restaurant.restaurant_name}. Hur kan jag hjälpa dig?`,
-        tr: `Merhaba! ${restaurant.restaurant_name}'a hoş geldiniz. Size nasıl yardımcı olabilirim?`,
-        ja: `こんにちは！${restaurant.restaurant_name}へようこそ。ご用件をお伺いします。`,
-        ko: `안녕하세요! ${restaurant.restaurant_name}에 오신 것을 환영합니다. 무엇을 도와드릴까요?`,
-        zh: `您好！欢迎来到${restaurant.restaurant_name}。我能为您做些什么？`,
-        ru: `Здравствуйте! Добро пожаловать в ${restaurant.restaurant_name}. Чем могу помочь?`,
-        hi: `नमस्ते! ${restaurant.restaurant_name} में आपका स्वागत है। मैं आपकी कैसे मदद कर सकता हूँ?`,
-      };
-      const baseLang = language.split('-')[0];
-      const newFirstMessage = firstMessages[baseLang] || firstMessages['en'];
       patchPayload.conversation_config.agent = {
-        first_message: restaurant.agent_greeting || newFirstMessage
+        first_message: restaurant.agent_greeting || buildDefaultVoiceGreeting(restaurant.restaurant_name, language)
       };
     }
 

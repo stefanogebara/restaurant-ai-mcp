@@ -99,7 +99,7 @@ test('a cleared greeting restores the default opening, while prompt-only refresh
     },
     error: null,
   });
-  const fallback = 'Thank you for calling Seatable Bistro. How may I help you today?';
+  const fallback = 'Hello! Welcome to Seatable Bistro. How can I help you today?';
   global.fetch
     .mockResolvedValueOnce({ ok: true })
     .mockResolvedValueOnce({ ok: true, json: async () => ({
@@ -116,4 +116,28 @@ test('a cleared greeting restores the default opening, while prompt-only refresh
   expect(JSON.parse(global.fetch.mock.calls[2][1].body).conversation_config.agent).toEqual({
     prompt: { prompt: 'Current persona prompt' },
   });
+});
+
+test.each([
+  ['pt-BR', 'Olá! Bem-vindo ao Seatable Bistro. Como posso ajudá-lo hoje?'],
+  ['de', 'Hallo! Willkommen bei Seatable Bistro. Wie kann ich Ihnen helfen?'],
+  ['ja', 'こんにちは！Seatable Bistroへようこそ。ご用件をお伺いします。'],
+])('clearing a custom greeting uses the %s language default', async (language, fallback) => {
+  mockSingle.mockResolvedValue({
+    data: {
+      id: 'rest-1', restaurant_name: 'Seatable Bistro', agent_language: language,
+      agent_greeting: '', elevenlabs_agent_id: 'agent-123',
+    },
+    error: null,
+  });
+  global.fetch
+    .mockResolvedValueOnce({ ok: true })
+    .mockResolvedValueOnce({ ok: true, json: async () => ({
+      conversation_config: { agent: { prompt: { prompt: 'Current persona prompt' }, first_message: fallback } },
+    }) });
+
+  const result = await refreshVoiceAgentPrompt('rest-1', { syncGreeting: true });
+
+  expect(JSON.parse(global.fetch.mock.calls[0][1].body).conversation_config.agent.first_message).toBe(fallback);
+  expect(result).toEqual({ success: true, prompt_synced: true, greeting_synced: true });
 });

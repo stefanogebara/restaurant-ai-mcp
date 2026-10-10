@@ -130,6 +130,12 @@ export default function Sidebar({ appearance = 'default', darkMobileMenu = false
     AI: 'navigation.sectionAI',
   };
 
+  const navLabel = (item: NavItem) => {
+    if (hero && item.label === 'Voice & Calls') return t('voiceSettings.setupEyebrow', 'Reception');
+    if (hero && item.label === 'Insights') return t('insights.tabs.analytics', 'Analytics');
+    return t(NAV_KEYS[item.label] ?? item.label, item.label);
+  };
+
   const isActive = (path: string) => {
     if (path === '/host-dashboard/simple') {
       return location.pathname === '/host-dashboard/simple' || location.pathname === '/host-dashboard';
@@ -245,10 +251,10 @@ export default function Sidebar({ appearance = 'default', darkMobileMenu = false
           {/* Navigation */}
           <nav aria-label="Main navigation" className="flex-1 overflow-y-auto [mask-image:linear-gradient(to_bottom,black_0%,black_94%,transparent_100%)]">
             {navSections.map((section) => (
-              <div key={section.label} className="mb-5">
+              <div key={section.label} className={hero ? 'mb-3' : 'mb-5'}>
                 {/* Section Label */}
                 {!isCollapsed && (
-                  <div className={`px-5 mb-2 font-semibold uppercase ${hero ? 'text-[12px] tracking-[0.14em] text-brand-muted' : 'text-[11px] tracking-widest text-stone-400'}`}>
+                  <div className={`px-5 mb-2 uppercase ${hero ? 'text-[11px] font-medium tracking-[0.08em] text-brand-muted' : 'text-[11px] font-semibold tracking-widest text-stone-400'}`}>
                     {hero && section.label === 'Insights' ? t('navigation.sectionInsightsHero', 'Data') : t(NAV_KEYS[section.label] ?? section.label, section.label)}
                   </div>
                 )}
@@ -282,15 +288,15 @@ export default function Sidebar({ appearance = 'default', darkMobileMenu = false
                           ${isCollapsed ? `justify-center ${hero ? 'px-3 py-2' : 'px-5 py-3'}` : `${hero ? 'px-5 py-2' : 'px-5 py-3'}`}
                         `}
                         title={isCollapsed
-                          ? `${t(NAV_KEYS[item.label] ?? item.label, item.label)} - ${t('navigation.upgradeToUnlock', 'Upgrade to unlock')}`
+                          ? `${navLabel(item)} - ${t('navigation.upgradeToUnlock', 'Upgrade to unlock')}`
                           : t('navigation.upgradePlanToUnlock', 'Upgrade to Professional plan to unlock')}
-                        aria-label={`${t(NAV_KEYS[item.label] ?? item.label, item.label)} - ${t('navigation.lockedFeature', 'Locked feature')}`}
+                        aria-label={`${navLabel(item)} - ${t('navigation.lockedFeature', 'Locked feature')}`}
                       >
                         {hero && isCollapsed && <ThiingsIcon name={heroNavIcons[item.path]} pxSize={18} />}
                         <span className={`w-1.5 h-1.5 rounded-full bg-current opacity-40 flex-shrink-0 ${hero ? 'hidden' : ''}`} />
                         {!isCollapsed && (
                           <span className="text-sm flex items-center gap-2">
-                            {hero && item.label === 'Insights' ? t('insights.tabs.analytics', 'Analytics') : t(NAV_KEYS[item.label] ?? item.label, item.label)}
+                            {navLabel(item)}
                             <ThiingsIcon name="lock" pxSize={10} />
                           </span>
                         )}
@@ -304,7 +310,7 @@ export default function Sidebar({ appearance = 'default', darkMobileMenu = false
                       to={item.path}
                       onClick={() => setIsMobileOpen(false)}
                       aria-current={active ? 'page' : undefined}
-                      aria-label={isCollapsed ? hero && item.label === 'Insights' ? t('insights.tabs.analytics', 'Analytics') : item.label : undefined}
+                      aria-label={isCollapsed ? navLabel(item) : undefined}
                       className={`
                         flex items-center gap-3 transition-all duration-150
                         ${hero ? 'relative ml-4 mr-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-action/60' : ''}
@@ -318,7 +324,7 @@ export default function Sidebar({ appearance = 'default', darkMobileMenu = false
                             : 'text-stone-300 hover:text-white hover:bg-white/[0.03] border-l-2 border-l-transparent'
                         }
                       `}
-                      title={isCollapsed ? hero && item.label === 'Insights' ? t('insights.tabs.analytics', 'Analytics') : item.label : undefined}
+                      title={isCollapsed ? navLabel(item) : undefined}
                     >
                       {hero && isCollapsed && <ThiingsIcon name={heroNavIcons[item.path]} pxSize={18} />}
                       <span
@@ -329,7 +335,7 @@ export default function Sidebar({ appearance = 'default', darkMobileMenu = false
                         `}
                       />
                       {!isCollapsed && (
-                        <span className={hero ? 'text-[14px] leading-5' : 'text-sm'}>{hero && item.label === 'Insights' ? t('insights.tabs.analytics', 'Analytics') : t(NAV_KEYS[item.label] ?? item.label, item.label)}</span>
+                        <span className={hero ? 'text-[14px] leading-5' : 'text-sm'}>{navLabel(item)}</span>
                       )}
                     </Link>
                   );
@@ -341,7 +347,7 @@ export default function Sidebar({ appearance = 'default', darkMobileMenu = false
             {/* Settings */}
             <div className={hero ? 'mb-3' : 'mb-5'}>
               {!isCollapsed && (
-                <div className={`px-5 mb-2 font-semibold uppercase ${hero ? 'text-[12px] tracking-[0.14em] text-brand-muted' : 'text-[11px] tracking-widest text-stone-400'}`}>
+                <div className={`px-5 mb-2 uppercase ${hero ? 'text-[11px] font-medium tracking-[0.08em] text-brand-muted' : 'text-[11px] font-semibold tracking-widest text-stone-400'}`}>
                   {t('navigation.sectionSettings', 'Settings')}
                 </div>
               )}
@@ -428,7 +434,7 @@ export default function Sidebar({ appearance = 'default', darkMobileMenu = false
             {can('manageTeam') && (
               <div className={hero ? 'mb-3' : 'mb-5'}>
                 {!isCollapsed && (
-                    <div className={`px-5 mb-2 font-semibold uppercase ${hero ? 'text-[12px] tracking-[0.14em] text-brand-muted' : 'text-[11px] tracking-widest text-stone-400'}`}>
+                    <div className={`px-5 mb-2 uppercase ${hero ? 'text-[11px] font-medium tracking-[0.08em] text-brand-muted' : 'text-[11px] font-semibold tracking-widest text-stone-400'}`}>
                     {t('navigation.sectionManage', 'Manage')}
                   </div>
                 )}

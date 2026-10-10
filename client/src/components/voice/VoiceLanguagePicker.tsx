@@ -17,10 +17,10 @@ export default function VoiceLanguagePicker({ currentLanguage, savedLanguage, on
     return name.charAt(0).toLocaleUpperCase(locale) + name.slice(1);
   };
   return (
-    <section className="min-w-0 py-3 font-brand text-brand-ink sm:py-0">
-      <div className="flex min-w-0 items-center justify-between gap-3 sm:block">
-        <label htmlFor="voice-language" className="font-brand text-[13px] font-medium text-brand-muted">{t('voiceSettings.languages')}</label>
-        <div className="relative min-w-0 w-40 max-w-[58%] sm:mt-0.5 sm:max-w-[190px] sm:w-full">
+    <section className="min-w-0 py-4 font-brand text-brand-ink">
+      <div className="grid min-w-0 grid-cols-1 items-center md:grid-cols-[150px_minmax(0,1fr)] md:gap-x-4">
+        <label htmlFor="voice-language" className="col-start-1 row-start-1 font-brand text-[13px] font-medium text-brand-muted">{t('voiceSettings.languages')}</label>
+        <div className="relative col-start-1 row-start-2 min-w-0 w-full md:col-start-2 md:row-start-1">
         <select
           id="voice-language"
           value={currentLanguage}

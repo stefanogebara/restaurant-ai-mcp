@@ -5,9 +5,12 @@ import type { VoicePersona, VoicePersonaSaveResult } from '../../hooks/useVoiceP
 import { useToast } from '../../contexts/ToastContext';
 import { useMutation } from '@tanstack/react-query';
 import { authFetch } from '../../services/api';
+import ThiingsIcon from '../common/ThiingsIcon';
 
 interface Props {
   variant?: 'default' | 'studio';
+  readOnly?: boolean;
+  readOnlyNotice?: boolean;
   engine?: 'elevenlabs' | 'openai_realtime';
   onGreetingDraftChange?: (value: string | null) => void;
   onAgentNameDraftChange?: (value: string | null) => void;
@@ -17,7 +20,7 @@ interface Props {
   sampleStatus?: ReactNode;
 }
 
-export default function VoicePersonaPanel({ variant = 'default', engine = 'elevenlabs', onGreetingDraftChange, onAgentNameDraftChange, exampleGreeting, voiceIdentity, playControl, sampleStatus }: Props) {
+export default function VoicePersonaPanel({ variant = 'default', readOnly = false, readOnlyNotice = true, engine = 'elevenlabs', onGreetingDraftChange, onAgentNameDraftChange, exampleGreeting, voiceIdentity, playControl, sampleStatus }: Props) {
   const { t } = useTranslation();
   const toast = useToast();
   const { data: persona, isLoading, isError, refetch } = useVoicePersona();
@@ -101,86 +104,102 @@ export default function VoicePersonaPanel({ variant = 'default', engine = 'eleve
 
   if (isError) {
     return (
-      <section className="mx-auto w-full max-w-[900px] border-l-2 border-amber-800 py-3 pl-4 font-brand" role="alert">
+      <section className="mx-auto w-full max-w-[960px] min-w-0 border-l-2 border-amber-800 py-3 pl-4 font-brand" role="alert">
         <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-amber-800">{t('dashboard.voicePersona.unavailableTitle', 'Greeting unavailable')}</h2>
         <p className="mt-2 max-w-[62ch] text-[13px] leading-5 text-brand-muted">{t('dashboard.voicePersona.unavailableBody', 'We could not load the saved greeting. The voice preview uses an example; nothing here is confirmed as saved.')}</p>
         {exampleGreeting && <p className="mt-3 max-w-[62ch] text-[16px] leading-6 text-brand-ink">“{exampleGreeting}”</p>}
         <button type="button" onClick={() => refetch?.()} className="mt-3 min-h-10 text-[13px] font-semibold text-brand-action underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-action">
           {t('common.retry', 'Retry')}
         </button>
-        {(voiceIdentity || playControl || sampleStatus) && <div className="mt-5 space-y-3">
-          {voiceIdentity}
-          <div className="flex items-center gap-4 rounded-[18px] border border-brand-line bg-white/40 p-3">{playControl}{sampleStatus}</div>
+        {(voiceIdentity || playControl || sampleStatus) && <div className="mt-5 border-y border-brand-line py-3 text-brand-ink">
+          <div className="grid min-w-0 grid-cols-[56px_minmax(0,1fr)] items-center gap-x-4 gap-y-2 sm:grid-cols-[64px_minmax(0,1fr)_minmax(190px,0.65fr)] sm:gap-x-5">
+            <div className="col-start-1 row-start-1">{playControl}</div>
+            <div className="col-start-2 row-start-1 min-w-0">{sampleStatus}</div>
+            <div className="col-start-2 row-start-2 min-w-0 sm:col-start-3 sm:row-start-1">{voiceIdentity}</div>
+          </div>
+          <a href="#voice-settings:phone" className="mt-2 inline-flex min-h-11 items-center gap-2 text-[13px] font-medium text-brand-action focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-action">
+            {t('dashboard.voicePersona.realCallHelp', 'How to test a real call')}
+            <ThiingsIcon name="arrow-right" pxSize={14} />
+          </a>
         </div>}
       </section>
     );
   }
 
   if (variant === 'studio') {
-    const greeting = getValue('agent_greeting');
+    const greeting = readOnly ? persona?.agent_greeting ?? '' : getValue('agent_greeting');
+    const agentName = readOnly ? persona?.agent_name ?? '' : getValue('agent_name');
+    const hasAudition = Boolean(voiceIdentity || playControl || sampleStatus);
     return (
-      <section className="mx-auto w-full max-w-[900px] min-w-0 pb-3 pt-4 font-brand text-brand-ink sm:pb-5 sm:pt-7" aria-labelledby="voice-persona-heading">
-        <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-6 gap-y-1">
-          <div className="flex min-w-0 flex-wrap items-baseline gap-x-3">
-            <h2 id="voice-persona-heading" className="font-brand text-[12px] font-medium text-brand-muted">
-              {t('dashboard.voicePersona.receptionistTitle', 'Your receptionist')}
-            </h2>
-            <label htmlFor="agent-name" className="sr-only">{t('dashboard.voicePersona.agentName', 'Agent name')}</label>
-            <input
-              id="agent-name" type="text" maxLength={50}
-              disabled={saveMutation.isPending}
-              placeholder={t('placeholders.agentName', 'e.g. Sofia')}
-              value={getValue('agent_name')}
-              onChange={event => set('agent_name', event.target.value)}
-              style={{ fieldSizing: 'content' }}
-              className="min-h-11 min-w-0 max-w-full border-0 bg-transparent px-0 py-0 font-brand text-[30px] font-medium leading-[1.05] tracking-[-0.045em] text-brand-ink placeholder:text-brand-muted/65 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-action disabled:opacity-60 sm:text-[33px]"
-            />
-          </div>
-          {voiceIdentity}
+      <section className="mx-auto w-full max-w-[960px] min-w-0 pt-6 font-brand text-brand-ink sm:pt-9" aria-labelledby="voice-persona-heading">
+        <div className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-0">
+          <h2 id="voice-persona-heading" className="font-brand text-[13px] font-medium text-brand-muted">
+            {t('dashboard.voicePersona.receptionistTitle', 'Your receptionist')}
+          </h2>
+          {!readOnly && <label htmlFor="agent-name" className="sr-only">{t('dashboard.voicePersona.agentName', 'Agent name')}</label>}
+          {readOnly ? <p className="font-brand text-[26px] font-medium leading-[1.1] tracking-[-0.04em] text-brand-ink sm:text-[29px]">{agentName}</p> : <input
+            id="agent-name" type="text" maxLength={50}
+            disabled={saveMutation.isPending}
+            placeholder={t('placeholders.agentName', 'e.g. Sofia')}
+            value={getValue('agent_name')}
+            onChange={event => set('agent_name', event.target.value)}
+            style={{ fieldSizing: 'content' }}
+            className="min-h-11 min-w-0 max-w-full border-0 bg-transparent px-0 py-0 font-brand text-[26px] font-medium leading-[1.1] tracking-[-0.04em] text-brand-ink placeholder:text-brand-muted/65 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-action disabled:opacity-60 sm:text-[29px]"
+          />}
         </div>
-        <label htmlFor="agent-greeting" className="sr-only">{t('dashboard.voicePersona.openingGreeting', 'Opening greeting')}</label>
-        <textarea
+        {!readOnly && <label htmlFor="agent-greeting" className="sr-only">{t('dashboard.voicePersona.openingGreeting', 'Opening greeting')}</label>}
+        {readOnly ? <p className="mt-7 max-w-[850px] whitespace-pre-wrap font-brand text-[30px] font-medium leading-[1.12] tracking-[-0.05em] text-brand-ink min-[360px]:text-[32px] sm:mt-9 sm:text-[48px]">{greeting || t('dashboard.voicePersona.noSavedGreeting', 'No saved greeting')}</p> : <textarea
           id="agent-greeting"
           ref={greetingRef}
           rows={2}
           disabled={saveMutation.isPending}
           maxLength={200}
-          placeholder={t('placeholders.agentGreeting', 'e.g. Welcome to our restaurant!')}
+          placeholder={exampleGreeting || t('placeholders.agentGreeting', 'e.g. Welcome to our restaurant!')}
           value={greeting}
           onChange={event => set('agent_greeting', event.target.value)}
           style={{ fieldSizing: 'content' }}
-          className="mt-6 block min-h-[68px] w-full max-w-[720px] resize-none overflow-hidden border-0 bg-transparent px-0 py-0 font-serif text-[28px] font-normal leading-[1.08] tracking-[-0.025em] [text-wrap:balance] text-brand-ink placeholder:text-brand-muted/65 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-action disabled:opacity-60 sm:mt-8 sm:min-h-[100px] sm:text-[40px]"
-        />
-        {!greeting && !isDirty && exampleGreeting && <p className="mt-2 max-w-[70ch] text-[12px] leading-5 text-brand-muted">{t('dashboard.voicePersona.examplePreview', 'No greeting is saved. The sample plays this example:')} “{exampleGreeting}”</p>}
-        <div className="mt-5 min-w-0 rounded-[18px] border border-brand-line bg-white/40 p-3 sm:mt-7 sm:p-4">
-          <div className="flex min-w-0 items-center gap-3 sm:gap-4">
-            {playControl}
-            <div className="min-w-0 flex-1">
-              {sampleStatus}
-              <p className={`mt-1 text-[12px] leading-4 ${isDirty ? 'text-amber-800' : 'text-brand-muted'}`}>
-                {isDirty ? t('dashboard.voicePersona.unsavedDraft', 'Unsaved draft') : greeting ? t('dashboard.voicePersona.savedInSeatable', 'Saved in Seatable') : t('dashboard.voicePersona.noSavedGreeting', 'No saved greeting')}
-              </p>
-            </div>
-            {!isDirty && <button type="button" onClick={() => greetingRef.current?.focus()} className="min-h-11 shrink-0 px-1 text-[13px] font-medium text-brand-action underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-action">
-              <span className="sm:hidden">{t('common.edit', 'Edit')}</span><span className="hidden sm:inline">{t('dashboard.voicePersona.editScript', 'Edit script')}</span>
-            </button>}
-          </div>
-          {isDirty && <div className="mt-2 flex items-center justify-end gap-3">
-            <button type="button" onClick={handleCancel} disabled={saveMutation.isPending} className="min-h-11 text-[13px] font-medium text-brand-muted underline underline-offset-4">{t('common.cancel', 'Cancel')}</button>
-            <button type="button" onClick={handleSave} disabled={saveMutation.isPending} className="min-h-11 rounded-full bg-brand-action px-4 py-2 text-[13px] font-semibold text-brand-paper disabled:opacity-50">
+          className="mt-7 block min-h-[68px] w-full max-w-[850px] resize-none overflow-hidden border-0 bg-transparent px-0 py-0 font-brand text-[30px] font-medium leading-[1.12] tracking-[-0.05em] text-brand-ink placeholder:text-brand-muted/65 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-action disabled:opacity-60 min-[360px]:text-[32px] sm:mt-9 sm:min-h-[110px] sm:text-[48px]"
+        />}
+        {!readOnly && !greeting && !isDirty && exampleGreeting && <p className="mt-2 max-w-[58ch] text-[12px] leading-5 text-brand-muted">{t('dashboard.voicePersona.examplePreview', 'No greeting is saved. The sample plays this example:')} “{exampleGreeting}”</p>}
+        {!readOnly && <div className="mt-4 flex min-w-0 flex-wrap items-center justify-between gap-x-4 gap-y-0 sm:mt-5">
+          <p className={`py-2 text-[12px] leading-5 ${isDirty ? 'text-amber-800' : 'text-brand-muted'}`}>
+            {isDirty ? t('dashboard.voicePersona.unsavedDraft', 'Unsaved draft') : greeting ? t('dashboard.voicePersona.savedInSeatable', 'Saved in Seatable') : t('dashboard.voicePersona.noSavedGreeting', 'No saved greeting')}
+          </p>
+          {!readOnly && !isDirty && <button type="button" onClick={() => greetingRef.current?.focus()} className="inline-flex min-h-11 items-center gap-2 text-[13px] font-medium text-brand-action focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-action">
+            {t('dashboard.voicePersona.editScript', 'Edit script')}
+            <ThiingsIcon name="arrow-right" pxSize={14} />
+          </button>}
+          {!readOnly && isDirty && <div className="flex items-center gap-3">
+            <button type="button" onClick={handleCancel} disabled={saveMutation.isPending} className="min-h-11 text-[13px] font-medium text-brand-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-action">{t('common.cancel', 'Cancel')}</button>
+            <button type="button" onClick={handleSave} disabled={saveMutation.isPending} className="min-h-11 rounded-full bg-brand-action px-4 py-2 text-[13px] font-semibold text-brand-paper disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-action">
               {saveMutation.isPending ? t('dashboard.voicePersona.saving', 'Saving...') : t('dashboard.voicePersona.saveGreeting', 'Save greeting')}
             </button>
           </div>}
-        </div>
-        <a href="#voice-settings:phone" className="mt-2 inline-flex min-h-11 items-center text-[12px] font-medium text-brand-action underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-action">
-          {t('dashboard.voicePersona.realCallHelp', 'How to test a real call')}
-        </a>
-        {syncStatus === 'partial' && <div role="status" className="mt-4 flex flex-wrap items-center gap-3 text-[12px] leading-5 text-amber-800">
+        </div>}
+        {hasAudition && <>
+          <div className="mt-3 min-w-0 border-y border-brand-line py-3 text-brand-ink sm:mt-4">
+            <div className="grid min-w-0 grid-cols-[56px_minmax(0,1fr)] items-center gap-x-4 gap-y-2 sm:grid-cols-[64px_minmax(0,1fr)_minmax(190px,0.65fr)] sm:gap-x-5">
+              <div className="col-start-1 row-start-1">{playControl}</div>
+              <div className="col-start-2 row-start-1 min-w-0">{sampleStatus}</div>
+              <div className="col-start-2 row-start-2 min-w-0 sm:col-start-3 sm:row-start-1">{voiceIdentity}</div>
+            </div>
+          </div>
+          <a href="#voice-settings:phone" className="mt-1 inline-flex min-h-11 items-center gap-2 text-[13px] font-medium text-brand-action focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-action">
+            {t('dashboard.voicePersona.realCallHelp', 'How to test a real call')}
+            <ThiingsIcon name="arrow-right" pxSize={14} />
+          </a>
+        </>}
+        {!hasAudition && !readOnly && <a href="#voice-settings:phone" className="mt-1 inline-flex min-h-11 items-center gap-2 text-[13px] font-medium text-brand-action focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-action">{t('dashboard.voicePersona.realCallHelp', 'How to test a real call')}<ThiingsIcon name="arrow-right" pxSize={14} /></a>}
+        {readOnly && readOnlyNotice && <div className="mt-5">
+          <p className="text-[12px] leading-5 text-amber-800">{t('dashboard.voicePersona.storedOnlyDisclaimer', 'Saved in Seatable; not verified on the voice agent.')}</p>
+          <a href="#voice-settings:phone" className="inline-flex min-h-11 items-center gap-2 text-[13px] font-medium text-brand-action focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-action">{t('dashboard.voicePersona.realCallHelp', 'How to test a real call')}<ThiingsIcon name="arrow-right" pxSize={14} /></a>
+        </div>}
+        {!readOnly && syncStatus === 'partial' && <div role="status" className="mt-4 flex flex-wrap items-center gap-3 text-[12px] leading-5 text-amber-800">
           <span>{t('dashboard.voicePersona.savedNotSynced', 'Saved in Seatable, but the voice agent is not fully updated. Retry the sync.')}</span>
           <button type="button" onClick={handleRetry} disabled={saveMutation.isPending || isDirty || !lastSaved} className="min-h-9 font-semibold underline underline-offset-4 disabled:opacity-40">{t('dashboard.voicePersona.retrySync', 'Retry sync')}</button>
         </div>}
-        {syncStatus === 'synced' && <p role="status" className="mt-3 text-[12px] text-emerald-800">{t('dashboard.voicePersona.savedAndSynced', 'Saved in Seatable and synced with the voice agent')}</p>}
-        {syncStatus === 'unverified' && <p role="status" className="mt-3 text-[12px] text-amber-800">{t('dashboard.voicePersona.openaiUnverified', 'Saved in Seatable. The OpenAI call greeting is not verified. Test a real call.')}</p>}
+        {!readOnly && syncStatus === 'synced' && <p role="status" className="mt-3 text-[12px] text-emerald-800">{t('dashboard.voicePersona.savedAndSynced', 'Saved in Seatable and synced with the voice agent')}</p>}
+        {!readOnly && syncStatus === 'unverified' && <p role="status" className="mt-3 text-[12px] text-amber-800">{t('dashboard.voicePersona.openaiUnverified', 'Saved in Seatable. The OpenAI call greeting is not verified. Test a real call.')}</p>}
       </section>
     );
   }
