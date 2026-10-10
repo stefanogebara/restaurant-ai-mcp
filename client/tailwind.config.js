@@ -12,6 +12,7 @@ export default {
         // Instrument Serif only ships weight 400 — index.css disables bold
         // synthesis on serif so headings render the authentic light face.
         sans: ['DM Sans', 'Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+        brand: ['Instrument Sans', 'Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
         serif: ['Instrument Serif', 'Georgia', 'serif'],
         mono: ['JetBrains Mono', 'monospace'],
       },
@@ -76,6 +77,12 @@ export default {
         'warm-stone': '#78716C',
         'muted-stone': '#706A65',
         'charcoal-dark': '#292524',
+        // Approved landing hero; scoped to product routes as they migrate.
+        'brand-paper': '#F3F0E9',
+        'brand-ink': '#293222',
+        'brand-action': '#3F4E32',
+        'brand-line': '#CDD0C7',
+        'brand-muted': '#586254',
         // CSS Variable Colors
         border: "var(--border)",
         input: "var(--input)",

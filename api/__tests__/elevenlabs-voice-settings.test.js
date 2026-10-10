@@ -136,7 +136,54 @@ describe('ElevenLabs Voice Settings degradation', () => {
     expect(global.fetch).not.toHaveBeenCalled();
   });
 
-  test('PATCH saves locally and returns sync warning when ElevenLabs is not configured', async () => {
+  test('GET names the selected voice from its live ID, not the agent name', async () => {
+    process.env.ELEVENLABS_API_KEY = 'test-key';
+    mockMaybeSingle.mockResolvedValueOnce({
+      data: { id: 'rest-1', restaurant_name: 'Seatable Bistro', elevenlabs_agent_id: 'agent-123', voice_id: 'old-voice' },
+      error: null,
+    });
+    global.fetch
+      .mockResolvedValueOnce({ ok: true, json: async () => ({
+        name: 'Restaurant agent',
+        conversation_config: { language: 'pt', tts: { voice_id: 'live-voice', speed: 1.05 } },
+      }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ name: 'Marina', description: 'Warm Brazilian Portuguese voice' }) });
+
+    const { req, res } = createMockReqRes({ method: 'GET' });
+    await handler(req, res);
+
+    expect(global.fetch.mock.calls[1][0]).toBe('https://api.elevenlabs.io/v1/voices/live-voice');
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({
+        source: 'agent_api', voice_id: 'live-voice', voice_name: 'Marina',
+        voice_description: 'Warm Brazilian Portuguese voice', agent_name: 'Restaurant agent',
+      }),
+    }));
+    expect(mockSelect).toHaveBeenCalledWith(expect.not.stringContaining('agent_voice_name'));
+  });
+
+  test('GET keeps live configuration usable when selected voice metadata fails', async () => {
+    process.env.ELEVENLABS_API_KEY = 'test-key';
+    mockMaybeSingle.mockResolvedValueOnce({
+      data: { id: 'rest-1', restaurant_name: 'Seatable Bistro', elevenlabs_agent_id: 'agent-123', voice_id: 'voice-123' },
+      error: null,
+    });
+    global.fetch
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ conversation_config: { tts: { voice_id: 'voice-123' } } }) })
+      .mockResolvedValueOnce({ ok: false, status: 404 });
+
+    const { req, res } = createMockReqRes({ method: 'GET' });
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({
+        source: 'agent_api', voice_id: 'voice-123', voice_name: null, voice_description: null,
+      }),
+    }));
+  });
+
+  test('PATCH refuses a false local-only success when ElevenLabs is not configured', async () => {
     mockMaybeSingle.mockResolvedValueOnce({
       data: {
         id: 'rest-1',
@@ -145,7 +192,6 @@ describe('ElevenLabs Voice Settings degradation', () => {
       },
       error: null,
     });
-    mockAwaitQueue.push({ data: null, error: null });
 
     const { req, res } = createMockReqRes({
       method: 'PATCH',
@@ -164,19 +210,114 @@ describe('ElevenLabs Voice Settings degradation', () => {
 
     await handler(req, res);
 
-    expect(res.status).toHaveBeenCalledWith(200);
-    expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({
-      // Column renamed: agent_voice_id → voice_id. voice_name no longer
-      // persisted on the no-API-key PATCH path.
-      voice_id: 'voice-456',
-      agent_language: 'en',
-    }));
+    expect(res.status).toHaveBeenCalledWith(503);
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
-      success: true,
-      message: 'Voice settings saved locally. Live agent sync will apply on next refresh.',
-      sync_warning: expect.stringContaining('API key not configured'),
+      success: false,
+      error: expect.stringContaining('No settings were saved'),
     }));
+    expect(mockUpdate).not.toHaveBeenCalled();
     expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  test('PATCH persists only after ElevenLabs accepts the update', async () => {
+    process.env.ELEVENLABS_API_KEY = 'test-key';
+    mockMaybeSingle.mockResolvedValueOnce({
+      data: { id: 'rest-1', restaurant_name: 'Seatable Bistro', elevenlabs_agent_id: 'agent-123' },
+      error: null,
+    });
+    global.fetch.mockResolvedValueOnce({ ok: true });
+    mockAwaitQueue.push({ data: null, error: null });
+
+    const { req, res } = createMockReqRes({ method: 'PATCH', body: { voice_id: 'voice-456', language: 'pt' } });
+    await handler(req, res);
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      'https://api.elevenlabs.io/v1/convai/agents/agent-123',
+      expect.objectContaining({ method: 'PATCH' })
+    );
+    expect(JSON.parse(global.fetch.mock.calls[0][1].body).conversation_config.agent.first_message)
+      .toBe('Olá! Bem-vindo ao Seatable Bistro. Como posso ajudá-lo hoje?');
+    expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({ voice_id: 'voice-456', agent_language: 'pt' }));
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  test('language change keeps a saved custom opening message', async () => {
+    process.env.ELEVENLABS_API_KEY = 'test-key';
+    mockMaybeSingle.mockResolvedValueOnce({
+      data: {
+        id: 'rest-1', restaurant_name: 'Seatable Bistro', elevenlabs_agent_id: 'agent-123',
+        agent_language: 'en', agent_greeting: 'Welcome to our table!',
+      },
+      error: null,
+    });
+    global.fetch.mockResolvedValueOnce({ ok: true });
+    mockAwaitQueue.push({ data: null, error: null });
+
+    const { req, res } = createMockReqRes({ method: 'PATCH', body: { language: 'pt' } });
+    await handler(req, res);
+
+    expect(mockSelect).toHaveBeenCalledWith(expect.stringContaining('agent_greeting'));
+    expect(JSON.parse(global.fetch.mock.calls[0][1].body)).toEqual({
+      conversation_config: {
+        language: 'pt',
+        agent: { first_message: 'Welcome to our table!' },
+      },
+    });
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  test.each([
+    ['de', 'Hallo! Willkommen bei Seatable Bistro. Wie kann ich Ihnen helfen?'],
+    ['ja', 'こんにちは！Seatable Bistroへようこそ。ご用件をお伺いします。'],
+  ])('language change to %s uses the same default as a cleared custom greeting', async (language, fallback) => {
+    process.env.ELEVENLABS_API_KEY = 'test-key';
+    mockMaybeSingle.mockResolvedValueOnce({
+      data: {
+        id: 'rest-1', restaurant_name: 'Seatable Bistro', elevenlabs_agent_id: 'agent-123',
+        agent_language: 'en', agent_greeting: '',
+      },
+      error: null,
+    });
+    global.fetch.mockResolvedValueOnce({ ok: true });
+    mockAwaitQueue.push({ data: null, error: null });
+
+    const { req, res } = createMockReqRes({ method: 'PATCH', body: { language } });
+    await handler(req, res);
+
+    expect(JSON.parse(global.fetch.mock.calls[0][1].body).conversation_config.agent.first_message).toBe(fallback);
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  test('PATCH leaves local settings untouched if ElevenLabs rejects the update', async () => {
+    process.env.ELEVENLABS_API_KEY = 'test-key';
+    mockMaybeSingle.mockResolvedValueOnce({
+      data: { id: 'rest-1', restaurant_name: 'Seatable Bistro', elevenlabs_agent_id: 'agent-123' },
+      error: null,
+    });
+    global.fetch.mockResolvedValueOnce({ ok: false, status: 400, text: async () => 'unsupported model' });
+
+    const { req, res } = createMockReqRes({ method: 'PATCH', body: { tts_model_id: 'unsupported-model' } });
+    await handler(req, res);
+
+    expect(mockUpdate).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(502);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: false, error: expect.stringContaining('No settings were saved') }));
+  });
+
+  test('PATCH reports partial sync when the agent updates but the database fails', async () => {
+    process.env.ELEVENLABS_API_KEY = 'test-key';
+    mockMaybeSingle.mockResolvedValueOnce({
+      data: { id: 'rest-1', restaurant_name: 'Seatable Bistro', elevenlabs_agent_id: 'agent-123' },
+      error: null,
+    });
+    global.fetch.mockResolvedValueOnce({ ok: true });
+    mockAwaitQueue.push({ data: null, error: { message: 'database unavailable' } });
+
+    const { req, res } = createMockReqRes({ method: 'PATCH', body: { voice_id: 'voice-456' } });
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(502);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: false, partial: true }));
   });
 
   test('refresh prompt returns skipped when ElevenLabs is not configured', async () => {

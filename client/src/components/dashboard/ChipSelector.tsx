@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 
 interface ChipSelectorProps {
   items: string[];
-  presets: string[];
+  presets: Array<{ value: string; label: string; aliases?: string[] }>;
   onChange: (items: string[]) => void;
   placeholder?: string;
   maxItems?: number;
@@ -19,23 +19,38 @@ export default function ChipSelector({
   const { t } = useTranslation();
   const [input, setInput] = useState('');
 
+  const matchingPreset = useCallback((item: string) =>
+    presets.find(({ value, aliases = [] }) =>
+      [value, ...aliases].some((alias) => alias.toLocaleLowerCase() === item.toLocaleLowerCase())
+    ), [presets]);
+
+  const canonicalize = useCallback((values: string[]) => {
+    const seen = new Set<string>();
+    return values.map((value) => matchingPreset(value)?.value ?? value).filter((value) => {
+      const key = value.toLocaleLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [matchingPreset]);
+
   const addItem = useCallback(
     (raw: string) => {
-      const item = raw.trim();
+      const item = matchingPreset(raw.trim())?.value ?? raw.trim();
       if (!item) return;
       if (items.length >= maxItems) return;
-      if (items.some((i) => i.toLowerCase() === item.toLowerCase())) return;
-      onChange([...items, item]);
+      if (items.some((i) => (matchingPreset(i)?.value ?? i).toLocaleLowerCase() === item.toLocaleLowerCase())) return;
+      onChange(canonicalize([...items, item]));
       setInput('');
     },
-    [items, maxItems, onChange]
+    [items, maxItems, onChange, matchingPreset, canonicalize]
   );
 
   const removeItem = useCallback(
     (itemToRemove: string) => {
-      onChange(items.filter((i) => i !== itemToRemove));
+      onChange(canonicalize(items.filter((i) => i !== itemToRemove)));
     },
-    [items, onChange]
+    [items, onChange, canonicalize]
   );
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -46,7 +61,7 @@ export default function ChipSelector({
   };
 
   const availablePresets = presets.filter(
-    (p) => !items.some((i) => i.toLowerCase() === p.toLowerCase())
+    (p) => !items.some((i) => matchingPreset(i)?.value === p.value)
   );
 
   return (
@@ -56,14 +71,14 @@ export default function ChipSelector({
         {items.map((item) => (
           <span
             key={item}
-            className="inline-flex items-center gap-1 text-xs bg-stone-100 text-stone-700 px-2 py-1 rounded-md border border-[#E7E5E4]"
+            className="inline-flex items-center gap-1 rounded-md border border-brand-line bg-white/70 px-2 py-1 text-xs text-brand-ink"
           >
-            {item}
+            {matchingPreset(item)?.label ?? item}
             <button
               type="button"
               onClick={() => removeItem(item)}
-              className="text-stone-400 hover:text-[#9F1239] transition-colors"
-              aria-label={t('crm.removeChip', { item })}
+              className="text-brand-muted hover:text-red-700 transition-colors"
+              aria-label={t('crm.removeChip', { item: matchingPreset(item)?.label ?? item })}
             >
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <line x1="18" y1="6" x2="6" y2="18" />
@@ -76,12 +91,12 @@ export default function ChipSelector({
         {/* Preset chips (unselected) */}
         {availablePresets.map((preset) => (
           <button
-            key={preset}
+            key={preset.value}
             type="button"
-            onClick={() => addItem(preset)}
-            className="text-xs text-stone-400 px-2 py-1 rounded-md border border-dashed border-stone-300 hover:border-[#9F1239] hover:text-[#9F1239] transition-colors"
+            onClick={() => addItem(preset.value)}
+            className="rounded-md border border-brand-line px-2 py-1 text-xs text-brand-muted transition-colors hover:border-brand-action hover:text-brand-action"
           >
-            + {preset}
+            + {preset.label}
           </button>
         ))}
       </div>
@@ -94,7 +109,7 @@ export default function ChipSelector({
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={placeholder || t('crm.addCustom', 'Add custom...')}
-          className="w-full text-sm border border-stone-200 rounded-lg px-3 py-1.5 text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-1 focus:ring-[#9F1239]/30 focus:border-[#9F1239]/30"
+          className="w-full rounded-lg border border-brand-line bg-white/70 px-3 py-2 text-sm text-brand-ink placeholder:text-brand-muted focus-visible:outline-2 focus-visible:outline-brand-action"
         />
       )}
     </div>

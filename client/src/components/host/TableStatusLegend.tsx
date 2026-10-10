@@ -6,7 +6,7 @@ import { getStatusStyle } from './floorPlanHelpers';
  *
  * History: this used to delegate to the semantic <StatusLegend /> (emerald /
  * blue / amber / stone dots). Once the tables became illustrated (occupied =
- * solid burgundy with plates, reserved = dashed amber, free = glass), those
+ * solid emerald, reserved = dashed amber, free = glass), those
  * dots described colours that appear nowhere on the floor. A legend that
  * disagrees with the drawing is worse than no legend, so it now derives every
  * swatch from the one palette in floorPlanHelpers.
@@ -27,8 +27,8 @@ interface TableStatusLegendProps {
 export default function TableStatusLegend({ night = false, className = '' }: TableStatusLegendProps) {
   const { t } = useTranslation();
   return (
-    <div className={`flex items-center gap-x-4 gap-y-2 flex-wrap ${className}`}>
-      <span className={`text-xs font-medium ${night ? 'text-white/55' : 'text-stone-gray'}`}>
+    <div className={`grid grid-cols-2 gap-x-3 gap-y-2 sm:flex sm:items-center sm:flex-wrap sm:gap-x-4 ${className}`}>
+      <span className={`hidden sm:inline text-xs font-medium ${night ? 'text-white/55' : 'text-stone-gray'}`}>
         {t('settings.tableStatusLabel', 'Status')}
       </span>
       {STATUSES.map(({ status, labelKey, fallback }) => {

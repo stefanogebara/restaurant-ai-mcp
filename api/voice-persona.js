@@ -4,6 +4,7 @@ const { createSecureLogger } = require('./_lib/secure-logger');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { inlineRequireFeature, checkSubscriptionByRestaurantId } = require('./_lib/subscription-middleware');
 const { triggerKbSync } = require('./_lib/kb-sync-trigger');
+const { refreshVoiceAgentPrompt } = require('./_services/voiceAgentService');
 
 const logger = createSecureLogger('voice-persona');
 
@@ -39,9 +40,10 @@ async function handleGet(req, res) {
       .eq('id', restaurantId)
       .single();
     if (error) {
-      // Column or table may not exist yet — return defaults instead of 500
-      logger.warn('voice-persona GET query error, returning defaults', { error: error.message });
-      return res.json({ agent_name: null, agent_greeting: null });
+      // A failed read cannot prove that the restaurant has no saved greeting.
+      // Let the UI show a retry state instead of presenting an example as fact.
+      logger.error('voice-persona GET query error', { error: error.message });
+      return res.status(503).json({ error: 'Voice persona temporarily unavailable' });
     }
     return res.json({
       agent_name: data?.agent_name || null,
@@ -96,15 +98,36 @@ async function handlePatch(req, res) {
 
     logger.info('voice persona updated', { restaurantId });
 
-    // Push the change to the live ElevenLabs voice agent so callers hear the
-    // new persona on the next call. Awaited (bounded) so stale-KB drift is
-    // impossible by design — see api/_lib/kb-sync-trigger.js for rationale.
-    const kbSync = await triggerKbSync(restaurantId, { reason: 'voice_persona' });
+    // The greeting is also in the knowledge base, while the agent name lives
+    // in the system prompt. Both remote writes must succeed before the UI can
+    // claim the persona is live. A failure does not undo the saved DB values.
+    let kbSynced = false;
+    try {
+      const kbSync = await triggerKbSync(restaurantId, { reason: 'voice_persona' });
+      kbSynced = kbSync?.success === true;
+    } catch (syncError) {
+      logger.error('voice persona KB sync failed', { restaurantId, error: syncError.message });
+    }
+    let promptSynced = false;
+    let greetingSynced = agent_greeting === undefined ? null : false;
+    try {
+      const promptSync = await refreshVoiceAgentPrompt(restaurantId, {
+        syncGreeting: agent_greeting !== undefined,
+      });
+      promptSynced = promptSync?.prompt_synced === true;
+      if (agent_greeting !== undefined) {
+        greetingSynced = promptSync?.greeting_synced === true;
+      }
+    } catch (syncError) {
+      logger.error('voice persona prompt sync failed', { restaurantId, error: syncError.message });
+    }
 
     return res.json({
       agent_name: data.agent_name,
       agent_greeting: data.agent_greeting,
-      kb_synced: kbSync.success,
+      kb_synced: kbSynced,
+      prompt_synced: promptSynced,
+      greeting_synced: greetingSynced,
     });
   } catch (err) {
     if (err.message === 'UNAUTHORIZED') return res.status(401).json({ error: 'Authentication required' });

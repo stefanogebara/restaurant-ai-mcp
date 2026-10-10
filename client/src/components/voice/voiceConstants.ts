@@ -32,7 +32,7 @@ const PREVIEW_TEMPLATES: Record<string, (name: string) => string> = {
   fr: (name) => `Bienvenue chez ${name} ! Je serais ravi de vous aider à réserver aujourd'hui.`,
   de: (name) => `Willkommen bei ${name}! Ich helfe Ihnen gerne, heute einen Tisch zu reservieren.`,
   it: (name) => `Benvenuto da ${name}! Sarò felice di aiutarti a prenotare oggi.`,
-  pt: (name) => `Bem-vindo ao ${name}! Terei prazer em ajudá-lo a fazer uma reserva hoje.`,
+  pt: (name) => `Olá, você ligou para ${name}! Posso ajudar com uma reserva?`,
   nl: (name) => `Welkom bij ${name}! Ik help u graag vandaag nog een reservering te maken.`,
   pl: (name) => `Witamy w ${name}! Chętnie pomogę Ci dokonać rezerwacji dzisiaj.`,
   sv: (name) => `Välkommen till ${name}! Jag hjälper dig gärna att boka bord idag.`,

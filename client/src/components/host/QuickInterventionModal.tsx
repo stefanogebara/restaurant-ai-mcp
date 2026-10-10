@@ -32,7 +32,7 @@ interface QuickInterventionModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
-  language?: 'en' | 'es';
+  language?: 'en' | 'es' | 'pt-BR';
 }
 
 export default function QuickInterventionModal({
@@ -84,7 +84,12 @@ export default function QuickInterventionModal({
       errorSelect: 'Please select an action',
       errorSave: 'Failed to log intervention',
       alreadyTaken: 'Intervention already recorded',
-      people: 'people'
+      people: 'people',
+      close: 'Close',
+      riskVeryHigh: 'Very high',
+      riskHigh: 'High',
+      riskMedium: 'Medium',
+      riskLow: 'Low'
     },
     es: {
       title: 'Tomar Acción',
@@ -107,27 +112,68 @@ export default function QuickInterventionModal({
       errorSelect: 'Por favor selecciona una acción',
       errorSave: 'Error al registrar la intervención',
       alreadyTaken: 'Intervención ya registrada',
-      people: 'personas'
+      people: 'personas',
+      close: 'Cerrar',
+      riskVeryHigh: 'Muy alto',
+      riskHigh: 'Alto',
+      riskMedium: 'Medio',
+      riskLow: 'Bajo'
+    },
+    'pt-BR': {
+      title: 'Tomar uma ação',
+      riskScore: 'Pontuação de risco',
+      riskFactors: 'Fatores de risco',
+      quickActions: 'Ações rápidas',
+      called: 'Liguei para o cliente',
+      sentSMS: 'Enviei SMS',
+      sentWhatsApp: 'Enviei WhatsApp',
+      depositRequired: 'Solicitei um depósito',
+      other: 'Outra ação',
+      staffName: 'Seu nome',
+      staffPlaceholder: 'Digite seu nome',
+      notes: 'Observações',
+      notesPlaceholder: 'O cliente confirmou que chegará no horário...',
+      cancel: 'Cancelar',
+      save: 'Registrar ação',
+      saving: 'Salvando...',
+      success: 'Ação registrada com sucesso!',
+      errorSelect: 'Selecione uma ação',
+      errorSave: 'Não foi possível registrar a ação',
+      alreadyTaken: 'Ação já registrada',
+      people: 'pessoas',
+      close: 'Fechar',
+      riskVeryHigh: 'Muito alto',
+      riskHigh: 'Alto',
+      riskMedium: 'Médio',
+      riskLow: 'Baixo'
     }
   };
 
   const t = translations[language as keyof typeof translations] || translations.en;
 
-  const actionOptions: Array<{ id: string; label: string; icon: IconName; color: string }> = [
-    { id: 'phone_call', label: t.called, icon: 'phone', color: 'bg-stone-500' },
-    { id: 'sms_reminder', label: t.sentSMS, icon: 'chat', color: 'bg-rose-500' },
-    { id: 'whatsapp_reminder', label: t.sentWhatsApp, icon: 'chat', color: 'bg-rose-500' },
-    { id: 'deposit_required', label: t.depositRequired, icon: 'credit-card', color: 'bg-ocre-500' },
-    { id: 'other', label: t.other, icon: 'check-circle', color: 'bg-warm-stone' }
+  const actionOptions: Array<{ id: string; label: string; icon: IconName }> = [
+    { id: 'phone_call', label: t.called, icon: 'phone' },
+    { id: 'sms_reminder', label: t.sentSMS, icon: 'chat' },
+    { id: 'whatsapp_reminder', label: t.sentWhatsApp, icon: 'chat' },
+    { id: 'deposit_required', label: t.depositRequired, icon: 'credit-card' },
+    { id: 'other', label: t.other, icon: 'check-circle' }
   ];
 
   const getRiskColor = (level?: string) => {
     switch (level) {
       case 'very-high': return 'bg-red-600/15 text-red-800 border-red-600/30';
-      case 'high': return 'bg-orange-600/15 text-orange-800 border-orange-600/30';
+      case 'high': return 'bg-red-600/15 text-red-800 border-red-600/30';
       case 'medium': return 'bg-amber-600/15 text-amber-800 border-amber-600/30';
-      default: return 'bg-rose-500/15 text-rose-800 border-rose-500/30';
+      case 'low': return 'bg-emerald-600/15 text-emerald-800 border-emerald-600/30';
+      default: return 'bg-soft-gray text-stone-gray border-glass-border-dark';
     }
+  };
+
+  const riskLabels: Record<string, string> = {
+    'very-high': t.riskVeryHigh,
+    high: t.riskHigh,
+    medium: t.riskMedium,
+    low: t.riskLow,
   };
 
   const handleSubmit = () => {
@@ -155,18 +201,18 @@ export default function QuickInterventionModal({
       />
 
       {/* Modal */}
-      <div role="dialog" aria-modal="true" aria-label="Quick Intervention" className="relative glass-modal w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
+      <div role="dialog" aria-modal="true" aria-label={t.title} className="relative glass-modal w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="sticky top-0 bg-glass-panel backdrop-blur-glass-nav px-6 py-4 border-b border-glass-border-dark flex items-center justify-between rounded-t-2xl">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-orange-600/15 rounded-xl">
+            <div className="p-2 bg-amber-600/15 text-amber-800 rounded-xl">
               <ThiingsIcon name="alert-triangle" size="sm" />
             </div>
             <h2 className="text-xl font-bold text-deep-charcoal">{t.title}</h2>
           </div>
           <button
             onClick={onClose}
-            aria-label="Close"
+            aria-label={t.close}
             className="p-2 hover:bg-soft-gray rounded-xl transition-colors"
           >
             <ThiingsIcon name="x-circle" size="sm" />
@@ -182,9 +228,12 @@ export default function QuickInterventionModal({
                 <ThiingsIcon name="user" size="xs" />
                 <span className="font-semibold text-deep-charcoal">{reservation.customer_name}</span>
               </div>
-              <div className={`px-2 py-1 rounded-lg border text-xs font-bold ${getRiskColor(reservation.ml_risk_level)}`}>
-                {reservation.ml_risk_level?.toUpperCase().replace('-', ' ')} {reservation.ml_risk_score}%
-              </div>
+              {(reservation.ml_risk_level || typeof reservation.ml_risk_score === 'number') && (
+                <div className={`px-2 py-1 rounded-lg border text-xs font-semibold ${getRiskColor(reservation.ml_risk_level)}`}>
+                  {riskLabels[reservation.ml_risk_level || ''] || t.riskScore}
+                  {typeof reservation.ml_risk_score === 'number' && ` · ${Math.round(reservation.ml_risk_score)}/100`}
+                </div>
+              )}
             </div>
             <div className="grid grid-cols-3 gap-3 text-sm text-stone-gray">
               <div className="flex items-center gap-1">
@@ -215,7 +264,7 @@ export default function QuickInterventionModal({
               <div className="space-y-1">
                 {reservation.ml_risk_factors.slice(0, 3).map((factor, idx) => (
                   <div key={idx} className="text-sm text-stone-gray flex items-start gap-2">
-                    <span className="text-orange-600">•</span>
+                    <span className="text-ocre-600">•</span>
                     <span>{factor.description}</span>
                   </div>
                 ))}
@@ -225,13 +274,13 @@ export default function QuickInterventionModal({
 
           {/* Already taken indicator */}
           {reservation.intervention_taken && (
-            <div className="bg-rose-500/10 border border-rose-500/20 rounded-xl p-3 flex items-center gap-2">
+            <div className="bg-emerald-500/10 border border-emerald-600/20 rounded-xl p-3 flex items-center gap-2 text-emerald-800">
               <ThiingsIcon name="check-circle" size="sm" />
               <div>
-                <span className="text-rose-800 font-medium">{t.alreadyTaken}</span>
+                <span className="font-medium">{t.alreadyTaken}</span>
                 {reservation.intervention_type && (
-                  <span className="text-rose-600 text-sm ml-2">
-                    ({reservation.intervention_type.replace('_', ' ')})
+                  <span className="text-emerald-800 text-sm ml-2">
+                    ({actionOptions.find((action) => action.id === reservation.intervention_type)?.label || reservation.intervention_type.replaceAll('_', ' ')})
                   </span>
                 )}
               </div>
@@ -256,7 +305,7 @@ export default function QuickInterventionModal({
                             : 'border-glass-border-dark hover:border-burgundy/50 hover:bg-soft-gray'
                         }`}
                       >
-                        <div className={`p-1.5 rounded-lg ${action.color}`}>
+                        <div className="p-1.5 rounded-lg bg-soft-gray text-stone-gray">
                           <ThiingsIcon name={action.icon} size="xs" />
                         </div>
                         <span className={`text-sm font-medium ${isSelected ? 'text-burgundy' : 'text-deep-charcoal'}`}>
@@ -301,10 +350,10 @@ export default function QuickInterventionModal({
           {/* Success State */}
           {logIntervention.isSuccess && (
             <div className="text-center py-6">
-              <div className="w-16 h-16 bg-rose-500/15 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 bg-emerald-500/15 text-emerald-800 rounded-full flex items-center justify-center mx-auto mb-4">
                 <ThiingsIcon name="check-circle" pxSize={32} />
               </div>
-              <p className="text-lg font-semibold text-rose-800">{t.success}</p>
+              <p className="text-lg font-semibold text-emerald-800">{t.success}</p>
             </div>
           )}
 

@@ -1,7 +1,7 @@
 /**
  * Cron Job: Cleanup Stale Waitlist Entries
  *
- * Cancels waitlist entries with status='waiting' older than 12 hours.
+ * Cancels active waitlist entries (waiting or notified) older than 12 hours.
  * Runs daily at 4 AM UTC — "0 4 * * *"
  */
 
@@ -36,8 +36,9 @@ module.exports = async (req, res) => {
 
     const { data, error, count } = await supabaseAdmin
       .from('waitlist')
-      .update({ status: 'cancelled', notes: 'Auto-cancelled: end of day', updated_at: new Date().toISOString() })
-      .eq('status', 'waiting')
+      // Keep guest/staff notes intact; the row and its history remain available.
+      .update({ status: 'cancelled', updated_at: new Date().toISOString() })
+      .in('status', ['waiting', 'notified'])
       .lt('added_at', cutoff)
       .select('id', { count: 'exact' });
 

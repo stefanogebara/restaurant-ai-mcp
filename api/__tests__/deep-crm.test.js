@@ -108,8 +108,8 @@ describe('customerMergeService', () => {
     it('groups customers with matching phone numbers', async () => {
       mockIs.mockResolvedValue({
         data: [
-          { customer_id: 'c1', customer_name: 'Alice', customer_phone: '+5511999', customer_email: null, total_visits: 5, total_revenue: 500, last_visit_date: '2026-03-01' },
-          { customer_id: 'c2', customer_name: 'Alice B', customer_phone: '+5511999', customer_email: null, total_visits: 2, total_revenue: 200, last_visit_date: '2026-02-15' },
+          { customer_id: 'c1', customer_name: 'Alice', customer_phone: '+5511999', customer_email: null, total_visits: 5, total_revenue: 500, last_visit_date: '2026-03-01', customer_tier: 'vip' },
+          { customer_id: 'c2', customer_name: 'Alice B', customer_phone: '+5511999', customer_email: null, total_visits: 2, total_revenue: 200, last_visit_date: '2026-02-15', customer_tier: 'regular' },
           { customer_id: 'c3', customer_name: 'Bob', customer_phone: '+5511888', customer_email: null, total_visits: 1, total_revenue: 100, last_visit_date: '2026-01-01' },
         ],
         error: null,
@@ -120,6 +120,8 @@ describe('customerMergeService', () => {
       expect(result[0].match_field).toBe('phone');
       expect(result[0].match_value).toBe('+5511999');
       expect(result[0].customers).toHaveLength(2);
+      expect(result[0].customers.map((customer) => customer.customer_tier)).toEqual(['vip', 'regular']);
+      expect(mockSelect).toHaveBeenCalledWith(expect.stringContaining('customer_tier'));
     });
 
     it('groups customers with matching email', async () => {
@@ -134,6 +136,35 @@ describe('customerMergeService', () => {
       const result = await findDuplicates('rest-1');
       expect(result).toHaveLength(1);
       expect(result[0].match_field).toBe('email');
+    });
+
+    it('does not show the same pair twice when both phone and email match', async () => {
+      mockIs.mockResolvedValue({
+        data: [
+          { customer_id: 'c1', customer_name: 'Alice', customer_phone: '+5511999', customer_email: 'alice@test.com' },
+          { customer_id: 'c2', customer_name: 'Alice B', customer_phone: '+5511999', customer_email: 'alice@test.com' },
+        ],
+        error: null,
+      });
+
+      const result = await findDuplicates('rest-1');
+      expect(result).toHaveLength(1);
+      expect(result[0].match_field).toBe('phone');
+    });
+
+    it('does not repeat an email subset already contained in a larger phone group', async () => {
+      mockIs.mockResolvedValue({
+        data: [
+          { customer_id: 'c1', customer_name: 'Alice', customer_phone: '+5511999', customer_email: 'alice@test.com' },
+          { customer_id: 'c2', customer_name: 'Alice B', customer_phone: '+5511999', customer_email: 'alice@test.com' },
+          { customer_id: 'c3', customer_name: 'Alice C', customer_phone: '+5511999', customer_email: null },
+        ],
+        error: null,
+      });
+
+      const result = await findDuplicates('rest-1');
+      expect(result).toHaveLength(1);
+      expect(result[0].customers).toHaveLength(3);
     });
 
     it('throws on database error', async () => {
@@ -356,6 +387,268 @@ describe('customerMergeService', () => {
 // ---------------------------------------------------------------------------
 // 2. update_profile action
 // ---------------------------------------------------------------------------
+
+describe('customers API — list risk threshold', () => {
+  let handler;
+  let query;
+
+  beforeEach(() => {
+    jest.resetModules();
+    query = {
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      is: jest.fn().mockReturnThis(),
+      gt: jest.fn().mockReturnThis(),
+      overlaps: jest.fn().mockReturnThis(),
+      contains: jest.fn().mockReturnThis(),
+      order: jest.fn().mockReturnThis(),
+      range: jest.fn().mockResolvedValue({
+        data: [{ customer_id: 'risk-1', churn_risk_score: '82', lifetime_value: '400', tags: null }],
+        count: 1,
+        error: null,
+      }),
+    };
+    jest.doMock('../../api/_lib/supabase', () => ({
+      supabaseAdmin: {
+        schema: jest.fn().mockReturnValue({ from: jest.fn().mockReturnValue(query) }),
+      },
+    }));
+    jest.doMock('../../api/_lib/auth', () => ({
+      verifyAuth: jest.fn().mockResolvedValue({ user: { restaurant_id: 'rest-1' } }),
+    }));
+    jest.doMock('../../api/_lib/secure-logger', () => ({
+      createSecureLogger: () => ({ info: jest.fn(), error: jest.fn(), warn: jest.fn() }),
+    }));
+    jest.doMock('../../api/_lib/subscription-middleware', () => ({
+      checkSubscription: jest.fn((_req, _res, next) => next()),
+      requireFeature: jest.fn(() => (_req, _res, next) => next()),
+    }));
+    jest.doMock('../../api/_lib/rate-limit', () => ({
+      checkAndApplyRateLimit: jest.fn().mockResolvedValue(false),
+    }));
+    jest.doMock('../../api/_lib/cors', () => ({ setInternalCors: jest.fn() }));
+    jest.doMock('../../api/_services/customerMergeService', () => ({
+      findDuplicates: jest.fn(), mergeCustomers: jest.fn(),
+    }));
+    handler = require('../customers');
+  });
+
+  const request = (minRiskScore) => ({
+    method: 'GET', query: { action: 'list', min_risk_score: minRiskScore }, headers: {},
+  });
+
+  it('filters above 70 inside the tenant query before sorting and pagination', async () => {
+    const res = mockRes();
+    await handler(request('70'), res);
+
+    expect(query.eq).toHaveBeenCalledWith('restaurant_id', 'rest-1');
+    expect(query.is).toHaveBeenCalledWith('merged_into', null);
+    expect(query.gt).toHaveBeenCalledWith('churn_risk_score', 70);
+    expect(query.gt.mock.invocationCallOrder[0]).toBeLessThan(query.range.mock.invocationCallOrder[0]);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({
+      success: true,
+      data: { customers: [expect.objectContaining({ customer_id: 'risk-1', churn_risk_score: 82 })], total: 1 },
+    });
+  });
+
+  it.each(['', 'NaN', 'Infinity', '-1', '101'])('rejects invalid threshold %j', async (value) => {
+    const res = mockRes();
+    await handler(request(value), res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(query.select).not.toHaveBeenCalled();
+  });
+
+  it('matches canonical and previously translated allergy and dietary presets within the tenant query', async () => {
+    const res = mockRes();
+    await handler({ method: 'GET', query: { action: 'list', allergy: 'Gluten', dietary: 'Vegetarian' }, headers: {} }, res);
+
+    expect(query.eq).toHaveBeenCalledWith('restaurant_id', 'rest-1');
+    expect(query.overlaps).toHaveBeenCalledWith('allergies', ['Gluten', 'Glúten']);
+    expect(query.overlaps).toHaveBeenCalledWith('dietary_restrictions', ['Vegetarian', 'Vegetariano']);
+    expect(query.overlaps.mock.invocationCallOrder[0]).toBeLessThan(query.range.mock.invocationCallOrder[0]);
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  it('includes every current Portuguese and Spanish preset label in the canonical filters', async () => {
+    const pt = require('../../client/src/i18n/locales/pt-BR.json').crm;
+    const es = require('../../client/src/i18n/locales/es.json').crm;
+    const groups = {
+      allergy: ['Gluten', 'Lactose', 'Nuts', 'Seafood', 'Soy', 'Eggs', 'Shellfish'],
+      dietary: ['Vegetarian', 'Vegan', 'Pescatarian', 'Kosher', 'Halal', 'Low-carb', 'Keto'],
+    };
+
+    for (const [filter, values] of Object.entries(groups)) {
+      for (const value of values) {
+        query.overlaps.mockClear();
+        const res = mockRes();
+        await handler({ method: 'GET', query: { action: 'list', [filter]: value }, headers: {} }, res);
+        const key = `${filter}_${value.toLowerCase().replace('-', '_')}`;
+        const field = filter === 'allergy' ? 'allergies' : 'dietary_restrictions';
+        const variants = query.overlaps.mock.calls.find(([column]) => column === field)?.[1];
+        expect(variants).toEqual(expect.arrayContaining([value, pt[key], es[key]]));
+        expect(res.status).toHaveBeenCalledWith(200);
+      }
+    }
+  });
+
+  it('keeps an exact array filter for custom allergy and dietary entries', async () => {
+    const res = mockRes();
+    await handler({ method: 'GET', query: { action: 'list', allergy: 'Sesame', dietary: 'No onions' }, headers: {} }, res);
+
+    expect(query.contains).toHaveBeenCalledWith('allergies', ['Sesame']);
+    expect(query.contains).toHaveBeenCalledWith('dietary_restrictions', ['No onions']);
+    expect(query.overlaps).not.toHaveBeenCalled();
+  });
+});
+
+describe('customers API — detail', () => {
+  let handler;
+  let customerQuery;
+  let reservationsQuery;
+  let upcomingQuery;
+  let notesQuery;
+
+  beforeEach(() => {
+    jest.resetModules();
+
+    customerQuery = {
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      single: jest.fn().mockResolvedValue({
+        data: {
+          customer_id: 'legacy-key', customer_phone: '+5511999000000', customer_name: 'Guest',
+          total_visits: 3, total_revenue: '420.00', avg_revenue_per_visit: '140.00',
+          lifetime_value: '504.00', churn_risk_score: '18', tags: null,
+        },
+        error: null,
+      }),
+    };
+    reservationsQuery = {
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      order: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockResolvedValue({ data: [{ id: 'reservation-1' }], error: null }),
+    };
+    upcomingQuery = {
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      gte: jest.fn().mockReturnThis(),
+      in: jest.fn().mockReturnThis(),
+      order: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockResolvedValue({ data: [], error: null }),
+    };
+    notesQuery = {
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      order: jest.fn().mockResolvedValue({ data: [{ id: 'note-1' }], error: null }),
+    };
+    const crmFrom = jest.fn(table => table === 'customer_ltv' ? customerQuery : notesQuery);
+    jest.doMock('../../api/_lib/supabase', () => ({
+      supabaseAdmin: {
+        schema: jest.fn().mockReturnValue({ from: crmFrom }),
+        from: jest.fn().mockReturnValueOnce(reservationsQuery).mockReturnValueOnce(upcomingQuery),
+      },
+    }));
+    jest.doMock('../../api/_lib/auth', () => ({
+      verifyAuth: jest.fn().mockResolvedValue({ user: { restaurant_id: 'rest-1' } }),
+    }));
+    jest.doMock('../../api/_lib/secure-logger', () => ({
+      createSecureLogger: () => ({ info: jest.fn(), error: jest.fn(), warn: jest.fn() }),
+    }));
+    jest.doMock('../../api/_lib/subscription-middleware', () => ({
+      checkSubscription: jest.fn((_req, _res, next) => next()),
+      requireFeature: jest.fn(() => (_req, _res, next) => next()),
+    }));
+    jest.doMock('../../api/_lib/rate-limit', () => ({
+      checkAndApplyRateLimit: jest.fn().mockResolvedValue(false),
+    }));
+    jest.doMock('../../api/_lib/cors', () => ({ setInternalCors: jest.fn() }));
+    jest.doMock('../../api/_services/customerMergeService', () => ({
+      findDuplicates: jest.fn(), mergeCustomers: jest.fn(),
+    }));
+    handler = require('../customers');
+  });
+
+  const request = () => ({ method: 'GET', query: { action: 'detail', customer_id: 'legacy-key', from_date: '2026-10-08' }, headers: {} });
+
+  it('uses the stored phone for history and returns the detail envelope', async () => {
+    const res = mockRes();
+    await handler(request(), res);
+
+    expect(reservationsQuery.eq).toHaveBeenCalledWith('customer_phone', '+5511999000000');
+    expect(upcomingQuery.eq).toHaveBeenCalledWith('restaurant_id', 'rest-1');
+    expect(upcomingQuery.eq).toHaveBeenCalledWith('customer_phone', '+5511999000000');
+    expect(upcomingQuery.gte).toHaveBeenCalledWith('date', '2026-10-08');
+    expect(upcomingQuery.in).toHaveBeenCalledWith('status', ['confirmed', 'pending']);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({
+      success: true,
+      data: {
+        customer: expect.objectContaining({
+          customer_name: 'Guest', total_visits: 3, total_revenue: 420,
+          avg_revenue_per_visit: 140, lifetime_value: 504, churn_risk_score: 18, tags: [],
+        }),
+        reservations: [{ id: 'reservation-1' }],
+        notes: [{ id: 'note-1' }],
+      },
+    });
+  });
+
+  it('includes the earliest upcoming booking even when it is outside the ten latest reservations', async () => {
+    const latest = Array.from({ length: 10 }, (_, index) => ({ id: `future-${index}`, date: '2026-12-01' }));
+    reservationsQuery.limit.mockResolvedValue({ data: latest, error: null });
+    upcomingQuery.limit.mockResolvedValue({ data: [{ id: 'earliest', date: '2026-10-09' }], error: null });
+    const res = mockRes();
+    await handler(request(), res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json.mock.calls[0][0].data.reservations).toHaveLength(11);
+    expect(res.json.mock.calls[0][0].data.reservations).toContainEqual({ id: 'earliest', date: '2026-10-09' });
+    expect(upcomingQuery.order).toHaveBeenNthCalledWith(1, 'date', { ascending: true });
+    expect(upcomingQuery.order).toHaveBeenNthCalledWith(2, 'time', { ascending: true });
+  });
+
+  it('does not duplicate an upcoming booking already present in history', async () => {
+    upcomingQuery.limit.mockResolvedValue({ data: [{ id: 'reservation-1' }], error: null });
+    const res = mockRes();
+    await handler(request(), res);
+    expect(res.json.mock.calls[0][0].data.reservations).toEqual([{ id: 'reservation-1' }]);
+  });
+
+  it('rejects a malformed from_date before querying customer data', async () => {
+    const res = mockRes();
+    await handler({ ...request(), query: { ...request().query, from_date: 'tomorrow' } }, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(customerQuery.select).not.toHaveBeenCalled();
+  });
+
+  it('does not report no visit details when the reservation lookup fails', async () => {
+    reservationsQuery.limit.mockResolvedValue({ data: null, error: { message: 'unavailable' } });
+    const res = mockRes();
+    await handler(request(), res);
+
+    expect(res.status).toHaveBeenCalledWith(503);
+    expect(res.json).toHaveBeenCalledWith({ success: false, error: 'Customer detail temporarily unavailable' });
+  });
+
+  it('does not silently hide the next reservation when its lookup fails', async () => {
+    upcomingQuery.limit.mockResolvedValue({ data: null, error: { message: 'unavailable' } });
+    const res = mockRes();
+    await handler(request(), res);
+    expect(res.status).toHaveBeenCalledWith(503);
+  });
+
+  it('does not report no notes when the notes lookup is malformed', async () => {
+    notesQuery.order.mockResolvedValue({ data: null, error: null });
+    const res = mockRes();
+    await handler(request(), res);
+
+    expect(res.status).toHaveBeenCalledWith(503);
+    expect(res.json).toHaveBeenCalledWith({ success: false, error: 'Customer detail temporarily unavailable' });
+  });
+});
 
 describe('customers API — update_profile', () => {
   let handler;

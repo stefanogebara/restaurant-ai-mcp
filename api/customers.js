@@ -18,6 +18,31 @@ const { findDuplicates, mergeCustomers } = require('./_services/customerMergeSer
 
 const logger = createSecureLogger('Customers');
 
+// Presets were previously saved as translated UI labels. Keep directory
+// filters inclusive until those records are edited and saved canonically.
+const ALLERGY_FILTER_ALIASES = {
+  Gluten: ['Glúten'],
+  Lactose: ['Lactosa'],
+  Nuts: ['Nozes', 'Frutos secos'],
+  Seafood: ['Frutos do Mar', 'Mariscos'],
+  Soy: ['Soja'],
+  Eggs: ['Ovos', 'Huevos'],
+  Shellfish: ['Crustáceos', 'Crustaceos'],
+};
+const DIETARY_FILTER_ALIASES = {
+  Vegetarian: ['Vegetariano'],
+  Vegan: ['Vegano'],
+  Pescatarian: ['Pescetariano'],
+  Kosher: [], Halal: [], 'Low-carb': [], Keto: [],
+};
+
+function filterPresetVariants(value, aliases) {
+  const entry = Object.entries(aliases).find(([canonical, translations]) =>
+    [canonical, ...translations].some((variant) => variant.toLocaleLowerCase() === value.toLocaleLowerCase())
+  );
+  return entry ? [...new Set([entry[0], ...entry[1]])] : null;
+}
+
 // Use restaurant schema for customer_ltv and customer_notes
 function crmDb() {
   return supabaseAdmin.schema('restaurant');
@@ -31,6 +56,7 @@ async function handleList(req, res) {
     const {
       search,
       tier,
+      min_risk_score,
       tag,
       allergy,
       dietary,
@@ -49,6 +75,16 @@ async function handleList(req, res) {
       });
     }
 
+    // The relationship review queue uses the same strict >70 threshold as
+    // Insights. Apply it before pagination so its total and pages stay true.
+    const riskThreshold = min_risk_score == null ? null : Number(min_risk_score);
+    if (riskThreshold !== null && (
+      typeof min_risk_score !== 'string' || min_risk_score.trim() === ''
+      || !Number.isFinite(riskThreshold) || riskThreshold < 0 || riskThreshold > 100
+    )) {
+      return res.status(400).json({ success: false, error: 'Invalid min_risk_score. Must be a number from 0 to 100' });
+    }
+
     const validSortFields = [
       'last_visit_date', 'total_visits', 'total_revenue',
       'lifetime_value', 'churn_risk_score', 'customer_name',
@@ -65,7 +101,8 @@ async function handleList(req, res) {
         'customer_id, customer_name, customer_phone, customer_email, total_visits, total_revenue, avg_revenue_per_visit, customer_tier, lifetime_value, churn_risk_score, last_visit_date, first_visit_date, tags',
         { count: 'exact' }
       )
-      .eq('restaurant_id', restaurantId);
+      .eq('restaurant_id', restaurantId)
+      .is('merged_into', null);
 
     // Search filter: ILIKE on name or exact match on phone
     if (search) {
@@ -82,19 +119,28 @@ async function handleList(req, res) {
       query = query.eq('customer_tier', tier);
     }
 
+    if (riskThreshold !== null) {
+      query = query.gt('churn_risk_score', riskThreshold);
+    }
+
     // Tag filter (JSONB contains)
     if (tag) {
       query = query.contains('tags', [tag.trim().toLowerCase()]);
     }
 
-    // Allergy filter (array contains)
+    // Existing records may have a translated preset, while new edits save the
+    // canonical value. PostgreSQL array overlap matches either spelling.
     if (allergy) {
-      query = query.contains('allergies', [allergy.trim()]);
+      const value = allergy.trim();
+      const variants = filterPresetVariants(value, ALLERGY_FILTER_ALIASES);
+      query = variants ? query.overlaps('allergies', variants) : query.contains('allergies', [value]);
     }
 
-    // Dietary filter (array contains)
+    // Preserve exact matching for free-text values outside the preset list.
     if (dietary) {
-      query = query.contains('dietary_restrictions', [dietary.trim()]);
+      const value = dietary.trim();
+      const variants = filterPresetVariants(value, DIETARY_FILTER_ALIASES);
+      query = variants ? query.overlaps('dietary_restrictions', variants) : query.contains('dietary_restrictions', [value]);
     }
 
     // Sorting and pagination
@@ -130,29 +176,58 @@ async function handleList(req, res) {
  */
 async function handleDetail(req, res) {
   try {
-    const { customer_id } = req.query;
+    const { customer_id, from_date } = req.query;
     const restaurantId = req.user.restaurant_id;
 
     if (!customer_id) {
       return res.status(400).json({ success: false, error: 'Missing required parameter: customer_id' });
     }
+    if (from_date != null && (typeof from_date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(from_date))) {
+      return res.status(400).json({ success: false, error: 'Invalid from_date. Use YYYY-MM-DD' });
+    }
+    const fromDate = from_date || new Date().toISOString().slice(0, 10);
 
-    // Fetch customer, reservations, and notes in parallel
-    const [customerResult, reservationsResult, notesResult] = await Promise.all([
-      crmDb()
-        .from('customer_ltv')
-        .select('customer_id, restaurant_id, customer_name, customer_email, customer_phone, total_visits, total_revenue, avg_revenue_per_visit, lifetime_value, churn_risk_score, customer_tier, first_visit_date, last_visit_date, tags, allergies, dietary_restrictions, seating_preferences, special_occasions, merged_into, created_at, updated_at')
-        .eq('customer_id', customer_id)
-        .eq('restaurant_id', restaurantId)
-        .single(),
+    const customerResult = await crmDb()
+      .from('customer_ltv')
+      .select('customer_id, restaurant_id, customer_name, customer_email, customer_phone, total_visits, total_revenue, avg_revenue_per_visit, lifetime_value, churn_risk_score, customer_tier, first_visit_date, last_visit_date, tags, allergies, dietary_restrictions, seating_preferences, special_occasions, merged_into, created_at, updated_at')
+      .eq('customer_id', customer_id)
+      .eq('restaurant_id', restaurantId)
+      .single();
 
+    if (customerResult.error) {
+      if (customerResult.error.code === 'PGRST116') {
+        return res.status(404).json({ success: false, error: 'Customer not found' });
+      }
+      throw customerResult.error;
+    }
+    if (!customerResult.data) throw new Error('Customer detail returned no customer');
+
+    // The CRM identifier is usually a phone number, but may differ for older
+    // imports. Look up reservation history with the stored phone when present.
+    const phone = customerResult.data.customer_phone || customer_id;
+    const reservationFields = 'id, date, time, party_size, status, customer_name, special_requests, created_at';
+    const [reservationsResult, nextReservationResult, notesResult] = await Promise.all([
       supabaseAdmin
         .from('reservations')
-        .select('id, date, time, party_size, status, customer_name, special_requests, created_at')
+        .select(reservationFields)
         .eq('restaurant_id', restaurantId)
-        .eq('customer_phone', customer_id)
+        .eq('customer_phone', phone)
         .order('date', { ascending: false })
         .limit(10),
+
+      // Latest-first history can omit the earliest upcoming booking when a
+      // guest has more than ten future reservations. Fetch that booking
+      // independently, then merge it into the existing response contract.
+      supabaseAdmin
+        .from('reservations')
+        .select(reservationFields)
+        .eq('restaurant_id', restaurantId)
+        .eq('customer_phone', phone)
+        .gte('date', fromDate)
+        .in('status', ['confirmed', 'pending'])
+        .order('date', { ascending: true })
+        .order('time', { ascending: true })
+        .limit(1),
 
       crmDb()
         .from('customer_notes')
@@ -162,19 +237,20 @@ async function handleDetail(req, res) {
         .order('created_at', { ascending: false }),
     ]);
 
-    if (customerResult.error) {
-      if (customerResult.error.code === 'PGRST116') {
-        return res.status(404).json({ success: false, error: 'Customer not found' });
-      }
-      throw customerResult.error;
+    if (reservationsResult.error || nextReservationResult.error || notesResult.error ||
+        !Array.isArray(reservationsResult.data) || !Array.isArray(nextReservationResult.data) || !Array.isArray(notesResult.data)) {
+      logger.error('Customer detail is incomplete', {
+        reservationsError: reservationsResult.error,
+        nextReservationError: nextReservationResult.error,
+        notesError: notesResult.error,
+      });
+      return res.status(503).json({ success: false, error: 'Customer detail temporarily unavailable' });
     }
 
-    if (reservationsResult.error) {
-      logger.error('Error fetching reservations for customer detail:', reservationsResult.error);
-    }
-
-    if (notesResult.error) {
-      logger.error('Error fetching notes for customer detail:', notesResult.error);
+    const reservations = [...reservationsResult.data];
+    const earliestUpcoming = nextReservationResult.data[0];
+    if (earliestUpcoming && !reservations.some(reservation => reservation.id === earliestUpcoming.id)) {
+      reservations.push(earliestUpcoming);
     }
 
     return res.status(200).json({
@@ -182,10 +258,16 @@ async function handleDetail(req, res) {
       data: {
         customer: {
           ...customerResult.data,
+          total_visits: Number(customerResult.data.total_visits || 0),
+          total_revenue: Number(customerResult.data.total_revenue || 0),
+          avg_revenue_per_visit: Number(customerResult.data.avg_revenue_per_visit || 0),
+          lifetime_value: Number(customerResult.data.lifetime_value || 0),
+          churn_risk_score: customerResult.data.churn_risk_score == null
+            ? null : Number(customerResult.data.churn_risk_score),
           tags: customerResult.data.tags || [],
         },
-        reservations: reservationsResult.data || [],
-        notes: notesResult.data || [],
+        reservations,
+        notes: notesResult.data,
       },
     });
 

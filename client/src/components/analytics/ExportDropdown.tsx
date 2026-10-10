@@ -37,7 +37,7 @@ export default function ExportDropdown({ data, dateLabel, onExportAll, isExporti
         type="button"
         onClick={() => setOpen(o => !o)}
         disabled={isExporting}
-        className="flex items-center gap-1.5 px-4 py-2 min-h-[44px] sm:min-h-0 glass-pill text-muted-stone hover:text-deep-charcoal rounded-[46px] text-[13px] font-medium transition-colors"
+        className="flex min-h-[44px] items-center gap-1.5 rounded-full border border-brand-line bg-transparent px-3 py-2 text-[13px] font-medium text-brand-ink transition-colors hover:border-brand-action hover:bg-brand-line/30 sm:min-h-0 sm:px-4"
       >
         {isExporting
           ? <span className="w-4 h-4 border border-stone-gray border-t-transparent rounded-full animate-spin inline-block" />
@@ -48,7 +48,7 @@ export default function ExportDropdown({ data, dateLabel, onExportAll, isExporti
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 z-50 glass-panel min-w-[210px] py-1.5">
+        <div className="absolute right-0 top-full mt-2 z-50 min-w-[210px] rounded-xl border border-brand-line bg-brand-paper py-1.5 shadow-[0_14px_34px_rgba(41,50,34,0.12)]">
           <button
             type="button"
             disabled={!hasReservations}
@@ -56,10 +56,10 @@ export default function ExportDropdown({ data, dateLabel, onExportAll, isExporti
               date: r.date, time: r.time, name: r.customer_name,
               party_size: r.party_size, status: r.status, id: r.reservation_id,
             })), ['date', 'time', 'name', 'party_size', 'status', 'id'])}
-            className={`w-full text-left px-4 py-2.5 text-sm text-muted-stone transition-colors ${hasReservations ? 'hover:bg-soft-gray' : 'opacity-40 cursor-not-allowed'}`}
+            className={`w-full text-left px-4 py-2.5 text-sm text-brand-ink transition-colors ${hasReservations ? 'hover:bg-brand-line/30' : 'opacity-40 cursor-not-allowed'}`}
           >
             {t('analytics.export.reservationsCsv', 'Reservations CSV')}
-            {!hasReservations && <span className="ml-1 text-xs text-muted-stone">({t('analytics.export.useAllFirst', 'use All first')})</span>}
+            {!hasReservations && <span className="ml-1 text-xs text-brand-muted">({t('analytics.export.useAllFirst', 'use All first')})</span>}
           </button>
 
           <button
@@ -68,7 +68,7 @@ export default function ExportDropdown({ data, dateLabel, onExportAll, isExporti
               date: d.date, day: d.dayName,
               reservations: d.reservations, completed_services: d.completed_services,
             })), ['date', 'day', 'reservations', 'completed_services'])}
-            className="w-full text-left px-4 py-2.5 text-sm text-stone-gray hover:bg-soft-gray transition-colors"
+            className="w-full text-left px-4 py-2.5 text-sm text-brand-ink hover:bg-brand-line/30 transition-colors"
           >
             {t('analytics.export.summaryCsv', 'Summary CSV')}
           </button>
@@ -79,17 +79,17 @@ export default function ExportDropdown({ data, dateLabel, onExportAll, isExporti
               table: t.table_number, capacity: t.capacity, location: t.location,
               times_used: t.times_used, utilization_pct: t.utilization_rate,
             })), ['table', 'capacity', 'location', 'times_used', 'utilization_pct'])}
-            className="w-full text-left px-4 py-2.5 text-sm text-stone-gray hover:bg-soft-gray transition-colors"
+            className="w-full text-left px-4 py-2.5 text-sm text-brand-ink hover:bg-brand-line/30 transition-colors"
           >
             {t('analytics.export.tablesCsv', 'Tables CSV')}
           </button>
 
-          <div className="border-t border-glass-border-dark my-1" />
+          <div className="border-t border-brand-line my-1" />
 
           <button
             type="button"
             onClick={() => { onExportAll(); setOpen(false); }}
-            className="w-full text-left px-4 py-2.5 text-sm font-semibold text-deep-charcoal hover:bg-soft-gray transition-colors"
+            className="w-full text-left px-4 py-2.5 text-sm font-medium text-brand-action hover:bg-brand-line/30 transition-colors"
           >
             {t('analytics.export.downloadAll', 'Download All')}
           </button>

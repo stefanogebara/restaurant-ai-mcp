@@ -74,7 +74,7 @@ export default function VoiceGrid({
   if (isLoading) {
     return (
       <div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" role="status" aria-label="Loading voices">
+        <div className="grid grid-cols-1 gap-x-8 md:grid-cols-2" role="status" aria-label="Loading voices">
           {Array.from({ length: 6 }).map((_, i) => (
             <VoiceCardSkeleton key={i} />
           ))}
@@ -85,12 +85,10 @@ export default function VoiceGrid({
 
   if (voices.length === 0) {
     return (
-      <div className="text-center py-10">
-        <div className="w-14 h-14 mx-auto mb-3 bg-soft-gray rounded-2xl flex items-center justify-center">
-          <ThiingsIcon name="search" pxSize={24} />
-        </div>
-        <p className="text-sm font-semibold text-deep-charcoal">No voices found</p>
-        <p className="text-xs text-stone-gray mt-1">Try adjusting your search or filters.</p>
+      <div className="border-y border-brand-line py-8 text-center font-brand">
+        <ThiingsIcon name="search" pxSize={22} />
+        <p className="mt-2 text-sm font-semibold text-brand-ink">No voices found</p>
+        <p className="mt-1 text-xs text-brand-muted">Try adjusting your search or filters.</p>
       </div>
     );
   }
@@ -98,13 +96,13 @@ export default function VoiceGrid({
   return (
     <div>
       {source === 'own_voices_fallback' && (
-        <p className="text-xs text-stone-gray bg-soft-gray rounded-xl px-3 py-2 mb-3">
+        <p className="mb-3 border-l-2 border-amber-700 pl-3 text-xs text-amber-900">
           Showing curated voices. Contact support to unlock the full voice library.
         </p>
       )}
 
       <div
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[520px] overflow-y-auto pr-1"
+        className="grid max-h-[520px] grid-cols-1 gap-x-8 overflow-y-auto pr-1 md:grid-cols-2"
         role="radiogroup"
         aria-label="Available voices"
         onKeyDown={handleGridKeyDown}
@@ -132,7 +130,7 @@ export default function VoiceGrid({
             type="button"
             onClick={onLoadMore}
             disabled={isLoadingMore}
-            className="px-6 py-2.5 text-sm font-medium text-burgundy bg-burgundy/5 hover:bg-burgundy/10 rounded-xl transition-colors disabled:opacity-50"
+            className="min-h-10 text-sm font-medium text-brand-action underline underline-offset-4 hover:text-brand-ink disabled:opacity-50"
           >
             {isLoadingMore ? 'Loading more voices...' : 'Show more voices'}
           </button>

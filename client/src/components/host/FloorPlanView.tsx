@@ -6,11 +6,10 @@ import FloorPlanProgressRing from './FloorPlanProgressRing';
 import FloorPlanHoverCard from './FloorPlanHoverCard';
 import {
   getStatusStyle,
+  statusLabel,
   getTableSize,
   hasPositionData,
   autoLayoutTables,
-  renderChairs,
-  renderPlates,
   type PartyInfo,
 } from './floorPlanHelpers';
 
@@ -19,7 +18,9 @@ interface FloorPlanViewProps {
   activeParties?: ActiveParty[];
   onTableClick?: (table: Table) => void;
   compact?: boolean;
-  /** Modo Serviço — salão escuro, mesas ocupadas brilham. */
+  /** Dashboard fallback: show truthful availability when no room positions exist. */
+  autoPresentation?: 'map' | 'availability';
+  /** Modo Serviço — salão escuro com estados de mesa de alto contraste. */
   night?: boolean;
 }
 
@@ -28,10 +29,12 @@ export default function FloorPlanView({
   activeParties = [],
   onTableClick,
   compact = false,
+  autoPresentation = 'map',
   night = false,
 }: FloorPlanViewProps) {
   const { t } = useTranslation();
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [focusedId, setFocusedId] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(680);
 
@@ -93,10 +96,85 @@ export default function FloorPlanView({
   }
 
   return (
-    <div className="space-y-5" ref={containerRef}>
+    <div className="space-y-4" ref={containerRef}>
       {Object.entries(tablesByLocation).map(([location, locTables]) => {
+        // The narrow preview is a proportional overview of the saved plan.
+        // Coordinates stay untouched; only restaurants without a plan get
+        // an automatic layout. Reflowing a 4×2 room into a 2-column list
+        // made the preview look like unrelated table cards.
+        const narrowPreview = containerWidth < 540;
         const useAuto = !hasPositionData(locTables);
-        const canvasWidth = Math.max(380, containerWidth - 32);
+        if (useAuto && autoPresentation === 'availability') {
+          const states: Record<string, { label: string; nightLabel: string }> = {
+            available: { label: 'text-brand-muted', nightLabel: 'text-white/70' },
+            occupied: { label: 'text-emerald-900', nightLabel: 'text-emerald-300' },
+            reserved: { label: 'text-amber-950', nightLabel: 'text-amber-200' },
+            'being cleaned': { label: 'text-amber-950', nightLabel: 'text-amber-200' },
+          };
+          // Without saved positions, table number is the only real spatial
+          // reference a host has. Keep that order stable as statuses change.
+          const orderedTables = [...locTables].sort((a, b) =>
+            String(a.table_number).localeCompare(String(b.table_number), undefined, { numeric: true }));
+
+          return (
+            <div key={location}>
+              {Object.keys(tablesByLocation).length > 1 && <div className="mb-2 flex items-baseline gap-2 px-1">
+                <span className={`text-[13px] font-medium ${night ? 'text-white' : 'text-brand-ink'}`}>{t(`floorPlan.location.${location.toLowerCase()}`, location)}</span>
+                <span className={`text-[11px] ${night ? 'text-white/55' : 'text-brand-muted'}`}>{locTables.length} {locTables.length === 1 ? t('floorPlan.table', 'table') : t('floorPlan.tables', 'tables')}</span>
+              </div>}
+              <div className="grid grid-cols-2 gap-x-2 gap-y-1 sm:grid-cols-4 sm:gap-x-3">
+                {orderedTables.map(table => {
+                  const state = states[table.status?.toLowerCase() || ''] || { label: 'text-brand-muted', nightLabel: 'text-white/70' };
+                  const glyph = getStatusStyle(table.status, night);
+                  const shape = table.shape?.toLowerCase() || 'round';
+                  const isRound = ['round', 'circle'].includes(shape);
+                  const isLong = ['rectangle', 'long', 'oval', 'booth'].includes(shape);
+                  // Markers reflect the recorded capacity. Larger banquet
+                  // tables use the exact written count rather than a false
+                  // partial set of chairs crammed around this small glyph.
+                  const seatMarkers = Number.isInteger(table.capacity) && table.capacity > 0 && table.capacity <= 12
+                    ? table.capacity : 0;
+                  const status = statusLabel(table.status, (key, fallback) => t(key, fallback ?? key));
+                  return <button
+                    key={table.id}
+                    type="button"
+                    onClick={() => onTableClick?.(table)}
+                    aria-label={`${t('tableLayout.table', 'Table')} ${table.table_number}, ${status}, ${table.capacity} ${t('floorPlan.seats', 'seats')}`}
+                    className={`group flex min-h-[84px] min-w-0 items-center gap-2 rounded-xl px-1.5 py-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-action ${night ? 'hover:bg-white/5' : 'hover:bg-brand-line/25'}`}
+                  >
+                    <svg data-table-inventory-glyph aria-hidden="true" viewBox="0 0 64 64" className="h-[60px] w-[60px] shrink-0 overflow-visible">
+                      {Array.from({ length: seatMarkers }, (_, index) => (
+                        <rect key={index} data-seat-marker x="28" y="2" width="8" height="7" rx="3"
+                          transform={`rotate(${index * 360 / seatMarkers} 32 32)`}
+                          fill={glyph.chairFill} stroke={glyph.stroke} strokeWidth="1.2" />
+                      ))}
+                      {isRound
+                        ? <circle cx="32" cy="32" r="22" fill={glyph.fill} stroke={glyph.stroke} strokeWidth="1.6" strokeDasharray={glyph.dash} />
+                        : <rect x={isLong ? 8 : 10} y={isLong ? 16 : 10} width={isLong ? 48 : 44} height={isLong ? 32 : 44}
+                            rx={shape === 'oval' ? 16 : 10} fill={glyph.fill} stroke={glyph.stroke} strokeWidth="1.6" strokeDasharray={glyph.dash} />}
+                      <text x="32" y="33" textAnchor="middle" dominantBaseline="middle"
+                        fill={night ? glyph.text : table.status?.toLowerCase() === 'available' ? '#293222' : glyph.text}
+                        fontFamily="'Instrument Sans',Inter,sans-serif" fontSize="22" fontWeight="500">
+                        {table.table_number}
+                      </text>
+                    </svg>
+                    <span className="min-w-0 font-brand">
+                      <span className={`block whitespace-nowrap text-[12px] font-medium leading-tight ${night ? state.nightLabel : state.label}`}>
+                        {status}
+                      </span>
+                      <span className={`mt-1 block whitespace-nowrap text-[12px] leading-tight ${night ? 'text-white/70' : 'text-brand-muted'}`}>
+                        {table.capacity} {t('floorPlan.seats', 'seats')}
+                      </span>
+                    </span>
+                  </button>;
+                })}
+              </div>
+            </div>
+          );
+        }
+        const canvasWidth = narrowPreview
+          ? 580
+          : Math.max(380, Math.min(760, containerWidth - 32));
         const layout = useAuto ? autoLayoutTables(locTables, canvasWidth) : null;
 
         let manualPos: { table: Table; x: number; y: number; w: number; h: number }[] = [];
@@ -118,59 +196,37 @@ export default function FloorPlanView({
         const positions = useAuto ? layout!.positions : manualPos;
         const svgW = useAuto ? layout!.totalWidth : manualBounds.width;
         const svgH = useAuto ? layout!.totalHeight : manualBounds.height;
+        // Preserve saved floor coordinates at a readable scale on desktop.
+        // The old width="100%" enlarged a small plan to fill any wide card.
+        const displayWidth = Math.min(svgW, narrowPreview ? containerWidth - 4 : 760);
         const hoveredPos = positions.find(p => p.table.id === hoveredId);
-
-        // Warm Glass: zonas externas em âmbar, internas em stone — nada
-        // fora da paleta (o arco-íris antigo era herança do tema Nordic).
-        const locationColors: Record<string, string> = {
-          'Indoor': '#706A65', 'Patio': '#D97706', 'Bar': '#9F1239', 'Main': '#706A65',
-        };
-        const dotColor = locationColors[location] || '#706A65';
 
         return (
           <div key={location}>
-            <div className="flex items-center gap-3 mb-4 mt-2">
-              <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: dotColor }} />
-              <span className="text-sm font-semibold text-deep-charcoal">{t(`floorPlan.location.${location.toLowerCase()}`, location)}</span>
-              <span className="text-xs bg-soft-gray text-muted-stone px-2 py-0.5 rounded-full font-medium flex-shrink-0">
+            <div className="flex items-baseline gap-2 px-2 mb-2">
+              <span className="text-[13px] font-medium text-deep-charcoal">{t(`floorPlan.location.${location.toLowerCase()}`, location)}</span>
+              <span className="text-[11px] text-muted-stone">
                 {locTables.length} {locTables.length === 1 ? t('floorPlan.table', 'table') : t('floorPlan.tables', 'tables')}
               </span>
-              <div className="flex-1 h-px bg-border-gray" />
             </div>
 
             <div
-              className={`rounded-2xl overflow-hidden border ${night ? 'border-white/10' : 'border-border-gray bg-white'}`}
-              style={{ maxWidth: '100%', overflowX: 'auto', ...(night ? { backgroundColor: '#221E1B' } : {}) }}
+              className="overflow-hidden"
+              style={{ maxWidth: '100%', overflowX: 'auto', backgroundColor: night ? '#221E1B' : undefined }}
             >
               <svg
-                width="100%"
+                width={displayWidth}
                 viewBox={`0 0 ${svgW} ${svgH}`}
-                className="block"
-                style={{ minHeight: compact ? 160 : 220, minWidth: 280, maxWidth: '100%' }}
+                className="block mx-auto"
+                style={{ minHeight: narrowPreview ? undefined : compact ? 160 : 220 }}
               >
                 <defs>
-                  <pattern id={`fpDots-${location}`} patternUnits="userSpaceOnUse" width="20" height="20">
-                    <circle cx="10" cy="10" r="0.75" fill="#B5ADA4" opacity="0.28" />
-                  </pattern>
-                  <pattern id={`fpGrid-${location}`} patternUnits="userSpaceOnUse" width="40" height="40">
-                    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#C8C0B6" strokeWidth="0.4" opacity="0.5" />
-                  </pattern>
                   <filter id={`fpShad-${location}`} x="-8%" y="-8%" width="116%" height="124%">
                     <feDropShadow dx="0" dy="1.5" stdDeviation="3" floodColor="#7A6E65" floodOpacity="0.09" />
                   </filter>
                   <filter id={`fpShadHov-${location}`} x="-12%" y="-12%" width="124%" height="136%">
                     <feDropShadow dx="0" dy="3" stdDeviation="6" floodColor="#7A6E65" floodOpacity="0.15" />
                   </filter>
-                  {/* Modo Serviço: mesas ocupadas brilham no salão escuro */}
-                  <filter id={`fpGlow-${location}`} x="-40%" y="-40%" width="180%" height="180%">
-                    <feDropShadow dx="0" dy="0" stdDeviation="9" floodColor="#9F1239" floodOpacity="0.5" />
-                  </filter>
-                  {positions.map(({ table }) => (
-                    <radialGradient key={`rg-${table.id}`} id={`rg-${table.id}`} cx="40%" cy="35%" r="65%">
-                      <stop offset="0%" stopColor="white" stopOpacity="0.35" />
-                      <stop offset="100%" stopColor="white" stopOpacity="0" />
-                    </radialGradient>
-                  ))}
                   <style>
                     {`
                       @keyframes fpLinkDash {
@@ -182,9 +238,7 @@ export default function FloorPlanView({
                   </style>
                 </defs>
 
-                <rect width="100%" height="100%" fill={night ? '#221E1B' : '#F8F5F0'} />
-                {!night && <rect width="100%" height="100%" fill={`url(#fpGrid-${location})`} />}
-                <rect width="100%" height="100%" fill={`url(#fpDots-${location})`} opacity={night ? 0.35 : 1} />
+                {night && <rect width="100%" height="100%" fill="#221E1B" />}
 
                 {/* Joinable connector lines */}
                 {(() => {
@@ -224,61 +278,72 @@ export default function FloorPlanView({
                   const isOccupied = table.status?.toLowerCase() === 'occupied';
                   const ringR = Math.max(w, h) / 2 + 11;
                   const glassFilter = night
-                    ? (isOccupied ? `url(#fpGlow-${location})` : undefined)
+                    ? undefined
                     : (isHovered ? `url(#fpShadHov-${location})` : `url(#fpShad-${location})`);
 
                   return (
                     <g
                       key={table.id}
                       className="cursor-pointer"
+                      role={onTableClick ? 'button' : undefined}
+                      tabIndex={onTableClick ? 0 : undefined}
+                      aria-label={`${t('tableLayout.table', 'Table')} ${table.table_number}, ${statusLabel(table.status, (key, fallback) => t(key, fallback ?? key))}, ${table.capacity} ${t('floorPlan.seats', 'seats')}`}
                       onClick={() => onTableClick?.(table)}
+                      onKeyDown={(event) => {
+                        if (onTableClick && (event.key === 'Enter' || event.key === ' ')) {
+                          event.preventDefault();
+                          onTableClick(table);
+                        }
+                      }}
                       onMouseEnter={() => setHoveredId(table.id)}
                       onMouseLeave={() => setHoveredId(null)}
+                      onFocus={() => setFocusedId(table.id)}
+                      onBlur={() => setFocusedId(null)}
                       filter={glassFilter}
                     >
-                      {isOccupied && party && (
+                      {focusedId === table.id && (isRound
+                        ? <circle cx={cx} cy={cy} r={w / 2 + 7} fill="none" stroke={night ? '#FFFFFF' : '#1C1917'} strokeWidth={2} />
+                        : <rect x={x - 7} y={y - 7} width={w + 14} height={h + 14} rx={18} fill="none" stroke={night ? '#FFFFFF' : '#1C1917'} strokeWidth={2} />)}
+                      {isOccupied && party && !narrowPreview && (
                         <FloorPlanProgressRing cx={cx} cy={cy} radius={ringR} party={party} />
                       )}
-
-                      {renderChairs(cx, cy, w, h, table.capacity || 2, shape, st.chairFill)}
 
                       {isRound ? (
                         <>
                           <circle cx={cx} cy={cy} r={w / 2} fill={st.fill} stroke={st.stroke} strokeWidth={2} strokeDasharray={st.dash} />
-                          {!isOccupied && <circle cx={cx} cy={cy} r={w / 2} fill={`url(#rg-${table.id})`} />}
                         </>
                       ) : shape === 'booth' ? (
                         <>
                           <rect x={x} y={y} width={w} height={h} rx={13} fill={st.fill} stroke={st.stroke} strokeWidth={2} strokeDasharray={st.dash} />
-                          {!isOccupied && <rect x={x + 3} y={y + 3} width={w - 6} height={h / 3} rx={7} fill="white" opacity={0.25} />}
                         </>
                       ) : (
                         <>
                           <rect x={x} y={y} width={w} height={h} rx={12} fill={st.fill} stroke={st.stroke} strokeWidth={2} strokeDasharray={st.dash} />
-                          {!isOccupied && <rect x={x + 3} y={y + 3} width={w - 6} height={h / 3} rx={7} fill="white" opacity={0.25} />}
                         </>
                       )}
 
-                      {/* Pratos = convidados sentados. É a diferença entre um
-                          diagrama e um salão de verdade. */}
-                      {isOccupied && party &&
-                        renderPlates(cx, cy, w, h, Math.min(party.partySize, table.capacity || party.partySize), shape, st.plateFill)}
-
-                      <text x={cx} y={isOccupied && party ? cy - 6 : cy - 2}
+                      <text x={cx} y={narrowPreview ? cy - 8 : isOccupied && party ? cy - 6 : cy - 2}
                         textAnchor="middle" dominantBaseline="middle"
-                        fill={st.text} fontSize={20} fontWeight={400}
+                        fill={st.text} fontSize={narrowPreview ? 28 : 20} fontWeight={400}
                         fontFamily="'Instrument Serif',Georgia,serif">
                         {table.table_number}
                       </text>
 
-                      <text x={cx} y={isOccupied && party ? cy + 12 : cy + 14}
+                      {narrowPreview && <text x={cx} y={cy + 22}
                         textAnchor="middle" dominantBaseline="middle"
-                        fill={st.text} fontSize={11} opacity={isOccupied ? 0.85 : 0.55}
+                        fill={st.text} fontSize={18} opacity={isOccupied ? 0.88 : 0.72}
+                        fontFamily="'DM Sans',Inter,-apple-system,sans-serif">
+                        {table.capacity}p
+                      </text>}
+
+                      {!narrowPreview && <text x={cx} y={isOccupied && party ? cy + 12 : cy + 14}
+                        textAnchor="middle" dominantBaseline="middle"
+                        fill={st.text} fontSize={13} opacity={isOccupied ? 0.9 : 0.72}
                         fontFamily="'DM Sans',Inter,-apple-system,sans-serif">
                         {isOccupied && party
                           ? party.guestName.split(' ')[0].substring(0, 9)
                           : `${table.capacity} ${t('floorPlan.seats', 'seats')}`}
-                      </text>
+                      </text>}
 
                       {party?.isVIP && (
                         <g transform={`translate(${x + w - 1}, ${y + 1})`}>

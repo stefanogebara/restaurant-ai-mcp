@@ -1,19 +1,16 @@
 /**
- * Unified Dashboard - Nordic Clean Design
+ * Unified host dashboard — operational summary beside the live floor.
  *
  * Layout:
- *   Header (title, date, controls)
- *   Metrics Row (4 metrics with border-bottom, gap-12)
- *   Reservations Table (upcoming)
- *   Grid 12 cols: Floor Plan (7) + Waitlist/Active (5)
- *   Additional widgets below
+ *   Header and metrics on the canvas; saved floor plan as one object.
+ *   Reservations, waitlist and service tools follow below the first fold.
  *
  * All panels are extracted into standalone components.
- * Sidebar (DashboardLayout) is completely unchanged.
+ * DashboardLayout supplies the shared navigation shell.
  */
 
 import { useState, useMemo, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
@@ -24,6 +21,7 @@ import { usePlanInfo } from '../hooks/useSubscription';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import TableLayoutPanel from '../components/dashboard/TableLayoutPanel';
 import TableTimeline from '../components/dashboard/TableTimeline';
+import { hasPositionData } from '../components/host/floorPlanHelpers';
 import { useServiceMode } from '../hooks/useServiceMode';
 import ReservationsList from '../components/dashboard/ReservationsList';
 import CustomerProfileDrawer from '../components/dashboard/CustomerProfileDrawer';
@@ -66,6 +64,8 @@ export default function Dashboard() {
   useDocumentTitle(t('pageTitles.dashboard'));
   const { success } = useToast();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const reservationFocusId = searchParams.get('reservation') ?? '';
 
   // Launch checklist: show after first subscription
   const [showLaunchChecklist, setShowLaunchChecklist] = useState(() => {
@@ -118,6 +118,12 @@ export default function Dashboard() {
     refetchInterval: 5 * 60 * 1000,
   });
 
+  useEffect(() => {
+    if (reservationFocusId && !isLoading) {
+      document.getElementById('reservations')?.scrollIntoView({ behavior: 'auto', block: 'start' });
+    }
+  }, [reservationFocusId, isLoading]);
+
   // ---- Data extraction ----
   const rawStats = dashboardData?.data?.summary || {};
   const tables = dashboardData?.data?.tables || [];
@@ -148,7 +154,6 @@ export default function Dashboard() {
   const { data: revenueStats } = useRevenueStats();
   const avgSpendPerCover = revenueStats?.avg_spend_per_cover;
 
-  const occupiedTables = tables.filter((t: { status: string }) => t.status === 'Occupied').length;
   const totalTables = tables.length;
   const availableTables = tables.filter((t: { status: string }) => t.status === 'Available');
 
@@ -208,17 +213,19 @@ export default function Dashboard() {
   // ---- Date display ----
   const dateLocale = i18n.language === 'pt-BR' ? 'pt-BR' : i18n.language === 'es' ? 'es-ES' : 'en-US';
   const fullDateStr = new Date().toLocaleDateString(dateLocale, { weekday: 'long', month: 'long', day: 'numeric' });
+  const compactDateStr = new Date().toLocaleDateString(dateLocale, { weekday: 'short', month: 'short', day: 'numeric' });
 
   // ---- Short date for header ----
 
   // ---- Computed metrics ----
-  const waitlistCount = rawStats.waitlist_count || 0;
+  const waitlistReady = Number.isFinite(rawStats.waitlist_count);
+  const waitlistCount: number = waitlistReady ? rawStats.waitlist_count : 0;
   const guestsExpected = todayReservations.reduce((sum, r) => sum + (r.party_size || 0), 0);
 
   // ---- Progressive disclosure: detect if dashboard is mostly empty (new user) ----
-  const hasReservations = todayReservations.length > 0 || tomorrowReservations.length > 0;
+  const hasReservations = todayReservations.length > 0 || tomorrowReservations.length > 0 || weekReservations.length > 0;
   const hasActiveParties = activeParties.length > 0;
-  const isDashboardEmpty = !hasReservations && !hasActiveParties && waitlistCount === 0;
+  const isDashboardEmpty = waitlistReady && !hasReservations && !hasActiveParties && waitlistCount === 0;
 
   // ---- Error state ----
   if (isError && !isLoading) {
@@ -244,228 +251,135 @@ export default function Dashboard() {
   }
 
   return (
-    <DashboardLayout>
-      <div className={`dashboard min-h-screen px-4 sm:px-6 lg:px-10 pt-6 sm:pt-10 pb-24 sm:pb-20${isNight ? ' service-mode' : ''}`}>
-        <div className="max-w-[1240px]">
+    <DashboardLayout mobileHeaderIntegrated appearance={isNight ? 'default' : 'hero'} darkMobileMenu={isNight}>
+      <div className={`dashboard min-h-screen px-4 sm:px-6 lg:px-10 pt-5 lg:pt-9 pb-24 sm:pb-20 ${isNight ? 'service-mode' : 'bg-brand-paper font-brand text-brand-ink'}`}>
+        <div className="mx-auto max-w-[1240px]">
 
-          {/* ---- Stripe Connect Adoption Nudge ---- */}
-          <StripeConnectNudgeBanner />
-
-          {/* ---- Payment Failure Banner ---- */}
-          {subStatus === 'past_due' && (
-            <div className="bg-red-50 border border-red-300 rounded-xl px-4 sm:px-5 py-3 sm:py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 mb-6 sm:mb-8">
-              <p className="text-sm text-red-800 flex-1 min-w-0">
-                <span className="font-semibold">{t('dashboard.paymentFailed', 'Payment failed')}</span>
-                {' — '}
-                {t('dashboard.paymentFailedHint', 'Please update your payment method to keep your subscription active.')}
-              </p>
-              <a
-                href="/subscription/manage"
-                className="text-sm font-semibold text-red-700 hover:text-red-900 bg-red-100 hover:bg-red-200 px-4 py-1.5 rounded-xl whitespace-nowrap transition-colors"
-              >
-                {t('dashboard.updatePayment', 'Update Payment')}
-              </a>
-            </div>
-          )}
-
-          {/* ---- Trial Banner ---- */}
-          {/* The audit found the previous amber-on-amber strip read as a
-              passive note rather than a time-bounded prompt. Promote the
-              countdown into a glanceable widget: large day count + bold
-              "Atualizar" pill, with urgency colours (burgundy when ≤2 days
-              left, amber otherwise). The whole row remains a single banner —
-              not a card — so it doesn't compete with the page header below. */}
-          {isTrial && isActive && trialDaysLeft !== null && (() => {
-            const urgent = trialDaysLeft <= 2;
-            return (
-              <div
-                className={`rounded-xl px-4 sm:px-5 py-3 sm:py-3.5 flex items-center gap-3 mb-6 sm:mb-8 ${
-                  urgent
-                    ? 'bg-burgundy/5 border border-burgundy/30'
-                    : 'bg-amber-50 border border-amber-200'
-                }`}
-                role="status"
-                aria-live="polite"
-              >
-                {/* Countdown badge — the headline number */}
-                <div
-                  className={`flex-shrink-0 flex flex-col items-center justify-center w-14 h-14 rounded-lg ${
-                    urgent ? 'bg-burgundy text-white' : 'bg-amber-100 text-amber-900'
-                  }`}
-                  aria-hidden="true"
+          {/* The floor is the main operational object; the facts above it
+              describe the same service without shrinking the live map. */}
+          <div className="flex min-h-[100svh] flex-col sm:mb-7 sm:min-h-0">
+            <header className="relative order-1 mb-3 flex flex-col gap-3 pb-1 sm:mb-5 sm:gap-4 sm:border-b sm:border-brand-line sm:pb-5 lg:mb-6 lg:flex-row lg:items-end lg:justify-between lg:gap-8">
+              <div className="grid min-w-0 grid-cols-[40px_minmax(0,1fr)] grid-rows-[44px_auto] gap-x-2 gap-y-1 lg:block">
+                <p className={`col-start-2 row-start-1 flex items-center gap-2 self-center whitespace-nowrap pr-11 text-[12px] font-medium uppercase tracking-[0.13em] sm:pr-0 lg:mb-2 ${isNight ? 'text-white/65' : 'text-brand-muted'}`}>
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-600" aria-hidden="true" />
+                  {t('dashboard.live', 'Ao vivo')}
+                  <span className="mx-1 h-3 w-px bg-brand-line" aria-hidden="true" />
+                  <span className="normal-case tracking-normal sm:hidden">{compactDateStr}</span>
+                  <span className="hidden normal-case tracking-normal sm:inline">{fullDateStr}</span>
+                </p>
+                <h1 className={`col-span-2 row-start-2 font-brand text-[36px] font-normal leading-[1.03] tracking-[-0.055em] sm:text-[48px] ${isNight ? 'text-white' : 'text-brand-ink'}`}>
+                  {t('dashboard.serviceTitle', 'Today on the floor')}
+                </h1>
+                <div className="col-span-2 empty:hidden lg:mt-2"><StripeConnectStatusBadge /></div>
+              </div>
+              <div className="flex w-full flex-nowrap items-center justify-start gap-2 lg:w-auto lg:justify-end">
+                <button
+                  type="button"
+                  onClick={toggleServiceMode}
+                  aria-pressed={isNight}
+                  aria-label={t('dashboard.serviceMode', 'Modo Serviço')}
+                  className={`absolute right-0 top-0 order-2 inline-flex min-h-[40px] items-center gap-2 rounded-full border px-3 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-action sm:static lg:order-1 ${isNight ? 'border-white/25 text-white/80 hover:bg-white/10' : 'border-brand-line text-brand-ink hover:bg-brand-line/35'}`}
                 >
-                  <span className="text-xl font-bold leading-none">{trialDaysLeft}</span>
-                  <span className="text-[10px] uppercase tracking-wider mt-0.5 font-semibold">
-                    {trialDaysLeft === 1
-                      ? t('dashboard.trialDayUnit', 'dia')
-                      : t('dashboard.trialDaysUnit', 'dias')}
-                  </span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className={`text-sm font-semibold ${urgent ? 'text-burgundy-dark' : 'text-amber-900'}`}>
-                    {trialDaysLeft === 0
-                      ? t('dashboard.trialExpiresToday')
-                      : t('dashboard.trialHeadline', 'Teste Gratuito termina em breve')}
-                  </p>
-                  <p className={`text-xs mt-0.5 ${urgent ? 'text-burgundy/80' : 'text-amber-700'}`}>
-                    {t('dashboard.trialUpgradeHint')}
-                  </p>
-                </div>
-                <a
-                  href="/subscription/manage"
-                  className={`flex-shrink-0 inline-flex items-center px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
-                    urgent
-                      ? 'bg-burgundy hover:bg-burgundy-dark text-white'
-                      : 'bg-amber-700 hover:bg-amber-800 text-white'
-                  }`}
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+                    <path d="M21 13.2A8.5 8.5 0 0 1 10.8 3a8.5 8.5 0 1 0 10.2 10.2z" />
+                  </svg>
+                  {isNight && <span className="hidden sm:inline">{t('dashboard.serviceMode', 'Modo Serviço')}</span>}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigate('/host-dashboard/reports')}
+                  aria-label={t('dashboard.reports', 'Reports')}
+                  className={`order-2 hidden min-h-[40px] min-w-[40px] items-center justify-center gap-2 rounded-full border px-3 text-[13px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-action sm:inline-flex ${isNight ? 'border-white/25 text-white hover:bg-white/10' : 'border-brand-line text-brand-ink hover:bg-brand-line/35'}`}
                 >
+                  <ThiingsIcon name="bar-chart" pxSize={16} />
+                  <span className="hidden sm:inline">{t('dashboard.reports', 'Reports')}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowWalkInModal(true)}
+                  className={`order-1 min-h-[40px] flex-1 rounded-full px-3 text-[12px] font-medium leading-tight transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-action sm:flex-none sm:px-4 sm:text-[13px] lg:order-3 ${isNight ? 'bg-white text-brand-ink hover:bg-white/85' : 'bg-brand-action text-white hover:bg-brand-ink'}`}
+                >
+                  {t('dashboard.walkIn.actionShort', 'Add walk-in')}
+                </button>
+              </div>
+            </header>
+
+            {/* Billing stays glanceable. On narrow screens the status and
+                action are visible; the full explanation remains available
+                to screen readers and is shown visually on wider screens. */}
+            {subStatus === 'past_due' && (
+              <div role="alert" className={`order-5 mt-5 flex min-h-[48px] flex-col items-start gap-0 border-l-2 py-0.5 pl-3 text-[13px] sm:order-2 sm:mb-3 sm:mt-0 sm:min-h-[32px] sm:flex-row sm:items-center sm:gap-3 sm:text-[13px] ${isNight ? 'border-red-400 text-red-200' : 'border-red-700 text-red-800'}`}>
+                <p className="min-w-0 leading-snug">
+                  <strong className="font-semibold">{t('dashboard.paymentFailed', 'Payment failed')}</strong>
+                  <span className={`sr-only lg:not-sr-only lg:ml-1 ${isNight ? 'lg:text-white/65' : 'lg:text-brand-muted'}`}> · {t('dashboard.paymentFailedHint', 'Please update your payment method to keep your subscription active.')}</span>
+                </p>
+                <a href="/subscription/manage" className="inline-flex min-h-[32px] shrink-0 items-center font-semibold underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600">
+                  {t('dashboard.updatePayment', 'Update Payment')}
+                </a>
+              </div>
+            )}
+
+            {isTrial && isActive && trialDaysLeft !== null && (
+              <div role="status" aria-live="polite" className={`order-5 mt-5 flex flex-wrap items-center justify-between gap-x-3 border-l-2 py-0.5 pl-3 text-[13px] sm:order-2 sm:mb-5 sm:mt-0 sm:text-sm ${isNight ? 'border-amber-400 text-amber-100' : 'border-amber-700 text-amber-950'}`}>
+                <p className="min-w-0 leading-snug sm:flex-1">
+                  <strong className="font-semibold">{trialDaysLeft === 0
+                    ? t('dashboard.trialExpiresToday')
+                    : t('dashboard.trialHeadline', 'Teste Gratuito termina em breve')}</strong>
+                  {trialDaysLeft > 0 && <> · {trialDaysLeft} {trialDaysLeft === 1
+                    ? t('dashboard.trialDayUnit', 'dia')
+                    : t('dashboard.trialDaysUnit', 'dias')}</>}
+                  <span className="hidden sm:inline"> · {t('dashboard.trialUpgradeHint')}</span>
+                </p>
+                <a href="/subscription/manage" className="inline-flex min-h-[32px] shrink-0 items-center font-semibold underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-action">
                   {t('dashboard.viewPlans')}
                 </a>
               </div>
-            );
-          })()}
+            )}
 
-          {/* ---- Header Section ---- */}
-          <header className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-8 sm:mb-14 mt-14 sm:mt-0 gap-3 sm:gap-4">
-            <div className="pl-12 lg:pl-0">
-              {/* Greeting line — Bom dia / boa tarde / boa noite. Audit found
-                  the dashboard read as "task-oriented, no warmth" — a
-                  hospitality product should at least say hello. Time-of-day
-                  bucketed in 4-hour windows; matches typical Brazilian usage
-                  (early morning still gets "Bom dia"). Drops the optional
-                  first-name slot when the auth display name isn't set. */}
-              <p className="text-sm text-muted-stone mb-0.5">
-                {(() => {
-                  const hour = new Date().getHours();
-                  const greetingKey = hour < 12
-                    ? 'dashboard.greetingMorning'
-                    : hour < 18
-                      ? 'dashboard.greetingAfternoon'
-                      : 'dashboard.greetingEvening';
-                  const fallback = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite';
-                  return `${t(greetingKey, fallback)} 👋`;
-                })()}
-              </p>
-              <h1 className="font-serif text-3xl sm:text-4xl tracking-tight text-deep-charcoal">
-                {t('dashboard.overview')}
-              </h1>
-              <div className="flex items-center gap-2 mt-1 flex-wrap">
-                <p className="text-[12px] sm:text-[13px] text-muted-stone font-mono uppercase tracking-widest">
-                  {fullDateStr}
-                </p>
-                <StripeConnectStatusBadge />
-              </div>
-            </div>
-            <div className="flex items-center gap-2 sm:gap-3 pl-12 lg:pl-0">
-              {/* Modo Serviço — automático às 18h, toggle manual aqui. O selo
-                  mostra POR QUE a tela escureceu; de dia é só o ícone de lua. */}
-              <button
-                type="button"
-                onClick={toggleServiceMode}
-                aria-pressed={isNight}
-                aria-label={t('dashboard.serviceMode', 'Modo Serviço')}
-                className={`inline-flex items-center gap-2 min-h-[36px] px-3 py-2 rounded-[100px] border text-[11px] font-mono uppercase tracking-[0.12em] transition-colors ${
-                  isNight
-                    ? 'border-white/20 text-white/70 hover:text-white'
-                    : 'border-border-gray text-muted-stone hover:text-deep-charcoal hover:bg-soft-gray'
-                }`}
-              >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
-                  <path d="M21 13.2A8.5 8.5 0 0 1 10.8 3a8.5 8.5 0 1 0 10.2 10.2z" />
-                </svg>
-                {isNight && <span>{t('dashboard.serviceMode', 'Modo Serviço')}</span>}
-              </button>
-              <button
-                onClick={() => navigate('/host-dashboard/reports')}
-                className="px-3 sm:px-4 py-2 border border-border-gray rounded-lg text-[12px] sm:text-[13px] font-medium bg-transparent hover:bg-soft-gray transition-colors text-deep-charcoal"
-              >
-                {t('dashboard.reports', 'Reports')}
-              </button>
-              <button
-                onClick={() => setShowWalkInModal(true)}
-                className="hidden sm:inline-flex px-4 py-2 bg-burgundy hover:bg-burgundy-dark text-white border border-burgundy rounded-lg text-[13px] font-medium transition-colors"
-              >
-                {t('dashboard.addWalkIn')}
-              </button>
-            </div>
-          </header>
-
-          {/* ---- Metrics Row ---- */}
-          {/* Liquid Glass v2: métricas SEM card — faixa direta no canvas,
-              delimitada por fios de tinta, números em serif. */}
-          {isLoading ? (
-            <section className="grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-12 border-y hairline py-7 sm:py-9 mb-10 sm:mb-16">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i}>
-                  <div className="h-9 w-16 bg-border-gray rounded animate-pulse mb-3" />
-                  <div className="h-3 w-20 bg-border-gray rounded animate-pulse" />
+            <section aria-label={t('dashboard.quickStats', 'Quick stats')} className={`order-2 mb-0 grid grid-cols-4 gap-x-2 border-b py-3 sm:order-3 sm:mb-6 sm:py-5 ${isNight ? 'border-white/15' : 'border-brand-line'}`}>
+              {[
+                { value: todayReservations.length, label: t('dashboard.stats.reservationsShort', 'Bookings'), aria: t('dashboard.stats.reservations', 'Reservations') },
+                { value: guestsExpected, label: t('dashboard.stats.guestsShort', 'Guests'), aria: t('dashboard.stats.guests', 'Guests') },
+                { value: `${availableTables.length}/${totalTables}`, label: t('dashboard.stats.tablesShort', 'Free'), aria: t('dashboard.stats.tables', 'Tables Available') },
+                { value: waitlistReady ? waitlistCount : '—', label: t('dashboard.stats.waitlistShort', 'Queue'), aria: t('waitlist.title', 'Waitlist') },
+              ].map(({ value, label, aria }) => (
+                <div key={aria} className="min-w-0 text-center sm:px-5 sm:text-left">
+                  {isLoading
+                    ? <div className="mb-2 h-9 w-14 animate-pulse rounded bg-brand-line/60" />
+                    : <p className={`font-brand text-[27px] font-normal leading-none tracking-[-0.055em] tabular-nums sm:text-[39px] ${isNight ? 'text-white' : 'text-brand-ink'}`}>{value}</p>}
+                  <p className={`mt-2 text-[11px] font-medium uppercase tracking-[0.07em] sm:text-[12px] ${isNight ? 'text-white/65' : 'text-brand-muted'}`} aria-label={aria}>{label}</p>
                 </div>
               ))}
             </section>
-          ) : (
-            <section className="grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-12 border-y hairline py-7 sm:py-9 mb-10 sm:mb-16">
-              {/* Reservations */}
-              <div>
-                <p className="font-serif text-[30px] sm:text-[38px] leading-none text-deep-charcoal tabular-nums">{todayReservations.length}</p>
-                <p className="text-[12px] uppercase tracking-[0.05em] text-muted-stone mt-3">
-                  {t('dashboard.stats.reservations', 'Reservations')}
-                </p>
-              </div>
-              {/* Guests Expected */}
-              <div>
-                <p className="font-serif text-[30px] sm:text-[38px] leading-none text-deep-charcoal tabular-nums">{guestsExpected}</p>
-                <p className="text-[12px] uppercase tracking-[0.05em] text-muted-stone mt-3">
-                  {t('dashboard.stats.guests', 'Guests')}
-                </p>
-              </div>
-              {/* Capacity */}
-              <div>
-                <p className="font-serif text-[30px] sm:text-[38px] leading-none text-deep-charcoal tabular-nums">
-                  {occupiedTables}/{totalTables}
-                </p>
-                <p className="text-[12px] uppercase tracking-[0.05em] text-muted-stone mt-3">
-                  {t('dashboard.stats.capacity', 'Tables Available')}
-                </p>
-              </div>
-              {/* Waitlist */}
-              <div>
-                <p className="font-serif text-[30px] sm:text-[38px] leading-none text-deep-charcoal tabular-nums">{waitlistCount}</p>
-                <p className="text-[12px] uppercase tracking-[0.05em] text-muted-stone mt-3">
-                  {t('waitlist.title', 'Waitlist')}
-                </p>
-              </div>
-            </section>
-          )}
 
-          {/* ---- Welcome Guide for New Users ---- */}
-          {isDashboardEmpty && !isLoading && (
-            <div className="bg-[#FFF7ED] border border-amber-200 rounded-xl px-4 sm:px-6 py-4 sm:py-5 mb-8 sm:mb-12">
-              <h3 className="text-sm font-semibold text-amber-900 mb-1">
-                {t('dashboard.welcomeGuide.title', 'Your dashboard is ready!')}
-              </h3>
-              <p className="text-sm text-amber-800">
-                {t('dashboard.welcomeGuide.description', 'Reservations, waitlist, and activity will appear here as your restaurant starts receiving guests. Add a walk-in or create a reservation to get started.')}
-              </p>
+            <div className="order-3 mb-5 px-1 sm:hidden">
+              <TableTimeline
+                tables={tables}
+                activeParties={activeParties}
+                todayReservations={todayReservations}
+                night={isNight}
+              />
             </div>
-          )}
 
-          {/* ---- O Palco: a planta do salão é a estrela da página ----
-              Redesign 2026-08-24 (candidato "Palco + Modo Serviço" do canvas):
-              o salão sobe para logo abaixo das métricas, em largura total,
-              como único objeto de vidro da página. Mesas ilustradas (pratos =
-              convidados sentados); à noite as ocupadas brilham. */}
-          <section className="glass-panel mb-8 sm:mb-10">
-            <TableLayoutPanel
-              tables={tables}
-              activeParties={activeParties}
-              onRefresh={refetch}
-              isLoading={isLoading}
-              night={isNight}
-            />
-          </section>
+            <section className={`relative order-4 -mt-2 min-w-0 sm:mt-0 ${hasPositionData(tables)
+              ? isNight ? 'glass-panel rounded-[14px] border border-white/15' : 'rounded-[14px] border border-brand-line bg-brand-paper/55'
+              : !hasActiveParties && todayReservations.length === 0 ? '[&_.grid>button]:min-h-[80px]' : ''}`}>
+              <TableLayoutPanel
+                tables={tables}
+                activeParties={activeParties}
+                onRefresh={refetch}
+                isLoading={isLoading}
+                night={isNight}
+              />
+            </section>
+          </div>
+
+          {/* Deposit payout setup stays visible, without displacing the
+              operational floor from the first viewport. */}
+          <StripeConnectNudgeBanner />
 
           {/* ---- A régua: essa mesa libera a tempo? ---- */}
-          <div className="mb-12 sm:mb-20">
+          <div className="hidden empty:hidden sm:mb-10 sm:block">
             <TableTimeline
               tables={tables}
               activeParties={activeParties}
@@ -475,8 +389,10 @@ export default function Dashboard() {
           </div>
 
           {/* ---- Reservations Section ---- */}
-          <section className="mb-12 sm:mb-20">
+          <section id="reservations" className="mb-12 scroll-mt-6 sm:mb-20">
             <ReservationsList
+              appearance={isNight ? 'default' : 'hero'}
+              initialSearchQuery={reservationFocusId}
               todayReservations={todayReservations}
               tomorrowReservations={tomorrowReservations}
               weekReservations={weekReservations}
@@ -490,18 +406,18 @@ export default function Dashboard() {
               avgSpendPerCover={avgSpendPerCover}
               byPartySize={revenueStats?.by_party_size}
               isLoading={isLoading}
-              language={i18n.language === 'es' ? 'es' : 'en'}
+              language={i18n.language === 'pt-BR' ? 'pt-BR' : i18n.language === 'es' ? 'es' : 'en'}
               tables={tables}
             />
           </section>
 
           {/* ---- Fila + Na casa agora — listas no canvas, sem cards ---- */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
-            <section className="border-t hairline pt-2">
+            <section>
               <WaitlistPanel onSeatNow={handleSeatFromWaitlist} />
             </section>
 
-            <section className="border-t hairline pt-2">
+            <section>
               <ActivePartiesPanel
                 parties={activeParties}
                 onCompleteService={handleCompleteService}
@@ -541,15 +457,6 @@ export default function Dashboard() {
           )}
 
         </div>
-
-        {/* ---- FAB: Add Walk-in ---- */}
-        <button
-          onClick={() => setShowWalkInModal(true)}
-          aria-label={t('dashboard.addWalkIn', 'Add walk-in')}
-          className="fixed bottom-24 sm:bottom-6 right-4 sm:right-6 z-50 w-14 h-14 bg-burgundy hover:bg-burgundy-dark active:scale-95 text-white rounded-full shadow-xl shadow-black/20 transition-all duration-200 flex items-center justify-center"
-        >
-          <ThiingsIcon name="plus" pxSize={24} />
-        </button>
 
       </div>
 
@@ -598,7 +505,7 @@ export default function Dashboard() {
             setInterventionReservation(null);
             refetch();
           }}
-          language={i18n.language === 'es' ? 'es' : 'en'}
+          language={i18n.language === 'pt-BR' ? 'pt-BR' : i18n.language === 'es' ? 'es' : 'en'}
         />
       )}
 

@@ -8,43 +8,37 @@ interface Props {
 }
 
 const STATUS_LIGHT_STYLES: Record<string, string> = {
-  active:  'bg-rose-500',
-  testing: 'bg-amber-500',
+  active:  'bg-emerald-700',
+  testing: 'bg-amber-700',
 };
 
-/**
- * Status card for the Fast Voice engine. Previously this surfaced
- * "WebSocket Endpoint: seatable-voice.fly.dev" and "Engine: OpenAI Realtime API"
- * to non-technical restaurant owners — implementation details that read as
- * "is this broken?" to João. Now we lead with a plain-English status, and
- * keep the technical breadcrumbs behind a "Technical details" disclosure so
- * support can still grab them on demand.
- */
 export default function OpenAIEngineInfo({ engineStatus, currentOpenAIVoice }: Props) {
   const { t } = useTranslation();
   const [showTech, setShowTech] = useState(false);
-  const status = engineStatus || 'active';
+  const status = engineStatus || 'unknown';
   const isActive = status === 'active';
 
   return (
-    <section className="py-5 border-b border-glass-border-dark">
-      <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone mb-4 flex items-center gap-2">
+    <section className="border-b border-brand-line py-5">
+      <h2 className="mb-4 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-muted">
         <ThiingsIcon name="info" pxSize={20} />
         {t('voiceEngine.statusHeader', 'AI receptionist status')}
       </h2>
 
       <div className="flex items-center gap-3">
         <span
-          className={`inline-block w-2.5 h-2.5 rounded-full ${STATUS_LIGHT_STYLES[status] ?? 'bg-stone-400'}`}
+          className={`inline-block h-2.5 w-2.5 rounded-full ${STATUS_LIGHT_STYLES[status] ?? 'bg-brand-muted'}`}
           aria-hidden="true"
         />
         <div>
-          <p className="text-sm font-semibold text-deep-charcoal">
+          <p className="text-sm font-medium text-brand-ink">
             {isActive
-              ? t('voiceEngine.statusActive', 'Running normally — ready to take calls.')
-              : t('voiceEngine.statusTesting', 'In test mode — calls are previewed but not answered yet.')}
+              ? t('voiceEngine.statusActive', 'Agent marked active. Confirm it answers with a test call.')
+              : status === 'testing'
+                ? t('voiceEngine.statusTesting', 'Agent in test mode. Confirm routing before forwarding calls.')
+                : t('voiceEngine.statusUnknown', 'Agent status is unavailable. Check the connection before forwarding calls.')}
           </p>
-          <p className="text-xs text-warm-stone mt-0.5">
+          <p className="mt-0.5 text-xs text-brand-muted">
             {t('voiceEngine.statusVoice', 'Voice: {{voice}}', { voice: currentOpenAIVoice })}
           </p>
         </div>
@@ -53,7 +47,7 @@ export default function OpenAIEngineInfo({ engineStatus, currentOpenAIVoice }: P
       <button
         type="button"
         onClick={() => setShowTech((v) => !v)}
-        className="mt-3 text-xs text-muted-stone hover:text-deep-charcoal underline underline-offset-2"
+        className="mt-3 text-xs text-brand-muted underline underline-offset-2 hover:text-brand-ink"
       >
         {showTech
           ? t('voiceEngine.hideTech', 'Hide technical details')
@@ -61,22 +55,18 @@ export default function OpenAIEngineInfo({ engineStatus, currentOpenAIVoice }: P
       </button>
 
       {showTech && (
-        <dl className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-warm-stone bg-soft-gray rounded-xl p-3">
+        <dl className="mt-3 grid grid-cols-1 gap-3 border-t border-brand-line pt-3 text-xs text-brand-muted sm:grid-cols-2">
           <div>
             <dt className="text-[10px] uppercase tracking-wider mb-1">{t('voiceEngine.techEngine', 'Engine')}</dt>
-            <dd className="font-mono text-deep-charcoal">OpenAI Realtime API</dd>
-          </div>
-          <div>
-            <dt className="text-[10px] uppercase tracking-wider mb-1">{t('voiceEngine.techEndpoint', 'Endpoint')}</dt>
-            <dd className="font-mono text-deep-charcoal truncate">seatable-voice.fly.dev</dd>
+            <dd className="font-mono text-brand-ink">OpenAI Realtime API</dd>
           </div>
           <div>
             <dt className="text-[10px] uppercase tracking-wider mb-1">{t('voiceEngine.techStatus', 'Internal status')}</dt>
-            <dd className="font-mono text-deep-charcoal">{status}</dd>
+            <dd className="font-mono text-brand-ink">{status}</dd>
           </div>
           <div>
             <dt className="text-[10px] uppercase tracking-wider mb-1">{t('voiceEngine.techVoiceId', 'Voice id')}</dt>
-            <dd className="font-mono text-deep-charcoal">{currentOpenAIVoice}</dd>
+            <dd className="font-mono text-brand-ink">{currentOpenAIVoice}</dd>
           </div>
         </dl>
       )}

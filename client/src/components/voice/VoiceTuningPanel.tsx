@@ -1,25 +1,19 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import ThiingsIcon from '../common/ThiingsIcon';
-import Spinner from '../common/Spinner';
 import VoiceSlider from './VoiceSlider';
-import type { VoiceSettings } from './voiceTypes';
+import { DEFAULT_VOICE_SETTINGS, type VoiceSettings } from './voiceTypes';
 
 interface Props {
   settings: VoiceSettings;
-  currentVoiceId: string;
-  loadingAudio: string | null;
   onSettingChange: (key: keyof VoiceSettings, value: number) => void;
   onReset: () => void;
-  onPreview: () => void;
 }
 
 /**
  * Voice tuning previously surfaced four ML-jargon sliders to a non-technical
- * audience: Stability, Similarity Boost, Style, Speed. João had no idea
- * which way to move "Similarity Boost". Now we lead with three named
- * presets — Calm / Warm / Energetic — that map to ElevenLabs setting
- * triples used in production. The granular sliders are still there for
+ * audience: Stability, Similarity Boost, Style, Speed. We lead with three
+ * named presets — Calm / Warm / Energetic — that map to specific settings
+ * values. The granular sliders are still there for
  * users who want to fine-tune, hidden behind an "Advanced" disclosure.
  *
  * Speed stays as a separate slider because it's the only one with an
@@ -32,7 +26,7 @@ const TUNING_PRESETS: Record<PresetKey, { stability: number; similarity_boost: n
   // Reliable, low-variance reading — best for confirmations + numbers.
   calm:      { stability: 0.75, similarity_boost: 0.85, style: 0.10 },
   // Friendly, mid-variance — the default for most restaurants.
-  warm:      { stability: 0.55, similarity_boost: 0.80, style: 0.25 },
+  warm:      { ...DEFAULT_VOICE_SETTINGS },
   // Higher variance + style — punchier, more expressive replies.
   energetic: { stability: 0.35, similarity_boost: 0.75, style: 0.55 },
 };
@@ -50,15 +44,15 @@ function detectPreset(settings: VoiceSettings): PresetKey | null {
 
 export default function VoiceTuningPanel({
   settings,
-  currentVoiceId,
-  loadingAudio,
   onSettingChange,
   onReset,
-  onPreview,
 }: Props) {
   const { t } = useTranslation();
   const detectedPreset = useMemo(() => detectPreset(settings), [settings]);
-  const [showAdvanced, setShowAdvanced] = useState(detectedPreset === null);
+  const [showTuning, setShowTuning] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const canReset = (Object.keys(DEFAULT_VOICE_SETTINGS) as Array<keyof VoiceSettings>)
+    .some((key) => Math.abs(settings[key] - DEFAULT_VOICE_SETTINGS[key]) > 0.001);
 
   const applyPreset = (key: PresetKey) => {
     const p = TUNING_PRESETS[key];
@@ -67,7 +61,7 @@ export default function VoiceTuningPanel({
     onSettingChange('style', p.style);
   };
 
-  const presetCards: Array<{ key: PresetKey; title: string; desc: string }> = [
+  const presets: Array<{ key: PresetKey; title: string; desc: string }> = [
     {
       key: 'calm',
       title: t('voiceTuning.preset.calm', 'Calm'),
@@ -80,51 +74,61 @@ export default function VoiceTuningPanel({
     },
     {
       key: 'energetic',
-      title: t('voiceTuning.preset.energetic', 'Energetic'),
+      title: t('voiceTuning.preset.energetic', 'Lively'),
       desc: t('voiceTuning.preset.energeticDesc', 'Lively and expressive. Best for busy spots and bars.'),
     },
   ];
+  const selectedTitle = presets.find(preset => preset.key === detectedPreset)?.title || t('voiceTuning.customLabel', 'Custom');
+  const paceLabel = settings.speed < 0.95
+    ? t('voiceTuning.paceSlow', 'Unhurried')
+    : settings.speed > 1.05
+      ? t('voiceTuning.paceFast', 'Brisk')
+      : t('voiceTuning.paceNatural', 'Natural');
 
   return (
-    <section className="overflow-hidden pb-5 border-b border-glass-border-dark">
-      <div className="flex items-center justify-between py-5 border-b border-glass-border-dark">
-        <span className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">{t('voiceTuning.title', 'How your AI sounds')}</span>
-        <button type="button" onClick={onReset} className="text-xs text-burgundy hover:underline">
-          {t('voiceTuning.resetToDefaults', 'Reset to defaults')}
+    <section className="min-w-0 py-4 font-brand text-brand-ink">
+      <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 md:grid-cols-[150px_minmax(0,1fr)_auto]">
+        <p role="heading" aria-level={2} className="col-start-1 row-start-1 font-brand text-[13px] font-medium text-brand-muted">{t('voiceTuning.toneAndPace', 'Tone & pace')}</p>
+        <p className="col-start-1 row-start-2 min-w-0 text-[16px] font-medium leading-6 md:col-start-2 md:row-start-1">{selectedTitle} <span className="font-normal text-brand-muted">· {paceLabel}</span></p>
+        <button
+          type="button"
+          onClick={() => setShowTuning(value => !value)}
+          aria-expanded={showTuning}
+          aria-controls="voice-tuning-controls"
+          className="col-start-2 row-span-2 inline-flex min-h-11 shrink-0 items-center rounded-md px-2 text-[13px] font-medium text-brand-action hover:bg-brand-action/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-action md:col-start-3 md:row-span-1 md:row-start-1"
+        >
+          <span className="sm:hidden">{showTuning ? t('voiceTuning.closeShort', 'Close') : t('voiceTuning.adjustShort', 'Adjust')}</span>
+          <span className="hidden sm:inline">{showTuning ? t('voiceTuning.closeTuning', 'Close controls') : t('voiceTuning.editTuning', 'Adjust tone & pace')}</span>
         </button>
       </div>
 
-      <div className="p-6 space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {presetCards.map(({ key, title, desc }) => {
-            const isSelected = detectedPreset === key;
-            return (
-              <button
-                key={key}
-                type="button"
-                onClick={() => applyPreset(key)}
-                className={`text-left p-4 rounded-2xl border-2 transition-all ${
-                  isSelected
-                    ? 'border-burgundy bg-burgundy/5'
-                    : 'border-glass-border-dark hover:border-muted-stone'
-                }`}
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm font-semibold text-deep-charcoal">{title}</span>
-                  {isSelected && (
-                    <span className="text-[10px] font-medium text-burgundy bg-burgundy/10 px-2 py-0.5 rounded-full">
-                      {t('voiceTuning.preset.selected', 'Current')}
-                    </span>
-                  )}
-                </div>
-                <p className="text-xs text-stone-gray">{desc}</p>
-              </button>
-            );
-          })}
+      <div id="voice-tuning-controls" hidden={!showTuning} className={showTuning ? 'mt-3 space-y-4 pt-2' : 'hidden'}>
+        <div>
+          <div className="space-y-1" role="group" aria-label={t('voiceTuning.title', 'How your AI sounds')}>
+            {presets.map(({ key, title, desc }) => {
+              const isSelected = detectedPreset === key;
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => applyPreset(key)}
+                  aria-pressed={isSelected}
+                  className={`flex min-h-[64px] w-full items-center gap-3 border-l-2 py-2 pl-3 pr-1 text-left hover:text-brand-action focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-action ${isSelected ? 'border-brand-action' : 'border-transparent'}`}
+                >
+                  <span aria-hidden="true" className={`grid size-[18px] shrink-0 place-items-center rounded-full border ${isSelected ? 'border-brand-action' : 'border-brand-line'}`}>
+                    {isSelected && <span className="size-[8px] rounded-full bg-brand-action" />}
+                  </span>
+                  <span className="min-w-0">
+                    <span className={`block text-[15px] leading-5 ${isSelected ? 'font-semibold text-brand-ink' : 'font-medium text-brand-ink'}`}>{title}</span>
+                    <span className="block text-[12px] leading-4 text-brand-muted">{desc}</span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
-        {/* Speed always-visible — only slider with an obvious mental model. */}
-        <div className="max-w-md">
+        <div className="pt-0">
           <VoiceSlider
             label={t('voiceTuning.speed', 'Speaking speed')}
             value={settings.speed}
@@ -135,18 +139,24 @@ export default function VoiceTuningPanel({
           />
         </div>
 
-        <button
-          type="button"
-          onClick={() => setShowAdvanced((v) => !v)}
-          className="text-xs text-muted-stone hover:text-deep-charcoal underline underline-offset-2"
-        >
-          {showAdvanced
-            ? t('voiceTuning.hideAdvanced', 'Hide advanced controls')
-            : t('voiceTuning.showAdvanced', 'Show advanced controls')}
-        </button>
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-1">
+          <button
+            type="button"
+            onClick={() => setShowAdvanced((v) => !v)}
+            aria-expanded={showAdvanced}
+            aria-controls="voice-advanced-controls"
+            className="min-h-10 text-xs font-medium text-brand-muted underline underline-offset-4 hover:text-brand-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-action"
+          >
+            {showAdvanced
+              ? t('voiceTuning.hideAdvanced', 'Hide advanced controls')
+              : t('voiceTuning.showAdvanced', 'Show advanced controls')}
+          </button>
+          {canReset && <button type="button" onClick={() => { setShowAdvanced(false); onReset(); }} className="min-h-10 text-xs font-medium text-brand-action underline underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-action">
+            {t('voiceTuning.resetToDefaults', 'Reset to defaults')}
+          </button>}
+        </div>
 
-        {showAdvanced && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+        <div id="voice-advanced-controls" hidden={!showAdvanced} className={showAdvanced ? 'grid max-w-3xl grid-cols-1 gap-x-10 gap-y-6 border-t border-brand-line pt-5 md:grid-cols-2' : 'hidden'}>
             <VoiceSlider
               label={t('voiceTuning.stability', 'Stability')}
               value={settings.stability}
@@ -168,20 +178,8 @@ export default function VoiceTuningPanel({
               lowLabel={t('voiceTuning.none', 'Neutral')} highLabel={t('voiceTuning.expressive', 'Expressive')}
               onChange={(v) => onSettingChange('style', v)}
             />
-          </div>
-        )}
-
-        <div className="pt-4 border-t border-glass-border-dark">
-          <button
-            type="button"
-            onClick={onPreview}
-            disabled={!currentVoiceId || loadingAudio !== null}
-            className="px-5 py-2.5 text-sm font-medium bg-soft-gray hover:bg-border-gray rounded-xl transition-colors flex items-center gap-2 disabled:opacity-50"
-          >
-            {loadingAudio ? <Spinner size="sm" /> : <ThiingsIcon name="play" pxSize={16} />}
-            {t('voiceTuning.previewWithSettings', 'Hear how it sounds')}
-          </button>
         </div>
+
       </div>
     </section>
   );

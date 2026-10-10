@@ -9,6 +9,7 @@ const { verifyAuth } = require('./_lib/auth');
 const { checkSubscription, requireFeature } = require('./_lib/subscription-middleware');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { validateElevenLabsVoiceId } = require('./_lib/validation');
+const { buildDefaultVoiceGreeting } = require('./_lib/voice-greetings');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const logger = createSecureLogger('VoiceSettings');
@@ -24,6 +25,7 @@ function buildStoredVoiceResponse(restaurant, overrides = {}) {
   return {
     voice_id: restaurant?.voice_id || null,
     voice_name: null,
+    voice_description: null,
     language: restaurant?.agent_language || 'en',
     tts_model_id: 'eleven_flash_v2_5',
     voice_settings: DEFAULT_VOICE_SETTINGS,
@@ -32,6 +34,32 @@ function buildStoredVoiceResponse(restaurant, overrides = {}) {
     agent_updated_at: restaurant?.updated_at || null,
     ...overrides
   };
+}
+
+// The agent API exposes the selected voice ID, not its human-readable name.
+// Resolve metadata from that exact ID; a failed lookup must never fabricate a
+// name or turn a valid agent configuration into an error page.
+async function getSelectedVoiceMetadata(voiceId) {
+  if (!voiceId) return { voice_name: null, voice_description: null };
+  try {
+    const response = await fetch(`https://api.elevenlabs.io/v1/voices/${encodeURIComponent(voiceId)}`, {
+      method: 'GET',
+      signal: AbortSignal.timeout(3500),
+      headers: { 'xi-api-key': process.env.ELEVENLABS_API_KEY },
+    });
+    if (!response.ok) {
+      logger.warn('[VoiceSettings] Voice metadata unavailable:', response.status);
+      return { voice_name: null, voice_description: null };
+    }
+    const voice = await response.json();
+    return {
+      voice_name: typeof voice.name === 'string' && voice.name.trim() ? voice.name.trim() : null,
+      voice_description: typeof voice.description === 'string' && voice.description.trim() ? voice.description.trim() : null,
+    };
+  } catch (error) {
+    logger.warn('[VoiceSettings] Voice metadata lookup failed:', error.message);
+    return { voice_name: null, voice_description: null };
+  }
 }
 
 module.exports = async (req, res) => {
@@ -123,6 +151,7 @@ async function handleGet(req, res) {
         data: {
           voice_id: null,
           voice_name: null,
+          voice_description: null,
           language: 'en',
           tts_model_id: 'eleven_turbo_v2_5',
           voice_settings: DEFAULT_VOICE_SETTINGS,
@@ -166,20 +195,21 @@ async function handleGet(req, res) {
 
     const agent = await agentResponse.json();
     const ttsConfig = agent.conversation_config?.tts || {};
-    const agentConfig = agent.conversation_config?.agent || {};
+    const selectedVoiceId = ttsConfig.voice_id || restaurant.voice_id || null;
+    const selectedVoice = await getSelectedVoiceMetadata(selectedVoiceId);
 
     return res.status(200).json({
       success: true,
       data: {
-        voice_id: ttsConfig.voice_id || restaurant.agent_voice_id || null,
-        voice_name: restaurant.agent_voice_name || null, // stored on save, not available from ElevenLabs agent API
+        voice_id: selectedVoiceId,
+        ...selectedVoice,
         language: agent.conversation_config?.language || restaurant.agent_language || 'en',
-        tts_model_id: ttsConfig.model_id || restaurant.tts_model_id || 'eleven_turbo_v2_5',
+        tts_model_id: ttsConfig.model_id || 'eleven_turbo_v2_5',
         voice_settings: {
-          stability: ttsConfig.stability ?? restaurant.voice_settings?.stability ?? 0.5,
-          similarity_boost: ttsConfig.similarity_boost ?? restaurant.voice_settings?.similarity_boost ?? 0.75,
-          style: ttsConfig.style ?? restaurant.voice_settings?.style ?? 0.0,
-          speed: ttsConfig.speed ?? restaurant.voice_settings?.speed ?? 1.0,
+          stability: ttsConfig.stability ?? 0.5,
+          similarity_boost: ttsConfig.similarity_boost ?? 0.75,
+          style: ttsConfig.style ?? 0.0,
+          speed: ttsConfig.speed ?? 1.0,
         },
         agent_id: restaurant.elevenlabs_agent_id,
         agent_name: agent.name || null,
@@ -216,7 +246,7 @@ async function handlePatch(req, res) {
     const { data: restaurant, error: dbError } = await supabaseAdmin
       .schema('restaurant')
       .from('restaurant_config')
-      .select('id, restaurant_name, elevenlabs_agent_id, agent_language')
+      .select('id, restaurant_name, elevenlabs_agent_id, agent_language, agent_greeting')
       .eq('id', restaurantId)
       .maybeSingle();
 
@@ -271,36 +301,46 @@ async function handlePatch(req, res) {
       patchPayload.conversation_config.language = language;
     }
 
-    // If language changed, regenerate first_message
+    // If language changed, use the saved custom greeting or its language's default.
     if (language && language !== restaurant.agent_language) {
-      const firstMessages = {
-        en: `Hello! Welcome to ${restaurant.restaurant_name}. How can I help you today?`,
-        es: `¡Hola! Bienvenido a ${restaurant.restaurant_name}. ¿En qué puedo ayudarle hoy?`,
-        fr: `Bonjour ! Bienvenue chez ${restaurant.restaurant_name}. Comment puis-je vous aider ?`,
-        de: `Hallo! Willkommen bei ${restaurant.restaurant_name}. Wie kann ich Ihnen helfen?`,
-        it: `Ciao! Benvenuto da ${restaurant.restaurant_name}. Come posso aiutarti oggi?`,
-        pt: `Olá! Bem-vindo ao ${restaurant.restaurant_name}. Como posso ajudá-lo hoje?`,
-        nl: `Hallo! Welkom bij ${restaurant.restaurant_name}. Hoe kan ik u helpen?`,
-        pl: `Cześć! Witamy w ${restaurant.restaurant_name}. Jak mogę Ci pomóc?`,
-        sv: `Hej! Välkommen till ${restaurant.restaurant_name}. Hur kan jag hjälpa dig?`,
-        tr: `Merhaba! ${restaurant.restaurant_name}'a hoş geldiniz. Size nasıl yardımcı olabilirim?`,
-        ja: `こんにちは！${restaurant.restaurant_name}へようこそ。ご用件をお伺いします。`,
-        ko: `안녕하세요! ${restaurant.restaurant_name}에 오신 것을 환영합니다. 무엇을 도와드릴까요?`,
-        zh: `您好！欢迎来到${restaurant.restaurant_name}。我能为您做些什么？`,
-        ru: `Здравствуйте! Добро пожаловать в ${restaurant.restaurant_name}. Чем могу помочь?`,
-        hi: `नमस्ते! ${restaurant.restaurant_name} में आपका स्वागत है। मैं आपकी कैसे मदद कर सकता हूँ?`,
-      };
-      const baseLang = language.split('-')[0];
-      const newFirstMessage = firstMessages[baseLang] || firstMessages['en'];
       patchPayload.conversation_config.agent = {
-        first_message: newFirstMessage
+        first_message: restaurant.agent_greeting || buildDefaultVoiceGreeting(restaurant.restaurant_name, language)
       };
     }
 
-    // Save settings to local DB (only columns that actually exist)
-    const dbUpdates = {
-      updated_at: new Date().toISOString()
-    };
+    // The local table only stores voice ID and language, not tuning/model.
+    // Never claim that a failed remote update was saved for a later sync.
+    if (!process.env.ELEVENLABS_API_KEY) {
+      logger.warn('[VoiceSettings PATCH] ElevenLabs API key missing; update rejected');
+      return res.status(503).json({ success: false, error: 'Voice service unavailable. No settings were saved.' });
+    }
+
+    try {
+      const patchResponse = await fetch(
+        `https://api.elevenlabs.io/v1/convai/agents/${restaurant.elevenlabs_agent_id}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'xi-api-key': process.env.ELEVENLABS_API_KEY,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(patchPayload)
+        }
+      );
+
+      if (!patchResponse.ok) {
+        const errorText = await patchResponse.text();
+        logger.error('[VoiceSettings PATCH] ElevenLabs error:', patchResponse.status, errorText);
+        return res.status(502).json({ success: false, error: 'Voice service rejected the update. No settings were saved.' });
+      }
+    } catch (syncError) {
+      logger.error('[VoiceSettings PATCH] ElevenLabs sync exception:', syncError);
+      return res.status(502).json({ success: false, error: 'Voice service unavailable. No settings were saved.' });
+    }
+
+    // Persist the locally represented fields only after the live agent accepts
+    // the change. Remote-only tuning/model remains readable from the agent API.
+    const dbUpdates = { updated_at: new Date().toISOString() };
     if (voice_id) dbUpdates.voice_id = voice_id;
     if (language) dbUpdates.agent_language = language;
 
@@ -311,51 +351,17 @@ async function handlePatch(req, res) {
       .eq('id', restaurantId);
 
     if (updateError) {
-      logger.error('[VoiceSettings PATCH] DB update error:', updateError);
-    }
-
-    // Attempt to sync changes to ElevenLabs agent
-    logger.info(`[VoiceSettings PATCH] Updating agent ${restaurant.elevenlabs_agent_id}:`, JSON.stringify(patchPayload));
-
-    let elevenLabsSyncFailed = false;
-    let syncWarning;
-    if (!process.env.ELEVENLABS_API_KEY) {
-      logger.warn('[VoiceSettings PATCH] ElevenLabs API key missing, saving locally only');
-      elevenLabsSyncFailed = true;
-      syncWarning = 'ElevenLabs API key not configured — settings saved locally and will apply on next agent refresh.';
-    } else {
-      try {
-        const patchResponse = await fetch(
-          `https://api.elevenlabs.io/v1/convai/agents/${restaurant.elevenlabs_agent_id}`,
-          {
-            method: 'PATCH',
-            headers: {
-              'xi-api-key': process.env.ELEVENLABS_API_KEY,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(patchPayload)
-          }
-        );
-
-        if (!patchResponse.ok) {
-          const errorText = await patchResponse.text();
-          logger.error('[VoiceSettings PATCH] ElevenLabs error:', patchResponse.status, errorText);
-          elevenLabsSyncFailed = true;
-          syncWarning = 'ElevenLabs agent sync failed — settings saved locally and will apply on next agent refresh.';
-        }
-      } catch (syncError) {
-        logger.error('[VoiceSettings PATCH] ElevenLabs sync exception:', syncError);
-        elevenLabsSyncFailed = true;
-        syncWarning = 'ElevenLabs agent sync failed — settings saved locally and will apply on next agent refresh.';
-      }
+      logger.error('[VoiceSettings PATCH] DB update error after agent sync:', updateError);
+      return res.status(502).json({
+        success: false,
+        partial: true,
+        error: 'Voice agent updated, but local settings did not sync. Refresh before retrying.'
+      });
     }
 
     return res.status(200).json({
       success: true,
-      message: elevenLabsSyncFailed
-        ? 'Voice settings saved locally. Live agent sync will apply on next refresh.'
-        : 'Voice settings updated successfully',
-      sync_warning: elevenLabsSyncFailed ? syncWarning : undefined,
+      message: 'Voice settings updated successfully',
       data: {
         voice_id: voice_id || null,
         language: language || null,

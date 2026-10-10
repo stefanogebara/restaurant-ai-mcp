@@ -244,30 +244,33 @@ async function sendTrialEndingEmail({ customerEmail, trialEndsAt }) {
 /**
  * Send a retention campaign email
  */
-async function sendRetentionCampaignEmail({ customerEmail, customerName, message, campaignType }) {
+async function sendRetentionCampaignEmail({ customerEmail, customerName, message, campaignType, unsubscribeUrl, language = 'pt-BR' }) {
+  if (!unsubscribeUrl) return { sent: false, reason: 'missing_unsubscribe_url' };
   const resend = getResendClient();
   if (!resend) { logger.warn('RESEND_API_KEY not set, skipping retention email'); return { sent: false, reason: 'no_api_key' }; }
 
-  const subjectMap = {
-    win_back: 'We Miss You!',
-    loyalty_reward: 'A Special Reward For You',
-    reservation_reminder: 'Time to Book Again?',
-  };
+  const lang = /^(pt|es|en)(-|$)/i.exec(language)?.[1].toLowerCase() || 'pt';
+  const copy = {
+    pt: { subject: 'Uma mensagem do seu restaurante', greeting: 'Olá', unsubscribe: 'Cancelar mensagens promocionais' },
+    es: { subject: 'Un mensaje de su restaurante', greeting: 'Hola', unsubscribe: 'Cancelar mensajes promocionales' },
+    en: { subject: 'A message from your restaurant', greeting: 'Hello', unsubscribe: 'Unsubscribe from promotional emails' },
+  }[lang];
 
   try {
     const { error } = await resend.emails.send({
       from: FROM_ADDRESS,
       to: customerEmail,
-      subject: subjectMap[campaignType] || 'A Message From Your Restaurant',
+      subject: copy.subject,
       html: wrapEmailHtml(`
         <div style="background: #FAFAF9; border: 1px solid #E7E5E4; border-radius: 16px; padding: 32px; margin-bottom: 24px;">
           <h2 style="font-size: 22px; color: #1C1917; margin: 0 0 16px 0;">
-            ${customerName ? `Hi ${he(customerName)},` : 'Hello,'}
+            ${copy.greeting}${customerName ? ` ${he(customerName)}` : ''},
           </h2>
           <p style="color: #57534E; margin: 0; font-size: 15px; line-height: 1.6;">
             ${he(message)}
           </p>
         </div>
+        <p style="text-align:center;color:#78716C;font-size:12px"><a href="${he(unsubscribeUrl)}" style="color:#78716C;text-decoration:underline">${copy.unsubscribe}</a></p>
       `),
     });
     if (error) {

@@ -27,7 +27,8 @@ export interface CustomerNote {
   created_at: string;
 }
 
-export interface CustomerDetail extends CrmCustomer {
+export interface CustomerDetail extends Omit<CrmCustomer, 'avg_party_size' | 'churn_risk_score'> {
+  churn_risk_score: number | null;
   recent_reservations: Array<{
     id: string;
     date: string;
@@ -51,9 +52,11 @@ export interface ProfileUpdatePayload {
 }
 
 export interface DuplicateGroup {
-  match_type: string;
+  match_field: 'phone' | 'email';
   match_value: string;
-  customers: Array<CrmCustomer & { customer_id: string }>;
+  customers: Array<Pick<CrmCustomer,
+    'customer_id' | 'customer_name' | 'customer_phone' | 'customer_email'
+    | 'total_visits' | 'total_revenue' | 'last_visit_date' | 'customer_tier'>>;
 }
 
 export interface DuplicatesResponse {
@@ -64,6 +67,8 @@ export interface DuplicatesResponse {
 export interface CustomerListFilters {
   search?: string;
   tier?: string;
+  /** Exclusive lower bound; 70 selects scores above 70/100. */
+  minRiskScore?: number;
   tag?: string;
   allergy?: string;
   dietary?: string;
@@ -78,6 +83,44 @@ interface CustomerListResponse {
   total: number;
 }
 
+interface CustomerDetailEnvelope {
+  customer: Omit<CustomerDetail, 'recent_reservations' | 'notes'>;
+  reservations: CustomerDetail['recent_reservations'];
+  notes: CustomerNote[];
+}
+
+function normalizeCustomerDetail(data: unknown): CustomerDetail {
+  if (!data || typeof data !== 'object') throw new Error('Invalid customer detail');
+  const envelope = data as Partial<CustomerDetailEnvelope>;
+  const customer = envelope.customer;
+  if (!customer || typeof customer !== 'object'
+    || typeof customer.customer_id !== 'string' || !customer.customer_id
+    || typeof customer.customer_phone !== 'string' || !customer.customer_phone
+    || (customer.customer_name !== null && typeof customer.customer_name !== 'string')
+    || typeof customer.customer_tier !== 'string'
+    || !Number.isFinite(customer.total_visits)
+    || !Number.isFinite(customer.total_revenue)
+    || !Number.isFinite(customer.avg_revenue_per_visit)
+    || !Number.isFinite(customer.lifetime_value)
+    || (customer.churn_risk_score !== null && !Number.isFinite(customer.churn_risk_score))
+    || !Array.isArray(envelope.reservations)
+    || !Array.isArray(envelope.notes)) {
+    throw new Error('Invalid customer detail');
+  }
+
+  return {
+    ...customer,
+    tags: Array.isArray(customer.tags) ? customer.tags : [],
+    allergies: Array.isArray(customer.allergies) ? customer.allergies : [],
+    dietary_restrictions: Array.isArray(customer.dietary_restrictions) ? customer.dietary_restrictions : [],
+    seating_preferences: Array.isArray(customer.seating_preferences) ? customer.seating_preferences : [],
+    special_occasions: customer.special_occasions && typeof customer.special_occasions === 'object'
+      ? customer.special_occasions : {},
+    recent_reservations: envelope.reservations,
+    notes: envelope.notes,
+  };
+}
+
 // ─── Stale time ─────────────────────────────────────────────
 
 const CRM_STALE_TIME = 5 * 60 * 1000; // 5 minutes
@@ -88,6 +131,7 @@ function buildQueryString(filters: CustomerListFilters): string {
   const params = new URLSearchParams({ action: 'list' });
   if (filters.search) params.set('search', filters.search);
   if (filters.tier) params.set('tier', filters.tier);
+  if (filters.minRiskScore != null) params.set('min_risk_score', String(filters.minRiskScore));
   if (filters.tag) params.set('tag', filters.tag);
   if (filters.allergy) params.set('allergy', filters.allergy);
   if (filters.dietary) params.set('dietary', filters.dietary);
@@ -116,16 +160,18 @@ export function useCustomerList(filters: CustomerListFilters) {
 }
 
 export function useCustomerDetail(customerId: string | null) {
+  const now = new Date();
+  const fromDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   return useQuery<CustomerDetail>({
-    queryKey: ['crm', 'customer', customerId],
+    queryKey: ['crm', 'customer', customerId, fromDate],
     queryFn: async () => {
       const response = await authFetch(
-        `/api/customers?action=detail&customer_id=${encodeURIComponent(customerId!)}`
+        `/api/customers?action=detail&customer_id=${encodeURIComponent(customerId!)}&from_date=${fromDate}`
       );
       if (!response.ok) throw new Error('Failed to fetch customer detail');
       const result = await response.json();
       if (!result.success) throw new Error(result.error || 'Failed to fetch customer detail');
-      return result.data;
+      return normalizeCustomerDetail(result.data);
     },
     enabled: !!customerId,
     staleTime: CRM_STALE_TIME,

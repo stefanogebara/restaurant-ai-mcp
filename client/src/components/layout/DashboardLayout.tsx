@@ -5,9 +5,15 @@ import { useRestaurantCurrency } from '../../hooks/useRestaurantCurrency';
 
 interface DashboardLayoutProps {
   children: ReactNode;
+  /** Dashboard owns an inline mobile title beside the fixed menu button. */
+  mobileHeaderIntegrated?: boolean;
+  /** Opt-in landing-hero palette for routes that have completed the migration. */
+  appearance?: 'default' | 'hero';
+  /** Keep the fixed menu control legible above the Dashboard's dark service canvas. */
+  darkMobileMenu?: boolean;
 }
 
-export default function DashboardLayout({ children }: DashboardLayoutProps) {
+export default function DashboardLayout({ children, mobileHeaderIntegrated = false, appearance = 'default', darkMobileMenu = false }: DashboardLayoutProps) {
   const { isCollapsed } = useSidebar();
   // Pull restaurant.country into the global currency cache so every dashboard
   // widget — and every formatCurrency() callsite without an explicit currency
@@ -16,11 +22,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   useRestaurantCurrency();
 
   return (
-    <div className="min-h-screen flex">
-      <Sidebar />
-      {/* Liquid Glass v2: a sidebar flutua destacada (top/left 16px), então a
-          margem do conteúdo soma o deslocamento da cápsula. */}
-      <main className={`flex-1 min-w-0 overflow-x-hidden transition-all duration-300 pb-16 lg:pb-0 ${isCollapsed ? 'lg:ml-24' : 'lg:ml-[276px]'}`}>
+    <div className={`min-h-screen flex ${appearance === 'hero' ? 'bg-brand-paper text-brand-ink font-brand' : ''}`}>
+      <Sidebar appearance={appearance} darkMobileMenu={darkMobileMenu} />
+      {/* The shell reserves exactly the floating capsule's width plus its
+          16px left inset, including the collapsed state. */}
+      <main className={`flex-1 min-w-0 overflow-x-hidden transition-all duration-300 pb-16 lg:pb-0 ${mobileHeaderIntegrated ? '' : 'pt-5 lg:pt-0'} ${isCollapsed ? 'lg:ml-[80px]' : 'lg:ml-[244px]'}`}>
         {children}
       </main>
     </div>

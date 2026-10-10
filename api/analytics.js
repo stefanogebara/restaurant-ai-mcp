@@ -11,18 +11,40 @@ const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const logger = createSecureLogger('Analytics');
+const ANALYTICS_PAGE_SIZE = 1000;
+const ANALYTICS_MAX_ROWS = 20000;
+
+// PostgREST caps a single SELECT response. A truncated result would produce
+// believable but incorrect totals, so fetch every page in a stable order and
+// fail closed if the bounded request cannot cover the history.
+async function fetchAnalyticsRows(table, columns, restaurantId) {
+  const rows = [];
+  for (let offset = 0; offset <= ANALYTICS_MAX_ROWS; offset += ANALYTICS_PAGE_SIZE) {
+    const { data, error } = await supabaseAdmin
+      .from(table)
+      .select(columns)
+      .eq('restaurant_id', restaurantId)
+      .order('id', { ascending: true })
+      .range(offset, offset + ANALYTICS_PAGE_SIZE - 1);
+    if (error) throw error;
+    if (!Array.isArray(data)) throw new Error(`${table} query returned no data`);
+    rows.push(...data);
+    if (rows.length > ANALYTICS_MAX_ROWS) throw new Error(`${table} exceeds analytics row limit`);
+    if (data.length < ANALYTICS_PAGE_SIZE) return rows;
+  }
+  throw new Error(`${table} exceeds analytics row limit`);
+}
 
 async function getAllReservations(restaurantId) {
   try {
-    const { data, error } = await supabaseAdmin
-      .from('reservations')
-      .select('date, time, status, party_size, customer_name, reservation_id, created_at')
-      .eq('restaurant_id', restaurantId);
-
-    if (error) throw error;
+    const data = await fetchAnalyticsRows(
+      'reservations',
+      'id, date, time, status, party_size, customer_name, reservation_id, created_at',
+      restaurantId
+    );
 
     // Map to Airtable-compatible format so the rest of the code works unchanged
-    const records = (data || []).map(r => ({
+    const records = data.map(r => ({
       fields: {
         Date: r.date,
         Time: r.time,
@@ -42,15 +64,14 @@ async function getAllReservations(restaurantId) {
 
 async function getAllServiceRecordsData(restaurantId) {
   try {
-    const { data, error } = await supabaseAdmin
-      .from('service_records')
-      .select('status, seated_at, actual_departure, table_ids, total_bill, party_size')
-      .eq('restaurant_id', restaurantId);
-
-    if (error) throw error;
+    const data = await fetchAnalyticsRows(
+      'service_records',
+      'id, status, seated_at, actual_departure, table_ids, total_bill, party_size',
+      restaurantId
+    );
 
     // Map to Airtable-compatible format
-    const records = (data || []).map(r => ({
+    const records = data.map(r => ({
       fields: {
         Status: (r.status || '').toLowerCase(),
         'Seated At': r.seated_at,
@@ -107,16 +128,24 @@ async function calculateAnalytics(restaurantId, period = '30d', startDate = null
   const tablesResult = results[2];
   const activePartiesResult = results[3];
 
-  if (!reservationsResult.success && !serviceRecordsResult.success && !tablesResult.success) {
-    // All queries failed — likely a database issue
-    return { success: false, error: 'Failed to fetch analytics data' };
+  const failedSources = [
+    ['reservations', reservationsResult, 'records'],
+    ['service_records', serviceRecordsResult, 'records'],
+    ['tables', tablesResult, 'tables'],
+    ['active_parties', activePartiesResult, 'service_records'],
+  ].filter(([, source, field]) => !source?.success || !Array.isArray(source[field]))
+    .map(([name]) => name);
+  if (failedSources.length > 0) {
+    // A missing source cannot be represented as zero. The client must render
+    // its error state instead of a plausible but false empty period.
+    logger.error('Analytics data incomplete', { failedSources });
+    return { success: false, error: 'Analytics data temporarily unavailable' };
   }
 
-  // Gracefully handle partial failures — use empty arrays for failed queries
-  const reservations = reservationsResult.success ? (reservationsResult.records || []) : [];
-  const serviceRecords = serviceRecordsResult.success ? (serviceRecordsResult.records || []) : [];
-  const tables = tablesResult.success ? (tablesResult.tables || []) : [];
-  const activeParties = activePartiesResult.service_records || [];
+  const reservations = reservationsResult.records;
+  const serviceRecords = serviceRecordsResult.records;
+  const tables = tablesResult.tables;
+  const activeParties = activePartiesResult.service_records;
 
   const now = new Date();
   const { from, to } = parseDateRange(period, startDate, endDate);
@@ -340,7 +369,7 @@ module.exports = async (req, res) => {
     const endDate    = req.query.end_date   || null;
     const incExport  = req.query.include_export === 'true';
     const result = await calculateAnalytics(restaurantId, period, startDate, endDate, incExport);
-    return res.status(200).json(result);
+    return res.status(result.success ? 200 : 503).json(result);
   } catch (error) {
     logger.error('Analytics error:', error);
     return res.status(500).json({ success: false, error: 'Failed to calculate analytics' });
