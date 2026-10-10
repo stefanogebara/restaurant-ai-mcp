@@ -45,12 +45,12 @@ export default function CustomerDirectory({
                 onClick={() => onOpen(customer.customer_id)}
                 aria-label={t('crm.openCustomer', { name, defaultValue: `Open ${name}` })}
                 aria-current={selectedCustomerId === customer.customer_id ? 'true' : undefined}
-                className={`group grid min-h-[76px] w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 border-l-[3px] px-3 py-3 text-left transition-colors hover:bg-brand-ink/[0.035] focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-brand-action md:grid-cols-[minmax(0,1.55fr)_120px_116px] md:gap-4 md:px-4 ${selectedCustomerId === customer.customer_id ? 'border-brand-action bg-brand-action/[0.07]' : 'border-transparent'}`}
+                className={`group grid min-h-[72px] w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 border-l-[3px] px-3 py-2.5 text-left transition-colors hover:bg-brand-ink/[0.035] focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-brand-action md:min-h-[66px] md:grid-cols-[minmax(0,1.55fr)_120px_116px] md:gap-4 md:px-4 ${selectedCustomerId === customer.customer_id ? 'border-brand-action bg-brand-action/[0.07]' : 'border-transparent'}`}
               >
                 <span className="min-w-0">
                   <span className="block truncate text-[18px] font-medium leading-6 tracking-[-0.025em] text-brand-ink">{name}</span>
                   <span className="mt-1 block min-h-[16px] truncate text-xs leading-4 text-brand-muted">
-                    {customer.customer_tier !== 'at_risk' && <span className="text-brand-ink/75">{t(`crm.tier_${customer.customer_tier}`, customer.customer_tier)}</span>}
+                    {customer.customer_tier !== 'at_risk' && <span className={customer.customer_tier === 'vip' ? 'font-semibold text-brand-ink' : 'text-brand-muted'}>{t(`crm.tier_${customer.customer_tier}`, customer.customer_tier)}</span>}
                     {customer.customer_tier !== 'at_risk' && (customer.tags || []).length > 0 && ' · '}
                     {(customer.tags || []).slice(0, 3).join(' · ')}
                     {(customer.tags || []).length > 3 && ` · +${customer.tags.length - 3}`}

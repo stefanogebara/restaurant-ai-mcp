@@ -1,5 +1,27 @@
 # Reforma da plataforma interna — primeira entrega (30/set/2026)
 
+## Continuação de Clientes (10/out/2026)
+
+**Estado:** PR #165 segue em rascunho; esta passada local ainda não está em produção. A prévia de Clientes usa respostas sintéticas e não envia alterações.
+
+- [x] Inspecionar a lista e a ficha em 1200, 390 e 320 px, inclusive as duas vistas da ficha e o fechamento por Escape.
+- [x] Corrigir o contrato de alergias/dietas entre valores salvos e filtros, preservando dados antigos traduzidos.
+- [x] Corrigir o contrato da detecção de duplicados e a escolha explícita dos registros a mesclar; eliminar grupo repetido quando telefone e e-mail coincidem.
+- [x] Fazer busca, filtros e paginação da prévia refletirem as consultas simuladas.
+- [x] Conter o foco na ficha móvel e devolvê-lo à linha ao fechar; adicionar teste de regressão.
+- [x] Revalidar testes, build, acessibilidade/overflow e registrar os limites da revisão autenticada.
+
+**Achado visual e operacional:** a ficha móvel passou a receber/reter/restaurar foco. A janela de duplicados agora usa o mesmo canvas de Clientes, mostra telefone/e-mail da correspondência, compara visitas e última visita, pede escolha explícita dos dois registros e mostra a soma prevista antes da confirmação. A prévia sintética bloqueia POST e exibe o erro sem esconder seleção ou foco em 320 px. A busca de duplicados não repete o mesmo par quando telefone e e-mail coincidem. Não houve mesclagem real.
+
+**Referência travada:** o hero aprovado e `DESIGN.md` governam papel, Instrument Sans, verde de ação, separadores e cores de estado; a ficha de Clientes fornece a densidade operacional. A lista usa colunas apenas no desktop e dados empilhados no celular. O diálogo usa um único contêiner; nenhum gráfico ou imagem é necessário para comparar registros. A crítica inicial da nova janela marcou 6,5/10 no desktop; a comparação revisada marcou 7/10 no desktop e 6/10 no celular antes dos ajustes finais de resumo, badges e ação móvel. A meta visual de 9/10 continua aberta.
+
+**Risco de backend descoberto:** `mergeCustomers` ainda faz atualização do registro principal, marcação do secundário, notas e reservas em operações separadas, sem transação. Falhas nas etapas finais podem deixar uma mesclagem parcial; `customer_tier`, `lifetime_value` e `churn_risk_score` não são recalculados após a soma. O cron diário por telefone pode sobrescrever o resultado, e trocar o telefone de reservas futuras pode mudar o contato indevidamente. A listagem agora oculta o registro absorvido; a correção completa está na issue #172. Não chamar esse fluxo seguro para dados reais nem tirar a PR de rascunho sem a migração transacional e testes de falha/rollback.
+
+**Crítica independente da lista sintética:** a versão larga recebeu 6,5/10; após estreitar o registro, aproximar os controles, reduzir as linhas e distinguir VIP, a nova captura desktop recebeu 6,7/10. Continua abaixo do alvo: a coluna de nomes ainda abre um vazio até visitas, a segunda linha mistura nível, ocasião e preferências, e a hierarquia de controles segue tímida. Não converter essa pequena melhora em aprovação visual; exige uma revisão de composição e semântica além de espaçamento.
+
+**Verificação desta continuação:** build de produção/TypeScript passou; Jest completo passou com 283 suítes e 4.322 testes, Vitest completo com 128 arquivos e 1.145 testes. A suíte focal do CRM passou após filtrar fichas absorvidas e suprimir subgrupos repetidos; sintaxe dos arquivos de API, ESLint de mudanças, JSON dos três idiomas e `git diff --check` passaram. Playwright sintético verificou 320/1440 px, foco e Escape, confirmação explícita, soma prevista, erro visível após POST bloqueado, ausência de overflow e zero erros novos no console. A captura mais recente da janela recebeu 6,5/10 no celular; a lista desktop recebeu 7/10. A meta de 9/10 e a prévia autenticada seguem pendentes.
+
+
 ## Auditoria autenticada e correções de confiança (08/out/2026)
 
 **Estado:** PR #165 em rascunho; produção não recebe esta reforma. Referência visual travada no hero aprovado, com dados operacionais reais como fonte de verdade. A conta real só será lida; não enviar mensagens, ligar, reservar, trocar canais ou limpar filas.

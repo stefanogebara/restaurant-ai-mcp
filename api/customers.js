@@ -18,6 +18,31 @@ const { findDuplicates, mergeCustomers } = require('./_services/customerMergeSer
 
 const logger = createSecureLogger('Customers');
 
+// Presets were previously saved as translated UI labels. Keep directory
+// filters inclusive until those records are edited and saved canonically.
+const ALLERGY_FILTER_ALIASES = {
+  Gluten: ['Glúten'],
+  Lactose: ['Lactosa'],
+  Nuts: ['Nozes', 'Frutos secos'],
+  Seafood: ['Frutos do Mar', 'Mariscos'],
+  Soy: ['Soja'],
+  Eggs: ['Ovos', 'Huevos'],
+  Shellfish: ['Crustáceos', 'Crustaceos'],
+};
+const DIETARY_FILTER_ALIASES = {
+  Vegetarian: ['Vegetariano'],
+  Vegan: ['Vegano'],
+  Pescatarian: ['Pescetariano'],
+  Kosher: [], Halal: [], 'Low-carb': [], Keto: [],
+};
+
+function filterPresetVariants(value, aliases) {
+  const entry = Object.entries(aliases).find(([canonical, translations]) =>
+    [canonical, ...translations].some((variant) => variant.toLocaleLowerCase() === value.toLocaleLowerCase())
+  );
+  return entry ? [...new Set([entry[0], ...entry[1]])] : null;
+}
+
 // Use restaurant schema for customer_ltv and customer_notes
 function crmDb() {
   return supabaseAdmin.schema('restaurant');
@@ -76,7 +101,8 @@ async function handleList(req, res) {
         'customer_id, customer_name, customer_phone, customer_email, total_visits, total_revenue, avg_revenue_per_visit, customer_tier, lifetime_value, churn_risk_score, last_visit_date, first_visit_date, tags',
         { count: 'exact' }
       )
-      .eq('restaurant_id', restaurantId);
+      .eq('restaurant_id', restaurantId)
+      .is('merged_into', null);
 
     // Search filter: ILIKE on name or exact match on phone
     if (search) {
@@ -102,14 +128,19 @@ async function handleList(req, res) {
       query = query.contains('tags', [tag.trim().toLowerCase()]);
     }
 
-    // Allergy filter (array contains)
+    // Existing records may have a translated preset, while new edits save the
+    // canonical value. PostgreSQL array overlap matches either spelling.
     if (allergy) {
-      query = query.contains('allergies', [allergy.trim()]);
+      const value = allergy.trim();
+      const variants = filterPresetVariants(value, ALLERGY_FILTER_ALIASES);
+      query = variants ? query.overlaps('allergies', variants) : query.contains('allergies', [value]);
     }
 
-    // Dietary filter (array contains)
+    // Preserve exact matching for free-text values outside the preset list.
     if (dietary) {
-      query = query.contains('dietary_restrictions', [dietary.trim()]);
+      const value = dietary.trim();
+      const variants = filterPresetVariants(value, DIETARY_FILTER_ALIASES);
+      query = variants ? query.overlaps('dietary_restrictions', variants) : query.contains('dietary_restrictions', [value]);
     }
 
     // Sorting and pagination

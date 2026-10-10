@@ -68,7 +68,7 @@ export function CustomersWorkspace() {
   return (
     <>
       <main className={`min-h-screen bg-brand-paper font-brand text-brand-ink transition-[margin] duration-300 ${selectedCustomerId ? 'lg:mr-[520px]' : ''}`}>
-      <div className="mx-auto max-w-[1240px] overflow-x-hidden px-4 pb-24 pt-6 sm:px-6 sm:pb-8 lg:px-10 mt-14 sm:mt-0">
+      <div className="mx-auto max-w-[900px] overflow-x-hidden px-4 pb-24 pt-6 sm:px-6 sm:pb-8 lg:px-10 mt-14 sm:mt-0">
         <header className="mb-7">
           <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.14em] text-brand-muted">{t('crm.sectionLabel', 'Guest relationships')}</p>
           <div className="flex flex-wrap items-end gap-x-5 gap-y-1">
@@ -90,9 +90,9 @@ export function CustomersWorkspace() {
         {reviewOnly && <p className="mb-4 max-w-2xl text-xs leading-relaxed text-brand-muted">{t('crm.reviewExplanation', 'Guests with a historical return-risk score above 70/100. Check reservations and visit history before deciding what to do.')}</p>}
 
         {/* Filters */}
-        <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-1 md:gap-y-2.5">
+        <div className="mb-4 flex flex-wrap items-center gap-x-5 gap-y-1 md:gap-y-2.5">
           {/* Search */}
-          <div className="relative w-full min-w-0 md:max-w-[30rem] md:flex-1">
+          <div className="relative w-full min-w-0 md:w-[22rem] md:flex-none">
             <svg
               className="absolute left-3.5 top-1/2 -translate-y-1/2 text-brand-muted"
               width="16"
@@ -115,7 +115,7 @@ export function CustomersWorkspace() {
             />
           </div>
 
-          <details className="group shrink-0 open:basis-full md:ml-auto">
+          <details className="group shrink-0 open:basis-full">
             <summary className="inline-flex min-h-[38px] cursor-pointer list-none items-center gap-2 text-xs font-medium text-brand-action marker:hidden focus-visible:outline-2 focus-visible:outline-brand-action">
               {t('crm.moreFilters', 'More filters')}{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
               <svg className="transition-transform group-open:rotate-180" width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="m3 6 5 5 5-5" /></svg>

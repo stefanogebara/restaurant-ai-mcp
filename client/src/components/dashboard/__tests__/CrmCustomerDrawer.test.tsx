@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { useState } from 'react';
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from '../../../test/renderWithProviders';
@@ -156,5 +157,24 @@ describe('CrmCustomerDrawer customer detail contract', () => {
     expect(screen.getByText('Edit profile')).toBeInTheDocument();
     await userEvent.keyboard('{Escape}');
     expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it('moves focus into the drawer and restores it to the customer opener on close', async () => {
+    respondWithDetail({ customer, reservations: [], notes: [] });
+    function Harness() {
+      const [open, setOpen] = useState(false);
+      return <>
+        <button type="button" onClick={() => setOpen(true)}>Open customer</button>
+        <CrmCustomerDrawer customerId={open ? customer.customer_id : null} onClose={() => setOpen(false)} />
+      </>;
+    }
+
+    renderWithProviders(<Harness />);
+    const opener = screen.getByRole('button', { name: 'Open customer' });
+    await userEvent.click(opener);
+    const dialog = await screen.findByRole('dialog', { name: 'Beatriz Costa' });
+    expect(dialog).toHaveFocus();
+    await userEvent.keyboard('{Escape}');
+    expect(opener).toHaveFocus();
   });
 });

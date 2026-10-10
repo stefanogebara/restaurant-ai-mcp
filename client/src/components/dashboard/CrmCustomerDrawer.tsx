@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import CustomerTierBadge from './CustomerTierBadge';
 import TagEditor from './TagEditor';
 import CustomerProfileSections from './CustomerProfileSections';
+import { displayCustomerPreset, type CustomerPresetKind } from './CustomerProfilePresets';
 import { formatCurrency } from '../../utils/currency';
 import { useCustomerDetail, useUpdateTags, useAddNote, useDeleteNote, useUpdateProfile } from '../../hooks/useCustomers';
 import type { ProfileUpdatePayload } from '../../hooks/useCustomers';
@@ -13,6 +14,9 @@ interface CrmCustomerDrawerProps {
   onClose: () => void;
   initialView?: 'service' | 'relationship';
 }
+
+const FOCUSABLE_SELECTOR =
+  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), summary, [tabindex]:not([tabindex="-1"])';
 
 export default function CrmCustomerDrawer({ customerId, onClose, initialView = 'service' }: CrmCustomerDrawerProps) {
   const { t, i18n } = useTranslation();
@@ -33,6 +37,9 @@ export default function CrmCustomerDrawer({ customerId, onClose, initialView = '
   const [noteText, setNoteText] = useState('');
   const [activeView, setActiveView] = useState<'service' | 'relationship'>(initialView);
   const [isDesktop, setIsDesktop] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 1024);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   useEffect(() => {
     if (customerId) setActiveView(initialView);
@@ -46,10 +53,48 @@ export default function CrmCustomerDrawer({ customerId, onClose, initialView = '
 
   useEffect(() => {
     if (!isOpen) return;
-    const onKeyDown = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose(); };
+    const previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const previousOverflow = document.body.style.overflow;
+    const updateScrollLock = () => {
+      document.body.style.overflow = window.innerWidth < 1024 ? 'hidden' : previousOverflow;
+    };
+    updateScrollLock();
+    window.addEventListener('resize', updateScrollLock);
+    dialogRef.current?.focus();
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        onCloseRef.current();
+        return;
+      }
+      if (event.key !== 'Tab' || window.innerWidth >= 1024 || !dialogRef.current) return;
+      const focusables = Array.from(dialogRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR))
+        .filter((element) => element.getClientRects().length > 0);
+      if (focusables.length === 0) {
+        event.preventDefault();
+        dialogRef.current.focus();
+        return;
+      }
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      const active = document.activeElement;
+      if (event.shiftKey && (active === first || active === dialogRef.current || !dialogRef.current.contains(active))) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && (active === last || !dialogRef.current.contains(active))) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
     document.addEventListener('keydown', onKeyDown);
-    return () => document.removeEventListener('keydown', onKeyDown);
-  }, [isOpen, onClose]);
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('resize', updateScrollLock);
+      document.body.style.overflow = previousOverflow;
+      if (previouslyFocused?.isConnected) previouslyFocused.focus();
+    };
+  }, [isOpen]);
 
   const handleTagsChange = (tags: string[]) => {
     if (!customerId) return;
@@ -89,9 +134,11 @@ export default function CrmCustomerDrawer({ customerId, onClose, initialView = '
 
           {/* Customer profile */}
           <motion.div
+            ref={dialogRef}
             role="dialog"
             aria-modal={!isDesktop}
             aria-label={customer?.customer_name || t('crm.customerProfile', 'Customer profile')}
+            tabIndex={-1}
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
@@ -153,7 +200,7 @@ export default function CrmCustomerDrawer({ customerId, onClose, initialView = '
                         <span className="shrink-0 text-[30px] leading-none tabular-nums tracking-[-0.05em]">{nextReservation.time}</span>
                       </div>
                       <p className="mt-3 text-xs tabular-nums text-brand-muted">{nextReservationDate?.year} <span aria-hidden="true">·</span> {nextReservation.party_size} {t('crm.people', 'guests')}</p>
-                      {customer.seating_preferences?.length > 0 && <p className="mt-4 text-xs text-brand-muted">{t('crm.seatingPreference', 'Seating preference')}: <span className="text-brand-ink">{customer.seating_preferences.join(', ')}</span></p>}
+                      {customer.seating_preferences?.length > 0 && <p className="mt-4 text-xs text-brand-muted">{t('crm.seatingPreference', 'Seating preference')}: <span className="text-brand-ink">{customer.seating_preferences.map((value) => displayCustomerPreset(value, 'seating')).join(', ')}</span></p>}
                     </div>}
                     <div className="flex items-center justify-between gap-3">
                       <h3 className="pt-5 text-[11px] font-medium uppercase tracking-[0.12em] text-brand-muted">{t('crm.serviceNotes', 'Service notes')}</h3>
@@ -186,9 +233,9 @@ export default function CrmCustomerDrawer({ customerId, onClose, initialView = '
                     <div className="mt-2">
                       {customer.allergies?.length || customer.dietary_restrictions?.length || (!nextReservation && customer.seating_preferences?.length) ? (
                         <div>
-                          {customer.allergies?.length > 0 && <Fact label={t('crm.allergies', 'Allergies')} values={customer.allergies} />}
-                          {customer.dietary_restrictions?.length > 0 && <Fact label={t('crm.dietaryRestrictions', 'Dietary restrictions')} values={customer.dietary_restrictions} />}
-                          {!nextReservation && customer.seating_preferences?.length > 0 && <Fact label={t('crm.seatingPreference', 'Seating preference')} values={customer.seating_preferences} />}
+                          {customer.allergies?.length > 0 && <Fact label={t('crm.allergies', 'Allergies')} values={customer.allergies} kind="allergy" />}
+                          {customer.dietary_restrictions?.length > 0 && <Fact label={t('crm.dietaryRestrictions', 'Dietary restrictions')} values={customer.dietary_restrictions} kind="dietary" />}
+                          {!nextReservation && customer.seating_preferences?.length > 0 && <Fact label={t('crm.seatingPreference', 'Seating preference')} values={customer.seating_preferences} kind="seating" />}
                         </div>
                       ) : !customer.notes?.length && <p className="text-sm text-brand-muted">{t('crm.noServicePreferences', 'No service preferences recorded yet.')}</p>}
                     </div>
@@ -318,8 +365,8 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-function Fact({ label, values }: { label: string; values: string[] }) {
-  return <div className="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-x-3 py-1.5 text-sm"><span className="text-brand-muted">{label}</span><span className="text-brand-ink">{values.join(', ')}</span></div>;
+function Fact({ label, values, kind }: { label: string; values: string[]; kind: CustomerPresetKind }) {
+  return <div className="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-x-3 py-1.5 text-sm"><span className="text-brand-muted">{label}</span><span className="text-brand-ink">{values.map((value) => displayCustomerPreset(value, kind)).join(', ')}</span></div>;
 }
 
 function formatVisitDate(value: string, locale: string): string {

@@ -108,8 +108,8 @@ describe('customerMergeService', () => {
     it('groups customers with matching phone numbers', async () => {
       mockIs.mockResolvedValue({
         data: [
-          { customer_id: 'c1', customer_name: 'Alice', customer_phone: '+5511999', customer_email: null, total_visits: 5, total_revenue: 500, last_visit_date: '2026-03-01' },
-          { customer_id: 'c2', customer_name: 'Alice B', customer_phone: '+5511999', customer_email: null, total_visits: 2, total_revenue: 200, last_visit_date: '2026-02-15' },
+          { customer_id: 'c1', customer_name: 'Alice', customer_phone: '+5511999', customer_email: null, total_visits: 5, total_revenue: 500, last_visit_date: '2026-03-01', customer_tier: 'vip' },
+          { customer_id: 'c2', customer_name: 'Alice B', customer_phone: '+5511999', customer_email: null, total_visits: 2, total_revenue: 200, last_visit_date: '2026-02-15', customer_tier: 'regular' },
           { customer_id: 'c3', customer_name: 'Bob', customer_phone: '+5511888', customer_email: null, total_visits: 1, total_revenue: 100, last_visit_date: '2026-01-01' },
         ],
         error: null,
@@ -120,6 +120,8 @@ describe('customerMergeService', () => {
       expect(result[0].match_field).toBe('phone');
       expect(result[0].match_value).toBe('+5511999');
       expect(result[0].customers).toHaveLength(2);
+      expect(result[0].customers.map((customer) => customer.customer_tier)).toEqual(['vip', 'regular']);
+      expect(mockSelect).toHaveBeenCalledWith(expect.stringContaining('customer_tier'));
     });
 
     it('groups customers with matching email', async () => {
@@ -134,6 +136,35 @@ describe('customerMergeService', () => {
       const result = await findDuplicates('rest-1');
       expect(result).toHaveLength(1);
       expect(result[0].match_field).toBe('email');
+    });
+
+    it('does not show the same pair twice when both phone and email match', async () => {
+      mockIs.mockResolvedValue({
+        data: [
+          { customer_id: 'c1', customer_name: 'Alice', customer_phone: '+5511999', customer_email: 'alice@test.com' },
+          { customer_id: 'c2', customer_name: 'Alice B', customer_phone: '+5511999', customer_email: 'alice@test.com' },
+        ],
+        error: null,
+      });
+
+      const result = await findDuplicates('rest-1');
+      expect(result).toHaveLength(1);
+      expect(result[0].match_field).toBe('phone');
+    });
+
+    it('does not repeat an email subset already contained in a larger phone group', async () => {
+      mockIs.mockResolvedValue({
+        data: [
+          { customer_id: 'c1', customer_name: 'Alice', customer_phone: '+5511999', customer_email: 'alice@test.com' },
+          { customer_id: 'c2', customer_name: 'Alice B', customer_phone: '+5511999', customer_email: 'alice@test.com' },
+          { customer_id: 'c3', customer_name: 'Alice C', customer_phone: '+5511999', customer_email: null },
+        ],
+        error: null,
+      });
+
+      const result = await findDuplicates('rest-1');
+      expect(result).toHaveLength(1);
+      expect(result[0].customers).toHaveLength(3);
     });
 
     it('throws on database error', async () => {
@@ -366,7 +397,10 @@ describe('customers API — list risk threshold', () => {
     query = {
       select: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
+      is: jest.fn().mockReturnThis(),
       gt: jest.fn().mockReturnThis(),
+      overlaps: jest.fn().mockReturnThis(),
+      contains: jest.fn().mockReturnThis(),
       order: jest.fn().mockReturnThis(),
       range: jest.fn().mockResolvedValue({
         data: [{ customer_id: 'risk-1', churn_risk_score: '82', lifetime_value: '400', tags: null }],
@@ -408,6 +442,7 @@ describe('customers API — list risk threshold', () => {
     await handler(request('70'), res);
 
     expect(query.eq).toHaveBeenCalledWith('restaurant_id', 'rest-1');
+    expect(query.is).toHaveBeenCalledWith('merged_into', null);
     expect(query.gt).toHaveBeenCalledWith('churn_risk_score', 70);
     expect(query.gt.mock.invocationCallOrder[0]).toBeLessThan(query.range.mock.invocationCallOrder[0]);
     expect(res.status).toHaveBeenCalledWith(200);
@@ -423,6 +458,48 @@ describe('customers API — list risk threshold', () => {
 
     expect(res.status).toHaveBeenCalledWith(400);
     expect(query.select).not.toHaveBeenCalled();
+  });
+
+  it('matches canonical and previously translated allergy and dietary presets within the tenant query', async () => {
+    const res = mockRes();
+    await handler({ method: 'GET', query: { action: 'list', allergy: 'Gluten', dietary: 'Vegetarian' }, headers: {} }, res);
+
+    expect(query.eq).toHaveBeenCalledWith('restaurant_id', 'rest-1');
+    expect(query.overlaps).toHaveBeenCalledWith('allergies', ['Gluten', 'Glúten']);
+    expect(query.overlaps).toHaveBeenCalledWith('dietary_restrictions', ['Vegetarian', 'Vegetariano']);
+    expect(query.overlaps.mock.invocationCallOrder[0]).toBeLessThan(query.range.mock.invocationCallOrder[0]);
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  it('includes every current Portuguese and Spanish preset label in the canonical filters', async () => {
+    const pt = require('../../client/src/i18n/locales/pt-BR.json').crm;
+    const es = require('../../client/src/i18n/locales/es.json').crm;
+    const groups = {
+      allergy: ['Gluten', 'Lactose', 'Nuts', 'Seafood', 'Soy', 'Eggs', 'Shellfish'],
+      dietary: ['Vegetarian', 'Vegan', 'Pescatarian', 'Kosher', 'Halal', 'Low-carb', 'Keto'],
+    };
+
+    for (const [filter, values] of Object.entries(groups)) {
+      for (const value of values) {
+        query.overlaps.mockClear();
+        const res = mockRes();
+        await handler({ method: 'GET', query: { action: 'list', [filter]: value }, headers: {} }, res);
+        const key = `${filter}_${value.toLowerCase().replace('-', '_')}`;
+        const field = filter === 'allergy' ? 'allergies' : 'dietary_restrictions';
+        const variants = query.overlaps.mock.calls.find(([column]) => column === field)?.[1];
+        expect(variants).toEqual(expect.arrayContaining([value, pt[key], es[key]]));
+        expect(res.status).toHaveBeenCalledWith(200);
+      }
+    }
+  });
+
+  it('keeps an exact array filter for custom allergy and dietary entries', async () => {
+    const res = mockRes();
+    await handler({ method: 'GET', query: { action: 'list', allergy: 'Sesame', dietary: 'No onions' }, headers: {} }, res);
+
+    expect(query.contains).toHaveBeenCalledWith('allergies', ['Sesame']);
+    expect(query.contains).toHaveBeenCalledWith('dietary_restrictions', ['No onions']);
+    expect(query.overlaps).not.toHaveBeenCalled();
   });
 });
 

@@ -52,9 +52,11 @@ export interface ProfileUpdatePayload {
 }
 
 export interface DuplicateGroup {
-  match_type: string;
+  match_field: 'phone' | 'email';
   match_value: string;
-  customers: Array<CrmCustomer & { customer_id: string }>;
+  customers: Array<Pick<CrmCustomer,
+    'customer_id' | 'customer_name' | 'customer_phone' | 'customer_email'
+    | 'total_visits' | 'total_revenue' | 'last_visit_date' | 'customer_tier'>>;
 }
 
 export interface DuplicatesResponse {
