@@ -89,6 +89,10 @@ if (import.meta.env.DEV) {
           reservations: guest.customer_id === 'guest-1' ? [
             { id: 'reservation-synthetic-next', date: nextReservationDate, time: '20:00', party_size: 2, status: 'confirmed' },
             { id: 'reservation-synthetic-1', date: guest.last_visit_date, time: '20:00', party_size: 2, status: 'completed' },
+          ] : guest.customer_id === 'guest-6' ? [
+            { id: 'reservation-synthetic-6a', date: '2026-10-02', time: '19:30', party_size: 3, status: 'completed' },
+            { id: 'reservation-synthetic-6b', date: '2026-09-04', time: '20:00', party_size: 2, status: 'completed' },
+            { id: 'reservation-synthetic-6c', date: '2026-08-14', time: '20:30', party_size: 4, status: 'completed' },
           ] : [{ id: `reservation-synthetic-${guest.customer_id}`, date: guest.last_visit_date, time: '19:30', party_size: guest.avg_party_size, status: 'completed' }],
           notes: guest.customer_id === 'guest-1'
             ? [{ id: 'note-synthetic-1', content: 'Prefere sombra no horário do almoço.', created_by: null, created_at: '2026-08-18T12:00:00Z' }]

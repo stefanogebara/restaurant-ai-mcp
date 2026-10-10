@@ -4,6 +4,8 @@
 
 **Estado:** PR #165 segue em rascunho; esta passada local ainda não está em produção. A prévia de Clientes usa respostas sintéticas e não envia alterações.
 
+**Ficha de relacionamento, continuação:** a identidade ganhou prioridade sobre o número de visitas; o resumo agora reúne frequência, primeira/última visita e índice histórico antes da lista cronológica de reservas. O valor projetado fica dentro da explicação do índice, com aviso de que é estimativa. A prévia da cliente Lia mostra três reservas sintéticas concluídas, coerentes com o histórico. Em larguras menores que 1280 px, a ficha abre como diálogo com fundo e foco contido; acima disso, divide a tela com a lista. As capturas em 390/1024/1440 px não tiveram overflow nem erros de página, e os testes focais passaram. A crítica visual independente da captura final ficou em 7,5/10; **não atingimos 9/10**. Evitar descrever essa ficha como aprovada ou pronta para produção.
+
 - [x] Inspecionar a lista e a ficha em 1200, 390 e 320 px, inclusive as duas vistas da ficha e o fechamento por Escape.
 - [x] Corrigir o contrato de alergias/dietas entre valores salvos e filtros, preservando dados antigos traduzidos.
 - [x] Corrigir o contrato da detecção de duplicados e a escolha explícita dos registros a mesclar; eliminar grupo repetido quando telefone e e-mail coincidem.

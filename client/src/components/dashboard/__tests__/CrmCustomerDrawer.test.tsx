@@ -52,7 +52,7 @@ describe('CrmCustomerDrawer customer detail contract', () => {
     expect(screen.getByRole('button', { name: 'Delete note' })).toBeVisible();
     expect(screen.queryByLabelText('Risk of not returning: 18/100')).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Relationship' }));
-    expect(screen.getByText('Sep 5, 2026')).toBeInTheDocument();
+    expect(within(screen.getByRole('heading', { name: 'Recent reservations' }).closest('section')!).getByText('Sep 5, 2026')).toBeInTheDocument();
     expect(screen.getByText('19:30')).toBeInTheDocument();
     expect(screen.getByLabelText('Risk of not returning: 18/100')).toBeInTheDocument();
     expect(screen.queryByText('18%')).not.toBeInTheDocument();
@@ -76,7 +76,7 @@ describe('CrmCustomerDrawer customer detail contract', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Relationship' }));
     expect(screen.getByRole('heading', { name: 'Next reservation' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Recent reservations' })).toBeInTheDocument();
-    expect(screen.getByText('Sep 5, 2026')).toBeInTheDocument();
+    expect(within(screen.getByRole('heading', { name: 'Recent reservations' }).closest('section')!).getByText('Sep 5, 2026')).toBeInTheDocument();
     expect(screen.getAllByText(/20:00/)).toHaveLength(1);
     await userEvent.click(screen.getByRole('button', { name: 'View service details' }));
     expect(screen.getAllByText('20:00')).toHaveLength(1);
@@ -105,7 +105,7 @@ describe('CrmCustomerDrawer customer detail contract', () => {
     expect(screen.queryByText('Recorded revenue')).not.toBeInTheDocument();
     expect(screen.getByText('6')).toBeInTheDocument();
     expect(screen.queryByText('$840')).not.toBeVisible();
-    await userEvent.click(screen.getByText('View value projection'));
+    await userEvent.click(screen.getByText('About this score'));
     expect(screen.getByText('$840')).toBeVisible();
     expect(screen.getByText('Estimated from visit frequency and average spend. This is not recorded revenue.')).toBeVisible();
     expect(screen.getByLabelText('Risk of not returning: 0/100')).toBeInTheDocument();

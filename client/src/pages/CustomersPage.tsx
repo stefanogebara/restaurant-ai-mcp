@@ -67,7 +67,7 @@ export function CustomersWorkspace() {
   const activeFilterCount = [!reviewOnly && !!tierFilter, !!tagFilter, !!allergyFilter, !!dietaryFilter].filter(Boolean).length;
   return (
     <>
-      <main className={`min-h-screen bg-brand-paper font-brand text-brand-ink transition-[margin] duration-300 ${selectedCustomerId ? 'lg:mr-[520px]' : ''}`}>
+      <main className={`min-h-screen bg-brand-paper font-brand text-brand-ink transition-[margin] duration-300 ${selectedCustomerId ? 'xl:mr-[520px]' : ''}`}>
       <div className="mx-auto max-w-[900px] overflow-x-hidden px-4 pb-24 pt-6 sm:px-6 sm:pb-8 lg:px-10 mt-14 sm:mt-0">
         <header className="mb-7">
           <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.14em] text-brand-muted">{t('crm.sectionLabel', 'Guest relationships')}</p>
