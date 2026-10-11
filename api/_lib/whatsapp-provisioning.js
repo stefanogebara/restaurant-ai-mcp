@@ -144,33 +144,64 @@ async function gravarEstado(restaurantId, estado) {
   if (error) throw new ErroDeProvisionamento('Falha ao gravar o estado.', error.message);
 }
 
+async function lerVinculoRoteamento(restaurantId) {
+  if (!isCentralConfigured()) {
+    throw new ErroDeProvisionamento('Não foi possível conferir o roteamento. Fale com o suporte.', 'centralSupabase null');
+  }
+  const { data, error } = await centralSupabase
+    .from('restaurant_registry')
+    .select('id, is_active, whatsapp_phone_number_id')
+    .eq('id', restaurantId)
+    .maybeSingle();
+  if (error) throw new ErroDeProvisionamento('Não foi possível conferir o roteamento. Tente novamente.', error.message);
+  return data;
+}
+
+async function conferirNumeroLivre(restaurantId, phoneNumberId) {
+  const { data, error } = await centralSupabase
+    .from('restaurant_registry')
+    .select('id')
+    .eq('whatsapp_phone_number_id', phoneNumberId)
+    .maybeSingle();
+  if (error) throw new ErroDeProvisionamento('Não foi possível conferir se o número está livre. Fale com o suporte.', error.message);
+  if (data && data.id !== restaurantId) {
+    throw new ErroDeProvisionamento('Este número já está ligado a outro restaurante. Fale com o suporte.');
+  }
+}
+
+async function conferirElegibilidadeRoteamento(restaurantId, phoneNumberId) {
+  const vinculo = await lerVinculoRoteamento(restaurantId);
+  if (!vinculo?.is_active) {
+    throw new ErroDeProvisionamento('O restaurante não está ativo no roteamento. Fale com o suporte.');
+  }
+  if (vinculo.whatsapp_phone_number_id && vinculo.whatsapp_phone_number_id !== phoneNumberId) {
+    throw new ErroDeProvisionamento('Este restaurante já usa outro número. Fale com o suporte antes de trocá-lo.');
+  }
+  await conferirNumeroLivre(restaurantId, phoneNumberId);
+  return vinculo;
+}
+
 /**
  * Copia o ponteiro final pro registry central — o ÚNICO efeito fora do tenant.
  * Só roda com registro completo; o cache do registry (60s) faz o roteamento
  * enxergar o número em até um minuto.
  */
 async function apontarRoteamento(restaurantId, phoneNumberId) {
-  if (!isCentralConfigured()) {
-    throw new ErroDeProvisionamento(
-      'Registry central não configurado — roteamento não foi atualizado.',
-      'centralSupabase null',
-    );
-  }
+  const vinculo = await conferirElegibilidadeRoteamento(restaurantId, phoneNumberId);
+  if (vinculo.whatsapp_phone_number_id === phoneNumberId) return;
   const { data, error } = await centralSupabase
     .from('restaurant_registry')
     .update({ whatsapp_phone_number_id: phoneNumberId })
     .eq('id', restaurantId)
+    .eq('is_active', true)
+    .is('whatsapp_phone_number_id', null)
     .select('id');
   if (error) {
-    const detalhe = error.code === '42703'
-      ? 'coluna whatsapp_phone_number_id ausente no registry central (migração 20260412 pendente lá)'
-      : error.message;
-    throw new ErroDeProvisionamento('Número registrado na Meta, mas o roteamento não foi atualizado — fale com o suporte.', detalhe);
+    throw new ErroDeProvisionamento('Número registrado na Meta, mas o roteamento não foi atualizado — fale com o suporte.', error.message);
   }
   if (!data || data.length === 0) {
     throw new ErroDeProvisionamento(
-      'Número registrado na Meta, mas este restaurante não está no registry de roteamento — fale com o suporte.',
-      `nenhuma linha com id=${restaurantId} no registry central`,
+      'O roteamento mudou durante a verificação. Fale com o suporte antes de tentar novamente.',
     );
   }
 }
@@ -195,7 +226,7 @@ async function iniciar({ restaurantId, modo, cc, numero, metodo }) {
     };
     await gravarEstado(restaurantId, estado);
     await apontarRoteamento(restaurantId, fake);
-    return { ...estado };
+    return { ...estado, roteamento_confirmado: true };
   }
 
   if (modo !== 'numero_proprio') {
@@ -269,6 +300,10 @@ async function confirmarCodigo({ restaurantId, codigo }) {
     throw new ErroDeProvisionamento('Código inválido — digite os dígitos recebidos.');
   }
 
+  // Fail before calling Meta when the restaurant or number is already bound
+  // elsewhere. Recheck after registration in apontarRoteamento for races.
+  await conferirElegibilidadeRoteamento(restaurantId, atual.phone_number_id);
+
   const { token } = envObrigatorio();
 
   try {
@@ -295,15 +330,31 @@ async function confirmarCodigo({ restaurantId, codigo }) {
   logger.info('Número ativo e roteamento apontado', { restaurantId, phoneNumberId: atual.phone_number_id });
 
   const { pin: _pin, ...publico } = ativo;
-  return publico;
+  return { ...publico, roteamento_confirmado: true };
 }
 
 /** Estado público (sem PIN) pra UI. */
 async function estadoPublico(restaurantId) {
   const atual = await lerEstado(restaurantId);
-  if (!atual) return { estado: 'nao_iniciado', pode_iniciar: autoCadastroLiberado() };
-  const { pin: _pin, ...publico } = atual;
-  return { ...publico, pode_iniciar: autoCadastroLiberado() };
+  if (!atual) return { estado: 'nao_iniciado', pode_iniciar: autoCadastroLiberado(), roteamento_confirmado: false };
+  let roteamentoConfirmado = false;
+  if (atual.estado === 'ativo' && atual.phone_number_id) {
+    const vinculo = await lerVinculoRoteamento(restaurantId);
+    roteamentoConfirmado = vinculo?.is_active === true
+      && vinculo.whatsapp_phone_number_id === atual.phone_number_id;
+    if (roteamentoConfirmado) {
+      await conferirNumeroLivre(restaurantId, atual.phone_number_id);
+    }
+  }
+  // Explicit allowlist: PIN and technical error details must never reach the browser.
+  return {
+    estado: atual.estado,
+    numero_e164: atual.numero_e164,
+    metodo: atual.metodo,
+    erro: atual.erro,
+    pode_iniciar: autoCadastroLiberado(),
+    roteamento_confirmado: roteamentoConfirmado,
+  };
 }
 
 module.exports = {

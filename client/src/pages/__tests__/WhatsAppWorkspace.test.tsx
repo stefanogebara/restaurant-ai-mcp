@@ -41,10 +41,18 @@ describe('WhatsApp workspace', () => {
     expect(fetchMock.mock.calls.every(([url]) => !String(url).includes('test_status'))).toBe(true);
   });
   it('links only the registered customer-facing number', async () => {
-    provision = { estado: 'ativo', numero_e164: '+5511999998888' };
+    provision = { estado: 'ativo', numero_e164: '+5511999998888', roteamento_confirmado: true };
     mount();
     expect(await screen.findByRole('link', { name: 'Open conversation' })).toHaveAttribute('href', 'https://wa.me/5511999998888');
     expect(screen.getByText(/Test an incoming conversation before/)).toBeInTheDocument();
+  });
+  it('does not offer a conversation when a registered number is not routed to this restaurant', async () => {
+    provision = { estado: 'ativo', numero_e164: '+5511999998888', roteamento_confirmado: false };
+    mount();
+    expect(await screen.findByText('Routing needs attention')).toBeInTheDocument();
+    expect(screen.getByText(/Do not share it yet/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Get help connecting' })).toHaveAttribute('href', 'mailto:hello@seatable.one');
+    expect(screen.queryByRole('link', { name: 'Open conversation' })).not.toBeInTheDocument();
   });
   it('shows pending verification instead of a success badge', async () => {
     provision = { estado: 'aguardando_codigo', numero_e164: '+5511999998888' };

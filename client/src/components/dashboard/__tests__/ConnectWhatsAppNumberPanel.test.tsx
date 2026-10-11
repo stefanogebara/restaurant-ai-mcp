@@ -72,11 +72,20 @@ describe('ConnectWhatsAppNumberPanel', () => {
   it('ativo: mostra o número conectado e a nota de propagação', async () => {
     mockAuthFetch.mockReturnValue(resposta({
       success: true,
-      data: { estado: 'ativo', numero_e164: '+5511999998888' },
+      data: { estado: 'ativo', numero_e164: '+5511999998888', roteamento_confirmado: true },
     }));
     montar();
     expect(await screen.findByText('+5511999998888')).toBeInTheDocument();
     expect(screen.getByText(/Test an incoming conversation before/)).toBeInTheDocument();
+  });
+
+  it('ativo sem roteamento não parece pronto para receber clientes', async () => {
+    mockAuthFetch.mockReturnValue(resposta({ success: true, data: {
+      estado: 'ativo', numero_e164: '+5511999998888', roteamento_confirmado: false,
+    } }));
+    montar();
+    expect(await screen.findByText(/Do not share it yet/)).toBeInTheDocument();
+    expect(screen.queryByText('Number registered')).not.toBeInTheDocument();
   });
 
   it('sem cadastro validado: orienta conexão assistida e não mostra envio de código', async () => {

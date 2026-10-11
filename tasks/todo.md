@@ -1,3 +1,18 @@
+# WhatsApp — prova de roteamento antes do teste (11/out/2026)
+
+- [x] Ler o ponteiro do registro central no GET; não anunciar conexão apenas pelo estado salvo no restaurante.
+- [x] Recusar ativação se o número estiver atribuído a outra casa, se a casa estiver inativa ou se já usar outro número.
+- [x] Exigir roteamento confirmado para mostrar o link da conversa; orientar suporte quando registro e roteamento divergem.
+- [x] Cobrir falhas e estados com testes, executar verificação completa e conferir a interface em navegador.
+
+Limite: o cadastro automático de número novo permanece desligado em produção. Esta etapa não faz alterações na Meta nem comprova conversa recebida. Um índice único/lock durável no registro central e um número pertencente ao restaurante ainda serão necessários antes de abrir autosserviço.
+
+Referência visual: `DESIGN.md` Liquid Glass v2 e guia de microcopy do Refero. Manter estado na cor semântica, ação burgundy e uma instrução clara no canvas; não criar uma nova página nem prometer atendimento sem prova.
+
+Revisão: o GET agora compara o estado do restaurante com o ponteiro ativo no registro central. O código só aponta um número se ele estiver livre, a casa estiver ativa e não houver outro número; a atualização usa condição de valor nulo, mas não substitui o índice único/lock durável exigido para autosserviço. PIN e detalhes técnicos não saem no estado público. A interface mostra aviso âmbar e bloqueia o link de conversa quando o roteamento diverge. Navegador local conferiu os estados simulado ativo e sem roteamento, sem envio real. Build, sintaxe da API, 276 suítes/4.238 testes backend e 104 arquivos/993 testes frontend passaram. Não houve alteração de banco, Meta, envios ou reserva real. A validação de mensagem recebida permanece aberta até haver um número do restaurante conectado.
+
+---
+
 # WhatsApp — conexão sem promessa falsa (11/out/2026)
 
 - [x] Bloquear novas adições self-service em produção até validar o caminho da Meta e um lock durável por restaurante.
