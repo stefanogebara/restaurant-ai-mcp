@@ -17,7 +17,8 @@
  * Modos:
  *   numero_proprio — o dono registra um número que ELE controla (fixo ou
  *     chip). O OTP da Meta chega NELE (SMS ou ligação) e ELE digita aqui.
- *     Zero toque do fundador; é o caminho real HOJE, sem contas novas.
+ *     A adição de novos números à WABA ainda não foi validada nesta conta.
+ *     Até essa validação e um lock durável, a conexão nova é assistida.
  *   mock — ativa instantaneamente com id falso. Só com
  *     ALLOW_MOCK_WHATSAPP_PROVISIONING=true (validar UI/fluxo sem WABA).
  *   twilio — compra automática de número (Caminho A puro). FASE 2: exige
@@ -59,7 +60,15 @@ function envObrigatorio() {
 }
 
 function modoMockLiberado() {
-  return process.env.ALLOW_MOCK_WHATSAPP_PROVISIONING === 'true';
+  return !process.env.VERCEL && ['development', 'test'].includes(process.env.NODE_ENV)
+    && process.env.ALLOW_MOCK_WHATSAPP_PROVISIONING === 'true';
+}
+
+// Never let a production environment flag alone enable an unproven Meta write.
+// This switch exists only for isolated local tests of the legacy flow.
+function autoCadastroLiberado() {
+  return !process.env.VERCEL && ['development', 'test'].includes(process.env.NODE_ENV)
+    && process.env.WHATSAPP_UNVERIFIED_ADD_NUMBER_DEV === 'true';
 }
 
 /** Chamada à Graph API com timeout e erro mapeado. */
@@ -195,6 +204,10 @@ async function iniciar({ restaurantId, modo, cc, numero, metodo }) {
     throw new ErroDeProvisionamento('Modo de provisionamento não suportado ainda.');
   }
 
+  if (!autoCadastroLiberado()) {
+    throw new ErroDeProvisionamento('A conexão automática ainda não está disponível. Fale com o suporte para conectar o número do restaurante.');
+  }
+
   const ccLimpo = String(cc || '').trim();
   const numeroLimpo = String(numero || '').replace(/[\s()-]/g, '');
   const metodoLimpo = metodo === 'voice' ? 'VOICE' : 'SMS';
@@ -288,9 +301,9 @@ async function confirmarCodigo({ restaurantId, codigo }) {
 /** Estado público (sem PIN) pra UI. */
 async function estadoPublico(restaurantId) {
   const atual = await lerEstado(restaurantId);
-  if (!atual) return { estado: 'nao_iniciado' };
+  if (!atual) return { estado: 'nao_iniciado', pode_iniciar: autoCadastroLiberado() };
   const { pin: _pin, ...publico } = atual;
-  return publico;
+  return { ...publico, pode_iniciar: autoCadastroLiberado() };
 }
 
 module.exports = {

@@ -67,12 +67,14 @@ beforeEach(() => {
   process.env.WHATSAPP_ACCESS_TOKEN = 'token-teste';
   process.env.WHATSAPP_WABA_ID = 'waba-teste';
   delete process.env.ALLOW_MOCK_WHATSAPP_PROVISIONING;
+  delete process.env.WHATSAPP_UNVERIFIED_ADD_NUMBER_DEV;
   mockConfigMaybeSingle.mockResolvedValue({ data: { id: RID, whatsapp_provisioning: null }, error: null });
   mockConfigUpdate.mockResolvedValue({ error: null });
   mockRegistryUpdate.mockResolvedValue({ data: [{ id: RID }], error: null });
 });
 
 describe('iniciar (numero_proprio)', () => {
+  beforeEach(() => { process.env.WHATSAPP_UNVERIFIED_ADD_NUMBER_DEV = 'true'; });
   test('adiciona na WABA, pede OTP pro número do DONO, guarda estado com PIN — e não devolve o PIN', async () => {
     graphOk([{ id: 'phone-123' }, { success: true }]);
     const r = await iniciar({ restaurantId: RID, modo: 'numero_proprio', cc: '55', numero: '11 99999-8888', metodo: 'sms' });
@@ -177,7 +179,7 @@ describe('mock — fechado por env', () => {
 
 describe('estadoPublico', () => {
   test('sem jornada → nao_iniciado; com jornada → estado sem PIN', async () => {
-    expect((await estadoPublico(RID)).estado).toBe('nao_iniciado');
+    expect(await estadoPublico(RID)).toEqual({ estado: 'nao_iniciado', pode_iniciar: false });
     mockConfigMaybeSingle.mockResolvedValue({
       data: { id: RID, whatsapp_provisioning: { estado: 'aguardando_codigo', pin: '111111', numero_e164: '+55x' } },
       error: null,
@@ -185,6 +187,23 @@ describe('estadoPublico', () => {
     const e = await estadoPublico(RID);
     expect(e.estado).toBe('aguardando_codigo');
     expect(e.pin).toBeUndefined();
+    expect(e.pode_iniciar).toBe(false);
+  });
+
+  test('produção nunca permite adicionar número novo, mesmo com a flag local ligada', async () => {
+    const previousNodeEnv = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'production';
+    process.env.WHATSAPP_UNVERIFIED_ADD_NUMBER_DEV = 'true';
+    global.fetch = jest.fn();
+    try {
+      expect((await estadoPublico(RID)).pode_iniciar).toBe(false);
+      await expect(iniciar({ restaurantId: RID, modo: 'numero_proprio', cc: '55', numero: '11999998888' }))
+        .rejects.toThrow(/conexão automática ainda não está disponível/i);
+      expect(global.fetch).not.toHaveBeenCalled();
+      expect(mockConfigUpdate).not.toHaveBeenCalled();
+    } finally {
+      process.env.NODE_ENV = previousNodeEnv;
+    }
   });
 
   test('coluna ausente (migração pendente) vira mensagem clara', async () => {
@@ -195,6 +214,7 @@ describe('estadoPublico', () => {
 
 describe('mensagens de erro nunca vazam internals', () => {
   test('erro desconhecido da Meta vira orientação genérica; o técnico fica no detalhe', async () => {
+    process.env.WHATSAPP_UNVERIFIED_ADD_NUMBER_DEV = 'true';
     graphOk([]);
     global.fetch = jest.fn().mockResolvedValue({
       ok: false, json: async () => ({ error: { message: 'Unsupported post request. Object with ID xyz' } }),

@@ -38,7 +38,8 @@ export function WhatsAppWorkspace() {
   const number = provision.data?.numero_e164 || '';
   const registered = !hasError && provision.data?.estado === 'ativo' && /^\+?[1-9]\d{7,14}$/.test(number);
   const label = hasError ? copy.unknown : registered ? copy.connected
-    : provision.data?.estado === 'aguardando_codigo' ? copy.pending : copy.disconnected;
+    : provision.data?.estado === 'aguardando_codigo' ? copy.pending
+      : provision.data?.pode_iniciar === true ? copy.disconnected : copy.assistedStatus;
   const refresh = () => { void status.refetch(); void provision.refetch(); };
   return <div className="mx-auto max-w-4xl px-4 py-8 sm:px-8 sm:py-12 text-[15px] text-deep-charcoal">
     <header className="mb-10 sm:mb-12">
@@ -62,7 +63,7 @@ export function WhatsAppWorkspace() {
           {copyError && <p role="alert" className="text-red-700">{copy.copyFailed}</p>}
         </> : <>
           <ConnectWhatsAppNumberPanel />
-          <p className="mt-4 text-sm text-muted-stone">{copy.migration} <a href="mailto:hello@seatable.one" className="text-burgundy underline">{copy.support}</a></p>
+          <p className="mt-4 text-sm text-muted-stone">{copy.migration} {provision.data?.pode_iniciar === true && <a href="mailto:hello@seatable.one" className="text-burgundy underline">{copy.support}</a>}</p>
         </>}
       </section>
       <section aria-labelledby="wa-test-heading" className="border-t hairline py-8 sm:py-10">
