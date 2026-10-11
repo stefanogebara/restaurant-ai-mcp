@@ -61,10 +61,10 @@ export const statusLabel = (s: string, t?: (key: string, fallback?: string) => s
 };
 
 /**
- * Mesa ilustrada (Warm Glass): a ocupada é burgundy sólido com pratos
+ * Mesa ilustrada (Warm Glass): a ocupada é esmeralda semântico com pratos
  * brancos, a reservada é tracejada em âmbar, a livre é vidro claro com
  * fio de tinta. `night` troca para a paleta do Modo Serviço — fundo
- * escuro, ocupadas brilham, o resto vira vidro escuro.
+ * escuro; o resto vira vidro escuro.
  */
 export const getStatusStyle = (status: string, night = false): StatusStyle => {
   if (night) {
@@ -72,7 +72,7 @@ export const getStatusStyle = (status: string, night = false): StatusStyle => {
       case 'available':
         return { fill: 'rgba(250,250,249,0.05)', stroke: 'rgba(250,250,249,0.18)', text: 'rgba(250,250,249,0.70)', chairFill: 'rgba(250,250,249,0.10)', sublabel: 'rgba(250,250,249,0.45)', plateFill: 'rgba(255,255,255,0.85)' };
       case 'occupied':
-        return { fill: '#9F1239', stroke: '#9F1239', text: '#FFFFFF', chairFill: 'rgba(250,250,249,0.28)', sublabel: 'rgba(250,250,249,0.55)', plateFill: 'rgba(255,255,255,0.85)' };
+        return { fill: '#065F46', stroke: '#34D399', text: '#FFFFFF', chairFill: 'rgba(250,250,249,0.28)', sublabel: '#D1FAE5', plateFill: 'rgba(255,255,255,0.85)' };
       case 'reserved':
         return { fill: 'rgba(250,250,249,0.04)', stroke: '#FBBF24', text: '#FBBF24', chairFill: 'rgba(250,250,249,0.14)', sublabel: '#FBBF24', dash: '5 4', plateFill: 'rgba(255,255,255,0.85)' };
       case 'being cleaned':
@@ -85,7 +85,7 @@ export const getStatusStyle = (status: string, night = false): StatusStyle => {
     case 'available':
       return { fill: 'rgba(255,255,255,0.85)', stroke: 'rgba(28,25,23,0.15)', text: '#706A65', chairFill: 'rgba(28,25,23,0.12)', sublabel: '#706A65', plateFill: 'rgba(255,255,255,0.85)' };
     case 'occupied':
-      return { fill: '#9F1239', stroke: '#9F1239', text: '#FFFFFF', chairFill: 'rgba(28,25,23,0.30)', sublabel: '#706A65', plateFill: 'rgba(255,255,255,0.85)' };
+      return { fill: '#065F46', stroke: '#065F46', text: '#FFFFFF', chairFill: 'rgba(28,25,23,0.30)', sublabel: '#065F46', plateFill: 'rgba(255,255,255,0.85)' };
     case 'reserved':
       return { fill: '#FFFFFF', stroke: '#D97706', text: '#B45309', chairFill: 'rgba(28,25,23,0.16)', sublabel: '#B45309', dash: '5 4', plateFill: 'rgba(255,255,255,0.85)' };
     case 'being cleaned':

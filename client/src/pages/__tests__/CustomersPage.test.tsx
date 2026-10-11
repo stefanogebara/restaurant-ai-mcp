@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { screen, waitFor, within } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from '../../test/renderWithProviders';
 import type { CrmCustomer } from '../../hooks/useCustomers';
@@ -13,8 +13,8 @@ vi.mock('../../components/layout/DashboardLayout', () => ({
 // O drawer e o painel de duplicados fazem suas próprias buscas; aqui só
 // interessa que a página os abra com o cliente certo.
 vi.mock('../../components/dashboard/CrmCustomerDrawer', () => ({
-  default: ({ customerId }: { customerId: string | null }) =>
-    customerId ? <div data-testid="drawer">{customerId}</div> : null,
+  default: ({ customerId, initialView }: { customerId: string | null; initialView: string }) =>
+    customerId ? <div data-testid="drawer">{customerId} · {initialView}</div> : null,
 }));
 vi.mock('../../components/dashboard/DuplicateCustomersPanel', () => ({
   default: () => <div data-testid="duplicates" />,
@@ -71,8 +71,8 @@ describe('CustomersPage', () => {
     renderWithProviders(<CustomersPage />);
 
     expect(await screen.findByText('Beatriz Costa')).toBeInTheDocument();
-    expect(screen.getByText('+5511999990001')).toBeInTheDocument();
-    expect(screen.getByText('6')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Open Beatriz Costa' })).toBeInTheDocument();
+    expect(screen.getByText('6 visits')).toBeInTheDocument();
   });
 
   it('mostra no máximo 3 tags e resume o resto', async () => {
@@ -80,12 +80,12 @@ describe('CustomersPage', () => {
     renderWithProviders(<CustomersPage />);
 
     await screen.findByText('Beatriz Costa');
-    expect(screen.getByText('terraço')).toBeInTheDocument();
-    expect(screen.getByText('vinho')).toBeInTheDocument();
-    expect(screen.getByText('aniversário')).toBeInTheDocument();
+    expect(screen.getByText(/terraço/)).toBeInTheDocument();
+    expect(screen.getByText(/vinho/)).toBeInTheDocument();
+    expect(screen.getByText(/aniversário/)).toBeInTheDocument();
     // A quarta tag não é impressa — vira "+1".
     expect(screen.queryByText('extra')).not.toBeInTheDocument();
-    expect(screen.getByText('+1')).toBeInTheDocument();
+    expect(screen.getByText(/\+1/)).toBeInTheDocument();
   });
 
   it('busca é debounced: só consulta o backend depois da pausa de digitação', async () => {
@@ -115,6 +115,7 @@ describe('CustomersPage', () => {
 
     // Filtrar por tier tem de zerar o offset — senão o host filtra e cai
     // numa página vazia do resultado novo.
+    await user.click(screen.getByText('More filters'));
     await user.selectOptions(screen.getByRole('combobox', { name: /filter by tier/i }), 'vip');
     await waitFor(() => expect(lastUrl()).toContain('tier=vip'));
     expect(lastUrl()).toContain('offset=0');
@@ -135,15 +136,32 @@ describe('CustomersPage', () => {
     renderWithProviders(<CustomersPage />);
 
     await user.click(await screen.findByText('Beatriz Costa'));
-    expect(within(screen.getByTestId('drawer')).getByText('abc-123')).toBeInTheDocument();
+    expect(screen.getByTestId('drawer')).toHaveTextContent('abc-123 · service');
+  });
+
+  it('filtra a vista de revisão no servidor e abre a ficha pelo teclado', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    respondWith([mkCustomer({ customer_id: 'risk-1', customer_tier: 'at_risk', churn_risk_score: 82 })]);
+    renderWithProviders(<CustomersPage />);
+
+    await user.click(await screen.findByRole('button', { name: 'For review' }));
+    await waitFor(() => expect(lastUrl()).toContain('min_risk_score=70'));
+    expect(lastUrl()).not.toContain('tier=at_risk');
+    expect(lastUrl()).toContain('sort=churn_risk_score');
+    const open = await screen.findByRole('button', { name: 'Open Beatriz Costa' });
+    open.focus();
+    await user.keyboard('{Enter}');
+    expect(screen.getByTestId('drawer')).toHaveTextContent('risk-1 · relationship');
+    await user.click(screen.getByRole('button', { name: 'All customers' }));
+    expect(screen.queryByTestId('drawer')).not.toBeInTheDocument();
   });
 
   it('CRM vazio explica como os clientes chegam, em vez de só dizer "nada aqui"', async () => {
     respondWith([]);
     renderWithProviders(<CustomersPage />);
 
-    expect(await screen.findByText(/CRM está esperando/i)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /primeira reserva/i })).toBeInTheDocument();
+    expect(await screen.findByText(/CRM is waiting/i)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /first reservation/i })).toBeInTheDocument();
     // Sem clientes, procurar duplicados não faz sentido e não deve aparecer.
     expect(screen.queryByRole('button', { name: /duplicate/i })).not.toBeInTheDocument();
   });
@@ -166,5 +184,16 @@ describe('CustomersPage', () => {
     renderWithProviders(<CustomersPage />);
 
     expect(await screen.findByText(/failed to load customers/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /retry/i })).toBeInTheDocument();
+  });
+
+  it('permite tentar carregar novamente depois de uma falha', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    authFetch.mockResolvedValueOnce({ ok: false, json: async () => ({ success: false }) });
+    authFetch.mockResolvedValue({ ok: true, json: async () => ({ success: true, data: { customers: [mkCustomer()], total: 1 } }) });
+    renderWithProviders(<CustomersPage />);
+
+    await user.click(await screen.findByRole('button', { name: /retry/i }));
+    expect(await screen.findByText('Beatriz Costa')).toBeInTheDocument();
   });
 });

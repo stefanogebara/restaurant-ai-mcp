@@ -19,7 +19,7 @@ import LTVAtRiskCustomers from './LTVAtRiskCustomers';
 import { useLTVStats, useLTVTopVIPs, useLTVAtRisk, useRecalculateLTV, useSendCampaign } from '../../hooks/useLTVData';
 
 export default function LTVDashboard() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { success, error } = useToast();
   const statsQuery = useLTVStats();
   const vipsQuery = useLTVTopVIPs();
@@ -37,7 +37,7 @@ export default function LTVDashboard() {
   const [campaignModalOpen, setCampaignModalOpen] = useState(false);
 
   const handleSendCampaign = async (customerId: string, campaignType: string, message: string) => {
-    await sendCampaignMutation.mutateAsync({ customerId, campaignType, message });
+    await sendCampaignMutation.mutateAsync({ customerId, campaignType, message, language: i18n.language });
   };
 
   const openCampaignModal = (customer: Customer) => {

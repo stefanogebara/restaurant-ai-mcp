@@ -103,6 +103,13 @@ const SEGMENT_TEMPLATE_MAP = {
 };
 
 async function createCampaign(restaurantId, { name, segment, message, scheduledAt, campaignType, whatsappTemplateName, channel: channelOverride }) {
+  // Bulk delivery only has a WhatsApp sender and phone-based recipients. Never
+  // persist an email campaign here: a manual send would otherwise use the
+  // WhatsApp fallback below for every supposed email recipient.
+  if (channelOverride && channelOverride !== 'whatsapp') {
+    return { success: false, error: 'Bulk email campaigns are not supported' };
+  }
+
   // Get segment customers
   const customers = await getSegmentCustomers(restaurantId, segment);
 
@@ -112,13 +119,18 @@ async function createCampaign(restaurantId, { name, segment, message, scheduledA
 
   // Filter out opted-out customers
   const phones = customers.map(c => c.phone);
-  const { data: optedOut } = await supabaseAdmin
+  const { data: optedOut, error: consentError } = await supabaseAdmin
     .from('customer_consent')
     .select('customer_phone')
     .eq('restaurant_id', restaurantId)
     .eq('consent_type', 'marketing')
     .eq('opted_in', false)
     .in('customer_phone', phones);
+
+  if (consentError) {
+    logger.error('Could not verify marketing consent', { error: consentError.message, restaurantId });
+    return { success: false, error: 'Could not verify marketing consent' };
+  }
 
   const optedOutPhones = new Set((optedOut || []).map(c => c.customer_phone));
   const eligibleCustomers = customers.filter(c => !optedOutPhones.has(c.phone));
@@ -150,9 +162,11 @@ async function createCampaign(restaurantId, { name, segment, message, scheduledA
       customer_id: `segment:${segment}`,
       campaign_type: campaignType || 'win_back',
       message,
-      channel: channelOverride || 'whatsapp',
+      channel: 'whatsapp',
       whatsapp_template_name: whatsappTemplateName || SEGMENT_TEMPLATE_MAP[segment] || 'seatable_promotion',
-      status: scheduledAt ? 'scheduled' : 'active',
+      // Keep it non-sendable until the recipient write succeeds. The cron can
+      // run between these two database calls.
+      status: 'pending',
       scheduled_at: scheduledAt || null,
       metadata: {
         segment_name: segment,
@@ -183,6 +197,26 @@ async function createCampaign(restaurantId, { name, segment, message, scheduledA
 
   if (recipientErr) {
     logger.error('Failed to create campaign recipients', { error: recipientErr.message });
+    await supabaseAdmin
+      .schema('restaurant')
+      .from('retention_campaigns')
+      .update({ status: 'failed' })
+      .eq('id', campaign.id)
+      .eq('restaurant_id', restaurantId);
+    return { success: false, error: 'Could not create campaign recipients' };
+  }
+
+  const readyStatus = scheduledAt ? 'scheduled' : 'active';
+  const { error: readyError } = await supabaseAdmin
+    .schema('restaurant')
+    .from('retention_campaigns')
+    .update({ status: readyStatus })
+    .eq('id', campaign.id)
+    .eq('restaurant_id', restaurantId);
+
+  if (readyError) {
+    logger.error('Could not activate campaign after recipient creation', { campaignId: campaign.id, error: readyError.message });
+    return { success: false, error: 'Could not activate campaign' };
   }
 
   logger.info('Campaign created', {
@@ -196,6 +230,7 @@ async function createCampaign(restaurantId, { name, segment, message, scheduledA
     success: true,
     data: {
       ...campaign,
+      status: readyStatus,
       recipient_count: eligibleCustomers.length,
       opted_out_count: optedOutPhones.size,
     },
@@ -219,6 +254,14 @@ async function sendCampaignBatch(campaignId, batchSize = 10) {
 
   if (campErr || !campaign) {
     logger.error('Campaign not found', { campaignId });
+    return 0;
+  }
+
+  // Defense in depth for historical rows created with channel=email. The
+  // cron already selects WhatsApp only, but the manual endpoint calls this
+  // function directly.
+  if (campaign.channel !== 'whatsapp') {
+    logger.warn('Refusing to send campaign through unsupported channel', { campaignId, channel: campaign.channel });
     return 0;
   }
 
@@ -272,7 +315,7 @@ async function sendCampaignBatch(campaignId, batchSize = 10) {
     const customerName = recipient.customer_name || '';
     let result;
 
-    if (campaign.channel === 'whatsapp' && campaign.whatsapp_template_name) {
+    if (campaign.whatsapp_template_name) {
       // Build body parameters: all templates use {{1}}=name, {{2}}=restaurant
       // seatable_promotion also uses {{3}}=message
       const bodyParams = [customerName, restaurantName];
@@ -342,6 +385,7 @@ async function processActiveCampaigns() {
     .schema('restaurant')
     .from('retention_campaigns')
     .update({ status: 'active' })
+    .eq('channel', 'whatsapp')
     .eq('status', 'scheduled')
     .lte('scheduled_at', now);
 

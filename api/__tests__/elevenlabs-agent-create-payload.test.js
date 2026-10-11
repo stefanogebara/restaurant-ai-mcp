@@ -30,9 +30,19 @@ process.env.ELEVENLABS_API_KEY = 'sk-teste';
 
 const mockFetch = jest.fn();
 global.fetch = mockFetch;
+var mockRestaurantConfig = null;
 
 const mockLogger = { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() };
 jest.mock('../_lib/secure-logger', () => ({ createSecureLogger: () => mockLogger }));
+jest.mock('../_lib/auth', () => ({ verifyAuth: jest.fn().mockResolvedValue({ user: { restaurant_id: 'rest-1' } }) }));
+jest.mock('../_lib/subscription-middleware', () => ({
+  checkSubscription: jest.fn((req, res, next) => next()),
+  requireFeature: jest.fn(() => (req, res, next) => next()),
+}));
+jest.mock('../_lib/rate-limit', () => ({ checkAndApplyRateLimit: jest.fn().mockResolvedValue(false) }));
+jest.mock('../_services/voiceAgentService', () => ({
+  refreshVoiceAgentPrompt: jest.fn().mockResolvedValue({ success: true }),
+}));
 
 // createAgent com restaurantId null não toca o Supabase, mas o módulo o
 // importa no carregamento — o mock precisa existir mesmo sem ser exercido.
@@ -40,7 +50,7 @@ jest.mock('../_lib/supabase', () => ({
   supabaseAdmin: {
     schema: () => ({
       from: () => ({
-        select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: null, error: null }) }) }),
+        select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: mockRestaurantConfig, error: null }) }) }),
         update: () => ({ eq: async () => ({ error: null }) }),
       }),
     }),
@@ -48,6 +58,7 @@ jest.mock('../_lib/supabase', () => ({
 }));
 
 const { createAgent } = require('../_services/elevenlabsAgentService');
+const createAgentEndpoint = require('../elevenlabs-agent-create');
 
 const ok = (body) => ({ ok: true, status: 200, json: async () => body, text: async () => JSON.stringify(body) });
 
@@ -84,7 +95,10 @@ const ARGS = {
 };
 
 describe('payload de criação do agente ElevenLabs', () => {
-  beforeEach(wireFetch);
+  beforeEach(() => {
+    mockRestaurantConfig = null;
+    wireFetch();
+  });
 
   it('cria o agente e chama POST /agents/create uma vez', async () => {
     const r = await createAgent(ARGS);
@@ -122,6 +136,30 @@ describe('payload de criação do agente ElevenLabs', () => {
     expect(corpoDoCreate().conversation_config.tts.model_id).toBe('eleven_flash_v2');
   });
 
+  test.each([
+    ['en', 'Hello! Welcome to Cantina do Zé. How can I help you today?'],
+    ['pt', 'Olá! Bem-vindo ao Cantina do Zé. Como posso ajudá-lo hoje?'],
+    ['de', 'Hallo! Willkommen bei Cantina do Zé. Wie kann ich Ihnen helfen?'],
+    ['ja', 'こんにちは！Cantina do Zéへようこそ。ご用件をお伺いします。'],
+  ])('usa a saudação padrão compartilhada na criação em %s', async (language, greeting) => {
+    await createAgent({ ...ARGS, language });
+    expect(corpoDoCreate().conversation_config.agent.first_message).toBe(greeting);
+  });
+
+  it('prioriza a saudação explícita sobre a salva; a salva sobre o padrão', async () => {
+    mockRestaurantConfig = {
+      restaurant_name: ARGS.restaurant_name,
+      agent_greeting: 'Saudação salva',
+      elevenlabs_webhook_secret: 'secret',
+    };
+    await createAgent({ ...ARGS, restaurantId: 'rest-1', custom_greeting: 'Saudação explícita' });
+    expect(corpoDoCreate().conversation_config.agent.first_message).toBe('Saudação explícita');
+
+    wireFetch();
+    await createAgent({ ...ARGS, restaurantId: 'rest-1' });
+    expect(corpoDoCreate().conversation_config.agent.first_message).toBe('Saudação salva');
+  });
+
   /**
    * O motivo de este arquivo existir. Os dois campos precisam ser ENVIADOS,
    * não herdados — herdar é o que permitiu a mudança de 24/08 passar em branco.
@@ -145,5 +183,49 @@ describe('payload de criação do agente ElevenLabs', () => {
     expect(Object.keys(corpoDoCreate().platform_settings.widget_config).sort()).toEqual(
       ['avatar_url', 'mic_muting_enabled', 'title', 'transcript_enabled'],
     );
+  });
+});
+
+describe('payload de criação pelo endpoint ElevenLabs', () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+    mockRestaurantConfig = null;
+    wireFetch();
+  });
+  afterEach(() => {
+    jest.clearAllTimers();
+    jest.useRealTimers();
+  });
+
+  async function createViaEndpoint(language, customGreeting) {
+    const res = { status: jest.fn(), json: jest.fn() };
+    res.status.mockReturnValue(res);
+    res.json.mockReturnValue(res);
+    await createAgentEndpoint({
+      method: 'POST',
+      body: {
+        restaurant_id: 'rest-1', restaurant_name: ARGS.restaurant_name,
+        voice_id: ARGS.voice_id, language,
+        ...(customGreeting ? { custom_greeting: customGreeting } : {}),
+      },
+    }, res);
+    expect(res.status).toHaveBeenCalledWith(200);
+    return corpoDoCreate().conversation_config.agent.first_message;
+  }
+
+  test.each([
+    ['en', 'Hello! Welcome to Cantina do Zé. How can I help you today?'],
+    ['pt', 'Olá! Bem-vindo ao Cantina do Zé. Como posso ajudá-lo hoje?'],
+    ['de', 'Hallo! Willkommen bei Cantina do Zé. Wie kann ich Ihnen helfen?'],
+    ['ja', 'こんにちは！Cantina do Zéへようこそ。ご用件をお伺いします。'],
+  ])('usa a saudação padrão compartilhada em %s', async (language, greeting) => {
+    expect(await createViaEndpoint(language)).toBe(greeting);
+  });
+
+  it('prioriza a saudação explícita sobre a salva; a salva sobre o padrão', async () => {
+    mockRestaurantConfig = { restaurant_name: ARGS.restaurant_name, agent_greeting: 'Saudação salva' };
+    expect(await createViaEndpoint('pt', 'Saudação explícita')).toBe('Saudação explícita');
+    wireFetch();
+    expect(await createViaEndpoint('pt')).toBe('Saudação salva');
   });
 });

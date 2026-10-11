@@ -6,6 +6,7 @@ export interface AnalyticsData {
   overview: {
     total_reservations: number;
     total_completed_services: number;
+    total_revenue?: number;
     avg_party_size: number;
     avg_service_time_minutes: number;
     total_capacity: number;

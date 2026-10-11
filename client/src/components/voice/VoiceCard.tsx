@@ -43,74 +43,45 @@ const VoiceCard = forwardRef<HTMLDivElement, VoiceCardProps>(function VoiceCard(
       aria-checked={isSelected}
       aria-label={`${voice.name} - ${voice.gender || 'neutral'} - ${voice.language?.toUpperCase() || 'EN'}`}
       className={`
-        relative glass-card border-2 p-5 cursor-pointer
-        transition-all duration-200 hover:border-burgundy/50
-        focus:outline-none focus:ring-2 focus:ring-burgundy focus:ring-offset-2
+        relative min-h-36 cursor-pointer border-b border-l-2 border-brand-line py-4 pl-4 pr-3 font-brand
+        transition-colors hover:bg-brand-action/5
+        focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-action
         ${isSelected
-          ? 'border-burgundy bg-burgundy/5'
-          : 'border-glass-border-dark hover:border-burgundy/50'
+          ? 'border-l-brand-action bg-brand-action/5'
+          : 'border-l-transparent'
         }
       `}
     >
-      {/* Selected Checkmark */}
       {isSelected && (
-        <div className="absolute top-3 right-3 text-burgundy">
-          <ThiingsIcon name="check-circle" pxSize={22} />
+        <div className="absolute right-3 top-4 text-brand-action">
+          <ThiingsIcon name="check-circle" pxSize={18} />
         </div>
       )}
 
-      {/* Voice Info */}
       <div className="mb-3">
-        <div className="flex items-center gap-2 mb-1">
-          <h3 className="text-base font-bold text-deep-charcoal truncate pr-6">
+        <div className="mb-1 flex items-center gap-2">
+          <h3 className="truncate pr-6 font-brand text-[16px] font-medium text-brand-ink">
             {voice.name}
           </h3>
-          <span className="text-xs capitalize text-stone-gray">
-            {voice.gender === 'male' ? '\u2642' : voice.gender === 'female' ? '\u2640' : ''}
-          </span>
         </div>
-
-        {/* Tags */}
-        <div className="flex flex-wrap gap-1.5 mb-2">
-          <span className="inline-flex items-center px-2 py-0.5 rounded-[46px] text-xs font-medium bg-burgundy/[0.10] text-burgundy">
-            {voice.language?.toUpperCase() || 'EN'}
-          </span>
-          {voice.accent && (
-            <span className="inline-flex items-center px-2 py-0.5 rounded-[46px] text-xs font-medium bg-amber-600/[0.12] text-amber-700">
-              {voice.accent}
-            </span>
-          )}
-          {voice.category && (
-            <span className="inline-flex items-center px-2 py-0.5 rounded-[46px] text-xs font-medium bg-muted-stone/[0.10] text-muted-stone">
-              {voice.category}
-            </span>
-          )}
-        </div>
-
-        {/* Description */}
+        <p className="text-[12px] text-brand-muted">
+          {[voice.language?.toUpperCase() || 'EN', voice.accent, voice.category].filter(Boolean).join(' · ')}
+        </p>
         {voice.description && (
-          <p className="text-xs text-warm-stone line-clamp-2">
+          <p className="mt-2 line-clamp-2 text-[12px] leading-5 text-brand-muted">
             {voice.description}
           </p>
         )}
       </div>
 
-      {/* Play Button */}
       <button
+        type="button"
         onClick={(e) => {
           e.stopPropagation();
           onPlay(voice.id, voice.preview_phrase);
         }}
         disabled={isLoading}
-        className={`
-          w-full py-2.5 px-4 rounded-xl font-semibold text-sm transition-all
-          flex items-center justify-center gap-2
-          ${isPlaying
-            ? 'bg-burgundy text-white hover:bg-burgundy-dark'
-            : 'bg-soft-gray hover:bg-border-gray text-deep-charcoal'
-          }
-          disabled:opacity-50 disabled:cursor-not-allowed
-        `}
+        className="inline-flex min-h-9 items-center justify-center gap-2 rounded-full border border-brand-line px-4 text-[13px] font-medium text-brand-ink hover:border-brand-action disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-action"
       >
         {isLoading ? (
           <>

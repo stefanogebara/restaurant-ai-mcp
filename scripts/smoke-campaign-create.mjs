@@ -121,6 +121,7 @@ try {
     segment: 'all',
     message: 'Hello {name}, this is a smoke-test message.',
     template_name: 'seatable_promotion',
+    channel: 'whatsapp',
     scheduled_at: null,
   };
   console.log(`[3/6] POST ${ENDPOINT}`);
@@ -153,7 +154,7 @@ try {
   if (campRow.restaurant_id !== RID) throw new Error(`restaurant_id mismatch: ${campRow.restaurant_id}`);
   if (campRow.metadata?.name !== campaignName) throw new Error(`metadata.name mismatch: "${campRow.metadata?.name}"`);
   if (campRow.metadata?.segment_name !== 'all') throw new Error(`metadata.segment_name mismatch: ${campRow.metadata?.segment_name}`);
-  if (campRow.channel !== 'whatsapp' && campRow.channel !== 'email') throw new Error(`unexpected channel: ${campRow.channel}`);
+  if (campRow.channel !== 'whatsapp') throw new Error(`expected WhatsApp channel, got: ${campRow.channel}`);
   if (campRow.status !== 'active') throw new Error(`expected status=active (immediate send), got ${campRow.status}`);
 
   // ── 5. Verify recipient row landed ──────────────────────────────────

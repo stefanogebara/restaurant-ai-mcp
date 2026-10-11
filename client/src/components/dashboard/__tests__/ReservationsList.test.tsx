@@ -133,6 +133,20 @@ describe('ReservationsList', () => {
     expect(screen.getByText('2')).toBeInTheDocument();
   });
 
+  it('keeps filtering and actions accessible in the hero appearance', () => {
+    const onAdd = vi.fn();
+    render(<ReservationsList {...defaultProps} appearance="hero" onAdd={onAdd} />);
+
+    expect(screen.getByText('Upcoming Reservations')).toHaveClass('font-medium', 'text-brand-ink');
+    expect(screen.getByRole('button', { name: 'Today' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByPlaceholderText('Search by name or phone...')).toHaveClass('bg-transparent');
+    fireEvent.click(screen.getByRole('button', { name: 'Tomorrow' }));
+    expect(screen.getByRole('button', { name: 'Tomorrow' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByText('Charlie Brown')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '+ Add' }));
+    expect(onAdd).toHaveBeenCalledOnce();
+  });
+
   it('shows check-in button for unchecked reservations', () => {
     render(<ReservationsList {...defaultProps} />);
     // Button displays "Confirmed" but has aria-label "Check In"
@@ -197,6 +211,35 @@ describe('ReservationsList', () => {
     );
     expect(screen.getByText('All Caught Up')).toBeInTheDocument();
     expect(screen.getByText('No upcoming reservations for today')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Search by name or phone...')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'At Risk' })).toBeInTheDocument();
+  });
+
+  it('puts the hero empty message before controls while keeping date navigation and Add', () => {
+    const onAdd = vi.fn();
+    render(<ReservationsList {...defaultProps} appearance="hero" todayReservations={[]} onAdd={onAdd} />);
+
+    expect(screen.getByText('All Caught Up')).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('Search by name or phone...')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'At Risk' })).not.toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: '+ Add' })).toHaveLength(1);
+    fireEvent.click(screen.getByRole('button', { name: '+ Add' }));
+    expect(onAdd).toHaveBeenCalledOnce();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Tomorrow' }));
+    expect(screen.getByText('Charlie Brown')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Search by name or phone...')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'At Risk' })).toBeInTheDocument();
+  });
+
+  it('keeps hero filters available on an empty day when a filter is active', () => {
+    render(<ReservationsList {...defaultProps} appearance="hero" todayReservations={[]} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Tomorrow' }));
+    fireEvent.click(screen.getByRole('button', { name: 'At Risk' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Today' }));
+
+    expect(screen.getByRole('button', { name: 'At Risk' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByPlaceholderText('Search by name or phone...')).toBeInTheDocument();
   });
 
   it('shows empty state for tomorrow when toggled', async () => {
@@ -285,6 +328,13 @@ describe('ReservationsList', () => {
   it('renders search input', () => {
     render(<ReservationsList {...defaultProps} />);
     expect(screen.getByPlaceholderText('Search by name or phone...')).toBeInTheDocument();
+  });
+
+  it('opens an Insights deep link with only the requested reservation visible', () => {
+    render(<ReservationsList {...defaultProps} initialSearchQuery="r2" />);
+    expect(screen.getByPlaceholderText('Search by name or phone...')).toHaveValue('r2');
+    expect(screen.queryByText('Alice Smith')).not.toBeInTheDocument();
+    expect(screen.getByText('Bob Johnson')).toBeInTheDocument();
   });
 
   it('renders status filter chips', () => {

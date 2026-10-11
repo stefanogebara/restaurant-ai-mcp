@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import TableTimeline from '../TableTimeline';
 import type { Table, ActiveParty, UpcomingReservation } from '../../../types/host.types';
 
@@ -70,7 +71,7 @@ const reservations: UpcomingReservation[] = [
 describe('TableTimeline', () => {
   it('renders one lane per table with activity', () => {
     render(
-      <TableTimeline tables={tables} activeParties={parties} todayReservations={reservations} now={NOW} />,
+      <MemoryRouter><TableTimeline tables={tables} activeParties={parties} todayReservations={reservations} now={NOW} /></MemoryRouter>,
     );
     expect(screen.getByText('Table 1')).toBeInTheDocument();
     expect(screen.getByText('Table 7')).toBeInTheDocument();
@@ -80,7 +81,7 @@ describe('TableTimeline', () => {
 
   it('draws reservations that have not checked in, skips checked-in ones', () => {
     render(
-      <TableTimeline tables={tables} activeParties={parties} todayReservations={reservations} now={NOW} />,
+      <MemoryRouter><TableTimeline tables={tables} activeParties={parties} todayReservations={reservations} now={NOW} /></MemoryRouter>,
     );
     expect(screen.getByText('Bob · 2p')).toBeInTheDocument();
     // Carol checked in — her reservation bar must not render (table 2 has no
@@ -91,19 +92,37 @@ describe('TableTimeline', () => {
 
   it('surfaces the nearest conflict: table still occupied when the reservation arrives', () => {
     render(
-      <TableTimeline tables={tables} activeParties={parties} todayReservations={reservations} now={NOW} />,
+      <MemoryRouter><TableTimeline tables={tables} activeParties={parties} todayReservations={reservations} now={NOW} /></MemoryRouter>,
     );
     // Bob arrives 19:45 at table 1; Alice leaves 20:00 → conflict headline.
-    const conflict = screen.getByText(/must be ready at|precisa estar pronta/);
-    const paragraph = conflict.closest('p');
-    expect(paragraph?.textContent).toContain('19:45');
-    expect(paragraph?.textContent).toContain('20:00');
+    const conflict = screen.getAllByText(/must be ready at|precisa estar pronta/);
+    expect(conflict).toHaveLength(2); // mobile summary and desktop timeline agree
+    for (const paragraph of conflict) {
+      expect(paragraph.textContent).toContain('19:45');
+      expect(paragraph.textContent).toContain('20:00');
+    }
   });
 
   it('renders nothing when there is no activity', () => {
     const { container } = render(
-      <TableTimeline tables={tables} activeParties={[]} todayReservations={[]} now={NOW} />,
+      <MemoryRouter><TableTimeline tables={tables} activeParties={[]} todayReservations={[]} now={NOW} /></MemoryRouter>,
     );
     expect(container).toBeEmptyDOMElement();
+  });
+
+  it('summarizes the next conflict on mobile and links to the full service view', () => {
+    render(
+      <MemoryRouter><TableTimeline tables={tables} activeParties={parties} todayReservations={reservations} now={NOW} /></MemoryRouter>,
+    );
+    expect(screen.getByText(/conflict|conflito/i)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /service|serviço|partitura/i })).toHaveAttribute('href', '/host-dashboard/service');
+  });
+
+  it('uses the next estimated table release when there is no conflict', () => {
+    render(
+      <MemoryRouter><TableTimeline tables={tables} activeParties={parties} todayReservations={[]} now={NOW} /></MemoryRouter>,
+    );
+    expect(screen.getByText(/Table 1 frees at 20:00|Mesa 1 libera às 20:00/)).toBeInTheDocument();
+    expect(screen.getByText(/Alice · 4 guests|Alice · 4 convidados/)).toBeInTheDocument();
   });
 });

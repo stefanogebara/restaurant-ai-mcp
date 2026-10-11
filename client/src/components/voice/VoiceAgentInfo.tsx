@@ -10,58 +10,48 @@ interface Props {
 }
 
 /**
- * Lead with the host-facing fact: "Ready to take calls — last updated 3 days
- * ago." The previous version showed "Voice Engine: turbo_v2.5" and a copyable
- * UUID Agent ID as primary surface area — neither means anything to a
- * restaurant owner. Keep the technical details available behind a disclosure
- * for support.
+ * Provider registration is not proof of a successful customer call.
+ * Keep technical details behind a disclosure for support.
  */
 export default function VoiceAgentInfo({ agentId, updatedAt, createdAt }: Props) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const toast = useToast();
   const [showTech, setShowTech] = useState(false);
 
+  const formatDate = (value: string) => new Intl.DateTimeFormat(i18n.language || 'en', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(new Date(value));
   const lastUpdated = updatedAt
-    ? new Date(updatedAt).toLocaleString()
+    ? formatDate(updatedAt)
     : null;
 
   return (
-    <section className="py-5 border-b border-glass-border-dark">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone flex items-center gap-2">
-          <ThiingsIcon name="info" pxSize={20} />
-          {t('agentInfo.title')}
-        </h2>
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-          {t('voice.agentActive', 'Ready to take calls')}
-        </span>
+    <section className="mx-auto max-w-[900px] py-4">
+      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
+        <button
+          type="button"
+          onClick={() => setShowTech((v) => !v)}
+          aria-expanded={showTech}
+          className="inline-flex min-h-10 items-center gap-2 font-brand text-[13px] font-medium text-brand-muted hover:text-brand-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-action"
+        >
+          <ThiingsIcon name="info" pxSize={18} />
+          {showTech
+            ? t('agentInfo.hideTech', 'Hide technical details')
+            : t('agentInfo.showTech', 'Show technical details')}
+        </button>
+        {lastUpdated && (
+          <p className="text-[12px] text-brand-muted">
+            {t('agentInfo.lastUpdatedShort', 'Last updated {{when}}', { when: lastUpdated })}
+          </p>
+        )}
       </div>
-
-      <p className="text-sm text-deep-charcoal">
-        {t('agentInfo.summary', 'Your AI receptionist is set up and ready to answer your phone.')}
-      </p>
-      {lastUpdated && (
-        <p className="text-xs text-warm-stone mt-1">
-          {t('agentInfo.lastUpdatedShort', 'Last updated {{when}}', { when: lastUpdated })}
-        </p>
-      )}
-
-      <button
-        type="button"
-        onClick={() => setShowTech((v) => !v)}
-        className="mt-3 text-xs text-muted-stone hover:text-deep-charcoal underline underline-offset-2"
-      >
-        {showTech
-          ? t('agentInfo.hideTech', 'Hide technical details')
-          : t('agentInfo.showTech', 'Show technical details')}
-      </button>
 
       {showTech && (
         <dl className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-soft-gray rounded-xl p-3">
           <div>
             <dt className="text-muted-stone text-[10px] uppercase tracking-wider mb-1">{t('agentInfo.voiceEngine')}</dt>
-            <dd className="text-deep-charcoal font-mono">turbo_v2.5</dd>
+            <dd className="text-brand-muted">{t('agentInfo.modelUnverified', 'Model not verified from the live agent')}</dd>
           </div>
           <div>
             <dt className="text-muted-stone text-[10px] uppercase tracking-wider mb-1">{t('agentInfo.agentId')}</dt>
@@ -80,7 +70,7 @@ export default function VoiceAgentInfo({ agentId, updatedAt, createdAt }: Props)
           {createdAt && (
             <div>
               <dt className="text-muted-stone text-[10px] uppercase tracking-wider mb-1">{t('agentInfo.created')}</dt>
-              <dd className="text-deep-charcoal">{new Date(createdAt).toLocaleString()}</dd>
+              <dd className="text-deep-charcoal">{formatDate(createdAt)}</dd>
             </div>
           )}
         </dl>

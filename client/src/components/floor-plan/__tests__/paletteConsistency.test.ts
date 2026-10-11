@@ -16,9 +16,10 @@ describe('table palette is shared between editor and dashboard', () => {
   });
 
   it('keeps the semantic anchors of the illustrated tables', () => {
-    // Occupied is the brand burgundy fill (plates read as white on it);
+    // Occupied uses a state colour, not the burgundy reserved for actions;
     // reserved is dashed amber; free is quiet glass, never an alarm colour.
-    expect(STATUS_STYLES.occupied.fill).toBe('#9F1239');
+    expect(STATUS_STYLES.occupied.fill).toBe('#065F46');
+    expect(STATUS_STYLES.occupied.fill).not.toBe('#9F1239');
     expect(STATUS_STYLES.reserved.stroke).toBe('#D97706');
     expect(STATUS_STYLES.reserved.dash).toBeTruthy();
     expect(STATUS_STYLES.available.dash).toBeUndefined();
@@ -26,7 +27,7 @@ describe('table palette is shared between editor and dashboard', () => {
   });
 
   it('has a night variant that only the dashboard opts into', () => {
-    expect(mesaStyle('Occupied', true).fill).toBe('#9F1239');
+    expect(mesaStyle('Occupied', true).fill).toBe('#065F46');
     expect(mesaStyle('Available', true).fill).not.toBe(mesaStyle('Available').fill);
   });
 });

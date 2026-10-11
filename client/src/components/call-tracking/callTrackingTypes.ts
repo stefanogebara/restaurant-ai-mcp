@@ -59,7 +59,7 @@ export interface PhoneStatusData {
   agent_id: string | null;
   phone_number: string | null;
   phone_number_id: string | null;
-  status: 'not_configured' | 'pending' | 'active' | 'error';
+  status: 'not_configured' | 'pending' | 'active' | 'error' | 'unavailable' | 'unknown';
   error: string | null;
   configured_at: string | null;
 }

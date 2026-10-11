@@ -20,6 +20,7 @@ const { supabaseAdmin } = require('./_lib/supabase');
 const { checkSubscription, requireFeature } = require('./_lib/subscription-middleware');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { buildPersonaPrompt } = require('./_lib/persona-prompt-builder');
+const { buildDefaultVoiceGreeting } = require('./_lib/voice-greetings');
 const { refreshVoiceAgentPrompt } = require('./_services/voiceAgentService');
 const { validateElevenLabsVoiceId } = require('./_lib/validation');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
@@ -201,12 +202,8 @@ module.exports = async (req, res) => {
     };
     systemPrompt = buildPersonaPrompt(configForPrompt, { channel: 'voice' });
 
-    // Build first message
-    firstMessage = buildFirstMessage({
-      restaurant_name,
-      language,
-      custom_greeting
-    });
+    // Explicit request greeting wins; otherwise use the saved persona or language default.
+    firstMessage = custom_greeting || restaurantConfig?.agent_greeting || buildDefaultVoiceGreeting(restaurant_name, language);
 
     // Create tools via the Tools API and collect IDs
     const toolDefinitions = buildToolDefinitions(baseUrl, restaurant_id, false);
@@ -398,25 +395,6 @@ function buildSystemPrompt({ restaurant_name, language, business_hours, phone, a
   prompt += `- The host will handle actual table assignments when the customer arrives\n`;
 
   return prompt;
-}
-
-/**
- * Build first message based on language and custom greeting
- */
-function buildFirstMessage({ restaurant_name, language, custom_greeting }) {
-  if (custom_greeting) {
-    return custom_greeting;
-  }
-
-  const defaultGreetings = {
-    en: `Thank you for calling ${restaurant_name}. How may I help you today?`,
-    es: `Gracias por llamar a ${restaurant_name}. ¿En qué puedo ayudarle hoy?`,
-    fr: `Merci d'avoir appelé ${restaurant_name}. Comment puis-je vous aider aujourd'hui?`,
-    it: `Grazie per aver chiamato ${restaurant_name}. Come posso aiutarla oggi?`,
-    pt: `Obrigado por ligar para ${restaurant_name}. Como posso ajudá-lo hoje?`
-  };
-
-  return defaultGreetings[language] || defaultGreetings.en;
 }
 
 /**

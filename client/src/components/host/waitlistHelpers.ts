@@ -20,7 +20,11 @@ export interface WaitlistEntry {
 
 export interface WaitlistResponse {
   success: boolean;
+  plan_gated?: boolean;
   count: number;
+  total?: number;
+  has_more?: boolean;
+  counts?: { active: number; seated: number; removed: number };
   waitlist: WaitlistEntry[];
 }
 

@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Seatable · revisão da plataforma</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+  <style>
+    :root { color-scheme: light; font-family: 'Instrument Sans', Arial, sans-serif; color: #293222; background: #f3f0e9; }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem clamp(1rem, 3vw, 2.5rem); border-bottom: 1px solid #cdd0c7; background: #f3f0e9; }
+    .brand { font-size: 1.35rem; letter-spacing: -.04em; white-space: nowrap; }
+    .brand em { font-family: 'Instrument Serif', Georgia, serif; font-size: 1.55rem; }
+    .eyebrow { color: #586254; font-size: .76rem; text-transform: uppercase; letter-spacing: .09em; }
+    main { max-width: 1520px; margin: auto; padding: clamp(1rem, 3vw, 2.5rem); }
+    h1 { font-size: clamp(1.8rem, 3vw, 2.7rem); font-weight: normal; letter-spacing: -.05em; margin: .25rem 0 .4rem; }
+    p { color: #586254; line-height: 1.5; max-width: 70ch; margin: 0 0 1.25rem; }
+    .controls { display: flex; flex-wrap: wrap; gap: .75rem; justify-content: space-between; margin: 1.5rem 0; }
+    .group { display: inline-flex; padding: .25rem; gap: .25rem; border: 1px solid #cdd0c7; border-radius: 999px; background: transparent; }
+    .group[hidden] { display: none; }
+    button { border: 0; background: transparent; color: #586254; border-radius: 999px; padding: .65rem .95rem; cursor: pointer; font: inherit; font-size: .9rem; }
+    button[aria-pressed="true"] { background: #3f4e32; color: #f3f0e9; }
+    button:focus-visible, a:focus-visible { outline: 2px solid #3f4e32; outline-offset: 2px; }
+    .frame { padding: 1rem; border: 1px solid #cdd0c7; border-radius: .5rem; background: #f8f6f0; overflow: auto; }
+    .frame img { display: block; width: 100%; height: auto; margin: 0 auto; }
+    .frame.mobile img { max-width: 390px; }
+    .note { margin-top: 1.2rem; font-size: .86rem; }
+    a { color: #3f4e32; text-underline-offset: 3px; }
+    [hidden] { display: none !important; }
+    @media (max-width: 620px) { header { align-items: flex-start; flex-direction: column; } .group { width: 100%; } button { flex: 1; } .frame { padding: .35rem; } }
+  </style>
+</head>
+<body>
+  <header><span class="brand"><em>Seat</em>able</span><span class="eyebrow">Revisão estática · 5 out 2026</span></header>
+  <main>
+    <h1>Plataforma, em revisão</h1>
+    <p>Capturas da proposta no PR #165. Os dados são sintéticos e esta página não executa ações do produto. Painel, Visão Geral e Análises mostram a primeira dobra no celular; Voz e WhatsApp mostram suas telas de configuração. A avaliação visual ainda está em andamento.</p>
+    <div class="controls">
+      <div class="group" role="group" aria-label="Seção">
+        <button type="button" data-section="dashboard" aria-pressed="false">Painel</button>
+        <button type="button" data-section="overview" aria-pressed="true">Visão Geral</button>
+        <button type="button" data-section="analytics" aria-pressed="false">Análises</button>
+        <button type="button" data-section="voice" aria-pressed="false">Voz</button>
+        <button type="button" data-section="whatsapp" aria-pressed="false">WhatsApp</button>
+      </div>
+      <div class="group" role="group" aria-label="Estado" id="state-controls">
+        <button type="button" data-state="filled" aria-pressed="true">Com dados</button>
+        <button type="button" data-state="empty" aria-pressed="false">Sem dados</button>
+        <button type="button" data-state="pending" aria-pressed="false" hidden>Aguardando</button>
+        <button type="button" data-state="error" aria-pressed="false" hidden>Erro</button>
+      </div>
+      <div class="group" role="group" aria-label="Formato">
+        <button type="button" data-device="desktop" aria-pressed="true">Desktop</button>
+        <button type="button" data-device="mobile" aria-pressed="false">Celular</button>
+      </div>
+    </div>
+    <div id="frame" class="frame"><img id="capture" alt="Captura da Visão Geral em desktop"></div>
+    <p class="note">Este é um registro de design, não uma página de produção. <a href="https://github.com/stefanogebara/restaurant-ai-mcp/pull/165">Abrir código e discussão no GitHub</a>.</p>
+  </main>
+  <script>
+    // The local review server exposes client/ directly; Vite/Vercel copy public/ to /.
+    const assets = location.port === '5177' || location.protocol === 'file:'
+      ? './public/insights-review/'
+      : '/insights-review/';
+    const names = { dashboard: 'Painel', overview: 'Visão Geral', analytics: 'Análises', voice: 'Voz', whatsapp: 'WhatsApp' };
+    const params = new URLSearchParams(location.search);
+    let section = ['dashboard', 'analytics', 'voice', 'whatsapp'].includes(params.get('section')) ? params.get('section') : 'overview';
+    let device = params.get('device') === 'mobile' ? 'mobile' : 'desktop';
+    let state = ['empty', 'pending', 'error'].includes(params.get('state')) ? params.get('state') : 'filled';
+    function render() {
+      const image = document.getElementById('capture');
+      const frame = document.getElementById('frame');
+      if (section === 'dashboard' || (section !== 'whatsapp' && !['filled', 'empty'].includes(state))) state = 'filled';
+      image.src = section === 'dashboard'
+        ? `${assets}dashboard-${device}.png`
+        : section === 'whatsapp'
+        ? `${assets}whatsapp-${({ filled: 'active', empty: 'disconnected', pending: 'pending', error: 'error' })[state]}-${device}.png`
+        : section === 'voice'
+        ? `${assets}voice-${state}-${device}.png`
+        : section === 'analytics'
+        ? `${assets}analytics-${state}-${device}.png`
+        : state === 'empty'
+          ? `${assets}overview-empty-${device}.png`
+          : `${assets}overview${device === 'mobile' ? 'Mobile' : 'Desktop'}.png`;
+      const stateName = section === 'whatsapp'
+        ? ({ filled: 'com número cadastrado', empty: 'sem conexão', pending: 'aguardando confirmação', error: 'com erro' })[state]
+        : section === 'voice'
+        ? (state === 'empty' ? 'com linha ainda não atribuída' : 'com linha atribuída')
+        : (state === 'empty' ? 'sem dados' : 'com dados');
+      image.alt = `Captura de ${names[section]} ${stateName} em ${device === 'mobile' ? 'celular' : 'desktop'}`;
+      frame.classList.toggle('mobile', device === 'mobile');
+      document.getElementById('state-controls').hidden = section === 'dashboard';
+      document.querySelector('[data-state="filled"]').textContent = section === 'voice' ? 'Linha atribuída' : 'Com dados';
+      document.querySelector('[data-state="empty"]').textContent = section === 'voice' ? 'Sem linha' : 'Sem dados';
+      if (section === 'whatsapp') {
+        document.querySelector('[data-state="filled"]').textContent = 'Número cadastrado';
+        document.querySelector('[data-state="empty"]').textContent = 'Sem conexão';
+      }
+      document.querySelector('[data-state="pending"]').hidden = section !== 'whatsapp';
+      document.querySelector('[data-state="error"]').hidden = section !== 'whatsapp';
+      for (const attribute of ['section', 'device', 'state']) {
+        document.querySelectorAll(`[data-${attribute}]`).forEach(button => button.setAttribute('aria-pressed', String(button.dataset[attribute] === ({ section, device, state })[attribute])));
+      }
+      const query = new URLSearchParams({ section, device });
+      query.set('state', state);
+      history.replaceState(null, '', '?' + query);
+    }
+    for (const attribute of ['section', 'device', 'state']) {
+      document.querySelectorAll(`[data-${attribute}]`).forEach(button => button.addEventListener('click', () => {
+        if (attribute === 'section') section = button.dataset.section;
+        if (attribute === 'device') device = button.dataset.device;
+        if (attribute === 'state') state = button.dataset.state;
+        render();
+      }));
+    }
+    render();
+  </script>
+</body>
+</html>

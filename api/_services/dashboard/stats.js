@@ -2,9 +2,19 @@ const {
   getAllTables,
   getActiveServiceRecords,
   getUpcomingReservations,
+  getWaitlistCount,
   query: supabase
 } = require('../../_lib/supabase');
 const { decorateWithDepositSuggestion } = require('../../_lib/deposit-suggest');
+
+async function getWaitlistCountOrUnknown(restaurantId) {
+  try {
+    return await getWaitlistCount(restaurantId);
+  } catch {
+    // Keep the rest of the dashboard available without inventing a zero.
+    return { success: false, count: null };
+  }
+}
 
 async function handleDashboard(req, res) {
   const restaurantId = req.user.restaurant_id;
@@ -12,7 +22,7 @@ async function handleDashboard(req, res) {
   // Pull deposit_config alongside slug — `decorateWithDepositSuggestion`
   // below uses `deposit_config.enabled` as a gate (no suggestion when the
   // restaurant hasn't opted into taking deposits at all).
-  const [tablesResult, activePartiesResult, upcomingReservationsResult, restaurantConfigResult] = await Promise.all([
+  const [tablesResult, activePartiesResult, upcomingReservationsResult, restaurantConfigResult, waitlistResult] = await Promise.all([
     getAllTables(restaurantId),
     getActiveServiceRecords(restaurantId),
     getUpcomingReservations(restaurantId, timezone),
@@ -21,7 +31,11 @@ async function handleDashboard(req, res) {
       .from('restaurant_config')
       .select('slug, deposit_config')
       .eq('id', restaurantId)
-      .single()
+      .single(),
+    // The count query is tenant-scoped and exact; the paginated waitlist
+    // entries endpoint can omit active guests after 100 older records.
+    // A waitlist outage must not take down the rest of the dashboard.
+    getWaitlistCountOrUnknown(restaurantId)
   ]);
 
   if (!tablesResult.success || !activePartiesResult.success || !upcomingReservationsResult.success) {
@@ -163,6 +177,9 @@ async function handleDashboard(req, res) {
       occupied_seats: occupiedSeats,
       occupancy_percentage: Math.round((occupiedSeats / totalCapacity) * 100),
       active_parties: activeParties.length,
+      waitlist_count: waitlistResult.success && Number.isFinite(waitlistResult.count)
+        ? waitlistResult.count
+        : null,
       upcoming_reservations: upcomingReservationsResult.reservations.length,
       estimated_wait_time: estimatedWaitMinutes,
       avg_duration_minutes: avgDurationMinutes || null,

@@ -13,6 +13,7 @@ const crypto = require('node:crypto');
 const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { buildPersonaPrompt } = require('../_lib/persona-prompt-builder');
+const { buildDefaultVoiceGreeting } = require('../_lib/voice-greetings');
 const { validateElevenLabsVoiceId } = require('../_lib/validation');
 
 const logger = createSecureLogger('ElevenLabsAgentService');
@@ -622,24 +623,6 @@ async function getBranchConversationCount(agentId, branchId, sinceDate) {
 // ---------------------------------------------------------------------------
 
 /**
- * Build first message based on language and optional custom greeting.
- * @param {{ restaurant_name: string, language?: string, custom_greeting?: string }} opts
- * @returns {string}
- */
-function buildFirstMessage({ restaurant_name, language = 'en', custom_greeting }) {
-  if (custom_greeting) return custom_greeting;
-
-  const greetings = {
-    en: `Thank you for calling ${restaurant_name}. How may I help you today?`,
-    es: `Gracias por llamar a ${restaurant_name}. ¿En qué puedo ayudarle hoy?`,
-    fr: `Merci d'avoir appelé ${restaurant_name}. Comment puis-je vous aider aujourd'hui?`,
-    it: `Grazie per aver chiamato ${restaurant_name}. Come posso aiutarla oggi?`,
-    pt: `Obrigado por ligar para ${restaurant_name}. Como posso ajudá-lo hoje?`,
-  };
-  return greetings[language] || greetings.en;
-}
-
-/**
  * Build webhook tool definitions for a single-tenant agent.
  *
  * SECURITY: `webhookSecret` is the per-restaurant secret from
@@ -833,6 +816,7 @@ async function createAgent({
 
     // Build system prompt — try persona-aware prompt if config exists, else basic
     let systemPrompt;
+    let savedGreeting;
     if (restaurantId) {
       const { data: restaurantConfig } = await supabaseAdmin
         .schema('restaurant')
@@ -845,6 +829,7 @@ async function createAgent({
         restaurant_name, phone, address, business_hours, language,
       };
       systemPrompt = buildPersonaPrompt(configForPrompt, { channel: 'voice' });
+      savedGreeting = restaurantConfig?.agent_greeting;
     } else {
       systemPrompt = buildPersonaPrompt(
         { restaurant_name, phone, address, business_hours, language },
@@ -852,7 +837,7 @@ async function createAgent({
       );
     }
 
-    const firstMessage = buildFirstMessage({ restaurant_name, language, custom_greeting });
+    const firstMessage = custom_greeting || savedGreeting || buildDefaultVoiceGreeting(restaurant_name, language);
 
     // Create webhook tools — authenticated with a per-restaurant secret,
     // never CRON_SECRET (these headers live on ElevenLabs's servers).

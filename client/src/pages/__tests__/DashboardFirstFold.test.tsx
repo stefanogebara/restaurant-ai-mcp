@@ -1,0 +1,163 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
+import Dashboard from '../Dashboard';
+import { formatLocalDate } from '../../utils/timeFormatting';
+
+const state = vi.hoisted(() => ({
+  query: { data: undefined as unknown, isLoading: false, isError: false, refetch: vi.fn() },
+  serviceNight: false,
+  plan: { isTrial: false, isActive: true, status: 'active', trialEnd: null as string | null },
+}));
+
+vi.mock('@tanstack/react-query', () => ({ useQuery: () => state.query }));
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    i18n: { language: 'pt-BR' },
+    t: (key: string, fallback?: string) => ({
+      'dashboard.stats.tables': 'Mesas Disponíveis',
+      'dashboard.stats.tablesShort': 'Livres',
+      'dashboard.serviceTitle': 'Hoje no salão',
+      'dashboard.walkIn.actionShort': 'Receber sem reserva',
+      'dashboard.showInsights': 'Mostrar análises e insights',
+    }[key] || fallback || key),
+  }),
+}));
+vi.mock('../../hooks/useDocumentTitle', () => ({ useDocumentTitle: vi.fn() }));
+vi.mock('../../hooks/useRealtimeSubscription', () => ({ useRealtimeDashboard: vi.fn() }));
+vi.mock('../../hooks/useCompleteService', () => ({ useCompleteService: () => ({ mutate: vi.fn() }) }));
+vi.mock('../../hooks/useSubscription', () => ({ usePlanInfo: () => state.plan }));
+vi.mock('../../hooks/useServiceMode', () => ({ useServiceMode: () => ({ isNight: state.serviceNight, toggle: vi.fn() }) }));
+vi.mock('../../hooks/useRevenueStats', () => ({ useRevenueStats: () => ({ data: undefined }) }));
+vi.mock('../../contexts/ToastContext', () => ({ useToast: () => ({ success: vi.fn() }) }));
+vi.mock('../../lib/analytics', () => ({ trackFirstReservationCreated: vi.fn() }));
+
+vi.mock('../../components/layout/DashboardLayout', () => ({
+  default: ({ children, appearance }: { children: React.ReactNode; appearance?: string }) => <div data-testid="dashboard-shell" data-appearance={appearance}>{children}</div>,
+}));
+vi.mock('../../components/dashboard/ReservationsList', () => ({
+  default: ({ language, appearance }: { language: string; appearance?: string }) => <div data-testid="reservations-list" data-language={language} data-appearance={appearance} />,
+}));
+vi.mock('../../components/dashboard/TableLayoutPanel', () => ({ default: () => <div data-testid="floor-plan" /> }));
+vi.mock('../../components/dashboard/TableTimeline', () => ({ default: () => null }));
+vi.mock('../../components/dashboard/CustomerProfileDrawer', () => ({ default: () => null }));
+vi.mock('../../components/dashboard/ActivePartiesPanel', () => ({ default: () => null }));
+vi.mock('../../components/host/WaitlistPanel', () => ({ default: () => null }));
+vi.mock('../../components/dashboard/ManagerNotesPanel', () => ({ default: () => null }));
+vi.mock('../../components/dashboard/StaffingForecastWidget', () => ({ default: () => null }));
+vi.mock('../../components/dashboard/StripeConnectStatusBadge', () => ({ default: () => null }));
+vi.mock('../../components/dashboard/StripeConnectNudgeBanner', () => ({ default: () => null }));
+vi.mock('../../components/dashboard/RevenueStatsWidget', () => ({ default: () => null }));
+vi.mock('../../components/dashboard/RevenueByPartySizeWidget', () => ({ default: () => null }));
+vi.mock('../../components/dashboard/ProactiveCommsPanel', () => ({ default: () => null }));
+vi.mock('../../components/host/WalkInModal', () => ({ default: () => null }));
+vi.mock('../../components/host/SeatPartyModal', () => ({ default: () => null }));
+vi.mock('../../components/host/CheckInModal', () => ({ default: () => null }));
+vi.mock('../../components/host/QuickInterventionModal', () => ({ default: () => null }));
+vi.mock('../../components/host/AddReservationModal', () => ({ default: () => null }));
+vi.mock('../../components/host/EditReservationModal', () => ({ default: () => null }));
+vi.mock('../../components/host/CancelReservationDialog', () => ({ default: () => null }));
+vi.mock('../../components/dashboard/DepositRequestModal', () => ({ default: () => null }));
+vi.mock('../../components/dashboard/LaunchChecklistModal', () => ({ default: () => null }));
+
+function dashboardData(waitlistCount: number | null, weekReservations: unknown[] = []) {
+  return {
+    data: {
+      summary: { waitlist_count: waitlistCount },
+      tables: [
+        { id: 'one', status: 'Available' },
+        { id: 'two', status: 'Available' },
+        { id: 'three', status: 'Occupied' },
+      ],
+      upcoming_reservations: weekReservations,
+      active_parties: [],
+    },
+  };
+}
+
+function renderDashboard() {
+  return render(<MemoryRouter><Dashboard /></MemoryRouter>);
+}
+
+describe('Dashboard first-fold data contract', () => {
+  beforeEach(() => {
+    state.query = { data: dashboardData(1), isLoading: false, isError: false, refetch: vi.fn() };
+    state.serviceNight = false;
+    state.plan = { isTrial: false, isActive: true, status: 'active', trialEnd: null };
+  });
+
+  it('uses the hero shell in daylight and keeps the floor map present', () => {
+    renderDashboard();
+
+    expect(screen.getByTestId('dashboard-shell')).toHaveAttribute('data-appearance', 'hero');
+    expect(screen.getByRole('heading', { name: 'Hoje no salão' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Receber sem reserva' })).toBeInTheDocument();
+    expect(screen.getByTestId('floor-plan')).toBeInTheDocument();
+  });
+
+  it('preserves the dark service shell at night', () => {
+    state.serviceNight = true;
+    renderDashboard();
+
+    expect(screen.getByTestId('dashboard-shell')).toHaveAttribute('data-appearance', 'default');
+    expect(screen.getByTestId('floor-plan')).toBeInTheDocument();
+    expect(screen.getByTestId('reservations-list')).toHaveAttribute('data-appearance', 'default');
+  });
+
+  it('shows available tables and exact active waitlist count in Portuguese', () => {
+    renderDashboard();
+
+    expect(screen.getByText('2/3')).toBeInTheDocument();
+    expect(screen.getByText('Livres')).toHaveAttribute('aria-label', 'Mesas Disponíveis');
+    expect(screen.getByText('1')).toBeInTheDocument();
+    expect(screen.getByTestId('reservations-list')).toHaveAttribute('data-language', 'pt-BR');
+    expect(screen.getByTestId('reservations-list')).toHaveAttribute('data-appearance', 'hero');
+    expect(screen.queryByRole('button', { name: 'Mostrar análises e insights' })).not.toBeInTheDocument();
+  });
+
+  it('does not call a restaurant empty when it has bookings later this week', () => {
+    const threeDaysFromNow = formatLocalDate(new Date(Date.now() + 3 * 86_400_000));
+    state.query.data = dashboardData(0, [{ date: threeDaysFromNow, party_size: 2 }]);
+
+    renderDashboard();
+
+    expect(screen.queryByRole('button', { name: 'Mostrar análises e insights' })).not.toBeInTheDocument();
+  });
+
+  it('does not claim the queue is empty when its count is unavailable', () => {
+    state.query.data = dashboardData(null);
+    renderDashboard();
+
+    expect(screen.getByText('—')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Mostrar análises e insights' })).not.toBeInTheDocument();
+  });
+
+  it('keeps the room visible and defers secondary insights when operations are empty', () => {
+    state.query.data = dashboardData(0);
+    renderDashboard();
+
+    expect(screen.getByTestId('floor-plan')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Mostrar análises e insights' })).toBeInTheDocument();
+    expect(screen.queryByText('Seu painel está pronto!')).not.toBeInTheDocument();
+  });
+
+  it('keeps failed payment action visible without moving the room behind onboarding copy', () => {
+    state.plan = { isTrial: false, isActive: false, status: 'past_due', trialEnd: null };
+    renderDashboard();
+
+    const warning = screen.getByRole('alert');
+    expect(warning).toHaveTextContent('Payment failed');
+    expect(warning.querySelector('a[href="/subscription/manage"]')).toBeInTheDocument();
+    expect(screen.getByTestId('floor-plan')).toBeInTheDocument();
+  });
+
+  it('shows trial time and upgrade path as an inline status', () => {
+    state.plan = { isTrial: true, isActive: true, status: 'trialing', trialEnd: new Date(Date.now() + 36 * 60 * 60 * 1000).toISOString() };
+    renderDashboard();
+
+    const status = screen.getByRole('status');
+    expect(status).toHaveTextContent('Teste Gratuito termina em breve');
+    expect(status).toHaveTextContent(/\d+ dias?/);
+    expect(status.querySelector('a[href="/subscription/manage"]')).toBeInTheDocument();
+  });
+});

@@ -13,6 +13,7 @@ const { checkSubscription, requireFeature } = require('./_lib/subscription-middl
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { sendRetentionCampaignEmail } = require('./_lib/email');
+const { buildUnsubscribeUrl } = require('./_lib/unsubscribe-url');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const { createCampaign, sendCampaignBatch, getCampaignStats, getSegmentCustomers } = require('./_services/campaignService');
 const logger = createSecureLogger('RetentionCampaigns');
@@ -22,7 +23,7 @@ const logger = createSecureLogger('RetentionCampaigns');
  */
 async function handleCreate(req, res) {
   try {
-    const { customer_id, campaign_type, message, channel } = req.body;
+    const { customer_id, campaign_type, message, channel, language } = req.body;
 
     if (!customer_id || !campaign_type || !message) {
       return res.status(400).json({
@@ -39,6 +40,46 @@ async function handleCreate(req, res) {
       });
     }
 
+    if (channel && channel !== 'email') {
+      return res.status(422).json({ success: false, error: 'Only email is supported for individual campaigns' });
+    }
+
+    // Resolve the guest inside the authenticated restaurant before writing a
+    // campaign or sending anything. A customer ID from another tenant must
+    // never become a row in this restaurant's history.
+    const { data: customer, error: customerLookupErr } = await supabaseAdmin
+      .schema('restaurant')
+      .from('customer_ltv')
+      .select('customer_email, customer_name, customer_phone')
+      .eq('customer_id', customer_id)
+      .eq('restaurant_id', req.user.restaurant_id)
+      .maybeSingle();
+
+    if (customerLookupErr) throw customerLookupErr;
+    if (!customer) {
+      return res.status(404).json({ success: false, error: 'Customer not found' });
+    }
+    if (!customer.customer_email) {
+      return res.status(422).json({ success: false, error: 'Customer has no email address' });
+    }
+    if (!customer.customer_phone) {
+      return res.status(422).json({ success: false, error: 'Customer has no phone number for marketing consent' });
+    }
+
+    const { data: optOut, error: consentError } = await supabaseAdmin
+      .from('customer_consent')
+      .select('customer_phone')
+      .eq('restaurant_id', req.user.restaurant_id)
+      .eq('customer_phone', customer.customer_phone)
+      .eq('consent_type', 'marketing')
+      .eq('opted_in', false)
+      .maybeSingle();
+
+    if (consentError) throw consentError;
+    if (optOut) {
+      return res.status(422).json({ success: false, error: 'Customer opted out of marketing' });
+    }
+
     const { data, error } = await supabaseAdmin
       .schema('restaurant')
       .from('retention_campaigns')
@@ -46,7 +87,7 @@ async function handleCreate(req, res) {
         customer_id,
         campaign_type,
         message,
-        channel: channel || 'email',
+        channel: 'email',
         status: 'pending',
         restaurant_id: req.user.restaurant_id,
         created_at: new Date().toISOString()
@@ -56,53 +97,38 @@ async function handleCreate(req, res) {
 
     if (error) throw error;
 
-    // Send the campaign email if channel is email
-    if (data.channel === 'email') {
-      // Look up customer email from customer_ltv (has email from reservation data)
-      const { data: customer, error: customerLookupErr } = await supabaseAdmin
-        .schema('restaurant')
-        .from('customer_ltv')
-        .select('customer_email, customer_name')
-        .eq('customer_id', customer_id)
-        .eq('restaurant_id', req.user.restaurant_id)
-        .single();
+    const result = await sendRetentionCampaignEmail({
+      customerEmail: customer.customer_email,
+      customerName: customer.customer_name,
+      message,
+      campaignType: campaign_type,
+      language: /^(pt|es|en)(-|$)/i.test(language || '') ? language : 'pt-BR',
+      unsubscribeUrl: buildUnsubscribeUrl(req.user.restaurant_id, customer.customer_phone),
+    });
 
-      if (customerLookupErr) {
-        logger.error(`customer_ltv lookup error for ${customer_id} (restaurant ${req.user.restaurant_id}):`, customerLookupErr);
-      }
+    const sentAt = result.sent ? new Date().toISOString() : null;
+    const { error: statusError } = await supabaseAdmin
+      .schema('restaurant')
+      .from('retention_campaigns')
+      .update({ status: result.sent ? 'sent' : 'failed', sent_at: sentAt })
+      .eq('id', data.id)
+      .eq('restaurant_id', req.user.restaurant_id);
 
-      if (customer?.customer_email) {
-        const result = await sendRetentionCampaignEmail({
-          customerEmail: customer.customer_email,
-          customerName: customer.customer_name,
-          message,
-          campaignType: campaign_type,
-        });
+    if (statusError) {
+      logger.error('Could not persist email campaign delivery state', { campaignId: data.id, error: statusError.message });
+    }
 
-        await supabaseAdmin
-          .schema('restaurant')
-          .from('retention_campaigns')
-          .update({
-            status: result.sent ? 'sent' : 'failed',
-            sent_at: result.sent ? new Date().toISOString() : null,
-          })
-          .eq('id', data.id);
-      } else {
-        logger.warn(`No email found for customer ${customer_id}, marking campaign as failed`);
-        await supabaseAdmin
-          .schema('restaurant')
-          .from('retention_campaigns')
-          .update({ status: 'failed' })
-          .eq('id', data.id);
-      }
-    } else {
-      // SMS/WhatsApp channels - mark as pending for future implementation
-      logger.info(`Campaign ${data.id} uses ${data.channel} channel - queued for future delivery`);
+    if (!result.sent) {
+      return res.status(502).json({ success: false, error: 'Email could not be sent', data: { id: data.id, status: 'failed' } });
     }
 
     logger.info(`Created retention campaign ${data.id} for customer ${customer_id}`);
 
-    return res.status(200).json({ success: true, data });
+    return res.status(200).json({
+      success: true,
+      data: { ...data, status: 'sent', sent_at: sentAt },
+      ...(statusError ? { warning: 'Email accepted but campaign status could not be saved' } : {}),
+    });
 
   } catch (error) {
     logger.error('Error creating campaign:', error);
@@ -205,7 +231,9 @@ async function handleStats(req, res) {
 }
 
 /**
- * Create a WhatsApp campaign with segment targeting
+ * Create a WhatsApp campaign with segment targeting.
+ * Bulk email is deliberately unavailable until there is an email-specific
+ * recipient model, consent check and delivery worker.
  */
 async function handleCreateWhatsApp(req, res) {
   try {
@@ -226,6 +254,10 @@ async function handleCreateWhatsApp(req, res) {
       });
     }
 
+    if (channel && channel !== 'whatsapp') {
+      return res.status(422).json({ success: false, error: 'Bulk email campaigns are not supported' });
+    }
+
     const result = await createCampaign(req.user.restaurant_id, {
       name: name || `${segment} campaign`,
       segment,
@@ -233,7 +265,7 @@ async function handleCreateWhatsApp(req, res) {
       scheduledAt: scheduled_at || null,
       campaignType: campaign_type || 'win_back',
       whatsappTemplateName: template_name || null,
-      channel: channel || 'email',
+      channel: 'whatsapp',
     });
 
     if (!result.success) {
@@ -255,6 +287,19 @@ async function handleCampaignDeliveryStats(req, res) {
     const { campaign_id } = req.query;
     if (!campaign_id) {
       return res.status(400).json({ success: false, error: 'Missing campaign_id' });
+    }
+
+    const { data: campaign, error: lookupError } = await supabaseAdmin
+      .schema('restaurant')
+      .from('retention_campaigns')
+      .select('id')
+      .eq('id', campaign_id)
+      .eq('restaurant_id', req.user.restaurant_id)
+      .maybeSingle();
+
+    if (lookupError) throw lookupError;
+    if (!campaign) {
+      return res.status(404).json({ success: false, error: 'Campaign not found' });
     }
 
     const stats = await getCampaignStats(campaign_id);
@@ -279,13 +324,42 @@ async function handleSend(req, res) {
       return res.status(400).json({ success: false, error: 'Missing campaign_id' });
     }
 
-    // Activate the campaign
-    await supabaseAdmin
+    const restaurantId = req.user.restaurant_id;
+    const { data: campaign, error: lookupError } = await supabaseAdmin
+      .schema('restaurant')
+      .from('retention_campaigns')
+      .select('id, channel, status')
+      .eq('id', campaign_id)
+      .eq('restaurant_id', restaurantId)
+      .maybeSingle();
+
+    if (lookupError) throw lookupError;
+    if (!campaign) {
+      return res.status(404).json({ success: false, error: 'Campaign not found' });
+    }
+    if (campaign.channel !== 'whatsapp') {
+      return res.status(422).json({ success: false, error: 'This campaign has no supported send path' });
+    }
+    if (!['pending', 'scheduled'].includes(campaign.status)) {
+      return res.status(409).json({ success: false, error: 'Campaign is not ready to send' });
+    }
+
+    // Claim only this restaurant's WhatsApp campaign in a sendable state.
+    const { data: activated, error: activationError } = await supabaseAdmin
       .schema('restaurant')
       .from('retention_campaigns')
       .update({ status: 'active' })
       .eq('id', campaign_id)
-      .eq('restaurant_id', req.user.restaurant_id);
+      .eq('restaurant_id', restaurantId)
+      .eq('channel', 'whatsapp')
+      .eq('status', campaign.status)
+      .select('id')
+      .maybeSingle();
+
+    if (activationError) throw activationError;
+    if (!activated) {
+      return res.status(409).json({ success: false, error: 'Campaign state changed; refresh and try again' });
+    }
 
     // Send first batch immediately
     const sent = await sendCampaignBatch(campaign_id, 10);

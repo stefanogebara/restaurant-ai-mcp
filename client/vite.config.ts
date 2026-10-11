@@ -25,7 +25,7 @@ export default defineConfig({
     // maps from showing up in the network panel of every visitor.
     sourcemap: 'hidden',
     rollupOptions: {
-      input: { main: 'index.html', prototype: 'seatable-prototype.html' },
+      input: { main: 'index.html', prototype: 'seatable-prototype.html', insightsReview: 'insights-audit.html' },
       output: {
         manualChunks: {
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],

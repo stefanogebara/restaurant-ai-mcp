@@ -165,6 +165,28 @@ it('includes memory context in system prompt', async () => {
   expect(callArgs.system).toContain('We close at 10pm');
 });
 
+it.each([
+  ['pt-BR', 'Limite de capacidade operacional', 'NAO tem ferramenta para criar', 'nao prometa executar depois'],
+  ['es', 'Limite de capacidad operativa', 'NO tienes una herramienta para crear', 'no prometas hacerlo despues'],
+  ['en', 'Operational capability boundary', 'NO tool to create', 'do not promise to do it later'],
+])('states the non-writing capability boundary in %s', async (language, heading, noWriteRule, noPromiseRule) => {
+  const configChain = makeChain();
+  configChain.maybeSingle.mockResolvedValue({
+    data: { restaurant_name: 'Test Restaurant', agent_language: language, timezone: 'UTC' },
+  });
+  mockSchemaFrom.mockReturnValue(configChain);
+  mockMessagesCreate.mockResolvedValue({ content: [{ type: 'text', text: 'I can help prepare the details.' }] });
+
+  await runManagerAgent('rest-1', 'Please book a table and notify the team', 'app', { skipQuota: true });
+
+  const { system, tools } = mockMessagesCreate.mock.calls[0][0];
+  expect(system).toContain(heading);
+  expect(system).toContain(noWriteRule);
+  expect(system).toContain(noPromiseRule);
+  expect(system).toContain('compare_periods');
+  expect(tools.map(({ name }) => name)).toEqual(['compare_periods']);
+});
+
 // ─── Quota enforcement ───────────────────────────────────────────────────────
 
 describe('quota enforcement', () => {

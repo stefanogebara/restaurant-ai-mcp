@@ -71,8 +71,8 @@ module.exports = async (req, res) => {
 
     const isHealthy =
       databaseHealth.status === 'healthy' &&
-      staleDataCheck.status !== 'critical' &&
-      dataQualityCheck.status !== 'critical';
+      ['healthy', 'warning'].includes(staleDataCheck.status) &&
+      ['healthy', 'warning'].includes(dataQualityCheck.status);
 
     const healthStatus = {
       status: isHealthy ? 'healthy' : 'degraded',
@@ -103,7 +103,7 @@ module.exports = async (req, res) => {
           severity: 'warning',
           type: 'stale_data',
           message: `Found ${staleDataCheck.staleWaitlistEntries} stale waitlist entry(ies) older than ${THRESHOLDS.WAITLIST_ENTRY_MAX_HOURS} hours`,
-          action: 'DELETE old waitlist entries via /api/waitlist DELETE endpoint'
+          action: 'Review the cleanup-waitlist cron and active queue; preserve terminal waitlist history'
         });
       }
       if (dataQualityCheck.nullDataCount > 0) {
@@ -197,10 +197,21 @@ async function checkForStaleData() {
       });
     }
 
-    // Check waitlist entries - unscoped query across all restaurants
+    // Only active entries can be stale. Terminal rows are retained history,
+    // not work for the cleanup job, and must not trigger a permanent warning.
     const { data: waitlistEntries, error: waitlistError } = await supabaseAdmin
       .from('waitlist')
-      .select('added_at');
+      .select('added_at')
+      .in('status', ['waiting', 'notified'])
+      .lt('added_at', staleWaitlistThreshold.toISOString());
+
+    if (serviceError || waitlistError) {
+      return {
+        status: 'error',
+        message: 'Stale data check failed',
+        error: 'Internal error'
+      };
+    }
 
     let staleWaitlistEntries = [];
     if (!waitlistError && waitlistEntries) {

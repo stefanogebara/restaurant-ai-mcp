@@ -20,11 +20,14 @@ function StatusBadge({ status }: { status: PhoneStatusData['status'] }) {
   switch (status) {
     case 'active':
       return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-rose-500/10 text-rose-600 text-xs font-semibold rounded-full">
-          <span className="w-1.5 h-1.5 bg-rose-500 rounded-full animate-pulse" />
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-800/10 px-2.5 py-1 text-xs font-medium text-amber-900">
+          <span className="h-1.5 w-1.5 rounded-full bg-amber-700" />
           {t('callTracking.statusActive')}
         </span>
       );
+    case 'unavailable':
+    case 'unknown':
+      return <span className="rounded-full bg-amber-800/10 px-2.5 py-1 text-xs font-medium text-amber-900">{t(status === 'unavailable' ? 'callTracking.phoneStatusUnavailable' : 'callTracking.phoneStatusUnknown')}</span>;
     case 'pending':
       return (
         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-600/10 text-amber-600 text-xs font-semibold rounded-full">
@@ -52,24 +55,24 @@ function StatusBadge({ status }: { status: PhoneStatusData['status'] }) {
 export default function CallPhoneStatusCard({
   phoneStatus,
   phoneStatusLoading,
-  setupLoading,
   diagnoseLoading,
-  disconnectLoading,
-  onSetupPhone,
   onDiagnose,
-  onDisconnect,
   onRefreshStatus,
 }: Props) {
   const { t } = useTranslation();
   const statusDescription =
     phoneStatus?.status === 'active'
       ? t('callTracking.phoneStatusActive')
+      : phoneStatus?.status === 'unavailable'
+        ? t('callTracking.phoneStatusUnavailable')
+        : phoneStatus?.status === 'unknown'
+          ? t('callTracking.phoneStatusUnknown')
       : phoneStatus?.status === 'error'
         ? t('callTracking.phoneStatusError')
         : t('callTracking.phoneStatusConnect');
 
   return (
-    <div className="py-5 border-b border-glass-border-dark">
+    <div className="border-b border-brand-line py-5">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <div className="flex items-center gap-3">
@@ -102,6 +105,8 @@ export default function CallPhoneStatusCard({
               <span className="text-sm font-medium text-deep-charcoal">
                 {phoneStatus.status === 'active' ? t('callTracking.statusActive')
                   : phoneStatus.status === 'pending' ? t('callTracking.statusPending')
+                  : phoneStatus.status === 'unavailable' ? t('callTracking.phoneStatusUnavailable')
+                  : phoneStatus.status === 'unknown' ? t('callTracking.phoneStatusUnknown')
                   : phoneStatus.status === 'error' ? t('callTracking.statusError')
                   : t('callTracking.statusNotConnected')}
               </span>
@@ -111,7 +116,7 @@ export default function CallPhoneStatusCard({
           <div className="py-3">
             <p className="text-xs text-stone-gray mb-1">{t('callTracking.phoneNumber')}</p>
             <p className="text-sm font-medium text-deep-charcoal">
-              {phoneStatus.phone_number || t('callTracking.noneAssigned')}
+              {(phoneStatus.status === 'active' ? phoneStatus.phone_number : null) || t('callTracking.noneAssigned')}
             </p>
           </div>
 
@@ -146,20 +151,7 @@ export default function CallPhoneStatusCard({
 
       {/* Action buttons */}
       <div className="flex flex-wrap items-center gap-3 mt-4 pt-4 border-t border-[#F5F5F4]">
-        {(!phoneStatus || phoneStatus.status === 'not_configured' || phoneStatus.status === 'error') && (
-          <button
-            type="button"
-            onClick={onSetupPhone}
-            disabled={setupLoading}
-            className="px-4 py-2 bg-burgundy text-white rounded-xl font-medium hover:bg-burgundy-dark transition-colors disabled:opacity-50 flex items-center gap-2"
-          >
-            {setupLoading ? (
-              <><Spinner size="sm" />{t('callTracking.settingUp')}</>
-            ) : (
-              <><ThiingsIcon name="phone" size="xs" />{t('callTracking.setupPhone')}</>
-            )}
-          </button>
-        )}
+        <a href="mailto:hello@seatable.one?subject=Restaurant%20phone%20setup" className="rounded-full bg-brand-action px-4 py-2 text-sm font-medium text-white hover:bg-brand-ink">{t('callTracking.requestPhoneSetup')}</a>
 
         {/* Diagnose was previously a primary-row button visible to every host
             — it triggers an internal "check the AI's tool calls" job that
@@ -179,21 +171,6 @@ export default function CallPhoneStatusCard({
               <><Spinner size="sm" />{t('callTracking.diagnosing')}</>
             ) : (
               <><ThiingsIcon name="stethoscope" size="xs" />{t('callTracking.troubleshoot', 'Troubleshooting')}</>
-            )}
-          </button>
-        )}
-
-        {phoneStatus?.status === 'active' && (
-          <button
-            type="button"
-            onClick={onDisconnect}
-            disabled={disconnectLoading}
-            className="px-4 py-2 bg-red-600/10 hover:bg-red-600/20 text-red-600 rounded-xl text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
-          >
-            {disconnectLoading ? (
-              <><Spinner size="sm" />{t('callTracking.disconnecting')}</>
-            ) : (
-              <><ThiingsIcon name="phone-off" size="xs" />{t('callTracking.disconnect')}</>
             )}
           </button>
         )}

@@ -25,7 +25,7 @@ async function findDuplicates(restaurantId) {
   // Fetch all non-merged customers with phone or email
   const { data: customers, error } = await crmDb()
     .from('customer_ltv')
-    .select('customer_id, customer_name, customer_phone, customer_email, total_visits, total_revenue, last_visit_date')
+    .select('customer_id, customer_name, customer_phone, customer_email, total_visits, total_revenue, last_visit_date, customer_tier')
     .eq('restaurant_id', restaurantId)
     .is('merged_into', null);
 
@@ -58,6 +58,7 @@ async function findDuplicates(restaurantId) {
 
   const duplicates = [];
   const seen = new Set();
+  const phoneDuplicateGroups = [];
 
   // Phone duplicates
   for (const [phone, group] of Object.entries(phoneGroups)) {
@@ -65,6 +66,9 @@ async function findDuplicates(restaurantId) {
       const key = `phone:${phone}`;
       if (!seen.has(key)) {
         seen.add(key);
+        // Email groups use the customer-id set as their deduplication key.
+        seen.add(group.map(c => c.customer_id).sort().join(','));
+        phoneDuplicateGroups.push(new Set(group.map(c => c.customer_id)));
         duplicates.push({ match_field: 'phone', match_value: phone, customers: group });
       }
     }
@@ -74,7 +78,8 @@ async function findDuplicates(restaurantId) {
   for (const [email, group] of Object.entries(emailGroups)) {
     if (group.length >= 2) {
       const ids = group.map(c => c.customer_id).sort().join(',');
-      if (!seen.has(ids)) {
+      const coveredByPhone = phoneDuplicateGroups.some(phoneIds => group.every(c => phoneIds.has(c.customer_id)));
+      if (!seen.has(ids) && !coveredByPhone) {
         seen.add(ids);
         duplicates.push({ match_field: 'email', match_value: email, customers: group });
       }

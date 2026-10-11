@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import ChipSelector from './ChipSelector';
+import { getCustomerPresetOptions } from './CustomerProfilePresets';
 import type { ProfileUpdatePayload } from '../../hooks/useCustomers';
 
 interface CustomerProfileSectionsProps {
@@ -12,22 +13,10 @@ interface CustomerProfileSectionsProps {
   onUpdateProfile: (payload: ProfileUpdatePayload) => void;
 }
 
-const ALLERGY_PRESETS = [
-  'Gluten', 'Lactose', 'Nuts', 'Seafood', 'Soy', 'Eggs', 'Shellfish',
-];
-
-const DIETARY_PRESETS = [
-  'Vegetarian', 'Vegan', 'Pescatarian', 'Kosher', 'Halal', 'Low-carb', 'Keto',
-];
-
-const SEATING_PRESETS = [
-  'Window', 'Outdoor', 'Quiet corner', 'Bar', 'Private room', 'Near entrance',
-];
-
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <h3 className="text-[11px] font-bold text-stone-500 uppercase tracking-widest mb-2">
+      <h3 className="mb-2 font-brand text-[11px] font-medium uppercase tracking-[0.14em] text-brand-muted">
         {title}
       </h3>
       {children}
@@ -44,6 +33,7 @@ export default function CustomerProfileSections({
   onUpdateProfile,
 }: CustomerProfileSectionsProps) {
   const { t } = useTranslation();
+
 
   const [birthday, setBirthday] = useState(specialOccasions.birthday || '');
   const [anniversary, setAnniversary] = useState(specialOccasions.anniversary || '');
@@ -72,13 +62,10 @@ export default function CustomerProfileSections({
   const handleBirthdayChange = useCallback(
     (value: string) => {
       setBirthday(value);
-      const updated = { ...specialOccasions, birthday: value };
-      if (!value) {
-        const { birthday: _removed, ...rest } = updated;
-        onUpdateProfile({ customerId, special_occasions: rest });
-      } else {
-        onUpdateProfile({ customerId, special_occasions: updated });
-      }
+      const updated = { ...specialOccasions };
+      if (value) updated.birthday = value;
+      else delete updated.birthday;
+      onUpdateProfile({ customerId, special_occasions: updated });
     },
     [customerId, specialOccasions, onUpdateProfile]
   );
@@ -86,13 +73,10 @@ export default function CustomerProfileSections({
   const handleAnniversaryChange = useCallback(
     (value: string) => {
       setAnniversary(value);
-      const updated = { ...specialOccasions, anniversary: value };
-      if (!value) {
-        const { anniversary: _removed, ...rest } = updated;
-        onUpdateProfile({ customerId, special_occasions: rest });
-      } else {
-        onUpdateProfile({ customerId, special_occasions: updated });
-      }
+      const updated = { ...specialOccasions };
+      if (value) updated.anniversary = value;
+      else delete updated.anniversary;
+      onUpdateProfile({ customerId, special_occasions: updated });
     },
     [customerId, specialOccasions, onUpdateProfile]
   );
@@ -109,7 +93,7 @@ export default function CustomerProfileSections({
       <Section title={t('crm.allergies', 'Allergies')}>
         <ChipSelector
           items={allergies}
-          presets={ALLERGY_PRESETS.map((a) => t(`crm.allergy_${a.toLowerCase()}`, a))}
+          presets={getCustomerPresetOptions('allergy')}
           onChange={handleAllergiesChange}
           placeholder={t('crm.addAllergyPlaceholder', 'Add allergy...')}
         />
@@ -119,7 +103,7 @@ export default function CustomerProfileSections({
       <Section title={t('crm.dietaryRestrictions', 'Dietary Restrictions')}>
         <ChipSelector
           items={dietaryRestrictions}
-          presets={DIETARY_PRESETS.map((d) => t(`crm.dietary_${d.toLowerCase().replace('-', '_')}`, d))}
+          presets={getCustomerPresetOptions('dietary')}
           onChange={handleDietaryChange}
           placeholder={t('crm.addDietaryPlaceholder', 'Add restriction...')}
         />
@@ -129,7 +113,7 @@ export default function CustomerProfileSections({
       <Section title={t('crm.seatingPreferences', 'Seating Preferences')}>
         <ChipSelector
           items={seatingPreferences}
-          presets={SEATING_PRESETS.map((s) => t(`crm.seating_${s.toLowerCase().replace(/ /g, '_')}`, s))}
+          presets={getCustomerPresetOptions('seating')}
           onChange={handleSeatingChange}
           placeholder={t('crm.addSeatingPlaceholder', 'Add preference...')}
         />
@@ -140,11 +124,10 @@ export default function CustomerProfileSections({
         <div className="space-y-3">
           {/* Birthday */}
           <div>
-            <label className="flex items-center gap-2 text-sm text-stone-700 mb-1">
-              <span>&#127874;</span>
+            <label className="mb-1 flex items-center gap-2 text-sm text-brand-ink">
               {t('crm.birthday', 'Birthday')}
               {birthday && (
-                <span className="text-xs text-stone-500">
+                <span className="text-xs text-brand-muted">
                   {formatOccasionDisplay(birthday)}
                 </span>
               )}
@@ -153,17 +136,16 @@ export default function CustomerProfileSections({
               type="date"
               value={birthday}
               onChange={(e) => handleBirthdayChange(e.target.value)}
-              className="w-full text-sm border border-stone-200 rounded-lg px-3 py-1.5 text-stone-900 focus:outline-none focus:ring-1 focus:ring-[#9F1239]/30 focus:border-[#9F1239]/30"
+              className="w-full rounded-lg border border-brand-line bg-white/70 px-3 py-2 text-sm text-brand-ink focus-visible:outline-2 focus-visible:outline-brand-action"
             />
           </div>
 
           {/* Anniversary */}
           <div>
-            <label className="flex items-center gap-2 text-sm text-stone-700 mb-1">
-              <span>&#128141;</span>
+            <label className="mb-1 flex items-center gap-2 text-sm text-brand-ink">
               {t('crm.anniversary', 'Anniversary')}
               {anniversary && (
-                <span className="text-xs text-stone-500">
+                <span className="text-xs text-brand-muted">
                   {formatOccasionDisplay(anniversary)}
                 </span>
               )}
@@ -172,7 +154,7 @@ export default function CustomerProfileSections({
               type="date"
               value={anniversary}
               onChange={(e) => handleAnniversaryChange(e.target.value)}
-              className="w-full text-sm border border-stone-200 rounded-lg px-3 py-1.5 text-stone-900 focus:outline-none focus:ring-1 focus:ring-[#9F1239]/30 focus:border-[#9F1239]/30"
+              className="w-full rounded-lg border border-brand-line bg-white/70 px-3 py-2 text-sm text-brand-ink focus-visible:outline-2 focus-visible:outline-brand-action"
             />
           </div>
         </div>

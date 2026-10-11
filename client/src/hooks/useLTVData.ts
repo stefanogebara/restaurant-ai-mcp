@@ -16,7 +16,8 @@ export function useLTVStats() {
       const response = await authFetch('/api/ltv?action=stats');
       if (!response.ok) throw new Error('Failed to fetch LTV stats');
       const result = await response.json();
-      return result.success ? result.data : null;
+      if (!result.success) throw new Error(result.error || 'Failed to fetch LTV stats');
+      return result.data ?? null;
     },
     enabled: hasAccess,
     staleTime: ANALYTICS_STALE_TIME,
@@ -32,7 +33,8 @@ export function useLTVTopVIPs() {
       const response = await authFetch('/api/ltv?action=list&tier=vip&limit=5');
       if (!response.ok) throw new Error('Failed to fetch VIP customers');
       const result = await response.json();
-      return result.success ? (result.data.customers || []) : [];
+      if (!result.success) throw new Error(result.error || 'Failed to fetch VIP customers');
+      return result.data.customers || [];
     },
     enabled: hasAccess,
     staleTime: ANALYTICS_STALE_TIME,
@@ -48,7 +50,7 @@ export function useLTVAtRisk() {
       const response = await authFetch('/api/ltv?action=list&limit=100');
       if (!response.ok) throw new Error('Failed to fetch customers');
       const result = await response.json();
-      if (!result.success) return [];
+      if (!result.success) throw new Error(result.error || 'Failed to fetch customers');
       return (result.data.customers as Customer[])
         .filter((c) => c.churn_risk_score > 70)
         .sort((a, b) => b.churn_risk_score - a.churn_risk_score)
@@ -84,11 +86,12 @@ interface CampaignInput {
   customerId: string;
   campaignType: string;
   message: string;
+  language: string;
 }
 
 export function useSendCampaign() {
   return useMutation<void, Error, CampaignInput>({
-    mutationFn: async ({ customerId, campaignType, message }) => {
+    mutationFn: async ({ customerId, campaignType, message, language }) => {
       const response = await authFetch('/api/retention-campaigns?action=create', {
         method: 'POST',
         body: JSON.stringify({
@@ -96,6 +99,7 @@ export function useSendCampaign() {
           campaign_type: campaignType,
           message,
           channel: 'email',
+          language,
         }),
       });
       if (!response.ok) throw new Error('Failed to create campaign');

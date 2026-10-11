@@ -4,7 +4,7 @@
  * Returns the 3 key metrics that measure whether the AI strategy is working:
  *   1. No-show rate (daily, last 30 days)
  *   2. Avg revenue per cover (weekly, last 30 days)
- *   3. Reservation conversion rate (daily, last 30 days)
+ *   3. Confirmed-status share of reservation rows (daily, last 30 days)
  *
  * This is the "val_bpb" equivalent from Karpathy's autoresearch — the scoreboard
  * that tells you if the strategy loop is improving the business.
@@ -18,6 +18,7 @@ const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { initSentry, captureException } = require('./_lib/sentry');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
+const { getLocalDate } = require('./_lib/timezone');
 initSentry();
 
 const logger = createSecureLogger('StrategyMetrics');
@@ -43,10 +44,14 @@ module.exports = async (req, res) => {
   const days = Math.min(parseInt(req.query.range || '30', 10), 90);
 
   try {
+    const localToday = getLocalDate(auth.user?.timezone || 'UTC');
     const since = new Date();
     since.setDate(since.getDate() - days);
-    const sinceDate = since.toISOString().split('T')[0];
     const sinceTs = since.toISOString();
+    // Reservation dates are calendar dates in the restaurant's timezone.
+    const firstLocalDay = new Date(`${localToday}T00:00:00Z`);
+    firstLocalDay.setUTCDate(firstLocalDay.getUTCDate() - days);
+    const sinceDate = firstLocalDay.toISOString().split('T')[0];
 
     const [reservationsRes, serviceRes] = await Promise.all([
       supabaseAdmin
@@ -76,9 +81,12 @@ module.exports = async (req, res) => {
     const serviceRecords = serviceRes.data || [];
 
     // ── 1. No-show rate — daily ────────────────────────────────────────────────
+    // The service day must have ended. Counting today's unfinished bookings
+    // (or future bookings) in the denominator makes the rate look artificially
+    // low until no-shows are classified. YYYY-MM-DD sorts chronologically.
+    const completedDayReservations = reservations.filter(r => r.date && r.date < localToday);
     const noShowByDate = {};
-    for (const r of reservations) {
-      if (!r.date) continue;
+    for (const r of completedDayReservations) {
       if (!noShowByDate[r.date]) noShowByDate[r.date] = { total: 0, no_shows: 0 };
       noShowByDate[r.date].total++;
       if (r.status === 'no_show') noShowByDate[r.date].no_shows++;
@@ -94,10 +102,10 @@ module.exports = async (req, res) => {
       }));
 
     // Overall no-show rate
-    const totalReservations = reservations.length;
-    const totalNoShows = reservations.filter(r => r.status === 'no_show').length;
-    const noShowRate = totalReservations > 0
-      ? parseFloat(((totalNoShows / totalReservations) * 100).toFixed(1))
+    const noShowSampleSize = completedDayReservations.length;
+    const totalNoShows = completedDayReservations.filter(r => r.status === 'no_show').length;
+    const noShowRate = noShowSampleSize > 0
+      ? parseFloat(((totalNoShows / noShowSampleSize) * 100).toFixed(1))
       : null;
 
     // ── 2. Avg revenue per cover — weekly ────────────────────────────────────
@@ -136,7 +144,9 @@ module.exports = async (req, res) => {
       ? parseFloat((totalBill / totalCovers).toFixed(2))
       : null;
 
-    // ── 3. Conversion rate — daily (confirmed / total) ───────────────────────
+    // ── 3. Confirmed-status share — daily (confirmed / reservation rows) ─────
+    // Kept under the historical `conversion_rate` field for API compatibility.
+    // This is not inquiry-to-booking conversion; inquiries are not counted.
     const conversionByDate = {};
     for (const r of reservations) {
       if (!r.date) continue;
@@ -160,6 +170,7 @@ module.exports = async (req, res) => {
     const confirmedReservations = reservations.filter(r =>
       ['confirmed', 'seated', 'completed'].includes(r.status)
     ).length;
+    const totalReservations = reservations.length;
     const conversionRate = totalReservations > 0
       ? parseFloat(((confirmedReservations / totalReservations) * 100).toFixed(1))
       : null;
@@ -178,6 +189,7 @@ module.exports = async (req, res) => {
         since: sinceDate,
         summary: {
           no_show_rate: noShowRate,
+          no_show_sample_size: noShowSampleSize,
           avg_revenue_per_cover: avgRevenuePerCover,
           conversion_rate: conversionRate,
           total_reservations: totalReservations,
