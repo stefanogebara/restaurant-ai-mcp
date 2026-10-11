@@ -159,6 +159,16 @@ describe('as três defesas', () => {
 });
 
 describe('envio', () => {
+  test('does not send when the restaurant language has no approved diagnostic', async () => {
+    mockTentativas.mockReturnValue([]);
+    const res = fakeRes();
+    await handler({ method: 'POST', body: { phone: '5511999998888' } }, res);
+
+    expect(res.statusCode).toBe(409);
+    expect(res.body.code).toBe('TEST_TEMPLATE_UNAVAILABLE');
+    expect(mockSendTemplate).not.toHaveBeenCalled();
+  });
+
   test('provedor não configurado devolve 503 e deixa rastro', async () => {
     mockConfigurado.mockReturnValue(false);
     const res = fakeRes();
