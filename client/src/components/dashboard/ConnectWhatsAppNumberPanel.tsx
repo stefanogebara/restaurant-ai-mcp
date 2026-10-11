@@ -66,7 +66,7 @@ export default function ConnectWhatsAppNumberPanel() {
             {t('whatsappProvision.subtitle', 'Your AI answers on a number you own. Meta sends a verification code to that number — by SMS or phone call (use the call for a landline).')}
           </p>
         </div>
-        {estado?.estado === 'ativo' && (
+        {estado?.estado === 'ativo' && estado.roteamento_confirmado === true && (
           <span className="shrink-0 inline-flex items-center gap-1.5 text-[11px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded-full">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
             {copy.connected}
@@ -202,12 +202,12 @@ export default function ConnectWhatsAppNumberPanel() {
       )}
 
       {!isLoading && estado?.estado === 'ativo' && (
-        <div className="mt-4 bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-3">
-          <p className="text-sm font-medium text-emerald-800">
+        <div className={`mt-4 border rounded-lg px-4 py-3 ${estado.roteamento_confirmado === true ? 'bg-emerald-50 border-emerald-200' : 'bg-amber-50 border-amber-200'}`}>
+          <p className={`text-sm font-medium ${estado.roteamento_confirmado === true ? 'text-emerald-800' : 'text-amber-800'}`}>
             {estado.numero_e164 || t('whatsappProvision.activeBadge', 'Active')}
           </p>
-          <p className="text-xs text-emerald-700 mt-1">
-            {copy.registeredHint}
+          <p className={`text-xs mt-1 ${estado.roteamento_confirmado === true ? 'text-emerald-700' : 'text-amber-800'}`}>
+            {estado.roteamento_confirmado === true ? copy.registeredHint : copy.routingIssue}
           </p>
         </div>
       )}

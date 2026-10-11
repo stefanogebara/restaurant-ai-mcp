@@ -7,6 +7,7 @@ export interface WhatsAppProvision {
   metodo?: string;
   erro?: string | null;
   pode_iniciar?: boolean;
+  roteamento_confirmado?: boolean;
 }
 
 export function useWhatsAppProvision() {

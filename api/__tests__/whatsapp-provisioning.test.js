@@ -27,12 +27,15 @@ jest.mock('../_lib/supabase', () => ({
 }));
 
 const mockRegistryUpdate = jest.fn();
+const mockRegistryOwn = jest.fn();
+const mockRegistryByNumber = jest.fn();
 jest.mock('../_lib/central-supabase', () => ({
   isCentralConfigured: () => true,
   centralSupabase: {
     from: () => ({
+      select: () => ({ eq: (column) => ({ maybeSingle: column === 'id' ? mockRegistryOwn : mockRegistryByNumber }) }),
       update: (payload) => ({
-        eq: () => ({ select: () => mockRegistryUpdate(payload) }),
+        eq: () => ({ eq: () => ({ is: () => ({ select: () => mockRegistryUpdate(payload) }) }) }),
       }),
     }),
   },
@@ -70,6 +73,8 @@ beforeEach(() => {
   delete process.env.WHATSAPP_UNVERIFIED_ADD_NUMBER_DEV;
   mockConfigMaybeSingle.mockResolvedValue({ data: { id: RID, whatsapp_provisioning: null }, error: null });
   mockConfigUpdate.mockResolvedValue({ error: null });
+  mockRegistryOwn.mockResolvedValue({ data: { id: RID, is_active: true, whatsapp_phone_number_id: null }, error: null });
+  mockRegistryByNumber.mockResolvedValue({ data: null, error: null });
   mockRegistryUpdate.mockResolvedValue({ data: [{ id: RID }], error: null });
 });
 
@@ -133,6 +138,7 @@ describe('confirmarCodigo', () => {
     expect(mockRegistryUpdate).toHaveBeenCalledWith({ whatsapp_phone_number_id: 'phone-123' });
     expect(r.estado).toBe('ativo');
     expect(r.pin).toBeUndefined();
+    expect(r.roteamento_confirmado).toBe(true);
   });
 
   test('código errado NÃO mata a jornada — continua aguardando_codigo pra nova tentativa', async () => {
@@ -148,12 +154,38 @@ describe('confirmarCodigo', () => {
     expect(mockRegistryUpdate).not.toHaveBeenCalled();
   });
 
-  test('restaurante fora do registry central: erro pede suporte e cita a linha ausente no detalhe', async () => {
+  test('restaurante fora do registry central: recusa antes de chamar a Meta', async () => {
+    mockConfigMaybeSingle.mockResolvedValue({ data: { id: RID, whatsapp_provisioning: aguardando }, error: null });
+    mockRegistryOwn.mockResolvedValue({ data: null, error: null });
+    global.fetch = jest.fn();
+
+    await expect(confirmarCodigo({ restaurantId: RID, codigo: '123456' })).rejects.toThrow(/suporte/i);
+    expect(global.fetch).not.toHaveBeenCalled();
+    expect(mockConfigUpdate.mock.calls.some(([payload]) => payload.whatsapp_provisioning?.estado === 'ativo')).toBe(false);
+  });
+
+  test('número de outro restaurante: não registra na Meta nem altera roteamento', async () => {
+    mockConfigMaybeSingle.mockResolvedValue({ data: { id: RID, whatsapp_provisioning: aguardando }, error: null });
+    mockRegistryByNumber.mockResolvedValue({ data: { id: 'outro-restaurante' }, error: null });
+    global.fetch = jest.fn();
+    await expect(confirmarCodigo({ restaurantId: RID, codigo: '123456' })).rejects.toThrow(/outro restaurante/i);
+    expect(global.fetch).not.toHaveBeenCalled();
+    expect(mockRegistryUpdate).not.toHaveBeenCalled();
+  });
+
+  test('restaurante com outro número: exige suporte antes de trocar', async () => {
+    mockConfigMaybeSingle.mockResolvedValue({ data: { id: RID, whatsapp_provisioning: aguardando }, error: null });
+    mockRegistryOwn.mockResolvedValue({ data: { id: RID, is_active: true, whatsapp_phone_number_id: 'phone-antigo' }, error: null });
+    global.fetch = jest.fn();
+    await expect(confirmarCodigo({ restaurantId: RID, codigo: '123456' })).rejects.toThrow(/já usa outro número/i);
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  test('mudança concorrente durante o registro não confirma um roteamento falso', async () => {
     mockConfigMaybeSingle.mockResolvedValue({ data: { id: RID, whatsapp_provisioning: aguardando }, error: null });
     graphOk([{ success: true }, { success: true }]);
     mockRegistryUpdate.mockResolvedValue({ data: [], error: null });
-
-    await expect(confirmarCodigo({ restaurantId: RID, codigo: '123456' })).rejects.toThrow(/suporte/i);
+    await expect(confirmarCodigo({ restaurantId: RID, codigo: '123456' })).rejects.toThrow(/mudou durante/i);
     expect(mockConfigUpdate.mock.calls.some(([payload]) => payload.whatsapp_provisioning?.estado === 'ativo')).toBe(false);
   });
 
@@ -179,7 +211,7 @@ describe('mock — fechado por env', () => {
 
 describe('estadoPublico', () => {
   test('sem jornada → nao_iniciado; com jornada → estado sem PIN', async () => {
-    expect(await estadoPublico(RID)).toEqual({ estado: 'nao_iniciado', pode_iniciar: false });
+    expect(await estadoPublico(RID)).toEqual({ estado: 'nao_iniciado', pode_iniciar: false, roteamento_confirmado: false });
     mockConfigMaybeSingle.mockResolvedValue({
       data: { id: RID, whatsapp_provisioning: { estado: 'aguardando_codigo', pin: '111111', numero_e164: '+55x' } },
       error: null,
@@ -188,6 +220,21 @@ describe('estadoPublico', () => {
     expect(e.estado).toBe('aguardando_codigo');
     expect(e.pin).toBeUndefined();
     expect(e.pode_iniciar).toBe(false);
+    expect(e.roteamento_confirmado).toBe(false);
+  });
+
+  test('ativo só é confirmado quando o registro central aponta para este mesmo número', async () => {
+    mockConfigMaybeSingle.mockResolvedValue({ data: { id: RID, whatsapp_provisioning: {
+      estado: 'ativo', numero_e164: '+5511999998888', phone_number_id: 'phone-123', pin: '123456', erro_detalhe: 'segredo',
+    } }, error: null });
+    const semVinculo = await estadoPublico(RID);
+    expect(semVinculo.roteamento_confirmado).toBe(false);
+    expect(semVinculo).not.toHaveProperty('pin');
+    expect(semVinculo).not.toHaveProperty('erro_detalhe');
+    mockRegistryOwn.mockResolvedValue({ data: { id: RID, is_active: true, whatsapp_phone_number_id: 'phone-123' }, error: null });
+    expect((await estadoPublico(RID)).roteamento_confirmado).toBe(true);
+    mockRegistryOwn.mockResolvedValue({ data: { id: RID, is_active: false, whatsapp_phone_number_id: 'phone-123' }, error: null });
+    expect((await estadoPublico(RID)).roteamento_confirmado).toBe(false);
   });
 
   test('produção nunca permite adicionar número novo, mesmo com a flag local ligada', async () => {
