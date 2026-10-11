@@ -38,7 +38,7 @@ describe('TestarNoMeuWhatsApp', () => {
     await userEvent.type(screen.getByLabelText(/seu número/i), '+55 (11) 99999-8888');
     await userEvent.click(screen.getByRole('button', { name: /enviar/i }));
 
-    await waitFor(() => expect(screen.getByText(/olhe seu whatsapp/i)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/mensagem encaminhada/i)).toBeInTheDocument());
     const corpo = JSON.parse((fetchSpy.mock.calls[0][1] as RequestInit).body as string);
     expect(corpo.phone).toBe('5511999998888');
     expect(corpo.restaurant_id).toBe('r-1');
@@ -101,7 +101,46 @@ describe('TestarNoMeuWhatsApp', () => {
     await userEvent.type(screen.getByLabelText(/seu número/i), '5511999998888');
     await userEvent.click(screen.getByRole('button', { name: /enviar/i }));
 
-    await waitFor(() => expect(screen.getByText(/olhe seu whatsapp/i)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/mensagem encaminhada/i)).toBeInTheDocument());
     expect(screen.queryByText(/responda por lá/i)).not.toBeInTheDocument();
+  });
+
+  it('usa espanhol em toda a experiência e não afirma entrega antes do webhook', async () => {
+    vi.spyOn(globalThis, 'fetch').mockImplementation(ok(true));
+    render(<TestarNoMeuWhatsApp restaurantId="r-1" restaurantName="Casa Paco" lang="es-ES" />);
+
+    expect(screen.getByText('Pruébalo en tu propio WhatsApp')).toBeInTheDocument();
+    await userEvent.type(screen.getByLabelText('Tu número de WhatsApp'), '+34 600 123 456');
+    await userEvent.click(screen.getByRole('button', { name: 'Enviar' }));
+
+    await waitFor(() => expect(screen.getByText(/solicitud de envío aceptada/i)).toBeInTheDocument());
+    expect(screen.getByText(/si llega, responde/i)).toBeInTheDocument();
+    expect(screen.queryByText(/entregado|delivered/i)).not.toBeInTheDocument();
+  });
+
+  it('usa inglês e deixa claro que a mensagem foi solicitada, não entregue', async () => {
+    vi.spyOn(globalThis, 'fetch').mockImplementation(ok(false));
+    render(<TestarNoMeuWhatsApp restaurantId="r-1" restaurantName="The Table" lang="en-US" />);
+
+    await userEvent.type(screen.getByLabelText('Your WhatsApp number'), '+1 555 123 4567');
+    await userEvent.click(screen.getByRole('button', { name: 'Send' }));
+
+    await waitFor(() => expect(screen.getByText(/message submitted/i)).toBeInTheDocument());
+    expect(screen.getByText(/platform number/i)).toBeInTheDocument();
+  });
+
+  it('traduz o limite do servidor sem perder o tempo de espera', async () => {
+    vi.spyOn(globalThis, 'fetch').mockImplementation(() => Promise.resolve({
+      ok: false,
+      status: 429,
+      json: () => Promise.resolve({ success: false, code: 'PHONE_COOLDOWN', error: 'Aguarde para tentar de novo.', retryAfter: 125 }),
+    } as Response));
+    render(<TestarNoMeuWhatsApp restaurantId="r-1" restaurantName="Casa Paco" lang="es-ES" />);
+
+    await userEvent.type(screen.getByLabelText('Tu número de WhatsApp'), '+34 600 123 456');
+    await userEvent.click(screen.getByRole('button', { name: 'Enviar' }));
+
+    await waitFor(() => expect(screen.getByText(/3 minutos/i)).toBeInTheDocument());
+    expect(screen.queryByText(/aguarde para tentar/i)).not.toBeInTheDocument();
   });
 });
