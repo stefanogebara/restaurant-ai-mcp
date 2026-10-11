@@ -177,6 +177,15 @@ module.exports = async function handler(req, res) {
     restaurantLanguage: idioma,
     restaurantName: nome,
   });
+  if (tentativas.length === 0) {
+    const language = idioma.toLowerCase();
+    const error = language.startsWith('es')
+      ? 'La prueba por WhatsApp aún no está disponible en el idioma de tu restaurante.'
+      : language.startsWith('en')
+        ? 'The WhatsApp test is not yet available in your restaurant’s language.'
+        : 'O teste por WhatsApp ainda não está disponível no idioma do seu restaurante.';
+    return res.status(409).json({ success: false, code: 'TEST_TEMPLATE_UNAVAILABLE', error });
+  }
 
   let resultado = null;
   let usado = null;
