@@ -1,3 +1,18 @@
+# WhatsApp — conexão sem promessa falsa (11/out/2026)
+
+- [x] Bloquear novas adições self-service em produção até validar o caminho da Meta e um lock durável por restaurante.
+- [x] Mostrar conexão assistida quando não há número; preservar a confirmação de um número já pendente.
+- [x] Cobrir o bloqueio do backend e os estados da interface, inclusive a ausência de envio à Meta.
+- [x] Revisar no navegador e executar a verificação completa do projeto.
+
+Direção fixada: preservar canvas quente, títulos Instrument Serif e uma jornada vertical. O formulário de código continua para uma solicitação já iniciada. Para um número novo, uma instrução curta e o contato de suporte substituem o formulário de envio não comprovado. A entrega pelo remetente da plataforma fica separada do teste de conversa recebida.
+
+Decisões: (1) guardar primeiro no backend, pois um cliente antigo ainda pode chamar a API; (2) expor a capacidade na leitura para a interface refletir o servidor; (3) não inferir conexão ativa a partir do teste de entrega. A coleção oficial da Meta documenta listar números da WABA e registrar um ID conhecido, mas não prova a chamada atual de adicionar número para esta conta.
+
+Revisão: em produção, uma nova adição de número é recusada no servidor mesmo se a flag local for ligada. O modo mock também só abre em desenvolvimento/teste fora da Vercel. A interface lê `pode_iniciar` e falha fechado se um servidor antigo não enviar o campo; um número já pendente mantém o formulário de código. O estado assistido usa conteúdo direto no canvas e apenas um link de ajuda. Playwright em Chrome examinou desktop, celular e estado ativo: sem erro de página, rolagem horizontal ou botão de envio de código no estado assistido. Testes focados: 14 backend e 17 frontend. Verificação completa: build de produção passou (avisos antigos de chunks grandes), 276 suítes e 4.234 testes backend passaram (6 pulados), 104 arquivos e 991 testes frontend passaram; sintaxe dos arquivos da API e `git diff --check` passaram. Prévia local simula estados e bloqueia envios. Não houve chamada à Meta, OTP, mensagem nova ou conversa recebida.
+
+---
+
 # Hero na paleta das demonstrações (25/set/2026)
 
 - [x] Fixar a direção: papel quente `#f3f0e9`, tinta oliva `#293222`, verde de ação `#3f4e32`; manter logo e tipografia.

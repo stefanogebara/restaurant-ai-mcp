@@ -32,7 +32,7 @@ beforeEach(() => {
 
 describe('ConnectWhatsAppNumberPanel', () => {
   it('nao_iniciado: mostra o formulário com +55 de padrão', async () => {
-    mockAuthFetch.mockReturnValue(resposta({ success: true, data: { estado: 'nao_iniciado' } }));
+    mockAuthFetch.mockReturnValue(resposta({ success: true, data: { estado: 'nao_iniciado', pode_iniciar: true } }));
     montar();
     expect(await screen.findByText(/Receive verification code/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Country/i)).toHaveValue('55');
@@ -40,7 +40,7 @@ describe('ConnectWhatsAppNumberPanel', () => {
 
   it('iniciar envia cc+numero+metodo e a tela muda pro código', async () => {
     mockAuthFetch
-      .mockReturnValueOnce(resposta({ success: true, data: { estado: 'nao_iniciado' } }))
+      .mockReturnValueOnce(resposta({ success: true, data: { estado: 'nao_iniciado', pode_iniciar: true } }))
       .mockReturnValueOnce(resposta({
         success: true,
         data: { estado: 'aguardando_codigo', numero_e164: '+5511999998888', metodo: 'SMS' },
@@ -58,7 +58,7 @@ describe('ConnectWhatsAppNumberPanel', () => {
 
   it('erro do backend aparece pro dono como veio — a mensagem já é amigável', async () => {
     mockAuthFetch
-      .mockReturnValueOnce(resposta({ success: true, data: { estado: 'nao_iniciado' } }))
+      .mockReturnValueOnce(resposta({ success: true, data: { estado: 'nao_iniciado', pode_iniciar: true } }))
       .mockReturnValueOnce(resposta({ success: false, error: 'A Meta limitou tentativas para este número.' }, false));
     montar();
 
@@ -76,6 +76,32 @@ describe('ConnectWhatsAppNumberPanel', () => {
     }));
     montar();
     expect(await screen.findByText('+5511999998888')).toBeInTheDocument();
-    expect(screen.getByText(/within a minute/i)).toBeInTheDocument();
+    expect(screen.getByText(/Test an incoming conversation before/)).toBeInTheDocument();
+  });
+
+  it('sem cadastro validado: orienta conexão assistida e não mostra envio de código', async () => {
+    mockAuthFetch.mockReturnValue(resposta({ success: true, data: { estado: 'nao_iniciado', pode_iniciar: false } }));
+    montar();
+    expect(await screen.findByText('Connect with our help')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Get help connecting' })).toHaveAttribute('href', 'mailto:hello@seatable.one');
+    expect(screen.queryByRole('button', { name: 'Receive verification code' })).not.toBeInTheDocument();
+    expect(mockAuthFetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('sem campo de capacidade em um servidor antigo: falha fechado', async () => {
+    mockAuthFetch.mockReturnValue(resposta({ success: true, data: { estado: 'nao_iniciado' } }));
+    montar();
+    expect(await screen.findByText('Connect with our help')).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('11 3456-7890')).not.toBeInTheDocument();
+  });
+
+  it('número já pendente ainda aceita o código sem oferecer outro número', async () => {
+    mockAuthFetch.mockReturnValue(resposta({ success: true, data: {
+      estado: 'aguardando_codigo', numero_e164: '+5511999998888', metodo: 'SMS', pode_iniciar: false,
+    } }));
+    montar();
+    expect(await screen.findByText(/\+5511999998888/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Confirm' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Use a different number' })).not.toBeInTheDocument();
   });
 });
