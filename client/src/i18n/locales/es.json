@@ -2786,6 +2786,8 @@
   "floorPlan": {
     "title": "Plano de Planta",
     "subtitle": "Arrastra las mesas para organizar la distribución de tu restaurante · Haz clic en una mesa para editar · Usa \"Vincular Mesas\" para unir mesas adyacentes",
+    "mobileSubtitle": "Toca una mesa para editarla o arrástrala para reorganizarla.",
+    "mobilePanHint": "Desliza por una zona vacía para explorar todo el plano.",
     "saving": "Guardando...",
     "saved": "Guardado",
     "linking": "Vinculando...",

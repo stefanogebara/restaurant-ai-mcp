@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import type { Table, TableShape } from '../../types/host.types';
@@ -54,8 +54,10 @@ export default function TablePopover({ table, position, onClose, onDelete, onUpd
   return (
     <div
       ref={popoverRef}
-      className="absolute z-30 w-60 glass-modal"
-      style={{ left: position.x, top: position.y }}
+      role="dialog"
+      aria-label={`${t('floorPlan.tableLabel', 'Table')} ${table.table_number}`}
+      className="fixed inset-x-3 bottom-20 z-30 w-auto glass-modal sm:absolute sm:inset-x-auto sm:bottom-auto sm:left-[var(--popover-x)] sm:top-[var(--popover-y)] sm:w-60"
+      style={{ '--popover-x': `${position.x}px`, '--popover-y': `${position.y}px` } as CSSProperties}
     >
       {/* Header */}
       <div className="px-4 py-3.5 border-b border-glass-border-dark flex items-start justify-between">

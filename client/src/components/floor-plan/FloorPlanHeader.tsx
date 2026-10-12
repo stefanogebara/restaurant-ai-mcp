@@ -14,8 +14,11 @@ export default function FloorPlanHeader({ saveStatus, linkMode, onToggleLinkMode
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
       <div>
-        <h1 className="text-xl font-bold text-deep-charcoal tracking-tight">{t('floorPlan.title')}</h1>
-        <p className="text-sm text-warm-stone mt-0.5">
+        <h1 className="font-serif text-3xl text-deep-charcoal">{t('floorPlan.title')}</h1>
+        <p className="text-sm text-warm-stone mt-1 sm:hidden">
+          {t('floorPlan.mobileSubtitle')}
+        </p>
+        <p className="hidden text-sm text-warm-stone mt-1 sm:block">
           {t('floorPlan.subtitle')}
         </p>
       </div>
@@ -29,7 +32,7 @@ export default function FloorPlanHeader({ saveStatus, linkMode, onToggleLinkMode
         } ${
           saveStatus === 'saving'
             ? 'bg-soft-gray text-muted-stone'
-            : 'bg-rose-50 text-rose-700 border border-rose-200'
+            : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
         }`}>
           {saveStatus === 'saving' ? t('floorPlan.saving') : t('floorPlan.saved')}
         </span>

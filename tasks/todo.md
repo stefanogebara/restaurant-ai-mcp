@@ -521,3 +521,15 @@ Observação: a aparente sobreposição do título com o menu em 320 px era a p�
 Revisão local: histórico em duas linhas, data formatada no idioma da interface sem deslocar o dia do calendário e hora `HH:mm`. A lista chama a projeção de “Valor futuro estimado” nos três idiomas; o perfil conserva “Gasto total estimado” para outra métrica. Os 12 testes focados passaram; Vitest completo passou (122 arquivos/1.054 testes), Jest completo passou (286 suítes/4.283 testes), build/TypeScript e lint focado passaram. Navegador na versão publicada ainda pendente.
 
 ---
+
+# Mesas — toque e navegação na planta móvel (12/out/2026)
+
+- [x] Confirmar no navegador autenticado que a planta encolhe as mesas em 320 px.
+- [x] Manter mesas em tamanho tocável e permitir explorar a planta sem modificar posições.
+- [x] Separar toque de arraste: tocar abre a edição, apenas mudança real de célula salva.
+- [x] Verificar toque e arraste em testes, suíte completa, build e lint.
+- [ ] Verificar layout móvel na versão publicada, sem mover mesas reais.
+
+Observação: o navegador de produção mostrou as mesas reduzidas pelo `viewBox` inteiro, embora a página não tivesse overflow horizontal. A correção aumenta apenas a largura de apresentação no celular; não altera coordenadas armazenadas. O teste de interação detectou que o toque não abria a edição, enquanto a posição era enviada para salvamento sem movimento. Agora toque e arraste são caminhos separados. Jest completo passou (286 suítes/4.283 testes), Vitest completo passou (124 arquivos/1.059 testes), build e lint focado passaram; após o rebase final, 15 testes focados e TypeScript passaram de novo. Falta apenas a verificação visual na versão publicada.
+
+---
