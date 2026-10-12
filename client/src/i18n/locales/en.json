@@ -1948,6 +1948,7 @@
     "churnRisk": "Risk score: {{score}}/100",
     "reEngagementDefaultMessage": "We'd love to welcome you back to our restaurant. We hope to see you again soon.",
     "emailLanguage": "Email language",
+    "emailLanguageChangeHint": "Changing the language replaces your unsent draft.",
     "visits": "{{count}} visits",
     "send": "Send",
     "reEngagementSent": "Re-engagement message sent",

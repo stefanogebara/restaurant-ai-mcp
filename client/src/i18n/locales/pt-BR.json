@@ -1954,6 +1954,7 @@
     "churnRisk": "Pontuação de risco: {{score}}/100",
     "reEngagementDefaultMessage": "Será um prazer receber você novamente em nosso restaurante. Esperamos ver você em breve.",
     "emailLanguage": "Idioma do e-mail",
+    "emailLanguageChangeHint": "Trocar o idioma substitui seu rascunho não enviado.",
     "visits": "{{count}} visitas",
     "send": "Enviar",
     "reEngagementSent": "Mensagem de reengajamento enviada",

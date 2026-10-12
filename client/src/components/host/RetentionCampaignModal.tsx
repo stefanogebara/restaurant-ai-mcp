@@ -150,13 +150,14 @@ export function RetentionCampaignModal({ isOpen, onClose, customer, onSendCampai
               <select
                 id="retention-campaign-language"
                 value={language}
-                onChange={(event) => setLanguage(event.target.value)}
+                onChange={(event) => { setLanguage(event.target.value); setCustomMessage(null); }}
                 className="w-full px-3 py-2 border border-glass-border-input rounded-xl bg-white/60 text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy"
               >
                 <option value="pt-BR">Português (Brasil)</option>
                 <option value="en">English</option>
                 <option value="es">Español</option>
               </select>
+              <p className="text-xs text-stone-gray">{t('insights.emailLanguageChangeHint')}</p>
               <label htmlFor="retention-campaign-message" className="text-sm font-medium text-deep-charcoal">{t('retentionCampaign.message')}</label>
               <textarea
                 id="retention-campaign-message"

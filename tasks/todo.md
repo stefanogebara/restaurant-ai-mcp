@@ -6,6 +6,7 @@
 - [x] Testar PT/EN/ES, build e tela autenticada sem enviar e-mails.
 - [x] Corrigir o mesmo ponto de quebra do menu em Integrações, Clientes, Voz, Dashboard, Salão, Serviço e Configurações.
 - [x] Confirmar o cliente no escopo do restaurante antes de criar ou enviar e-mail de retenção.
+- [x] Substituir rascunhos editados ao trocar idioma, com aviso visível, para não montar e-mails mistos.
 - [ ] Validar o lote em produção nas larguras de celular e tablet após o deploy.
 
 Limite: o envio individual existente não será acionado durante a revisão.

@@ -66,4 +66,16 @@ describe('RetentionCampaignModal', () => {
 
     expect(send).toHaveBeenCalledWith('guest-1', 'win_back', expect.stringContaining('Hola Diego Souza,'), 'es');
   });
+
+  it('replaces an edited template on language change to avoid mixed-language emails', async () => {
+    await i18n.changeLanguage('pt-BR');
+    render(<RetentionCampaignModal isOpen onClose={vi.fn()} customer={customer} onSendCampaign={vi.fn()} />);
+    const user = userEvent.setup();
+    await user.clear(screen.getByRole('textbox'));
+    await user.type(screen.getByRole('textbox'), 'texto em português');
+
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Idioma do e-mail' }), 'en');
+
+    expect(screen.getByRole('textbox')).toHaveValue("Hi {name}, we'd love to welcome you back to our restaurant. We hope to see you again soon.");
+  });
 });

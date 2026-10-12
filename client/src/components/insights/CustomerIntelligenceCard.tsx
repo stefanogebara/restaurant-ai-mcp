@@ -42,9 +42,7 @@ function SendModal({ customer, onClose }: SendModalProps) {
   };
 
   const handleLanguageChange = (nextLanguage: string) => {
-    if (message === t('insights.reEngagementDefaultMessage', { lng: language })) {
-      setMessage(t('insights.reEngagementDefaultMessage', { lng: nextLanguage }));
-    }
+    setMessage(t('insights.reEngagementDefaultMessage', { lng: nextLanguage }));
     setLanguage(nextLanguage);
   };
 
@@ -92,6 +90,7 @@ function SendModal({ customer, onClose }: SendModalProps) {
               <option value="en">English</option>
               <option value="es">Español</option>
             </select>
+            <p className="mt-1.5 text-xs text-muted-stone">{t('insights.emailLanguageChangeHint')}</p>
           </div>
 
           <div>

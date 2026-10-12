@@ -2865,6 +2865,7 @@
     "churnRisk": "Puntuación de riesgo: {{score}}/100",
     "reEngagementDefaultMessage": "Nos encantará recibirte de nuevo en nuestro restaurante. Esperamos verte pronto.",
     "emailLanguage": "Idioma del correo",
+    "emailLanguageChangeHint": "Cambiar el idioma sustituye tu borrador sin enviar.",
     "visits": "{{count}} visitas",
     "send": "Enviar",
     "reEngagementSent": "Mensaje de reactivación enviado",

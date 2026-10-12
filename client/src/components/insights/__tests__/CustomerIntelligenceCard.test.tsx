@@ -64,4 +64,18 @@ describe('CustomerIntelligenceCard', () => {
     expect(screen.getByRole('textbox', { name: 'Mensagem' })).toHaveValue("We'd love to welcome you back to our restaurant. We hope to see you again soon.");
     expect(mockSend).not.toHaveBeenCalled();
   });
+
+  it('replaces an edited draft when changing language, as the helper promises', async () => {
+    await i18n.changeLanguage('pt-BR');
+    const user = userEvent.setup();
+    render(<CustomerIntelligenceCard />);
+    await user.click(screen.getByRole('button', { name: 'Enviar' }));
+    await user.clear(screen.getByRole('textbox', { name: 'Mensagem' }));
+    await user.type(screen.getByRole('textbox', { name: 'Mensagem' }), 'texto em português');
+
+    expect(screen.getByText('Trocar o idioma substitui seu rascunho não enviado.')).toBeInTheDocument();
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Idioma do e-mail' }), 'en');
+
+    expect(screen.getByRole('textbox', { name: 'Mensagem' })).toHaveValue("We'd love to welcome you back to our restaurant. We hope to see you again soon.");
+  });
 });
