@@ -526,12 +526,15 @@ async function sendReferralRewardEmail(to, { referrerName, refereeRestaurantName
  */
 async function sendInviteEmail({ to, inviteUrl, role }) {
   const resend = getResendClient();
-  if (!resend) { logger.warn('RESEND_API_KEY not set, skipping invite email'); return; }
+  if (!resend) {
+    logger.warn('RESEND_API_KEY not set, skipping invite email');
+    return { accepted: false };
+  }
 
   const roleLabel = role.charAt(0).toUpperCase() + role.slice(1);
 
   try {
-    await resend.emails.send({
+    const { data, error } = await resend.emails.send({
       from: FROM_ADDRESS,
       to,
       subject: `You're invited to join a restaurant team as ${roleLabel}`,
@@ -555,9 +558,15 @@ async function sendInviteEmail({ to, inviteUrl, role }) {
         </div>
       `),
     });
+    if (error || !data?.id) {
+      logger.error('Invite email was not accepted by provider:', error?.message || 'missing email id');
+      return { accepted: false };
+    }
     logger.info('Invite email sent to:', to);
+    return { accepted: true };
   } catch (err) {
     logger.error('Failed to send invite email:', err.message);
+    return { accepted: false };
   }
 }
 

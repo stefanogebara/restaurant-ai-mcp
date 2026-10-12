@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { authFetch } from '../services/api';
 import { SETTINGS_STALE_TIME } from '../config/constants';
+import { useAuth } from '../contexts/AuthContext';
 
 export interface TeamMember {
   id: string;
@@ -10,21 +11,24 @@ export interface TeamMember {
 }
 
 export function useTeamMembers() {
+  const { user } = useAuth();
   return useQuery<TeamMember[]>({
-    queryKey: ['team-members'],
+    queryKey: ['team-members', user?.id],
     queryFn: async () => {
       const res = await authFetch('/api/team-members');
       if (!res.ok) throw new Error('Failed to fetch team members');
       const data = await res.json();
-      return data.success ? data.members : [];
+      if (!data.success || !Array.isArray(data.members)) throw new Error('Failed to fetch team members');
+      return data.members;
     },
     staleTime: SETTINGS_STALE_TIME,
+    enabled: Boolean(user?.id),
   });
 }
 
 export function useInviteTeamMember() {
   const queryClient = useQueryClient();
-  return useMutation<{ message?: string }, Error, { email: string; role: string }>({
+  return useMutation<{ email_accepted: boolean }, Error, { email: string; role: string }>({
     mutationFn: async ({ email, role }) => {
       const res = await authFetch('/api/team-members', {
         method: 'POST',
@@ -33,7 +37,7 @@ export function useInviteTeamMember() {
       });
       if (!res.ok) throw new Error('Failed to send invitation');
       const data = await res.json();
-      if (!data.success) throw new Error(data.error || 'Failed to send invitation');
+      if (!data.success) throw new Error(data.error || 'Failed to create invitation');
       return data;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['team-members'] }),

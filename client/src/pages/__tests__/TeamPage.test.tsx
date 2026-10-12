@@ -1,11 +1,12 @@
-import { describe, it, expect, vi } from 'vitest';
+import { beforeEach, describe, it, expect, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SidebarProvider } from '../../contexts/SidebarContext';
 
 vi.mock('../../contexts/AuthContext', () => ({
-  useAuth: () => ({ user: { email: 'owner@test.com' }, role: 'owner' }),
+  useAuth: () => ({ user: { id: 'owner-uid', email: 'owner@test.com' }, role: 'owner' }),
 }));
 vi.mock('../../hooks/usePermission', () => ({
   usePermission: () => ({ can: () => true, role: 'owner' }),
@@ -28,12 +29,17 @@ vi.mock('../../services/api', () => ({
   authFetch: vi.fn((...args: Parameters<typeof fetch>) => fetch(...args)),
 }));
 
-vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
-  ok: true,
-  json: async () => ({ success: true, members: [
-    { id: '1', email: 'host@test.com', role: 'host', status: 'active' },
-  ]}),
-}));
+const mockFetch = vi.fn();
+vi.stubGlobal('fetch', mockFetch);
+
+beforeEach(() => {
+  mockFetch.mockReset().mockResolvedValue({
+    ok: true,
+    json: async () => ({ success: true, members: [
+      { id: '1', email: 'host@test.com', role: 'host', status: 'active' },
+    ] }),
+  });
+});
 
 import TeamPage from '../TeamPage';
 
@@ -58,6 +64,36 @@ describe('TeamPage', () => {
 
   it('shows invite form for owner', async () => {
     renderTeamPage();
-    expect(screen.getByPlaceholderText(/email/i)).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Email address' })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Team role' })).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Email address' })).toHaveClass('col-span-2');
+  });
+
+  it('explains manager access without falsely promising team management', async () => {
+    renderTeamPage();
+    await userEvent.click(screen.getByText('What can each role do?'));
+    expect(screen.getByText(/Only the owner manages the team and billing/)).toBeInTheDocument();
+  });
+
+  it('shows a retryable loading error rather than an empty team', async () => {
+    mockFetch.mockResolvedValue({ ok: false });
+    renderTeamPage();
+    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('We could not load your team'));
+    expect(screen.queryByText('No team members yet.')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument();
+  });
+
+  it('does not say the invite was sent when email acceptance is unconfirmed', async () => {
+    mockFetch.mockImplementation(async (_url: unknown, options?: RequestInit) => ({
+      ok: true,
+      json: async () => options?.method === 'POST'
+        ? { success: true, email_accepted: false }
+        : { success: true, members: [] },
+    }));
+    renderTeamPage();
+    await userEvent.type(screen.getByRole('textbox', { name: 'Email address' }), 'host@example.com');
+    await userEvent.click(screen.getByRole('button', { name: 'Invite' }));
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('email acceptance was not confirmed'));
+    expect(screen.queryByText(/Invitation sent to/)).not.toBeInTheDocument();
   });
 });

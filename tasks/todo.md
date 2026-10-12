@@ -484,3 +484,14 @@ Contrato confirmado em leitura no projeto `seatable-eu`: a rota antiga não tem 
 Verificação local: 9 testes novos da rota aposentada, Jest completo (285 suítes/4.275 testes), Vitest completo (122 arquivos/1.050 testes), checagem de sintaxe, `git diff --check` e build de produção passaram. O handler antigo permanece recuperável no histórico Git; nenhuma linha foi apagada no banco. Publicação e verificação da versão publicada ainda pendentes.
 
 ---
+
+# Equipe — convite confiável e celular utilizável (12/out/2026)
+
+- [ ] Corrigir título sob o menu e tornar e-mail, papel e ação legíveis em 390/320 px.
+- [ ] Separar lista vazia de falha ao carregar e alinhar a legenda dos papéis com as permissões reais.
+- [ ] Não afirmar que o convite foi enviado quando o provedor não o aceitou; não devolver token de convite na API.
+- [ ] Cobrir estados de convite, erro e responsividade com testes e navegador, sem enviar convite real.
+
+Limite: nenhum convite será enviado no teste de produção; a conta autenticada será usada apenas para leitura e inspeção visual.
+
+---

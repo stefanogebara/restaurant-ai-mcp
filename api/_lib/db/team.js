@@ -27,28 +27,40 @@ const addTeamMember = async (restaurantId, { email, role, invitedBy }) => {
     throw new Error(`Invalid role: ${role}`);
   }
 
+  const normalizedEmail = email.toLowerCase().trim();
+  const { data: existing, error: lookupError } = await supabaseAdmin
+    .schema('restaurant')
+    .from('restaurant_members')
+    .select('id, status')
+    .eq('restaurant_id', restaurantId)
+    .eq('email', normalizedEmail)
+    .maybeSingle();
+
+  if (lookupError) return { success: false, error: lookupError.message };
+  if (existing && existing.status !== 'inactive') {
+    return { success: false, error: 'already_member' };
+  }
+
   const crypto = require('crypto');
   const inviteToken = crypto.randomBytes(32).toString('hex');
   const inviteExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
-  const { data, error } = await supabaseAdmin
-    .schema('restaurant')
-    .from('restaurant_members')
-    .upsert(
-      {
-        restaurant_id: restaurantId,
-        email: email.toLowerCase().trim(),
-        role,
-        status: 'pending',
-        invited_by: invitedBy,
-        invite_token: inviteToken,
-        invite_expires_at: inviteExpiresAt,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: 'restaurant_id,email', ignoreDuplicates: false }
-    )
-    .select()
-    .single();
+  const payload = {
+    restaurant_id: restaurantId,
+    email: normalizedEmail,
+    role,
+    status: 'pending',
+    invited_by: invitedBy,
+    invite_token: inviteToken,
+    invite_expires_at: inviteExpiresAt,
+    updated_at: new Date().toISOString(),
+  };
+
+  const write = existing
+    ? supabaseAdmin.schema('restaurant').from('restaurant_members')
+        .update(payload).eq('id', existing.id).eq('restaurant_id', restaurantId).eq('status', 'inactive')
+    : supabaseAdmin.schema('restaurant').from('restaurant_members').insert(payload);
+  const { data, error } = await write.select().single();
 
   if (error) return { success: false, error: error.message };
   return { success: true, member: data };

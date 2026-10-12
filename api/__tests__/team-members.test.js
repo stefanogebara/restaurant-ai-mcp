@@ -17,10 +17,16 @@ let _singleResult = { data: null, error: null };
 let _listResult = { data: null, error: null };
 
 const mockSingle = jest.fn();
+const mockMaybeSingle = jest.fn();
+const mockInsert = jest.fn();
+const mockUpdate = jest.fn();
 const mockChain = new Proxy({}, {
   get(_, prop) {
     if (prop === 'then') return (resolve) => resolve(_listResult);
     if (prop === 'single') return mockSingle;
+    if (prop === 'maybeSingle') return mockMaybeSingle;
+    if (prop === 'insert') return mockInsert;
+    if (prop === 'update') return mockUpdate;
     return () => mockChain;
   },
 });
@@ -46,6 +52,9 @@ beforeEach(() => {
   jest.clearAllMocks();
   mockClient.schema.mockReturnValue(mockClient);
   mockClient.from.mockReturnValue(mockChain);
+  mockMaybeSingle.mockResolvedValue({ data: null, error: null });
+  mockInsert.mockReturnValue(mockChain);
+  mockUpdate.mockReturnValue(mockChain);
   setList(null);
 });
 
@@ -103,6 +112,25 @@ describe('addTeamMember', () => {
     expect(result.success).toBe(true);
     expect(result.member.invite_token).toBeDefined();
     expect(result.member.status).toBe('pending');
+    expect(mockInsert).toHaveBeenCalledTimes(1);
+    expect(mockUpdate).not.toHaveBeenCalled();
+  });
+
+  it('does not reset an active or pending member to pending when invited again', async () => {
+    mockMaybeSingle.mockResolvedValueOnce({ data: { id: 'existing', status: 'active' }, error: null });
+    const result = await addTeamMember('r-id', { email: 'HOST@test.com', role: 'staff', invitedBy: 'owner-uid' });
+    expect(result).toEqual({ success: false, error: 'already_member' });
+    expect(mockInsert).not.toHaveBeenCalled();
+    expect(mockUpdate).not.toHaveBeenCalled();
+  });
+
+  it('reactivates an inactive member without overwriting an active one', async () => {
+    mockMaybeSingle.mockResolvedValueOnce({ data: { id: 'inactive-id', status: 'inactive' }, error: null });
+    setSingle({ id: 'inactive-id', email: 'host@test.com', status: 'pending', invite_token: 'new-token' });
+    const result = await addTeamMember('r-id', { email: 'host@test.com', role: 'host', invitedBy: 'owner-uid' });
+    expect(result.success).toBe(true);
+    expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({ status: 'pending' }));
+    expect(mockInsert).not.toHaveBeenCalled();
   });
 
   it('rejects invalid role', async () => {

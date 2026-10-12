@@ -1521,3 +1521,6 @@ Um número global pode estar registrado na plataforma e ainda apontar para o age
 ## 2026-10-12 — Uma entrega isolada não encerra uma reforma contínua
 
 Quando Stefano pede para continuar arrumando e testando todas as páginas, concluir um PR não é sinal para parar ou pedir nova autorização. Confirmar o que foi observado em produção, registrar limites da prova (por exemplo, sem mensagem real ou sem sessão Playwright) e seguir para a próxima superfície independente. Não misturar código de outro checkout sujo; trabalhar em ramo isolado e manter atualizações curtas durante a espera por builds.
+# Continuidade por superfície
+
+- Quando Stefano pedir para continuar sem parar a cada entrega, encadear a próxima superfície a partir de um defeito observado em navegador, mantendo branches e provas de deploy separados. Não transformar “merge”, teste local ou preview em confirmação de produção.

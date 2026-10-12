@@ -43,26 +43,36 @@ module.exports = async (req, res) => {
 
     if (req.method === 'POST') {
       const { email, role } = req.body || {};
-      if (!email || !role) {
-        return res.status(400).json({ success: false, error: 'email and role are required' });
+      const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
+      if (normalizedEmail.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail) || !['manager', 'host', 'staff'].includes(role)) {
+        return res.status(400).json({ success: false, error: 'valid email and role are required' });
       }
 
-      const result = await addTeamMember(restaurantId, { email, role, invitedBy: user.sub });
-      if (!result.success) return res.status(400).json({ success: false, error: result.error });
+      const result = await addTeamMember(restaurantId, { email: normalizedEmail, role, invitedBy: user.sub });
+      if (!result.success) return res.status(result.error === 'already_member' ? 409 : 400).json({ success: false, error: result.error });
 
       const inviteUrl = `${process.env.CLIENT_URL || 'https://seatable.one'}/join?token=${result.member.invite_token}`;
       // Await so Vercel doesn't kill the Lambda mid-Resend (same shape as
       // booking confirmation race fixed in a39320c0). Wrapped in race+timeout
       // to bound worst-case latency.
-      await Promise.race([
-        sendInviteEmail({ to: email, inviteUrl, role }).catch(err => {
-          logger.error('Failed to send invite email:', err.message);
-        }),
-        new Promise(resolve => setTimeout(resolve, 6000)),
-      ]);
+      let timeoutId;
+      let delivery;
+      try {
+        delivery = await Promise.race([
+          sendInviteEmail({ to: normalizedEmail, inviteUrl, role }),
+          new Promise(resolve => { timeoutId = setTimeout(() => resolve({ accepted: false }), 6000); }),
+        ]);
+      } finally {
+        clearTimeout(timeoutId);
+      }
 
-      logger.info(`Team member invited: ${email} as ${role}`);
-      return res.status(201).json({ success: true, member: result.member });
+      if (!delivery?.accepted) logger.warn('Team invite saved but email acceptance was not confirmed');
+      const { id, status } = result.member;
+      return res.status(201).json({
+        success: true,
+        member: { id, email: result.member.email, role: result.member.role, status },
+        email_accepted: delivery?.accepted === true,
+      });
     }
 
     if (req.method === 'PATCH') {
