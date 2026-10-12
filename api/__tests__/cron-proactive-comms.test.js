@@ -36,7 +36,7 @@ jest.mock('../_lib/ai-client', () => ({
 }));
 
 const handler = require('../_crons/proactive-comms');
-const { parseOccasionDate, normaliseLang } = require('../_crons/proactive-comms');
+const { parseOccasionDate, normaliseLang, formatSuggestedAction } = require('../_crons/proactive-comms');
 
 function mockRes() {
   const r = {};
@@ -115,6 +115,15 @@ describe('cron/proactive-comms — handler', () => {
 });
 
 describe('cron/proactive-comms — pure helpers', () => {
+  test.each([
+    ['pt-BR', 'pontuação de afastamento 90/100'],
+    ['es', 'puntuación de abandono 90/100'],
+    ['en', 'drift score 90/100'],
+  ])('labels a heuristic score, not probability, in %s', (language, expected) => {
+    const text = formatSuggestedAction({ type: 'churn_risk', customer_tier: 'regular', churn_risk: 90, total_visits: 4, last_visit: '2026-04-12' }, language);
+    expect(text).toContain(expected);
+    expect(text).not.toMatch(/90%/);
+  });
   describe('parseOccasionDate', () => {
     test('parses MM-DD format and rolls forward to next year if past', () => {
       const yearAgo = new Date();
