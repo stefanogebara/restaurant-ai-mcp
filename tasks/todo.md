@@ -1,3 +1,17 @@
+# Relatórios — período fiel e experiência móvel (12/out/2026)
+
+- [x] Reproduzir no navegador autenticado o controle de datas cortado e os botões de saída para um período sem atividade.
+- [x] Reestruturar seleção de período e ações para celular; distinguir intervalo em edição do relatório já carregado.
+- [x] Fazer o PDF e o WhatsApp usarem exatamente o período confirmado, sem nota inventada nem envio se a consulta falhar.
+- [x] Não enviar dados a um conversor público por padrão; exigir configuração explícita do renderizador.
+- [ ] Cobrir contrato e layout com testes, build e navegador publicado; não enviar relatórios reais durante QA.
+
+Limite: nenhum relatório será enviado, compartilhado nem gerado para cliente real durante a verificação de produção. A rota de WhatsApp tem consumidores no cron semanal e no comando de WhatsApp, então o serviço precisa continuar com contrato coerente e falhar fechado quando não puder cumprir.
+
+Revisão local: o cabeçalho agora usa campos de data com rótulos e disposição móvel; editar datas não altera o relatório até “Aplicar período”. O intervalo inicial cobre sete dias concluídos, não oito dias incluindo hoje. A API de tela inclui todo o último dia no fuso do restaurante, rotula como estimativa as pessoas inferidas de reservas sem atendimento concluído e não trata perfil desconhecido como cliente recorrente. O PDF foi simplificado para texto e tabelas próprios, sem QuickChart, fonte externa, nota fictícia nem nomes crus em HTML; usa as datas pedidas, moeda conhecida do país, idioma e serviços realmente concluídos. Sem `GOTENBERG_URL` HTTPS privado, a geração e o envio falham fechados; a tela só oferece WhatsApp quando o status autenticado confirma renderizador e telefone verificado. Antes dos dois últimos ajustes, Jest completo passou (291 suítes/4.323 testes), Vitest completo passou (130 arquivos/1.079 testes); testes focados, build, lint dos arquivos alterados e diff check passam após o ajuste. O lint global ainda acusa 17 erros preexistentes fora desta reforma. Faltam inspeção visual da versão publicada e prova do domínio.
+
+---
+
 # Voz — configuração não é ligação conectada (12/out/2026)
 
 - [x] Separar o estado do motor/agente da disponibilidade real do telefone.

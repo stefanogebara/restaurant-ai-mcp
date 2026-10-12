@@ -6,6 +6,8 @@ export interface WeeklyReportData {
   };
   summary: {
     total_covers: number;
+    covers_estimated?: boolean;
+    covers_comparison_valid?: boolean;
     previous_covers: number;
     covers_change_percent: number;
     total_reservations: number;

@@ -9,14 +9,14 @@ export default function WeeklyReportSummaryCards({ summary }: WeeklyReportSummar
   const { t } = useTranslation();
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-8 border-b border-[#E7E5E4] pb-5">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-8 border-b hairline pb-5">
       <div className="py-5 text-center">
         <div className="text-[11px] font-medium text-muted-stone mb-1.5 tracking-wide">{t('analytics.totalReservations')}</div>
         <div className="text-2xl font-bold tracking-tight">{summary.total_reservations}</div>
-        {summary.previous_covers === 0 && summary.total_covers > 0 ? (
+        {summary.covers_comparison_valid !== false && summary.previous_covers === 0 && summary.total_covers > 0 ? (
           <div className="text-[11px] font-medium mt-1 text-stone-600">{t('analytics.new', 'New')}</div>
-        ) : summary.previous_covers >= 3 && (
-          <div className={`text-[11px] font-medium mt-1 ${summary.covers_change_percent >= 0 ? 'text-rose-600' : 'text-red-600'}`}>
+        ) : summary.covers_comparison_valid !== false && summary.previous_covers >= 3 && (
+          <div className="text-[11px] font-medium mt-1 text-stone-gray">
             {summary.covers_change_percent >= 0 ? '+' : ''}{summary.covers_change_percent}% {t('analytics.vsPrevWeek', 'vs prev week')}
           </div>
         )}
@@ -36,12 +36,14 @@ export default function WeeklyReportSummaryCards({ summary }: WeeklyReportSummar
         <div className="text-[11px] font-medium text-warm-stone mt-1">{summary.total_covers} {t('analytics.coversTotal', 'covers total')}</div>
       </div>
       <div className="py-5 text-center">
-        <div className="text-[11px] font-medium text-muted-stone mb-1.5 tracking-wide">{t('analytics.totalCovers')}</div>
-        <div className="text-2xl font-bold tracking-tight text-burgundy">{summary.total_covers}</div>
-        {summary.previous_covers === 0 && summary.total_covers > 0 ? (
+        <div className="text-[11px] font-medium text-muted-stone mb-1.5 tracking-wide">
+          {summary.covers_estimated ? t('reports.expectedCovers') : t('analytics.totalCovers')}
+        </div>
+        <div className="text-2xl font-bold tracking-tight text-deep-charcoal">{summary.total_covers}</div>
+        {summary.covers_comparison_valid !== false && summary.previous_covers === 0 && summary.total_covers > 0 ? (
           <div className="text-[11px] font-medium mt-1 text-stone-600">{t('analytics.new', 'New')}</div>
-        ) : summary.previous_covers >= 3 && (
-          <div className={`text-[11px] font-medium mt-1 ${summary.covers_change_percent >= 0 ? 'text-rose-600' : 'text-red-600'}`}>
+        ) : summary.covers_comparison_valid !== false && summary.previous_covers >= 3 && (
+          <div className="text-[11px] font-medium mt-1 text-stone-gray">
             {summary.covers_change_percent >= 0 ? '+' : ''}{summary.covers_change_percent}%
           </div>
         )}
