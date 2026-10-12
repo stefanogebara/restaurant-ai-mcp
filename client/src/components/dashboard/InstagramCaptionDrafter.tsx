@@ -34,20 +34,7 @@ export interface InstagramCaptionDrafterProps {
   language?: 'pt' | 'es' | 'fr' | 'it' | 'en' | null;
 }
 
-const LENGTHS: { id: Length; label: string }[] = [
-  { id: 'short',  label: 'Short' },
-  { id: 'medium', label: 'Medium' },
-  { id: 'long',   label: 'Long' },
-];
-
-/** Map ISO-2 to a friendly label + flag emoji for the language pill. */
-const LANGUAGE_DISPLAY: Record<NonNullable<InstagramCaptionDrafterProps['language']>, { flag: string; label: string }> = {
-  pt: { flag: '🇧🇷', label: 'Portuguese' },
-  es: { flag: '🇪🇸', label: 'Spanish' },
-  fr: { flag: '🇫🇷', label: 'French' },
-  it: { flag: '🇮🇹', label: 'Italian' },
-  en: { flag: '🇺🇸', label: 'English' },
-};
+const LENGTHS: Length[] = ['short', 'medium', 'long'];
 
 export default function InstagramCaptionDrafter({ toneProfileReady, language }: InstagramCaptionDrafterProps) {
   const { t } = useTranslation();
@@ -55,6 +42,8 @@ export default function InstagramCaptionDrafter({ toneProfileReady, language }: 
   const [topic, setTopic] = useState('');
   const [length, setLength] = useState<Length>('medium');
   const [drafts, setDrafts] = useState<string[]>([]);
+  const [draftBatchId, setDraftBatchId] = useState(0);
+  const [openDraftIndex, setOpenDraftIndex] = useState<number | null>(null);
 
   const draftMutation = useMutation<string[], Error, { topic: string; length: Length }>({
     mutationFn: async (input) => {
@@ -69,7 +58,13 @@ export default function InstagramCaptionDrafter({ toneProfileReady, language }: 
       }
       return body.drafts;
     },
-    onSuccess: (d) => setDrafts(d),
+    onSuccess: (d) => {
+      // A new batch must not inherit media/schedule state from cards at the
+      // same array index in the previous batch.
+      setDraftBatchId((previous) => previous + 1);
+      setDrafts(d);
+      setOpenDraftIndex(null);
+    },
     onError: (err) => toast.error(err.message),
   });
 
@@ -82,9 +77,9 @@ export default function InstagramCaptionDrafter({ toneProfileReady, language }: 
   const onCopy = async (text: string, index: number) => {
     try {
       await navigator.clipboard.writeText(text);
-      toast.success(t('instagram.draftCopied', `Draft ${index + 1} copied to clipboard.`));
+      toast.success(t('instagram.feed.draftCopied', { index: index + 1 }));
     } catch {
-      toast.error(t('instagram.draftCopyFailed', "Couldn't copy — your browser may have blocked clipboard access."));
+      toast.error(t('instagram.feed.draftCopyFailed'));
     }
   };
 
@@ -94,45 +89,43 @@ export default function InstagramCaptionDrafter({ toneProfileReady, language }: 
         className="border border-glass-border-dark rounded-xl p-4 bg-warm-white"
         data-testid="instagram-caption-drafter-disabled"
       >
-        <p className="text-sm font-medium text-deep-charcoal">Caption drafter</p>
+        <h3 className="font-serif text-2xl text-deep-charcoal">{t('instagram.feed.title')}</h3>
         <p className="text-xs text-muted-stone mt-1">
-          We need to learn your voice first — tap <strong>Build now</strong> above to extract your tone profile, then come back.
+          {t('instagram.feed.tonePending')}
         </p>
       </div>
     );
   }
 
-  const langDisplay = language ? LANGUAGE_DISPLAY[language] : null;
-
   return (
     <div className="border border-glass-border-dark rounded-xl p-4 space-y-4 bg-warm-white" data-testid="instagram-caption-drafter">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-sm font-medium text-deep-charcoal">Caption drafter</p>
-          <p className="text-xs text-muted-stone mt-1">Tell us what you want to post about, we'll draft 3 captions in your voice.</p>
+          <h3 className="font-serif text-2xl text-deep-charcoal">{t('instagram.feed.title')}</h3>
+          <p className="text-[15px] text-muted-stone mt-1">{t('instagram.feed.intro')}</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap justify-end">
           <InstagramGenSpendPill />
-          {langDisplay && (
+          {language && (
             <span
               className="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] bg-warm-white border border-glass-border-dark text-muted-stone"
-              title={`Drafts will be written in ${langDisplay.label} (detected from your IG posts)`}
+              title={t('instagram.feed.languageHint', { language: t(`instagram.feed.language.${language}`) })}
               data-testid="instagram-caption-drafter-language"
             >
-              <span aria-hidden>{langDisplay.flag}</span>
-              <span>Drafting in {langDisplay.label}</span>
+              <span>{t('instagram.feed.draftingIn', { language: t(`instagram.feed.language.${language}`) })}</span>
             </span>
           )}
         </div>
       </div>
 
       <div className="space-y-2">
-        <label className="text-xs text-muted-stone block">What's the post about?</label>
+        <label htmlFor="instagram-feed-topic" className="text-xs text-muted-stone block">{t('instagram.feed.topicLabel')}</label>
         <input
+          id="instagram-feed-topic"
           type="text"
           value={topic}
           onChange={(e) => setTopic(e.target.value)}
-          placeholder="e.g. our new sourdough pizza"
+          placeholder={t('instagram.feed.topicPlaceholder')}
           maxLength={300}
           className="w-full px-3 py-2 border border-glass-border-input rounded-lg text-sm focus:outline-none focus:border-burgundy"
           data-testid="instagram-caption-drafter-topic"
@@ -140,22 +133,23 @@ export default function InstagramCaptionDrafter({ toneProfileReady, language }: 
       </div>
 
       <div className="space-y-2">
-        <label className="text-xs text-muted-stone block">Length</label>
+        <p className="text-xs text-muted-stone">{t('instagram.feed.lengthLabel')}</p>
         <div className="flex gap-2">
           {LENGTHS.map((l) => (
             <button
-              key={l.id}
+              key={l}
               type="button"
-              onClick={() => setLength(l.id)}
+              onClick={() => setLength(l)}
+              aria-pressed={length === l}
               className={
                 'px-3 py-1.5 rounded-full text-xs border transition-colors ' +
-                (length === l.id
+                (length === l
                   ? 'bg-burgundy text-white border-burgundy'
                   : 'bg-white/60 text-deep-charcoal border-glass-border-dark hover:border-burgundy')
               }
-              data-testid={`instagram-caption-drafter-length-${l.id}`}
+              data-testid={`instagram-caption-drafter-length-${l}`}
             >
-              {l.label}
+              {t(`instagram.feed.length.${l}`)}
             </button>
           ))}
         </div>
@@ -168,13 +162,21 @@ export default function InstagramCaptionDrafter({ toneProfileReady, language }: 
         className="px-4 py-2 bg-burgundy text-white rounded-lg text-sm font-medium hover:bg-burgundy-dark disabled:opacity-50 transition-colors"
         data-testid="instagram-caption-drafter-submit"
       >
-        {draftMutation.isPending ? 'Drafting…' : 'Draft 3 captions'}
+        {draftMutation.isPending ? t('instagram.feed.drafting') : t('instagram.feed.draftThree')}
       </button>
 
       {drafts.length > 0 && (
         <div className="space-y-3 pt-2 border-t border-glass-border-dark" data-testid="instagram-caption-drafter-results">
           {drafts.map((d, i) => (
-            <DraftCard key={i} draft={d} index={i} onCopy={() => onCopy(d, i)} />
+            <DraftCard
+              key={`${draftBatchId}-${i}`}
+              draft={d}
+              index={i}
+              onCopy={() => onCopy(d, i)}
+              postingOpen={openDraftIndex === i}
+              onTogglePosting={() => setOpenDraftIndex((current) => current === i ? null : i)}
+              onPostingComplete={() => setOpenDraftIndex(null)}
+            />
           ))}
         </div>
       )}
@@ -216,11 +218,17 @@ interface RecentMediaItem {
   timestamp: string;
 }
 
-function DraftCard({ draft, index, onCopy }: { draft: string; index: number; onCopy: () => void }) {
-  const { t } = useTranslation();
+function DraftCard({ draft, index, onCopy, postingOpen, onTogglePosting, onPostingComplete }: {
+  draft: string;
+  index: number;
+  onCopy: () => void;
+  postingOpen: boolean;
+  onTogglePosting: () => void;
+  onPostingComplete: () => void;
+}) {
+  const { t, i18n } = useTranslation();
   const toast = useToast();
   const queryClient = useQueryClient();
-  const [postingOpen, setPostingOpen] = useState(false);
   // imageUrls[] is the source of truth — single posts have 1 entry,
   // carousels have 2-10. The "or paste URL" input still lives, but it
   // now APPENDS to imageUrls rather than replacing.
@@ -260,11 +268,12 @@ function DraftCard({ draft, index, onCopy }: { draft: string; index: number; onC
     onSuccess: ({ url }) => {
       if (imageUrls.includes(url)) return;  // shouldn't happen — UUID path
       if (imageUrls.length >= CAROUSEL_MAX) {
-        toast.error(t('instagram.uploadMaxReached', `Maximum ${CAROUSEL_MAX} images per post.`));
+        toast.error(t('instagram.feed.maxImages', { count: CAROUSEL_MAX }));
         return;
       }
       setImageUrls((prev) => [...prev, url]);
-      toast.success(t('instagram.generated', 'Image generated and added.'));
+      toast.success(t('instagram.feed.generated'));
+      queryClient.invalidateQueries({ queryKey: ['instagram-gen-spend'] });
     },
     onError: (err) => toast.error(err.message),
   });
@@ -274,7 +283,7 @@ function DraftCard({ draft, index, onCopy }: { draft: string; index: number; onC
     const p = genPrompt.trim();
     if (p.length < 3) return;
     if (imageUrls.length >= CAROUSEL_MAX) {
-      toast.error(t('instagram.uploadMaxReached', `Maximum ${CAROUSEL_MAX} images per post.`));
+      toast.error(t('instagram.feed.maxImages', { count: CAROUSEL_MAX }));
       return;
     }
     generateMutation.mutate({ prompt: p, model: genModel });
@@ -300,14 +309,10 @@ function DraftCard({ draft, index, onCopy }: { draft: string; index: number; onC
       return { permalink: body.permalink ?? null, post_kind: body.post_kind };
     },
     onSuccess: ({ permalink, post_kind }) => {
-      const verb = post_kind === 'carousel' ? 'Carousel posted' : 'Posted';
-      toast.success(
-        permalink
-          ? t('instagram.publishedWithLink', `${verb} → ${permalink}`)
-          : t('instagram.published', `${verb}.`),
-      );
+      const key = post_kind === 'carousel' ? 'carouselPosted' : 'postPosted';
+      toast.success(t(`instagram.feed.${key}${permalink ? 'WithLink' : ''}`, { link: permalink || '' }));
       // Reset the form so the card looks "done".
-      setPostingOpen(false);
+      onPostingComplete();
       setImageUrls([]);
       setPasteUrl('');
     },
@@ -348,9 +353,9 @@ function DraftCard({ draft, index, onCopy }: { draft: string; index: number; onC
       return { id: body.id, scheduled_at: body.scheduled_at };
     },
     onSuccess: ({ scheduled_at }) => {
-      const when = new Date(scheduled_at).toLocaleString();
-      toast.success(t('instagram.scheduled', `Scheduled for ${when}.`));
-      setPostingOpen(false);
+      const when = new Date(scheduled_at).toLocaleString(i18n.language);
+      toast.success(t('instagram.feed.scheduledFor', { date: when }));
+      onPostingComplete();
       setImageUrls([]);
       setPasteUrl('');
       setScheduleMode(false);
@@ -468,11 +473,11 @@ function DraftCard({ draft, index, onCopy }: { draft: string; index: number; onC
 
   const onPickFromRecent = (item: RecentMediaItem) => {
     if (imageUrls.includes(item.image_url)) {
-      toast.info(t('instagram.alreadyAdded', "You've already added that one."));
+      toast.info(t('instagram.feed.alreadyAdded'));
       return;
     }
     if (imageUrls.length >= CAROUSEL_MAX) {
-      toast.error(t('instagram.uploadMaxReached', `Maximum ${CAROUSEL_MAX} images per post.`));
+      toast.error(t('instagram.feed.maxImages', { count: CAROUSEL_MAX }));
       return;
     }
     setImageUrls((prev) => [...prev, item.image_url]);
@@ -504,10 +509,10 @@ function DraftCard({ draft, index, onCopy }: { draft: string; index: number; onC
    */
   const uploadOneFile = async (file: File): Promise<string> => {
     if (!/^image\/(jpe?g|png|webp)$/i.test(file.type)) {
-      throw new Error(t('instagram.uploadInvalidType', `${file.name}: only JPEG, PNG, or WebP supported.`));
+      throw new Error(t('instagram.feed.invalidImageType', { name: file.name }));
     }
     if (file.size > 4 * 1024 * 1024) {
-      throw new Error(t('instagram.uploadTooLarge', `${file.name}: must be 4 MB or smaller.`));
+      throw new Error(t('instagram.feed.imageTooLarge', { name: file.name }));
     }
     const dataB64 = await fileToBase64(file);
     const res = await authFetch('/api/instagram/upload-image', {
@@ -529,12 +534,12 @@ function DraftCard({ draft, index, onCopy }: { draft: string; index: number; onC
 
     const room = CAROUSEL_MAX - imageUrls.length;
     if (room <= 0) {
-      toast.error(t('instagram.uploadMaxReached', `Maximum ${CAROUSEL_MAX} images per post.`));
+      toast.error(t('instagram.feed.maxImages', { count: CAROUSEL_MAX }));
       return;
     }
     const accepted = files.slice(0, room);
     if (files.length > room) {
-      toast.info(t('instagram.uploadTrimmed', `Only ${room} more images fit — ignoring ${files.length - room}.`));
+      toast.info(t('instagram.feed.uploadTrimmed', { available: room, ignored: files.length - room }));
     }
 
     setUploading(true);
@@ -546,9 +551,9 @@ function DraftCard({ draft, index, onCopy }: { draft: string; index: number; onC
         // Append progressively so the user sees thumbnails landing
         setImageUrls((prev) => [...prev, url]);
       }
-      toast.success(t('instagram.uploadOk', `Uploaded ${uploadedUrls.length} image${uploadedUrls.length === 1 ? '' : 's'}.`));
+      toast.success(t('instagram.feed.uploadOk', { count: uploadedUrls.length }));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t('instagram.uploadFailed', 'Upload failed.'));
+      toast.error(err instanceof Error ? err.message : t('instagram.feed.uploadFailed'));
     } finally {
       setUploading(false);
     }
@@ -564,33 +569,33 @@ function DraftCard({ draft, index, onCopy }: { draft: string; index: number; onC
           className="text-xs text-burgundy underline underline-offset-2 hover:text-burgundy-dark"
           data-testid={`instagram-caption-drafter-copy-${index}`}
         >
-          Copy
+          {t('instagram.feed.copy')}
         </button>
         <button
           type="button"
-          onClick={() => setPostingOpen((v) => !v)}
+          onClick={onTogglePosting}
           className="text-xs text-burgundy underline underline-offset-2 hover:text-burgundy-dark"
           data-testid={`instagram-caption-drafter-post-toggle-${index}`}
         >
-          {postingOpen ? 'Hide post fields' : 'Post to Instagram'}
+          {postingOpen ? t('instagram.feed.hidePostFields') : t('instagram.feed.postToInstagram')}
         </button>
         <button
           type="button"
           onClick={() => {
             sendCaptionToReel(draft);
-            toast.success(t('instagram.sentToReel', 'Sent to the Reel panel below.'));
+            toast.success(t('instagram.feed.sentToReel'));
           }}
           className="text-xs text-burgundy underline underline-offset-2 hover:text-burgundy-dark"
           data-testid={`instagram-caption-drafter-send-to-reel-${index}`}
         >
-          Send to Reel
+          {t('instagram.feed.sendToReel')}
         </button>
       </div>
 
       {postingOpen && (
         <div className="border-t border-glass-border-dark pt-2 space-y-2" data-testid={`instagram-caption-drafter-post-form-${index}`}>
           <label className="text-xs text-muted-stone block">
-            Images {imageUrls.length > 0 && <span className="text-deep-charcoal">({imageUrls.length}/{CAROUSEL_MAX})</span>}
+            {t('instagram.feed.images')} {imageUrls.length > 0 && <span className="text-deep-charcoal">({imageUrls.length}/{CAROUSEL_MAX})</span>}
           </label>
 
           {/* Thumbnail grid — appears once at least one image is added.
@@ -613,14 +618,14 @@ function DraftCard({ draft, index, onCopy }: { draft: string; index: number; onC
                   }
                   data-testid={`instagram-caption-drafter-thumb-${index}-${i}`}
                   aria-grabbed={draggingIdx === i || undefined}
-                  title={imageUrls.length > 1 ? `Drag to reorder. Slide ${i + 1} of ${imageUrls.length}${i === 0 ? ' (cover)' : ''}` : undefined}
+                  title={imageUrls.length > 1 ? t('instagram.feed.dragSlide', { index: i + 1, count: imageUrls.length, cover: i === 0 ? t('instagram.feed.coverSuffix') : '' }) : undefined}
                 >
                   {i === 0 && imageUrls.length > 1 && (
                     <span
-                      className="absolute top-0.5 left-0.5 px-1 rounded text-[9px] bg-burgundy text-white font-medium uppercase tracking-wide pointer-events-none"
+                      className="absolute top-0.5 left-0.5 px-1 rounded text-[9px] bg-deep-charcoal text-white font-medium uppercase tracking-wide pointer-events-none"
                       data-testid={`instagram-caption-drafter-thumb-cover-${index}`}
                     >
-                      Cover
+                      {t('instagram.feed.cover')}
                     </span>
                   )}
                   <img src={u} alt="" className="w-full h-full object-cover pointer-events-none" />
@@ -629,10 +634,10 @@ function DraftCard({ draft, index, onCopy }: { draft: string; index: number; onC
                     onClick={() => onRemoveImage(i)}
                     disabled={publishMutation.isPending || uploading}
                     className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-burgundy text-white text-xs leading-none flex items-center justify-center hover:bg-burgundy-dark disabled:opacity-50"
-                    aria-label={`Remove image ${i + 1}`}
+                    aria-label={t('instagram.feed.removeImage', { index: i + 1 })}
                     data-testid={`instagram-caption-drafter-thumb-remove-${index}-${i}`}
                   >
-                    ×
+                      <ThiingsIcon name="close" pxSize={12} />
                   </button>
                 </div>
               ))}
@@ -656,7 +661,7 @@ function DraftCard({ draft, index, onCopy }: { draft: string; index: number; onC
                 disabled={uploading || publishMutation.isPending || imageUrls.length >= CAROUSEL_MAX}
                 className="hidden"
               />
-              {uploading ? 'Uploading…' : imageUrls.length === 0 ? 'Upload images' : 'Add more'}
+              {uploading ? t('instagram.feed.uploading') : imageUrls.length === 0 ? t('instagram.feed.uploadImages') : t('instagram.feed.addMore')}
             </label>
             <button
               type="button"
@@ -665,7 +670,7 @@ function DraftCard({ draft, index, onCopy }: { draft: string; index: number; onC
               className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-glass-border-input rounded-lg text-xs text-deep-charcoal hover:border-burgundy transition-colors disabled:opacity-50"
               data-testid={`instagram-caption-drafter-picker-toggle-${index}`}
             >
-              {pickerOpen ? 'Hide recent posts' : 'From your posts'}
+              {pickerOpen ? t('instagram.feed.hideRecent') : t('instagram.feed.fromRecent')}
             </button>
             <button
               type="button"
@@ -675,9 +680,9 @@ function DraftCard({ draft, index, onCopy }: { draft: string; index: number; onC
               data-testid={`instagram-caption-drafter-generator-toggle-${index}`}
             >
               <ThiingsIcon name="sparkles" pxSize={15} className="text-ocre-600" />
-              {generatorOpen ? 'Hide AI generator' : 'Generate with AI'}
+              {generatorOpen ? t('instagram.feed.hideGenerator') : t('instagram.feed.showGenerator')}
             </button>
-            <span className="text-xs text-muted-stone">or paste URLs</span>
+            <span className="text-xs text-muted-stone">{t('instagram.feed.orPasteUrls')}</span>
           </div>
 
           {generatorOpen && (
@@ -686,12 +691,12 @@ function DraftCard({ draft, index, onCopy }: { draft: string; index: number; onC
               data-testid={`instagram-caption-drafter-generator-${index}`}
             >
               <label className="text-xs text-muted-stone block">
-                Describe the image you want (e.g. "wood-fired margherita pizza on a marble table, soft natural light")
+                {t('instagram.feed.imagePrompt')}
               </label>
               <textarea
                 value={genPrompt}
                 onChange={(e) => setGenPrompt(e.target.value)}
-                placeholder="A beautifully plated tiramisu with espresso art…"
+                placeholder={t('instagram.feed.imagePlaceholder')}
                 rows={2}
                 maxLength={1000}
                 className="w-full px-3 py-2 border border-glass-border-input rounded-lg text-sm focus:outline-none focus:border-burgundy resize-y"
@@ -715,9 +720,9 @@ function DraftCard({ draft, index, onCopy }: { draft: string; index: number; onC
                   className="px-3 py-1.5 bg-burgundy text-white rounded-lg text-xs font-medium hover:bg-burgundy-dark disabled:opacity-50 transition-colors"
                   data-testid={`instagram-caption-drafter-gen-submit-${index}`}
                 >
-                  {generateMutation.isPending ? 'Generating… (20-40s)' : 'Generate'}
+                  {generateMutation.isPending ? t('instagram.feed.generatingImage') : t('instagram.feed.generateImage')}
                 </button>
-                <span className="text-[10px] text-muted-stone">~4¢ per image · added to your post on success</span>
+                <span className="text-xs text-muted-stone">{t('instagram.feed.imageCostHint')}</span>
               </div>
             </div>
           )}
@@ -728,7 +733,7 @@ function DraftCard({ draft, index, onCopy }: { draft: string; index: number; onC
               data-testid={`instagram-caption-drafter-picker-${index}`}
             >
               {recentMediaLoading && (
-                <p className="text-xs text-muted-stone py-2 text-center">Loading your recent posts…</p>
+                <p className="text-xs text-muted-stone py-2 text-center">{t('instagram.feed.loadingRecent')}</p>
               )}
               {recentMediaError && (
                 <div className="flex items-center justify-between gap-2 text-xs">
@@ -738,13 +743,13 @@ function DraftCard({ draft, index, onCopy }: { draft: string; index: number; onC
                     onClick={() => void loadRecentMedia(true)}
                     className="text-burgundy underline underline-offset-2"
                   >
-                    Retry
+                    {t('instagram.feed.retry')}
                   </button>
                 </div>
               )}
               {!recentMediaLoading && !recentMediaError && recentMedia !== null && recentMedia.length === 0 && (
                 <p className="text-xs text-muted-stone py-2 text-center">
-                  No recent posts found. Post something on Instagram first, then come back.
+                  {t('instagram.feed.noRecent')}
                 </p>
               )}
               {!recentMediaLoading && recentMedia !== null && recentMedia.length > 0 && (
@@ -765,7 +770,7 @@ function DraftCard({ draft, index, onCopy }: { draft: string; index: number; onC
                             ? 'border-emerald-500 ring-2 ring-emerald-200 cursor-default'
                             : 'border-glass-border-dark hover:border-burgundy cursor-pointer'
                         }`}
-                        title={alreadyAdded ? 'Already added' : `Use this image (${new Date(item.timestamp).toLocaleDateString()})`}
+                        title={alreadyAdded ? t('instagram.feed.alreadyAdded') : t('instagram.feed.useImage', { date: new Date(item.timestamp).toLocaleDateString(i18n.language) })}
                         data-testid={`instagram-caption-drafter-picker-item-${index}-${mediaIdx}`}
                       >
                         <img src={item.image_url} alt="" className="w-full h-full object-cover" />
@@ -803,7 +808,7 @@ function DraftCard({ draft, index, onCopy }: { draft: string; index: number; onC
               className="px-3 py-2 text-xs text-burgundy border border-glass-border-input rounded-lg hover:border-burgundy disabled:opacity-50 transition-colors"
               data-testid={`instagram-caption-drafter-add-url-${index}`}
             >
-              Add
+              {t('instagram.feed.add')}
             </button>
           </div>
 
@@ -816,7 +821,7 @@ function DraftCard({ draft, index, onCopy }: { draft: string; index: number; onC
               data-testid={`instagram-caption-drafter-schedule-panel-${index}`}
             >
               <label className="text-xs text-muted-stone block">
-                Post on
+                {t('instagram.feed.postOn')}
               </label>
               <input
                 type="datetime-local"
@@ -827,7 +832,7 @@ function DraftCard({ draft, index, onCopy }: { draft: string; index: number; onC
                 data-testid={`instagram-caption-drafter-scheduled-at-${index}`}
               />
               <p className="text-[10px] text-muted-stone">
-                Actually posts within 0–15 min of this time (cron polls every 15 min).
+                {t('instagram.feed.scheduleWindow')}
               </p>
             </div>
           )}
@@ -842,10 +847,10 @@ function DraftCard({ draft, index, onCopy }: { draft: string; index: number; onC
                 data-testid={`instagram-caption-drafter-publish-${index}`}
               >
                 {publishMutation.isPending
-                  ? 'Posting…'
+                  ? t('instagram.feed.posting')
                   : imageUrls.length >= 2
-                    ? `Post carousel (${imageUrls.length})`
-                    : 'Post now'}
+                    ? t('instagram.feed.postCarousel', { count: imageUrls.length })
+                    : t('instagram.feed.postNow')}
               </button>
             ) : (
               <button
@@ -855,7 +860,7 @@ function DraftCard({ draft, index, onCopy }: { draft: string; index: number; onC
                 className="px-3 py-1.5 bg-burgundy text-white rounded-lg text-xs font-medium hover:bg-burgundy-dark disabled:opacity-50 transition-colors"
                 data-testid={`instagram-caption-drafter-schedule-submit-${index}`}
               >
-                {scheduleMutation.isPending ? 'Scheduling…' : 'Schedule'}
+                {scheduleMutation.isPending ? t('instagram.feed.scheduling') : t('instagram.feed.schedule')}
               </button>
             )}
 
@@ -866,7 +871,7 @@ function DraftCard({ draft, index, onCopy }: { draft: string; index: number; onC
               className="text-xs text-burgundy underline underline-offset-2 hover:text-burgundy-dark disabled:opacity-50"
               data-testid={`instagram-caption-drafter-schedule-toggle-${index}`}
             >
-              {scheduleMode ? 'Cancel scheduling' : 'Schedule for later'}
+              {scheduleMode ? t('instagram.feed.cancelSchedule') : t('instagram.feed.scheduleLater')}
             </button>
           </div>
         </div>

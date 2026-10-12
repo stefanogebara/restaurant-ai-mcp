@@ -724,7 +724,7 @@ test.describe('Carousel — 2-10 images (C.10)', () => {
 
     // Initially the Reel panel is collapsed
     await expect(page.getByTestId('instagram-reel-panel-toggle')).toBeVisible();
-    await expect(page.getByTestId('instagram-reel-panel')).toHaveCount(0);
+    await expect(page.getByTestId('instagram-reel-panel')).not.toBeVisible();
 
     // Generate drafts
     await page.getByTestId('instagram-caption-drafter-topic').fill('pizza launch');
@@ -848,7 +848,7 @@ test.describe('Carousel — 2-10 images (C.10)', () => {
 
     // Toggle shown by default, panel hidden
     await expect(page.getByTestId('instagram-reel-panel-toggle')).toBeVisible();
-    await expect(page.getByTestId('instagram-reel-panel')).toHaveCount(0);
+    await expect(page.getByTestId('instagram-reel-panel')).not.toBeVisible();
 
     await page.getByTestId('instagram-reel-panel-toggle').click();
     await expect(page.getByTestId('instagram-reel-panel')).toBeVisible();
@@ -933,7 +933,8 @@ test.describe('Carousel — 2-10 images (C.10)', () => {
     await page.goto(INSTAGRAM_TAB_URL);
     await waitForInstagramPanel(page);
 
-    // Panel mounts with the 3 sections visible
+    await page.getByTestId('instagram-view-scheduled').click();
+    // The dedicated view keeps all three sections accessible.
     await expect(page.getByTestId('instagram-scheduled-posts-panel')).toBeVisible();
     await expect(page.getByTestId('instagram-scheduled-pending')).toBeVisible();
     await expect(page.getByTestId('instagram-scheduled-failed')).toBeVisible();
