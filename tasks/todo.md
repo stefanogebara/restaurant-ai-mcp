@@ -384,3 +384,13 @@ Sandbox account:
 Local: build e sintaxe das APIs alteradas passaram. Jest: 277 suítes e 4.241 testes passaram (1 suíte e 6 testes pulados). Vitest: 107 arquivos e 1.006 testes passaram. Os testes novos cobrem retornos OAuth, links antigos, montagem de abas e a hierarquia de compartilhamento de reservas. A página de reservas agora apresenta um link principal, QR e código de site opcional; não repete o mesmo link em cinco cartões. A verificação visual autenticada, o estado de publicação e os componentes internos de criação no Instagram ainda estão em aberto; não afirmar que todo o produto foi redesenhado.
 
 A auditoria de Telefone encontrou um risco de roteamento entre restaurantes: a API usava um único número de voz e podia mudar o agente sem invalidar o “Ativo” salvo em outras casas. O backend agora exige dono no banco, bloqueia registrar/desregistrar/testar, não expõe o inventário da plataforma e devolve `needs_review` para antigos registros ativos. Voz e Chamadas mostram orientação assistida sem sugerir encaminhamento antes de verificar o roteamento. Os cinco testes de fronteira de telefone e dois de UI passaram; a suíte completa passou com 278 suítes/4.246 testes backend e 109 arquivos/1.008 testes frontend. Build, TypeScript, sintaxe e navegador pós-publicação ainda precisam de confirmação após o último ajuste.
+
+## 2026-10-12 — Configurações do restaurante sem duplicar canais
+
+- [x] Manter um único lugar para compartilhar o link de reservas: Integrações; Configurações aponta para lá.
+- [x] Dar acesso direto às cinco seções longas sem esconder campos nem perder rascunhos.
+- [x] Associar rótulos a horários e políticas para teclado/leitor de tela; cobrir com testes.
+- [x] Verificar build e suítes completas.
+- [ ] Revisar no navegador e publicar após a versão anterior estabilizar.
+
+Revisão parcial: 11 testes da página, TypeScript, JSON dos três idiomas e `git diff --check` passaram; build de produção, 278 suítes/4.246 testes backend e 109 arquivos/1.009 testes frontend também passaram. Nenhum dado de restaurante foi alterado. O retorno Google iniciado na prévia caiu na landing estática de produção com credenciais no fragmento da URL; a causa exata ainda precisa ser confirmada. A aba temporária foi fechada, sem reutilizar essas credenciais. A revisão visual autenticada da prévia ficou indisponível; repetir no domínio após o deploy e tratar o callback OAuth como problema separado.
