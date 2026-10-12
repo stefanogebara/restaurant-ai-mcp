@@ -1,3 +1,14 @@
+# Voz — configuração não é ligação conectada (12/out/2026)
+
+- [x] Separar o estado do motor/agente da disponibilidade real do telefone.
+- [x] Remover promessas numéricas de custo, latência e troca sem chamadas perdidas sem evidência operacional.
+- [x] Trocar bandeiras emoji por nomes de idioma localizados; limpar cores de estado e densidade dos cartões.
+- [ ] Cobrir estados, idiomas e textos com testes; validar build e navegador autenticado sem realizar ligação.
+
+Limite: não registrar/desregistrar telefone, trocar motor em produção ou iniciar chamada. A aba Telefone continua sendo a fonte de verdade para roteamento.
+
+---
+
 # Insights — pontuação honesta e idioma (12/out/2026)
 
 - [x] Nomear o risco como pontuação heurística, não porcentagem de probabilidade.
@@ -7,11 +18,11 @@
 - [x] Corrigir o mesmo ponto de quebra do menu em Integrações, Clientes, Voz, Dashboard, Salão, Serviço e Configurações.
 - [x] Confirmar o cliente no escopo do restaurante antes de criar ou enviar e-mail de retenção.
 - [x] Substituir rascunhos editados ao trocar idioma, com aviso visível, para não montar e-mails mistos.
-- [ ] Validar o lote em produção nas larguras de celular e tablet após o deploy.
+- [x] Validar o lote em produção nas larguras de celular e tablet após o deploy.
 
 Limite: o envio individual existente não será acionado durante a revisão.
 
-Revisão: o algoritmo calcula uma pontuação saturada entre 0 e 100, não uma probabilidade; a interface agora mostra `/100`. O texto sugerido foi traduzido em três línguas e não oferece bebida ou desconto sem autorização. O modal de Insights tem nome acessível, foco inicial e fecha com Escape. O CRM também permite escolher o idioma antes do envio. O assunto, a saudação e o rodapé do e-mail seguem essa escolha. A recusa do provedor não aparece mais como sucesso. O backend valida cliente e e-mail dentro do restaurante antes de escrever campanha; canais não implementados são recusados. Os testes focados de interface e backend, TypeScript, ESLint, Jest completo (279 suítes/4.250 testes), Vitest completo (115 arquivos/1.028 testes) e build passaram antes do rebase; falta repetir o conjunto após o último ajuste e validar o deploy.
+Revisão: o algoritmo calcula uma pontuação saturada entre 0 e 100, não uma probabilidade; a interface agora mostra `/100`. O texto sugerido foi traduzido em três línguas e não oferece bebida ou desconto sem autorização. O modal de Insights tem nome acessível, foco inicial e fecha com Escape. O CRM também permite escolher o idioma antes do envio. O assunto, a saudação e o rodapé do e-mail seguem essa escolha. A recusa do provedor não aparece mais como sucesso. O backend valida cliente e e-mail dentro do restaurante antes de escrever campanha; canais não implementados são recusados. Os testes completos passaram antes do último ajuste de troca de idioma; depois dele, testes focados, tipos, lint e CI passaram. PR #181 mesclado; Vercel READY e `seatable.one` apontando para o deploy correto. No navegador autenticado, título sem sobreposição em 899/390/320 px, sem rolagem horizontal; risco aparece como `/100`, modal traz escolha de idioma, e alternar para espanhol substituiu o rascunho pelo texto espanhol. Nenhum e-mail foi enviado.
 
 ---
 
