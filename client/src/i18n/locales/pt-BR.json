@@ -2725,6 +2725,10 @@
     }
   },
   "voiceSettings": {
+    "pageEyebrow": "CANAL DE VOZ",
+    "pageTitle": "Voz e chamadas",
+    "pageIntro": "Escolha como sua recepcionista atende as ligações e ajuste o telefone. Os outros canais ficam nas páginas próprias.",
+    "otherChannels": "Outros canais:",
     "upgradeFeature": "Agente de Voz com IA",
     "upgradeDescription": "Configure seu agente de voz com IA para atender reservas por telefone automaticamente. Disponível no plano Profissional.",
     "saving": "Salvando...",
@@ -3533,6 +3537,19 @@
     "statusPending": "Pendente"
   },
   "integrations": {
+    "eyebrow": "ALCANCE",
+    "pageTitle": "Canais e integrações",
+    "pageIntro": "Compartilhe seu link de reservas e conecte os serviços que ajudam seu restaurante a receber e atender clientes.",
+    "tab": {
+      "booking": "Compartilhar reservas",
+      "instagram": "Instagram",
+      "pos": "Caixa e pagamentos",
+      "developers": "Para desenvolvedores"
+    },
+    "loadingBookingLink": "Carregando seu link de reservas...",
+    "devIntro": "Use chaves API e webhooks apenas se sua equipe técnica estiver criando uma integração personalizada.",
+    "whatsAppElsewhere": "O número de WhatsApp é conectado e testado em uma página própria.",
+    "openWhatsApp": "Abrir WhatsApp",
     "title": "Integração POS personalizada",
     "subtitle": "Para equipe técnica ou desenvolvedores que conectam um sistema POS próprio. A maioria dos restaurantes não precisa de nada nesta página — o Seatable já cuida de reservas, serviços e status das mesas direto da caixa.",
     "devBadge": "Para desenvolvedores",
@@ -3571,6 +3588,97 @@
     "endpointServiceCompletion": "Reportar serviços concluídos com faturamento",
     "endpointReservations": "Consultar reservas por período",
     "endpointTableStatus": "Atualizar status de disponibilidade das mesas"
+  },
+  "pos": {
+    "title": "Caixa Square",
+    "connectDescription": "Conecte o Square para importar itens do cardápio. Vendas e faturamento ainda não são sincronizados aqui.",
+    "connectSquare": "Conectar Square",
+    "connecting": "Conectando...",
+    "connected": "Square conectado",
+    "connectSuccess": "Square conectado com sucesso.",
+    "connectFailed": "Não foi possível conectar o Square.",
+    "confirmDisconnect": "Desconectar o Square?",
+    "disconnect": "Desconectar",
+    "disconnectSuccess": "Square desconectado.",
+    "disconnectFailed": "Não foi possível desconectar. Tente novamente.",
+    "merchantId": "Estabelecimento",
+    "locationId": "Local",
+    "menuItems": "Itens do cardápio",
+    "lastSync": "Última sincronização",
+    "syncNow": "Sincronizar cardápio",
+    "syncing": "Sincronizando...",
+    "syncSuccess": "Cardápio sincronizado.",
+    "syncFailed": "Falha ao sincronizar o cardápio. Tente novamente.",
+    "expired": "A conexão com o Square expirou. Conecte novamente.",
+    "error": {
+      "not_configured": "O Square ainda não está disponível. Fale com hello@seatable.one.",
+      "denied": "Você recusou as permissões do Square. Nada foi alterado.",
+      "invalid_callback": "O retorno do Square foi inválido. Tente novamente.",
+      "invalid_state": "O link de conexão expirou ou falhou na validação. Tente novamente.",
+      "token_failed": "O Square recusou a conexão. Tente novamente.",
+      "db_error": "Não conseguimos salvar a conexão com o Square. Tente novamente.",
+      "server_error": "Algo deu errado com o Square. Tente novamente."
+    }
+  },
+  "stripeConnect": {
+    "title": "Stripe para depósitos de reservas",
+    "subtitle": "Conecte sua conta Stripe para que os depósitos de reservas sejam enviados diretamente ao seu banco.",
+    "startCta": "Conectar Stripe",
+    "resumeCta": "Editar dados no Stripe",
+    "continueCta": "Continuar cadastro",
+    "fixCta": "Resolver pendências no Stripe",
+    "openCta": "Abrir Stripe",
+    "starting": "Abrindo Stripe...",
+    "startFailed": "Não foi possível iniciar a conexão com o Stripe.",
+    "returnSuccess": "Conta Stripe atualizada. Verificando status...",
+    "returnRefresh": "O link de cadastro expirou. Continue para obter outro.",
+    "charges": "Cobranças",
+    "payouts": "Repasses",
+    "detailsSubmitted": "Dados enviados",
+    "currency": "Moeda",
+    "flagEnabled": "Ativado",
+    "flagDisabled": "Desativado",
+    "status": {
+      "active": "Ativo",
+      "pending": "Em análise",
+      "restricted": "Ação necessária",
+      "disabled": "Desativado",
+      "revoked": "Revogado"
+    }
+  },
+  "instagramPanel": {
+    "loading": "Carregando status do Instagram…",
+    "loadFailed": "Não foi possível carregar o Instagram. Atualize a página para tentar de novo.",
+    "connectDescription": "Conecte o Instagram profissional para criar conteúdo no estilo do seu restaurante.",
+    "connectedDescription": "Crie conteúdo inspirado nas suas publicações recentes. Revise tudo antes de publicar.",
+    "followers_one": "{{formattedCount}} seguidor",
+    "followers_other": "{{formattedCount}} seguidores",
+    "toneReady": "Perfil de estilo pronto",
+    "toneBuilding": "Criando seu perfil de estilo…",
+    "toneRefreshed": "Perfil de estilo atualizado com suas publicações recentes.",
+    "refreshing": "Atualizando…",
+    "refreshTone": "Atualizar estilo",
+    "buildNow": "Criar agora",
+    "links": "links",
+    "metaError": "A Meta informou",
+    "openingMeta": "Abrindo a Meta…",
+    "reconnect": "Reconectar Instagram",
+    "connect": "Conectar Instagram",
+    "connectFailed": "Não foi possível iniciar a conexão com o Instagram",
+    "status": { "active": "Conectado", "restricted": "Restrito", "expired": "Expirado", "revoked": "Revogado" }
+  },
+  "instagram": {
+    "return": {
+      "ok": "Instagram conectado. Criando seu perfil de estilo…",
+      "denied": "Você recusou as permissões do Instagram. Nada foi alterado.",
+      "no_ig_account": "Não encontramos uma conta profissional do Instagram nas suas Páginas do Facebook.",
+      "invalid_state": "O link de conexão expirou. Tente novamente.",
+      "token_exchange_failed": "A Meta recusou a conexão. Tente novamente.",
+      "long_token_exchange_failed": "A Meta recusou o token de longa duração. Tente novamente.",
+      "pages_fetch_failed": "Não foi possível listar suas Páginas do Facebook. Confira as permissões.",
+      "not_configured": "O Instagram ainda não está configurado no servidor.",
+      "server_error": "Algo deu errado. Tente novamente ou fale com o suporte."
+    }
   },
   "events": {
     "pageTitle": "Eventos & Experiências",

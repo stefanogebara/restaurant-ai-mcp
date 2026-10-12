@@ -1505,3 +1505,7 @@ não em digitação.
 ## 2026-09-25 — O herói precisa herdar a linguagem das demonstrações
 
 O herói fotográfico foi aprovado isoladamente, mas ficou cromaticamente separado das demonstrações em papel quente e verde-oliva. A correção do usuário mostrou que avaliar a primeira dobra sozinha não basta. Antes de publicar uma landing, comparar herói, demonstração e cartão social no mesmo fluxo; compartilhar tokens de papel, tinta, ação e linha; e verificar a passagem entre seções em desktop e celular. A foto deve mostrar um detalhe da reserva que a interface realmente carrega, sem repetir a mesma fala na seção seguinte.
+
+## 2026-10-12 — Não parar na primeira tela corrigida
+
+Quando o pedido é continuidade do design na plataforma, uma correção isolada não encerra o trabalho. Revisar as superfícies vizinhas e suas fontes de verdade, testar o fluxo entre elas e registrar o que está local, integrado e publicado. Uma página nova não pode conviver com uma aba antiga que contradiz seu estado — como WhatsApp “Conexão assistida” e Voz “Conectado” para o mesmo restaurante.

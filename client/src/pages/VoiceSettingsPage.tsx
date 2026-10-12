@@ -7,6 +7,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link, Navigate } from 'react-router-dom';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import { Skeleton } from '../components/common/Skeleton';
 import { useToast } from '../contexts/ToastContext';
@@ -18,7 +19,7 @@ import UpgradePrompt from '../components/common/UpgradePrompt';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 import { useVoiceBrowser } from '../hooks/useVoiceBrowser';
 import { useAudioPlayback } from '../hooks/useAudioPlayback';
-import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import SettingsTabs, { type SettingsTabDef } from '../components/common/SettingsTabs';
 import VoiceEngineSelector from '../components/voice/VoiceEngineSelector';
@@ -34,18 +35,14 @@ import VoiceGrid from '../components/voice/VoiceGrid';
 import Spinner from '../components/common/Spinner';
 import VoicePersonaPanel from '../components/dashboard/VoicePersonaPanel';
 // VoiceExperimentPanel removed — non-functional (K-1)
-import BookingChannelsPanel from '../components/dashboard/BookingChannelsPanel';
-import POSIntegrationPanel from '../components/dashboard/POSIntegrationPanel';
-import StripeConnectPanel from '../components/dashboard/StripeConnectPanel';
-import InstagramPanel from '../components/dashboard/InstagramPanel';
 import PhoneIntegrationPanel from '../components/voice/PhoneIntegrationPanel';
 // AIStrategyPanel removed — dead feature
 // StrategyMetricsWidget moved to insights-only (removed from voice settings)
-import { authFetch, hostAPI } from '../services/api';
+import { authFetch } from '../services/api';
 
 import { DEFAULT_VOICE_SETTINGS } from '../components/voice/voiceTypes';
 import type { VoiceSettings } from '../components/voice/voiceTypes';
-import { useWhatsAppIntegrationStatus } from '../hooks/useWhatsAppSettings';
+import { legacyVoiceSettingsRedirect } from '../lib/legacySettingsRedirect';
 
 export default function VoiceSettingsPage() {
   const { t } = useTranslation();
@@ -57,7 +54,6 @@ export default function VoiceSettingsPage() {
   const saveMutation = useSaveVoiceSettings();
   const { data: engineConfig } = useVoiceEngineSettings({ enabled: canLoadVoiceData });
   const saveEngineMutation = useSaveVoiceEngine();
-  const { data: waStatus } = useWhatsAppIntegrationStatus({ enabled: canLoadVoiceData });
   const queryClient = useQueryClient();
   const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -87,18 +83,6 @@ export default function VoiceSettingsPage() {
       toast.error(err instanceof Error ? err.message : t('voice.createAgentFailed', 'Failed to create agent'));
     },
   });
-  // Share React Query cache with Dashboard.tsx and FloorPlanEditor.tsx — same
-  // queryKey AND queryFn so all three pages read the same axios-wrapped shape.
-  // Different queryFns under the same key would clobber each other's cached
-  // payload depending on render order.
-  const { data: dashData } = useQuery({
-    queryKey: ['dashboard'],
-    queryFn: hostAPI.getDashboard,
-    enabled: canLoadVoiceData,
-    staleTime: 5 * 60 * 1000,
-  });
-  const slug: string = (dashData as { data?: { slug?: string } } | undefined)?.data?.slug || '';
-
   // ─── Pending changes ──────────────────────────────────────────────────────────
 
   const [pendingVoiceId, setPendingVoiceId] = useState<string | null>(null);
@@ -214,6 +198,13 @@ export default function VoiceSettingsPage() {
   };
 
   // ─── Early returns ────────────────────────────────────────────────────────────
+
+  // Old bookmarks and provider callbacks must reach their new owner even
+  // when this restaurant does not have access to the voice feature.
+  const legacyDestination = typeof window === 'undefined'
+    ? null
+    : legacyVoiceSettingsRedirect(window.location.hash, window.location.search);
+  if (legacyDestination) return <Navigate to={legacyDestination} replace />;
 
   if (!isLoadingAccess && !hasAccess) {
     return (
@@ -347,10 +338,18 @@ export default function VoiceSettingsPage() {
   return (
     <DashboardLayout>
       <div className="p-6 lg:p-8 max-w-5xl">
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="font-serif text-3xl sm:text-4xl text-deep-charcoal tracking-tight">
-            {t('navigation.voiceAgent')} <span className="font-light text-warm-stone">/ {t('common.settings')}</span>
-          </h1>
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between mb-8">
+          <div>
+            <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone mb-2">
+              {t('voiceSettings.pageEyebrow')}
+            </p>
+            <h1 className="font-serif text-3xl sm:text-4xl text-deep-charcoal tracking-tight">
+              {t('voiceSettings.pageTitle')}
+            </h1>
+            <p className="text-[15px] text-muted-stone mt-2 max-w-2xl">
+              {t('voiceSettings.pageIntro')}
+            </p>
+          </div>
           <div className="flex flex-col items-end gap-1">
             <button
               type="button"
@@ -361,11 +360,6 @@ export default function VoiceSettingsPage() {
               {isSaving && <Spinner size="sm" className="border-white border-t-white/30" />}
               {isSaving ? t('voiceSettings.saving', 'Saving...') : t('voiceSettings.saveChanges', 'Save Changes')}
             </button>
-            {!isDirty && !isSaving && (
-              <p className="text-xs text-warm-stone">
-                {t('voiceSettings.changeSettingsHint', 'Change a setting above to enable saving')}
-              </p>
-            )}
           </div>
         </div>
 
@@ -465,97 +459,27 @@ export default function VoiceSettingsPage() {
 
           const phoneTab = <PhoneIntegrationPanel />;
 
-          const whatsappTab = waStatus ? (
-            <div>
-              <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone mb-3">
-                {t('voiceSettings.whatsappStatus', 'WhatsApp Status')}
-              </h2>
-              {waStatus.meta.approved ? (
-                <div className="space-y-1">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-100 text-rose-800">
-                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                    {t('voiceSettings.waConnected', 'Connected')}
-                  </span>
-                  {waStatus.meta.phone_number && (
-                    <p className="text-sm text-deep-charcoal mt-2">
-                      <span className="text-warm-stone">{t('voiceSettings.waPhone', 'Phone')}:</span> {waStatus.meta.phone_number}
-                    </p>
-                  )}
-                  {waStatus.meta.quality_rating && (
-                    <p className="text-sm text-deep-charcoal">
-                      <span className="text-warm-stone">{t('voiceSettings.waQualityRating', 'Quality rating')}:</span> {t(`voiceSettings.waQuality.${waStatus.meta.quality_rating.toLowerCase()}`, waStatus.meta.quality_rating)}
-                    </p>
-                  )}
-                </div>
-              ) : waStatus.meta.configured && !waStatus.meta.error ? (
-                <div className="space-y-3">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                    <span className="w-1.5 h-1.5 rounded-full bg-yellow-500" />
-                    {t('voiceSettings.waPendingApproval', 'Pending Approval')}
-                  </span>
-                  <div className="bg-soft-gray rounded-xl p-3 text-xs text-warm-stone space-y-2">
-                    <p className="text-deep-charcoal font-medium">{t('voiceSettings.waPendingHelpTitle', 'What happens next')}</p>
-                    <ol className="list-decimal list-inside space-y-1">
-                      <li>{t('voiceSettings.waPendingStep1', 'Meta reviews your number — usually takes 1–2 business days.')}</li>
-                      <li>{t('voiceSettings.waPendingStep2', 'You can check the review status in Meta Business Manager (link below).')}</li>
-                      <li>{t('voiceSettings.waPendingStep3', 'When approved, this page flips to "Connected" automatically.')}</li>
-                    </ol>
-                  </div>
-                  <a href="https://business.facebook.com/" target="_blank" rel="noreferrer" className="text-xs text-burgundy hover:underline inline-flex items-center gap-1">
-                    {t('voiceSettings.waCheckMeta', 'Open Meta Business Manager')} &rarr;
-                  </a>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                    <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                    {t('voiceSettings.waNotConfigured', 'Not Configured')}
-                  </span>
-                  {waStatus.meta.error && <p className="text-xs text-red-600">{waStatus.meta.error}</p>}
-                  <div className="bg-soft-gray rounded-xl p-3 text-xs text-warm-stone space-y-2">
-                    <p className="text-deep-charcoal font-medium">{t('voiceSettings.waSetupHelpTitle', 'How to connect WhatsApp')}</p>
-                    <ol className="list-decimal list-inside space-y-1">
-                      <li>{t('voiceSettings.waSetupStep1', 'Open Meta Business Manager with the Facebook account that owns your restaurant page.')}</li>
-                      <li>{t('voiceSettings.waSetupStep2', 'Go to WhatsApp Accounts → Approve the connection request from Seatable.')}</li>
-                      <li>{t('voiceSettings.waSetupStep3', 'Come back here — it flips to "Connected" in about a minute.')}</li>
-                    </ol>
-                    <p className="pt-1">
-                      {t('voiceSettings.waSetupHelp', 'Stuck?')}{' '}
-                      <a href="mailto:hello@seatable.one?subject=WhatsApp%20setup" className="text-burgundy hover:text-burgundy-dark underline underline-offset-2 font-medium">
-                        hello@seatable.one
-                      </a>
-                    </p>
-                  </div>
-                  <a href="https://business.facebook.com/" target="_blank" rel="noreferrer" className="text-xs text-burgundy hover:underline inline-flex items-center gap-1">
-                    {t('voiceSettings.waCheckMeta', 'Open Meta Business Manager')} &rarr;
-                  </a>
-                </div>
-              )}
-            </div>
-          ) : (
-            <p className="text-sm text-warm-stone">{t('voiceSettings.waLoading', 'Loading WhatsApp connection status...')}</p>
-          );
-
-          const posTab = (
-            <>
-              <POSIntegrationPanel />
-              <StripeConnectPanel />
-            </>
-          );
-          const widgetTab = slug
-            ? <BookingChannelsPanel slug={slug} />
-            : <p className="text-sm text-warm-stone">{t('voiceSettings.widgetUnavailable', 'Your booking widget will appear here once your restaurant is set up.')}</p>;
-
           const tabs: SettingsTabDef[] = [
             { id: 'voice',     label: t('voiceSettings.tab.voice', 'Voice & language'), content: voiceTab },
             { id: 'phone',     label: t('voiceSettings.tab.phone', 'Phone'),            content: phoneTab },
-            { id: 'whatsapp',  label: t('voiceSettings.tab.whatsapp', 'WhatsApp link'), content: whatsappTab },
-            { id: 'pos',       label: t('voiceSettings.tab.pos', 'POS'),                content: posTab },
-            { id: 'instagram', label: t('voiceSettings.tab.instagram', 'Instagram'),    content: <InstagramPanel /> },
-            { id: 'widget',    label: t('voiceSettings.tab.widget', 'Booking widget'),  content: widgetTab },
           ];
 
-          return <SettingsTabs tabs={tabs} hashKey="voice-settings" />;
+          return (
+            <>
+              <SettingsTabs tabs={tabs} hashKey="voice-settings" />
+              <div className="hairline my-10" />
+              <p className="text-[15px] text-muted-stone">
+                {t('voiceSettings.otherChannels')}{' '}
+                <Link to="/host-dashboard/whatsapp" className="text-burgundy hover:text-burgundy-dark underline underline-offset-2">
+                  WhatsApp
+                </Link>
+                {' · '}
+                <Link to="/host-dashboard/integrations" className="text-burgundy hover:text-burgundy-dark underline underline-offset-2">
+                  {t('navigation.integrations')}
+                </Link>
+              </p>
+            </>
+          );
         })()}
 
         <VoiceEngineSwitchModal isOpen={showEngineSwitchConfirm} engineSwitchTarget={engineSwitchTarget} onConfirm={confirmEngineSwitch} onClose={() => setShowEngineSwitchConfirm(false)} />

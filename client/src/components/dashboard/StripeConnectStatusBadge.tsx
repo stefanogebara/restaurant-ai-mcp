@@ -40,7 +40,7 @@ export default function StripeConnectStatusBadge() {
 
   return (
     <a
-      href="/host-dashboard/voice-settings#tab=pos"
+      href="/host-dashboard/integrations#integrations:pos"
       className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${tone.bg} ${tone.text} hover:opacity-90 transition-opacity`}
       data-testid="stripe-connect-status-badge"
     >

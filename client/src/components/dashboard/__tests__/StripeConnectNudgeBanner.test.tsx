@@ -81,7 +81,7 @@ describe('StripeConnectNudgeBanner', () => {
     expect(banner.textContent).toMatch(/Connect your Stripe account/i);
     expect(banner.textContent).toMatch(/currently routed through Seatable/i);
     const cta = screen.getByRole('link', { name: /Connect Stripe/i });
-    expect(cta.getAttribute('href')).toBe('/host-dashboard/voice-settings#tab=pos');
+    expect(cta.getAttribute('href')).toBe('/host-dashboard/integrations#integrations:pos');
   });
 
   it('renders the banner for per-person deposit config too', async () => {

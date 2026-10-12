@@ -369,3 +369,15 @@ Sandbox account:
 - [x] Review `scripts/audit-fire-and-forget.js` ALLOWLIST — 2026-08-24: reancorada em conteúdo (`{ file, match, reason }`) em vez de `path:linha`. Das 16 entradas antigas, só 3 ainda suprimiam algo: 5 apontavam para `api/services/` (renomeado para `api/_services/` em 10/jun, duas semanas *depois* da revisão de maio que as declarou justificadas) e 8 para linhas que hoje são JSDoc ou código não relacionado. Entrada que não casa com nenhum código agora falha o run — rot aparece no CI seguinte, não anos depois.
 - [x] Varredura manual de fire-and-forget em `api/_lib/` (140 arquivos) — 2026-08-24: o audit não alcança lib de request path (o `res` mora no chamador) nem `.catch` multi-linha. 26 candidatos triados: 5 bugs reais corrigidos (confirmação de reserva por voz, upsert de LTV, webhook `service.completed`, release de lock do prospect-responder, e 2 sites de cobrança de cancelamento com janela zero-await), o resto seguro ou cosmético. Novo teste `service-completion-freeze.test.js` trava a ordenação. Os 2 pendentes foram fechados em seguida: extração de memória do WhatsApp e `registrarGasto` do ai-client, ambos com `await Promise.race` + teto (6s e 1500ms). O bloqueio que eu tinha levantado para a extração — risco de re-entrega da Meta — não existia: o orçamento de retry de 20s é absorvido por dedup no Redis (documentado em `api/whatsapp-webhook.js`), e `manager-agent.js` já usava teto de 6s na operação idêntica.
 - [x] Walk Vercel cron schedule in `vercel.json` — 2026-05-24: nothing faster than `*/15`. The 4 `*/15` crons (check-late-reservations, send-campaigns, sync-conversation-data, validate-conversations) all time-sensitive and justified.
+
+## 2026-10-12 — Continuidade do design, superfícies conectadas
+
+- [x] Eliminar o falso “WhatsApp conectado” da página de Voz; a única fonte de verdade deve ser a conexão do restaurante em /host-dashboard/whatsapp.
+- [x] Separar Voz/Telefone de Integrações; mover reservas, Instagram, POS, Stripe e ferramentas técnicas para a superfície apropriada, preservando deep links e retornos OAuth.
+- [x] Corrigir a hierarquia e o texto principal em PT/EN/ES segundo DESIGN.md, sem prometer prontidão não comprovada.
+- [x] Cobrir roteamento legado e tabs com testes; validar build, sintaxe e testes completos.
+- [ ] Revisar no navegador desktop/mobile e registrar diferenças entre local, PR, Preview e produção.
+
+### Revisão
+
+Local: build e sintaxe das APIs alteradas passaram. Jest: 277 suítes e 4.241 testes passaram (1 suíte e 6 testes pulados). Vitest: 106 arquivos e 1.005 testes passaram. Os testes novos cobrem retornos OAuth, links antigos e montagem de abas. A verificação visual autenticada, o estado de publicação e os componentes internos de criação no Instagram ainda estão em aberto; não afirmar que todo o produto foi redesenhado.
