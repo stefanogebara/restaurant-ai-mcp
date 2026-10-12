@@ -1952,6 +1952,7 @@
     "send": "Send",
     "reEngagementSent": "Re-engagement message sent",
     "reEngagementFailed": "Failed to send message",
+    "reEngagementMissingEmail": "This customer has no email address. Add one before sending.",
     "lastVisit": "Last",
     "editStrategy": "Edit AI strategy document",
     "whatsappCampaigns": "WhatsApp Campaigns",

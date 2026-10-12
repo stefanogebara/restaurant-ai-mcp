@@ -39,6 +39,29 @@ async function handleCreate(req, res) {
       });
     }
 
+    // This action is the individual email flow. Other channels use the
+    // separately validated create_whatsapp action, not an undeliverable row.
+    if (channel && channel !== 'email') {
+      return res.status(400).json({ success: false, error: 'Unsupported channel for individual campaign' });
+    }
+
+    // Check tenant ownership before writing a campaign or contacting anyone.
+    const { data: customer, error: customerLookupErr } = await supabaseAdmin
+      .schema('restaurant')
+      .from('customer_ltv')
+      .select('customer_email, customer_name')
+      .eq('customer_id', customer_id)
+      .eq('restaurant_id', req.user.restaurant_id)
+      .maybeSingle();
+
+    if (customerLookupErr) throw customerLookupErr;
+    if (!customer) {
+      return res.status(404).json({ success: false, error: 'Customer not found' });
+    }
+    if (!customer.customer_email) {
+      return res.status(422).json({ success: false, error: 'Customer has no email address' });
+    }
+
     const { data, error } = await supabaseAdmin
       .schema('restaurant')
       .from('retention_campaigns')
@@ -46,7 +69,7 @@ async function handleCreate(req, res) {
         customer_id,
         campaign_type,
         message,
-        channel: channel || 'email',
+        channel: 'email',
         status: 'pending',
         restaurant_id: req.user.restaurant_id,
         created_at: new Date().toISOString()
@@ -56,56 +79,30 @@ async function handleCreate(req, res) {
 
     if (error) throw error;
 
-    let emailAccepted = false;
-    // Send the campaign email if channel is email
-    if (data.channel === 'email') {
-      // Look up customer email from customer_ltv (has email from reservation data)
-      const { data: customer, error: customerLookupErr } = await supabaseAdmin
-        .schema('restaurant')
-        .from('customer_ltv')
-        .select('customer_email, customer_name')
-        .eq('customer_id', customer_id)
-        .eq('restaurant_id', req.user.restaurant_id)
-        .single();
+    const result = await sendRetentionCampaignEmail({
+      customerEmail: customer.customer_email,
+      customerName: customer.customer_name,
+      message,
+      campaignType: campaign_type,
+      language,
+    });
+    const emailAccepted = result.sent === true;
+    const sentAt = emailAccepted ? new Date().toISOString() : null;
 
-      if (customerLookupErr) {
-        logger.error(`customer_ltv lookup error for ${customer_id} (restaurant ${req.user.restaurant_id}):`, customerLookupErr);
-      }
-
-      if (customer?.customer_email) {
-        const result = await sendRetentionCampaignEmail({
-          customerEmail: customer.customer_email,
-          customerName: customer.customer_name,
-          message,
-          campaignType: campaign_type,
-          language,
-        });
-        emailAccepted = result.sent === true;
-
-        await supabaseAdmin
-          .schema('restaurant')
-          .from('retention_campaigns')
-          .update({
-            status: result.sent ? 'sent' : 'failed',
-            sent_at: result.sent ? new Date().toISOString() : null,
-          })
-          .eq('id', data.id);
-      } else {
-        logger.warn(`No email found for customer ${customer_id}, marking campaign as failed`);
-        await supabaseAdmin
-          .schema('restaurant')
-          .from('retention_campaigns')
-          .update({ status: 'failed' })
-          .eq('id', data.id);
-      }
-    } else {
-      // SMS/WhatsApp channels - mark as pending for future implementation
-      logger.info(`Campaign ${data.id} uses ${data.channel} channel - queued for future delivery`);
-    }
+    await supabaseAdmin
+      .schema('restaurant')
+      .from('retention_campaigns')
+      .update({ status: emailAccepted ? 'sent' : 'failed', sent_at: sentAt })
+      .eq('id', data.id)
+      .eq('restaurant_id', req.user.restaurant_id);
 
     logger.info(`Created retention campaign ${data.id} for customer ${customer_id}`);
 
-    return res.status(200).json({ success: true, data, sent: emailAccepted });
+    return res.status(200).json({
+      success: true,
+      data: { ...data, status: emailAccepted ? 'sent' : 'failed', sent_at: sentAt },
+      sent: emailAccepted,
+    });
 
   } catch (error) {
     logger.error('Error creating campaign:', error);

@@ -2869,6 +2869,7 @@
     "send": "Enviar",
     "reEngagementSent": "Mensaje de reactivación enviado",
     "reEngagementFailed": "Error al enviar mensaje",
+    "reEngagementMissingEmail": "Este cliente no tiene correo. Añade una dirección antes de enviar.",
     "lastVisit": "Última",
     "editStrategy": "Editar documento de estrategia IA",
     "whatsappCampaigns": "Campañas WhatsApp",

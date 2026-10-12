@@ -1958,6 +1958,7 @@
     "send": "Enviar",
     "reEngagementSent": "Mensagem de reengajamento enviada",
     "reEngagementFailed": "Falha ao enviar mensagem",
+    "reEngagementMissingEmail": "Este cliente não tem e-mail. Adicione um endereço antes de enviar.",
     "lastVisit": "Última",
     "editStrategy": "Editar documento de estratégia IA",
     "whatsappCampaigns": "Campanhas WhatsApp",

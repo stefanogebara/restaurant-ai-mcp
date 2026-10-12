@@ -33,7 +33,9 @@ function SendModal({ customer, onClose }: SendModalProps) {
           onClose();
         },
         onError: (err) => {
-          toast.error(err.message || t('insights.reEngagementFailed', 'Failed to send message'));
+          toast.error(t(err.message === 'customer_email_missing'
+            ? 'insights.reEngagementMissingEmail'
+            : 'insights.reEngagementFailed'));
         },
       }
     );
@@ -197,8 +199,8 @@ export default function CustomerIntelligenceCard() {
     <>
       <div className="border border-glass-border-dark rounded-lg overflow-hidden">
         <div className="p-5 border-b border-glass-border-dark flex items-center gap-3">
-          <div className="w-8 h-8 rounded-xl bg-rose-50 flex items-center justify-center flex-shrink-0">
-            <ThiingsIcon name="user" pxSize={16} className="text-rose-600" />
+          <div className="w-8 h-8 rounded-xl bg-soft-gray flex items-center justify-center flex-shrink-0">
+            <ThiingsIcon name="user" pxSize={16} className="text-stone-gray" />
           </div>
           <div>
             <h2 className="text-sm font-semibold text-deep-charcoal">{t('insights.customerIntelligence')}</h2>

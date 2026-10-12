@@ -100,9 +100,11 @@ export function useSendCampaign() {
           channel: 'email',
         }),
       });
-      if (!response.ok) throw new Error('Failed to create campaign');
+      if (!response.ok) {
+        throw new Error(response.status === 422 ? 'customer_email_missing' : 'send_failed');
+      }
       const result = await response.json();
-      if (!result.success || result.sent !== true) throw new Error(result.error || 'Email was not sent');
+      if (!result.success || result.sent !== true) throw new Error('send_failed');
     },
   });
 }
