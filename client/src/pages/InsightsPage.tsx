@@ -129,7 +129,7 @@ export default function InsightsPage() {
     <DashboardLayout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         {/* Header */}
-        <header className="mb-8 mt-14 sm:mt-0">
+        <header className="mb-8 mt-14 lg:mt-0">
           <h1 className="font-serif text-3xl sm:text-4xl text-deep-charcoal tracking-tight">
             {t('insights.pageTitle', 'Insights')}
           </h1>
@@ -157,7 +157,7 @@ export default function InsightsPage() {
                   className={`
                     relative px-5 py-3 text-sm font-medium transition-colors whitespace-nowrap border-b-2
                     ${isActive
-                      ? 'text-burgundy border-burgundy'
+                      ? 'text-deep-charcoal border-deep-charcoal'
                       : isLocked
                         ? 'text-muted-stone/50 cursor-default border-transparent'
                         : 'text-muted-stone hover:text-deep-charcoal border-transparent'

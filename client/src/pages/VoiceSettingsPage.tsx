@@ -219,7 +219,7 @@ export default function VoiceSettingsPage() {
   if (isLoadingConfig || isLoadingAccess) {
     return (
       <DashboardLayout>
-        <div className="p-6 mt-14 sm:mt-0 lg:p-8 max-w-5xl" role="status" aria-label={t('voiceSettings.loadingAriaLabel', 'Loading voice settings')}>
+        <div className="p-6 mt-14 lg:mt-0 lg:p-8 max-w-5xl" role="status" aria-label={t('voiceSettings.loadingAriaLabel', 'Loading voice settings')}>
           <Skeleton className="h-4 w-48 mb-2" />
           <Skeleton className="h-8 w-64 mb-1" />
           <Skeleton className="h-4 w-80 mb-6" />
@@ -255,7 +255,7 @@ export default function VoiceSettingsPage() {
   if (isConfigError) {
     return (
       <DashboardLayout>
-        <div className="p-6 mt-14 sm:mt-0 lg:p-8 max-w-5xl">
+        <div className="p-6 mt-14 lg:mt-0 lg:p-8 max-w-5xl">
           <div className="mt-8 text-center py-16">
             <div className="max-w-md mx-auto">
               <ThiingsIcon name="alert-circle" pxSize={28} className="text-red-700 mx-auto mb-3" />
@@ -280,7 +280,7 @@ export default function VoiceSettingsPage() {
     const hasRestaurantName = !!config?.restaurant_name;
     return (
       <DashboardLayout>
-        <div className="p-6 mt-14 sm:mt-0 lg:p-8 max-w-5xl space-y-6">
+        <div className="p-6 mt-14 lg:mt-0 lg:p-8 max-w-5xl space-y-6">
           <div className="mt-8 text-center py-16">
             <div className="max-w-md mx-auto">
               {hasRestaurantName ? (
@@ -337,7 +337,7 @@ export default function VoiceSettingsPage() {
 
   return (
     <DashboardLayout>
-      <div className="p-6 mt-14 sm:mt-0 lg:p-8 max-w-5xl">
+      <div className="p-6 mt-14 lg:mt-0 lg:p-8 max-w-5xl">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between mb-8">
           <div>
             <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone mb-2">

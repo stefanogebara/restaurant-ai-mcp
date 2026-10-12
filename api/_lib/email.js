@@ -109,7 +109,13 @@ function he(str) {
 }
 
 // Shared Seatable email wrapper (consistent branding)
-function wrapEmailHtml(bodyHtml) {
+function wrapEmailHtml(bodyHtml, language = 'en') {
+  const footerByLanguage = {
+    en: 'Powered by Seatable - AI Restaurant Management',
+    pt: 'Tecnologia Seatable - Gestão inteligente de restaurantes',
+    es: 'Tecnología Seatable - Gestión inteligente de restaurantes',
+  };
+  const lang = String(language).split('-')[0].toLowerCase();
   return `
     <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
       <div style="text-align: center; margin-bottom: 32px;">
@@ -120,7 +126,7 @@ function wrapEmailHtml(bodyHtml) {
       ${bodyHtml}
       <div style="text-align: center; margin-top: 32px; padding-top: 24px; border-top: 1px solid #E7E5E4;">
         <p style="color: #A8A29E; font-size: 12px; margin: 0;">
-          Powered by Seatable - AI Restaurant Management
+          ${footerByLanguage[lang] || footerByLanguage.en}
         </p>
       </div>
     </div>
@@ -244,31 +250,45 @@ async function sendTrialEndingEmail({ customerEmail, trialEndsAt }) {
 /**
  * Send a retention campaign email
  */
-async function sendRetentionCampaignEmail({ customerEmail, customerName, message, campaignType }) {
+async function sendRetentionCampaignEmail({ customerEmail, customerName, message, campaignType, language }) {
   const resend = getResendClient();
   if (!resend) { logger.warn('RESEND_API_KEY not set, skipping retention email'); return { sent: false, reason: 'no_api_key' }; }
 
-  const subjectMap = {
-    win_back: 'We Miss You!',
-    loyalty_reward: 'A Special Reward For You',
-    reservation_reminder: 'Time to Book Again?',
+  const copyByLanguage = {
+    en: {
+      subject: { win_back: 'We Would Love to See You Again', loyalty_reward: 'Thank You for Visiting', reservation_reminder: 'Come Visit Us Again' },
+      greeting: customerName ? `Hi ${he(customerName)},` : 'Hello,',
+      fallback: 'A Message From Your Restaurant',
+    },
+    pt: {
+      subject: { win_back: 'Será um prazer receber você novamente', loyalty_reward: 'Obrigado pela sua visita', reservation_reminder: 'Esperamos sua próxima visita' },
+      greeting: customerName ? `Olá ${he(customerName)},` : 'Olá,',
+      fallback: 'Uma mensagem do seu restaurante',
+    },
+    es: {
+      subject: { win_back: 'Nos encantará recibirte de nuevo', loyalty_reward: 'Gracias por tu visita', reservation_reminder: 'Esperamos tu próxima visita' },
+      greeting: customerName ? `Hola ${he(customerName)},` : 'Hola,',
+      fallback: 'Un mensaje de tu restaurante',
+    },
   };
+  const lang = String(language || 'en').split('-')[0].toLowerCase();
+  const copy = copyByLanguage[lang] || copyByLanguage.en;
 
   try {
     const { error } = await resend.emails.send({
       from: FROM_ADDRESS,
       to: customerEmail,
-      subject: subjectMap[campaignType] || 'A Message From Your Restaurant',
+      subject: copy.subject[campaignType] || copy.fallback,
       html: wrapEmailHtml(`
         <div style="background: #FAFAF9; border: 1px solid #E7E5E4; border-radius: 16px; padding: 32px; margin-bottom: 24px;">
           <h2 style="font-size: 22px; color: #1C1917; margin: 0 0 16px 0;">
-            ${customerName ? `Hi ${he(customerName)},` : 'Hello,'}
+            ${copy.greeting}
           </h2>
           <p style="color: #57534E; margin: 0; font-size: 15px; line-height: 1.6;">
             ${he(message)}
           </p>
         </div>
-      `),
+      `, lang),
     });
     if (error) {
       logger.error('Failed to send retention email:', error.message || JSON.stringify(error));

@@ -1,3 +1,20 @@
+# Insights — pontuação honesta e idioma (12/out/2026)
+
+- [x] Nomear o risco como pontuação heurística, não porcentagem de probabilidade.
+- [x] Localizar o texto sugerido para reengajamento sem prometer vantagem não autorizada.
+- [x] Evitar que o título fique sob o menu em larguras intermediárias; revisar o modal por teclado.
+- [x] Testar PT/EN/ES, build e tela autenticada sem enviar e-mails.
+- [x] Corrigir o mesmo ponto de quebra do menu em Integrações, Clientes, Voz, Dashboard, Salão, Serviço e Configurações.
+- [x] Confirmar o cliente no escopo do restaurante antes de criar ou enviar e-mail de retenção.
+- [x] Substituir rascunhos editados ao trocar idioma, com aviso visível, para não montar e-mails mistos.
+- [ ] Validar o lote em produção nas larguras de celular e tablet após o deploy.
+
+Limite: o envio individual existente não será acionado durante a revisão.
+
+Revisão: o algoritmo calcula uma pontuação saturada entre 0 e 100, não uma probabilidade; a interface agora mostra `/100`. O texto sugerido foi traduzido em três línguas e não oferece bebida ou desconto sem autorização. O modal de Insights tem nome acessível, foco inicial e fecha com Escape. O CRM também permite escolher o idioma antes do envio. O assunto, a saudação e o rodapé do e-mail seguem essa escolha. A recusa do provedor não aparece mais como sucesso. O backend valida cliente e e-mail dentro do restaurante antes de escrever campanha; canais não implementados são recusados. Os testes focados de interface e backend, TypeScript, ESLint, Jest completo (279 suítes/4.250 testes), Vitest completo (115 arquivos/1.028 testes) e build passaram antes do rebase; falta repetir o conjunto após o último ajuste e validar o deploy.
+
+---
+
 # Marketing — clareza e isolamento (12/out/2026)
 
 - [x] Impedir leitura de métricas e envio de campanhas de outro restaurante.
