@@ -135,6 +135,7 @@ describe('RestaurantSettings: GET basic settings', () => {
     expect(data.success).toBe(true);
     expect(data.data.language).toBe('es');
     expect(data.data.restaurant_name).toBe('El Tapas');
+    expect(data.data.timezone).toBe('');
   });
 
   test('defaults language to en when null', async () => {
@@ -168,6 +169,27 @@ describe('RestaurantSettings: GET basic settings', () => {
 // PUT settings
 // ============================================================
 describe('RestaurantSettings: PUT basic settings', () => {
+  test.each(['', 'Invalid/Legacy', 42])('rejects invalid timezone %s before updating', async (timezone) => {
+    verifyAuth.mockResolvedValueOnce({ user: { restaurant_id: 'rest-1', email: 'admin@test.com' } });
+    const { req, res } = createMockReqRes({
+      method: 'PUT', url: '/api/restaurant-settings', body: { timezone },
+    });
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(mockUpdate).not.toHaveBeenCalled();
+  });
+
+  test('keeps a valid IANA timezone as the persisted value', async () => {
+    verifyAuth.mockResolvedValueOnce({ user: { restaurant_id: 'rest-1', email: 'admin@test.com' } });
+    mockSupabaseResult = { data: { agent_language: 'en', restaurant_name: 'Test' }, error: null };
+    const { req, res } = createMockReqRes({
+      method: 'PUT', url: '/api/restaurant-settings', body: { timezone: 'Europe/Madrid' },
+    });
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(mockUpdate).toHaveBeenCalledWith({ timezone: 'Europe/Madrid' });
+  });
+
   test('updates language successfully', async () => {
     verifyAuth.mockResolvedValueOnce({
       user: { restaurant_id: 'rest-1', email: 'admin@test.com' },

@@ -132,9 +132,10 @@ export default function ReportsTab() {
         </div>
       ) : !report ? (
         <p className="border-t hairline py-8 text-sm text-stone-gray">{t('analytics.noReportData')}</p>
+      ) : !hasActivity ? (
+        <p role="status" className="border-t hairline py-10 text-sm text-stone-gray">{t('reports.noActivity')}</p>
       ) : (
         <div className="space-y-12">
-          {!hasActivity && <p role="status" className="border-t hairline pt-5 text-sm text-stone-gray">{t('reports.noActivity')}</p>}
           {report.summary.covers_estimated && <p role="note" className="text-sm text-ocre-600">{t('reports.coversEstimateNote')}</p>}
           {report.summary.covers_comparison_valid === false && <p role="note" className="text-sm text-stone-gray">{t('reports.comparisonUnavailable')}</p>}
           <WeeklyReportSummaryCards summary={report.summary} />

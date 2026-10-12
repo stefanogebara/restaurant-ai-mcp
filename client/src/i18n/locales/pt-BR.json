@@ -1643,6 +1643,8 @@
     "city": "Cidade",
     "country": "País",
     "timezone": "Fuso Horário",
+    "offsetNow": "agora",
+    "timezoneRequired": "Escolha o fuso horário antes de salvar.",
     "saveInfo": "Salvar informações",
     "businessHours": "Horário de Funcionamento",
     "openTime": "horário de abertura",

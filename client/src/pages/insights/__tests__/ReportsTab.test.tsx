@@ -59,6 +59,7 @@ describe('ReportsTab', () => {
     renderWithProviders(<ReportsTab />);
     expect(screen.getByText('No reservations or completed services in this period. Try other dates.')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Send via WhatsApp' })).not.toBeInTheDocument();
+    expect(screen.queryByText('Total Reservations')).not.toBeInTheDocument();
     expect(mockAuthFetch).not.toHaveBeenCalled();
   });
 
