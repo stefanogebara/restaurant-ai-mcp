@@ -28,11 +28,11 @@ Limite: não registrar/desregistrar telefone, trocar motor em produção ou inic
 - [x] Compartilhar a consulta da fila entre resumo e painel, sem chamada duplicada nem guia vazio falso.
 - [x] Localizar o aviso Stripe e a data da fila; distinguir aviso antigo de mesa pronta agora.
 - [x] Aplicar cores semânticas e ícones reais ao painel da fila, sem mudar ações de atendimento.
-- [ ] Cobrir estados e idiomas com testes; verificar build, navegador e produção.
+- [x] Cobrir estados e idiomas com testes; verificar build, navegador e produção.
 
 Limite: somente leitura no navegador de produção. Não avisar, sentar, remover ou cadastrar convidados durante o teste.
 
-Revisão local: o resumo e a lista agora compartilham a mesma consulta. Quando ela não respondeu ou a função está fora do plano, o resumo mostra traço e não declara o restaurante vazio. O painel bloqueado explica a restrição sem oferecer ação inválida. Avisos de mais de um dia ficam em “Precisa de revisão”, sem remoção automática. O cronômetro voltou a aparecer para status reais em minúsculas; o horário usa o idioma da interface e o fuso do restaurante. A faixa de depósitos Stripe foi traduzida e o topo do painel saiu de trás do menu móvel. Após o rebase, Jest completo passou (288 suítes/4.302 testes), Vitest completo passou (128 arquivos/1.071 testes); após os dois ajustes finais, 15 testes focados, build/TypeScript, lint focado e `git diff --check` passaram. Navegador após deploy pendente.
+Revisão: o resumo e a lista compartilham a mesma consulta. Quando ela não respondeu ou a função está fora do plano, o resumo mostra traço e não declara o restaurante vazio. O painel bloqueado explica a restrição sem oferecer ação inválida. Avisos de mais de um dia ficam em “Precisa de revisão”, sem remoção automática. O cronômetro voltou a aparecer para status reais em minúsculas; o horário usa o idioma da interface e o fuso do restaurante. A faixa de depósitos Stripe foi traduzida e o topo do painel saiu de trás do menu móvel. Jest completo passou (288 suítes/4.302 testes), Vitest completo passou (128 arquivos/1.071 testes); após os dois ajustes finais, 15 testes focados, build/TypeScript, lint focado e `git diff --check` passaram. PR #190 publicado no domínio com SHA correto; navegador autenticado em 390/320 px confirmou contador 1 = lista 1, “Precisa de revisão”, data em PT, faixa Stripe legível e ausência de rolagem horizontal, sem ações de atendimento.
 
 ---
 
@@ -572,5 +572,17 @@ Observação: o navegador de produção mostrou as mesas reduzidas pelo `viewBox
 Limite: não acionar atualização manual, campanhas ou mensagens reais no restaurante do usuário. A tela publicada foi inspecionada apenas para leitura.
 
 Revisão local: o valor usa a moeda do restaurante, não a língua do navegador. As seções agora distinguem projeção de valor e gasto passado estimado. O botão que parecia falar com todos foi removido; o contato restante abre um único cliente. A rota antiga de tendências responde 410 depois da autenticação, sem consultar dados, até existir uma implementação baseada no esquema POS vigente. Jest completo passou (288 suítes/4.302 testes), Vitest completo passou (124 arquivos/1.058 testes), build, tipos e lint passaram. O commit `d0cfeccd` foi publicado em `seatable.one`; o navegador autenticado mostrou PT e BRL, nomes em vez de identificadores, projeções rotuladas e lista sem envio em massa. Em 320 e 390 px não houve overflow horizontal. Nenhum recálculo ou mensagem foi acionado.
+
+---
+# Painel — oportunidades sem porcentagem fictícia (12/out/2026)
+
+- [x] Reproduzir no navegador autenticado o texto persistido “100% de risco de churn” e os contadores sem concordância.
+- [x] Mostrar pontuação heurística /100 a partir dos dados estruturados, inclusive nas filas antigas.
+- [x] Simplificar a lista para canvas e divisórias, com estados semânticos, idioma e data localizados.
+- [ ] Cobrir os três idiomas, build, testes e verificação publicada sem aprovar nem enviar mensagens.
+
+Limite: nenhum contato com clientes será aprovado, enviado ou descartado no navegador de produção.
+
+Revisão local: sugestões novas e antigas leem `trigger_data` para mostrar pontuação `/100`, visitas e data no idioma atual, sem reproduzir a antiga frase persistida como probabilidade. A lista usa divisórias no canvas, cores semânticas e contagem singular/plural correta. Jest completo passou (291 suítes/4.327 testes), Vitest completo passou (131 arquivos/1.084 testes), build/TypeScript, lint focado e `git diff --check` passaram. Falta verificar a tela publicada após o deploy; nenhuma mensagem foi enviada.
 
 ---

@@ -320,7 +320,7 @@ async function findAtRiskCustomers(restaurantIds) {
         avg_revenue_per_visit: c.avg_revenue_per_visit,
         churn_risk: c.churn_risk_score,
         last_visit: c.last_visit_date,
-        suggested_action: `${c.customer_tier || 'regular'} guest at ${c.churn_risk_score}% churn risk — ${c.total_visits} visits, last seen ${c.last_visit_date || 'unknown'}`,
+        suggested_action: `Score ${c.churn_risk_score}/100 — ${c.total_visits} visits, last seen ${c.last_visit_date || 'unknown'}`,
       });
     }
     return porRestaurante;
@@ -530,15 +530,15 @@ function formatSuggestedAction(opp, lang) {
     return `${opp.occasion_label} on ${opp.occasion_date} — invite ${guestName}`;
   }
 
-  // churn_risk
+  // churn_risk: this is a heuristic score, not a calibrated probability.
   const lastSeen = opp.last_visit || (lang === 'pt-BR' ? 'desconhecido' : lang === 'es' ? 'desconocido' : 'unknown');
   if (lang === 'pt-BR') {
-    return `${tierLabel} com ${opp.churn_risk}% de risco de churn — ${opp.total_visits} visitas, última em ${lastSeen}`;
+    return `${tierLabel} com pontuação de afastamento ${opp.churn_risk}/100 — ${opp.total_visits} visitas, última em ${lastSeen}`;
   }
   if (lang === 'es') {
-    return `${tierLabel} con ${opp.churn_risk}% de riesgo de fuga — ${opp.total_visits} visitas, última el ${lastSeen}`;
+    return `${tierLabel} con puntuación de abandono ${opp.churn_risk}/100 — ${opp.total_visits} visitas, última el ${lastSeen}`;
   }
-  return `${tierLabel} at ${opp.churn_risk}% churn risk — ${opp.total_visits} visits, last seen ${lastSeen}`;
+  return `${tierLabel} with drift score ${opp.churn_risk}/100 — ${opp.total_visits} visits, last seen ${lastSeen}`;
 }
 
 // Exported for testing
