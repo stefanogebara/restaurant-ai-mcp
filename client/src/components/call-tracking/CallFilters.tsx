@@ -51,9 +51,9 @@ export default function CallFilters({ filter, onChange }: Props) {
         </div>
 
         {/* Period */}
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2">
           <span className="text-xs font-medium text-muted-stone">{t('callTracking.period')}</span>
-          <div className="flex gap-0">
+          <div className="flex max-w-full flex-wrap gap-0">
             {PERIOD_OPTIONS.map((opt) => (
               <button
                 type="button"

@@ -640,3 +640,18 @@ Limite: não recalcular nem editar dados reais do CRM; a mudança é de apresent
 Revisão local: a lista exibida em produção mostrava até R$ 23.400 de valor futuro para alguém com duas visitas e cinco meses de afastamento. A origem era `lifetime_value`, extrapolação de frequência histórica por dois anos sem desconto de afastamento. A lista passa a mostrar `total_revenue`, estimativa relativa às visitas concluídas, com aviso de que pode diferir de pagamentos registrados. O drawer repete a ressalva. Testes focados (14), Jest completo (292 suítes/4.342 testes), Vitest completo (135 arquivos/1.098 testes), TypeScript/build, lint focado e diff check passaram. Nenhum dado real foi alterado.
 
 ---
+
+# Chamadas — período, paginação e atualização coerentes (12/out/2026)
+
+- [x] Auditar lista, estatísticas, filtros e contrato de paginação no backend.
+- [x] Aplicar o mesmo período à lista e às estatísticas sem ampliar acesso entre restaurantes.
+- [x] Exibir paginação honesta e erro dos números; atualizar todas as consultas com um só botão.
+- [x] Ajustar cabeçalho e filtros para 320 px seguindo Liquid Glass v2.
+- [x] Cobrir o filtro e os estados com testes; rodar suítes completas e build.
+- [ ] Revisar PR e a página publicada em 320/390 px, sem realizar ligações.
+
+Limite: QA de produção somente leitura; nenhuma chamada, mensagem ou alteração de configuração será disparada.
+
+Revisão local: a lista ignorava o filtro 1/7/30/90 dias, enquanto os números o usavam. O backend concatenava `offset` e `limit` como strings: a segunda página com `50`/`50` buscava 5.000 linhas, não 50. Ambos agora compartilham a janela móvel, inclusive na troca de horário de verão, e a API valida/pagina números corretamente. O CSV é rotulado como exportação da página visível. Jest completo: 293 suítes/4.341 testes; Vitest completo: 137 arquivos/1.099 testes. TypeScript/build, sintaxe Node, lint focado e diff check passaram. Publicação e navegador ainda pendentes.
+
+---
