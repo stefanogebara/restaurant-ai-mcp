@@ -657,3 +657,16 @@ Revisão local: a lista ignorava o filtro 1/7/30/90 dias, enquanto os números o
 Revisão integrada com Clientes: 293 suítes/4.348 testes Jest e 137 arquivos/1.101 testes Vitest passaram; TypeScript e build também passaram. Nenhuma ligação, mensagem ou edição de cliente ocorreu na verificação.
 
 ---
+
+# Navegação móvel — cabeçalho sem botão duplicado (12/out/2026)
+
+- [x] Reproduzir em produção, a 320 px, o botão fixo cobrindo o rótulo de WhatsApp e espremendo o título de Chamadas.
+- [x] Manter a entrada "Mais" da barra inferior como único acionador do menu e oferecer botão de fechar dentro do painel.
+- [x] Cobrir abertura e fechamento, build e testes.
+- [ ] Revisar no navegador após a publicação.
+
+Limite: a revisão de produção é somente leitura. Não enviar mensagens nem mudar configurações.
+
+Revisão local: a barra inferior continua abrindo o menu, e o botão dentro do painel o fecha. O teste confirma os ícones presentes. Jest completo passou (293 suítes/4.348 testes), Vitest completo passou (138 arquivos/1.102 testes), lint focado e build/TypeScript passaram. A verificação visual publicada ainda depende do deploy exato.
+
+---

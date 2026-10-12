@@ -138,16 +138,6 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* Mobile Menu Button (top-left hamburger, visible when bottom nav is hidden or as fallback) */}
-      <button
-        onClick={() => setIsMobileOpen(!isMobileOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2.5 bg-deep-charcoal/90 backdrop-blur-sm rounded-xl shadow-lg border border-charcoal-dark text-white focus:outline-none focus:ring-2 focus:ring-burgundy"
-        aria-label={isMobileOpen ? "Close navigation menu" : "Open navigation menu"}
-        aria-expanded={isMobileOpen}
-      >
-        <ThiingsIcon name="menu" pxSize={20} />
-      </button>
-
       {/* Mobile Overlay */}
       {isMobileOpen && (
         <div
@@ -158,6 +148,7 @@ export default function Sidebar() {
 
       {/* Sidebar */}
       <aside
+        id="dashboard-sidebar"
         className={`
           fixed top-0 left-0 h-full bg-deep-charcoal z-40
           lg:top-4 lg:bottom-4 lg:left-4 lg:h-auto
@@ -191,6 +182,14 @@ export default function Sidebar() {
               <span className={`inline-flex transition-transform ${isCollapsed ? 'rotate-180' : ''}`}>
                 <ThiingsIcon name="chevron-left" pxSize={18} />
               </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsMobileOpen(false)}
+              aria-label={t('common.closeMenu')}
+              className="lg:hidden p-2 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-white/30"
+            >
+              <ThiingsIcon name="close" pxSize={20} />
             </button>
           </div>
 
@@ -511,12 +510,12 @@ export default function Sidebar() {
         aria-label="Mobile navigation"
       >
         <div className="flex items-center justify-around px-2 py-1 pb-[max(0.25rem,env(safe-area-inset-bottom))]">
-          {[
+          {([
             { path: '/host-dashboard/simple', label: t('navigation.dashboard', 'Dashboard'), icon: 'layout-dashboard' },
             { path: '/host-dashboard/floor-plan', label: t('navigation.tables', 'Tables'), icon: 'table' },
             { path: '/host-dashboard/manager-ai', label: 'AI', icon: 'message-circle' },
             { path: '/host-dashboard/settings', label: t('navigation.restaurantSettings', 'Settings'), icon: 'settings' },
-          ].map((item) => {
+          ] as const).map((item) => {
             const active = isActive(item.path);
             return (
               <Link
@@ -528,7 +527,7 @@ export default function Sidebar() {
                     : 'text-stone-500 active:text-stone-300'
                 }`}
               >
-                <ThiingsIcon name={item.icon as any} pxSize={20} />
+                <ThiingsIcon name={item.icon} pxSize={20} />
                 <span className="text-[10px] font-medium leading-tight">{item.label}</span>
                 {active && <span className="w-1 h-1 rounded-full bg-burgundy" />}
               </Link>
@@ -537,6 +536,8 @@ export default function Sidebar() {
           <button
             type="button"
             onClick={() => setIsMobileOpen(true)}
+            aria-controls="dashboard-sidebar"
+            aria-expanded={isMobileOpen}
             className="flex flex-col items-center gap-0.5 px-3 py-2 rounded-lg transition-colors min-w-[60px] text-stone-500 active:text-stone-300"
           >
             <ThiingsIcon name="menu" pxSize={20} />
