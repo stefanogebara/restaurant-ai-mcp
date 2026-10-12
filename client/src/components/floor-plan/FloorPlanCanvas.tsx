@@ -72,7 +72,7 @@ export default function FloorPlanCanvas({
   const { t } = useTranslation();
   return (
     <div
-      className="rounded-lg border border-glass-border-dark overflow-hidden"
+      className="min-w-[720px] rounded-lg border border-glass-border-dark overflow-hidden sm:min-w-0"
       style={{ background: '#F5F2EC' }}
     >
       {isLoading ? (
@@ -90,13 +90,13 @@ export default function FloorPlanCanvas({
           </p>
         </div>
       ) : (
-        <div style={{ overflowX: 'auto' }}>
+        <div>
           <svg
             ref={svgRef}
             width="100%"
             viewBox={`0 0 ${SVG_W} ${SVG_H}`}
             className="block select-none"
-            style={{ minHeight: 380, minWidth: 400, maxWidth: '100%', touchAction: 'none' }}
+            style={{ minHeight: 380, touchAction: 'auto' }}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
             /* No onPointerLeave={onPointerUp}: handlePointerDown calls
@@ -180,7 +180,7 @@ export default function FloorPlanCanvas({
                 <g
                   key={table.id}
                   className={linkMode ? 'cursor-pointer' : 'cursor-grab'}
-                  style={{ opacity: isDragging ? 0.8 : 1 }}
+                  style={{ opacity: isDragging ? 0.8 : 1, touchAction: 'none' }}
                   filter={isDragging ? 'url(#edShadDrag)' : 'url(#edShad)'}
                   onPointerDown={e => onPointerDown(e, table)}
                   onClick={e => onTableClick(e, table)}

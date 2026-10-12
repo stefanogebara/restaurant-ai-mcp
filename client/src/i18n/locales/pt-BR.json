@@ -1863,6 +1863,8 @@
   "floorPlan": {
     "title": "Planta do Salão",
     "subtitle": "Arraste as mesas para organizar o layout do seu restaurante · Clique em uma mesa para editar · Use \"Vincular Mesas\" para juntar mesas adjacentes",
+    "mobileSubtitle": "Toque numa mesa para editar ou arraste para reorganizar.",
+    "mobilePanHint": "Deslize a área vazia para explorar toda a planta.",
     "saving": "Salvando...",
     "saved": "Salvo",
     "linking": "Vinculando...",
