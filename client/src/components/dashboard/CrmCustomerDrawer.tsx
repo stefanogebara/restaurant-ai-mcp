@@ -17,7 +17,7 @@ export default function CrmCustomerDrawer({ customerId, onClose }: CrmCustomerDr
   const { t } = useTranslation();
   const isOpen = !!customerId;
 
-  const { data: customer, isLoading } = useCustomerDetail(customerId);
+  const { data: customer, isLoading, isError, refetch } = useCustomerDetail(customerId);
   const updateTags = useUpdateTags();
   const addNote = useAddNote();
   const deleteNote = useDeleteNote();
@@ -63,13 +63,24 @@ export default function CrmCustomerDrawer({ customerId, onClose }: CrmCustomerDr
 
           {/* Drawer */}
           <motion.div
+            role="dialog"
+            aria-modal="true"
+            aria-label={t('crm.customerDetails')}
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="fixed right-0 top-0 h-full w-[420px] max-w-[90vw] bg-glass-modal backdrop-blur-glass-modal shadow-glass-modal z-50 overflow-y-auto border-l border-glass-border-dark"
+            className="fixed right-0 top-0 h-full w-full sm:w-[420px] sm:max-w-[90vw] bg-glass-modal backdrop-blur-glass-modal shadow-glass-modal z-50 overflow-y-auto border-l border-glass-border-dark"
           >
-            {isLoading || !customer ? (
+            {isError ? (
+              <div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center">
+                <p className="text-sm text-deep-charcoal">{t('crm.detailLoadFailed')}</p>
+                <div className="flex gap-3">
+                  <button type="button" onClick={() => void refetch()} className="rounded-[100px] bg-burgundy px-4 py-2 text-sm text-white">{t('common.retry')}</button>
+                  <button type="button" onClick={onClose} className="rounded-[100px] border border-glass-border-dark px-4 py-2 text-sm text-deep-charcoal">{t('common.close')}</button>
+                </div>
+              </div>
+            ) : isLoading || !customer ? (
               <div className="flex items-center justify-center h-full">
                 <div className="animate-spin rounded-full h-8 w-8 border-2 border-border-gray border-t-burgundy" />
               </div>
@@ -124,7 +135,7 @@ export default function CrmCustomerDrawer({ customerId, onClose }: CrmCustomerDr
                     />
                     <StatBox
                       label={t('crm.churnRisk', 'Risco de Churn')}
-                      value={customer.churn_risk_score != null ? `${customer.churn_risk_score}%` : '--'}
+                      value={customer.churn_risk_score != null ? `${customer.churn_risk_score}/100` : '--'}
                       valueColor={customer.churn_risk_score > 50 ? 'text-red-600' : undefined}
                     />
                   </div>
@@ -139,6 +150,7 @@ export default function CrmCustomerDrawer({ customerId, onClose }: CrmCustomerDr
 
                   {/* Profile Sections (Allergies, Dietary, Seating, Occasions) */}
                   <CustomerProfileSections
+                    key={customer.customer_id}
                     customerId={customer.customer_id}
                     allergies={customer.allergies || []}
                     dietaryRestrictions={customer.dietary_restrictions || []}
@@ -264,17 +276,30 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 function StatusBadge({ status }: { status: string }) {
+  const { t } = useTranslation();
   const colorMap: Record<string, string> = {
     confirmed: 'bg-emerald-600/[0.10] text-emerald-700',
-    completed: 'bg-burgundy/[0.08] text-burgundy',
+    completed: 'bg-emerald-600/[0.10] text-emerald-700',
     cancelled: 'bg-red-700/[0.08] text-red-700',
+    canceled: 'bg-red-700/[0.08] text-red-700',
     'no-show': 'bg-amber-600/[0.12] text-amber-700',
-    pending: 'bg-muted-stone/[0.10] text-muted-stone',
+    no_show: 'bg-amber-600/[0.12] text-amber-700',
+    pending: 'bg-amber-600/[0.12] text-amber-700',
   };
-  const cls = colorMap[status.toLowerCase()] || colorMap.pending;
+  const statusKey = status.toLowerCase();
+  const cls = colorMap[statusKey] || colorMap.pending;
+  const labels: Record<string, string> = {
+    confirmed: t('crm.statusConfirmed'),
+    completed: t('crm.statusCompleted'),
+    cancelled: t('crm.statusCancelled'),
+    canceled: t('crm.statusCancelled'),
+    'no-show': t('crm.statusNoShow'),
+    no_show: t('crm.statusNoShow'),
+    pending: t('crm.statusPending'),
+  };
   return (
     <span className={`text-[10px] font-semibold uppercase tracking-[0.08em] px-2 py-0.5 rounded-[46px] ${cls}`}>
-      {status}
+      {labels[statusKey] || status}
     </span>
   );
 }

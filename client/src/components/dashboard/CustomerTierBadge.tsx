@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import ThiingsIcon from '../common/ThiingsIcon';
 
 interface CustomerTierBadgeProps {
   tier?: 'new' | 'occasional' | 'regular' | 'vip' | 'at_risk';
@@ -17,8 +18,8 @@ const TIER_STYLES: Record<string, {
   labels: Record<string, string>;
 }> = {
   vip: {
-    bg: 'bg-burgundy/[0.10]',
-    text: 'text-burgundy',
+    bg: 'bg-deep-charcoal/[0.06]',
+    text: 'text-deep-charcoal',
     labels: { en: 'VIP', 'pt-BR': 'VIP', es: 'VIP' },
   },
   regular: {
@@ -70,9 +71,7 @@ export default function CustomerTierBadge({ tier, visitCount, compact = false }:
   return (
     <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2.5 py-0.5 rounded-[46px] ${style.bg} ${style.text} uppercase tracking-[0.08em]`}>
       {tier === 'vip' && (
-        <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-          <path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.3 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8z" />
-        </svg>
+        <ThiingsIcon name="star" pxSize={10} />
       )}
       {label}
       {visitCount != null && visitCount > 1 && (

@@ -70,16 +70,27 @@ describe('CustomersPage', () => {
     respondWith([mkCustomer()]);
     renderWithProviders(<CustomersPage />);
 
-    expect(await screen.findByText('Beatriz Costa')).toBeInTheDocument();
-    expect(screen.getByText('+5511999990001')).toBeInTheDocument();
-    expect(screen.getByText('6')).toBeInTheDocument();
+    expect((await screen.findAllByText('Beatriz Costa')).length).toBe(2);
+    expect(screen.getAllByText('+5511999990001').length).toBe(2);
+    expect(screen.getAllByText('6').length).toBe(2);
+  });
+
+  it('no celular mantém as métricas no mesmo botão do cliente', async () => {
+    respondWith([mkCustomer()]);
+    renderWithProviders(<CustomersPage />);
+
+    const mobileCustomer = await screen.findByRole('button', { name: /Beatriz Costa/ });
+    expect(within(mobileCustomer).getByText('Visits')).toBeInTheDocument();
+    expect(within(mobileCustomer).getByText('Last Visit')).toBeInTheDocument();
+    expect(within(mobileCustomer).getByText('Estimated value')).toBeInTheDocument();
+    expect(within(mobileCustomer).getByText('$1,840')).toBeInTheDocument();
   });
 
   it('mostra no máximo 3 tags e resume o resto', async () => {
     respondWith([mkCustomer()]);
     renderWithProviders(<CustomersPage />);
 
-    await screen.findByText('Beatriz Costa');
+    await screen.findAllByText('Beatriz Costa');
     expect(screen.getByText('terraço')).toBeInTheDocument();
     expect(screen.getByText('vinho')).toBeInTheDocument();
     expect(screen.getByText('aniversário')).toBeInTheDocument();
@@ -92,7 +103,7 @@ describe('CustomersPage', () => {
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     respondWith([mkCustomer()]);
     renderWithProviders(<CustomersPage />);
-    await screen.findByText('Beatriz Costa');
+    await screen.findAllByText('Beatriz Costa');
 
     const callsBefore = authFetch.mock.calls.length;
     await user.type(screen.getByRole('textbox', { name: /search customers/i }), 'bea');
@@ -108,7 +119,7 @@ describe('CustomersPage', () => {
     // 60 clientes = 3 páginas de 25.
     respondWith([mkCustomer()], 60);
     renderWithProviders(<CustomersPage />);
-    await screen.findByText('Beatriz Costa');
+    await screen.findAllByText('Beatriz Costa');
 
     await user.click(screen.getByRole('button', { name: /next/i }));
     await waitFor(() => expect(lastUrl()).toContain('offset=25'));
@@ -123,7 +134,7 @@ describe('CustomersPage', () => {
   it('desabilita a paginação nos extremos', async () => {
     respondWith([mkCustomer()], 60);
     renderWithProviders(<CustomersPage />);
-    await screen.findByText('Beatriz Costa');
+    await screen.findAllByText('Beatriz Costa');
 
     expect(screen.getByRole('button', { name: /previous/i })).toBeDisabled();
     expect(screen.getByRole('button', { name: /next/i })).toBeEnabled();
@@ -134,8 +145,21 @@ describe('CustomersPage', () => {
     respondWith([mkCustomer({ customer_id: 'abc-123' })]);
     renderWithProviders(<CustomersPage />);
 
-    await user.click(await screen.findByText('Beatriz Costa'));
+    await screen.findAllByText('Beatriz Costa');
+    await user.click(screen.getByRole('button', { name: /Beatriz Costa/ }));
     expect(within(screen.getByTestId('drawer')).getByText('abc-123')).toBeInTheDocument();
+  });
+
+  it('abre o mesmo cliente pelo teclado na tabela', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    respondWith([mkCustomer({ customer_id: 'keyboard-guest' })]);
+    renderWithProviders(<CustomersPage />);
+    const row = await screen.findByRole('row', { name: /Beatriz Costa/ });
+
+    row.focus();
+    await user.keyboard('{Enter}');
+
+    expect(within(screen.getByTestId('drawer')).getByText('keyboard-guest')).toBeInTheDocument();
   });
 
   it('CRM vazio explica como os clientes chegam, em vez de só dizer "nada aqui"', async () => {

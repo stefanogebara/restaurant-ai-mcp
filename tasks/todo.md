@@ -21,11 +21,11 @@ Revisão: o algoritmo calcula uma pontuação saturada entre 0 e 100, não uma p
 - [x] Mostrar o nome real, o status localizado e datas na língua da interface.
 - [x] Trocar a tabela densa por uma lista legível no desktop e no celular.
 - [x] Revisar automações e formulário sem disparar mensagens reais.
-- [ ] Cobrir com testes, build e navegação; publicar apenas após os checks.
+- [x] Cobrir com testes, build e navegação; publicar apenas após os checks.
 
 Limite: nenhuma campanha, automação ou mensagem será ativada ou enviada em produção durante a revisão.
 
-Revisão: o histórico usa o nome salvo em `metadata.name`, traduz estados legados e não mostra um falso total de destinatários. O endpoint agora confirma a posse da campanha antes de ler métricas ou iniciar envio. O fluxo manual continua sem entrega confiável: o formulário omitia o canal WhatsApp, o backend assumia e-mail e o processador só buscava WhatsApp; por isso a criação foi pausada na interface e o atalho duplicado em Insights virou leitura + link. Automação permanece configurável sem alterações nesta rodada. Testes focados (6 backend, 6 frontend), Jest completo (280 suítes/4.252 testes), Vitest completo (112 arquivos/1.015 testes), TypeScript, build e ESLint focado passaram. A revisão visual da versão nova ainda precisa fechar.
+Revisão: o histórico usa o nome salvo em `metadata.name`, traduz estados legados e não mostra um falso total de destinatários. O endpoint agora confirma a posse da campanha antes de ler métricas ou iniciar envio. O fluxo manual continua sem entrega confiável: o formulário omitia o canal WhatsApp, o backend assumia e-mail e o processador só buscava WhatsApp; por isso a criação foi pausada na interface e o atalho duplicado em Insights virou leitura + link. Automação permanece configurável sem alterações nesta rodada. Testes focados (6 backend, 6 frontend), Jest completo (280 suítes/4.252 testes), Vitest completo (112 arquivos/1.015 testes), TypeScript, build e ESLint focado passaram. Produção confirmou em 899 e 390 px: histórico legível, estado pendente e detalhe sem falso dado de entrega; automações examinadas sem ativação. Nenhum envio real.
 
 ---
 
@@ -439,5 +439,23 @@ Revisão parcial: 11 testes da página, TypeScript, JSON dos três idiomas e `gi
 Direção: conteúdo no canvas, controles densos em glass, estado em cor semântica e ação em burgundy. Nenhum teste deve publicar ou agendar conteúdo real.
 
 Revisão local: a geração de uma nova leva de legendas agora reinicia os cartões, para que mídias da leva antiga não sejam publicadas com texto novo. Só um formulário de publicação abre por vez, mas imagens do mesmo rascunho sobrevivem à troca. Adicionados testes para alternância, tradução, lista vazia, mais de cinco agendamentos e isolamento da mídia. Suítes completas: 278/4.246 backend, 113 arquivos/1.017 testes frontend, build de produção e paridade das três traduções passaram. A suíte Playwright existente do Instagram foi atualizada, mas não executada porque depende de `e2e/auth-state.json` ausente neste checkout. Faltam navegador do novo design e produção. A API de agendadas ainda devolve no máximo 50 linhas; paginar é trabalho posterior. O medidor de custo usa `ai_generation_events`, mas os geradores gravam nesse registro sem esperar a gravação; conferir durabilidade antes de chamá-lo de valor faturado.
+
+---
+# Clientes no celular — dados legíveis e abertura acessível (12/out/2026)
+
+- [x] Substituir a tabela cortada por uma lista compacta abaixo de 768 px.
+- [x] Manter nome, nível, visitas, última visita e valor visíveis sem rolagem lateral.
+- [x] Abrir o cliente pelo teclado e pelo toque; cobrir a lista com testes.
+- [x] Chamar o valor previsto de estimativa, não de receita realizada, em Clientes e Insights.
+- [x] Corrigir o contrato do perfil: API aninhada versus cliente plano, histórico por telefone e falha explícita.
+- [ ] Verificar build, suites e a página autenticada no celular após o deploy.
+
+Limite: nenhum perfil, reserva ou dado de cliente será alterado nesta revisão.
+
+Revisão local: a lista móvel mostra métricas em três colunas, tags resumidas e abre o perfil por botão. A tabela desktop também aceita Enter e Espaço. O selo VIP agora usa tinta neutra, sem gastar a cor de ação. Após o rebase sobre #181, Jest completo passou (283 suítes/4.264 testes), Vitest completo passou (121 arquivos/1.044 testes), TypeScript, lint focado, build e `git diff --check` passaram. Falta navegador na versão publicada.
+
+Auditoria do valor: `lifetime_value` vem de `calculatePredictedLTV` e projeta valor futuro; os rótulos agora dizem “valor estimado” nos três idiomas. Não equivale a faturamento recebido.
+
+Auditoria autenticada: abrir Beatriz Costa em produção mostrava cabeçalho vazio, contato “undefined” e métricas ausentes. A API devolve `{ customer, reservations, notes }`, mas o hook tratava o objeto inteiro como cliente; o histórico também buscava `customer_phone = customer_id`. O hook agora adapta o contrato, o backend resolve primeiro o cliente do restaurante e busca pelo telefone real, e uma resposta defeituosa mostra erro com retry em vez de dados vazios. Três testes backend e dois do hook cobrem essas fronteiras; um teste adicional valida o drawer. A receita da tabela LTV pode ser estimada a partir de visitas × ticket médio (inclusive fallback por cobertura); por isso o drawer também usa rótulos de estimativa.
 
 ---

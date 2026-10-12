@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import CustomerTierBadge from '../components/dashboard/CustomerTierBadge';
+import CustomerMobileList from '../components/dashboard/CustomerMobileList';
 import CrmCustomerDrawer from '../components/dashboard/CrmCustomerDrawer';
 import DuplicateCustomersPanel from '../components/dashboard/DuplicateCustomersPanel';
 import { useCustomerList } from '../hooks/useCustomers';
@@ -93,7 +94,7 @@ export default function CustomersPage() {
     <DashboardLayout>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 overflow-x-hidden pb-24 sm:pb-6 mt-14 lg:mt-0">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6 pl-10 sm:pl-0">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
           <div>
             <h1 className="font-serif text-3xl sm:text-4xl text-deep-charcoal tracking-tight">
               {t('crm.pageTitle', 'Customers')}
@@ -248,8 +249,13 @@ export default function CustomersPage() {
             )
           ) : (
             <>
+              <CustomerMobileList
+                customers={customers}
+                onSelect={setSelectedCustomerId}
+                formatLastVisit={(date) => formatRelativeDate(date, t as unknown as TFunction)}
+              />
               {/* Desktop table */}
-              <div className="overflow-x-auto">
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b hairline">
@@ -278,7 +284,14 @@ export default function CustomersPage() {
                       <tr
                         key={c.customer_id}
                         onClick={() => setSelectedCustomerId(c.customer_id)}
-                        className="border-b hairline last:border-0 hover:bg-deep-charcoal/[0.02] cursor-pointer transition-colors"
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault();
+                            setSelectedCustomerId(c.customer_id);
+                          }
+                        }}
+                        tabIndex={0}
+                        className="border-b hairline last:border-0 hover:bg-deep-charcoal/[0.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-burgundy/50 cursor-pointer transition-colors"
                       >
                         <td className="px-4 py-3">
                           <div>
