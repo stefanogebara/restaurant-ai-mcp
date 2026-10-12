@@ -15,7 +15,7 @@ import { churnSummaryParts } from './proactiveCommsCopy';
  * Proactive Comms Panel — manager inbox for re-engagement opportunities
  * (birthdays, churn risks) generated weekly by api/cron/proactive-comms.js.
  *
- * Each opportunity has an AI-drafted message the manager can edit, then
+ * Each opportunity has a grounded draft the manager can edit, then
  * approve and send via WhatsApp.
  */
 export default function ProactiveCommsPanel() {
@@ -222,7 +222,7 @@ function ProactiveCommCard({
               disabled={item.status === 'sent'}
               rows={4}
               className="w-full rounded-lg border border-glass-border-input bg-warm-white px-3 py-2 text-sm text-deep-charcoal placeholder:text-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy disabled:opacity-60"
-              placeholder={t('proactiveComms.draftPlaceholder', 'AI is drafting this — write your own if you prefer.')}
+              placeholder={t('proactiveComms.draftPlaceholder', 'Write a message using only details you know about this guest.')}
             />
           </div>
 

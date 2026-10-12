@@ -511,7 +511,7 @@
     "typeChurnRisk": "Pode estar se afastando",
     "typeLongAbsent": "Faz tempo que não aparece",
     "draftLabel": "Rascunho da mensagem (edite à vontade)",
-    "draftPlaceholder": "A IA está rascunhando — escreva o seu se preferir.",
+    "draftPlaceholder": "Escreva uma mensagem usando apenas o que você sabe sobre este cliente.",
     "approve": "Aprovar",
     "dismiss": "Descartar",
     "sendWhatsApp": "Enviar via WhatsApp",

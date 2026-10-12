@@ -12,6 +12,20 @@ Revisão: `/api/guest-profile` devolve `churn_risk_score` de 0 a 100, mas a tela
 
 ---
 
+# Rascunhos proativos — personalização sem invenção (12/out/2026)
+
+- [x] Reproduzir afirmações sem fonte no rascunho publicado e rastrear os fatos disponíveis ao gerador.
+- [x] Gerar mensagens PT/EN/ES apenas com nome, restaurante e ocasião autorizada; sem pratos favoritos ou vantagens imaginadas.
+- [x] Ajustar o texto de edição e cobrir os três idiomas, sem modificar os rascunhos já existentes.
+- [x] Validar testes e build sem aprovar nem enviar mensagens.
+- [ ] Revisar PR, publicar e verificar o novo texto sem enviar mensagens.
+
+Limite: alterar somente o código de novos rascunhos; mensagens já na fila requerem revisão humana e não serão reescritas em produção.
+
+Revisão local: a tela publicada sugeria "aquele seu prato favorito" para uma cliente cuja oportunidade continha somente nome, restaurante, número de visitas e última visita. O gerador livre podia inventar memória ou oferta. O novo rascunho é determinístico, curto e localiza apenas fatos realmente presentes; ocasiões conhecidas são traduzidas, rótulos desconhecidos não são reproduzidos. O campo vazio deixa de afirmar que a IA está redigindo. Jest completo: 291 suítes/4.338 testes; Vitest: 132 arquivos/1.089 testes; build/TypeScript e teste focado após o último ajuste passaram. Publicação ainda pendente.
+
+---
+
 # Configurações — localização legível e fiel (12/out/2026)
 
 - [x] Verificar no navegador autenticado a página em 320 px e identificar fusos com offsets fixos incorretos no horário de verão.
