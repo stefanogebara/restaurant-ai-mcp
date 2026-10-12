@@ -1509,3 +1509,6 @@ O herói fotográfico foi aprovado isoladamente, mas ficou cromaticamente separa
 ## 2026-10-12 — Não parar na primeira tela corrigida
 
 Quando o pedido é continuidade do design na plataforma, uma correção isolada não encerra o trabalho. Revisar as superfícies vizinhas e suas fontes de verdade, testar o fluxo entre elas e registrar o que está local, integrado e publicado. Uma página nova não pode conviver com uma aba antiga que contradiz seu estado — como WhatsApp “Conexão assistida” e Voz “Conectado” para o mesmo restaurante.
+# 2026-10-12 — Número compartilhado não é status por restaurante
+
+Um número global pode estar registrado na plataforma e ainda apontar para o agente errado. Nunca use uma flag local `active` como prova de roteamento. Antes de permitir ativação, desativação, teste ou divulgar o número, confirme a titularidade do restaurante no banco e o vínculo real do número ao agente. Se não houver prova, bloqueie self-service e mostre “revisão necessária”, não “conectado”.

@@ -15,9 +15,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { toCsv, downloadCsv } from '../utils/exportCsv';
 import { todayLocalISO } from '../utils/timeFormatting';
 import ThiingsIcon from '../components/common/ThiingsIcon';
-import ConfirmModal from '../components/common/ConfirmModal';
 import CallPhoneStatusCard from '../components/call-tracking/CallPhoneStatusCard';
-import CallDiagnosticsPanel from '../components/call-tracking/CallDiagnosticsPanel';
 import CallFilters from '../components/call-tracking/CallFilters';
 import CallStatsOverview from '../components/call-tracking/CallStatsOverview';
 import CallConversationList from '../components/call-tracking/CallConversationList';
@@ -29,10 +27,6 @@ import {
   useCallStats,
   usePhoneStatus,
   useConversationDetail,
-  useSetupPhone,
-  useDisconnectPhone,
-  useDiagnoseAgent,
-  useFixTools,
 } from '../hooks/useCallTracking';
 
 import type { CallFilter } from '../components/call-tracking/callTrackingTypes';
@@ -41,12 +35,9 @@ export default function CallTrackingDashboard() {
   const { t } = useTranslation();
   const [filter, setFilter] = useState<CallFilter>({ period: '7d', outcome: 'all', language: 'all' });
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
-  const [showDiagnosePanel, setShowDiagnosePanel] = useState(false);
   const [guestProfilePhone, setGuestProfilePhone] = useState<string | null>(null);
-  // Confirm-disconnect modal state — replaces the native window.confirm() prompt.
-  const [showDisconnectConfirm, setShowDisconnectConfirm] = useState(false);
 
-  const { success: toastSuccess, error: toastError, info: toastInfo } = useToast();
+  const { info: toastInfo } = useToast();
   const { user } = useAuth();
   // Source of truth is the JWT, not localStorage. LS_RESTAURANT_ID was read in
   // 3 places but written nowhere — every read returned empty string, which
@@ -68,75 +59,6 @@ export default function CallTrackingDashboard() {
   const { data: selectedConversation } = useConversationDetail(selectedConversationId);
 
   const conversations = convsResult?.conversations ?? [];
-
-  // ─── Mutations ───────────────────────────────────────────────────────────────
-
-  const setupPhone = useSetupPhone();
-  const disconnectPhone = useDisconnectPhone();
-  const diagnose = useDiagnoseAgent();
-  const fixTools = useFixTools();
-
-  // ─── Handlers ────────────────────────────────────────────────────────────────
-
-  const handleSetupPhone = () => {
-    if (!restaurant_id) {
-      toastError(t('callTracking.noRestaurantId', 'No restaurant configured. Please complete onboarding first.'));
-      return;
-    }
-    setupPhone.mutate(restaurant_id, {
-      onSuccess: (data) => toastSuccess(data.message || t('callTracking.phoneConnected')),
-      onError: (err) => toastError(err.message || t('callTracking.phoneSetupFailed')),
-    });
-  };
-
-  const handleDisconnect = () => {
-    if (!restaurant_id) {
-      toastError(t('callTracking.noRestaurantId', 'No restaurant configured. Please complete onboarding first.'));
-      return;
-    }
-    setShowDisconnectConfirm(true);
-  };
-
-  const performDisconnect = () => {
-    if (!restaurant_id) return;
-    setShowDisconnectConfirm(false);
-    disconnectPhone.mutate(restaurant_id, {
-      onSuccess: () => {
-        toastSuccess(t('callTracking.phoneDisconnected'));
-        setShowDiagnosePanel(false);
-      },
-      onError: (err) => toastError(err.message || t('callTracking.disconnectFailed')),
-    });
-  };
-
-  const handleDiagnose = () => {
-    if (!restaurant_id) {
-      toastError(t('callTracking.noRestaurantId', 'No restaurant configured. Please complete onboarding first.'));
-      return;
-    }
-    setShowDiagnosePanel(true);
-    diagnose.mutate(restaurant_id, {
-      onSuccess: () => toastSuccess(t('callTracking.diagnosticsLoaded')),
-      onError: (err) => {
-        toastError(err.message || t('callTracking.diagnosticsFailed'));
-        setShowDiagnosePanel(false);
-      },
-    });
-  };
-
-  const handleFixTools = () => {
-    if (!restaurant_id) {
-      toastError(t('callTracking.noRestaurantId', 'No restaurant configured. Please complete onboarding first.'));
-      return;
-    }
-    fixTools.mutate(restaurant_id, {
-      onSuccess: (data) => {
-        toastSuccess(data.message || t('callTracking.toolsConfigured'));
-        handleDiagnose();
-      },
-      onError: (err) => toastError(err.message || t('callTracking.toolsFixFailed')),
-    });
-  };
 
   // ─── Render ──────────────────────────────────────────────────────────────────
 
@@ -223,24 +145,9 @@ export default function CallTrackingDashboard() {
           <CallPhoneStatusCard
             phoneStatus={phoneStatusQuery.data ?? null}
             phoneStatusLoading={phoneStatusQuery.isLoading}
-            setupLoading={setupPhone.isPending}
-            diagnoseLoading={diagnose.isPending}
-            disconnectLoading={disconnectPhone.isPending}
-            onSetupPhone={handleSetupPhone}
-            onDiagnose={handleDiagnose}
-            onDisconnect={handleDisconnect}
+            phoneStatusError={phoneStatusQuery.isError}
             onRefreshStatus={() => { phoneStatusQuery.refetch(); toastInfo(t('callTracking.refreshingStatus')); }}
           />
-
-          {showDiagnosePanel && (
-            <CallDiagnosticsPanel
-              diagnoseData={diagnose.data ?? null}
-              diagnoseLoading={diagnose.isPending}
-              fixToolsLoading={fixTools.isPending}
-              onFixTools={handleFixTools}
-              onClose={() => setShowDiagnosePanel(false)}
-            />
-          )}
 
           <CallFilters filter={filter} onChange={setFilter} />
 
@@ -267,17 +174,6 @@ export default function CallTrackingDashboard() {
               onClose={() => setGuestProfilePhone(null)}
             />
           )}
-
-          <ConfirmModal
-            open={showDisconnectConfirm}
-            title={t('callTracking.disconnectTitle', 'Disconnect AI phone?')}
-            message={t('callTracking.confirmDisconnect')}
-            confirmLabel={t('callTracking.disconnect', 'Disconnect')}
-            confirmTone="danger"
-            isLoading={disconnectPhone.isPending}
-            onCancel={() => setShowDisconnectConfirm(false)}
-            onConfirm={performDisconnect}
-          />
 
         </div>
       </div>

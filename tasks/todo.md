@@ -377,7 +377,10 @@ Sandbox account:
 - [x] Corrigir a hierarquia e o texto principal em PT/EN/ES segundo DESIGN.md, sem prometer prontidão não comprovada.
 - [x] Cobrir roteamento legado e tabs com testes; validar build, sintaxe e testes completos.
 - [ ] Revisar no navegador desktop/mobile e registrar diferenças entre local, PR, Preview e produção.
+- [x] Impedir que o número compartilhado de voz seja reatribuído por self-service, conferir titularidade no servidor e remover o falso estado “Ativo” em Voz e Chamadas.
 
 ### Revisão
 
 Local: build e sintaxe das APIs alteradas passaram. Jest: 277 suítes e 4.241 testes passaram (1 suíte e 6 testes pulados). Vitest: 107 arquivos e 1.006 testes passaram. Os testes novos cobrem retornos OAuth, links antigos, montagem de abas e a hierarquia de compartilhamento de reservas. A página de reservas agora apresenta um link principal, QR e código de site opcional; não repete o mesmo link em cinco cartões. A verificação visual autenticada, o estado de publicação e os componentes internos de criação no Instagram ainda estão em aberto; não afirmar que todo o produto foi redesenhado.
+
+A auditoria de Telefone encontrou um risco de roteamento entre restaurantes: a API usava um único número de voz e podia mudar o agente sem invalidar o “Ativo” salvo em outras casas. O backend agora exige dono no banco, bloqueia registrar/desregistrar/testar, não expõe o inventário da plataforma e devolve `needs_review` para antigos registros ativos. Voz e Chamadas mostram orientação assistida sem sugerir encaminhamento antes de verificar o roteamento. Os cinco testes de fronteira de telefone e dois de UI passaram; a suíte completa passou com 278 suítes/4.246 testes backend e 109 arquivos/1.008 testes frontend. Build, TypeScript, sintaxe e navegador pós-publicação ainda precisam de confirmação após o último ajuste.

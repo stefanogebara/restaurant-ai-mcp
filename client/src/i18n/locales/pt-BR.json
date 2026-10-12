@@ -1972,6 +1972,8 @@
     "generating": "Gerando..."
   },
   "callTracking": {
+    "routingNeedsReview": "Roteamento não verificado",
+    "openPhoneSettings": "Ver configuração do telefone",
     "title": "Histórico de Chamadas",
     "today": "Hoje",
     "refresh": "Atualizar",
@@ -2896,6 +2898,11 @@
     "noChanges": "Sem alterações configuradas"
   },
   "phoneIntegration": {
+    "assistedTitle": "O telefone precisa de uma verificação de roteamento",
+    "assistedDescription": "O número de voz do Seatable é compartilhado. Precisamos confirmar qual recepcionista IA recebe as ligações antes de você encaminhar a linha do restaurante ou divulgar o número.",
+    "routingUnverified": "Existe uma configuração antiga salva, mas não verificamos se as ligações chegam à recepcionista IA deste restaurante. Não encaminhe sua linha ainda.",
+    "statusUnavailable": "Não conseguimos verificar o telefone agora. Nenhuma conexão foi confirmada.",
+    "requestHelp": "Pedir verificação do telefone ao Seatable",
     "title": "Telefone da recepcionista IA",
     "platformNumberHelp": "Este é o número de telefone onde sua recepcionista IA atende as ligações. Encaminhe o número principal do restaurante para este, para que toda ligação (até as perdidas) seja atendida.",
     "helpWithForwarding": "Me ajude a encaminhar meu número",

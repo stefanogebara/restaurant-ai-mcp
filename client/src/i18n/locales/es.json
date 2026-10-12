@@ -2577,6 +2577,11 @@
     "noChanges": "Sin cambios configurados"
   },
   "phoneIntegration": {
+    "assistedTitle": "El teléfono necesita una verificación de enrutamiento",
+    "assistedDescription": "El número de voz de Seatable es compartido. Debemos confirmar qué recepcionista IA recibe las llamadas antes de que desvíes la línea de tu restaurante o difundas el número.",
+    "routingUnverified": "Hay una configuración anterior guardada, pero no verificamos si las llamadas llegan a la recepcionista IA de este restaurante. No desvíes tu línea todavía.",
+    "statusUnavailable": "No pudimos comprobar el teléfono ahora. No hay ninguna conexión confirmada.",
+    "requestHelp": "Pedir a Seatable que verifique el teléfono",
     "title": "Teléfono de la recepcionista IA",
     "platformNumberHelp": "Este es el número de teléfono donde tu recepcionista IA atiende las llamadas. Redirige el número principal de tu restaurante a este para que toda llamada (incluso las que pierdes) sea atendida.",
     "helpWithForwarding": "Ayúdame a redirigir mi número",
@@ -2868,6 +2873,8 @@
     "generating": "Generando..."
   },
   "callTracking": {
+    "routingNeedsReview": "Enrutamiento sin verificar",
+    "openPhoneSettings": "Ver configuración del teléfono",
     "title": "Historial de Llamadas",
     "today": "Hoy",
     "refresh": "Actualizar",

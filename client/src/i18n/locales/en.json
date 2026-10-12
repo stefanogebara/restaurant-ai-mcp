@@ -1966,6 +1966,8 @@
     "generating": "Generating..."
   },
   "callTracking": {
+    "routingNeedsReview": "Routing not verified",
+    "openPhoneSettings": "View phone setup",
     "title": "Call History",
     "today": "Today",
     "refresh": "Refresh",
@@ -2882,6 +2884,11 @@
     "noChanges": "No overrides configured"
   },
   "phoneIntegration": {
+    "assistedTitle": "Phone setup needs a routing check",
+    "assistedDescription": "Seatable's voice number is shared. We must confirm which AI receptionist receives calls before you forward your restaurant's line or invite guests to call it.",
+    "routingUnverified": "An older setup is saved, but we have not verified that calls reach this restaurant's AI receptionist. Do not forward your line yet.",
+    "statusUnavailable": "We couldn't check the phone setup right now. No connection is confirmed.",
+    "requestHelp": "Ask Seatable to verify phone routing",
     "title": "AI receptionist phone",
     "platformNumberHelp": "This is the phone number where your AI receptionist takes calls. Forward your restaurant's main line to this number so every call (including the ones you miss) gets answered.",
     "helpWithForwarding": "Help me forward my number",

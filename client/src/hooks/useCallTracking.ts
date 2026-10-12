@@ -1,11 +1,10 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { authFetch } from '../services/api';
 import { ANALYTICS_POLL_INTERVAL, ANALYTICS_STALE_TIME } from '../config/constants';
 import type {
   Conversation,
   Stats,
   PhoneStatusData,
-  DiagnoseData,
   CallFilter,
 } from '../components/call-tracking/callTrackingTypes';
 
@@ -63,16 +62,14 @@ export function usePhoneStatus(restaurantId: string) {
   return useQuery<PhoneStatusData | null>({
     queryKey: ['phone-status', restaurantId],
     queryFn: async () => {
-      if (!restaurantId) return null;
-      const res = await authFetch(
-        `/api/phone-integration-simple?action=status&restaurant_id=${restaurantId}`
-      );
+      // The server resolves the owned restaurant from the authenticated user.
+      // Never send mutable profile metadata as tenant scope for this endpoint.
+      const res = await authFetch('/api/phone-integration-simple?action=status');
       if (!res.ok) throw new Error('Failed to fetch phone status');
       const data = await res.json();
       if (!data.success) throw new Error(data.error || 'Failed to fetch phone status');
       return data.restaurant ?? null;
     },
-    enabled: !!restaurantId,
     staleTime: ANALYTICS_STALE_TIME,
   });
 }
@@ -89,77 +86,5 @@ export function useConversationDetail(conversationId: string | null) {
     },
     enabled: !!conversationId,
     staleTime: Infinity,
-  });
-}
-
-// ─── Mutations ────────────────────────────────────────────────────────────────
-
-export function useSetupPhone() {
-  const queryClient = useQueryClient();
-  return useMutation<{ message?: string }, Error, string>({
-    mutationFn: async (restaurantId) => {
-      const res = await authFetch('/api/phone-integration-simple?action=register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ restaurant_id: restaurantId }),
-      });
-      const data = await res.json().catch(() => ({ success: false, error: 'Unexpected server error' }));
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Failed to set up phone');
-      }
-      return data;
-    },
-    onSuccess: (_, restaurantId) => {
-      queryClient.invalidateQueries({ queryKey: ['phone-status', restaurantId] });
-    },
-  });
-}
-
-export function useDisconnectPhone() {
-  const queryClient = useQueryClient();
-  return useMutation<void, Error, string>({
-    mutationFn: async (restaurantId) => {
-      const res = await authFetch('/api/phone-integration-simple?action=unregister', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ restaurant_id: restaurantId }),
-      });
-      if (!res.ok) throw new Error('Failed to disconnect phone');
-      const data = await res.json();
-      if (!data.success) throw new Error(data.error || 'Failed to disconnect phone');
-    },
-    onSuccess: (_, restaurantId) => {
-      queryClient.invalidateQueries({ queryKey: ['phone-status', restaurantId] });
-    },
-  });
-}
-
-export function useDiagnoseAgent() {
-  return useMutation<DiagnoseData, Error, string>({
-    mutationFn: async (restaurantId) => {
-      const res = await authFetch(
-        `/api/phone-integration-simple?action=diagnose&restaurant_id=${restaurantId}`
-      );
-      if (!res.ok) throw new Error('Failed to diagnose agent');
-      const data = await res.json();
-      if (!data.success) throw new Error(data.error || 'Failed to diagnose agent');
-      return data;
-    },
-  });
-}
-
-export function useFixTools() {
-  return useMutation<{ message?: string }, Error, string>({
-    mutationFn: async (restaurantId) => {
-      const res = await authFetch('/api/phone-integration-simple?action=fix-tools', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ restaurant_id: restaurantId }),
-      });
-      if (!res.ok) throw new Error('Failed to fix tools');
-      const data = await res.json();
-      if (!data.success) throw new Error(data.error || 'Failed to fix tools');
-      return data;
-    },
   });
 }
