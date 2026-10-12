@@ -103,7 +103,7 @@ export default function IntegrationsPage() {
 
   return (
     <DashboardLayout>
-      <div className="max-w-5xl p-6 lg:p-8">
+      <div className="max-w-5xl p-6 mt-14 sm:mt-0 lg:p-8">
         <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone mb-2">
           {t('integrations.eyebrow')}
         </p>

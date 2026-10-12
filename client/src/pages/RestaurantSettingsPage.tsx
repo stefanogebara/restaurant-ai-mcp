@@ -7,6 +7,7 @@
 
 import { useState, useEffect, useRef, useId } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useRestaurantSettings, useUpdateRestaurantSettings } from '../hooks/useRestaurantSettings';
 import type { BusinessHours, ReservationSettings } from '../hooks/useRestaurantSettings';
@@ -17,9 +18,6 @@ import ThiingsIcon from '../components/common/ThiingsIcon';
 import StaffingSettingsPanel from '../components/dashboard/StaffingSettingsPanel';
 import DepositSettingsPanel from '../components/settings/DepositSettingsPanel';
 import CoverPhotoPanel from '../components/settings/CoverPhotoPanel';
-import BookingChannelsPanel from '../components/dashboard/BookingChannelsPanel';
-import { useQuery } from '@tanstack/react-query';
-import { authFetch } from '../services/api';
 import { isDayHoursValid } from '../components/onboarding/Step2Contact';
 
 // Number-input setter that doesn't snap to `fallback` on every keystroke. The
@@ -49,15 +47,6 @@ export default function RestaurantSettingsPage() {
   const toast = useToast();
   const { data: settings, isLoading, error } = useRestaurantSettings();
   const updateMutation = useUpdateRestaurantSettings();
-  const { data: dashData } = useQuery({
-    queryKey: ['hostDashboard'],
-    queryFn: async () => {
-      const res = await authFetch('/host-dashboard?action=dashboard');
-      return res.json();
-    },
-    staleTime: 5 * 60 * 1000,
-  });
-  const slug: string = (dashData as { slug?: string } | undefined)?.slug || '';
 
   // Basic info form
   const [info, setInfo] = useState({
@@ -281,8 +270,22 @@ export default function RestaurantSettingsPage() {
           </p>
         </div>
 
+        <nav aria-label={t('settings.sectionNavigation')} className="mb-8 flex flex-wrap gap-x-5 gap-y-2 text-sm">
+          {([
+            ['restaurant-info', 'restaurantInfo'],
+            ['business-hours', 'businessHours'],
+            ['reservation-policies', 'reservationPolicies'],
+            ['staffing-ratios', 'staffingRatios'],
+            ['reservation-deposits', 'depositTitle'],
+          ] as const).map(([id, label]) => (
+            <a key={id} href={`#${id}`} className="text-muted-stone hover:text-burgundy underline-offset-4 hover:underline">
+              {t(`settings.${label}`)}
+            </a>
+          ))}
+        </nav>
+
         {/* ── Basic Info ── */}
-        <section className="py-5 border-b border-[#E7E5E4] space-y-4">
+        <section id="restaurant-info" className="scroll-mt-6 py-5 border-b border-glass-border-dark space-y-4">
           <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone flex items-center gap-2">
             <ThiingsIcon name="store" pxSize={16} className="text-muted-stone" />
             {t('settings.restaurantInfo', 'Restaurant Info')}
@@ -309,7 +312,7 @@ export default function RestaurantSettingsPage() {
         </section>
 
         {/* ── Business Hours ── */}
-        <section className="py-5 border-b border-[#E7E5E4] space-y-4">
+        <section id="business-hours" className="scroll-mt-6 py-5 border-b border-glass-border-dark space-y-4">
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone flex items-center gap-2">
               <ThiingsIcon name="clock" pxSize={16} className="text-muted-stone" />
@@ -333,9 +336,9 @@ export default function RestaurantSettingsPage() {
               return (
                 <div key={day} className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3 py-2 border-b border-[#F5F5F4] sm:border-b-0 last:border-b-0">
                   <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
-                    <label className="w-16 sm:w-20 text-sm font-medium text-deep-charcoal flex-shrink-0">
+                    <span className="w-16 sm:w-20 text-sm font-medium text-deep-charcoal flex-shrink-0">
                       {dayLabels[day]}
-                    </label>
+                    </span>
                     <label className="flex items-center gap-1.5 flex-shrink-0">
                       <input
                         type="checkbox"
@@ -353,6 +356,7 @@ export default function RestaurantSettingsPage() {
                     <div className="flex items-center gap-2 w-full sm:w-auto sm:flex-1 pl-0 sm:pl-0 ml-0">
                       <input
                         type="time"
+                        aria-label={`${dayLabels[day]} — ${t('settings.openTime')}`}
                         value={dayHours.open_time || '12:00'}
                         onChange={(e) => updateHour(day, 'open_time', e.target.value)}
                         className="min-w-0 flex-1 sm:flex-none sm:w-[120px] px-2 py-1.5 bg-soft-gray border border-glass-border-input rounded-lg text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
@@ -360,6 +364,7 @@ export default function RestaurantSettingsPage() {
                       <span className="text-xs text-muted-stone flex-shrink-0">—</span>
                       <input
                         type="time"
+                        aria-label={`${dayLabels[day]} — ${t('settings.closeTime')}`}
                         value={dayHours.close_time || '23:00'}
                         onChange={(e) => updateHour(day, 'close_time', e.target.value)}
                         className="min-w-0 flex-1 sm:flex-none sm:w-[120px] px-2 py-1.5 bg-soft-gray border border-glass-border-input rounded-lg text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
@@ -377,7 +382,7 @@ export default function RestaurantSettingsPage() {
         </section>
 
         {/* ── Reservation Policies ── */}
-        <section className="py-5 border-b border-[#E7E5E4] space-y-4">
+        <section id="reservation-policies" className="scroll-mt-6 py-5 border-b border-glass-border-dark space-y-4">
           <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone flex items-center gap-2">
             <ThiingsIcon name="settings" pxSize={16} className="text-muted-stone" />
             {t('settings.reservationPolicies', 'Reservation Policies')}
@@ -385,10 +390,11 @@ export default function RestaurantSettingsPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-medium text-muted-stone mb-1">
+              <label htmlFor="advance-booking-days" className="block text-xs font-medium text-muted-stone mb-1">
                 {t('settings.advanceBooking', 'Advance Booking (days)')}
               </label>
               <input
+                id="advance-booking-days"
                 type="number"
                 min="1"
                 max="365"
@@ -398,10 +404,11 @@ export default function RestaurantSettingsPage() {
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-muted-stone mb-1">
+              <label htmlFor="default-dining-duration" className="block text-xs font-medium text-muted-stone mb-1">
                 {t('settings.defaultDiningDuration', 'Default Dining Duration')}
               </label>
               <select
+                id="default-dining-duration"
                 value={policies.default_dining_duration ?? 90}
                 onChange={(e) => patchPolicies({ default_dining_duration: parseInt(e.target.value, 10) })}
                 className="w-full px-3 py-2 bg-soft-gray border border-glass-border-input rounded-xl text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
@@ -413,10 +420,11 @@ export default function RestaurantSettingsPage() {
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-muted-stone mb-1">
+              <label htmlFor="reservation-buffer-minutes" className="block text-xs font-medium text-muted-stone mb-1">
                 {t('settings.bufferTime', 'Buffer Between Reservations (min)')}
               </label>
               <input
+                id="reservation-buffer-minutes"
                 type="number"
                 min="0"
                 max="120"
@@ -426,10 +434,11 @@ export default function RestaurantSettingsPage() {
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-muted-stone mb-1">
+              <label htmlFor="minimum-party-size" className="block text-xs font-medium text-muted-stone mb-1">
                 {t('settings.minPartySize', 'Min Party Size')}
               </label>
               <input
+                id="minimum-party-size"
                 type="number"
                 min="1"
                 max="20"
@@ -439,10 +448,11 @@ export default function RestaurantSettingsPage() {
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-muted-stone mb-1">
+              <label htmlFor="maximum-party-size" className="block text-xs font-medium text-muted-stone mb-1">
                 {t('settings.maxPartySize', 'Max Party Size')}
               </label>
               <input
+                id="maximum-party-size"
                 type="number"
                 min="1"
                 max="50"
@@ -454,10 +464,11 @@ export default function RestaurantSettingsPage() {
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-muted-stone mb-1">
+            <label htmlFor="cancellation-policy" className="block text-xs font-medium text-muted-stone mb-1">
               {t('settings.cancellationPolicy', 'Cancellation Policy')}
             </label>
             <textarea
+              id="cancellation-policy"
               rows={2}
               maxLength={1000}
               // If the stored value is a stable preset key (set during onboarding),
@@ -496,17 +507,21 @@ export default function RestaurantSettingsPage() {
         </section>
 
         {/* ── Staffing Ratios ── */}
-        <section className="py-5 border-b border-[#E7E5E4]">
+        <section id="staffing-ratios" className="scroll-mt-6 py-5 border-b border-glass-border-dark">
           <StaffingSettingsPanel />
         </section>
 
         {/* ── Reservation Deposits ── */}
-        <section className="py-5 border-b border-[#E7E5E4]">
+        <section id="reservation-deposits" className="scroll-mt-6 py-5 border-b border-glass-border-dark">
           <DepositSettingsPanel />
         </section>
 
-        {/* ── Booking Channels ── */}
-        {slug && <BookingChannelsPanel slug={slug} />}
+        <p className="pt-8 text-[15px] text-muted-stone">
+          {t('settings.bookingLinkElsewhere')}{' '}
+          <Link to="/host-dashboard/integrations#integrations:booking" className="text-burgundy hover:text-burgundy-dark underline underline-offset-2">
+            {t('settings.openBookingLinks')}
+          </Link>
+        </p>
       </div>
     </DashboardLayout>
   );
