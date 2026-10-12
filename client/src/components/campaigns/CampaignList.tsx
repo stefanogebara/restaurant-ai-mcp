@@ -5,13 +5,15 @@ import type { Campaign } from '../../hooks/useCampaigns';
 import CampaignDetail from './CampaignDetail';
 import ThiingsIcon from '../common/ThiingsIcon';
 
-const STATUS_STYLES: Record<string, string> = {
-  draft: 'bg-stone-100 text-stone-700',
-  scheduled: 'bg-stone-50 text-stone-700',
-  active: 'bg-amber-50 text-amber-700',
-  sending: 'bg-amber-50 text-amber-700',
-  completed: 'bg-emerald-50 text-emerald-700',
-  failed: 'bg-red-50 text-red-700',
+const STATUS: Record<string, { label: string; style: string }> = {
+  draft: { label: 'campaigns.statusDraft', style: 'bg-soft-gray text-stone-gray' },
+  pending: { label: 'campaigns.statusPending', style: 'bg-amber-50 text-amber-800' },
+  scheduled: { label: 'campaigns.statusScheduled', style: 'bg-amber-50 text-amber-800' },
+  active: { label: 'campaigns.statusActive', style: 'bg-amber-50 text-amber-800' },
+  sending: { label: 'campaigns.statusSending', style: 'bg-amber-50 text-amber-800' },
+  sent: { label: 'campaigns.statusSent', style: 'bg-emerald-50 text-emerald-800' },
+  completed: { label: 'campaigns.statusCompleted', style: 'bg-emerald-50 text-emerald-800' },
+  failed: { label: 'campaigns.statusFailed', style: 'bg-red-50 text-red-800' },
 };
 
 const SEGMENT_LABELS: Record<string, string> = {
@@ -23,115 +25,94 @@ const SEGMENT_LABELS: Record<string, string> = {
   new_customers: 'campaigns.segmentNew',
 };
 
-const STATUS_LABELS: Record<string, string> = {
-  draft: 'campaigns.statusDraft',
-  scheduled: 'campaigns.statusScheduled',
-  active: 'campaigns.statusActive',
-  sending: 'campaigns.statusSending',
-  completed: 'campaigns.statusCompleted',
-  failed: 'campaigns.statusFailed',
-};
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+function formatDate(iso: string, language: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '—';
+  const locale = language.startsWith('pt') ? 'pt-BR' : language.startsWith('es') ? 'es-ES' : 'en-US';
+  return new Intl.DateTimeFormat(locale, {
+    day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
+  }).format(date);
 }
 
 export default function CampaignList() {
-  const { t } = useTranslation();
-  const { data: campaigns, isLoading } = useCampaignList();
+  const { t, i18n } = useTranslation();
+  const { data: campaigns, isLoading, isError, refetch } = useCampaignList();
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   if (isLoading) {
+    return <p role="status" className="py-12 text-sm text-stone-gray">{t('campaigns.loading')}</p>;
+  }
+
+  if (isError) {
     return (
-      <div className="glass-panel p-8 text-center">
-        <p className="text-sm text-stone-gray">{t('campaigns.loading')}</p>
+      <div role="alert" className="py-10 space-y-3">
+        <p className="text-sm text-red-700">{t('campaigns.loadFailed')}</p>
+        <button type="button" onClick={() => void refetch()} className="text-sm font-semibold text-burgundy hover:underline">
+          {t('campaigns.retry')}
+        </button>
       </div>
     );
   }
 
-  if (!campaigns || campaigns.length === 0) {
+  if (!campaigns?.length) {
     return (
-      <div className="glass-panel p-10 text-center">
-        <div className="w-12 h-12 bg-[#F5F5F4] rounded-full flex items-center justify-center mx-auto mb-3">
-          <ThiingsIcon name="send" size="xs" className="text-stone-gray" />
-        </div>
-        <h3 className="text-sm font-medium text-deep-charcoal mb-1">{t('campaigns.noCampaigns')}</h3>
-        <p className="text-xs text-stone-gray">{t('campaigns.noCampaignsHint')}</p>
+      <div className="py-12 text-center">
+        <ThiingsIcon name="send" size="sm" className="text-muted-stone mx-auto mb-4" />
+        <h2 className="font-serif text-2xl text-deep-charcoal">{t('campaigns.noCampaigns')}</h2>
+        <p className="text-sm text-stone-gray mt-2">{t('campaigns.noCampaignsHint')}</p>
       </div>
     );
   }
 
   return (
-    <div className="glass-panel overflow-hidden">
-      {/* Header row */}
-      <div className="hidden sm:grid grid-cols-[1fr_1fr_100px_80px_160px_120px] gap-2 px-4 py-2.5 bg-[#FAFAFA] border-b border-glass-border-dark text-xs font-medium text-stone-gray">
-        <span>{t('campaigns.colName')}</span>
-        <span>{t('campaigns.colSegment')}</span>
-        <span>{t('campaigns.colStatus')}</span>
-        <span className="text-right">{t('campaigns.colRecipients')}</span>
-        <span className="text-center">{t('campaigns.colDelivery')}</span>
-        <span>{t('campaigns.colCreated')}</span>
+    <section aria-label={t('campaigns.history')}>
+      <div className="flex items-baseline justify-between gap-3 mb-4">
+        <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">
+          {t('campaigns.history')}
+        </h2>
+        <span className="text-sm text-stone-gray">{campaigns.length}</span>
       </div>
+      <ul className="hairline">
+        {campaigns.map((campaign: Campaign) => {
+          const expanded = expandedId === campaign.id;
+          const detailId = `campaign-detail-${campaign.id}`;
+          const status = STATUS[campaign.status] ?? { label: 'campaigns.statusUnknown', style: 'bg-soft-gray text-stone-gray' };
+          const name = campaign.name?.trim() || campaign.message?.slice(0, 60) || t('campaigns.unnamedCampaign');
+          const segment = SEGMENT_LABELS[campaign.segment_name];
 
-      {/* Rows */}
-      {campaigns.map((c: Campaign) => {
-        const isExpanded = expandedId === c.id;
-        const segmentLabel = SEGMENT_LABELS[c.segment_name] ?? c.segment_name;
-        const statusStyle = STATUS_STYLES[c.status] ?? STATUS_STYLES.draft;
-        const statusLabel = STATUS_LABELS[c.status] ?? c.status;
-
-        return (
-          <div key={c.id}>
-            <button
-              type="button"
-              onClick={() => setExpandedId(isExpanded ? null : c.id)}
-              className="w-full text-left grid grid-cols-1 sm:grid-cols-[1fr_1fr_100px_80px_160px_120px] gap-2 px-4 py-3 border-b border-glass-border-dark hover:bg-[#FAFAFA] transition-colors items-center"
-            >
-              {/* Name — message preview is the most identifying content because
-                  the user-entered `name` field from CampaignBuilder is silently
-                  dropped at the backend (campaignService.js doesn't persist it).
-                  Falls back to a localized generic label so we never render the
-                  raw campaign_type enum string or hardcoded English "Campaign". */}
-              <span className="text-sm font-medium text-deep-charcoal truncate">
-                {c.message?.slice(0, 60) || t('campaigns.unnamedCampaign', 'Campaign')}
-              </span>
-
-              {/* Segment */}
-              <span className="text-xs text-stone-gray">{t(segmentLabel)}</span>
-
-              {/* Status badge */}
-              <span>
-                <span className={`inline-block text-xs font-medium px-2 py-0.5 rounded-full ${statusStyle}`}>
-                  {t(statusLabel)}
+          return (
+            <li key={campaign.id} className="border-b border-glass-border-dark last:border-b-0">
+              <button
+                type="button"
+                aria-expanded={expanded}
+                aria-controls={expanded ? detailId : undefined}
+                onClick={() => setExpandedId(expanded ? null : campaign.id)}
+                className="w-full py-5 flex items-start gap-4 text-left hover:bg-white/40 focus-visible:outline-2 focus-visible:outline-burgundy rounded-lg transition-colors"
+              >
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[15px] font-semibold text-deep-charcoal break-words">{name}</span>
+                  {campaign.name && campaign.message && (
+                    <span className="block text-sm text-stone-gray mt-1 line-clamp-1">{campaign.message}</span>
+                  )}
+                  <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-stone-gray mt-2">
+                    {segment && <span>{t(segment)}</span>}
+                    {segment && <span aria-hidden="true">·</span>}
+                    <span>{formatDate(campaign.created_at, i18n.language)}</span>
+                    {campaign.sent_count > 0 && (
+                      <span>· {t('campaigns.sentCount', { count: campaign.sent_count })}</span>
+                    )}
+                  </span>
                 </span>
-              </span>
-
-              {/* Recipients */}
-              <span className="text-xs text-deep-charcoal text-right">
-                {c.recipient_count ?? '—'}
-              </span>
-
-              {/* Delivery stats */}
-              <span className="text-xs text-stone-gray text-center">
-                {c.sent_count ?? 0} / {c.delivered_count ?? 0} / {c.read_count ?? 0}
-              </span>
-
-              {/* Created date */}
-              <span className="text-xs text-stone-gray">
-                {formatDate(c.created_at)}
-              </span>
-            </button>
-
-            {/* Expandable detail */}
-            {isExpanded && <CampaignDetail campaign={c} />}
-          </div>
-        );
-      })}
-    </div>
+                <span className={`shrink-0 px-2.5 py-1 rounded-full text-xs font-medium ${status.style}`}>
+                  {t(status.label)}
+                </span>
+                <ThiingsIcon name={expanded ? 'chevron-up' : 'chevron-down'} size="xs" className="shrink-0 text-stone-gray mt-1" />
+              </button>
+              {expanded && <div id={detailId}><CampaignDetail campaign={campaign} /></div>}
+            </li>
+          );
+        })}
+      </ul>
+    </section>
   );
 }

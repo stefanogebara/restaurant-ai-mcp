@@ -1,3 +1,17 @@
+# Marketing — clareza e isolamento (12/out/2026)
+
+- [x] Impedir leitura de métricas e envio de campanhas de outro restaurante.
+- [x] Mostrar o nome real, o status localizado e datas na língua da interface.
+- [x] Trocar a tabela densa por uma lista legível no desktop e no celular.
+- [x] Revisar automações e formulário sem disparar mensagens reais.
+- [ ] Cobrir com testes, build e navegação; publicar apenas após os checks.
+
+Limite: nenhuma campanha, automação ou mensagem será ativada ou enviada em produção durante a revisão.
+
+Revisão: o histórico usa o nome salvo em `metadata.name`, traduz estados legados e não mostra um falso total de destinatários. O endpoint agora confirma a posse da campanha antes de ler métricas ou iniciar envio. O fluxo manual continua sem entrega confiável: o formulário omitia o canal WhatsApp, o backend assumia e-mail e o processador só buscava WhatsApp; por isso a criação foi pausada na interface e o atalho duplicado em Insights virou leitura + link. Automação permanece configurável sem alterações nesta rodada. Testes focados (6 backend, 6 frontend), Jest completo (280 suítes/4.252 testes), Vitest completo (112 arquivos/1.015 testes), TypeScript, build e ESLint focado passaram. A revisão visual da versão nova ainda precisa fechar.
+
+---
+
 # WhatsApp — prova de roteamento antes do teste (11/out/2026)
 
 - [x] Ler o ponteiro do registro central no GET; não anunciar conexão apenas pelo estado salvo no restaurante.

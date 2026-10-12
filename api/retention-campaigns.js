@@ -257,7 +257,7 @@ async function handleCampaignDeliveryStats(req, res) {
       return res.status(400).json({ success: false, error: 'Missing campaign_id' });
     }
 
-    const stats = await getCampaignStats(campaign_id);
+    const stats = await getCampaignStats(campaign_id, req.user.restaurant_id);
     if (!stats) {
       return res.status(404).json({ success: false, error: 'Campaign not found' });
     }
@@ -280,15 +280,22 @@ async function handleSend(req, res) {
     }
 
     // Activate the campaign
-    await supabaseAdmin
+    const { data: ownedCampaign, error: updateError } = await supabaseAdmin
       .schema('restaurant')
       .from('retention_campaigns')
       .update({ status: 'active' })
       .eq('id', campaign_id)
-      .eq('restaurant_id', req.user.restaurant_id);
+      .eq('restaurant_id', req.user.restaurant_id)
+      .select('id')
+      .maybeSingle();
+
+    if (updateError) throw updateError;
+    if (!ownedCampaign) {
+      return res.status(404).json({ success: false, error: 'Campaign not found' });
+    }
 
     // Send first batch immediately
-    const sent = await sendCampaignBatch(campaign_id, 10);
+    const sent = await sendCampaignBatch(campaign_id, 10, req.user.restaurant_id);
 
     return res.status(200).json({ success: true, sent });
   } catch (error) {
