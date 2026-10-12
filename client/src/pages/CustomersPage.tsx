@@ -272,7 +272,7 @@ export default function CustomersPage() {
                         {t('crm.colLastVisit', 'Last Visit')}
                       </th>
                       <th className="text-right px-4 py-3.5 text-[11px] font-semibold text-muted-stone uppercase tracking-[0.12em]">
-                        {t('crm.colLTV', 'LTV')}
+                        {t('crm.colLTV', 'Estimated future value')}
                       </th>
                       <th className="text-left px-4 py-3.5 text-[11px] font-semibold text-muted-stone uppercase tracking-[0.12em]">
                         {t('crm.colTags', 'Tags')}

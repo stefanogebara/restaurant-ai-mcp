@@ -82,7 +82,7 @@ describe('CustomersPage', () => {
     const mobileCustomer = await screen.findByRole('button', { name: /Beatriz Costa/ });
     expect(within(mobileCustomer).getByText('Visits')).toBeInTheDocument();
     expect(within(mobileCustomer).getByText('Last Visit')).toBeInTheDocument();
-    expect(within(mobileCustomer).getByText('Estimated value')).toBeInTheDocument();
+    expect(within(mobileCustomer).getByText('Estimated future value')).toBeInTheDocument();
     expect(within(mobileCustomer).getByText('$1,840')).toBeInTheDocument();
   });
 

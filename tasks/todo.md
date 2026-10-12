@@ -508,3 +508,16 @@ Limite: não alterar perfis, LTV, reservas nem páginas da wiki existentes no ba
 Revisão local: a rota retorna 410 após autenticação, sem carregar o cliente de serviço. A wiki lê somente `restaurant.customer_ltv` filtrando `restaurant_id` e trata os contadores VIP/regular como amostra dos 20 principais, não como totais. Uma falha nessa leitura impede sobrescrever páginas existentes com conteúdo vazio. O novo artigo de clientes recebe prefixo de origem segura no `source_hash`; `getWikiPages` omite artigos antigos sem esse prefixo, evitando que o gerente leia conteúdo compilado da fonte global antes do próximo cron. Os 30 testes focados de endpoint, compilador e cron, Jest completo (286 suítes/4.291 testes), Vitest completo (122 arquivos/1.050 testes), sintaxe e build passaram; testes focados e build foram repetidos após o rebase na Equipe. As tabelas e páginas já persistidas não foram modificadas nesta etapa. Publicação pendente.
 
 ---
+
+# Clientes — leitura do histórico e previsão (12/out/2026)
+
+- [x] Localizar a data de visita e mostrar a hora sem segundos no perfil, em linhas que caibam no celular.
+- [x] Diferenciar na lista o valor futuro estimado do gasto total estimado no perfil.
+- [x] Cobrir a apresentação com testes.
+- [ ] Validar no navegador autenticado depois do deploy.
+
+Observação: a aparente sobreposição do título com o menu em 320 px era a página rolada sob o menu fixo. No topo (`scrollY=0`) não há colisão; não adicionar padding para compensar uma leitura incorreta.
+
+Revisão local: histórico em duas linhas, data formatada no idioma da interface sem deslocar o dia do calendário e hora `HH:mm`. A lista chama a projeção de “Valor futuro estimado” nos três idiomas; o perfil conserva “Gasto total estimado” para outra métrica. Os 12 testes focados passaram; Vitest completo passou (122 arquivos/1.054 testes), Jest completo passou (286 suítes/4.283 testes), build/TypeScript e lint focado passaram. Navegador na versão publicada ainda pendente.
+
+---
