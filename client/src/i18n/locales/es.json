@@ -511,7 +511,7 @@
     "typeChurnRisk": "Probable que se aleje",
     "typeLongAbsent": "Hace tiempo que no viene",
     "draftLabel": "Borrador del mensaje (edita lo que necesites)",
-    "draftPlaceholder": "La IA lo está redactando — escribe el tuyo si prefieres.",
+    "draftPlaceholder": "Escribe un mensaje usando solo lo que sabes de este cliente.",
     "approve": "Aprobar",
     "dismiss": "Descartar",
     "sendWhatsApp": "Enviar por WhatsApp",

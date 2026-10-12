@@ -1,7 +1,7 @@
 /**
  * Cron Job: Proactive Guest Communications (C6)
  *
- * Identifies re-engagement opportunities, generates AI-drafted personalised
+ * Identifies re-engagement opportunities, generates grounded personalised
  * messages, and queues them in `restaurant.proactive_comms_queue` for manager
  * review. Managers approve/edit drafts in the dashboard, then the API sends
  * the message via WhatsApp.
@@ -24,7 +24,6 @@
 const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { logCronRun } = require('../_lib/cron-tracker');
-const { getAI, AI_MODEL_FAST } = require('../_lib/ai-client');
 const { isCronEnabled } = require('../_lib/cron-config');
 const { bearerEquals } = require('../_lib/secure-compare');
 
@@ -59,13 +58,15 @@ const MAX_OPPORTUNITIES_PER_RESTAURANT_PER_RUN = 25;
 //
 // O conserto tem três partes, e a terceira é a que importa mais:
 //   1. as consultas de candidatos viraram 3 no total, não 2 por restaurante;
-//   2. a deduplicação acontece ANTES do LLM, não depois;
+//   2. a deduplicação acontece ANTES da geração do rascunho, não depois;
 //   3. orçamento de tempo conferido DENTRO do laço de oportunidades. A lição do
 //      update-churn-scores (24/08) foi exatamente esta: orçamento conferido só
 //      ENTRE restaurantes não protege de nada, porque um restaurante grande
 //      atravessa o limite inteiro sem ninguém olhar. Agora a rodada sempre
 //      alcança o logCronRun e diz honestamente o que deixou para a semana
 //      seguinte, em vez de morrer em silêncio.
+// Em 12/10/2026 o rascunho passou a ser determinístico: o LLM inventava
+// pratos favoritos e vantagens que não constavam nos dados do cliente.
 const TIME_BUDGET_MS = 45_000;
 // Teto de leitura dos candidatos. Alto de propósito: limitar a LEITURA é o que
 // cria fome de fila (ver MAX_ARQUIVO_CANDIDATOS em prospect-score-outcomes.js).
@@ -148,10 +149,7 @@ module.exports = async (req, res) => {
         ].slice(0, MAX_OPPORTUNITIES_PER_RESTAURANT_PER_RUN);
 
         for (const opp of opportunities) {
-          // DEDUPE ANTES DO LLM. Era aqui que a rodada queimava o relógio:
-          // generateDraftMessage roda dentro de queueOpportunity, ou seja,
-          // ANTES do INSERT que descobre a duplicata. Toda linha já pendente
-          // custava uma chamada de Haiku para ser jogada fora no 23505.
+          // Deduplicar antes de montar o rascunho e tentar o INSERT.
           if (jaPendentes.has(chaveFila(restaurant.id, opp.type, opp.customer_phone))) {
             stats.skipped_duplicate++;
             continue;
@@ -203,7 +201,7 @@ module.exports = async (req, res) => {
 // ────────────────────────────────────────────────────────────────────────────
 
 /** Chave do índice único parcial `idx_pcq_active_dedup`: uma linha PENDENTE por
- *  (restaurante, tipo, telefone). Usada para deduplicar ANTES de gastar LLM. */
+ *  (restaurante, tipo, telefone). Usada para deduplicar antes do INSERT. */
 function chaveFila(restaurantId, type, phone) {
   return `${restaurantId}|${type}|${phone}`;
 }
@@ -341,17 +339,9 @@ async function queueOpportunity(restaurant, opp) {
   const expiresAt = addDays(new Date(), QUEUE_TTL_DAYS).toISOString();
   const lang = normaliseLang(restaurant.agent_language);
 
-  // Generate AI message draft (Haiku — cheap)
-  let draftMessage = null;
-  try {
-    draftMessage = await generateDraftMessage(restaurant, opp, lang);
-  } catch (err) {
-    logger.warn('Draft message generation failed (will queue without draft)', {
-      restaurantId: restaurant.id,
-      type: opp.type,
-      error: err.message,
-    });
-  }
+  // Build a grounded draft from facts we actually have. A previous LLM draft
+  // claimed guests had a favourite dish without any menu/preference evidence.
+  const draftMessage = generateDraftMessage(restaurant, opp, lang);
 
   const triggerData = opp.type === 'occasion'
     ? { occasion_label: opp.occasion_label, occasion_date: opp.occasion_date, total_visits: opp.total_visits }
@@ -421,48 +411,37 @@ async function expireStalePendingItems() {
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-// AI DRAFT GENERATION
+// GROUNDED DRAFT GENERATION
 // ────────────────────────────────────────────────────────────────────────────
 
-/** Generate a personalised WhatsApp-friendly draft (PT/ES/EN) using Haiku. */
-async function generateDraftMessage(restaurant, opp, lang) {
-  const ai = getAI();
-  if (!ai) return null;
+/** Short WhatsApp draft using only known facts; a manager still approves it. */
+function generateDraftMessage(restaurant, opp, lang) {
+  const restaurantName = String(restaurant.restaurant_name || '').trim().replace(/\s+/g, ' ').slice(0, 120);
+  if (!restaurantName) return null;
 
-  const customerName = opp.customer_name || (lang === 'pt-BR' ? 'cliente' : lang === 'es' ? 'cliente' : 'guest');
+  const customerName = String(opp.customer_name || '').trim().replace(/\s+/g, ' ').slice(0, 60);
+  const language = normaliseLang(lang);
+  const greeting = customerName
+    ? language === 'pt-BR' ? `Oi, ${customerName}!` : language === 'es' ? `¡Hola, ${customerName}!` : `Hi, ${customerName}!`
+    : language === 'pt-BR' ? 'Olá!' : language === 'es' ? '¡Hola!' : 'Hello!';
 
-  const systemPrompt = lang === 'pt-BR'
-    ? 'Você escreve mensagens curtas de WhatsApp para clientes de um restaurante. 2-3 frases, calorosas, personalizadas, sem emojis exagerados (máximo 1). Em português brasileiro.'
-    : lang === 'es'
-      ? 'Escribes mensajes cortos de WhatsApp para clientes de un restaurante. 2-3 frases, cálidas, personalizadas, sin emojis excesivos (máximo 1). En español.'
-      : 'You write short WhatsApp messages to a restaurant\'s customers. 2-3 sentences, warm, personalised, max 1 emoji. In English.';
-
-  let userPrompt;
   if (opp.type === 'occasion') {
-    userPrompt = lang === 'pt-BR'
-      ? `Restaurante: "${restaurant.restaurant_name}". Cliente: ${customerName}. Ocasião: ${opp.occasion_label} em ${opp.occasion_date}. Já veio ${opp.total_visits || 0}x. Escreva uma mensagem convidando para celebrar conosco.`
-      : lang === 'es'
-        ? `Restaurante: "${restaurant.restaurant_name}". Cliente: ${customerName}. Ocasión: ${opp.occasion_label} el ${opp.occasion_date}. Ha venido ${opp.total_visits || 0} veces. Escribe un mensaje invitándole a celebrar con nosotros.`
-        : `Restaurant: "${restaurant.restaurant_name}". Guest: ${customerName}. Occasion: ${opp.occasion_label} on ${opp.occasion_date}. Visited ${opp.total_visits || 0}x. Write a message inviting them to celebrate with us.`;
-  } else {
-    // churn_risk
-    userPrompt = lang === 'pt-BR'
-      ? `Restaurante: "${restaurant.restaurant_name}". Cliente regular: ${customerName} (${opp.total_visits} visitas). Não vem desde ${opp.last_visit || 'há tempo'}. Escreva uma mensagem genuína convidando para voltar — sem soar como spam.`
-      : lang === 'es'
-        ? `Restaurante: "${restaurant.restaurant_name}". Cliente habitual: ${customerName} (${opp.total_visits} visitas). No viene desde ${opp.last_visit || 'hace tiempo'}. Escribe un mensaje genuino invitándole a volver — sin sonar a spam.`
-        : `Restaurant: "${restaurant.restaurant_name}". Regular guest: ${customerName} (${opp.total_visits} visits). Hasn't visited since ${opp.last_visit || 'a while'}. Write a genuine welcome-back message — not spammy.`;
+    const key = String(opp.occasion_label || '').trim().toLowerCase();
+    const occasion = {
+      birthday: { 'pt-BR': 'seu aniversário', es: 'tu cumpleaños', en: 'your birthday' },
+      anniversary: { 'pt-BR': 'essa data especial', es: 'esa fecha especial', en: 'that special occasion' },
+    }[key]?.[language] || { 'pt-BR': 'essa ocasião', es: 'esa ocasión', en: 'that occasion' }[language];
+
+    if (language === 'pt-BR') return `${greeting} Aqui é da ${restaurantName}. Se quiser celebrar ${occasion} conosco, podemos ajudar com uma reserva.`;
+    if (language === 'es') return `${greeting} Te escribimos desde ${restaurantName}. Si quieres celebrar ${occasion} con nosotros, podemos ayudarte con una reserva.`;
+    return `${greeting} This is ${restaurantName}. If you would like to celebrate ${occasion} with us, we can help with a reservation.`;
   }
 
-  const response = await ai.messages.create({
-    model: AI_MODEL_FAST,
-    max_tokens: 200,
-    system: systemPrompt,
-    messages: [{ role: 'user', content: userPrompt }],
-    temperature: 0.7,
-  });
+  if (opp.type !== 'churn_risk') return null;
 
-  const text = (response.content || []).map(b => b.text || '').join('').trim();
-  return text || null;
+  if (language === 'pt-BR') return `${greeting} Aqui é da ${restaurantName}. Será um prazer receber você novamente quando quiser. Podemos ajudar com uma reserva?`;
+  if (language === 'es') return `${greeting} Te escribimos desde ${restaurantName}. Nos encantará recibirte de nuevo cuando quieras. ¿Te ayudamos con una reserva?`;
+  return `${greeting} This is ${restaurantName}. We'd love to welcome you back whenever you'd like. Can we help with a reservation?`;
 }
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -549,3 +528,4 @@ module.exports.loadPendingKeys = loadPendingKeys;
 module.exports.parseOccasionDate = parseOccasionDate;
 module.exports.normaliseLang = normaliseLang;
 module.exports.formatSuggestedAction = formatSuggestedAction;
+module.exports.generateDraftMessage = generateDraftMessage;

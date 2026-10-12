@@ -1,7 +1,7 @@
 /**
  * Tests for api/cron/proactive-comms.js (rewritten for the queue-backed C6 impl).
  *
- * The cron now writes to restaurant.proactive_comms_queue, generates AI drafts,
+ * The cron writes to restaurant.proactive_comms_queue and builds grounded drafts,
  * and is auth-gated by CRON_SECRET. We test:
  *   1. Auth (401 on wrong secret)
  *   2. Empty restaurants list (no crash)
@@ -23,20 +23,8 @@ jest.mock('../_lib/secure-logger', () => ({
 jest.mock('../_lib/cron-tracker', () => ({
   logCronRun: jest.fn().mockResolvedValue(undefined),
 }));
-// Stub the AI client so tests don't make real API calls
-jest.mock('../_lib/ai-client', () => ({
-  getAI: jest.fn().mockReturnValue({
-    messages: {
-      create: jest.fn().mockResolvedValue({
-        content: [{ text: 'Olá! Te esperamos para celebrar.' }],
-      }),
-    },
-  }),
-  AI_MODEL_FAST: 'anthropic/claude-3.5-haiku',
-}));
-
 const handler = require('../_crons/proactive-comms');
-const { parseOccasionDate, normaliseLang, formatSuggestedAction } = require('../_crons/proactive-comms');
+const { parseOccasionDate, normaliseLang, formatSuggestedAction, generateDraftMessage } = require('../_crons/proactive-comms');
 
 function mockRes() {
   const r = {};
@@ -116,6 +104,42 @@ describe('cron/proactive-comms — handler', () => {
 
 describe('cron/proactive-comms — pure helpers', () => {
   test.each([
+    ['pt-BR', 'Oi, Ana! Aqui é da Cantina Bella Vista. Será um prazer receber você novamente quando quiser. Podemos ajudar com uma reserva?'],
+    ['es', '¡Hola, Ana! Te escribimos desde Cantina Bella Vista. Nos encantará recibirte de nuevo cuando quieras. ¿Te ayudamos con una reserva?'],
+    ['en', "Hi, Ana! This is Cantina Bella Vista. We'd love to welcome you back whenever you'd like. Can we help with a reservation?"],
+  ])('builds a churn draft only from known facts in %s', (language, expected) => {
+    const text = generateDraftMessage(
+      { restaurant_name: 'Cantina Bella Vista' },
+      { type: 'churn_risk', customer_name: 'Ana', total_visits: 7, last_visit: '2026-04-12' },
+      language,
+    );
+    expect(text).toBe(expected);
+    expect(text).not.toMatch(/favorite|favorit|prato|plato|discount|desconto|descuento/i);
+  });
+
+  test.each([
+    ['pt-BR', 'seu aniversário'],
+    ['es', 'tu cumpleaños'],
+    ['en', 'your birthday'],
+  ])('translates a stored birthday occasion into %s', (language, occasion) => {
+    const text = generateDraftMessage(
+      { restaurant_name: 'Cantina Bella Vista' },
+      { type: 'occasion', customer_name: 'Ana', occasion_label: 'birthday' },
+      language,
+    );
+    expect(text).toContain(occasion);
+    expect(text).toContain('Cantina Bella Vista');
+  });
+
+  test('does not invent a restaurant name or echo an unknown occasion label', () => {
+    expect(generateDraftMessage({}, { type: 'churn_risk', customer_name: 'Ana' }, 'pt-BR')).toBeNull();
+    expect(generateDraftMessage({ restaurant_name: 'Cantina Bella Vista' }, { type: 'unknown' }, 'pt-BR')).toBeNull();
+    const text = generateDraftMessage({ restaurant_name: 'Cantina Bella Vista' }, { type: 'occasion', occasion_label: 'DROP TABLE' }, 'pt-BR');
+    expect(text).toContain('essa ocasião');
+    expect(text).not.toContain('DROP TABLE');
+  });
+
+  test.each([
     ['pt-BR', 'pontuação de afastamento 90/100'],
     ['es', 'puntuación de abandono 90/100'],
     ['en', 'drift score 90/100'],
@@ -183,10 +207,10 @@ describe('cron/proactive-comms — pure helpers', () => {
  * por rodada cujo destino garantido era o lixo — e o relógio de 60s da Vercel
  * acabava no meio.
  *
- * Este teste falha na versão antiga: ela chamaria o LLM duas vezes (uma para o
- * telefone já pendente) em vez de uma.
+ * Desde 12/10 os rascunhos são determinísticos. A deduplicação ainda precisa
+ * acontecer antes de montar o texto e gravar a nova oportunidade.
  */
-describe('cron/proactive-comms — dedupe antes do LLM', () => {
+describe('cron/proactive-comms — dedupe antes do rascunho', () => {
   const RID = 'rest-1';
   const JA_NA_FILA = '+5511900000001';
   const NOVO = '+5511900000002';
@@ -203,7 +227,7 @@ describe('cron/proactive-comms — dedupe antes do LLM', () => {
   }
   const usou = (calls, metodo, arg0) => calls.some(([m, a]) => m === metodo && a === arg0);
 
-  test('não gasta LLM em oportunidade que já tem linha pendente na fila', async () => {
+  test('não cria outro rascunho para oportunidade que já está na fila', async () => {
     const inseridos = [];
 
     mockSupabaseAdmin.schema.mockReturnValue({
@@ -233,16 +257,13 @@ describe('cron/proactive-comms — dedupe antes do LLM', () => {
       })),
     });
 
-    const criar = require('../_lib/ai-client').getAI().messages.create;
-    criar.mockClear();
-
     const res = mockRes();
     await handler({ headers: { authorization: 'Bearer test-cron-secret' } }, res);
 
-    // Só o telefone novo custa uma chamada de LLM. O que já estava na fila, zero.
-    expect(criar).toHaveBeenCalledTimes(1);
     expect(inseridos).toHaveLength(1);
     expect(inseridos[0].customer_phone).toBe(NOVO);
+    expect(inseridos[0].draft_message).toContain('Oi, Bia!');
+    expect(inseridos[0].draft_message).not.toMatch(/prato favorito/i);
 
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
