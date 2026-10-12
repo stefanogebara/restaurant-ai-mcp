@@ -397,3 +397,16 @@ Publicação: PR #177 mesclada; deploy `78266cdf` ficou READY e associado a `sea
 - [ ] Revisar no navegador e publicar após a versão anterior estabilizar.
 
 Revisão parcial: 11 testes da página, TypeScript, JSON dos três idiomas e `git diff --check` passaram; build de produção, 278 suítes/4.246 testes backend e 109 arquivos/1.009 testes frontend também passaram. Nenhum dado de restaurante foi alterado. O retorno Google iniciado na prévia caiu na landing estática de produção com credenciais no fragmento da URL; a causa exata ainda precisa ser confirmada. A aba temporária foi fechada, sem reutilizar essas credenciais. A revisão visual autenticada da prévia ficou indisponível; repetir no domínio após o deploy e tratar o callback OAuth como problema separado.
+# Instagram — um espaço de criação, sem perder rascunhos (12/out/2026)
+
+- [x] Separar publicação de feed, Reel e agendadas numa navegação curta, com conta conectada sempre visível.
+- [x] Preservar editores montados ao alternar modos e manter o envio de legenda para Reel.
+- [x] Corrigir o estado vazio das agendadas, a atualização após agendar Reel e textos principais em EN/PT/ES.
+- [ ] Cobrir alternância, persistência, transferência e idiomas com testes; revisar desktop/celular no navegador.
+- [ ] Verificar build, tipos, suítes e produção antes de declarar concluído.
+
+Direção: conteúdo no canvas, controles densos em glass, estado em cor semântica e ação em burgundy. Nenhum teste deve publicar ou agendar conteúdo real.
+
+Revisão local: a geração de uma nova leva de legendas agora reinicia os cartões, para que mídias da leva antiga não sejam publicadas com texto novo. Só um formulário de publicação abre por vez, mas imagens do mesmo rascunho sobrevivem à troca. Adicionados testes para alternância, tradução, lista vazia, mais de cinco agendamentos e isolamento da mídia. Suítes completas: 278/4.246 backend, 113 arquivos/1.017 testes frontend, build de produção e paridade das três traduções passaram. A suíte Playwright existente do Instagram foi atualizada, mas não executada porque depende de `e2e/auth-state.json` ausente neste checkout. Faltam navegador do novo design e produção. A API de agendadas ainda devolve no máximo 50 linhas; paginar é trabalho posterior. O medidor de custo usa `ai_generation_events`, mas os geradores gravam nesse registro sem esperar a gravação; conferir durabilidade antes de chamá-lo de valor faturado.
+
+---

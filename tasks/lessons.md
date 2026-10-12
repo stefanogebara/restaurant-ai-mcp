@@ -1512,3 +1512,6 @@ Quando o pedido é continuidade do design na plataforma, uma correção isolada 
 # 2026-10-12 — Número compartilhado não é status por restaurante
 
 Um número global pode estar registrado na plataforma e ainda apontar para o agente errado. Nunca use uma flag local `active` como prova de roteamento. Antes de permitir ativação, desativação, teste ou divulgar o número, confirme a titularidade do restaurante no banco e o vínculo real do número ao agente. Se não houver prova, bloqueie self-service e mostre “revisão necessária”, não “conectado”.
+## 2026-10-12 — Uma entrega isolada não encerra uma reforma contínua
+
+Quando Stefano pede para continuar arrumando e testando todas as páginas, concluir um PR não é sinal para parar ou pedir nova autorização. Confirmar o que foi observado em produção, registrar limites da prova (por exemplo, sem mensagem real ou sem sessão Playwright) e seguir para a próxima superfície independente. Não misturar código de outro checkout sujo; trabalhar em ramo isolado e manter atualizações curtas durante a espera por builds.

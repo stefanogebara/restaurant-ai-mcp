@@ -19,13 +19,13 @@ interface GenSpend {
 
 const QUERY_KEY = ['instagram-gen-spend'] as const;
 
-function formatUSD(cents: number): string {
+function formatUSD(cents: number, locale: string): string {
   const dollars = cents / 100;
-  return dollars.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+  return dollars.toLocaleString(locale, { style: 'currency', currency: 'USD' });
 }
 
 export default function InstagramGenSpendPill() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { data } = useQuery<GenSpend, Error>({
     queryKey: QUERY_KEY,
     queryFn: async () => {
@@ -43,12 +43,12 @@ export default function InstagramGenSpendPill() {
 
   const { image, video } = data.month.by_kind;
   const tooltipLines = [
-    t('instagram.spendPill.month', `${formatUSD(monthTotal)} this month`),
-    `${data.month.gen_count} generation${data.month.gen_count === 1 ? '' : 's'}`,
-    image > 0 ? `${formatUSD(image)} images` : null,
-    video > 0 ? `${formatUSD(video)} videos` : null,
+    t('instagram.spendPill.month', { amount: formatUSD(monthTotal, i18n.language) }),
+    t('instagram.spendPill.generations', { count: data.month.gen_count }),
+    image > 0 ? t('instagram.spendPill.images', { amount: formatUSD(image, i18n.language) }) : null,
+    video > 0 ? t('instagram.spendPill.videos', { amount: formatUSD(video, i18n.language) }) : null,
     data.all_time.total_cents !== monthTotal
-      ? `${formatUSD(data.all_time.total_cents)} all-time`
+      ? t('instagram.spendPill.allTime', { amount: formatUSD(data.all_time.total_cents, i18n.language) })
       : null,
   ].filter(Boolean).join(' · ');
 
@@ -60,8 +60,8 @@ export default function InstagramGenSpendPill() {
     >
       <ThiingsIcon name="sparkles" pxSize={15} className="text-ocre-600" />
       <span>
-        {formatUSD(monthTotal)}{' '}
-        <span className="text-deep-charcoal/60">this month</span>
+        {formatUSD(monthTotal, i18n.language)}{' '}
+        <span className="text-deep-charcoal/60">{t('instagram.spendPill.thisMonth')}</span>
       </span>
     </span>
   );

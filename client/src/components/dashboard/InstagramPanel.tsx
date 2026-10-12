@@ -12,7 +12,7 @@
  *   - restricted    → amber pill, shows last_error
  *   - revoked       → red pill, "Reconnect"
  */
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { authFetch } from '../../services/api';
@@ -21,6 +21,9 @@ import { useInstagramStatus, type InstagramStatus, INSTAGRAM_STATUS_QUERY_KEY } 
 import InstagramCaptionDrafter from './InstagramCaptionDrafter';
 import InstagramScheduledPostsPanel from './InstagramScheduledPostsPanel';
 import InstagramReelPanel from './InstagramReelPanel';
+import { subscribeReelCaption } from './instagramCaptionBus';
+
+type InstagramView = 'feed' | 'reel' | 'scheduled';
 
 const STATUS_TONE: Record<InstagramStatus, { dot: string; bg: string; text: string }> = {
   active:     { dot: 'bg-emerald-500', bg: 'bg-emerald-100', text: 'text-emerald-800' },
@@ -81,6 +84,12 @@ export default function InstagramPanel() {
   const { t, i18n } = useTranslation();
   const toast = useToast();
   const queryClient = useQueryClient();
+  const [view, setView] = useState<InstagramView>('feed');
+
+  // Both editors stay mounted, so switching views never discards an upload,
+  // generated caption, or the local schedule form. A caption transfer opens
+  // the Reel view before its editor scrolls into place.
+  useEffect(() => subscribeReelCaption(() => setView('reel')), []);
 
   // Handle ?instagram_connect=<reason> return params after Meta redirect
   useEffect(() => {
@@ -245,22 +254,81 @@ export default function InstagramPanel() {
       )}
 
       {connected && (
-        <InstagramCaptionDrafter
-          toneProfileReady={!!data?.tone_profile_ready}
-          language={data?.tone_language ?? null}
-        />
+        <div className="space-y-6" data-testid="instagram-workspace">
+          <div className="hairline" />
+          <div>
+            <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">
+              {t('instagramPanel.workspaceEyebrow')}
+            </p>
+            <h3 className="font-serif text-2xl text-deep-charcoal mt-1">
+              {t('instagramPanel.workspaceTitle')}
+            </h3>
+            <p className="text-[15px] text-muted-stone mt-1 max-w-2xl">
+              {t('instagramPanel.workspaceDescription')}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2" role="tablist" aria-label={t('instagramPanel.workspaceTitle')}>
+            {(['feed', 'reel', 'scheduled'] as const).map((item) => (
+              <button
+                key={item}
+                id={`instagram-view-${item}`}
+                type="button"
+                role="tab"
+                aria-selected={view === item}
+                aria-controls={`instagram-panel-${item}`}
+                tabIndex={view === item ? 0 : -1}
+                onClick={() => setView(item)}
+                onKeyDown={(event) => {
+                  const views: InstagramView[] = ['feed', 'reel', 'scheduled'];
+                  const index = views.indexOf(item);
+                  const nextIndex = event.key === 'ArrowRight' ? (index + 1) % views.length
+                    : event.key === 'ArrowLeft' ? (index + views.length - 1) % views.length
+                      : event.key === 'Home' ? 0 : event.key === 'End' ? views.length - 1 : -1;
+                  if (nextIndex < 0) return;
+                  event.preventDefault();
+                  setView(views[nextIndex]);
+                  document.getElementById(`instagram-view-${views[nextIndex]}`)?.focus();
+                }}
+                className={`rounded-[100px] border px-4 py-2 text-sm transition-colors ${view === item
+                  ? 'border-burgundy bg-burgundy text-white'
+                  : 'border-glass-border-dark bg-white/60 text-deep-charcoal hover:border-burgundy'}`}
+                data-testid={`instagram-view-${item}`}
+              >
+                {t(`instagramPanel.view.${item}`)}
+              </button>
+            ))}
+          </div>
+          <div id="instagram-panel-feed" role="tabpanel" aria-labelledby="instagram-view-feed" hidden={view !== 'feed'}>
+            <InstagramCaptionDrafter
+              toneProfileReady={!!data?.tone_profile_ready}
+              language={data?.tone_language ?? null}
+            />
+            <button
+              type="button"
+              onClick={() => setView('reel')}
+              className="mt-4 text-sm text-burgundy underline underline-offset-2 hover:text-burgundy-dark"
+              data-testid="instagram-reel-panel-toggle"
+            >
+              {t('instagramPanel.switchToReel')}
+            </button>
+          </div>
+          <div id="instagram-panel-reel" role="tabpanel" aria-labelledby="instagram-view-reel" hidden={view !== 'reel'}>
+            <InstagramReelPanel workspaceMode onClose={() => setView('feed')} />
+          </div>
+          <div id="instagram-panel-scheduled" role="tabpanel" aria-labelledby="instagram-view-scheduled" hidden={view !== 'scheduled'}>
+            <InstagramScheduledPostsPanel showEmptyState />
+          </div>
+        </div>
       )}
-
-      {connected && <InstagramReelPanel />}
-
-      {connected && <InstagramScheduledPostsPanel />}
 
       <div>
         <button
           type="button"
           onClick={() => connectMutation.mutate()}
           disabled={connectMutation.isPending}
-          className="px-5 py-2.5 bg-burgundy text-white rounded-[100px] text-sm font-medium hover:bg-burgundy-dark transition-colors disabled:opacity-50"
+          className={connected
+            ? 'text-sm text-burgundy underline underline-offset-2 hover:text-burgundy-dark disabled:opacity-50'
+            : 'px-5 py-2.5 bg-burgundy text-white rounded-[100px] text-sm font-medium hover:bg-burgundy-dark transition-colors disabled:opacity-50'}
           data-testid="instagram-panel-connect-cta"
         >
           {connectMutation.isPending
