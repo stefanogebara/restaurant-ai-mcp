@@ -674,6 +674,8 @@
   },
   "waitlist": {
     "title": "Waitlist",
+    "planGated": "The waitlist is not available on your current plan.",
+    "viewPlans": "View plans",
     "addToWaitlist": "Add to Waitlist",
     "addGuest": "Add Guest",
     "addGuestHint": "Tap \"+ Add Guest\" above to add a walk-in to the waitlist",

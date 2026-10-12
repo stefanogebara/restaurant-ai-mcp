@@ -68,7 +68,7 @@ export default function WaitlistEntryCard({
       </div>
 
       {/* Row 2: Time Display with Progress (compact) */}
-      {['Waiting', 'Notified'].includes(entry.status) && entry.added_at && entry.estimated_wait && (
+      {['waiting', 'notified'].includes(entry.status.toLowerCase()) && !needsReview && entry.added_at && entry.estimated_wait > 0 && (
         <div className="mt-1.5 ml-10">
           <WaitlistTimeDisplay addedAt={entry.added_at} estimatedWait={entry.estimated_wait} compact />
         </div>

@@ -674,6 +674,8 @@
   },
   "waitlist": {
     "title": "Lista de Espera",
+    "planGated": "La lista de espera no está disponible en tu plan actual.",
+    "viewPlans": "Ver planes",
     "addToWaitlist": "Agregar a Lista de Espera",
     "addGuest": "Agregar Invitado",
     "addGuestHint": "Toca \"+Agregar Invitado\" arriba para añadir un cliente sin reserva a la lista",

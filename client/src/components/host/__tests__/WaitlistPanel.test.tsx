@@ -87,6 +87,19 @@ describe('WaitlistPanel', () => {
     ).toBeInTheDocument();
   });
 
+  it('shows a plan restriction rather than an empty queue or an add action', async () => {
+    mockAuthFetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({ success: true, items: [], plan_gated: true }),
+    });
+
+    renderWithProviders(<WaitlistPanel onSeatNow={onSeatNow} />);
+
+    expect(await screen.findByText('The waitlist is not available on your current plan.')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'View plans' })).toHaveAttribute('href', '/subscription/manage');
+    expect(screen.queryByRole('button', { name: '+ Add Guest' })).not.toBeInTheDocument();
+  });
+
   it('renders waitlist entries with name, party size, status, and tags', async () => {
     const entries = [
       makeEntry(),
@@ -111,6 +124,7 @@ describe('WaitlistPanel', () => {
     // Wait for data
     expect(await screen.findByText('Alice Johnson')).toBeInTheDocument();
     expect(screen.getByText('Bob Smith')).toBeInTheDocument();
+    expect(screen.getByTestId('waitlist-time-display')).toBeInTheDocument();
 
     // Party size badges
     expect(screen.getByText('4p')).toBeInTheDocument();

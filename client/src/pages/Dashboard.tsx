@@ -214,7 +214,9 @@ export default function Dashboard() {
   // ---- Short date for header ----
 
   // ---- Computed metrics ----
-  const waitlistCount = waitlistQuery.data ? countActiveWaitlist(waitlistQuery.data.waitlist) : null;
+  const waitlistCount = waitlistQuery.data && !waitlistQuery.data.plan_gated
+    ? countActiveWaitlist(waitlistQuery.data.waitlist)
+    : null;
   const guestsExpected = todayReservations.reduce((sum, r) => sum + (r.party_size || 0), 0);
 
   // ---- Progressive disclosure: detect if dashboard is mostly empty (new user) ----

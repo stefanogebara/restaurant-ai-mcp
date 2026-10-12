@@ -21,7 +21,7 @@ const entry = (status: WaitlistEntry['status']): WaitlistEntry => ({
 
 function CountConsumer() {
   const query = useWaitlistEntries();
-  return <p>{query.data ? countActiveWaitlist(query.data.waitlist) : 'loading'}</p>;
+  return <p>{query.data && !query.data.plan_gated ? countActiveWaitlist(query.data.waitlist) : '—'}</p>;
 }
 
 describe('shared waitlist data', () => {
@@ -47,6 +47,6 @@ describe('shared waitlist data', () => {
     mockAuthFetch.mockReset();
     mockAuthFetch.mockResolvedValue({ ok: true, json: async () => ({ success: true, items: [], plan_gated: true }) });
     renderWithProviders(<CountConsumer />);
-    expect(await screen.findByText('0')).toBeInTheDocument();
+    expect(await screen.findByText('—')).toBeInTheDocument();
   });
 });

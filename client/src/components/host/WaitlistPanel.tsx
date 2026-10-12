@@ -115,6 +115,18 @@ export default function WaitlistPanel({ onSeatNow, timeZone }: WaitlistPanelProp
     );
   }
 
+  if (data?.plan_gated) {
+    return (
+      <div className="p-4" role="status">
+        <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">{t('waitlist.title')}</h2>
+        <p className="mt-3 text-sm text-stone-gray">{t('waitlist.planGated')}</p>
+        <a href="/subscription/manage" className="inline-flex mt-3 text-sm font-semibold text-burgundy hover:underline">
+          {t('waitlist.viewPlans')}
+        </a>
+      </div>
+    );
+  }
+
   return (
     <>
       {/* Header */}

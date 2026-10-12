@@ -22,6 +22,7 @@ export interface WaitlistResponse {
   success: boolean;
   count: number;
   waitlist: WaitlistEntry[];
+  plan_gated?: boolean;
 }
 
 export function getTags(specialRequests?: string): string[] {
@@ -47,7 +48,7 @@ export function getStatusColor(status?: string | null): string {
 
 /** A table-ready notice older than one service day needs review, not a "ready now" claim. */
 export function isStaleNotified(entry: WaitlistEntry, now = new Date()): boolean {
-  if (String(entry.status).toLowerCase() !== 'notified' || !entry.notified_at) return false;
+  if (normalizeStatus(entry.status) !== 'notified' || !entry.notified_at) return false;
   const notifiedAt = new Date(entry.notified_at).getTime();
   return Number.isFinite(notifiedAt) && now.getTime() - notifiedAt > 24 * 60 * 60 * 1000;
 }
