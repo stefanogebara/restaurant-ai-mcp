@@ -3421,7 +3421,7 @@
     "colTier": "Tier",
     "colVisits": "Visits",
     "colLastVisit": "Last Visit",
-    "colLTV": "Estimated value",
+    "colLTV": "Estimated future value",
     "colTags": "Tags",
     "noCustomers": "No customers found",
     "clearFilters": "Clear filters",
