@@ -470,3 +470,17 @@ Auditoria do valor: `lifetime_value` vem de `calculatePredictedLTV` e projeta va
 Auditoria autenticada: abrir Beatriz Costa em produção mostrava cabeçalho vazio, contato “undefined” e métricas ausentes. A API devolve `{ customer, reservations, notes }`, mas o hook tratava o objeto inteiro como cliente; o histórico também buscava `customer_phone = customer_id`. O hook agora adapta o contrato, o backend resolve primeiro o cliente do restaurante e busca pelo telefone real, e uma resposta defeituosa mostra erro com retry em vez de dados vazios. Três testes backend e dois do hook cobrem essas fronteiras; um teste adicional valida o drawer. A receita da tabela LTV pode ser estimada a partir de visitas × ticket médio (inclusive fallback por cobertura); por isso o drawer também usa rótulos de estimativa.
 
 ---
+# Receita legada — fechar API incompatível e insegura (12/out/2026)
+
+- [x] Confirmar esquema real do projeto Seatable e consumidores atuais da rota antiga.
+- [x] Fazer `/api/revenue` falhar fechado, após autenticação, sem ler nem escrever no banco.
+- [x] Preservar `/api/revenue-stats` e os fluxos POS atuais; documentar a migração manual pendente.
+- [ ] Testar todos os métodos/ações, executar verificação completa e revisar produção sem criar receita real.
+
+Limite: nenhuma linha financeira será criada, alterada ou apagada durante esta auditoria. A tabela atual `public.revenue_records` usa `amount_cents`/`recorded_at`; a API antiga usa colunas que não existem (`total_revenue`, `service_date`, `is_deleted`).
+
+Contrato confirmado em leitura no projeto `seatable-eu`: a rota antiga não tem consumidores montados na interface; `ManualRevenueModal` e `useCustomerSearch` continuam como código não usado. A leitura financeira visível usa `/api/revenue-stats`, e a integração POS não passa pela rota aposentada. Antes de oferecer lançamento manual novamente, desenhar um contrato novo com moeda/unidade (`amount_cents`), origem POS, deduplicação e autorização por restaurante. Nenhuma migração financeira implícita nesta correção.
+
+Verificação local: 9 testes novos da rota aposentada, Jest completo (285 suítes/4.275 testes), Vitest completo (122 arquivos/1.050 testes), checagem de sintaxe, `git diff --check` e build de produção passaram. O handler antigo permanece recuperável no histórico Git; nenhuma linha foi apagada no banco. Publicação e verificação da versão publicada ainda pendentes.
+
+---
