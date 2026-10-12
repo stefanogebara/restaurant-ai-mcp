@@ -712,13 +712,37 @@
     "guestFallback": "Convidado"
   },
   "ltv": {
+    "pageTitle": "Valor dos clientes",
+    "pageDescription": "Entenda quem volta e o valor estimado. Projeções não são receita recebida.",
+    "emptyTitle": "Ainda não há histórico de visitas",
+    "emptyBody": "O valor dos clientes aparece após o registro de visitas concluídas.",
+    "errorTitle": "Não foi possível carregar o valor dos clientes",
+    "errorBody": "Os dados dos clientes não foram alterados. Tente carregar novamente.",
+    "metricCustomers": "Clientes com histórico",
+    "metricAverage": "Valor médio estimado",
+    "metricTotal": "Valor estimado combinado",
+    "forecastHint": "Estimativa baseada nas visitas passadas e em hipóteses de gasto. Não é receita recebida nem previsão garantida.",
+    "segmentsTitle": "Grupos de clientes",
+    "segmentsHint": "Grupos baseados no histórico de visitas e valor estimado. São orientações, não garantias.",
+    "totalCount": "{{count}} clientes",
+    "topVipTitle": "Clientes frequentes com alto valor estimado",
+    "visitsCount": "{{count}} visitas",
+    "estimatedPastSpend": "Gasto passado estimado",
+    "estimatedFutureValue": "Valor estimado",
+    "tier": {
+      "vip": "VIP",
+      "regular": "Frequente",
+      "occasional": "Ocasional",
+      "new": "Novo",
+      "at_risk": "Precisa de atenção"
+    },
     "atRisk": {
       "heading": "Faz tempo que não aparecem",
       "lastVisit": "Última visita",
       "visitsCount": "{{count}} visitas",
       "anonymousGuest": "Cliente sem nome",
-      "sendWinBack": "Enviar mensagem para trazer de volta",
-      "launchCampaign": "Enviar mensagem para todos",
+      "prepareMessage": "Preparar mensagem",
+      "reviewHint": "Escolha um cliente para revisar a mensagem antes de enviar.",
       "unknown": "Desconhecido"
     },
     "maintenance": {
