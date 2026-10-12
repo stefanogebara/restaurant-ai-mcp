@@ -5,7 +5,7 @@
  * UI is delegated to focused subcomponents in components/call-tracking/.
  */
 
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import { SkeletonCallTracking } from '../components/common/Skeleton';
@@ -23,6 +23,7 @@ import CallConversationModal from '../components/call-tracking/CallConversationM
 import GuestProfilePanel from '../components/call-tracking/GuestProfilePanel';
 
 import {
+  CALLS_PAGE_SIZE,
   useCallConversations,
   useCallStats,
   usePhoneStatus,
@@ -34,6 +35,7 @@ import type { CallFilter } from '../components/call-tracking/callTrackingTypes';
 export default function CallTrackingDashboard() {
   const { t } = useTranslation();
   const [filter, setFilter] = useState<CallFilter>({ period: '7d', outcome: 'all', language: 'all' });
+  const [page, setPage] = useState(0);
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [guestProfilePhone, setGuestProfilePhone] = useState<string | null>(null);
 
@@ -53,12 +55,22 @@ export default function CallTrackingDashboard() {
 
   // ─── Queries ─────────────────────────────────────────────────────────────────
 
-  const { data: convsResult, isLoading, isError, refetch: refetchConversations } = useCallConversations(filter, restaurant_id);
-  const { data: stats } = useCallStats(filter, restaurant_id);
+  const { data: convsResult, isLoading, isError, isFetching: isFetchingConversations, refetch: refetchConversations } = useCallConversations(filter, restaurant_id, page);
+  const { data: stats, isError: statsError, refetch: refetchStats } = useCallStats(filter, restaurant_id);
   const phoneStatusQuery = usePhoneStatus(restaurant_id);
   const { data: selectedConversation } = useConversationDetail(selectedConversationId);
 
   const conversations = convsResult?.conversations ?? [];
+  const pagination = convsResult?.pagination;
+  const changeFilter = useCallback((next: CallFilter) => {
+    setPage(0);
+    setFilter(next);
+  }, []);
+  const refreshAll = () => {
+    void refetchConversations();
+    void refetchStats();
+    void phoneStatusQuery.refetch();
+  };
 
   // ─── Render ──────────────────────────────────────────────────────────────────
 
@@ -85,7 +97,7 @@ export default function CallTrackingDashboard() {
             <p className="text-sm text-stone-gray mb-6">{t('errors.serverError')}</p>
             <button
               type="button"
-              onClick={() => refetchConversations()}
+              onClick={refreshAll}
               className="inline-flex items-center gap-2 px-5 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-xl transition-colors"
             >
               <ThiingsIcon name="refresh" size="xs" />
@@ -107,11 +119,11 @@ export default function CallTrackingDashboard() {
             <h1 className="font-serif text-3xl sm:text-4xl text-deep-charcoal tracking-tight">
               {t('callTracking.title')}
             </h1>
-            <div className="flex items-center gap-2.5">
+            <div className="flex flex-wrap items-center gap-2.5">
               <button
                 type="button"
-                onClick={() => refetchConversations()}
-                className="px-4 py-2 border border-glass-border-dark bg-white/50 backdrop-blur-glass-chip text-[#A8A29E] hover:border-[#1C1917] hover:bg-white/80 rounded-lg text-[13px] font-medium transition-colors"
+                onClick={refreshAll}
+                className="px-4 py-2 border border-glass-border-dark bg-white/50 backdrop-blur-glass-chip text-stone-gray hover:border-deep-charcoal hover:bg-white/80 rounded-full text-[13px] font-medium transition-colors"
               >
                 {t('callTracking.refresh')}
               </button>
@@ -129,15 +141,15 @@ export default function CallTrackingDashboard() {
                     party_size: c.party_size ?? '',
                   }));
                   const columns = ['date', 'caller', 'duration_seconds', 'outcome', 'language', 'customer_name', 'party_size'];
-                  downloadCsv(`calls-${todayLocalISO()}.csv`, toCsv(rows, columns));
+                  downloadCsv(`calls-${todayLocalISO()}-page-${page + 1}.csv`, toCsv(rows, columns));
                 }}
                 disabled={!conversations.length}
                 title={!conversations.length ? t('callTracking.noCallsToExport', 'No calls to export') : ''}
-                className={`px-4 py-2 border border-glass-border-dark bg-white/50 backdrop-blur-glass-chip rounded-lg text-[13px] font-medium transition-colors ${
-                  conversations.length ? 'text-[#A8A29E] hover:bg-white/80 hover:border-[#1C1917]' : 'text-[#A8A29E] cursor-not-allowed opacity-40'
+                className={`px-4 py-2 border border-glass-border-dark bg-white/50 backdrop-blur-glass-chip rounded-full text-[13px] font-medium transition-colors ${
+                  conversations.length ? 'text-stone-gray hover:bg-white/80 hover:border-deep-charcoal' : 'text-muted-stone cursor-not-allowed opacity-40'
                 }`}
               >
-                {t('common.export')}
+                {t('callTracking.exportPage')}
               </button>
             </div>
           </div>
@@ -149,17 +161,46 @@ export default function CallTrackingDashboard() {
             onRefreshStatus={() => { phoneStatusQuery.refetch(); toastInfo(t('callTracking.refreshingStatus')); }}
           />
 
-          <CallFilters filter={filter} onChange={setFilter} />
+          <CallFilters filter={filter} onChange={changeFilter} />
 
           {stats && <CallStatsOverview stats={stats} />}
+          {statsError && (
+            <div role="alert" className="flex flex-wrap items-center gap-3 border-y border-red-200 py-4 text-sm text-red-700">
+              <span>{t('callTracking.statsUnavailable')}</span>
+              <button type="button" onClick={() => void refetchStats()} className="font-semibold underline underline-offset-2">
+                {t('common.retry')}
+              </button>
+            </div>
+          )}
 
-          <CallConversationList
-            conversations={conversations}
-            filter={filter}
-            onOutcomeChange={(outcome) => setFilter({ ...filter, outcome })}
-            onConversationClick={(id) => setSelectedConversationId(id)}
-            onPhoneClick={(phone) => setGuestProfilePhone(phone)}
-          />
+          {isLoading ? (
+            <div role="status" className="py-12 text-center text-sm text-stone-gray">{t('common.loading')}</div>
+          ) : (
+            <>
+              <CallConversationList
+                conversations={conversations}
+                filter={filter}
+                onOutcomeChange={(outcome) => changeFilter({ ...filter, outcome })}
+                onConversationClick={(id) => setSelectedConversationId(id)}
+                onPhoneClick={(phone) => setGuestProfilePhone(phone)}
+              />
+              {pagination && pagination.total > CALLS_PAGE_SIZE && (
+                <nav aria-label={t('callTracking.pages')} className="flex flex-wrap items-center justify-between gap-3 border-t border-glass-border-dark pt-4">
+                  <span className="text-xs text-muted-stone">
+                    {t('callTracking.showingCalls', {
+                      from: pagination.offset + 1,
+                      to: Math.min(pagination.offset + conversations.length, pagination.total),
+                      total: pagination.total,
+                    })}
+                  </span>
+                  <div className="flex gap-2">
+                    <button type="button" disabled={page === 0 || isFetchingConversations} onClick={() => setPage(p => Math.max(0, p - 1))} className="liquid-capsule px-4 py-2 text-xs text-deep-charcoal disabled:opacity-40">{t('common.back')}</button>
+                    <button type="button" disabled={!pagination.has_more || isFetchingConversations} onClick={() => setPage(p => p + 1)} className="liquid-capsule px-4 py-2 text-xs text-deep-charcoal disabled:opacity-40">{t('common.next')}</button>
+                  </div>
+                </nav>
+              )}
+            </>
+          )}
 
           {selectedConversation && (
             <CallConversationModal

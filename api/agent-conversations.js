@@ -93,6 +93,15 @@ async function handleListConversations(req, res, user) {
       });
     }
 
+    // Query-string values are strings. Without numeric conversion, offset=50
+    // and limit=50 concatenate to "5050" and fetch 5,000 rows on page two.
+    const pageLimit = Number(limit);
+    const pageOffset = Number(offset);
+    if (!Number.isInteger(pageLimit) || pageLimit < 1 || pageLimit > 100 ||
+        !Number.isInteger(pageOffset) || pageOffset < 0 || pageOffset > 100_000) {
+      return res.status(400).json({ success: false, error: 'Invalid pagination' });
+    }
+
     let query = supabaseAdmin
       .from('agent_conversations')
       .select('*', { count: 'exact' })
@@ -123,7 +132,7 @@ async function handleListConversations(req, res, user) {
     query = query.order(safeOrderBy, { ascending: order_direction === 'asc' });
 
     // Apply pagination
-    query = query.range(offset, offset + limit - 1);
+    query = query.range(pageOffset, pageOffset + pageLimit - 1);
 
     const { data, error, count } = await query;
 
@@ -141,9 +150,9 @@ async function handleListConversations(req, res, user) {
       conversations: data,
       pagination: {
         total: count,
-        limit: parseInt(limit),
-        offset: parseInt(offset),
-        has_more: count > (parseInt(offset) + parseInt(limit))
+        limit: pageLimit,
+        offset: pageOffset,
+        has_more: count > (pageOffset + pageLimit)
       }
     });
 
@@ -242,9 +251,8 @@ async function handleGetStats(req, res, user) {
     if (date_from) {
       startDate = new Date(date_from);
     } else {
-      startDate = new Date();
-      const days = period.endsWith('d') ? parseInt(period) : 7;
-      startDate.setDate(startDate.getDate() - days);
+      const days = { '1d': 1, '7d': 7, '30d': 30, '90d': 90 }[String(period)] || 7;
+      startDate = new Date(Date.now() - days * 86_400_000);
     }
 
     const endDate = date_to ? new Date(date_to) : new Date();
@@ -373,4 +381,3 @@ function getTopErrors(conversations) {
     .sort((a, b) => b.count - a.count)
     .slice(0, 5); // Top 5 errors
 }
-

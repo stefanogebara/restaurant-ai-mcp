@@ -4,7 +4,7 @@ import { type Conversation, type CallFilter, getOutcomeLabelKey, getOutcomePillC
 
 function callIconStyle(outcome?: string): string {
   switch (outcome) {
-    case 'reservation_created': return 'bg-rose-600/[8%] text-rose-600';
+    case 'reservation_created': return 'bg-emerald-600/[8%] text-emerald-700';
     case 'information_only':    return 'bg-stone-500/[8%] text-stone-500';
     case 'error':               return 'bg-red-600/[8%] text-red-600';
     case 'abandoned':           return 'bg-amber-600/[8%] text-amber-600';
@@ -38,9 +38,9 @@ export default function CallConversationList({
   return (
     <div className="overflow-hidden">
       {/* Header + tabs */}
-      <div className="flex items-center justify-between py-5 border-b border-glass-border-dark">
-        <span className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">{t('callTracking.recentCalls')}</span>
-        <div className="flex gap-0">
+      <div className="flex flex-col items-start gap-3 py-5 border-b border-glass-border-dark sm:flex-row sm:items-center sm:justify-between">
+        <span className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">{t('callTracking.callsInPeriod')}</span>
+        <div className="flex flex-wrap gap-0">
           {OUTCOME_TABS.map((tab) => (
             <button
               type="button"
@@ -63,9 +63,9 @@ export default function CallConversationList({
           <div className="w-14 h-14 mx-auto mb-4 bg-soft-gray rounded-2xl flex items-center justify-center">
             <ThiingsIcon name="phone" pxSize={24} />
           </div>
-          <p className="text-sm font-semibold text-deep-charcoal mb-1">{t('callTracking.noCallsRecorded')}</p>
+          <p className="text-sm font-semibold text-deep-charcoal mb-1">{t('callTracking.noCallsForFilters')}</p>
           <p className="text-xs text-muted-stone">
-            {t('callTracking.noCallsRecordedHint')}
+            {t('callTracking.noCallsForFiltersHint')}
           </p>
         </div>
       ) : (
@@ -84,7 +84,7 @@ export default function CallConversationList({
             return (
               <div
                 key={conv.id}
-                className="flex items-center py-5 border-b border-[#F5F5F4] gap-3 sm:gap-4 cursor-pointer hover:bg-[#FAFAFA] transition-colors"
+                className="flex items-center py-5 border-b border-glass-border-dark gap-3 sm:gap-4 cursor-pointer hover:bg-soft-gray/60 transition-colors"
                 onClick={() => onConversationClick(conv.id)}
               >
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${callIconStyle(conv.outcome)}`}>

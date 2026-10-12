@@ -140,6 +140,7 @@ export default function CrmCustomerDrawer({ customerId, onClose }: CrmCustomerDr
                       valueColor={customer.churn_risk_score > 50 ? 'text-red-600' : undefined}
                     />
                   </div>
+                  <p className="text-xs leading-relaxed text-muted-stone">{t('crm.estimatedSpendMethod')}</p>
 
                   {/* Tags */}
                   <Section title={t('crm.tags', 'Tags')}>

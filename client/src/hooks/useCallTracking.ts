@@ -12,27 +12,43 @@ import type {
 
 interface ConversationsResult {
   conversations: Conversation[];
+  pagination: {
+    total: number;
+    limit: number;
+    offset: number;
+    has_more: boolean;
+  };
 }
 
-export function useCallConversations(filter: CallFilter, restaurantId: string) {
+export const CALLS_PAGE_SIZE = 50;
+
+export function callPeriodStartIso(period: string, now = new Date()): string {
+  const days = ({ '1d': 1, '7d': 7, '30d': 30, '90d': 90 } as Record<string, number>)[period] ?? 7;
+  return new Date(now.getTime() - days * 86_400_000).toISOString();
+}
+
+export function useCallConversations(filter: CallFilter, restaurantId: string, page = 0) {
   const outcomeParam = filter.outcome !== 'all' ? `&outcome=${filter.outcome}` : '';
   const languageParam = filter.language !== 'all' ? `&language=${filter.language}` : '';
   const sentimentParam = filter.sentiment ? `&sentiment=${filter.sentiment}` : '';
   const searchParam = filter.search ? `&search=${encodeURIComponent(filter.search)}` : '';
-  const restaurantParam = restaurantId ? `&restaurant_id=${restaurantId}` : '';
-
   return useQuery<ConversationsResult>({
-    queryKey: ['call-conversations', filter.outcome, filter.language, filter.sentiment, filter.search, restaurantId],
+    queryKey: ['call-conversations', filter.period, filter.outcome, filter.language, filter.sentiment, filter.search, restaurantId, page],
     queryFn: async () => {
+      const dateFrom = encodeURIComponent(callPeriodStartIso(filter.period));
+      const offset = page * CALLS_PAGE_SIZE;
       const res = await authFetch(
-        `/api/agent-conversations?action=list&limit=50&offset=0${restaurantParam}${outcomeParam}${languageParam}${sentimentParam}${searchParam}`
+        `/api/agent-conversations?action=list&limit=${CALLS_PAGE_SIZE}&offset=${offset}&date_from=${dateFrom}${outcomeParam}${languageParam}${sentimentParam}${searchParam}`
       );
       if (!res.ok) throw new Error('Failed to fetch conversations');
       const data = await res.json();
       // A 200 with { success:false } is still a failure — throwing lets React
       // Query surface isError/retry instead of rendering a fake empty list.
       if (!data.success) throw new Error(data.error || 'Failed to fetch conversations');
-      return { conversations: data.conversations || [] };
+      return {
+        conversations: data.conversations || [],
+        pagination: data.pagination || { total: 0, limit: CALLS_PAGE_SIZE, offset, has_more: false },
+      };
     },
     staleTime: ANALYTICS_STALE_TIME,
     refetchInterval: ANALYTICS_POLL_INTERVAL,
@@ -40,13 +56,11 @@ export function useCallConversations(filter: CallFilter, restaurantId: string) {
 }
 
 export function useCallStats(filter: CallFilter, restaurantId: string) {
-  const restaurantParam = restaurantId ? `&restaurant_id=${restaurantId}` : '';
-
   return useQuery<Stats | null>({
     queryKey: ['call-stats', filter.period, restaurantId],
     queryFn: async () => {
       const res = await authFetch(
-        `/api/agent-conversations?action=stats&period=${filter.period}${restaurantParam}`
+        `/api/agent-conversations?action=stats&period=${filter.period}`
       );
       if (!res.ok) throw new Error('Failed to fetch stats');
       const data = await res.json();

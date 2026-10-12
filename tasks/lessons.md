@@ -1524,3 +1524,6 @@ Quando Stefano pede para continuar arrumando e testando todas as páginas, concl
 # Continuidade por superfície
 
 - Quando Stefano pedir para continuar sem parar a cada entrega, encadear a próxima superfície a partir de um defeito observado em navegador, mantendo branches e provas de deploy separados. Não transformar “merge”, teste local ou preview em confirmação de produção.
+# 2026-10-12 — Entrega por superfície não encerra uma reforma contínua
+
+Correção do usuário: não parar ao concluir cada tarefa; seguir auditando, corrigindo, testando e aplicando o design nas páginas seguintes. Regra: manter uma fila explícita de problemas observados, fechar cada lote com testes e prova visual, conferir merge e produção separadamente e avançar ao próximo problema sem pedir permissão a cada PR. Pausar apenas quando houver bloqueio real ou decisão externa necessária; nunca chamar uma mudança local ou um preview de produção pronta.

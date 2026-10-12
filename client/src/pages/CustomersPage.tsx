@@ -199,6 +199,10 @@ export default function CustomersPage() {
           </div>
         </div>
 
+        {customers.length > 0 && (
+          <p className="mb-4 text-xs leading-relaxed text-muted-stone">{t('crm.estimatedSpendMethod')}</p>
+        )}
+
         {/* Table */}
         <div className="glass-panel rounded-xl overflow-hidden">
           {isLoading ? (
@@ -272,7 +276,7 @@ export default function CustomersPage() {
                         {t('crm.colLastVisit', 'Last Visit')}
                       </th>
                       <th className="text-right px-4 py-3.5 text-[11px] font-semibold text-muted-stone uppercase tracking-[0.12em]">
-                        {t('crm.colLTV', 'Estimated future value')}
+                        {t('crm.colEstimatedSpend', 'Estimated spend from visits')}
                       </th>
                       <th className="text-left px-4 py-3.5 text-[11px] font-semibold text-muted-stone uppercase tracking-[0.12em]">
                         {t('crm.colTags', 'Tags')}
@@ -316,7 +320,7 @@ export default function CustomersPage() {
                           {formatRelativeDate(c.last_visit_date, t as unknown as TFunction)}
                         </td>
                         <td className="px-4 py-3 text-right text-deep-charcoal font-medium tabular-nums">
-                          {c.lifetime_value ? formatCurrency(Math.round(c.lifetime_value)) : '--'}
+                          {c.total_revenue ? formatCurrency(Math.round(c.total_revenue)) : '--'}
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex flex-wrap gap-1">
