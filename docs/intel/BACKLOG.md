@@ -5,6 +5,47 @@ têm âncora verificada. Estado do repositório em `STATE.md`.
 
 ---
 
+### elevenlabs-on-openrouter — Consolidar TTS avulso na chave que já pagamos
+**Origem:** INTEL 2026-10-12 · **Veredito:** PROTOTIPAR 11/15 (P3 A3 D2 E2 L1)
+**Fonte:** [OpenRouter, 07/10](https://openrouter.ai/blog/announcements/elevenlabs-on-openrouter/)
+
+**O mecanismo:** a OpenRouter passou a expor 9 modelos de TTS e 2 de STT da ElevenLabs
+(`POST /api/v1/audio/speech` e `/audio/transcriptions`), autenticados com a própria
+`OPENROUTER_API_KEY`, preço pass-through da tabela ElevenLabs sem markup (50% de desconto
+promocional até 19/10). Não é o motor conversacional (Agents Platform) que atende telefone —
+é TTS/STT avulso, encadeável manualmente.
+
+**Por que dói mesmo sendo avulso:** dois call sites do repo já fazem exatamente a chamada que
+isto substituiria, direto pra `api.elevenlabs.io` com `xi-api-key`: `sendVoiceNote` em
+`api/_lib/briefing-sender.js` (linhas ~95-137, narra o briefing de voz por WhatsApp) e
+`api/elevenlabs-preview.js` (linha ~90, preview de voz no painel). Migrar os dois consolidaria
+numa única chave (`OPENROUTER_API_KEY`, já usada por `ai-client.js`) e tornaria
+`ELEVENLABS_API_KEY` dispensável para esses dois caminhos — sem tocar o pipeline de voz
+principal (Twilio→Fly.io→ElevenLabs Agents Platform), que não é afetado por este anúncio.
+
+**Hipótese:** se `sendVoiceNote` e `elevenlabs-preview.js` forem migrados para
+`POST https://openrouter.ai/api/v1/audio/speech`, então o áudio gerado (voz "Jessica",
+`eleven_multilingual_v2`, PT-BR) fica indistinguível em qualidade/latência do caminho atual, e
+a chave direta da ElevenLabs deixa de ser necessária nesses dois pontos.
+
+**Spike:** script isolado fora do repo chamando os dois endpoints (ElevenLabs direto vs.
+OpenRouter `/audio/speech`) com o mesmo texto PT-BR de um briefing real e o `voice_id`
+`cgSgspJ2msm6clMCkdW9`; comparar tamanho/duração do MP3, latência round-trip e `usage.cost`
+reportado. Se os números baterem, trocar o `fetch` em `briefing-sender.js` por trás de uma
+flag. **Caixa de tempo: 3h.**
+
+**Medir:** latência via OpenRouter ≤20% mais lenta que direto, e `usage.cost` batendo com a
+tabela de preço ElevenLabs pass-through em pelo menos 5 textos de teste.
+
+**Parar se:** `eleven_multilingual_v2` não estiver mapeado 1:1 no catálogo de 9 modelos da
+OpenRouter, ou a latência adicional passar de 1s por chamada (briefing roda em cron, não em
+tempo real — tolerância é alta, mas acima disso não compensa a troca).
+
+**Toca:** `api/_lib/briefing-sender.js`, `api/elevenlabs-preview.js`
+**Status:** aberto
+
+---
+
 ### ia-liga-pro-restaurante — Quando quem liga pro Seatable também é uma IA
 **Origem:** INTEL 2026-09-28 · **Veredito:** PROTOTIPAR 11/15 (P2 A2 D3 E2 L2)
 **Fontes:** [TechCrunch, 17/09](https://techcrunch.com/2026/09/17/rival-ai-agents-instinct-and-metas-muse-both-add-the-ability-to-make-calls/) · [TechCrunch (Gemini), 24/09](https://techcrunch.com/2026/09/24/google-tests-letting-gemini-make-phone-calls-initially-for-us-pixel-owners/) · [CNN/ABC17, 23/09](https://abc17news.com/money/cnn-business-consumer/2026/09/23/now-ai-is-trying-to-gobble-up-dinner-reservations/) · [NBC News, 28/09](https://www.nbcnews.com/tech/tech-news/trying-get-restaurant-reservation-get-ready-compete-ai-agents-rcna599738) · [PYMNTS (Série C), 28/09](https://www.pymnts.com/startups/2026/instinct-ai-assistant-targets-10-billion-dollar-valuation/)

@@ -11,6 +11,45 @@
 
 ## Em aberto — precisa de decisão do Stefano
 
+### [DISCUTIR 9/15] Twilio tagueia qualidade de áudio na perna PSTN — mas não mede o que falta de verdade
+**Data:** 2026-10-09 · **Fonte:** [Twilio changelog](https://www.twilio.com/en-us/changelog.html) · **Eixos:** P3 A2 D1 E1 L2
+
+**O que é:** o Twilio Voice Insights passa a marcar cada chamada como "HD Audio" (codec AMR-WB/Opus negociado) ou "Downsampled" (trecho caiu para banda estreita), exposto no Call Summary do Console, na REST API e em Event Streams. A tag é calculada na perna carrier/PSTN — diferente do componente Voice JS SDK já descartado em 24/08 (que só vale pra softphone de navegador), este é alcançável no caminho Twilio→Fly.io deste projeto, porque mede a perna do carrier, não o fork de Media Streams.
+
+**O que a fonte não prova:** não há benchmark, amostra nem confirmação se a tag é recurso Basic (grátis) ou Advanced (cobrado por minuto). E, mais importante: ela mede qualidade de **codec** na perna PSTN, não **latência** nem **erro de barge-in** dentro do pipeline real (Fly.io → ElevenLabs/OpenAI Realtime) — que é o buraco central já registrado no `known_gaps` de instrumentação de voz.
+
+**Aterramento no repo:** `callSid` já trafega por `api/_voice-server/session-manager.js`/`ws-server.js` (vindo do evento `start` do Media Stream), mas nunca é persistido em `agent_conversations` — só o `conversation_id` da ElevenLabs é salvo. Aproveitar esta tag exigiria schema novo + wiring, não é "grátis e já disponível". `grep` por "Voice Insights" no repo: zero ocorrências.
+
+**A pergunta:** vale abrir um spike pra persistir o `call_sid` e consultar a tag HD Audio/Downsampled via Voice Insights REST API — como sinal barato de qualidade de codec na perna PSTN — ou isso é descartável porque não mede o que realmente falta (latência e barge-in dentro do pipeline Fly.io/ElevenLabs), que é o alvo real do `known_gap`?
+
+---
+
+### [DISCUTIR 9/15] ElevenLabs trocou o default de TTS — mas o snapshot de payload já nos protege
+**Data:** 2026-10-05 · **Fonte:** [ElevenLabs changelog](https://elevenlabs.io/docs/changelog) · **Eixos:** P3 A2 D1 E2 L1
+
+**O que é:** a entrada de 05/10 do changelog da ElevenAgents traz três mudanças: "Update agent"/"Create agent draft" passam a compilar/validar structured procedures automaticamente (o repo não usa procedures nem branches de agente — zero superfície aqui); "Merge proposals" entra em alpha; e o modelo de TTS conversacional default passa de `eleven_flash_v2` para **`eleven_v4_turbo`** quando a chamada não especifica `model_id`.
+
+**Por que isto não nos pega de surpresa, ao contrário do incidente de 24/08:** os dois pontos de criação de agente do Seatable (`api/_services/elevenlabsAgentService.js:883` e `api/elevenlabs-agent-create.js:128/245`) hardcodam `model_id` por idioma (`eleven_flash_v2` EN / `eleven_flash_v2_5` PT) em toda chamada — nunca herdam o default do fornecedor — e isso está travado por `api/__tests__/elevenlabs-agent-create-payload.test.js` desde o fechamento do spike `elevenlabs-payload-snapshot` (01/09). Esse teste cobre exatamente `tts.model_id`, então a mudança de default da ElevenLabs **não nos afeta sem ação nossa**. Correção aplicada no `known_gaps` do `intel.config.json` nesta rodada: a entrada que dizia "não há snapshot" estava desatualizada.
+
+**O que a fonte não prova:** se o novo default se aplica retroativamente a agentes já existentes, nem traz número de latência/qualidade do `eleven_v4_turbo` em pt-BR.
+
+**A pergunta:** dado que não somos afetados passivamente, vale abrir um spike para testar `eleven_v4_turbo` em pt-BR (latência/qualidade) como upgrade **deliberado** — já que a instrumentação de voz continua no `known_gap` zero-métrica — ou isso fica parado até existir medição de latência implementada?
+
+---
+
+### [DISCUTIR 8/15] A Toast — parceira da Resy — está construindo o próprio atendente de telefone
+**Data:** 2026-10-07 · **Fonte:** [Nation's Restaurant News](https://www.nrn.com/restaurant-technology/toast-unveils-an-array-of-new-ai-agents-for-restaurants) · **Eixos:** P2 A1 D2 E1 L2
+
+**O que é:** a Toast expande o Toast IQ com a categoria "Team" (US$60/mês + US$9/funcionário), cujo carro-chefe é o Scheduling Agent já lançado (41% menos hora extra por funcionário, autodeclarado, sem amostra). Em paralelo, abriu early access para três agentes "em desenvolvimento": **Answering Agent** (atende ligação — a matéria não descreve como), Menu Agent (atualiza cardápio online) e Configurable Agents.
+
+**O que a fonte não prova:** o Answering Agent é citado numa frase, sem mecanismo, telefonia, idioma, preço ou data de lançamento geral. Não há menção a Resy nesta peça — a ligação Resy+Toast é framing do scout, não da fonte.
+
+**Por que toca este projeto mesmo assim:** Toast, já parceira do Digital Chit da Resy, confirma com mais um incumbente o padrão estrutural já registrado em `BACKLOG.md` (Resy+Toast, Square+OpenTable, Presto+Toast) de POS virando camada de atendimento — exatamente a `bets[0]` já revisada ("end-to-end é piso, não diferencial"). Não ameaça direto porque Toast não opera no Brasil e não fala português/WhatsApp.
+
+**A pergunta:** Toast verticalizando o próprio atendimento telefônico por IA é mais uma confirmação de que "atender telefone" virou piso de qualquer POS americano. Vale usar esse movimento como gatilho comercial da Olímpia ("antes que um POS brasileiro copie isso aqui"), ou é cedo demais para um recurso ainda em early access sem data nem mecanismo publicado?
+
+---
+
 ### [DISCUTIR 10/15] Slang AI vende memória-entre-chamadas; o Seatable já lê memória na ligação, mas nunca escreve de volta
 **Data:** 2026-10-05 · **Fonte:** [PRNewswire](https://www.prnewswire.com/news-releases/slang-ai-introduces-the-superhost-the-most-natural-restaurant-caller-experience-in-the-world-302898024.html) · **Eixos:** P3 A2 D2 E1 L2
 
@@ -141,6 +180,16 @@ meio da ligação a partir dos transcritos que `api/cron/sync-conversation-data.
 caso específico demais de fast-food americano (pedido complexo, não reserva) para importar
 pro produto?
 
+**Atualização 2026-10-12 — um relatório diferente, do lado oposto, no mesmo período.** O
+relatório anual Intouch Insight/QSR Magazine (mystery shop, 120 pedidos assistidos por IA em
+Burger King/Taco Bell/Wendy's, 2.145 visitas totais) mostra a IA **dobrando** a taxa de
+conclusão de pedido sem humano (20%→40% ano a ano) e "liderando" em acurácia pela primeira vez.
+Fonte primária (QSR Magazine) devolveu 403 — número só confirmado via cobertura secundária
+(MarketScale). Isto não contradiz o recuo do Burger King, complementa: a IA ficou **tecnicamente
+melhor** em completar o pedido no mesmo período em que o BK recuou por **rejeição do cliente**
+em atendimento forçado. Capacidade crescente não resolve, por si, o problema de aceitação que
+motivou o recuo — reforça, não dilui, a pergunta original sobre fallback humano na ligação.
+
 ---
 
 ### [DISCUTIR 8/15] Flipdish: dez mil pedidos por telefone confirmam o gap de takeout que o repo já tem nomeado
@@ -241,6 +290,16 @@ spike de diligência direta (virar cliente teste, ou entrevistar um dos 50+ cita
 confirmar se ele tem ou não uma perna de CRM/receita — antes de decidir se a pergunta (a)/(b)
 acima precisa ser reescrita para citar concorrência no nível de restaurante único, não só de
 rede via Tagme?
+
+**Atualização 2026-10-12 — a lacuna técnica da atualização de 21/09 tem resposta, e é
+retroativa.** Aquela atualização registrou que "nenhuma fonte confirma tecnicamente se o 'Pra
+Comer Fora' já roda sobre o motor da Tagme". Um fato de 10/06/2026 — processado agora por erro
+de dedup anterior (a nota em `seen.jsonl` apontava para o item errado, corrigida nesta rodada) —
+responde isso: o iFood já lançava reserva de mesa integrada a **Tagme** (gestão/cardápio) + **Get
+In** (fila) desde o lançamento em SP, com 1.000+ estabelecimentos no dia 1 (D.O.M., Mocotó, Pobre
+Juan). Ou seja, a integração operacional já existia **três meses antes** do investimento formal
+anunciado no iFood Move (16-17/09) — o investimento de setembro é a formalização do capital numa
+parceria que já rodava, não o início da integração. [Mobile Time, 10/06](https://www.mobiletime.com.br/noticias/10/06/2026/ifood-reservas-de-mesa/)
 
 ---
 
@@ -415,6 +474,14 @@ ter visibilidade própria do próprio custo?
 
 ## Fila de trabalho
 
+Promovido em 2026-10-12:
+
+- [PROTOTIPAR 11/15] ElevenLabs TTS/STT via OpenRouter → `BACKLOG.md#elevenlabs-on-openrouter`
+  · âncora: `api/_lib/briefing-sender.js` (sendVoiceNote), `api/elevenlabs-preview.js`
+  · dois call sites secundários (voice briefing, preview) já chamam a ElevenLabs direto com
+    `ELEVENLABS_API_KEY`; passthrough sem markup via `OPENROUTER_API_KEY` consolidaria a chave
+    — não toca o motor conversacional principal (Agents Platform), só TTS/STT avulso
+
 Promovidos em 2026-09-28:
 
 - [PROTOTIPAR 11/15] IAs de terceiros (Instinct, Gemini Call for Me) ligando direto pro
@@ -467,6 +534,28 @@ Promovidos em 2026-08-24, os quatro com âncora verificada:
 
 ## Radar
 
+- `2026-10-12` **Apéro capta US$5M (Valsoft/Now Book It) para recepcionista de IA bilíngue
+  (FR/EN) no Québec** — reserva, mesa, waitlist, perfil de cliente, anti-no-show e IA 24/7 por
+  telefone; puro press release, zero métrica própria. Mercado sem overlap com SP/Brasil; mais um
+  ponto na saturação de "AI phone answering" (ao lado de Medicall, Ringg, Palona, Arini).
+  [Newswire](https://www.newswire.com/news/now-book-it-makes-a-series-a-investment-of-5m-in-apero-an-ai-powered-restaurant) · 6/15
+- `2026-10-12` **Stripe versão "endive" (30/09) quebra Connect Accounts v2 / Account Links v2 /
+  SEPA** — status `rejected` em capabilities v2, remoção de `configurations` em Account Links v2,
+  padronização de `sepa_debit_payments.creditor_id`. `api/stripe-connect-onboarding.js` usa só
+  Accounts v1 Standard + Account Links v1, sem fixar `apiVersion` em código — zero efeito hoje.
+  [Stripe](https://docs.stripe.com/changelog/endive/2026-09-30/rejected-accounts-v2-capabilities.md) · 6/15
+- `2026-10-12` **Vercel renomeia "Edge Requests" para "CDN Requests"** na fatura (preço e medição
+  inalterados, só `ServiceName` muda) e a CDN para de cachear resposta com `Vary: Cookie` — repo
+  não usa nenhum dos dois mecanismos (`api/_lib/cors.js` só usa `Vary: Origin`).
+  [Vercel](https://vercel.com/changelog/edge-requests-are-now-called-cdn-requests) · 6/15
+- `2026-10-12` **Inworld compra Ultravox (ex-Fixie)** por valor não revelado, levando a camada de
+  turn-taking/interrupção de voz real-time para o próprio stack TTS/STT — consolidação no mesmo
+  mercado do ElevenLabs/OpenAI Realtime, mas sem contato com o código do Seatable (zero ocorrência
+  de Inworld/Ultravox/Fixie no repo). [Inworld](https://inworld.ai/blog/inworld-acquires-ultravox) · 5/15
+- `2026-10-12` **Bird capta US$450M em dívida e lança "Agentic Harness"** — servidor MCP + CLI
+  dando a agentes de IA (Claude, ChatGPT, Cursor) acesso a WhatsApp/voz/email/eSIM sem integração
+  custom. CPaaS virando infra de agente, mesmo padrão já visto na Gupshup (04/09); sem preço, sem
+  cliente nomeado, sem menção à Twilio. [Bird](https://bird.com/blog/bird-450-million-financing-agentic-harness) · 6/15
 - `2026-10-05` **IAMenu (cardápio digital BR) anuncia atendente de IA por voz+WhatsApp** sobre a
   base de clientes que já tem — mas é pré-lançamento puro ("em breve" repetido 6x na página), sem
   preço, sem cliente nomeado, sem data. Primeiro concorrente *brasileiro* nomeado atacando o canal
