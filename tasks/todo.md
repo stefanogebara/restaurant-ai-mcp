@@ -484,7 +484,6 @@ Contrato confirmado em leitura no projeto `seatable-eu`: a rota antiga não tem 
 Verificação local: 9 testes novos da rota aposentada, Jest completo (285 suítes/4.275 testes), Vitest completo (122 arquivos/1.050 testes), checagem de sintaxe, `git diff --check` e build de produção passaram. O handler antigo permanece recuperável no histórico Git; nenhuma linha foi apagada no banco. Publicação e verificação da versão publicada ainda pendentes.
 
 ---
-
 # Equipe — convite confiável e celular utilizável (12/out/2026)
 
 - [x] Corrigir título sob o menu e tornar e-mail, papel e ação legíveis em 390/320 px.
@@ -495,5 +494,17 @@ Verificação local: 9 testes novos da rota aposentada, Jest completo (285 suít
 Limite: nenhum convite será enviado no teste de produção; a conta autenticada será usada apenas para leitura e inspeção visual.
 
 Revisão local: o e-mail ocupa a linha inteira no celular; os papéis refletem a matriz real de permissões (só o proprietário gerencia equipe). O backend aguarda o aceite do provedor com limite de 6 s e informa `email_accepted`; um envio não confirmado não aparece como sucesso. O token não volta na resposta. Um membro ativo ou pendente não pode ser redefinido por novo convite. O modal de remoção ganhou foco, Escape e ciclo de Tab. Jest completo passou (285 suítes/4.274 testes); Vitest completo repetido com dois workers passou (122 arquivos/1.054 testes), TypeScript e lint focado passaram. Falta navegador na versão publicada; nenhum convite real foi enviado.
+
+---
+
+# DNA de clientes — isolamento real entre restaurantes (12/out/2026)
+
+- [x] Fechar o endpoint legado que consulta perfis globais sem `restaurant_id` e tabelas ausentes.
+- [x] Tirar o compilador da wiki da fonte global e usar apenas clientes da casa na tabela LTV.
+- [ ] Cobrir a rota fechada e a consulta escopada com testes; verificar suíte, build e deploy.
+
+Limite: não alterar perfis, LTV, reservas nem páginas da wiki existentes no banco. O CRM atual usa outra rota. A tabela publicada `public.customer_behavioral_profiles` não tem `restaurant_id`; não existe filtro seguro para ela sem nova modelagem/migração.
+
+Revisão local: a rota retorna 410 após autenticação, sem carregar o cliente de serviço. A wiki lê somente `restaurant.customer_ltv` filtrando `restaurant_id` e trata os contadores VIP/regular como amostra dos 20 principais, não como totais. Uma falha nessa leitura impede sobrescrever páginas existentes com conteúdo vazio. O novo artigo de clientes recebe prefixo de origem segura no `source_hash`; `getWikiPages` omite artigos antigos sem esse prefixo, evitando que o gerente leia conteúdo compilado da fonte global antes do próximo cron. Os 30 testes focados de endpoint, compilador e cron, Jest completo (286 suítes/4.291 testes), Vitest completo (122 arquivos/1.050 testes), sintaxe e build passaram; testes focados e build foram repetidos após o rebase na Equipe. As tabelas e páginas já persistidas não foram modificadas nesta etapa. Publicação pendente.
 
 ---

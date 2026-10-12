@@ -15,11 +15,11 @@ const { getAI, AI_MODEL_FAST } = require('../_lib/ai-client');
 const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { getRestaurantSnapshot } = require('./restaurantSnapshot');
-const { listCustomerProfiles } = require('./customerDNA');
 
 const logger = createSecureLogger('wiki-compiler');
 
 const WIKI_SLUGS = ['overview', 'customers', 'patterns', 'performance', 'operations'];
+const CUSTOMER_WIKI_SOURCE_PREFIX = 'tenant-ltv-v1:';
 
 const WIKI_PROMPTS = {
   overview: (data) => `You are compiling a wiki article about a restaurant for its AI manager.
@@ -42,10 +42,10 @@ Write in third person. Be specific with numbers. No filler phrases.`,
 
 Restaurant: ${data.restaurantName}
 Total tracked customers: ${data.totalCustomers}
-VIP customers: ${data.vipCount}
-Regular customers: ${data.regularCount}
+VIPs among top ${data.sampleSize} by visits: ${data.vipCount}
+Regulars among top ${data.sampleSize} by visits: ${data.regularCount}
 
-Recent top customers:
+Top tracked customers of this restaurant (up to 20):
 ${data.topCustomers}
 
 Write a concise CUSTOMERS article (3-5 paragraphs) covering:
@@ -53,6 +53,7 @@ Write a concise CUSTOMERS article (3-5 paragraphs) covering:
 2. Notable customers and their preferences
 3. What the manager AI needs to know to give excellent service
 
+The tier counts above describe the sampled top customers, not the full base.
 Write in third person. Be specific. No filler.`,
 
   patterns: (data) => `You are compiling a wiki article about a restaurant's booking and traffic patterns for its AI manager.
@@ -142,6 +143,18 @@ async function getTableCount(restaurantId) {
   return count || 0;
 }
 
+async function getTenantCustomers(restaurantId) {
+  const { data, count, error } = await supabaseAdmin
+    .schema('restaurant')
+    .from('customer_ltv')
+    .select('customer_id, customer_name, customer_tier, total_visits', { count: 'exact' })
+    .eq('restaurant_id', restaurantId)
+    .order('total_visits', { ascending: false })
+    .limit(20);
+  if (error) throw error;
+  return { profiles: data || [], total: count ?? (data || []).length };
+}
+
 async function compileArticle(slug, prompt) {
   const response = await getAI().messages.create({
     model: AI_MODEL_FAST,
@@ -194,11 +207,11 @@ async function compileWikiForRestaurant(restaurantId) {
     getRecentReservationStats(restaurantId),
     getStoredMemories(restaurantId),
     getTableCount(restaurantId),
-    listCustomerProfiles(restaurantId, { limit: 20 }).catch(() => ({ profiles: [] })),
+    getTenantCustomers(restaurantId),
   ]);
 
   const restaurantName = config.restaurant_name || config.name || 'this restaurant';
-  const customers = customerResult?.profiles || customerResult || [];
+  const customers = customerResult.profiles;
 
   // Summarize reservation patterns for the prompt
   const statusCounts = reservations.reduce((acc, r) => {
@@ -222,11 +235,11 @@ async function compileWikiForRestaurant(restaurantId) {
     `Average party size: ${partySizeAvg}\n` +
     `Peak hour (UTC): ${peakHour || 'unknown'}`;
 
-  const vipCount = customers.filter((c) => c.tier === 'vip').length;
-  const regularCount = customers.filter((c) => c.tier === 'regular').length;
+  const vipCount = customers.filter((c) => c.customer_tier === 'vip').length;
+  const regularCount = customers.filter((c) => c.customer_tier === 'regular').length;
   const topCustomers = customers
     .slice(0, 8)
-    .map((c) => `  ${c.customer_name || c.customer_id} (${c.tier || 'new'}, ${c.visit_count || 0} visits)`)
+    .map((c) => `  ${c.customer_name || c.customer_id} (${c.customer_tier || 'new'}, ${c.total_visits || 0} visits)`)
     .join('\n') || '  No customers tracked yet.';
 
   const memorySummary = memories.length > 0
@@ -252,7 +265,8 @@ async function compileWikiForRestaurant(restaurantId) {
     },
     customers: {
       restaurantName,
-      totalCustomers: customers.length,
+      totalCustomers: customerResult.total,
+      sampleSize: customers.length,
       vipCount,
       regularCount,
       topCustomers,
@@ -284,7 +298,11 @@ async function compileWikiForRestaurant(restaurantId) {
 
   for (const slug of WIKI_SLUGS) {
     const inputText = JSON.stringify(articleData[slug]);
-    const newHash = md5(inputText);
+    // Old customer articles were built from a global, non-tenant-owned table.
+    // A versioned source hash forces recompilation and distinguishes safe pages.
+    const newHash = slug === 'customers'
+      ? `${CUSTOMER_WIKI_SOURCE_PREFIX}${md5(inputText)}`
+      : md5(inputText);
     const existingHash = await getExistingHash(restaurantId, slug);
 
     if (existingHash === newHash) {
@@ -312,14 +330,16 @@ async function compileWikiForRestaurant(restaurantId) {
 async function getWikiPages(restaurantId) {
   const { data, error } = await supabaseAdmin
     .from('restaurant_wiki_pages')
-    .select('slug, title, content, compiled_at')
+    .select('slug, title, content, compiled_at, source_hash')
     .eq('restaurant_id', restaurantId)
     .order('slug');
   if (error) {
     logger.error('getWikiPages failed', { restaurantId, error: error.message });
     return [];
   }
-  return data || [];
+  return (data || [])
+    .filter((page) => page.slug !== 'customers' || page.source_hash?.startsWith(CUSTOMER_WIKI_SOURCE_PREFIX))
+    .map(({ slug, title, content, compiled_at }) => ({ slug, title, content, compiled_at }));
 }
 
 module.exports = { compileWikiForRestaurant, getWikiPages };
