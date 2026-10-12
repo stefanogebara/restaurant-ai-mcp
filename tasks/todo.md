@@ -385,11 +385,14 @@ Local: build e sintaxe das APIs alteradas passaram. Jest: 277 suítes e 4.241 te
 
 A auditoria de Telefone encontrou um risco de roteamento entre restaurantes: a API usava um único número de voz e podia mudar o agente sem invalidar o “Ativo” salvo em outras casas. O backend agora exige dono no banco, bloqueia registrar/desregistrar/testar, não expõe o inventário da plataforma e devolve `needs_review` para antigos registros ativos. Voz e Chamadas mostram orientação assistida sem sugerir encaminhamento antes de verificar o roteamento. Os cinco testes de fronteira de telefone e dois de UI passaram; a suíte completa passou com 278 suítes/4.246 testes backend e 109 arquivos/1.008 testes frontend. Build, TypeScript, sintaxe e navegador pós-publicação ainda precisam de confirmação após o último ajuste.
 
+Publicação: PR #177 mesclada; deploy `78266cdf` ficou READY e associado a `seatable.one`. Na conta Cantina Bella Vista, Integrações mostra link único e QR, Voz mostra revisão assistida e Chamadas não diz mais “Ativo” nem expõe o número compartilhado. Sem erros de console nas duas telas. No celular, a aba Integrações não transborda em 390 px, mas o botão do menu encobre o rótulo acima do título; correção de espaçamento segue no branch seguinte. Instagram conectado ainda expõe o editor de legendas em inglês — próximo fluxo a corrigir por inteiro.
+
 ## 2026-10-12 — Configurações do restaurante sem duplicar canais
 
 - [x] Manter um único lugar para compartilhar o link de reservas: Integrações; Configurações aponta para lá.
 - [x] Dar acesso direto às cinco seções longas sem esconder campos nem perder rascunhos.
 - [x] Associar rótulos a horários e políticas para teclado/leitor de tela; cobrir com testes.
+- [x] Corrigir a sobreposição do menu móvel sobre os cabeçalhos de Integrações e Voz descoberta na produção.
 - [x] Verificar build e suítes completas.
 - [ ] Revisar no navegador e publicar após a versão anterior estabilizar.
 
