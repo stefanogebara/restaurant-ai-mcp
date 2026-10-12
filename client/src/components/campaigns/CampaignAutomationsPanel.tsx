@@ -27,7 +27,7 @@ export default function CampaignAutomationsPanel() {
 
   if (isLoading) {
     return (
-      <div className="text-center py-12 text-stone-500 text-sm">
+      <div className="text-center py-12 text-stone-gray text-sm">
         {t('campaigns.loading')}
       </div>
     );
@@ -35,7 +35,7 @@ export default function CampaignAutomationsPanel() {
 
   if (error) {
     return (
-      <div className="text-center py-12 text-red-600 text-sm">
+      <div className="text-center py-12 text-red-700 text-sm">
         {t('campaigns.automations.updateFailed', 'Failed to load automations')}
       </div>
     );
@@ -46,8 +46,8 @@ export default function CampaignAutomationsPanel() {
   );
 
   return (
-    <div className="space-y-4">
-      <p className="text-sm text-stone-500 mb-4">
+    <div>
+      <p className="text-[15px] text-stone-gray mb-7 max-w-2xl">
         {t('campaigns.automations.description')}
       </p>
 
@@ -91,13 +91,13 @@ function AutomationRow({ triggerType, automation, onUpdate, isUpdating }: Automa
   const descKey = `campaigns.automations.triggers.${triggerType}Desc`;
 
   return (
-    <div className="border border-stone-200 rounded-lg p-4">
+    <section className="py-6 border-t border-glass-border-dark">
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
-          <h3 className="text-sm font-semibold text-deep-charcoal">
+          <h3 className="text-[15px] font-semibold text-deep-charcoal">
             {t(triggerKey)}
           </h3>
-          <p className="text-xs text-stone-500 mt-0.5">
+          <p className="text-sm text-stone-gray mt-1">
             {t(descKey)}
           </p>
         </div>
@@ -106,11 +106,12 @@ function AutomationRow({ triggerType, automation, onUpdate, isUpdating }: Automa
         <button
           type="button"
           role="switch"
+          aria-label={t(triggerKey)}
           aria-checked={enabled}
           disabled={isUpdating}
           onClick={() => onUpdate({ trigger_type: triggerType, enabled: !enabled })}
           className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-burgundy focus:ring-offset-2 ${
-            enabled ? 'bg-burgundy' : 'bg-stone-200'
+            enabled ? 'bg-emerald-600' : 'bg-border-gray'
           } ${isUpdating ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
           <span
@@ -123,13 +124,14 @@ function AutomationRow({ triggerType, automation, onUpdate, isUpdating }: Automa
 
       {/* Expanded settings when enabled */}
       {enabled && (
-        <div className="mt-3 pt-3 border-t border-stone-100 grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="mt-5 pt-5 border-t border-glass-border-dark grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Channel */}
           <div>
-            <label className="block text-xs font-medium text-stone-600 mb-1">
+            <label htmlFor={`automation-channel-${triggerType}`} className="block text-xs font-medium text-stone-gray mb-1">
               {t('campaigns.automations.channel')}
             </label>
             <select
+              id={`automation-channel-${triggerType}`}
               value={channel}
               onChange={(e) => onUpdate({ trigger_type: triggerType, channel: e.target.value })}
               disabled={isUpdating}
@@ -143,10 +145,11 @@ function AutomationRow({ triggerType, automation, onUpdate, isUpdating }: Automa
 
           {/* Delay */}
           <div>
-            <label className="block text-xs font-medium text-stone-600 mb-1">
+            <label htmlFor={`automation-delay-${triggerType}`} className="block text-xs font-medium text-stone-gray mb-1">
               {t('campaigns.automations.delay')}
             </label>
             <select
+              id={`automation-delay-${triggerType}`}
               value={delayMinutes}
               onChange={(e) => onUpdate({ trigger_type: triggerType, delay_minutes: Number(e.target.value) })}
               disabled={isUpdating}
@@ -164,11 +167,12 @@ function AutomationRow({ triggerType, automation, onUpdate, isUpdating }: Automa
           {/* Google Review URL (only for review_request) */}
           {triggerType === 'review_request' && (
             <div className="sm:col-span-2">
-              <label className="block text-xs font-medium text-stone-600 mb-1">
+              <label htmlFor={`automation-review-${triggerType}`} className="block text-xs font-medium text-stone-gray mb-1">
                 {t('campaigns.automations.googleReviewUrl')}
               </label>
               <div className="flex gap-2">
                 <input
+                  id={`automation-review-${triggerType}`}
                   type="url"
                   value={reviewUrl}
                   onChange={(e) => setReviewUrl(e.target.value)}
@@ -184,13 +188,13 @@ function AutomationRow({ triggerType, automation, onUpdate, isUpdating }: Automa
                   {t('campaigns.automations.save')}
                 </button>
               </div>
-              <p className="text-xs text-stone-400 mt-1">
+              <p className="text-xs text-stone-gray mt-1">
                 {t('campaigns.automations.googleReviewUrlHint')}
               </p>
             </div>
           )}
         </div>
       )}
-    </div>
+    </section>
   );
 }

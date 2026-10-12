@@ -4,6 +4,7 @@ import { usePlanFeature } from './usePlanFeature';
 
 export interface Campaign {
   id: string;
+  name: string | null;
   campaign_type: string;
   message: string;
   channel: string;
