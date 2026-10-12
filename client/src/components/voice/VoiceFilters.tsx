@@ -5,7 +5,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
-import { SUPPORTED_LANGUAGES } from './voiceConstants';
+import { getVoiceLanguageLabel, SUPPORTED_LANGUAGES } from './voiceConstants';
 import type { VoiceFiltersState } from './voiceTypes';
 
 interface VoiceFiltersProps {
@@ -15,14 +15,13 @@ interface VoiceFiltersProps {
   hideSearch?: boolean;
 }
 
-const GENDER_OPTIONS = [
-  { value: 'all' as const, label: 'All' },
-  { value: 'male' as const, label: 'Male' },
-  { value: 'female' as const, label: 'Female' },
-];
-
 export default function VoiceFilters({ filters, onChange, defaultLanguage = 'en', hideSearch = false }: VoiceFiltersProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const genderOptions = [
+    { value: 'all' as const, label: t('voiceSettings.filterAll') },
+    { value: 'male' as const, label: t('voiceSettings.filterMale') },
+    { value: 'female' as const, label: t('voiceSettings.filterFemale') },
+  ];
   const [searchInput, setSearchInput] = useState(filters.search);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -43,7 +42,7 @@ export default function VoiceFilters({ filters, onChange, defaultLanguage = 'en'
     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-4">
       {/* Gender Toggle Pills */}
       <div className="flex rounded-lg border border-glass-border-dark overflow-hidden">
-        {GENDER_OPTIONS.map((opt) => (
+        {genderOptions.map((opt) => (
           <button
             key={opt.value}
             type="button"
@@ -65,12 +64,12 @@ export default function VoiceFilters({ filters, onChange, defaultLanguage = 'en'
       <select
         value={filters.language || defaultLanguage}
         onChange={(e) => onChange({ ...filters, language: e.target.value })}
-        aria-label="Filter by language"
+        aria-label={t('voiceSettings.filterByLanguage')}
         className="px-3 py-2 text-sm border border-glass-border-input rounded-xl bg-white/60 backdrop-blur-glass-chip text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/50"
       >
         {SUPPORTED_LANGUAGES.map((lang) => (
           <option key={lang.code} value={lang.code}>
-            {lang.flag} {lang.label}
+            {getVoiceLanguageLabel(lang, i18n.language)}
           </option>
         ))}
       </select>

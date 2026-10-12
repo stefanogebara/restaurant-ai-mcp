@@ -11,11 +11,13 @@ interface Props {
 
 export default function VoiceEngineSwitchModal({ isOpen, engineSwitchTarget, onConfirm, onClose }: Props) {
   const { t } = useTranslation();
-  const targetLabel = engineSwitchTarget === 'openai_realtime' ? 'OpenAI Realtime' : 'ElevenLabs';
+  const targetLabel = engineSwitchTarget === 'openai_realtime'
+    ? t('voiceEngine.fastName')
+    : t('voiceEngine.premiumName');
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={t('voiceEngine.switchTitle', 'Switch Voice Engine?')} size="sm">
-      <p className="text-sm text-stone-gray mb-6">
+      <p className="text-sm text-muted-stone mb-6">
         {t('voiceEngine.switchConfirmation', 'Are you sure you want to switch to {{engine}}? This will change how incoming calls are handled.', { engine: targetLabel })}
       </p>
       <div className="flex items-center justify-end gap-3">

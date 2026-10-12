@@ -8,8 +8,9 @@ interface Props {
 }
 
 const STATUS_LIGHT_STYLES: Record<string, string> = {
-  active:  'bg-rose-500',
+  active:  'bg-muted-stone',
   testing: 'bg-amber-500',
+  disabled: 'bg-red-700',
 };
 
 /**
@@ -23,32 +24,40 @@ const STATUS_LIGHT_STYLES: Record<string, string> = {
 export default function OpenAIEngineInfo({ engineStatus, currentOpenAIVoice }: Props) {
   const { t } = useTranslation();
   const [showTech, setShowTech] = useState(false);
-  const status = engineStatus || 'active';
+  const status = engineStatus || 'unknown';
   const isActive = status === 'active';
 
   return (
     <section className="py-5 border-b border-glass-border-dark">
       <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone mb-4 flex items-center gap-2">
         <ThiingsIcon name="info" pxSize={20} />
-        {t('voiceEngine.statusHeader', 'AI receptionist status')}
+        {t('voiceEngine.statusHeader')}
       </h2>
 
       <div className="flex items-center gap-3">
         <span
-          className={`inline-block w-2.5 h-2.5 rounded-full ${STATUS_LIGHT_STYLES[status] ?? 'bg-stone-400'}`}
+          className={`inline-block w-2.5 h-2.5 rounded-full ${STATUS_LIGHT_STYLES[status] ?? 'bg-muted-stone'}`}
           aria-hidden="true"
         />
         <div>
           <p className="text-sm font-semibold text-deep-charcoal">
             {isActive
-              ? t('voiceEngine.statusActive', 'Running normally — ready to take calls.')
-              : t('voiceEngine.statusTesting', 'In test mode — calls are previewed but not answered yet.')}
+              ? t('voiceEngine.statusActive')
+              : status === 'testing'
+                ? t('voiceEngine.statusTesting')
+                : status === 'disabled'
+                  ? t('voiceEngine.statusDisabled')
+                  : t('voiceEngine.statusUnknown')}
           </p>
           <p className="text-xs text-warm-stone mt-0.5">
             {t('voiceEngine.statusVoice', 'Voice: {{voice}}', { voice: currentOpenAIVoice })}
           </p>
         </div>
       </div>
+
+      <a href="#voice-settings:phone" className="mt-3 inline-block text-sm text-burgundy underline underline-offset-2 hover:text-burgundy-dark">
+        {t('agentInfo.checkPhone')}
+      </a>
 
       <button
         type="button"
@@ -61,14 +70,10 @@ export default function OpenAIEngineInfo({ engineStatus, currentOpenAIVoice }: P
       </button>
 
       {showTech && (
-        <dl className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-warm-stone bg-soft-gray rounded-xl p-3">
+        <dl className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3 rounded-xl border border-glass-border-dark p-3 text-xs text-warm-stone">
           <div>
             <dt className="text-[10px] uppercase tracking-wider mb-1">{t('voiceEngine.techEngine', 'Engine')}</dt>
             <dd className="font-mono text-deep-charcoal">OpenAI Realtime API</dd>
-          </div>
-          <div>
-            <dt className="text-[10px] uppercase tracking-wider mb-1">{t('voiceEngine.techEndpoint', 'Endpoint')}</dt>
-            <dd className="font-mono text-deep-charcoal truncate">seatable-voice.fly.dev</dd>
           </div>
           <div>
             <dt className="text-[10px] uppercase tracking-wider mb-1">{t('voiceEngine.techStatus', 'Internal status')}</dt>

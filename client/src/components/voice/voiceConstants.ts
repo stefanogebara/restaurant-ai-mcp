@@ -5,26 +5,33 @@
 export interface SupportedLanguage {
   code: string;
   label: string;
-  flag: string;
 }
 
 export const SUPPORTED_LANGUAGES: SupportedLanguage[] = [
-  { code: 'en', label: 'English', flag: '🇺🇸' },
-  { code: 'es', label: 'Spanish', flag: '🇪🇸' },
-  { code: 'fr', label: 'French', flag: '🇫🇷' },
-  { code: 'de', label: 'German', flag: '🇩🇪' },
-  { code: 'it', label: 'Italian', flag: '🇮🇹' },
-  { code: 'pt', label: 'Portuguese', flag: '🇵🇹' },
-  { code: 'nl', label: 'Dutch', flag: '🇳🇱' },
-  { code: 'pl', label: 'Polish', flag: '🇵🇱' },
-  { code: 'sv', label: 'Swedish', flag: '🇸🇪' },
-  { code: 'tr', label: 'Turkish', flag: '🇹🇷' },
-  { code: 'ja', label: 'Japanese', flag: '🇯🇵' },
-  { code: 'ko', label: 'Korean', flag: '🇰🇷' },
-  { code: 'zh', label: 'Chinese', flag: '🇨🇳' },
-  { code: 'ru', label: 'Russian', flag: '🇷🇺' },
-  { code: 'hi', label: 'Hindi', flag: '🇮🇳' },
+  { code: 'en', label: 'English' },
+  { code: 'es', label: 'Spanish' },
+  { code: 'fr', label: 'French' },
+  { code: 'de', label: 'German' },
+  { code: 'it', label: 'Italian' },
+  { code: 'pt', label: 'Portuguese' },
+  { code: 'nl', label: 'Dutch' },
+  { code: 'pl', label: 'Polish' },
+  { code: 'sv', label: 'Swedish' },
+  { code: 'tr', label: 'Turkish' },
+  { code: 'ja', label: 'Japanese' },
+  { code: 'ko', label: 'Korean' },
+  { code: 'zh', label: 'Chinese' },
+  { code: 'ru', label: 'Russian' },
+  { code: 'hi', label: 'Hindi' },
 ];
+
+export function getVoiceLanguageLabel(language: SupportedLanguage, uiLanguage: string): string {
+  try {
+    return new Intl.DisplayNames([uiLanguage], { type: 'language' }).of(language.code) || language.label;
+  } catch {
+    return language.label;
+  }
+}
 
 const PREVIEW_TEMPLATES: Record<string, (name: string) => string> = {
   en: (name) => `Welcome to ${name}! I'd be happy to help you make a reservation today.`,
