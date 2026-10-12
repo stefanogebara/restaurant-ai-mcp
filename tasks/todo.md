@@ -1,3 +1,17 @@
+# Perfil do convidado — fatos, não probabilidades (12/out/2026)
+
+- [x] Conferir a origem e unidade dos indicadores exibidos nos drawers de reserva e chamadas.
+- [x] Remover risco e receita inventados, corrigir a escala de 0–100 nas chamadas, localizar datas e alinhar os drawers ao design vigente.
+- [x] Distinguir falha de consulta de perfil vazio e remover métricas 0/0 no resumo de chamadas.
+- [x] Liberar o botão Aprovar/Enviar do botão flutuante de reserva em telas de 320 px.
+- [ ] Cobrir estados com e sem dados por teste, build e inspeção visual autenticada.
+
+Limite: navegação somente leitura em produção; não alterar clientes, reservas ou campanhas.
+
+Revisão: `/api/guest-profile` devolve `churn_risk_score` de 0 a 100, mas a tela de chamadas multiplicava o número por 100 e exibia 8.000% para 80 pontos. O drawer de reservas fabricava 5/15/40 pela categoria e somava receita sem fonte. Ambos passam a apresentar apenas o dado existente como pontuação `/100`; gasto estimado usa os rótulos já empregados no CRM. Datas e detalhes foram localizados, largura móvel corrigida. A API agora não transforma erro de qualquer fonte em perfil vazio; a interface oferece nova tentativa. O resumo de chamadas chama o intervalo de "período" e mostra traço em vez de 0%/0s quando não há chamadas. Testes focados finais (7 frontend + 4 backend), Jest completo (292 suítes/4.331 testes), TypeScript, build e lint focado passaram; Vitest completo passou antes dos dois ajustes finais (133 arquivos/1.088 testes). Navegador publicado ainda pendente. A fila proativa publicada em 320 px confirmou que o FAB cobria parte de Aprovar; os controles foram alinhados à esquerda em celular. Nenhuma aprovação/envio ocorreu.
+
+---
+
 # Configurações — localização legível e fiel (12/out/2026)
 
 - [x] Verificar no navegador autenticado a página em 320 px e identificar fusos com offsets fixos incorretos no horário de verão.
