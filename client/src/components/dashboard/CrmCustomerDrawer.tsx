@@ -70,7 +70,7 @@ export default function CrmCustomerDrawer({ customerId, onClose }: CrmCustomerDr
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="fixed right-0 top-0 h-full w-[420px] max-w-[90vw] bg-glass-modal backdrop-blur-glass-modal shadow-glass-modal z-50 overflow-y-auto border-l border-glass-border-dark"
+            className="fixed right-0 top-0 h-full w-full sm:w-[420px] sm:max-w-[90vw] bg-glass-modal backdrop-blur-glass-modal shadow-glass-modal z-50 overflow-y-auto border-l border-glass-border-dark"
           >
             {isError ? (
               <div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center">

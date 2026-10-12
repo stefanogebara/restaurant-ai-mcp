@@ -73,10 +73,10 @@ export default function CustomerProfileSections({
   const handleBirthdayChange = useCallback(
     (value: string) => {
       setBirthday(value);
-      const updated = { ...specialOccasions, birthday: value };
+      const updated: Record<string, string> = { ...specialOccasions, birthday: value };
       if (!value) {
-        const { birthday: _removed, ...rest } = updated;
-        onUpdateProfile({ customerId, special_occasions: rest });
+        delete updated.birthday;
+        onUpdateProfile({ customerId, special_occasions: updated });
       } else {
         onUpdateProfile({ customerId, special_occasions: updated });
       }
@@ -87,10 +87,10 @@ export default function CustomerProfileSections({
   const handleAnniversaryChange = useCallback(
     (value: string) => {
       setAnniversary(value);
-      const updated = { ...specialOccasions, anniversary: value };
+      const updated: Record<string, string> = { ...specialOccasions, anniversary: value };
       if (!value) {
-        const { anniversary: _removed, ...rest } = updated;
-        onUpdateProfile({ customerId, special_occasions: rest });
+        delete updated.anniversary;
+        onUpdateProfile({ customerId, special_occasions: updated });
       } else {
         onUpdateProfile({ customerId, special_occasions: updated });
       }
