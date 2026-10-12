@@ -8,6 +8,19 @@
 Limite: não registrar/desregistrar telefone, trocar motor em produção ou iniciar chamada. A aba Telefone continua sendo a fonte de verdade para roteamento.
 
 ---
+# Painel — fila verdadeira e estados legíveis (12/out/2026)
+
+- [x] Reproduzir no navegador autenticado: resumo mostra zero enquanto a fila lista uma pessoa avisada.
+- [x] Compartilhar a consulta da fila entre resumo e painel, sem chamada duplicada nem guia vazio falso.
+- [x] Localizar o aviso Stripe e a data da fila; distinguir aviso antigo de mesa pronta agora.
+- [x] Aplicar cores semânticas e ícones reais ao painel da fila, sem mudar ações de atendimento.
+- [ ] Cobrir estados e idiomas com testes; verificar build, navegador e produção.
+
+Limite: somente leitura no navegador de produção. Não avisar, sentar, remover ou cadastrar convidados durante o teste.
+
+Revisão local: o resumo e a lista agora compartilham a mesma consulta. Quando ela não respondeu, o resumo mostra traço e não declara o restaurante vazio. Avisos de mais de um dia ficam em “Precisa de revisão”, sem remoção automática. O horário usa o idioma da interface e o fuso do restaurante. A faixa de depósitos Stripe foi traduzida e o topo do painel saiu de trás do menu móvel. Testes focados cobrem deduplicação, status antigo, data e copy PT. Após o rebase, Jest completo passou (288 suítes/4.302 testes), Vitest completo passou (128 arquivos/1.071 testes), build/TypeScript, lint focado e `git diff --check` passaram; navegador após deploy pendente.
+
+---
 
 # Insights — pontuação honesta e idioma (12/out/2026)
 
@@ -527,9 +540,9 @@ Revisão local: histórico em duas linhas, data formatada no idioma da interface
 - [x] Manter mesas em tamanho tocável e permitir explorar a planta sem modificar posições.
 - [x] Separar toque de arraste: tocar abre a edição, apenas mudança real de célula salva.
 - [x] Verificar toque e arraste em testes, suíte completa, build e lint.
-- [ ] Verificar layout móvel na versão publicada, sem mover mesas reais.
+- [x] Verificar layout móvel na versão publicada, sem mover mesas reais.
 
-Observação: o navegador de produção mostrou as mesas reduzidas pelo `viewBox` inteiro, embora a página não tivesse overflow horizontal. A correção aumenta apenas a largura de apresentação no celular; não altera coordenadas armazenadas. O teste de interação detectou que o toque não abria a edição, enquanto a posição era enviada para salvamento sem movimento. Agora toque e arraste são caminhos separados. Jest completo passou (286 suítes/4.283 testes), Vitest completo passou (124 arquivos/1.059 testes), build e lint focado passaram; após o rebase final, 15 testes focados e TypeScript passaram de novo. Falta apenas a verificação visual na versão publicada.
+Observação: o navegador de produção mostrou as mesas reduzidas pelo `viewBox` inteiro, embora a página não tivesse overflow horizontal. A correção aumenta apenas a largura de apresentação no celular; não altera coordenadas armazenadas. O teste de interação detectou que o toque não abria a edição, enquanto a posição era enviada para salvamento sem movimento. Agora toque e arraste são caminhos separados. Jest completo passou (286 suítes/4.283 testes), Vitest completo passou (124 arquivos/1.059 testes), build e lint focado passaram; após o rebase final, 15 testes focados e TypeScript passaram de novo. Na versão publicada, 320 px mostrou mesas legíveis, um toque abriu o painel da mesa sem arraste e 390 px permitiu deslocar horizontalmente a planta sem overflow da página. Nenhuma mesa real foi movida.
 
 ---
 

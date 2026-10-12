@@ -19,6 +19,7 @@ import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { hostAPI } from '../services/api';
 import { useRealtimeDashboard } from '../hooks/useRealtimeSubscription';
+import { useWaitlistEntries, countActiveWaitlist } from '../hooks/useWaitlistEntries';
 import { useCompleteService } from '../hooks/useCompleteService';
 import { usePlanInfo } from '../hooks/useSubscription';
 import DashboardLayout from '../components/layout/DashboardLayout';
@@ -117,14 +118,15 @@ export default function Dashboard() {
     queryFn: hostAPI.getDashboard,
     refetchInterval: 5 * 60 * 1000,
   });
+  const waitlistQuery = useWaitlistEntries();
 
   // ---- Data extraction ----
-  const rawStats = dashboardData?.data?.summary || {};
   const tables = dashboardData?.data?.tables || [];
   const reservations: UpcomingReservation[] = dashboardData?.data?.upcoming_reservations || [];
   const activeParties: ActiveParty[] = dashboardData?.data?.active_parties || [];
   const restaurantSlug: string = dashboardData?.data?.slug || '';
   const restaurantId: string | undefined = dashboardData?.data?.restaurant_id;
+  const restaurantTimezone: string | undefined = dashboardData?.data?.timezone;
 
   // BB.2: subscribe to live changes the moment we know which tenant we are.
   // Each INSERT/UPDATE/DELETE on reservations, tables, waitlist, or
@@ -212,7 +214,7 @@ export default function Dashboard() {
   // ---- Short date for header ----
 
   // ---- Computed metrics ----
-  const waitlistCount = rawStats.waitlist_count || 0;
+  const waitlistCount = waitlistQuery.data ? countActiveWaitlist(waitlistQuery.data.waitlist) : null;
   const guestsExpected = todayReservations.reduce((sum, r) => sum + (r.party_size || 0), 0);
 
   // ---- Progressive disclosure: detect if dashboard is mostly empty (new user) ----
@@ -245,7 +247,7 @@ export default function Dashboard() {
 
   return (
     <DashboardLayout>
-      <div className={`dashboard min-h-screen px-4 sm:px-6 lg:px-10 pt-6 sm:pt-10 pb-24 sm:pb-20${isNight ? ' service-mode' : ''}`}>
+      <div className={`dashboard min-h-screen px-4 sm:px-6 lg:px-10 pt-20 lg:pt-10 pb-24 sm:pb-20${isNight ? ' service-mode' : ''}`}>
         <div className="max-w-[1240px]">
 
           {/* ---- Stripe Connect Adoption Nudge ---- */}
@@ -429,7 +431,7 @@ export default function Dashboard() {
               </div>
               {/* Waitlist */}
               <div>
-                <p className="font-serif text-[30px] sm:text-[38px] leading-none text-deep-charcoal tabular-nums">{waitlistCount}</p>
+                <p className="font-serif text-[30px] sm:text-[38px] leading-none text-deep-charcoal tabular-nums">{waitlistCount ?? '—'}</p>
                 <p className="text-[12px] uppercase tracking-[0.05em] text-muted-stone mt-3">
                   {t('waitlist.title', 'Waitlist')}
                 </p>
@@ -498,7 +500,7 @@ export default function Dashboard() {
           {/* ---- Fila + Na casa agora — listas no canvas, sem cards ---- */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
             <section className="border-t hairline pt-2">
-              <WaitlistPanel onSeatNow={handleSeatFromWaitlist} />
+              <WaitlistPanel onSeatNow={handleSeatFromWaitlist} timeZone={restaurantTimezone} />
             </section>
 
             <section className="border-t hairline pt-2">

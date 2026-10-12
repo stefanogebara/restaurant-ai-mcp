@@ -1,7 +1,7 @@
 ﻿import { useTranslation } from 'react-i18next';
-import { formatTimeAgo } from '../../utils/timeFormatting';
+import ThiingsIcon from '../common/ThiingsIcon';
 import WaitlistTimeDisplay from './WaitlistTimeDisplay';
-import { getTags, getStatusColor } from './waitlistHelpers';
+import { getTags, getStatusColor, isStaleNotified, formatNotifiedTime } from './waitlistHelpers';
 import type { WaitlistEntry } from './waitlistHelpers';
 
 interface WaitlistEntryCardProps {
@@ -13,6 +13,7 @@ interface WaitlistEntryCardProps {
   isNotifying: boolean;
   isRemoving: boolean;
   showActions?: boolean;
+  timeZone?: string;
 }
 
 export default function WaitlistEntryCard({
@@ -24,8 +25,10 @@ export default function WaitlistEntryCard({
   isNotifying,
   isRemoving,
   showActions = true,
+  timeZone,
 }: WaitlistEntryCardProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const needsReview = isStaleNotified(entry);
   const initials = entry.customer_name
     ? entry.customer_name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
     : '?';
@@ -33,11 +36,11 @@ export default function WaitlistEntryCard({
 
   return (
     <div className={`px-3 py-4 border-b border-glass-border-dark/50 hover:bg-warm-white transition-colors ${
-      isTableReady ? 'bg-rose-600/5' : ''
+      needsReview ? 'bg-amber-50/40' : isTableReady ? 'bg-emerald-50/40' : ''
     }`}>
       {/* Row 1: Avatar, Name, Party Size, Status */}
       <div className="flex items-center gap-2">
-        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#9F1239]/15 to-[#9F1239]/10 flex items-center justify-center font-bold text-xs text-[#9F1239] border border-[#9F1239]/20 flex-shrink-0">
+        <div className="w-8 h-8 rounded-full bg-soft-gray flex items-center justify-center font-semibold text-xs text-deep-charcoal border border-glass-border-dark flex-shrink-0">
           {initials}
         </div>
         <div className="flex-1 min-w-0">
@@ -49,7 +52,7 @@ export default function WaitlistEntryCard({
                 title="WhatsApp"
                 aria-label="WhatsApp"
               >
-                <span aria-hidden="true">ðŸ’¬</span>
+                <ThiingsIcon name="chat" pxSize={11} />
                 WhatsApp
               </span>
             )}
@@ -90,7 +93,8 @@ export default function WaitlistEntryCard({
       {/* Notified timestamp */}
       {entry.status === 'notified' && entry.notified_at && (
         <div className="text-[10px] text-amber-600 ml-10 mt-1">
-          {t('waitlist.notifiedAt', 'Notified')} {formatTimeAgo(entry.notified_at)}
+          {t('waitlist.notifiedAt', 'Notified')} {formatNotifiedTime(entry.notified_at, i18n.language, new Date(), timeZone)}
+          {needsReview && <span className="ml-1 font-medium">· {t('waitlist.reviewOldNotice')}</span>}
         </div>
       )}
 
@@ -102,13 +106,13 @@ export default function WaitlistEntryCard({
               <button
                 onClick={() => onNotify(entry.id)}
                 disabled={isNotifying}
-                className="px-2 py-1 text-[11px] bg-rose-600 hover:bg-rose-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
+                className="px-2 py-1 text-[11px] bg-burgundy hover:bg-burgundy/90 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
               >
                 {t('waitlist.ready')}
               </button>
               <button
                 onClick={() => onSeatNow(entry)}
-                className="px-2 py-1 text-[11px] bg-[#9F1239] hover:bg-[#881337] text-white font-medium rounded-lg transition-colors"
+                className="px-2 py-1 text-[11px] bg-burgundy hover:bg-burgundy/90 text-white font-medium rounded-lg transition-colors"
               >
                 {t('waitlist.seat')}
               </button>
@@ -117,7 +121,7 @@ export default function WaitlistEntryCard({
           {entry.status === 'notified' && (
             <button
               onClick={() => onSeatNow(entry)}
-              className="px-2 py-1 text-[11px] bg-[#9F1239] hover:bg-[#881337] text-white font-medium rounded-lg transition-colors"
+              className="px-2 py-1 text-[11px] bg-burgundy hover:bg-burgundy/90 text-white font-medium rounded-lg transition-colors"
             >
               {t('waitlist.seatNow')}
             </button>

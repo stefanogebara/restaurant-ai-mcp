@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface WaitlistTimeDisplayProps {
   addedAt: string;
@@ -7,6 +8,7 @@ interface WaitlistTimeDisplayProps {
 }
 
 export default function WaitlistTimeDisplay({ addedAt, estimatedWait, compact = false }: WaitlistTimeDisplayProps) {
+  const { t } = useTranslation();
   const [now, setNow] = useState(new Date());
 
   // Update every minute
@@ -16,20 +18,21 @@ export default function WaitlistTimeDisplay({ addedAt, estimatedWait, compact = 
   }, []);
 
   const added = new Date(addedAt);
-  const elapsedMinutes = Math.floor((now.getTime() - added.getTime()) / 60000);
-  const remainingMinutes = Math.max(0, estimatedWait - elapsedMinutes);
-  const progress = Math.min((elapsedMinutes / estimatedWait) * 100, 100);
-  const isOverdue = elapsedMinutes > estimatedWait;
+  const quotedMinutes = Math.max(1, estimatedWait);
+  const elapsedMinutes = Math.max(0, Math.floor((now.getTime() - added.getTime()) / 60000));
+  const remainingMinutes = Math.max(0, quotedMinutes - elapsedMinutes);
+  const progress = Math.min((elapsedMinutes / quotedMinutes) * 100, 100);
+  const isOverdue = elapsedMinutes > quotedMinutes;
 
   // Color based on progress
   const getProgressColor = () => {
-    if (progress < 50) return 'bg-rose-600';
+    if (progress < 50) return 'bg-emerald-600';
     if (progress < 80) return 'bg-amber-600';
     return 'bg-red-600';
   };
 
   const getTextColor = () => {
-    if (progress < 50) return 'text-rose-600';
+    if (progress < 50) return 'text-emerald-700';
     if (progress < 80) return 'text-amber-600';
     return 'text-red-600';
   };
@@ -54,7 +57,7 @@ export default function WaitlistTimeDisplay({ addedAt, estimatedWait, compact = 
     <div className="flex items-center gap-4">
       {/* Quoted Time */}
       <div className="text-center min-w-[50px]">
-        <div className="text-[10px] text-muted-stone uppercase tracking-wide">Quoted</div>
+        <div className="text-[10px] text-muted-stone uppercase tracking-wide">{t('waitlist.quotedTime')}</div>
         <div className="font-bold text-deep-charcoal text-sm">{estimatedWait}m</div>
       </div>
 
@@ -67,14 +70,14 @@ export default function WaitlistTimeDisplay({ addedAt, estimatedWait, compact = 
           />
         </div>
         <div className="flex justify-between mt-1">
-          <span className="text-[10px] text-muted-stone">{elapsedMinutes}m elapsed</span>
+          <span className="text-[10px] text-muted-stone">{t('waitlist.elapsedMinutes', { count: elapsedMinutes })}</span>
         </div>
       </div>
 
       {/* Remaining / Overdue */}
       <div className="text-center min-w-[60px]">
         <div className="text-[10px] text-muted-stone uppercase tracking-wide">
-          {isOverdue ? 'Overdue' : 'Remaining'}
+          {isOverdue ? t('waitlist.overdue') : t('waitlist.remaining')}
         </div>
         <div className={`font-bold text-sm ${getTextColor()}`}>
           {isOverdue ? `+${elapsedMinutes - estimatedWait}m` : `${remainingMinutes}m`}

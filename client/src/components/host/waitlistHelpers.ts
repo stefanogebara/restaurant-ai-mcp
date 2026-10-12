@@ -35,12 +35,36 @@ export function getStatusColor(status?: string | null): string {
   // normalizeStatus lives under reservationStatus but is a generic
   // trim+lowercase, and unlike a bare .toLowerCase() it survives undefined.
   switch (normalizeStatus(status)) {
-    case 'waiting': return 'bg-burgundy/10 text-burgundy';
+    case 'waiting': return 'bg-soft-gray text-stone-gray';
     case 'notified': return 'bg-amber-600/10 text-amber-600';
-    case 'seated': return 'bg-rose-600/10 text-rose-600';
+    case 'seated': return 'bg-emerald-50 text-emerald-700';
     case 'cancelled': return 'bg-red-500/10 text-red-500';
     case 'no_show':
     case 'no show': return 'bg-stone-gray/10 text-stone-gray';
     default: return 'bg-stone-gray/10 text-stone-gray';
   }
+}
+
+/** A table-ready notice older than one service day needs review, not a "ready now" claim. */
+export function isStaleNotified(entry: WaitlistEntry, now = new Date()): boolean {
+  if (String(entry.status).toLowerCase() !== 'notified' || !entry.notified_at) return false;
+  const notifiedAt = new Date(entry.notified_at).getTime();
+  return Number.isFinite(notifiedAt) && now.getTime() - notifiedAt > 24 * 60 * 60 * 1000;
+}
+
+export function formatNotifiedTime(value: string, language: string, now = new Date(), timeZone?: string): string {
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime())) return '';
+  const elapsedMinutes = Math.max(0, Math.floor((now.getTime() - date.getTime()) / 60000));
+  const locale = language === 'pt-BR' ? 'pt-BR' : language.startsWith('es') ? 'es-ES' : 'en-US';
+  if (elapsedMinutes >= 24 * 60) {
+    try {
+      return new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', year: 'numeric', timeZone }).format(date);
+    } catch {
+      return new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', year: 'numeric' }).format(date);
+    }
+  }
+  const relative = new Intl.RelativeTimeFormat(locale, { numeric: 'auto', style: 'short' });
+  if (elapsedMinutes >= 60) return relative.format(-Math.floor(elapsedMinutes / 60), 'hour');
+  return relative.format(-elapsedMinutes, 'minute');
 }

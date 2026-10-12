@@ -667,6 +667,11 @@
       "unavailable": "Payment is temporarily unavailable. Please try again later or contact the restaurant directly."
     }
   },
+  "stripeConnectNudge": {
+    "title": "Connect your Stripe account",
+    "subtitle": "Booking deposits are routed through Seatable until you connect Stripe.",
+    "cta": "Connect Stripe"
+  },
   "waitlist": {
     "title": "Waitlist",
     "addToWaitlist": "Add to Waitlist",
@@ -693,6 +698,12 @@
     "guestFallback": "Guest",
     "partyCount": "{{count}}p",
     "notifiedAt": "Notified",
+    "needsReview": "Needs review",
+    "reviewOldNotice": "Check whether this guest is still waiting",
+    "quotedTime": "Quoted",
+    "elapsedMinutes": "{{count}}m elapsed",
+    "overdue": "Overdue",
+    "remaining": "Remaining",
     "status": {
       "waiting": "Waiting",
       "notified": "Notified",

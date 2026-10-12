@@ -19,11 +19,6 @@ vi.mock('../WaitlistTimeDisplay', () => ({
   ),
 }));
 
-// Mock timeFormatting utility
-vi.mock('../../../utils/timeFormatting', () => ({
-  formatTimeAgo: (date: string) => `${date} ago`,
-}));
-
 // ------------------------------------------------------------------
 // Helpers — renderWithProviders comes from src/test/renderWithProviders
 // (wraps ToastProvider + QueryClientProvider with retry-disabled client).
@@ -129,6 +124,22 @@ describe('WaitlistPanel', () => {
     expect(screen.getByText('High Chair')).toBeInTheDocument();
     expect(screen.getByText('Outdoor')).toBeInTheDocument();
     expect(screen.getByText('Birthday')).toBeInTheDocument();
+  });
+
+  it('shows an old notified guest as needing review, not as a table ready now', async () => {
+    mockAuthFetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({ success: true, count: 1, waitlist: [makeEntry({
+        status: 'notified',
+        notified_at: '2025-12-20T18:10:00Z',
+      })] }),
+    });
+
+    renderWithProviders(<WaitlistPanel onSeatNow={onSeatNow} />);
+    expect(await screen.findByText('Alice Johnson')).toBeInTheDocument();
+    expect(screen.getByText('Needs review (1)')).toBeInTheDocument();
+    expect(screen.queryByText('Table Ready (1)')).not.toBeInTheDocument();
+    expect(screen.getByText(/Check whether this guest is still waiting/)).toBeInTheDocument();
   });
 
   it('filters entries by search query on name', async () => {

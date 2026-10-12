@@ -667,6 +667,11 @@
       "unavailable": "El pago no está disponible temporalmente. Inténtalo más tarde o contacta directamente con el restaurante."
     }
   },
+  "stripeConnectNudge": {
+    "title": "Conecta tu cuenta de Stripe",
+    "subtitle": "Los depósitos de reservas pasan por Seatable hasta que conectes Stripe.",
+    "cta": "Conectar Stripe"
+  },
   "waitlist": {
     "title": "Lista de Espera",
     "addToWaitlist": "Agregar a Lista de Espera",
@@ -692,6 +697,12 @@
     "remove": "Eliminar",
     "partyCount": "{{count}}p",
     "notifiedAt": "Avisado",
+    "needsReview": "Necesita revisión",
+    "reviewOldNotice": "Confirma si todavía está esperando",
+    "quotedTime": "Estimado",
+    "elapsedMinutes": "{{count}} min transcurridos",
+    "overdue": "Atrasado",
+    "remaining": "Restante",
     "status": {
       "waiting": "En espera",
       "notified": "Avisado",
