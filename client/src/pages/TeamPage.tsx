@@ -7,6 +7,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { usePermission } from '../hooks/usePermission';
 import DashboardLayout from '../components/layout/DashboardLayout';
+import ThiingsIcon from '../components/common/ThiingsIcon';
 import {
   useTeamMembers,
   useInviteTeamMember,
@@ -34,6 +35,7 @@ export default function TeamPage() {
   const [loadingTimedOut, setLoadingTimedOut] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cancelRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
 
   const { data: members = [], isLoading, isError, refetch } = useTeamMembers();
   const invite = useInviteTeamMember();
@@ -51,6 +53,19 @@ export default function TeamPage() {
     if (!confirmRemoveId) return;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && !remove.isPending) setConfirmRemoveId(null);
+      if (event.key === 'Tab') {
+        const buttons = Array.from(dialogRef.current?.querySelectorAll<HTMLButtonElement>('button:not(:disabled)') || []);
+        if (buttons.length === 0) return;
+        const first = buttons[0];
+        const last = buttons[buttons.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      }
     };
     document.addEventListener('keydown', onKeyDown);
     return () => { document.removeEventListener('keydown', onKeyDown); };
@@ -168,9 +183,7 @@ export default function TeamPage() {
         ) : members.length === 0 ? (
           <div className="max-w-md mx-auto p-8 text-center">
             <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-deep-charcoal/[0.06]">
-              <svg className="h-5 w-5 text-deep-charcoal" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-              </svg>
+              <ThiingsIcon name="users" pxSize={20} className="text-deep-charcoal" />
             </div>
             <p className="text-sm leading-relaxed text-muted-stone">
               {t('team.emptyHint', 'Convide seus anfitriões, gerentes e garçons para gerenciar reservas em equipe. Cada membro recebe acesso ao painel com permissões do papel escolhido.')}
@@ -213,7 +226,7 @@ export default function TeamPage() {
       {/* Remove confirmation dialog */}
       {confirmRemoveId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-          <div role="dialog" aria-modal="true" aria-labelledby="team-remove-title" className="glass-modal w-full max-w-sm p-6">
+          <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="team-remove-title" className="glass-modal w-full max-w-sm p-6">
             <h3 id="team-remove-title" className="mb-2 font-serif text-2xl text-deep-charcoal">{t('team.removeTitle')}</h3>
             <p className="mb-6 text-sm text-muted-stone">
               {t('team.removeConfirm')}

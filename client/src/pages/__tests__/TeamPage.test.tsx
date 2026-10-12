@@ -96,4 +96,17 @@ describe('TeamPage', () => {
     await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('email acceptance was not confirmed'));
     expect(screen.queryByText(/Invitation sent to/)).not.toBeInTheDocument();
   });
+
+  it('opens an accessible removal dialog and restores focus on Escape without deleting', async () => {
+    renderTeamPage();
+    await waitFor(() => expect(screen.getByText('host@test.com')).toBeInTheDocument());
+    const removeButton = screen.getByRole('button', { name: 'Remove' });
+    await userEvent.click(removeButton);
+    expect(screen.getByRole('dialog', { name: 'Remove Team Member' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Cancel' })).toHaveFocus();
+    await userEvent.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(removeButton).toHaveFocus();
+    expect(mockFetch).not.toHaveBeenCalledWith('/api/team-members', expect.objectContaining({ method: 'DELETE' }));
+  });
 });

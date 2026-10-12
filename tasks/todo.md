@@ -487,11 +487,13 @@ Verificação local: 9 testes novos da rota aposentada, Jest completo (285 suít
 
 # Equipe — convite confiável e celular utilizável (12/out/2026)
 
-- [ ] Corrigir título sob o menu e tornar e-mail, papel e ação legíveis em 390/320 px.
-- [ ] Separar lista vazia de falha ao carregar e alinhar a legenda dos papéis com as permissões reais.
-- [ ] Não afirmar que o convite foi enviado quando o provedor não o aceitou; não devolver token de convite na API.
+- [x] Corrigir título sob o menu e tornar e-mail, papel e ação legíveis em 390/320 px.
+- [x] Separar lista vazia de falha ao carregar e alinhar a legenda dos papéis com as permissões reais.
+- [x] Não afirmar que o convite foi enviado quando o provedor não o aceitou; não devolver token de convite na API.
 - [ ] Cobrir estados de convite, erro e responsividade com testes e navegador, sem enviar convite real.
 
 Limite: nenhum convite será enviado no teste de produção; a conta autenticada será usada apenas para leitura e inspeção visual.
+
+Revisão local: o e-mail ocupa a linha inteira no celular; os papéis refletem a matriz real de permissões (só o proprietário gerencia equipe). O backend aguarda o aceite do provedor com limite de 6 s e informa `email_accepted`; um envio não confirmado não aparece como sucesso. O token não volta na resposta. Um membro ativo ou pendente não pode ser redefinido por novo convite. O modal de remoção ganhou foco, Escape e ciclo de Tab. Jest completo passou (285 suítes/4.274 testes); Vitest completo repetido com dois workers passou (122 arquivos/1.054 testes), TypeScript e lint focado passaram. Falta navegador na versão publicada; nenhum convite real foi enviado.
 
 ---
