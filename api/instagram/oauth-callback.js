@@ -20,6 +20,7 @@ const crypto = require('crypto');
 const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { checkAndApplyRateLimit } = require('../_lib/rate-limit');
+const { integrationReturnUrl } = require('../_lib/integration-redirects');
 
 const logger = createSecureLogger('instagram-oauth-callback');
 
@@ -68,7 +69,7 @@ function verifyState(state) {
 }
 
 function redirectWithStatus(res, reason) {
-  const dest = `${CLIENT_URL}/host-dashboard/voice-settings?instagram_connect=${encodeURIComponent(reason)}#tab=instagram`;
+  const dest = integrationReturnUrl(CLIENT_URL, 'instagram', 'instagram_connect', reason);
   res.setHeader('Location', dest);
   return res.status(302).end();
 }

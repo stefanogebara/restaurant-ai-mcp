@@ -1,15 +1,5 @@
-/**
- * BookingChannelsPanel
- *
- * Shows all booking channel options with copy-to-clipboard:
- * 1. Direct URL
- * 2. Widget embed code
- * 3. QR Code (preview + download)
- * 4. Instagram bio link
- * 5. Google Maps instructions
- */
-
-import { useState, useCallback } from 'react';
+/** Share one booking link; keep QR and website code as optional formats. */
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import QRCodePanel from './QRCodePanel';
@@ -18,197 +8,92 @@ interface Props {
   slug: string;
 }
 
-type CopiedKey = 'url' | 'widget' | 'instagram' | null;
-
+type CopiedKey = 'url' | 'widget' | null;
 const BASE_URL = 'https://seatable.one';
-
-function ChannelCard({
-  title,
-  description,
-  children,
-}: {
-  title: string;
-  description: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="border border-[#E7E5E4] rounded-xl p-5 space-y-3">
-      <div>
-        <h3 className="text-sm font-semibold text-deep-charcoal">{title}</h3>
-        <p className="text-xs text-warm-stone mt-0.5">{description}</p>
-      </div>
-      {children}
-    </div>
-  );
-}
-
-function CopyButton({
-  text,
-  copiedKey,
-  myKey,
-  onCopy,
-  label,
-}: {
-  text: string;
-  copiedKey: CopiedKey;
-  myKey: CopiedKey;
-  onCopy: (key: CopiedKey, text: string) => void;
-  label: string;
-}) {
-  const { t } = useTranslation();
-  const isCopied = copiedKey === myKey;
-
-  return (
-    <button
-      type="button"
-      onClick={() => onCopy(myKey, text)}
-      aria-label={label}
-      className="px-3 py-1.5 bg-deep-charcoal text-white text-xs font-medium rounded-lg hover:bg-charcoal-dark transition-colors flex items-center gap-1.5"
-    >
-      <ThiingsIcon name={isCopied ? 'check' : 'clipboard'} size="xs" />
-      {isCopied ? t('common.copied', 'Copied!') : t('common.copy', 'Copy')}
-    </button>
-  );
-}
 
 export default function BookingChannelsPanel({ slug }: Props) {
   const { t } = useTranslation();
   const [copiedKey, setCopiedKey] = useState<CopiedKey>(null);
+  const [copyFailed, setCopyFailed] = useState(false);
+  const bookingUrl = `${BASE_URL}/book/${encodeURIComponent(slug)}`;
+  const widgetSnippet = `<script src="${BASE_URL}/widget.js" data-slug="${slug.replaceAll('"', '&quot;')}"></script>`;
 
-  const bookingUrl = `${BASE_URL}/book/${slug}`;
-  const widgetSnippet = `<script src="${BASE_URL}/widget.js" data-slug="${slug}"></script>`;
-
-  const handleCopy = useCallback((key: CopiedKey, text: string) => {
-    navigator.clipboard.writeText(text).then(() => {
+  const handleCopy = useCallback(async (key: CopiedKey, value: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
       setCopiedKey(key);
-      setTimeout(() => setCopiedKey(null), 2000);
-    });
+      setCopyFailed(false);
+      window.setTimeout(() => setCopiedKey((current) => current === key ? null : current), 2000);
+    } catch {
+      setCopyFailed(true);
+    }
   }, []);
 
   return (
-    <div className="py-5 border-t border-[#E7E5E4] mt-8 space-y-5">
-      <div>
-        <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">
-          {t('bookingChannels.title', 'Booking Channels')}
-        </h2>
-        <p className="text-xs text-warm-stone mt-1">
-          {t('bookingChannels.subtitle', 'Share your booking page across all channels to maximize reservations.')}
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* 1. Direct URL */}
-        <ChannelCard
-          title={t('bookingChannels.directUrl', 'Direct URL')}
-          description={t('bookingChannels.directUrlDesc', 'Share this link on social media, emails, or your website.')}
-        >
-          <div className="flex items-center gap-2">
-            <code className="flex-1 bg-soft-gray rounded-lg px-3 py-2 text-xs text-deep-charcoal truncate">
-              {bookingUrl}
-            </code>
-            <CopyButton
-              text={bookingUrl}
-              copiedKey={copiedKey}
-              myKey="url"
-              onCopy={handleCopy}
-              label={t('bookingChannels.copyUrl', 'Copy booking URL')}
-            />
-          </div>
-        </ChannelCard>
-
-        {/* 2. Widget Embed - reframed for non-technical owners. The raw
-            <script> snippet is still here for developers who know what to
-            do with it, but the primary action is now an "Email to my web
-            person" link that mailto's a prefilled message + the snippet so
-            João doesn't have to figure out how to send it. */}
-        <ChannelCard
-          title={t('bookingChannels.widgetEmbed', 'Add a booking button to your website')}
-          description={t('bookingChannels.widgetEmbedDesc', "Drops a 'Book a table' button on any page. If you have a web developer, email it to them in one click.")}
-        >
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <a
-                href={`mailto:?subject=${encodeURIComponent('Please add this booking button to our website')}&body=${encodeURIComponent(
-                  `Hi,\n\nPlease add this snippet anywhere on our website (just before </body> works) so customers can book a table directly from the site.\n\n${widgetSnippet}\n\nLet me know when it's live — I'd like to test it.\n\nThanks!`
-                )}`}
-                className="px-3 py-1.5 bg-burgundy hover:bg-burgundy-dark text-white text-xs font-semibold rounded-lg transition-colors"
-              >
-                {t('bookingChannels.emailToWebmaster', 'Email to my web person')}
-              </a>
-              <CopyButton
-                text={widgetSnippet}
-                copiedKey={copiedKey}
-                myKey="widget"
-                onCopy={handleCopy}
-                label={t('bookingChannels.copyWidget', 'Copy code')}
-              />
-            </div>
-            <details className="text-xs">
-              <summary className="text-muted-stone hover:text-deep-charcoal cursor-pointer underline underline-offset-2">
-                {t('bookingChannels.showSnippet', 'Show the code')}
-              </summary>
-              <pre className="mt-2 bg-soft-gray rounded-lg px-3 py-2 text-xs text-deep-charcoal overflow-x-auto whitespace-pre-wrap break-all leading-relaxed">
-                {widgetSnippet}
-              </pre>
-            </details>
-          </div>
-        </ChannelCard>
-
-        {/* 3. QR Code */}
-        <ChannelCard
-          title={t('bookingChannels.qrCode', 'QR Code')}
-          description={t('bookingChannels.qrCodeDesc', 'Print for table tents, menus, or window displays.')}
-        >
-          <QRCodePanel slug={slug} />
-        </ChannelCard>
-
-        {/* 4. Instagram Bio */}
-        <ChannelCard
-          title={t('bookingChannels.instagramBio', 'Instagram Bio Link')}
-          description={t('bookingChannels.instagramBioDesc', 'Add to your Instagram bio for easy booking access.')}
-        >
-          <div className="flex items-center gap-2">
-            <code className="flex-1 bg-soft-gray rounded-lg px-3 py-2 text-xs text-deep-charcoal truncate">
-              {bookingUrl}
-            </code>
-            <CopyButton
-              text={bookingUrl}
-              copiedKey={copiedKey}
-              myKey="instagram"
-              onCopy={handleCopy}
-              label={t('bookingChannels.copyInstagram', 'Copy link for Instagram bio')}
-            />
-          </div>
-          <p className="text-xs text-warm-stone">
-            {t('bookingChannels.instagramTip', 'Paste this URL in your Instagram profile > Edit Profile > Website field.')}
+    <div className="space-y-10 py-5">
+      <section aria-labelledby="booking-link-title" className="space-y-5">
+        <div>
+          <h2 id="booking-link-title" className="font-serif text-2xl text-deep-charcoal">
+            {t('bookingChannels.shareTitle')}
+          </h2>
+          <p className="mt-1 text-[15px] text-muted-stone max-w-2xl">
+            {t('bookingChannels.shareDescription')}
           </p>
-        </ChannelCard>
-
-        {/* 5. Google Maps */}
-        <ChannelCard
-          title={t('bookingChannels.googleMaps', 'Google Maps')}
-          description={t('bookingChannels.googleMapsDesc', 'Add a booking link to your Google Business Profile.')}
-        >
-          <ol className="text-xs text-deep-charcoal space-y-1.5 list-decimal list-inside">
-            <li>{t('bookingChannels.googleStep1', 'Go to business.google.com and sign in')}</li>
-            <li>{t('bookingChannels.googleStep2', 'Select your restaurant listing')}</li>
-            <li>{t('bookingChannels.googleStep3', 'Click "Edit profile" > "Contact"')}</li>
-            <li>{t('bookingChannels.googleStep4', 'Add your booking URL to "Appointment links"')}</li>
-          </ol>
-          <div className="flex items-center gap-2 mt-2">
-            <code className="flex-1 bg-soft-gray rounded-lg px-3 py-2 text-xs text-deep-charcoal truncate">
-              {bookingUrl}
-            </code>
-            <CopyButton
-              text={bookingUrl}
-              copiedKey={copiedKey}
-              myKey="url"
-              onCopy={handleCopy}
-              label={t('bookingChannels.copyGoogleUrl', 'Copy URL for Google Maps')}
-            />
+        </div>
+        <div className="liquid-capsule p-4 sm:p-5 space-y-4">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-stone">
+            {t('bookingChannels.directUrl')}
+          </p>
+          <p className="font-mono text-sm text-deep-charcoal break-all select-all">{bookingUrl}</p>
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={() => handleCopy('url', bookingUrl)}
+              className="inline-flex items-center gap-2 rounded-[100px] bg-burgundy px-5 py-2.5 text-sm font-medium text-white hover:bg-burgundy-dark"
+            >
+              <ThiingsIcon name={copiedKey === 'url' ? 'check' : 'clipboard'} size="xs" />
+              {copiedKey === 'url' ? t('common.copied') : t('bookingChannels.copyUrl')}
+            </button>
+            <a href={bookingUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-burgundy underline underline-offset-2 hover:text-burgundy-dark">
+              {t('bookingChannels.openLink')}
+            </a>
           </div>
-        </ChannelCard>
-      </div>
+          {copyFailed && <p role="alert" className="text-sm text-red-700">{t('bookingChannels.copyFailed')}</p>}
+        </div>
+        <p className="text-sm text-muted-stone">{t('bookingChannels.whereToShare')}</p>
+      </section>
+
+      <div className="hairline" />
+
+      <section aria-labelledby="booking-qr-title" className="grid gap-6 md:grid-cols-[minmax(0,1fr)_minmax(280px,340px)] md:items-start">
+        <div>
+          <h2 id="booking-qr-title" className="font-serif text-2xl text-deep-charcoal">
+            {t('bookingChannels.qrCode')}
+          </h2>
+          <p className="mt-1 text-[15px] text-muted-stone max-w-lg">{t('bookingChannels.qrCodeDesc')}</p>
+        </div>
+        <QRCodePanel slug={slug} />
+      </section>
+
+      <div className="hairline" />
+
+      <details className="group">
+        <summary className="cursor-pointer list-none flex items-center justify-between gap-3 text-sm font-medium text-deep-charcoal">
+          <span>{t('bookingChannels.widgetEmbed')}</span>
+          <span aria-hidden="true" className="text-muted-stone transition-transform group-open:rotate-45">+</span>
+        </summary>
+        <p className="mt-3 text-[15px] text-muted-stone">{t('bookingChannels.websiteHelp')}</p>
+        <pre className="mt-4 overflow-x-auto rounded-xl bg-soft-gray p-4 text-xs text-deep-charcoal whitespace-pre-wrap break-all">{widgetSnippet}</pre>
+        <button
+          type="button"
+          onClick={() => handleCopy('widget', widgetSnippet)}
+          className="mt-3 inline-flex items-center gap-2 text-sm text-burgundy underline underline-offset-2 hover:text-burgundy-dark"
+        >
+          <ThiingsIcon name={copiedKey === 'widget' ? 'check' : 'clipboard'} size="xs" />
+          {copiedKey === 'widget' ? t('common.copied') : t('bookingChannels.copyWidget')}
+        </button>
+        {copyFailed && <p role="alert" className="mt-2 text-sm text-red-700">{t('bookingChannels.copyFailed')}</p>}
+      </details>
     </div>
   );
 }

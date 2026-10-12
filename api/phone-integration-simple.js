@@ -33,24 +33,47 @@ module.exports = async (req, res) => {
   const auth = await verifyAuth(req);
   if (auth.error) return res.status(auth.status).json({ error: auth.error });
 
-  // Make JWT-derived identity available as a fallback for handlers
-  req._authRestaurantId = auth.user?.restaurant_id || null;
-  req._authUserId = auth.user?.id || auth.user?.sub || null;
+  // Service-role queries below bypass RLS. Never let a request body, query
+  // string or mutable JWT metadata select another restaurant's voice agent.
+  const userId = auth.user?.sub || auth.user?.id;
+  if (!userId) return res.status(403).json({ success: false, error: 'Restaurant owner required' });
+  let owned;
+  let ownerError;
+  try {
+    ({ data: owned, error: ownerError } = await supabaseAdmin
+      .schema('restaurant').from('restaurant_config')
+      .select('id').eq('user_id', userId).eq('is_active', true)
+      .limit(1).maybeSingle());
+  } catch (error) {
+    logger.error('Phone ownership lookup failed', { error: error.message });
+    return res.status(503).json({ success: false, error: 'Could not verify restaurant ownership' });
+  }
+  if (ownerError) return res.status(503).json({ success: false, error: 'Could not verify restaurant ownership' });
+  if (!owned) return res.status(403).json({ success: false, error: 'Restaurant owner required' });
+  const requestedId = req.body?.restaurant_id || req.query?.restaurant_id;
+  if (requestedId && requestedId !== owned.id) {
+    return res.status(403).json({ success: false, error: 'Restaurant mismatch' });
+  }
+  req._authRestaurantId = owned.id;
+  req._authUserId = userId;
 
   const action = req.query.action || req.body?.action;
 
   try {
     switch (action) {
       case 'register':
-        return await handleRegister(req, res);
+        // One shared Twilio number can point to only one ElevenLabs agent.
+        // Self-service reassignment would silently route another restaurant's
+        // calls to this owner. Keep it closed until per-restaurant routing exists.
+        return res.status(409).json({ success: false, error: 'Phone activation requires Seatable support' });
       case 'unregister':
-        return await handleUnregister(req, res);
+        return res.status(409).json({ success: false, error: 'Phone deactivation requires Seatable support' });
       case 'status':
         return await handleStatus(req, res);
       case 'test-call':
-        return await handleTestCall(req, res);
+        return res.status(409).json({ success: false, error: 'Phone routing has not been verified for this restaurant' });
       case 'list-phones':
-        return await handleListPhones(req, res);
+        return res.status(403).json({ success: false, error: 'Platform phone inventory is not available to restaurant owners' });
       case 'diagnose':
         return await handleDiagnose(req, res);
       case 'fix-tools':
@@ -58,9 +81,7 @@ module.exports = async (req, res) => {
       default:
         return res.status(400).json({
           success: false,
-          error: 'Invalid action. Use: register, unregister, status, test-call, list-phones, diagnose, fix-tools',
-          platform_phone: PLATFORM_TWILIO_NUMBER,
-          elevenlabs_configured: !!ELEVENLABS_API_KEY && ELEVENLABS_API_KEY !== 'your-elevenlabs-key-here'
+          error: 'Invalid action'
         });
     }
   } catch (error) {
@@ -399,37 +420,7 @@ async function handleUnregister(req, res) {
  * Get phone integration status
  */
 async function handleStatus(req, res) {
-  // The raw string 'undefined' sometimes arrives when the frontend hook can't
-  // resolve restaurant_id from the JWT metadata (older users created before
-  // the metadata.restaurant_id backfill). Normalize it out.
-  let restaurant_id = req.query.restaurant_id || req.body?.restaurant_id || req._authRestaurantId;
-  if (restaurant_id === 'undefined' || restaurant_id === 'null') restaurant_id = null;
-
-  // Fallback: resolve restaurant by the authenticated user's id via the
-  // restaurant_config.user_id FK. This catches the case where the JWT has
-  // no restaurant_id claim but the user owns exactly one restaurant.
-  if (!restaurant_id && req._authUserId) {
-    const { data: owned } = await supabaseAdmin
-      .schema('restaurant')
-      .from('restaurant_config')
-      .select('id')
-      .eq('user_id', req._authUserId)
-      .limit(1)
-      .maybeSingle();
-    if (owned?.id) restaurant_id = owned.id;
-  }
-
-  // Platform status (no restaurant_id needed)
-  if (!restaurant_id) {
-    return res.status(200).json({
-      success: true,
-      platform: {
-        twilio_configured: !!PLATFORM_TWILIO_SID && !!PLATFORM_TWILIO_TOKEN,
-        twilio_phone: PLATFORM_TWILIO_NUMBER,
-        elevenlabs_configured: !!ELEVENLABS_API_KEY && ELEVENLABS_API_KEY !== 'your-elevenlabs-key-here'
-      }
-    });
-  }
+  const restaurant_id = req._authRestaurantId;
 
   const { data: restaurant, error: fetchError } = await supabaseAdmin
     .schema('restaurant')
@@ -439,27 +430,11 @@ async function handleStatus(req, res) {
     .single();
 
   if (fetchError || !restaurant) {
-    // Return sensible defaults instead of 404/500 when table/column missing or restaurant not found
-    logger.warn('phone-integration status: restaurant query failed, returning defaults', {
+    logger.warn('phone-integration status: restaurant query failed', {
       restaurant_id,
       error: fetchError?.message || 'not found'
     });
-    return res.status(200).json({
-      success: true,
-      restaurant: {
-        name: null,
-        has_agent: false,
-        agent_id: null,
-        phone_number: null,
-        phone_number_id: null,
-        status: 'not_configured',
-        error: null,
-        configured_at: null
-      },
-      platform: {
-        twilio_phone: PLATFORM_TWILIO_NUMBER
-      }
-    });
+    return res.status(503).json({ success: false, error: 'Phone status is unavailable' });
   }
 
   const phoneInfo = restaurant.ai_config?.phone || {};
@@ -469,15 +444,15 @@ async function handleStatus(req, res) {
       name: restaurant.restaurant_name,
       has_agent: !!restaurant.elevenlabs_agent_id,
       agent_id: restaurant.elevenlabs_agent_id,
-      phone_number: phoneInfo.number || null,
-      phone_number_id: phoneInfo.number_id || null,
-      status: phoneInfo.status || 'not_configured',
+      // Local "active" is not proof of which agent currently owns the shared
+      // platform number. Do not expose it as this restaurant's callable line.
+      phone_number: null,
+      phone_number_id: null,
+      status: phoneInfo.status === 'active' ? 'needs_review' : (phoneInfo.status || 'not_configured'),
       error: phoneInfo.error || null,
       configured_at: phoneInfo.configured_at || null
     },
-    platform: {
-      twilio_phone: PLATFORM_TWILIO_NUMBER
-    }
+    platform: { activation_mode: 'assisted', routing_verified: false }
   });
 }
 

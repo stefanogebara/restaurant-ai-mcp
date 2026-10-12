@@ -26,6 +26,7 @@ const { verifyJWT } = require('./_lib/auth');
 const { supabaseAdmin } = require('./_lib/supabase');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
+const { integrationReturnUrl } = require('./_lib/integration-redirects');
 
 const logger = createSecureLogger('square');
 
@@ -41,7 +42,7 @@ const SQUARE_API_BASE =
 const SQUARE_OAUTH_BASE = `${SQUARE_API_BASE}/oauth2/authorize`;
 
 const SQUARE_SCOPES = ['ITEMS_READ', 'MERCHANT_PROFILE_READ', 'INVENTORY_READ', 'ORDERS_READ'].join('+');
-const SETTINGS_REDIRECT = `${CLIENT_URL}/host-dashboard/voice-settings`;
+const settingsRedirect = (parameter, value) => integrationReturnUrl(CLIENT_URL, 'pos', parameter, value);
 
 module.exports = async (req, res) => {
   const { route } = req.query;
@@ -109,11 +110,11 @@ async function handleCallback(req, res) {
 
   if (squareError) {
     logger.warn('Square OAuth denied', { error: squareError });
-    return res.redirect(`${SETTINGS_REDIRECT}?pos_error=denied`);
+    return res.redirect(settingsRedirect('pos_error', 'denied'));
   }
 
   if (!code || !state) {
-    return res.redirect(`${SETTINGS_REDIRECT}?pos_error=invalid_callback`);
+    return res.redirect(settingsRedirect('pos_error', 'invalid_callback'));
   }
 
   let restaurantId;
@@ -124,12 +125,12 @@ async function handleCallback(req, res) {
     restaurantId = rid;
   } catch (err) {
     logger.error('Invalid state param', { error: err.message });
-    return res.redirect(`${SETTINGS_REDIRECT}?pos_error=invalid_state`);
+    return res.redirect(settingsRedirect('pos_error', 'invalid_state'));
   }
 
   if (!SQUARE_APP_ID || !SQUARE_APP_SECRET) {
     logger.error('Square credentials not configured');
-    return res.redirect(`${SETTINGS_REDIRECT}?pos_error=not_configured`);
+    return res.redirect(settingsRedirect('pos_error', 'not_configured'));
   }
 
   try {
@@ -149,7 +150,7 @@ async function handleCallback(req, res) {
     const tokenData = await tokenRes.json();
     if (!tokenRes.ok || !tokenData.access_token) {
       logger.error('Token exchange failed', { status: tokenRes.status });
-      return res.redirect(`${SETTINGS_REDIRECT}?pos_error=token_failed`);
+      return res.redirect(settingsRedirect('pos_error', 'token_failed'));
     }
 
     const { access_token, refresh_token, expires_at, merchant_id } = tokenData;
@@ -192,7 +193,7 @@ async function handleCallback(req, res) {
 
     if (selErr) {
       logger.error('Lookup failed', { error: selErr.message });
-      return res.redirect(`${SETTINGS_REDIRECT}?pos_error=db_error`);
+      return res.redirect(settingsRedirect('pos_error', 'db_error'));
     }
 
     const { error: dbErr } = existing
@@ -206,14 +207,14 @@ async function handleCallback(req, res) {
 
     if (dbErr) {
       logger.error('DB write failed', { error: dbErr.message });
-      return res.redirect(`${SETTINGS_REDIRECT}?pos_error=db_error`);
+      return res.redirect(settingsRedirect('pos_error', 'db_error'));
     }
 
     logger.info('Square connected', { restaurantId, merchantId: merchant_id });
-    res.redirect(`${SETTINGS_REDIRECT}?pos_connected=1`);
+    res.redirect(settingsRedirect('pos_connected', '1'));
   } catch (err) {
     logger.error('OAuth callback error', { error: err.message });
-    res.redirect(`${SETTINGS_REDIRECT}?pos_error=server_error`);
+    res.redirect(settingsRedirect('pos_error', 'server_error'));
   }
 }
 

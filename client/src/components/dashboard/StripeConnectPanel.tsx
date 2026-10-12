@@ -81,9 +81,9 @@ export default function StripeConnectPanel() {
   })();
 
   return (
-    <div className="py-5 border-t border-[#E7E5E4] mt-8">
+    <section className="py-5">
       <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone mb-3">
-        {t('stripeConnect.title', 'Stripe (receive bookings)')}
+        {t('stripeConnect.title', 'Stripe for booking deposits')}
       </h2>
       <p className="text-sm text-muted-stone mb-4">
         {t(
@@ -149,7 +149,7 @@ export default function StripeConnectPanel() {
             type="button"
             onClick={() => onboardingMutation.mutate()}
             disabled={onboardingMutation.isPending}
-            className="px-4 py-2 bg-[#9F1239] text-white rounded-lg text-xs font-medium hover:bg-[#831a3a] transition-colors disabled:opacity-50"
+            className="px-4 py-2 bg-burgundy text-white rounded-full text-xs font-medium hover:bg-burgundy-dark transition-colors disabled:opacity-50"
           >
             {onboardingMutation.isPending
               ? t('stripeConnect.starting', 'Opening Stripe…')
@@ -157,6 +157,6 @@ export default function StripeConnectPanel() {
           </button>
         </div>
       )}
-    </div>
+    </section>
   );
 }

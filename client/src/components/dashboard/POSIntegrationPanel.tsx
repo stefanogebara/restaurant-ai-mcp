@@ -20,15 +20,10 @@ interface POSStatus {
   menu_items_count: number;
 }
 
-const POS_ERROR_MESSAGES: Record<string, string> = {
-  not_configured: 'Square integration is not yet enabled. Contact hello@seatable.one.',
-  denied: 'Square authorization was denied.',
-  invalid_callback: 'Invalid OAuth callback. Please try again.',
-  invalid_state: 'Security validation failed. Please try again.',
-  token_failed: 'Failed to exchange authorization code. Please try again.',
-  db_error: 'Connection saved but encountered a database error.',
-  server_error: 'An unexpected error occurred. Please try again.',
-};
+const POS_ERROR_REASONS = new Set([
+  'not_configured', 'denied', 'invalid_callback', 'invalid_state',
+  'token_failed', 'db_error', 'server_error',
+]);
 
 export default function POSIntegrationPanel() {
   const { t } = useTranslation();
@@ -49,8 +44,7 @@ export default function POSIntegrationPanel() {
       url.searchParams.delete('pos_connected');
       window.history.replaceState({}, '', url.toString());
     } else if (posError) {
-      const msg = POS_ERROR_MESSAGES[posError] || 'Square connection failed. Please try again.';
-      toast.error(msg);
+      toast.error(t(POS_ERROR_REASONS.has(posError) ? `pos.error.${posError}` : 'pos.connectFailed'));
       const url = new URL(window.location.href);
       url.searchParams.delete('pos_error');
       window.history.replaceState({}, '', url.toString());
@@ -74,9 +68,9 @@ export default function POSIntegrationPanel() {
       if (!res.ok) throw new Error('Sync failed');
       return res.json();
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pos-status'] });
-      toast.success(data.message || t('pos.syncSuccess', 'Menu synced successfully'));
+      toast.success(t('pos.syncSuccess', 'Menu synced successfully'));
     },
     onError: () => {
       toast.error(t('pos.syncFailed', 'Menu sync failed. Please try again.'));
@@ -130,9 +124,9 @@ export default function POSIntegrationPanel() {
   };
 
   return (
-    <div className="py-5 border-t border-[#E7E5E4] mt-8">
+    <section className="py-5">
       <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone mb-3">
-        {t('pos.title', 'POS Integration')}
+        {t('pos.title', 'Square POS')}
       </h2>
 
       {isLoading ? (
@@ -202,7 +196,7 @@ export default function POSIntegrationPanel() {
       ) : (
         <div className="space-y-3">
           <p className="text-sm text-muted-stone">
-            {t('pos.connectDescription', 'Connect your Square POS to sync menu items and track revenue automatically.')}
+            {t('pos.connectDescription', 'Connect Square to import menu items. Sales and revenue are not synced here yet.')}
           </p>
           <button
             type="button"
@@ -221,6 +215,6 @@ export default function POSIntegrationPanel() {
           )}
         </div>
       )}
-    </div>
+    </section>
   );
 }

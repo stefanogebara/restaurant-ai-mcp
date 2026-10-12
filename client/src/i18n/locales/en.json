@@ -435,6 +435,12 @@
     "serviceMode": "Service Mode"
   },
   "bookingChannels": {
+    "shareTitle": "One link, wherever your guests find you",
+    "shareDescription": "Use this link on your website, Instagram and Google profile. They all lead to the same booking page.",
+    "openLink": "Open booking page",
+    "copyFailed": "Couldn't copy the link. Select and copy it above.",
+    "whereToShare": "You can paste this same link into your Instagram bio, Google Business Profile or a message to guests.",
+    "websiteHelp": "If someone manages your website, send them this code to add a booking button. You don't need it to share the link above.",
     "title": "Booking Channels",
     "subtitle": "Share your booking page across all channels to maximize reservations.",
     "directUrl": "Direct URL",
@@ -1960,6 +1966,8 @@
     "generating": "Generating..."
   },
   "callTracking": {
+    "routingNeedsReview": "Routing not verified",
+    "openPhoneSettings": "View phone setup",
     "title": "Call History",
     "today": "Today",
     "refresh": "Refresh",
@@ -2711,6 +2719,10 @@
     }
   },
   "voiceSettings": {
+    "pageEyebrow": "VOICE CHANNEL",
+    "pageTitle": "Voice & calls",
+    "pageIntro": "Choose how your receptionist answers calls and set up your phone. Other channels have their own pages.",
+    "otherChannels": "Other channels:",
     "upgradeFeature": "Voice AI Agent",
     "upgradeDescription": "Configure your AI voice agent to handle phone reservations automatically. Available on the Profissional plan.",
     "saving": "Saving...",
@@ -2872,6 +2884,11 @@
     "noChanges": "No overrides configured"
   },
   "phoneIntegration": {
+    "assistedTitle": "Phone setup needs a routing check",
+    "assistedDescription": "Seatable's voice number is shared. We must confirm which AI receptionist receives calls before you forward your restaurant's line or invite guests to call it.",
+    "routingUnverified": "An older setup is saved, but we have not verified that calls reach this restaurant's AI receptionist. Do not forward your line yet.",
+    "statusUnavailable": "We couldn't check the phone setup right now. No connection is confirmed.",
+    "requestHelp": "Ask Seatable to verify phone routing",
     "title": "AI receptionist phone",
     "platformNumberHelp": "This is the phone number where your AI receptionist takes calls. Forward your restaurant's main line to this number so every call (including the ones you miss) gets answered.",
     "helpWithForwarding": "Help me forward my number",
@@ -3519,6 +3536,19 @@
     "statusPending": "Pending"
   },
   "integrations": {
+    "eyebrow": "REACH",
+    "pageTitle": "Channels & integrations",
+    "pageIntro": "Share your booking link and connect the services that help your restaurant reach and serve guests.",
+    "tab": {
+      "booking": "Share bookings",
+      "instagram": "Instagram",
+      "pos": "POS & payments",
+      "developers": "For developers"
+    },
+    "loadingBookingLink": "Loading your booking link...",
+    "devIntro": "Use API keys and webhooks only if your technical team is building a custom integration.",
+    "whatsAppElsewhere": "Your WhatsApp number is connected and tested on its own page.",
+    "openWhatsApp": "Open WhatsApp",
     "title": "Custom POS integration",
     "subtitle": "For technical staff or developers connecting your own POS system. Most restaurants do not need anything on this page — Seatable already handles reservations, services, and table status out of the box.",
     "devBadge": "For developers",
@@ -3557,6 +3587,97 @@
     "endpointServiceCompletion": "Report completed services with billing",
     "endpointReservations": "Pull reservations by date range",
     "endpointTableStatus": "Update table availability status"
+  },
+  "pos": {
+    "title": "Square POS",
+    "connectDescription": "Connect Square to import menu items. Sales and revenue are not synced here yet.",
+    "connectSquare": "Connect Square",
+    "connecting": "Connecting...",
+    "connected": "Square connected",
+    "connectSuccess": "Square connected successfully.",
+    "connectFailed": "Could not connect Square.",
+    "confirmDisconnect": "Disconnect Square?",
+    "disconnect": "Disconnect",
+    "disconnectSuccess": "Square disconnected.",
+    "disconnectFailed": "Could not disconnect. Please try again.",
+    "merchantId": "Merchant",
+    "locationId": "Location",
+    "menuItems": "Menu items",
+    "lastSync": "Last sync",
+    "syncNow": "Sync menu",
+    "syncing": "Syncing...",
+    "syncSuccess": "Menu synced.",
+    "syncFailed": "Menu sync failed. Please try again.",
+    "expired": "Your Square connection expired. Reconnect to continue.",
+    "error": {
+      "not_configured": "Square is not enabled yet. Contact hello@seatable.one.",
+      "denied": "You declined the Square permissions. No changes were made.",
+      "invalid_callback": "The Square callback was invalid. Try again.",
+      "invalid_state": "The connection link expired or failed validation. Try again.",
+      "token_failed": "Square refused the connection. Try again.",
+      "db_error": "We couldn't save the Square connection. Try again.",
+      "server_error": "Something went wrong with Square. Try again."
+    }
+  },
+  "stripeConnect": {
+    "title": "Stripe for booking deposits",
+    "subtitle": "Connect your Stripe account so booking deposits reach your bank directly.",
+    "startCta": "Connect Stripe",
+    "resumeCta": "Edit Stripe details",
+    "continueCta": "Continue onboarding",
+    "fixCta": "Resolve Stripe issues",
+    "openCta": "Open Stripe",
+    "starting": "Opening Stripe...",
+    "startFailed": "Could not start the Stripe connection.",
+    "returnSuccess": "Stripe account updated. Checking status...",
+    "returnRefresh": "The onboarding link expired. Continue to get a new one.",
+    "charges": "Charges",
+    "payouts": "Payouts",
+    "detailsSubmitted": "Details submitted",
+    "currency": "Currency",
+    "flagEnabled": "Enabled",
+    "flagDisabled": "Disabled",
+    "status": {
+      "active": "Active",
+      "pending": "Pending",
+      "restricted": "Action needed",
+      "disabled": "Disabled",
+      "revoked": "Revoked"
+    }
+  },
+  "instagramPanel": {
+    "loading": "Loading Instagram status…",
+    "loadFailed": "Couldn't load Instagram status. Refresh to retry.",
+    "connectDescription": "Connect your Instagram Business account to draft content in your restaurant's style.",
+    "connectedDescription": "Draft content inspired by your recent posts. Review everything before publishing.",
+    "followers_one": "{{formattedCount}} follower",
+    "followers_other": "{{formattedCount}} followers",
+    "toneReady": "Style profile ready",
+    "toneBuilding": "Building your style profile…",
+    "toneRefreshed": "Style profile updated from your recent posts.",
+    "refreshing": "Refreshing…",
+    "refreshTone": "Refresh style",
+    "buildNow": "Build now",
+    "links": "links",
+    "metaError": "Meta reported",
+    "openingMeta": "Opening Meta…",
+    "reconnect": "Reconnect Instagram",
+    "connect": "Connect Instagram",
+    "connectFailed": "Couldn't start Instagram connection",
+    "status": { "active": "Connected", "restricted": "Restricted", "expired": "Expired", "revoked": "Revoked" }
+  },
+  "instagram": {
+    "return": {
+      "ok": "Instagram connected. Building your style profile…",
+      "denied": "You declined Instagram permissions. No changes were made.",
+      "no_ig_account": "No Instagram Business account was found on your Facebook Pages.",
+      "invalid_state": "The connection link expired. Try again.",
+      "token_exchange_failed": "Meta refused the connection. Try again.",
+      "long_token_exchange_failed": "Meta refused the long-lived token. Try again.",
+      "pages_fetch_failed": "Couldn't list your Facebook Pages. Check your permissions.",
+      "not_configured": "Instagram isn't configured on the server yet.",
+      "server_error": "Something went wrong. Try again or contact support."
+    }
   },
   "events": {
     "pageTitle": "Events & Experiences",

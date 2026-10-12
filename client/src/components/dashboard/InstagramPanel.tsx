@@ -1,5 +1,5 @@
 /**
- * Instagram connector panel — lives in /host-dashboard/voice-settings under
+ * Instagram connector panel — lives in /host-dashboard/integrations under
  * the "Instagram" tab. Lets the user connect their IG Business account so
  * Seatable can learn their tone of voice (C2) and draft captions (C3).
  *
@@ -22,11 +22,11 @@ import InstagramCaptionDrafter from './InstagramCaptionDrafter';
 import InstagramScheduledPostsPanel from './InstagramScheduledPostsPanel';
 import InstagramReelPanel from './InstagramReelPanel';
 
-const STATUS_TONE: Record<InstagramStatus, { dot: string; bg: string; text: string; label: string }> = {
-  active:     { dot: 'bg-emerald-500', bg: 'bg-emerald-100', text: 'text-emerald-800', label: 'Connected' },
-  restricted: { dot: 'bg-amber-500',   bg: 'bg-amber-100',   text: 'text-amber-800',   label: 'Restricted' },
-  expired:    { dot: 'bg-amber-500',   bg: 'bg-amber-100',   text: 'text-amber-800',   label: 'Expired' },
-  revoked:    { dot: 'bg-red-500',     bg: 'bg-red-100',     text: 'text-red-800',     label: 'Revoked' },
+const STATUS_TONE: Record<InstagramStatus, { dot: string; bg: string; text: string }> = {
+  active:     { dot: 'bg-emerald-500', bg: 'bg-emerald-100', text: 'text-emerald-800' },
+  restricted: { dot: 'bg-amber-500',   bg: 'bg-amber-100',   text: 'text-amber-800' },
+  expired:    { dot: 'bg-amber-500',   bg: 'bg-amber-100',   text: 'text-amber-800' },
+  revoked:    { dot: 'bg-red-500',     bg: 'bg-red-100',     text: 'text-red-800' },
 };
 
 // Map the callback's redirect reasons to user-facing toast copy. Same
@@ -70,15 +70,15 @@ function safeHttpUrl(url: string | null | undefined): string | null {
  * the URL is a known aggregator (we know that because the server populated
  * bio_links for it), otherwise shows the host.
  */
-function websiteLabel(url: string, bioLinks: ReadonlyArray<{ host: string }> | null): string {
+function websiteLabel(url: string, bioLinks: ReadonlyArray<{ host: string }> | null, linksLabel: string): string {
   let host = '';
   try { host = new URL(url).host.replace(/^www\./, ''); } catch { host = url; }
-  if (bioLinks && bioLinks.length > 0) return `View on ${host} (${bioLinks.length} links)`;
+  if (bioLinks && bioLinks.length > 0) return `${host} (${bioLinks.length} ${linksLabel})`;
   return host;
 }
 
 export default function InstagramPanel() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const toast = useToast();
   const queryClient = useQueryClient();
 
@@ -88,10 +88,11 @@ export default function InstagramPanel() {
     const reason = params.get('instagram_connect');
     if (!reason) return;
 
-    const mapped = RETURN_REASONS[reason] ?? { kind: 'error' as const, copy: `Connection failed (${reason}).` };
-    if (mapped.kind === 'success') toast.success(t(`instagram.return.${reason}`, mapped.copy));
-    else if (mapped.kind === 'info') toast.info(t(`instagram.return.${reason}`, mapped.copy));
-    else toast.error(t(`instagram.return.${reason}`, mapped.copy));
+    const mapped = RETURN_REASONS[reason];
+    const message = mapped ? t(`instagram.return.${reason}`, mapped.copy) : t('instagramPanel.connectFailed');
+    if (mapped?.kind === 'success') toast.success(message);
+    else if (mapped?.kind === 'info') toast.info(message);
+    else toast.error(message);
 
     // Refresh status so the panel shows the new connection
     queryClient.invalidateQueries({ queryKey: INSTAGRAM_STATUS_QUERY_KEY });
@@ -114,12 +115,12 @@ export default function InstagramPanel() {
       return body.url;
     },
     onSuccess: (url) => {
-      // Open in same tab — Meta redirects back to /host-dashboard/voice-settings
+      // Open in same tab — Meta redirects back to /host-dashboard/integrations
       // with the ?instagram_connect=<reason> param the useEffect above handles.
       window.location.href = url;
     },
     onError: (err) => {
-      toast.error(t('instagram.connectFailed', `Couldn't start Instagram connection: ${err.message}`));
+      toast.error(`${t('instagramPanel.connectFailed')}: ${err.message}`);
     },
   });
 
@@ -136,7 +137,7 @@ export default function InstagramPanel() {
       return body.profile;
     },
     onSuccess: () => {
-      toast.success(t('instagram.toneRefreshed', 'Tone profile updated from your recent posts.'));
+      toast.success(t('instagramPanel.toneRefreshed'));
       queryClient.invalidateQueries({ queryKey: INSTAGRAM_STATUS_QUERY_KEY });
     },
     onError: (err) => {
@@ -145,12 +146,12 @@ export default function InstagramPanel() {
   });
 
   if (isLoading) {
-    return <div className="text-sm text-muted-stone" data-testid="instagram-panel-loading">Loading Instagram status…</div>;
+    return <div className="text-sm text-muted-stone" data-testid="instagram-panel-loading">{t('instagramPanel.loading')}</div>;
   }
   if (isError) {
     return (
       <div className="text-sm text-red-700" data-testid="instagram-panel-error">
-        Couldn't fetch Instagram status. Refresh to retry.
+        {t('instagramPanel.loadFailed')}
       </div>
     );
   }
@@ -160,14 +161,14 @@ export default function InstagramPanel() {
   const tone = STATUS_TONE[status as InstagramStatus] ?? null;
 
   return (
-    <section className="glass-card p-6 space-y-5" data-testid="instagram-panel">
+    <section className="space-y-6" data-testid="instagram-panel">
       <header className="flex items-start justify-between gap-4">
         <div className="space-y-1">
-          <h2 className="text-base font-semibold text-deep-charcoal">Instagram</h2>
+          <h2 className="font-serif text-2xl text-deep-charcoal">Instagram</h2>
           <p className="text-sm text-muted-stone">
             {connected
-              ? 'Seatable will learn your tone of voice from your recent posts and help draft new captions.'
-              : 'Connect your Instagram Business account so Seatable can learn your tone of voice and help with content.'}
+              ? t('instagramPanel.connectedDescription')
+              : t('instagramPanel.connectDescription')}
           </p>
         </div>
         {tone && (
@@ -176,7 +177,7 @@ export default function InstagramPanel() {
             data-testid="instagram-panel-status-pill"
           >
             <span className={`w-1.5 h-1.5 rounded-full ${tone.dot}`} />
-            {tone.label}
+            {t(`instagramPanel.status.${status}`)}
           </span>
         )}
       </header>
@@ -198,8 +199,8 @@ export default function InstagramPanel() {
                 {data.display_name && <span className="text-muted-stone font-normal"> @{data.username}</span>}
               </p>
               <p className="text-xs text-muted-stone">
-                {typeof data.followers_count === 'number' && `${data.followers_count.toLocaleString()} followers · `}
-                {data.tone_profile_ready ? 'Tone profile ready' : 'Building tone profile…'}
+                {typeof data.followers_count === 'number' && `${t('instagramPanel.followers', { count: data.followers_count, formattedCount: data.followers_count.toLocaleString(i18n.language) })} · `}
+                {data.tone_profile_ready ? t('instagramPanel.toneReady') : t('instagramPanel.toneBuilding')}
               </p>
             </div>
             <button
@@ -209,7 +210,7 @@ export default function InstagramPanel() {
               className="text-xs text-burgundy underline underline-offset-2 hover:text-burgundy-dark disabled:opacity-50"
               data-testid="instagram-panel-refresh-tone-cta"
             >
-              {refreshToneMutation.isPending ? 'Refreshing…' : data.tone_profile_ready ? 'Refresh tone' : 'Build now'}
+              {refreshToneMutation.isPending ? t('instagramPanel.refreshing') : data.tone_profile_ready ? t('instagramPanel.refreshTone') : t('instagramPanel.buildNow')}
             </button>
           </div>
 
@@ -230,7 +231,7 @@ export default function InstagramPanel() {
               className="inline-flex items-center gap-1.5 text-xs text-burgundy hover:text-burgundy-dark underline underline-offset-2"
               data-testid="instagram-panel-website-link"
             >
-              {websiteLabel(data.website, data.bio_links)}
+              {websiteLabel(data.website, data.bio_links, t('instagramPanel.links'))}
               <span aria-hidden>↗</span>
             </a>
           )}
@@ -239,7 +240,7 @@ export default function InstagramPanel() {
 
       {status === 'restricted' && data?.last_error && (
         <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-          Last error from Meta: {data.last_error}
+          {t('instagramPanel.metaError')}: {data.last_error}
         </p>
       )}
 
@@ -259,12 +260,12 @@ export default function InstagramPanel() {
           type="button"
           onClick={() => connectMutation.mutate()}
           disabled={connectMutation.isPending}
-          className="px-4 py-2 bg-burgundy text-white rounded-lg text-sm font-medium hover:bg-burgundy-dark transition-colors disabled:opacity-50"
+          className="px-5 py-2.5 bg-burgundy text-white rounded-[100px] text-sm font-medium hover:bg-burgundy-dark transition-colors disabled:opacity-50"
           data-testid="instagram-panel-connect-cta"
         >
           {connectMutation.isPending
-            ? 'Opening Meta…'
-            : connected ? 'Reconnect Instagram' : 'Connect Instagram'}
+            ? t('instagramPanel.openingMeta')
+            : connected ? t('instagramPanel.reconnect') : t('instagramPanel.connect')}
         </button>
       </div>
     </section>

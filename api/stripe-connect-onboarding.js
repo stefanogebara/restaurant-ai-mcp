@@ -30,6 +30,7 @@ const { verifyJWT } = require('./_lib/auth');
 const { supabaseAdmin } = require('./_lib/supabase');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
+const { integrationReturnUrl } = require('./_lib/integration-redirects');
 
 const logger = createSecureLogger('stripe-connect-onboarding');
 
@@ -38,8 +39,8 @@ const CLIENT_URL = process.env.CLIENT_URL || 'https://seatable.one';
 
 const stripe = STRIPE_SECRET_KEY ? Stripe(STRIPE_SECRET_KEY) : null;
 
-const DEFAULT_RETURN_URL = `${CLIENT_URL}/host-dashboard/voice-settings?stripe_connect=ok`;
-const DEFAULT_REFRESH_URL = `${CLIENT_URL}/host-dashboard/voice-settings?stripe_connect=refresh`;
+const DEFAULT_RETURN_URL = integrationReturnUrl(CLIENT_URL, 'pos', 'stripe_connect', 'ok');
+const DEFAULT_REFRESH_URL = integrationReturnUrl(CLIENT_URL, 'pos', 'stripe_connect', 'refresh');
 
 module.exports = async (req, res) => {
   if (await checkAndApplyRateLimit(req, res, 'api')) return;
