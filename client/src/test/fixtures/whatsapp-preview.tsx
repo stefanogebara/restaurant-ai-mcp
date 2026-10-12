@@ -7,7 +7,7 @@ import '../../i18n/config';
 import { WhatsAppWorkspace } from '../../pages/WhatsAppSettingsPage';
 
 if (import.meta.env.DEV) {
-  const active = new URLSearchParams(location.search).get('state') === 'active';
+  const state = new URLSearchParams(location.search).get('state');
   const originalFetch = window.fetch.bind(window);
   window.fetch = async (input, init) => {
     const url = String(input);
@@ -17,7 +17,9 @@ if (import.meta.env.DEV) {
   };
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, refetchOnWindowFocus: false } } });
   client.setQueryData(['whatsappStatus'], { enabled: false, api_configured: true, phone_number: null });
-  client.setQueryData(['whatsapp-provision'], active ? { estado: 'ativo', numero_e164: '+5511999990000' } : { estado: 'nao_iniciado' });
+  client.setQueryData(['whatsapp-provision'], state === 'active' || state === 'unrouted'
+    ? { estado: 'ativo', numero_e164: '+5511999990000', roteamento_confirmado: state === 'active' }
+    : { estado: 'nao_iniciado', roteamento_confirmado: false });
   createRoot(document.getElementById('root')!).render(<QueryClientProvider client={client}><MemoryRouter>
     <div className="px-4 py-2 bg-amber-50 text-amber-800 text-sm">Prévia local · dados simulados · nenhum envio real</div>
     <WhatsAppWorkspace />

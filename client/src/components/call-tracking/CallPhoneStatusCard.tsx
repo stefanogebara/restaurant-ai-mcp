@@ -1,211 +1,50 @@
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import ThiingsIcon from '../common/ThiingsIcon';
-import Spinner from '../common/Spinner';
-import { formatConfiguredDate, type PhoneStatusData } from './callTrackingTypes';
+import type { PhoneStatusData } from './callTrackingTypes';
 
 interface Props {
   phoneStatus: PhoneStatusData | null;
   phoneStatusLoading: boolean;
-  setupLoading: boolean;
-  diagnoseLoading: boolean;
-  disconnectLoading: boolean;
-  onSetupPhone: () => void;
-  onDiagnose: () => void;
-  onDisconnect: () => void;
+  phoneStatusError: boolean;
   onRefreshStatus: () => void;
 }
 
-function StatusBadge({ status }: { status: PhoneStatusData['status'] }) {
+export default function CallPhoneStatusCard({ phoneStatus, phoneStatusLoading, phoneStatusError, onRefreshStatus }: Props) {
   const { t } = useTranslation();
-  switch (status) {
-    case 'active':
-      return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-rose-500/10 text-rose-600 text-xs font-semibold rounded-full">
-          <span className="w-1.5 h-1.5 bg-rose-500 rounded-full animate-pulse" />
-          {t('callTracking.statusActive')}
-        </span>
-      );
-    case 'pending':
-      return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-600/10 text-amber-600 text-xs font-semibold rounded-full">
-          <Spinner size="sm" />
-          {t('callTracking.statusPending')}
-        </span>
-      );
-    case 'error':
-      return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-red-600/10 text-red-600 text-xs font-semibold rounded-full">
-          <ThiingsIcon name="alert-circle" size="xs" />
-          {t('callTracking.statusError')}
-        </span>
-      );
-    default:
-      return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-warm-stone/10 text-stone-gray text-xs font-semibold rounded-full">
-          <ThiingsIcon name="wifi-off" size="xs" />
-          {t('callTracking.statusNotConfigured')}
-        </span>
-      );
-  }
-}
-
-export default function CallPhoneStatusCard({
-  phoneStatus,
-  phoneStatusLoading,
-  setupLoading,
-  diagnoseLoading,
-  disconnectLoading,
-  onSetupPhone,
-  onDiagnose,
-  onDisconnect,
-  onRefreshStatus,
-}: Props) {
-  const { t } = useTranslation();
-  const statusDescription =
-    phoneStatus?.status === 'active'
-      ? t('callTracking.phoneStatusActive')
-      : phoneStatus?.status === 'error'
-        ? t('callTracking.phoneStatusError')
-        : t('callTracking.phoneStatusConnect');
+  const needsReview = phoneStatus?.status === 'needs_review';
 
   return (
-    <div className="py-5 border-b border-glass-border-dark">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-        <div className="flex items-center gap-3">
-          <ThiingsIcon name="phone-call" pxSize={24} />
-          <div>
-            <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">{t('callTracking.phoneStatus')}</h2>
-            <p className="text-sm text-stone-gray">{statusDescription}</p>
-          </div>
+    <section className="space-y-4 py-5 border-b border-glass-border-dark" aria-labelledby="call-phone-title">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone mb-2">
+            {t('callTracking.phoneStatus')}
+          </p>
+          <h2 id="call-phone-title" className="font-serif text-2xl text-deep-charcoal">
+            {t('phoneIntegration.assistedTitle')}
+          </h2>
         </div>
-        <div className="flex items-center gap-2">
-          {phoneStatusLoading ? (
-            <Spinner size="md" />
-          ) : (
-            phoneStatus && <StatusBadge status={phoneStatus.status} />
-          )}
-        </div>
+        {needsReview && (
+          <span className="inline-flex items-center gap-2 rounded-[100px] bg-amber-100 px-3 py-1 text-xs font-medium text-amber-900">
+            <ThiingsIcon name="alert-triangle" size="xs" />
+            {t('callTracking.routingNeedsReview')}
+          </span>
+        )}
       </div>
-
-      {/* Info grid */}
-      {phoneStatus && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
-          <div className="py-3">
-            <p className="text-xs text-stone-gray mb-1">{t('callTracking.connection')}</p>
-            <div className="flex items-center gap-2">
-              {phoneStatus.status === 'active' ? (
-                <ThiingsIcon name="wifi" size="xs" />
-              ) : (
-                <ThiingsIcon name="wifi-off" size="xs" />
-              )}
-              <span className="text-sm font-medium text-deep-charcoal">
-                {phoneStatus.status === 'active' ? t('callTracking.statusActive')
-                  : phoneStatus.status === 'pending' ? t('callTracking.statusPending')
-                  : phoneStatus.status === 'error' ? t('callTracking.statusError')
-                  : t('callTracking.statusNotConnected')}
-              </span>
-            </div>
-          </div>
-
-          <div className="py-3">
-            <p className="text-xs text-stone-gray mb-1">{t('callTracking.phoneNumber')}</p>
-            <p className="text-sm font-medium text-deep-charcoal">
-              {phoneStatus.phone_number || t('callTracking.noneAssigned')}
-            </p>
-          </div>
-
-          <div className="py-3">
-            <p className="text-xs text-stone-gray mb-1">{t('callTracking.agentId')}</p>
-            <p
-              className="text-sm font-medium text-deep-charcoal font-mono truncate"
-              title={phoneStatus.agent_id ?? undefined}
-            >
-              {phoneStatus.agent_id
-                ? `${phoneStatus.agent_id.substring(0, 12)}...`
-                : t('callTracking.noAgent')}
-            </p>
-          </div>
-
-          <div className="py-3">
-            <p className="text-xs text-stone-gray mb-1">{t('callTracking.configured')}</p>
-            <p className="text-sm font-medium text-deep-charcoal">
-              {formatConfiguredDate(phoneStatus.configured_at)}
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* Error message */}
-      {phoneStatus?.status === 'error' && phoneStatus.error && (
-        <div className="mt-4 bg-red-600/10 border border-red-600/20 rounded-xl p-3 flex items-start gap-2">
-          <ThiingsIcon name="alert-circle" size="sm" className="shrink-0 mt-0.5" />
-          <p className="text-sm text-red-600">{phoneStatus.error}</p>
-        </div>
-      )}
-
-      {/* Action buttons */}
-      <div className="flex flex-wrap items-center gap-3 mt-4 pt-4 border-t border-[#F5F5F4]">
-        {(!phoneStatus || phoneStatus.status === 'not_configured' || phoneStatus.status === 'error') && (
-          <button
-            type="button"
-            onClick={onSetupPhone}
-            disabled={setupLoading}
-            className="px-4 py-2 bg-burgundy text-white rounded-xl font-medium hover:bg-burgundy-dark transition-colors disabled:opacity-50 flex items-center gap-2"
-          >
-            {setupLoading ? (
-              <><Spinner size="sm" />{t('callTracking.settingUp')}</>
-            ) : (
-              <><ThiingsIcon name="phone" size="xs" />{t('callTracking.setupPhone')}</>
-            )}
-          </button>
-        )}
-
-        {/* Diagnose was previously a primary-row button visible to every host
-            — it triggers an internal "check the AI's tool calls" job that
-            Carla shouldn't see during a shift. Moved into a smaller, muted
-            "Troubleshooting" toggle that lives next to the main actions but
-            doesn't compete with them visually. */}
-        {phoneStatus?.has_agent && (
-          <button
-            type="button"
-            onClick={onDiagnose}
-            disabled={diagnoseLoading}
-            aria-label={t('callTracking.troubleshootAriaLabel', 'Open troubleshooting tools (for support)')}
-            title={t('callTracking.troubleshootHint', 'For support staff — checks the AI is configured correctly.')}
-            className="px-3 py-2 text-muted-stone hover:text-deep-charcoal text-xs font-medium transition-colors disabled:opacity-50 flex items-center gap-1.5 underline underline-offset-2"
-          >
-            {diagnoseLoading ? (
-              <><Spinner size="sm" />{t('callTracking.diagnosing')}</>
-            ) : (
-              <><ThiingsIcon name="stethoscope" size="xs" />{t('callTracking.troubleshoot', 'Troubleshooting')}</>
-            )}
-          </button>
-        )}
-
-        {phoneStatus?.status === 'active' && (
-          <button
-            type="button"
-            onClick={onDisconnect}
-            disabled={disconnectLoading}
-            className="px-4 py-2 bg-red-600/10 hover:bg-red-600/20 text-red-600 rounded-xl text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
-          >
-            {disconnectLoading ? (
-              <><Spinner size="sm" />{t('callTracking.disconnecting')}</>
-            ) : (
-              <><ThiingsIcon name="phone-off" size="xs" />{t('callTracking.disconnect')}</>
-            )}
-          </button>
-        )}
-
-        <button
-          type="button"
-          onClick={onRefreshStatus}
-          className="px-3 py-2 text-stone-gray hover:text-deep-charcoal transition-colors text-sm"
-        >
+      <p className="max-w-2xl text-[15px] text-muted-stone">
+        {needsReview ? t('phoneIntegration.routingUnverified') : t('phoneIntegration.assistedDescription')}
+      </p>
+      {phoneStatusLoading && <p role="status" className="text-sm text-muted-stone">{t('phoneIntegration.loadingStatus')}</p>}
+      {phoneStatusError && <p role="alert" className="text-sm text-red-700">{t('phoneIntegration.statusUnavailable')}</p>}
+      <div className="flex flex-wrap items-center gap-5 text-sm">
+        <Link to="/host-dashboard/voice-settings#voice-settings:phone" className="text-burgundy underline underline-offset-2 hover:text-burgundy-dark">
+          {t('callTracking.openPhoneSettings')}
+        </Link>
+        <button type="button" onClick={onRefreshStatus} className="text-muted-stone underline underline-offset-2 hover:text-deep-charcoal">
           {t('callTracking.refreshStatus')}
         </button>
       </div>
-    </div>
+    </section>
   );
 }

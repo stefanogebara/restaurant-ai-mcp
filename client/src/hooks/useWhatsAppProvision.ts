@@ -6,6 +6,8 @@ export interface WhatsAppProvision {
   numero_e164?: string;
   metodo?: string;
   erro?: string | null;
+  pode_iniciar?: boolean;
+  roteamento_confirmado?: boolean;
 }
 
 export function useWhatsAppProvision() {

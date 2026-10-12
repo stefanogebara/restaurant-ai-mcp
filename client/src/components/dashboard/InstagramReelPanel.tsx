@@ -15,7 +15,7 @@
  */
 import { useState, useRef, useEffect } from 'react';
 import ThiingsIcon from '../../components/common/ThiingsIcon';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { authFetch } from '../../services/api';
 import { useToast } from '../../contexts/ToastContext';
@@ -41,9 +41,18 @@ function defaultScheduledAt(): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-export default function InstagramReelPanel({ disabled = false }: { disabled?: boolean }) {
-  const { t } = useTranslation();
+export default function InstagramReelPanel({
+  disabled = false,
+  workspaceMode = false,
+  onClose,
+}: {
+  disabled?: boolean;
+  workspaceMode?: boolean;
+  onClose?: () => void;
+}) {
+  const { t, i18n } = useTranslation();
   const toast = useToast();
+  const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [caption, setCaption] = useState('');
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
@@ -89,11 +98,9 @@ export default function InstagramReelPanel({ disabled = false }: { disabled?: bo
       return { permalink: body.permalink ?? null };
     },
     onSuccess: ({ permalink }) => {
-      toast.success(
-        permalink
-          ? t('instagram.reelPosted', `Reel posted → ${permalink}`)
-          : t('instagram.reelPosted', 'Reel posted.'),
-      );
+      toast.success(permalink
+        ? t('instagram.reel.postedWithLink', { link: permalink })
+        : t('instagram.reel.posted'));
       // Reset so the next reel starts fresh
       setOpen(false);
       setCaption('');
@@ -120,11 +127,11 @@ export default function InstagramReelPanel({ disabled = false }: { disabled?: bo
     e.target.value = '';
     if (!file) return;
     if (!/^video\/(mp4|quicktime)$/i.test(file.type)) {
-      toast.error(t('instagram.reelInvalidType', 'Only MP4 or MOV videos are supported.'));
+      toast.error(t('instagram.reel.invalidType'));
       return;
     }
     if (file.size > MAX_VIDEO_BYTES) {
-      toast.error(t('instagram.reelTooLarge', `Video must be ${MAX_VIDEO_BYTES / 1024 / 1024} MB or smaller.`));
+      toast.error(t('instagram.reel.tooLarge', { size: MAX_VIDEO_BYTES / 1024 / 1024 }));
       return;
     }
     setUploading(true);
@@ -141,9 +148,9 @@ export default function InstagramReelPanel({ disabled = false }: { disabled?: bo
       }
       setVideoUrl(body.url);
       setVideoName(file.name);
-      toast.success(t('instagram.reelUploaded', 'Video uploaded — ready to post.'));
+      toast.success(t('instagram.reel.uploaded'));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t('instagram.reelUploadFailed', 'Upload failed.'));
+      toast.error(err instanceof Error ? err.message : t('instagram.reel.uploadFailed'));
     } finally {
       setUploading(false);
     }
@@ -182,14 +189,15 @@ export default function InstagramReelPanel({ disabled = false }: { disabled?: bo
       return { id: body.id, scheduled_at: body.scheduled_at };
     },
     onSuccess: ({ scheduled_at }) => {
-      const when = new Date(scheduled_at).toLocaleString();
-      toast.success(t('instagram.reelScheduled', `Reel scheduled for ${when}.`));
+      const when = new Date(scheduled_at).toLocaleString(i18n.language);
+      toast.success(t('instagram.reel.scheduledFor', { date: when }));
       setOpen(false);
       setCaption('');
       setVideoUrl(null);
       setVideoName(null);
       setScheduleMode(false);
       setScheduledAt(defaultScheduledAt());
+      queryClient.invalidateQueries({ queryKey: ['instagram-scheduled-posts'] });
     },
     onError: (err) => toast.error(err.message),
   });
@@ -264,7 +272,8 @@ export default function InstagramReelPanel({ disabled = false }: { disabled?: bo
           setVideoUrl(body.url);
           setVideoName('AI-generated.mp4');
           setGenStatus('completed');
-          toast.success(t('instagram.videoGenerated', 'Video generated — caption it and post.'));
+          toast.success(t('instagram.reel.videoGenerated'));
+          queryClient.invalidateQueries({ queryKey: ['instagram-gen-spend'] });
           return;
         }
         if (body.status === 'failed') {
@@ -282,7 +291,7 @@ export default function InstagramReelPanel({ disabled = false }: { disabled?: bo
     };
     setTimeout(poll, POLL_INTERVAL_MS);
     return () => { canceled = true; };
-  }, [genStatus, genJobId, t, toast]);
+  }, [genStatus, genJobId, t, toast, queryClient]);
 
   const onStartGen = () => {
     if (startGenMutation.isPending || genStatus === 'processing') return;
@@ -295,7 +304,7 @@ export default function InstagramReelPanel({ disabled = false }: { disabled?: bo
 
   const elapsedSec = genStartedAtRef.current ? Math.floor((Date.now() - genStartedAtRef.current) / 1000) : 0;
 
-  if (!open) {
+  if (!open && !workspaceMode) {
     return (
       <button
         type="button"
@@ -304,7 +313,7 @@ export default function InstagramReelPanel({ disabled = false }: { disabled?: bo
         className="text-xs text-burgundy underline underline-offset-2 hover:text-burgundy-dark disabled:opacity-50"
         data-testid="instagram-reel-panel-toggle"
       >
-        Or post a Reel instead
+        {t('instagram.reel.switchToReel')}
       </button>
     );
   }
@@ -316,19 +325,19 @@ export default function InstagramReelPanel({ disabled = false }: { disabled?: bo
       data-testid="instagram-reel-panel"
     >
       <header className="flex items-center justify-between">
-        <p className="text-sm font-medium text-deep-charcoal">Post a Reel</p>
+        <h3 className="font-serif text-2xl text-deep-charcoal">{t('instagram.reel.title')}</h3>
         <button
           type="button"
-          onClick={() => setOpen(false)}
+          onClick={() => { setOpen(false); onClose?.(); }}
           disabled={uploading || publishMutation.isPending}
           className="text-xs text-muted-stone hover:text-deep-charcoal disabled:opacity-50"
           data-testid="instagram-reel-panel-close"
         >
-          Hide
+          {t('instagram.reel.hide')}
         </button>
       </header>
 
-      <label className="text-xs text-muted-stone block">Video (MP4 or MOV, ≤32 MB)</label>
+      <label className="text-xs text-muted-stone block">{t('instagram.reel.videoLabel')}</label>
       <div className="flex items-center gap-2 flex-wrap">
         <label
           className={`inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-glass-border-input rounded-lg text-xs text-deep-charcoal hover:border-burgundy transition-colors ${
@@ -344,7 +353,7 @@ export default function InstagramReelPanel({ disabled = false }: { disabled?: bo
             disabled={uploading || publishMutation.isPending}
             className="hidden"
           />
-          {uploading ? 'Uploading…' : videoUrl ? 'Replace video' : 'Upload video'}
+          {uploading ? t('instagram.reel.uploading') : videoUrl ? t('instagram.reel.replaceVideo') : t('instagram.reel.uploadVideo')}
         </label>
         <button
           type="button"
@@ -354,7 +363,7 @@ export default function InstagramReelPanel({ disabled = false }: { disabled?: bo
           data-testid="instagram-reel-gen-toggle"
         >
           <ThiingsIcon name="sparkles" pxSize={15} className="text-ocre-600" />
-          {genOpen ? 'Hide AI generator' : 'Generate with AI'}
+          {genOpen ? t('instagram.reel.hideGenerator') : t('instagram.reel.showGenerator')}
         </button>
         {videoName && (
           <span className="text-xs text-muted-stone truncate" data-testid="instagram-reel-video-name">
@@ -369,12 +378,12 @@ export default function InstagramReelPanel({ disabled = false }: { disabled?: bo
           data-testid="instagram-reel-gen-panel"
         >
           <label className="text-xs text-muted-stone block">
-            Describe the video clip you want (5s vertical 9:16 — works best for product shots, b-roll)
+            {t('instagram.reel.generatorPrompt')}
           </label>
           <textarea
             value={genPrompt}
             onChange={(e) => setGenPrompt(e.target.value)}
-            placeholder="Slow zoom on a sizzling steak, soft restaurant lighting, steam rising…"
+            placeholder={t('instagram.reel.generatorPlaceholder')}
             rows={2}
             maxLength={1000}
             disabled={genStatus === 'processing' || startGenMutation.isPending}
@@ -399,12 +408,12 @@ export default function InstagramReelPanel({ disabled = false }: { disabled?: bo
               data-testid="instagram-reel-gen-submit"
             >
               {startGenMutation.isPending
-                ? 'Starting…'
+                ? t('instagram.reel.starting')
                 : genStatus === 'processing'
-                  ? `Generating… ${elapsedSec}s`
-                  : 'Generate'}
+                  ? t('instagram.reel.generating', { seconds: elapsedSec })
+                  : t('instagram.reel.generate')}
             </button>
-            <span className="text-[10px] text-muted-stone">~60–120s · ~$0.50 per clip · added on success</span>
+            <span className="text-xs text-muted-stone">{t('instagram.reel.generatorHint')}</span>
           </div>
           {genStatus === 'failed' && genError && (
             <p className="text-[11px] text-red-700" data-testid="instagram-reel-gen-error">{genError}</p>
@@ -412,11 +421,12 @@ export default function InstagramReelPanel({ disabled = false }: { disabled?: bo
         </div>
       )}
 
-      <label className="text-xs text-muted-stone block">Caption</label>
+      <label htmlFor="instagram-reel-caption" className="text-xs text-muted-stone block">{t('instagram.reel.caption')}</label>
       <textarea
+        id="instagram-reel-caption"
         value={caption}
         onChange={(e) => setCaption(e.target.value.slice(0, MAX_CAPTION_LEN))}
-        placeholder="What's the reel about?"
+        placeholder={t('instagram.reel.captionPlaceholder')}
         rows={3}
         className="w-full px-3 py-2 border border-glass-border-input rounded-lg text-sm focus:outline-none focus:border-burgundy resize-y"
         data-testid="instagram-reel-caption"
@@ -427,8 +437,9 @@ export default function InstagramReelPanel({ disabled = false }: { disabled?: bo
           className="border border-glass-border-dark rounded-lg p-2 space-y-2 bg-white/65"
           data-testid="instagram-reel-schedule-panel"
         >
-          <label className="text-xs text-muted-stone block">Post on</label>
+          <label htmlFor="instagram-reel-scheduled-at" className="text-xs text-muted-stone block">{t('instagram.reel.postOn')}</label>
           <input
+            id="instagram-reel-scheduled-at"
             type="datetime-local"
             value={scheduledAt}
             onChange={(e) => setScheduledAt(e.target.value)}
@@ -437,7 +448,7 @@ export default function InstagramReelPanel({ disabled = false }: { disabled?: bo
             data-testid="instagram-reel-scheduled-at"
           />
           <p className="text-[10px] text-muted-stone">
-            Actually posts within 0–15 min of this time (cron polls every 15 min).
+            {t('instagram.reel.scheduleWindow')}
           </p>
         </div>
       )}
@@ -451,7 +462,7 @@ export default function InstagramReelPanel({ disabled = false }: { disabled?: bo
             className="px-3 py-1.5 bg-burgundy text-white rounded-lg text-xs font-medium hover:bg-burgundy-dark disabled:opacity-50 transition-colors"
             data-testid="instagram-reel-publish"
           >
-            {publishMutation.isPending ? 'Processing… (up to a minute)' : 'Post as Reel'}
+            {publishMutation.isPending ? t('instagram.reel.processing') : t('instagram.reel.publish')}
           </button>
         ) : (
           <button
@@ -461,7 +472,7 @@ export default function InstagramReelPanel({ disabled = false }: { disabled?: bo
             className="px-3 py-1.5 bg-burgundy text-white rounded-lg text-xs font-medium hover:bg-burgundy-dark disabled:opacity-50 transition-colors"
             data-testid="instagram-reel-schedule-submit"
           >
-            {scheduleMutation.isPending ? 'Scheduling…' : 'Schedule Reel'}
+            {scheduleMutation.isPending ? t('instagram.reel.scheduling') : t('instagram.reel.schedule')}
           </button>
         )}
         <button
@@ -471,14 +482,14 @@ export default function InstagramReelPanel({ disabled = false }: { disabled?: bo
           className="text-xs text-burgundy underline underline-offset-2 hover:text-burgundy-dark disabled:opacity-50"
           data-testid="instagram-reel-schedule-toggle"
         >
-          {scheduleMode ? 'Cancel scheduling' : 'Schedule for later'}
+          {scheduleMode ? t('instagram.reel.cancelSchedule') : t('instagram.reel.scheduleLater')}
         </button>
       </div>
 
       <p className="text-[10px] text-muted-stone">
         {scheduleMode
-          ? 'Cron picks up scheduled reels every 15 min and runs the same publish flow.'
-          : 'Meta processes Reels server-side — the post may take 30–60s to land.'}
+          ? t('instagram.reel.scheduleNote')
+          : t('instagram.reel.publishNote')}
       </p>
     </section>
   );

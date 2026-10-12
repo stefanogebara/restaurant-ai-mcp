@@ -90,7 +90,8 @@ async function handleGet(req, res) {
       success: true,
       data: {
         voice_engine: config.voice_engine || 'elevenlabs',
-        voice_engine_status: config.voice_engine_status || 'active',
+        // A missing DB status is not proof that calls can reach this engine.
+        voice_engine_status: config.voice_engine_status || 'unknown',
         openai_voice_id: config.openai_voice_id || 'alloy',
         elevenlabs_agent_id: config.elevenlabs_agent_id || null,
       }

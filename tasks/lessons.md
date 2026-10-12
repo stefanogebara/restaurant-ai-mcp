@@ -1,3 +1,9 @@
+## 2026-10-12 — Continuidade de design não termina na primeira tela
+
+Quando Stefano pede para continuar corrigindo todas as páginas, não encerrar após o primeiro PR. Agrupar melhorias coerentes, provar cada lote com testes e navegador autenticado, conferir o deploy real e seguir para a próxima superfície. Distinguir código local, PR integrado e versão visível em produção. Nunca usar envios reais de WhatsApp, e-mail ou Instagram como atalho de QA visual.
+
+Uma lista que parece correta não prova a jornada: abrir um item real pode revelar contrato API/UI quebrado. O perfil de Clientes recebia `{ customer, reservations, notes }` e tratava o envelope como cliente plano; nenhuma suíte de lista detectou “undefined” no drawer. Em revisões de páginas, testar também a primeira ação útil e o estado de erro, com dados autenticados quando possível.
+
 ## 2026-08-27 — Teste de WhatsApp não pode se disfarçar de pesquisa
 
 Um teste reutilizou uma pesquisa de satisfação sem criar contexto de pesquisa: a resposta “5” virou quantidade de pessoas. Nunca reutilizar campanha/pesquisa para diagnóstico. Usar mensagem explícita, nome real e idioma configurado; não trocar idioma silenciosamente para conseguir um envio. Falha na consulta de contexto deve bloquear envio, não virar “Your Restaurant”. Recibos precisam ser aguardados antes do 200 do webhook. Entrega física não prova contexto conversacional correto.
@@ -1505,3 +1511,13 @@ não em digitação.
 ## 2026-09-25 — O herói precisa herdar a linguagem das demonstrações
 
 O herói fotográfico foi aprovado isoladamente, mas ficou cromaticamente separado das demonstrações em papel quente e verde-oliva. A correção do usuário mostrou que avaliar a primeira dobra sozinha não basta. Antes de publicar uma landing, comparar herói, demonstração e cartão social no mesmo fluxo; compartilhar tokens de papel, tinta, ação e linha; e verificar a passagem entre seções em desktop e celular. A foto deve mostrar um detalhe da reserva que a interface realmente carrega, sem repetir a mesma fala na seção seguinte.
+
+## 2026-10-12 — Não parar na primeira tela corrigida
+
+Quando o pedido é continuidade do design na plataforma, uma correção isolada não encerra o trabalho. Revisar as superfícies vizinhas e suas fontes de verdade, testar o fluxo entre elas e registrar o que está local, integrado e publicado. Uma página nova não pode conviver com uma aba antiga que contradiz seu estado — como WhatsApp “Conexão assistida” e Voz “Conectado” para o mesmo restaurante.
+# 2026-10-12 — Número compartilhado não é status por restaurante
+
+Um número global pode estar registrado na plataforma e ainda apontar para o agente errado. Nunca use uma flag local `active` como prova de roteamento. Antes de permitir ativação, desativação, teste ou divulgar o número, confirme a titularidade do restaurante no banco e o vínculo real do número ao agente. Se não houver prova, bloqueie self-service e mostre “revisão necessária”, não “conectado”.
+## 2026-10-12 — Uma entrega isolada não encerra uma reforma contínua
+
+Quando Stefano pede para continuar arrumando e testando todas as páginas, concluir um PR não é sinal para parar ou pedir nova autorização. Confirmar o que foi observado em produção, registrar limites da prova (por exemplo, sem mensagem real ou sem sessão Playwright) e seguir para a próxima superfície independente. Não misturar código de outro checkout sujo; trabalhar em ramo isolado e manter atualizações curtas durante a espera por builds.

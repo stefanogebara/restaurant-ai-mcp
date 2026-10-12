@@ -137,22 +137,34 @@ async function handleDetail(req, res) {
       return res.status(400).json({ success: false, error: 'Missing required parameter: customer_id' });
     }
 
-    // Fetch customer, reservations, and notes in parallel
-    const [customerResult, reservationsResult, notesResult] = await Promise.all([
-      crmDb()
-        .from('customer_ltv')
-        .select('customer_id, restaurant_id, customer_name, customer_email, customer_phone, total_visits, total_revenue, avg_revenue_per_visit, lifetime_value, churn_risk_score, customer_tier, first_visit_date, last_visit_date, tags, allergies, dietary_restrictions, seating_preferences, special_occasions, merged_into, created_at, updated_at')
-        .eq('customer_id', customer_id)
-        .eq('restaurant_id', restaurantId)
-        .single(),
+    const customerResult = await crmDb()
+      .from('customer_ltv')
+      .select('customer_id, restaurant_id, customer_name, customer_email, customer_phone, total_visits, total_revenue, avg_revenue_per_visit, lifetime_value, churn_risk_score, customer_tier, first_visit_date, last_visit_date, tags, allergies, dietary_restrictions, seating_preferences, special_occasions, merged_into, created_at, updated_at')
+      .eq('customer_id', customer_id)
+      .eq('restaurant_id', restaurantId)
+      .single();
 
-      supabaseAdmin
+    if (customerResult.error) {
+      if (customerResult.error.code === 'PGRST116') {
+        return res.status(404).json({ success: false, error: 'Customer not found' });
+      }
+      throw customerResult.error;
+    }
+
+    // The CRM identifier is not necessarily the customer's phone number.
+    // Resolve the owned customer first, then use its phone for visit history.
+    const reservationsQuery = customerResult.data.customer_phone
+      ? supabaseAdmin
         .from('reservations')
         .select('id, date, time, party_size, status, customer_name, special_requests, created_at')
         .eq('restaurant_id', restaurantId)
-        .eq('customer_phone', customer_id)
+        .eq('customer_phone', customerResult.data.customer_phone)
         .order('date', { ascending: false })
-        .limit(10),
+        .limit(10)
+      : Promise.resolve({ data: [], error: null });
+
+    const [reservationsResult, notesResult] = await Promise.all([
+      reservationsQuery,
 
       crmDb()
         .from('customer_notes')
@@ -161,13 +173,6 @@ async function handleDetail(req, res) {
         .eq('customer_id', customer_id)
         .order('created_at', { ascending: false }),
     ]);
-
-    if (customerResult.error) {
-      if (customerResult.error.code === 'PGRST116') {
-        return res.status(404).json({ success: false, error: 'Customer not found' });
-      }
-      throw customerResult.error;
-    }
 
     if (reservationsResult.error) {
       logger.error('Error fetching reservations for customer detail:', reservationsResult.error);

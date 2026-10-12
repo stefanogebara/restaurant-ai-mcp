@@ -1,10 +1,10 @@
 /**
  * POST/GET /api/whatsapp-provision — conectar um número WhatsApp ao restaurante.
  *
- * Item 4 do plano zero-toque. O dono (autenticado) conecta um número que ele
- * controla: a Meta manda o código NO NÚMERO DELE (SMS ou ligação), ele digita
- * aqui, e o roteamento multi-tenant passa a apontar pra ele em até 60s (TTL do
- * cache do registry). Nenhum passo passa pelo fundador.
+ * A adição automática de números novos à WABA está desabilitada em produção:
+ * a chamada não foi validada para a conta Seatable e ainda não há lock durável.
+ * Uma verificação já pendente pode ser concluída. O GET informa à UI se uma
+ * nova conexão está disponível; em produção, o próximo passo é assistido.
  *
  *   GET                        → estado atual (sem PIN)
  *   POST {action:'iniciar', cc, numero, metodo}   → dispara OTP da Meta

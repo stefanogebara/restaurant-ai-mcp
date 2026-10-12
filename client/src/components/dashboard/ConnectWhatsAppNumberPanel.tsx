@@ -3,14 +3,13 @@ import { useTranslation } from 'react-i18next';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { authFetch } from '../../services/api';
 import { useWhatsAppProvision, type WhatsAppProvision as EstadoProvisionamento } from '../../hooks/useWhatsAppProvision';
+import { whatsappCopy } from './whatsappCopy';
 
 /**
  * Conectar um número WhatsApp ao restaurante — item 4 do plano zero-toque.
  *
- * O dono informa um número que ELE controla (fixo ou celular). A Meta manda o
- * código de verificação NESSE número (SMS ou ligação — ligação é o caminho
- * para o fixo do restaurante), ele digita aqui, e o roteamento multi-tenant
- * passa a apontar pra ele em até 1 minuto. Nenhum passo envolve o fundador.
+ * Uma conexão nova é assistida até que a adição de número à WABA e o lock
+ * durável estejam comprovados. Um número já pendente ainda pode ser verificado.
  *
  * O estado vem do backend (/api/whatsapp-provision) — a máquina real mora lá;
  * este painel é só a janela: nao_iniciado → aguardando_codigo → ativo | erro.
@@ -19,7 +18,8 @@ import { useWhatsAppProvision, type WhatsAppProvision as EstadoProvisionamento }
 const API = '/api/whatsapp-provision';
 
 export default function ConnectWhatsAppNumberPanel() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const copy = whatsappCopy(i18n.language);
   const qc = useQueryClient();
 
   const [cc, setCc] = useState('55');
@@ -30,6 +30,7 @@ export default function ConnectWhatsAppNumberPanel() {
   const [changingNumber, setChangingNumber] = useState(false);
 
   const { data: estado, isLoading, error: erroLeitura, refetch } = useWhatsAppProvision();
+  const assistedNew = !estado?.pode_iniciar && (estado?.estado === 'nao_iniciado' || estado?.estado === 'erro');
 
   const acao = useMutation({
     mutationFn: async (body: Record<string, string>) => {
@@ -55,8 +56,8 @@ export default function ConnectWhatsAppNumberPanel() {
   const confirmar = () => acao.mutate({ action: 'confirmar', codigo });
 
   return (
-    <div className="liquid-capsule p-5 sm:p-7">
-      <div className="flex items-start justify-between gap-3 mb-1">
+    <div className={assistedNew ? 'py-1' : 'liquid-capsule p-5 sm:p-7'}>
+      {!assistedNew && <div className="flex items-start justify-between gap-3 mb-1">
         <div>
           <h2 className="font-sans text-base font-medium text-deep-charcoal">
             {t('whatsappProvision.title', 'Connect your WhatsApp number')}
@@ -65,13 +66,13 @@ export default function ConnectWhatsAppNumberPanel() {
             {t('whatsappProvision.subtitle', 'Your AI answers on a number you own. Meta sends a verification code to that number — by SMS or phone call (use the call for a landline).')}
           </p>
         </div>
-        {estado?.estado === 'ativo' && (
+        {estado?.estado === 'ativo' && estado.roteamento_confirmado === true && (
           <span className="shrink-0 inline-flex items-center gap-1.5 text-[11px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded-full">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            {t('whatsappProvision.activeBadge', 'Active')}
+            {copy.connected}
           </span>
         )}
-      </div>
+      </div>}
 
       {isLoading && (
         <p className="text-xs text-muted-stone mt-3">{t('common.loading', 'Loading...')}</p>
@@ -85,11 +86,21 @@ export default function ConnectWhatsAppNumberPanel() {
         </div>
       )}
 
-      {!isLoading && !erroLeitura && (changingNumber || estado?.estado === 'nao_iniciado' || estado?.estado === 'erro') && (
+      {!isLoading && !erroLeitura && estado?.estado === 'erro' && estado.erro && (
+        <p role="alert" className="text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mt-4">{estado.erro}</p>
+      )}
+
+      {!isLoading && !erroLeitura && assistedNew && (
+        <div role="status">
+          <h2 className="text-base font-medium text-deep-charcoal">{copy.assistedTitle}</h2>
+          <p className="mt-2 text-sm text-muted-stone max-w-xl">{copy.assistedIntro}</p>
+          <p className="mt-2 text-sm text-muted-stone max-w-xl">{copy.assistedBody}</p>
+          <a href="mailto:hello@seatable.one" className="inline-block mt-4 text-sm text-burgundy underline underline-offset-4">{copy.support}</a>
+        </div>
+      )}
+
+      {!isLoading && !erroLeitura && estado?.pode_iniciar === true && (changingNumber || estado?.estado === 'nao_iniciado' || estado?.estado === 'erro') && (
         <div className="mt-4 space-y-3">
-          {estado?.estado === 'erro' && estado.erro && (
-            <p className="text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{estado.erro}</p>
-          )}
           <div className="flex gap-2">
             <div className="w-20">
               <label htmlFor="whatsapp-country-code" className="block text-xs text-muted-stone mb-1">{t('whatsappProvision.cc', 'Country')}</label>
@@ -180,23 +191,23 @@ export default function ConnectWhatsAppNumberPanel() {
               {acao.isPending ? '...' : t('whatsappProvision.confirm', 'Confirm')}
             </button>
           </div>
-          <button
+          {estado.pode_iniciar === true && <button
             type="button"
             onClick={() => { setChangingNumber(true); setErroAcao(null); }}
             className="text-[11px] text-muted-stone underline"
           >
             {t('whatsappProvision.restart', 'Use a different number')}
-          </button>
+          </button>}
         </div>
       )}
 
       {!isLoading && estado?.estado === 'ativo' && (
-        <div className="mt-4 bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-3">
-          <p className="text-sm font-medium text-emerald-800">
+        <div className={`mt-4 border rounded-lg px-4 py-3 ${estado.roteamento_confirmado === true ? 'bg-emerald-50 border-emerald-200' : 'bg-amber-50 border-amber-200'}`}>
+          <p className={`text-sm font-medium ${estado.roteamento_confirmado === true ? 'text-emerald-800' : 'text-amber-800'}`}>
             {estado.numero_e164 || t('whatsappProvision.activeBadge', 'Active')}
           </p>
-          <p className="text-xs text-emerald-700 mt-1">
-            {t('whatsappProvision.activeNote', 'Your AI now answers this number. New messages route to it within a minute.')}
+          <p className={`text-xs mt-1 ${estado.roteamento_confirmado === true ? 'text-emerald-700' : 'text-amber-800'}`}>
+            {estado.roteamento_confirmado === true ? copy.registeredHint : copy.routingIssue}
           </p>
         </div>
       )}

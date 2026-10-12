@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from '../../test/renderWithProviders';
+import { MemoryRouter } from 'react-router-dom';
+import { authFetch } from '../../services/api';
 
 vi.mock('../../components/layout/DashboardLayout', () => ({
   default: ({ children }: { children: React.ReactNode }) => (
@@ -26,6 +28,10 @@ vi.mock('../../services/api', () => ({
 }));
 
 import RestaurantSettingsPage from '../RestaurantSettingsPage';
+
+const renderPage = () => renderWithProviders(
+  <MemoryRouter><RestaurantSettingsPage /></MemoryRouter>,
+);
 
 // ---- Dados ----
 
@@ -61,19 +67,36 @@ describe('RestaurantSettingsPage', () => {
   beforeEach(() => {
     apiGet.mockReset().mockResolvedValue({ data: { success: true, data: SETTINGS } });
     apiPut.mockReset().mockResolvedValue({ data: { success: true, data: SETTINGS } });
+    vi.mocked(authFetch).mockClear();
   });
 
   it('hidrata o formulário com os dados do restaurante', async () => {
-    renderWithProviders(<RestaurantSettingsPage />);
+    renderPage();
 
     expect(await screen.findByDisplayValue('Cantina do Porto')).toBeInTheDocument();
     expect(screen.getByDisplayValue('+5511988887777')).toBeInTheDocument();
     expect(screen.getByDisplayValue('contato@cantina.com')).toBeInTheDocument();
   });
 
+  it('mantém navegação por seção e leva o link de reservas para Integrações sem buscar o painel', async () => {
+    renderPage();
+    await screen.findByDisplayValue('Cantina do Porto');
+
+    expect(screen.getByRole('navigation', { name: 'Restaurant settings sections' }))
+      .toHaveAttribute('aria-label', 'Restaurant settings sections');
+    expect(screen.getByRole('link', { name: 'Business Hours' })).toHaveAttribute('href', '#business-hours');
+    expect(screen.getByRole('link', { name: 'Open booking links in Integrations' }))
+      .toHaveAttribute('href', '/host-dashboard/integrations#integrations:booking');
+    expect(screen.getByLabelText('Monday — opening time')).toHaveAttribute('type', 'time');
+    expect(screen.getByLabelText('Monday — closing time')).toHaveAttribute('type', 'time');
+    expect(screen.getByLabelText('Advance Booking (days)')).toHaveAttribute('type', 'number');
+    expect(screen.getByLabelText('Cancellation Policy')).toHaveAttribute('rows', '2');
+    expect(authFetch).not.toHaveBeenCalled();
+  });
+
   it('salvar fica desabilitado até haver edição', async () => {
     const user = userEvent.setup();
-    renderWithProviders(<RestaurantSettingsPage />);
+    renderPage();
     await screen.findByDisplayValue('Cantina do Porto');
 
     const save = screen.getByRole('button', { name: /save info/i });
@@ -85,7 +108,7 @@ describe('RestaurantSettingsPage', () => {
 
   it('recusa telefone fora do formato E.164 sem chamar o backend', async () => {
     const user = userEvent.setup();
-    renderWithProviders(<RestaurantSettingsPage />);
+    renderPage();
     await screen.findByDisplayValue('Cantina do Porto');
 
     const phone = screen.getByLabelText(/phone/i);
@@ -101,7 +124,7 @@ describe('RestaurantSettingsPage', () => {
 
   it('recusa e-mail inválido sem chamar o backend', async () => {
     const user = userEvent.setup();
-    renderWithProviders(<RestaurantSettingsPage />);
+    renderPage();
     await screen.findByDisplayValue('Cantina do Porto');
 
     const email = screen.getByLabelText(/email/i);
@@ -115,7 +138,7 @@ describe('RestaurantSettingsPage', () => {
 
   it('salva as informações válidas com o payload completo', async () => {
     const user = userEvent.setup();
-    renderWithProviders(<RestaurantSettingsPage />);
+    renderPage();
     await screen.findByDisplayValue('Cantina do Porto');
 
     const name = screen.getByLabelText(/restaurant name/i);
@@ -134,7 +157,7 @@ describe('RestaurantSettingsPage', () => {
   it('um 200 com success:false vira erro, não um "salvo" verde', async () => {
     const user = userEvent.setup();
     apiPut.mockResolvedValue({ data: { success: false, error: 'Coluna inexistente' } });
-    renderWithProviders(<RestaurantSettingsPage />);
+    renderPage();
     await screen.findByDisplayValue('Cantina do Porto');
 
     await user.type(screen.getByLabelText(/restaurant name/i), '!');
@@ -146,7 +169,7 @@ describe('RestaurantSettingsPage', () => {
 
   it('não deixa salvar um dia aberto com fechamento antes da abertura', async () => {
     const user = userEvent.setup();
-    renderWithProviders(<RestaurantSettingsPage />);
+    renderPage();
     await screen.findByDisplayValue('Cantina do Porto');
 
     // Segunda vem aberta 12:00–23:00; inverter cria um dia sem slot algum.
@@ -159,7 +182,7 @@ describe('RestaurantSettingsPage', () => {
 
   it('aceita fechamento à meia-noite (o único caso overnight suportado)', async () => {
     const user = userEvent.setup();
-    renderWithProviders(<RestaurantSettingsPage />);
+    renderPage();
     await screen.findByDisplayValue('Cantina do Porto');
 
     setMondayCloseTime('00:00');
@@ -174,7 +197,7 @@ describe('RestaurantSettingsPage', () => {
 
   it('envia a semana inteira, não só os dias que o servidor mandou', async () => {
     const user = userEvent.setup();
-    renderWithProviders(<RestaurantSettingsPage />);
+    renderPage();
     await screen.findByDisplayValue('Cantina do Porto');
 
     setMondayCloseTime('22:00');
@@ -189,7 +212,7 @@ describe('RestaurantSettingsPage', () => {
 
   it('mostra o estado de erro quando as configurações não carregam', async () => {
     apiGet.mockRejectedValue(new Error('boom'));
-    renderWithProviders(<RestaurantSettingsPage />);
+    renderPage();
 
     await waitFor(() => expect(screen.queryByDisplayValue('Cantina do Porto')).not.toBeInTheDocument());
   });

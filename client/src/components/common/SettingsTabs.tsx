@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 
 /**
  * Reusable horizontal tab bar for split-pane settings pages. Designed to break
@@ -26,12 +26,14 @@ export interface SettingsTabDef {
 interface SettingsTabsProps {
   tabs: SettingsTabDef[];
   defaultTabId?: string;
+  /** Mount a panel on first visit, then retain it so unfinished edits survive tab switches. */
+  lazyMount?: boolean;
   /** Optional storage key for the URL hash — useful when multiple SettingsTabs render on the same page (very rare). */
   hashKey?: string;
   className?: string;
 }
 
-export default function SettingsTabs({ tabs, defaultTabId, hashKey, className = '' }: SettingsTabsProps) {
+export default function SettingsTabs({ tabs, defaultTabId, lazyMount = false, hashKey, className = '' }: SettingsTabsProps) {
   const resolvedDefault = defaultTabId ?? tabs[0]?.id;
 
   // Initialize from URL hash if it matches a known tab; otherwise fall back
@@ -45,6 +47,12 @@ export default function SettingsTabs({ tabs, defaultTabId, hashKey, className = 
   };
 
   const [activeId, setActiveId] = useState<string>(readInitialTab);
+  const [visitedIds, setVisitedIds] = useState<Set<string>>(() => new Set([readInitialTab()]));
+
+  const activateTab = useCallback((id: string) => {
+    setActiveId(id);
+    setVisitedIds((previous) => previous.has(id) ? previous : new Set([...previous, id]));
+  }, []);
 
   // Sync URL hash when the user clicks a tab. Use replaceState to avoid
   // polluting back-button history with every tab change.
@@ -62,11 +70,11 @@ export default function SettingsTabs({ tabs, defaultTabId, hashKey, className = 
     const onHashChange = () => {
       const raw = window.location.hash.replace(/^#/, '');
       const desired = hashKey ? raw.split(':').slice(1).join(':') : raw;
-      if (desired && tabs.some((t) => t.id === desired)) setActiveId(desired);
+      if (desired && tabs.some((t) => t.id === desired)) activateTab(desired);
     };
     window.addEventListener('hashchange', onHashChange);
     return () => window.removeEventListener('hashchange', onHashChange);
-  }, [hashKey, tabs]);
+  }, [activateTab, hashKey, tabs]);
 
   // Roving-tabindex arrow-key navigation (WAI-ARIA tabs pattern). The
   // tabIndex juggling was already here but without key handlers the roving
@@ -82,7 +90,7 @@ export default function SettingsTabs({ tabs, defaultTabId, hashKey, className = 
     if (e.key === 'End') nextIdx = tabs.length - 1;
     const next = tabs[nextIdx];
     if (next) {
-      setActiveId(next.id);
+      activateTab(next.id);
       document.getElementById(`settings-tab-${next.id}`)?.focus();
     }
   };
@@ -111,7 +119,7 @@ export default function SettingsTabs({ tabs, defaultTabId, hashKey, className = 
               aria-controls={`settings-panel-${tab.id}`}
               id={`settings-tab-${tab.id}`}
               tabIndex={isActive ? 0 : -1}
-              onClick={() => setActiveId(tab.id)}
+              onClick={() => activateTab(tab.id)}
               className={`flex items-center gap-2 px-3.5 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 transition-colors -mb-px ${
                 isActive
                   ? 'border-burgundy text-deep-charcoal'
@@ -139,7 +147,7 @@ export default function SettingsTabs({ tabs, defaultTabId, hashKey, className = 
               aria-labelledby={`settings-tab-${tab.id}`}
               hidden={!isActive}
             >
-              {tab.content}
+              {(!lazyMount || visitedIds.has(tab.id)) && tab.content}
             </div>
           );
         })}

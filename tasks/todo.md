@@ -1,3 +1,75 @@
+# Voz — configuração não é ligação conectada (12/out/2026)
+
+- [x] Separar o estado do motor/agente da disponibilidade real do telefone.
+- [x] Remover promessas numéricas de custo, latência e troca sem chamadas perdidas sem evidência operacional.
+- [x] Trocar bandeiras emoji por nomes de idioma localizados; limpar cores de estado e densidade dos cartões.
+- [ ] Cobrir estados, idiomas e textos com testes; validar build e navegador autenticado sem realizar ligação.
+
+Limite: não registrar/desregistrar telefone, trocar motor em produção ou iniciar chamada. A aba Telefone continua sendo a fonte de verdade para roteamento.
+
+---
+
+# Insights — pontuação honesta e idioma (12/out/2026)
+
+- [x] Nomear o risco como pontuação heurística, não porcentagem de probabilidade.
+- [x] Localizar o texto sugerido para reengajamento sem prometer vantagem não autorizada.
+- [x] Evitar que o título fique sob o menu em larguras intermediárias; revisar o modal por teclado.
+- [x] Testar PT/EN/ES, build e tela autenticada sem enviar e-mails.
+- [x] Corrigir o mesmo ponto de quebra do menu em Integrações, Clientes, Voz, Dashboard, Salão, Serviço e Configurações.
+- [x] Confirmar o cliente no escopo do restaurante antes de criar ou enviar e-mail de retenção.
+- [x] Substituir rascunhos editados ao trocar idioma, com aviso visível, para não montar e-mails mistos.
+- [x] Validar o lote em produção nas larguras de celular e tablet após o deploy.
+
+Limite: o envio individual existente não será acionado durante a revisão.
+
+Revisão: o algoritmo calcula uma pontuação saturada entre 0 e 100, não uma probabilidade; a interface agora mostra `/100`. O texto sugerido foi traduzido em três línguas e não oferece bebida ou desconto sem autorização. O modal de Insights tem nome acessível, foco inicial e fecha com Escape. O CRM também permite escolher o idioma antes do envio. O assunto, a saudação e o rodapé do e-mail seguem essa escolha. A recusa do provedor não aparece mais como sucesso. O backend valida cliente e e-mail dentro do restaurante antes de escrever campanha; canais não implementados são recusados. Os testes completos passaram antes do último ajuste de troca de idioma; depois dele, testes focados, tipos, lint e CI passaram. PR #181 mesclado; Vercel READY e `seatable.one` apontando para o deploy correto. No navegador autenticado, título sem sobreposição em 899/390/320 px, sem rolagem horizontal; risco aparece como `/100`, modal traz escolha de idioma, e alternar para espanhol substituiu o rascunho pelo texto espanhol. Nenhum e-mail foi enviado.
+
+---
+
+# Marketing — clareza e isolamento (12/out/2026)
+
+- [x] Impedir leitura de métricas e envio de campanhas de outro restaurante.
+- [x] Mostrar o nome real, o status localizado e datas na língua da interface.
+- [x] Trocar a tabela densa por uma lista legível no desktop e no celular.
+- [x] Revisar automações e formulário sem disparar mensagens reais.
+- [x] Cobrir com testes, build e navegação; publicar apenas após os checks.
+
+Limite: nenhuma campanha, automação ou mensagem será ativada ou enviada em produção durante a revisão.
+
+Revisão: o histórico usa o nome salvo em `metadata.name`, traduz estados legados e não mostra um falso total de destinatários. O endpoint agora confirma a posse da campanha antes de ler métricas ou iniciar envio. O fluxo manual continua sem entrega confiável: o formulário omitia o canal WhatsApp, o backend assumia e-mail e o processador só buscava WhatsApp; por isso a criação foi pausada na interface e o atalho duplicado em Insights virou leitura + link. Automação permanece configurável sem alterações nesta rodada. Testes focados (6 backend, 6 frontend), Jest completo (280 suítes/4.252 testes), Vitest completo (112 arquivos/1.015 testes), TypeScript, build e ESLint focado passaram. Produção confirmou em 899 e 390 px: histórico legível, estado pendente e detalhe sem falso dado de entrega; automações examinadas sem ativação. Nenhum envio real.
+
+---
+
+# WhatsApp — prova de roteamento antes do teste (11/out/2026)
+
+- [x] Ler o ponteiro do registro central no GET; não anunciar conexão apenas pelo estado salvo no restaurante.
+- [x] Recusar ativação se o número estiver atribuído a outra casa, se a casa estiver inativa ou se já usar outro número.
+- [x] Exigir roteamento confirmado para mostrar o link da conversa; orientar suporte quando registro e roteamento divergem.
+- [x] Cobrir falhas e estados com testes, executar verificação completa e conferir a interface em navegador.
+
+Limite: o cadastro automático de número novo permanece desligado em produção. Esta etapa não faz alterações na Meta nem comprova conversa recebida. Um índice único/lock durável no registro central e um número pertencente ao restaurante ainda serão necessários antes de abrir autosserviço.
+
+Referência visual: `DESIGN.md` Liquid Glass v2 e guia de microcopy do Refero. Manter estado na cor semântica, ação burgundy e uma instrução clara no canvas; não criar uma nova página nem prometer atendimento sem prova.
+
+Revisão: o GET agora compara o estado do restaurante com o ponteiro ativo no registro central. O código só aponta um número se ele estiver livre, a casa estiver ativa e não houver outro número; a atualização usa condição de valor nulo, mas não substitui o índice único/lock durável exigido para autosserviço. PIN e detalhes técnicos não saem no estado público. A interface mostra aviso âmbar e bloqueia o link de conversa quando o roteamento diverge. Navegador local conferiu os estados simulado ativo e sem roteamento, sem envio real. Build, sintaxe da API, 276 suítes/4.238 testes backend e 104 arquivos/993 testes frontend passaram. Não houve alteração de banco, Meta, envios ou reserva real. A validação de mensagem recebida permanece aberta até haver um número do restaurante conectado.
+
+---
+
+# WhatsApp — conexão sem promessa falsa (11/out/2026)
+
+- [x] Bloquear novas adições self-service em produção até validar o caminho da Meta e um lock durável por restaurante.
+- [x] Mostrar conexão assistida quando não há número; preservar a confirmação de um número já pendente.
+- [x] Cobrir o bloqueio do backend e os estados da interface, inclusive a ausência de envio à Meta.
+- [x] Revisar no navegador e executar a verificação completa do projeto.
+
+Direção fixada: preservar canvas quente, títulos Instrument Serif e uma jornada vertical. O formulário de código continua para uma solicitação já iniciada. Para um número novo, uma instrução curta e o contato de suporte substituem o formulário de envio não comprovado. A entrega pelo remetente da plataforma fica separada do teste de conversa recebida.
+
+Decisões: (1) guardar primeiro no backend, pois um cliente antigo ainda pode chamar a API; (2) expor a capacidade na leitura para a interface refletir o servidor; (3) não inferir conexão ativa a partir do teste de entrega. A coleção oficial da Meta documenta listar números da WABA e registrar um ID conhecido, mas não prova a chamada atual de adicionar número para esta conta.
+
+Revisão: em produção, uma nova adição de número é recusada no servidor mesmo se a flag local for ligada. O modo mock também só abre em desenvolvimento/teste fora da Vercel. A interface lê `pode_iniciar` e falha fechado se um servidor antigo não enviar o campo; um número já pendente mantém o formulário de código. O estado assistido usa conteúdo direto no canvas e apenas um link de ajuda. Playwright em Chrome examinou desktop, celular e estado ativo: sem erro de página, rolagem horizontal ou botão de envio de código no estado assistido. Testes focados: 14 backend e 17 frontend. Verificação completa: build de produção passou (avisos antigos de chunks grandes), 276 suítes e 4.234 testes backend passaram (6 pulados), 104 arquivos e 991 testes frontend passaram; sintaxe dos arquivos da API e `git diff --check` passaram. Prévia local simula estados e bloqueia envios. Não houve chamada à Meta, OTP, mensagem nova ou conversa recebida.
+
+---
+
 # Hero na paleta das demonstrações (25/set/2026)
 
 - [x] Fixar a direção: papel quente `#f3f0e9`, tinta oliva `#293222`, verde de ação `#3f4e32`; manter logo e tipografia.
@@ -339,3 +411,62 @@ Sandbox account:
 - [x] Review `scripts/audit-fire-and-forget.js` ALLOWLIST — 2026-08-24: reancorada em conteúdo (`{ file, match, reason }`) em vez de `path:linha`. Das 16 entradas antigas, só 3 ainda suprimiam algo: 5 apontavam para `api/services/` (renomeado para `api/_services/` em 10/jun, duas semanas *depois* da revisão de maio que as declarou justificadas) e 8 para linhas que hoje são JSDoc ou código não relacionado. Entrada que não casa com nenhum código agora falha o run — rot aparece no CI seguinte, não anos depois.
 - [x] Varredura manual de fire-and-forget em `api/_lib/` (140 arquivos) — 2026-08-24: o audit não alcança lib de request path (o `res` mora no chamador) nem `.catch` multi-linha. 26 candidatos triados: 5 bugs reais corrigidos (confirmação de reserva por voz, upsert de LTV, webhook `service.completed`, release de lock do prospect-responder, e 2 sites de cobrança de cancelamento com janela zero-await), o resto seguro ou cosmético. Novo teste `service-completion-freeze.test.js` trava a ordenação. Os 2 pendentes foram fechados em seguida: extração de memória do WhatsApp e `registrarGasto` do ai-client, ambos com `await Promise.race` + teto (6s e 1500ms). O bloqueio que eu tinha levantado para a extração — risco de re-entrega da Meta — não existia: o orçamento de retry de 20s é absorvido por dedup no Redis (documentado em `api/whatsapp-webhook.js`), e `manager-agent.js` já usava teto de 6s na operação idêntica.
 - [x] Walk Vercel cron schedule in `vercel.json` — 2026-05-24: nothing faster than `*/15`. The 4 `*/15` crons (check-late-reservations, send-campaigns, sync-conversation-data, validate-conversations) all time-sensitive and justified.
+
+## 2026-10-12 — Continuidade do design, superfícies conectadas
+
+- [x] Eliminar o falso “WhatsApp conectado” da página de Voz; a única fonte de verdade deve ser a conexão do restaurante em /host-dashboard/whatsapp.
+- [x] Separar Voz/Telefone de Integrações; mover reservas, Instagram, POS, Stripe e ferramentas técnicas para a superfície apropriada, preservando deep links e retornos OAuth.
+- [x] Corrigir a hierarquia e o texto principal em PT/EN/ES segundo DESIGN.md, sem prometer prontidão não comprovada.
+- [x] Cobrir roteamento legado e tabs com testes; validar build, sintaxe e testes completos.
+- [ ] Revisar no navegador desktop/mobile e registrar diferenças entre local, PR, Preview e produção.
+- [x] Impedir que o número compartilhado de voz seja reatribuído por self-service, conferir titularidade no servidor e remover o falso estado “Ativo” em Voz e Chamadas.
+
+### Revisão
+
+Local: build e sintaxe das APIs alteradas passaram. Jest: 277 suítes e 4.241 testes passaram (1 suíte e 6 testes pulados). Vitest: 107 arquivos e 1.006 testes passaram. Os testes novos cobrem retornos OAuth, links antigos, montagem de abas e a hierarquia de compartilhamento de reservas. A página de reservas agora apresenta um link principal, QR e código de site opcional; não repete o mesmo link em cinco cartões. A verificação visual autenticada, o estado de publicação e os componentes internos de criação no Instagram ainda estão em aberto; não afirmar que todo o produto foi redesenhado.
+
+A auditoria de Telefone encontrou um risco de roteamento entre restaurantes: a API usava um único número de voz e podia mudar o agente sem invalidar o “Ativo” salvo em outras casas. O backend agora exige dono no banco, bloqueia registrar/desregistrar/testar, não expõe o inventário da plataforma e devolve `needs_review` para antigos registros ativos. Voz e Chamadas mostram orientação assistida sem sugerir encaminhamento antes de verificar o roteamento. Os cinco testes de fronteira de telefone e dois de UI passaram; a suíte completa passou com 278 suítes/4.246 testes backend e 109 arquivos/1.008 testes frontend. Build, TypeScript, sintaxe e navegador pós-publicação ainda precisam de confirmação após o último ajuste.
+
+Publicação: PR #177 mesclada; deploy `78266cdf` ficou READY e associado a `seatable.one`. Na conta Cantina Bella Vista, Integrações mostra link único e QR, Voz mostra revisão assistida e Chamadas não diz mais “Ativo” nem expõe o número compartilhado. Sem erros de console nas duas telas. No celular, a aba Integrações não transborda em 390 px, mas o botão do menu encobre o rótulo acima do título; correção de espaçamento segue no branch seguinte. Instagram conectado ainda expõe o editor de legendas em inglês — próximo fluxo a corrigir por inteiro.
+
+## 2026-10-12 — Configurações do restaurante sem duplicar canais
+
+- [x] Manter um único lugar para compartilhar o link de reservas: Integrações; Configurações aponta para lá.
+- [x] Dar acesso direto às cinco seções longas sem esconder campos nem perder rascunhos.
+- [x] Associar rótulos a horários e políticas para teclado/leitor de tela; cobrir com testes.
+- [x] Corrigir a sobreposição do menu móvel sobre os cabeçalhos de Integrações e Voz descoberta na produção.
+- [x] Verificar build e suítes completas.
+- [ ] Revisar no navegador e publicar após a versão anterior estabilizar.
+
+Revisão parcial: 11 testes da página, TypeScript, JSON dos três idiomas e `git diff --check` passaram; build de produção, 278 suítes/4.246 testes backend e 109 arquivos/1.009 testes frontend também passaram. Nenhum dado de restaurante foi alterado. O retorno Google iniciado na prévia caiu na landing estática de produção com credenciais no fragmento da URL; a causa exata ainda precisa ser confirmada. A aba temporária foi fechada, sem reutilizar essas credenciais. A revisão visual autenticada da prévia ficou indisponível; repetir no domínio após o deploy e tratar o callback OAuth como problema separado.
+# Instagram — um espaço de criação, sem perder rascunhos (12/out/2026)
+
+- [x] Separar publicação de feed, Reel e agendadas numa navegação curta, com conta conectada sempre visível.
+- [x] Preservar editores montados ao alternar modos e manter o envio de legenda para Reel.
+- [x] Corrigir o estado vazio das agendadas, a atualização após agendar Reel e textos principais em EN/PT/ES.
+- [ ] Cobrir alternância, persistência, transferência e idiomas com testes; revisar desktop/celular no navegador.
+- [ ] Verificar build, tipos, suítes e produção antes de declarar concluído.
+
+Direção: conteúdo no canvas, controles densos em glass, estado em cor semântica e ação em burgundy. Nenhum teste deve publicar ou agendar conteúdo real.
+
+Revisão local: a geração de uma nova leva de legendas agora reinicia os cartões, para que mídias da leva antiga não sejam publicadas com texto novo. Só um formulário de publicação abre por vez, mas imagens do mesmo rascunho sobrevivem à troca. Adicionados testes para alternância, tradução, lista vazia, mais de cinco agendamentos e isolamento da mídia. Suítes completas: 278/4.246 backend, 113 arquivos/1.017 testes frontend, build de produção e paridade das três traduções passaram. A suíte Playwright existente do Instagram foi atualizada, mas não executada porque depende de `e2e/auth-state.json` ausente neste checkout. Faltam navegador do novo design e produção. A API de agendadas ainda devolve no máximo 50 linhas; paginar é trabalho posterior. O medidor de custo usa `ai_generation_events`, mas os geradores gravam nesse registro sem esperar a gravação; conferir durabilidade antes de chamá-lo de valor faturado.
+
+---
+# Clientes no celular — dados legíveis e abertura acessível (12/out/2026)
+
+- [x] Substituir a tabela cortada por uma lista compacta abaixo de 768 px.
+- [x] Manter nome, nível, visitas, última visita e valor visíveis sem rolagem lateral.
+- [x] Abrir o cliente pelo teclado e pelo toque; cobrir a lista com testes.
+- [x] Chamar o valor previsto de estimativa, não de receita realizada, em Clientes e Insights.
+- [x] Corrigir o contrato do perfil: API aninhada versus cliente plano, histórico por telefone e falha explícita.
+- [ ] Verificar build, suites e a página autenticada no celular após o deploy.
+
+Limite: nenhum perfil, reserva ou dado de cliente será alterado nesta revisão.
+
+Revisão local: a lista móvel mostra métricas em três colunas, tags resumidas e abre o perfil por botão. A tabela desktop também aceita Enter e Espaço. O selo VIP agora usa tinta neutra, sem gastar a cor de ação. Após o rebase sobre #181, Jest completo passou (283 suítes/4.264 testes), Vitest completo passou (121 arquivos/1.044 testes), TypeScript, lint focado, build e `git diff --check` passaram. Falta navegador na versão publicada.
+
+Auditoria do valor: `lifetime_value` vem de `calculatePredictedLTV` e projeta valor futuro; os rótulos agora dizem “valor estimado” nos três idiomas. Não equivale a faturamento recebido.
+
+Auditoria autenticada: abrir Beatriz Costa em produção mostrava cabeçalho vazio, contato “undefined” e métricas ausentes. A API devolve `{ customer, reservations, notes }`, mas o hook tratava o objeto inteiro como cliente; o histórico também buscava `customer_phone = customer_id`. O hook agora adapta o contrato, o backend resolve primeiro o cliente do restaurante e busca pelo telefone real, e uma resposta defeituosa mostra erro com retry em vez de dados vazios. Três testes backend e dois do hook cobrem essas fronteiras; um teste adicional valida o drawer. A receita da tabela LTV pode ser estimada a partir de visitas × ticket médio (inclusive fallback por cobertura); por isso o drawer também usa rótulos de estimativa.
+
+---

@@ -10,19 +10,19 @@ interface Props {
 }
 
 /**
- * Lead with the host-facing fact: "Ready to take calls — last updated 3 days
- * ago." The previous version showed "Voice Engine: turbo_v2.5" and a copyable
+ * Lead with the host-facing fact that the agent is configured, not that
+ * telephone routing is connected. The previous version showed "Voice Engine: turbo_v2.5" and a copyable
  * UUID Agent ID as primary surface area — neither means anything to a
  * restaurant owner. Keep the technical details available behind a disclosure
  * for support.
  */
 export default function VoiceAgentInfo({ agentId, updatedAt, createdAt }: Props) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const toast = useToast();
   const [showTech, setShowTech] = useState(false);
 
   const lastUpdated = updatedAt
-    ? new Date(updatedAt).toLocaleString()
+    ? new Date(updatedAt).toLocaleString(i18n.language)
     : null;
 
   return (
@@ -32,15 +32,17 @@ export default function VoiceAgentInfo({ agentId, updatedAt, createdAt }: Props)
           <ThiingsIcon name="info" pxSize={20} />
           {t('agentInfo.title')}
         </h2>
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-          {t('voice.agentActive', 'Ready to take calls')}
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-deep-charcoal/[0.06] text-deep-charcoal">
+          {t('voice.agentActive')}
         </span>
       </div>
 
       <p className="text-sm text-deep-charcoal">
-        {t('agentInfo.summary', 'Your AI receptionist is set up and ready to answer your phone.')}
+        {t('agentInfo.summary')}
       </p>
+      <a href="#voice-settings:phone" className="mt-2 inline-block text-sm text-burgundy underline underline-offset-2 hover:text-burgundy-dark">
+        {t('agentInfo.checkPhone')}
+      </a>
       {lastUpdated && (
         <p className="text-xs text-warm-stone mt-1">
           {t('agentInfo.lastUpdatedShort', 'Last updated {{when}}', { when: lastUpdated })}
@@ -58,11 +60,7 @@ export default function VoiceAgentInfo({ agentId, updatedAt, createdAt }: Props)
       </button>
 
       {showTech && (
-        <dl className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-soft-gray rounded-xl p-3">
-          <div>
-            <dt className="text-muted-stone text-[10px] uppercase tracking-wider mb-1">{t('agentInfo.voiceEngine')}</dt>
-            <dd className="text-deep-charcoal font-mono">turbo_v2.5</dd>
-          </div>
+        <dl className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3 rounded-xl border border-glass-border-dark p-3 text-xs">
           <div>
             <dt className="text-muted-stone text-[10px] uppercase tracking-wider mb-1">{t('agentInfo.agentId')}</dt>
             <div className="flex items-center gap-2">
@@ -80,7 +78,7 @@ export default function VoiceAgentInfo({ agentId, updatedAt, createdAt }: Props)
           {createdAt && (
             <div>
               <dt className="text-muted-stone text-[10px] uppercase tracking-wider mb-1">{t('agentInfo.created')}</dt>
-              <dd className="text-deep-charcoal">{new Date(createdAt).toLocaleString()}</dd>
+              <dd className="text-deep-charcoal">{new Date(createdAt).toLocaleString(i18n.language)}</dd>
             </div>
           )}
         </dl>

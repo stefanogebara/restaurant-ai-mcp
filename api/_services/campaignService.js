@@ -208,14 +208,15 @@ async function createCampaign(restaurantId, { name, segment, message, scheduledA
  * @param {number} batchSize
  * @returns {number} Messages sent
  */
-async function sendCampaignBatch(campaignId, batchSize = 10) {
+async function sendCampaignBatch(campaignId, batchSize = 10, restaurantId = null) {
   // Get campaign details
-  const { data: campaign, error: campErr } = await supabaseAdmin
+  let campaignQuery = supabaseAdmin
     .schema('restaurant')
     .from('retention_campaigns')
     .select('id, message, status, restaurant_id, whatsapp_template_name, channel')
-    .eq('id', campaignId)
-    .single();
+    .eq('id', campaignId);
+  if (restaurantId) campaignQuery = campaignQuery.eq('restaurant_id', restaurantId);
+  const { data: campaign, error: campErr } = await campaignQuery.single();
 
   if (campErr || !campaign) {
     logger.error('Campaign not found', { campaignId });
@@ -231,6 +232,7 @@ async function sendCampaignBatch(campaignId, batchSize = 10) {
     .from('campaign_recipients')
     .select('id, customer_phone, customer_name')
     .eq('campaign_id', campaignId)
+    .eq('restaurant_id', campaign.restaurant_id)
     .eq('status', 'pending')
     .order('created_at')
     .limit(batchSize);
@@ -242,7 +244,8 @@ async function sendCampaignBatch(campaignId, batchSize = 10) {
         .schema('restaurant')
         .from('retention_campaigns')
         .update({ status: 'completed' })
-        .eq('id', campaignId);
+        .eq('id', campaignId)
+        .eq('restaurant_id', campaign.restaurant_id);
     }
     return 0;
   }
@@ -252,7 +255,8 @@ async function sendCampaignBatch(campaignId, batchSize = 10) {
     .schema('restaurant')
     .from('retention_campaigns')
     .update({ status: 'sending' })
-    .eq('id', campaignId);
+    .eq('id', campaignId)
+    .eq('restaurant_id', campaign.restaurant_id);
 
   // Fetch restaurant name for template personalization
   let restaurantName = 'our restaurant';
@@ -300,7 +304,8 @@ async function sendCampaignBatch(campaignId, batchSize = 10) {
           sent_at: new Date().toISOString(),
           whatsapp_message_id: result.messageId || null,
         })
-        .eq('id', recipient.id);
+        .eq('id', recipient.id)
+        .eq('restaurant_id', campaign.restaurant_id);
       sentCount++;
     } else {
       await supabaseAdmin
@@ -309,7 +314,8 @@ async function sendCampaignBatch(campaignId, batchSize = 10) {
           status: 'failed',
           error: result.error || 'Send failed',
         })
-        .eq('id', recipient.id);
+        .eq('id', recipient.id)
+        .eq('restaurant_id', campaign.restaurant_id);
     }
   }
 
@@ -319,13 +325,15 @@ async function sendCampaignBatch(campaignId, batchSize = 10) {
     .from('retention_campaigns')
     .select('sent_count')
     .eq('id', campaignId)
+    .eq('restaurant_id', campaign.restaurant_id)
     .single();
 
   await supabaseAdmin
     .schema('restaurant')
     .from('retention_campaigns')
     .update({ sent_count: (currentCampaign?.sent_count || 0) + sentCount })
-    .eq('id', campaignId);
+    .eq('id', campaignId)
+    .eq('restaurant_id', campaign.restaurant_id);
 
   logger.info('Campaign batch sent', { campaignId, sent: sentCount, total: recipients.length });
   return sentCount;
@@ -460,13 +468,27 @@ async function updateDeliveryStatus(whatsappMessageId, status) {
 /**
  * Get campaign delivery stats.
  */
-async function getCampaignStats(campaignId) {
+async function getCampaignStats(campaignId, restaurantId) {
+  if (!restaurantId) return null;
+
+  const { data: campaign, error: campaignError } = await supabaseAdmin
+    .schema('restaurant')
+    .from('retention_campaigns')
+    .select('id')
+    .eq('id', campaignId)
+    .eq('restaurant_id', restaurantId)
+    .maybeSingle();
+
+  if (campaignError) throw campaignError;
+  if (!campaign) return null;
+
   const { data: recipients, error } = await supabaseAdmin
     .from('campaign_recipients')
     .select('status')
-    .eq('campaign_id', campaignId);
+    .eq('campaign_id', campaignId)
+    .eq('restaurant_id', restaurantId);
 
-  if (error) return null;
+  if (error) throw error;
 
   const stats = { total: 0, pending: 0, sent: 0, delivered: 0, read: 0, failed: 0, opted_out: 0 };
   for (const r of recipients || []) {

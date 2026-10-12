@@ -5,7 +5,7 @@
  *   - Not-connected state: "Connect Instagram" CTA visible
  *   - Active + tone-pending: handle + "Build now" visible, drafter disabled
  *   - Active + tone-ready: bio, website chip, drafter language pill, drafter unlocked
- *   - Active + bio_links populated (Linktree case): "View on linktr.ee (N links)"
+ *   - Active + bio_links populated (Linktree case): "linktr.ee (N links)"
  *   - Restricted: amber status pill + last_error surfaced
  *   - Revoked: red pill + "Reconnect Instagram"
  *   - Draft flow: type topic → 3 drafts render → Copy button toast
@@ -13,7 +13,7 @@
  *
  * Strategy: stub every Instagram endpoint at the Playwright route layer so
  * the spec is deterministic and doesn't depend on a real IG connection.
- * Auth: reuses e2e/auth-state.json — /host-dashboard/voice-settings is
+ * Auth: reuses e2e/auth-state.json — /host-dashboard/integrations is
  * behind ProtectedRoute.
  *
  * Why this spec matters: InstagramPanel + InstagramCaptionDrafter have been
@@ -95,7 +95,7 @@ async function waitForInstagramPanel(page: Page) {
   await page.getByTestId('instagram-panel').waitFor({ state: 'visible', timeout: 15_000 });
 }
 
-const INSTAGRAM_TAB_URL = '/host-dashboard/voice-settings#voice-settings:instagram';
+const INSTAGRAM_TAB_URL = '/host-dashboard/integrations#integrations:instagram';
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -135,9 +135,9 @@ test.describe('Instagram panel — active connection, no tone profile yet', () =
     await expect(page.getByTestId('instagram-panel-connected-card')).toContainText(/Cantina Bella/);
     await expect(page.getByTestId('instagram-panel-connected-card')).toContainText(/cantinabella/);
     await expect(page.getByTestId('instagram-panel-connected-card')).toContainText(/1,234 followers/);
-    await expect(page.getByTestId('instagram-panel-connected-card')).toContainText(/Building tone profile/i);
+    await expect(page.getByTestId('instagram-panel-connected-card')).toContainText(/Building your style profile/i);
 
-    // Refresh CTA reads "Build now" before tone exists, "Refresh tone" after.
+    // Refresh CTA reads "Build now" before tone exists, "Refresh style" after.
     await expect(page.getByTestId('instagram-panel-refresh-tone-cta')).toContainText(/Build now/i);
 
     // Caption drafter renders its disabled placeholder.
@@ -189,11 +189,11 @@ test.describe('Instagram panel — active + tone profile ready', () => {
     await expect(page.getByTestId('instagram-caption-drafter-topic')).toBeEditable();
     await expect(page.getByTestId('instagram-caption-drafter-disabled')).toHaveCount(0);
 
-    // Refresh CTA flips to "Refresh tone" now.
-    await expect(page.getByTestId('instagram-panel-refresh-tone-cta')).toContainText(/Refresh tone/i);
+    // Refresh CTA flips to "Refresh style" now.
+    await expect(page.getByTestId('instagram-panel-refresh-tone-cta')).toContainText(/Refresh style/i);
   });
 
-  test('Linktree website shows "View on linktr.ee (N links)" with bio_links populated', async ({ page, context }) => {
+  test('Linktree website shows "linktr.ee (N links)" with bio_links populated', async ({ page, context }) => {
     await stubStatus(context, {
       connected: true,
       status: 'active',
@@ -212,7 +212,7 @@ test.describe('Instagram panel — active + tone profile ready', () => {
     await waitForInstagramPanel(page);
 
     const website = page.getByTestId('instagram-panel-website-link');
-    await expect(website).toContainText(/View on linktr\.ee \(3 links\)/);
+    await expect(website).toContainText(/linktr\.ee \(3 links\)/);
     await expect(website).toHaveAttribute('href', 'https://linktr.ee/cantinabella');
   });
 });
@@ -724,7 +724,7 @@ test.describe('Carousel — 2-10 images (C.10)', () => {
 
     // Initially the Reel panel is collapsed
     await expect(page.getByTestId('instagram-reel-panel-toggle')).toBeVisible();
-    await expect(page.getByTestId('instagram-reel-panel')).toHaveCount(0);
+    await expect(page.getByTestId('instagram-reel-panel')).not.toBeVisible();
 
     // Generate drafts
     await page.getByTestId('instagram-caption-drafter-topic').fill('pizza launch');
@@ -848,7 +848,7 @@ test.describe('Carousel — 2-10 images (C.10)', () => {
 
     // Toggle shown by default, panel hidden
     await expect(page.getByTestId('instagram-reel-panel-toggle')).toBeVisible();
-    await expect(page.getByTestId('instagram-reel-panel')).toHaveCount(0);
+    await expect(page.getByTestId('instagram-reel-panel')).not.toBeVisible();
 
     await page.getByTestId('instagram-reel-panel-toggle').click();
     await expect(page.getByTestId('instagram-reel-panel')).toBeVisible();
@@ -933,7 +933,8 @@ test.describe('Carousel — 2-10 images (C.10)', () => {
     await page.goto(INSTAGRAM_TAB_URL);
     await waitForInstagramPanel(page);
 
-    // Panel mounts with the 3 sections visible
+    await page.getByTestId('instagram-view-scheduled').click();
+    // The dedicated view keeps all three sections accessible.
     await expect(page.getByTestId('instagram-scheduled-posts-panel')).toBeVisible();
     await expect(page.getByTestId('instagram-scheduled-pending')).toBeVisible();
     await expect(page.getByTestId('instagram-scheduled-failed')).toBeVisible();

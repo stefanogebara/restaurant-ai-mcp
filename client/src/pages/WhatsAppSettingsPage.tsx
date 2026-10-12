@@ -36,9 +36,13 @@ export function WhatsAppWorkspace() {
   const loading = status.isLoading || provision.isLoading;
   // Global credentials and the owner's phone are NOT a restaurant connection.
   const number = provision.data?.numero_e164 || '';
-  const registered = !hasError && provision.data?.estado === 'ativo' && /^\+?[1-9]\d{7,14}$/.test(number);
+  const registered = !hasError && provision.data?.estado === 'ativo'
+    && provision.data?.roteamento_confirmado === true && /^\+?[1-9]\d{7,14}$/.test(number);
+  const routingIssue = !hasError && provision.data?.estado === 'ativo' && !registered;
   const label = hasError ? copy.unknown : registered ? copy.connected
-    : provision.data?.estado === 'aguardando_codigo' ? copy.pending : copy.disconnected;
+    : routingIssue ? copy.routingIssueStatus
+    : provision.data?.estado === 'aguardando_codigo' ? copy.pending
+      : provision.data?.pode_iniciar === true ? copy.disconnected : copy.assistedStatus;
   const refresh = () => { void status.refetch(); void provision.refetch(); };
   return <div className="mx-auto max-w-4xl px-4 py-8 sm:px-8 sm:py-12 text-[15px] text-deep-charcoal">
     <header className="mb-10 sm:mb-12">
@@ -52,7 +56,11 @@ export function WhatsAppWorkspace() {
           <span className={`rounded-full px-3 py-1 text-sm ${hasError ? 'bg-red-50 text-red-700' : registered ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>{label}</span>
           <button type="button" onClick={refresh} disabled={status.isFetching || provision.isFetching} className="text-sm text-burgundy underline underline-offset-4 disabled:opacity-50">{copy.retry}</button>
         </div>
-        {hasError ? <div role="alert"><p className="text-red-700">{copy.loadError}</p><a className="inline-block mt-3 text-burgundy underline" href="mailto:hello@seatable.one">{copy.support}</a></div> : registered ? <>
+        {hasError ? <div role="alert"><p className="text-red-700">{copy.loadError}</p><a className="inline-block mt-3 text-burgundy underline" href="mailto:hello@seatable.one">{copy.support}</a></div> : routingIssue ? <div role="alert">
+          {number && <p className="font-serif text-3xl sm:text-4xl break-words">{number}</p>}
+          <p className="mt-3 max-w-xl text-muted-stone">{copy.routingIssue}</p>
+          <a className="inline-block mt-4 text-burgundy underline underline-offset-4" href="mailto:hello@seatable.one">{copy.support}</a>
+        </div> : registered ? <>
           <p className="font-serif text-3xl sm:text-4xl break-words">{number}</p>
           <p className="text-muted-stone mt-3 max-w-xl">{copy.registeredHint}</p>
           <button type="button" className="mt-3 text-burgundy underline" onClick={async () => {
@@ -62,7 +70,7 @@ export function WhatsAppWorkspace() {
           {copyError && <p role="alert" className="text-red-700">{copy.copyFailed}</p>}
         </> : <>
           <ConnectWhatsAppNumberPanel />
-          <p className="mt-4 text-sm text-muted-stone">{copy.migration} <a href="mailto:hello@seatable.one" className="text-burgundy underline">{copy.support}</a></p>
+          <p className="mt-4 text-sm text-muted-stone">{copy.migration} {provision.data?.pode_iniciar === true && <a href="mailto:hello@seatable.one" className="text-burgundy underline">{copy.support}</a>}</p>
         </>}
       </section>
       <section aria-labelledby="wa-test-heading" className="border-t hairline py-8 sm:py-10">

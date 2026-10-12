@@ -17,7 +17,7 @@ let provision: Record<string, unknown>;
 let failStatus: boolean;
 let testMessage: Record<string, unknown> | null;
 beforeEach(() => {
-  provision = { estado: 'nao_iniciado' };
+  provision = { estado: 'nao_iniciado', pode_iniciar: false };
   failStatus = false;
   testMessage = null;
   fetchMock.mockReset();
@@ -35,16 +35,24 @@ function mount() {
 describe('WhatsApp workspace', () => {
   it('does not mistake global credentials or owner phone for a connected restaurant', async () => {
     mount();
-    expect(await screen.findByText('Connect to get started')).toBeInTheDocument();
+    expect(await screen.findByText('Assisted connection')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Open conversation' })).not.toBeInTheDocument();
     expect(screen.queryByText('+5511111111111')).not.toBeInTheDocument();
     expect(fetchMock.mock.calls.every(([url]) => !String(url).includes('test_status'))).toBe(true);
   });
   it('links only the registered customer-facing number', async () => {
-    provision = { estado: 'ativo', numero_e164: '+5511999998888' };
+    provision = { estado: 'ativo', numero_e164: '+5511999998888', roteamento_confirmado: true };
     mount();
     expect(await screen.findByRole('link', { name: 'Open conversation' })).toHaveAttribute('href', 'https://wa.me/5511999998888');
     expect(screen.getByText(/Test an incoming conversation before/)).toBeInTheDocument();
+  });
+  it('does not offer a conversation when a registered number is not routed to this restaurant', async () => {
+    provision = { estado: 'ativo', numero_e164: '+5511999998888', roteamento_confirmado: false };
+    mount();
+    expect(await screen.findByText('Routing needs attention')).toBeInTheDocument();
+    expect(screen.getByText(/Do not share it yet/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Get help connecting' })).toHaveAttribute('href', 'mailto:hello@seatable.one');
+    expect(screen.queryByRole('link', { name: 'Open conversation' })).not.toBeInTheDocument();
   });
   it('shows pending verification instead of a success badge', async () => {
     provision = { estado: 'aguardando_codigo', numero_e164: '+5511999998888' };
@@ -61,7 +69,7 @@ describe('WhatsApp workspace', () => {
   });
   it('mounts optional settings on demand and preserves them when collapsed', async () => {
     mount();
-    await screen.findByText('Connect to get started');
+    await screen.findByText('Assisted connection');
     expect(screen.queryByText('Personality editor')).not.toBeInTheDocument();
     const user = userEvent.setup();
     await user.click(screen.getByText('How the AI replies'));
@@ -71,7 +79,7 @@ describe('WhatsApp workspace', () => {
   });
   it('distinguishes a platform delivery test from the customer conversation', async () => {
     mount();
-    await screen.findByText('Connect to get started');
+    await screen.findByText('Assisted connection');
     await userEvent.click(screen.getByText('Check outbound delivery'));
     expect(await screen.findByText(/Delivery does not verify/)).toBeInTheDocument();
     await waitFor(() => expect(fetchMock.mock.calls.some(([url]) => String(url).includes('test_status'))).toBe(true));
@@ -79,7 +87,7 @@ describe('WhatsApp workspace', () => {
   });
   it('requires an international phone and sends to the existing test endpoint', async () => {
     mount();
-    await screen.findByText('Connect to get started');
+    await screen.findByText('Assisted connection');
     const user = userEvent.setup();
     await user.click(screen.getByText('Check outbound delivery'));
     const input = await screen.findByLabelText(/Your number to receive the test/);
@@ -94,7 +102,7 @@ describe('WhatsApp workspace', () => {
   it('honors recipient-specific delivery cooldowns', async () => {
     testMessage = { status: 'accepted', recipient_phone: '+5511999998888', requested_at: new Date().toISOString(), cooldown_expires_at: new Date(Date.now() + 60000).toISOString() };
     mount();
-    await screen.findByText('Connect to get started');
+    await screen.findByText('Assisted connection');
     const user = userEvent.setup();
     await user.click(screen.getByText('Check outbound delivery'));
     const input = await screen.findByLabelText(/Your number to receive the test/);
@@ -108,7 +116,7 @@ describe('WhatsApp workspace', () => {
   it('shows delivery failure rather than an unqualified sent message', async () => {
     testMessage = { status: 'failed', recipient_phone: '+5511999998888', error_message: 'Delivery rejected' };
     mount();
-    await screen.findByText('Connect to get started');
+    await screen.findByText('Assisted connection');
     await userEvent.click(screen.getByText('Check outbound delivery'));
     expect(await screen.findByText('Delivery rejected')).toBeInTheDocument();
     expect(screen.queryByText('Request accepted. Waiting for delivery confirmation.')).not.toBeInTheDocument();
@@ -116,7 +124,7 @@ describe('WhatsApp workspace', () => {
   it('does not leave an old accepted message waiting indefinitely or invent delivery failure', async () => {
     testMessage = { status: 'accepted', recipient_phone: '+5511999998888', requested_at: '2020-06-09T13:09:00Z' };
     mount();
-    await screen.findByText('Connect to get started');
+    await screen.findByText('Assisted connection');
     await userEvent.click(screen.getByText('Check outbound delivery'));
     expect(await screen.findByText('Delivery not confirmed')).toBeInTheDocument();
     expect(screen.getByText(/This does not prove the message failed/)).toBeInTheDocument();

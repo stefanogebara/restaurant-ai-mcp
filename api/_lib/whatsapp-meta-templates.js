@@ -19,15 +19,16 @@
  */
 
 const GRAPH_VERSION = 'v19.0';
+const DIAGNOSTIC_TEMPLATE = 'seatable_connection_test';
 
 /**
  * Códigos de idioma a tentar, em ordem. A Meta trata `pt_BR` e `pt` como
  * traduções DISTINTAS: um template aprovado em `pt_BR` recusa envio pedido em
- * `pt` (erro 132001). Tentar a família toda evita depender de como a conta foi
- * cadastrada.
+ * `pt` (erro 132001). Só tentamos variantes do idioma do restaurante. Jamais
+ * usamos outro idioma para fazer um teste parecer bem-sucedido.
  */
 function getTemplateLanguageCandidates(language) {
-  const normalized = String(language || '').trim().toLowerCase();
+  const normalized = String(language || '').trim().toLowerCase().replace(/_/g, '-');
   const candidates = [];
   const seen = new Set();
 
@@ -56,12 +57,6 @@ function getTemplateLanguageCandidates(language) {
     add(language);
   }
 
-  add('pt_BR');
-  add('pt');
-  add('en');
-  add('en_US');
-  add('es');
-
   return candidates;
 }
 
@@ -69,32 +64,6 @@ function getTemplateLanguageCandidates(language) {
 function isTemplateTranslationMissing(result) {
   const errorText = String(result?.error || '').toLowerCase();
   return errorText.includes('132001') || errorText.includes('does not exist in the translation');
-}
-
-function getMetaTestTemplatePriority(preferredTemplateName) {
-  const priority = [];
-  const seen = new Set();
-
-  function add(name) {
-    if (!name || seen.has(name)) return;
-    seen.add(name);
-    priority.push(name);
-  }
-
-  add(preferredTemplateName);
-  add('seatable_feedback_request');
-  add('seatable_promotion');
-  add('seatable_birthday');
-  add('seatable_reengagement');
-
-  return priority;
-}
-
-function getMetaTemplateBodyParameters(templateName, restaurantName) {
-  if (templateName === 'seatable_promotion') {
-    return ['there', restaurantName, `This is a WhatsApp delivery test from ${restaurantName}.`];
-  }
-  return ['there', restaurantName];
 }
 
 /**
@@ -122,52 +91,23 @@ async function fetchApprovedMetaTestTemplates() {
   }
 }
 
-function buildMetaTemplateAttempts({ templates, preferredTemplateName, restaurantLanguage, restaurantName }) {
+function buildMetaTemplateAttempts({ templates, restaurantLanguage, restaurantName }) {
   const languageCandidates = getTemplateLanguageCandidates(restaurantLanguage);
-  const attempts = [];
-  const seen = new Set();
-  const priorityNames = getMetaTestTemplatePriority(preferredTemplateName);
-
-  for (const templateName of priorityNames) {
-    const approvedMatches = (templates || [])
-      .filter(template => template.name === templateName)
-      .sort((a, b) => {
-        const aIdx = languageCandidates.indexOf(a.language);
-        const bIdx = languageCandidates.indexOf(b.language);
-        const aRank = aIdx === -1 ? Number.MAX_SAFE_INTEGER : aIdx;
-        const bRank = bIdx === -1 ? Number.MAX_SAFE_INTEGER : bIdx;
-        return aRank - bRank;
-      });
-
-    for (const template of approvedMatches) {
-      const key = `${template.name}:${template.language}`;
-      if (seen.has(key)) continue;
-      seen.add(key);
-      attempts.push({
-        templateName: template.name,
-        language: template.language,
-        bodyParameters: getMetaTemplateBodyParameters(template.name, restaurantName),
-      });
-    }
-  }
-
-  if (attempts.length > 0) return attempts;
-
-  // Nada aprovado casou: tenta o nome preferido em cada idioma. Palpite
-  // deliberado — melhor recusa da Meta com erro legível que silêncio.
-  const fallbackTemplateName = preferredTemplateName || 'seatable_feedback_request';
-  return languageCandidates.map(language => ({
-    templateName: fallbackTemplateName,
-    language,
-    bodyParameters: getMetaTemplateBodyParameters(fallbackTemplateName, restaurantName),
-  }));
+  const approved = (templates || [])
+    .filter(template => template.name === DIAGNOSTIC_TEMPLATE && template.status === 'APPROVED' && languageCandidates.includes(template.language));
+  return languageCandidates
+    .filter(language => approved.some(template => template.language === language))
+    .map(language => ({
+      templateName: DIAGNOSTIC_TEMPLATE,
+      language,
+      // O modelo aprovado tem exatamente uma variável: o restaurante.
+      bodyParameters: [restaurantName],
+    }));
 }
 
 module.exports = {
   getTemplateLanguageCandidates,
   isTemplateTranslationMissing,
-  getMetaTestTemplatePriority,
-  getMetaTemplateBodyParameters,
   fetchApprovedMetaTestTemplates,
   buildMetaTemplateAttempts,
 };

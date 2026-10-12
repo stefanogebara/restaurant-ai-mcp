@@ -1,5 +1,5 @@
 ﻿import { useTranslation } from 'react-i18next';
-import { SUPPORTED_LANGUAGES } from './voiceConstants';
+import { getVoiceLanguageLabel, SUPPORTED_LANGUAGES } from './voiceConstants';
 
 interface Props {
   currentLanguage: string;
@@ -8,14 +8,14 @@ interface Props {
 }
 
 export default function VoiceLanguagePicker({ currentLanguage, savedLanguage, onChange }: Props) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   return (
     <section className="overflow-hidden pb-5 border-b border-glass-border-dark">
       <div className="py-5 border-b border-glass-border-dark">
         <span className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">{t('voiceSettings.languages')}</span>
       </div>
 
-      <div className="p-6">
+      <div className="py-6">
         <div className="flex gap-2 flex-wrap">
           {SUPPORTED_LANGUAGES.map((lang) => (
             <button
@@ -28,7 +28,7 @@ export default function VoiceLanguagePicker({ currentLanguage, savedLanguage, on
                   : 'border-glass-border-dark text-stone-gray bg-white/60 backdrop-blur-glass-chip hover:border-muted-stone hover:bg-white/85'
               }`}
             >
-              {lang.flag} {lang.label}
+              {getVoiceLanguageLabel(lang, i18n.language)}
             </button>
           ))}
         </div>

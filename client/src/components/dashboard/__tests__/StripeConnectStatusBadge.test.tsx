@@ -95,7 +95,7 @@ describe('StripeConnectStatusBadge', () => {
     const badge = await screen.findByTestId('stripe-connect-status-badge');
     expect(badge.className).toContain('bg-red-50');
     expect(badge.textContent).toMatch(/Stripe disconnected/i);
-    expect(badge.getAttribute('href')).toBe('/host-dashboard/voice-settings#tab=pos');
+    expect(badge.getAttribute('href')).toBe('/host-dashboard/integrations#integrations:pos');
   });
 
   it('renders nothing if API call fails (graceful degradation)', async () => {
