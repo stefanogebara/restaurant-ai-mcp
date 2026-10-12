@@ -508,17 +508,16 @@ Limite: não alterar perfis, LTV, reservas nem páginas da wiki existentes no ba
 Revisão local: a rota retorna 410 após autenticação, sem carregar o cliente de serviço. A wiki lê somente `restaurant.customer_ltv` filtrando `restaurant_id` e trata os contadores VIP/regular como amostra dos 20 principais, não como totais. Uma falha nessa leitura impede sobrescrever páginas existentes com conteúdo vazio. O novo artigo de clientes recebe prefixo de origem segura no `source_hash`; `getWikiPages` omite artigos antigos sem esse prefixo, evitando que o gerente leia conteúdo compilado da fonte global antes do próximo cron. Os 30 testes focados de endpoint, compilador e cron, Jest completo (286 suítes/4.291 testes), Vitest completo (122 arquivos/1.050 testes), sintaxe e build passaram; testes focados e build foram repetidos após o rebase na Equipe. As tabelas e páginas já persistidas não foram modificadas nesta etapa. Publicação pendente.
 
 ---
-
 # Clientes — leitura do histórico e previsão (12/out/2026)
 
 - [x] Localizar a data de visita e mostrar a hora sem segundos no perfil, em linhas que caibam no celular.
 - [x] Diferenciar na lista o valor futuro estimado do gasto total estimado no perfil.
 - [x] Cobrir a apresentação com testes.
-- [ ] Validar no navegador autenticado depois do deploy.
+- [x] Validar no navegador autenticado depois do deploy.
 
 Observação: a aparente sobreposição do título com o menu em 320 px era a página rolada sob o menu fixo. No topo (`scrollY=0`) não há colisão; não adicionar padding para compensar uma leitura incorreta.
 
-Revisão local: histórico em duas linhas, data formatada no idioma da interface sem deslocar o dia do calendário e hora `HH:mm`. A lista chama a projeção de “Valor futuro estimado” nos três idiomas; o perfil conserva “Gasto total estimado” para outra métrica. Os 12 testes focados passaram; Vitest completo passou (122 arquivos/1.054 testes), Jest completo passou (286 suítes/4.283 testes), build/TypeScript e lint focado passaram. Navegador na versão publicada ainda pendente.
+Revisão local: histórico em duas linhas, data formatada no idioma da interface sem deslocar o dia do calendário e hora `HH:mm`. A lista chama a projeção de “Valor futuro estimado” nos três idiomas; o perfil conserva “Gasto total estimado” para outra métrica. Os 12 testes focados passaram; Vitest completo passou (122 arquivos/1.054 testes), Jest completo passou (286 suítes/4.283 testes), build/TypeScript e lint focado passaram. Em produção, 320 e 390 px mostraram a lista sem overflow e o perfil exibiu data e hora separadas, sem escrita de dados.
 
 ---
 
@@ -531,5 +530,20 @@ Revisão local: histórico em duas linhas, data formatada no idioma da interface
 - [ ] Verificar layout móvel na versão publicada, sem mover mesas reais.
 
 Observação: o navegador de produção mostrou as mesas reduzidas pelo `viewBox` inteiro, embora a página não tivesse overflow horizontal. A correção aumenta apenas a largura de apresentação no celular; não altera coordenadas armazenadas. O teste de interação detectou que o toque não abria a edição, enquanto a posição era enviada para salvamento sem movimento. Agora toque e arraste são caminhos separados. Jest completo passou (286 suítes/4.283 testes), Vitest completo passou (124 arquivos/1.059 testes), build e lint focado passaram; após o rebase final, 15 testes focados e TypeScript passaram de novo. Falta apenas a verificação visual na versão publicada.
+
+---
+
+# Valor dos clientes — idioma, moeda e promessa real (12/out/2026)
+
+- [x] Confirmar no navegador autenticado mistura de inglês, dólar e português em 320/390 px.
+- [x] Usar a moeda do restaurante e textos localizados em PT/EN/ES, sem chamar projeção de receita recebida.
+- [x] Mostrar nomes de clientes e retirar a ação que prometia enviar a todos, mas selecionava apenas o primeiro.
+- [x] Corrigir a atualização manual para POST, conforme contrato da API.
+- [x] Fechar a rota de tendências LTV que usava colunas inexistentes e não tem consumidor na interface.
+- [ ] Validar testes, build, revisão visual e publicação sem recalcular nem enviar mensagens em produção.
+
+Limite: não acionar atualização manual, campanhas ou mensagens reais no restaurante do usuário. A tela publicada foi inspecionada apenas para leitura.
+
+Revisão local: o valor usa a moeda do restaurante, não a língua do navegador. As seções agora distinguem projeção de valor e gasto passado estimado. O botão que parecia falar com todos foi removido; o contato restante abre um único cliente. A rota antiga de tendências responde 410 depois da autenticação, sem consultar dados, até existir uma implementação baseada no esquema POS vigente. Revisão visual local em desktop e 320 px não mostrou rolagem horizontal. Vitest completo passou (124 arquivos/1.058 testes), Jest completo antes da rota aposentada passou (287 suítes/4.299 testes), build e tipos passaram; os três novos testes da rota também passaram. Repetir as suítes após o rebase final e verificar no navegador autenticado depois do deploy.
 
 ---

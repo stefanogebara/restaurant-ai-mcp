@@ -1,6 +1,6 @@
+import { useTranslation } from 'react-i18next';
 import HelpTooltip from '../common/HelpTooltip';
 import { getTierColor, getTierBgColor, getTierIcon } from './ltvHelpers';
-import { LTV_TIERS } from '../../config/businessDefaults';
 import type { LTVStats } from './ltvDashboard.types';
 
 interface LTVTierBreakdownProps {
@@ -8,25 +8,22 @@ interface LTVTierBreakdownProps {
 }
 
 export default function LTVTierBreakdown({ tiers }: LTVTierBreakdownProps) {
+  const { t } = useTranslation();
   const totalTierCustomers = Object.values(tiers).reduce((sum, count) => sum + count, 0);
 
   return (
-    <div className="p-4 bg-soft-gray rounded-xl">
+    <section className="hairline pt-8">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <h3 className="text-sm font-semibold text-deep-charcoal">Customer Segments</h3>
+          <h2 className="font-serif text-2xl text-deep-charcoal">{t('ltv.segmentsTitle')}</h2>
           <HelpTooltip
-            title="Customer Segments"
-            content={`VIP (${LTV_TIERS.vip.label}): Top 10% - Priority reservations, special offers
-Regular (${LTV_TIERS.regular.label}): Core customers - Loyalty rewards
-Occasional (${LTV_TIERS.occasional.label}): Potential for growth - Engagement campaigns
-New (${LTV_TIERS.new.label}): First-time diners - Welcome offers
-At Risk: Haven't visited in 90+ days - Win-back campaigns`}
+            title={t('ltv.segmentsTitle')}
+            content={t('ltv.segmentsHint')}
             position="right"
             size="sm"
           />
         </div>
-        <span className="text-xs text-stone-gray">{totalTierCustomers} total</span>
+        <span className="text-xs text-stone-gray">{t('ltv.totalCount', { count: totalTierCustomers })}</span>
       </div>
       <div className="space-y-2">
         {Object.entries(tiers).map(([tier, count]) => {
@@ -38,12 +35,12 @@ At Risk: Haven't visited in 90+ days - Win-back campaigns`}
               </div>
               <div className="flex-1">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm font-medium text-deep-charcoal capitalize">{tier}</span>
+                  <span className="text-sm font-medium text-deep-charcoal">{t(`ltv.tier.${tier}`)}</span>
                   <span className="text-sm text-stone-gray">{count} ({percentage.toFixed(0)}%)</span>
                 </div>
                 <div className="w-full bg-white h-2 rounded-full overflow-hidden">
                   <div
-                    className={`h-full ${tier === 'vip' ? 'bg-ocre-600' : tier === 'regular' ? 'bg-burgundy' : tier === 'occasional' ? 'bg-rose-600' : tier === 'new' ? 'bg-stone-gray' : 'bg-amber-600'}`}
+                    className={`h-full ${tier === 'vip' ? 'bg-ocre-600' : tier === 'regular' ? 'bg-emerald-600' : tier === 'occasional' ? 'bg-stone-gray' : tier === 'new' ? 'bg-muted-stone' : 'bg-amber-600'}`}
                     style={{ width: `${percentage}%` }}
                   />
                 </div>
@@ -52,6 +49,6 @@ At Risk: Haven't visited in 90+ days - Win-back campaigns`}
           );
         })}
       </div>
-    </div>
+    </section>
   );
 }
