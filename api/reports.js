@@ -16,6 +16,7 @@ const { createSecureLogger } = require('./_lib/secure-logger');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { inlineCheckSubscription } = require('./_lib/subscription-middleware');
+const { validTimeZone, shiftDate, resolveReportRange, servicesInLocalRange } = require('./_lib/report-period');
 const logger = createSecureLogger('Reports');
 
 module.exports = async (req, res) => {
@@ -74,21 +75,22 @@ async function handleWeeklyReport(req, res) {
     return res.status(400).json({ success: false, error: 'No restaurant associated with this account' });
   }
 
-  // Default to current week if not specified
-  const endDate = end_date ? new Date(end_date) : new Date();
-  const startDate = start_date ? new Date(start_date) : new Date(endDate.getTime() - 7 * 24 * 60 * 60 * 1000);
-
-  // Calculate previous week dates for comparison
-  const prevEndDate = new Date(startDate.getTime() - 1);
-  const prevStartDate = new Date(prevEndDate.getTime() - 7 * 24 * 60 * 60 * 1000);
-
-  // Format dates for SQL
-  const formatDate = (date) => date.toISOString().split('T')[0];
-
-  const currentStart = formatDate(startDate);
-  const currentEnd = formatDate(endDate);
-  const prevStart = formatDate(prevStartDate);
-  const prevEnd = formatDate(prevEndDate);
+  const { data: config, error: configError } = await supabaseAdmin
+    .schema('restaurant').from('restaurant_config')
+    .select('timezone').eq('id', restaurantId).maybeSingle();
+  if (configError || !config) throw new Error('Restaurant timezone unavailable');
+  const timeZone = validTimeZone(config.timezone || 'UTC');
+  let range;
+  try {
+    range = resolveReportRange({ start_date, end_date }, timeZone);
+  } catch (error) {
+    return res.status(400).json({ success: false, error: error.message });
+  }
+  const currentStart = range.start;
+  const currentEnd = range.end;
+  const periodDays = Math.round((Date.parse(`${currentEnd}T12:00:00Z`) - Date.parse(`${currentStart}T12:00:00Z`)) / 86_400_000) + 1;
+  const prevEnd = shiftDate(currentStart, -1);
+  const prevStart = shiftDate(currentStart, -periodDays);
 
   try {
     // ============================================================================
@@ -107,15 +109,16 @@ async function handleWeeklyReport(req, res) {
     // later, add the columns via migration and put them back.
 
     // Get completed service records (actual covers served)
-    const { data: currentServices, error: currentServicesError } = await supabaseAdmin
+    const { data: currentServicesRaw, error: currentServicesError } = await supabaseAdmin
       .from('service_records')
       .select('id, seated_at, party_size, status, reservation_id')
       .eq('restaurant_id', restaurantId)
-      .gte('seated_at', currentStart)
-      .lte('seated_at', currentEnd)
+      .gte('seated_at', `${shiftDate(currentStart, -1)}T00:00:00Z`)
+      .lt('seated_at', `${shiftDate(currentEnd, 2)}T00:00:00Z`)
       .eq('status', 'completed');
 
     if (currentServicesError) throw currentServicesError;
+    const currentServices = servicesInLocalRange(currentServicesRaw, range, timeZone);
 
     // Get reservations data for current week
     const { data: currentReservations, error: currentReservationsError } = await supabaseAdmin
@@ -131,15 +134,16 @@ async function handleWeeklyReport(req, res) {
     // PREVIOUS WEEK DATA (for comparison)
     // ============================================================================
 
-    const { data: prevServices, error: prevServicesError } = await supabaseAdmin
+    const { data: prevServicesRaw, error: prevServicesError } = await supabaseAdmin
       .from('service_records')
       .select('id, seated_at, party_size, status, reservation_id')
       .eq('restaurant_id', restaurantId)
-      .gte('seated_at', prevStart)
-      .lte('seated_at', prevEnd)
+      .gte('seated_at', `${shiftDate(prevStart, -1)}T00:00:00Z`)
+      .lt('seated_at', `${shiftDate(prevEnd, 2)}T00:00:00Z`)
       .eq('status', 'completed');
 
     if (prevServicesError) throw prevServicesError;
+    const prevServices = servicesInLocalRange(prevServicesRaw, { start: prevStart, end: prevEnd }, timeZone);
 
     const { data: prevReservations, error: prevReservationsError } = await supabaseAdmin
       .from('reservations')
@@ -157,6 +161,9 @@ async function handleWeeklyReport(req, res) {
     // If no completed services, fall back to using reservations data
     // This handles cases where restaurants don't mark services as completed
     const useReservationsFallback = (!currentServices || currentServices.length === 0) && currentReservations?.length > 0;
+    const prevHasActivity = (prevServices?.length || 0) > 0 || (prevReservations?.length || 0) > 0;
+    const prevUsesReservations = (prevServices?.length || 0) === 0 && (prevReservations?.length || 0) > 0;
+    const coversComparisonValid = !prevHasActivity || useReservationsFallback === prevUsesReservations;
 
     let currentCovers, prevCovers, currentReservationCount, currentWalkInCount, avgPartySize;
 
@@ -208,15 +215,15 @@ async function handleWeeklyReport(req, res) {
       // Use reservation dates
       const validReservations = currentReservations?.filter(r => r.status !== 'cancelled') || [];
       validReservations.forEach(reservation => {
-        const date = new Date(reservation.date);
-        const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
+        const date = new Date(`${reservation.date}T12:00:00Z`);
+        const dayName = date.toLocaleDateString('en-US', { weekday: 'long', timeZone: 'UTC' });
         dayOfWeekCounts[dayName] = (dayOfWeekCounts[dayName] || 0) + (reservation.party_size || 0);
       });
     } else {
       // Use service seated times
       currentServices?.forEach(service => {
         const date = new Date(service.seated_at);
-        const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
+        const dayName = date.toLocaleDateString('en-US', { weekday: 'long', timeZone });
         dayOfWeekCounts[dayName] = (dayOfWeekCounts[dayName] || 0) + (service.party_size || 0);
       });
     }
@@ -247,7 +254,9 @@ async function handleWeeklyReport(req, res) {
       // Use service seated times
       currentServices?.forEach(service => {
         const date = new Date(service.seated_at);
-        const hour = date.getHours();
+        const hour = Number(new Intl.DateTimeFormat('en-GB', {
+          timeZone, hour: '2-digit', hourCycle: 'h23',
+        }).format(date));
         const timeSlot = `${hour}:00`;
         hourCounts[timeSlot] = (hourCounts[timeSlot] || 0) + (service.party_size || 0);
       });
@@ -308,7 +317,9 @@ async function handleWeeklyReport(req, res) {
 
     // First-time visitors
     const firstTimeVisitors = currentReservations?.filter(r => r.first_time_visitor === true).length || 0;
-    const repeatCustomers = totalReservations - firstTimeVisitors;
+    // These fields are not selected (or present in the current reservations
+    // schema). Unknown repeat status must not be presented as known repeat guests.
+    const repeatCustomers = 0;
 
     // ============================================================================
     // BUILD RESPONSE
@@ -326,6 +337,8 @@ async function handleWeeklyReport(req, res) {
       },
       summary: {
         total_covers: currentCovers,
+        covers_estimated: useReservationsFallback,
+        covers_comparison_valid: coversComparisonValid,
         previous_covers: prevCovers,
         covers_change_percent: Math.round(coversChange * 10) / 10,
         total_reservations: totalReservations,

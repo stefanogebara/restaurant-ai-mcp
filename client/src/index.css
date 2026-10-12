@@ -331,3 +331,15 @@ elevenlabs-convai {
 elevenlabs-convai::part(widget) {
   z-index: 30 !important;
 }
+@media print {
+  body:has(.report-print) #root * { visibility: hidden !important; }
+  body:has(.report-print) .report-print,
+  body:has(.report-print) .report-print * { visibility: visible !important; }
+  body:has(.report-print) .report-print {
+    position: absolute !important;
+    inset: 0 auto auto 0;
+    width: 100%;
+    padding: 20px;
+    background: #FAFAF9;
+  }
+}
