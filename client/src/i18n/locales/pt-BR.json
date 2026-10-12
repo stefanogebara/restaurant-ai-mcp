@@ -667,8 +667,15 @@
       "unavailable": "O pagamento está temporariamente indisponível. Tente mais tarde ou entre em contato diretamente com o restaurante."
     }
   },
+  "stripeConnectNudge": {
+    "title": "Conecte sua conta Stripe",
+    "subtitle": "Os depósitos de reservas passam pela Seatable até você conectar o Stripe.",
+    "cta": "Conectar Stripe"
+  },
   "waitlist": {
     "title": "Lista de Espera",
+    "planGated": "A lista de espera não está disponível no seu plano atual.",
+    "viewPlans": "Ver planos",
     "addToWaitlist": "Adicionar à Lista de Espera",
     "addGuest": "Adicionar Convidado",
     "addGuestHint": "Toque em \"+Adicionar Convidado\" acima para adicionar um cliente sem reserva à lista",
@@ -692,6 +699,12 @@
     "remove": "Remover",
     "partyCount": "{{count}}p",
     "notifiedAt": "Avisado",
+    "needsReview": "Precisa de revisão",
+    "reviewOldNotice": "Confirme se ainda está na fila",
+    "quotedTime": "Estimado",
+    "elapsedMinutes": "{{count}} min decorridos",
+    "overdue": "Atrasado",
+    "remaining": "Restante",
     "status": {
       "waiting": "Aguardando",
       "notified": "Avisado",

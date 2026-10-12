@@ -1,5 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { screen, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { act, screen, waitFor } from '@testing-library/react';
+import i18n from '../../../i18n/config';
 import { renderWithProviders as render } from '../../../test/renderWithProviders';
 import StripeConnectNudgeBanner from '../StripeConnectNudgeBanner';
 
@@ -34,6 +35,10 @@ function stubConnectStatus(body: unknown) {
 
 beforeEach(() => {
   mockAuthFetch.mockReset();
+});
+
+afterEach(async () => {
+  await act(async () => { await i18n.changeLanguage('en'); });
 });
 
 describe('StripeConnectNudgeBanner', () => {
@@ -79,9 +84,20 @@ describe('StripeConnectNudgeBanner', () => {
     const banner = await screen.findByTestId('stripe-connect-nudge-banner');
     expect(banner).toBeInTheDocument();
     expect(banner.textContent).toMatch(/Connect your Stripe account/i);
-    expect(banner.textContent).toMatch(/currently routed through Seatable/i);
+    expect(banner.textContent).toMatch(/routed through Seatable/i);
     const cta = screen.getByRole('link', { name: /Connect Stripe/i });
     expect(cta.getAttribute('href')).toBe('/host-dashboard/integrations#integrations:pos');
+  });
+
+  it('explains the deposit status in Portuguese without an English fallback', async () => {
+    await act(async () => { await i18n.changeLanguage('pt-BR'); });
+    setDepositConfig({ enabled: true, type: 'flat', amount: 50 });
+    stubConnectStatus({ success: true, connected: false });
+    render(<StripeConnectNudgeBanner />);
+
+    const banner = await screen.findByTestId('stripe-connect-nudge-banner');
+    expect(banner).toHaveTextContent('Os depósitos de reservas passam pela Seatable');
+    expect(screen.getByRole('link', { name: 'Conectar Stripe' })).toHaveAttribute('href', '/host-dashboard/integrations#integrations:pos');
   });
 
   it('renders the banner for per-person deposit config too', async () => {
