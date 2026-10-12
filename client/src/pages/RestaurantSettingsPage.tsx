@@ -228,7 +228,7 @@ export default function RestaurantSettingsPage() {
   if (isLoading) {
     return (
       <DashboardLayout>
-        <div className="p-6 sm:p-10 max-w-3xl mx-auto space-y-6 mt-14 sm:mt-0">
+        <div className="p-6 sm:p-10 max-w-3xl mx-auto space-y-6 mt-14 lg:mt-0">
           {[1, 2, 3].map((i) => (
             <div key={i} className="py-5 border-b border-[#E7E5E4] animate-pulse space-y-3">
               <div className="h-5 bg-stone-100 rounded w-40" />
@@ -244,7 +244,7 @@ export default function RestaurantSettingsPage() {
   if (error) {
     return (
       <DashboardLayout>
-        <div className="p-6 sm:p-10 max-w-3xl mx-auto mt-14 sm:mt-0 text-center">
+        <div className="p-6 sm:p-10 max-w-3xl mx-auto mt-14 lg:mt-0 text-center">
           <p className="text-sm text-red-600 mb-3">{t('settings.loadError', 'Failed to load restaurant settings.')}</p>
           <button
             type="button"
@@ -260,7 +260,7 @@ export default function RestaurantSettingsPage() {
 
   return (
     <DashboardLayout>
-      <div className="p-4 sm:p-6 lg:p-10 max-w-3xl mx-auto mt-14 sm:mt-0 pb-24 sm:pb-10 overflow-x-hidden">
+      <div className="p-4 sm:p-6 lg:p-10 max-w-3xl mx-auto mt-14 lg:mt-0 pb-24 sm:pb-10 overflow-x-hidden">
         <div className="pl-10 lg:pl-0 mb-8">
           <h1 className="font-serif text-3xl sm:text-4xl text-deep-charcoal tracking-tight">
             {t('settings.title', 'Restaurant Settings')}

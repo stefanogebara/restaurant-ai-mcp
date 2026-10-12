@@ -36,8 +36,8 @@ export default function LTVDashboard() {
   const [selectedCustomerForCampaign, setSelectedCustomerForCampaign] = useState<Customer | null>(null);
   const [campaignModalOpen, setCampaignModalOpen] = useState(false);
 
-  const handleSendCampaign = async (customerId: string, campaignType: string, message: string) => {
-    await sendCampaignMutation.mutateAsync({ customerId, campaignType, message });
+  const handleSendCampaign = async (customerId: string, campaignType: string, message: string, language: string) => {
+    await sendCampaignMutation.mutateAsync({ customerId, campaignType, message, language });
   };
 
   const openCampaignModal = (customer: Customer) => {

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import { useLTVAtRisk, useLTVTopVIPs, useSendCampaign } from '../../hooks/useLTVData';
@@ -6,23 +6,27 @@ import { useToast } from '../../contexts/ToastContext';
 import { parseLocalDate } from '../../utils/timeFormatting';
 import type { Customer } from '../host/ltvDashboard.types';
 
-const RE_ENGAGEMENT_MESSAGE =
-  "We miss you! It's been a while and we'd love to welcome you back. Enjoy a complimentary welcome drink on your next visit.";
-
 interface SendModalProps {
   customer: Customer;
   onClose: () => void;
 }
 
 function SendModal({ customer, onClose }: SendModalProps) {
-  const { t } = useTranslation();
-  const [message, setMessage] = useState(RE_ENGAGEMENT_MESSAGE);
+  const { t, i18n } = useTranslation();
+  const [language, setLanguage] = useState(() =>
+    i18n.language.startsWith('pt') ? 'pt-BR' : i18n.language.startsWith('es') ? 'es' : 'en'
+  );
+  const [message, setMessage] = useState(() => t('insights.reEngagementDefaultMessage'));
   const { mutate: sendCampaign, isPending } = useSendCampaign();
   const toast = useToast();
+  const titleId = useId();
+  const messageRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => { messageRef.current?.focus(); }, []);
 
   const handleSend = () => {
     sendCampaign(
-      { customerId: customer.customer_id, campaignType: 'win_back', message },
+      { customerId: customer.customer_id, campaignType: 'win_back', message, language },
       {
         onSuccess: () => {
           toast.success(t('insights.reEngagementSent', 'Re-engagement message sent'));
@@ -35,14 +39,28 @@ function SendModal({ customer, onClose }: SendModalProps) {
     );
   };
 
+  const handleLanguageChange = (nextLanguage: string) => {
+    if (message === t('insights.reEngagementDefaultMessage', { lng: language })) {
+      setMessage(t('insights.reEngagementDefaultMessage', { lng: nextLanguage }));
+    }
+    setLanguage(nextLanguage);
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-      <div className="glass-modal w-full max-w-md">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        onKeyDown={(event) => { if (event.key === 'Escape') onClose(); }}
+        className="glass-modal w-full max-w-md"
+      >
         <div className="p-5 border-b border-glass-border-dark flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-deep-charcoal">{t('insights.sendReEngagement')}</h3>
+          <h3 id={titleId} className="text-sm font-semibold text-deep-charcoal">{t('insights.sendReEngagement')}</h3>
           <button
             type="button"
             onClick={onClose}
+            aria-label={t('common.close')}
             className="text-warm-stone hover:text-deep-charcoal transition-colors"
           >
             <ThiingsIcon name="close" pxSize={18} />
@@ -51,11 +69,27 @@ function SendModal({ customer, onClose }: SendModalProps) {
 
         <div className="p-5 space-y-4">
           <div className="flex items-center gap-3 p-3 bg-soft-gray rounded-xl">
-            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-burgundy to-rose-700 flex-shrink-0" />
+            <div className="w-9 h-9 rounded-full bg-soft-gray flex-shrink-0" />
             <div>
               <div className="text-sm font-semibold text-deep-charcoal">{customer.customer_name || customer.customer_id}</div>
-              <div className="text-xs text-warm-stone">{t('insights.churnRisk', { score: customer.churn_risk_score })} · {t('insights.visits', { count: customer.total_visits })}</div>
+              <div className="text-xs text-warm-stone">{t('insights.churnRisk', { score: Math.round(customer.churn_risk_score) })} · {t('insights.visits', { count: customer.total_visits })}</div>
             </div>
+          </div>
+
+          <div>
+            <label htmlFor="re-engagement-language" className="text-xs font-semibold text-deep-charcoal block mb-1.5">
+              {t('insights.emailLanguage')}
+            </label>
+            <select
+              id="re-engagement-language"
+              value={language}
+              onChange={(event) => handleLanguageChange(event.target.value)}
+              className="w-full text-sm text-deep-charcoal border border-glass-border-input rounded-xl px-3 py-2 bg-white/60 focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
+            >
+              <option value="pt-BR">Português (Brasil)</option>
+              <option value="en">English</option>
+              <option value="es">Español</option>
+            </select>
           </div>
 
           <div>
@@ -64,6 +98,7 @@ function SendModal({ customer, onClose }: SendModalProps) {
             </label>
             <textarea
               id="re-engagement-msg"
+              ref={messageRef}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               rows={4}
@@ -123,8 +158,8 @@ function CustomerRow({ customer, showChurn, onSend }: CustomerRowProps) {
         <div className="text-xs text-warm-stone">{t('insights.visits', { count: customer.total_visits })} · {t('insights.lastVisit', 'Last')}: {lastVisit}</div>
       </div>
       {showChurn && (
-        <span className={`text-xs font-semibold flex-shrink-0 ${churnColor}`}>
-          {customer.churn_risk_score}%
+        <span className={`text-xs font-semibold flex-shrink-0 ${churnColor}`} title={t('insights.churnRisk', { score: Math.round(customer.churn_risk_score) })}>
+          {Math.round(customer.churn_risk_score)}/100
         </span>
       )}
       {onSend && (

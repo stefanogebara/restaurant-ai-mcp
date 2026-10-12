@@ -22,7 +22,7 @@ const logger = createSecureLogger('RetentionCampaigns');
  */
 async function handleCreate(req, res) {
   try {
-    const { customer_id, campaign_type, message, channel } = req.body;
+    const { customer_id, campaign_type, message, channel, language } = req.body;
 
     if (!customer_id || !campaign_type || !message) {
       return res.status(400).json({
@@ -56,6 +56,7 @@ async function handleCreate(req, res) {
 
     if (error) throw error;
 
+    let emailAccepted = false;
     // Send the campaign email if channel is email
     if (data.channel === 'email') {
       // Look up customer email from customer_ltv (has email from reservation data)
@@ -77,7 +78,9 @@ async function handleCreate(req, res) {
           customerName: customer.customer_name,
           message,
           campaignType: campaign_type,
+          language,
         });
+        emailAccepted = result.sent === true;
 
         await supabaseAdmin
           .schema('restaurant')
@@ -102,7 +105,7 @@ async function handleCreate(req, res) {
 
     logger.info(`Created retention campaign ${data.id} for customer ${customer_id}`);
 
-    return res.status(200).json({ success: true, data });
+    return res.status(200).json({ success: true, data, sent: emailAccepted });
 
   } catch (error) {
     logger.error('Error creating campaign:', error);

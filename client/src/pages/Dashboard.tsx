@@ -326,7 +326,7 @@ export default function Dashboard() {
           })()}
 
           {/* ---- Header Section ---- */}
-          <header className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-8 sm:mb-14 mt-14 sm:mt-0 gap-3 sm:gap-4">
+          <header className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-8 sm:mb-14 mt-14 lg:mt-0 gap-3 sm:gap-4">
             <div className="pl-12 lg:pl-0">
               {/* Greeting line — Bom dia / boa tarde / boa noite. Audit found
                   the dashboard read as "task-oriented, no warmth" — a

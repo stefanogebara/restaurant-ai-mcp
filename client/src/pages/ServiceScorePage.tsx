@@ -49,7 +49,7 @@ export default function ServiceScorePage() {
     <DashboardLayout>
       <div className={`dashboard min-h-screen px-4 sm:px-6 lg:px-10 pt-6 sm:pt-10 pb-24 sm:pb-20${isNight ? ' service-mode' : ''}`}>
         <div className="max-w-[1240px]">
-          <header className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-8 sm:mb-12 mt-14 sm:mt-0 gap-3">
+          <header className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-8 sm:mb-12 mt-14 lg:mt-0 gap-3">
             <div className="pl-12 lg:pl-0">
               <h1 className="font-serif text-3xl sm:text-4xl tracking-tight text-deep-charcoal">
                 {t('serviceScore.heading', 'A noite inteira, numa página')}
