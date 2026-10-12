@@ -1,3 +1,9 @@
+## 2026-10-12 — Continuidade de design não termina na primeira tela
+
+Quando Stefano pede para continuar corrigindo todas as páginas, não encerrar após o primeiro PR. Agrupar melhorias coerentes, provar cada lote com testes e navegador autenticado, conferir o deploy real e seguir para a próxima superfície. Distinguir código local, PR integrado e versão visível em produção. Nunca usar envios reais de WhatsApp, e-mail ou Instagram como atalho de QA visual.
+
+Uma lista que parece correta não prova a jornada: abrir um item real pode revelar contrato API/UI quebrado. O perfil de Clientes recebia `{ customer, reservations, notes }` e tratava o envelope como cliente plano; nenhuma suíte de lista detectou “undefined” no drawer. Em revisões de páginas, testar também a primeira ação útil e o estado de erro, com dados autenticados quando possível.
+
 ## 2026-08-27 — Teste de WhatsApp não pode se disfarçar de pesquisa
 
 Um teste reutilizou uma pesquisa de satisfação sem criar contexto de pesquisa: a resposta “5” virou quantidade de pessoas. Nunca reutilizar campanha/pesquisa para diagnóstico. Usar mensagem explícita, nome real e idioma configurado; não trocar idioma silenciosamente para conseguir um envio. Falha na consulta de contexto deve bloquear envio, não virar “Your Restaurant”. Recibos precisam ser aguardados antes do 200 do webhook. Entrega física não prova contexto conversacional correto.

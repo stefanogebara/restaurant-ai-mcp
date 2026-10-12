@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import ThiingsIcon from '../common/ThiingsIcon';
 import ChipSelector from './ChipSelector';
 import type { ProfileUpdatePayload } from '../../hooks/useCustomers';
 
@@ -27,7 +28,7 @@ const SEATING_PRESETS = [
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <h3 className="text-[11px] font-bold text-stone-500 uppercase tracking-widest mb-2">
+      <h3 className="text-[11px] font-semibold text-muted-stone uppercase tracking-[0.12em] mb-2">
         {title}
       </h3>
       {children}
@@ -43,7 +44,7 @@ export default function CustomerProfileSections({
   specialOccasions,
   onUpdateProfile,
 }: CustomerProfileSectionsProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const [birthday, setBirthday] = useState(specialOccasions.birthday || '');
   const [anniversary, setAnniversary] = useState(specialOccasions.anniversary || '');
@@ -100,7 +101,7 @@ export default function CustomerProfileSections({
   const formatOccasionDisplay = (dateStr: string): string => {
     if (!dateStr) return '';
     const date = new Date(dateStr + 'T00:00:00');
-    return date.toLocaleDateString(undefined, { month: 'long', day: 'numeric' });
+    return date.toLocaleDateString(i18n.language, { month: 'long', day: 'numeric' });
   };
 
   return (
@@ -140,39 +141,41 @@ export default function CustomerProfileSections({
         <div className="space-y-3">
           {/* Birthday */}
           <div>
-            <label className="flex items-center gap-2 text-sm text-stone-700 mb-1">
-              <span>&#127874;</span>
+            <label htmlFor={`crm-birthday-${customerId}`} className="flex items-center gap-2 text-sm text-deep-charcoal mb-1">
+              <ThiingsIcon name="calendar" pxSize={15} className="text-muted-stone" />
               {t('crm.birthday', 'Birthday')}
               {birthday && (
-                <span className="text-xs text-stone-500">
+                <span className="text-xs text-muted-stone">
                   {formatOccasionDisplay(birthday)}
                 </span>
               )}
             </label>
             <input
+              id={`crm-birthday-${customerId}`}
               type="date"
               value={birthday}
               onChange={(e) => handleBirthdayChange(e.target.value)}
-              className="w-full text-sm border border-stone-200 rounded-lg px-3 py-1.5 text-stone-900 focus:outline-none focus:ring-1 focus:ring-[#9F1239]/30 focus:border-[#9F1239]/30"
+              className="w-full glass-pill rounded-xl px-3.5 py-2.5 text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
             />
           </div>
 
           {/* Anniversary */}
           <div>
-            <label className="flex items-center gap-2 text-sm text-stone-700 mb-1">
-              <span>&#128141;</span>
+            <label htmlFor={`crm-anniversary-${customerId}`} className="flex items-center gap-2 text-sm text-deep-charcoal mb-1">
+              <ThiingsIcon name="calendar" pxSize={15} className="text-muted-stone" />
               {t('crm.anniversary', 'Anniversary')}
               {anniversary && (
-                <span className="text-xs text-stone-500">
+                <span className="text-xs text-muted-stone">
                   {formatOccasionDisplay(anniversary)}
                 </span>
               )}
             </label>
             <input
+              id={`crm-anniversary-${customerId}`}
               type="date"
               value={anniversary}
               onChange={(e) => handleAnniversaryChange(e.target.value)}
-              className="w-full text-sm border border-stone-200 rounded-lg px-3 py-1.5 text-stone-900 focus:outline-none focus:ring-1 focus:ring-[#9F1239]/30 focus:border-[#9F1239]/30"
+              className="w-full glass-pill rounded-xl px-3.5 py-2.5 text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
             />
           </div>
         </div>

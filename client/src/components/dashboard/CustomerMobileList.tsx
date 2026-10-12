@@ -37,17 +37,17 @@ export default function CustomerMobileList({ customers, onSelect, formatLastVisi
             </div>
 
             <dl className="mt-3 grid grid-cols-3 gap-2">
-              <div>
+              <div className="min-w-0">
                 <dt className="text-[11px] text-muted-stone">{t('crm.colVisits')}</dt>
                 <dd className="mt-0.5 text-sm text-deep-charcoal tabular-nums">{customer.total_visits}</dd>
               </div>
-              <div>
+              <div className="min-w-0">
                 <dt className="text-[11px] text-muted-stone">{t('crm.colLastVisit')}</dt>
                 <dd className="mt-0.5 text-sm text-deep-charcoal">{formatLastVisit(customer.last_visit_date)}</dd>
               </div>
-              <div>
-                <dt className="text-[11px] text-muted-stone">{t('crm.colLTV')}</dt>
-                <dd className="mt-0.5 text-sm text-deep-charcoal tabular-nums">
+              <div className="min-w-0">
+                <dt className="text-[11px] text-muted-stone break-words">{t('crm.colLTV')}</dt>
+                <dd className="mt-0.5 text-sm text-deep-charcoal tabular-nums break-words">
                   {customer.lifetime_value ? formatCurrency(Math.round(customer.lifetime_value)) : '—'}
                 </dd>
               </div>

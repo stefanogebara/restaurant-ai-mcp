@@ -42,6 +42,12 @@ export interface CustomerDetail extends CrmCustomer {
   special_occasions: Record<string, string>;
 }
 
+interface CustomerDetailResponse {
+  customer: CrmCustomer & Partial<Pick<CustomerDetail, 'allergies' | 'dietary_restrictions' | 'seating_preferences' | 'special_occasions'>>;
+  reservations: CustomerDetail['recent_reservations'];
+  notes: CustomerNote[];
+}
+
 export interface ProfileUpdatePayload {
   customerId: string;
   allergies?: string[];
@@ -125,7 +131,17 @@ export function useCustomerDetail(customerId: string | null) {
       if (!response.ok) throw new Error('Failed to fetch customer detail');
       const result = await response.json();
       if (!result.success) throw new Error(result.error || 'Failed to fetch customer detail');
-      return result.data;
+      const detail = result.data as CustomerDetailResponse | undefined;
+      if (!detail?.customer?.customer_id) throw new Error('Invalid customer detail response');
+      return {
+        ...detail.customer,
+        recent_reservations: detail.reservations || [],
+        notes: detail.notes || [],
+        allergies: detail.customer.allergies || [],
+        dietary_restrictions: detail.customer.dietary_restrictions || [],
+        seating_preferences: detail.customer.seating_preferences || [],
+        special_occasions: detail.customer.special_occasions || {},
+      };
     },
     enabled: !!customerId,
     staleTime: CRM_STALE_TIME,

@@ -446,10 +446,16 @@ Revisão local: a geração de uma nova leva de legendas agora reinicia os cart�
 - [x] Substituir a tabela cortada por uma lista compacta abaixo de 768 px.
 - [x] Manter nome, nível, visitas, última visita e valor visíveis sem rolagem lateral.
 - [x] Abrir o cliente pelo teclado e pelo toque; cobrir a lista com testes.
+- [x] Chamar o valor previsto de estimativa, não de receita realizada, em Clientes e Insights.
+- [x] Corrigir o contrato do perfil: API aninhada versus cliente plano, histórico por telefone e falha explícita.
 - [ ] Verificar build, suites e a página autenticada no celular após o deploy.
 
 Limite: nenhum perfil, reserva ou dado de cliente será alterado nesta revisão.
 
 Revisão local: a lista móvel mostra métricas em três colunas, tags resumidas e abre o perfil por botão. A tabela desktop também aceita Enter e Espaço. O selo VIP agora usa tinta neutra, sem gastar a cor de ação. Onze testes da página, TypeScript, ESLint, `git diff --check`, Jest completo (280 suítes/4.252 testes), Vitest completo (116 arquivos/1.025 testes) e build passaram. Falta navegador na versão publicada.
+
+Auditoria do valor: `lifetime_value` vem de `calculatePredictedLTV` e projeta valor futuro; os rótulos agora dizem “valor estimado” nos três idiomas. Não equivale a faturamento recebido.
+
+Auditoria autenticada: abrir Beatriz Costa em produção mostrava cabeçalho vazio, contato “undefined” e métricas ausentes. A API devolve `{ customer, reservations, notes }`, mas o hook tratava o objeto inteiro como cliente; o histórico também buscava `customer_phone = customer_id`. O hook agora adapta o contrato, o backend resolve primeiro o cliente do restaurante e busca pelo telefone real, e uma resposta defeituosa mostra erro com retry em vez de dados vazios. Dois testes backend e dois frontend cobrem essas fronteiras. A receita da tabela LTV pode ser estimada a partir de visitas × ticket médio (inclusive fallback por cobertura); por isso o drawer também usa rótulos de estimativa.
 
 ---
