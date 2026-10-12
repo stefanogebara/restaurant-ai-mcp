@@ -284,7 +284,7 @@ module.exports = async function handler(req, res) {
           phone: restaurant.phone || '',
           email: restaurant.email || '',
           business_hours: restaurant.business_hours || null,
-          timezone: restaurant.timezone || 'America/Sao_Paulo',
+          timezone: restaurant.timezone || '',
           reservation_settings: restaurant.reservation_settings || null,
           cover_image_url: restaurant.cover_image_url || null,
         },
@@ -299,6 +299,15 @@ module.exports = async function handler(req, res) {
 
       if (language && !ALLOWED_LANGUAGES.includes(language)) {
         return res.status(400).json({ success: false, error: `Invalid language. Allowed values: ${ALLOWED_LANGUAGES.join(', ')}` });
+      }
+
+      if (req.body.timezone !== undefined) {
+        try {
+          if (typeof req.body.timezone !== 'string' || !req.body.timezone.trim()) throw new RangeError('Timezone required');
+          new Intl.DateTimeFormat('en', { timeZone: req.body.timezone }).format(new Date());
+        } catch {
+          return res.status(400).json({ success: false, error: 'Invalid timezone' });
+        }
       }
 
       const updates = {};

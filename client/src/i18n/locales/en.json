@@ -1642,6 +1642,8 @@
     "city": "City",
     "country": "Country",
     "timezone": "Timezone",
+    "offsetNow": "now",
+    "timezoneRequired": "Choose a timezone before saving.",
     "saveInfo": "Save Information",
     "businessHours": "Business Hours",
     "openTime": "opening time",

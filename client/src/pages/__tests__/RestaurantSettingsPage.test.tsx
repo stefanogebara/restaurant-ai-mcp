@@ -78,6 +78,30 @@ describe('RestaurantSettingsPage', () => {
     expect(screen.getByDisplayValue('contato@cantina.com')).toBeInTheDocument();
   });
 
+  it('mostra a seleção legada de país e o offset atual sem alterar os valores salvos', async () => {
+    apiGet.mockResolvedValueOnce({ data: { success: true, data: { ...SETTINGS, country: 'Brazil', timezone: 'Europe/Madrid' } } });
+    renderPage();
+    await screen.findByDisplayValue('Cantina do Porto');
+
+    expect(screen.getByRole('combobox', { name: 'Country' })).toHaveValue('BRAZIL');
+    expect(screen.getByRole('combobox', { name: 'Country' })).toHaveTextContent('Brazil');
+    expect(screen.getByRole('combobox', { name: 'Timezone' })).toHaveValue('Europe/Madrid');
+    expect(screen.getByRole('option', { name: /Madrid \(GMT\+[12] now\)/ })).toBeInTheDocument();
+    expect(apiPut).not.toHaveBeenCalled();
+  });
+
+  it('não presume São Paulo quando o fuso do restaurante está ausente', async () => {
+    apiGet.mockResolvedValueOnce({ data: { success: true, data: { ...SETTINGS, timezone: '' } } });
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByDisplayValue('Cantina do Porto');
+    expect(screen.getByRole('combobox', { name: 'Timezone' })).toHaveValue('');
+    await user.type(screen.getByLabelText(/restaurant name/i), '!');
+    await user.click(screen.getByRole('button', { name: /save info/i }));
+    expect(await screen.findByText('Choose a timezone before saving.')).toBeInTheDocument();
+    expect(apiPut).not.toHaveBeenCalled();
+  });
+
   it('mantém navegação por seção e leva o link de reservas para Integrações sem buscar o painel', async () => {
     renderPage();
     await screen.findByDisplayValue('Cantina do Porto');

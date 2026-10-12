@@ -1,3 +1,16 @@
+# Configurações — localização legível e fiel (12/out/2026)
+
+- [x] Verificar no navegador autenticado a página em 320 px e identificar fusos com offsets fixos incorretos no horário de verão.
+- [x] Mostrar offset vigente na data atual sem trocar os IDs IANA persistidos.
+- [x] Localizar nomes dos países e preservar seleção visível de valores legados fora da lista.
+- [ ] Testar verão/inverno, país legado e página em produção sem salvar alterações.
+
+Limite: não salvar dados reais nem alterar fuso, país ou horários do restaurante durante a QA.
+
+Revisão local: o seletor calcula o offset do fuso IANA na data atual e o rotula como “agora”, sem prometer um GMT fixo o ano inteiro. Nomes de país seguem o idioma da interface; o país legado fora da lista permanece selecionado. Se o fuso estiver ausente, a página deixa o campo vazio e pede uma escolha antes de salvar; a API rejeita fusos inválidos. O carregamento e os campos usam a paleta quente e ações arredondadas. Testes de verão/inverno, país legado, fuso ausente e validação do servidor passaram. Jest completo passou (291 suítes/4.328 testes), Vitest completo passou (131 arquivos/1.085 testes); testes focados após os últimos ajustes, build/TypeScript, lint focado e diff check passaram. Verificação visual publicada segue pendente; nenhum dado real foi salvo.
+
+---
+
 # Relatórios — período fiel e experiência móvel (12/out/2026)
 
 - [x] Reproduzir no navegador autenticado o controle de datas cortado e os botões de saída para um período sem atividade.
@@ -8,7 +21,7 @@
 
 Limite: nenhum relatório será enviado, compartilhado nem gerado para cliente real durante a verificação de produção. A rota de WhatsApp tem consumidores no cron semanal e no comando de WhatsApp, então o serviço precisa continuar com contrato coerente e falhar fechado quando não puder cumprir.
 
-Revisão local: o cabeçalho agora usa campos de data com rótulos e disposição móvel; editar datas não altera o relatório até “Aplicar período”. O intervalo inicial cobre sete dias concluídos, não oito dias incluindo hoje. A API de tela inclui todo o último dia no fuso do restaurante, rotula como estimativa as pessoas inferidas de reservas sem atendimento concluído e não trata perfil desconhecido como cliente recorrente. O PDF foi simplificado para texto e tabelas próprios, sem QuickChart, fonte externa, nota fictícia nem nomes crus em HTML; usa as datas pedidas, moeda conhecida do país, idioma e serviços realmente concluídos. Sem `GOTENBERG_URL` HTTPS privado, a geração e o envio falham fechados; a tela só oferece WhatsApp quando o status autenticado confirma renderizador e telefone verificado. Antes dos dois últimos ajustes, Jest completo passou (291 suítes/4.323 testes), Vitest completo passou (130 arquivos/1.079 testes); testes focados, build, lint dos arquivos alterados e diff check passam após o ajuste. O lint global ainda acusa 17 erros preexistentes fora desta reforma. Faltam inspeção visual da versão publicada e prova do domínio.
+Revisão: o cabeçalho usa campos de data com rótulos; editar datas não altera o relatório até “Aplicar período”. O intervalo inicial cobre sete dias concluídos, não oito dias incluindo hoje. A API inclui todo o último dia no fuso do restaurante, rotula estimativas de reservas e não inventa clientes recorrentes. O PDF usa as datas pedidas, moeda conhecida do país, idioma e serviços concluídos, sem QuickChart ou renderizador demo público. Sem `GOTENBERG_URL` HTTPS privado, envio e geração falham fechados. Jest completo passou (291 suítes/4.323 testes), Vitest completo passou (130 arquivos/1.079 testes), build/TypeScript e lint focado passaram; lint global ainda acusa 17 erros preexistentes fora da reforma. PR #191 publicado no domínio com SHA correto. Navegador autenticado em 320/390 px confirmou período 5–11/out, estado vazio e ausência de PDF/WhatsApp, sem overflow nem envio. A inspeção visual flagrou setas presas ao segundo campo e blocos de zero no vazio; o lote seguinte move as setas para uma linha própria e simplifica o estado vazio, ainda pendente de publicação.
 
 ---
 
