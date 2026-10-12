@@ -380,4 +380,4 @@ Sandbox account:
 
 ### Revisão
 
-Local: build e sintaxe das APIs alteradas passaram. Jest: 277 suítes e 4.241 testes passaram (1 suíte e 6 testes pulados). Vitest: 106 arquivos e 1.005 testes passaram. Os testes novos cobrem retornos OAuth, links antigos e montagem de abas. A verificação visual autenticada, o estado de publicação e os componentes internos de criação no Instagram ainda estão em aberto; não afirmar que todo o produto foi redesenhado.
+Local: build e sintaxe das APIs alteradas passaram. Jest: 277 suítes e 4.241 testes passaram (1 suíte e 6 testes pulados). Vitest: 107 arquivos e 1.006 testes passaram. Os testes novos cobrem retornos OAuth, links antigos, montagem de abas e a hierarquia de compartilhamento de reservas. A página de reservas agora apresenta um link principal, QR e código de site opcional; não repete o mesmo link em cinco cartões. A verificação visual autenticada, o estado de publicação e os componentes internos de criação no Instagram ainda estão em aberto; não afirmar que todo o produto foi redesenhado.

@@ -435,6 +435,12 @@
     "serviceMode": "Service Mode"
   },
   "bookingChannels": {
+    "shareTitle": "One link, wherever your guests find you",
+    "shareDescription": "Use this link on your website, Instagram and Google profile. They all lead to the same booking page.",
+    "openLink": "Open booking page",
+    "copyFailed": "Couldn't copy the link. Select and copy it above.",
+    "whereToShare": "You can paste this same link into your Instagram bio, Google Business Profile or a message to guests.",
+    "websiteHelp": "If someone manages your website, send them this code to add a booking button. You don't need it to share the link above.",
     "title": "Booking Channels",
     "subtitle": "Share your booking page across all channels to maximize reservations.",
     "directUrl": "Direct URL",

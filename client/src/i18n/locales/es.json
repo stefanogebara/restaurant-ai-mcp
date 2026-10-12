@@ -435,6 +435,12 @@
     "serviceMode": "Modo Servicio"
   },
   "bookingChannels": {
+    "shareTitle": "Un enlace, donde estén tus clientes",
+    "shareDescription": "Usa este enlace en tu web, Instagram y perfil de Google. Todos llevan a la misma página de reservas.",
+    "openLink": "Abrir página de reservas",
+    "copyFailed": "No se pudo copiar. Selecciona y copia el enlace de arriba.",
+    "whereToShare": "Puedes pegar el mismo enlace en tu biografía de Instagram, tu Perfil de Empresa en Google o un mensaje a tus clientes.",
+    "websiteHelp": "Si alguien gestiona tu web, envíale este código para añadir un botón de reservas. No lo necesitas para compartir el enlace de arriba.",
     "title": "Canales de Reserva",
     "subtitle": "Comparte tu página de reservas en todos los canales para maximizar las reservas.",
     "directUrl": "URL Directa",
