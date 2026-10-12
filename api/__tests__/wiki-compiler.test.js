@@ -14,7 +14,6 @@ var mockSupabaseAdmin = {
 
 var mockGetAI = jest.fn();
 var mockGetRestaurantSnapshot = jest.fn();
-var mockListCustomerProfiles = jest.fn();
 
 jest.mock('../_lib/supabase', () => ({ supabaseAdmin: mockSupabaseAdmin }));
 jest.mock('../_lib/secure-logger', () => ({
@@ -27,10 +26,6 @@ jest.mock('../_lib/ai-client', () => ({
 jest.mock('../_services/restaurantSnapshot', () => ({
   getRestaurantSnapshot: (...a) => mockGetRestaurantSnapshot(...a),
 }));
-jest.mock('../_services/customerDNA', () => ({
-  listCustomerProfiles: (...a) => mockListCustomerProfiles(...a),
-}));
-
 const { compileWikiForRestaurant, getWikiPages } = require('../_services/wikiCompiler');
 
 const RESTAURANT_ID = 'rest-abc-123';
@@ -63,12 +58,9 @@ beforeEach(() => {
     deposit_summary: { count: 0, total_amount: 0 },
     staffing_forecast: [],
   });
-  mockListCustomerProfiles.mockResolvedValue({ profiles: [] });
-
-  // schema().from() → restaurant_config
-  mockSchemaFrom.mockReturnValue(makeFromChain({
-    data: [{ restaurant_name: 'Test Bistro', restaurant_type: 'italian', agent_language: 'en' }],
-  }));
+  mockSchemaFrom.mockImplementation((table) => table === 'customer_ltv'
+    ? makeFromChain({ data: [] })
+    : makeFromChain({ data: [{ restaurant_name: 'Test Bistro', restaurant_type: 'italian', agent_language: 'en' }] }));
 
   // supabaseAdmin.from() calls: reservations, manager_memory, tables, restaurant_wiki_pages
   mockSupabaseAdmin.from.mockImplementation((table) => {
@@ -142,8 +134,9 @@ describe('compileWikiForRestaurant', () => {
 
     jest.clearAllMocks();
     mockGetRestaurantSnapshot.mockResolvedValue({ upcoming_reservations: [], active_parties: [], waitlist_count: 0, deposit_summary: { count: 0 }, staffing_forecast: [] });
-    mockListCustomerProfiles.mockResolvedValue({ profiles: [] });
-    mockSchemaFrom.mockReturnValue(makeFromChain({ data: [{ restaurant_name: 'Test Bistro', restaurant_type: 'italian', agent_language: 'en' }] }));
+    mockSchemaFrom.mockImplementation((table) => table === 'customer_ltv'
+      ? makeFromChain({ data: [] })
+      : makeFromChain({ data: [{ restaurant_name: 'Test Bistro', restaurant_type: 'italian', agent_language: 'en' }] }));
     mockGetAI.mockReturnValue({ messages: { create: jest.fn().mockResolvedValue({ content: [{ type: 'text', text: 'Article.' }] }) } });
 
     // Second run — same data, overview hash matches → overview should be skipped
@@ -191,9 +184,46 @@ describe('compileWikiForRestaurant', () => {
   });
 
   it('handles empty customer profiles gracefully', async () => {
-    mockListCustomerProfiles.mockResolvedValue([]);
     const result = await compileWikiForRestaurant(RESTAURANT_ID);
     expect(result.compiled + result.skipped).toBe(5);
+  });
+
+  it('compiles customers only from restaurant-scoped LTV rows', async () => {
+    const ltvChain = makeFromChain({ data: [] });
+    ltvChain.limit.mockResolvedValue({
+      data: [{ customer_id: 'phone-1', customer_name: 'Own Guest', customer_tier: 'vip', total_visits: 8 }],
+      count: 1,
+      error: null,
+    });
+    mockSchemaFrom.mockImplementation((table) => table === 'customer_ltv'
+      ? ltvChain
+      : makeFromChain({ data: [{ restaurant_name: 'Test Bistro' }] }));
+    const create = jest.fn().mockResolvedValue({ content: [{ type: 'text', text: 'Article.' }] });
+    mockGetAI.mockReturnValue({ messages: { create } });
+
+    await compileWikiForRestaurant(RESTAURANT_ID);
+
+    expect(mockSupabaseAdmin.schema).toHaveBeenCalledWith('restaurant');
+    expect(mockSchemaFrom).toHaveBeenCalledWith('customer_ltv');
+    expect(ltvChain.eq).toHaveBeenCalledWith('restaurant_id', RESTAURANT_ID);
+    expect(mockSupabaseAdmin.from).not.toHaveBeenCalledWith('customer_behavioral_profiles');
+    expect(create.mock.calls.some(([params]) => params.messages[0].content.includes('Own Guest'))).toBe(true);
+    const wikiWrites = mockSupabaseAdmin.from.mock.calls.flatMap(([table], index) =>
+      table === 'restaurant_wiki_pages'
+        ? mockSupabaseAdmin.from.mock.results[index].value.upsert.mock.calls
+        : []);
+    expect(wikiWrites.some(([row]) => row.slug === 'customers' && row.source_hash.startsWith('tenant-ltv-v1:'))).toBe(true);
+  });
+
+  it('does not overwrite wiki pages when the scoped customer lookup fails', async () => {
+    const ltvChain = makeFromChain({ data: [] });
+    ltvChain.limit.mockResolvedValue({ data: null, error: { message: 'LTV unavailable' } });
+    mockSchemaFrom.mockImplementation((table) => table === 'customer_ltv'
+      ? ltvChain
+      : makeFromChain({ data: [{ restaurant_name: 'Test Bistro' }] }));
+
+    await expect(compileWikiForRestaurant(RESTAURANT_ID)).rejects.toEqual({ message: 'LTV unavailable' });
+    expect(mockSupabaseAdmin.from).not.toHaveBeenCalledWith('restaurant_wiki_pages');
   });
 });
 
@@ -209,7 +239,7 @@ describe('getWikiPages', () => {
   it('returns wiki pages sorted by slug', async () => {
     const mockPages = [
       { slug: 'overview', title: 'Overview', content: 'Overview content', compiled_at: '2026-04-10T04:30:00Z' },
-      { slug: 'customers', title: 'Customers', content: 'Customer content', compiled_at: '2026-04-10T04:30:00Z' },
+      { slug: 'customers', title: 'Customers', content: 'Customer content', compiled_at: '2026-04-10T04:30:00Z', source_hash: 'tenant-ltv-v1:abc' },
     ];
 
     // order().eq() chain for getWikiPages
@@ -227,6 +257,23 @@ describe('getWikiPages', () => {
     const pages = await getWikiPages(RESTAURANT_ID);
     expect(pages).toHaveLength(2);
     expect(pages[0].slug).toBe('overview');
+    expect(pages[1]).not.toHaveProperty('source_hash');
+  });
+
+  it('hides customer articles compiled from the old global source', async () => {
+    const rows = [
+      { slug: 'customers', title: 'Old global customer article', content: 'Unsafe', compiled_at: '2026-04-10', source_hash: 'legacy-hash' },
+      { slug: 'overview', title: 'Overview', content: 'Safe', compiled_at: '2026-04-10', source_hash: 'other-hash' },
+    ];
+    const chain = { select: jest.fn(), eq: jest.fn(), order: jest.fn() };
+    chain.select.mockReturnValue(chain);
+    chain.eq.mockReturnValue(chain);
+    chain.order.mockResolvedValue({ data: rows, error: null });
+    mockSupabaseAdmin.from.mockReturnValue(chain);
+
+    expect(await getWikiPages(RESTAURANT_ID)).toEqual([
+      { slug: 'overview', title: 'Overview', content: 'Safe', compiled_at: '2026-04-10' },
+    ]);
   });
 
   it('returns empty array on database error', async () => {
