@@ -627,3 +627,16 @@ Limite: nenhum contato com clientes será aprovado, enviado ou descartado no nav
 Revisão local: sugestões novas e antigas leem `trigger_data` para mostrar pontuação `/100`, visitas e data no idioma atual, sem reproduzir a antiga frase persistida como probabilidade. A lista usa divisórias no canvas, cores semânticas e contagem singular/plural correta. Jest completo passou (291 suítes/4.327 testes), Vitest completo passou (131 arquivos/1.084 testes), build/TypeScript, lint focado e `git diff --check` passaram. Falta verificar a tela publicada após o deploy; nenhuma mensagem foi enviada.
 
 ---
+# Clientes — gasto estimado com fonte, sem projeção inflada (12/out/2026)
+
+- [x] Confrontar cifra publicada com campos do CRM e cálculo que os grava.
+- [x] Trocar a projeção bienal da lista por gasto estimado das visitas concluídas, com explicação explícita.
+- [x] Alinhar o drawer e os três idiomas sem afirmar que houve pagamento confirmado.
+- [x] Cobrir desktop/móvel e ausência de dados; rodar testes e build.
+- [ ] Revisar publicação e verificar visualmente sem editar dados reais.
+
+Limite: não recalcular nem editar dados reais do CRM; a mudança é de apresentação e interpretação, não altera valores persistidos.
+
+Revisão local: a lista exibida em produção mostrava até R$ 23.400 de valor futuro para alguém com duas visitas e cinco meses de afastamento. A origem era `lifetime_value`, extrapolação de frequência histórica por dois anos sem desconto de afastamento. A lista passa a mostrar `total_revenue`, estimativa relativa às visitas concluídas, com aviso de que pode diferir de pagamentos registrados. O drawer repete a ressalva. Testes focados (14), Jest completo (292 suítes/4.342 testes), Vitest completo (135 arquivos/1.098 testes), TypeScript/build, lint focado e diff check passaram. Nenhum dado real foi alterado.
+
+---

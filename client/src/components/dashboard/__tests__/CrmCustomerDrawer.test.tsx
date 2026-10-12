@@ -42,6 +42,7 @@ describe('CrmCustomerDrawer', () => {
     expect(screen.getByText('Window table')).toBeInTheDocument();
     expect(screen.getByText('52/100')).toBeInTheDocument();
     expect(screen.getByText('Estimated total spend')).toBeInTheDocument();
+    expect(screen.getByText(/may differ from recorded payments/i)).toBeInTheDocument();
     expect(screen.getByText('Completed')).toBeInTheDocument();
     expect(screen.getByText('Oct 11, 2026')).toBeInTheDocument();
     expect(screen.getByText('19:00')).toBeInTheDocument();
