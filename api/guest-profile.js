@@ -67,6 +67,12 @@ module.exports = async (req, res) => {
         .maybeSingle(),
     ]);
 
+    // A failed source is not an empty history. Returning 200 here made the
+    // guest panel confidently claim there were no calls, visits or risk data.
+    if (callsResult.error || reservationsResult.error || ltvResult.error) {
+      throw new Error('guest_profile_source_failed');
+    }
+
     const calls = callsResult.data || [];
     const reservations = reservationsResult.data || [];
     const ltv = ltvResult.data || null;

@@ -15,7 +15,7 @@ export default function CallStatsOverview({ stats }: Props) {
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 py-5 border-b border-glass-border-dark">
       <div className="py-5">
-        <div className="text-xs font-medium text-muted-stone mb-2">{t('callTracking.totalCallsToday')}</div>
+        <div className="text-xs font-medium text-muted-stone mb-2">{t('callTracking.totalCallsPeriod')}</div>
         <div className="text-[32px] font-bold tracking-tight leading-none text-deep-charcoal">
           {overview.total_calls}
         </div>
@@ -24,25 +24,27 @@ export default function CallStatsOverview({ stats }: Props) {
 
       <div className="py-5">
         <div className="text-xs font-medium text-muted-stone mb-2">{t('callTracking.successRate')}</div>
-        <div className="text-[32px] font-bold tracking-tight leading-none text-rose-600">
-          {overview.success_rate}%
+        <div className="text-[32px] font-bold tracking-tight leading-none text-deep-charcoal">
+          {overview.total_calls > 0 ? `${overview.success_rate}%` : '—'}
         </div>
         <div className="text-xs text-warm-stone mt-1">
-          {t('callTracking.callsResolved', { success: overview.successful_bookings, total: overview.total_calls })}
+          {overview.total_calls > 0
+            ? t('callTracking.callsResolved', { success: overview.successful_bookings, total: overview.total_calls })
+            : t('callTracking.noCallsYet')}
         </div>
       </div>
 
       <div className="py-5">
         <div className="text-xs font-medium text-muted-stone mb-2">{t('callTracking.avgDuration')}</div>
         <div className="text-[32px] font-bold tracking-tight leading-none text-deep-charcoal">
-          {overview.average_duration_formatted}
+          {overview.total_calls > 0 ? overview.average_duration_formatted : '—'}
         </div>
-        <div className="text-xs text-warm-stone mt-1">{t('callTracking.perCall', 'per call')}</div>
+        <div className="text-xs text-warm-stone mt-1">{overview.total_calls > 0 ? t('callTracking.perCall') : t('callTracking.noCallsYet')}</div>
       </div>
 
       <div className="py-5">
         <div className="text-xs font-medium text-muted-stone mb-2">{t('callTracking.bookingsViaCall')}</div>
-        <div className="text-[32px] font-bold tracking-tight leading-none text-burgundy">
+        <div className="text-[32px] font-bold tracking-tight leading-none text-deep-charcoal">
           {overview.successful_bookings}
         </div>
         <div className="text-xs text-warm-stone mt-1">
