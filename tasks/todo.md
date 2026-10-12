@@ -654,4 +654,6 @@ Limite: QA de produção somente leitura; nenhuma chamada, mensagem ou alteraç�
 
 Revisão local: a lista ignorava o filtro 1/7/30/90 dias, enquanto os números o usavam. O backend concatenava `offset` e `limit` como strings: a segunda página com `50`/`50` buscava 5.000 linhas, não 50. Ambos agora compartilham a janela móvel, inclusive na troca de horário de verão, e a API valida/pagina números corretamente. O CSV é rotulado como exportação da página visível. Jest completo: 293 suítes/4.341 testes; Vitest completo: 137 arquivos/1.099 testes. TypeScript/build, sintaxe Node, lint focado e diff check passaram. Publicação e navegador ainda pendentes.
 
+Revisão integrada com Clientes: 293 suítes/4.348 testes Jest e 137 arquivos/1.101 testes Vitest passaram; TypeScript e build também passaram. Nenhuma ligação, mensagem ou edição de cliente ocorreu na verificação.
+
 ---
