@@ -392,7 +392,7 @@ async function compressOldHistory(history) {
 /**
  * Process a message with AI (OpenAI-compatible API)
  */
-async function processWithAI(userMessage, session, conversationHistory = []) {
+async function processWithAI(userMessage, session, conversationHistory = [], inboundContext = {}) {
   const language = session?.restaurant?.agent_language || session?.restaurant?.language || session?.language || 'pt';
   const currentDateTime = getCurrentDateTime(language);
 
@@ -524,7 +524,7 @@ async function processWithAI(userMessage, session, conversationHistory = []) {
         for (const toolCall of toolCalls) {
           const toolName = toolCall.function.name;
           const toolInput = JSON.parse(toolCall.function.arguments);
-          const toolResult = await executeTool(toolName, toolInput, session);
+          const toolResult = await executeTool(toolName, toolInput, session, inboundContext);
 
           if (toolName === 'identify_restaurant' && toolResult.found && toolResult.restaurant) {
             session = await getSessionByPhone(session?.sender_phone);
