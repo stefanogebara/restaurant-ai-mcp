@@ -120,6 +120,19 @@ test('a Twilio booking never sends confirmation from the Meta number', async () 
   expect(mockButtons).not.toHaveBeenCalled();
 });
 
+test.each([
+  { providerName: 'meta', receiver: '' },
+  { providerName: 'meta', receiver: 'restaurant-uuid-fallback' },
+  { providerName: 'twilio', receiver: '123456789012345' },
+])('invalid $providerName receiver refuses the booking before commit', async invalid => {
+  const result = await executeTool('create_reservation', input, session, {
+    ...context, ...invalid,
+  });
+  expect(result.success).toBe(false);
+  expect(mockRpc).not.toHaveBeenCalled();
+  expect(mockButtons).not.toHaveBeenCalled();
+});
+
 test('does not return before metering and Meta confirmation settle', async () => {
   let finishUsage;
   let finishButtons;

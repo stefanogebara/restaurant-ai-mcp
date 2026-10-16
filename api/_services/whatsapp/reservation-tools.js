@@ -502,6 +502,16 @@ async function executeTool(toolName, toolInput, session, inboundContext = {}) {
           return { success: false, error: 'Missing or invalid booking details' };
         }
 
+        // The sender of a confirmation must be known before the booking commits.
+        // A missing Meta receiver used to fall back to the restaurant UUID as
+        // an idempotency key, then fail only after the reservation was saved.
+        if ((inboundContext.providerName === 'meta'
+            && !/^\d{5,30}$/.test(inboundContext.receiver || ''))
+          || (inboundContext.providerName === 'twilio'
+            && !/^\+[1-9]\d{8,14}$/.test(inboundContext.receiver || ''))) {
+          return { success: false, error: 'Could not verify the receiving WhatsApp number. Please try again.' };
+        }
+
         const externalId = bookingExternalId(inboundContext, session.restaurant.id);
         if (!externalId) {
           logger.error('create_reservation: missing stable inbound message identity');
