@@ -27,7 +27,7 @@ and production database must remain untouched while this branch is developed.
       and a stable inbound identity. Distinguish newly created from replayed.
 - [x] Add focused tests for the conversation retry after a committed tool call,
       duplicate explicit action, unavailable capacity, and tenant scoping.
-- [ ] Run Seatable verification, review the diff, and report migration/deployment
+- [x] Run Seatable verification, review the diff, and report migration/deployment
       sequencing explicitly. No live database change during development.
 
 ## Verification record
@@ -38,9 +38,9 @@ and production database must remain untouched while this branch is developed.
   and legacy hours format pass.
 - Focused backend suites: 22/22 pass after the retry-key correction.
 - Frontend build: pass. Vitest: 138 files / 1,102 tests pass.
-- Full backend run before the correction to the unrelated expiring ML fixture:
-  4,357 pass, 1 fails (`features.test.js`, hard-coded 2025-10-16). Fixed in
-  separate PR #201, not mixed into this change.
+- Full backend after separate PR #201 fixed the expired ML fixture and was
+  merged into this branch: 294 suites / 4,361 tests pass, 1 suite skipped;
+  fire-and-forget and phantom-column audits pass.
 - No production migration, deploy, or real WhatsApp message has occurred.
 
 ## Known remaining gaps
