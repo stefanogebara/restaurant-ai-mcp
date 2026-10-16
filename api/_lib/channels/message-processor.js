@@ -484,7 +484,11 @@ async function processMessage(adapter, msg, options = {}) {
 
   let response;
   try {
-    response = await processWithAI(aiMessage, session, conversationHistory);
+    response = await processWithAI(aiMessage, session, conversationHistory, {
+      providerName,
+      receiver: phoneNumberId || session?.restaurant_id,
+      messageId,
+    });
   } catch (err) {
     logger.error(`[${providerName}] AI error:`, err.message);
     response = 'Desculpe, tive dificuldade em processar sua mensagem. Por favor, tente novamente.';
