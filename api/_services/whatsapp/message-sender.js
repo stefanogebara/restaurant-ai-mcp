@@ -147,7 +147,7 @@ async function sendInteractiveButtonMessage(to, bodyText, buttons, options = {})
       return { success: false, error: data.error?.message || 'Failed to send buttons' };
     }
 
-    logger.info(` Interactive buttons sent to ${to}, messageId: ${data.messages?.[0]?.id}`);
+    logger.info(` Interactive buttons accepted by Meta, messageId: ${data.messages?.[0]?.id}`);
     return { success: true, messageId: data.messages?.[0]?.id };
   } catch (error) {
     logger.error(' Interactive button send exception:', error);
