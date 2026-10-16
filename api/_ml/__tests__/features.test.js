@@ -331,12 +331,12 @@ describe('Customer Features', () => {
 
   describe('calculateDaysSinceLastVisit', () => {
     test('calculates days since last visit', () => {
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
       const customerHistory = {
-        fields: { 'Last Visit Date': '2025-10-16' }
+        fields: { 'Last Visit Date': sevenDaysAgo.toISOString() }
       };
       const days = calculateDaysSinceLastVisit(customerHistory);
-      expect(days).toBeGreaterThanOrEqual(0);
-      expect(days).toBeLessThan(365); // Sanity check
+      expect(days).toBe(7);
     });
 
     test('returns 999 for new customer', () => {
@@ -649,4 +649,3 @@ describe('Feature Engineering Test Summary', () => {
     expect(featuresArray.length).toBe(23);
   });
 });
-
