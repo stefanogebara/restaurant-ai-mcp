@@ -13,6 +13,7 @@ const { sendTemplateMessage, sendInteractiveButtonMessage } = require('./message
 const { sendReservationConfirmationEmail } = require('../../_lib/email');
 const { addCustomerToQueue, checkQueuePosition } = require('./waitlist-handler');
 const handoff = require('./handoff');
+const { bookingExternalId } = require('./booking-intent');
 
 /** One instant, rendered consistently in the restaurant's IANA timezone. */
 function getCurrentDateTime(language = 'en', timezone = 'UTC', now = new Date()) {
@@ -85,7 +86,7 @@ const RESERVATION_TOOLS = [
     type: 'function',
     function: {
       name: 'create_reservation',
-      description: 'Create a new reservation after confirming all details with the customer',
+      description: 'Create one reservation after confirming all details with the customer. For a second reservation, ask for a new customer message.',
       parameters: {
         type: 'object',
         properties: {
@@ -332,7 +333,7 @@ async function resolveSessionRestaurant(session) {
 /**
  * Execute a tool call
  */
-async function executeTool(toolName, toolInput, session, context = {}) {
+async function executeTool(toolName, toolInput, session, inboundContext = {}) {
   logger.info(` Executing tool: ${toolName}`, toolInput);
 
   // Normalize session: if JOIN returned null but FK is set, resolve from registry
@@ -479,6 +480,10 @@ async function executeTool(toolName, toolInput, session, context = {}) {
           error: 'No restaurant selected. Please identify the restaurant first.'
         };
       }
+      if (session.restaurant_id && session.restaurant.id !== session.restaurant_id) {
+        logger.error('create_reservation: restaurant context mismatch');
+        return { success: false, error: 'Restaurant context is inconsistent. Please try again.' };
+      }
 
       try {
         // Pass full restaurant object with credentials
@@ -488,38 +493,68 @@ async function executeTool(toolName, toolInput, session, context = {}) {
         }
 
         const { date, time, party_size, customer_name, customer_email, special_requests } = toolInput;
-        // Use provided phone or fall back to sender's WhatsApp number
-        const customer_phone = toolInput.customer_phone || session?.sender_phone;
-
-        if (!customer_phone) {
-          return { success: false, error: 'Customer phone number is required' };
+        // The sender, not an LLM-provided number, owns this WhatsApp booking.
+        const customer_phone = session?.sender_phone;
+        if (!customer_phone || typeof customer_name !== 'string' || !customer_name.trim()
+          || typeof date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(date)
+          || typeof time !== 'string' || !/^([01]\d|2[0-3]):[0-5]\d$/.test(time)
+          || !Number.isInteger(party_size) || party_size < 1 || party_size > 100) {
+          return { success: false, error: 'Missing or invalid booking details' };
         }
 
-        // Generate reservation ID
-        const reservationId = generateSecureReservationId();
+        const externalId = bookingExternalId(inboundContext, session.restaurant.id);
+        if (!externalId) {
+          logger.error('create_reservation: missing stable inbound message identity');
+          return { success: false, error: 'Could not verify this booking request. Please try again.' };
+        }
 
-        const { data, error } = await client
-          .from('reservations')
-          .insert({
-            reservation_id: reservationId,
-            restaurant_id: session.restaurant.id,
-            date,
-            time,
-            party_size,
-            customer_name,
-            customer_phone,
-            special_requests: special_requests || '',
-            status: 'confirmed',
-            source: 'whatsapp_ai',
-            created_at: new Date().toISOString()
-          })
-          .select()
-          .single();
+        const proposedId = generateSecureReservationId();
+        const { data, error } = await client.rpc('book_whatsapp_reservation', {
+          p_restaurant_id: session.restaurant.id,
+          p_external_id: externalId,
+          p_reservation_id: proposedId,
+          p_date: date,
+          p_time: time,
+          p_party_size: party_size,
+          p_customer_name: customer_name,
+          p_customer_phone: customer_phone,
+          p_customer_email: customer_email || null,
+          p_special_requests: special_requests || '',
+        });
 
         if (error) {
           logger.error(' Create reservation error:', error);
           return { success: false, error: 'Could not create reservation' };
         }
+
+        if (data?.status === 'existing') {
+          return {
+            success: true,
+            message: 'This reservation is already confirmed.',
+            reservation: {
+              id: data.reservation_id,
+              restaurant: session.restaurant.restaurant_name,
+              date: data.date,
+              time: data.time,
+              party_size: data.party_size,
+              customer_name: data.customer_name,
+            },
+            customer_phone,
+          };
+        }
+        if (data?.status !== 'created' || !data.reservation_id) {
+          const refusal = {
+            unavailable: 'No capacity remains for that time. Please offer another time.',
+            outside_hours: 'The restaurant is closed at that time. Please offer another time.',
+            too_late: 'That time is after the last seating. Please offer an earlier time.',
+            past_slot: 'That time has passed. Please offer a future time.',
+            too_far: 'The requested date is beyond the advance-booking window.',
+            party_too_large: 'The party exceeds the restaurant booking limit.',
+            cancelled_intent: 'That booking request was cancelled. Ask the guest to send a new request.',
+          };
+          return { success: false, error: refusal[data?.status] || 'Could not create reservation' };
+        }
+        const reservationId = data.reservation_id;
 
         // Track usage for metered billing
         if (session.restaurant?.id) {
@@ -637,10 +672,10 @@ async function executeTool(toolName, toolInput, session, context = {}) {
     }
 
     case 'get_current_datetime': {
-      const timezone = context.timezone || session?.restaurant?.timezone;
+      const timezone = inboundContext.timezone || session?.restaurant?.timezone;
       if (!timezone) return { success: false, error: 'Restaurant timezone unavailable' };
       try {
-        return getCurrentDateTime(context.language || session?.restaurant?.language || 'pt', timezone);
+        return getCurrentDateTime(inboundContext.language || session?.restaurant?.language || 'pt', timezone);
       } catch (_error) {
         return { success: false, error: 'Restaurant timezone unavailable' };
       }
