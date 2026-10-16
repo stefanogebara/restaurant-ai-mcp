@@ -14,25 +14,24 @@ const { sendReservationConfirmationEmail } = require('../../_lib/email');
 const { addCustomerToQueue, checkQueuePosition } = require('./waitlist-handler');
 const handoff = require('./handoff');
 
-/**
- * Get current date/time in restaurant timezone
- */
-function getCurrentDateTime(language = 'en') {
-  const now = new Date();
+/** One instant, rendered consistently in the restaurant's IANA timezone. */
+function getCurrentDateTime(language = 'en', timezone = 'UTC', now = new Date()) {
   const localeMap = { en: 'en-US', es: 'es-ES', pt: 'pt-BR' };
-  const locale = localeMap[language] || 'en-US';
+  const locale = localeMap[String(language).split('-')[0]] || 'en-US';
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: timezone, year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+  }).formatToParts(now);
+  const part = type => parts.find(item => item.type === type)?.value;
   return {
-    date: now.toISOString().split('T')[0],
-    time: now.toTimeString().split(' ')[0].substring(0, 5),
-    dayOfWeek: now.toLocaleDateString(locale, { weekday: 'long' }),
+    date: `${part('year')}-${part('month')}-${part('day')}`,
+    time: `${part('hour')}:${part('minute')}`,
+    dayOfWeek: now.toLocaleDateString(locale, { timeZone: timezone, weekday: 'long' }),
     formatted: now.toLocaleString(locale, {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit'
-    })
+      timeZone: timezone, weekday: 'long', year: 'numeric', month: 'long',
+      day: 'numeric', hour: 'numeric', minute: '2-digit', hourCycle: 'h23',
+    }),
+    timezone,
   };
 }
 
@@ -333,7 +332,7 @@ async function resolveSessionRestaurant(session) {
 /**
  * Execute a tool call
  */
-async function executeTool(toolName, toolInput, session) {
+async function executeTool(toolName, toolInput, session, context = {}) {
   logger.info(` Executing tool: ${toolName}`, toolInput);
 
   // Normalize session: if JOIN returned null but FK is set, resolve from registry
@@ -638,7 +637,13 @@ async function executeTool(toolName, toolInput, session) {
     }
 
     case 'get_current_datetime': {
-      return getCurrentDateTime();
+      const timezone = context.timezone || session?.restaurant?.timezone;
+      if (!timezone) return { success: false, error: 'Restaurant timezone unavailable' };
+      try {
+        return getCurrentDateTime(context.language || session?.restaurant?.language || 'pt', timezone);
+      } catch (_error) {
+        return { success: false, error: 'Restaurant timezone unavailable' };
+      }
     }
 
     case 'list_restaurants': {

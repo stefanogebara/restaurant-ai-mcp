@@ -104,7 +104,7 @@ async function callChatCompletions(messages, tools) {
  * Build a WhatsApp-specific system prompt for a restaurant with full config.
  * This is separate from persona-prompt-builder.js which is voice-oriented.
  */
-function buildWhatsAppPrompt(restaurantConfig, session, currentDateTime) {
+function buildWhatsAppPrompt(restaurantConfig, session, currentDateTime, timezone) {
   const agentName = restaurantConfig.agent_name || 'the host';
   const restaurantName = restaurantConfig.restaurant_name || restaurantConfig.name || 'the restaurant';
 
@@ -315,8 +315,12 @@ ANTI-HALLUCINATION (CRITICAL):
 `;
 
   // Date/time context
-  prompt += `\nCurrent date/time: ${currentDateTime.formatted}\n`;
-  prompt += `Today is ${currentDateTime.dayOfWeek}, ${currentDateTime.date}\n`;
+  if (timezone) {
+    prompt += `\nCurrent date/time (${timezone}): ${currentDateTime.formatted}\n`;
+    prompt += `Today is ${currentDateTime.dayOfWeek}, ${currentDateTime.date}\n`;
+  } else {
+    prompt += '\nRestaurant timezone unavailable. Do not infer dates from "today" or "tomorrow"; ask for an explicit date.\n';
+  }
 
   // Customer phone
   if (session?.sender_phone) {
@@ -394,7 +398,6 @@ async function compressOldHistory(history) {
  */
 async function processWithAI(userMessage, session, conversationHistory = []) {
   const language = session?.restaurant?.agent_language || session?.restaurant?.language || session?.language || 'pt';
-  const currentDateTime = getCurrentDateTime(language);
 
   // Compress old history if it's getting long
   const rawCompressed = await compressOldHistory(conversationHistory);
@@ -435,6 +438,15 @@ async function processWithAI(userMessage, session, conversationHistory = []) {
   ]);
 
   const restaurantConfig = configResult.status === 'fulfilled' ? configResult.value?.data : null;
+  let timezone = restaurantConfig?.timezone || session?.restaurant?.timezone;
+  let currentDateTime;
+  try {
+    currentDateTime = getCurrentDateTime(language, timezone || 'UTC');
+  } catch (error) {
+    logger.warn(`Invalid restaurant timezone; requesting an explicit booking date (${error.message})`);
+    timezone = null;
+    currentDateTime = getCurrentDateTime(language, 'UTC');
+  }
   if (configResult.status === 'rejected') {
     logger.warn('Failed to load restaurant config for prompt (non-fatal):', configResult.reason?.message);
   }
@@ -447,7 +459,7 @@ async function processWithAI(userMessage, session, conversationHistory = []) {
   logger.info(`processWithAI: restaurantId=${restaurantId || 'none'} configFound=${!!restaurantConfig} configName=${restaurantConfig?.restaurant_name || 'N/A'}`);
 
   if (restaurantConfig) {
-    systemPrompt = buildWhatsAppPrompt(restaurantConfig, session, currentDateTime);
+    systemPrompt = buildWhatsAppPrompt(restaurantConfig, session, currentDateTime, timezone);
   }
 
   // Fallback to generic prompt
@@ -455,8 +467,12 @@ async function processWithAI(userMessage, session, conversationHistory = []) {
     const fallbackRestaurantName = session?.restaurant?.restaurant_name || 'the restaurant';
     const langLabel = language === 'es' ? 'Spanish' : language === 'en' ? 'English' : 'Portuguese (pt-BR)';
     systemPrompt = `You are a friendly assistant for ${fallbackRestaurantName} on WhatsApp. Help the customer warmly in ${langLabel}.\n`;
-    systemPrompt += `\nCurrent date/time: ${currentDateTime.formatted}\n`;
-    systemPrompt += `Today is ${currentDateTime.dayOfWeek}, ${currentDateTime.date}\n`;
+    if (timezone) {
+      systemPrompt += `\nCurrent date/time (${timezone}): ${currentDateTime.formatted}\n`;
+      systemPrompt += `Today is ${currentDateTime.dayOfWeek}, ${currentDateTime.date}\n`;
+    } else {
+      systemPrompt += '\nRestaurant timezone unavailable. Do not infer dates from "today" or "tomorrow"; ask for an explicit date.\n';
+    }
     systemPrompt += `\nRestaurant: ${fallbackRestaurantName}\n`;
     if (session?.sender_phone) {
       systemPrompt += `Customer's WhatsApp: ${session.sender_phone} (use as phone for reservations — don't ask for it)\n`;
@@ -524,7 +540,7 @@ async function processWithAI(userMessage, session, conversationHistory = []) {
         for (const toolCall of toolCalls) {
           const toolName = toolCall.function.name;
           const toolInput = JSON.parse(toolCall.function.arguments);
-          const toolResult = await executeTool(toolName, toolInput, session);
+          const toolResult = await executeTool(toolName, toolInput, session, { timezone, language });
 
           if (toolName === 'identify_restaurant' && toolResult.found && toolResult.restaurant) {
             session = await getSessionByPhone(session?.sender_phone);
