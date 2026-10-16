@@ -158,7 +158,7 @@ jest.mock('../_services/guestMemory', () => ({
 // ─── Env setup ────────────────────────────────────────────────────────────────
 
 process.env.WHATSAPP_VERIFY_TOKEN = 'test-verify-token';
-process.env.WHATSAPP_PHONE_NUMBER_ID = 'PHONE_ID';
+process.env.WHATSAPP_PHONE_NUMBER_ID = '123456789012345';
 process.env.WHATSAPP_ACCESS_TOKEN = 'test-access-token';
 process.env.AI_BASE_URL = 'https://openrouter.ai/api/v1';
 process.env.OPENROUTER_API_KEY = 'sk-test';
@@ -199,7 +199,7 @@ function metaBody(from, text, wamid = 'wamid.TEST123') {
           messaging_product: 'whatsapp',
           metadata: {
             display_phone_number: '+1555000',
-            phone_number_id: 'PHONE_ID',
+            phone_number_id: '123456789012345',
           },
           messages: [{
             from: from.replace('+', ''),

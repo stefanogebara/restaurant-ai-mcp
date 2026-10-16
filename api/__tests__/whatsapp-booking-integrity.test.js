@@ -57,7 +57,7 @@ const session = {
   sender_phone: '5511999999999',
   restaurant: { id: '11111111-1111-1111-1111-111111111111', restaurant_name: 'Seatable Test', language: 'pt-BR' },
 };
-const context = { providerName: 'meta', receiver: 'PHONE-ID', messageId: 'wamid.ABC' };
+const context = { providerName: 'meta', receiver: '123456789012345', messageId: 'wamid.ABC' };
 const input = {
   date: '2099-01-01', time: '19:00', party_size: 3,
   customer_name: 'Alice', customer_email: 'alice@example.test', customer_phone: 'ATTACKER-PHONE',
@@ -84,6 +84,7 @@ test('new booking uses tenant and sender from session, never the model-provided 
   const result = await executeTool('create_reservation', input, session, context);
   expect(result.success).toBe(true);
   expect(result.reservation.id).toBe('RES-REAL');
+  expect(result.confirmation_submission).toBe('accepted');
   expect(mockRpc).toHaveBeenCalledWith('book_whatsapp_reservation', expect.objectContaining({
     p_restaurant_id: session.restaurant.id,
     p_customer_phone: session.sender_phone,
@@ -92,6 +93,63 @@ test('new booking uses tenant and sender from session, never the model-provided 
   expect(mockUsage).toHaveBeenCalledTimes(1);
   expect(mockEmail).toHaveBeenCalledTimes(1);
   expect(mockButtons).toHaveBeenCalledTimes(1);
+  expect(mockButtons.mock.calls[0][3]).toEqual({ phoneNumberId: context.receiver });
+});
+
+test('a Meta send refusal is reported without pretending the committed booking failed', async () => {
+  mockButtons.mockResolvedValueOnce({ success: false, error: 'Meta rejected recipient' });
+  const result = await executeTool('create_reservation', input, session, context);
+  expect(result).toMatchObject({ success: true, confirmation_submission: 'failed' });
+  expect(result.reservation.id).toBe('RES-REAL');
+  expect(mockUsage).toHaveBeenCalledTimes(1);
+});
+
+test('a thrown notification or metering error never converts a committed booking to failure', async () => {
+  mockUsage.mockRejectedValueOnce(new Error('meter offline'));
+  mockButtons.mockRejectedValueOnce(new Error('Meta timeout'));
+  const result = await executeTool('create_reservation', input, session, context);
+  expect(result).toMatchObject({ success: true, confirmation_submission: 'failed' });
+  expect(result.reservation.id).toBe('RES-REAL');
+});
+
+test('a Twilio booking never sends confirmation from the Meta number', async () => {
+  const result = await executeTool('create_reservation', input, session, {
+    ...context, providerName: 'twilio', receiver: '+15551234567',
+  });
+  expect(result).toMatchObject({ success: true, confirmation_submission: 'channel_reply' });
+  expect(mockButtons).not.toHaveBeenCalled();
+});
+
+test.each([
+  { providerName: 'meta', receiver: '' },
+  { providerName: 'meta', receiver: 'restaurant-uuid-fallback' },
+  { providerName: 'twilio', receiver: '123456789012345' },
+])('invalid $providerName receiver refuses the booking before commit', async invalid => {
+  const result = await executeTool('create_reservation', input, session, {
+    ...context, ...invalid,
+  });
+  expect(result.success).toBe(false);
+  expect(mockRpc).not.toHaveBeenCalled();
+  expect(mockButtons).not.toHaveBeenCalled();
+});
+
+test('does not return before metering and Meta confirmation settle', async () => {
+  let finishUsage;
+  let finishButtons;
+  mockUsage.mockImplementationOnce(() => new Promise(resolve => { finishUsage = resolve; }));
+  mockButtons.mockImplementationOnce(() => new Promise(resolve => { finishButtons = resolve; }));
+  let settled = false;
+  const booking = executeTool('create_reservation', input, session, context)
+    .then(result => { settled = true; return result; });
+  for (let i = 0; i < 20 && !finishUsage; i++) await new Promise(setImmediate);
+  expect(typeof finishUsage).toBe('function');
+  expect(settled).toBe(false);
+  finishUsage();
+  for (let i = 0; i < 20 && !finishButtons; i++) await new Promise(setImmediate);
+  expect(typeof finishButtons).toBe('function');
+  expect(settled).toBe(false);
+  finishButtons({ success: true });
+  expect(await booking).toMatchObject({ success: true, confirmation_submission: 'accepted' });
 });
 
 test('model retry sees committed booking without duplicate billing or outbound confirmation', async () => {
