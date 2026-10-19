@@ -1,183 +1,157 @@
 # Estado do repositório — Seatable
 
-> Reescrito pelo `/intel` de 2026-09-07. Janela: desde o último commit de intel
-> (`0914f9e`/`e12595c`, PR #108, 2026-09-01) até `edda6b0` (2026-09-04), 29
-> commits não-merge em `main`. Fora de `main`: dois PRs abertos (`#140` draft,
-> `#90` parado há 12 dias) e quatro PRs de dependabot abertos hoje de manhã.
-> Reescrito a cada `/intel`. Fonte: o git e o GitHub, não o config.
+> Reescrito pelo `/intel` de 2026-10-19. Janela: desde o commit de intel anterior
+> nesta branch (`d3b79919`, sessão de 2026-10-12, PR #163 ainda não mergeado)
+> até hoje (`dcb7e2ec`), via merge de `main`. Reescrito a cada `/intel`. Fonte:
+> o git e o GitHub, não o config.
 
 ## O parágrafo
 
-A semana não teve feature nova — teve uma auditoria que virou caçada, e a
-caçada achou uma falha de segurança de verdade. O gatilho foi mecânico: o
-PR #111 (31/08) construiu um verificador que compara todo `.select()`/`.from()`
-do repo contra o `information_schema` real do Supabase, em vez de uma lista
-escrita à mão de "problemas já conhecidos". Rodado, ele achou **72 referências
-a colunas fantasma em 22 arquivos** — nomes de coluna que o código lê e que
-não existem na tabela. Quatro rodadas de correção (PRs #114, #129, #131, #132)
-fecharam a lista até zero, e no meio da terceira apareceu o achado sério:
-`verify-session.js` pedia `customer_email` de uma coluna que não existe em
-`restaurant_config` (a real é `email`); o `SELECT` falhava inteiro, o bloco de
-posse era pulado e **qualquer usuário autenticado lia a sessão de checkout do
-Stripe de qualquer outro dono** — e-mail, valor, plano — só por ter o
-`session_id`. Corrigido e testado (7 testes, 3 provados vermelhos contra a
-versão antiga). No mesmo lote: o agente de voz nunca lia a config do
-restaurante (7 colunas erradas, `configForPrompt` sempre caía no fallback
-genérico), as campanhas pós-visita nunca enviaram nada desde sempre
-(`service_records` não tem `customer_email` nem `completed_at`), `whatsapp-
-settings.js` sempre mostrava zero de uso, e `customer_history` — já registrada
-como morta no `CLAUDE.md` — teve o mapeamento confirmado contra produção e o
-erro parou de ser engolido em silêncio (o modelo de no-show continua tratando
-todo cliente como novo; repontar para `customer_ltv` foi deixado como decisão
-de produto, não bug). Em paralelo, a Olímpia teve sua própria rodada de
-correção de mira: a regex de celular inventava número a partir de classe CSS
-e float de JSON (10 de 19 sites testados davam falso positivo), a caça ficava
-travada sem `SCRAPINGDOG_API_KEY` mesmo tendo um leitor grátis, e uma casa de
-culto (2926 avaliações) quase recebeu intro comercial por entrar no ICP pelo
-início do nome. Por baixo disso, duas frentes de custo do `CLAUDE.md` foram
-atacadas de vez: 36 funções de cron viraram 3 despachantes (191→159 funções,
-15min→11min de build) e o build passa a pular quando o commit não toca nada
-servido (medido: 80,8% do CPU do ciclo). E a segurança de dependência foi
-zerada — 50 vulnerabilidades (`npm audit fix`, sem `--force` exceto `sharp`) —
-com scan automático configurado pela primeira vez.
+**O achado operacional é, pela quinta vez, o mesmo, e agora passou de "represado"
+para "esquecido": o PR #163 está aberto há 21 dias desde a primeira promessa de
+"pronto pra revisão" (05/10), com zero review, zero comentário humano, zero commit
+entre 12/10 e hoje.** Esta rodada repete a decisão das quatro anteriores — não abrir
+um sexto PR paralelo, continuar na mesma branch `intel/2026-09-28` — e mescla os 22
+commits que `main` ganhou nesse meio-tempo. Fora do `/intel`, a semana foi das mais
+produtivas do repositório: um sprint sustentado de "verdade na interface" (14 PRs,
+10-12 a 10-16, majoritariamente `codex/*` mergeados no mesmo dia de abertura) que
+reescreveu LTV/valor do cliente, aposentou dois endpoints que liam coluna inexistente
+havia tempo (`/api/revenue` legado e o endpoint global de `customer-dna`), corrigiu
+estados de waitlist/floor-plan/reports no mobile para não fingir dado que não existe,
+e terminou numa correção de segurança concreta: a reserva por WhatsApp tinha uma
+condição de corrida de capacidade e podia duplicar por retry de modelo ou replay de
+webhook — corrigida com uma função transacional no banco (idempotência + checagem de
+capacidade sob a mesma transação, migration `20261016184431_whatsapp_booking_integrity.sql`,
+PRs #201-204). A própria implementação documenta o que ainda falta, em
+`docs/plans/2026-10-16-whatsapp-booking-integrity.md`: os caminhos de reserva por
+dashboard, web, voz e Google **não passam pela mesma função** e continuam sem a
+mesma proteção, e a confirmação de WhatsApp de saída continua "fire-and-forget",
+sem recibo durável. No dia seguinte (16/10), um PR novo e ainda aberto (#205) fechou
+uma segunda falha na mesma área: até então, saber o `reservation_id` bastava para
+cancelar ou modificar a reserva de **qualquer** hóspede pelo WhatsApp — agora as três
+tools exigem que o telefone autenticado do remetente bata com o telefone gravado.
 
 ## O que shipou
 
-- **A auditoria de colunas fantasma, do gatilho ao zero** (#111→#114→#129→
-  #131→#132): `schema-snapshot.json` (colunas reais de 17 tabelas, tiradas do
-  `information_schema` de produção) substitui o allowlist manual de
-  `audit:phantom-columns`. 72 referências corrigidas em 22 arquivos. A mais
-  séria: `verify-session.js` deixava qualquer usuário logado ler a sessão de
-  checkout do Stripe de outro dono (e-mail, valor, plano) — o `error` do
-  Supabase nunca era lido, o `SELECT` falhava calado, o gate de posse nunca
-  rodava. Também corrigido: o agente de voz nunca lia a config real do
-  restaurante (7 colunas erradas em `elevenlabs-agent-create.js`); campanhas
-  pós-visita e pedido de review no Google nunca saíram (`service_records` sem
-  `customer_email`/`completed_at` — `completed_at` na verdade é
-  `actual_departure`); contador de uso do WhatsApp sempre zero; `handoff_to_
-  human` (do #109) respondia em inglês para cliente brasileiro porque o
-  fallback de restaurante também lia coluna errada (`language`/`restaurant_
-  slug` em vez de `agent_language`/`slug`). `customer_history` confirmada
-  morta (schema `restaurant`, zero linhas, `restaurant_id` não existe) — LGPD
-  deletion corrigido, erro passa a subir em vez de virar "cliente novo" em
-  silêncio; repontar o no-show model para `customer_ltv` fica em aberto, por
-  decisão.
-- **Cron: 36 funções → 3 despachantes** (#135) — `api/_crons/` (não vira
-  função própria) + `run.js`(60s)/`run-2min.js`/`run-5min.js`, agrupados por
-  teto de `maxDuration`. 191→159 funções, build 15min→11min. `health.js`
-  ficou standalone de propósito (não tem cron, mover quebraria `GET /api/
-  cron/health`). **`vercel.json` mudou de rota **e** de cadência** — o
-  `CLAUDE.md` ainda documenta caminhos diretos (`/api/cron/check-late-
-  reservations` etc.) e frequências antigas; hoje `sync-conversation-data` e
-  `validate-conversations` rodam de hora em hora (eram `*/15`), `send-
-  feedback` também (era 30 min), e a tabela do `CLAUDE.md` nem lista boa parte
-  dos 39 crons reais (a maioria da Olímpia). Não é `intel.config.json`, é
-  `CLAUDE.md` — fica registrado aqui, não é deste pipeline corrigir.
-- **Build pulado quando nada servido muda** (#128) — Ignored Build Step mede
-  `vite build` (38s) contra o empacotamento de função (~13min de 191 funções);
-  9 dos últimos 38 commits antes desta mudança eram só doc/lição/intel.
-  Falha para o lado de construir (git raso, sem base, qualquer erro → builda).
-- **Segurança de dependência zerada** (#117, #124, #133, #136 em sequência) —
-  50 vulnerabilidades (20 raiz, 30 client) a zero via `npm audit fix` sem
-  `--force` (exceto `sharp`, dev-only, bump maior testado à mão). Duas
-  dependências fantasma achadas no caminho: `node-fetch` (só transitiva do
-  SDK Anthropic, virou `fetch` nativo — o bump do SDK para 0.122 já tinha
-  quebrado 4 rotas do ElevenLabs por isso) e `jsonwebtoken` (só transitiva do
-  Twilio, autentica todo JWT do repo — um bump de SMS derrubaria login). Scan
-  de dependência (`dependabot.yml`, agrupado por ecossistema) configurado pela
-  primeira vez — o repo tinha três lockfiles e zero scan.
-- **CodeRabbit revisando de verdade** (#116) — `auto_review.drafts` estava
-  `false`; como todo PR desta esteira nasce draft, nada era revisado, sete PRs
-  seguidos saíram verdes por "review skipped" — inclusive PRs mexendo em RLS
-  e WhatsApp. Corrigido. Registrado no cabeçalho: o repo também está abaixo do
-  corte de 10 estrelas que libera revisão automática por padrão do plano —
-  isso não tem correção por YAML.
-- **9 tabelas expostas via RLS fechadas** (#112) — 4 de fato tinham grant para
-  `anon`/`authenticated` (das 9 que o advisor apontou). A mais séria:
-  `restaurant.stripe_connect_accounts` era `SELECT` para qualquer usuário
-  **logado**, vazando `stripe_account_id`/`payouts_enabled` dos 65
-  restaurantes entre inquilinos.
-- **CI: live-smoke falha rápido e sem vazar credencial** (#137) — estava
-  vermelho em 100% das runs desde 02/09 por dois secrets faltando
-  (`SANDBOX_EMAIL`/`SANDBOX_PASSWORD`), e a revisão pegou que a correção
-  original vazava a senha para todo passo do job (`npm ci` incluído). Trocado
-  por flag de presença; valor só chega aos passos de login.
-- **e2e: 536 testes e 0 rodavam** (#90, ainda aberto — ver "em voo") — um spec
-  do Racha lia um `.env` do Windows local no carregamento do módulo; `ENOENT`
-  derrubava a coleta do Playwright inteira antes de qualquer teste existir.
-- **Prospecção — três acertos de mira**: regex de celular parava de inventar
-  número a partir de CSS/JSON (#113, 0%→100% de precisão em 19 sites reais);
-  caça ao celular deixou de depender de `SCRAPINGDOG_API_KEY` como trava dura
-  — leitor grátis primeiro, pago só quando o grátis não achou (#138, 82% dos
-  sites abrem com o grátis); link de WhatsApp do Elementor reconhecido, dedup
-  de intro cruza o lote inteiro (não só dentro da rodada — `+5511946310342`
-  tinha recebido 7 intros em um mês), e ICP para de aceitar casa de culto pelo
-  início do nome (#139).
+- **Sprint de verdade na interface, 14 PRs em 4 dias (10-12 a 10-16, `codex/*`,
+  merge no mesmo dia de abertura de cada um)** — `fix(revenue)`: `/api/revenue`
+  aposentado com 410 autenticado (usava colunas que não existem mais no schema
+  atual); `fix(customers)`: endpoint global `customer-dna` aposentado e isolado
+  por wiki/tenant; `fix(ltv)`: página de valor do cliente reconstruída —
+  projeção rotulada como estimativa (não receita coletada), moeda explícita,
+  botão de envio em massa removido, ação de trends obsoleta aposentada (também
+  lia coluna que não existe); `fix(team)`: convites confiáveis + gestão mobile;
+  `fix(floor-plan)`: canvas mobile usável, toque sem escrita indevida;
+  `fix(waitlist)`: estado de espera e timer mostrados com honestidade (sem
+  fingir "ativo" quando está gated); `fix(reports)`: relatório mobile com
+  período delimitado, PDF entregue de forma privada; `fix(dashboard)`: churn
+  mostrado como score, não como fato definitivo; `fix(proactive)`: rascunho de
+  contato novo ancorado em fatos conhecidos (não inventa histórico);
+  `fix(settings)`: fuso horário atual mostrado com veracidade; `fix(calls)`/
+  `fix(customers)`: período, paginação e estado mobile alinhados entre Call
+  Tracking e Customers; `fix(mobile)`: navegação inferior única (sem
+  duplicação de menu). Tema comum, confirmado em `tasks/lessons.md`: "não
+  declarar uma página pronta só porque não tem overflow" e "uma entrega
+  isolada não encerra uma reforma contínua" — o próprio Stefano pediu
+  continuidade superfície por superfície sem pausar a cada PR.
+- **Reserva por WhatsApp deixa de ter condição de corrida de capacidade**
+  (PRs #201-204, 16/10, migration `20261016184431_whatsapp_booking_integrity.sql`)
+  — nova função transacional, `service_role`-only, dá identidade de idempotência
+  estável a cada comando de reserva (retry de IA ou replay de webhook não cria
+  reserva duplicada) e checa capacidade de assento sob a mesma transação (duas
+  reservas concorrentes pelas últimas vagas não podem as duas vencer). Testada
+  contra Postgres descartável nas duas ordens de lock, replay, cancelamento/
+  reserva nova, e recusa por capacidade. Documentado explicitamente em
+  `docs/plans/2026-10-16-whatsapp-booking-integrity.md` o que **não** está
+  coberto: isolamento receptor→restaurante (P1 separado), os caminhos de
+  dashboard/web/voz/Google que escrevem reserva direto sem passar por esta
+  função, e a confirmação de saída do WhatsApp, que continua fire-and-forget
+  sem recibo durável.
+- **Correção mecânica em `intel.config.json`** — a linha de `known_gaps` sobre
+  lembrete/campanha de WhatsApp hardcoded ainda citava `api/cron/send-
+  reminders.js`, caminho que não existe desde a consolidação de crons do PR
+  #135 (setembro); o arquivo real é `api/_crons/send-reminders.js`. A
+  `BACKLOG.md#twilio-bulk-lembretes` já tinha essa âncora corrigida desde
+  14/09 — só o `known_gaps` ficou com a referência órfã. Corrigida nesta
+  rodada; o gap em si (roteamento hardcoded, sem checar `whatsapp_provider`)
+  continua real e sem mudança.
 
 ## O que está em voo
 
-- **PR #140** (draft, aberto 06/09, mergeable): landing fotográfica em três
-  tempos (`PhotographicHero`/`LiveServiceCanvas`/`CinematicServiceStory`),
-  teste de envio de WhatsApp que não vira pesquisa, e uma lição registrada —
-  oito rodadas de crítica sem a nota mexer até resolver o laço estrutural
-  (artefato repetido, CTA preso num mock) em vez da lista item a item. Achado
-  lateral que vale registrar: o mock anterior repintava reservas planejadas
-  como se fossem o estado real da noite — sem nenhum no-show numa página que
-  vende exatamente a detecção disso.
-- **PR #90** (aberto desde 26/08, 12 dias, não-draft, `mergeable_state:
-  unknown` — base desatualizada, roda sobre `b33944b`, bem antes desta
-  janela): remove dois specs do Racha que faziam a suíte e2e inteira falhar
-  coleta (0 testes coletados) e que, sem configuração, disparavam contra o
-  ambiente de produção de **outro produto**. Correção pequena (42+/8-, 4
-  arquivos) e isolada; parece só esperando merge.
-- **4 PRs de dependabot** abertos nesta manhã (09-07): #141–#144, bumps de
-  rotina em `producao`/`desenvolvimento`, raiz e client.
-- **Eval do Manager AI** (20 casos, PR #99 de duas semanas atrás) — arnês
-  pronto, ainda não rodado; segue faltando `OPENROUTER_API_KEY` e login neste
-  ambiente.
-- **G5 — onboarding em conversa** segue como estava no `STATE.md` anterior:
-  fundação escrita, endpoint que liga (`api/onboarding/agent.js`) e promoção
-  atômica do demo ainda não existem. Nenhum commit desta janela tocou
-  `onboarding-agent.js`/`onboarding-draft.js`/`agent-loop.js`.
+- **PR #163→continuado (este trabalho)** — 21 dias desde "pronto pra revisão"
+  (05/10), zero review humano, zero atividade entre 12/10 e hoje. Quinta
+  rodada seguida registrando o mesmo bloqueio de processo.
+- **PR #205** (aberto 16/10, 3 dias, `mergeable_state: clean`, não-draft):
+  fecha a falha de autorização descrita acima (qualquer um podia
+  cancelar/modificar reserva de outro hóspede sabendo só o ID). Ainda sem
+  review — é o PR mais novo e mais claramente pronto da lista.
+- **PR #169** (draft, aberto 05/10, agora **14 dias**, `mergeable_state: dirty`,
+  zero commit desde a criação): continua bloqueado de propósito — carrega o
+  mesmo número de telefone duplicado entre 2 restaurantes em produção, nunca
+  resolvido, e ainda precisa reconciliar com o que o PR #177 (já mergeado em
+  setembro) deixou em `api/phone-integration-simple.js`.
+- **PR #165** (draft, aberto 30/09, agora **19 dias**, `mergeable_state: dirty`):
+  WIP de redesenho de Insights, sem commit novo desde 10/10 (9 dias parado).
+  Nota de crítica mais recente (6.5/10 desktop, 6.8/10 mobile, 5.5/10
+  database-only) segue abaixo da barra de 9/10 que o próprio PR define como
+  critério de merge. Provavelmente mais conflitante agora, dado que o sprint
+  de verdade na interface tocou Reports/Customers/LTV em paralelo.
+- **PR #140** (draft, aberto 06/09, agora **43 dias**): landing fotográfica,
+  seguindo sem decisão do Stefano sobre se é intencional ou esquecida — sem
+  mudança desde a última passada.
+- **PR #90** (aberto 26/08, agora **54 dias**, `mergeable_state: unknown`):
+  o item mais velho da lista, zero commit/comentário desde a criação. Pequeno
+  (42+/8-), isolado, remove dois specs do Racha que zeravam a coleta e2e.
+- **4 PRs de dependabot abertos**: #168 (05/10, 14 dias), #198 e #199 (13/10,
+  6 dias), #206 (19/10, hoje) — nenhum revisado em nenhuma passada até agora.
+- **7 issues `[design-drift]`** (#2-#8) — seguem abertas e paradas desde 25/05,
+  agora **~147 dias**.
+- **Eval do Manager AI** (PR #99) — segue bloqueado por `OPENROUTER_API_KEY`
+  ausente neste ambiente; sem mudança.
+- **BACKLOG.md em aberto, sem spike rodado:** `elevenlabs-queueing` (21/09),
+  `ia-liga-pro-restaurante` (28/09), `elevenlabs-parallel-tool-calls` (28/09),
+  `elevenlabs-on-openrouter` (12/10), `twilio-bulk-lembretes` (31/08),
+  `ucp-catalogo-legivel`, `identidade-reserva-externa`, `tool-evento-privado`
+  (24/08). Nenhum commit desta janela fecha algum destes — os arquivos que o
+  sprint de verdade tocou (`ltv.js`, `guest-profile.js`, `message-sender.js`)
+  foram por honestidade de exibição/fuso, não pela lógica que os spikes
+  descrevem.
 
 ## O que morreu
 
-- Nada foi removido de propósito nesta janela — foi tudo correção de dado
-  errado, não descarte de feature. A exceção é a lista de conhecidos-ruins do
-  `audit:phantom-columns` (3 tabelas escritas à mão), substituída pelo
-  `schema-snapshot.json` gerado do banco real.
+- **`/api/revenue` (endpoint manual legado)** — aposentado com 410 autenticado;
+  usava colunas que o schema atual não tem. `/api/revenue-stats` e o caminho
+  de POS continuam intactos.
+- **Endpoint global de `customer-dna`** — aposentado/isolado por tenant; ação
+  de "trends" do LTV também aposentada (consultava coluna obsoleta).
 
 ## Áreas quentes
 
-`api/_lib/audit/phantom-columns` (e o `schema-snapshot.json` que o alimenta),
-`api/_lib/prospecting/*` (regex de celular, caça ao JSON, dedup entre
-rodadas), `api/_crons/*` + `api/cron/run*.js` (a nova forma de todo cron), `.
-github/workflows/live-smoke.yml`, `.github/dependabot.yml`, `api/verify-
-session.js` (segurança — vale revisão extra no próximo toque).
+`docs/intel/*` — quinta semana seguida como área quente de **processo**: o
+problema não é falta de trabalho (14+5 PRs reais entraram em `main` nesta
+janela), é especificamente este PR de intel não ser revisado, agora por três
+semanas corridas sem nenhum commit entre passadas.
+`api/_services/whatsapp/*` — dois PRs de segurança/integridade em sequência
+(idempotência+capacidade em #201-204, posse de hóspede em #205) na mesma
+área; vale revisão extra no próximo toque, inclusive dos caminhos ainda não
+cobertos (dashboard/web/voz/Google) que o próprio plano documenta como gap.
+`api/phone-integration-simple.js` — segue precisando de reconciliação entre
+o que o PR #177 (mergeado) já mudou e o que o PR #169 (draft, bloqueado)
+ainda carrega sem resolver.
 
 ## Divergências com o config
 
-Nenhuma linha de `bets`, `known_gaps` ou `settled` foi tocada nesta janela por
-decisão de julgamento — o que segue é o que dá para aplicar sozinho, por ser
-o que o próprio texto do `known_gaps[6]` (customer_history) já previa:
+Uma correção mecânica aplicada (ver "O que shipou": âncora órfã de
+`api/cron/send-reminders.js` em `known_gaps`, corrigida para
+`api/_crons/send-reminders.js` — fato verificável no filesystem, não
+julgamento). Nenhuma linha de `bets` ou `settled` tocada.
 
-1. **`customer_history` — buraco documentado só em `CLAUDE.md`, faltava em
-   `known_gaps`; acrescentado agora, mecânico.** O `CLAUDE.md` já registrava
-   a tabela como morta ("erra 42P01 em silêncio"), mas o `intel.config.json`
-   não tinha essa entrada. PR #115 (2026-09-02) corrigiu metade do problema:
-   o erro agora sobe para quem chama, em vez de virar `null`/"cliente novo"
-   sem rastro, e a exclusão LGPD (`data-deletion.js`) passou a usar
-   `.schema('restaurant')` e parar de filtrar por uma coluna (`restaurant_id`)
-   que a tabela não tem. O que **não** mudou: o modelo de no-show ainda trata
-   todo cliente como novo — o mapeamento para `customer_ltv` está pronto
-   (`total_visits`, `last_visit_date`, `avg_party_size` existem lá) mas não
-   foi aplicado, por ser decisão de produto e não bug. Acrescentado ao
-   `known_gaps` do `intel.config.json` nesta passada — é adição de fato
-   verificável no git, não remoção nem alteração de entrada existente.
-2. **`CLAUDE.md` (fora do `intel.config.json`, registrado aqui por não ter
-   outro lugar):** a tabela de cron jobs ficou desatualizada pelo próprio
-   #135 desta janela — rotas mudaram de endpoint direto para `/api/cron/
-   run?job=`, e pelo menos três cadências mudaram (`sync-conversation-data`,
-   `validate-conversations`: `*/15`→hora em hora; `send-feedback`: 30min→hora
-   em hora) sem que a doc acompanhasse. Fora do escopo deste pipeline
-   (`docs/intel/` + `intel.config.json`) corrigir — só registrar que existe.
+**Candidato a `known_gaps` novo, não aplicado por exigir julgamento:** o
+próprio `docs/plans/2026-10-16-whatsapp-booking-integrity.md` documenta, nas
+palavras de quem fez o trabalho, que a proteção de idempotência/capacidade
+da reserva por WhatsApp **não** se estende aos caminhos de dashboard, web,
+voz e Google (que seguem escrevendo reserva direto, sem a mesma admissão) e
+que a confirmação de saída do WhatsApp segue fire-and-forget, sem recibo
+durável. Isso é um gap novo e concreto, mas decidir se vira linha de
+`known_gaps` — e como fundir com o gap já existente de roteamento hardcoded
+de WhatsApp — é chamada do Stefano, não deste pipeline.

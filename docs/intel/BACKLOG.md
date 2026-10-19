@@ -5,6 +5,240 @@ têm âncora verificada. Estado do repositório em `STATE.md`.
 
 ---
 
+### elevenlabs-on-openrouter — Consolidar TTS avulso na chave que já pagamos
+**Origem:** INTEL 2026-10-12 · **Veredito:** PROTOTIPAR 11/15 (P3 A3 D2 E2 L1)
+**Fonte:** [OpenRouter, 07/10](https://openrouter.ai/blog/announcements/elevenlabs-on-openrouter/)
+
+**O mecanismo:** a OpenRouter passou a expor 9 modelos de TTS e 2 de STT da ElevenLabs
+(`POST /api/v1/audio/speech` e `/audio/transcriptions`), autenticados com a própria
+`OPENROUTER_API_KEY`, preço pass-through da tabela ElevenLabs sem markup (50% de desconto
+promocional até 19/10). Não é o motor conversacional (Agents Platform) que atende telefone —
+é TTS/STT avulso, encadeável manualmente.
+
+**Por que dói mesmo sendo avulso:** dois call sites do repo já fazem exatamente a chamada que
+isto substituiria, direto pra `api.elevenlabs.io` com `xi-api-key`: `sendVoiceNote` em
+`api/_lib/briefing-sender.js` (linhas ~95-137, narra o briefing de voz por WhatsApp) e
+`api/elevenlabs-preview.js` (linha ~90, preview de voz no painel). Migrar os dois consolidaria
+numa única chave (`OPENROUTER_API_KEY`, já usada por `ai-client.js`) e tornaria
+`ELEVENLABS_API_KEY` dispensável para esses dois caminhos — sem tocar o pipeline de voz
+principal (Twilio→Fly.io→ElevenLabs Agents Platform), que não é afetado por este anúncio.
+
+**Hipótese:** se `sendVoiceNote` e `elevenlabs-preview.js` forem migrados para
+`POST https://openrouter.ai/api/v1/audio/speech`, então o áudio gerado (voz "Jessica",
+`eleven_multilingual_v2`, PT-BR) fica indistinguível em qualidade/latência do caminho atual, e
+a chave direta da ElevenLabs deixa de ser necessária nesses dois pontos.
+
+**Spike:** script isolado fora do repo chamando os dois endpoints (ElevenLabs direto vs.
+OpenRouter `/audio/speech`) com o mesmo texto PT-BR de um briefing real e o `voice_id`
+`cgSgspJ2msm6clMCkdW9`; comparar tamanho/duração do MP3, latência round-trip e `usage.cost`
+reportado. Se os números baterem, trocar o `fetch` em `briefing-sender.js` por trás de uma
+flag. **Caixa de tempo: 3h.**
+
+**Medir:** latência via OpenRouter ≤20% mais lenta que direto, e `usage.cost` batendo com a
+tabela de preço ElevenLabs pass-through em pelo menos 5 textos de teste.
+
+**Parar se:** `eleven_multilingual_v2` não estiver mapeado 1:1 no catálogo de 9 modelos da
+OpenRouter, ou a latência adicional passar de 1s por chamada (briefing roda em cron, não em
+tempo real — tolerância é alta, mas acima disso não compensa a troca).
+
+**Toca:** `api/_lib/briefing-sender.js`, `api/elevenlabs-preview.js`
+**Status:** aberto
+
+**Atualização 2026-10-19 — confirmado: não é roteamento de voz conversacional, mas ganha um
+detalhe de privacidade de graça.** Verificado na doc de API real (não só o changelog) que
+`SpeechInput`/`SpeechTurn` (06/10) servem só para narração multi-locutor num único request
+síncrono — texto ou array de turnos com voz/instruções próprias, ainda request→resposta única,
+sem sessão nem STT acoplado; suportado por Gemini TTS/Fish Audio, não confirmado para
+ElevenLabs. `judge_model` do `SwitchyardRouterPlugin` (06-07/10) é roteamento de **texto**
+(`/chat/completions`), não tem relação com áudio — fora do escopo deste item. O que é real e
+barato: `STTRequest`/`SpeechRequest` ganharam `zdr` (zero data retention) e `data_collection`
+(`'deny'|'allow'`) em `provider.*` — dá pra somar `provider: { zdr: true, data_collection:
+'deny' }` ao request de migração já planejado, melhorando a postura de LGPD no caminho
+ElevenLabs-via-OpenRouter sem custo extra. Soma 1h ao timebox do spike (total 4h): testar com
+e sem o bloco `provider`, parar se a API devolver 400/404 por nenhum provider ElevenLabs
+atender `zdr`/`data_collection` (a migração em si segue válida sem a flag). Pipeline continua
+intocado — `settled` "OpenRouter é o provedor único de LLM" não é afetado.
+
+---
+
+### ia-liga-pro-restaurante — Quando quem liga pro Seatable também é uma IA
+**Origem:** INTEL 2026-09-28 · **Veredito:** PROTOTIPAR 11/15 (P2 A2 D3 E2 L2)
+**Fontes:** [TechCrunch, 17/09](https://techcrunch.com/2026/09/17/rival-ai-agents-instinct-and-metas-muse-both-add-the-ability-to-make-calls/) · [TechCrunch (Gemini), 24/09](https://techcrunch.com/2026/09/24/google-tests-letting-gemini-make-phone-calls-initially-for-us-pixel-owners/) · [CNN/ABC17, 23/09](https://abc17news.com/money/cnn-business-consumer/2026/09/23/now-ai-is-trying-to-gobble-up-dinner-reservations/) · [NBC News, 28/09](https://www.nbcnews.com/tech/tech-news/trying-get-restaurant-reservation-get-ready-compete-ai-agents-rcna599738) · [PYMNTS (Série C), 28/09](https://www.pymnts.com/startups/2026/instinct-ai-assistant-targets-10-billion-dollar-valuation/)
+
+**O mecanismo:** Instinct (feature "Concierge") e Meta Muse ganharam a capacidade de LIGAR
+para negócios em nome do usuário — o caso de uso citado explicitamente é "restaurante que
+não aceita reserva online", o público exato do Seatable. O Google testa "Call for Me" no
+Gemini: a IA disca do próprio número do usuário via app Telefone do Android (beta, só Pixel
+11, só EUA, só assinante pago), com transcrição ao vivo e opção de retomada humana, para
+checar estoque, remarcar hora ou reservar mesa. A Resy confirma que bane contas cujo agente
+Instinct martela a API "centenas de vezes por hora" — ToS "não permite atualmente bots ou
+agentes de terceiros não aprovados". Cinco semanas depois de captar US$250M a US$2,5bi, o
+Instinct captou **US$1 bilhão em Série C a US$10 bilhões de valuation** (28/09, confirmado
+por múltiplas fontes financeiras independentes com o mesmo número — 100mil+ usuários,
+limite de capacidade computacional como causa da rodada).
+
+**Correção ao candidato original:** a alegação de que a Resy tem integrações *aprovadas* com
+ChatGPT/Claude **não se confirma** na fonte CNN/ABC17 — refeito o fetch duas vezes, a única
+menção a esses nomes é uma comparação estilística de tom, não uma parceria. Tratar como não
+verificado até achar fonte primária. O corpo do artigo da NBC (28/09) também não carregou
+via WebFetch — só manchete e legenda do case study do Izakaya Seki foram recuperáveis.
+
+**Por que promove — e por que substitui o item de 2026-09-09 (5/15) em vez de só somar:** a
+entrada anterior do Radar cobria só o incidente pontual do banimento, com veredito "sem
+âncora — Seatable não opera como agente de terceiro contra APIs de reserva alheias". Isso
+continua verdadeiro e não muda. O que inverteu a direção: não é mais sobre o Seatable agindo
+como bot contra a Resy, é sobre IAs de terceiros **ligando pra dentro** do próprio pipeline
+de voz do Seatable (`api/twilio-voice-connect.js`, `api/_voice-server/`) — isso tem âncora
+real, e escala junto com a Série C de US$1bi e o rollout do Gemini.
+
+**Hipótese:** se um chamador com cadência de fala de IA (sem hesitação, sem pausas de
+preenchimento, ritmo constante) ligar para o pipeline de voz do Seatable, então o
+`server_vad` hardcoded (`threshold: 0.5`, `silence_duration_ms: 500`) em
+`api/_voice-server/backends/openai-realtime.js` erra detecção de fim-de-turno com
+frequência maior do que para um chamador humano.
+
+**Spike:** gerar 10 áudios TTS com cadência "de IA" (sem hesitação) e 10 com cadência humana
+(pausas, "eh"); discar o número de teste Twilio do Seatable com cada um; contar interrupções
+indevidas e falhas de resposta em até 2s após o fim real do turno. **Caixa de tempo: 4h.**
+
+**Medir:** taxa de falha de turno (% de trocas com corte indevido ou sem resposta em 2s) —
+sucesso do spike é confirmar se a cadência-IA falha ≥2x mais que a cadência-humana.
+
+**Parar se:** a taxa de falha para cadência-IA for igual ou menor que a cadência-humana — o
+VAD hardcoded já absorve o caso, e a urgência cai de volta pro known_gap geral de
+instrumentação de voz, sem item novo.
+
+**Toca:** `api/twilio-voice-connect.js`, `api/_voice-server/ws-server.js`,
+`api/_voice-server/backends/openai-realtime.js`, `api/_voice-server/session-manager.js`
+**Status:** aberto
+
+---
+
+### elevenlabs-parallel-tool-calls — `enable_parallel_tool_calls` nasce `true` sem nossa escolha
+**Origem:** INTEL 2026-09-28 · **Veredito:** PROTOTIPAR 11/15 (P3 A3 D1 E2 L2)
+**Fonte:** [ElevenLabs Changelog, 21/09](https://elevenlabs.io/docs/changelog/2026/9/21)
+
+**O mecanismo:** o changelog de 21/09 (confirmado no HTML bruto, não só no resumo
+renderizado) traz três mudanças na Conversational AI API: (1) `gpt-6-astra` vira opção de
+LLM para agentes; (2) o payload de criação de agente ganha `enable_parallel_tool_calls`
+(boolean, **default `true`**) — "quando ligado, modelos suportados podem executar múltiplas
+tools num único turno"; (3) `is_final_audio_for_turn` passa a ser emitido de forma
+confiável para todo formato de áudio bufferizado (MP3/Opus incluídos, antes só PCM tinha
+essa garantia).
+
+**Por que promove:** `enable_parallel_tool_calls` reincide exatamente no padrão de risco já
+documentado no próprio código como comentário (`elevenlabs-agent-create.js:890-899`) do
+incidente de 24/08, quando `mic_muting_enabled`/`transcript_enabled` mudaram de default em
+silêncio. Hoje **zero ocorrência** do campo no repo — todo agente criado a partir de agora
+nasce com paralelismo de tools ligado, sem que uma linha nossa tenha mudado. As 8 tools em
+`api/_voice-server/tool-handler.js` são todas de reserva **sequencial**
+(`check_availability` → `create_reservation`), então paralelismo aqui é risco, não ganho.
+
+**`is_final_audio_for_turn` não tem âncora hoje, e a razão é arquitetural:** para chamada
+por telefone (motor ElevenLabs, o default), `api/twilio-voice-connect.js` chama
+`POST /v1/convai/twilio/register-call` e devolve a TwiML da própria ElevenLabs — o Twilio
+conecta direto ao WebSocket deles; `api/_voice-server/ws-server.js` (Fly.io) nunca vê esse
+tráfego, e seu `createBackend()` só sabe instanciar `OpenAIRealtimeBackend`. O widget de
+navegador usa `@elevenlabs/react` + WebRTC, que abstrai áudio e não expõe marcadores de
+streaming raw. Endereçar o known_gap de turn-taking com esse campo exigiria trocar
+`register-call` por uma ponte WebSocket própria — decisão arquitetural maior, fora deste
+spike.
+
+**Hipótese:** se `enable_parallel_tool_calls` não for setado explicitamente, o agente herda
+`true` do fornecedor — e como as tools do produto são sequenciais por natureza, isso é
+superfície de risco sem benefício, não capacidade nova aproveitável.
+
+**Spike:** rodar 5 diálogos de reserva via `/api/elevenlabs-signed-url` forçando cenários
+onde o LLM poderia paralelizar ("verifica se tem mesa pra 4 às 20h e já reserva"); inspecionar
+logs do `VoiceToolHandler` por tool calls concorrentes na mesma sessão. Em paralelo, setar
+`enable_parallel_tool_calls: false` explícito nos dois arquivos de criação de agente e
+estender `elevenlabs-agent-create-payload.test.js` para travar o campo. **Caixa de tempo:
+4h.**
+
+**Medir:** zero tool calls concorrentes indevidas em 5 diálogos de teste; teste de snapshot
+novo passa e trava o valor escolhido.
+
+**Parar se:** em 5 tentativas de forçar o cenário o modelo (`gpt-4o-mini`, hardcoded em três
+lugares) nunca disparar tools em paralelo — o risco é teórico com o LLM atual; documentar a
+decisão e não investir mais tempo até trocar de modelo.
+
+**Toca:** `api/_services/elevenlabsAgentService.js`, `api/elevenlabs-agent-create.js`,
+`api/__tests__/elevenlabs-agent-create-payload.test.js`, `api/_voice-server/tool-handler.js`
+**Status:** aberto
+
+---
+
+### elevenlabs-queueing — Fila de chamadas ElevenLabs em vez de Hangup imediato
+**Origem:** INTEL 2026-09-21 · **Veredito:** PROTOTIPAR 12/15 (P3 A2 D2 E2 L3)
+**Fonte:** [ElevenLabs Changelog, 14/set](https://elevenlabs.io/docs/changelog/2026/9/14)
+
+**O mecanismo:** desde 14/09 os agentes ElevenLabs aceitam `platform_settings.queueing_config`
+(`enabled` boolean, default `false`; `wait_timeout_seconds` 1-1800, default 180) — quando o
+agente satura o teto de concorrência do workspace, o chamador ouve áudio de espera
+customizável (`POST/DELETE /v1/convai/agents/{agent_id}/hold-audio`) em vez de ser recusado,
+com eventos de servidor `queue_status` (`waiting`/`admitted`/`timed_out`) e `queue_wait_secs`
+separando tempo de fila de duração faturável. `platform_settings` é o mesmo objeto que
+`api/_services/elevenlabsAgentService.js:871-908` já popula em `POST /agents/create`.
+
+**Por que promove — pergunta de 24/08 ganha resposta parcial.** O item já aberto desde 24/08
+("Qual é o teto de concorrência do workspace ElevenLabs?") apontava que `ELEVENLABS_API_KEY`
+é única para todos os inquilinos — o teto é compartilhado — e que **nada no código trata
+recusa**. Confirmado agora com leitura direta: `api/twilio-voice-connect.js:299-303` — se o
+POST inicial a `register-call` falhar, a ligação recebe `<Say>` + `<Hangup/>` imediato, sem
+fila nem retry. Para um produto cuja aposta central é não perder ligação de reserva, é o modo
+de falha exato que `queueing_config` resolveria — **se** ele cobrir o fluxo Twilio nativo
+inbound, o que o changelog não confirma explicitamente (só que vive em `platform_settings`
+geral, o mesmo objeto usado por telefonia).
+
+**Hipótese:** se `platform_settings.queueing_config.enabled = true` for ligado no agente de um
+restaurante de teste, então uma segunda chamada simultânea (enquanto a primeira está em
+conversa ativa) recebe áudio de espera e é admitida depois, em vez de cair em Hangup
+imediato.
+
+**Spike:** (1) confirmar que `queueing_config` se aplica ao fluxo Twilio nativo
+(`register-call`), não só a outbound/batch/SIP — ligar duas vezes seguidas para o mesmo
+número de um restaurante de staging enquanto a primeira ligação segue ativa. (2) Se
+aplicável, adicionar o campo ao payload de `POST /agents/create` em
+`elevenlabsAgentService.js` seguindo o padrão já estabelecido no arquivo ("todo campo
+sensível a default de fornecedor vai explícito no payload" — a mesma lição do incidente de
+24/08 com `mic_muting_enabled`/`transcript_enabled`), estender
+`elevenlabs-agent-create-payload.test.js`, e repetir o teste de duas chamadas observando
+`queue_status`/`queue_wait_secs`. **Caixa de tempo: 4h.**
+
+**Medir:** a segunda chamada recebe áudio de espera (não Hangup) e é admitida dentro de
+`wait_timeout_seconds`; `queue_wait_secs` aparece no payload de metadata da conversa
+sincronizada por `sync-conversation-data`.
+
+**Parar se:** `queueing_config` não afeta o fluxo Twilio nativo (só outbound/batch/SIP) ou
+exige um tier de plano ElevenLabs que o Seatable não tem — nesse caso o item cai para
+REGISTRAR e a mitigação de perda de chamada vira problema de produto separado.
+
+**Toca:** `api/_services/elevenlabsAgentService.js`, `api/twilio-voice-connect.js:299-303`,
+`api/__tests__/elevenlabs-agent-create-payload.test.js`
+**Status:** aberto
+
+**Atualização 2026-10-19 — o fornecedor já decidiu por nós, silenciosamente.** Changelog de
+12/10 confirmado verbatim na fonte: *"New agents are created with call queueing enabled unless
+`platform_settings.queueing_config.enabled` is set explicitly. Existing agents keep their
+current setting."* — o default de `queueing_config.enabled` virou `true` para agentes **criados
+a partir de agora** (a entrada de 14/09 tinha GA'd o campo com default `false`). Confirmado por
+grep: `api/_services/elevenlabsAgentService.js:887-906` não envia `queueing_config` no payload
+de `POST /agents/create` — só popula `widget_config`. Logo, todo agente novo nasce com fila
+ligada sem que o Seatable tenha decidido ou medido isso — o mesmo tipo de campo que a lição do
+incidente de 24/08 (comentário nas linhas 891-899 do próprio arquivo) manda travar explícito, e
+ainda não foi aplicada a este campo. Ação de uma linha, independente do spike maior: travar
+`queueing_config.enabled: false` explícito em `elevenlabsAgentService.js` (mesmo padrão de
+`mic_muting_enabled`/`transcript_enabled`), preservando o comportamento testado até hoje — e só
+então decidir, com medição, se vale ligar `true` de propósito. Pré-requisito de 2h antes de
+mexer no código: confirmar via `GET /v1/convai/agents/{agent_id}` se um agente criado hoje sem o
+campo no payload realmente veio com `enabled: true` (parar se o novo default só valer para
+criação via painel/dashboard da ElevenLabs, não via API). Também confirmado nesta rodada: a
+mesma entrada de changelog adiciona `turn_prediction` como `commit_strategy` no STT realtime
+standalone da ElevenLabs — sem âncora no repo (o Seatable nunca chama esse WebSocket; telefone
+usa `register-call` opaco, OpenAI Realtime usa `server_vad` próprio), não muda este item.
+
+---
+
 ### whatsapp-transbordo-humano — Transbordo humano no canal de hóspede
 **Origem:** INTEL 2026-09-01 · **Veredito:** PROTOTIPAR 11/15 (P3 A2 D2 E1 L3)
 **Fonte:** [Baguete, 26/ago](https://www.baguete.com.br/noticias/fogo-de-chao-automatiza-atendimento-com-foodster) · [Portal Filipe Mello, 27/ago](https://www.portalfilipemello.com/2026/08/fogo-de-chao-registra-mais-de-mil.html)
@@ -176,8 +410,8 @@ lote inteiro sai numa chamada em vez de uma REST call por destinatário.
 
 **Por que dói mesmo assim:** o repo já reimplementa isso na mão, dois caminhos diferentes, nenhum
 checando a preferência real do restaurante:
-- `api/cron/send-reminders.js` — loop sequencial via Twilio, uma chamada Twilio + 500ms de espera
-  por destinatário.
+- `api/_crons/send-reminders.js` (moveu de `api/cron/` no #135, 09/09) — loop sequencial via
+  Twilio, uma chamada Twilio + 500ms de espera por destinatário.
 - `api/_services/campaignService.js` — importa `sendTemplateMessage` de
   `api/_lib/whatsapp-sender.js`, que é **Meta-only**, sem checar `whatsapp_provider` do
   restaurante.
@@ -195,7 +429,7 @@ N×(request+500ms) para uma chamada, sem perda de entregabilidade.
 
 **Spike (1 dia):** script isolado no scratchpad chamando o endpoint REST/SDK de Bulk Messaging do
 Twilio contra 5-10 números sandbox, replicando o `contentSid` + variáveis (nome, restaurante,
-horário, pax) hoje usados em `sendTemplateMessage` de `send-reminders.js`; comparar latência total,
+horário, pax) hoje usados em `sendTemplateMessage` de `api/_crons/send-reminders.js`; comparar latência total,
 taxa de sucesso, e se o fallback WhatsApp→SMS funciona quando o número não tem WhatsApp ativo.
 
 **Medir:** latência do lote cai para menos de 5s (vs. N×~1s do loop atual) e taxa de erro igual ou
@@ -207,7 +441,7 @@ tem, ou o SDK `twilio` `^5.10.3` instalado não expuser o endpoint sem chamada R
 — não vale trocar um cron de produção (lembretes de reserva) por uma dependência Public Beta sem
 SLA.
 
-**Toca:** `api/cron/send-reminders.js`, `api/_services/campaignService.js`, `api/_lib/whatsapp-sender.js`, `api/_lib/whatsapp/message-sender.js`, `api/_lib/channels/twilio-adapter.js`
+**Toca:** `api/_crons/send-reminders.js`, `api/_services/campaignService.js`, `api/_lib/whatsapp-sender.js`, `api/_lib/whatsapp/message-sender.js`, `api/_lib/channels/twilio-adapter.js`
 **Status:** aberto
 
 ---
