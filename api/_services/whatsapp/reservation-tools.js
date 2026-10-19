@@ -76,7 +76,7 @@ const RESERVATION_TOOLS = [
     type: 'function',
     function: {
       name: 'check_availability',
-      description: 'Check if a specific date, time, and party size is available for reservation',
+      description: 'Estimate availability for a date, time, and party size. This is provisional; only create_reservation confirms the slot transactionally.',
       parameters: {
         type: 'object',
         properties: {
@@ -411,15 +411,37 @@ async function executeTool(toolName, toolInput, session, inboundContext = {}) {
       const { date, time, party_size } = toolInput;
       logger.info(`[TOOL] check_availability restaurant=${session.restaurant.id?.slice(0, 8)} date=${date} time=${time} size=${party_size}`);
 
+      const requestedStart = typeof date === 'string' && typeof time === 'string'
+        && /^\d{4}-\d{2}-\d{2}$/.test(date) && /^([01]\d|2[0-3]):[0-5]\d$/.test(time)
+        ? Date.parse(`${date}T${time}:00Z`) : NaN;
+      if (!Number.isFinite(requestedStart)
+        || new Date(requestedStart).toISOString().slice(0, 10) !== date
+        || !Number.isInteger(party_size) || party_size < 1 || party_size > 100) {
+        return { success: false, error: 'Invalid date, time, or party size.' };
+      }
+
+      // Match the booking RPC's 30–360 minute window. These timestamps are
+      // local wall times represented in UTC only for arithmetic, as in SQL.
+      const configuredDuration = Number(
+        inboundContext.averageDiningDurationMinutes ?? session.restaurant.average_dining_duration_minutes,
+      );
+      const durationMinutes = Number.isFinite(configuredDuration) && configuredDuration > 0
+        ? Math.max(30, Math.min(configuredDuration, 360)) : 90;
+      const durationMs = durationMinutes * 60_000;
+      const adjacentDay = offset => new Date(requestedStart + offset * 86_400_000)
+        .toISOString().slice(0, 10);
+
       try {
         const client = supabaseAdmin;
 
-        // Get reservations for that date/time (scoped to this restaurant)
+        // The authoritative RPC counts overlapping reservations, including
+        // service windows crossing midnight. Read the same three-day span.
         const { data: reservations, error } = await client
           .from('reservations')
-          .select('id, time, party_size, status')
+          .select('date, time, party_size, status')
           .eq('restaurant_id', session.restaurant.id)
-          .eq('date', date)
+          .gte('date', adjacentDay(-1))
+          .lte('date', adjacentDay(1))
           .in('status', ['confirmed', 'seated']);
 
         if (error) {
@@ -428,39 +450,55 @@ async function executeTool(toolName, toolInput, session, inboundContext = {}) {
         }
 
         // Check if party can be accommodated using date/time-aware table logic
-        const accommodationResult = await canAccommodateParty(session.restaurant.id, party_size, { date, time });
+        const accommodationResult = await canAccommodateParty(session.restaurant.id, party_size, {
+          date, time, durationMinutes,
+        });
 
         if (!accommodationResult.success) {
           logger.error(`[TOOL_FAIL] check_availability canAccommodate: ${JSON.stringify(accommodationResult).slice(0, 200)}`);
           return { success: false, error: 'Could not check table availability — getAllTables failed' };
         }
 
-        // Check for time conflicts with existing reservations
-        const bookedAtTime = reservations?.filter(r => r.time === time) || [];
-        const bookedSeats = bookedAtTime.reduce((sum, r) => sum + (r.party_size || 0), 0);
+        let bookedSeats = 0;
+        for (const reservation of reservations || []) {
+          const start = Date.parse(`${reservation.date}T${reservation.time}Z`);
+          if (!Number.isFinite(start) || !Number.isFinite(Number(reservation.party_size))) {
+            return { success: false, error: 'Could not verify existing reservations.' };
+          }
+          if (start < requestedStart + durationMs && start + durationMs > requestedStart) {
+            bookedSeats += Number(reservation.party_size);
+          }
+        }
 
         // Get total capacity to check overall availability (scoped to this restaurant)
-        const { data: allTables } = await client
+        const { data: allTables, error: tablesError } = await client
           .from('tables')
           .select('capacity')
           .eq('restaurant_id', session.restaurant.id)
           .eq('is_active', true);
-        const totalCapacity = allTables?.reduce((sum, t) => sum + t.capacity, 0) || 30;
+        if (tablesError || !Array.isArray(allTables)) {
+          logger.error('[TOOL_FAIL] check_availability tables query', tablesError);
+          return { success: false, error: 'Could not verify table capacity.' };
+        }
+        const totalCapacity = allTables.reduce((sum, t) => sum + (Number(t.capacity) || 0), 0);
         const remainingCapacity = totalCapacity - bookedSeats;
 
         // Both conditions must be met:
         // 1. Tables can physically accommodate the party (proper combinations)
         // 2. There's enough remaining capacity at the requested time
-        const canFit = accommodationResult.can_accommodate && remainingCapacity >= party_size;
+        const canFit = totalCapacity > 0 && accommodationResult.can_accommodate
+          && remainingCapacity >= party_size;
 
         // Build response message with table info
         let message;
         if (canFit) {
           if (accommodationResult.method === 'combination') {
-            message = `Yes, we have availability for ${party_size} guests on ${date} at ${time}. We can seat you at Tables ${(accommodationResult.table_numbers || []).join(' + ')} (${accommodationResult.total_capacity} seats combined).`;
+            message = `It looks like we can seat ${party_size} guests on ${date} at ${time} at Tables ${(accommodationResult.table_numbers || []).join(' + ')}. The slot is confirmed only when the reservation is created.`;
           } else {
-            message = `Yes, we have availability for ${party_size} guests on ${date} at ${time}. We have a table that seats ${accommodationResult.total_capacity}.`;
+            message = `It looks like we can seat ${party_size} guests on ${date} at ${time}. The slot is confirmed only when the reservation is created.`;
           }
+        } else if (totalCapacity === 0) {
+          message = 'There are no active tables configured for reservations.';
         } else if (!accommodationResult.can_accommodate) {
           message = `Sorry, we cannot accommodate a party of ${party_size} guests. ${accommodationResult.reason || 'Our largest available seating option is smaller.'}`;
         } else {
@@ -470,6 +508,7 @@ async function executeTool(toolName, toolInput, session, inboundContext = {}) {
         return {
           success: true,
           available: canFit,
+          provisional: true,
           message,
           details: {
             requested_date: date,
