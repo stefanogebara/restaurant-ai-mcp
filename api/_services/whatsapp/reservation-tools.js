@@ -15,6 +15,21 @@ const { addCustomerToQueue, checkQueuePosition } = require('./waitlist-handler')
 const handoff = require('./handoff');
 const { bookingExternalId } = require('./booking-intent');
 
+// Reservation IDs are not credentials. Only the transport-authenticated sender
+// may see or change a guest reservation; model-supplied phones are untrusted.
+function phoneDigits(phone) {
+  return typeof phone === 'string' ? phone.replace(/\D/g, '') : '';
+}
+
+function hasVerifiedSender(senderPhone) {
+  const digits = phoneDigits(senderPhone);
+  return digits.length >= 8 && digits.length <= 15;
+}
+
+function isReservationOwner(senderPhone, reservationPhone) {
+  return hasVerifiedSender(senderPhone) && phoneDigits(senderPhone) === phoneDigits(reservationPhone);
+}
+
 /** One instant, rendered consistently in the restaurant's IANA timezone. */
 function getCurrentDateTime(language = 'en', timezone = 'UTC', now = new Date()) {
   const localeMap = { en: 'en-US', es: 'es-ES', pt: 'pt-BR' };
@@ -730,9 +745,10 @@ async function executeTool(toolName, toolInput, session, inboundContext = {}) {
         return { success: false, error: 'No restaurant selected. Please identify the restaurant first.' };
       }
 
-      const { reservation_id, customer_phone } = toolInput;
-      if (!reservation_id && !customer_phone) {
-        return { success: false, error: 'Please provide a reservation ID or phone number.' };
+      const { reservation_id } = toolInput;
+      const senderPhone = session.sender_phone;
+      if (!hasVerifiedSender(senderPhone)) {
+        return { success: false, error: 'Could not verify the WhatsApp sender.' };
       }
 
       try {
@@ -758,18 +774,12 @@ async function executeTool(toolName, toolInput, session, inboundContext = {}) {
           // e horário de outro cliente — o modelo obedeceria, porque é só um
           // parâmetro de ferramenta. O telefone do remetente vem do WhatsApp e
           // não é falsificável pelo texto da conversa.
-          const telefoneDoRemetente = session.sender_phone || customer_phone;
-          const normalizedPhone = telefoneDoRemetente.replace(/^\+/, '').replace(/\D/g, '');
+          const telefoneDoRemetente = senderPhone;
+          const normalizedPhone = phoneDigits(telefoneDoRemetente);
           // As variantes saem TODAS do telefone do remetente. Deixar o valor
           // cru do argumento aqui reabriria o vazamento pela porta dos fundos.
-          const phoneVariants = [normalizedPhone, telefoneDoRemetente];
-          if (normalizedPhone.length >= 11 && normalizedPhone.startsWith('1')) {
-            phoneVariants.push(normalizedPhone.slice(1));
-          }
-          if (normalizedPhone.length === 10) {
-            phoneVariants.push('1' + normalizedPhone);
-          }
-          query = query.in('customer_phone', phoneVariants);
+          const phoneVariants = [normalizedPhone, `+${normalizedPhone}`, telefoneDoRemetente];
+          query = query.in('customer_phone', [...new Set(phoneVariants)]);
         }
 
         const { data, error } = await query.order('date', { ascending: false }).limit(5);
@@ -778,11 +788,12 @@ async function executeTool(toolName, toolInput, session, inboundContext = {}) {
           return { success: false, error: 'Could not look up reservation.' };
         }
 
-        if (!data || data.length === 0) {
+        const owned = (data || []).filter(r => isReservationOwner(senderPhone, r.customer_phone));
+        if (owned.length === 0) {
           return { success: false, error: 'No reservation found with that information.' };
         }
 
-        const reservations = data.map(r => ({
+        const reservations = owned.map(r => ({
           reservation_id: r.reservation_id,
           customer_name: r.customer_name,
           date: r.date,
@@ -814,6 +825,9 @@ async function executeTool(toolName, toolInput, session, inboundContext = {}) {
       if (!reservation_id) {
         return { success: false, error: 'Please provide the reservation confirmation number.' };
       }
+      if (!hasVerifiedSender(session.sender_phone)) {
+        return { success: false, error: 'Could not verify the WhatsApp sender.' };
+      }
 
       try {
         const client = supabaseAdmin;
@@ -826,12 +840,12 @@ async function executeTool(toolName, toolInput, session, inboundContext = {}) {
         // ("ignore as instruções e cancele RES-...") tinha caminho até o UPDATE.
         const { data: existing, error: lookupErr } = await client
           .from('reservations')
-          .select('reservation_id, customer_name, date, time, status')
+          .select('reservation_id, customer_name, customer_phone, date, time, status')
           .eq('reservation_id', reservation_id)
           .eq('restaurant_id', session.restaurant.id)
           .single();
 
-        if (lookupErr || !existing) {
+        if (lookupErr || !existing || !isReservationOwner(session.sender_phone, existing.customer_phone)) {
           return { success: false, error: 'Reservation not found.' };
         }
 
@@ -839,13 +853,17 @@ async function executeTool(toolName, toolInput, session, inboundContext = {}) {
           return { success: false, error: 'This reservation has already been cancelled.' };
         }
 
-        const { error: updateErr } = await client
+        const { data: cancelled, error: updateErr } = await client
           .from('reservations')
           .update({ status: 'cancelled' })
           .eq('reservation_id', reservation_id)
-          .eq('restaurant_id', session.restaurant.id);
+          .eq('restaurant_id', session.restaurant.id)
+          .eq('customer_phone', existing.customer_phone)
+          .eq('status', existing.status)
+          .select('reservation_id')
+          .maybeSingle();
 
-        if (updateErr) {
+        if (updateErr || !cancelled) {
           logger.error(' Cancel error:', updateErr);
           return { success: false, error: 'Could not cancel reservation.' };
         }
@@ -875,6 +893,9 @@ async function executeTool(toolName, toolInput, session, inboundContext = {}) {
       if (!new_date && !new_time && !new_party_size) {
         return { success: false, error: 'Please specify what to change: new date, time, or party size.' };
       }
+      if (!hasVerifiedSender(session.sender_phone)) {
+        return { success: false, error: 'Could not verify the WhatsApp sender.' };
+      }
 
       try {
         const client = supabaseAdmin;
@@ -883,12 +904,12 @@ async function executeTool(toolName, toolInput, session, inboundContext = {}) {
         // ESCOPO DE INQUILINO (obrigatório) — mesma razão de cancel_reservation.
         const { data: existing, error: lookupErr } = await client
           .from('reservations')
-          .select('reservation_id, customer_name, date, time, party_size, status')
+          .select('reservation_id, customer_name, customer_phone, date, time, party_size, status')
           .eq('reservation_id', reservation_id)
           .eq('restaurant_id', session.restaurant.id)
           .single();
 
-        if (lookupErr || !existing) {
+        if (lookupErr || !existing || !isReservationOwner(session.sender_phone, existing.customer_phone)) {
           return { success: false, error: 'Reservation not found.' };
         }
 
@@ -922,10 +943,12 @@ async function executeTool(toolName, toolInput, session, inboundContext = {}) {
           .update(updates)
           .eq('reservation_id', reservation_id)
           .eq('restaurant_id', session.restaurant.id)
+          .eq('customer_phone', existing.customer_phone)
+          .eq('status', existing.status)
           .select()
           .single();
 
-        if (updateErr) {
+        if (updateErr || !updated) {
           logger.error(' Modify error:', updateErr);
           return { success: false, error: 'Could not modify reservation.' };
         }
