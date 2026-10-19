@@ -76,43 +76,6 @@
 
 ---
 
-### [DISCUTIR 8/15] A ANPD abre agenda regulatória de IA/decisão automatizada 2027-2028 — a janela de contribuição fecha em 11 dias
-**Data:** 2026-09-01 (consulta aberta) · **Fonte:** [gov.br/ANPD](https://www.gov.br/anpd/pt-br/assuntos/noticias/anpd-abre-ts-agenda-regulatoria-e-avaliacao-de-resultado-regulatorio) · **Eixos:** P2 A2 D1 E2 L1
-
-**O que é:** a ANPD abriu tomada de subsídios via Brasil Participativo para a Agenda Regulatória 2027-2028, com prazo até **16/10/2026** (faltam ~11 dias a partir de hoje). O eixo "Privacidade e Proteção de Dados" lista reconhecimento facial, dados de saúde e **decisões automatizadas** como temas prioritários. Não existe texto normativo ainda — é coleta de prioridades, sem obrigação nascendo da consulta em si.
-
-**Por que toca este projeto:** reserva, cancelamento e campanha do Seatable são decisão automatizada por LLM sobre dado de cliente final brasileiro. O guardrail determinístico que existe (`claim-linter.js`, `settled`) é escopado só para a prospecção (Olímpia) — o caminho de atendimento ao cliente final (`api/_services/whatsapp/conversation.js`, `reservation-tools.js`) usa só grounding de prompt, sem linter equivalente. Segunda vez em cinco semanas que a ANPD sinaliza capacidade de regular IA conversacional (depois da notificação a 22 plataformas, 25/08).
-
-**O que a fonte não prova:** nenhuma fonte menciona atendimento ao consumidor, restaurante, voz ou WhatsApp — a conexão é inferência, não afirmação da ANPD. É agenda, não norma.
-
-**A pergunta:** vale gastar meio dia submetendo contribuição na consulta pedindo proporcionalidade para PMEs que operam IA de terceiro (OpenRouter/ElevenLabs) nas futuras regras sobre decisão automatizada, ou é melhor só registrar a exposição internamente e esperar o texto normativo real de 2027-2028 antes de agir?
-
----
-
-### [DISCUTIR 8/15] Gupshup baixa a barreira de "voz+WhatsApp no-code" a US$0,035/min — mas a comparação de preço é falsa
-**Data:** 2026-09-04 · **Fonte:** [PRNewswire](https://www.prnewswire.com/news-releases/gupshup-launches-self-serve-voice-ai-platform-extending-conversational-engagement-into-phone-calls-302869131.html) · **Eixos:** P2 A1 D2 E1 L2
-
-**O que é:** a Gupshup (BSP com 50 mil+ empresas em 100+ países) abriu console self-serve no-code para montar agente de voz sobre PSTN e sobre o canal de voz do WhatsApp, STT/TTS/LLM plugáveis por fora, US$0,035/min de orquestração (100 min grátis de teste). Sem benchmark de acurácia/latência; números de escala (10bi interações/mês, 500mi chamadas/mês) são da Gupshup inteira, não do produto de voz.
-
-**Por que a comparação de preço não funciona:** US$0,035/min é só a orquestração — STT/TTS/LLM cobram por fora e o TCO real depende do que o cliente escolhe. ElevenLabs sozinho já cobra US$0,08/min fixo, antes de Twilio PSTN e LLM separados — comparar os dois números direto é enganoso. Nenhuma presença confirmada no Brasil.
-
-**Por que toca este projeto mesmo assim:** é mais um dado concreto de que "montar voz+WhatsApp" está sendo comoditizado por qualquer negócio — reforça a tese já revisada em `bets[0]` ("end-to-end é piso, não diferencial") sem ser, por si, concorrente direto de restaurante.
-
-**A pergunta:** a comoditização de voz+WhatsApp no-code (Gupshup é mais um exemplo, ao lado de Bland/Vapi/Retell) já está coberta pela revisão de `bets[0]` de 01/09. Vale abrir um spike formal de TCO (ElevenLabs+Twilio+OpenRouter por minuto vs. Gupshup+provedores escolhidos) para ter um número defensável em conversa de venda/investidor, ou é esforço gasto numa pergunta cuja resposta estratégica já está fechada?
-
----
-
-### [DISCUTIR 8/15] Supabase fecha 44 CVEs no Postgres — upgrade manual, sem prazo, sem CVE crítico contra RLS
-**Data:** 2026-09-25 · **Fontes:** [Supabase changelog](https://supabase.com/changelog/postgres-15-19-17-11-breaking-changes) · **Eixos:** P2 A2 D1 E2 L1
-
-**O que é:** Supabase empacotou cinco ciclos de segurança upstream do Postgres (15.14→15.19, 17.6→17.11), fechando 44 CVEs. Só dois são nomeados: CVE-2026-14663 (pgcrypto parava de descriptografar dados PGP com cifra legada, silenciosamente) e CVE-2026-2004 (só superuser pode anexar estimador de seletividade customizado a um operador). Upgrade é manual, disponível no painel desde 28/09; projetos novos já nascem na versão nova.
-
-**Por que não é mais urgente que isso:** nenhum CVE nomeado é RLS bypass ou privilege escalation contra o modelo multi-tenant (`settled`); CVE-2026-2004 exige papel de superuser, que tenants comuns não têm. `grep` no repo inteiro por `pgcrypto|ltree|btree_gist|pgp_sym_encrypt|pgp_pub_encrypt|cipher-algo` devolve zero arquivos — as breaking changes publicadas (reindexação, re-criptografia) não têm nenhuma superfície aqui.
-
-**A pergunta:** agendamos agora o upgrade do Postgres 15.19/17.11 no dashboard da Supabase (zero extensão nossa precisa de reindexação ou re-criptografia, confirmado por grep), ou esperamos a próxima janela de manutenção, já que nenhum dos 44 CVEs nomeados ameaça o isolamento multi-tenant?
-
----
-
 ### [DISCUTIR 9/15] Supabase cobra Logs Ingest por uso a partir de 2027 — vale uma checagem agora?
 **Data:** 2026-09-28 · **Fonte:** [Supabase Changelog](https://supabase.com/changelog/logs-usage-based-pricing) · [docs — logs-ingest](https://supabase.com/docs/guides/platform/manage-your-usage/logs-ingest) · [docs — logs-query](https://supabase.com/docs/guides/platform/manage-your-usage/logs-query) · **Eixos:** P3 A1 D2 E2 L1
 
@@ -192,29 +155,33 @@ motivou o recuo — reforça, não dilui, a pergunta original sobre fallback hum
 
 ---
 
-### [DISCUTIR 8/15] Flipdish: dez mil pedidos por telefone confirmam o gap de takeout que o repo já tem nomeado
-**Data:** 2026-09-16 · **Fonte:** [Retail Technology Innovation Hub](https://retailtechinnovationhub.com/home/2026/9/16/flipdish-ai-phone-agent-reaches-10000-orders-bringing-in-over-230000-to-uk-and-irish-restaurants) · **Eixos:** P2 A1 D2 E1 L2
+### [DISCUTIR 8/15] A Square constrói voz agêntica dentro do próprio kiosk — não mais por parceria
+**Data:** 2026-10-14 · **Fonte:** [Square (press release oficial)](https://squareup.com/us/en/press/square-kiosk-self-service-reimagined) · **Eixos:** P2 A1 D2 E1 L2
 
-**O que é:** marco de adoção (não feature nova) do AI Phone Agent da Flipdish, lançado em
-nov/2025 para restaurantes do Reino Unido e Irlanda: 10.000+ pedidos processados, £230mil+
-gerados. Atende ligação, tira pedido com upsell de acompanhamento, envia direto pro POS/KDS
-próprio da Flipdish. Números só do CEO, sem contagem de restaurantes ativos nem baseline.
-Próximos passos anunciados: alteração de pedido, horário de funcionamento, CRM/workflow.
+**O que é:** a Square lançou um kiosk flagship de autoatendimento (US$1.999 + US$99/mês de taxa de
+software, exigindo plano Square Plus US$49 ou Premium US$149/loja) com tela de 21,5", detecção
+de presença e uma camada de voz "agêntica e conversacional" embutida — responde pergunta de
+cardápio/alergia, sugere item por popularidade/horário/carrinho em tempo real, permite alternar
+entre voz e toque na mesma sessão. Pacote multi-loja para redes de franquia anunciado sem preço.
 
-**Por que toca este projeto:** `api/_voice-server/tool-handler.js` tem 8 tools, todas de
-reserva — zero de pedido/takeout, o mesmo buraco que `api/square.js` aprofunda ao descartar
-o catálogo do Square em vez de gravar como tabela consultável (`known_gaps`). O BACKLOG já
-tem um spike vizinho (`tool-evento-privado`, PROTOTIPAR 11/15) para "zero de evento", mas
-nenhum cobre "zero de pedido" — são gaps distintos.
+**O que a fonte não prova:** zero benchmark ou número de acurácia da voz; nenhum detalhe de como
+o cardápio é sincronizado para a camada de voz "entender" em tempo real; não fica claro se a IA
+fecha o pedido sozinha ou é assistida. Release só em inglês/EUA, sem menção a expansão. Fornecedor
+do motor de voz não divulgado. É copy de anúncio da própria Square, sem auditoria terceira.
 
-**O que a fonte não prova:** os números são autodeclarados e sem amostra — não dá pra saber
-se é tração ampla ou duas contas grandes puxando a média. Não há detalhe técnico do motor de
-voz por trás.
+**Por que toca este projeto:** Square já é um `pos_provider` integrado neste repo (`api/square.js`,
+`database/migrations/20260126_pos_and_revenue.sql`) — e hoje `handleCatalogSync` busca o catálogo
+do Square e **descarta** os itens, gravando só a contagem (`known_gap` já registrado). Isso é
+diferente do padrão já visto em Resy+Toast, Square+OpenTable e Google Ask Maps (todos parceria
+externa): aqui é a própria Square construindo voz **dentro do seu próprio hardware/POS**, sem
+intermediário — uma escalada da `bets[0]` ("POS embutir voz") em direção ao canal de kiosk
+presencial, não ao canal de telefone/reserva que é o que o Seatable ataca.
 
-**A pergunta:** o gap de takeout vira frente própria de spike — exigindo primeiro uma tabela
-de menu, que hoje não existe em lugar nenhum do banco — ou fica atrás do
-`tool-evento-privado` já enfileirado, até essa decidir se o agente aguenta duas tools novas
-sem confundir reserva com evento/pedido?
+**A pergunta:** isso muda a urgência do spike `BACKLOG.md#ucp-catalogo-legivel` (já PROTOTIPAR
+11/15, aberto desde 24/08, sem spike rodado) de "nice to have" para "correr antes que a Square
+estenda essa mesma voz do kiosk para telefone/WhatsApp"? Ou o kiosk de autoatendimento presencial
+para QSR americano é distante o bastante do caso de uso (reserva por telefone, restaurante
+independente, Brasil) para não mudar prioridade nenhuma?
 
 ---
 
@@ -534,6 +501,50 @@ Promovidos em 2026-08-24, os quatro com âncora verificada:
 
 ## Radar
 
+- `2026-10-19` **Twilio Voice Integrity cobre as três maiores operadoras dos EUA (beta, Voice
+  API)** — registro de número para reduzir marcação como spam em ligações legítimas; relevante
+  para o volume de ligações outbound do Seatable (lembretes por telefone, briefings do Manager
+  AI via canal `phone_call`), mas sem caso conhecido de call marcada como spam hoje — capacidade
+  sem demanda confirmada. [Twilio](https://www.twilio.com/en-us/changelog/elevenlabs-voices-for-say-is-now-public-beta) · 7/15
+- `2026-10-19` **Supabase desativa cifras TLS 1.2 antigas nas HTTP APIs de projeto em
+  2026-11-10** — ação com prazo: clientes sem suporte TLS moderno param de conectar. Node ≥18 e
+  `@supabase/supabase-js` atuais negociam TLS 1.3 por padrão; risco real parece baixo, mas vale
+  checagem de 10 minutos antes do prazo. [Supabase](https://supabase.com/changelog) · 6/15
+- `2026-10-19` **Deliverect integra catálogo ao Yext Knowledge Graph para "AI search"** —
+  segunda evidência (depois de Google Ask Maps/Square/Toast, 06/ago) de que "catálogo de
+  restaurante legível por agente de IA" virou padrão de mercado — mas é press release puro, sem
+  mecanismo, sem IA nomeada como consumidora, números institucionais inconsistentes (80k vs 85k
+  locais). Reforça sem acrescentar urgência nova ao spike já aberto
+  `BACKLOG.md#ucp-catalogo-legivel` (`api/square.js::handleCatalogSync`, `api/_lib/seo-schema.js`).
+  [FastCasual](https://www.fastcasual.com/press-releases/deliverect-and-yext-partner-to-keep-restaurant-data-accurate-across-every-digital-surface-including-ai-search/) · 6/15
+- `2026-10-19` **Kutlerri.ai capta US$4M para "time de agentes de IA" de receita/custo de
+  restaurante** — produto âncora é um Catering Sales Agent com pricing **performance-based**
+  (não assinatura) — modelo de monetização diferente do SaaS fixo do Seatable, vale registrar
+  como data point de modelo de negócio alternativo. [QSR Magazine](https://www.qsrmagazine.com/news/kutlerri-ai-raises-4-million-to-put-a-team-of-ai-agents-to-work-on-restaurant-revenue-and-cost/) · 5/15
+- `2026-10-19` **Flai capta US$27M Série A (Base10, Toyota Ventures, YC) — CRM nativo em IA +
+  agentes de telefone/texto para concessionárias de carros** — mesmo padrão estrutural
+  (CRM+agente de voz/texto verticalizado) do Seatable, vertical diferente (automotivo, não
+  restaurante) — sem overlap direto, reforça só a tese geral de "CRM+voz verticalizado" como
+  categoria financiável. [Dealroom](https://dealroom.co/news/160361-flai-lands-27m-series-a-as-ai-dealership-software-books-50-000-appointme/) · 5/15
+- `2026-10-19` **Vercel Daemons entra em beta público** (processos de longa duração: filas,
+  workers, CI runners self-hosted, cobrança por Active CPU + Provisioned Memory) — primitivo
+  novo fora do modelo serverless-por-invocação; nenhum uso óbvio hoje (crons já consolidados em
+  3 despachantes por teto de `maxDuration`, voz já roda fora da Vercel via Fly.io), mas vale
+  lembrar na próxima revisão de arquitetura de cron. [Vercel](https://vercel.com/changelog) · 5/15
+- `2026-10-19` **Swiggy lança assistente de IA "Guru" para parceiros-restaurante na Índia** —
+  copiloto de operação via chat único (vendas, anúncios, descontos, cardápio), mesmo padrão já
+  registrado via Delivery Hero/Owner.com — geografia sem overlap (Índia), reforça só a tese de
+  que "copiloto do dono via chat" virou categoria, não ameaça direta.
+  [Business Today](https://www.businesstoday.in/latest/trends/story/meet-swiggys-new-ai-assistant-guru-that-helps-restaurants-manage-business-from-one-chat-549634-2026-08-17) · 4/15
+- `2026-10-19` **Supabase: Scoped Personal Access Tokens atinge GA** — permissões por
+  projeto/organização para Management API/MCP/CLI, em vez de PAT de conta inteira; aplicável a
+  `scripts/apply-migration.js` e qualquer automação de CI que hoje use PAT amplo — melhoria de
+  higiene de credencial, não urgente. [Supabase](https://supabase.com/changelog) · 4/15
+- `2026-10-19` **Vercel AI Gateway lança "Token Pass"** (US$30/mês por US$80 de crédito em
+  modelos open-weight) — pacote de roteamento de LLM concorrente ao uso de OpenRouter; sem ação
+  necessária (o Seatable usa OpenRouter direto, não AI Gateway), mas é o tipo de oferta que pode
+  comprimir a vantagem de custo do provedor único no médio prazo.
+  [Vercel](https://vercel.com/changelog) · 4/15
 - `2026-10-12` **Apéro capta US$5M (Valsoft/Now Book It) para recepcionista de IA bilíngue
   (FR/EN) no Québec** — reserva, mesa, waitlist, perfil de cliente, anti-no-show e IA 24/7 por
   telefone; puro press release, zero métrica própria. Mercado sem overlap com SP/Brasil; mais um
@@ -745,6 +756,71 @@ Promovidos em 2026-08-24, os quatro com âncora verificada:
   estande sem preço nem prazo público. Decidir ir como visitante expira ~14/09. [Abrasel](https://abrasel.com.br/noticias/noticias/salao-abrasel-5-motivos-para-participar-do-evento/) · 7/15
 
 ## Arquivo
+
+### [ARQUIVADO 2026-10-19] Quatro itens entre 01/09 e 25/09 — envelheceram sem decisão (24 a 48 dias em aberto)
+
+Nenhum recebeu resposta do Stefano nem atualização nos últimos 21 dias. A consulta da ANPD
+citada no primeiro item já fechou (prazo era 16/10) — a pergunta que ele fazia não existe mais
+do jeito que foi escrita. Conteúdo original preservado abaixo, sem reavaliação de score —
+arquivado por idade, não por descarte de mérito.
+
+<details>
+<summary>[DISCUTIR 8/15] A ANPD abre agenda regulatória de IA/decisão automatizada 2027-2028 — a janela de contribuição fecha em 11 dias — 2026-09-01 (consulta aberta)</summary>
+
+**Fonte:** [gov.br/ANPD](https://www.gov.br/anpd/pt-br/assuntos/noticias/anpd-abre-ts-agenda-regulatoria-e-avaliacao-de-resultado-regulatorio) · **Eixos:** P2 A2 D1 E2 L1
+
+**O que é:** a ANPD abriu tomada de subsídios via Brasil Participativo para a Agenda Regulatória 2027-2028, com prazo até **16/10/2026** (faltavam ~11 dias à data de escrita). O eixo "Privacidade e Proteção de Dados" lista reconhecimento facial, dados de saúde e **decisões automatizadas** como temas prioritários. Não existe texto normativo ainda — é coleta de prioridades, sem obrigação nascendo da consulta em si.
+
+**Por que tocava este projeto:** reserva, cancelamento e campanha do Seatable são decisão automatizada por LLM sobre dado de cliente final brasileiro. O guardrail determinístico que existe (`claim-linter.js`, `settled`) é escopado só para a prospecção (Olímpia) — o caminho de atendimento ao cliente final (`api/_services/whatsapp/conversation.js`, `reservation-tools.js`) usa só grounding de prompt, sem linter equivalente. Segunda vez em cinco semanas que a ANPD sinalizava capacidade de regular IA conversacional (depois da notificação a 22 plataformas, 25/08).
+
+**O que a fonte não prova:** nenhuma fonte menciona atendimento ao consumidor, restaurante, voz ou WhatsApp — a conexão era inferência, não afirmação da ANPD. É agenda, não norma.
+
+**A pergunta (não respondida, janela fechada em 16/10):** valia gastar meio dia submetendo contribuição na consulta pedindo proporcionalidade para PMEs que operam IA de terceiro (OpenRouter/ElevenLabs) nas futuras regras sobre decisão automatizada? Perdeu o prazo de ação; o guardrail-gap em si (claim-linter não cobre o caminho de atendimento ao cliente final) continua real e pode voltar como item novo se a ANPD publicar texto normativo.
+
+</details>
+
+<details>
+<summary>[DISCUTIR 8/15] Gupshup baixa a barreira de "voz+WhatsApp no-code" a US$0,035/min — mas a comparação de preço é falsa — 2026-09-04</summary>
+
+**Fonte:** [PRNewswire](https://www.prnewswire.com/news-releases/gupshup-launches-self-serve-voice-ai-platform-extending-conversational-engagement-into-phone-calls-302869131.html) · **Eixos:** P2 A1 D2 E1 L2
+
+**O que é:** a Gupshup (BSP com 50 mil+ empresas em 100+ países) abriu console self-serve no-code para montar agente de voz sobre PSTN e sobre o canal de voz do WhatsApp, STT/TTS/LLM plugáveis por fora, US$0,035/min de orquestração (100 min grátis de teste). Sem benchmark de acurácia/latência; números de escala (10bi interações/mês, 500mi chamadas/mês) são da Gupshup inteira, não do produto de voz.
+
+**Por que a comparação de preço não funciona:** US$0,035/min é só a orquestração — STT/TTS/LLM cobram por fora e o TCO real depende do que o cliente escolhe. ElevenLabs sozinho já cobra US$0,08/min fixo, antes de Twilio PSTN e LLM separados — comparar os dois números direto é enganoso. Nenhuma presença confirmada no Brasil.
+
+**Por que tocava este projeto mesmo assim:** é mais um dado concreto de que "montar voz+WhatsApp" está sendo comoditizado por qualquer negócio — reforça a tese já revisada em `bets[0]` ("end-to-end é piso, não diferencial") sem ser, por si, concorrente direto de restaurante.
+
+**A pergunta (não respondida):** a comoditização de voz+WhatsApp no-code (Gupshup é mais um exemplo, ao lado de Bland/Vapi/Retell) já estava coberta pela revisão de `bets[0]` de 01/09 — o próprio texto original já apontava que a resposta estratégica estava fechada. Arquivado sem spike de TCO.
+
+</details>
+
+<details>
+<summary>[DISCUTIR 8/15] Supabase fecha 44 CVEs no Postgres — upgrade manual, sem prazo, sem CVE crítico contra RLS — 2026-09-25</summary>
+
+**Fontes:** [Supabase changelog](https://supabase.com/changelog/postgres-15-19-17-11-breaking-changes) · **Eixos:** P2 A2 D1 E2 L1
+
+**O que é:** Supabase empacotou cinco ciclos de segurança upstream do Postgres (15.14→15.19, 17.6→17.11), fechando 44 CVEs. Só dois são nomeados: CVE-2026-14663 (pgcrypto parava de descriptografar dados PGP com cifra legada, silenciosamente) e CVE-2026-2004 (só superuser pode anexar estimador de seletividade customizado a um operador). Upgrade é manual, disponível no painel desde 28/09; projetos novos já nascem na versão nova.
+
+**Por que não era mais urgente que isso:** nenhum CVE nomeado é RLS bypass ou privilege escalation contra o modelo multi-tenant (`settled`); CVE-2026-2004 exige papel de superuser, que tenants comuns não têm. `grep` no repo inteiro por `pgcrypto|ltree|btree_gist|pgp_sym_encrypt|pgp_pub_encrypt|cipher-algo` devolve zero arquivos — as breaking changes publicadas (reindexação, re-criptografia) não têm nenhuma superfície aqui.
+
+**A pergunta (não respondida):** agendar o upgrade do Postgres 15.19/17.11 no dashboard da Supabase (zero extensão nossa precisa de reindexação ou re-criptografia, confirmado por grep) continua uma tarefa de baixo risco e baixa urgência, pendente de uma janela de manutenção.
+
+</details>
+
+<details>
+<summary>[DISCUTIR 8/15] Flipdish: dez mil pedidos por telefone confirmam o gap de takeout que o repo já tem nomeado — 2026-09-16</summary>
+
+**Fonte:** [Retail Technology Innovation Hub](https://retailtechinnovationhub.com/home/2026/9/16/flipdish-ai-phone-agent-reaches-10000-orders-bringing-in-over-230000-to-uk-and-irish-restaurants) · **Eixos:** P2 A1 D2 E1 L2
+
+**O que é:** marco de adoção (não feature nova) do AI Phone Agent da Flipdish, lançado em nov/2025 para restaurantes do Reino Unido e Irlanda: 10.000+ pedidos processados, £230mil+ gerados. Atende ligação, tira pedido com upsell de acompanhamento, envia direto pro POS/KDS próprio da Flipdish. Números só do CEO, sem contagem de restaurantes ativos nem baseline. Próximos passos anunciados: alteração de pedido, horário de funcionamento, CRM/workflow.
+
+**Por que tocava este projeto:** `api/_voice-server/tool-handler.js` tem 8 tools, todas de reserva — zero de pedido/takeout, o mesmo buraco que `api/square.js` aprofunda ao descartar o catálogo do Square em vez de gravar como tabela consultável (`known_gaps`). O BACKLOG já tem um spike vizinho (`tool-evento-privado`, PROTOTIPAR 11/15) para "zero de evento", mas nenhum cobre "zero de pedido" — são gaps distintos.
+
+**O que a fonte não prova:** os números são autodeclarados e sem amostra — não dá pra saber se é tração ampla ou duas contas grandes puxando a média. Não há detalhe técnico do motor de voz por trás.
+
+**A pergunta (não respondida):** o gap de takeout vira frente própria de spike — exigindo primeiro uma tabela de menu, que hoje não existe em lugar nenhum do banco — ou fica atrás do `tool-evento-privado` já enfileirado? Ganhou reforço nesta semana (ver item novo "Deliverect×Yext" no Radar e `BACKLOG.md#ucp-catalogo-legivel`) mas segue sem spike rodado.
+
+</details>
 
 ### [ARQUIVADO 2026-10-05] Treze itens entre 24/08 e 10/09 — envelheceram sem decisão (25 a 35 dias em aberto)
 

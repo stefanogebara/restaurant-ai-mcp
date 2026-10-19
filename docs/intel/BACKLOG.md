@@ -44,6 +44,21 @@ tempo real — tolerância é alta, mas acima disso não compensa a troca).
 **Toca:** `api/_lib/briefing-sender.js`, `api/elevenlabs-preview.js`
 **Status:** aberto
 
+**Atualização 2026-10-19 — confirmado: não é roteamento de voz conversacional, mas ganha um
+detalhe de privacidade de graça.** Verificado na doc de API real (não só o changelog) que
+`SpeechInput`/`SpeechTurn` (06/10) servem só para narração multi-locutor num único request
+síncrono — texto ou array de turnos com voz/instruções próprias, ainda request→resposta única,
+sem sessão nem STT acoplado; suportado por Gemini TTS/Fish Audio, não confirmado para
+ElevenLabs. `judge_model` do `SwitchyardRouterPlugin` (06-07/10) é roteamento de **texto**
+(`/chat/completions`), não tem relação com áudio — fora do escopo deste item. O que é real e
+barato: `STTRequest`/`SpeechRequest` ganharam `zdr` (zero data retention) e `data_collection`
+(`'deny'|'allow'`) em `provider.*` — dá pra somar `provider: { zdr: true, data_collection:
+'deny' }` ao request de migração já planejado, melhorando a postura de LGPD no caminho
+ElevenLabs-via-OpenRouter sem custo extra. Soma 1h ao timebox do spike (total 4h): testar com
+e sem o bloco `provider`, parar se a API devolver 400/404 por nenhum provider ElevenLabs
+atender `zdr`/`data_collection` (a migração em si segue válida sem a flag). Pipeline continua
+intocado — `settled` "OpenRouter é o provedor único de LLM" não é afetado.
+
 ---
 
 ### ia-liga-pro-restaurante — Quando quem liga pro Seatable também é uma IA
@@ -201,6 +216,26 @@ REGISTRAR e a mitigação de perda de chamada vira problema de produto separado.
 **Toca:** `api/_services/elevenlabsAgentService.js`, `api/twilio-voice-connect.js:299-303`,
 `api/__tests__/elevenlabs-agent-create-payload.test.js`
 **Status:** aberto
+
+**Atualização 2026-10-19 — o fornecedor já decidiu por nós, silenciosamente.** Changelog de
+12/10 confirmado verbatim na fonte: *"New agents are created with call queueing enabled unless
+`platform_settings.queueing_config.enabled` is set explicitly. Existing agents keep their
+current setting."* — o default de `queueing_config.enabled` virou `true` para agentes **criados
+a partir de agora** (a entrada de 14/09 tinha GA'd o campo com default `false`). Confirmado por
+grep: `api/_services/elevenlabsAgentService.js:887-906` não envia `queueing_config` no payload
+de `POST /agents/create` — só popula `widget_config`. Logo, todo agente novo nasce com fila
+ligada sem que o Seatable tenha decidido ou medido isso — o mesmo tipo de campo que a lição do
+incidente de 24/08 (comentário nas linhas 891-899 do próprio arquivo) manda travar explícito, e
+ainda não foi aplicada a este campo. Ação de uma linha, independente do spike maior: travar
+`queueing_config.enabled: false` explícito em `elevenlabsAgentService.js` (mesmo padrão de
+`mic_muting_enabled`/`transcript_enabled`), preservando o comportamento testado até hoje — e só
+então decidir, com medição, se vale ligar `true` de propósito. Pré-requisito de 2h antes de
+mexer no código: confirmar via `GET /v1/convai/agents/{agent_id}` se um agente criado hoje sem o
+campo no payload realmente veio com `enabled: true` (parar se o novo default só valer para
+criação via painel/dashboard da ElevenLabs, não via API). Também confirmado nesta rodada: a
+mesma entrada de changelog adiciona `turn_prediction` como `commit_strategy` no STT realtime
+standalone da ElevenLabs — sem âncora no repo (o Seatable nunca chama esse WebSocket; telefone
+usa `register-call` opaco, OpenAI Realtime usa `server_vad` próprio), não muda este item.
 
 ---
 
