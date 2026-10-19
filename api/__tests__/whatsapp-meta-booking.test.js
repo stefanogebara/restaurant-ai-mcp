@@ -129,6 +129,9 @@ jest.mock('../_lib/supabase', () => ({
     };
     return {
       from: jest.fn().mockImplementation(() => makeChain()),
+      rpc: jest.fn().mockResolvedValue({
+        data: { status: 'created', reservation_id: 'RES-TEST-001' }, error: null,
+      }),
       schema: jest.fn().mockReturnValue({
         from: jest.fn().mockImplementation(() => makeChain({ agent_language: 'pt-BR' })),
       }),
@@ -155,7 +158,7 @@ jest.mock('../_services/guestMemory', () => ({
 // ─── Env setup ────────────────────────────────────────────────────────────────
 
 process.env.WHATSAPP_VERIFY_TOKEN = 'test-verify-token';
-process.env.WHATSAPP_PHONE_NUMBER_ID = 'PHONE_ID';
+process.env.WHATSAPP_PHONE_NUMBER_ID = '123456789012345';
 process.env.WHATSAPP_ACCESS_TOKEN = 'test-access-token';
 process.env.AI_BASE_URL = 'https://openrouter.ai/api/v1';
 process.env.OPENROUTER_API_KEY = 'sk-test';
@@ -196,7 +199,7 @@ function metaBody(from, text, wamid = 'wamid.TEST123') {
           messaging_product: 'whatsapp',
           metadata: {
             display_phone_number: '+1555000',
-            phone_number_id: 'PHONE_ID',
+            phone_number_id: '123456789012345',
           },
           messages: [{
             from: from.replace('+', ''),
@@ -326,6 +329,9 @@ describe('whatsapp-webhook (Meta Cloud API)', () => {
       data: { id: 1, reservation_id: 'RES-TEST-001', customer_name: 'Test User' },
       error: null,
     });
+    mockSupabaseAdmin.rpc.mockResolvedValue({
+      data: { status: 'created', reservation_id: 'RES-TEST-001' }, error: null,
+    });
     getOrCreateSession.mockResolvedValue(makeSession());
     getSessionByPhone.mockResolvedValue(makeSession());
     // Default AI: end-turn response (overridden per test)
@@ -387,8 +393,14 @@ describe('whatsapp-webhook (Meta Cloud API)', () => {
     // AI called 3 times (check_availability, create_reservation, end_turn)
     expect(aiCallCount).toBe(3);
 
-    // supabaseAdmin.from('reservations') called for availability check + insert
+    // The create step must reach the transactional RPC, not merely prompt the
+    // model to say the table was booked after a silently failed tool call.
     expect(mockSupabaseAdmin.from).toHaveBeenCalledWith('reservations');
+    expect(mockSupabaseAdmin.rpc).toHaveBeenCalledWith('book_whatsapp_reservation', expect.objectContaining({
+      p_restaurant_id: expect.any(String),
+      p_customer_phone: '+15551234567',
+      p_external_id: expect.stringMatching(/^wa:v1:[a-f0-9]{64}$/),
+    }));
 
     // At least one Meta Graph API call was made (final reply or template)
     const graphCalls = global.fetch.mock.calls.filter(([url]) =>

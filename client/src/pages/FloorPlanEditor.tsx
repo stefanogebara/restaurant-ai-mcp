@@ -22,7 +22,7 @@ import FloorPlanCanvas from '../components/floor-plan/FloorPlanCanvas';
 import FloorPlanLegend from '../components/floor-plan/FloorPlanLegend';
 import TablePopover from '../components/floor-plan/TablePopover';
 import AddTableModal from '../components/floor-plan/AddTableModal';
-import { CELL, GRID_COLS, SVG_W, SVG_H, snapToGrid, getTablePxSize } from '../components/floor-plan/floorPlanConstants';
+import { CELL, GRID_COLS, SVG_W, SVG_H, snapToGrid, getTablePxSize, movedBeyondDragThreshold } from '../components/floor-plan/floorPlanConstants';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
 export default function FloorPlanEditor() {
@@ -54,6 +54,8 @@ export default function FloorPlanEditor() {
   } | null>(null);
 
   const svgRef = useRef<SVGSVGElement>(null);
+  const dragStartRef = useRef<{ x: number; y: number; screenPos: { x: number; y: number } } | null>(null);
+  const draggedRef = useRef(false);
 
   // ─── Derived state ────────────────────────────────────────────────────────────
 
@@ -251,6 +253,13 @@ export default function FloorPlanEditor() {
       return;
     }
     e.preventDefault(); e.stopPropagation();
+    const tableRect = (e.currentTarget as SVGGElement).getBoundingClientRect();
+    dragStartRef.current = {
+      x: e.clientX,
+      y: e.clientY,
+      screenPos: { x: tableRect.right + 10, y: tableRect.top },
+    };
+    draggedRef.current = false;
     (e.target as SVGElement).setPointerCapture?.(e.pointerId);
     const pt = svgPoint(e.clientX, e.clientY);
     const autoPos = autoPositions.get(table.id);
@@ -264,6 +273,10 @@ export default function FloorPlanEditor() {
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
     if (!draggingId) return;
+    if (!draggedRef.current && dragStartRef.current) {
+      if (!movedBeyondDragThreshold(dragStartRef.current, { x: e.clientX, y: e.clientY })) return;
+      draggedRef.current = true;
+    }
     e.preventDefault();
     const pt = svgPoint(e.clientX, e.clientY);
     // Clamp using the dragged table's actual footprint — multi-cell tables
@@ -278,6 +291,17 @@ export default function FloorPlanEditor() {
 
   const handlePointerUp = useCallback(() => {
     if (!draggingId || !dragPos) return;
+    const wasDragged = draggedRef.current;
+    const start = dragStartRef.current;
+    dragStartRef.current = null;
+    setDraggingId(null); setDragPos(null);
+    // Open directly on pointer-up: relying on the synthetic click lost taps
+    // because draggingId was still set when that click ran.
+    if (!wasDragged) {
+      const tappedTable = filteredTables.find(table => table.id === draggingId);
+      if (tappedTable && start) setSelectedTable({ table: tappedTable, screenPos: start.screenPos });
+      return;
+    }
     // Clamp the snap to the table's grid footprint so a multi-cell table
     // can't be saved hanging off the right/bottom edge of the grid.
     const dragging = filteredTables.find(tbl => tbl.id === draggingId);
@@ -286,17 +310,20 @@ export default function FloorPlanEditor() {
       dragPos.x, dragPos.y, Math.round(w / CELL), Math.round(h / CELL),
     );
     const id = draggingId;
-    setDraggingId(null); setDragPos(null);
+    const autoPos = autoPositions.get(id);
+    const originalGx = autoPos?.gx ?? dragging?.position_x ?? 0;
+    const originalGy = autoPos?.gy ?? dragging?.position_y ?? 0;
+    if (gx === originalGx && gy === originalGy) return;
     showSaving();
     // Optimistic mutation: onMutate cancels in-flight refetches + patches the
     // cache, onError rolls back, onSettled re-syncs. No drag-save ↔ refetch race.
     positionMutation.mutate({ id, gx, gy });
-  }, [draggingId, dragPos, filteredTables, showSaving, positionMutation]);
+  }, [draggingId, dragPos, filteredTables, autoPositions, showSaving, positionMutation]);
 
   // ─── Table click ──────────────────────────────────────────────────────────────
 
   const handleTableClick = useCallback((e: React.MouseEvent, table: Table) => {
-    if (draggingId || linkMode) return; // link mode handled in handlePointerDown
+    if (draggingId || linkMode || draggedRef.current) return; // link mode handled in handlePointerDown
     const rect = (e.currentTarget as SVGElement).getBoundingClientRect();
     setSelectedTable({ table, screenPos: { x: rect.right + 10, y: rect.top } });
   }, [draggingId, linkMode]);
@@ -485,6 +512,9 @@ export default function FloorPlanEditor() {
           />
         )}
 
+        {!isLoading && filteredTables.length > 0 && (
+          <p className="mb-2 text-xs text-muted-stone sm:hidden">{t('floorPlan.mobilePanHint')}</p>
+        )}
         <div className="relative overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0 pb-2 sm:pb-0">
           <FloorPlanCanvas
             filteredTables={filteredTables}

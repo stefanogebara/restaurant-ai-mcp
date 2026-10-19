@@ -19,6 +19,7 @@ import StaffingSettingsPanel from '../components/dashboard/StaffingSettingsPanel
 import DepositSettingsPanel from '../components/settings/DepositSettingsPanel';
 import CoverPhotoPanel from '../components/settings/CoverPhotoPanel';
 import { isDayHoursValid } from '../components/onboarding/Step2Contact';
+import { currentTimezoneLabel, localizedCountryName } from '../utils/settingsLocations';
 
 // Number-input setter that doesn't snap to `fallback` on every keystroke. The
 // previous `parseInt(v) || fallback` pattern (a) ignored the radix and (b) hit
@@ -87,7 +88,7 @@ export default function RestaurantSettingsPage() {
       email: settings.email || '',
       city: settings.city || '',
       country: settings.country || '',
-      timezone: settings.timezone || 'America/Sao_Paulo',
+      timezone: settings.timezone || '',
     });
     // Seed all 7 days from the server payload (or sensible defaults). Saves
     // need the complete week — without this, a partial server payload meant
@@ -125,6 +126,10 @@ export default function RestaurantSettingsPage() {
   const handleSaveInfo = () => {
     const phone = info.phone.trim();
     const email = info.email.trim();
+    if (!info.timezone) {
+      toast.error(t('settings.timezoneRequired'));
+      return;
+    }
     // Match the validation Step2Contact already runs during onboarding —
     // this page was accepting "abc" as email and "123" as phone, both of
     // which then break Twilio/WhatsApp/Resend dispatchers downstream.
@@ -230,10 +235,10 @@ export default function RestaurantSettingsPage() {
       <DashboardLayout>
         <div className="p-6 sm:p-10 max-w-3xl mx-auto space-y-6 mt-14 lg:mt-0">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="py-5 border-b border-[#E7E5E4] animate-pulse space-y-3">
-              <div className="h-5 bg-stone-100 rounded w-40" />
-              <div className="h-10 bg-stone-100 rounded" />
-              <div className="h-10 bg-stone-100 rounded" />
+            <div key={i} className="border-b hairline py-5 animate-pulse space-y-3">
+              <div className="h-5 w-40 rounded bg-soft-gray" />
+              <div className="h-10 rounded bg-soft-gray" />
+              <div className="h-10 rounded bg-soft-gray" />
             </div>
           ))}
         </div>
@@ -245,11 +250,11 @@ export default function RestaurantSettingsPage() {
     return (
       <DashboardLayout>
         <div className="p-6 sm:p-10 max-w-3xl mx-auto mt-14 lg:mt-0 text-center">
-          <p className="text-sm text-red-600 mb-3">{t('settings.loadError', 'Failed to load restaurant settings.')}</p>
+          <p className="mb-3 text-sm text-red-700">{t('settings.loadError', 'Failed to load restaurant settings.')}</p>
           <button
             type="button"
             onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-burgundy text-white text-sm rounded-xl hover:bg-burgundy-dark transition-colors"
+            className="rounded-full bg-burgundy px-4 py-2 text-sm text-white hover:bg-burgundy-dark transition-colors"
           >
             {t('common.retry', 'Retry')}
           </button>
@@ -296,8 +301,8 @@ export default function RestaurantSettingsPage() {
             <Field label={t('settings.phone', 'Phone')} value={info.phone} onChange={(v) => patchInfo({ phone: v })} type="tel" />
             <Field label={t('settings.email', 'Email')} value={info.email} onChange={(v) => patchInfo({ email: v })} type="email" />
             <Field label={t('settings.city', 'City')} value={info.city} onChange={(v) => patchInfo({ city: v })} />
-            <CountrySelect label={t('settings.country', 'Country')} value={info.country} onChange={(v) => patchInfo({ country: v })} selectPlaceholder={t('common.select', '— Select —')} />
-            <TimezoneSelect label={t('settings.timezone', 'Timezone')} value={info.timezone} onChange={(v) => patchInfo({ timezone: v })} selectPlaceholder={t('common.select', '— Select —')} />
+            <CountrySelect label={t('settings.country', 'Country')} value={info.country} language={i18n.language} onChange={(v) => patchInfo({ country: v })} selectPlaceholder={t('common.select', '— Select —')} />
+            <TimezoneSelect label={t('settings.timezone', 'Timezone')} value={info.timezone} offsetNow={t('settings.offsetNow')} onChange={(v) => patchInfo({ timezone: v })} selectPlaceholder={t('common.select', '— Select —')} />
           </div>
 
           <div className="flex justify-end pt-2">
@@ -555,44 +560,43 @@ function Field({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full px-3 py-2 bg-soft-gray border border-glass-border-input rounded-xl text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
+        className="w-full rounded-lg border border-glass-border-input bg-soft-gray px-3 py-2 text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
       />
     </div>
   );
 }
 
-// Friendly labels for each timezone the picker offers — IANA strings like
-// "America/Sao_Paulo" leak technical detail to restaurant owners who'd rather
-// see "São Paulo (GMT-3)". Order kept stable across the list.
+// Friendly city labels for IANA timezones. The offset is derived at render
+// time: a fixed GMT label becomes false during daylight-saving time.
 const TZ_OPTIONS: ReadonlyArray<{ tz: string; label: string }> = [
-  { tz: 'America/Sao_Paulo',    label: 'São Paulo (GMT-3)' },
-  { tz: 'America/New_York',     label: 'New York (GMT-5)' },
-  { tz: 'America/Chicago',      label: 'Chicago (GMT-6)' },
-  { tz: 'America/Denver',       label: 'Denver (GMT-7)' },
-  { tz: 'America/Los_Angeles',  label: 'Los Angeles (GMT-8)' },
-  { tz: 'America/Mexico_City',  label: 'Cidade do México (GMT-6)' },
-  { tz: 'America/Buenos_Aires', label: 'Buenos Aires (GMT-3)' },
-  { tz: 'America/Bogota',       label: 'Bogotá (GMT-5)' },
-  { tz: 'Europe/London',        label: 'London (GMT+0)' },
-  { tz: 'Europe/Paris',         label: 'Paris (GMT+1)' },
-  { tz: 'Europe/Berlin',        label: 'Berlin (GMT+1)' },
-  { tz: 'Europe/Madrid',        label: 'Madrid (GMT+1)' },
-  { tz: 'Europe/Rome',          label: 'Rome (GMT+1)' },
-  { tz: 'Europe/Lisbon',        label: 'Lisbon (GMT+0)' },
-  { tz: 'Europe/Amsterdam',     label: 'Amsterdam (GMT+1)' },
-  { tz: 'Europe/Zurich',        label: 'Zurich (GMT+1)' },
-  { tz: 'Europe/Vienna',        label: 'Vienna (GMT+1)' },
-  { tz: 'Asia/Tokyo',           label: 'Tokyo (GMT+9)' },
-  { tz: 'Asia/Shanghai',        label: 'Shanghai (GMT+8)' },
-  { tz: 'Asia/Dubai',           label: 'Dubai (GMT+4)' },
-  { tz: 'Asia/Singapore',       label: 'Singapore (GMT+8)' },
-  { tz: 'Asia/Kolkata',         label: 'Kolkata (GMT+5:30)' },
-  { tz: 'Australia/Sydney',     label: 'Sydney (GMT+10)' },
-  { tz: 'Pacific/Auckland',     label: 'Auckland (GMT+12)' },
+  { tz: 'America/Sao_Paulo',    label: 'São Paulo' },
+  { tz: 'America/New_York',     label: 'New York' },
+  { tz: 'America/Chicago',      label: 'Chicago' },
+  { tz: 'America/Denver',       label: 'Denver' },
+  { tz: 'America/Los_Angeles',  label: 'Los Angeles' },
+  { tz: 'America/Mexico_City',  label: 'Cidade do México' },
+  { tz: 'America/Buenos_Aires', label: 'Buenos Aires' },
+  { tz: 'America/Bogota',       label: 'Bogotá' },
+  { tz: 'Europe/London',        label: 'London' },
+  { tz: 'Europe/Paris',         label: 'Paris' },
+  { tz: 'Europe/Berlin',        label: 'Berlin' },
+  { tz: 'Europe/Madrid',        label: 'Madrid' },
+  { tz: 'Europe/Rome',          label: 'Rome' },
+  { tz: 'Europe/Lisbon',        label: 'Lisbon' },
+  { tz: 'Europe/Amsterdam',     label: 'Amsterdam' },
+  { tz: 'Europe/Zurich',        label: 'Zurich' },
+  { tz: 'Europe/Vienna',        label: 'Vienna' },
+  { tz: 'Asia/Tokyo',           label: 'Tokyo' },
+  { tz: 'Asia/Shanghai',        label: 'Shanghai' },
+  { tz: 'Asia/Dubai',           label: 'Dubai' },
+  { tz: 'Asia/Singapore',       label: 'Singapore' },
+  { tz: 'Asia/Kolkata',         label: 'Kolkata' },
+  { tz: 'Australia/Sydney',     label: 'Sydney' },
+  { tz: 'Pacific/Auckland',     label: 'Auckland' },
 ];
 const COMMON_TIMEZONES = TZ_OPTIONS.map((o) => o.tz);
 
-function TimezoneSelect({ label, value, onChange, selectPlaceholder = '— Select —' }: { label: string; value: string; onChange: (v: string) => void; selectPlaceholder?: string }) {
+function TimezoneSelect({ label, value, offsetNow, onChange, selectPlaceholder = '— Select —' }: { label: string; value: string; offsetNow: string; onChange: (v: string) => void; selectPlaceholder?: string }) {
   // If the stored timezone is outside the curated list (e.g. America/Halifax),
   // include it as an extra option. Otherwise the <select> silently rendered no
   // selection and saving the form would overwrite the host's real timezone
@@ -609,11 +613,11 @@ function TimezoneSelect({ label, value, onChange, selectPlaceholder = '— Selec
         id={id}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full px-3 py-2 bg-soft-gray border border-glass-border-input rounded-xl text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
+        className="w-full rounded-lg border border-glass-border-input bg-soft-gray px-3 py-2 text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
       >
         <option value="">{selectPlaceholder}</option>
         {options.map(({ tz, label }) => (
-          <option key={tz} value={tz}>{label}</option>
+          <option key={tz} value={tz}>{currentTimezoneLabel(tz, label, offsetNow)}</option>
         ))}
       </select>
     </div>
@@ -638,12 +642,12 @@ const COUNTRY_OPTIONS: ReadonlyArray<{ code: string; label: string }> = [
 ];
 const COUNTRY_CODES = COUNTRY_OPTIONS.map((o) => o.code);
 
-function CountrySelect({ label, value, onChange, selectPlaceholder = '— Select —' }: { label: string; value: string; onChange: (v: string) => void; selectPlaceholder?: string }) {
+function CountrySelect({ label, value, language, onChange, selectPlaceholder = '— Select —' }: { label: string; value: string; language: string; onChange: (v: string) => void; selectPlaceholder?: string }) {
   // Preserve any out-of-list value the same way TimezoneSelect does, so
   // saving with an unfamiliar legacy code doesn't silently wipe it.
   const options: ReadonlyArray<{ code: string; label: string }> =
     value && !COUNTRY_CODES.includes(value.toUpperCase())
-      ? [{ code: value, label: value }, ...COUNTRY_OPTIONS]
+      ? [{ code: value.toUpperCase(), label: value }, ...COUNTRY_OPTIONS]
       : COUNTRY_OPTIONS;
   const id = useId();
   return (
@@ -653,11 +657,11 @@ function CountrySelect({ label, value, onChange, selectPlaceholder = '— Select
         id={id}
         value={value.toUpperCase()}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full px-3 py-2 bg-soft-gray border border-glass-border-input rounded-xl text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
+        className="w-full rounded-lg border border-glass-border-input bg-soft-gray px-3 py-2 text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
       >
         <option value="">{selectPlaceholder}</option>
         {options.map(({ code, label }) => (
-          <option key={code} value={code}>{label}</option>
+          <option key={code} value={code}>{localizedCountryName(code, label, language)}</option>
         ))}
       </select>
     </div>
@@ -671,7 +675,7 @@ function SaveButton({ onClick, loading, label, disabled }: { onClick: () => void
       onClick={onClick}
       disabled={loading || disabled}
       aria-busy={loading}
-      className="px-5 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-xl transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+      className="rounded-full bg-burgundy px-5 py-2.5 text-sm font-semibold text-white hover:bg-burgundy-dark transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
     >
       {loading ? '...' : label}
     </button>

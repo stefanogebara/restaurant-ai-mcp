@@ -91,11 +91,18 @@ async function sendInteractiveListMessage(to, bodyText, buttonText, sections) {
  * @param {string} to - Recipient phone number
  * @param {string} bodyText - Message body text (max 1024 chars)
  * @param {Array<{id: string, title: string}>} buttons - Up to 3 buttons
+ * @param {{phoneNumberId?: string}} options - Verified receiving Meta number for this reply
  * @returns {object} Result with success status
  */
-async function sendInteractiveButtonMessage(to, bodyText, buttons) {
-  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+async function sendInteractiveButtonMessage(to, bodyText, buttons, options = {}) {
+  const hasReceiver = Object.prototype.hasOwnProperty.call(options, 'phoneNumberId');
+  const phoneNumberId = hasReceiver ? options.phoneNumberId : process.env.WHATSAPP_PHONE_NUMBER_ID;
   const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
+
+  if (hasReceiver && !/^\d{5,30}$/.test(phoneNumberId)) {
+    logger.error(' Invalid verified Meta receiver for interactive buttons');
+    return { success: false, error: 'Invalid Meta receiver' };
+  }
 
   if (!phoneNumberId || !accessToken) {
     logger.error(' Missing WHATSAPP_PHONE_NUMBER_ID or WHATSAPP_ACCESS_TOKEN');
@@ -125,6 +132,7 @@ async function sendInteractiveButtonMessage(to, bodyText, buttons) {
   try {
     const response = await fetch(`${WHATSAPP_API_URL}/${phoneNumberId}/messages`, {
       method: 'POST',
+      signal: AbortSignal.timeout(10_000),
       headers: {
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json'
@@ -139,7 +147,7 @@ async function sendInteractiveButtonMessage(to, bodyText, buttons) {
       return { success: false, error: data.error?.message || 'Failed to send buttons' };
     }
 
-    logger.info(` Interactive buttons sent to ${to}, messageId: ${data.messages?.[0]?.id}`);
+    logger.info(` Interactive buttons accepted by Meta, messageId: ${data.messages?.[0]?.id}`);
     return { success: true, messageId: data.messages?.[0]?.id };
   } catch (error) {
     logger.error(' Interactive button send exception:', error);

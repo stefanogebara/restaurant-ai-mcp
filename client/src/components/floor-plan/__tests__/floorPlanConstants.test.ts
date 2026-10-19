@@ -1,5 +1,13 @@
 import { describe, it, expect } from 'vitest';
-import { snapToGrid, getShapeLabelKey, GRID_COLS, GRID_ROWS, CELL } from '../floorPlanConstants';
+import { snapToGrid, getShapeLabelKey, GRID_COLS, GRID_ROWS, CELL, movedBeyondDragThreshold } from '../floorPlanConstants';
+
+describe('drag gesture threshold', () => {
+  it('does not treat a tap or finger jitter as a table move', () => {
+    expect(movedBeyondDragThreshold({ x: 10, y: 10 }, { x: 10, y: 10 })).toBe(false);
+    expect(movedBeyondDragThreshold({ x: 10, y: 10 }, { x: 13, y: 14 })).toBe(false);
+    expect(movedBeyondDragThreshold({ x: 10, y: 10 }, { x: 16, y: 10 })).toBe(true);
+  });
+});
 
 describe('snapToGrid', () => {
   it('snaps a pixel position to the nearest grid cell', () => {

@@ -6,6 +6,7 @@ import { formatCurrency } from '../../utils/currency';
 import { authFetch } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import type { UpcomingReservation } from '../../types/host.types';
+import { parseLocalDate } from '../../utils/timeFormatting';
 
 interface CustomerProfileDrawerProps {
   reservation: UpcomingReservation | null;
@@ -42,7 +43,8 @@ interface LtvData {
 
 
 export default function CustomerProfileDrawer({ reservation, onClose }: CustomerProfileDrawerProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const dateLocale = i18n.language.startsWith('pt') ? 'pt-BR' : i18n.language.startsWith('es') ? 'es-ES' : 'en-US';
   const isOpen = !!reservation;
   const phone = reservation?.customer_phone;
 
@@ -87,12 +89,14 @@ export default function CustomerProfileDrawer({ reservation, onClose }: Customer
 
   // Use reservation-level data (works in demo), fall back to API data (works in production)
   const tier = reservation.customer_tier || ltvData?.customer_tier || 'new';
-  const visits = reservation.visit_count || ltvData?.total_visits || 0;
-  const avgSpend = reservation.avg_spend || ltvData?.avg_revenue_per_visit;
-  const totalRevenue = ltvData?.total_revenue || (avgSpend && visits ? Math.round(avgSpend * visits) : undefined);
-  const churnRisk = ltvData?.churn_risk_score ?? (tier === 'vip' ? 5 : tier === 'regular' ? 15 : tier === 'occasional' ? 40 : undefined);
+  const visits = reservation.visit_count ?? ltvData?.total_visits ?? 0;
+  const avgSpend = reservation.avg_spend ?? ltvData?.avg_revenue_per_visit;
+  // The LTV endpoint estimates spending and supplies a heuristic score, not a
+  // measured total or a calibrated probability. Never synthesize either from tier.
+  const totalRevenue = ltvData?.total_revenue;
+  const churnRisk = ltvData?.churn_risk_score;
   const firstVisit = ltvData?.first_visit_date;
-  const favTime = ltvData?.favorite_time_slot || (reservation.time ? reservation.time.split(':')[0] + ':00' : undefined);
+  const favTime = ltvData?.favorite_time_slot;
   const favDay = ltvData?.favorite_day;
 
   const memories = guestCtx?.memories || [];
@@ -106,6 +110,9 @@ export default function CustomerProfileDrawer({ reservation, onClose }: Customer
         <>
           {/* Backdrop */}
           <motion.div
+            role="dialog"
+            aria-modal="true"
+            aria-label={t('guestProfile.title')}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -119,26 +126,26 @@ export default function CustomerProfileDrawer({ reservation, onClose }: Customer
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="fixed right-0 top-0 h-full w-[400px] max-w-[90vw] bg-glass-modal backdrop-blur-glass-modal shadow-glass-modal z-50 overflow-y-auto border-l border-glass-border-dark"
+            className="fixed right-0 top-0 h-full w-full sm:w-[400px] sm:max-w-[90vw] bg-glass-modal backdrop-blur-glass-modal shadow-glass-modal z-50 overflow-y-auto border-l border-glass-border-dark"
           >
             {/* Header */}
             <div className="sticky top-0 bg-glass-panel backdrop-blur-glass-nav border-b border-glass-border-dark px-6 py-4 flex items-center justify-between">
               <div>
                 <div className="flex items-center gap-2">
-                  <h2 className="text-lg font-bold text-stone-900">{reservation.customer_name}</h2>
+                  <h2 className="font-serif text-2xl text-deep-charcoal">{reservation.customer_name}</h2>
                   <CustomerTierBadge tier={tier as 'vip' | 'regular' | 'occasional' | 'new' | 'at_risk'} visitCount={visits} />
                 </div>
                 {firstVisit && (
-                  <p className="text-xs text-stone-500 mt-0.5">
-                    {t('customer.memberSince', 'Cliente desde')} {new Date(firstVisit).toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' })}
+                  <p className="text-xs text-muted-stone mt-0.5">
+                    {t('guestProfile.memberSince')} {parseLocalDate(firstVisit).toLocaleDateString(dateLocale, { month: 'short', year: 'numeric' })}
                   </p>
                 )}
               </div>
               <button
                 type="button"
                 onClick={onClose}
-                className="p-2 hover:bg-stone-100 rounded-lg transition-colors"
-                aria-label={t('common.close', 'Fechar')}
+                className="p-2 hover:bg-deep-charcoal/[0.05] rounded-full transition-colors"
+                aria-label={t('common.close')}
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
@@ -149,27 +156,27 @@ export default function CustomerProfileDrawer({ reservation, onClose }: Customer
             <div className="px-6 py-5 space-y-6">
               {/* Stats Grid */}
               <div className="grid grid-cols-2 gap-3">
-                <StatBox label={t('customer.totalVisits', 'Visitas')} value={String(visits)} />
-                <StatBox label={t('customer.avgSpend', 'Ticket Medio')} value={avgSpend ? formatCurrency(Math.round(avgSpend)) : '—'} />
-                <StatBox label={t('customer.totalRevenue', 'Receita Total')} value={totalRevenue ? formatCurrency(Math.round(totalRevenue)) : '—'} />
-                <StatBox label={t('customer.churnRisk', 'Risco de Churn')} value={churnRisk != null ? `${churnRisk}%` : '—'} valueColor={churnRisk != null && churnRisk > 50 ? 'text-red-600' : undefined} />
+                <StatBox label={t('crm.totalVisits')} value={String(visits)} />
+                <StatBox label={t('crm.avgSpend')} value={avgSpend != null ? formatCurrency(Math.round(avgSpend)) : '—'} />
+                <StatBox label={t('crm.totalRevenue')} value={totalRevenue != null ? formatCurrency(Math.round(totalRevenue)) : '—'} />
+                <StatBox label={t('crm.churnRisk')} value={churnRisk != null ? `${Math.round(churnRisk)}/100` : '—'} valueColor={churnRisk != null && churnRisk > 50 ? 'text-red-600' : undefined} />
               </div>
 
               {/* Behavior */}
               {(favTime || favDay) && (
-                <Section title={t('customer.behavior', 'Comportamento')}>
+                <Section title={t('guestProfile.behavior')}>
                   <div className="space-y-1.5">
-                    {favDay && <InfoRow label={t('customer.favoriteDay', 'Dia favorito')} value={favDay} />}
-                    {favTime && <InfoRow label={t('customer.favoriteTime', 'Horario favorito')} value={favTime} />}
-                    {ltvData?.avg_party_size && <InfoRow label={t('customer.avgPartySize', 'Grupo medio')} value={`${Math.round(ltvData.avg_party_size)} pessoas`} />}
-                    {ltvData?.avg_days_between_visits && <InfoRow label={t('customer.frequency', 'Frequencia')} value={`A cada ${Math.round(ltvData.avg_days_between_visits)} dias`} />}
+                    {favDay && <InfoRow label={t('guestProfile.favoriteDay')} value={favDay} />}
+                    {favTime && <InfoRow label={t('guestProfile.favoriteTime')} value={favTime} />}
+                    {ltvData?.avg_party_size && <InfoRow label={t('guestProfile.avgPartySize')} value={t('guestProfile.people', { count: Math.round(ltvData.avg_party_size) })} />}
+                    {ltvData?.avg_days_between_visits && <InfoRow label={t('guestProfile.frequency')} value={t('guestProfile.everyDays', { count: Math.round(ltvData.avg_days_between_visits) })} />}
                   </div>
                 </Section>
               )}
 
               {/* Dietary Preferences */}
               {reservation.dietary_restrictions && reservation.dietary_restrictions.length > 0 && (
-                <Section title={t('customer.dietary', 'Restricoes Alimentares')}>
+                <Section title={t('guestProfile.dietary')}>
                   <div className="flex flex-wrap gap-1.5">
                     {reservation.dietary_restrictions.map((d) => (
                       <span key={d} className="text-xs bg-amber-50 text-amber-800 px-2 py-0.5 rounded-full font-medium">{d}</span>
@@ -180,10 +187,10 @@ export default function CustomerProfileDrawer({ reservation, onClose }: Customer
 
               {/* Preferences from memories */}
               {preferences.length > 0 && (
-                <Section title={t('customer.preferences', 'Preferencias')}>
+                <Section title={t('guestProfile.preferences')}>
                   <div className="space-y-2">
                     {preferences.slice(0, 5).map((m) => (
-                      <p key={m.id} className="text-sm text-stone-700">{m.content}</p>
+                      <p key={m.id} className="text-sm text-deep-charcoal">{m.content}</p>
                     ))}
                   </div>
                 </Section>
@@ -191,41 +198,41 @@ export default function CustomerProfileDrawer({ reservation, onClose }: Customer
 
               {/* Special Occasions */}
               {occasions.length > 0 && (
-                <Section title={t('customer.occasions', 'Datas Especiais')}>
+                <Section title={t('guestProfile.occasions')}>
                   <div className="space-y-2">
                     {occasions.map((m) => (
-                      <p key={m.id} className="text-sm text-stone-700">{m.content}</p>
+                      <p key={m.id} className="text-sm text-deep-charcoal">{m.content}</p>
                     ))}
                   </div>
                 </Section>
               )}
 
               {/* Manager Notes */}
-              <Section title={t('customer.notes', 'Notas do Gerente')}>
+              <Section title={t('guestProfile.notes')}>
                 {notes.length > 0 ? (
                   <div className="space-y-2">
                     {notes.map((m) => (
-                      <div key={m.id} className="text-sm text-stone-700 bg-stone-50 px-3 py-2 rounded-lg">
+                      <div key={m.id} className="text-sm text-deep-charcoal border-b border-glass-border-dark py-2 last:border-0">
                         {m.content}
-                        <span className="text-[10px] text-stone-400 ml-2">
-                          {new Date(m.created_at).toLocaleDateString('pt-BR')}
+                        <span className="text-[10px] text-muted-stone ml-2">
+                          {new Date(m.created_at).toLocaleDateString(dateLocale)}
                         </span>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-stone-400 italic">{t('customer.noNotes', 'Nenhuma nota adicionada')}</p>
+                  <p className="text-sm text-muted-stone">{t('crm.noNotes')}</p>
                 )}
               </Section>
 
               {/* Current Reservation */}
-              <Section title={t('customer.currentReservation', 'Reserva Atual')}>
+              <Section title={t('guestProfile.currentReservation')}>
                 <div className="space-y-1.5">
-                  <InfoRow label={t('customer.date', 'Data')} value={reservation.date} />
-                  <InfoRow label={t('customer.time', 'Horario')} value={reservation.time} />
-                  <InfoRow label={t('customer.partySize', 'Pessoas')} value={String(reservation.party_size)} />
+                  <InfoRow label={t('guestProfile.date')} value={parseLocalDate(reservation.date).toLocaleDateString(dateLocale, { month: 'short', day: 'numeric', year: 'numeric' })} />
+                  <InfoRow label={t('guestProfile.time')} value={reservation.time} />
+                  <InfoRow label={t('guestProfile.partySize')} value={String(reservation.party_size)} />
                   {reservation.special_requests && (
-                    <InfoRow label={t('customer.requests', 'Pedidos')} value={reservation.special_requests} />
+                    <InfoRow label={t('guestProfile.requests')} value={reservation.special_requests} />
                   )}
                 </div>
               </Section>
@@ -241,9 +248,9 @@ export default function CustomerProfileDrawer({ reservation, onClose }: Customer
 
 function StatBox({ label, value, valueColor }: { label: string; value: string; valueColor?: string }) {
   return (
-    <div className="bg-stone-50 rounded-lg p-3">
-      <p className="text-[10px] font-bold text-stone-500 uppercase tracking-widest mb-1">{label}</p>
-      <p className={`text-lg font-bold ${valueColor || 'text-stone-900'}`}>{value}</p>
+    <div className="py-2 border-b border-glass-border-dark">
+      <p className="text-[11px] text-muted-stone uppercase tracking-[0.14em] mb-1">{label}</p>
+      <p className={`text-lg font-medium ${valueColor || 'text-deep-charcoal'}`}>{value}</p>
     </div>
   );
 }
@@ -251,7 +258,7 @@ function StatBox({ label, value, valueColor }: { label: string; value: string; v
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <h3 className="text-[11px] font-bold text-stone-500 uppercase tracking-widest mb-2">{title}</h3>
+      <h3 className="text-[11px] text-muted-stone uppercase tracking-[0.14em] mb-2">{title}</h3>
       {children}
     </div>
   );
@@ -260,8 +267,8 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between text-sm">
-      <span className="text-stone-500">{label}</span>
-      <span className="text-stone-900 font-medium">{value}</span>
+      <span className="text-muted-stone">{label}</span>
+      <span className="text-deep-charcoal font-medium text-right">{value}</span>
     </div>
   );
 }

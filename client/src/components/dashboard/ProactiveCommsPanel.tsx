@@ -9,16 +9,17 @@ import {
 } from '../../hooks/useProactiveComms';
 import ThiingsIcon from '../common/ThiingsIcon';
 import { useToast } from '../../contexts/ToastContext';
+import { churnSummaryParts } from './proactiveCommsCopy';
 
 /**
  * Proactive Comms Panel — manager inbox for re-engagement opportunities
  * (birthdays, churn risks) generated weekly by api/cron/proactive-comms.js.
  *
- * Each opportunity has an AI-drafted message the manager can edit, then
+ * Each opportunity has a grounded draft the manager can edit, then
  * approve and send via WhatsApp.
  */
 export default function ProactiveCommsPanel() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { data, isLoading } = useProactiveComms();
   const update = useUpdateProactiveComm();
   const send = useSendProactiveComm();
@@ -32,8 +33,8 @@ export default function ProactiveCommsPanel() {
 
   if (isLoading) {
     return (
-      <div className="glass-card p-6">
-        <div className="text-sm text-[#A8A29E]">{t('proactiveComms.loading', 'Loading opportunities...')}</div>
+      <div role="status" className="py-6 text-sm text-muted-stone">
+        {t('proactiveComms.loading', 'Loading opportunities...')}
       </div>
     );
   }
@@ -44,14 +45,14 @@ export default function ProactiveCommsPanel() {
 
   if (items.length === 0) {
     return (
-      <section className="glass-card p-6">
+      <section className="py-6">
         <div className="flex items-center gap-2 mb-3">
-          <ThiingsIcon name="sparkles" size="xs" className="text-burgundy" />
-          <h3 className="text-sm font-semibold text-[#1C1917]">
+          <ThiingsIcon name="sparkles" size="xs" className="text-muted-stone" />
+          <h3 className="font-serif text-2xl text-deep-charcoal">
             {t('proactiveComms.title', 'Guests to reach out to')}
           </h3>
         </div>
-        <p className="text-sm text-[#78716C]">
+        <p className="text-sm text-stone-gray">
           {t('proactiveComms.empty', "No win-back ideas right now. Birthdays, anniversaries, and guests who haven't visited in a while will appear here automatically.")}
         </p>
       </section>
@@ -95,24 +96,23 @@ export default function ProactiveCommsPanel() {
   };
 
   return (
-    <section className="glass-card p-6">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <ThiingsIcon name="sparkles" size="xs" className="text-burgundy" />
-          <h3 className="text-sm font-semibold text-[#1C1917]">
+    <section className="py-6">
+      <div className="mb-4 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h3 className="font-serif text-2xl text-deep-charcoal">
             {t('proactiveComms.title', 'Guests to reach out to')}
           </h3>
           {(pendingCount > 0 || approvedCount > 0) && (
-            <span className="text-xs text-[#A8A29E]">
-              {pendingCount > 0 && `${pendingCount} ${t('proactiveComms.pending', 'pending')}`}
+            <span className="text-xs text-muted-stone">
+              {pendingCount > 0 && t('proactiveComms.pendingCount', { count: pendingCount })}
               {pendingCount > 0 && approvedCount > 0 && ' · '}
-              {approvedCount > 0 && `${approvedCount} ${t('proactiveComms.readyToSend', 'ready to send')}`}
+              {approvedCount > 0 && t('proactiveComms.readyCount', { count: approvedCount })}
             </span>
           )}
         </div>
       </div>
 
-      <ul className="space-y-3">
+      <ul className="border-t hairline">
         {items.map(item => (
           <ProactiveCommCard
             key={item.id}
@@ -127,6 +127,7 @@ export default function ProactiveCommsPanel() {
             isSending={send.isPending}
             isUpdating={update.isPending}
             t={t}
+            language={i18n.language}
           />
         ))}
       </ul>
@@ -146,13 +147,20 @@ interface CardProps {
   isSending: boolean;
   isUpdating: boolean;
   t: ReturnType<typeof useTranslation>['t'];
+  language: string;
 }
 
 function ProactiveCommCard({
   item, isExpanded, onToggleExpand, draftOverride,
-  onSetDraft, onApprove, onDismiss, onSend, isSending, isUpdating, t,
+  onSetDraft, onApprove, onDismiss, onSend, isSending, isUpdating, t, language,
 }: CardProps) {
   const draft = draftOverride !== undefined ? draftOverride : (item.draft_message || '');
+  const scoreParts = churnSummaryParts(item, language);
+  const summary = scoreParts ? [
+    scoreParts.score === null ? t('proactiveComms.scoreUnknown') : t('proactiveComms.score', { score: scoreParts.score }),
+    scoreParts.visits === null ? null : t('proactiveComms.visitCount', { count: scoreParts.visits }),
+    scoreParts.lastVisit ? t('proactiveComms.lastVisit', { date: scoreParts.lastVisit }) : null,
+  ].filter(Boolean).join(' · ') : item.suggested_action;
   // Carla-friendly labels: dropped "Churn risk" (analytics term) and "Long
   // absent" (vague). Now phrased as actions a host actually takes.
   const typeLabel = item.type === 'occasion'
@@ -164,47 +172,47 @@ function ProactiveCommCard({
   const statusBadge = (() => {
     switch (item.status) {
       case 'pending':
-        return <span className="text-[10px] uppercase tracking-wider text-[#92400E] bg-[#FEF3C7] rounded-full px-2 py-0.5">{t('proactiveComms.pending', 'pending')}</span>;
+        return <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] uppercase tracking-wider text-amber-700">{t('proactiveComms.pending', 'pending')}</span>;
       case 'approved':
-        return <span className="text-[10px] uppercase tracking-wider text-[#065F46] bg-[#D1FAE5] rounded-full px-2 py-0.5">{t('proactiveComms.approved', 'approved')}</span>;
+        return <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] uppercase tracking-wider text-emerald-700">{t('proactiveComms.approved', 'approved')}</span>;
       case 'sent':
-        return <span className="text-[10px] uppercase tracking-wider text-[#1E40AF] bg-[#DBEAFE] rounded-full px-2 py-0.5">{t('proactiveComms.sent', 'sent')}</span>;
+        return <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] uppercase tracking-wider text-emerald-700">{t('proactiveComms.sent', 'sent')}</span>;
       default:
         return null;
     }
   })();
 
   return (
-    <li className="border border-[#E7E5E4] rounded-xl bg-[#FAFAF9]">
+    <li className="border-b hairline last:border-b-0">
       <button
         type="button"
         onClick={onToggleExpand}
-        className="w-full flex items-center justify-between gap-3 p-4 text-left hover:bg-white transition-colors rounded-xl"
+        className="w-full flex items-center justify-between gap-3 px-1 py-5 text-left hover:bg-warm-white/50 transition-colors"
         aria-expanded={isExpanded}
       >
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-[10px] uppercase tracking-wider text-burgundy font-semibold">{typeLabel}</span>
+            <span className="text-[10px] uppercase tracking-wider text-muted-stone font-semibold">{typeLabel}</span>
             {statusBadge}
           </div>
-          <div className="text-sm font-medium text-[#1C1917] truncate">
+          <div className="truncate text-sm font-medium text-deep-charcoal">
             {item.customer_name || item.customer_phone}
           </div>
-          <div className="text-xs text-[#78716C] truncate">{item.suggested_action}</div>
+          <div className="text-xs text-stone-gray break-words">{summary}</div>
         </div>
-        <ThiingsIcon name={isExpanded ? 'chevron-up' : 'chevron-down'} size="xs" className="text-[#A8A29E] flex-shrink-0" />
+        <ThiingsIcon name={isExpanded ? 'chevron-up' : 'chevron-down'} size="xs" className="text-muted-stone flex-shrink-0" />
       </button>
 
       {isExpanded && (
-        <div className="border-t border-[#E7E5E4] p-4 space-y-3">
+        <div className="border-t hairline px-1 py-4 space-y-3">
           {item.send_error && (
-            <div className="text-xs text-[#B91C1C] bg-[#FEE2E2] rounded-lg p-2">
+            <div className="rounded-lg bg-red-50 p-2 text-xs text-red-700">
               {t('proactiveComms.lastSendError', 'Last send attempt failed')}: {item.send_error}
             </div>
           )}
 
           <div>
-            <label htmlFor={`draft-${item.id}`} className="block text-xs font-semibold text-[#44403C] mb-1.5">
+            <label htmlFor={`draft-${item.id}`} className="mb-1.5 block text-xs font-semibold text-deep-charcoal">
               {t('proactiveComms.draftLabel', 'Draft message (edit as needed)')}
             </label>
             <textarea
@@ -213,19 +221,19 @@ function ProactiveCommCard({
               onChange={(e) => onSetDraft(e.target.value)}
               disabled={item.status === 'sent'}
               rows={4}
-              className="w-full px-3 py-2 border border-glass-border-input rounded-lg text-sm text-[#1C1917] placeholder-[#A8A29E] focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy disabled:bg-[#F5F5F4] disabled:text-[#78716C]"
-              placeholder={t('proactiveComms.draftPlaceholder', 'AI is drafting this — write your own if you prefer.')}
+              className="w-full rounded-lg border border-glass-border-input bg-warm-white px-3 py-2 text-sm text-deep-charcoal placeholder:text-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy disabled:opacity-60"
+              placeholder={t('proactiveComms.draftPlaceholder', 'Write a message using only details you know about this guest.')}
             />
           </div>
 
-          <div className="flex flex-wrap gap-2 justify-end">
+          <div className="flex flex-wrap gap-2 justify-start sm:justify-end">
             {item.status === 'pending' && (
               <>
                 <button
                   type="button"
                   onClick={onDismiss}
                   disabled={isUpdating}
-                  className="px-3 py-1.5 text-sm text-[#78716C] hover:text-[#1C1917] transition-colors disabled:opacity-50"
+                  className="px-3 py-1.5 text-sm text-stone-gray hover:text-deep-charcoal transition-colors disabled:opacity-50"
                 >
                   {t('proactiveComms.dismiss', 'Dismiss')}
                 </button>
@@ -245,7 +253,7 @@ function ProactiveCommCard({
                   type="button"
                   onClick={onDismiss}
                   disabled={isUpdating || isSending}
-                  className="px-3 py-1.5 text-sm text-[#78716C] hover:text-[#1C1917] transition-colors disabled:opacity-50"
+                  className="px-3 py-1.5 text-sm text-stone-gray hover:text-deep-charcoal transition-colors disabled:opacity-50"
                 >
                   {t('proactiveComms.dismiss', 'Dismiss')}
                 </button>
@@ -261,8 +269,8 @@ function ProactiveCommCard({
               </>
             )}
             {item.status === 'sent' && item.sent_at && (
-              <span className="text-xs text-[#78716C]">
-                {t('proactiveComms.sentAt', 'Sent')} {new Date(item.sent_at).toLocaleString()}
+              <span className="text-xs text-stone-gray">
+                {t('proactiveComms.sentAt', 'Sent')} {new Date(item.sent_at).toLocaleString(language)}
               </span>
             )}
           </div>

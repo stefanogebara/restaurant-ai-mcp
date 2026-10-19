@@ -68,7 +68,7 @@ export function useRecalculateLTV() {
   const queryClient = useQueryClient();
   return useMutation<RecalculateResult, Error, void>({
     mutationFn: async () => {
-      const response = await authFetch('/api/ltv?action=calculate-all');
+      const response = await authFetch('/api/ltv?action=calculate-all', { method: 'POST' });
       if (!response.ok) throw new Error('Failed to calculate LTV');
       const result = await response.json();
       if (!result.success) throw new Error(result.error || 'Failed');

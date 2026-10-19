@@ -13,26 +13,26 @@ const { sendTemplateMessage, sendInteractiveButtonMessage } = require('./message
 const { sendReservationConfirmationEmail } = require('../../_lib/email');
 const { addCustomerToQueue, checkQueuePosition } = require('./waitlist-handler');
 const handoff = require('./handoff');
+const { bookingExternalId } = require('./booking-intent');
 
-/**
- * Get current date/time in restaurant timezone
- */
-function getCurrentDateTime(language = 'en') {
-  const now = new Date();
+/** One instant, rendered consistently in the restaurant's IANA timezone. */
+function getCurrentDateTime(language = 'en', timezone = 'UTC', now = new Date()) {
   const localeMap = { en: 'en-US', es: 'es-ES', pt: 'pt-BR' };
-  const locale = localeMap[language] || 'en-US';
+  const locale = localeMap[String(language).split('-')[0]] || 'en-US';
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: timezone, year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+  }).formatToParts(now);
+  const part = type => parts.find(item => item.type === type)?.value;
   return {
-    date: now.toISOString().split('T')[0],
-    time: now.toTimeString().split(' ')[0].substring(0, 5),
-    dayOfWeek: now.toLocaleDateString(locale, { weekday: 'long' }),
+    date: `${part('year')}-${part('month')}-${part('day')}`,
+    time: `${part('hour')}:${part('minute')}`,
+    dayOfWeek: now.toLocaleDateString(locale, { timeZone: timezone, weekday: 'long' }),
     formatted: now.toLocaleString(locale, {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit'
-    })
+      timeZone: timezone, weekday: 'long', year: 'numeric', month: 'long',
+      day: 'numeric', hour: 'numeric', minute: '2-digit', hourCycle: 'h23',
+    }),
+    timezone,
   };
 }
 
@@ -86,7 +86,7 @@ const RESERVATION_TOOLS = [
     type: 'function',
     function: {
       name: 'create_reservation',
-      description: 'Create a new reservation after confirming all details with the customer',
+      description: 'Create one reservation after confirming all details with the customer. For a second reservation, ask for a new customer message.',
       parameters: {
         type: 'object',
         properties: {
@@ -333,7 +333,7 @@ async function resolveSessionRestaurant(session) {
 /**
  * Execute a tool call
  */
-async function executeTool(toolName, toolInput, session) {
+async function executeTool(toolName, toolInput, session, inboundContext = {}) {
   logger.info(` Executing tool: ${toolName}`, toolInput);
 
   // Normalize session: if JOIN returned null but FK is set, resolve from registry
@@ -480,6 +480,10 @@ async function executeTool(toolName, toolInput, session) {
           error: 'No restaurant selected. Please identify the restaurant first.'
         };
       }
+      if (session.restaurant_id && session.restaurant.id !== session.restaurant_id) {
+        logger.error('create_reservation: restaurant context mismatch');
+        return { success: false, error: 'Restaurant context is inconsistent. Please try again.' };
+      }
 
       try {
         // Pass full restaurant object with credentials
@@ -489,42 +493,86 @@ async function executeTool(toolName, toolInput, session) {
         }
 
         const { date, time, party_size, customer_name, customer_email, special_requests } = toolInput;
-        // Use provided phone or fall back to sender's WhatsApp number
-        const customer_phone = toolInput.customer_phone || session?.sender_phone;
-
-        if (!customer_phone) {
-          return { success: false, error: 'Customer phone number is required' };
+        // The sender, not an LLM-provided number, owns this WhatsApp booking.
+        const customer_phone = session?.sender_phone;
+        if (!customer_phone || typeof customer_name !== 'string' || !customer_name.trim()
+          || typeof date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(date)
+          || typeof time !== 'string' || !/^([01]\d|2[0-3]):[0-5]\d$/.test(time)
+          || !Number.isInteger(party_size) || party_size < 1 || party_size > 100) {
+          return { success: false, error: 'Missing or invalid booking details' };
         }
 
-        // Generate reservation ID
-        const reservationId = generateSecureReservationId();
+        // The sender of a confirmation must be known before the booking commits.
+        // A missing Meta receiver used to fall back to the restaurant UUID as
+        // an idempotency key, then fail only after the reservation was saved.
+        if ((inboundContext.providerName === 'meta'
+            && !/^\d{5,30}$/.test(inboundContext.receiver || ''))
+          || (inboundContext.providerName === 'twilio'
+            && !/^\+[1-9]\d{8,14}$/.test(inboundContext.receiver || ''))) {
+          return { success: false, error: 'Could not verify the receiving WhatsApp number. Please try again.' };
+        }
 
-        const { data, error } = await client
-          .from('reservations')
-          .insert({
-            reservation_id: reservationId,
-            restaurant_id: session.restaurant.id,
-            date,
-            time,
-            party_size,
-            customer_name,
-            customer_phone,
-            special_requests: special_requests || '',
-            status: 'confirmed',
-            source: 'whatsapp_ai',
-            created_at: new Date().toISOString()
-          })
-          .select()
-          .single();
+        const externalId = bookingExternalId(inboundContext, session.restaurant.id);
+        if (!externalId) {
+          logger.error('create_reservation: missing stable inbound message identity');
+          return { success: false, error: 'Could not verify this booking request. Please try again.' };
+        }
+
+        const proposedId = generateSecureReservationId();
+        const { data, error } = await client.rpc('book_whatsapp_reservation', {
+          p_restaurant_id: session.restaurant.id,
+          p_external_id: externalId,
+          p_reservation_id: proposedId,
+          p_date: date,
+          p_time: time,
+          p_party_size: party_size,
+          p_customer_name: customer_name,
+          p_customer_phone: customer_phone,
+          p_customer_email: customer_email || null,
+          p_special_requests: special_requests || '',
+        });
 
         if (error) {
           logger.error(' Create reservation error:', error);
           return { success: false, error: 'Could not create reservation' };
         }
 
+        if (data?.status === 'existing') {
+          return {
+            success: true,
+            message: 'This reservation is already confirmed.',
+            reservation: {
+              id: data.reservation_id,
+              restaurant: session.restaurant.restaurant_name,
+              date: data.date,
+              time: data.time,
+              party_size: data.party_size,
+              customer_name: data.customer_name,
+            },
+            customer_phone,
+          };
+        }
+        if (data?.status !== 'created' || !data.reservation_id) {
+          const refusal = {
+            unavailable: 'No capacity remains for that time. Please offer another time.',
+            outside_hours: 'The restaurant is closed at that time. Please offer another time.',
+            too_late: 'That time is after the last seating. Please offer an earlier time.',
+            past_slot: 'That time has passed. Please offer a future time.',
+            too_far: 'The requested date is beyond the advance-booking window.',
+            party_too_large: 'The party exceeds the restaurant booking limit.',
+            cancelled_intent: 'That booking request was cancelled. Ask the guest to send a new request.',
+          };
+          return { success: false, error: refusal[data?.status] || 'Could not create reservation' };
+        }
+        const reservationId = data.reservation_id;
+
         // Track usage for metered billing
         if (session.restaurant?.id) {
-          trackUsage(session.restaurant.id, 'whatsapp_reservation');
+          try {
+            await trackUsage(session.restaurant.id, 'whatsapp_reservation');
+          } catch (usageErr) {
+            logger.warn(' Booking usage tracking failed after commit:', usageErr.message);
+          }
         }
 
         // Send template confirmation message
@@ -608,14 +656,28 @@ async function executeTool(toolName, toolInput, session) {
         };
         const cancelLabel = { 'pt-BR': '❌ Cancelar', es: '❌ Cancelar', en: '❌ Cancel' };
         const modifyLabel = { 'pt-BR': '✏️ Alterar', es: '✏️ Modificar', en: '✏️ Modify' };
-        sendInteractiveButtonMessage(
-          customer_phone,
-          buttonConfirmText[lang] || buttonConfirmText['en'],
-          [
-            { id: `cancel_reservation_${reservationId}`, title: cancelLabel[lang] || cancelLabel['en'] },
-            { id: `modify_reservation_${reservationId}`, title: modifyLabel[lang] || modifyLabel['en'] },
-          ]
-        ).catch(err => logger.warn(' Button message failed (non-fatal):', err.message));
+        // A Twilio/WAHA guest must not receive a second confirmation from the
+        // platform's Meta number. Their normal channel reply follows this tool.
+        let confirmationSubmission = 'channel_reply';
+        if (inboundContext.providerName === 'meta') {
+          try {
+            const delivery = await sendInteractiveButtonMessage(
+              customer_phone,
+              buttonConfirmText[lang] || buttonConfirmText['en'],
+              [
+                { id: `cancel_reservation_${reservationId}`, title: cancelLabel[lang] || cancelLabel['en'] },
+                { id: `modify_reservation_${reservationId}`, title: modifyLabel[lang] || modifyLabel['en'] },
+              ],
+              { phoneNumberId: inboundContext.receiver }
+            );
+            // Meta's 200 means accepted for delivery, not delivered to the guest.
+            confirmationSubmission = delivery?.success ? 'accepted' : 'failed';
+            if (!delivery?.success) logger.warn(' Booking button confirmation failed:', delivery?.error);
+          } catch (sendErr) {
+            confirmationSubmission = 'failed';
+            logger.warn(' Booking button confirmation threw:', sendErr.message);
+          }
+        }
 
         return {
           success: true,
@@ -629,7 +691,8 @@ async function executeTool(toolName, toolInput, session) {
             customer_name
           },
           // Include phone for potential template use
-          customer_phone: customer_phone
+          customer_phone: customer_phone,
+          confirmation_submission: confirmationSubmission,
         };
       } catch (err) {
         logger.error(' Create error:', err);
@@ -638,7 +701,13 @@ async function executeTool(toolName, toolInput, session) {
     }
 
     case 'get_current_datetime': {
-      return getCurrentDateTime();
+      const timezone = inboundContext.timezone || session?.restaurant?.timezone;
+      if (!timezone) return { success: false, error: 'Restaurant timezone unavailable' };
+      try {
+        return getCurrentDateTime(inboundContext.language || session?.restaurant?.language || 'pt', timezone);
+      } catch (_error) {
+        return { success: false, error: 'Restaurant timezone unavailable' };
+      }
     }
 
     case 'list_restaurants': {

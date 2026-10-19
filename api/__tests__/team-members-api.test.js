@@ -41,7 +41,7 @@ const mockVerifyAuth = jest.fn();
 jest.mock('../_lib/auth', () => ({ verifyAuth: mockVerifyAuth }));
 
 jest.mock('../_lib/email', () => ({
-  sendInviteEmail: jest.fn().mockResolvedValue(undefined),
+  sendInviteEmail: jest.fn().mockResolvedValue({ accepted: true }),
 }));
 
 jest.mock('../_lib/sentry', () => ({
@@ -117,15 +117,45 @@ describe('POST /api/team-members', () => {
     expect(res.status).toHaveBeenCalledWith(400);
   });
 
+  it('rejects invalid email and role before touching the database', async () => {
+    const res = mockRes();
+    await teamMembersHandler(mockReq('POST', { email: 'not-an-email', role: 'owner' }), res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(mockAddTeamMember).not.toHaveBeenCalled();
+  });
+
+  it('returns conflict without sending an email for an existing member', async () => {
+    mockAddTeamMember.mockResolvedValueOnce({ success: false, error: 'already_member' });
+    const res = mockRes();
+    await teamMembersHandler(mockReq('POST', { email: 'host@test.com', role: 'host' }), res);
+    expect(res.status).toHaveBeenCalledWith(409);
+    expect(require('../_lib/email').sendInviteEmail).not.toHaveBeenCalled();
+  });
+
   it('invites a new member (owner)', async () => {
     mockAddTeamMember.mockResolvedValueOnce({
       success: true,
-      member: { id: 'm1', email: 'h@t.com', invite_token: 'tok123', status: 'pending' },
+      member: { id: 'm1', email: 'h@t.com', role: 'host', invite_token: 'tok123', status: 'pending' },
     });
     const res = mockRes();
     await teamMembersHandler(mockReq('POST', { email: 'h@t.com', role: 'host' }), res);
     expect(res.status).toHaveBeenCalledWith(201);
-    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true, email_accepted: true }));
+    expect(res.json.mock.calls[0][0].member).not.toHaveProperty('invite_token');
+  });
+
+  it('keeps the invitation pending but does not claim email acceptance on failure', async () => {
+    const { sendInviteEmail } = require('../_lib/email');
+    sendInviteEmail.mockResolvedValueOnce({ accepted: false });
+    mockAddTeamMember.mockResolvedValueOnce({
+      success: true,
+      member: { id: 'm2', email: 'h@t.com', role: 'host', invite_token: 'secret', status: 'pending' },
+    });
+    const res = mockRes();
+    await teamMembersHandler(mockReq('POST', { email: 'h@t.com', role: 'host' }), res);
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ email_accepted: false }));
+    expect(res.json.mock.calls[0][0].member).not.toHaveProperty('invite_token');
   });
 });
 

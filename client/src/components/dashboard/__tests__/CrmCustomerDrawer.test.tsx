@@ -20,7 +20,7 @@ vi.mock('../../../hooks/useCustomers', () => ({
       dietary_restrictions: [],
       seating_preferences: [],
       special_occasions: {},
-      recent_reservations: [{ id: 'reservation-1', date: '2026-10-11', time: '19:00', party_size: 2, status: 'completed' }],
+      recent_reservations: [{ id: 'reservation-1', date: '2026-10-11', time: '19:00:00', party_size: 2, status: 'completed' }],
       notes: [{ id: 'note-1', content: 'Window table', created_by: null, created_at: '2026-10-11' }],
     },
     isLoading: false,
@@ -42,7 +42,12 @@ describe('CrmCustomerDrawer', () => {
     expect(screen.getByText('Window table')).toBeInTheDocument();
     expect(screen.getByText('52/100')).toBeInTheDocument();
     expect(screen.getByText('Estimated total spend')).toBeInTheDocument();
+    expect(screen.getByText(/may differ from recorded payments/i)).toBeInTheDocument();
     expect(screen.getByText('Completed')).toBeInTheDocument();
+    expect(screen.getByText('Oct 11, 2026')).toBeInTheDocument();
+    expect(screen.getByText('19:00')).toBeInTheDocument();
+    expect(screen.queryByText('2026-10-11')).not.toBeInTheDocument();
+    expect(screen.queryByText('19:00:00')).not.toBeInTheDocument();
     expect(screen.queryByText('undefined')).not.toBeInTheDocument();
   });
 });

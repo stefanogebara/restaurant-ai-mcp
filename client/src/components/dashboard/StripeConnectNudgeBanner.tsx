@@ -44,19 +44,16 @@ export default function StripeConnectNudgeBanner() {
     >
       <p className="text-sm text-amber-800 flex-1 min-w-0">
         <span className="font-semibold">
-          {t('stripeConnectNudge.title', 'Connect your Stripe account')}
+          {t('stripeConnectNudge.title')}
         </span>
         {' — '}
-        {t(
-          'stripeConnectNudge.subtitle',
-          'Your booking deposits are currently routed through Seatable. Connect Stripe to receive them directly to your account.',
-        )}
+        {t('stripeConnectNudge.subtitle')}
       </p>
       <a
         href="/host-dashboard/integrations#integrations:pos"
         className="text-sm font-semibold text-amber-700 hover:text-amber-900 bg-amber-100 hover:bg-amber-200 px-4 py-1.5 rounded-xl whitespace-nowrap transition-colors"
       >
-        {t('stripeConnectNudge.cta', 'Connect Stripe')}
+        {t('stripeConnectNudge.cta')}
       </a>
     </div>
   );

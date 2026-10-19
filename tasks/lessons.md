@@ -1521,3 +1521,12 @@ Um número global pode estar registrado na plataforma e ainda apontar para o age
 ## 2026-10-12 — Uma entrega isolada não encerra uma reforma contínua
 
 Quando Stefano pede para continuar arrumando e testando todas as páginas, concluir um PR não é sinal para parar ou pedir nova autorização. Confirmar o que foi observado em produção, registrar limites da prova (por exemplo, sem mensagem real ou sem sessão Playwright) e seguir para a próxima superfície independente. Não misturar código de outro checkout sujo; trabalhar em ramo isolado e manter atualizações curtas durante a espera por builds.
+# Continuidade por superfície
+
+- Quando Stefano pedir para continuar sem parar a cada entrega, encadear a próxima superfície a partir de um defeito observado em navegador, mantendo branches e provas de deploy separados. Não transformar “merge”, teste local ou preview em confirmação de produção.
+# 2026-10-12 — Entrega por superfície não encerra uma reforma contínua
+
+Correção do usuário: não parar ao concluir cada tarefa; seguir auditando, corrigindo, testando e aplicando o design nas páginas seguintes. Regra: manter uma fila explícita de problemas observados, fechar cada lote com testes e prova visual, conferir merge e produção separadamente e avançar ao próximo problema sem pedir permissão a cada PR. Pausar apenas quando houver bloqueio real ou decisão externa necessária; nunca chamar uma mudança local ou um preview de produção pronta.
+# 2026-10-12 — Não declarar uma página móvel pronta só porque não tem overflow
+
+O botão global de navegação cobria o rótulo da página de WhatsApp em 320 px, embora `scrollWidth` fosse igual à largura da tela. Sempre inspecionar uma captura visual do topo e verificar sobreposição com controles fixos. Se já houver outro acionador equivalente na barra inferior, eliminar a duplicação antes de adicionar padding diferente em cada página.

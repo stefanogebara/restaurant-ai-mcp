@@ -17,10 +17,12 @@ import LTVTierBreakdown from './LTVTierBreakdown';
 import LTVTopVIPs from './LTVTopVIPs';
 import LTVAtRiskCustomers from './LTVAtRiskCustomers';
 import { useLTVStats, useLTVTopVIPs, useLTVAtRisk, useRecalculateLTV, useSendCampaign } from '../../hooks/useLTVData';
+import { useRestaurantCurrency } from '../../hooks/useRestaurantCurrency';
 
 export default function LTVDashboard() {
   const { t } = useTranslation();
   const { success, error } = useToast();
+  const currency = useRestaurantCurrency();
   const statsQuery = useLTVStats();
   const vipsQuery = useLTVTopVIPs();
   const atRiskQuery = useLTVAtRisk();
@@ -32,7 +34,6 @@ export default function LTVDashboard() {
   const atRiskCustomers = atRiskQuery.data ?? [];
   const isLoading = statsQuery.isLoading;
 
-  const [isExpanded, setIsExpanded] = useState(true);
   const [selectedCustomerForCampaign, setSelectedCustomerForCampaign] = useState<Customer | null>(null);
   const [campaignModalOpen, setCampaignModalOpen] = useState(false);
 
@@ -47,11 +48,7 @@ export default function LTVDashboard() {
 
   if (isLoading) {
     return (
-      <div className="glass-card p-6">
-        <h2 className="text-xl font-bold text-deep-charcoal flex items-center gap-2 mb-4">
-          <ThiingsIcon name="users" size="sm" />
-          Customer Lifetime Value
-        </h2>
+      <div className="py-12">
         <div className="flex flex-col items-center justify-center py-8">
           <Spinner size="lg" className="mb-4" />
           <p className="text-stone-gray font-semibold">{t('common.loadingAnalytics')}</p>
@@ -60,16 +57,28 @@ export default function LTVDashboard() {
     );
   }
 
+  if (statsQuery.isError) {
+    return (
+      <div role="alert" className="py-12 space-y-3">
+        <h2 className="font-serif text-2xl text-deep-charcoal">{t('ltv.errorTitle')}</h2>
+        <p className="text-sm text-muted-stone">{t('ltv.errorBody')}</p>
+        <button type="button" onClick={() => statsQuery.refetch()} className="rounded-full bg-deep-charcoal px-5 py-2 text-sm text-white">
+          {t('common.retry')}
+        </button>
+      </div>
+    );
+  }
+
   if (!stats || stats.total_customers === 0) {
     return (
-      <div className="glass-card p-6">
+      <div className="py-12">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-full bg-soft-gray flex items-center justify-center">
             <ThiingsIcon name="users" pxSize={24} />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-deep-charcoal">No Customer Data Yet</h3>
-            <p className="text-sm text-stone-gray">LTV metrics will appear as customers visit</p>
+            <h3 className="font-serif text-2xl text-deep-charcoal">{t('ltv.emptyTitle')}</h3>
+            <p className="text-sm text-stone-gray">{t('ltv.emptyBody')}</p>
           </div>
         </div>
       </div>
@@ -77,62 +86,37 @@ export default function LTVDashboard() {
   }
 
   return (
-    <div className="glass-panel">
-      <button
-        onClick={() => setIsExpanded(!isExpanded)}
-        aria-expanded={isExpanded}
-        className="w-full p-6 flex items-center justify-between hover:bg-soft-gray/50 transition-colors rounded-t-2xl"
-      >
-        <h2 className="text-xl font-bold text-deep-charcoal flex items-center gap-2">
-          <ThiingsIcon name="users" size="sm" />
-          Customer Lifetime Value
-        </h2>
-        <div className={`transform transition-transform ${isExpanded ? 'rotate-180' : ''}`}>
-          <ThiingsIcon name="chevron-down" size="sm" />
+    <div className="space-y-10">
+      <LTVKeyMetrics stats={stats} currency={currency} />
+      <LTVTierBreakdown tiers={stats.tiers} />
+      <LTVTopVIPs topVIPs={topVIPs} currency={currency} />
+      <LTVAtRiskCustomers
+        atRiskCustomers={atRiskCustomers}
+        highRiskCount={stats.high_risk_customers}
+        currency={currency}
+        onOpenCampaignModal={openCampaignModal}
+      />
+      {/* This database maintenance job stays out of the daily service flow. */}
+      <details className="text-xs">
+        <summary className="cursor-pointer text-muted-stone hover:text-deep-charcoal underline underline-offset-2 select-none">
+          {t('ltv.maintenance.toggle', 'Maintenance')}
+        </summary>
+        <div className="mt-3 max-w-xl space-y-2">
+          <p className="text-xs text-warm-stone">{t('ltv.maintenance.recalcHint')}</p>
+          <button
+            type="button"
+            className="w-full px-3 py-2 bg-soft-gray hover:bg-border-gray border border-glass-border-dark text-xs font-medium text-deep-charcoal rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+            disabled={recalculate.isPending}
+            onClick={() => recalculate.mutate(undefined, {
+              onSuccess: (result) => success(t('ltv.maintenance.recalcDone', { count: result.total_customers })),
+              onError: () => error(t('ltv.maintenance.recalcFailed')),
+            })}
+          >
+            {recalculate.isPending ? <Spinner size="sm" /> : <ThiingsIcon name="activity" size="sm" />}
+            {recalculate.isPending ? t('ltv.maintenance.recalcRunning') : t('ltv.maintenance.recalcButton')}
+          </button>
         </div>
-      </button>
-
-      {isExpanded && (
-        <div className="px-6 pb-6 space-y-4">
-          <LTVKeyMetrics stats={stats} />
-          <LTVTierBreakdown tiers={stats.tiers} />
-          <LTVTopVIPs topVIPs={topVIPs} />
-          <LTVAtRiskCustomers
-            atRiskCustomers={atRiskCustomers}
-            highRiskCount={stats.high_risk_customers}
-            onOpenCampaignModal={openCampaignModal}
-          />
-          {/* Recalculate is a maintenance-grade database job that previously
-              took primary CTA real-estate. Hosts don't need it for daily
-              shifts — the values refresh automatically on the next cron pass.
-              Tucked into a small disclosure so admins can still trigger it. */}
-          <details className="text-xs">
-            <summary className="cursor-pointer text-muted-stone hover:text-deep-charcoal underline underline-offset-2 select-none">
-              {t('ltv.maintenance.toggle', 'Maintenance')}
-            </summary>
-            <div className="mt-3 p-3 bg-soft-gray rounded-xl space-y-2">
-              <p className="text-xs text-warm-stone">
-                {t('ltv.maintenance.recalcHint', 'These numbers refresh automatically every day. You only need to trigger a manual rebuild after a large CSV import.')}
-              </p>
-              <button
-                type="button"
-                className="w-full px-3 py-2 bg-soft-gray hover:bg-border-gray border border-glass-border-dark text-xs font-medium text-deep-charcoal rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
-                disabled={recalculate.isPending}
-                onClick={() => recalculate.mutate(undefined, {
-                  onSuccess: (result) => success(t('ltv.maintenance.recalcDone', 'Refreshed values for {{count}} customers', { count: result.total_customers })),
-                  onError: () => error(t('ltv.maintenance.recalcFailed', 'Could not refresh customer values. Please try again.')),
-                })}
-              >
-                {recalculate.isPending ? <Spinner size="sm" /> : <ThiingsIcon name="activity" size="sm" />}
-                {recalculate.isPending
-                  ? t('ltv.maintenance.recalcRunning', 'Refreshing...')
-                  : t('ltv.maintenance.recalcButton', 'Refresh all customer values now')}
-              </button>
-            </div>
-          </details>
-        </div>
-      )}
-
+      </details>
       <RetentionCampaignModal
         isOpen={campaignModalOpen}
         onClose={() => setCampaignModalOpen(false)}

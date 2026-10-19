@@ -40,7 +40,7 @@ const mkCustomer = (over: Partial<CrmCustomer> = {}): CrmCustomer => ({
   customer_tier: 'vip',
   lifetime_value: 1840,
   avg_revenue_per_visit: 0,
-  total_revenue: 0,
+  total_revenue: 240,
   churn_risk_score: 0,
   avg_party_size: 4,
   tags: ['terraço', 'vinho', 'aniversário', 'extra'],
@@ -82,8 +82,26 @@ describe('CustomersPage', () => {
     const mobileCustomer = await screen.findByRole('button', { name: /Beatriz Costa/ });
     expect(within(mobileCustomer).getByText('Visits')).toBeInTheDocument();
     expect(within(mobileCustomer).getByText('Last Visit')).toBeInTheDocument();
-    expect(within(mobileCustomer).getByText('Estimated value')).toBeInTheDocument();
-    expect(within(mobileCustomer).getByText('$1,840')).toBeInTheDocument();
+    expect(within(mobileCustomer).getByText('Estimated spend from visits')).toBeInTheDocument();
+    expect(within(mobileCustomer).getByText('$240')).toBeInTheDocument();
+    expect(within(mobileCustomer).queryByText('$1,840')).not.toBeInTheDocument();
+    expect(screen.getByText(/may differ from recorded payments/i)).toBeInTheDocument();
+  });
+
+  it('shows the visit-based estimate in the desktop table, never the two-year projection', async () => {
+    respondWith([mkCustomer()]);
+    renderWithProviders(<CustomersPage />);
+    const row = await screen.findByRole('row', { name: /Beatriz Costa/ });
+    expect(within(row).getByText('$240')).toBeInTheDocument();
+    expect(within(row).queryByText('$1,840')).not.toBeInTheDocument();
+  });
+
+  it('does not substitute a future-value projection when visit spend is unavailable', async () => {
+    respondWith([mkCustomer({ total_revenue: 0, lifetime_value: 1840 })]);
+    renderWithProviders(<CustomersPage />);
+    const mobileCustomer = await screen.findByRole('button', { name: /Beatriz Costa/ });
+    expect(within(mobileCustomer).getByText('—')).toBeInTheDocument();
+    expect(within(mobileCustomer).queryByText('$1,840')).not.toBeInTheDocument();
   });
 
   it('mostra no máximo 3 tags e resume o resto', async () => {

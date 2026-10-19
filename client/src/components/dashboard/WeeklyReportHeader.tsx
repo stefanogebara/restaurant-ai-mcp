@@ -3,59 +3,80 @@ import { useTranslation } from 'react-i18next';
 interface WeeklyReportHeaderProps {
   startDate: string;
   endDate: string;
-  onStartDateChange: (v: string) => void;
-  onEndDateChange: (v: string) => void;
+  onStartDateChange: (value: string) => void;
+  onEndDateChange: (value: string) => void;
   onPrevious: () => void;
   onNext: () => void;
   onApply: () => void;
   onPrint: () => void;
   onShare: () => void;
+  canExport: boolean;
+  canApply: boolean;
+  hasPendingChanges: boolean;
 }
 
 export default function WeeklyReportHeader({
   startDate, endDate, onStartDateChange, onEndDateChange,
   onPrevious, onNext, onApply, onPrint, onShare,
+  canExport, canApply, hasPendingChanges,
 }: WeeklyReportHeaderProps) {
   const { t } = useTranslation();
 
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pl-12 sm:pl-0">
-      <h1 className="text-2xl font-bold text-deep-charcoal tracking-tight">
-        {t('analytics.weeklyReports', 'Weekly Reports')}
-      </h1>
-      <div className="flex items-center gap-2.5 print:hidden">
-        <div className="flex items-center gap-1.5 px-2 py-2 bg-white border border-border-gray rounded-xl text-[13px] font-medium text-stone-gray">
-          <button onClick={onPrevious} aria-label={t('analytics.previousPeriod', 'Previous period')} className="px-2 py-0.5 text-stone-gray hover:text-deep-charcoal transition-colors">←</button>
-          <input
-            type="date"
-            value={startDate}
-            onChange={(e) => onStartDateChange(e.target.value)}
-            className="bg-transparent border-0 text-[13px] text-stone-gray w-[110px] cursor-pointer"
-          />
-          <span className="text-muted-stone">&ndash;</span>
-          <input
-            type="date"
-            value={endDate}
-            onChange={(e) => onEndDateChange(e.target.value)}
-            className="bg-transparent border-0 text-[13px] text-stone-gray w-[110px] cursor-pointer"
-          />
-          <button type="button" onClick={onApply} className="ml-1 text-burgundy font-semibold text-xs hover:text-burgundy-dark transition-colors">{t('common.apply')}</button>
-          <button onClick={onNext} aria-label={t('analytics.nextPeriod', 'Next period')} className="px-2 py-0.5 text-stone-gray hover:text-deep-charcoal transition-colors">→</button>
-        </div>
-        <button
-          onClick={onPrint}
-          className="px-4 py-2 bg-white border border-border-gray text-stone-gray hover:border-muted-stone rounded-xl text-[13px] font-medium transition-colors"
-        >
-          {t('analytics.downloadPdf')}
-        </button>
-        <button
-          type="button"
-          onClick={onShare}
-          className="px-4 py-2 bg-burgundy text-white hover:bg-burgundy-dark rounded-xl text-[13px] font-medium transition-colors"
-        >
-          {t('analytics.shareReport')}
-        </button>
+    <div className="space-y-5 print:hidden">
+      <div>
+        <h2 className="font-serif text-3xl text-deep-charcoal">{t('reports.periodTitle')}</h2>
+        <p className="mt-1 text-sm text-muted-stone">{t('reports.periodHint')}</p>
       </div>
+
+      <div className="flex flex-col gap-3">
+        <div className="grid min-w-0 grid-cols-1 gap-2 min-[480px]:grid-cols-2">
+          <label className="min-w-0 text-[11px] text-muted-stone">
+            <span className="mb-1 block">{t('reports.startDate')}</span>
+            <input type="date" value={startDate} onChange={event => onStartDateChange(event.target.value)}
+              aria-label={t('reports.startDate')}
+              className="w-full min-w-0 rounded-lg border border-glass-border-dark bg-warm-white px-2 py-2 text-xs text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy" />
+          </label>
+          <label className="min-w-0 text-[11px] text-muted-stone">
+            <span className="mb-1 block">{t('reports.endDate')}</span>
+            <input type="date" value={endDate} onChange={event => onEndDateChange(event.target.value)}
+              aria-label={t('reports.endDate')}
+              className="w-full min-w-0 rounded-lg border border-glass-border-dark bg-warm-white px-2 py-2 text-xs text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy" />
+          </label>
+        </div>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex gap-2">
+            <button type="button" onClick={onPrevious} aria-label={t('analytics.previousPeriod')}
+              className="h-10 w-10 rounded-full border border-glass-border-dark text-deep-charcoal hover:bg-soft-gray">
+              ←
+            </button>
+            <button type="button" onClick={onNext} aria-label={t('analytics.nextPeriod')}
+              className="h-10 w-10 rounded-full border border-glass-border-dark text-deep-charcoal hover:bg-soft-gray">
+              →
+            </button>
+          </div>
+          <button type="button" onClick={onApply} disabled={!canApply || !hasPendingChanges}
+            className="rounded-full bg-burgundy px-5 py-2 text-sm font-medium text-white disabled:opacity-50">
+            {t('reports.applyPeriod')}
+          </button>
+        </div>
+        {!canApply && <span role="alert" className="text-xs text-red-700">{t('reports.invalidPeriod')}</span>}
+        {canApply && hasPendingChanges && <span className="text-xs text-amber-700">{t('reports.pendingPeriod')}</span>}
+      </div>
+
+      {canExport && (
+        <div className="flex flex-wrap gap-2 border-t hairline pt-4">
+          <button type="button" onClick={onPrint}
+            className="rounded-full border border-glass-border-dark px-4 py-2 text-sm text-deep-charcoal hover:bg-soft-gray">
+            {t('reports.printOrSave')}
+          </button>
+          <button type="button" onClick={onShare}
+            className="rounded-full border border-glass-border-dark px-4 py-2 text-sm text-deep-charcoal hover:bg-soft-gray">
+            {t('reports.shareLink')}
+          </button>
+          <span className="self-center text-xs text-muted-stone">{t('reports.accessNote')}</span>
+        </div>
+      )}
     </div>
   );
 }

@@ -285,75 +285,6 @@ async function handleStats(req, res) {
 }
 
 /**
- * Get LTV trend analytics over time
- */
-async function handleTrends(req, res) {
-  try {
-    const { period = '30d' } = req.query;
-    const restaurantId = req.user.restaurant_id;
-
-    const daysBack = period === '7d' ? 7 : period === '90d' ? 90 : 30;
-    const startDateStr = new Date(Date.now() - daysBack * 86400000).toISOString().split('T')[0];
-
-    const { data, error } = await ltvDb()
-      .from('revenue_records')
-      .select('service_date, total_revenue, customer_id')
-      .eq('restaurant_id', restaurantId)
-      .gte('service_date', startDateStr)
-      .order('service_date', { ascending: true });
-
-    if (error) throw error;
-
-    if (!data || data.length === 0) {
-      return res.status(200).json({
-        success: true,
-        data: { period, trends: [], summary: { total_revenue: 0, total_customers: 0, avg_per_customer: 0 } }
-      });
-    }
-
-    const byDate = {};
-    const allCustomers = new Set();
-    for (const r of data) {
-      if (!byDate[r.service_date]) byDate[r.service_date] = { revenue: 0, customers: new Set() };
-      byDate[r.service_date].revenue += parseFloat(r.total_revenue) || 0;
-      byDate[r.service_date].customers.add(r.customer_id);
-      allCustomers.add(r.customer_id);
-    }
-
-    const trends = Object.entries(byDate)
-      .map(([date, s]) => ({
-        date,
-        revenue: Math.round(s.revenue * 100) / 100,
-        unique_customers: s.customers.size,
-        avg_per_customer: s.customers.size > 0 ? Math.round((s.revenue / s.customers.size) * 100) / 100 : 0
-      }))
-      .sort((a, b) => a.date.localeCompare(b.date));
-
-    const totalRevenue = trends.reduce((s, t) => s + t.revenue, 0);
-
-    return res.status(200).json({
-      success: true,
-      data: {
-        period,
-        start_date: startDateStr,
-        end_date: new Date().toISOString().split('T')[0],
-        trends,
-        summary: {
-          total_revenue: Math.round(totalRevenue * 100) / 100,
-          total_unique_customers: allCustomers.size,
-          avg_per_customer: allCustomers.size > 0 ? Math.round((totalRevenue / allCustomers.size) * 100) / 100 : 0,
-          avg_daily_revenue: trends.length > 0 ? Math.round((totalRevenue / trends.length) * 100) / 100 : 0,
-        }
-      }
-    });
-
-  } catch (error) {
-    logger.error('Error calculating LTV trends:', error);
-    return res.status(500).json({ success: false, error: 'Failed to calculate LTV trends' });
-  }
-}
-
-/**
  * Main serverless function handler
  */
 module.exports = async (req, res) => {
@@ -396,7 +327,7 @@ module.exports = async (req, res) => {
     return res.status(400).json({
       success: false,
       error: 'Missing required parameter: action',
-      available_actions: ['calculate-all', 'get', 'list', 'stats', 'trends']
+      available_actions: ['calculate-all', 'get', 'list', 'stats']
     });
   }
 
@@ -416,13 +347,17 @@ module.exports = async (req, res) => {
         return await handleStats(req, res);
 
       case 'trends':
-        return await handleTrends(req, res);
+        // The former implementation queried restaurant.revenue_records using
+        // columns from an obsolete schema. No client consumes this action.
+        // Fail closed until a trend contract is built from real POS records.
+        res.setHeader('Cache-Control', 'no-store');
+        return res.status(410).json({ success: false, error: 'ltv_trends_retired' });
 
       default:
         return res.status(400).json({
           success: false,
           error: `Unknown action: ${action}`,
-          available_actions: ['calculate-all', 'get', 'list', 'stats', 'trends']
+          available_actions: ['calculate-all', 'get', 'list', 'stats']
         });
     }
   } catch (error) {

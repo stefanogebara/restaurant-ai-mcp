@@ -1,3 +1,58 @@
+# Perfil do convidado — fatos, não probabilidades (12/out/2026)
+
+- [x] Conferir a origem e unidade dos indicadores exibidos nos drawers de reserva e chamadas.
+- [x] Remover risco e receita inventados, corrigir a escala de 0–100 nas chamadas, localizar datas e alinhar os drawers ao design vigente.
+- [x] Distinguir falha de consulta de perfil vazio e remover métricas 0/0 no resumo de chamadas.
+- [x] Liberar o botão Aprovar/Enviar do botão flutuante de reserva em telas de 320 px.
+- [ ] Cobrir estados com e sem dados por teste, build e inspeção visual autenticada.
+
+Limite: navegação somente leitura em produção; não alterar clientes, reservas ou campanhas.
+
+Revisão: `/api/guest-profile` devolve `churn_risk_score` de 0 a 100, mas a tela de chamadas multiplicava o número por 100 e exibia 8.000% para 80 pontos. O drawer de reservas fabricava 5/15/40 pela categoria e somava receita sem fonte. Ambos passam a apresentar apenas o dado existente como pontuação `/100`; gasto estimado usa os rótulos já empregados no CRM. Datas e detalhes foram localizados, largura móvel corrigida. A API agora não transforma erro de qualquer fonte em perfil vazio; a interface oferece nova tentativa. O resumo de chamadas chama o intervalo de "período" e mostra traço em vez de 0%/0s quando não há chamadas. Testes focados finais (7 frontend + 4 backend), Jest completo (292 suítes/4.331 testes), TypeScript, build e lint focado passaram; Vitest completo passou antes dos dois ajustes finais (133 arquivos/1.088 testes). Navegador publicado ainda pendente. A fila proativa publicada em 320 px confirmou que o FAB cobria parte de Aprovar; os controles foram alinhados à esquerda em celular. Nenhuma aprovação/envio ocorreu.
+
+---
+
+# Rascunhos proativos — personalização sem invenção (12/out/2026)
+
+- [x] Reproduzir afirmações sem fonte no rascunho publicado e rastrear os fatos disponíveis ao gerador.
+- [x] Gerar mensagens PT/EN/ES apenas com nome, restaurante e ocasião autorizada; sem pratos favoritos ou vantagens imaginadas.
+- [x] Ajustar o texto de edição e cobrir os três idiomas, sem modificar os rascunhos já existentes.
+- [x] Validar testes e build sem aprovar nem enviar mensagens.
+- [ ] Revisar PR, publicar e verificar o novo texto sem enviar mensagens.
+
+Limite: alterar somente o código de novos rascunhos; mensagens já na fila requerem revisão humana e não serão reescritas em produção.
+
+Revisão local: a tela publicada sugeria "aquele seu prato favorito" para uma cliente cuja oportunidade continha somente nome, restaurante, número de visitas e última visita. O gerador livre podia inventar memória ou oferta. O novo rascunho é determinístico, curto e localiza apenas fatos realmente presentes; ocasiões conhecidas são traduzidas, rótulos desconhecidos não são reproduzidos. O campo vazio deixa de afirmar que a IA está redigindo. Jest completo: 291 suítes/4.338 testes; Vitest: 132 arquivos/1.089 testes; build/TypeScript e teste focado após o último ajuste passaram. Publicação ainda pendente.
+
+---
+
+# Configurações — localização legível e fiel (12/out/2026)
+
+- [x] Verificar no navegador autenticado a página em 320 px e identificar fusos com offsets fixos incorretos no horário de verão.
+- [x] Mostrar offset vigente na data atual sem trocar os IDs IANA persistidos.
+- [x] Localizar nomes dos países e preservar seleção visível de valores legados fora da lista.
+- [ ] Testar verão/inverno, país legado e página em produção sem salvar alterações.
+
+Limite: não salvar dados reais nem alterar fuso, país ou horários do restaurante durante a QA.
+
+Revisão local: o seletor calcula o offset do fuso IANA na data atual e o rotula como “agora”, sem prometer um GMT fixo o ano inteiro. Nomes de país seguem o idioma da interface; o país legado fora da lista permanece selecionado. Se o fuso estiver ausente, a página deixa o campo vazio e pede uma escolha antes de salvar; a API rejeita fusos inválidos. O carregamento e os campos usam a paleta quente e ações arredondadas. Testes de verão/inverno, país legado, fuso ausente e validação do servidor passaram. Jest completo passou (291 suítes/4.328 testes), Vitest completo passou (131 arquivos/1.085 testes); testes focados após os últimos ajustes, build/TypeScript, lint focado e diff check passaram. Verificação visual publicada segue pendente; nenhum dado real foi salvo.
+
+---
+
+# Relatórios — período fiel e experiência móvel (12/out/2026)
+
+- [x] Reproduzir no navegador autenticado o controle de datas cortado e os botões de saída para um período sem atividade.
+- [x] Reestruturar seleção de período e ações para celular; distinguir intervalo em edição do relatório já carregado.
+- [x] Fazer o PDF e o WhatsApp usarem exatamente o período confirmado, sem nota inventada nem envio se a consulta falhar.
+- [x] Não enviar dados a um conversor público por padrão; exigir configuração explícita do renderizador.
+- [ ] Cobrir contrato e layout com testes, build e navegador publicado; não enviar relatórios reais durante QA.
+
+Limite: nenhum relatório será enviado, compartilhado nem gerado para cliente real durante a verificação de produção. A rota de WhatsApp tem consumidores no cron semanal e no comando de WhatsApp, então o serviço precisa continuar com contrato coerente e falhar fechado quando não puder cumprir.
+
+Revisão: o cabeçalho usa campos de data com rótulos; editar datas não altera o relatório até “Aplicar período”. O intervalo inicial cobre sete dias concluídos, não oito dias incluindo hoje. A API inclui todo o último dia no fuso do restaurante, rotula estimativas de reservas e não inventa clientes recorrentes. O PDF usa as datas pedidas, moeda conhecida do país, idioma e serviços concluídos, sem QuickChart ou renderizador demo público. Sem `GOTENBERG_URL` HTTPS privado, envio e geração falham fechados. Jest completo passou (291 suítes/4.323 testes), Vitest completo passou (130 arquivos/1.079 testes), build/TypeScript e lint focado passaram; lint global ainda acusa 17 erros preexistentes fora da reforma. PR #191 publicado no domínio com SHA correto. Navegador autenticado em 320/390 px confirmou período 5–11/out, estado vazio e ausência de PDF/WhatsApp, sem overflow nem envio. A inspeção visual flagrou setas presas ao segundo campo e blocos de zero no vazio; o lote seguinte move as setas para uma linha própria e simplifica o estado vazio, ainda pendente de publicação.
+
+---
+
 # Voz — configuração não é ligação conectada (12/out/2026)
 
 - [x] Separar o estado do motor/agente da disponibilidade real do telefone.
@@ -6,6 +61,19 @@
 - [ ] Cobrir estados, idiomas e textos com testes; validar build e navegador autenticado sem realizar ligação.
 
 Limite: não registrar/desregistrar telefone, trocar motor em produção ou iniciar chamada. A aba Telefone continua sendo a fonte de verdade para roteamento.
+
+---
+# Painel — fila verdadeira e estados legíveis (12/out/2026)
+
+- [x] Reproduzir no navegador autenticado: resumo mostra zero enquanto a fila lista uma pessoa avisada.
+- [x] Compartilhar a consulta da fila entre resumo e painel, sem chamada duplicada nem guia vazio falso.
+- [x] Localizar o aviso Stripe e a data da fila; distinguir aviso antigo de mesa pronta agora.
+- [x] Aplicar cores semânticas e ícones reais ao painel da fila, sem mudar ações de atendimento.
+- [x] Cobrir estados e idiomas com testes; verificar build, navegador e produção.
+
+Limite: somente leitura no navegador de produção. Não avisar, sentar, remover ou cadastrar convidados durante o teste.
+
+Revisão: o resumo e a lista compartilham a mesma consulta. Quando ela não respondeu ou a função está fora do plano, o resumo mostra traço e não declara o restaurante vazio. O painel bloqueado explica a restrição sem oferecer ação inválida. Avisos de mais de um dia ficam em “Precisa de revisão”, sem remoção automática. O cronômetro voltou a aparecer para status reais em minúsculas; o horário usa o idioma da interface e o fuso do restaurante. A faixa de depósitos Stripe foi traduzida e o topo do painel saiu de trás do menu móvel. Jest completo passou (288 suítes/4.302 testes), Vitest completo passou (128 arquivos/1.071 testes); após os dois ajustes finais, 15 testes focados, build/TypeScript, lint focado e `git diff --check` passaram. PR #190 publicado no domínio com SHA correto; navegador autenticado em 390/320 px confirmou contador 1 = lista 1, “Precisa de revisão”, data em PT, faixa Stripe legível e ausência de rolagem horizontal, sem ações de atendimento.
 
 ---
 
@@ -468,5 +536,137 @@ Revisão local: a lista móvel mostra métricas em três colunas, tags resumidas
 Auditoria do valor: `lifetime_value` vem de `calculatePredictedLTV` e projeta valor futuro; os rótulos agora dizem “valor estimado” nos três idiomas. Não equivale a faturamento recebido.
 
 Auditoria autenticada: abrir Beatriz Costa em produção mostrava cabeçalho vazio, contato “undefined” e métricas ausentes. A API devolve `{ customer, reservations, notes }`, mas o hook tratava o objeto inteiro como cliente; o histórico também buscava `customer_phone = customer_id`. O hook agora adapta o contrato, o backend resolve primeiro o cliente do restaurante e busca pelo telefone real, e uma resposta defeituosa mostra erro com retry em vez de dados vazios. Três testes backend e dois do hook cobrem essas fronteiras; um teste adicional valida o drawer. A receita da tabela LTV pode ser estimada a partir de visitas × ticket médio (inclusive fallback por cobertura); por isso o drawer também usa rótulos de estimativa.
+
+---
+# Receita legada — fechar API incompatível e insegura (12/out/2026)
+
+- [x] Confirmar esquema real do projeto Seatable e consumidores atuais da rota antiga.
+- [x] Fazer `/api/revenue` falhar fechado, após autenticação, sem ler nem escrever no banco.
+- [x] Preservar `/api/revenue-stats` e os fluxos POS atuais; documentar a migração manual pendente.
+- [ ] Testar todos os métodos/ações, executar verificação completa e revisar produção sem criar receita real.
+
+Limite: nenhuma linha financeira será criada, alterada ou apagada durante esta auditoria. A tabela atual `public.revenue_records` usa `amount_cents`/`recorded_at`; a API antiga usa colunas que não existem (`total_revenue`, `service_date`, `is_deleted`).
+
+Contrato confirmado em leitura no projeto `seatable-eu`: a rota antiga não tem consumidores montados na interface; `ManualRevenueModal` e `useCustomerSearch` continuam como código não usado. A leitura financeira visível usa `/api/revenue-stats`, e a integração POS não passa pela rota aposentada. Antes de oferecer lançamento manual novamente, desenhar um contrato novo com moeda/unidade (`amount_cents`), origem POS, deduplicação e autorização por restaurante. Nenhuma migração financeira implícita nesta correção.
+
+Verificação local: 9 testes novos da rota aposentada, Jest completo (285 suítes/4.275 testes), Vitest completo (122 arquivos/1.050 testes), checagem de sintaxe, `git diff --check` e build de produção passaram. O handler antigo permanece recuperável no histórico Git; nenhuma linha foi apagada no banco. Publicação e verificação da versão publicada ainda pendentes.
+
+---
+# Equipe — convite confiável e celular utilizável (12/out/2026)
+
+- [x] Corrigir título sob o menu e tornar e-mail, papel e ação legíveis em 390/320 px.
+- [x] Separar lista vazia de falha ao carregar e alinhar a legenda dos papéis com as permissões reais.
+- [x] Não afirmar que o convite foi enviado quando o provedor não o aceitou; não devolver token de convite na API.
+- [ ] Cobrir estados de convite, erro e responsividade com testes e navegador, sem enviar convite real.
+
+Limite: nenhum convite será enviado no teste de produção; a conta autenticada será usada apenas para leitura e inspeção visual.
+
+Revisão local: o e-mail ocupa a linha inteira no celular; os papéis refletem a matriz real de permissões (só o proprietário gerencia equipe). O backend aguarda o aceite do provedor com limite de 6 s e informa `email_accepted`; um envio não confirmado não aparece como sucesso. O token não volta na resposta. Um membro ativo ou pendente não pode ser redefinido por novo convite. O modal de remoção ganhou foco, Escape e ciclo de Tab. Jest completo passou (285 suítes/4.274 testes); Vitest completo repetido com dois workers passou (122 arquivos/1.054 testes), TypeScript e lint focado passaram. Falta navegador na versão publicada; nenhum convite real foi enviado.
+
+---
+
+# DNA de clientes — isolamento real entre restaurantes (12/out/2026)
+
+- [x] Fechar o endpoint legado que consulta perfis globais sem `restaurant_id` e tabelas ausentes.
+- [x] Tirar o compilador da wiki da fonte global e usar apenas clientes da casa na tabela LTV.
+- [ ] Cobrir a rota fechada e a consulta escopada com testes; verificar suíte, build e deploy.
+
+Limite: não alterar perfis, LTV, reservas nem páginas da wiki existentes no banco. O CRM atual usa outra rota. A tabela publicada `public.customer_behavioral_profiles` não tem `restaurant_id`; não existe filtro seguro para ela sem nova modelagem/migração.
+
+Revisão local: a rota retorna 410 após autenticação, sem carregar o cliente de serviço. A wiki lê somente `restaurant.customer_ltv` filtrando `restaurant_id` e trata os contadores VIP/regular como amostra dos 20 principais, não como totais. Uma falha nessa leitura impede sobrescrever páginas existentes com conteúdo vazio. O novo artigo de clientes recebe prefixo de origem segura no `source_hash`; `getWikiPages` omite artigos antigos sem esse prefixo, evitando que o gerente leia conteúdo compilado da fonte global antes do próximo cron. Os 30 testes focados de endpoint, compilador e cron, Jest completo (286 suítes/4.291 testes), Vitest completo (122 arquivos/1.050 testes), sintaxe e build passaram; testes focados e build foram repetidos após o rebase na Equipe. As tabelas e páginas já persistidas não foram modificadas nesta etapa. Publicação pendente.
+
+---
+# Clientes — leitura do histórico e previsão (12/out/2026)
+
+- [x] Localizar a data de visita e mostrar a hora sem segundos no perfil, em linhas que caibam no celular.
+- [x] Diferenciar na lista o valor futuro estimado do gasto total estimado no perfil.
+- [x] Cobrir a apresentação com testes.
+- [x] Validar no navegador autenticado depois do deploy.
+
+Observação: a aparente sobreposição do título com o menu em 320 px era a página rolada sob o menu fixo. No topo (`scrollY=0`) não há colisão; não adicionar padding para compensar uma leitura incorreta.
+
+Revisão local: histórico em duas linhas, data formatada no idioma da interface sem deslocar o dia do calendário e hora `HH:mm`. A lista chama a projeção de “Valor futuro estimado” nos três idiomas; o perfil conserva “Gasto total estimado” para outra métrica. Os 12 testes focados passaram; Vitest completo passou (122 arquivos/1.054 testes), Jest completo passou (286 suítes/4.283 testes), build/TypeScript e lint focado passaram. Em produção, 320 e 390 px mostraram a lista sem overflow e o perfil exibiu data e hora separadas, sem escrita de dados.
+
+---
+
+# Mesas — toque e navegação na planta móvel (12/out/2026)
+
+- [x] Confirmar no navegador autenticado que a planta encolhe as mesas em 320 px.
+- [x] Manter mesas em tamanho tocável e permitir explorar a planta sem modificar posições.
+- [x] Separar toque de arraste: tocar abre a edição, apenas mudança real de célula salva.
+- [x] Verificar toque e arraste em testes, suíte completa, build e lint.
+- [x] Verificar layout móvel na versão publicada, sem mover mesas reais.
+
+Observação: o navegador de produção mostrou as mesas reduzidas pelo `viewBox` inteiro, embora a página não tivesse overflow horizontal. A correção aumenta apenas a largura de apresentação no celular; não altera coordenadas armazenadas. O teste de interação detectou que o toque não abria a edição, enquanto a posição era enviada para salvamento sem movimento. Agora toque e arraste são caminhos separados. Jest completo passou (286 suítes/4.283 testes), Vitest completo passou (124 arquivos/1.059 testes), build e lint focado passaram; após o rebase final, 15 testes focados e TypeScript passaram de novo. Na versão publicada, 320 px mostrou mesas legíveis, um toque abriu o painel da mesa sem arraste e 390 px permitiu deslocar horizontalmente a planta sem overflow da página. Nenhuma mesa real foi movida.
+
+---
+
+# Valor dos clientes — idioma, moeda e promessa real (12/out/2026)
+
+- [x] Confirmar no navegador autenticado mistura de inglês, dólar e português em 320/390 px.
+- [x] Usar a moeda do restaurante e textos localizados em PT/EN/ES, sem chamar projeção de receita recebida.
+- [x] Mostrar nomes de clientes e retirar a ação que prometia enviar a todos, mas selecionava apenas o primeiro.
+- [x] Corrigir a atualização manual para POST, conforme contrato da API.
+- [x] Fechar a rota de tendências LTV que usava colunas inexistentes e não tem consumidor na interface.
+- [x] Validar testes, build, revisão visual e publicação sem recalcular nem enviar mensagens em produção.
+
+Limite: não acionar atualização manual, campanhas ou mensagens reais no restaurante do usuário. A tela publicada foi inspecionada apenas para leitura.
+
+Revisão local: o valor usa a moeda do restaurante, não a língua do navegador. As seções agora distinguem projeção de valor e gasto passado estimado. O botão que parecia falar com todos foi removido; o contato restante abre um único cliente. A rota antiga de tendências responde 410 depois da autenticação, sem consultar dados, até existir uma implementação baseada no esquema POS vigente. Jest completo passou (288 suítes/4.302 testes), Vitest completo passou (124 arquivos/1.058 testes), build, tipos e lint passaram. O commit `d0cfeccd` foi publicado em `seatable.one`; o navegador autenticado mostrou PT e BRL, nomes em vez de identificadores, projeções rotuladas e lista sem envio em massa. Em 320 e 390 px não houve overflow horizontal. Nenhum recálculo ou mensagem foi acionado.
+
+---
+# Painel — oportunidades sem porcentagem fictícia (12/out/2026)
+
+- [x] Reproduzir no navegador autenticado o texto persistido “100% de risco de churn” e os contadores sem concordância.
+- [x] Mostrar pontuação heurística /100 a partir dos dados estruturados, inclusive nas filas antigas.
+- [x] Simplificar a lista para canvas e divisórias, com estados semânticos, idioma e data localizados.
+- [ ] Cobrir os três idiomas, build, testes e verificação publicada sem aprovar nem enviar mensagens.
+
+Limite: nenhum contato com clientes será aprovado, enviado ou descartado no navegador de produção.
+
+Revisão local: sugestões novas e antigas leem `trigger_data` para mostrar pontuação `/100`, visitas e data no idioma atual, sem reproduzir a antiga frase persistida como probabilidade. A lista usa divisórias no canvas, cores semânticas e contagem singular/plural correta. Jest completo passou (291 suítes/4.327 testes), Vitest completo passou (131 arquivos/1.084 testes), build/TypeScript, lint focado e `git diff --check` passaram. Falta verificar a tela publicada após o deploy; nenhuma mensagem foi enviada.
+
+---
+# Clientes — gasto estimado com fonte, sem projeção inflada (12/out/2026)
+
+- [x] Confrontar cifra publicada com campos do CRM e cálculo que os grava.
+- [x] Trocar a projeção bienal da lista por gasto estimado das visitas concluídas, com explicação explícita.
+- [x] Alinhar o drawer e os três idiomas sem afirmar que houve pagamento confirmado.
+- [x] Cobrir desktop/móvel e ausência de dados; rodar testes e build.
+- [ ] Revisar publicação e verificar visualmente sem editar dados reais.
+
+Limite: não recalcular nem editar dados reais do CRM; a mudança é de apresentação e interpretação, não altera valores persistidos.
+
+Revisão local: a lista exibida em produção mostrava até R$ 23.400 de valor futuro para alguém com duas visitas e cinco meses de afastamento. A origem era `lifetime_value`, extrapolação de frequência histórica por dois anos sem desconto de afastamento. A lista passa a mostrar `total_revenue`, estimativa relativa às visitas concluídas, com aviso de que pode diferir de pagamentos registrados. O drawer repete a ressalva. Testes focados (14), Jest completo (292 suítes/4.342 testes), Vitest completo (135 arquivos/1.098 testes), TypeScript/build, lint focado e diff check passaram. Nenhum dado real foi alterado.
+
+---
+
+# Chamadas — período, paginação e atualização coerentes (12/out/2026)
+
+- [x] Auditar lista, estatísticas, filtros e contrato de paginação no backend.
+- [x] Aplicar o mesmo período à lista e às estatísticas sem ampliar acesso entre restaurantes.
+- [x] Exibir paginação honesta e erro dos números; atualizar todas as consultas com um só botão.
+- [x] Ajustar cabeçalho e filtros para 320 px seguindo Liquid Glass v2.
+- [x] Cobrir o filtro e os estados com testes; rodar suítes completas e build.
+- [ ] Revisar PR e a página publicada em 320/390 px, sem realizar ligações.
+
+Limite: QA de produção somente leitura; nenhuma chamada, mensagem ou alteração de configuração será disparada.
+
+Revisão local: a lista ignorava o filtro 1/7/30/90 dias, enquanto os números o usavam. O backend concatenava `offset` e `limit` como strings: a segunda página com `50`/`50` buscava 5.000 linhas, não 50. Ambos agora compartilham a janela móvel, inclusive na troca de horário de verão, e a API valida/pagina números corretamente. O CSV é rotulado como exportação da página visível. Jest completo: 293 suítes/4.341 testes; Vitest completo: 137 arquivos/1.099 testes. TypeScript/build, sintaxe Node, lint focado e diff check passaram. Publicação e navegador ainda pendentes.
+
+Revisão integrada com Clientes: 293 suítes/4.348 testes Jest e 137 arquivos/1.101 testes Vitest passaram; TypeScript e build também passaram. Nenhuma ligação, mensagem ou edição de cliente ocorreu na verificação.
+
+---
+
+# Navegação móvel — cabeçalho sem botão duplicado (12/out/2026)
+
+- [x] Reproduzir em produção, a 320 px, o botão fixo cobrindo o rótulo de WhatsApp e espremendo o título de Chamadas.
+- [x] Manter a entrada "Mais" da barra inferior como único acionador do menu e oferecer botão de fechar dentro do painel.
+- [x] Cobrir abertura e fechamento, build e testes.
+- [ ] Revisar no navegador após a publicação.
+
+Limite: a revisão de produção é somente leitura. Não enviar mensagens nem mudar configurações.
+
+Revisão local: a barra inferior continua abrindo o menu, e o botão dentro do painel o fecha. O teste confirma os ícones presentes. Jest completo passou (293 suítes/4.348 testes), Vitest completo passou (138 arquivos/1.102 testes), lint focado e build/TypeScript passaram. A verificação visual publicada ainda depende do deploy exato.
 
 ---

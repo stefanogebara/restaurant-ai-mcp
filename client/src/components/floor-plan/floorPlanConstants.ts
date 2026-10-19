@@ -10,6 +10,12 @@ export const GRID_ROWS = 20;
 export const SVG_W = CELL * GRID_COLS;
 export const SVG_H = CELL * GRID_ROWS;
 export const TABLE_VISUAL_SCALE = 1.3;
+export const DRAG_THRESHOLD_PX = 6;
+
+export const movedBeyondDragThreshold = (
+  start: { x: number; y: number },
+  current: { x: number; y: number },
+) => Math.hypot(current.x - start.x, current.y - start.y) >= DRAG_THRESHOLD_PX;
 
 // ── Animations ────────────────────────────────────────────────────────────────
 

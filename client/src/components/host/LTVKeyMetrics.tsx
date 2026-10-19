@@ -1,48 +1,40 @@
 import { useTranslation } from 'react-i18next';
-import ThiingsIcon from '../common/ThiingsIcon';
 import HelpTooltip from '../common/HelpTooltip';
 import { formatCurrency } from './ltvHelpers';
 import type { LTVStats } from './ltvDashboard.types';
+import type { SupportedCurrency } from '../../utils/currency';
 
 interface LTVKeyMetricsProps {
   stats: LTVStats;
+  currency: SupportedCurrency;
 }
 
-export default function LTVKeyMetrics({ stats }: LTVKeyMetricsProps) {
+export default function LTVKeyMetrics({ stats, currency }: LTVKeyMetricsProps) {
   const { t } = useTranslation();
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-      <div className="p-4 bg-burgundy/10 rounded-xl border border-burgundy/20">
-        <div className="flex items-center justify-between mb-2">
-          <ThiingsIcon name="users" size="sm" />
-          <span className="text-2xl font-bold text-deep-charcoal">{stats.total_customers}</span>
-        </div>
-        <div className="text-xs text-stone-gray">Total Customers</div>
+    <div className="grid grid-cols-1 gap-0 sm:grid-cols-3 sm:gap-6">
+      <div className="hairline py-4 sm:border-b-0 sm:border-r sm:border-glass-border-dark sm:pr-6">
+        <div className="text-3xl font-serif text-deep-charcoal">{stats.total_customers}</div>
+        <div className="mt-1 text-xs text-muted-stone">{t('ltv.metricCustomers')}</div>
       </div>
 
-      <div className="p-4 bg-rose-600/10 rounded-xl border border-rose-600/20">
-        <div className="flex items-center justify-between mb-2">
-          <ThiingsIcon name="trending-up" size="sm" />
-          <span className="text-2xl font-bold text-deep-charcoal">{formatCurrency(stats.avg_ltv)}</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <div className="text-xs text-stone-gray">Avg Lifetime Value</div>
+      <div className="hairline py-4 sm:border-b-0 sm:border-r sm:border-glass-border-dark sm:pr-6">
+        <div className="text-3xl font-serif text-deep-charcoal">{formatCurrency(stats.avg_ltv, currency)}</div>
+        <div className="mt-1 flex items-center gap-1 text-xs text-muted-stone">
+          {t('ltv.metricAverage')}
           <HelpTooltip
-            title={t('ltv.tooltipTitle', 'What is LTV?')}
-            content={t('ltv.tooltipContent', 'Total revenue a customer generates over their relationship with you.\n\nComponents:\n• Average spend per visit: R$45\n• Visit frequency: 3x per year\n• Customer lifespan: 3 years\n• LTV = R$45 × 3 × 3 = R$405\n\nWhy it matters:\nFocus retention efforts on high-LTV customers')}
+            title={t('ltv.metricAverage')}
+            content={t('ltv.forecastHint')}
             position="bottom"
             size="sm"
           />
         </div>
       </div>
 
-      <div className="p-4 bg-ocre-600/10 rounded-xl border border-ocre-600/20">
-        <div className="flex items-center justify-between mb-2">
-          <ThiingsIcon name="dollar" size="sm" />
-          <span className="text-2xl font-bold text-deep-charcoal">{formatCurrency(stats.total_ltv)}</span>
-        </div>
-        <div className="text-xs text-stone-gray">Total LTV</div>
+      <div className="py-4">
+        <div className="text-3xl font-serif text-deep-charcoal">{formatCurrency(stats.total_ltv, currency)}</div>
+        <div className="mt-1 text-xs text-muted-stone">{t('ltv.metricTotal')}</div>
       </div>
     </div>
   );

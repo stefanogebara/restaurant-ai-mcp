@@ -5,6 +5,7 @@ import CustomerTierBadge from './CustomerTierBadge';
 import TagEditor from './TagEditor';
 import CustomerProfileSections from './CustomerProfileSections';
 import { formatCurrency } from '../../utils/currency';
+import { parseLocalDate } from '../../utils/timeFormatting';
 import { useCustomerDetail, useUpdateTags, useAddNote, useDeleteNote, useUpdateProfile } from '../../hooks/useCustomers';
 import type { ProfileUpdatePayload } from '../../hooks/useCustomers';
 
@@ -14,7 +15,7 @@ interface CrmCustomerDrawerProps {
 }
 
 export default function CrmCustomerDrawer({ customerId, onClose }: CrmCustomerDrawerProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isOpen = !!customerId;
 
   const { data: customer, isLoading, isError, refetch } = useCustomerDetail(customerId);
@@ -139,6 +140,7 @@ export default function CrmCustomerDrawer({ customerId, onClose }: CrmCustomerDr
                       valueColor={customer.churn_risk_score > 50 ? 'text-red-600' : undefined}
                     />
                   </div>
+                  <p className="text-xs leading-relaxed text-muted-stone">{t('crm.estimatedSpendMethod')}</p>
 
                   {/* Tags */}
                   <Section title={t('crm.tags', 'Tags')}>
@@ -222,16 +224,18 @@ export default function CrmCustomerDrawer({ customerId, onClose }: CrmCustomerDr
                     {customer.recent_reservations && customer.recent_reservations.length > 0 ? (
                       <div className="space-y-2">
                         {customer.recent_reservations.map((res) => (
-                          <div
-                            key={res.id}
-                            className="flex items-center justify-between text-sm border-b hairline py-2.5 last:border-0"
-                          >
-                            <div>
-                              <span className="font-mono text-deep-charcoal font-medium">{res.date}</span>
-                              <span className="font-mono text-muted-stone ml-2">{res.time}</span>
-                            </div>
-                            <div className="flex items-center gap-3">
-                              <span className="text-muted-stone">
+                          <div key={res.id} className="border-b hairline py-2.5 last:border-0">
+                            <p className="text-sm font-medium text-deep-charcoal">
+                              <time dateTime={res.date}>
+                                {new Intl.DateTimeFormat(i18n.language, { day: 'numeric', month: 'short', year: 'numeric' }).format(parseLocalDate(res.date))}
+                              </time>
+                              {' '}
+                              <time dateTime={res.time.slice(0, 5)} className="ml-2 font-mono font-normal text-muted-stone">
+                                {res.time.slice(0, 5)}
+                              </time>
+                            </p>
+                            <div className="mt-1.5 flex items-center justify-between gap-3">
+                              <span className="text-xs text-muted-stone">
                                 {res.party_size} {t('crm.people', 'pessoas')}
                               </span>
                               <StatusBadge status={res.status} />

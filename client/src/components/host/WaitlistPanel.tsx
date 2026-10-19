@@ -1,21 +1,20 @@
 import { useState, useMemo } from 'react';
 import { useTranslation, Trans } from 'react-i18next';
 import { authFetch } from '../../services/api';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { WAITLIST_POLL_INTERVAL } from '../../config/constants';
-import { useRealtimeSubscription } from '../../hooks/useRealtimeSubscription';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useWaitlistEntries, countActiveWaitlist } from '../../hooks/useWaitlistEntries';
 import { useToast } from '../../contexts/ToastContext';
 import ThiingsIcon from '../common/ThiingsIcon';
 import WaitlistEntryCard from './WaitlistEntryCard';
 import AddToWaitlistModal from './AddToWaitlistModal';
-import type { WaitlistEntry, WaitlistResponse } from './waitlistHelpers';
+import { isStaleNotified, type WaitlistEntry } from './waitlistHelpers';
 
 interface WaitlistPanelProps {
   onSeatNow: (entry: WaitlistEntry) => void;
-  restaurantId?: string;
+  timeZone?: string;
 }
 
-export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanelProps) {
+export default function WaitlistPanel({ onSeatNow, timeZone }: WaitlistPanelProps) {
   const { t } = useTranslation();
   const toast = useToast();
   const queryClient = useQueryClient();
@@ -25,17 +24,7 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
   const [sourceFilter, setSourceFilter] = useState<'all' | 'walk_in' | 'whatsapp'>('all');
   const [confirmRemove, setConfirmRemove] = useState<{ id: string; name: string } | null>(null);
 
-  useRealtimeSubscription('waitlist', restaurantId);
-
-  const { data, isLoading, error } = useQuery<WaitlistResponse>({
-    queryKey: ['waitlist', 'all'],
-    queryFn: async () => {
-      const response = await authFetch('/api/waitlist');
-      if (!response.ok) throw new Error('Failed to fetch waitlist');
-      return response.json();
-    },
-    refetchInterval: WAITLIST_POLL_INTERVAL,
-  });
+  const { data, isLoading, error } = useWaitlistEntries();
 
   const notifyMutation = useMutation({
     mutationFn: async (entryId: string) => {
@@ -66,7 +55,7 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
   const rawWaitlist = data?.waitlist;
   const waitlist = useMemo(() => rawWaitlist || [], [rawWaitlist]);
   const s = (v: string) => v.toLowerCase();
-  const activeCount = waitlist.filter(e => ['waiting', 'notified'].includes(s(e.status))).length;
+  const activeCount = countActiveWaitlist(waitlist);
   const seatedCount = waitlist.filter(e => s(e.status) === 'seated').length;
   const removedCount = waitlist.filter(e => ['cancelled', 'no_show'].includes(s(e.status))).length;
 
@@ -92,7 +81,8 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
     return filtered;
   }, [waitlist, activeTab, sourceFilter, searchQuery]);
 
-  const tableReadyEntries = filteredWaitlist.filter(e => s(e.status) === 'notified');
+  const tableReadyEntries = filteredWaitlist.filter(e => s(e.status) === 'notified' && !isStaleNotified(e));
+  const reviewEntries = filteredWaitlist.filter(entry => isStaleNotified(entry));
   const waitingEntries = filteredWaitlist.filter(e => s(e.status) === 'waiting');
 
   if (isLoading) {
@@ -125,6 +115,18 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
     );
   }
 
+  if (data?.plan_gated) {
+    return (
+      <div className="p-4" role="status">
+        <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">{t('waitlist.title')}</h2>
+        <p className="mt-3 text-sm text-stone-gray">{t('waitlist.planGated')}</p>
+        <a href="/subscription/manage" className="inline-flex mt-3 text-sm font-semibold text-burgundy hover:underline">
+          {t('waitlist.viewPlans')}
+        </a>
+      </div>
+    );
+  }
+
   return (
     <>
       {/* Header */}
@@ -132,13 +134,13 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
         <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
           <div className="flex items-center gap-2.5">
             <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-stone">{t('waitlist.title')}</h2>
-            <span className="text-[11px] font-semibold bg-[#9F1239]/[8%] text-[#9F1239] px-2.5 py-0.5 rounded-full">
+            <span className="text-[11px] font-semibold bg-soft-gray text-stone-gray px-2.5 py-0.5 rounded-full">
               {activeCount}
             </span>
           </div>
           <button
             onClick={() => setShowAddModal(true)}
-            className="px-3 py-1.5 bg-[#9F1239] hover:bg-[#881337] text-white text-sm font-semibold rounded-lg transition-all"
+            className="px-3 py-1.5 bg-burgundy hover:bg-burgundy/90 text-white text-sm font-semibold rounded-lg transition-all"
           >
             + {t('waitlist.addGuest')}
           </button>
@@ -164,7 +166,7 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
               >
                 {tab.label}
                 <span className={`ml-1.5 px-1.5 py-0.5 text-[10px] rounded-full ${
-                  activeTab === tab.key ? 'bg-[#9F1239]/10 text-[#9F1239]' : 'bg-border-gray text-stone-gray'
+                  activeTab === tab.key ? 'bg-soft-gray text-deep-charcoal' : 'bg-border-gray text-stone-gray'
                 }`}>
                   {tab.count}
                 </span>
@@ -184,8 +186,8 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
                 onClick={() => setSourceFilter(pill.key)}
                 className={`px-2 py-1 text-xs font-medium rounded-full border transition-all ${
                   sourceFilter === pill.key
-                    ? 'border-[#9F1239] bg-[#9F1239]/[8%] text-[#9F1239]'
-                    : 'border-glass-border-dark text-stone-gray hover:border-[#9F1239]/40 hover:text-deep-charcoal'
+                    ? 'border-deep-charcoal bg-soft-gray text-deep-charcoal'
+                    : 'border-glass-border-dark text-stone-gray hover:border-deep-charcoal/40 hover:text-deep-charcoal'
                 }`}
               >
                 {pill.label}
@@ -201,7 +203,7 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
               aria-label={t('waitlist.searchLabel')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-8 pr-3 py-1.5 bg-soft-gray border border-glass-border-input rounded-xl text-xs focus:ring-2 focus:ring-[#9F1239] focus:border-transparent outline-none"
+              className="w-full pl-8 pr-3 py-1.5 bg-soft-gray border border-glass-border-input rounded-xl text-xs focus:ring-2 focus:ring-burgundy focus:border-transparent outline-none"
             />
           </div>
         </div>
@@ -227,8 +229,8 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
           <>
             {tableReadyEntries.length > 0 && (
               <div className="mb-2">
-                <div className="px-4 py-2 bg-rose-600/10 border-l-4 border-rose-600">
-                  <span className="text-xs font-bold text-rose-600 uppercase tracking-wide">
+                <div className="px-4 py-2 bg-emerald-50/60 border-l-4 border-emerald-600">
+                  <span className="text-xs font-semibold text-emerald-700 uppercase tracking-wide">
                     {t('waitlist.tableReady')} ({tableReadyEntries.length})
                   </span>
                 </div>
@@ -237,6 +239,29 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
                     key={entry.id}
                     entry={entry}
                     isTableReady
+                    timeZone={timeZone}
+                    onNotify={(id) => notifyMutation.mutate(id)}
+                    onRemove={(id) => setConfirmRemove({ id, name: entry.customer_name || t('waitlist.guestFallback') })}
+                    onSeatNow={onSeatNow}
+                    isNotifying={notifyMutation.isPending}
+                    isRemoving={removeMutation.isPending}
+                  />
+                ))}
+              </div>
+            )}
+
+            {reviewEntries.length > 0 && (
+              <div className="mb-2">
+                <div className="px-4 py-2 bg-amber-50/60 border-l-4 border-amber-600">
+                  <span className="text-xs font-semibold text-amber-700 uppercase tracking-wide">
+                    {t('waitlist.needsReview')} ({reviewEntries.length})
+                  </span>
+                </div>
+                {reviewEntries.map(entry => (
+                  <WaitlistEntryCard
+                    key={entry.id}
+                    entry={entry}
+                    timeZone={timeZone}
                     onNotify={(id) => notifyMutation.mutate(id)}
                     onRemove={(id) => setConfirmRemove({ id, name: entry.customer_name || t('waitlist.guestFallback') })}
                     onSeatNow={onSeatNow}
@@ -258,6 +283,7 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
                   <WaitlistEntryCard
                     key={entry.id}
                     entry={entry}
+                    timeZone={timeZone}
                     onNotify={(id) => notifyMutation.mutate(id)}
                     onRemove={(id) => setConfirmRemove({ id, name: entry.customer_name || t('waitlist.guestFallback') })}
                     onSeatNow={onSeatNow}
@@ -273,6 +299,7 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
             <WaitlistEntryCard
               key={entry.id}
               entry={entry}
+              timeZone={timeZone}
               onNotify={(id) => notifyMutation.mutate(id)}
               onRemove={(id) => setConfirmRemove({ id, name: entry.customer_name || 'Guest' })}
               onSeatNow={onSeatNow}
