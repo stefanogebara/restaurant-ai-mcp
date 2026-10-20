@@ -8,6 +8,7 @@ export interface WhatsAppProvision {
   erro?: string | null;
   pode_iniciar?: boolean;
   roteamento_confirmado?: boolean;
+  origem?: 'registro_central';
 }
 
 export function useWhatsAppProvision() {

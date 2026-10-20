@@ -46,6 +46,22 @@ describe('WhatsApp workspace', () => {
     expect(await screen.findByRole('link', { name: 'Open conversation' })).toHaveAttribute('href', 'https://wa.me/5511999998888');
     expect(screen.getByText(/Test an incoming conversation before/)).toBeInTheDocument();
   });
+  it('shows an existing dedicated route as linked only after the display number is verified', async () => {
+    provision = { estado: 'ativo', numero_e164: '+5511999998888', roteamento_confirmado: true, origem: 'registro_central' };
+    mount();
+    expect(await screen.findByText('Number linked')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open conversation' })).toHaveAttribute('href', 'https://wa.me/5511999998888');
+    expect(screen.getByText(/linked to your restaurant/)).toBeInTheDocument();
+    expect(screen.queryByText('Connect with our help')).not.toBeInTheDocument();
+  });
+  it('does not invent a public phone when legacy routing exists but Meta is unavailable', async () => {
+    provision = { estado: 'ativo', roteamento_confirmado: true, origem: 'registro_central' };
+    mount();
+    expect(await screen.findByText('Display number needs confirmation')).toBeInTheDocument();
+    expect(screen.getByText(/could not verify its public number/)).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Open conversation' })).not.toBeInTheDocument();
+    expect(screen.queryByText('Connect with our help')).not.toBeInTheDocument();
+  });
   it('does not offer a conversation when a registered number is not routed to this restaurant', async () => {
     provision = { estado: 'ativo', numero_e164: '+5511999998888', roteamento_confirmado: false };
     mount();

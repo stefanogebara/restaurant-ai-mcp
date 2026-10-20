@@ -237,6 +237,55 @@ describe('estadoPublico', () => {
     expect((await estadoPublico(RID)).roteamento_confirmado).toBe(false);
   });
 
+  test('legado com receiver dedicado mostra somente o número confirmado pela WABA da Seatable', async () => {
+    process.env.WHATSAPP_WABA_ID = '987654321098765';
+    mockRegistryOwn.mockResolvedValue({ data: { id: RID, is_active: true, whatsapp_phone_number_id: '123456789012345' }, error: null });
+    mockRegistryByNumber.mockResolvedValue({ data: { id: RID }, error: null });
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: [
+        { id: '999999999999999', display_phone_number: '+55 11 2222-3333' },
+        { id: '123456789012345', display_phone_number: '+55 11 99999-8888' },
+      ] }),
+    });
+
+    const state = await estadoPublico(RID);
+    expect(state).toMatchObject({
+      estado: 'ativo', numero_e164: '+5511999998888',
+      roteamento_confirmado: true, origem: 'registro_central',
+    });
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.objectContaining({ pathname: '/v21.0/987654321098765/phone_numbers' }),
+      expect.objectContaining({ headers: { Authorization: 'Bearer token-teste' } }),
+    );
+    expect(state).not.toHaveProperty('phone_number_id');
+  });
+
+  test('legado não publica wa.me quando Meta falha ou não devolve o receiver exato', async () => {
+    process.env.WHATSAPP_WABA_ID = '987654321098765';
+    mockRegistryOwn.mockResolvedValue({ data: { id: RID, is_active: true, whatsapp_phone_number_id: '123456789012345' }, error: null });
+    mockRegistryByNumber.mockResolvedValue({ data: { id: RID }, error: null });
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: [{ id: 'other', display_phone_number: '+55 11 99999-8888' }] }),
+    });
+    const state = await estadoPublico(RID);
+    expect(state.roteamento_confirmado).toBe(true);
+    expect(state.numero_e164).toBeUndefined();
+    global.fetch.mockRejectedValue(new Error('Meta unavailable'));
+    expect((await estadoPublico(RID)).numero_e164).toBeUndefined();
+  });
+
+  test('legado inativo não é anunciado como conectado e receiver de outro tenant falha fechado', async () => {
+    mockRegistryOwn.mockResolvedValue({ data: { id: RID, is_active: false, whatsapp_phone_number_id: '123456789012345' }, error: null });
+    mockRegistryByNumber.mockResolvedValue({ data: { id: RID }, error: null });
+    global.fetch = jest.fn();
+    expect(await estadoPublico(RID)).toMatchObject({ estado: 'ativo', roteamento_confirmado: false });
+    expect(global.fetch).not.toHaveBeenCalled();
+    mockRegistryByNumber.mockResolvedValue({ data: { id: 'outro-restaurante' }, error: null });
+    await expect(estadoPublico(RID)).rejects.toThrow(/outro restaurante/i);
+  });
+
   test('produção nunca permite adicionar número novo, mesmo com a flag local ligada', async () => {
     const previousNodeEnv = process.env.NODE_ENV;
     process.env.NODE_ENV = 'production';
