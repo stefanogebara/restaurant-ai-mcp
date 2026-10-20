@@ -77,6 +77,13 @@ describe('WhatsApp workspace', () => {
     await user.click(screen.getByText('How the AI replies'));
     expect(screen.getByText('Personality editor')).not.toBeVisible();
   });
+  it('explains that reservation notices do not control incoming conversations', async () => {
+    mount();
+    await screen.findByText('Assisted connection');
+    await userEvent.click(screen.getByText('Messages and alerts'));
+    expect(await screen.findByLabelText('Send reservation notices by WhatsApp')).toBeInTheDocument();
+    expect(screen.getByText(/does not control incoming conversations/)).toBeInTheDocument();
+  });
   it('distinguishes a platform delivery test from the customer conversation', async () => {
     mount();
     await screen.findByText('Assisted connection');
