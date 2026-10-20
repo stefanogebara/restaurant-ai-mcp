@@ -169,6 +169,36 @@ async function conferirNumeroLivre(restaurantId, phoneNumberId) {
   }
 }
 
+/** Resolve a legacy receiver's public number without trusting a global display env. */
+async function numeroMetaDoRoteamento(phoneNumberId) {
+  const wabaId = process.env.WHATSAPP_WABA_ID;
+  const token = process.env.WHATSAPP_ACCESS_TOKEN;
+  if (!/^\d{5,25}$/.test(String(wabaId || '')) || !/^\d{5,25}$/.test(String(phoneNumberId || '')) || !token) {
+    return null;
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 5000);
+  try {
+    const url = new URL(`${GRAPH}/${wabaId}/phone_numbers`);
+    url.searchParams.set('fields', 'id,display_phone_number');
+    url.searchParams.set('limit', '200');
+    const response = await fetch(url, {
+      headers: { Authorization: `Bearer ${token}` },
+      signal: controller.signal,
+    });
+    if (!response.ok) return null;
+    const body = await response.json();
+    const raw = body?.data?.find(entry => String(entry.id) === String(phoneNumberId))?.display_phone_number;
+    const e164 = `+${String(raw || '').replace(/\D/g, '')}`;
+    return /^\+[1-9]\d{7,14}$/.test(e164) ? e164 : null;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 async function conferirElegibilidadeRoteamento(restaurantId, phoneNumberId) {
   const vinculo = await lerVinculoRoteamento(restaurantId);
   if (!vinculo?.is_active) {
@@ -336,7 +366,26 @@ async function confirmarCodigo({ restaurantId, codigo }) {
 /** Estado público (sem PIN) pra UI. */
 async function estadoPublico(restaurantId) {
   const atual = await lerEstado(restaurantId);
-  if (!atual) return { estado: 'nao_iniciado', pode_iniciar: autoCadastroLiberado(), roteamento_confirmado: false };
+  if (!atual) {
+    // Connections created before the provisioning wizard exist only in the
+    // central registry. Never call them disconnected, but never expose wa.me
+    // until Meta confirms the display number belongs to that exact receiver.
+    const vinculo = await lerVinculoRoteamento(restaurantId);
+    if (!vinculo?.whatsapp_phone_number_id) {
+      return { estado: 'nao_iniciado', pode_iniciar: autoCadastroLiberado(), roteamento_confirmado: false };
+    }
+    const phoneNumberId = vinculo.whatsapp_phone_number_id;
+    await conferirNumeroLivre(restaurantId, phoneNumberId);
+    const roteamentoConfirmado = vinculo.is_active === true;
+    const numeroE164 = roteamentoConfirmado ? await numeroMetaDoRoteamento(phoneNumberId) : null;
+    return {
+      estado: 'ativo',
+      numero_e164: numeroE164 || undefined,
+      pode_iniciar: false,
+      roteamento_confirmado: roteamentoConfirmado,
+      origem: 'registro_central',
+    };
+  }
   let roteamentoConfirmado = false;
   if (atual.estado === 'ativo' && atual.phone_number_id) {
     const vinculo = await lerVinculoRoteamento(restaurantId);
