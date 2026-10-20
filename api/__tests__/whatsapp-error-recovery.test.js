@@ -1,4 +1,20 @@
 'use strict';
+jest.mock('../_lib/channels/inbound-reply', () => ({
+  getPendingReply: jest.fn().mockResolvedValue(null),
+  savePendingReply: jest.fn().mockResolvedValue(undefined),
+  getRecordedRating: jest.fn().mockResolvedValue(null),
+  replyKey: jest.fn(() => 'inbound-reply:test'),
+}));
+jest.mock('../_lib/channels/inbound-completion', () => ({
+  wasCompleted: jest.fn().mockResolvedValue(false),
+  markCompleted: jest.fn().mockResolvedValue(undefined),
+  wasRateBlocked: jest.fn().mockResolvedValue(false),
+  markRateBlocked: jest.fn().mockResolvedValue(undefined),
+  claimRateCount: jest.fn().mockResolvedValue(true),
+  hasSendAttempt: jest.fn().mockResolvedValue(false),
+  reserveSendAttempt: jest.fn().mockResolvedValue(undefined),
+  releaseRejectedSend: jest.fn().mockResolvedValue(undefined),
+}));
 
 /**
  * Error-recovery path tests for WhatsApp webhook fixes:
@@ -43,7 +59,9 @@ jest.mock('../_lib/rate-limit', () => ({
 
 jest.mock('../_lib/restaurant-registry', () => ({
   getRestaurantByName:    jest.fn().mockResolvedValue({ match: null, confidence: 0 }),
-  getAllActiveRestaurants: jest.fn().mockResolvedValue([]),
+  getAllActiveRestaurants: jest.fn().mockResolvedValue([
+    { id: 'rest-abc', restaurant_name: 'Test Restaurant', whatsapp_phone_number_id: '123456789012345' },
+  ]),
 }));
 
 // Os adapters REAIS devolvem o resultado do sender ({ success, messageId }) —
@@ -144,7 +162,7 @@ function makeMsg(text = 'Quero fazer uma reserva') {
     text,
     mediaContext:          null,
     interactiveSelection:  null,
-    phoneNumberId:         'PHONE_ID_TEST',
+    phoneNumberId:         '123456789012345',
   };
 }
 
@@ -154,6 +172,8 @@ function makeSession(overrides = {}) {
     sender_phone:        '+5511988887777',
     restaurant:          RESTAURANT,
     restaurant_id:       RESTAURANT.id,
+    inbound_provider:    'meta',
+    inbound_receiver:    '123456789012345',
     conversationHistory: [],
     context:             {},
     ...overrides,
@@ -192,30 +212,27 @@ describe('A. Session creation retry', () => {
     expect(errorCalls).toHaveLength(0);
   }, 10000);
 
-  it('sends error message when session creation fails on both attempts', async () => {
+  it('leaves a failed session attempt retryable for the provider', async () => {
     mockGetOrCreateSession.mockRejectedValue(new Error('DB timeout'));
 
     const adapter = makeAdapter();
-    await processMessage(adapter, makeMsg());
+    const outcome = await processMessage(adapter, makeMsg());
 
     // Both attempts were made
     expect(mockGetOrCreateSession).toHaveBeenCalledTimes(2);
-    // Error message was sent to the customer
-    const errorCalls = adapter.sendMessage.mock.calls.filter(([, msg]) =>
-      msg.includes('problema ao iniciar'));
-    expect(errorCalls).toHaveLength(1);
+    expect(outcome).toEqual(expect.objectContaining({ retryable: true, skipped: 'session_unavailable' }));
+    expect(adapter.sendMessage).not.toHaveBeenCalled();
   }, 10000);
 
-  it('sends error message when session returns null on both attempts', async () => {
+  it('does not consume the message when session creation returns null', async () => {
     mockGetOrCreateSession.mockResolvedValue(null);
 
     const adapter = makeAdapter();
-    await processMessage(adapter, makeMsg());
+    const outcome = await processMessage(adapter, makeMsg());
 
     expect(mockGetOrCreateSession).toHaveBeenCalledTimes(2);
-    const errorCalls = adapter.sendMessage.mock.calls.filter(([, msg]) =>
-      msg.includes('problema ao iniciar'));
-    expect(errorCalls).toHaveLength(1);
+    expect(outcome.retryable).toBe(true);
+    expect(adapter.sendMessage).not.toHaveBeenCalled();
   }, 10000);
 });
 

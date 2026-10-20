@@ -119,14 +119,15 @@ async function getRestaurantById(id) {
  * Get all active restaurants
  * @returns {Promise<array>} List of active restaurants (name and ID only)
  */
-async function getAllActiveRestaurants() {
+async function getAllActiveRestaurants(options = {}) {
   // Return cached result if still fresh — avoids repeated slow DB queries on the same Lambda.
-  if (_restaurantCache && Date.now() < _restaurantCacheExpiry) {
+  if (!options.fresh && _restaurantCache && Date.now() < _restaurantCacheExpiry) {
     return _restaurantCache;
   }
 
   if (!isCentralConfigured()) {
     logger.error('[RestaurantRegistry] Central Supabase not configured');
+    if (options.fresh) throw new Error('Central Supabase not configured');
     return [];
   }
 
@@ -151,6 +152,7 @@ async function getAllActiveRestaurants() {
 
     if (error) {
       logger.error('[RestaurantRegistry] Error fetching restaurants:', error);
+      if (options.fresh) throw new Error('Restaurant registry lookup failed');
       return [];
     }
 
@@ -163,7 +165,7 @@ async function getAllActiveRestaurants() {
         const enrichPromise = supabaseAdmin
           .schema('restaurant')
           .from('restaurant_config')
-          .select('id, restaurant_type, city')
+          .select('id, restaurant_type, city, whatsapp_provider')
           .in('id', ids);
         const timeoutPromise = new Promise((_, reject) =>
           setTimeout(() => reject(new Error('config enrich timeout')), 3000));
@@ -175,13 +177,17 @@ async function getAllActiveRestaurants() {
             ...r,
             restaurant_type: configMap[r.id]?.restaurant_type || null,
             city: configMap[r.id]?.city || null,
+            whatsapp_provider: configMap[r.id]
+              ? (configMap[r.id].whatsapp_provider || 'meta') : 'unconfigured',
           }));
           _restaurantCache = enriched;
           _restaurantCacheExpiry = Date.now() + RESTAURANT_CACHE_TTL_MS;
           return enriched;
         }
+        if (options.fresh) throw new Error('Restaurant provider ownership unavailable');
       } catch (configErr) {
         logger.warn('[RestaurantRegistry] Failed to enrich with config data (non-fatal):', configErr.message);
+        if (options.fresh) throw configErr;
       }
     }
 
@@ -190,6 +196,7 @@ async function getAllActiveRestaurants() {
     return restaurants;
   } catch (error) {
     logger.error('[RestaurantRegistry] Error:', error);
+    if (options.fresh) throw error;
     return [];
   }
 }

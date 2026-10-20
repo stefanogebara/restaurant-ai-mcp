@@ -182,7 +182,7 @@ describe('fiação', () => {
     const src = ler('_lib/channels/message-processor.js');
     const portao = src.indexOf('if (isPaused(session))');
     const llm = src.indexOf('await processWithAI(');
-    const reacao = src.indexOf("adapter.addReaction(from, messageId, '\\uD83D\\uDC40')");
+    const reacao = src.indexOf("adapter.addReaction(from, messageId, '\\uD83D\\uDC40', receiverContext)");
     expect(portao).toBeGreaterThan(-1);
     // Antes do LLM e antes até da reação — nada de gastar chamada numa conversa
     // que está com um humano.

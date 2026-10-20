@@ -15,8 +15,9 @@ const logger = createSecureLogger('WhatsAppInteractions');
 
 const WHATSAPP_API_URL = 'https://graph.facebook.com/v18.0';
 
-function getCredentials() {
-  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+function getCredentials(verifiedReceiver) {
+  if (verifiedReceiver != null && !/^\d{5,30}$/.test(verifiedReceiver)) return null;
+  const phoneNumberId = verifiedReceiver || process.env.WHATSAPP_PHONE_NUMBER_ID;
   const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
   if (!phoneNumberId || !accessToken) return null;
   return { phoneNumberId, accessToken };
@@ -41,8 +42,8 @@ async function metaApiCall(phoneNumberId, accessToken, endpoint, body) {
  * Mark a message as read (blue checkmarks).
  * @param {string} messageId - The WhatsApp message ID to mark as read
  */
-async function markAsRead(messageId) {
-  const creds = getCredentials();
+async function markAsRead(messageId, verifiedReceiver) {
+  const creds = getCredentials(verifiedReceiver);
   if (!creds) return;
   try {
     await metaApiCall(creds.phoneNumberId, creds.accessToken, 'messages', {
@@ -64,8 +65,8 @@ async function markAsRead(messageId) {
  * @param {string} messageId - Message to react to
  * @param {string} emoji - Emoji character (e.g. '👀', '✅')
  */
-async function addReaction(to, messageId, emoji) {
-  const creds = getCredentials();
+async function addReaction(to, messageId, emoji, verifiedReceiver) {
+  const creds = getCredentials(verifiedReceiver);
   if (!creds) return;
   try {
     await metaApiCall(creds.phoneNumberId, creds.accessToken, 'messages', {
@@ -85,8 +86,8 @@ async function addReaction(to, messageId, emoji) {
  * @param {string} to - Recipient phone number
  * @param {string} messageId - Message to remove reaction from
  */
-async function removeReaction(to, messageId) {
-  const creds = getCredentials();
+async function removeReaction(to, messageId, verifiedReceiver) {
+  const creds = getCredentials(verifiedReceiver);
   if (!creds) return;
   try {
     await metaApiCall(creds.phoneNumberId, creds.accessToken, 'messages', {

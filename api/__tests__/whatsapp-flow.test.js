@@ -19,6 +19,22 @@
 
 const { Readable } = require('stream');
 const crypto = require('crypto');
+jest.mock('../_lib/channels/inbound-reply', () => ({
+  getPendingReply: jest.fn().mockResolvedValue(null),
+  savePendingReply: jest.fn().mockResolvedValue(undefined),
+  getRecordedRating: jest.fn().mockResolvedValue(null),
+  replyKey: jest.fn(() => 'inbound-reply:test'),
+}));
+jest.mock('../_lib/channels/inbound-completion', () => ({
+  wasCompleted: jest.fn().mockResolvedValue(false),
+  markCompleted: jest.fn().mockResolvedValue(undefined),
+  wasRateBlocked: jest.fn().mockResolvedValue(false),
+  markRateBlocked: jest.fn().mockResolvedValue(undefined),
+  claimRateCount: jest.fn().mockResolvedValue(true),
+  hasSendAttempt: jest.fn().mockResolvedValue(false),
+  reserveSendAttempt: jest.fn().mockResolvedValue(undefined),
+  releaseRejectedSend: jest.fn().mockResolvedValue(undefined),
+}));
 
 // ─── Mock all external dependencies ──────────────────────────────────────────
 
@@ -164,7 +180,8 @@ jest.mock('../_lib/supabase', () => ({
     return {
       from: jest.fn().mockImplementation(() => makeChain()),
       schema: jest.fn().mockReturnValue({
-        from: jest.fn().mockImplementation(() => makeChain({ agent_language: 'pt-BR' })),
+        from: jest.fn().mockImplementation(() => makeChain({ agent_language: 'pt-BR',
+          manager_phone: '+5511999990000', manager_whatsapp_verified: true })),
       }),
     };
   })(),
@@ -201,7 +218,7 @@ jest.mock('../_services/pdfReportService', () => ({
 // ─── Env setup ────────────────────────────────────────────────────────────────
 
 process.env.WHATSAPP_VERIFY_TOKEN = 'test-verify-token';
-process.env.WHATSAPP_PHONE_NUMBER_ID = 'PHONE_ID_TEST';
+process.env.WHATSAPP_PHONE_NUMBER_ID = '123456789012345';
 process.env.WHATSAPP_ACCESS_TOKEN = 'test-access-token';
 process.env.AI_BASE_URL = 'https://openrouter.ai/api/v1';
 process.env.OPENROUTER_API_KEY = 'sk-test';
@@ -217,6 +234,7 @@ const handler = require('../whatsapp-webhook');
 
 const TEST_RESTAURANT = {
   id: 'rest-123',
+  whatsapp_phone_number_id: '123456789012345',
   name: 'Restaurante Teste',
   phone: '+551199990001',
   agent_language: 'pt-BR',
@@ -239,7 +257,7 @@ function buildMetaBody(from, text, wamid = `wamid.TEST${Date.now()}`) {
           messaging_product: 'whatsapp',
           metadata: {
             display_phone_number: '+15550000000',
-            phone_number_id: 'PHONE_ID_TEST',
+            phone_number_id: '123456789012345',
           },
           messages: [{
             from: from.replace('+', ''),
@@ -313,6 +331,8 @@ function makeCustomerSession(overrides = {}) {
   return {
     phone: CUSTOMER_PHONE,
     restaurant: TEST_RESTAURANT,
+    inbound_provider: 'meta',
+    inbound_receiver: '123456789012345',
     conversationHistory: [],
     context: {},
     ...overrides,
@@ -324,6 +344,7 @@ function makeCustomerSession(overrides = {}) {
 describe('WhatsApp conversation flows', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    require('../_lib/restaurant-registry').getAllActiveRestaurants.mockResolvedValue([TEST_RESTAURANT]);
     mockFetch.mockResolvedValue({
       ok: true,
       json: async () => ({ messages: [{ id: 'wamid.MOCK_REPLY' }] }),
@@ -469,7 +490,7 @@ describe('WhatsApp conversation flows', () => {
   // 6. Manager sending RELATORIO command
   // ──────────────────────────────────────────────────────────────────────────
   describe('Scenario 6: Manager sending RELATORIO command', () => {
-    it('should acknowledge and trigger async PDF report', async () => {
+    it('should send only the PDF after verification', async () => {
       const managerSession = makeCustomerSession({
         phone: MANAGER_PHONE,
         restaurant: TEST_RESTAURANT,
@@ -491,16 +512,13 @@ describe('WhatsApp conversation flows', () => {
       // Handler should complete without error
       expect(res.status).not.toHaveBeenCalledWith(500);
 
-      // Allow the fire-and-forget PDF generation to start
-      await Promise.resolve();
-      await Promise.resolve();
-
-      // sendWeeklyReportViaWhatsApp should have been called eventually
-      // (fire-and-forget, so we just verify it was invoked)
+      // The report is awaited, never fire-and-forget after webhook 200.
       expect(sendWeeklyReportViaWhatsApp).toHaveBeenCalledWith(
         TEST_RESTAURANT.id,
         expect.any(String),
-        expect.any(String)
+        expect.any(String),
+        undefined,
+        expect.objectContaining({ phoneNumberId: '123456789012345', beforeSend: expect.any(Function) }),
       );
     });
   });
@@ -666,8 +684,7 @@ describe('WhatsApp conversation flows', () => {
     });
 
     it('should return 200 for duplicate message (already processed)', async () => {
-      const { isMessageDuplicate } = require('../_lib/rate-limit');
-      isMessageDuplicate.mockResolvedValueOnce(true);
+      require('../_lib/channels/inbound-completion').wasCompleted.mockResolvedValueOnce(true);
 
       const session = makeCustomerSession();
       mockGetOrCreateSession.mockResolvedValue(session);

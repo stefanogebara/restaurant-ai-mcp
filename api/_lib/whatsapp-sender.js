@@ -74,7 +74,7 @@ async function sendViaMeta(to, message, options = {}) {
 
   if (!phoneNumberId || !accessToken) {
     logger.error('Missing WHATSAPP_PHONE_NUMBER_ID or WHATSAPP_ACCESS_TOKEN');
-    return { success: false, error: 'WhatsApp not configured' };
+    return { success: false, error: 'WhatsApp not configured', definitiveFailure: true };
   }
 
   // NOTE: NO RETRY. Meta's /messages endpoint is NOT idempotent without a
@@ -112,6 +112,7 @@ async function sendViaMeta(to, message, options = {}) {
         error: data.error?.message || 'Failed to send',
         code: data.error?.code,
         subcode: data.error?.error_subcode,
+        definitiveFailure: response.status >= 400 && response.status < 500,
       };
     }
 
@@ -136,7 +137,7 @@ async function sendViaTwilio(to, message) {
 
     if (!accountSid || !authToken || !twilioWhatsAppNumber) {
       logger.error('Missing TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, or TWILIO_WHATSAPP_NUMBER');
-      return { success: false, error: 'Twilio not configured' };
+      return { success: false, error: 'Twilio not configured', definitiveFailure: true };
     }
 
     const client = twilio(accountSid, authToken);
@@ -159,7 +160,8 @@ async function sendViaTwilio(to, message) {
     return { success: true, messageId: result.sid };
   } catch (error) {
     logger.error('Twilio WhatsApp send exception:', error);
-    return { success: false, error: error.message };
+    return { success: false, error: error.message,
+      definitiveFailure: Number(error.status) >= 400 && Number(error.status) < 500 };
   }
 }
 
@@ -437,13 +439,13 @@ async function sendWhatsAppImageMessage(to, imageUrl, caption) {
  * @param {string} [filename='relatorio.pdf'] - Display filename
  * @returns {{ success: boolean, messageId?: string, error?: string }}
  */
-async function sendWhatsAppDocumentMessage(to, documentUrl, caption = '', filename = 'relatorio.pdf') {
-  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+async function sendWhatsAppDocumentMessage(to, documentUrl, caption = '', filename = 'relatorio.pdf', options = {}) {
+  const phoneNumberId = resolvePhoneNumberId(options);
   const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
 
   if (!phoneNumberId || !accessToken) {
     logger.error('Missing WHATSAPP_PHONE_NUMBER_ID or WHATSAPP_ACCESS_TOKEN');
-    return { success: false, error: 'WhatsApp not configured' };
+    return { success: false, error: 'WhatsApp not configured', definitiveFailure: true };
   }
 
   try {
@@ -470,7 +472,8 @@ async function sendWhatsAppDocumentMessage(to, documentUrl, caption = '', filena
 
     if (!response.ok) {
       logger.error('WhatsApp document send error:', { status: response.status, data: JSON.stringify(data) });
-      return { success: false, error: data.error?.message || 'Failed to send document' };
+      return { success: false, error: data.error?.message || 'Failed to send document',
+        definitiveFailure: response.status >= 400 && response.status < 500 };
     }
 
     logger.info(`WhatsApp document sent to ${to}, msgId=${data.messages?.[0]?.id}`);

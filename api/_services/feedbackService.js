@@ -195,7 +195,7 @@ async function expireOldFeedback() {
  * Parses rating (1-5 or star emoji count) and optional comment.
  * @returns {Object|null} Updated feedback record or null
  */
-async function processFeedbackReply(restaurantId, customerPhone, messageText) {
+async function processFeedbackReply(restaurantId, customerPhone, messageText, inboundKey = null) {
   // Find the most recent sent feedback for this phone + restaurant
   const { data: feedback, error } = await supabaseAdmin
     .from('guest_feedback')
@@ -207,9 +207,8 @@ async function processFeedbackReply(restaurantId, customerPhone, messageText) {
     .limit(1)
     .maybeSingle();
 
-  if (error || !feedback) {
-    return null;
-  }
+  if (error) throw new Error('Feedback record lookup failed');
+  if (!feedback) return null;
 
   // Parse rating from message
   const parsed = parseRatingFromMessage(messageText);
@@ -234,6 +233,7 @@ async function processFeedbackReply(restaurantId, customerPhone, messageText) {
     status: 'answered',
     answered_at: new Date().toISOString(),
     rating: parsed.rating,
+    ...(inboundKey ? { whatsapp_inbound_key: inboundKey } : {}),
   };
   if (parsed.comment) {
     updates.comment = parsed.comment.slice(0, 1000);
@@ -248,7 +248,7 @@ async function processFeedbackReply(restaurantId, customerPhone, messageText) {
 
   if (updateErr) {
     logger.error('Failed to update feedback reply', { error: updateErr.message });
-    return null;
+    throw new Error('Feedback reply could not be saved');
   }
 
   logger.info('Feedback reply processed', {
@@ -311,7 +311,8 @@ async function findPendingFeedbackForPhone(customerPhone, restaurantId) {
     .limit(1)
     .maybeSingle();
 
-  if (error || !data) return null;
+  if (error) throw new Error('Pending feedback lookup failed');
+  if (!data) return null;
   return { feedbackId: data.id, restaurantId: data.restaurant_id };
 }
 

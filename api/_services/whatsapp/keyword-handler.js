@@ -3,8 +3,17 @@
 const { createSecureLogger } = require('../../_lib/secure-logger');
 const logger = createSecureLogger('WhatsApp');
 const { handleOptOut } = require('../campaignService');
-const { sendWhatsAppMessage } = require('./message-sender');
 const { sendWeeklyReportViaWhatsApp } = require('../pdfReportService');
+const { supabaseAdmin } = require('../../_lib/supabase');
+
+async function isVerifiedReportManager(restaurantId, from) {
+  if (!restaurantId || !from) return false;
+  const { data, error } = await supabaseAdmin.schema('restaurant').from('restaurant_config')
+    .select('manager_phone,manager_whatsapp_verified').eq('id', restaurantId).maybeSingle();
+  return !error && data?.manager_whatsapp_verified === true &&
+    !!data?.manager_phone &&
+    String(data.manager_phone).replace(/\D/g, '') === String(from).replace(/\D/g, '');
+}
 
 /**
  * Handle template response keywords (MODIFY, CANCEL, CONFIRM, BOOK, HELP, STOP, RELATORIO).
@@ -18,9 +27,16 @@ const { sendWeeklyReportViaWhatsApp } = require('../pdfReportService');
  * @param {object} [session] - Active session (optional; RELATORIO + STOP need it)
  * @returns {boolean} true if the keyword was handled, false if not a keyword
  */
-async function handleKeyword(normalizedText, from, session = null) {
+async function handleKeyword(normalizedText, from, session = null, context = {}) {
+  // The processor supplies a sender bound to the verified receiving account.
+  // A keyword must never fall back to the default Meta number.
+  const sendText = async (body, purpose = 'keyword') => {
+    if (typeof context.sendText !== 'function') throw new Error('Verified keyword sender unavailable');
+    const result = await context.sendText(body, purpose);
+    if (!result?.entregue) throw new Error('Keyword reply was not accepted');
+  };
   if (normalizedText === 'MODIFY' || normalizedText === 'MODIFICAR') {
-    await sendWhatsAppMessage(from,
+    await sendText(
       normalizedText === 'MODIFICAR'
         ? 'Para modificar a sua reserva, por favor diga-me:\n' +
           '- O seu nome\n' +
@@ -35,7 +51,7 @@ async function handleKeyword(normalizedText, from, session = null) {
   }
 
   if (normalizedText === 'CANCEL' || normalizedText === 'CANCELAR') {
-    await sendWhatsAppMessage(from,
+    await sendText(
       normalizedText === 'CANCELAR'
         ? 'Para cancelar a sua reserva, por favor confirme com:\n' +
           '- O seu nome\n' +
@@ -50,7 +66,7 @@ async function handleKeyword(normalizedText, from, session = null) {
   }
 
   if (normalizedText === 'CONFIRM' || normalizedText === 'CONFIRMAR') {
-    await sendWhatsAppMessage(from,
+    await sendText(
       normalizedText === 'CONFIRMAR'
         ? 'Otimo! A sua reserva foi confirmada. Esperamos ve-lo em breve!\n\n' +
           'Responda AJUDA se precisar de assistencia.'
@@ -61,7 +77,7 @@ async function handleKeyword(normalizedText, from, session = null) {
   }
 
   if (normalizedText === 'BOOK' || normalizedText === 'RESERVAR') {
-    await sendWhatsAppMessage(from,
+    await sendText(
       normalizedText === 'RESERVAR'
         ? 'Terei todo o gosto em ajuda-lo a fazer uma nova reserva!\n\n' +
           'Por favor diga-me:\n' +
@@ -78,7 +94,7 @@ async function handleKeyword(normalizedText, from, session = null) {
   }
 
   if (normalizedText === 'HELP' || normalizedText === 'AJUDA' || normalizedText === 'AYUDA') {
-    await sendWhatsAppMessage(from,
+    await sendText(
       (normalizedText === 'AJUDA')
         ? 'Posso ajuda-lo com:\n' +
           '- Fazer uma nova reserva\n' +
@@ -103,38 +119,42 @@ async function handleKeyword(normalizedText, from, session = null) {
       const language = session?.restaurant?.agent_language || 'pt-BR';
       logger.info('[RELATORIO] start', { from, restaurantId });
 
-      // Acknowledge immediately, send report asynchronously
-      await sendWhatsAppMessage(from,
-        language === 'pt-BR'
-          ? 'Gerando seu relatório semanal... 📊 Você receberá em instantes.'
-          : 'Generating your weekly report... 📊 You will receive it in a moment.'
-      );
+      // Reports contain guest and revenue data. A restaurant-bound session is
+      // not proof that the sender is the manager: any guest can open one.
+      if (!(await isVerifiedReportManager(restaurantId, from))) {
+        await sendText(language === 'pt-BR'
+          ? 'O relatório está disponível apenas para o gestor verificado deste restaurante.'
+          : 'Reports are available only to this restaurant’s verified manager.');
+        return true;
+      }
 
+      // Only Meta supports the verified PDF sender on this inbound path.
+      if (context.provider !== 'meta' || !/^\d{5,30}$/.test(context.receiver || '')) {
+        await sendText(language === 'pt-BR'
+          ? 'O relatório por PDF ainda não está disponível neste canal.'
+          : 'PDF reports are not available on this channel yet.');
+        return true;
+      }
       if (restaurantId) {
-        // AWAITED. Fire-and-forget doesn't work on Vercel — the Lambda dies
-        // the moment the outer webhook sends 200 OK, killing this promise.
-        // Previously: user saw "Gerando..." but never received the PDF.
-        // PDF generation (Gotenberg HTML→PDF + storage upload + WhatsApp send)
-        // typically takes 8-15s, well within the whatsapp-webhook's 120s
-        // maxDuration. Meta webhook-retry dedup prevents double-processing.
-        try {
-          const r = await sendWeeklyReportViaWhatsApp(restaurantId, from, language);
-          if (!r?.success) {
-            logger.error('RELATORIO send failed', { restaurantId, error: r?.error });
-            await sendWhatsAppMessage(from,
-              language === 'pt-BR'
-                ? 'Desculpe, não consegui gerar o relatório agora. Tente novamente em alguns minutos.'
-                : 'Sorry, I couldn\'t generate the report right now. Please try again in a few minutes.'
-            ).catch(() => {});
-          }
-        } catch (err) {
-          logger.error('RELATORIO exception', { restaurantId, error: err.message });
+        if (typeof context.beforeReportSend !== 'function') {
+          throw new Error('Durable report send reservation unavailable');
+        }
+        // Do not send a separate acknowledgement. It made an accepted text
+        // reply look complete even when the PDF had not been generated yet.
+        // The document is the only outbound send for this inbound message.
+        const r = await sendWeeklyReportViaWhatsApp(restaurantId, from, language,
+          undefined, { phoneNumberId: context.receiver, beforeSend: context.beforeReportSend });
+        if (!r?.success) {
+          if (r?.definitiveFailure) await context.releaseRejectedReport?.();
+          logger.error('RELATORIO send failed', { restaurantId, error: r?.error });
+          throw new Error('Report was not delivered');
         }
       } else {
         logger.warn('RELATORIO keyword: no restaurant found in session', { from });
       }
     } catch (e) {
       logger.error('RELATORIO keyword handling error:', e.message);
+      throw e;
     }
     return true;
   }
@@ -149,7 +169,7 @@ async function handleKeyword(normalizedText, from, session = null) {
     } catch (e) {
       logger.error('Opt-out handling error:', e.message);
     }
-    await sendWhatsAppMessage(from,
+    await sendText(
       normalizedText === 'PARAR'
         ? 'Voce foi removido da nossa lista de marketing. Nao recebera mais mensagens promocionais.'
         : 'You have been unsubscribed from marketing messages. You will no longer receive promotional messages from us.'
@@ -160,4 +180,4 @@ async function handleKeyword(normalizedText, from, session = null) {
   return false;
 }
 
-module.exports = { handleKeyword };
+module.exports = { handleKeyword, isVerifiedReportManager };

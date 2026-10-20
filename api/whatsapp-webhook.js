@@ -123,11 +123,11 @@ async function handlePost(req, res) {
       return; // no actionable message
     }
 
-    await processMessage(adapter, msg, { oppositeProvider: 'twilio' })
-      .catch(err => logger.error('processMessage error:', err.message));
+    return await processMessage(adapter, msg, { oppositeProvider: 'twilio' });
 
   } catch (error) {
     logger.error('Webhook error:', error.message);
+    throw error;
   }
 }
 
@@ -181,14 +181,16 @@ module.exports = async (req, res) => {
   // Waiting for handlePost here keeps the Lambda alive for its full processing.
   // Meta's 20s webhook-timeout retry budget is handled by Redis dedup
   // (86400s TTL) in processMessage — retries of the same messageId no-op.
+  let result;
   try {
-    await handlePost(req, res);
+    result = await handlePost(req, res);
   } catch (err) {
     logger.error('Webhook post handler error:', err.message);
+    if (!res.headersSent) return res.status(503).json({ status: 'retry' });
   }
 
   if (!res.headersSent) {
-    res.status(200).json({ status: 'ok' });
+    res.status(result?.retryable ? 503 : 200).json({ status: result?.retryable ? 'retry' : 'ok' });
   }
 };
 

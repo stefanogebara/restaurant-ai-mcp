@@ -10,12 +10,10 @@
  * silencioso e caro, no cliente que paga.
  *
  * Desenho verificado contra o banco:
- *  - whatsapp_sessions.restaurant_id tem FK para restaurant_registry → o demo
- *    precisa existir lá;
+ *  - whatsapp_sessions.restaurant_id NÃO tem FK para restaurant_registry;
  *  - `is_active: false` mantém o demo fora de getAllActiveRestaurants(), logo
  *    fora do seletor e do auto-assign;
- *  - a FK é ON DELETE SET NULL → quando o cron apaga o demo expirado, a sessão
- *    volta ao roteamento normal sozinha.
+ *  - quando o demo expira, o processador limpa explicitamente a sessão órfã.
  */
 
 const mockLogger = { info: jest.fn(), warn: jest.fn(), error: jest.fn() };
@@ -38,14 +36,17 @@ jest.mock('../_lib/whatsapp-sessions', () => ({
 }));
 
 const { vincularTelefoneAoDemo } = require('../_lib/demo-whatsapp-link');
+const { demoConversationId } = require('../_lib/channels/receiver-identity');
 
 const DEMO = { telefone: '5511999998888', demoId: 'demo-abc', nome: 'Mocotó', idioma: 'pt-BR' };
 const REAL_ID = 'rest-real-999';
+process.env.WHATSAPP_PHONE_NUMBER_ID = '123456789012345';
 
 beforeEach(() => {
   jest.clearAllMocks();
   mockGetByPhone.mockResolvedValue(null);
-  mockAtivos.mockResolvedValue([]);
+  mockAtivos.mockResolvedValue([{ id: 'shared-a', whatsapp_phone_number_id: null },
+    { id: 'shared-b', whatsapp_phone_number_id: null }]);
   mockUpsert.mockResolvedValue({ data: { id: DEMO.demoId }, error: null });
   mockGetOrCreate.mockResolvedValue({ id: 'sess-1' });
   mockSetRestaurant.mockResolvedValue({ id: 'sess-1', restaurant_id: DEMO.demoId });
@@ -54,8 +55,14 @@ beforeEach(() => {
 describe('caminho normal', () => {
   test('vincula e devolve vinculado:true', async () => {
     const r = await vincularTelefoneAoDemo(DEMO);
+    const expectedConversation = demoConversationId(DEMO.demoId, { picker: [
+      { id: 'shared-a' }, { id: 'shared-b' },
+    ] });
     expect(r).toEqual({ vinculado: true });
-    expect(mockSetRestaurant).toHaveBeenCalledWith('sess-1', DEMO.demoId);
+    expect(mockSetRestaurant).toHaveBeenCalledWith('sess-1', DEMO.demoId,
+      { conversationId: expectedConversation });
+    expect(mockGetOrCreate).toHaveBeenCalledWith(DEMO.telefone, expectedConversation,
+      expect.objectContaining({ provider: 'meta', receiver: '123456789012345' }));
   });
 
   test('registra o demo como INATIVO — fora do seletor e do auto-assign', async () => {
@@ -69,7 +76,8 @@ describe('caminho normal', () => {
 describe('a recusa que protege o cliente que paga', () => {
   test('telefone já ligado a restaurante ATIVO não é sobrescrito', async () => {
     mockGetByPhone.mockResolvedValue({ id: 'sess-1', restaurant_id: REAL_ID });
-    mockAtivos.mockResolvedValue([{ id: REAL_ID, restaurant_name: 'Cliente Real' }]);
+    mockAtivos.mockResolvedValue([{ id: REAL_ID, restaurant_name: 'Cliente Real' },
+      { id: 'shared-b', whatsapp_phone_number_id: null }]);
 
     const r = await vincularTelefoneAoDemo(DEMO);
 
@@ -80,7 +88,7 @@ describe('a recusa que protege o cliente que paga', () => {
 
   test('sessão ligada a restaurante INATIVO (demo antigo) pode ser revinculada', async () => {
     mockGetByPhone.mockResolvedValue({ id: 'sess-1', restaurant_id: 'demo-antigo' });
-    mockAtivos.mockResolvedValue([{ id: REAL_ID }]); // o antigo não está entre os ativos
+    mockAtivos.mockResolvedValue([{ id: REAL_ID }, { id: 'shared-b' }]); // o antigo não está entre os ativos
 
     const r = await vincularTelefoneAoDemo(DEMO);
     expect(r.vinculado).toBe(true);
@@ -98,11 +106,17 @@ describe('a recusa que protege o cliente que paga', () => {
 
   test('revincular ao MESMO demo é permitido — não é conflito', async () => {
     mockGetByPhone.mockResolvedValue({ id: 'sess-1', restaurant_id: DEMO.demoId });
-    mockAtivos.mockResolvedValue([]);
+    mockAtivos.mockResolvedValue([{ id: 'shared-a' }, { id: 'shared-b' }]);
 
     const r = await vincularTelefoneAoDemo(DEMO);
     expect(r.vinculado).toBe(true);
   });
+});
+
+test('não promete vínculo de demo quando o número Meta já pertence a restaurante ativo', async () => {
+  mockAtivos.mockResolvedValue([{ id: REAL_ID, whatsapp_phone_number_id: process.env.WHATSAPP_PHONE_NUMBER_ID }]);
+  expect(await vincularTelefoneAoDemo(DEMO)).toEqual({ vinculado: false, motivo: 'conta_whatsapp_ocupada' });
+  expect(mockUpsert).not.toHaveBeenCalled();
 });
 
 describe('a premissa que eu errei — documentada para não voltar', () => {

@@ -1180,6 +1180,12 @@ async function executeTool(toolName, toolInput, session, inboundContext = {}) {
       // precisa responder é o pior estado possível — pior do que a esquiva de
       // hoje, porque a esquiva ao menos devolve alguma coisa ao cliente.
       const restaurante = session?.restaurant;
+      if (handoff.isPaused(session)) {
+        // A model retry after a successful tool call must not notify the host
+        // twice. The persisted pause is the durable idempotency signal.
+        return { success: true, paused: true,
+          message: handoff.mensagemAoCliente(restaurante?.language || 'en') };
+      }
       if (!handoff.isHandoffEnabled(session)) {
         // Não deveria chegar aqui: a tool nem é oferecida com o recurso
         // desligado. Se chegou, responder que não dá é melhor que pausar.
@@ -1216,6 +1222,9 @@ async function executeTool(toolName, toolInput, session, inboundContext = {}) {
         }
 
         const { sendWhatsAppMessage } = require('../../_lib/whatsapp-sender');
+        if (inboundContext.providerName !== 'meta' && inboundContext.providerName !== 'twilio') {
+          throw new Error('handoff notification unavailable for this WhatsApp provider');
+        }
         const envio = await sendWhatsAppMessage(
           cfg.manager_phone,
           handoff.mensagemAoHost({
@@ -1223,6 +1232,9 @@ async function executeTool(toolName, toolInput, session, inboundContext = {}) {
             customerPhone: session.sender_phone,
             reason: toolInput?.reason,
           }),
+          inboundContext.providerName === 'meta'
+            ? { provider: 'meta', phoneNumberId: inboundContext.receiver }
+            : { provider: 'twilio' },
         );
         if (envio?.success === false) throw new Error(envio.error || 'envio ao host falhou');
 

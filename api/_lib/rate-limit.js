@@ -411,7 +411,7 @@ async function isMessageDuplicate(messageId, ttlSeconds = 300) {
  *   (see whatsapp_message_dedup.sql for context).
  * Last resort: fail open with a warning.
  */
-async function acquireProcessingLock(phone, ttlSeconds = 25) {
+async function acquireProcessingLock(phone, ttlSeconds = 25, options = {}) {
   if (!phone) return true;
   const nowIso = new Date().toISOString();
   const expiresAt = new Date(Date.now() + ttlSeconds * 1000).toISOString();
@@ -431,7 +431,8 @@ async function acquireProcessingLock(phone, ttlSeconds = 25) {
 
       const { error } = await centralSupabase
         .from('whatsapp_processing_lock')
-        .insert({ phone, expires_at: expiresAt });
+        .insert({ phone, expires_at: expiresAt,
+          ...(options.ownerToken ? { owner_token: options.ownerToken } : {}) });
 
       if (!error) return true;              // we hold the lock
       if (error.code === '23505') return false;  // someone else holds it
@@ -441,13 +442,16 @@ async function acquireProcessingLock(phone, ttlSeconds = 25) {
       } else {
         logger.warn(`[Lock] Supabase lock error code=${error.code} msg=${error.message?.slice(0, 100)}`);
       }
+      if (options.requireDurable) return false;
       // Fall through to Redis
     }
   } catch (err) {
     logger.warn('[Lock] Supabase lock threw:', err.message?.slice(0, 100));
+    if (options.requireDurable) return false;
   }
 
   // Fallback: Redis SET NX
+  if (options.requireDurable) return false;
   if (!redis) return true;
   try {
     const result = await redis.set(`wa:proc_lock:${phone}`, '1', { nx: true, ex: ttlSeconds });
@@ -461,22 +465,25 @@ async function acquireProcessingLock(phone, ttlSeconds = 25) {
 /**
  * Release the per-phone processing lock after history is saved.
  */
-async function releaseProcessingLock(phone) {
+async function releaseProcessingLock(phone, ownerToken = null) {
   if (!phone) return;
 
   try {
     const { centralSupabase } = require('./central-supabase');
     if (centralSupabase) {
-      await centralSupabase
+      let query = centralSupabase
         .from('whatsapp_processing_lock')
         .delete()
         .eq('phone', phone);
+      if (ownerToken) query = query.eq('owner_token', ownerToken);
+      const { error } = await query;
+      if (error) throw error;
     }
   } catch (err) {
     logger.warn('[Lock] Supabase lock release threw:', err.message?.slice(0, 100));
   }
 
-  if (!redis) return;
+  if (ownerToken || !redis) return;
   try {
     await redis.del(`wa:proc_lock:${phone}`);
   } catch (err) {

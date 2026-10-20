@@ -1,4 +1,20 @@
 'use strict';
+jest.mock('../_lib/channels/inbound-reply', () => ({
+  getPendingReply: jest.fn().mockResolvedValue(null),
+  savePendingReply: jest.fn().mockResolvedValue(undefined),
+  getRecordedRating: jest.fn().mockResolvedValue(null),
+  replyKey: jest.fn(() => 'inbound-reply:test'),
+}));
+jest.mock('../_lib/channels/inbound-completion', () => ({
+  wasCompleted: jest.fn().mockResolvedValue(false),
+  markCompleted: jest.fn().mockResolvedValue(undefined),
+  wasRateBlocked: jest.fn().mockResolvedValue(false),
+  markRateBlocked: jest.fn().mockResolvedValue(undefined),
+  claimRateCount: jest.fn().mockResolvedValue(true),
+  hasSendAttempt: jest.fn().mockResolvedValue(false),
+  reserveSendAttempt: jest.fn().mockResolvedValue(undefined),
+  releaseRejectedSend: jest.fn().mockResolvedValue(undefined),
+}));
 
 /**
  * Resposta que não foi entregue NÃO entra no histórico.
@@ -32,6 +48,9 @@ jest.mock('../_lib/whatsapp-sessions', () => ({
   getOrCreateSession: jest.fn().mockResolvedValue({
     id: 'sess-1',
     sender_phone: '5511999998888',
+    inbound_provider: 'meta',
+    inbound_receiver: '123456789012345',
+    restaurant_id: 'rest-abc',
     restaurant: { id: 'rest-abc', name: 'Test Restaurant', agent_language: 'pt-BR' },
     conversation_history: [],
   }),
@@ -51,7 +70,8 @@ jest.mock('../_lib/rate-limit', () => ({
 jest.mock('../_lib/restaurant-registry', () => ({
   getRestaurantByName: jest.fn().mockResolvedValue({ match: null, confidence: 0 }),
   getAllActiveRestaurants: jest.fn().mockResolvedValue([
-    { id: 'rest-abc', restaurant_name: 'Test Restaurant', agent_language: 'pt-BR' },
+    { id: 'rest-abc', restaurant_name: 'Test Restaurant', agent_language: 'pt-BR',
+      whatsapp_phone_number_id: '123456789012345' },
   ]),
 }));
 
@@ -126,7 +146,7 @@ const mensagem = () => ({
   from: '5511999998888',
   messageId: 'wamid.ENTRADA',
   text: 'Quero fazer uma reserva',
-  phoneNumberId: 'pn-1',
+  phoneNumberId: '123456789012345',
 });
 
 /** Os papéis gravados na última chamada de histórico. */
