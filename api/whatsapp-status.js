@@ -35,13 +35,19 @@ module.exports = async (req, res) => {
   };
 
   if (result.meta.configured) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
     try {
-      const url = `https://graph.facebook.com/v18.0/${phoneNumberId}?fields=display_phone_number,verified_name,quality_rating&access_token=${accessToken}`;
-      const response = await fetch(url);
+      const url = new URL(`https://graph.facebook.com/v18.0/${encodeURIComponent(phoneNumberId)}`);
+      url.searchParams.set('fields', 'display_phone_number,verified_name,quality_rating');
+      const response = await fetch(url, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        signal: controller.signal,
+      });
       const data = await response.json();
 
-      if (data.error) {
-        result.meta.error = data.error.message || 'Meta API error';
+      if (!response.ok || data?.error) {
+        result.meta.error = data?.error?.message || 'Meta API error';
         result.meta.approved = false;
       } else {
         result.meta.approved = true;
@@ -50,8 +56,10 @@ module.exports = async (req, res) => {
         result.meta.quality_rating = data.quality_rating || null;
       }
     } catch (err) {
-      result.meta.error = err.message;
+      result.meta.error = err.name === 'AbortError' ? 'Meta API timed out' : 'Meta API unavailable';
       result.meta.approved = false;
+    } finally {
+      clearTimeout(timeout);
     }
   }
 
