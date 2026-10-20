@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -14,19 +14,28 @@ vi.mock('../../components/dashboard/FeedbackSettingsPanel', () => ({ default: ()
 vi.mock('../../components/dashboard/SurveySettingsPanel', () => ({ default: () => null }));
 
 let provision: Record<string, unknown>;
-let failStatus: boolean;
+let failProvision: boolean;
+let failSettings: boolean;
+let settingsPending: Promise<void> | null;
 let testMessage: Record<string, unknown> | null;
 beforeEach(() => {
   provision = { estado: 'nao_iniciado', pode_iniciar: false };
-  failStatus = false;
+  failProvision = false;
+  failSettings = false;
+  settingsPending = null;
   testMessage = null;
   fetchMock.mockReset();
-  fetchMock.mockImplementation(async (url: string) => ({
-    ok: !failStatus,
-    json: async () => ({ success: !failStatus, data: url === '/api/whatsapp-provision' ? provision
-      : url.includes('test_status') ? testMessage
-        : { enabled: true, api_configured: true, phone_number: '+5511111111111', display_phone: '+5522222222222', wa_me_link: 'https://wa.me/5522222222222' } }),
-  }));
+  fetchMock.mockImplementation(async (url: string) => {
+    if (url === '/api/whatsapp-settings?action=status' && settingsPending) await settingsPending;
+    const fails = url === '/api/whatsapp-provision' ? failProvision
+      : url === '/api/whatsapp-settings?action=status' ? failSettings : false;
+    return {
+      ok: !fails,
+      json: async () => ({ success: !fails, data: url === '/api/whatsapp-provision' ? provision
+        : url.includes('test_status') ? testMessage
+          : { enabled: true, api_configured: true, phone_number: '+5511111111111', display_phone: '+5522222222222', wa_me_link: 'https://wa.me/5522222222222' } }),
+    };
+  });
 });
 function mount() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -77,11 +86,31 @@ describe('WhatsApp workspace', () => {
     expect(screen.getByRole('textbox', { name: 'Verification code' })).toBeInTheDocument();
   });
   it('surfaces failed status reads with a retry, not an empty setup form', async () => {
-    failStatus = true;
+    failProvision = true;
     mount();
     expect(await screen.findByRole('alert', {}, { timeout: 4000 })).toHaveTextContent('Nothing has been changed');
     expect(screen.queryByPlaceholderText('11 3456-7890')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Check again' })).toBeInTheDocument();
+  });
+  it('keeps a confirmed connection visible when only notification status fails', async () => {
+    provision = { estado: 'ativo', numero_e164: '+5511999998888', roteamento_confirmado: true };
+    failSettings = true;
+    mount();
+    expect(await screen.findByRole('link', { name: 'Open conversation' })).toHaveAttribute('href', 'https://wa.me/5511999998888');
+    expect(screen.getByText('Number registered')).toBeInTheDocument();
+    expect(screen.getByText('Optional settings')).toBeInTheDocument();
+    await userEvent.click(screen.getByText('Check outbound delivery'));
+    expect(await screen.findByText(/Your restaurant number is unaffected/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Send test message' })).not.toBeInTheDocument();
+  });
+  it('shows the connection while outbound status is still loading', async () => {
+    let releaseSettings!: () => void;
+    settingsPending = new Promise<void>(resolve => { releaseSettings = resolve; });
+    provision = { estado: 'ativo', numero_e164: '+5511999998888', roteamento_confirmado: true };
+    mount();
+    expect(await screen.findByText('Number registered')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open conversation' })).toHaveAttribute('href', 'https://wa.me/5511999998888');
+    await act(async () => { releaseSettings(); });
   });
   it('mounts optional settings on demand and preserves them when collapsed', async () => {
     mount();
