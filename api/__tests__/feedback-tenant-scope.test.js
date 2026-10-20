@@ -34,6 +34,7 @@ function criarQueryFake(resultado) {
     order: () => q,
     limit: () => q,
     maybeSingle: async () => resultado,
+    single: async () => resultado,
     schema: () => q,
     from: () => q,
     insert: async () => ({ error: null }),
@@ -91,6 +92,19 @@ describe('findPendingFeedbackForPhone — escopo de restaurante', () => {
   });
 });
 
+test('feedback persiste o identificador da mensagem na mesma atualização da nota', async () => {
+  const { processFeedbackReply } = require('../_services/feedbackService');
+  const pending = criarQueryFake({ data: { id: 'feedback-1' }, error: null });
+  const updated = criarQueryFake({ data: { id: 'feedback-1', rating: 5 }, error: null });
+  const update = jest.fn(() => updated);
+  pending.update = update;
+  mockFrom.mockReset().mockReturnValue(pending);
+  await processFeedbackReply(RESTAURANTE_B, TELEFONE, '5', 'inbound-reply:exact-key');
+  expect(update).toHaveBeenCalledWith(expect.objectContaining({
+    rating: 5, whatsapp_inbound_key: 'inbound-reply:exact-key',
+  }));
+});
+
 describe('handleSurveyReply — escopo de restaurante', () => {
   const { handleSurveyReply } = require('../_services/surveyReplyHandler');
 
@@ -122,5 +136,21 @@ describe('handleSurveyReply — escopo de restaurante', () => {
     const r = await handleSurveyReply(TELEFONE, 'mesa pra 4 amanhã', RESTAURANTE_B);
     expect(r).toBeNull();
     expect(mockFrom).not.toHaveBeenCalled();
+  });
+
+  test('survey persiste o identificador da mensagem junto com a avaliação', async () => {
+    const service = criarQueryFake({ data: {
+      id: 'service-1', restaurant_id: RESTAURANTE_B, customer_name: 'Guest', reservation_id: null,
+    }, error: null });
+    const existing = criarQueryFake({ data: null, error: null });
+    const inserted = criarQueryFake({ data: null, error: null });
+    inserted.insert = jest.fn(async () => ({ error: null }));
+    mockFrom.mockReturnValue(service);
+    mockSchema.mockReturnValue({ from: jest.fn().mockReturnValueOnce(existing).mockReturnValueOnce(inserted) });
+    await handleSurveyReply(TELEFONE, '5', RESTAURANTE_B, 'inbound-reply:exact-key');
+    expect(inserted.insert).toHaveBeenCalledWith(expect.objectContaining({
+      restaurant_id: RESTAURANTE_B, rating: 5,
+      whatsapp_inbound_key: 'inbound-reply:exact-key',
+    }));
   });
 });

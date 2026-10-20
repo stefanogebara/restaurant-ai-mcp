@@ -180,7 +180,7 @@ async function uploadReportToStorage(buffer, restaurantId, range = {}) {
   return data.signedUrl;
 }
 
-async function sendWeeklyReportViaWhatsApp(restaurantId, phone, language = 'pt-BR', range) {
+async function sendWeeklyReportViaWhatsApp(restaurantId, phone, language = 'pt-BR', range, sendOptions = {}) {
   try {
     const pdf = await generateWeeklyReportPDF(restaurantId, language, range);
     const url = await uploadReportToStorage(pdf, restaurantId, range);
@@ -188,8 +188,12 @@ async function sendWeeklyReportViaWhatsApp(restaurantId, phone, language = 'pt-B
     const label = range?.start_date && range?.end_date
       ? `${range.start_date} – ${range.end_date}`
       : new Intl.DateTimeFormat(localeFor(language), { dateStyle: 'medium' }).format(new Date());
-    const result = await sendWhatsAppDocumentMessage(phone, url, `${copy.caption} — ${label}`, 'seatable-report.pdf');
-    if (!result?.success) throw new Error(result?.error || 'WhatsApp delivery failed');
+    // The webhook reserves its send intent at this exact boundary. Renderer
+    // failures remain retryable; an accepted Meta document cannot be resent.
+    if (sendOptions.beforeSend) await sendOptions.beforeSend();
+    const result = await sendWhatsAppDocumentMessage(phone, url, `${copy.caption} — ${label}`, 'seatable-report.pdf', sendOptions);
+    if (!result?.success) return { success: false, error: result?.error || 'WhatsApp delivery failed',
+      definitiveFailure: result?.definitiveFailure === true };
     return { success: true, url };
   } catch (error) {
     logger.error('Report WhatsApp delivery failed', { restaurantId, error: error.message });

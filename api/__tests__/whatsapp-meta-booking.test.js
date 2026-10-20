@@ -1,4 +1,20 @@
 'use strict';
+jest.mock('../_lib/channels/inbound-reply', () => ({
+  getPendingReply: jest.fn().mockResolvedValue(null),
+  savePendingReply: jest.fn().mockResolvedValue(undefined),
+  getRecordedRating: jest.fn().mockResolvedValue(null),
+  replyKey: jest.fn(() => 'inbound-reply:test'),
+}));
+jest.mock('../_lib/channels/inbound-completion', () => ({
+  wasCompleted: jest.fn().mockResolvedValue(false),
+  markCompleted: jest.fn().mockResolvedValue(undefined),
+  wasRateBlocked: jest.fn().mockResolvedValue(false),
+  markRateBlocked: jest.fn().mockResolvedValue(undefined),
+  claimRateCount: jest.fn().mockResolvedValue(true),
+  hasSendAttempt: jest.fn().mockResolvedValue(false),
+  reserveSendAttempt: jest.fn().mockResolvedValue(undefined),
+  releaseRejectedSend: jest.fn().mockResolvedValue(undefined),
+}));
 
 const { Readable } = require('stream');
 
@@ -22,6 +38,14 @@ jest.mock('../_lib/secure-logger', () => ({
 
 jest.mock('../_services/whatsappTestMessageService', () => ({
   updateWhatsAppTestMessageStatus: jest.fn().mockResolvedValue(true),
+}));
+
+jest.mock('../_services/feedbackService', () => ({
+  findPendingFeedbackForPhone: jest.fn().mockResolvedValue(null),
+  processFeedbackReply: jest.fn().mockResolvedValue(null),
+}));
+jest.mock('../_services/surveyReplyHandler', () => ({
+  handleSurveyReply: jest.fn().mockResolvedValue(null),
 }));
 
 jest.mock('../_lib/whatsapp-interactions', () => ({
@@ -50,7 +74,9 @@ jest.mock('../_lib/whatsapp-sessions', () => ({
 
 jest.mock('../_lib/restaurant-registry', () => ({
   getRestaurantByName: jest.fn().mockResolvedValue({ match: null, confidence: 0 }),
-  getAllActiveRestaurants: jest.fn().mockResolvedValue([]),
+  getAllActiveRestaurants: jest.fn().mockResolvedValue([
+    { id: 'rest-123', restaurant_name: 'Test Restaurant', whatsapp_phone_number_id: '123456789012345' },
+  ]),
 }));
 
 // insertSingle is stored on the mock module so tests can control it post-require
@@ -223,6 +249,8 @@ function makeSession(opts = {}) {
     id: 'sess-456',
     sender_phone: '+15551234567',
     restaurant_id: 'rest-123',
+    inbound_provider: 'meta',
+    inbound_receiver: '123456789012345',
     restaurant_confirmed: true,
     conversation_history: [],
     expires_at: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
@@ -416,7 +444,7 @@ describe('whatsapp-webhook (Meta Cloud API)', () => {
 
   // ── 3. Duplicate wamid → skip AI ───────────────────────────────────────────
   it('returns 200 immediately on duplicate wamid without calling AI', async () => {
-    isMessageDuplicate.mockResolvedValue(true);
+    require('../_lib/channels/inbound-completion').wasCompleted.mockResolvedValueOnce(true);
     global.fetch = jest.fn();
 
     const req = mockReq('POST', {
@@ -428,6 +456,16 @@ describe('whatsapp-webhook (Meta Cloud API)', () => {
 
     expect(global.fetch).not.toHaveBeenCalled();
     expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  it('returns 503 when completion storage is unavailable so Meta can retry', async () => {
+    require('../_lib/channels/inbound-completion').wasCompleted
+      .mockRejectedValueOnce(new Error('database unavailable'));
+    const req = mockReq('POST', { body: metaBody('+15551234567', 'Book a table', 'wamid.RETRY') });
+    const res = mockRes();
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(503);
+    expect(mockAnthropicCreate).not.toHaveBeenCalled();
   });
 
   // ── 4. No tables available → no reservation inserted ───────────────────────
@@ -546,9 +584,11 @@ describe('whatsapp-webhook (Meta Cloud API)', () => {
     }
 
     // First from() → lookup, second from() → update (no error)
-    mockFrom
-      .mockImplementationOnce(() => localBuilder(existingRes))
-      .mockImplementationOnce(() => localBuilder(null));
+    const baseFrom = mockFrom.getMockImplementation();
+    let reservationCalls = 0;
+    mockFrom.mockImplementation(table => table === 'reservations'
+      ? localBuilder(reservationCalls++ === 0 ? existingRes : null)
+      : baseFrom(table));
 
     let aiCallCount = 0;
     mockAnthropicCreate.mockImplementation(async () => {
@@ -600,9 +640,11 @@ describe('whatsapp-webhook (Meta Cloud API)', () => {
     }
 
     // First from() → lookup, second from() → update+select+single returning updatedRes
-    mockFrom
-      .mockImplementationOnce(() => localBuilder(existingRes))
-      .mockImplementationOnce(() => localBuilder(updatedRes));
+    const baseFrom = mockFrom.getMockImplementation();
+    let reservationCalls = 0;
+    mockFrom.mockImplementation(table => table === 'reservations'
+      ? localBuilder(reservationCalls++ === 0 ? existingRes : updatedRes)
+      : baseFrom(table));
 
     let aiCallCount = 0;
     mockAnthropicCreate.mockImplementation(async () => {

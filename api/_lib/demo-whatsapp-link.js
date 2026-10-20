@@ -41,6 +41,7 @@
 const { createSecureLogger } = require('./secure-logger');
 const { upsertRestaurant, getAllActiveRestaurants } = require('./restaurant-registry');
 const { getOrCreateSession, getSessionByPhone, setSessionRestaurant } = require('./whatsapp-sessions');
+const { inboundIdentity, resolveReceiver, demoConversationId } = require('./channels/receiver-identity');
 
 const logger = createSecureLogger('DemoWhatsAppLink');
 
@@ -54,6 +55,9 @@ const logger = createSecureLogger('DemoWhatsAppLink');
  */
 async function vincularTelefoneAoDemo({ telefone, demoId, nome, idioma }) {
   if (!telefone || !demoId) return { vinculado: false, motivo: 'dados_incompletos' };
+  const scope = inboundIdentity('meta', process.env.WHATSAPP_PHONE_NUMBER_ID, telefone);
+  if (!scope) return { vinculado: false, motivo: 'conta_whatsapp_nao_configurada' };
+  let boundConversationId;
 
   // ── GUARDA: não roubar a conversa de um cliente real ──
   //
@@ -62,10 +66,17 @@ async function vincularTelefoneAoDemo({ telefone, demoId, nome, idioma }) {
   // mensagens dos CLIENTES DELE — ou dele com a operação — seriam respondidas
   // pelo restaurante de demo. Prefiro não vincular a arriscar isso.
   try {
-    const sessaoAtual = await getSessionByPhone(telefone);
+    const ativos = await getAllActiveRestaurants({ fresh: true });
+    const route = resolveReceiver(scope, ativos);
+    // A dedicated Meta number belongs to its active restaurant. The next
+    // inbound turn would reset the demo, so never claim that the link worked.
+    if (!route || route.restaurant?.whatsapp_phone_number_id) {
+      return { vinculado: false, motivo: 'conta_whatsapp_ocupada' };
+    }
+    boundConversationId = demoConversationId(demoId, route);
+    const sessaoAtual = await getSessionByPhone(telefone, scope, { strict: true });
     const idAtual = sessaoAtual?.restaurant_id || sessaoAtual?.restaurant?.id || null;
     if (idAtual && idAtual !== demoId) {
-      const ativos = await getAllActiveRestaurants();
       if (ativos.some((r) => r.id === idAtual)) {
         logger.info('Telefone já ligado a restaurante ativo — vínculo de demo recusado', {
           demoId,
@@ -81,8 +92,8 @@ async function vincularTelefoneAoDemo({ telefone, demoId, nome, idioma }) {
     return { vinculado: false, motivo: 'checagem_falhou' };
   }
 
-  // ── Demo precisa existir no registry para satisfazer a FK, e INATIVO para
-  //    ficar fora de todo roteamento automático. ──
+  // ── Manter o demo no registry é deliberado, não uma exigência de FK.
+  //    INATIVO o mantém fora de todo roteamento automático. ──
   const reg = await upsertRestaurant(demoId, {
     restaurant_name: nome || 'Demo',
     language: idioma || 'pt-BR',
@@ -95,13 +106,14 @@ async function vincularTelefoneAoDemo({ telefone, demoId, nome, idioma }) {
     return { vinculado: false, motivo: 'registry_falhou' };
   }
 
-  const sessao = await getOrCreateSession(telefone, `demo-${demoId}`);
+  const sessao = await getOrCreateSession(telefone, boundConversationId, scope);
   if (!sessao?.id) {
     logger.error('Sessão não pôde ser criada para o vínculo de demo', { demoId });
     return { vinculado: false, motivo: 'sessao_falhou' };
   }
 
-  const atualizada = await setSessionRestaurant(sessao.id, demoId);
+  const atualizada = await setSessionRestaurant(sessao.id, demoId,
+    { conversationId: boundConversationId });
   if (!atualizada) {
     logger.error('Sessão criada mas não vinculada ao demo', { demoId });
     return { vinculado: false, motivo: 'vinculo_falhou' };

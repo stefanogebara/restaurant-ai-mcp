@@ -1,7 +1,7 @@
 /**
  * WhatsApp Session Manager
  *
- * Tracks conversation state per phone number for multi-tenant routing.
+ * Tracks inbound conversation state per provider, receiving account and guest.
  * Sessions expire after 30 minutes of inactivity.
  */
 
@@ -17,7 +17,17 @@ const SESSION_EXPIRY_MS = 30 * 60 * 1000;
 // 60s TTL is short enough that restaurant_id updates from setSessionRestaurant
 // propagate quickly, but long enough to cover a typical conversation burst.
 const SESSION_CACHE_TTL_MS = 60 * 1000;
-const _sessionCache = new Map(); // phone -> { session, expiresAt }
+const _sessionCache = new Map(); // scope + phone -> { session, expiresAt }
+
+function sessionKey(phone, scope) {
+  return JSON.stringify([scope?.provider || 'legacy', scope?.receiver || '', phone]);
+}
+
+function applyScope(query, scope) {
+  if (!scope) return query.is('inbound_provider', null);
+  if (!scope.provider || !scope.receiver) throw new Error('Incomplete inbound scope');
+  return query.eq('inbound_provider', scope.provider).eq('inbound_receiver', scope.receiver);
+}
 
 function _getCachedSession(phone) {
   const entry = _sessionCache.get(phone);
@@ -50,7 +60,10 @@ function _setCachedSession(phone, session) {
 }
 
 function _invalidateCachedSession(phone) {
-  if (phone) _sessionCache.delete(phone);
+  if (!phone) return;
+  for (const [key, entry] of _sessionCache) {
+    if (entry.session?.sender_phone === normalizePhoneNumber(phone)) _sessionCache.delete(key);
+  }
 }
 
 /**
@@ -59,7 +72,7 @@ function _invalidateCachedSession(phone) {
  * @param {string} conversationId - ElevenLabs conversation ID
  * @returns {Promise<object|null>} Session object with restaurant if available
  */
-async function getOrCreateSession(senderPhone, conversationId) {
+async function getOrCreateSession(senderPhone, conversationId, scope = null) {
   if (!isCentralConfigured()) {
     logger.error('[WhatsAppSessions] Central Supabase not configured');
     return null;
@@ -72,9 +85,12 @@ async function getOrCreateSession(senderPhone, conversationId) {
 
   // Normalize phone number (remove spaces, ensure + prefix)
   const normalizedPhone = normalizePhoneNumber(senderPhone);
+  if (scope && (!scope.provider || !scope.receiver)) return null;
+  const cacheKey = sessionKey(normalizedPhone, scope);
 
-  // Fast path: in-memory cache for warm Lambdas
-  const cached = _getCachedSession(normalizedPhone);
+  // Inbound sessions always re-read the DB: a warm Lambda must not serve a
+  // cached restaurant after ownership of a receiving account changes.
+  const cached = scope ? null : _getCachedSession(cacheKey);
   if (cached) {
     logger.info(`[WhatsAppSessions] Cache hit for ${normalizedPhone} (session ${cached.id})`);
     // Refresh expiry in DB fire-and-forget — don't block the response
@@ -91,10 +107,10 @@ async function getOrCreateSession(senderPhone, conversationId) {
 
   try {
     // Check for existing active session
-    const { data: existing, error: fetchError } = await centralSupabase
+    const { data: existing, error: fetchError } = await applyScope(centralSupabase
       .from('whatsapp_sessions')
       .select('*')
-      .eq('sender_phone', normalizedPhone)
+      .eq('sender_phone', normalizedPhone), scope)
       .gt('expires_at', new Date().toISOString())
       .order('created_at', { ascending: false })
       .limit(1)
@@ -102,18 +118,51 @@ async function getOrCreateSession(senderPhone, conversationId) {
 
     if (existing && !fetchError) {
       // Update session activity
-      await centralSupabase
+      const { error: activityError } = await centralSupabase
         .from('whatsapp_sessions')
         .update({
           last_message_at: new Date().toISOString(),
           expires_at: new Date(Date.now() + SESSION_EXPIRY_MS).toISOString(),
-          conversation_id: conversationId || existing.conversation_id
+          conversation_id: existing.conversation_id?.startsWith('demo-')
+            ? existing.conversation_id : (conversationId || existing.conversation_id)
         })
         .eq('id', existing.id);
 
+      if (activityError && scope) {
+        logger.error('[WhatsAppSessions] Scoped activity update failed:', activityError.message);
+        return null;
+      }
+
       logger.info(`[WhatsAppSessions] Existing session found for ${normalizedPhone}: ${existing.restaurant?.restaurant_name || 'No restaurant yet'}`);
-      _setCachedSession(normalizedPhone, existing);
+      if (!scope) _setCachedSession(cacheKey, existing);
       return existing;
+    }
+    if (fetchError && fetchError.code !== 'PGRST116') {
+      logger.error('[WhatsAppSessions] Session lookup failed:', fetchError.message);
+      return null;
+    }
+
+    // The partial unique index allows one durable row per inbound identity.
+    // On expiry, reset its context instead of reviving old history or creating
+    // a second row under the same identity.
+    if (scope) {
+      const { data: expired, error: expiredError } = await applyScope(centralSupabase
+        .from('whatsapp_sessions').select('id').eq('sender_phone', normalizedPhone), scope)
+        .order('created_at', { ascending: false }).limit(1).maybeSingle();
+      if (expiredError) return null;
+      if (expired) {
+        const { data: reset, error: resetError } = await centralSupabase
+          .from('whatsapp_sessions')
+          .update({ conversation_id: conversationId, restaurant_id: null,
+            restaurant_confirmed: false, conversation_history: [],
+            handoff_paused_until: null,
+            last_message_at: new Date().toISOString(),
+            expires_at: new Date(Date.now() + SESSION_EXPIRY_MS).toISOString() })
+          .eq('id', expired.id).select('*').single();
+        if (!resetError) return reset;
+        logger.error('[WhatsAppSessions] Failed to reset expired scoped session:', resetError.message);
+        return null;
+      }
     }
 
     // Create new session. Retry once on transient failure (cold Supabase, fetch abort)
@@ -125,6 +174,7 @@ async function getOrCreateSession(senderPhone, conversationId) {
         .from('whatsapp_sessions')
         .insert({
           sender_phone: normalizedPhone,
+          ...(scope ? { inbound_provider: scope.provider, inbound_receiver: scope.receiver } : {}),
           conversation_id: conversationId,
           restaurant_confirmed: false,
           last_message_at: new Date().toISOString(),
@@ -142,10 +192,10 @@ async function getOrCreateSession(senderPhone, conversationId) {
 
       // Unique-violation means another Lambda won the race — committed row IS the right session.
       if (isConflict) {
-        const { data: committed } = await centralSupabase
+        const { data: committed } = await applyScope(centralSupabase
           .from('whatsapp_sessions')
           .select('*')
-          .eq('sender_phone', normalizedPhone)
+          .eq('sender_phone', normalizedPhone), scope)
           .gt('expires_at', new Date().toISOString())
           .order('created_at', { ascending: false })
           .limit(1)
@@ -167,7 +217,7 @@ async function getOrCreateSession(senderPhone, conversationId) {
     }
 
     logger.info(`[WhatsAppSessions] New session created for ${normalizedPhone} id=${newSession.id}`);
-    _setCachedSession(normalizedPhone, newSession);
+    if (!scope) _setCachedSession(cacheKey, newSession);
     return newSession;
 
   } catch (error) {
@@ -182,7 +232,7 @@ async function getOrCreateSession(senderPhone, conversationId) {
  * @param {string} restaurantId - Restaurant UUID
  * @returns {Promise<object|null>} Updated session with restaurant
  */
-async function setSessionRestaurant(sessionId, restaurantId) {
+async function setSessionRestaurant(sessionId, restaurantId, options = {}) {
   if (!isCentralConfigured() || !sessionId || !restaurantId) {
     return null;
   }
@@ -194,6 +244,7 @@ async function setSessionRestaurant(sessionId, restaurantId) {
         .from('whatsapp_sessions')
         .update({
           restaurant_id: restaurantId,
+          ...(options.conversationId ? { conversation_id: options.conversationId } : {}),
           restaurant_confirmed: true,
           last_message_at: new Date().toISOString(),
           expires_at: new Date(Date.now() + SESSION_EXPIRY_MS).toISOString()
@@ -209,7 +260,7 @@ async function setSessionRestaurant(sessionId, restaurantId) {
       }
 
       logger.info(`[WhatsAppSessions] Session ${sessionId} linked to restaurant_id=${restaurantId}`);
-      if (data?.sender_phone) _setCachedSession(data.sender_phone, data);
+      if (data?.sender_phone && !data.inbound_provider) _setCachedSession(sessionKey(data.sender_phone), data);
       return data;
     } catch (error) {
       logger.error(`[SESSION_FAIL] setRestaurant attempt=${attempt} threw: ${error?.message?.slice(0, 120)}`);
@@ -220,12 +271,27 @@ async function setSessionRestaurant(sessionId, restaurantId) {
   return null;
 }
 
+/** Reset a scoped conversation after the receiving account changes owner. */
+async function resetSessionRestaurant(sessionId) {
+  if (!isCentralConfigured() || !sessionId) return null;
+  const { data, error } = await centralSupabase.from('whatsapp_sessions')
+    .update({ restaurant_id: null, restaurant_confirmed: false,
+      conversation_history: [], conversation_id: null, handoff_paused_until: null })
+    .eq('id', sessionId).select('*').single();
+  if (error) {
+    logger.error('[WhatsAppSessions] Receiver ownership reset failed:', error.message);
+    return null;
+  }
+  if (data?.sender_phone) _invalidateCachedSession(data.sender_phone);
+  return data;
+}
+
 /**
  * Get session by phone number
  * @param {string} senderPhone - Customer's phone number
  * @returns {Promise<object|null>} Active session or null
  */
-async function getSessionByPhone(senderPhone) {
+async function getSessionByPhone(senderPhone, scope = null, options = {}) {
   if (!isCentralConfigured() || !senderPhone) {
     return null;
   }
@@ -233,16 +299,17 @@ async function getSessionByPhone(senderPhone) {
   const normalizedPhone = normalizePhoneNumber(senderPhone);
 
   try {
-    const { data, error } = await centralSupabase
+    const { data, error } = await applyScope(centralSupabase
       .from('whatsapp_sessions')
       .select('*')
-      .eq('sender_phone', normalizedPhone)
+      .eq('sender_phone', normalizedPhone), scope)
       .gt('expires_at', new Date().toISOString())
       .order('created_at', { ascending: false })
       .limit(1)
       .single();
 
     if (error || !data) {
+      if (options.strict && error && error.code !== 'PGRST116') throw error;
       return null;
     }
 
@@ -250,6 +317,7 @@ async function getSessionByPhone(senderPhone) {
   } catch (error) {
     // Ver nota acima: exceção muda fazia sessão ativa parecer inexistente.
     logger.error('[WhatsAppSessions] Exceção inesperada:', error?.message || error);
+    if (options.strict) throw error;
     return null;
   }
 }
@@ -320,7 +388,7 @@ async function clearSession(sessionId) {
  * @param {string} senderPhone - Customer's phone number
  * @returns {Promise<number>} Number of sessions cleared
  */
-async function clearSessionsByPhone(senderPhone) {
+async function clearSessionsByPhone(senderPhone, scope = null) {
   if (!isCentralConfigured() || !senderPhone) {
     return 0;
   }
@@ -328,10 +396,10 @@ async function clearSessionsByPhone(senderPhone) {
   const normalizedPhone = normalizePhoneNumber(senderPhone);
 
   try {
-    const { data, error } = await centralSupabase
+    const { data, error } = await applyScope(centralSupabase
       .from('whatsapp_sessions')
       .delete()
-      .eq('sender_phone', normalizedPhone)
+      .eq('sender_phone', normalizedPhone), scope)
       .select();
 
     if (error) {
@@ -518,6 +586,7 @@ async function getActiveSessionCount() {
 module.exports = {
   getOrCreateSession,
   setSessionRestaurant,
+  resetSessionRestaurant,
   getSessionByPhone,
   getSessionByConversationId,
   clearSession,

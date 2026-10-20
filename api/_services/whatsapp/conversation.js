@@ -547,7 +547,10 @@ async function processWithAI(userMessage, session, conversationHistory = [], inb
           });
 
           if (toolName === 'identify_restaurant' && toolResult.found && toolResult.restaurant) {
-            session = await getSessionByPhone(session?.sender_phone);
+            session = await getSessionByPhone(session?.sender_phone,
+              session?.inbound_provider && session?.inbound_receiver
+                ? { provider: session.inbound_provider, receiver: session.inbound_receiver }
+                : null);
           }
 
           msgs.push({

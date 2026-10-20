@@ -45,18 +45,22 @@ class TwilioAdapter extends ChannelAdapter {
 
     const { From, To, Body, MessageSid, NumMedia, ProfileName } = parsedBody || {};
 
-    if (!From || !Body) return null;
+    if (!From || (!Body && !(Number(NumMedia) > 0))) return null;
 
     // Reject media (Twilio path doesn't support voice/image transcription yet)
     if (NumMedia && parseInt(NumMedia) > 0) {
-      const fromNumber = From.replace('whatsapp:', '');
-      await this.sendMessage(fromNumber, 'I can only process text messages at the moment. Please type your request.');
-      return null;
+      return {
+        from: From.replace(/^whatsapp:/i, ''), messageId: MessageSid || null,
+        text: '', messageType: 'media', mediaContext: null,
+        preprocessReply: 'I can only process text messages at the moment. Please type your request.',
+        interactiveSelection: null, profileName: ProfileName || null,
+        phoneNumberId: To ? To.replace(/^whatsapp:/i, '') : null,
+      };
     }
 
     return {
       from: From.replace('whatsapp:', ''),
-      messageId: MessageSid || `twilio-${Date.now()}`,
+      messageId: MessageSid || null,
       text: Body.trim(),
       messageType: 'text',
       mediaContext: null,
@@ -67,7 +71,11 @@ class TwilioAdapter extends ChannelAdapter {
     };
   }
 
-  async sendMessage(to, text) {
+  async sendMessage(to, text, context = {}) {
+    const configured = (process.env.TWILIO_WHATSAPP_NUMBER || '').replace(/^whatsapp:/i, '').replace(/\D/g, '');
+    if (!configured || context.receiver !== `+${configured}`) {
+      return { success: false, error: 'Receiving Twilio account not verified', definitiveFailure: true };
+    }
     return sendViaTwilio(to, text);
   }
 

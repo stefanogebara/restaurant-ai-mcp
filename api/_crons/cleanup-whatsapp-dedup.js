@@ -2,9 +2,11 @@
  * Cron Job: Cleanup whatsapp_message_dedup + whatsapp_processing_lock
  *
  * Both tables grow unbounded without a sweeper:
- *  - whatsapp_message_dedup: rows exist for cross-Lambda dedup of inbound
- *    messageIds. 24h of protection is more than enough (Meta retry window
- *    closes at 20s); older rows are dead weight.
+ *  - whatsapp_message_dedup: completion, rate and pre-send reservations.
+ *    Seven days retain uncertain external sends long enough to prevent a
+ *    delayed provider retry from repeating a reply or an AI tool effect.
+ *  - whatsapp_inbound_replies: exact reply retained for safe retry after an
+ *    explicit provider rejection, without rerunning AI or rating writes.
  *  - whatsapp_processing_lock: rows should be deleted by the Lambda that
  *    owns them, but a crashed Lambda leaves orphans. Each row has an
  *    expires_at; anything past that is safe to delete.
@@ -19,7 +21,7 @@ const { isCronEnabled } = require('../_lib/cron-config');
 const { bearerEquals } = require('../_lib/secure-compare');
 
 const logger = createSecureLogger('CronCleanupWhatsAppDedup');
-const DEDUP_TTL_HOURS = 24;
+const DEDUP_TTL_HOURS = 24 * 7;
 if (DEDUP_TTL_HOURS < 1) {
   throw new Error('DEDUP_TTL_HOURS must be >= 1 to avoid wiping active dedup rows');
 }
@@ -42,7 +44,7 @@ module.exports = async (req, res) => {
     return res.status(500).json({ success: false, error: 'Database not configured' });
   }
 
-  const result = { dedup_deleted: 0, locks_deleted: 0, rate_buckets_deleted: 0 };
+  const result = { dedup_deleted: 0, replies_deleted: 0, locks_deleted: 0, rate_buckets_deleted: 0 };
   const errors = [];
 
   try {
@@ -60,6 +62,21 @@ module.exports = async (req, res) => {
   } catch (err) {
     logger.error('dedup cleanup threw:', err.message);
     errors.push(`dedup: ${err.message}`);
+  }
+
+  try {
+    const cutoff = new Date(Date.now() - DEDUP_TTL_HOURS * 60 * 60 * 1000).toISOString();
+    const { error, count } = await supabaseAdmin.from('whatsapp_inbound_replies')
+      .delete({ count: 'exact' }).lt('created_at', cutoff);
+    if (error) {
+      logger.error('inbound reply cleanup failed:', error.message);
+      errors.push(`replies: ${error.message}`);
+    } else {
+      result.replies_deleted = count ?? 0;
+    }
+  } catch (err) {
+    logger.error('inbound reply cleanup threw:', err.message);
+    errors.push(`replies: ${err.message}`);
   }
 
   try {

@@ -43,6 +43,7 @@ module.exports = async (req, res) => {
 
       // Process through unified pipeline
       const result = await processMessage(adapter, msg, { oppositeProvider: 'meta' });
+      if (result.retryable) return res.status(503).json({ status: 'retry' });
 
       // Twilio expects TwiML response (sync, not async)
       if (result.response) {
@@ -55,8 +56,7 @@ module.exports = async (req, res) => {
 
     } catch (error) {
       logger.error('Webhook error:', error.message);
-      res.setHeader('Content-Type', 'text/xml');
-      return res.status(200).send(adapter.emptyResponse);
+      return res.status(503).json({ status: 'retry' });
     }
   }
 

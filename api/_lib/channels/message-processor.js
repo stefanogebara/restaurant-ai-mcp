@@ -11,8 +11,12 @@
  */
 
 const { createSecureLogger } = require('../secure-logger');
-const { isMessageDuplicate, acquireProcessingLock, releaseProcessingLock } = require('../rate-limit');
-const { getOrCreateSession, setSessionRestaurant, updateSessionConversationHistory } = require('../whatsapp-sessions');
+const { acquireProcessingLock, releaseProcessingLock } = require('../rate-limit');
+const { wasCompleted, markCompleted, claimRateCount, hasSendAttempt,
+  reserveSendAttempt, releaseRejectedSend, wasRateBlocked, markRateBlocked } = require('./inbound-completion');
+const { getPendingReply, savePendingReply, getRecordedRating, replyKey } = require('./inbound-reply');
+const { getOrCreateSession, getSessionByPhone, setSessionRestaurant,
+  updateSessionConversationHistory } = require('../whatsapp-sessions');
 const { getAllActiveRestaurants } = require('../restaurant-registry');
 const { getWhatsAppProvider } = require('../whatsapp-sender');
 const { processWithAI, cleanHistoryForStorage } = require('../../_services/whatsapp/conversation');
@@ -24,8 +28,34 @@ const { extractMemoriesFromWhatsApp } = require('../../_services/memoryExtractor
 const { simulateTypingDelay } = require('../whatsapp-interactions');
 const { avaliarEnvio } = require('./send-result');
 const { isPaused } = require('../../_services/whatsapp/handoff');
+const { inboundIdentity, lockKey, resolveReceiver, normalizedReceiver,
+  demoConversationId } = require('./receiver-identity');
+const { randomUUID } = require('node:crypto');
+const { lerNota } = require('../rating-reply');
 
 const logger = createSecureLogger('MessageProcessor');
+
+function ratingReplyText(purpose, result, language) {
+  const pt = language === 'pt' || language === 'pt-BR';
+  if (purpose === 'feedback') {
+    if (!result.rating) return pt ? 'Obrigado pelo seu feedback! Agradecemos o seu tempo.'
+      : language === 'es' ? '¡Gracias por tu opinion! Apreciamos que te hayas tomado el tiempo.'
+        : 'Thank you for your feedback! We appreciate you taking the time to share your thoughts.';
+    return pt
+      ? `Obrigado pelo seu feedback! Voce nos avaliou ${result.rating}/5.${result.comment ? ' Agradecemos seu comentario.' : ''} Esperamos te ver novamente!`
+      : language === 'es'
+        ? `¡Gracias por tu opinion! Nos diste ${result.rating}/5.${result.comment ? ' Apreciamos tus comentarios.' : ''} ¡Esperamos verte pronto!`
+        : `Thank you for your feedback! You rated us ${result.rating}/5.${result.comment ? ' We appreciate your comments.' : ''} We look forward to welcoming you again!`;
+  }
+  const stars = '\u2B50'.repeat(result.rating);
+  return result.comment
+    ? pt ? `Obrigado pela avaliacao! ${stars} (${result.rating}/5)\nSeu comentario foi registrado. Esperamos te ver novamente!`
+      : language === 'es' ? `¡Gracias por tu valoracion! ${stars} (${result.rating}/5)\nTu comentario fue registrado. ¡Esperamos verte pronto!`
+        : `Thank you for your rating! ${stars} (${result.rating}/5)\nYour comment has been recorded. We hope to see you again!`
+    : pt ? `Obrigado pela avaliacao! ${stars} (${result.rating}/5)\nEsperamos te ver novamente!`
+      : language === 'es' ? `¡Gracias por tu valoracion! ${stars} (${result.rating}/5)\n¡Esperamos verte pronto!`
+        : `Thank you for your rating! ${stars} (${result.rating}/5)\nWe hope to see you again!`;
+}
 
 /**
  * Envia e OLHA o resultado.
@@ -40,22 +70,30 @@ const logger = createSecureLogger('MessageProcessor');
  * Nunca lança: uma falha de envio não pode derrubar o resto do processamento
  * (o histórico ainda precisa ser gravado, o lock ainda precisa ser solto).
  */
-async function enviarComGuarda(adapter, to, texto, ondeFoi) {
+async function enviarComGuarda(adapter, to, texto, ondeFoi, receiverContext, attempt) {
+  if (attempt) {
+    await savePendingReply(attempt.identity, attempt.messageId, texto, ondeFoi,
+      attempt.restaurantId || null);
+    await reserveSendAttempt(attempt.identity, attempt.messageId);
+  }
   let resultado;
   try {
-    resultado = await adapter.sendMessage(to, texto);
+    resultado = await adapter.sendMessage(to, texto, receiverContext);
   } catch (err) {
     resultado = { success: false, error: err && err.message };
   }
 
   const v = avaliarEnvio(resultado);
+  if (attempt && !v.entregue && resultado?.definitiveFailure === true) {
+    await releaseRejectedSend(attempt.identity, attempt.messageId);
+  }
   if (!v.entregue) {
     const linha = `${v.resumo} origem=${ondeFoi}`;
     // Alertável vira error (o cron de saúde e o Sentry pescam por nível);
     // o resto vira info, pra não treinar ninguém a ignorar vermelho.
     if (v.alertavel) logger.error(linha); else logger.info(linha);
   }
-  return v;
+  return { ...v, uncertain: !v.entregue && resultado?.definitiveFailure !== true };
 }
 
 /**
@@ -68,8 +106,33 @@ async function enviarComGuarda(adapter, to, texto, ondeFoi) {
  * @returns {Promise<{response?: string, handled: boolean}>}
  */
 async function processMessage(adapter, msg, options = {}) {
-  const { from, messageId, text, mediaContext, interactiveSelection, phoneNumberId } = msg;
+  const { from, messageId, text, mediaContext, interactiveSelection, phoneNumberId, preprocessReply } = msg;
   const providerName = adapter.providerName;
+  const identity = inboundIdentity(providerName, phoneNumberId, from);
+  if (!identity || typeof messageId !== 'string' || !messageId.trim()) {
+    logger.error(`[${providerName}] Invalid receiver or guest identity; inbound message blocked`);
+    return { handled: true, skipped: 'invalid_receiver' };
+  }
+  let activeRestaurants;
+  try {
+    activeRestaurants = await getAllActiveRestaurants({ fresh: true });
+  } catch (error) {
+    logger.error(`[${providerName}] Registry unavailable:`, error.message);
+    return { handled: false, retryable: true, skipped: 'registry_unavailable' };
+  }
+  if (activeRestaurants.length === 0) {
+    logger.error(`[${providerName}] Registry has no active restaurants`);
+    return { handled: false, retryable: true, skipped: 'registry_empty' };
+  }
+  const route = resolveReceiver(identity, activeRestaurants);
+  if (!route) {
+    logger.error(`[${providerName}] Unmapped receiving account; inbound message blocked`);
+    return { handled: true, skipped: 'unknown_receiver' };
+  }
+  const receiverContext = { provider: identity.provider, receiver: identity.receiver };
+  const sendAttempt = { identity, messageId };
+  const processingKey = lockKey(identity);
+  const lockOwner = randomUUID();
 
   // Privacy: customer message bodies often contain PII (names, dietary needs,
   // celebration context, sometimes credit-card last-4 typed in panic). Never
@@ -77,24 +140,104 @@ async function processMessage(adapter, msg, options = {}) {
   // version logged the first 40 chars verbatim, which leaked PII into every
   // Vercel log line and any downstream log aggregator.
   const textLen = typeof text === 'string' ? text.length : 0;
-  logger.info(`[${providerName}] processMessage ENTRY from=${from} phoneNumId=${phoneNumberId} msgId=${String(messageId).slice(-8)} textLen=${textLen}`);
+  logger.info(`[${providerName}] processMessage ENTRY receiver=${identity.receiver} msgId=${String(messageId).slice(-8)} textLen=${textLen}`);
+
+  // Serialize the entire read/modify/write of this account's conversation.
+  // Never fall back to an in-process lock: separate Vercel Lambdas would race.
+  let lockAcquired = await acquireProcessingLock(processingKey, 125,
+    { ownerToken: lockOwner, requireDurable: true });
+  if (!lockAcquired) {
+    // Return a retryable webhook status quickly instead of burning 45 seconds
+    // in a Lambda while another invocation owns this same conversation.
+    for (let attempt = 0; attempt < 2 && !lockAcquired; attempt++) {
+      await new Promise(r => setTimeout(r, 750));
+      lockAcquired = await acquireProcessingLock(processingKey, 125,
+        { ownerToken: lockOwner, requireDurable: true });
+    }
+  }
+  if (!lockAcquired) {
+    logger.error(`[${providerName}] Durable inbound lock unavailable`);
+    return { handled: false, retryable: true, skipped: 'lock_unavailable' };
+  }
+
+  try {
 
   // 1. Mark as read (fire-and-forget)
-  adapter.markAsRead(messageId).catch(() => {});
+  adapter.markAsRead(messageId, receiverContext).catch(() => {});
 
-  // 2. Dedup check
-  if (messageId && await isMessageDuplicate(messageId, 86400)) {
+  // Only a COMPLETED message is duplicate. A failed attempt must be retried.
+  if (messageId && await wasCompleted(identity, messageId)) {
     logger.info(`[${providerName}] Duplicate message ${messageId}, skipping`);
     return { handled: true };
   }
+  if (await hasSendAttempt(identity, messageId)) {
+    // The provider may have accepted the reply even if our completion write
+    // failed. Never replay a potentially delivered message or its AI tools.
+    logger.error(`[${providerName}] Inbound send state uncertain; manual reconciliation required`,
+      { messageId: String(messageId).slice(-8) });
+    return { handled: false, retryable: false, skipped: 'send_uncertain' };
+  }
+  if (await wasRateBlocked(identity, messageId)) {
+    await markCompleted(identity, messageId);
+    return { handled: true, skipped: 'rate_limited' };
+  }
+  const pendingReply = await getPendingReply(identity, messageId);
+  if (pendingReply) {
+    // Reuse the exact planned reply: AI tools, ratings and session mutations
+    // already happened on the first attempt and must not run a second time.
+    const boundRestaurantId = pendingReply.restaurant_id;
+    if (boundRestaurantId) {
+      let stillOwned = route.restaurant
+        ? route.restaurant.id === boundRestaurantId
+        : route.picker.some(r => r.id === boundRestaurantId);
+      if (!stillOwned && providerName === 'meta' &&
+          identity.receiver === normalizedReceiver('meta', process.env.WHATSAPP_PHONE_NUMBER_ID) &&
+          !route.restaurant?.whatsapp_phone_number_id) {
+        // A demo is deliberately inactive in the registry. An explicit,
+        // current-route session may still replay its saved reply, but an old
+        // owner or expired demo must not leak through this shortcut.
+        const scoped = await getSessionByPhone(from, identity, { strict: true });
+        if (scoped?.restaurant_id === boundRestaurantId &&
+            scoped.conversation_id === demoConversationId(boundRestaurantId, route)) {
+          const { supabaseAdmin } = require('../supabase');
+          const { data: demo, error } = await supabaseAdmin.schema('restaurant')
+            .from('restaurant_config').select('is_demo,demo_expires_at')
+            .eq('id', boundRestaurantId).maybeSingle();
+          if (error) return { handled: false, retryable: true, skipped: 'demo_lookup_failed' };
+          stillOwned = demo?.is_demo === true &&
+            (!demo.demo_expires_at || Date.parse(demo.demo_expires_at) > Date.now());
+        }
+      }
+      if (!stillOwned) {
+        logger.error(`[${providerName}] Pending reply belongs to the prior receiver owner`);
+        return { handled: false, retryable: false, skipped: 'pending_tenant_changed' };
+      }
+    }
+    const replay = await enviarComGuarda(adapter, from, pendingReply.reply_text,
+      pendingReply.purpose, receiverContext, sendAttempt);
+    if (!replay.entregue) {
+      return { handled: false, retryable: !replay.uncertain, skipped: 'pending_reply_send_failed' };
+    }
+    await markCompleted(identity, messageId);
+    return { handled: true, skipped: 'pending_reply_replayed' };
+  }
+
+  const outcome = await (async () => {
 
   // 3. Rate limit
   // await obrigatório: a contagem agora vive no Postgres (compartilhada entre
   // Lambdas). Sem o await isto seria uma Promise — sempre truthy — e TODA
   // mensagem seria descartada como se tivesse estourado o limite.
-  if (await isRateLimited(from)) {
+  if ((await claimRateCount(identity, messageId)) && await isRateLimited(processingKey)) {
     logger.info(`[${providerName}] Rate limited ${from}`);
+    await markRateBlocked(identity, messageId);
     return { handled: true };
+  }
+
+  if (preprocessReply) {
+    const sent = await enviarComGuarda(adapter, from, preprocessReply, 'media_reply', receiverContext, sendAttempt);
+    return { handled: sent.entregue, retryable: !sent.entregue && !sent.uncertain,
+      skipped: sent.entregue ? 'media_reply' : 'media_reply_failed' };
   }
 
   // (Keyword handling moved below session mgmt — keywords like RELATORIO and
@@ -113,7 +256,7 @@ async function processMessage(adapter, msg, options = {}) {
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
       session = await Promise.race([
-        getOrCreateSession(from, `${providerName}-${Date.now()}`),
+        getOrCreateSession(from, `${providerName}-${Date.now()}`, identity),
         new Promise((_, reject) => setTimeout(() => reject(new Error('Session timeout')), 35000)),
       ]);
       if (session) break;
@@ -126,29 +269,37 @@ async function processMessage(adapter, msg, options = {}) {
   }
 
   if (!session) {
-    await enviarComGuarda(adapter, from, 'Desculpe, tive um problema ao iniciar nossa conversa. Por favor, tente novamente.', 'falha-sessao');
-    return { handled: true };
+    return { handled: false, retryable: true, skipped: 'session_unavailable' };
   }
 
-  // 7b. Per-phone lock — serializes concurrent Lambdas for the same phone so
-  // history writes can't race. Wait up to 45s for a prior Lambda to finish.
-  let lockAcquired = await acquireProcessingLock(from, 30);
-  if (!lockAcquired) {
-    const lockDeadline = Date.now() + 45000;
-    while (Date.now() < lockDeadline) {
-      await new Promise(r => setTimeout(r, 1500));
-      lockAcquired = await acquireProcessingLock(from, 30);
-      if (lockAcquired) break;
+  if (session.inbound_provider !== identity.provider || session.inbound_receiver !== identity.receiver) {
+    logger.error(`[${providerName}] Session receiver mismatch; inbound message blocked`);
+    return { handled: true, skipped: 'session_scope_mismatch' };
+  }
+
+  // A scoped session may be bound only to the restaurant owned by this
+  // receiving account, an eligible shared-number choice, or an explicitly
+  // prelinked demo on this same account. Never trust a stale tenant ID.
+  const eligibleRestaurantIds = route.restaurant
+    ? [route.restaurant.id]
+    : route.picker.map(r => r.id);
+  if (session.restaurant_id && !eligibleRestaurantIds.includes(session.restaurant_id)) {
+    const isExplicitDemo = session.conversation_id === demoConversationId(session.restaurant_id, route) &&
+      providerName === 'meta' &&
+      identity.receiver === normalizedReceiver('meta', process.env.WHATSAPP_PHONE_NUMBER_ID) &&
+      !route.restaurant?.whatsapp_phone_number_id;
+    if (!isExplicitDemo) {
+      logger.warn(`[${providerName}] Receiver ownership changed; clearing stale tenant context`);
+      const { resetSessionRestaurant } = require('../whatsapp-sessions');
+      const reset = await resetSessionRestaurant(session.id);
+      if (!reset) return { handled: false, retryable: true, skipped: 'tenant_reset_failed' };
+      session = reset;
     }
-    // Re-read session — a prior Lambda just committed new history we need.
-    try {
-      const { getSessionByPhone } = require('../whatsapp-sessions');
-      const fresh = await getSessionByPhone(from);
-      if (fresh) session = { ...session, ...fresh };
-    } catch (_) { /* non-fatal */ }
-    if (!lockAcquired) {
-      logger.warn(`[${providerName}] Lock wait exceeded 45s for ${from}, proceeding without lock`);
-    }
+  }
+  if (session.restaurant_id && interactiveSelection?.id?.startsWith('restaurant_') &&
+      interactiveSelection.id.slice('restaurant_'.length) !== session.restaurant_id) {
+    logger.warn(`[${providerName}] Stale restaurant picker reply blocked`);
+    return { handled: true, skipped: 'stale_restaurant_selection' };
   }
 
   // 8. Restaurant routing
@@ -156,59 +307,35 @@ async function processMessage(adapter, msg, options = {}) {
   // object even when FK is set, so check restaurant_id as the authoritative signal)
   if (!session.restaurant && !session.restaurant_id) {
     try {
-      const activeRestaurants = await Promise.race([
-        getAllActiveRestaurants(),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Restaurant lookup timeout')), 25000)),
-      ]);
-
       if (activeRestaurants.length === 0) {
         // No restaurants configured or registry down — don't proceed to AI with broken context
         logger.error('[MessageProcessor] No active restaurants in registry — cannot route message');
-        await enviarComGuarda(adapter, from, 'Desculpe, nosso sistema está passando por manutenção. Por favor, tente novamente em alguns minutos. 🙏', 'manutencao');
-        return { handled: true };
+        return { handled: false, retryable: true, skipped: 'registry_empty' };
       }
 
       // Route by phone_number_id first: if this WhatsApp number belongs to one specific restaurant
       // (each restaurant can have their own number), skip the picker entirely.
-      let directMatch = null;
-      if (phoneNumberId) {
-        directMatch = activeRestaurants.find(r => r.whatsapp_phone_number_id === phoneNumberId);
-      }
-      // Env var override: TWILIO_RESTAURANT_ID / META_RESTAURANT_ID allow direct routing per
-      // provider without needing the whatsapp_phone_number_id column set on every registry row.
-      if (!directMatch) {
-        const envRestaurantId = (providerName === 'twilio'
-          ? process.env.TWILIO_RESTAURANT_ID
-          : process.env.META_RESTAURANT_ID)?.trim();
-        if (envRestaurantId) {
-          directMatch = activeRestaurants.find(r => r.id === envRestaurantId);
-        }
-      }
-      // Also check the env-level single-restaurant case (WHATSAPP_PHONE_NUMBER_ID points to one restaurant)
-      const sharedPhoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
-      const isSharedNumber = !directMatch && phoneNumberId && phoneNumberId === sharedPhoneNumberId;
+      const directMatch = route.restaurant;
 
       if (directMatch) {
         // Dedicated number — route directly without picker
         const updated = await setSessionRestaurant(session.id, directMatch.id);
         // Supabase JOIN on restaurant_registry consistently returns null even when FK is set.
         // Always force-inject directMatch so in-memory session always has restaurant context.
-        session = { ...(updated || session), restaurant_id: directMatch.id, restaurant: directMatch };
+        if (!updated) return { handled: false, retryable: true, skipped: 'route_write_failed' };
+        session = { ...updated, restaurant_id: directMatch.id, restaurant: directMatch };
         logger.info(`[MessageProcessor] Routed to ${directMatch.restaurant_name} via ${directMatch.whatsapp_phone_number_id ? 'phone_number_id' : 'env var'}`);
-      } else if (activeRestaurants.length === 1 || (!isSharedNumber && !directMatch)) {
-        // Only one active restaurant — auto-assign
-        const chosen = activeRestaurants[0];
-        const updated = await setSessionRestaurant(session.id, chosen.id);
-        session = { ...(updated || session), restaurant_id: chosen.id, restaurant: chosen };
       } else {
         // Multiple restaurants on shared number — show interactive picker
         if (interactiveSelection?.id?.startsWith('restaurant_')) {
           // Customer just picked a restaurant from the list
           const selectedId = interactiveSelection.id.replace('restaurant_', '');
-          const selectedRestaurant = activeRestaurants.find(r => r.id === selectedId);
+          const selectedRestaurant = route.picker.find(r => r.id === selectedId);
           if (selectedRestaurant) {
             const updated = await setSessionRestaurant(session.id, selectedRestaurant.id);
-            if (updated) session = updated;
+            if (!updated) return { handled: false, retryable: true, skipped: 'route_write_failed' };
+            session = updated;
+            sendAttempt.restaurantId = selectedRestaurant.id;
             // Send restaurant-specific greeting, localised to restaurant language
             const rLang = selectedRestaurant.language || 'pt';
             let greetingMsg = rLang === 'es'
@@ -226,22 +353,25 @@ async function processMessage(adapter, msg, options = {}) {
                 .maybeSingle();
               if (rConfig?.agent_greeting) greetingMsg = rConfig.agent_greeting;
             } catch (e) { /* non-fatal */ }
-            await enviarComGuarda(adapter, from, greetingMsg, 'saudacao');
-            return { handled: true };
+            const greeting = await enviarComGuarda(adapter, from, greetingMsg, 'saudacao', receiverContext, sendAttempt);
+            return { handled: greeting.entregue, retryable: !greeting.entregue && !greeting.uncertain };
           }
         }
 
         // Send restaurant picker list
-        await sendRestaurantPicker(adapter, from, activeRestaurants);
-        return { handled: true };
+        await reserveSendAttempt(identity, messageId);
+        const picker = await sendRestaurantPicker(adapter, from, route.picker, receiverContext);
+        if (!picker.entregue) {
+          // The interactive sender does not expose a reliable rejection class.
+          // Preserve the send reservation rather than risk a duplicate picker.
+          logger.error(`[${providerName}] Picker delivery uncertain; manual reconciliation required`);
+        }
+        return { handled: picker.entregue, retryable: false };
       }
     } catch (err) {
       logger.error('Restaurant routing error:', err.message);
-      // If routing fails entirely, bail gracefully rather than proceeding with no context
-      if (!session.restaurant) {
-        await enviarComGuarda(adapter, from, 'Desculpe, tive um problema ao identificar o restaurante. Por favor, tente novamente. 🙏', 'falha-roteamento');
-        return { handled: true };
-      }
+      // Never fall into AI after a failed picker/greeting reservation or send.
+      return { handled: false, retryable: true, skipped: 'route_unavailable' };
     }
   }
 
@@ -312,6 +442,8 @@ async function processMessage(adapter, msg, options = {}) {
     }
   }
 
+  sendAttempt.restaurantId = session.restaurant_id || session.restaurant?.id || null;
+
   // 8c. Template keyword handling (MODIFY, CANCEL, CONFIRM, BOOK, HELP, STOP, RELATORIO).
   //     Runs AFTER session management so keywords that need restaurant_id (RELATORIO,
   //     STOP) have a valid session. Previously ran at step 4, before session mgmt —
@@ -319,16 +451,21 @@ async function processMessage(adapter, msg, options = {}) {
   if (text && typeof text === 'string') {
     const normalizedText = text.trim().toUpperCase();
     try {
-      const handled = await handleKeyword(normalizedText, from, session);
+      const handled = await handleKeyword(normalizedText, from, session, {
+        ...receiverContext,
+        beforeReportSend: () => reserveSendAttempt(identity, messageId),
+        releaseRejectedReport: () => releaseRejectedSend(identity, messageId),
+        sendText: (body, purpose = 'keyword') =>
+          enviarComGuarda(adapter, from, body, purpose, receiverContext, sendAttempt),
+      });
       if (handled) {
-        // Aguardado: sem await, a lambda congela ao responder e o DELETE pode não
-        // landar. O lock fica preso até o TTL de 30s e a próxima mensagem do
-        // cliente gasta esse tempo girando no laço de espera antes de ser atendida.
-        await releaseProcessingLock(from).catch(() => {});
+        // The outer finally releases the account-scoped lock on this early exit.
         return { handled: true };
       }
     } catch (err) {
       logger.error(`[${providerName}] Keyword handler error:`, err.message);
+      const uncertain = await hasSendAttempt(identity, messageId);
+      return { handled: false, retryable: !uncertain, skipped: 'keyword_send_failed' };
     }
   }
 
@@ -348,21 +485,32 @@ async function processMessage(adapter, msg, options = {}) {
   // Preferir isso a gravar na casa errada: nota no lugar errado é dado falso
   // nos dois restaurantes e ninguém percebe.
   const restauranteDaConversa = session.restaurant_id || session.restaurant?.id || null;
+  const ratingKey = replyKey(identity, messageId);
+  const ratingLanguage = activeRestaurants.find(r => r.id === restauranteDaConversa)?.language ||
+    session.restaurant?.language || 'en';
+  // The rating row records this exact inbound key in the same database write.
+  // A crash between saving the rating and reserving its reply is recoverable.
+  if (lerNota(text || '').nota !== null) {
+    let recorded;
+    try {
+      recorded = await getRecordedRating(identity, messageId, restauranteDaConversa);
+    } catch (err) {
+      logger.error('Recorded rating recovery failed:', err.message);
+      return { handled: false, retryable: true, skipped: 'rating_recovery_unavailable' };
+    }
+    if (recorded) {
+      const reply = ratingReplyText(recorded.purpose, recorded, ratingLanguage);
+      const sent = await enviarComGuarda(adapter, from, reply, recorded.purpose, receiverContext, sendAttempt);
+      return { handled: sent.entregue, retryable: !sent.entregue && !sent.uncertain,
+        skipped: sent.entregue ? 'rating_reply_recovered' : 'rating_reply_failed' };
+    }
+  }
   let pendingFeedback = null;
-  let surveyResult = null;
   try {
-    [pendingFeedback, surveyResult] = await Promise.all([
-      findPendingFeedbackForPhone(from, restauranteDaConversa).catch(err => {
-        logger.error('Feedback reply check failed:', err.message);
-        return null;
-      }),
-      handleSurveyReply(from, text, restauranteDaConversa).catch(err => {
-        logger.error('Survey reply check failed:', err.message);
-        return null;
-      }),
-    ]);
+    pendingFeedback = await findPendingFeedbackForPhone(from, restauranteDaConversa);
   } catch (err) {
-    logger.error('Feedback/survey parallel check failed:', err.message);
+    logger.error('Feedback lookup failed:', err.message);
+    return { handled: false, retryable: true, skipped: 'feedback_lookup_failed' };
   }
 
   if (pendingFeedback) {
@@ -370,58 +518,37 @@ async function processMessage(adapter, msg, options = {}) {
     // o registro falhou, e a resposta cai no fluxo normal como se fosse uma
     // mensagem qualquer. O cliente não recebe agradecimento e o restaurante
     // nunca vê a nota — sem nenhum sinal de que existiu.
-    const result = await processFeedbackReply(pendingFeedback.restaurantId, from, text).catch((err) => {
-      logger.error('Falha ao registrar resposta de feedback — a nota do cliente foi PERDIDA', {
+    let result;
+    try {
+      result = await processFeedbackReply(pendingFeedback.restaurantId, from, text, ratingKey);
+    } catch (err) {
+      logger.error('Falha ao registrar resposta de feedback — aguardando retry', {
         restaurantId: pendingFeedback.restaurantId,
         de: from,
         erro: err?.message || String(err),
       });
-      return null;
-    });
+      return { handled: false, retryable: true, skipped: 'feedback_write_failed' };
+    }
     if (result) {
-      let feedbackLang = 'en';
-      try {
-        const activeRestaurants = await getAllActiveRestaurants();
-        const restaurant = activeRestaurants.find(r => r.id === pendingFeedback.restaurantId);
-        feedbackLang = restaurant?.language || 'en';
-      } catch (_) { /* fall back to English */ }
-      const thankYou = result.rating
-        ? feedbackLang === 'pt' || feedbackLang === 'pt-BR'
-          ? `Obrigado pelo seu feedback! Voce nos avaliou ${result.rating}/5.${result.comment ? ' Agradecemos seu comentario.' : ''} Esperamos te ver novamente!`
-          : feedbackLang === 'es'
-            ? `¡Gracias por tu opinion! Nos diste ${result.rating}/5.${result.comment ? ' Apreciamos tus comentarios.' : ''} ¡Esperamos verte pronto!`
-            : `Thank you for your feedback! You rated us ${result.rating}/5.${result.comment ? ' We appreciate your comments.' : ''} We look forward to welcoming you again!`
-        : feedbackLang === 'pt' || feedbackLang === 'pt-BR'
-          ? 'Obrigado pelo seu feedback! Agradecemos o seu tempo.'
-          : feedbackLang === 'es'
-            ? '¡Gracias por tu opinion! Apreciamos que te hayas tomado el tiempo.'
-            : 'Thank you for your feedback! We appreciate you taking the time to share your thoughts.';
-      await enviarComGuarda(adapter, from, thankYou, 'feedback');
-      return { handled: true };
+      const thankYou = ratingReplyText('feedback', result, ratingLanguage);
+      const sent = await enviarComGuarda(adapter, from, thankYou, 'feedback', receiverContext, sendAttempt);
+      return { handled: sent.entregue, retryable: !sent.entregue && !sent.uncertain,
+        skipped: sent.entregue ? undefined : 'feedback_ack_failed' };
     }
   }
 
+  let surveyResult = null;
+  try {
+    surveyResult = await handleSurveyReply(from, text, restauranteDaConversa, ratingKey);
+  } catch (err) {
+    logger.error('Survey reply failed:', err.message);
+    return { handled: false, retryable: true, skipped: 'survey_write_failed' };
+  }
   if (surveyResult) {
-    let surveyLang = 'en';
-    try {
-      const activeRestaurants = await getAllActiveRestaurants();
-      const restaurant = activeRestaurants.find(r => r.id === surveyResult.restaurantId);
-      surveyLang = restaurant?.language || 'en';
-    } catch (_) { /* fall back to English */ }
-    const stars = '\u2B50'.repeat(surveyResult.rating);
-    const thankYou = surveyResult.comment
-      ? surveyLang === 'pt' || surveyLang === 'pt-BR'
-        ? `Obrigado pela avaliacao! ${stars} (${surveyResult.rating}/5)\nSeu comentario foi registrado. Esperamos te ver novamente!`
-        : surveyLang === 'es'
-          ? `¡Gracias por tu valoracion! ${stars} (${surveyResult.rating}/5)\nTu comentario fue registrado. ¡Esperamos verte pronto!`
-          : `Thank you for your rating! ${stars} (${surveyResult.rating}/5)\nYour comment has been recorded. We hope to see you again!`
-      : surveyLang === 'pt' || surveyLang === 'pt-BR'
-        ? `Obrigado pela avaliacao! ${stars} (${surveyResult.rating}/5)\nEsperamos te ver novamente!`
-        : surveyLang === 'es'
-          ? `¡Gracias por tu valoracion! ${stars} (${surveyResult.rating}/5)\n¡Esperamos verte pronto!`
-          : `Thank you for your rating! ${stars} (${surveyResult.rating}/5)\nWe hope to see you again!`;
-    await enviarComGuarda(adapter, from, thankYou, 'pesquisa');
-    return { handled: true };
+    const thankYou = ratingReplyText('pesquisa', surveyResult, ratingLanguage);
+    const sent = await enviarComGuarda(adapter, from, thankYou, 'pesquisa', receiverContext, sendAttempt);
+    return { handled: sent.entregue, retryable: !sent.entregue && !sent.uncertain,
+      skipped: sent.entregue ? undefined : 'survey_ack_failed' };
   }
 
 
@@ -456,7 +583,7 @@ async function processMessage(adapter, msg, options = {}) {
   }
 
   // 10. Add processing reaction
-  adapter.addReaction(from, messageId, '\uD83D\uDC40').catch(() => {}); // eye emoji
+  adapter.addReaction(from, messageId, '\uD83D\uDC40', receiverContext).catch(() => {}); // eye emoji
 
   // 11. AI processing
   const conversationHistory = Array.isArray(session.conversation_history) ? session.conversation_history : [];
@@ -486,7 +613,7 @@ async function processMessage(adapter, msg, options = {}) {
   try {
     response = await processWithAI(aiMessage, session, conversationHistory, {
       providerName,
-      receiver: phoneNumberId || session?.restaurant_id,
+      receiver: identity.receiver,
       messageId,
     });
   } catch (err) {
@@ -495,7 +622,7 @@ async function processMessage(adapter, msg, options = {}) {
   }
 
   // 12. Remove processing reaction
-  adapter.removeReaction(from, messageId).catch(() => {});
+  adapter.removeReaction(from, messageId, receiverContext).catch(() => {});
 
   // 13. ENVIAR ANTES DE GRAVAR.
   //
@@ -511,7 +638,7 @@ async function processMessage(adapter, msg, options = {}) {
   // entra de qualquer jeito — ele falou de verdade, e perder isso apagaria o
   // contexto da próxima mensagem.
   await simulateTypingDelay(response.length);
-  const envio = await enviarComGuarda(adapter, from, response, 'resposta-ia');
+  const envio = await enviarComGuarda(adapter, from, response, 'resposta-ia', receiverContext, sendAttempt);
 
   const newPair = cleanHistoryForStorage(
     envio.entregue
@@ -532,7 +659,7 @@ async function processMessage(adapter, msg, options = {}) {
     // Saída normal de TODA mensagem, então soltar o lock sem await deixa o
     // caminho quente inteiro sujeito ao freeze da lambda: quando o DELETE não
     // landa, a mensagem seguinte espera o TTL de 30s à toa.
-    await releaseProcessingLock(from).catch(() => {});
+    // The outer finally also releases on every early routing/feedback exit.
   }
 
   // 14. Memory extraction — só sobre conversa que aconteceu.
@@ -562,7 +689,16 @@ async function processMessage(adapter, msg, options = {}) {
   //     To re-enable for a single scenario (e.g. only on first-ever contact from
   //     a new phone), gate on customer_history lookups rather than session state.
 
-  return { response, handled: true, restaurantId: session?.restaurant_id || session?.restaurant?.id || null };
+  return { response, handled: envio.entregue, retryable: !envio.entregue && !envio.uncertain,
+    restaurantId: session?.restaurant_id || session?.restaurant?.id || null };
+  })();
+  if ((outcome.handled || outcome.skipped === 'handoff_paused') && messageId) {
+    await markCompleted(identity, messageId);
+  }
+  return outcome;
+  } finally {
+    await releaseProcessingLock(processingKey, lockOwner).catch(() => {});
+  }
 }
 
 /**
@@ -616,7 +752,7 @@ async function sendWelcomeButtons(adapter, from, session) {
  * @param {string} from
  * @param {Array} restaurants - List from getAllActiveRestaurants()
  */
-async function sendRestaurantPicker(adapter, from, restaurants) {
+async function sendRestaurantPicker(adapter, from, restaurants, receiverContext) {
   const sections = [];
   const chunkSize = 10;
   for (let i = 0; i < restaurants.length; i += chunkSize) {
@@ -632,13 +768,17 @@ async function sendRestaurantPicker(adapter, from, restaurants) {
       })),
     });
   }
-  await adapter.sendInteractiveList(
+  const result = await adapter.sendInteractiveList(
     from,
     'Ol\u00E1! Com qual restaurante voc\u00EA gostaria de falar?',
     'Ver restaurantes',
     sections,
+    receiverContext,
   );
-  logger.info(`[MessageProcessor] Sent restaurant picker (${restaurants.length} options) to ${from}`);
+  const delivery = avaliarEnvio(result);
+  if (delivery.entregue) logger.info(`[MessageProcessor] Sent restaurant picker (${restaurants.length} options)`);
+  else logger.error(`${delivery.resumo} origem=restaurant-picker`);
+  return delivery;
 }
 
 module.exports = { processMessage };

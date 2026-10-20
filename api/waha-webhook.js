@@ -61,11 +61,14 @@ module.exports = async (req, res) => {
   let outcome = 'processed';
   let errorMsg = null;
   let restaurantId = null;
+  let retryable = false;
   try {
     const result = await processMessage(requestAdapter, msg);
     restaurantId = result?.restaurantId || null;
+    retryable = result?.retryable === true;
   } catch (err) {
     outcome = 'failed';
+    retryable = true;
     errorMsg = err.message;
     logger.error('WAHA processMessage error:', err.message);
   }
@@ -78,5 +81,5 @@ module.exports = async (req, res) => {
     error: errorMsg,
   }).catch(() => {});
 
-  res.status(200).json({ status: 'ok' });
+  res.status(retryable ? 503 : 200).json({ status: retryable ? 'retry' : 'ok' });
 };
