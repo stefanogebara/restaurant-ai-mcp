@@ -296,10 +296,18 @@ async function processMessage(adapter, msg, options = {}) {
       session = reset;
     }
   }
-  if (session.restaurant_id && interactiveSelection?.id?.startsWith('restaurant_') &&
-      interactiveSelection.id.slice('restaurant_'.length) !== session.restaurant_id) {
+  // Any picker reply is stale once this conversation or receiver has a direct
+  // restaurant. This includes a tap on the *same* row, which would otherwise
+  // be misread as a fresh AI message after the restaurant was already chosen.
+  if ((route.restaurant || session.restaurant_id || session.restaurant?.id) &&
+      interactiveSelection?.id?.startsWith('restaurant_')) {
     logger.warn(`[${providerName}] Stale restaurant picker reply blocked`);
     return { handled: true, skipped: 'stale_restaurant_selection' };
+  }
+  if ((route.restaurant || session.restaurant_id || session.restaurant?.id) &&
+      interactiveSelection?.id?.startsWith('picker_page_')) {
+    logger.warn(`[${providerName}] Stale restaurant picker page blocked`);
+    return { handled: true, skipped: 'stale_picker_page' };
   }
 
   // 8. Restaurant routing
@@ -360,10 +368,16 @@ async function processMessage(adapter, msg, options = {}) {
 
         // Send restaurant picker list
         await reserveSendAttempt(identity, messageId);
-        const picker = await sendRestaurantPicker(adapter, from, route.picker, receiverContext);
+        const pageMatch = /^picker_page_(\d{1,3})$/.exec(interactiveSelection?.id || '');
+        const requestedPage = pageMatch ? Number(pageMatch[1]) : 0;
+        const picker = await sendRestaurantPicker(adapter, from, route.picker, receiverContext,
+          requestedPage);
         if (!picker.entregue) {
-          // The interactive sender does not expose a reliable rejection class.
-          // Preserve the send reservation rather than risk a duplicate picker.
+          if (picker.definitiveFailure) {
+            await releaseRejectedSend(identity, messageId);
+            return { handled: false, retryable: true, skipped: 'picker_rejected' };
+          }
+          // Unknown send outcomes stay reserved rather than risking a duplicate picker.
           logger.error(`[${providerName}] Picker delivery uncertain; manual reconciliation required`);
         }
         return { handled: picker.entregue, retryable: false };
@@ -752,22 +766,27 @@ async function sendWelcomeButtons(adapter, from, session) {
  * @param {string} from
  * @param {Array} restaurants - List from getAllActiveRestaurants()
  */
-async function sendRestaurantPicker(adapter, from, restaurants, receiverContext) {
-  const sections = [];
-  const chunkSize = 10;
-  for (let i = 0; i < restaurants.length; i += chunkSize) {
-    const chunk = restaurants.slice(i, i + chunkSize);
-    sections.push({
-      title: sections.length === 0 ? 'Restaurantes' : `Mais restaurantes`,
-      rows: chunk.map(r => ({
-        id: `restaurant_${r.id}`,
-        title: r.restaurant_name,
-        description: r.restaurant_type && r.city
-          ? `${r.restaurant_type} \u00B7 ${r.city}`
-          : (r.restaurant_type || r.city || ''),
-      })),
-    });
-  }
+async function sendRestaurantPicker(adapter, from, restaurants, receiverContext, requestedPage = 0) {
+  // Meta permits ten rows TOTAL, not ten per section. Reserve two rows for
+  // navigation when the shared number has more than ten restaurants.
+  const pageSize = restaurants.length > 10 ? 8 : 10;
+  const pageCount = Math.ceil(restaurants.length / pageSize);
+  const page = Number.isSafeInteger(requestedPage) && requestedPage >= 0 && requestedPage < pageCount
+    ? requestedPage : 0;
+  const rows = restaurants.slice(page * pageSize, (page + 1) * pageSize).map(r => ({
+    id: `restaurant_${r.id}`,
+    title: r.restaurant_name,
+    description: r.restaurant_type && r.city
+      ? `${r.restaurant_type} \u00B7 ${r.city}`
+      : (r.restaurant_type || r.city || ''),
+  }));
+  if (page > 0) rows.push({
+    id: `picker_page_${page - 1}`, title: '◀ Anterior / Back', description: '',
+  });
+  if (page < pageCount - 1) rows.push({
+    id: `picker_page_${page + 1}`, title: 'Mais / More ▶', description: '',
+  });
+  const sections = [{ title: 'Restaurantes', rows }];
   const result = await adapter.sendInteractiveList(
     from,
     'Ol\u00E1! Com qual restaurante voc\u00EA gostaria de falar?',
@@ -776,9 +795,9 @@ async function sendRestaurantPicker(adapter, from, restaurants, receiverContext)
     receiverContext,
   );
   const delivery = avaliarEnvio(result);
-  if (delivery.entregue) logger.info(`[MessageProcessor] Sent restaurant picker (${restaurants.length} options)`);
+  if (delivery.entregue) logger.info(`[MessageProcessor] Sent restaurant picker (page ${page + 1}/${pageCount}, ${restaurants.length} options)`);
   else logger.error(`${delivery.resumo} origem=restaurant-picker`);
-  return delivery;
+  return { ...delivery, definitiveFailure: result?.definitiveFailure === true };
 }
 
 module.exports = { processMessage };

@@ -125,6 +125,149 @@ beforeEach(() => {
     is_demo: true, demo_expires_at: new Date(Date.now() + 86400000).toISOString() }, error: null });
 });
 
+test('shared-number picker pages 19 restaurants without exceeding ten total rows', async () => {
+  const previousPhoneId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+  const previousOwnerId = process.env.META_RESTAURANT_ID;
+  const original = mockRestaurants.map(r => ({ ...r }));
+  try {
+    process.env.WHATSAPP_PHONE_NUMBER_ID = '99999999999';
+    delete process.env.META_RESTAURANT_ID;
+    mockRestaurants.splice(0, mockRestaurants.length,
+      ...Array.from({ length: 19 }, (_, i) => ({
+        id: `shared-${i + 1}`, restaurant_name: `Restaurante ${i + 1}`,
+        whatsapp_phone_number_id: null,
+      })));
+    const channel = adapter();
+    const listRows = () => channel.sendInteractiveList.mock.lastCall[3].flatMap(section => section.rows);
+
+    await processMessage(channel, message('99999999999', 'picker-first'));
+    expect(listRows()).toHaveLength(9);
+    expect(listRows().at(-1).id).toBe('picker_page_1');
+
+    await processMessage(channel, { ...message('99999999999', 'picker-next'),
+      interactiveSelection: { id: 'picker_page_1' } });
+    expect(listRows()).toHaveLength(10);
+    expect(listRows().at(0).id).toBe('restaurant_shared-9');
+    expect(listRows().at(-1).id).toBe('picker_page_2');
+
+    await processMessage(channel, { ...message('99999999999', 'picker-last'),
+      interactiveSelection: { id: 'picker_page_2' } });
+    expect(listRows()).toHaveLength(4);
+    expect(listRows().at(0).id).toBe('restaurant_shared-17');
+    expect(listRows().at(-1).id).toBe('picker_page_1');
+
+    await processMessage(channel, { ...message('99999999999', 'picker-back'),
+      interactiveSelection: { id: 'picker_page_1' } });
+    expect(listRows().at(0).id).toBe('restaurant_shared-9');
+
+    await processMessage(channel, { ...message('99999999999', 'picker-invalid'),
+      interactiveSelection: { id: 'picker_page_999' } });
+    expect(listRows().at(0).id).toBe('restaurant_shared-1');
+    expect(mockAI).not.toHaveBeenCalled();
+
+    await processMessage(channel, { ...message('99999999999', 'picker-select'),
+      interactiveSelection: { id: 'restaurant_shared-19' } });
+    expect(mockSessions.get(`meta:99999999999:${from}`).restaurant_id).toBe('shared-19');
+  } finally {
+    mockRestaurants.splice(0, mockRestaurants.length, ...original);
+    if (previousPhoneId === undefined) delete process.env.WHATSAPP_PHONE_NUMBER_ID;
+    else process.env.WHATSAPP_PHONE_NUMBER_ID = previousPhoneId;
+    if (previousOwnerId === undefined) delete process.env.META_RESTAURANT_ID;
+    else process.env.META_RESTAURANT_ID = previousOwnerId;
+  }
+});
+
+test('old page navigation is ignored after the guest chose a restaurant', async () => {
+  const previousPhoneId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+  const previousOwnerId = process.env.META_RESTAURANT_ID;
+  try {
+    process.env.WHATSAPP_PHONE_NUMBER_ID = '99999999999';
+    delete process.env.META_RESTAURANT_ID;
+    mockRestaurants.forEach(r => { r.whatsapp_phone_number_id = null; });
+    const channel = adapter();
+    await processMessage(channel, { ...message('99999999999', 'selected'),
+      interactiveSelection: { id: 'restaurant_house-a' } });
+    const stale = await processMessage(channel, { ...message('99999999999', 'old-page'),
+      interactiveSelection: { id: 'picker_page_1', title: 'Mais / More' } });
+    expect(stale).toMatchObject({ handled: true, skipped: 'stale_picker_page' });
+    const oldRow = await processMessage(channel, { ...message('99999999999', 'old-row'),
+      interactiveSelection: { id: 'restaurant_house-a', title: 'Casa A' } });
+    expect(oldRow).toMatchObject({ handled: true, skipped: 'stale_restaurant_selection' });
+    expect(mockSessions.get(`meta:99999999999:${from}`).restaurant_id).toBe('house-a');
+    expect(channel.sendMessage).toHaveBeenCalledTimes(1);
+    expect(channel.sendInteractiveList).not.toHaveBeenCalled();
+    expect(mockAI).not.toHaveBeenCalled();
+  } finally {
+    if (previousPhoneId === undefined) delete process.env.WHATSAPP_PHONE_NUMBER_ID;
+    else process.env.WHATSAPP_PHONE_NUMBER_ID = previousPhoneId;
+    if (previousOwnerId === undefined) delete process.env.META_RESTAURANT_ID;
+    else process.env.META_RESTAURANT_ID = previousOwnerId;
+  }
+});
+
+test('old shared-picker page cannot become AI text when receiver becomes dedicated', async () => {
+  const previousPhoneId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+  const previousOwnerId = process.env.META_RESTAURANT_ID;
+  try {
+    process.env.WHATSAPP_PHONE_NUMBER_ID = '99999999999';
+    delete process.env.META_RESTAURANT_ID;
+    mockRestaurants.forEach(r => { r.whatsapp_phone_number_id = null; });
+    const channel = adapter();
+    await processMessage(channel, message('99999999999', 'before-dedicated'));
+    expect(channel.sendInteractiveList).toHaveBeenCalledTimes(1);
+    mockRestaurants[0].whatsapp_phone_number_id = '99999999999';
+
+    const stale = await processMessage(channel, { ...message('99999999999', 'after-dedicated'),
+      interactiveSelection: { id: 'picker_page_1', title: 'Mais / More' } });
+    expect(stale).toMatchObject({ handled: true, skipped: 'stale_picker_page' });
+    const oldRow = await processMessage(channel, { ...message('99999999999', 'old-row-after-dedicated'),
+      interactiveSelection: { id: 'restaurant_house-b', title: 'Casa B' } });
+    expect(oldRow).toMatchObject({ handled: true, skipped: 'stale_restaurant_selection' });
+    expect(mockSessions.get(`meta:99999999999:${from}`).restaurant_id).toBeNull();
+    expect(channel.sendMessage).not.toHaveBeenCalled();
+    expect(mockAI).not.toHaveBeenCalled();
+  } finally {
+    if (previousPhoneId === undefined) delete process.env.WHATSAPP_PHONE_NUMBER_ID;
+    else process.env.WHATSAPP_PHONE_NUMBER_ID = previousPhoneId;
+    if (previousOwnerId === undefined) delete process.env.META_RESTAURANT_ID;
+    else process.env.META_RESTAURANT_ID = previousOwnerId;
+  }
+});
+
+test('explicitly rejected picker send releases its reservation and retries safely', async () => {
+  const previousPhoneId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+  const previousOwnerId = process.env.META_RESTAURANT_ID;
+  try {
+    process.env.WHATSAPP_PHONE_NUMBER_ID = '99999999999';
+    delete process.env.META_RESTAURANT_ID;
+    mockRestaurants.forEach(r => { r.whatsapp_phone_number_id = null; });
+    const receipts = require('../_lib/channels/inbound-completion');
+    const attempts = new Set();
+    receipts.hasSendAttempt.mockImplementation(async (_identity, id) => attempts.has(id));
+    receipts.reserveSendAttempt.mockImplementation(async (_identity, id) => { attempts.add(id); });
+    receipts.releaseRejectedSend.mockImplementation(async (_identity, id) => { attempts.delete(id); });
+    const channel = adapter();
+    channel.sendInteractiveList
+      .mockResolvedValueOnce({ success: false, error: 'Meta rejected list', definitiveFailure: true })
+      .mockResolvedValueOnce({ success: true });
+    const inbound = message('99999999999', 'picker-retry');
+    const failed = await processMessage(channel, inbound);
+    expect(failed).toMatchObject({ handled: false, retryable: true, skipped: 'picker_rejected' });
+    expect(receipts.releaseRejectedSend).toHaveBeenCalledTimes(1);
+    expect(attempts.size).toBe(0);
+
+    const delivered = await processMessage(channel, inbound);
+    expect(delivered.handled).toBe(true);
+    expect(channel.sendInteractiveList).toHaveBeenCalledTimes(2);
+    expect(mockAI).not.toHaveBeenCalled();
+  } finally {
+    if (previousPhoneId === undefined) delete process.env.WHATSAPP_PHONE_NUMBER_ID;
+    else process.env.WHATSAPP_PHONE_NUMBER_ID = previousPhoneId;
+    if (previousOwnerId === undefined) delete process.env.META_RESTAURANT_ID;
+    else process.env.META_RESTAURANT_ID = previousOwnerId;
+  }
+});
+
 test('same guest A → B → A keeps tenant, history, and reply sender separate', async () => {
   const a = adapter();
   const b = adapter();
