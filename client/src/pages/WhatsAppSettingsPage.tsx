@@ -32,18 +32,18 @@ export function WhatsAppWorkspace() {
   const provision = useWhatsAppProvision();
   const [copied, setCopied] = useState(false);
   const [copyError, setCopyError] = useState(false);
-  const hasError = status.isError || provision.isError;
-  const loading = status.isLoading || provision.isLoading;
+  const connectionError = provision.isError;
+  const loading = provision.isLoading;
   // Global credentials and the owner's phone are NOT a restaurant connection.
   const number = provision.data?.numero_e164 || '';
   const knownNumber = /^\+?[1-9]\d{7,14}$/.test(number);
-  const registered = !hasError && provision.data?.estado === 'ativo'
+  const registered = !connectionError && provision.data?.estado === 'ativo'
     && provision.data?.roteamento_confirmado === true && knownNumber;
-  const numberUnknown = !hasError && provision.data?.estado === 'ativo'
+  const numberUnknown = !connectionError && provision.data?.estado === 'ativo'
     && provision.data?.roteamento_confirmado === true && !knownNumber;
-  const routingIssue = !hasError && provision.data?.estado === 'ativo'
+  const routingIssue = !connectionError && provision.data?.estado === 'ativo'
     && provision.data?.roteamento_confirmado !== true;
-  const label = hasError ? copy.unknown : registered ? (provision.data?.origem === 'registro_central' ? copy.linked : copy.connected)
+  const label = connectionError ? copy.unknown : registered ? (provision.data?.origem === 'registro_central' ? copy.linked : copy.connected)
     : numberUnknown ? copy.numberUnknownStatus
     : routingIssue ? copy.routingIssueStatus
     : provision.data?.estado === 'aguardando_codigo' ? copy.pending
@@ -58,10 +58,10 @@ export function WhatsAppWorkspace() {
     {loading ? <p role="status">{copy.refreshing}</p> : <>
       <section aria-label={copy.number} className="mb-10">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
-          <span className={`rounded-full px-3 py-1 text-sm ${hasError ? 'bg-red-50 text-red-700' : registered ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>{label}</span>
-          <button type="button" onClick={refresh} disabled={status.isFetching || provision.isFetching} className="text-sm text-burgundy underline underline-offset-4 disabled:opacity-50">{copy.retry}</button>
+          <span className={`rounded-full px-3 py-1 text-sm ${connectionError ? 'bg-red-50 text-red-700' : registered ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>{label}</span>
+          <button type="button" onClick={refresh} disabled={provision.isFetching} className="text-sm text-burgundy underline underline-offset-4 disabled:opacity-50">{copy.retry}</button>
         </div>
-        {hasError ? <div role="alert"><p className="text-red-700">{copy.loadError}</p><a className="inline-block mt-3 text-burgundy underline" href="mailto:hello@seatable.one">{copy.support}</a></div> : numberUnknown ? <div role="status">
+        {connectionError ? <div role="alert"><p className="text-red-700">{copy.loadError}</p><a className="inline-block mt-3 text-burgundy underline" href="mailto:hello@seatable.one">{copy.support}</a></div> : numberUnknown ? <div role="status">
           <p className="max-w-xl text-muted-stone">{copy.numberUnknown}</p>
           <a className="inline-block mt-4 text-burgundy underline underline-offset-4" href="mailto:hello@seatable.one">{copy.support}</a>
         </div> : routingIssue ? <div role="alert">
@@ -88,14 +88,21 @@ export function WhatsAppWorkspace() {
           <a href={`https://wa.me/${number.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="bg-burgundy text-white rounded-full px-6 py-3 text-sm font-medium">{copy.open}</a>
           <Link to="/host-dashboard/simple" className="text-burgundy text-sm underline underline-offset-4">{copy.reservations}</Link>
         </div>}
-        {!hasError && <WhatsAppDisclosure title={copy.delivery}><WhatsAppDeliveryTest configured={Boolean(status.data?.api_configured)} /></WhatsAppDisclosure>}
+        <WhatsAppDisclosure title={copy.delivery}>
+          {status.isLoading ? <p role="status" className="text-muted-stone">{copy.refreshing}</p>
+            : status.isError ? <div role="alert" className="text-red-700">
+              <p>{copy.deliveryStatusError}</p>
+              <button type="button" onClick={() => void status.refetch()} className="mt-2 text-burgundy underline underline-offset-4">{copy.retry}</button>
+            </div>
+              : <WhatsAppDeliveryTest configured={Boolean(status.data?.api_configured)} />}
+        </WhatsAppDisclosure>
       </section>
-      {!hasError && <section aria-label={copy.preferences}>
+      <section aria-label={copy.preferences}>
         <h2 className="text-[12px] uppercase tracking-[0.14em] text-muted-stone mb-4">{copy.preferences}</h2>
         <WhatsAppDisclosure title={copy.personality}><AiPersonalityPanel /></WhatsAppDisclosure>
         <WhatsAppDisclosure title={copy.notifications}><p className="text-muted-stone mb-5">{copy.notificationHint}</p><WhatsAppOwnerPreferences /><ManagerNotificationsPanel /></WhatsAppDisclosure>
         <WhatsAppDisclosure title={copy.automated}><FeedbackSettingsPanel /><SurveySettingsPanel /></WhatsAppDisclosure>
-      </section>}
+      </section>
     </>}
   </div>;
 }
