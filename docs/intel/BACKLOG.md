@@ -325,6 +325,19 @@ entrega.
 reescrita em 2026-09-01 precisa de ressalva, e há a pergunta de entrar como substituto ou como
 leitor de Tagme (`VALID_SOURCES` em `api/external-booking-webhook.js` não inclui `tagme`).
 
+**Sinal de mercado, 2026-10-26 — alguém pequeno já lançou em produção o que está desligado aqui.**
+A FLÆ Robotics (startup tcheca, seed de ~€1M, Purple Ventures + Garage Angels, anunciado 13/10)
+roda o "BE-A": triagem de mensagens de hóspede de hotel por WhatsApp/voz/e-mail/web, com
+roteamento automático pra equipe certa e ações diretas (consultar disponibilidade, reservar). Em
+mais de 60 hotéis (RU/Alemanha/Tcheca), jul-ago/2026: ~265 mil interações, >3.400 reservas
+concluídas **sem intervenção humana** — números autodeclarados, sem auditoria. Fonte:
+[The Recursive, 13/10](https://www.therecursive.com/czech-startup-flae-robotics-raises-eur1m-to-scale-its-ai-hotel-agent-be-a.md).
+Não resolve a credencial que trava o spike (`SUPABASE_SERVICE_ROLE_KEY`/`OPENROUTER_API_KEY`
+continuam ausentes neste ambiente), mas é evidência de que o mecanismo que o Seatable já construiu
+e manteve `whatsapp_handoff_enabled = false` por falta de calibração já roda em produção, em escala
+pequena, num vertical adjacente — reforça a urgência de obter a credencial e rodar
+`scripts/calibrate-whatsapp-handoff.js`, não muda o spike em si.
+
 ---
 
 ### elevenlabs-payload-snapshot — Travar o payload de criação do agente

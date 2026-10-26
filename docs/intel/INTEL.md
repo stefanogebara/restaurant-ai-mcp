@@ -11,6 +11,49 @@
 
 ## Em aberto — precisa de decisão do Stefano
 
+### [DISCUTIR 10/15] A Colibri comprou CRM e reserva — e tem adquirência própria no Brasil, que o Seatable não tem
+**Data:** 2026-10-21 · **Fonte:** [Startups.com.br](https://startups.com.br/negocios/colibri-faz-novas-aquisicoes-e-amplia-ecossistema-para-restaurantes/) · **Eixos:** P2 A1 D2 E2 L3
+
+**O que é:** a Colibri (comprada pela RS Solutions por ~R$100mi em set/2025, ex-NCR Voyix) incorporou a **Qnow** (filas, reservas e estacionamento) e a **Cannoli** (CRM de recompra — segmentação, campanha, fidelidade, cashback, fundada por ex-Linx). Volume transacionado subiu de R$28bi para R$34bi; meta é dobrar receita de R$50mi para R$100mi até 2027, com entrada de clientes dobrando mês a mês. O fundador descreve a tese em uma frase: capturar dado de PDV, totem, cardápio digital, delivery, reserva e fila numa visão única do consumidor — "a Colibri possui as duas coisas" (produtos e dados). Soma-se o **Colibri Pay** (parcelamento de refeição no salão, infraestrutura de subadquirência via XPago/XP, desenvolvimento com o Itaú) e um portal de conciliação financeira independente do adquirente.
+
+**O que a fonte não prova:** não há número de restaurantes atendidos, nem comparação de churn ou retenção antes/depois das aquisições; os números de crescimento (dobrar mês a mês) são autodeclarados pelo fundador, sem auditoria externa. O artigo não usa o termo "Square brasileira" — essa é uma leitura do analista, não uma citação da empresa.
+
+**Por que toca este projeto:** é o "loop integrado" (o mesmo mecanismo do Resy+Toast e Square+OpenTable já registrados neste arquivo) montado por um player **100% brasileiro**, com uma peça que o Seatable não tem: adquirência própria em reais, via XPago/XP e parceria com o Itaú. O Seatable roda Stripe Connect e Square — ambos americanos, sem Pix em nenhum fluxo de pagamento (`known_gaps`). O público-alvo declarado da Colibri (faturamento acima de R$300mil) é maior que o do Seatable, mas a direção do movimento (CRM + reserva + fila + pagamento num player único, vendendo pra restaurante brasileiro) é exatamente a aposta nº1 revisada ("end-to-end é piso") — só que com adquirência local que nenhum concorrente americano mapeado até aqui tem.
+
+**A pergunta:** a Colibri é ameaça direta (ela soma reserva+CRM+pagamento+dado unificado, e o Seatable soma voz+WhatsApp+CRM+dado unificado — dois loops competindo pelo mesmo dono de restaurante, um com adquirência local e outro sem) ou é adjacente por faixa de faturamento (ela mira o restaurante de porte médio/grande, o Seatable mira o independente de SP)? E, independente da resposta: falta de Pix/adquirência brasileira no Seatable continua sendo aceitável, ou um player como a Colibri — que já tem o rail financeiro local — é o sinal de que isso precisa mudar antes que ela ou um concorrente dela decida atender voz/WhatsApp também?
+
+---
+
+### [DISCUTIR 10/15] ElevenLabs diz que o protocolo dela e o da OpenAI Realtime agora são o mesmo
+**Data:** 2026-10-19 (mais 2026-10-12 e 2026-09-21, mesmo tema) · **Fonte:** [ElevenLabs changelog](https://elevenlabs.io/docs/changelog) · **Eixos:** P3 A2 D2 E1 L2
+**Item relacionado, arquivado por idade:** "Os dois motores de voz vão divergir em turn-taking" (2026-08-24, arquivado em 2026-09-21 sem decisão) — este item retoma o tema com desenvolvimento novo, não é reabertura silenciosa do antigo.
+
+**O que é:** três mudanças no changelog da ElevenLabs em 5 semanas, todas sobre turn-taking:
+(1) **19/10** — **Eleven Realtime v1 Mini/Max**, dois modelos de voz em tempo real para agents. A ElevenLabs afirma, em texto literal: *"The events and the WebSocket transport are the same, so you change the endpoint and the session configuration"* — ou seja, o protocolo dela passa a ser compatível com o formato de evento/WebSocket do Realtime da OpenAI.
+(2) **12/10** — novo commit strategy `turn_prediction` no WebSocket de Speech-to-Text em tempo real: em vez de só segmentar por silêncio, *"it commits a segment as soon as the model predicts the speaker has finished their turn"*.
+(3) **21/09** — `is_final_audio_for_turn` passa a disparar em todos os formatos de saída de áudio (incluindo MP3/Opus, não só um formato), como marcador confiável de fim de turno.
+
+**O que a fonte não prova:** nenhum benchmark de latência/acurácia em pt-BR para `turn_prediction` nem para o v1 Mini/Max; não há confirmação se "protocolo compatível" significa que o código cliente de um motor funciona no outro sem adaptação alguma, ou só que a forma geral dos eventos é parecida — é afirmação do fornecedor, não testada por este repo.
+
+**Por que toca este projeto:** o `known_gap` central de voz é exatamente isso — dois motores (`VALID_ENGINES = ['elevenlabs', 'openai_realtime']` em `api/voice-engine-settings.js`) com estratégias de turn-taking diferentes, nenhuma instrumentada, tornando qualquer comparação entre eles contaminada. `api/_voice-server/backends/openai-realtime.js` ainda hardcoda `server_vad` fixo; se a ElevenLabs de fato fala o mesmo protocolo, a abstração dupla de backend (`base-backend.js` + `ws-server.js:255`) pode simplificar — ou pode esconder uma divergência nova assim que os dois motores "parecerem" iguais por fora mas resolverem turno de forma diferente por dentro.
+
+**A pergunta:** vale um spike de meio dia testando se o cliente WebSocket que hoje fala com `openai-realtime.js` consegue, com só troca de endpoint/config, falar com o Eleven Realtime v1 — confirmando ou refutando a afirmação da ElevenLabs na prática — antes de decidir se isso simplifica a abstração de dois motores ou é só semelhança superficial de protocolo? E, separado: `turn_prediction` é candidato a substituir o `server_vad` hardcoded como estratégia de commit, mas só caso a pingue a instrumentação de latência/barge-in que nenhum dos dois motores tem hoje — vale medir antes de trocar?
+
+---
+
+### [DISCUTIR 8/15] Prosus — controladora do iFood — está apostando no exato nicho da bets[2], só que por câmera e PDV
+**Data:** 2026-09-14 · **Fonte:** [Startups.com.br](https://startups.com.br/negocios/rodada-de-investimento/prosus-sobe-aposta-em-ia-nos-restaurantes-e-investe-us-15m-na-emilia-ai/) · **Eixos:** P1 A1 D1 E2 L3
+
+**O que é:** a Emilia AI (fundada por dois colombianos em 2024, sede nos EUA, Brasil declarado como mercado principal) levantou US$1,5M pre-seed, US$1M liderado pela **Prosus Ventures** (braço de venture early-stage da Prosus, controladora do iFood) + US$500k de anjos. O produto instala IA sobre câmeras de segurança que o restaurante já tem, cruzando vídeo com dado de PDV: agente "Coach" aponta oportunidade de upsell perdida (sobremesa/bebida não oferecida); agente "Sentinel" é antifraude (prato que saiu sem lançar, caixa que não bateu). Dois pilotos citados: Alife Nino (100+ estabelecimentos BR, ROI autodeclarado de ~28x — US$300/mês de receita extra por mesa contra US$10 de custo) e Jin Jin (rede franqueada do iFood, 77+ lojas em expansão da solução depois do Sentinel achar fraude em 12h de gravação analisada).
+
+**O que a fonte não prova:** nenhum número de clientes totais, receita da Emilia, ou taxa de conversão fora dos dois pilotos citados — tudo relatado pelos próprios fundadores/clientes, sem auditoria terceira. Não há evidência de que a Emilia grava dado de cliente em CRM próprio ou fecha loop de receita — ela descreve só a camada de operação/antifraude, não de relacionamento com o hóspede.
+
+**Por que toca este projeto:** a Emilia **não é concorrente direto** — não faz reserva, voz ou WhatsApp. Mas é evidência direta de capital de risco validando as apostas 2 e 3 do config (dado do cliente é o ativo; restaurante independente brasileiro é subatendido) vindo de um investidor que é a própria controladora do maior concorrente indireto do Brasil — a Prosus/iFood já comprou Get In (reservas), tem participação em Saipos/OPDV/3S Checkout e Anota AI, e agora financia uma camada de inteligência de operação para o mesmo público (restaurante independente brasileiro) que o Seatable ataca pelo lado de reserva/voz/WhatsApp.
+
+**A pergunta:** isso é só mais uma peça do padrão já registrado (iFood comprando/financiando toda a camada operacional do restaurante independente brasileiro, settled como "conector de leitura" para Saipos) — ou o fato de ser câmera+PDV, não reserva, muda alguma coisa na urgência? Especificamente: se o Jin Jin (rede do próprio iFood) está escalando Sentinel/Coach para 77+ lojas, isso é sinal de que o iFood está testando, através de investidas, qual camada de inteligência vale comprar/replicar internamente depois — e a próxima pode ser justamente CRM/reserva, onde o Seatable joga?
+
+---
+
 ### [DISCUTIR 9/15] Twilio tagueia qualidade de áudio na perna PSTN — mas não mede o que falta de verdade
 **Data:** 2026-10-09 · **Fonte:** [Twilio changelog](https://www.twilio.com/en-us/changelog.html) · **Eixos:** P3 A2 D1 E1 L2
 
@@ -425,6 +468,31 @@ ter visibilidade própria do próprio custo?
 
 ---
 
+**Absorvido em 2026-10-26 — pela primeira vez, a doc-mãe da Meta confirma o mecanismo com as
+próprias palavras, mas ainda sem rate card BR.** Reabri `developers.facebook.com/docs/whatsapp/
+pricing` hoje. Três coisas mudaram de "estimativa de terceiro" para "confirmado pela própria
+Meta": (1) a página agora diz, em texto literal, *"This page reflects pricing updates that became
+effective as of October 1, 2026"* e *"Meta resumed charging, on a per-message basis, for messages
+that were previously free"* — a cobrança está confirmada em vigor pela fonte primária, não só por
+imprensa/BSP como nas seis checagens anteriores; (2) a franquia de 1.000 mensagens de serviço
+grátis por mês por número, **sem acúmulo**, agora está na própria doc da Meta — *"Unused service
+messages in the free tier do not roll over to the next month"* — confirmando pela primeira vez na
+fonte primária o número que só o Zappy (BSP) tinha trazido em 05/10; (3) a suspensão de entrega
+para quem não cadastrou pagamento até 30/09 também está confirmada, mas só para "Solution
+Providers e empresas com integração direta" sem forma de pagamento — não é um corte universal.
+**O que continua sem resposta, sexta semana seguida:** a página não traz o valor em BRL — ela
+remete a três arquivos ("BRL list rates" CSV, "BRL volume tiers" CSV, "BRL rates and volume tiers"
+PDF) cujas URLs não vieram no conteúdo acessado, e a única cifra encontrada na página foi a mesma
+de sempre, 0,68¢/mensagem de utilidade/autenticação (não de serviço). Não há data de "last
+updated" na página. **A pergunta muda de "a cobrança está em vigor?" (sim, confirmado) para "qual é
+o valor exato, e o Seatable já está pagando?"** — vale agora abrir os três arquivos de rate card
+linkados na própria página da Meta (não mais extrapolar de BSP) e, em paralelo, ligar a leitura de
+`pricing_category`/`AI_BOT` no webhook de status (`api/_lib/channels/meta-adapter.js` ainda
+descarta todo webhook sem `messages`) — é o único jeito de saber pelo próprio tráfego se a conta já
+está sendo cobrada, sem esperar a Meta confirmar o valor por escrito.
+
+---
+
 ### [DISCUTIR 8/15] Qual é o teto de concorrência do workspace ElevenLabs?
 **Data:** 2026-08-24 · **Fonte:** [ElevenLabs changelog, 17/ago](https://elevenlabs.io/docs/changelog/2026/8/17) · **Eixos:** P2 A2 D1 E2 L1
 **Ponteiro de trabalho:** o `queueing_config` saiu de campo anunciado para GA — spike aberto → `BACKLOG.md#elevenlabs-queueing`
@@ -501,6 +569,25 @@ Promovidos em 2026-08-24, os quatro com âncora verificada:
 
 ## Radar
 
+- `2026-10-26` **Fly.io teve 27 incidentes entre 15/09 e 25/10, três em GRU, zero em CDG** —
+  confirmado em `status.flyio.net/history`: GRU teve problema de state database (24/09), rede
+  (29/09, 22min) e capacidade de criação de Machines (20/10); CDG (região primária de
+  `seatable-voice`, confirmada hoje em `fly.toml`) não aparece em nenhum incidente da janela. O
+  único evento multi-região ("Degraded Edge Performance", 22/10, ~10min) não nomeia quais regiões.
+  Não decide o item arquivado "roda em Paris" (2026-09-01) — se algo, pesa contra mudar pra GRU às
+  pressas, já que GRU também não ficou livre de incidente. `fly.toml` continua apontando o build
+  para `api/voice-server/Dockerfile`, caminho que não existe (confirmado hoje). [Fly.io
+  Status](https://status.flyio.net/history) · 6/15
+- `2026-10-26` **Dextr AI capta US$6,7M seed (Elevation Capital) para agentes de voz em
+  hotelaria** — "Daisy" reserva por voz em 90+ idiomas, "Alfred" cuida de pedido/reclamação de
+  hóspede; >1M interações/mês autodeclaradas em centenas de propriedades franqueadas (Hilton,
+  Wyndham, Best Western, IHG). Mesmo padrão estrutural do Seatable (agente de voz + memória de
+  hóspede), em hotelaria americana, estágio seed. [Inc42](https://inc42.com/buzz/dextr-ai-raises-6-7-mn-to-build-ai-agents-for-hospitality-industry/) · 7/15
+- `2026-10-26` **Fiserv/Clover lança "Clover Reserve powered by Tabit"** — parceria exclusiva
+  com a Tabit (POS "AI-first" de hospitalidade) para fine-dining: pacing de pratos, gestão de
+  salão, conta na mesa. Zero número, zero data confirmada, só cobertura secundária (sem release
+  primário encontrado) — teto REGISTRAR por G1 fraco, independente do score. Nome novo no mapa de
+  POS-com-IA americano. [Glenbrook](https://glenbrook.com/payments_news/fiserv-expands-clovers-restaurant-portfolio-with-new-fine-dining-solution-clover-reserve-powered-by-tabit/) · 5/15, travado
 - `2026-10-19` **Twilio Voice Integrity cobre as três maiores operadoras dos EUA (beta, Voice
   API)** — registro de número para reduzir marcação como spam em ligações legítimas; relevante
   para o volume de ligações outbound do Seatable (lembretes por telefone, briefings do Manager
