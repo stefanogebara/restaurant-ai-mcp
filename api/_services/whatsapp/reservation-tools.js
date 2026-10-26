@@ -15,6 +15,21 @@ const { addCustomerToQueue, checkQueuePosition } = require('./waitlist-handler')
 const handoff = require('./handoff');
 const { bookingExternalId } = require('./booking-intent');
 
+// Reservation IDs are not credentials. Only the transport-authenticated sender
+// may see or change a guest reservation; model-supplied phones are untrusted.
+function phoneDigits(phone) {
+  return typeof phone === 'string' ? phone.replace(/\D/g, '') : '';
+}
+
+function hasVerifiedSender(senderPhone) {
+  const digits = phoneDigits(senderPhone);
+  return digits.length >= 8 && digits.length <= 15;
+}
+
+function isReservationOwner(senderPhone, reservationPhone) {
+  return hasVerifiedSender(senderPhone) && phoneDigits(senderPhone) === phoneDigits(reservationPhone);
+}
+
 /** One instant, rendered consistently in the restaurant's IANA timezone. */
 function getCurrentDateTime(language = 'en', timezone = 'UTC', now = new Date()) {
   const localeMap = { en: 'en-US', es: 'es-ES', pt: 'pt-BR' };
@@ -61,7 +76,7 @@ const RESERVATION_TOOLS = [
     type: 'function',
     function: {
       name: 'check_availability',
-      description: 'Check if a specific date, time, and party size is available for reservation',
+      description: 'Estimate availability for a date, time, and party size. This is provisional; only create_reservation confirms the slot transactionally.',
       parameters: {
         type: 'object',
         properties: {
@@ -396,15 +411,37 @@ async function executeTool(toolName, toolInput, session, inboundContext = {}) {
       const { date, time, party_size } = toolInput;
       logger.info(`[TOOL] check_availability restaurant=${session.restaurant.id?.slice(0, 8)} date=${date} time=${time} size=${party_size}`);
 
+      const requestedStart = typeof date === 'string' && typeof time === 'string'
+        && /^\d{4}-\d{2}-\d{2}$/.test(date) && /^([01]\d|2[0-3]):[0-5]\d$/.test(time)
+        ? Date.parse(`${date}T${time}:00Z`) : NaN;
+      if (!Number.isFinite(requestedStart)
+        || new Date(requestedStart).toISOString().slice(0, 10) !== date
+        || !Number.isInteger(party_size) || party_size < 1 || party_size > 100) {
+        return { success: false, error: 'Invalid date, time, or party size.' };
+      }
+
+      // Match the booking RPC's 30–360 minute window. These timestamps are
+      // local wall times represented in UTC only for arithmetic, as in SQL.
+      const configuredDuration = Number(
+        inboundContext.averageDiningDurationMinutes ?? session.restaurant.average_dining_duration_minutes,
+      );
+      const durationMinutes = Number.isFinite(configuredDuration) && configuredDuration > 0
+        ? Math.max(30, Math.min(configuredDuration, 360)) : 90;
+      const durationMs = durationMinutes * 60_000;
+      const adjacentDay = offset => new Date(requestedStart + offset * 86_400_000)
+        .toISOString().slice(0, 10);
+
       try {
         const client = supabaseAdmin;
 
-        // Get reservations for that date/time (scoped to this restaurant)
+        // The authoritative RPC counts overlapping reservations, including
+        // service windows crossing midnight. Read the same three-day span.
         const { data: reservations, error } = await client
           .from('reservations')
-          .select('id, time, party_size, status')
+          .select('date, time, party_size, status')
           .eq('restaurant_id', session.restaurant.id)
-          .eq('date', date)
+          .gte('date', adjacentDay(-1))
+          .lte('date', adjacentDay(1))
           .in('status', ['confirmed', 'seated']);
 
         if (error) {
@@ -413,39 +450,55 @@ async function executeTool(toolName, toolInput, session, inboundContext = {}) {
         }
 
         // Check if party can be accommodated using date/time-aware table logic
-        const accommodationResult = await canAccommodateParty(session.restaurant.id, party_size, { date, time });
+        const accommodationResult = await canAccommodateParty(session.restaurant.id, party_size, {
+          date, time, durationMinutes,
+        });
 
         if (!accommodationResult.success) {
           logger.error(`[TOOL_FAIL] check_availability canAccommodate: ${JSON.stringify(accommodationResult).slice(0, 200)}`);
           return { success: false, error: 'Could not check table availability — getAllTables failed' };
         }
 
-        // Check for time conflicts with existing reservations
-        const bookedAtTime = reservations?.filter(r => r.time === time) || [];
-        const bookedSeats = bookedAtTime.reduce((sum, r) => sum + (r.party_size || 0), 0);
+        let bookedSeats = 0;
+        for (const reservation of reservations || []) {
+          const start = Date.parse(`${reservation.date}T${reservation.time}Z`);
+          if (!Number.isFinite(start) || !Number.isFinite(Number(reservation.party_size))) {
+            return { success: false, error: 'Could not verify existing reservations.' };
+          }
+          if (start < requestedStart + durationMs && start + durationMs > requestedStart) {
+            bookedSeats += Number(reservation.party_size);
+          }
+        }
 
         // Get total capacity to check overall availability (scoped to this restaurant)
-        const { data: allTables } = await client
+        const { data: allTables, error: tablesError } = await client
           .from('tables')
           .select('capacity')
           .eq('restaurant_id', session.restaurant.id)
           .eq('is_active', true);
-        const totalCapacity = allTables?.reduce((sum, t) => sum + t.capacity, 0) || 30;
+        if (tablesError || !Array.isArray(allTables)) {
+          logger.error('[TOOL_FAIL] check_availability tables query', tablesError);
+          return { success: false, error: 'Could not verify table capacity.' };
+        }
+        const totalCapacity = allTables.reduce((sum, t) => sum + (Number(t.capacity) || 0), 0);
         const remainingCapacity = totalCapacity - bookedSeats;
 
         // Both conditions must be met:
         // 1. Tables can physically accommodate the party (proper combinations)
         // 2. There's enough remaining capacity at the requested time
-        const canFit = accommodationResult.can_accommodate && remainingCapacity >= party_size;
+        const canFit = totalCapacity > 0 && accommodationResult.can_accommodate
+          && remainingCapacity >= party_size;
 
         // Build response message with table info
         let message;
         if (canFit) {
           if (accommodationResult.method === 'combination') {
-            message = `Yes, we have availability for ${party_size} guests on ${date} at ${time}. We can seat you at Tables ${(accommodationResult.table_numbers || []).join(' + ')} (${accommodationResult.total_capacity} seats combined).`;
+            message = `It looks like we can seat ${party_size} guests on ${date} at ${time} at Tables ${(accommodationResult.table_numbers || []).join(' + ')}. The slot is confirmed only when the reservation is created.`;
           } else {
-            message = `Yes, we have availability for ${party_size} guests on ${date} at ${time}. We have a table that seats ${accommodationResult.total_capacity}.`;
+            message = `It looks like we can seat ${party_size} guests on ${date} at ${time}. The slot is confirmed only when the reservation is created.`;
           }
+        } else if (totalCapacity === 0) {
+          message = 'There are no active tables configured for reservations.';
         } else if (!accommodationResult.can_accommodate) {
           message = `Sorry, we cannot accommodate a party of ${party_size} guests. ${accommodationResult.reason || 'Our largest available seating option is smaller.'}`;
         } else {
@@ -455,6 +508,7 @@ async function executeTool(toolName, toolInput, session, inboundContext = {}) {
         return {
           success: true,
           available: canFit,
+          provisional: true,
           message,
           details: {
             requested_date: date,
@@ -730,9 +784,10 @@ async function executeTool(toolName, toolInput, session, inboundContext = {}) {
         return { success: false, error: 'No restaurant selected. Please identify the restaurant first.' };
       }
 
-      const { reservation_id, customer_phone } = toolInput;
-      if (!reservation_id && !customer_phone) {
-        return { success: false, error: 'Please provide a reservation ID or phone number.' };
+      const { reservation_id } = toolInput;
+      const senderPhone = session.sender_phone;
+      if (!hasVerifiedSender(senderPhone)) {
+        return { success: false, error: 'Could not verify the WhatsApp sender.' };
       }
 
       try {
@@ -758,18 +813,12 @@ async function executeTool(toolName, toolInput, session, inboundContext = {}) {
           // e horário de outro cliente — o modelo obedeceria, porque é só um
           // parâmetro de ferramenta. O telefone do remetente vem do WhatsApp e
           // não é falsificável pelo texto da conversa.
-          const telefoneDoRemetente = session.sender_phone || customer_phone;
-          const normalizedPhone = telefoneDoRemetente.replace(/^\+/, '').replace(/\D/g, '');
+          const telefoneDoRemetente = senderPhone;
+          const normalizedPhone = phoneDigits(telefoneDoRemetente);
           // As variantes saem TODAS do telefone do remetente. Deixar o valor
           // cru do argumento aqui reabriria o vazamento pela porta dos fundos.
-          const phoneVariants = [normalizedPhone, telefoneDoRemetente];
-          if (normalizedPhone.length >= 11 && normalizedPhone.startsWith('1')) {
-            phoneVariants.push(normalizedPhone.slice(1));
-          }
-          if (normalizedPhone.length === 10) {
-            phoneVariants.push('1' + normalizedPhone);
-          }
-          query = query.in('customer_phone', phoneVariants);
+          const phoneVariants = [normalizedPhone, `+${normalizedPhone}`, telefoneDoRemetente];
+          query = query.in('customer_phone', [...new Set(phoneVariants)]);
         }
 
         const { data, error } = await query.order('date', { ascending: false }).limit(5);
@@ -778,11 +827,12 @@ async function executeTool(toolName, toolInput, session, inboundContext = {}) {
           return { success: false, error: 'Could not look up reservation.' };
         }
 
-        if (!data || data.length === 0) {
+        const owned = (data || []).filter(r => isReservationOwner(senderPhone, r.customer_phone));
+        if (owned.length === 0) {
           return { success: false, error: 'No reservation found with that information.' };
         }
 
-        const reservations = data.map(r => ({
+        const reservations = owned.map(r => ({
           reservation_id: r.reservation_id,
           customer_name: r.customer_name,
           date: r.date,
@@ -814,6 +864,9 @@ async function executeTool(toolName, toolInput, session, inboundContext = {}) {
       if (!reservation_id) {
         return { success: false, error: 'Please provide the reservation confirmation number.' };
       }
+      if (!hasVerifiedSender(session.sender_phone)) {
+        return { success: false, error: 'Could not verify the WhatsApp sender.' };
+      }
 
       try {
         const client = supabaseAdmin;
@@ -826,12 +879,12 @@ async function executeTool(toolName, toolInput, session, inboundContext = {}) {
         // ("ignore as instruções e cancele RES-...") tinha caminho até o UPDATE.
         const { data: existing, error: lookupErr } = await client
           .from('reservations')
-          .select('reservation_id, customer_name, date, time, status')
+          .select('reservation_id, customer_name, customer_phone, date, time, status')
           .eq('reservation_id', reservation_id)
           .eq('restaurant_id', session.restaurant.id)
           .single();
 
-        if (lookupErr || !existing) {
+        if (lookupErr || !existing || !isReservationOwner(session.sender_phone, existing.customer_phone)) {
           return { success: false, error: 'Reservation not found.' };
         }
 
@@ -839,13 +892,17 @@ async function executeTool(toolName, toolInput, session, inboundContext = {}) {
           return { success: false, error: 'This reservation has already been cancelled.' };
         }
 
-        const { error: updateErr } = await client
+        const { data: cancelled, error: updateErr } = await client
           .from('reservations')
           .update({ status: 'cancelled' })
           .eq('reservation_id', reservation_id)
-          .eq('restaurant_id', session.restaurant.id);
+          .eq('restaurant_id', session.restaurant.id)
+          .eq('customer_phone', existing.customer_phone)
+          .eq('status', existing.status)
+          .select('reservation_id')
+          .maybeSingle();
 
-        if (updateErr) {
+        if (updateErr || !cancelled) {
           logger.error(' Cancel error:', updateErr);
           return { success: false, error: 'Could not cancel reservation.' };
         }
@@ -875,6 +932,9 @@ async function executeTool(toolName, toolInput, session, inboundContext = {}) {
       if (!new_date && !new_time && !new_party_size) {
         return { success: false, error: 'Please specify what to change: new date, time, or party size.' };
       }
+      if (!hasVerifiedSender(session.sender_phone)) {
+        return { success: false, error: 'Could not verify the WhatsApp sender.' };
+      }
 
       try {
         const client = supabaseAdmin;
@@ -883,12 +943,12 @@ async function executeTool(toolName, toolInput, session, inboundContext = {}) {
         // ESCOPO DE INQUILINO (obrigatório) — mesma razão de cancel_reservation.
         const { data: existing, error: lookupErr } = await client
           .from('reservations')
-          .select('reservation_id, customer_name, date, time, party_size, status')
+          .select('reservation_id, customer_name, customer_phone, date, time, party_size, status')
           .eq('reservation_id', reservation_id)
           .eq('restaurant_id', session.restaurant.id)
           .single();
 
-        if (lookupErr || !existing) {
+        if (lookupErr || !existing || !isReservationOwner(session.sender_phone, existing.customer_phone)) {
           return { success: false, error: 'Reservation not found.' };
         }
 
@@ -922,10 +982,12 @@ async function executeTool(toolName, toolInput, session, inboundContext = {}) {
           .update(updates)
           .eq('reservation_id', reservation_id)
           .eq('restaurant_id', session.restaurant.id)
+          .eq('customer_phone', existing.customer_phone)
+          .eq('status', existing.status)
           .select()
           .single();
 
-        if (updateErr) {
+        if (updateErr || !updated) {
           logger.error(' Modify error:', updateErr);
           return { success: false, error: 'Could not modify reservation.' };
         }
@@ -1118,6 +1180,12 @@ async function executeTool(toolName, toolInput, session, inboundContext = {}) {
       // precisa responder é o pior estado possível — pior do que a esquiva de
       // hoje, porque a esquiva ao menos devolve alguma coisa ao cliente.
       const restaurante = session?.restaurant;
+      if (handoff.isPaused(session)) {
+        // A model retry after a successful tool call must not notify the host
+        // twice. The persisted pause is the durable idempotency signal.
+        return { success: true, paused: true,
+          message: handoff.mensagemAoCliente(restaurante?.language || 'en') };
+      }
       if (!handoff.isHandoffEnabled(session)) {
         // Não deveria chegar aqui: a tool nem é oferecida com o recurso
         // desligado. Se chegou, responder que não dá é melhor que pausar.
@@ -1154,6 +1222,9 @@ async function executeTool(toolName, toolInput, session, inboundContext = {}) {
         }
 
         const { sendWhatsAppMessage } = require('../../_lib/whatsapp-sender');
+        if (inboundContext.providerName !== 'meta' && inboundContext.providerName !== 'twilio') {
+          throw new Error('handoff notification unavailable for this WhatsApp provider');
+        }
         const envio = await sendWhatsAppMessage(
           cfg.manager_phone,
           handoff.mensagemAoHost({
@@ -1161,6 +1232,9 @@ async function executeTool(toolName, toolInput, session, inboundContext = {}) {
             customerPhone: session.sender_phone,
             reason: toolInput?.reason,
           }),
+          inboundContext.providerName === 'meta'
+            ? { provider: 'meta', phoneNumberId: inboundContext.receiver }
+            : { provider: 'twilio' },
         );
         if (envio?.success === false) throw new Error(envio.error || 'envio ao host falhou');
 

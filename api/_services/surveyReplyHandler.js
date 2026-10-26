@@ -30,7 +30,7 @@ const SURVEY_WINDOW_HOURS = 48;
  *   quebrar chamadores que não sabem o restaurante; quem sabe DEVE passar.
  * @returns {null | { rating: number, comment: string|null }} - null if not a survey reply
  */
-async function handleSurveyReply(phone, messageText, restaurantId) {
+async function handleSurveyReply(phone, messageText, restaurantId, inboundKey = null) {
   if (!phone || !messageText) return null;
 
   const trimmed = messageText.trim();
@@ -77,13 +77,13 @@ async function handleSurveyReply(phone, messageText, restaurantId) {
 
   if (svcErr) {
     logger.error('Failed to check survey status', { error: svcErr.message });
-    return null;
+    throw new Error('Survey status lookup failed');
   }
 
   if (!serviceRecord) return null;
 
   // Check if already responded
-  const { data: existing } = await supabaseAdmin
+  const { data: existing, error: existingErr } = await supabaseAdmin
     .schema('restaurant')
     .from('survey_responses')
     .select('id')
@@ -92,6 +92,8 @@ async function handleSurveyReply(phone, messageText, restaurantId) {
     .gte('created_at', cutoff)
     .limit(1)
     .maybeSingle();
+
+  if (existingErr) throw new Error('Survey response lookup failed');
 
   if (existing) {
     logger.info('Survey already responded', { phone: normalizedPhone.slice(0, 4) + '****' });
@@ -112,11 +114,12 @@ async function handleSurveyReply(phone, messageText, restaurantId) {
       rating,
       comment,
       reservation_id: serviceRecord.reservation_id || null,
+      ...(inboundKey ? { whatsapp_inbound_key: inboundKey } : {}),
     });
 
   if (insertErr) {
     logger.error('Failed to save survey response', { error: insertErr.message });
-    return null;
+    throw new Error('Survey response could not be saved');
   }
 
   logger.info('Survey response saved', {

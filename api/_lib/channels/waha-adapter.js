@@ -63,8 +63,8 @@ class WAHAAdapter extends ChannelAdapter {
   async verifySignature(req) {
     const apiKey = process.env.WAHA_API_KEY;
     if (!apiKey) {
-      logger.warn('WAHA_API_KEY not set — skipping signature check');
-      return true;
+      logger.error('WAHA_API_KEY not set — refusing unauthenticated webhook');
+      return false;
     }
     const incoming = req.headers['x-api-key'];
     if (incoming === apiKey) return true;
@@ -115,13 +115,13 @@ class WAHAAdapter extends ChannelAdapter {
 
     let text = '';
     let mediaContext = null;
+    let preprocessReply = null;
 
     if (messageType === 'chat') {
       text = payload.body || '';
     } else if (messageType === 'audio' || messageType === 'voice') {
       // WAHA NOWEB doesn't support transcription — ask customer to type
-      await this.sendMessage(from, 'Nao consigo processar audios no momento. Por favor, envie sua mensagem por texto.');
-      return null;
+      preprocessReply = 'Nao consigo processar audios no momento. Por favor, envie sua mensagem por texto.';
     } else if (messageType === 'image') {
       const caption = payload.caption || payload.body || '';
       mediaContext = '[Cliente enviou uma imagem]';
@@ -132,11 +132,10 @@ class WAHAAdapter extends ChannelAdapter {
       text = payload.caption || `Enviou um documento: ${filename}`;
     } else {
       // sticker, video, location, etc.
-      await this.sendMessage(from, 'Consigo processar mensagens de texto. Por favor, envie sua mensagem assim.');
-      return null;
+      preprocessReply = 'Consigo processar mensagens de texto. Por favor, envie sua mensagem assim.';
     }
 
-    if (!text) return null;
+    if (!text && !preprocessReply) return null;
 
     return {
       from,
@@ -144,20 +143,25 @@ class WAHAAdapter extends ChannelAdapter {
       text,
       messageType: messageType === 'chat' ? 'text' : messageType,
       mediaContext,
+      preprocessReply,
       interactiveSelection: null,
       profileName: payload.notifyName || null,
+      phoneNumberId: body.session || null,
     };
   }
 
   /**
    * Send a text message via WAHA.
    */
-  async sendMessage(to, text) {
+  async sendMessage(to, text, context = {}) {
+    const session = context.receiver;
+    if (!session || session !== process.env.WAHA_SESSION) {
+      return { success: false, error: 'Receiving WAHA session not verified', definitiveFailure: true };
+    }
     if (this.testMode) {
       logger.info(`[TEST MODE] Suppressed send to ${to}: ${text.substring(0, 100)}`);
       return { success: true, testMode: true };
     }
-    const session = process.env.WAHA_SESSION || 'default';
     const chatId = to.includes('@') ? to : `${to}@c.us`;
     try {
       await wahaAPI('POST', '/api/sendText', { session, chatId, text });

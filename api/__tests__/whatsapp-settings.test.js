@@ -12,6 +12,8 @@ const mockSingle = jest.fn();
 const mockUpdate = jest.fn();
 const mockFrom = jest.fn();
 const mockSchema = jest.fn();
+const mockRegistryUpdate = jest.fn();
+const mockRegistryUpsert = jest.fn();
 
 // Default count result (resolves immediately for .select with {count, head})
 const DEFAULT_COUNT = { count: 0, data: [], error: null };
@@ -44,6 +46,10 @@ jest.mock('../_lib/supabase', () => ({
 }));
 
 jest.mock('../_lib/auth', () => ({ verifyAuth: jest.fn() }));
+jest.mock('../_lib/restaurant-registry', () => ({
+  updateRestaurant: (...args) => mockRegistryUpdate(...args),
+  upsertRestaurant: (...args) => mockRegistryUpsert(...args),
+}));
 jest.mock('../_lib/rate-limit', () => ({ checkAndApplyRateLimit: jest.fn().mockResolvedValue(false) }));
 jest.mock('../_lib/whatsapp-sender', () => ({
   isWhatsAppConfigured: jest.fn(),
@@ -237,6 +243,27 @@ describe('WhatsApp Settings: update', () => {
     expect(json.success).toBe(true);
     expect(json.data.enabled).toBe(true);
     expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({ whatsapp_enabled: true }));
+    expect(mockRegistryUpdate).not.toHaveBeenCalled();
+    expect(mockRegistryUpsert).not.toHaveBeenCalled();
+  });
+
+  test('disabling reservation notices does not deactivate inbound restaurant routing', async () => {
+    mockSingle.mockResolvedValueOnce({
+      data: { whatsapp_enabled: false, whatsapp_phone_number: '+5511999999999' },
+      error: null,
+    });
+
+    const { req, res } = mkReqRes({
+      method: 'PATCH',
+      query: { action: 'update' },
+      body: { enabled: false },
+    });
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(mockUpdate).toHaveBeenCalledWith({ whatsapp_enabled: false });
+    expect(mockRegistryUpdate).not.toHaveBeenCalled();
+    expect(mockRegistryUpsert).not.toHaveBeenCalled();
   });
 
   test('updates phone number', async () => {

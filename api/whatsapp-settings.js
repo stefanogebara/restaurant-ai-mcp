@@ -17,7 +17,6 @@ const { isWhatsAppConfigured, sendWhatsAppMessage, sendTemplateMessage, getWhats
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { initSentry, captureException } = require('./_lib/sentry');
-const { upsertRestaurant, updateRestaurant: updateRegistryRestaurant } = require('./_lib/restaurant-registry');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const {
   normalizeWhatsAppTestPhone,
@@ -323,38 +322,9 @@ async function handleUpdate(req, res, restaurantId) {
 
   logger.info(`WhatsApp settings updated for ${restaurantId}:`, updates);
 
-  // Sync enabled/disabled state to restaurant_registry so the webhook can route messages
-  if (typeof enabled === 'boolean') {
-    try {
-      if (!enabled) {
-        await updateRegistryRestaurant(restaurantId, { is_active: false });
-        logger.info(`Registry deactivated for ${restaurantId}`);
-      } else {
-        // Fetch restaurant name for registry upsert
-        const { data: config } = await supabaseAdmin
-          .schema('restaurant')
-          .from('restaurant_config')
-          .select('restaurant_name, agent_language')
-          .eq('id', restaurantId)
-          .single();
-
-        if (config) {
-          await upsertRestaurant(restaurantId, {
-            restaurant_name: config.restaurant_name,
-            language: config.language || 'en',
-            is_active: true,
-            // Store the restaurant's dedicated phone_number_id if configured in env
-            // (used for per-restaurant WhatsApp routing when each has their own number)
-            whatsapp_phone_number_id: config.whatsapp_phone_number_id || null,
-          });
-          logger.info(`Registry upserted for ${restaurantId} (${config.restaurant_name})`);
-        }
-      }
-    } catch (syncErr) {
-      // Non-fatal: log but don't fail the settings update
-      logger.warn(`Registry sync failed for ${restaurantId} (non-fatal):`, syncErr.message);
-    }
-  }
+  // whatsapp_enabled gates outbound reservation notices. The central registry
+  // controls inbound tenant routing and restaurant activation; toggling notices
+  // must never deactivate the restaurant or overwrite its dedicated receiver.
 
   return res.status(200).json({
     success: true,

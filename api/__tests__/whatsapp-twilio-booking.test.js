@@ -1,4 +1,20 @@
 'use strict';
+jest.mock('../_lib/channels/inbound-reply', () => ({
+  getPendingReply: jest.fn().mockResolvedValue(null),
+  savePendingReply: jest.fn().mockResolvedValue(undefined),
+  getRecordedRating: jest.fn().mockResolvedValue(null),
+  replyKey: jest.fn(() => 'inbound-reply:test'),
+}));
+jest.mock('../_lib/channels/inbound-completion', () => ({
+  wasCompleted: jest.fn().mockResolvedValue(false),
+  markCompleted: jest.fn().mockResolvedValue(undefined),
+  wasRateBlocked: jest.fn().mockResolvedValue(false),
+  markRateBlocked: jest.fn().mockResolvedValue(undefined),
+  claimRateCount: jest.fn().mockResolvedValue(true),
+  hasSendAttempt: jest.fn().mockResolvedValue(false),
+  reserveSendAttempt: jest.fn().mockResolvedValue(undefined),
+  releaseRejectedSend: jest.fn().mockResolvedValue(undefined),
+}));
 
 // ─── Mocks (hoisted before require) ───────────────────────────────────────────
 
@@ -71,7 +87,9 @@ jest.mock('../_lib/whatsapp-sessions', () => ({
 jest.mock('../_lib/restaurant-registry', () => ({
   getRestaurantByName: jest.fn().mockResolvedValue({ match: null, confidence: 0 }),
   getRestaurantById: jest.fn().mockResolvedValue(null),
-  getAllActiveRestaurants: jest.fn().mockResolvedValue([]),
+  getAllActiveRestaurants: jest.fn().mockResolvedValue([
+    { id: 'rest-123', restaurant_name: 'Test Restaurant' },
+  ]),
 }));
 
 // insertSingle stored on module for post-require access
@@ -186,9 +204,11 @@ jest.mock('twilio', () => {
 process.env.ANTHROPIC_API_KEY = 'sk-ant-test';
 // Set a test auth token — validateRequest is mocked to return true
 process.env.TWILIO_AUTH_TOKEN = 'test-twilio-auth-token';
+process.env.TWILIO_ACCOUNT_SID = 'AC-test-account';
 // No template → skip template send
 delete process.env.TWILIO_TEMPLATE_RESERVATION_CONFIRMED;
 process.env.TWILIO_WHATSAPP_NUMBER = 'whatsapp:+14155238886';
+process.env.TWILIO_RESTAURANT_ID = 'rest-123';
 
 // ─── Load handler and mocked refs ────────────────────────────────────────────
 
@@ -230,6 +250,8 @@ function makeSession(opts = {}) {
     id: 'sess-789',
     sender_phone: '+15551234567',
     restaurant_id: opts.noRestaurant ? null : 'rest-123',
+    inbound_provider: 'twilio',
+    inbound_receiver: '+14155238886',
     restaurant_confirmed: true,
     conversation_history: [],
     context: opts.context || {},
@@ -346,7 +368,7 @@ describe('twilio-whatsapp-webhook (Twilio path)', () => {
 
   // ── 2. Duplicate MessageSid → skip AI ─────────────────────────────────────
   it('returns empty TwiML immediately on duplicate MessageSid', async () => {
-    isMessageDuplicate.mockResolvedValue(true);
+    require('../_lib/channels/inbound-completion').wasCompleted.mockResolvedValueOnce(true);
 
     const req = mockReq('POST', {
       body: twilioBody('+15551234567', 'Book a table', 'SM_DUPLICATE'),
@@ -360,6 +382,16 @@ describe('twilio-whatsapp-webhook (Twilio path)', () => {
     expect(res.status).toHaveBeenCalledWith(200);
     const sentBody = res.send.mock.calls[0]?.[0] || '';
     expect(sentBody).toContain('<Response>');
+  });
+
+  it('returns 503 when completion storage fails before AI processing', async () => {
+    require('../_lib/channels/inbound-completion').wasCompleted
+      .mockRejectedValueOnce(new Error('database unavailable'));
+    const req = mockReq('POST', { body: twilioBody('+15551234567', 'Book a table', 'SM_RETRY') });
+    const res = mockRes();
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(503);
+    expect(mockProcessWithAI).not.toHaveBeenCalled();
   });
 
   // ── 3. Missing Body field → empty TwiML ───────────────────────────────────
@@ -382,11 +414,11 @@ describe('twilio-whatsapp-webhook (Twilio path)', () => {
     expect(sentBody).toContain('<Response>');
   });
 
-  // ── 4. No restaurant in session and no restaurants in registry → graceful error ─────────
-  it('sends graceful error message when no restaurant can be found for routing', async () => {
-    // Session has no restaurant and registry returns none → should bail, not call AI
+  // ── 4. No restaurant in registry → retry, never invent a tenant ─────────
+  it('retries when registry is empty rather than routing or sending as another tenant', async () => {
+    // Unknown receiver ownership must fail closed, not choose the first house.
     getOrCreateSession.mockResolvedValue(makeSession({ noRestaurant: true }));
-    // getAllActiveRestaurants is already mocked to return [] at module level
+    require('../_lib/restaurant-registry').getAllActiveRestaurants.mockResolvedValueOnce([]);
 
     const req = mockReq('POST', {
       body: twilioBody('+15551234567', 'I want to make a reservation'),
@@ -395,9 +427,9 @@ describe('twilio-whatsapp-webhook (Twilio path)', () => {
 
     await handler(req, res);
 
-    // AI should NOT be called — we bail out with a maintenance message
+    // AI must not run; registry read may be temporarily unavailable.
     expect(mockProcessWithAI).not.toHaveBeenCalled();
-    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.status).toHaveBeenCalledWith(503);
   });
 
   // ── 6. cancel_reservation tool → success (via unified processor) ──────────

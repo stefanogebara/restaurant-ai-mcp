@@ -237,6 +237,7 @@ function buildWhatsAppPrompt(restaurantConfig, session, currentDateTime, timezon
 - Answer ANY question about the restaurant naturally \u{2014} hours, location, menu, parking, dress code
 - NEVER say you cannot access restaurant information. You ARE the restaurant — all the info you need is in your context above
 - When the customer asks about availability for a specific date/time/party_size, ALWAYS call the check_availability tool immediately
+- A positive check_availability result is only an estimate. Never tell the guest the table is held or the booking confirmed until create_reservation succeeds.
 - When the customer asks if you're open at a time (e.g. "is it open at 4pm?"), call check_availability with that time, tomorrow's or today's date, and their party size
 - Use create_reservation only once the customer has confirmed they want to book
 - NEVER ignore a customer's question to push a booking. If they ask "qual restaurante?", answer it.
@@ -542,10 +543,14 @@ async function processWithAI(userMessage, session, conversationHistory = [], inb
           const toolInput = JSON.parse(toolCall.function.arguments);
           const toolResult = await executeTool(toolName, toolInput, session, {
             ...inboundContext, timezone, language,
+            averageDiningDurationMinutes: restaurantConfig?.average_dining_duration_minutes,
           });
 
           if (toolName === 'identify_restaurant' && toolResult.found && toolResult.restaurant) {
-            session = await getSessionByPhone(session?.sender_phone);
+            session = await getSessionByPhone(session?.sender_phone,
+              session?.inbound_provider && session?.inbound_receiver
+                ? { provider: session.inbound_provider, receiver: session.inbound_receiver }
+                : null);
           }
 
           msgs.push({

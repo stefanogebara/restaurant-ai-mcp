@@ -79,6 +79,7 @@ class MetaAdapter extends ChannelAdapter {
     let text = '';
     let interactiveSelection = null;
     let mediaContext = null;
+    let preprocessReply = null;
 
     if (messageType === 'text') {
       text = message.text?.body || '';
@@ -95,27 +96,22 @@ class MetaAdapter extends ChannelAdapter {
       const audioMediaId = message.audio?.id;
       if (audioMediaId) {
         try {
-          addReactionAPI(from, messageId, '\uD83C\uDFA4').catch(() => {});
           text = await transcribeVoiceMessage(audioMediaId);
-          removeReactionAPI(from, messageId).catch(() => {});
           if (!text.trim()) {
-            await this.sendMessage(from, 'Nao consegui entender o audio. Poderia tentar novamente ou digitar sua mensagem?');
-            return null;
+            preprocessReply = 'Nao consegui entender o audio. Poderia tentar novamente ou digitar sua mensagem?';
           }
-          logger.info(`Voice transcribed from ${from}: ${text.substring(0, 80)}`);
+          logger.info('Voice message transcribed');
         } catch (err) {
-          removeReactionAPI(from, messageId).catch(() => {});
           // Áudio acima do teto tem resposta PRÓPRIA: dizer "não consegui
           // processar" faria o cliente reenviar o mesmo áudio gigante, pagando
           // o download de novo. Pedir para encurtar resolve de primeira.
           if (err && err.name === 'MidiaGrandeDemais') {
             logger.info(`Audio recusado por tamanho: ${err.bytes} bytes (teto ${err.teto})`);
-            await this.sendMessage(from, 'Esse audio ficou muito longo pra mim. Pode mandar um mais curto ou escrever sua mensagem?');
-            return null;
+            preprocessReply = 'Esse audio ficou muito longo pra mim. Pode mandar um mais curto ou escrever sua mensagem?';
+          } else {
+            logger.error('Voice transcription failed:', err.message);
+            preprocessReply = 'Desculpe, nao consegui processar o audio. Por favor, envie sua mensagem por texto.';
           }
-          logger.error('Voice transcription failed:', err.message);
-          await this.sendMessage(from, 'Desculpe, nao consegui processar o audio. Por favor, envie sua mensagem por texto.');
-          return null;
         }
       }
     } else if (messageType === 'image') {
@@ -138,11 +134,10 @@ class MetaAdapter extends ChannelAdapter {
       text = caption || `Sent a document: ${filename}`;
     } else {
       // Unsupported type
-      await this.sendMessage(from, 'Consigo processar mensagens de texto e audio. Por favor, envie sua mensagem assim.');
-      return null;
+      preprocessReply = 'Consigo processar mensagens de texto e audio. Por favor, envie sua mensagem assim.';
     }
 
-    if (!text && messageType !== 'text' && messageType !== 'interactive') {
+    if (!text && !preprocessReply && messageType !== 'text' && messageType !== 'interactive') {
       return null;
     }
 
@@ -152,30 +147,38 @@ class MetaAdapter extends ChannelAdapter {
       text,
       messageType,
       mediaContext,
+      preprocessReply,
       interactiveSelection,
       profileName: value.contacts?.[0]?.profile?.name || null,
       phoneNumberId: value.metadata?.phone_number_id || null,
     };
   }
 
-  async sendMessage(to, text) {
-    return sendWhatsAppMessage(to, text, { provider: 'meta' });
+  async sendMessage(to, text, context = {}) {
+    if (!/^\d{5,30}$/.test(context.receiver || '')) {
+      return { success: false, error: 'Receiving Meta account not verified', definitiveFailure: true };
+    }
+    return sendWhatsAppMessage(to, text, { provider: 'meta', phoneNumberId: context.receiver });
   }
 
-  async markAsRead(messageId) {
-    return markAsReadAPI(messageId);
+  async markAsRead(messageId, context = {}) {
+    return markAsReadAPI(messageId, context.receiver);
   }
 
-  async addReaction(to, messageId, emoji) {
-    return addReactionAPI(to, messageId, emoji);
+  async addReaction(to, messageId, emoji, context = {}) {
+    return addReactionAPI(to, messageId, emoji, context.receiver);
   }
 
-  async removeReaction(to, messageId) {
-    return removeReactionAPI(to, messageId);
+  async removeReaction(to, messageId, context = {}) {
+    return removeReactionAPI(to, messageId, context.receiver);
   }
 
-  async sendInteractiveList(to, bodyText, buttonText, sections) {
-    return sendInteractiveListMessage(to, bodyText, buttonText, sections);
+  async sendInteractiveList(to, bodyText, buttonText, sections, context = {}) {
+    if (!/^\d{5,30}$/.test(context.receiver || '')) {
+      return { success: false, error: 'Receiving Meta account not verified' };
+    }
+    return sendInteractiveListMessage(to, bodyText, buttonText, sections,
+      { phoneNumberId: context.receiver });
   }
 
   async sendButtons(to, bodyText, buttons) {

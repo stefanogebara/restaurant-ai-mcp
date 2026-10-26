@@ -28,13 +28,17 @@ const WHATSAPP_API_URL = 'https://graph.facebook.com/v18.0';
  * @param {Array} sections - Array of { title, rows: [{ id, title, description }] }
  * @returns {object} Result with success status
  */
-async function sendInteractiveListMessage(to, bodyText, buttonText, sections) {
-  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+async function sendInteractiveListMessage(to, bodyText, buttonText, sections, options = {}) {
+  const phoneNumberId = options.phoneNumberId || process.env.WHATSAPP_PHONE_NUMBER_ID;
   const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
+
+  if (options.phoneNumberId && !/^\d{5,30}$/.test(options.phoneNumberId)) {
+    return { success: false, error: 'Invalid Meta receiver', definitiveFailure: true };
+  }
 
   if (!phoneNumberId || !accessToken) {
     logger.error(' Missing WHATSAPP_PHONE_NUMBER_ID or WHATSAPP_ACCESS_TOKEN');
-    return { success: false, error: 'WhatsApp not configured' };
+    return { success: false, error: 'WhatsApp not configured', definitiveFailure: true };
   }
 
   try {
@@ -73,7 +77,8 @@ async function sendInteractiveListMessage(to, bodyText, buttonText, sections) {
 
     if (!response.ok) {
       logger.error(' Interactive list send error:', data);
-      return { success: false, error: data.error?.message || 'Failed to send interactive list' };
+      return { success: false, error: data.error?.message || 'Failed to send interactive list',
+        definitiveFailure: response.status >= 400 && response.status < 500 };
     }
 
     logger.info(` Interactive list sent to ${to}, messageId: ${data.messages?.[0]?.id}`);

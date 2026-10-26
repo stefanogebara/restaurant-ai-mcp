@@ -37,6 +37,7 @@ function criarClienteFalso(linhas) {
       limit() { return finalizar(); },
       select() { return q; },
       single() { return finalizar(true); },
+      maybeSingle() { return finalizar(true); },
       then(resolve, reject) { return finalizar().then(resolve, reject); },
     };
 
