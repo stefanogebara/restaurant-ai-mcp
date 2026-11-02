@@ -11,6 +11,32 @@
 
 ## Em aberto — precisa de decisão do Stefano
 
+### [DISCUTIR 10/15] ElevenLabs lança tier de LLM mais rápido (e mais caro) — não quebra o snapshot de payload, mas destrava um teste que a instrumentação de voz ainda não tem como julgar
+**Data:** 2026-10-26 · **Fonte:** [ElevenLabs changelog](https://elevenlabs.io/docs/changelog) · **Eixos:** P3 A2 D2 E1 L2
+
+**O que é:** a entrada de 26/10 do changelog da ElevenAgents adiciona `service_tier` (`standard`/`fast`) à configuração de prompt do agente — `fast` troca um premium por token por maior throughput e menor latência, em LLMs marcados com `fast` em `available_service_tiers` no endpoint List LLMs. É opt-in, default inalterado (`standard`).
+
+**O que a fonte não prova:** não lista quais LLMs suportam o tier (não confirma se `gpt-4o-mini`, hardcoded no repo, está na lista), não dá o valor do premium (só remete à calculadora), e não publica benchmark de latência antes/depois — é anúncio de capacidade, não dado medido.
+
+**Por que toca este projeto:** os dois pontos de criação de agente (`api/_services/elevenlabsAgentService.js:872-909`, o caminho real; e o duplicado `api/elevenlabs-agent-create.js:225-263`) montam `conversation_config.agent.prompt` com `llm: 'gpt-4o-mini'` e sem nenhuma chave `service_tier` — é o ponto literal de inserção se quiséssemos testar o tier. Diferente do incidente de 24/08 (`mic_muting_enabled`), isto não é um default mudando em silêncio — é campo novo, opt-in, que o snapshot atual (`api/__tests__/elevenlabs-agent-create-payload.test.js`) não precisa cobrir enquanto não for ativado.
+
+**A pergunta:** vale abrir um spike pra testar `service_tier: 'fast'` no `gpt-4o-mini` (primeiro checando no List LLMs se ele está em `available_service_tiers`, e o premium real na calculadora) mesmo sem instrumentação de latência hoje pra provar o ganho (`known_gaps` #1) — ou isso espera a instrumentação ser construída primeiro, já que do contrário pagaríamos mais por token sem conseguir medir o que comprou?
+
+---
+
+### [DISCUTIR 9/15] A Twilio formaliza um produto de voz concorrente ao que o Seatable usa — dentro da própria Twilio
+**Data:** 2026-10-28 · **Fonte:** [Twilio changelog](https://www.twilio.com/en-us/changelog/conversation-relay--dynamic-configuration--application-reconnect) · **Eixos:** P2 A2 D2 E1 L2
+
+**O que é:** `<ConversationRelay>`, o produto TwiML em que a própria Twilio faz ASR e TTS e troca só texto com a aplicação do cliente via WebSocket, sai de beta (GA, 28/10) com quatro capacidades novas: reconfiguração de sessão em pleno call (voz/ASR/TTS/idioma) sem cair a chamada; `applicationReconnect` (buffer de até 500 eventos, re-entrega se a app cair); `echoPromptFiltering` (filtra o próprio TTS do agente voltando pelo microfone do chamador, evitando auto-interrupção); e a lista de vozes TTS suportadas passa a incluir ElevenLabs v3 Conversational e v4 Turbo.
+
+**O que a fonte não prova:** é nota de release da própria Twilio — zero benchmark de latência, zero taxa de falso-positivo do echo filtering, zero comparação de qualidade contra a alternativa. Copy técnico de anúncio, não dado auditável.
+
+**Por que toca este projeto — e por que não é um complemento plugável:** Conversation Relay é DIFERENTE do Media Streams (`<Connect><Stream>`) que este repo usa hoje (`api/twilio-voice-connect.js` → `api/_voice-server/ws-server.js` na Fly.io → agente completo ElevenLabs Conversational AI ou backend OpenAI Realtime). Adotá-lo significaria a Twilio passar a ser dona de ASR+TTS, com o Seatable reconstruindo a orquestração de LLM/tool-calling em texto puro — perdendo o agente nativo da ElevenLabs (as 8 tools de `api/_voice-server/tool-handler.js`, o KB sync de `elevenlabsAgentService.js`) e o pipeline de áudio cru do OpenAI Realtime. `echoPromptFiltering` toca direto o `known_gap` de barge-in/instrumentação de voz — mas só se a app migrar de arquitetura. `grep` por `ConversationRelay`/`conversationrelay`: zero ocorrências hoje.
+
+**A pergunta:** Conversation Relay resolveria em teoria o turn-taking divergente e a falta de instrumentação de barge-in (echo filtering nativo, ASR único unificando o comportamento hoje fragmentado entre ElevenLabs e OpenAI Realtime) — mas custa abandonar o agente completo da ElevenLabs e reconstruir essa orquestração como texto puro. Vale um spike isolado (uma linha Twilio de teste com `<ConversationRelay>`, medindo latência e auto-interrupção) para quantificar o ganho antes de decidir se migramos, ou isso é descartável porque a arquitetura de voz não trocaria por esse motivo?
+
+---
+
 ### [DISCUTIR 10/15] A Colibri comprou CRM e reserva — e tem adquirência própria no Brasil, que o Seatable não tem
 **Data:** 2026-10-21 · **Fonte:** [Startups.com.br](https://startups.com.br/negocios/colibri-faz-novas-aquisicoes-e-amplia-ecossistema-para-restaurantes/) · **Eixos:** P2 A1 D2 E2 L3
 
@@ -39,120 +65,7 @@
 
 **A pergunta:** vale um spike de meio dia testando se o cliente WebSocket que hoje fala com `openai-realtime.js` consegue, com só troca de endpoint/config, falar com o Eleven Realtime v1 — confirmando ou refutando a afirmação da ElevenLabs na prática — antes de decidir se isso simplifica a abstração de dois motores ou é só semelhança superficial de protocolo? E, separado: `turn_prediction` é candidato a substituir o `server_vad` hardcoded como estratégia de commit, mas só caso a pingue a instrumentação de latência/barge-in que nenhum dos dois motores tem hoje — vale medir antes de trocar?
 
----
-
-### [DISCUTIR 8/15] Prosus — controladora do iFood — está apostando no exato nicho da bets[2], só que por câmera e PDV
-**Data:** 2026-09-14 · **Fonte:** [Startups.com.br](https://startups.com.br/negocios/rodada-de-investimento/prosus-sobe-aposta-em-ia-nos-restaurantes-e-investe-us-15m-na-emilia-ai/) · **Eixos:** P1 A1 D1 E2 L3
-
-**O que é:** a Emilia AI (fundada por dois colombianos em 2024, sede nos EUA, Brasil declarado como mercado principal) levantou US$1,5M pre-seed, US$1M liderado pela **Prosus Ventures** (braço de venture early-stage da Prosus, controladora do iFood) + US$500k de anjos. O produto instala IA sobre câmeras de segurança que o restaurante já tem, cruzando vídeo com dado de PDV: agente "Coach" aponta oportunidade de upsell perdida (sobremesa/bebida não oferecida); agente "Sentinel" é antifraude (prato que saiu sem lançar, caixa que não bateu). Dois pilotos citados: Alife Nino (100+ estabelecimentos BR, ROI autodeclarado de ~28x — US$300/mês de receita extra por mesa contra US$10 de custo) e Jin Jin (rede franqueada do iFood, 77+ lojas em expansão da solução depois do Sentinel achar fraude em 12h de gravação analisada).
-
-**O que a fonte não prova:** nenhum número de clientes totais, receita da Emilia, ou taxa de conversão fora dos dois pilotos citados — tudo relatado pelos próprios fundadores/clientes, sem auditoria terceira. Não há evidência de que a Emilia grava dado de cliente em CRM próprio ou fecha loop de receita — ela descreve só a camada de operação/antifraude, não de relacionamento com o hóspede.
-
-**Por que toca este projeto:** a Emilia **não é concorrente direto** — não faz reserva, voz ou WhatsApp. Mas é evidência direta de capital de risco validando as apostas 2 e 3 do config (dado do cliente é o ativo; restaurante independente brasileiro é subatendido) vindo de um investidor que é a própria controladora do maior concorrente indireto do Brasil — a Prosus/iFood já comprou Get In (reservas), tem participação em Saipos/OPDV/3S Checkout e Anota AI, e agora financia uma camada de inteligência de operação para o mesmo público (restaurante independente brasileiro) que o Seatable ataca pelo lado de reserva/voz/WhatsApp.
-
-**A pergunta:** isso é só mais uma peça do padrão já registrado (iFood comprando/financiando toda a camada operacional do restaurante independente brasileiro, settled como "conector de leitura" para Saipos) — ou o fato de ser câmera+PDV, não reserva, muda alguma coisa na urgência? Especificamente: se o Jin Jin (rede do próprio iFood) está escalando Sentinel/Coach para 77+ lojas, isso é sinal de que o iFood está testando, através de investidas, qual camada de inteligência vale comprar/replicar internamente depois — e a próxima pode ser justamente CRM/reserva, onde o Seatable joga?
-
----
-
-### [DISCUTIR 9/15] Twilio tagueia qualidade de áudio na perna PSTN — mas não mede o que falta de verdade
-**Data:** 2026-10-09 · **Fonte:** [Twilio changelog](https://www.twilio.com/en-us/changelog.html) · **Eixos:** P3 A2 D1 E1 L2
-
-**O que é:** o Twilio Voice Insights passa a marcar cada chamada como "HD Audio" (codec AMR-WB/Opus negociado) ou "Downsampled" (trecho caiu para banda estreita), exposto no Call Summary do Console, na REST API e em Event Streams. A tag é calculada na perna carrier/PSTN — diferente do componente Voice JS SDK já descartado em 24/08 (que só vale pra softphone de navegador), este é alcançável no caminho Twilio→Fly.io deste projeto, porque mede a perna do carrier, não o fork de Media Streams.
-
-**O que a fonte não prova:** não há benchmark, amostra nem confirmação se a tag é recurso Basic (grátis) ou Advanced (cobrado por minuto). E, mais importante: ela mede qualidade de **codec** na perna PSTN, não **latência** nem **erro de barge-in** dentro do pipeline real (Fly.io → ElevenLabs/OpenAI Realtime) — que é o buraco central já registrado no `known_gaps` de instrumentação de voz.
-
-**Aterramento no repo:** `callSid` já trafega por `api/_voice-server/session-manager.js`/`ws-server.js` (vindo do evento `start` do Media Stream), mas nunca é persistido em `agent_conversations` — só o `conversation_id` da ElevenLabs é salvo. Aproveitar esta tag exigiria schema novo + wiring, não é "grátis e já disponível". `grep` por "Voice Insights" no repo: zero ocorrências.
-
-**A pergunta:** vale abrir um spike pra persistir o `call_sid` e consultar a tag HD Audio/Downsampled via Voice Insights REST API — como sinal barato de qualidade de codec na perna PSTN — ou isso é descartável porque não mede o que realmente falta (latência e barge-in dentro do pipeline Fly.io/ElevenLabs), que é o alvo real do `known_gap`?
-
----
-
-### [DISCUTIR 9/15] ElevenLabs trocou o default de TTS — mas o snapshot de payload já nos protege
-**Data:** 2026-10-05 · **Fonte:** [ElevenLabs changelog](https://elevenlabs.io/docs/changelog) · **Eixos:** P3 A2 D1 E2 L1
-
-**O que é:** a entrada de 05/10 do changelog da ElevenAgents traz três mudanças: "Update agent"/"Create agent draft" passam a compilar/validar structured procedures automaticamente (o repo não usa procedures nem branches de agente — zero superfície aqui); "Merge proposals" entra em alpha; e o modelo de TTS conversacional default passa de `eleven_flash_v2` para **`eleven_v4_turbo`** quando a chamada não especifica `model_id`.
-
-**Por que isto não nos pega de surpresa, ao contrário do incidente de 24/08:** os dois pontos de criação de agente do Seatable (`api/_services/elevenlabsAgentService.js:883` e `api/elevenlabs-agent-create.js:128/245`) hardcodam `model_id` por idioma (`eleven_flash_v2` EN / `eleven_flash_v2_5` PT) em toda chamada — nunca herdam o default do fornecedor — e isso está travado por `api/__tests__/elevenlabs-agent-create-payload.test.js` desde o fechamento do spike `elevenlabs-payload-snapshot` (01/09). Esse teste cobre exatamente `tts.model_id`, então a mudança de default da ElevenLabs **não nos afeta sem ação nossa**. Correção aplicada no `known_gaps` do `intel.config.json` nesta rodada: a entrada que dizia "não há snapshot" estava desatualizada.
-
-**O que a fonte não prova:** se o novo default se aplica retroativamente a agentes já existentes, nem traz número de latência/qualidade do `eleven_v4_turbo` em pt-BR.
-
-**A pergunta:** dado que não somos afetados passivamente, vale abrir um spike para testar `eleven_v4_turbo` em pt-BR (latência/qualidade) como upgrade **deliberado** — já que a instrumentação de voz continua no `known_gap` zero-métrica — ou isso fica parado até existir medição de latência implementada?
-
----
-
-### [DISCUTIR 8/15] A Toast — parceira da Resy — está construindo o próprio atendente de telefone
-**Data:** 2026-10-07 · **Fonte:** [Nation's Restaurant News](https://www.nrn.com/restaurant-technology/toast-unveils-an-array-of-new-ai-agents-for-restaurants) · **Eixos:** P2 A1 D2 E1 L2
-
-**O que é:** a Toast expande o Toast IQ com a categoria "Team" (US$60/mês + US$9/funcionário), cujo carro-chefe é o Scheduling Agent já lançado (41% menos hora extra por funcionário, autodeclarado, sem amostra). Em paralelo, abriu early access para três agentes "em desenvolvimento": **Answering Agent** (atende ligação — a matéria não descreve como), Menu Agent (atualiza cardápio online) e Configurable Agents.
-
-**O que a fonte não prova:** o Answering Agent é citado numa frase, sem mecanismo, telefonia, idioma, preço ou data de lançamento geral. Não há menção a Resy nesta peça — a ligação Resy+Toast é framing do scout, não da fonte.
-
-**Por que toca este projeto mesmo assim:** Toast, já parceira do Digital Chit da Resy, confirma com mais um incumbente o padrão estrutural já registrado em `BACKLOG.md` (Resy+Toast, Square+OpenTable, Presto+Toast) de POS virando camada de atendimento — exatamente a `bets[0]` já revisada ("end-to-end é piso, não diferencial"). Não ameaça direto porque Toast não opera no Brasil e não fala português/WhatsApp.
-
-**A pergunta:** Toast verticalizando o próprio atendimento telefônico por IA é mais uma confirmação de que "atender telefone" virou piso de qualquer POS americano. Vale usar esse movimento como gatilho comercial da Olímpia ("antes que um POS brasileiro copie isso aqui"), ou é cedo demais para um recurso ainda em early access sem data nem mecanismo publicado?
-
----
-
-### [DISCUTIR 10/15] Slang AI vende memória-entre-chamadas; o Seatable já lê memória na ligação, mas nunca escreve de volta
-**Data:** 2026-10-05 · **Fonte:** [PRNewswire](https://www.prnewswire.com/news-releases/slang-ai-introduces-the-superhost-the-most-natural-restaurant-caller-experience-in-the-world-302898024.html) · **Eixos:** P3 A2 D2 E1 L2
-
-**O que é:** o "Superhost" da Slang AI persiste memória entre chamadas chaveada por telefone (reconhece recorrente, reserva futura, alergia, aniversário), afirma distinguir tom emocional na fala ("ok exasperado" vs. "ok satisfeito"), fala 97 idiomas e monitora toda chamada sob SOC2 Type II. Cobre telefone, texto e web — sem WhatsApp. Três clientes citados (Gusto54, KNEAD, Founding Farmers), satisfação autodeclarada 95%+, sem metodologia nem amostra.
-
-**Correção à premissa inicial:** a ligação de voz do Seatable **não é cega hoje**. `api/_voice-server/ws-server.js` (~linha 196-214) já chama `buildGuestContext` de `api/_services/guestMemory.js` e injeta preferências/ocasiões/notas de gerente no system prompt antes da ligação conectar, desde `b49b8dd2` (26/08). O que de fato falta, confirmado por grep, é o sentido contrário: `extractMemoriesFromWhatsApp` só é chamado em `api/_lib/channels/message-processor.js` (canal WhatsApp) — nenhuma ligação de voz escreve memória nova de volta. Também confirmado por grep: zero detecção de tom/sentimento em `api/_voice-server/` — isso é exclusivo da Slang hoje. E `LANGUAGE_CONFIG` em `api/_lib/persona-prompt-builder.js` cobre só 6 idiomas, bem abaixo dos 97 anunciados (provavelmente diferença de prompt, não de motor — ambos usam ASR/TTS de terceiro).
-
-**O que a fonte não prova:** 95%+ de satisfação e "milhares de locais" são números do próprio vendedor, sem amostra, sem comparação com baseline, sem benchmark auditável.
-
-**A pergunta:** com um concorrente bem financiado vendendo memória-entre-chamadas e monitoramento de qualidade como diferencial — ambos itens que tocam exatamente um `known_gap` já registrado (zero instrumentação de latência/qualidade de voz) e uma assimetria real no código (voz lê memória, nunca escreve) — vale adiantar na fila: (a) fechar o round-trip de memória na ligação de voz, e (b) a instrumentação de qualidade/latência já conhecida? Ou isso continua atrás da prospecção e do Racha na priorização atual?
-
----
-
-### [DISCUTIR 8/15] DashOS: a DoorDash executa a bets[1] em escala, com números que ninguém auditou
-**Data:** 2026-09-30 · **Fontes:** [Investing.com (DashOS)](https://www.investing.com/news/company-news/doordash-launches-dashos-platform-to-connect-restaurant-services-93CH-4925247) · [TechCrunch (agente iMessage)](https://techcrunch.com/2026/09/30/doordash-launches-an-ai-agent-you-can-text-to-order-food/) · **Eixos:** P2 A1 D2 E1 L2
-
-**O que é:** DashOS unifica num perfil único por restaurante marketplace, pedido direto, loyalty e reserva (via SevenRooms, já da DoorDash), com IA para recomendação de reserva, resposta a review, campanha e atendimento de voz. No mesmo dia, a DoorDash lançou (waitlist EUA) um agente de pedido por texto livre dentro do Apple Messages, casando telefone a histórico e montando pedido de grupo com preferência por pessoa. Números citados pela própria empresa: +15% em reservas num teste de jul-ago, US$10mil+/mês de receita por restaurante atribuída ao Voice AI da SevenRooms, US$150M em vendas via campanha (jan-ago), 1,8x/1,75x em frequência/gasto no loyalty — tudo sem amostra, controle ou metodologia publicados.
-
-**Por que toca este projeto:** é a execução em produto, com números (ainda que não auditáveis), do movimento de consolidação já registrado como mudança estrutural desde 22/08 (DoorDash comprando SevenRooms) — confirma, não inaugura. Toca `bets[1]` (dado do cliente é o ativo) e o mesmo ponto que o known_gap já registra: `api/square.js` descarta o catálogo e não existe tabela de menu, `api/_voice-server/tool-handler.js` só tem tools de reserva, zero pedido/takeout — exatamente o que o agente de iMessage ilumina.
-
-**O que a fonte não prova:** todos os números-chave são autodeclarados; o agente de iMessage é anúncio de waitlist, sem métrica de adoção ou precisão.
-
-**A pergunta:** a DoorDash escolheu iMessage, não WhatsApp — fora do Brasil por desenho, o que reforça o `settled` de que o WhatsApp é a porta que os americanos não têm. É só questão de tempo até um incumbente brasileiro (iFood/Rappi) replicar o mesmo agente dentro do WhatsApp? Se replicar, a janela de "reserva conversacional em português" fecha em meses. Vale tratar pedido como extensão natural do agente de WhatsApp agora, ou isso fica fora do produto por decisão (reserva+CRM, não marketplace de pedido)?
-
----
-
-### [DISCUTIR 9/15] Supabase cobra Logs Ingest por uso a partir de 2027 — vale uma checagem agora?
-**Data:** 2026-09-28 · **Fonte:** [Supabase Changelog](https://supabase.com/changelog/logs-usage-based-pricing) · [docs — logs-ingest](https://supabase.com/docs/guides/platform/manage-your-usage/logs-ingest) · [docs — logs-query](https://supabase.com/docs/guides/platform/manage-your-usage/logs-query) · **Eixos:** P3 A1 D2 E2 L1
-
-**O que é:** a Supabase está movendo Logs (Postgres, PostgREST/API gateway, Auth, Storage,
-Realtime, Edge Functions) de "incluído sem medição" para cobrança por uso. Planos
-Pro/Team/Enterprise ganham 20GB/mês de ingest incluídos, US$0,50/GB de excedente (Free: 1GB);
-a cota de consulta de log escala 100:1 com o ingest pago, e estourá-la degrada acesso (rate
-limit, depois retenção encolhida, depois corte). **Billing e enforcement só começam no início
-de 2027** — o medidor já roda hoje no dashboard, mas nada é cobrado ou bloqueado ainda.
-Supabase afirma que mais de 90% dos projetos ficam dentro do limite grátis. Números batidos
-em três fontes independentes (changelog + duas páginas de doc).
-
-**Correção de mecanismo, decisiva:** a hipótese inicial deste candidato era que os ~191
-`console.log`/`createSecureLogger` das funções serverless da Vercel alimentariam esse
-medidor. **Não alimentam** — Logs Ingest mede tráfego dos serviços da própria Supabase, não
-stdout de função Vercel, a menos que exista um Log Drain explícito ligando as duas coisas
-(`grep` vazio no repo por "log drain"/"logflare"). O vetor de risco real, se houver, é volume
-de query Postgres/PostgREST/Realtime — que sim escala com o produto
-(`supabaseAdmin`/`supabaseClient` chamado em ~480 arquivos) — mas não há como quantificar sem
-abrir o dashboard ao vivo da Supabase, fora do alcance de uma leitura de repositório.
-
-**Por que toca este projeto:** Supabase é o banco único e `settled` do projeto
-(`intel.config.json`), e o `CLAUDE.md` já tem uma seção inteira de "Vercel Cost Rules"
-nascida de um incidente real de fatura (US$375, março/2026) — o mesmo tipo de risco
-operacional, em fornecedor diferente.
-
-**O que a fonte não prova:** nenhum dado sobre o volume atual de ingest do projeto Seatable
-existe fora do dashboard ao vivo — a estimativa de estouro é especulação de ordem de
-grandeza, não fato verificado.
-
-**A pergunta:** vale abrir agora uma seção "Supabase Cost Rules" no `CLAUDE.md` (espelhando
-as regras da Vercel) e checar uma vez o GB de log ingest atual no dashboard — ou é cedo demais
-dado que o enforcement só começa em 2027 e mais de 90% dos projetos nunca estouram o limite
-grátis?
+**Atualização 2026-11-02 — o toggle que a mitigação planejada dependia some, mas só para agentes em modo Realtime.** O changelog da ElevenLabs em 26/10 (confirmado na fonte) registra dois fatos ligados: (1) trocar um agente para **Realtime voice mode** no dashboard agora seleciona **Eleven Realtime v1 Max** por padrão, não mais v1 Mini (default desde 19/10); (2) texto literal: *"Realtime agents always run tool calls in parallel, so the Parallel tool calling toggle is removed"*. Isto não responde a pergunta original (ainda sem confirmação de primeira mão de que o cliente de `openai-realtime.js` fala com o Eleven Realtime v1 só trocando endpoint/config — o spike de meio dia continua de pé); mas acrescenta uma trava concreta que **toca `BACKLOG.md#elevenlabs-parallel-tool-calls`** diretamente. Aquele spike propõe setar `enable_parallel_tool_calls: false` como mitigação — as 8 tools em `api/_voice-server/tool-handler.js` são sequenciais (`check_availability` → `create_reservation`), e paralelismo é risco, não ganho. Essa mitigação só vale enquanto o agente roda no modelo conversacional padrão de produção (`eleven_flash_v2_5`, configurado em `api/elevenlabs-agent-create.js:128,245`), não em Realtime voice mode. Se o spike de convergência de protocolo desta seção algum dia levar a adotar Realtime voice mode, o toggle que desligaria paralelismo **deixa de existir** para esse agente — paralelismo passa a ser mandatório. Os dois caminhos desta seção (adotar Realtime voice mode vs. manter a mitigação de parallel tool calls) ficam mutuamente exclusivos a partir de agora, e isso devia entrar como condição de parada explícita no spike de `BACKLOG.md#elevenlabs-parallel-tool-calls` se a convergência de protocolo avançar.
 
 ---
 
@@ -493,20 +406,6 @@ está sendo cobrada, sem esperar a Meta confirmar o valor por escrito.
 
 ---
 
-### [DISCUTIR 8/15] Qual é o teto de concorrência do workspace ElevenLabs?
-**Data:** 2026-08-24 · **Fonte:** [ElevenLabs changelog, 17/ago](https://elevenlabs.io/docs/changelog/2026/8/17) · **Eixos:** P2 A2 D1 E2 L1
-**Ponteiro de trabalho:** o `queueing_config` saiu de campo anunciado para GA — spike aberto → `BACKLOG.md#elevenlabs-queueing`
-
-**O que é:** a plataforma ganhou `queueing` (`AgentQueueingConfig`) com `enabled` e `wait_timeout_seconds` até 1.800s — com fila ligada, o chamador espera quando o agente bate o teto de concorrência, em vez de ser recusado.
-
-**O que sobrou, e é real:** a `ELEVENLABS_API_KEY` é uma só para todos os inquilinos, então o teto de concorrência é **compartilhado** — e o código não trata recusa em lugar nenhum.
-
-**Atualização 2026-09-21 — a pergunta original ganhou uma resposta parcial.** O changelog de 14/09 GA o exato `queueing_config` que este item só via como campo isolado: `enabled` (default `false`) + `wait_timeout_seconds` (1-1800), áudio de espera customizável via `hold-audio`, e eventos `queue_status` (`waiting`/`admitted`/`timed_out`) em tempo real — tudo dentro de `platform_settings`, o mesmo objeto que `elevenlabsAgentService.js` já popula em `POST /agents/create`. Aterramento novo, direto do código: quando o `register-call` inicial falha (`api/twilio-voice-connect.js:299-303`), a ligação recebe `<Say>` + `<Hangup/>` imediato — nenhuma fila, nenhum retry, hoje. Para um produto cuja aposta central é não perder ligação de reserva, isso é o modo de falha exato que o `queueing_config` resolveria, **se** ele se aplicar ao fluxo Twilio nativo inbound (não confirmado na fonte). Vira spike → `BACKLOG.md#elevenlabs-queueing` (ainda sem spike rodado, conforme `STATE.md`).
-
-**A pergunta:** qual é o teto do workspace no plano atual, e alguma casa já perdeu ligação por bater nele? Sem esse número e sem um caso real, ligar `queueing` é capacidade sem demanda — e segurar um cliente de restaurante em espera pode ser pior que dar sinal de ocupado.
-
----
-
 ## Fila de trabalho
 
 Promovido em 2026-10-12:
@@ -569,6 +468,36 @@ Promovidos em 2026-08-24, os quatro com âncora verificada:
 
 ## Radar
 
+- `2026-11-02` **Yelp lança "Check for Me": a IA do app liga PARA o restaurante perguntando
+  tempo de espera** (lançamento anunciado para "próximos meses", só EUA/iOS) — o cliente pede
+  pelo app, a IA do Yelp telefona para a equipe e manda a resposta por SMS. Mesmo movimento do
+  Yelp Host já mapeado (05/10). Ponto de contato real, sem ação hoje: se o telefone listado no
+  Yelp for o mesmo número que o Seatable atende, essa ligação cairia em
+  `api/twilio-voice-connect.js` sem triagem de chamador-robô, e a pergunta já tem handler pronto
+  (`getWaitTime` em `api/_lib/tool-handlers.js:668`) — cenário IA-liga-pra-IA nunca testado, mas
+  nenhum known_gap aberto por isso. [blog.yelp.com](https://blog.yelp.com/news/fall-product-release-2026/) · 6/15
+- `2026-11-02` **Abrasel alerta que a alíquota padrão da reforma tributária pode chegar a ~30%
+  para bares e restaurantes** — TCU fixou a referência da CBS em 11,35% (vs. 9,21% estimado
+  antes); somada ao IBS de 18,70%, o desconto de 40% do setor incide sobre a referência, não
+  sobre o total. Senado tem até 15/dez para fixar a taxa. Macroeconômico, sem âncora de código.
+  [muitainformacao.com.br](https://muitainformacao.com.br/negocios/novo-imposto-preocupa-bares-e-restaurantes-e-pode-elevar-precos-e-reduzir-empregos-alerta-abrasel/) · 6/15
+- `2026-11-02` **Vocca (saúde) capta US$20M Série A para IA que atende telefone de clínica
+  médica** — fora do vertical restaurante, mas mesmo mecanismo estrutural de `focus_areas`
+  ("AI phone answering") que qualquer concorrente de voz de reserva replica; cross-vertical, sem
+  menção a restaurante ou Brasil. [HIT Consultant](https://hitconsultant.net/2026/10/05/vocca-raises-20m-series-a-norrsken-vc-ai-phone-assistant-medical-practices/) · 5/15
+- `2026-11-02` **Chefia (BR) capta rodada para gestão financeira de food service** —
+  adjacente (financeiro, não reserva/CRM/voz), meta de 200 mil+ donos de restaurante até fim de
+  2026; disputa orçamento de tecnologia do mesmo público, não atenção do telefone.
+  [Startupi](https://startupi.com.br/chefia-capta-r-1-milhao-solucoes-financeiras/) · 5/15
+- `2026-11-02` **Gemini passa a fazer/alterar/cancelar reserva via OpenTable dentro do próprio
+  app** ("Reserve with Google" dentro do Gemini) — concorrente adjacente de reserva por agente
+  conversacional; data exata de disponibilidade não confirmada na página oficial do Google.
+  [Google Support](https://support.google.com/gemini/answer/17090712) · 6/15
+- `2026-11-02` **Stripe aceita Pix no Brasil desde ago/2025, via parceria com EBANX** — fato
+  antigo (achado agora), relevante porque fura a premissa de que "processar Pix exige sair do
+  Stripe"; não confirmado se o caminho cobre Stripe Connect (modelo do Seatable) ou só checkout
+  direto — vale checar antes de tratar como resposta ao `known_gap` de ausência de Pix.
+  [Finextra](https://www.finextra.com/newsarticle/46431/stripe-businesses-can-now-accept-pix-in-brazil) · 6/15
 - `2026-10-26` **Fly.io teve 27 incidentes entre 15/09 e 25/10, três em GRU, zero em CDG** —
   confirmado em `status.flyio.net/history`: GRU teve problema de state database (24/09), rede
   (29/09, 22min) e capacidade de criação de Machines (20/10); CDG (região primária de
@@ -843,6 +772,160 @@ Promovidos em 2026-08-24, os quatro com âncora verificada:
   estande sem preço nem prazo público. Decidir ir como visitante expira ~14/09. [Abrasel](https://abrasel.com.br/noticias/noticias/salao-abrasel-5-motivos-para-participar-do-evento/) · 7/15
 
 ## Arquivo
+
+### [ARQUIVADO 2026-11-02] Sete itens entre 09-14 e 10-09 — envelheceram sem decisão (24 a 49 dias em aberto), mais um já promovido e nunca destacado
+
+Nenhum dos sete primeiros recebeu resposta do Stefano nem atualização nos últimos 21 dias — mesma regra de manutenção aplicada em 19/10. O oitavo (teto de concorrência da ElevenLabs) não envelheceu por falta de decisão: a decisão já tinha sido tomada em 2026-09-21 (promovido a PROTOTIPAR, `BACKLOG.md#elevenlabs-queueing`) e o item só não foi movido pra cá na hora certa. Conteúdo original preservado abaixo, sem reavaliação de score — arquivado por idade ou por processo, não por descarte de mérito.
+
+<details>
+<summary>[DISCUTIR 8/15] Prosus — controladora do iFood — está apostando no exato nicho da bets[2], só que por câmera e PDV — 2026-09-14</summary>
+
+**Fonte:** [Startups.com.br](https://startups.com.br/negocios/rodada-de-investimento/prosus-sobe-aposta-em-ia-nos-restaurantes-e-investe-us-15m-na-emilia-ai/) · **Eixos:** P1 A1 D1 E2 L3
+
+**O que é:** a Emilia AI (fundada por dois colombianos em 2024, sede nos EUA, Brasil declarado como mercado principal) levantou US$1,5M pre-seed, US$1M liderado pela **Prosus Ventures** (braço de venture early-stage da Prosus, controladora do iFood) + US$500k de anjos. O produto instala IA sobre câmeras de segurança que o restaurante já tem, cruzando vídeo com dado de PDV: agente "Coach" aponta oportunidade de upsell perdida (sobremesa/bebida não oferecida); agente "Sentinel" é antifraude (prato que saiu sem lançar, caixa que não bateu). Dois pilotos citados: Alife Nino (100+ estabelecimentos BR, ROI autodeclarado de ~28x — US$300/mês de receita extra por mesa contra US$10 de custo) e Jin Jin (rede franqueada do iFood, 77+ lojas em expansão da solução depois do Sentinel achar fraude em 12h de gravação analisada).
+
+**O que a fonte não prova:** nenhum número de clientes totais, receita da Emilia, ou taxa de conversão fora dos dois pilotos citados — tudo relatado pelos próprios fundadores/clientes, sem auditoria terceira. Não há evidência de que a Emilia grava dado de cliente em CRM próprio ou fecha loop de receita — ela descreve só a camada de operação/antifraude, não de relacionamento com o hóspede.
+
+**Por que toca este projeto:** a Emilia **não é concorrente direto** — não faz reserva, voz ou WhatsApp. Mas é evidência direta de capital de risco validando as apostas 2 e 3 do config (dado do cliente é o ativo; restaurante independente brasileiro é subatendido) vindo de um investidor que é a própria controladora do maior concorrente indireto do Brasil — a Prosus/iFood já comprou Get In (reservas), tem participação em Saipos/OPDV/3S Checkout e Anota AI, e agora financia uma camada de inteligência de operação para o mesmo público (restaurante independente brasileiro) que o Seatable ataca pelo lado de reserva/voz/WhatsApp.
+
+**A pergunta:** isso é só mais uma peça do padrão já registrado (iFood comprando/financiando toda a camada operacional do restaurante independente brasileiro, settled como "conector de leitura" para Saipos) — ou o fato de ser câmera+PDV, não reserva, muda alguma coisa na urgência? Especificamente: se o Jin Jin (rede do próprio iFood) está escalando Sentinel/Coach para 77+ lojas, isso é sinal de que o iFood está testando, através de investidas, qual camada de inteligência vale comprar/replicar internamente depois — e a próxima pode ser justamente CRM/reserva, onde o Seatable joga?
+
+</details>
+
+<details>
+<summary>[DISCUTIR 9/15] Twilio tagueia qualidade de áudio na perna PSTN — mas não mede o que falta de verdade — 2026-10-09</summary>
+
+**Fonte:** [Twilio changelog](https://www.twilio.com/en-us/changelog.html) · **Eixos:** P3 A2 D1 E1 L2
+
+**O que é:** o Twilio Voice Insights passa a marcar cada chamada como "HD Audio" (codec AMR-WB/Opus negociado) ou "Downsampled" (trecho caiu para banda estreita), exposto no Call Summary do Console, na REST API e em Event Streams. A tag é calculada na perna carrier/PSTN — diferente do componente Voice JS SDK já descartado em 24/08 (que só vale pra softphone de navegador), este é alcançável no caminho Twilio→Fly.io deste projeto, porque mede a perna do carrier, não o fork de Media Streams.
+
+**O que a fonte não prova:** não há benchmark, amostra nem confirmação se a tag é recurso Basic (grátis) ou Advanced (cobrado por minuto). E, mais importante: ela mede qualidade de **codec** na perna PSTN, não **latência** nem **erro de barge-in** dentro do pipeline real (Fly.io → ElevenLabs/OpenAI Realtime) — que é o buraco central já registrado no `known_gaps` de instrumentação de voz.
+
+**Aterramento no repo:** `callSid` já trafega por `api/_voice-server/session-manager.js`/`ws-server.js` (vindo do evento `start` do Media Stream), mas nunca é persistido em `agent_conversations` — só o `conversation_id` da ElevenLabs é salvo. Aproveitar esta tag exigiria schema novo + wiring, não é "grátis e já disponível". `grep` por "Voice Insights" no repo: zero ocorrências.
+
+**A pergunta:** vale abrir um spike pra persistir o `call_sid` e consultar a tag HD Audio/Downsampled via Voice Insights REST API — como sinal barato de qualidade de codec na perna PSTN — ou isso é descartável porque não mede o que realmente falta (latência e barge-in dentro do pipeline Fly.io/ElevenLabs), que é o alvo real do `known_gap`?
+
+</details>
+
+<details>
+<summary>[DISCUTIR 9/15] ElevenLabs trocou o default de TTS — mas o snapshot de payload já nos protege — 2026-10-05</summary>
+
+**Fonte:** [ElevenLabs changelog](https://elevenlabs.io/docs/changelog) · **Eixos:** P3 A2 D1 E2 L1
+
+**O que é:** a entrada de 05/10 do changelog da ElevenAgents traz três mudanças: "Update agent"/"Create agent draft" passam a compilar/validar structured procedures automaticamente (o repo não usa procedures nem branches de agente — zero superfície aqui); "Merge proposals" entra em alpha; e o modelo de TTS conversacional default passa de `eleven_flash_v2` para **`eleven_v4_turbo`** quando a chamada não especifica `model_id`.
+
+**Por que isto não nos pega de surpresa, ao contrário do incidente de 24/08:** os dois pontos de criação de agente do Seatable (`api/_services/elevenlabsAgentService.js:883` e `api/elevenlabs-agent-create.js:128/245`) hardcodam `model_id` por idioma (`eleven_flash_v2` EN / `eleven_flash_v2_5` PT) em toda chamada — nunca herdam o default do fornecedor — e isso está travado por `api/__tests__/elevenlabs-agent-create-payload.test.js` desde o fechamento do spike `elevenlabs-payload-snapshot` (01/09). Esse teste cobre exatamente `tts.model_id`, então a mudança de default da ElevenLabs **não nos afeta sem ação nossa**. Correção aplicada no `known_gaps` do `intel.config.json` nesta rodada: a entrada que dizia "não há snapshot" estava desatualizada.
+
+**O que a fonte não prova:** se o novo default se aplica retroativamente a agentes já existentes, nem traz número de latência/qualidade do `eleven_v4_turbo` em pt-BR.
+
+**A pergunta:** dado que não somos afetados passivamente, vale abrir um spike para testar `eleven_v4_turbo` em pt-BR (latência/qualidade) como upgrade **deliberado** — já que a instrumentação de voz continua no `known_gap` zero-métrica — ou isso fica parado até existir medição de latência implementada?
+
+</details>
+
+<details>
+<summary>[DISCUTIR 8/15] A Toast — parceira da Resy — está construindo o próprio atendente de telefone — 2026-10-07</summary>
+
+**Fonte:** [Nation's Restaurant News](https://www.nrn.com/restaurant-technology/toast-unveils-an-array-of-new-ai-agents-for-restaurants) · **Eixos:** P2 A1 D2 E1 L2
+
+**O que é:** a Toast expande o Toast IQ com a categoria "Team" (US$60/mês + US$9/funcionário), cujo carro-chefe é o Scheduling Agent já lançado (41% menos hora extra por funcionário, autodeclarado, sem amostra). Em paralelo, abriu early access para três agentes "em desenvolvimento": **Answering Agent** (atende ligação — a matéria não descreve como), Menu Agent (atualiza cardápio online) e Configurable Agents.
+
+**O que a fonte não prova:** o Answering Agent é citado numa frase, sem mecanismo, telefonia, idioma, preço ou data de lançamento geral. Não há menção a Resy nesta peça — a ligação Resy+Toast é framing do scout, não da fonte.
+
+**Por que toca este projeto mesmo assim:** Toast, já parceira do Digital Chit da Resy, confirma com mais um incumbente o padrão estrutural já registrado em `BACKLOG.md` (Resy+Toast, Square+OpenTable, Presto+Toast) de POS virando camada de atendimento — exatamente a `bets[0]` já revisada ("end-to-end é piso, não diferencial"). Não ameaça direto porque Toast não opera no Brasil e não fala português/WhatsApp.
+
+**A pergunta:** Toast verticalizando o próprio atendimento telefônico por IA é mais uma confirmação de que "atender telefone" virou piso de qualquer POS americano. Vale usar esse movimento como gatilho comercial da Olímpia ("antes que um POS brasileiro copie isso aqui"), ou é cedo demais para um recurso ainda em early access sem data nem mecanismo publicado?
+
+</details>
+
+<details>
+<summary>[DISCUTIR 10/15] Slang AI vende memória-entre-chamadas; o Seatable já lê memória na ligação, mas nunca escreve de volta — 2026-10-05</summary>
+
+**Fonte:** [PRNewswire](https://www.prnewswire.com/news-releases/slang-ai-introduces-the-superhost-the-most-natural-restaurant-caller-experience-in-the-world-302898024.html) · **Eixos:** P3 A2 D2 E1 L2
+
+**O que é:** o "Superhost" da Slang AI persiste memória entre chamadas chaveada por telefone (reconhece recorrente, reserva futura, alergia, aniversário), afirma distinguir tom emocional na fala ("ok exasperado" vs. "ok satisfeito"), fala 97 idiomas e monitora toda chamada sob SOC2 Type II. Cobre telefone, texto e web — sem WhatsApp. Três clientes citados (Gusto54, KNEAD, Founding Farmers), satisfação autodeclarada 95%+, sem metodologia nem amostra.
+
+**Correção à premissa inicial:** a ligação de voz do Seatable **não é cega hoje**. `api/_voice-server/ws-server.js` (~linha 196-214) já chama `buildGuestContext` de `api/_services/guestMemory.js` e injeta preferências/ocasiões/notas de gerente no system prompt antes da ligação conectar, desde `b49b8dd2` (26/08). O que de fato falta, confirmado por grep, é o sentido contrário: `extractMemoriesFromWhatsApp` só é chamado em `api/_lib/channels/message-processor.js` (canal WhatsApp) — nenhuma ligação de voz escreve memória nova de volta. Também confirmado por grep: zero detecção de tom/sentimento em `api/_voice-server/` — isso é exclusivo da Slang hoje. E `LANGUAGE_CONFIG` em `api/_lib/persona-prompt-builder.js` cobre só 6 idiomas, bem abaixo dos 97 anunciados (provavelmente diferença de prompt, não de motor — ambos usam ASR/TTS de terceiro).
+
+**O que a fonte não prova:** 95%+ de satisfação e "milhares de locais" são números do próprio vendedor, sem amostra, sem comparação com baseline, sem benchmark auditável.
+
+**A pergunta:** com um concorrente bem financiado vendendo memória-entre-chamadas e monitoramento de qualidade como diferencial — ambos itens que tocam exatamente um `known_gap` já registrado (zero instrumentação de latência/qualidade de voz) e uma assimetria real no código (voz lê memória, nunca escreve) — vale adiantar na fila: (a) fechar o round-trip de memória na ligação de voz, e (b) a instrumentação de qualidade/latência já conhecida? Ou isso continua atrás da prospecção e do Racha na priorização atual?
+
+</details>
+
+<details>
+<summary>[DISCUTIR 8/15] DashOS: a DoorDash executa a bets[1] em escala, com números que ninguém auditou — 2026-09-30</summary>
+
+**Fontes:** [Investing.com (DashOS)](https://www.investing.com/news/company-news/doordash-launches-dashos-platform-to-connect-restaurant-services-93CH-4925247) · [TechCrunch (agente iMessage)](https://techcrunch.com/2026/09/30/doordash-launches-an-ai-agent-you-can-text-to-order-food/) · **Eixos:** P2 A1 D2 E1 L2
+
+**O que é:** DashOS unifica num perfil único por restaurante marketplace, pedido direto, loyalty e reserva (via SevenRooms, já da DoorDash), com IA para recomendação de reserva, resposta a review, campanha e atendimento de voz. No mesmo dia, a DoorDash lançou (waitlist EUA) um agente de pedido por texto livre dentro do Apple Messages, casando telefone a histórico e montando pedido de grupo com preferência por pessoa. Números citados pela própria empresa: +15% em reservas num teste de jul-ago, US$10mil+/mês de receita por restaurante atribuída ao Voice AI da SevenRooms, US$150M em vendas via campanha (jan-ago), 1,8x/1,75x em frequência/gasto no loyalty — tudo sem amostra, controle ou metodologia publicados.
+
+**Por que toca este projeto:** é a execução em produto, com números (ainda que não auditáveis), do movimento de consolidação já registrado como mudança estrutural desde 22/08 (DoorDash comprando SevenRooms) — confirma, não inaugura. Toca `bets[1]` (dado do cliente é o ativo) e o mesmo ponto que o known_gap já registra: `api/square.js` descarta o catálogo e não existe tabela de menu, `api/_voice-server/tool-handler.js` só tem tools de reserva, zero pedido/takeout — exatamente o que o agente de iMessage ilumina.
+
+**O que a fonte não prova:** todos os números-chave são autodeclarados; o agente de iMessage é anúncio de waitlist, sem métrica de adoção ou precisão.
+
+**A pergunta:** a DoorDash escolheu iMessage, não WhatsApp — fora do Brasil por desenho, o que reforça o `settled` de que o WhatsApp é a porta que os americanos não têm. É só questão de tempo até um incumbente brasileiro (iFood/Rappi) replicar o mesmo agente dentro do WhatsApp? Se replicar, a janela de "reserva conversacional em português" fecha em meses. Vale tratar pedido como extensão natural do agente de WhatsApp agora, ou isso fica fora do produto por decisão (reserva+CRM, não marketplace de pedido)?
+
+</details>
+
+<details>
+<summary>[DISCUTIR 9/15] Supabase cobra Logs Ingest por uso a partir de 2027 — vale uma checagem agora? — 2026-09-28</summary>
+
+**Fonte:** [Supabase Changelog](https://supabase.com/changelog/logs-usage-based-pricing) · [docs — logs-ingest](https://supabase.com/docs/guides/platform/manage-your-usage/logs-ingest) · [docs — logs-query](https://supabase.com/docs/guides/platform/manage-your-usage/logs-query) · **Eixos:** P3 A1 D2 E2 L1
+
+**O que é:** a Supabase está movendo Logs (Postgres, PostgREST/API gateway, Auth, Storage,
+Realtime, Edge Functions) de "incluído sem medição" para cobrança por uso. Planos
+Pro/Team/Enterprise ganham 20GB/mês de ingest incluídos, US$0,50/GB de excedente (Free: 1GB);
+a cota de consulta de log escala 100:1 com o ingest pago, e estourá-la degrada acesso (rate
+limit, depois retenção encolhida, depois corte). **Billing e enforcement só começam no início
+de 2027** — o medidor já roda hoje no dashboard, mas nada é cobrado ou bloqueado ainda.
+Supabase afirma que mais de 90% dos projetos ficam dentro do limite grátis. Números batidos
+em três fontes independentes (changelog + duas páginas de doc).
+
+**Correção de mecanismo, decisiva:** a hipótese inicial deste candidato era que os ~191
+`console.log`/`createSecureLogger` das funções serverless da Vercel alimentariam esse
+medidor. **Não alimentam** — Logs Ingest mede tráfego dos serviços da própria Supabase, não
+stdout de função Vercel, a menos que exista um Log Drain explícito ligando as duas coisas
+(`grep` vazio no repo por "log drain"/"logflare"). O vetor de risco real, se houver, é volume
+de query Postgres/PostgREST/Realtime — que sim escala com o produto
+(`supabaseAdmin`/`supabaseClient` chamado em ~480 arquivos) — mas não há como quantificar sem
+abrir o dashboard ao vivo da Supabase, fora do alcance de uma leitura de repositório.
+
+**Por que toca este projeto:** Supabase é o banco único e `settled` do projeto
+(`intel.config.json`), e o `CLAUDE.md` já tem uma seção inteira de "Vercel Cost Rules"
+nascida de um incidente real de fatura (US$375, março/2026) — o mesmo tipo de risco
+operacional, em fornecedor diferente.
+
+**O que a fonte não prova:** nenhum dado sobre o volume atual de ingest do projeto Seatable
+existe fora do dashboard ao vivo — a estimativa de estouro é especulação de ordem de
+grandeza, não fato verificado.
+
+**A pergunta:** vale abrir agora uma seção "Supabase Cost Rules" no `CLAUDE.md` (espelhando
+as regras da Vercel) e checar uma vez o GB de log ingest atual no dashboard — ou é cedo demais
+dado que o enforcement só começa em 2027 e mais de 90% dos projetos nunca estouram o limite
+grátis?
+
+</details>
+
+<details>
+<summary>[DISCUTIR 8/15] Qual é o teto de concorrência do workspace ElevenLabs? — 2026-08-24</summary>
+
+**Fonte:** [ElevenLabs changelog, 17/ago](https://elevenlabs.io/docs/changelog/2026/8/17) · **Eixos:** P2 A2 D1 E2 L1
+**Ponteiro de trabalho:** o `queueing_config` saiu de campo anunciado para GA — spike aberto → `BACKLOG.md#elevenlabs-queueing`
+
+**O que é:** a plataforma ganhou `queueing` (`AgentQueueingConfig`) com `enabled` e `wait_timeout_seconds` até 1.800s — com fila ligada, o chamador espera quando o agente bate o teto de concorrência, em vez de ser recusado.
+
+**O que sobrou, e é real:** a `ELEVENLABS_API_KEY` é uma só para todos os inquilinos, então o teto de concorrência é **compartilhado** — e o código não trata recusa em lugar nenhum.
+
+**Atualização 2026-09-21 — a pergunta original ganhou uma resposta parcial.** O changelog de 14/09 GA o exato `queueing_config` que este item só via como campo isolado: `enabled` (default `false`) + `wait_timeout_seconds` (1-1800), áudio de espera customizável via `hold-audio`, e eventos `queue_status` (`waiting`/`admitted`/`timed_out`) em tempo real — tudo dentro de `platform_settings`, o mesmo objeto que `elevenlabsAgentService.js` já popula em `POST /agents/create`. Aterramento novo, direto do código: quando o `register-call` inicial falha (`api/twilio-voice-connect.js:299-303`), a ligação recebe `<Say>` + `<Hangup/>` imediato — nenhuma fila, nenhum retry, hoje. Para um produto cuja aposta central é não perder ligação de reserva, isso é o modo de falha exato que o `queueing_config` resolveria, **se** ele se aplicar ao fluxo Twilio nativo inbound (não confirmado na fonte). Vira spike → `BACKLOG.md#elevenlabs-queueing` (ainda sem spike rodado, conforme `STATE.md`).
+
+**A pergunta:** qual é o teto do workspace no plano atual, e alguma casa já perdeu ligação por bater nele? Sem esse número e sem um caso real, ligar `queueing` é capacidade sem demanda — e segurar um cliente de restaurante em espera pode ser pior que dar sinal de ocupado.
+
+Promovido a PROTOTIPAR 12/15 em 2026-09-21 (`BACKLOG.md#elevenlabs-queueing`) — ficou ESQUECIDO em "Em aberto" por seis semanas depois da própria promoção, em vez de ser movido para cá. Arquivado agora por processo, não por idade de decisão: a pergunta sobre o teto numérico do workspace segue sem resposta, mas o produto (fila em vez de desligar a ligação) já está na fila de trabalho e não precisa de um segundo veredito.
+
+
+</details>
+
+---
 
 ### [ARQUIVADO 2026-10-19] Quatro itens entre 01/09 e 25/09 — envelheceram sem decisão (24 a 48 dias em aberto)
 
