@@ -57,7 +57,13 @@ function inspect(row, agent) {
   if (current.first_message !== ENGLISH_DEFAULT(row.restaurant_name)) {
     return { status: 'skip', reason: 'nondefault_first_message' };
   }
-  return { status: 'ready', targetLanguage, targetGreeting };
+  // ElevenLabs rejects non-English languages with flash v2. The model change
+  // must be in the same PATCH as language so no intermediate config is invalid.
+  const oldTtsModel = agent?.conversation_config?.tts?.model_id;
+  if (oldTtsModel !== 'eleven_flash_v2' && oldTtsModel !== 'eleven_flash_v2_5') {
+    return { status: 'skip', reason: 'unsupported_tts_model' };
+  }
+  return { status: 'ready', targetLanguage, targetGreeting, targetTtsModel: 'eleven_flash_v2_5' };
 }
 
 async function inventory({ db, api }) {
@@ -86,24 +92,33 @@ async function migrate({ items, db, api, journal = () => {} }) {
     const fresh = inspect(row, agent);
     const oldConfig = item.agent?.conversation_config?.agent;
     const current = agent?.conversation_config?.agent;
+    const oldTtsModel = item.agent?.conversation_config?.tts?.model_id;
+    const currentTtsModel = agent?.conversation_config?.tts?.model_id;
     if (row?.elevenlabs_agent_id !== id || fresh.status !== 'ready' ||
         fresh.targetLanguage !== item.targetLanguage || fresh.targetGreeting !== item.targetGreeting ||
         current?.language !== oldConfig?.language || current?.first_message !== oldConfig?.first_message ||
+        currentTtsModel !== oldTtsModel ||
         agent?.version_id !== item.agent?.version_id) {
       throw new Error(`Agent ${id} changed after inventory; no write attempted`);
     }
-    const updates = { language: item.targetLanguage, first_message: item.targetGreeting };
+    const updates = {
+      agent: { language: item.targetLanguage, first_message: item.targetGreeting },
+      tts: { model_id: item.targetTtsModel },
+    };
     const rollback = {
       agent_id: id, old_language: current.language, old_first_message: current.first_message,
-      new_language: updates.language, new_first_message: updates.first_message,
+      old_tts_model: oldTtsModel,
+      new_language: updates.agent.language, new_first_message: updates.agent.first_message,
+      new_tts_model: updates.tts.model_id,
     };
     journal({ ...rollback, state: 'patch_intent' });
     try {
       await api.patchAgent(id, updates);
       journal({ ...rollback, state: 'patch_returned' });
       const saved = await api.getAgent(id);
-      if (saved?.conversation_config?.agent?.language !== updates.language ||
-          saved?.conversation_config?.agent?.first_message !== updates.first_message) {
+      if (saved?.conversation_config?.agent?.language !== updates.agent.language ||
+          saved?.conversation_config?.agent?.first_message !== updates.agent.first_message ||
+          saved?.conversation_config?.tts?.model_id !== updates.tts.model_id) {
         throw new Error('Provider readback mismatch');
       }
       journal({ ...rollback, new_version_id: saved.version_id || null, state: 'verified' });
@@ -129,7 +144,7 @@ function createApi(apiKey, fetcher = fetch) {
     getWorkspaceId: async () => (await request('/user')).workspace_id,
     getAgent: id => request(`/convai/agents/${encodeURIComponent(id)}`),
     patchAgent: (id, updates) => request(`/convai/agents/${encodeURIComponent(id)}`, 'PATCH', {
-      conversation_config: { agent: updates },
+      conversation_config: updates,
     }),
   };
 }
