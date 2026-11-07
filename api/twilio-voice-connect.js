@@ -132,48 +132,51 @@ module.exports = async (req, res) => {
 async function lookupRestaurantByPhone(phoneNumber) {
   const normalizedPhone = phoneNumber.replace(/[\s\-\(\)]/g, '');
 
-  // Try exact match first
-  let { data, error } = await supabaseAdmin
+  const columns = 'id, restaurant_name, phone, voice_engine, voice_engine_status, voice_ws_endpoint, elevenlabs_agent_id, ai_config';
+
+  // A provisioned AI number owns the inbound call, even if another restaurant
+  // lists it as a business phone. Two rows are enough to detect ambiguity.
+  const { data: aiMatches, error: aiError } = await supabaseAdmin
     .schema('restaurant')
     .from('restaurant_config')
-    .select('id, restaurant_name, phone, voice_engine, voice_engine_status, voice_ws_endpoint, elevenlabs_agent_id, ai_config')
-    .eq('phone', normalizedPhone)
+    .select(columns)
+    .filter('ai_config->phone->>number', 'eq', normalizedPhone)
+    .filter('ai_config->phone->>status', 'eq', 'active')
+    .neq('ai_config->phone->>number_id', '')
     .eq('is_active', true)
-    .eq('onboarding_completed', true)
-    .limit(1)
-    .maybeSingle();
+    .limit(2);
 
-  // If not found and original differs, try original format
-  if (!data && !error && normalizedPhone !== phoneNumber) {
-    ({ data, error } = await supabaseAdmin
-      .schema('restaurant')
-      .from('restaurant_config')
-      .select('id, restaurant_name, phone, voice_engine, voice_engine_status, voice_ws_endpoint, elevenlabs_agent_id, ai_config')
-      .eq('phone', phoneNumber)
-      .eq('is_active', true)
-      .eq('onboarding_completed', true)
-      .limit(1)
-      .maybeSingle());
-  }
-
-  // If still not found, try matching against ai_config.phone.number (Twilio AI number)
-  if (!data && !error) {
-    ({ data, error } = await supabaseAdmin
-      .schema('restaurant')
-      .from('restaurant_config')
-      .select('id, restaurant_name, phone, voice_engine, voice_engine_status, voice_ws_endpoint, elevenlabs_agent_id, ai_config')
-      .filter('ai_config->phone->>number', 'eq', normalizedPhone)
-      .eq('is_active', true)
-      .limit(1)
-      .maybeSingle());
-  }
-
-  if (error) {
-    logger.error('Restaurant lookup error:', { message: error.message });
+  if (aiError || !Array.isArray(aiMatches)) {
+    logger.error('AI number lookup error:', { message: aiError?.message || 'Invalid query response' });
     return null;
   }
+  if (aiMatches.length > 1) {
+    logger.error('Ambiguous provisioned AI number', { phone: normalizedPhone });
+    return null;
+  }
+  if (aiMatches.length === 1) return aiMatches[0];
 
-  return data;
+  // Check both stored phone formats together. Neither a duplicate nor a
+  // formatting variant may win merely because it was returned first.
+  const phoneVariants = [...new Set([normalizedPhone, phoneNumber])];
+  const { data: businessMatches, error: businessError } = await supabaseAdmin
+    .schema('restaurant')
+    .from('restaurant_config')
+    .select(columns)
+    .in('phone', phoneVariants)
+    .eq('is_active', true)
+    .eq('onboarding_completed', true)
+    .limit(2);
+
+  if (businessError || !Array.isArray(businessMatches)) {
+    logger.error('Business phone lookup error:', { message: businessError?.message || 'Invalid query response' });
+    return null;
+  }
+  if (businessMatches.length > 1) {
+    logger.error('Ambiguous business phone', { phone: normalizedPhone });
+    return null;
+  }
+  return businessMatches[0] || null;
 }
 
 /**
